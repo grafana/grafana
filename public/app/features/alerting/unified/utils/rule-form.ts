@@ -217,7 +217,6 @@ export const getDefaultQueriesAsync = async (): Promise<{
   try {
     ds = await getDataSourceSrv().get(dataSource.uid);
   } catch (error) {
-    console.log(error);
     return { queries: [...getDefaultExpressions('A', 'B')] };
   }
 

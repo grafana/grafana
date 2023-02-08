@@ -80,10 +80,11 @@ export const QueryAndExpressionsStep: FC<Props> = ({
     runner.current.run(getValues('queries'));
   }, [getValues]);
 
+  const updateWithDefault = !editingExistingRule && !prefill;
   //once default queries is updated
   useEffect(() => {
-    !editingExistingRule && !isDirty && !prefill && lazyDefaultQueries && dispatch(setDataQueries(lazyDefaultQueries));
-  }, [lazyDefaultQueries, editingExistingRule, isDirty, prefill]);
+    updateWithDefault && !isDirty && lazyDefaultQueries && dispatch(setDataQueries(lazyDefaultQueries));
+  }, [lazyDefaultQueries, updateWithDefault, isDirty]);
 
   // whenever we update the queries we have to update the form too
   useEffect(() => {
@@ -211,6 +212,8 @@ export const QueryAndExpressionsStep: FC<Props> = ({
                   {...field}
                   dataSourceName={dataSourceName}
                   showPreviewAlertsButton={!isRecordingRuleType}
+                  lazyDefaultQuery={lazyDefaultQueries?.[0]}
+                  preservePreviousValue={!updateWithDefault}
                 />
               );
             }}

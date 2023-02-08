@@ -231,7 +231,25 @@ async function newModel(
   item: AlertQuery,
   settings: DataSourceInstanceSettings
 ): Promise<Omit<AlertQuery, 'datasource'>> {
-  const ds = await getDataSourceSrv().get(item.datasourceUid);
+  let ds;
+  try {
+    ds = await getDataSourceSrv().get(settings.uid); // get new ds
+  } catch (e) {
+    return {
+      refId: item.refId,
+      relativeTimeRange: item.relativeTimeRange,
+      queryType: '',
+      datasourceUid: settings.uid,
+      model: {
+        refId: item.refId,
+        hide: false,
+        datasource: {
+          type: settings.type,
+          uid: settings.uid,
+        },
+      },
+    };
+  }
   return {
     refId: item.refId,
     relativeTimeRange: item.relativeTimeRange,

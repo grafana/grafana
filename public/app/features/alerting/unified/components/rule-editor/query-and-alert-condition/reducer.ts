@@ -64,12 +64,12 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
       state.queries = addQuery(state.queries, {
         datasourceUid: datasource.uid,
         model: {
-          refId: '',
           datasource: {
             type: datasource.type,
             uid: datasource.uid,
           },
           ...payload.defaultQuery,
+          refId: '',
         },
       });
     })
