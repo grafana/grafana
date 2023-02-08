@@ -92,6 +92,7 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, hasEditPerm bool, p
 			Section:        navtree.NavSectionCore,
 			Children:       starredItemsLinks,
 			EmptyMessageId: "starred-empty",
+			Url:            s.cfg.AppSubURL + "/dashboards?starred",
 		})
 	}
 

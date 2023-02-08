@@ -22,7 +22,7 @@ export function NavBarMenuItemWrapper({
 
   if (link.emptyMessage && !linkHasChildren(link)) {
     return (
-      <NavBarMenuSection link={link}>
+      <NavBarMenuSection onClose={onClose} link={link} activeItem={activeItem}>
         <ul className={styles.children}>
           <div className={styles.emptyMessage}>{link.emptyMessage}</div>
         </ul>
