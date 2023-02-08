@@ -3,7 +3,7 @@ import React, { FC, useEffect, useMemo, useState } from 'react';
 import { DeepMap, FieldError, FormProvider, useForm, useFormContext, UseFormWatch } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 
-import { DataQuery, DataSourceApi, DataSourceJsonData, GrafanaTheme2 } from '@grafana/data';
+import { DataQuery, DataSourceApi, DataSourceJsonData, GrafanaTheme2, UrlQueryMap } from '@grafana/data';
 import { config, logInfo } from '@grafana/runtime';
 import { Button, ConfirmModal, CustomScrollbar, Field, HorizontalGroup, Input, Spinner, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
@@ -12,7 +12,7 @@ import { useCleanup } from 'app/core/hooks/useCleanup';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
-import { AlertQuery } from 'app/types/unified-alerting-dto';
+import { AlertQuery, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { LogMessages, trackNewAlerRuleFormCancelled, trackNewAlerRuleFormError } from '../../Analytics';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
@@ -79,16 +79,7 @@ type Props = {
   prefill?: Partial<RuleFormValues>; // Existing implies we modify existing rule. Prefill only provides default form values
 };
 
-export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
-  const styles = useStyles2(getStyles);
-  const dispatch = useDispatch();
-  const notifyApp = useAppNotification();
-  const [queryParams] = useQueryParams();
-  const [showEditYaml, setShowEditYaml] = useState(false);
-  const [evaluateEvery, setEvaluateEvery] = useState(existing?.group.interval ?? MINUTE);
-
-  const returnTo: string = (queryParams['returnTo'] as string | undefined) ?? '/alerting/list';
-  const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+export const useGetDefaults = (queryParams: UrlQueryMap, existing: RuleWithLocation<RulerRuleDTO> | undefined) => {
   const [defaultDsAndQueries, setDefaultDsAndQueries] = useState<{
     queries: AlertQuery[] | null;
     ds?: DataSourceApi<DataQuery, DataSourceJsonData, {}>;
@@ -105,6 +96,21 @@ export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
     () => ({ ...(defaultsInQueryParams ? JSON.parse(defaultsInQueryParams) : {}) }),
     [defaultsInQueryParams]
   );
+  return { defaultDsAndQueries, defaultsInQueryParamsObject };
+};
+
+export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
+  const styles = useStyles2(getStyles);
+  const dispatch = useDispatch();
+  const notifyApp = useAppNotification();
+  const [queryParams] = useQueryParams();
+  const [showEditYaml, setShowEditYaml] = useState(false);
+  const [evaluateEvery, setEvaluateEvery] = useState(existing?.group.interval ?? MINUTE);
+
+  const returnTo: string = (queryParams['returnTo'] as string | undefined) ?? '/alerting/list';
+  const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+
+  const { defaultDsAndQueries, defaultsInQueryParamsObject } = useGetDefaults(queryParams, existing);
 
   const defaultValues: RuleFormValues = useMemo(() => {
     if (existing) {
@@ -136,6 +142,7 @@ export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
 
   const { handleSubmit, watch, reset } = formAPI;
 
+  // only reset once we get some value in defaultDsAndQueries.queries, adding this value.
   useEffect(() => {
     !existing &&
       !prefill &&

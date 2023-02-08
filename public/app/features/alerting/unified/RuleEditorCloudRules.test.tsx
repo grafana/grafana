@@ -1,4 +1,4 @@
-import { waitFor, screen, within, waitForElementToBeRemoved } from '@testing-library/react';
+import { screen, waitFor, waitForElementToBeRemoved, within } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
@@ -17,6 +17,7 @@ import { ExpressionEditorProps } from './components/rule-editor/ExpressionEditor
 import { disableRBAC, mockDataSource, MockDataSourceSrv } from './mocks';
 import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
 import * as config from './utils/config';
+import * as ruleForm from './utils/rule-form';
 
 jest.mock('./components/rule-editor/ExpressionEditor', () => ({
   // eslint-disable-next-line react/display-name
@@ -37,6 +38,7 @@ jest.mock('app/features/query/components/QueryEditorRow', () => ({
 }));
 
 jest.spyOn(config, 'getAllDataSources');
+jest.spyOn(ruleForm, 'getDefaultQueriesAsync');
 
 // these tests are rather slow because we have to wait for various API calls and mocks to be called
 // and wait for the UI to be in particular states, drone seems to time out quite often so
@@ -47,6 +49,7 @@ jest.setTimeout(60 * 1000);
 const mocks = {
   getAllDataSources: jest.mocked(config.getAllDataSources),
   searchFolders: jest.mocked(searchFolders),
+  getDefaultQueriesAsync: jest.mocked(ruleForm.getDefaultQueriesAsync),
   api: {
     discoverFeatures: jest.mocked(discoverFeatures),
     fetchRulerRulesGroup: jest.mocked(fetchRulerRulesGroup),
@@ -79,7 +82,6 @@ describe('RuleEditor cloud', () => {
         { alerting: true }
       ),
     };
-
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     mocks.api.setRulerRuleGroup.mockResolvedValue();
@@ -109,6 +111,18 @@ describe('RuleEditor cloud', () => {
       features: {
         rulerApiEnabled: true,
       },
+    });
+
+    mocks.getDefaultQueriesAsync.mockResolvedValue({
+      queries: [
+        {
+          refId: 'A',
+          relativeTimeRange: { from: 900, to: 1000 },
+          datasourceUid: '',
+          model: { refId: 'A' },
+          queryType: 'query',
+        },
+      ],
     });
 
     renderRuleEditor();
