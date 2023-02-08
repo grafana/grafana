@@ -41,10 +41,6 @@ func init() {
 						Value: "actionCard",
 						Label: "ActionCard",
 					},
-					{
-						Value: "markdown",
-						Label: "Markdown",
-					},
 				},
 			},
 		},
