@@ -5,6 +5,8 @@ import { Draggable } from 'react-beautiful-dnd';
 import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Button, Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import { isConflictingFilter } from 'app/plugins/datasource/loki/querybuilder/operationUtils';
+import { LokiOperationId } from 'app/plugins/datasource/loki/querybuilder/types';
 
 import { OperationHeader } from './OperationHeader';
 import { getOperationParamEditor } from './OperationParamEditor';
@@ -23,6 +25,7 @@ export interface Props {
   query: any;
   datasource: DataSourceApi;
   queryModeller: VisualQueryModeller;
+  setShowConflictMessage: (isConflicting: boolean) => void;
   onChange: (index: number, update: QueryBuilderOperation) => void;
   onRemove: (index: number) => void;
   onRunQuery: () => void;
@@ -41,6 +44,7 @@ export function OperationEditor({
   datasource,
   flash,
   highlight,
+  setShowConflictMessage,
 }: Props) {
   const styles = useStyles2(getStyles);
   const def = queryModeller.getOperationDef(operation.id);
@@ -126,11 +130,22 @@ export function OperationEditor({
     }
   }
 
+  let isConflicting = false;
+  if (operation.id === LokiOperationId.LabelFilter) {
+    const res = isConflictingFilter(operation, query.labels);
+    isConflicting = res;
+    setShowConflictMessage(res);
+  }
+
   return (
     <Draggable draggableId={`operation-${index}`} index={index}>
       {(provided) => (
         <div
-          className={cx(styles.card, (shouldFlash || highlight) && styles.cardHighlight)}
+          className={cx(
+            styles.card,
+            (shouldFlash || highlight) && styles.cardHighlight,
+            isConflicting && styles.cardError
+          )}
           ref={provided.innerRef}
           {...provided.draggableProps}
           data-testid={`operations.${index}.wrapper`}
@@ -230,6 +245,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       marginBottom: theme.spacing(1),
       position: 'relative',
       transition: 'all 0.5s ease-in 0s',
+    }),
+    cardError: css({
+      boxShadow: `0px 0px 4px 0px ${theme.colors.error.main}`,
+      border: `1px solid ${theme.colors.error.main}`,
     }),
     cardHighlight: css({
       boxShadow: `0px 0px 4px 0px ${theme.colors.primary.border}`,
