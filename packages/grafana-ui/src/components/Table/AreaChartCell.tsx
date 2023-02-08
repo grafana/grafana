@@ -1,12 +1,44 @@
 import { isArray } from 'lodash';
 import React, { FC } from 'react';
 
-import { ArrayVector, FieldType, FieldConfig, getMinMaxAndDelta, FieldSparkline, isDataFrame } from '@grafana/data';
-import { GraphDrawStyle, GraphFieldConfig, GraphGradientMode, LineInterpolation } from '@grafana/schema';
+import {
+  ArrayVector,
+  FieldType,
+  FieldConfig,
+  getMinMaxAndDelta,
+  FieldSparkline,
+  isDataFrame,
+  Field,
+  Vector,
+} from '@grafana/data';
+import {
+  BarAlignment,
+  FieldColorModeId,
+  GraphDrawStyle,
+  GraphFieldConfig,
+  GraphGradientMode,
+  LineInterpolation,
+  TableAreaChartCellOptions,
+  TableCellBackgroundDisplayMode,
+  TableCellDisplayMode,
+  VisibilityMode,
+} from '@grafana/schema';
 
 import { Sparkline } from '../Sparkline/Sparkline';
 
 import { TableCellProps } from './types';
+import { getCellOptions } from './utils';
+
+export const defaultAreaChartCellConfig: GraphFieldConfig = {
+  drawStyle: GraphDrawStyle.Line,
+  lineInterpolation: LineInterpolation.Smooth,
+  lineWidth: 1,
+  fillOpacity: 17,
+  gradientMode: GraphGradientMode.Hue,
+  pointSize: 1,
+  barAlignment: BarAlignment.Center,
+  showPoints: VisibilityMode.Never,
+};
 
 export const AreaChartCell: FC<TableCellProps> = (props) => {
   const { field, innerWidth, tableStyles, cell, cellProps } = props;
@@ -16,7 +48,7 @@ export const AreaChartCell: FC<TableCellProps> = (props) => {
   if (!sparkline) {
     return (
       <div {...cellProps} className={tableStyles.cellContainer}>
-        Invalid value
+        no data
       </div>
     );
   }
@@ -26,14 +58,13 @@ export const AreaChartCell: FC<TableCellProps> = (props) => {
   sparkline.y.config.max = range.max;
   sparkline.y.state = { range };
 
+  const cellOptions = getTableAreaChartCellOptions(field);
+
   const config: FieldConfig<GraphFieldConfig> = {
-    color: field.config.color,
+    color: cellOptions.color ? { mode: FieldColorModeId.Fixed, fixedColor: cellOptions.color } : field.config.color,
     custom: {
-      drawStyle: GraphDrawStyle.Line,
-      lineInterpolation: LineInterpolation.Smooth,
-      lineWidth: 1,
-      fillOpacity: 17,
-      gradientMode: GraphGradientMode.Hue,
+      ...defaultAreaChartCellConfig,
+      ...cellOptions,
     },
   };
 
@@ -72,4 +103,12 @@ function getSparkline(value: unknown): FieldSparkline | undefined {
   }
 
   return;
+}
+
+function getTableAreaChartCellOptions(field: Field): TableAreaChartCellOptions {
+  const options = getCellOptions(field);
+  if (options.type === TableCellDisplayMode.AreaChart) {
+    return options;
+  }
+  throw new Error(`Excpected options type ${TableCellDisplayMode.AreaChart} but got ${options.type}`);
 }

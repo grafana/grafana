@@ -5,6 +5,7 @@ import { SelectableValue } from '@grafana/data';
 import { TableCellOptions } from '@grafana/schema';
 import { Field, Select, TableCellDisplayMode } from '@grafana/ui';
 
+import { AreaChartCellOptionsEditor } from './cells/AreaChartCellOptionsEditor';
 import { BarGaugeCellOptionsEditor } from './cells/BarGaugeCellOptionsEditor';
 import { ColorBackgroundCellOptionsEditor } from './cells/ColorBackgroundCellOptionsEditor';
 
@@ -64,12 +65,16 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
       {cellType === TableCellDisplayMode.ColorBackground && (
         <ColorBackgroundCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
       )}
+      {cellType === TableCellDisplayMode.AreaChart && (
+        <AreaChartCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
+      )}
     </>
   );
 };
 
 const cellDisplayModeOptions: Array<SelectableValue<TableCellOptions>> = [
   { value: { type: TableCellDisplayMode.Auto }, label: 'Auto' },
+  { value: { type: TableCellDisplayMode.AreaChart }, label: 'Area chart' },
   { value: { type: TableCellDisplayMode.ColorText }, label: 'Colored text' },
   { value: { type: TableCellDisplayMode.ColorBackground }, label: 'Colored background' },
   { value: { type: TableCellDisplayMode.Gauge }, label: 'Gauge' },

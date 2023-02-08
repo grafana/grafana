@@ -191,6 +191,7 @@ export class Sparkline extends PureComponent<SparklineProps, State> {
         pointSize: customConfig.pointSize,
         fillOpacity: customConfig.fillOpacity,
         fillColor: customConfig.fillColor,
+        lineStyle: customConfig.lineStyle,
         gradientMode: customConfig.gradientMode,
       });
     }
