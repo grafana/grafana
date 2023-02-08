@@ -167,6 +167,7 @@ export function PanelChrome({
               <PanelMenu
                 menu={menu}
                 title={title}
+                placement="bottom-end"
                 menuButtonClass={cx(styles.menuItem, dragClassCancel, 'show-on-hover')}
               />
             )}
