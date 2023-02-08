@@ -190,6 +190,12 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:         "newTraceView",
+			Description:  "Shows the new trace view design",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
 			Name:         "commandPalette",
 			Description:  "Enable command palette",
 			State:        FeatureStateStable,

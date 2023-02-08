@@ -139,6 +139,10 @@ const (
 	// Adds trace ID to error notifications
 	FlagTracing = "tracing"
 
+	// FlagNewTraceView
+	// Shows the new trace view design
+	FlagNewTraceView = "newTraceView"
+
 	// FlagCommandPalette
 	// Enable command palette
 	FlagCommandPalette = "commandPalette"

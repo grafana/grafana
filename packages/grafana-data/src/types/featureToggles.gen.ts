@@ -49,6 +49,7 @@ export interface FeatureToggles {
   export?: boolean;
   exploreMixedDatasource?: boolean;
   tracing?: boolean;
+  newTraceView?: boolean;
   commandPalette?: boolean;
   correlations?: boolean;
   cloudWatchDynamicLabels?: boolean;
