@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { PureComponent, ChangeEvent, FocusEvent } from 'react';
 
 import { rangeUtil, PanelData, DataSourceApi } from '@grafana/data';
-import { Switch, Input, InlineField, InlineFormLabel, stylesFactory } from '@grafana/ui';
+import { Switch, Input, InlineFormLabel, stylesFactory } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { config } from 'app/core/config';
 import { QueryGroupOptions } from 'app/types';
@@ -28,6 +28,7 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
     super(props);
 
     const { options } = props;
+    console.log({ options });
 
     this.state = {
       timeRangeFrom: options.timeRange?.from || '',
@@ -358,11 +359,21 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
         {this.renderQueryCachingTTLOption()}
 
         <div className="gf-form">
-          <InlineFormLabel width={9}>Relative time</InlineFormLabel>
+          <InlineFormLabel
+            width={9}
+            tooltip={
+              <>
+                Overrides the relative time range for individual panels, which causes them to be different than what is
+                selected in the dashboard time picker in the top-right corner of the dashboard.
+              </>
+            }
+          >
+            Relative time
+          </InlineFormLabel>
           <Input
             type="text"
             className="width-6"
-            placeholder="1h"
+            placeholder="No override"
             onChange={this.onRelativeTimeChange}
             onBlur={this.onOverrideTime}
             invalid={!relativeTimeIsValid}
@@ -371,11 +382,21 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
         </div>
 
         <div className="gf-form">
-          <span className="gf-form-label width-9">Time shift</span>
+          <InlineFormLabel
+            width={9}
+            tooltip={
+              <>
+                Overrides the time range for individual panels by shifting its start and end relative to the time
+                picker.
+              </>
+            }
+          >
+            Time shift
+          </InlineFormLabel>
           <Input
             type="text"
             className="width-6"
-            placeholder="1h"
+            placeholder="0h"
             onChange={this.onTimeShiftChange}
             onBlur={this.onTimeShift}
             invalid={!timeShiftIsValid}
@@ -383,10 +404,9 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
           />
         </div>
         {(timeShift || relativeTime) && (
-          <div className="gf-form-inline">
-            <InlineField label="Hide time info" labelWidth={18}>
-              <Switch value={hideTimeOverride} onChange={this.onToggleTimeOverride} />
-            </InlineField>
+          <div className="gf-form-inline align-items-center">
+            <InlineFormLabel width={9}>Hide time info</InlineFormLabel>
+            <Switch value={hideTimeOverride} onChange={this.onToggleTimeOverride} />
           </div>
         )}
       </QueryOperationRow>
