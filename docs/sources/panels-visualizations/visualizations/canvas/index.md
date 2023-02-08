@@ -76,7 +76,7 @@ The inline editing toggle enables you to lock or unlock the canvas panel. When t
 
 {{< video-embed src="/static/img/docs/canvas-panel/canvas-inline-editing-toggle-9-2-0.mp4" max-width="750px" caption="Inline editing toggle demo" >}}
 
-### Data Links
+### Data links
 
 Canvas supports [data links](https://grafana.com/docs/grafana/latest/panels-visualizations/configure-data-links/). Once you've added a data link to the panel, you can display it by following these steps:
 
