@@ -365,17 +365,14 @@ func (md mdSection) write(w io.Writer) {
 func (s *schema) Markdown() string {
 	buf := new(bytes.Buffer)
 
-	var sections []mdSection
-	s.toSections(&sections)
-
-	for _, v := range sections {
+	for _, v := range s.sections() {
 		v.write(buf)
 	}
 
 	return buf.String()
 }
 
-func (s *schema) toSections(sections *[]mdSection) {
+func (s *schema) sections() []mdSection {
 	md := mdSection{}
 
 	if s.AdditionalProperties == nil {
@@ -388,21 +385,20 @@ func (s *schema) toSections(sections *[]mdSection) {
 	}
 	md.rows = makeRows(s)
 
-	if !contains(sections, md) {
-		*sections = append(*sections, md)
+	sections := []mdSection{md}
+	for _, sch := range findDefinitions(s) {
+		for _, ss := range sch.sections() {
+			if !contains(sections, ss) {
+				sections = append(sections, ss)
+			}
+		}
 	}
 
-	for _, sch := range findDefinitions(s) {
-		sch.toSections(sections)
-	}
+	return sections
 }
 
-func contains(sl *[]mdSection, elem mdSection) bool {
-	if sl == nil {
-		return false
-	}
-
-	for _, s := range *sl {
+func contains(sl []mdSection, elem mdSection) bool {
+	for _, s := range sl {
 		if reflect.DeepEqual(s, elem) {
 			return true
 		}
