@@ -1,14 +1,14 @@
 import React from 'react';
 
 import { DataFrame, DataTransformerID, getFrameDisplayName, SelectableValue } from '@grafana/data';
-import { Field, HorizontalGroup, Select, Switch, VerticalGroup } from '@grafana/ui';
+import { Field, HorizontalGroup, Select, Switch, VerticalGroup, useStyles2 } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { t } from 'app/core/internationalization';
 import { PanelModel } from 'app/features/dashboard/state';
 import { DetailText } from 'app/features/inspector/DetailText';
 import { GetDataOptions } from 'app/features/query/state/PanelQueryRunner';
 
-import { getPanelInspectorStyles } from './styles';
+import { getPanelInspectorStyles2 } from './styles';
 
 interface Props {
   options: GetDataOptions;
@@ -37,7 +37,7 @@ export const InspectDataOptions = ({
   downloadForExcel,
   toggleDownloadForExcel,
 }: Props) => {
-  const styles = getPanelInspectorStyles();
+  const styles = useStyles2(getPanelInspectorStyles2);
 
   const panelTransformations = panel?.getTransformations();
   const showPanelTransformationsOption =

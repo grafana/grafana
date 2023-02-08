@@ -35,7 +35,7 @@ export const BasicAuthSettings: React.FC<HttpSettingsProps> = ({ dataSourceConfi
 
   return (
     <>
-      <InlineField>
+      <InlineField disabled={dataSourceConfig.readOnly}>
         <FormField
           label="User"
           labelWidth={10}
@@ -45,7 +45,7 @@ export const BasicAuthSettings: React.FC<HttpSettingsProps> = ({ dataSourceConfi
           onChange={(event) => onChange({ ...dataSourceConfig, basicAuthUser: event.currentTarget.value })}
         />
       </InlineField>
-      <InlineField>
+      <InlineField disabled={dataSourceConfig.readOnly}>
         <SecretFormField
           isConfigured={!!(dataSourceConfig.secureJsonFields && dataSourceConfig.secureJsonFields.basicAuthPassword)}
           value={password || ''}

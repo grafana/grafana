@@ -12,7 +12,7 @@ keywords:
   - alerts
   - groups
 title: View and filter by alert groups
-weight: 455
+weight: 800
 ---
 
 # View and filter by alert groups

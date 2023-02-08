@@ -44,7 +44,6 @@ export interface DashboardMeta {
   publicDashboardAccessToken?: string;
   publicDashboardUid?: string;
   publicDashboardEnabled?: boolean;
-  hasPublicDashboard?: boolean;
   dashboardNotFound?: boolean;
 }
 
@@ -85,7 +84,7 @@ export enum DashboardInitPhase {
 
 export interface DashboardInitError {
   message: string;
-  error: any;
+  error: unknown;
 }
 
 export enum KioskMode {

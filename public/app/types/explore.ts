@@ -9,12 +9,12 @@ import {
   HistoryItem,
   LogsModel,
   PanelData,
-  QueryHint,
   RawTimeRange,
   TimeRange,
   EventBusExtended,
   DataQueryResponse,
   ExplorePanelsState,
+  SupplementaryQueryType,
 } from '@grafana/data';
 import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistoryTypes';
 
@@ -204,12 +204,10 @@ export interface ExploreItemState {
    */
   cache: Array<{ key: string; value: ExplorePanelData }>;
 
-  // properties below should be more generic if we add more providers
-  // see also: DataSourceWithLogsVolumeSupport
-  logsVolumeEnabled: boolean;
-  logsVolumeDataProvider?: Observable<DataQueryResponse>;
-  logsVolumeDataSubscription?: SubscriptionLike;
-  logsVolumeData?: DataQueryResponse;
+  /**
+   * Supplementary queries are additional queries used in Explore, e.g. for logs volume
+   */
+  supplementaryQueries: SupplementaryQueries;
 
   panelsState: ExplorePanelsState;
 
@@ -232,11 +230,8 @@ export interface QueryOptions {
 export interface QueryTransaction {
   id: string;
   done: boolean;
-  error?: string | JSX.Element;
-  hints?: QueryHint[];
   request: DataQueryRequest;
   queries: DataQuery[];
-  result?: any; // Table model / Timeseries[] / Logs
   scanning?: boolean;
 }
 
@@ -270,3 +265,14 @@ export enum TABLE_RESULTS_STYLE {
 }
 export const TABLE_RESULTS_STYLES = [TABLE_RESULTS_STYLE.table, TABLE_RESULTS_STYLE.raw];
 export type TableResultsStyle = typeof TABLE_RESULTS_STYLES[number];
+
+export interface SupplementaryQuery {
+  enabled: boolean;
+  dataProvider?: Observable<DataQueryResponse>;
+  dataSubscription?: SubscriptionLike;
+  data?: DataQueryResponse;
+}
+
+export type SupplementaryQueries = {
+  [key in SupplementaryQueryType]: SupplementaryQuery;
+};

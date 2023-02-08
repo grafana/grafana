@@ -50,7 +50,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: theme.spacing(1, 1, 1, 0),
     width: '25%',
     '&:first-of-type': {
-      width: '50%',
+      width: '80%',
       padding: theme.spacing(1, 1, 1, 2),
     },
   }),

@@ -2,6 +2,7 @@ package userimpl
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -9,11 +10,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -35,6 +36,7 @@ func ProvideService(
 	teamService team.Service,
 	cacheService *localcache.CacheService,
 	quotaService quota.Service,
+	bundleRegistry supportbundles.Service,
 ) (user.Service, error) {
 	store := ProvideStore(db, cfg)
 	s := &Service{
@@ -57,6 +59,8 @@ func ProvideService(
 	}); err != nil {
 		return s, err
 	}
+
+	bundleRegistry.RegisterSupportItemCollector(s.supportBundleCollector())
 	return s, nil
 }
 
@@ -271,19 +275,19 @@ func (s *Service) GetSignedInUser(ctx context.Context, query *user.GetSignedInUs
 			},
 		},
 	}
-	getTeamsByUserQuery := &models.GetTeamsByUserQuery{
-		OrgId:        signedInUser.OrgID,
-		UserId:       signedInUser.UserID,
+	getTeamsByUserQuery := &team.GetTeamsByUserQuery{
+		OrgID:        signedInUser.OrgID,
+		UserID:       signedInUser.UserID,
 		SignedInUser: tempUser,
 	}
-	err = s.teamService.GetTeamsByUser(ctx, getTeamsByUserQuery)
+	getTeamsByUserQueryResult, err := s.teamService.GetTeamsByUser(ctx, getTeamsByUserQuery)
 	if err != nil {
 		return nil, err
 	}
 
-	signedInUser.Teams = make([]int64, len(getTeamsByUserQuery.Result))
-	for i, t := range getTeamsByUserQuery.Result {
-		signedInUser.Teams[i] = t.Id
+	signedInUser.Teams = make([]int64, len(getTeamsByUserQueryResult))
+	for i, t := range getTeamsByUserQueryResult {
+		signedInUser.Teams[i] = t.ID
 	}
 	return signedInUser, err
 }
@@ -547,4 +551,46 @@ func (s *Service) CreateServiceAccount(ctx context.Context, cmd *user.CreateUser
 		}
 	}
 	return usr, nil
+}
+
+func (s *Service) supportBundleCollector() supportbundles.Collector {
+	collectorFn := func(ctx context.Context) (*supportbundles.SupportItem, error) {
+		query := &user.SearchUsersQuery{
+			SignedInUser: &user.SignedInUser{
+				Login:            "sa-supportbundle",
+				OrgRole:          "Admin",
+				IsGrafanaAdmin:   true,
+				IsServiceAccount: true},
+			OrgID:      0,
+			Query:      "",
+			Page:       0,
+			Limit:      0,
+			AuthModule: "",
+			Filters:    []user.Filter{},
+			IsDisabled: new(bool),
+		}
+		res, err := s.Search(ctx, query)
+		if err != nil {
+			return nil, err
+		}
+
+		userBytes, err := json.Marshal(res.Users)
+		if err != nil {
+			return nil, err
+		}
+
+		return &supportbundles.SupportItem{
+			Filename:  "users.json",
+			FileBytes: userBytes,
+		}, nil
+	}
+
+	return supportbundles.Collector{
+		UID:               "users",
+		DisplayName:       "User information",
+		Description:       "List users belonging to the Grafana instance",
+		IncludedByDefault: false,
+		Default:           false,
+		Fn:                collectorFn,
+	}
 }

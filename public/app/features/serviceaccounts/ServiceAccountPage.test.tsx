@@ -1,11 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { Provider } from 'react-redux';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { ApiKey, OrgRole, ServiceAccountDTO } from 'app/types';
-
-import { configureStore } from '../../store/configureStore';
 
 import { ServiceAccountPageUnconnected, Props } from './ServiceAccountPage';
 
@@ -19,7 +17,6 @@ jest.mock('app/core/core', () => ({
 }));
 
 const setup = (propOverrides: Partial<Props>) => {
-  const store = configureStore();
   const createServiceAccountTokenMock = jest.fn();
   const deleteServiceAccountMock = jest.fn();
   const deleteServiceAccountTokenMock = jest.fn();
@@ -54,9 +51,9 @@ const setup = (propOverrides: Partial<Props>) => {
   Object.assign(props, propOverrides);
 
   const { rerender } = render(
-    <Provider store={store}>
+    <TestProvider>
       <ServiceAccountPageUnconnected {...props} />
-    </Provider>
+    </TestProvider>
   );
   return {
     rerender,

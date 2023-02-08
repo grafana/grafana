@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/events"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
@@ -110,9 +109,9 @@ func (ss *SQLStore) createUser(ctx context.Context, sess *DBSession, args user.C
 		Email:     usr.Email,
 	})
 
-	orgUser := models.OrgUser{
-		OrgId:   orgID,
-		UserId:  usr.ID,
+	orgUser := org.OrgUser{
+		OrgID:   orgID,
+		UserID:  usr.ID,
 		Role:    org.RoleAdmin,
 		Created: time.Now(),
 		Updated: time.Now(),

@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { useId } from '@react-aria/utils';
 import React, { MouseEventHandler } from 'react';
 import { DraggableProvidedDragHandleProps } from 'react-beautiful-dnd';
 
@@ -14,7 +15,7 @@ interface QueryOperationRowHeaderProps {
   isContentVisible: boolean;
   onRowToggle: () => void;
   reportDragMousePosition: MouseEventHandler<HTMLDivElement>;
-  titleElement?: React.ReactNode;
+  title?: string;
   id: string;
 }
 
@@ -27,10 +28,11 @@ export const QueryOperationRowHeader: React.FC<QueryOperationRowHeaderProps> = (
   isContentVisible,
   onRowToggle,
   reportDragMousePosition,
-  titleElement,
+  title,
   id,
 }: QueryOperationRowHeaderProps) => {
   const styles = useStyles2(getStyles);
+  const titleId = useId();
 
   return (
     <div className={styles.header}>
@@ -44,10 +46,13 @@ export const QueryOperationRowHeader: React.FC<QueryOperationRowHeaderProps> = (
           type="button"
           aria-expanded={isContentVisible}
           aria-controls={id}
+          aria-labelledby={titleId}
         />
-        {titleElement && (
-          <div className={styles.titleWrapper} onClick={onRowToggle} aria-label="Query operation row title">
-            <div className={cx(styles.title, disabled && styles.disabled)}>{titleElement}</div>
+        {title && (
+          <div className={styles.titleWrapper}>
+            <div id={titleId} className={cx(styles.title, disabled && styles.disabled)}>
+              {title}
+            </div>
           </div>
         )}
         {headerElement}
@@ -109,13 +114,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     align-items: center;
     flex-grow: 1;
-    cursor: pointer;
     overflow: hidden;
     margin-right: ${theme.spacing(0.5)};
   `,
   title: css`
     font-weight: ${theme.typography.fontWeightBold};
-    color: ${theme.colors.text.link};
     margin-left: ${theme.spacing(0.5)};
     overflow: hidden;
     text-overflow: ellipsis;

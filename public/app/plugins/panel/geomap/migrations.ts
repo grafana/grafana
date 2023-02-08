@@ -6,7 +6,7 @@ import { ResourceDimensionMode } from 'app/features/dimensions';
 import { MarkersConfig } from './layers/data/markersLayer';
 import { getMarkerAsPath } from './style/markers';
 import { defaultStyleConfig } from './style/types';
-import { GeomapPanelOptions, TooltipMode } from './types';
+import { PanelOptions, TooltipMode } from './types';
 import { MapCenterID } from './view';
 
 /**
@@ -26,13 +26,13 @@ export const mapPanelChangedHandler: PanelTypeChangedHandler = (panel, prevPlugi
   return {};
 };
 
-export function worldmapToGeomapOptions(angular: any): { fieldConfig: FieldConfigSource; options: GeomapPanelOptions } {
+export function worldmapToGeomapOptions(angular: any): { fieldConfig: FieldConfigSource; options: PanelOptions } {
   const fieldConfig: FieldConfigSource = {
     defaults: {},
     overrides: [],
   };
 
-  const options: GeomapPanelOptions = {
+  const options: PanelOptions = {
     view: {
       id: MapCenterID.Zero,
     },
@@ -107,7 +107,7 @@ function asNumber(v: any): number | undefined {
   return isNaN(num) ? undefined : num;
 }
 
-export const mapMigrationHandler = (panel: PanelModel): Partial<GeomapPanelOptions> => {
+export const mapMigrationHandler = (panel: PanelModel): Partial<PanelOptions> => {
   const pluginVersion = panel?.pluginVersion ?? '';
 
   // before 8.3, only one layer was supported!

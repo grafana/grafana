@@ -12,8 +12,9 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/org"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -31,7 +32,7 @@ import (
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) GetPendingOrgInvites(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetPendingOrgInvites(c *contextmodel.ReqContext) response.Response {
 	query := tempuser.GetTempUsersQuery{OrgID: c.OrgID, Status: tempuser.TmpUserInvitePending}
 
 	queryResult, err := hs.tempUserService.GetTempUsersQuery(c.Req.Context(), &query)
@@ -57,7 +58,7 @@ func (hs *HTTPServer) GetPendingOrgInvites(c *models.ReqContext) response.Respon
 // 403: forbiddenError
 // 412: SMTPNotEnabledError
 // 500: internalServerError
-func (hs *HTTPServer) AddOrgInvite(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) AddOrgInvite(c *contextmodel.ReqContext) response.Response {
 	inviteDto := dtos.AddInviteForm{}
 	if err := web.Bind(c.Req, &inviteDto); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -113,7 +114,7 @@ func (hs *HTTPServer) AddOrgInvite(c *models.ReqContext) response.Response {
 
 	// send invite email
 	if inviteDto.SendEmail && util.IsEmail(inviteDto.LoginOrEmail) {
-		emailCmd := models.SendEmailCommand{
+		emailCmd := notifications.SendEmailCommand{
 			To:       []string{inviteDto.LoginOrEmail},
 			Template: "new_user_invite",
 			Data: map[string]interface{}{
@@ -126,7 +127,7 @@ func (hs *HTTPServer) AddOrgInvite(c *models.ReqContext) response.Response {
 		}
 
 		if err := hs.AlertNG.NotificationService.SendEmailCommandHandler(c.Req.Context(), &emailCmd); err != nil {
-			if errors.Is(err, models.ErrSmtpNotEnabled) {
+			if errors.Is(err, notifications.ErrSmtpNotEnabled) {
 				return response.Error(412, err.Error(), err)
 			}
 
@@ -144,18 +145,18 @@ func (hs *HTTPServer) AddOrgInvite(c *models.ReqContext) response.Response {
 	return response.Success(fmt.Sprintf("Created invite for %s", inviteDto.LoginOrEmail))
 }
 
-func (hs *HTTPServer) inviteExistingUserToOrg(c *models.ReqContext, user *user.User, inviteDto *dtos.AddInviteForm) response.Response {
+func (hs *HTTPServer) inviteExistingUserToOrg(c *contextmodel.ReqContext, user *user.User, inviteDto *dtos.AddInviteForm) response.Response {
 	// user exists, add org role
 	createOrgUserCmd := org.AddOrgUserCommand{OrgID: c.OrgID, UserID: user.ID, Role: inviteDto.Role}
 	if err := hs.orgService.AddOrgUser(c.Req.Context(), &createOrgUserCmd); err != nil {
-		if errors.Is(err, models.ErrOrgUserAlreadyAdded) {
+		if errors.Is(err, org.ErrOrgUserAlreadyAdded) {
 			return response.Error(412, fmt.Sprintf("User %s is already added to organization", inviteDto.LoginOrEmail), err)
 		}
 		return response.Error(500, "Error while trying to create org user", err)
 	}
 
 	if inviteDto.SendEmail && util.IsEmail(user.Email) {
-		emailCmd := models.SendEmailCommand{
+		emailCmd := notifications.SendEmailCommand{
 			To:       []string{user.Email},
 			Template: "invited_to_org",
 			Data: map[string]interface{}{
@@ -186,7 +187,7 @@ func (hs *HTTPServer) inviteExistingUserToOrg(c *models.ReqContext, user *user.U
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) RevokeInvite(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) RevokeInvite(c *contextmodel.ReqContext) response.Response {
 	if ok, rsp := hs.updateTempUserStatus(c.Req.Context(), web.Params(c.Req)[":code"], tempuser.TmpUserRevoked); !ok {
 		return rsp
 	}
@@ -197,7 +198,7 @@ func (hs *HTTPServer) RevokeInvite(c *models.ReqContext) response.Response {
 // GetInviteInfoByCode gets a pending user invite corresponding to a certain code.
 // A response containing an InviteInfo object is returned if the invite is found.
 // If a (pending) invite is not found, 404 is returned.
-func (hs *HTTPServer) GetInviteInfoByCode(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetInviteInfoByCode(c *contextmodel.ReqContext) response.Response {
 	query := tempuser.GetTempUserByCodeQuery{Code: web.Params(c.Req)[":code"]}
 	queryResult, err := hs.tempUserService.GetTempUserByCode(c.Req.Context(), &query)
 	if err != nil {
@@ -220,7 +221,7 @@ func (hs *HTTPServer) GetInviteInfoByCode(c *models.ReqContext) response.Respons
 	})
 }
 
-func (hs *HTTPServer) CompleteInvite(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) CompleteInvite(c *contextmodel.ReqContext) response.Response {
 	completeInvite := dtos.CompleteInviteForm{}
 	var err error
 	if err = web.Bind(c.Req, &completeInvite); err != nil {
@@ -312,7 +313,7 @@ func (hs *HTTPServer) applyUserInvite(ctx context.Context, usr *user.User, invit
 	// add to org
 	addOrgUserCmd := org.AddOrgUserCommand{OrgID: invite.OrgID, UserID: usr.ID, Role: invite.Role}
 	if err := hs.orgService.AddOrgUser(ctx, &addOrgUserCmd); err != nil {
-		if !errors.Is(err, models.ErrOrgUserAlreadyAdded) {
+		if !errors.Is(err, org.ErrOrgUserAlreadyAdded) {
 			return false, response.Error(500, "Error while trying to create org user", err)
 		}
 	}

@@ -4,7 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { AppEvents, GrafanaTheme2, LoadingState, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import {
   Button,
   Field,
@@ -20,6 +20,7 @@ import {
   withTheme2,
   DropzoneFile,
   FileDropzoneDefaultChildren,
+  LinkButton,
 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
@@ -172,9 +173,14 @@ class UnthemedDashboardImport extends PureComponent<Props> {
                     rows={10}
                   />
                 </Field>
-                <Button type="submit" data-testid={selectors.components.DashboardImportPage.submit}>
-                  Load
-                </Button>
+                <HorizontalGroup>
+                  <Button type="submit" data-testid={selectors.components.DashboardImportPage.submit}>
+                    Load
+                  </Button>
+                  <LinkButton variant="secondary" href={`${config.appSubUrl}/dashboards`}>
+                    Cancel
+                  </LinkButton>
+                </HorizontalGroup>
               </>
             )}
           </Form>
