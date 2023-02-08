@@ -87,7 +87,5 @@ func (a *AnonSessionService) TagSession(ctx context.Context, httpReq *http.Reque
 		return err
 	}
 
-	a.remoteCache.Set(ctx, key, key, thirtyDays)
-
-	return nil
+	return a.remoteCache.Set(ctx, key, key, thirtyDays)
 }
