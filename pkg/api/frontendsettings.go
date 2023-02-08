@@ -402,11 +402,12 @@ func newAppDTO(plugin plugins.PluginDTO, settings pluginsettings.InfoDTO) *plugi
 		ID:      plugin.ID,
 		Version: plugin.Info.Version,
 		Path:    plugin.Module,
-		Preload: plugin.Preload,
+		Preload: false,
 	}
 
 	if settings.Enabled {
 		app.Extensions = plugin.Extensions
+		app.Preload = plugin.Preload
 	}
 
 	return app
