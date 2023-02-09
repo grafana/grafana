@@ -401,19 +401,24 @@ function combineFrames(dest: DataQueryResponseData, source: DataQueryResponseDat
     dest.fields[i].values.buffer = [].concat.apply([], [source.fields[i].values.buffer, dest.fields[i].values.buffer]);
   }
   dest.length += source.length;
-  combineMetadata(dest.meta, source.meta);
+  combineMetadata(dest, source);
 }
 
-function combineMetadata(dest: QueryResultMeta, source: QueryResultMeta) {
-  if (!source.stats) {
+function combineMetadata(dest: DataQueryResponseData = {}, source: DataQueryResponseData = {}) {
+  if (!source.meta?.stats) {
     return;
   }
-  if (!dest.stats) {
-    dest.stats = source.stats;
+  if (!dest.meta?.stats) {
+    if (!dest.meta) {
+      dest.meta = {};
+    }
+    Object.assign(dest.meta, { stats: source.meta.stats });
     return;
   }
-  dest.stats.forEach((destStat: QueryResultMetaStat, i: number) => {
-    const sourceStat = source.stats?.find((sourceStat) => destStat.displayName === sourceStat.displayName);
+  dest.meta.stats.forEach((destStat: QueryResultMetaStat, i: number) => {
+    const sourceStat = source.meta.stats?.find(
+      (sourceStat: QueryResultMetaStat) => destStat.displayName === sourceStat.displayName
+    );
     if (sourceStat) {
       destStat.value += sourceStat.value;
     }
