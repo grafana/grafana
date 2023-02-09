@@ -12,32 +12,28 @@ export enum DashboardSearchItemType {
 
 /**
  * @deprecated Use DashboardSearchItem and use UIDs instead of IDs
+ * This type was previously also used heavily for views, so contains lots of
+ * extraneous properties
  */
 export interface DashboardSearchHit extends WithAccessControlMetadata {
-  expanded?: boolean;
-  score?: number;
-  slug?: string;
-  itemsFetching?: boolean;
-
-  checked?: boolean;
   folderId?: number;
   folderTitle?: string;
   folderUid?: string;
   folderUrl?: string;
   id?: number;
-  isStarred: boolean;
-  selected?: boolean;
   tags: string[];
   title: string;
   type: DashboardSearchItemType;
-  icon?: string;
   uid?: string;
-  uri: string;
   url: string;
   sortMeta?: number;
   sortMetaName?: string;
 }
 
+/**
+ * DTO type for search API result items
+ * This should not be used directly - use GrafanaSearcher instead and get a DashboardQueryResult
+ */
 export interface DashboardSearchItem {
   uid: string;
   title: string;
