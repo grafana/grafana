@@ -5,11 +5,8 @@ import {
   DataQueryRequest,
   DataQueryResponse,
   DataQueryResponseData,
-  dateTime,
-  DurationUnit,
   QueryResultMeta,
   QueryResultMetaStat,
-  TimeRange,
 } from '@grafana/data';
 import {
   parser,
@@ -319,37 +316,6 @@ export function getStreamSelectorsFromQuery(query: string): string[] {
   });
 
   return labelMatchers;
-}
-
-const PARTITION_LIMIT = 60;
-export function partitionTimeRange(range: TimeRange, timeShift = 1, unit: DurationUnit = 'm'): TimeRange[] {
-  const partition: TimeRange[] = [];
-  for (let from = dateTime(range.from), to = dateTime(from).add(timeShift, unit); to <= range.to && from < range.to; ) {
-    partition.push({
-      from,
-      to,
-      raw: { from, to },
-    });
-
-    /**
-     * The user can request for any arbitrary time range. If we receive one from too
-     * long ago, this will cause an extremely large loop which could break the app.
-     * Additionally, data retention is limited, so ranges that go above PARTIION_LIMIT
-     * will be ignored.
-     */
-    if (partition.length > PARTITION_LIMIT) {
-      return [range];
-    }
-
-    from = dateTime(to);
-    to = dateTime(to).add(timeShift, unit);
-
-    if (to > range.to) {
-      to = range.to;
-    }
-  }
-
-  return partition;
 }
 
 export function requestSupportsPartitioning(queries: LokiQuery[]) {

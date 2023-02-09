@@ -1,16 +1,56 @@
 import { Subscriber, map, Observable } from 'rxjs';
 
-import { DataQueryRequest, DataQueryResponse } from '@grafana/data';
+import { DataQueryRequest, DataQueryResponse, dateTime, TimeRange } from '@grafana/data';
 import { LoadingState } from '@grafana/schema';
 
 import { LokiDatasource } from './datasource';
-import { partitionTimeRange, combineResponses, resultLimitReached } from './queryUtils';
+import { getRanges } from './metricTimeSplit';
+import { combineResponses, resultLimitReached } from './queryUtils';
 import { LokiQuery } from './types';
 
-export function runPartitionedQuery(datasource: LokiDatasource, request: DataQueryRequest<LokiQuery>) {
-  const partition = partitionTimeRange(request.range);
+function partitionTimeRange(originalTimeRange: TimeRange, intervalMs: number, resolution: number): TimeRange[] {
+  // we currently assume we are only running metric queries here.
+  // for logs-queries we will have to use a different time-range-split algorithm.
 
+  // the `step` value that will be finally sent to Loki is rougly the same as `intervalMs`,
+  // but there are some complications.
+  // we need to replicate this algo:
+  //
+  // https://github.com/grafana/grafana/blob/main/pkg/tsdb/loki/step.go#L23
+
+  const start = originalTimeRange.from.toDate().getTime();
+  const end = originalTimeRange.to.toDate().getTime();
+
+  const safeStep = Math.ceil((end - start) / 11000);
+  const step = Math.max(intervalMs * resolution, safeStep);
+
+  const ranges = getRanges(
+    start,
+    end,
+    step,
+    60 * 1000 // we go with a hardcoded 1minute for now
+  );
+
+  // if the split was not possible, go with the original range
+  if (ranges == null) {
+    return [originalTimeRange];
+  }
+
+  return ranges.map(([start, end]) => {
+    const from = dateTime(start);
+    const to = dateTime(end);
+    return {
+      from,
+      to,
+      raw: { from, to },
+    };
+  });
+}
+
+export function runPartitionedQuery(datasource: LokiDatasource, request: DataQueryRequest<LokiQuery>) {
   let mergedResponse: DataQueryResponse | null;
+  // FIXME: the following line assumes every query has the same resolution
+  const partition = partitionTimeRange(request.range, request.intervalMs, request.targets[0].resolution ?? 1);
   const totalRequests = partition.length;
 
   const next = (subscriber: Subscriber<DataQueryResponse>, requestN: number) => {
