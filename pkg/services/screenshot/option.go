@@ -17,6 +17,7 @@ var (
 
 // ScreenshotOptions are the options for taking a screenshot.
 type ScreenshotOptions struct {
+	OrgID        int64
 	DashboardUID string
 	PanelID      int64
 	Width        int
@@ -46,6 +47,7 @@ func (s ScreenshotOptions) SetDefaults() ScreenshotOptions {
 
 func (s ScreenshotOptions) Hash() []byte {
 	h := fnv.New64()
+	_, _ = h.Write([]byte(strconv.FormatInt(s.OrgID, 10)))
 	_, _ = h.Write([]byte(s.DashboardUID))
 	_, _ = h.Write([]byte(strconv.FormatInt(s.PanelID, 10)))
 	_, _ = h.Write([]byte(strconv.FormatInt(int64(s.Width), 10)))
