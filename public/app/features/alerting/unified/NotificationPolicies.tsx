@@ -270,7 +270,7 @@ const AmRoutes = () => {
                       onChangeReceiver={setContactPointFilter}
                     />
                   )}
-                  {rootRoute && haveData && (
+                  {rootRoute && (
                     <Policy
                       receivers={receivers}
                       routeTree={rootRoute}

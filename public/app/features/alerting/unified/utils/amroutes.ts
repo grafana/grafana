@@ -88,6 +88,10 @@ export const emptyRoute: FormAmRoute = {
   muteTimeIntervals: [],
 };
 
+/**
+ * We need to deal with multiple (deprecated) properties such as "match" and "match_re"
+ * this function will normalize all of the different ways to define matchers in to a single one.
+ */
 export const normalizeMatchers = (route: Route): ObjectMatcher[] => {
   const matchers: ObjectMatcher[] = [];
 
