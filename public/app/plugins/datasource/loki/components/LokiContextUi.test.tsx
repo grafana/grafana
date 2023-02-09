@@ -15,6 +15,15 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('LokiContextUi', () => {
+  const savedGlobal = global;
+  beforeAll(() => {
+    if (typeof structuredClone !== 'undefined') {
+      (global as any).structuredClone = structuredClone;
+    }
+  });
+  afterAll(() => {
+    global = savedGlobal;
+  });
   const setupProps = (): LokiContextUiProps => {
     const mockLanguageProvider = {
       start: jest.fn().mockImplementation(() => Promise.resolve()),
