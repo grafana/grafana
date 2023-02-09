@@ -238,7 +238,7 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 		fieldName := "fieldName"
 		configType := correlations.ConfigTypeQuery
 		transformation := correlations.Transformation{Type: "logfmt"}
-		transformation2 := correlations.Transformation{Type: "regex", Expression: "testExpression", Variable: "testVar"}
+		transformation2 := correlations.Transformation{Type: "regex", Expression: "testExpression", MapValue: "testVar"}
 		res := ctx.Post(PostParams{
 			url: fmt.Sprintf("/api/datasources/uid/%s/correlations", writableDs),
 			body: fmt.Sprintf(`{
@@ -251,7 +251,7 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 						"target": { "expr": "foo" },
 						"transformations": [
 							{"type": "logfmt"},
-							{"type": "regex", "expression": "testExpression", "variable": "testVar"}
+							{"type": "regex", "expression": "testExpression", "mapValue": "testVar"}
 						]
 					}
 				}`, writableDs, description, label, configType, fieldName),
