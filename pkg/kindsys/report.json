@@ -187,6 +187,7 @@
     "barchartpanelcfg": {
       "category": "composable",
       "codeowners": [
+        "grafana/dataviz-squad",
         "grafana/grafana-bi-squad"
       ],
       "currentVersion": [
@@ -211,7 +212,7 @@
     "bargaugepanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/user-essentials"
+        "grafana/dataviz-squad"
       ],
       "currentVersion": [
         0,
@@ -281,8 +282,8 @@
     "dashboard": {
       "category": "core",
       "codeowners": [
+        "grafana/dataviz-squad",
         "grafana/grafana-as-code",
-        "grafana/grafana-bi-squad",
         "grafana/plugins-platform-frontend",
         "grafana/user-essentials"
       ],
@@ -525,7 +526,7 @@
     "gaugepanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/user-essentials"
+        "grafana/dataviz-squad"
       ],
       "currentVersion": [
         0,
@@ -549,7 +550,7 @@
     "geomappanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/grafana-edge-squad"
+        "grafana/dataviz-squad"
       ],
       "currentVersion": [
         0,
@@ -749,7 +750,7 @@
     "histogrampanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/grafana-bi-squad"
+        "grafana/dataviz-squad"
       ],
       "currentVersion": [
         0,
@@ -839,8 +840,8 @@
     "librarypanel": {
       "category": "core",
       "codeowners": [
+        "grafana/dataviz-squad",
         "grafana/grafana-as-code",
-        "grafana/grafana-bi-squad",
         "grafana/plugins-platform-frontend",
         "grafana/user-essentials"
       ],
@@ -1189,7 +1190,7 @@
     "piechartpanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/grafana-bi-squad"
+        "grafana/dataviz-squad"
       ],
       "currentVersion": [
         0,
@@ -1213,8 +1214,8 @@
     "playlist": {
       "category": "core",
       "codeowners": [
+        "grafana/dataviz-squad",
         "grafana/grafana-as-code",
-        "grafana/grafana-bi-squad",
         "grafana/plugins-platform-frontend",
         "grafana/user-essentials"
       ],
@@ -1289,8 +1290,8 @@
     "preferences": {
       "category": "core",
       "codeowners": [
+        "grafana/dataviz-squad",
         "grafana/grafana-as-code",
-        "grafana/grafana-bi-squad",
         "grafana/plugins-platform-frontend",
         "grafana/user-essentials"
       ],
@@ -1365,8 +1366,8 @@
     "publicdashboard": {
       "category": "core",
       "codeowners": [
+        "grafana/dataviz-squad",
         "grafana/grafana-as-code",
-        "grafana/grafana-bi-squad",
         "grafana/plugins-platform-frontend",
         "grafana/user-essentials"
       ],
@@ -1449,8 +1450,8 @@
     "serviceaccount": {
       "category": "core",
       "codeowners": [
+        "grafana/dataviz-squad",
         "grafana/grafana-as-code",
-        "grafana/grafana-bi-squad",
         "grafana/plugins-platform-frontend",
         "grafana/user-essentials"
       ],
@@ -1481,7 +1482,7 @@
     "statetimelinepanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/grafana-bi-squad"
+        "grafana/dataviz-squad"
       ],
       "currentVersion": [
         0,
@@ -1505,7 +1506,7 @@
     "statpanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/user-essentials"
+        "grafana/dataviz-squad"
       ],
       "currentVersion": [
         0,
@@ -1529,7 +1530,7 @@
     "statushistorypanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/grafana-bi-squad"
+        "grafana/dataviz-squad"
       ],
       "currentVersion": [
         0,
@@ -1575,8 +1576,8 @@
     "team": {
       "category": "core",
       "codeowners": [
+        "grafana/dataviz-squad",
         "grafana/grafana-as-code",
-        "grafana/grafana-bi-squad",
         "grafana/plugins-platform-frontend",
         "grafana/user-essentials"
       ],
@@ -1819,7 +1820,7 @@
     "xychartpanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/grafana-bi-squad"
+        "grafana/dataviz-squad"
       ],
       "currentVersion": [
         0,
