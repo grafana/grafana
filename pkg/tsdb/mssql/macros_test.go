@@ -349,6 +349,20 @@ func TestMacroEngine(t *testing.T) {
 				require.NotNil(t, err)
 			}
 		})
+
+		t.Run("should return unmodified sql if there are no macros present", func(t *testing.T) {
+			sqls := []string{
+				"select * from table",
+				"select count(val) from table",
+				"select col1, col2,col3, col4 from table where col1 = 'val1' and col2 = 'val2' order by col1 asc",
+			}
+
+			for _, sql := range sqls {
+				actual, err := engine.Interpolate(query, timeRange, sql)
+				require.Nil(t, err)
+				require.Equal(t, sql, actual)
+			}
+		})
 	})
 }
 
