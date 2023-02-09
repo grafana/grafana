@@ -291,10 +291,11 @@ describe('hasRefId', () => {
 
   describe('when called with an object that has refId somewhere in the object tree', () => {
     it('then it should return the object', () => {
-      const input: any = { data: [123, null, {}, { series: [123, null, {}, { refId: 'A' }] }] };
+      const mockObject = { refId: 'A' };
+      const input = { data: [123, null, {}, { series: [123, null, {}, mockObject] }] };
       const result = getValueWithRefId(input);
 
-      expect(result).toBe(input.data[3].series[3]);
+      expect(result).toBe(mockObject);
     });
   });
 });

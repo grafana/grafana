@@ -46,7 +46,7 @@ describe('errors functions', () => {
 
   describe('when getMessageFromError gets an error object', () => {
     beforeEach(() => {
-      message = getMessageFromError({ customError: 'error string' } as any);
+      message = getMessageFromError({ customError: 'error string' });
     });
 
     it('should return the stringified error', () => {
