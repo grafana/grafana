@@ -60,11 +60,16 @@ func (h *AnnotationBackend) RecordStatesAsync(ctx context.Context, rule history_
 		defer close(errCh)
 		h.metrics.ActiveWriteGoroutines.Inc()
 		defer h.metrics.ActiveWriteGoroutines.Dec()
+
 		start := h.clock.Now()
 		defer func() {
 			dur := h.clock.Now().Sub(start)
 			h.metrics.PersistDuration.Observe(dur.Seconds())
 		}()
+
+		org := fmt.Sprint(rule.OrgID)
+		defer h.metrics.WritesTotal.Inc()
+		defer h.metrics.TransitionsTotal.WithLabelValues(org).Add(float64(len(annotations)))
 
 		errCh <- h.recordAnnotations(ctx, panel, annotations, rule.OrgID, logger)
 
@@ -207,9 +212,6 @@ func (h *AnnotationBackend) recordAnnotations(ctx context.Context, panel *panelK
 	}
 
 	logger.Debug("Done saving alert annotation batch")
-	h.metrics.WritesTotal.Inc()
-	org := fmt.Sprint(annotations[0].OrgID) // We're guaranteed there is at least one annotation, and they all have the same org ID.
-	h.metrics.TransitionsTotal.WithLabelValues(org).Add(float64(len(annotations)))
 	return nil
 }
 

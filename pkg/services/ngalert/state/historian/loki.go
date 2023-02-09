@@ -75,20 +75,25 @@ func (h *RemoteLokiBackend) RecordStatesAsync(ctx context.Context, rule history_
 		defer close(errCh)
 		h.metrics.ActiveWriteGoroutines.Inc()
 		defer h.metrics.ActiveWriteGoroutines.Dec()
+
 		start := h.clock.Now()
 		defer func() {
 			dur := h.clock.Now().Sub(start)
 			h.metrics.PersistDuration.Observe(dur.Seconds())
 		}()
 
-		if err := h.recordStreams(ctx, streams, rule.OrgID, logger); err != nil {
+		org := fmt.Sprint(rule.OrgID)
+		defer h.metrics.WritesTotal.Inc()
+		samples := 0
+		for _, s := range streams {
+			samples += len(s.Values)
+		}
+		defer h.metrics.TransitionsTotal.WithLabelValues(org).Add(float64(samples))
+
+		if err := h.recordStreams(ctx, streams, logger); err != nil {
 			logger.Error("Failed to save alert state history batch", "error", err)
 			h.metrics.WritesFailed.Inc()
-			samples := 0
-			for _, s := range streams {
-				samples += len(s.Values)
-			}
-			h.metrics.TransitionsFailed.WithLabelValues(fmt.Sprint(rule.OrgID)).Add(float64(samples))
+			h.metrics.TransitionsFailed.WithLabelValues(org).Add(float64(samples))
 			errCh <- fmt.Errorf("failed to save alert state history batch: %w", err)
 		}
 	}()
@@ -291,19 +296,12 @@ func statesToStreams(rule history_model.RuleMeta, states []state.StateTransition
 	return result
 }
 
-func (h *RemoteLokiBackend) recordStreams(ctx context.Context, streams []stream, orgID int64, logger log.Logger) error {
+func (h *RemoteLokiBackend) recordStreams(ctx context.Context, streams []stream, logger log.Logger) error {
 	if err := h.client.push(ctx, streams); err != nil {
 		return err
 	}
 
 	logger.Debug("Done saving alert state history batch")
-	h.metrics.WritesTotal.Inc()
-	org := fmt.Sprint(orgID)
-	samples := 0
-	for _, s := range streams {
-		samples += len(s.Values)
-	}
-	h.metrics.TransitionsTotal.WithLabelValues(org).Add(float64(samples))
 	return nil
 }
 
