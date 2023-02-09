@@ -45,6 +45,7 @@ export interface DataLinkTransformationConfig {
   type: 'regex' | 'logfmt';
   field?: string;
   expression?: string;
+  mapValue?: string;
 }
 
 /** @internal */

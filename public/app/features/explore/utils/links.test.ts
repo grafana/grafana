@@ -246,10 +246,13 @@ describe('getFieldLinksForExplore', () => {
       title: '',
       url: '',
       internal: {
-        query: { query: 'http_requests{app=${application} env=${msg}}' },
+        query: { query: 'http_requests{app=${application} env=${environment}}' },
         datasourceUid: 'uid_1',
         datasourceName: 'test_ds',
-        transformations: [{ type: 'logfmt' }, { type: 'regex', expression: 'host=(dev|prod)' }],
+        transformations: [
+          { type: 'logfmt' },
+          { type: 'regex', expression: 'host=(dev|prod)', mapValue: 'environment' },
+        ],
       },
     };
 

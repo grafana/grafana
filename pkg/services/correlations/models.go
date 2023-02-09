@@ -22,6 +22,7 @@ type Transformation struct {
 	Type       string `json:"type"`
 	Expression string `json:"expression,omitempty"`
 	Field      string `json:"field,omitempty"`
+	MapValue   string `json:"mapValue,omitempty"`
 }
 
 const (
