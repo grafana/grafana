@@ -1,5 +1,5 @@
 import { SerializedError } from '@reduxjs/toolkit';
-import { prettyDOM, prettyFormat, render, screen, waitFor } from '@testing-library/react';
+import { prettyDOM, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
