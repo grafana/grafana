@@ -917,14 +917,13 @@ func flatten(target map[string]interface{}) map[string]interface{} {
 			newKey := prev + delimiter + key
 
 			v, ok := value.(map[string]interface{})
-			if ok {
-				if len(v) > 0 && currentDepth < maxDepth {
+			shouldStepInside := ok && len(v) > 0 && currentDepth < maxDepth
+			if shouldStepInside {
 					currentDepth++
 					step(v, newKey)
-
-				}
+			} else {
+				output[newKey] = value
 			}
-			output[newKey] = value
 		}
 	}
 
