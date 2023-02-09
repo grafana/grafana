@@ -44,7 +44,6 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `validateDashboardsOnSave`        | Validate dashboard JSON POSTed to api/dashboards/db                             |
 | `autoMigrateGraphPanels`          | Replace the angular graph panel with timeseries                                 |
 | `topnav`                          | Displays new top nav and page layouts                                           |
-| `datasourceLogger`                | Logs all datasource requests                                                    |
 | `accessControlOnCall`             | Access control primitives for OnCall                                            |
 | `alertingNoNormalState`           | Stop maintaining state of alerts that are not firing                            |
 | `topNavCommandPalette`            | Launch the Command Palette from the top navigation search box                   |
@@ -56,7 +55,6 @@ Alpha features might be changed or removed without prior notice.
 
 | Feature toggle name                | Description                                                                                                                                                                  |
 | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `returnUnameHeader`                | Return user login as header for authenticated requests                                                                                                                       |
 | `alertingBigTransactions`          | Use big transactions for alerting database writes                                                                                                                            |
 | `dashboardPreviews`                | Create and show thumbnails for dashboard search results                                                                                                                      |
 | `live-pipeline`                    | Enable a generic live processing pipeline                                                                                                                                    |
@@ -100,7 +98,6 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 
 | Feature toggle name            | Description                                                             |
 | ------------------------------ | ----------------------------------------------------------------------- |
-| `showFeatureFlagsInUI`         | Show feature flags in the settings UI                                   |
 | `publicDashboardsEmailSharing` | Allows public dashboard sharing to be restricted to only allowed emails |
 | `k8s`                          | Explore native k8s integrations                                         |
 | `k8sDashboards`                | Save dashboards via k8s                                                 |

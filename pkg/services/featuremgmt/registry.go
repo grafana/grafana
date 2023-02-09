@@ -10,11 +10,6 @@ var (
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{
 		{
-			Name:        "returnUnameHeader",
-			Description: "Return user login as header for authenticated requests",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:        "alertingBigTransactions",
 			Description: "Use big transactions for alerting database writes",
 			State:       FeatureStateAlpha,
@@ -65,12 +60,6 @@ var (
 			Name:        "prometheusAzureOverrideAudience",
 			Description: "Experimental. Allow override default AAD audience for Azure Prometheus endpoint",
 			State:       FeatureStateBeta,
-		},
-		{
-			Name:            "showFeatureFlagsInUI",
-			Description:     "Show feature flags in the settings UI",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
 		},
 		{
 			Name:        "publicDashboards",
@@ -310,11 +299,6 @@ var (
 			Name:        "mysqlAnsiQuotes",
 			Description: "Use double quotes to escape keyword in a MySQL query",
 			State:       FeatureStateAlpha,
-		},
-		{
-			Name:        "datasourceLogger",
-			Description: "Logs all datasource requests",
-			State:       FeatureStateBeta,
 		},
 		{
 			Name:        "accessControlOnCall",
