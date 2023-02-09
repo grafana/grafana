@@ -281,8 +281,9 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({
       <Configurations
         databaseType={selectedCluster ? selectedCluster.databaseType : databaseType?.value}
         k8sClusterName={selectedCluster ? selectedCluster.kubernetesClusterName : kubernetesCluster?.value}
+        mode={mode}
       />
-      <NetworkAndSecurity mode={mode} />
+      <NetworkAndSecurity />
     </FieldSet>
   );
 };
