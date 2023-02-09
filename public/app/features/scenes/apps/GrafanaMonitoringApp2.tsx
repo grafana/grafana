@@ -1,9 +1,14 @@
 // Libraries
 import React from 'react';
 
-import { SceneCanvasText, SceneFlexLayout } from '@grafana/scenes';
-
-import { SceneApp, SceneAppPage, SceneRouteMatch } from '../components/app/SceneApp';
+import {
+  SceneCanvasText,
+  SceneFlexLayout,
+  SceneApp,
+  SceneAppPage,
+  SceneRouteMatch,
+  EmbeddedScene,
+} from '@grafana/scenes';
 
 import {
   getOverviewScene,
@@ -26,7 +31,7 @@ export function getMainPageScene() {
     title: 'Grafana Monitoring',
     subTitle: 'A custom app with embedded scenes to monitor your Grafana server',
     url: '/scenes/grafana-monitoring',
-    hideFromBreadcrumbs: true,
+    hideFromBreadcrumbs: false,
     getScene: getOverviewScene,
     tabs: [
       new SceneAppPage({
@@ -109,12 +114,14 @@ export function getSecondLevelDrilldown(
     url: baseUrl,
     getParentPage: () => parent,
     getScene: () => {
-      return new SceneFlexLayout({
-        children: [
-          new SceneCanvasText({
-            text: 'Drilldown: ' + secondLevel,
-          }),
-        ],
+      return new EmbeddedScene({
+        body: new SceneFlexLayout({
+          children: [
+            new SceneCanvasText({
+              text: 'Drilldown: ' + secondLevel,
+            }),
+          ],
+        }),
       });
     },
   });
