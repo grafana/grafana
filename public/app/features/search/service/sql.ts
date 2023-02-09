@@ -263,14 +263,9 @@ async function getChildFolders(parentUid?: string): Promise<DashboardViewItem[]>
   const folders = await backendSrv.get<NestedFolderDTO[]>('/api/folders', { parentUid });
 
   return folders.map((item) => ({
-    type: DashboardSearchItemType.DashFolder,
     kind: 'folder',
-
     uid: item.uid,
     title: item.title,
-    isStarred: false,
-    tags: [],
-    uri: `/dashboards/f/${item.uid}/`, // TODO: make url here
-    url: `/dashboards/f/${item.uid}/`, // TODO: make url here
+    url: `/dashboards/f/${item.uid}/`,
   }));
 }
