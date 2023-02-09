@@ -1,4 +1,4 @@
-import { CombinedRule, Rule, RuleIdentifier, RuleWithLocation } from 'app/types/unified-alerting';
+import { CombinedRule, PromRuleWithLocation, Rule, RuleIdentifier, RuleWithLocation } from 'app/types/unified-alerting';
 import { Annotations, Labels, RulerRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
@@ -56,6 +56,10 @@ export function fromCombinedRule(ruleSourceName: string, rule: CombinedRule): Ru
 
 export function fromRuleWithLocation(rule: RuleWithLocation): RuleIdentifier {
   return fromRulerRule(rule.ruleSourceName, rule.namespace, rule.group.name, rule.rule);
+}
+
+export function fromPromRuleWithLocation(rule: PromRuleWithLocation): RuleIdentifier {
+  return fromRule(rule.dataSourceName, rule.namespaceName, rule.groupName, rule.rule);
 }
 
 export function equal(a: RuleIdentifier, b: RuleIdentifier) {

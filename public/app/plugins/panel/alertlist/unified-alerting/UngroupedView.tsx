@@ -1,12 +1,15 @@
 import { css } from '@emotion/css';
 import React, { FC } from 'react';
+import useLocation from 'react-use/lib/useLocation';
 
 import { GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Icon, LinkButton, useStyles2 } from '@grafana/ui';
 import alertDef from 'app/features/alerting/state/alertDef';
 import { Spacer } from 'app/features/alerting/unified/components/Spacer';
+import { fromPromRuleWithLocation, stringifyIdentifier } from 'app/features/alerting/unified/utils/rule-id';
 import { alertStateToReadable, alertStateToState, getFirstActiveAt } from 'app/features/alerting/unified/utils/rules';
+import { createUrl } from 'app/features/alerting/unified/utils/url';
 import { PromRuleWithLocation } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
@@ -22,6 +25,7 @@ type UngroupedModeProps = {
 const UngroupedModeView: FC<UngroupedModeProps> = ({ rules, options }) => {
   const styles = useStyles2(getStyles);
   const stateStyle = useStyles2(getStateTagStyles);
+  const { href: returnTo } = useLocation();
 
   const rulesToDisplay = rules.length <= options.maxItems ? rules : rules.slice(0, options.maxItems);
 
@@ -29,8 +33,16 @@ const UngroupedModeView: FC<UngroupedModeProps> = ({ rules, options }) => {
     <>
       <ol className={styles.alertRuleList}>
         {rulesToDisplay.map((ruleWithLocation, index) => {
-          const { rule, namespaceName, groupName } = ruleWithLocation;
+          const { rule, namespaceName, groupName, dataSourceName } = ruleWithLocation;
           const firstActiveAt = getFirstActiveAt(rule);
+          const indentifier = fromPromRuleWithLocation(ruleWithLocation);
+          const strIndentifier = stringifyIdentifier(indentifier);
+
+          const href = createUrl(
+            `/alerting/${encodeURIComponent(dataSourceName)}/${encodeURIComponent(strIndentifier)}/view`,
+            { returnTo: returnTo ?? '' }
+          );
+
           return (
             <li className={styles.alertRuleItem} key={`alert-${namespaceName}-${groupName}-${rule.name}-${index}`}>
               <div className={stateStyle.icon}>
@@ -40,16 +52,18 @@ const UngroupedModeView: FC<UngroupedModeProps> = ({ rules, options }) => {
                   size={'lg'}
                 />
               </div>
-              <Stack direction="column" flexGrow={1}>
+              <div className={styles.alertNameWrapper}>
                 <div className={styles.instanceDetails}>
-                  <Stack direction="row" gap={1}>
+                  <Stack direction="row" gap={1} wrap={false}>
                     <div className={styles.alertName} title={rule.name}>
                       {rule.name}
                     </div>
                     <Spacer />
-                    <LinkButton href={''} size="sm" icon="external-link-alt">
-                      Alert view
-                    </LinkButton>
+                    {href && (
+                      <LinkButton target="_blank" rel="noopener" href={href} size="sm" icon="external-link-alt">
+                        Details
+                      </LinkButton>
+                    )}
                   </Stack>
                   <div className={styles.alertDuration}>
                     <span className={stateStyle[alertStateToState(rule.state)]}>
@@ -69,7 +83,7 @@ const UngroupedModeView: FC<UngroupedModeProps> = ({ rules, options }) => {
                   </div>
                 </div>
                 <AlertInstances alerts={ruleWithLocation.rule.alerts ?? []} options={options} />
-              </Stack>
+              </div>
             </li>
           );
         })}

@@ -239,13 +239,23 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     border-radius: ${theme.shape.borderRadius(2)};
     margin-bottom: ${theme.spacing(0.5)};
 
-    & > * {
-      margin-right: ${theme.spacing(1)};
-    }
+    gap: ${theme.spacing(2)};
   `,
   alertName: css`
     font-size: ${theme.typography.h6.fontSize};
     font-weight: ${theme.typography.fontWeightBold};
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  `,
+  alertNameWrapper: css`
+    display: flex;
+    flex: 1;
+    flex-wrap: nowrap;
+    flex-direction: column;
+
+    min-width: 100px;
   `,
   alertLabels: css`
     > * {
