@@ -1,3 +1,6 @@
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
+
 import { DashboardSearchItem, DashboardSearchItemType } from '../../../search/types';
 import { DashboardLink } from '../../state/DashboardModel';
 
@@ -18,9 +21,9 @@ describe('searchForTags', () => {
       type: 'dashboards',
       url: '/d/6ieouugGk/DashLinks',
     };
-    const backendSrv: any = {
+    const backendSrv = {
       search: jest.fn((args) => []),
-    };
+    } as unknown as BackendSrv;
 
     return { link, backendSrv };
   };
@@ -64,9 +67,9 @@ describe('resolveLinks', () => {
         type: DashboardSearchItemType.DashDB,
       },
     ];
-    const linkSrv: any = {
+    const linkSrv = {
       getLinkUrl: jest.fn((args) => args.url),
-    };
+    } as unknown as LinkSrv;
     const sanitize = jest.fn((args) => args);
     const sanitizeUrl = jest.fn((args) => args);
 

@@ -1,6 +1,7 @@
 import { render } from '@testing-library/react';
 import React from 'react';
 
+import { Dashboard } from '@grafana/schema';
 import { DashboardMeta } from 'app/types';
 
 import { DashboardModel } from '../state';
@@ -14,7 +15,7 @@ jest.mock('app/features/dashboard/dashgrid/LazyLoader', () => {
   return { LazyLoader };
 });
 
-function getTestDashboard(overrides?: any, metaOverrides?: Partial<DashboardMeta>): DashboardModel {
+function getTestDashboard(overrides?: Partial<Dashboard>, metaOverrides?: Partial<DashboardMeta>): DashboardModel {
   const data = Object.assign(
     {
       title: 'My dashboard',
@@ -44,7 +45,7 @@ function getTestDashboard(overrides?: any, metaOverrides?: Partial<DashboardMeta
           gridPos: { x: 0, y: 120, w: 25, h: 10 },
         },
       ],
-    },
+    } as Dashboard,
     overrides
   );
 

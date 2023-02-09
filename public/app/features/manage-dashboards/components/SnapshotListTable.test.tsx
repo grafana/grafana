@@ -3,7 +3,7 @@ import { locationService } from '@grafana/runtime';
 import { getSnapshots } from './SnapshotListTable';
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({
     get: jest.fn().mockResolvedValue([
       {

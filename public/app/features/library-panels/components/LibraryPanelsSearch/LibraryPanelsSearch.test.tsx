@@ -16,7 +16,7 @@ import { LibraryElementsSearchResult } from '../../types';
 import { LibraryPanelsSearch, LibraryPanelsSearchProps } from './LibraryPanelsSearch';
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   config: {
     panels: {
       timeseries: {

@@ -41,7 +41,7 @@ const datasourceSrv = new DatasourceSrvMock(defaultDs, {
 
 const getDataSourceSrvMock = jest.fn().mockReturnValue(datasourceSrv);
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => getDataSourceSrvMock(),
 }));
 
