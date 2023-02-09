@@ -295,8 +295,7 @@ func (s *Service) parseMetricRequest(ctx context.Context, user *user.SignedInUse
 		})
 	}
 
-	_ = req.validateRequest(ctx)
-	return req, nil // TODO req.validateRequest()
+	return req, req.validateRequest(ctx)
 }
 
 func (s *Service) getDataSourceFromQuery(ctx context.Context, user *user.SignedInUser, skipCache bool, query *simplejson.Json, history map[string]*datasources.DataSource) (*datasources.DataSource, error) {
