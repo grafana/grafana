@@ -26,7 +26,6 @@ export interface FeatureToggles {
   queryOverLive?: boolean;
   panelTitleSearch?: boolean;
   prometheusAzureOverrideAudience?: boolean;
-  showFeatureFlagsInUI?: boolean;
   publicDashboards?: boolean;
   publicDashboardsEmailSharing?: boolean;
   lokiLive?: boolean;

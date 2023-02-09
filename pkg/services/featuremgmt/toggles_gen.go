@@ -47,10 +47,6 @@ const (
 	// Experimental. Allow override default AAD audience for Azure Prometheus endpoint
 	FlagPrometheusAzureOverrideAudience = "prometheusAzureOverrideAudience"
 
-	// FlagShowFeatureFlagsInUI
-	// Show feature flags in the settings UI
-	FlagShowFeatureFlagsInUI = "showFeatureFlagsInUI"
-
 	// FlagPublicDashboards
 	// Enables public access to dashboards
 	FlagPublicDashboards = "publicDashboards"
