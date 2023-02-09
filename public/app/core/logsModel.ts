@@ -732,6 +732,22 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
             data: [],
           });
           observer.error(error);
+        } else if (dataQueryResponse.state === LoadingState.Streaming) {
+          rawLogsVolume = dataQueryResponse.data.map(toDataFrame);
+          const aggregatedLogsVolume = aggregateRawLogsVolume(rawLogsVolume, options.extractLevel);
+          if (aggregatedLogsVolume[0]) {
+            aggregatedLogsVolume[0].meta = {
+              custom: {
+                targets: options.targets,
+                absoluteRange: { from: options.range.from.valueOf(), to: options.range.to.valueOf() },
+              },
+            };
+          }
+          observer.next({
+            state: LoadingState.Streaming,
+            error: undefined,
+            data: aggregatedLogsVolume,
+          });
         } else {
           rawLogsVolume = rawLogsVolume.concat(dataQueryResponse.data.map(toDataFrame));
         }
