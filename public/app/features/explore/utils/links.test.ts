@@ -280,6 +280,48 @@ describe('getFieldLinksForExplore', () => {
     );
   });
 
+  it('returns internal links with 2 unnamed regex transformations and use the last transformation', () => {
+    const transformationLink: DataLink = {
+      title: '',
+      url: '',
+      internal: {
+        query: { query: 'http_requests{env=${msg}}' },
+        datasourceUid: 'uid_1',
+        datasourceName: 'test_ds',
+        transformations: [
+          { type: 'regex', expression: 'fieldA=(asparagus|broccoli)' },
+          { type: 'regex', expression: 'fieldB=(apple|banana)' },
+        ],
+      },
+    };
+
+    const { field, range, dataFrame } = setup(transformationLink, true, {
+      name: 'msg',
+      type: FieldType.string,
+      values: new ArrayVector(['fieldA=asparagus fieldB=banana', 'fieldA=broccoli fieldB=apple']),
+      config: {
+        links: [transformationLink],
+      },
+    });
+
+    const links = [
+      getFieldLinksForExplore({ field, rowIndex: 0, range, dataFrame }),
+      getFieldLinksForExplore({ field, rowIndex: 1, range, dataFrame }),
+    ];
+    expect(links[0]).toHaveLength(1);
+    expect(links[0][0].href).toBe(
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{env=banana}"}]}'
+      )}`
+    );
+    expect(links[1]).toHaveLength(1);
+    expect(links[1][0].href).toBe(
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{env=apple}"}]}'
+      )}`
+    );
+  });
+
   it('returns internal links with logfmt with stringified booleans', () => {
     const transformationLink: DataLink = {
       title: '',
