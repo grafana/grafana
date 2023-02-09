@@ -28,6 +28,7 @@ export const Alias: FunctionComponent<Props> = ({ value = '', onChange, id }) =>
             Alias pattern will be deprecated in Grafana 10. See{' '}
             <a
               target="__blank"
+              rel="noopener noreferrer"
               href="https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/query-editor/#common-query-editor-fields"
             >
               documentation
