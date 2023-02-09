@@ -189,6 +189,7 @@ export const SearchView = ({ showManage, folderDTO, hidePseudoFolders, keyboardE
           getSortOptions={getGrafanaSearcher().getSortOptions}
           sortPlaceholder={getGrafanaSearcher().sortPlaceholder}
           onDatasourceChange={stateManager.onDatasourceChange}
+          onPanelTypeChange={stateManager.onPanelTypeChange}
           state={state}
           includePanels={state.includePanels!}
           onSetIncludePanels={stateManager.onSetIncludePanels}

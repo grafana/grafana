@@ -63,6 +63,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       query: this.state.query.length === 0 ? null : this.state.query,
       tag: this.state.tag,
       datasource: this.state.datasource,
+      panel_type: this.state.panel_type,
       starred: this.state.starred ? this.state.starred : null,
       sort: this.state.sort,
     });
@@ -101,6 +102,10 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
 
   onDatasourceChange = (datasource: string | undefined) => {
     this.setStateAndDoSearch({ datasource });
+  };
+
+  onPanelTypeChange = (panel_type?: string) => {
+    this.setStateAndDoSearch({ panel_type });
   };
 
   onStarredFilterChange = (e: FormEvent<HTMLInputElement>) => {
