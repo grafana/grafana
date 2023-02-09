@@ -8,7 +8,8 @@ import (
 
 type Historian struct {
 	TransitionsTotal      *prometheus.CounterVec
-	WriteFailuresTotal    prometheus.Counter
+	WritesTotal           prometheus.Counter
+	WritesFailedTotal     prometheus.Counter
 	ActiveWriteGoroutines prometheus.Gauge
 	PersistDuration       prometheus.Histogram
 	WriteDuration         *instrument.HistogramCollector
@@ -29,10 +30,16 @@ func NewHistorianMetrics(r prometheus.Registerer) *Historian {
 			Name:      "historian_transitions_total",
 			Help:      "The total number of state transitions recorded by the state historian.",
 		}, []string{"org"}),
-		WriteFailuresTotal: promauto.With(r).NewCounter(prometheus.CounterOpts{
+		WritesTotal: promauto.With(r).NewCounter(prometheus.CounterOpts{
 			Namespace: Namespace,
 			Subsystem: Subsystem,
-			Name:      "historian_batch_write_failed_total",
+			Name:      "historian_batch_writes_total",
+			Help:      "The total number of written state history batches.",
+		}),
+		WritesFailedTotal: promauto.With(r).NewCounter(prometheus.CounterOpts{
+			Namespace: Namespace,
+			Subsystem: Subsystem,
+			Name:      "historian_batch_writes_failed_total",
 			Help:      "The total number of failed writes of state history batches.",
 		}),
 		ActiveWriteGoroutines: promauto.With(r).NewGauge(prometheus.GaugeOpts{

@@ -201,11 +201,12 @@ func (h *AnnotationBackend) recordAnnotations(ctx context.Context, panel *panelK
 
 	if err := h.annotations.SaveMany(ctx, annotations); err != nil {
 		logger.Error("Error saving alert annotation batch", "error", err)
-		h.metrics.WriteFailuresTotal.Inc()
+		h.metrics.WritesFailedTotal.Inc()
 		return fmt.Errorf("error saving alert annotation batch: %w", err)
 	}
 
 	logger.Debug("Done saving alert annotation batch")
+	h.metrics.WritesTotal.Inc()
 	org := fmt.Sprint(annotations[0].OrgID) // We're guaranteed there is at least one annotation, and they all have the same org ID.
 	h.metrics.TransitionsTotal.WithLabelValues(org).Add(float64(len(annotations)))
 	return nil
