@@ -761,7 +761,6 @@ const createEmptyDataFrame = (
     });
   }
 
-  console.log(series);
   return series;
 };
 

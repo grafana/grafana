@@ -75,7 +75,6 @@ func parseResponse(responses []*es.SearchResponse, targets []*Query, timeField s
 			result.Responses[target.RefID] = queryRes
 		}
 	}
-
 	return &result, nil
 }
 
@@ -189,8 +188,8 @@ func processDocumentResponse(res *es.SearchResponse, target *Query, timeField st
 			for i, doc := range docs {
 				bytes, err := json.Marshal(doc[propName])
 				if err != nil {
-					// TODO: Not sure what to do with empty values
-					bytes = []byte{}
+					// We skip values that cannot be marshalled
+					continue
 				}
 				fieldVector[i] = json.RawMessage(bytes)
 			}
@@ -206,9 +205,7 @@ func processDocumentResponse(res *es.SearchResponse, target *Query, timeField st
 	frames = append(frames, frame)
 
 	queryRes.Frames = frames
-
 	return nil
-
 }
 
 func processBuckets(aggs map[string]interface{}, target *Query,
@@ -896,7 +893,7 @@ func getErrorFromElasticResponse(response *es.SearchResponse) string {
 	return errorString
 }
 
-// flatten flattens multi-level map[string]interface{} to single level map[string]interface{}. It uses dot notation to join keys.
+// flatten flattens multi-level objects to single level objects. It uses dot notation to join keys.
 func flatten(target map[string]interface{}) map[string]interface{} {
 	// On frontend maxDepth wasn't used but as we are processing on backend
 	// let's put a limit to avoid infinite loop. 10 was chosen arbitrary.
@@ -919,8 +916,8 @@ func flatten(target map[string]interface{}) map[string]interface{} {
 			v, ok := value.(map[string]interface{})
 			shouldStepInside := ok && len(v) > 0 && currentDepth < maxDepth
 			if shouldStepInside {
-					currentDepth++
-					step(v, newKey)
+				currentDepth++
+				step(v, newKey)
 			} else {
 				output[newKey] = value
 			}
@@ -940,7 +937,7 @@ func isStringInSlice(a string, list []string) bool {
 	return false
 }
 
-// sortPropNames orders propNames so that timeField is first, if it exists and rest of propNames are ordered alphabetically
+// sortPropNames orders propNames so that timeField is first (if it exists) and rest of propNames are ordered alphabetically
 func sortPropNames(propNames []string, timeField string) []string {
 	sortedPropNames := make([]string, 0, len(propNames))
 	sortedPropNames = append(sortedPropNames, propNames...)
