@@ -11,9 +11,9 @@ export enum DashboardSearchItemType {
 }
 
 /**
- * @deprecated
+ * @deprecated Used only in the deprecated
  */
-export interface DashboardSection {
+interface DashboardSection {
   id?: number;
   uid?: string;
   title: string;
@@ -33,7 +33,7 @@ export interface DashboardSection {
 /**
  * @deprecated
  */
-export interface DashboardSectionItem {
+interface DashboardSectionItem {
   checked?: boolean;
   folderId?: number;
   folderTitle?: string;
@@ -52,39 +52,24 @@ export interface DashboardSectionItem {
   sortMeta?: number;
   sortMetaName?: string;
 }
-
-export interface DashboardSearchHitDTO {
-  id: number;
-  uid: string;
-  title: string;
-  uri: string;
-  url: string;
-  slug: string;
-  type: string; // dash-db, dash-home
-  tags: string[];
-  isStarred: boolean;
-
-  sortMeta: number;
-  sortMetaName?: string;
-
-  // Only on dashboards in folders results
-  folderId?: number;
-  folderUid?: string;
-  folderTitle?: string;
-  folderUrl?: string;
-}
-
 /**
  * @deprecated - It uses dashboard ID which is deprecated in favor of dashboard UID. Please, use DashboardSearchItem instead.
  */
 export interface DashboardSearchHit extends DashboardSectionItem, DashboardSection, WithAccessControlMetadata {}
 
-export interface DashboardSearchItem
-  extends Omit<
-    DashboardSearchHit,
-    'id' | 'uid' | 'expanded' | 'selected' | 'checked' | 'folderId' | 'icon' | 'sortMeta' | 'sortMetaName'
-  > {
+export interface DashboardSearchItem {
   uid: string;
+  title: string;
+  uri: string;
+  url: string;
+  type: string; // dash-db, dash-home
+  tags: string[];
+  isStarred: boolean;
+
+  // Only on dashboards in folders results
+  folderUid?: string;
+  folderTitle?: string;
+  folderUrl?: string;
 }
 
 export interface SearchAction extends Action {
