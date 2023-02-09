@@ -19,28 +19,25 @@ import (
 )
 
 type Api struct {
-	PublicDashboardService    publicdashboards.Service
-	OSSPublicDashboardService publicdashboards.WrappedService
-	RouteRegister             routing.RouteRegister
-	AccessControl             accesscontrol.AccessControl
-	Features                  *featuremgmt.FeatureManager
-	Log                       log.Logger
+	PublicDashboardService publicdashboards.Service
+	RouteRegister          routing.RouteRegister
+	AccessControl          accesscontrol.AccessControl
+	Features               *featuremgmt.FeatureManager
+	Log                    log.Logger
 }
 
 func ProvideApi(
 	pd publicdashboards.Service,
-	ossPdService publicdashboards.WrappedService,
 	rr routing.RouteRegister,
 	ac accesscontrol.AccessControl,
 	features *featuremgmt.FeatureManager,
 ) *Api {
 	api := &Api{
-		PublicDashboardService:    pd,
-		OSSPublicDashboardService: ossPdService,
-		RouteRegister:             rr,
-		AccessControl:             ac,
-		Features:                  features,
-		Log:                       log.New("publicdashboards.api"),
+		PublicDashboardService: pd,
+		RouteRegister:          rr,
+		AccessControl:          ac,
+		Features:               features,
+		Log:                    log.New("publicdashboards.api"),
 	}
 
 	// attach api if PublicDashboards feature flag is enabled
@@ -109,7 +106,7 @@ func (api *Api) GetPublicDashboard(c *contextmodel.ReqContext) response.Response
 		return response.Err(ErrPublicDashboardIdentifierNotSet.Errorf("GetPublicDashboard: no dashboard Uid for public dashboard specified"))
 	}
 
-	pd, err := api.OSSPublicDashboardService.FindByDashboardUid(c.Req.Context(), c.OrgID, dashboardUid)
+	pd, err := api.PublicDashboardService.FindByDashboardUid(c.Req.Context(), c.OrgID, dashboardUid)
 	if err != nil {
 		return response.Err(err)
 	}

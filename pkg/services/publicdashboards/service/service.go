@@ -33,6 +33,7 @@ type PublicDashboardServiceImpl struct {
 	QueryDataService   *query.Service
 	AnnotationsRepo    annotations.Repository
 	ac                 accesscontrol.AccessControl
+	serviceWrapper     publicdashboards.ServiceWrapper
 }
 
 var LogPrefix = "publicdashboards.service"
@@ -49,6 +50,7 @@ func ProvideService(
 	qds *query.Service,
 	anno annotations.Repository,
 	ac accesscontrol.AccessControl,
+	serviceWrapper publicdashboards.ServiceWrapper,
 ) *PublicDashboardServiceImpl {
 	return &PublicDashboardServiceImpl{
 		log:                log.New(LogPrefix),
@@ -58,7 +60,13 @@ func ProvideService(
 		QueryDataService:   qds,
 		AnnotationsRepo:    anno,
 		ac:                 ac,
+		serviceWrapper:     serviceWrapper,
 	}
+}
+
+// FindByDashboardUid this method would be replaced by another implementation for Enterprise version
+func (pd *PublicDashboardServiceImpl) FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error) {
+	return pd.serviceWrapper.FindByDashboardUid(ctx, orgId, dashboardUid)
 }
 
 func (pd *PublicDashboardServiceImpl) Find(ctx context.Context, uid string) (*PublicDashboard, error) {
