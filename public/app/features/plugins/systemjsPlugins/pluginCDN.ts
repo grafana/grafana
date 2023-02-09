@@ -8,7 +8,7 @@ export function extractPluginNameVersionFromUrl(address: string) {
   let version: string | null = null;
   let name: string | null = null;
   for (let i = 0; i < match.length; i++) {
-    if (i > 1 && !match[i].match(/\d+\./)) {
+    if (i <= 1 || !match[i].match(/\d+\./)) {
       continue;
     }
     // version -> first part that contains digits and at least a dot
