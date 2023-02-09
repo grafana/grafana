@@ -153,9 +153,9 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   getSearchQuery() {
     const q: SearchQuery = {
       query: this.state.query,
-      tags: this.state.tag as string[],
-      ds_uid: this.state.datasource as string,
-      panel_type: this.state.panel_type as string,
+      tags: this.state.tag,
+      ds_uid: this.state.datasource,
+      panel_type: this.state.panel_type,
       location: this.state.folderUid, // This will scope all results to the prefix
       sort: this.state.sort,
       explain: this.state.explain,
