@@ -13,7 +13,6 @@ import {
   parseToNodeNamesArray,
   getParserFromQuery,
   obfuscate,
-  isRateQuery,
   resultLimitReached,
   combineResponses,
 } from './queryUtils';
@@ -298,17 +297,6 @@ describe('getParserFromQuery', () => {
     expect(getParserFromQuery(`sum(count_over_time({place="luna"} | ${parser} | unwrap counter )) by (place)`)).toBe(
       parser
     );
-  });
-});
-
-describe('isRateQuery', () => {
-  it('returns false for non-rate queries', () => {
-    expect(isRateQuery('{job="grafana"}')).toBe(false);
-    expect(isRateQuery('sum_over_time({compose_project="docker-compose"}[1m])')).toBe(false);
-  });
-  it('returns true for rate queries', () => {
-    expect(isRateQuery('rate({job="grafana"}[5m])')).toBe(true);
-    expect(isRateQuery('sum(rate({job="grafana"}[5m]))')).toBe(true);
   });
 });
 

@@ -288,20 +288,6 @@ export function isQueryWithLineFilter(query: string): boolean {
   return queryWithLineFilter;
 }
 
-export function isRateQuery(query: string): boolean {
-  let isRateQuery = false;
-  const tree = parser.parse(query);
-  tree.iterate({
-    enter: ({ type }): false | void => {
-      if (type.id === Rate) {
-        isRateQuery = true;
-        return;
-      }
-    },
-  });
-  return isRateQuery;
-}
-
 export function getStreamSelectorsFromQuery(query: string): string[] {
   const labelMatcherPositions = getStreamSelectorPositions(query);
 
@@ -328,10 +314,6 @@ export function requestSupportsPartitioning(queries: LokiQuery[]) {
   }
 
   if (isLogsQuery(queries[0].expr)) {
-    return false;
-  }
-
-  if (isRateQuery(queries[0].expr)) {
     return false;
   }
 
