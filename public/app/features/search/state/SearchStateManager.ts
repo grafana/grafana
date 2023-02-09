@@ -142,7 +142,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   };
 
   hasSearchFilters() {
-    return this.state.query || this.state.tag.length || this.state.starred;
+    return this.state.query || this.state.tag.length || this.state.starred || this.state.panel_type;
   }
 
   getSearchQuery() {
@@ -150,6 +150,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       query: this.state.query,
       tags: this.state.tag as string[],
       ds_uid: this.state.datasource as string,
+      panel_type: this.state.panel_type as string,
       location: this.state.folderUid, // This will scope all results to the prefix
       sort: this.state.sort,
       explain: this.state.explain,
@@ -171,6 +172,10 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
 
     if (!this.state.includePanels && !q.kind) {
       q.kind = ['dashboard', 'folder']; // skip panels
+    }
+
+    if (q.panel_type?.length) {
+      q.kind = ['panel'];
     }
 
     return q;
