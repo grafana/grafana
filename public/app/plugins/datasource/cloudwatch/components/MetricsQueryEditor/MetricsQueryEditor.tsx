@@ -196,12 +196,7 @@ export const MetricsQueryEditor = (props: Props) => {
             ></DynamicLabelsField>
           </EditorField>
         ) : (
-          <EditorField
-            label="Alias"
-            width={26}
-            optional
-            tooltip="Change time series legend name using this field. See documentation for replacement variable formats."
-          >
+          <EditorField label="Alias" width={26} optional tooltip="Change time series legend name using this field.">
             <Alias
               id={`${query.refId}-cloudwatch-metric-query-editor-alias`}
               value={migratedQuery.alias ?? ''}
