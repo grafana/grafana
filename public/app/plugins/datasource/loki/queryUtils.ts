@@ -18,7 +18,6 @@ import {
   MetricExpr,
   Matcher,
   Identifier,
-  Rate,
 } from '@grafana/lezer-logql';
 
 import { ErrorId } from '../prometheus/querybuilder/shared/parsingUtils';
