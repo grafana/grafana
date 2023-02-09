@@ -1,4 +1,4 @@
-import { InfluxQueryTag } from './types';
+import { InfluxQuery, InfluxQueryTag } from './types';
 
 type LegacyAnnotation = {
   query?: string;
@@ -10,7 +10,7 @@ type LegacyAnnotation = {
   titleColumn?: string;
   name?: string;
   target?: {
-    limit?: number;
+    limit?: string | number | undefined;
     matchAny?: boolean;
     tags?: InfluxQueryTag[];
     type?: string;
@@ -19,12 +19,9 @@ type LegacyAnnotation = {
 
 // this becomes the target in the migrated annotations
 const migrateLegacyAnnotation = (json: LegacyAnnotation) => {
-  const limit = json.target ? json.target.limit : 0;
-  const matchAny = json.target ? json.target.matchAny : false;
-  const tags = json.target ? json.target.tags : [];
-  const type = json.target ? json.target.type : '';
-
-  return {
+  // eslint-ignore-next-line
+  const target: InfluxQuery = {
+    refId: '',
     query: json.query ?? '',
     queryType: 'tags',
     fromAnnotations: true,
@@ -33,12 +30,26 @@ const migrateLegacyAnnotation = (json: LegacyAnnotation) => {
     timeEndColumn: json.timeEndColumn ?? '',
     titleColumn: json.titleColumn ?? '',
     name: json.name ?? '',
-    // handle json target fields
-    limit: limit,
-    matchAny: matchAny,
-    tags: tags,
-    type: type,
   };
+
+  // handle json target fields
+  if (json.target && json.target.limit) {
+    target.limit = json.target.limit;
+  }
+
+  if (json.target && json.target.matchAny) {
+    target.matchAny = json.target.matchAny;
+  }
+
+  if (json.target && json.target.tags) {
+    target.tags = json.target.tags;
+  }
+
+  if (json.target && json.target.type) {
+    target.type = json.target.type;
+  }
+
+  return target;
 };
 
 // eslint-ignore-next-line
