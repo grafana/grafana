@@ -124,7 +124,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/entity/httpentitystore"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
-	"github.com/grafana/grafana/pkg/services/store/k8saccess"
 	"github.com/grafana/grafana/pkg/services/store/kind"
 	"github.com/grafana/grafana/pkg/services/store/resolver"
 	"github.com/grafana/grafana/pkg/services/store/sanitizer"
@@ -365,7 +364,6 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(tag.Service), new(*tagimpl.Service)),
 	authnimpl.ProvideService,
 	wire.Bind(new(authn.Service), new(*authnimpl.Service)),
-	k8saccess.ProvideK8SAccess,
 	supportbundlesimpl.ProvideService,
 )
 
