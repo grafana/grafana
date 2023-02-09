@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import React, { useContext, useEffect } from 'react';
+import React, { useContext } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
@@ -61,21 +61,13 @@ const ConfigPublicDashboard = () => {
   const [update, { isLoading: isUpdateLoading }] = useUpdatePublicDashboardMutation();
   const disableInputs = !hasWritePermissions || isUpdateLoading || isGetLoading;
 
-  const { reset, handleSubmit, setValue, register } = useForm<ConfigPublicDashoardForm>({
+  const { handleSubmit, setValue, register } = useForm<ConfigPublicDashoardForm>({
     defaultValues: {
-      isAnnotationsEnabled: false,
-      isTimeSelectionEnabled: false,
-      isPaused: false,
-    },
-  });
-
-  useEffect(() => {
-    reset({
       isAnnotationsEnabled: publicDashboard?.annotationsEnabled,
       isTimeSelectionEnabled: publicDashboard?.timeSelectionEnabled,
       isPaused: !publicDashboard?.isEnabled,
-    });
-  }, [publicDashboard, reset]);
+    },
+  });
 
   const onUpdate = async (values: ConfigPublicDashoardForm) => {
     const { isAnnotationsEnabled, isTimeSelectionEnabled, isPaused } = values;
