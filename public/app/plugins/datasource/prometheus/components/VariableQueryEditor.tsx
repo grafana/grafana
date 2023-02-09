@@ -1,7 +1,7 @@
 import React, { FC, FormEvent, useEffect, useState } from 'react';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
-import { InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
+import { InlineField, InlineFieldRow, Input, Select, TextArea } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../datasource';
 import {
@@ -103,7 +103,7 @@ export const PromVariableQueryEditor: FC<Props> = ({ onChange, query, datasource
     setMetric(e.currentTarget.value);
   };
 
-  const onVarQueryChange = (e: FormEvent<HTMLInputElement>) => {
+  const onVarQueryChange = (e: FormEvent<HTMLTextAreaElement>) => {
     setVarQuery(e.currentTarget.value);
   };
 
@@ -144,7 +144,16 @@ export const PromVariableQueryEditor: FC<Props> = ({ onChange, query, datasource
       </InlineField>
       {exprType === QueryType.LabelValues && (
         <>
-          <InlineField label="Label" labelWidth={20}>
+          <InlineField
+            label="Label"
+            labelWidth={20}
+            required
+            tooltip={
+              <div>
+                Returns a list of label values for the label name in all metrics unless the metric is specified.
+              </div>
+            }
+          >
             <Select
               aria-label="label-select"
               onChange={onLabelChange}
@@ -158,12 +167,7 @@ export const PromVariableQueryEditor: FC<Props> = ({ onChange, query, datasource
           <InlineField
             label="Metric"
             labelWidth={20}
-            tooltip={
-              <div>
-                Returns a list of label values for the label in every metric unless a metric is specified, which then
-                returns a list of label values for the label in the specified metric.
-              </div>
-            }
+            tooltip={<div>*Optional: returns a list of label values for the label name in the specified metric.</div>}
           >
             <Input
               type="text"
@@ -207,14 +211,14 @@ export const PromVariableQueryEditor: FC<Props> = ({ onChange, query, datasource
               </div>
             }
           >
-            <Input
+            <TextArea
               type="text"
               aria-label="Prometheus Query"
               placeholder="Prometheus Query"
               value={varQuery}
               onChange={onVarQueryChange}
               onBlur={handleBlur}
-              width={25}
+              cols={100}
             />
           </InlineField>
         </>
@@ -226,8 +230,10 @@ export const PromVariableQueryEditor: FC<Props> = ({ onChange, query, datasource
             labelWidth={20}
             tooltip={
               <div>
-                Enter a query that contains full metric name, i.e. &#123;instance=&quot;localhost:9090&quot;&#125;.
-                Returns a metric name and label list.
+                Enter enter a metric with labels, only a metric or only labels, i.e.
+                go_goroutines&#123;instance=&quot;localhost:9090&quot;&#125;, go_goroutines, or
+                &#123;instance=&quot;localhost:9090&quot;&#125;. Returns a list of time series associated with the
+                entered data.
               </div>
             }
           >
@@ -238,7 +244,7 @@ export const PromVariableQueryEditor: FC<Props> = ({ onChange, query, datasource
               value={seriesQuery}
               onChange={onSeriesQueryChange}
               onBlur={handleBlur}
-              width={25}
+              width={100}
             />
           </InlineField>
         </>

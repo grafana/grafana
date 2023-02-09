@@ -89,10 +89,16 @@ export function migrateVariableEditorBackToVariableSupport(QueryVariable: PromVa
     case QueryType.MetricNames:
       return `metrics(${QueryVariable.metric})`;
     case QueryType.VarQueryResult:
-      return `query_result(${QueryVariable.varQuery})`;
+      const varQuery = removeLineBreaks(QueryVariable.varQuery);
+      return `query_result(${varQuery})`;
     case QueryType.SeriesQuery:
       return '' + QueryVariable.seriesQuery;
   }
 
   return '';
+}
+
+// allow line breaks in query result textarea
+function removeLineBreaks(input?: string) {
+  return input ? input.replace(/[\r\n]+/gm, '') : '';
 }
