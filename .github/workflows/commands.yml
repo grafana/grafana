@@ -1,7 +1,7 @@
 name: Run commands when issues are labeled or comments added
 on:
   issues:
-    types: [labeled, unlabeled]
+    types: [labeled, unlabeled, opened]
   issue_comment:
     types: [created]
 concurrency:
