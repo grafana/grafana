@@ -1,13 +1,7 @@
 import { SyntaxNode } from '@lezer/common';
 import { escapeRegExp } from 'lodash';
 
-import {
-  DataQueryRequest,
-  DataQueryResponse,
-  DataQueryResponseData,
-  QueryResultMeta,
-  QueryResultMetaStat,
-} from '@grafana/data';
+import { DataQueryRequest, DataQueryResponse, DataQueryResponseData, QueryResultMetaStat } from '@grafana/data';
 import {
   parser,
   LineFilter,
