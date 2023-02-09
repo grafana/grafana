@@ -109,7 +109,7 @@ const ConfigPublicDashboard = () => {
       <div className={styles.titleContainer}>
         <HorizontalGroup spacing="sm" align="center">
           <h4 className={styles.title}>Settings</h4>
-          {(isUpdateLoading || isGetLoading) && <Spinner />}
+          {(isUpdateLoading || isGetLoading) && <Spinner size={14} />}
         </HorizontalGroup>
       </div>
       <Configuration disabled={disableInputs} onChange={onChange} register={register} />
