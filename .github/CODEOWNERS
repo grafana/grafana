@@ -253,6 +253,7 @@ WORKFLOW.md @torkelo
 *_mig.go @grafana/backend-platform @grafana/hosted-grafana-team
 
 # Grafana multitenancy
+/pkg/services/k8s/ @grafana/multitenancy-squad
 /pkg/services/live/ @grafana/multitenancy-squad
 /pkg/services/searchV2/ @grafana/multitenancy-squad
 /pkg/services/store/ @grafana/multitenancy-squad
