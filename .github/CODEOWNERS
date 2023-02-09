@@ -387,10 +387,10 @@ lerna.json @grafana/frontend-ops
 /public/app/plugins/panel/alertlist/ @grafana/alerting-squad-frontend
 /public/app/plugins/panel/annolist/ @grafana/user-essentials
 /public/app/plugins/panel/barchart/ @grafana/grafana-bi-squad @grafana/dataviz-squad
-/public/app/plugins/panel/bargauge/ @grafana/user-essentials
+/public/app/plugins/panel/bargauge/ @grafana/dataviz-squad
 /public/app/plugins/panel/dashlist/ @grafana/user-essentials
 /public/app/plugins/panel/debug/ @ryantxu
-/public/app/plugins/panel/gauge/ @grafana/user-essentials
+/public/app/plugins/panel/gauge/ @grafana/dataviz-squad
 /public/app/plugins/panel/gettingstarted/ @grafana/user-essentials
 /public/app/plugins/panel/graph/ @grafana/dataviz-squad
 /public/app/plugins/panel/heatmap/ @grafana/dataviz-squad
@@ -411,7 +411,7 @@ lerna.json @grafana/frontend-ops
 /public/app/plugins/panel/icon/ @grafana/grafana-edge-squad
 /public/app/plugins/panel/live/ @grafana/multitenancy-squad
 /public/app/plugins/panel/news/ @grafana/user-essentials
-/public/app/plugins/panel/stat/ @grafana/user-essentials
+/public/app/plugins/panel/stat/ @grafana/dataviz-squad
 /public/app/plugins/panel/text/ @grafana/user-essentials
 /public/app/plugins/panel/welcome/ @grafana/user-essentials
 /public/app/plugins/panel/xychart/ @grafana/dataviz-squad

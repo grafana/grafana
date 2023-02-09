@@ -212,7 +212,7 @@
     "bargaugepanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/user-essentials"
+        "grafana/dataviz-squad"
       ],
       "currentVersion": [
         0,
@@ -526,7 +526,7 @@
     "gaugepanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/user-essentials"
+        "grafana/dataviz-squad"
       ],
       "currentVersion": [
         0,
@@ -1506,7 +1506,7 @@
     "statpanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/user-essentials"
+        "grafana/dataviz-squad"
       ],
       "currentVersion": [
         0,
