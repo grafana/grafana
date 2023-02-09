@@ -98,7 +98,6 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 
 | Feature toggle name            | Description                                                             |
 | ------------------------------ | ----------------------------------------------------------------------- |
-| `showFeatureFlagsInUI`         | Show feature flags in the settings UI                                   |
 | `publicDashboardsEmailSharing` | Allows public dashboard sharing to be restricted to only allowed emails |
 | `k8s`                          | Explore native k8s integrations                                         |
 | `k8sDashboards`                | Save dashboards via k8s                                                 |

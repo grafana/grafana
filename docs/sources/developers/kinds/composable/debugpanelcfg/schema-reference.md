@@ -34,12 +34,4 @@ title: DebugPanelCfg kind
 | `render`        | boolean | **Yes**  |             |
 | `schemaChanged` | boolean | **Yes**  |             |
 
-### UpdateConfig
-
-| Property        | Type    | Required | Description |
-|-----------------|---------|----------|-------------|
-| `dataChanged`   | boolean | **Yes**  |             |
-| `render`        | boolean | **Yes**  |             |
-| `schemaChanged` | boolean | **Yes**  |             |
-
 

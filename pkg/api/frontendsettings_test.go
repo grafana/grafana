@@ -244,7 +244,7 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 				return &plugins.FakePluginStore{
 					PluginList: newPlugins("test-app", []*plugindef.ExtensionsLink{
 						{
-							Target:      "core/home/menu",
+							Placement:   "core/home/menu",
 							Type:        plugindef.ExtensionsLinkTypeLink,
 							Title:       "Title",
 							Description: "Home route of app",
@@ -267,7 +267,7 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 						Version: "0.5.0",
 						Extensions: []*plugindef.ExtensionsLink{
 							{
-								Target:      "core/home/menu",
+								Placement:   "core/home/menu",
 								Type:        plugindef.ExtensionsLinkTypeLink,
 								Title:       "Title",
 								Description: "Home route of app",
@@ -284,7 +284,7 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 				return &plugins.FakePluginStore{
 					PluginList: newPlugins("test-app", []*plugindef.ExtensionsLink{
 						{
-							Target:      "core/home/menu",
+							Placement:   "core/home/menu",
 							Type:        plugindef.ExtensionsLinkTypeLink,
 							Title:       "Title",
 							Description: "Home route of app",
@@ -303,6 +303,76 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 					"test-app": {
 						ID:         "test-app",
 						Preload:    false,
+						Path:       "/test-app/module.js",
+						Version:    "0.5.0",
+						Extensions: nil,
+					},
+				},
+			},
+		},
+		{
+			desc: "disabled app with preload",
+			pluginStore: func() plugins.Store {
+				return &plugins.FakePluginStore{
+					PluginList: []plugins.PluginDTO{
+						{
+							Module: fmt.Sprintf("/%s/module.js", "test-app"),
+							JSONData: plugins.JSONData{
+								ID:         "test-app",
+								Info:       plugins.Info{Version: "0.5.0"},
+								Type:       plugins.App,
+								Extensions: []*plugindef.ExtensionsLink{},
+								Preload:    true,
+							},
+						},
+					},
+				}
+			},
+			pluginSettings: func() pluginSettings.Service {
+				return &pluginSettings.FakePluginSettings{
+					Plugins: newAppSettings("test-app", false),
+				}
+			},
+			expected: settings{
+				Apps: map[string]*plugins.AppDTO{
+					"test-app": {
+						ID:         "test-app",
+						Preload:    false,
+						Path:       "/test-app/module.js",
+						Version:    "0.5.0",
+						Extensions: nil,
+					},
+				},
+			},
+		},
+		{
+			desc: "enalbed app with preload",
+			pluginStore: func() plugins.Store {
+				return &plugins.FakePluginStore{
+					PluginList: []plugins.PluginDTO{
+						{
+							Module: fmt.Sprintf("/%s/module.js", "test-app"),
+							JSONData: plugins.JSONData{
+								ID:         "test-app",
+								Info:       plugins.Info{Version: "0.5.0"},
+								Type:       plugins.App,
+								Extensions: []*plugindef.ExtensionsLink{},
+								Preload:    true,
+							},
+						},
+					},
+				}
+			},
+			pluginSettings: func() pluginSettings.Service {
+				return &pluginSettings.FakePluginSettings{
+					Plugins: newAppSettings("test-app", true),
+				}
+			},
+			expected: settings{
+				Apps: map[string]*plugins.AppDTO{
+					"test-app": {
+						ID:         "test-app",
+						Preload:    true,
 						Path:       "/test-app/module.js",
 						Version:    "0.5.0",
 						Extensions: nil,

@@ -46,16 +46,6 @@ TODO docs
 |------------|---------------------------------------|----------|-------------|
 | `hideFrom` | [HideSeriesConfig](#hideseriesconfig) | No       | TODO docs   |
 
-### HideSeriesConfig
-
-TODO docs
-
-| Property  | Type    | Required | Description |
-|-----------|---------|----------|-------------|
-| `legend`  | boolean | **Yes**  |             |
-| `tooltip` | boolean | **Yes**  |             |
-| `viz`     | boolean | **Yes**  |             |
-
 ### PanelOptions
 
 It extends [OptionsWithLegend](#optionswithlegend) and [OptionsWithTooltip](#optionswithtooltip) and [OptionsWithTimezones](#optionswithtimezones).
@@ -108,31 +98,6 @@ TODO docs
 | Property  | Type                                    | Required | Description |
 |-----------|-----------------------------------------|----------|-------------|
 | `tooltip` | [VizTooltipOptions](#viztooltipoptions) | **Yes**  | TODO docs   |
-
-### VizTooltipOptions
-
-TODO docs
-
-| Property | Type   | Required | Description                                                   |
-|----------|--------|----------|---------------------------------------------------------------|
-| `mode`   | string | **Yes**  | TODO docs<br/>Possible values are: `single`, `multi`, `none`. |
-| `sort`   | string | **Yes**  | TODO docs<br/>Possible values are: `asc`, `desc`, `none`.     |
-
-### VizLegendOptions
-
-TODO docs
-
-| Property      | Type     | Required | Description                                                                                                                             |
-|---------------|----------|----------|-----------------------------------------------------------------------------------------------------------------------------------------|
-| `calcs`       | string[] | **Yes**  |                                                                                                                                         |
-| `displayMode` | string   | **Yes**  | TODO docs<br/>Note: "hidden" needs to remain as an option for plugins compatibility<br/>Possible values are: `list`, `table`, `hidden`. |
-| `placement`   | string   | **Yes**  | TODO docs<br/>Possible values are: `bottom`, `right`.                                                                                   |
-| `showLegend`  | boolean  | **Yes**  |                                                                                                                                         |
-| `asTable`     | boolean  | No       |                                                                                                                                         |
-| `isVisible`   | boolean  | No       |                                                                                                                                         |
-| `sortBy`      | string   | No       |                                                                                                                                         |
-| `sortDesc`    | boolean  | No       |                                                                                                                                         |
-| `width`       | number   | No       |                                                                                                                                         |
 
 ### VizTooltipOptions
 

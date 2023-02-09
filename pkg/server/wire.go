@@ -69,6 +69,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/hooks"
+	ldapapi "github.com/grafana/grafana/pkg/services/ldap/api"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/live"
@@ -249,6 +250,7 @@ var wireBasicSet = wire.NewSet(
 	tracing.ProvideService,
 	metrics.ProvideService,
 	testdatasource.ProvideService,
+	ldapapi.ProvideService,
 	opentsdb.ProvideService,
 	social.ProvideService,
 	influxdb.ProvideService,

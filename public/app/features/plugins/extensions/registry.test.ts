@@ -7,7 +7,7 @@ describe('Plugin registry', () => {
     const registry = createPluginExtensionsRegistry({
       'belugacdn-app': createConfig([
         {
-          target: 'plugins/belugacdn-app/menu',
+          placement: 'plugins/belugacdn-app/menu',
           title: 'The title',
           type: PluginExtensionTypes.link,
           description: 'Incidents are occurring!',
@@ -16,7 +16,7 @@ describe('Plugin registry', () => {
       ]),
       'strava-app': createConfig([
         {
-          target: 'plugins/strava-app/menu',
+          placement: 'plugins/strava-app/menu',
           title: 'The title',
           type: PluginExtensionTypes.link,
           description: 'Incidents are occurring!',
@@ -25,14 +25,14 @@ describe('Plugin registry', () => {
       ]),
       'duplicate-links-app': createConfig([
         {
-          target: 'plugins/duplicate-links-app/menu',
+          placement: 'plugins/duplicate-links-app/menu',
           title: 'The title',
           type: PluginExtensionTypes.link,
           description: 'Incidents are occurring!',
           path: '/incidents/declare',
         },
         {
-          target: 'plugins/duplicate-links-app/menu',
+          placement: 'plugins/duplicate-links-app/menu',
           title: 'The title',
           type: PluginExtensionTypes.link,
           description: 'Incidents are occurring!',
@@ -49,7 +49,7 @@ describe('Plugin registry', () => {
         title: 'The title',
         type: 'link',
         description: 'Incidents are occurring!',
-        href: '/a/belugacdn-app/incidents/declare',
+        path: '/a/belugacdn-app/incidents/declare',
         key: 539074708,
       });
     });
@@ -68,7 +68,7 @@ describe('Plugin registry', () => {
         title: 'The title',
         type: 'link',
         description: 'Incidents are occurring!',
-        href: '/a/belugacdn-app/incidents/declare',
+        path: '/a/belugacdn-app/incidents/declare',
         key: 539074708,
       });
 
@@ -76,7 +76,7 @@ describe('Plugin registry', () => {
         title: 'The title',
         type: 'link',
         description: 'Incidents are occurring!',
-        href: '/a/strava-app/incidents/declare',
+        path: '/a/strava-app/incidents/declare',
         key: -1637066384,
       });
     });

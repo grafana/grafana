@@ -506,6 +506,9 @@ type Cfg struct {
 
 	SecureSocksDSProxy SecureSocksDSProxySettings
 
+	// SAML Auth
+	SAMLSkipOrgRoleSync bool
+
 	// Okta OAuth
 	OktaSkipOrgRoleSync bool
 
@@ -1109,6 +1112,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 		cfg.PluginsEnableAlpha = true
 	}
 
+	cfg.readSAMLConfig()
 	cfg.readLDAPConfig()
 	cfg.handleAWSConfig()
 	cfg.readAzureSettings()
@@ -1206,6 +1210,11 @@ type RemoteCacheOptions struct {
 	ConnStr    string
 	Prefix     string
 	Encryption bool
+}
+
+func (cfg *Cfg) readSAMLConfig() {
+	samlSec := cfg.Raw.Section("auth.saml")
+	cfg.SAMLSkipOrgRoleSync = samlSec.Key("skip_org_role_sync").MustBool(false)
 }
 
 func (cfg *Cfg) readLDAPConfig() {
