@@ -9,10 +9,10 @@ export async function preloadPlugins(apps: Record<string, AppPluginConfig> = {})
 }
 
 async function preloadPlugin(plugin: AppPluginConfig): Promise<void> {
-  const { path, version } = plugin;
+  const { path, version, id } = plugin;
   try {
     const { plugin } = await importPluginModule(path, version);
-    setExtensionItemCallback(plugin);
+    setExtensionItemCallback(id, plugin);
   } catch (error: unknown) {
     console.error(`Failed to load plugin: ${path} (version: ${version})`, error);
   }

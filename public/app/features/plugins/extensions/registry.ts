@@ -6,9 +6,9 @@ import {
   PluginsExtensionRegistry,
 } from '@grafana/runtime';
 
-export function createPluginExtensionsRegistry(apps: Record<string, AppPluginConfig> = {}): PluginsExtensionRegistry {
-  const registry: PluginsExtensionRegistry = {};
+const registry: PluginsExtensionRegistry = {};
 
+export function createPluginExtensionsRegistry(apps: Record<string, AppPluginConfig> = {}): PluginsExtensionRegistry {
   for (const [pluginId, config] of Object.entries(apps)) {
     const extensions = config.extensions;
 
@@ -37,14 +37,33 @@ export function createPluginExtensionsRegistry(apps: Record<string, AppPluginCon
   return Object.freeze(registry);
 }
 
-export function setExtensionItemCallback(app: AppPlugin) {
-  console.log(app.extensionOverrides);
+export function setExtensionItemCallback(pluginId: string, app: AppPlugin) {
+  console.log('all overrides', app.extensionOverrides);
+
+  for (const overrideId of Object.keys(app.extensionOverrides)) {
+    const item = Object.values(registry).reduce<PluginsExtensionLink | undefined>(
+      (theone: PluginsExtensionLink | undefined, items: PluginsExtensionLink[]) => {
+        if (theone) {
+          return theone;
+        }
+        return items.find((i) => i.id === overrideId && i.pluginId === pluginId);
+      },
+      undefined
+    );
+
+    if (item) {
+      console.log('item found', item);
+      item.override = app.extensionOverrides[overrideId];
+    }
+  }
 }
 
 function createRegistryItem(pluginId: string, extension: PluginsExtensionLinkConfig): PluginsExtensionLink {
   const path = `/a/${pluginId}${extension.path}`;
 
   return {
+    id: extension.id,
+    pluginId: pluginId,
     type: PluginExtensionTypes.link,
     title: extension.title,
     description: extension.description,

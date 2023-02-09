@@ -135,6 +135,8 @@ describe('getPanelMenu()', () => {
     setPluginsExtensionRegistry({
       [GrafanaExtensions.DashboardPanelMenu]: [
         {
+          pluginId: 'grafana-app',
+          id: 'declare-incident',
           type: 'link',
           title: 'Declare incident',
           description: 'Declaring an incident in the app',

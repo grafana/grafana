@@ -1,3 +1,5 @@
+import { PluginsExtensionLink } from '@grafana/data';
+
 import { getPluginsExtensionRegistry, PluginsExtension } from './registry';
 
 export type GetPluginExtensionsOptions<T extends object> = {
@@ -22,6 +24,7 @@ export class PluginExtensionsMissingError extends Error {
 
 export function getPluginExtensions<T extends object = {}>({
   placement,
+  context,
 }: GetPluginExtensionsOptions<T>): PluginExtensionsResult {
   const registry = getPluginsExtensionRegistry();
   const extensions = registry[placement];
@@ -33,5 +36,17 @@ export function getPluginExtensions<T extends object = {}>({
     };
   }
 
-  return { extensions };
+  return {
+    extensions: extensions.reduce<PluginsExtensionLink[]>((all, e) => {
+      if (!e.override) {
+        return [...all, e];
+      }
+      // TODO: map into other object without all values.
+      const overriden = e.override(e, context);
+      if (overriden) {
+        return [...all, { ...e, ...overriden }];
+      }
+      return all;
+    }, []),
+  };
 }
