@@ -865,80 +865,85 @@ Administrators can increase this if they experience OAuth login state mismatch e
 
 ### skip_org_role_sync
 
-Use this setting when you want to manage the organization roles of your users from within Grafana or to prevent synchronization conflicts when they are synchronized from another provider.
+`skip_org_role_sync` prevents the synchronization of organization roles for a specific OAuth integration, while the deprecated setting `oauth_skip_org_role_update_sync` affects all configured OAuth providers.
 
-Skip forced assignment of OrgID `1` or `auto_assign_org_id` for external logins. Default is `false`. Use this setting to allow users with external login to be manually assigned to multiple organizations.
+`skip_org_role_sync` default value is `false`.
 
-By default, the users' organization and role is reset on every new login. When a user logs in the first time, Grafana sets the organization role based on the value specified in `AutoAssignOrgRole`.
+With `skip_org_role_sync` set to `false`, the users' organization and role is reset on every new login, based on the external provider's role. See provider specifities in the tables below.
 
-`skip_org_role_sync` is an option for preventing the synchronization of organization roles for a specific OAuth integration. The deprecated setting `oauth_skip_org_role_update_sync` affects all configured OAuth providers, while `skip_org_role_sync` only affects the specific provider. The behavior of both settings, with the default value and the value of `skip_org_role_sync`, can be seen in the tables below:
+With `skip_org_role_sync` set to `true`, when a user logs in for the first time, Grafana sets the organization role based on the value specified in `auto_assign_org_role` and forces the organization to `auto_assign_org_id` when specified, otherwise it falls back to OrgID `1`.
+
+Use this setting when you want to manage the organization roles of your users from within Grafana and be able to manually assign them to multiple organizations, or to prevent synchronization conflicts when they can be synchronized from another provider.
+
+The behavior of `oauth_skip_org_role_update_sync` and `skip_org_role_sync`, can be seen in the tables below:
 
 **[auth.grafana_com]**
-| `oauth_skip_org_role_sync_update` | `skip_org_role_sync` | **Resulting Org Role** |
-| --- | --- | --- |
-| false | false | Sync org role with Grafana.com role. |
-| true | false | Skips org role sync for all OAuth providers including Grafana.com users. |
-| false | true | Skips org role sync for Grafana.com users. |
-| true | true | Skips org role sync for Grafana.com users and all other OAuth providers. |
+| `oauth_skip_org_role_update_sync` | `skip_org_role_sync` | **Resulting Org Role** | Can be changed through UI |
+|-----------------------------------|----------------------|-------------------------------------------------------------------------------------------------------------------------------------|---------------------------|
+| false | false | Synchronize user organization role with Grafana.com role. If no role is provided, `auto_assign_org_role` is set. | false |
+| true | false | Skips organization role synchronization for all OAuth providers' users. Role is set to `auto_assign_org_role`. | true |
+| false | true | Skips organization role synchronization for Grafana.com users. Role is set to `auto_assign_org_role`. | true |
+| true | true | Skips organization role synchronization for Grafana.com users and all other OAuth providers. Role is set to `auto_assign_org_role`. | true |
 
 **[auth.azuread]**
-| `oauth_skip_org_role_sync_update` | `skip_org_role_sync` | **Resulting Org Role** |
-| --- | --- | --- |
-| false | false | Sync organization roles AzureAD. |
-| true | false | Skips org role sync for OAuth providers including AzureAD users. |
-| false | true | Skips org role sync for AzureAD users. |
-| true | true | Skips org role sync for AzureAD users and all other OAuth providers. |
+| `oauth_skip_org_role_update_sync` | `skip_org_role_sync` | **Resulting Org Role** | Can be changed through UI |
+|-----------------------------------|----------------------|---------------------------------------------------------------------------------------------------------------------------------|---------------------------|
+| false | false | Synchronize user organization role with AzureAD role. If no role is provided, `auto_assign_org_role` is set. | false |
+| true | false | Skips organization role synchronization for all OAuth providers' users. Role is set to `auto_assign_org_role`. | true |
+| false | true | Skips organization role synchronization for AzureAD users. Role is set to `auto_assign_org_role`. | true |
+| true | true | Skips organization role synchronization for AzureAD users and all other OAuth providers. Role is set to `auto_assign_org_role`. | true |
 
 **[auth.google]**
-| `oauth_skip_org_role_sync_update` | `skip_org_role_sync` | **Resulting Org Role** |
-| --- | --- | --- | --- |
-| false | false | User organization roles are set with `defaultRole` and cannot be changed. |
-| true | false | User organization roles are set with `defaultRole` for Google. For other providers, the synchronization will be skipped, and the org role can be changed, along with other OAuth provider users' org roles. |
-| false | true | User organization roles are set with `defaultRole` and the org role can be changed for Google synced users. |
-| true | true | User organization roles are set with `defaultRole` for Google. For other providers, the synchronization will be skipped, and the org role can be changed, along with other OAuth provider users' org roles. |
+| `oauth_skip_org_role_update_sync` | `skip_org_role_sync` | **Resulting Org Role** | Can be changed through UI |
+|-----------------------------------|----------------------|----------------------------------------------------------------------------------------|---------------------------|
+| false | false | User organization role is set to `auto_assign_org_role` and cannot be changed. | false |
+| true | false | User organization role is set to `auto_assign_org_role` and can be changed in Grafana. | true |
+| false | true | User organization role is set to `auto_assign_org_role` and can be changed in Grafana. | true |
+| true | true | User organization role is set to `auto_assign_org_role` and can be changed in Grafana. | true |
 
-> **Note:** For GitLab, GitHub, Okta, Generic OAuth providers Grafana syncs organization roles and sets Grafana Admins. This also impacts `allow_assign_grafana_admin` setting, by not syncing the grafana admin role from the provider.
+> **Note:** For GitLab, GitHub, Okta, Generic OAuth providers Grafana synchronizes organization roles and sets Grafana Admins. The `allow_assign_grafana_admin` setting is also accounted for, to allow or not setting the Grafana Admin role from the external provider.
 
 **[auth.github]**
-| `oauth_skip_org_role_sync_update` | `skip_org_role_sync` | **Resulting Org Role** |
-| --- | --- | --- |
-| false | false | User organization roles are set with `defaultRole` and cannot be changed. |
-| true | false | User organization roles are set with `defaultRole`, and Grafana Admins are set to `false` for all OAuth providers, and the org role can be changed. |
-| false | true | GitHub users organization roles are set with `defaultRole`, and the organization role can be changed. |
-| true | true | User organization roles are set with `defaultRole`, and Grafana Admins are set to `false` for all OAuth providers, and the org role can be changed. |
+| `oauth_skip_org_role_update_sync` | `skip_org_role_sync` | **Resulting Org Role** | Can be changed through UI |
+|-----------------------------------|----------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------|
+| false | false | Synchronize user organization role with GitHub role. If no role is provided, `auto_assign_org_role` is set. | false |
+| true | false | Skips organization role synchronization for all OAuth providers' users. Role is set to `auto_assign_org_role`. | true |
+| false | true | Skips organization role and Grafana Admin synchronization for GitHub users. Role is set to `auto_assign_org_role`. | true |
+| true | true | Skips organization role synchronization for all OAuth providers and skips Grafana Admin synchronization for GitHub users. Role is set to `auto_assign_org_role`. | true |
 
 **[auth.gitlab]**
-| `oauth_skip_org_role_sync_update` | `skip_org_role_sync` | **Resulting Org Role** |
-| --- | --- | --- |
-| false | false | User organization roles are set with `defaultRole` and cannot be changed. |
-| true | false | User organization roles are set with `defaultRole`, and Grafana Admins are set to `false` for all OAuth providers, and the org role can be changed. |
-| false | true | GitLab users organization roles are set with `defaultRole`, and the organization role can be changed. |
-| true | true | User organization roles are set with `defaultRole`, and Grafana Admins are set to `false` for all OAuth providers, and the org role can be changed. |
+| `oauth_skip_org_role_update_sync` | `skip_org_role_sync` | **Resulting Org Role** | Can be changed through UI |
+|-----------------------------------|----------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------|
+| false | false | Synchronize user organization role with Gitlab role. If no role is provided, `auto_assign_org_role` is set. | false |
+| true | false | Skips organization role synchronization for all OAuth providers' users. Role is set to `auto_assign_org_role`. | true |
+| false | true | Skips organization role and Grafana Admin synchronization for Gitlab users. Role is set to `auto_assign_org_role`. | true |
+| true | true | Skips organization role synchronization for all OAuth providers and skips Grafana Admin synchronization for Gitlab users. Role is set to `auto_assign_org_role`. | true |
 
 **[auth.generic_oauth]**
-| `oauth_skip_org_role_sync_update` | `skip_org_role_sync` | **Resulting Org Role** |
-| --- | --- | --- |
-| false | false | User organization roles are set with `defaultRole` and cannot be changed. |
-| true | false | User organization roles are set with `defaultRole`, and Grafana Admins are set to `false` for all OAuth providers, and the org role can be changed. |
-| false | true | Generic OAuth users organization roles are set with `defaultRole`, and the organization role can be changed. |
-| true | true | User organization roles are set with `defaultRole`, and Grafana Admins are set to `false` for all OAuth providers, and the org role can be changed. |
+| `oauth_skip_org_role_update_sync` | `skip_org_role_sync` | **Resulting Org Role** | Can be changed through UI |
+|-----------------------------------|----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------|
+| false | false | Synchronize user organization role with the provider's role. If no role is provided, `auto_assign_org_role` is set. | false |
+| true | false | Skips organization role synchronization for all OAuth providers' users. Role is set to `auto_assign_org_role`. | true |
+| false | true | Skips organization role and Grafana Admin synchronization for the provider's users. Role is set to `auto_assign_org_role`. | true |
+| true | true | Skips organization role synchronization for all OAuth providers and skips Grafana Admin synchronization for the provider's users. Role is set to `auto_assign_org_role`. | true |
 
 **[auth.okta]**
-| `oauth_skip_org_role_sync_update` | `skip_org_role_sync` | **Resulting Org Role** |
-| --- | --- | --- |
-| false | false | Organization Role Synced with Okta, user organization roles are set with `defaultRole` by default. |
-| true | false | User organization roles are set with `defaultRole`, and Grafana Admins are set to `false` for all OAuth providers, and the org role can be changed. |
-| false | true | Okta users organization roles are set with `defaultRole`, and the organization role can be changed. |
-| true | true | User organization roles are set with `defaultRole`, and Grafana Admins are set to `false` for all OAuth providers, and the org role can be changed. |
+| `oauth_skip_org_role_update_sync` | `skip_org_role_sync` | **Resulting Org Role** | Can be changed through UI |
+|-----------------------------------|----------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------|
+| false | false | Synchronize user organization role with Okta role. If no role is provided, `auto_assign_org_role` is set. | false |
+| true | false | Skips organization role synchronization for all OAuth providers' users. Role is set to `auto_assign_org_role`. | true |
+| false | true | Skips organization role and Grafana Admin synchronization for Okta users. Role is set to `auto_assign_org_role`. | true |
+| true | true | Skips organization role synchronization for all OAuth providers and skips Grafana Admin synchronization for Okta users. Role is set to `auto_assign_org_role`. | true |
 
 #### Example skip_org_role_sync
 
 [auth.google]
-| `oauth_skip_org_role_sync_update` | `skip_org_role_sync` | **Resulting Org Role** | **Example Scenario**
-| false | false | Synced with Google Auth organization roles | A user logs in to Grafana using their Google account and their organization role is automatically set based on their role in Google.
-| true | false | Skipped sync of organization roles from all OAuth providers | A user logs in to Grafana using their Google account and their organization role is **not** set based on their role from any provider but from Grafana.
-| false | true | Skipped sync of organization roles Google | A user logs in to Grafana using their Google account and their organization role is **not** set based on their role in Google but from Grafana.
-| true | true | Skipped sync of organization roles from all OAuth providers including Google | A user logs in to Grafana using their Google account and their organization role is **not** set based on their role in Google or any other provider but from Grafana.
+| `oauth_skip_org_role_update_sync` | `skip_org_role_sync` | **Resulting Org Role** | **Example Scenario** |
+|-----------------------------------|----------------------|-----------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| false | false | Synchronized with Google Auth organization roles | A user logs in to Grafana using their Google account and their organization role is automatically set based on their role in Google. |
+| true | false | Skipped synchronization of organization roles from all OAuth providers | A user logs in to Grafana using their Google account and their organization role is **not** set based on their role. But Grafana Administrators can modify the role from the UI. |
+| false | true | Skipped synchronization of organization roles Google | A user logs in to Grafana using their Google account and their organization role is **not** set based on their role in Google. But Grafana Administrators can modify the role from the UI. |
+| true | true | Skipped synchronization of organization roles from all OAuth providers including Google | A user logs in to Grafana using their Google account and their organization role is **not** set based on their role in Google. But Grafana Administrators can modify the role from the UI. |
 
 ### api_key_max_seconds_to_live
 
