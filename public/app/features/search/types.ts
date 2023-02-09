@@ -11,29 +11,14 @@ export enum DashboardSearchItemType {
 }
 
 /**
- * @deprecated Used only in the deprecated
+ * @deprecated Use DashboardSearchItem and use UIDs instead of IDs
  */
-interface DashboardSection {
-  id?: number;
-  uid?: string;
-  title: string;
+export interface DashboardSearchHit extends WithAccessControlMetadata {
   expanded?: boolean;
-  url: string;
-  icon?: string;
   score?: number;
-  checked?: boolean;
-  items: DashboardSectionItem[];
-  toggle?: (section: DashboardSection) => Promise<DashboardSection>;
-  selected?: boolean;
-  type: DashboardSearchItemType;
   slug?: string;
   itemsFetching?: boolean;
-}
 
-/**
- * @deprecated
- */
-interface DashboardSectionItem {
   checked?: boolean;
   folderId?: number;
   folderTitle?: string;
@@ -45,17 +30,13 @@ interface DashboardSectionItem {
   tags: string[];
   title: string;
   type: DashboardSearchItemType;
-  icon?: string; // used for grid view
+  icon?: string;
   uid?: string;
   uri: string;
   url: string;
   sortMeta?: number;
   sortMetaName?: string;
 }
-/**
- * @deprecated - It uses dashboard ID which is deprecated in favor of dashboard UID. Please, use DashboardSearchItem instead.
- */
-export interface DashboardSearchHit extends DashboardSectionItem, DashboardSection, WithAccessControlMetadata {}
 
 export interface DashboardSearchItem {
   uid: string;
