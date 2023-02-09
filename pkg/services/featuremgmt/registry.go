@@ -62,12 +62,6 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
-			Name:            "showFeatureFlagsInUI",
-			Description:     "Show feature flags in the settings UI",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-		},
-		{
 			Name:        "publicDashboards",
 			Description: "Enables public access to dashboards",
 			State:       FeatureStateAlpha,
