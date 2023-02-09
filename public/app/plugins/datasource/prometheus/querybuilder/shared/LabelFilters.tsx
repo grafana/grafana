@@ -15,6 +15,7 @@ export interface Props {
   onChange: (labelFilters: QueryBuilderLabelFilter[]) => void;
   onGetLabelNames: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<SelectableValue[]>;
   onGetLabelValues: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<SelectableValue[]>;
+  setLabels: React.Dispatch<React.SetStateAction<Array<Partial<QueryBuilderLabelFilter>>>>;
   /** If set to true, component will show error message until at least 1 filter is selected */
   labelFilterRequired?: boolean;
 }
@@ -25,6 +26,7 @@ export function LabelFilters({
   onGetLabelNames,
   onGetLabelValues,
   labelFilterRequired,
+  setLabels,
 }: Props) {
   const defaultOp = '=';
   const [items, setItems] = useState<Array<Partial<QueryBuilderLabelFilter>>>([{ op: defaultOp }]);
@@ -39,6 +41,7 @@ export function LabelFilters({
 
   const onLabelsChange = (newItems: Array<Partial<QueryBuilderLabelFilter>>) => {
     setItems(newItems);
+    setLabels(newItems);
 
     // Extract full label filters with both label & value
     const newLabels = newItems.filter((x) => x.label != null && x.value != null);
@@ -62,6 +65,7 @@ export function LabelFilters({
           renderItem={(item: Partial<QueryBuilderLabelFilter>, onChangeItem, onDelete) => (
             <LabelFilterItem
               item={item}
+              items={items}
               defaultOp={defaultOp}
               onChange={onChangeItem}
               onDelete={onDelete}

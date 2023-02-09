@@ -7,6 +7,7 @@ import { LabelParamEditor } from '../components/LabelParamEditor';
 import { PromVisualQueryOperationCategory } from '../types';
 
 import {
+  QueryBuilderLabelFilter,
   QueryBuilderOperation,
   QueryBuilderOperationDef,
   QueryBuilderOperationParamDef,
@@ -320,4 +321,46 @@ export function getOnLabelAddedHandler(changeToOperationId: string) {
     }
     return op;
   };
+}
+
+export function isConflictingSelector(
+  newLabel: Partial<QueryBuilderLabelFilter>,
+  labels: Array<Partial<QueryBuilderLabelFilter>>
+): boolean {
+  if (labels.length < 2) {
+    return false;
+  }
+
+  if (!newLabel.label || !newLabel.op || !newLabel.value) {
+    return false;
+  }
+
+  let isConflicting = false;
+
+  const labelsWithoutNew = labels.filter((label) => {
+    if (label.label === newLabel.label && label.op === newLabel.op && label.value === newLabel.value) {
+      return;
+    }
+
+    if (!label.label || !label.op || !label.value) {
+      return;
+    }
+
+    return label;
+  });
+
+  labelsWithoutNew.forEach((label) => {
+    if (label.label !== newLabel.label || label.value !== newLabel.value) {
+      return;
+    }
+
+    if (
+      (label.op!.startsWith('!') && !String(newLabel.op).startsWith('!')) ||
+      (!label.op!.startsWith('!') && String(newLabel.op).startsWith('!'))
+    ) {
+      isConflicting = true;
+    }
+  });
+
+  return isConflicting;
 }
