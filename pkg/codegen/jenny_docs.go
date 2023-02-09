@@ -608,7 +608,7 @@ func constraintDescr(prop *schema) string {
 	}
 
 	if prop.Pattern != "" {
-		fmt.Sprintf("\nConstraint: must match `%s`.", prop.Pattern)
+		return fmt.Sprintf("\nConstraint: must match `%s`.", prop.Pattern)
 	}
 
 	return ""
