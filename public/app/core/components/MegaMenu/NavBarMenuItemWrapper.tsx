@@ -4,7 +4,6 @@ import React from 'react';
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { toIconName, useStyles2 } from '@grafana/ui';
 
-import { getNavTitle } from '../NavBar/navBarItem-translations';
 import { isMatchOrChildMatch } from '../NavBar/utils';
 
 import { NavBarMenuItem } from './NavBarMenuItem';
@@ -21,12 +20,11 @@ export function NavBarMenuItemWrapper({
 }) {
   const styles = useStyles2(getStyles);
 
-  if (link.emptyMessageId && !linkHasChildren(link)) {
-    const emptyMessageTranslated = getNavTitle(link.emptyMessageId);
+  if (link.emptyMessage && !linkHasChildren(link)) {
     return (
-      <NavBarMenuSection link={link}>
+      <NavBarMenuSection onClose={onClose} link={link} activeItem={activeItem}>
         <ul className={styles.children}>
-          <div className={styles.emptyMessage}>{emptyMessageTranslated}</div>
+          <div className={styles.emptyMessage}>{link.emptyMessage}</div>
         </ul>
       </NavBarMenuSection>
     );
@@ -52,7 +50,7 @@ export function NavBarMenuItemWrapper({
                   target={childLink.target}
                   url={childLink.url}
                 >
-                  {getNavTitle(childLink.id) ?? childLink.text}
+                  {childLink.text}
                 </NavBarMenuItem>
               )
             );

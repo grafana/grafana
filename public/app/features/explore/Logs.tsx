@@ -438,7 +438,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                   id={`prettify_${exploreId}`}
                 />
               </InlineField>
-              <InlineField label="Dedup" className={styles.horizontalInlineLabel} transparent>
+              <InlineField label="Deduplication" className={styles.horizontalInlineLabel} transparent>
                 <RadioButtonGroup
                   options={Object.values(LogsDedupStrategy).map((dedupType) => ({
                     label: capitalize(dedupType),

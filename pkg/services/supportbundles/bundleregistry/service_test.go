@@ -1,4 +1,4 @@
-package supportbundlesimpl
+package bundleregistry
 
 import (
 	"context"
@@ -6,22 +6,11 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestService_RegisterSupportItemCollector(t *testing.T) {
-	s := &Service{
-		cfg:            &setting.Cfg{},
-		store:          nil,
-		pluginStore:    nil,
-		pluginSettings: nil,
-		accessControl:  nil,
-		features:       nil,
-		log:            log.NewNopLogger(),
-		collectors:     map[string]supportbundles.Collector{},
-	}
+	s := ProvideService()
 	collector := supportbundles.Collector{
 		UID:               "test",
 		DisplayName:       "test",
@@ -36,10 +25,12 @@ func TestService_RegisterSupportItemCollector(t *testing.T) {
 	t.Run("should register collector", func(t *testing.T) {
 		s.RegisterSupportItemCollector(collector)
 		require.Len(t, s.collectors, 1)
+		require.Len(t, s.Collectors(), 1)
 	})
 
 	t.Run("should not register collector with same UID", func(t *testing.T) {
 		s.RegisterSupportItemCollector(collector)
 		require.Len(t, s.collectors, 1)
+		require.Len(t, s.Collectors(), 1)
 	})
 }
