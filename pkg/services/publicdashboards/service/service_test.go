@@ -145,6 +145,7 @@ func TestCreatePublicDashboard(t *testing.T) {
 				IsEnabled:            true,
 				AnnotationsEnabled:   false,
 				TimeSelectionEnabled: true,
+				Share:                EmailShareType,
 				DashboardUid:         "NOTTHESAME",
 				OrgId:                9999999,
 				TimeSettings:         timeSettings,
@@ -169,6 +170,7 @@ func TestCreatePublicDashboard(t *testing.T) {
 		assert.NotEqual(t, &time.Time{}, pubdash.CreatedAt)
 		// Time settings set by db
 		assert.Equal(t, timeSettings, pubdash.TimeSettings)
+		assert.Equal(t, dto.PublicDashboard.Share, pubdash.Share)
 		// accessToken is valid uuid
 		_, err = uuid.Parse(pubdash.AccessToken)
 		require.NoError(t, err, "expected a valid UUID, got %s", pubdash.AccessToken)
@@ -320,6 +322,39 @@ func TestCreatePublicDashboard(t *testing.T) {
 		_, err = service.Create(context.Background(), SignedInUser, dto)
 		require.Error(t, err)
 		assert.True(t, ErrBadRequest.Is(err))
+	})
+
+	t.Run("Validate pubdash has default share value", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		quotaService := quotatest.New(false, nil)
+		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
+		require.NoError(t, err)
+		publicdashboardStore := database.ProvideStore(sqlStore)
+		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
+
+		service := &PublicDashboardServiceImpl{
+			log:   log.New("test.logger"),
+			store: publicdashboardStore,
+		}
+
+		dto := &SavePublicDashboardDTO{
+			DashboardUid: dashboard.UID,
+			OrgId:        dashboard.OrgID,
+			UserId:       7,
+			PublicDashboard: &PublicDashboard{
+				IsEnabled:    true,
+				DashboardUid: "NOTTHESAME",
+				OrgId:        9999999,
+			},
+		}
+
+		_, err = service.Create(context.Background(), SignedInUser, dto)
+		require.NoError(t, err)
+
+		pubdash, err := service.FindByDashboardUid(context.Background(), dashboard.OrgID, dashboard.UID)
+		require.NoError(t, err)
+		// if share type is empty should be populated with public by default
+		assert.Equal(t, PublicShareType, pubdash.Share)
 	})
 }
 
