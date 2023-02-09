@@ -8,13 +8,26 @@ import { getRanges } from './metricTimeSplit';
 import { combineResponses, resultLimitReached } from './queryUtils';
 import { LokiQuery } from './types';
 
-function partitionTimeRange(originalTimeRange: TimeRange, intervalMs: number): TimeRange[] {
+function partitionTimeRange(originalTimeRange: TimeRange, intervalMs: number, resolution: number): TimeRange[] {
   // we currently assume we are only running metric queries here.
   // for logs-queries we will have to use a different time-range-split algorithm.
+
+  // the `step` value that will be finally sent to Loki is rougly the same as `intervalMs`,
+  // but there are some complications.
+  // we need to replicate this algo:
+  //
+  // https://github.com/grafana/grafana/blob/main/pkg/tsdb/loki/step.go#L23
+
+  const start = originalTimeRange.from.toDate().getTime();
+  const end = originalTimeRange.to.toDate().getTime();
+
+  const safeStep = Math.ceil((end - start) / 11000);
+  const step = Math.max(intervalMs * resolution, safeStep);
+
   const ranges = getRanges(
-    originalTimeRange.from.toDate().getTime(),
-    originalTimeRange.to.toDate().getTime(),
-    intervalMs,
+    start,
+    end,
+    step,
     60 * 1000 // we go with a hardcoded 1minute for now
   );
 
@@ -36,7 +49,8 @@ function partitionTimeRange(originalTimeRange: TimeRange, intervalMs: number): T
 
 export function runPartitionedQuery(datasource: LokiDatasource, request: DataQueryRequest<LokiQuery>) {
   let mergedResponse: DataQueryResponse | null;
-  const partition = partitionTimeRange(request.range, request.intervalMs);
+  // FIXME: the following line assumes every query has the same resolution
+  const partition = partitionTimeRange(request.range, request.intervalMs, request.targets[0].resolution ?? 1);
   const totalRequests = partition.length;
 
   const next = (subscriber: Subscriber<DataQueryResponse>, requestN: number) => {
