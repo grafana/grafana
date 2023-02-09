@@ -201,8 +201,8 @@ func (h *AnnotationBackend) recordAnnotations(ctx context.Context, panel *panelK
 
 	if err := h.annotations.SaveMany(ctx, annotations); err != nil {
 		logger.Error("Error saving alert annotation batch", "error", err)
-		h.metrics.WritesFailedTotal.Inc()
-		h.metrics.TransitionsFailedTotal.WithLabelValues(fmt.Sprint(orgID)).Add(float64(len(annotations)))
+		h.metrics.WritesFailed.Inc()
+		h.metrics.TransitionsFailed.WithLabelValues(fmt.Sprint(orgID)).Add(float64(len(annotations)))
 		return fmt.Errorf("error saving alert annotation batch: %w", err)
 	}
 
