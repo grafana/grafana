@@ -7,7 +7,6 @@ import (
 )
 
 type Historian struct {
-	Registerer            prometheus.Registerer
 	TransitionsTotal      *prometheus.CounterVec
 	WriteFailuresTotal    prometheus.Counter
 	ActiveWriteGoroutines prometheus.Gauge
@@ -24,7 +23,6 @@ func NewHistorianMetrics(r prometheus.Registerer) *Historian {
 			Help:      "Histogram of request durations to the state history store.",
 			Buckets:   instrument.DefBuckets,
 		}, instrument.HistogramCollectorBuckets)),
-		Registerer: r,
 		TransitionsTotal: promauto.With(r).NewCounterVec(prometheus.CounterOpts{
 			Namespace: Namespace,
 			Subsystem: Subsystem,
