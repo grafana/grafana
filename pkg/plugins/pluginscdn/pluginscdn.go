@@ -47,11 +47,14 @@ func (s *Service) PluginSupported(pluginID string) bool {
 }
 
 // BaseURL returns the absolute base URL of the plugins CDN.
+// This is the "fixed" part of the URL (protocol + host + root url).
 // If the plugins CDN is disabled, it returns an empty string.
 func (s *Service) BaseURL() (string, error) {
 	if !s.IsEnabled() {
 		return "", nil
 	}
+	// Everything before the first "{id}" is static and thus considered as the "base path".
+	// If it does not exist, it returns an error.
 	basePathEndPos := strings.Index(s.cfg.PluginsCDNURLTemplate, "/{id}/")
 	if basePathEndPos == -1 {
 		return "", fmt.Errorf("invalid cdn url template: /{id}/ not found")

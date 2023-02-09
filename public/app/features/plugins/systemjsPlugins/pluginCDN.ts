@@ -11,14 +11,18 @@ export function extractPluginNameVersionFromUrl(address: string) {
     if (i > 1 && !match[i].match(/\d+\./)) {
       continue;
     }
+    // version -> first part that contains digits and at least a dot
     name = match[i - 1];
     version = match[i];
+    break;
   }
   return { name, version };
 }
 
 export function locateFromCDN(load: SystemJSLoad) {
   const { address } = load;
+  // add the pathname (the part after the host) to the URL path when splitting or
+  // it'll be repeated twice.
   let rootPath = new URL(config.pluginsCDNBaseURL).pathname;
   if (!rootPath.endsWith('/')) {
     rootPath = rootPath + '/';
