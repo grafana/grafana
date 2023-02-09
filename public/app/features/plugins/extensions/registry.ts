@@ -1,9 +1,9 @@
+import { AppPlugin, PluginsExtensionLink } from '@grafana/data';
 import {
   AppPluginConfig,
   PluginExtensionTypes,
   PluginsExtensionLinkConfig,
   PluginsExtensionRegistry,
-  PluginsExtensionLink,
 } from '@grafana/runtime';
 
 export function createPluginExtensionsRegistry(apps: Record<string, AppPluginConfig> = {}): PluginsExtensionRegistry {
@@ -37,16 +37,20 @@ export function createPluginExtensionsRegistry(apps: Record<string, AppPluginCon
   return Object.freeze(registry);
 }
 
+export function setExtensionItemCallback(app: AppPlugin) {
+  console.log(app.extensionOverrides);
+}
+
 function createRegistryItem(pluginId: string, extension: PluginsExtensionLinkConfig): PluginsExtensionLink {
   const path = `/a/${pluginId}${extension.path}`;
 
-  return Object.freeze({
+  return {
     type: PluginExtensionTypes.link,
     title: extension.title,
     description: extension.description,
     path: path,
     key: hashKey(`${extension.title}${path}`),
-  });
+  };
 }
 
 function hashKey(key: string): number {

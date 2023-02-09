@@ -9,7 +9,7 @@ export * from './live';
 export * from './LocationService';
 export * from './appEvents';
 export { setPluginsExtensionRegistry } from './pluginExtensions/registry';
-export type { PluginsExtensionRegistry, PluginsExtensionLink, PluginsExtension } from './pluginExtensions/registry';
+export type { PluginsExtensionRegistry, PluginsExtension } from './pluginExtensions/registry';
 export {
   type GetPluginExtensionsOptions,
   type PluginExtensionsResult,

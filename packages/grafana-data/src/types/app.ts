@@ -3,6 +3,7 @@ import { ComponentType } from 'react';
 import { KeyValue } from './data';
 import { NavModel } from './navModel';
 import { PluginMeta, GrafanaPlugin, PluginIncludeType } from './plugin';
+import { PluginsExtensionLinkOverridable } from './pluginExtensions';
 
 /**
  * @public
@@ -52,6 +53,7 @@ export interface AppPluginMeta<T extends KeyValue = KeyValue> extends PluginMeta
 export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppPluginMeta<T>> {
   // Content under: /a/${plugin-id}/*
   root?: ComponentType<AppRootProps<T>>;
+  extensionOverrides: Record<string, LinkExtensionCallback> = {};
 
   /**
    * Called after the module has loaded, and before the app is used.
@@ -90,12 +92,17 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
     }
   }
 
-  configureExtensionLink(id: string, configure: LinkExtensionCallback): void {}
+  configureExtensionLink<P extends object>(id: string, configure: LinkExtensionCallback<P>) {
+    this.extensionOverrides[id] = configure as LinkExtensionCallback;
+    return this;
+  }
 }
 
-type LinkExtensionLink = {};
+type LinkExtensionCallback<T extends object = object> = (
+  link: PluginsExtensionLinkOverridable,
+  context?: T
+) => PluginsExtensionLinkOverridable | undefined;
 
-type LinkExtensionCallback<T extends object> = (context: T, link: LinkExtensionLink) => LinkExtensionLink | undefined;
 /**
  * Defines life cycle of a feature
  * @internal

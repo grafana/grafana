@@ -1,5 +1,6 @@
 import { AppPluginConfig } from '@grafana/runtime';
 
+import { setExtensionItemCallback } from './extensions/registry';
 import { importPluginModule } from './plugin_loader';
 
 export async function preloadPlugins(apps: Record<string, AppPluginConfig> = {}): Promise<void> {
@@ -10,7 +11,8 @@ export async function preloadPlugins(apps: Record<string, AppPluginConfig> = {})
 async function preloadPlugin(plugin: AppPluginConfig): Promise<void> {
   const { path, version } = plugin;
   try {
-    await importPluginModule(path, version);
+    const { plugin } = await importPluginModule(path, version);
+    setExtensionItemCallback(plugin);
   } catch (error: unknown) {
     console.error(`Failed to load plugin: ${path} (version: ${version})`, error);
   }
