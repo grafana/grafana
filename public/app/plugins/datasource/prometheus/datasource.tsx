@@ -22,16 +22,13 @@ import {
   dateMath,
   DateTime,
   dateTime,
-  durationToMilliseconds,
   Field,
   LoadingState,
-  parseDuration,
   QueryFixAction,
   rangeUtil,
   ScopedVars,
   TimeRange,
 } from '@grafana/data';
-import { join } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import {
   BackendDataSourceResponse,
   BackendSrvRequest,
@@ -49,7 +46,7 @@ import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { PromApiFeatures, PromApplication } from 'app/types/unified-alerting-dto';
 
-import { amendTimeSeries, trimTimeSeries } from '../../../features/live/data/amendTimeSeries';
+import { amendTable, trimTable } from '../../../features/live/data/amendTimeSeries';
 
 import { addLabelToQuery } from './add_label_to_query';
 import { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
@@ -553,8 +550,7 @@ export class PrometheusDatasource
                 }
 
                 // frames are identified by their second (non-time) field's name + labels
-                // TODO: also add frame.meta.type, frame name and dataTopic? (exemplars, annotations)
-                // ${frame.meta?.type ?? ''}|${frame.meta?.custom?.resultType ?? ''}|
+                // TODO: maybe also frame.meta.type?
                 let respFrameIdent = getFieldIdent(respFrame.fields[1]);
 
                 let cachedFrame = cachedFrames.find((cached) => getFieldIdent(cached.fields[1]) === respFrameIdent);
@@ -566,51 +562,39 @@ export class PrometheusDatasource
                   // we assume that fields cannot appear/disappear and will all exist in same order
 
                   // amend & re-cache
-                  let prevTimes = cachedFrame.fields[0].values.toArray();
-                  let nextTimes = respFrame.fields[0].values.toArray();
+                  let prevTable = cachedFrame.fields.map((field) => field.values.toArray());
+                  let nextTable = respFrame.fields.map((field) => field.values.toArray());
 
-                  // potentially unaligned timeseries from merged cache and next
-                  let frameData: Array<[times: number[], ...values: any[][]]> = [];
+                  let amendedTable = amendTable(prevTable, nextTable);
 
-                  // skip time field [0]
-                  for (let i = 1; i < respFrame.fields.length; i++) {
-                    let respField = respFrame.fields[i];
-                    let cachedField = cachedFrame.fields[i];
-
-                    const prevVals = cachedField.values.toArray();
-                    const nextVals = respField.values.toArray();
-
-                    const amended = amendTimeSeries([prevTimes, prevVals], [nextTimes, nextVals]);
-                    const trimmed = trimTimeSeries(amended, newFrom, newTo); // todo: in full dataset?
-                    frameData.push(trimmed);
+                  for (let i = 0; i < amendedTable.length; i++) {
+                    cachedFrame.fields[i].values = new ArrayVector(amendedTable[i]);
                   }
-
-                  // align data by joining, set field data, update frame length
-                  // TODO: not needed for exemplars/annotations?
-                  join(frameData).forEach((data, fieldIdx) => {
-                    cachedFrame!.fields[fieldIdx].values = new ArrayVector(data as unknown as any[]);
-                  });
 
                   cachedFrame.length = cachedFrame.fields[0].values.length;
                 }
               });
 
-              // trim all frames in cache? use rawRange?, each cache should be aware of own trim range
-              // purge cache for this target
-              // cachedFrames.forEach((data, key) => {
-              //   if (data[0].length === 0) {
-              //     this.fieldsCache.delete(key);
-              //   }
-              // });
+              // trim all frames to in-view range, evict those that end up with 0 length
+              let nonEmptyCachedFrames: DataFrame[] = [];
 
-              this.cachedFrames.set(targIdent, cachedFrames);
+              cachedFrames.forEach((frame) => {
+                let table = frame.fields.map((field) => field.values.toArray());
+
+                let trimmed = trimTable(table, newFrom, newTo);
+
+                if (trimmed[0].length > 0) {
+                  for (let i = 0; i < trimmed.length; i++) {
+                    frame.fields[i].values = new ArrayVector(trimmed[i]);
+                  }
+                  nonEmptyCachedFrames.push(frame);
+                }
+              });
+
+              this.cachedFrames.set(targIdent, nonEmptyCachedFrames);
               this.cachedSigs.set(targIdent, reqTargSigs.get(targIdent)!);
               this.cachedTos.set(targIdent, newTo);
             });
-
-            // TODO: trim fields/frames that were missing or empty in response
-
-
 
             let respFrames: DataFrame[] = [];
             for (let targIdent of respByTarget.keys()) {
