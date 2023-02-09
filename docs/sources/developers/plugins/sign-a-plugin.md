@@ -12,7 +12,7 @@ Before you can sign your plugin, you need to decide whether you want to sign it 
 
 If you want to make your plugin publicly available outside of your organization, you need to sign your plugin under a _community_ or _commercial_ [signature level](#plugin-signature-levels). Public plugins are available from [grafana.com/plugins](https://grafana.com/plugins) and can be installed by anyone.
 
-If you intend to only use the plugin within your organization, you can  sign it under a _private_ [signature level](#plugin-signature-levels).
+If you intend to only use the plugin within your organization, you can sign it under a _private_ [signature level](#plugin-signature-levels).
 
 ## Generate an API key
 
@@ -30,15 +30,15 @@ To verify ownership of your plugin, you need to generate an API key that you'll 
 
 Public plugins need to be reviewed by the Grafana team before you can sign them.
 
-1. Submit your plugin for review. 
+1. Submit your plugin for review.
 
    1. Sign in to [grafana.com](https://grafana.com)
    1. Go to **My Account** > **Org Settings**.
-   1. On the **Org Settings** page, click **My plugins**. 
-   1. Click **Submit New Plugin**. 
+   1. On the **Org Settings** page, click **My plugins**.
+   1. Click **Submit New Plugin**.
    1. Complete the form, and then click **Submit**.
 
-   **NOTE:** You must be an organization administrator to sign a public plugin. 
+   **NOTE:** You must be an organization administrator to sign a public plugin.
 
 2. When your plugin is approved, you're granted a plugin signature level. **Without a plugin signature level, you won't be able to sign your plugin**.
 3. In your plugin directory, sign the plugin with the API key you just created. Grafana Sign Plugin creates a [MANIFEST.txt](#plugin-manifest) file in the `dist` directory of your plugin.
