@@ -1,3 +1,5 @@
+import { InfluxQueryTag } from './types';
+
 type LegacyAnnotation = {
   query?: string;
   queryType?: string;
@@ -7,16 +9,21 @@ type LegacyAnnotation = {
   timeEndColumn?: string;
   titleColumn?: string;
   name?: string;
-  target: {
-    limit: number;
-    matchAny: boolean;
-    tags: string[];
-    type: string;
+  target?: {
+    limit?: number;
+    matchAny?: boolean;
+    tags?: InfluxQueryTag[];
+    type?: string;
   };
 };
 
 // this becomes the target in the migrated annotations
 const migrateLegacyAnnotation = (json: LegacyAnnotation) => {
+  const limit = json.target ? json.target.limit : 0;
+  const matchAny = json.target ? json.target.matchAny : false;
+  const tags = json.target ? json.target.tags : [];
+  const type = json.target ? json.target.type : '';
+
   return {
     query: json.query ?? '',
     queryType: 'tags',
@@ -27,10 +34,10 @@ const migrateLegacyAnnotation = (json: LegacyAnnotation) => {
     titleColumn: json.titleColumn ?? '',
     name: json.name ?? '',
     // handle json target fields
-    limit: json.target ? json.target.limit : 0,
-    matchAny: json.target ? json.target.matchAny : false,
-    tags: json.target ? json.target.tags : [],
-    type: json.target ? json.target.type : '',
+    limit: limit,
+    matchAny: matchAny,
+    tags: tags,
+    type: type,
   };
 };
 
