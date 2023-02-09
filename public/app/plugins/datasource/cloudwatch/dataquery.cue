@@ -104,11 +104,11 @@ composableKinds: DataQuery: {
 						#QueryEditorOperatorExpression: {
 							type:     #QueryEditorExpressionType & "operator"
 							property: #QueryEditorProperty
-							// TODO QueryEditorOperator<QueryEditorOperatorValueType>, extend in veneer
+							// TS type is operator: QueryEditorOperator<QueryEditorOperatorValueType>, extended in veneer
 							operator: #QueryEditorOperator
 						} @cuetsy(kind="interface")
 
-						// TODO <T extends QueryEditorOperatorValueType>, extend in veneer
+						// TS type is QueryEditorOperator<T extends QueryEditorOperatorValueType>, extended in veneer
 						#QueryEditorOperator: {
 							name?:  string
 							value?: #QueryEditorOperatorType | [...#QueryEditorOperatorType]
@@ -126,10 +126,10 @@ composableKinds: DataQuery: {
 						#QueryEditorPropertyType: "string" | "any" @cuetsy(kind="enum")
 
 						#QueryEditorArrayExpression: {
-							// TODO this doesn't work
+							// TODO this doesn't work; temporarily extended in veneer
 							type: (#QueryEditorExpressionType & "and") | (#QueryEditorExpressionType & "or")
-							// TODO should be QueryEditorExpression[] | QueryEditorArrayExpression[], extend in veneer
-							expressions: _ // TODO modify this in veneer
+							// TS type expressions: QueryEditorExpression[] | QueryEditorArrayExpression[], extended in veneer
+							expressions: _
 						} @cuetsy(kind="interface")
 
 						// QueryEditorArrayExpression is added in veneer
@@ -166,7 +166,7 @@ composableKinds: DataQuery: {
 							alarmNamePrefix?: string
 						} @cuetsy(kind="interface")
 
-						// TODO this doesn't work. Also the type is CloudWatchDefaultQuery = Omit<CloudWatchLogsQuery, 'queryMode'> & CloudWatchMetricsQuery;
+						// TS type is CloudWatchDefaultQuery = Omit<CloudWatchLogsQuery, 'queryMode'> & CloudWatchMetricsQuery, declared in veneer
 						// #CloudWatchDefaultQuery: #CloudWatchLogsQuery & #CloudWatchMetricsQuery @cuetsy(kind="type")
 					},
 				]

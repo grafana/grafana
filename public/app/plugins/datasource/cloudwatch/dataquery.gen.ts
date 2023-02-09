@@ -110,7 +110,7 @@ export interface QueryEditorGroupByExpression {
 
 export interface QueryEditorOperatorExpression {
   /**
-   * TODO QueryEditorOperator<QueryEditorOperatorValueType>, extend in veneer
+   * TS type is operator: QueryEditorOperator<QueryEditorOperatorValueType>, extended in veneer
    */
   operator: QueryEditorOperator;
   property: QueryEditorProperty;
@@ -118,7 +118,7 @@ export interface QueryEditorOperatorExpression {
 }
 
 /**
- * TODO <T extends QueryEditorOperatorValueType>, extend in veneer
+ * TS type is QueryEditorOperator<T extends QueryEditorOperatorValueType>, extended in veneer
  */
 export interface QueryEditorOperator {
   name?: string;
@@ -144,11 +144,11 @@ export enum QueryEditorPropertyType {
 
 export interface QueryEditorArrayExpression {
   /**
-   * TODO should be QueryEditorExpression[] | QueryEditorArrayExpression[], extend in veneer
+   * TS type expressions: QueryEditorExpression[] | QueryEditorArrayExpression[], extended in veneer
    */
   expressions: unknown;
   /**
-   * TODO this doesn't work
+   * TODO this doesn't work; temporarily extended in veneer
    */
   type: QueryEditorExpressionType;
 }

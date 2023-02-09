@@ -310,10 +310,10 @@ type CloudWatchMetricsQuery struct {
 	Sql              *struct {
 		From    *interface{} `json:"from,omitempty"`
 		GroupBy *struct {
-			// TODO should be QueryEditorExpression[] | QueryEditorArrayExpression[], extend in veneer
+			// TS type expressions: QueryEditorExpression[] | QueryEditorArrayExpression[], extended in veneer
 			Expressions interface{} `json:"expressions"`
 
-			// TODO this doesn't work
+			// TODO this doesn't work; temporarily extended in veneer
 			Type CloudWatchMetricsQuerySqlGroupByType `json:"type"`
 		} `json:"groupBy,omitempty"`
 		Limit   *int64 `json:"limit,omitempty"`
@@ -335,10 +335,10 @@ type CloudWatchMetricsQuery struct {
 			Type CloudWatchMetricsQuerySqlSelectType `json:"type"`
 		} `json:"select,omitempty"`
 		Where *struct {
-			// TODO should be QueryEditorExpression[] | QueryEditorArrayExpression[], extend in veneer
+			// TS type expressions: QueryEditorExpression[] | QueryEditorArrayExpression[], extended in veneer
 			Expressions interface{} `json:"expressions"`
 
-			// TODO this doesn't work
+			// TODO this doesn't work; temporarily extended in veneer
 			Type CloudWatchMetricsQuerySqlWhereType `json:"type"`
 		} `json:"where,omitempty"`
 	} `json:"sql,omitempty"`
@@ -358,7 +358,7 @@ type CloudWatchMetricsQueryMetricQueryType int
 // CloudWatchMetricsQueryQueryMode defines model for CloudWatchMetricsQuery.QueryMode.
 type CloudWatchMetricsQueryQueryMode string
 
-// TODO this doesn't work
+// TODO this doesn't work; temporarily extended in veneer
 type CloudWatchMetricsQuerySqlGroupByType string
 
 // CloudWatchMetricsQuerySqlOrderByParametersType defines model for CloudWatchMetricsQuery.Sql.OrderBy.Parameters.Type.
@@ -373,7 +373,7 @@ type CloudWatchMetricsQuerySqlSelectParametersType string
 // CloudWatchMetricsQuerySqlSelectType defines model for CloudWatchMetricsQuery.Sql.Select.Type.
 type CloudWatchMetricsQuerySqlSelectType string
 
-// TODO this doesn't work
+// TODO this doesn't work; temporarily extended in veneer
 type CloudWatchMetricsQuerySqlWhereType string
 
 // CloudWatchQueryMode defines model for CloudWatchQueryMode.
@@ -410,14 +410,14 @@ type MetricStat struct {
 
 // QueryEditorArrayExpression defines model for QueryEditorArrayExpression.
 type QueryEditorArrayExpression struct {
-	// TODO should be QueryEditorExpression[] | QueryEditorArrayExpression[], extend in veneer
+	// TS type expressions: QueryEditorExpression[] | QueryEditorArrayExpression[], extended in veneer
 	Expressions interface{} `json:"expressions"`
 
-	// TODO this doesn't work
+	// TODO this doesn't work; temporarily extended in veneer
 	Type QueryEditorArrayExpressionType `json:"type"`
 }
 
-// TODO this doesn't work
+// TODO this doesn't work; temporarily extended in veneer
 type QueryEditorArrayExpressionType string
 
 // QueryEditorArrayExpression is added in veneer
@@ -466,7 +466,7 @@ type QueryEditorGroupByExpressionPropertyType string
 // QueryEditorGroupByExpressionType defines model for QueryEditorGroupByExpression.Type.
 type QueryEditorGroupByExpressionType string
 
-// TODO <T extends QueryEditorOperatorValueType>, extend in veneer
+// TS type is QueryEditorOperator<T extends QueryEditorOperatorValueType>, extended in veneer
 type QueryEditorOperator struct {
 	Name  *string      `json:"name,omitempty"`
 	Value *interface{} `json:"value,omitempty"`
@@ -474,7 +474,7 @@ type QueryEditorOperator struct {
 
 // QueryEditorOperatorExpression defines model for QueryEditorOperatorExpression.
 type QueryEditorOperatorExpression struct {
-	// TODO QueryEditorOperator<QueryEditorOperatorValueType>, extend in veneer
+	// TS type is operator: QueryEditorOperator<QueryEditorOperatorValueType>, extended in veneer
 	Operator struct {
 		Name  *string      `json:"name,omitempty"`
 		Value *interface{} `json:"value,omitempty"`
@@ -526,10 +526,10 @@ type QueryEditorPropertyExpressionType string
 type SQLExpression struct {
 	From    *interface{} `json:"from,omitempty"`
 	GroupBy *struct {
-		// TODO should be QueryEditorExpression[] | QueryEditorArrayExpression[], extend in veneer
+		// TS type expressions: QueryEditorExpression[] | QueryEditorArrayExpression[], extended in veneer
 		Expressions interface{} `json:"expressions"`
 
-		// TODO this doesn't work
+		// TODO this doesn't work; temporarily extended in veneer
 		Type SQLExpressionGroupByType `json:"type"`
 	} `json:"groupBy,omitempty"`
 	Limit   *int64 `json:"limit,omitempty"`
@@ -551,15 +551,15 @@ type SQLExpression struct {
 		Type SQLExpressionSelectType `json:"type"`
 	} `json:"select,omitempty"`
 	Where *struct {
-		// TODO should be QueryEditorExpression[] | QueryEditorArrayExpression[], extend in veneer
+		// TS type expressions: QueryEditorExpression[] | QueryEditorArrayExpression[], extended in veneer
 		Expressions interface{} `json:"expressions"`
 
-		// TODO this doesn't work
+		// TODO this doesn't work; temporarily extended in veneer
 		Type SQLExpressionWhereType `json:"type"`
 	} `json:"where,omitempty"`
 }
 
-// TODO this doesn't work
+// TODO this doesn't work; temporarily extended in veneer
 type SQLExpressionGroupByType string
 
 // SQLExpressionOrderByParametersType defines model for SQLExpression.OrderBy.Parameters.Type.
@@ -574,5 +574,5 @@ type SQLExpressionSelectParametersType string
 // SQLExpressionSelectType defines model for SQLExpression.Select.Type.
 type SQLExpressionSelectType string
 
-// TODO this doesn't work
+// TODO this doesn't work; temporarily extended in veneer
 type SQLExpressionWhereType string
