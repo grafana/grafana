@@ -136,6 +136,7 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 		ClientParams: authn.ClientParams{
 			SyncUser:        true,
 			SyncTeamMembers: true,
+			FetchSyncedUser: true,
 			AllowSignUp:     c.connector.IsSignupAllowed(),
 			LookUpParams:    login.UserLookupParams{Email: &userInfo.Email},
 		},

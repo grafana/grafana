@@ -69,11 +69,9 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 		AuthID:     sub,
 		OrgRoles:   map[int64]org.RoleType{},
 		ClientParams: authn.ClientParams{
-			SyncUser: true,
-			// We do not allow team member sync from JWT Authentication
-			SyncTeamMembers:     false,
-			AllowSignUp:         s.cfg.JWTAuthAutoSignUp,
-			EnableDisabledUsers: false,
+			SyncUser:        true,
+			FetchSyncedUser: true,
+			AllowSignUp:     s.cfg.JWTAuthAutoSignUp,
 		}}
 
 	if key := s.cfg.JWTAuthUsernameClaim; key != "" {

@@ -6,12 +6,12 @@ title: LibraryPanel kind
 ---
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
 
-# LibraryPanel kind
+## LibraryPanel
 
-## Maturity: experimental
-## Version: 0.0
+#### Maturity: [experimental](../../../maturity/#experimental)
+#### Version: 0.0
 
-## Properties
+A standalone panel
 
 | Property        | Type                                            | Required | Description                                                                                                                          |
 |-----------------|-------------------------------------------------|----------|--------------------------------------------------------------------------------------------------------------------------------------|
@@ -25,9 +25,7 @@ title: LibraryPanel kind
 | `meta`          | [LibraryElementDTOMeta](#libraryelementdtometa) | No       |                                                                                                                                      |
 | `schemaVersion` | integer                                         | No       | Dashboard version when this was saved (zero if unknown)                                                                              |
 
-## LibraryElementDTOMeta
-
-### Properties
+### LibraryElementDTOMeta
 
 | Property              | Type                                                    | Required | Description |
 |-----------------------|---------------------------------------------------------|----------|-------------|
@@ -41,25 +39,13 @@ title: LibraryPanel kind
 
 ### LibraryElementDTOMetaUser
 
-#### Properties
-
 | Property    | Type    | Required | Description |
 |-------------|---------|----------|-------------|
 | `avatarUrl` | string  | **Yes**  |             |
 | `id`        | integer | **Yes**  |             |
 | `name`      | string  | **Yes**  |             |
 
-### LibraryElementDTOMetaUser
-
-#### Properties
-
-| Property    | Type    | Required | Description |
-|-------------|---------|----------|-------------|
-| `avatarUrl` | string  | **Yes**  |             |
-| `id`        | integer | **Yes**  |             |
-| `name`      | string  | **Yes**  |             |
-
-## model
+### Model
 
 TODO: should be the same panel schema defined in dashboard
 Typescript: Omit<Panel, 'gridPos' | 'id' | 'libraryPanel'>;
