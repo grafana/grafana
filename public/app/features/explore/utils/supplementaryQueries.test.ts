@@ -1,5 +1,5 @@
 import { flatten } from 'lodash';
-import { from, Observable } from 'rxjs';
+import { from, Observable, take, toArray } from 'rxjs';
 
 import {
   DataFrame,
@@ -154,8 +154,8 @@ describe('SupplementaryQueries utils', function () {
     it('Uses fallback for logs volume', async () => {
       const testProvider = await setup('no-data-providers', SupplementaryQueryType.LogsVolume);
 
-      await expect(testProvider).toEmitValuesWith((received) => {
-        expect(received).toMatchObject([
+      await expect(testProvider!.pipe(take(1), toArray())).toEmitValuesWith((received) => {
+        expect(received[0]).toMatchObject([
           // No loading state as we don't know if result will contain logs
           {
             data: [{ refId: 'logs' }],
@@ -201,8 +201,10 @@ describe('SupplementaryQueries utils', function () {
             'no-data-providers',
             'no-data-providers-2',
           ]);
-          await expect(testProvider).toEmitValuesWith((received) => {
-            expect(received).toMatchObject([
+
+          // ExplorePanelData never completes so we limit number of assertions
+          await expect(testProvider!.pipe(take(2), toArray())).toEmitValuesWith((received) => {
+            expect(received[0]).toMatchObject([
               {
                 data: assertDataFromLogsResults(),
                 state: 'Done',
@@ -224,8 +226,8 @@ describe('SupplementaryQueries utils', function () {
             'logs-volume-b',
             'no-data-providers-2',
           ]);
-          await expect(testProvider).toEmitValuesWith((received) => {
-            expect(received).toMatchObject([
+          await expect(testProvider!.pipe(take(6), toArray())).toEmitValuesWith((received) => {
+            expect(received[0]).toMatchObject([
               {
                 data: [],
                 state: 'Loading',

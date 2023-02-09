@@ -89,7 +89,6 @@ const createFallbackLogVolumeProvider = (
           }),
           state: LoadingState.Done,
         });
-        observer.complete();
       }
     });
   }).pipe(enrichWithSource('', 'All visible logs'));
