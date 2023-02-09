@@ -461,46 +461,57 @@ export class PrometheusDatasource
 
   query(request: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
     if (this.access === 'proxy') {
+      // TODO: align from/to to interval to increase probability of hitting backend cache
+
       const newFrom = request.range.from.valueOf();
       const newTo = request.range.to.valueOf();
 
       // only cache 'now'-relative queries (that can benefit from a backfill cache)
-      const shouldCache = request.rangeRaw?.from?.toString().indexOf('now-') === 0;
-
-      const reqTargSigs = new Map<TargetIdent, TargetSig>();
+      const shouldCache = request.rangeRaw?.to?.toString() === 'now';
 
       // all targets are queried together, so we check for any that causes group cache invalidation & full re-query
       let doPartialQuery = shouldCache;
       let prevTo: TimestampMs;
 
-      // 1. pre-compute reqTargSigs
-      // 2. figure out if new query range or new target props trigger full cache invalidation & re-query
+      // pre-compute reqTargSigs
+      const reqTargSigs = new Map<TargetIdent, TargetSig>();
       request.targets.forEach((targ) => {
         let targIdent = `${request.dashboardUID}|${request.panelId}|${targ.refId}`;
-        let targSig = `${targ.expr}|${request.intervalMs}|${JSON.stringify(request.rangeRaw ?? '')}`; // ${request.maxDataPoints} ?
+        let targExpr = this.interpolateString(targ.expr);
+        let targSig = `${targExpr}|${request.intervalMs}|${JSON.stringify(request.rangeRaw ?? '')}`; // ${request.maxDataPoints} ?
 
         reqTargSigs.set(targIdent, targSig);
-
-        if (doPartialQuery) {
-          let cachedSig = this.cachedSigs.get(targIdent);
-
-          if (cachedSig !== targSig) {
-            doPartialQuery = false;
-          } else {
-            // only do partial queries when new request range follows prior request range (possibly with overlap)
-            // e.g. now-6h with refresh <= 6h
-            prevTo = this.cachedTos.get(targIdent) ?? Infinity;
-            doPartialQuery = newTo > prevTo && newFrom <= prevTo;
-          }
-        }
       });
 
+      // figure out if new query range or new target props trigger full cache invalidation & re-query
+      for (const [targIdent, targSig] of reqTargSigs) {
+        let cachedSig = this.cachedSigs.get(targIdent);
+
+        if (cachedSig !== targSig) {
+          doPartialQuery = false;
+        } else {
+          // only do partial queries when new request range follows prior request range (possibly with overlap)
+          // e.g. now-6h with refresh <= 6h
+          prevTo = this.cachedTos.get(targIdent) ?? Infinity;
+          doPartialQuery = newTo > prevTo && newFrom <= prevTo;
+        }
+
+        if (!doPartialQuery) {
+          break;
+        }
+      }
+
       if (doPartialQuery) {
-        // 10 min requery overlap
+        // 10m requery overlap
         const requeryLastMs = 10 * 60 * 1000;
 
+        // clamp to make sure we don't requery previous 10m when newFrom is ahead of it (e.g. 5min range, 30s refresh)
+        let newFromPartial = Math.max(prevTo! - requeryLastMs, newFrom);
+
+        // console.log(`query previous ${(newTo - newFromPartial) / 1000 / 60} mins`);
+
         // modify to partial query
-        request.range.from = moment(prevTo! - requeryLastMs) as DateTime;
+        request.range.from = moment(newFromPartial) as DateTime;
         request.range.to = moment(newTo) as DateTime;
       } else {
         reqTargSigs.forEach((targSig, targIdent) => {
@@ -515,7 +526,7 @@ export class PrometheusDatasource
         });
       }
 
-      console.log(`${doPartialQuery ? 'partial' : 'full'} query`);
+      // console.log(`${doPartialQuery ? 'partial' : 'full'} query`);
 
       const targets = request.targets.map((target) => this.processTargetV2(target, request));
       const startTime = new Date();
@@ -539,6 +550,8 @@ export class PrometheusDatasource
 
               frames.push(frame);
             });
+
+            let outFrames: DataFrame[] = [];
 
             respByTarget.forEach((respFrames, targIdent) => {
               let cachedFrames = (targIdent ? this.cachedFrames.get(targIdent) : null) ?? [];
@@ -594,24 +607,22 @@ export class PrometheusDatasource
               this.cachedFrames.set(targIdent, nonEmptyCachedFrames);
               this.cachedSigs.set(targIdent, reqTargSigs.get(targIdent)!);
               this.cachedTos.set(targIdent, newTo);
+
+              outFrames.push(...nonEmptyCachedFrames);
             });
 
-            let respFrames: DataFrame[] = [];
-            for (let targIdent of respByTarget.keys()) {
-              respFrames.push(...this.cachedFrames.get(targIdent)!);
-            }
-
             // transformV2 mutates field values for heatmap de-accum, and modifies field order, so we gotta clone here, for now :(
-            let clonedFrames = respFrames.map((frame) => ({
+            let clonedFrames = outFrames.map((frame) => ({
               ...frame,
               fields: frame.fields.map((field) => ({
                 ...field,
                 config: {
-                  ...field.config, // prevents mutatative exemplars links (re)enrichment?
+                  ...field.config, // prevents mutatative exemplars links (re)enrichment
                 },
                 values: new ArrayVector(field.values.toArray().slice()),
               })),
             }));
+
             response.data = clonedFrames;
 
             // reset to original range for transformV2
