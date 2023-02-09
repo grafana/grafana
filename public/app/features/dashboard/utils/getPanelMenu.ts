@@ -221,7 +221,7 @@ export function getPanelMenu(
 
   const { extensions } = getPluginExtensions({
     placement: GrafanaExtensions.DashboardPanelMenu,
-    context: { title: panel.title },
+    context: { title: panel.title, type: panel.type },
   });
 
   for (const extension of extensions) {

@@ -3,7 +3,7 @@ import { ComponentType } from 'react';
 import { KeyValue } from './data';
 import { NavModel } from './navModel';
 import { PluginMeta, GrafanaPlugin, PluginIncludeType } from './plugin';
-import { PluginsExtensionLinkOverridable } from './pluginExtensions';
+import { LinkExtensionCallback } from './pluginExtensions';
 
 /**
  * @public
@@ -97,11 +97,6 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
     return this;
   }
 }
-
-type LinkExtensionCallback<T extends object = object> = (
-  link: PluginsExtensionLinkOverridable,
-  context?: T
-) => PluginsExtensionLinkOverridable | undefined;
 
 /**
  * Defines life cycle of a feature

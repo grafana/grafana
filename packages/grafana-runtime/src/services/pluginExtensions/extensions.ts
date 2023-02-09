@@ -37,14 +37,15 @@ export function getPluginExtensions<T extends object = {}>({
   }
 
   return {
-    extensions: extensions.reduce<PluginsExtensionLink[]>((all, e) => {
-      if (!e.override) {
-        return [...all, e];
+    extensions: extensions.reduce<PluginsExtensionLink[]>((all, extension) => {
+      if (!extension.override) {
+        return [...all, extension];
       }
-      // TODO: map into other object without all values.
-      const overriden = e.override(e, context);
+      // Only give a plugin dev the parts of the link that they need to override
+      const { override, id, pluginId, type, ...overrideLink } = extension;
+      const overriden = extension.override(overrideLink, context);
       if (overriden) {
-        return [...all, { ...e, ...overriden }];
+        return [...all, { ...extension, ...overriden }];
       }
       return all;
     }, []),

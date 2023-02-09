@@ -51,4 +51,4 @@ export * from './alerts';
 export * from './slider';
 export * from './accesscontrol';
 export * from './icon';
-export type { PluginsExtensionLink } from './pluginExtensions';
+export type { PluginsExtensionLink, LinkExtensionCallback } from './pluginExtensions';

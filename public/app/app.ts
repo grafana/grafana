@@ -170,9 +170,6 @@ export class GrafanaApp {
       setDataSourceSrv(dataSourceSrv);
       initWindowRuntime();
 
-      const pluginExtensionRegistry = createPluginExtensionsRegistry(config.apps);
-      setPluginsExtensionRegistry(pluginExtensionRegistry);
-
       // init modal manager
       const modalManager = new ModalManager();
       modalManager.init();
@@ -183,6 +180,10 @@ export class GrafanaApp {
         // Preload selected app plugins
         await preloadPlugins(config.apps),
       ]);
+
+      // wait for preloaded plugins before initializing plugin extensions registry
+      const pluginExtensionRegistry = createPluginExtensionsRegistry(config.apps);
+      setPluginsExtensionRegistry(pluginExtensionRegistry);
 
       // initialize chrome service
       const queryParams = locationService.getSearchObject();

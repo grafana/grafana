@@ -1,4 +1,4 @@
-import { AppPlugin, PluginsExtensionLink } from '@grafana/data';
+import { PluginsExtensionLink } from '@grafana/data';
 import {
   AppPluginConfig,
   PluginExtensionTypes,
@@ -6,9 +6,11 @@ import {
   PluginsExtensionRegistry,
 } from '@grafana/runtime';
 
-const registry: PluginsExtensionRegistry = {};
+import { getPluginExtensionConfig } from '../pluginPreloader';
+
 
 export function createPluginExtensionsRegistry(apps: Record<string, AppPluginConfig> = {}): PluginsExtensionRegistry {
+  const registry: PluginsExtensionRegistry = {};
   for (const [pluginId, config] of Object.entries(apps)) {
     const extensions = config.extensions;
 
@@ -37,39 +39,20 @@ export function createPluginExtensionsRegistry(apps: Record<string, AppPluginCon
   return Object.freeze(registry);
 }
 
-export function setExtensionItemCallback(pluginId: string, app: AppPlugin) {
-  console.log('all overrides', app.extensionOverrides);
-
-  for (const overrideId of Object.keys(app.extensionOverrides)) {
-    const item = Object.values(registry).reduce<PluginsExtensionLink | undefined>(
-      (theone: PluginsExtensionLink | undefined, items: PluginsExtensionLink[]) => {
-        if (theone) {
-          return theone;
-        }
-        return items.find((i) => i.id === overrideId && i.pluginId === pluginId);
-      },
-      undefined
-    );
-
-    if (item) {
-      console.log('item found', item);
-      item.override = app.extensionOverrides[overrideId];
-    }
-  }
-}
-
 function createRegistryItem(pluginId: string, extension: PluginsExtensionLinkConfig): PluginsExtensionLink {
   const path = `/a/${pluginId}${extension.path}`;
+  const override = getPluginExtensionConfig(pluginId, extension.id);
 
-  return {
+  return Object.freeze({
     id: extension.id,
-    pluginId: pluginId,
+    pluginId,
     type: PluginExtensionTypes.link,
     title: extension.title,
     description: extension.description,
-    path: path,
     key: hashKey(`${extension.title}${path}`),
-  };
+    path,
+    override,
+  });
 }
 
 function hashKey(key: string): number {

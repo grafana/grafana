@@ -1,6 +1,6 @@
+import { LinkExtensionCallback } from '@grafana/data';
 import { AppPluginConfig } from '@grafana/runtime';
 
-import { setExtensionItemCallback } from './extensions/registry';
 import { importPluginModule } from './plugin_loader';
 
 export async function preloadPlugins(apps: Record<string, AppPluginConfig> = {}): Promise<void> {
@@ -12,8 +12,21 @@ async function preloadPlugin(plugin: AppPluginConfig): Promise<void> {
   const { path, version, id } = plugin;
   try {
     const { plugin } = await importPluginModule(path, version);
-    setExtensionItemCallback(id, plugin);
+    setPluginExtensionConfigs(id, plugin.extensionOverrides);
   } catch (error: unknown) {
+    // TODO: handle case where the plugin failed to load causing broken extension links
     console.error(`Failed to load plugin: ${path} (version: ${version})`, error);
   }
+}
+
+let configs: Record<string, LinkExtensionCallback> = {};
+
+function setPluginExtensionConfigs(pluginId: string, overrides: Record<string, LinkExtensionCallback> = {}) {
+  for (const [overrideId, override] of Object.entries(overrides)) {
+    configs[`${pluginId}.${overrideId}`] = override;
+  }
+}
+
+export function getPluginExtensionConfig(pluginId: string, overrideId: string) {
+  return configs[`${pluginId}.${overrideId}`];
 }
