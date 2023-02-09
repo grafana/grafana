@@ -169,7 +169,7 @@ export const PromVariableQueryEditor: FC<Props> = ({ onChange, query, datasource
           <InlineField
             label="Metric"
             labelWidth={20}
-            tooltip={<div>*Optional: returns a list of label values for the label name in the specified metric.</div>}
+            tooltip={<div>Optional: returns a list of label values for the label name in the specified metric.</div>}
           >
             <Input
               type="text"
