@@ -83,3 +83,15 @@ To filter dashboard search result by a tag, complete one of the following steps:
   All tags will be shown, and when you select a tag, the dashboard search will be instantly filtered.
 
 > **Note:** When using only a keyboard, press the `tab` key and navigate to the **Filter by tag** drop-down menu, press the down arrow key `▼` to activate the menu and locate a tag, and press `Enter` to select the tag.
+
+# Command Palette
+
+Open the Command Palette by pressing `cmd+K` in macOS or `ctrl+k` in Linux/Windows.
+
+You can:
+
+1.- Search, open and create dashboards and folders.
+2.- Navigate to various areas or pages.
+3.- Change theme: dark, light or system.
+
+> **Note:** When you want to go back, press `backspace` when the Command Palette input is empty.
