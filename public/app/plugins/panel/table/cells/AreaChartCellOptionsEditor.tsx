@@ -74,7 +74,7 @@ const getStyles = () => ({
     // @TODO don't show "scheme" option for custom gradient mode.
     // it needs thresholds to work, which are not supported
     // for area chart cell right now
-    [for='option-scheme-custom.gradientMode'] {
+    [title='Use color scheme to define gradient'] {
       display: none;
     }
   `,
