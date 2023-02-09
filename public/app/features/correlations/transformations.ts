@@ -9,7 +9,7 @@ export const getTransformationVars = (
   fieldName: string
 ): ScopedVars => {
   let transformationScopedVars: ScopedVars = {};
-  let transformVal: { [key: string]: string | boolean | null } = {};
+  let transformVal: { [key: string]: string | boolean | null | undefined } = {};
   if (transformation.type === 'regex' && transformation.expression) {
     const regexp = new RegExp(transformation.expression, 'gi');
     const matches = fieldValue.matchAll(regexp);
@@ -21,7 +21,7 @@ export const getTransformationVars = (
       }
     }
   } else if (transformation.type === 'logfmt') {
-    transformVal = logfmt.parse(fieldValue) as { [key: string]: string | boolean | null };
+    transformVal = logfmt.parse(fieldValue);
   }
 
   Object.keys(transformVal).forEach((key) => {
