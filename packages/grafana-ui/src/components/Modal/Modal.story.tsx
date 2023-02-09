@@ -53,8 +53,8 @@ export const Basic: Story = ({ body, title, ...args }) => {
     <Modal title={title} {...args}>
       {body}
       <Modal.ButtonRow>
-        <Button>Button1</Button>
         <Button variant="secondary">Cancel</Button>
+        <Button>Button1</Button>
       </Modal.ButtonRow>
     </Modal>
   );
