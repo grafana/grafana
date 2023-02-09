@@ -1,7 +1,8 @@
 import { getPluginsExtensionRegistry, PluginsExtension } from './registry';
 
-export type GetPluginExtensionsOptions = {
+export type GetPluginExtensionsOptions<T extends object> = {
   placement: string;
+  context?: T;
 };
 
 export type PluginExtensionsResult = {
@@ -19,7 +20,9 @@ export class PluginExtensionsMissingError extends Error {
   }
 }
 
-export function getPluginExtensions({ placement }: GetPluginExtensionsOptions): PluginExtensionsResult {
+export function getPluginExtensions<T extends object = {}>({
+  placement,
+}: GetPluginExtensionsOptions<T>): PluginExtensionsResult {
   const registry = getPluginsExtensionRegistry();
   const extensions = registry[placement];
 

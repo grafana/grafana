@@ -222,6 +222,7 @@ export function getPanelMenu(
   const { extensions } = getPluginExtensions({
     placement: GrafanaExtensions.DashboardPanelMenu,
   });
+
   for (const extension of extensions) {
     subMenu.push({
       text: extension.title,
