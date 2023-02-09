@@ -294,17 +294,17 @@ WORKFLOW.md @torkelo
 /public/app/core/internationalization/ @grafana/user-essentials
 /e2e/ @grafana/user-essentials
 /e2e/cloud-plugins-suite/ @grafana/partner-plugins
-/packages/ @grafana/user-essentials @grafana/plugins-platform-frontend @grafana/grafana-bi-squad
+/packages/ @grafana/user-essentials @grafana/plugins-platform-frontend @grafana/dataviz-squad
 /packages/grafana-e2e-selectors/ @grafana/user-essentials
 /packages/grafana-e2e/ @grafana/user-essentials
 /packages/grafana-toolkit/ @grafana/plugins-platform-frontend
 /packages/grafana-ui/.storybook/ @grafana/plugins-platform-frontend
 /packages/grafana-ui/src/components/DateTimePickers/ @grafana/user-essentials
-/packages/grafana-ui/src/components/GraphNG/ @grafana/grafana-bi-squad
+/packages/grafana-ui/src/components/GraphNG/ @grafana/dataviz-squad
 /packages/grafana-ui/src/components/Logs/ @grafana/observability-logs
 /packages/grafana-ui/src/components/Table/ @grafana/grafana-bi-squad
-/packages/grafana-ui/src/components/TimeSeries/ @grafana/grafana-bi-squad
-/packages/grafana-ui/src/components/uPlot/ @grafana/grafana-bi-squad
+/packages/grafana-ui/src/components/TimeSeries/ @grafana/dataviz-squad
+/packages/grafana-ui/src/components/uPlot/ @grafana/dataviz-squad
 /packages/grafana-ui/src/utils/storybook/ @grafana/plugins-platform-frontend
 /packages/grafana-data/src/**/*logs* @grafana/observability-logs
 /plugins-bundled/ @grafana/plugins-platform-frontend
@@ -385,25 +385,25 @@ lerna.json @grafana/frontend-ops
 /public/app/plugins/panel/alertGroups/ @grafana/alerting-squad-frontend
 /public/app/plugins/panel/alertlist/ @grafana/alerting-squad-frontend
 /public/app/plugins/panel/annolist/ @grafana/user-essentials
-/public/app/plugins/panel/barchart/ @grafana/grafana-bi-squad
+/public/app/plugins/panel/barchart/ @grafana/grafana-bi-squad @grafana/dataviz-squad
 /public/app/plugins/panel/bargauge/ @grafana/user-essentials
 /public/app/plugins/panel/dashlist/ @grafana/user-essentials
 /public/app/plugins/panel/debug/ @ryantxu
 /public/app/plugins/panel/gauge/ @grafana/user-essentials
 /public/app/plugins/panel/gettingstarted/ @grafana/user-essentials
-/public/app/plugins/panel/graph/ @grafana/user-essentials
-/public/app/plugins/panel/heatmap/ @grafana/grafana-bi-squad
-/public/app/plugins/panel/histogram/ @grafana/grafana-bi-squad
+/public/app/plugins/panel/graph/ @grafana/dataviz-squad
+/public/app/plugins/panel/heatmap/ @grafana/dataviz-squad
+/public/app/plugins/panel/histogram/ @grafana/dataviz-squad
 /public/app/plugins/panel/logs/ @grafana/observability-logs
 /public/app/plugins/panel/nodeGraph/ @grafana/observability-traces-and-profiling
 /public/app/plugins/panel/traces/ @grafana/observability-traces-and-profiling
 /public/app/plugins/panel/flamegraph/ @grafana/observability-traces-and-profiling
-/public/app/plugins/panel/piechart/ @grafana/grafana-bi-squad
-/public/app/plugins/panel/state-timeline/ @grafana/grafana-bi-squad
-/public/app/plugins/panel/status-history/ @grafana/grafana-bi-squad
+/public/app/plugins/panel/piechart/ @grafana/dataviz-squad
+/public/app/plugins/panel/state-timeline/ @grafana/dataviz-squad
+/public/app/plugins/panel/status-history/ @grafana/dataviz-squad
 /public/app/plugins/panel/table/ @grafana/grafana-bi-squad
 /public/app/plugins/panel/table-old/ @grafana/grafana-bi-squad
-/public/app/plugins/panel/timeseries/ @grafana/grafana-bi-squad
+/public/app/plugins/panel/timeseries/ @grafana/dataviz-squad
 /public/app/plugins/panel/geomap/ @grafana/grafana-edge-squad
 /public/app/plugins/panel/canvas/ @grafana/grafana-edge-squad
 /public/app/plugins/panel/candlestick/ @grafana/grafana-edge-squad
@@ -413,7 +413,7 @@ lerna.json @grafana/frontend-ops
 /public/app/plugins/panel/stat/ @grafana/user-essentials
 /public/app/plugins/panel/text/ @grafana/user-essentials
 /public/app/plugins/panel/welcome/ @grafana/user-essentials
-/public/app/plugins/panel/xychart/ @grafana/grafana-bi-squad
+/public/app/plugins/panel/xychart/ @grafana/dataviz-squad
 /public/app/plugins/sdk.ts @grafana/plugins-platform-frontend
 /public/app/polyfills/old-mediaquerylist.ts @grafana/user-essentials
 /public/app/routes/ @grafana/user-essentials
