@@ -152,13 +152,13 @@ func (s *ServiceImpl) getServerAdminNode(c *contextmodel.ReqContext) *navtree.Na
 	}
 
 	if hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionSettingsRead)) && s.features.IsEnabled(featuremgmt.FlagStorage) {
-		adminNavLinks = append(adminNavLinks, &navtree.NavLink{
+		storage := &navtree.NavLink{
 			Text:     "Storage",
 			Id:       "storage",
 			SubTitle: "Manage file storage",
 			Icon:     "cube",
 			Url:      s.cfg.AppSubURL + "/admin/storage",
-		})
+		}
 		adminNavLinks = append(adminNavLinks, storage)
 
 		if s.features.IsEnabled(featuremgmt.FlagExport) {

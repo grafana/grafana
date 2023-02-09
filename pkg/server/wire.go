@@ -48,6 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	dashboardimportservice "github.com/grafana/grafana/pkg/services/dashboardimport/service"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardstore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
@@ -291,10 +292,14 @@ var wireBasicSet = wire.NewSet(
 	teamguardianManager.ProvideService,
 	featuremgmt.ProvideManagerService,
 	featuremgmt.ProvideToggles,
-	dashboardservice.ProvideDashboardService,
+	dashboardservice.ProvideDashboardService, // DashboardServiceImpl
 	dashboardstore.ProvideDashboardStore,
 	folderimpl.ProvideService,
 	folderimpl.ProvideDashboardFolderStore,
+	dashboardservice.ProvideSimpleDashboardService,
+	dashboardservice.ProvideDashboardProvisioningService,
+	dashboardservice.ProvideDashboardPluginService,
+	wire.Bind(new(dashboards.Store), new(*dashboardstore.DashboardStore)),
 	wire.Bind(new(folder.FolderStore), new(*folderimpl.DashboardFolderStoreImpl)),
 	dashboardimportservice.ProvideService,
 	wire.Bind(new(dashboardimport.Service), new(*dashboardimportservice.ImportDashboardService)),
@@ -338,6 +343,7 @@ var wireBasicSet = wire.NewSet(
 	grpcserver.ProvideHealthService,
 	grpcserver.ProvideReflectionService,
 	interceptors.ProvideAuthenticator,
+	kind.ProvideService, // The registry of known kinds
 	sqlstash.ProvideSQLEntityServer,
 	resolver.ProvideEntityReferenceResolver,
 	httpentitystore.ProvideHTTPEntityStore,
@@ -359,7 +365,6 @@ var wireBasicSet = wire.NewSet(
 	authnimpl.ProvideService,
 	wire.Bind(new(authn.Service), new(*authnimpl.Service)),
 	supportbundlesimpl.ProvideService,
-	kind.ProvideService,
 )
 
 var wireSet = wire.NewSet(

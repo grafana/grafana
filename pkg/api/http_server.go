@@ -13,16 +13,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/middleware/csrf"
-	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/oauthtoken"
-	"github.com/grafana/grafana/pkg/services/querylibrary"
-	"github.com/grafana/grafana/pkg/services/searchV2"
-	"github.com/grafana/grafana/pkg/services/stats"
-	"github.com/grafana/grafana/pkg/services/store/entity/httpentitystore"
-
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
