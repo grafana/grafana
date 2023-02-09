@@ -160,7 +160,7 @@ function makeRandomNode(index: number) {
   };
 }
 
-export function savedNodesResponse(): any {
+export function savedNodesResponse() {
   return [new MutableDataFrame(nodes), new MutableDataFrame(edges)];
 }
 
