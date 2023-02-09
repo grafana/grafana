@@ -6,14 +6,16 @@ import { createDashboardModelFixture, createPanelJSONFixture } from '../dashboar
 
 import { TestRuleResult } from './TestRuleResult';
 
+const backendSrv = {
+  post: jest.fn(),
+};
+
 jest.mock('@grafana/runtime', () => {
   const original = jest.requireActual('@grafana/runtime');
 
   return {
     ...original,
-    getBackendSrv: () => ({
-      post: jest.fn(),
-    }),
+    getBackendSrv: () => backendSrv,
   };
 });
 
@@ -30,9 +32,14 @@ describe('TestRuleResult', () => {
   });
 
   it('should call testRule when mounting', () => {
-    jest.spyOn(TestRuleResult.prototype, 'testRule');
+    jest.spyOn(backendSrv, 'post');
     render(<TestRuleResult {...props} />);
 
-    expect(TestRuleResult.prototype.testRule).toHaveBeenCalled();
+    expect(backendSrv.post).toHaveBeenCalledWith(
+      '/api/alerts/test',
+      expect.objectContaining({
+        panelId: 1,
+      })
+    );
   });
 });
