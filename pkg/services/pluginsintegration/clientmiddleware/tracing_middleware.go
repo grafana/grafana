@@ -28,11 +28,11 @@ type TracingMiddleware struct {
 func (m *TracingMiddleware) traceWrap(ctx context.Context, opName string) (context.Context, func(error)) {
 	ctx, span := m.tracer.Start(ctx, opName)
 	return ctx, func(err error) {
-		span.End()
 		if err != nil {
 			span.SetStatus(codes.Error, opName+" error: "+err.Error())
 			span.RecordError(err)
 		}
+		span.End()
 	}
 }
 

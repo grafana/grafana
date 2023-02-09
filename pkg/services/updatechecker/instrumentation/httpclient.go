@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
-// InstrumentedHTTPClient is an HTTP client that wraps every request a span, tracking the method, url,
+// InstrumentedHTTPClient is an HTTP client that wraps every request with a span, tracking the method, url,
 // and response code as span attributes.
 type InstrumentedHTTPClient struct {
 	*http.Client
