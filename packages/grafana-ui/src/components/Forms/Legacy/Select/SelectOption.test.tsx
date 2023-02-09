@@ -4,7 +4,7 @@ import renderer from 'react-test-renderer';
 
 import SelectOption from './SelectOption';
 
-const model: OptionProps<any> = {
+const model: OptionProps = {
   data: jest.fn(),
   cx: jest.fn(),
   clearValue: jest.fn(),
