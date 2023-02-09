@@ -64,7 +64,7 @@ func TestSetAlerting(t *testing.T) {
 	}
 }
 
-func TestSetPending(t *testing.T) {
+func TestSetPendingAlerting(t *testing.T) {
 	mock := clock.NewMock()
 	tests := []struct {
 		name     string
@@ -79,31 +79,34 @@ func TestSetPending(t *testing.T) {
 		startsAt: mock.Now(),
 		endsAt:   mock.Now().Add(time.Minute),
 		expected: State{
-			State:       eval.Pending,
-			StateReason: "this is a reason",
-			StartsAt:    mock.Now(),
-			EndsAt:      mock.Now().Add(time.Minute),
+			State:        eval.Pending,
+			PendingState: PendingStateAlerting,
+			StateReason:  "this is a reason",
+			StartsAt:     mock.Now(),
+			EndsAt:       mock.Now().Add(time.Minute),
 		},
 	}, {
 		name: "previous state is removed",
 		state: State{
-			State:       eval.Pending,
-			StateReason: "this is a reason",
-			Error:       errors.New("this is an error"),
+			State:        eval.Pending,
+			PendingState: PendingStateAlerting,
+			StateReason:  "this is a reason",
+			Error:        errors.New("this is an error"),
 		},
 		startsAt: mock.Now(),
 		endsAt:   mock.Now().Add(time.Minute),
 		expected: State{
-			State:    eval.Pending,
-			StartsAt: mock.Now(),
-			EndsAt:   mock.Now().Add(time.Minute),
+			State:        eval.Pending,
+			PendingState: PendingStateAlerting,
+			StartsAt:     mock.Now(),
+			EndsAt:       mock.Now().Add(time.Minute),
 		},
 	}}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			actual := test.state
-			actual.SetPending(test.reason, test.startsAt, test.endsAt)
+			actual.SetPendingAlerting(test.reason, test.startsAt, test.endsAt)
 			assert.Equal(t, test.expected, actual)
 		})
 	}
@@ -124,27 +127,30 @@ func TestSetPendingError(t *testing.T) {
 		startsAt: mock.Now(),
 		endsAt:   mock.Now().Add(time.Minute),
 		expected: State{
-			State:       eval.Pending,
-			StateReason: ngmodels.StateReasonError,
-			StartsAt:    mock.Now(),
-			EndsAt:      mock.Now().Add(time.Minute),
-			Error:       errors.New("this is an error"),
+			State:        eval.Pending,
+			PendingState: PendingStateError,
+			StateReason:  ngmodels.StateReasonError,
+			StartsAt:     mock.Now(),
+			EndsAt:       mock.Now().Add(time.Minute),
+			Error:        errors.New("this is an error"),
 		},
 	}, {
 		name:  "previous state is removed",
 		error: errors.New("this is an error"),
 		state: State{
-			State:       eval.Pending,
-			StateReason: "this is a reason",
+			State:        eval.Pending,
+			PendingState: PendingStateError,
+			StateReason:  "this is a reason",
 		},
 		startsAt: mock.Now(),
 		endsAt:   mock.Now().Add(time.Minute),
 		expected: State{
-			State:       eval.Pending,
-			StateReason: ngmodels.StateReasonError,
-			StartsAt:    mock.Now(),
-			EndsAt:      mock.Now().Add(time.Minute),
-			Error:       errors.New("this is an error"),
+			State:        eval.Pending,
+			PendingState: PendingStateError,
+			StateReason:  ngmodels.StateReasonError,
+			StartsAt:     mock.Now(),
+			EndsAt:       mock.Now().Add(time.Minute),
+			Error:        errors.New("this is an error"),
 		},
 	}}
 

@@ -9,13 +9,24 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/screenshot"
 )
+
+type PendingState int
+
+const (
+	PendingStateEmpty PendingState = iota
+	PendingStateAlerting
+	PendingStateError
+)
+
+func (s PendingState) String() string {
+	return [...]string{"", "AlertingPending", "ErrorPending"}[s]
+}
 
 type State struct {
 	OrgID        int64
@@ -27,6 +38,9 @@ type State struct {
 
 	// State represents the current state.
 	State eval.State
+
+	// PendingState represents the current pending state
+	PendingState PendingState
 
 	// StateReason is a textual description to explain why the state has its current state.
 	StateReason string
@@ -85,15 +99,17 @@ func (a *State) GetAlertInstanceKey() (models.AlertInstanceKey, error) {
 // SetAlerting sets the state to Alerting. It changes both the start and end time.
 func (a *State) SetAlerting(reason string, startsAt, endsAt time.Time) {
 	a.State = eval.Alerting
+	a.PendingState = PendingStateEmpty
 	a.StateReason = reason
 	a.StartsAt = startsAt
 	a.EndsAt = endsAt
 	a.Error = nil
 }
 
-// SetPending the state to Pending. It changes both the start and end time.
-func (a *State) SetPending(reason string, startsAt, endsAt time.Time) {
+// SetPendingAlerting the state to Pending. It changes both the start and end time.
+func (a *State) SetPendingAlerting(reason string, startsAt, endsAt time.Time) {
 	a.State = eval.Pending
+	a.PendingState = PendingStateAlerting
 	a.StateReason = reason
 	a.StartsAt = startsAt
 	a.EndsAt = endsAt
@@ -103,6 +119,7 @@ func (a *State) SetPending(reason string, startsAt, endsAt time.Time) {
 // SetPendingError the state to Pending for Error state. It changes both the start and end time.
 func (a *State) SetPendingError(err error, startsAt, endsAt time.Time) {
 	a.State = eval.Pending
+	a.PendingState = PendingStateError
 	a.StateReason = models.StateReasonError
 	a.StartsAt = startsAt
 	a.EndsAt = endsAt
@@ -112,6 +129,7 @@ func (a *State) SetPendingError(err error, startsAt, endsAt time.Time) {
 // SetNoData sets the state to NoData. It changes both the start and end time.
 func (a *State) SetNoData(reason string, startsAt, endsAt time.Time) {
 	a.State = eval.NoData
+	a.PendingState = PendingStateEmpty
 	a.StateReason = reason
 	a.StartsAt = startsAt
 	a.EndsAt = endsAt
@@ -121,6 +139,7 @@ func (a *State) SetNoData(reason string, startsAt, endsAt time.Time) {
 // SetError sets the state to Error. It changes both the start and end time.
 func (a *State) SetError(err error, startsAt, endsAt time.Time) {
 	a.State = eval.Error
+	a.PendingState = PendingStateEmpty
 	a.StateReason = models.StateReasonError
 	a.StartsAt = startsAt
 	a.EndsAt = endsAt
@@ -130,6 +149,7 @@ func (a *State) SetError(err error, startsAt, endsAt time.Time) {
 // SetNormal sets the state to Normal. It changes both the start and end time.
 func (a *State) SetNormal(reason string, startsAt, endsAt time.Time) {
 	a.State = eval.Normal
+	a.PendingState = PendingStateEmpty
 	a.StateReason = reason
 	a.StartsAt = startsAt
 	a.EndsAt = endsAt
@@ -139,6 +159,7 @@ func (a *State) SetNormal(reason string, startsAt, endsAt time.Time) {
 // Resolve sets the State to Normal. It updates the StateReason, the end time, and sets Resolved to true.
 func (a *State) Resolve(reason string, endsAt time.Time) {
 	a.State = eval.Normal
+	a.PendingState = PendingStateEmpty
 	a.StateReason = reason
 	a.Resolved = true
 	a.EndsAt = endsAt
@@ -208,7 +229,7 @@ func resultAlerting(state *State, rule *models.AlertRule, result eval.Result, lo
 	case state.State == eval.Alerting:
 		logger.Debug("Keeping state", "state", state.State)
 		state.Maintain(rule.IntervalSeconds, result.EvaluatedAt)
-	case state.State == eval.Pending && state.Error == nil:
+	case state.State == eval.Pending && state.PendingState == PendingStateAlerting:
 		// If the previous state is Pending then check if the For duration has been observed
 		if result.EvaluatedAt.Sub(state.StartsAt) >= rule.For {
 			logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Alerting)
@@ -218,7 +239,7 @@ func resultAlerting(state *State, rule *models.AlertRule, result eval.Result, lo
 		if rule.For > 0 {
 			// If the alert rule has a For duration that should be observed then the state should be set to Pending
 			logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Pending)
-			state.SetPending("", result.EvaluatedAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
+			state.SetPendingAlerting("", result.EvaluatedAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
 		} else {
 			logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Alerting)
 			state.SetAlerting("", result.EvaluatedAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
@@ -238,7 +259,7 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 		if state.State == eval.Error {
 			logger.Debug("Keeping state", "state", state.State)
 			state.Maintain(rule.IntervalSeconds, result.EvaluatedAt)
-		} else if state.State == eval.Pending && state.Error != nil {
+		} else if state.State == eval.Pending && state.PendingState == PendingStateError {
 			// If the previous state is Pending then check if the ForError duration has been observed
 			if result.EvaluatedAt.Sub(state.StartsAt) >= rule.ForError {
 				logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Error)

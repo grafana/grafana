@@ -188,6 +188,14 @@ func alertInstanceMigration(mg *migrator.Migrator) {
 		migrator.NewAddColumnMigration(alertInstance, &migrator.Column{
 			Name: "current_reason", Type: migrator.DB_NVarchar, Length: DefaultFieldMaxLength, Nullable: true,
 		}))
+
+	mg.AddMigration("add current_pending_state column related to pending current_state",
+		migrator.NewAddColumnMigration(alertInstance, &migrator.Column{
+			Name:     "current_pending_state",
+			Type:     migrator.DB_NVarchar,
+			Length:   DefaultFieldMaxLength,
+			Nullable: true,
+		}))
 }
 
 func addAlertRuleMigrations(mg *migrator.Migrator, defaultIntervalSeconds int64) {

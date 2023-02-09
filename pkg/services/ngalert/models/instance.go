@@ -7,13 +7,14 @@ import (
 
 // AlertInstance represents a single alert instance.
 type AlertInstance struct {
-	AlertInstanceKey  `xorm:"extends"`
-	Labels            InstanceLabels
-	CurrentState      InstanceStateType
-	CurrentReason     string
-	CurrentStateSince time.Time
-	CurrentStateEnd   time.Time
-	LastEvalTime      time.Time
+	AlertInstanceKey    `xorm:"extends"`
+	Labels              InstanceLabels
+	CurrentState        InstanceStateType
+	CurrentPendingState InstancePendingStateType
+	CurrentReason       string
+	CurrentStateSince   time.Time
+	CurrentStateEnd     time.Time
+	LastEvalTime        time.Time
 }
 
 type AlertInstanceKey struct {
@@ -38,14 +39,44 @@ const (
 	InstanceStateError InstanceStateType = "Error"
 )
 
-// IsValid checks that the value of InstanceStateType is a valid
-// string.
+// InstancePendingStateType is an enum to differentiate between the different pending states.
+type InstancePendingStateType string
+
+const (
+	// InstancePendingStateEmpty is for any state different that Pending.
+	InstancePendingStateEmpty InstancePendingStateType = ""
+	// InstancePendingStateFiring is for pending state of a firing alert.
+	InstancePendingStateFiring InstancePendingStateType = "AlertingPending"
+	// InstancePendingStateError is for pending state of an erroring alert.
+	InstancePendingStateError InstancePendingStateType = "ErrorPending"
+)
+
+// IsValid checks that the value of InstanceStateType is a valid string.
 func (i InstanceStateType) IsValid() bool {
 	return i == InstanceStateFiring ||
 		i == InstanceStateNormal ||
 		i == InstanceStateNoData ||
 		i == InstanceStatePending ||
 		i == InstanceStateError
+}
+
+// IsValid checks that the value of InstancePendingStateType is a valid string.
+func (i InstancePendingStateType) IsValid() bool {
+	return i == InstancePendingStateEmpty ||
+		i == InstancePendingStateFiring ||
+		i == InstancePendingStateError
+}
+
+// validateCurrentStateAndCurrentPendingState checks that the possible combinations of CurrentState and
+// CurrentPendingState are valid.
+func validateCurrentStateAndCurrentPendingState(cState InstanceStateType, cPendingState InstancePendingStateType) bool {
+	return (cState == InstanceStateNormal && cPendingState == InstancePendingStateEmpty) ||
+		(cState == InstanceStateFiring && cPendingState == InstancePendingStateEmpty) ||
+		(cState == InstanceStateNoData && cPendingState == InstancePendingStateEmpty) ||
+		(cState == InstanceStateError && cPendingState == InstancePendingStateEmpty) ||
+		(cState == InstanceStatePending &&
+			(cPendingState == InstancePendingStateFiring ||
+				cPendingState == InstancePendingStateError))
 }
 
 // ListAlertInstancesQuery is the query list alert Instances.
@@ -68,7 +99,15 @@ func ValidateAlertInstance(alertInstance AlertInstance) error {
 	}
 
 	if !alertInstance.CurrentState.IsValid() {
-		return fmt.Errorf("alert instance is invalid because the state '%v' is invalid", alertInstance.CurrentState)
+		return fmt.Errorf("alert instance is invalid because the state %q is invalid", alertInstance.CurrentState)
+	}
+
+	if !alertInstance.CurrentPendingState.IsValid() {
+		return fmt.Errorf("alert instance is invalid because the pending state %q is invalid", alertInstance.CurrentPendingState)
+	}
+
+	if !validateCurrentStateAndCurrentPendingState(alertInstance.CurrentState, alertInstance.CurrentPendingState) {
+		return fmt.Errorf("alert instance is invalid because the state %q and pending state %q are not a valid pair", alertInstance.CurrentState, alertInstance.CurrentPendingState)
 	}
 
 	return nil

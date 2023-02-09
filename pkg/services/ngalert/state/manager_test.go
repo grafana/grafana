@@ -48,6 +48,7 @@ func TestWarmStateCache(t *testing.T) {
 			CacheID:      `[["test1","testValue1"]]`,
 			Labels:       data.Labels{"test1": "testValue1"},
 			State:        eval.Normal,
+			PendingState: state.PendingStateEmpty,
 			Results: []state.Evaluation{
 				{EvaluationTime: evaluationTime, EvaluationState: eval.Normal},
 			},
@@ -61,6 +62,7 @@ func TestWarmStateCache(t *testing.T) {
 			CacheID:      `[["test2","testValue2"]]`,
 			Labels:       data.Labels{"test2": "testValue2"},
 			State:        eval.Alerting,
+			PendingState: state.PendingStateEmpty,
 			Results: []state.Evaluation{
 				{EvaluationTime: evaluationTime, EvaluationState: eval.Alerting},
 			},
@@ -75,6 +77,7 @@ func TestWarmStateCache(t *testing.T) {
 			CacheID:      `[["test3","testValue3"]]`,
 			Labels:       data.Labels{"test3": "testValue3"},
 			State:        eval.NoData,
+			PendingState: state.PendingStateEmpty,
 			Results: []state.Evaluation{
 				{EvaluationTime: evaluationTime, EvaluationState: eval.NoData},
 			},
@@ -89,6 +92,7 @@ func TestWarmStateCache(t *testing.T) {
 			CacheID:      `[["test4","testValue4"]]`,
 			Labels:       data.Labels{"test4": "testValue4"},
 			State:        eval.Error,
+			PendingState: state.PendingStateEmpty,
 			Results: []state.Evaluation{
 				{EvaluationTime: evaluationTime, EvaluationState: eval.Error},
 			},
@@ -103,6 +107,22 @@ func TestWarmStateCache(t *testing.T) {
 			CacheID:      `[["test5","testValue5"]]`,
 			Labels:       data.Labels{"test5": "testValue5"},
 			State:        eval.Pending,
+			PendingState: state.PendingStateAlerting,
+			Results: []state.Evaluation{
+				{EvaluationTime: evaluationTime, EvaluationState: eval.Pending},
+			},
+			StartsAt:           evaluationTime.Add(-1 * time.Minute),
+			EndsAt:             evaluationTime.Add(1 * time.Minute),
+			LastEvaluationTime: evaluationTime,
+			Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+		},
+		{
+			AlertRuleUID: rule.UID,
+			OrgID:        rule.OrgID,
+			CacheID:      `[["test6","testValue6"]]`,
+			Labels:       data.Labels{"test6": "testValue6"},
+			State:        eval.Pending,
+			PendingState: state.PendingStateError,
 			Results: []state.Evaluation{
 				{EvaluationTime: evaluationTime, EvaluationState: eval.Pending},
 			},
@@ -121,11 +141,12 @@ func TestWarmStateCache(t *testing.T) {
 			RuleUID:    rule.UID,
 			LabelsHash: hash,
 		},
-		CurrentState:      models.InstanceStateNormal,
-		LastEvalTime:      evaluationTime,
-		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
-		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
-		Labels:            labels,
+		CurrentState:        models.InstanceStateNormal,
+		CurrentPendingState: models.InstancePendingStateEmpty,
+		LastEvalTime:        evaluationTime,
+		CurrentStateSince:   evaluationTime.Add(-1 * time.Minute),
+		CurrentStateEnd:     evaluationTime.Add(1 * time.Minute),
+		Labels:              labels,
 	}
 
 	labels = models.InstanceLabels{"test2": "testValue2"}
@@ -136,11 +157,12 @@ func TestWarmStateCache(t *testing.T) {
 			RuleUID:    rule.UID,
 			LabelsHash: hash,
 		},
-		CurrentState:      models.InstanceStateFiring,
-		LastEvalTime:      evaluationTime,
-		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
-		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
-		Labels:            labels,
+		CurrentState:        models.InstanceStateFiring,
+		CurrentPendingState: models.InstancePendingStateEmpty,
+		LastEvalTime:        evaluationTime,
+		CurrentStateSince:   evaluationTime.Add(-1 * time.Minute),
+		CurrentStateEnd:     evaluationTime.Add(1 * time.Minute),
+		Labels:              labels,
 	}
 
 	labels = models.InstanceLabels{"test3": "testValue3"}
@@ -151,11 +173,12 @@ func TestWarmStateCache(t *testing.T) {
 			RuleUID:    rule.UID,
 			LabelsHash: hash,
 		},
-		CurrentState:      models.InstanceStateNoData,
-		LastEvalTime:      evaluationTime,
-		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
-		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
-		Labels:            labels,
+		CurrentState:        models.InstanceStateNoData,
+		CurrentPendingState: models.InstancePendingStateEmpty,
+		LastEvalTime:        evaluationTime,
+		CurrentStateSince:   evaluationTime.Add(-1 * time.Minute),
+		CurrentStateEnd:     evaluationTime.Add(1 * time.Minute),
+		Labels:              labels,
 	}
 
 	labels = models.InstanceLabels{"test4": "testValue4"}
@@ -166,11 +189,12 @@ func TestWarmStateCache(t *testing.T) {
 			RuleUID:    rule.UID,
 			LabelsHash: hash,
 		},
-		CurrentState:      models.InstanceStateError,
-		LastEvalTime:      evaluationTime,
-		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
-		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
-		Labels:            labels,
+		CurrentState:        models.InstanceStateError,
+		CurrentPendingState: models.InstancePendingStateEmpty,
+		LastEvalTime:        evaluationTime,
+		CurrentStateSince:   evaluationTime.Add(-1 * time.Minute),
+		CurrentStateEnd:     evaluationTime.Add(1 * time.Minute),
+		Labels:              labels,
 	}
 
 	labels = models.InstanceLabels{"test5": "testValue5"}
@@ -181,13 +205,30 @@ func TestWarmStateCache(t *testing.T) {
 			RuleUID:    rule.UID,
 			LabelsHash: hash,
 		},
-		CurrentState:      models.InstanceStatePending,
-		LastEvalTime:      evaluationTime,
-		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
-		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
-		Labels:            labels,
+		CurrentState:        models.InstanceStatePending,
+		CurrentPendingState: models.InstancePendingStateFiring,
+		LastEvalTime:        evaluationTime,
+		CurrentStateSince:   evaluationTime.Add(-1 * time.Minute),
+		CurrentStateEnd:     evaluationTime.Add(1 * time.Minute),
+		Labels:              labels,
 	}
-	_ = dbstore.SaveAlertInstances(ctx, instance1, instance2, instance3, instance4, instance5)
+
+	labels = models.InstanceLabels{"test6": "testValue6"}
+	_, hash, _ = labels.StringAndHash()
+	instance6 := models.AlertInstance{
+		AlertInstanceKey: models.AlertInstanceKey{
+			RuleOrgID:  rule.OrgID,
+			RuleUID:    rule.UID,
+			LabelsHash: hash,
+		},
+		CurrentState:        models.InstanceStatePending,
+		CurrentPendingState: models.InstancePendingStateError,
+		LastEvalTime:        evaluationTime,
+		CurrentStateSince:   evaluationTime.Add(-1 * time.Minute),
+		CurrentStateEnd:     evaluationTime.Add(1 * time.Minute),
+		Labels:              labels,
+	}
+	_ = dbstore.SaveAlertInstances(ctx, instance1, instance2, instance3, instance4, instance5, instance6)
 
 	cfg := state.ManagerCfg{
 		Metrics:       testMetrics.GetStateMetrics(),
@@ -320,8 +361,9 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					Values: make(map[string]float64),
-					State:  eval.Normal,
+					Values:       make(map[string]float64),
+					State:        eval.Normal,
+					PendingState: state.PendingStateEmpty,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -399,8 +441,9 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label_2":             "test",
 					},
-					Values: make(map[string]float64),
-					State:  eval.Alerting,
+					Values:       make(map[string]float64),
+					State:        eval.Alerting,
+					PendingState: state.PendingStateEmpty,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -457,8 +500,9 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					Values: make(map[string]float64),
-					State:  eval.Normal,
+					Values:       make(map[string]float64),
+					State:        eval.Normal,
+					PendingState: state.PendingStateEmpty,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -519,8 +563,9 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					Values: make(map[string]float64),
-					State:  eval.Alerting,
+					Values:       make(map[string]float64),
+					State:        eval.Alerting,
+					PendingState: state.PendingStateEmpty,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -592,8 +637,9 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					Values: make(map[string]float64),
-					State:  eval.Alerting,
+					Values:       make(map[string]float64),
+					State:        eval.Alerting,
+					PendingState: state.PendingStateEmpty,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -687,8 +733,9 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					Values: make(map[string]float64),
-					State:  eval.Pending,
+					Values:       make(map[string]float64),
+					State:        eval.Pending,
+					PendingState: state.PendingStateAlerting,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime.Add(30 * time.Second),
@@ -769,8 +816,9 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					Values: make(map[string]float64),
-					State:  eval.NoData,
+					Values:       make(map[string]float64),
+					State:        eval.NoData,
+					PendingState: state.PendingStateEmpty,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime.Add(20 * time.Second),
@@ -834,8 +882,9 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					Values: make(map[string]float64),
-					State:  eval.Pending,
+					Values:       make(map[string]float64),
+					State:        eval.Pending,
+					PendingState: state.PendingStateAlerting,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -899,8 +948,9 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					Values: make(map[string]float64),
-					State:  eval.Pending,
+					Values:       make(map[string]float64),
+					State:        eval.Pending,
+					PendingState: state.PendingStateAlerting,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -964,9 +1014,10 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					Values:      make(map[string]float64),
-					State:       eval.Alerting,
-					StateReason: eval.NoData.String(),
+					Values:       make(map[string]float64),
+					State:        eval.Alerting,
+					PendingState: state.PendingStateEmpty,
+					StateReason:  eval.NoData.String(),
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -1030,8 +1081,9 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					Values: make(map[string]float64),
-					State:  eval.NoData,
+					Values:       make(map[string]float64),
+					State:        eval.NoData,
+					PendingState: state.PendingStateEmpty,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -1095,8 +1147,9 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					Values: make(map[string]float64),
-					State:  eval.Normal,
+					Values:       make(map[string]float64),
+					State:        eval.Normal,
+					PendingState: state.PendingStateEmpty,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -1120,8 +1173,9 @@ func TestProcessEvalResults(t *testing.T) {
 						"alertname":                    "test_title",
 						"label":                        "test",
 					},
-					Values: make(map[string]float64),
-					State:  eval.NoData,
+					Values:       make(map[string]float64),
+					State:        eval.NoData,
+					PendingState: state.PendingStateEmpty,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime.Add(10 * time.Second),
@@ -1186,8 +1240,9 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test-1",
 					},
-					Values: make(map[string]float64),
-					State:  eval.Normal,
+					Values:       make(map[string]float64),
+					State:        eval.Normal,
+					PendingState: state.PendingStateEmpty,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -1212,8 +1267,9 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test-2",
 					},
-					Values: make(map[string]float64),
-					State:  eval.Normal,
+					Values:       make(map[string]float64),
+					State:        eval.Normal,
+					PendingState: state.PendingStateEmpty,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -1237,8 +1293,9 @@ func TestProcessEvalResults(t *testing.T) {
 						"alertname":                    "test_title",
 						"label":                        "test",
 					},
-					Values: make(map[string]float64),
-					State:  eval.NoData,
+					Values:       make(map[string]float64),
+					State:        eval.NoData,
+					PendingState: state.PendingStateEmpty,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime.Add(10 * time.Second),
@@ -1305,8 +1362,9 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					Values: make(map[string]float64),
-					State:  eval.Normal,
+					Values:       make(map[string]float64),
+					State:        eval.Normal,
+					PendingState: state.PendingStateEmpty,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -1335,8 +1393,9 @@ func TestProcessEvalResults(t *testing.T) {
 						"alertname":                    "test_title",
 						"label":                        "test",
 					},
-					Values: make(map[string]float64),
-					State:  eval.NoData,
+					Values:       make(map[string]float64),
+					State:        eval.NoData,
+					PendingState: state.PendingStateEmpty,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime.Add(10 * time.Second),
@@ -1395,9 +1454,10 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					Values:      make(map[string]float64),
-					State:       eval.Normal,
-					StateReason: eval.NoData.String(),
+					Values:       make(map[string]float64),
+					State:        eval.Normal,
+					PendingState: state.PendingStateEmpty,
+					StateReason:  eval.NoData.String(),
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -1462,9 +1522,10 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					Values:      make(map[string]float64),
-					State:       eval.Alerting,
-					StateReason: eval.NoData.String(),
+					Values:       make(map[string]float64),
+					State:        eval.Alerting,
+					PendingState: state.PendingStateEmpty,
+					StateReason:  eval.NoData.String(),
 
 					Results: []state.Evaluation{
 						{
@@ -1531,10 +1592,11 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					Values:      make(map[string]float64),
-					State:       eval.Pending,
-					StateReason: eval.Error.String(),
-					Error:       errors.New("test error"),
+					Values:       make(map[string]float64),
+					State:        eval.Pending,
+					PendingState: state.PendingStateAlerting,
+					StateReason:  eval.Error.String(),
+					Error:        errors.New("test error"),
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -1623,9 +1685,10 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					Values:      make(map[string]float64),
-					State:       eval.Alerting,
-					StateReason: eval.Error.String(),
+					Values:       make(map[string]float64),
+					State:        eval.Alerting,
+					PendingState: state.PendingStateEmpty,
+					StateReason:  eval.Error.String(),
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime.Add(20 * time.Second),
@@ -1703,8 +1766,9 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					Values: make(map[string]float64),
-					State:  eval.Error,
+					Values:       make(map[string]float64),
+					State:        eval.Error,
+					PendingState: state.PendingStateEmpty,
 					Error: expr.QueryError{
 						RefID: "A",
 						Err:   errors.New("this is an error"),
@@ -1782,9 +1846,10 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					Values:      make(map[string]float64),
-					State:       eval.Pending,
-					StateReason: "Error",
+					Values:       make(map[string]float64),
+					State:        eval.Pending,
+					PendingState: state.PendingStateError,
+					StateReason:  "Error",
 					Error: expr.QueryError{
 						RefID: "A",
 						Err:   errors.New("this is an error"),
@@ -1861,10 +1926,11 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					Values:      make(map[string]float64),
-					State:       eval.Normal,
-					StateReason: eval.Error.String(),
-					Error:       nil,
+					Values:       make(map[string]float64),
+					State:        eval.Normal,
+					PendingState: state.PendingStateEmpty,
+					StateReason:  eval.Error.String(),
+					Error:        nil,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -1935,10 +2001,11 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					Values:      make(map[string]float64),
-					State:       eval.Normal,
-					StateReason: eval.Error.String(),
-					Error:       nil,
+					Values:       make(map[string]float64),
+					State:        eval.Normal,
+					PendingState: state.PendingStateEmpty,
+					StateReason:  eval.Error.String(),
+					Error:        nil,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -1970,6 +2037,7 @@ func TestProcessEvalResults(t *testing.T) {
 				Labels:          map[string]string{"label": "test"},
 				IntervalSeconds: 10,
 				For:             20 * time.Second,
+				ForError:        20 * time.Second,
 				ExecErrState:    models.ErrorErrState,
 			},
 			evalResults: []eval.Results{
@@ -2022,7 +2090,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 				},
 			},
-			expectedAnnotations: 3,
+			expectedAnnotations: 4,
 			expectedStates: map[string]*state.State{
 				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
 					AlertRuleUID: "test_alert_rule_uid_2",
@@ -2035,8 +2103,9 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					Values: make(map[string]float64),
-					State:  eval.Error,
+					Values:       make(map[string]float64),
+					State:        eval.Error,
+					PendingState: state.PendingStateEmpty,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime.Add(40 * time.Second),
@@ -2049,7 +2118,7 @@ func TestProcessEvalResults(t *testing.T) {
 							Values:          make(map[string]*float64),
 						},
 					},
-					StartsAt:           evaluationTime.Add(30 * time.Second),
+					StartsAt:           evaluationTime.Add(50 * time.Second),
 					EndsAt:             evaluationTime.Add(50 * time.Second).Add(state.ResendDelay * 3),
 					LastEvaluationTime: evaluationTime.Add(50 * time.Second),
 					EvaluationDuration: evaluationDuration,
@@ -2126,9 +2195,10 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					Values:      make(map[string]float64),
-					State:       eval.Pending,
-					StateReason: models.StateReasonError,
+					Values:       make(map[string]float64),
+					State:        eval.Pending,
+					PendingState: state.PendingStateError,
+					StateReason:  models.StateReasonError,
 					Error: expr.QueryError{
 						RefID: "A",
 						Err:   errors.New("this is an error"),
@@ -2222,8 +2292,9 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					Values: make(map[string]float64),
-					State:  eval.Pending,
+					Values:       make(map[string]float64),
+					State:        eval.Pending,
+					PendingState: state.PendingStateAlerting,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime.Add(20 * time.Second),
@@ -2365,8 +2436,9 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					Values: make(map[string]float64),
-					State:  eval.Alerting,
+					Values:       make(map[string]float64),
+					State:        eval.Alerting,
+					PendingState: state.PendingStateEmpty,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime.Add(80 * time.Second),
@@ -2447,8 +2519,9 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					Values: make(map[string]float64),
-					State:  eval.Pending,
+					Values:       make(map[string]float64),
+					State:        eval.Pending,
+					PendingState: state.PendingStateAlerting,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime.Add(30 * time.Second),
@@ -2535,8 +2608,9 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"instance_label":               "test",
 					},
-					Values: make(map[string]float64),
-					State:  eval.NoData,
+					Values:       make(map[string]float64),
+					State:        eval.NoData,
+					PendingState: state.PendingStateEmpty,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime.Add(30 * time.Second),
@@ -2598,8 +2672,9 @@ func TestProcessEvalResults(t *testing.T) {
 						"label":                        "test",
 						"job":                          "prod/grafana",
 					},
-					Values: make(map[string]float64),
-					State:  eval.Normal,
+					Values:       make(map[string]float64),
+					State:        eval.Normal,
+					PendingState: state.PendingStateEmpty,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,

@@ -38,9 +38,10 @@ func BenchmarkAlertInstanceOperations(b *testing.B) {
 				RuleUID:    alertRule.UID,
 				LabelsHash: labelsHash,
 			},
-			CurrentState:  models.InstanceStateFiring,
-			CurrentReason: string(models.InstanceStateError),
-			Labels:        labels,
+			CurrentState:        models.InstanceStateFiring,
+			CurrentPendingState: models.InstancePendingStateEmpty,
+			CurrentReason:       string(models.InstanceStateError),
+			Labels:              labels,
 		}
 		instances = append(instances, instance)
 		keys = append(keys, instance.AlertInstanceKey)
@@ -78,9 +79,10 @@ func TestIntegrationAlertInstanceBulkWrite(t *testing.T) {
 					RuleUID:    alertRule.UID,
 					LabelsHash: labelsHash,
 				},
-				CurrentState:  models.InstanceStateFiring,
-				CurrentReason: string(models.InstanceStateError),
-				Labels:        labels,
+				CurrentState:        models.InstanceStateFiring,
+				CurrentPendingState: models.InstancePendingStateEmpty,
+				CurrentReason:       string(models.InstanceStateError),
+				Labels:              labels,
 			}
 			instances = append(instances, instance)
 			keys = append(keys, instance.AlertInstanceKey)
@@ -160,9 +162,10 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 				RuleUID:    alertRule1.UID,
 				LabelsHash: hash,
 			},
-			CurrentState:  models.InstanceStateFiring,
-			CurrentReason: string(models.InstanceStateError),
-			Labels:        labels,
+			CurrentState:        models.InstanceStateFiring,
+			CurrentPendingState: models.InstancePendingStateEmpty,
+			CurrentReason:       string(models.InstanceStateError),
+			Labels:              labels,
 		}
 		err := dbstore.SaveAlertInstances(ctx, instance)
 		require.NoError(t, err)
@@ -190,8 +193,9 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 				RuleUID:    alertRule2.UID,
 				LabelsHash: hash,
 			},
-			CurrentState: models.InstanceStateNormal,
-			Labels:       labels,
+			CurrentState:        models.InstanceStateNormal,
+			CurrentPendingState: models.InstancePendingStateEmpty,
+			Labels:              labels,
 		}
 		err := dbstore.SaveAlertInstances(ctx, instance)
 		require.NoError(t, err)
@@ -219,8 +223,9 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 				RuleUID:    alertRule3.UID,
 				LabelsHash: hash,
 			},
-			CurrentState: models.InstanceStateFiring,
-			Labels:       labels,
+			CurrentState:        models.InstanceStateFiring,
+			CurrentPendingState: models.InstancePendingStateEmpty,
+			Labels:              labels,
 		}
 
 		err := dbstore.SaveAlertInstances(ctx, instance1)
@@ -234,8 +239,9 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 				RuleUID:    instance1.RuleUID,
 				LabelsHash: hash,
 			},
-			CurrentState: models.InstanceStateFiring,
-			Labels:       labels,
+			CurrentState:        models.InstanceStateFiring,
+			CurrentPendingState: models.InstancePendingStateEmpty,
+			Labels:              labels,
 		}
 		err = dbstore.SaveAlertInstances(ctx, instance2)
 		require.NoError(t, err)
@@ -270,9 +276,10 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 				RuleUID:    util.GenerateShortUID(),
 				LabelsHash: util.GenerateShortUID(),
 			},
-			CurrentState:  models.InstanceStateNormal,
-			CurrentReason: "",
-			Labels:        labels,
+			CurrentState:        models.InstanceStateNormal,
+			CurrentPendingState: models.InstancePendingStateEmpty,
+			CurrentReason:       "",
+			Labels:              labels,
 		}
 		instance2 := models.AlertInstance{
 			AlertInstanceKey: models.AlertInstanceKey{
@@ -280,9 +287,10 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 				RuleUID:    util.GenerateShortUID(),
 				LabelsHash: util.GenerateShortUID(),
 			},
-			CurrentState:  models.InstanceStateNormal,
-			CurrentReason: models.StateReasonError,
-			Labels:        labels,
+			CurrentState:        models.InstanceStateNormal,
+			CurrentPendingState: models.InstancePendingStateEmpty,
+			CurrentReason:       models.StateReasonError,
+			Labels:              labels,
 		}
 		err := dbstore.SaveAlertInstances(ctx, instance1, instance2)
 		require.NoError(t, err)
@@ -323,8 +331,9 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 				RuleUID:    alertRule4.UID,
 				LabelsHash: hash,
 			},
-			CurrentState: models.InstanceStateFiring,
-			Labels:       labels,
+			CurrentState:        models.InstanceStateFiring,
+			CurrentPendingState: models.InstancePendingStateEmpty,
+			Labels:              labels,
 		}
 
 		err := dbstore.SaveAlertInstances(ctx, instance1)
@@ -336,8 +345,9 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 				RuleUID:    instance1.RuleUID,
 				LabelsHash: instance1.LabelsHash,
 			},
-			CurrentState: models.InstanceStateNormal,
-			Labels:       instance1.Labels,
+			CurrentState:        models.InstanceStateNormal,
+			CurrentPendingState: models.InstancePendingStateEmpty,
+			Labels:              instance1.Labels,
 		}
 		err = dbstore.SaveAlertInstances(ctx, instance2)
 		require.NoError(t, err)
@@ -356,5 +366,6 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 		require.Equal(t, instance2.RuleUID, listQuery.Result[0].RuleUID)
 		require.Equal(t, instance2.Labels, listQuery.Result[0].Labels)
 		require.Equal(t, instance2.CurrentState, listQuery.Result[0].CurrentState)
+		require.Equal(t, instance2.CurrentPendingState, listQuery.Result[0].CurrentPendingState)
 	})
 }

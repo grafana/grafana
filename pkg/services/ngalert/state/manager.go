@@ -147,6 +147,7 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 				CacheID:              cacheID,
 				Labels:               lbs,
 				State:                translateInstanceState(entry.CurrentState),
+				PendingState:         translateInstancePendingState(entry.CurrentPendingState),
 				StateReason:          entry.CurrentReason,
 				LastEvaluationString: "",
 				StartsAt:             entry.CurrentStateSince,
@@ -363,13 +364,14 @@ func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, state
 			continue
 		}
 		fields := ngModels.AlertInstance{
-			AlertInstanceKey:  key,
-			Labels:            ngModels.InstanceLabels(s.Labels),
-			CurrentState:      ngModels.InstanceStateType(s.State.State.String()),
-			CurrentReason:     s.StateReason,
-			LastEvalTime:      s.LastEvaluationTime,
-			CurrentStateSince: s.StartsAt,
-			CurrentStateEnd:   s.EndsAt,
+			AlertInstanceKey:    key,
+			Labels:              ngModels.InstanceLabels(s.Labels),
+			CurrentState:        ngModels.InstanceStateType(s.State.State.String()),
+			CurrentPendingState: ngModels.InstancePendingStateType(s.PendingState.String()),
+			CurrentReason:       s.StateReason,
+			LastEvalTime:        s.LastEvaluationTime,
+			CurrentStateSince:   s.StartsAt,
+			CurrentStateEnd:     s.EndsAt,
 		}
 		instances = append(instances, fields)
 	}
@@ -428,6 +430,19 @@ func translateInstanceState(state ngModels.InstanceStateType) eval.State {
 		return eval.Pending
 	default:
 		return eval.Error
+	}
+}
+
+func translateInstancePendingState(pendingState ngModels.InstancePendingStateType) PendingState {
+	switch pendingState {
+	case ngModels.InstancePendingStateEmpty:
+		return PendingStateEmpty
+	case ngModels.InstancePendingStateFiring:
+		return PendingStateAlerting
+	case ngModels.InstancePendingStateError:
+		return PendingStateError
+	default:
+		return PendingStateEmpty
 	}
 }
 
