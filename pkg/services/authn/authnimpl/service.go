@@ -5,12 +5,15 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/hashicorp/go-multierror"
 	"go.opentelemetry.io/otel/attribute"
 
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
@@ -49,11 +52,13 @@ func ProvideService(
 	accessControlService accesscontrol.Service,
 	apikeyService apikey.Service, userService user.Service,
 	jwtService auth.JWTVerifierService,
+	usageStats usagestats.Service,
+	kvstore kvstore.KVStore,
 	userProtectionService login.UserProtectionService,
 	loginAttempts loginattempt.Service, quotaService quota.Service,
 	authInfoService login.AuthInfoService, renderService rendering.Service,
 	features *featuremgmt.FeatureManager, oauthTokenService oauthtoken.OAuthTokenService,
-	socialService social.Service,
+	socialService social.Service, cache *remotecache.RemoteCache,
 ) *Service {
 	s := &Service{
 		log:            log.New("authn.service"),
@@ -66,17 +71,17 @@ func ProvideService(
 		postLoginHooks: newQueue[authn.PostLoginHookFn](),
 	}
 
+	usageStats.RegisterMetricsFunc(s.getUsageStats)
+
 	s.RegisterClient(clients.ProvideRender(userService, renderService))
 	s.RegisterClient(clients.ProvideAPIKey(apikeyService, userService))
 
 	if cfg.LoginCookieName != "" {
-		sessionClient := clients.ProvideSession(sessionService, userService, cfg.LoginCookieName, cfg.LoginMaxLifetime)
-		s.RegisterClient(sessionClient)
-		s.RegisterPostAuthHook(sessionClient.RefreshTokenHook, 20)
+		s.RegisterClient(clients.ProvideSession(sessionService, userService, cfg.LoginCookieName, cfg.LoginMaxLifetime))
 	}
 
 	if s.cfg.AnonymousEnabled {
-		s.RegisterClient(clients.ProvideAnonymous(cfg, orgService))
+		s.RegisterClient(clients.ProvideAnonymous(cfg, orgService, kvstore))
 	}
 
 	var proxyClients []authn.ProxyClient
@@ -106,7 +111,7 @@ func ProvideService(
 	}
 
 	if s.cfg.AuthProxyEnabled && len(proxyClients) > 0 {
-		proxy, err := clients.ProvideProxy(cfg, proxyClients...)
+		proxy, err := clients.ProvideProxy(cfg, cache, userService, proxyClients...)
 		if err != nil {
 			s.log.Error("failed to configure auth proxy", "err", err)
 		} else {
@@ -145,6 +150,8 @@ func ProvideService(
 		s.RegisterPostAuthHook(sync.ProvideOauthTokenSync(oauthTokenService, sessionService).SyncOauthToken, 60)
 	}
 
+	s.RegisterPostAuthHook(sync.ProvideFetchUserSync(userService).FetchSyncedUserHook, 100)
+
 	return s
 }
 
@@ -173,7 +180,6 @@ func (s *Service) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 		if item.v.Test(ctx, r) {
 			identity, err := s.authenticate(ctx, item.v, r)
 			if err != nil {
-				s.log.Warn("failed to authenticate", "client", item.v.Name(), "err", err)
 				authErr = multierror.Append(authErr, err)
 				// try next
 				continue
@@ -202,13 +208,20 @@ func (s *Service) authenticate(ctx context.Context, c authn.Client, r *authn.Req
 
 	for _, hook := range s.postAuthHooks.items {
 		if err := hook.v(ctx, identity, r); err != nil {
-			s.log.FromContext(ctx).Warn("post auth hook failed", "error", err, "id", identity)
+			s.log.FromContext(ctx).Warn("post auth hook failed", "error", err, "client", c.Name(), "id", identity.ID)
 			return nil, err
 		}
 	}
 
 	if identity.IsDisabled {
 		return nil, errDisabledIdentity.Errorf("identity is disabled")
+	}
+
+	if hc, ok := c.(authn.HookClient); ok {
+		if err := hc.Hook(ctx, identity, r); err != nil {
+			s.log.FromContext(ctx).Warn("post client auth hook failed", "error", err, "client", c.Name(), "id", identity.ID)
+			return nil, err
+		}
 	}
 
 	return identity, nil

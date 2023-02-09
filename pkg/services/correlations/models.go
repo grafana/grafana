@@ -20,9 +20,9 @@ type CorrelationConfigType string
 
 type Transformation struct {
 	Type       string `json:"type"`
-	Variable   string `json:"variable,omitempty"`
 	Expression string `json:"expression,omitempty"`
 	Field      string `json:"field,omitempty"`
+	MapValue   string `json:"mapValue,omitempty"`
 }
 
 const (
@@ -60,9 +60,6 @@ func (c CorrelationConfig) MarshalJSON() ([]byte, error) {
 	transformations := c.Transformations
 	if target == nil {
 		target = map[string]interface{}{}
-	}
-	if transformations == nil {
-		transformations = nil
 	}
 	return json.Marshal(struct {
 		Type            CorrelationConfigType  `json:"type"`

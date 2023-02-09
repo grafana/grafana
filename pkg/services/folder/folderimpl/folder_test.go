@@ -40,7 +40,7 @@ func TestIntegrationProvideFolderService(t *testing.T) {
 		ac := acmock.New()
 		ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, nil, nil, nil, &featuremgmt.FeatureManager{})
 
-		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 2)
+		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 3)
 	})
 }
 
@@ -300,7 +300,6 @@ func TestIntegrationFolderService(t *testing.T) {
 				{ActualError: dashboards.ErrDashboardWithSameUIDExists, ExpectedError: dashboards.ErrFolderWithSameUIDExists},
 				{ActualError: dashboards.ErrDashboardVersionMismatch, ExpectedError: dashboards.ErrFolderVersionMismatch},
 				{ActualError: dashboards.ErrDashboardNotFound, ExpectedError: dashboards.ErrFolderNotFound},
-				{ActualError: dashboards.ErrDashboardFailedGenerateUniqueUid, ExpectedError: dashboards.ErrFolderFailedGenerateUniqueUid},
 				{ActualError: dashboards.ErrDashboardInvalidUid, ExpectedError: dashboards.ErrDashboardInvalidUid},
 			}
 
@@ -763,6 +762,32 @@ func TestNestedFolderService(t *testing.T) {
 			})
 			assert.ErrorIs(t, err, folder.ErrMaximumDepthReached)
 			require.NotNil(t, actualCmd)
+		})
+
+		t.Run("get default folder, no error", func(t *testing.T) {
+			g := guardian.New
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
+			t.Cleanup(func() {
+				guardian.New = g
+			})
+
+			// dashboard store commands that should be called.
+			dashStore := &dashboards.FakeDashboardStore{}
+
+			dashboardFolderStore := foldertest.NewFakeFolderStore(t)
+
+			nestedFolderStore := NewFakeStore()
+			nestedFolderStore.ExpectedError = folder.ErrFolderNotFound
+
+			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
+				ExpectedEvaluate: true,
+			})
+			_, err := folderSvc.Get(context.Background(), &folder.GetFolderQuery{
+				OrgID:        orgID,
+				ID:           &folder.GeneralFolder.ID,
+				SignedInUser: usr,
+			})
+			require.NoError(t, err)
 		})
 	})
 }

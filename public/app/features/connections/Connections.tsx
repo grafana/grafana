@@ -29,21 +29,25 @@ export default function Connections() {
       }}
     >
       <Switch>
-        <Route exact path={ROUTES.Base} component={() => <Redirect to={ROUTES.ConnectData} />} />
+        {/* Redirect to "Connect data" by default */}
+        <Route exact sensitive path={ROUTES.Base} component={() => <Redirect to={ROUTES.ConnectData} />} />
         <Route
           exact
+          sensitive
           path={ROUTES.YourConnections}
           component={() => <NavLandingPage navId="connections-your-connections" />}
         />
-        <Route exact path={ROUTES.DataSources} component={DataSourcesListPage} />
-        <Route exact path={ROUTES.DataSourcesDetails} component={DataSourceDetailsPage} />
-        <Route exact path={ROUTES.DataSourcesNew} component={NewDataSourcePage} />
-        <Route exact path={ROUTES.DataSourcesEdit} component={EditDataSourcePage} />
-        <Route exact path={ROUTES.DataSourcesDashboards} component={DataSourceDashboardsPage} />
-        {!isConnectDataPageOverriden && <Route path={ROUTES.ConnectData} component={ConnectDataPage} />}
+        <Route exact sensitive path={ROUTES.DataSources} component={DataSourcesListPage} />
+        <Route exact sensitive path={ROUTES.DataSourcesDetails} component={DataSourceDetailsPage} />
+        <Route exact sensitive path={ROUTES.DataSourcesNew} component={NewDataSourcePage} />
+        <Route exact sensitive path={ROUTES.DataSourcesEdit} component={EditDataSourcePage} />
+        <Route exact sensitive path={ROUTES.DataSourcesDashboards} component={DataSourceDashboardsPage} />
 
-        {/* Default page */}
-        <Route component={DataSourcesListPage} />
+        {/* "Connect data" page - we don't register a route in case a plugin already registers a standalone page for it */}
+        {!isConnectDataPageOverriden && <Route exact sensitive path={ROUTES.ConnectData} component={ConnectDataPage} />}
+
+        {/* Not found */}
+        <Route component={() => <Redirect to="/notfound" />} />
       </Switch>
     </DataSourcesRoutesContext.Provider>
   );
