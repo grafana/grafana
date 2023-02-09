@@ -2,6 +2,7 @@ import { merge } from 'lodash';
 import React, { useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { TableCellOptions } from '@grafana/schema';
 import { Field, Select, TableCellDisplayMode } from '@grafana/ui';
 
@@ -72,9 +73,14 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
   );
 };
 
+const areaChartDisplayModeOption: SelectableValue<TableCellOptions> = {
+  value: { type: TableCellDisplayMode.AreaChart },
+  label: 'Area chart',
+};
+
 const cellDisplayModeOptions: Array<SelectableValue<TableCellOptions>> = [
   { value: { type: TableCellDisplayMode.Auto }, label: 'Auto' },
-  { value: { type: TableCellDisplayMode.AreaChart }, label: 'Area chart' },
+  ...(config.featureToggles.timeSeriesTable ? [areaChartDisplayModeOption] : []),
   { value: { type: TableCellDisplayMode.ColorText }, label: 'Colored text' },
   { value: { type: TableCellDisplayMode.ColorBackground }, label: 'Colored background' },
   { value: { type: TableCellDisplayMode.Gauge }, label: 'Gauge' },
