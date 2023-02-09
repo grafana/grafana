@@ -550,7 +550,7 @@
     "geomappanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/grafana-edge-squad"
+        "grafana/dataviz-squad"
       ],
       "currentVersion": [
         0,
