@@ -26,7 +26,10 @@ export const Alias: FunctionComponent<Props> = ({ value = '', onChange, id }) =>
         content={
           <span>
             Alias pattern will be deprecated in Grafana 10. See{' '}
-            <a href="https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/query-editor/#common-query-editor-fields">
+            <a
+              target="__blank"
+              href="https://grafana.com/docs/grafana/latest/datasources/aws-cloudwatch/query-editor/#common-query-editor-fields"
+            >
               documentation
             </a>{' '}
             for how to use dynamic labels.
