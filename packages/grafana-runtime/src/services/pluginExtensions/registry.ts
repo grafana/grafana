@@ -1,10 +1,4 @@
-export type PluginsExtensionLink = {
-  type: 'link';
-  title: string;
-  description: string;
-  path: string;
-  key: number;
-};
+import type { PluginsExtensionLink } from '@grafana/data';
 
 export type PluginsExtension = PluginsExtensionLink;
 

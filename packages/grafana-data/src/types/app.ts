@@ -89,8 +89,13 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
       }
     }
   }
+
+  configureExtensionLink(id: string, configure: LinkExtensionCallback): void {}
 }
 
+type LinkExtensionLink = {};
+
+type LinkExtensionCallback<T extends object> = (context: T, link: LinkExtensionLink) => LinkExtensionLink | undefined;
 /**
  * Defines life cycle of a feature
  * @internal
