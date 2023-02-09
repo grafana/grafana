@@ -37,8 +37,6 @@ export interface FeatureToggles {
   migrationLocking?: boolean;
   storage?: boolean;
   k8s?: boolean;
-  k8sDashboards?: boolean;
-  apiserver?: boolean;
   supportBundles?: boolean;
   dashboardsFromStorage?: boolean;
   export?: boolean;

@@ -101,8 +101,6 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 | ------------------------------ | ----------------------------------------------------------------------- |
 | `publicDashboardsEmailSharing` | Allows public dashboard sharing to be restricted to only allowed emails |
 | `k8s`                          | Explore native k8s integrations                                         |
-| `k8sDashboards`                | Save dashboards via k8s                                                 |
-| `apiserver`                    | Add a k8s API server proxy                                              |
 | `dashboardsFromStorage`        | Load dashboards from the generic storage interface                      |
 | `export`                       | Export grafana instance (to git, etc)                                   |
 | `grpcServer`                   | Run GRPC server                                                         |
