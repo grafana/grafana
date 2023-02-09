@@ -16,8 +16,8 @@ import {
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import store from 'app/core/store';
-import { BatchedQueries, MIXED_DATASOURCE_NAME, MixedDatasource } from 'app/plugins/datasource/mixed/MixedDataSource';
-import { SupplementaryQueries, ExplorePanelData } from 'app/types';
+import { BatchedQueries, MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
+import { ExplorePanelData, SupplementaryQueries } from 'app/types';
 
 export const supplementaryQueryTypes: SupplementaryQueryType[] = [
   SupplementaryQueryType.LogsVolume,
@@ -89,6 +89,7 @@ const createFallbackLogVolumeProvider = (
           }),
           state: LoadingState.Done,
         });
+        observer.complete();
       }
     });
   }).pipe(enrichWithSource('', 'All visible logs'));
@@ -125,7 +126,7 @@ const enrichWithSource = (uid: string, title: string) => {
           meta: {
             ...df.meta,
             custom: {
-              ...df.meta.custom,
+              ...df.meta?.custom,
               datasourceUid: uid,
               datasourceName: title,
             },
@@ -162,7 +163,7 @@ export const getSupplementaryQueryProvider = (
 ): Observable<DataQueryResponse> | undefined => {
   if (hasSupplementaryQuerySupport(datasourceInstance, type)) {
     return datasourceInstance.getDataProvider(type, request);
-  } else if (datasourceInstance.meta.mixed === true && datasourceInstance instanceof MixedDatasource) {
+  } else if (datasourceInstance.meta?.mixed === true) {
     // Remove any invalid queries
     const queries = request.targets.filter((t) => {
       return t.datasource?.uid !== MIXED_DATASOURCE_NAME;
@@ -210,9 +211,13 @@ export const getSupplementaryQueryProvider = (
       }),
       scan<DataQueryResponse, DataQueryResponse>(
         (acc, next) => {
+          if (acc.state !== LoadingState.NotStarted && next.state === LoadingState.NotStarted) {
+            return acc;
+          }
+
           if (next.state !== LoadingState.Done) {
             return {
-              data: [],
+              data: acc.data,
               state: next.state,
               error: next.error,
             };
@@ -222,11 +227,11 @@ export const getSupplementaryQueryProvider = (
             return acc;
           }
 
-          acc.data = supplementaryQueryFallbackCleanUp(type, acc.data, next);
+          const accData = supplementaryQueryFallbackCleanUp(type, acc.data, next);
 
           return {
             ...acc,
-            data: [...acc.data, ...next.data],
+            data: [...accData, ...next.data],
             state: LoadingState.Done,
           };
         },
