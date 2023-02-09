@@ -100,6 +100,7 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 | ------------------------------ | ----------------------------------------------------------------------- |
 | `showFeatureFlagsInUI`         | Show feature flags in the settings UI                                   |
 | `publicDashboardsEmailSharing` | Allows public dashboard sharing to be restricted to only allowed emails |
+| `k8s`                          | Explore native k8s integrations                                         |
 | `dashboardsFromStorage`        | Load dashboards from the generic storage interface                      |
 | `export`                       | Export grafana instance (to git, etc)                                   |
 | `grpcServer`                   | Run GRPC server                                                         |

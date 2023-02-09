@@ -120,6 +120,12 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:            "k8s",
+			Description:     "Explore native k8s integrations",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
 			Name:        "supportBundles",
 			Description: "Support bundles for troubleshooting",
 			State:       FeatureStateAlpha,

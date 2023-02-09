@@ -37,6 +37,7 @@ export interface FeatureToggles {
   annotationComments?: boolean;
   migrationLocking?: boolean;
   storage?: boolean;
+  k8s?: boolean;
   supportBundles?: boolean;
   dashboardsFromStorage?: boolean;
   export?: boolean;

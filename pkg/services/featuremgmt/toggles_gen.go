@@ -91,6 +91,10 @@ const (
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
 
+	// FlagK8s
+	// Explore native k8s integrations
+	FlagK8s = "k8s"
+
 	// FlagSupportBundles
 	// Support bundles for troubleshooting
 	FlagSupportBundles = "supportBundles"
