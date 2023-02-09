@@ -4,8 +4,11 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
+	"strconv"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/dynamic"
@@ -62,4 +65,44 @@ func isK8sNameInUse(ctx context.Context, resourceClient dynamic.ResourceInterfac
 	}
 
 	return false, err
+}
+
+func stripNulls(j *simplejson.Json) {
+	m, err := j.Map()
+	if err != nil {
+		arr, err := j.Array()
+		if err == nil {
+			for i := range arr {
+				stripNulls(j.GetIndex(i))
+			}
+		}
+		return
+	}
+	for k, v := range m {
+		if v == nil {
+			j.Del(k)
+		} else {
+			stripNulls(j.Get(k))
+		}
+	}
+}
+
+func annotationsFromDashboardDTO(dto *dashboards.SaveDashboardDTO) map[string]string {
+	annotations := map[string]string{
+		"version":   strconv.FormatInt(int64(dto.Dashboard.Version), 10),
+		"message":   dto.Message,
+		"orgID":     strconv.FormatInt(dto.OrgID, 10),
+		"overwrite": strconv.FormatBool(dto.Overwrite),
+		"updatedBy": strconv.FormatInt(dto.Dashboard.UpdatedBy, 10),
+		"updatedAt": strconv.FormatInt(dto.Dashboard.Updated.UnixNano(), 10),
+		"createdBy": strconv.FormatInt(dto.Dashboard.CreatedBy, 10),
+		"createdAt": strconv.FormatInt(dto.Dashboard.Created.UnixNano(), 10),
+		"folderID":  strconv.FormatInt(dto.Dashboard.FolderID, 10),
+		"isFolder":  strconv.FormatBool(dto.Dashboard.IsFolder),
+		"hasACL":    strconv.FormatBool(dto.Dashboard.HasACL),
+		"slug":      dto.Dashboard.Slug,
+		"title":     dto.Dashboard.Title,
+	}
+
+	return annotations
 }

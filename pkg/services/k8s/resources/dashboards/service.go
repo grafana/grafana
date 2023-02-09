@@ -3,20 +3,18 @@ package dashboards
 import (
 	"context"
 	"fmt"
-	"strconv"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/google/wire"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/kindsys/k8ssys"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -27,12 +25,15 @@ var WireSet = wire.NewSet(ProvideResource, ProvideService)
 //kubectl --kubeconfig=devenv/docker/blocks/apiserver/apiserver.kubeconfig delete CustomResourceDefinition dashboards.dashboard.core.grafana.com
 
 type Service struct {
+	dashboards.DashboardService
+	registry.BackgroundService
+	registry.CanBeDisabled
+
 	cfg *setting.Cfg
 	log log.Logger
 
 	dashboardResource *Resource
 
-	dashboardService     dashboards.DashboardService
 	userService          user.Service
 	accessControlService accesscontrol.Service
 }
@@ -57,56 +58,8 @@ func ProvideService(
 }
 
 func (s *Service) WithDashboardService(dashboardService dashboards.DashboardService) *Service {
-	s.dashboardService = dashboardService
+	s.DashboardService = dashboardService
 	return s
-}
-
-func (s *Service) BuildSaveDashboardCommand(ctx context.Context, dto *dashboards.SaveDashboardDTO, shouldValidateAlerts bool, validateProvisionedDashboard bool) (*dashboards.SaveDashboardCommand, error) {
-	return s.dashboardService.BuildSaveDashboardCommand(ctx, dto, shouldValidateAlerts, validateProvisionedDashboard)
-}
-
-func (s *Service) DeleteDashboard(ctx context.Context, dashboardId int64, orgId int64) error {
-	return s.dashboardService.DeleteDashboard(ctx, dashboardId, orgId)
-}
-
-func (s *Service) FindDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
-	return s.dashboardService.FindDashboards(ctx, query)
-}
-
-func (s *Service) GetDashboard(ctx context.Context, query *dashboards.GetDashboardQuery) (*dashboards.Dashboard, error) {
-	return s.dashboardService.GetDashboard(ctx, query)
-}
-
-func (s *Service) GetDashboardACLInfoList(ctx context.Context, query *dashboards.GetDashboardACLInfoListQuery) ([]*dashboards.DashboardACLInfoDTO, error) {
-	return s.dashboardService.GetDashboardACLInfoList(ctx, query)
-}
-
-func (s *Service) GetDashboards(ctx context.Context, query *dashboards.GetDashboardsQuery) ([]*dashboards.Dashboard, error) {
-	return s.dashboardService.GetDashboards(ctx, query)
-}
-
-func (s *Service) GetDashboardTags(ctx context.Context, query *dashboards.GetDashboardTagsQuery) ([]*dashboards.DashboardTagCloudItem, error) {
-	return s.dashboardService.GetDashboardTags(ctx, query)
-}
-
-func (s *Service) GetDashboardUIDByID(ctx context.Context, query *dashboards.GetDashboardRefByIDQuery) (*dashboards.DashboardRef, error) {
-	return s.dashboardService.GetDashboardUIDByID(ctx, query)
-}
-
-func (s *Service) HasAdminPermissionInDashboardsOrFolders(ctx context.Context, query *folder.HasAdminPermissionInDashboardsOrFoldersQuery) (bool, error) {
-	return s.dashboardService.HasAdminPermissionInDashboardsOrFolders(ctx, query)
-}
-
-func (s *Service) HasEditPermissionInFolders(ctx context.Context, query *folder.HasEditPermissionInFoldersQuery) (bool, error) {
-	return s.dashboardService.HasEditPermissionInFolders(ctx, query)
-}
-
-func (s *Service) ImportDashboard(ctx context.Context, dto *dashboards.SaveDashboardDTO) (*dashboards.Dashboard, error) {
-	return s.dashboardService.ImportDashboard(ctx, dto)
-}
-
-func (s *Service) MakeUserAdmin(ctx context.Context, orgID int64, userID, dashboardID int64, setViewAndEditPermissions bool) error {
-	return s.dashboardService.MakeUserAdmin(ctx, orgID, userID, dashboardID, setViewAndEditPermissions)
 }
 
 // SaveDashboard saves the dashboard to kubernetes
@@ -220,60 +173,4 @@ func (s *Service) SaveDashboard(ctx context.Context, dto *dashboards.SaveDashboa
 	}
 
 	return dto.Dashboard, err
-}
-
-func (s *Service) SearchDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) error {
-	return s.dashboardService.SearchDashboards(ctx, query)
-}
-
-func (s *Service) UpdateDashboardACL(ctx context.Context, uid int64, items []*dashboards.DashboardACL) error {
-	return s.dashboardService.UpdateDashboardACL(ctx, uid, items)
-}
-
-func (s *Service) DeleteACLByUser(ctx context.Context, userID int64) error {
-	return s.dashboardService.DeleteACLByUser(ctx, userID)
-}
-
-func (s *Service) CountDashboardsInFolder(ctx context.Context, query *dashboards.CountDashboardsInFolderQuery) (int64, error) {
-	return s.dashboardService.CountDashboardsInFolder(ctx, query)
-}
-
-func stripNulls(j *simplejson.Json) {
-	m, err := j.Map()
-	if err != nil {
-		arr, err := j.Array()
-		if err == nil {
-			for i := range arr {
-				stripNulls(j.GetIndex(i))
-			}
-		}
-		return
-	}
-	for k, v := range m {
-		if v == nil {
-			j.Del(k)
-		} else {
-			stripNulls(j.Get(k))
-		}
-	}
-}
-
-func annotationsFromDashboardDTO(dto *dashboards.SaveDashboardDTO) map[string]string {
-	annotations := map[string]string{
-		"version":   strconv.FormatInt(int64(dto.Dashboard.Version), 10),
-		"message":   dto.Message,
-		"orgID":     strconv.FormatInt(dto.OrgID, 10),
-		"overwrite": strconv.FormatBool(dto.Overwrite),
-		"updatedBy": strconv.FormatInt(dto.Dashboard.UpdatedBy, 10),
-		"updatedAt": strconv.FormatInt(dto.Dashboard.Updated.UnixNano(), 10),
-		"createdBy": strconv.FormatInt(dto.Dashboard.CreatedBy, 10),
-		"createdAt": strconv.FormatInt(dto.Dashboard.Created.UnixNano(), 10),
-		"folderID":  strconv.FormatInt(dto.Dashboard.FolderID, 10),
-		"isFolder":  strconv.FormatBool(dto.Dashboard.IsFolder),
-		"hasACL":    strconv.FormatBool(dto.Dashboard.HasACL),
-		"slug":      dto.Dashboard.Slug,
-		"title":     dto.Dashboard.Title,
-	}
-
-	return annotations
 }

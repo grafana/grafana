@@ -35,7 +35,7 @@ func (s *Service) Run(ctx context.Context) error {
 				s.log.Error("dashboard add failed", "err", err)
 			}
 
-			if existing, err := s.dashboardService.GetDashboard(context.Background(), &dashboards.GetDashboardQuery{UID: dto.Dashboard.UID, OrgID: dto.OrgID}); err == nil && existing.Version >= dto.Dashboard.Version {
+			if existing, err := s.DashboardService.GetDashboard(context.Background(), &dashboards.GetDashboardQuery{UID: dto.Dashboard.UID, OrgID: dto.OrgID}); err == nil && existing.Version >= dto.Dashboard.Version {
 				s.log.Error("dashboard already exists, skipping")
 				return
 			}
@@ -47,7 +47,7 @@ func (s *Service) Run(ctx context.Context) error {
 
 			dto.User = signedInUser
 
-			_, err = s.dashboardService.SaveDashboard(context.Background(), dto, true)
+			_, err = s.DashboardService.SaveDashboard(context.Background(), dto, true)
 			if err != nil {
 				s.log.Error("orig.SaveDashboard failed", err)
 				return
@@ -65,7 +65,7 @@ func (s *Service) Run(ctx context.Context) error {
 				s.log.Error("dashboard update failed", "err", err)
 			}
 
-			if existing, err := s.dashboardService.GetDashboard(context.Background(), &dashboards.GetDashboardQuery{UID: dto.Dashboard.UID, OrgID: dto.OrgID}); err == nil && existing.Version >= dto.Dashboard.Version {
+			if existing, err := s.DashboardService.GetDashboard(context.Background(), &dashboards.GetDashboardQuery{UID: dto.Dashboard.UID, OrgID: dto.OrgID}); err == nil && existing.Version >= dto.Dashboard.Version {
 				s.log.Error("dashboard version already exists, skipping")
 				return
 			}
@@ -77,7 +77,7 @@ func (s *Service) Run(ctx context.Context) error {
 
 			dto.User = signedInUser
 
-			_, err = s.dashboardService.SaveDashboard(context.Background(), dto, true)
+			_, err = s.DashboardService.SaveDashboard(context.Background(), dto, true)
 			if err != nil {
 				s.log.Error("orig.SaveDashboard failed", err)
 				return
@@ -93,13 +93,13 @@ func (s *Service) Run(ctx context.Context) error {
 			if err != nil {
 				s.log.Error("dashboard delete failed", "err", err)
 			}
-			existing, err := s.dashboardService.GetDashboard(context.Background(), &dashboards.GetDashboardQuery{UID: dto.Dashboard.UID, OrgID: dto.OrgID})
+			existing, err := s.DashboardService.GetDashboard(context.Background(), &dashboards.GetDashboardQuery{UID: dto.Dashboard.UID, OrgID: dto.OrgID})
 			// no dashboard found, nothing to delete
 			if err != nil {
 				return
 			}
 
-			if err := s.dashboardService.DeleteDashboard(ctx, existing.ID, existing.OrgID); err != nil {
+			if err := s.DashboardService.DeleteDashboard(ctx, existing.ID, existing.OrgID); err != nil {
 				s.log.Error("orig.DeleteDashboard failed", err)
 			}
 			s.log.Debug("dashboard deleted")
