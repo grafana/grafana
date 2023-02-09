@@ -13,14 +13,14 @@ export function migrateVariableQueryToEditor(rawQuery: string | PromVariableQuer
 
   const queryBase = {
     refId: 'PrometheusDatasource-VariableQuery',
-    exprType: QueryType.LabelNames,
+    qryType: QueryType.LabelNames,
   };
 
   const labelNames = rawQuery.match(labelNamesRegex);
   if (labelNames) {
     return {
       ...queryBase,
-      exprType: QueryType.LabelNames,
+      qryType: QueryType.LabelNames,
     };
   }
 
@@ -32,14 +32,14 @@ export function migrateVariableQueryToEditor(rawQuery: string | PromVariableQuer
     if (metric) {
       return {
         ...queryBase,
-        exprType: QueryType.LabelValues,
+        qryType: QueryType.LabelValues,
         label,
         metric,
       };
     } else {
       return {
         ...queryBase,
-        exprType: QueryType.LabelValues,
+        qryType: QueryType.LabelValues,
         label,
       };
     }
@@ -49,7 +49,7 @@ export function migrateVariableQueryToEditor(rawQuery: string | PromVariableQuer
   if (metricNames) {
     return {
       ...queryBase,
-      exprType: QueryType.MetricNames,
+      qryType: QueryType.MetricNames,
       metric: metricNames[1],
     };
   }
@@ -58,7 +58,7 @@ export function migrateVariableQueryToEditor(rawQuery: string | PromVariableQuer
   if (queryResult) {
     return {
       ...queryBase,
-      exprType: QueryType.VarQueryResult,
+      qryType: QueryType.VarQueryResult,
       varQuery: queryResult[1],
     };
   }
@@ -67,7 +67,7 @@ export function migrateVariableQueryToEditor(rawQuery: string | PromVariableQuer
   if (!labelNames && !labelValues && !metricNames && !queryResult) {
     return {
       ...queryBase,
-      exprType: QueryType.SeriesQuery,
+      qryType: QueryType.SeriesQuery,
       seriesQuery: rawQuery,
     };
   }
@@ -77,7 +77,7 @@ export function migrateVariableQueryToEditor(rawQuery: string | PromVariableQuer
 
 // migrate it back to a string with the correct varialbes in place
 export function migrateVariableEditorBackToVariableSupport(QueryVariable: PromVariableQuery): string {
-  switch (QueryVariable.exprType) {
+  switch (QueryVariable.qryType) {
     case QueryType.LabelNames:
       return 'label_names()';
     case QueryType.LabelValues:

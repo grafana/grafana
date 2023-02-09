@@ -178,7 +178,7 @@ export enum PromVariableQueryType {
 export interface PromVariableQuery extends DataQuery {
   query?: string;
   expr?: string;
-  exprType?: PromVariableQueryType;
+  qryType?: PromVariableQueryType;
   label?: string;
   metric?: string;
   varQuery?: string;

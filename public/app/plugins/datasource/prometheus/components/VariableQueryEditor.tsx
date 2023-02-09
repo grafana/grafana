@@ -23,8 +23,8 @@ export type Props = QueryEditorProps<PrometheusDatasource, PromQuery, PromOption
 const refId = 'PrometheusVariableQueryEditor-VariableQuery';
 
 export const PromVariableQueryEditor: FC<Props> = ({ onChange, query, datasource }) => {
-  // to select the type of function, i.e. label_names, label_values, etc.
-  const [exprType, setExprType] = useState<number | undefined>(undefined);
+  // to select the query type, i.e. label_names, label_values, etc.
+  const [qryType, setQryType] = useState<number | undefined>(undefined);
 
   // list of variables for each function
   const [label, setLabel] = useState('');
@@ -47,7 +47,7 @@ export const PromVariableQueryEditor: FC<Props> = ({ onChange, query, datasource
     // Changing from standard to custom variable editor changes the string attr from expr to query
     const variableQuery = query.query ? migrateVariableQueryToEditor(query.query) : query;
 
-    setExprType(variableQuery.exprType);
+    setQryType(variableQuery.qryType);
     setLabel(variableQuery.label ?? '');
     setMetric(variableQuery.metric ?? '');
     setVarQuery(variableQuery.varQuery ?? '');
@@ -61,18 +61,18 @@ export const PromVariableQueryEditor: FC<Props> = ({ onChange, query, datasource
 
   // set the label names options for the label values var query
   useEffect(() => {
-    if (exprType !== QueryType.LabelValues) {
+    if (qryType !== QueryType.LabelValues) {
       return;
     }
 
     datasource.getLabelNames().then((labelNames: Array<{ text: string }>) => {
       setLabelOptions(labelNames.map(({ text }) => ({ label: text, value: text })));
     });
-  }, [datasource, exprType]);
+  }, [datasource, qryType]);
 
-  const onChangeWithVariableString = (exprType: QueryType) => {
+  const onChangeWithVariableString = (qryType: QueryType) => {
     const queryVar = {
-      exprType: exprType,
+      qryType: qryType,
       label,
       metric,
       varQuery,
@@ -89,7 +89,7 @@ export const PromVariableQueryEditor: FC<Props> = ({ onChange, query, datasource
   };
 
   const onQueryTypeChange = (newType: SelectableValue<QueryType>) => {
-    setExprType(newType.value);
+    setQryType(newType.value);
     if (newType.value === QueryType.LabelNames) {
       onChangeWithVariableString(newType.value);
     }
@@ -112,37 +112,39 @@ export const PromVariableQueryEditor: FC<Props> = ({ onChange, query, datasource
   };
 
   const handleBlur = () => {
-    if (exprType === QueryType.LabelNames) {
-      onChangeWithVariableString(exprType);
-    } else if (exprType === QueryType.LabelValues && label) {
-      onChangeWithVariableString(exprType);
-    } else if (exprType === QueryType.MetricNames && metric) {
-      onChangeWithVariableString(exprType);
-    } else if (exprType === QueryType.VarQueryResult && varQuery) {
-      onChangeWithVariableString(exprType);
-    } else if (exprType === QueryType.SeriesQuery && seriesQuery) {
-      onChangeWithVariableString(exprType);
+    if (qryType === QueryType.LabelNames) {
+      onChangeWithVariableString(qryType);
+    } else if (qryType === QueryType.LabelValues && label) {
+      onChangeWithVariableString(qryType);
+    } else if (qryType === QueryType.MetricNames && metric) {
+      onChangeWithVariableString(qryType);
+    } else if (qryType === QueryType.VarQueryResult && varQuery) {
+      onChangeWithVariableString(qryType);
+    } else if (qryType === QueryType.SeriesQuery && seriesQuery) {
+      onChangeWithVariableString(qryType);
     }
   };
 
   return (
     <InlineFieldRow>
       <InlineField
-        label="Function type"
+        label="Query Type"
         labelWidth={20}
-        tooltip={<div>The Prometheus data source plugin provides the following functions for querying variables.</div>}
+        tooltip={
+          <div>The Prometheus data source plugin provides the following query types for template variables.</div>
+        }
       >
         <Select
-          placeholder="Select function"
-          aria-label="Function type"
+          placeholder="Select query type"
+          aria-label="Query type"
           onChange={onQueryTypeChange}
           onBlur={handleBlur}
-          value={exprType}
+          value={qryType}
           options={variableOptions}
           width={25}
         />
       </InlineField>
-      {exprType === QueryType.LabelValues && (
+      {qryType === QueryType.LabelValues && (
         <>
           <InlineField
             label="Label"
@@ -181,7 +183,7 @@ export const PromVariableQueryEditor: FC<Props> = ({ onChange, query, datasource
           </InlineField>
         </>
       )}
-      {exprType === QueryType.MetricNames && (
+      {qryType === QueryType.MetricNames && (
         <>
           <InlineField
             label="Metric Regex"
@@ -200,14 +202,15 @@ export const PromVariableQueryEditor: FC<Props> = ({ onChange, query, datasource
           </InlineField>
         </>
       )}
-      {exprType === QueryType.VarQueryResult && (
+      {qryType === QueryType.VarQueryResult && (
         <>
           <InlineField
-            label="Query Result"
+            label="Query"
             labelWidth={20}
             tooltip={
               <div>
-                Returns a list of Prometheus query results for the query. This can include Prometheus functions.
+                Returns a list of Prometheus query results for the query. This can include Prometheus functions, i.e.
+                sum(go_goroutines).
               </div>
             }
           >
@@ -223,7 +226,7 @@ export const PromVariableQueryEditor: FC<Props> = ({ onChange, query, datasource
           </InlineField>
         </>
       )}
-      {exprType === QueryType.SeriesQuery && (
+      {qryType === QueryType.SeriesQuery && (
         <>
           <InlineField
             label="Series Query"

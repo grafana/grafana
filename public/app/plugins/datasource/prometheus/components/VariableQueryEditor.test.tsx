@@ -37,7 +37,7 @@ describe('PromVariableQueryEditor', () => {
   test('Displays a group of function options', async () => {
     render(<PromVariableQueryEditor {...props} />);
 
-    const select = screen.getByLabelText('Function type').parentElement!;
+    const select = screen.getByLabelText('Query type').parentElement!;
     await userEvent.click(select);
 
     await waitFor(() => expect(screen.getAllByText('Label names')).toHaveLength(2));
@@ -57,7 +57,7 @@ describe('PromVariableQueryEditor', () => {
 
     render(<PromVariableQueryEditor {...props} onChange={onChange} />);
 
-    await selectOptionInTest(screen.getByLabelText('Function type'), 'Label names');
+    await selectOptionInTest(screen.getByLabelText('Query type'), 'Label names');
 
     expect(onChange).toHaveBeenCalledWith({
       query: 'label_names()',
@@ -70,9 +70,9 @@ describe('PromVariableQueryEditor', () => {
 
     render(<PromVariableQueryEditor {...props} onChange={onChange} />);
 
-    await selectOptionInTest(screen.getByLabelText('Function type'), 'Metrics');
-    await selectOptionInTest(screen.getByLabelText('Function type'), 'Query result');
-    await selectOptionInTest(screen.getByLabelText('Function type'), 'Series query');
+    await selectOptionInTest(screen.getByLabelText('Query type'), 'Metrics');
+    await selectOptionInTest(screen.getByLabelText('Query type'), 'Query result');
+    await selectOptionInTest(screen.getByLabelText('Query type'), 'Series query');
 
     expect(onChange).not.toHaveBeenCalled();
   });
@@ -89,7 +89,7 @@ describe('PromVariableQueryEditor', () => {
 
     const labelSelect = screen.getByLabelText('Metric selector');
     await userEvent.click(labelSelect);
-    const functionSelect = screen.getByLabelText('Function type').parentElement!;
+    const functionSelect = screen.getByLabelText('Query type').parentElement!;
     await userEvent.click(functionSelect);
 
     expect(onChange).toHaveBeenCalledWith({
@@ -110,7 +110,7 @@ describe('PromVariableQueryEditor', () => {
 
     const labelSelect = screen.getByLabelText('Prometheus Query');
     await userEvent.click(labelSelect);
-    const functionSelect = screen.getByLabelText('Function type').parentElement!;
+    const functionSelect = screen.getByLabelText('Query type').parentElement!;
     await userEvent.click(functionSelect);
 
     expect(onChange).toHaveBeenCalledWith({
@@ -131,7 +131,7 @@ describe('PromVariableQueryEditor', () => {
 
     const labelSelect = screen.getByLabelText('Series Query');
     await userEvent.click(labelSelect);
-    const functionSelect = screen.getByLabelText('Function type').parentElement!;
+    const functionSelect = screen.getByLabelText('Query type').parentElement!;
     await userEvent.click(functionSelect);
 
     expect(onChange).toHaveBeenCalledWith({
