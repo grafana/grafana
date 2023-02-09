@@ -68,6 +68,8 @@ func ProvideService(cfg *setting.Cfg,
 		serverAdminOnly: section.Key("server_admin_only").MustBool(true),
 	}
 
+	usageStats.RegisterMetricsFunc(s.getUsageStats)
+
 	if !features.IsEnabled(featuremgmt.FlagSupportBundles) || !s.enabled {
 		return s, nil
 	}
@@ -166,4 +168,16 @@ func (s *Service) cleanup(ctx context.Context) {
 			}
 		}
 	}
+}
+
+func (s *Service) getUsageStats(ctx context.Context) (map[string]interface{}, error) {
+	m := map[string]interface{}{}
+
+	count, err := s.store.StatsCount(ctx)
+	if err != nil {
+		s.log.Warn("unable to get support bundle counter", "error", err)
+	}
+
+	m["stats.bundles.count"] = count
+	return m, nil
 }

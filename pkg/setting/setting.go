@@ -442,6 +442,7 @@ type Cfg struct {
 	// LDAP
 	LDAPEnabled         bool
 	LDAPSkipOrgRoleSync bool
+	LDAPConfigFilePath  string
 	LDAPAllowSignup     bool
 
 	DefaultTheme    string
@@ -504,6 +505,9 @@ type Cfg struct {
 	Search SearchSettings
 
 	SecureSocksDSProxy SecureSocksDSProxySettings
+
+	// SAML Auth
+	SAMLSkipOrgRoleSync bool
 
 	// Okta OAuth
 	OktaSkipOrgRoleSync bool
@@ -1095,6 +1099,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 		cfg.PluginsEnableAlpha = true
 	}
 
+	cfg.readSAMLConfig()
 	cfg.readLDAPConfig()
 	cfg.handleAWSConfig()
 	cfg.readAzureSettings()
@@ -1194,9 +1199,15 @@ type RemoteCacheOptions struct {
 	Encryption bool
 }
 
+func (cfg *Cfg) readSAMLConfig() {
+	samlSec := cfg.Raw.Section("auth.saml")
+	cfg.SAMLSkipOrgRoleSync = samlSec.Key("skip_org_role_sync").MustBool(false)
+}
+
 func (cfg *Cfg) readLDAPConfig() {
 	ldapSec := cfg.Raw.Section("auth.ldap")
 	LDAPConfigFile = ldapSec.Key("config_file").String()
+	cfg.LDAPConfigFilePath = LDAPConfigFile
 	LDAPSyncCron = ldapSec.Key("sync_cron").String()
 	LDAPEnabled = ldapSec.Key("enabled").MustBool(false)
 	cfg.LDAPEnabled = LDAPEnabled
