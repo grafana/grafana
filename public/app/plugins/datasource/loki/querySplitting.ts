@@ -8,7 +8,15 @@ import { getRanges } from './metricTimeSplit';
 import { combineResponses, resultLimitReached } from './queryUtils';
 import { LokiQuery } from './types';
 
-function partitionTimeRange(originalTimeRange: TimeRange, intervalMs: number, resolution: number): TimeRange[] {
+/**
+ * Purposely exposing it to support doing tests without needing to update the repo.
+ * TODO: remove.
+ * Hardcoded to 1 day.
+ */
+// @ts-disable-next-line
+(window as any).lokiChunkDuration = 24 * 60 * 60 * 1000; 
+
+export function partitionTimeRange(originalTimeRange: TimeRange, intervalMs: number, resolution: number): TimeRange[] {
   // we currently assume we are only running metric queries here.
   // for logs-queries we will have to use a different time-range-split algorithm.
 
@@ -28,7 +36,8 @@ function partitionTimeRange(originalTimeRange: TimeRange, intervalMs: number, re
     start,
     end,
     step,
-    60 * 1000 // we go with a hardcoded 1minute for now
+    // @ts-disable-next-line
+    (window as any).lokiChunkDuration
   );
 
   // if the split was not possible, go with the original range
