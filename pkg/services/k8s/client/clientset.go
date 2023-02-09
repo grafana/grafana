@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/wire"
 	"github.com/grafana/grafana/pkg/kindsys/k8ssys"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
@@ -21,6 +22,8 @@ import (
 	"k8s.io/client-go/restmapper"
 	"k8s.io/client-go/tools/cache"
 )
+
+var WireSet = wire.NewSet(ProvideClientset)
 
 var (
 	// ErrCRDAlreadyRegistered is returned when trying to register a duplicate CRD.
@@ -74,6 +77,10 @@ func NewFromConfig(cfg *rest.Config) (*Clientset, error) {
 
 	mapper := restmapper.NewDeferredDiscoveryRESTMapper(memory.NewMemCacheClient(k8sset))
 	factory := dynamicinformer.NewDynamicSharedInformerFactory(dyn, time.Minute)
+
+	// TODO: when does this need to start, and how do we stop it?
+	stop := make(chan struct{})
+	factory.Start(stop)
 
 	return NewClientset(cfg, k8sset, extset, dyn, mapper, factory)
 }

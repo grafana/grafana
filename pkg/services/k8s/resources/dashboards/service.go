@@ -8,21 +8,20 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/dynamic"
 
+	"github.com/google/wire"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/kindsys/k8ssys"
-	"github.com/grafana/grafana/pkg/registry/corecrd"
-	"github.com/grafana/grafana/pkg/registry/corekind"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+var WireSet = wire.NewSet(ProvideResource, ProvideService)
 
 // NOTE this is how you reset the CRD
 //kubectl --kubeconfig=devenv/docker/blocks/apiserver/apiserver.kubeconfig delete CustomResourceDefinition dashboards.dashboard.core.grafana.com
@@ -31,10 +30,7 @@ type Service struct {
 	cfg *setting.Cfg
 	log log.Logger
 
-	dashboardClient dynamic.ResourceInterface
-
-	reg   *corecrd.Registry
-	kinds *corekind.Base
+	dashboardResource *Resource
 
 	dashboardService     dashboards.DashboardService
 	userService          user.Service
@@ -43,28 +39,26 @@ type Service struct {
 
 var _ dashboards.DashboardService = (*Service)(nil)
 
-func NewDashboardService(
+func ProvideService(
 	cfg *setting.Cfg,
-	dashboardClient dynamic.ResourceInterface,
-	reg *corecrd.Registry,
-	kinds *corekind.Base,
-	dashboardService dashboards.DashboardService,
+	dashboardResource *Resource,
 	userService user.Service,
 	accessControlService accesscontrol.Service,
-) dashboards.DashboardService {
+) *Service {
 	return &Service{
 		cfg: cfg,
 		log: log.New("store.k8saccess.dashboard"),
 
-		dashboardClient: dashboardClient,
+		dashboardResource: dashboardResource,
 
-		reg:   reg,
-		kinds: kinds,
-
-		dashboardService:     dashboardService,
 		userService:          userService,
 		accessControlService: accessControlService,
 	}
+}
+
+func (s *Service) WithDashboardService(dashboardService dashboards.DashboardService) *Service {
+	s.dashboardService = dashboardService
+	return s
 }
 
 func (s *Service) BuildSaveDashboardCommand(ctx context.Context, dto *dashboards.SaveDashboardDTO, shouldValidateAlerts bool, validateProvisionedDashboard bool) (*dashboards.SaveDashboardCommand, error) {
@@ -122,17 +116,7 @@ func (s *Service) SaveDashboard(ctx context.Context, dto *dashboards.SaveDashboa
 	// take the kindsys dashboard kind and alias it so it's easier to distinguish from dashboards.Dashboard
 	type dashboardKind = dashboard.Dashboard
 	// get the dashboard CRD from the CRD registry
-	dashboardCRD := s.reg.Dashboard()
-	gk := schema.GroupKind{
-		Group: dashboardCRD.GVK().Group,
-		Kind:  dashboardCRD.GVK().Kind,
-	}
-
-	// get's client to operate on resource (dashboard)
-	resourceClient, err := s.clientSet.GetResource(gk, namespace, dashboardCRD.GVK().Version)
-	if err != nil {
-		return nil, fmt.Errorf("resource client missing: %w", err)
-	}
+	dashboardCRD := s.dashboardResource.crd
 
 	/////////////////
 	// do  work
@@ -142,15 +126,16 @@ func (s *Service) SaveDashboard(ctx context.Context, dto *dashboards.SaveDashboa
 
 	// FIXME this is not reliable and is spaghetti. Change UID or create mapping
 	// for k8s with uuidV4
+	var err error
 	uid := dto.Dashboard.UID
 	if uid == "" {
-		uid, err = getUnusedGrafanaUID(ctx, resourceClient)
+		uid, err = getUnusedGrafanaUID(ctx, s.dashboardResource)
 		if err != nil {
 			return nil, err
 		}
 	} else {
 		// check if dashboard exists in k8s. if it does, we're gonna do an update, if
-		rv, ok, err := getResourceVersion(ctx, resourceClient, uid)
+		rv, ok, err := getResourceVersion(ctx, s.dashboardResource, uid)
 		if !ok {
 			return nil, err
 		}
@@ -178,7 +163,7 @@ func (s *Service) SaveDashboard(ctx context.Context, dto *dashboards.SaveDashboa
 		return nil, err
 	}
 
-	d, _, err := s.kinds.Dashboard().JSONValueMux(dashbytes)
+	d, _, err := s.dashboardResource.kind.JSONValueMux(dashbytes)
 	if err != nil {
 		return nil, fmt.Errorf("dashboard JSONValueMux failed: %w", err)
 	}
@@ -219,10 +204,10 @@ func (s *Service) SaveDashboard(ctx context.Context, dto *dashboards.SaveDashboa
 
 	if updateDashboard {
 		s.log.Debug("k8s action: update")
-		_, err = resourceClient.Update(ctx, uObj, metav1.UpdateOptions{})
+		_, err = s.dashboardResource.Update(ctx, uObj, metav1.UpdateOptions{})
 	} else {
 		s.log.Debug("k8s action: create")
-		_, err = resourceClient.Create(ctx, uObj, metav1.CreateOptions{})
+		_, err = s.dashboardResource.Create(ctx, uObj, metav1.CreateOptions{})
 	}
 
 	// create or update error

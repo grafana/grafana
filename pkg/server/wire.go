@@ -68,7 +68,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/hooks"
-	k8sclient "github.com/grafana/grafana/pkg/services/k8s/client"
+	"github.com/grafana/grafana/pkg/services/k8s"
 	ldapapi "github.com/grafana/grafana/pkg/services/ldap/api"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
@@ -366,7 +366,6 @@ var wireBasicSet = wire.NewSet(
 	authnimpl.ProvideService,
 	wire.Bind(new(authn.Service), new(*authnimpl.Service)),
 	supportbundlesimpl.ProvideService,
-	k8sclient.ProvideClientset,
 )
 
 var wireSet = wire.NewSet(
@@ -380,6 +379,7 @@ var wireSet = wire.NewSet(
 	prefimpl.ProvideService,
 	oauthtoken.ProvideService,
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
+	k8s.WireSet,
 )
 
 var wireTestSet = wire.NewSet(

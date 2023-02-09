@@ -16,22 +16,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/dynamic/dynamicinformer"
 	"k8s.io/client-go/tools/cache"
 )
 
 func (s *Service) Run(ctx context.Context) error {
-	dashboardCRD := s.reg.Dashboard()
-
-	gvr := schema.GroupVersionResource{
-		Group:    dashboardCRD.GVK().Group,
-		Version:  dashboardCRD.GVK().Version,
-		Resource: dashboardCRD.Schema.Spec.Names.Plural,
-	}
-
-	factory := dynamicinformer.NewDynamicSharedInformerFactory(s.dashboardClient.Dynamic, time.Minute)
-	dashboardInformer := factory.ForResource(gvr).Informer()
+	dashboardInformer := s.dashboardResource
 
 	dashboardInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
@@ -117,17 +106,13 @@ func (s *Service) Run(ctx context.Context) error {
 		},
 	})
 
-	stop := make(chan struct{})
-	defer close(stop)
-
-	factory.Start(stop)
 	<-ctx.Done()
 	return nil
 }
 
 // only run service if feature toggle is enabled
 func (s *Service) IsDisabled() bool {
-	return !s.cfg.IsFeatureToggleEnabled(featuremgmt.FlagApiserver)
+	return !s.cfg.IsFeatureToggleEnabled(featuremgmt.FlagK8s)
 }
 
 // TODO: get the admin user using userID 1 and orgID 1
