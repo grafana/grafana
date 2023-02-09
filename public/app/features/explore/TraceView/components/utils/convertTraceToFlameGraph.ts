@@ -10,7 +10,7 @@ interface FlameSpan extends TraceSpan {
   self: number;
 }
 
-export function convertTraceToProfile(trace: Trace): DataFrame {
+export function convertTraceToFlameGraph(trace: Trace): DataFrame {
   const result: { names: string[]; levels: number[]; values: number[]; self: number[] } = {
     names: [],
     levels: [],
