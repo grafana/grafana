@@ -115,7 +115,7 @@ export const logFrameA: DataFrame = {
       name: 'Time',
       type: FieldType.time,
       config: {},
-      values: new ArrayVector([1, 2]),
+      values: new ArrayVector([3, 4]),
     },
     {
       name: 'Line',
@@ -140,7 +140,7 @@ export const logFrameA: DataFrame = {
       name: 'tsNs',
       type: FieldType.string,
       config: {},
-      values: new ArrayVector(['1000000', '2000000']),
+      values: new ArrayVector(['3000000', '4000000']),
     },
     {
       name: 'id',
@@ -159,7 +159,7 @@ export const logFrameB: DataFrame = {
       name: 'Time',
       type: FieldType.time,
       config: {},
-      values: new ArrayVector([3, 4]),
+      values: new ArrayVector([1, 2]),
     },
     {
       name: 'Line',
@@ -181,7 +181,7 @@ export const logFrameB: DataFrame = {
       name: 'tsNs',
       type: FieldType.string,
       config: {},
-      values: new ArrayVector(['3000000', '4000000']),
+      values: new ArrayVector(['1000000', '2000000']),
     },
     {
       name: 'id',
@@ -203,7 +203,7 @@ export const metricFrameA: DataFrame = {
       name: 'Time',
       type: FieldType.time,
       config: {},
-      values: new ArrayVector([1000000, 2000000]),
+      values: new ArrayVector([3000000, 4000000]),
     },
     {
       name: 'Value',
@@ -225,7 +225,7 @@ export const metricFrameB: DataFrame = {
       name: 'Time',
       type: FieldType.time,
       config: {},
-      values: new ArrayVector([3000000, 4000000]),
+      values: new ArrayVector([1000000, 2000000]),
     },
     {
       name: 'Value',

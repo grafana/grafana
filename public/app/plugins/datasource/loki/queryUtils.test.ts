@@ -374,7 +374,7 @@ describe('combineResponses', () => {
               config: {},
               name: 'Time',
               type: 'time',
-              values: new ArrayVector([3, 4, 1, 2]),
+              values: new ArrayVector([1, 2, 3, 4]),
             },
             {
               config: {},
@@ -402,7 +402,7 @@ describe('combineResponses', () => {
               config: {},
               name: 'tsNs',
               type: 'string',
-              values: new ArrayVector(['3000000', '4000000', '1000000', '2000000']),
+              values: new ArrayVector(['1000000', '2000000', '3000000', '4000000']),
             },
             {
               config: {},
@@ -441,7 +441,7 @@ describe('combineResponses', () => {
               config: {},
               name: 'Time',
               type: 'time',
-              values: new ArrayVector([3000000, 4000000, 1000000, 2000000]),
+              values: new ArrayVector([1000000, 2000000, 3000000, 4000000]),
             },
             {
               config: {},
