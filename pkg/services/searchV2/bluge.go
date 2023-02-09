@@ -207,7 +207,7 @@ func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
 			AddField(bluge.NewKeywordField(documentFieldLocation, location).Aggregatable().StoreValue()).
 			AddField(bluge.NewKeywordField(documentFieldKind, string(entityKindPanel)).Aggregatable().StoreValue()) // likely want independent index for this
 
-		for _, ref := range dash.summary.References {
+		for _, ref := range panel.References {
 			switch ref.Family {
 			case entity.StandardKindDashboard:
 				if ref.Type != "" {
