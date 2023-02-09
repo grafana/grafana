@@ -453,11 +453,7 @@ func saveDashboard(sess *db.Session, cmd *dashboards.SaveDashboardCommand, emitE
 	}
 
 	if dash.UID == "" {
-		uid, err := generateNewDashboardUid(sess, dash.OrgID)
-		if err != nil {
-			return nil, err
-		}
-		dash.SetUID(uid)
+		dash.SetUID(util.GenerateShortUID())
 	}
 
 	parentVersion := dash.Version
@@ -534,23 +530,6 @@ func saveDashboard(sess *db.Session, cmd *dashboards.SaveDashboardCommand, emitE
 		}
 	}
 	return dash, nil
-}
-
-func generateNewDashboardUid(sess *db.Session, orgId int64) (string, error) {
-	for i := 0; i < 3; i++ {
-		uid := util.GenerateShortUID()
-
-		exists, err := sess.Where("org_id=? AND uid=?", orgId, uid).Get(&dashboards.Dashboard{})
-		if err != nil {
-			return "", err
-		}
-
-		if !exists {
-			return uid, nil
-		}
-	}
-
-	return "", dashboards.ErrDashboardFailedGenerateUniqueUid
 }
 
 func saveProvisionedData(sess *db.Session, provisioning *dashboards.DashboardProvisioning, dashboard *dashboards.Dashboard) error {

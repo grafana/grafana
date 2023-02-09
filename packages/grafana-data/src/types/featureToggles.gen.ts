@@ -16,7 +16,6 @@
 export interface FeatureToggles {
   [name: string]: boolean | undefined; // support any string value
 
-  returnUnameHeader?: boolean;
   alertingBigTransactions?: boolean;
   trimDefaults?: boolean;
   disableEnvelopeEncryption?: boolean;
@@ -27,7 +26,6 @@ export interface FeatureToggles {
   queryOverLive?: boolean;
   panelTitleSearch?: boolean;
   prometheusAzureOverrideAudience?: boolean;
-  showFeatureFlagsInUI?: boolean;
   publicDashboards?: boolean;
   publicDashboardsEmailSharing?: boolean;
   lokiLive?: boolean;
@@ -67,12 +65,10 @@ export interface FeatureToggles {
   cloudWatchCrossAccountQuerying?: boolean;
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
-  increaseInMemDatabaseQueryCache?: boolean;
   newPanelChromeUI?: boolean;
   queryLibrary?: boolean;
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
-  datasourceLogger?: boolean;
   accessControlOnCall?: boolean;
   nestedFolders?: boolean;
   accessTokenExpirationCheck?: boolean;
