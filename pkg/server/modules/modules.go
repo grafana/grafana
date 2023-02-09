@@ -6,8 +6,8 @@ import (
 	"github.com/grafana/dskit/modules"
 	"github.com/grafana/dskit/services"
 
-	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/pluginmod"
 	"github.com/grafana/grafana/pkg/server/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -30,70 +30,70 @@ type Modules struct {
 	cfg     *setting.Cfg
 	log     log.Logger
 
-	moduleManager  *modules.Manager
-	serviceManager *services.Manager
+	ModuleManager  *modules.Manager
+	ServiceManager *services.Manager
 	serviceMap     map[string]services.Service
 	deps           map[string][]string
 
-	backgroundServiceRegistry *backgroundsvcs.BackgroundServiceRegistry
 	ac                        *acimpl.Service
-	httpServer                *api.HTTPServer
+	backgroundServiceRegistry *backgroundsvcs.BackgroundServiceRegistry
 }
 
-func ProvideService(cfg *setting.Cfg, backgroundServiceRegistry *backgroundsvcs.BackgroundServiceRegistry,
-	ac *acimpl.Service, httpServer *api.HTTPServer) *Modules {
-	return &Modules{
-		cfg:                       cfg,
+func ProvideService(cfg *setting.Cfg, ac *acimpl.Service, backgroundServiceRegistry *backgroundsvcs.BackgroundServiceRegistry) *Modules {
+	m := &Modules{
 		targets:                   cfg.Target,
-		log:                       log.New("modules"),
-		httpServer:                httpServer,
-		backgroundServiceRegistry: backgroundServiceRegistry,
+		cfg:                       cfg,
 		ac:                        ac,
+		log:                       log.New("modules"),
+		backgroundServiceRegistry: backgroundServiceRegistry,
 	}
+
+	m.ModuleManager = modules.NewManager(m.log)
+
+	m.ModuleManager.RegisterModule(Core, m.initBackgroundServices)
+	return m
 }
 
 func (m *Modules) Init() error {
-	mm := modules.NewManager(m.log)
-	mm.RegisterModule(PluginManagerServer, m.initServer)
-	mm.RegisterModule(PluginManagerClient, m.initClient, modules.UserInvisibleModule)
-	mm.RegisterModule(PluginManagement, m.initLocalPluginManagement, modules.UserInvisibleModule)
-	mm.RegisterModule(Plugins, nil, modules.UserInvisibleModule)
-	mm.RegisterModule(HTTPServer, m.initHTTPServer)
-	mm.RegisterModule(Core, m.initBackgroundServices)
-	mm.RegisterModule(AccessControl, m.initAccessControl)
-	mm.RegisterModule(All, nil)
+	//mm.RegisterModule(PluginManagerServer, m.initServer)
+	//mm.RegisterModule(PluginManagerClient, m.initClient, modules.UserInvisibleModule)
+	//mm.RegisterModule(PluginManagement, m.initLocalPluginManagement, modules.UserInvisibleModule)
+	//mm.RegisterModule(Plugins, nil, modules.UserInvisibleModule)
+	//mm.RegisterModule(HTTPServer, m.initHTTPServer)
+	//mm.RegisterModule(Core, m.initBackgroundServices)
+	//mm.RegisterModule(AccessControl, m.initAccessControl)
+	m.ModuleManager.RegisterModule(All, nil)
 
 	deps := map[string][]string{
-		AccessControl:       {},
-		PluginManagerServer: {},
-		PluginManagerClient: {},
-		PluginManagement:    {},
-		Plugins:             {},
-		HTTPServer:          {Core, Plugins},
-		Core:                {AccessControl},
-		All:                 {Core, HTTPServer, Plugins},
+		//AccessControl:       {},
+		//PluginManagerServer: {},
+		//PluginManagerClient: {},
+		//PluginManagement:    {},
+		//Plugins:             {},
+		//Core:                {AccessControl},
+		All: {Core, HTTPServer}, //Plugins
 	}
 
-	if m.isModuleEnabled(All) {
-		deps[Plugins] = append(deps[Plugins], PluginManagement)
-	} else {
-		deps[Plugins] = append(deps[Plugins], PluginManagerClient)
-	}
+	//if m.isModuleEnabled(All) {
+	//	deps[Plugins] = append(deps[Plugins], PluginManagement)
+	//} else {
+	//	deps[Plugins] = append(deps[Plugins], PluginManagerClient)
+	//}
 
 	for mod, targets := range deps {
-		if err := mm.AddDependency(mod, targets...); err != nil {
+		if err := m.ModuleManager.AddDependency(mod, targets...); err != nil {
 			return err
 		}
 	}
 
 	m.deps = deps
-	m.moduleManager = mm
 
 	return nil
 }
 
 func (m *Modules) Run() error {
-	serviceMap, err := m.moduleManager.InitModuleServices(m.targets...)
+	m.log.Info("Initializing modules...")
+	serviceMap, err := m.ModuleManager.InitModuleServices(m.targets...)
 	if err != nil {
 		return err
 	}
@@ -112,7 +112,7 @@ func (m *Modules) Run() error {
 		return err
 	}
 
-	m.serviceManager = sm
+	m.ServiceManager = sm
 
 	healthy := func() { m.log.Info("Modules started") }
 	stopped := func() { m.log.Info("Modules stopped") }
@@ -160,9 +160,9 @@ func (m *Modules) Run() error {
 }
 
 func (m *Modules) Stop() error {
-	if m.serviceManager != nil {
-		m.serviceManager.StopAsync()
-		return m.serviceManager.AwaitStopped(context.Background())
+	if m.ServiceManager != nil {
+		m.ServiceManager.StopAsync()
+		return m.ServiceManager.AwaitStopped(context.Background())
 	}
 	return nil
 }
@@ -181,9 +181,13 @@ func stringsContain(values []string, search string) bool {
 	return false
 }
 
-func (m *Modules) initHTTPServer() (services.Service, error) {
-	return m.httpServer, nil
+func (m *Modules) RegisterService(s services.Service) {
+
 }
+
+//func (m *Modules) initHTTPServer() (services.Service, error) {
+//	return m.httpServer, nil
+//}
 
 func (m *Modules) initBackgroundServices() (services.Service, error) {
 	return m.backgroundServiceRegistry, nil
@@ -209,4 +213,17 @@ func (m *Modules) initClient() (services.Service, error) {
 	pluginmod.RegisterPluginsService(c)
 
 	return c, nil
+}
+
+func (m *Modules) PluginInstaller() plugins.Installer {
+	return pluginmod.GetPluginsService()
+}
+
+func (m *Modules) RegisterModule(name string, initFn func() (services.Service, error), deps ...string) error {
+	m.ModuleManager.RegisterModule(name, initFn)
+	err := m.ModuleManager.AddDependency(name, deps...)
+	if err != nil {
+		return err
+	}
+	return nil
 }

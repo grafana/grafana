@@ -42,7 +42,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/store/sanitizer"
-	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
 	"github.com/grafana/grafana/pkg/services/thumbs"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
 )
@@ -58,7 +57,7 @@ func ProvideBackgroundServiceRegistry(
 	thumbnailsService thumbs.Service, StorageService store.StorageService, searchService searchV2.SearchService, entityEventsService store.EntityEventsService,
 	saService *samanager.ServiceAccountsService, authInfoService *authinfoservice.Implementation,
 	grpcServerProvider grpcserver.Provider, secretMigrationProvider secretsMigrations.SecretMigrationProvider, loginAttemptService *loginattemptimpl.Service,
-	bundleService *supportbundlesimpl.Service,
+	//bundleService *supportbundlesimpl.Service,
 	usageStatsProvidersRegistry registry.UsageStatsProvidersRegistry,
 	provisioningService provisioning.ProvisioningService,
 	pluginStore *pluginStore.Service,
@@ -67,8 +66,9 @@ func ProvideBackgroundServiceRegistry(
 	_ serviceaccounts.Service, _ *guardian.Provider,
 	_ *plugindashboardsservice.DashboardUpdater, _ *sanitizer.Provider,
 	_ *grpcserver.HealthService, _ entity.EntityStoreServer, _ *grpcserver.ReflectionService, _ *ldapapi.Service,
-) *BackgroundServiceRegistry {
+) (*BackgroundServiceRegistry, error) {
 	r := NewBackgroundServiceRegistry(
+		//httpServer,
 		pluginStore,
 		ng,
 		cleanup,
@@ -97,14 +97,14 @@ func ProvideBackgroundServiceRegistry(
 		processManager,
 		secretMigrationProvider,
 		loginAttemptService,
-		bundleService,
+		//bundleService,
 	)
 
 	r.usageStatsProvidersRegistry = usageStatsProvidersRegistry
 	r.statsCollectorService = statsCollector
 	r.provisioningService = provisioningService
 
-	return r
+	return r, nil
 }
 
 // BackgroundServiceRegistry provides background services.
@@ -133,6 +133,7 @@ func (r *BackgroundServiceRegistry) start(ctx context.Context) error {
 }
 
 func (r *BackgroundServiceRegistry) run(ctx context.Context) error {
+	fmt.Println("Running background services...")
 	rootCtx, _ := context.WithCancel(ctx) // TODO: cancelFunc
 	childRoutines, childCtx := errgroup.WithContext(rootCtx)
 

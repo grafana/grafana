@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/api"
 	_ "github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -27,8 +28,8 @@ type Options struct {
 }
 
 // New returns a new instance of Server.
-func New(opts Options, cfg *setting.Cfg, moduleService *modules.Modules) (*Server, error) {
-	s := newServer(opts, cfg, moduleService)
+func New(opts Options, cfg *setting.Cfg, moduleService *modules.Modules, httpServer *api.HTTPServer) (*Server, error) {
+	s := newServer(opts, cfg, moduleService, httpServer)
 
 	if err := s.init(); err != nil {
 		return nil, err
@@ -37,18 +38,21 @@ func New(opts Options, cfg *setting.Cfg, moduleService *modules.Modules) (*Serve
 	return s, nil
 }
 
-func newServer(opts Options, cfg *setting.Cfg, moduleService *modules.Modules) *Server {
+func newServer(opts Options, cfg *setting.Cfg, moduleService *modules.Modules,
+	httpServer *api.HTTPServer) *Server {
 	return &Server{
 		log:              log.New("server"),
 		cfg:              cfg,
 		shutdownFinished: make(chan struct{}),
 		pidFile:          opts.PidFile,
 		moduleService:    moduleService,
+		httpServer:       httpServer,
 	}
 }
 
 // Server is responsible for managing the lifecycle of services.
 type Server struct {
+	httpServer       *api.HTTPServer
 	log              log.Logger
 	cfg              *setting.Cfg
 	shutdownOnce     sync.Once

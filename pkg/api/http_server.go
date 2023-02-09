@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
+	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
@@ -115,6 +116,7 @@ type HTTPServer struct {
 	middlewares      []web.Handler
 	namedMiddlewares []routing.RegisterNamedMiddleware
 	bus              bus.Bus
+	moduleManager    modules.Service
 
 	PluginContextProvider        *plugincontext.Provider
 	RouteRegister                routing.RouteRegister
@@ -137,7 +139,6 @@ type HTTPServer struct {
 	PluginRequestValidator       validations.PluginRequestValidator
 	pluginClient                 plugins.Client
 	pluginStore                  plugins.Store
-	pluginInstaller              plugins.Installer
 	pluginDashboardService       plugindashboards.Service
 	pluginStaticRouteResolver    plugins.StaticRouteResolver
 	pluginErrorResolver          plugins.ErrorResolver
@@ -227,7 +228,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	cacheService *localcache.CacheService, sqlStore *sqlstore.SQLStore, alertEngine *alerting.AlertEngine,
 	pluginRequestValidator validations.PluginRequestValidator, pluginStaticRouteResolver plugins.StaticRouteResolver,
 	pluginDashboardService plugindashboards.Service, pluginStore plugins.Store, pluginClient plugins.Client,
-	pluginErrorResolver plugins.ErrorResolver, pluginInstaller plugins.Installer, settingsProvider setting.Provider,
+	pluginErrorResolver plugins.ErrorResolver, settingsProvider setting.Provider, moduleManager modules.Service,
 	dataSourceCache datasources.CacheService, userTokenService auth.UserTokenService,
 	cleanUpService *cleanup.CleanUpService, shortURLService shorturls.Service, queryHistoryService queryhistory.Service, correlationsService correlations.Service,
 	thumbService thumbs.Service, remoteCache *remotecache.RemoteCache, provisioningService provisioning.ProvisioningService,
@@ -266,6 +267,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	m := web.New()
 
 	hs := &HTTPServer{
+		moduleManager:                moduleManager,
 		Cfg:                          cfg,
 		RouteRegister:                routeRegister,
 		bus:                          bus,
@@ -276,7 +278,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		SQLStore:                     sqlStore,
 		AlertEngine:                  alertEngine,
 		PluginRequestValidator:       pluginRequestValidator,
-		pluginInstaller:              pluginInstaller,
 		pluginClient:                 pluginClient,
 		pluginStore:                  pluginStore,
 		pluginStaticRouteResolver:    pluginStaticRouteResolver,
@@ -377,11 +378,22 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	// Register access control scope resolver for annotations
 	hs.AccessControl.RegisterScopeAttributeResolver(AnnotationTypeScopeResolver(hs.annotationsRepo))
 
-	hs.BasicService = services.NewBasicService(hs.start, nil, hs.stop)
+	err := hs.moduleManager.RegisterModule(modules.HTTPServer, func() (services.Service, error) {
+		hs.BasicService = services.NewBasicService(hs.start, nil, hs.stop)
+		return hs, nil
+	}, modules.Core)
+	if err != nil {
+		return nil, err
+	}
+
 	if err := hs.declareFixedRoles(); err != nil {
 		return nil, err
 	}
 	return hs, nil
+}
+
+func (hs *HTTPServer) Run(_ context.Context) error {
+	return nil
 }
 
 func (hs *HTTPServer) AddMiddleware(middleware web.Handler) {
