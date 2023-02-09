@@ -10,9 +10,9 @@ import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 import { FolderDTO } from 'app/types';
 
 import { PreviewsSystemRequirements } from '../../components/PreviewsSystemRequirements';
-import { getGrafanaSearcher, NestedFolderItem } from '../../service';
+import { getGrafanaSearcher } from '../../service';
 import { getSearchStateManager } from '../../state/SearchStateManager';
-import { SearchLayout } from '../../types';
+import { SearchLayout, DashboardViewItem } from '../../types';
 import { newSearchSelection, updateSearchSelection } from '../selection';
 
 import { ActionRow, getValidQueryLayout } from './ActionRow';
@@ -229,6 +229,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
 });
 
-function sectionForFolderView(folderDTO: FolderDTO): NestedFolderItem {
+function sectionForFolderView(folderDTO: FolderDTO): DashboardViewItem {
   return { uid: folderDTO.uid, kind: 'folder', title: folderDTO.title };
 }

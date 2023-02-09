@@ -1,6 +1,8 @@
 import { DataFrameView, SelectableValue } from '@grafana/data';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 
+import { DashboardViewItem } from '../types';
+
 export interface FacetField {
   field: string;
   count?: number;
@@ -75,7 +77,7 @@ export interface GrafanaSearcher {
   getSortOptions: () => Promise<SelectableValue[]>;
   sortPlaceholder?: string;
 
-  getFolderChildren: (folderUid?: string) => Promise<NestedFolderItem[]>;
+  getFolderChildren: (folderUid?: string) => Promise<DashboardViewItem[]>;
 
   /** Gets the default sort used for the Folder view */
   getFolderViewSort: () => string;
@@ -84,21 +86,4 @@ export interface GrafanaSearcher {
 export interface NestedFolderDTO {
   uid: string;
   title: string;
-}
-
-export interface NestedFolderItem {
-  kind: 'folder' | 'dashboard';
-  uid: string;
-  title: string;
-  url?: string;
-  tags?: string[];
-
-  icon?: string;
-  folderTitle?: string; // where does this come from?
-  sortMeta?: string; // PR TODO: test with enterprise
-  sortMetaName?: string; // PR TODO: test with enterprise
-
-  itemsUIDs?: string[];
-
-  // selected?: boolean; // PR TODO: is this the right place for it? I don't think this shape should contain state
 }

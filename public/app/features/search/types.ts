@@ -2,7 +2,7 @@ import { Action } from 'redux';
 
 import { WithAccessControlMetadata } from '@grafana/data';
 
-import { NestedFolderItem, QueryResponse } from './service';
+import { QueryResponse } from './service';
 
 export enum DashboardSearchItemType {
   DashDB = 'dash-db',
@@ -49,6 +49,24 @@ export interface DashboardSearchItem {
   folderUrl?: string;
 }
 
+/**
+ * Type used in the folder view components
+ */
+export interface DashboardViewItem {
+  kind: 'folder' | 'dashboard';
+  uid: string;
+  title: string;
+  url?: string;
+  tags?: string[];
+
+  icon?: string;
+  folderTitle?: string; // where does this come from?
+  sortMeta?: string; // PR TODO: test with enterprise
+  sortMetaName?: string; // PR TODO: test with enterprise
+
+  itemsUIDs?: string[];
+}
+
 export interface SearchAction extends Action {
   payload?: any;
 }
@@ -71,7 +89,7 @@ export interface SearchState {
   eventTrackingNamespace: EventTrackingNamespace;
 }
 
-export type OnToggleChecked = (item: NestedFolderItem) => void;
+export type OnToggleChecked = (item: DashboardViewItem) => void;
 
 export enum SearchLayout {
   List = 'list',

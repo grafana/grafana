@@ -1,7 +1,9 @@
 import { SelectableValue, DataFrame, DataFrameView } from '@grafana/data';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 
-import { GrafanaSearcher, NestedFolderItem, QueryResponse, SearchQuery } from '.';
+import { DashboardViewItem } from '../types';
+
+import { GrafanaSearcher, QueryResponse, SearchQuery } from '.';
 
 // This is a dummy search useful for tests
 export class DummySearcher implements GrafanaSearcher {
@@ -39,7 +41,7 @@ export class DummySearcher implements GrafanaSearcher {
     return '';
   }
 
-  async getFolderChildren(folderUid?: string): Promise<NestedFolderItem[]> {
+  async getFolderChildren(folderUid?: string): Promise<DashboardViewItem[]> {
     return [];
   }
 }

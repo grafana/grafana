@@ -6,13 +6,12 @@ import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Card, Icon, IconName, TagList, useStyles2 } from '@grafana/ui';
 
 import { SEARCH_ITEM_HEIGHT } from '../constants';
-import { NestedFolderItem } from '../service';
-import { OnToggleChecked } from '../types';
+import { DashboardViewItem, OnToggleChecked } from '../types';
 
 import { SearchCheckbox } from './SearchCheckbox';
 
 export interface Props {
-  item: NestedFolderItem;
+  item: DashboardViewItem;
   isSelected?: boolean;
   editable?: boolean;
   onTagSelected: (name: string) => any;
@@ -98,7 +97,7 @@ export const SearchItem: FC<Props> = ({ item, isSelected, editable, onToggleChec
   );
 };
 
-function KindIcon({ kind }: { kind: NestedFolderItem['kind'] }) {
+function KindIcon({ kind }: { kind: DashboardViewItem['kind'] }) {
   if (kind === 'folder') {
     return <Icon name="folder" />;
   }

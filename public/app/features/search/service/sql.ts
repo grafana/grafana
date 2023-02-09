@@ -4,9 +4,9 @@ import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { DEFAULT_MAX_VALUES, TYPE_KIND_MAP } from '../constants';
-import { DashboardSearchHit, DashboardSearchItemType } from '../types';
+import { DashboardSearchHit, DashboardSearchItemType, DashboardViewItem } from '../types';
 
-import { LocationInfo, NestedFolderDTO, NestedFolderItem } from './types';
+import { LocationInfo, NestedFolderDTO } from './types';
 import { queryResultToNestedFolderItem, replaceCurrentFolderQuery } from './utils';
 
 import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery } from '.';
@@ -225,7 +225,7 @@ export class SQLSearcher implements GrafanaSearcher {
     };
   }
 
-  async getFolderChildren(parentUid?: string): Promise<NestedFolderItem[]> {
+  async getFolderChildren(parentUid?: string): Promise<DashboardViewItem[]> {
     if (!config.featureToggles.nestedFolders) {
       throw new Error('PR TODO: Require nestedFolders enabled');
     }
@@ -259,7 +259,7 @@ export class SQLSearcher implements GrafanaSearcher {
   };
 }
 
-async function getChildFolders(parentUid?: string): Promise<NestedFolderItem[]> {
+async function getChildFolders(parentUid?: string): Promise<DashboardViewItem[]> {
   const folders = await backendSrv.get<NestedFolderDTO[]>('/api/folders', { parentUid });
 
   return folders.map((item) => ({

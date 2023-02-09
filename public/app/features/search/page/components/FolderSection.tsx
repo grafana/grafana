@@ -10,7 +10,8 @@ import { useUniqueId } from 'app/plugins/datasource/influxdb/components/useUniqu
 
 import { SearchItem } from '../..';
 import { GENERAL_FOLDER_UID } from '../../constants';
-import { getGrafanaSearcher, NestedFolderItem } from '../../service';
+import { getGrafanaSearcher } from '../../service';
+import { DashboardViewItem } from '../../types';
 import { SelectionChecker, SelectionToggle } from '../selection';
 
 interface SectionHeaderProps {
@@ -18,7 +19,7 @@ interface SectionHeaderProps {
   selectionToggle?: SelectionToggle;
   onClickItem?: (e: React.MouseEvent<HTMLElement>) => void;
   onTagSelected: (tag: string) => void;
-  section: NestedFolderItem;
+  section: DashboardViewItem;
   renderStandaloneBody?: boolean; // render the body on its own
   tags?: string[];
 }

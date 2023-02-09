@@ -6,7 +6,7 @@ import SVG from 'react-inlinesvg';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Spinner, TagList, useTheme2 } from '@grafana/ui';
 
-import { NestedFolderItem } from '../service';
+import { DashboardViewItem } from '../types';
 
 import { getThumbnailURL } from './SearchCard';
 
@@ -14,7 +14,7 @@ export interface Props {
   className?: string;
   imageHeight: number;
   imageWidth: number;
-  item: NestedFolderItem;
+  item: DashboardViewItem;
   lastUpdated?: string | null;
   onClick?: (event: React.MouseEvent<HTMLAnchorElement>) => void;
 }

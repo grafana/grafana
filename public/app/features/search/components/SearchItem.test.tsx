@@ -3,7 +3,7 @@ import React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 
-import { NestedFolderItem } from '../service';
+import { DashboardViewItem } from '../types';
 
 import { Props, SearchItem } from './SearchItem';
 
@@ -11,7 +11,7 @@ beforeEach(() => {
   jest.clearAllMocks();
 });
 
-const dashboardResult: NestedFolderItem = {
+const dashboardResult: DashboardViewItem = {
   uid: 'lBdLINUWk',
   title: 'Test 1',
   url: '/d/lBdLINUWk/test1',

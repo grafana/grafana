@@ -9,7 +9,8 @@ import { useStyles2 } from '@grafana/ui';
 
 import { SearchItem } from '../../components/SearchItem';
 import { useSearchKeyboardNavigation } from '../../hooks/useSearchKeyboardSelection';
-import { NestedFolderItem, SearchResultMeta } from '../../service';
+import { SearchResultMeta } from '../../service';
+import { DashboardViewItem } from '../../types';
 
 import { SearchResultsProps } from './SearchResultsTable';
 
@@ -49,7 +50,7 @@ export const SearchResultsCards = React.memo(
         }
 
         const item = response.view.get(rowIndex);
-        const searchItem: NestedFolderItem = {
+        const searchItem: DashboardViewItem = {
           uid: item.uid,
           title: item.name,
           url: item.url,

@@ -9,8 +9,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Icon, Portal, TagList, useTheme2 } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
 
-import { NestedFolderItem } from '../service';
-import { OnToggleChecked } from '../types';
+import { DashboardViewItem, OnToggleChecked } from '../types';
 
 import { SearchCardExpanded } from './SearchCardExpanded';
 import { SearchCheckbox } from './SearchCheckbox';
@@ -19,7 +18,7 @@ const DELAY_BEFORE_EXPANDING = 500;
 
 export interface Props {
   editable?: boolean;
-  item: NestedFolderItem;
+  item: DashboardViewItem;
   isSelected?: boolean;
   onTagSelected?: (name: string) => any;
   onToggleChecked?: OnToggleChecked;
