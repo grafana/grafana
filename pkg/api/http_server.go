@@ -391,10 +391,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	return hs, nil
 }
 
-func (hs *HTTPServer) Run(_ context.Context) error {
-	return nil
-}
-
 func (hs *HTTPServer) AddMiddleware(middleware web.Handler) {
 	hs.middlewares = append(hs.middlewares, middleware)
 }
