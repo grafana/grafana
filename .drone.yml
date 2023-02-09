@@ -3653,7 +3653,7 @@ steps:
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
-  - git checkout ${DRONE_TAG}
+  - git checkout ${DRONE_TARGET_BRANCH}
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -6524,6 +6524,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: 097b8c809aec946dc17e4daabeda080c47079b111c836cf9b00dcfb1564a4b50
+hmac: 7c0815bf36cbe2e31cf7bda31593ca713805dbb14a7a5f142a8747518debaafc
 
 ...

@@ -417,6 +417,8 @@ def enterprise2_pipelines(prefix = "", ver_mode = ver_mode, trigger = release_tr
     """
     if ver_mode == "release":
         source = "${DRONE_TAG}"
+        if prefix == "custom-":
+            source = "${DRONE_TARGET_BRANCH}"
     elif ver_mode == "release-branch":
         source = "${DRONE_BRANCH}"
     else:
