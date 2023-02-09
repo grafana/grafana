@@ -10,7 +10,7 @@ import { useStyles2 } from '@grafana/ui';
 import { SearchItem } from '../../components/SearchItem';
 import { useSearchKeyboardNavigation } from '../../hooks/useSearchKeyboardSelection';
 import { SearchResultMeta } from '../../service';
-import { DashboardSearchItemType, DashboardSectionItem } from '../../types';
+import { queryResultToNestedFolderItem } from '../../service/utils';
 
 import { SearchResultsProps } from './SearchResultsTable';
 
@@ -50,37 +50,21 @@ export const SearchResultsCards = React.memo(
         }
 
         const item = response.view.get(rowIndex);
-        let v: DashboardSectionItem = {
-          uid: item.uid,
-          title: item.name,
-          url: item.url,
-          uri: item.url,
-          type: item.kind === 'folder' ? DashboardSearchItemType.DashFolder : DashboardSearchItemType.DashDB,
-          id: 666, // do not use me!
-          isStarred: false,
-          tags: item.tags ?? [],
-        };
+        const searchItem = queryResultToNestedFolderItem(item, response.view.dataFrame.meta);
 
         if (item.location) {
           const first = item.location.split('/')[0];
           const finfo = meta.locationInfo[first];
           if (finfo) {
-            v.folderUid = item.location;
-            v.folderTitle = finfo.name;
+            // searchItem.folderUid = item.location; // PR TODO: is this needed?
+            searchItem.folderTitle = finfo.name;
           }
         }
 
-        if (selection && selectionToggle) {
-          const type = v.type === DashboardSearchItemType.DashFolder ? 'folder' : 'dashboard';
-          v = {
-            ...v,
-            checked: selection(type, v.uid!),
-          };
-        }
         return (
           <div style={style} key={item.uid} className={className} role="row">
             <SearchItem
-              item={v}
+              item={searchItem}
               onTagSelected={onTagSelected}
               onToggleChecked={(item) => {
                 if (selectionToggle) {
@@ -89,6 +73,7 @@ export const SearchResultsCards = React.memo(
               }}
               editable={Boolean(selection != null)}
               onClickItem={onClickItem}
+              isSelected={selectionToggle && selection?.(searchItem.kind, searchItem.uid)}
             />
           </div>
         );

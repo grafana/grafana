@@ -6,12 +6,13 @@ import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Card, Icon, IconName, TagList, useStyles2 } from '@grafana/ui';
 
 import { SEARCH_ITEM_HEIGHT } from '../constants';
-import { DashboardSectionItem, OnToggleChecked } from '../types';
+import { DashboardViewItem, OnToggleChecked } from '../types';
 
 import { SearchCheckbox } from './SearchCheckbox';
 
 export interface Props {
-  item: DashboardSectionItem;
+  item: DashboardViewItem;
+  isSelected?: boolean;
   editable?: boolean;
   onTagSelected: (name: string) => any;
   onToggleChecked?: OnToggleChecked;
@@ -30,7 +31,7 @@ const getIconFromMeta = (meta = ''): IconName => {
 };
 
 /** @deprecated */
-export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSelected, onClickItem }) => {
+export const SearchItem: FC<Props> = ({ item, isSelected, editable, onToggleChecked, onTagSelected, onClickItem }) => {
   const styles = useStyles2(getStyles);
   const tagSelected = useCallback(
     (tag: string, event: React.MouseEvent<HTMLElement>) => {
@@ -67,7 +68,7 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSe
         <SearchCheckbox
           aria-label="Select dashboard"
           editable={editable}
-          checked={item.checked}
+          checked={isSelected}
           onClick={handleCheckboxClick}
         />
       </Card.Figure>
@@ -84,7 +85,7 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSe
         )}
       </Card.Meta>
       <Card.Tags>
-        <TagList tags={item.tags} onClick={tagSelected} getAriaLabel={(tag) => `Filter by tag "${tag}"`} />
+        <TagList tags={item.tags ?? []} onClick={tagSelected} getAriaLabel={(tag) => `Filter by tag "${tag}"`} />
       </Card.Tags>
     </Card>
   );
