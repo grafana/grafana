@@ -36,6 +36,7 @@
   ],
   "extensions": [
     {
+      "id": "slo-declare-incident",
       "placement": "plugins/grafana-slo-app/slo-breach",
       "type": "link",
       "title": "Declare incident",
@@ -43,6 +44,7 @@
       "path": "/incidents/declare"
     },
     {
+      "id": "slo-declare-incident-2",
       "placement": "plugins/grafana-slo-app/slo-breach",
       "type": "link",
       "title": "Declare incident",

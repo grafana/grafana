@@ -502,6 +502,7 @@ func TestLoader_Load(t *testing.T) {
 					},
 					Extensions: []*plugindef.ExtensionsLink{
 						{
+							Id:          "slo-declare-incident",
 							Placement:   "plugins/grafana-slo-app/slo-breach",
 							Title:       "Declare incident",
 							Type:        plugindef.ExtensionsLinkTypeLink,
@@ -509,6 +510,7 @@ func TestLoader_Load(t *testing.T) {
 							Path:        "/incidents/declare",
 						},
 						{
+							Id:          "slo-declare-incident-2",
 							Placement:   "plugins/grafana-slo-app/slo-breach",
 							Title:       "Declare incident",
 							Type:        plugindef.ExtensionsLinkTypeLink,

@@ -7,6 +7,7 @@ describe('Plugin registry', () => {
     const registry = createPluginExtensionsRegistry({
       'belugacdn-app': createConfig([
         {
+          id: '1',
           placement: 'plugins/belugacdn-app/menu',
           title: 'The title',
           type: PluginExtensionTypes.link,
@@ -16,6 +17,7 @@ describe('Plugin registry', () => {
       ]),
       'strava-app': createConfig([
         {
+          id: '1',
           placement: 'plugins/strava-app/menu',
           title: 'The title',
           type: PluginExtensionTypes.link,
@@ -25,6 +27,7 @@ describe('Plugin registry', () => {
       ]),
       'duplicate-links-app': createConfig([
         {
+          id: '1',
           placement: 'plugins/duplicate-links-app/menu',
           title: 'The title',
           type: PluginExtensionTypes.link,
@@ -32,6 +35,7 @@ describe('Plugin registry', () => {
           path: '/incidents/declare',
         },
         {
+          id: '2',
           placement: 'plugins/duplicate-links-app/menu',
           title: 'The title',
           type: PluginExtensionTypes.link,

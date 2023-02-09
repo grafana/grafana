@@ -480,8 +480,13 @@
         "type": "object",
         "description": "Expose a page link that can be used by Grafana core or other plugins to navigate users to the plugin",
         "additionalProperties": false,
-        "required": ["type", "title", "placement", "path"],
+        "required": ["id", "type", "title", "placement", "path"],
         "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 22
+          },
           "type": {
             "type": "string",
             "enum": ["link"]

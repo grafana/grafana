@@ -244,6 +244,7 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 				return &plugins.FakePluginStore{
 					PluginList: newPlugins("test-app", []*plugindef.ExtensionsLink{
 						{
+							Id:          "1",
 							Placement:   "core/home/menu",
 							Type:        plugindef.ExtensionsLinkTypeLink,
 							Title:       "Title",
@@ -267,6 +268,7 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 						Version: "0.5.0",
 						Extensions: []*plugindef.ExtensionsLink{
 							{
+								Id:          "1",
 								Placement:   "core/home/menu",
 								Type:        plugindef.ExtensionsLinkTypeLink,
 								Title:       "Title",
@@ -284,6 +286,7 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 				return &plugins.FakePluginStore{
 					PluginList: newPlugins("test-app", []*plugindef.ExtensionsLink{
 						{
+							Id:          "1",
 							Placement:   "core/home/menu",
 							Type:        plugindef.ExtensionsLinkTypeLink,
 							Title:       "Title",

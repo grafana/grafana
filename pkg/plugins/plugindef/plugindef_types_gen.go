@@ -158,6 +158,9 @@ type ExtensionsLink struct {
 	// Description for the rendered link
 	Description string `json:"description"`
 
+	// unique identifier of the extensions
+	Id string `json:"id"`
+
 	// Path relative to the extending plugin e.g. /incidents/declare
 	Path string `json:"path"`
 

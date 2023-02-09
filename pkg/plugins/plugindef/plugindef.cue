@@ -123,6 +123,8 @@ seqs: [
 				}
 
 				#ExtensionsLink: {
+					// unique identifier of the extensions
+					id: string & strings.MinRunes(3) & strings.MaxRunes(22)
 					// Target where the link will be rendered
 					placement: =~"^(plugins|grafana)\/[a-z-/0-9]*$"
 					// Type of extension
