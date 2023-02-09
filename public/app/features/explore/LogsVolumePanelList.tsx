@@ -60,13 +60,12 @@ export const LogsVolumePanelList = ({
     return !isLogsVolumeLimited(data) && zoomRatio && zoomRatio < 1;
   });
 
-  let limitedInfo;
+  let limitedInfo = '';
   if (containsLimited) {
-    const limitedInfoText =
+    limitedInfo =
       numberOfLogVolumes > 1
-        ? 'Some datasources does not support full-range histograms. "All visible logs" graph is based on the logs seen in all responses.'
-        : 'This datasource does not support full-range histograms. The graph is based on the logs seen in the response.';
-    limitedInfo = <div className={styles.oldInfoText}>{limitedInfoText}</div>;
+        ? 'Some datasources does not support full-range histograms. The graph below is based on the logs seen in all responses.'
+        : 'This datasource does not support full-range histograms. The graph below is based on the logs seen in the response.';
   }
 
   let zoomedInfo;
@@ -78,12 +77,7 @@ export const LogsVolumePanelList = ({
     );
   }
 
-  let extraInfo = (
-    <>
-      {limitedInfo}
-      {zoomedInfo}
-    </>
-  );
+  let extraInfo = <>{zoomedInfo}</>;
 
   if (logsVolumeData?.state === LoadingState.Loading) {
     return <span>Log volume is loading...</span>;
@@ -94,13 +88,15 @@ export const LogsVolumePanelList = ({
   }
 
   return (
-    <>
+    <div className={styles.listContainer}>
       {Object.keys(logVolumes).map((name, index) => {
         const logsVolumeData = { data: logVolumes[name] };
-        const title = getLogsVolumeDataSourceInfo(logVolumes[name]).name;
+        const extraInfo = isLogsVolumeLimited(logVolumes[name])
+          ? limitedInfo
+          : getLogsVolumeDataSourceInfo(logVolumes[name]).name;
         return (
           <LogsVolumePanel
-            title={numberOfLogVolumes > 1 ? title : ''}
+            extraInfo={extraInfo}
             key={index}
             absoluteRange={absoluteRange}
             width={width}
@@ -116,12 +112,15 @@ export const LogsVolumePanelList = ({
         );
       })}
       <div className={styles.extraInfoContainer}>{extraInfo}</div>
-    </>
+    </div>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    listContainer: css`
+      padding-top: 10px;
+    `,
     extraInfoContainer: css`
       display: flex;
       justify-content: end;
