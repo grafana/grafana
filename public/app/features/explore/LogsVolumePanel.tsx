@@ -17,7 +17,7 @@ import { TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
 import { ExploreGraph } from './Graph/ExploreGraph';
 
 type Props = {
-  extraInfo: string;
+  extraInfo?: string;
   logsVolumeData: DataQueryResponse | undefined;
   absoluteRange: AbsoluteTimeRange;
   timeZone: TimeZone;
