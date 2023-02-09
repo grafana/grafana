@@ -3,27 +3,25 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
-	"net/http/httptest"
-	"path/filepath"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
-	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/ldap"
+	"github.com/grafana/grafana/pkg/services/ldap/multildap"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
-	"github.com/grafana/grafana/pkg/services/multildap"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
@@ -31,12 +29,12 @@ import (
 )
 
 type LDAPMock struct {
-	Results []*login.ExternalUserInfo
+	Results          []*login.ExternalUserInfo
+	UserSearchResult *login.ExternalUserInfo
+	UserSearchConfig ldap.ServerConfig
+	UserSearchError  error
 }
 
-var userSearchResult *login.ExternalUserInfo
-var userSearchConfig ldap.ServerConfig
-var userSearchError error
 var pingResult []*multildap.ServerStatus
 var pingError error
 
@@ -54,37 +52,34 @@ func (m *LDAPMock) Users(logins []string) ([]*login.ExternalUserInfo, error) {
 }
 
 func (m *LDAPMock) User(login string) (*login.ExternalUserInfo, ldap.ServerConfig, error) {
-	return userSearchResult, userSearchConfig, userSearchError
+	return m.UserSearchResult, m.UserSearchConfig, m.UserSearchError
 }
 
-// ***
-// GetUserFromLDAP tests
-// ***
-
-func getUserFromLDAPContext(t *testing.T, requestURL string, searchOrgRst []*org.OrgDTO) *scenarioContext {
+func setupAPITest(t *testing.T, opts ...func(a *Service)) (*Service, *webtest.Server) {
 	t.Helper()
+	router := routing.NewRouteRegister()
+	cfg := setting.NewCfg()
+	cfg.LDAPEnabled = true
 
-	sc := setupScenarioContext(t, requestURL)
+	a := ProvideService(cfg,
+		router,
+		acimpl.ProvideAccessControl(cfg),
+		usertest.NewUserServiceFake(),
+		&logintest.AuthInfoServiceFake{},
+		ldap.ProvideGroupsService(),
+		&logintest.LoginServiceFake{},
+		&orgtest.FakeOrgService{},
+		authtest.NewFakeUserAuthTokenService(),
+		supportbundlestest.NewFakeBundleService(),
+	)
 
-	origLDAP := setting.LDAPEnabled
-	setting.LDAPEnabled = true
-	t.Cleanup(func() { setting.LDAPEnabled = origLDAP })
+	for _, o := range opts {
+		o(a)
+	}
 
-	hs := &HTTPServer{Cfg: setting.NewCfg(), ldapGroups: ldap.ProvideGroupsService(), orgService: &orgtest.FakeOrgService{ExpectedOrgs: searchOrgRst}}
+	server := webtest.NewServer(t, router)
 
-	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
-		sc.context = c
-		return hs.GetUserFromLDAP(c)
-	})
-
-	sc.m.Get("/api/admin/ldap/:username", sc.defaultHandler)
-
-	sc.resp = httptest.NewRecorder()
-	req, _ := http.NewRequest(http.MethodGet, requestURL, nil)
-	sc.req = req
-	sc.exec()
-
-	return sc
+	return a, server
 }
 
 func TestGetUserFromLDAPAPIEndpoint_UserNotFound(t *testing.T) {
@@ -93,20 +88,36 @@ func TestGetUserFromLDAPAPIEndpoint_UserNotFound(t *testing.T) {
 	}
 
 	newLDAP = func(_ []*ldap.ServerConfig) multildap.IMultiLDAP {
-		return &LDAPMock{}
+		return &LDAPMock{
+			UserSearchResult: nil,
+		}
 	}
 
-	userSearchResult = nil
+	_, server := setupAPITest(t, func(a *Service) {
+		a.orgService = &orgtest.FakeOrgService{
+			ExpectedOrgs: []*org.OrgDTO{},
+		}
+	})
 
-	sc := getUserFromLDAPContext(t, "/api/admin/ldap/user-that-does-not-exist", []*org.OrgDTO{})
+	req := server.NewGetRequest("/api/admin/ldap/user-that-does-not-exist")
+	webtest.RequestWithSignedInUser(req, &user.SignedInUser{
+		OrgID: 1,
+		Permissions: map[int64]map[string][]string{
+			1: {"ldap.user:read": {"*"}}},
+	})
 
-	require.Equal(t, sc.resp.Code, http.StatusNotFound)
-	assert.JSONEq(t, "{\"message\":\"No user was found in the LDAP server(s) with that username\"}", sc.resp.Body.String())
+	res, err := server.Send(req)
+	defer func() { require.NoError(t, res.Body.Close()) }()
+	require.NoError(t, err)
+
+	assert.Equal(t, http.StatusNotFound, res.StatusCode)
+	bodyBytes, _ := io.ReadAll(res.Body)
+	assert.JSONEq(t, "{\"message\":\"No user was found in the LDAP server(s) with that username\"}", string(bodyBytes))
 }
 
 func TestGetUserFromLDAPAPIEndpoint_OrgNotfound(t *testing.T) {
 	isAdmin := true
-	userSearchResult = &login.ExternalUserInfo{
+	userSearchResult := &login.ExternalUserInfo{
 		Name:           "John Doe",
 		Email:          "john.doe@example.com",
 		Login:          "johndoe",
@@ -115,7 +126,7 @@ func TestGetUserFromLDAPAPIEndpoint_OrgNotfound(t *testing.T) {
 		IsGrafanaAdmin: &isAdmin,
 	}
 
-	userSearchConfig = ldap.ServerConfig{
+	userSearchConfig := ldap.ServerConfig{
 		Attr: ldap.AttributeMap{
 			Name:     "ldap-name",
 			Surname:  "ldap-surname",
@@ -136,32 +147,51 @@ func TestGetUserFromLDAPAPIEndpoint_OrgNotfound(t *testing.T) {
 		},
 	}
 
+	newLDAP = func(_ []*ldap.ServerConfig) multildap.IMultiLDAP {
+		return &LDAPMock{
+			UserSearchResult: userSearchResult,
+			UserSearchConfig: userSearchConfig,
+		}
+	}
+
 	mockOrgSearchResult := []*org.OrgDTO{
 		{ID: 1, Name: "Main Org."},
 	}
+
+	_, server := setupAPITest(t, func(a *Service) {
+		a.orgService = &orgtest.FakeOrgService{
+			ExpectedOrgs: mockOrgSearchResult,
+		}
+	})
 
 	getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 		return &ldap.Config{}, nil
 	}
 
-	newLDAP = func(_ []*ldap.ServerConfig) multildap.IMultiLDAP {
-		return &LDAPMock{}
-	}
+	req := server.NewGetRequest("/api/admin/ldap/johndoe")
+	webtest.RequestWithSignedInUser(req, &user.SignedInUser{
+		OrgID: 1,
+		Permissions: map[int64]map[string][]string{
+			1: {"ldap.user:read": {"*"}}},
+	})
 
-	sc := getUserFromLDAPContext(t, "/api/admin/ldap/johndoe", mockOrgSearchResult)
+	res, err := server.Send(req)
+	defer func() { require.NoError(t, res.Body.Close()) }()
+	require.NoError(t, err)
 
-	require.Equal(t, http.StatusBadRequest, sc.resp.Code)
+	assert.Equal(t, http.StatusBadRequest, res.StatusCode)
+	bodyBytes, _ := io.ReadAll(res.Body)
 
-	var res map[string]interface{}
-	err := json.Unmarshal(sc.resp.Body.Bytes(), &res)
+	var resMap map[string]interface{}
+	err = json.Unmarshal(bodyBytes, &resMap)
 	assert.NoError(t, err)
-	assert.Equal(t, "unable to find organization with ID '2'", res["error"])
-	assert.Equal(t, "An organization was not found - Please verify your LDAP configuration", res["message"])
+	assert.Equal(t, "unable to find organization with ID '2'", resMap["error"])
+	assert.Equal(t, "An organization was not found - Please verify your LDAP configuration", resMap["message"])
 }
 
 func TestGetUserFromLDAPAPIEndpoint(t *testing.T) {
 	isAdmin := true
-	userSearchResult = &login.ExternalUserInfo{
+	userSearchResult := &login.ExternalUserInfo{
 		Name:           "John Doe",
 		Email:          "john.doe@example.com",
 		Login:          "johndoe",
@@ -170,7 +200,7 @@ func TestGetUserFromLDAPAPIEndpoint(t *testing.T) {
 		IsGrafanaAdmin: &isAdmin,
 	}
 
-	userSearchConfig = ldap.ServerConfig{
+	userSearchConfig := ldap.ServerConfig{
 		Attr: ldap.AttributeMap{
 			Name:     "ldap-name",
 			Surname:  "ldap-surname",
@@ -200,12 +230,30 @@ func TestGetUserFromLDAPAPIEndpoint(t *testing.T) {
 	}
 
 	newLDAP = func(_ []*ldap.ServerConfig) multildap.IMultiLDAP {
-		return &LDAPMock{}
+		return &LDAPMock{
+			UserSearchResult: userSearchResult,
+			UserSearchConfig: userSearchConfig,
+		}
 	}
 
-	sc := getUserFromLDAPContext(t, "/api/admin/ldap/johndoe", mockOrgSearchResult)
+	_, server := setupAPITest(t, func(a *Service) {
+		a.orgService = &orgtest.FakeOrgService{
+			ExpectedOrgs: mockOrgSearchResult,
+		}
+	})
 
-	assert.Equal(t, sc.resp.Code, http.StatusOK)
+	req := server.NewGetRequest("/api/admin/ldap/johndoe")
+	webtest.RequestWithSignedInUser(req, &user.SignedInUser{
+		OrgID: 1,
+		Permissions: map[int64]map[string][]string{
+			1: {"ldap.user:read": {"*"}}},
+	})
+
+	res, err := server.Send(req)
+	defer func() { require.NoError(t, res.Body.Close()) }()
+	require.NoError(t, err)
+
+	assert.Equal(t, http.StatusOK, res.StatusCode)
 
 	expected := `
 		{
@@ -231,12 +279,13 @@ func TestGetUserFromLDAPAPIEndpoint(t *testing.T) {
 		}
 	`
 
-	assert.JSONEq(t, expected, sc.resp.Body.String())
+	bodyBytes, _ := io.ReadAll(res.Body)
+	assert.JSONEq(t, expected, string(bodyBytes))
 }
 
 func TestGetUserFromLDAPAPIEndpoint_WithTeamHandler(t *testing.T) {
 	isAdmin := true
-	userSearchResult = &login.ExternalUserInfo{
+	userSearchResult := &login.ExternalUserInfo{
 		Name:           "John Doe",
 		Email:          "john.doe@example.com",
 		Login:          "johndoe",
@@ -245,7 +294,7 @@ func TestGetUserFromLDAPAPIEndpoint_WithTeamHandler(t *testing.T) {
 		IsGrafanaAdmin: &isAdmin,
 	}
 
-	userSearchConfig = ldap.ServerConfig{
+	userSearchConfig := ldap.ServerConfig{
 		Attr: ldap.AttributeMap{
 			Name:     "ldap-name",
 			Surname:  "ldap-surname",
@@ -270,12 +319,30 @@ func TestGetUserFromLDAPAPIEndpoint_WithTeamHandler(t *testing.T) {
 	}
 
 	newLDAP = func(_ []*ldap.ServerConfig) multildap.IMultiLDAP {
-		return &LDAPMock{}
+		return &LDAPMock{
+			UserSearchResult: userSearchResult,
+			UserSearchConfig: userSearchConfig,
+		}
 	}
 
-	sc := getUserFromLDAPContext(t, "/api/admin/ldap/johndoe", mockOrgSearchResult)
+	_, server := setupAPITest(t, func(a *Service) {
+		a.orgService = &orgtest.FakeOrgService{
+			ExpectedOrgs: mockOrgSearchResult,
+		}
+	})
 
-	require.Equal(t, sc.resp.Code, http.StatusOK)
+	req := server.NewGetRequest("/api/admin/ldap/johndoe")
+	webtest.RequestWithSignedInUser(req, &user.SignedInUser{
+		OrgID: 1,
+		Permissions: map[int64]map[string][]string{
+			1: {"ldap.user:read": {"*"}}},
+	})
+
+	res, err := server.Send(req)
+	defer func() { require.NoError(t, res.Body.Close()) }()
+	require.NoError(t, err)
+
+	assert.Equal(t, http.StatusOK, res.StatusCode)
 
 	expected := `
 		{
@@ -300,38 +367,8 @@ func TestGetUserFromLDAPAPIEndpoint_WithTeamHandler(t *testing.T) {
 		}
 	`
 
-	assert.JSONEq(t, expected, sc.resp.Body.String())
-}
-
-// ***
-// GetLDAPStatus tests
-// ***
-
-func getLDAPStatusContext(t *testing.T) *scenarioContext {
-	t.Helper()
-
-	requestURL := "/api/admin/ldap/status"
-	sc := setupScenarioContext(t, requestURL)
-
-	ldap := setting.LDAPEnabled
-	setting.LDAPEnabled = true
-	t.Cleanup(func() { setting.LDAPEnabled = ldap })
-
-	hs := &HTTPServer{Cfg: setting.NewCfg()}
-
-	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
-		sc.context = c
-		return hs.GetLDAPStatus(c)
-	})
-
-	sc.m.Get("/api/admin/ldap/status", sc.defaultHandler)
-
-	sc.resp = httptest.NewRecorder()
-	req, _ := http.NewRequest(http.MethodGet, requestURL, nil)
-	sc.req = req
-	sc.exec()
-
-	return sc
+	bodyBytes, _ := io.ReadAll(res.Body)
+	assert.JSONEq(t, expected, string(bodyBytes))
 }
 
 func TestGetLDAPStatusAPIEndpoint(t *testing.T) {
@@ -349,9 +386,21 @@ func TestGetLDAPStatusAPIEndpoint(t *testing.T) {
 		return &LDAPMock{}
 	}
 
-	sc := getLDAPStatusContext(t)
+	_, server := setupAPITest(t, func(a *Service) {
+	})
 
-	require.Equal(t, http.StatusOK, sc.resp.Code)
+	req := server.NewGetRequest("/api/admin/ldap/status")
+	webtest.RequestWithSignedInUser(req, &user.SignedInUser{
+		OrgID: 1,
+		Permissions: map[int64]map[string][]string{
+			1: {"ldap.status:read": {}}},
+	})
+
+	res, err := server.Send(req)
+	defer func() { require.NoError(t, res.Body.Close()) }()
+	require.NoError(t, err)
+
+	assert.Equal(t, http.StatusOK, res.StatusCode)
 
 	expected := `
 	[
@@ -360,70 +409,41 @@ func TestGetLDAPStatusAPIEndpoint(t *testing.T) {
 		{ "host": "10.0.0.5", "port": 361, "available": false, "error": "something is awfully wrong" }
 	]
 	`
-	assert.JSONEq(t, expected, sc.resp.Body.String())
-}
 
-// ***
-// PostSyncUserWithLDAP tests
-// ***
-
-func postSyncUserWithLDAPContext(t *testing.T, requestURL string, preHook func(*testing.T, *scenarioContext), userService user.Service) *scenarioContext {
-	t.Helper()
-
-	sc := setupScenarioContext(t, requestURL)
-	sc.authInfoService = &logintest.AuthInfoServiceFake{}
-
-	ldap := setting.LDAPEnabled
-	t.Cleanup(func() {
-		setting.LDAPEnabled = ldap
-	})
-	setting.LDAPEnabled = true
-
-	hs := &HTTPServer{
-		Cfg:              sc.cfg,
-		AuthTokenService: authtest.NewFakeUserAuthTokenService(),
-		Login:            loginservice.LoginServiceMock{},
-		authInfoService:  sc.authInfoService,
-		userService:      userService,
-	}
-
-	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
-		sc.context = c
-		return hs.PostSyncUserWithLDAP(c)
-	})
-
-	sc.m.Post("/api/admin/ldap/sync/:id", sc.defaultHandler)
-
-	sc.resp = httptest.NewRecorder()
-	req, err := http.NewRequest(http.MethodPost, requestURL, nil)
-	require.NoError(t, err)
-
-	preHook(t, sc)
-
-	sc.req = req
-	sc.exec()
-
-	return sc
+	bodyBytes, _ := io.ReadAll(res.Body)
+	assert.JSONEq(t, expected, string(bodyBytes))
 }
 
 func TestPostSyncUserWithLDAPAPIEndpoint_Success(t *testing.T) {
 	userServiceMock := usertest.NewUserServiceFake()
 	userServiceMock.ExpectedUser = &user.User{Login: "ldap-daniel", ID: 34}
-	sc := postSyncUserWithLDAPContext(t, "/api/admin/ldap/sync/34", func(t *testing.T, sc *scenarioContext) {
-		getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
-			return &ldap.Config{}, nil
-		}
 
-		newLDAP = func(_ []*ldap.ServerConfig) multildap.IMultiLDAP {
-			return &LDAPMock{}
-		}
+	getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
+		return &ldap.Config{}, nil
+	}
 
-		userSearchResult = &login.ExternalUserInfo{
+	newLDAP = func(_ []*ldap.ServerConfig) multildap.IMultiLDAP {
+		return &LDAPMock{UserSearchResult: &login.ExternalUserInfo{
 			Login: "ldap-daniel",
-		}
-	}, userServiceMock)
+		}}
+	}
 
-	assert.Equal(t, http.StatusOK, sc.resp.Code)
+	_, server := setupAPITest(t, func(a *Service) {
+		a.userService = userServiceMock
+	})
+
+	req := server.NewPostRequest("/api/admin/ldap/sync/34", nil)
+	webtest.RequestWithSignedInUser(req, &user.SignedInUser{
+		OrgID: 1,
+		Permissions: map[int64]map[string][]string{
+			1: {"ldap.user:sync": {}}},
+	})
+
+	res, err := server.Send(req)
+	defer func() { require.NoError(t, res.Body.Close()) }()
+	require.NoError(t, err)
+
+	assert.Equal(t, http.StatusOK, res.StatusCode)
 
 	expected := `
 	{
@@ -431,23 +451,38 @@ func TestPostSyncUserWithLDAPAPIEndpoint_Success(t *testing.T) {
 	}
 	`
 
-	assert.JSONEq(t, expected, sc.resp.Body.String())
+	bodyBytes, _ := io.ReadAll(res.Body)
+	assert.JSONEq(t, expected, string(bodyBytes))
 }
 
 func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotFound(t *testing.T) {
 	userServiceMock := usertest.NewUserServiceFake()
 	userServiceMock.ExpectedError = user.ErrUserNotFound
-	sc := postSyncUserWithLDAPContext(t, "/api/admin/ldap/sync/34", func(t *testing.T, sc *scenarioContext) {
-		getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
-			return &ldap.Config{}, nil
-		}
 
-		newLDAP = func(_ []*ldap.ServerConfig) multildap.IMultiLDAP {
-			return &LDAPMock{}
-		}
-	}, userServiceMock)
+	getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
+		return &ldap.Config{}, nil
+	}
 
-	assert.Equal(t, http.StatusNotFound, sc.resp.Code)
+	newLDAP = func(_ []*ldap.ServerConfig) multildap.IMultiLDAP {
+		return &LDAPMock{}
+	}
+
+	_, server := setupAPITest(t, func(a *Service) {
+		a.userService = userServiceMock
+	})
+
+	req := server.NewPostRequest("/api/admin/ldap/sync/34", nil)
+	webtest.RequestWithSignedInUser(req, &user.SignedInUser{
+		OrgID: 1,
+		Permissions: map[int64]map[string][]string{
+			1: {"ldap.user:sync": {}}},
+	})
+
+	res, err := server.Send(req)
+	defer func() { require.NoError(t, res.Body.Close()) }()
+	require.NoError(t, err)
+
+	assert.Equal(t, http.StatusNotFound, res.StatusCode)
 
 	expected := `
 	{
@@ -455,52 +490,77 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotFound(t *testing.T) {
 	}
 	`
 
-	assert.JSONEq(t, expected, sc.resp.Body.String())
+	bodyBytes, _ := io.ReadAll(res.Body)
+	assert.JSONEq(t, expected, string(bodyBytes))
 }
 
 func TestPostSyncUserWithLDAPAPIEndpoint_WhenGrafanaAdmin(t *testing.T) {
 	userServiceMock := usertest.NewUserServiceFake()
 	userServiceMock.ExpectedUser = &user.User{Login: "ldap-daniel", ID: 34}
-	sc := postSyncUserWithLDAPContext(t, "/api/admin/ldap/sync/34", func(t *testing.T, sc *scenarioContext) {
-		getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
-			return &ldap.Config{}, nil
-		}
 
-		newLDAP = func(_ []*ldap.ServerConfig) multildap.IMultiLDAP {
-			return &LDAPMock{}
-		}
+	getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
+		return &ldap.Config{}, nil
+	}
 
-		userSearchError = multildap.ErrDidNotFindUser
+	newLDAP = func(_ []*ldap.ServerConfig) multildap.IMultiLDAP {
+		return &LDAPMock{UserSearchError: multildap.ErrDidNotFindUser}
+	}
 
-		sc.cfg.AdminUser = "ldap-daniel"
-	}, userServiceMock)
-	assert.Equal(t, http.StatusBadRequest, sc.resp.Code)
+	_, server := setupAPITest(t, func(a *Service) {
+		a.userService = userServiceMock
+		a.cfg.AdminUser = "ldap-daniel"
+	})
 
-	var res map[string]interface{}
-	err := json.Unmarshal(sc.resp.Body.Bytes(), &res)
+	req := server.NewPostRequest("/api/admin/ldap/sync/34", nil)
+	webtest.RequestWithSignedInUser(req, &user.SignedInUser{
+		OrgID: 1,
+		Permissions: map[int64]map[string][]string{
+			1: {"ldap.user:sync": {}}},
+	})
+
+	res, err := server.Send(req)
+	defer func() { require.NoError(t, res.Body.Close()) }()
+	require.NoError(t, err)
+
+	assert.Equal(t, http.StatusBadRequest, res.StatusCode)
+
+	bodyBytes, _ := io.ReadAll(res.Body)
+	var resMap map[string]interface{}
+	err = json.Unmarshal(bodyBytes, &resMap)
 	assert.NoError(t, err)
-	assert.Equal(t, "did not find a user", res["error"])
-	assert.Equal(t, "Refusing to sync grafana super admin \"ldap-daniel\" - it would be disabled", res["message"])
+	assert.Equal(t, "did not find a user", resMap["error"])
+	assert.Equal(t, "Refusing to sync grafana super admin \"ldap-daniel\" - it would be disabled", resMap["message"])
 }
 
 func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotInLDAP(t *testing.T) {
 	userServiceMock := usertest.NewUserServiceFake()
 	userServiceMock.ExpectedUser = &user.User{Login: "ldap-daniel", ID: 34}
-	sc := postSyncUserWithLDAPContext(t, "/api/admin/ldap/sync/34", func(t *testing.T, sc *scenarioContext) {
-		sc.authInfoService.ExpectedExternalUser = &login.ExternalUserInfo{IsDisabled: true, UserId: 34}
-		getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
-			return &ldap.Config{}, nil
-		}
 
-		newLDAP = func(_ []*ldap.ServerConfig) multildap.IMultiLDAP {
-			return &LDAPMock{}
-		}
+	getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
+		return &ldap.Config{}, nil
+	}
 
-		userSearchResult = nil
-		userSearchError = multildap.ErrDidNotFindUser
-	}, userServiceMock)
+	newLDAP = func(_ []*ldap.ServerConfig) multildap.IMultiLDAP {
+		return &LDAPMock{UserSearchError: multildap.ErrDidNotFindUser}
+	}
 
-	assert.Equal(t, http.StatusBadRequest, sc.resp.Code)
+	_, server := setupAPITest(t, func(a *Service) {
+		a.userService = userServiceMock
+		a.authInfoService = &logintest.AuthInfoServiceFake{ExpectedExternalUser: &login.ExternalUserInfo{IsDisabled: true, UserId: 34}}
+	})
+
+	req := server.NewPostRequest("/api/admin/ldap/sync/34", nil)
+	webtest.RequestWithSignedInUser(req, &user.SignedInUser{
+		OrgID: 1,
+		Permissions: map[int64]map[string][]string{
+			1: {"ldap.user:sync": {}}},
+	})
+
+	res, err := server.Send(req)
+	defer func() { require.NoError(t, res.Body.Close()) }()
+	require.NoError(t, err)
+
+	assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 
 	expected := `
 	{
@@ -508,14 +568,39 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotInLDAP(t *testing.T) {
 	}
 	`
 
-	assert.JSONEq(t, expected, sc.resp.Body.String())
+	bodyBytes, _ := io.ReadAll(res.Body)
+	assert.JSONEq(t, expected, string(bodyBytes))
 }
 
-// ***
-// Access control tests for ldap endpoints
-// ***
-
 func TestLDAP_AccessControl(t *testing.T) {
+	f, errC := os.CreateTemp("", "ldap.toml")
+	require.NoError(t, errC)
+
+	_, errF := f.WriteString(
+		`[[servers]]
+host = "127.0.0.1"
+port = 389
+search_filter = "(cn=%s)"
+search_base_dns = ["dc=grafana,dc=org"]`)
+	require.NoError(t, errF)
+
+	ldapConfigFile := f.Name()
+
+	errF = f.Close()
+	require.NoError(t, errF)
+
+	getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
+		return &ldap.Config{}, nil
+	}
+
+	newLDAP = func(_ []*ldap.ServerConfig) multildap.IMultiLDAP {
+		return &LDAPMock{
+			UserSearchResult: &login.ExternalUserInfo{
+				Login: "ldap-daniel",
+			},
+		}
+	}
+
 	type testCase struct {
 		desc         string
 		method       string
@@ -600,41 +685,23 @@ func TestLDAP_AccessControl(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			enabled := setting.LDAPEnabled
-			configFile := setting.LDAPConfigFile
-
-			t.Cleanup(func() {
-				setting.LDAPEnabled = enabled
-				setting.LDAPConfigFile = configFile
-			})
-
-			setting.LDAPEnabled = true
-			path, err := filepath.Abs("../../conf/ldap.toml")
-			assert.NoError(t, err)
-			setting.LDAPConfigFile = path
-
-			server := SetupAPITestServer(t, func(hs *HTTPServer) {
-				cfg := setting.NewCfg()
-				cfg.LDAPEnabled = true
-				hs.Cfg = cfg
-				hs.SQLStore = dbtest.NewFakeDB()
-				hs.orgService = orgtest.NewOrgServiceFake()
-				hs.userService = &usertest.FakeUserService{ExpectedUser: &user.User{}}
-				hs.ldapGroups = &ldap.OSSGroups{}
-				hs.Login = &loginservice.LoginServiceMock{}
-				hs.authInfoService = &logintest.AuthInfoServiceFake{}
+			_, server := setupAPITest(t, func(a *Service) {
+				a.userService = &usertest.FakeUserService{ExpectedUser: &user.User{Login: "ldap-daniel", ID: 1}}
+				a.cfg.LDAPConfigFilePath = ldapConfigFile
 			})
 			// Add minimal setup to pass handler
-			userSearchResult = &login.ExternalUserInfo{}
-			userSearchError = nil
-			newLDAP = func(_ []*ldap.ServerConfig) multildap.IMultiLDAP {
-				return &LDAPMock{}
-			}
-
-			res, err := server.Send(webtest.RequestWithSignedInUser(server.NewRequest(tt.method, tt.url, nil), userWithPermissions(1, tt.permissions)))
+			res, err := server.Send(
+				webtest.RequestWithSignedInUser(server.NewRequest(tt.method, tt.url, nil),
+					userWithPermissions(1, tt.permissions)))
 			require.NoError(t, err)
-			assert.Equal(t, tt.expectedCode, res.StatusCode)
+
+			bodyBytes, _ := io.ReadAll(res.Body)
+			assert.Equal(t, tt.expectedCode, res.StatusCode, string(bodyBytes))
 			require.NoError(t, res.Body.Close())
 		})
 	}
+}
+
+func userWithPermissions(orgID int64, permissions []accesscontrol.Permission) *user.SignedInUser {
+	return &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByAction(permissions)}}
 }

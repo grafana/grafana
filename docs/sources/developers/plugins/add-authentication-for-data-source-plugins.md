@@ -158,7 +158,7 @@ To forward requests through the Grafana proxy, you need to configure one or more
 
 Grafana sends the proxy route to the server, where the data source proxy decrypts any sensitive data and interpolates the template variables with the decrypted data before making the request.
 
-To add user-defined configuration to your routes, add `{{ .JsonData.apiKey }}` to the route, where `apiKey` is the name of a property in the `jsonData` object.
+To add user-defined configuration to your routes, for example, add `{{ .JsonData.projectId }}` to the route, where `projectId` is the name of a property in the `jsonData` object.
 
 ```json
 "routes": [

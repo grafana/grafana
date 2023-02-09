@@ -32,7 +32,7 @@ describe('QueryOperationRow', () => {
       const onCloseSpy = jest.fn();
       setup({ isOpen: false, onOpen: onOpenSpy, onClose: onCloseSpy });
 
-      const queryRow = screen.getByRole('button', { name: /^test-title$/ });
+      const queryRow = screen.getByText(/^test-title$/);
       expect(queryRow).toBeInTheDocument();
 
       // open row on click

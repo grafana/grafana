@@ -62,12 +62,6 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
-			Name:            "showFeatureFlagsInUI",
-			Description:     "Show feature flags in the settings UI",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-		},
-		{
 			Name:        "publicDashboards",
 			Description: "Enables public access to dashboards",
 			State:       FeatureStateAlpha,
@@ -381,6 +375,12 @@ var (
 		{
 			Name:         "logsContextDatasourceUi",
 			Description:  "Allow datasource to provide custom UI for context view",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:         "lokiQuerySplitting",
+			Description:  "Split large interval queries into subqueries with smaller time intervals",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 		},

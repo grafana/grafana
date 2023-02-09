@@ -739,9 +739,10 @@ func (hs *HTTPServer) GetDashboardVersion(c *contextmodel.ReqContext) response.R
 
 	version, _ := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 32)
 	query := dashver.GetDashboardVersionQuery{
-		OrgID:       c.OrgID,
-		DashboardID: dash.ID,
-		Version:     int(version),
+		OrgID:        c.OrgID,
+		DashboardID:  dash.ID,
+		DashboardUID: dash.UID,
+		Version:      int(version),
 	}
 
 	res, err := hs.dashboardVersionService.Get(c.Req.Context(), &query)
@@ -757,7 +758,7 @@ func (hs *HTTPServer) GetDashboardVersion(c *contextmodel.ReqContext) response.R
 	dashVersionMeta := &dashver.DashboardVersionMeta{
 		ID:            res.ID,
 		DashboardID:   res.DashboardID,
-		DashboardUID:  dashUID,
+		DashboardUID:  dash.UID,
 		Data:          res.Data,
 		ParentVersion: res.ParentVersion,
 		RestoredFrom:  res.RestoredFrom,
@@ -989,7 +990,7 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *contextmodel.ReqContext) respon
 		return dashboardGuardianResponse(err)
 	}
 
-	versionQuery := dashver.GetDashboardVersionQuery{DashboardID: dashID, Version: apiCmd.Version, OrgID: c.OrgID}
+	versionQuery := dashver.GetDashboardVersionQuery{DashboardID: dashID, DashboardUID: dash.UID, Version: apiCmd.Version, OrgID: c.OrgID}
 	version, err := hs.dashboardVersionService.Get(c.Req.Context(), &versionQuery)
 	if err != nil {
 		return response.Error(404, "Dashboard version not found", nil)

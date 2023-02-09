@@ -1,6 +1,7 @@
 import { SyntaxNode } from '@lezer/common';
 import { escapeRegExp } from 'lodash';
 
+import { DataQueryRequest, DataQueryResponse, DataQueryResponseData, QueryResultMetaStat } from '@grafana/data';
 import {
   parser,
   LineFilter,
@@ -294,4 +295,95 @@ export function getStreamSelectorsFromQuery(query: string): string[] {
   });
 
   return labelMatchers;
+}
+
+export function requestSupportsPartitioning(queries: LokiQuery[]) {
+  /*
+   * For now, we would not split when more than 1 query is requested.
+   */
+  if (queries.length > 1) {
+    return false;
+  }
+
+  /**
+   * Disable logs volume queries.
+   */
+  if (queries[0].refId.includes('log-volume-')) {
+    return false;
+  }
+
+  if (isLogsQuery(queries[0].expr)) {
+    return false;
+  }
+
+  return true;
+}
+
+export function combineResponses(currentResult: DataQueryResponse | null, newResult: DataQueryResponse) {
+  if (!currentResult) {
+    return newResult;
+  }
+
+  newResult.data.forEach((newFrame) => {
+    const currentFrame = currentResult.data.find((frame) => frame.name === newFrame.name);
+    if (!currentFrame) {
+      currentResult.data.push(newFrame);
+      return;
+    }
+    combineFrames(currentFrame, newFrame);
+  });
+
+  return currentResult;
+}
+
+function combineFrames(dest: DataQueryResponseData, source: DataQueryResponseData) {
+  const totalFields = dest.fields.length;
+  for (let i = 0; i < totalFields; i++) {
+    dest.fields[i].values.buffer = [].concat.apply(source.fields[i].values.buffer, dest.fields[i].values.buffer);
+  }
+  dest.length += source.length;
+  combineMetadata(dest, source);
+}
+
+function combineMetadata(dest: DataQueryResponseData = {}, source: DataQueryResponseData = {}) {
+  if (!source.meta?.stats) {
+    return;
+  }
+  if (!dest.meta?.stats) {
+    if (!dest.meta) {
+      dest.meta = {};
+    }
+    Object.assign(dest.meta, { stats: source.meta.stats });
+    return;
+  }
+  dest.meta.stats.forEach((destStat: QueryResultMetaStat, i: number) => {
+    const sourceStat = source.meta.stats?.find(
+      (sourceStat: QueryResultMetaStat) => destStat.displayName === sourceStat.displayName
+    );
+    if (sourceStat) {
+      destStat.value += sourceStat.value;
+    }
+  });
+}
+
+/**
+ * Checks if the current response has reached the requested amount of results or not.
+ * For log queries, we will ensure that the current amount of results doesn't go beyond `maxLines`.
+ */
+export function resultLimitReached(request: DataQueryRequest<LokiQuery>, result: DataQueryResponse) {
+  const logRequests = request.targets.filter((target) => isLogsQuery(target.expr));
+
+  if (logRequests.length === 0) {
+    return false;
+  }
+
+  for (const request of logRequests) {
+    for (const frame of result.data) {
+      if (request.maxLines && frame?.fields[0].values.length >= request.maxLines) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
