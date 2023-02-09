@@ -1129,7 +1129,7 @@ func TestResponseParser(t *testing.T) {
   			    "status":200
   			  }
   			]
-			}`	
+			}`
 
 			result, err := parseTestResponse(targets, response)
 			require.NoError(t, err)
@@ -1140,7 +1140,7 @@ func TestResponseParser(t *testing.T) {
 			dataframes := queryRes.Frames
 			require.Len(t, dataframes, 1)
 			frame := dataframes[0]
-			
+
 			require.Equal(t, 18, len(frame.Fields))
 			// Fields have the correct length
 			require.Equal(t, 2, frame.Fields[0].Len())
@@ -1157,7 +1157,7 @@ func TestResponseParser(t *testing.T) {
 			require.Equal(t, "value", frame.Fields[14].At(0))
 			// Correctly detects type even if first value is null
 			require.Equal(t, data.FieldTypeString, frame.Fields[17].Type())
-	})
+		})
 	})
 
 	t.Run("With top_metrics", func(t *testing.T) {
@@ -1396,8 +1396,8 @@ func TestFlatten(t *testing.T) {
 			"nested0": map[string]interface{}{
 				"nested1": map[string]interface{}{
 					"nested2": map[string]interface{}{
-						"nested3":  map[string]interface{}{
-							"nested4":  map[string]interface{}{
+						"nested3": map[string]interface{}{
+							"nested4": map[string]interface{}{
 								"nested5": map[string]interface{}{
 									"nested6": map[string]interface{}{
 										"nested7": map[string]interface{}{
@@ -1419,9 +1419,9 @@ func TestFlatten(t *testing.T) {
 				},
 			},
 		}
-	
+
 		flattened := flatten(obj)
 		require.Len(t, flattened, 1)
-		require.Equal(t, map[string]interface{}{"nested11":map[string]interface{}{"nested12": "abc",}}, flattened["nested0.nested1.nested2.nested3.nested4.nested5.nested6.nested7.nested8.nested9.nested10"])
+		require.Equal(t, map[string]interface{}{"nested11": map[string]interface{}{"nested12": "abc"}}, flattened["nested0.nested1.nested2.nested3.nested4.nested5.nested6.nested7.nested8.nested9.nested10"])
 	})
 }
