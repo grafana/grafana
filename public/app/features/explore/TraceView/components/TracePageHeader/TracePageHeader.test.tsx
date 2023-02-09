@@ -82,42 +82,17 @@ describe('TracePageHeader test', () => {
     expect(screen.getByText(/Reset Selection/)).toBeInTheDocument();
   });
 
-  describe('observes the visibility toggles for various UX elements', () => {
-    it('hides the minimap when hideMap === true', () => {
-      setup({ hideMap: true } as TracePageHeaderEmbedProps);
-      expect(screen.queryByText(/Reset Selection/)).not.toBeInTheDocument();
-    });
+  it('shows the summary', () => {
+    const { rerender } = setup();
 
-    it('hides the summary when hideSummary === true', () => {
-      const { rerender } = setup({ hideSummary: false } as TracePageHeaderEmbedProps);
-      expect(screen.queryAllByRole('listitem')).toHaveLength(5);
-
-      rerender(<TracePageHeader {...({ hideSummary: false, trace: null } as TracePageHeaderEmbedProps)} />);
-      expect(screen.queryAllByRole('listitem')).toHaveLength(0);
-
-      rerender(
-        <TracePageHeader
-          {...({
-            trace: trace,
-            hideSummary: true,
-            hideMap: false,
-            viewRange: { time: { current: [10, 20] } },
-          } as TracePageHeaderEmbedProps)}
-        />
-      );
-      expect(screen.queryAllByRole('listitem')).toHaveLength(0);
-
-      rerender(
-        <TracePageHeader
-          {...({
-            trace: trace,
-            hideSummary: false,
-            hideMap: false,
-            viewRange: { time: { current: [10, 20] } },
-          } as TracePageHeaderEmbedProps)}
-        />
-      );
-      expect(screen.queryAllByRole('listitem')).toHaveLength(5);
-    });
+    rerender(
+      <TracePageHeader
+        {...({
+          trace: trace,
+          viewRange: { time: { current: [10, 20] } },
+        } as TracePageHeaderEmbedProps)}
+      />
+    );
+    expect(screen.queryAllByRole('listitem')).toHaveLength(5);
   });
 });

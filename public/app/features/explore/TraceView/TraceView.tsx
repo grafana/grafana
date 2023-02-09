@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { RefObject, useCallback, useMemo, useState } from 'react';
+import React, { RefObject, useMemo, useState } from 'react';
 
 import {
   DataFrame,
@@ -90,10 +90,6 @@ export function TraceView(props: Props) {
    * Keeps state of resizable name column width
    */
   const [spanNameColumnWidth, setSpanNameColumnWidth] = useState(0.25);
-  /**
-   * State of the top minimap, slim means it is collapsed.
-   */
-  const [slim, setSlim] = useState(false);
 
   const [focusedSpanId, createFocusSpanLink] = useFocusSpanLink({
     refId: props.dataFrames[0]?.refId,
@@ -131,7 +127,6 @@ export function TraceView(props: Props) {
       }),
     [props.splitOpenFn, traceToLogsOptions, traceToMetricsOptions, props.dataFrames, createFocusSpanLink, traceProp]
   );
-  const onSlimViewClicked = useCallback(() => setSlim(!slim), [slim]);
   const timeZone = useSelector((state) => getTimeZone(state.user));
   const datasourceType = datasource ? datasource?.type : 'unknown';
 
@@ -140,12 +135,6 @@ export function TraceView(props: Props) {
       {props.dataFrames?.length && props.dataFrames[0]?.meta?.preferredVisualisationType === 'trace' && traceProp ? (
         <>
           <TracePageHeader
-            canCollapse={false}
-            hideMap={false}
-            hideSummary={false}
-            onSlimViewClicked={onSlimViewClicked}
-            onTraceGraphViewClicked={noop}
-            slimView={slim}
             trace={traceProp}
             updateNextViewRangeTime={updateNextViewRangeTime}
             updateViewRangeTime={updateViewRangeTime}
