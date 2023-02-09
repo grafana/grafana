@@ -70,9 +70,6 @@ export const AcknowledgeCheckboxes = ({
                 label={acknowledge.description}
                 data-testid={acknowledge.testId}
               />
-              {/*<a href={acknowledge.info.href} target="_blank" rel="noreferrer" className={cx('text-link')}>*/}
-              {/*  Learn more*/}
-              {/*</a>*/}
               <LinkButton
                 variant="primary"
                 href={acknowledge.info.href}
