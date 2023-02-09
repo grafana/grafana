@@ -666,8 +666,9 @@ function canReuseSupplementaryQueryData(
 
   const allResultsHaveWiderRange = supplementaryQueryData.data.every((data: DataFrame) => {
     const dataRange = data.meta?.custom?.absoluteRange;
+    // Only first data frame in the response may contain the absolute range
     if (!dataRange) {
-      return true; // temp
+      return true;
     }
     const hasWiderRange = dataRange && dataRange.from <= selectedTimeRange.from && selectedTimeRange.to <= dataRange.to;
     return hasWiderRange;
