@@ -44,11 +44,14 @@ import { notifyApp } from '../../../core/actions';
 import { createErrorNotification } from '../../../core/copy/appNotification';
 import { runRequest } from '../../query/state/runRequest';
 import { decorateData } from '../utils/decorators';
-import { storeSupplementaryQueryEnabled, supplementaryQueryTypes } from '../utils/supplementaryQueries';
+import {
+  storeSupplementaryQueryEnabled,
+  supplementaryQueryTypes,
+  getSupplementaryQueryProvider,
+} from '../utils/supplementaryQueries';
 
 import { addHistoryItem, historyUpdatedAction, loadRichHistory } from './history';
 import { stateSave } from './main';
-import { getSupplementaryQueryProvider } from './supplementaryQueries';
 import { updateTime } from './time';
 import { createCacheKey, getResultsFromCache } from './utils';
 
