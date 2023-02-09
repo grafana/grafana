@@ -8,17 +8,12 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	"github.com/google/wire"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/kindsys/k8ssys"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
-
-var WireSet = wire.NewSet(ProvideResource, ProvideService)
 
 // NOTE this is how you reset the CRD
 //kubectl --kubeconfig=devenv/docker/blocks/apiserver/apiserver.kubeconfig delete CustomResourceDefinition dashboards.dashboard.core.grafana.com
@@ -30,9 +25,6 @@ type Service struct {
 	log log.Logger
 
 	dashboardResource *Resource
-
-	userService          user.Service
-	accessControlService accesscontrol.Service
 }
 
 var _ dashboards.DashboardService = (*Service)(nil)
@@ -40,17 +32,11 @@ var _ dashboards.DashboardService = (*Service)(nil)
 func ProvideService(
 	cfg *setting.Cfg,
 	dashboardResource *Resource,
-	userService user.Service,
-	accessControlService accesscontrol.Service,
 ) *Service {
 	return &Service{
-		cfg: cfg,
-		log: log.New("store.k8saccess.dashboard"),
-
+		cfg:               cfg,
+		log:               log.New("k8s.dashboards.service"),
 		dashboardResource: dashboardResource,
-
-		userService:          userService,
-		accessControlService: accessControlService,
 	}
 }
 
