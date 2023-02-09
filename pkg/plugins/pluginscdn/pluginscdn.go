@@ -3,8 +3,8 @@ package pluginscdn
 import (
 	"errors"
 	"fmt"
-	"net/url"
 	"path"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/plugins/config"
 )
@@ -52,11 +52,11 @@ func (s *Service) BaseURL() (string, error) {
 	if !s.IsEnabled() {
 		return "", nil
 	}
-	u, err := url.Parse(s.cfg.PluginsCDNURLTemplate)
-	if err != nil {
-		return "", fmt.Errorf("url parse: %w", err)
+	basePathEndPos := strings.Index(s.cfg.PluginsCDNURLTemplate, "/{id}/")
+	if basePathEndPos == -1 {
+		return "", fmt.Errorf("invalid cdn url template: /{id}/ not found")
 	}
-	return u.Scheme + "://" + u.Host, nil
+	return s.cfg.PluginsCDNURLTemplate[:basePathEndPos], nil
 }
 
 // SystemJSAssetPath returns a system-js path for the specified asset on the plugins CDN.

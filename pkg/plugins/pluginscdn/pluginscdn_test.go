@@ -31,7 +31,7 @@ func TestService(t *testing.T) {
 			{
 				name:       "valid",
 				cfgURL:     "https://grafana-assets.grafana.net/plugin-cdn-test/plugin-cdn/{id}/{version}/public/plugins/{id}/{assetPath}",
-				expBaseURL: "https://grafana-assets.grafana.net",
+				expBaseURL: "https://grafana-assets.grafana.net/plugin-cdn-test/plugin-cdn",
 			},
 			{
 				name:       "empty",
