@@ -76,11 +76,6 @@ describe('TracePageHeader test', () => {
     expect(headerItems[4].textContent?.match(/Total Spans:\d\d?\d?\d?/)).toBeTruthy();
   });
 
-  it('should render a <SpanGraph>', () => {
-    setup();
-    expect(screen.getByText(/Reset Selection/)).toBeInTheDocument();
-  });
-
   describe('observes the visibility toggles for various UX elements', () => {
     it('hides the summary when hideSummary === true', () => {
       const { rerender } = setup({ hideSummary: false } as TracePageHeaderEmbedProps);
