@@ -86,7 +86,7 @@ func (s *HeadlessScreenshotService) Take(ctx context.Context, opts ScreenshotOpt
 	start := time.Now()
 	defer func() { s.duration.Observe(time.Since(start).Seconds()) }()
 
-	q := models.GetDashboardQuery{Uid: opts.DashboardUID}
+	q := models.GetDashboardQuery{OrgId: opts.OrgID, Uid: opts.DashboardUID}
 	if err := s.ds.GetDashboard(ctx, &q); err != nil {
 		s.instrumentError(err)
 		return nil, err
