@@ -30,6 +30,7 @@ A support bundle can include any of the following components:
 - **Basic information**: Basic information about the Grafana instance (version, memory usage, and so on)
 - **Settings**: Settings for the Grafana instance
 - **SAML**: Healthcheck connection and metadata for SAML (only displayed if SAML is enabled)
+- **LDAP**: Healthcheck connection and metadata for LDAP (only displayed if LDAP is enabled)
 
 ## Steps
 

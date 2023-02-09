@@ -19,10 +19,20 @@ import (
 	"github.com/grafana/grafana/pkg/services/ldap/multildap"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
+)
+
+var (
+	getLDAPConfig = multildap.GetConfig
+	newLDAP       = multildap.New
+
+	errOrganizationNotFound = func(orgId int64) error {
+		return fmt.Errorf("unable to find organization with ID '%d'", orgId)
+	}
 )
 
 type Service struct {
@@ -38,7 +48,8 @@ type Service struct {
 
 func ProvideService(cfg *setting.Cfg, router routing.RouteRegister, accessControl ac.AccessControl,
 	userService user.Service, authInfoService login.AuthInfoService, ldapGroupsService ldap.Groups,
-	loginService login.Service, orgService org.Service, sessionService auth.UserTokenService) *Service {
+	loginService login.Service, orgService org.Service,
+	sessionService auth.UserTokenService, bundleRegistry supportbundles.Service) *Service {
 	s := &Service{
 		cfg:               cfg,
 		userService:       userService,
@@ -60,17 +71,19 @@ func ProvideService(cfg *setting.Cfg, router routing.RouteRegister, accessContro
 		adminRoute.Get("/ldap/status", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionLDAPStatusRead)), routing.Wrap(s.GetLDAPStatus))
 	}, middleware.ReqSignedIn)
 
+	if cfg.LDAPEnabled {
+		bundleRegistry.RegisterSupportItemCollector(supportbundles.Collector{
+			UID:               "auth-ldap",
+			DisplayName:       "LDAP",
+			Description:       "LDAP authentication healthcheck and configuration data",
+			IncludedByDefault: false,
+			Default:           false,
+			Fn:                s.supportBundleCollector,
+		})
+	}
+
 	return s
 }
-
-var (
-	getLDAPConfig = multildap.GetConfig
-	newLDAP       = multildap.New
-
-	errOrganizationNotFound = func(orgId int64) error {
-		return fmt.Errorf("unable to find organization with ID '%d'", orgId)
-	}
-)
 
 // LDAPAttribute is a serializer for user attributes mapped from LDAP. Is meant to display both the serialized value and the LDAP key we received it from.
 type LDAPAttribute struct {
@@ -159,11 +172,11 @@ func (user *LDAPUserDTO) FetchOrgs(ctx context.Context, orga org.Service) error 
 // 403: forbiddenError
 // 500: internalServerError
 func (s *Service) ReloadLDAPCfg(c *contextmodel.ReqContext) response.Response {
-	if !ldap.IsEnabled() {
+	if !s.cfg.LDAPEnabled {
 		return response.Error(http.StatusBadRequest, "LDAP is not enabled", nil)
 	}
 
-	err := ldap.ReloadConfig()
+	err := ldap.ReloadConfig(s.cfg.LDAPConfigFilePath)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to reload LDAP config", err)
 	}
@@ -185,7 +198,7 @@ func (s *Service) ReloadLDAPCfg(c *contextmodel.ReqContext) response.Response {
 // 403: forbiddenError
 // 500: internalServerError
 func (s *Service) GetLDAPStatus(c *contextmodel.ReqContext) response.Response {
-	if !ldap.IsEnabled() {
+	if !s.cfg.LDAPEnabled {
 		return response.Error(http.StatusBadRequest, "LDAP is not enabled", nil)
 	}
 
@@ -238,7 +251,7 @@ func (s *Service) GetLDAPStatus(c *contextmodel.ReqContext) response.Response {
 // 403: forbiddenError
 // 500: internalServerError
 func (s *Service) PostSyncUserWithLDAP(c *contextmodel.ReqContext) response.Response {
-	if !ldap.IsEnabled() {
+	if !s.cfg.LDAPEnabled {
 		return response.Error(http.StatusBadRequest, "LDAP is not enabled", nil)
 	}
 
@@ -334,7 +347,7 @@ func (s *Service) PostSyncUserWithLDAP(c *contextmodel.ReqContext) response.Resp
 // 403: forbiddenError
 // 500: internalServerError
 func (s *Service) GetUserFromLDAP(c *contextmodel.ReqContext) response.Response {
-	if !ldap.IsEnabled() {
+	if !s.cfg.LDAPEnabled {
 		return response.Error(http.StatusBadRequest, "LDAP is not enabled", nil)
 	}
 
