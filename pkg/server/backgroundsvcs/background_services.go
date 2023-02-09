@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/dskit/services"
 	"golang.org/x/sync/errgroup"
 
+	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
@@ -18,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	pluginStore "github.com/grafana/grafana/pkg/plugins/manager/store"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/server/modules"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/cleanup"
@@ -47,7 +49,7 @@ import (
 )
 
 func ProvideBackgroundServiceRegistry(
-	ng *ngalert.AlertNG, cleanup *cleanup.CleanUpService, live *live.GrafanaLive,
+	httpServer *api.HTTPServer, ng *ngalert.AlertNG, cleanup *cleanup.CleanUpService, live *live.GrafanaLive,
 	pushGateway *pushhttp.Gateway, notifications *notifications.NotificationService, processManager *process.Manager,
 	rendering *rendering.RenderingService, tokenService auth.UserTokenBackgroundService, tracing tracing.Tracer,
 	provisioning *provisioning.ProvisioningServiceImpl, alerting *alerting.AlertEngine, usageStats *uss.UsageStats,
@@ -60,7 +62,7 @@ func ProvideBackgroundServiceRegistry(
 	//bundleService *supportbundlesimpl.Service,
 	usageStatsProvidersRegistry registry.UsageStatsProvidersRegistry,
 	provisioningService provisioning.ProvisioningService,
-	pluginStore *pluginStore.Service,
+	pluginStore *pluginStore.Service, moduleManager *modules.Modules,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service, _ *alerting.AlertNotificationService,
 	_ serviceaccounts.Service, _ *guardian.Provider,
@@ -68,7 +70,7 @@ func ProvideBackgroundServiceRegistry(
 	_ *grpcserver.HealthService, _ entity.EntityStoreServer, _ *grpcserver.ReflectionService, _ *ldapapi.Service,
 ) (*BackgroundServiceRegistry, error) {
 	r := NewBackgroundServiceRegistry(
-		//httpServer,
+		httpServer,
 		pluginStore,
 		ng,
 		cleanup,
@@ -100,6 +102,14 @@ func ProvideBackgroundServiceRegistry(
 		//bundleService,
 	)
 
+	err := moduleManager.RegisterModule(modules.Core, func() (services.Service, error) {
+		r.BasicService = services.NewBasicService(r.start, r.run, r.stop)
+		return r, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	r.usageStatsProvidersRegistry = usageStatsProvidersRegistry
 	r.statsCollectorService = statsCollector
 	r.provisioningService = provisioningService
@@ -123,7 +133,6 @@ func NewBackgroundServiceRegistry(s ...registry.BackgroundService) *BackgroundSe
 		Services: s,
 		log:      log.New("background-services"),
 	}
-	r.BasicService = services.NewBasicService(nil, r.run, r.stop)
 	return r
 }
 
@@ -133,7 +142,6 @@ func (r *BackgroundServiceRegistry) start(ctx context.Context) error {
 }
 
 func (r *BackgroundServiceRegistry) run(ctx context.Context) error {
-	fmt.Println("Running background services...")
 	rootCtx, _ := context.WithCancel(ctx) // TODO: cancelFunc
 	childRoutines, childCtx := errgroup.WithContext(rootCtx)
 
@@ -151,7 +159,6 @@ func (r *BackgroundServiceRegistry) run(ctx context.Context) error {
 				return childCtx.Err()
 			default:
 			}
-			r.log.Debug("Starting background service", "service", serviceName)
 			err := service.Run(childCtx)
 			// Do not return context.Canceled error since errgroup.Group only
 			// returns the first error to the caller - thus we can miss a more

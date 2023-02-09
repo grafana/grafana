@@ -111,7 +111,6 @@ type HTTPServer struct {
 	*services.BasicService
 	log              log.Logger
 	web              *web.Mux
-	context          context.Context
 	httpSrv          *http.Server
 	middlewares      []web.Handler
 	namedMiddlewares []routing.RegisterNamedMiddleware
@@ -379,9 +378,9 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	hs.AccessControl.RegisterScopeAttributeResolver(AnnotationTypeScopeResolver(hs.annotationsRepo))
 
 	err := hs.moduleManager.RegisterModule(modules.HTTPServer, func() (services.Service, error) {
-		hs.BasicService = services.NewBasicService(hs.start, nil, hs.stop)
+		hs.BasicService = services.NewBasicService(hs.start, hs.run, hs.stop)
 		return hs, nil
-	}, modules.Core)
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -405,9 +404,6 @@ func (hs *HTTPServer) AddNamedMiddleware(middleware routing.RegisterNamedMiddlew
 }
 
 func (hs *HTTPServer) start(ctx context.Context) error {
-	fmt.Println("Starting HTTP Server...")
-	hs.context = ctx
-
 	hs.applyRoutes()
 
 	// Remove any square brackets enclosing IPv6 addresses, a format we support for backwards compatibility
@@ -429,6 +425,10 @@ func (hs *HTTPServer) start(ctx context.Context) error {
 	default:
 	}
 
+	return nil
+}
+
+func (hs *HTTPServer) run(ctx context.Context) error {
 	listener, err := hs.getListener()
 	if err != nil {
 		return err
@@ -457,7 +457,8 @@ func (hs *HTTPServer) start(ctx context.Context) error {
 	default:
 		panic(fmt.Sprintf("Unhandled protocol %q", hs.Cfg.Protocol))
 	}
-	return nil
+
+	return ctx.Err()
 }
 
 func (hs *HTTPServer) stop(failure error) error {

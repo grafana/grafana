@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/server/backgroundsvcs"
+
 	"github.com/grafana/grafana/pkg/api"
 	_ "github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -28,8 +30,9 @@ type Options struct {
 }
 
 // New returns a new instance of Server.
-func New(opts Options, cfg *setting.Cfg, moduleService *modules.Modules, httpServer *api.HTTPServer) (*Server, error) {
-	s := newServer(opts, cfg, moduleService, httpServer)
+func New(opts Options, cfg *setting.Cfg, moduleService *modules.Modules, httpServer *api.HTTPServer,
+	backgroundServiceRegistry *backgroundsvcs.BackgroundServiceRegistry) (*Server, error) {
+	s := newServer(opts, cfg, moduleService, backgroundServiceRegistry, httpServer)
 
 	if err := s.init(); err != nil {
 		return nil, err
@@ -39,20 +42,21 @@ func New(opts Options, cfg *setting.Cfg, moduleService *modules.Modules, httpSer
 }
 
 func newServer(opts Options, cfg *setting.Cfg, moduleService *modules.Modules,
-	httpServer *api.HTTPServer) *Server {
+	backgroundServiceRegistry *backgroundsvcs.BackgroundServiceRegistry, httpServer *api.HTTPServer) *Server {
 	return &Server{
-		log:              log.New("server"),
-		cfg:              cfg,
-		shutdownFinished: make(chan struct{}),
-		pidFile:          opts.PidFile,
-		moduleService:    moduleService,
-		httpServer:       httpServer,
+		log:                       log.New("server"),
+		cfg:                       cfg,
+		shutdownFinished:          make(chan struct{}),
+		pidFile:                   opts.PidFile,
+		moduleService:             moduleService,
+		httpServer:                httpServer,
+		backgroundServiceRegistry: backgroundServiceRegistry,
 	}
 }
 
 // Server is responsible for managing the lifecycle of services.
 type Server struct {
-	httpServer       *api.HTTPServer
+	moduleService    *modules.Modules
 	log              log.Logger
 	cfg              *setting.Cfg
 	shutdownOnce     sync.Once
@@ -61,7 +65,8 @@ type Server struct {
 	pidFile          string
 	shutdownFinished chan struct{}
 
-	moduleService *modules.Modules
+	httpServer                *api.HTTPServer
+	backgroundServiceRegistry *backgroundsvcs.BackgroundServiceRegistry
 }
 
 // init initializes the server and its services.
