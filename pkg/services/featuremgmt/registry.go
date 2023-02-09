@@ -62,12 +62,6 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
-			Name:            "showFeatureFlagsInUI",
-			Description:     "Show feature flags in the settings UI",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-		},
-		{
 			Name:        "publicDashboards",
 			Description: "Enables public access to dashboards",
 			State:       FeatureStateAlpha,
@@ -122,18 +116,6 @@ var (
 		{
 			Name:            "k8s",
 			Description:     "Explore native k8s integrations",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-		},
-		{
-			Name:            "k8sDashboards",
-			Description:     "Save dashboards via k8s",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-		},
-		{
-			Name:            "apiserver",
-			Description:     "Add a k8s API server proxy",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
 		},
@@ -381,6 +363,12 @@ var (
 		{
 			Name:         "logsContextDatasourceUi",
 			Description:  "Allow datasource to provide custom UI for context view",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:         "lokiQuerySplitting",
+			Description:  "Split large interval queries into subqueries with smaller time intervals",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 		},

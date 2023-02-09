@@ -186,7 +186,7 @@ func (c *httpLokiClient) setAuthAndTenantHeaders(req *http.Request) {
 		req.Header.Add("X-Scope-OrgID", c.cfg.TenantID)
 	}
 }
-func (c *httpLokiClient) query(ctx context.Context, selectors []Selector, start, end int64) (QueryRes, error) {
+func (c *httpLokiClient) rangeQuery(ctx context.Context, selectors []Selector, start, end int64) (QueryRes, error) {
 	// Run the pre-flight checks for the query.
 	if len(selectors) == 0 {
 		return QueryRes{}, fmt.Errorf("at least one selector required to query")

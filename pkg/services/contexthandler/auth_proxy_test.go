@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -53,7 +54,8 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 	key := fmt.Sprintf(authproxy.CachePrefix, h)
 
 	t.Logf("Injecting stale user ID in cache with key %q", key)
-	err = svc.RemoteCache.Set(context.Background(), key, int64(33), 0)
+	userIdPayload := []byte(strconv.FormatInt(int64(33), 10))
+	err = svc.RemoteCache.SetByteArray(context.Background(), key, userIdPayload, 0)
 	require.NoError(t, err)
 
 	authEnabled := svc.initContextWithAuthProxy(ctx, orgID)
@@ -62,9 +64,13 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 	require.Equal(t, userID, ctx.SignedInUser.UserID)
 	require.True(t, ctx.IsSignedIn)
 
-	i, err := svc.RemoteCache.Get(context.Background(), key)
+	cachedByteArray, err := svc.RemoteCache.GetByteArray(context.Background(), key)
 	require.NoError(t, err)
-	require.Equal(t, userID, i.(int64))
+
+	cacheUserId, err := strconv.ParseInt(string(cachedByteArray), 10, 64)
+
+	require.NoError(t, err)
+	require.Equal(t, userID, cacheUserId)
 }
 
 type fakeRenderService struct {
