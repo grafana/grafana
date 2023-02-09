@@ -258,7 +258,7 @@ func TestIntegrationFolderService(t *testing.T) {
 
 				folderStore.On("GetFolderByID", mock.Anything, orgID, expected.ID).Return(expected, nil)
 
-				actual, err := service.getFolderByID(context.Background(), usr, expected.ID, orgID)
+				actual, err := service.getFolderByID(context.Background(), expected.ID, orgID)
 				require.Equal(t, expected, actual)
 				require.NoError(t, err)
 			})
@@ -269,7 +269,7 @@ func TestIntegrationFolderService(t *testing.T) {
 
 				folderStore.On("GetFolderByUID", mock.Anything, orgID, expected.UID).Return(expected, nil)
 
-				actual, err := service.getFolderByUID(context.Background(), usr, orgID, expected.UID)
+				actual, err := service.getFolderByUID(context.Background(), orgID, expected.UID)
 				require.Equal(t, expected, actual)
 				require.NoError(t, err)
 			})
@@ -279,7 +279,7 @@ func TestIntegrationFolderService(t *testing.T) {
 
 				folderStore.On("GetFolderByTitle", mock.Anything, orgID, expected.Title).Return(expected, nil)
 
-				actual, err := service.getFolderByTitle(context.Background(), usr, orgID, expected.Title)
+				actual, err := service.getFolderByTitle(context.Background(), orgID, expected.Title)
 				require.Equal(t, expected, actual)
 				require.NoError(t, err)
 			})
