@@ -28,7 +28,6 @@ import (
 	loginpkg "github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
-	gmod "github.com/grafana/grafana/pkg/modules"
 	pluginDashboards "github.com/grafana/grafana/pkg/plugins/manager/dashboards"
 	"github.com/grafana/grafana/pkg/registry/corekind"
 	"github.com/grafana/grafana/pkg/server/modules"
@@ -369,7 +368,6 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(authn.Service), new(*authnimpl.Service)),
 	k8saccess.ProvideK8SAccess,
 	supportbundlesimpl.ProvideService,
-	wire.Bind(new(gmod.Service), new(*modules.Modules)),
 	modules.ProvideService,
 )
 
