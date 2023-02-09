@@ -606,7 +606,9 @@ export class PrometheusDatasource
               ...frame,
               fields: frame.fields.map((field) => ({
                 ...field,
-                ...field.config, // prevents mutatative exemplars links (re)enrichment?
+                config: {
+                  ...field.config, // prevents mutatative exemplars links (re)enrichment?
+                },
                 values: new ArrayVector(field.values.toArray().slice()),
               })),
             }));
