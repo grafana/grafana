@@ -32,8 +32,8 @@ func NewHistorianMetrics(r prometheus.Registerer) *Historian {
 		WriteFailuresTotal: promauto.With(r).NewCounter(prometheus.CounterOpts{
 			Namespace: Namespace,
 			Subsystem: Subsystem,
-			Name:      "historian_write_failures_total",
-			Help:      "The total number of failed state history writes",
+			Name:      "historian_batch_write_failed_total",
+			Help:      "The total number of failed writes of state history batches.",
 		}),
 		ActiveWriteGoroutines: promauto.With(r).NewGauge(prometheus.GaugeOpts{
 			Namespace: Namespace,
