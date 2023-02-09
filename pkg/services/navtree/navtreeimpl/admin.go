@@ -152,13 +152,13 @@ func (s *ServiceImpl) getServerAdminNode(c *contextmodel.ReqContext) *navtree.Na
 	}
 
 	if hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionSettingsRead)) && s.features.IsEnabled(featuremgmt.FlagStorage) {
-		storage := &navtree.NavLink{
+		adminNavLinks = append(adminNavLinks, &navtree.NavLink{
 			Text:     "Storage",
 			Id:       "storage",
 			SubTitle: "Manage file storage",
 			Icon:     "cube",
 			Url:      s.cfg.AppSubURL + "/admin/storage",
-		}
+		})
 		adminNavLinks = append(adminNavLinks, storage)
 
 		if s.features.IsEnabled(featuremgmt.FlagExport) {
@@ -168,16 +168,6 @@ func (s *ServiceImpl) getServerAdminNode(c *contextmodel.ReqContext) *navtree.Na
 				SubTitle: "Export grafana settings",
 				Icon:     "cube",
 				Url:      s.cfg.AppSubURL + "/admin/storage/export",
-			})
-		}
-
-		if s.features.IsEnabled(featuremgmt.FlagK8s) {
-			storage.Children = append(storage.Children, &navtree.NavLink{
-				Text:     "Kubernetes",
-				Id:       "k8s",
-				SubTitle: "Manage k8s storage",
-				Icon:     "cube",
-				Url:      s.cfg.AppSubURL + "/admin/storage/k8s",
 			})
 		}
 	}
