@@ -86,12 +86,19 @@ To filter dashboard search result by a tag, complete one of the following steps:
 
 # Command Palette
 
-Open the Command Palette by pressing `cmd+K` in macOS or `ctrl+k` in Linux/Windows.
+Open the Command Palette by pressing `cmd+K` in macOS or `ctrl+k` in Linux/Windows. You can also click on the input placed in the navbar.
 
-You can:
+![Command Palette screenshot](/static/img/docs/command-palette/CommandPalette_doc_1.png)
 
-1.- Search, open and create dashboards and folders.
-2.- Navigate to various areas or pages.
-3.- Change theme: dark, light or system.
+By typing in this field, you can:
 
-> **Note:** When you want to go back, press `backspace` when the Command Palette input is empty.
+1. Search and open dashboards and folders.
+2. Create dashboards and alert rules.
+3. Navigate to various areas or pages.
+4. Change the theme: dark or light.
+
+![Select change theme](/static/img/docs/command-palette/CommandPalette_doc_4.png)
+
+![Change theme on Command Palette](/static/img/docs/command-palette/CommandPalette_doc_3.png)
+
+> **Note:** If you want to the previous step, press `backspace` with the Command Palette input empty.
