@@ -24,7 +24,7 @@ export interface DashboardSearchHit extends WithAccessControlMetadata {
   tags: string[];
   title: string;
   type: DashboardSearchItemType;
-  uid?: string;
+  uid: string;
   url: string;
   sortMeta?: number;
   sortMetaName?: string;
