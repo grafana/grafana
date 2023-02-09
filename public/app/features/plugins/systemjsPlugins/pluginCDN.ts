@@ -5,12 +5,25 @@ import type { SystemJSLoad } from './types';
 export function extractPluginNameVersionFromUrl(address: string) {
   const path = new URL(address).pathname;
   const match = path.split('/');
-  return { name: match[3], version: match[4] };
+  let version: string | null = null;
+  let name: string | null = null;
+  for (let i = 0; i < match.length; i++) {
+    if (i > 1 && !match[i].match(/\d+\./)) {
+      continue;
+    }
+    name = match[i - 1];
+    version = match[i];
+  }
+  return { name, version };
 }
 
 export function locateFromCDN(load: SystemJSLoad) {
   const { address } = load;
-  const pluginPath = address.split('/public/plugin-cdn/');
+  let rootPath = new URL(config.pluginsCDNBaseURL).pathname;
+  if (!rootPath.endsWith('/')) {
+    rootPath = rootPath + '/';
+  }
+  const pluginPath = address.split('/public/plugin-cdn' + rootPath);
   return `${config.pluginsCDNBaseURL}/${pluginPath[1]}`;
 }
 
