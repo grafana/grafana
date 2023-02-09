@@ -17,7 +17,7 @@ export const getTransformationVars = (
       if (match.groups) {
         transformVal = match.groups;
       } else {
-        transformVal[transformation.variable || fieldName] = match[1] || match[0];
+        transformVal[fieldName] = match[1] || match[0];
       }
     }
   } else if (transformation.type === 'logfmt') {
