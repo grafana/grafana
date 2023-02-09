@@ -197,7 +197,6 @@ func processDocumentResponse(res *es.SearchResponse, target *Query, timeField st
 			field.Config = &data.FieldConfig{Filterable: &isFilterable}
 			allFields[propNameIdx] = field
 		}
-
 	}
 
 	frames := data.Frames{}

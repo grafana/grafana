@@ -1141,7 +1141,7 @@ func TestResponseParser(t *testing.T) {
 			require.Len(t, dataframes, 1)
 			frame := dataframes[0]
 
-			require.Equal(t, 18, len(frame.Fields))
+			require.Equal(t, 16, len(frame.Fields))
 			// Fields have the correct length
 			require.Equal(t, 2, frame.Fields[0].Len())
 			// First field is timeField
@@ -1153,10 +1153,10 @@ func TestResponseParser(t *testing.T) {
 			// Correctly detects json types
 			require.Equal(t, data.FieldTypeJSON, frame.Fields[7].Type())
 			// Correctly flattens fields
-			require.Equal(t, "nested.field.double_nested", frame.Fields[14].Name)
-			require.Equal(t, "value", frame.Fields[14].At(0))
+			require.Equal(t, "nested.field.double_nested", frame.Fields[12].Name)
+			require.Equal(t, "value", frame.Fields[12].At(0))
 			// Correctly detects type even if first value is null
-			require.Equal(t, data.FieldTypeString, frame.Fields[17].Type())
+			require.Equal(t, data.FieldTypeString, frame.Fields[15].Type())
 		})
 	})
 
