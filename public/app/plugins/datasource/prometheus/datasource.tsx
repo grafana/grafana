@@ -82,6 +82,7 @@ export const InstantQueryRefIdIndex = '-Instant';
 
 type TargetIdent = string;
 type TargetSig = string;
+type TimestampMs = number;
 
 export class PrometheusDatasource
   extends DataSourceWithBackend<PromQuery, PromOptions>
@@ -111,8 +112,12 @@ export class PrometheusDatasource
   subType: PromApplication;
   rulerEnabled: boolean;
 
+  // accumulated DataFrame cache
   cachedFrames: Map<TargetIdent, DataFrame[]> = new Map();
+  // compound cache-invalidation strings
   cachedSigs: Map<TargetIdent, TargetSig> = new Map();
+  // holds ends of requested ranges, for incrmental forward queries
+  cachedTos: Map<TargetIdent, TimestampMs> = new Map();
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
@@ -459,89 +464,94 @@ export class PrometheusDatasource
 
   query(request: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
     if (this.access === 'proxy') {
-      const fullFromTs = request.range.from.valueOf();
-      const fullToTs = request.range.to.valueOf();
-      const fullRangeMs = fullToTs - fullFromTs;
+      const newFrom = request.range.from.valueOf();
+      const newTo = request.range.to.valueOf();
 
-      // 10 min
-      const requeryLastMs = 10 * 60 * 1000;
-      const refreshMs = this.timeSrv.refresh ? durationToMilliseconds(parseDuration(this.timeSrv.refresh)) : 0;
-      const doIncrementalQuery = refreshMs > 0 && fullRangeMs > requeryLastMs;
-      let doPartialQuery = doIncrementalQuery;
+      // only cache 'now'-relative queries (that can benefit from a backfill cache)
+      const shouldCache = request.rangeRaw?.from?.toString().indexOf('now-') === 0;
 
-      const targSigs = new Map<TargetIdent, TargetSig>();
+      const reqTargSigs = new Map<TargetIdent, TargetSig>();
 
-      if (doIncrementalQuery) {
-        // if the target signature changes from what's in cache, invalidate and do full range query
-        request.targets.forEach((targ) => {
-          let targIdent = `${request.dashboardUID}|${request.panelId}|${targ.refId}`;
-          let targSig = `${targ.expr}|${request.intervalMs}|${JSON.stringify(request.rangeRaw ?? '')}`; // ${request.maxDataPoints} ?
+      // all targets are queried together, so we check for any that causes group cache invalidation & full re-query
+      let doPartialQuery = shouldCache;
+      let prevTo: TimestampMs;
 
-          // console.log(targSig);
+      // 1. pre-compute reqTargSigs
+      // 2. figure out if new query range or new target props trigger full cache invalidation & re-query
+      request.targets.forEach((targ) => {
+        let targIdent = `${request.dashboardUID}|${request.panelId}|${targ.refId}`;
+        let targSig = `${targ.expr}|${request.intervalMs}|${JSON.stringify(request.rangeRaw ?? '')}`; // ${request.maxDataPoints} ?
 
-          targSigs.set(targIdent, targSig);
-
-          let cachedSig = this.cachedSigs.get(targIdent);
-
-          if (cachedSig) {
-            if (cachedSig !== targSig) {
-              console.log('purge cache due to sig change!', targIdent);
-
-              this.cachedFrames.delete(targIdent);
-              this.cachedSigs.delete(targIdent);
-
-              doPartialQuery = false;
-            }
-          } else {
-            doPartialQuery = false;
-          }
-        });
+        reqTargSigs.set(targIdent, targSig);
 
         if (doPartialQuery) {
-          console.log('do partial query');
+          let cachedSig = this.cachedSigs.get(targIdent);
 
-          // modify to incremental query
-          request.range.from = moment(fullToTs - refreshMs - requeryLastMs) as DateTime;
-          request.range.to = moment(fullToTs) as DateTime;
-        } else {
-          console.log('do full query');
+          if (cachedSig !== targSig) {
+            doPartialQuery = false;
+          } else {
+            // only do partial queries when new request range follows prior request range (possibly with overlap)
+            // e.g. now-6h with refresh <= 6h
+            prevTo = this.cachedTos.get(targIdent) ?? Infinity;
+            doPartialQuery = newTo > prevTo && newFrom <= prevTo;
+          }
         }
+      });
+
+      if (doPartialQuery) {
+        // 10 min requery overlap
+        const requeryLastMs = 10 * 60 * 1000;
+
+        // modify to partial query
+        request.range.from = moment(prevTo! - requeryLastMs) as DateTime;
+        request.range.to = moment(newTo) as DateTime;
+      } else {
+        reqTargSigs.forEach((targSig, targIdent) => {
+          this.cachedFrames.delete(targIdent);
+          this.cachedSigs.delete(targIdent);
+          this.cachedTos.delete(targIdent);
+
+          // TODO: figure out how to purge caches of targets that have permanently stopped making queries
+          // - dashboard deleted (dashboardUID)
+          // - panel removed (panelId),
+          // - query removed (refId)
+        });
       }
+
+      console.log(`${doPartialQuery ? 'partial' : 'full'} query`);
 
       const targets = request.targets.map((target) => this.processTargetV2(target, request));
       const startTime = new Date();
       return super.query({ ...request, targets: targets.flat() }).pipe(
         map((response) => {
-          if (doIncrementalQuery) {
+          if (shouldCache) {
             const getFieldIdent = (field: Field) => `${field.type}|${field.name}|${JSON.stringify(field.labels ?? '')}`;
 
             // group frames by targets
             const respByTarget = new Map<TargetIdent, DataFrame[]>();
 
-            // what happens when a target disappears? panel/dash deleted?
-            // do we get notified when auto refresh is disabled?
-            // lazy-loaded panels?
-            // will need to account for per-panel refreshes in the future
-
             response.data.forEach((frame: DataFrame) => {
-              if (frame.fields.length > 0 || frame.length > 0) {
-                let targIdent = `${request.dashboardUID}|${request.panelId}|${frame.refId}`;
+              let targIdent = `${request.dashboardUID}|${request.panelId}|${frame.refId}`;
 
-                let frames = respByTarget.get(targIdent);
+              let frames = respByTarget.get(targIdent);
 
-                if (!frames) {
-                  frames = [];
-                  respByTarget.set(targIdent, frames);
-                }
-
-                frames.push(frame);
+              if (!frames) {
+                frames = [];
+                respByTarget.set(targIdent, frames);
               }
+
+              frames.push(frame);
             });
 
             respByTarget.forEach((respFrames, targIdent) => {
               let cachedFrames = (targIdent ? this.cachedFrames.get(targIdent) : null) ?? [];
 
               respFrames.forEach((respFrame: DataFrame) => {
+                // skip empty frames
+                if (respFrame.length === 0 || respFrame.fields.length === 0) {
+                  return;
+                }
+
                 // frames are identified by their second (non-time) field's name + labels
                 // TODO: also add frame.meta.type, frame name and dataTopic? (exemplars, annotations)
                 // ${frame.meta?.type ?? ''}|${frame.meta?.custom?.resultType ?? ''}|
@@ -571,7 +581,7 @@ export class PrometheusDatasource
                     const nextVals = respField.values.toArray();
 
                     const amended = amendTimeSeries([prevTimes, prevVals], [nextTimes, nextVals]);
-                    const trimmed = trimTimeSeries(amended, fullFromTs, fullToTs); // todo: in full dataset?
+                    const trimmed = trimTimeSeries(amended, newFrom, newTo); // todo: in full dataset?
                     frameData.push(trimmed);
                   }
 
@@ -594,14 +604,13 @@ export class PrometheusDatasource
               // });
 
               this.cachedFrames.set(targIdent, cachedFrames);
-              this.cachedSigs.set(targIdent, targSigs.get(targIdent)!);
+              this.cachedSigs.set(targIdent, reqTargSigs.get(targIdent)!);
+              this.cachedTos.set(targIdent, newTo);
             });
 
             // TODO: trim fields/frames that were missing or empty in response
 
-            // if (doPartialQuery)
-            request.range.from = moment(fullFromTs) as DateTime;
-            request.range.to = moment(fullToTs) as DateTime;
+
 
             let respFrames: DataFrame[] = [];
             for (let targIdent of respByTarget.keys()) {
@@ -613,13 +622,20 @@ export class PrometheusDatasource
               ...frame,
               fields: frame.fields.map((field) => ({
                 ...field,
-                values: new ArrayVector(field.values.toArray().slice())
-              }))
+                ...field.config, // prevents mutatative exemplars links (re)enrichment?
+                values: new ArrayVector(field.values.toArray().slice()),
+              })),
             }));
             response.data = clonedFrames;
+
+            // reset to original range for transformV2
+            if (doPartialQuery) {
+              request.range.from = moment(newFrom) as DateTime;
+              request.range.to = moment(newTo) as DateTime;
+            }
           }
 
-          return transformV2(response, request, { exemplarTraceIdDestinations: this.exemplarTraceIdDestinations })
+          return transformV2(response, request, { exemplarTraceIdDestinations: this.exemplarTraceIdDestinations });
         }),
         tap((response: DataQueryResponse) => {
           trackQuery(response, request, startTime);
