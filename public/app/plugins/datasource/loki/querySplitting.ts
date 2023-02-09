@@ -13,8 +13,7 @@ import { LokiQuery } from './types';
  * TODO: remove.
  * Hardcoded to 1 day.
  */
-// @ts-disable-next-line
-(window as any).lokiChunkDuration = 24 * 60 * 60 * 1000; 
+(window as any).lokiChunkDuration = 24 * 60 * 60 * 1000;
 
 export function partitionTimeRange(originalTimeRange: TimeRange, intervalMs: number, resolution: number): TimeRange[] {
   // we currently assume we are only running metric queries here.
@@ -32,13 +31,7 @@ export function partitionTimeRange(originalTimeRange: TimeRange, intervalMs: num
   const safeStep = Math.ceil((end - start) / 11000);
   const step = Math.max(intervalMs * resolution, safeStep);
 
-  const ranges = getRanges(
-    start,
-    end,
-    step,
-    // @ts-disable-next-line
-    (window as any).lokiChunkDuration
-  );
+  const ranges = getRanges(start, end, step, (window as any).lokiChunkDuration);
 
   // if the split was not possible, go with the original range
   if (ranges == null) {
