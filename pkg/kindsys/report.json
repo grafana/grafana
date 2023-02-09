@@ -548,7 +548,9 @@
     },
     "geomappanelcfg": {
       "category": "composable",
-      "codeowners": [],
+      "codeowners": [
+        "grafana/grafana-edge-squad"
+      ],
       "currentVersion": [
         0,
         0
@@ -556,13 +558,13 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
-        "docs": "n/a",
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/geomappanelcfg/schema-reference",
         "go": "n/a",
-        "schema": "n/a",
-        "ts": "n/a"
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/geomap/panelcfg.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/geomap/panelcfg.gen.ts"
       },
       "machineName": "geomappanelcfg",
-      "maturity": "planned",
+      "maturity": "experimental",
       "name": "GeomapPanelCfg",
       "pluralMachineName": "geomappanelcfgs",
       "pluralName": "GeomapPanelCfgs",
@@ -1989,6 +1991,7 @@
           "debugpanelcfg",
           "elasticsearchdataquery",
           "gaugepanelcfg",
+          "geomappanelcfg",
           "histogrampanelcfg",
           "librarypanel",
           "lokidataquery",
@@ -2005,7 +2008,7 @@
           "textpanelcfg",
           "xychartpanelcfg"
         ],
-        "count": 23
+        "count": 24
       },
       "mature": {
         "name": "mature",
@@ -2041,7 +2044,6 @@
           "elasticsearchdatasourcecfg",
           "flamegraphpanelcfg",
           "folder",
-          "geomappanelcfg",
           "gettingstartedpanelcfg",
           "googlecloudmonitoringdataquery",
           "googlecloudmonitoringdatasourcecfg",
@@ -2078,7 +2080,7 @@
           "zipkindataquery",
           "zipkindatasourcecfg"
         ],
-        "count": 48
+        "count": 47
       },
       "stable": {
         "name": "stable",
