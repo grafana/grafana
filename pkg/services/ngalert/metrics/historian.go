@@ -49,12 +49,6 @@ func NewHistorianMetrics(r prometheus.Registerer) *Historian {
 			Name:      "state_history_batch_writes_failed_total",
 			Help:      "The total number of failed writes of state history batches.",
 		}),
-		ActiveWriteGoroutines: promauto.With(r).NewGauge(prometheus.GaugeOpts{
-			Namespace: Namespace,
-			Subsystem: Subsystem,
-			Name:      "state_history_active_write_goroutines",
-			Help:      "The current number of active goroutines trying to persist state history data.",
-		}),
 		PersistDuration: promauto.With(r).NewHistogram(prometheus.HistogramOpts{
 			Namespace: Namespace,
 			Subsystem: Subsystem,

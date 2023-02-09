@@ -73,8 +73,6 @@ func (h *RemoteLokiBackend) RecordStatesAsync(ctx context.Context, rule history_
 	errCh := make(chan error, 1)
 	go func() {
 		defer close(errCh)
-		h.metrics.ActiveWriteGoroutines.Inc()
-		defer h.metrics.ActiveWriteGoroutines.Dec()
 
 		start := h.clock.Now()
 		defer func() {
