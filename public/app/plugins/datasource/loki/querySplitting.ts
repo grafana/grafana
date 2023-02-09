@@ -62,7 +62,7 @@ export function runPartitionedQuery(datasource: LokiDatasource, request: DataQue
   const partition = partitionTimeRange(request.range, request.intervalMs, request.targets[0].resolution ?? 1);
   const totalRequests = partition.length;
 
-  const next = (subscriber: Subscriber<DataQueryResponse>, requestN: number) => {
+  const runNextRequest = (subscriber: Subscriber<DataQueryResponse>, requestN: number) => {
     const requestId = `${request.requestId}_${requestN}`;
     const range = partition[requestN - 1];
     datasource
@@ -79,7 +79,7 @@ export function runPartitionedQuery(datasource: LokiDatasource, request: DataQue
           if (requestN > 1 && resultLimitReached(request, response) === false) {
             response.state = LoadingState.Streaming;
             subscriber.next(response);
-            next(subscriber, requestN - 1);
+            runNextRequest(subscriber, requestN - 1);
             return;
           }
           response.state = LoadingState.Done;
@@ -93,7 +93,7 @@ export function runPartitionedQuery(datasource: LokiDatasource, request: DataQue
   };
 
   const response = new Observable<DataQueryResponse>((subscriber) => {
-    next(subscriber, totalRequests);
+    runNextRequest(subscriber, totalRequests);
   });
 
   return response;
