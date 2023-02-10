@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/dskit/services"
 
 	"github.com/grafana/grafana/pkg/plugins"
@@ -55,6 +57,41 @@ func (c *Client) Plugin(ctx context.Context, pluginID string) (plugins.PluginDTO
 }
 
 func (c *Client) Plugins(ctx context.Context, pluginTypes ...plugins.Type) []plugins.PluginDTO {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Client) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Client) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Client) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Client) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Client) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Client) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Client) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
 	//TODO implement me
 	panic("implement me")
 }

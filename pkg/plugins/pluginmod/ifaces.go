@@ -7,4 +7,5 @@ import (
 type PluginManager interface {
 	plugins.Installer
 	plugins.Store
+	plugins.Client
 }
