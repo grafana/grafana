@@ -24,7 +24,7 @@ const interpolateMock = jest.fn();
 jest.mock('@grafana/scenes', () => ({
   ...jest.requireActual('@grafana/scenes'),
   sceneGraph: {
-    interpolate: (...args: any[]) => interpolateMock(...args),
+    interpolate: interpolateMock,
   },
 }));
 
@@ -660,8 +660,8 @@ describe('templateSrv', () => {
     });
 
     it('should not pass object to custom function', () => {
-      let passedValue: any = null;
-      _templateSrv.replace('this.${test}.filters', {}, (value: any) => {
+      let passedValue: string | null = null;
+      _templateSrv.replace('this.${test}.filters', {}, (value: string) => {
         passedValue = value;
       });
 
@@ -676,8 +676,8 @@ describe('templateSrv', () => {
     });
 
     it('should not pass object to custom function', () => {
-      let passedValue: any = null;
-      _templateSrv.replace('this.${test}.filters', {}, (value: any) => {
+      let passedValue: string | null = null;
+      _templateSrv.replace('this.${test}.filters', {}, (value: string) => {
         passedValue = value;
       });
 
