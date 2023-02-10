@@ -12,21 +12,40 @@ async function preloadPlugin(plugin: AppPluginConfig): Promise<void> {
   const { path, version, id } = plugin;
   try {
     const { plugin } = await importPluginModule(path, version);
-    setPluginExtensionConfigs(id, plugin.extensionOverrides);
+    const { extensionOverrides } = plugin;
+
+    setPluginLoadedConfig({ id, hasLoaded: true, extensionOverrides });
   } catch (error: unknown) {
-    // TODO: handle case where the plugin failed to load causing broken extension links
+    setPluginLoadedConfig({ id, hasLoaded: false });
     console.error(`Failed to load plugin: ${path} (version: ${version})`, error);
   }
 }
 
-let configs: Record<string, LinkExtensionCallback> = {};
-
-function setPluginExtensionConfigs(pluginId: string, overrides: Record<string, LinkExtensionCallback> = {}) {
-  for (const [overrideId, override] of Object.entries(overrides)) {
-    configs[`${pluginId}.${overrideId}`] = override;
+const pluginLoadedConfig: Record<
+  string,
+  {
+    // Is TRUE if the plugin was successfully loaded and initialised
+    hasLoaded: boolean;
+    // An optional list of dynacmic overrides for plugin extensions based on the context runtime
+    extensionOverrides?: Record<string, LinkExtensionCallback>;
   }
+> = {};
+
+function setPluginLoadedConfig({
+  id,
+  hasLoaded,
+  extensionOverrides,
+}: {
+  id: string;
+  hasLoaded: boolean;
+  extensionOverrides?: Record<string, LinkExtensionCallback>;
+}) {
+  pluginLoadedConfig[id] = {
+    hasLoaded,
+    extensionOverrides,
+  };
 }
 
-export function getPluginExtensionConfig(pluginId: string, overrideId: string) {
-  return configs[`${pluginId}.${overrideId}`];
+export function getPluginLoadedConfig(id: string) {
+  return pluginLoadedConfig[id];
 }

@@ -6,8 +6,7 @@ import {
   PluginsExtensionRegistry,
 } from '@grafana/runtime';
 
-import { getPluginExtensionConfig } from '../pluginPreloader';
-
+import { getPluginLoadedConfig } from '../pluginPreloader';
 
 export function createPluginExtensionsRegistry(apps: Record<string, AppPluginConfig> = {}): PluginsExtensionRegistry {
   const registry: PluginsExtensionRegistry = {};
@@ -22,13 +21,17 @@ export function createPluginExtensionsRegistry(apps: Record<string, AppPluginCon
       const placement = extension.placement;
       const item = createRegistryItem(pluginId, extension);
 
+      // If there was an issue initialising the plugin, skip adding its extensions to the registry
+      if (!item) {
+        continue;
+      }
+
       if (!Array.isArray(registry[placement])) {
         registry[placement] = [item];
         continue;
       }
 
       registry[placement].push(item);
-      continue;
     }
   }
 
@@ -39,9 +42,13 @@ export function createPluginExtensionsRegistry(apps: Record<string, AppPluginCon
   return Object.freeze(registry);
 }
 
-function createRegistryItem(pluginId: string, extension: PluginsExtensionLinkConfig): PluginsExtensionLink {
+function createRegistryItem(pluginId: string, extension: PluginsExtensionLinkConfig): PluginsExtensionLink | null {
   const path = `/a/${pluginId}${extension.path}`;
-  const override = getPluginExtensionConfig(pluginId, extension.id);
+  const { hasLoaded, extensionOverrides } = getPluginLoadedConfig(pluginId);
+
+  if (!hasLoaded) {
+    return null;
+  }
 
   return Object.freeze({
     id: extension.id,
@@ -51,7 +58,7 @@ function createRegistryItem(pluginId: string, extension: PluginsExtensionLinkCon
     description: extension.description,
     key: hashKey(`${extension.title}${path}`),
     path,
-    override,
+    override: extensionOverrides?.[extension.id],
   });
 }
 
