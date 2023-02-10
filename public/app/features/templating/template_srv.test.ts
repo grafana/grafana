@@ -24,7 +24,7 @@ const interpolateMock = jest.fn();
 jest.mock('@grafana/scenes', () => ({
   ...jest.requireActual('@grafana/scenes'),
   sceneGraph: {
-    interpolate: interpolateMock,
+    interpolate: (...args: unknown[]) => interpolateMock(...args),
   },
 }));
 
