@@ -87,7 +87,7 @@ const createFallbackLogVolumeProvider = (
               },
             };
           }),
-          state: LoadingState.Done,
+          state: exploreData.state,
         });
       }
     });
