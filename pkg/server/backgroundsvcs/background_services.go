@@ -140,8 +140,7 @@ func (r *BackgroundServiceRegistry) start(ctx context.Context) error {
 }
 
 func (r *BackgroundServiceRegistry) run(ctx context.Context) error {
-	rootCtx, _ := context.WithCancel(ctx) // TODO: cancelFunc
-	childRoutines, childCtx := errgroup.WithContext(rootCtx)
+	childRoutines, childCtx := errgroup.WithContext(ctx)
 
 	// Start background services.
 	for _, svc := range r.Services {

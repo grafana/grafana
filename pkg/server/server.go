@@ -116,12 +116,10 @@ func (s *Server) Shutdown(ctx context.Context, reason string) error {
 			s.log.Error("Failed to stop modules", "error", err)
 		}
 
-		s.log.Info("Module service stopped")
-
 		// Wait for server to shut down
 		select {
 		case <-s.shutdownFinished:
-			s.log.Info("Finished waiting for server to shut down")
+			s.log.Debug("Finished waiting for server to shut down")
 		case <-ctx.Done():
 			s.log.Warn("Timed out while waiting for server to shut down")
 			err = fmt.Errorf("timeout waiting for shutdown")
