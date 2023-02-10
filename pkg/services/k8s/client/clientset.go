@@ -20,7 +20,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
-	"k8s.io/client-go/tools/cache"
 )
 
 var WireSet = wire.NewSet(ProvideClientset)
@@ -32,7 +31,6 @@ var (
 
 type Resource interface {
 	dynamic.ResourceInterface
-	cache.SharedIndexInformer
 }
 
 // Clientset is the clientset for Kubernetes APIs.
@@ -149,7 +147,7 @@ func (c *Clientset) GetResourceClient(gcrd k8ssys.Kind, namespace ...string) (dy
 	var resourceClient dynamic.ResourceInterface
 	if mapping.Scope.Name() == meta.RESTScopeNameNamespace {
 		if len(namespace) == 0 {
-			return nil, errors.New("namespace is required for namespaced resources")
+			namespace = []string{metav1.NamespaceDefault}
 		}
 		resourceClient = c.dynamic.Resource(mapping.Resource).Namespace(namespace[0])
 	} else {
@@ -159,13 +157,20 @@ func (c *Clientset) GetResourceClient(gcrd k8ssys.Kind, namespace ...string) (dy
 	return resourceClient, nil
 }
 
+type Watcher interface {
+	OnAdd(obj interface{})
+	OnUpdate(oldObj, newObj interface{})
+	OnDelete(obj interface{})
+}
+
 // GetResourceInformer returns a SharedIndexInformer for the given Kind.
-func (c *Clientset) GetResourceInformer(gcrd k8ssys.Kind) cache.SharedIndexInformer {
+func (c *Clientset) AddInformer(gcrd k8ssys.Kind, watcher Watcher, stop <-chan struct{}) {
 	gvk := gcrd.GVK()
 	gvr := k8schema.GroupVersionResource{
 		Group:    gvk.Group,
 		Version:  gvk.Version,
 		Resource: gcrd.Schema.Spec.Names.Plural,
 	}
-	return c.factory.ForResource(gvr).Informer()
+	c.factory.ForResource(gvr).Informer().AddEventHandler(watcher)
+	c.factory.Start(stop)
 }

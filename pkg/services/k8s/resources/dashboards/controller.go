@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
-	"k8s.io/client-go/tools/cache"
 )
 
 type Controller struct {
@@ -36,94 +35,94 @@ func (c *Controller) WithDashboardService(dashboardService dashboards.DashboardS
 }
 
 func (c *Controller) Run(ctx context.Context) error {
-	dashboardInformer := c.dashboardResource
-
-	dashboardInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			dash, err := interfaceToK8sDashboard(obj)
-			if err != nil {
-				c.log.Error("dashboard add failed", err)
-				return
-			}
-
-			dto, err := k8sDashboardToDashboardDTO(dash)
-			if err != nil {
-				c.log.Error("dashboard add failed", "err", err)
-			}
-
-			if existing, err := c.dashboardService.GetDashboard(context.Background(), &dashboards.GetDashboardQuery{UID: dto.Dashboard.UID, OrgID: dto.OrgID}); err == nil && existing.Version >= dto.Dashboard.Version {
-				c.log.Error("dashboard already exists, skipping")
-				return
-			}
-
-			signedInUser, err := c.getSignedInUser(ctx, dto.OrgID, dto.Dashboard.UpdatedBy)
-			if err != nil {
-				c.log.Error("orig.SaveDashboard failed", err)
-			}
-
-			dto.User = signedInUser
-
-			_, err = c.dashboardService.SaveDashboard(context.Background(), dto, true)
-			if err != nil {
-				c.log.Error("orig.SaveDashboard failed", err)
-				return
-			}
-		},
-		UpdateFunc: func(oldObj, newObj interface{}) {
-			dash, err := interfaceToK8sDashboard(newObj)
-			if err != nil {
-				c.log.Error("dashboard add failed", err)
-				return
-			}
-
-			dto, err := k8sDashboardToDashboardDTO(dash)
-			if err != nil {
-				c.log.Error("dashboard update failed", "err", err)
-			}
-
-			if existing, err := c.dashboardService.GetDashboard(context.Background(), &dashboards.GetDashboardQuery{UID: dto.Dashboard.UID, OrgID: dto.OrgID}); err == nil && existing.Version >= dto.Dashboard.Version {
-				c.log.Error("dashboard version already exists, skipping")
-				return
-			}
-
-			signedInUser, err := c.getSignedInUser(ctx, dto.OrgID, dto.Dashboard.UpdatedBy)
-			if err != nil {
-				c.log.Error("orig.SaveDashboard failed", err)
-			}
-
-			dto.User = signedInUser
-
-			_, err = c.dashboardService.SaveDashboard(context.Background(), dto, true)
-			if err != nil {
-				c.log.Error("orig.SaveDashboard failed", err)
-				return
-			}
-		},
-		DeleteFunc: func(obj interface{}) {
-			dash, err := interfaceToK8sDashboard(obj)
-			if err != nil {
-				c.log.Error("dashboard delete failed", err)
-				return
-			}
-			dto, err := k8sDashboardToDashboardDTO(dash)
-			if err != nil {
-				c.log.Error("dashboard delete failed", "err", err)
-			}
-			existing, err := c.dashboardService.GetDashboard(context.Background(), &dashboards.GetDashboardQuery{UID: dto.Dashboard.UID, OrgID: dto.OrgID})
-			// no dashboard found, nothing to delete
-			if err != nil {
-				return
-			}
-
-			if err := c.dashboardService.DeleteDashboard(ctx, existing.ID, existing.OrgID); err != nil {
-				c.log.Error("orig.DeleteDashboard failed", err)
-			}
-			c.log.Debug("dashboard deleted")
-		},
-	})
-
+	c.dashboardResource.RegisterController(ctx, c)
 	<-ctx.Done()
 	return nil
+}
+
+func (c *Controller) OnAdd(obj interface{}) {
+	dash, err := interfaceToK8sDashboard(obj)
+	if err != nil {
+		c.log.Error("dashboard add failed", err)
+		return
+	}
+
+	dto, err := k8sDashboardToDashboardDTO(dash)
+	if err != nil {
+		c.log.Error("dashboard add failed", "err", err)
+	}
+
+	if existing, err := c.dashboardService.GetDashboard(context.Background(), &dashboards.GetDashboardQuery{UID: dto.Dashboard.UID, OrgID: dto.OrgID}); err == nil && existing.Version >= dto.Dashboard.Version {
+		c.log.Error("dashboard already exists, skipping")
+		return
+	}
+
+	signedInUser, err := c.getSignedInUser(context.Background(), dto.OrgID, dto.Dashboard.UpdatedBy)
+	if err != nil {
+		c.log.Error("orig.SaveDashboard failed", err)
+	}
+
+	dto.User = signedInUser
+
+	_, err = c.dashboardService.SaveDashboard(context.Background(), dto, true)
+	if err != nil {
+		c.log.Error("orig.SaveDashboard failed", err)
+		return
+	}
+
+}
+
+func (c *Controller) OnUpdate(oldObj, newObj interface{}) {
+	dash, err := interfaceToK8sDashboard(newObj)
+	if err != nil {
+		c.log.Error("dashboard add failed", err)
+		return
+	}
+
+	dto, err := k8sDashboardToDashboardDTO(dash)
+	if err != nil {
+		c.log.Error("dashboard update failed", "err", err)
+	}
+
+	if existing, err := c.dashboardService.GetDashboard(context.Background(), &dashboards.GetDashboardQuery{UID: dto.Dashboard.UID, OrgID: dto.OrgID}); err == nil && existing.Version >= dto.Dashboard.Version {
+		c.log.Error("dashboard version already exists, skipping")
+		return
+	}
+
+	signedInUser, err := c.getSignedInUser(context.Background(), dto.OrgID, dto.Dashboard.UpdatedBy)
+	if err != nil {
+		c.log.Error("orig.SaveDashboard failed", err)
+	}
+
+	dto.User = signedInUser
+
+	_, err = c.dashboardService.SaveDashboard(context.Background(), dto, true)
+	if err != nil {
+		c.log.Error("orig.SaveDashboard failed", err)
+		return
+	}
+}
+
+func (c *Controller) OnDelete(obj interface{}) {
+	dash, err := interfaceToK8sDashboard(obj)
+	if err != nil {
+		c.log.Error("dashboard delete failed", err)
+		return
+	}
+	dto, err := k8sDashboardToDashboardDTO(dash)
+	if err != nil {
+		c.log.Error("dashboard delete failed", "err", err)
+	}
+	existing, err := c.dashboardService.GetDashboard(context.Background(), &dashboards.GetDashboardQuery{UID: dto.Dashboard.UID, OrgID: dto.OrgID})
+	// no dashboard found, nothing to delete
+	if err != nil {
+		return
+	}
+
+	if err := c.dashboardService.DeleteDashboard(context.Background(), existing.ID, existing.OrgID); err != nil {
+		c.log.Error("orig.DeleteDashboard failed", err)
+	}
+	c.log.Debug("dashboard deleted")
 }
 
 // only run service if feature toggle is enabled

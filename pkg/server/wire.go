@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
 	pluginDashboards "github.com/grafana/grafana/pkg/plugins/manager/dashboards"
+	"github.com/grafana/grafana/pkg/registry/corecrd"
 	"github.com/grafana/grafana/pkg/registry/corekind"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -366,6 +367,8 @@ var wireBasicSet = wire.NewSet(
 	authnimpl.ProvideService,
 	wire.Bind(new(authn.Service), new(*authnimpl.Service)),
 	supportbundlesimpl.ProvideService,
+	corecrd.New,
+	k8s.WireSet,
 )
 
 var wireSet = wire.NewSet(
@@ -379,7 +382,6 @@ var wireSet = wire.NewSet(
 	prefimpl.ProvideService,
 	oauthtoken.ProvideService,
 	wire.Bind(new(oauthtoken.OAuthTokenService), new(*oauthtoken.Service)),
-	k8s.WireSet,
 )
 
 var wireTestSet = wire.NewSet(
