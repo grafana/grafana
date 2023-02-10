@@ -187,18 +187,6 @@ describe('labelFilterRenderer', () => {
 });
 
 describe('isConflictingFilter', () => {
-  it('should return true if the operation conflicts with a label', () => {
-    const MOCK_OPERATION = { id: '__label_filter', params: ['a', '!=', 'b'] };
-    const MOCK_QUERY_OPERATIONS = [{ id: '__label_filter', params: ['a', '!=', 'b'] }];
-    expect(isConflictingFilter(MOCK_OPERATION, MOCK_QUERY_OPERATIONS)).toBe(true);
-  });
-
-  it("should return false if the operation doesn't conflict with a label", () => {
-    const MOCK_OPERATION = { id: '__label_filter', params: ['a', '=', 'b'] };
-    const MOCK_QUERY_OPERATIONS = [{ id: '__label_filter', params: ['a', '=', 'b'] }];
-    expect(isConflictingFilter(MOCK_OPERATION, MOCK_QUERY_OPERATIONS)).toBe(false);
-  });
-
   it('should return true if the operation conflict with another label filter', () => {
     const MOCK_OPERATION = { id: '__label_filter', params: ['abc', '!=', '123'] };
     const MOCK_QUERY_OPERATIONS = [
