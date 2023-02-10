@@ -305,13 +305,6 @@ export function requestSupportsPartitioning(queries: LokiQuery[]) {
     return false;
   }
 
-  /**
-   * Disable logs volume queries.
-   */
-  if (queries[0].refId.includes('log-volume-')) {
-    return false;
-  }
-
   return true;
 }
 
