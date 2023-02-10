@@ -7,15 +7,16 @@ import { EditorFieldGroup, EditorField, EditorList } from '@grafana/experimental
 import { QueryBuilderLabelFilter } from '../shared/types';
 
 import { LabelFilterItem } from './LabelFilterItem';
+import { isConflictingSelector } from './operationUtils';
 
 export const MISSING_LABEL_FILTER_ERROR_MESSAGE = 'Select at least 1 label filter (label and value)';
+export const CONFLICTING_LABEL_FILTER_ERROR_MESSAGE = 'You have conflicting label filters';
 
 export interface Props {
   labelsFilters: QueryBuilderLabelFilter[];
   onChange: (labelFilters: QueryBuilderLabelFilter[]) => void;
   onGetLabelNames: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<SelectableValue[]>;
   onGetLabelValues: (forLabel: Partial<QueryBuilderLabelFilter>) => Promise<SelectableValue[]>;
-  setLabels: React.Dispatch<React.SetStateAction<Array<Partial<QueryBuilderLabelFilter>>>>;
   /** If set to true, component will show error message until at least 1 filter is selected */
   labelFilterRequired?: boolean;
 }
@@ -26,10 +27,22 @@ export function LabelFilters({
   onGetLabelNames,
   onGetLabelValues,
   labelFilterRequired,
-  setLabels,
 }: Props) {
   const defaultOp = '=';
   const [items, setItems] = useState<Array<Partial<QueryBuilderLabelFilter>>>([{ op: defaultOp }]);
+  const [conflictingLabels, setConflictingLabels] = useState(false);
+
+  useEffect(() => {
+    const conflictingArr = items.map((label) => {
+      return isConflictingSelector(label, items);
+    });
+
+    if (conflictingArr.some((bool) => bool === true)) {
+      setConflictingLabels(true);
+    } else {
+      setConflictingLabels(false);
+    }
+  }, [items]);
 
   useEffect(() => {
     if (labelsFilters.length > 0) {
@@ -41,7 +54,6 @@ export function LabelFilters({
 
   const onLabelsChange = (newItems: Array<Partial<QueryBuilderLabelFilter>>) => {
     setItems(newItems);
-    setLabels(newItems);
 
     // Extract full label filters with both label & value
     const newLabels = newItems.filter((x) => x.label != null && x.value != null);
@@ -56,8 +68,8 @@ export function LabelFilters({
     <EditorFieldGroup>
       <EditorField
         label="Label filters"
-        error={MISSING_LABEL_FILTER_ERROR_MESSAGE}
-        invalid={labelFilterRequired && !hasLabelFilter}
+        error={conflictingLabels ? CONFLICTING_LABEL_FILTER_ERROR_MESSAGE : MISSING_LABEL_FILTER_ERROR_MESSAGE}
+        invalid={conflictingLabels || (labelFilterRequired && !hasLabelFilter)}
       >
         <EditorList
           items={items}

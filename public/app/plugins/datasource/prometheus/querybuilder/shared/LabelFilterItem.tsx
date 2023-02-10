@@ -1,11 +1,10 @@
-import { css, cx } from '@emotion/css';
 import { uniqBy } from 'lodash';
 import React, { useState } from 'react';
 
-import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
+import { SelectableValue, toOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { AccessoryButton, InputGroup } from '@grafana/experimental';
-import { Select, useStyles2 } from '@grafana/ui';
+import { Select } from '@grafana/ui';
 
 import { isConflictingSelector } from './operationUtils';
 import { QueryBuilderLabelFilter } from './types';
@@ -39,7 +38,6 @@ export function LabelFilterItem({
     isLoadingLabelNames?: boolean;
     isLoadingLabelValues?: boolean;
   }>({});
-  const styles = useStyles2(getStyles);
 
   const isMultiSelect = (operator = item.op) => {
     return operators.find((op) => op.label === operator)?.isMultiValue;
@@ -66,7 +64,7 @@ export function LabelFilterItem({
   const isConflicting = isConflictingSelector(item, items);
 
   return (
-    <div data-testid="prometheus-dimensions-filter-item" className={cx(isConflicting && styles.isConflicting)}>
+    <div data-testid="prometheus-dimensions-filter-item">
       <InputGroup>
         <Select
           placeholder="Select label"
@@ -91,7 +89,7 @@ export function LabelFilterItem({
               } as unknown as QueryBuilderLabelFilter);
             }
           }}
-          invalid={invalidLabel}
+          invalid={isConflicting || invalidLabel}
         />
 
         <Select
@@ -108,6 +106,7 @@ export function LabelFilterItem({
               } as unknown as QueryBuilderLabelFilter);
             }
           }}
+          invalid={isConflicting}
         />
 
         <Select
@@ -149,7 +148,7 @@ export function LabelFilterItem({
               onChange({ ...item, value: changes, op: item.op ?? defaultOp } as unknown as QueryBuilderLabelFilter);
             }
           }}
-          invalid={invalidValue}
+          invalid={isConflicting || invalidValue}
         />
         <AccessoryButton aria-label="remove" icon="times" variant="secondary" onClick={onDelete} />
       </InputGroup>
@@ -163,12 +162,3 @@ const operators = [
   { label: '!=', value: '!=', isMultiValue: false },
   { label: '!~', value: '!~', isMultiValue: true },
 ];
-
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    isConflicting: css({
-      boxShadow: `0px 0px 4px 0px ${theme.colors.error.main}`,
-      border: `1px solid ${theme.colors.error.main}`,
-    }),
-  };
-};

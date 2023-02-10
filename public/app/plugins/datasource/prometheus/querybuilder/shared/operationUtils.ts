@@ -337,26 +337,26 @@ export function isConflictingSelector(
 
   let isConflicting = false;
 
-  const labelsWithoutNew = labels.filter((label) => {
+  const labelsWithoutNewLabel = labels.filter((label) => {
     if (label.label === newLabel.label && label.op === newLabel.op && label.value === newLabel.value) {
-      return;
+      return false;
     }
 
     if (!label.label || !label.op || !label.value) {
-      return;
+      return false;
     }
 
-    return label;
+    return true;
   });
 
-  labelsWithoutNew.forEach((label) => {
+  labelsWithoutNewLabel.forEach((label) => {
     if (label.label !== newLabel.label || label.value !== newLabel.value) {
       return;
     }
 
     if (
-      (label.op!.startsWith('!') && !String(newLabel.op).startsWith('!')) ||
-      (!label.op!.startsWith('!') && String(newLabel.op).startsWith('!'))
+      (label.op?.startsWith('!') && !newLabel.op?.startsWith('!')) ||
+      (!label.op?.startsWith('!') && newLabel.op?.startsWith('!'))
     ) {
       isConflicting = true;
     }

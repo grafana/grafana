@@ -1,16 +1,7 @@
-import { css } from '@emotion/css';
 import React, { useEffect, useMemo, useState } from 'react';
 
-import {
-  DataSourceApi,
-  getDefaultTimeRange,
-  GrafanaTheme2,
-  LoadingState,
-  PanelData,
-  SelectableValue,
-} from '@grafana/data';
+import { DataSourceApi, getDefaultTimeRange, LoadingState, PanelData, SelectableValue } from '@grafana/data';
 import { EditorRow } from '@grafana/experimental';
-import { useStyles2 } from '@grafana/ui';
 import { LabelFilters } from 'app/plugins/datasource/prometheus/querybuilder/shared/LabelFilters';
 import { OperationExplainedBox } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationExplainedBox';
 import { OperationList } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationList';
@@ -18,7 +9,6 @@ import { OperationListExplained } from 'app/plugins/datasource/prometheus/queryb
 import { OperationsEditorRow } from 'app/plugins/datasource/prometheus/querybuilder/shared/OperationsEditorRow';
 import { QueryBuilderHints } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryBuilderHints';
 import { RawQuery } from 'app/plugins/datasource/prometheus/querybuilder/shared/RawQuery';
-import { isConflictingSelector } from 'app/plugins/datasource/prometheus/querybuilder/shared/operationUtils';
 import {
   QueryBuilderLabelFilter,
   QueryBuilderOperation,
@@ -45,10 +35,6 @@ export interface Props {
 export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, onChange, onRunQuery, showExplain }) => {
   const [sampleData, setSampleData] = useState<PanelData>();
   const [highlightedOp, setHighlightedOp] = useState<QueryBuilderOperation | undefined>(undefined);
-  const [conflictingLabels, setConflictingLabels] = useState(false);
-  const [labels, setLabels] = useState<Array<Partial<QueryBuilderLabelFilter>>>([]);
-
-  const styles = useStyles2(getStyles);
 
   const onChangeLabels = (labels: QueryBuilderLabelFilter[]) => {
     onChange({ ...query, labels });
@@ -120,18 +106,6 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, onChange
     onGetSampleData().catch(console.error);
   }, [datasource, query]);
 
-  useEffect(() => {
-    const res = labels.map((label) => {
-      return isConflictingSelector(label, labels);
-    });
-
-    if (res.some((res) => res)) {
-      setConflictingLabels(true);
-    } else {
-      setConflictingLabels(false);
-    }
-  }, [labels]);
-
   const lang = { grammar: logqlGrammar, name: 'logql' };
   return (
     <div data-testid={testIds.editor}>
@@ -146,14 +120,8 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, onChange
           labelsFilters={query.labels}
           onChange={onChangeLabels}
           labelFilterRequired={labelFilterRequired}
-          setLabels={setLabels}
         />
       </EditorRow>
-      {conflictingLabels && (
-        <div className={styles.container}>
-          <p className={styles.errorText}>You have conflicting labels in your query, this will result in no data.</p>
-        </div>
-      )}
       {showExplain && (
         <OperationExplainedBox
           stepNumber={1}
@@ -208,16 +176,3 @@ export const LokiQueryBuilder = React.memo<Props>(({ datasource, query, onChange
 });
 
 LokiQueryBuilder.displayName = 'LokiQueryBuilder';
-
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    container: css({
-      padding: theme.spacing(0, 0, 0, 1),
-      backgroundColor: theme.colors.background.secondary,
-    }),
-    errorText: css({
-      margin: theme.spacing(0),
-      color: theme.colors.error.main,
-    }),
-  };
-};
