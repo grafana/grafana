@@ -80,7 +80,7 @@ func parseResponse(responses []*es.SearchResponse, targets []*Query, timeField s
 
 func processDocumentResponse(res *es.SearchResponse, target *Query, timeField string, queryRes *backend.DataResponse) error {
 	docs := make([]map[string]interface{}, len(res.Hits.Hits))
-	propNames := make([]string, 0)
+	propNames := make(map[string]bool)
 
 	for hitIdx, hit := range res.Hits.Hits {
 		var flattened map[string]interface{}
@@ -102,12 +102,7 @@ func processDocumentResponse(res *es.SearchResponse, target *Query, timeField st
 		}
 
 		for key := range doc {
-			// We want to add only unique propNames
-			if isStringInSlice(key, propNames) {
-				continue
-			} else {
-				propNames = append(propNames, key)
-			}
+			propNames[key] = true
 		}
 
 		docs[hitIdx] = doc
@@ -899,34 +894,25 @@ func flatten(target map[string]interface{}) map[string]interface{} {
 	return output
 }
 
-func isStringInSlice(a string, list []string) bool {
-	for _, b := range list {
-		if b == a {
-			return true
+// sortPropNames orders propNames so that timeField is first (if it exists) and rest of propNames are ordered alphabetically
+func sortPropNames(propNames map[string]bool, timeField string) []string {
+	hasTimeField := false
+
+	var sortedPropNames []string
+	for k, _ := range propNames {
+		if k == timeField {
+			hasTimeField = true
+		} else {
+			sortedPropNames = append(sortedPropNames, k)
 		}
 	}
-	return false
-}
-
-// sortPropNames orders propNames so that timeField is first (if it exists) and rest of propNames are ordered alphabetically
-func sortPropNames(propNames []string, timeField string) []string {
-	sortedPropNames := make([]string, 0, len(propNames))
-	sortedPropNames = append(sortedPropNames, propNames...)
 
 	sort.Strings(sortedPropNames)
-	if len(sortedPropNames) == 0 || sortedPropNames[0] == timeField {
-		return sortedPropNames
+
+	if hasTimeField {
+		sortedPropNames = append([]string{timeField}, sortedPropNames...)
 	}
 
-	if sortedPropNames[len(sortedPropNames)-1] == timeField {
-		return append([]string{timeField}, (sortedPropNames)[:len(sortedPropNames)-1]...)
-	}
-
-	for idx, propName := range sortedPropNames {
-		if propName == timeField {
-			return append([]string{timeField}, append((sortedPropNames)[:idx], (sortedPropNames)[idx+1:]...)...)
-		}
-	}
 	return sortedPropNames
 }
 
