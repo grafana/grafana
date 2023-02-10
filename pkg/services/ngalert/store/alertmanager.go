@@ -162,21 +162,26 @@ func (st *DBstore) MarkConfigurationAsApplied(ctx context.Context, cmd *models.M
 }
 
 // GetAppliedConfigurations returns all configurations that have been marked as applied, ordered newest -> oldest by id.
-func (st *DBstore) GetAppliedConfigurations(ctx context.Context, query *models.GetAppliedConfigurationsQuery) error {
-	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+func (st *DBstore) GetAppliedConfigurations(ctx context.Context, orgID int64, limit int) ([]*models.HistoricAlertConfiguration, error) {
+	var configs []*models.HistoricAlertConfiguration
+	if err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		cfgs := []*models.HistoricAlertConfiguration{}
 		err := sess.Table("alert_configuration_history").
 			Desc("id").
-			Where("org_id = ? AND last_applied != 0", query.OrgID).
+			Where("org_id = ? AND last_applied != 0", orgID).
+			Limit(limit).
 			Find(&cfgs)
-
 		if err != nil {
 			return err
 		}
 
-		query.Result = cfgs
+		configs = cfgs
 		return nil
-	})
+	}); err != nil {
+		return []*models.HistoricAlertConfiguration{}, err
+	}
+
+	return configs, nil
 }
 
 func (st *DBstore) deleteOldConfigurations(ctx context.Context, orgID int64, limit int) (int64, error) {

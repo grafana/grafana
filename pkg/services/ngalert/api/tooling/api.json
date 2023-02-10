@@ -715,6 +715,40 @@
    ],
    "type": "object"
   },
+  "EnumFieldConfig": {
+   "description": "Enum field config\nVector values are used as lookup keys into the enum fields",
+   "properties": {
+    "color": {
+     "description": "Color is the color value for a given index (empty is undefined)",
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "description": {
+     "description": "Description of the enum state",
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "icon": {
+     "description": "Icon supports setting an icon for a given index value",
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "text": {
+     "description": "Value is the string display value for a given index",
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    }
+   },
+   "type": "object"
+  },
   "ErrorType": {
    "title": "ErrorType models the different API error types.",
    "type": "string"
@@ -870,6 +904,9 @@
     "thresholds": {
      "$ref": "#/definitions/ThresholdsConfig"
     },
+    "type": {
+     "$ref": "#/definitions/FieldTypeConfig"
+    },
     "unit": {
      "description": "Numeric Options",
      "type": "string"
@@ -880,6 +917,15 @@
     }
    },
    "title": "FieldConfig represents the display properties for a Field.",
+   "type": "object"
+  },
+  "FieldTypeConfig": {
+   "description": "FieldTypeConfig has type specific configs, only one should be active at a time",
+   "properties": {
+    "enum": {
+     "$ref": "#/definitions/EnumFieldConfig"
+    }
+   },
    "type": "object"
   },
   "Frame": {
@@ -958,6 +1004,9 @@
     },
     "type": {
      "$ref": "#/definitions/FrameType"
+    },
+    "typeVersion": {
+     "$ref": "#/definitions/FrameTypeVersion"
     }
    },
    "title": "FrameMeta matches:",
@@ -966,6 +1015,14 @@
   "FrameType": {
    "description": "A FrameType string, when present in a frame's metadata, asserts that the\nframe's structure conforms to the FrameType's specification.\nThis property is currently optional, so FrameType may be FrameTypeUnknown even if the properties of\nthe Frame correspond to a defined FrameType.",
    "type": "string"
+  },
+  "FrameTypeVersion": {
+   "items": {
+    "format": "uint64",
+    "type": "integer"
+   },
+   "title": "FrameType is a 2 number version (Major / Minor).",
+   "type": "array"
   },
   "Frames": {
    "description": "It is the main data container within a backend.DataResponse.",
@@ -1255,6 +1312,30 @@
     "version": {
      "format": "int64",
      "type": "integer"
+    }
+   },
+   "type": "object"
+  },
+  "GettableHistoricUserConfig": {
+   "properties": {
+    "alertmanager_config": {
+     "$ref": "#/definitions/GettableApiAlertingConfig"
+    },
+    "last_applied": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "template_file_provenances": {
+     "additionalProperties": {
+      "$ref": "#/definitions/Provenance"
+     },
+     "type": "object"
+    },
+    "template_files": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
     }
    },
    "type": "object"
@@ -2472,6 +2553,9 @@
     "thresholds": {
      "$ref": "#/definitions/ThresholdsConfig"
     },
+    "type": {
+     "$ref": "#/definitions/FieldTypeConfig"
+    },
     "unit": {
      "description": "Numeric Options",
      "type": "string"
@@ -3507,6 +3591,7 @@
    "type": "object"
   },
   "alertGroup": {
+   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -3635,6 +3720,7 @@
    "type": "object"
   },
   "gettableAlert": {
+   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -3697,6 +3783,7 @@
    "type": "array"
   },
   "gettableSilence": {
+   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3745,12 +3832,14 @@
    "type": "object"
   },
   "gettableSilences": {
+   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
    "type": "array"
   },
   "integration": {
+   "description": "Integration integration",
    "properties": {
     "lastNotifyAttempt": {
      "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -3894,6 +3983,7 @@
    "type": "array"
   },
   "postableSilence": {
+   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3931,6 +4021,7 @@
    "type": "object"
   },
   "receiver": {
+   "description": "Receiver receiver",
    "properties": {
     "active": {
      "description": "active",
@@ -4864,6 +4955,15 @@
   "application/json"
  ],
  "responses": {
+  "GettableHistoricUserConfigs": {
+   "description": "",
+   "schema": {
+    "items": {
+     "$ref": "#/definitions/GettableHistoricUserConfig"
+    },
+    "type": "array"
+   }
+  },
   "receiversResponse": {
    "description": "",
    "schema": {

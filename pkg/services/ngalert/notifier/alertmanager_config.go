@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
+	"github.com/go-openapi/strfmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -36,7 +38,76 @@ func (moa *MultiOrgAlertmanager) GetAlertmanagerConfiguration(ctx context.Contex
 	if err != nil {
 		return definitions.GettableUserConfig{}, fmt.Errorf("failed to get latest configuration: %w", err)
 	}
-	cfg, err := Load([]byte(query.Result.AlertmanagerConfiguration))
+
+	return moa.gettableUserConfigFromAMConfigString(ctx, org, query.Result.AlertmanagerConfiguration)
+}
+
+// GetAppliedAlertmanagerConfigurations returns the last n configurations marked as applied for a given org.
+func (moa *MultiOrgAlertmanager) GetAppliedAlertmanagerConfigurations(ctx context.Context, org int64, limit int) ([]*definitions.GettableHistoricUserConfig, error) {
+	if limit < 1 || limit > store.ConfigRecordsLimit {
+		limit = store.ConfigRecordsLimit
+	}
+	configs, err := moa.configStore.GetAppliedConfigurations(ctx, org, limit)
+	if err != nil {
+		return []*definitions.GettableHistoricUserConfig{}, fmt.Errorf("failed to get applied configurations: %w", err)
+	}
+
+	gettableHistoricConfigs := make([]*definitions.GettableHistoricUserConfig, 0, len(configs))
+	for _, config := range configs {
+		appliedAt := strfmt.DateTime(time.Unix(config.LastApplied, 0).UTC())
+		gettableConfig, err := moa.gettableUserConfigFromAMConfigString(ctx, org, config.AlertmanagerConfiguration)
+		if err != nil {
+			return []*definitions.GettableHistoricUserConfig{}, err
+		}
+
+		gettableHistoricConfig := definitions.GettableHistoricUserConfig{
+			TemplateFiles:           gettableConfig.TemplateFiles,
+			TemplateFileProvenances: gettableConfig.TemplateFileProvenances,
+			AlertmanagerConfig:      gettableConfig.AlertmanagerConfig,
+			LastApplied:             &appliedAt,
+		}
+		gettableHistoricConfigs = append(gettableHistoricConfigs, &gettableHistoricConfig)
+	}
+
+	return gettableHistoricConfigs, nil
+}
+
+func (moa *MultiOrgAlertmanager) ApplyAlertmanagerConfiguration(ctx context.Context, org int64, config definitions.PostableUserConfig) error {
+	// Get the last known working configuration
+	query := models.GetLatestAlertmanagerConfigurationQuery{OrgID: org}
+	if err := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, &query); err != nil {
+		// If we don't have a configuration there's nothing for us to know and we should just continue saving the new one
+		if !errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
+			return fmt.Errorf("failed to get latest configuration %w", err)
+		}
+	}
+
+	if err := moa.Crypto.LoadSecureSettings(ctx, org, config.AlertmanagerConfig.Receivers); err != nil {
+		return err
+	}
+
+	if err := config.ProcessConfig(moa.Crypto.Encrypt); err != nil {
+		return fmt.Errorf("failed to post process Alertmanager configuration: %w", err)
+	}
+
+	am, err := moa.AlertmanagerFor(org)
+	if err != nil {
+		// It's okay if the alertmanager isn't ready yet, we're changing its config anyway.
+		if !errors.Is(err, ErrAlertmanagerNotReady) {
+			return err
+		}
+	}
+
+	if err := am.SaveAndApplyConfig(ctx, &config); err != nil {
+		moa.logger.Error("unable to save and apply alertmanager configuration", "error", err)
+		return AlertmanagerConfigRejectedError{err}
+	}
+
+	return nil
+}
+
+func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx context.Context, orgID int64, config string) (definitions.GettableUserConfig, error) {
+	cfg, err := Load([]byte(config))
 	if err != nil {
 		return definitions.GettableUserConfig{}, fmt.Errorf("failed to unmarshal alertmanager configuration: %w", err)
 	}
@@ -81,46 +152,12 @@ func (moa *MultiOrgAlertmanager) GetAlertmanagerConfiguration(ctx context.Contex
 		result.AlertmanagerConfig.Receivers = append(result.AlertmanagerConfig.Receivers, &gettableApiReceiver)
 	}
 
-	result, err = moa.mergeProvenance(ctx, result, org)
+	result, err = moa.mergeProvenance(ctx, result, orgID)
 	if err != nil {
 		return definitions.GettableUserConfig{}, err
 	}
 
 	return result, nil
-}
-
-func (moa *MultiOrgAlertmanager) ApplyAlertmanagerConfiguration(ctx context.Context, org int64, config definitions.PostableUserConfig) error {
-	// Get the last known working configuration
-	query := models.GetLatestAlertmanagerConfigurationQuery{OrgID: org}
-	if err := moa.configStore.GetLatestAlertmanagerConfiguration(ctx, &query); err != nil {
-		// If we don't have a configuration there's nothing for us to know and we should just continue saving the new one
-		if !errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
-			return fmt.Errorf("failed to get latest configuration %w", err)
-		}
-	}
-
-	if err := moa.Crypto.LoadSecureSettings(ctx, org, config.AlertmanagerConfig.Receivers); err != nil {
-		return err
-	}
-
-	if err := config.ProcessConfig(moa.Crypto.Encrypt); err != nil {
-		return fmt.Errorf("failed to post process Alertmanager configuration: %w", err)
-	}
-
-	am, err := moa.AlertmanagerFor(org)
-	if err != nil {
-		// It's okay if the alertmanager isn't ready yet, we're changing its config anyway.
-		if !errors.Is(err, ErrAlertmanagerNotReady) {
-			return err
-		}
-	}
-
-	if err := am.SaveAndApplyConfig(ctx, &config); err != nil {
-		moa.logger.Error("unable to save and apply alertmanager configuration", "error", err)
-		return AlertmanagerConfigRejectedError{err}
-	}
-
-	return nil
 }
 
 func (moa *MultiOrgAlertmanager) mergeProvenance(ctx context.Context, config definitions.GettableUserConfig, org int64) (definitions.GettableUserConfig, error) {
