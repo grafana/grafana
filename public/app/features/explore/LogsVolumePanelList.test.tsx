@@ -31,7 +31,7 @@ function renderPanel(logsVolumeData?: DataQueryResponse) {
 describe('LogsVolumePanelList', () => {
   it('shows loading message', () => {
     renderPanel({ state: LoadingState.Loading, error: undefined, data: [] });
-    expect(screen.getByText('Log volume is loading...')).toBeInTheDocument();
+    expect(screen.getByText('Loading...')).toBeInTheDocument();
   });
 
   it('shows short warning message', () => {
