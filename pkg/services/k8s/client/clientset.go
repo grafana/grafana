@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/wire"
 	"github.com/grafana/grafana/pkg/kindsys/k8ssys"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
@@ -48,7 +49,10 @@ type Clientset struct {
 	lock sync.RWMutex
 }
 
-func ProvideClientset() (*Clientset, error) {
+func ProvideClientset(toggles featuremgmt.FeatureToggles) (*Clientset, error) {
+	if !toggles.IsEnabled(featuremgmt.FlagK8s) {
+		return &Clientset{}, nil
+	}
 	cfg, err := GetRESTConfig()
 	if err != nil {
 		return nil, err
