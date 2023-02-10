@@ -67,7 +67,6 @@ func annotationsFromDashboardDTO(dto *dashboards.SaveDashboardDTO) map[string]st
 		"version":   strconv.FormatInt(int64(dto.Dashboard.Version), 10),
 		"message":   dto.Message,
 		"orgID":     strconv.FormatInt(dto.OrgID, 10),
-		"overwrite": strconv.FormatBool(dto.Overwrite),
 		"updatedBy": strconv.FormatInt(dto.Dashboard.UpdatedBy, 10),
 		"updatedAt": strconv.FormatInt(dto.Dashboard.Updated.UnixNano(), 10),
 		"createdBy": strconv.FormatInt(dto.Dashboard.CreatedBy, 10),
@@ -154,13 +153,6 @@ func parseAnnotations(dash *k8ssys.Base[dashboard.Dashboard], dto dashboards.Sav
 		orgID, err := strconv.ParseInt(v, 10, 64)
 		if err == nil {
 			dto.OrgID = orgID
-		}
-	}
-
-	if v, ok := a["overwrite"]; ok {
-		overwrite, err := strconv.ParseBool(v)
-		if err == nil {
-			dto.Overwrite = overwrite
 		}
 	}
 

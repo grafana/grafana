@@ -75,6 +75,13 @@ func (s *Service) SaveDashboard(ctx context.Context, dto *dashboards.SaveDashboa
 		}
 
 		if rv != "" {
+			if !dto.Overwrite {
+				dtoRV := dto.Dashboard.Data.Get("resourceVersion").MustString()
+				if dtoRV != "" && dtoRV != rv {
+					return nil, dashboards.ErrDashboardVersionMismatch
+				}
+			}
+
 			// exists in k8s
 			updateDashboard = true
 			resourceVersion = rv

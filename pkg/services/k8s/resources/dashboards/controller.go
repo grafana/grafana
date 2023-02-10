@@ -97,9 +97,12 @@ func (c *Controller) OnUpdate(oldObj, newObj interface{}) {
 	}
 	rv := existing.Data.Get("resourceVersion").MustString()
 	if rv == dash.ResourceVersion {
-		c.log.Error("existing dashboard is newer than requested, skipping", "existing", existing.Version, "requested", dto.Dashboard.Version)
+		c.log.Error("resourceVersion is already saved", "resourceVersion", rv)
 		return
 	}
+
+	// Always overwrite
+	dto.Overwrite = true
 
 	signedInUser, err := c.getSignedInUser(ctx, dto.OrgID, dto.Dashboard.UpdatedBy)
 	if err != nil {
