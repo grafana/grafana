@@ -55,5 +55,13 @@ describe('runPartitionedQuery()', () => {
         expect(datasource.runQuery).toHaveBeenCalledTimes(3);
       });
     });
+    test('Performs all the requests if not a log query', async () => {
+      request.targets[0].maxLines = 1;
+      request.targets[0].expr = 'count_over_time({a="b"}[1m])';
+      await expect(runPartitionedQuery(datasource, request)).toEmitValuesWith(() => {
+        // 3 days, 3 chunks, 3 responses of 2 logs, 3 requests
+        expect(datasource.runQuery).toHaveBeenCalledTimes(3);
+      });
+    });
   });
 });

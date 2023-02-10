@@ -70,7 +70,7 @@ function adjustTargetsFromResponseState(targets: LokiQuery[], response: DataQuer
 
   return targets
     .map((target) => {
-      if (!target.maxLines) {
+      if (!target.maxLines || !isLogsQuery(target.expr)) {
         return target;
       }
       const targetFrame = response.data.find((frame) => frame.refId === target.refId);
