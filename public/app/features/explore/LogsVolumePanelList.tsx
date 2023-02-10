@@ -64,7 +64,7 @@ export const LogsVolumePanelList = ({
   if (containsLimited) {
     limitedInfo =
       numberOfLogVolumes > 1
-        ? 'Some datasources does not support full-range histograms. The graph below is based on the logs seen in all responses.'
+        ? 'Some datasources do not support full-range histograms. The graph below is based on the logs seen in all responses.'
         : 'This datasource does not support full-range histograms. The graph below is based on the logs seen in the response.';
   }
 
