@@ -20,21 +20,24 @@ type Controller struct {
 	accessControlService accesscontrol.Service
 }
 
-func ProvideController(features featuremgmt.FeatureToggles, userService user.Service, accessControlService accesscontrol.Service, dashboardResource *Resource, informerFactory *informer.Factory) *Controller {
+func ProvideController(
+	features featuremgmt.FeatureToggles,
+	dashboardService dashboards.OriginalDashboardService,
+	userService user.Service,
+	accessControlService accesscontrol.Service,
+	dashboardResource *Resource,
+	informerFactory *informer.Factory,
+) *Controller {
 	c := Controller{
 		enabled:              features.IsEnabled(featuremgmt.FlagK8s),
 		log:                  log.New("k8s.dashboards.controller"),
+		dashboardService:     dashboardService,
 		userService:          userService,
 		accessControlService: accessControlService,
 		dashboardResource:    dashboardResource,
 	}
 	informerFactory.AddInformer(c.dashboardResource.crd, &c)
 	return &c
-}
-
-func (c *Controller) WithDashboardService(dashboardService dashboards.DashboardService) *Controller {
-	c.dashboardService = dashboardService
-	return c
 }
 
 func (c *Controller) OnAdd(ctx context.Context, obj any) {

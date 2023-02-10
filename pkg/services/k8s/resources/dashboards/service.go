@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/kindsys/k8ssys"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 // NOTE this is how you reset the CRD
@@ -21,28 +20,21 @@ import (
 type Service struct {
 	dashboards.DashboardService
 
-	cfg *setting.Cfg
-	log log.Logger
-
+	log               log.Logger
 	dashboardResource *Resource
 }
 
 var _ dashboards.DashboardService = (*Service)(nil)
 
 func ProvideService(
-	cfg *setting.Cfg,
 	dashboardResource *Resource,
+	dashboardService dashboards.OriginalDashboardService,
 ) *Service {
 	return &Service{
-		cfg:               cfg,
+		DashboardService:  dashboardService,
 		log:               log.New("k8s.dashboards.service"),
 		dashboardResource: dashboardResource,
 	}
-}
-
-func (s *Service) WithDashboardService(dashboardService dashboards.DashboardService) *Service {
-	s.DashboardService = dashboardService
-	return s
 }
 
 // SaveDashboard saves the dashboard to kubernetes

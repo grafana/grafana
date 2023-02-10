@@ -31,6 +31,10 @@ type DashboardService interface {
 	CountDashboardsInFolder(ctx context.Context, query *CountDashboardsInFolderQuery) (int64, error)
 }
 
+// TODO: ¯\_(ツ)_/¯
+type OriginalDashboardService DashboardService
+type K8sDashboardService DashboardService
+
 // PluginService is a service for operating on plugin dashboards.
 type PluginService interface {
 	GetDashboardsByPluginID(ctx context.Context, query *GetDashboardsByPluginIDQuery) ([]*Dashboard, error)

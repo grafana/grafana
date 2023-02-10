@@ -295,6 +295,7 @@ var wireBasicSet = wire.NewSet(
 	featuremgmt.ProvideManagerService,
 	featuremgmt.ProvideToggles,
 	dashboardservice.ProvideDashboardService, // DashboardServiceImpl
+	wire.Bind(new(dashboards.OriginalDashboardService), new(*dashboardservice.DashboardServiceImpl)),
 	dashboardstore.ProvideDashboardStore,
 	folderimpl.ProvideService,
 	folderimpl.ProvideDashboardFolderStore,
