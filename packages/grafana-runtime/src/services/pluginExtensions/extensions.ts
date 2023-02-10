@@ -1,4 +1,4 @@
-import { PluginsExtensionLink } from '@grafana/data';
+import type { PluginsExtensionLink, PluginsExtensionLinkOverridable } from '@grafana/data';
 
 import { getPluginsExtensionRegistry, PluginsExtension } from './registry';
 
@@ -37,17 +37,31 @@ export function getPluginExtensions<T extends object = {}>({
   }
 
   return {
-    extensions: extensions.reduce<PluginsExtensionLink[]>((all, extension) => {
+    extensions: extensions.reduce<PluginsExtensionLink[]>((allExtensions, extension) => {
       if (!extension.override) {
-        return [...all, extension];
+        return [...allExtensions, extension];
       }
-      // Only give a plugin dev the parts of the link that they need to override
-      const { override, id, pluginId, type, ...overrideLink } = extension;
-      const overriden = extension.override(overrideLink, context);
-      if (overriden) {
-        return [...all, { ...extension, ...overriden }];
+      // Only allow a plugin to access the overridable fields of the link extension
+      const { title, description, path } = extension;
+      const linkWithLimitedProps: PluginsExtensionLinkOverridable = { title, description, path };
+      const overridenLink = extension.override(linkWithLimitedProps, context);
+
+      // Skip the extension from being displayed
+      if (overridenLink === null) {
+        return allExtensions;
       }
-      return all;
+
+      return [
+        ...allExtensions,
+        {
+          ...extension,
+          ...{
+            title: overridenLink?.title || title,
+            description: overridenLink?.description || description,
+            path: overridenLink?.path || path,
+          },
+        },
+      ];
     }, []),
   };
 }
