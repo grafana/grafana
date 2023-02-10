@@ -85,78 +85,6 @@ func ProvideService(cfg *setting.Cfg, router routing.RouteRegister, accessContro
 	return s
 }
 
-// LDAPAttribute is a serializer for user attributes mapped from LDAP. Is meant to display both the serialized value and the LDAP key we received it from.
-type LDAPAttribute struct {
-	ConfigAttributeValue string `json:"cfgAttrValue"`
-	LDAPAttributeValue   string `json:"ldapValue"`
-}
-
-// RoleDTO is a serializer for mapped roles from LDAP
-type LDAPRoleDTO struct {
-	OrgId   int64        `json:"orgId"`
-	OrgName string       `json:"orgName"`
-	OrgRole org.RoleType `json:"orgRole"`
-	GroupDN string       `json:"groupDN"`
-}
-
-// LDAPUserDTO is a serializer for users mapped from LDAP
-type LDAPUserDTO struct {
-	Name           *LDAPAttribute         `json:"name"`
-	Surname        *LDAPAttribute         `json:"surname"`
-	Email          *LDAPAttribute         `json:"email"`
-	Username       *LDAPAttribute         `json:"login"`
-	IsGrafanaAdmin *bool                  `json:"isGrafanaAdmin"`
-	IsDisabled     bool                   `json:"isDisabled"`
-	OrgRoles       []LDAPRoleDTO          `json:"roles"`
-	Teams          []ldap.TeamOrgGroupDTO `json:"teams"`
-}
-
-// LDAPServerDTO is a serializer for LDAP server statuses
-type LDAPServerDTO struct {
-	Host      string `json:"host"`
-	Port      int    `json:"port"`
-	Available bool   `json:"available"`
-	Error     string `json:"error"`
-}
-
-// FetchOrgs fetches the organization(s) information by executing a single query to the database. Then, populating the DTO with the information retrieved.
-func (user *LDAPUserDTO) FetchOrgs(ctx context.Context, orga org.Service) error {
-	orgIds := []int64{}
-
-	for _, or := range user.OrgRoles {
-		orgIds = append(orgIds, or.OrgId)
-	}
-
-	q := &org.SearchOrgsQuery{}
-	q.IDs = orgIds
-
-	result, err := orga.Search(ctx, q)
-	if err != nil {
-		return err
-	}
-
-	orgNamesById := map[int64]string{}
-	for _, org := range result {
-		orgNamesById[org.ID] = org.Name
-	}
-
-	for i, orgDTO := range user.OrgRoles {
-		if orgDTO.OrgId < 1 {
-			continue
-		}
-
-		orgName := orgNamesById[orgDTO.OrgId]
-
-		if orgName != "" {
-			user.OrgRoles[i].OrgName = orgName
-		} else {
-			return errOrganizationNotFound(orgDTO.OrgId)
-		}
-	}
-
-	return nil
-}
-
 // swagger:route POST /admin/ldap/reload admin_ldap reloadLDAPCfg
 //
 // Reloads the LDAP configuration.
@@ -409,7 +337,7 @@ func (s *Service) GetUserFromLDAP(c *contextmodel.ReqContext) response.Response 
 	}
 
 	s.log.Debug("mapping org roles", "orgsRoles", u.OrgRoles)
-	if err := u.FetchOrgs(c.Req.Context(), s.orgService); err != nil {
+	if err := u.fetchOrgs(c.Req.Context(), s.orgService); err != nil {
 		return response.Error(http.StatusBadRequest, "An organization was not found - Please verify your LDAP configuration", err)
 	}
 
@@ -435,16 +363,40 @@ func splitName(name string) (string, string) {
 	}
 }
 
-// swagger:parameters getUserFromLDAP
-type GetLDAPUserParams struct {
-	// in:path
-	// required:true
-	UserName string `json:"user_name"`
-}
+// fetchOrgs fetches the organization(s) information by executing a single query to the database. Then, populating the DTO with the information retrieved.
+func (user *LDAPUserDTO) fetchOrgs(ctx context.Context, orga org.Service) error {
+	orgIds := []int64{}
 
-// swagger:parameters postSyncUserWithLDAP
-type SyncLDAPUserParams struct {
-	// in:path
-	// required:true
-	UserID int64 `json:"user_id"`
+	for _, or := range user.OrgRoles {
+		orgIds = append(orgIds, or.OrgId)
+	}
+
+	q := &org.SearchOrgsQuery{}
+	q.IDs = orgIds
+
+	result, err := orga.Search(ctx, q)
+	if err != nil {
+		return err
+	}
+
+	orgNamesById := map[int64]string{}
+	for _, org := range result {
+		orgNamesById[org.ID] = org.Name
+	}
+
+	for i, orgDTO := range user.OrgRoles {
+		if orgDTO.OrgId < 1 {
+			continue
+		}
+
+		orgName := orgNamesById[orgDTO.OrgId]
+
+		if orgName != "" {
+			user.OrgRoles[i].OrgName = orgName
+		} else {
+			return errOrganizationNotFound(orgDTO.OrgId)
+		}
+	}
+
+	return nil
 }
