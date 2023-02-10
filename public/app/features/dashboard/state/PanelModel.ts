@@ -318,6 +318,11 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       model[property] = cloneDeep(this[property]);
     }
 
+    // remove empty overrides array
+    if (model.fieldConfig?.overrides && !model.fieldConfig.overrides.length) {
+      delete model.fieldConfig.overrides;
+    }
+
     return model;
   }
 

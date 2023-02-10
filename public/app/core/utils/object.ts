@@ -10,7 +10,7 @@ export function sortedDeepCloneWithoutNulls<T extends {}>(value: T): T {
       .sort()
       .reduce((acc: any, key) => {
         const v = (value as any)[key];
-        if (v != null) {
+        if (v != null && v !== -Infinity) {
           acc[key] = sortedDeepCloneWithoutNulls(v);
         }
         return acc;

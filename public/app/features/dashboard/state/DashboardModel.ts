@@ -91,6 +91,7 @@ export class DashboardModel implements TimeModel {
   schemaVersion: number;
   version: number;
   revision: number;
+  resourceVersion?: string; // resourceVersion will match k8s (if exists)
   links: DashboardLink[];
   gnetId: any;
   panels: PanelModel[];
@@ -131,6 +132,7 @@ export class DashboardModel implements TimeModel {
     this.id = data.id || null;
     // UID is not there for newly created dashboards
     this.uid = data.uid || null;
+    this.resourceVersion = (data as any)?.resourceVersion; // only k8s
     this.revision = data.revision || 1;
     this.title = data.title ?? 'No Title';
     this.description = data.description;

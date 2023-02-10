@@ -4,6 +4,7 @@ import { useAsync } from 'react-use';
 import { config, isFetchError } from '@grafana/runtime';
 import { Drawer, Spinner, Tab, TabsBar } from '@grafana/ui';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 
 import { jsonDiff } from '../VersionHistory/utils';
 
@@ -30,7 +31,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
     }
 
     const result = await backendSrv.getDashboardByUid(dashboard.uid);
-    return result.dashboard;
+    return sortedDeepCloneWithoutNulls(result.dashboard);
   }, [dashboard, isNew]);
 
   const data = useMemo<SaveDashboardData>(() => {

@@ -94,6 +94,7 @@ func (s *Service) SaveDashboard(ctx context.Context, dto *dashboards.SaveDashboa
 
 	// HACK, remove empty ID!!
 	dto.Dashboard.Data.Del("id")
+	dto.Dashboard.Data.Del("resourceVersion") // remove version hack
 	dto.Dashboard.Data.Set("uid", uid)
 	dto.Dashboard.UID = uid
 	// strip nulls...

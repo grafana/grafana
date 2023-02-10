@@ -19,7 +19,7 @@ import (
 	"k8s.io/client-go/dynamic"
 )
 
-// This makes an consistent mapping between Grafana UIDs and k8s compatible names
+// This makes a consistent mapping between Grafana UIDs and k8s compatible names
 func GrafanaUIDToK8sName(uid string) string {
 	h := sha256.New()
 	_, _ = h.Write([]byte(uid))
