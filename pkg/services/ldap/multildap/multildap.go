@@ -54,13 +54,15 @@ type IMultiLDAP interface {
 // MultiLDAP is basic struct of LDAP authorization
 type MultiLDAP struct {
 	configs []*ldap.ServerConfig
+	cfg     *setting.Cfg
 	log     log.Logger
 }
 
 // New creates the new LDAP auth
-func New(configs []*ldap.ServerConfig, _ *setting.Cfg) IMultiLDAP {
+func New(configs []*ldap.ServerConfig, cfg *setting.Cfg) IMultiLDAP {
 	return &MultiLDAP{
 		configs: configs,
+		cfg:     cfg,
 		log:     log.New("ldap"),
 	}
 }
@@ -78,7 +80,7 @@ func (multiples *MultiLDAP) Ping() ([]*ServerStatus, error) {
 		status.Host = config.Host
 		status.Port = config.Port
 
-		server := newLDAP(config)
+		server := newLDAP(config, multiples.cfg)
 		err := server.Dial()
 
 		if err == nil {
@@ -106,7 +108,7 @@ func (multiples *MultiLDAP) Login(query *login.LoginUserQuery) (
 	ldapSilentErrors := []error{}
 
 	for index, config := range multiples.configs {
-		server := newLDAP(config)
+		server := newLDAP(config, multiples.cfg)
 
 		if err := server.Dial(); err != nil {
 			logDialFailure(err, config)
@@ -164,7 +166,7 @@ func (multiples *MultiLDAP) User(login string) (
 
 	search := []string{login}
 	for index, config := range multiples.configs {
-		server := newLDAP(config)
+		server := newLDAP(config, multiples.cfg)
 
 		if err := server.Dial(); err != nil {
 			logDialFailure(err, config)
@@ -207,7 +209,7 @@ func (multiples *MultiLDAP) Users(logins []string) (
 	}
 
 	for index, config := range multiples.configs {
-		server := newLDAP(config)
+		server := newLDAP(config, multiples.cfg)
 
 		if err := server.Dial(); err != nil {
 			logDialFailure(err, config)

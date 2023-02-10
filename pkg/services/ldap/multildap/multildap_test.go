@@ -512,7 +512,7 @@ func (mock *mockLDAP) Bind() error {
 func setup() *mockLDAP {
 	mock := &mockLDAP{}
 
-	newLDAP = func(config *ldap.ServerConfig) ldap.IServer {
+	newLDAP = func(config *ldap.ServerConfig, cfg *setting.Cfg) ldap.IServer {
 		return mock
 	}
 

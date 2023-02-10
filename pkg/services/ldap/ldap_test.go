@@ -18,7 +18,7 @@ func TestNew(t *testing.T) {
 	result := New(&ServerConfig{
 		Attr:          AttributeMap{},
 		SearchBaseDNs: []string{"BaseDNHere"},
-	})
+	}, &setting.Cfg{})
 
 	assert.Implements(t, (*IServer)(nil), result)
 }

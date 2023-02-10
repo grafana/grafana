@@ -84,9 +84,10 @@ var (
 )
 
 // New creates the new LDAP connection
-func New(config *ServerConfig) IServer {
+func New(config *ServerConfig, cfg *setting.Cfg) IServer {
 	return &Server{
 		Config: config,
+		cfg:    cfg,
 		log:    log.New("ldap"),
 	}
 }
