@@ -70,7 +70,6 @@ func (c *Controller) OnAdd(ctx context.Context, obj any) {
 		c.log.Error("orig.SaveDashboard failed", err)
 		return
 	}
-
 }
 
 func (c *Controller) OnUpdate(ctx context.Context, oldObj, newObj any) {
@@ -85,10 +84,21 @@ func (c *Controller) OnUpdate(ctx context.Context, oldObj, newObj any) {
 		c.log.Error("dashboard update failed", "err", err)
 	}
 
-	if existing, err := c.dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{UID: dto.Dashboard.UID, OrgID: dto.OrgID}); err == nil && existing.Version >= dto.Dashboard.Version {
-		c.log.Error("dashboard version already exists, skipping")
+	existing, err := c.dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{
+		UID:   dto.Dashboard.UID,
+		OrgID: dto.OrgID,
+	})
+	if err != nil {
+		c.log.Error("get existing dashboard failed", "err", err)
+	}
+	rv := existing.Data.Get("resourceVersion").MustString()
+	if rv == dash.ResourceVersion {
+		c.log.Error("resourceVersion is already saved", "resourceVersion", rv)
 		return
 	}
+
+	// Always overwrite
+	dto.Overwrite = true
 
 	signedInUser, err := c.getSignedInUser(ctx, dto.OrgID, dto.Dashboard.UpdatedBy)
 	if err != nil {

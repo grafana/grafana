@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/kindsys/k8ssys"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -26,22 +25,6 @@ func GrafanaUIDToK8sName(uid string) string {
 	_, _ = h.Write([]byte(uid))
 	bs := h.Sum(nil)
 	return fmt.Sprintf("g%x", bs[:12])
-}
-
-// FIXME this shouldnt need to exist. use a uuidv4 and do some sort of mapping
-// generate a unique id in k8s
-func getUnusedGrafanaUID(ctx context.Context, resourceClient dynamic.ResourceInterface) (string, error) {
-	var err error
-	isInUse := false
-	for i := 0; i < 3; i++ {
-		uid := util.GenerateShortUID()
-		name := GrafanaUIDToK8sName(uid)
-		isInUse, err = isK8sNameInUse(ctx, resourceClient, name)
-		if err == nil && !isInUse {
-			return uid, nil
-		}
-	}
-	return "", fmt.Errorf("unable to find unique grafana UID: %w", err)
 }
 
 // Gets resource version tells us whether there was an error or not found
@@ -57,20 +40,6 @@ func getResourceVersion(ctx context.Context, resourceClient dynamic.ResourceInte
 	}
 
 	return "", false, err
-}
-
-// tells us whether uid exists in k8s
-func isK8sNameInUse(ctx context.Context, resourceClient dynamic.ResourceInterface, name string) (bool, error) {
-	_, err := resourceClient.Get(ctx, name, metav1.GetOptions{})
-	if err == nil {
-		return true, nil
-	}
-
-	if err != nil && strings.Contains(err.Error(), "not found") {
-		return false, nil
-	}
-
-	return false, err
 }
 
 func stripNulls(j *simplejson.Json) {
@@ -98,7 +67,6 @@ func annotationsFromDashboardDTO(dto *dashboards.SaveDashboardDTO) map[string]st
 		"version":   strconv.FormatInt(int64(dto.Dashboard.Version), 10),
 		"message":   dto.Message,
 		"orgID":     strconv.FormatInt(dto.OrgID, 10),
-		"overwrite": strconv.FormatBool(dto.Overwrite),
 		"updatedBy": strconv.FormatInt(dto.Dashboard.UpdatedBy, 10),
 		"updatedAt": strconv.FormatInt(dto.Dashboard.Updated.UnixNano(), 10),
 		"createdBy": strconv.FormatInt(dto.Dashboard.CreatedBy, 10),
@@ -139,6 +107,7 @@ func k8sDashboardToDashboardDTO(dash *k8ssys.Base[dashboard.Dashboard]) (*dashbo
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert dashboard spec to simplejson %w", err)
 	}
+	data.Set("resourceVersion", dash.ResourceVersion)
 	dto := dashboards.SaveDashboardDTO{
 		Dashboard: &dashboards.Dashboard{
 			FolderID: 0,
@@ -184,13 +153,6 @@ func parseAnnotations(dash *k8ssys.Base[dashboard.Dashboard], dto dashboards.Sav
 		orgID, err := strconv.ParseInt(v, 10, 64)
 		if err == nil {
 			dto.OrgID = orgID
-		}
-	}
-
-	if v, ok := a["overwrite"]; ok {
-		overwrite, err := strconv.ParseBool(v)
-		if err == nil {
-			dto.Overwrite = overwrite
 		}
 	}
 
