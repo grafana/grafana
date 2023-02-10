@@ -21,7 +21,7 @@ import { Dashboard } from '@grafana/schema';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
-import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
+import { sortedDeepCloneWithoutJSONNulls } from 'app/core/utils/object';
 import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
 import { GetVariables, getVariablesByKey } from 'app/features/variables/state/selectors';
@@ -242,7 +242,7 @@ export class DashboardModel implements TimeModel {
     copy.panels = this.getPanelSaveModels();
 
     //  sort by keys
-    copy = sortedDeepCloneWithoutNulls(copy);
+    copy = sortedDeepCloneWithoutJSONNulls(copy);
     copy.getVariables = () => copy.templating.list;
 
     return copy;

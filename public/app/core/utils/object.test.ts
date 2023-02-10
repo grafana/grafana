@@ -1,4 +1,4 @@
-import { sortedDeepCloneWithoutNulls } from './object';
+import { sortedDeepCloneWithoutJSONNulls } from './object';
 
 describe('objects', () => {
   const value = {
@@ -9,11 +9,12 @@ describe('objects', () => {
       arr: [null, 1, 'hello'],
     },
     bar: undefined,
+    baz: -Infinity,
     simple: 'A',
   };
 
   it('returns a clean copy', () => {
-    const copy = sortedDeepCloneWithoutNulls(value);
+    const copy = sortedDeepCloneWithoutJSONNulls(value);
     expect(copy).toMatchObject({
       world: {
         deeper: 10,
