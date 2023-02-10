@@ -142,16 +142,6 @@ export const EmailSharingConfiguration = () => {
                       >
                         Revoke
                       </Button>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        fill="text"
-                        aria-label="Resend"
-                        title="Resend"
-                        onClick={() => {}}
-                      >
-                        Resend
-                      </Button>
                     </ButtonGroup>
                   </td>
                 </tr>
