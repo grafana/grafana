@@ -66,7 +66,7 @@ func TestBacktesting(t *testing.T) {
 			UserID: userId,
 			OrgID:  1,
 		}
-		err := env.HTTPServer.DataSourcesService.AddDataSource(context.Background(), dsCmd)
+		_, err := env.HTTPServer.DataSourcesService.AddDataSource(context.Background(), dsCmd)
 		require.NoError(t, err)
 		break
 	}

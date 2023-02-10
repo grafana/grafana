@@ -302,17 +302,17 @@ func newTestScenario(t *testing.T, name string, opts []testScenarioOption, callb
 	tsCtx.modifyIncomingRequest = in.modifyIncomingRequest
 	tsCtx.testEnv.OAuthTokenService.Token = in.token
 
-	err = testEnv.HTTPServer.DataSourcesService.AddDataSource(ctx, cmd)
+	_, err = testEnv.HTTPServer.DataSourcesService.AddDataSource(ctx, cmd)
 	require.NoError(t, err)
 
 	getDataSourceQuery := &datasources.GetDataSourceQuery{
 		OrgID: 1,
 		UID:   tsCtx.uid,
 	}
-	err = testEnv.HTTPServer.DataSourcesService.GetDataSource(ctx, getDataSourceQuery)
+	dataSource, err := testEnv.HTTPServer.DataSourcesService.GetDataSource(ctx, getDataSourceQuery)
 	require.NoError(t, err)
 
-	rt, err := testEnv.HTTPServer.DataSourcesService.GetHTTPTransport(ctx, getDataSourceQuery.Result, testEnv.HTTPClientProvider)
+	rt, err := testEnv.HTTPServer.DataSourcesService.GetHTTPTransport(ctx, dataSource, testEnv.HTTPClientProvider)
 	require.NoError(t, err)
 
 	tsCtx.rt = rt

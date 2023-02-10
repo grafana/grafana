@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
@@ -58,6 +59,7 @@ func setupAPITest(t *testing.T, opts ...func(a *Service)) (*Service, *webtest.Se
 	t.Helper()
 	router := routing.NewRouteRegister()
 	cfg := setting.NewCfg()
+	cfg.LDAPEnabled = true
 
 	a := ProvideService(cfg,
 		router,
@@ -68,6 +70,7 @@ func setupAPITest(t *testing.T, opts ...func(a *Service)) (*Service, *webtest.Se
 		&logintest.LoginServiceFake{},
 		&orgtest.FakeOrgService{},
 		authtest.NewFakeUserAuthTokenService(),
+		supportbundlestest.NewFakeBundleService(),
 	)
 
 	for _, o := range opts {
@@ -80,9 +83,6 @@ func setupAPITest(t *testing.T, opts ...func(a *Service)) (*Service, *webtest.Se
 }
 
 func TestGetUserFromLDAPAPIEndpoint_UserNotFound(t *testing.T) {
-	setting.LDAPEnabled = true
-	defer func() { setting.LDAPEnabled = false }()
-
 	getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 		return &ldap.Config{}, nil
 	}
@@ -116,9 +116,6 @@ func TestGetUserFromLDAPAPIEndpoint_UserNotFound(t *testing.T) {
 }
 
 func TestGetUserFromLDAPAPIEndpoint_OrgNotfound(t *testing.T) {
-	setting.LDAPEnabled = true
-	defer func() { setting.LDAPEnabled = false }()
-
 	isAdmin := true
 	userSearchResult := &login.ExternalUserInfo{
 		Name:           "John Doe",
@@ -193,9 +190,6 @@ func TestGetUserFromLDAPAPIEndpoint_OrgNotfound(t *testing.T) {
 }
 
 func TestGetUserFromLDAPAPIEndpoint(t *testing.T) {
-	setting.LDAPEnabled = true
-	defer func() { setting.LDAPEnabled = false }()
-
 	isAdmin := true
 	userSearchResult := &login.ExternalUserInfo{
 		Name:           "John Doe",
@@ -290,9 +284,6 @@ func TestGetUserFromLDAPAPIEndpoint(t *testing.T) {
 }
 
 func TestGetUserFromLDAPAPIEndpoint_WithTeamHandler(t *testing.T) {
-	setting.LDAPEnabled = true
-	defer func() { setting.LDAPEnabled = false }()
-
 	isAdmin := true
 	userSearchResult := &login.ExternalUserInfo{
 		Name:           "John Doe",
@@ -381,9 +372,6 @@ func TestGetUserFromLDAPAPIEndpoint_WithTeamHandler(t *testing.T) {
 }
 
 func TestGetLDAPStatusAPIEndpoint(t *testing.T) {
-	setting.LDAPEnabled = true
-	defer func() { setting.LDAPEnabled = false }()
-
 	pingResult = []*multildap.ServerStatus{
 		{Host: "10.0.0.3", Port: 361, Available: true, Error: nil},
 		{Host: "10.0.0.3", Port: 362, Available: true, Error: nil},
@@ -427,9 +415,6 @@ func TestGetLDAPStatusAPIEndpoint(t *testing.T) {
 }
 
 func TestPostSyncUserWithLDAPAPIEndpoint_Success(t *testing.T) {
-	setting.LDAPEnabled = true
-	defer func() { setting.LDAPEnabled = false }()
-
 	userServiceMock := usertest.NewUserServiceFake()
 	userServiceMock.ExpectedUser = &user.User{Login: "ldap-daniel", ID: 34}
 
@@ -471,8 +456,6 @@ func TestPostSyncUserWithLDAPAPIEndpoint_Success(t *testing.T) {
 }
 
 func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotFound(t *testing.T) {
-	setting.LDAPEnabled = true
-	defer func() { setting.LDAPEnabled = false }()
 	userServiceMock := usertest.NewUserServiceFake()
 	userServiceMock.ExpectedError = user.ErrUserNotFound
 
@@ -512,9 +495,6 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotFound(t *testing.T) {
 }
 
 func TestPostSyncUserWithLDAPAPIEndpoint_WhenGrafanaAdmin(t *testing.T) {
-	setting.LDAPEnabled = true
-	defer func() { setting.LDAPEnabled = false }()
-
 	userServiceMock := usertest.NewUserServiceFake()
 	userServiceMock.ExpectedUser = &user.User{Login: "ldap-daniel", ID: 34}
 
@@ -553,9 +533,6 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenGrafanaAdmin(t *testing.T) {
 }
 
 func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotInLDAP(t *testing.T) {
-	setting.LDAPEnabled = true
-	defer func() { setting.LDAPEnabled = false }()
-
 	userServiceMock := usertest.NewUserServiceFake()
 	userServiceMock.ExpectedUser = &user.User{Login: "ldap-daniel", ID: 34}
 
@@ -596,8 +573,6 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotInLDAP(t *testing.T) {
 }
 
 func TestLDAP_AccessControl(t *testing.T) {
-	setting.LDAPEnabled = true
-
 	f, errC := os.CreateTemp("", "ldap.toml")
 	require.NoError(t, errC)
 
@@ -609,15 +584,10 @@ search_filter = "(cn=%s)"
 search_base_dns = ["dc=grafana,dc=org"]`)
 	require.NoError(t, errF)
 
-	setting.LDAPConfigFile = f.Name()
+	ldapConfigFile := f.Name()
 
 	errF = f.Close()
 	require.NoError(t, errF)
-
-	defer func() {
-		setting.LDAPEnabled = false
-		setting.LDAPConfigFile = ""
-	}()
 
 	getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 		return &ldap.Config{}, nil
@@ -717,6 +687,7 @@ search_base_dns = ["dc=grafana,dc=org"]`)
 		t.Run(tt.desc, func(t *testing.T) {
 			_, server := setupAPITest(t, func(a *Service) {
 				a.userService = &usertest.FakeUserService{ExpectedUser: &user.User{Login: "ldap-daniel", ID: 1}}
+				a.cfg.LDAPConfigFilePath = ldapConfigFile
 			})
 			// Add minimal setup to pass handler
 			res, err := server.Send(

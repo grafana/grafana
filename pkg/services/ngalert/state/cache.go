@@ -2,7 +2,6 @@ package state
 
 import (
 	"context"
-	"fmt"
 	"math"
 	"net/url"
 	"strings"
@@ -282,8 +281,7 @@ func (c *cache) recordMetrics(metrics *metrics.State) {
 		eval.Error:    0,
 	}
 
-	for org, orgMap := range c.states {
-		metrics.GroupRules.WithLabelValues(fmt.Sprint(org)).Set(float64(len(orgMap)))
+	for _, orgMap := range c.states {
 		for _, rule := range orgMap {
 			for _, state := range rule.states {
 				n := ct[state.State]
