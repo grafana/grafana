@@ -133,7 +133,7 @@ func (hs *HTTPServer) makePluginResourceRequest(w http.ResponseWriter, req *http
 		wg.Done()
 	}()
 
-	if err := hs.pluginClient.CallResource(req.Context(), crReq, stream); err != nil {
+	if err := hs.PluginClient.CallResource(req.Context(), crReq, stream); err != nil {
 		return err
 	}
 

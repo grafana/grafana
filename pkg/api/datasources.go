@@ -830,7 +830,7 @@ func (hs *HTTPServer) checkDatasourceHealth(c *contextmodel.ReqContext, ds *data
 		return response.Error(http.StatusForbidden, "Access denied", err)
 	}
 
-	resp, err := hs.pluginClient.CheckHealth(c.Req.Context(), req)
+	resp, err := hs.PluginClient.CheckHealth(c.Req.Context(), req)
 	if err != nil {
 		return translatePluginRequestErrorToAPIError(err)
 	}

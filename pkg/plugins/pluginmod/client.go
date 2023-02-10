@@ -42,56 +42,61 @@ func (c *Client) stop(err error) error {
 }
 
 func (c *Client) Add(ctx context.Context, pluginID, version string, opts plugins.CompatOpts) error {
-	//TODO implement me
 	panic("implement me")
 }
 
 func (c *Client) Remove(ctx context.Context, pluginID string) error {
-	//TODO implement me
 	panic("implement me")
 }
 
 func (c *Client) Plugin(ctx context.Context, pluginID string) (plugins.PluginDTO, bool) {
-	//TODO implement me
 	panic("implement me")
 }
 
 func (c *Client) Plugins(ctx context.Context, pluginTypes ...plugins.Type) []plugins.PluginDTO {
-	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Client) Renderer(ctx context.Context) *plugins.Plugin {
+	panic("implement me")
+}
+
+func (c *Client) SecretsManager(ctx context.Context) *plugins.Plugin {
+	panic("implement me")
+}
+
+func (c *Client) Routes() []*plugins.StaticRoute {
+	panic("implement me")
+}
+
+func (c *Client) PluginErrors() []*plugins.Error {
 	panic("implement me")
 }
 
 func (c *Client) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	//TODO implement me
 	panic("implement me")
 }
 
 func (c *Client) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	//TODO implement me
 	panic("implement me")
 }
 
 func (c *Client) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	//TODO implement me
 	panic("implement me")
 }
 
 func (c *Client) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
-	//TODO implement me
 	panic("implement me")
 }
 
 func (c *Client) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
-	//TODO implement me
 	panic("implement me")
 }
 
 func (c *Client) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
-	//TODO implement me
 	panic("implement me")
 }
 
 func (c *Client) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
-	//TODO implement me
 	panic("implement me")
 }

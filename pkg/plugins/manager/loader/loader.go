@@ -54,9 +54,9 @@ type Loader struct {
 }
 
 func ProvideService(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
-	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
+	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider, processManager process.Service,
 	roleRegistry plugins.RoleRegistry, pluginsCDNService *pluginscdn.Service, assetPath *assetpath.Service) *Loader {
-	return New(cfg, license, authorizer, pluginRegistry, backendProvider, process.NewManager(pluginRegistry),
+	return New(cfg, license, authorizer, pluginRegistry, backendProvider, processManager,
 		storage.FileSystem(logger.NewLogger("loader.fs"), cfg.PluginsPath), roleRegistry, pluginsCDNService, assetPath)
 }
 

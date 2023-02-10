@@ -372,7 +372,7 @@ func TestMakePluginResourceRequest(t *testing.T) {
 	hs := HTTPServer{
 		Cfg:          setting.NewCfg(),
 		log:          log.New(),
-		pluginClient: &fakePluginClient{},
+		PluginClient: &fakePluginClient{},
 	}
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 
@@ -395,7 +395,7 @@ func TestMakePluginResourceRequestSetCookieNotPresent(t *testing.T) {
 	hs := HTTPServer{
 		Cfg: setting.NewCfg(),
 		log: log.New(),
-		pluginClient: &fakePluginClient{
+		PluginClient: &fakePluginClient{
 			headers: map[string][]string{"Set-Cookie": {"monster"}},
 		},
 	}
@@ -423,7 +423,7 @@ func TestMakePluginResourceRequestContentTypeUnique(t *testing.T) {
 			hs := HTTPServer{
 				Cfg: setting.NewCfg(),
 				log: log.New(),
-				pluginClient: &fakePluginClient{
+				PluginClient: &fakePluginClient{
 					headers: map[string][]string{
 						// This should be "overwritten" by the HTTP server
 						ctHeader: {"application/json"},
@@ -457,7 +457,7 @@ func TestMakePluginResourceRequestContentTypeEmpty(t *testing.T) {
 	hs := HTTPServer{
 		Cfg:          setting.NewCfg(),
 		log:          log.New(),
-		pluginClient: pluginClient,
+		PluginClient: pluginClient,
 	}
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	resp := httptest.NewRecorder()

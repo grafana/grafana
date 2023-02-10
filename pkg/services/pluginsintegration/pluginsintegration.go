@@ -7,14 +7,9 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	"github.com/grafana/grafana/pkg/plugins/config"
-	"github.com/grafana/grafana/pkg/plugins/licensing"
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader"
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
-	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
-	"github.com/grafana/grafana/pkg/plugins/manager/store"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/plugins/pluginmod"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
@@ -26,23 +21,14 @@ import (
 // WireSet provides a wire.ProviderSet of plugin providers.
 var WireSet = wire.NewSet(
 	config.ProvideConfig,
-	store.ProvideService,
-	wire.Bind(new(plugins.RendererManager), new(*store.Service)),
-	wire.Bind(new(plugins.SecretsPluginManager), new(*store.Service)),
-	wire.Bind(new(plugins.StaticRouteResolver), new(*store.Service)),
-	process.ProvideService,
-	wire.Bind(new(process.Service), new(*process.Manager)),
 	coreplugin.ProvideCoreRegistry,
-	pluginscdn.ProvideService,
-	assetpath.ProvideService,
-	loader.ProvideService,
-	wire.Bind(new(loader.Service), new(*loader.Loader)),
-	wire.Bind(new(plugins.ErrorResolver), new(*loader.Loader)),
-	registry.ProvideService,
-	wire.Bind(new(registry.Service), new(*registry.InMemory)),
 	plugincontext.ProvideService,
-	licensing.ProvideLicensing,
-	wire.Bind(new(plugins.Licensing), new(*licensing.Service)),
+	pluginscdn.ProvideService,
+
+	wire.Bind(new(plugins.RendererManager), new(*pluginmod.PluginsModule)),
+	wire.Bind(new(plugins.SecretsPluginManager), new(*pluginmod.PluginsModule)),
+	wire.Bind(new(plugins.StaticRouteResolver), new(*pluginmod.PluginsModule)),
+	wire.Bind(new(plugins.ErrorResolver), new(*pluginmod.PluginsModule)),
 	wire.Bind(new(plugins.Client), new(*pluginmod.PluginsModule)),
 	wire.Bind(new(plugins.Store), new(*pluginmod.PluginsModule)),
 	wire.Bind(new(plugins.Installer), new(*pluginmod.PluginsModule)),

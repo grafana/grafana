@@ -24,7 +24,7 @@ func TestPluginMetricsEndpoint(t *testing.T) {
 				MetricsEndpointBasicAuthUsername: "",
 				MetricsEndpointBasicAuthPassword: "",
 			},
-			pluginClient: &fakePluginClientMetrics{
+			PluginClient: &fakePluginClientMetrics{
 				store: map[string][]byte{
 					"test-plugin": []byte("http_errors=2"),
 				},
@@ -78,7 +78,7 @@ func TestPluginMetricsEndpoint(t *testing.T) {
 				MetricsEndpointBasicAuthUsername: "user",
 				MetricsEndpointBasicAuthPassword: "pwd",
 			},
-			pluginClient: &fakePluginClientMetrics{
+			PluginClient: &fakePluginClientMetrics{
 				store: map[string][]byte{
 					"test-plugin": []byte("http_errors=2"),
 				},
@@ -121,7 +121,7 @@ func TestPluginMetricsEndpoint(t *testing.T) {
 			Cfg: &setting.Cfg{
 				MetricsEndpointEnabled: false,
 			},
-			pluginClient: &fakePluginClientMetrics{
+			PluginClient: &fakePluginClientMetrics{
 				store: map[string][]byte{
 					"test-plugin": []byte("http_errors=2"),
 				},

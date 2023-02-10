@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
+	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/store"
@@ -58,8 +59,9 @@ func TestCallResource(t *testing.T) {
 	pCfg := config.ProvideConfig(setting.ProvideProvider(cfg), cfg)
 	reg := registry.ProvideService()
 	cdn := pluginscdn.ProvideService(pCfg)
-	l := loader.ProvideService(pCfg, fakes.NewFakeLicensingService(), signature.NewUnsignedAuthorizer(pCfg),
-		reg, provider.ProvideService(coreRegistry), fakes.NewFakeRoleRegistry(), cdn, assetpath.ProvideService(cdn))
+	l := loader.ProvideService(pCfg, fakes.NewFakeLicensingService(), signature.NewUnsignedAuthorizer(pCfg), reg,
+		provider.ProvideService(coreRegistry), process.ProvideService(reg), fakes.NewFakeRoleRegistry(), cdn,
+		assetpath.ProvideService(cdn))
 	ps := store.ProvideService(cfg, pCfg, reg, l)
 	err = ps.Run(context.Background())
 	require.NoError(t, err)
@@ -71,7 +73,7 @@ func TestCallResource(t *testing.T) {
 		hs.PluginContextProvider = pcp
 		hs.QuotaService = quotatest.New(false, nil)
 		hs.pluginStore = ps
-		hs.pluginClient = pluginClient.ProvideService(reg, pCfg)
+		hs.PluginClient = pluginClient.ProvideService(reg, pCfg)
 	})
 
 	t.Run("Test successful response is received for valid request", func(t *testing.T) {
@@ -96,7 +98,7 @@ func TestCallResource(t *testing.T) {
 		require.Equal(t, 200, resp.StatusCode)
 	})
 
-	pc, err := pluginClient.NewDecorator(&fakes.FakePluginClient{
+	pc, err := pluginClient.NewDecorator(&fakes.FakePluginBackend{
 		CallResourceHandlerFunc: backend.CallResourceHandlerFunc(func(ctx context.Context,
 			req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 			return errors.New("something went wrong")
@@ -109,7 +111,7 @@ func TestCallResource(t *testing.T) {
 		hs.PluginContextProvider = pcp
 		hs.QuotaService = quotatest.New(false, nil)
 		hs.pluginStore = ps
-		hs.pluginClient = pc
+		hs.PluginClient = pc
 	})
 
 	t.Run("Test error is properly propagated to API response", func(t *testing.T) {

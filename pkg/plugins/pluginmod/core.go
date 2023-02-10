@@ -2,7 +2,6 @@ package pluginmod
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
@@ -18,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
+	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/store"
@@ -35,15 +35,18 @@ type core struct {
 	i *manager.PluginInstaller
 	s *store.Service
 	c *client.Service
+	l *loader.Loader
+	p *process.Manager
 }
 
 func NewCore(cfg *setting.Cfg, coreRegistry *coreplugin.Registry) *core {
 	pCfg := config.ProvideConfig(setting.ProvideProvider(cfg), cfg)
 	reg := registry.ProvideService()
 	cdn := pluginscdn.ProvideService(pCfg)
+	proc := process.NewManager(reg)
 	lic := plicensing.ProvideLicensing(cfg, &licensing.OSSLicensingService{Cfg: cfg})
 	l := loader.ProvideService(pCfg, lic, signature.NewUnsignedAuthorizer(pCfg),
-		reg, provider.ProvideService(coreRegistry), fakes.NewFakeRoleRegistry(),
+		reg, provider.ProvideService(coreRegistry), proc, fakes.NewFakeRoleRegistry(),
 		cdn, assetpath.ProvideService(cdn))
 	r := repo.ProvideService()
 
@@ -51,19 +54,18 @@ func NewCore(cfg *setting.Cfg, coreRegistry *coreplugin.Registry) *core {
 		i: manager.ProvideInstaller(pCfg, reg, l, r),
 		s: store.ProvideService(cfg, pCfg, reg, l),
 		c: client.ProvideService(reg, pCfg),
+		l: l,
+		p: proc,
 	}
 	c.BasicService = services.NewBasicService(c.start, c.run, c.stop)
 	return c
 }
 
 func (c *core) start(ctx context.Context) error {
-	fmt.Println("Starting local...")
-
 	return nil
 }
 
 func (c *core) run(ctx context.Context) error {
-	fmt.Println("Running local...")
 	err := c.s.Run(ctx)
 	if err != nil {
 		return err
@@ -73,7 +75,10 @@ func (c *core) run(ctx context.Context) error {
 }
 
 func (c *core) stop(failure error) error {
-	fmt.Println("Stopping local...")
+	err := c.p.Shutdown(context.Background())
+	if err != nil {
+		return err
+	}
 
 	return failure
 }
@@ -92,6 +97,22 @@ func (c *core) Plugin(ctx context.Context, pluginID string) (plugins.PluginDTO, 
 
 func (c *core) Plugins(ctx context.Context, pluginTypes ...plugins.Type) []plugins.PluginDTO {
 	return c.s.Plugins(ctx, pluginTypes...)
+}
+
+func (c *core) Renderer(ctx context.Context) *plugins.Plugin {
+	return c.s.Renderer(ctx)
+}
+
+func (c *core) SecretsManager(ctx context.Context) *plugins.Plugin {
+	return c.s.SecretsManager(ctx)
+}
+
+func (c *core) Routes() []*plugins.StaticRoute {
+	return c.s.Routes()
+}
+
+func (c *core) PluginErrors() []*plugins.Error {
+	return c.l.PluginErrors()
 }
 
 func (c *core) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {

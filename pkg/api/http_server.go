@@ -137,7 +137,7 @@ type HTTPServer struct {
 	DataProxy                    *datasourceproxy.DataSourceProxyService
 	PluginRequestValidator       validations.PluginRequestValidator
 	pluginInstaller              plugins.Installer
-	pluginClient                 plugins.Client
+	PluginClient                 plugins.Client
 	pluginStore                  plugins.Store
 	pluginDashboardService       plugindashboards.Service
 	pluginStaticRouteResolver    plugins.StaticRouteResolver
@@ -277,7 +277,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		SQLStore:                     sqlStore,
 		AlertEngine:                  alertEngine,
 		PluginRequestValidator:       pluginRequestValidator,
-		pluginClient:                 pluginClient,
+		PluginClient:                 pluginClient,
 		pluginStore:                  pluginStore,
 		pluginInstaller:              pluginInstaller,
 		pluginStaticRouteResolver:    pluginStaticRouteResolver,

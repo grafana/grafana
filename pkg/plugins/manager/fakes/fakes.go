@@ -15,6 +15,34 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/storage"
 )
 
+type FakePluginClient struct {
+	backend.QueryDataHandlerFunc
+	backend.CheckHealthHandlerFunc
+	backend.StreamHandler
+	backend.CallResourceHandlerFunc
+	backend.CollectMetricsHandlerFunc
+}
+
+type FakePluginStore struct {
+	GetFunc func(ctx context.Context, pluginID string) (plugins.PluginDTO, bool)
+	// Plugins returns plugins by their requested type.
+	ListFunc func(ctx context.Context, pluginTypes ...plugins.Type) []plugins.PluginDTO
+}
+
+func (s *FakePluginStore) Plugin(ctx context.Context, pluginID string) (plugins.PluginDTO, bool) {
+	if s.GetFunc != nil {
+		return s.GetFunc(ctx, pluginID)
+	}
+	return plugins.PluginDTO{}, false
+}
+
+func (s *FakePluginStore) Plugins(ctx context.Context, pluginTypes ...plugins.Type) []plugins.PluginDTO {
+	if s.ListFunc != nil {
+		return s.ListFunc(ctx, pluginTypes...)
+	}
+	return nil
+}
+
 type FakePluginInstaller struct {
 	AddFunc func(ctx context.Context, pluginID, version string, opts plugins.CompatOpts) error
 	// Remove removes a plugin from the store.
@@ -54,7 +82,7 @@ func (l *FakeLoader) Unload(ctx context.Context, pluginID string) error {
 	return nil
 }
 
-type FakePluginClient struct {
+type FakePluginBackend struct {
 	ID      string
 	Managed bool
 	Log     log.Logger
@@ -72,15 +100,15 @@ type FakePluginClient struct {
 	backendplugin.Plugin
 }
 
-func (pc *FakePluginClient) PluginID() string {
+func (pc *FakePluginBackend) PluginID() string {
 	return pc.ID
 }
 
-func (pc *FakePluginClient) Logger() log.Logger {
+func (pc *FakePluginBackend) Logger() log.Logger {
 	return pc.Log
 }
 
-func (pc *FakePluginClient) Start(_ context.Context) error {
+func (pc *FakePluginBackend) Start(_ context.Context) error {
 	pc.mutex.Lock()
 	defer pc.mutex.Unlock()
 	pc.exited = false
@@ -88,7 +116,7 @@ func (pc *FakePluginClient) Start(_ context.Context) error {
 	return nil
 }
 
-func (pc *FakePluginClient) Stop(_ context.Context) error {
+func (pc *FakePluginBackend) Stop(_ context.Context) error {
 	pc.mutex.Lock()
 	defer pc.mutex.Unlock()
 	pc.stopCount++
@@ -96,30 +124,30 @@ func (pc *FakePluginClient) Stop(_ context.Context) error {
 	return nil
 }
 
-func (pc *FakePluginClient) IsManaged() bool {
+func (pc *FakePluginBackend) IsManaged() bool {
 	return pc.Managed
 }
 
-func (pc *FakePluginClient) Exited() bool {
+func (pc *FakePluginBackend) Exited() bool {
 	pc.mutex.RLock()
 	defer pc.mutex.RUnlock()
 	return pc.exited
 }
 
-func (pc *FakePluginClient) Decommission() error {
+func (pc *FakePluginBackend) Decommission() error {
 	pc.mutex.Lock()
 	defer pc.mutex.Unlock()
 	pc.decommissioned = true
 	return nil
 }
 
-func (pc *FakePluginClient) IsDecommissioned() bool {
+func (pc *FakePluginBackend) IsDecommissioned() bool {
 	pc.mutex.RLock()
 	defer pc.mutex.RUnlock()
 	return pc.decommissioned
 }
 
-func (pc *FakePluginClient) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
+func (pc *FakePluginBackend) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
 	if pc.CollectMetricsHandlerFunc != nil {
 		return pc.CollectMetricsHandlerFunc(ctx, req)
 	}
@@ -127,7 +155,7 @@ func (pc *FakePluginClient) CollectMetrics(ctx context.Context, req *backend.Col
 	return nil, backendplugin.ErrMethodNotImplemented
 }
 
-func (pc *FakePluginClient) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+func (pc *FakePluginBackend) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	if pc.CheckHealthHandlerFunc != nil {
 		return pc.CheckHealthHandlerFunc(ctx, req)
 	}
@@ -135,7 +163,7 @@ func (pc *FakePluginClient) CheckHealth(ctx context.Context, req *backend.CheckH
 	return nil, backendplugin.ErrMethodNotImplemented
 }
 
-func (pc *FakePluginClient) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (pc *FakePluginBackend) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	if pc.QueryDataHandlerFunc != nil {
 		return pc.QueryDataHandlerFunc(ctx, req)
 	}
@@ -143,7 +171,7 @@ func (pc *FakePluginClient) QueryData(ctx context.Context, req *backend.QueryDat
 	return nil, backendplugin.ErrMethodNotImplemented
 }
 
-func (pc *FakePluginClient) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+func (pc *FakePluginBackend) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 	if pc.CallResourceHandlerFunc != nil {
 		return pc.CallResourceHandlerFunc(ctx, req, sender)
 	}
@@ -151,15 +179,15 @@ func (pc *FakePluginClient) CallResource(ctx context.Context, req *backend.CallR
 	return backendplugin.ErrMethodNotImplemented
 }
 
-func (pc *FakePluginClient) SubscribeStream(_ context.Context, _ *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+func (pc *FakePluginBackend) SubscribeStream(_ context.Context, _ *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
 	return nil, backendplugin.ErrMethodNotImplemented
 }
 
-func (pc *FakePluginClient) PublishStream(_ context.Context, _ *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+func (pc *FakePluginBackend) PublishStream(_ context.Context, _ *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
 	return nil, backendplugin.ErrMethodNotImplemented
 }
 
-func (pc *FakePluginClient) RunStream(_ context.Context, _ *backend.RunStreamRequest, _ *backend.StreamSender) error {
+func (pc *FakePluginBackend) RunStream(_ context.Context, _ *backend.RunStreamRequest, _ *backend.StreamSender) error {
 	return backendplugin.ErrMethodNotImplemented
 }
 
@@ -297,6 +325,10 @@ func (m *FakeProcessManager) Stop(ctx context.Context, pluginID string) error {
 	return nil
 }
 
+func (m *FakeProcessManager) Shutdown(_ context.Context) error {
+	return nil
+}
+
 type FakeBackendProcessProvider struct {
 	Requested map[string]int
 	Invoked   map[string]int
@@ -313,7 +345,7 @@ func (pr *FakeBackendProcessProvider) BackendFactory(_ context.Context, p *plugi
 	pr.Requested[p.ID]++
 	return func(pluginID string, _ log.Logger, _ []string) (backendplugin.Plugin, error) {
 		pr.Invoked[pluginID]++
-		return &FakePluginClient{}, nil
+		return &FakePluginBackend{}, nil
 	}
 }
 
