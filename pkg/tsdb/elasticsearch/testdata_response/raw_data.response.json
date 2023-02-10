@@ -23,6 +23,7 @@
             "_score": null,
             "_source": {
               "abc": null,
+              "is_true": true,
               "@timestamp": "2023-02-09T14:40:01.475Z",
               "line": "log text  [106619125]",
               "counter": 81,
@@ -61,6 +62,7 @@
             "_score": null,
             "_source": {
               "abc": null,
+              "is_true": false,
               "@timestamp": "2023-02-09T14:40:00.513Z",
               "line": "log text with [781660944]",
               "counter": 80,
@@ -93,6 +95,7 @@
             "_score": null,
             "_source": {
               "abc": "def",
+              "is_true": true,
               "@timestamp": "2023-02-09T14:39:59.556Z",
               "line": "log text  [894867430]",
               "counter": 79,
@@ -125,6 +128,7 @@
             "_score": null,
             "_source": {
               "abc": "def",
+              "is_true": false,
               "@timestamp": "2023-02-09T14:39:58.608Z",
               "line": "log text  [478598889]",
               "counter": 78,
@@ -163,6 +167,7 @@
             "_score": null,
             "_source": {
               "abc": "def",
+              "is_true": false,
               "@timestamp": "2023-02-09T14:39:57.665Z",
               "line": "log text  [526995818]",
               "counter": 77,
