@@ -5,10 +5,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
-func ProvideSimpleDashboardService(
+func ProvideDashboardService(
 	features featuremgmt.FeatureToggles,
-	svc dashboards.OriginalDashboardService,
-	k8sDashboards dashboards.K8sDashboardService,
+	svc *DashboardServiceImpl,
+	k8sDashboards dashboards.DashboardServiceWrapper,
 ) dashboards.DashboardService {
 	if features.IsEnabled(featuremgmt.FlagK8s) {
 		return k8sDashboards

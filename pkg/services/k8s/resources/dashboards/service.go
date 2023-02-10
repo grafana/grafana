@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/kindsys/k8ssys"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/service"
 )
 
 // NOTE this is how you reset the CRD
@@ -28,7 +29,7 @@ var _ dashboards.DashboardService = (*Service)(nil)
 
 func ProvideService(
 	dashboardResource *Resource,
-	dashboardService dashboards.OriginalDashboardService,
+	dashboardService *service.DashboardServiceImpl,
 ) *Service {
 	return &Service{
 		DashboardService:  dashboardService,

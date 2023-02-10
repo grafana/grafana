@@ -5,4 +5,4 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 )
 
-var WireSet = wire.NewSet(ProvideResource, ProvideService, ProvideController, wire.Bind(new(dashboards.K8sDashboardService), new(*Service)))
+var WireSet = wire.NewSet(ProvideResource, ProvideService, ProvideController, wire.Bind(new(dashboards.DashboardServiceWrapper), new(*Service)))

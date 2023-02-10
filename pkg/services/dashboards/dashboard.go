@@ -32,8 +32,7 @@ type DashboardService interface {
 }
 
 // TODO: ¯\_(ツ)_/¯
-type OriginalDashboardService DashboardService
-type K8sDashboardService DashboardService
+type DashboardServiceWrapper DashboardService
 
 // PluginService is a service for operating on plugin dashboards.
 type PluginService interface {

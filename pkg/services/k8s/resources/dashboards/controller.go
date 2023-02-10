@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/k8s/informer"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -22,7 +23,7 @@ type Controller struct {
 
 func ProvideController(
 	features featuremgmt.FeatureToggles,
-	dashboardService dashboards.OriginalDashboardService,
+	dashboardService *service.DashboardServiceImpl,
 	userService user.Service,
 	accessControlService accesscontrol.Service,
 	dashboardResource *Resource,
