@@ -305,6 +305,10 @@ export function requestSupportsPartitioning(queries: LokiQuery[]) {
     return false;
   }
 
+  if (queries[0].refId.includes('do-not-chunk')) {
+    return false;
+  }
+
   return true;
 }
 
