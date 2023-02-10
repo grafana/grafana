@@ -1,6 +1,5 @@
 import { AnnotationQuery, DataSourceApi, getDefaultTimeRange } from '@grafana/data';
-import { Dashboard } from '@grafana/schema';
-import { DashboardModel } from 'app/features/dashboard/state';
+import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 
 import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceConsoleOutput';
 import * as store from '../../../../store/store';
@@ -10,7 +9,7 @@ import { AnnotationQueryRunnerOptions } from './types';
 
 function getDefaultOptions(annotationQuery?: jest.Mock): AnnotationQueryRunnerOptions {
   const annotation = {} as AnnotationQuery;
-  const dashboard = new DashboardModel({} as Dashboard);
+  const dashboard = createDashboardModelFixture();
   const datasource = {
     annotationQuery: annotationQuery ?? jest.fn().mockResolvedValue([{ id: '1' }]),
   } as unknown as DataSourceApi;

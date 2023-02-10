@@ -653,7 +653,7 @@ describe('DashboardModel', () => {
       expect(saveModel.panels[1].scopedVars).toBe(undefined);
 
       model.collapseRows();
-      const savedModelWithCollapsedRows: DashboardModel = model.getSaveModelClone();
+      const savedModelWithCollapsedRows = model.getSaveModelClone();
       expect(savedModelWithCollapsedRows.panels[0].panels!.length).toBe(1);
     });
 
@@ -708,7 +708,7 @@ describe('DashboardModel', () => {
       expect(saveModel.panels.find((x) => x.type !== 'row')?.scopedVars?.app.value).toBe('se1');
 
       model.collapseRows();
-      const savedModelWithCollapsedRows: DashboardModel = model.getSaveModelClone();
+      const savedModelWithCollapsedRows = model.getSaveModelClone();
       expect(savedModelWithCollapsedRows.panels[0].panels!.length).toBe(2);
     });
   });

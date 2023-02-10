@@ -22,6 +22,7 @@ import { configureStore } from '../../../store/configureStore';
 import { Props as LazyLoaderProps } from '../dashgrid/LazyLoader';
 import { DashboardSrv, setDashboardSrv } from '../services/DashboardSrv';
 import { DashboardModel } from '../state';
+import { createDashboardModelFixture } from '../state/__fixtures__/dashboardFixtures';
 
 import { Props, UnthemedDashboardPage } from './DashboardPage';
 
@@ -87,12 +88,11 @@ function getTestDashboard(overrides?: Partial<Dashboard>, metaOverrides?: Partia
           gridPos: { x: 0, y: 0, w: 1, h: 1 },
         },
       ],
-    } as Dashboard,
+    },
     overrides
   );
 
-  const meta = Object.assign({ canSave: true, canEdit: true }, metaOverrides);
-  return new DashboardModel(data, meta);
+  return createDashboardModelFixture(data, metaOverrides);
 }
 
 function dashboardPageScenario(description: string, scenarioFn: (ctx: ScenarioContext) => void) {

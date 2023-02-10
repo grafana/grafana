@@ -11,6 +11,7 @@ import { DashboardMeta, DashboardRoutes } from 'app/types';
 import { getRouteComponentProps } from '../../../core/navigation/__mocks__/routeProps';
 import { Props as DashboardPanelProps } from '../dashgrid/DashboardPanel';
 import { DashboardModel } from '../state';
+import { createDashboardModelFixture } from '../state/__fixtures__/dashboardFixtures';
 
 import { Props, SoloPanelPage } from './SoloPanelPage';
 
@@ -48,12 +49,11 @@ function getTestDashboard(overrides?: Partial<Dashboard>, metaOverrides?: Partia
           gridPos: { x: 0, y: 0, w: 1, h: 1 },
         },
       ],
-    } as Dashboard,
+    },
     overrides
   );
 
-  const meta = Object.assign({ canSave: true, canEdit: true }, metaOverrides);
-  return new DashboardModel(data, meta);
+  return createDashboardModelFixture(data, metaOverrides);
 }
 
 function soloPanelPageScenario(description: string, scenarioFn: (ctx: ScenarioContext) => void) {

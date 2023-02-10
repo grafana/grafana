@@ -18,8 +18,8 @@ describe('FieldDisplay', () => {
       id: 'mappings', // Match field properties
       process: (value) => value,
       shouldApply: () => true,
-      override: () => null,
-      editor: () => null,
+      override: jest.fn(),
+      editor: jest.fn(),
       name: 'Value mappings',
       path: 'mappings',
     };

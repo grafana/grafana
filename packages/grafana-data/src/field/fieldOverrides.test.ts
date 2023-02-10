@@ -37,8 +37,8 @@ const property1: FieldConfigPropertyItem = {
   isCustom: true,
   process: (value) => value,
   shouldApply: () => true,
-  override: () => null,
-  editor: () => null,
+  override: jest.fn(),
+  editor: jest.fn(),
   name: 'Property 1',
 };
 
@@ -48,8 +48,8 @@ const property2: FieldConfigPropertyItem = {
   isCustom: true,
   process: (value) => value,
   shouldApply: () => true,
-  override: () => null,
-  editor: () => null,
+  override: jest.fn(),
+  editor: jest.fn(),
   name: 'Property 2',
 };
 
@@ -59,8 +59,8 @@ const property3: FieldConfigPropertyItem = {
   isCustom: true,
   process: (value) => value,
   shouldApply: () => true,
-  override: () => null,
-  editor: () => null,
+  override: jest.fn(),
+  editor: jest.fn(),
   name: 'Property 3',
 };
 
@@ -70,8 +70,8 @@ const shouldApplyFalse: FieldConfigPropertyItem = {
   isCustom: true,
   process: (value) => value,
   shouldApply: () => false,
-  override: () => null,
-  editor: () => null,
+  override: jest.fn(),
+  editor: jest.fn(),
   name: 'Should Apply False',
 };
 

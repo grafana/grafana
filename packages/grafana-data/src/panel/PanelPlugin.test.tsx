@@ -24,14 +24,14 @@ describe('PanelPlugin', () => {
             id: FieldConfigProperty.Max,
             path: 'max',
           },
-        ] as unknown as FieldConfigPropertyItem[];
+        ] as FieldConfigPropertyItem[];
       });
       standardEditorsRegistry.setInit(() => {
         return [
           {
             id: 'number',
           },
-        ] as unknown as StandardEditorsRegistryItem[];
+        ] as StandardEditorsRegistryItem[];
       });
     });
 

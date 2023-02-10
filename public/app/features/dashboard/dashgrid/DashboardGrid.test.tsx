@@ -5,6 +5,7 @@ import { Dashboard } from '@grafana/schema';
 import { DashboardMeta } from 'app/types';
 
 import { DashboardModel } from '../state';
+import { createDashboardModelFixture } from '../state/__fixtures__/dashboardFixtures';
 
 import { DashboardGrid, Props } from './DashboardGrid';
 
@@ -45,12 +46,11 @@ function getTestDashboard(overrides?: Partial<Dashboard>, metaOverrides?: Partia
           gridPos: { x: 0, y: 120, w: 25, h: 10 },
         },
       ],
-    } as Dashboard,
+    },
     overrides
   );
 
-  const meta = Object.assign({ canSave: true, canEdit: true }, metaOverrides);
-  return new DashboardModel(data, meta);
+  return createDashboardModelFixture(data, metaOverrides);
 }
 
 describe('DashboardGrid', () => {

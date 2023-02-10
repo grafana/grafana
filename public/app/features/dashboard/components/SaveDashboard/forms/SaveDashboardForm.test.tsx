@@ -34,7 +34,7 @@ const prepareDashboardMock = (
 const renderAndSubmitForm = async (dashboard: DashboardModel, submitSpy: jest.Mock) => {
   render(
     <SaveDashboardForm
-      dashboard={dashboard as DashboardModel}
+      dashboard={dashboard}
       onCancel={() => {}}
       onSuccess={() => {}}
       onSubmit={async (jsonModel) => {

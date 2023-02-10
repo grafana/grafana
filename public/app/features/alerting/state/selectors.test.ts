@@ -4,7 +4,7 @@ import { getSearchQuery, getAlertRuleItems } from './selectors';
 
 describe('Get search query', () => {
   it('should get search query', () => {
-    const state = { searchQuery: 'dashboard' } as AlertRulesState;
+    const state: AlertRulesState = { searchQuery: 'dashboard', items: [], isLoading: false };
     const result = getSearchQuery(state);
 
     expect(result).toEqual(state.searchQuery);
