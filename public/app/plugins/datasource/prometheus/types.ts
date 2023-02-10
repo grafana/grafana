@@ -22,6 +22,7 @@ export interface PromQuery extends DataQuery {
   showingTable?: boolean;
   /** Code, Builder or Explain */
   editorMode?: QueryEditorMode;
+  query?: string;
 }
 
 export interface PromOptions extends DataSourceJsonData {
@@ -164,4 +165,22 @@ export enum LegendFormatMode {
   Auto = '__auto',
   Verbose = '__verbose',
   Custom = '__custom',
+}
+
+export enum PromVariableQueryType {
+  LabelNames,
+  LabelValues,
+  MetricNames,
+  VarQueryResult,
+  SeriesQuery,
+}
+
+export interface PromVariableQuery extends DataQuery {
+  query?: string;
+  expr?: string;
+  qryType?: PromVariableQueryType;
+  label?: string;
+  metric?: string;
+  varQuery?: string;
+  seriesQuery?: string;
 }

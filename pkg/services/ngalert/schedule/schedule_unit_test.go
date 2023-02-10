@@ -40,7 +40,8 @@ type evalAppliedInfo struct {
 
 func TestProcessTicks(t *testing.T) {
 	testTracer := tracing.InitializeTracerForTest()
-	testMetrics := metrics.NewNGAlert(prometheus.NewPedanticRegistry())
+	reg := prometheus.NewPedanticRegistry()
+	testMetrics := metrics.NewNGAlert(reg)
 	ctx := context.Background()
 	dispatcherGroup, ctx := errgroup.WithContext(ctx)
 
@@ -113,6 +114,17 @@ func TestProcessTicks(t *testing.T) {
 		assertEvalRun(t, evalAppliedCh, tick, alertRule1.GetKey())
 	})
 
+	t.Run("after 1st tick rule metrics should report one rule", func(t *testing.T) {
+		expectedMetric := fmt.Sprintf(
+			`# HELP grafana_alerting_rule_group_rules The number of rules.
+        	            	# TYPE grafana_alerting_rule_group_rules gauge
+        	            	grafana_alerting_rule_group_rules{org="%[1]d"} 1
+				`, alertRule1.OrgID)
+
+		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
+		require.NoError(t, err)
+	})
+
 	// add alert rule under main org with three base intervals
 	alertRule2 := models.AlertRuleGen(models.WithOrgID(mainOrgID), models.WithInterval(3*cfg.BaseInterval), models.WithTitle("rule-2"))()
 	ruleStore.PutRule(ctx, alertRule2)
@@ -126,6 +138,17 @@ func TestProcessTicks(t *testing.T) {
 		require.Equal(t, tick, scheduled[0].scheduledAt)
 		require.Emptyf(t, stopped, "None rules are expected to be stopped")
 		assertEvalRun(t, evalAppliedCh, tick, alertRule1.GetKey())
+	})
+
+	t.Run("after 2nd tick rule metrics should report two rules", func(t *testing.T) {
+		expectedMetric := fmt.Sprintf(
+			`# HELP grafana_alerting_rule_group_rules The number of rules.
+        	            	# TYPE grafana_alerting_rule_group_rules gauge
+        	            	grafana_alerting_rule_group_rules{org="%[1]d"} 2
+				`, alertRule1.OrgID)
+
+		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
+		require.NoError(t, err)
 	})
 
 	t.Run("on 3rd tick two alert rules should be evaluated", func(t *testing.T) {
@@ -170,6 +193,17 @@ func TestProcessTicks(t *testing.T) {
 		require.Contains(t, stopped, alertRule1.GetKey())
 
 		assertStopRun(t, stopAppliedCh, alertRule1.GetKey())
+	})
+
+	t.Run("after 5th tick rule metrics should report one rules", func(t *testing.T) {
+		expectedMetric := fmt.Sprintf(
+			`# HELP grafana_alerting_rule_group_rules The number of rules.
+        	            	# TYPE grafana_alerting_rule_group_rules gauge
+        	            	grafana_alerting_rule_group_rules{org="%[1]d"} 1
+				`, alertRule1.OrgID)
+
+		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
+		require.NoError(t, err)
 	})
 
 	t.Run("on 6th tick one alert rule should be evaluated", func(t *testing.T) {
