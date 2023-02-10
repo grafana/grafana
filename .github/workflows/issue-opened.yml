@@ -1,4 +1,4 @@
-name: Run commands when issues are labeled or comments added
+name: Run commands when issues are opened
 on:
   issues:
     types: [opened]
