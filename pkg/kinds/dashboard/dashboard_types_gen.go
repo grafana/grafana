@@ -101,13 +101,6 @@ const (
 	RowPanelTypeRow RowPanelType = "row"
 )
 
-// Defines values for SpecialValueMapOptionsMatch.
-const (
-	SpecialValueMapOptionsMatchFalse SpecialValueMapOptionsMatch = "false"
-
-	SpecialValueMapOptionsMatchTrue SpecialValueMapOptionsMatch = "true"
-)
-
 // Defines values for SpecialValueMatch.
 const (
 	SpecialValueMatchEmpty SpecialValueMatch = "empty"
@@ -667,8 +660,9 @@ type Snapshot struct {
 // TODO docs
 type SpecialValueMap struct {
 	Options struct {
-		Match   SpecialValueMapOptionsMatch `json:"match"`
-		Pattern string                      `json:"pattern"`
+		// TODO docs
+		Match   SpecialValueMatch `json:"match"`
+		Pattern string            `json:"pattern"`
 
 		// TODO docs
 		Result ValueMappingResult `json:"result"`
@@ -679,9 +673,6 @@ type SpecialValueMap struct {
 		// Embedded fields due to inline allOf schema
 	} `json:"type"`
 }
-
-// SpecialValueMapOptionsMatch defines model for SpecialValueMap.Options.Match.
-type SpecialValueMapOptionsMatch string
 
 // TODO docs
 type SpecialValueMatch string

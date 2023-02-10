@@ -268,7 +268,7 @@ lineage: seqs: [
 				#SpecialValueMap: {
 					type: #MappingType & "special"
 					options: {
-						match:   "true" | "false"
+						match:   #SpecialValueMatch
 						pattern: string
 						result:  #ValueMappingResult
 					}

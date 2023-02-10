@@ -322,7 +322,7 @@ export interface RegexMap {
  */
 export interface SpecialValueMap {
   options: {
-    match: ('true' | 'false');
+    match: SpecialValueMatch;
     pattern: string;
     result: ValueMappingResult;
   };
