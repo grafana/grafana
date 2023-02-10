@@ -51,9 +51,10 @@ func ProvideService(cfg *setting.Cfg, httpClientProvider httpclient.Provider) *S
 func newInstanceSettings(cfg *setting.Cfg, httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		jsonData := sqleng.JsonData{
-			MaxOpenConns:    0,
-			MaxIdleConns:    2,
-			ConnMaxLifetime: 14400,
+			MaxOpenConns:            0,
+			MaxIdleConns:            2,
+			ConnMaxLifetime:         14400,
+			AllowCleartextPasswords: false,
 		}
 
 		err := json.Unmarshal(settings.JSONData, &jsonData)
@@ -89,6 +90,10 @@ func newInstanceSettings(cfg *setting.Cfg, httpClientProvider httpclient.Provide
 			characterEscape(dsInfo.URL, ")"),
 			characterEscape(dsInfo.Database, "?"),
 		)
+
+		if dsInfo.JsonData.AllowCleartextPasswords {
+			cnnstr += fmt.Sprintf("&allowCleartextPasswords=true")
+		}
 
 		opts, err := settings.HTTPClientOptions()
 		if err != nil {
