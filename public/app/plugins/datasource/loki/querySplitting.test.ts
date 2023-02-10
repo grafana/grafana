@@ -4,6 +4,8 @@ import { getQueryOptions } from 'test/helpers/getQueryOptions';
 import { dateTime } from '@grafana/data';
 
 import { LokiDatasource } from './datasource';
+import * as logsTimeSplit from './logsTimeSplit';
+import * as metricTimeSplit from './metricTimeSplit';
 import { createLokiDatasource, logFrameA } from './mocks';
 import { runPartitionedQuery } from './querySplitting';
 import { LokiQuery } from './types';
@@ -31,6 +33,30 @@ describe('runPartitionedQuery()', () => {
     await expect(runPartitionedQuery(datasource, request)).toEmitValuesWith(() => {
       // 3 days, 3 chunks, 3 requests.
       expect(datasource.runQuery).toHaveBeenCalledTimes(3);
+    });
+  });
+
+  describe('Hidden queries', () => {
+    const request = getQueryOptions<LokiQuery>({
+      targets: [
+        { expr: 'count_over_time({a="b"}[1m])', refId: 'A', hide: true },
+        { expr: '{a="b"}', refId: 'B' },
+      ],
+      range,
+    });
+    beforeAll(() => {
+      jest.spyOn(logsTimeSplit, 'getRangeChunks').mockReturnValue([]);
+      jest.spyOn(metricTimeSplit, 'getRangeChunks').mockReturnValue([]);
+    });
+    afterAll(() => {
+      jest.mocked(logsTimeSplit.getRangeChunks).mockRestore();
+      jest.mocked(metricTimeSplit.getRangeChunks).mockRestore();
+    });
+    test('Ignores hidden queries', async () => {
+      await expect(runPartitionedQuery(datasource, request)).toEmitValuesWith(() => {
+        expect(logsTimeSplit.getRangeChunks).toHaveBeenCalled();
+        expect(metricTimeSplit.getRangeChunks).not.toHaveBeenCalled();
+      });
     });
   });
 
