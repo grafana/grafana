@@ -342,10 +342,6 @@ export function isConflictingSelector(
       return false;
     }
 
-    if (!label.label || !label.op || !label.value) {
-      return false;
-    }
-
     return true;
   });
 

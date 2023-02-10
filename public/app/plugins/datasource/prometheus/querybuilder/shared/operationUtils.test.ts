@@ -179,6 +179,15 @@ describe('isConflictingSelector', () => {
     expect(isConflictingSelector(MOCK_NEW_LABEL, MOCK_LABELS)).toBe(true);
   });
 
+  it('returns false if selector is not complete', () => {
+    const MOCK_NEW_LABEL = { label: 'job', op: '', value: 'tns/app' };
+    const MOCK_LABELS = [
+      { label: 'job', op: '=', value: 'tns/app' },
+      { label: 'job', op: '', value: 'tns/app' },
+    ];
+    expect(isConflictingSelector(MOCK_NEW_LABEL, MOCK_LABELS)).toBe(false);
+  });
+
   it('returns false if selector is not conflicting', () => {
     const MOCK_NEW_LABEL = { label: 'host', op: '=', value: 'docker-desktop' };
     const MOCK_LABELS = [
