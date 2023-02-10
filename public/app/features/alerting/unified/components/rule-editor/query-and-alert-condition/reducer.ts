@@ -17,6 +17,7 @@ import { queriesWithUpdatedReferences, refIdExists } from '../util';
 
 export interface QueriesAndExpressionsState {
   queries: AlertQuery[];
+  recordingRulesQueries: AlertQuery[];
 }
 
 const findDataSourceFromExpression = (
@@ -30,6 +31,7 @@ const findDataSourceFromExpression = (
 
 const initialState: QueriesAndExpressionsState = {
   queries: [],
+  recordingRulesQueries: [],
 };
 
 export const duplicateQuery = createAction<AlertQuery>('duplicateQuery');
@@ -44,6 +46,8 @@ export const rewireExpressions = createAction<{ oldRefId: string; newRefId: stri
 export const updateExpressionType = createAction<{ refId: string; type: ExpressionQueryType }>('updateExpressionType');
 export const updateExpressionTimeRange = createAction('updateExpressionTimeRange');
 export const updateMaxDataPoints = createAction<{ refId: string; maxDataPoints: number }>('updateMaxDataPoints');
+
+export const setRecordingRulesQueries = createAction<AlertQuery[]>('setRecordingRulesQueries');
 
 export const queriesAndExpressionsReducer = createReducer(initialState, (builder) => {
   // data queries actions
@@ -71,6 +75,9 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
     .addCase(setDataQueries, (state, { payload }) => {
       const expressionQueries = state.queries.filter((query) => isExpressionQuery(query.model));
       state.queries = [...payload, ...expressionQueries];
+    })
+    .addCase(setRecordingRulesQueries, (state, { payload }) => {
+      state.recordingRulesQueries = [...payload];
     })
     .addCase(updateMaxDataPoints, (state, action) => {
       state.queries = state.queries.map((query) => {

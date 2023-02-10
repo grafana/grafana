@@ -23,6 +23,7 @@ export interface RuleFormValues {
 
   // grafana rules
   queries: AlertQuery[];
+  recordingRulesQueries: AlertQuery[];
   condition: string | null; // refId of the query that gets alerted on
   noDataState: GrafanaAlertStateDecision;
   execErrState: GrafanaAlertStateDecision;
