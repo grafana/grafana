@@ -146,7 +146,7 @@ func processDocumentResponse(res *es.SearchResponse, target *Query, timeField st
 		case float64:
 			fieldVector := make([]float64, size)
 			for i, doc := range docs {
-				v, _ := doc[propName].(float64)
+				v, _ := doc[propName].(float64) // if the data is invalid, we use the data-type's zero-value
 				fieldVector[i] = v
 			}
 			field := data.NewField(propName, nil, fieldVector)
