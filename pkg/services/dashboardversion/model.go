@@ -25,6 +25,8 @@ type DashboardVersion struct {
 
 	Created   time.Time `json:"created" db:"created"`
 	CreatedBy int64     `json:"createdBy" db:"created_by"`
+	// user login is not stored in DB so xorm:"-"
+	CreatedByLogin string `json:"createdBylogin" xorm:"-"`
 
 	Message string           `json:"message" db:"message"`
 	Data    *simplejson.Json `json:"data" db:"data"`
@@ -33,16 +35,17 @@ type DashboardVersion struct {
 // ToDTO converts a DashboardVersion to a DashboardVersionDTO.
 func (v *DashboardVersion) ToDTO(dashUid string) *DashboardVersionDTO {
 	return &DashboardVersionDTO{
-		ID:            v.ID,
-		DashboardID:   v.DashboardID,
-		DashboardUID:  dashUid,
-		ParentVersion: v.ParentVersion,
-		RestoredFrom:  v.RestoredFrom,
-		Version:       v.Version,
-		Created:       v.Created,
-		CreatedBy:     v.CreatedBy,
-		Message:       v.Message,
-		Data:          v.Data,
+		ID:             v.ID,
+		DashboardID:    v.DashboardID,
+		DashboardUID:   dashUid,
+		ParentVersion:  v.ParentVersion,
+		RestoredFrom:   v.RestoredFrom,
+		Version:        v.Version,
+		Created:        v.Created,
+		CreatedBy:      v.CreatedBy,
+		CreatedByLogin: v.CreatedByLogin,
+		Message:        v.Message,
+		Data:           v.Data,
 	}
 }
 
@@ -68,16 +71,17 @@ type ListDashboardVersionsQuery struct {
 }
 
 type DashboardVersionDTO struct {
-	ID            int64            `json:"id"`
-	DashboardID   int64            `json:"dashboardId"`
-	DashboardUID  string           `json:"dashboardUid"`
-	ParentVersion int              `json:"parentVersion"`
-	RestoredFrom  int              `json:"restoredFrom"`
-	Version       int              `json:"version"`
-	Created       time.Time        `json:"created"`
-	CreatedBy     int64            `json:"createdBy"`
-	Message       string           `json:"message"`
-	Data          *simplejson.Json `json:"data" db:"data"`
+	ID             int64            `json:"id"`
+	DashboardID    int64            `json:"dashboardId"`
+	DashboardUID   string           `json:"dashboardUid"`
+	ParentVersion  int              `json:"parentVersion"`
+	RestoredFrom   int              `json:"restoredFrom"`
+	Version        int              `json:"version"`
+	Created        time.Time        `json:"created"`
+	CreatedBy      int64            `json:"createdBy"`
+	CreatedByLogin string           `json:"createdBylogin"`
+	Message        string           `json:"message"`
+	Data           *simplejson.Json `json:"data" db:"data"`
 }
 
 // DashboardVersionMeta extends the DashboardVersionDTO with the names

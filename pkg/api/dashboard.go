@@ -680,8 +680,24 @@ func (hs *HTTPServer) GetDashboardVersions(c *contextmodel.ReqContext) response.
 			version.Message = "Initial save"
 		}
 	}
+	var funcres []*dashver.DashboardVersionMeta
+	for _, r := range res {
+		dashVersionMeta := &dashver.DashboardVersionMeta{
+			ID:            r.ID,
+			DashboardID:   r.DashboardID,
+			DashboardUID:  dash.UID,
+			Data:          r.Data,
+			ParentVersion: r.ParentVersion,
+			RestoredFrom:  r.RestoredFrom,
+			Version:       r.Version,
+			Created:       r.Created,
+			Message:       r.Message,
+			CreatedBy:     r.CreatedByLogin,
+		}
+		funcres = append(funcres, dashVersionMeta)
+	}
 
-	return response.JSON(http.StatusOK, res)
+	return response.JSON(http.StatusOK, funcres)
 }
 
 // swagger:route GET /dashboards/id/{DashboardID}/versions/{DashboardVersionID} dashboard_versions getDashboardVersionByID

@@ -71,9 +71,16 @@ func (ss *sqlStore) DeleteBatch(ctx context.Context, cmd *dashver.DeleteExpiredV
 	return deleted, err
 }
 
+type dashboardVersionWithLogin struct {
+	Dv dashver.DashboardVersion `xorm:"extends"`
+	// this time we get login from DB by join so here is place for it
+	Login string `xorm:"login"`
+}
+
 func (ss *sqlStore) List(ctx context.Context, query *dashver.ListDashboardVersionsQuery) ([]*dashver.DashboardVersion, error) {
 	var dashboardVersion []*dashver.DashboardVersion
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		var dashboardVersionsWithLogin []*dashboardVersionWithLogin
 		err := sess.Table("dashboard_version").
 			Select(`dashboard_version.id,
 				dashboard_version.dashboard_id,
@@ -83,16 +90,23 @@ func (ss *sqlStore) List(ctx context.Context, query *dashver.ListDashboardVersio
 				dashboard_version.created,
 				dashboard_version.created_by,
 				dashboard_version.message,
-				dashboard_version.data`).
+				dashboard_version.data,
+				login`).
+			Join("LEFT", "user", `user.id = dashboard_version.created_by`).
 			Join("LEFT", "dashboard", `dashboard.id = dashboard_version.dashboard_id`).
 			Where("dashboard_version.dashboard_id=? AND dashboard.org_id=?", query.DashboardID, query.OrgID).
 			OrderBy("dashboard_version.version DESC").
 			Limit(query.Limit, query.Start).
-			Find(&dashboardVersion)
+			Find(&dashboardVersionsWithLogin)
 		if err != nil {
 			return err
 		}
-
+		// prapare return slice
+		for _, du := range dashboardVersionsWithLogin {
+			d := du.Dv
+			d.CreatedByLogin = du.Login
+			dashboardVersion = append(dashboardVersion, &d)
+		}
 		if len(dashboardVersion) < 1 {
 			return dashver.ErrNoVersionsForDashboardID
 		}
