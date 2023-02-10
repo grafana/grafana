@@ -7,7 +7,6 @@ import {
   DataTransformerInfo,
   Field,
   FieldType,
-  Labels,
   MutableDataFrame,
 } from '@grafana/data';
 
@@ -27,7 +26,13 @@ export const timeSeriesTableTransformer: DataTransformerInfo<TimeSeriesTableTran
     ),
 };
 
+/*
+For each refId (queryName) convert all time series frames intol a single table frame, adding each series
+as values of a "Trend" frame field. This allows "Trend" to be rendered as area chart type.
+Any non time series frames are returned as is. 
+*/
 export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOptions, data: DataFrame[]): DataFrame[] {
+  // initialize fields from labels for each refId
   const refId2LabelFields = getLabelFields(data);
 
   const refId2frameField: Record<string, Field<DataFrame, ArrayVector>> = {};
@@ -37,11 +42,13 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
   for (const frame of data) {
     if (!isTimeSeries(frame)) {
       result.push(frame);
+      continue;
     }
 
     const refId = frame.refId ?? '';
 
     const labelFields = refId2LabelFields[refId] ?? {};
+    // initialize a new frame for this refId with fields per label and a Trend frame field, if it doesn't exist yet
     let frameField = refId2frameField[refId];
     if (!frameField) {
       frameField = {
@@ -60,10 +67,10 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
       result.push(table);
     }
 
+    // add values to each label based field of this frame
     const labels = frame.fields[1].labels;
-
     for (const labelKey of Object.keys(labelFields)) {
-      const labelValue = getLabelValue(labelKey, labels);
+      const labelValue = labels?.[labelKey] ?? null;
       labelFields[labelKey].values.add(labelValue);
     }
 
@@ -72,8 +79,9 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
   return result;
 }
 
+// For each refId, initialize a field for each label name
 function getLabelFields(frames: DataFrame[]): Record<string, Record<string, Field<string, ArrayVector>>> {
-  // refId -> label name -> label value -> values
+  // refId -> label name -> field
   const labelFields: Record<string, Record<string, Field<string, ArrayVector>>> = {};
 
   for (const frame of frames) {
@@ -106,14 +114,6 @@ function getLabelFields(frames: DataFrame[]): Record<string, Record<string, Fiel
   }
 
   return labelFields;
-}
-
-function getLabelValue(key: string, labels: Labels | undefined) {
-  if (!labels) {
-    return null;
-  }
-
-  return labels[key] ?? null;
 }
 
 export function isTimeSeries(frame: DataFrame) {
