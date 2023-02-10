@@ -24,12 +24,11 @@ lineage: seqs: [
 				title?: string
 				// Description of dashboard.
 				description?: string
-
 				// This property should only be used in dashboards defined by plugins.  It is a quick check
 				// to see if the version has changed since the last time.  Unclear why using the version property 
 				// is insufficient.  
 				revision?: int64 @grafanamaturity(NeedsExpertReview)
-
+				// For dashboards imported from the https://grafana.com/grafana/dashboards/ portal
 				gnetId?: string @grafanamaturity(NeedsExpertReview)
 				// Tags associated with dashboard.
 				tags?: [...string] @grafanamaturity(NeedsExpertReview)

@@ -673,6 +673,9 @@ export interface Dashboard {
    * The month that the fiscal year starts on.  0 = January, 11 = December
    */
   fiscalYearStartMonth?: number;
+  /**
+   * For dashboards imported from the https://grafana.com/grafana/dashboards/ portal
+   */
   gnetId?: string;
   /**
    * Configuration of dashboard cursor sync behavior.

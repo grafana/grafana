@@ -212,8 +212,10 @@ type Dashboard struct {
 	Editable bool `json:"editable"`
 
 	// The month that the fiscal year starts on.  0 = January, 11 = December
-	FiscalYearStartMonth *int    `json:"fiscalYearStartMonth,omitempty"`
-	GnetId               *string `json:"gnetId,omitempty"`
+	FiscalYearStartMonth *int `json:"fiscalYearStartMonth,omitempty"`
+
+	// For dashboards imported from the https://grafana.com/grafana/dashboards/ portal
+	GnetId *string `json:"gnetId,omitempty"`
 
 	// 0 for no shared crosshair or tooltip (default).
 	// 1 for shared crosshair.
