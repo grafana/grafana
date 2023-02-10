@@ -80,7 +80,7 @@ export const LogsVolumePanelList = ({
   let extraInfo = <>{zoomedInfo}</>;
 
   if (logsVolumeData?.state === LoadingState.Loading) {
-    return <span>Log volume is loading...</span>;
+    return <span>Loading...</span>;
   }
 
   if (logsVolumeData?.error !== undefined) {
