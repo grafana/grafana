@@ -71,6 +71,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/k8s"
 	ldapapi "github.com/grafana/grafana/pkg/services/ldap/api"
+	ldapservice "github.com/grafana/grafana/pkg/services/ldap/service"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/live"
@@ -236,6 +237,8 @@ var wireBasicSet = wire.NewSet(
 	live.ProvideService,
 	pushhttp.ProvideService,
 	contexthandler.ProvideService,
+	ldapservice.ProvideService,
+	wire.Bind(new(ldapservice.LDAP), new(*ldapservice.LDAPImpl)),
 	jwt.ProvideService,
 	wire.Bind(new(jwt.JWTService), new(*jwt.AuthService)),
 	ngstore.ProvideDBStore,
