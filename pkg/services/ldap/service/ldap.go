@@ -17,6 +17,7 @@ var (
 // LDAP is the interface for the LDAP service.
 type LDAP interface {
 	ReloadConfig() error
+	Config() *ldap.Config
 	Client() multildap.IMultiLDAP
 }
 
@@ -80,4 +81,8 @@ func (s *LDAPImpl) ReloadConfig() error {
 
 func (s *LDAPImpl) Client() multildap.IMultiLDAP {
 	return s.client
+}
+
+func (s *LDAPImpl) Config() *ldap.Config {
+	return s.ldapCfg
 }

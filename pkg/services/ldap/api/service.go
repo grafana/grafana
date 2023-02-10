@@ -17,6 +17,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/ldap/multildap"
+	"github.com/grafana/grafana/pkg/services/ldap/service"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
@@ -24,15 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
-)
-
-var (
-	getLDAPConfig = multildap.GetConfig
-	newLDAP       = multildap.New
-
-	errOrganizationNotFound = func(orgId int64) error {
-		return fmt.Errorf("unable to find organization with ID '%d'", orgId)
-	}
 )
 
 type Service struct {
@@ -44,11 +36,12 @@ type Service struct {
 	orgService        org.Service
 	sessionService    auth.UserTokenService
 	log               log.Logger
+	ldapService       service.LDAP
 }
 
 func ProvideService(cfg *setting.Cfg, router routing.RouteRegister, accessControl ac.AccessControl,
 	userService user.Service, authInfoService login.AuthInfoService, ldapGroupsService ldap.Groups,
-	loginService login.Service, orgService org.Service,
+	loginService login.Service, orgService org.Service, ldapService service.LDAP,
 	sessionService auth.UserTokenService, bundleRegistry supportbundles.Service) *Service {
 	s := &Service{
 		cfg:               cfg,
@@ -58,6 +51,7 @@ func ProvideService(cfg *setting.Cfg, router routing.RouteRegister, accessContro
 		loginService:      loginService,
 		orgService:        orgService,
 		sessionService:    sessionService,
+		ldapService:       ldapService,
 		log:               log.New("ldap.api"),
 	}
 
@@ -104,10 +98,10 @@ func (s *Service) ReloadLDAPCfg(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "LDAP is not enabled", nil)
 	}
 
-	err := ldap.ReloadConfig(s.cfg.LDAPConfigFilePath)
-	if err != nil {
+	if err := s.ldapService.ReloadConfig(); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to reload LDAP config", err)
 	}
+
 	return response.Success("LDAP config reloaded")
 }
 
@@ -130,18 +124,12 @@ func (s *Service) GetLDAPStatus(c *contextmodel.ReqContext) response.Response {
 		return response.Error(http.StatusBadRequest, "LDAP is not enabled", nil)
 	}
 
-	ldapConfig, err := getLDAPConfig(s.cfg)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "Failed to obtain the LDAP configuration. Please verify the configuration and try again", err)
-	}
-
-	ldap := newLDAP(ldapConfig.Servers)
-
-	if ldap == nil {
+	ldapClient := s.ldapService.Client()
+	if ldapClient == nil {
 		return response.Error(http.StatusInternalServerError, "Failed to find the LDAP server", nil)
 	}
 
-	statuses, err := ldap.Ping()
+	statuses, err := ldapClient.Ping()
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Failed to connect to the LDAP server(s)", err)
 	}
@@ -183,9 +171,9 @@ func (s *Service) PostSyncUserWithLDAP(c *contextmodel.ReqContext) response.Resp
 		return response.Error(http.StatusBadRequest, "LDAP is not enabled", nil)
 	}
 
-	ldapConfig, err := getLDAPConfig(s.cfg)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "Failed to obtain the LDAP configuration. Please verify the configuration and try again", err)
+	ldapClient := s.ldapService.Client()
+	if ldapClient == nil {
+		return response.Error(http.StatusInternalServerError, "Failed to find the LDAP server", nil)
 	}
 
 	userId, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
@@ -198,10 +186,10 @@ func (s *Service) PostSyncUserWithLDAP(c *contextmodel.ReqContext) response.Resp
 	usr, err := s.userService.GetByID(c.Req.Context(), &query)
 	if err != nil { // validate the userId exists
 		if errors.Is(err, user.ErrUserNotFound) {
-			return response.Error(404, user.ErrUserNotFound.Error(), nil)
+			return response.Error(http.StatusNotFound, user.ErrUserNotFound.Error(), nil)
 		}
 
-		return response.Error(500, "Failed to get user", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get user", err)
 	}
 
 	authModuleQuery := &login.GetAuthInfoQuery{UserId: usr.ID, AuthModule: login.LDAPAuthModule}
@@ -213,8 +201,7 @@ func (s *Service) PostSyncUserWithLDAP(c *contextmodel.ReqContext) response.Resp
 		return response.Error(500, "Failed to get user", err)
 	}
 
-	ldapServer := newLDAP(ldapConfig.Servers)
-	userInfo, _, err := ldapServer.User(usr.Login)
+	userInfo, _, err := ldapClient.User(usr.Login)
 	if err != nil {
 		if errors.Is(err, multildap.ErrDidNotFindUser) { // User was not in the LDAP server - we need to take action:
 			if s.cfg.AdminUser == usr.Login { // User is *the* Grafana Admin. We cannot disable it.
@@ -279,20 +266,14 @@ func (s *Service) GetUserFromLDAP(c *contextmodel.ReqContext) response.Response 
 		return response.Error(http.StatusBadRequest, "LDAP is not enabled", nil)
 	}
 
-	ldapConfig, err := getLDAPConfig(s.cfg)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "Failed to obtain the LDAP configuration", err)
-	}
-
-	multiLDAP := newLDAP(ldapConfig.Servers)
+	ldapClient := s.ldapService.Client()
 
 	username := web.Params(c.Req)[":username"]
-
 	if len(username) == 0 {
 		return response.Error(http.StatusBadRequest, "Validation error. You must specify an username", nil)
 	}
 
-	user, serverConfig, err := multiLDAP.User(username)
+	user, serverConfig, err := ldapClient.User(username)
 	if user == nil || err != nil {
 		return response.Error(http.StatusNotFound, "No user was found in the LDAP server(s) with that username", err)
 	}
@@ -394,7 +375,7 @@ func (user *LDAPUserDTO) fetchOrgs(ctx context.Context, orga org.Service) error 
 		if orgName != "" {
 			user.OrgRoles[i].OrgName = orgName
 		} else {
-			return errOrganizationNotFound(orgDTO.OrgId)
+			return &OrganizationNotFoundError{orgDTO.OrgId}
 		}
 	}
 

@@ -16,12 +16,11 @@ func (s *Service) supportBundleCollector(context.Context) (*supportbundles.Suppo
 	bWriter := bytes.NewBuffer(nil)
 	bWriter.WriteString("# LDAP information\n\n")
 
-	ldapConfig, err := getLDAPConfig(s.cfg)
-
+	ldapConfig := s.ldapService.Config()
 	if ldapConfig != nil {
 		bWriter.WriteString("## LDAP Status\n")
 
-		ldapClient := newLDAP(ldapConfig.Servers)
+		ldapClient := s.ldapService.Client()
 
 		ldapStatus, err := ldapClient.Ping()
 		if err != nil {
@@ -66,7 +65,7 @@ func (s *Service) supportBundleCollector(context.Context) (*supportbundles.Suppo
 	errM := toml.NewEncoder(bWriter).Encode(ldapConfig)
 	if errM != nil {
 		bWriter.WriteString(
-			fmt.Sprintf("Unable to encode LDAP configuration  \n Err: %s", err))
+			fmt.Sprintf("Unable to encode LDAP configuration  \n Err: %s", errM))
 	}
 	bWriter.WriteString("```\n\n")
 
