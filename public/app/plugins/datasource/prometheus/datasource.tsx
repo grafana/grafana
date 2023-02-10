@@ -1,6 +1,5 @@
 import { cloneDeep, defaults } from 'lodash';
 import LRU from 'lru-cache';
-import moment from 'moment';
 import React from 'react';
 import { forkJoin, lastValueFrom, merge, Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
 import { catchError, filter, map, tap } from 'rxjs/operators';
@@ -10,7 +9,6 @@ import {
   AbstractQuery,
   AnnotationEvent,
   AnnotationQueryRequest,
-  ArrayVector,
   CoreApp,
   DataFrame,
   DataQueryError,
@@ -22,7 +20,6 @@ import {
   dateMath,
   DateTime,
   dateTime,
-  Field,
   LoadingState,
   QueryFixAction,
   rangeUtil,
@@ -46,8 +43,7 @@ import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { PromApiFeatures, PromApplication } from 'app/types/unified-alerting-dto';
 
-import { amendTable, trimTable } from '../../../features/live/data/amendTimeSeries';
-
+import { QueryCache } from './QueryCache';
 import { addLabelToQuery } from './add_label_to_query';
 import { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
 import PrometheusLanguageProvider from './language_provider';
@@ -77,10 +73,6 @@ const GET_AND_POST_METADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', '
 
 export const InstantQueryRefIdIndex = '-Instant';
 
-type TargetIdent = string;
-type TargetSig = string;
-type TimestampMs = number;
-
 export class PrometheusDatasource
   extends DataSourceWithBackend<PromQuery, PromOptions>
   implements DataSourceWithQueryImportSupport<PromQuery>, DataSourceWithQueryExportSupport<PromQuery>
@@ -109,12 +101,7 @@ export class PrometheusDatasource
   subType: PromApplication;
   rulerEnabled: boolean;
 
-  // accumulated DataFrame cache
-  cachedFrames: Map<TargetIdent, DataFrame[]> = new Map();
-  // compound cache-invalidation strings
-  cachedSigs: Map<TargetIdent, TargetSig> = new Map();
-  // holds ends of requested ranges, for incrmental forward queries
-  cachedTos: Map<TargetIdent, TimestampMs> = new Map();
+  cache = new QueryCache();
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
@@ -461,178 +448,18 @@ export class PrometheusDatasource
 
   query(request: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
     if (this.access === 'proxy') {
-      // TODO: align from/to to interval to increase probability of hitting backend cache
+      const requestInfo = this.cache.requestInfo(request, this.interpolateString.bind(this));
+      const fullOrPartialRequest = requestInfo.requests[0];
 
-      const newFrom = request.range.from.valueOf();
-      const newTo = request.range.to.valueOf();
-
-      // only cache 'now'-relative queries (that can benefit from a backfill cache)
-      const shouldCache = request.rangeRaw?.to?.toString() === 'now';
-
-      // all targets are queried together, so we check for any that causes group cache invalidation & full re-query
-      let doPartialQuery = shouldCache;
-      let prevTo: TimestampMs;
-
-      // pre-compute reqTargSigs
-      const reqTargSigs = new Map<TargetIdent, TargetSig>();
-      request.targets.forEach((targ) => {
-        let targIdent = `${request.dashboardUID}|${request.panelId}|${targ.refId}`;
-        let targExpr = this.interpolateString(targ.expr);
-        let targSig = `${targExpr}|${request.intervalMs}|${JSON.stringify(request.rangeRaw ?? '')}`; // ${request.maxDataPoints} ?
-
-        reqTargSigs.set(targIdent, targSig);
-      });
-
-      // figure out if new query range or new target props trigger full cache invalidation & re-query
-      for (const [targIdent, targSig] of reqTargSigs) {
-        let cachedSig = this.cachedSigs.get(targIdent);
-
-        if (cachedSig !== targSig) {
-          doPartialQuery = false;
-        } else {
-          // only do partial queries when new request range follows prior request range (possibly with overlap)
-          // e.g. now-6h with refresh <= 6h
-          prevTo = this.cachedTos.get(targIdent) ?? Infinity;
-          doPartialQuery = newTo > prevTo && newFrom <= prevTo;
-        }
-
-        if (!doPartialQuery) {
-          break;
-        }
-      }
-
-      if (doPartialQuery) {
-        // 10m requery overlap
-        const requeryLastMs = 10 * 60 * 1000;
-
-        // clamp to make sure we don't requery previous 10m when newFrom is ahead of it (e.g. 5min range, 30s refresh)
-        let newFromPartial = Math.max(prevTo! - requeryLastMs, newFrom);
-
-        // console.log(`query previous ${(newTo - newFromPartial) / 1000 / 60} mins`);
-
-        // modify to partial query
-        request.range.from = moment(newFromPartial) as DateTime;
-        request.range.to = moment(newTo) as DateTime;
-      } else {
-        reqTargSigs.forEach((targSig, targIdent) => {
-          this.cachedFrames.delete(targIdent);
-          this.cachedSigs.delete(targIdent);
-          this.cachedTos.delete(targIdent);
-
-          // TODO: figure out how to purge caches of targets that have permanently stopped making queries
-          // - dashboard deleted (dashboardUID)
-          // - panel removed (panelId),
-          // - query removed (refId)
-        });
-      }
-
-      // console.log(`${doPartialQuery ? 'partial' : 'full'} query`);
-
-      const targets = request.targets.map((target) => this.processTargetV2(target, request));
+      const targets = fullOrPartialRequest.targets.map((target) => this.processTargetV2(target, fullOrPartialRequest));
       const startTime = new Date();
-      return super.query({ ...request, targets: targets.flat() }).pipe(
+      return super.query({ ...fullOrPartialRequest, targets: targets.flat() }).pipe(
         map((response) => {
-          if (shouldCache) {
-            const getFieldIdent = (field: Field) => `${field.type}|${field.name}|${JSON.stringify(field.labels ?? '')}`;
-
-            // group frames by targets
-            const respByTarget = new Map<TargetIdent, DataFrame[]>();
-
-            response.data.forEach((frame: DataFrame) => {
-              let targIdent = `${request.dashboardUID}|${request.panelId}|${frame.refId}`;
-
-              let frames = respByTarget.get(targIdent);
-
-              if (!frames) {
-                frames = [];
-                respByTarget.set(targIdent, frames);
-              }
-
-              frames.push(frame);
-            });
-
-            let outFrames: DataFrame[] = [];
-
-            respByTarget.forEach((respFrames, targIdent) => {
-              let cachedFrames = (targIdent ? this.cachedFrames.get(targIdent) : null) ?? [];
-
-              respFrames.forEach((respFrame: DataFrame) => {
-                // skip empty frames
-                if (respFrame.length === 0 || respFrame.fields.length === 0) {
-                  return;
-                }
-
-                // frames are identified by their second (non-time) field's name + labels
-                // TODO: maybe also frame.meta.type?
-                let respFrameIdent = getFieldIdent(respFrame.fields[1]);
-
-                let cachedFrame = cachedFrames.find((cached) => getFieldIdent(cached.fields[1]) === respFrameIdent);
-
-                if (!cachedFrame) {
-                  // append new unknown frames
-                  cachedFrames.push(respFrame);
-                } else {
-                  // we assume that fields cannot appear/disappear and will all exist in same order
-
-                  // amend & re-cache
-                  let prevTable = cachedFrame.fields.map((field) => field.values.toArray());
-                  let nextTable = respFrame.fields.map((field) => field.values.toArray());
-
-                  let amendedTable = amendTable(prevTable, nextTable);
-
-                  for (let i = 0; i < amendedTable.length; i++) {
-                    cachedFrame.fields[i].values = new ArrayVector(amendedTable[i]);
-                  }
-
-                  cachedFrame.length = cachedFrame.fields[0].values.length;
-                }
-              });
-
-              // trim all frames to in-view range, evict those that end up with 0 length
-              let nonEmptyCachedFrames: DataFrame[] = [];
-
-              cachedFrames.forEach((frame) => {
-                let table = frame.fields.map((field) => field.values.toArray());
-
-                let trimmed = trimTable(table, newFrom, newTo);
-
-                if (trimmed[0].length > 0) {
-                  for (let i = 0; i < trimmed.length; i++) {
-                    frame.fields[i].values = new ArrayVector(trimmed[i]);
-                  }
-                  nonEmptyCachedFrames.push(frame);
-                }
-              });
-
-              this.cachedFrames.set(targIdent, nonEmptyCachedFrames);
-              this.cachedSigs.set(targIdent, reqTargSigs.get(targIdent)!);
-              this.cachedTos.set(targIdent, newTo);
-
-              outFrames.push(...nonEmptyCachedFrames);
-            });
-
-            // transformV2 mutates field values for heatmap de-accum, and modifies field order, so we gotta clone here, for now :(
-            let clonedFrames = outFrames.map((frame) => ({
-              ...frame,
-              fields: frame.fields.map((field) => ({
-                ...field,
-                config: {
-                  ...field.config, // prevents mutatative exemplars links (re)enrichment
-                },
-                values: new ArrayVector(field.values.toArray().slice()),
-              })),
-            }));
-
-            response.data = clonedFrames;
-
-            // reset to original range for transformV2
-            if (doPartialQuery) {
-              request.range.from = moment(newFrom) as DateTime;
-              request.range.to = moment(newTo) as DateTime;
-            }
-          }
-
-          return transformV2(response, request, { exemplarTraceIdDestinations: this.exemplarTraceIdDestinations });
+          const amendedResponse = {
+            ...response,
+            data: this.cache.procFrames(request, requestInfo, response.data),
+          };
+          return transformV2(amendedResponse, request, { exemplarTraceIdDestinations: this.exemplarTraceIdDestinations });
         }),
         tap((response: DataQueryResponse) => {
           trackQuery(response, request, startTime);
