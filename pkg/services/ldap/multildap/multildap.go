@@ -3,14 +3,12 @@ package multildap
 import (
 	"errors"
 
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/setting"
 )
-
-// logger to log
-var logger = log.New("ldap")
 
 // GetConfig gets LDAP config
 var GetConfig = ldap.GetConfig
@@ -56,12 +54,14 @@ type IMultiLDAP interface {
 // MultiLDAP is basic struct of LDAP authorization
 type MultiLDAP struct {
 	configs []*ldap.ServerConfig
+	log     log.Logger
 }
 
 // New creates the new LDAP auth
-func New(configs []*ldap.ServerConfig, cfg *setting.Cfg) IMultiLDAP {
+func New(configs []*ldap.ServerConfig, _ *setting.Cfg) IMultiLDAP {
 	return &MultiLDAP{
 		configs: configs,
+		log:     log.New("ldap"),
 	}
 }
 
@@ -124,7 +124,7 @@ func (multiples *MultiLDAP) Login(query *login.LoginUserQuery) (
 		if err != nil {
 			if isSilentError(err) {
 				ldapSilentErrors = append(ldapSilentErrors, err)
-				logger.Debug(
+				multiples.log.Debug(
 					"unable to login with LDAP - skipping server",
 					"host", config.Host,
 					"port", config.Port,
