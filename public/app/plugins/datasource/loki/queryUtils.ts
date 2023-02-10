@@ -297,9 +297,10 @@ export function getStreamSelectorsFromQuery(query: string): string[] {
   return labelMatchers;
 }
 
-export function requestSupportsPartitioning(queries: LokiQuery[]) {
+export function requestSupportsPartitioning(allQueries: LokiQuery[]) {
+  const queries = allQueries.filter((query) => !query.hide);
   /*
-   * For now, we would not split when more than 1 query is requested.
+   * For now, we will not split when more than 1 query is requested.
    */
   if (queries.length > 1) {
     return false;
