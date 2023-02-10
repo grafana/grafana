@@ -4,14 +4,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"strings"
 	text_template "text/template"
 )
 
 // FuncMap is a map of custom functions we use for templates.
 var FuncMap = text_template.FuncMap{
 	"graphLink": graphLink,
-	"tableLink": tableLink,
+	"join": func(sep string, s []string) string {
+		return strings.Join(s, sep)
+	},
 	"strvalue":  strValue,
+	"tableLink": tableLink,
 }
 
 func graphLink(rawQuery string) string {
