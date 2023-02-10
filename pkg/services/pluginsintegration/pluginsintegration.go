@@ -29,7 +29,6 @@ import (
 var WireSet = wire.NewSet(
 	config.ProvideConfig,
 	store.ProvideService,
-	wire.Bind(new(plugins.Store), new(*store.Service)),
 	wire.Bind(new(plugins.RendererManager), new(*store.Service)),
 	wire.Bind(new(plugins.SecretsPluginManager), new(*store.Service)),
 	wire.Bind(new(plugins.StaticRouteResolver), new(*store.Service)),
@@ -51,6 +50,7 @@ var WireSet = wire.NewSet(
 	plugincontext.ProvideService,
 	licensing.ProvideLicensing,
 	wire.Bind(new(plugins.Licensing), new(*licensing.Service)),
+	wire.Bind(new(plugins.Store), new(*pluginmod.PluginsModule)),
 	wire.Bind(new(plugins.Installer), new(*pluginmod.PluginsModule)),
 	pluginmod.ProvidePluginsModule,
 )

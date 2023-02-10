@@ -55,7 +55,7 @@ func (m *Modules) Init() error {
 		Plugins:             {},
 
 		AccessControl: {},
-		Core:          {AccessControl},
+		Core:          {AccessControl, Plugins},
 		HTTPServer:    {Core, Plugins},
 		All:           {Core, HTTPServer, AccessControl, Plugins},
 	}

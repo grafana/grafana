@@ -48,3 +48,13 @@ func (c *Client) Remove(ctx context.Context, pluginID string) error {
 	//TODO implement me
 	panic("implement me")
 }
+
+func (c *Client) Plugin(ctx context.Context, pluginID string) (plugins.PluginDTO, bool) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c *Client) Plugins(ctx context.Context, pluginTypes ...plugins.Type) []plugins.PluginDTO {
+	//TODO implement me
+	panic("implement me")
+}

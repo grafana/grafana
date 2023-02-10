@@ -3,14 +3,17 @@ package pluginmod
 import (
 	"github.com/grafana/dskit/services"
 
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/server/modules"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvidePluginsModule(cfg *setting.Cfg, moduleManager *modules.Modules) (*PluginsModule, error) {
+func ProvidePluginsModule(cfg *setting.Cfg, moduleManager *modules.Modules,
+	coreRegistry *coreplugin.Registry) (*PluginsModule, error) {
 	m := &PluginsModule{
 		cfg:           cfg,
 		moduleManager: moduleManager,
+		coreRegistry:  coreRegistry,
 	}
 
 	if err := m.moduleManager.RegisterModule(modules.PluginManagerServer, m.initServer); err != nil {
@@ -35,6 +38,7 @@ type PluginsModule struct {
 
 	cfg           *setting.Cfg
 	moduleManager *modules.Modules
+	coreRegistry  *coreplugin.Registry
 }
 
 func (m *PluginsModule) initServer() (services.Service, error) {
@@ -49,7 +53,7 @@ func (m *PluginsModule) initClient() (services.Service, error) {
 }
 
 func (m *PluginsModule) initLocalPluginManagement() (services.Service, error) {
-	c := NewCore(m.cfg)
+	c := NewCore(m.cfg, m.coreRegistry)
 	m.registerPluginManager(c)
 
 	return c, nil

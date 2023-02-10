@@ -18,10 +18,8 @@ import (
 func ProvideDashboardUpdater(bus bus.Bus, pluginStore plugins.Store, pluginDashboardService plugindashboards.Service,
 	dashboardImportService dashboardimport.Service, pluginSettingsService pluginsettings.Service,
 	dashboardPluginService dashboards.PluginService, dashboardService dashboards.DashboardService) *DashboardUpdater {
-	du := newDashboardUpdater(bus, pluginStore, pluginDashboardService, dashboardImportService,
+	return newDashboardUpdater(bus, pluginStore, pluginDashboardService, dashboardImportService,
 		pluginSettingsService, dashboardPluginService, dashboardService)
-	du.updateAppDashboards()
-	return du
 }
 
 func newDashboardUpdater(bus bus.Bus, pluginStore plugins.Store,
@@ -50,6 +48,11 @@ type DashboardUpdater struct {
 	dashboardPluginService dashboards.PluginService
 	dashboardService       dashboards.DashboardService
 	logger                 log.Logger
+}
+
+func (du *DashboardUpdater) Run(_ context.Context) error {
+	du.updateAppDashboards()
+	return nil
 }
 
 func (du *DashboardUpdater) updateAppDashboards() {

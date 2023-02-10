@@ -65,7 +65,7 @@ func ProvideBackgroundServiceRegistry(
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service, _ *alerting.AlertNotificationService,
 	_ serviceaccounts.Service, _ *guardian.Provider,
-	_ *plugindashboardsservice.DashboardUpdater, _ *sanitizer.Provider,
+	dashboardUpdater *plugindashboardsservice.DashboardUpdater, _ *sanitizer.Provider,
 	_ *grpcserver.HealthService, _ entity.EntityStoreServer, _ *grpcserver.ReflectionService, _ *ldapapi.Service,
 ) (*BackgroundServiceRegistry, error) {
 	r := NewBackgroundServiceRegistry(
@@ -97,6 +97,7 @@ func ProvideBackgroundServiceRegistry(
 		secretMigrationProvider,
 		loginAttemptService,
 		bundleService,
+		dashboardUpdater,
 	)
 
 	err := moduleManager.RegisterModule(modules.Core, func() (services.Service, error) {
