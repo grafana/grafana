@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/server/modules"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/api"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
@@ -32,12 +33,13 @@ const (
 )
 
 func ProvideService(cfg *setting.Cfg, store db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
-	accessControl accesscontrol.AccessControl, features *featuremgmt.FeatureManager) (*Service, error) {
-	return ProvideOSSService(cfg, database.ProvideService(store), cache, features, routeRegister, accessControl), nil
+	accessControl accesscontrol.AccessControl, features *featuremgmt.FeatureManager, moduleManager *modules.Modules) (*Service, error) {
+	return ProvideOSSService(cfg, database.ProvideService(store), cache, features, routeRegister, accessControl, moduleManager)
 }
 
 func ProvideOSSService(cfg *setting.Cfg, store store, cache *localcache.CacheService, features *featuremgmt.FeatureManager,
-	routeRegister routing.RouteRegister, accessControl accesscontrol.AccessControl) *Service {
+	routeRegister routing.RouteRegister, accessControl accesscontrol.AccessControl,
+	moduleManager *modules.Modules) (*Service, error) {
 	s := &Service{
 		cfg:           cfg,
 		store:         store,
@@ -47,9 +49,16 @@ func ProvideOSSService(cfg *setting.Cfg, store store, cache *localcache.CacheSer
 		features:      features,
 		routeRegister: routeRegister,
 		accessControl: accessControl,
+		moduleManager: moduleManager,
 	}
-	s.BasicService = services.NewBasicService(s.start, s.run, nil)
-	return s
+	err := s.moduleManager.RegisterModule(modules.AccessControl, func() (services.Service, error) {
+		s.BasicService = services.NewBasicService(s.start, s.run, nil)
+		return s, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return s, nil
 }
 
 type store interface {
@@ -69,6 +78,7 @@ type Service struct {
 	registrations accesscontrol.RegistrationList
 	roles         map[string]*accesscontrol.RoleDTO
 	features      *featuremgmt.FeatureManager
+	moduleManager *modules.Modules
 
 	routeRegister routing.RouteRegister
 	accessControl accesscontrol.AccessControl

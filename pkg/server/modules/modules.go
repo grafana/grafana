@@ -11,9 +11,10 @@ import (
 )
 
 const (
-	All        string = "all"
-	Core       string = "core"
-	HTTPServer string = "http-server"
+	All           string = "all"
+	Core          string = "core"
+	HTTPServer    string = "http-server"
+	AccessControl string = "access-control"
 )
 
 type Modules struct {
@@ -43,9 +44,10 @@ func (m *Modules) Init() error {
 	m.moduleManager.RegisterModule(All, nil)
 
 	deps := map[string][]string{
-		Core:       {},
-		HTTPServer: {Core},
-		All:        {Core, HTTPServer},
+		AccessControl: {},
+		Core:          {AccessControl},
+		HTTPServer:    {Core},
+		All:           {Core, HTTPServer, AccessControl},
 	}
 
 	for mod, targets := range deps {
