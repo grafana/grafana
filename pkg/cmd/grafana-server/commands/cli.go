@@ -253,7 +253,7 @@ func RunServer(opt ServerOptions) error {
 
 	go listenToSystemSignals(ctx, s)
 
-	return s.Run()
+	return s.Run(ctx)
 }
 
 func validPackaging(packaging string) string {

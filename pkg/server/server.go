@@ -92,7 +92,7 @@ func (s *Server) init() error {
 
 // Run initializes and starts services. This will block until all services have
 // exited. To initiate shutdown, call the Shutdown method in another goroutine.
-func (s *Server) Run() error {
+func (s *Server) Run(ctx context.Context) error {
 	defer close(s.shutdownFinished)
 	if err := s.init(); err != nil {
 		return err
@@ -101,7 +101,7 @@ func (s *Server) Run() error {
 	s.notifySystemd("READY=1")
 
 	s.log.Debug("Waiting on services...")
-	return s.moduleService.Run()
+	return s.moduleService.Run(ctx)
 }
 
 // Shutdown initiates Grafana graceful shutdown. This shuts down all
@@ -112,14 +112,16 @@ func (s *Server) Shutdown(ctx context.Context, reason string) error {
 	s.shutdownOnce.Do(func() {
 		s.log.Info("Shutdown started", "reason", reason)
 
-		if err = s.moduleService.Stop(); err != nil {
+		if err = s.moduleService.Stop(ctx); err != nil {
 			s.log.Error("Failed to stop modules", "error", err)
 		}
+
+		s.log.Info("Module service stopped")
 
 		// Wait for server to shut down
 		select {
 		case <-s.shutdownFinished:
-			s.log.Debug("Finished waiting for server to shut down")
+			s.log.Info("Finished waiting for server to shut down")
 		case <-ctx.Done():
 			s.log.Warn("Timed out while waiting for server to shut down")
 			err = fmt.Errorf("timeout waiting for shutdown")

@@ -59,7 +59,7 @@ func (m *Modules) Init() error {
 	return nil
 }
 
-func (m *Modules) Run() error {
+func (m *Modules) Run(ctx context.Context) error {
 	serviceMap, err := m.moduleManager.InitModuleServices(m.targets...)
 	if err != nil {
 		return err
@@ -104,7 +104,6 @@ func (m *Modules) Run() error {
 	sm.AddListener(services.NewManagerListener(healthy, stopped, serviceFailed))
 
 	// wait until a service fails or stop signal received
-	ctx := context.Background()
 	err = sm.StartAsync(ctx)
 	if err == nil {
 		err = sm.AwaitStopped(ctx)
@@ -125,10 +124,16 @@ func (m *Modules) Run() error {
 	return err
 }
 
-func (m *Modules) Stop() error {
+func (m *Modules) Stop(ctx context.Context) error {
 	if m.serviceManager != nil {
 		m.serviceManager.StopAsync()
-		return m.serviceManager.AwaitStopped(context.Background())
+
+		m.log.Info("Awaiting services to be stopped")
+		err := m.serviceManager.AwaitStopped(ctx)
+		if err != nil {
+			return err
+		}
+		return nil
 	}
 	return nil
 }

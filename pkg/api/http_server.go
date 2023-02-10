@@ -11,6 +11,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
@@ -378,7 +379,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	hs.AccessControl.RegisterScopeAttributeResolver(AnnotationTypeScopeResolver(hs.annotationsRepo))
 
 	err := hs.moduleManager.RegisterModule(modules.HTTPServer, func() (services.Service, error) {
-		hs.BasicService = services.NewBasicService(hs.start, hs.run, hs.stop)
+		hs.BasicService = services.NewBasicService(hs.start, hs.run, nil)
 		return hs, nil
 	})
 	if err != nil {
@@ -433,6 +434,19 @@ func (hs *HTTPServer) run(ctx context.Context) error {
 	hs.log.Info("HTTP Server Listen", "address", listener.Addr().String(), "protocol",
 		hs.Cfg.Protocol, "subUrl", hs.Cfg.AppSubURL, "socket", hs.Cfg.SocketPath)
 
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	// handle http shutdown on server context done
+	go func() {
+		defer wg.Done()
+
+		<-ctx.Done()
+		if err := hs.httpSrv.Shutdown(context.Background()); err != nil {
+			hs.log.Error("Failed to shutdown server", "error", err)
+		}
+	}()
+
 	switch hs.Cfg.Protocol {
 	case setting.HTTPScheme, setting.SocketScheme:
 		if err := hs.httpSrv.Serve(listener); err != nil {
@@ -454,20 +468,9 @@ func (hs *HTTPServer) run(ctx context.Context) error {
 		panic(fmt.Sprintf("Unhandled protocol %q", hs.Cfg.Protocol))
 	}
 
-	return ctx.Err()
-}
+	wg.Wait()
 
-func (hs *HTTPServer) stop(failure error) error {
-	if failure != nil {
-		hs.log.Error("HTTP server encountered failure", "error", failure)
-	}
-
-	if err := hs.httpSrv.Shutdown(context.Background()); err != nil {
-		hs.log.Error("Failed to shutdown server", "error", err)
-		return err
-	}
-
-	return failure
+	return nil
 }
 
 func (hs *HTTPServer) getListener() (net.Listener, error) {
