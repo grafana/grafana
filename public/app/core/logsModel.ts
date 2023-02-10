@@ -26,7 +26,6 @@ import {
   LogsMetaItem,
   LogsMetaKind,
   LogsModel,
-  LogsVolumeType,
   MutableDataFrame,
   rangeUtil,
   ScopedVars,
@@ -706,20 +705,10 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
 
     const subscription = queryObservable.subscribe({
       complete: () => {
-        const aggregatedLogsVolume = aggregateRawLogsVolume(rawLogsVolume, options.extractLevel);
-        if (aggregatedLogsVolume[0]) {
-          aggregatedLogsVolume[0].meta = {
-            custom: {
-              targets: options.targets,
-              logsVolumeType: LogsVolumeType.FullRange,
-              absoluteRange: { from: options.range.from.valueOf(), to: options.range.to.valueOf() },
-            },
-          };
-        }
         observer.next({
           state: LoadingState.Done,
           error: undefined,
-          data: aggregatedLogsVolume,
+          data: rawLogsVolume,
         });
         observer.complete();
       },
@@ -732,9 +721,11 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
             data: [],
           });
           observer.error(error);
-        } else if (dataQueryResponse.state === LoadingState.Streaming) {
-          rawLogsVolume = dataQueryResponse.data.map(toDataFrame);
-          const aggregatedLogsVolume = aggregateRawLogsVolume(rawLogsVolume, options.extractLevel);
+        } else {
+          const aggregatedLogsVolume = aggregateRawLogsVolume(
+            dataQueryResponse.data.map(toDataFrame),
+            options.extractLevel
+          );
           if (aggregatedLogsVolume[0]) {
             aggregatedLogsVolume[0].meta = {
               custom: {
@@ -743,13 +734,12 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
               },
             };
           }
+          rawLogsVolume = aggregatedLogsVolume;
           observer.next({
             state: LoadingState.Streaming,
             error: undefined,
-            data: aggregatedLogsVolume,
+            data: rawLogsVolume,
           });
-        } else {
-          rawLogsVolume = rawLogsVolume.concat(dataQueryResponse.data.map(toDataFrame));
         }
       },
       error: (error) => {
