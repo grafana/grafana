@@ -17,8 +17,13 @@ jest.mock('@grafana/runtime', () => ({
 describe('LokiContextUi', () => {
   const savedGlobal = global;
   beforeAll(() => {
-    if (typeof structuredClone !== 'undefined') {
-      (global as any).structuredClone = structuredClone;
+    // TODO: `structuredClone` is not yet in jsdom https://github.com/jsdom/jsdom/issues/3363
+    if (!(global as any).structuredClone) {
+      (global as any).structuredClone = function structuredClone(objectToClone: any) {
+        const stringified = JSON.stringify(objectToClone);
+        const parsed = JSON.parse(stringified);
+        return parsed;
+      };
     }
   });
   afterAll(() => {
