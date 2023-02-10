@@ -102,3 +102,9 @@ export type SearchResponse = {
   traces: TraceSearchMetadata[];
   metrics: SearchMetrics;
 };
+
+export type SearchFilter = {
+  tag?: string;
+  operator?: string;
+  value?: string;
+};

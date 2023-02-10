@@ -17,12 +17,12 @@ import {
 import { LokiQueryField } from '../../loki/components/LokiQueryField';
 import { LokiDatasource } from '../../loki/datasource';
 import { LokiQuery } from '../../loki/types';
+import NativeSearch from '../SearchTraceQLEditor/NativeSearch';
 import { TempoQueryType } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import { QueryEditor } from '../traceql/QueryEditor';
 import { TempoQuery } from '../types';
 
-import NativeSearch from './NativeSearch';
 import { ServiceGraphSection } from './ServiceGraphSection';
 import { getDS } from './utils';
 

@@ -20,7 +20,7 @@ export const languageConfiguration = {
   folding: {},
 };
 
-const operators = ['=', '!=', '>', '<', '>=', '<=', '=~', '!~'];
+export const operators = ['=', '!=', '>', '<', '>=', '<=', '=~', '!~'];
 
 const intrinsics = ['duration', 'name', 'status', 'parent'];
 
