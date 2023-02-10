@@ -8,7 +8,7 @@ import { byRole } from 'testing-library-selector';
 import { setDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardSearchHit } from 'app/features/search/types';
-import { GrafanaAlertStateDecision, PromApplication } from 'app/types/unified-alerting-dto';
+import { PromApplication } from 'app/types/unified-alerting-dto';
 
 import { searchFolders } from '../../../../app/features/manage-dashboards/state/actions';
 
@@ -19,7 +19,7 @@ import { disableRBAC, mockDataSource, MockDataSourceSrv } from './mocks';
 import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
 import * as config from './utils/config';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
-import { getDefaultQueriesAsync } from './utils/rule-form';
+import * as ruleForm from './utils/rule-form';
 
 jest.mock('./components/rule-editor/ExpressionEditor', () => ({
   // eslint-disable-next-line react/display-name
@@ -31,6 +31,7 @@ jest.mock('./components/rule-editor/ExpressionEditor', () => ({
 jest.mock('./api/buildInfo');
 jest.mock('./api/ruler');
 jest.mock('../../../../app/features/manage-dashboards/state/actions');
+jest.spyOn(ruleForm, 'getDefaultQueriesAsync');
 
 // there's no angular scope in test and things go terribly wrong when trying to render the query editor row.
 // lets just skip it
@@ -46,6 +47,7 @@ jest.setTimeout(60 * 1000);
 const mocks = {
   getAllDataSources: jest.mocked(config.getAllDataSources),
   searchFolders: jest.mocked(searchFolders),
+  getDefaultQueriesAsync: jest.mocked(ruleForm.getDefaultQueriesAsync),
   api: {
     discoverFeatures: jest.mocked(discoverFeatures),
     fetchRulerRulesGroup: jest.mocked(fetchRulerRulesGroup),
@@ -121,6 +123,17 @@ describe('RuleEditor grafana managed rules', () => {
         rulerApiEnabled: false,
       },
     });
+    mocks.getDefaultQueriesAsync.mockResolvedValue({
+      queries: [
+        {
+          refId: 'A',
+          relativeTimeRange: { from: 900, to: 1000 },
+          datasourceUid: 'dsuid',
+          model: { refId: 'A' },
+          queryType: 'query',
+        },
+      ],
+    });
     renderRuleEditor();
     await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
 
@@ -142,6 +155,7 @@ describe('RuleEditor grafana managed rules', () => {
 
     // save and check what was sent to backend
     await userEvent.click(ui.buttons.save.get());
+
     // 9seg
     await waitFor(() => expect(mocks.api.setRulerRuleGroup).toHaveBeenCalled());
     // 9seg
@@ -149,20 +163,106 @@ describe('RuleEditor grafana managed rules', () => {
       { dataSourceName: GRAFANA_RULES_SOURCE_NAME, apiVersion: 'legacy' },
       'Folder A',
       {
-        interval: '1m',
         name: 'group1',
+        interval: '1m',
         rules: [
           {
-            annotations: { description: 'some description' },
-            labels: { severity: 'warn' },
-            for: '5m',
             grafana_alert: {
-              condition: 'B',
-              data: (await getDefaultQueriesAsync()).queries,
-              exec_err_state: GrafanaAlertStateDecision.Error,
-              is_paused: false,
-              no_data_state: 'NoData',
               title: 'my great new rule',
+              condition: 'B',
+              no_data_state: 'NoData',
+              exec_err_state: 'Error',
+              data: [
+                {
+                  refId: 'A',
+                  relativeTimeRange: {
+                    from: 900,
+                    to: 1000,
+                  },
+                  datasourceUid: 'dsuid',
+                  model: {
+                    refId: 'A',
+                  },
+                  queryType: 'query',
+                },
+                {
+                  refId: 'A',
+                  datasourceUid: '__expr__',
+                  queryType: '',
+                  model: {
+                    refId: 'A',
+                    hide: false,
+                    type: 'reduce',
+                    datasource: {
+                      uid: '__expr__',
+                      type: '__expr__',
+                    },
+                    conditions: [
+                      {
+                        type: 'query',
+                        evaluator: {
+                          params: [],
+                          type: 'gt',
+                        },
+                        operator: {
+                          type: 'and',
+                        },
+                        query: {
+                          params: ['A'],
+                        },
+                        reducer: {
+                          params: [],
+                          type: 'last',
+                        },
+                      },
+                    ],
+                    reducer: 'last',
+                    expression: 'A',
+                  },
+                },
+                {
+                  refId: 'B',
+                  datasourceUid: '__expr__',
+                  queryType: '',
+                  model: {
+                    refId: 'B',
+                    hide: false,
+                    type: 'threshold',
+                    datasource: {
+                      uid: '__expr__',
+                      type: '__expr__',
+                    },
+                    conditions: [
+                      {
+                        type: 'query',
+                        evaluator: {
+                          params: [0],
+                          type: 'gt',
+                        },
+                        operator: {
+                          type: 'and',
+                        },
+                        query: {
+                          params: ['B'],
+                        },
+                        reducer: {
+                          params: [],
+                          type: 'last',
+                        },
+                      },
+                    ],
+                    expression: 'A',
+                  },
+                },
+              ],
+              is_paused: false,
+            },
+            for: '5m',
+            annotations: {
+              description: 'some description',
+            },
+            labels: {
+              severity: 'warn',
             },
           },
         ],
