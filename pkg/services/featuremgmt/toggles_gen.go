@@ -91,10 +91,6 @@ const (
 	// Explore native k8s integrations
 	FlagK8s = "k8s"
 
-	// FlagSupportBundles
-	// Support bundles for troubleshooting
-	FlagSupportBundles = "supportBundles"
-
 	// FlagDashboardsFromStorage
 	// Load dashboards from the generic storage interface
 	FlagDashboardsFromStorage = "dashboardsFromStorage"

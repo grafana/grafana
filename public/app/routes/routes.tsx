@@ -552,7 +552,7 @@ export function getBrowseStorageRoutes(cfg = config): RouteDescriptor[] {
 }
 
 export function getSupportBundleRoutes(cfg = config): RouteDescriptor[] {
-  if (!cfg.featureToggles.supportBundles) {
+  if (!cfg.supportBundlesEnabled) {
     return [];
   }
 

@@ -70,7 +70,7 @@ func ProvideService(cfg *setting.Cfg,
 
 	usageStats.RegisterMetricsFunc(s.getUsageStats)
 
-	if !features.IsEnabled(featuremgmt.FlagSupportBundles) || !s.enabled {
+	if !s.enabled {
 		return s, nil
 	}
 
@@ -92,7 +92,7 @@ func ProvideService(cfg *setting.Cfg,
 }
 
 func (s *Service) Run(ctx context.Context) error {
-	if !s.features.IsEnabled(featuremgmt.FlagSupportBundles) {
+	if !s.enabled {
 		return nil
 	}
 
