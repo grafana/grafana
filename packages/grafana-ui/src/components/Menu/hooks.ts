@@ -50,12 +50,6 @@ export const useMenuFocus = ({
   }, [localRef, focusedItem]);
 
   useEffectOnce(() => {
-    const firstMenuItem = localRef?.current?.querySelector<HTMLElement | HTMLButtonElement | HTMLAnchorElement>(
-      '[data-role="menuitem"]:not([data-disabled])'
-    );
-    if (firstMenuItem) {
-      firstMenuItem.tabIndex = 0;
-    }
     onOpen?.(setFocusedItem);
   });
 
