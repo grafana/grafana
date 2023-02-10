@@ -2,6 +2,7 @@ package pluginsintegration
 
 import (
 	"github.com/google/wire"
+
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
@@ -16,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/store"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
+	"github.com/grafana/grafana/pkg/plugins/pluginmod"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
@@ -42,7 +44,6 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(loader.Service), new(*loader.Loader)),
 	wire.Bind(new(plugins.ErrorResolver), new(*loader.Loader)),
 	manager.ProvideInstaller,
-	wire.Bind(new(plugins.Installer), new(*manager.PluginInstaller)),
 	registry.ProvideService,
 	wire.Bind(new(registry.Service), new(*registry.InMemory)),
 	repo.ProvideService,
@@ -50,6 +51,8 @@ var WireSet = wire.NewSet(
 	plugincontext.ProvideService,
 	licensing.ProvideLicensing,
 	wire.Bind(new(plugins.Licensing), new(*licensing.Service)),
+	wire.Bind(new(plugins.Installer), new(*pluginmod.PluginsModule)),
+	pluginmod.ProvidePluginsModule,
 )
 
 // WireExtensionSet provides a wire.ProviderSet of plugin providers that can be

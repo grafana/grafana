@@ -15,6 +15,11 @@ const (
 	Core          string = "core"
 	HTTPServer    string = "http-server"
 	AccessControl string = "access-control"
+
+	Plugins             string = "plugins"
+	PluginManagerServer string = "plugins-server"
+	PluginManagerClient string = "plugins-client"
+	PluginManagement    string = "plugin-management"
 )
 
 type Modules struct {
@@ -44,10 +49,21 @@ func (m *Modules) Init() error {
 	m.moduleManager.RegisterModule(All, nil)
 
 	deps := map[string][]string{
+		PluginManagerServer: {},
+		PluginManagerClient: {},
+		PluginManagement:    {},
+		Plugins:             {},
+
 		AccessControl: {},
 		Core:          {AccessControl},
-		HTTPServer:    {Core},
-		All:           {Core, HTTPServer, AccessControl},
+		HTTPServer:    {Core, Plugins},
+		All:           {Core, HTTPServer, AccessControl, Plugins},
+	}
+
+	if m.isModuleEnabled(All) {
+		deps[Plugins] = append(deps[Plugins], PluginManagement)
+	} else {
+		deps[Plugins] = append(deps[Plugins], PluginManagerClient)
 	}
 
 	for mod, targets := range deps {
@@ -156,6 +172,15 @@ func stringsContain(values []string, search string) bool {
 
 func (m *Modules) RegisterModule(name string, initFn func() (services.Service, error), deps ...string) error {
 	m.moduleManager.RegisterModule(name, initFn)
+	err := m.moduleManager.AddDependency(name, deps...)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *Modules) RegisterInvisibleModule(name string, initFn func() (services.Service, error), deps ...string) error {
+	m.moduleManager.RegisterModule(name, initFn, modules.UserInvisibleModule)
 	err := m.moduleManager.AddDependency(name, deps...)
 	if err != nil {
 		return err

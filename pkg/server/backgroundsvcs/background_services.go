@@ -16,7 +16,6 @@ import (
 	uss "github.com/grafana/grafana/pkg/infra/usagestats/service"
 	"github.com/grafana/grafana/pkg/infra/usagestats/statscollector"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
-	pluginStore "github.com/grafana/grafana/pkg/plugins/manager/store"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/server/modules"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -62,7 +61,7 @@ func ProvideBackgroundServiceRegistry(
 	bundleService *supportbundlesimpl.Service,
 	usageStatsProvidersRegistry registry.UsageStatsProvidersRegistry,
 	provisioningService provisioning.ProvisioningService,
-	pluginStore *pluginStore.Service, moduleManager *modules.Modules,
+	moduleManager *modules.Modules,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service, _ *alerting.AlertNotificationService,
 	_ serviceaccounts.Service, _ *guardian.Provider,
@@ -70,7 +69,6 @@ func ProvideBackgroundServiceRegistry(
 	_ *grpcserver.HealthService, _ entity.EntityStoreServer, _ *grpcserver.ReflectionService, _ *ldapapi.Service,
 ) (*BackgroundServiceRegistry, error) {
 	r := NewBackgroundServiceRegistry(
-		pluginStore,
 		ng,
 		cleanup,
 		live,

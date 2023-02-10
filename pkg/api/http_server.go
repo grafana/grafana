@@ -137,6 +137,7 @@ type HTTPServer struct {
 	AccessControl                accesscontrol.AccessControl
 	DataProxy                    *datasourceproxy.DataSourceProxyService
 	PluginRequestValidator       validations.PluginRequestValidator
+	pluginInstaller              plugins.Installer
 	pluginClient                 plugins.Client
 	pluginStore                  plugins.Store
 	pluginDashboardService       plugindashboards.Service
@@ -229,7 +230,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	pluginRequestValidator validations.PluginRequestValidator, pluginStaticRouteResolver plugins.StaticRouteResolver,
 	pluginDashboardService plugindashboards.Service, pluginStore plugins.Store, pluginClient plugins.Client,
 	pluginErrorResolver plugins.ErrorResolver, settingsProvider setting.Provider, moduleManager *modules.Modules,
-	dataSourceCache datasources.CacheService, userTokenService auth.UserTokenService,
+	dataSourceCache datasources.CacheService, userTokenService auth.UserTokenService, pluginInstaller plugins.Installer,
 	cleanUpService *cleanup.CleanUpService, shortURLService shorturls.Service, queryHistoryService queryhistory.Service, correlationsService correlations.Service,
 	thumbService thumbs.Service, remoteCache *remotecache.RemoteCache, provisioningService provisioning.ProvisioningService,
 	loginService login.Service, authenticator loginpkg.Authenticator, accessControl accesscontrol.AccessControl,
@@ -280,6 +281,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		PluginRequestValidator:       pluginRequestValidator,
 		pluginClient:                 pluginClient,
 		pluginStore:                  pluginStore,
+		pluginInstaller:              pluginInstaller,
 		pluginStaticRouteResolver:    pluginStaticRouteResolver,
 		pluginDashboardService:       pluginDashboardService,
 		pluginErrorResolver:          pluginErrorResolver,

@@ -22,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/pluginmod"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -464,7 +463,7 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 	}
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	err := pluginmod.GetPluginsService().Add(c.Req.Context(), pluginID, dto.Version, plugins.CompatOpts{
+	err := hs.pluginInstaller.Add(c.Req.Context(), pluginID, dto.Version, plugins.CompatOpts{
 		GrafanaVersion: hs.Cfg.BuildVersion,
 		OS:             runtime.GOOS,
 		Arch:           runtime.GOARCH,
@@ -499,7 +498,7 @@ func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Respons
 func (hs *HTTPServer) UninstallPlugin(c *contextmodel.ReqContext) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
 
-	err := pluginmod.GetPluginsService().Remove(c.Req.Context(), pluginID)
+	err := hs.pluginInstaller.Remove(c.Req.Context(), pluginID)
 	if err != nil {
 		if errors.Is(err, plugins.ErrPluginNotInstalled) {
 			return response.Error(http.StatusNotFound, "Plugin not installed", err)
