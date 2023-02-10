@@ -76,7 +76,7 @@ export function LogsVolumePanel(props: Props) {
     }
   }
 
-  let extraInfo = <></>;
+  let extraInfo;
   if (logsVolumeData.data[0]?.meta?.custom?.logsVolumeType !== LogsVolumeType.Limited) {
     const zoomRatio = logsLevelZoomRatio(logsVolumeData, range);
 
