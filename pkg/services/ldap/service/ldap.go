@@ -7,11 +7,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/ldap/multildap"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
 	ErrUnableToCreateLDAPClient = errors.New("unable to create LDAP client")
+	ErrLDAPNotEnabled           = errors.New("LDAP not enabled")
 )
 
 // LDAP is the interface for the LDAP service.
@@ -19,6 +21,11 @@ type LDAP interface {
 	ReloadConfig() error
 	Config() *ldap.Config
 	Client() multildap.IMultiLDAP
+
+	// Login authenticates the user against the LDAP server.
+	Login(query *login.LoginUserQuery) (*login.ExternalUserInfo, error)
+	// User searches for a user in the LDAP server.
+	User(username string) (*login.ExternalUserInfo, error)
 }
 
 type LDAPImpl struct {
@@ -85,4 +92,21 @@ func (s *LDAPImpl) Client() multildap.IMultiLDAP {
 
 func (s *LDAPImpl) Config() *ldap.Config {
 	return s.ldapCfg
+}
+
+func (s *LDAPImpl) Login(query *login.LoginUserQuery) (*login.ExternalUserInfo, error) {
+	if !s.cfg.LDAPEnabled {
+		return nil, ErrLDAPNotEnabled
+	}
+
+	return s.Client().Login(query)
+}
+
+func (s *LDAPImpl) User(username string) (*login.ExternalUserInfo, error) {
+	if !s.cfg.LDAPEnabled {
+		return nil, ErrLDAPNotEnabled
+	}
+
+	user, _, err := s.Client().User(username)
+	return user, err
 }
