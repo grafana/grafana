@@ -104,7 +104,10 @@ function getSparkline(value: unknown): FieldSparkline | undefined {
 }
 
 function getTableAreaChartCellOptions(field: Field): TableAreaChartCellOptions {
-  const options = getCellOptions(field);
+  let options = getCellOptions(field);
+  if (options.type === TableCellDisplayMode.Auto) {
+    options = { ...options, type: TableCellDisplayMode.AreaChart };
+  }
   if (options.type === TableCellDisplayMode.AreaChart) {
     return options;
   }
