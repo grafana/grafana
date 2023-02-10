@@ -122,7 +122,7 @@ func processDocumentResponse(res *es.SearchResponse, target *Query, timeField st
 	for propNameIdx, propName := range sortedPropNames {
 		// Special handling for time field
 		if propName == timeField {
-			timeVector := make([]time.Time, size)
+			timeVector := make([]*time.Time, size)
 			for i, doc := range docs {
 				timeString, ok := doc[timeField].(string)
 				if !ok {
@@ -133,7 +133,7 @@ func processDocumentResponse(res *es.SearchResponse, target *Query, timeField st
 					// We skip time values that cannot be parsed
 					continue
 				} else {
-					timeVector[i] = timeValue
+					timeVector[i] = &timeValue
 				}
 			}
 			field := data.NewField(timeField, nil, timeVector)
@@ -155,14 +155,15 @@ func processDocumentResponse(res *es.SearchResponse, target *Query, timeField st
 		case bool:
 			allFields[propNameIdx] = createFieldOfType[bool](docs, propName, size, isFilterable)
 		default:
-			fieldVector := make([]json.RawMessage, size)
+			fieldVector := make([]*json.RawMessage, size)
 			for i, doc := range docs {
 				bytes, err := json.Marshal(doc[propName])
 				if err != nil {
 					// We skip values that cannot be marshalled
 					continue
 				}
-				fieldVector[i] = json.RawMessage(bytes)
+				value := json.RawMessage(bytes)
+				fieldVector[i] = &value
 			}
 			field := data.NewField(propName, nil, fieldVector)
 			field.Config = &data.FieldConfig{Filterable: &isFilterable}
@@ -941,13 +942,13 @@ func findTheFirstNonNilDocValueForPropName(docs []map[string]interface{}, propNa
 
 
 func createFieldOfType[T int | float64 | bool | string](docs []map[string]interface{}, propName string, size int, isFilterable bool) *data.Field {
-	fieldVector := make([]T, size)
+	fieldVector := make([]*T, size)
 	for i, doc := range docs {
 		value, ok := doc[propName].(T)
 		if !ok {
 			continue;
 		}
-		fieldVector[i] = value
+		fieldVector[i] = &value
 	}
 	field := data.NewField(propName, nil, fieldVector)
 	field.Config = &data.FieldConfig{Filterable: &isFilterable}

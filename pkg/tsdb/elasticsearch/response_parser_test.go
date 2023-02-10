@@ -1145,18 +1145,18 @@ func TestResponseParser(t *testing.T) {
 			// Fields have the correct length
 			require.Equal(t, 2, frame.Fields[0].Len())
 			// First field is timeField
-			require.Equal(t, true, frame.Fields[0].Type().Time())
+			require.Equal(t, data.FieldTypeNullableTime, frame.Fields[0].Type())
 			// Correctly uses string types
-			require.Equal(t, data.FieldTypeString, frame.Fields[1].Type())
+			require.Equal(t, data.FieldTypeNullableString, frame.Fields[1].Type())
 			// Correctly detects float64 types
-			require.Equal(t, data.FieldTypeFloat64, frame.Fields[6].Type())
+			require.Equal(t, data.FieldTypeNullableFloat64, frame.Fields[6].Type())
 			// Correctly detects json types
-			require.Equal(t, data.FieldTypeJSON, frame.Fields[7].Type())
+			require.Equal(t, data.FieldTypeNullableJSON, frame.Fields[7].Type())
 			// Correctly flattens fields
 			require.Equal(t, "nested.field.double_nested", frame.Fields[12].Name)
-			require.Equal(t, "value", frame.Fields[12].At(0))
+			require.Equal(t, data.FieldTypeNullableString, frame.Fields[12].Type())
 			// Correctly detects type even if first value is null
-			require.Equal(t, data.FieldTypeString, frame.Fields[15].Type())
+			require.Equal(t, data.FieldTypeNullableString, frame.Fields[15].Type())
 		})
 	})
 
