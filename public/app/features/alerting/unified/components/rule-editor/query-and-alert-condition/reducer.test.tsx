@@ -53,12 +53,14 @@ describe('Query and expressions reducer', () => {
   it('should return initial state', () => {
     expect(queriesAndExpressionsReducer(undefined, { type: undefined })).toEqual({
       queries: [],
+      recordingRulesQueries: [],
     });
   });
 
   it('should duplicate query', () => {
     const initialState: QueriesAndExpressionsState = {
       queries: [alertQuery],
+      recordingRulesQueries: [],
     };
 
     const newState = queriesAndExpressionsReducer(initialState, duplicateQuery(alertQuery));
@@ -70,6 +72,7 @@ describe('Query and expressions reducer', () => {
   it('should duplicate query and copy time range', () => {
     const initialState: QueriesAndExpressionsState = {
       queries: [alertQuery],
+      recordingRulesQueries: [],
     };
 
     const customTimeRange = {
@@ -84,6 +87,7 @@ describe('Query and expressions reducer', () => {
 
     const previousState: QueriesAndExpressionsState = {
       queries: [query],
+      recordingRulesQueries: [],
     };
 
     const newState = queriesAndExpressionsReducer(previousState, duplicateQuery(query));
@@ -94,6 +98,7 @@ describe('Query and expressions reducer', () => {
   it('should add query', () => {
     const initialState: QueriesAndExpressionsState = {
       queries: [alertQuery],
+      recordingRulesQueries: [],
     };
 
     const newState = queriesAndExpressionsReducer(initialState, addNewDataQuery());
@@ -104,6 +109,7 @@ describe('Query and expressions reducer', () => {
   it('should set data queries', () => {
     const initialState: QueriesAndExpressionsState = {
       queries: [alertQuery, expressionQuery],
+      recordingRulesQueries: [],
     };
 
     const newState = queriesAndExpressionsReducer(initialState, setDataQueries([]));
@@ -114,6 +120,7 @@ describe('Query and expressions reducer', () => {
   it('should add a new expression', () => {
     const initialState: QueriesAndExpressionsState = {
       queries: [alertQuery],
+      recordingRulesQueries: [],
     };
 
     const newState = queriesAndExpressionsReducer(initialState, addNewExpression());
@@ -124,6 +131,7 @@ describe('Query and expressions reducer', () => {
   it('should remove an expression or alert query', () => {
     const initialState: QueriesAndExpressionsState = {
       queries: [alertQuery, expressionQuery],
+      recordingRulesQueries: [],
     };
 
     let stateWithoutB = queriesAndExpressionsReducer(initialState, removeExpression('B'));
@@ -142,6 +150,7 @@ describe('Query and expressions reducer', () => {
 
     const initialState: QueriesAndExpressionsState = {
       queries: [expressionQuery],
+      recordingRulesQueries: [],
     };
 
     const newState = queriesAndExpressionsReducer(initialState, updateExpression(newExpression));
@@ -192,6 +201,7 @@ describe('Query and expressions reducer', () => {
 
     const initialState: QueriesAndExpressionsState = {
       queries: [queryA, expressionQuery, expressionQuery2],
+      recordingRulesQueries: [],
     };
 
     const newState = queriesAndExpressionsReducer(initialState, updateExpression(newExpression));
@@ -262,6 +272,7 @@ describe('Query and expressions reducer', () => {
 
     const initialState: QueriesAndExpressionsState = {
       queries: [queryA, expressionQuery],
+      recordingRulesQueries: [],
     };
 
     const newState = queriesAndExpressionsReducer(initialState, updateExpressionTimeRange());
@@ -298,6 +309,7 @@ describe('Query and expressions reducer', () => {
   it('should update an expression refId and rewire expressions', () => {
     const initialState: QueriesAndExpressionsState = {
       queries: [alertQuery, expressionQuery],
+      recordingRulesQueries: [],
     };
 
     const newState = queriesAndExpressionsReducer(
@@ -314,6 +326,7 @@ describe('Query and expressions reducer', () => {
   it('should not update an expression when the refId exists', () => {
     const initialState: QueriesAndExpressionsState = {
       queries: [alertQuery, expressionQuery],
+      recordingRulesQueries: [],
     };
 
     const newState = queriesAndExpressionsReducer(
@@ -330,6 +343,7 @@ describe('Query and expressions reducer', () => {
   it('should rewire expressions', () => {
     const initialState: QueriesAndExpressionsState = {
       queries: [alertQuery, expressionQuery],
+      recordingRulesQueries: [],
     };
 
     const newState = queriesAndExpressionsReducer(
@@ -346,6 +360,7 @@ describe('Query and expressions reducer', () => {
   it('should update expression type', () => {
     const initialState: QueriesAndExpressionsState = {
       queries: [alertQuery, expressionQuery],
+      recordingRulesQueries: [],
     };
 
     const newState = queriesAndExpressionsReducer(

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import React, { ChangeEvent, FC, ReactElement, useState } from 'react';
+import React, { ChangeEvent, FC, useState } from 'react';
 
 import {
   CoreApp,
