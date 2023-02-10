@@ -124,7 +124,10 @@ func processDocumentResponse(res *es.SearchResponse, target *Query, timeField st
 		if propName == timeField {
 			timeVector := make([]time.Time, size)
 			for i, doc := range docs {
-				timeString := doc[timeField].(string)
+				timeString, ok := doc[timeField].(string)
+				if !ok {
+				    continue
+				}
 				timeValue, err := time.Parse(time.RFC3339Nano, timeString)
 				if err != nil {
 					// We skip time values that cannot be parsed
