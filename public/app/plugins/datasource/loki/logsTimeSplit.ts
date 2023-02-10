@@ -18,7 +18,7 @@ const MAX_CHUNK_COUNT = 50;
 // to the end, so if we do it right in milliseconds, it should be OK in
 // nanoseconds too
 
-export function getRanges(
+export function getRangeChunks(
   startTime: number,
   endTime: number,
   idealRangeDuration: number

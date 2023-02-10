@@ -1,11 +1,11 @@
-import { getRanges } from './logsTimeSplit';
+import { getRangeChunks } from './logsTimeSplit';
 
 describe('querySplit', () => {
   it('should split time range into chunks', () => {
     const start = Date.parse('2022-02-06T14:10:03.234');
     const end = Date.parse('2022-02-06T14:11:03.567');
 
-    expect(getRanges(start, end, 10000)).toStrictEqual([
+    expect(getRangeChunks(start, end, 10000)).toStrictEqual([
       [Date.parse('2022-02-06T14:10:03.234'), Date.parse('2022-02-06T14:10:03.567')],
       [Date.parse('2022-02-06T14:10:03.567'), Date.parse('2022-02-06T14:10:13.567')],
       [Date.parse('2022-02-06T14:10:13.567'), Date.parse('2022-02-06T14:10:23.567')],
@@ -20,7 +20,7 @@ describe('querySplit', () => {
     const start = Date.parse('2022-02-06T14:10:03.567');
     const end = Date.parse('2022-02-06T14:11:03.567');
 
-    expect(getRanges(start, end, 20000)).toStrictEqual([
+    expect(getRangeChunks(start, end, 20000)).toStrictEqual([
       [Date.parse('2022-02-06T14:10:03.567'), Date.parse('2022-02-06T14:10:23.567')],
       [Date.parse('2022-02-06T14:10:23.567'), Date.parse('2022-02-06T14:10:43.567')],
       [Date.parse('2022-02-06T14:10:43.567'), Date.parse('2022-02-06T14:11:03.567')],
@@ -30,6 +30,6 @@ describe('querySplit', () => {
   it('should return null if too many chunks would be generated', () => {
     const start = Date.parse('2022-02-06T14:10:03');
     const end = Date.parse('2022-02-06T14:30:03');
-    expect(getRanges(start, end, 10000)).toBeNull();
+    expect(getRangeChunks(start, end, 10000)).toBeNull();
   });
 });

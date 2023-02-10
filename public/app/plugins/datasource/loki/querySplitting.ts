@@ -4,8 +4,8 @@ import { DataQueryRequest, DataQueryResponse, dateTime, TimeRange } from '@grafa
 import { LoadingState } from '@grafana/schema';
 
 import { LokiDatasource } from './datasource';
-import { getRanges as getLogsRanges } from './logsTimeSplit';
-import { getRanges as getMetricRanges } from './metricTimeSplit';
+import { getRangeChunks as getLogsRangeChunks } from './logsTimeSplit';
+import { getRangeChunks as getMetricRangeChunks } from './metricTimeSplit';
 import { combineResponses, isLogsQuery, resultLimitReached } from './queryUtils';
 import { LokiQuery } from './types';
 
@@ -36,7 +36,9 @@ export function partitionTimeRange(
 
   const duration: number = (window as any).lokiChunkDuration;
 
-  const ranges = isLogsQuery ? getLogsRanges(start, end, duration) : getMetricRanges(start, end, step, duration);
+  const ranges = isLogsQuery
+    ? getLogsRangeChunks(start, end, duration)
+    : getMetricRangeChunks(start, end, step, duration);
 
   // if the split was not possible, go with the original range
   if (ranges == null) {
