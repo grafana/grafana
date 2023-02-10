@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // IConnection is interface for LDAP connection manipulation
@@ -42,6 +43,7 @@ type IServer interface {
 
 // Server is basic struct of LDAP authorization
 type Server struct {
+	cfg        *setting.Cfg
 	Config     *ServerConfig
 	Connection IConnection
 	log        log.Logger
@@ -361,7 +363,7 @@ func (server *Server) users(logins []string) (
 // If there are no ldap group mappings access is true
 // otherwise a single group must match
 func (server *Server) validateGrafanaUser(user *login.ExternalUserInfo) error {
-	if !SkipOrgRoleSync() && len(server.Config.Groups) > 0 &&
+	if !server.cfg.LDAPSkipOrgRoleSync && len(server.Config.Groups) > 0 &&
 		(len(user.OrgRoles) == 0 && (user.IsGrafanaAdmin == nil || !*user.IsGrafanaAdmin)) {
 		server.log.Warn(
 			"User does not belong in any of the specified LDAP groups",
@@ -446,7 +448,7 @@ func (server *Server) buildGrafanaUser(user *ldap.Entry) (*login.ExternalUserInf
 	}
 
 	// Skipping org role sync
-	if SkipOrgRoleSync() {
+	if server.cfg.LDAPSkipOrgRoleSync {
 		server.log.Debug("skipping organization role mapping.")
 		return extUser, nil
 	}

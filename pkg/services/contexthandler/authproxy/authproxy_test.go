@@ -133,7 +133,7 @@ func TestMiddlewareContext_ldap(t *testing.T) {
 			return config, nil
 		}
 
-		newLDAP = func(servers []*ldap.ServerConfig) multildap.IMultiLDAP {
+		newLDAP = func(servers []*ldap.ServerConfig, _ *setting.Cfg) multildap.IMultiLDAP {
 			return stub
 		}
 
@@ -175,7 +175,7 @@ func TestMiddlewareContext_ldap(t *testing.T) {
 			ID: id,
 		}
 
-		newLDAP = func(servers []*ldap.ServerConfig) multildap.IMultiLDAP {
+		newLDAP = func(servers []*ldap.ServerConfig, _ *setting.Cfg) multildap.IMultiLDAP {
 			return stub
 		}
 

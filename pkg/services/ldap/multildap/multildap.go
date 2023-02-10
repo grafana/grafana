@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // logger to log
@@ -13,9 +14,6 @@ var logger = log.New("ldap")
 
 // GetConfig gets LDAP config
 var GetConfig = ldap.GetConfig
-
-// IsEnabled checks if LDAP is enabled
-var IsEnabled = ldap.IsEnabled
 
 // newLDAP return instance of the single LDAP server
 var newLDAP = ldap.New
@@ -62,7 +60,7 @@ type MultiLDAP struct {
 }
 
 // New creates the new LDAP auth
-func New(configs []*ldap.ServerConfig) IMultiLDAP {
+func New(configs []*ldap.ServerConfig, cfg *setting.Cfg) IMultiLDAP {
 	return &MultiLDAP{
 		configs: configs,
 	}

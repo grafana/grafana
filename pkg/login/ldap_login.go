@@ -15,9 +15,6 @@ import (
 // getLDAPConfig gets LDAP config
 var getLDAPConfig = multildap.GetConfig
 
-// isLDAPEnabled checks if LDAP is enabled
-var isLDAPEnabled = multildap.IsEnabled
-
 // newLDAP creates multiple LDAP instance
 var newLDAP = multildap.New
 
@@ -28,9 +25,7 @@ var ldapLogger = log.New("login.ldap")
 // populated with the logged in user if successful.
 var loginUsingLDAP = func(ctx context.Context, query *login.LoginUserQuery,
 	loginService login.Service, cfg *setting.Cfg) (bool, error) {
-	enabled := isLDAPEnabled()
-
-	if !enabled {
+	if !cfg.LDAPEnabled {
 		return false, nil
 	}
 
@@ -39,7 +34,7 @@ var loginUsingLDAP = func(ctx context.Context, query *login.LoginUserQuery,
 		return true, fmt.Errorf("%v: %w", "Failed to get LDAP config", err)
 	}
 
-	externalUser, err := newLDAP(config.Servers).Login(query)
+	externalUser, err := newLDAP(config.Servers, cfg).Login(query)
 	if err != nil {
 		if errors.Is(err, ldap.ErrCouldNotFindUser) {
 			// Ignore the error since user might not be present anyway

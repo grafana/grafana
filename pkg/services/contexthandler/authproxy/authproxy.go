@@ -236,7 +236,7 @@ func (auth *AuthProxy) LoginViaLDAP(reqCtx *contextmodel.ReqContext) (int64, err
 	}
 
 	header := auth.getDecodedHeader(reqCtx, auth.cfg.AuthProxyHeaderName)
-	mldap := newLDAP(config.Servers)
+	mldap := newLDAP(config.Servers, auth.cfg)
 	extUser, _, err := mldap.User(header)
 	if err != nil {
 		return 0, err

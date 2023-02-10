@@ -49,7 +49,7 @@ func ProvideService(cfg *setting.Cfg) *LDAPImpl {
 		s.log.Error("Failed to get LDAP config", "error", err)
 	} else {
 		s.ldapCfg = ldapCfg
-		s.client = multildap.New(s.ldapCfg.Servers)
+		s.client = multildap.New(s.ldapCfg.Servers, s.cfg)
 	}
 
 	return s
@@ -68,7 +68,7 @@ func (s *LDAPImpl) ReloadConfig() error {
 		return err
 	}
 
-	client := multildap.New(config.Servers)
+	client := multildap.New(config.Servers, s.cfg)
 	if client == nil {
 		return ErrUnableToCreateLDAPClient
 	}

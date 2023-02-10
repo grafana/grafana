@@ -76,7 +76,7 @@ func (s *ldapServiceImpl) Login(query *login.LoginUserQuery) (*login.ExternalUse
 		return nil, err
 	}
 
-	return multildap.New(cfg.Servers).Login(query)
+	return multildap.New(cfg.Servers, s.cfg).Login(query)
 }
 
 func (s *ldapServiceImpl) User(username string) (*login.ExternalUserInfo, error) {
@@ -85,7 +85,7 @@ func (s *ldapServiceImpl) User(username string) (*login.ExternalUserInfo, error)
 		return nil, err
 	}
 
-	user, _, err := multildap.New(cfg.Servers).User(username)
+	user, _, err := multildap.New(cfg.Servers, s.cfg).User(username)
 	return user, err
 }
 
