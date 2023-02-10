@@ -71,29 +71,6 @@ var logger = log.New("ldap")
 // loadingMutex locks the reading of the config so multiple requests for reloading are sequential.
 var loadingMutex = &sync.Mutex{}
 
-// IsEnabled checks if ldap is enabled
-func IsEnabled() bool {
-	return setting.LDAPEnabled
-}
-
-func SkipOrgRoleSync() bool {
-	return setting.LDAPSkipOrgRoleSync
-}
-
-// ReloadConfig reads the config from the disk and caches it.
-func ReloadConfig(ldapConfigFilePath string) error {
-	if !IsEnabled() {
-		return nil
-	}
-
-	loadingMutex.Lock()
-	defer loadingMutex.Unlock()
-
-	var err error
-	config, err = readConfig(ldapConfigFilePath)
-	return err
-}
-
 // We need to define in this space so `GetConfig` fn
 // could be defined as singleton
 var config *Config
@@ -105,7 +82,7 @@ func GetConfig(cfg *setting.Cfg) (*Config, error) {
 		if !cfg.LDAPEnabled {
 			return nil, nil
 		}
-	} else if !IsEnabled() {
+	} else if !cfg.LDAPEnabled {
 		return nil, nil
 	}
 
