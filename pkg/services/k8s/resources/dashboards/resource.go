@@ -22,6 +22,10 @@ type Resource struct {
 }
 
 func ProvideResource(clientset *client.Clientset, reg *corecrd.Registry, kinds *corekind.Base) (*Resource, error) {
+	if clientset.IsDisabled() {
+		return &Resource{}, nil // something better
+	}
+
 	err := clientset.RegisterKind(context.Background(), reg.Dashboard())
 	if err != nil {
 		return nil, err
