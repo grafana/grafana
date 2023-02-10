@@ -32,10 +32,10 @@ It extends [AxisConfig](#axisconfig) and [HideableFieldConfig](#hideablefieldcon
 | `axisSoftMax`       | number                                              | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
 | `axisSoftMin`       | number                                              | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
 | `axisWidth`         | number                                              | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
-| `fillOpacity`       | integer                                             | No       | Controls the fill opacity of the bars. Default: `80`.                                                                                   |
+| `fillOpacity`       | integer                                             | No       | Controls the fill opacity of the bars. Default: `80`.<br/>Constraint: `>=0 & <=100`.                                                    |
 | `gradientMode`      | string                                              | No       | TODO docs<br/>Possible values are: `none`, `opacity`, `hue`, `scheme`.                                                                  |
 | `hideFrom`          | [HideSeriesConfig](#hideseriesconfig)               | No       | *(Inherited from [HideableFieldConfig](#hideablefieldconfig))*<br/>TODO docs                                                            |
-| `lineWidth`         | integer                                             | No       | Controls line width of the bars. Default: `1`.                                                                                          |
+| `lineWidth`         | integer                                             | No       | Controls line width of the bars. Default: `1`.<br/>Constraint: `>=0 & <=10`.                                                            |
 | `scaleDistribution` | [ScaleDistributionConfig](#scaledistributionconfig) | No       | *(Inherited from [AxisConfig](#axisconfig))*<br/>TODO docs                                                                              |
 
 ### AxisConfig
@@ -90,7 +90,7 @@ It extends [OptionsWithLegend](#optionswithlegend) and [OptionsWithTooltip](#opt
 |----------------|-----------------------------------------|----------|----------------------------------------------------------------------------|
 | `legend`       | [VizLegendOptions](#vizlegendoptions)   | **Yes**  | *(Inherited from [OptionsWithLegend](#optionswithlegend))*<br/>TODO docs   |
 | `tooltip`      | [VizTooltipOptions](#viztooltipoptions) | **Yes**  | *(Inherited from [OptionsWithTooltip](#optionswithtooltip))*<br/>TODO docs |
-| `bucketOffset` | integer                                 | No       | Offset buckets by this amount Default: `0`.                                |
+| `bucketOffset` | int32                                   | No       | Offset buckets by this amount Default: `0`.                                |
 | `bucketSize`   | integer                                 | No       | Size of each bucket                                                        |
 | `combine`      | boolean                                 | No       | Combines multiple series into a single histogram                           |
 
