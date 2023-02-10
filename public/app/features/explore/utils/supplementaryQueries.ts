@@ -16,7 +16,7 @@ import {
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import store from 'app/core/store';
-import { BatchedQueries, MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { ExplorePanelData, SupplementaryQueries } from 'app/types';
 
 export const supplementaryQueryTypes: SupplementaryQueryType[] = [
@@ -163,13 +163,12 @@ export const getSupplementaryQueryProvider = (
   if (hasSupplementaryQuerySupport(datasourceInstance, type)) {
     return datasourceInstance.getDataProvider(type, request);
   } else if (datasourceInstance.meta?.mixed === true) {
-    // Remove any invalid queries
     const queries = request.targets.filter((t) => {
       return t.datasource?.uid !== MIXED_DATASOURCE_NAME;
     });
     // Build groups of queries to run in parallel
     const sets: { [key: string]: DataQuery[] } = groupBy(queries, 'datasource.uid');
-    const mixed: BatchedQueries[] = [];
+    const mixed: Array<{ datasource: Promise<DataSourceApi>; targets: DataQuery[] }> = [];
 
     for (const key in sets) {
       const targets = sets[key];

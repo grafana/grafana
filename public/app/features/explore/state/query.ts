@@ -578,6 +578,13 @@ export const runQueries = (
         }
       } else {
         for (const type of supplementaryQueryTypes) {
+          // TODO: query.hide check is baked into each data source. For supplementary queries it means
+          // each plugins would need to filter it out too, but that seems unnecessary. Below we remove
+          // hidden queries just for supplementary queries but maybe we could make it part of buildQueryTransaction?
+          // (plus check usages in plugins and dashboards but ideally query.hide check should not be
+          // required by plugins?
+          const visibleQueries = transaction.request.targets.filter((t) => !t.hide);
+
           // We always prepare provider, even is supplementary query is disabled because when the user
           // enables the query, we need to load the data, so we need the provider
           const dataProvider = getSupplementaryQueryProvider(
@@ -585,6 +592,7 @@ export const runQueries = (
             type,
             {
               ...transaction.request,
+              targets: visibleQueries,
               requestId: `${transaction.request.requestId}_${snakeCase(type)}`,
             },
             newQuerySource
@@ -599,7 +607,7 @@ export const runQueries = (
               })
             );
 
-            if (!canReuseSupplementaryQueryData(supplementaryQueries[type].data, queries, absoluteRange)) {
+            if (!canReuseSupplementaryQueryData(supplementaryQueries[type].data, visibleQueries, absoluteRange)) {
               dispatch(cleanSupplementaryQueryAction({ exploreId, type }));
               if (supplementaryQueries[type].enabled) {
                 dispatch(loadSupplementaryQueryData(exploreId, type));
@@ -610,6 +618,7 @@ export const runQueries = (
           } else if (hasLogsVolumeSupport(datasourceInstance) && type === SupplementaryQueryType.LogsVolume) {
             const dataProvider = datasourceInstance.getLogsVolumeDataProvider({
               ...transaction.request,
+              targets: visibleQueries,
               requestId: `${transaction.request.requestId}_${snakeCase(type)}`,
             });
             dispatch(
@@ -620,7 +629,7 @@ export const runQueries = (
               })
             );
 
-            if (!canReuseSupplementaryQueryData(supplementaryQueries[type].data, queries, absoluteRange)) {
+            if (!canReuseSupplementaryQueryData(supplementaryQueries[type].data, visibleQueries, absoluteRange)) {
               dispatch(cleanSupplementaryQueryAction({ exploreId, type }));
               if (supplementaryQueries[type].enabled) {
                 dispatch(loadSupplementaryQueryData(exploreId, type));
