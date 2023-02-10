@@ -12,9 +12,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/cleanup"
+	"github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	k8sDashboards "github.com/grafana/grafana/pkg/services/k8s/resources/dashboards"
 	ldapapi "github.com/grafana/grafana/pkg/services/ldap/api"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
@@ -50,6 +52,8 @@ func ProvideBackgroundServiceRegistry(
 	saService *samanager.ServiceAccountsService, authInfoService *authinfoservice.Implementation,
 	grpcServerProvider grpcserver.Provider, secretMigrationProvider secretsMigrations.SecretMigrationProvider, loginAttemptService *loginattemptimpl.Service,
 	bundleService *supportbundlesimpl.Service,
+	dashboardService *service.DashboardServiceImpl,
+	k8sDashboardController *k8sDashboards.Controller,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service, _ *alerting.AlertNotificationService,
 	_ serviceaccounts.Service, _ *guardian.Provider,
@@ -86,6 +90,7 @@ func ProvideBackgroundServiceRegistry(
 		secretMigrationProvider,
 		loginAttemptService,
 		bundleService,
+		k8sDashboardController.WithDashboardService(dashboardService),
 	)
 }
 

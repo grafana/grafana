@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
 	pluginDashboards "github.com/grafana/grafana/pkg/plugins/manager/dashboards"
+	"github.com/grafana/grafana/pkg/registry/corecrd"
 	"github.com/grafana/grafana/pkg/registry/corekind"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -68,7 +69,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/hooks"
-	k8sclient "github.com/grafana/grafana/pkg/services/k8s/client"
+	"github.com/grafana/grafana/pkg/services/k8s"
 	ldapapi "github.com/grafana/grafana/pkg/services/ldap/api"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
@@ -366,7 +367,8 @@ var wireBasicSet = wire.NewSet(
 	authnimpl.ProvideService,
 	wire.Bind(new(authn.Service), new(*authnimpl.Service)),
 	supportbundlesimpl.ProvideService,
-	k8sclient.ProvideClientset,
+	corecrd.New,
+	k8s.WireSet,
 )
 
 var wireSet = wire.NewSet(
