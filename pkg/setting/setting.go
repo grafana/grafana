@@ -141,12 +141,9 @@ var (
 	RudderstackConfigUrl                string
 
 	// LDAP
-	LDAPEnabled           bool
-	LDAPSkipOrgRoleSync   bool
-	LDAPConfigFile        string
-	LDAPSyncCron          string
-	LDAPAllowSignup       bool
-	LDAPActiveSyncEnabled bool
+	LDAPEnabled         bool
+	LDAPSkipOrgRoleSync bool
+	LDAPAllowSignup     bool
 
 	// Alerting
 	AlertingEnabled            *bool
@@ -440,10 +437,12 @@ type Cfg struct {
 	GenericOAuthSkipOrgRoleSync bool
 
 	// LDAP
-	LDAPEnabled         bool
-	LDAPSkipOrgRoleSync bool
-	LDAPConfigFilePath  string
-	LDAPAllowSignup     bool
+	LDAPEnabled           bool
+	LDAPSkipOrgRoleSync   bool
+	LDAPConfigFilePath    string
+	LDAPAllowSignup       bool
+	LDAPActiveSyncEnabled bool
+	LDAPSyncCron          string
 
 	DefaultTheme    string
 	DefaultLanguage string
@@ -1206,14 +1205,13 @@ func (cfg *Cfg) readSAMLConfig() {
 
 func (cfg *Cfg) readLDAPConfig() {
 	ldapSec := cfg.Raw.Section("auth.ldap")
-	LDAPConfigFile = ldapSec.Key("config_file").String()
-	cfg.LDAPConfigFilePath = LDAPConfigFile
-	LDAPSyncCron = ldapSec.Key("sync_cron").String()
+	cfg.LDAPConfigFilePath = ldapSec.Key("config_file").String()
+	cfg.LDAPSyncCron = ldapSec.Key("sync_cron").String()
 	LDAPEnabled = ldapSec.Key("enabled").MustBool(false)
 	cfg.LDAPEnabled = LDAPEnabled
 	LDAPSkipOrgRoleSync = ldapSec.Key("skip_org_role_sync").MustBool(false)
 	cfg.LDAPSkipOrgRoleSync = LDAPSkipOrgRoleSync
-	LDAPActiveSyncEnabled = ldapSec.Key("active_sync_enabled").MustBool(false)
+	cfg.LDAPActiveSyncEnabled = ldapSec.Key("active_sync_enabled").MustBool(false)
 	LDAPAllowSignup = ldapSec.Key("allow_sign_up").MustBool(true)
 	cfg.LDAPAllowSignup = LDAPAllowSignup
 }
