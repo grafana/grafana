@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/licensing"
-	"github.com/grafana/grafana/pkg/plugins/manager"
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
@@ -19,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/plugins/pluginmod"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
-	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/clientmiddleware"
 	"github.com/grafana/grafana/pkg/setting"
@@ -32,7 +30,6 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(plugins.RendererManager), new(*store.Service)),
 	wire.Bind(new(plugins.SecretsPluginManager), new(*store.Service)),
 	wire.Bind(new(plugins.StaticRouteResolver), new(*store.Service)),
-	ProvideClientDecorator,
 	process.ProvideService,
 	wire.Bind(new(process.Service), new(*process.Manager)),
 	coreplugin.ProvideCoreRegistry,
@@ -41,11 +38,8 @@ var WireSet = wire.NewSet(
 	loader.ProvideService,
 	wire.Bind(new(loader.Service), new(*loader.Loader)),
 	wire.Bind(new(plugins.ErrorResolver), new(*loader.Loader)),
-	manager.ProvideInstaller,
 	registry.ProvideService,
 	wire.Bind(new(registry.Service), new(*registry.InMemory)),
-	repo.ProvideService,
-	wire.Bind(new(repo.Service), new(*repo.Manager)),
 	plugincontext.ProvideService,
 	licensing.ProvideLicensing,
 	wire.Bind(new(plugins.Licensing), new(*licensing.Service)),
