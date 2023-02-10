@@ -40,14 +40,14 @@ title: GeomapPanelCfg kind
 | `id`        | string  | **Yes**  | Default: `zero`. |
 | `allLayers` | boolean | No       | Default: `true`. |
 | `lastOnly`  | boolean | No       |                  |
-| `lat`       | integer | No       | Default: `0`.    |
+| `lat`       | int64   | No       | Default: `0`.    |
 | `layer`     | string  | No       |                  |
-| `lon`       | integer | No       | Default: `0`.    |
+| `lon`       | int64   | No       | Default: `0`.    |
 | `maxZoom`   | integer | No       |                  |
 | `minZoom`   | integer | No       |                  |
 | `padding`   | integer | No       |                  |
 | `shared`    | boolean | No       |                  |
-| `zoom`      | integer | No       | Default: `1`.    |
+| `zoom`      | int64   | No       | Default: `1`.    |
 
 ### PanelOptions
 

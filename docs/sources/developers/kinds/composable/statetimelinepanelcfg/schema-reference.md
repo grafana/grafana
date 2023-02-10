@@ -24,9 +24,9 @@ It extends [HideableFieldConfig](#hideablefieldconfig).
 
 | Property      | Type                                  | Required | Description                                                                  |
 |---------------|---------------------------------------|----------|------------------------------------------------------------------------------|
-| `fillOpacity` | integer                               | No       | Default: `70`.                                                               |
+| `fillOpacity` | integer                               | No       | Default: `70`.<br/>Constraint: `>=0 & <=100`.                                |
 | `hideFrom`    | [HideSeriesConfig](#hideseriesconfig) | No       | *(Inherited from [HideableFieldConfig](#hideablefieldconfig))*<br/>TODO docs |
-| `lineWidth`   | integer                               | No       | Default: `0`.                                                                |
+| `lineWidth`   | integer                               | No       | Default: `0`.<br/>Constraint: `>=0 & <=10`.                                  |
 
 ### HideSeriesConfig
 
