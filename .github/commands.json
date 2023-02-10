@@ -322,5 +322,12 @@
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/78"
     }
+  },
+    {
+    "type": "author",
+    "memberOf": { "org": "grafana" },
+    "noLabels": true,
+    "addLabel": "internal",
+    "comment": " Hi there! It looks like you forgot to add any labels to this issue. We ask that members of the Grafana Org avoid filing empty issues because it slows down our triage process. Please add one or more appropriate labels. Here are some tips:\r\n\r\n- if you are making an issue, TODO, or reminder for yourself or your team, please add one descriptive label AND add the issue to your project board. :rocket:\r\n\r\n- if you are making an issue for any other reason (docs typo, you found a bug, etc), please add at least one descriptive label and the triage folks will help place it with the correct team. This really helps us move as fast as possible. :rocket:\r\n\r\nAnd please keep the `internal` tag so we can track issues created by grafanistas. Thank you! :heart:"
   }
 ]
