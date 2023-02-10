@@ -5,14 +5,15 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestGrafana_AuthenticateProxy(t *testing.T) {
@@ -51,7 +52,8 @@ func TestGrafana_AuthenticateProxy(t *testing.T) {
 					SyncUser:        true,
 					SyncTeamMembers: true,
 					AllowSignUp:     true,
-					LookUpParams: models.UserLookupParams{
+					FetchSyncedUser: true,
+					LookUpParams: login.UserLookupParams{
 						Email: strPtr("email@email.com"),
 						Login: strPtr("test"),
 					},
@@ -72,7 +74,7 @@ func TestGrafana_AuthenticateProxy(t *testing.T) {
 					SyncUser:        true,
 					SyncTeamMembers: true,
 					AllowSignUp:     true,
-					LookUpParams: models.UserLookupParams{
+					LookUpParams: login.UserLookupParams{
 						Email: strPtr("test@test.com"),
 						Login: strPtr("test@test.com"),
 					},

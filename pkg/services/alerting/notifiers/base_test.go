@@ -189,7 +189,7 @@ func TestBaseNotifier(t *testing.T) {
 	bJSON := simplejson.New()
 
 	model := &models.AlertNotification{
-		Uid:      "1",
+		UID:      "1",
 		Name:     "name",
 		Type:     "email",
 		Settings: bJSON,

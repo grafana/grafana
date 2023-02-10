@@ -5,16 +5,17 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/remotecache"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/ldap"
+	"github.com/grafana/grafana/pkg/services/ldap/multildap"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
-	"github.com/grafana/grafana/pkg/services/multildap"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -23,7 +24,7 @@ import (
 const hdrName = "markelog"
 const id int64 = 42
 
-func prepareMiddleware(t *testing.T, remoteCache *remotecache.RemoteCache, configureReq func(*http.Request, *setting.Cfg)) (*AuthProxy, *models.ReqContext) {
+func prepareMiddleware(t *testing.T, remoteCache *remotecache.RemoteCache, configureReq func(*http.Request, *setting.Cfg)) (*AuthProxy, *contextmodel.ReqContext) {
 	t.Helper()
 
 	req, err := http.NewRequest("POST", "http://example.com", nil)
@@ -38,7 +39,7 @@ func prepareMiddleware(t *testing.T, remoteCache *remotecache.RemoteCache, confi
 		req.Header.Set(cfg.AuthProxyHeaderName, hdrName)
 	}
 
-	ctx := &models.ReqContext{
+	ctx := &contextmodel.ReqContext{
 		Context: &web.Context{Req: req},
 	}
 
@@ -60,7 +61,8 @@ func TestMiddlewareContext(t *testing.T) {
 		h, err := HashCacheKey(hdrName)
 		require.NoError(t, err)
 		key := fmt.Sprintf(CachePrefix, h)
-		err = cache.Set(context.Background(), key, id, 0)
+		userIdPayload := []byte(strconv.FormatInt(id, 10))
+		err = cache.SetByteArray(context.Background(), key, userIdPayload, 0)
 		require.NoError(t, err)
 		// Set up the middleware
 		auth, reqCtx := prepareMiddleware(t, cache, nil)
@@ -82,7 +84,8 @@ func TestMiddlewareContext(t *testing.T) {
 		h, err := HashCacheKey(hdrName + "-" + group + "-" + role)
 		require.NoError(t, err)
 		key := fmt.Sprintf(CachePrefix, h)
-		err = cache.Set(context.Background(), key, id, 0)
+		userIdPayload := []byte(strconv.FormatInt(id, 10))
+		err = cache.SetByteArray(context.Background(), key, userIdPayload, 0)
 		require.NoError(t, err)
 
 		auth, reqCtx := prepareMiddleware(t, cache, func(req *http.Request, cfg *setting.Cfg) {

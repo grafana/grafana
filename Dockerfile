@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 ARG BASE_IMAGE=alpine:3.15
-ARG JS_IMAGE=node:16-alpine3.15
+ARG JS_IMAGE=node:18-alpine3.15
 ARG GO_IMAGE=golang:1.19.4-alpine3.17
 
 ARG GO_SRC=go-builder
@@ -49,10 +49,11 @@ COPY cue.mod cue.mod
 COPY kinds kinds
 COPY packages/grafana-schema packages/grafana-schema
 COPY public/app/plugins public/app/plugins
-COPY public/api-spec.json public/api-spec.json
+COPY public/api-merged.json public/api-merged.json
 COPY pkg pkg
 COPY scripts scripts
 COPY conf conf
+COPY .github .github
 
 RUN make build-go
 

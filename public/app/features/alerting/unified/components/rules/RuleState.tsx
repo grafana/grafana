@@ -14,9 +14,10 @@ interface Props {
   rule: CombinedRule;
   isDeleting: boolean;
   isCreating: boolean;
+  isPaused?: boolean;
 }
 
-export const RuleState: FC<Props> = ({ rule, isDeleting, isCreating }) => {
+export const RuleState: FC<Props> = ({ rule, isDeleting, isCreating, isPaused }) => {
   const style = useStyles2(getStyle);
   const { promRule } = rule;
 
@@ -68,7 +69,7 @@ export const RuleState: FC<Props> = ({ rule, isDeleting, isCreating }) => {
   } else if (promRule && isAlertingRule(promRule)) {
     return (
       <HorizontalGroup align="flex-start">
-        <AlertStateTag state={promRule.state} />
+        <AlertStateTag state={promRule.state} isPaused={isPaused} />
         {forTime}
       </HorizontalGroup>
     );
