@@ -324,8 +324,9 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	store := publicdashboardsStore.ProvideStore(db)
 	cfg := setting.NewCfg()
 	ac := acmock.New()
+	ws := &publicdashboards.FakePublicDashboardServiceWrapper{}
 	cfg.RBACEnabled = false
-	service := publicdashboardsService.ProvideService(cfg, store, qds, annotationsService, ac)
+	service := publicdashboardsService.ProvideService(cfg, store, qds, annotationsService, ac, ws)
 	pubdash, err := service.Create(context.Background(), &user.SignedInUser{}, savePubDashboardCmd)
 	require.NoError(t, err)
 
