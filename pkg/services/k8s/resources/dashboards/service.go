@@ -13,10 +13,11 @@ import (
 	"github.com/grafana/grafana/pkg/kindsys/k8ssys"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // NOTE this is how you reset the CRD
-//kubectl --kubeconfig=devenv/docker/blocks/apiserver/apiserver.kubeconfig delete CustomResourceDefinition dashboards.dashboard.core.grafana.com
+//kubectl delete CustomResourceDefinition dashboards.dashboard.core.grafana.com
 
 type Service struct {
 	dashboards.DashboardService
@@ -60,15 +61,11 @@ func (s *Service) SaveDashboard(ctx context.Context, dto *dashboards.SaveDashboa
 	updateDashboard := false
 	resourceVersion := ""
 
-	// FIXME this is not reliable and is spaghetti. Change UID or create mapping
-	// for k8s with uuidV4
+	// FIXME this is not reliable and is spaghetti
 	var err error
 	uid := dto.Dashboard.UID
 	if uid == "" {
-		uid, err = getUnusedGrafanaUID(ctx, s.dashboardResource)
-		if err != nil {
-			return nil, err
-		}
+		uid = util.GenerateShortUID()
 	} else {
 		// check if dashboard exists in k8s. if it does, we're gonna do an update, if
 		rv, ok, err := getResourceVersion(ctx, s.dashboardResource, uid)

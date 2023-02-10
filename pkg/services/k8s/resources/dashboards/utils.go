@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/kindsys/k8ssys"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -26,22 +25,6 @@ func GrafanaUIDToK8sName(uid string) string {
 	_, _ = h.Write([]byte(uid))
 	bs := h.Sum(nil)
 	return fmt.Sprintf("g%x", bs[:12])
-}
-
-// FIXME this shouldnt need to exist. use a uuidv4 and do some sort of mapping
-// generate a unique id in k8s
-func getUnusedGrafanaUID(ctx context.Context, resourceClient dynamic.ResourceInterface) (string, error) {
-	var err error
-	isInUse := false
-	for i := 0; i < 3; i++ {
-		uid := util.GenerateShortUID()
-		name := GrafanaUIDToK8sName(uid)
-		isInUse, err = isK8sNameInUse(ctx, resourceClient, name)
-		if err == nil && !isInUse {
-			return uid, nil
-		}
-	}
-	return "", fmt.Errorf("unable to find unique grafana UID: %w", err)
 }
 
 // Gets resource version tells us whether there was an error or not found
