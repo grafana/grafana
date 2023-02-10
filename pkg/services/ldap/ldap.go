@@ -363,7 +363,7 @@ func (server *Server) users(logins []string) (
 func (server *Server) validateGrafanaUser(user *login.ExternalUserInfo) error {
 	if !SkipOrgRoleSync() && len(server.Config.Groups) > 0 &&
 		(len(user.OrgRoles) == 0 && (user.IsGrafanaAdmin == nil || !*user.IsGrafanaAdmin)) {
-		server.log.Error(
+		server.log.Warn(
 			"User does not belong in any of the specified LDAP groups",
 			"username", user.Login,
 			"groups", user.Groups,
