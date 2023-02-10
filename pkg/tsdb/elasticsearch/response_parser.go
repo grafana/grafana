@@ -126,7 +126,7 @@ func processDocumentResponse(res *es.SearchResponse, target *Query, timeField st
 			for i, doc := range docs {
 				timeString, ok := doc[timeField].(string)
 				if !ok {
-				    continue
+					continue
 				}
 				timeValue, err := time.Parse(time.RFC3339Nano, timeString)
 				if err != nil {
@@ -940,13 +940,12 @@ func findTheFirstNonNilDocValueForPropName(docs []map[string]interface{}, propNa
 	return docs[0][propName]
 }
 
-
 func createFieldOfType[T int | float64 | bool | string](docs []map[string]interface{}, propName string, size int, isFilterable bool) *data.Field {
 	fieldVector := make([]*T, size)
 	for i, doc := range docs {
 		value, ok := doc[propName].(T)
 		if !ok {
-			continue;
+			continue
 		}
 		fieldVector[i] = &value
 	}
