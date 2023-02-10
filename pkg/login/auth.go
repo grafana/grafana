@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
@@ -73,7 +74,8 @@ func (a *AuthenticatorService) AuthenticateUser(ctx context.Context, query *logi
 		return err
 	}
 
-	ldapEnabled, ldapErr := loginUsingLDAP(ctx, query, a.loginService)
+	cfg := setting.NewCfg()
+	ldapEnabled, ldapErr := loginUsingLDAP(ctx, query, a.loginService, cfg)
 	if ldapEnabled {
 		query.AuthModule = login.LDAPAuthModule
 		if ldapErr == nil || !errors.Is(ldapErr, ldap.ErrInvalidCredentials) {

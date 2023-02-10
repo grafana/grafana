@@ -38,11 +38,7 @@ var getLDAPConfig = ldap.GetConfig
 
 // isLDAPEnabled checks if LDAP is enabled
 var isLDAPEnabled = func(cfg *setting.Cfg) bool {
-	if cfg != nil {
-		return cfg.LDAPEnabled
-	}
-
-	return setting.LDAPEnabled
+	return cfg.LDAPEnabled
 }
 
 // newLDAP creates multiple LDAP instance
@@ -175,7 +171,7 @@ func (auth *AuthProxy) Login(reqCtx *contextmodel.ReqContext, ignoreCache bool) 
 		}
 	}
 
-	if isLDAPEnabled(auth.cfg) {
+	if auth.cfg.LDAPEnabled {
 		id, err := auth.LoginViaLDAP(reqCtx)
 		if err != nil {
 			if errors.Is(err, ldap.ErrInvalidCredentials) {

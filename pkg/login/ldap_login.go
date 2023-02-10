@@ -26,7 +26,8 @@ var ldapLogger = log.New("login.ldap")
 
 // loginUsingLDAP logs in user using LDAP. It returns whether LDAP is enabled and optional error and query arg will be
 // populated with the logged in user if successful.
-var loginUsingLDAP = func(ctx context.Context, query *login.LoginUserQuery, loginService login.Service) (bool, error) {
+var loginUsingLDAP = func(ctx context.Context, query *login.LoginUserQuery,
+	loginService login.Service, cfg *setting.Cfg) (bool, error) {
 	enabled := isLDAPEnabled()
 
 	if !enabled {
@@ -56,7 +57,7 @@ var loginUsingLDAP = func(ctx context.Context, query *login.LoginUserQuery, logi
 	upsert := &login.UpsertUserCommand{
 		ReqContext:    query.ReqContext,
 		ExternalUser:  externalUser,
-		SignupAllowed: setting.LDAPAllowSignup,
+		SignupAllowed: cfg.LDAPAllowSignup,
 		UserLookupParams: login.UserLookupParams{
 			Login:  &externalUser.Login,
 			Email:  &externalUser.Email,
