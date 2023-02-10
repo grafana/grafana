@@ -58,8 +58,9 @@ export function partitionTimeRange(
 
 export function runPartitionedQuery(datasource: LokiDatasource, request: DataQueryRequest<LokiQuery>) {
   let mergedResponse: DataQueryResponse | null;
+  const queries = request.targets.filter((query) => !query.hide);
   // we assume there is just a single query in the request
-  const query = request.targets[0];
+  const query = queries[0];
   const partition = partitionTimeRange(
     isLogsQuery(query.expr),
     request.range,
