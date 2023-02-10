@@ -41,8 +41,14 @@ export interface DataLink<T extends DataQuery = any> {
 }
 
 /** @internal */
+export enum SupportedTransformationTypes {
+  Regex = 'regex',
+  Logfmt = 'logfmt',
+}
+
+/** @internal */
 export interface DataLinkTransformationConfig {
-  type: 'regex' | 'logfmt';
+  type: SupportedTransformationTypes;
   field?: string;
   expression?: string;
   mapValue?: string;

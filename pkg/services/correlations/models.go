@@ -14,11 +14,14 @@ var (
 	ErrCorrelationNotFound                = errors.New("correlation not found")
 	ErrUpdateCorrelationEmptyParams       = errors.New("not enough parameters to edit correlation")
 	ErrInvalidConfigType                  = errors.New("invalid correlation config type")
+	ErrInvalidTransformationType          = errors.New("invalid transformation type")
+	ErrTransformationNotNested            = errors.New("transformations must be nested under config")
 )
 
 type CorrelationConfigType string
 
 type Transformation struct {
+	//Enum: regex,logfmt
 	Type       string `json:"type"`
 	Expression string `json:"expression,omitempty"`
 	Field      string `json:"field,omitempty"`
@@ -36,6 +39,17 @@ func (t CorrelationConfigType) Validate() error {
 	return nil
 }
 
+func (t Transformations) Validate() error {
+	for _, v := range t {
+		if v.Type != "regex" && v.Type != "logfmt" {
+			return fmt.Errorf("%s: \"%s\"", ErrInvalidTransformationType, t)
+		}
+	}
+	return nil
+}
+
+type Transformations []Transformation
+
 // swagger:model
 type CorrelationConfig struct {
 	// Field used to attach the correlation link
@@ -52,7 +66,7 @@ type CorrelationConfig struct {
 	// Source data transformations
 	// required:false
 	// example: [{"type": "logfmt"}]
-	Transformations []Transformation `json:"transformations,omitempty"`
+	Transformations Transformations `json:"transformations,omitempty"`
 }
 
 func (c CorrelationConfig) MarshalJSON() ([]byte, error) {
@@ -65,7 +79,7 @@ func (c CorrelationConfig) MarshalJSON() ([]byte, error) {
 		Type            CorrelationConfigType  `json:"type"`
 		Field           string                 `json:"field"`
 		Target          map[string]interface{} `json:"target"`
-		Transformations []Transformation       `json:"transformations,omitempty"`
+		Transformations Transformations        `json:"transformations,omitempty"`
 	}{
 		Type:            ConfigTypeQuery,
 		Field:           c.Field,
@@ -130,6 +144,10 @@ func (c CreateCorrelationCommand) Validate() error {
 	}
 	if c.TargetUID == nil && c.Config.Type == ConfigTypeQuery {
 		return fmt.Errorf("correlations of type \"%s\" must have a targetUID", ConfigTypeQuery)
+	}
+
+	if err := c.Config.Transformations.Validate(); err != nil {
+		return err
 	}
 	return nil
 }

@@ -7,6 +7,7 @@ import {
   FieldType,
   InterpolateFunction,
   LinkModel,
+  SupportedTransformationTypes,
   TimeRange,
   toDataFrame,
 } from '@grafana/data';
@@ -250,8 +251,8 @@ describe('getFieldLinksForExplore', () => {
         datasourceUid: 'uid_1',
         datasourceName: 'test_ds',
         transformations: [
-          { type: 'logfmt' },
-          { type: 'regex', expression: 'host=(dev|prod)', mapValue: 'environment' },
+          { type: SupportedTransformationTypes.Logfmt },
+          { type: SupportedTransformationTypes.Regex, expression: 'host=(dev|prod)', mapValue: 'environment' },
         ],
       },
     };
@@ -292,8 +293,8 @@ describe('getFieldLinksForExplore', () => {
         datasourceUid: 'uid_1',
         datasourceName: 'test_ds',
         transformations: [
-          { type: 'regex', expression: 'fieldA=(asparagus|broccoli)' },
-          { type: 'regex', expression: 'fieldB=(apple|banana)' },
+          { type: SupportedTransformationTypes.Regex, expression: 'fieldA=(asparagus|broccoli)' },
+          { type: SupportedTransformationTypes.Regex, expression: 'fieldB=(apple|banana)' },
         ],
       },
     };
@@ -333,7 +334,7 @@ describe('getFieldLinksForExplore', () => {
         query: { query: 'http_requests{app=${application} isOnline=${online}}' },
         datasourceUid: 'uid_1',
         datasourceName: 'test_ds',
-        transformations: [{ type: 'logfmt' }],
+        transformations: [{ type: SupportedTransformationTypes.Logfmt }],
       },
     };
 
@@ -372,7 +373,7 @@ describe('getFieldLinksForExplore', () => {
         query: { query: 'http_requests{app=${application}}' },
         datasourceUid: 'uid_1',
         datasourceName: 'test_ds',
-        transformations: [{ type: 'logfmt', field: 'fieldNamedInTransformation' }],
+        transformations: [{ type: SupportedTransformationTypes.Logfmt, field: 'fieldNamedInTransformation' }],
       },
     };
 
@@ -425,7 +426,10 @@ describe('getFieldLinksForExplore', () => {
         datasourceUid: 'uid_1',
         datasourceName: 'test_ds',
         transformations: [
-          { type: 'regex', expression: '(?=.*(?<application>(grafana|loki)))(?=.*(?<environment>(dev|prod)))' },
+          {
+            type: SupportedTransformationTypes.Regex,
+            expression: '(?=.*(?<application>(grafana|loki)))(?=.*(?<environment>(dev|prod)))',
+          },
         ],
       },
     };
