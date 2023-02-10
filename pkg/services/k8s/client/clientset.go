@@ -76,10 +76,6 @@ func NewFromConfig(cfg *rest.Config) (*Clientset, error) {
 	mapper := restmapper.NewDeferredDiscoveryRESTMapper(memory.NewMemCacheClient(k8sset))
 	factory := dynamicinformer.NewDynamicSharedInformerFactory(dyn, time.Minute)
 
-	// TODO: when does this need to start, and how do we stop it?
-	stop := make(chan struct{})
-	factory.Start(stop)
-
 	return NewClientset(cfg, k8sset, extset, dyn, mapper, factory)
 }
 
