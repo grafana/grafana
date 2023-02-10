@@ -4,6 +4,7 @@ import { AlertState, getDefaultTimeRange, TimeRange } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { disableRBAC, enableRBAC, grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
+import { DashboardModel } from 'app/features/dashboard/state';
 import { AccessControlAction } from 'app/types/accessControl';
 import { PromAlertingRuleState, PromRuleDTO, PromRulesResponse, PromRuleType } from 'app/types/unified-alerting-dto';
 
@@ -19,7 +20,11 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 function getDefaultOptions(): DashboardQueryRunnerOptions {
-  const dashboard: any = { id: 'an id', uid: 'a uid', meta: { publicDashboardAccessToken: '' } };
+  const dashboard = {
+    id: 'an id',
+    uid: 'a uid',
+    meta: { publicDashboardAccessToken: '' },
+  } as unknown as DashboardModel;
   const range = getDefaultTimeRange();
 
   return { dashboard, range };
@@ -60,7 +65,7 @@ describe('UnifiedAlertStatesWorker', () => {
 
   describe('when canWork is called with no dashboard id', () => {
     it('then it should return false', () => {
-      const dashboard: any = {};
+      const dashboard = {} as unknown as DashboardModel;
       const options = { ...getDefaultOptions(), dashboard };
 
       expect(worker.canWork(options)).toBe(false);
@@ -80,7 +85,7 @@ describe('UnifiedAlertStatesWorker', () => {
   describe('when run is called with incorrect props', () => {
     it('then it should return the correct results', async () => {
       const { getMock, options } = getTestContext();
-      const dashboard: any = {};
+      const dashboard = {} as unknown as DashboardModel;
 
       await expect(worker.work({ ...options, dashboard })).toEmitValuesWith((received) => {
         expect(received).toHaveLength(1);
