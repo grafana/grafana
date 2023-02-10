@@ -144,9 +144,8 @@ export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
 
   // only reset once we get some value in defaultDsAndQueries.queries, adding this value.
   useEffect(() => {
-    !existing &&
-      !prefill &&
-      defaultDsAndQueries.queries &&
+    const shouldReset = !existing && !prefill && defaultDsAndQueries.queries;
+    if (shouldReset) {
       reset({
         ...getDefaultFormValues(),
         queries: defaultDsAndQueries.queries,
@@ -155,6 +154,7 @@ export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
         type: RuleFormType.grafana,
         evaluateEvery: evaluateEvery,
       });
+    }
   }, [defaultDsAndQueries.queries, reset, existing, prefill, defaultsInQueryParamsObject, evaluateEvery]);
 
   const type = watch('type');
@@ -294,8 +294,8 @@ export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
                 editingExistingRule={!!existing}
                 prefill={!!prefill}
                 onDataChange={checkAlertCondition}
-                lazyDefaultQueries={defaultDsAndQueries.queries}
-                lazyDataSource={defaultDsAndQueries.ds}
+                asyncDefaultQueries={defaultDsAndQueries.queries}
+                asyncDataSource={defaultDsAndQueries.ds}
               />
               {showStep2 && (
                 <>

@@ -19,7 +19,7 @@ export interface ExpressionEditorProps {
   onChange: (value: string) => void;
   dataSourceName: string; // will be a prometheus or loki datasource
   showPreviewAlertsButton: boolean;
-  lazyDefaultQuery?: AlertQuery;
+  asyncDefaultQuery?: AlertQuery;
   preservePreviousValue: boolean;
 }
 
@@ -28,27 +28,30 @@ export const ExpressionEditor: FC<ExpressionEditorProps> = ({
   onChange,
   dataSourceName,
   showPreviewAlertsButton = true,
-  lazyDefaultQuery,
+  asyncDefaultQuery,
   preservePreviousValue,
 }) => {
   const styles = useStyles2(getStyles);
 
   const { mapToValue, mapToQuery } = useQueryMappers(dataSourceName);
   const [dataQuery, setDataQuery] = useState(mapToQuery({ refId: 'A', hide: false }, value));
-  const defaultModel = lazyDefaultQuery?.model;
+  const defaultModel = asyncDefaultQuery?.model;
   const previousDataSource = usePrevious(dataSourceName);
 
-  // New alert: update with default query once we have the lazy default
+  // New alert: update with default query once we have the async default value
   useEffect(() => {
-    !preservePreviousValue && defaultModel && setDataQuery((dataQuery) => ({ ...dataQuery, ...{ ...defaultModel } }));
+    const shouldSetDefaultQuery = !preservePreviousValue && defaultModel;
+    if (shouldSetDefaultQuery) {
+      setDataQuery((dataQuery) => ({ ...dataQuery, ...{ ...defaultModel } }));
+    }
   }, [defaultModel, preservePreviousValue]);
   // when data source is changed
   useEffect(() => {
-    !!previousDataSource &&
-      previousDataSource !== dataSourceName &&
-      Boolean(dataSourceName) &&
-      defaultModel &&
+    const shouldSetDefaultQuery =
+      !!previousDataSource && previousDataSource !== dataSourceName && Boolean(dataSourceName) && defaultModel;
+    if (shouldSetDefaultQuery) {
       setDataQuery((dataQuery) => ({ ...dataQuery, ...{ ...defaultModel } }));
+    }
   }, [dataSourceName, defaultModel, previousDataSource]);
 
   const {

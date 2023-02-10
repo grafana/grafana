@@ -37,15 +37,15 @@ interface Props {
   editingExistingRule: boolean;
   prefill: boolean;
   onDataChange: (error: string) => void;
-  lazyDefaultQueries?: AlertQuery[];
-  lazyDataSource?: DataSourceApi<DataQuery, DataSourceJsonData, {}>;
+  asyncDefaultQueries?: AlertQuery[];
+  asyncDataSource?: DataSourceApi<DataQuery, DataSourceJsonData, {}>;
 }
 
 export const QueryAndExpressionsStep: FC<Props> = ({
   editingExistingRule,
   onDataChange,
-  lazyDefaultQueries,
-  lazyDataSource,
+  asyncDefaultQueries,
+  asyncDataSource,
   prefill,
 }) => {
   const runner = useRef(new AlertingQueryRunner());
@@ -53,9 +53,8 @@ export const QueryAndExpressionsStep: FC<Props> = ({
     setValue,
     getValues,
     watch,
-    formState: { errors },
+    formState: { errors, isDirty },
     control,
-    formState: { isDirty },
   } = useFormContext<RuleFormValues>();
   const [panelData, setPanelData] = useState<Record<string, PanelData>>({});
 
@@ -83,8 +82,11 @@ export const QueryAndExpressionsStep: FC<Props> = ({
   const updateWithDefault = !editingExistingRule && !prefill;
   //once default queries is updated
   useEffect(() => {
-    updateWithDefault && !isDirty && lazyDefaultQueries && dispatch(setDataQueries(lazyDefaultQueries));
-  }, [lazyDefaultQueries, updateWithDefault, isDirty]);
+    const shouldSetDataQuery = updateWithDefault && !isDirty && asyncDefaultQueries;
+    if (shouldSetDataQuery) {
+      dispatch(setDataQueries(asyncDefaultQueries));
+    }
+  }, [asyncDefaultQueries, updateWithDefault, isDirty]);
 
   // whenever we update the queries we have to update the form too
   useEffect(() => {
@@ -191,10 +193,11 @@ export const QueryAndExpressionsStep: FC<Props> = ({
     }
   }, [condition, queries, handleSetCondition]);
 
+  const defaultQueryAvailable = asyncDataSource && asyncDefaultQueries;
   const onAddNewQuery = () => {
-    lazyDataSource &&
-      lazyDefaultQueries &&
-      dispatch(addNewDataQuery({ ds: lazyDataSource, defaultQuery: lazyDefaultQueries[0]?.model }));
+    if (defaultQueryAvailable) {
+      dispatch(addNewDataQuery({ ds: asyncDataSource, defaultQuery: asyncDefaultQueries[0]?.model }));
+    }
   };
 
   return (
@@ -212,7 +215,7 @@ export const QueryAndExpressionsStep: FC<Props> = ({
                   {...field}
                   dataSourceName={dataSourceName}
                   showPreviewAlertsButton={!isRecordingRuleType}
-                  lazyDefaultQuery={lazyDefaultQueries?.[0]}
+                  asyncDefaultQuery={asyncDefaultQueries?.[0]}
                   preservePreviousValue={!updateWithDefault}
                 />
               );
