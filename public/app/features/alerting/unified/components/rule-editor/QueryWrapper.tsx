@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { cloneDeep } from 'lodash';
-import React, { ChangeEvent, FC, useState } from 'react';
+import React, { ChangeEvent, FC, ReactElement, useState } from 'react';
 
 import {
   CoreApp,
@@ -58,6 +58,9 @@ interface Props {
   condition: string | null;
   onSetCondition: (refId: string) => void;
   onChangeQueryOptions: (options: AlertQueryOptions, index: number) => void;
+  filter?: (ds: DataSourceInstanceSettings) => boolean;
+  renderHeaderExtras?: boolean;
+  renderActions?: boolean;
 }
 
 export const QueryWrapper: FC<Props> = ({
@@ -79,6 +82,9 @@ export const QueryWrapper: FC<Props> = ({
   condition,
   onSetCondition,
   onChangeQueryOptions,
+  filter,
+  renderHeaderExtras,
+  renderActions,
 }) => {
   const styles = useStyles2(getStyles);
   const isExpression = isExpressionQuery(query.model);
@@ -161,8 +167,12 @@ export const QueryWrapper: FC<Props> = ({
         onAddQuery={() => onDuplicateQuery(cloneDeep(query))}
         onRunQuery={onRunQueries}
         queries={queries}
-        renderHeaderExtras={() => <HeaderExtras query={query} index={index} error={error} />}
+        renderHeaderExtras={
+          renderHeaderExtras !== false ? () => <HeaderExtras query={query} index={index} error={error} /> : () => <></>
+        }
+        renderActions={renderActions}
         app={CoreApp.UnifiedAlerting}
+        filter={filter}
         visualization={
           data.state !== LoadingState.NotStarted ? (
             <VizWrapper

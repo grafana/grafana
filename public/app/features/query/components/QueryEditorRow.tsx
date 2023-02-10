@@ -60,6 +60,8 @@ interface Props<TQuery extends DataQuery> {
   onQueryCopied?: () => void;
   onQueryRemoved?: () => void;
   onQueryToggled?: (queryStatus?: boolean | undefined) => void;
+  filter?: (ds: DataSourceInstanceSettings) => boolean;
+  renderActions?: boolean;
 }
 
 interface State<TQuery extends DataQuery> {
@@ -454,7 +456,8 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   renderHeader = (props: QueryOperationRowRenderProps) => {
-    const { alerting, query, dataSource, onChangeDataSource, onChange, queries, renderHeaderExtras } = this.props;
+    const { alerting, query, dataSource, onChangeDataSource, onChange, queries, renderHeaderExtras, filter } =
+      this.props;
 
     return (
       <QueryEditorRowHeader
@@ -468,6 +471,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         collapsedText={!props.isOpen ? this.renderCollapsedText() : null}
         renderExtras={renderHeaderExtras}
         alerting={alerting}
+        filter={filter}
       />
     );
   };
@@ -496,7 +500,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
           draggable={true}
           index={index}
           headerElement={this.renderHeader}
-          actions={this.renderActions}
+          actions={this.props.renderActions !== false ? this.renderActions : null}
           onOpen={this.onOpen}
         >
           <div className={rowClasses} id={this.id}>

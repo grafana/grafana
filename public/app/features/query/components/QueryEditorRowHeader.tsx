@@ -17,6 +17,7 @@ export interface Props<TQuery extends DataQuery = DataQuery> {
   onClick: (e: React.MouseEvent) => void;
   collapsedText: string | null;
   alerting?: boolean;
+  filter?: (ds: DataSourceInstanceSettings) => boolean;
 }
 
 export const QueryEditorRowHeader = <TQuery extends DataQuery>(props: Props<TQuery>) => {
@@ -129,7 +130,7 @@ const renderDataSource = <TQuery extends DataQuery>(
   props: Props<TQuery>,
   styles: ReturnType<typeof getStyles>
 ): ReactNode => {
-  const { alerting, dataSource, onChangeDataSource } = props;
+  const { alerting, dataSource, onChangeDataSource, filter } = props;
 
   if (!onChangeDataSource) {
     return <em className={styles.contextInfo}>({dataSource.name})</em>;
@@ -137,7 +138,13 @@ const renderDataSource = <TQuery extends DataQuery>(
 
   return (
     <div className={styles.itemWrapper}>
-      <DataSourcePicker variables={true} alerting={alerting} current={dataSource.name} onChange={onChangeDataSource} />
+      <DataSourcePicker
+        filter={filter}
+        variables={true}
+        alerting={alerting}
+        current={dataSource.name}
+        onChange={onChangeDataSource}
+      />
     </div>
   );
 };
