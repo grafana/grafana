@@ -1,4 +1,4 @@
-package state
+package template
 
 import (
 	"context"
@@ -14,22 +14,56 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 )
 
-func TestTemplateCaptureValueStringer(t *testing.T) {
+func TestRefString(t *testing.T) {
 	cases := []struct {
 		name     string
-		value    templateCaptureValue
+		value    Ref
 		expected string
 	}{{
 		name:     "0 is returned as integer value",
-		value:    templateCaptureValue{Value: 0},
+		value:    Ref{Value: 0},
+		expected: "labels: , value: 0",
+	}, {
+		name:     "1.0 is returned as integer value",
+		value:    Ref{Value: 1.0},
+		expected: "labels: , value: 1",
+	}, {
+		name:     "1.1 is returned as decimal value with labels",
+		value:    Ref{Labels: Labels{"foo": "bar"}, Value: 1.1},
+		expected: "labels: foo=bar, value: 1.1",
+	}, {
+		name:     "1.1 is returned as decimal value with two or more labels",
+		value:    Ref{Labels: Labels{"foo": "bar", "bar": "baz"}, Value: 1.1},
+		expected: "labels: bar=baz, foo=bar, value: 1.1",
+	}}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			assert.Equal(t, c.expected, c.value.String())
+		})
+	}
+}
+
+func TestValueString(t *testing.T) {
+	cases := []struct {
+		name     string
+		value    Value
+		expected string
+	}{{
+		name:     "0 is returned as integer value",
+		value:    Value{Value: 0},
 		expected: "0",
 	}, {
 		name:     "1.0 is returned as integer value",
-		value:    templateCaptureValue{Value: 1.0},
+		value:    Value{Value: 1.0},
 		expected: "1",
 	}, {
 		name:     "1.1 is returned as decimal value",
-		value:    templateCaptureValue{Value: 1.1},
+		value:    Value{Value: 1.1},
+		expected: "1.1",
+	}, {
+		name:     "1.1 is returned as decimal value, no labels",
+		value:    Value{Labels: Labels{"foo": "bar"}, Value: 1.1},
 		expected: "1.1",
 	}}
 
@@ -405,7 +439,7 @@ func TestExpandTemplate(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			v, err := expandTemplate(context.Background(), "test", c.text, c.labels, c.alertInstance, externalURL)
+			v, err := Expand(context.Background(), "test", c.text, c.labels, c.alertInstance, externalURL)
 			if c.expectedError != nil {
 				require.NotNil(t, err)
 				require.EqualError(t, c.expectedError, err.Error())
