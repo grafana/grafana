@@ -66,7 +66,6 @@ Alpha features might be changed or removed without prior notice.
 | `dashboardComments`                | Enable dashboard-wide comments                                                                                                                                               |
 | `annotationComments`               | Enable annotation comments                                                                                                                                                   |
 | `storage`                          | Configurable storage for dashboards, datasources, and resources                                                                                                              |
-| `supportBundles`                   | Support bundles for troubleshooting                                                                                                                                          |
 | `exploreMixedDatasource`           | Enable mixed datasource in Explore                                                                                                                                           |
 | `tracing`                          | Adds trace ID to error notifications                                                                                                                                         |
 | `correlations`                     | Correlations page                                                                                                                                                            |
@@ -101,8 +100,6 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 | ------------------------------ | ----------------------------------------------------------------------- |
 | `publicDashboardsEmailSharing` | Allows public dashboard sharing to be restricted to only allowed emails |
 | `k8s`                          | Explore native k8s integrations                                         |
-| `k8sDashboards`                | Save dashboards via k8s                                                 |
-| `apiserver`                    | Add a k8s API server proxy                                              |
 | `dashboardsFromStorage`        | Load dashboards from the generic storage interface                      |
 | `export`                       | Export grafana instance (to git, etc)                                   |
 | `grpcServer`                   | Run GRPC server                                                         |

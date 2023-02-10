@@ -312,10 +312,6 @@ export function requestSupportsPartitioning(queries: LokiQuery[]) {
     return false;
   }
 
-  if (isLogsQuery(queries[0].expr)) {
-    return false;
-  }
-
   return true;
 }
 
