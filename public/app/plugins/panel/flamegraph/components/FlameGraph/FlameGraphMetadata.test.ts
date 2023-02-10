@@ -58,7 +58,7 @@ describe('should get metadata correctly', () => {
       percentValue: 18.83,
       unitTitle: 'Time',
       unitValue: '1.62 s',
-      samples: '8,624,078,250',
+      samples: '8.62 s',
     });
   });
 });
