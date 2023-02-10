@@ -99,7 +99,7 @@ export function LogsVolumePanel(props: Props) {
       <>
         {extraInfo}
         <Tooltip content="Streaming">
-          <Icon name="circle-mono" size="md" className={styles.streaming} />
+          <Icon name="circle-mono" size="md" className={styles.streaming} data-testid="logs-volume-streaming" />
         </Tooltip>
       </>
     );

@@ -26,6 +26,7 @@ import {
   LogsMetaItem,
   LogsMetaKind,
   LogsModel,
+  LogsVolumeType,
   MutableDataFrame,
   rangeUtil,
   ScopedVars,
@@ -730,13 +731,14 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
             aggregatedLogsVolume[0].meta = {
               custom: {
                 targets: options.targets,
+                logsVolumeType: LogsVolumeType.FullRange,
                 absoluteRange: { from: options.range.from.valueOf(), to: options.range.to.valueOf() },
               },
             };
           }
           rawLogsVolume = aggregatedLogsVolume;
           observer.next({
-            state: LoadingState.Streaming,
+            state: dataQueryResponse.state ?? LoadingState.Streaming,
             error: undefined,
             data: rawLogsVolume,
           });
