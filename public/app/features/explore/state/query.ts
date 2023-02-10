@@ -583,6 +583,9 @@ export const runQueries = (
           // hidden queries just for supplementary queries but maybe we could make it part of buildQueryTransaction?
           // (plus check usages in plugins and dashboards but ideally query.hide check should not be
           // required by plugins?
+
+          // TODO: update docs: Graphite can reference other queries that's why they
+          // always need to be passed to plugin's query() method
           const visibleQueries = transaction.request.targets.filter((t) => !t.hide);
 
           // We always prepare provider, even is supplementary query is disabled because when the user
