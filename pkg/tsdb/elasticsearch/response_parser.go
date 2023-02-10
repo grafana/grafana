@@ -147,45 +147,13 @@ func processDocumentResponse(res *es.SearchResponse, target *Query, timeField st
 		// We are checking for default data types values (float64, int, bool, string)
 		// and default to json.RawMessage if we cannot find any of them
 		case float64:
-			fieldVector := make([]float64, size)
-			for i, doc := range docs {
-				v, _ := doc[propName].(float64) // if the data is invalid, we use the data-type's zero-value
-				fieldVector[i] = v
-			}
-			field := data.NewField(propName, nil, fieldVector)
-			field.Config = &data.FieldConfig{Filterable: &isFilterable}
-			allFields[propNameIdx] = field
-
+			allFields[propNameIdx] = createFieldOfType[float64](docs, propName, size, isFilterable)
 		case int:
-			fieldVector := make([]int, size)
-			for i, doc := range docs {
-				v, _ := doc[propName].(int)
-				fieldVector[i] = v
-			}
-			field := data.NewField(propName, nil, fieldVector)
-			field.Config = &data.FieldConfig{Filterable: &isFilterable}
-			allFields[propNameIdx] = field
-
+			allFields[propNameIdx] = createFieldOfType[int](docs, propName, size, isFilterable)
 		case string:
-			fieldVector := make([]string, size)
-			for i, doc := range docs {
-				v, _ := doc[propName].(string)
-				fieldVector[i] = v
-			}
-			field := data.NewField(propName, nil, fieldVector)
-			field.Config = &data.FieldConfig{Filterable: &isFilterable}
-			allFields[propNameIdx] = field
-
+			allFields[propNameIdx] = createFieldOfType[string](docs, propName, size, isFilterable)
 		case bool:
-			fieldVector := make([]bool, size)
-			for i, doc := range docs {
-				v, _ := doc[propName].(bool)
-				fieldVector[i] = v
-			}
-			field := data.NewField(propName, nil, fieldVector)
-			field.Config = &data.FieldConfig{Filterable: &isFilterable}
-			allFields[propNameIdx] = field
-
+			allFields[propNameIdx] = createFieldOfType[bool](docs, propName, size, isFilterable)
 		default:
 			fieldVector := make([]json.RawMessage, size)
 			for i, doc := range docs {
@@ -969,4 +937,19 @@ func findTheFirstNonNilDocValueForPropName(docs []map[string]interface{}, propNa
 		}
 	}
 	return docs[0][propName]
+}
+
+
+func createFieldOfType[T int | float64 | bool | string](docs []map[string]interface{}, propName string, size int, isFilterable bool) *data.Field {
+	fieldVector := make([]T, size)
+	for i, doc := range docs {
+		value, ok := doc[propName].(T)
+		if !ok {
+			continue;
+		}
+		fieldVector[i] = value
+	}
+	field := data.NewField(propName, nil, fieldVector)
+	field.Config = &data.FieldConfig{Filterable: &isFilterable}
+	return field
 }
