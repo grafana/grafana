@@ -21,7 +21,7 @@ function expandTimeRange(startTime: number, endTime: number, step: number): [num
 
 const MAX_CHUNK_COUNT = 50;
 
-export function getRanges(
+export function getRangeChunks(
   startTime: number,
   endTime: number,
   step: number,
