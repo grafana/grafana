@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import React, { useContext, useEffect } from 'react';
+import React, { useContext } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
@@ -29,8 +29,13 @@ import { useIsDesktop } from '../../../../utils/screen';
 import { ShareModal } from '../../ShareModal';
 import { NoUpsertPermissionsAlert } from '../ModalAlerts/NoUpsertPermissionsAlert';
 import { SaveDashboardChangesAlert } from '../ModalAlerts/SaveDashboardChangesAlert';
+import { UnsupportedDataSourcesAlert } from '../ModalAlerts/UnsupportedDataSourcesAlert';
 import { UnsupportedTemplateVariablesAlert } from '../ModalAlerts/UnsupportedTemplateVariablesAlert';
-import { dashboardHasTemplateVariables, generatePublicDashboardUrl } from '../SharePublicDashboardUtils';
+import {
+  dashboardHasTemplateVariables,
+  generatePublicDashboardUrl,
+  getUnsupportedDashboardDatasources,
+} from '../SharePublicDashboardUtils';
 
 import { Configuration } from './Configuration';
 import { EmailSharingConfiguration } from './EmailSharingConfiguration';
@@ -54,25 +59,19 @@ const ConfigPublicDashboard = () => {
   const dashboardState = useSelector((store) => store.dashboard);
   const dashboard = dashboardState.getModel()!;
   const dashboardVariables = dashboard.getVariables();
+  const unsupportedDataSources = getUnsupportedDashboardDatasources(dashboard.panels);
 
-  const { data: publicDashboard } = useGetPublicDashboardQuery(dashboard.uid);
+  const { data: publicDashboard, isFetching: isGetLoading } = useGetPublicDashboardQuery(dashboard.uid);
   const [update, { isLoading: isUpdateLoading }] = useUpdatePublicDashboardMutation();
+  const disableInputs = !hasWritePermissions || isUpdateLoading || isGetLoading;
 
-  const { reset, handleSubmit, setValue, register } = useForm<ConfigPublicDashoardForm>({
+  const { handleSubmit, setValue, register } = useForm<ConfigPublicDashoardForm>({
     defaultValues: {
-      isAnnotationsEnabled: false,
-      isTimeSelectionEnabled: false,
-      isPaused: false,
-    },
-  });
-
-  useEffect(() => {
-    reset({
       isAnnotationsEnabled: publicDashboard?.annotationsEnabled,
       isTimeSelectionEnabled: publicDashboard?.timeSelectionEnabled,
       isPaused: !publicDashboard?.isEnabled,
-    });
-  }, [publicDashboard, reset]);
+    },
+  });
 
   const onUpdate = async (values: ConfigPublicDashoardForm) => {
     const { isAnnotationsEnabled, isTimeSelectionEnabled, isPaused } = values;
@@ -105,20 +104,19 @@ const ConfigPublicDashboard = () => {
 
   return (
     <div>
-      {hasWritePermissions ? (
-        dashboard.hasUnsavedChanges() ? (
-          <SaveDashboardChangesAlert />
-        ) : (
-          dashboardHasTemplateVariables(dashboardVariables) && <UnsupportedTemplateVariablesAlert mode="edit" />
-        )
-      ) : (
-        <NoUpsertPermissionsAlert mode="edit" />
+      {hasWritePermissions && dashboard.hasUnsavedChanges() && <SaveDashboardChangesAlert />}
+      {!hasWritePermissions && <NoUpsertPermissionsAlert mode="edit" />}
+      {dashboardHasTemplateVariables(dashboardVariables) && <UnsupportedTemplateVariablesAlert />}
+      {!!unsupportedDataSources.length && (
+        <UnsupportedDataSourcesAlert unsupportedDataSources={unsupportedDataSources.join(', ')} />
       )}
-      <HorizontalGroup className={styles.title} spacing="sm" align="center">
-        <h4>Settings</h4>
-        {isUpdateLoading && <Spinner />}
-      </HorizontalGroup>
-      <Configuration disabled={!hasWritePermissions} onChange={onChange} register={register} />
+      <div className={styles.titleContainer}>
+        <HorizontalGroup spacing="sm" align="center">
+          <h4 className={styles.title}>Settings</h4>
+          {(isUpdateLoading || isGetLoading) && <Spinner size={14} />}
+        </HorizontalGroup>
+      </div>
+      <Configuration disabled={disableInputs} onChange={onChange} register={register} />
       <hr />
       {hasEmailSharingEnabled && <EmailSharingConfiguration />}
       <Field label="Dashboard URL" className={styles.publicUrl}>
@@ -147,14 +145,14 @@ const ConfigPublicDashboard = () => {
         <HorizontalGroup spacing="sm">
           <Switch
             {...register('isPaused')}
-            disabled={!hasWritePermissions}
+            disabled={disableInputs}
             onChange={(e) => {
               reportInteraction('grafana_dashboards_public_enable_clicked', {
                 action: e.currentTarget.checked ? 'disable' : 'enable',
               });
               onChange('isPaused', e.currentTarget.checked);
             }}
-            data-testid={selectors.EnableSwitch}
+            data-testid={selectors.PauseSwitch}
           />
           <Label
             className={css`
@@ -168,7 +166,7 @@ const ConfigPublicDashboard = () => {
           <DeletePublicDashboardButton
             className={cx(styles.deleteButton, { [styles.deleteButtonMobile]: !isDesktop })}
             type="button"
-            disabled={!hasWritePermissions || isUpdateLoading}
+            disabled={disableInputs}
             data-testid={selectors.DeleteButton}
             onDismiss={onDismissDelete}
             variant="destructive"
@@ -189,8 +187,11 @@ const ConfigPublicDashboard = () => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  titleContainer: css`
+    margin-bottom: ${theme.spacing(2)};
+  `,
   title: css`
-    margin-bottom: ${theme.spacing(1)};
+    margin: 0;
   `,
   publicUrl: css`
     width: 100%;

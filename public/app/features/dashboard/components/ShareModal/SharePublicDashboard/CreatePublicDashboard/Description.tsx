@@ -10,7 +10,7 @@ export const Description = () => {
 
   return (
     <div className={styles.container}>
-      <p className={styles.description}>Currently we don’t support template variables or frontend data sources</p>
+      <p className={styles.description}>Currently, we don’t support template variables or frontend data sources</p>
       <p className={styles.description}>
         We&apos;d love your feedback. To share, please comment on this{' '}
         <a

@@ -18,7 +18,8 @@ export const UnsupportedDataSourcesAlert = ({ unsupportedDataSources }: { unsupp
       data-testid={selectors.UnsupportedDataSourcesWarningAlert}
     >
       <p className={styles.unsupportedDataSourceDescription}>
-        {`There are data sources in this dashboard that are unsupported for public dashboards. Panels that use these data sources may not function properly: ${unsupportedDataSources}.`}
+        There are data sources in this dashboard that are unsupported for public dashboards. Panels that use these data
+        sources may not function properly: {unsupportedDataSources}.
       </p>
       <a
         href="https://grafana.com/docs/grafana/latest/dashboards/dashboard-public/"

@@ -101,7 +101,7 @@ func TestLokiHTTPClient(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("smoke test querying Loki", func(t *testing.T) {
+	t.Run("smoke test range querying Loki", func(t *testing.T) {
 		url, err := url.Parse("https://logs-prod-eu-west-0.grafana.net")
 		require.NoError(t, err)
 
@@ -127,7 +127,7 @@ func TestLokiHTTPClient(t *testing.T) {
 		end := time.Now().UnixNano()
 
 		// Authorized request should not fail against Grafana Cloud.
-		res, err := client.query(context.Background(), selectors, start, end)
+		res, err := client.rangeQuery(context.Background(), selectors, start, end)
 		require.NoError(t, err)
 		require.NotNil(t, res)
 	})

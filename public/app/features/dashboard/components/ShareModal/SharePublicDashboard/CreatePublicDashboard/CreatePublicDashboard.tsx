@@ -27,7 +27,7 @@ export type SharePublicDashboardAcknowledgmentInputs = {
   usageAcknowledgment: boolean;
 };
 
-const CreatePublicDashboard = () => {
+const CreatePublicDashboard = ({ isError }: { isError: boolean }) => {
   const styles = useStyles2(getStyles);
   const hasWritePermissions = contextSrv.hasAccess(AccessControlAction.DashboardsPublicWrite, isOrgAdmin());
   const dashboardState = useSelector((store) => store.dashboard);
@@ -35,6 +35,8 @@ const CreatePublicDashboard = () => {
   const unsupportedDataSources = getUnsupportedDashboardDatasources(dashboard.panels);
 
   const [createPublicDashboard, { isLoading: isSaveLoading }] = useCreatePublicDashboardMutation();
+
+  const disableInputs = !hasWritePermissions || isSaveLoading || isError;
 
   const onCreate = async () => {
     reportInteraction('grafana_dashboards_public_create_clicked');
@@ -45,38 +47,31 @@ const CreatePublicDashboard = () => {
     <div>
       <p className={styles.title}>Welcome to public dashboards alpha!</p>
       <Description />
+      {!hasWritePermissions && <NoUpsertPermissionsAlert mode="create" />}
+      {dashboardHasTemplateVariables(dashboard.getVariables()) && <UnsupportedTemplateVariablesAlert />}
       {!!unsupportedDataSources.length && (
         <UnsupportedDataSourcesAlert unsupportedDataSources={unsupportedDataSources.join(', ')} />
       )}
-      {!hasWritePermissions && <NoUpsertPermissionsAlert mode="create" />}
-      {dashboardHasTemplateVariables(dashboard.getVariables()) ? (
-        <UnsupportedTemplateVariablesAlert mode="create" />
-      ) : (
-        <Form onSubmit={onCreate} validateOn="onChange" maxWidth="none">
-          {({
-            register,
-            formState: { isValid },
-          }: {
-            register: UseFormRegister<SharePublicDashboardAcknowledgmentInputs>;
-            formState: FormState<SharePublicDashboardAcknowledgmentInputs>;
-          }) => (
-            <>
-              <div className={styles.checkboxes}>
-                <AcknowledgeCheckboxes disabled={!hasWritePermissions || isSaveLoading} register={register} />
-              </div>
-              <div className={styles.buttonContainer}>
-                <Button
-                  type="submit"
-                  disabled={!hasWritePermissions || !isValid || isSaveLoading}
-                  data-testid={selectors.CreateButton}
-                >
-                  Generate public URL {isSaveLoading && <Spinner className={styles.loadingSpinner} />}
-                </Button>
-              </div>
-            </>
-          )}
-        </Form>
-      )}
+      <Form onSubmit={onCreate} validateOn="onChange" maxWidth="none">
+        {({
+          register,
+          formState: { isValid },
+        }: {
+          register: UseFormRegister<SharePublicDashboardAcknowledgmentInputs>;
+          formState: FormState<SharePublicDashboardAcknowledgmentInputs>;
+        }) => (
+          <>
+            <div className={styles.checkboxes}>
+              <AcknowledgeCheckboxes disabled={disableInputs} register={register} />
+            </div>
+            <div className={styles.buttonContainer}>
+              <Button type="submit" disabled={disableInputs || !isValid} data-testid={selectors.CreateButton}>
+                Generate public URL {isSaveLoading && <Spinner className={styles.loadingSpinner} />}
+              </Button>
+            </div>
+          </>
+        )}
+      </Form>
     </div>
   );
 };

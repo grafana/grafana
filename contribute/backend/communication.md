@@ -1,6 +1,7 @@
 # Communication
 
-Grafana uses a _bus_ to pass messages between different parts of the application. All communication over the bus happens synchronously.
+Grafana use dependency injection and method calls on Go interfaces to
+communicate between different parts of the backend.
 
 ## Commands and queries
 

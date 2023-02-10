@@ -8,7 +8,7 @@ title: Dashboard kind
 
 ## Dashboard
 
-#### Maturity: experimental
+#### Maturity: [experimental](../../../maturity/#experimental)
 #### Version: 0.0
 
 A Grafana dashboard.
