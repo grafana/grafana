@@ -4,8 +4,9 @@ import { DataQueryRequest, DataQueryResponse, dateTime, TimeRange } from '@grafa
 import { LoadingState } from '@grafana/schema';
 
 import { LokiDatasource } from './datasource';
-import { getRanges } from './metricTimeSplit';
-import { combineResponses, resultLimitReached } from './queryUtils';
+import { getRangeChunks as getLogsRangeChunks } from './logsTimeSplit';
+import { getRangeChunks as getMetricRangeChunks } from './metricTimeSplit';
+import { combineResponses, isLogsQuery, resultLimitReached } from './queryUtils';
 import { LokiQuery } from './types';
 
 /**
@@ -15,10 +16,12 @@ import { LokiQuery } from './types';
  */
 (window as any).lokiChunkDuration = 24 * 60 * 60 * 1000;
 
-export function partitionTimeRange(originalTimeRange: TimeRange, intervalMs: number, resolution: number): TimeRange[] {
-  // we currently assume we are only running metric queries here.
-  // for logs-queries we will have to use a different time-range-split algorithm.
-
+export function partitionTimeRange(
+  isLogsQuery: boolean,
+  originalTimeRange: TimeRange,
+  intervalMs: number,
+  resolution: number
+): TimeRange[] {
   // the `step` value that will be finally sent to Loki is rougly the same as `intervalMs`,
   // but there are some complications.
   // we need to replicate this algo:
@@ -31,7 +34,11 @@ export function partitionTimeRange(originalTimeRange: TimeRange, intervalMs: num
   const safeStep = Math.ceil((end - start) / 11000);
   const step = Math.max(intervalMs * resolution, safeStep);
 
-  const ranges = getRanges(start, end, step, (window as any).lokiChunkDuration);
+  const duration: number = (window as any).lokiChunkDuration;
+
+  const ranges = isLogsQuery
+    ? getLogsRangeChunks(start, end, duration)
+    : getMetricRangeChunks(start, end, step, duration);
 
   // if the split was not possible, go with the original range
   if (ranges == null) {
@@ -51,8 +58,14 @@ export function partitionTimeRange(originalTimeRange: TimeRange, intervalMs: num
 
 export function runPartitionedQuery(datasource: LokiDatasource, request: DataQueryRequest<LokiQuery>) {
   let mergedResponse: DataQueryResponse | null;
-  // FIXME: the following line assumes every query has the same resolution
-  const partition = partitionTimeRange(request.range, request.intervalMs, request.targets[0].resolution ?? 1);
+  // we assume there is just a single query in the request
+  const query = request.targets[0];
+  const partition = partitionTimeRange(
+    isLogsQuery(query.expr),
+    request.range,
+    request.intervalMs,
+    query.resolution ?? 1
+  );
   const totalRequests = partition.length;
 
   const runNextRequest = (subscriber: Subscriber<DataQueryResponse>, requestN: number) => {
