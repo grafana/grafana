@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { RefObject, useCallback, useMemo, useState } from 'react';
+import React, { RefObject, useMemo, useState } from 'react';
 
 import {
   CoreApp,
@@ -96,10 +96,6 @@ export function TraceView(props: Props) {
    * Keeps state of resizable name column width
    */
   const [spanNameColumnWidth, setSpanNameColumnWidth] = useState(0.25);
-  /**
-   * State of the top minimap, slim means it is collapsed.
-   */
-  const [slim, setSlim] = useState(false);
   const [visualization, setVisualization] = useState<VisualizationTypes>('spanList');
 
   const [focusedSpanId, createFocusSpanLink] = useFocusSpanLink({
@@ -138,7 +134,6 @@ export function TraceView(props: Props) {
       }),
     [props.splitOpenFn, traceToLogsOptions, traceToMetricsOptions, props.dataFrames, createFocusSpanLink, traceProp]
   );
-  const onSlimViewClicked = useCallback(() => setSlim(!slim), [slim]);
   const timeZone = useSelector((state) => getTimeZone(state.user));
   const datasourceType = datasource ? datasource?.type : 'unknown';
 
@@ -147,11 +142,6 @@ export function TraceView(props: Props) {
       {props.dataFrames?.length && props.dataFrames[0]?.meta?.preferredVisualisationType === 'trace' && traceProp ? (
         <>
           <TracePageHeader
-            canCollapse={false}
-            hideSummary={false}
-            onSlimViewClicked={onSlimViewClicked}
-            onTraceGraphViewClicked={noop}
-            slimView={slim}
             trace={traceProp}
             timeZone={timeZone}
             visualization={visualization}
@@ -159,14 +149,12 @@ export function TraceView(props: Props) {
           />
           {visualization === 'spanList' ? (
             <>
-              {!slim && (
-                <SpanGraph
-                  trace={traceProp}
-                  viewRange={viewRange}
-                  updateNextViewRangeTime={updateNextViewRangeTime}
-                  updateViewRangeTime={updateViewRangeTime}
-                />
-              )}
+              <SpanGraph
+                trace={traceProp}
+                viewRange={viewRange}
+                updateNextViewRangeTime={updateNextViewRangeTime}
+                updateViewRangeTime={updateViewRangeTime}
+              />
               <TraceTimelineViewer
                 registerAccessors={noop}
                 scrollToFirstVisibleSpan={noop}
