@@ -18,17 +18,16 @@ var GetConfig = ldap.GetConfig
 // newLDAP return instance of the single LDAP server
 var newLDAP = ldap.New
 
-// ErrInvalidCredentials is returned if username and password do not match
-var ErrInvalidCredentials = ldap.ErrInvalidCredentials
-
-// ErrCouldNotFindUser is returned when username hasn't been found (not username+password)
-var ErrCouldNotFindUser = ldap.ErrCouldNotFindUser
-
-// ErrNoLDAPServers is returned when there is no LDAP servers specified
-var ErrNoLDAPServers = errors.New("no LDAP servers are configured")
-
-// ErrDidNotFindUser if request for user is unsuccessful
-var ErrDidNotFindUser = errors.New("did not find a user")
+var (
+	// ErrInvalidCredentials is returned if username and password do not match
+	ErrInvalidCredentials = ldap.ErrInvalidCredentials
+	// ErrCouldNotFindUser is returned when username hasn't been found (not username+password)
+	ErrCouldNotFindUser = ldap.ErrCouldNotFindUser
+	// ErrNoLDAPServers is returned when there is no LDAP servers specified
+	ErrNoLDAPServers = errors.New("no LDAP servers are configured")
+	// ErrDidNotFindUser if request for user is unsuccessful
+	ErrDidNotFindUser = errors.New("did not find a user")
+)
 
 // ServerStatus holds the LDAP server status
 type ServerStatus struct {
