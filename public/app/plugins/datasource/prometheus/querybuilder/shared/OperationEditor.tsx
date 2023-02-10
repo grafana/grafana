@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useEffect, useState } from 'react';
+import React, { ReactElement, useEffect, useState } from 'react';
 import { Draggable } from 'react-beautiful-dnd';
 
 import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
@@ -136,36 +136,58 @@ export function OperationEditor({
   return (
     <Draggable draggableId={`operation-${index}`} index={index}>
       {(provided) => (
-        <div
-          className={cx(
-            styles.card,
-            (shouldFlash || highlight) && styles.cardHighlight,
-            isConflicting && styles.cardError
-          )}
-          ref={provided.innerRef}
-          {...provided.draggableProps}
-          data-testid={`operations.${index}.wrapper`}
-        >
-          <OperationHeader
-            operation={operation}
-            dragHandleProps={provided.dragHandleProps}
-            def={def}
-            index={index}
-            onChange={onChange}
-            onRemove={onRemove}
-            queryModeller={queryModeller}
-          />
-          <div className={styles.body}>{operationElements}</div>
-          {restParam}
-          {index < query.operations.length - 1 && (
-            <div className={styles.arrow}>
-              <div className={styles.arrowLine} />
-              <div className={styles.arrowArrow} />
-            </div>
-          )}
-        </div>
+        // FIX: THIS TOOLTIP BREAKS DRAGGING
+        <ConditionalTooltip condition={isConflicting}>
+          <div
+            className={cx(
+              styles.card,
+              (shouldFlash || highlight) && styles.cardHighlight,
+              isConflicting && styles.cardError
+            )}
+            ref={provided.innerRef}
+            {...provided.draggableProps}
+            data-testid={`operations.${index}.wrapper`}
+          >
+            <OperationHeader
+              operation={operation}
+              dragHandleProps={provided.dragHandleProps}
+              def={def}
+              index={index}
+              onChange={onChange}
+              onRemove={onRemove}
+              queryModeller={queryModeller}
+            />
+            <div className={styles.body}>{operationElements}</div>
+            {restParam}
+            {index < query.operations.length - 1 && (
+              <div className={styles.arrow}>
+                <div className={styles.arrowLine} />
+                <div className={styles.arrowArrow} />
+              </div>
+            )}
+          </div>
+        </ConditionalTooltip>
       )}
     </Draggable>
+  );
+}
+
+interface ConditionalTooltipProps {
+  condition: boolean;
+  children: ReactElement;
+}
+
+function ConditionalTooltip({ condition, children }: ConditionalTooltipProps) {
+  const content = 'You have conflicting operations, this will result in no data.';
+
+  if (!condition) {
+    return children;
+  }
+
+  return (
+    <Tooltip content={content} theme="error" placement="top">
+      {children}
+    </Tooltip>
   );
 }
 
@@ -243,8 +265,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       transition: 'all 0.5s ease-in 0s',
     }),
     cardError: css({
-      boxShadow: `0px 0px 4px 0px ${theme.colors.error.main}`,
-      border: `1px solid ${theme.colors.error.main}`,
+      boxShadow: `0px 0px 4px 0px ${theme.colors.warning.main}`,
+      border: `1px solid ${theme.colors.warning.main}`,
     }),
     cardHighlight: css({
       boxShadow: `0px 0px 4px 0px ${theme.colors.primary.border}`,
