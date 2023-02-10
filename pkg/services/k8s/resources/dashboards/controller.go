@@ -44,6 +44,7 @@ func (c *Controller) Run(ctx context.Context) error {
 }
 
 func (c *Controller) OnAdd(obj interface{}) {
+	ctx := context.Background()
 	dash, err := interfaceToK8sDashboard(obj)
 	if err != nil {
 		c.log.Error("dashboard add failed", err)
@@ -55,19 +56,19 @@ func (c *Controller) OnAdd(obj interface{}) {
 		c.log.Error("dashboard add failed", "err", err)
 	}
 
-	if existing, err := c.dashboardService.GetDashboard(context.Background(), &dashboards.GetDashboardQuery{UID: dto.Dashboard.UID, OrgID: dto.OrgID}); err == nil && existing.Version >= dto.Dashboard.Version {
+	if existing, err := c.dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{UID: dto.Dashboard.UID, OrgID: dto.OrgID}); err == nil && existing.Version >= dto.Dashboard.Version {
 		c.log.Error("dashboard already exists, skipping")
 		return
 	}
 
-	signedInUser, err := c.getSignedInUser(context.Background(), dto.OrgID, dto.Dashboard.UpdatedBy)
+	signedInUser, err := c.getSignedInUser(ctx, dto.OrgID, dto.Dashboard.UpdatedBy)
 	if err != nil {
 		c.log.Error("orig.SaveDashboard failed", err)
 	}
 
 	dto.User = signedInUser
 
-	_, err = c.dashboardService.SaveDashboard(context.Background(), dto, true)
+	_, err = c.dashboardService.SaveDashboard(ctx, dto, true)
 	if err != nil {
 		c.log.Error("orig.SaveDashboard failed", err)
 		return
@@ -94,7 +95,8 @@ func (c *Controller) OnUpdate(oldObj, newObj interface{}) {
 	if err != nil {
 		c.log.Error("get existing dashboard failed", "err", err)
 	}
-	if existing.Version > dto.Dashboard.Version {
+	rv := existing.Data.Get("resourceVersion").MustString()
+	if rv == dash.ResourceVersion {
 		c.log.Error("existing dashboard is newer than requested, skipping", "existing", existing.Version, "requested", dto.Dashboard.Version)
 		return
 	}

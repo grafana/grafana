@@ -3,6 +3,7 @@ package dashboards
 import (
 	"context"
 	"fmt"
+	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -137,10 +138,10 @@ func (s *Service) SaveDashboard(ctx context.Context, dto *dashboards.SaveDashboa
 
 	if updateDashboard {
 		s.log.Debug("k8s action: update")
-		_, err = s.dashboardResource.Update(ctx, uObj, metav1.UpdateOptions{})
+		uObj, err = s.dashboardResource.Update(ctx, uObj, metav1.UpdateOptions{})
 	} else {
 		s.log.Debug("k8s action: create")
-		_, err = s.dashboardResource.Create(ctx, uObj, metav1.CreateOptions{})
+		uObj, err = s.dashboardResource.Create(ctx, uObj, metav1.CreateOptions{})
 	}
 
 	// create or update error
@@ -148,9 +149,25 @@ func (s *Service) SaveDashboard(ctx context.Context, dto *dashboards.SaveDashboa
 		return nil, err
 	}
 
-	if err != nil {
-		return nil, err
+	rv := uObj.GetResourceVersion()
+	s.log.Debug("wait for revision", "revision", rv)
+
+	for i := 0; i < 5; i++ {
+		time.Sleep(150 * time.Millisecond)
+		out, err := s.DashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{UID: uid, OrgID: dto.OrgID})
+		if err != nil {
+			fmt.Printf("ERROR: %v", err)
+			continue
+		}
+		if out != nil && out.Data != nil {
+			savedRV := out.Data.Get("resourceVersion").MustString()
+			if savedRV == rv {
+				return out, nil
+			} else {
+				fmt.Printf("NO MATCH: %v\n", out)
+			}
+		}
 	}
 
-	return dto.Dashboard, err
+	return nil, fmt.Errorf("controller never ran?")
 }
