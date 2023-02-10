@@ -70,7 +70,7 @@ export const ActionRow = ({
   const layout = getValidQueryLayout(state);
 
   // Disabled folder layout option when query is present
-  const disabledOptions = state.query ? [SearchLayout.Folders] : [];
+  const disabledOptions = state.query || state.datasource || state.panel_type ? [SearchLayout.Folders] : [];
 
   return (
     <div className={styles.actionRow}>

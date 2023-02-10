@@ -43,6 +43,11 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   initStateFromUrl(folderUid?: string) {
     const stateFromUrl = parseRouteParams(locationService.getSearchObject());
 
+    // Force list view when conditions are specified from the URL
+    if (stateFromUrl.query || stateFromUrl.datasource || stateFromUrl.panel_type) {
+      stateFromUrl.layout = SearchLayout.List;
+    }
+
     stateManager.setState({
       ...stateFromUrl,
       folderUid: folderUid,
