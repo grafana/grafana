@@ -27,7 +27,7 @@ const MenuComp = React.forwardRef<HTMLDivElement, MenuProps>(
     const localRef = useRef<HTMLDivElement>(null);
     useImperativeHandle(forwardedRef, () => localRef.current!);
 
-    const [handleKeys, handleFocus] = useMenuFocus({ localRef, onOpen, onClose, onKeyDown });
+    const [handleKeys] = useMenuFocus({ localRef, onOpen, onClose, onKeyDown });
 
     return (
       <div
@@ -38,7 +38,6 @@ const MenuComp = React.forwardRef<HTMLDivElement, MenuProps>(
         role="menu"
         aria-label={ariaLabel}
         onKeyDown={handleKeys}
-        onFocus={handleFocus}
       >
         {header && <div className={styles.header}>{header}</div>}
         {children}
