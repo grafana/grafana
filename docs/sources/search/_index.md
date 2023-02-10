@@ -84,11 +84,7 @@ To filter dashboard search result by a tag, complete one of the following steps:
 
 > **Note:** When using only a keyboard, press the `tab` key and navigate to the **Filter by tag** drop-down menu, press the down arrow key `▼` to activate the menu and locate a tag, and press `Enter` to select the tag.
 
-# Command Palette
-
-Open the Command Palette by pressing `cmd+K` in macOS or `ctrl+k` in Linux/Windows. You can also click on the input placed in the navbar.
-
-![Command Palette screenshot](/static/img/docs/command-palette/CommandPalette_doc_1.png)
+## Command Palette
 
 By typing in this field, you can:
 
@@ -97,8 +93,8 @@ By typing in this field, you can:
 3. Navigate to various areas or pages.
 4. Change the theme: dark or light.
 
-![Select change theme](/static/img/docs/command-palette/CommandPalette_doc_4.png)
+![Command Palette screenshot](/media/docs/grafana/CommandPalette_doc_1.png)
 
-![Change theme on Command Palette](/static/img/docs/command-palette/CommandPalette_doc_3.png)
+To open the Command Palette, press `cmd+K` in macOS or `ctrl+k` in Linux/Windows. You can also click on the input placed in the navigation bar.
 
-> **Note:** If you want to the previous step, press `backspace` with the Command Palette input empty.
+> **Note:** To go to the previous step, press `backspace` with the Command Palette input empty.
