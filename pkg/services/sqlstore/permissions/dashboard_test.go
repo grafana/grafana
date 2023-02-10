@@ -9,15 +9,24 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
+	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -135,7 +144,7 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 
 			var result int
 			err := store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-				q, params := filter.Where()
+				_, q, params := filter.Where()
 				_, err := sess.SQL("SELECT COUNT(*) FROM dashboard WHERE "+q, params...).Get(&result)
 				return err
 			})
@@ -144,6 +153,124 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 			assert.Equal(t, tt.expectedResult, result)
 		})
 	}
+}
+
+func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
+	origNewGuardian := guardian.New
+	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true, CanSaveValue: true})
+	t.Cleanup(func() {
+		guardian.New = origNewGuardian
+	})
+
+	var orgID int64 = 1
+	permission := dashboards.PERMISSION_VIEW
+	queryType := ""
+	perms := []accesscontrol.Permission{
+		{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:parent"},
+	}
+	usr := &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(perms)}}
+	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
+
+	db := sqlstore.InitTestDB(t)
+	setup := func() {
+		// dashboard store commands that should be called.
+		dashStore, err := database.ProvideDashboardStore(db, db.Cfg, features, tagimpl.ProvideService(db, db.Cfg), quotatest.New(false, nil))
+		require.NoError(t, err)
+
+		folderSvc := folderimpl.ProvideService(mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), db.Cfg, dashStore, folderimpl.ProvideDashboardFolderStore(db), db, features)
+
+		// create parent folder
+		parent, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
+			UID:          "parent",
+			OrgID:        orgID,
+			Title:        "parent",
+			SignedInUser: usr,
+		})
+		require.NoError(t, err)
+
+		// create subfolder
+		subfolder, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
+			UID:          "subfolder",
+			ParentUID:    "parent",
+			OrgID:        orgID,
+			Title:        "subfolder",
+			SignedInUser: usr,
+		})
+		require.NoError(t, err)
+
+		// create dashboard under parent folder
+		_, err = dashStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
+			OrgID:    orgID,
+			FolderID: parent.ID,
+			Dashboard: simplejson.NewFromAny(map[string]interface{}{
+				"title": "dashboard 1",
+			}),
+		})
+		require.NoError(t, err)
+
+		// create dashboard under subfolder
+		_, err = dashStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
+			OrgID:    orgID,
+			FolderID: subfolder.ID,
+			Dashboard: simplejson.NewFromAny(map[string]interface{}{
+				"title": "dashboard 2",
+			}),
+		})
+		require.NoError(t, err)
+
+		err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+
+			role := &accesscontrol.Role{
+				OrgID:   0,
+				UID:     "basic_viewer",
+				Name:    "basic:viewer",
+				Updated: time.Now(),
+				Created: time.Now(),
+			}
+			_, err = sess.Insert(role)
+			if err != nil {
+				return err
+			}
+			_, err = sess.Insert(accesscontrol.BuiltinRole{
+				OrgID:   0,
+				RoleID:  role.ID,
+				Role:    "Viewer",
+				Created: time.Now(),
+				Updated: time.Now(),
+			})
+			if err != nil {
+				return err
+			}
+
+			for i := range perms {
+				perms[i].RoleID = role.ID
+				perms[i].Created = time.Now()
+				perms[i].Updated = time.Now()
+			}
+			if len(perms) > 0 {
+				_, err = sess.InsertMulti(&perms)
+				if err != nil {
+					return err
+				}
+			}
+
+			return nil
+		})
+		require.NoError(t, err)
+	}
+
+	setup()
+	filter := permissions.NewAccessControlDashboardPermissionFilter(usr, permission, queryType, features)
+
+	var result int
+	err := db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		recQry, q, params := filter.Where()
+		_, err := sess.SQL(recQry+"\nSELECT COUNT(*) FROM dashboard WHERE "+q, params...).Get(&result)
+		return err
+	})
+	require.NoError(t, err)
+
+	assert.Equal(t, 2, result)
 }
 
 func setupTest(t *testing.T, numFolders, numDashboards int, permissions []accesscontrol.Permission) db.DB {
