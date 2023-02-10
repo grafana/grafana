@@ -159,6 +159,8 @@ func (s *Service) SaveDashboard(ctx context.Context, dto *dashboards.SaveDashboa
 	rv := uObj.GetResourceVersion()
 	s.log.Debug("wait for revision", "revision", rv)
 
+	// TODO: rather than polling the dashboard service,
+	// we could write a status field and listen for changes on that status from k8s directly
 	for i := 0; i < 5; i++ {
 		time.Sleep(150 * time.Millisecond)
 		out, err := s.DashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{UID: uid, OrgID: dto.OrgID})
