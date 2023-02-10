@@ -99,7 +99,12 @@ func (s *LDAPImpl) Login(query *login.LoginUserQuery) (*login.ExternalUserInfo, 
 		return nil, ErrLDAPNotEnabled
 	}
 
-	return s.Client().Login(query)
+	client := s.Client()
+	if client == nil {
+		return nil, ErrUnableToCreateLDAPClient
+	}
+
+	return client.Login(query)
 }
 
 func (s *LDAPImpl) User(username string) (*login.ExternalUserInfo, error) {
@@ -107,6 +112,11 @@ func (s *LDAPImpl) User(username string) (*login.ExternalUserInfo, error) {
 		return nil, ErrLDAPNotEnabled
 	}
 
-	user, _, err := s.Client().User(username)
+	client := s.Client()
+	if client == nil {
+		return nil, ErrUnableToCreateLDAPClient
+	}
+
+	user, _, err := client.User(username)
 	return user, err
 }

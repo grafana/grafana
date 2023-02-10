@@ -11,6 +11,7 @@ type LDAPFakeService struct {
 	ExpectedClient multildap.IMultiLDAP
 	ExpectedError  error
 	ExpectedUser   *login.ExternalUserInfo
+	UserCalled     bool
 }
 
 func NewLDAPFakeService() *LDAPFakeService {
@@ -34,5 +35,6 @@ func (s *LDAPFakeService) Login(query *login.LoginUserQuery) (*login.ExternalUse
 }
 
 func (s *LDAPFakeService) User(username string) (*login.ExternalUserInfo, error) {
+	s.UserCalled = true
 	return s.ExpectedUser, s.ExpectedError
 }
