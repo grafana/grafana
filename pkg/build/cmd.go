@@ -150,7 +150,7 @@ func doBuild(binaryName, pkg string, opts BuildOpts) error {
 	if err := setBuildEnv(opts); err != nil {
 		return err
 	}
-	
+
 	libcPart := ""
 	if opts.libc != "" {
 		libcPart = fmt.Sprintf("-%s", opts.libc)
