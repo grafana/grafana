@@ -292,22 +292,29 @@ To allow Grafana to pass the access token to the plugin, update the data source 
 When configured, Grafana can forward authorization HTTP headers, like `Authorization` or `X-ID-Token`, to an external server. For doing so, it's just necessary to create the HTTP client using the [Grafana Plugin SDK](https://pkg.go.dev/github.com/grafana/grafana-plugin-sdk-go). This also ensures that the request has some recommended settings, like a default timeout.
 
 ```go
+func NewDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	opts, err := settings.HTTPClientOptions()
+	if err != nil {
+		return nil, fmt.Errorf("http client options: %w", err)
+	}
+  // Important to reuse the same client for each query, to avoid using all available connections on a host
+	cl, err := httpclient.New(opts)
+	if err != nil {
+		return nil, fmt.Errorf("httpclient new: %w", err)
+	}
+	return &Datasource{
+		httpClient: cl,
+	}, nil
+}
+
 func (ds *dataSource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-    opts, err := settings.HTTPClientOptions()
-    if err != nil {
-      return nil, fmt.Errorf("http client options: %w", err)
-    }
-    cli, err := httpclient.New(opts)
-    if err != nil {
-      return nil, fmt.Errorf("httpclient new: %w", err)
-    }
     // Important to keep the Context, since the injected middleware is configured there
     req, err := http.NewRequestWithContext(ctx, http.MethodGet, "https://some-url", nil)
     if err != nil {
       return nil, fmt.Errorf("new request with context: %w", err)
     }
     // Authorization header will be automatically injected if oauthPassThru is configured
-    resp, err := cli.Do(req)
+    resp, err := ds.httpClient.Do(req)
     // ...
 }
 ```
