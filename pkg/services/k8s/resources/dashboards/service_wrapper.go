@@ -20,20 +20,20 @@ import (
 // NOTE this is how you reset the CRD
 //kubectl delete CustomResourceDefinition dashboards.dashboard.core.grafana.com
 
-type Service struct {
+type ServiceWrapper struct {
 	dashboards.DashboardService
 
 	log               log.Logger
 	dashboardResource *Resource
 }
 
-var _ dashboards.DashboardService = (*Service)(nil)
+var _ dashboards.DashboardService = (*ServiceWrapper)(nil)
 
 func ProvideService(
 	dashboardResource *Resource,
 	dashboardService *service.DashboardServiceImpl,
-) *Service {
-	return &Service{
+) *ServiceWrapper {
+	return &ServiceWrapper{
 		DashboardService:  dashboardService,
 		log:               log.New("k8s.dashboards.service"),
 		dashboardResource: dashboardResource,
@@ -41,7 +41,7 @@ func ProvideService(
 }
 
 // SaveDashboard saves the dashboard to kubernetes
-func (s *Service) SaveDashboard(ctx context.Context, dto *dashboards.SaveDashboardDTO, allowUiUpdate bool) (*dashboards.Dashboard, error) {
+func (s *ServiceWrapper) SaveDashboard(ctx context.Context, dto *dashboards.SaveDashboardDTO, allowUiUpdate bool) (*dashboards.Dashboard, error) {
 	// config and client setup
 	namespace := "default"
 	// take the kindsys dashboard kind and alias it so it's easier to distinguish from dashboards.Dashboard
