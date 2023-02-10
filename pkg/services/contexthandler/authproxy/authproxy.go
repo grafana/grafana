@@ -58,6 +58,7 @@ func ProvideAuthProxy(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache,
 		sqlStore:     sqlStore,
 		userService:  userService,
 		logger:       log.New("auth.proxy"),
+		ldapService:  ldapService,
 	}
 }
 

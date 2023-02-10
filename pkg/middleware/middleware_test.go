@@ -951,9 +951,15 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg, mockSQLStore *dbtest.Fake
 	renderSvc := &fakeRenderService{}
 	authJWTSvc := jwt.NewFakeJWTService()
 	tracer := tracing.InitializeTracerForTest()
-	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginService, userService, mockSQLStore, service.NewLDAPFakeService())
+	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginService,
+		userService, mockSQLStore, &service.LDAPFakeService{ExpectedError: service.ErrUnableToCreateLDAPClient})
 	authenticator := &logintest.AuthenticatorFake{ExpectedUser: &user.User{}}
-	return contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, mockSQLStore, tracer, authProxy, loginService, apiKeyService, authenticator, userService, orgService, oauthTokenService, featuremgmt.WithFeatures(featuremgmt.FlagAccessTokenExpirationCheck), &authntest.FakeService{})
+	return contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc,
+		remoteCacheSvc, renderSvc, mockSQLStore, tracer, authProxy,
+		loginService, apiKeyService, authenticator, userService, orgService,
+		oauthTokenService,
+		featuremgmt.WithFeatures(featuremgmt.FlagAccessTokenExpirationCheck),
+		&authntest.FakeService{})
 }
 
 type fakeRenderService struct {
