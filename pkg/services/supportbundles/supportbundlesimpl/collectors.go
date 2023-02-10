@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
@@ -103,7 +104,7 @@ func settingsCollector(settings setting.Provider) supportbundles.Collector {
 	}
 }
 
-func pluginInfoCollector(pluginStore plugins.Store, pluginSettings pluginsettings.Service) supportbundles.Collector {
+func pluginInfoCollector(pluginStore plugins.Store, pluginSettings pluginsettings.Service, logger log.Logger) supportbundles.Collector {
 	return supportbundles.Collector{
 		UID:               "plugins",
 		DisplayName:       "Plugin information",
@@ -111,60 +112,71 @@ func pluginInfoCollector(pluginStore plugins.Store, pluginSettings pluginsetting
 		IncludedByDefault: false,
 		Default:           true,
 		Fn: func(ctx context.Context) (*supportbundles.SupportItem, error) {
-			type pluginInfo struct {
-				data  plugins.JSONData
-				Class plugins.Class
+			type PluginInfo struct {
+				id          string
+				Name        string
+				Description string
+				PluginType  string `json:"type"`
 
-				// App fields
-				IncludedInAppID string
-				DefaultNavURL   string
-				Pinned          bool
+				Author          plugins.InfoLink `json:"author,omitempty"`
+				SignatureStatus plugins.SignatureStatus
+				SignatureType   plugins.SignatureType
+				SignatureOrg    string
 
-				// Signature fields
-				Signature plugins.SignatureStatus
+				GrafanaVersionDependency string `json:"grafanaVersionDependency,omitempty"`
 
-				// SystemJS fields
-				Module  string
-				BaseURL string
-
-				PluginVersion string
-				Enabled       bool
-				Updated       time.Time
+				Settings []pluginsettings.InfoDTO `json:"settings,omitempty"`
 			}
 
-			plugins := pluginStore.Plugins(context.Background())
+			// plugin definitions
+			plugins := pluginStore.Plugins(ctx)
 
-			var pluginInfoList []pluginInfo
+			// plugin settings
+			settings, err := pluginSettings.GetPluginSettings(ctx, &pluginsettings.GetArgs{})
+			if err != nil {
+				logger.Debug("failed to fetch plugin settings:", "err", err)
+			}
+
+			settingMap := make(map[string][]*pluginsettings.InfoDTO)
+			for _, ps := range settings {
+				settingMap[ps.PluginID] = append(settingMap[ps.PluginID], ps)
+			}
+
+			var pluginInfoList []PluginInfo
 			for _, plugin := range plugins {
-				// skip builtin plugins
-				if plugin.BuiltIn {
+				// skip builtin and core plugins
+				if plugin.BuiltIn || plugin.IsCorePlugin() {
+					continue
+				}
+				// skip plugins that are included in another plugin
+				if plugin.IncludedInAppID != "" {
 					continue
 				}
 
-				pInfo := pluginInfo{
-					data:            plugin.JSONData,
-					Class:           plugin.Class,
-					IncludedInAppID: plugin.IncludedInAppID,
-					DefaultNavURL:   plugin.DefaultNavURL,
-					Pinned:          plugin.Pinned,
-					Signature:       plugin.Signature,
-					Module:          plugin.Module,
-					BaseURL:         plugin.BaseURL,
+				pInfo := PluginInfo{
+					id:                       plugin.ID,
+					Name:                     plugin.Name,
+					Description:              plugin.Info.Description,
+					PluginType:               string(plugin.Type),
+					Author:                   plugin.Info.Author,
+					SignatureStatus:          plugin.Signature,
+					SignatureType:            plugin.SignatureType,
+					SignatureOrg:             plugin.SignatureOrg,
+					GrafanaVersionDependency: plugin.Dependencies.GrafanaVersion,
 				}
 
-				// TODO need to loop through all the orgs
-				// TODO ignore the error for now, not all plugins have settings
-				settings, err := pluginSettings.GetPluginSettingByPluginID(context.Background(), &pluginsettings.GetByPluginIDArgs{PluginID: plugin.ID, OrgID: 1})
-				if err == nil {
-					pInfo.PluginVersion = settings.PluginVersion
-					pInfo.Enabled = settings.Enabled
-					pInfo.Updated = settings.Updated
+				for _, ps := range settingMap[plugin.ID] {
+					pInfo.Settings = append(pInfo.Settings, pluginsettings.InfoDTO{
+						OrgID:         ps.OrgID,
+						Enabled:       ps.Enabled,
+						PluginVersion: ps.PluginVersion,
+					})
 				}
 
 				pluginInfoList = append(pluginInfoList, pInfo)
 			}
 
-			data, err := json.Marshal(pluginInfoList)
+			data, err := json.MarshalIndent(pluginInfoList, "", " ")
 			if err != nil {
 				return nil, err
 			}
