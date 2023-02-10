@@ -17,7 +17,7 @@ import cx from 'classnames';
 import { get as _get, maxBy as _maxBy, values as _values } from 'lodash';
 import * as React from 'react';
 
-import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
+import { dateTimeFormat, GrafanaTheme2, SelectableValue, TimeZone } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { HorizontalGroup, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
@@ -156,15 +156,7 @@ export const HEADER_ITEMS = [
 ];
 
 export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
-  const {
-    trace,
-    updateNextViewRangeTime,
-    updateViewRangeTime,
-    viewRange,
-    timeZone,
-    visualization,
-    visualizationOnChange,
-  } = props;
+  const { trace, timeZone, visualization, visualizationOnChange } = props;
 
   const styles = useStyles2(getStyles);
   const links = React.useMemo(() => {

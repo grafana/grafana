@@ -25,11 +25,6 @@ import TracePageHeader, { TracePageHeaderEmbedProps } from './TracePageHeader';
 const trace = transformTraceData(traceGenerator.trace({}));
 const setup = (propOverrides?: TracePageHeaderEmbedProps) => {
   const defaultProps = {
-    canCollapse: false,
-    hideSummary: false,
-    onSlimViewClicked: () => {},
-    onTraceGraphViewClicked: () => {},
-    slimView: false,
     trace,
     timeZone: '',
     visualization: 'spanList' as VisualizationTypes,
@@ -74,35 +69,5 @@ describe('TracePageHeader test', () => {
     expect(headerItems[2].textContent?.match(/Services:\d\d?/g)).toBeTruthy();
     expect(headerItems[3].textContent?.match(/Depth:\d\d?/)).toBeTruthy();
     expect(headerItems[4].textContent?.match(/Total Spans:\d\d?\d?\d?/)).toBeTruthy();
-  });
-
-  describe('observes the visibility toggles for various UX elements', () => {
-    it('hides the summary when hideSummary === true', () => {
-      const { rerender } = setup({ hideSummary: false } as TracePageHeaderEmbedProps);
-      expect(screen.queryAllByRole('listitem')).toHaveLength(5);
-
-      rerender(<TracePageHeader {...({ hideSummary: false, trace: null } as TracePageHeaderEmbedProps)} />);
-      expect(screen.queryAllByRole('listitem')).toHaveLength(0);
-
-      rerender(
-        <TracePageHeader
-          {...({
-            trace: trace,
-            hideSummary: true,
-          } as TracePageHeaderEmbedProps)}
-        />
-      );
-      expect(screen.queryAllByRole('listitem')).toHaveLength(0);
-
-      rerender(
-        <TracePageHeader
-          {...({
-            trace: trace,
-            hideSummary: false,
-          } as TracePageHeaderEmbedProps)}
-        />
-      );
-      expect(screen.queryAllByRole('listitem')).toHaveLength(5);
-    });
   });
 });
