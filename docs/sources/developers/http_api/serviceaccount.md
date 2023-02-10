@@ -217,6 +217,38 @@ Content-Type: application/json
 }
 ```
 
+## Delete service account
+
+`DELETE /api/serviceaccounts/:id`
+
+**Required permissions**
+
+See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
+
+| Action                 | Scope                 |
+| ---------------------- | --------------------- |
+| serviceaccounts:delete | serviceaccounts:id:\* |
+
+**Example Request**:
+
+```http
+DELETE /api/serviceaccounts/2 HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Basic YWRtaW46YWRtaW4=
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+	"message": "Service account deleted"
+}
+```
+
 ---
 
 ## Get service account tokens
