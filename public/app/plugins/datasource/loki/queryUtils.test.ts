@@ -1,6 +1,4 @@
-import { getQueryOptions } from 'test/helpers/getQueryOptions';
-
-import { ArrayVector, DataQueryResponse, FieldType } from '@grafana/data';
+import { ArrayVector, DataQueryResponse } from '@grafana/data';
 
 import { logFrameA, logFrameB, metricFrameA, metricFrameB } from './mocks';
 import {
