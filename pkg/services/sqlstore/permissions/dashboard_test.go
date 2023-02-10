@@ -166,26 +166,27 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 	}{
 		{
 			desc:       "Should be able to view dashboards under inherited folders if nested folders are enabled",
-			queryType:  "",
+			queryType:  searchstore.TypeDashboard,
 			permission: dashboards.PERMISSION_VIEW,
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:parent"},
 			},
 			features:       featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
-			expectedResult: []string{"dashboard 1", "dashboard 2"},
+			expectedResult: []string{"dashboard under parent folder", "dashboard under subfolder"},
 		},
 		{
 			desc:       "Should not be able to view dashboards under inherited folders if nested folders are not enabled",
-			queryType:  "",
+			queryType:  searchstore.TypeDashboard,
 			permission: dashboards.PERMISSION_VIEW,
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:parent"},
 			},
 			features:       featuremgmt.WithFeatures(),
-			expectedResult: []string{"dashboard 1"},
+			expectedResult: []string{"dashboard under parent folder"},
 		},
 		{
 			desc:       "Should be able to view inherited folders if nested folders are enabled",
+			queryType:  searchstore.TypeFolder,
 			permission: dashboards.PERMISSION_VIEW,
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:parent"},
@@ -195,11 +196,12 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 		},
 		{
 			desc:       "Should be not able to view inherited folders if nested folders are not enabled",
+			queryType:  searchstore.TypeFolder,
 			permission: dashboards.PERMISSION_VIEW,
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:parent"},
 			},
-			features:       featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
+			features:       featuremgmt.WithFeatures(),
 			expectedResult: []string{"parent"},
 		},
 	}
@@ -349,7 +351,7 @@ func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol
 		OrgID:    orgID,
 		FolderID: parent.ID,
 		Dashboard: simplejson.NewFromAny(map[string]interface{}{
-			"title": "dashboard 1",
+			"title": "dashboard under parent folder",
 		}),
 	})
 	require.NoError(t, err)
@@ -359,7 +361,7 @@ func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol
 		OrgID:    orgID,
 		FolderID: subfolder.ID,
 		Dashboard: simplejson.NewFromAny(map[string]interface{}{
-			"title": "dashboard 2",
+			"title": "dashboard under subfolder",
 		}),
 	})
 	require.NoError(t, err)
