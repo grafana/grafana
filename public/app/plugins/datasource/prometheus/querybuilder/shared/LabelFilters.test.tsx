@@ -108,7 +108,6 @@ function setup(propOverrides?: Partial<ComponentProps<typeof LabelFilters>>) {
       { label: 'quux', value: 'quux' },
     ],
     labelsFilters: [],
-    setLabels: jest.fn(),
   };
 
   const props = { ...defaultProps, ...propOverrides };
