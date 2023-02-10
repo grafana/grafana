@@ -6,7 +6,6 @@ import {
   getPromAndLokiOperationDisplayName,
 } from '../../prometheus/querybuilder/shared/operationUtils';
 import {
-  QueryBuilderLabelFilter,
   QueryBuilderOperation,
   QueryBuilderOperationDef,
   QueryBuilderOperationParamDef,
@@ -160,7 +159,6 @@ export function labelFilterRenderer(model: QueryBuilderOperation, def: QueryBuil
 
 export function isConflictingFilter(
   operation: QueryBuilderOperation,
-  queryLabels: QueryBuilderLabelFilter[],
   queryOperations: QueryBuilderOperation[]
 ): boolean {
   let conflictingFilter = false;
@@ -178,20 +176,6 @@ export function isConflictingFilter(
     if (
       (String(operation.params[1]).startsWith('!') && !String(filter.params[1]).startsWith('!')) ||
       (String(filter.params[1]).startsWith('!') && !String(operation.params[1]).startsWith('!'))
-    ) {
-      conflictingFilter = true;
-    }
-  });
-
-  // check if the new filter conflicts with any label selector
-  queryLabels.forEach((label) => {
-    if (operation.params[0] !== label.label || operation.params[2] !== label.value) {
-      return;
-    }
-
-    if (
-      (String(operation.params[1]).startsWith('!') && !label.op.startsWith('!')) ||
-      (label.op.startsWith('!') && !String(operation.params[1]).startsWith('!'))
     ) {
       conflictingFilter = true;
     }

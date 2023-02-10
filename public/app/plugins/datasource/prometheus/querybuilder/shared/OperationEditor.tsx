@@ -25,7 +25,6 @@ export interface Props {
   query: any;
   datasource: DataSourceApi;
   queryModeller: VisualQueryModeller;
-  setShowConflictMessage: (isConflicting: boolean) => void;
   onChange: (index: number, update: QueryBuilderOperation) => void;
   onRemove: (index: number) => void;
   onRunQuery: () => void;
@@ -44,7 +43,6 @@ export function OperationEditor({
   datasource,
   flash,
   highlight,
-  setShowConflictMessage,
 }: Props) {
   const styles = useStyles2(getStyles);
   const def = queryModeller.getOperationDef(operation.id);
@@ -132,9 +130,7 @@ export function OperationEditor({
 
   let isConflicting = false;
   if (operation.id === LokiOperationId.LabelFilter) {
-    const res = isConflictingFilter(operation, query.labels, query.operations);
-    isConflicting = res;
-    setShowConflictMessage(res);
+    isConflicting = isConflictingFilter(operation, query.operations);
   }
 
   return (

@@ -34,7 +34,6 @@ export function OperationList<T extends QueryWithOperations>({
   const opsToHighlight = useOperationsHighlight(operations);
 
   const [cascaderOpen, setCascaderOpen] = useState(false);
-  const [showConflictMessage, setShowConflictMessage] = useState(false);
 
   const onOperationChange = (index: number, update: QueryBuilderOperation) => {
     const updatedList = [...operations];
@@ -85,7 +84,7 @@ export function OperationList<T extends QueryWithOperations>({
   };
 
   return (
-    <Stack gap={0} direction="column">
+    <Stack gap={1} direction="column">
       <Stack gap={1}>
         {operations.length > 0 && (
           <DragDropContext onDragEnd={onDragEnd}>
@@ -106,7 +105,6 @@ export function OperationList<T extends QueryWithOperations>({
                         onRunQuery={onRunQuery}
                         flash={opsToHighlight[index]}
                         highlight={highlightedOp === op}
-                        setShowConflictMessage={setShowConflictMessage}
                       />
                     );
                   })}
@@ -134,11 +132,6 @@ export function OperationList<T extends QueryWithOperations>({
           )}
         </div>
       </Stack>
-      {showConflictMessage && (
-        <p className={styles.hasConflict}>
-          You have conflicting operations in your query, this will result in no data.
-        </p>
-      )}
     </Stack>
   );
 }
@@ -204,10 +197,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'addButton',
       width: 126,
       paddingBottom: theme.spacing(1),
-    }),
-    hasConflict: css({
-      color: theme.colors.error.main,
-      marginBottom: theme.spacing(1),
     }),
   };
 };

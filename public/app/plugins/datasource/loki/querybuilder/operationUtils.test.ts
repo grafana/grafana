@@ -187,49 +187,33 @@ describe('labelFilterRenderer', () => {
 });
 
 describe('isConflictingFilter', () => {
-  // Query Expression: {a="b"} | a != `b`
-  // Conflicts:          ^         ^
   it('should return true if the operation conflicts with a label', () => {
     const MOCK_OPERATION = { id: '__label_filter', params: ['a', '!=', 'b'] };
-    const MOCK_QUERY_LABELS = [{ label: 'a', op: '=', value: 'b' }];
     const MOCK_QUERY_OPERATIONS = [{ id: '__label_filter', params: ['a', '!=', 'b'] }];
-
-    expect(isConflictingFilter(MOCK_OPERATION, MOCK_QUERY_LABELS, MOCK_QUERY_OPERATIONS)).toBe(true);
+    expect(isConflictingFilter(MOCK_OPERATION, MOCK_QUERY_OPERATIONS)).toBe(true);
   });
 
-  // Query Expression: {a="b"} | a = `b`
-  // Conflicts: n/a
   it("should return false if the operation doesn't conflict with a label", () => {
     const MOCK_OPERATION = { id: '__label_filter', params: ['a', '=', 'b'] };
-    const MOCK_QUERY_LABELS = [{ label: 'a', op: '=', value: 'b' }];
     const MOCK_QUERY_OPERATIONS = [{ id: '__label_filter', params: ['a', '=', 'b'] }];
-
-    expect(isConflictingFilter(MOCK_OPERATION, MOCK_QUERY_LABELS, MOCK_QUERY_OPERATIONS)).toBe(false);
+    expect(isConflictingFilter(MOCK_OPERATION, MOCK_QUERY_OPERATIONS)).toBe(false);
   });
 
-  // Query Expression: {a="b"} | abc = `123` | abc != `123`
-  // Conflicts:                      ^             ^
   it('should return true if the operation conflict with another label filter', () => {
     const MOCK_OPERATION = { id: '__label_filter', params: ['abc', '!=', '123'] };
-    const MOCK_QUERY_LABELS = [{ label: 'a', op: '=', value: 'b' }];
     const MOCK_QUERY_OPERATIONS = [
       { id: '__label_filter', params: ['abc', '=', '123'] },
       { id: '__label_filter', params: ['abc', '!=', '123'] },
     ];
-
-    expect(isConflictingFilter(MOCK_OPERATION, MOCK_QUERY_LABELS, MOCK_QUERY_OPERATIONS)).toBe(true);
+    expect(isConflictingFilter(MOCK_OPERATION, MOCK_QUERY_OPERATIONS)).toBe(true);
   });
 
-  // Query Expression: {a="b"} | abc = `123` | abc = `123`
-  // Conflicts: n/a
   it("should return false if the operation doesn't conflict with another label filter", () => {
     const MOCK_OPERATION = { id: '__label_filter', params: ['abc', '=', '123'] };
-    const MOCK_QUERY_LABELS = [{ label: 'a', op: '=', value: 'b' }];
     const MOCK_QUERY_OPERATIONS = [
       { id: '__label_filter', params: ['abc', '=', '123'] },
       { id: '__label_filter', params: ['abc', '=', '123'] },
     ];
-
-    expect(isConflictingFilter(MOCK_OPERATION, MOCK_QUERY_LABELS, MOCK_QUERY_OPERATIONS)).toBe(false);
+    expect(isConflictingFilter(MOCK_OPERATION, MOCK_QUERY_OPERATIONS)).toBe(false);
   });
 });
