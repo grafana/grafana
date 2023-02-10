@@ -21,7 +21,9 @@ type SQLBuilder struct {
 	features featuremgmt.FeatureToggles
 	sql      bytes.Buffer
 	params   []interface{}
-	dialect  migrator.Dialect
+	recQry   string
+
+	dialect migrator.Dialect
 }
 
 func (sb *SQLBuilder) Write(sql string, params ...interface{}) {
@@ -48,9 +50,10 @@ func (sb *SQLBuilder) WriteDashboardPermissionFilter(user *user.SignedInUser, pe
 	var (
 		sql    string
 		params []interface{}
+		recQry string
 	)
 	if !ac.IsDisabled(sb.cfg) {
-		sql, params = permissions.NewAccessControlDashboardPermissionFilter(user, permission, "", sb.features).Where()
+		recQry, sql, params = permissions.NewAccessControlDashboardPermissionFilter(user, permission, "", sb.features).Where()
 	} else {
 		sql, params = permissions.DashboardPermissionFilter{
 			OrgRole:         user.OrgRole,
@@ -63,4 +66,5 @@ func (sb *SQLBuilder) WriteDashboardPermissionFilter(user *user.SignedInUser, pe
 
 	sb.sql.WriteString(" AND " + sql)
 	sb.params = append(sb.params, params...)
+	sb.recQry = recQry
 }
