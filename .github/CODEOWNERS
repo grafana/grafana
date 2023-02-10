@@ -562,6 +562,7 @@ embed.go @grafana/grafana-as-code
 /.github/bot.md @torkelo
 /.github/commands.json @torkelo
 /.github/dependabot.yml @grafana/frontend-ops
+/.github/issue-opened.json @grafana/grafana-community-support
 /.github/metrics-collector.json @torkelo
 /.github/pr-checks.json @marefr
 /.github/pr-commands.json @marefr
@@ -579,6 +580,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/epic-add-to-platform-ux-parent-project.yml @meanmina
 /.github/workflows/github-release.yml @torkelo
 /.github/workflows/issue-labeled.yml @armandgrillet
+/.github/workflows/issue-opened.yml @grafana/grafana-community-support
 /.github/workflows/metrics-collector.yml @torkelo
 /.github/workflows/milestone.yml @marefr
 /.github/workflows/ox-code-coverage.yml @grafana/explore-squad
