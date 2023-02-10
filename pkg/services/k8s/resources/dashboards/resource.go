@@ -37,7 +37,3 @@ func ProvideResource(clientset *client.Clientset, reg *corecrd.Registry, kinds *
 		kind:              kinds.Dashboard(),
 	}, nil
 }
-
-func (r *Resource) RegisterController(ctx context.Context, watcher client.Watcher) {
-	r.clientSet.AddInformer(r.crd, watcher, ctx.Done())
-}
