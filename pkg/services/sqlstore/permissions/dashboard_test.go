@@ -156,6 +156,54 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 }
 
 func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
+	testCases := []struct {
+		desc           string
+		queryType      string
+		permission     dashboards.PermissionType
+		permissions    []accesscontrol.Permission
+		expectedResult []string
+		features       featuremgmt.FeatureToggles
+	}{
+		{
+			desc:       "Should be able to view dashboards under inherited folders if nested folders are enabled",
+			queryType:  "",
+			permission: dashboards.PERMISSION_VIEW,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:parent"},
+			},
+			features:       featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
+			expectedResult: []string{"dashboard 1", "dashboard 2"},
+		},
+		{
+			desc:       "Should not be able to view dashboards under inherited folders if nested folders are not enabled",
+			queryType:  "",
+			permission: dashboards.PERMISSION_VIEW,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:parent"},
+			},
+			features:       featuremgmt.WithFeatures(),
+			expectedResult: []string{"dashboard 1"},
+		},
+		{
+			desc:       "Should be able to view inherited folders if nested folders are enabled",
+			permission: dashboards.PERMISSION_VIEW,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:parent"},
+			},
+			features:       featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
+			expectedResult: []string{"parent", "subfolder"},
+		},
+		{
+			desc:       "Should be not able to view inherited folders if nested folders are not enabled",
+			permission: dashboards.PERMISSION_VIEW,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:parent"},
+			},
+			features:       featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
+			expectedResult: []string{"parent"},
+		},
+	}
+
 	origNewGuardian := guardian.New
 	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true, CanSaveValue: true})
 	t.Cleanup(func() {
@@ -163,117 +211,27 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 	})
 
 	var orgID int64 = 1
-	permission := dashboards.PERMISSION_VIEW
-	queryType := ""
-	perms := []accesscontrol.Permission{
-		{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:parent"},
-	}
-	usr := &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(perms)}}
-	features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
 
-	db := sqlstore.InitTestDB(t)
-	setup := func() {
-		// dashboard store commands that should be called.
-		dashStore, err := database.ProvideDashboardStore(db, db.Cfg, features, tagimpl.ProvideService(db, db.Cfg), quotatest.New(false, nil))
-		require.NoError(t, err)
-
-		folderSvc := folderimpl.ProvideService(mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), db.Cfg, dashStore, folderimpl.ProvideDashboardFolderStore(db), db, features)
-
-		// create parent folder
-		parent, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
-			UID:          "parent",
-			OrgID:        orgID,
-			Title:        "parent",
-			SignedInUser: usr,
-		})
-		require.NoError(t, err)
-
-		// create subfolder
-		subfolder, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
-			UID:          "subfolder",
-			ParentUID:    "parent",
-			OrgID:        orgID,
-			Title:        "subfolder",
-			SignedInUser: usr,
-		})
-		require.NoError(t, err)
-
-		// create dashboard under parent folder
-		_, err = dashStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
-			OrgID:    orgID,
-			FolderID: parent.ID,
-			Dashboard: simplejson.NewFromAny(map[string]interface{}{
-				"title": "dashboard 1",
-			}),
-		})
-		require.NoError(t, err)
-
-		// create dashboard under subfolder
-		_, err = dashStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
-			OrgID:    orgID,
-			FolderID: subfolder.ID,
-			Dashboard: simplejson.NewFromAny(map[string]interface{}{
-				"title": "dashboard 2",
-			}),
-		})
-		require.NoError(t, err)
-
-		err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-
-			role := &accesscontrol.Role{
-				OrgID:   0,
-				UID:     "basic_viewer",
-				Name:    "basic:viewer",
-				Updated: time.Now(),
-				Created: time.Now(),
-			}
-			_, err = sess.Insert(role)
-			if err != nil {
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			usr := &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tc.permissions)}}
+			db := setupNestedTest(t, usr, tc.permissions, orgID, tc.features)
+			filter := permissions.NewAccessControlDashboardPermissionFilter(usr, tc.permission, tc.queryType, tc.features)
+			var result []string
+			err := db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+				recQry, q, params := filter.Where()
+				err := sess.SQL(recQry+"\nSELECT title FROM dashboard WHERE "+q, params...).Find(&result)
 				return err
-			}
-			_, err = sess.Insert(accesscontrol.BuiltinRole{
-				OrgID:   0,
-				RoleID:  role.ID,
-				Role:    "Viewer",
-				Created: time.Now(),
-				Updated: time.Now(),
 			})
-			if err != nil {
-				return err
-			}
-
-			for i := range perms {
-				perms[i].RoleID = role.ID
-				perms[i].Created = time.Now()
-				perms[i].Updated = time.Now()
-			}
-			if len(perms) > 0 {
-				_, err = sess.InsertMulti(&perms)
-				if err != nil {
-					return err
-				}
-			}
-
-			return nil
+			require.NoError(t, err)
+			assert.Equal(t, tc.expectedResult, result)
 		})
-		require.NoError(t, err)
 	}
-
-	setup()
-	filter := permissions.NewAccessControlDashboardPermissionFilter(usr, permission, queryType, features)
-
-	var result int
-	err := db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		recQry, q, params := filter.Where()
-		_, err := sess.SQL(recQry+"\nSELECT COUNT(*) FROM dashboard WHERE "+q, params...).Get(&result)
-		return err
-	})
-	require.NoError(t, err)
-
-	assert.Equal(t, 2, result)
 }
 
 func setupTest(t *testing.T, numFolders, numDashboards int, permissions []accesscontrol.Permission) db.DB {
+	t.Helper()
+
 	store := db.InitTestDB(t)
 	err := store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		dashes := make([]dashboards.Dashboard, 0, numFolders+numDashboards)
@@ -354,4 +312,97 @@ func setupTest(t *testing.T, numFolders, numDashboards int, permissions []access
 	})
 	require.NoError(t, err)
 	return store
+}
+
+func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol.Permission, orgID int64, features featuremgmt.FeatureToggles) db.DB {
+	t.Helper()
+
+	db := sqlstore.InitTestDB(t)
+
+	// dashboard store commands that should be called.
+	dashStore, err := database.ProvideDashboardStore(db, db.Cfg, features, tagimpl.ProvideService(db, db.Cfg), quotatest.New(false, nil))
+	require.NoError(t, err)
+
+	folderSvc := folderimpl.ProvideService(mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), db.Cfg, dashStore, folderimpl.ProvideDashboardFolderStore(db), db, features)
+
+	// create parent folder
+	parent, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
+		UID:          "parent",
+		OrgID:        orgID,
+		Title:        "parent",
+		SignedInUser: usr,
+	})
+	require.NoError(t, err)
+
+	// create subfolder
+	subfolder, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
+		UID:          "subfolder",
+		ParentUID:    "parent",
+		OrgID:        orgID,
+		Title:        "subfolder",
+		SignedInUser: usr,
+	})
+	require.NoError(t, err)
+
+	// create dashboard under parent folder
+	_, err = dashStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
+		OrgID:    orgID,
+		FolderID: parent.ID,
+		Dashboard: simplejson.NewFromAny(map[string]interface{}{
+			"title": "dashboard 1",
+		}),
+	})
+	require.NoError(t, err)
+
+	// create dashboard under subfolder
+	_, err = dashStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
+		OrgID:    orgID,
+		FolderID: subfolder.ID,
+		Dashboard: simplejson.NewFromAny(map[string]interface{}{
+			"title": "dashboard 2",
+		}),
+	})
+	require.NoError(t, err)
+
+	err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+
+		role := &accesscontrol.Role{
+			OrgID:   0,
+			UID:     "basic_viewer",
+			Name:    "basic:viewer",
+			Updated: time.Now(),
+			Created: time.Now(),
+		}
+		_, err = sess.Insert(role)
+		if err != nil {
+			return err
+		}
+		_, err = sess.Insert(accesscontrol.BuiltinRole{
+			OrgID:   0,
+			RoleID:  role.ID,
+			Role:    "Viewer",
+			Created: time.Now(),
+			Updated: time.Now(),
+		})
+		if err != nil {
+			return err
+		}
+
+		for i := range perms {
+			perms[i].RoleID = role.ID
+			perms[i].Created = time.Now()
+			perms[i].Updated = time.Now()
+		}
+		if len(perms) > 0 {
+			_, err = sess.InsertMulti(&perms)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+	require.NoError(t, err)
+
+	return db
 }

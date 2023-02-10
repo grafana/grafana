@@ -143,7 +143,8 @@ func (f AccessControlDashboardPermissionFilter) Where() (string, string, []inter
 	var args []interface{}
 	builder := strings.Builder{}
 	builder.WriteRune('(')
-	recQry := ""
+	var recQries []string
+	withClause := ""
 	if len(f.dashboardActions) > 0 {
 		toCheck := actionsToCheck(f.dashboardActions, f.user.Permissions[f.user.OrgID], dashWildcards, folderWildcards)
 
@@ -181,8 +182,8 @@ func (f AccessControlDashboardPermissionFilter) Where() (string, string, []inter
 
 			switch f.features.IsEnabled(featuremgmt.FlagNestedFolders) {
 			case true:
-				recQry = getFoldersWithPermissions(sb.String())
-				builder.WriteString("INNER JOIN RecQry AS foldersWithPermissions ON d.uid = foldersWithPermissions.uid")
+				recQries = append(recQries, getFoldersWithPermissions(sb.String()))
+				builder.WriteString("WHERE d.uid IN (SELECT uid FROM RecQry)")
 			default:
 				builder.WriteString("WHERE d.uid IN ")
 				builder.WriteString(sb.String())
@@ -217,11 +218,15 @@ func (f AccessControlDashboardPermissionFilter) Where() (string, string, []inter
 		}
 	}
 	builder.WriteRune(')')
-	return recQry, builder.String(), args
+
+	if len(recQries) > 0 {
+		withClause = fmt.Sprintf("WITH RECURSIVE %s", strings.Join(recQries, ","))
+	}
+	return withClause, builder.String(), args
 }
 
 func getFoldersWithPermissions(whereUIDSelect string) string {
-	return fmt.Sprintf(`WITH RECURSIVE RecQry AS (
+	return fmt.Sprintf(`RecQry AS (
 			SELECT uid, parent_uid, org_id FROM folder WHERE uid IN %s
 			UNION ALL SELECT f.uid, f.parent_uid, f.org_id FROM folder f INNER JOIN RecQry r ON f.parent_uid = r.uid and f.org_id = r.org_id
 		)`, whereUIDSelect)
