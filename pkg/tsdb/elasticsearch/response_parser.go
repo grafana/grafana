@@ -899,7 +899,7 @@ func sortPropNames(propNames map[string]bool, timeField string) []string {
 	hasTimeField := false
 
 	var sortedPropNames []string
-	for k, _ := range propNames {
+	for k := range propNames {
 		if k == timeField {
 			hasTimeField = true
 		} else {
