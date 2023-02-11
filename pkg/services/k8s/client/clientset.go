@@ -7,6 +7,8 @@ import (
 
 	"github.com/google/wire"
 	"github.com/grafana/grafana/pkg/kindsys/k8ssys"
+	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
@@ -45,8 +47,14 @@ type Clientset struct {
 	lock sync.RWMutex
 }
 
+var _ registry.CanBeDisabled = (*Clientset)(nil)
+
 // ProvideClientset returns a new Clientset configured with cfg.
-func ProvideClientset(cfg *rest.Config) (*Clientset, error) {
+func ProvideClientset(toggles featuremgmt.FeatureToggles, cfg *rest.Config) (*Clientset, error) {
+	if !toggles.IsEnabled(featuremgmt.FlagK8s) {
+		return &Clientset{}, nil
+	}
+
 	k8sset, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
 		return nil, err
@@ -86,6 +94,10 @@ func NewClientset(
 		crds: make(map[k8schema.GroupVersion]apiextensionsv1.CustomResourceDefinition),
 		lock: sync.RWMutex{},
 	}, nil
+}
+
+func (c *Clientset) IsDisabled() bool {
+	return c.config == nil
 }
 
 // RegisterSchema registers a k8ssys.Kind with the Kubernetes API.

@@ -19,6 +19,9 @@ type Resource struct {
 }
 
 func ProvideResource(clientset *client.Clientset, kinds *corekind.Base) (*Resource, error) {
+	if clientset.IsDisabled() {
+		return &Resource{}, nil // something better
+	}
 	err := clientset.RegisterKind(context.Background(), CRD)
 	if err != nil {
 		return nil, err

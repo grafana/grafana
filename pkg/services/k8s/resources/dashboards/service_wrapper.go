@@ -23,7 +23,8 @@ import (
 type ServiceWrapper struct {
 	dashboards.DashboardService
 
-	log               log.Logger
+	log log.Logger
+
 	dashboardResource *Resource
 }
 
