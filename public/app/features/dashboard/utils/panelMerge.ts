@@ -62,6 +62,11 @@ export function mergePanels(current: PanelModel[], data: IPanelModel[]): PanelMe
     // Check if it is the same type
     if (panel.type === target.type) {
       const save = panel.getSaveModel();
+      const first = save.fieldConfig?.defaults?.thresholds?.steps?.[0];
+      if (first) {
+        first.value = -Infinity;
+      }
+
       let isNoop = true;
       let doUpdate = false;
       for (const [key, value] of Object.entries(target)) {
