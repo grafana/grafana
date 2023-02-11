@@ -212,8 +212,10 @@ type Dashboard struct {
 	Editable bool `json:"editable"`
 
 	// The month that the fiscal year starts on.  0 = January, 11 = December
-	FiscalYearStartMonth *int    `json:"fiscalYearStartMonth,omitempty"`
-	GnetId               *string `json:"gnetId,omitempty"`
+	FiscalYearStartMonth *int `json:"fiscalYearStartMonth,omitempty"`
+
+	// For dashboards imported from the https://grafana.com/grafana/dashboards/ portal
+	GnetId *string `json:"gnetId,omitempty"`
 
 	// 0 for no shared crosshair or tooltip (default).
 	// 1 for shared crosshair.
@@ -227,15 +229,19 @@ type Dashboard struct {
 	// TODO docs
 	Links *[]Link `json:"links,omitempty"`
 
-	// TODO docs
+	// When set to true, the dashboard will redraw panels at an interval matching the pixel width.
+	// This will keep data "moving left" regardless of the query refresh rate.  This setting helps
+	// avoid dashboards presenting stale live data
 	LiveNow *bool          `json:"liveNow,omitempty"`
 	Panels  *[]interface{} `json:"panels,omitempty"`
 
 	// Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".
 	Refresh *interface{} `json:"refresh,omitempty"`
 
-	// Version of the current dashboard data
-	Revision int `json:"revision"`
+	// This property should only be used in dashboards defined by plugins.  It is a quick check
+	// to see if the version has changed since the last time.  Unclear why using the version property
+	// is insufficient.
+	Revision *int64 `json:"revision,omitempty"`
 
 	// Version of the JSON schema, incremented each time a Grafana update brings
 	// changes to said schema.
