@@ -24,9 +24,9 @@ It extends [HideableFieldConfig](#hideablefieldconfig).
 
 | Property      | Type                                  | Required | Description                                                                  |
 |---------------|---------------------------------------|----------|------------------------------------------------------------------------------|
-| `fillOpacity` | integer                               | No       | Default: `70`.                                                               |
+| `fillOpacity` | integer                               | No       | Default: `70`.<br/>Constraint: `>=0 & <=100`.                                |
 | `hideFrom`    | [HideSeriesConfig](#hideseriesconfig) | No       | *(Inherited from [HideableFieldConfig](#hideablefieldconfig))*<br/>TODO docs |
-| `lineWidth`   | integer                               | No       | Default: `1`.                                                                |
+| `lineWidth`   | integer                               | No       | Default: `1`.<br/>Constraint: `>=0 & <=10`.                                  |
 
 ### HideSeriesConfig
 
@@ -53,7 +53,7 @@ It extends [OptionsWithLegend](#optionswithlegend) and [OptionsWithTooltip](#opt
 | Property    | Type                                    | Required | Description                                                                |
 |-------------|-----------------------------------------|----------|----------------------------------------------------------------------------|
 | `legend`    | [VizLegendOptions](#vizlegendoptions)   | **Yes**  | *(Inherited from [OptionsWithLegend](#optionswithlegend))*<br/>TODO docs   |
-| `rowHeight` | number                                  | **Yes**  | Set the height of the rows Default: `0.9`.                                 |
+| `rowHeight` | number                                  | **Yes**  | Set the height of the rows Default: `0.9`.<br/>Constraint: `>=0 & <=1`.    |
 | `showValue` | string                                  | **Yes**  | TODO docs<br/>Possible values are: `auto`, `never`, `always`.              |
 | `tooltip`   | [VizTooltipOptions](#viztooltipoptions) | **Yes**  | *(Inherited from [OptionsWithTooltip](#optionswithtooltip))*<br/>TODO docs |
 | `colWidth`  | number                                  | No       | Controls the column width Default: `0.9`.                                  |
