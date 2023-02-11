@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/kindsys/k8ssys"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -23,7 +22,6 @@ import (
 type Service struct {
 	dashboards.DashboardService
 
-	cfg *setting.Cfg
 	log log.Logger
 
 	dashboardResource *Resource
@@ -31,12 +29,8 @@ type Service struct {
 
 var _ dashboards.DashboardService = (*Service)(nil)
 
-func ProvideService(
-	cfg *setting.Cfg,
-	dashboardResource *Resource,
-) *Service {
+func ProvideService(dashboardResource *Resource) *Service {
 	return &Service{
-		cfg:               cfg,
 		log:               log.New("k8s.dashboards.service"),
 		dashboardResource: dashboardResource,
 	}
