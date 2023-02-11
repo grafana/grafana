@@ -147,7 +147,7 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 				CacheID:              cacheID,
 				Labels:               lbs,
 				State:                translateInstanceState(entry.CurrentState),
-				PendingState:         translateInstancePendingState(entry.CurrentPendingState),
+				Cause:                translateInstanceCause(entry.CurrentCause),
 				StateReason:          entry.CurrentReason,
 				LastEvaluationString: "",
 				StartsAt:             entry.CurrentStateSince,
@@ -188,7 +188,7 @@ func (st *Manager) DeleteStateByRuleUID(ctx context.Context, ruleKey ngModels.Al
 		if s.State != eval.Normal {
 			startsAt = now
 		}
-		s.SetNormal(reason, startsAt, now)
+		s.SetNormal(reason, NoCause, startsAt, now)
 		// Set Resolved property so the scheduler knows to send a postable alert
 		// to Alertmanager.
 		s.Resolved = oldState == eval.Alerting
@@ -279,10 +279,10 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	switch result.State {
 	case eval.Normal:
 		logger.Debug("Setting next state", "handler", "resultNormal")
-		resultNormal(currentState, alertRule, result, logger)
+		resultNormal(currentState, alertRule, result, logger, NoCause)
 	case eval.Alerting:
 		logger.Debug("Setting next state", "handler", "resultAlerting")
-		resultAlerting(currentState, alertRule, result, logger)
+		resultAlerting(currentState, alertRule, result, logger, CauseFiring, "", nil)
 	case eval.Error:
 		logger.Debug("Setting next state", "handler", "resultError")
 		resultError(currentState, alertRule, result, logger)
@@ -364,14 +364,14 @@ func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, state
 			continue
 		}
 		fields := ngModels.AlertInstance{
-			AlertInstanceKey:    key,
-			Labels:              ngModels.InstanceLabels(s.Labels),
-			CurrentState:        ngModels.InstanceStateType(s.State.State.String()),
-			CurrentPendingState: ngModels.InstancePendingStateType(s.PendingState.String()),
-			CurrentReason:       s.StateReason,
-			LastEvalTime:        s.LastEvaluationTime,
-			CurrentStateSince:   s.StartsAt,
-			CurrentStateEnd:     s.EndsAt,
+			AlertInstanceKey:  key,
+			Labels:            ngModels.InstanceLabels(s.Labels),
+			CurrentState:      ngModels.InstanceStateType(s.State.State.String()),
+			CurrentCause:      ngModels.InstanceCauseType(s.Cause.String()),
+			CurrentReason:     s.StateReason,
+			LastEvalTime:      s.LastEvaluationTime,
+			CurrentStateSince: s.StartsAt,
+			CurrentStateEnd:   s.EndsAt,
 		}
 		instances = append(instances, fields)
 	}
@@ -433,16 +433,18 @@ func translateInstanceState(state ngModels.InstanceStateType) eval.State {
 	}
 }
 
-func translateInstancePendingState(pendingState ngModels.InstancePendingStateType) PendingState {
+func translateInstanceCause(pendingState ngModels.InstanceCauseType) Cause {
 	switch pendingState {
-	case ngModels.InstancePendingStateEmpty:
-		return PendingStateEmpty
-	case ngModels.InstancePendingStateFiring:
-		return PendingStateAlerting
-	case ngModels.InstancePendingStateError:
-		return PendingStateError
+	case ngModels.InstanceNoCause:
+		return NoCause
+	case ngModels.InstanceCauseFiring:
+		return CauseFiring
+	case ngModels.InstanceCauseError:
+		return CauseError
+	case ngModels.InstanceCauseNoData:
+		return CauseNoData
 	default:
-		return PendingStateEmpty
+		return NoCause
 	}
 }
 
