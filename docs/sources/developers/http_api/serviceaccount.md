@@ -251,6 +251,134 @@ Content-Type: application/json
 
 ---
 
+## Migrate API keys to service accounts
+
+`POST /api/serviceaccounts/migrate`
+
+**Required permissions**
+
+See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
+
+| Action                | Scope              |
+| --------------------- | ------------------ |
+| serviceaccounts:write | serviceaccounts:\* |
+
+**Example Request**:
+
+```http
+POST /api/serviceaccounts/migrate HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Basic YWRtaW46YWRtaW4=
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+	"message": "API keys migrated to service accounts"
+}
+```
+
+## Migrate API key to service account
+
+`POST /api/serviceaccounts/migrate/:keyId`
+
+**Required permissions**
+
+See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
+
+| Action                | Scope              |
+| --------------------- | ------------------ |
+| serviceaccounts:write | serviceaccounts:\* |
+
+**Example Request**:
+
+```http
+POST /api/serviceaccounts/migrate/4 HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Basic YWRtaW46YWRtaW4=
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+	"message": "Service accounts migrated"
+}
+```
+
+## Get API key to service account migration status
+
+`GET /api/serviceaccounts/migrationstatus`
+
+**Required permissions**
+
+See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
+
+| Action               | Scope              |
+| -------------------- | ------------------ |
+| serviceaccounts:read | serviceaccounts:\* |
+
+**Example Request**:
+
+```http
+POST /api/serviceaccounts/migrationstatus HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Basic YWRtaW46YWRtaW4=
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+	"migrated": true
+}
+```
+
+## Hide the API keys tab
+
+`GET /api/serviceaccounts/hideApiKeys`
+
+**Required permissions**
+
+See note in the [introduction]({{< ref "#service-account-api" >}}) for an explanation.
+
+| Action                | Scope              |
+| --------------------- | ------------------ |
+| serviceaccounts:write | serviceaccounts:\* |
+
+**Example Request**:
+
+```http
+POST /api/serviceaccounts/hideApiKeys HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Basic YWRtaW46YWRtaW4=
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+	"message": "API keys hidden"
+}
+```
+
 ## Get service account tokens
 
 `GET /api/serviceaccounts/:id/tokens`
