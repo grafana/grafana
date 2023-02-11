@@ -47,7 +47,7 @@ func (s *ServiceWrapper) SaveDashboard(ctx context.Context, dto *dashboards.Save
 	// take the kindsys dashboard kind and alias it so it's easier to distinguish from dashboards.Dashboard
 	type dashboardKind = dashboard.Dashboard
 	// get the dashboard CRD from the CRD registry
-	dashboardCRD := s.dashboardResource.crd
+	dashboardCRD := CRD
 
 	/////////////////
 	// do  work

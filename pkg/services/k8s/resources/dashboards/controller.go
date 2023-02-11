@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/k8s/informer"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -27,7 +26,6 @@ func ProvideController(
 	userService user.Service,
 	accessControlService accesscontrol.Service,
 	dashboardResource *Resource,
-	informerFactory *informer.Factory,
 ) *Controller {
 	c := Controller{
 		enabled:              features.IsEnabled(featuremgmt.FlagK8s),
@@ -37,7 +35,6 @@ func ProvideController(
 		accessControlService: accessControlService,
 		dashboardResource:    dashboardResource,
 	}
-	informerFactory.AddInformer(c.dashboardResource.crd, &c)
 	return &c
 }
 
