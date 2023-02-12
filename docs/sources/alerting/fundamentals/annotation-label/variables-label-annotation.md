@@ -13,7 +13,9 @@ weight: 117
 
 In Grafana it is possible to template labels and annotations just like in Prometheus. Those who have used Prometheus before should be familiar with `$labels` and `$value` as these variables contain the labels and value of the alert. You can use the same variables in Grafana to template labels and annotations, even if the alert does not use a Prometheus datasource.
 
-For example, suppose you want to create an alert rule in Grafana that fires when one of your instances is down for more than 5 minutes, and that each alert fired should have a summary annotation to tell you which instance is down:
+## Printing labels
+
+Suppose you want to create an alert rule that fires when an instance is down for more than 5 minutes. You want the alert to contain a summary telling you which instance is down. You can do this by creating a summary annotation that prints the instance label and the message "has been down for more than 5 minutes".
 
 ```
 Instance {{ $labels.instance }} has been down for more than 5 minutes
@@ -33,65 +35,43 @@ This is because it is attempting to use a non-existing field `name` in `$labels.
 Instance {{ index $labels "instance.name" }} has been down for more than 5 minutes
 ```
 
-## Use values in labels and annotations
+## Printing the ValueString
 
-Grafana supports `$value` when templating labels and annotations. However, while `$value` in Prometheus is a floating point number contains the value of the expression, `$value` in Grafana is a string containing the labels and values of all Threshold, Reduce and Maths expressions. It does not contain the value of queries as a single query can return anywhere from 1 to 10,000s of rows or metrics.
+You can print the value of the alert with `$value`. However, where `$value` in Prometheus is a floating point number containing the value of the expression, in Grafana it is is a string containing the labels and values of all Threshold, Reduce and Maths expressions from the alert rule definition. It does not contain time series or tabular data, as a single query can return anywhere from 1 to 10,000s of rows or metrics.
 
-This `$value` variable is called the Value String. If you were to use it in the template of a summary annotation:
+This `$value` variable is called the ValueString. If you were to use it in the template of a summary annotation:
 
 ```
 {{ $labels.instance }} has an average 95th percentile request latency above 1s: {{ $value }})
 ```
 
-you will get the following summary:
+you would get the following summary:
 
 ```
 http_server has an average 95th percentile request latency above 1s: [ var='B' labels={instance=http_server} value=10 ]
 ```
 
-To get just the value of `B` you can instead use `$values`:
+## Printing the values of individual expressions
+
+You can also print the values of individual expressions with `$values`. For example, if you have an alert rule with a Reduce expression `B` and a Math expression `C`, you can print just the value of `B`:
 
 ```
 {{ $labels.instance }} has an average 95th percentile request latency above 1s: {{ $values.B }}
 ```
 
-and then you will get this summary:
+and then you would get this summary:
 
 ```
 http_server has an average 95th percentile request latency above 1s: 11
 ```
 
-## Alert rules with multiple queries, or expressions
-
-If you have an alert rule with multiple queries and expressions, or a single query with a Reduce and Math expression, like in the following example:
-
-{{< figure src="/static/img/docs/alerting/unified/grafana-alerting-histogram-quantile.png" class="docs-image--no-shadow" caption="An alert rule that uses histogram_quantile to compute 95th percentile" >}}
-
-Then the Value String will not just include the value of the alert condition, but the labels and values of all Threshold, Reduce and Maths expressions.
-
-**Example 1**: The Value String of an alert rule with a single query and Reduce expression `B`:
+You might want to do this if your Math expression `C` is a boolean comparison, for example:
 
 ```
-[ var='B' labels={instance=http_server} value=11 ]
+$B > 100
 ```
 
-**Example 2**: The Value String of an alert rule with a single query, Reduce expression `B` and a Math expression `C`:
-
-```
-[ var='B' labels={instance=http_server} value=11, var='C' labels={instance=http_server} value=1 ]
-```
-
-If you were to write a summary annotation such as:
-
-```
-{{ $labels.instance }} has an average 95th percentile request latency above 1s: {{ $values.C }})
-```
-
-You would find that because the condition of the alert `C` is a Math expression with a boolean comparison, it must return either a `0` or a `1`. What you want instead is the average of the 95th percentile, and you can get this from the reduce expression `B`:
-
-```
-{{ $labels.instance }} has an average 95th percentile request latency above 1s: {{ $values.B }})
-```
+as its value will be either 0 or 1 depending on the result of the comparison.
 
 ## No data and execution errors or timeouts
 
