@@ -27,6 +27,10 @@ type LDAP struct {
 	service ldapService
 }
 
+func (c *LDAP) String() string {
+	return "ldap"
+}
+
 func (c *LDAP) AuthenticateProxy(ctx context.Context, r *authn.Request, username string, _ map[string]string) (*authn.Identity, error) {
 	info, err := c.service.User(username)
 	if errors.Is(err, multildap.ErrDidNotFindUser) {
