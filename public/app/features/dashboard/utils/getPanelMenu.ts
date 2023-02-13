@@ -226,7 +226,7 @@ export function getPanelMenu(
 
   for (const extension of extensions) {
     subMenu.push({
-      text: extension.title,
+      text: truncateTitle(extension.title, 25),
       href: extension.path,
     });
   }
@@ -298,4 +298,12 @@ export function getPanelMenu(
   }
 
   return menu;
+}
+
+function truncateTitle(title: string, length: number): string {
+  if (title.length < length) {
+    return title;
+  }
+  const part = title.slice(0, length - 3);
+  return `${part.trimEnd()}...`;
 }

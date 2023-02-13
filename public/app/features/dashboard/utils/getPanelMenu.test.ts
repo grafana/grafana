@@ -131,32 +131,62 @@ describe('getPanelMenu()', () => {
     );
   });
 
-  it('should be possible to extend the panel menu with link type extensions', () => {
-    setPluginsExtensionRegistry({
-      [GrafanaExtensions.DashboardPanelMenu]: [
-        {
-          type: 'link',
-          title: 'Declare incident',
-          description: 'Declaring an incident in the app',
-          path: '/a/grafana-basic-app/declare-incident',
-          key: 1,
-        },
-      ],
+  describe('when extending panel menu from plugins', () => {
+    it('should contain menu item from link extension', () => {
+      setPluginsExtensionRegistry({
+        [GrafanaExtensions.DashboardPanelMenu]: [
+          {
+            type: 'link',
+            title: 'Declare incident',
+            description: 'Declaring an incident in the app',
+            path: '/a/grafana-basic-app/declare-incident',
+            key: 1,
+          },
+        ],
+      });
+
+      const panel = new PanelModel({});
+      const dashboard = createDashboardModelFixture({});
+      const menuItems = getPanelMenu(dashboard, panel, LoadingState.Loading);
+      const moreSubMenu = menuItems.find((i) => i.text === 'More...')?.subMenu;
+
+      expect(moreSubMenu).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            text: 'Declare incident',
+            href: '/a/grafana-basic-app/declare-incident',
+          }),
+        ])
+      );
     });
 
-    const panel = new PanelModel({});
-    const dashboard = createDashboardModelFixture({});
-    const menuItems = getPanelMenu(dashboard, panel, LoadingState.Loading);
-    const moreSubMenu = menuItems.find((i) => i.text === 'More...')?.subMenu;
+    it('should truncate menu item title to 25 chars', () => {
+      setPluginsExtensionRegistry({
+        [GrafanaExtensions.DashboardPanelMenu]: [
+          {
+            type: 'link',
+            title: 'Declare incident when pressing this amazing menu item',
+            description: 'Declaring an incident in the app',
+            path: '/a/grafana-basic-app/declare-incident',
+            key: 1,
+          },
+        ],
+      });
 
-    expect(moreSubMenu).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          text: 'Declare incident',
-          href: '/a/grafana-basic-app/declare-incident',
-        }),
-      ])
-    );
+      const panel = new PanelModel({});
+      const dashboard = createDashboardModelFixture({});
+      const menuItems = getPanelMenu(dashboard, panel, LoadingState.Loading);
+      const moreSubMenu = menuItems.find((i) => i.text === 'More...')?.subMenu;
+
+      expect(moreSubMenu).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            text: 'Declare incident when...',
+            href: '/a/grafana-basic-app/declare-incident',
+          }),
+        ])
+      );
+    });
   });
 
   describe('when panel is in view mode', () => {
