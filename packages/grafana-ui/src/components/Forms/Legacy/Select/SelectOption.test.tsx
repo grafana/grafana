@@ -9,6 +9,7 @@ const model: OptionProps<any> = {
   cx: jest.fn(),
   clearValue: jest.fn(),
   getStyles: jest.fn(),
+  getClassNames: jest.fn(),
   getValue: jest.fn(),
   hasValue: true,
   isMulti: false,
