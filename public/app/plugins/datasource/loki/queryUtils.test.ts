@@ -1,6 +1,4 @@
-import { getQueryOptions } from 'test/helpers/getQueryOptions';
-
-import { ArrayVector, DataQueryResponse, FieldType } from '@grafana/data';
+import { ArrayVector, DataQueryResponse } from '@grafana/data';
 
 import { logFrameA, logFrameB, metricFrameA, metricFrameB } from './mocks';
 import {
@@ -13,7 +11,6 @@ import {
   parseToNodeNamesArray,
   getParserFromQuery,
   obfuscate,
-  resultLimitReached,
   combineResponses,
 } from './queryUtils';
 import { LokiQuery, LokiQueryType } from './types';
@@ -297,52 +294,6 @@ describe('getParserFromQuery', () => {
     expect(getParserFromQuery(`sum(count_over_time({place="luna"} | ${parser} | unwrap counter )) by (place)`)).toBe(
       parser
     );
-  });
-});
-
-describe('resultLimitReached', () => {
-  const result = {
-    data: [
-      {
-        name: 'test',
-        fields: [
-          {
-            name: 'Time',
-            type: FieldType.time,
-            config: {},
-            values: new ArrayVector([1, 2]),
-          },
-          {
-            name: 'Line',
-            type: FieldType.string,
-            config: {},
-            values: new ArrayVector(['line1', 'line2']),
-          },
-        ],
-        length: 2,
-      },
-    ],
-  };
-  it('returns false for non-logs queries', () => {
-    const request = getQueryOptions<LokiQuery>({
-      targets: [{ expr: 'count_over_time({a="b"}[1m])', refId: 'A', maxLines: 0 }],
-    });
-
-    expect(resultLimitReached(request, result)).toBe(false);
-  });
-  it('returns false when the limit is not reached', () => {
-    const request = getQueryOptions<LokiQuery>({
-      targets: [{ expr: '{a="b"}', refId: 'A', maxLines: 3 }],
-    });
-
-    expect(resultLimitReached(request, result)).toBe(false);
-  });
-  it('returns true when the limit is reached', () => {
-    const request = getQueryOptions<LokiQuery>({
-      targets: [{ expr: '{a="b"}', refId: 'A', maxLines: 2 }],
-    });
-
-    expect(resultLimitReached(request, result)).toBe(true);
   });
 });
 
