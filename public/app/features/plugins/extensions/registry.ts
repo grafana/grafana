@@ -6,7 +6,7 @@ import {
   PluginsExtensionRegistry,
 } from '@grafana/runtime';
 
-import { getPluginLoadedConfig } from '../pluginPreloader';
+import { getPreloadPluginConfig } from '../pluginPreloadConfigs';
 
 export function createPluginExtensionsRegistry(apps: Record<string, AppPluginConfig> = {}): PluginsExtensionRegistry {
   const registry: PluginsExtensionRegistry = {};
@@ -44,21 +44,19 @@ export function createPluginExtensionsRegistry(apps: Record<string, AppPluginCon
 
 function createRegistryItem(pluginId: string, extension: PluginsExtensionLinkConfig): PluginsExtensionLink | null {
   const path = `/a/${pluginId}${extension.path}`;
-  const { hasLoaded, extensionOverrides } = getPluginLoadedConfig(pluginId);
+  const config = getPreloadPluginConfig(pluginId);
 
-  if (!hasLoaded) {
+  if (config?.error) {
     return null;
   }
 
   return Object.freeze({
-    id: extension.id,
-    pluginId,
     type: PluginExtensionTypes.link,
     title: extension.title,
     description: extension.description,
     key: hashKey(`${extension.title}${path}`),
     path,
-    override: extensionOverrides?.[extension.id],
+    configure: config?.extensionConfigs?.[extension.id],
   });
 }
 

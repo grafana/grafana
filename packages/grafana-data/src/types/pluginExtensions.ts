@@ -1,17 +1,15 @@
-export type LinkExtensionCallback<T extends object = object> = (
-  link: PluginsExtensionLinkOverridable,
+export type LinkExtensionConfigurer<T extends object = object> = (
+  link: PluginsExtensionLinkOverride,
   context?: T
-) => PluginsExtensionLinkOverridable | undefined;
+) => PluginsExtensionLinkOverride | undefined;
 
 export type PluginsExtensionLink = {
-  id: string;
-  pluginId: string;
   type: 'link';
   title: string;
   description: string;
   path: string;
   key: number;
-  override?: LinkExtensionCallback;
+  configure?: LinkExtensionConfigurer;
 };
 
-export type PluginsExtensionLinkOverridable = Pick<PluginsExtensionLink, 'title' | 'description' | 'path'>;
+export type PluginsExtensionLinkOverride = Pick<PluginsExtensionLink, 'title' | 'description' | 'path'>;

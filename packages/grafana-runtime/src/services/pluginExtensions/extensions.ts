@@ -1,4 +1,4 @@
-import type { PluginsExtensionLink, PluginsExtensionLinkOverridable } from '@grafana/data';
+import type { PluginsExtensionLink, PluginsExtensionLinkOverride } from '@grafana/data';
 
 import { getPluginsExtensionRegistry, PluginsExtension } from './registry';
 
@@ -36,32 +36,33 @@ export function getPluginExtensions<T extends object = {}>({
     };
   }
 
+  const configured = extensions.reduce<PluginsExtensionLink[]>((extensions, extension) => {
+    const configured = configureLink(extension, context);
+    if (configured) {
+      extensions.push(configured);
+    }
+    return extensions;
+  }, []);
+
   return {
-    extensions: extensions.reduce<PluginsExtensionLink[]>((allExtensions, extension) => {
-      if (!extension.override) {
-        return [...allExtensions, extension];
-      }
-      // Only allow a plugin to access the overridable fields of the link extension
-      const { title, description, path } = extension;
-      const linkWithLimitedProps: PluginsExtensionLinkOverridable = { title, description, path };
-      const overridenLink = extension.override(linkWithLimitedProps, context);
+    extensions: configured,
+  };
+}
 
-      // Skip the extension from being displayed
-      if (overridenLink === null) {
-        return allExtensions;
-      }
+function configureLink<T extends object>(link: PluginsExtensionLink, context?: T): PluginsExtensionLink | undefined {
+  if (!link.configure) {
+    return link;
+  }
 
-      return [
-        ...allExtensions,
-        {
-          ...extension,
-          ...{
-            title: overridenLink?.title || title,
-            description: overridenLink?.description || description,
-            path: overridenLink?.path || path,
-          },
-        },
-      ];
-    }, []),
+  // Only allow a plugin to access the overridable fields of the link extension
+  const { title, description, path } = link;
+  const overridable: PluginsExtensionLinkOverride = { title, description, path };
+  const configured = link.configure(overridable, context);
+
+  return {
+    ...link,
+    title: configured?.title ?? link.title,
+    description: configured?.description ?? link.description,
+    path: configured?.path ?? link.path,
   };
 }
