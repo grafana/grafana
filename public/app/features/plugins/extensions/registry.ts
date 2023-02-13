@@ -25,7 +25,7 @@ export function createPluginExtensionsRegistry(apps: Record<string, AppPluginCon
       const item = createRegistryItem(pluginId, extension);
 
       // If there was an issue initialising the plugin, skip adding its extensions to the registry
-      if (!item || counter[placement] > 3) {
+      if (!item || counter[placement] > 2) {
         continue;
       }
 

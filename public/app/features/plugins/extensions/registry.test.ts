@@ -69,14 +69,6 @@ describe('Plugin registry', () => {
           description: 'Incidents are occurring!',
           path: '/incidents/declare2',
         },
-        {
-          id: '4',
-          placement: 'plugins/placement-in-ui/menu',
-          title: 'The title',
-          type: PluginExtensionTypes.link,
-          description: 'Incidents are occurring!',
-          path: '/incidents/declare2',
-        },
       ]),
     });
 
@@ -125,10 +117,10 @@ describe('Plugin registry', () => {
       expect(links.length).toBe(2);
     });
 
-    it('should configure maximum 3 links per plugin for a single target', () => {
+    it('should configure maximum 2 links per plugin for a single target', () => {
       const links = registry['plugins/placement-in-ui/menu'];
 
-      expect(links.length).toBe(3);
+      expect(links.length).toBe(2);
     });
   });
 });
