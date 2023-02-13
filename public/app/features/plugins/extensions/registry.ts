@@ -17,12 +17,15 @@ export function createPluginExtensionsRegistry(apps: Record<string, AppPluginCon
       continue;
     }
 
+    const counter: Record<string, number> = {};
+
     for (const extension of extensions) {
       const placement = extension.placement;
+      counter[placement] = (counter[placement] ?? 0) + 1;
       const item = createRegistryItem(pluginId, extension);
 
       // If there was an issue initialising the plugin, skip adding its extensions to the registry
-      if (!item) {
+      if (!item || counter[placement] > 3) {
         continue;
       }
 
@@ -42,12 +45,12 @@ export function createPluginExtensionsRegistry(apps: Record<string, AppPluginCon
   return Object.freeze(registry);
 }
 
-function createRegistryItem(pluginId: string, extension: PluginsExtensionLinkConfig): PluginsExtensionLink | null {
+function createRegistryItem(pluginId: string, extension: PluginsExtensionLinkConfig): PluginsExtensionLink | undefined {
   const path = `/a/${pluginId}${extension.path}`;
   const config = getPreloadPluginConfig(pluginId);
 
   if (config?.error) {
-    return null;
+    return;
   }
 
   return Object.freeze({
