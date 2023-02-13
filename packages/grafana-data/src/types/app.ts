@@ -93,7 +93,7 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
   }
 
   configureExtensionLink<P extends object>(id: string, configure: LinkExtensionConfigurer<P>) {
-    this.extensionConfigs[id] = configure as LinkExtensionConfigurer;
+    this.extensionConfigs[id] = configureWithErrorHandling(configure);
     return this;
   }
 }
@@ -105,4 +105,15 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
 export enum FeatureState {
   alpha = 'alpha',
   beta = 'beta',
+}
+
+function configureWithErrorHandling<T extends object>(configurer: LinkExtensionConfigurer<T>): LinkExtensionConfigurer {
+  return function configureLinkExtension(link, context) {
+    try {
+      return configurer(link, context as T);
+    } catch (error) {
+      console.error(`[Plugin] failed to configure link: `, link.title);
+      return;
+    }
+  };
 }
