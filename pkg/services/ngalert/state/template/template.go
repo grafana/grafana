@@ -23,7 +23,7 @@ type Labels map[string]string
 func (l Labels) String() string {
 	// sort the names of the labels in increasing order
 	sorted := make([]string, 0, len(l))
-	for k, _ := range l {
+	for k := range l {
 		sorted = append(sorted, k)
 	}
 	sort.Strings(sorted)
