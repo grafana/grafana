@@ -146,12 +146,13 @@ export const userListAdminSlice = createSlice({
   initialState: initialUserListAdminState,
   reducers: {
     usersFetched: (state, action: PayloadAction<UsersFetched>) => {
-      const { totalCount, perPage, ...rest } = action.payload;
+      const { totalCount, perPage, users, ...rest } = action.payload;
       const totalPages = Math.ceil(totalCount / perPage);
 
       return {
         ...state,
         ...rest,
+        users: users || [],
         totalPages,
         perPage,
         showPaging: totalPages > 1,
