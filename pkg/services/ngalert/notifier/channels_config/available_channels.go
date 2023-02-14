@@ -135,6 +135,10 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 							Value: "actionCard",
 							Label: "ActionCard",
 						},
+						{
+							Value: "markdown",
+							Label: "Markdown",
+						},
 					},
 				},
 				{ // New in 9.3.
