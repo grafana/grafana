@@ -187,6 +187,64 @@ describe('getPanelMenu()', () => {
         ])
       );
     });
+
+    it('should hide menu item if configure function returns undefined', () => {
+      setPluginsExtensionRegistry({
+        [GrafanaExtensions.DashboardPanelMenu]: [
+          {
+            type: 'link',
+            title: 'Declare incident when pressing this amazing menu item',
+            description: 'Declaring an incident in the app',
+            path: '/a/grafana-basic-app/declare-incident',
+            key: 1,
+            configure: () => undefined,
+          },
+        ],
+      });
+
+      const panel = new PanelModel({});
+      const dashboard = createDashboardModelFixture({});
+      const menuItems = getPanelMenu(dashboard, panel, LoadingState.Loading);
+      const moreSubMenu = menuItems.find((i) => i.text === 'More...')?.subMenu;
+
+      expect(moreSubMenu).toEqual(
+        expect.not.arrayContaining([
+          expect.objectContaining({
+            text: 'Declare incident when...',
+            href: '/a/grafana-basic-app/declare-incident',
+          }),
+        ])
+      );
+    });
+
+    it('should have a title configured via the extension', () => {
+      setPluginsExtensionRegistry({
+        [GrafanaExtensions.DashboardPanelMenu]: [
+          {
+            type: 'link',
+            title: 'Declare incident when pressing this amazing menu item',
+            description: 'Declaring an incident in the app',
+            path: '/a/grafana-basic-app/declare-incident',
+            key: 1,
+            configure: () => ({ title: 'Wohoo' }),
+          },
+        ],
+      });
+
+      const panel = new PanelModel({});
+      const dashboard = createDashboardModelFixture({});
+      const menuItems = getPanelMenu(dashboard, panel, LoadingState.Loading);
+      const moreSubMenu = menuItems.find((i) => i.text === 'More...')?.subMenu;
+
+      expect(moreSubMenu).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            text: 'Wohoo',
+            href: '/a/grafana-basic-app/declare-incident',
+          }),
+        ])
+      );
+    });
   });
 
   describe('when panel is in view mode', () => {

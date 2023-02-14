@@ -1,7 +1,7 @@
 export type LinkExtensionConfigurer<T extends object = object> = (
   link: PluginsExtensionLinkOverride,
   context?: T
-) => PluginsExtensionLinkOverride | undefined;
+) => Partial<PluginsExtensionLinkOverride> | undefined;
 
 export type PluginsExtensionLink = {
   type: 'link';
