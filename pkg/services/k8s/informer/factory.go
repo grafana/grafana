@@ -30,6 +30,11 @@ func ProvideFactory(
 	features featuremgmt.FeatureToggles,
 	dashboardController *dashboards.Controller,
 ) (*Factory, error) {
+	enabled := features.IsEnabled(featuremgmt.FlagK8s)
+	if !enabled {
+		return &Factory{}, nil
+	}
+
 	dyn, err := dynamic.NewForConfig(cfg)
 	if err != nil {
 		return nil, err
@@ -38,7 +43,7 @@ func ProvideFactory(
 	f := &Factory{
 		DynamicSharedInformerFactory: dynamicinformer.NewDynamicSharedInformerFactory(dyn, time.Minute),
 
-		enabled:  features.IsEnabled(featuremgmt.FlagK8s),
+		enabled:  enabled,
 		watchers: make(map[schema.GroupVersionResource]ResourceWatcher),
 	}
 
