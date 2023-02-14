@@ -1,4 +1,4 @@
-import { Duration, Interval } from 'date-fns';
+import { Duration, Interval, isAfter } from 'date-fns';
 import add from 'date-fns/add';
 import intervalToDuration from 'date-fns/intervalToDuration';
 
@@ -21,6 +21,11 @@ const durationMap: { [key in Required<keyof Duration>]: string[] } = {
  * @public
  */
 export function intervalToAbbreviatedDurationString(interval: Interval, includeSeconds = true): string {
+  // @PERCONA
+  // An edge case when the system's clock is behind
+  if (isAfter(interval.start, interval.end)) {
+    interval.end = interval.start;
+  }
   const duration = intervalToDuration(interval);
   return (Object.entries(duration) as Array<[keyof Duration, number | undefined]>).reduce((str, [unit, value]) => {
     if (value && value !== 0 && !(unit === 'seconds' && !includeSeconds && str)) {
