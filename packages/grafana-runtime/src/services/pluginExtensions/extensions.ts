@@ -59,6 +59,10 @@ function configureLink<T extends object>(link: PluginsExtensionLink, context?: T
   const overridable: PluginsExtensionLinkOverride = { title, description, path };
   const configured = link.configure(overridable, context);
 
+  if (!configured) {
+    return;
+  }
+
   return {
     ...link,
     title: configured?.title ?? link.title,

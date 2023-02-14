@@ -1,3 +1,4 @@
+import { isFunction, isObject } from 'lodash';
 import { ComponentType } from 'react';
 
 import { KeyValue } from './data';
@@ -93,7 +94,7 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
   }
 
   configureExtensionLink<P extends object>(id: string, configure: LinkExtensionConfigurer<P>) {
-    this.extensionConfigs[id] = configureWithErrorHandling(configure);
+    this.extensionConfigs[id] = configureWithErrorHandling(id, configure);
     return this;
   }
 }
@@ -107,12 +108,36 @@ export enum FeatureState {
   beta = 'beta',
 }
 
-function configureWithErrorHandling<T extends object>(configurer: LinkExtensionConfigurer<T>): LinkExtensionConfigurer {
+function configureWithErrorHandling<T extends object>(
+  id: string,
+  configurer: LinkExtensionConfigurer<T>
+): LinkExtensionConfigurer {
   return function configureLinkExtension(link, context) {
     try {
-      return configurer(link, context as T);
+      if (!isFunction(configurer)) {
+        console.error(`[PluginExtensions] Invalid configuration function provided for extension '${id}'.`);
+        return;
+      }
+
+      const result = configurer(link, context as T);
+      if (result instanceof Promise) {
+        console.error(
+          `[PluginExtensions] Can't configure extension '${id}' with an async/promise-based configuration function.`
+        );
+        result.catch(() => {});
+        return;
+      }
+
+      if (!isObject(result) && !undefined) {
+        console.error(
+          `[PluginExtensions] Will not configure extension '${id}' due to invalid override returned from configuration function.`
+        );
+        return;
+      }
+
+      return result;
     } catch (error) {
-      console.error(`[Plugin] failed to configure link: `, link.title);
+      console.error(`[PluginExtensions] Error occured while configure extension '${id}'`, error);
       return;
     }
   };
