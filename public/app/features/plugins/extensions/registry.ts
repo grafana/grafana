@@ -1,12 +1,7 @@
-import { PluginsExtensionLink } from '@grafana/data';
-import {
-  AppPluginConfig,
-  PluginExtensionTypes,
-  PluginsExtensionLinkConfig,
-  PluginsExtensionRegistry,
-} from '@grafana/runtime';
+import { type PluginsExtensionLink, PluginsExtensionTypes } from '@grafana/data';
+import { type AppPluginConfig, type PluginsExtensionLinkConfig, type PluginsExtensionRegistry } from '@grafana/runtime';
 
-import { getPreloadPluginConfig } from '../pluginPreloadConfigs';
+import { getPreloadPluginConfig } from '../pluginPreloader';
 
 export function createPluginExtensionsRegistry(apps: Record<string, AppPluginConfig> = {}): PluginsExtensionRegistry {
   const registry: PluginsExtensionRegistry = {};
@@ -25,6 +20,7 @@ export function createPluginExtensionsRegistry(apps: Record<string, AppPluginCon
       const item = createRegistryItem(pluginId, extension);
 
       // If there was an issue initialising the plugin, skip adding its extensions to the registry
+      // or if the plugin already have placed 2 items at the extension point.
       if (!item || counter[placement] > 2) {
         continue;
       }
@@ -54,7 +50,7 @@ function createRegistryItem(pluginId: string, extension: PluginsExtensionLinkCon
   }
 
   return Object.freeze({
-    type: PluginExtensionTypes.link,
+    type: PluginsExtensionTypes.link,
     title: extension.title,
     description: extension.description,
     key: hashKey(`${extension.title}${path}`),

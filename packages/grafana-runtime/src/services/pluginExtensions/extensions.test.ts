@@ -1,14 +1,14 @@
-import { getPluginExtensions, PluginExtensionsMissingError } from './extensions';
+import { getPluginExtensions } from './extensions';
 import { setPluginsExtensionRegistry } from './registry';
 
 describe('getPluginExtensions', () => {
-  describe('when getting a registered extension link', () => {
+  describe('when getting extensions for placement', () => {
+    const placement = 'grafana/dashboard/panel/menu';
     const pluginId = 'grafana-basic-app';
-    const linkId = 'declare-incident';
 
     beforeAll(() => {
       setPluginsExtensionRegistry({
-        [`plugins/${pluginId}/${linkId}`]: [
+        [placement]: [
           {
             type: 'link',
             title: 'Declare incident',
@@ -17,35 +17,48 @@ describe('getPluginExtensions', () => {
             key: 1,
           },
         ],
+        'plugins/myorg-basic-app/start': [
+          {
+            type: 'link',
+            title: 'Declare incident',
+            description: 'Declaring an incident in the app',
+            path: `/a/${pluginId}/declare-incident`,
+            key: 2,
+          },
+        ],
       });
     });
 
-    it('should return a collection of extensions to the plugin', () => {
-      const { extensions, error } = getPluginExtensions({
-        placement: `plugins/${pluginId}/${linkId}`,
-      });
+    it('should return extensions with correct path', () => {
+      const { extensions } = getPluginExtensions({ placement });
+      const [extension] = extensions;
 
-      expect(extensions[0].path).toBe(`/a/${pluginId}/declare-incident`);
-      expect(error).toBeUndefined();
+      expect(extension.path).toBe(`/a/${pluginId}/declare-incident`);
+      expect(extensions.length).toBe(1);
     });
 
-    it('should return a description for the requested link', () => {
-      const { extensions, error } = getPluginExtensions({
-        placement: `plugins/${pluginId}/${linkId}`,
-      });
+    it('should return extensions with correct description', () => {
+      const { extensions } = getPluginExtensions({ placement });
+      const [extension] = extensions;
 
-      expect(extensions[0].path).toBe(`/a/${pluginId}/declare-incident`);
-      expect(extensions[0].description).toBe('Declaring an incident in the app');
-      expect(error).toBeUndefined();
+      expect(extension.description).toBe('Declaring an incident in the app');
+      expect(extensions.length).toBe(1);
     });
 
-    it('should return an empty array when no links can be found', () => {
-      const { extensions, error } = getPluginExtensions({
-        placement: `an-unknown-app/${linkId}`,
+    it('should return extensions with correct title', () => {
+      const { extensions } = getPluginExtensions({ placement });
+      const [extension] = extensions;
+
+      expect(extension.title).toBe('Declare incident');
+      expect(extensions.length).toBe(1);
+    });
+
+    it('should return an empty array when extensions can be found', () => {
+      const { extensions } = getPluginExtensions({
+        placement: 'plugins/not-installed-app/news',
       });
 
       expect(extensions.length).toBe(0);
-      expect(error).toBeInstanceOf(PluginExtensionsMissingError);
     });
   });
 });

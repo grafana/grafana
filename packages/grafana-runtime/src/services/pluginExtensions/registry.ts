@@ -1,6 +1,4 @@
-import type { PluginsExtensionLink } from '@grafana/data';
-
-export type PluginsExtension = PluginsExtensionLink;
+import type { PluginsExtension } from '@grafana/data';
 
 export type PluginsExtensionRegistry = Record<string, PluginsExtension[]>;
 

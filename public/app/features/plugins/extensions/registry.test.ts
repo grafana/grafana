@@ -1,4 +1,5 @@
-import { AppPluginConfig, PluginExtensionTypes, PluginsExtensionLinkConfig } from '@grafana/runtime';
+import { PluginsExtensionTypes } from '@grafana/data';
+import { AppPluginConfig, PluginsExtensionLinkConfig } from '@grafana/runtime';
 
 import { createPluginExtensionsRegistry } from './registry';
 
@@ -10,7 +11,7 @@ describe('Plugin registry', () => {
           id: '1',
           placement: 'plugins/belugacdn-app/menu',
           title: 'The title',
-          type: PluginExtensionTypes.link,
+          type: PluginsExtensionTypes.link,
           description: 'Incidents are occurring!',
           path: '/incidents/declare',
         },
@@ -20,7 +21,7 @@ describe('Plugin registry', () => {
           id: '1',
           placement: 'plugins/strava-app/menu',
           title: 'The title',
-          type: PluginExtensionTypes.link,
+          type: PluginsExtensionTypes.link,
           description: 'Incidents are occurring!',
           path: '/incidents/declare',
         },
@@ -30,7 +31,7 @@ describe('Plugin registry', () => {
           id: '1',
           placement: 'plugins/duplicate-links-app/menu',
           title: 'The title',
-          type: PluginExtensionTypes.link,
+          type: PluginsExtensionTypes.link,
           description: 'Incidents are occurring!',
           path: '/incidents/declare',
         },
@@ -38,7 +39,7 @@ describe('Plugin registry', () => {
           id: '2',
           placement: 'plugins/duplicate-links-app/menu',
           title: 'The title',
-          type: PluginExtensionTypes.link,
+          type: PluginsExtensionTypes.link,
           description: 'Incidents are occurring!',
           path: '/incidents/declare2',
         },
@@ -49,7 +50,7 @@ describe('Plugin registry', () => {
           id: '1',
           placement: 'plugins/placement-in-ui/menu',
           title: 'The title',
-          type: PluginExtensionTypes.link,
+          type: PluginsExtensionTypes.link,
           description: 'Incidents are occurring!',
           path: '/incidents/declare',
         },
@@ -57,7 +58,7 @@ describe('Plugin registry', () => {
           id: '2',
           placement: 'plugins/placement-in-ui/menu',
           title: 'The title',
-          type: PluginExtensionTypes.link,
+          type: PluginsExtensionTypes.link,
           description: 'Incidents are occurring!',
           path: '/incidents/declare2',
         },
@@ -65,7 +66,7 @@ describe('Plugin registry', () => {
           id: '3',
           placement: 'plugins/placement-in-ui/menu',
           title: 'The title',
-          type: PluginExtensionTypes.link,
+          type: PluginsExtensionTypes.link,
           description: 'Incidents are occurring!',
           path: '/incidents/declare2',
         },

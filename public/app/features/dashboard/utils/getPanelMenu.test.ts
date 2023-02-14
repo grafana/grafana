@@ -1,4 +1,4 @@
-import { PanelMenuItem } from '@grafana/data';
+import { PanelMenuItem, PluginsExtensionTypes } from '@grafana/data';
 import { setPluginsExtensionRegistry } from '@grafana/runtime';
 import { LoadingState } from '@grafana/schema';
 import config from 'app/core/config';
@@ -136,7 +136,7 @@ describe('getPanelMenu()', () => {
       setPluginsExtensionRegistry({
         [GrafanaExtensions.DashboardPanelMenu]: [
           {
-            type: 'link',
+            type: PluginsExtensionTypes.link,
             title: 'Declare incident',
             description: 'Declaring an incident in the app',
             path: '/a/grafana-basic-app/declare-incident',
@@ -164,7 +164,7 @@ describe('getPanelMenu()', () => {
       setPluginsExtensionRegistry({
         [GrafanaExtensions.DashboardPanelMenu]: [
           {
-            type: 'link',
+            type: PluginsExtensionTypes.link,
             title: 'Declare incident when pressing this amazing menu item',
             description: 'Declaring an incident in the app',
             path: '/a/grafana-basic-app/declare-incident',
@@ -192,7 +192,7 @@ describe('getPanelMenu()', () => {
       setPluginsExtensionRegistry({
         [GrafanaExtensions.DashboardPanelMenu]: [
           {
-            type: 'link',
+            type: PluginsExtensionTypes.link,
             title: 'Declare incident when pressing this amazing menu item',
             description: 'Declaring an incident in the app',
             path: '/a/grafana-basic-app/declare-incident',
@@ -221,7 +221,7 @@ describe('getPanelMenu()', () => {
       setPluginsExtensionRegistry({
         [GrafanaExtensions.DashboardPanelMenu]: [
           {
-            type: 'link',
+            type: PluginsExtensionTypes.link,
             title: 'Declare incident when pressing this amazing menu item',
             description: 'Declaring an incident in the app',
             path: '/a/grafana-basic-app/declare-incident',

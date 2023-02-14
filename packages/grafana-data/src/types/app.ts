@@ -4,7 +4,7 @@ import { ComponentType } from 'react';
 import { KeyValue } from './data';
 import { NavModel } from './navModel';
 import { PluginMeta, GrafanaPlugin, PluginIncludeType } from './plugin';
-import { LinkExtensionConfigurer } from './pluginExtensions';
+import { PluginsExtensionLinkConfigurer } from './pluginExtensions';
 
 /**
  * @public
@@ -54,7 +54,7 @@ export interface AppPluginMeta<T extends KeyValue = KeyValue> extends PluginMeta
 export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppPluginMeta<T>> {
   // Content under: /a/${plugin-id}/*
   root?: ComponentType<AppRootProps<T>>;
-  extensionConfigs: Record<string, LinkExtensionConfigurer> = {};
+  extensionConfigs: Record<string, PluginsExtensionLinkConfigurer> = {};
 
   /**
    * Called after the module has loaded, and before the app is used.
@@ -93,8 +93,8 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
     }
   }
 
-  configureExtensionLink<P extends object>(id: string, configure: LinkExtensionConfigurer<P>) {
-    this.extensionConfigs[id] = configureWithErrorHandling(id, configure);
+  configureExtensionLink<P extends object>(extensionId: string, configure: PluginsExtensionLinkConfigurer<P>) {
+    this.extensionConfigs[extensionId] = configureWithErrorHandling(extensionId, configure);
     return this;
   }
 }
@@ -109,20 +109,20 @@ export enum FeatureState {
 }
 
 function configureWithErrorHandling<T extends object>(
-  id: string,
-  configurer: LinkExtensionConfigurer<T>
-): LinkExtensionConfigurer {
+  extensionId: string,
+  configurer: PluginsExtensionLinkConfigurer<T>
+): PluginsExtensionLinkConfigurer {
   return function configureLinkExtension(link, context) {
     try {
       if (!isFunction(configurer)) {
-        console.error(`[PluginExtensions] Invalid configuration function provided for extension '${id}'.`);
+        console.error(`[Plugins] Invalid configuration function provided for extension '${extensionId}'.`);
         return;
       }
 
       const result = configurer(link, context as T);
       if (result instanceof Promise) {
         console.error(
-          `[PluginExtensions] Can't configure extension '${id}' with an async/promise-based configuration function.`
+          `[Plugins] Can't configure extension '${extensionId}' with an async/promise-based configuration function.`
         );
         result.catch(() => {});
         return;
@@ -130,14 +130,14 @@ function configureWithErrorHandling<T extends object>(
 
       if (!isObject(result) && !undefined) {
         console.error(
-          `[PluginExtensions] Will not configure extension '${id}' due to invalid override returned from configuration function.`
+          `[Plugins] Will not configure extension '${extensionId}' due to incorrect override returned from configuration function.`
         );
         return;
       }
 
       return result;
     } catch (error) {
-      console.error(`[PluginExtensions] Error occured while configure extension '${id}'`, error);
+      console.error(`[Plugins] Error occured while configure extension '${extensionId}'`, error);
       return;
     }
   };

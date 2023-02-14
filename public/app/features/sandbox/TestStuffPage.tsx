@@ -149,9 +149,9 @@ export function getDefaultState(): State {
 }
 
 function LinkToBasicApp({ placement }: { placement: string }) {
-  const { extensions, error } = getPluginExtensions({ placement });
+  const { extensions } = getPluginExtensions({ placement });
 
-  if (error) {
+  if (extensions.length === 0) {
     return null;
   }
 

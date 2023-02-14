@@ -1,52 +1,48 @@
-import type { PluginsExtensionLink, PluginsExtensionLinkOverride } from '@grafana/data';
+import {
+  isPluginsExtensionLink,
+  type PluginsExtension,
+  type PluginsExtensionLink,
+  type PluginsExtensionLinkOverride,
+} from '@grafana/data';
 
-import { getPluginsExtensionRegistry, PluginsExtension } from './registry';
+import { getPluginsExtensionRegistry } from './registry';
 
-export type GetPluginExtensionsOptions<T extends object> = {
+export type PluginExtensionsOptions<T extends object> = {
   placement: string;
   context?: T;
 };
 
 export type PluginExtensionsResult = {
   extensions: PluginsExtension[];
-  error?: Error;
 };
-
-export class PluginExtensionsMissingError extends Error {
-  readonly placement: string;
-
-  constructor(placement: string) {
-    super(`Could not find extensions for '${placement}'`);
-    this.placement = placement;
-    this.name = PluginExtensionsMissingError.name;
-  }
-}
 
 export function getPluginExtensions<T extends object = {}>({
   placement,
   context,
-}: GetPluginExtensionsOptions<T>): PluginExtensionsResult {
+}: PluginExtensionsOptions<T>): PluginExtensionsResult {
   const registry = getPluginsExtensionRegistry();
-  const extensions = registry[placement];
+  const extensions = registry[placement] ?? [];
 
-  if (!Array.isArray(extensions)) {
-    return {
-      extensions: [],
-      error: new PluginExtensionsMissingError(placement),
-    };
-  }
+  return {
+    extensions: configureExtensions(extensions, context),
+  };
+}
 
-  const configured = extensions.reduce<PluginsExtensionLink[]>((extensions, extension) => {
-    const configured = configureLink(extension, context);
+function configureExtensions<T extends object>(extensions: PluginsExtension[], context?: T): PluginsExtension[] {
+  return extensions.reduce<PluginsExtension[]>((extensions, extension) => {
+    const configured = configureExtension(extension, context);
     if (configured) {
       extensions.push(configured);
     }
     return extensions;
   }, []);
+}
 
-  return {
-    extensions: configured,
-  };
+function configureExtension<T extends object>(extension: PluginsExtension, context?: T): PluginsExtension | undefined {
+  if (isPluginsExtensionLink(extension)) {
+    return configureLink(extension, context);
+  }
+  return;
 }
 
 function configureLink<T extends object>(link: PluginsExtensionLink, context?: T): PluginsExtensionLink | undefined {

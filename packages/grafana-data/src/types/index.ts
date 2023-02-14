@@ -51,4 +51,11 @@ export * from './alerts';
 export * from './slider';
 export * from './accesscontrol';
 export * from './icon';
-export type { PluginsExtensionLink, PluginsExtensionLinkOverride, LinkExtensionConfigurer } from './pluginExtensions';
+export {
+  type PluginsExtension,
+  type PluginsExtensionLink,
+  isPluginsExtensionLink,
+  type PluginsExtensionLinkOverride,
+  type PluginsExtensionLinkConfigurer,
+  PluginsExtensionTypes,
+} from './pluginExtensions';

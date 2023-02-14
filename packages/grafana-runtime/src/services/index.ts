@@ -8,10 +8,9 @@ export * from './legacyAngularInjector';
 export * from './live';
 export * from './LocationService';
 export * from './appEvents';
-export { setPluginsExtensionRegistry } from './pluginExtensions/registry';
-export type { PluginsExtensionRegistry, PluginsExtension } from './pluginExtensions/registry';
+export { type PluginsExtensionRegistry, setPluginsExtensionRegistry } from './pluginExtensions/registry';
 export {
-  type GetPluginExtensionsOptions,
+  type PluginExtensionsOptions,
   type PluginExtensionsResult,
   getPluginExtensions,
 } from './pluginExtensions/extensions';

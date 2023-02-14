@@ -17,6 +17,7 @@ import {
   systemDateFormats,
   SystemDateFormatSettings,
   NewThemeOptions,
+  PluginsExtensionTypes,
 } from '@grafana/data';
 
 export interface AzureSettings {
@@ -24,14 +25,10 @@ export interface AzureSettings {
   managedIdentityEnabled: boolean;
 }
 
-export enum PluginExtensionTypes {
-  link = 'link',
-}
-
 export type PluginsExtensionLinkConfig = {
   id: string;
   placement: string;
-  type: PluginExtensionTypes.link;
+  type: PluginsExtensionTypes.link;
   title: string;
   description: string;
   path: string;
