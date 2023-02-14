@@ -26,7 +26,7 @@ import {
 jest.mock('@grafana/data', () => ({
   ...jest.requireActual('@grafana/data'),
   dateTimeFormat: () => 'format() jest mocked',
-  dateTimeFormatTimeAgo: (ts: any) => 'fromNow() jest mocked',
+  dateTimeFormatTimeAgo: () => 'fromNow() jest mocked',
 }));
 
 const getTestContext = () => {

@@ -5,7 +5,7 @@ import { GrafanaDatasource } from './datasource';
 import { GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQuery } from './types';
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
   getTemplateSrv: () => ({
     replace: (val: string) => {
