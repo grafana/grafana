@@ -6,8 +6,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/k8s/client"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -20,31 +20,25 @@ type Controller struct {
 	accessControlService accesscontrol.Service
 }
 
-var _ client.Watcher = (*Controller)(nil)
-
-func ProvideController(features featuremgmt.FeatureToggles, userService user.Service, accessControlService accesscontrol.Service, dashboardResource *Resource) *Controller {
-	return &Controller{
+func ProvideController(
+	features featuremgmt.FeatureToggles,
+	dashboardService *service.DashboardServiceImpl,
+	userService user.Service,
+	accessControlService accesscontrol.Service,
+	dashboardResource *Resource,
+) *Controller {
+	c := Controller{
 		enabled:              features.IsEnabled(featuremgmt.FlagK8s),
 		log:                  log.New("k8s.dashboards.controller"),
+		dashboardService:     dashboardService,
 		userService:          userService,
 		accessControlService: accessControlService,
 		dashboardResource:    dashboardResource,
 	}
+	return &c
 }
 
-func (c *Controller) WithDashboardService(dashboardService dashboards.DashboardService) *Controller {
-	c.dashboardService = dashboardService
-	return c
-}
-
-func (c *Controller) Run(ctx context.Context) error {
-	c.dashboardResource.RegisterController(ctx, c)
-	<-ctx.Done()
-	return nil
-}
-
-func (c *Controller) OnAdd(obj interface{}) {
-	ctx := context.Background()
+func (c *Controller) OnAdd(ctx context.Context, obj any) {
 	dash, err := interfaceToK8sDashboard(obj)
 	if err != nil {
 		c.log.Error("dashboard add failed", err)
@@ -75,8 +69,7 @@ func (c *Controller) OnAdd(obj interface{}) {
 	}
 }
 
-func (c *Controller) OnUpdate(oldObj, newObj interface{}) {
-	ctx := context.Background()
+func (c *Controller) OnUpdate(ctx context.Context, oldObj, newObj any) {
 	dash, err := interfaceToK8sDashboard(newObj)
 	if err != nil {
 		c.log.Error("dashboard add failed", err)
@@ -118,7 +111,7 @@ func (c *Controller) OnUpdate(oldObj, newObj interface{}) {
 	}
 }
 
-func (c *Controller) OnDelete(obj interface{}) {
+func (c *Controller) OnDelete(ctx context.Context, obj any) {
 	dash, err := interfaceToK8sDashboard(obj)
 	if err != nil {
 		c.log.Error("dashboard delete failed", err)
@@ -128,13 +121,13 @@ func (c *Controller) OnDelete(obj interface{}) {
 	if err != nil {
 		c.log.Error("dashboard delete failed", "err", err)
 	}
-	existing, err := c.dashboardService.GetDashboard(context.Background(), &dashboards.GetDashboardQuery{UID: dto.Dashboard.UID, OrgID: dto.OrgID})
+	existing, err := c.dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{UID: dto.Dashboard.UID, OrgID: dto.OrgID})
 	// no dashboard found, nothing to delete
 	if err != nil {
 		return
 	}
 
-	if err := c.dashboardService.DeleteDashboard(context.Background(), existing.ID, existing.OrgID); err != nil {
+	if err := c.dashboardService.DeleteDashboard(ctx, existing.ID, existing.OrgID); err != nil {
 		c.log.Error("orig.DeleteDashboard failed", err)
 	}
 	c.log.Debug("dashboard deleted")

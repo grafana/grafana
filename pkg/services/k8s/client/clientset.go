@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"sync"
-	"time"
 
 	"github.com/google/wire"
 	"github.com/grafana/grafana/pkg/kindsys/k8ssys"
@@ -18,13 +17,12 @@ import (
 	k8schema "k8s.io/apimachinery/pkg/runtime/schema"
 	memory "k8s.io/client-go/discovery/cached"
 	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/dynamic/dynamicinformer"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
 )
 
-var WireSet = wire.NewSet(ProvideClientset)
+var WireSet = wire.NewSet(ProvideClientset, ProvideRESTConfig)
 
 var (
 	// ErrCRDAlreadyRegistered is returned when trying to register a duplicate CRD.
@@ -44,7 +42,6 @@ type Clientset struct {
 	extset    apiextensionsclient.Interface
 	dynamic   dynamic.Interface
 	mapper    meta.RESTMapper
-	factory   dynamicinformer.DynamicSharedInformerFactory
 
 	crds map[k8schema.GroupVersion]apiextensionsv1.CustomResourceDefinition
 	lock sync.RWMutex
@@ -52,19 +49,12 @@ type Clientset struct {
 
 var _ registry.CanBeDisabled = (*Clientset)(nil)
 
-func ProvideClientset(toggles featuremgmt.FeatureToggles) (*Clientset, error) {
+// ProvideClientset returns a new Clientset configured with cfg.
+func ProvideClientset(toggles featuremgmt.FeatureToggles, cfg *rest.Config) (*Clientset, error) {
 	if !toggles.IsEnabled(featuremgmt.FlagK8s) {
 		return &Clientset{}, nil
 	}
-	cfg, err := GetRESTConfig()
-	if err != nil {
-		return nil, err
-	}
-	return NewFromConfig(cfg)
-}
 
-// NewFromConfig returns a new Clientset configured with cfg.
-func NewFromConfig(cfg *rest.Config) (*Clientset, error) {
 	k8sset, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
 		return nil, err
@@ -81,9 +71,8 @@ func NewFromConfig(cfg *rest.Config) (*Clientset, error) {
 	}
 
 	mapper := restmapper.NewDeferredDiscoveryRESTMapper(memory.NewMemCacheClient(k8sset))
-	factory := dynamicinformer.NewDynamicSharedInformerFactory(dyn, time.Minute)
 
-	return NewClientset(cfg, k8sset, extset, dyn, mapper, factory)
+	return NewClientset(cfg, k8sset, extset, dyn, mapper)
 }
 
 // NewClientset returns a new Clientset.
@@ -93,7 +82,6 @@ func NewClientset(
 	extset apiextensionsclient.Interface,
 	dyn dynamic.Interface,
 	mapper meta.RESTMapper,
-	factory dynamicinformer.DynamicSharedInformerFactory,
 ) (*Clientset, error) {
 	return &Clientset{
 		config: cfg,
@@ -102,7 +90,6 @@ func NewClientset(
 		extset:    extset,
 		dynamic:   dyn,
 		mapper:    mapper,
-		factory:   factory,
 
 		crds: make(map[k8schema.GroupVersion]apiextensionsv1.CustomResourceDefinition),
 		lock: sync.RWMutex{},
@@ -162,22 +149,4 @@ func (c *Clientset) GetResourceClient(gcrd k8ssys.Kind, namespace ...string) (dy
 	}
 
 	return resourceClient, nil
-}
-
-type Watcher interface {
-	OnAdd(obj interface{})
-	OnUpdate(oldObj, newObj interface{})
-	OnDelete(obj interface{})
-}
-
-// GetResourceInformer returns a SharedIndexInformer for the given Kind.
-func (c *Clientset) AddInformer(gcrd k8ssys.Kind, watcher Watcher, stop <-chan struct{}) {
-	gvk := gcrd.GVK()
-	gvr := k8schema.GroupVersionResource{
-		Group:    gvk.Group,
-		Version:  gvk.Version,
-		Resource: gcrd.Schema.Spec.Names.Plural,
-	}
-	c.factory.ForResource(gvr).Informer().AddEventHandler(watcher)
-	c.factory.Start(stop)
 }

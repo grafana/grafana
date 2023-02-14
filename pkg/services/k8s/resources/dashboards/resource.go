@@ -4,8 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
-	"github.com/grafana/grafana/pkg/kindsys/k8ssys"
-	"github.com/grafana/grafana/pkg/registry/corecrd"
 	"github.com/grafana/grafana/pkg/registry/corekind"
 	"github.com/grafana/grafana/pkg/services/k8s/client"
 	"k8s.io/client-go/dynamic"
@@ -17,31 +15,24 @@ type Resource struct {
 	dynamic.ResourceInterface
 
 	clientSet *client.Clientset
-	crd       k8ssys.Kind
 	kind      *dashboard.Kind
 }
 
-func ProvideResource(clientset *client.Clientset, reg *corecrd.Registry, kinds *corekind.Base) (*Resource, error) {
+func ProvideResource(clientset *client.Clientset, kinds *corekind.Base) (*Resource, error) {
 	if clientset.IsDisabled() {
 		return &Resource{}, nil // something better
 	}
-
-	err := clientset.RegisterKind(context.Background(), reg.Dashboard())
+	err := clientset.RegisterKind(context.Background(), CRD)
 	if err != nil {
 		return nil, err
 	}
-	resourceClient, err := clientset.GetResourceClient(reg.Dashboard())
+	resourceClient, err := clientset.GetResourceClient(CRD)
 	if err != nil {
 		return nil, err
 	}
 	return &Resource{
 		ResourceInterface: resourceClient,
 		clientSet:         clientset,
-		crd:               reg.Dashboard(),
 		kind:              kinds.Dashboard(),
 	}, nil
-}
-
-func (r *Resource) RegisterController(ctx context.Context, watcher client.Watcher) {
-	r.clientSet.AddInformer(r.crd, watcher, ctx.Done())
 }

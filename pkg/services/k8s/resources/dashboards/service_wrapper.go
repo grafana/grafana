@@ -13,13 +13,14 @@ import (
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/kindsys/k8ssys"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 // NOTE this is how you reset the CRD
 //kubectl delete CustomResourceDefinition dashboards.dashboard.core.grafana.com
 
-type Service struct {
+type ServiceWrapper struct {
 	dashboards.DashboardService
 
 	log log.Logger
@@ -27,28 +28,27 @@ type Service struct {
 	dashboardResource *Resource
 }
 
-var _ dashboards.DashboardService = (*Service)(nil)
+var _ dashboards.DashboardService = (*ServiceWrapper)(nil)
 
-func ProvideService(dashboardResource *Resource) *Service {
-	return &Service{
+func ProvideService(
+	dashboardResource *Resource,
+	dashboardService *service.DashboardServiceImpl,
+) *ServiceWrapper {
+	return &ServiceWrapper{
+		DashboardService:  dashboardService,
 		log:               log.New("k8s.dashboards.service"),
 		dashboardResource: dashboardResource,
 	}
 }
 
-func (s *Service) WithDashboardService(dashboardService dashboards.DashboardService) *Service {
-	s.DashboardService = dashboardService
-	return s
-}
-
 // SaveDashboard saves the dashboard to kubernetes
-func (s *Service) SaveDashboard(ctx context.Context, dto *dashboards.SaveDashboardDTO, allowUiUpdate bool) (*dashboards.Dashboard, error) {
+func (s *ServiceWrapper) SaveDashboard(ctx context.Context, dto *dashboards.SaveDashboardDTO, allowUiUpdate bool) (*dashboards.Dashboard, error) {
 	// config and client setup
 	namespace := "default"
 	// take the kindsys dashboard kind and alias it so it's easier to distinguish from dashboards.Dashboard
 	type dashboardKind = dashboard.Dashboard
 	// get the dashboard CRD from the CRD registry
-	dashboardCRD := s.dashboardResource.crd
+	dashboardCRD := CRD
 
 	/////////////////
 	// do  work
