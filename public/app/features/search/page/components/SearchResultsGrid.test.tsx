@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import React from 'react';
+import React, { KeyboardEvent } from 'react';
 import { Observable } from 'rxjs';
 
 import { ArrayVector, DataFrame, DataFrameView, FieldType } from '@grafana/data';
@@ -38,7 +38,7 @@ describe('SearchResultsGrid', () => {
     height: 600,
     clearSelection: jest.fn(),
     onTagSelected: jest.fn(),
-    keyboardEvents: new Observable<any>(),
+    keyboardEvents: new Observable<KeyboardEvent<Element>>(),
   };
 
   it('should render grid of dashboards', () => {

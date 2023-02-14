@@ -329,7 +329,7 @@ describe('DashboardModel', () => {
         },
         {},
         // getVariablesFromState stub to return a variable
-        () => [{} as any]
+        jest.fn().mockImplementation(() => [{}])
       );
     });
 
@@ -653,8 +653,8 @@ describe('DashboardModel', () => {
       expect(saveModel.panels[1].scopedVars).toBe(undefined);
 
       model.collapseRows();
-      const savedModelWithCollapsedRows: any = model.getSaveModelClone();
-      expect(savedModelWithCollapsedRows.panels[0].panels.length).toBe(1);
+      const savedModelWithCollapsedRows = model.getSaveModelClone();
+      expect(savedModelWithCollapsedRows.panels[0].panels!.length).toBe(1);
     });
 
     it('getSaveModelClone should not remove repeated panels and scopedVars during snapshot', () => {
@@ -708,8 +708,8 @@ describe('DashboardModel', () => {
       expect(saveModel.panels.find((x) => x.type !== 'row')?.scopedVars?.app.value).toBe('se1');
 
       model.collapseRows();
-      const savedModelWithCollapsedRows: any = model.getSaveModelClone();
-      expect(savedModelWithCollapsedRows.panels[0].panels.length).toBe(2);
+      const savedModelWithCollapsedRows = model.getSaveModelClone();
+      expect(savedModelWithCollapsedRows.panels[0].panels!.length).toBe(2);
     });
   });
 
@@ -1106,7 +1106,7 @@ describe('DashboardModel', () => {
 
 describe('exitViewPanel', () => {
   function getTestContext() {
-    const panel: any = { setIsViewing: jest.fn() };
+    const panel = new PanelModel({ setIsViewing: jest.fn() });
     const dashboard = createDashboardModelFixture();
     dashboard.startRefresh = jest.fn();
     dashboard.panelInView = panel;
@@ -1143,7 +1143,7 @@ describe('exitViewPanel', () => {
 
 describe('exitPanelEditor', () => {
   function getTestContext(pauseAutoRefresh = false) {
-    const panel: any = { destroy: jest.fn() };
+    const panel = new PanelModel({ destroy: jest.fn() });
     const dashboard = createDashboardModelFixture();
     const timeSrvMock = {
       pauseAutoRefresh: jest.fn(),
