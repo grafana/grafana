@@ -2,7 +2,6 @@ package notifier
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -39,7 +38,7 @@ type TestReceiverConfigResult struct {
 }
 
 type InvalidReceiverError struct {
-	Receiver *apimodels.PostableGrafanaReceiver
+	Receiver *alertingNotify.GrafanaReceiver
 	Err      error
 }
 
@@ -59,35 +58,7 @@ func (e ReceiverTimeoutError) Error() string {
 func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestReceiversConfigBodyParams) (*TestReceiversResult, error) {
 	receivers := make([]*alertingNotify.APIReceiver, 0, len(c.Receivers))
 	for _, r := range c.Receivers {
-		greceivers := make([]*alertingNotify.GrafanaReceiver, 0, len(r.GrafanaManagedReceivers))
-		for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
-			var settings map[string]interface{}
-			//TODO: We shouldn't need to do this marshalling.
-			j, err := gr.Settings.MarshalJSON()
-			if err != nil {
-				return nil, fmt.Errorf("unable to marshal settings to JSON: %v", err)
-			}
-
-			err = json.Unmarshal(j, &settings)
-			if err != nil {
-				return nil, fmt.Errorf("unable to marshal settings into map: %v", err)
-			}
-
-			greceivers = append(greceivers, &alertingNotify.GrafanaReceiver{
-				UID:                   gr.UID,
-				Name:                  gr.Name,
-				Type:                  gr.Type,
-				DisableResolveMessage: gr.DisableResolveMessage,
-				Settings:              settings,
-				SecureSettings:        gr.SecureSettings,
-			})
-		}
-		receivers = append(receivers, &alertingNotify.APIReceiver{
-			ConfigReceiver: r.Receiver,
-			GrafanaReceivers: alertingNotify.GrafanaReceivers{
-				Receivers: greceivers,
-			},
-		})
+		receivers = append(receivers, r.ToApiReceiver())
 	}
 	var alert *alertingNotify.TestReceiversConfigAlertParams
 	if c.Alert != nil {

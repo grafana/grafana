@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
+	"github.com/grafana/alerting/notify"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/pkg/labels"
@@ -865,6 +866,14 @@ type PostableApiAlertingConfig struct {
 	Receivers []*PostableApiReceiver `yaml:"receivers,omitempty" json:"receivers,omitempty"`
 }
 
+func (c *PostableApiAlertingConfig) ToApiReceivers() []*notify.APIReceiver {
+	result := make([]*notify.APIReceiver, 0, len(c.Receivers))
+	for _, receiver := range c.Receivers {
+		result = append(result, receiver.ToApiReceiver())
+	}
+	return result
+}
+
 func (c *PostableApiAlertingConfig) UnmarshalJSON(b []byte) error {
 	type plain PostableApiAlertingConfig
 	if err := json.Unmarshal(b, (*plain)(c)); err != nil {
@@ -1105,6 +1114,13 @@ type PostableApiReceiver struct {
 	PostableGrafanaReceivers `yaml:",inline"`
 }
 
+func (r *PostableApiReceiver) ToApiReceiver() *notify.APIReceiver {
+	return &notify.APIReceiver{
+		ConfigReceiver:   r.Receiver,
+		GrafanaReceivers: r.ToGrafanaReceivers(),
+	}
+}
+
 func (r *PostableApiReceiver) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err := unmarshal(&r.PostableGrafanaReceivers); err != nil {
 		return err
@@ -1174,6 +1190,21 @@ type GettableGrafanaReceivers struct {
 
 type PostableGrafanaReceivers struct {
 	GrafanaManagedReceivers []*PostableGrafanaReceiver `yaml:"grafana_managed_receiver_configs,omitempty" json:"grafana_managed_receiver_configs,omitempty"`
+}
+
+func (t *PostableGrafanaReceivers) ToGrafanaReceivers() notify.GrafanaReceivers {
+	result := make([]*notify.GrafanaReceiver, 0, len(t.GrafanaManagedReceivers))
+	for _, receiver := range t.GrafanaManagedReceivers {
+		result = append(result, &notify.GrafanaReceiver{
+			UID:                   receiver.UID,
+			Name:                  receiver.Name,
+			Type:                  receiver.Type,
+			DisableResolveMessage: receiver.DisableResolveMessage,
+			Settings:              json.RawMessage(receiver.Settings),
+			SecureSettings:        receiver.SecureSettings,
+		})
+	}
+	return notify.GrafanaReceivers{Receivers: result}
 }
 
 type EncryptFn func(ctx context.Context, payload []byte, scope secrets.EncryptionOptions) ([]byte, error)
