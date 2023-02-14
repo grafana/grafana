@@ -44,7 +44,7 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 		folderService:               folderService,
 		folderPermissionsService:    folderPermissions,
 		dashboardPermissionsService: dashboardPermissions,
-		DashboardService: service.ProvideDashboardService(
+		DashboardService: service.ProvideDashboardServiceImpl(
 			settings, dashboardStore, foldertest.NewFakeFolderStore(t), nil, features, folderPermissions, dashboardPermissions, ac,
 			folderService,
 		),

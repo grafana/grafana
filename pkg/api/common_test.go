@@ -384,7 +384,7 @@ func setupHTTPServerWithCfgDb(
 		accesscontrolService:   acService,
 		teamPermissionsService: teamPermissionService,
 		searchUsersService:     searchusers.ProvideUsersService(filters.ProvideOSSSearchUserFilter(), usertest.NewUserServiceFake()),
-		DashboardService: dashboardservice.ProvideDashboardService(
+		DashboardService: dashboardservice.ProvideDashboardServiceImpl(
 			cfg, dashboardsStore, folderimpl.ProvideDashboardFolderStore(db), nil, features,
 			folderPermissionsService, dashboardPermissionsService, ac,
 			folderSvc,
