@@ -219,18 +219,6 @@ export function getPanelMenu(
     }
   }
 
-  const { extensions } = getPluginExtensions({
-    placement: GrafanaExtensions.DashboardPanelMenu,
-    context: { title: panel.title, type: panel.type },
-  });
-
-  for (const extension of extensions) {
-    subMenu.push({
-      text: truncateTitle(extension.title, 25),
-      href: extension.path,
-    });
-  }
-
   // add old angular panel options
   if (angularComponent) {
     const scope = angularComponent.getScope();
@@ -294,6 +282,18 @@ export function getPanelMenu(
       iconClassName: 'trash-alt',
       onClick: onRemovePanel,
       shortcut: 'p r',
+    });
+  }
+
+  const { extensions } = getPluginExtensions({
+    placement: GrafanaExtensions.DashboardPanelMenu,
+    context: { title: panel.title, type: panel.type },
+  });
+
+  for (const extension of extensions) {
+    subMenu.push({
+      text: truncateTitle(extension.title, 25),
+      href: extension.path,
     });
   }
 
