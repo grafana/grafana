@@ -3,12 +3,9 @@ package featuremgmt
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"reflect"
 
-	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
-	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/licensing"
 )
 
@@ -149,20 +146,6 @@ func (fm *FeatureManager) GetFlags() []FeatureFlag {
 		v = append(v, *value)
 	}
 	return v
-}
-
-func (fm *FeatureManager) HandleGetSettings(c *contextmodel.ReqContext) {
-	res := make(map[string]interface{}, 3)
-	res["enabled"] = fm.GetEnabled(c.Req.Context())
-
-	vv := make([]*FeatureFlag, 0, len(fm.flags))
-	for _, v := range fm.flags {
-		vv = append(vv, v)
-	}
-
-	res["info"] = vv
-
-	response.JSON(http.StatusOK, res).WriteTo(c)
 }
 
 // WithFeatures is used to define feature toggles for testing.

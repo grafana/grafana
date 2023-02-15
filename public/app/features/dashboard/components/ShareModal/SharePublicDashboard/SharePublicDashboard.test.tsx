@@ -25,7 +25,7 @@ import * as sharePublicDashboardUtils from './SharePublicDashboardUtils';
 const server = setupServer();
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
 }));
 

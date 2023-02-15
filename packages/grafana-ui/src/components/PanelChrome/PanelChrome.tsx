@@ -147,9 +147,7 @@ export function PanelChrome({
       aria-label={ariaLabel}
     >
       <div className={styles.loadingBarContainer}>
-        {loadingState === LoadingState.Loading ? (
-          <LoadingBar width={'28%'} height={'2px'} ariaLabel="Panel loading bar" />
-        ) : null}
+        {loadingState === LoadingState.Loading ? <LoadingBar width={width} ariaLabel="Panel loading bar" /> : null}
       </div>
 
       {(hoverHeader || !hasHeader) && menu && (
