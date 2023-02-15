@@ -239,3 +239,26 @@ export const metricFrameB: DataFrame = {
   },
   length: 2,
 };
+
+export const metricFrameC: DataFrame = {
+  refId: 'A',
+  name: 'some-time-series',
+  fields: [
+    {
+      name: 'Time',
+      type: FieldType.time,
+      config: {},
+      values: new ArrayVector([3000000, 4000000]),
+    },
+    {
+      name: 'Value',
+      type: FieldType.number,
+      config: {},
+      values: new ArrayVector([6, 7]),
+    },
+  ],
+  meta: {
+    stats: [{ displayName: 'Ingester: total reached', value: 2 }],
+  },
+  length: 2,
+};

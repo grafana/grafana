@@ -1,7 +1,7 @@
 import { SyntaxNode } from '@lezer/common';
-import { escapeRegExp } from 'lodash';
+import { cloneDeep, escapeRegExp } from 'lodash';
 
-import { DataQueryResponse, DataQueryResponseData, QueryResultMetaStat } from '@grafana/data';
+import { ArrayVector, DataQueryResponse, DataQueryResponseData, Field, QueryResultMetaStat } from '@grafana/data';
 import {
   parser,
   LineFilter,
@@ -315,7 +315,7 @@ export function requestSupportsPartitioning(allQueries: LokiQuery[]) {
 
 export function combineResponses(currentResult: DataQueryResponse | null, newResult: DataQueryResponse) {
   if (!currentResult) {
-    return newResult;
+    return createQueryResponse(newResult);
   }
 
   newResult.data.forEach((newFrame) => {
@@ -333,7 +333,9 @@ export function combineResponses(currentResult: DataQueryResponse | null, newRes
 function combineFrames(dest: DataQueryResponseData, source: DataQueryResponseData) {
   const totalFields = dest.fields.length;
   for (let i = 0; i < totalFields; i++) {
-    dest.fields[i].values.buffer = [].concat.apply(source.fields[i].values.buffer, dest.fields[i].values.buffer);
+    dest.fields[i].values = new ArrayVector(
+      [].concat.apply(source.fields[i].values.toArray(), dest.fields[i].values.toArray())
+    );
   }
   dest.length += source.length;
   combineMetadata(dest, source);
@@ -358,4 +360,17 @@ function combineMetadata(dest: DataQueryResponseData = {}, source: DataQueryResp
       destStat.value += sourceStat.value;
     }
   });
+}
+
+/**
+ * Deep clones a DataQueryResponse
+ */
+export function createQueryResponse(response: DataQueryResponse): DataQueryResponse {
+  const newResponse = cloneDeep(response);
+  newResponse.data.forEach((data: DataQueryResponseData) => {
+    data.fields.forEach((field: Field<unknown, ArrayVector>) => {
+      field.values = new ArrayVector(field.values.buffer);
+    });
+  });
+  return newResponse;
 }
