@@ -7,6 +7,7 @@ import {
   getLogLevelFromKey,
   sortLogsResult,
   checkLogsError,
+  logRowsToReadableJson,
 } from './utils';
 
 describe('getLoglevel()', () => {
@@ -203,5 +204,60 @@ describe('checkLogsError()', () => {
   } as LogRowModel;
   test('should return correct error if error is present', () => {
     expect(checkLogsError(log)).toStrictEqual({ hasError: true, errorMessage: 'Error Message' });
+  });
+});
+
+describe('logRowsToReadableJson', () => {
+  const testRow: LogRowModel = {
+    rowIndex: 1,
+    entryFieldIndex: 0,
+    dataFrame: new MutableDataFrame(),
+    entry: 'test entry',
+    hasAnsi: false,
+    hasUnescapedContent: false,
+    labels: {
+      foo: 'bar',
+    },
+    logLevel: LogLevel.info,
+    raw: '',
+    timeEpochMs: 10,
+    timeEpochNs: '123456789',
+    timeFromNow: '',
+    timeLocal: '',
+    timeUtc: '',
+    uid: '2',
+  };
+  const testDf = new MutableDataFrame();
+  testDf.addField({ name: 'foo2', values: ['bar2'] });
+  const testRow2: LogRowModel = {
+    rowIndex: 0,
+    entryFieldIndex: -1,
+    dataFrame: testDf,
+    entry: 'test entry',
+    hasAnsi: false,
+    hasUnescapedContent: false,
+    labels: {
+      foo: 'bar',
+    },
+    logLevel: LogLevel.info,
+    raw: '',
+    timeEpochMs: 10,
+    timeEpochNs: '123456789',
+    timeFromNow: '',
+    timeLocal: '',
+    timeUtc: '',
+    uid: '2',
+  };
+
+  it('should format a single row', () => {
+    const result = logRowsToReadableJson([testRow]);
+
+    expect(result).toEqual([{ line: 'test entry', timestamp: '123456789', fields: { foo: 'bar' } }]);
+  });
+
+  it('should format a df field row', () => {
+    const result = logRowsToReadableJson([testRow2]);
+
+    expect(result).toEqual([{ line: 'test entry', timestamp: '123456789', fields: { foo: 'bar', foo2: 'bar2' } }]);
   });
 });

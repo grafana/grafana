@@ -3,9 +3,8 @@ package notifier
 import (
 	"context"
 
-	"github.com/grafana/alerting/alerting/notifier/channels"
+	"github.com/grafana/alerting/receivers"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
@@ -13,8 +12,8 @@ type sender struct {
 	ns notifications.Service
 }
 
-func (s sender) SendWebhook(ctx context.Context, cmd *channels.SendWebhookSettings) error {
-	return s.ns.SendWebhookSync(ctx, &models.SendWebhookSync{
+func (s sender) SendWebhook(ctx context.Context, cmd *receivers.SendWebhookSettings) error {
+	return s.ns.SendWebhookSync(ctx, &notifications.SendWebhookSync{
 		Url:         cmd.URL,
 		User:        cmd.User,
 		Password:    cmd.Password,
@@ -26,19 +25,19 @@ func (s sender) SendWebhook(ctx context.Context, cmd *channels.SendWebhookSettin
 	})
 }
 
-func (s sender) SendEmail(ctx context.Context, cmd *channels.SendEmailSettings) error {
-	var attached []*models.SendEmailAttachFile
+func (s sender) SendEmail(ctx context.Context, cmd *receivers.SendEmailSettings) error {
+	var attached []*notifications.SendEmailAttachFile
 	if cmd.AttachedFiles != nil {
-		attached = make([]*models.SendEmailAttachFile, 0, len(cmd.AttachedFiles))
+		attached = make([]*notifications.SendEmailAttachFile, 0, len(cmd.AttachedFiles))
 		for _, file := range cmd.AttachedFiles {
-			attached = append(attached, &models.SendEmailAttachFile{
+			attached = append(attached, &notifications.SendEmailAttachFile{
 				Name:    file.Name,
 				Content: file.Content,
 			})
 		}
 	}
-	return s.ns.SendEmailCommandHandlerSync(ctx, &models.SendEmailCommandSync{
-		SendEmailCommand: models.SendEmailCommand{
+	return s.ns.SendEmailCommandHandlerSync(ctx, &notifications.SendEmailCommandSync{
+		SendEmailCommand: notifications.SendEmailCommand{
 			To:            cmd.To,
 			SingleEmail:   cmd.SingleEmail,
 			Template:      cmd.Template,
@@ -52,6 +51,6 @@ func (s sender) SendEmail(ctx context.Context, cmd *channels.SendEmailSettings) 
 	})
 }
 
-func NewNotificationSender(ns notifications.Service) channels.NotificationSender {
+func NewNotificationSender(ns notifications.Service) receivers.NotificationSender {
 	return &sender{ns: ns}
 }

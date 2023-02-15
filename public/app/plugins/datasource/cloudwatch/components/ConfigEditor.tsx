@@ -14,8 +14,8 @@ import { createWarningNotification } from 'app/core/copy/appNotification';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { store } from 'app/store/store';
 
-import { SelectableResourceValue } from '../api';
 import { CloudWatchDatasource } from '../datasource';
+import { SelectableResourceValue } from '../resources/types';
 import { CloudWatchJsonData, CloudWatchSecureJsonData } from '../types';
 
 import { LogGroupsField } from './LogGroups/LogGroupsField';
@@ -45,7 +45,7 @@ export const ConfigEditor: FC<Props> = (props: Props) => {
         loadRegions={
           datasource &&
           (async () => {
-            return datasource.api
+            return datasource.resources
               .getRegions()
               .then((regions) =>
                 regions.reduce(
@@ -76,7 +76,7 @@ export const ConfigEditor: FC<Props> = (props: Props) => {
         >
           <Input
             width={60}
-            placeholder="15m"
+            placeholder="30m"
             value={options.jsonData.logsTimeout || ''}
             onChange={onUpdateDatasourceJsonDataOption(props, 'logsTimeout')}
             title={'The timeout must be a valid duration string, such as "15m" "30s" "2000ms" etc.'}

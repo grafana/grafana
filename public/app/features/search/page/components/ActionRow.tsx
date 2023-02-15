@@ -20,7 +20,7 @@ if (config.featureToggles.dashboardPreviews) {
 
 interface Props {
   onLayoutChange: (layout: SearchLayout) => void;
-  onSortChange: (value: SelectableValue) => void;
+  onSortChange: (value?: string) => void;
   onStarredFilterChange?: (event: FormEvent<HTMLInputElement>) => void;
   onTagFilterChange: (tags: string[]) => void;
   getTagOptions: () => Promise<TermCount[]>;
@@ -39,7 +39,7 @@ export function getValidQueryLayout(q: SearchState): SearchLayout {
 
   // Folders is not valid when a query exists
   if (layout === SearchLayout.Folders) {
-    if (q.query || q.sort || q.starred) {
+    if (q.query || q.sort || q.starred || q.tag.length > 0) {
       return SearchLayout.List;
     }
   }
@@ -106,10 +106,10 @@ export const ActionRow: FC<Props> = ({
             />
           )}
           <SortPicker
-            onChange={onSortChange}
-            value={state.sort?.value}
+            onChange={(change) => onSortChange(change?.value)}
+            value={state.sort}
             getSortOptions={getSortOptions}
-            placeholder={sortPlaceholder}
+            placeholder={sortPlaceholder || 'Sort'}
             isClearable
           />
         </HorizontalGroup>

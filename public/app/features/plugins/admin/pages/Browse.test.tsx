@@ -1,12 +1,12 @@
 import { render, RenderResult, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { Provider } from 'react-redux';
-import { Router } from 'react-router-dom';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { PluginType, escapeStringForRegex } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
+import { RouteDescriptor } from 'app/core/navigation/types';
 import { configureStore } from 'app/store/configureStore';
 
 import { getCatalogPluginMock, getPluginsStateMock } from '../__mocks__';
@@ -33,15 +33,13 @@ const renderBrowse = (
   const store = configureStore({ plugins: pluginsStateOverride || getPluginsStateMock(plugins) });
   locationService.push(path);
   const props = getRouteComponentProps({
-    route: { routeName: PluginAdminRoutes.Home } as any,
+    route: { routeName: PluginAdminRoutes.Home } as RouteDescriptor,
   });
 
   return render(
-    <Provider store={store}>
-      <Router history={locationService.getHistory()}>
-        <BrowsePage {...props} />
-      </Router>
-    </Provider>
+    <TestProvider store={store}>
+      <BrowsePage {...props} />
+    </TestProvider>
   );
 };
 

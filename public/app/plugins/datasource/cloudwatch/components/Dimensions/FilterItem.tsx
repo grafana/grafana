@@ -51,7 +51,7 @@ export const FilterItem: FunctionComponent<Props> = ({
       return [];
     }
 
-    return datasource.api
+    return datasource.resources
       .getDimensionValues({
         dimensionKey: filter.key,
         dimensionFilters: dimensionsExcludingCurrentKey,

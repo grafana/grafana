@@ -1,10 +1,8 @@
 import React, { ReactNode } from 'react';
 import {
   MapLayerRegistryItem,
-  MapLayerOptions,
   PanelData,
   GrafanaTheme2,
-  FrameGeometrySourceMode,
   PluginState,
   EventBus,
   DataHoverEvent,
@@ -12,6 +10,12 @@ import {
   DataFrame,
   TIME_SERIES_TIME_FIELD_NAME,
 } from '@grafana/data';
+
+import {
+  MapLayerOptions,
+  FrameGeometrySourceMode,
+} from '@grafana/schema';
+
 import Map from 'ol/Map';
 import { FeatureLike } from 'ol/Feature';
 import { ReplaySubject, Subscription, throttleTime } from 'rxjs';

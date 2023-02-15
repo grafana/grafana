@@ -1,8 +1,6 @@
-import { EmbeddedScene, SceneObjectBase, SceneState } from '@grafana/scenes';
+import { DashboardScene } from '../dashboard/DashboardScene';
 
-import { Scene } from '../components/Scene';
-
-import { getFlexLayoutTest, getScenePanelRepeaterTest } from './demo';
+import { getFlexLayoutTest, getRepeaterSceneWithFlexWrap, getScenePanelRepeaterTest } from './demo';
 import { getGridLayoutTest } from './grid';
 import { getGridWithMultipleTimeRanges } from './gridMultiTimeRange';
 import { getMultipleGridLayoutTest } from './gridMultiple';
@@ -16,12 +14,13 @@ import { getVariablesDemo, getVariablesDemoWithAll } from './variablesDemo';
 
 interface SceneDef {
   title: string;
-  getScene: (standalone: boolean) => Scene | EmbeddedScene;
+  getScene: () => DashboardScene;
 }
 export function getScenes(): SceneDef[] {
   return [
     { title: 'Flex layout test', getScene: getFlexLayoutTest },
     { title: 'Panel repeater test', getScene: getScenePanelRepeaterTest },
+    { title: 'Panel repeater test flex wrap', getScene: getRepeaterSceneWithFlexWrap },
     { title: 'Nested Scene demo', getScene: getNestedScene },
     { title: 'Scene with rows', getScene: getSceneWithRows },
     { title: 'Grid layout test', getScene: getGridLayoutTest },
@@ -36,20 +35,18 @@ export function getScenes(): SceneDef[] {
   ];
 }
 
-const cache: Record<string, { standalone: boolean; scene: SceneObjectBase<SceneState> }> = {};
+const cache: Record<string, DashboardScene> = {};
 
-export function getSceneByTitle(title: string, standalone = true) {
+export function getSceneByTitle(title: string) {
   if (cache[title]) {
-    if (cache[title].standalone === standalone) {
-      return cache[title].scene;
-    }
+    return cache[title];
   }
 
   const scene = getScenes().find((x) => x.title === title);
 
   if (scene) {
-    cache[title] = { scene: scene.getScene(standalone), standalone };
+    cache[title] = scene.getScene();
   }
 
-  return cache[title].scene;
+  return cache[title];
 }

@@ -12,12 +12,15 @@
       "light-theme": "Ŀįģĥŧ",
       "search": "Ŝęäřčĥ"
     },
+    "search-box": {
+      "placeholder": "Ŝęäřčĥ őř ĵūmp ŧő..."
+    },
     "section": {
       "actions": "Åčŧįőŉş",
       "dashboard-search-results": "Đäşĥþőäřđş",
       "pages": "Päģęş",
       "preferences": "Přęƒęřęŉčęş",
-      "recent-dashboards": "Ŗęčęŉŧľy vįęŵęđ đäşĥþőäřđş"
+      "recent-dashboards": "Ŗęčęŉŧ đäşĥþőäřđş"
     }
   },
   "common": {
@@ -157,7 +160,7 @@
       "title": "Åľęřŧ řūľęş"
     },
     "alerting-receivers": {
-      "subtitle": "Đęčįđę ĥőŵ yőūř čőŉŧäčŧş äřę ŉőŧįƒįęđ ŵĥęŉ äŉ äľęřŧ ƒįřęş",
+      "subtitle": "Cĥőőşę ĥőŵ ŧő ŉőŧįƒy yőūř čőŉŧäčŧ pőįŉŧş ŵĥęŉ äŉ äľęřŧ įŉşŧäŉčę ƒįřęş",
       "title": "Cőŉŧäčŧ pőįŉŧş"
     },
     "alerting-silences": {
@@ -188,7 +191,7 @@
       "title": "Cřęäŧę"
     },
     "create-alert": {
-      "title": "Ńęŵ äľęřŧ řūľę"
+      "title": "Cřęäŧę äľęřŧ řūľę"
     },
     "create-dashboard": {
       "title": "Đäşĥþőäřđ"
@@ -226,7 +229,6 @@
     "help/documentation": "Đőčūmęŉŧäŧįőŉ",
     "help/keyboard-shortcuts": "Ķęyþőäřđ şĥőřŧčūŧş",
     "help/support": "Ŝūppőřŧ",
-    "help/support-bundle": "Ŝūppőřŧ ßūŉđľęş",
     "home": {
       "title": "Ħőmę"
     },
@@ -282,14 +284,18 @@
       "title": "Cĥäŉģę päşşŵőřđ"
     },
     "profile/settings": {
-      "title": "Přęƒęřęŉčęş"
+      "title": "Přőƒįľę"
     },
     "profile/switch-org": "Ŝŵįŧčĥ őřģäŉįžäŧįőŉ",
+    "public": {
+      "title": "Pūþľįč đäşĥþőäřđş"
+    },
     "scenes": {
       "title": "Ŝčęŉęş"
     },
     "search": {
-      "placeholder": "Ŝęäřčĥ Ğřäƒäŉä"
+      "placeholder": "Ŝęäřčĥ Ğřäƒäŉä",
+      "placeholderCommandPalette": "Ŝęäřčĥ őř ĵūmp ŧő..."
     },
     "search-dashboards": {
       "title": "Ŝęäřčĥ đäşĥþőäřđş"
@@ -486,7 +492,8 @@
     "theme": {
       "dark-label": "Đäřĸ",
       "default-label": "Đęƒäūľŧ",
-      "light-label": "Ŀįģĥŧ"
+      "light-label": "Ŀįģĥŧ",
+      "system-label": "Ŝyşŧęm"
     },
     "title": "Přęƒęřęŉčęş"
   },
@@ -552,8 +559,7 @@
       "name-error": "Ńämę įş řęqūįřęđ",
       "name-label": "Ńämę",
       "username-label": "Ůşęřŉämę"
-    },
-    "title": "Přőƒįľę"
+    }
   },
   "user-session": {
     "browser-column": "ßřőŵşęř & ØŜ",

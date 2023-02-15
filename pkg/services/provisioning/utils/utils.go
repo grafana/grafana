@@ -5,12 +5,12 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
 type DashboardStore interface {
-	GetDashboard(context.Context, *models.GetDashboardQuery) error
+	GetDashboard(context.Context, *dashboards.GetDashboardQuery) (*dashboards.Dashboard, error)
 }
 
 func CheckOrgExists(ctx context.Context, orgService org.Service, orgID int64) error {
