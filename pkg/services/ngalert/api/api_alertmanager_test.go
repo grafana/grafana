@@ -2,7 +2,9 @@ package api
 
 import (
 	"context"
+	"crypto/md5"
 	"encoding/json"
+	"fmt"
 	"math/rand"
 	"net/http"
 	"testing"
@@ -21,6 +23,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -302,6 +305,7 @@ func TestRouteGetAlertingConfigHistory(t *testing.T) {
 		req.URL.RawQuery = q.Encode()
 
 		rc := createRequestCtxInOrg(10)
+		rc.Req = req
 
 		response := sut.RouteGetAlertingConfigHistory(rc)
 		require.Equal(tt, 200, response.Status())
@@ -313,14 +317,15 @@ func TestRouteGetAlertingConfigHistory(t *testing.T) {
 		require.Len(tt, configs, 0)
 	})
 
-	t.Run("assert 200 and one config in the response for an org that has one successfully applied configuration", func(tt *testing.T) {
+	t.Run("assert 200 and two configs in the response for an org that has two successfully applied configurations", func(tt *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, "https://grafana.net", nil)
 		require.NoError(tt, err)
 		q := req.URL.Query()
 		q.Add("limit", "10")
 		req.URL.RawQuery = q.Encode()
 
-		rc := createRequestCtxInOrg(1)
+		rc := createRequestCtxInOrg(2)
+		rc.Req = req
 
 		response := sut.RouteGetAlertingConfigHistory(rc)
 		require.Equal(tt, 200, response.Status())
@@ -329,7 +334,10 @@ func TestRouteGetAlertingConfigHistory(t *testing.T) {
 		err = json.Unmarshal(response.Body(), &configs)
 		require.NoError(tt, err)
 
-		require.Len(tt, configs, 1)
+		require.Len(tt, configs, 2)
+		for _, config := range configs {
+			require.NotZero(tt, config.LastApplied)
+		}
 	})
 
 	t.Run("assert 200 when no limit is provided", func(tt *testing.T) {
@@ -357,6 +365,26 @@ func TestRouteGetAlertingConfigHistory(t *testing.T) {
 		require.Equal(tt, 200, response.Status())
 
 		configs := asGettableHistoricUserConfigs(tt, response)
+		for _, config := range configs {
+			require.NotZero(tt, config.LastApplied)
+		}
+	})
+
+	t.Run("assert 200 and only one config when the limit is set to 1", func(tt *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "https://grafana.net", nil)
+		require.NoError(tt, err)
+		q := req.URL.Query()
+		q.Add("limit", "1")
+		req.URL.RawQuery = q.Encode()
+
+		rc := createRequestCtxInOrg(2)
+		rc.Req = req
+
+		response := sut.RouteGetAlertingConfigHistory(rc)
+		require.Equal(tt, 200, response.Status())
+
+		configs := asGettableHistoricUserConfigs(tt, response)
+		require.Len(tt, configs, 1)
 		for _, config := range configs {
 			require.NotZero(tt, config.LastApplied)
 		}
@@ -611,6 +639,19 @@ func createMultiOrgAlertmanager(t *testing.T) *notifier.MultiOrgAlertmanager {
 	require.NoError(t, err)
 	err = mam.LoadAndSyncAlertmanagersForOrgs(context.Background())
 	require.NoError(t, err)
+
+	// Add another configuration so we have more than one in the history.
+	cmd := models.SaveAlertmanagerConfigurationCmd{
+		AlertmanagerConfiguration: validConfig,
+		FetchedConfigurationHash:  fmt.Sprintf("%x", md5.Sum([]byte(validConfig))),
+		ConfigurationVersion:      "v1",
+		Default:                   false,
+		OrgID:                     2,
+		LastApplied:               time.Now().UTC().Unix(),
+	}
+	err = configStore.SaveAlertmanagerConfiguration(context.Background(), &cmd)
+	require.NoError(t, err)
+
 	return mam
 }
 
