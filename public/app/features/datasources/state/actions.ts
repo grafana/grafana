@@ -144,7 +144,7 @@ export const testDataSource = (
   };
 };
 
-export function loadDataSources(): ThunkResult<void> {
+export function loadDataSources(): ThunkResult<Promise<void>> {
   return async (dispatch) => {
     const response = await api.getDataSources();
     dispatch(dataSourcesLoaded(response));

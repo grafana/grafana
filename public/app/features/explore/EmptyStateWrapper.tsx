@@ -12,15 +12,19 @@ import { ExplorePage } from './ExplorePage';
 
 export default function EmptyStateWrapper(props: GrafanaRouteComponentProps<{}, ExploreQueryParams>) {
   const dispatch = useDispatch();
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffectOnce(() => {
-    if (config.featureToggles.datasourceOnboarding) {
-      dispatch(loadDataSources());
-    }
+    (async () => {
+      if (config.featureToggles.datasourceOnboarding) {
+        await dispatch(loadDataSources());
+        setIsLoading(false);
+      }
+    })();
   });
 
-  const { hasDatasource, loading } = useSelector((state) => ({
+  const { hasDatasource } = useSelector((state) => ({
     hasDatasource: state.dataSources.dataSourcesCount > 0,
-    loading: !state.dataSources.hasFetched,
   }));
   const [showOnboarding, setShowOnboarding] = useState(config.featureToggles.datasourceOnboarding);
   const showExplorePage = hasDatasource || !showOnboarding;
@@ -30,7 +34,7 @@ export default function EmptyStateWrapper(props: GrafanaRouteComponentProps<{}, 
   ) : (
     <EmptyStateNoDatasource
       onCTAClick={() => setShowOnboarding(false)}
-      loading={loading}
+      loading={isLoading}
       title="Welcome to Grafana Explore!"
       CTAText="Or explore sample data"
       navId="explore"

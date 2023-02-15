@@ -12,13 +12,19 @@ import DashboardPage from './DashboardPage';
 
 export default function NewDashboardPage(props: GrafanaRouteComponentProps) {
   const dispatch = useDispatch();
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffectOnce(() => {
-    dispatch(loadDataSources());
+    (async () => {
+      if (config.featureToggles.datasourceOnboarding) {
+        await dispatch(loadDataSources());
+        setIsLoading(false);
+      }
+    })();
   });
 
-  const { hasDatasource, loading } = useSelector((state) => ({
+  const { hasDatasource } = useSelector((state) => ({
     hasDatasource: state.dataSources.dataSourcesCount > 0,
-    loading: !state.dataSources.hasFetched,
   }));
   const [createDashboard, setCreateDashboard] = useState(false);
   const showDashboardPage = hasDatasource || createDashboard || !config.featureToggles.datasourceOnboarding;
@@ -28,7 +34,7 @@ export default function NewDashboardPage(props: GrafanaRouteComponentProps) {
   ) : (
     <EmptyStateNoDatasource
       onCTAClick={() => setCreateDashboard(true)}
-      loading={loading}
+      loading={isLoading}
       title={t('datasource-onboarding.welcome', 'Welcome to Grafana dashboards!')}
       CTAText={t('datasource-onboarding.sampleData', 'Or set up a new dashboard with sample data')}
       navId="dashboards/browse"
