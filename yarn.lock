@@ -22231,7 +22231,7 @@ __metadata:
     react-test-renderer: 17.0.2
     react-transition-group: 4.4.5
     react-use: 17.4.0
-    react-virtual: 2.8.2
+    react-virtual: 2.10.4
     react-virtualized-auto-sizer: 1.0.7
     react-window: 1.8.8
     react-window-infinite-loader: 1.0.8
@@ -33269,18 +33269,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-virtual@npm:2.8.2":
-  version: 2.8.2
-  resolution: "react-virtual@npm:2.8.2"
-  dependencies:
-    "@reach/observe-rect": ^1.1.0
-  peerDependencies:
-    react: ^16.6.3 || ^17.0.0
-  checksum: 3c95c7ea951d33d6da8d5461ea28b39dea7bd536b06ccae58ac808907761bc2425dcb469be5618c95a6f9f021f70b8019f386d21d33c64540d051f11e3f10e4a
-  languageName: node
-  linkType: hard
-
-"react-virtual@npm:^2.8.2":
+"react-virtual@npm:2.10.4, react-virtual@npm:^2.8.2":
   version: 2.10.4
   resolution: "react-virtual@npm:2.10.4"
   dependencies:
