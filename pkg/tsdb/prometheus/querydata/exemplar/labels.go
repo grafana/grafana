@@ -9,7 +9,7 @@ import (
 var _ LabelTracker = (*labelTracker)(nil)
 
 type LabelTracker interface {
-	Add(map[string]string)
+	Add(labels map[string]string)
 	AddFields(fields []*data.Field)
 	GetNames() []string
 }
