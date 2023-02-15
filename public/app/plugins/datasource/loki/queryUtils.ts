@@ -315,7 +315,7 @@ export function requestSupportsPartitioning(allQueries: LokiQuery[]) {
 
 export function combineResponses(currentResult: DataQueryResponse | null, newResult: DataQueryResponse) {
   if (!currentResult) {
-    return createQueryResponse(newResult);
+    return cloneQueryResponse(newResult);
   }
 
   newResult.data.forEach((newFrame) => {
@@ -365,7 +365,7 @@ function combineMetadata(dest: DataQueryResponseData = {}, source: DataQueryResp
 /**
  * Deep clones a DataQueryResponse
  */
-export function createQueryResponse(response: DataQueryResponse): DataQueryResponse {
+export function cloneQueryResponse(response: DataQueryResponse): DataQueryResponse {
   const newResponse = cloneDeep(response);
   newResponse.data.forEach((data: DataQueryResponseData) => {
     data.fields.forEach((field: Field<unknown, ArrayVector>) => {

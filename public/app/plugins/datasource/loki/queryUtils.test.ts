@@ -12,7 +12,7 @@ import {
   getParserFromQuery,
   obfuscate,
   combineResponses,
-  createQueryResponse,
+  cloneQueryResponse,
 } from './queryUtils';
 import { LokiQuery, LokiQueryType } from './types';
 
@@ -298,6 +298,17 @@ describe('getParserFromQuery', () => {
   });
 });
 
+describe('cloneQueryResponse', () => {
+  const responseA: DataQueryResponse = {
+    data: [logFrameA],
+  };
+  it('clones query responses', () => {
+    const clonedA = cloneQueryResponse(responseA);
+    expect(clonedA).not.toBe(responseA);
+    expect(clonedA).toEqual(clonedA);
+  });
+});
+
 describe('combineResponses', () => {
   it('combines logs frames', () => {
     const responseA: DataQueryResponse = {
@@ -367,10 +378,10 @@ describe('combineResponses', () => {
   });
 
   it('combines metric frames', () => {
-    const responseA: DataQueryResponse = createQueryResponse({
+    const responseA: DataQueryResponse = cloneQueryResponse({
       data: [metricFrameA],
     });
-    const responseB: DataQueryResponse = createQueryResponse({
+    const responseB: DataQueryResponse = cloneQueryResponse({
       data: [metricFrameB],
     });
     expect(combineResponses(responseA, responseB)).toEqual({
@@ -406,10 +417,10 @@ describe('combineResponses', () => {
   });
 
   it('combines and identifies new frames in the response', () => {
-    const responseA: DataQueryResponse = createQueryResponse({
+    const responseA: DataQueryResponse = cloneQueryResponse({
       data: [metricFrameA],
     });
-    const responseB: DataQueryResponse = createQueryResponse({
+    const responseB: DataQueryResponse = cloneQueryResponse({
       data: [metricFrameB, metricFrameC],
     });
     expect(combineResponses(responseA, responseB)).toEqual({
