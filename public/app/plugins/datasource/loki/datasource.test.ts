@@ -34,7 +34,7 @@ import { CustomVariableModel } from '../../../features/variables/types';
 import { LokiDatasource, REF_ID_DATA_SAMPLES } from './datasource';
 import { createLokiDatasource, createMetadataRequest } from './mocks';
 import { runPartitionedQuery } from './querySplitting';
-import { parseToNodeNamesArray, requestSupportsPartitioning } from './queryUtils';
+import { parseToNodeNamesArray } from './queryUtils';
 import { LokiOptions, LokiQuery, LokiQueryType, LokiVariableQueryType, SupportingQueryType } from './types';
 import { LokiVariableSupport } from './variables';
 
@@ -42,13 +42,6 @@ jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
     reportInteraction: jest.fn(),
-  };
-});
-
-jest.mock('./queryUtils', () => {
-  return {
-    ...jest.requireActual('./queryUtils'),
-    requestSupportsPartitioning: jest.fn(),
   };
 });
 
@@ -1111,7 +1104,6 @@ describe('LokiDatasource', () => {
 
   describe('Query splitting', () => {
     beforeAll(() => {
-      jest.mocked(requestSupportsPartitioning).mockReturnValue(true);
       config.featureToggles.lokiQuerySplitting = true;
       jest.mocked(runPartitionedQuery).mockReturnValue(
         of({
@@ -1121,12 +1113,20 @@ describe('LokiDatasource', () => {
     });
     afterAll(() => {
       config.featureToggles.lokiQuerySplitting = false;
-      jest.mocked(requestSupportsPartitioning).mockReturnValue(false);
     });
-    it('supports query splitting when the requirements are met', async () => {
+    it.each([
+      [[{ expr: 'count_over_time({a="b"}[1m])', refId: 'A' }]],
+      [[{ expr: '{a="b"}', refId: 'A' }]],
+      [
+        [
+          { expr: 'count_over_time({a="b"}[1m])', refId: 'A', hide: true },
+          { expr: '{a="b"}', refId: 'B' },
+        ],
+      ],
+    ])('supports query splitting when the requirements are met', async (targets: LokiQuery[]) => {
       const ds = createLokiDatasource(templateSrvStub);
       const query = getQueryOptions<LokiQuery>({
-        targets: [{ expr: 'count_over_time({a="b"}[1m])', refId: 'A' }],
+        targets,
         app: CoreApp.Dashboard,
       });
 
