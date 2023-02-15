@@ -37,8 +37,11 @@ jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
 });
 
 describe('QueryGroup', () => {
-  it('Should add expression on click', async () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
     config.expressionsEnabled = true;
+  });
+  it('Should add expression on click', async () => {
     renderScenario({});
 
     const addExpressionButton = await screen.findByTestId('query-tab-add-expression');
@@ -46,19 +49,48 @@ describe('QueryGroup', () => {
     expect(queryRowsContainer.children.length).toBe(2);
 
     await addExpressionButton.click();
-
     expect(queryRowsContainer.children.length).toBe(3);
   });
 
   it('Should add query on click', async () => {
     renderScenario({});
+
     const addQueryButton = await screen.findByTestId('query-tab-add-query');
     const queryRowsContainer = await screen.findByTestId('query-editor-rows');
-
     expect(queryRowsContainer.children.length).toBe(2);
 
     await addQueryButton.click();
 
+    expect(queryRowsContainer.children.length).toBe(3);
+  });
+
+  it('New expression should be expanded', async () => {
+    renderScenario({});
+
+    const addExpressionButton = await screen.findByTestId('query-tab-add-expression');
+    const queryRowsContainer = await screen.findByTestId('query-editor-rows');
+    await addExpressionButton.click();
+
+    const lastQueryEditorRow = (await screen.findAllByTestId('query-editor-row')).at(-1);
+    const lastEditorToggleRow = (await screen.findAllByLabelText('toggle collapse and expand query row')).at(-1);
+
+    expect(lastEditorToggleRow?.getAttribute('aria-expanded')).toBe('true');
+    expect(lastQueryEditorRow?.firstElementChild?.children.length).toBe(2);
+    expect(queryRowsContainer.children.length).toBe(3);
+  });
+
+  it('New query should be expanded', async () => {
+    renderScenario({});
+
+    const addQueryButton = await screen.findByTestId('query-tab-add-query');
+    const queryRowsContainer = await screen.findByTestId('query-editor-rows');
+    await addQueryButton.click();
+
+    const lastQueryEditorRow = (await screen.findAllByTestId('query-editor-row')).at(-1);
+    const lastEditorToggleRow = (await screen.findAllByLabelText('toggle collapse and expand query row')).at(-1);
+
+    expect(lastEditorToggleRow?.getAttribute('aria-expanded')).toBe('true');
+    expect(lastQueryEditorRow?.firstElementChild?.children.length).toBe(2);
     expect(queryRowsContainer.children.length).toBe(3);
   });
 });
