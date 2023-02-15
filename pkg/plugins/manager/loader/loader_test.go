@@ -464,7 +464,7 @@ func TestLoader_Load(t *testing.T) {
 			},
 		},
 		{
-			name:  "Load an app with link extensions",
+			name:  "Load an app with link extensions should remove entries with invalid paths",
 			class: plugins.External,
 			cfg: &config.Cfg{
 				PluginsAllowUnsigned: []string{"test-app"},
@@ -498,7 +498,7 @@ func TestLoader_Load(t *testing.T) {
 						Plugins:           []plugins.Dependency{},
 					},
 					Includes: []*plugins.Includes{
-						{Name: "Root Page (react)", Type: "page", Role: "Viewer", Path: "/a/my-simple-app", DefaultNav: true, AddToNav: true, Slug: "root-page-react"},
+						{Name: "Root Page (react)", Type: "page", Role: "Viewer", Path: "/a/test-app", DefaultNav: true, AddToNav: true, Slug: "root-page-react"},
 					},
 					Extensions: []*plugindef.ExtensionsLink{
 						{
@@ -507,15 +507,7 @@ func TestLoader_Load(t *testing.T) {
 							Title:       "Declare incident",
 							Type:        plugindef.ExtensionsLinkTypeLink,
 							Description: "Declares a new incident",
-							Path:        "/incidents/declare",
-						},
-						{
-							Id:          "slo-declare-incident-2",
-							Placement:   "plugins/grafana-slo-app/slo-breach",
-							Title:       "Declare incident",
-							Type:        plugindef.ExtensionsLinkTypeLink,
-							Description: "Declares a new incident (path without backslash)",
-							Path:        "/incidents/declare",
+							Path:        "/a/test-app/incidents/declare",
 						},
 					},
 					Backend: false,

@@ -506,7 +506,7 @@
           },
           "path": {
             "type": "string",
-            "pattern": "^/.*"
+            "pattern": "^/a/.*"
           }
         }
       }

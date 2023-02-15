@@ -6,53 +6,53 @@ import { createPluginExtensionsRegistry } from './registry';
 describe('Plugin registry', () => {
   describe('createPluginExtensionsRegistry function', () => {
     const registry = createPluginExtensionsRegistry({
-      'belugacdn-app': createConfig([
+      'belugacdn-app': createAppConfig([
         {
           id: '1',
-          placement: 'plugins/belugacdn-app/menu',
+          placement: 'grafana/dashboard/panel/menu',
           title: 'The title',
           type: PluginsExtensionTypes.link,
           description: 'Incidents are occurring!',
-          path: '/incidents/declare',
+          path: '/a/belugacdn-app/incidents/declare',
         },
       ]),
-      'strava-app': createConfig([
+      'strava-app': createAppConfig([
+        {
+          id: '1',
+          placement: 'grafana/explore/actions',
+          title: 'The title',
+          type: PluginsExtensionTypes.link,
+          description: 'Incidents are occurring!',
+          path: '/a/strava-app/incidents/declare',
+        },
+      ]),
+      'duplicate-links-app': createAppConfig([
         {
           id: '1',
           placement: 'plugins/strava-app/menu',
           title: 'The title',
           type: PluginsExtensionTypes.link,
           description: 'Incidents are occurring!',
-          path: '/incidents/declare',
-        },
-      ]),
-      'duplicate-links-app': createConfig([
-        {
-          id: '1',
-          placement: 'plugins/duplicate-links-app/menu',
-          title: 'The title',
-          type: PluginsExtensionTypes.link,
-          description: 'Incidents are occurring!',
-          path: '/incidents/declare',
+          path: '/a/duplicate-links-app/incidents/declare',
         },
         {
           id: '2',
-          placement: 'plugins/duplicate-links-app/menu',
+          placement: 'plugins/strava-app/menu',
           title: 'The title',
           type: PluginsExtensionTypes.link,
           description: 'Incidents are occurring!',
-          path: '/incidents/declare2',
+          path: '/a/duplicate-links-app/incidents/declare2',
         },
       ]),
-      'no-extensions-app': createConfig(undefined),
-      'too-many-links-app': createConfig([
+      'no-extensions-app': createAppConfig(undefined),
+      'too-many-links-app': createAppConfig([
         {
           id: '1',
           placement: 'plugins/placement-in-ui/menu',
           title: 'The title',
           type: PluginsExtensionTypes.link,
           description: 'Incidents are occurring!',
-          path: '/incidents/declare',
+          path: '/a/too-many-links-app/incidents/declare',
         },
         {
           id: '2',
@@ -60,7 +60,7 @@ describe('Plugin registry', () => {
           title: 'The title',
           type: PluginsExtensionTypes.link,
           description: 'Incidents are occurring!',
-          path: '/incidents/declare2',
+          path: '/a/too-many-links-app/incidents/declare2',
         },
         {
           id: '3',
@@ -68,13 +68,13 @@ describe('Plugin registry', () => {
           title: 'The title',
           type: PluginsExtensionTypes.link,
           description: 'Incidents are occurring!',
-          path: '/incidents/declare2',
+          path: '/a/too-many-links-app/incidents/declare2',
         },
       ]),
     });
 
     it('should configure a registry link', () => {
-      const [link] = registry['plugins/belugacdn-app/menu'];
+      const [link] = registry['grafana/dashboard/panel/menu'];
 
       expect(link).toEqual({
         title: 'The title',
@@ -92,8 +92,8 @@ describe('Plugin registry', () => {
     });
 
     it('should configure registry targets from multiple plugins', () => {
-      const [pluginALink] = registry['plugins/belugacdn-app/menu'];
-      const [pluginBLink] = registry['plugins/strava-app/menu'];
+      const [pluginALink] = registry['grafana/dashboard/panel/menu'];
+      const [pluginBLink] = registry['grafana/explore/actions'];
 
       expect(pluginALink).toEqual({
         title: 'The title',
@@ -113,7 +113,7 @@ describe('Plugin registry', () => {
     });
 
     it('should configure multiple links for a single target', () => {
-      const links = registry['plugins/duplicate-links-app/menu'];
+      const links = registry['plugins/strava-app/menu'];
 
       expect(links.length).toBe(2);
     });
@@ -126,7 +126,7 @@ describe('Plugin registry', () => {
   });
 });
 
-function createConfig(extensions?: PluginsExtensionLinkConfig[]): AppPluginConfig {
+function createAppConfig(extensions?: PluginsExtensionLinkConfig[]): AppPluginConfig {
   return {
     id: 'myorg-basic-app',
     preload: false,

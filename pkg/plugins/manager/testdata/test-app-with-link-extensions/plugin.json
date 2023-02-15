@@ -28,7 +28,7 @@
     {
       "type": "page",
       "name": "Root Page (react)",
-      "path": "/a/my-simple-app",
+      "path": "/a/test-app",
       "role": "Viewer",
       "addToNav": true,
       "defaultNav": true
@@ -41,14 +41,14 @@
       "type": "link",
       "title": "Declare incident",
       "description": "Declares a new incident",
-      "path": "/incidents/declare"
+      "path": "/a/test-app/incidents/declare"
     },
     {
       "id": "slo-declare-incident-2",
       "placement": "plugins/grafana-slo-app/slo-breach",
       "type": "link",
       "title": "Declare incident",
-      "description": "Declares a new incident (path without backslash)",
+      "description": "Declares a new incident (without valid path)",
       "path": "incidents/declare"
     }
   ],

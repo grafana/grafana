@@ -134,7 +134,7 @@ seqs: [
 					// Description for the rendered link
 					description: string & strings.MaxRunes(200)
 					// Path relative to the extending plugin e.g. /incidents/declare
-					path: =~"^\/.*"
+					path: =~"^\/a\/.*"
 					...
 				}
 

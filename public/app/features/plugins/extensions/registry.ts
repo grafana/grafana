@@ -42,7 +42,6 @@ export function createPluginExtensionsRegistry(apps: Record<string, AppPluginCon
 }
 
 function createRegistryItem(pluginId: string, extension: PluginsExtensionLinkConfig): PluginsExtensionLink | undefined {
-  const path = `/a/${pluginId}${extension.path}`;
   const config = getPreloadPluginConfig(pluginId);
 
   if (config?.error) {
@@ -53,8 +52,8 @@ function createRegistryItem(pluginId: string, extension: PluginsExtensionLinkCon
     type: PluginsExtensionTypes.link,
     title: extension.title,
     description: extension.description,
-    key: hashKey(`${extension.title}${path}`),
-    path,
+    key: hashKey(`${extension.title}${extension.path}`),
+    path: extension.path,
     configure: config?.extensionConfigs?.[extension.id],
   });
 }
