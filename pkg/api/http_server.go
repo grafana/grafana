@@ -93,7 +93,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/entity/httpentitystore"
-	"github.com/grafana/grafana/pkg/services/store/k8saccess"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/teamguardian"
@@ -258,7 +257,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService,
 	queryLibraryHTTPService querylibrary.HTTPService, queryLibraryService querylibrary.Service, oauthTokenService oauthtoken.OAuthTokenService,
 	statsService stats.Service, authnService authn.Service, pluginsCDNService *pluginscdn.Service,
-	k8saccess k8saccess.K8SAccess, // required so that the router is registered
 	starApi *starApi.API,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env

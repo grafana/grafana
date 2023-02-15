@@ -585,18 +585,18 @@ describe('Merge multiple to single', () => {
   });
 });
 
-const createField = (name: string, type: FieldType, values: any[], config = {}, display?: DisplayProcessor): Field => {
+const createField = (
+  name: string,
+  type: FieldType,
+  values: unknown[],
+  config = {},
+  display?: DisplayProcessor
+): Field => {
   return { name, type, values: new ArrayVector(values), config, labels: undefined, display };
 };
 
 const unwrap = (fields: Field[]): Field[] => {
   return fields.map((field) =>
-    createField(
-      field.name,
-      field.type,
-      field.values.toArray().map((value: any) => value),
-      field.config,
-      field.display
-    )
+    createField(field.name, field.type, field.values.toArray(), field.config, field.display)
   );
 };

@@ -11,7 +11,7 @@ import {
   EventBus,
   LogsVolumeType,
 } from '@grafana/data';
-import { Button, Collapse, InlineField, TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, Collapse, Icon, InlineField, Tooltip, TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { ExploreGraph } from './Graph/ExploreGraph';
 import { SupplementaryResultError } from './SupplementaryResultError';
@@ -57,7 +57,7 @@ export function LogsVolumePanel(props: Props) {
       LogsVolumePanelContent = (
         <ExploreGraph
           graphStyle="lines"
-          loadingState={LoadingState.Done}
+          loadingState={logsVolumeData.state ?? LoadingState.Done}
           data={logsVolumeData.data}
           height={height}
           width={width - spacing * 2}
@@ -94,6 +94,16 @@ export function LogsVolumePanel(props: Props) {
       </div>
     );
   }
+  if (logsVolumeData.state === LoadingState.Streaming) {
+    extraInfo = (
+      <>
+        {extraInfo}
+        <Tooltip content="Streaming">
+          <Icon name="circle-mono" size="md" className={styles.streaming} data-testid="logs-volume-streaming" />
+        </Tooltip>
+      </>
+    );
+  }
   return (
     <Collapse label="" isOpen={true}>
       <div style={{ height }} className={styles.contentContainer}>
@@ -121,6 +131,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     oldInfoText: css`
       font-size: ${theme.typography.size.sm};
       color: ${theme.colors.text.secondary};
+    `,
+    streaming: css`
+      color: ${theme.colors.success.text};
     `,
   };
 };
