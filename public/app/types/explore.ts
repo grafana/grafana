@@ -9,12 +9,12 @@ import {
   HistoryItem,
   LogsModel,
   PanelData,
-  QueryHint,
   RawTimeRange,
   TimeRange,
   EventBusExtended,
   DataQueryResponse,
   ExplorePanelsState,
+  SupplementaryQueryType,
 } from '@grafana/data';
 import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistoryTypes';
 
@@ -230,11 +230,8 @@ export interface QueryOptions {
 export interface QueryTransaction {
   id: string;
   done: boolean;
-  error?: string | JSX.Element;
-  hints?: QueryHint[];
   request: DataQueryRequest;
   queries: DataQuery[];
-  result?: any; // Table model / Timeseries[] / Logs
   scanning?: boolean;
 }
 
@@ -279,7 +276,3 @@ export interface SupplementaryQuery {
 export type SupplementaryQueries = {
   [key in SupplementaryQueryType]: SupplementaryQuery;
 };
-
-export enum SupplementaryQueryType {
-  LogsVolume = 'LogsVolume',
-}

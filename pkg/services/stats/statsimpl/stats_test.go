@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/stats"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 )
@@ -73,7 +74,7 @@ func populateDB(t *testing.T, sqlStore *sqlstore.SQLStore) {
 	t.Helper()
 
 	orgService, _ := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotatest.New(false, nil))
-	userSvc, _ := userimpl.ProvideService(sqlStore, orgService, sqlStore.Cfg, nil, nil, &quotatest.FakeQuotaService{})
+	userSvc, _ := userimpl.ProvideService(sqlStore, orgService, sqlStore.Cfg, nil, nil, &quotatest.FakeQuotaService{}, supportbundlestest.NewFakeBundleService())
 
 	users := make([]user.User, 3)
 	for i := range users {

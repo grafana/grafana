@@ -132,6 +132,7 @@ If the setting is set to `false`, the user is assigned the role of `Admin` of th
 name = Azure AD
 enabled = true
 allow_sign_up = true
+auto_login = false
 client_id = APPLICATION_ID
 client_secret = CLIENT_SECRET
 scopes = openid email profile
@@ -190,6 +191,15 @@ The `allowed_domains` option limits access to users who belong to specific domai
 allowed_domains = mycompany.com mycompany.org
 ```
 
+### Configure automatic login
+
+Set `auto_login` option to true to attempt login automatically, skipping the login screen.
+This setting is ignored if multiple auth providers are configured to use auto login.
+
+```
+auto_login = true
+```
+
 ### Team Sync (Enterprise only)
 
 With Team Sync you can map your Azure AD groups to teams in Grafana so that your users will automatically be added to
@@ -244,15 +254,12 @@ their organization membership will be reset to the default organization.
 
 ## Skip organization role sync
 
-If Azure AD authentication is not intended to sync user roles and organization membership,
-`oauth_skip_org_role_update_sync` should be enabled, this is not recommended to use in favor of setting provider specific `skip_org_role_sync` option.
-See [configure-grafana]({{< relref "../../../configure-grafana#oauth_skip_org_role_update_sync" >}}) for more details.
-
-To prevent the sync of org roles from Grafana.com, set `skip_org_role_sync` to `true`. This is useful if you want to manage the organization roles for your users from within Grafana.
+If Azure AD authentication is not intended to sync user roles and organization membership and prevent the sync of org roles from AzureAD, set `skip_org_role_sync` to `true`. This is useful if you want to manage the organization roles for your users from within Grafana or that your organization roles are synced from another provider.
+See [configure-grafana]({{< relref "../../../configure-grafana#authazuread-skip-org-role-sync" >}}) for more details.
 
 ```ini
 [auth.azuread]
 # ..
-# prevents the sync of org roles from Grafana.com
+# prevents the sync of org roles from AzureAD
 skip_org_role_sync = true
 ```

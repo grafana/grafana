@@ -1,6 +1,7 @@
 ---
 aliases:
   - ../../http_api/user/
+canonical: /docs/grafana/latest/developers/http_api/user/
 description: Grafana User HTTP API
 keywords:
   - grafana

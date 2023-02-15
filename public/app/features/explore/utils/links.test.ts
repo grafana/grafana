@@ -6,14 +6,13 @@ import {
   Field,
   FieldType,
   InterpolateFunction,
-  LinkModel,
   TimeRange,
   toDataFrame,
 } from '@grafana/data';
 import { setTemplateSrv } from '@grafana/runtime';
 
 import { initTemplateSrv } from '../../../../test/helpers/initTemplateSrv';
-import { setContextSrv } from '../../../core/services/context_srv';
+import { ContextSrv, setContextSrv } from '../../../core/services/context_srv';
 import { setLinkSrv } from '../../panel/panellinks/link_srv';
 
 import { getFieldLinksForExplore } from './links';
@@ -147,7 +146,7 @@ describe('getFieldLinksForExplore', () => {
     expect(links).toHaveLength(1);
     expect(links[0].href).toBe(
       `/explore?left=${encodeURIComponent(
-        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"query_1-foo"}],"panelsState":{}}'
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"query_1-foo"}]}'
       )}`
     );
   });
@@ -166,7 +165,7 @@ describe('getFieldLinksForExplore', () => {
     expect(links).toHaveLength(1);
     expect(links[0].href).toBe(
       `/explore?left=${encodeURIComponent(
-        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"query_1-foo"}],"panelsState":{}}'
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"query_1-foo"}]}'
       )}`
     );
   });
@@ -194,7 +193,7 @@ describe('getFieldLinksForExplore', () => {
     expect(links).toHaveLength(1);
     expect(links[0].href).toBe(
       `/explore?left=${encodeURIComponent(
-        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"query_1-foo"}],"panelsState":{}}'
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"query_1-foo"}]}'
       )}`
     );
   });
@@ -236,7 +235,7 @@ describe('getFieldLinksForExplore', () => {
     expect(links).toHaveLength(1);
     expect(links[0].href).toBe(
       `/explore?left=${encodeURIComponent(
-        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"query_1-foo-foo2"}],"panelsState":{}}'
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"query_1-foo-foo2"}]}'
       )}`
     );
   });
@@ -266,7 +265,7 @@ function setup(
   dataFrameOtherFieldOverride?: Field[]
 ) {
   setLinkSrv({
-    getDataLinkUIModel(link: DataLink, replaceVariables: InterpolateFunction | undefined, origin: any): LinkModel<any> {
+    getDataLinkUIModel(link: DataLink, replaceVariables: InterpolateFunction | undefined, origin) {
       return {
         href: link.url,
         title: link.title,
@@ -274,17 +273,17 @@ function setup(
         origin: origin,
       };
     },
-    getAnchorInfo(link: any) {
+    getAnchorInfo(link) {
       return { ...link };
     },
-    getLinkUrl(link: any) {
+    getLinkUrl(link) {
       return link.url;
     },
   });
 
   setContextSrv({
     hasAccessToExplore: () => hasAccess,
-  } as any);
+  } as ContextSrv);
 
   const field: Field<string | null> = {
     name: 'flux-dimensions',

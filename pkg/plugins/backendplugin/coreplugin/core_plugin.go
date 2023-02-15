@@ -64,6 +64,10 @@ func (cp *corePlugin) IsDecommissioned() bool {
 	return false
 }
 
+func (cp *corePlugin) Target() backendplugin.Target {
+	return backendplugin.TargetInMemory
+}
+
 func (cp *corePlugin) CollectMetrics(_ context.Context, _ *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
 	return nil, backendplugin.ErrMethodNotImplemented
 }

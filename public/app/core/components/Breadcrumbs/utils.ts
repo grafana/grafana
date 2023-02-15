@@ -1,7 +1,5 @@
 import { NavModelItem } from '@grafana/data';
 
-import { getNavTitle } from '../NavBar/navBarItem-translations';
-
 import { Breadcrumb } from './types';
 
 export function buildBreadcrumbs(sectionNav: NavModelItem, pageNav?: NavModelItem, homeNav?: NavModelItem) {
@@ -19,10 +17,10 @@ export function buildBreadcrumbs(sectionNav: NavModelItem, pageNav?: NavModelIte
 
     if (!foundHome && !node.hideFromBreadcrumbs) {
       if (homeNav && urlToMatch === homeNav.url) {
-        crumbs.unshift({ text: getNavTitle(homeNav.id) ?? homeNav.text, href: node.url ?? '' });
+        crumbs.unshift({ text: homeNav.text, href: node.url ?? '' });
         foundHome = true;
       } else {
-        crumbs.unshift({ text: getNavTitle(node.id) ?? node.text, href: node.url ?? '' });
+        crumbs.unshift({ text: node.text, href: node.url ?? '' });
       }
     }
 
@@ -32,10 +30,14 @@ export function buildBreadcrumbs(sectionNav: NavModelItem, pageNav?: NavModelIte
   }
 
   if (pageNav) {
-    if (pageNav.children) {
+    if (pageNav.url && pageNav.children) {
       const child = pageNav.children.find((child) => child.active);
       if (child) {
         addCrumbs(child);
+        // Some pages set up children but they are not connected to parent pageNav
+        if (child.parentItem !== pageNav) {
+          addCrumbs(pageNav);
+        }
       }
     } else {
       addCrumbs(pageNav);

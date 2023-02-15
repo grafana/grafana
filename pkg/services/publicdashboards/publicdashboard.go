@@ -21,6 +21,7 @@ type Service interface {
 	FindAnnotations(ctx context.Context, reqDTO AnnotationsQueryDTO, accessToken string) ([]AnnotationEvent, error)
 	FindDashboard(ctx context.Context, orgId int64, dashboardUid string) (*dashboards.Dashboard, error)
 	FindAll(ctx context.Context, u *user.SignedInUser, orgId int64) ([]PublicDashboardListResponse, error)
+	Find(ctx context.Context, uid string) (*PublicDashboard, error)
 	Create(ctx context.Context, u *user.SignedInUser, dto *SavePublicDashboardDTO) (*PublicDashboard, error)
 	Update(ctx context.Context, u *user.SignedInUser, dto *SavePublicDashboardDTO) (*PublicDashboard, error)
 	Delete(ctx context.Context, orgId int64, uid string) error
@@ -33,6 +34,13 @@ type Service interface {
 
 	ExistsEnabledByAccessToken(ctx context.Context, accessToken string) (bool, error)
 	ExistsEnabledByDashboardUid(ctx context.Context, dashboardUid string) (bool, error)
+}
+
+// ServiceWrapper these methods have different behavior between OSS and Enterprise. The latter would call the OSS service first
+//
+//go:generate mockery --name ServiceWrapper --structname FakePublicDashboardServiceWrapper --inpackage --filename public_dashboard_service_wrapper_mock.go
+type ServiceWrapper interface {
+	FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error)
 }
 
 //go:generate mockery --name Store --structname FakePublicDashboardStore --inpackage --filename public_dashboard_store_mock.go

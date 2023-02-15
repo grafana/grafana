@@ -20,7 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-var _ authn.Client = new(JWT)
+var _ authn.ContextAwareClient = new(JWT)
 
 var (
 	ErrJWTInvalid = errutil.NewBase(errutil.StatusUnauthorized,
@@ -45,6 +45,10 @@ type JWT struct {
 	jwtService auth.JWTVerifierService
 }
 
+func (s *JWT) Name() string {
+	return authn.ClientJWT
+}
+
 func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
 	jwtToken := s.retrieveToken(r.HTTPRequest)
 
@@ -65,10 +69,9 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 		AuthID:     sub,
 		OrgRoles:   map[int64]org.RoleType{},
 		ClientParams: authn.ClientParams{
-			SyncUser:            true,
-			SyncTeamMembers:     true,
-			AllowSignUp:         false,
-			EnableDisabledUsers: false,
+			SyncUser:        true,
+			FetchSyncedUser: true,
+			AllowSignUp:     s.cfg.JWTAuthAutoSignUp,
 		}}
 
 	if key := s.cfg.JWTAuthUsernameClaim; key != "" {
@@ -115,14 +118,10 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 		}
 	}
 
-	if id.Login == "" || id.Email == "" {
+	if id.Login == "" && id.Email == "" {
 		s.log.Debug("Failed to get an authentication claim from JWT",
 			"login", id.Login, "email", id.Email)
-		return nil, ErrJWTMissingClaim.Errorf("missing login or email claim in JWT")
-	}
-
-	if s.cfg.JWTAuthAutoSignUp {
-		id.ClientParams.AllowSignUp = true
+		return nil, ErrJWTMissingClaim.Errorf("missing login and email claim in JWT")
 	}
 
 	return id, nil
@@ -155,6 +154,10 @@ func (s *JWT) Test(ctx context.Context, r *authn.Request) bool {
 	}
 
 	return true
+}
+
+func (s *JWT) Priority() uint {
+	return 20
 }
 
 const roleGrafanaAdmin = "GrafanaAdmin"

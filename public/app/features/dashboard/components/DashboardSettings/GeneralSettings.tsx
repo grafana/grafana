@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { TimeZone } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { CollapsableSection, Field, Input, RadioButtonGroup, TagsInput } from '@grafana/ui';
 import { Page } from 'app/core/components/PageNew/Page';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
@@ -10,7 +9,6 @@ import { updateTimeZoneDashboard, updateWeekStartDashboard } from 'app/features/
 
 import { DeleteDashboardButton } from '../DeleteDashboard/DeleteDashboardButton';
 
-import { PreviewSettings } from './PreviewSettings';
 import { TimePickerSettings } from './TimePickerSettings';
 import { SettingsPageProps } from './types';
 
@@ -124,10 +122,6 @@ export function GeneralSettingsUnconnected({
             <RadioButtonGroup value={dashboard.editable} options={editableOptions} onChange={onEditableChange} />
           </Field>
         </div>
-
-        {config.featureToggles.dashboardPreviews && config.featureToggles.dashboardPreviewsAdmin && (
-          <PreviewSettings uid={dashboard.uid} />
-        )}
 
         <TimePickerSettings
           onTimeZoneChange={onTimeZoneChange}

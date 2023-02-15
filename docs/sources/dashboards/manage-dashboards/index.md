@@ -9,7 +9,6 @@ aliases:
   - dashboard-folders/
   - dashboard-manage/
   - export-import/
-  - time-range-controls/
 keywords:
   - grafana
   - dashboard

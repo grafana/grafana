@@ -1,9 +1,14 @@
 import { MonoTypeOperatorFunction } from 'rxjs';
 
+import { MatcherConfig, DataTransformerConfig } from '@grafana/schema';
+
 import { RegistryItemWithOptions } from '../utils/Registry';
 
 import { DataFrame, Field } from './dataFrame';
 import { InterpolateFunction } from './panel';
+
+/** deprecated, use it from schema */
+export type { MatcherConfig };
 
 /**
  * Context passed to transformDataFrame and to each transform operator
@@ -36,22 +41,9 @@ export interface SynchronousDataTransformerInfo<TOptions = any> extends DataTran
 }
 
 /**
- * @public
+ * @deprecated use TransformationConfig from schema
  */
-export interface DataTransformerConfig<TOptions = any> {
-  /**
-   * Unique identifier of transformer
-   */
-  id: string;
-  /**
-   * Disabled transformations are skipped
-   */
-  disabled?: boolean;
-  /**
-   * Options to be passed to the transformer
-   */
-  options: TOptions;
-}
+export type { DataTransformerConfig };
 
 export type FrameMatcher = (frame: DataFrame) => boolean;
 export type FieldMatcher = (field: Field, frame: DataFrame, allFrames: DataFrame[]) => boolean;
@@ -79,10 +71,6 @@ export interface ValueMatcherInfo<TOptions = any> extends RegistryItemWithOption
   get: (options: TOptions) => ValueMatcher;
   isApplicable: (field: Field) => boolean;
   getDefaultOptions: (field: Field) => TOptions;
-}
-export interface MatcherConfig<TOptions = any> {
-  id: string;
-  options?: TOptions;
 }
 
 /**

@@ -21,16 +21,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gobwas/glob"
+	"github.com/prometheus/common/model"
+	"gopkg.in/ini.v1"
+
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util"
-
-	"github.com/gobwas/glob"
-	"github.com/prometheus/common/model"
-	"gopkg.in/ini.v1"
 )
 
 type Scheme string
@@ -87,12 +87,6 @@ var (
 	CookieSameSiteDisabled bool
 	CookieSameSiteMode     http.SameSite
 
-	// Snapshots
-	ExternalSnapshotUrl   string
-	ExternalSnapshotName  string
-	ExternalEnabled       bool
-	SnapShotRemoveExpired bool
-
 	// Dashboard history
 	DashboardVersionsToKeep int
 	MinRefreshInterval      string
@@ -145,14 +139,6 @@ var (
 	RudderstackWriteKey                 string
 	RudderstackSdkUrl                   string
 	RudderstackConfigUrl                string
-
-	// LDAP
-	LDAPEnabled           bool
-	LDAPSkipOrgRoleSync   bool
-	LDAPConfigFile        string
-	LDAPSyncCron          string
-	LDAPAllowSignup       bool
-	LDAPActiveSyncEnabled bool
 
 	// Alerting
 	AlertingEnabled            *bool
@@ -282,6 +268,9 @@ type Cfg struct {
 	PluginAdminEnabled               bool
 	PluginAdminExternalManageEnabled bool
 
+	PluginsCDNURLTemplate    string
+	PluginLogBackendRequests bool
+
 	// Panels
 	DisableSanitizeHtml bool
 
@@ -407,6 +396,12 @@ type Cfg struct {
 	DataSourceLimit int
 
 	// Snapshots
+	SnapshotEnabled       bool
+	ExternalSnapshotUrl   string
+	ExternalSnapshotName  string
+	ExternalEnabled       bool
+	SnapShotRemoveExpired bool
+
 	SnapshotPublicMode bool
 
 	ErrTemplateName string
@@ -430,10 +425,19 @@ type Cfg struct {
 	// Google
 	GoogleSkipOrgRoleSync bool
 
+	// Gitlab
+	GitLabSkipOrgRoleSync bool
+
+	// Generic OAuth
+	GenericOAuthSkipOrgRoleSync bool
+
 	// LDAP
-	LDAPEnabled         bool
-	LDAPSkipOrgRoleSync bool
-	LDAPAllowSignup     bool
+	LDAPEnabled           bool
+	LDAPSkipOrgRoleSync   bool
+	LDAPConfigFilePath    string
+	LDAPAllowSignup       bool
+	LDAPActiveSyncEnabled bool
+	LDAPSyncCron          string
 
 	DefaultTheme    string
 	DefaultLanguage string
@@ -464,6 +468,9 @@ type Cfg struct {
 	// then Live uses AppURL as the only allowed origin.
 	LiveAllowedOrigins []string
 
+	// Github OAuth
+	GithubSkipOrgRoleSync bool
+
 	// Grafana.com URL, used for OAuth redirect.
 	GrafanaComURL string
 	// Grafana.com API URL. Can be set separately to GrafanaComURL
@@ -492,6 +499,12 @@ type Cfg struct {
 	Search SearchSettings
 
 	SecureSocksDSProxy SecureSocksDSProxySettings
+
+	// SAML Auth
+	SAMLSkipOrgRoleSync bool
+
+	// Okta OAuth
+	OktaSkipOrgRoleSync bool
 
 	// Access Control
 	RBACEnabled         bool
@@ -1080,6 +1093,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 		cfg.PluginsEnableAlpha = true
 	}
 
+	cfg.readSAMLConfig()
 	cfg.readLDAPConfig()
 	cfg.handleAWSConfig()
 	cfg.readAzureSettings()
@@ -1179,17 +1193,19 @@ type RemoteCacheOptions struct {
 	Encryption bool
 }
 
+func (cfg *Cfg) readSAMLConfig() {
+	samlSec := cfg.Raw.Section("auth.saml")
+	cfg.SAMLSkipOrgRoleSync = samlSec.Key("skip_org_role_sync").MustBool(false)
+}
+
 func (cfg *Cfg) readLDAPConfig() {
 	ldapSec := cfg.Raw.Section("auth.ldap")
-	LDAPConfigFile = ldapSec.Key("config_file").String()
-	LDAPSyncCron = ldapSec.Key("sync_cron").String()
-	LDAPEnabled = ldapSec.Key("enabled").MustBool(false)
-	cfg.LDAPEnabled = LDAPEnabled
-	LDAPSkipOrgRoleSync = ldapSec.Key("skip_org_role_sync").MustBool(false)
-	cfg.LDAPSkipOrgRoleSync = LDAPSkipOrgRoleSync
-	LDAPActiveSyncEnabled = ldapSec.Key("active_sync_enabled").MustBool(false)
-	LDAPAllowSignup = ldapSec.Key("allow_sign_up").MustBool(true)
-	cfg.LDAPAllowSignup = LDAPAllowSignup
+	cfg.LDAPConfigFilePath = ldapSec.Key("config_file").String()
+	cfg.LDAPSyncCron = ldapSec.Key("sync_cron").String()
+	cfg.LDAPEnabled = ldapSec.Key("enabled").MustBool(false)
+	cfg.LDAPSkipOrgRoleSync = ldapSec.Key("skip_org_role_sync").MustBool(false)
+	cfg.LDAPActiveSyncEnabled = ldapSec.Key("active_sync_enabled").MustBool(false)
+	cfg.LDAPAllowSignup = ldapSec.Key("allow_sign_up").MustBool(true)
 }
 
 func (cfg *Cfg) handleAWSConfig() {
@@ -1372,9 +1388,29 @@ func readAuthGrafanaComSettings(iniFile *ini.File, cfg *Cfg) {
 	cfg.GrafanaComSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
 }
 
+func readAuthGithubSettings(iniFile *ini.File, cfg *Cfg) {
+	sec := iniFile.Section("auth.github")
+	cfg.GithubSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
+}
+
 func readAuthGoogleSettings(iniFile *ini.File, cfg *Cfg) {
 	sec := iniFile.Section("auth.google")
 	cfg.GoogleSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
+}
+
+func readAuthGitlabSettings(iniFile *ini.File, cfg *Cfg) {
+	sec := iniFile.Section("auth.gitlab")
+	cfg.GitLabSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
+}
+
+func readGenericOAuthSettings(iniFile *ini.File, cfg *Cfg) {
+	sec := iniFile.Section("auth.generic_oauth")
+	cfg.GenericOAuthSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
+}
+
+func readAuthOktaSettings(iniFile *ini.File, cfg *Cfg) {
+	sec := iniFile.Section("auth.okta")
+	cfg.OktaSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
 }
 
 func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
@@ -1408,10 +1444,20 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 	DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
+
+	// Deprecated
 	OAuthAutoLogin = auth.Key("oauth_auto_login").MustBool(false)
+	if OAuthAutoLogin {
+		cfg.Logger.Warn("[Deprecated] The oauth_auto_login configuration setting is deprecated. Please use auto_login inside auth provider section instead.")
+	}
+
 	cfg.OAuthCookieMaxAge = auth.Key("oauth_state_cookie_max_age").MustInt(600)
 	SignoutRedirectUrl = valueAsString(auth, "signout_redirect_url", "")
+	// Deprecated
 	cfg.OAuthSkipOrgRoleUpdateSync = auth.Key("oauth_skip_org_role_update_sync").MustBool(false)
+	if cfg.OAuthSkipOrgRoleUpdateSync {
+		cfg.Logger.Warn("[Deprecated] The oauth_skip_org_role_update_sync configuration setting is deprecated. Please use skip_org_role_sync inside the auth provider section instead.")
+	}
 
 	cfg.DisableLogin = auth.Key("disable_login").MustBool(false)
 
@@ -1427,6 +1473,15 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	// Google Auth
 	readAuthGoogleSettings(iniFile, cfg)
+
+	// GitLab Auth
+	readAuthGitlabSettings(iniFile, cfg)
+
+	// Generic OAuth
+	readGenericOAuthSettings(iniFile, cfg)
+
+	// Okta Auth
+	readAuthOktaSettings(iniFile, cfg)
 
 	// anonymous access
 	AnonymousEnabled = iniFile.Section("auth.anonymous").Key("enabled").MustBool(false)
@@ -1484,7 +1539,11 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	cfg.AuthProxyHeadersEncoded = authProxy.Key("headers_encoded").MustBool(false)
 
+	// GrafanaCom
 	readAuthGrafanaComSettings(iniFile, cfg)
+
+	// Github
+	readAuthGithubSettings(iniFile, cfg)
 	return nil
 }
 
@@ -1673,11 +1732,13 @@ func IsLegacyAlertingEnabled() bool {
 func readSnapshotsSettings(cfg *Cfg, iniFile *ini.File) error {
 	snapshots := iniFile.Section("snapshots")
 
-	ExternalSnapshotUrl = valueAsString(snapshots, "external_snapshot_url", "")
-	ExternalSnapshotName = valueAsString(snapshots, "external_snapshot_name", "")
+	cfg.SnapshotEnabled = snapshots.Key("enabled").MustBool(true)
 
-	ExternalEnabled = snapshots.Key("external_enabled").MustBool(true)
-	SnapShotRemoveExpired = snapshots.Key("snapshot_remove_expired").MustBool(true)
+	cfg.ExternalSnapshotUrl = valueAsString(snapshots, "external_snapshot_url", "")
+	cfg.ExternalSnapshotName = valueAsString(snapshots, "external_snapshot_name", "")
+
+	cfg.ExternalEnabled = snapshots.Key("external_enabled").MustBool(true)
+	cfg.SnapShotRemoveExpired = snapshots.Key("snapshot_remove_expired").MustBool(true)
 	cfg.SnapshotPublicMode = snapshots.Key("public_mode").MustBool(false)
 
 	return nil
@@ -1771,8 +1832,8 @@ func (cfg *Cfg) readDataSourcesSettings() {
 }
 
 func GetAllowedOriginGlobs(originPatterns []string) ([]glob.Glob, error) {
-	var originGlobs []glob.Glob
 	allowedOrigins := originPatterns
+	originGlobs := make([]glob.Glob, 0, len(allowedOrigins))
 	for _, originPattern := range allowedOrigins {
 		g, err := glob.Compile(originPattern)
 		if err != nil {

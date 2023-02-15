@@ -14,7 +14,7 @@ import (
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -500,7 +500,7 @@ func TestAMConfigMigration(t *testing.T) {
 	}
 }
 
-// TestDashAlertMigration tests the execution of the main DashAlertMigration specifically for migrations of alerts.
+// TestDashAlertMigration tests the execution of the main DashAlertMigration specifically for migrations of models.
 func TestDashAlertMigration(t *testing.T) {
 	// Run initial migration to have a working DB.
 	x := setupTestDB(t)
@@ -619,8 +619,8 @@ func createAlertNotificationWithReminder(t *testing.T, orgId int64, uid string, 
 	}
 
 	return &models.AlertNotification{
-		OrgId:                 orgId,
-		Uid:                   uid,
+		OrgID:                 orgId,
+		UID:                   uid,
 		Name:                  uid, // Same as uid to make testing easier.
 		Type:                  channelType,
 		DisableResolveMessage: false,
@@ -656,9 +656,9 @@ func createAlert(t *testing.T, orgId int64, dashboardId int64, panelsId int64, n
 	}
 
 	return &models.Alert{
-		OrgId:        orgId,
-		DashboardId:  dashboardId,
-		PanelId:      panelsId,
+		OrgID:        orgId,
+		DashboardID:  dashboardId,
+		PanelID:      panelsId,
 		Name:         name,
 		Message:      "message",
 		Frequency:    int64(60),
@@ -688,9 +688,9 @@ func createDashboard(t *testing.T, id int64, orgId int64, uid string) *dashboard
 func createDatasource(t *testing.T, id int64, orgId int64, uid string) *datasources.DataSource {
 	t.Helper()
 	return &datasources.DataSource{
-		Id:      id,
-		OrgId:   orgId,
-		Uid:     uid,
+		ID:      id,
+		OrgID:   orgId,
+		UID:     uid,
 		Created: now,
 		Updated: now,
 		Name:    uid, // Not tested, needed to satisfy contraint.
