@@ -1,4 +1,4 @@
-import { type PluginsExtensionLink, PluginsExtensionTypes } from '@grafana/data';
+import { type PluginsExtensionLink, PluginsExtensionTypes, PluginsExtensionLinkConfigurer } from '@grafana/data';
 import { type AppPluginConfig, type PluginsExtensionLinkConfig, type PluginsExtensionRegistry } from '@grafana/runtime';
 
 import { getPreloadPluginConfig } from '../pluginPreloader';
@@ -54,10 +54,35 @@ function createRegistryItem(pluginId: string, extension: PluginsExtensionLinkCon
     description: extension.description,
     key: hashKey(`${extension.title}${extension.path}`),
     path: extension.path,
-    configure: config?.extensionConfigs?.[extension.id],
+    configure: configureWithValidation(pluginId, config?.extensionConfigs?.[extension.id]),
   });
 }
 
 function hashKey(key: string): number {
   return Array.from(key).reduce((s, c) => (Math.imul(31, s) + c.charCodeAt(0)) | 0, 0);
+}
+
+// This should not live here. It should be moved to the AppPlugin
+// to be applied as early in the pipeline as possible. But currently
+// we don't have access to pluginId when preloading plugins.
+function configureWithValidation(
+  pluginId: string,
+  configurer: PluginsExtensionLinkConfigurer | undefined
+): PluginsExtensionLinkConfigurer | undefined {
+  if (!configurer) {
+    return;
+  }
+
+  const pathPrefix = `/a/${pluginId}/`;
+
+  return function validateConfiguredLink(link, context) {
+    const configured = configurer(link, context);
+    const path = configured?.path;
+
+    if (path && !path.startsWith(pathPrefix)) {
+      return undefined;
+    }
+
+    return configured;
+  };
 }
