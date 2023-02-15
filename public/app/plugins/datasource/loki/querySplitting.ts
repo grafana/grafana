@@ -126,6 +126,10 @@ export function runPartitionedQuery(datasource: LokiDatasource, request: DataQue
       .pipe(
         // in case of an empty query, this is somehow run twice. `share()` is no workaround here as the observable is generated from `of()`.
         map((partialResponse) => {
+          if (partialResponse.error) {
+            subscriber.error(partialResponse.error);
+            return mergedResponse || { data: [] };
+          }
           mergedResponse = combineResponses(mergedResponse, partialResponse);
           return mergedResponse;
         })
