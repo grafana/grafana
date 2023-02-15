@@ -1,7 +1,7 @@
 import { SyntaxNode } from '@lezer/common';
 import { escapeRegExp } from 'lodash';
 
-import { DataQueryRequest, DataQueryResponse, DataQueryResponseData, QueryResultMetaStat } from '@grafana/data';
+import { DataQueryResponse, DataQueryResponseData, QueryResultMetaStat } from '@grafana/data';
 import {
   parser,
   LineFilter,
@@ -297,22 +297,16 @@ export function getStreamSelectorsFromQuery(query: string): string[] {
   return labelMatchers;
 }
 
-export function requestSupportsPartitioning(queries: LokiQuery[]) {
+export function requestSupportsPartitioning(allQueries: LokiQuery[]) {
+  const queries = allQueries.filter((query) => !query.hide);
   /*
-   * For now, we would not split when more than 1 query is requested.
+   * For now, we will not split when more than 1 query is requested.
    */
   if (queries.length > 1) {
     return false;
   }
 
-  /**
-   * Disable logs volume queries.
-   */
-  if (queries[0].refId.includes('log-volume-')) {
-    return false;
-  }
-
-  if (isLogsQuery(queries[0].expr)) {
+  if (queries[0].refId.includes('do-not-chunk')) {
     return false;
   }
 
@@ -364,26 +358,4 @@ function combineMetadata(dest: DataQueryResponseData = {}, source: DataQueryResp
       destStat.value += sourceStat.value;
     }
   });
-}
-
-/**
- * Checks if the current response has reached the requested amount of results or not.
- * For log queries, we will ensure that the current amount of results doesn't go beyond `maxLines`.
- */
-export function resultLimitReached(request: DataQueryRequest<LokiQuery>, result: DataQueryResponse) {
-  const logRequests = request.targets.filter((target) => isLogsQuery(target.expr));
-
-  if (logRequests.length === 0) {
-    return false;
-  }
-
-  for (const request of logRequests) {
-    for (const frame of result.data) {
-      if (request.maxLines && frame?.fields[0].values.length >= request.maxLines) {
-        return true;
-      }
-    }
-  }
-
-  return false;
 }

@@ -1,11 +1,12 @@
-import { Subscriber, map, Observable } from 'rxjs';
+import { Subscriber, map, Observable, Subscription } from 'rxjs';
 
 import { DataQueryRequest, DataQueryResponse, dateTime, TimeRange } from '@grafana/data';
 import { LoadingState } from '@grafana/schema';
 
 import { LokiDatasource } from './datasource';
-import { getRanges } from './metricTimeSplit';
-import { combineResponses, resultLimitReached } from './queryUtils';
+import { getRangeChunks as getLogsRangeChunks } from './logsTimeSplit';
+import { getRangeChunks as getMetricRangeChunks } from './metricTimeSplit';
+import { combineResponses, isLogsQuery } from './queryUtils';
 import { LokiQuery } from './types';
 
 /**
@@ -15,10 +16,12 @@ import { LokiQuery } from './types';
  */
 (window as any).lokiChunkDuration = 24 * 60 * 60 * 1000;
 
-export function partitionTimeRange(originalTimeRange: TimeRange, intervalMs: number, resolution: number): TimeRange[] {
-  // we currently assume we are only running metric queries here.
-  // for logs-queries we will have to use a different time-range-split algorithm.
-
+export function partitionTimeRange(
+  isLogsQuery: boolean,
+  originalTimeRange: TimeRange,
+  intervalMs: number,
+  resolution: number
+): TimeRange[] {
   // the `step` value that will be finally sent to Loki is rougly the same as `intervalMs`,
   // but there are some complications.
   // we need to replicate this algo:
@@ -31,7 +34,11 @@ export function partitionTimeRange(originalTimeRange: TimeRange, intervalMs: num
   const safeStep = Math.ceil((end - start) / 11000);
   const step = Math.max(intervalMs * resolution, safeStep);
 
-  const ranges = getRanges(start, end, step, (window as any).lokiChunkDuration);
+  const duration: number = (window as any).lokiChunkDuration;
+
+  const ranges = isLogsQuery
+    ? getLogsRangeChunks(start, end, duration)
+    : getMetricRangeChunks(start, end, step, duration);
 
   // if the split was not possible, go with the original range
   if (ranges == null) {
@@ -49,17 +56,73 @@ export function partitionTimeRange(originalTimeRange: TimeRange, intervalMs: num
   });
 }
 
+/**
+ * Based in the state of the current response, if any, adjust target parameters such as `maxLines`.
+ * For `maxLines`, we will update it as `maxLines - current amount of lines`.
+ * At the end, we will filter the targets that don't need to be executed in the next request batch,
+ * becasue, for example, the `maxLines` have been reached.
+ */
+
+function adjustTargetsFromResponseState(targets: LokiQuery[], response: DataQueryResponse | null): LokiQuery[] {
+  if (!response) {
+    return targets;
+  }
+
+  return targets
+    .map((target) => {
+      if (!target.maxLines || !isLogsQuery(target.expr)) {
+        return target;
+      }
+      const targetFrame = response.data.find((frame) => frame.refId === target.refId);
+      if (!targetFrame) {
+        return target;
+      }
+      const updatedMaxLines = target.maxLines - targetFrame.length;
+      return {
+        ...target,
+        maxLines: updatedMaxLines < 0 ? 0 : updatedMaxLines,
+      };
+    })
+    .filter((target) => target.maxLines === undefined || target.maxLines > 0);
+}
+
 export function runPartitionedQuery(datasource: LokiDatasource, request: DataQueryRequest<LokiQuery>) {
   let mergedResponse: DataQueryResponse | null;
-  // FIXME: the following line assumes every query has the same resolution
-  const partition = partitionTimeRange(request.range, request.intervalMs, request.targets[0].resolution ?? 1);
+  const queries = request.targets.filter((query) => !query.hide);
+  // we assume there is just a single query in the request
+  const query = queries[0];
+  const partition = partitionTimeRange(
+    isLogsQuery(query.expr),
+    request.range,
+    request.intervalMs,
+    query.resolution ?? 1
+  );
   const totalRequests = partition.length;
 
+  let shouldStop = false;
+  let smallQuerySubsciption: Subscription | null = null;
   const runNextRequest = (subscriber: Subscriber<DataQueryResponse>, requestN: number) => {
+    if (shouldStop) {
+      return;
+    }
+
     const requestId = `${request.requestId}_${requestN}`;
     const range = partition[requestN - 1];
-    datasource
-      .runQuery({ ...request, range, requestId })
+    const targets = adjustTargetsFromResponseState(request.targets, mergedResponse);
+
+    const done = (response: DataQueryResponse) => {
+      response.state = LoadingState.Done;
+      subscriber.next(response);
+      subscriber.complete();
+    };
+
+    if (!targets.length && mergedResponse) {
+      done(mergedResponse);
+      return;
+    }
+
+    smallQuerySubsciption = datasource
+      .runQuery({ ...request, range, requestId, targets })
       .pipe(
         // in case of an empty query, this is somehow run twice. `share()` is no workaround here as the observable is generated from `of()`.
         map((partialResponse) => {
@@ -69,15 +132,13 @@ export function runPartitionedQuery(datasource: LokiDatasource, request: DataQue
       )
       .subscribe({
         next: (response) => {
-          if (requestN > 1 && resultLimitReached(request, response) === false) {
+          if (requestN > 1) {
             response.state = LoadingState.Streaming;
             subscriber.next(response);
             runNextRequest(subscriber, requestN - 1);
             return;
           }
-          response.state = LoadingState.Done;
-          subscriber.next(response);
-          subscriber.complete();
+          done(response);
         },
         error: (error) => {
           subscriber.error(error);
@@ -87,6 +148,12 @@ export function runPartitionedQuery(datasource: LokiDatasource, request: DataQue
 
   const response = new Observable<DataQueryResponse>((subscriber) => {
     runNextRequest(subscriber, totalRequests);
+    return () => {
+      shouldStop = true;
+      if (smallQuerySubsciption != null) {
+        smallQuerySubsciption.unsubscribe();
+      }
+    };
   });
 
   return response;

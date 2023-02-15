@@ -70,7 +70,7 @@ func ProvideService(cfg *setting.Cfg,
 
 	usageStats.RegisterMetricsFunc(s.getUsageStats)
 
-	if !features.IsEnabled(featuremgmt.FlagSupportBundles) || !s.enabled {
+	if !s.enabled {
 		return s, nil
 	}
 
@@ -86,13 +86,13 @@ func ProvideService(cfg *setting.Cfg,
 	s.bundleRegistry.RegisterSupportItemCollector(basicCollector(cfg))
 	s.bundleRegistry.RegisterSupportItemCollector(settingsCollector(settings))
 	s.bundleRegistry.RegisterSupportItemCollector(dbCollector(sql))
-	s.bundleRegistry.RegisterSupportItemCollector(pluginInfoCollector(pluginStore, pluginSettings))
+	s.bundleRegistry.RegisterSupportItemCollector(pluginInfoCollector(pluginStore, pluginSettings, s.log))
 
 	return s, nil
 }
 
 func (s *Service) Run(ctx context.Context) error {
-	if !s.features.IsEnabled(featuremgmt.FlagSupportBundles) {
+	if !s.enabled {
 		return nil
 	}
 

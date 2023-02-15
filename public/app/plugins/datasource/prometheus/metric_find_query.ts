@@ -24,7 +24,7 @@ export default class PrometheusMetricFindQuery {
     const queryResultRegex = /^query_result\((.+)\)\s*$/;
     const labelNamesQuery = this.query.match(labelNamesRegex);
     if (labelNamesQuery) {
-      return this.datasource.getLabelNames();
+      return this.labelNamesQuery();
     }
 
     const labelValuesQuery = this.query.match(labelValuesRegex);
@@ -47,12 +47,24 @@ export default class PrometheusMetricFindQuery {
     }
 
     // if query contains full metric name, return metric name and label list
-    const expressions = ['label_values()', 'metrics()', 'query_result()'];
-    if (!expressions.includes(this.query)) {
-      return this.metricNameAndLabelsQuery(this.query);
-    }
+    return this.metricNameAndLabelsQuery(this.query);
+  }
 
-    return Promise.resolve([]);
+  labelNamesQuery() {
+    const start = this.datasource.getPrometheusTime(this.range.from, false);
+    const end = this.datasource.getPrometheusTime(this.range.to, true);
+    const params = {
+      start: start.toString(),
+      end: end.toString(),
+    };
+
+    const url = `/api/v1/labels`;
+
+    return this.datasource.metadataRequest(url, params).then((result: any) => {
+      return _map(result.data.data, (value) => {
+        return { text: value };
+      });
+    });
   }
 
   labelValuesQuery(label: string, metric?: string) {
