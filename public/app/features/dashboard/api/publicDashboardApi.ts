@@ -1,4 +1,4 @@
-import { BaseQueryFn, createApi, retry } from '@reduxjs/toolkit/query/react';
+import { BaseQueryFn, createApi } from '@reduxjs/toolkit/query/react';
 import { lastValueFrom } from 'rxjs';
 
 import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime/src';
@@ -12,7 +12,7 @@ import { DashboardModel } from 'app/features/dashboard/state';
 import { ListPublicDashboardResponse } from 'app/features/manage-dashboards/types';
 
 type ReqOptions = {
-  manageError?: (err: unknown) => { error: unknown };
+  manageError?: (err: { status: number }) => { error: unknown };
   showErrorAlert?: boolean;
 };
 
@@ -29,6 +29,7 @@ const backendSrvBaseQuery =
       );
       return { data: responseData, meta };
     } catch (error) {
+      // @ts-ignore
       return requestOptions.manageError ? requestOptions.manageError(error) : { error };
     }
   };
@@ -37,13 +38,13 @@ const getConfigError = (err: { status: number }) => ({ error: err.status !== 404
 
 export const publicDashboardApi = createApi({
   reducerPath: 'publicDashboardApi',
-  baseQuery: retry(backendSrvBaseQuery({ baseUrl: '/api/dashboards' }), { maxRetries: 0 }),
+  baseQuery: backendSrvBaseQuery({ baseUrl: '/api' }),
   tagTypes: ['PublicDashboard', 'AuditTablePublicDashboard'],
   refetchOnMountOrArgChange: true,
   endpoints: (builder) => ({
     getPublicDashboard: builder.query<PublicDashboard | undefined, string>({
       query: (dashboardUid) => ({
-        url: `/uid/${dashboardUid}/public-dashboards`,
+        url: `/dashboards/uid/${dashboardUid}/public-dashboards`,
         manageError: getConfigError,
         showErrorAlert: false,
       }),
@@ -63,7 +64,7 @@ export const publicDashboardApi = createApi({
       { dashboard: DashboardModel; payload: Partial<PublicDashboardSettings> }
     >({
       query: (params) => ({
-        url: `/uid/${params.dashboard.uid}/public-dashboards`,
+        url: `/dashboards/uid/${params.dashboard.uid}/public-dashboards`,
         method: 'POST',
         data: params.payload,
       }),
@@ -81,11 +82,10 @@ export const publicDashboardApi = createApi({
     }),
     updatePublicDashboard: builder.mutation<PublicDashboard, { dashboard: DashboardModel; payload: PublicDashboard }>({
       query: (params) => ({
-        url: `/uid/${params.dashboard.uid}/public-dashboards/${params.payload.uid}`,
+        url: `/dashboards/uid/${params.dashboard.uid}/public-dashboards/${params.payload.uid}`,
         method: 'PUT',
         data: params.payload,
       }),
-      extraOptions: { maxRetries: 0 },
       async onQueryStarted({ dashboard, payload }, { dispatch, queryFulfilled }) {
         const { data } = await queryFulfilled;
         dispatch(notifyApp(createSuccessNotification('Public dashboard updated!')));
@@ -98,15 +98,27 @@ export const publicDashboardApi = createApi({
       },
       invalidatesTags: (result, error, { payload }) => [{ type: 'PublicDashboard', id: payload.dashboardUid }],
     }),
+    addEmailSharing: builder.mutation<void, { email: string; accessToken: string; dashboardUid: string }>({
+      query: ({ email, accessToken, dashboardUid }) => ({
+        url: `/public-dashboards/${dashboardUid}/share/recipients`,
+        method: 'POST',
+        data: { email, accessToken },
+      }),
+      async onQueryStarted(_, { dispatch, queryFulfilled }) {
+        await queryFulfilled;
+        dispatch(notifyApp(createSuccessNotification('Email added!')));
+      },
+      invalidatesTags: (result, error, { dashboardUid }) => [{ type: 'PublicDashboard', id: dashboardUid }],
+    }),
     listPublicDashboards: builder.query<ListPublicDashboardResponse[], void>({
       query: () => ({
-        url: '/public-dashboards',
+        url: '/dashboards/public-dashboards',
       }),
       providesTags: ['AuditTablePublicDashboard'],
     }),
     deletePublicDashboard: builder.mutation<void, { dashboard?: DashboardModel; dashboardUid: string; uid: string }>({
       query: (params) => ({
-        url: `/uid/${params.dashboardUid}/public-dashboards/${params.uid}`,
+        url: `/dashboards/uid/${params.dashboardUid}/public-dashboards/${params.uid}`,
         method: 'DELETE',
       }),
       async onQueryStarted({ dashboard, uid }, { dispatch, queryFulfilled }) {
@@ -132,4 +144,5 @@ export const {
   useUpdatePublicDashboardMutation,
   useDeletePublicDashboardMutation,
   useListPublicDashboardsQuery,
+  useAddEmailSharingMutation,
 } = publicDashboardApi;

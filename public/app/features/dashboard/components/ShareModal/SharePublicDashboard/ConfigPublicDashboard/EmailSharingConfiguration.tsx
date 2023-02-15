@@ -16,6 +16,7 @@ import {
   VerticalGroup,
 } from '@grafana/ui/src';
 import {
+  useAddEmailSharingMutation,
   useGetPublicDashboardQuery,
   useUpdatePublicDashboardMutation,
 } from 'app/features/dashboard/api/publicDashboardApi';
@@ -42,7 +43,8 @@ export const EmailSharingConfiguration = () => {
   const dashboard = dashboardState.getModel()!;
 
   const { data: publicDashboard } = useGetPublicDashboardQuery(dashboard.uid);
-  const [update, { isLoading }] = useUpdatePublicDashboardMutation();
+  const [update] = useUpdatePublicDashboardMutation();
+  const [addEmail, { isLoading: isAddEmailLoading }] = useAddEmailSharingMutation();
 
   const onShareTypeChange = (shareType: PublicDashboardShareType) => {
     const req = {
@@ -59,7 +61,7 @@ export const EmailSharingConfiguration = () => {
   };
 
   const onSubmit = (data: EmailSharingConfigurationForm) => {
-    console.log('mi data', data);
+    addEmail({ email: data.email, accessToken: publicDashboard!.accessToken!, dashboardUid: dashboard.uid });
   };
 
   return (
@@ -111,7 +113,7 @@ export const EmailSharingConfiguration = () => {
                       })}
                     />
                     <Button type="submit" variant="primary">
-                      Invite {isLoading && <Spinner />}
+                      Invite {isAddEmailLoading && <Spinner />}
                     </Button>
                   </div>
                 </Field>
