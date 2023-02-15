@@ -87,6 +87,7 @@ beforeEach(() => {
 
   mockPanel = new PanelModel({
     id: 'mockPanelId',
+    timezone: 'utc',
   });
 
   jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(true);
@@ -143,7 +144,7 @@ describe('SharePublic', () => {
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
 
     await screen.findByText('Welcome to Grafana public dashboards alpha!');
-    expect(screen.getByText('2022-08-30 00:00:00 to 2022-09-04 01:59:59')).toBeInTheDocument();
+    expect(screen.getByText('2022-08-30 00:00:00 to 2022-09-04 00:59:59')).toBeInTheDocument();
   });
   it('when modal is opened, then loader spinner appears and inputs are disabled', async () => {
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });

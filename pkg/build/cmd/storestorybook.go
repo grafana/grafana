@@ -13,7 +13,7 @@ import (
 func StoreStorybook(c *cli.Context) error {
 	deployment := c.String("deployment")
 
-	metadata, err := GenerateMetadata(c)
+	metadata, err := config.GenerateMetadata(c)
 	if err != nil {
 		return err
 	}

@@ -13,7 +13,7 @@ import (
 )
 
 func Package(c *cli.Context) error {
-	metadata, err := GenerateMetadata(c)
+	metadata, err := config.GenerateMetadata(c)
 	if err != nil {
 		return err
 	}
@@ -22,12 +22,12 @@ func Package(c *cli.Context) error {
 
 	releaseMode, err := metadata.GetReleaseMode()
 	if err != nil {
-		return cli.NewExitError(err.Error(), 1)
+		return cli.Exit(err.Error(), 1)
 	}
 
 	releaseModeConfig, err := config.GetBuildConfig(metadata.ReleaseMode.Mode)
 	if err != nil {
-		return cli.NewExitError(err.Error(), 1)
+		return cli.Exit(err.Error(), 1)
 	}
 
 	cfg := config.Config{
@@ -37,14 +37,17 @@ func Package(c *cli.Context) error {
 
 	ctx := context.Background()
 
-	variantStrs := strings.Split(c.String("variants"), ",")
 	variants := []config.Variant{}
-	for _, varStr := range variantStrs {
-		if varStr == "" {
-			continue
+	variantStrs := strings.Split(c.String("variants"), ",")
+	if c.String("variants") != "" {
+		for _, varStr := range variantStrs {
+			if varStr == "" {
+				continue
+			}
+			variants = append(variants, config.Variant(varStr))
 		}
-
-		variants = append(variants, config.Variant(varStr))
+	} else {
+		variants = releaseModeConfig.Variants
 	}
 
 	if len(variants) == 0 {
