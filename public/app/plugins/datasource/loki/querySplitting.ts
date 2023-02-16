@@ -121,33 +121,29 @@ export function runPartitionedQuery(datasource: LokiDatasource, request: DataQue
       return;
     }
 
-    smallQuerySubsciption = datasource
-      .runQuery({ ...request, range, requestId, targets })
-      .pipe(
-        // in case of an empty query, this is somehow run twice. `share()` is no workaround here as the observable is generated from `of()`.
-        map((partialResponse) => {
-          if (partialResponse.error) {
-            subscriber.error(partialResponse.error);
-            return mergedResponse || { data: [] };
-          }
-          mergedResponse = combineResponses(mergedResponse, partialResponse);
-          return mergedResponse;
-        })
-      )
-      .subscribe({
-        next: (response) => {
-          if (requestN > 1) {
-            response.state = LoadingState.Streaming;
-            subscriber.next(response);
-            runNextRequest(subscriber, requestN - 1);
-            return;
-          }
-          done(response);
-        },
-        error: (error) => {
-          subscriber.error(error);
-        },
-      });
+    smallQuerySubsciption = datasource.runQuery({ ...request, range, requestId, targets }).subscribe({
+      next: (partialResponse) => {
+        if (partialResponse.error) {
+          subscriber.error(partialResponse.error);
+          partialResponse = { data: [] };
+        }
+        mergedResponse = combineResponses(mergedResponse, partialResponse);
+        subscriber.next(mergedResponse);
+      },
+      complete: () => {
+        mergedResponse = mergedResponse || { data: [] };
+        if (requestN > 1) {
+          mergedResponse.state = LoadingState.Streaming;
+          subscriber.next(mergedResponse);
+          runNextRequest(subscriber, requestN - 1);
+          return;
+        }
+        done(mergedResponse);
+      },
+      error: (error) => {
+        subscriber.error(error);
+      },
+    });
   };
 
   const response = new Observable<DataQueryResponse>((subscriber) => {
