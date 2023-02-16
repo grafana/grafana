@@ -139,7 +139,6 @@ export function runPartitionedQuery(datasource: LokiDatasource, request: DataQue
           partialResponse = { data: [] };
         }
         mergedResponse = combineResponses(mergedResponse, partialResponse);
-        subscriber.next(mergedResponse);
       },
       complete: () => {
         nextRequest();
