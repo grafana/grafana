@@ -8,6 +8,7 @@ import { Spinner, useStyles2 } from '@grafana/ui/src';
 import { useShowPMMAddressWarning } from 'app/percona/shared/components/hooks/showPMMAddressWarning';
 import { useSelector, useDispatch } from 'app/types';
 
+import { FeatureLoader } from '../../../../shared/components/Elements/FeatureLoader';
 import { fetchStorageLocations } from '../../../../shared/core/reducers/backups/backupLocations';
 import { resetAddDBClusterState } from '../../../../shared/core/reducers/dbaas/addDBCluster/addDBCluster';
 import { resetDBCluster } from '../../../../shared/core/reducers/dbaas/dbaas';
@@ -72,63 +73,73 @@ export const EditDBClusterPage: FC<EditDBClusterPageProps> = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return kubernetes === undefined || kubernetesLoading ? (
-    <div data-testid="db-cluster-form-loading">
-      <Spinner />
-    </div>
-  ) : kubernetes && kubernetes?.length > 0 ? (
-    <Form
-      initialValues={initialValues}
-      onSubmit={onSubmit}
-      mutators={{
-        setClusterName: (databaseTypeValue: string, state, { changeValue }) => {
-          changeValue(state, `${BasicOptionsFields.name}`, () => `${databaseTypeValue}-${generateUID()}`);
-        },
-        ...arrayMutators,
-      }}
-      render={({ form, handleSubmit, valid, pristine, ...props }) => (
-        <form onSubmit={handleSubmit} data-testid="create-db-cluster-page">
-          <DBaaSPage
-            pageToolbarProps={{
-              title: Messages.dbCluster,
-              parent: DBaaSMessages.dbaas,
-              titleHref: DB_CLUSTER_INVENTORY_URL,
-              parentHref: DBAAS_INVENTORY_URL,
-            }}
-            submitBtnProps={{
-              disabled: !valid || pristine || loading,
-              loading,
-              buttonMessage: buttonMessage,
-            }}
-            pageHeader={`${mode === 'create' ? 'Create' : 'Edit'} DB Cluster`}
-            pageName="db-cluster"
-            cancelUrl={DBAAS_INVENTORY_URL}
-            featureLoaderProps={{ featureName: DBaaSMessages.dbaas, featureSelector: featureSelector }}
-          >
-            {showPMMAddressWarning && <PMMServerUrlWarning />}
-            <div className={styles.optionsWrapper}>
-              {mode === 'create' && <DBClusterBasicOptions kubernetes={kubernetes} form={form} />}
-              {settings?.backupEnabled && mode === 'create' && (
-                <DBaaSBackups handleSubmit={handleSubmit} pristine={pristine} valid={valid} form={form} {...props} />
-              )}
-              <DBClusterAdvancedOptions
-                mode={mode}
-                showUnsafeConfigurationWarning={showUnsafeConfigurationWarning}
-                setShowUnsafeConfigurationWarning={setShowUnsafeConfigurationWarning}
-                form={form}
-                selectedCluster={selectedDBCluster}
-                handleSubmit={handleSubmit}
-                pristine={pristine}
-                valid={valid}
-                {...props}
-              />
-            </div>
-          </DBaaSPage>
-        </form>
+  return (
+    <FeatureLoader featureName={DBaaSMessages.dbaas} featureSelector={featureSelector}>
+      {kubernetes === undefined || kubernetesLoading ? (
+        <div data-testid="db-cluster-form-loading">
+          <Spinner />
+        </div>
+      ) : kubernetes && kubernetes?.length > 0 ? (
+        <Form
+          initialValues={initialValues}
+          onSubmit={onSubmit}
+          mutators={{
+            setClusterName: (databaseTypeValue: string, state, { changeValue }) => {
+              changeValue(state, `${BasicOptionsFields.name}`, () => `${databaseTypeValue}-${generateUID()}`);
+            },
+            ...arrayMutators,
+          }}
+          render={({ form, handleSubmit, valid, pristine, ...props }) => (
+            <form onSubmit={handleSubmit} data-testid="create-db-cluster-page">
+              <DBaaSPage
+                pageToolbarProps={{
+                  title: Messages.dbCluster,
+                  parent: DBaaSMessages.dbaas,
+                  titleHref: DB_CLUSTER_INVENTORY_URL,
+                  parentHref: DBAAS_INVENTORY_URL,
+                }}
+                submitBtnProps={{
+                  disabled: !valid || pristine || loading,
+                  loading,
+                  buttonMessage: buttonMessage,
+                }}
+                pageHeader={`${mode === 'create' ? 'Create' : 'Edit'} DB Cluster`}
+                pageName="db-cluster"
+                cancelUrl={DBAAS_INVENTORY_URL}
+                featureLoaderProps={{ featureName: DBaaSMessages.dbaas, featureSelector: featureSelector }}
+              >
+                {showPMMAddressWarning && <PMMServerUrlWarning />}
+                <div className={styles.optionsWrapper}>
+                  {mode === 'create' && <DBClusterBasicOptions kubernetes={kubernetes} form={form} />}
+                  {settings?.backupEnabled && mode === 'create' && (
+                    <DBaaSBackups
+                      handleSubmit={handleSubmit}
+                      pristine={pristine}
+                      valid={valid}
+                      form={form}
+                      {...props}
+                    />
+                  )}
+                  <DBClusterAdvancedOptions
+                    mode={mode}
+                    showUnsafeConfigurationWarning={showUnsafeConfigurationWarning}
+                    setShowUnsafeConfigurationWarning={setShowUnsafeConfigurationWarning}
+                    form={form}
+                    selectedCluster={selectedDBCluster}
+                    handleSubmit={handleSubmit}
+                    pristine={pristine}
+                    valid={valid}
+                    {...props}
+                  />
+                </div>
+              </DBaaSPage>
+            </form>
+          )}
+        />
+      ) : (
+        <Redirect to={K8S_INVENTORY_URL} />
       )}
-    />
-  ) : (
-    <Redirect to={K8S_INVENTORY_URL} />
+    </FeatureLoader>
   );
 };
 

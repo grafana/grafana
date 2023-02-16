@@ -145,4 +145,28 @@ describe('EditDBClusterPage::', () => {
     const button = screen.getByTestId('db-cluster-submit-button');
     expect(button).toBeDisabled();
   });
+
+  it('should show notification if DBaaS is disabled', async () => {
+    await waitFor(() =>
+      render(
+        <Provider
+          store={configureStore({
+            percona: {
+              user: { isAuthorized: true },
+              settings: {
+                loading: false,
+                result: {},
+              },
+            },
+          } as StoreState)}
+        >
+          <Router history={locationService.getHistory()}>
+            <EditDBClusterPage kubernetes={[]} />
+          </Router>
+        </Provider>
+      )
+    );
+
+    expect(screen.getByTestId('empty-block')).toBeInTheDocument();
+  });
 });

@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'app/types';
 
 import { useCancelToken } from '../../shared/components/hooks/cancelToken.hook';
 import { fetchKubernetesAction } from '../../shared/core/reducers';
-import { getKubernetes as getKubernetesSelector } from '../../shared/core/selectors';
+import { getKubernetes as getKubernetesSelector, getPerconaSettingFlag } from '../../shared/core/selectors';
 import {
   CHECK_OPERATOR_UPDATE_CANCEL_TOKEN,
   GET_KUBERNETES_CANCEL_TOKEN,
@@ -34,8 +34,12 @@ export const useUpdateOfKubernetesList = (): [Kubernetes[] | undefined, boolean]
   const dispatch = useDispatch();
   const { result, loading } = useSelector(getKubernetesSelector);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const featureSelector = getPerconaSettingFlag('dbaasEnabled');
+  const featureEnabled = useSelector(featureSelector);
+
   useEffect(() => {
-    if (result === undefined && loading !== true) {
+    if (featureEnabled && result === undefined && loading !== true) {
       dispatch(
         fetchKubernetesAction({
           kubernetes: generateToken(GET_KUBERNETES_CANCEL_TOKEN),
@@ -44,7 +48,7 @@ export const useUpdateOfKubernetesList = (): [Kubernetes[] | undefined, boolean]
       );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [result, loading]);
+  }, [result, loading, featureEnabled]);
 
   return [result, loading];
 };
