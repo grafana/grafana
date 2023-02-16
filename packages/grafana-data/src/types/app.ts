@@ -51,10 +51,16 @@ export interface AppPluginMeta<T extends KeyValue = KeyValue> extends PluginMeta
   // TODO anything specific to apps?
 }
 
+export type ConfigureExtensionLinkOptions<P extends object> = {
+  id: string;
+  configurer: PluginsExtensionLinkConfigurer<P>;
+};
+
 export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppPluginMeta<T>> {
+  private configs: Record<string, PluginsExtensionLinkConfigurer> = {};
+
   // Content under: /a/${plugin-id}/*
   root?: ComponentType<AppRootProps<T>>;
-  extensionConfigs: Record<string, PluginsExtensionLinkConfigurer> = {};
 
   /**
    * Called after the module has loaded, and before the app is used.
@@ -93,8 +99,11 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
     }
   }
 
-  configureExtensionLink<P extends object>(extensionId: string, configure: PluginsExtensionLinkConfigurer<P>) {
-    this.extensionConfigs[extensionId] = configureWithErrorHandling(extensionId, configure);
+  get extensionConfigs(): {};
+
+  configureExtensionLink<P extends object>(options: ConfigureExtensionLinkOptions<P>): AppPlugin<T> {
+    const { id, configurer } = options;
+    this.configs[id] = configureWithErrorHandling(id, configurer);
     return this;
   }
 }
