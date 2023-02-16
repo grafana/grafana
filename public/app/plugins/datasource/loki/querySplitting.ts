@@ -103,6 +103,7 @@ export function runPartitionedQuery(datasource: LokiDatasource, request: DataQue
   let smallQuerySubsciption: Subscription | null = null;
   const runNextRequest = (subscriber: Subscriber<DataQueryResponse>, requestN: number) => {
     if (shouldStop) {
+      subscriber.complete();
       return;
     }
 
