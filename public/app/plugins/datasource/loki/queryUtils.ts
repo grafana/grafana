@@ -321,7 +321,7 @@ export function combineResponses(currentResult: DataQueryResponse | null, newRes
   newResult.data.forEach((newFrame) => {
     const currentFrame = currentResult.data.find((frame) => frame.name === newFrame.name);
     if (!currentFrame) {
-      currentResult.data.push({ ...newFrame });
+      currentResult.data.push(cloneDataFrame(newFrame));
       return;
     }
     combineFrames(currentFrame, newFrame);
@@ -368,13 +368,17 @@ function combineMetadata(dest: DataQueryResponseData = {}, source: DataQueryResp
 export function cloneQueryResponse(response: DataQueryResponse): DataQueryResponse {
   const newResponse = {
     ...response,
-    data: response.data.map((frame) => ({ ...frame })),
+    data: response.data.map(cloneDataFrame),
   };
-
-  newResponse.data.forEach((data: DataQueryResponseData) => {
-    data.fields.forEach((field: Field<unknown, ArrayVector>) => {
-      field.values = new ArrayVector(field.values.buffer);
-    });
-  });
   return newResponse;
+}
+
+function cloneDataFrame(frame: DataQueryResponseData): DataQueryResponseData {
+  return {
+    ...frame,
+    fields: frame.fields.map((field: Field<unknown, ArrayVector>) => ({
+      ...field,
+      values: new ArrayVector(field.values.buffer),
+    })),
+  };
 }
