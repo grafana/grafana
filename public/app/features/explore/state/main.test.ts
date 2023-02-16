@@ -41,28 +41,25 @@ const getNavigateToExploreContext = async (openInNewWindow?: (url: string) => vo
 describe('navigateToExplore', () => {
   describe('when navigateToExplore thunk is dispatched', () => {
     describe('and openInNewWindow is undefined', () => {
-      const openInNewWindow: (url: string) => void = undefined as unknown as (url: string) => void;
       it('then it should dispatch correct actions', async () => {
-        const { url } = await getNavigateToExploreContext(openInNewWindow);
+        const { url } = await getNavigateToExploreContext();
         expect(locationService.getLocation().pathname).toEqual(url);
       });
 
       it('then getDataSourceSrv should have been once', async () => {
-        const { getDataSourceSrv } = await getNavigateToExploreContext(openInNewWindow);
+        const { getDataSourceSrv } = await getNavigateToExploreContext();
 
         expect(getDataSourceSrv).toHaveBeenCalledTimes(1);
       });
 
       it('then getTimeSrv should have been called once', async () => {
-        const { getTimeSrv } = await getNavigateToExploreContext(openInNewWindow);
+        const { getTimeSrv } = await getNavigateToExploreContext();
 
         expect(getTimeSrv).toHaveBeenCalledTimes(1);
       });
 
       it('then getExploreUrl should have been called with correct arguments', async () => {
-        const { getExploreUrl, panel, getDataSourceSrv, getTimeSrv } = await getNavigateToExploreContext(
-          openInNewWindow
-        );
+        const { getExploreUrl, panel, getDataSourceSrv, getTimeSrv } = await getNavigateToExploreContext();
 
         expect(getExploreUrl).toHaveBeenCalledTimes(1);
         expect(getExploreUrl).toHaveBeenCalledWith({
@@ -139,11 +136,15 @@ describe('Explore reducer', () => {
           .givenReducer(exploreReducer, initialState)
           .whenActionIsDispatched(splitCloseAction({ itemId: ExploreId.left }))
           .thenStateShouldEqual({
+            evenSplitPanes: true,
+            largerExploreId: undefined,
             left: rightItemMock,
+            maxedExploreId: undefined,
             right: undefined,
+            syncedTimes: false,
           } as unknown as ExploreState);
       });
-      it('should reset right pane when it is closed ', () => {
+      it('should reset right pane when it is closed', () => {
         const leftItemMock = {
           containerWidth: 100,
         } as unknown as ExploreItemState;
@@ -162,15 +163,41 @@ describe('Explore reducer', () => {
           .givenReducer(exploreReducer, initialState)
           .whenActionIsDispatched(splitCloseAction({ itemId: ExploreId.right }))
           .thenStateShouldEqual({
+            evenSplitPanes: true,
+            largerExploreId: undefined,
             left: leftItemMock,
+            maxedExploreId: undefined,
             right: undefined,
+            syncedTimes: false,
+          } as unknown as ExploreState);
+      });
+
+      it('should unsync time ranges', () => {
+        const itemMock = {
+          containerWidth: 100,
+        } as unknown as ExploreItemState;
+
+        const initialState = {
+          left: itemMock,
+          right: itemMock,
+          syncedTimes: true,
+        } as unknown as ExploreState;
+
+        reducerTester<ExploreState>()
+          .givenReducer(exploreReducer, initialState)
+          .whenActionIsDispatched(splitCloseAction({ itemId: ExploreId.right }))
+          .thenStateShouldEqual({
+            evenSplitPanes: true,
+            left: itemMock,
+            right: undefined,
+            syncedTimes: false,
           } as unknown as ExploreState);
       });
     });
   });
 });
 
-export const setup = (urlStateOverrides?: any) => {
+export const setup = (urlStateOverrides?: Partial<ExploreUrlState>) => {
   const urlStateDefaults: ExploreUrlState = {
     datasource: 'some-datasource',
     queries: [],

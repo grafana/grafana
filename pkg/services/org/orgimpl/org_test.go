@@ -4,9 +4,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestOrgService(t *testing.T) {
@@ -120,7 +122,7 @@ func (f *FakeOrgStore) GetOrgUsers(ctx context.Context, query *org.GetOrgUsersQu
 	return f.ExpectedOrgUsers, f.ExpectedError
 }
 
-func (f *FakeOrgStore) GetByID(ctx context.Context, query *org.GetOrgByIdQuery) (*org.Org, error) {
+func (f *FakeOrgStore) GetByID(ctx context.Context, query *org.GetOrgByIDQuery) (*org.Org, error) {
 	return f.ExpectedOrg, f.ExpectedError
 }
 
@@ -134,4 +136,8 @@ func (f *FakeOrgStore) SearchOrgUsers(ctx context.Context, query *org.SearchOrgU
 
 func (f *FakeOrgStore) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUserCommand) error {
 	return f.ExpectedError
+}
+
+func (f *FakeOrgStore) Count(ctx context.Context, _ *quota.ScopeParameters) (*quota.Map, error) {
+	return nil, nil
 }

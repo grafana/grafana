@@ -2,8 +2,7 @@
 _build:
   list: false
 aliases:
-  - /docs/grafana/latest/guides/whats-new-in-v7-4/
-  - /docs/grafana/latest/whatsnew/whats-new-in-v7-4/
+  - ../guides/whats-new-in-v7-4/
 description: Feature and improvement highlights for Grafana v7.4
 keywords:
   - grafana
@@ -238,10 +237,6 @@ In order not to break all angular panel plugins and data sources we have some cu
 ### Fixes Constant variable persistence confusion
 
 In order to minimize the confusion with Constant variable usage, we've removed the ability to make Constant variables visible. This change will also migrate all existing visible Constant variables to Textbox variables because which we think this is a more appropriate type of variable for this use case.
-
-## Upgrading
-
-See [upgrade notes]({{< relref "../setup-grafana/upgrade-grafana/" >}}).
 
 ## Changelog
 

@@ -22,9 +22,8 @@ export const bundlePlugin = async ({ watch, production, preserveConsole }: Plugi
   const webpackPromise = new Promise<void>((resolve, reject) => {
     if (watch) {
       console.log('Started watching plugin for changes...');
-      compiler.watch({}, (err, stats) => {});
+      compiler.watch({ ignored: ['**/node_modules', '**/dist'] }, (err, stats) => {});
 
-      // @ts-ignore
       compiler.hooks.invalid.tap('invalid', () => {
         clearConsole();
         console.log('Compiling...');

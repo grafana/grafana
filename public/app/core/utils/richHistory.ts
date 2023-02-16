@@ -234,12 +234,9 @@ export function createQueryHeading(query: RichHistoryQuery, sortOrder: SortOrder
   return heading;
 }
 
-export function createQueryText(query: DataQuery, queryDsInstance: DataSourceApi | undefined) {
-  /* query DatasourceInstance is necessary because we use its getQueryDisplayText method
-   * to format query text
-   */
-  if (queryDsInstance?.getQueryDisplayText) {
-    return queryDsInstance.getQueryDisplayText(query);
+export function createQueryText(query: DataQuery, dsApi?: DataSourceApi) {
+  if (dsApi?.getQueryDisplayText) {
+    return dsApi.getQueryDisplayText(query);
   }
 
   return getQueryDisplayText(query);
@@ -270,7 +267,6 @@ export function createDatasourcesList() {
       return {
         name: dsSettings.name,
         uid: dsSettings.uid,
-        imgUrl: dsSettings.meta.info.logos.small,
       };
     });
 }

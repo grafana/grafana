@@ -7,7 +7,9 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
@@ -16,7 +18,15 @@ import (
 func Test_DimensionValues_Route(t *testing.T) {
 	t.Run("Calls GetDimensionValuesByDimensionFilter when a valid request is passed", func(t *testing.T) {
 		mockListMetricsService := mocks.ListMetricsServiceMock{}
-		mockListMetricsService.On("GetDimensionValuesByDimensionFilter").Return([]string{}, nil)
+		mockListMetricsService.On("GetDimensionValuesByDimensionFilter", mock.MatchedBy(func(r resources.DimensionValuesRequest) bool {
+			return r.ResourceRequest != nil && *r.ResourceRequest == resources.ResourceRequest{Region: "us-east-2"} &&
+				r.Namespace == "AWS/EC2" &&
+				r.MetricName == "CPUUtilization" &&
+				r.DimensionKey == "instanceId" &&
+				len(r.DimensionFilter) == 2 &&
+				assert.Contains(t, r.DimensionFilter, &resources.Dimension{Name: "NodeID", Value: "Shared"}) &&
+				assert.Contains(t, r.DimensionFilter, &resources.Dimension{Name: "stage", Value: "QueryCommit"})
+		})).Return([]resources.ResourceResponse[string]{}, nil).Once()
 		newListMetricsService = func(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.ListMetricsProvider, error) {
 			return &mockListMetricsService, nil
 		}
@@ -28,7 +38,7 @@ func Test_DimensionValues_Route(t *testing.T) {
 
 	t.Run("returns 500 if GetDimensionValuesByDimensionFilter returns an error", func(t *testing.T) {
 		mockListMetricsService := mocks.ListMetricsServiceMock{}
-		mockListMetricsService.On("GetDimensionValuesByDimensionFilter").Return([]string{}, fmt.Errorf("some error"))
+		mockListMetricsService.On("GetDimensionValuesByDimensionFilter", mock.Anything).Return([]resources.ResourceResponse[string]{}, fmt.Errorf("some error"))
 		newListMetricsService = func(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.ListMetricsProvider, error) {
 			return &mockListMetricsService, nil
 		}

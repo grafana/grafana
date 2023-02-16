@@ -1,47 +1,60 @@
 import React from 'react';
 
-import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { Button, ComponentSize, Icon, ModalsController, Spinner } from '@grafana/ui/src';
-
-import { useDeletePublicDashboardMutation } from '../../../dashboard/api/publicDashboardApi';
-import { ListPublicDashboardResponse } from '../../types';
+import { Button, ModalsController, ButtonProps } from '@grafana/ui/src';
+import { useDeletePublicDashboardMutation } from 'app/features/dashboard/api/publicDashboardApi';
+import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import { DeletePublicDashboardModal } from './DeletePublicDashboardModal';
 
+export interface PublicDashboardDeletion {
+  uid: string;
+  dashboardUid: string;
+  title: string;
+}
+
 export const DeletePublicDashboardButton = ({
+  dashboard,
   publicDashboard,
-  size,
+  loader,
+  children,
+  onDismiss,
+  ...rest
 }: {
-  publicDashboard: ListPublicDashboardResponse;
-  size: ComponentSize;
-}) => {
+  dashboard?: DashboardModel;
+  publicDashboard: PublicDashboardDeletion;
+  loader?: JSX.Element;
+  children: React.ReactNode;
+  onDismiss?: () => void;
+} & ButtonProps) => {
   const [deletePublicDashboard, { isLoading }] = useDeletePublicDashboardMutation();
 
-  const onDeletePublicDashboardClick = (pd: ListPublicDashboardResponse, onDelete: () => void) => {
-    deletePublicDashboard({ uid: pd.uid, dashboardUid: pd.dashboardUid, dashboardTitle: pd.title });
+  const onDeletePublicDashboardClick = (pd: PublicDashboardDeletion, onDelete: () => void) => {
+    deletePublicDashboard({
+      dashboard,
+      uid: pd.uid,
+      dashboardUid: pd.dashboardUid,
+    });
     onDelete();
   };
-
-  const selectors = e2eSelectors.pages.PublicDashboards;
 
   return (
     <ModalsController>
       {({ showModal, hideModal }) => (
         <Button
-          fill="text"
           aria-label="Delete public dashboard"
           title="Delete public dashboard"
           onClick={() =>
             showModal(DeletePublicDashboardModal, {
               dashboardTitle: publicDashboard.title,
               onConfirm: () => onDeletePublicDashboardClick(publicDashboard, hideModal),
-              onDismiss: hideModal,
+              onDismiss: () => {
+                onDismiss ? onDismiss() : hideModal();
+              },
             })
           }
-          data-testid={selectors.ListItem.trashcanButton}
-          size={size}
+          {...rest}
         >
-          {isLoading ? <Spinner /> : <Icon size={size} name="trash-alt" />}
+          {isLoading && loader ? loader : children}
         </Button>
       )}
     </ModalsController>

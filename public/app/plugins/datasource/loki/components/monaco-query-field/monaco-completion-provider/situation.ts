@@ -19,7 +19,10 @@ import {
   Expr,
   LiteralExpr,
   MetricExpr,
+  UnwrapExpr,
 } from '@grafana/lezer-logql';
+
+import { getLogQueryFromMetricsQuery } from '../../../queryUtils';
 
 type Direction = 'parent' | 'firstChild' | 'lastChild' | 'nextSibling';
 type NodeType = number;
@@ -94,14 +97,14 @@ export type Situation =
       type: 'AT_ROOT';
     }
   | {
-      type: 'IN_DURATION';
+      type: 'IN_RANGE';
     }
   | {
       type: 'IN_AGGREGATION';
     }
   | {
       type: 'IN_GROUPING';
-      otherLabels: Label[];
+      logQuery: string;
     }
   | {
       type: 'IN_LABEL_SELECTOR_NO_LABEL_NAME';
@@ -116,7 +119,12 @@ export type Situation =
   | {
       type: 'AFTER_SELECTOR';
       afterPipe: boolean;
-      labels: Label[];
+      hasSpace: boolean;
+      logQuery: string;
+    }
+  | {
+      type: 'AFTER_UNWRAP';
+      logQuery: string;
     };
 
 type Resolver = {
@@ -164,12 +172,20 @@ const RESOLVERS: Resolver[] = [
     fun: resolveLogRangeFromError,
   },
   {
-    path: [ERROR_NODE_ID, LiteralExpr, MetricExpr, VectorAggregationExpr, MetricExpr, Expr, LogQL],
+    path: [ERROR_NODE_ID, LiteralExpr, MetricExpr, VectorAggregationExpr],
     fun: () => ({ type: 'IN_AGGREGATION' }),
   },
   {
     path: [ERROR_NODE_ID, PipelineStage, PipelineExpr],
     fun: resolvePipeError,
+  },
+  {
+    path: [ERROR_NODE_ID, UnwrapExpr],
+    fun: resolveAfterUnwrap,
+  },
+  {
+    path: [UnwrapExpr],
+    fun: resolveAfterUnwrap,
   },
 ];
 
@@ -248,6 +264,13 @@ function getLabels(selectorNode: SyntaxNode, text: string): Label[] {
   return labels;
 }
 
+function resolveAfterUnwrap(node: SyntaxNode, text: string, pos: number): Situation | null {
+  return {
+    type: 'AFTER_UNWRAP',
+    logQuery: getLogQueryFromMetricsQuery(text).trim(),
+  };
+}
+
 function resolvePipeError(node: SyntaxNode, text: string, pos: number): Situation | null {
   // for example `{level="info"} |`
   const exprNode = walk(node, [
@@ -292,11 +315,9 @@ function resolveLabelsForGrouping(node: SyntaxNode, text: string, pos: number): 
     return null;
   }
 
-  const otherLabels = getLabels(selectorNode, text);
-
   return {
     type: 'IN_GROUPING',
-    otherLabels,
+    logQuery: getLogQueryFromMetricsQuery(text).trim(),
   };
 }
 
@@ -400,7 +421,7 @@ function resolveTopLevel(node: SyntaxNode, text: string, pos: number): Situation
 
 function resolveDurations(node: SyntaxNode, text: string, pos: number): Situation {
   return {
-    type: 'IN_DURATION',
+    type: 'IN_RANGE',
   };
 }
 
@@ -418,21 +439,21 @@ function resolveLogRangeFromError(node: SyntaxNode, text: string, pos: number): 
 }
 
 function resolveLogOrLogRange(node: SyntaxNode, text: string, pos: number, afterPipe: boolean): Situation | null {
-  // here the `node` is either a LogExpr or a LogRangeExpr
-  // we want to handle the case where we are next to a selector
+  // Here the `node` is either a LogExpr or a LogRangeExpr
+  // We want to handle the case where we are next to a selector
   const selectorNode = walk(node, [['firstChild', Selector]]);
 
-  // we check that the selector is before the cursor, not after it
-  if (selectorNode != null && selectorNode.to <= pos) {
-    const labels = getLabels(selectorNode, text);
-    return {
-      type: 'AFTER_SELECTOR',
-      afterPipe,
-      labels,
-    };
+  // Check that the selector is before the cursor, not after it
+  if (!selectorNode || selectorNode.to > pos) {
+    return null;
   }
 
-  return null;
+  return {
+    type: 'AFTER_SELECTOR',
+    afterPipe,
+    hasSpace: text.endsWith(' '),
+    logQuery: getLogQueryFromMetricsQuery(text).trim(),
+  };
 }
 
 function resolveSelector(node: SyntaxNode, text: string, pos: number): Situation | null {

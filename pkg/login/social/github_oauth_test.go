@@ -9,6 +9,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
+
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 const testGHUserTeamsJSON = `[
@@ -110,11 +112,14 @@ const testGHUserJSON = `{
 }`
 
 func TestSocialGitHub_UserInfo(t *testing.T) {
+	var boolPointer *bool
 	tests := []struct {
 		name                     string
 		userRawJSON              string
 		userTeamsRawJSON         string
 		settingAutoAssignOrgRole string
+		settingAllowGrafanaAdmin bool
+		settingSkipOrgRoleSync   bool
 		roleAttributePath        string
 		autoAssignOrgRole        string
 		want                     *BasicUserInfo
@@ -165,6 +170,38 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 				Groups: []string{"https://github.com/orgs/github/teams/justice-league", "@github/justice-league"},
 			},
 		},
+		{
+			name:                   "Should be empty role if setting skipOrgRoleSync is set to true",
+			roleAttributePath:      "contains(groups[*], '@github/justice-league') && 'Editor' || 'Viewer'",
+			settingSkipOrgRoleSync: true,
+			userRawJSON:            testGHUserJSON,
+			userTeamsRawJSON:       testGHUserTeamsJSON,
+			want: &BasicUserInfo{
+				Id:     "1",
+				Name:   "monalisa octocat",
+				Email:  "octocat@github.com",
+				Login:  "octocat",
+				Role:   "",
+				Groups: []string{"https://github.com/orgs/github/teams/justice-league", "@github/justice-league"},
+			},
+		},
+		{
+			name:                     "Should return nil pointer if allowGrafanaAdmin and skipOrgRoleSync setting is set to true",
+			roleAttributePath:        "contains(groups[*], '@github/justice-league') && 'Editor' || 'Viewer'",
+			settingSkipOrgRoleSync:   true,
+			settingAllowGrafanaAdmin: true,
+			userRawJSON:              testGHUserJSON,
+			userTeamsRawJSON:         testGHUserTeamsJSON,
+			want: &BasicUserInfo{
+				Id:             "1",
+				Name:           "monalisa octocat",
+				Email:          "octocat@github.com",
+				Login:          "octocat",
+				Role:           "",
+				Groups:         []string{"https://github.com/orgs/github/teams/justice-league", "@github/justice-league"},
+				IsGrafanaAdmin: boolPointer,
+			},
+		},
 		{ // Case that's going to change with Grafana 10
 			name:              "No fallback to default org role (will change in Grafana 10)",
 			roleAttributePath: "",
@@ -202,10 +239,11 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 
 			s := &SocialGithub{
 				SocialBase: newSocialBase("github", &oauth2.Config{},
-					&OAuthInfo{RoleAttributePath: tt.roleAttributePath}, tt.autoAssignOrgRole, false),
+					&OAuthInfo{RoleAttributePath: tt.roleAttributePath}, tt.autoAssignOrgRole, false, *featuremgmt.WithFeatures()),
 				allowedOrganizations: []string{},
 				apiUrl:               server.URL + "/user",
 				teamIds:              []int{},
+				skipOrgRoleSync:      tt.settingSkipOrgRoleSync,
 			}
 
 			token := &oauth2.Token{

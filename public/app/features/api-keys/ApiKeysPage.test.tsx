@@ -1,6 +1,7 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import React from 'react';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { ApiKey, OrgRole } from 'app/types';
@@ -54,9 +55,13 @@ const setup = (propOverrides: Partial<Props>) => {
 
   Object.assign(props, propOverrides);
 
-  const { rerender } = render(<ApiKeysPageUnconnected {...props} />);
+  const { rerender } = render(
+    <TestProvider>
+      <ApiKeysPageUnconnected {...props} />
+    </TestProvider>
+  );
   return {
-    rerender,
+    rerender: (element: JSX.Element) => rerender(<TestProvider>{element}</TestProvider>),
     props,
     loadApiKeysMock,
     setSearchQueryMock,

@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/plugins/legacy/data-sources/
-  - /docs/grafana/latest/plugins/developing/datasources/
+  - ../../../plugins/developing/datasources/
 keywords:
   - grafana
   - plugins

@@ -1,14 +1,11 @@
-import { TableIdentifier } from '@grafana/experimental';
-import { AGGREGATE_FNS, OPERATORS } from 'app/features/plugins/sql/constants';
 import {
   ColumnDefinition,
-  DB,
+  getStandardSQLCompletionProvider,
   LanguageCompletionProvider,
-  SQLQuery,
   TableDefinition,
-} from 'app/features/plugins/sql/types';
-
-import { FUNCTIONS } from '../mysql/functions';
+  TableIdentifier,
+} from '@grafana/experimental';
+import { DB, SQLQuery } from 'app/features/plugins/sql/types';
 
 interface CompletionProviderGetterArgs {
   getColumns: React.MutableRefObject<(t: SQLQuery) => Promise<ColumnDefinition[]>>;
@@ -17,8 +14,8 @@ interface CompletionProviderGetterArgs {
 
 export const getSqlCompletionProvider: (args: CompletionProviderGetterArgs) => LanguageCompletionProvider =
   ({ getColumns, getTables }) =>
-  () => ({
-    triggerCharacters: ['.', ' ', '$', ',', '(', "'"],
+  (monaco, language) => ({
+    ...(language && getStandardSQLCompletionProvider(monaco, language)),
     tables: {
       resolve: async () => {
         return await getTables.current();
@@ -29,8 +26,6 @@ export const getSqlCompletionProvider: (args: CompletionProviderGetterArgs) => L
         return await getColumns.current({ table: t?.table, refId: 'A' });
       },
     },
-    supportedFunctions: () => [...AGGREGATE_FNS, ...FUNCTIONS],
-    supportedOperators: () => OPERATORS,
   });
 
 export async function fetchColumns(db: DB, q: SQLQuery) {
@@ -45,6 +40,6 @@ export async function fetchColumns(db: DB, q: SQLQuery) {
 }
 
 export async function fetchTables(db: DB) {
-  const tables = await db.lookup();
-  return tables;
+  const tables = await db.lookup?.();
+  return tables || [];
 }

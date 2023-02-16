@@ -3,8 +3,6 @@ import React, { useEffect } from 'react';
 
 import {
   DataTransformerID,
-  FrameGeometrySource,
-  FrameGeometrySourceMode,
   GrafanaTheme2,
   PanelOptionsEditorBuilder,
   PluginState,
@@ -12,6 +10,7 @@ import {
   TransformerRegistryItem,
   TransformerUIProps,
 } from '@grafana/data';
+import { FrameGeometrySource, FrameGeometrySourceMode } from '@grafana/schema';
 import { useTheme2 } from '@grafana/ui';
 import { addLocationFields } from 'app/features/geo/editor/locationEditor';
 
@@ -122,7 +121,8 @@ export const SetGeometryTransformerEditor: React.FC<TransformerUIProps<SpatialTr
       props.onChange({ ...opts, ...props.options });
       console.log('geometry useEffect', opts);
     }
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const styles = getStyles(useTheme2());
 

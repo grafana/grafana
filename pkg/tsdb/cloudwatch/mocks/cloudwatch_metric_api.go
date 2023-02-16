@@ -9,19 +9,9 @@ import (
 )
 
 type FakeMetricsAPI struct {
-	cloudwatchiface.CloudWatchAPI
-	cloudwatch.GetMetricDataOutput
-
 	Metrics        []*cloudwatch.Metric
+	OwningAccounts []*string
 	MetricsPerPage int
-
-	CallsGetMetricDataWithContext []*cloudwatch.GetMetricDataInput
-}
-
-func (c *FakeMetricsAPI) GetMetricDataWithContext(ctx aws.Context, input *cloudwatch.GetMetricDataInput, opts ...request.Option) (*cloudwatch.GetMetricDataOutput, error) {
-	c.CallsGetMetricDataWithContext = append(c.CallsGetMetricDataWithContext, input)
-
-	return &c.GetMetricDataOutput, nil
 }
 
 func (c *FakeMetricsAPI) ListMetricsPages(input *cloudwatch.ListMetricsInput, fn func(*cloudwatch.ListMetricsOutput, bool) bool) error {
@@ -32,7 +22,8 @@ func (c *FakeMetricsAPI) ListMetricsPages(input *cloudwatch.ListMetricsInput, fn
 
 	for i, metrics := range chunks {
 		response := fn(&cloudwatch.ListMetricsOutput{
-			Metrics: metrics,
+			Metrics:        metrics,
+			OwningAccounts: c.OwningAccounts,
 		}, i+1 == len(chunks))
 		if !response {
 			break
@@ -58,12 +49,12 @@ func chunkSlice(slice []*cloudwatch.Metric, chunkSize int) [][]*cloudwatch.Metri
 	return chunks
 }
 
-type MetricsClient struct {
+type MetricsAPI struct {
 	cloudwatchiface.CloudWatchAPI
 	mock.Mock
 }
 
-func (m *MetricsClient) GetMetricDataWithContext(ctx aws.Context, input *cloudwatch.GetMetricDataInput, opts ...request.Option) (*cloudwatch.GetMetricDataOutput, error) {
+func (m *MetricsAPI) GetMetricDataWithContext(ctx aws.Context, input *cloudwatch.GetMetricDataInput, opts ...request.Option) (*cloudwatch.GetMetricDataOutput, error) {
 	args := m.Called(ctx, input, opts)
 
 	return args.Get(0).(*cloudwatch.GetMetricDataOutput), args.Error(1)

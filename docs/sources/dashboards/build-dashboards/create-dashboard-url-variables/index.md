@@ -1,15 +1,14 @@
 ---
-title: Dashboard URL variables
+aliases:
+  - ../../variables/url-variables/
+  - ../../variables/variable-types/url-variables/
 keywords:
   - grafana
   - url variables
   - documentation
   - variables
   - dashboards
-aliases:
-  - /docs/grafana/latest/dashboards/build-dashboards/create-dashboard-url-variables/
-  - /docs/grafana/latest/variables/url-variables/
-  - /docs/grafana/latest/variables/variable-types/url-variables/
+title: Dashboard URL variables
 weight: 250
 ---
 
@@ -42,7 +41,7 @@ Grafana interprets `var-example=value1&var-example=value2` as the dashboard vari
 
 ### Example
 
-See [https://play.grafana.org/d/000000074/alerting?var-app=backend&var-server=backend_01&var-server=backend_03&var-interval=1]h - this passes the variable `server` with multiple values, and the variables `app` and `interval` with a single value each.
+This example in [Grafana Play](https://play.grafana.org/d/000000074/alerting?var-app=backend&var-server=backend_01&var-server=backend_03&var-interval=1h) passes the variable `server` with multiple values, and the variables `app` and `interval` with a single value each.
 
 ## Adding variables to dashboard links
 

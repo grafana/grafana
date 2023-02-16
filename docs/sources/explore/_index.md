@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/explore/
-  - /docs/grafana/latest/features/explore/
+  - features/explore/
 keywords:
   - explore
   - loki
@@ -33,13 +32,11 @@ To access Explore:
 
 1. Click on the Explore icon on the menu bar.
 
-   {{< figure src="/static/img/docs/explore/access-explore-7-4.png" max-width= "650px" caption="Screenshot of the new Explore Icon" >}}
-
    An empty Explore tab opens.
 
    Alternately to start with an existing query in a panel, choose the Explore option from the Panel menu. This opens an Explore tab with the query from the panel and allows you to tweak or iterate in the query outside of your dashboard.
 
-{{< figure src="/static/img/docs/explore/panel_dropdown-7-4.png" class="docs-image--no-shadow" max-width= "650px" caption="Screenshot of the new Explore option in the panel menu" >}}
+   {{< figure src="/static/img/docs/explore/panel_dropdown-7-4.png" class="docs-image--no-shadow" max-width= "650px" caption="Screenshot of the new Explore option in the panel menu" >}}
 
 1. Choose your data source from the dropdown in the top left. [Prometheus](https://grafana.com/oss/prometheus/) has a custom Explore implementation, the other data sources use their standard query editor.
 1. In the query field, write your query to explore your data. There are three buttons beside the query field, a clear button (X), an add query button (+) and the remove query button (-). Just like the normal query editor, you can add and remove multiple queries.
@@ -67,12 +64,6 @@ To close the newly created query, click on the Close Split button.
 The Share shortened link capability allows you to create smaller and simpler URLs of the format /goto/:uid instead of using longer URLs with query parameters. To create a shortened link to the executed query, click the **Share** option in the Explore toolbar. A shortened link that is never used will automatically get deleted after seven (7) days.
 
 ## Available feature toggles
-
-### explore2Dashboard
-
-> **Note:** Available in Grafana 8.5.0 and later versions.
-
-Enabled by default, allows users to create panels in dashboards from within Explore.
 
 ### exploreMixedDatasource
 

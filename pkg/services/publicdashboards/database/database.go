@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
@@ -56,8 +55,8 @@ func (d *PublicDashboardStoreImpl) FindAll(ctx context.Context, orgId int64) ([]
 }
 
 // FindDashboard returns a dashboard by orgId and dashboardUid
-func (d *PublicDashboardStoreImpl) FindDashboard(ctx context.Context, orgId int64, dashboardUid string) (*models.Dashboard, error) {
-	dashboard := &models.Dashboard{OrgId: orgId, Uid: dashboardUid}
+func (d *PublicDashboardStoreImpl) FindDashboard(ctx context.Context, orgId int64, dashboardUid string) (*dashboards.Dashboard, error) {
+	dashboard := &dashboards.Dashboard{OrgID: orgId, UID: dashboardUid}
 
 	var found bool
 	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
@@ -66,11 +65,15 @@ func (d *PublicDashboardStoreImpl) FindDashboard(ctx context.Context, orgId int6
 		return err
 	})
 
+	if err != nil {
+		return nil, err
+	}
+
 	if !found {
 		return nil, nil
 	}
 
-	return dashboard, err
+	return dashboard, nil
 }
 
 // Find Returns public dashboard by Uid or nil if not found
@@ -80,10 +83,10 @@ func (d *PublicDashboardStoreImpl) Find(ctx context.Context, uid string) (*Publi
 	}
 
 	var found bool
-	pdRes := &PublicDashboard{Uid: uid}
+	publicDashboard := &PublicDashboard{Uid: uid}
 	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		var err error
-		found, err = sess.Get(pdRes)
+		found, err = sess.Get(publicDashboard)
 		return err
 	})
 
@@ -95,7 +98,7 @@ func (d *PublicDashboardStoreImpl) Find(ctx context.Context, uid string) (*Publi
 		return nil, nil
 	}
 
-	return pdRes, err
+	return publicDashboard, nil
 }
 
 // FindByAccessToken Returns public dashboard by access token or nil if not found
@@ -105,10 +108,10 @@ func (d *PublicDashboardStoreImpl) FindByAccessToken(ctx context.Context, access
 	}
 
 	var found bool
-	pdRes := &PublicDashboard{AccessToken: accessToken}
+	publicDashboard := &PublicDashboard{AccessToken: accessToken}
 	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		var err error
-		found, err = sess.Get(pdRes)
+		found, err = sess.Get(publicDashboard)
 		return err
 	})
 
@@ -120,7 +123,7 @@ func (d *PublicDashboardStoreImpl) FindByAccessToken(ctx context.Context, access
 		return nil, nil
 	}
 
-	return pdRes, err
+	return publicDashboard, nil
 }
 
 // FindByDashboardUid Retrieves public dashboard by dashboard uid or nil if not found
@@ -128,7 +131,6 @@ func (d *PublicDashboardStoreImpl) FindByDashboardUid(ctx context.Context, orgId
 	if dashboardUid == "" || orgId == 0 {
 		return nil, nil
 	}
-
 	var found bool
 	publicDashboard := &PublicDashboard{OrgId: orgId, DashboardUid: dashboardUid}
 	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
@@ -149,67 +151,7 @@ func (d *PublicDashboardStoreImpl) FindByDashboardUid(ctx context.Context, orgId
 		return nil, nil
 	}
 
-	return publicDashboard, err
-}
-
-// Save Persists public dashboard
-func (d *PublicDashboardStoreImpl) Save(ctx context.Context, cmd SavePublicDashboardCommand) error {
-	if cmd.PublicDashboard.DashboardUid == "" {
-		return dashboards.ErrDashboardIdentifierNotSet
-	}
-
-	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		_, err := sess.UseBool("is_enabled").Insert(&cmd.PublicDashboard)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
-
-	return err
-}
-
-// Update updates existing public dashboard
-func (d *PublicDashboardStoreImpl) Update(ctx context.Context, cmd SavePublicDashboardCommand) error {
-	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		timeSettingsJSON, err := json.Marshal(cmd.PublicDashboard.TimeSettings)
-		if err != nil {
-			return err
-		}
-
-		_, err = sess.Exec("UPDATE dashboard_public SET is_enabled = ?, annotations_enabled = ?, time_settings = ?, updated_by = ?, updated_at = ? WHERE uid = ?",
-			cmd.PublicDashboard.IsEnabled,
-			cmd.PublicDashboard.AnnotationsEnabled,
-			string(timeSettingsJSON),
-			cmd.PublicDashboard.UpdatedBy,
-			cmd.PublicDashboard.UpdatedAt.UTC().Format("2006-01-02 15:04:05"),
-			cmd.PublicDashboard.Uid)
-
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
-
-	return err
-}
-
-func (d *PublicDashboardStoreImpl) Delete(ctx context.Context, orgId int64, uid string) (int64, error) {
-	dashboard := &PublicDashboard{OrgId: orgId, Uid: uid}
-	var affectedRows int64
-	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		var err error
-		affectedRows, err = sess.Delete(dashboard)
-
-		if err != nil {
-			return err
-		}
-		return nil
-	})
-
-	return affectedRows, err
+	return publicDashboard, nil
 }
 
 // ExistsEnabledByDashboardUid Responds true if there is an enabled public dashboard for a dashboard uid
@@ -263,4 +205,65 @@ func (d *PublicDashboardStoreImpl) GetOrgIdByAccessToken(ctx context.Context, ac
 	})
 
 	return orgId, err
+}
+
+// Creates a public dashboard
+func (d *PublicDashboardStoreImpl) Create(ctx context.Context, cmd SavePublicDashboardCommand) (int64, error) {
+	if cmd.PublicDashboard.DashboardUid == "" {
+		return 0, dashboards.ErrDashboardIdentifierNotSet
+	}
+
+	var affectedRows int64
+	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		var err error
+		affectedRows, err = sess.UseBool("is_enabled").Insert(&cmd.PublicDashboard)
+		return err
+	})
+
+	return affectedRows, err
+}
+
+// Updates existing public dashboard
+func (d *PublicDashboardStoreImpl) Update(ctx context.Context, cmd SavePublicDashboardCommand) (int64, error) {
+	var affectedRows int64
+	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		timeSettingsJSON, err := json.Marshal(cmd.PublicDashboard.TimeSettings)
+		if err != nil {
+			return err
+		}
+
+		sqlResult, err := sess.Exec("UPDATE dashboard_public SET is_enabled = ?, annotations_enabled = ?, time_selection_enabled = ?, share = ?, time_settings = ?, updated_by = ?, updated_at = ? WHERE uid = ?",
+			cmd.PublicDashboard.IsEnabled,
+			cmd.PublicDashboard.AnnotationsEnabled,
+			cmd.PublicDashboard.TimeSelectionEnabled,
+			cmd.PublicDashboard.Share,
+			string(timeSettingsJSON),
+			cmd.PublicDashboard.UpdatedBy,
+			cmd.PublicDashboard.UpdatedAt.UTC().Format("2006-01-02 15:04:05"),
+			cmd.PublicDashboard.Uid)
+
+		if err != nil {
+			return err
+		}
+
+		affectedRows, err = sqlResult.RowsAffected()
+
+		return err
+	})
+
+	return affectedRows, err
+}
+
+// Deletes a public dashboard
+func (d *PublicDashboardStoreImpl) Delete(ctx context.Context, orgId int64, uid string) (int64, error) {
+	dashboard := &PublicDashboard{OrgId: orgId, Uid: uid}
+	var affectedRows int64
+	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		var err error
+		affectedRows, err = sess.Delete(dashboard)
+
+		return err
+	})
+
+	return affectedRows, err
 }

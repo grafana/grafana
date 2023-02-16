@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/http_api/reporting/
-  - /docs/grafana/latest/http_api/reporting/
+  - ../../http_api/reporting/
+canonical: /docs/grafana/latest/developers/http_api/reporting/
 description: Grafana Enterprise APIs
 keywords:
   - grafana

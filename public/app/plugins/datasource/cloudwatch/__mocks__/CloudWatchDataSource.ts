@@ -48,7 +48,7 @@ export const meta: DataSourcePluginMeta<CloudWatchJsonData> = {
 };
 
 export const CloudWatchSettings: DataSourceInstanceSettings<CloudWatchJsonData> = {
-  jsonData: { defaultRegion: 'us-west-1', tracingDatasourceUid: 'xray' },
+  jsonData: { defaultRegion: 'us-west-1', tracingDatasourceUid: 'xray', logGroups: [] },
   id: 0,
   uid: '',
   type: '',
@@ -62,28 +62,30 @@ export function setupMockedDataSource({
   variables,
   mockGetVariableName = true,
   getMock = jest.fn(),
+  customInstanceSettings = CloudWatchSettings,
 }: {
   getMock?: jest.Func;
   variables?: CustomVariableModel[];
   mockGetVariableName?: boolean;
+  customInstanceSettings?: DataSourceInstanceSettings<CloudWatchJsonData>;
 } = {}) {
   let templateService = new TemplateSrv();
   if (variables) {
     templateService = setupMockedTemplateService(variables);
     if (mockGetVariableName) {
-      templateService.getVariableName = (name: string) => name;
+      templateService.getVariableName = (name: string) => name.replace('$', '');
     }
   }
 
   const timeSrv = getTimeSrv();
-  const datasource = new CloudWatchDatasource(CloudWatchSettings, templateService, timeSrv);
+  const datasource = new CloudWatchDatasource(customInstanceSettings, templateService, timeSrv);
   datasource.getVariables = () => ['test'];
-  datasource.api.describeLogGroups = jest.fn().mockResolvedValue([]);
-  datasource.api.getNamespaces = jest.fn().mockResolvedValue([]);
-  datasource.api.getRegions = jest.fn().mockResolvedValue([]);
-  datasource.api.getDimensionKeys = jest.fn().mockResolvedValue([]);
-  datasource.api.getMetrics = jest.fn().mockResolvedValue([]);
-  datasource.logsQueryRunner.defaultLogGroups = [];
+  datasource.resources.getNamespaces = jest.fn().mockResolvedValue([]);
+  datasource.resources.getRegions = jest.fn().mockResolvedValue([]);
+  datasource.resources.getDimensionKeys = jest.fn().mockResolvedValue([]);
+  datasource.resources.getMetrics = jest.fn().mockResolvedValue([]);
+  datasource.resources.getAccounts = jest.fn().mockResolvedValue([]);
+  datasource.resources.getLogGroups = jest.fn().mockResolvedValue([]);
   const fetchMock = jest.fn().mockReturnValue(of({}));
   setBackendSrv({
     ...getBackendSrv(),
@@ -191,7 +193,7 @@ export const logGroupNamesVariable: CustomVariableModel = {
   id: 'groups',
   name: 'groups',
   current: {
-    value: ['templatedGroup-1', 'templatedGroup-2'],
+    value: ['templatedGroup-arn-1', 'templatedGroup-arn-2'],
     text: ['templatedGroup-1', 'templatedGroup-2'],
     selected: true,
   },
@@ -240,4 +242,17 @@ export const periodIntervalVariable: CustomVariableModel = {
   query: '',
   hide: VariableHide.dontHide,
   type: 'custom',
+};
+
+export const accountIdVariable: CustomVariableModel = {
+  ...initialCustomVariableModelState,
+  id: 'accountId',
+  name: 'accountId',
+  current: {
+    value: 'templatedaccountId',
+    text: 'templatedaccountId',
+    selected: true,
+  },
+  options: [{ value: 'templatedRegion', text: 'templatedRegion', selected: true }],
+  multi: false,
 };

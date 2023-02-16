@@ -70,12 +70,10 @@ func BuildImage(version string, arch config.Architecture, grafanaDir string, use
 	}
 
 	libc := "-musl"
-	dockerfile := "Dockerfile"
 	baseImage := fmt.Sprintf("%salpine:3.15", baseArch)
 	tagSuffix := ""
 	if useUbuntu {
 		libc = ""
-		dockerfile = "ubuntu.Dockerfile"
 		baseImage = fmt.Sprintf("%subuntu:20.04", baseArch)
 		tagSuffix = "-ubuntu"
 	}
@@ -85,6 +83,11 @@ func BuildImage(version string, arch config.Architecture, grafanaDir string, use
 	var additionalDockerRepo string
 	var tags []string
 	var imageFileBase string
+	var dockerEnterprise2Repo string
+	if repo, ok := os.LookupEnv("DOCKER_ENTERPRISE2_REPO"); ok {
+		dockerEnterprise2Repo = repo
+	}
+
 	switch edition {
 	case config.EditionOSS:
 		dockerRepo = "grafana/grafana-image-tags"
@@ -94,6 +97,10 @@ func BuildImage(version string, arch config.Architecture, grafanaDir string, use
 		dockerRepo = "grafana/grafana-enterprise-image-tags"
 		imageFileBase = "grafana-enterprise"
 		editionStr = "-enterprise"
+	case config.EditionEnterprise2:
+		dockerRepo = dockerEnterprise2Repo
+		imageFileBase = "grafana-enterprise2"
+		editionStr = "-enterprise2"
 	default:
 		return []string{}, fmt.Errorf("unrecognized edition %s", edition)
 	}
@@ -109,33 +116,49 @@ func BuildImage(version string, arch config.Architecture, grafanaDir string, use
 	tags = append(tags, tag)
 
 	args := []string{
-		"build", "--build-arg", fmt.Sprintf("BASE_IMAGE=%s", baseImage),
-		"--build-arg", fmt.Sprintf("GRAFANA_TGZ=%s", archive), "--tag", tag, "--no-cache",
-		"-f", dockerfile, ".",
+		"build",
+		"-q",
+		"--build-arg", fmt.Sprintf("BASE_IMAGE=%s", baseImage),
+		"--build-arg", fmt.Sprintf("GRAFANA_TGZ=%s", archive),
+		"--build-arg", "GO_SRC=tgz-builder",
+		"--build-arg", "JS_SRC=tgz-builder",
+		"--build-arg", "RUN_SH=./run.sh",
+		"--tag", tag,
+		"--no-cache",
+		"--file", "../../Dockerfile",
+		".",
 	}
 
-	log.Printf("Running Docker: docker %s", strings.Join(args, " "))
 	//nolint:gosec
 	cmd := exec.Command("docker", args...)
 	cmd.Dir = buildDir
-	cmd.Env = append(os.Environ(), "DOCKER_CLI_EXPERIMENTAL=enabled")
-	if output, err := cmd.CombinedOutput(); err != nil {
-		return []string{}, fmt.Errorf("building Docker image failed: %w\n%s", err, output)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	cmd.Env = append(os.Environ(), "DOCKER_CLI_EXPERIMENTAL=enabled", "DOCKER_BUILDKIT=1")
+	log.Printf("Running Docker: DOCKER_CLI_EXPERIMENTAL=enabled DOCKER_BUILDKIT=1 %s", cmd)
+	if err := cmd.Run(); err != nil {
+		return []string{}, fmt.Errorf("building Docker image failed: %w", err)
 	}
 	if shouldSave {
 		imageFile := fmt.Sprintf("%s-%s%s-%s.img", imageFileBase, version, tagSuffix, arch)
 		//nolint:gosec
 		cmd = exec.Command("docker", "save", tag, "-o", imageFile)
 		cmd.Dir = buildDir
-		if output, err := cmd.CombinedOutput(); err != nil {
-			return []string{}, fmt.Errorf("saving Docker image failed: %w\n%s", err, output)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		log.Printf("Running Docker: %s", cmd)
+		if err := cmd.Run(); err != nil {
+			return []string{}, fmt.Errorf("saving Docker image failed: %w", err)
 		}
 		gcsURL := fmt.Sprintf("gs://grafana-prerelease/artifacts/docker/%s/%s", version, imageFile)
 		//nolint:gosec
-		cmd = exec.Command("gsutil", "cp", imageFile, gcsURL)
+		cmd = exec.Command("gsutil", "-q", "cp", imageFile, gcsURL)
 		cmd.Dir = buildDir
-		if output, err := cmd.CombinedOutput(); err != nil {
-			return []string{}, fmt.Errorf("storing Docker image failed: %w\n%s", err, output)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		log.Printf("Running gsutil: %s", cmd)
+		if err := cmd.Run(); err != nil {
+			return []string{}, fmt.Errorf("storing Docker image failed: %w", err)
 		}
 		log.Printf("Docker image %s stored to grafana-prerelease GCS bucket", imageFile)
 	}
@@ -145,8 +168,11 @@ func BuildImage(version string, arch config.Architecture, grafanaDir string, use
 		//nolint:gosec
 		cmd = exec.Command("docker", "tag", tag, additionalTag)
 		cmd.Dir = buildDir
-		if output, err := cmd.CombinedOutput(); err != nil {
-			return []string{}, fmt.Errorf("tagging Docker image failed: %w\n%s", err, output)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		log.Printf("Running Docker: %s", cmd)
+		if err := cmd.Run(); err != nil {
+			return []string{}, fmt.Errorf("tagging Docker image failed: %w", err)
 		}
 		tags = append(tags, additionalTag)
 	}

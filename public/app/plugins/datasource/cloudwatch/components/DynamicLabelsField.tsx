@@ -4,21 +4,20 @@ import React, { useCallback, useRef } from 'react';
 
 import { CodeEditor, getInputStyles, Monaco, useTheme2 } from '@grafana/ui';
 
-import { DynamicLabelsCompletionItemProvider } from '../dynamic-labels/CompletionItemProvider';
-import language from '../dynamic-labels/definition';
-import { TRIGGER_SUGGEST } from '../monarch/commands';
-import { registerLanguage } from '../monarch/register';
+import { DynamicLabelsCompletionItemProvider } from '../language/dynamic-labels/CompletionItemProvider';
+import language from '../language/dynamic-labels/definition';
+import { TRIGGER_SUGGEST } from '../language/monarch/commands';
+import { registerLanguage } from '../language/monarch/register';
 
 const dynamicLabelsCompletionItemProvider = new DynamicLabelsCompletionItemProvider();
 
 export interface Props {
   onChange: (query: string) => void;
-  onRunQuery: () => void;
   label: string;
   width: number;
 }
 
-export function DynamicLabelsField({ label, width, onChange, onRunQuery }: Props) {
+export function DynamicLabelsField({ label, width, onChange }: Props) {
   const theme = useTheme2();
   const styles = getInputStyles({ theme, width });
   const containerRef = useRef<HTMLDivElement>(null);
@@ -28,13 +27,12 @@ export function DynamicLabelsField({ label, width, onChange, onRunQuery }: Props
       editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.Enter, () => {
         const text = editor.getValue();
         onChange(text);
-        onRunQuery();
       });
 
       const containerDiv = containerRef.current;
       containerDiv !== null && editor.layout({ width: containerDiv.clientWidth, height: containerDiv.clientHeight });
     },
-    [onChange, onRunQuery]
+    [onChange]
   );
 
   return (
@@ -69,7 +67,6 @@ export function DynamicLabelsField({ label, width, onChange, onRunQuery }: Props
         onBlur={(value) => {
           if (value !== label) {
             onChange(value);
-            onRunQuery();
           }
         }}
         onBeforeEditorMount={(monaco: Monaco) =>

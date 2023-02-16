@@ -1,7 +1,7 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
 //  Frame[0] {
-//      "type": "timeseries-many",
+//      "type": "timeseries-multi",
 //      "executedQueryString": "Expr: query1"
 //  }
 //  Name: {level="error", location="moon"}
@@ -17,7 +17,7 @@
 //  
 //  
 //  Frame[1] {
-//      "type": "timeseries-many",
+//      "type": "timeseries-multi",
 //      "executedQueryString": "Expr: query1"
 //  }
 //  Name: {level="info", location="moon"}
@@ -33,7 +33,7 @@
 //  
 //  
 //  Frame[2] {
-//      "type": "timeseries-many",
+//      "type": "timeseries-multi",
 //      "executedQueryString": "Expr: query1"
 //  }
 //  Name: {level="debug", location="moon"}
@@ -49,12 +49,13 @@
 //  
 //  🌟 This was machine generated.  Do not edit. 🌟
 {
+  "status": 200,
   "frames": [
     {
       "schema": {
         "name": "{level=\"error\", location=\"moon\"}",
         "meta": {
-          "type": "timeseries-many",
+          "type": "timeseries-multi",
           "executedQueryString": "Expr: query1"
         },
         "fields": [
@@ -104,7 +105,7 @@
       "schema": {
         "name": "{level=\"info\", location=\"moon\"}",
         "meta": {
-          "type": "timeseries-many",
+          "type": "timeseries-multi",
           "executedQueryString": "Expr: query1"
         },
         "fields": [
@@ -154,7 +155,7 @@
       "schema": {
         "name": "{level=\"debug\", location=\"moon\"}",
         "meta": {
-          "type": "timeseries-many",
+          "type": "timeseries-multi",
           "executedQueryString": "Expr: query1"
         },
         "fields": [

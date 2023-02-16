@@ -3,6 +3,7 @@ package folder
 import (
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -10,9 +11,12 @@ var ErrMaximumDepthReached = errutil.NewBase(errutil.StatusBadRequest, "folder.m
 var ErrBadRequest = errutil.NewBase(errutil.StatusBadRequest, "folder.bad-request")
 var ErrDatabaseError = errutil.NewBase(errutil.StatusInternal, "folder.database-error")
 var ErrInternal = errutil.NewBase(errutil.StatusInternal, "folder.internal")
+var ErrFolderTooDeep = errutil.NewBase(errutil.StatusInternal, "folder.too-deep")
+var ErrCircularReference = errutil.NewBase(errutil.StatusBadRequest, "folder.circular-reference", errutil.WithPublicMessage("Circular reference detected"))
 
 const (
 	GeneralFolderUID     = "general"
+	RootFolderUID        = ""
 	MaxNestedFolderDepth = 8
 )
 
@@ -31,7 +35,23 @@ type Folder struct {
 
 	// TODO: validate if this field is required/relevant to folders.
 	// currently there is no such column
-	// UpdatedBy int64
+	Version   int
+	URL       string
+	UpdatedBy int64
+	CreatedBy int64
+	HasACL    bool
+}
+
+var GeneralFolder = Folder{ID: 0, Title: "General"}
+
+func (f *Folder) IsGeneral() bool {
+	return f.ID == GeneralFolder.ID && f.Title == GeneralFolder.Title
+}
+
+type FolderDTO struct {
+	Folder
+
+	Children []FolderDTO
 }
 
 // NewFolder tales a title and returns a Folder with the Created and Updated
@@ -49,32 +69,53 @@ func NewFolder(title string, description string) *Folder {
 // to create a folder.
 type CreateFolderCommand struct {
 	UID         string `json:"uid"`
-	OrgID       int64  `json:"orgId"`
+	OrgID       int64  `json:"-"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
-	ParentUID   string `json:"parent_uid"`
+	ParentUID   string `json:"parentUid"`
+
+	SignedInUser *user.SignedInUser `json:"-"`
 }
 
 // UpdateFolderCommand captures the information required by the folder service
 // to update a folder. Use Move to update a folder's parent folder.
 type UpdateFolderCommand struct {
-	Folder         *Folder `json:"folder"` // The extant folder
-	NewUID         *string `json:"uid" xorm:"uid"`
-	NewTitle       *string `json:"title"`
-	NewDescription *string `json:"description"`
+	UID   string `json:"-"`
+	OrgID int64  `json:"-"`
+	// NewUID it's an optional parameter used for overriding the existing folder UID
+	NewUID *string `json:"uid"` // keep same json tag with the legacy command for not breaking the existing APIs
+	// NewTitle it's an optional parameter used for overriding the existing folder title
+	NewTitle *string `json:"title"` // keep same json tag with the legacy command for not breaking the existing APIs
+	// NewDescription it's an optional parameter used for overriding the existing folder description
+	NewDescription *string `json:"description"` // keep same json tag with the legacy command for not breaking the existing APIs
+	NewParentUID   *string `json:"-"`
+
+	// Version only used by the legacy folder implementation
+	Version int `json:"version"`
+	// Overwrite only used by the legacy folder implementation
+	Overwrite bool `json:"overwrite"`
+
+	SignedInUser *user.SignedInUser `json:"-"`
 }
 
 // MoveFolderCommand captures the information required by the folder service
 // to move a folder.
 type MoveFolderCommand struct {
-	UID          string `json:"uid"`
-	NewParentUID string `json:"new_parent_uid"`
+	UID          string `json:"-"`
+	NewParentUID string `json:"parentUid"`
+	OrgID        int64  `json:"-"`
+
+	SignedInUser *user.SignedInUser `json:"-"`
 }
 
 // DeleteFolderCommand captures the information required by the folder service
 // to delete a folder.
 type DeleteFolderCommand struct {
-	UID string `json:"uid" xorm:"uid"`
+	UID              string `json:"uid" xorm:"uid"`
+	OrgID            int64  `json:"orgId" xorm:"org_id"`
+	ForceDeleteRules bool   `json:"forceDeleteRules"`
+
+	SignedInUser *user.SignedInUser `json:"-"`
 }
 
 // GetFolderQuery is used for all folder Get requests. Only one of UID, ID, or
@@ -86,6 +127,8 @@ type GetFolderQuery struct {
 	ID    *int64
 	Title *string
 	OrgID int64
+
+	SignedInUser *user.SignedInUser `json:"-"`
 }
 
 // GetParentsQuery captures the information required by the folder service to
@@ -95,10 +138,10 @@ type GetParentsQuery struct {
 	OrgID int64  `xorm:"org_id"`
 }
 
-// GetTreeCommand captures the information required by the folder service to
+// GetChildrenQuery captures the information required by the folder service to
 // return a list of child folders of the given folder.
 
-type GetTreeQuery struct {
+type GetChildrenQuery struct {
 	UID   string `xorm:"uid"`
 	OrgID int64  `xorm:"org_id"`
 	Depth int64
@@ -106,4 +149,14 @@ type GetTreeQuery struct {
 	// Pagination options
 	Limit int64
 	Page  int64
+
+	SignedInUser *user.SignedInUser `json:"-"`
+}
+
+type HasEditPermissionInFoldersQuery struct {
+	SignedInUser *user.SignedInUser
+}
+
+type HasAdminPermissionInDashboardsOrFoldersQuery struct {
+	SignedInUser *user.SignedInUser
 }

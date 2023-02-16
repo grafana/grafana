@@ -1,3 +1,5 @@
+import deepEqual from 'fast-deep-equal';
+
 import { config } from '@grafana/runtime';
 
 import { CloudWatchMetricsQuery } from '../types';
@@ -6,7 +8,7 @@ import { CloudWatchMetricsQuery } from '../types';
 export function migrateMetricQuery(query: CloudWatchMetricsQuery): CloudWatchMetricsQuery {
   //add metric query migrations here
   const migratedQuery = migrateAliasPatterns(query);
-  return migratedQuery;
+  return deepEqual(migratedQuery, query) ? query : migratedQuery;
 }
 
 const aliasPatterns: Record<string, string> = {
@@ -20,16 +22,19 @@ const aliasPatterns: Record<string, string> = {
 
 export function migrateAliasPatterns(query: CloudWatchMetricsQuery): CloudWatchMetricsQuery {
   if (config.featureToggles.cloudWatchDynamicLabels && !query.hasOwnProperty('label')) {
-    const regex = /{{\s*(.+?)\s*}}/g;
-    query.label =
-      query.alias?.replace(regex, (_, value) => {
-        if (aliasPatterns.hasOwnProperty(value)) {
-          return `\${${aliasPatterns[value]}}`;
-        }
+    const newQuery = { ...query };
+    if (!query.hasOwnProperty('label')) {
+      const regex = /{{\s*(.+?)\s*}}/g;
+      newQuery.label =
+        query.alias?.replace(regex, (_, value) => {
+          if (aliasPatterns.hasOwnProperty(value)) {
+            return `\${${aliasPatterns[value]}}`;
+          }
 
-        return `\${PROP('Dim.${value}')}`;
-      }) ?? '';
+          return `\${PROP('Dim.${value}')}`;
+        }) ?? '';
+    }
+    return newQuery;
   }
-
   return query;
 }

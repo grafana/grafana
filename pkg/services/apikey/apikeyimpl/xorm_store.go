@@ -11,6 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
+	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -28,11 +30,11 @@ func (ss *sqlStore) GetAPIKeys(ctx context.Context, query *apikey.GetApiKeysQuer
 
 		if query.IncludeExpired {
 			sess = dbSession.Limit(100, 0).
-				Where("org_id=?", query.OrgId).
+				Where("org_id=?", query.OrgID).
 				Asc("name")
 		} else {
 			sess = dbSession.Limit(100, 0).
-				Where("org_id=? and ( expires IS NULL or expires >= ?)", query.OrgId, timeNow().Unix()).
+				Where("org_id=? and ( expires IS NULL or expires >= ?)", query.OrgID, timeNow().Unix()).
 				Asc("name")
 		}
 
@@ -66,7 +68,7 @@ func (ss *sqlStore) GetAllAPIKeys(ctx context.Context, orgID int64) ([]*apikey.A
 func (ss *sqlStore) DeleteApiKey(ctx context.Context, cmd *apikey.DeleteCommand) error {
 	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		rawSQL := "DELETE FROM api_key WHERE id=? and org_id=? and service_account_id IS NULL"
-		result, err := sess.Exec(rawSQL, cmd.Id, cmd.OrgId)
+		result, err := sess.Exec(rawSQL, cmd.ID, cmd.OrgID)
 		if err != nil {
 			return err
 		}
@@ -82,7 +84,7 @@ func (ss *sqlStore) DeleteApiKey(ctx context.Context, cmd *apikey.DeleteCommand)
 
 func (ss *sqlStore) AddAPIKey(ctx context.Context, cmd *apikey.AddCommand) error {
 	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		key := apikey.APIKey{OrgId: cmd.OrgId, Name: cmd.Name}
+		key := apikey.APIKey{OrgID: cmd.OrgID, Name: cmd.Name}
 		exists, _ := sess.Get(&key)
 		if exists {
 			return apikey.ErrDuplicate
@@ -99,7 +101,7 @@ func (ss *sqlStore) AddAPIKey(ctx context.Context, cmd *apikey.AddCommand) error
 
 		isRevoked := false
 		t := apikey.APIKey{
-			OrgId:            cmd.OrgId,
+			OrgID:            cmd.OrgID,
 			Name:             cmd.Name,
 			Role:             cmd.Role,
 			Key:              cmd.Key,
@@ -121,7 +123,7 @@ func (ss *sqlStore) AddAPIKey(ctx context.Context, cmd *apikey.AddCommand) error
 func (ss *sqlStore) GetApiKeyById(ctx context.Context, query *apikey.GetByIDQuery) error {
 	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		var key apikey.APIKey
-		has, err := sess.ID(query.ApiKeyId).Get(&key)
+		has, err := sess.ID(query.ApiKeyID).Get(&key)
 
 		if err != nil {
 			return err
@@ -137,7 +139,7 @@ func (ss *sqlStore) GetApiKeyById(ctx context.Context, query *apikey.GetByIDQuer
 func (ss *sqlStore) GetApiKeyByName(ctx context.Context, query *apikey.GetByNameQuery) error {
 	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		var key apikey.APIKey
-		has, err := sess.Where("org_id=? AND name=?", query.OrgId, query.KeyName).Get(&key)
+		has, err := sess.Where("org_id=? AND name=?", query.OrgID, query.KeyName).Get(&key)
 
 		if err != nil {
 			return err
@@ -173,4 +175,48 @@ func (ss *sqlStore) UpdateAPIKeyLastUsedDate(ctx context.Context, tokenID int64)
 
 		return nil
 	})
+}
+
+func (ss *sqlStore) Count(ctx context.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {
+	u := &quota.Map{}
+	type result struct {
+		Count int64
+	}
+
+	r := result{}
+	if err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		rawSQL := "SELECT COUNT(*) AS count FROM api_key"
+		if _, err := sess.SQL(rawSQL).Get(&r); err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		return u, err
+	} else {
+		tag, err := quota.NewTag(apikey.QuotaTargetSrv, apikey.QuotaTarget, quota.GlobalScope)
+		if err != nil {
+			return nil, err
+		}
+		u.Set(tag, r.Count)
+	}
+
+	if scopeParams != nil && scopeParams.OrgID != 0 {
+		if err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			rawSQL := "SELECT COUNT(*) AS count FROM api_key WHERE org_id = ?"
+			if _, err := sess.SQL(rawSQL, scopeParams.OrgID).Get(&r); err != nil {
+				return err
+			}
+			return nil
+		}); err != nil {
+			return u, err
+		} else {
+			tag, err := quota.NewTag(apikey.QuotaTargetSrv, apikey.QuotaTarget, quota.OrgScope)
+			if err != nil {
+				return nil, err
+			}
+			u.Set(tag, r.Count)
+		}
+	}
+
+	return u, nil
 }

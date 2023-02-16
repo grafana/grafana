@@ -1,6 +1,7 @@
 import { SyntaxNode } from '@lezer/common';
 import { escapeRegExp } from 'lodash';
 
+import { DataQueryResponse, DataQueryResponseData, QueryResultMetaStat } from '@grafana/data';
 import {
   parser,
   LineFilter,
@@ -21,6 +22,7 @@ import {
 
 import { ErrorId } from '../prometheus/querybuilder/shared/parsingUtils';
 
+import { getStreamSelectorPositions } from './modifyQuery';
 import { LokiQuery, LokiQueryType } from './types';
 
 export function formatQuery(selector: string | undefined): string {
@@ -108,6 +110,33 @@ export function getNormalizedLokiQuery(query: LokiQuery): LokiQuery {
   return { ...rest, queryType: LokiQueryType.Range };
 }
 
+const tagsToObscure = ['String', 'Identifier', 'LineComment', 'Number'];
+const partsToKeep = ['__error__', '__interval', '__interval_ms'];
+export function obfuscate(query: string): string {
+  let obfuscatedQuery: string = query;
+  const tree = parser.parse(query);
+  tree.iterate({
+    enter: ({ name, from, to }): false | void => {
+      const queryPart = query.substring(from, to);
+      if (tagsToObscure.includes(name) && !partsToKeep.includes(queryPart)) {
+        obfuscatedQuery = obfuscatedQuery.replace(queryPart, name);
+      }
+    },
+  });
+  return obfuscatedQuery;
+}
+
+export function parseToNodeNamesArray(query: string): string[] {
+  const queryParts: string[] = [];
+  const tree = parser.parse(query);
+  tree.iterate({
+    enter: ({ name }): false | void => {
+      queryParts.push(name);
+    },
+  });
+  return queryParts;
+}
+
 export function isValidQuery(query: string): boolean {
   let isValid = true;
   const tree = parser.parse(query);
@@ -145,6 +174,21 @@ export function isQueryWithParser(query: string): { queryWithParser: boolean; pa
     },
   });
   return { queryWithParser: parserCount > 0, parserCount };
+}
+
+export function getParserFromQuery(query: string) {
+  const tree = parser.parse(query);
+  let logParser;
+  tree.iterate({
+    enter: (node: SyntaxNode): false | void => {
+      if (node.type.id === LabelParser || node.type.id === JsonExpressionParser) {
+        logParser = query.substring(node.from, node.to).trim();
+        return false;
+      }
+    },
+  });
+
+  return logParser;
 }
 
 export function isQueryPipelineErrorFiltering(query: string): boolean {
@@ -209,4 +253,109 @@ export function getLogQueryFromMetricsQuery(query: string): string {
   });
 
   return selector + pipelineExpr;
+}
+
+export function isQueryWithLabelFilter(query: string): boolean {
+  const tree = parser.parse(query);
+  let hasLabelFilter = false;
+
+  tree.iterate({
+    enter: ({ type, node }): false | void => {
+      if (type.id === LabelFilter) {
+        hasLabelFilter = true;
+        return;
+      }
+    },
+  });
+
+  return hasLabelFilter;
+}
+
+export function isQueryWithLineFilter(query: string): boolean {
+  const tree = parser.parse(query);
+  let queryWithLineFilter = false;
+
+  tree.iterate({
+    enter: ({ type }): false | void => {
+      if (type.id === LineFilter) {
+        queryWithLineFilter = true;
+        return;
+      }
+    },
+  });
+
+  return queryWithLineFilter;
+}
+
+export function getStreamSelectorsFromQuery(query: string): string[] {
+  const labelMatcherPositions = getStreamSelectorPositions(query);
+
+  const labelMatchers = labelMatcherPositions.map((labelMatcher) => {
+    return query.slice(labelMatcher.from, labelMatcher.to);
+  });
+
+  return labelMatchers;
+}
+
+export function requestSupportsPartitioning(allQueries: LokiQuery[]) {
+  const queries = allQueries.filter((query) => !query.hide);
+  /*
+   * For now, we will not split when more than 1 query is requested.
+   */
+  if (queries.length > 1) {
+    return false;
+  }
+
+  if (queries[0].refId.includes('do-not-chunk')) {
+    return false;
+  }
+
+  return true;
+}
+
+export function combineResponses(currentResult: DataQueryResponse | null, newResult: DataQueryResponse) {
+  if (!currentResult) {
+    return newResult;
+  }
+
+  newResult.data.forEach((newFrame) => {
+    const currentFrame = currentResult.data.find((frame) => frame.name === newFrame.name);
+    if (!currentFrame) {
+      currentResult.data.push(newFrame);
+      return;
+    }
+    combineFrames(currentFrame, newFrame);
+  });
+
+  return currentResult;
+}
+
+function combineFrames(dest: DataQueryResponseData, source: DataQueryResponseData) {
+  const totalFields = dest.fields.length;
+  for (let i = 0; i < totalFields; i++) {
+    dest.fields[i].values.buffer = [].concat.apply(source.fields[i].values.buffer, dest.fields[i].values.buffer);
+  }
+  dest.length += source.length;
+  combineMetadata(dest, source);
+}
+
+function combineMetadata(dest: DataQueryResponseData = {}, source: DataQueryResponseData = {}) {
+  if (!source.meta?.stats) {
+    return;
+  }
+  if (!dest.meta?.stats) {
+    if (!dest.meta) {
+      dest.meta = {};
+    }
+    Object.assign(dest.meta, { stats: source.meta.stats });
+    return;
+  }
+  dest.meta.stats.forEach((destStat: QueryResultMetaStat, i: number) => {
+    const sourceStat = source.meta.stats?.find(
+      (sourceStat: QueryResultMetaStat) => destStat.displayName === sourceStat.displayName
+    );
+    if (sourceStat) {
+      destStat.value += sourceStat.value;
+    }
+  });
 }

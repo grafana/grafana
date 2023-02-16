@@ -1,0 +1,40 @@
+<mjml>
+  <mj-head>
+    <!-- ⬇ Don't forget to specifify an email subject! Use the HTML comment below ⬇ -->
+    <mj-title>
+      {{ Subject .Subject .TemplateData "{{ .InvitedBy }} has added you to the {{ .OrgName }} organization" }}
+    </mj-title>
+    <mj-include path="./partials/layout/head.mjml" />
+  </mj-head>
+  <mj-body>
+    <mj-section>
+      <mj-include path="./partials/layout/header.mjml" />
+    </mj-section>
+    <mj-section background-color="#22252b" border="1px solid #2f3037">
+      <mj-column>
+        <mj-text>
+          <h2>You have been added to {{ .OrgName }}</h2>
+          <strong>{{ .InvitedBy }}</strong> has added you to the <strong>{{ .OrgName }}</strong> organization in Grafana.
+        </mj-text>
+        <mj-text>
+          Once logged in, <strong>{{ .OrgName }}</strong> will be available to switch to in the user interface.
+        </mj-text>
+        <mj-text>
+          Log in now by clicking the link below:
+        </mj-text>
+        <mj-button href="{{ .AppUrl }}">
+          Login to Grafana
+        </mj-button>
+        <mj-text>
+          You can also copy and paste this link into your browser directly:
+        </mj-text>
+        <mj-text>
+          <a rel="noopener" href="{{ .AppUrl }}">{{ .AppUrl }}</a>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+    <mj-section>
+      <mj-include path="./partials/layout/footer.mjml" />
+    </mj-section>
+  </mj-body>
+</mjml>

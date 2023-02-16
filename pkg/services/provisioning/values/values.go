@@ -210,8 +210,8 @@ func (val *JSONSliceValue) UnmarshalYAML(unmarshal func(interface{}) error) erro
 	for _, v := range unmarshaled {
 		i := make(map[string]interface{})
 		r := make(map[string]interface{})
-		for key, val := range v.(map[interface{}]interface{}) {
-			i[key.(string)], r[key.(string)], err = transformInterface(val)
+		for key, val := range v.(map[string]interface{}) {
+			i[key], r[key], err = transformInterface(val)
 			if err != nil {
 				return err
 			}
@@ -245,9 +245,9 @@ func transformInterface(i interface{}) (interface{}, interface{}, error) {
 	case reflect.Slice:
 		return transformSlice(i.([]interface{}))
 	case reflect.Map:
-		return transformMap(i.(map[interface{}]interface{}))
+		return transformMap(i.(map[string]interface{}))
 	case reflect.String:
-		return interpolateValue(i.(string))
+		return interpolateIfaceValue(i.(string))
 	default:
 		// Was int, float or some other value that we do not need to do any transform on.
 		return i, i, nil
@@ -255,8 +255,8 @@ func transformInterface(i interface{}) (interface{}, interface{}, error) {
 }
 
 func transformSlice(i []interface{}) (interface{}, interface{}, error) {
-	var transformedSlice []interface{}
-	var rawSlice []interface{}
+	transformedSlice := make([]interface{}, 0, len(i))
+	rawSlice := make([]interface{}, 0, len(i))
 	for _, val := range i {
 		transformed, raw, err := transformInterface(val)
 		if err != nil {
@@ -268,20 +268,45 @@ func transformSlice(i []interface{}) (interface{}, interface{}, error) {
 	return transformedSlice, rawSlice, nil
 }
 
-func transformMap(i map[interface{}]interface{}) (interface{}, interface{}, error) {
+func transformMap(i map[string]interface{}) (interface{}, interface{}, error) {
 	transformed := make(map[string]interface{})
 	raw := make(map[string]interface{})
 	for key, val := range i {
-		stringKey, ok := key.(string)
-		if ok {
-			var err error
-			transformed[stringKey], raw[stringKey], err = transformInterface(val)
-			if err != nil {
-				return nil, nil, err
-			}
+		var err error
+		transformed[key], raw[key], err = transformInterface(val)
+		if err != nil {
+			return nil, nil, err
 		}
 	}
 	return transformed, raw, nil
+}
+
+func interpolateIfaceValue(val string) (interface{}, string, error) {
+	parts := strings.Split(val, "$$")
+	if len(parts) > 1 {
+		return interpolateValue(val)
+	}
+	expanded, err := setting.ExpandVar(val)
+	if err != nil {
+		return val, val, fmt.Errorf("failed to interpolate value '%s': %w", val, err)
+	}
+	expandedEnv := os.ExpandEnv(expanded)
+	if expandedEnv != val {
+		// If the value is an environment variable, consider it may not be a string
+		intV, err := strconv.ParseInt(expandedEnv, 10, 64)
+		if err == nil {
+			return intV, val, nil
+		}
+		floatV, err := strconv.ParseFloat(expandedEnv, 64)
+		if err == nil {
+			return floatV, val, nil
+		}
+		boolV, err := strconv.ParseBool(expandedEnv)
+		if err == nil {
+			return boolV, val, nil
+		}
+	}
+	return expandedEnv, val, nil
 }
 
 // interpolateValue returns the final value after interpolation. In addition to environment variable interpolation,

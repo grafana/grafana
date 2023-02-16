@@ -1,9 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/notifications/
-  - /docs/grafana/latest/alerting/old-alerting/notifications/
-  - /docs/grafana/latest/alerting/unified-alerting/notifications/
-  - /docs/grafana/latest/alerting/manage-notifications/create-notification-policy/
+  - ../notifications/
+  - ../old-alerting/notifications/
+  - ../unified-alerting/notifications/
 description: Notification policies
 keywords:
   - grafana
@@ -17,7 +16,7 @@ weight: 300
 
 # Manage notification policies
 
-Notification policies determine how alerts are routed to contact points. Policies have a tree structure, where each policy can have one or more child policies. Each policy, except for the root policy, can also match specific alert labels. Each alert is evaluated by the root policy and subsequently by each child policy. If you enable the `Continue matching subsequent sibling nodes` option is enabled for a specific policy, then evaluation continues even after one or more matches. A parent policy’s configuration settings and contact point information govern the behavior of an alert that does not match any of the child policies. A root policy governs any alert that does not match a specific policy.
+Notification policies determine how alerts are routed to contact points. Policies have a tree structure, where each policy can have one or more child policies. Each policy, except for the root policy, can also match specific alert labels. Each alert is evaluated by the root policy and subsequently by each child policy. If the `Continue matching subsequent sibling nodes` option is enabled for a specific policy, then evaluation continues even after one or more matches. A parent policy’s configuration settings and contact point information govern the behavior of an alert that does not match any of the child policies. A root policy governs any alert that does not match a specific policy.
 
 You can configure Grafana managed notification policies as well as notification policies for an external Alertmanager data source.
 
@@ -84,7 +83,7 @@ An example of an alert configuration.
 - Create a "default" contact point for slack notifications, and set it on root policy.
 - Edit the root policy grouping to group alerts by `cluster`, `namespace` and `severity` so that you get a notification per alert rule and specific kubernetes cluster and namespace.
 - Create specific route for alerts coming from the development cluster with an appropriate contact point.
-- Create a specific route for alerts with "critical" severity with a more invasive contact point type, like pager duty notification.
+- Create a specific route for alerts with "critical" severity with a more invasive contact point integration, like pager duty notification.
 - Create specific routes for particular teams that handle their own onduty rotations.
 
 {{< figure max-width="40%" src="/static/img/docs/alerting/unified/notification-policies-8-0.png" max-width="650px" caption="Notification policies" >}}

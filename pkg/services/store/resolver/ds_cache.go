@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 )
 
@@ -50,26 +50,26 @@ func (c *dsCache) refreshCache(ctx context.Context) error {
 
 	for _, ds := range q.Result {
 		val := &dsVal{
-			InternalID: ds.Id,
+			InternalID: ds.ID,
 			Name:       ds.Name,
-			UID:        ds.Uid,
+			UID:        ds.UID,
 			Type:       ds.Type,
 			IsDefault:  ds.IsDefault,
 		}
 		_, ok := c.pluginStore.Plugin(ctx, val.Type)
 		val.PluginExists = ok
 
-		orgCache, ok := cache[ds.OrgId]
+		orgCache, ok := cache[ds.OrgID]
 		if !ok {
 			orgCache = make(map[string]*dsVal, 0)
-			cache[ds.OrgId] = orgCache
+			cache[ds.OrgID] = orgCache
 		}
 
 		orgCache[val.UID] = val
 
 		// Empty string or
 		if val.IsDefault {
-			defaultDS[ds.OrgId] = val
+			defaultDS[ds.OrgID] = val
 		}
 	}
 
@@ -122,9 +122,12 @@ func (c *dsCache) getDS(ctx context.Context, uid string) (*dsVal, error) {
 		}
 	}
 
-	orgID := store.UserFromContext(ctx).OrgID
+	usr, err := appcontext.User(ctx)
+	if err != nil {
+		return nil, nil // no user
+	}
 
-	v, ok := c.cache[orgID]
+	v, ok := c.cache[usr.OrgID]
 	if !ok {
 		return nil, nil // org not found
 	}

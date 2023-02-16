@@ -1,3 +1,6 @@
+import { ArrayVector, DataQueryResponse } from '@grafana/data';
+
+import { logFrameA, logFrameB, metricFrameA, metricFrameB } from './mocks';
 import {
   getHighlighterExpressionsFromQuery,
   getNormalizedLokiQuery,
@@ -5,6 +8,10 @@ import {
   isQueryWithLabelFormat,
   isQueryWithParser,
   isValidQuery,
+  parseToNodeNamesArray,
+  getParserFromQuery,
+  obfuscate,
+  combineResponses,
 } from './queryUtils';
 import { LokiQuery, LokiQueryType } from './types';
 
@@ -166,6 +173,67 @@ describe('isValidQuery', () => {
   });
 });
 
+describe('parseToNodeNamesArray', () => {
+  it('returns on empty query', () => {
+    expect(parseToNodeNamesArray('{}')).toEqual(['LogQL', 'Expr', 'LogExpr', 'Selector', '⚠']);
+  });
+  it('returns on invalid query', () => {
+    expect(parseToNodeNamesArray('{job="grafana"')).toEqual([
+      'LogQL',
+      'Expr',
+      'LogExpr',
+      'Selector',
+      'Matchers',
+      'Matcher',
+      'Identifier',
+      'Eq',
+      'String',
+      '⚠',
+    ]);
+  });
+  it('returns on valid query', () => {
+    expect(parseToNodeNamesArray('{job="grafana"}')).toEqual([
+      'LogQL',
+      'Expr',
+      'LogExpr',
+      'Selector',
+      'Matchers',
+      'Matcher',
+      'Identifier',
+      'Eq',
+      'String',
+    ]);
+  });
+});
+
+describe('obfuscate', () => {
+  it('obfuscates on invalid query', () => {
+    expect(obfuscate('{job="grafana"')).toEqual('{Identifier=String');
+  });
+  it('obfuscates on valid query', () => {
+    expect(
+      obfuscate('sum(sum_over_time({test="test"} |= `` | logfmt | __error__=`` | unwrap test | __error__=`` [10m]))')
+    ).toEqual(
+      'sum(sum_over_time({Identifier=String} |= String | logfmt | __error__=String | unwrap Identifier | __error__=String [10m]))'
+    );
+  });
+  it('obfuscates on arithmetic operation', () => {
+    expect(obfuscate('2 + 3')).toEqual('Number + Number');
+  });
+  it('obfuscates a comment', () => {
+    expect(obfuscate('{job="grafana"} # test comment')).toEqual('{Identifier=String} LineComment');
+  });
+  it('does not obfuscate interval variables', () => {
+    expect(
+      obfuscate(
+        'sum(quantile_over_time(0.5, {label="$var"} | logfmt | __error__=`` | unwrap latency | __error__=`` [$__interval]))'
+      )
+    ).toEqual(
+      'sum(quantile_over_time(Number, {Identifier=String} | logfmt | __error__=String | unwrap Identifier | __error__=String [$__interval]))'
+    );
+  });
+});
+
 describe('isLogsQuery', () => {
   it('returns false if metrics query', () => {
     expect(isLogsQuery('rate({job="grafana"}[5m])')).toBe(false);
@@ -213,5 +281,126 @@ describe('isQueryWithLabelFormat', () => {
 
   it('returns false if metrics query without label format', () => {
     expect(isQueryWithLabelFormat('rate({job="grafana"} [5m])')).toBe(false);
+  });
+});
+
+describe('getParserFromQuery', () => {
+  it('returns no parser', () => {
+    expect(getParserFromQuery('{job="grafana"}')).toBeUndefined();
+  });
+
+  it.each(['json', 'logfmt', 'pattern', 'regexp', 'unpack'])('detects %s parser', (parser: string) => {
+    expect(getParserFromQuery(`{job="grafana"} | ${parser}`)).toBe(parser);
+    expect(getParserFromQuery(`sum(count_over_time({place="luna"} | ${parser} | unwrap counter )) by (place)`)).toBe(
+      parser
+    );
+  });
+});
+
+describe('combineResponses', () => {
+  it('combines logs frames', () => {
+    const responseA: DataQueryResponse = {
+      data: [logFrameA],
+    };
+    const responseB: DataQueryResponse = {
+      data: [logFrameB],
+    };
+    expect(combineResponses(responseA, responseB)).toEqual({
+      data: [
+        {
+          fields: [
+            {
+              config: {},
+              name: 'Time',
+              type: 'time',
+              values: new ArrayVector([1, 2, 3, 4]),
+            },
+            {
+              config: {},
+              name: 'Line',
+              type: 'string',
+              values: new ArrayVector(['line3', 'line4', 'line1', 'line2']),
+            },
+            {
+              config: {},
+              name: 'labels',
+              type: 'other',
+              values: new ArrayVector([
+                {
+                  otherLabel: 'other value',
+                },
+                {
+                  label: 'value',
+                },
+                {
+                  otherLabel: 'other value',
+                },
+              ]),
+            },
+            {
+              config: {},
+              name: 'tsNs',
+              type: 'string',
+              values: new ArrayVector(['1000000', '2000000', '3000000', '4000000']),
+            },
+            {
+              config: {},
+              name: 'id',
+              type: 'string',
+              values: new ArrayVector(['id3', 'id4', 'id1', 'id2']),
+            },
+          ],
+          length: 4,
+          meta: {
+            stats: [
+              {
+                displayName: 'Ingester: total reached',
+                value: 1,
+              },
+            ],
+          },
+          refId: 'A',
+        },
+      ],
+    });
+  });
+
+  it('combines metric frames', () => {
+    const responseA: DataQueryResponse = {
+      data: [metricFrameA],
+    };
+    const responseB: DataQueryResponse = {
+      data: [metricFrameB],
+    };
+    expect(combineResponses(responseA, responseB)).toEqual({
+      data: [
+        {
+          fields: [
+            {
+              config: {},
+              name: 'Time',
+              type: 'time',
+              values: new ArrayVector([1000000, 2000000, 3000000, 4000000]),
+            },
+            {
+              config: {},
+              name: 'Value',
+              type: 'number',
+              values: new ArrayVector([6, 7, 5, 4]),
+            },
+          ],
+          length: 4,
+          meta: {
+            stats: [
+              {
+                displayName: 'Ingester: total reached',
+                value: 3,
+              },
+            ],
+          },
+          refId: 'A',
+        },
+      ],
+    });
   });
 });

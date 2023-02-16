@@ -91,15 +91,15 @@ describe('Query Response parser', () => {
 
     const norm = frames.map((f) => toDataFrameDTO(f));
     expect(norm).toMatchInlineSnapshot(`
-      Array [
-        Object {
-          "fields": Array [
-            Object {
-              "config": Object {},
+      [
+        {
+          "fields": [
+            {
+              "config": {},
               "labels": undefined,
               "name": "time",
               "type": "time",
-              "values": Array [
+              "values": [
                 1611767228473,
                 1611767240473,
                 1611767252473,
@@ -108,12 +108,12 @@ describe('Query Response parser', () => {
                 1611767288473,
               ],
             },
-            Object {
-              "config": Object {},
+            {
+              "config": {},
               "labels": undefined,
               "name": "A-series",
               "type": "number",
-              "values": Array [
+              "values": [
                 1,
                 20,
                 90,
@@ -127,14 +127,14 @@ describe('Query Response parser', () => {
           "name": undefined,
           "refId": "A",
         },
-        Object {
-          "fields": Array [
-            Object {
-              "config": Object {},
+        {
+          "fields": [
+            {
+              "config": {},
               "labels": undefined,
               "name": "time",
               "type": "time",
-              "values": Array [
+              "values": [
                 1611767228473,
                 1611767240473,
                 1611767252473,
@@ -143,12 +143,12 @@ describe('Query Response parser', () => {
                 1611767288473,
               ],
             },
-            Object {
-              "config": Object {},
+            {
+              "config": {},
               "labels": undefined,
               "name": "B-series",
               "type": "number",
-              "values": Array [
+              "values": [
                 1,
                 20,
                 90,
@@ -176,15 +176,15 @@ describe('Query Response parser', () => {
 
     const norm = frames.map((f) => toDataFrameDTO(f));
     expect(norm).toMatchInlineSnapshot(`
-      Array [
-        Object {
-          "fields": Array [
-            Object {
-              "config": Object {},
+      [
+        {
+          "fields": [
+            {
+              "config": {},
               "labels": undefined,
               "name": "time",
               "type": "time",
-              "values": Array [
+              "values": [
                 1611767228473,
                 1611767240473,
                 1611767252473,
@@ -193,12 +193,12 @@ describe('Query Response parser', () => {
                 1611767288473,
               ],
             },
-            Object {
-              "config": Object {},
+            {
+              "config": {},
               "labels": undefined,
               "name": "B-series",
               "type": "number",
-              "values": Array [
+              "values": [
                 1,
                 20,
                 90,
@@ -212,14 +212,14 @@ describe('Query Response parser', () => {
           "name": undefined,
           "refId": "B",
         },
-        Object {
-          "fields": Array [
-            Object {
-              "config": Object {},
+        {
+          "fields": [
+            {
+              "config": {},
               "labels": undefined,
               "name": "time",
               "type": "time",
-              "values": Array [
+              "values": [
                 1611767228473,
                 1611767240473,
                 1611767252473,
@@ -228,12 +228,12 @@ describe('Query Response parser', () => {
                 1611767288473,
               ],
             },
-            Object {
-              "config": Object {},
+            {
+              "config": {},
               "labels": undefined,
               "name": "A-series",
               "type": "number",
-              "values": Array [
+              "values": [
                 1,
                 20,
                 90,
@@ -280,7 +280,7 @@ describe('Query Response parser', () => {
   });
 
   describe('Cache notice', () => {
-    let resp: any;
+    let resp: FetchResponse<BackendDataSourceResponse>;
 
     beforeEach(() => {
       resp = {
@@ -311,7 +311,7 @@ describe('Query Response parser', () => {
     test('does not remove existing notices', () => {
       const queries: DataQuery[] = [{ refId: 'A' }];
       resp.headers.set('X-Cache', 'HIT');
-      resp.data.results.A.frames[0].schema.meta = { notices: [{ severity: 'info', text: 'Example' }] };
+      resp.data.results.A.frames![0].schema!.meta = { notices: [{ severity: 'info', text: 'Example' }] };
       expect(toDataQueryResponse(resp, queries).data[0].meta.notices).toStrictEqual([
         { severity: 'info', text: 'Example' },
         cachedResponseNotice,
@@ -351,7 +351,7 @@ describe('Query Response parser', () => {
     // }
     const res = toDataQueryResponse(resWithError);
     expect(res.error).toMatchInlineSnapshot(`
-      Object {
+      {
         "message": "Hello Error",
         "refId": "A",
       }
@@ -359,23 +359,23 @@ describe('Query Response parser', () => {
 
     const norm = res.data.map((f) => toDataFrameDTO(f));
     expect(norm).toMatchInlineSnapshot(`
-      Array [
-        Object {
-          "fields": Array [
-            Object {
-              "config": Object {},
+      [
+        {
+          "fields": [
+            {
+              "config": {},
               "labels": undefined,
               "name": "numbers",
               "type": "number",
-              "values": Array [
+              "values": [
                 1,
                 3,
               ],
             },
           ],
-          "meta": Object {
-            "notices": Array [
-              Object {
+          "meta": {
+            "notices": [
+              {
                 "severity": 2,
                 "text": "Text",
               },

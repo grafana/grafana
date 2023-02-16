@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/data-sources/tempo/query-editor/
+  - ../../data-sources/tempo/query-editor/
 description: Guide for using the Tempo data source's query editor
 keywords:
   - grafana

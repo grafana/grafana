@@ -12,7 +12,7 @@ const Body = ({ title }: { title?: string }) => {
       <p className={styles.title}>Do you want to delete this public dashboard?</p>
       <p className={styles.description}>
         {title
-          ? `This will delete the public dashboard for ${title}. Your dashboard will not be deleted.`
+          ? `This will delete the public dashboard for "${title}". Your dashboard will not be deleted.`
           : 'Orphaned public dashboard will be deleted'}
       </p>
     </>

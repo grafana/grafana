@@ -5,14 +5,16 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web/webtest"
-	"github.com/stretchr/testify/require"
 )
 
 func TestAPI_getUserActions(t *testing.T) {
@@ -38,7 +40,7 @@ func TestAPI_getUserActions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			acSvc := actest.FakeService{ExpectedPermissions: tt.permissions}
-			api := NewAccessControlAPI(routing.NewRouteRegister(), acSvc)
+			api := NewAccessControlAPI(routing.NewRouteRegister(), actest.FakeAccessControl{}, acSvc, featuremgmt.WithFeatures())
 			api.RegisterAPIEndpoints()
 
 			server := webtest.NewServer(t, api.RouteRegister)
@@ -91,7 +93,7 @@ func TestAPI_getUserPermissions(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			acSvc := actest.FakeService{ExpectedPermissions: tt.permissions}
-			api := NewAccessControlAPI(routing.NewRouteRegister(), acSvc)
+			api := NewAccessControlAPI(routing.NewRouteRegister(), actest.FakeAccessControl{}, acSvc, featuremgmt.WithFeatures())
 			api.RegisterAPIEndpoints()
 
 			server := webtest.NewServer(t, api.RouteRegister)

@@ -7,10 +7,10 @@ import { AddLibraryPanelContents } from 'app/features/library-panels/components/
 import { ShareModalTabProps } from './types';
 
 interface Props extends ShareModalTabProps {
-  initialFolderId?: number;
+  initialFolderUid?: string;
 }
 
-export const ShareLibraryPanel = ({ panel, initialFolderId, onDismiss }: Props) => {
+export const ShareLibraryPanel = ({ panel, initialFolderUid, onDismiss }: Props) => {
   useEffect(() => {
     reportInteraction('grafana_dashboards_library_panel_share_viewed');
   }, []);
@@ -24,7 +24,7 @@ export const ShareLibraryPanel = ({ panel, initialFolderId, onDismiss }: Props) 
       <p className="share-modal-info-text">
         <Trans i18nKey="share-modal.library.info">Create library panel.</Trans>
       </p>
-      <AddLibraryPanelContents panel={panel} initialFolderId={initialFolderId} onDismiss={onDismiss!} />
+      <AddLibraryPanelContents panel={panel} initialFolderUid={initialFolderUid} onDismiss={onDismiss!} />
     </>
   );
 };

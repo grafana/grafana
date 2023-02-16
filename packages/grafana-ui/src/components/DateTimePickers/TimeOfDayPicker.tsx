@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import RcTimePicker from 'rc-time-picker';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { dateTime, DateTime, dateTimeAsMoment, GrafanaTheme2 } from '@grafana/data';
 
@@ -19,7 +19,7 @@ export interface Props {
   disabled?: boolean;
 }
 
-export const TimeOfDayPicker: FC<Props> = ({
+export const TimeOfDayPicker = ({
   minuteStep = 1,
   showHour = true,
   showSeconds = false,
@@ -27,7 +27,7 @@ export const TimeOfDayPicker: FC<Props> = ({
   value,
   size = 'auto',
   disabled,
-}) => {
+}: Props) => {
   const styles = useStyles2(getStyles);
 
   return (
@@ -51,7 +51,7 @@ interface CaretProps {
   wrapperStyle?: string;
 }
 
-const Caret: FC<CaretProps> = ({ wrapperStyle = '' }) => {
+const Caret = ({ wrapperStyle = '' }: CaretProps) => {
   return (
     <div className={wrapperStyle}>
       <Icon name="angle-down" />

@@ -116,6 +116,10 @@ export abstract class CloudWatchRequest {
     }
     return region;
   }
+
+  getVariables() {
+    return this.templateSrv.getVariables().map((v) => `$${v.name}`);
+  }
 }
 
 const displayCustomError = (title: string, message: string) =>

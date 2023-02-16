@@ -10,7 +10,7 @@ import (
 )
 
 func TestGeoJSONSummary(t *testing.T) {
-	builder := GetObjectSummaryBuilder()
+	builder := GetEntitySummaryBuilder()
 	geo := []byte(`{"type":"FeatureCo`) // invalid
 	_, _, err := builder(context.Background(), "hello", geo)
 	require.Error(t, err)

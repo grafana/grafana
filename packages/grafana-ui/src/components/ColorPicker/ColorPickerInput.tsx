@@ -59,9 +59,17 @@ export const ColorPickerInput = forwardRef<HTMLInputElement, ColorPickerInputPro
               className={cx(paletteStyles.root, styles.picker)}
             />
           )}
-          <div onClick={() => setIsOpen(true)}>
-            <ColorInput {...inputProps} theme={theme} color={currentColor} onChange={setColor} ref={ref} isClearable />
-          </div>
+          <ColorInput
+            {...inputProps}
+            theme={theme}
+            color={currentColor}
+            onChange={setColor}
+            buttonAriaLabel="Open color picker"
+            onClick={() => setIsOpen(true)}
+            onBlur={() => setIsOpen(false)}
+            ref={ref}
+            isClearable
+          />
         </div>
       </ClickOutsideWrapper>
     );

@@ -13,29 +13,26 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
-	querierv1 "github.com/grafana/grafana/pkg/tsdb/phlare/gen/querier/v1"
+	"github.com/grafana/grafana/pkg/tsdb/phlare/kinds/dataquery"
+	querierv1 "github.com/grafana/phlare/api/gen/proto/go/querier/v1"
 )
 
 type queryModel struct {
 	WithStreaming bool
-	ProfileTypeID string   `json:"profileTypeId"`
-	LabelSelector string   `json:"labelSelector"`
-	GroupBy       []string `json:"groupBy"`
+	dataquery.PhlareDataQuery
 }
 
 type dsJsonModel struct {
 	MinStep string `json:"minStep"`
 }
 
-// These constants need to match the ones in the frontend.
-const queryTypeProfile = "profile"
-
 const (
-	queryTypeMetrics = "metrics"
-	queryTypeBoth    = "both"
+	queryTypeProfile = string(dataquery.PhlareQueryTypeProfile)
+	queryTypeMetrics = string(dataquery.PhlareQueryTypeMetrics)
+	queryTypeBoth    = string(dataquery.PhlareQueryTypeBoth)
 )
 
-// query processes single Fire query transforming the response to data.Frame packaged in DataResponse
+// query processes single Phlare query transforming the response to data.Frame packaged in DataResponse
 func (d *PhlareDatasource) query(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
 	var qm queryModel
 	response := backend.DataResponse{}
@@ -63,7 +60,7 @@ func (d *PhlareDatasource) query(ctx context.Context, pCtx backend.PluginContext
 			}
 		}
 		req := connect.NewRequest(&querierv1.SelectSeriesRequest{
-			ProfileTypeID: qm.ProfileTypeID,
+			ProfileTypeID: qm.ProfileTypeId,
 			LabelSelector: qm.LabelSelector,
 			Start:         query.TimeRange.From.UnixMilli(),
 			End:           query.TimeRange.To.UnixMilli(),
@@ -79,7 +76,7 @@ func (d *PhlareDatasource) query(ctx context.Context, pCtx backend.PluginContext
 			return response
 		}
 		// add the frames to the response.
-		response.Frames = append(response.Frames, seriesToDataFrames(seriesResp, qm.ProfileTypeID)...)
+		response.Frames = append(response.Frames, seriesToDataFrames(seriesResp, qm.ProfileTypeId)...)
 	}
 
 	if query.QueryType == queryTypeProfile || query.QueryType == queryTypeBoth {
@@ -91,7 +88,7 @@ func (d *PhlareDatasource) query(ctx context.Context, pCtx backend.PluginContext
 			response.Error = err
 			return response
 		}
-		frame := responseToDataFrames(resp, qm.ProfileTypeID)
+		frame := responseToDataFrames(resp, qm.ProfileTypeId)
 		response.Frames = append(response.Frames, frame)
 
 		// If query called with streaming on then return a channel
@@ -113,7 +110,7 @@ func (d *PhlareDatasource) query(ctx context.Context, pCtx backend.PluginContext
 func makeRequest(qm queryModel, query backend.DataQuery) *connect.Request[querierv1.SelectMergeStacktracesRequest] {
 	return &connect.Request[querierv1.SelectMergeStacktracesRequest]{
 		Msg: &querierv1.SelectMergeStacktracesRequest{
-			ProfileTypeID: qm.ProfileTypeID,
+			ProfileTypeID: qm.ProfileTypeId,
 			LabelSelector: qm.LabelSelector,
 			Start:         query.TimeRange.From.UnixMilli(),
 			End:           query.TimeRange.To.UnixMilli(),
@@ -121,7 +118,7 @@ func makeRequest(qm queryModel, query backend.DataQuery) *connect.Request[querie
 	}
 }
 
-// responseToDataFrames turns fire response to data.Frame. We encode the data into a nested set format where we have
+// responseToDataFrames turns Phlare response to data.Frame. We encode the data into a nested set format where we have
 // [level, value, label] columns and by ordering the items in a depth first traversal order we can recreate the whole
 // tree back.
 func responseToDataFrames(resp *connect.Response[querierv1.SelectMergeStacktracesResponse], profileTypeID string) *data.Frame {
@@ -154,7 +151,7 @@ type ProfileTree struct {
 }
 
 // levelsToTree converts flamebearer format into a tree. This is needed to then convert it into nested set format
-// dataframe. This should be temporary, and ideally we should get some sort of tree struct directly from Fire API.
+// dataframe. This should be temporary, and ideally we should get some sort of tree struct directly from Phlare API.
 func levelsToTree(levels []*querierv1.Level, names []string) *ProfileTree {
 	tree := &ProfileTree{
 		Start: 0,
@@ -285,14 +282,14 @@ func walkTree(tree *ProfileTree, fn func(tree *ProfileTree)) {
 }
 
 func seriesToDataFrames(seriesResp *connect.Response[querierv1.SelectSeriesResponse], profileTypeID string) []*data.Frame {
-	var frames []*data.Frame
+	frames := make([]*data.Frame, 0, len(seriesResp.Msg.Series))
 
 	for _, series := range seriesResp.Msg.Series {
 		// We create separate data frames as the series may not have the same length
 		frame := data.NewFrame("series")
 		frame.Meta = &data.FrameMeta{PreferredVisualization: "graph"}
 
-		fields := data.Fields{}
+		fields := make(data.Fields, 0, 2)
 		timeField := data.NewField("time", nil, []time.Time{})
 		fields = append(fields, timeField)
 

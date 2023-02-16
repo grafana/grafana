@@ -1,8 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/datasources/aws-cloudwatch/
-  - /docs/grafana/latest/datasources/cloudwatch/
-  - /docs/grafana/latest/data-sources/aws-cloudwatch/query-editor/
+  - ../../data-sources/aws-cloudwatch/query-editor/
+  - ../cloudwatch/
+  - ./
 description: Guide for using the AWS CloudWatch data source's query editor
 keywords:
   - grafana
@@ -91,6 +91,10 @@ For details on the available functions, refer to [AWS Metric Math](https://docs.
 For example, to apply arithmetic operations to a metric, apply a unique string id to the raw metric, then use this id and apply arithmetic operations to it in the Expression field of the new metric.
 
 > **Note:** If you use the expression field to reference another query, like `queryA * 2`, you can't create an alert rule based on that query.
+
+##### Period macro
+
+If you're using a CloudWatch [`SEARCH`](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/search-expression-syntax.html) expression, you may want to use the `$__period_auto` macro rather than specifying a period explicitly. The `$__period_auto` macro will resolve to a [CloudWatch period](https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetMetricData.html) that is suitable for the chosen time range.
 
 #### Deep-link Grafana panels to the CloudWatch console
 
@@ -213,6 +217,24 @@ You can also write queries returning time series data by using the [`stats` comm
 When making `stats` queries in [Explore]({{< relref "../../../explore/" >}}), make sure you are in Metrics Explore mode.
 
 {{< figure src="/static/img/docs/v70/explore-mode-switcher.png" max-width="500px" class="docs-image--right" caption="Explore mode switcher" >}}
+
+### Getting started
+
+To enable cross-account observability, first enable it in CloudWatch using the official [CloudWatch docs](http://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Unified-Cross-Account.html), then add [two new API actions]({{< relref "../#cross-account-observability" >}}) to the IAM policy attached to the role/user running the plugin.
+
+Cross-account querying is available in the plugin through the `Logs` mode and the `Metric search` mode. Once you have it configured correctly, you'll see a "Monitoring account" badge displayed in the query editor header.
+
+{{< figure src="/static/img/docs/cloudwatch/cloudwatch-monitoring-badge-9.3.0.png" max-width="1200px" caption="Monitoring account badge" >}}
+
+### Metrics editor
+
+When you select the `Builder` mode within the Metric search editor, a new Account field displays. Use the Account field to specify which of the linked accounts to target for the given query. By default, the `All` option is specified, which will target all linked accounts.
+
+While in `Code` mode, you can specify any math expression. If the Monitoring account badge displays in the query editor header, all `SEARCH` expressions entered in this field will be cross-account by default. You can limit the search to one or a set of accounts, as documented in the [AWS documentation](http://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Unified-Cross-Account.html).
+
+### Logs editor
+
+The Log group selector allows you to specify what log groups to target in the logs query. If the Monitoring account badge is displayed in the query editor header, it is possible to search and select log groups across multiple accounts. You can use the Account field in the Log Group Selector to filter Log Groups by Account. If you have many log groups and do not see the log group you'd like to select in the selector, use the prefix search to narrow down the possible log groups.
 
 ### Deep-link Grafana panels to the CloudWatch console
 

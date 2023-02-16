@@ -43,12 +43,12 @@ describe('prepare timeseries graph', () => {
     const frames = prepareGraphableFields(input, createTheme());
     const out = frames![0];
 
-    expect(out.fields.map((f) => f.name)).toEqual(['a', 'c', 'd']);
+    expect(out.fields.map((f) => f.name)).toEqual(['a', 'b', 'c', 'd']);
 
     const field = out.fields.find((f) => f.name === 'c');
     expect(field?.display).toBeDefined();
     expect(field!.display!(1)).toMatchInlineSnapshot(`
-      Object {
+      {
         "color": "#808080",
         "numeric": 1,
         "percent": 1,
@@ -70,7 +70,7 @@ describe('prepare timeseries graph', () => {
 
     const field = frames![0].fields.find((f) => f.name === 'a');
     expect(field!.values.toArray()).toMatchInlineSnapshot(`
-      Array [
+      [
         -10,
         null,
         10,
@@ -91,7 +91,7 @@ describe('prepare timeseries graph', () => {
 
     const field = frames![0].fields.find((f) => f.name === 'a');
     expect(field!.values.toArray()).toMatchInlineSnapshot(`
-      Array [
+      [
         1,
         null,
         2,
@@ -115,7 +115,7 @@ describe('prepare timeseries graph', () => {
 
     const field = frames![0].fields.find((f) => f.name === 'a');
     expect(field!.values.toArray()).toMatchInlineSnapshot(`
-      Array [
+      [
         1,
         20,
         2,

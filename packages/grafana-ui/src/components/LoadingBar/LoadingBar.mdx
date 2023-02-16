@@ -1,0 +1,22 @@
+import { Meta, Preview, ArgsTable } from '@storybook/addon-docs/blocks';
+import { LoadingBar } from './LoadingBar';
+
+<Meta title="MDX|LoadingBar" component={LoadingBar} />
+
+# LoadingBar
+
+The LoadingBar is used as a simple loading slider animation in the top of its container.
+
+<Preview>
+  <div style={{ height: '200px', width: '400px' }}>
+    <LoadingBar containerWidth={400} height={2} width={128} />
+  </div>
+</Preview>
+
+```jsx
+<div style={{ height: '200px', width: '400px' }}>
+  <LoadingBar containerWidth={400} height={2} width={128} />
+</div>
+```
+
+<ArgsTable of={LoadingBar} />

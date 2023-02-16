@@ -13,8 +13,9 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/grafana/grafana/pkg/models"
 	"golang.org/x/oauth2"
+
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 type SocialGenericOAuth struct {
@@ -30,10 +31,6 @@ type SocialGenericOAuth struct {
 	idTokenAttributeName string
 	teamIdsAttributePath string
 	teamIds              []string
-}
-
-func (s *SocialGenericOAuth) Type() int {
-	return int(models.GENERIC)
 }
 
 func (s *SocialGenericOAuth) IsTeamMember(client *http.Client) bool {
@@ -146,14 +143,19 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 		}
 
 		if userInfo.Role == "" {
-			role, grafanaAdmin := s.extractRoleAndAdmin(data.rawJSON, []string{}, true)
-			if role != "" {
-				s.log.Debug("Setting user info role from extracted role")
+			if !s.skipOrgRoleSync {
+				role, grafanaAdmin := s.extractRoleAndAdmin(data.rawJSON, []string{}, true)
+				if role != "" {
+					s.log.Debug("Setting user info role from extracted role")
 
-				userInfo.Role = role
-				if s.allowAssignGrafanaAdmin {
-					userInfo.IsGrafanaAdmin = &grafanaAdmin
+					userInfo.Role = role
+					if s.allowAssignGrafanaAdmin {
+						userInfo.IsGrafanaAdmin = &grafanaAdmin
+					}
 				}
+			}
+			if s.allowAssignGrafanaAdmin && s.skipOrgRoleSync {
+				s.log.Warn("allowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 			}
 		}
 
@@ -508,4 +510,11 @@ func (s *SocialGenericOAuth) FetchOrganizations(client *http.Client) ([]string, 
 	s.log.Debug("Received organizations", "logins", logins)
 
 	return logins, true
+}
+
+func (s *SocialGenericOAuth) AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string {
+	if s.features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) {
+		opts = append(opts, oauth2.AccessTypeOffline)
+	}
+	return s.SocialBase.AuthCodeURL(state, opts...)
 }

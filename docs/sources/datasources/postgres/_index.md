@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/features/datasources/postgres/
-  - /docs/grafana/latest/datasources/postgres/
-  - /docs/grafana/latest/data-sources/postgres/
+  - ../data-sources/postgres/
+  - ../features/datasources/postgres/
 description: Guide for using PostgreSQL in Grafana
 keywords:
   - grafana
@@ -126,11 +125,11 @@ datasources:
   - name: Postgres
     type: postgres
     url: localhost:5432
-    database: grafana
     user: grafana
     secureJsonData:
       password: 'Password!'
     jsonData:
+      database: grafana
       sslmode: 'disable' # disable/require/verify-ca/verify-full
       maxOpenConns: 0 # Grafana v5.4+
       maxIdleConns: 2 # Grafana v5.4+

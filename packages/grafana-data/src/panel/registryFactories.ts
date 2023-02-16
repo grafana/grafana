@@ -50,8 +50,8 @@ export function createFieldConfigRegistry<TFieldConfigOptions>(
       }
     }
     if (config.standardOptions) {
-      const customDefault: any = config.standardOptions[fieldConfigProp.id as FieldConfigProperty]?.defaultValue;
-      const customSettings: any = config.standardOptions[fieldConfigProp.id as FieldConfigProperty]?.settings;
+      const customDefault = config.standardOptions[fieldConfigProp.id as FieldConfigProperty]?.defaultValue;
+      const customSettings = config.standardOptions[fieldConfigProp.id as FieldConfigProperty]?.settings;
       if (customDefault) {
         fieldConfigProp = {
           ...fieldConfigProp,

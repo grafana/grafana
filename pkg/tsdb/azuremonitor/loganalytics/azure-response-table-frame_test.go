@@ -173,12 +173,7 @@ func TestLogTableToFrame(t *testing.T) {
 			name:     "empty data response",
 			testFile: "loganalytics/11-log-analytics-response-empty.json",
 			expectedFrame: func() *data.Frame {
-				return &data.Frame{
-					RefID: "A",
-					Meta: &data.FrameMeta{
-						ExecutedQueryString: "query",
-					},
-				}
+				return nil
 			},
 		},
 	}

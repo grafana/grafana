@@ -21,7 +21,15 @@ export enum LoadingState {
 }
 
 // Should be kept in sync with grafana-plugin-sdk-go/data/frame_meta.go
-export const preferredVisualizationTypes = ['graph', 'table', 'logs', 'trace', 'nodeGraph', 'flamegraph'] as const;
+export const preferredVisualizationTypes = [
+  'graph',
+  'table',
+  'logs',
+  'trace',
+  'nodeGraph',
+  'flamegraph',
+  'rawPrometheus',
+] as const;
 export type PreferredVisualisationType = typeof preferredVisualizationTypes[number];
 
 /**
@@ -29,6 +37,12 @@ export type PreferredVisualisationType = typeof preferredVisualizationTypes[numb
  */
 export interface QueryResultMeta {
   type?: DataFrameType;
+
+  /**
+   * TypeVersion is the version of the Type property. Versions greater than 0.0 correspond to the dataplane
+   * contract documentation https://github.com/grafana/grafana-plugin-sdk-go/tree/main/data/contract_docs.
+   */
+  typeVersion?: [number, number];
 
   /** DatasSource Specific Values */
   custom?: Record<string, any>;
@@ -177,3 +191,6 @@ export interface DataConfigSource {
   getFieldOverrideOptions: () => ApplyFieldOverrideOptions | undefined;
   snapshotData?: DataFrameDTO[];
 }
+
+type Truthy<T> = T extends false | '' | 0 | null | undefined ? never : T;
+export const isTruthy = <T>(value: T): value is Truthy<T> => Boolean(value);

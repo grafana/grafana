@@ -32,7 +32,7 @@ export class DashboardLoaderSrv {
     };
   }
 
-  loadDashboard(type: UrlQueryValue, slug: any, uid: any) {
+  loadDashboard(type: UrlQueryValue, slug: any, uid: any): Promise<DashboardDTO> {
     let promise;
 
     if (type === 'script') {
@@ -133,7 +133,7 @@ export class DashboardLoaderSrv {
     });
 
     return getBackendSrv()
-      .get(`/api/datasources/${ds.id}/resources/${path}`, queryParams)
+      .get(`/api/datasources/uid/${ds.uid}/resources/${path}`, queryParams)
       .then((data) => {
         return {
           meta: {

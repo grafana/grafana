@@ -60,7 +60,7 @@ func TestBatching(t *testing.T) {
 	})
 }
 
-func TestBulkOps(t *testing.T) {
+func TestIntegrationBulkOps(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}

@@ -1,6 +1,6 @@
 import { captureMessage, captureException, Severity as LogLevel } from '@sentry/browser';
 
-import { agent, LogLevel as GrafanaLogLevel } from '@grafana/agent-web';
+import { faro, LogLevel as GrafanaLogLevel } from '@grafana/faro-web-sdk';
 
 import { config } from '../config';
 
@@ -16,7 +16,7 @@ type Contexts = Record<string, Record<string, number | string | Record<string, s
  */
 export function logInfo(message: string, contexts?: Contexts) {
   if (config.grafanaJavascriptAgent.enabled) {
-    agent.api.pushLog([message], {
+    faro.api.pushLog([message], {
       level: GrafanaLogLevel.INFO,
       context: contexts,
     });
@@ -36,7 +36,7 @@ export function logInfo(message: string, contexts?: Contexts) {
  */
 export function logWarning(message: string, contexts?: Contexts) {
   if (config.grafanaJavascriptAgent.enabled) {
-    agent.api.pushLog([message], {
+    faro.api.pushLog([message], {
       level: GrafanaLogLevel.WARN,
       context: contexts,
     });
@@ -56,7 +56,7 @@ export function logWarning(message: string, contexts?: Contexts) {
  */
 export function logDebug(message: string, contexts?: Contexts) {
   if (config.grafanaJavascriptAgent.enabled) {
-    agent.api.pushLog([message], {
+    faro.api.pushLog([message], {
       level: GrafanaLogLevel.DEBUG,
       context: contexts,
     });
@@ -76,7 +76,7 @@ export function logDebug(message: string, contexts?: Contexts) {
  */
 export function logError(err: Error, contexts?: Contexts) {
   if (config.grafanaJavascriptAgent.enabled) {
-    agent.api.pushLog([err.message], {
+    faro.api.pushLog([err.message], {
       level: GrafanaLogLevel.ERROR,
       context: contexts,
     });

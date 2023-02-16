@@ -4,7 +4,6 @@ import { TemplateSrvStub } from 'test/specs/helpers';
 
 import { FieldType, MutableDataFrame } from '@grafana/data';
 import { FetchResponse } from '@grafana/runtime';
-import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 
 import InfluxDatasource from '../datasource';
@@ -15,7 +14,7 @@ import ResponseParser, { getSelectedParams } from '../response_parser';
 const templateSrv = new TemplateSrvStub();
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
 }));
 
@@ -426,7 +425,6 @@ describe('influxdb response parser', () => {
 
       ctx.ds = new InfluxDatasource(ctx.instanceSettings, templateSrv);
       ctx.ds.access = 'proxy';
-      config.featureToggles.influxdbBackendMigration = true;
       response = await ctx.ds.annotationEvents(queryOptions, annotation);
     });
 

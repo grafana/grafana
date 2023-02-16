@@ -52,6 +52,7 @@ export const enrichConfigItems = (items: NavModelItem[], location: Location<unkn
 
     if (link.id === 'help') {
       link.children = [
+        ...menuItems,
         ...getFooterLinks(),
         {
           id: 'keyboard-shortcuts',
@@ -128,7 +129,7 @@ export const getActiveItem = (
   for (const link of navTree) {
     const linkWithoutParams = stripQueryParams(link.url);
     const linkPathname = locationUtil.stripBaseFromUrl(linkWithoutParams);
-    if (linkPathname) {
+    if (linkPathname && link.id !== 'starred') {
       if (linkPathname === pathname) {
         // exact match
         currentBestMatch = link;

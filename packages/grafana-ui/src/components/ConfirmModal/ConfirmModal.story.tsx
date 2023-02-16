@@ -46,6 +46,7 @@ export const Basic: ComponentStory<typeof ConfirmModal> = ({
   body,
   description,
   confirmText,
+  confirmButtonVariant,
   dismissText,
   icon,
   isOpen,
@@ -58,6 +59,7 @@ export const Basic: ComponentStory<typeof ConfirmModal> = ({
       body={body}
       description={description}
       confirmText={confirmText}
+      confirmButtonVariant={confirmButtonVariant}
       dismissText={dismissText}
       icon={icon}
       onConfirm={onConfirm}
@@ -77,6 +79,7 @@ Basic.args = {
   body: 'Are you sure you want to delete this user?',
   description: 'Removing the user will not remove any dashboards the user has created',
   confirmText: 'Delete',
+  confirmButtonVariant: 'destructive',
   dismissText: 'Cancel',
   icon: 'exclamation-triangle',
   isOpen: true,
@@ -112,7 +115,7 @@ export const AlternativeAction: ComponentStory<typeof ConfirmModal> = ({
 
 AlternativeAction.parameters = {
   controls: {
-    exclude: [...defaultExcludes, 'confirmationText'],
+    exclude: [...defaultExcludes, 'confirmationText', 'confirmButtonVariant'],
   },
 };
 
@@ -155,7 +158,7 @@ export const WithConfirmation: ComponentStory<typeof ConfirmModal> = ({
 
 WithConfirmation.parameters = {
   controls: {
-    exclude: [...defaultExcludes, 'alternativeText'],
+    exclude: [...defaultExcludes, 'alternativeText', 'confirmButtonVariant'],
   },
 };
 

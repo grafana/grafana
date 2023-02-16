@@ -3,16 +3,18 @@ package provisioning
 import (
 	"context"
 	"encoding/json"
+	"strconv"
 	"testing"
 	"time"
+
+	"github.com/grafana/grafana/pkg/expr"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/setting"
-
-	"github.com/stretchr/testify/require"
 )
 
 func TestAlertRuleService(t *testing.T) {
@@ -162,6 +164,27 @@ func TestAlertRuleService(t *testing.T) {
 		require.Len(t, readGroup.Rules, 1)
 		require.Equal(t, "some-other-title-asdf", readGroup.Rules[0].Title)
 		require.Equal(t, int64(2), readGroup.Rules[0].Version)
+	})
+
+	t.Run("updating a group by updating a rule should not remove dashboard and panel ids", func(t *testing.T) {
+		var orgID int64 = 1
+		dashboardUid := "huYnkl7H"
+		panelId := int64(5678)
+		group := createDummyGroup("group-test-5", orgID)
+		group.Rules[0].Annotations = map[string]string{
+			models.DashboardUIDAnnotation: dashboardUid,
+			models.PanelIDAnnotation:      strconv.FormatInt(panelId, 10),
+		}
+
+		err := ruleService.ReplaceRuleGroup(context.Background(), orgID, group, 0, models.ProvenanceAPI)
+		require.NoError(t, err)
+		updatedGroup, err := ruleService.GetRuleGroup(context.Background(), orgID, "my-namespace", "group-test-5")
+		require.NoError(t, err)
+
+		require.NotNil(t, updatedGroup.Rules[0].DashboardUID)
+		require.NotNil(t, updatedGroup.Rules[0].PanelID)
+		require.Equal(t, dashboardUid, *updatedGroup.Rules[0].DashboardUID)
+		require.Equal(t, panelId, *updatedGroup.Rules[0].PanelID)
 	})
 
 	t.Run("alert rule provenace should be correctly checked", func(t *testing.T) {
@@ -349,7 +372,7 @@ func createTestRule(title string, groupTitle string, orgID int64) models.AlertRu
 			{
 				RefID:         "A",
 				Model:         json.RawMessage("{}"),
-				DatasourceUID: "-100",
+				DatasourceUID: expr.DatasourceUID,
 				RelativeTimeRange: models.RelativeTimeRange{
 					From: models.Duration(60),
 					To:   models.Duration(0),

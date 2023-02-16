@@ -14,9 +14,8 @@ func TestExecutor_parseToAnnotations(t *testing.T) {
 	require.Len(t, d.TimeSeries, 3)
 
 	res := &backend.DataResponse{}
-	query := &cloudMonitoringTimeSeriesFilter{}
 
-	err = query.parseToAnnotations(res, d, "atitle {{metric.label.instance_name}} {{metric.value}}",
+	err = parseToAnnotations("anno", res, d, "atitle {{metric.label.instance_name}} {{metric.value}}",
 		"atext {{resource.label.zone}}")
 	require.NoError(t, err)
 
@@ -33,13 +32,12 @@ func TestExecutor_parseToAnnotations(t *testing.T) {
 
 func TestCloudMonitoringExecutor_parseToAnnotations_emptyTimeSeries(t *testing.T) {
 	res := &backend.DataResponse{}
-	query := &cloudMonitoringTimeSeriesFilter{}
 
 	response := cloudMonitoringResponse{
 		TimeSeries: []timeSeries{},
 	}
 
-	err := query.parseToAnnotations(res, response, "atitle", "atext")
+	err := parseToAnnotations("anno", res, response, "atitle", "atext")
 	require.NoError(t, err)
 
 	require.Len(t, res.Frames, 1)
@@ -55,7 +53,6 @@ func TestCloudMonitoringExecutor_parseToAnnotations_emptyTimeSeries(t *testing.T
 
 func TestCloudMonitoringExecutor_parseToAnnotations_noPointsInSeries(t *testing.T) {
 	res := &backend.DataResponse{}
-	query := &cloudMonitoringTimeSeriesFilter{}
 
 	response := cloudMonitoringResponse{
 		TimeSeries: []timeSeries{
@@ -63,7 +60,7 @@ func TestCloudMonitoringExecutor_parseToAnnotations_noPointsInSeries(t *testing.
 		},
 	}
 
-	err := query.parseToAnnotations(res, response, "atitle", "atext")
+	err := parseToAnnotations("anno", res, response, "atitle", "atext")
 	require.NoError(t, err)
 
 	require.Len(t, res.Frames, 1)

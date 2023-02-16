@@ -54,6 +54,7 @@ type JsonData struct {
 	MaxOpenConns        int    `json:"maxOpenConns"`
 	MaxIdleConns        int    `json:"maxIdleConns"`
 	ConnMaxLifetime     int    `json:"connMaxLifetime"`
+	ConnectionTimeout   int    `json:"connectionTimeout"`
 	Timescaledb         bool   `json:"timescaledb"`
 	Mode                string `json:"sslmode"`
 	ConfigurationMethod string `json:"tlsConfigurationMethod"`
@@ -65,6 +66,7 @@ type JsonData struct {
 	Encrypt             string `json:"encrypt"`
 	Servername          string `json:"servername"`
 	TimeInterval        string `json:"timeInterval"`
+	Database            string `json:"database"`
 }
 
 type DataSourceInfo struct {
@@ -105,7 +107,7 @@ type QueryJson struct {
 	Format       string  `json:"format"`
 }
 
-func (e *DataSourceHandler) transformQueryError(logger log.Logger, err error) error {
+func (e *DataSourceHandler) TransformQueryError(logger log.Logger, err error) error {
 	// OpError is the error type usually returned by functions in the net
 	// package. It describes the operation, network type, and address of
 	// an error. We log this error rather than return it to the client
@@ -169,6 +171,10 @@ func (e *DataSourceHandler) Dispose() {
 		}
 	}
 	e.log.Debug("Engine disposed")
+}
+
+func (e *DataSourceHandler) Ping() error {
+	return e.engine.Ping()
 }
 
 func (e *DataSourceHandler) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -248,14 +254,14 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 	// global substitutions
 	interpolatedQuery, err := Interpolate(query, timeRange, e.dsInfo.JsonData.TimeInterval, queryJson.RawSql)
 	if err != nil {
-		errAppendDebug("interpolation failed", e.transformQueryError(logger, err), interpolatedQuery)
+		errAppendDebug("interpolation failed", e.TransformQueryError(logger, err), interpolatedQuery)
 		return
 	}
 
 	// data source specific substitutions
 	interpolatedQuery, err = e.macroEngine.Interpolate(&query, timeRange, interpolatedQuery)
 	if err != nil {
-		errAppendDebug("interpolation failed", e.transformQueryError(logger, err), interpolatedQuery)
+		errAppendDebug("interpolation failed", e.TransformQueryError(logger, err), interpolatedQuery)
 		return
 	}
 
@@ -265,7 +271,7 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 
 	rows, err := db.QueryContext(queryContext, interpolatedQuery)
 	if err != nil {
-		errAppendDebug("db query error", e.transformQueryError(logger, err), interpolatedQuery)
+		errAppendDebug("db query error", e.TransformQueryError(logger, err), interpolatedQuery)
 		return
 	}
 	defer func() {
@@ -296,7 +302,7 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 
 	// If no rows were returned, no point checking anything else.
 	if frame.Rows() == 0 {
-		queryResult.dataResponse.Frames = data.Frames{frame}
+		queryResult.dataResponse.Frames = data.Frames{}
 		ch <- queryResult
 		return
 	}

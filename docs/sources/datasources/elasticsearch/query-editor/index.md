@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/data-sources/elasticsearch/query-editor/
-  - /docs/grafana/latest/data-sources/elasticsearch/template-variables/
+  - ../../data-sources/elasticsearch/query-editor/
+  - ../../data-sources/elasticsearch/template-variables/
 description: Guide for using the Elasticsearch data source's query editor
 keywords:
   - grafana

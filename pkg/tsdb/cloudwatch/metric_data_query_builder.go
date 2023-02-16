@@ -24,7 +24,7 @@ func (e *cloudWatchExecutor) buildMetricDataQuery(logger log.Logger, query *mode
 		mdq.Label = &query.Label
 	}
 
-	switch query.GetGMDAPIMode(logger) {
+	switch query.GetGetMetricDataAPIMode() {
 	case models.GMDApiModeMathExpression:
 		mdq.Period = aws.Int64(int64(query.Period))
 		mdq.Expression = aws.String(query.Expression)
@@ -50,6 +50,7 @@ func (e *cloudWatchExecutor) buildMetricDataQuery(logger log.Logger, query *mode
 				})
 		}
 		mdq.MetricStat.Stat = aws.String(query.Statistic)
+		mdq.AccountId = query.AccountId
 	}
 
 	if mdq.Expression != nil {
@@ -98,18 +99,27 @@ func buildSearchExpression(query *models.CloudWatchQuery, stat string) string {
 		searchTerm = appendSearch(searchTerm, keyFilter)
 	}
 
+	var account string
+	if query.AccountId != nil && *query.AccountId != "all" {
+		account = fmt.Sprintf(":aws.AccountId=%q", *query.AccountId)
+	}
+
 	if query.MatchExact {
 		schema := fmt.Sprintf("%q", query.Namespace)
 		if len(dimensionNames) > 0 {
 			sort.Strings(dimensionNames)
 			schema += fmt.Sprintf(",%s", join(dimensionNames, ",", `"`, `"`))
 		}
-		return fmt.Sprintf("REMOVE_EMPTY(SEARCH('{%s} %s', '%s', %s))", schema, searchTerm, stat, strconv.Itoa(query.Period))
+		schema = fmt.Sprintf("{%s}", schema)
+		schemaSearchTermAndAccount := strings.TrimSpace(strings.Join([]string{schema, searchTerm, account}, " "))
+		return fmt.Sprintf("REMOVE_EMPTY(SEARCH('%s', '%s', %s))", schemaSearchTermAndAccount, stat, strconv.Itoa(query.Period))
 	}
 
 	sort.Strings(dimensionNamesWithoutKnownValues)
 	searchTerm = appendSearch(searchTerm, join(dimensionNamesWithoutKnownValues, " ", `"`, `"`))
-	return fmt.Sprintf(`REMOVE_EMPTY(SEARCH('Namespace="%s" %s', '%s', %s))`, query.Namespace, searchTerm, stat, strconv.Itoa(query.Period))
+	namespace := fmt.Sprintf("Namespace=%q", query.Namespace)
+	namespaceSearchTermAndAccount := strings.TrimSpace(strings.Join([]string{namespace, searchTerm, account}, " "))
+	return fmt.Sprintf(`REMOVE_EMPTY(SEARCH('%s', '%s', %s))`, namespaceSearchTermAndAccount, stat, strconv.Itoa(query.Period))
 }
 
 func escapeDoubleQuotes(arr []string) []string {

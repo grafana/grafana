@@ -29,50 +29,50 @@ describe('DataFrame JSON', () => {
 
       const frame = dataFrameFromJSON(json);
       expect(frame).toMatchInlineSnapshot(`
-        Object {
-          "fields": Array [
-            Object {
-              "config": Object {},
-              "entities": Object {},
+        {
+          "fields": [
+            {
+              "config": {},
+              "entities": {},
               "name": "time",
               "type": "time",
-              "values": Array [
+              "values": [
                 100,
                 200,
                 300,
               ],
             },
-            Object {
-              "config": Object {},
-              "entities": Object {
-                "Inf": Array [
+            {
+              "config": {},
+              "entities": {
+                "Inf": [
                   1,
                 ],
-                "NaN": Array [
+                "NaN": [
                   0,
                 ],
-                "Undef": Array [
+                "Undef": [
                   2,
                 ],
               },
               "name": "name",
               "type": "string",
-              "values": Array [
+              "values": [
                 NaN,
                 Infinity,
                 undefined,
               ],
             },
-            Object {
-              "config": Object {},
-              "entities": Object {
-                "NegInf": Array [
+            {
+              "config": {},
+              "entities": {
+                "NegInf": [
                   2,
                 ],
               },
               "name": "value",
               "type": "number",
-              "values": Array [
+              "values": [
                 1,
                 2,
                 -Infinity,
@@ -106,26 +106,26 @@ describe('DataFrame JSON', () => {
 
       const frame = dataFrameFromJSON(json);
       expect(frame).toMatchInlineSnapshot(`
-        Object {
-          "fields": Array [
-            Object {
-              "config": Object {},
-              "entities": Object {},
+        {
+          "fields": [
+            {
+              "config": {},
+              "entities": {},
               "name": "time",
               "type": "time",
-              "values": Array [
+              "values": [
                 100,
                 200,
                 300,
                 400,
               ],
             },
-            Object {
-              "config": Object {},
-              "entities": Object {},
+            {
+              "config": {},
+              "entities": {},
               "name": "value",
               "type": "string",
-              "values": Array [
+              "values": [
                 "bar",
                 "foo",
                 "baz",

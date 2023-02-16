@@ -18,7 +18,7 @@ export interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   name: IconName;
   /** Icon size */
   size?: IconSize;
-  /** Type od the icon - mono or default */
+  /** Type of the icon - mono or default */
   iconType?: IconType;
   /** Tooltip content to display on hover */
   tooltip?: PopoverContent;

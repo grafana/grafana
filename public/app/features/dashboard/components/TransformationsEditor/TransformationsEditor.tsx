@@ -380,7 +380,7 @@ function TransformationCard({ transform, onClick }: TransformationCardProps) {
       onClick={onClick}
     >
       <Card.Heading>{transform.name}</Card.Heading>
-      <Card.Meta>{transform.description}</Card.Meta>
+      <Card.Description>{transform.description}</Card.Description>
       {transform.state && (
         <Card.Tags>
           <PluginStateInfo state={transform.state} />

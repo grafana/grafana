@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/enterprise/access-control/custom-role-actions-scopes/
-  - /docs/grafana/latest/enterprise/access-control/permissions/
-  - /docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/
+  - ../../../enterprise/access-control/custom-role-actions-scopes/
+  - ../../../enterprise/access-control/permissions/
 description: Learn about Grafana RBAC permissions, actions, and scopes.
 menuTitle: RBAC permissions, actions, and scopes
 title: Grafana RBAC permissions, actions, and scopes
@@ -11,7 +10,7 @@ weight: 80
 
 # RBAC permissions, actions, and scopes
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced]({{< ref "/docs/grafana-cloud" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced](/docs/grafana-cloud).
 
 A permission is comprised of an action and a scope. When creating a custom role, consider the actions the user can perform and the resource(s) on which they can perform those actions.
 
@@ -96,6 +95,8 @@ The following list contains role-based access control actions.
 | `orgs:read`                          | `orgs:*` <br> `orgs:id:*`                                                               | Read one or more organizations.                                                                                                                                                                  |
 | `orgs:write`                         | `orgs:*` <br> `orgs:id:*`                                                               | Update one or more organizations.                                                                                                                                                                |
 | `plugins.app:access`                 | `plugins:*` <br> `plugins:id:*`                                                         | Access one or more application plugins (still enforcing the organization role)                                                                                                                   |
+| `plugins:install`                    | n/a                                                                                     | Install and uninstall plugins.                                                                                                                                                                   |
+| `plugins:write`                      | `plugins:*` <br> `plugins:id:*`                                                         | Edit settings for one or more plugins.                                                                                                                                                           |
 | `provisioning:reload`                | `provisioners:*`                                                                        | Reload provisioning files. To find the exact scope for specific provisioner, see [Scope definitions]({{< relref "#scope-definitions" >}}).                                                       |
 | `reports:create`                     | n/a                                                                                     | Create reports.                                                                                                                                                                                  |
 | `reports:write`                      | `reports:*` <br> `reports:id:*`                                                         | Update reports.                                                                                                                                                                                  |
@@ -145,6 +146,43 @@ The following list contains role-based access control actions.
 | `users:read`                         | `global.users:*`                                                                        | Read or search user profiles.                                                                                                                                                                    |
 | `users:write`                        | `global.users:*` <br> `global.users:id:*`                                               | Update a user’s profile.                                                                                                                                                                         |
 
+### Grafana OnCall action definitions (beta)
+
+> **Note:** Available from Grafana 9.4 in early access.
+
+> **Note:** This feature is behind the `accessControlOnCall` feature toggle.
+> You can enable feature toggles through configuration file or environment variables. See configuration [docs]({{< relref "../../../../setup-grafana/configure-grafana/#feature_toggles" >}}) for details.
+
+The following list contains role-based access control actions used by Grafana OnCall application plugin.
+
+| Action                                           | Applicable scope | Description                                       |
+| ------------------------------------------------ | ---------------- | ------------------------------------------------- |
+| `grafana-oncall-app.alert-groups:read`           | n/a              | Read OnCall alert groups.                         |
+| `grafana-oncall-app.alert-groups:write`          | n/a              | Create, edit and delete OnCall alert groups.      |
+| `grafana-oncall-app.integrations:read`           | n/a              | Read OnCall integrations.                         |
+| `grafana-oncall-app.integrations:write`          | n/a              | Create, edit and delete OnCall integrations.      |
+| `grafana-oncall-app.integrations:test`           | n/a              | Test OnCall integrations.                         |
+| `grafana-oncall-app.escalation-chains:read`      | n/a              | Read OnCall escalation chains.                    |
+| `grafana-oncall-app.escalation-chains:write`     | n/a              | Create, edit and delete OnCall escalation chains. |
+| `grafana-oncall-app.schedules:read`              | n/a              | Read OnCall schedules.                            |
+| `grafana-oncall-app.schedules:write`             | n/a              | Create, edit and delete OnCall schedules.         |
+| `grafana-oncall-app.schedules:export`            | n/a              | Export OnCall schedules.                          |
+| `grafana-oncall-app.chatops:read`                | n/a              | Read OnCall ChatOps.                              |
+| `grafana-oncall-app.chatops:write`               | n/a              | Edit OnCall ChatOps.                              |
+| `grafana-oncall-app.chatops:update-settings`     | n/a              | Edit OnCall ChatOps settings.                     |
+| `grafana-oncall-app.maintenance:read`            | n/a              | Read OnCall maintenance.                          |
+| `grafana-oncall-app.maintenance:write`           | n/a              | Edit OnCall maintenance.                          |
+| `grafana-oncall-app.api-keys:read`               | n/a              | Read OnCall API keys.                             |
+| `grafana-oncall-app.api-keys:write`              | n/a              | Create, edit and delete OnCall API keys.          |
+| `grafana-oncall-app.notifications:read`          | n/a              | Receive OnCall notifications.                     |
+| `grafana-oncall-app.notification-settings:read`  | n/a              | Read OnCall notification settings.                |
+| `grafana-oncall-app.notification-settings:write` | n/a              | Edit OnCall notification settings.                |
+| `grafana-oncall-app.user-settings:read`          | n/a              | Read user's own OnCall user settings.             |
+| `grafana-oncall-app.user-settings:write`         | n/a              | Edit user's own OnCall user settings.             |
+| `grafana-oncall-app.user-settings:admin`         | n/a              | Read and edit all users' OnCall user settings.    |
+| `grafana-oncall-app.other-settings:read`         | n/a              | Read OnCall settings.                             |
+| `grafana-oncall-app.other-settings:write`        | n/a              | Edit OnCall settings.                             |
+
 ## Scope definitions
 
 The following list contains role-based access control scopes.
@@ -160,7 +198,8 @@ The following list contains role-based access control scopes.
 | `orgs:*` <br> `orgs:id:*`                       | Restrict an action to a set of organizations. For example, `orgs:*` matches any organization and `orgs:id:1` matches the organization whose ID is `1`.                                                                                             |
 | `permissions:type:delegate`                     | The scope is only applicable for roles associated with the Access Control itself and indicates that you can delegate your permissions only, or a subset of it, by creating a new role or making an assignment.                                     |
 | `permissions:type:escalate`                     | The scope is required to trigger the reset of basic roles permissions. It indicates that users might acquire additional permissions they did not previously have.                                                                                  |
-| `provisioners:*`                                | Restrict an action to a set of provisioners. For example, `provisioners:*` matches any provisioner, and `provisioners:accesscontrol` matches the role-based access control [provisioner]({{< relref "./rbac-provisioning/" >}}).                   |
+| `plugins:*` <br> `plugins:id:*`                 | Restrict an action to a set of plugins. For example, `plugins:id:grafana-oncall-app` matches Grafana OnCall plugin, and `plugins:*` matches all plugins.                                                                                           |
+| `provisioners:*`                                | Restrict an action to a set of provisioners. For example, `provisioners:*` matches any provisioner, and `provisioners:accesscontrol` matches the role-based access control [provisioner]({{< relref "./rbac-grafana-provisioning/" >}}).           |
 | `reports:*` <br> `reports:id:*`                 | Restrict an action to a set of reports. For example, `reports:*` matches any report and `reports:id:1` matches the report whose ID is `1`.                                                                                                         |
 | `roles:*` <br> `roles:uid:*`                    | Restrict an action to a set of roles. For example, `roles:*` matches any role and `roles:uid:randomuid` matches only the role whose UID is `randomuid`.                                                                                            |
 | `services:accesscontrol`                        | Restrict an action to target only the role-based access control service. You can use this in conjunction with the `status:accesscontrol` actions.                                                                                                  |

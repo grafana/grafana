@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
 
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Modal, stylesFactory } from '@grafana/ui';
 
@@ -59,7 +59,7 @@ export class DashboardChangedModal extends PureComponent<Props, State> {
   render() {
     const { event } = this.props;
     const { dismiss } = this.state;
-    const styles = getStyles(config.theme);
+    const styles = getStyles(config.theme2);
 
     const isDelete = event?.action === DashboardEventAction.Deleted;
 
@@ -98,7 +98,7 @@ export class DashboardChangedModal extends PureComponent<Props, State> {
   }
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     modal: css`
       width: 500px;
@@ -106,13 +106,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     radioItem: css`
       margin: 0;
       font-size: ${theme.typography.size.sm};
-      color: ${theme.colors.textWeak};
+      color: ${theme.colors.text.secondary};
       padding: 10px;
       cursor: pointer;
       width: 100%;
 
       &:hover {
-        background: ${theme.colors.bgBlue1};
+        background: ${theme.colors.primary.main};
         color: ${theme.colors.text};
       }
     `,

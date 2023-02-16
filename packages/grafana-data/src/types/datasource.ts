@@ -145,6 +145,10 @@ interface PluginMetaQueryOptions {
   maxDataPoints?: boolean;
   minInterval?: boolean;
 }
+interface PluginQueryCachingConfig {
+  enabled?: boolean;
+  TTLMs?: number;
+}
 
 export interface DataSourcePluginComponents<
   DSType extends DataSourceApi<TQuery, TOptions>,
@@ -224,6 +228,7 @@ abstract class DataSourceApi<
     this.id = instanceSettings.id;
     this.type = instanceSettings.type;
     this.meta = instanceSettings.meta;
+    this.cachingConfig = instanceSettings.cachingConfig;
     this.uid = instanceSettings.uid;
   }
 
@@ -300,6 +305,12 @@ abstract class DataSourceApi<
    * static information about the datasource
    */
   meta: DataSourcePluginMeta;
+
+  /**
+   * Information about the datasource's query caching configuration
+   * When the caching feature is disabled, this config will always be falsy
+   */
+  cachingConfig?: PluginQueryCachingConfig;
 
   /**
    * Used by alerting to check if query contains template variables
@@ -487,6 +498,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   app: CoreApp | string;
 
   cacheTimeout?: string | null;
+  queryCachingTTL?: number | null;
   rangeRaw?: RawTimeRange;
   timeInfo?: string; // The query time description (blue text in the upper right)
   panelId?: number;
@@ -511,6 +523,7 @@ export interface DataQueryTimings {
 }
 
 export interface QueryFix {
+  title?: string;
   label: string;
   action?: QueryFixAction;
 }
@@ -558,6 +571,10 @@ export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJso
   access: string;
   url: string;
   user: string;
+  /**
+   *  @deprecated -- use jsonData to store information related to database.
+   *  This field should only be used by Elasticsearch and Influxdb.
+   */
   database: string;
   basicAuth: boolean;
   basicAuthUser: string;
@@ -581,11 +598,16 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
   type: string;
   name: string;
   meta: DataSourcePluginMeta;
+  cachingConfig?: PluginQueryCachingConfig;
   readOnly: boolean;
   url?: string;
   jsonData: T;
   username?: string;
   password?: string; // when access is direct, for some legacy datasources
+  /**
+   *  @deprecated -- use jsonData to store information related to database.
+   *  This field should only be used by Elasticsearch and Influxdb.
+   */
   database?: string;
   isDefault?: boolean;
   access: 'direct' | 'proxy'; // Currently we support 2 options - direct (browser) and proxy (server)

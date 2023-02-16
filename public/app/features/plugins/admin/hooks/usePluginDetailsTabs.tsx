@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaPlugin, NavModelItem, PluginIncludeType, PluginType } from '@grafana/data';
@@ -6,7 +6,6 @@ import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction } from 'app/types';
 
-import { PluginDetailsHeader } from '../components/PluginDetailsHeader';
 import { usePluginConfig } from '../hooks/usePluginConfig';
 import { isOrgAdmin } from '../permissions';
 import { CatalogPlugin, PluginTabIds, PluginTabLabels } from '../types';
@@ -110,9 +109,6 @@ export const usePluginDetailsTabs = (plugin?: CatalogPlugin, pageId?: PluginTabI
       },
       ...navModelChildren,
     ],
-    headerExtra: () => {
-      return plugin ? <PluginDetailsHeader plugin={plugin} /> : null;
-    },
   };
 
   return {

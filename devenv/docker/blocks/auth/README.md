@@ -26,7 +26,6 @@ by the `devenv` target.
 - [nginx_proxy_mac](./nginx_proxy_mac)
 - [oauth](./oauth)
 - [openldap](./openldap)
-- [openldap-mac](./openldap-mac)
 - [openldap-multiple](./openldap-multiple)
 - [prometheus_basic_auth_proxy](./prometheus_basic_auth_proxy)
 - [saml](./saml)

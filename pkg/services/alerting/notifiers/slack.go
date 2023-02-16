@@ -17,8 +17,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -284,7 +284,7 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 		"fallback":    evalContext.GetNotificationTitle(),
 		"fields":      fields,
 		"footer":      "Grafana v" + setting.BuildVersion,
-		"footer_icon": "https://grafana.com/assets/img/fav32.png",
+		"footer_icon": "https://grafana.com/static/assets/img/fav32.png",
 		"ts":          time.Now().Unix(),
 	}
 	if sn.NeedsImage() && imageURL != "" {
@@ -415,7 +415,7 @@ func (sn *SlackNotifier) slackFileUpload(evalContext *alerting.EvalContext, log 
 	if err != nil {
 		return err
 	}
-	cmd := &models.SendWebhookSync{
+	cmd := &notifications.SendWebhookSync{
 		Url: "https://slack.com/api/files.upload", Body: uploadBody.String(), HttpHeader: headers, HttpMethod: "POST",
 	}
 	if err := sn.NotificationService.SendWebhookSync(evalContext.Ctx, cmd); err != nil {

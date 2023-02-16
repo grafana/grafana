@@ -45,12 +45,7 @@ func apiErrorToNotice(err *AzureLogAnalyticsAPIError) data.Notice {
 // ResponseTableToFrame converts an AzureResponseTable to a data.Frame.
 func ResponseTableToFrame(table *types.AzureResponseTable, refID string, executedQuery string) (*data.Frame, error) {
 	if len(table.Rows) == 0 {
-		return &data.Frame{
-			RefID: refID,
-			Meta: &data.FrameMeta{
-				ExecutedQueryString: executedQuery,
-			},
-		}, nil
+		return nil, nil
 	}
 
 	converterFrame, err := converterFrameForTable(table)

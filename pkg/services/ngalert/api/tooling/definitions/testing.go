@@ -6,8 +6,9 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/promql"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -52,6 +53,19 @@ import (
 //
 //     Responses:
 //       200: EvalQueriesResponse
+
+// swagger:route Post /api/v1/rule/backtest testing BacktestConfig
+//
+// Test rule
+//
+//     Consumes:
+//     - application/json
+//
+//     Produces:
+//     - application/json
+//
+//     Responses:
+//       200: BacktestResult
 
 // swagger:parameters RouteTestReceiverConfig
 type TestReceiverRequest struct {
@@ -160,3 +174,29 @@ type Failure ResponseDetails
 type ResponseDetails struct {
 	Msg string `json:"msg"`
 }
+
+// swagger:parameters BacktestConfig
+type BacktestConfigRequest struct {
+	// in:body
+	Body BacktestConfig
+}
+
+// swagger:model
+type BacktestConfig struct {
+	From     time.Time      `json:"from"`
+	To       time.Time      `json:"to"`
+	Interval model.Duration `json:"interval,omitempty"`
+
+	Condition string              `json:"condition"`
+	Data      []models.AlertQuery `json:"data"` // TODO yuri. Create API model for AlertQuery
+	For       model.Duration      `json:"for,omitempty"`
+
+	Title       string            `json:"title"`
+	Labels      map[string]string `json:"labels,omitempty"`
+	Annotations map[string]string `json:"annotations,omitempty"`
+
+	NoDataState NoDataState `json:"no_data_state"`
+}
+
+// swagger:model
+type BacktestResult data.Frame

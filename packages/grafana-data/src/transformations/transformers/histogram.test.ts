@@ -30,13 +30,13 @@ describe('histogram frames frames', () => {
         config: f.config,
       }))
     ).toMatchInlineSnapshot(`
-      Array [
-        Object {
-          "config": Object {
+      [
+        {
+          "config": {
             "unit": "mph",
           },
-          "name": "BucketMin",
-          "values": Array [
+          "name": "xMin",
+          "values": [
             1,
             2,
             3,
@@ -48,12 +48,12 @@ describe('histogram frames frames', () => {
             9,
           ],
         },
-        Object {
-          "config": Object {
+        {
+          "config": {
             "unit": "mph",
           },
-          "name": "BucketMax",
-          "values": Array [
+          "name": "xMax",
+          "values": [
             2,
             3,
             4,
@@ -65,12 +65,12 @@ describe('histogram frames frames', () => {
             10,
           ],
         },
-        Object {
-          "config": Object {
+        {
+          "config": {
             "unit": undefined,
           },
           "name": "A",
-          "values": Array [
+          "values": [
             1,
             1,
             1,
@@ -82,12 +82,12 @@ describe('histogram frames frames', () => {
             0,
           ],
         },
-        Object {
-          "config": Object {
+        {
+          "config": {
             "unit": undefined,
           },
           "name": "B",
-          "values": Array [
+          "values": [
             0,
             0,
             1,
@@ -99,12 +99,12 @@ describe('histogram frames frames', () => {
             0,
           ],
         },
-        Object {
-          "config": Object {
+        {
+          "config": {
             "unit": undefined,
           },
           "name": "C",
-          "values": Array [
+          "values": [
             0,
             0,
             0,
@@ -116,12 +116,12 @@ describe('histogram frames frames', () => {
             1,
           ],
         },
-        Object {
-          "config": Object {
+        {
+          "config": {
             "unit": undefined,
           },
           "name": "C",
-          "values": Array [
+          "values": [
             0,
             0,
             0,
@@ -143,10 +143,10 @@ describe('histogram frames frames', () => {
         values: f.values.toArray(),
       }))
     ).toMatchInlineSnapshot(`
-      Array [
-        Object {
-          "name": "BucketMin",
-          "values": Array [
+      [
+        {
+          "name": "xMin",
+          "values": [
             1,
             2,
             3,
@@ -158,9 +158,9 @@ describe('histogram frames frames', () => {
             9,
           ],
         },
-        Object {
-          "name": "BucketMax",
-          "values": Array [
+        {
+          "name": "xMax",
+          "values": [
             2,
             3,
             4,
@@ -172,9 +172,9 @@ describe('histogram frames frames', () => {
             10,
           ],
         },
-        Object {
-          "name": "Count",
-          "values": Array [
+        {
+          "name": "count",
+          "values": [
             1,
             1,
             2,

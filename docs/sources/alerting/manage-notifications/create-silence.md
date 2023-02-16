@@ -1,13 +1,10 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/silences/create-silence/
-  - /docs/grafana/latest/alerting/unified-alerting/silences/
-  - /docs/grafana/latest/alerting/silences/edit-silence/
-  - /docs/grafana/latest/alerting/unified-alerting/silences/
-  - /docs/grafana/latest/alerting/silences/linking-to-silence-form/
-  - /docs/grafana/latest/alerting/unified-alerting/silences/
-  - /docs/grafana/latest/alerting/silences/remove-silence/
-  - /docs/grafana/latest/alerting/unified-alerting/silences/
+  - ../silences/create-silence/
+  - ../silences/edit-silence/
+  - ../silences/linking-to-silence-form/
+  - ../silences/remove-silence/
+  - ../unified-alerting/silences/
 description: Add silence alert notification
 keywords:
   - grafana
@@ -15,12 +12,14 @@ keywords:
   - silence
   - mute
 title: Manage silences
-weight: 450
+weight: 600
 ---
 
 # Manage silences
 
 Silences stop notifications from getting created and last for only a specified window of time.
+
+**Note that inhibition rules are not supported in the Grafana Alertmanager.**
 
 ## Add silences
 
@@ -29,7 +28,7 @@ To add a silence, complete the following steps.
 1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page listing existing alerts.
 2. On the Alerting page, click **Silences** to open the page listing existing silences.
 3. From Alertmanager drop-down, select an external Alertmanager to create and manage silences for the external data source. Otherwise, keep the default option of Grafana.
-4. Click **New Silence** to open the Create silence page.
+4. Click **Add Silence** to open the Create silence page.
 5. In **Silence start and end**, select the start and end date to indicate when the silence should go into effect and expire.
 6. Optionally, in **Duration**, specify how long the silence is enforced. This automatically updates the end time in the **Silence start and end** field.
 7. In the **Name** and **Value** fields, enter one or more _Matching Labels_. Matchers determine which rules the silence will apply to.

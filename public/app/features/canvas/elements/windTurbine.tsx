@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -16,10 +16,8 @@ interface WindTurbineConfig {
   rpm?: ScalarDimensionConfig;
 }
 
-const WindTurbineDisplay: FC<CanvasElementProps<WindTurbineConfig, WindTurbineData>> = (props) => {
+const WindTurbineDisplay = ({ data }: CanvasElementProps<WindTurbineConfig, WindTurbineData>) => {
   const styles = useStyles2(getStyles);
-
-  const { data } = props;
 
   const windTurbineAnimation = `spin ${data?.rpm ? 60 / Math.abs(data.rpm) : 0}s linear infinite`;
 

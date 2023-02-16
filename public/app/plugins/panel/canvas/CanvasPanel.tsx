@@ -10,13 +10,18 @@ import { Scene } from 'app/features/canvas/runtime/scene';
 import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 
 import { InlineEdit } from './InlineEdit';
+import { SetBackground } from './SetBackground';
 import { PanelOptions } from './models.gen';
+import { AnchorPoint, CanvasTooltipPayload } from './types';
 
 interface Props extends PanelProps<PanelOptions> {}
 
 interface State {
   refresh: number;
   openInlineEdit: boolean;
+  openSetBackground: boolean;
+  contextMenuAnchorPoint: AnchorPoint;
+  moveableAction: boolean;
 }
 
 export interface InstanceState {
@@ -31,6 +36,7 @@ export interface SelectionAction {
 let canvasInstances: CanvasPanel[] = [];
 let activeCanvasPanel: CanvasPanel | undefined = undefined;
 let isInlineEditOpen = false;
+let isSetBackgroundOpen = false;
 
 export const activePanelSubject = new ReplaySubject<SelectionAction>(1);
 
@@ -49,6 +55,9 @@ export class CanvasPanel extends Component<Props, State> {
     this.state = {
       refresh: 0,
       openInlineEdit: false,
+      openSetBackground: false,
+      contextMenuAnchorPoint: { x: 0, y: 0 },
+      moveableAction: false,
     };
 
     // Only the initial options are ever used.
@@ -57,11 +66,15 @@ export class CanvasPanel extends Component<Props, State> {
       this.props.options.root,
       this.props.options.inlineEditing,
       this.props.options.showAdvancedTypes,
-      this.onUpdateScene
+      this.onUpdateScene,
+      this
     );
     this.scene.updateSize(props.width, props.height);
     this.scene.updateData(props.data);
     this.scene.inlineEditingCallback = this.openInlineEdit;
+    this.scene.setBackgroundCallback = this.openSetBackground;
+    this.scene.tooltipCallback = this.tooltipCallback;
+    this.scene.moveableActionCallback = this.moveableActionCallback;
 
     this.subs.add(
       this.props.eventBus.subscribe(PanelEditEnteredEvent, (evt: PanelEditEnteredEvent) => {
@@ -126,6 +139,7 @@ export class CanvasPanel extends Component<Props, State> {
     this.scene.subscription.unsubscribe();
     this.subs.unsubscribe();
     isInlineEditOpen = false;
+    isSetBackgroundOpen = false;
     canvasInstances = canvasInstances.filter((ci) => ci.props.id !== activeCanvasPanel?.props.id);
   }
 
@@ -143,7 +157,7 @@ export class CanvasPanel extends Component<Props, State> {
   };
 
   shouldComponentUpdate(nextProps: Props, nextState: State) {
-    const { width, height, data } = this.props;
+    const { width, height, data, options } = this.props;
     let changed = false;
 
     if (width !== nextProps.width || height !== nextProps.height) {
@@ -156,6 +170,11 @@ export class CanvasPanel extends Component<Props, State> {
       changed = true;
     }
 
+    if (options !== nextProps.options && !this.scene.ignoreDataUpdate) {
+      this.scene.updateData(nextProps.data);
+      changed = true;
+    }
+
     if (this.state.refresh !== nextState.refresh) {
       changed = true;
     }
@@ -164,12 +183,19 @@ export class CanvasPanel extends Component<Props, State> {
       changed = true;
     }
 
+    if (this.state.openSetBackground !== nextState.openSetBackground) {
+      changed = true;
+    }
+
+    if (this.state.moveableAction !== nextState.moveableAction) {
+      changed = true;
+    }
+
     // After editing, the options are valid, but the scene was in a different panel or inline editing mode has changed
-    const shouldUpdateSceneAndPanel = this.needsReload && this.props.options !== nextProps.options;
     const inlineEditingSwitched = this.props.options.inlineEditing !== nextProps.options.inlineEditing;
     const shouldShowAdvancedTypesSwitched =
       this.props.options.showAdvancedTypes !== nextProps.options.showAdvancedTypes;
-    if (shouldUpdateSceneAndPanel || inlineEditingSwitched || shouldShowAdvancedTypesSwitched) {
+    if (this.needsReload || inlineEditingSwitched || shouldShowAdvancedTypesSwitched) {
       if (inlineEditingSwitched) {
         // Replace scene div to prevent selecto instance leaks
         this.scene.revId++;
@@ -197,9 +223,38 @@ export class CanvasPanel extends Component<Props, State> {
     isInlineEditOpen = true;
   };
 
+  openSetBackground = (anchorPoint: AnchorPoint) => {
+    if (isSetBackgroundOpen) {
+      this.forceUpdate();
+      this.setActivePanel();
+      return;
+    }
+
+    this.setActivePanel();
+    this.setState({ openSetBackground: true });
+    this.setState({ contextMenuAnchorPoint: anchorPoint });
+
+    isSetBackgroundOpen = true;
+  };
+
+  tooltipCallback = (tooltip: CanvasTooltipPayload | undefined) => {
+    this.scene.tooltip = tooltip;
+    this.forceUpdate();
+  };
+
+  moveableActionCallback = (updated: boolean) => {
+    this.setState({ moveableAction: updated });
+    this.forceUpdate();
+  };
+
   closeInlineEdit = () => {
     this.setState({ openInlineEdit: false });
     isInlineEditOpen = false;
+  };
+
+  closeSetBackground = () => {
+    this.setState({ openSetBackground: false });
+    isSetBackgroundOpen = false;
   };
 
   setActivePanel = () => {
@@ -208,7 +263,17 @@ export class CanvasPanel extends Component<Props, State> {
   };
 
   renderInlineEdit = () => {
-    return <InlineEdit onClose={() => this.closeInlineEdit()} id={this.props.id} scene={activeCanvasPanel!.scene} />;
+    return <InlineEdit onClose={() => this.closeInlineEdit()} id={this.props.id} scene={this.scene} />;
+  };
+
+  renderSetBackground = () => {
+    return (
+      <SetBackground
+        onClose={() => this.closeSetBackground()}
+        scene={this.scene}
+        anchorPoint={this.state.contextMenuAnchorPoint}
+      />
+    );
   };
 
   render() {
@@ -216,6 +281,7 @@ export class CanvasPanel extends Component<Props, State> {
       <>
         {this.scene.render()}
         {this.state.openInlineEdit && this.renderInlineEdit()}
+        {this.state.openSetBackground && this.renderSetBackground()}
       </>
     );
   }

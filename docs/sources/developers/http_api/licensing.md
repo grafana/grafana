@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/http_api/licensing/
-  - /docs/grafana/latest/http_api/licensing/
+  - ../../http_api/licensing/
+canonical: /docs/grafana/latest/developers/http_api/licensing/
 description: Enterprise Licensing HTTP API
 keywords:
   - grafana
@@ -10,7 +10,7 @@ keywords:
   - api
   - licensing
   - enterprise
-title: 'Licensing HTTP API'
+title: Licensing HTTP API
 ---
 
 # Enterprise License API

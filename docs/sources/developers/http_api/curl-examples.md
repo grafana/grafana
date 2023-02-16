@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/http_api/curl-examples/
-  - /docs/grafana/latest/http_api/curl-examples/
+  - ../../http_api/curl-examples/
+canonical: /docs/grafana/latest/developers/http_api/curl-examples/
 description: cURL examples
 keywords:
   - grafana
@@ -34,7 +34,5 @@ You can't use authorization tokens in the request.
 For example, to [list permissions associated with roles]({{< relref "../../administration/roles-and-permissions/access-control/manage-rbac-roles/" >}}) given a username of `user` and password of `password`, use:
 
 ```
-curl --location --request GET '<grafana_url>/api/access-control/builtin-roles' --header 'Authorization: Basic dXNlcjpwYXNzd29yZAo='
+curl --location '<grafana_url>/api/access-control/builtin-roles' --user 'user:password'
 ```
-
-where `dXNlcjpwYXNzd29yZAo=` is the base64 encoding of `user:password`.

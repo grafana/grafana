@@ -1,0 +1,166 @@
+import { Meta, Props, Story, Canvas } from '@storybook/addon-docs/blocks';
+
+import { InteractiveTable } from './InteractiveTable';
+import { Badge } from '../Badge/Badge';
+
+<Meta title="MDX|InteractiveTable" component={InteractiveTable} />
+
+# InteractiveTable
+
+<Badge text="Alpha" icon="rocket" color="blue" tooltip="This component is still experimental." />
+
+The InteractiveTable is used to display and select data efficiently.
+It allows for the display and modification of detailed information.
+With additional functionality it allows for batch editing, as needed by your feature's users.
+
+It is a wrapper around [React Table](https://react-table-v7.tanstack.com/), for more informations about it, refer to the [official documentation](https://react-table.tanstack.com/docs/overview).
+
+### When to use
+
+The InteractiveTable can be used to allow users to perform administrative tasks workflows.
+
+### When not to use
+
+Avoid using the InteractiveTable where mobile or responsiveness may be a requirement.
+Consider an alternative pattern where the user is presented with a summary list and can click/tap to an individual page for each row in that list.
+
+### Usage
+
+<Props of={InteractiveTable} />
+
+#### About `columns` and `data` Props
+
+To avoid unnecessary rerenders, `columns` and `data` must be memoized.
+
+Columns are rendered in the same order defined in the `columns` prop.
+Each Cell's content is automatically rendered by matching the `id` of the column to the key of each object in the `data` array prop.
+
+##### Example
+
+```tsx
+interface TableData {
+  projectName: string;
+  repository: string;
+}
+
+const columns = useMemo<Array<Column<TableData>>>(
+  () => [
+    id: 'projectName'
+    header: "Project Name"
+  ],
+  [
+    id: 'repository',
+    header: "Repository"
+  ],
+  []
+);
+
+const data = useMemo<Array<TableData>>(
+  () => [
+    {
+      projectName: 'Grafana',
+      repository: 'https://github.com/grafana/grafana',
+   }
+  ],
+  [
+    {
+      projectName: 'Loki';
+      repository: 'https://github.com/grafana/loki';
+    }
+  ],
+  []
+);
+```
+
+## Examples
+
+### With row expansion
+
+Individual rows can be expanded to display additional details or reconfigure properties previously defined when the row was created.
+The expanded row area should be used to declutter the primary presentation of data, carefully consider what the user needs to know at first glance and what can be hidden behind the Row Expander button.
+
+In general, data-types that are consistent across all dataset are in the primary table, variances are pushed to the expanded section for each individual row.
+
+<Story id="experimental-interactivetable--with-row-expansion" />
+
+Row expansion is enabled whenever the `renderExpanded` prop is provided. The `renderExpanded` function is called with the row's data and should return a ReactNode.
+
+```tsx
+interface TableData {
+  datasource: string;
+  repo: string;
+  description: string;
+}
+
+const tableData: TableData[] = [
+  //...
+];
+
+const columns: Array<Column<TableData>> = [
+  //...
+];
+
+const ExpandedCell = ({ description }: TableData) => {
+  return <p>{description}</p>;
+};
+
+export const MyComponent = () => {
+  return (
+    <InteractiveTable
+      columns={columns}
+      data={tableData}
+      getRowId={(r) => r.datasource}
+      renderExpandedRow={ExpandedCell}
+    />
+  );
+};
+```
+
+### Custom Cell Rendering
+
+Individual cells can be rendered using custom content dy defining a `cell` property on the column definition.
+
+<Story id="experimental-interactivetable--with-custom-cell" />
+
+```tsx
+interface TableData {
+  datasource: string;
+  repo: string;
+}
+
+const RepoCell = ({
+  row: {
+    original: { repo },
+  },
+}: CellProps<WithCustomCellData, void>) => {
+  return (
+    <LinkButton href={repo} size="sm" icon="external-link-alt">
+      Open on GitHub
+    </LinkButton>
+  );
+};
+
+const tableData: WithCustomCellData[] = [
+  {
+    datasource: 'Prometheus',
+    repo: 'https://github.com/prometheus/prometheus',
+  },
+  {
+    datasource: 'Loki',
+    repo: 'https://github.com/grafana/loki',
+  },
+  {
+    datasource: 'Tempo',
+    repo: 'https://github.com/grafana/tempo',
+  },
+];
+
+const columns: Array<Column<WithCustomCellData>> = [
+  { id: 'datasource', header: 'Data Source' },
+  { id: 'repo', header: 'Repo', cell: RepoCell },
+];
+
+export const MyComponent = () => {
+  return <InteractiveTable columns={columns} data={tableData} getRowId={(r) => r.datasource} />;
+};
+```

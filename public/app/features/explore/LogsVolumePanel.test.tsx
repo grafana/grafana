@@ -5,7 +5,7 @@ import { DataQueryResponse, LoadingState, EventBusSrv } from '@grafana/data';
 
 import { LogsVolumePanel } from './LogsVolumePanel';
 
-jest.mock('./ExploreGraph', () => {
+jest.mock('./Graph/ExploreGraph', () => {
   const ExploreGraph = () => <span>ExploreGraph</span>;
   return {
     ExploreGraph,
@@ -68,5 +68,15 @@ describe('LogsVolumePanel', () => {
   it('does not show the panel when there is no volume data', () => {
     renderPanel(undefined);
     expect(screen.queryByText('Log volume')).not.toBeInTheDocument();
+  });
+
+  it('renders a loading indicator when data is streaming', () => {
+    renderPanel({ state: LoadingState.Streaming, error: undefined, data: [{}] });
+    expect(screen.getByTestId('logs-volume-streaming')).toBeInTheDocument();
+  });
+
+  it('does not render loading indicator when data is not streaming', () => {
+    renderPanel({ state: LoadingState.Done, error: undefined, data: [{}] });
+    expect(screen.queryByText('logs-volume-streaming')).not.toBeInTheDocument();
   });
 });

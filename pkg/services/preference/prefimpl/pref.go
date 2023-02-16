@@ -54,19 +54,15 @@ func (s *Service) GetWithDefaults(ctx context.Context, query *pref.GetPreference
 		if p.Timezone != "" {
 			res.Timezone = p.Timezone
 		}
-		if p.WeekStart != "" {
+		if p.WeekStart != nil && *p.WeekStart != "" {
 			res.WeekStart = p.WeekStart
 		}
 		if p.HomeDashboardID != 0 {
 			res.HomeDashboardID = p.HomeDashboardID
 		}
 		if p.JSONData != nil {
-			if p.JSONData.Locale != "" {
-				res.JSONData.Locale = p.JSONData.Locale
-			}
-
-			if len(p.JSONData.Navbar.SavedItems) > 0 {
-				res.JSONData.Navbar = p.JSONData.Navbar
+			if p.JSONData.Language != "" {
+				res.JSONData.Language = p.JSONData.Language
 			}
 
 			if p.JSONData.QueryHistory.HomeTab != "" {
@@ -108,12 +104,12 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 				TeamID:          cmd.TeamID,
 				HomeDashboardID: cmd.HomeDashboardID,
 				Timezone:        cmd.Timezone,
-				WeekStart:       cmd.WeekStart,
+				WeekStart:       &cmd.WeekStart,
 				Theme:           cmd.Theme,
 				Created:         time.Now(),
 				Updated:         time.Now(),
 				JSONData: &pref.PreferenceJSONData{
-					Locale: cmd.Locale,
+					Language: cmd.Language,
 				},
 			}
 			_, err = s.store.Insert(ctx, preference)
@@ -125,18 +121,15 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 	}
 
 	preference.Timezone = cmd.Timezone
-	preference.WeekStart = cmd.WeekStart
+	preference.WeekStart = &cmd.WeekStart
 	preference.Theme = cmd.Theme
 	preference.Updated = time.Now()
 	preference.Version += 1
 	preference.HomeDashboardID = cmd.HomeDashboardID
 	preference.JSONData = &pref.PreferenceJSONData{
-		Locale: cmd.Locale,
+		Language: cmd.Language,
 	}
 
-	if cmd.Navbar != nil {
-		preference.JSONData.Navbar = *cmd.Navbar
-	}
 	if cmd.QueryHistory != nil {
 		preference.JSONData.QueryHistory = *cmd.QueryHistory
 	}
@@ -166,20 +159,11 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 		exists = true
 	}
 
-	if cmd.Locale != nil {
+	if cmd.Language != nil {
 		if preference.JSONData == nil {
 			preference.JSONData = &pref.PreferenceJSONData{}
 		}
-		preference.JSONData.Locale = *cmd.Locale
-	}
-
-	if cmd.Navbar != nil {
-		if preference.JSONData == nil {
-			preference.JSONData = &pref.PreferenceJSONData{}
-		}
-		if cmd.Navbar.SavedItems != nil {
-			preference.JSONData.Navbar.SavedItems = cmd.Navbar.SavedItems
-		}
+		preference.JSONData.Language = *cmd.Language
 	}
 
 	if cmd.QueryHistory != nil {
@@ -200,7 +184,7 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 	}
 
 	if cmd.WeekStart != nil {
-		preference.WeekStart = *cmd.WeekStart
+		preference.WeekStart = cmd.WeekStart
 	}
 
 	if cmd.Theme != nil {
@@ -209,16 +193,6 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 
 	preference.Updated = time.Now()
 	preference.Version += 1
-
-	// Wrap this in an if statement to maintain backwards compatibility
-	if cmd.Navbar != nil {
-		if preference.JSONData == nil {
-			preference.JSONData = &pref.PreferenceJSONData{}
-		}
-		if cmd.Navbar.SavedItems != nil {
-			preference.JSONData.Navbar.SavedItems = cmd.Navbar.SavedItems
-		}
-	}
 
 	if exists {
 		err = s.store.Update(ctx, preference)
@@ -232,13 +206,13 @@ func (s *Service) GetDefaults() *pref.Preference {
 	defaults := &pref.Preference{
 		Theme:           s.cfg.DefaultTheme,
 		Timezone:        s.cfg.DateFormats.DefaultTimezone,
-		WeekStart:       s.cfg.DateFormats.DefaultWeekStart,
+		WeekStart:       &s.cfg.DateFormats.DefaultWeekStart,
 		HomeDashboardID: 0,
 		JSONData:        &pref.PreferenceJSONData{},
 	}
 
 	if s.features.IsEnabled(featuremgmt.FlagInternationalization) {
-		defaults.JSONData.Locale = s.cfg.DefaultLocale
+		defaults.JSONData.Language = s.cfg.DefaultLanguage
 	}
 
 	return defaults
