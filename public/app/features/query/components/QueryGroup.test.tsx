@@ -105,6 +105,13 @@ describe('QueryGroup', () => {
     const helpModal = await screen.findByRole('dialog');
     expect(helpModal).toBeInTheDocument();
   });
+
+  it('Should not show add expression button when expressions are disabled', async () => {
+    config.expressionsEnabled = false;
+    renderScenario({});
+    const addExpressionButton = screen.queryByTestId('query-tab-add-expression');
+    expect(addExpressionButton).not.toBeInTheDocument();
+  });
 });
 
 function renderScenario(overrides: Partial<Props>) {
