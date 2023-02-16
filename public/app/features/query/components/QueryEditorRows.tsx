@@ -14,7 +14,7 @@ import { getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 
 import { QueryEditorRow } from './QueryEditorRow';
 
-interface Props {
+export interface Props {
   // The query configuration
   queries: DataQuery[];
   dsSettings: DataSourceInstanceSettings;
