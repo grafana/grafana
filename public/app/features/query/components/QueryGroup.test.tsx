@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import config from 'app/core/config';
@@ -92,6 +92,18 @@ describe('QueryGroup', () => {
     expect(lastEditorToggleRow?.getAttribute('aria-expanded')).toBe('true');
     expect(lastQueryEditorRow?.firstElementChild?.children.length).toBe(2);
     expect(queryRowsContainer.children.length).toBe(3);
+  });
+
+  it('Should open data source help modal', async () => {
+    renderScenario({});
+
+    const openHelpButton = await screen.findByTestId('query-tab-help-button');
+    await act(async () => {
+      await openHelpButton.click();
+    });
+
+    const helpModal = await screen.findByRole('dialog');
+    expect(helpModal).toBeInTheDocument();
   });
 });
 
