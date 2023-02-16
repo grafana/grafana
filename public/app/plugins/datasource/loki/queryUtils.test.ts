@@ -1,6 +1,6 @@
 import { ArrayVector, DataQueryResponse } from '@grafana/data';
 
-import { logFrameA, logFrameB, metricFrameA, metricFrameB } from './mocks';
+import { getMockFrames } from './mocks';
 import {
   getHighlighterExpressionsFromQuery,
   getNormalizedLokiQuery,
@@ -12,6 +12,7 @@ import {
   getParserFromQuery,
   obfuscate,
   combineResponses,
+  cloneQueryResponse,
 } from './queryUtils';
 import { LokiQuery, LokiQueryType } from './types';
 
@@ -297,8 +298,21 @@ describe('getParserFromQuery', () => {
   });
 });
 
+describe('cloneQueryResponse', () => {
+  const { logFrameA } = getMockFrames();
+  const responseA: DataQueryResponse = {
+    data: [logFrameA],
+  };
+  it('clones query responses', () => {
+    const clonedA = cloneQueryResponse(responseA);
+    expect(clonedA).not.toBe(responseA);
+    expect(clonedA).toEqual(clonedA);
+  });
+});
+
 describe('combineResponses', () => {
   it('combines logs frames', () => {
+    const { logFrameA, logFrameB } = getMockFrames();
     const responseA: DataQueryResponse = {
       data: [logFrameA],
     };
@@ -366,6 +380,7 @@ describe('combineResponses', () => {
   });
 
   it('combines metric frames', () => {
+    const { metricFrameA, metricFrameB } = getMockFrames();
     const responseA: DataQueryResponse = {
       data: [metricFrameA],
     };
@@ -402,5 +417,58 @@ describe('combineResponses', () => {
         },
       ],
     });
+  });
+
+  it('combines and identifies new frames in the response', () => {
+    const { metricFrameA, metricFrameB, metricFrameC } = getMockFrames();
+    const responseA: DataQueryResponse = {
+      data: [metricFrameA],
+    };
+    const responseB: DataQueryResponse = {
+      data: [metricFrameB, metricFrameC],
+    };
+    expect(combineResponses(responseA, responseB)).toEqual({
+      data: [
+        {
+          fields: [
+            {
+              config: {},
+              name: 'Time',
+              type: 'time',
+              values: new ArrayVector([1000000, 2000000, 3000000, 4000000]),
+            },
+            {
+              config: {},
+              name: 'Value',
+              type: 'number',
+              values: new ArrayVector([6, 7, 5, 4]),
+            },
+          ],
+          length: 4,
+          meta: {
+            stats: [
+              {
+                displayName: 'Ingester: total reached',
+                value: 3,
+              },
+            ],
+          },
+          refId: 'A',
+        },
+        metricFrameC,
+      ],
+    });
+  });
+
+  it('combines frames in a new response instance', () => {
+    const { metricFrameA, metricFrameB } = getMockFrames();
+    const responseA: DataQueryResponse = {
+      data: [metricFrameA],
+    };
+    const responseB: DataQueryResponse = {
+      data: [metricFrameB],
+    };
+    expect(combineResponses(null, responseA)).not.toBe(responseA);
+    expect(combineResponses(null, responseB)).not.toBe(responseB);
   });
 });
