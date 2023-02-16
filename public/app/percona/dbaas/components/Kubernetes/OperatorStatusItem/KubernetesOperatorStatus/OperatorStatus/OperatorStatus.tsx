@@ -34,7 +34,7 @@ export const OperatorStatus: FC<OperatorStatusProps> = ({ operator }) => {
       color={statusColor}
       data-testid={`cluster-status-${STATUS_DATA_QA[status]}`}
       icon={externalLink ? 'external-link-alt' : undefined}
-      className={status === Status.unsupported ? styles.wrapperUnsupported : undefined}
+      className={status === Status.unsupported ? styles.wrapperGrey : undefined}
     />
   );
 };

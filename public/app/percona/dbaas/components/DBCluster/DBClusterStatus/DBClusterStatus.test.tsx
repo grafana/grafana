@@ -18,7 +18,7 @@ describe('DBClusterStatus::', () => {
       finishedSteps: 10,
       totalSteps: 10,
     };
-    const { container } = render(
+    render(
       <Provider
         store={configureStore({
           percona: {
@@ -33,7 +33,6 @@ describe('DBClusterStatus::', () => {
 
     expect(screen.getByTestId('cluster-status-active')).toBeInTheDocument();
     expect(screen.queryByTestId('cluster-status-error-message')).not.toBeInTheDocument();
-    expect(container.querySelector('span')?.className).toContain('active');
   });
 
   it('renders progress bar and error when changing', () => {

@@ -20,7 +20,7 @@ export const getStyles = ({ v1, isDark }: GrafanaTheme2) => {
   }
 
   return {
-    wrapperUnsupported: css`
+    wrapperGrey: css`
       background: ${bgColor};
       border: 1px solid ${borderColor};
       color: ${textColor};

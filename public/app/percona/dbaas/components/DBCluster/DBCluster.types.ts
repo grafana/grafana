@@ -1,4 +1,5 @@
 import { SelectableValue } from '@grafana/data';
+import { BadgeColor } from '@grafana/ui';
 import { Databases } from 'app/percona/shared/core';
 
 import { DBClusterService } from './DBCluster.service';
@@ -76,6 +77,17 @@ export enum DBClusterStatus {
   upgrading = 'DB_CLUSTER_STATE_UPGRADING',
   unknown = 'DB_CLUSTER_STATE_UNKNOWN',
 }
+
+export const DBClusterStatusColors: Record<DBClusterStatus, BadgeColor> = {
+  [DBClusterStatus.invalid]: 'red',
+  [DBClusterStatus.changing]: 'blue',
+  [DBClusterStatus.ready]: 'green',
+  [DBClusterStatus.failed]: 'red',
+  [DBClusterStatus.deleting]: 'blue',
+  [DBClusterStatus.suspended]: 'orange',
+  [DBClusterStatus.upgrading]: 'blue',
+  [DBClusterStatus.unknown]: 'red',
+};
 
 export type DBClusterStatusMap = {
   [key in DBClusterStatus]: string;
