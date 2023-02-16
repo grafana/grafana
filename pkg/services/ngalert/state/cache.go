@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/state/template"
 )
 
 type ruleStates struct {
@@ -141,7 +142,7 @@ func (rs *ruleStates) expandRuleLabelsAndAnnotations(ctx context.Context, log lo
 	expand := func(original map[string]string) map[string]string {
 		expanded := make(map[string]string, len(original))
 		for k, v := range original {
-			ev, err := expandTemplate(ctx, alertRule.Title, v, templateLabels, alertInstance, externalURL)
+			ev, err := template.Expand(ctx, alertRule.Title, v, templateLabels, alertInstance, externalURL)
 			expanded[k] = ev
 			if err != nil {
 				log.Error("Error in expanding template", "name", k, "value", v, "error", err)

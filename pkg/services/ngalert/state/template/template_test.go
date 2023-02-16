@@ -1,4 +1,4 @@
-package state
+package template
 
 import (
 	"context"
@@ -14,28 +14,32 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 )
 
-func TestTemplateCaptureValueStringer(t *testing.T) {
-	cases := []struct {
+func TestValueString(t *testing.T) {
+	tests := []struct {
 		name     string
-		value    templateCaptureValue
+		value    Value
 		expected string
 	}{{
 		name:     "0 is returned as integer value",
-		value:    templateCaptureValue{Value: 0},
+		value:    Value{Value: 0},
 		expected: "0",
 	}, {
 		name:     "1.0 is returned as integer value",
-		value:    templateCaptureValue{Value: 1.0},
+		value:    Value{Value: 1.0},
 		expected: "1",
 	}, {
 		name:     "1.1 is returned as decimal value",
-		value:    templateCaptureValue{Value: 1.1},
+		value:    Value{Value: 1.1},
+		expected: "1.1",
+	}, {
+		name:     "1.1 is returned as decimal value, no labels",
+		value:    Value{Labels: map[string]string{"foo": "bar"}, Value: 1.1},
 		expected: "1.1",
 	}}
 
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			assert.Equal(t, c.expected, c.value.String())
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.expected, test.value.String())
 		})
 	}
 }
@@ -405,7 +409,7 @@ func TestExpandTemplate(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			v, err := expandTemplate(context.Background(), "test", c.text, c.labels, c.alertInstance, externalURL)
+			v, err := Expand(context.Background(), "test", c.text, c.labels, c.alertInstance, externalURL)
 			if c.expectedError != nil {
 				require.NotNil(t, err)
 				require.EqualError(t, c.expectedError, err.Error())
