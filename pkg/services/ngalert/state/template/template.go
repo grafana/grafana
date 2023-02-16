@@ -4,6 +4,7 @@ import (
 	"context"
 	"math"
 	"net/url"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -16,10 +17,33 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 )
 
+type Labels map[string]string
+
+// String returns the labels as k=v, comma separated, in increasing order.
+func (l Labels) String() string {
+	// sort the names of the labels in increasing order
+	sorted := make([]string, 0, len(l))
+	for k := range l {
+		sorted = append(sorted, k)
+	}
+	sort.Strings(sorted)
+	// create the string from the sorted labels
+	b := strings.Builder{}
+	for i, k := range sorted {
+		b.WriteString(k)
+		b.WriteString("=")
+		b.WriteString(l[k])
+		if i < len(l)-1 {
+			b.WriteString(", ")
+		}
+	}
+	return b.String()
+}
+
 // Value contains the labels and value of a Reduce, Math or Threshold
 // expression for a series.
 type Value struct {
-	Labels map[string]string
+	Labels Labels
 	Value  float64
 }
 
@@ -37,7 +61,7 @@ func NewValues(values map[string]eval.NumberValueCapture) map[string]Value {
 			f = math.NaN()
 		}
 		m[k] = Value{
-			Labels: v.Labels,
+			Labels: Labels(v.Labels),
 			Value:  f,
 		}
 	}
