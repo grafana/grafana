@@ -14,6 +14,28 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 )
 
+func TestLabelsString(t *testing.T) {
+	tests := []struct {
+		name     string
+		labels   Labels
+		expected string
+	}{{
+		name:     "single label has no commas",
+		labels:   Labels{"foo": "bar"},
+		expected: "foo=bar",
+	}, {
+		name:     "labels are sorted in increasing order",
+		labels:   Labels{"foo": "bar", "bar": "baz"},
+		expected: "bar=baz, foo=bar",
+	}}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			assert.Equal(t, test.expected, test.labels.String())
+		})
+	}
+}
+
 func TestValueString(t *testing.T) {
 	tests := []struct {
 		name     string
