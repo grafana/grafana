@@ -1,4 +1,4 @@
-import { Subscriber, map, Observable, Subscription } from 'rxjs';
+import { Subscriber, Observable, Subscription } from 'rxjs';
 
 import { DataQueryRequest, DataQueryResponse, dateTime, TimeRange } from '@grafana/data';
 import { LoadingState } from '@grafana/schema';
