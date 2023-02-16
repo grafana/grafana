@@ -483,7 +483,7 @@ func init() {
 
 	StatsTotalActiveViewers = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_totals_active_viewers",
-		Help:      "total amount of viewers",
+		Help:      "total amount of active viewers",
 		Namespace: ExporterName,
 	})
 
