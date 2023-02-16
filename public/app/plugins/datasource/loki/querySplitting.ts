@@ -100,7 +100,7 @@ export function runPartitionedQuery(datasource: LokiDatasource, request: DataQue
   const totalRequests = partition.length;
 
   let shouldStop = false;
-  let smallQuerySubsciption: Subscription | null = null;
+  let subquerySubsciption: Subscription | null = null;
   const runNextRequest = (subscriber: Subscriber<DataQueryResponse>, requestN: number) => {
     if (shouldStop) {
       subscriber.complete();
@@ -133,7 +133,7 @@ export function runPartitionedQuery(datasource: LokiDatasource, request: DataQue
       return;
     }
 
-    smallQuerySubsciption = datasource.runQuery({ ...request, range, requestId, targets }).subscribe({
+    subquerySubsciption = datasource.runQuery({ ...request, range, requestId, targets }).subscribe({
       next: (partialResponse) => {
         if (partialResponse.error) {
           subscriber.error(partialResponse.error);
@@ -153,8 +153,8 @@ export function runPartitionedQuery(datasource: LokiDatasource, request: DataQue
     runNextRequest(subscriber, totalRequests);
     return () => {
       shouldStop = true;
-      if (smallQuerySubsciption != null) {
-        smallQuerySubsciption.unsubscribe();
+      if (subquerySubsciption != null) {
+        subquerySubsciption.unsubscribe();
       }
     };
   });

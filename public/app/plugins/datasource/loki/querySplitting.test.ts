@@ -7,7 +7,7 @@ import { LoadingState } from '@grafana/schema';
 import { LokiDatasource } from './datasource';
 import * as logsTimeSplit from './logsTimeSplit';
 import * as metricTimeSplit from './metricTimeSplit';
-import { createLokiDatasource, logFrameA } from './mocks';
+import { createLokiDatasource, getMockFrames } from './mocks';
 import { runPartitionedQuery } from './querySplitting';
 import { LokiQuery } from './types';
 
@@ -75,6 +75,7 @@ describe('runPartitionedQuery()', () => {
       targets: [{ expr: '{a="b"}', refId: 'A', maxLines: 4 }],
       range,
     });
+    const { logFrameA } = getMockFrames();
     beforeEach(() => {
       jest.spyOn(datasource, 'runQuery').mockReturnValue(of({ data: [logFrameA], refId: 'A' }));
     });
