@@ -116,6 +116,17 @@ export function runPartitionedQuery(datasource: LokiDatasource, request: DataQue
       subscriber.complete();
     };
 
+    const nextRequest = () => {
+      mergedResponse = mergedResponse || { data: [] };
+      if (requestN > 1) {
+        mergedResponse.state = LoadingState.Streaming;
+        subscriber.next(mergedResponse);
+        runNextRequest(subscriber, requestN - 1);
+        return;
+      }
+      done(mergedResponse);
+    };
+
     if (!targets.length && mergedResponse) {
       done(mergedResponse);
       return;
@@ -131,17 +142,11 @@ export function runPartitionedQuery(datasource: LokiDatasource, request: DataQue
         subscriber.next(mergedResponse);
       },
       complete: () => {
-        mergedResponse = mergedResponse || { data: [] };
-        if (requestN > 1) {
-          mergedResponse.state = LoadingState.Streaming;
-          subscriber.next(mergedResponse);
-          runNextRequest(subscriber, requestN - 1);
-          return;
-        }
-        done(mergedResponse);
+        nextRequest();
       },
       error: (error) => {
         subscriber.error(error);
+        nextRequest();
       },
     });
   };
