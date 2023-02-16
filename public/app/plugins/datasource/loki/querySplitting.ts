@@ -137,7 +137,6 @@ export function runPartitionedQuery(datasource: LokiDatasource, request: DataQue
       next: (partialResponse) => {
         if (partialResponse.error) {
           subscriber.error(partialResponse.error);
-          partialResponse = { data: [] };
         }
         mergedResponse = combineResponses(mergedResponse, partialResponse);
       },
@@ -146,7 +145,6 @@ export function runPartitionedQuery(datasource: LokiDatasource, request: DataQue
       },
       error: (error) => {
         subscriber.error(error);
-        nextRequest();
       },
     });
   };
