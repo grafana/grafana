@@ -14,10 +14,10 @@ import { setupForLogs } from './__mocks__/logsTestContext';
 import { validLogsQuery, validMetricSearchBuilderQuery } from './__mocks__/queries';
 import { TimeRangeMock } from './__mocks__/timeRange';
 import {
+  CloudWatchDefaultQuery,
   CloudWatchLogsQuery,
   CloudWatchMetricsQuery,
   CloudWatchQuery,
-  CloudWatchDefaultQuery,
   MetricEditorMode,
   MetricQueryType,
 } from './types';
@@ -280,7 +280,7 @@ describe('datasource', () => {
           },
         ]),
       }).datasource;
-      const allMetrics = await datasource.api.getAllMetrics({ region: 'us-east-2' });
+      const allMetrics = await datasource.resources.getAllMetrics({ region: 'us-east-2' });
       expect(allMetrics[0].metricName).toEqual('CPUUtilization');
       expect(allMetrics[0].namespace).toEqual('AWS/EC2');
       expect(allMetrics[1].metricName).toEqual('CPUPercentage');

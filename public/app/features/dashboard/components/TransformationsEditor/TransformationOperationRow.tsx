@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import { useToggle } from 'react-use';
 
-import { DataFrame, DataTransformerConfig, TransformerRegistryItem } from '@grafana/data';
+import { DataFrame, DataTransformerConfig, TransformerRegistryItem, FrameMatcherID } from '@grafana/data';
 import { HorizontalGroup } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import { QueryOperationAction } from 'app/core/components/QueryOperationRow/QueryOperationAction';
@@ -12,6 +12,7 @@ import {
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 
 import { TransformationEditor } from './TransformationEditor';
+import { TransformationFilter } from './TransformationFilter';
 import { TransformationsEditorTransformation } from './types';
 
 interface TransformationOperationRowProps {
@@ -24,7 +25,7 @@ interface TransformationOperationRowProps {
   onChange: (index: number, config: DataTransformerConfig) => void;
 }
 
-export const TransformationOperationRow: React.FC<TransformationOperationRowProps> = ({
+export const TransformationOperationRow = ({
   onRemove,
   index,
   id,
@@ -32,10 +33,12 @@ export const TransformationOperationRow: React.FC<TransformationOperationRowProp
   configs,
   uiConfig,
   onChange,
-}) => {
+}: TransformationOperationRowProps) => {
   const [showDebug, toggleDebug] = useToggle(false);
   const [showHelp, toggleHelp] = useToggle(false);
   const disabled = configs[index].transformation.disabled;
+  const filter = configs[index].transformation.filter != null;
+  const showFilter = filter || data.length > 1;
 
   const onDisableToggle = useCallback(
     (index: number) => {
@@ -48,6 +51,20 @@ export const TransformationOperationRow: React.FC<TransformationOperationRowProp
     [onChange, configs]
   );
 
+  // Adds or removes the frame filter
+  const toggleFilter = useCallback(() => {
+    let current = { ...configs[index].transformation };
+    if (current.filter) {
+      delete current.filter;
+    } else {
+      current.filter = {
+        id: FrameMatcherID.byRefId,
+        options: '', // empty string will not do anything
+      };
+    }
+    onChange(index, current);
+  }, [onChange, index, configs]);
+
   const renderActions = ({ isOpen }: QueryOperationRowRenderProps) => {
     return (
       <HorizontalGroup align="center" width="auto">
@@ -58,6 +75,7 @@ export const TransformationOperationRow: React.FC<TransformationOperationRowProp
           onClick={toggleHelp}
           active={showHelp}
         />
+        {showFilter && <QueryOperationAction title="Filter" icon="filter" onClick={toggleFilter} active={filter} />}
         <QueryOperationAction title="Debug" disabled={!isOpen} icon="bug" onClick={toggleDebug} active={showDebug} />
         <QueryOperationAction
           title="Disable/Enable transformation"
@@ -80,6 +98,9 @@ export const TransformationOperationRow: React.FC<TransformationOperationRowProp
       disabled={disabled}
     >
       {showHelp && <OperationRowHelp markdown={prepMarkdown(uiConfig)} />}
+      {filter && (
+        <TransformationFilter index={index} config={configs[index].transformation} data={data} onChange={onChange} />
+      )}
       <TransformationEditor
         debugMode={showDebug}
         index={index}

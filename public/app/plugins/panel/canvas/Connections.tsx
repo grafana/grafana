@@ -4,8 +4,9 @@ import { ConnectionPath } from 'app/features/canvas';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
-import { ConnectionAnchors } from './ConnectionAnchors';
+import { CONNECTION_ANCHOR_ALT, ConnectionAnchors, CONNECTION_ANCHOR_HIGHLIGHT_OFFSET } from './ConnectionAnchors';
 import { ConnectionSVG } from './ConnectionSVG';
+import { isConnectionSource, isConnectionTarget } from './utils';
 
 export class Connections {
   scene: Scene;
@@ -15,6 +16,7 @@ export class Connections {
   connectionSource?: ElementState;
   connectionTarget?: ElementState;
   isDrawingConnection?: boolean;
+  didConnectionLeaveHighlight?: boolean;
 
   constructor(scene: Scene) {
     this.scene = scene;
@@ -32,33 +34,51 @@ export class Connections {
     this.connectionLine = connectionLine;
   };
 
+  // Recursively find the first parent that is a canvas element
+  findElementTarget = (element: Element): ElementState | undefined => {
+    let elementTarget = undefined;
+
+    // Cap recursion at the scene level
+    if (element === this.scene.div) {
+      return undefined;
+    }
+
+    elementTarget = this.scene.findElementByTarget(element);
+
+    if (!elementTarget && element.parentElement) {
+      elementTarget = this.findElementTarget(element.parentElement);
+    }
+
+    return elementTarget;
+  };
+
   handleMouseEnter = (event: React.MouseEvent) => {
-    if (!(event.target instanceof HTMLElement) || !this.scene.isEditingEnabled) {
+    if (!(event.target instanceof Element) || !this.scene.isEditingEnabled) {
       return;
     }
 
-    const element = event.target.parentElement?.parentElement;
+    let element: ElementState | undefined = this.findElementTarget(event.target);
+
     if (!element) {
       console.log('no element');
       return;
     }
 
     if (this.isDrawingConnection) {
-      this.connectionTarget = this.scene.findElementByTarget(element);
+      this.connectionTarget = element;
     } else {
-      this.connectionSource = this.scene.findElementByTarget(element);
+      this.connectionSource = element;
       if (!this.connectionSource) {
         console.log('no connection source');
         return;
       }
     }
 
-    const elementBoundingRect = element!.getBoundingClientRect();
+    const elementBoundingRect = element.div!.getBoundingClientRect();
     const parentBoundingRect = this.scene.div?.getBoundingClientRect();
-    let parentBorderWidth = parseFloat(getComputedStyle(this.scene.div!).borderWidth);
 
-    const relativeTop = elementBoundingRect.top - (parentBoundingRect?.top ?? 0) - parentBorderWidth;
-    const relativeLeft = elementBoundingRect.left - (parentBoundingRect?.left ?? 0) - parentBorderWidth;
+    const relativeTop = elementBoundingRect.top - (parentBoundingRect?.top ?? 0);
+    const relativeLeft = elementBoundingRect.left - (parentBoundingRect?.left ?? 0);
 
     if (this.connectionAnchorDiv) {
       this.connectionAnchorDiv.style.display = 'none';
@@ -70,8 +90,19 @@ export class Connections {
     }
   };
 
-  handleMouseLeave = (event: React.MouseEvent | React.FocusEvent) => {
+  // Return boolean indicates if connection anchors were hidden or not
+  handleMouseLeave = (event: React.MouseEvent | React.FocusEvent): boolean => {
+    // If mouse is leaving INTO the anchor image, don't remove div
+    if (
+      event.relatedTarget instanceof HTMLImageElement &&
+      event.relatedTarget.getAttribute('alt') === CONNECTION_ANCHOR_ALT
+    ) {
+      return false;
+    }
+
+    this.connectionTarget = undefined;
     this.connectionAnchorDiv!.style.display = 'none';
+    return true;
   };
 
   connectionListener = (event: MouseEvent) => {
@@ -88,17 +119,24 @@ export class Connections {
     this.connectionLine.setAttribute('x2', `${x}`);
     this.connectionLine.setAttribute('y2', `${y}`);
 
+    const connectionLineX1 = this.connectionLine.x1.baseVal.value;
+    const connectionLineY1 = this.connectionLine.y1.baseVal.value;
+    if (!this.didConnectionLeaveHighlight) {
+      const connectionLength = Math.hypot(x - connectionLineX1, y - connectionLineY1);
+      if (connectionLength > CONNECTION_ANCHOR_HIGHLIGHT_OFFSET && this.connectionSVG) {
+        this.didConnectionLeaveHighlight = true;
+        this.connectionSVG.style.display = 'block';
+        this.isDrawingConnection = true;
+      }
+    }
+
     if (!event.buttons) {
       if (this.connectionSource && this.connectionSource.div && this.connectionSource.div.parentElement) {
-        const connectionLineX1 = this.connectionLine.x1.baseVal.value;
-        const connectionLineY1 = this.connectionLine.y1.baseVal.value;
-
         const sourceRect = this.connectionSource.div.getBoundingClientRect();
         const parentRect = this.connectionSource.div.parentElement.getBoundingClientRect();
-        const parentBorderWidth = parseFloat(getComputedStyle(this.connectionSource.div.parentElement).borderWidth);
 
-        const sourceVerticalCenter = sourceRect.top - parentRect.top - parentBorderWidth + sourceRect.height / 2;
-        const sourceHorizontalCenter = sourceRect.left - parentRect.left - parentBorderWidth + sourceRect.width / 2;
+        const sourceVerticalCenter = sourceRect.top - parentRect.top + sourceRect.height / 2;
+        const sourceHorizontalCenter = sourceRect.left - parentRect.left + sourceRect.width / 2;
 
         // Convert from DOM coords to connection coords
         // TODO: Break this out into util function and add tests
@@ -112,8 +150,8 @@ export class Connections {
         if (this.connectionTarget && this.connectionTarget.div) {
           const targetRect = this.connectionTarget.div.getBoundingClientRect();
 
-          const targetVerticalCenter = targetRect.top - parentRect.top - parentBorderWidth + targetRect.height / 2;
-          const targetHorizontalCenter = targetRect.left - parentRect.left - parentBorderWidth + targetRect.width / 2;
+          const targetVerticalCenter = targetRect.top - parentRect.top + targetRect.height / 2;
+          const targetHorizontalCenter = targetRect.left - parentRect.left + targetRect.width / 2;
 
           targetX = (x - targetHorizontalCenter) / (targetRect.width / 2);
           targetY = (targetVerticalCenter - y) / (targetRect.height / 2);
@@ -145,9 +183,10 @@ export class Connections {
         if (!options.connections) {
           options.connections = [];
         }
-        this.connectionSource.options.connections = [...options.connections, connection];
-
-        this.connectionSource.onChange(this.connectionSource.options);
+        if (this.didConnectionLeaveHighlight) {
+          this.connectionSource.options.connections = [...options.connections, connection];
+          this.connectionSource.onChange(this.connectionSource.options);
+        }
       }
 
       if (this.connectionSVG) {
@@ -169,10 +208,8 @@ export class Connections {
       const connectionStartTargetBox = selectedTarget.getBoundingClientRect();
       const parentBoundingRect = this.scene.div.parentElement.getBoundingClientRect();
 
-      // TODO: Make this not as magic numbery -> related to the height / width of highlight ellipse
-      const connectionAnchorHighlightOffset = 8;
-      const x = connectionStartTargetBox.x - parentBoundingRect.x + connectionAnchorHighlightOffset;
-      const y = connectionStartTargetBox.y - parentBoundingRect.y + connectionAnchorHighlightOffset;
+      const x = connectionStartTargetBox.x - parentBoundingRect.x + CONNECTION_ANCHOR_HIGHLIGHT_OFFSET;
+      const y = connectionStartTargetBox.y - parentBoundingRect.y + CONNECTION_ANCHOR_HIGHLIGHT_OFFSET;
 
       const mouseX = clientX - parentBoundingRect.x;
       const mouseY = clientY - parentBoundingRect.y;
@@ -181,12 +218,15 @@ export class Connections {
       this.connectionLine.setAttribute('y1', `${y}`);
       this.connectionLine.setAttribute('x2', `${mouseX}`);
       this.connectionLine.setAttribute('y2', `${mouseY}`);
-      this.connectionSVG.style.display = 'block';
-
-      this.isDrawingConnection = true;
+      this.didConnectionLeaveHighlight = false;
     }
 
     this.scene.selecto?.rootContainer?.addEventListener('mousemove', this.connectionListener);
+  };
+
+  // used for moveable actions
+  connectionsNeedUpdate = (element: ElementState): boolean => {
+    return isConnectionSource(element) || isConnectionTarget(element, this.scene.byName);
   };
 
   render() {

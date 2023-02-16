@@ -1,3 +1,6 @@
+import { ArrayVector, DataQueryResponse } from '@grafana/data';
+
+import { logFrameA, logFrameB, metricFrameA, metricFrameB } from './mocks';
 import {
   getHighlighterExpressionsFromQuery,
   getNormalizedLokiQuery,
@@ -8,6 +11,7 @@ import {
   parseToNodeNamesArray,
   getParserFromQuery,
   obfuscate,
+  combineResponses,
 } from './queryUtils';
 import { LokiQuery, LokiQueryType } from './types';
 
@@ -290,5 +294,113 @@ describe('getParserFromQuery', () => {
     expect(getParserFromQuery(`sum(count_over_time({place="luna"} | ${parser} | unwrap counter )) by (place)`)).toBe(
       parser
     );
+  });
+});
+
+describe('combineResponses', () => {
+  it('combines logs frames', () => {
+    const responseA: DataQueryResponse = {
+      data: [logFrameA],
+    };
+    const responseB: DataQueryResponse = {
+      data: [logFrameB],
+    };
+    expect(combineResponses(responseA, responseB)).toEqual({
+      data: [
+        {
+          fields: [
+            {
+              config: {},
+              name: 'Time',
+              type: 'time',
+              values: new ArrayVector([1, 2, 3, 4]),
+            },
+            {
+              config: {},
+              name: 'Line',
+              type: 'string',
+              values: new ArrayVector(['line3', 'line4', 'line1', 'line2']),
+            },
+            {
+              config: {},
+              name: 'labels',
+              type: 'other',
+              values: new ArrayVector([
+                {
+                  otherLabel: 'other value',
+                },
+                {
+                  label: 'value',
+                },
+                {
+                  otherLabel: 'other value',
+                },
+              ]),
+            },
+            {
+              config: {},
+              name: 'tsNs',
+              type: 'string',
+              values: new ArrayVector(['1000000', '2000000', '3000000', '4000000']),
+            },
+            {
+              config: {},
+              name: 'id',
+              type: 'string',
+              values: new ArrayVector(['id3', 'id4', 'id1', 'id2']),
+            },
+          ],
+          length: 4,
+          meta: {
+            stats: [
+              {
+                displayName: 'Ingester: total reached',
+                value: 1,
+              },
+            ],
+          },
+          refId: 'A',
+        },
+      ],
+    });
+  });
+
+  it('combines metric frames', () => {
+    const responseA: DataQueryResponse = {
+      data: [metricFrameA],
+    };
+    const responseB: DataQueryResponse = {
+      data: [metricFrameB],
+    };
+    expect(combineResponses(responseA, responseB)).toEqual({
+      data: [
+        {
+          fields: [
+            {
+              config: {},
+              name: 'Time',
+              type: 'time',
+              values: new ArrayVector([1000000, 2000000, 3000000, 4000000]),
+            },
+            {
+              config: {},
+              name: 'Value',
+              type: 'number',
+              values: new ArrayVector([6, 7, 5, 4]),
+            },
+          ],
+          length: 4,
+          meta: {
+            stats: [
+              {
+                displayName: 'Ingester: total reached',
+                value: 3,
+              },
+            ],
+          },
+          refId: 'A',
+        },
+      ],
+    });
   });
 });

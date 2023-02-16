@@ -1,3 +1,4 @@
+import { getFrameDisplayName } from '@grafana/data';
 import {
   SceneFlexLayout,
   SceneTimeRange,
@@ -6,18 +7,18 @@ import {
   VizPanel,
   SceneCanvasText,
   SceneToolbarInput,
-  EmbeddedScene,
   SceneDataNode,
 } from '@grafana/scenes';
+import { TestDataQueryType } from 'app/plugins/datasource/testdata/dataquery.gen';
 
 import { panelBuilders } from '../builders/panelBuilders';
-import { Scene } from '../components/Scene';
+import { DashboardScene } from '../dashboard/DashboardScene';
 import { SceneEditManager } from '../editor/SceneEditManager';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
-export function getFlexLayoutTest(standalone: boolean): Scene | EmbeddedScene {
-  const state = {
+export function getFlexLayoutTest(): DashboardScene {
+  return new DashboardScene({
     title: 'Flex layout test',
     body: new SceneFlexLayout({
       direction: 'row',
@@ -63,19 +64,17 @@ export function getFlexLayoutTest(standalone: boolean): Scene | EmbeddedScene {
     $timeRange: new SceneTimeRange(),
     $data: getQueryRunnerWithRandomWalkQuery(),
     actions: [new SceneTimePicker({})],
-  };
-
-  return standalone ? new Scene(state) : new EmbeddedScene(state);
+  });
 }
 
-export function getScenePanelRepeaterTest(standalone: boolean): Scene | EmbeddedScene {
+export function getScenePanelRepeaterTest(): DashboardScene {
   const queryRunner = getQueryRunnerWithRandomWalkQuery({
     seriesCount: 2,
     alias: '__server_names',
-    scenarioId: 'random_walk',
+    scenarioId: TestDataQueryType.RandomWalk,
   });
 
-  const state = {
+  return new DashboardScene({
     title: 'Panel repeater test',
     body: new SceneByFrameRepeater({
       body: new SceneFlexLayout({
@@ -96,7 +95,7 @@ export function getScenePanelRepeaterTest(standalone: boolean): Scene | Embedded
           children: [
             new VizPanel({
               pluginId: 'timeseries',
-              title: 'Title',
+              title: getFrameDisplayName(frame),
               options: {
                 legend: { displayMode: 'hidden' },
               },
@@ -133,7 +132,59 @@ export function getScenePanelRepeaterTest(standalone: boolean): Scene | Embedded
       }),
       new SceneTimePicker({}),
     ],
-  };
+  });
+}
 
-  return standalone ? new Scene(state) : new EmbeddedScene(state);
+export function getRepeaterSceneWithFlexWrap(): DashboardScene {
+  const queryRunner = getQueryRunnerWithRandomWalkQuery({
+    seriesCount: 10,
+    alias: '__server_names',
+    scenarioId: TestDataQueryType.RandomWalk,
+  });
+
+  return new DashboardScene({
+    title: 'Flex layout with wrap test',
+    body: new SceneByFrameRepeater({
+      body: new SceneFlexLayout({
+        direction: 'row',
+        wrap: 'wrap',
+        children: [],
+      }),
+      getLayoutChild: (data, frame, frameIndex) => {
+        return new VizPanel({
+          pluginId: 'timeseries',
+          title: getFrameDisplayName(frame),
+          $data: new SceneDataNode({
+            data: {
+              ...data,
+              series: [frame],
+            },
+          }),
+          placement: { height: 300, minWidth: 400 },
+          options: {
+            legend: { displayMode: 'hidden' },
+          },
+        });
+      },
+    }),
+    $timeRange: new SceneTimeRange(),
+    $data: queryRunner,
+    actions: [
+      new SceneToolbarInput({
+        value: '10',
+        onChange: (newValue) => {
+          queryRunner.setState({
+            queries: [
+              {
+                ...queryRunner.state.queries[0],
+                seriesCount: newValue,
+              },
+            ],
+          });
+          queryRunner.runQueries();
+        },
+      }),
+      new SceneTimePicker({}),
+    ],
+  });
 }

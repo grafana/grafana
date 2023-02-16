@@ -20,7 +20,7 @@ The old URLs will still work, serving the content from the new repository, but y
 
 ## Note on upgrading
 
-While the process for upgrading Grafana is very similar to installing Grafana, there are some key backup steps you should perform. Read [Upgrading Grafana]({{< relref "../../upgrade-grafana/" >}}) for tips and guidance on updating an existing installation.
+While the process for upgrading Grafana is very similar to installing Grafana, there are some key backup steps you should perform. Read [Upgrading Grafana]({{< relref "../../../upgrade-guide/" >}}) for tips and guidance on updating an existing installation.
 
 ## 1. Download and install
 

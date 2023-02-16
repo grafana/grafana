@@ -17,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/converter"
 )
 
-func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *http.Response) (backend.DataResponse, error) {
+func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *http.Response) backend.DataResponse {
 	defer func() {
 		if err := res.Body.Close(); err != nil {
 			s.log.FromContext(ctx).Error("Failed to close response body", "err", err)
@@ -29,8 +29,10 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 		MatrixWideSeries: s.enableWideSeries,
 		VectorWideSeries: s.enableWideSeries,
 	})
-	if r.Frames == nil {
-		return r, fmt.Errorf("received empty response from prometheus")
+
+	// Add frame to attach metadata
+	if len(r.Frames) == 0 && !q.ExemplarQuery {
+		r.Frames = append(r.Frames, data.NewFrame(""))
 	}
 
 	// The ExecutedQueryString can be viewed in QueryInspector in UI
@@ -42,8 +44,11 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 		}
 	}
 
-	r = s.processExemplars(q, r)
-	return r, nil
+	if r.Error == nil {
+		r = s.processExemplars(q, r)
+	}
+
+	return r
 }
 
 func (s *QueryData) processExemplars(q *models.Query, dr backend.DataResponse) backend.DataResponse {

@@ -27,7 +27,7 @@ export const getAllFields = memoizeOne(
 /**
  * creates fields from the dataframe-fields, adding data-links, when field.config.links exists
  */
-const getDataframeFields = memoizeOne(
+export const getDataframeFields = memoizeOne(
   (
     row: LogRowModel,
     getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>

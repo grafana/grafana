@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-const defaultURL = "https://secretscan.grafana.com"
+const defaultURL = "https://secret-scanning.grafana.net"
 
 type Checker interface {
 	CheckTokens(ctx context.Context) error
@@ -40,20 +40,34 @@ type Service struct {
 	revoke        bool // whether to revoke leaked tokens
 }
 
-func NewService(store SATokenRetriever, cfg *setting.Cfg) *Service {
+func NewService(store SATokenRetriever, cfg *setting.Cfg) (*Service, error) {
 	secretscanBaseURL := cfg.SectionWithEnvOverrides("secretscan").Key("base_url").MustString(defaultURL)
 	// URL to send outgoing webhook when a token is leaked.
 	oncallURL := cfg.SectionWithEnvOverrides("secretscan").Key("oncall_url").MustString("")
 	revoke := cfg.SectionWithEnvOverrides("secretscan").Key("revoke").MustBool(true)
 
+	client, err := newClient(secretscanBaseURL, cfg.BuildVersion, cfg.Env == setting.Dev)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create secretscan client: %w", err)
+	}
+
+	var webHookClient WebHookClient
+	if oncallURL != "" {
+		var errWebhook error
+		webHookClient, errWebhook = newWebHookClient(oncallURL, cfg.BuildVersion, cfg.Env == setting.Dev)
+		if errWebhook != nil {
+			return nil, fmt.Errorf("failed to create secretscan webhook client: %w", errWebhook)
+		}
+	}
+
 	return &Service{
 		store:         store,
-		client:        newClient(secretscanBaseURL, cfg.BuildVersion),
-		webHookClient: newWebHookClient(oncallURL, cfg.BuildVersion),
+		client:        client,
+		webHookClient: webHookClient,
 		logger:        log.New("secretscan"),
 		webHookNotify: oncallURL != "",
 		revoke:        revoke,
-	}
+	}, nil
 }
 
 func (s *Service) RetrieveActiveTokens(ctx context.Context) ([]apikey.APIKey, error) {
@@ -106,10 +120,10 @@ func (s *Service) CheckTokens(ctx context.Context) error {
 
 		if s.revoke {
 			if err := s.store.RevokeServiceAccountToken(
-				ctx, leakedToken.OrgId, *leakedToken.ServiceAccountId, leakedToken.Id); err != nil {
+				ctx, leakedToken.OrgID, *leakedToken.ServiceAccountId, leakedToken.ID); err != nil {
 				s.logger.Error("failed to delete leaked token. Revoke manually.",
 					"error", err, "url", secretscanToken.URL, "reported_at", secretscanToken.ReportedAt,
-					"token_id", leakedToken.Id, "token", leakedToken.Name, "org", leakedToken.OrgId,
+					"token_id", leakedToken.ID, "token", leakedToken.Name, "org", leakedToken.OrgID,
 					"serviceAccount", *leakedToken.ServiceAccountId)
 			}
 		}
@@ -122,7 +136,7 @@ func (s *Service) CheckTokens(ctx context.Context) error {
 
 		s.logger.Warn("found leaked token",
 			"url", secretscanToken.URL, "reported_at", secretscanToken.ReportedAt,
-			"token_id", leakedToken.Id, "token", leakedToken.Name, "org", leakedToken.OrgId,
+			"token_id", leakedToken.ID, "token", leakedToken.Name, "org", leakedToken.OrgID,
 			"serviceAccount", *leakedToken.ServiceAccountId, "revoked", s.revoke)
 	}
 

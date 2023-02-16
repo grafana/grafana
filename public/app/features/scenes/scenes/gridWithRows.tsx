@@ -7,12 +7,11 @@ import {
   SceneTimeRange,
 } from '@grafana/scenes';
 
-import { Scene } from '../components/Scene';
-import { SceneEditManager } from '../editor/SceneEditManager';
+import { DashboardScene } from '../dashboard/DashboardScene';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
-export function getGridWithRowsTest(): Scene {
+export function getGridWithRowsTest(): DashboardScene {
   const panel = new VizPanel({
     pluginId: 'timeseries',
     title: 'Fill height',
@@ -77,12 +76,12 @@ export function getGridWithRowsTest(): Scene {
       }),
     ],
   });
-  const scene = new Scene({
+
+  const scene = new DashboardScene({
     title: 'Grid rows test',
     body: new SceneGridLayout({
       children: [cell1, cell2, row1, row2],
     }),
-    $editor: new SceneEditManager({}),
     $timeRange: new SceneTimeRange(),
     $data: getQueryRunnerWithRandomWalkQuery(),
     actions: [new SceneTimePicker({})],

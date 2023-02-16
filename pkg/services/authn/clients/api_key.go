@@ -23,7 +23,7 @@ var (
 	errAPIKeyRevoked = errutil.NewBase(errutil.StatusUnauthorized, "api-key.revoked", errutil.WithPublicMessage("Revoked API key"))
 )
 
-var _ authn.Client = new(APIKey)
+var _ authn.ContextAwareClient = new(APIKey)
 
 func ProvideAPIKey(apiKeyService apikey.Service, userService user.Service) *APIKey {
 	return &APIKey{
@@ -37,6 +37,10 @@ type APIKey struct {
 	log           log.Logger
 	userService   user.Service
 	apiKeyService apikey.Service
+}
+
+func (s *APIKey) Name() string {
+	return authn.ClientAPIKey
 }
 
 func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
@@ -56,29 +60,18 @@ func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 		return nil, errAPIKeyRevoked.Errorf("Api key is revoked")
 	}
 
-	go func(id int64) {
-		defer func() {
-			if err := recover(); err != nil {
-				s.log.Error("api key authentication panic", "err", err)
-			}
-		}()
-		if err := s.apiKeyService.UpdateAPIKeyLastUsedDate(context.Background(), id); err != nil {
-			s.log.Warn("failed to update last use date for api key", "id", id)
-		}
-	}(apiKey.Id)
-
 	// if the api key don't belong to a service account construct the identity and return it
 	if apiKey.ServiceAccountId == nil || *apiKey.ServiceAccountId < 1 {
 		return &authn.Identity{
-			ID:       authn.NamespacedID(authn.NamespaceAPIKey, apiKey.Id),
-			OrgID:    apiKey.OrgId,
-			OrgRoles: map[int64]org.RoleType{apiKey.OrgId: apiKey.Role},
+			ID:       authn.NamespacedID(authn.NamespaceAPIKey, apiKey.ID),
+			OrgID:    apiKey.OrgID,
+			OrgRoles: map[int64]org.RoleType{apiKey.OrgID: apiKey.Role},
 		}, nil
 	}
 
 	usr, err := s.userService.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{
 		UserID: *apiKey.ServiceAccountId,
-		OrgID:  apiKey.OrgId,
+		OrgID:  apiKey.OrgID,
 	})
 
 	if err != nil {
@@ -123,7 +116,7 @@ func (s *APIKey) getFromTokenLegacy(ctx context.Context, token string) (*apikey.
 	}
 
 	// fetch key
-	keyQuery := apikey.GetByNameQuery{KeyName: decoded.Name, OrgId: decoded.OrgId}
+	keyQuery := apikey.GetByNameQuery{KeyName: decoded.Name, OrgID: decoded.OrgId}
 	if err := s.apiKeyService.GetApiKeyByName(ctx, &keyQuery); err != nil {
 		return nil, err
 	}
@@ -142,6 +135,10 @@ func (s *APIKey) getFromTokenLegacy(ctx context.Context, token string) (*apikey.
 
 func (s *APIKey) Test(ctx context.Context, r *authn.Request) bool {
 	return looksLikeApiKey(getTokenFromRequest(r))
+}
+
+func (s *APIKey) Priority() uint {
+	return 30
 }
 
 func looksLikeApiKey(token string) bool {

@@ -67,7 +67,7 @@ func dbCollector(sql db.DB) supportbundles.Collector {
 	return supportbundles.Collector{
 		UID:               "db",
 		Description:       "Database information and migration log",
-		DisplayName:       "Database and Migration information",
+		DisplayName:       "Database and migration information",
 		IncludedByDefault: false,
 		Default:           true,
 		Fn:                collectorFn,

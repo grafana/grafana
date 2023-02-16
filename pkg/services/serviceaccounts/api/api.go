@@ -11,9 +11,9 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
@@ -47,7 +47,7 @@ type service interface {
 	MigrateApiKey(ctx context.Context, orgID int64, keyId int64) error
 	RevertApiKey(ctx context.Context, saId int64, keyId int64) error
 	// Service account tokens
-	AddServiceAccountToken(ctx context.Context, serviceAccountID int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) error
+	AddServiceAccountToken(ctx context.Context, serviceAccountID int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) (*apikey.APIKey, error)
 	DeleteServiceAccountToken(ctx context.Context, orgID, serviceAccountID, tokenID int64) error
 }
 
@@ -117,7 +117,7 @@ func (api *ServiceAccountsAPI) RegisterAPIEndpoints() {
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (api *ServiceAccountsAPI) CreateServiceAccount(c *models.ReqContext) response.Response {
+func (api *ServiceAccountsAPI) CreateServiceAccount(c *contextmodel.ReqContext) response.Response {
 	cmd := serviceaccounts.CreateServiceAccountForm{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "Bad request data", err)
@@ -171,7 +171,7 @@ func (api *ServiceAccountsAPI) CreateServiceAccount(c *models.ReqContext) respon
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (api *ServiceAccountsAPI) RetrieveServiceAccount(ctx *models.ReqContext) response.Response {
+func (api *ServiceAccountsAPI) RetrieveServiceAccount(ctx *contextmodel.ReqContext) response.Response {
 	scopeID, err := strconv.ParseInt(web.Params(ctx.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Service Account ID is invalid", err)
@@ -218,7 +218,7 @@ func (api *ServiceAccountsAPI) RetrieveServiceAccount(ctx *models.ReqContext) re
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (api *ServiceAccountsAPI) UpdateServiceAccount(c *models.ReqContext) response.Response {
+func (api *ServiceAccountsAPI) UpdateServiceAccount(c *contextmodel.ReqContext) response.Response {
 	scopeID, err := strconv.ParseInt(web.Params(c.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Service Account ID is invalid", err)
@@ -286,7 +286,7 @@ func (api *ServiceAccountsAPI) validateRole(r *org.RoleType, orgRole *org.RoleTy
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (api *ServiceAccountsAPI) DeleteServiceAccount(ctx *models.ReqContext) response.Response {
+func (api *ServiceAccountsAPI) DeleteServiceAccount(ctx *contextmodel.ReqContext) response.Response {
 	scopeID, err := strconv.ParseInt(web.Params(ctx.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Service account ID is invalid", err)
@@ -310,7 +310,7 @@ func (api *ServiceAccountsAPI) DeleteServiceAccount(ctx *models.ReqContext) resp
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *models.ReqContext) response.Response {
+func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *contextmodel.ReqContext) response.Response {
 	ctx := c.Req.Context()
 	perPage := c.QueryInt("perpage")
 	if perPage <= 0 {
@@ -365,7 +365,7 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *models.ReqC
 }
 
 // GET /api/serviceaccounts/migrationstatus
-func (api *ServiceAccountsAPI) GetAPIKeysMigrationStatus(ctx *models.ReqContext) response.Response {
+func (api *ServiceAccountsAPI) GetAPIKeysMigrationStatus(ctx *contextmodel.ReqContext) response.Response {
 	upgradeStatus, err := api.service.GetAPIKeysMigrationStatus(ctx.Req.Context(), ctx.OrgID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Internal server error", err)
@@ -374,7 +374,7 @@ func (api *ServiceAccountsAPI) GetAPIKeysMigrationStatus(ctx *models.ReqContext)
 }
 
 // POST /api/serviceaccounts/hideapikeys
-func (api *ServiceAccountsAPI) HideApiKeysTab(ctx *models.ReqContext) response.Response {
+func (api *ServiceAccountsAPI) HideApiKeysTab(ctx *contextmodel.ReqContext) response.Response {
 	if err := api.service.HideApiKeysTab(ctx.Req.Context(), ctx.OrgID); err != nil {
 		return response.Error(http.StatusInternalServerError, "Internal server error", err)
 	}
@@ -382,7 +382,7 @@ func (api *ServiceAccountsAPI) HideApiKeysTab(ctx *models.ReqContext) response.R
 }
 
 // POST /api/serviceaccounts/migrate
-func (api *ServiceAccountsAPI) MigrateApiKeysToServiceAccounts(ctx *models.ReqContext) response.Response {
+func (api *ServiceAccountsAPI) MigrateApiKeysToServiceAccounts(ctx *contextmodel.ReqContext) response.Response {
 	if err := api.service.MigrateApiKeysToServiceAccounts(ctx.Req.Context(), ctx.OrgID); err != nil {
 		return response.Error(http.StatusInternalServerError, "Internal server error", err)
 	}
@@ -391,7 +391,7 @@ func (api *ServiceAccountsAPI) MigrateApiKeysToServiceAccounts(ctx *models.ReqCo
 }
 
 // POST /api/serviceaccounts/migrate/:keyId
-func (api *ServiceAccountsAPI) ConvertToServiceAccount(ctx *models.ReqContext) response.Response {
+func (api *ServiceAccountsAPI) ConvertToServiceAccount(ctx *contextmodel.ReqContext) response.Response {
 	keyId, err := strconv.ParseInt(web.Params(ctx.Req)[":keyId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Key ID is invalid", err)
@@ -405,7 +405,7 @@ func (api *ServiceAccountsAPI) ConvertToServiceAccount(ctx *models.ReqContext) r
 }
 
 // POST /api/serviceaccounts/revert/:keyId
-func (api *ServiceAccountsAPI) RevertApiKey(ctx *models.ReqContext) response.Response {
+func (api *ServiceAccountsAPI) RevertApiKey(ctx *contextmodel.ReqContext) response.Response {
 	keyId, err := strconv.ParseInt(web.Params(ctx.Req)[":keyId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "key ID is invalid", err)
@@ -421,7 +421,7 @@ func (api *ServiceAccountsAPI) RevertApiKey(ctx *models.ReqContext) response.Res
 	return response.Success("reverted service account to API key")
 }
 
-func (api *ServiceAccountsAPI) getAccessControlMetadata(c *models.ReqContext, saIDs map[string]bool) map[string]accesscontrol.Metadata {
+func (api *ServiceAccountsAPI) getAccessControlMetadata(c *contextmodel.ReqContext, saIDs map[string]bool) map[string]accesscontrol.Metadata {
 	if api.accesscontrol.IsDisabled() || !c.QueryBool("accesscontrol") {
 		return map[string]accesscontrol.Metadata{}
 	}

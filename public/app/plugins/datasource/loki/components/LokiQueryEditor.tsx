@@ -165,7 +165,14 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
             showExplain={explain}
           />
         )}
-        <LokiQueryBuilderOptions query={query} onChange={onChange} onRunQuery={onRunQuery} app={app} />
+        <LokiQueryBuilderOptions
+          query={query}
+          onChange={onChange}
+          onRunQuery={onRunQuery}
+          app={app}
+          maxLines={datasource.maxLines}
+          datasource={datasource}
+        />
       </EditorRows>
     </>
   );

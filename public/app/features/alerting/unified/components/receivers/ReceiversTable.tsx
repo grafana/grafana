@@ -1,8 +1,7 @@
-import { css } from '@emotion/css';
 import pluralize from 'pluralize';
 import React, { FC, useMemo, useState } from 'react';
 
-import { GrafanaTheme2, dateTime, dateTimeFormat } from '@grafana/data';
+import { dateTime, dateTimeFormat } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Button, ConfirmModal, Modal, useStyles2, Badge, Icon } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -241,7 +240,6 @@ interface Props {
 
 export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
   const dispatch = useDispatch();
-  const styles = useStyles2(getStyles);
   const isVanillaAM = isVanillaPrometheusAlertManagerDataSource(alertManagerName);
   const permissions = getNotificationsPermissions(alertManagerName);
   const grafanaNotifiers = useUnifiedAlertingSelector((state) => state.grafanaNotifiers);
@@ -299,11 +297,10 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
 
   return (
     <ReceiversSection
-      className={styles.section}
       title="Contact points"
-      description="Define where the notifications will be sent to, for example email or Slack."
+      description="Define where notifications are sent, for example, email or Slack."
       showButton={!isVanillaAM && contextSrv.hasPermission(permissions.create)}
-      addButtonLabel={'New contact point'}
+      addButtonLabel={'Add contact point'}
       addButtonTo={makeAMLink('/alerting/notifications/receivers/new', alertManagerName)}
     >
       <DynamicTable
@@ -436,23 +433,3 @@ function useGetColumns(
     },
   ];
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  section: css`
-    margin-top: ${theme.spacing(4)};
-  `,
-  warning: css`
-    color: ${theme.colors.warning.text};
-  `,
-  countMessage: css``,
-  onCallBadgeWrapper: css`
-    text-align: left;
-    height: 22px;
-    display: inline-flex;
-    padding: 1px 4px;
-    border-radius: 3px;
-    border: 1px solid rgba(245, 95, 62, 1);
-    color: rgba(245, 95, 62, 1);
-    font-weight: ${theme.typography.fontWeightRegular};
-  `,
-});

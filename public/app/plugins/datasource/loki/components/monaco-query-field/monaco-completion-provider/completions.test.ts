@@ -31,6 +31,7 @@ const labelNames = ['place', 'source'];
 const labelValues = ['moon', 'luna', 'server\\1'];
 // Source is duplicated to test handling duplicated labels
 const extractedLabelKeys = ['extracted', 'place', 'source'];
+const unwrapLabelKeys = ['unwrap', 'labels'];
 const otherLabels: Label[] = [
   {
     name: 'place',
@@ -195,6 +196,7 @@ describe('getCompletions', () => {
     jest.spyOn(completionProvider, 'getLabelValues').mockResolvedValue(labelValues);
     jest.spyOn(completionProvider, 'getParserAndLabelKeys').mockResolvedValue({
       extractedLabelKeys,
+      unwrapLabelKeys,
       hasJSON: false,
       hasLogfmt: false,
     });
@@ -327,6 +329,7 @@ describe('getCompletions', () => {
     async (afterPipe: boolean, hasSpace: boolean) => {
       jest.spyOn(completionProvider, 'getParserAndLabelKeys').mockResolvedValue({
         extractedLabelKeys,
+        unwrapLabelKeys,
         hasJSON: true,
         hasLogfmt: false,
       });
@@ -343,6 +346,7 @@ describe('getCompletions', () => {
     async (afterPipe: boolean) => {
       jest.spyOn(completionProvider, 'getParserAndLabelKeys').mockResolvedValue({
         extractedLabelKeys,
+        unwrapLabelKeys,
         hasJSON: false,
         hasLogfmt: true,
       });
@@ -368,7 +372,20 @@ describe('getCompletions', () => {
     const extractedCompletions = completions.filter((completion) => completion.type === 'LABEL_NAME');
     const functionCompletions = completions.filter((completion) => completion.type === 'FUNCTION');
 
-    expect(extractedCompletions).toHaveLength(3);
+    expect(extractedCompletions).toEqual([
+      {
+        insertText: 'unwrap',
+        label: 'unwrap',
+        triggerOnInsert: false,
+        type: 'LABEL_NAME',
+      },
+      {
+        insertText: 'labels',
+        label: 'labels',
+        triggerOnInsert: false,
+        type: 'LABEL_NAME',
+      },
+    ]);
     expect(functionCompletions).toHaveLength(3);
   });
 });

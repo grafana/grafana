@@ -2,6 +2,8 @@ import { countBy, chain } from 'lodash';
 
 import { LogLevel, LogRowModel, LogLabelStatsModel, LogsModel, LogsSortOrder } from '@grafana/data';
 
+import { getDataframeFields } from './components/logParser';
+
 /**
  * Returns the log level of a log line.
  * Parse the line for level words. If no level is found, it returns `LogLevel.unknown`.
@@ -129,3 +131,21 @@ export const checkLogsError = (logRow: LogRowModel): { hasError: boolean; errorM
 
 export const escapeUnescapedString = (string: string) =>
   string.replace(/\\r\\n|\\n|\\t|\\r/g, (match: string) => (match.slice(1) === 't' ? '\t' : '\n'));
+
+export function logRowsToReadableJson(logs: LogRowModel[]) {
+  return logs.map((log) => {
+    const fields = getDataframeFields(log).reduce<Record<string, string>>((acc, field) => {
+      acc[field.key] = field.value;
+      return acc;
+    }, {});
+
+    return {
+      line: log.entry,
+      timestamp: log.timeEpochNs,
+      fields: {
+        ...fields,
+        ...log.labels,
+      },
+    };
+  });
+}

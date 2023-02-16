@@ -3,8 +3,8 @@ package db
 import (
 	"bytes"
 
-	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -42,7 +42,7 @@ func (sb *SQLBuilder) AddParams(params ...interface{}) {
 	sb.params = append(sb.params, params...)
 }
 
-func (sb *SQLBuilder) WriteDashboardPermissionFilter(user *user.SignedInUser, permission models.PermissionType) {
+func (sb *SQLBuilder) WriteDashboardPermissionFilter(user *user.SignedInUser, permission dashboards.PermissionType) {
 	var (
 		sql    string
 		params []interface{}
