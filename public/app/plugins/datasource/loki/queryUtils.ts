@@ -313,11 +313,7 @@ export function requestSupportsPartitioning(allQueries: LokiQuery[]) {
   return true;
 }
 
-export function combineResponses(currentResult: DataQueryResponse | null, newResult: DataQueryResponse) {
-  if (!currentResult) {
-    return newResult;
-  }
-
+export function combineResponses(currentResult: DataQueryResponse, newResult: DataQueryResponse) {
   newResult.data.forEach((newFrame) => {
     const currentFrame = currentResult.data.find((frame) => frame.name === newFrame.name);
     if (!currentFrame) {

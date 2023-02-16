@@ -1,4 +1,4 @@
-import { Subscriber, map, Observable, Subscription } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 
 import { DataQueryRequest, DataQueryResponse, dateTime, TimeRange } from '@grafana/data';
 import { LoadingState } from '@grafana/schema';
@@ -87,7 +87,11 @@ function adjustTargetsFromResponseState(targets: LokiQuery[], response: DataQuer
 }
 
 export function runPartitionedQuery(datasource: LokiDatasource, request: DataQueryRequest<LokiQuery>) {
-  let mergedResponse: DataQueryResponse | null;
+  let mergedResponse: DataQueryResponse = {
+    state: LoadingState.Streaming,
+    data: [],
+  };
+
   const queries = request.targets.filter((query) => !query.hide);
   // we assume there is just a single query in the request
   const query = queries[0];
@@ -99,62 +103,71 @@ export function runPartitionedQuery(datasource: LokiDatasource, request: DataQue
   );
   const totalRequests = partition.length;
 
-  let shouldStop = false;
-  let smallQuerySubsciption: Subscription | null = null;
-  const runNextRequest = (subscriber: Subscriber<DataQueryResponse>, requestN: number) => {
-    if (shouldStop) {
-      return;
-    }
+  return new Observable<DataQueryResponse>((subscriber) => {
+    let shouldStop = false;
+    let smallQuerySubsciption: Subscription | null = null;
 
-    const requestId = `${request.requestId}_${requestN}`;
-    const range = partition[requestN - 1];
-    const targets = adjustTargetsFromResponseState(request.targets, mergedResponse);
+    const update = () => {
+      subscriber.next(mergedResponse);
+    };
 
-    const done = (response: DataQueryResponse) => {
-      response.state = LoadingState.Done;
-      subscriber.next(response);
+    const done = () => {
+      mergedResponse.state = LoadingState.Done;
+      subscriber.next(mergedResponse);
       subscriber.complete();
     };
 
-    if (!targets.length && mergedResponse) {
-      done(mergedResponse);
-      return;
-    }
-
-    smallQuerySubsciption = datasource
-      .runQuery({ ...request, range, requestId, targets })
-      .pipe(
-        // in case of an empty query, this is somehow run twice. `share()` is no workaround here as the observable is generated from `of()`.
-        map((partialResponse) => {
-          mergedResponse = combineResponses(mergedResponse, partialResponse);
-          return mergedResponse;
-        })
-      )
-      .subscribe({
-        next: (response) => {
-          if (requestN > 1) {
-            response.state = LoadingState.Streaming;
-            subscriber.next(response);
-            runNextRequest(subscriber, requestN - 1);
-            return;
-          }
-          done(response);
-        },
-        error: (error) => {
-          subscriber.error(error);
-        },
-      });
-  };
-
-  const response = new Observable<DataQueryResponse>((subscriber) => {
-    runNextRequest(subscriber, totalRequests);
-    return () => {
+    const stop = () => {
       shouldStop = true;
       if (smallQuerySubsciption != null) {
         smallQuerySubsciption.unsubscribe();
       }
     };
-  });
 
-  return response;
+    const runNextRequest = (requestN: number) => {
+      if (shouldStop) {
+        return;
+      }
+
+      const requestId = `${request.requestId}_${requestN}`;
+      const range = partition[requestN - 1];
+      const targets = adjustTargetsFromResponseState(request.targets, mergedResponse);
+
+      if (!targets.length) {
+        done();
+        return;
+      }
+
+      smallQuerySubsciption = datasource.runQuery({ ...request, range, requestId, targets }).subscribe({
+        next: (response) => {
+          const { error } = response;
+          if (error != null) {
+            mergedResponse.state = LoadingState.Error;
+            mergedResponse.error = error;
+            update();
+            subscriber.complete();
+            stop(); // if an error happened, we stop any further processing
+          } else {
+            mergedResponse = combineResponses(mergedResponse, response);
+            update();
+          }
+        },
+        complete: () => {
+          if (requestN > 1) {
+            runNextRequest(requestN - 1);
+            return;
+          }
+          done();
+        },
+        error: (error) => {
+          subscriber.error(error);
+        },
+      });
+    };
+
+    runNextRequest(totalRequests);
+    return () => {
+      stop();
+    };
+  });
 }
