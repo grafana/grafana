@@ -2,6 +2,7 @@ import { of } from 'rxjs';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
 
 import { dateTime } from '@grafana/data';
+import { LoadingState } from '@grafana/schema';
 
 import { LokiDatasource } from './datasource';
 import * as logsTimeSplit from './logsTimeSplit';
@@ -33,6 +34,15 @@ describe('runPartitionedQuery()', () => {
     await expect(runPartitionedQuery(datasource, request)).toEmitValuesWith(() => {
       // 3 days, 3 chunks, 3 requests.
       expect(datasource.runQuery).toHaveBeenCalledTimes(3);
+    });
+  });
+
+  test('Handles and reports rerrors', async () => {
+    jest
+      .spyOn(datasource, 'runQuery')
+      .mockReturnValue(of({ state: LoadingState.Error, error: { refId: 'A', message: 'Error' }, data: [] }));
+    await expect(runPartitionedQuery(datasource, request)).toEmitValuesWith((values) => {
+      expect(values).toEqual([{ refId: 'A', message: 'Error' }]);
     });
   });
 

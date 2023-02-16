@@ -1,4 +1,4 @@
-import { Subscriber, map, Observable, Subscription } from 'rxjs';
+import { Subscriber, Observable, Subscription } from 'rxjs';
 
 import { DataQueryRequest, DataQueryResponse, dateTime, TimeRange } from '@grafana/data';
 import { LoadingState } from '@grafana/schema';
@@ -103,6 +103,7 @@ export function runPartitionedQuery(datasource: LokiDatasource, request: DataQue
   let subquerySubsciption: Subscription | null = null;
   const runNextRequest = (subscriber: Subscriber<DataQueryResponse>, requestN: number) => {
     if (shouldStop) {
+      subscriber.complete();
       return;
     }
 
@@ -116,34 +117,36 @@ export function runPartitionedQuery(datasource: LokiDatasource, request: DataQue
       subscriber.complete();
     };
 
+    const nextRequest = () => {
+      mergedResponse = mergedResponse || { data: [] };
+      if (requestN > 1) {
+        mergedResponse.state = LoadingState.Streaming;
+        subscriber.next(mergedResponse);
+        runNextRequest(subscriber, requestN - 1);
+        return;
+      }
+      done(mergedResponse);
+    };
+
     if (!targets.length && mergedResponse) {
       done(mergedResponse);
       return;
     }
 
-    subquerySubsciption = datasource
-      .runQuery({ ...request, range, requestId, targets })
-      .pipe(
-        // in case of an empty query, this is somehow run twice. `share()` is no workaround here as the observable is generated from `of()`.
-        map((partialResponse) => {
-          mergedResponse = combineResponses(mergedResponse, partialResponse);
-          return mergedResponse;
-        })
-      )
-      .subscribe({
-        next: (response) => {
-          if (requestN > 1) {
-            response.state = LoadingState.Streaming;
-            subscriber.next(response);
-            runNextRequest(subscriber, requestN - 1);
-            return;
-          }
-          done(response);
-        },
-        error: (error) => {
-          subscriber.error(error);
-        },
-      });
+    subquerySubsciption = datasource.runQuery({ ...request, range, requestId, targets }).subscribe({
+      next: (partialResponse) => {
+        if (partialResponse.error) {
+          subscriber.error(partialResponse.error);
+        }
+        mergedResponse = combineResponses(mergedResponse, partialResponse);
+      },
+      complete: () => {
+        nextRequest();
+      },
+      error: (error) => {
+        subscriber.error(error);
+      },
+    });
   };
 
   const response = new Observable<DataQueryResponse>((subscriber) => {
