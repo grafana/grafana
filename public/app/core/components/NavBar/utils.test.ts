@@ -164,6 +164,11 @@ describe('getActiveItem', () => {
       url: '/',
     },
     {
+      text: 'Starred',
+      url: '/dashboards?starred',
+      id: 'starred',
+    },
+    {
       text: 'Dashboards',
       url: '/dashboards',
     },

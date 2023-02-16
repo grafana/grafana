@@ -4,9 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/url"
 	"path"
-	"path/filepath"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -15,11 +13,13 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/logger"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/plugins/storage"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -34,21 +34,25 @@ type Loader struct {
 	pluginInitializer  initializer.Initializer
 	signatureValidator signature.Validator
 	pluginStorage      storage.Manager
+	pluginsCDN         *pluginscdn.Service
+	assetPath          *assetpath.Service
 	log                log.Logger
+	cfg                *config.Cfg
 
 	errs map[string]*plugins.SignatureError
 }
 
 func ProvideService(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
-	roleRegistry plugins.RoleRegistry) *Loader {
+	roleRegistry plugins.RoleRegistry, pluginsCDNService *pluginscdn.Service, assetPath *assetpath.Service) *Loader {
 	return New(cfg, license, authorizer, pluginRegistry, backendProvider, process.NewManager(pluginRegistry),
-		storage.FileSystem(logger.NewLogger("loader.fs"), cfg.PluginsPath), roleRegistry)
+		storage.FileSystem(logger.NewLogger("loader.fs"), cfg.PluginsPath), roleRegistry, pluginsCDNService, assetPath)
 }
 
 func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
-	processManager process.Service, pluginStorage storage.Manager, roleRegistry plugins.RoleRegistry) *Loader {
+	processManager process.Service, pluginStorage storage.Manager, roleRegistry plugins.RoleRegistry,
+	pluginsCDNService *pluginscdn.Service, assetPath *assetpath.Service) *Loader {
 	return &Loader{
 		pluginFinder:       finder.NewService(),
 		pluginRegistry:     pluginRegistry,
@@ -59,6 +63,9 @@ func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLo
 		errs:               make(map[string]*plugins.SignatureError),
 		log:                log.New("plugin.loader"),
 		roleRegistry:       roleRegistry,
+		cfg:                cfg,
+		pluginsCDN:         pluginsCDNService,
+		assetPath:          assetPath,
 	}
 }
 
@@ -78,13 +85,25 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, found []*
 			l.log.Warn("Skipping plugin loading as it's a duplicate", "pluginID", p.Primary.JSONData.ID)
 			continue
 		}
-		plugin := createPluginBase(p.Primary.JSONData, class, p.Primary.FS)
 
-		sig, err := signature.Calculate(l.log, class, p.Primary)
+		var sig plugins.Signature
+		if l.pluginsCDN.PluginSupported(p.Primary.JSONData.ID) {
+			// CDN plugins have no signature checks for now.
+			sig = plugins.Signature{Status: plugins.SignatureValid}
+		} else {
+			var err error
+			sig, err = signature.Calculate(l.log, class, p.Primary)
+			if err != nil {
+				l.log.Warn("Could not calculate plugin signature state", "pluginID", p.Primary.JSONData.ID, "err", err)
+				continue
+			}
+		}
+		plugin, err := l.createPluginBase(p.Primary.JSONData, class, p.Primary.FS)
 		if err != nil {
-			l.log.Warn("Could not calculate plugin signature state", "pluginID", plugin.ID, "err", err)
+			l.log.Error("Could not create primary plugin base", "pluginID", p.Primary.JSONData.ID, "err", err)
 			continue
 		}
+
 		plugin.Signature = sig.Status
 		plugin.SignatureType = sig.Type
 		plugin.SignatureOrg = sig.SigningOrg
@@ -97,7 +116,11 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, found []*
 				continue
 			}
 
-			cp := createPluginBase(c.JSONData, class, c.FS)
+			cp, err := l.createPluginBase(c.JSONData, class, c.FS)
+			if err != nil {
+				l.log.Error("Could not create child plugin base", "pluginID", p.Primary.JSONData.ID, "err", err)
+				continue
+			}
 			cp.Parent = plugin
 			cp.Signature = sig.Status
 			cp.SignatureType = sig.Type
@@ -125,11 +148,12 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, found []*
 		// clear plugin error if a pre-existing error has since been resolved
 		delete(l.errs, plugin.ID)
 
-		// verify module.js exists for SystemJS to load
+		// verify module.js exists for SystemJS to load.
+		// CDN plugins can be loaded with plugin.json only, so do not warn for those.
 		if !plugin.IsRenderer() && !plugin.IsCorePlugin() {
 			_, err := plugin.FS.Open("module.js")
 			if err != nil {
-				if errors.Is(err, plugins.ErrFileNotExist) {
+				if errors.Is(err, plugins.ErrFileNotExist) && !l.pluginsCDN.PluginSupported(plugin.ID) {
 					l.log.Warn("Plugin missing module.js", "pluginID", plugin.ID,
 						"warning", "Missing module.js, If you loaded this plugin from git, make sure to compile it.")
 				}
@@ -223,42 +247,47 @@ func (l *Loader) unload(ctx context.Context, p *plugins.Plugin) error {
 	return nil
 }
 
-func createPluginBase(pluginJSON plugins.JSONData, class plugins.Class, files plugins.FS) *plugins.Plugin {
+func (l *Loader) createPluginBase(pluginJSON plugins.JSONData, class plugins.Class, files plugins.FS) (*plugins.Plugin, error) {
+	baseURL, err := l.assetPath.Base(pluginJSON, class, files.Base())
+	if err != nil {
+		return nil, fmt.Errorf("base url: %w", err)
+	}
+	moduleURL, err := l.assetPath.Module(pluginJSON, class, files.Base())
+	if err != nil {
+		return nil, fmt.Errorf("module url: %w", err)
+	}
 	plugin := &plugins.Plugin{
 		JSONData: pluginJSON,
 		FS:       files,
-		BaseURL:  baseURL(pluginJSON, class, files.Base()),
-		Module:   module(pluginJSON, class, files.Base()),
+		BaseURL:  baseURL,
+		Module:   moduleURL,
 		Class:    class,
 	}
 
 	plugin.SetLogger(log.New(fmt.Sprintf("plugin.%s", plugin.ID)))
-	setImages(plugin)
-
-	return plugin
-}
-
-func baseURL(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) string {
-	if class == plugins.Core {
-		return path.Join("public/app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir))
+	if err := l.setImages(plugin); err != nil {
+		return nil, err
 	}
-	return path.Join("public/plugins", pluginJSON.ID)
+
+	return plugin, nil
 }
 
-func module(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) string {
-	if class == plugins.Core {
-		return path.Join("app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir), "module")
+func (l *Loader) setImages(p *plugins.Plugin) error {
+	var err error
+	for _, dst := range []*string{&p.Info.Logos.Small, &p.Info.Logos.Large} {
+		*dst, err = l.assetPath.RelativeURL(p, *dst, defaultLogoPath(p.Type))
+		if err != nil {
+			return fmt.Errorf("logo: %w", err)
+		}
 	}
-	return path.Join("plugins", pluginJSON.ID, "module")
-}
-
-func setImages(p *plugins.Plugin) {
-	p.Info.Logos.Small = pluginLogoURL(p.Type, p.Info.Logos.Small, p.BaseURL)
-	p.Info.Logos.Large = pluginLogoURL(p.Type, p.Info.Logos.Large, p.BaseURL)
-
 	for i := 0; i < len(p.Info.Screenshots); i++ {
-		p.Info.Screenshots[i].Path = evalRelativePluginURLPath(p.Info.Screenshots[i].Path, p.BaseURL, p.Type)
+		screenshot := &p.Info.Screenshots[i]
+		screenshot.Path, err = l.assetPath.RelativeURL(p, screenshot.Path, "")
+		if err != nil {
+			return fmt.Errorf("screenshot %d relative url: %w", i, err)
+		}
 	}
+	return nil
 }
 
 func setDefaultNavURL(p *plugins.Plugin) {
@@ -302,34 +331,8 @@ func configureAppChildPlugin(parent *plugins.Plugin, child *plugins.Plugin) {
 	}
 }
 
-func pluginLogoURL(pluginType plugins.Type, path, baseURL string) string {
-	if path == "" {
-		return defaultLogoPath(pluginType)
-	}
-
-	return evalRelativePluginURLPath(path, baseURL, pluginType)
-}
-
 func defaultLogoPath(pluginType plugins.Type) string {
 	return "public/img/icn-" + string(pluginType) + ".svg"
-}
-
-func evalRelativePluginURLPath(pathStr, baseURL string, pluginType plugins.Type) string {
-	if pathStr == "" {
-		return ""
-	}
-
-	u, _ := url.Parse(pathStr)
-	if u.IsAbs() {
-		return pathStr
-	}
-
-	// is set as default or has already been prefixed with base path
-	if pathStr == defaultLogoPath(pluginType) || strings.HasPrefix(pathStr, baseURL) {
-		return pathStr
-	}
-
-	return path.Join(baseURL, pathStr)
 }
 
 func (l *Loader) PluginErrors() []*plugins.Error {

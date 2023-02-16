@@ -5,12 +5,13 @@ import (
 	"net/url"
 	"time"
 
+	"xorm.io/xorm"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations/ualert"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/util"
-	"xorm.io/xorm"
 )
 
 func AddExternalAlertmanagerToDatasourceMigration(mg *migrator.Migrator) {
@@ -54,14 +55,14 @@ func (e externalAlertmanagerToDatasources) Exec(sess *xorm.Session, mg *migrator
 				return err
 			}
 			ds := &datasources.DataSource{
-				OrgId:   result.OrgID,
+				OrgID:   result.OrgID,
 				Name:    fmt.Sprintf("alertmanager-%s", uid),
 				Type:    "alertmanager",
 				Access:  "proxy",
-				Url:     uri,
+				URL:     uri,
 				Created: time.Unix(result.CreatedAt, 0),
 				Updated: time.Unix(result.UpdatedAt, 0),
-				Uid:     uid,
+				UID:     uid,
 				Version: 1,
 				JsonData: simplejson.NewFromAny(map[string]interface{}{
 					"handleGrafanaManagedAlerts": true,

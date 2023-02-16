@@ -29,6 +29,11 @@ schema_config:
 ruler:
   alertmanager_url: http://localhost:9093
 
+ingester:
+  chunk_target_size: 1000
+  max_chunk_age: 10s
+  chunk_idle_period: 10s
+  flush_check_period: 10s
 
 # By default, Loki will send anonymous, but uniquely-identifiable usage and configuration
 # analytics to Grafana Labs. These statistics are sent to https://stats.grafana.org/

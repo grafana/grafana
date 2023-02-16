@@ -10,6 +10,7 @@ import {
   Button,
   Collapse,
   Icon,
+  IconButton,
   LoadingPlaceholder,
   useStyles2,
   VerticalGroup,
@@ -18,7 +19,7 @@ import {
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../core/constants';
-import { AlertQuery } from '../../../types/unified-alerting-dto';
+import { AlertQuery, GrafanaRuleDefinition } from '../../../types/unified-alerting-dto';
 
 import { GrafanaRuleQueryViewer, QueryPreview } from './GrafanaRuleQueryViewer';
 import { AlertLabels } from './components/AlertLabels';
@@ -181,7 +182,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
             )}
             {!!rule.labels && !!Object.keys(rule.labels).length && (
               <DetailsField label="Labels" horizontal={true}>
-                <AlertLabels labels={rule.labels} />
+                <AlertLabels labels={rule.labels} className={styles.labels} />
               </DetailsField>
             )}
             <RuleDetailsExpression rulesSource={rulesSource} rule={rule} annotations={annotations} />
@@ -190,7 +191,10 @@ export function RuleViewer({ match }: RuleViewerProps) {
           <div className={styles.rightSide}>
             <RuleDetailsDataSources rule={rule} rulesSource={rulesSource} />
             {isFederatedRule && <RuleDetailsFederatedSources group={rule.group} />}
-            <DetailsField label="Namespace / Group">{`${rule.namespace.name} / ${rule.group.name}`}</DetailsField>
+            <DetailsField label="Namespace / Group" className={styles.rightSideDetails}>
+              {rule.namespace.name} / {rule.group.name}
+            </DetailsField>
+            {isGrafanaRulerRule(rule.rulerRule) && <GrafanaRuleUID rule={rule.rulerRule.grafana_alert} />}
           </div>
         </div>
         <div>
@@ -244,6 +248,17 @@ export function RuleViewer({ match }: RuleViewerProps) {
   );
 }
 
+function GrafanaRuleUID({ rule }: { rule: GrafanaRuleDefinition }) {
+  const styles = useStyles2(getStyles);
+  const copyUID = () => navigator.clipboard && navigator.clipboard.writeText(rule.uid);
+
+  return (
+    <DetailsField label="Rule UID" childrenWrapperClassName={styles.ruleUid}>
+      {rule.uid} <IconButton name="copy" onClick={copyUID} />
+    </DetailsField>
+  );
+}
+
 function isLoading(data: Record<string, PanelData>): boolean {
   return !!Object.values(data).find((d) => d.state === LoadingState.Loading);
 }
@@ -278,13 +293,26 @@ const getStyles = (theme: GrafanaTheme2) => {
     details: css`
       display: flex;
       flex-direction: row;
+      gap: ${theme.spacing(4)};
     `,
     leftSide: css`
       flex: 1;
     `,
     rightSide: css`
-      padding-left: 90px;
-      width: 300px;
+      padding-right: ${theme.spacing(3)};
+    `,
+    rightSideDetails: css`
+      & > div:first-child {
+        width: auto;
+      }
+    `,
+    labels: css`
+      justify-content: flex-start;
+    `,
+    ruleUid: css`
+      display: flex;
+      align-items: center;
+      gap: ${theme.spacing(1)};
     `,
   };
 };

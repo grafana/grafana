@@ -44,7 +44,7 @@ In contrast, Azure Monitor Logs can store a variety of data types, each with the
 
 1. In a Grafana panel, select the **Azure Monitor** data source.
 1. Select the **Metrics** service.
-1. Select a resource from which to metrics by using the subscription, resource group, resource type, and resource fields.
+1. Select a resource from which to query metrics by using the subscription, resource group, resource type, and resource fields. Multiple resources can also be selected as long as they belong to the same subscription, region and resource type. Note that only a limited amount of resource types support this feature.
 1. To select a different namespace than the default—for instance, to select resources like storage accounts that are organized under multiple namespaces—use the **Namespace** option.
 
    > **Note:** Not all metrics returned by the Azure Monitor Metrics API have values.
@@ -110,7 +110,7 @@ You can also perform complex analysis of Logs data by using KQL.
 
 1. In a Grafana panel, select the **Azure Monitor** data source.
 1. Select the **Logs** service.
-1. Select a resource to query.
+1. Select a resource to query. Multiple resources can be selected as long as they are of the same type.
 
    Alternatively, you can dynamically query all resources under a single resource group or subscription.
 

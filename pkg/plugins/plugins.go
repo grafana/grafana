@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
+	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -142,7 +143,8 @@ type JSONData struct {
 	SkipDataQuery bool `json:"skipDataQuery"`
 
 	// App settings
-	AutoEnabled bool `json:"autoEnabled"`
+	AutoEnabled bool                        `json:"autoEnabled"`
+	Extensions  []*plugindef.ExtensionsLink `json:"extensions"`
 
 	// Datasource settings
 	Annotations  bool            `json:"annotations"`
@@ -262,6 +264,16 @@ func (p *Plugin) Exited() bool {
 		return p.client.Exited()
 	}
 	return false
+}
+
+func (p *Plugin) Target() backendplugin.Target {
+	if !p.Backend {
+		return backendplugin.TargetNone
+	}
+	if p.client == nil {
+		return backendplugin.TargetUnknown
+	}
+	return p.client.Target()
 }
 
 func (p *Plugin) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {

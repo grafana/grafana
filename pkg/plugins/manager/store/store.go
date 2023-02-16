@@ -124,7 +124,7 @@ func pluginSources(gCfg *setting.Cfg, cfg *config.Cfg) []plugins.PluginSource {
 	return []plugins.PluginSource{
 		{Class: plugins.Core, Paths: corePluginPaths(gCfg.StaticRootPath)},
 		{Class: plugins.Bundled, Paths: []string{gCfg.BundledPluginsPath}},
-		{Class: plugins.CDN, Paths: pluginSettingSourcePaths(cfg.PluginSettings)},
+		{Class: plugins.CDN, Paths: cdnEnabledPlugins(cfg.PluginSettings)},
 		{Class: plugins.External, Paths: append([]string{cfg.PluginsPath}, pluginSettingPaths(cfg.PluginSettings)...)},
 	}
 }
@@ -136,7 +136,7 @@ func corePluginPaths(staticRootPath string) []string {
 	return []string{datasourcePaths, panelsPath}
 }
 
-// pluginSettingPaths provides a plugin paths defined in cfg.PluginSettings which need to be scanned on init()
+// pluginSettingPaths provides a plugin paths defined in cfg.PluginSettings
 func pluginSettingPaths(ps map[string]map[string]string) []string {
 	var pluginSettingDirs []string
 	for _, s := range ps {
@@ -149,15 +149,15 @@ func pluginSettingPaths(ps map[string]map[string]string) []string {
 	return pluginSettingDirs
 }
 
-// pluginSettingPaths provides a plugin paths defined in cfg.PluginSettings which need to be scanned on init()
-func pluginSettingSourcePaths(ps map[string]map[string]string) []string {
-	var pluginSettingDirs []string
-	for _, s := range ps {
-		path, exists := s["source_path"]
-		if !exists || path == "" {
+// cdnEnabledPlugins provides a list of plugin IDs that are marked as CDN enabled via the config
+func cdnEnabledPlugins(ps map[string]map[string]string) []string {
+	var cdnEnabled []string
+	for pluginID, s := range ps {
+		enabled, exists := s["cdn"]
+		if !exists || enabled == "" {
 			continue
 		}
-		pluginSettingDirs = append(pluginSettingDirs, path)
+		cdnEnabled = append(cdnEnabled, pluginID)
 	}
-	return pluginSettingDirs
+	return cdnEnabled
 }

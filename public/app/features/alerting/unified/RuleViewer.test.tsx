@@ -1,21 +1,19 @@
 import { act, render, screen } from '@testing-library/react';
 import React from 'react';
-import { Provider } from 'react-redux';
-import { Router } from 'react-router-dom';
+import { TestProvider } from 'test/helpers/TestProvider';
 import { byRole } from 'testing-library-selector';
 
 import { locationService, setBackendSrv } from '@grafana/runtime';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
-import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types';
 import { CombinedRule } from 'app/types/unified-alerting';
 
 import { RuleViewer } from './RuleViewer';
 import { useCombinedRule } from './hooks/useCombinedRule';
 import { useIsRuleEditable } from './hooks/useIsRuleEditable';
-import { getCloudRule, getGrafanaRule } from './mocks';
+import { getCloudRule, getGrafanaRule, grantUserPermissions } from './mocks';
 
 const mockGrafanaRule = getGrafanaRule({ name: 'Test alert' });
 const mockCloudRule = getCloudRule({ name: 'cloud test alert' });
@@ -45,15 +43,12 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
-const store = configureStore();
 const renderRuleViewer = () => {
   return act(async () => {
     render(
-      <Provider store={store}>
-        <Router history={locationService.getHistory()}>
-          <RuleViewer {...mockRoute} />
-        </Router>
-      </Provider>
+      <TestProvider>
+        <RuleViewer {...mockRoute} />
+      </TestProvider>
     );
   });
 };
@@ -61,6 +56,7 @@ const renderRuleViewer = () => {
 const ui = {
   actionButtons: {
     edit: byRole('link', { name: /edit/i }),
+    clone: byRole('link', { name: /copy/i }),
     delete: byRole('button', { name: /delete/i }),
     silence: byRole('link', { name: 'Silence' }),
   },
@@ -199,6 +195,36 @@ describe('RuleDetails RBAC', () => {
 
       // Assert
       expect(ui.actionButtons.silence.query()).toBeInTheDocument();
+    });
+
+    it('Should render clone button for users having create rule permission', async () => {
+      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: false });
+      mockCombinedRule.mockReturnValue({
+        result: getGrafanaRule({ name: 'Grafana rule' }),
+        loading: false,
+        dispatched: true,
+      });
+      grantUserPermissions([AccessControlAction.AlertingRuleCreate]);
+
+      await renderRuleViewer();
+
+      expect(ui.actionButtons.clone.get()).toBeInTheDocument();
+    });
+
+    it('Should NOT render clone button for users without create rule permission', async () => {
+      mocks.useIsRuleEditable.mockReturnValue({ loading: false, isEditable: true });
+      mockCombinedRule.mockReturnValue({
+        result: getGrafanaRule({ name: 'Grafana rule' }),
+        loading: false,
+        dispatched: true,
+      });
+
+      const { AlertingRuleRead, AlertingRuleUpdate, AlertingRuleDelete } = AccessControlAction;
+      grantUserPermissions([AlertingRuleRead, AlertingRuleUpdate, AlertingRuleDelete]);
+
+      await renderRuleViewer();
+
+      expect(ui.actionButtons.clone.query()).not.toBeInTheDocument();
     });
   });
   describe('Cloud rules action buttons', () => {

@@ -229,7 +229,6 @@
     "help/documentation": "Documentación",
     "help/keyboard-shortcuts": "Atajos de teclado",
     "help/support": "Asistencia",
-    "help/support-bundle": "Paquetes de apoyo",
     "home": {
       "title": "Inicio"
     },
@@ -288,11 +287,15 @@
       "title": "Preferencias"
     },
     "profile/switch-org": "Cambiar de organización",
+    "public": {
+      "title": ""
+    },
     "scenes": {
       "title": "Escenas"
     },
     "search": {
-      "placeholder": "Buscar Grafana"
+      "placeholder": "Buscar Grafana",
+      "placeholderCommandPalette": ""
     },
     "search-dashboards": {
       "title": "Buscar paneles de control"
@@ -489,7 +492,8 @@
     "theme": {
       "dark-label": "Oscuro",
       "default-label": "Por defecto",
-      "light-label": "Claro"
+      "light-label": "Claro",
+      "system-label": ""
     },
     "title": "Preferencias"
   },
@@ -555,8 +559,7 @@
       "name-error": "El nombre es obligatorio",
       "name-label": "Nombre",
       "username-label": "Nombre de usuario"
-    },
-    "title": "Perfil"
+    }
   },
   "user-session": {
     "browser-column": "Navegador y sistema operativo",

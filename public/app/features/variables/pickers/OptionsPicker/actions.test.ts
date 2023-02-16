@@ -398,7 +398,7 @@ describe('options picker actions', () => {
       const option = {
         ...createOption(['A']),
         selected: true,
-        value: ['A'] as any[],
+        value: ['A'],
       };
 
       tester.thenDispatchedActionsShouldEqual(

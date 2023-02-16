@@ -11,14 +11,10 @@ import {
 import TableModel from 'app/core/TableModel';
 import flatten from 'app/core/utils/flatten';
 
-import {
-  ExtendedStatMetaType,
-  isMetricAggregationWithField,
-  TopMetrics,
-} from './components/QueryEditor/MetricAggregationsEditor/aggregations';
+import { isMetricAggregationWithField } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import * as queryDef from './queryDef';
-import { ElasticsearchAggregation, ElasticsearchQuery } from './types';
+import { ElasticsearchAggregation, ElasticsearchQuery, TopMetrics, ExtendedStatMetaType } from './types';
 import { describeMetric, getScriptValue } from './utils';
 
 const HIGHLIGHT_TAGS_EXP = `${queryDef.highlightTags.pre}([^@]+)${queryDef.highlightTags.post}`;
@@ -285,6 +281,11 @@ export class ElasticResponse {
       esAgg = aggs[aggId];
 
       if (!aggDef) {
+        continue;
+      }
+
+      if (aggDef.type === 'nested') {
+        this.processBuckets(esAgg, target, seriesList, table, props, depth + 1);
         continue;
       }
 

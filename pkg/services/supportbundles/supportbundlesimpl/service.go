@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	grafanaApi "github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -15,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
+	"github.com/grafana/grafana/pkg/services/supportbundles/bundleregistry"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -31,26 +33,26 @@ type Service struct {
 	pluginSettings pluginsettings.Service
 	accessControl  ac.AccessControl
 	features       *featuremgmt.FeatureManager
+	bundleRegistry *bundleregistry.Service
 
 	log log.Logger
 
 	enabled         bool
 	serverAdminOnly bool
-
-	collectors map[string]supportbundles.Collector
 }
 
 func ProvideService(cfg *setting.Cfg,
+	bundleRegistry *bundleregistry.Service,
 	sql db.DB,
 	kvStore kvstore.KVStore,
 	accessControl ac.AccessControl,
 	accesscontrolService ac.Service,
 	routeRegister routing.RouteRegister,
-	userService user.Service,
 	settings setting.Provider,
 	pluginStore plugins.Store,
 	pluginSettings pluginsettings.Service,
 	features *featuremgmt.FeatureManager,
+	httpServer *grafanaApi.HTTPServer,
 	usageStats usagestats.Service) (*Service, error) {
 	section := cfg.SectionWithEnvOverrides("support_bundles")
 	s := &Service{
@@ -60,13 +62,15 @@ func ProvideService(cfg *setting.Cfg,
 		pluginSettings:  pluginSettings,
 		accessControl:   accessControl,
 		features:        features,
+		bundleRegistry:  bundleRegistry,
 		log:             log.New("supportbundle.service"),
 		enabled:         section.Key("enabled").MustBool(true),
 		serverAdminOnly: section.Key("server_admin_only").MustBool(true),
-		collectors:      make(map[string]supportbundles.Collector),
 	}
 
-	if !features.IsEnabled(featuremgmt.FlagSupportBundles) || !s.enabled {
+	usageStats.RegisterMetricsFunc(s.getUsageStats)
+
+	if !s.enabled {
 		return s, nil
 	}
 
@@ -76,29 +80,19 @@ func ProvideService(cfg *setting.Cfg,
 		}
 	}
 
-	s.registerAPIEndpoints(routeRegister)
+	s.registerAPIEndpoints(httpServer, routeRegister)
 
 	// TODO: move to relevant services
-	s.RegisterSupportItemCollector(basicCollector(cfg))
-	s.RegisterSupportItemCollector(settingsCollector(settings))
-	s.RegisterSupportItemCollector(usageStatesCollector(usageStats))
-	s.RegisterSupportItemCollector(userCollector(userService))
-	s.RegisterSupportItemCollector(dbCollector(sql))
-	s.RegisterSupportItemCollector(pluginInfoCollector(pluginStore, pluginSettings))
+	s.bundleRegistry.RegisterSupportItemCollector(basicCollector(cfg))
+	s.bundleRegistry.RegisterSupportItemCollector(settingsCollector(settings))
+	s.bundleRegistry.RegisterSupportItemCollector(dbCollector(sql))
+	s.bundleRegistry.RegisterSupportItemCollector(pluginInfoCollector(pluginStore, pluginSettings, s.log))
 
 	return s, nil
 }
 
-func (s *Service) RegisterSupportItemCollector(collector supportbundles.Collector) {
-	if _, ok := s.collectors[collector.UID]; ok {
-		s.log.Warn("Support bundle collector with the same UID already registered", "uid", collector.UID)
-	}
-
-	s.collectors[collector.UID] = collector
-}
-
 func (s *Service) Run(ctx context.Context) error {
-	if !s.features.IsEnabled(featuremgmt.FlagSupportBundles) {
+	if !s.enabled {
 		return nil
 	}
 
@@ -174,4 +168,16 @@ func (s *Service) cleanup(ctx context.Context) {
 			}
 		}
 	}
+}
+
+func (s *Service) getUsageStats(ctx context.Context) (map[string]interface{}, error) {
+	m := map[string]interface{}{}
+
+	count, err := s.store.StatsCount(ctx)
+	if err != nil {
+		s.log.Warn("unable to get support bundle counter", "error", err)
+	}
+
+	m["stats.bundles.count"] = count
+	return m, nil
 }

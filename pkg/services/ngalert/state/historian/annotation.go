@@ -4,11 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"sort"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
@@ -16,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 )
 
 // AnnotationBackend is an implementation of state.Historian that uses Grafana Annotations as the backing datastore.
@@ -40,12 +43,17 @@ func NewAnnotationBackend(annotations annotations.Repository, dashboards dashboa
 }
 
 // RecordStates writes a number of state transitions for a given rule to state history.
-func (h *AnnotationBackend) RecordStatesAsync(ctx context.Context, rule *ngmodels.AlertRule, states []state.StateTransition) {
+func (h *AnnotationBackend) RecordStatesAsync(ctx context.Context, rule history_model.RuleMeta, states []state.StateTransition) <-chan error {
 	logger := h.log.FromContext(ctx)
 	// Build annotations before starting goroutine, to make sure all data is copied and won't mutate underneath us.
-	annotations := h.buildAnnotations(rule, states, logger)
+	annotations := buildAnnotations(rule, states, logger)
 	panel := parsePanelKey(rule, logger)
-	go h.recordAnnotationsSync(ctx, panel, annotations, logger)
+	errCh := make(chan error, 1)
+	go func() {
+		defer close(errCh)
+		errCh <- h.recordAnnotationsSync(ctx, panel, annotations, logger)
+	}()
+	return errCh
 }
 
 func (h *AnnotationBackend) QueryStates(ctx context.Context, query ngmodels.HistoryQuery) (*data.Frame, error) {
@@ -71,10 +79,11 @@ func (h *AnnotationBackend) QueryStates(ctx context.Context, query ngmodels.Hist
 	}
 
 	q := annotations.ItemQuery{
-		AlertId: rq.Result.ID,
-		OrgId:   query.OrgID,
-		From:    query.From.Unix(),
-		To:      query.To.Unix(),
+		AlertID:      rq.Result.ID,
+		OrgID:        query.OrgID,
+		From:         query.From.Unix(),
+		To:           query.To.Unix(),
+		SignedInUser: query.SignedInUser,
 	}
 	items, err := h.annotations.Find(ctx, &q)
 	if err != nil {
@@ -112,7 +121,7 @@ func (h *AnnotationBackend) QueryStates(ctx context.Context, query ngmodels.Hist
 	for _, item := range items {
 		data, err := json.Marshal(item.Data)
 		if err != nil {
-			logger.Error("Annotation service gave an annotation with unparseable data, skipping", "id", item.Id, "err", err)
+			logger.Error("Annotation service gave an annotation with unparseable data, skipping", "id", item.ID, "err", err)
 			continue
 		}
 		times = append(times, time.Unix(item.Time, 0))
@@ -131,7 +140,7 @@ func (h *AnnotationBackend) QueryStates(ctx context.Context, query ngmodels.Hist
 	return frame, nil
 }
 
-func (h *AnnotationBackend) buildAnnotations(rule *ngmodels.AlertRule, states []state.StateTransition, logger log.Logger) []annotations.Item {
+func buildAnnotations(rule history_model.RuleMeta, states []state.StateTransition, logger log.Logger) []annotations.Item {
 	items := make([]annotations.Item, 0, len(states))
 	for _, state := range states {
 		if !shouldRecord(state) {
@@ -142,8 +151,8 @@ func (h *AnnotationBackend) buildAnnotations(rule *ngmodels.AlertRule, states []
 		annotationText, annotationData := buildAnnotationTextAndData(rule, state.State)
 
 		item := annotations.Item{
-			AlertId:   rule.ID,
-			OrgId:     state.OrgID,
+			AlertID:   rule.ID,
+			OrgID:     state.OrgID,
 			PrevState: state.PreviousFormatted(),
 			NewState:  state.Formatted(),
 			Text:      annotationText,
@@ -156,28 +165,30 @@ func (h *AnnotationBackend) buildAnnotations(rule *ngmodels.AlertRule, states []
 	return items
 }
 
-func (h *AnnotationBackend) recordAnnotationsSync(ctx context.Context, panel *panelKey, annotations []annotations.Item, logger log.Logger) {
+func (h *AnnotationBackend) recordAnnotationsSync(ctx context.Context, panel *panelKey, annotations []annotations.Item, logger log.Logger) error {
 	if panel != nil {
 		dashID, err := h.dashboards.getID(ctx, panel.orgID, panel.dashUID)
 		if err != nil {
 			logger.Error("Error getting dashboard for alert annotation", "dashboardUID", panel.dashUID, "error", err)
-			return
+			dashID = 0
 		}
 
 		for i := range annotations {
-			annotations[i].DashboardId = dashID
-			annotations[i].PanelId = panel.panelID
+			annotations[i].DashboardID = dashID
+			annotations[i].PanelID = panel.panelID
 		}
 	}
 
 	if err := h.annotations.SaveMany(ctx, annotations); err != nil {
 		logger.Error("Error saving alert annotation batch", "error", err)
+		return fmt.Errorf("error saving alert annotation batch: %w", err)
 	}
 
 	logger.Debug("Done saving alert annotation batch")
+	return nil
 }
 
-func buildAnnotationTextAndData(rule *ngmodels.AlertRule, currentState *state.State) (string, *simplejson.Json) {
+func buildAnnotationTextAndData(rule history_model.RuleMeta, currentState *state.State) (string, *simplejson.Json) {
 	jsonData := simplejson.New()
 	var value string
 
@@ -203,10 +214,27 @@ func buildAnnotationTextAndData(rule *ngmodels.AlertRule, currentState *state.St
 		for _, k := range keys {
 			values = append(values, fmt.Sprintf("%s=%f", k, currentState.Values[k]))
 		}
-		jsonData.Set("values", simplejson.NewFromAny(currentState.Values))
+		jsonData.Set("values", jsonifyValues(currentState.Values))
 		value = strings.Join(values, ", ")
 	}
 
 	labels := removePrivateLabels(currentState.Labels)
 	return fmt.Sprintf("%s {%s} - %s", rule.Title, labels.String(), value), jsonData
+}
+
+func jsonifyValues(vs map[string]float64) *simplejson.Json {
+	if vs == nil {
+		return nil
+	}
+
+	j := simplejson.New()
+	for k, v := range vs {
+		switch {
+		case math.IsInf(v, 0), math.IsNaN(v):
+			j.Set(k, fmt.Sprintf("%f", v))
+		default:
+			j.Set(k, v)
+		}
+	}
+	return j
 }
