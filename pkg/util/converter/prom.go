@@ -260,8 +260,7 @@ func readLabelsOrExemplars(iter *jsoniter.Iterator) (*data.Frame, [][2]string) {
 					switch l2Field {
 					// nolint:goconst
 					case "value":
-						v, _ := strconv.ParseFloat(iter.ReadString(), 64)
-						valueField.Append(v)
+						valueField.Append(iter.ReadFloat64())
 
 					case "timestamp":
 						ts := timeFromFloat(iter.ReadFloat64())
