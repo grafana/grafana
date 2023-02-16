@@ -1,5 +1,5 @@
 import { SyntaxNode } from '@lezer/common';
-import { cloneDeep, escapeRegExp } from 'lodash';
+import { escapeRegExp } from 'lodash';
 
 import { ArrayVector, DataQueryResponse, DataQueryResponseData, Field, QueryResultMetaStat } from '@grafana/data';
 import {
@@ -321,7 +321,7 @@ export function combineResponses(currentResult: DataQueryResponse | null, newRes
   newResult.data.forEach((newFrame) => {
     const currentFrame = currentResult.data.find((frame) => frame.name === newFrame.name);
     if (!currentFrame) {
-      currentResult.data.push(newFrame);
+      currentResult.data.push({ ...newFrame });
       return;
     }
     combineFrames(currentFrame, newFrame);
@@ -366,7 +366,11 @@ function combineMetadata(dest: DataQueryResponseData = {}, source: DataQueryResp
  * Deep clones a DataQueryResponse
  */
 export function cloneQueryResponse(response: DataQueryResponse): DataQueryResponse {
-  const newResponse = cloneDeep(response);
+  const newResponse = {
+    ...response,
+    data: response.data.map((frame) => ({ ...frame })),
+  };
+
   newResponse.data.forEach((data: DataQueryResponseData) => {
     data.fields.forEach((field: Field<unknown, ArrayVector>) => {
       field.values = new ArrayVector(field.values.buffer);

@@ -1,6 +1,6 @@
 import { ArrayVector, DataQueryResponse } from '@grafana/data';
 
-import { logFrameA, logFrameB, metricFrameA, metricFrameB, metricFrameC } from './mocks';
+import { getMockFrames } from './mocks';
 import {
   getHighlighterExpressionsFromQuery,
   getNormalizedLokiQuery,
@@ -299,6 +299,7 @@ describe('getParserFromQuery', () => {
 });
 
 describe('cloneQueryResponse', () => {
+  const { logFrameA } = getMockFrames();
   const responseA: DataQueryResponse = {
     data: [logFrameA],
   };
@@ -311,6 +312,7 @@ describe('cloneQueryResponse', () => {
 
 describe('combineResponses', () => {
   it('combines logs frames', () => {
+    const { logFrameA, logFrameB } = getMockFrames();
     const responseA: DataQueryResponse = {
       data: [logFrameA],
     };
@@ -378,12 +380,13 @@ describe('combineResponses', () => {
   });
 
   it('combines metric frames', () => {
-    const responseA: DataQueryResponse = cloneQueryResponse({
+    const { metricFrameA, metricFrameB } = getMockFrames();
+    const responseA: DataQueryResponse = {
       data: [metricFrameA],
-    });
-    const responseB: DataQueryResponse = cloneQueryResponse({
+    };
+    const responseB: DataQueryResponse = {
       data: [metricFrameB],
-    });
+    };
     expect(combineResponses(responseA, responseB)).toEqual({
       data: [
         {
@@ -417,12 +420,13 @@ describe('combineResponses', () => {
   });
 
   it('combines and identifies new frames in the response', () => {
-    const responseA: DataQueryResponse = cloneQueryResponse({
+    const { metricFrameA, metricFrameB, metricFrameC } = getMockFrames();
+    const responseA: DataQueryResponse = {
       data: [metricFrameA],
-    });
-    const responseB: DataQueryResponse = cloneQueryResponse({
+    };
+    const responseB: DataQueryResponse = {
       data: [metricFrameB, metricFrameC],
-    });
+    };
     expect(combineResponses(responseA, responseB)).toEqual({
       data: [
         {
@@ -457,6 +461,7 @@ describe('combineResponses', () => {
   });
 
   it('combines frames in a new response instance', () => {
+    const { metricFrameA, metricFrameB } = getMockFrames();
     const responseA: DataQueryResponse = {
       data: [metricFrameA],
     };
