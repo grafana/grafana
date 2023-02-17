@@ -5,6 +5,7 @@ package runner
 
 import (
 	"context"
+
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 
@@ -167,7 +168,7 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(legacydata.RequestHandler), new(*legacydataservice.Service)),
 	alerting.ProvideAlertStore,
 	alerting.ProvideAlertEngine,
-	wire.Bind(new(alerting.UsageStatsQuerier), new(*alerting.AlertEngine)),
+	alerting.ProvideStats,
 	api.ProvideHTTPServer,
 	query.ProvideService,
 	thumbs.ProvideService,

@@ -13,9 +13,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
-	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/stats"
@@ -31,6 +31,7 @@ type Service struct {
 	features           *featuremgmt.FeatureManager
 	datasources        datasources.DataSourceService
 	httpClientProvider httpclient.Provider
+	alertStats         *alerting.Stats
 
 	log log.Logger
 
@@ -45,7 +46,7 @@ func ProvideService(
 	statsService stats.Service,
 	cfg *setting.Cfg,
 	store db.DB,
-	social social.Service,
+	alertStats *alerting.Stats,
 	plugins plugins.Store,
 	features *featuremgmt.FeatureManager,
 	datasourceService datasources.DataSourceService,
@@ -60,6 +61,7 @@ func ProvideService(
 		features:           features,
 		datasources:        datasourceService,
 		httpClientProvider: httpClientProvider,
+		alertStats:         alertStats,
 
 		startTime: time.Now(),
 		log:       log.New("infra.usagestats.collector"),
@@ -71,6 +73,7 @@ func ProvideService(
 		s.collectDatasourceStats,
 		s.collectDatasourceAccess,
 		s.collectElasticStats,
+		s.collectAlertStats,
 		s.collectAlertNotifierStats,
 		s.collectPrometheusFlavors,
 		s.collectAdditionalMetrics,
@@ -212,6 +215,27 @@ func (s *Service) collectAlertNotifierStats(ctx context.Context) (map[string]int
 	return m, nil
 }
 
+func (s *Service) collectAlertStats(ctx context.Context) (map[string]interface{}, error) {
+	alertingUsageStats, err := s.alertStats.QueryUsageStats(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	alertingOtherCount := 0
+	m := map[string]interface{}{}
+	for dsType, usageCount := range alertingUsageStats.DatasourceUsage {
+		if s.shouldReportDataSource(ctx, dsType) {
+			m[fmt.Sprintf("stats.alerting.ds.%s.count", dsType)] = usageCount
+		} else {
+			alertingOtherCount += usageCount
+		}
+	}
+
+	m["stats.alerting.ds.other.count"] = alertingOtherCount
+
+	return m, nil
+}
+
 func (s *Service) collectDatasourceStats(ctx context.Context) (map[string]interface{}, error) {
 	m := map[string]interface{}{}
 	dsStats := stats.GetDataSourceStatsQuery{}
@@ -225,7 +249,7 @@ func (s *Service) collectDatasourceStats(ctx context.Context) (map[string]interf
 	// as sending that name could be sensitive information
 	dsOtherCount := 0
 	for _, dsStat := range dsStats.Result {
-		if s.usageStats.ShouldBeReported(ctx, dsStat.Type) {
+		if s.shouldReportDataSource(ctx, dsStat.Type) {
 			m["stats.ds."+dsStat.Type+".count"] = dsStat.Count
 		} else {
 			dsOtherCount += dsStat.Count
@@ -279,7 +303,7 @@ func (s *Service) collectDatasourceAccess(ctx context.Context) (map[string]inter
 
 		access := strings.ToLower(dsAccessStat.Access)
 
-		if s.usageStats.ShouldBeReported(ctx, dsAccessStat.Type) {
+		if s.shouldReportDataSource(ctx, dsAccessStat.Type) {
 			m["stats.ds_access."+dsAccessStat.Type+"."+access+".count"] = dsAccessStat.Count
 		} else {
 			old := dsAccessOtherCount[access]
@@ -355,4 +379,13 @@ func (s *Service) panelCount(ctx context.Context) int {
 
 func (s *Service) dataSourceCount(ctx context.Context) int {
 	return len(s.plugins.Plugins(ctx, plugins.DataSource))
+}
+
+func (s *Service) shouldReportDataSource(ctx context.Context, pluginID string) bool {
+	ds, exists := s.plugins.Plugin(ctx, pluginID)
+	if !exists {
+		return false
+	}
+
+	return ds.Signature.IsValid() || ds.Signature.IsInternal()
 }

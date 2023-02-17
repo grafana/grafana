@@ -11,7 +11,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
@@ -38,7 +37,7 @@ func TestIntegrationEngineTimeouts(t *testing.T) {
 	tracer := tracing.InitializeTracerForTest()
 	dsMock := &datasources.FakeDataSourceService{}
 	annotationsRepo := annotationstest.NewFakeAnnotationsRepo()
-	engine := ProvideAlertEngine(nil, nil, nil, usMock, encService, nil, tracer, nil, setting.NewCfg(), nil, nil, localcache.New(time.Minute, time.Minute), dsMock, annotationsRepo)
+	engine := ProvideAlertEngine(nil, nil, nil, encService, nil, tracer, nil, setting.NewCfg(), nil, nil, dsMock, annotationsRepo)
 	setting.AlertingNotificationTimeout = 30 * time.Second
 	setting.AlertingMaxAttempts = 3
 	engine.resultHandler = &FakeResultHandler{}

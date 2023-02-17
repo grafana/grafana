@@ -11,7 +11,6 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice/database"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -28,7 +27,6 @@ func TestUserAuth(t *testing.T) {
 	srv := ProvideAuthInfoService(
 		&OSSUserProtectionImpl{},
 		authInfoStore,
-		&usagestats.UsageStatsMock{},
 	)
 
 	t.Run("Given 5 users", func(t *testing.T) {
