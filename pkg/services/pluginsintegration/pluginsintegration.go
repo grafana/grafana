@@ -25,6 +25,13 @@ var WireSet = wire.NewSet(
 	plugincontext.ProvideService,
 	pluginscdn.ProvideService,
 
+	//TODO remove (only here to support backendplugin_test.go)
+	// <toRemove>
+	wire.Bind(new(registry.Service), new(*registry.InMemory)),
+	registry.ProvideService,
+	ProvideClientDecorator,
+	// </toRemove>
+
 	wire.Bind(new(plugins.RendererManager), new(*pluginmod.PluginsModule)),
 	wire.Bind(new(plugins.SecretsPluginManager), new(*pluginmod.PluginsModule)),
 	wire.Bind(new(plugins.StaticRouteResolver), new(*pluginmod.PluginsModule)),

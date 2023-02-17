@@ -34,14 +34,14 @@ type core struct {
 
 	i *manager.PluginInstaller
 	s *store.Service
-	c *client.Service
+	c *client.Decorator
 	l *loader.Loader
 	p *process.Manager
 }
 
-func NewCore(cfg *setting.Cfg, coreRegistry *coreplugin.Registry) *core {
+func NewCore(cfg *setting.Cfg, coreRegistry *coreplugin.Registry, reg *registry.InMemory,
+	cl *client.Decorator) *core {
 	pCfg := config.ProvideConfig(setting.ProvideProvider(cfg), cfg)
-	reg := registry.ProvideService()
 	cdn := pluginscdn.ProvideService(pCfg)
 	proc := process.NewManager(reg)
 	lic := plicensing.ProvideLicensing(cfg, &licensing.OSSLicensingService{Cfg: cfg})
@@ -53,7 +53,7 @@ func NewCore(cfg *setting.Cfg, coreRegistry *coreplugin.Registry) *core {
 	c := &core{
 		i: manager.ProvideInstaller(pCfg, reg, l, r),
 		s: store.ProvideService(cfg, pCfg, reg, l),
-		c: client.ProvideService(reg, pCfg),
+		c: cl,
 		l: l,
 		p: proc,
 	}
@@ -125,7 +125,6 @@ func (c *core) CallResource(ctx context.Context, req *backend.CallResourceReques
 
 func (c *core) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	return c.c.CheckHealth(ctx, req)
-
 }
 
 func (c *core) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {

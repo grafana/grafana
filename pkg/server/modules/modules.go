@@ -35,14 +35,12 @@ type Modules struct {
 
 func ProvideService(cfg *setting.Cfg) *Modules {
 	logger := log.New("modules")
-	m := &Modules{
+	return &Modules{
 		targets:       cfg.Target,
 		cfg:           cfg,
 		log:           logger,
 		moduleManager: modules.NewManager(logger),
 	}
-
-	return m
 }
 
 func (m *Modules) Init() error {

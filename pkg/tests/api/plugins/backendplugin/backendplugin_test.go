@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -277,16 +276,8 @@ func newTestScenario(t *testing.T, name string, opts []testScenarioOption, callb
 
 	p, backendTestPlugin := createTestPlugin(tsCtx.testPluginID)
 	tsCtx.backendTestPlugin = backendTestPlugin
-	testEnv.PluginClient = &fakes.FakePluginClient{
-		QueryDataHandlerFunc: func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-			return backendTestPlugin.QueryData(ctx, req)
-		},
-	}
-	testEnv.PluginStore = &fakes.FakePluginStore{
-		GetFunc: func(ctx context.Context, pluginID string) (plugins.PluginDTO, bool) {
-			return p.ToDTO(), true
-		},
-	}
+	err := testEnv.PluginRegistry.Add(ctx, p)
+	require.NoError(t, err)
 
 	jsonData := simplejson.New()
 	secureJSONData := map[string]string{}
@@ -311,7 +302,7 @@ func newTestScenario(t *testing.T, name string, opts []testScenarioOption, callb
 	tsCtx.modifyIncomingRequest = in.modifyIncomingRequest
 	tsCtx.testEnv.OAuthTokenService.Token = in.token
 
-	_, err := testEnv.HTTPServer.DataSourcesService.AddDataSource(ctx, cmd)
+	_, err = testEnv.HTTPServer.DataSourcesService.AddDataSource(ctx, cmd)
 	require.NoError(t, err)
 
 	getDataSourceQuery := &datasources.GetDataSourceQuery{

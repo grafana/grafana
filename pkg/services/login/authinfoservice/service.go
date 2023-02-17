@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -18,7 +17,7 @@ type Implementation struct {
 	logger                log.Logger
 }
 
-func ProvideAuthInfoService(userProtectionService login.UserProtectionService, authInfoStore login.Store, usageStats usagestats.Service) *Implementation {
+func ProvideAuthInfoService(userProtectionService login.UserProtectionService, authInfoStore login.Store) *Implementation {
 	s := &Implementation{
 		UserProtectionService: userProtectionService,
 		authInfoStore:         authInfoStore,

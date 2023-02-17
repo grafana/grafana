@@ -3,7 +3,7 @@ package server
 import (
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/notifications"
@@ -17,21 +17,18 @@ func ProvideTestEnv(
 	store *sqlstore.SQLStore,
 	ns *notifications.NotificationServiceMock,
 	grpcServer grpcserver.Provider,
+	pluginRegistry registry.Service,
 	httpClientProvider httpclient.Provider,
 	oAuthTokenService *oauthtokentest.Service,
 	roleRegistry accesscontrol.RoleRegistry,
-	pluginClient plugins.Client,
-	pluginStore plugins.Store,
 ) (*TestEnv, error) {
 	return &TestEnv{
-
 		server,
 		httpServer,
 		store,
 		ns,
 		grpcServer,
-		pluginClient,
-		pluginStore,
+		pluginRegistry,
 		httpClientProvider,
 		oAuthTokenService,
 		roleRegistry,
@@ -44,8 +41,7 @@ type TestEnv struct {
 	SQLStore            *sqlstore.SQLStore
 	NotificationService *notifications.NotificationServiceMock
 	GRPCServer          grpcserver.Provider
-	PluginClient        plugins.Client
-	PluginStore         plugins.Store
+	PluginRegistry      registry.Service
 	HTTPClientProvider  httpclient.Provider
 	OAuthTokenService   *oauthtokentest.Service
 	RoleRegistry        accesscontrol.RoleRegistry
