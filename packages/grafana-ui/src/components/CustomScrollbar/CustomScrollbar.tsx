@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { RefCallback, useCallback, useEffect, useRef } from 'react';
+import React, { RefCallback, useCallback, useEffect, useRef, ReactNode } from 'react';
 import Scrollbars, { positionValues } from 'react-custom-scrollbars-2';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -26,6 +26,7 @@ interface Props {
   autoHeightMin?: number | string;
   updateAfterMountMs?: number;
   onScroll?: React.UIEventHandler;
+  children?: ReactNode;
 }
 
 /**
@@ -48,7 +49,7 @@ export const CustomScrollbar = ({
   scrollTop,
   onScroll,
   children,
-}: React.PropsWithChildren<Props>) => {
+}: Props) => {
   const ref = useRef<Scrollbars & { view: HTMLDivElement; update: () => void }>(null);
   const styles = useStyles2(getStyles);
 
