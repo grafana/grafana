@@ -124,12 +124,10 @@ func TestProcessManager_ManagedBackendPluginLifecycle(t *testing.T) {
 	require.Equal(t, 1, bp.startCount)
 
 	t.Run("When plugin process is killed, the process is restarted", func(t *testing.T) {
-		pCtx := context.Background()
-		cCtx, _ := context.WithCancel(pCtx)
 		var wgRun sync.WaitGroup
 		wgRun.Add(1)
 		go func() {
-			err = m.Shutdown(cCtx)
+			err = m.Shutdown(context.Background())
 			require.NoError(t, err)
 			wgRun.Done()
 		}()

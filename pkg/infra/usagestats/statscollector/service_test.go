@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
-	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -451,16 +450,6 @@ func mockSystemStats(statsService *statstest.FakeService) {
 		ActiveDataKeys:            3,
 		PublicDashboards:          5,
 	}
-}
-
-type mockSocial struct {
-	social.Service
-
-	OAuthProviders map[string]bool
-}
-
-func (m *mockSocial) GetOAuthProviders() map[string]bool {
-	return m.OAuthProviders
 }
 
 func setupSomeDataSourcePlugins(t *testing.T, s *Service) {

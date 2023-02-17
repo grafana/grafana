@@ -2,6 +2,7 @@ package modules
 
 import (
 	"context"
+	"errors"
 
 	"github.com/grafana/dskit/modules"
 	"github.com/grafana/dskit/services"
@@ -83,9 +84,7 @@ func (m *Modules) Run(ctx context.Context) error {
 	m.serviceMap = serviceMap
 
 	var svcs []services.Service
-	var svcNames []string
-	for key, s := range serviceMap {
-		svcNames = append(svcNames, key)
+	for _, s := range serviceMap {
 		svcs = append(svcs, s)
 	}
 
@@ -105,7 +104,7 @@ func (m *Modules) Run(ctx context.Context) error {
 		// log which module failed
 		for module, s := range serviceMap {
 			if s == service {
-				if service.FailureCase() == modules.ErrStopProcess {
+				if errors.Is(service.FailureCase(), modules.ErrStopProcess) {
 					m.log.Info("Received stop signal via return error", "module", module, "err", service.FailureCase())
 				} else {
 					m.log.Error("Module failed", "module", module, "err", service.FailureCase())
@@ -128,7 +127,7 @@ func (m *Modules) Run(ctx context.Context) error {
 	if err == nil {
 		if failed := sm.ServicesByState()[services.Failed]; len(failed) > 0 {
 			for _, f := range failed {
-				if f.FailureCase() != modules.ErrStopProcess {
+				if !errors.Is(f.FailureCase(), modules.ErrStopProcess) {
 					// Details were reported via failure listener before
 					err = f.FailureCase()
 					break

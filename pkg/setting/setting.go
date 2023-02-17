@@ -732,19 +732,18 @@ func applyCommandLineDefaultProperties(props map[string]string, file *ini.File) 
 }
 
 func applyCommandLineProperties(target string, props map[string]string, file *ini.File) {
-	defaultSection, err := file.GetSection("")
-	if err == nil {
-		key, err := defaultSection.GetKey("target")
-		if err == nil {
-			key.SetValue(target)
-		} else {
-			defaultSection.NewKey("target", target)
-		}
-	}
 	for _, section := range file.Sections() {
 		sectionName := section.Name() + "."
 		if section.Name() == ini.DefaultSection {
 			sectionName = ""
+
+			// set target field
+			key, err := section.GetKey("target")
+			if err == nil {
+				key.SetValue(target)
+			} else {
+				_, _ = section.NewKey("target", target)
+			}
 		}
 		for _, key := range section.Keys() {
 			keyString := sectionName + key.Name()
