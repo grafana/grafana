@@ -44,7 +44,7 @@
     "@sentry/browser": "6.19.7",
     "history": "4.10.1",
     "lodash": "4.17.21",
-    "rxjs": "7.5.7",
+    "rxjs": "7.8.0",
     "systemjs": "0.20.19",
     "tslib": "2.4.1"
   },
