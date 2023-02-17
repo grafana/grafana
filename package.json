@@ -232,7 +232,7 @@
     "redux-mock-store": "1.5.4",
     "rimraf": "3.0.2",
     "rudder-sdk-js": "2.24.0",
-    "sass": "1.56.0",
+    "sass": "1.58.2",
     "sass-loader": "13.1.0",
     "sinon": "14.0.1",
     "style-loader": "3.3.1",
