@@ -2,7 +2,6 @@ package sources
 
 import (
 	"context"
-	"net/url"
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -59,19 +58,21 @@ func pluginFSPaths(ps map[string]map[string]string) []string {
 
 // pluginCDNURLs provides a list of URLs for plugins that are marked as CDN enabled via the config
 func (s *Service) pluginCDNURLs(ps map[string]map[string]string) []string {
+	if !s.cdnService.IsEnabled() {
+		return []string{}
+	}
+
 	var pluginCDNURLs []string
-	for _, kv := range ps {
-		src, exists := kv["url"]
-		if !exists || src == "" {
+	for pluginID := range ps {
+		if !s.cdnService.PluginSupported(pluginID) {
 			continue
 		}
-		u, err := url.Parse(src)
+		u, err := s.cdnService.AssetURL(pluginID, "") // base CDN URL
 		if err != nil {
 			s.log.Warn("....")
 			continue
 		}
-
-		pluginCDNURLs = append(pluginCDNURLs, u.String())
+		pluginCDNURLs = append(pluginCDNURLs, u)
 	}
 	return pluginCDNURLs
 }
