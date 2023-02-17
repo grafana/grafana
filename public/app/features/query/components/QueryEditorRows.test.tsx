@@ -73,7 +73,7 @@ describe('QueryEditorRows', () => {
   it('Should render queries', async () => {
     const {
       renderResult: { rerender },
-    } = renderScenario({});
+    } = renderScenario();
     expect((await screen.findByTestId('query-editor-rows')).children.length).toBe(2);
 
     rerender(
@@ -92,7 +92,7 @@ describe('QueryEditorRows', () => {
   });
 
   it('Should be able to expand and collapse queries', async () => {
-    renderScenario({});
+    renderScenario();
     const queryEditorRows = await screen.findAllByTestId('query-editor-row');
 
     for (const childQuery of queryEditorRows) {
@@ -147,11 +147,10 @@ describe('QueryEditorRows', () => {
   });
 });
 
-function renderScenario(overrides: Partial<Props>) {
+function renderScenario(overrides?: Partial<Props>) {
   Object.assign(props, overrides);
 
   return {
-    props,
     renderResult: render(<QueryEditorRows {...props} />),
   };
 }

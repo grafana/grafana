@@ -124,7 +124,7 @@ export function QueryOperationRow({
   }
 
   return (
-    <div data-testid="query-operation-row" className={styles.wrapper}>
+    <div className={styles.wrapper}>
       <QueryOperationRowHeader
         id={id}
         actionsElement={actionsElement}

@@ -384,7 +384,6 @@ export class QueryGroup extends PureComponent<Props, State> {
           panelData={data}
           onChange={this.onQueriesChange}
           onRunQueries={onRunQueries}
-          data-testid="shared-dashboard-query-editor-rows"
         />
       );
     }
