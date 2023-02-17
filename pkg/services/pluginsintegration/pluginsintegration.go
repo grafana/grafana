@@ -51,6 +51,7 @@ var WireSet = wire.NewSet(
 	plugincontext.ProvideService,
 	licensing.ProvideLicensing,
 	wire.Bind(new(plugins.Licensing), new(*licensing.Service)),
+	wire.Bind(new(sources.Resolver), new(*sources.Service)),
 	sources.ProvideService,
 )
 

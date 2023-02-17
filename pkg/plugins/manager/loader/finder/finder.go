@@ -27,7 +27,7 @@ func (f *Service) Find(ctx context.Context, pluginPaths ...string) ([]*plugins.F
 		return []*plugins.FoundBundle{}, nil
 	}
 
-	var found []*plugins.FoundBundle
+	fbs := make(map[string][]*plugins.FoundBundle)
 	for _, path := range pluginPaths {
 		if strings.HasPrefix(path, "http") {
 			remote, err := f.remote.Find(ctx, path)
@@ -35,7 +35,7 @@ func (f *Service) Find(ctx context.Context, pluginPaths ...string) ([]*plugins.F
 				f.log.Warn("Error occurred when trying to find plugin", "path", path)
 				continue
 			}
-			found = append(found, remote...)
+			fbs[path] = remote
 			continue
 		}
 		local, err := f.local.Find(ctx, path)
@@ -43,7 +43,12 @@ func (f *Service) Find(ctx context.Context, pluginPaths ...string) ([]*plugins.F
 			f.log.Warn("Error occurred when trying to find plugin", "path", path)
 			continue
 		}
-		found = append(found, local...)
+		fbs[path] = local
+	}
+
+	var found []*plugins.FoundBundle
+	for _, fb := range fbs {
+		found = append(found, fb...)
 	}
 
 	return found, nil

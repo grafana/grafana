@@ -375,3 +375,14 @@ func (f *FakePluginFiles) Base() string {
 func (f *FakePluginFiles) Files() []string {
 	return []string{}
 }
+
+type FakeSources struct {
+	ListFunc func(_ context.Context) []plugins.PluginSource
+}
+
+func (s *FakeSources) List(ctx context.Context) []plugins.PluginSource {
+	if s.ListFunc != nil {
+		return s.ListFunc(ctx)
+	}
+	return []plugins.PluginSource{}
+}
