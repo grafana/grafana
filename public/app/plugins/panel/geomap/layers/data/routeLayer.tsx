@@ -10,10 +10,7 @@ import {
   TIME_SERIES_TIME_FIELD_NAME,
 } from '@grafana/data';
 
-import {
-  MapLayerOptions,
-  FrameGeometrySourceMode,
-} from '@grafana/schema';
+import { MapLayerOptions, FrameGeometrySourceMode } from '@grafana/schema';
 
 import Map from 'ol/Map';
 import { FeatureLike } from 'ol/Feature';
@@ -114,9 +111,10 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
         if (geom instanceof SimpleGeometry) {
           const coordinates = geom.getCoordinates();
           if (coordinates) {
+            let j = 0; // Index start for segment optimization
             for (let i = 0; i < coordinates.length - 1; i++) {
               const color1 = tinycolor(
-                theme.visualization.getColorByName((dims.color && dims.color.get(i)) ?? style.base.color)
+                theme.visualization.getColorByName((dims.color && dims.color.get(j)) ?? style.base.color)
               )
                 .setAlpha(opacity)
                 .toString();
@@ -126,7 +124,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
                 .setAlpha(opacity)
                 .toString();
 
-              const arrowSize1 = (dims.size && dims.size.get(i)) ?? style.base.size;
+              const arrowSize1 = (dims.size && dims.size.get(j)) ?? style.base.size;
               const arrowSize2 = (dims.size && dims.size.get(i + 1)) ?? style.base.size;
 
               const flowStyle = new FlowLine({
@@ -134,7 +132,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
                 lineCap: config.arrow == 0 ? 'round' : 'square',
                 color: color1,
                 color2: color2,
-                width: (dims.size && dims.size.get(i)) ?? style.base.size,
+                width: (dims.size && dims.size.get(j)) ?? style.base.size,
                 width2: (dims.size && dims.size.get(i + 1)) ?? style.base.size,
               });
               if (config.arrow) {
@@ -147,10 +145,20 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
                   flowStyle.setArrowSize((arrowSize1 ?? 0) * 1.5);
                 }
               }
-              const LS = new LineString([coordinates[i], coordinates[i + 1]]);
-              flowStyle.setGeometry(LS);
-              styles.push(flowStyle);
+              const LS = new LineString([coordinates[j], coordinates[i + 1]]);
+              //TODO: let's try to find a less intensive check
+              const pixel1 = map.getPixelFromCoordinate(coordinates[j]);
+              const pixel2 = map.getPixelFromCoordinate(coordinates[i + 1]);
+              const deltaX = Math.abs(pixel1[0] - pixel2[0]);
+              const deltaY = Math.abs(pixel1[1] - pixel2[1]);
+              // Only render segment if change in pixel coordinates is significant enough
+              if (deltaX > 2 || deltaY > 2) {
+                flowStyle.setGeometry(LS);
+                styles.push(flowStyle);
+                j = i + 1;
+              }
             }
+            //TODO: add case where no significant segments were found, perhaps add a point
           }
           return styles;
         }
