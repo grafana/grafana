@@ -15,10 +15,11 @@ type Service struct {
 }
 
 func NewService() *Service {
+	logger := log.New("plugin.finder")
 	return &Service{
-		local:  newFS(),
-		remote: newRemote(),
-		log:    log.New("plugin.finder"),
+		local:  newFS(logger),
+		remote: newRemote(logger),
+		log:    logger,
 	}
 }
 

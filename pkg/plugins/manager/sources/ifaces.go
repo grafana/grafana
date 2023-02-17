@@ -7,5 +7,5 @@ import (
 )
 
 type Resolver interface {
-	List(_ context.Context) []plugins.PluginSource
+	List(context.Context) []plugins.PluginSource
 }

@@ -3,7 +3,6 @@ package finder
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -18,11 +17,9 @@ type HTTP struct {
 	log log.Logger
 }
 
-func newRemote() *HTTP {
-	return &HTTP{log: log.New("plugin.remote.finder")}
+func newRemote(logger log.Logger) *HTTP {
+	return &HTTP{log: logger.New("remote")}
 }
-
-var errSkipPlugin = errors.New("skip plugin")
 
 func (h *HTTP) Find(_ context.Context, pluginPaths ...string) ([]*plugins.FoundBundle, error) {
 	if len(pluginPaths) == 0 {

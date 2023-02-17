@@ -75,20 +75,3 @@ func (s *Service) pluginCDNURLs(ps map[string]map[string]string) []string {
 	}
 	return pluginCDNURLs
 }
-
-// cdnEnabledPluginPaths provides a list of URLs for plugins that are marked as CDN enabled via the config
-func (s *Service) cdnEnabledPluginPaths(ps map[string]map[string]string) []string {
-	var cdnEnabledPaths []string
-	for pluginID, kv := range ps {
-		// TODO determine versioning pattern
-		if s.cdnService.PluginSupported(pluginID) && kv["version"] != "" {
-			base, err := s.cdnService.AssetURL(pluginID, kv["version"], "")
-			if err != nil {
-				s.log.Warn("....")
-				continue
-			}
-			cdnEnabledPaths = append(cdnEnabledPaths, base)
-		}
-	}
-	return cdnEnabledPaths
-}
