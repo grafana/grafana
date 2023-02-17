@@ -43,9 +43,6 @@ func (h *HTTP) Find(_ context.Context, pluginPaths ...string) ([]*plugins.FoundB
 
 		jd, err := h.fetchPlugin(path)
 		if err != nil {
-			if errors.Is(err, errSkipPlugin) {
-				continue
-			}
 			return nil, err
 		}
 
@@ -61,10 +58,8 @@ func (h *HTTP) Find(_ context.Context, pluginPaths ...string) ([]*plugins.FoundB
 		for _, plugin := range data.Dependencies.Plugins {
 			jd, err := h.fetchPlugin(plugin.ID) // get plugin CDN path given plugin ID + version
 			if err != nil {
-				if errors.Is(err, errSkipPlugin) {
-					continue
-				}
-				return nil, err
+				h.log.Error("Could not fetch plugin dependency", "err", err)
+				continue
 			}
 
 			children[key.id] = &plugins.FoundPlugin{
@@ -99,13 +94,13 @@ func (h *HTTP) fetchPlugin(path string) (plugins.JSONData, error) {
 	_, err := url.Parse(path)
 	if err != nil {
 		h.log.Warn("Skipping finding plugins as path is invalid URL", "path", path)
-		return plugins.JSONData{}, errSkipPlugin
+		return plugins.JSONData{}, err
 	}
 
 	u, err := url.JoinPath(path, "plugin.json")
 	if err != nil {
 		h.log.Warn("Skipping finding plugins as path is invalid URL", "path", path)
-		return plugins.JSONData{}, errSkipPlugin
+		return plugins.JSONData{}, err
 	}
 
 	// It's safe to ignore gosec warning G107 since the path comes from the Grafana configuration and is also
@@ -114,19 +109,22 @@ func (h *HTTP) fetchPlugin(path string) (plugins.JSONData, error) {
 	resp, err := http.Get(u)
 	if err != nil {
 		h.log.Warn("Error occurred when fetching plugin.json", "path", path, "err", err)
-		return plugins.JSONData{}, errSkipPlugin
+		return plugins.JSONData{}, err
 	}
 
-	if resp.StatusCode/100 == http.StatusNotFound {
-		h.log.Warn("Could not find plugin.json", "path", path)
-		return plugins.JSONData{}, fmt.Errorf("could not find plugin.json at %s", path)
+	if resp.StatusCode == http.StatusNotFound {
+		return plugins.JSONData{}, fmt.Errorf("plugin.json not found")
+	}
+
+	if resp.StatusCode/100 != 2 {
+		return plugins.JSONData{}, fmt.Errorf("could not retrieve plugin.json")
 	}
 
 	var jd plugins.JSONData
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		h.log.Warn("Error occurred when reading response body", "path", path, "err", err)
-		return plugins.JSONData{}, errSkipPlugin
+		return plugins.JSONData{}, err
 	}
 	err = json.Unmarshal(body, &jd)
 	if err != nil {
