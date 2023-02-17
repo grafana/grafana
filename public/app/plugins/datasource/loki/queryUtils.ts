@@ -1,7 +1,14 @@
 import { SyntaxNode } from '@lezer/common';
 import { escapeRegExp } from 'lodash';
 
-import { ArrayVector, DataQueryResponse, DataQueryResponseData, Field, QueryResultMetaStat } from '@grafana/data';
+import {
+  ArrayVector,
+  DataFrame,
+  DataQueryResponse,
+  DataQueryResponseData,
+  Field,
+  QueryResultMetaStat,
+} from '@grafana/data';
 import {
   parser,
   LineFilter,
@@ -330,7 +337,7 @@ export function combineResponses(currentResult: DataQueryResponse | null, newRes
   return currentResult;
 }
 
-function combineFrames(dest: DataQueryResponseData, source: DataQueryResponseData) {
+function combineFrames(dest: DataFrame, source: DataFrame) {
   const totalFields = dest.fields.length;
   for (let i = 0; i < totalFields; i++) {
     dest.fields[i].values = new ArrayVector(
@@ -341,7 +348,7 @@ function combineFrames(dest: DataQueryResponseData, source: DataQueryResponseDat
   combineMetadata(dest, source);
 }
 
-function combineMetadata(dest: DataQueryResponseData = {}, source: DataQueryResponseData = {}) {
+function combineMetadata(dest: DataFrame, source: DataFrame) {
   if (!source.meta?.stats) {
     return;
   }
@@ -353,7 +360,7 @@ function combineMetadata(dest: DataQueryResponseData = {}, source: DataQueryResp
     return;
   }
   dest.meta.stats.forEach((destStat: QueryResultMetaStat, i: number) => {
-    const sourceStat = source.meta.stats?.find(
+    const sourceStat = source.meta?.stats?.find(
       (sourceStat: QueryResultMetaStat) => destStat.displayName === sourceStat.displayName
     );
     if (sourceStat) {
