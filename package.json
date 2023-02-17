@@ -401,7 +401,7 @@
     "regenerator-runtime": "0.13.10",
     "reselect": "4.1.6",
     "rst2html": "github:thoward/rst2html#990cb89f2a300cdd9151790be377c4c0840df809",
-    "rxjs": "7.5.7",
+    "rxjs": "7.8.0",
     "sass": "link:./public/sass",
     "selecto": "1.20.2",
     "semver": "7.3.8",

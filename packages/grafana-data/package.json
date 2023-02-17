@@ -51,7 +51,7 @@
     "papaparse": "5.3.2",
     "react-use": "17.4.0",
     "regenerator-runtime": "0.13.10",
-    "rxjs": "7.5.7",
+    "rxjs": "7.8.0",
     "tinycolor2": "1.4.2",
     "tslib": "2.4.1",
     "uplot": "1.6.24",
