@@ -1,4 +1,4 @@
-import { Subscriber, map, Observable } from 'rxjs';
+import { Subscriber, Observable, Subscription } from 'rxjs';
 
 import { DataQueryRequest, DataQueryResponse, dateTime, TimeRange } from '@grafana/data';
 import { LoadingState } from '@grafana/schema';
@@ -6,7 +6,7 @@ import { LoadingState } from '@grafana/schema';
 import { LokiDatasource } from './datasource';
 import { getRangeChunks as getLogsRangeChunks } from './logsTimeSplit';
 import { getRangeChunks as getMetricRangeChunks } from './metricTimeSplit';
-import { combineResponses, isLogsQuery, resultLimitReached } from './queryUtils';
+import { combineResponses, isLogsQuery } from './queryUtils';
 import { LokiQuery } from './types';
 
 /**
@@ -56,6 +56,36 @@ export function partitionTimeRange(
   });
 }
 
+/**
+ * Based in the state of the current response, if any, adjust target parameters such as `maxLines`.
+ * For `maxLines`, we will update it as `maxLines - current amount of lines`.
+ * At the end, we will filter the targets that don't need to be executed in the next request batch,
+ * becasue, for example, the `maxLines` have been reached.
+ */
+
+function adjustTargetsFromResponseState(targets: LokiQuery[], response: DataQueryResponse | null): LokiQuery[] {
+  if (!response) {
+    return targets;
+  }
+
+  return targets
+    .map((target) => {
+      if (!target.maxLines || !isLogsQuery(target.expr)) {
+        return target;
+      }
+      const targetFrame = response.data.find((frame) => frame.refId === target.refId);
+      if (!targetFrame) {
+        return target;
+      }
+      const updatedMaxLines = target.maxLines - targetFrame.length;
+      return {
+        ...target,
+        maxLines: updatedMaxLines < 0 ? 0 : updatedMaxLines,
+      };
+    })
+    .filter((target) => target.maxLines === undefined || target.maxLines > 0);
+}
+
 export function runPartitionedQuery(datasource: LokiDatasource, request: DataQueryRequest<LokiQuery>) {
   let mergedResponse: DataQueryResponse | null;
   const queries = request.targets.filter((query) => !query.hide);
@@ -69,38 +99,64 @@ export function runPartitionedQuery(datasource: LokiDatasource, request: DataQue
   );
   const totalRequests = partition.length;
 
+  let shouldStop = false;
+  let subquerySubsciption: Subscription | null = null;
   const runNextRequest = (subscriber: Subscriber<DataQueryResponse>, requestN: number) => {
+    if (shouldStop) {
+      subscriber.complete();
+      return;
+    }
+
     const requestId = `${request.requestId}_${requestN}`;
     const range = partition[requestN - 1];
-    datasource
-      .runQuery({ ...request, range, requestId })
-      .pipe(
-        // in case of an empty query, this is somehow run twice. `share()` is no workaround here as the observable is generated from `of()`.
-        map((partialResponse) => {
-          mergedResponse = combineResponses(mergedResponse, partialResponse);
-          return mergedResponse;
-        })
-      )
-      .subscribe({
-        next: (response) => {
-          if (requestN > 1 && resultLimitReached(request, response) === false) {
-            response.state = LoadingState.Streaming;
-            subscriber.next(response);
-            runNextRequest(subscriber, requestN - 1);
-            return;
-          }
-          response.state = LoadingState.Done;
-          subscriber.next(response);
-          subscriber.complete();
-        },
-        error: (error) => {
-          subscriber.error(error);
-        },
-      });
+    const targets = adjustTargetsFromResponseState(request.targets, mergedResponse);
+
+    const done = (response: DataQueryResponse) => {
+      response.state = LoadingState.Done;
+      subscriber.next(response);
+      subscriber.complete();
+    };
+
+    const nextRequest = () => {
+      mergedResponse = mergedResponse || { data: [] };
+      if (requestN > 1) {
+        mergedResponse.state = LoadingState.Streaming;
+        subscriber.next(mergedResponse);
+        runNextRequest(subscriber, requestN - 1);
+        return;
+      }
+      done(mergedResponse);
+    };
+
+    if (!targets.length && mergedResponse) {
+      done(mergedResponse);
+      return;
+    }
+
+    subquerySubsciption = datasource.runQuery({ ...request, range, requestId, targets }).subscribe({
+      next: (partialResponse) => {
+        if (partialResponse.error) {
+          subscriber.error(partialResponse.error);
+        }
+        mergedResponse = combineResponses(mergedResponse, partialResponse);
+      },
+      complete: () => {
+        nextRequest();
+      },
+      error: (error) => {
+        subscriber.error(error);
+      },
+    });
   };
 
   const response = new Observable<DataQueryResponse>((subscriber) => {
     runNextRequest(subscriber, totalRequests);
+    return () => {
+      shouldStop = true;
+      if (subquerySubsciption != null) {
+        subquerySubsciption.unsubscribe();
+      }
+    };
   });
 
   return response;

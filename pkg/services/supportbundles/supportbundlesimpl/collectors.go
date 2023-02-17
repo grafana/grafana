@@ -51,7 +51,7 @@ func basicCollector(cfg *setting.Cfg) supportbundles.Collector {
 			loc, _ := time.LoadLocation("UTC")
 			now := collectionDate.In(loc)
 
-			data, err := json.Marshal(basicInfo{
+			info := basicInfo{
 				Version:         cfg.BuildVersion,
 				Commit:          cfg.BuildCommit,
 				CollectionDate:  now,
@@ -69,7 +69,8 @@ func basicCollector(cfg *setting.Cfg) supportbundles.Collector {
 				GoOS:            runtime.GOOS,
 				GoArch:          runtime.GOARCH,
 				GoCompiler:      runtime.Compiler,
-			})
+			}
+			data, err := json.MarshalIndent(info, "", " ")
 			if err != nil {
 				return nil, err
 			}
@@ -91,7 +92,7 @@ func settingsCollector(settings setting.Provider) supportbundles.Collector {
 		Default:           true,
 		Fn: func(ctx context.Context) (*supportbundles.SupportItem, error) {
 			current := settings.Current()
-			data, err := json.Marshal(current)
+			data, err := json.MarshalIndent(current, "", " ")
 			if err != nil {
 				return nil, err
 			}

@@ -1,7 +1,7 @@
 import { SyntaxNode } from '@lezer/common';
 import { escapeRegExp } from 'lodash';
 
-import { DataQueryRequest, DataQueryResponse, DataQueryResponseData, QueryResultMetaStat } from '@grafana/data';
+import { ArrayVector, DataQueryResponse, DataQueryResponseData, Field, QueryResultMetaStat } from '@grafana/data';
 import {
   parser,
   LineFilter,
@@ -315,13 +315,13 @@ export function requestSupportsPartitioning(allQueries: LokiQuery[]) {
 
 export function combineResponses(currentResult: DataQueryResponse | null, newResult: DataQueryResponse) {
   if (!currentResult) {
-    return newResult;
+    return cloneQueryResponse(newResult);
   }
 
   newResult.data.forEach((newFrame) => {
     const currentFrame = currentResult.data.find((frame) => frame.name === newFrame.name);
     if (!currentFrame) {
-      currentResult.data.push(newFrame);
+      currentResult.data.push(cloneDataFrame(newFrame));
       return;
     }
     combineFrames(currentFrame, newFrame);
@@ -333,7 +333,9 @@ export function combineResponses(currentResult: DataQueryResponse | null, newRes
 function combineFrames(dest: DataQueryResponseData, source: DataQueryResponseData) {
   const totalFields = dest.fields.length;
   for (let i = 0; i < totalFields; i++) {
-    dest.fields[i].values.buffer = [].concat.apply(source.fields[i].values.buffer, dest.fields[i].values.buffer);
+    dest.fields[i].values = new ArrayVector(
+      [].concat.apply(source.fields[i].values.toArray(), dest.fields[i].values.toArray())
+    );
   }
   dest.length += source.length;
   combineMetadata(dest, source);
@@ -361,23 +363,22 @@ function combineMetadata(dest: DataQueryResponseData = {}, source: DataQueryResp
 }
 
 /**
- * Checks if the current response has reached the requested amount of results or not.
- * For log queries, we will ensure that the current amount of results doesn't go beyond `maxLines`.
+ * Deep clones a DataQueryResponse
  */
-export function resultLimitReached(request: DataQueryRequest<LokiQuery>, result: DataQueryResponse) {
-  const logRequests = request.targets.filter((target) => isLogsQuery(target.expr));
+export function cloneQueryResponse(response: DataQueryResponse): DataQueryResponse {
+  const newResponse = {
+    ...response,
+    data: response.data.map(cloneDataFrame),
+  };
+  return newResponse;
+}
 
-  if (logRequests.length === 0) {
-    return false;
-  }
-
-  for (const request of logRequests) {
-    for (const frame of result.data) {
-      if (request.maxLines && frame?.fields[0].values.length >= request.maxLines) {
-        return true;
-      }
-    }
-  }
-
-  return false;
+function cloneDataFrame(frame: DataQueryResponseData): DataQueryResponseData {
+  return {
+    ...frame,
+    fields: frame.fields.map((field: Field<unknown, ArrayVector>) => ({
+      ...field,
+      values: new ArrayVector(field.values.buffer),
+    })),
+  };
 }

@@ -1,8 +1,6 @@
-import { getQueryOptions } from 'test/helpers/getQueryOptions';
+import { ArrayVector, DataQueryResponse } from '@grafana/data';
 
-import { ArrayVector, DataQueryResponse, FieldType } from '@grafana/data';
-
-import { logFrameA, logFrameB, metricFrameA, metricFrameB } from './mocks';
+import { getMockFrames } from './mocks';
 import {
   getHighlighterExpressionsFromQuery,
   getNormalizedLokiQuery,
@@ -13,8 +11,8 @@ import {
   parseToNodeNamesArray,
   getParserFromQuery,
   obfuscate,
-  resultLimitReached,
   combineResponses,
+  cloneQueryResponse,
 } from './queryUtils';
 import { LokiQuery, LokiQueryType } from './types';
 
@@ -300,54 +298,21 @@ describe('getParserFromQuery', () => {
   });
 });
 
-describe('resultLimitReached', () => {
-  const result = {
-    data: [
-      {
-        name: 'test',
-        fields: [
-          {
-            name: 'Time',
-            type: FieldType.time,
-            config: {},
-            values: new ArrayVector([1, 2]),
-          },
-          {
-            name: 'Line',
-            type: FieldType.string,
-            config: {},
-            values: new ArrayVector(['line1', 'line2']),
-          },
-        ],
-        length: 2,
-      },
-    ],
+describe('cloneQueryResponse', () => {
+  const { logFrameA } = getMockFrames();
+  const responseA: DataQueryResponse = {
+    data: [logFrameA],
   };
-  it('returns false for non-logs queries', () => {
-    const request = getQueryOptions<LokiQuery>({
-      targets: [{ expr: 'count_over_time({a="b"}[1m])', refId: 'A', maxLines: 0 }],
-    });
-
-    expect(resultLimitReached(request, result)).toBe(false);
-  });
-  it('returns false when the limit is not reached', () => {
-    const request = getQueryOptions<LokiQuery>({
-      targets: [{ expr: '{a="b"}', refId: 'A', maxLines: 3 }],
-    });
-
-    expect(resultLimitReached(request, result)).toBe(false);
-  });
-  it('returns true when the limit is reached', () => {
-    const request = getQueryOptions<LokiQuery>({
-      targets: [{ expr: '{a="b"}', refId: 'A', maxLines: 2 }],
-    });
-
-    expect(resultLimitReached(request, result)).toBe(true);
+  it('clones query responses', () => {
+    const clonedA = cloneQueryResponse(responseA);
+    expect(clonedA).not.toBe(responseA);
+    expect(clonedA).toEqual(clonedA);
   });
 });
 
 describe('combineResponses', () => {
   it('combines logs frames', () => {
+    const { logFrameA, logFrameB } = getMockFrames();
     const responseA: DataQueryResponse = {
       data: [logFrameA],
     };
@@ -415,6 +380,7 @@ describe('combineResponses', () => {
   });
 
   it('combines metric frames', () => {
+    const { metricFrameA, metricFrameB } = getMockFrames();
     const responseA: DataQueryResponse = {
       data: [metricFrameA],
     };
@@ -451,5 +417,58 @@ describe('combineResponses', () => {
         },
       ],
     });
+  });
+
+  it('combines and identifies new frames in the response', () => {
+    const { metricFrameA, metricFrameB, metricFrameC } = getMockFrames();
+    const responseA: DataQueryResponse = {
+      data: [metricFrameA],
+    };
+    const responseB: DataQueryResponse = {
+      data: [metricFrameB, metricFrameC],
+    };
+    expect(combineResponses(responseA, responseB)).toEqual({
+      data: [
+        {
+          fields: [
+            {
+              config: {},
+              name: 'Time',
+              type: 'time',
+              values: new ArrayVector([1000000, 2000000, 3000000, 4000000]),
+            },
+            {
+              config: {},
+              name: 'Value',
+              type: 'number',
+              values: new ArrayVector([6, 7, 5, 4]),
+            },
+          ],
+          length: 4,
+          meta: {
+            stats: [
+              {
+                displayName: 'Ingester: total reached',
+                value: 3,
+              },
+            ],
+          },
+          refId: 'A',
+        },
+        metricFrameC,
+      ],
+    });
+  });
+
+  it('combines frames in a new response instance', () => {
+    const { metricFrameA, metricFrameB } = getMockFrames();
+    const responseA: DataQueryResponse = {
+      data: [metricFrameA],
+    };
+    const responseB: DataQueryResponse = {
+      data: [metricFrameB],
+    };
+    expect(combineResponses(null, responseA)).not.toBe(responseA);
+    expect(combineResponses(null, responseB)).not.toBe(responseB);
   });
 });
