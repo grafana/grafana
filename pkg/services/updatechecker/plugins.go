@@ -60,7 +60,7 @@ func (s *PluginsService) IsDisabled() bool {
 }
 
 func (s *PluginsService) Run(ctx context.Context) error {
-	s.checkForUpdates(ctx)
+	s.instrumentedCheckForUpdates(ctx)
 
 	ticker := time.NewTicker(time.Minute * 10)
 	run := true
@@ -68,7 +68,7 @@ func (s *PluginsService) Run(ctx context.Context) error {
 	for run {
 		select {
 		case <-ticker.C:
-			s.checkForUpdates(ctx)
+			s.instrumentedCheckForUpdates(ctx)
 		case <-ctx.Done():
 			run = false
 		}
