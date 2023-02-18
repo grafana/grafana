@@ -46,23 +46,38 @@ func (t *FakeSpan) IsEnded() bool {
 }
 
 func (t *FakeSpan) SetAttributes(key string, value interface{}, kv attribute.KeyValue) {
+	if t.IsEnded() {
+		panic("span already ended")
+	}
 	t.Attributes[kv.Key] = kv.Value
 }
 
 func (t *FakeSpan) SetName(name string) {
+	if t.IsEnded() {
+		panic("span already ended")
+	}
 	t.Name = name
 }
 
 func (t *FakeSpan) SetStatus(code codes.Code, description string) {
+	if t.IsEnded() {
+		panic("span already ended")
+	}
 	t.StatusCode = code
 	t.Description = description
 }
 
 func (t *FakeSpan) RecordError(err error, options ...trace.EventOption) {
+	if t.IsEnded() {
+		panic("span already ended")
+	}
 	t.Err = err
 }
 
 func (t *FakeSpan) AddEvents(keys []string, values []EventValue) {
+	if t.IsEnded() {
+		panic("span already ended")
+	}
 	if len(keys) != len(values) {
 		panic("different number of keys and values")
 	}
