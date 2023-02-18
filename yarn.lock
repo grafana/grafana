@@ -4874,7 +4874,7 @@ __metadata:
     marked: 4.2.0
     moment: 2.29.4
     moment-timezone: 0.5.38
-    ol: 7.1.0
+    ol: 7.2.2
     papaparse: 5.3.2
     react: 17.0.2
     react-dom: 17.0.2
@@ -5359,7 +5359,7 @@ __metadata:
     mock-raf: 1.0.1
     moment: 2.29.4
     monaco-editor: 0.34.0
-    ol: 7.1.0
+    ol: 7.2.2
     prismjs: 1.29.0
     process: ^0.11.10
     rc-cascader: 3.8.0
@@ -21374,18 +21374,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"geotiff@npm:2.0.4":
-  version: 2.0.4
-  resolution: "geotiff@npm:2.0.4"
+"geotiff@npm:^2.0.7":
+  version: 2.0.7
+  resolution: "geotiff@npm:2.0.7"
   dependencies:
     "@petamoriken/float16": ^3.4.7
     lerc: ^3.0.0
-    lru-cache: ^6.0.0
     pako: ^2.0.4
     parse-headers: ^2.0.2
+    quick-lru: ^6.1.1
     web-worker: ^1.2.0
     xml-utils: ^1.0.2
-  checksum: 68d54ea7b9a8965287b20a7c30b5eb9552bd21ed341edfd65dfd424309b7d91fffb2dc474298f23bc2274ed8b34d1792812fa444385bd6000173d706de675169
+  checksum: d64bd3c3cf0342368899fe693059520e003a6610515760e6afe1cb4191397e5fc180591f2aa75729bb0283190eda0574e10e3da0241be2556cbedc5c50222f69
   languageName: node
   linkType: hard
 
@@ -22162,7 +22162,7 @@ __metadata:
     mutationobserver-shim: 0.3.7
     ngtemplate-loader: 2.1.0
     node-notifier: 10.0.1
-    ol: 7.1.0
+    ol: 7.2.2
     ol-ext: 4.0.3
     papaparse: 5.3.2
     pluralize: ^8.0.0
@@ -29400,26 +29400,26 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ol-mapbox-style@npm:9.1.0":
-  version: 9.1.0
-  resolution: "ol-mapbox-style@npm:9.1.0"
+"ol-mapbox-style@npm:^9.2.0":
+  version: 9.5.0
+  resolution: "ol-mapbox-style@npm:9.5.0"
   dependencies:
     "@mapbox/mapbox-gl-style-spec": ^13.23.1
     mapbox-to-css-font: ^2.4.1
-  checksum: 587a41456b76e1bd592b7594c288661ee8c651e9f1cd038a53ff5c01654b68081911088a6feba6ee3ac133f34072d629f171dbf35cd2f13dab3908d519268978
+  checksum: b85103c0d8e2a6338ce90aedaccf1597a768f9e06baee13b41903868712639e4516f662d88ee5a3f8f2e4b84788f5a5700190fe9aa244bdd67758fd8416a0e31
   languageName: node
   linkType: hard
 
-"ol@npm:7.1.0":
-  version: 7.1.0
-  resolution: "ol@npm:7.1.0"
+"ol@npm:7.2.2":
+  version: 7.2.2
+  resolution: "ol@npm:7.2.2"
   dependencies:
     earcut: ^2.2.3
-    geotiff: 2.0.4
-    ol-mapbox-style: 9.1.0
+    geotiff: ^2.0.7
+    ol-mapbox-style: ^9.2.0
     pbf: 3.2.1
     rbush: ^3.0.1
-  checksum: 0935be63be953d29e142ea38191e0161c58ec75375bd60640f7e54c4c831dd5d0401c55f4144ede159e90c0bb3c3e6bc7a71c1f82e640208df6dfc9325da5abd
+  checksum: 025b58ad79d8b3f1036632306cc2f38fa02aa6e18504916ec4242b5b4f5672d8068d8f45190896241cb1975d331f993b512b60b667e92e9fa126bfbb6b87557d
   languageName: node
   linkType: hard
 
@@ -31952,6 +31952,13 @@ __metadata:
   version: 4.0.1
   resolution: "quick-lru@npm:4.0.1"
   checksum: bea46e1abfaa07023e047d3cf1716a06172c4947886c053ede5c50321893711577cb6119360f810cc3ffcd70c4d7db4069c3cee876b358ceff8596e062bd1154
+  languageName: node
+  linkType: hard
+
+"quick-lru@npm:^6.1.1":
+  version: 6.1.1
+  resolution: "quick-lru@npm:6.1.1"
+  checksum: a9c75bf1d208c1d207590e10403a75d037f9faf7857f2e0d38c294d92b40d8b400776bcb5d4dd516baa84e6f5e3baf2a16cf405e6fedc18107922f46aeae83ee
   languageName: node
   linkType: hard
 
