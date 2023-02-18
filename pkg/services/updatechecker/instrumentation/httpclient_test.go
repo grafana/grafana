@@ -27,7 +27,7 @@ func TestHTTPClientTracing(t *testing.T) {
 
 	require.Len(t, tracer.Spans, 1, "tracer must have started 1 span")
 	span := tracer.Spans[0]
-	assert.True(t, span.Ended, "span should hae ended")
+	assert.True(t, span.IsEnded(), "span should hae ended")
 	assert.Equal(t, codes.Unset, span.StatusCode, "span should have unset status code")
 	assert.NoError(t, span.Err, "span should have no error")
 }

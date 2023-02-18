@@ -91,7 +91,7 @@ func TestTracingMiddleware(t *testing.T) {
 				require.NoError(t, err)
 				require.Len(t, tracer.Spans, 1, "must have 1 span")
 				span := tracer.Spans[0]
-				assert.True(t, span.Ended, "span should be ended")
+				assert.True(t, span.IsEnded(), "span should be ended")
 				assert.NoError(t, span.Err, "span should not have an error")
 				assert.Equal(t, codes.Unset, span.StatusCode, "span should not have a status code")
 			})
@@ -111,7 +111,7 @@ func TestTracingMiddleware(t *testing.T) {
 				require.Error(t, err)
 				require.Len(t, tracer.Spans, 1, "must have 1 span")
 				span := tracer.Spans[0]
-				assert.True(t, span.Ended, "span should be ended")
+				assert.True(t, span.IsEnded(), "span should be ended")
 				assert.Error(t, span.Err, "span should contain an error")
 				assert.Equal(t, codes.Error, span.StatusCode, "span code should be error")
 			})

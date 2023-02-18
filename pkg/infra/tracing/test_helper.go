@@ -18,7 +18,7 @@ func InitializeTracerForTest() Tracer {
 type FakeSpan struct {
 	Name string
 
-	Ended       bool
+	ended       bool
 	Attributes  map[attribute.Key]attribute.Value
 	StatusCode  codes.Code
 	Description string
@@ -35,7 +35,14 @@ func newFakeSpan(name string) *FakeSpan {
 }
 
 func (t *FakeSpan) End() {
-	t.Ended = true
+	if t.ended {
+		panic("End already called")
+	}
+	t.ended = true
+}
+
+func (t *FakeSpan) IsEnded() bool {
+	return t.ended
 }
 
 func (t *FakeSpan) SetAttributes(key string, value interface{}, kv attribute.KeyValue) {
