@@ -486,7 +486,7 @@ func (s *Service) CreateServiceAccount(ctx context.Context, cmd *user.CreateUser
 
 	err = s.store.LoginConflict(ctx, cmd.Login, cmd.Email, s.cfg.CaseInsensitiveLogin)
 	if err != nil {
-		return nil, user.ErrUserAlreadyExists
+		return nil, err
 	}
 
 	// create user
