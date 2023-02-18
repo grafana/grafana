@@ -176,7 +176,7 @@ import (
 // create silence
 //
 //     Responses:
-//       201: postSilencesOKBody
+//       200: postSilencesOKBody
 //       400: ValidationError
 
 // swagger:route POST /api/alertmanager/{DatasourceUID}/api/v2/silences alertmanager RouteCreateSilence
@@ -184,7 +184,7 @@ import (
 // create silence
 //
 //     Responses:
-//       201: postSilencesOKBody
+//       200: postSilencesOKBody
 //       400: ValidationError
 //       404: NotFound
 

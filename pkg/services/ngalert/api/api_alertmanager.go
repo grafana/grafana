@@ -87,7 +87,7 @@ func (srv AlertmanagerSrv) RouteCreateSilence(c *contextmodel.ReqContext, postab
 
 		return ErrResp(http.StatusInternalServerError, err, "failed to create silence")
 	}
-	return response.JSON(http.StatusCreated, apimodels.PostSilencesOKBody{
+	return response.JSON(http.StatusOK, apimodels.PostSilencesOKBody{
 		SilenceID: silenceID,
 	})
 }
