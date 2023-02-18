@@ -8,12 +8,13 @@ import {
   DataHoverClearEvent,
   DataFrame,
   TIME_SERIES_TIME_FIELD_NAME,
+  standardEditorsRegistry,
+  FieldConfigPropertyItem,
+  FieldColor,
+  FieldColorConfigSettings,
 } from '@grafana/data';
 
-import {
-  MapLayerOptions,
-  FrameGeometrySourceMode,
-} from '@grafana/schema';
+import { MapLayerOptions, FrameGeometrySourceMode } from '@grafana/schema';
 
 import Map from 'ol/Map';
 import { FeatureLike } from 'ol/Feature';
@@ -40,6 +41,8 @@ import { getStyleDimension } from '../../utils/utils';
 export interface RouteConfig {
   style: StyleConfig;
   arrow?: 0 | 1 | -1;
+  layerColorScheme?: boolean;
+  fieldColor?: FieldConfigPropertyItem<any, FieldColor | undefined, FieldColorConfigSettings>;
 }
 
 const defaultOptions: RouteConfig = {
@@ -49,6 +52,7 @@ const defaultOptions: RouteConfig = {
     lineWidth: 2,
   },
   arrow: 0,
+  layerColorScheme: false,
 };
 
 export const ROUTE_LAYER_ID = 'route';
@@ -87,6 +91,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
     };
 
     const style = await getStyleConfigState(config.style);
+    console.log(options);
     const location = await getLocationMatchers(options.location);
     const source = new FrameVectorSource(location);
     const vectorLayer = new VectorLayer({ source });
@@ -267,7 +272,24 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
               ],
             },
             defaultValue: defaultOptions.arrow,
+          })
+          .addBooleanSwitch({
+            path: 'config.layerColorScheme',
+            name: 'Layer Color Scheme',
+            defaultValue: false,
           });
+        if (config.layerColorScheme) {
+          builder.addCustomEditor({
+            id: 'config.fieldColor',
+            path: 'config.fieldColor',
+            name: 'Color scheme',
+            editor: standardEditorsRegistry.get('fieldColor').editor,
+            settings: {
+              byValueSupport: true,
+              preferThresholdsMode: true,
+            },
+          });
+        }
       },
     };
   },
