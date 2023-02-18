@@ -146,6 +146,12 @@ var (
 	// MStatActiveUsers is a metric number of active users
 	MStatActiveUsers prometheus.Gauge
 
+	// MStatDailyActiveUsers is a metric number of daily active users
+	MStatDailyActiveUsers prometheus.Gauge
+
+	// MStatMonthlyActiveUsers is a metric number of monthly active users
+	MStatMonthlyActiveUsers prometheus.Gauge
+
 	// MStatTotalOrgs is a metric total amount of orgs
 	MStatTotalOrgs prometheus.Gauge
 
@@ -195,6 +201,18 @@ var (
 
 	// MStatTotalPublicDashboards is a metric total amount of public dashboards
 	MStatTotalPublicDashboards prometheus.Gauge
+
+	// StatsTotalAuthTokens is a metric total amount of auth tokens
+	StatsTotalAuthTokens prometheus.Gauge
+
+	// StatsTotalAPIKeys is a metric total amount of api keys
+	StatsTotalAPIKeys prometheus.Gauge
+
+	// StatsTotalActiveSessions is a metric total amount of active sessions
+	StatsTotalActiveSessions prometheus.Gauge
+
+	// StatsTotalDailyActiveSessions is a metric total amount of daily active sessions
+	StatsTotalDailyActiveSessions prometheus.Gauge
 )
 
 func init() {
@@ -451,6 +469,18 @@ func init() {
 		Namespace: ExporterName,
 	})
 
+	MStatDailyActiveUsers = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_daily_active_users",
+		Help:      "number of daily active users",
+		Namespace: ExporterName,
+	})
+
+	MStatMonthlyActiveUsers = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_monthly_active_users",
+		Help:      "number of monthly active users",
+		Namespace: ExporterName,
+	})
+
 	MStatTotalOrgs = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_total_orgs",
 		Help:      "total amount of orgs",
@@ -570,6 +600,27 @@ func init() {
 		Help:      "total amount of public dashboards",
 		Namespace: ExporterName,
 	})
+
+	StatsTotalAuthTokens = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_total_auth_tokens",
+		Help:      "total amount of auth tokens",
+		Namespace: ExporterName,
+	})
+	StatsTotalAPIKeys = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_total_api_keys",
+		Help:      "total amount of api keys",
+		Namespace: ExporterName,
+	})
+	StatsTotalActiveSessions = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_active_sessions",
+		Help:      "total amount of active sessions",
+		Namespace: ExporterName,
+	})
+	StatsTotalDailyActiveSessions = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name:      "stat_daily_active_sessions",
+		Help:      "total amount of daily active sessions",
+		Namespace: ExporterName,
+	})
 }
 
 // SetBuildInformation sets the build information for this binary
@@ -662,6 +713,8 @@ func initMetricVars() {
 		MStatTotalFolders,
 		MStatTotalUsers,
 		MStatActiveUsers,
+		MStatDailyActiveUsers,
+		MStatMonthlyActiveUsers,
 		MStatTotalOrgs,
 		MStatTotalPlaylists,
 		StatsTotalViewers,
@@ -681,5 +734,9 @@ func initMetricVars() {
 		MStatTotalPublicDashboards,
 		MPublicDashboardRequestCount,
 		MPublicDashboardDatasourceQuerySuccess,
+		StatsTotalAuthTokens,
+		StatsTotalAPIKeys,
+		StatsTotalActiveSessions,
+		StatsTotalDailyActiveSessions,
 	)
 }

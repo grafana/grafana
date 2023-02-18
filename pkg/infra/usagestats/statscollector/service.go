@@ -313,6 +313,8 @@ func (s *Service) updateTotalStats(ctx context.Context) bool {
 	metrics.MStatTotalFolders.Set(float64(statsQuery.Result.Folders))
 	metrics.MStatTotalUsers.Set(float64(statsQuery.Result.Users))
 	metrics.MStatActiveUsers.Set(float64(statsQuery.Result.ActiveUsers))
+	metrics.MStatDailyActiveUsers.Set(float64(statsQuery.Result.DailyActiveUsers))
+	metrics.MStatMonthlyActiveUsers.Set(float64(statsQuery.Result.MonthlyActiveUsers))
 	metrics.MStatTotalPlaylists.Set(float64(statsQuery.Result.Playlists))
 	metrics.MStatTotalOrgs.Set(float64(statsQuery.Result.Orgs))
 	metrics.StatsTotalViewers.Set(float64(statsQuery.Result.Viewers))
@@ -326,6 +328,10 @@ func (s *Service) updateTotalStats(ctx context.Context) bool {
 	metrics.StatsTotalAlertRules.Set(float64(statsQuery.Result.AlertRules))
 	metrics.StatsTotalLibraryPanels.Set(float64(statsQuery.Result.LibraryPanels))
 	metrics.StatsTotalLibraryVariables.Set(float64(statsQuery.Result.LibraryVariables))
+	metrics.StatsTotalAuthTokens.Set(float64(statsQuery.Result.AuthTokens))
+	metrics.StatsTotalAPIKeys.Set(float64(statsQuery.Result.APIKeys))
+	metrics.StatsTotalActiveSessions.Set(float64(statsQuery.Result.ActiveSessions))
+	metrics.StatsTotalDailyActiveSessions.Set(float64(statsQuery.Result.DailyActiveSessions))
 
 	metrics.StatsTotalDataKeys.With(prometheus.Labels{"active": "true"}).Set(float64(statsQuery.Result.ActiveDataKeys))
 	inactiveDataKeys := statsQuery.Result.DataKeys - statsQuery.Result.ActiveDataKeys
