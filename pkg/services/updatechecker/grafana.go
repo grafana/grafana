@@ -81,9 +81,9 @@ func (s *GrafanaService) instrumentedCheckForUpdates(ctx context.Context) {
 		span.SetStatus(codes.Error, fmt.Sprintf("update check failed: %s", err))
 		span.RecordError(err)
 		ctxLogger.Error("Update check failed", "error", err)
-	} else {
-		ctxLogger.Debug("Update check succeeded")
+		return
 	}
+	ctxLogger.Debug("Update check succeeded")
 }
 
 func (s *GrafanaService) checkForUpdates(ctx context.Context) error {

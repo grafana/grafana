@@ -3,6 +3,7 @@ package updatechecker
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -95,22 +96,21 @@ func (s *PluginsService) HasUpdate(ctx context.Context, pluginID string) (string
 	return "", false
 }
 
-func (s *PluginsService) checkForUpdates(ctx context.Context) {
-	var err error
+func (s *PluginsService) instrumentedCheckForUpdates(ctx context.Context) {
 	ctx, span := s.tracer.Start(ctx, "updatechecker.PluginsService.checkForUpdates")
 	defer span.End()
-
 	ctxLogger := s.log.FromContext(ctx)
-	defer func() {
-		if err != nil {
-			span.SetStatus(codes.Error, "update check failed: "+err.Error())
-			span.RecordError(err)
-			ctxLogger.Debug("Update check failed")
-		} else {
-			ctxLogger.Debug("Update check succeeded")
-		}
-	}()
+	if err := s.checkForUpdates(ctx); err != nil {
+		span.SetStatus(codes.Error, fmt.Sprintf("update check failed: %s", err))
+		span.RecordError(err)
+		ctxLogger.Debug("Update check failed", "error", err)
+		return
+	}
+	ctxLogger.Debug("Update check succeeded")
+}
 
+func (s *PluginsService) checkForUpdates(ctx context.Context) error {
+	ctxLogger := s.log.FromContext(ctx)
 	ctxLogger.Debug("Checking for updates")
 	localPlugins := s.pluginsEligibleForVersionCheck(ctx)
 	requestURL := "https://grafana.com/api/plugins/versioncheck?" + url.Values{
@@ -119,8 +119,7 @@ func (s *PluginsService) checkForUpdates(ctx context.Context) {
 	}.Encode()
 	resp, err := s.httpClient.Get(ctx, requestURL)
 	if err != nil {
-		ctxLogger.Debug("Failed to get plugins repo from grafana.com", "error", err.Error())
-		return
+		return fmt.Errorf("failed to get plugins repo from grafana.com: %w", err)
 	}
 	defer func() {
 		err = resp.Body.Close()
@@ -131,8 +130,7 @@ func (s *PluginsService) checkForUpdates(ctx context.Context) {
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		ctxLogger.Debug("Update check failed, reading response from grafana.com", "error", err.Error())
-		return
+		return fmt.Errorf("failed to read response from grafana.com: %w", err)
 	}
 
 	type gcomPlugin struct {
@@ -142,8 +140,7 @@ func (s *PluginsService) checkForUpdates(ctx context.Context) {
 	var gcomPlugins []gcomPlugin
 	err = json.Unmarshal(body, &gcomPlugins)
 	if err != nil {
-		ctxLogger.Debug("Failed to unmarshal plugin repo, reading response from grafana.com", "error", err.Error())
-		return
+		return fmt.Errorf("failed to unmarshal plugin repo, reading response from grafana.com: %w", err)
 	}
 
 	availableUpdates := map[string]string{}
@@ -160,6 +157,8 @@ func (s *PluginsService) checkForUpdates(ctx context.Context) {
 		s.availableUpdates = availableUpdates
 		s.mutex.Unlock()
 	}
+
+	return nil
 }
 
 func canUpdate(v1, v2 string) bool {
