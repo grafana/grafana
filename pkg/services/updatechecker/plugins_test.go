@@ -168,7 +168,7 @@ func TestPluginUpdateChecker_checkForUpdates(t *testing.T) {
 			tracer: tracing.InitializeTracerForTest(),
 		}
 
-		svc.checkForUpdates(context.Background())
+		svc.instrumentedCheckForUpdates(context.Background())
 
 		require.Equal(t, 1, len(svc.availableUpdates))
 
