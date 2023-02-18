@@ -28,7 +28,7 @@ import VectorSource from 'ol/source/Vector';
 import { Fill, Stroke, Style, Circle } from 'ol/style';
 import Feature from 'ol/Feature';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
-import { LineString, SimpleGeometry } from 'ol/geom';
+import { LineString, Point, SimpleGeometry } from 'ol/geom';
 import FlowLine from 'ol-ext/style/FlowLine';
 import tinycolor from 'tinycolor2';
 import { getStyleDimension } from '../../utils/utils';
@@ -158,7 +158,26 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
                 j = i + 1;
               }
             }
-            //TODO: add case where no significant segments were found, perhaps add a point
+            // If no segments created, render a single point
+            if (styles.length === 0) {
+              const P = new Point(coordinates[0]);
+              const radius = ((dims.size && dims.size.get(0)) ?? style.base.size ?? 10) / 2;
+              const color = tinycolor(
+                theme.visualization.getColorByName((dims.color && dims.color.get(0)) ?? style.base.color)
+              )
+                .setAlpha(opacity)
+                .toString();
+              const ZoomOutCircle = new Style({
+                image: new Circle({
+                  radius: radius,
+                  fill: new Fill({
+                    color: color,
+                  }),
+                }),
+              });
+              ZoomOutCircle.setGeometry(P);
+              styles.push(ZoomOutCircle);
+            }
           }
           return styles;
         }
