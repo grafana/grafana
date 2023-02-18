@@ -3,6 +3,7 @@ package updatechecker
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -55,7 +56,7 @@ func (s *GrafanaService) IsDisabled() bool {
 }
 
 func (s *GrafanaService) Run(ctx context.Context) error {
-	s.checkForUpdates(ctx)
+	s.instrumentedCheckForUpdates(ctx)
 
 	ticker := time.NewTicker(time.Minute * 10)
 	run := true
@@ -63,7 +64,7 @@ func (s *GrafanaService) Run(ctx context.Context) error {
 	for run {
 		select {
 		case <-ticker.C:
-			s.checkForUpdates(ctx)
+			s.instrumentedCheckForUpdates(ctx)
 		case <-ctx.Done():
 			run = false
 		}
@@ -72,27 +73,25 @@ func (s *GrafanaService) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func (s *GrafanaService) checkForUpdates(ctx context.Context) {
-	var err error
+func (s *GrafanaService) instrumentedCheckForUpdates(ctx context.Context) {
 	ctx, span := s.tracer.Start(ctx, "updatechecker.GrafanaService.checkForUpdates")
 	defer span.End()
-
 	ctxLogger := s.log.FromContext(ctx)
-	defer func() {
-		if err != nil {
-			span.SetStatus(codes.Error, "update check failed: "+err.Error())
-			span.RecordError(err)
-			ctxLogger.Debug("Update check failed")
-		} else {
-			ctxLogger.Debug("Update check succeeded")
-		}
-	}()
+	if err := s.checkForUpdates(ctx); err != nil {
+		span.SetStatus(codes.Error, fmt.Sprintf("update check failed: %s", err))
+		span.RecordError(err)
+		ctxLogger.Error("Update check failed", "error", err)
+	} else {
+		ctxLogger.Debug("Update check succeeded")
+	}
+}
 
+func (s *GrafanaService) checkForUpdates(ctx context.Context) error {
+	ctxLogger := s.log.FromContext(ctx)
 	ctxLogger.Debug("Checking for updates")
 	resp, err := s.httpClient.Get(ctx, "https://raw.githubusercontent.com/grafana/grafana/main/latest.json")
 	if err != nil {
-		ctxLogger.Debug("Failed to get latest.json repo from github.com", "error", err)
-		return
+		return fmt.Errorf("failed to get latest.json repo from github.com: %w", err)
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
@@ -101,8 +100,7 @@ func (s *GrafanaService) checkForUpdates(ctx context.Context) {
 	}()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		ctxLogger.Debug("Update check failed, reading response from github.com", "error", err)
-		return
+		return fmt.Errorf("update check failed, reading response from github.com: %w", err)
 	}
 
 	type latestJSON struct {
@@ -112,8 +110,7 @@ func (s *GrafanaService) checkForUpdates(ctx context.Context) {
 	var latest latestJSON
 	err = json.Unmarshal(body, &latest)
 	if err != nil {
-		ctxLogger.Debug("Failed to unmarshal latest.json", "error", err)
-		return
+		return fmt.Errorf("failed to unmarshal latest.json: %w", err)
 	}
 
 	s.mutex.Lock()
@@ -131,6 +128,8 @@ func (s *GrafanaService) checkForUpdates(ctx context.Context) {
 	if err1 == nil && err2 == nil {
 		s.hasUpdate = currVersion.LessThan(latestVersion)
 	}
+
+	return nil
 }
 
 func (s *GrafanaService) UpdateAvailable() bool {
