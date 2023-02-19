@@ -4888,7 +4888,7 @@ __metadata:
     rollup-plugin-node-externals: ^5.0.0
     rxjs: 7.8.0
     sinon: 14.0.1
-    tinycolor2: 1.4.2
+    tinycolor2: 1.6.0
     tslib: 2.4.1
     typescript: 4.8.4
     uplot: 1.6.24
@@ -5402,7 +5402,7 @@ __metadata:
     storybook-addon-turbo-build: 1.1.0
     storybook-dark-mode: 2.0.4
     style-loader: 3.3.1
-    tinycolor2: 1.4.2
+    tinycolor2: 1.6.0
     tslib: 2.4.1
     typescript: 4.8.4
     uplot: 1.6.24
@@ -22219,7 +22219,7 @@ __metadata:
     test: "link:./public/test"
     testing-library-selector: 0.2.1
     tether-drop: "https://github.com/torkelo/drop"
-    tinycolor2: 1.4.2
+    tinycolor2: 1.6.0
     ts-jest: 29.0.3
     ts-loader: 9.3.1
     ts-node: 10.9.1
@@ -37012,10 +37012,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tinycolor2@npm:1.4.2":
-  version: 1.4.2
-  resolution: "tinycolor2@npm:1.4.2"
-  checksum: 57ed262e08815a4ab0ed933edafdbc6555a17081781766149813b44a080ecbe58b3ee281e81c0e75b42e4d41679f138cfa98eabf043f829e0683c04adb12c031
+"tinycolor2@npm:1.6.0":
+  version: 1.6.0
+  resolution: "tinycolor2@npm:1.6.0"
+  checksum: 6df4d07fceeedc0a878d7bac47e2cd47c1ceeb1078340a9eb8a295bc0651e17c750f73d47b3028d829f30b85c15e0572c0fd4142083e4c21a30a597e47f47230
   languageName: node
   linkType: hard
 
