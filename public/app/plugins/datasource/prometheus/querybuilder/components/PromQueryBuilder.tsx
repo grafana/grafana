@@ -3,7 +3,7 @@ import React, { useCallback, useState } from 'react';
 import { DataSourceApi, PanelData, SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { Button, Input } from '@grafana/ui';
+import { Input } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../datasource';
 import { getMetadataString } from '../../language_provider';
