@@ -52,7 +52,7 @@
     "react-use": "17.4.0",
     "regenerator-runtime": "0.13.10",
     "rxjs": "7.8.0",
-    "tinycolor2": "1.4.2",
+    "tinycolor2": "1.6.0",
     "tslib": "2.4.1",
     "uplot": "1.6.24",
     "xss": "1.0.14"
