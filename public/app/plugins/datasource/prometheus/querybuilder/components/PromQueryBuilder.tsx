@@ -1,11 +1,14 @@
 import React, { useCallback, useState } from 'react';
 
 import { DataSourceApi, PanelData, SelectableValue } from '@grafana/data';
-import { EditorRow } from '@grafana/experimental';
+import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/experimental';
+import { config } from '@grafana/runtime';
+import { Button, Input } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../datasource';
 import { getMetadataString } from '../../language_provider';
 import promqlGrammar from '../../promql';
+import { MetricEncyclopediaModal } from '../MetricEncyclopediaModal';
 import { promQueryModeller } from '../PromQueryModeller';
 import { buildVisualQueryFromString } from '../parsing';
 import { OperationExplainedBox } from '../shared/OperationExplainedBox';
@@ -35,6 +38,7 @@ export interface Props {
 export const PromQueryBuilder = React.memo<Props>((props) => {
   const { datasource, query, onChange, onRunQuery, data, showExplain } = props;
   const [highlightedOp, setHighlightedOp] = useState<QueryBuilderOperation | undefined>();
+  const [metricEncyclopediaModalOpen, setMetricEncyclopediaModalOpen] = useState(false);
   const onChangeLabels = (labels: QueryBuilderLabelFilter[]) => {
     onChange({ ...query, labels });
   };
@@ -202,17 +206,39 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
   }, [datasource, query, withTemplateVariableOptions]);
 
   const lang = { grammar: promqlGrammar, name: 'promql' };
-
+  const MetricEncyclopedia = config.featureToggles.prometheusMetricEncyclopedia;
+  // debugger
   return (
     <>
       <EditorRow>
-        <MetricSelect
-          query={query}
-          onChange={onChange}
-          onGetMetrics={onGetMetrics}
-          datasource={datasource}
-          labelsFilters={query.labels}
-        />
+        {MetricEncyclopedia ? (
+          <>
+            <EditorFieldGroup>
+              <EditorField label="Metric">
+                <Input
+                  value={query.metric}
+                  placeholder="Select metric"
+                  onClick={() => setMetricEncyclopediaModalOpen((prevValue) => !prevValue)}
+                />
+              </EditorField>
+            </EditorFieldGroup>
+            <MetricEncyclopediaModal
+              datasource={datasource}
+              isOpen={metricEncyclopediaModalOpen}
+              onClose={() => setMetricEncyclopediaModalOpen(false)}
+              query={query}
+              onChange={onChange}
+            />
+          </>
+        ) : (
+          <MetricSelect
+            query={query}
+            onChange={onChange}
+            onGetMetrics={onGetMetrics}
+            datasource={datasource}
+            labelsFilters={query.labels}
+          />
+        )}
         <LabelFilters
           getLabelValuesAutofillSuggestions={getLabelValuesAutocompleteSuggestions}
           labelsFilters={query.labels}
