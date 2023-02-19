@@ -181,7 +181,7 @@
     "rollup-plugin-esbuild": "5.0.0",
     "rollup-plugin-node-externals": "^5.0.0",
     "rollup-plugin-svg-import": "^1.6.0",
-    "sass-loader": "13.1.0",
+    "sass-loader": "13.2.0",
     "storybook-addon-turbo-build": "1.1.0",
     "storybook-dark-mode": "2.0.4",
     "style-loader": "3.3.1",
