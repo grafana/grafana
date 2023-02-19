@@ -50,7 +50,7 @@
     "@rollup/plugin-node-resolve": "15.0.1",
     "@types/chrome-remote-interface": "0.31.4",
     "@types/lodash": "4.14.187",
-    "@types/node": "18.13.0",
+    "@types/node": "18.14.0",
     "@types/uuid": "8.3.4",
     "esbuild": "0.16.17",
     "rollup": "2.79.1",

@@ -4857,7 +4857,7 @@ __metadata:
     "@types/jquery": 3.5.14
     "@types/lodash": 4.14.187
     "@types/marked": 4.0.7
-    "@types/node": 18.13.0
+    "@types/node": 18.14.0
     "@types/papaparse": 5.3.5
     "@types/react": 17.0.42
     "@types/react-dom": 17.0.14
@@ -4906,7 +4906,7 @@ __metadata:
     "@grafana/tsconfig": ^1.2.0-rc1
     "@rollup/plugin-commonjs": 23.0.2
     "@rollup/plugin-node-resolve": 15.0.1
-    "@types/node": 18.13.0
+    "@types/node": 18.14.0
     esbuild: 0.16.17
     rimraf: 3.0.2
     rollup: 2.79.1
@@ -4942,7 +4942,7 @@ __metadata:
     "@rollup/plugin-node-resolve": 15.0.1
     "@types/chrome-remote-interface": 0.31.4
     "@types/lodash": 4.14.187
-    "@types/node": 18.13.0
+    "@types/node": 18.14.0
     "@types/uuid": 8.3.4
     babel-loader: 9.1.0
     blink-diff: 1.0.13
@@ -5319,7 +5319,7 @@ __metadata:
     "@types/jquery": 3.5.14
     "@types/lodash": 4.14.187
     "@types/mock-raf": 1.0.3
-    "@types/node": 18.13.0
+    "@types/node": 18.14.0
     "@types/prismjs": 1.26.0
     "@types/react": 17.0.42
     "@types/react-beautiful-dnd": 13.1.2
@@ -11612,10 +11612,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:18.13.0":
-  version: 18.13.0
-  resolution: "@types/node@npm:18.13.0"
-  checksum: 4ea10f8802848b01672bce938f678b6774ca2cee0c9774f12275ab064ae07818419c3e2e41d6257ce7ba846d1ea26c63214aa1dfa4166fa3746291752b8c6416
+"@types/node@npm:18.14.0":
+  version: 18.14.0
+  resolution: "@types/node@npm:18.14.0"
+  checksum: d83fcf5e4ed544755dd9028f5cbb6b9d46235043159111bb2ad62223729aee581c0144a9f6df8ba73d74011db9ed4ebd7af2fd5e0996714e3beb508a5da8ac5c
   languageName: node
   linkType: hard
 
@@ -22024,7 +22024,7 @@ __metadata:
     "@types/lodash": 4.14.187
     "@types/logfmt": ^1.2.1
     "@types/mousetrap": 1.6.10
-    "@types/node": 18.13.0
+    "@types/node": 18.14.0
     "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.0.6"
     "@types/papaparse": 5.3.5
     "@types/pluralize": ^0.0.29

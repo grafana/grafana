@@ -72,7 +72,7 @@
     "@types/jquery": "3.5.14",
     "@types/lodash": "4.14.187",
     "@types/marked": "4.0.7",
-    "@types/node": "18.13.0",
+    "@types/node": "18.14.0",
     "@types/papaparse": "5.3.5",
     "@types/react": "17.0.42",
     "@types/react-dom": "17.0.14",
