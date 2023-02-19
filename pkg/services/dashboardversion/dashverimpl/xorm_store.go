@@ -77,10 +77,21 @@ type dashboardVersionWithLogin struct {
 	Login string `xorm:"login"`
 }
 
+func (ss *sqlStore) getUserJoin() []string {
+	// helper function to hack PostgreSQL user table issue
+	var args = []string{"LEFT", "user", "user.id = dashboard_version.created_by"}
+	if ss.db.GetDBType() == "postgres" {
+		args[1] = "\"user\""
+		args[2] = "\"user\".id = dashboard_version.created_by"
+	}
+	return args
+}
+
 func (ss *sqlStore) List(ctx context.Context, query *dashver.ListDashboardVersionsQuery) ([]*dashver.DashboardVersion, error) {
 	var dashboardVersion []*dashver.DashboardVersion
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		var dashboardVersionsWithLogin []*dashboardVersionWithLogin
+		ujoin := ss.getUserJoin()
 		err := sess.Table("dashboard_version").
 			Select(`dashboard_version.id,
 				dashboard_version.dashboard_id,
@@ -92,7 +103,7 @@ func (ss *sqlStore) List(ctx context.Context, query *dashver.ListDashboardVersio
 				dashboard_version.message,
 				dashboard_version.data,
 				login`).
-			Join("LEFT", "user", `user.id = dashboard_version.created_by`).
+			Join(ujoin[0], ujoin[1], ujoin[2]).
 			Join("LEFT", "dashboard", `dashboard.id = dashboard_version.dashboard_id`).
 			Where("dashboard_version.dashboard_id=? AND dashboard.org_id=?", query.DashboardID, query.OrgID).
 			OrderBy("dashboard_version.version DESC").
