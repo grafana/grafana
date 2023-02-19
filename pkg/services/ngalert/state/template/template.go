@@ -95,7 +95,7 @@ func Expand(ctx context.Context, name, tmpl string, data Data, externalURL *url.
 	tm := model.Time(timestamp.FromTime(evaluatedAt))
 	// Use missingkey=invalid so missing data shows <no value> instead of the type's default value
 	options := []string{"missingkey=invalid"}
-	
+
 	expander := template.NewTemplateExpander(ctx, tmpl, name, data, tm, queryFunc, externalURL, options)
 	expander.Funcs(defaultFuncs)
 
