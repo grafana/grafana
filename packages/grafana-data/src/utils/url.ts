@@ -40,7 +40,7 @@ function encodeURIComponentAsAngularJS(val: string, pctEncodeSpaces?: boolean) {
 
 function toUrlParams(a: any) {
   const s: any[] = [];
-  const rbracket = /\[\]$/;
+  const rbracket = /\[]$/;
 
   const isArray = (obj: any) => {
     return Object.prototype.toString.call(obj) === '[object Array]';
