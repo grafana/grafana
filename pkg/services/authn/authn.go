@@ -45,8 +45,8 @@ type ClientParams struct {
 	EnableDisabledUsers bool
 	// FetchSyncedUser ensure that all required information is added to the identity
 	FetchSyncedUser bool
-	// Add entity to teams
-	SyncTeamMembers bool
+	// SyncTeams will sync the groups from identity to teams in grafana, enterprise only feature
+	SyncTeams bool
 	// CacheAuthProxyKey  if this key is set we will try to cache the user id for proxy client
 	CacheAuthProxyKey string
 	// LookUpParams are the arguments used to look up the entity in the DB.
