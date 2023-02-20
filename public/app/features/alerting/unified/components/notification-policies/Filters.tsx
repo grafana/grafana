@@ -51,20 +51,21 @@ const NotificationPoliciesFilter: FC<NotificationPoliciesFilterProps> = ({
   const selectedContactPoint = receiverOptions.find((option) => option.value === contactPoint) ?? null;
 
   const hasFilters = queryString || contactPoint;
+  const inputInvalid = queryString && queryString.length > 3 ? parseMatchers(queryString).length === 0 : false;
 
   return (
-    <Stack direction="row" alignItems="flex-end" gap={0.5}>
+    <Stack direction="row" alignItems="flex-start" gap={0.5}>
       <Field
         className={styles.noBottom}
         label={
           <LabelElement>
             <Stack gap={0.5}>
-              <span>Search by labels</span>
+              <span>Search by matchers</span>
               <Tooltip
                 content={
                   <div>
-                    Find notification policies that match the given set of labels, ex:
-                    <code>{`severity=critical, team=operations`}</code>
+                    Filter silences by matchers using a comma separated list of matchers, ie:
+                    <pre>{`severity=critical, instance=~cluster-us-.+`}</pre>
                   </div>
                 }
               >
@@ -73,17 +74,19 @@ const NotificationPoliciesFilter: FC<NotificationPoliciesFilterProps> = ({
             </Stack>
           </LabelElement>
         }
+        invalid={inputInvalid}
+        error={inputInvalid ? 'Query must use valid matcher syntax' : null}
       >
         <Input
           ref={searchInputRef}
-          placeholder="Search"
           data-testid="search-query-input"
+          placeholder="Search"
+          width={46}
           prefix={<Icon name="search" />}
           onChange={(event) => {
             setSearchParams({ queryString: event.currentTarget.value });
           }}
           defaultValue={queryString}
-          width={46}
         />
       </Field>
       <Field label="Search by contact point" style={{ marginBottom: 0 }}>
@@ -99,7 +102,7 @@ const NotificationPoliciesFilter: FC<NotificationPoliciesFilterProps> = ({
         />
       </Field>
       {hasFilters && (
-        <Button variant="secondary" icon="times" onClick={clearFilters}>
+        <Button variant="secondary" icon="times" onClick={clearFilters} style={{ marginTop: 19 }}>
           Clear filters
         </Button>
       )}
