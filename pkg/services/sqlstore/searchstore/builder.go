@@ -78,20 +78,16 @@ func (b *Builder) applyFilters() (ordering string) {
 
 	orders := []string{}
 
-	// TODO consume me!!!
-	withs := []string{}
-
 	for _, f := range b.Filters {
 		if f, ok := f.(FilterLeftJoin); ok {
 			joins = append(joins, fmt.Sprintf(" LEFT OUTER JOIN %s ", f.LeftJoin()))
 		}
 
 		if f, ok := f.(FilterWhere); ok {
-			withClause, sql, params := f.Where()
+			sql, params := f.Where()
 			if sql != "" {
 				wheres = append(wheres, sql)
 				whereParams = append(whereParams, params...)
-				withs = append(withs, withClause)
 			}
 		}
 

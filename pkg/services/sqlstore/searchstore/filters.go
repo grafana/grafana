@@ -8,14 +8,10 @@ import (
 )
 
 // FilterWhere limits the set of dashboard IDs to the dashboards for
-// which the filter is applicable. Results where the 2nd value is
+// which the filter is applicable. Results where the first value is
 // an empty string are discarded.
 type FilterWhere interface {
-	// Where returns:
-	// - a with clause for fetching folders with inherited permissions if nested folders are enabled or an empty string
-	// - a where clause for filtering dashboards with expected permissions
-	// - an array with the query parameters
-	Where() (string, string, []interface{})
+	Where() (string, []interface{})
 }
 
 // FilterGroupBy should be used after performing an outer join on the
@@ -183,6 +179,6 @@ type FolderWithAlertsFilter struct {
 
 var _ FilterWhere = &FolderWithAlertsFilter{}
 
-func (f FolderWithAlertsFilter) Where() (string, string, []interface{}) {
-	return "", "EXISTS (SELECT 1 FROM alert_rule WHERE alert_rule.namespace_uid = dashboard.uid)", nil
+func (f FolderWithAlertsFilter) Where() (string, []interface{}) {
+	return "EXISTS (SELECT 1 FROM alert_rule WHERE alert_rule.namespace_uid = dashboard.uid)", nil
 }
