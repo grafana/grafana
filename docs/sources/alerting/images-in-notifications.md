@@ -62,25 +62,25 @@ Restart Grafana for the changes to take affect.
 
 Images in notifications are supported in the following notifiers and additional support will be added in the future:
 
-| Name                    | Upload images from disk | Include images from URL |
-| ----------------------- | ----------------------- | ----------------------- |
-| DingDing                | No                      | No                      |
-| Discord                 | Yes                     | Yes                     |
-| Email                   | Yes                     | Yes                     |
-| Google Hangouts Chat    | No                      | Yes                     |
-| Kafka                   | No                      | No                      |
-| Line                    | No                      | No                      |
-| Microsoft Teams         | No                      | Yes                     |
-| Opsgenie                | No                      | Yes                     |
-| Pagerduty               | No                      | Yes                     |
-| Prometheus Alertmanager | No                      | No                      |
-| Pushover                | Yes                     | No                      |
-| Sensu Go                | No                      | No                      |
-| Slack                   | No                      | Yes                     |
-| Telegram                | Yes                     | No                      |
-| Threema                 | No                      | No                      |
-| VictorOps               | No                      | No                      |
-| Webhook                 | No                      | Yes                     |
+| Name                    | Upload images from disk     | Include images from URL   |
+| ----------------------- | --------------------------- | ------------------------- |
+| DingDing                | No                          | No                        |
+| Discord                 | Yes                         | Yes                       |
+| Email                   | Yes                         | Yes                       |
+| Google Hangouts Chat    | No                          | Yes                       |
+| Kafka                   | No                          | No                        |
+| Line                    | No                          | No                        |
+| Microsoft Teams         | No                          | Yes                       |
+| Opsgenie                | No                          | Yes                       |
+| Pagerduty               | No                          | Yes                       |
+| Prometheus Alertmanager | No                          | No                        |
+| Pushover                | Yes                         | No                        |
+| Sensu Go                | No                          | No                        |
+| Slack                   | Yes (when using Bot tokens) | Yes (when using webhooks) |
+| Telegram                | Yes                         | No                        |
+| Threema                 | No                          | No                        |
+| VictorOps               | No                          | No                        |
+| Webhook                 | No                          | Yes                       |
 
 Include images from URL refers to using the external image store.
 
