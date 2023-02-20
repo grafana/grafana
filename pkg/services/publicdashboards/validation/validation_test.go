@@ -37,10 +37,38 @@ func TestValidatePublicDashboard(t *testing.T) {
 		}`)
 		dashboardData, _ := simplejson.NewJson(templateVars)
 		dashboard := dashboards.NewDashboardFromJson(dashboardData)
-		dto := &SavePublicDashboardDTO{DashboardUid: "abc123", OrgId: 1, UserId: 1, PublicDashboard: nil}
+		dto := &SavePublicDashboardDTO{DashboardUid: "abc123", OrgId: 1, UserId: 1, PublicDashboard: &PublicDashboard{}}
 
 		err := ValidatePublicDashboard(dto, dashboard)
 		require.NoError(t, err)
+	})
+
+	t.Run("Returns no error when valid shareType value is received", func(t *testing.T) {
+		templateVars := []byte(`{
+			"templating": {
+				 "list": []
+			}
+		}`)
+		dashboardData, _ := simplejson.NewJson(templateVars)
+		dashboard := dashboards.NewDashboardFromJson(dashboardData)
+		dto := &SavePublicDashboardDTO{DashboardUid: "abc123", OrgId: 1, UserId: 1, PublicDashboard: &PublicDashboard{Share: EmailShareType}}
+
+		err := ValidatePublicDashboard(dto, dashboard)
+		require.NoError(t, err)
+	})
+
+	t.Run("Returns error when invalid shareType value", func(t *testing.T) {
+		templateVars := []byte(`{
+			"templating": {
+				 "list": []
+			}
+		}`)
+		dashboardData, _ := simplejson.NewJson(templateVars)
+		dashboard := dashboards.NewDashboardFromJson(dashboardData)
+		dto := &SavePublicDashboardDTO{DashboardUid: "abc123", OrgId: 1, UserId: 1, PublicDashboard: &PublicDashboard{Share: "invalid"}}
+
+		err := ValidatePublicDashboard(dto, dashboard)
+		require.Error(t, err)
 	})
 }
 
