@@ -48,13 +48,10 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		return nil, err
 	}
 
-	gaID := hs.Cfg.GoogleAnalyticsID
-	ga4ID := hs.Cfg.GoogleAnalytics4ID
 	if hs.Features.IsEnabled(featuremgmt.FlagIndividualCookiePreferences) {
 		if !prefs.Cookies("analytics") {
-			gaID, ga4ID = "", ""
-			settings["googleAnalytics4Id"] = ""
-			settings["googleAnalyticsId"] = ""
+			settings.GoogleAnalytics4Id = ""
+			settings.GoogleAnalyticsId = ""
 		}
 	}
 
@@ -120,8 +117,8 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		Theme:                               prefs.Theme,
 		AppUrl:                              appURL,
 		AppSubUrl:                           appSubURL,
-		GoogleAnalyticsId:                   gaID,
-		GoogleAnalytics4Id:                  ga4ID,
+		GoogleAnalyticsId:                   settings.GoogleAnalyticsId,
+		GoogleAnalytics4Id:                  settings.GoogleAnalytics4Id,
 		GoogleAnalytics4SendManualPageViews: hs.Cfg.GoogleAnalytics4SendManualPageViews,
 		GoogleTagManagerId:                  hs.Cfg.GoogleTagManagerID,
 		BuildVersion:                        setting.BuildVersion,
