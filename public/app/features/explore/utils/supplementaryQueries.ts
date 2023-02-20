@@ -154,17 +154,6 @@ const supplementaryQueryFallbackCleanUp = (type: SupplementaryQueryType, acc: Da
   }
 };
 
-/**
- * TODO from feedback
- * (can be done later) When multiple histograms are shown -> align selected range (even for the fallback)
- * (can be done later) Y-axis should be aligned to the maximum
- * (this PR) Fallback histogram should not show duplicates, it should filter out results from data sources that support the histogram
- * (this PR) Histograms should be aggregated by query/refId. The info text should show refId + data source name. Fallback should list all
- *           data sources that do not support the histogram. Check if ela
- * (future improvement / needed to enabled Mixed DS) Create separate legend for multiple histograms (with all fields)
- * (optional) Check if bars for the fallback could have the same style / width
- */
-
 export const getSupplementaryQueryProvider = (
   datasourceInstance: DataSourceApi,
   type: SupplementaryQueryType,
