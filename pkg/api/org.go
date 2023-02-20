@@ -151,7 +151,10 @@ func (hs *HTTPServer) CreateOrg(c *contextmodel.ReqContext) response.Response {
 	globalhideAPIkeys := hs.serviceAccountsService.CheckGloballyHideAPIKeysTab(c.Req.Context())
 	if globalhideAPIkeys {
 		// hide apikeys tab for the newly created org
-		hs.serviceAccountsService.HideApiKeysTab(c.Req.Context(), result.ID)
+		err := hs.serviceAccountsService.HideApiKeysTab(c.Req.Context(), result.ID)
+		if err != nil {
+			hs.log.Error("Failed to hide apikeys tab for the newly created org", "orgId", result.ID, "error", err)
+		}
 	}
 
 	return response.JSON(http.StatusOK, &util.DynMap{
