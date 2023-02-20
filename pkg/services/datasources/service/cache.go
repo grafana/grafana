@@ -53,12 +53,10 @@ func (dc *CacheServiceImpl) GetDatasource(
 
 	query := &datasources.GetDataSourceQuery{ID: datasourceID, OrgID: user.OrgID}
 	ss := SqlStore{db: dc.SQLStore, logger: dc.logger}
-	err := ss.GetDataSource(ctx, query)
+	ds, err := ss.GetDataSource(ctx, query)
 	if err != nil {
 		return nil, err
 	}
-
-	ds := query.Result
 
 	if ds.UID != "" {
 		dc.CacheService.Set(uidKey(ds.OrgID, ds.UID), ds, time.Second*5)
@@ -93,12 +91,10 @@ func (dc *CacheServiceImpl) GetDatasourceByUID(
 	dc.logger.FromContext(ctx).Debug("Querying for data source via SQL store", "uid", datasourceUID, "orgId", user.OrgID)
 	query := &datasources.GetDataSourceQuery{UID: datasourceUID, OrgID: user.OrgID}
 	ss := SqlStore{db: dc.SQLStore, logger: dc.logger}
-	err := ss.GetDataSource(ctx, query)
+	ds, err := ss.GetDataSource(ctx, query)
 	if err != nil {
 		return nil, err
 	}
-
-	ds := query.Result
 
 	dc.CacheService.Set(uidCacheKey, ds, dc.cacheTTL)
 	dc.CacheService.Set(idKey(ds.ID), ds, dc.cacheTTL)

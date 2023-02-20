@@ -125,7 +125,7 @@ export class TemplateSrv implements BaseTemplateSrv {
     return filters;
   }
 
-  formatValue(value: any, format: any, variable: any, text?: string): string {
+  formatValue(value: any, format?: any, variable?: any, text?: string): string {
     // for some scopedVars there is no variable
     variable = variable || {};
 

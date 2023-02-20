@@ -49,9 +49,11 @@ export function LokiContextUi(props: LokiContextUiProps) {
   const styles = useStyles2(getStyles);
 
   const [contextFilters, setContextFilters] = useState<ContextFilter[]>([]);
+
   const [initialized, setInitialized] = useState(false);
   const timerHandle = React.useRef<number>();
   const previousInitialized = React.useRef<boolean>(false);
+  const previousContextFilters = React.useRef<ContextFilter[]>([]);
   useEffect(() => {
     if (!initialized) {
       return;
@@ -62,6 +64,13 @@ export function LokiContextUi(props: LokiContextUiProps) {
       previousInitialized.current = initialized;
       return;
     }
+
+    if (contextFilters.filter(({ enabled, fromParser }) => enabled && !fromParser).length === 0) {
+      setContextFilters(previousContextFilters.current);
+      return;
+    }
+
+    previousContextFilters.current = structuredClone(contextFilters);
 
     if (timerHandle.current) {
       clearTimeout(timerHandle.current);
@@ -143,7 +152,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
             colorIndex={1}
           />
         </Tooltip>{' '}
-        Select labels to include in the context query:
+        Select labels to be included in the context query:
       </div>
       <div>
         <MultiSelect
