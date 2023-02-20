@@ -27,6 +27,10 @@ export const Pages = {
     url: '/datasources',
     dataSources: (dataSourceName: string) => `Data source list item ${dataSourceName}`,
   },
+  EditDataSource: {
+    url: (dataSourceUid: string) => `/datasources/edit/${dataSourceUid}`,
+    settings: 'Datasource settings page basic settings',
+  },
   AddDataSource: {
     url: '/datasources/new',
     /** @deprecated Use dataSourcePluginsV2 */
@@ -236,6 +240,14 @@ export const Pages = {
       linkButton: 'public-dashboard-link-button',
       configButton: 'public-dashboard-configuration-button',
       trashcanButton: 'public-dashboard-remove-button',
+    },
+  },
+  UserListPage: {
+    org: {
+      url: '/org/users',
+    },
+    admin: {
+      url: '/admin/users',
     },
   },
 };
