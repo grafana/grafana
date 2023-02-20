@@ -4,7 +4,7 @@ import { Draggable } from 'react-beautiful-dnd';
 
 import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Button, Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, Icon, InlineField, Tooltip, useStyles2 } from '@grafana/ui';
 import { isConflictingFilter } from 'app/plugins/datasource/loki/querybuilder/operationUtils';
 import { LokiOperationId } from 'app/plugins/datasource/loki/querybuilder/types';
 
@@ -136,8 +136,7 @@ export function OperationEditor({
   return (
     <Draggable draggableId={`operation-${index}`} index={index}>
       {(provided) => (
-        // FIX: THIS TOOLTIP BREAKS DRAGGING
-        <ConditionalTooltip condition={isConflicting}>
+        <InlineField error={'You have conflicting label filters'} invalid={isConflicting} className={styles.error}>
           <div
             className={cx(
               styles.card,
@@ -166,28 +165,9 @@ export function OperationEditor({
               </div>
             )}
           </div>
-        </ConditionalTooltip>
+        </InlineField>
       )}
     </Draggable>
-  );
-}
-
-interface ConditionalTooltipProps {
-  condition: boolean;
-  children: ReactElement;
-}
-
-function ConditionalTooltip({ condition, children }: ConditionalTooltipProps) {
-  const content = 'You have conflicting operations, this will result in no data.';
-
-  if (!condition) {
-    return children;
-  }
-
-  return (
-    <Tooltip content={content} theme="error" placement="top">
-      {children}
-    </Tooltip>
   );
 }
 
@@ -253,6 +233,9 @@ function callParamChangedThenOnChange(
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    error: css({
+      marginBottom: theme.spacing(1),
+    }),
     card: css({
       background: theme.colors.background.primary,
       border: `1px solid ${theme.colors.border.medium}`,
