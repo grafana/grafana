@@ -137,7 +137,7 @@ var (
 	// MStatTotalDashboards is a metric total amount of dashboards
 	MStatTotalDashboards prometheus.Gauge
 
-	// MStatTotalDashboards is a metric total amount of dashboards
+	// MStatTotalFolders is a metric total amount of folders
 	MStatTotalFolders prometheus.Gauge
 
 	// MStatTotalUsers is a metric total amount of users

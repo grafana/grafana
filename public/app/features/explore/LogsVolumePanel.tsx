@@ -12,7 +12,7 @@ import {
   getLogsVolumeAbsoluteRange,
   GrafanaTheme2,
 } from '@grafana/data';
-import { TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
+import { Icon, Tooltip, TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { ExploreGraph } from './Graph/ExploreGraph';
 
@@ -53,7 +53,7 @@ export function LogsVolumePanel(props: Props) {
       LogsVolumePanelContent = (
         <ExploreGraph
           graphStyle="lines"
-          loadingState={LoadingState.Done}
+          loadingState={logsVolumeData.state ?? LoadingState.Done}
           data={logsVolumeData.data}
           height={height}
           width={width - spacing * 2}
@@ -72,10 +72,23 @@ export function LogsVolumePanel(props: Props) {
     }
   }
 
+  let extraInfoComponent = <span>{extraInfo}</span>
+
+  if (logsVolumeData.state === LoadingState.Streaming) {
+    extraInfoComponent = (
+      <>
+        {extraInfoComponent}
+        <Tooltip content="Streaming">
+          <Icon name="circle-mono" size="md" className={styles.streaming} data-testid="logs-volume-streaming" />
+        </Tooltip>
+      </>
+    );
+  }
+
   return (
     <div style={{ height }} className={styles.contentContainer}>
       {LogsVolumePanelContent}
-      {extraInfo && <div className={styles.extraInfoContainer}>{extraInfo}</div>}
+      {extraInfoComponent && <div className={styles.extraInfoContainer}>{extraInfoComponent}</div>}
     </div>
   );
 }
@@ -96,6 +109,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       align-items: center;
       justify-content: center;
       position: relative;
+    `,
+    streaming: css`
+      color: ${theme.colors.success.text};
     `,
   };
 };

@@ -86,7 +86,7 @@ func ProvideService(cfg *setting.Cfg,
 	s.bundleRegistry.RegisterSupportItemCollector(basicCollector(cfg))
 	s.bundleRegistry.RegisterSupportItemCollector(settingsCollector(settings))
 	s.bundleRegistry.RegisterSupportItemCollector(dbCollector(sql))
-	s.bundleRegistry.RegisterSupportItemCollector(pluginInfoCollector(pluginStore, pluginSettings))
+	s.bundleRegistry.RegisterSupportItemCollector(pluginInfoCollector(pluginStore, pluginSettings, s.log))
 
 	return s, nil
 }

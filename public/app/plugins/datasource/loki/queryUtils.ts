@@ -1,7 +1,14 @@
 import { SyntaxNode } from '@lezer/common';
 import { escapeRegExp } from 'lodash';
 
-import { DataQueryRequest, DataQueryResponse, DataQueryResponseData, QueryResultMetaStat } from '@grafana/data';
+import {
+  ArrayVector,
+  DataFrame,
+  DataQueryResponse,
+  DataQueryResponseData,
+  Field,
+  QueryResultMetaStat,
+} from '@grafana/data';
 import {
   parser,
   LineFilter,
@@ -297,18 +304,16 @@ export function getStreamSelectorsFromQuery(query: string): string[] {
   return labelMatchers;
 }
 
-export function requestSupportsPartitioning(queries: LokiQuery[]) {
+export function requestSupportsPartitioning(allQueries: LokiQuery[]) {
+  const queries = allQueries.filter((query) => !query.hide);
   /*
-   * For now, we would not split when more than 1 query is requested.
+   * For now, we will not split when more than 1 query is requested.
    */
   if (queries.length > 1) {
     return false;
   }
 
-  /**
-   * Disable logs volume queries.
-   */
-  if (queries[0].refId.includes('log-volume-')) {
+  if (queries[0].refId.includes('do-not-chunk')) {
     return false;
   }
 
@@ -317,13 +322,13 @@ export function requestSupportsPartitioning(queries: LokiQuery[]) {
 
 export function combineResponses(currentResult: DataQueryResponse | null, newResult: DataQueryResponse) {
   if (!currentResult) {
-    return newResult;
+    return cloneQueryResponse(newResult);
   }
 
   newResult.data.forEach((newFrame) => {
     const currentFrame = currentResult.data.find((frame) => frame.name === newFrame.name);
     if (!currentFrame) {
-      currentResult.data.push(newFrame);
+      currentResult.data.push(cloneDataFrame(newFrame));
       return;
     }
     combineFrames(currentFrame, newFrame);
@@ -332,16 +337,18 @@ export function combineResponses(currentResult: DataQueryResponse | null, newRes
   return currentResult;
 }
 
-function combineFrames(dest: DataQueryResponseData, source: DataQueryResponseData) {
+function combineFrames(dest: DataFrame, source: DataFrame) {
   const totalFields = dest.fields.length;
   for (let i = 0; i < totalFields; i++) {
-    dest.fields[i].values.buffer = [].concat.apply(source.fields[i].values.buffer, dest.fields[i].values.buffer);
+    dest.fields[i].values = new ArrayVector(
+      [].concat.apply(source.fields[i].values.toArray(), dest.fields[i].values.toArray())
+    );
   }
   dest.length += source.length;
   combineMetadata(dest, source);
 }
 
-function combineMetadata(dest: DataQueryResponseData = {}, source: DataQueryResponseData = {}) {
+function combineMetadata(dest: DataFrame, source: DataFrame) {
   if (!source.meta?.stats) {
     return;
   }
@@ -353,7 +360,7 @@ function combineMetadata(dest: DataQueryResponseData = {}, source: DataQueryResp
     return;
   }
   dest.meta.stats.forEach((destStat: QueryResultMetaStat, i: number) => {
-    const sourceStat = source.meta.stats?.find(
+    const sourceStat = source.meta?.stats?.find(
       (sourceStat: QueryResultMetaStat) => destStat.displayName === sourceStat.displayName
     );
     if (sourceStat) {
@@ -363,23 +370,22 @@ function combineMetadata(dest: DataQueryResponseData = {}, source: DataQueryResp
 }
 
 /**
- * Checks if the current response has reached the requested amount of results or not.
- * For log queries, we will ensure that the current amount of results doesn't go beyond `maxLines`.
+ * Deep clones a DataQueryResponse
  */
-export function resultLimitReached(request: DataQueryRequest<LokiQuery>, result: DataQueryResponse) {
-  const logRequests = request.targets.filter((target) => isLogsQuery(target.expr));
+export function cloneQueryResponse(response: DataQueryResponse): DataQueryResponse {
+  const newResponse = {
+    ...response,
+    data: response.data.map(cloneDataFrame),
+  };
+  return newResponse;
+}
 
-  if (logRequests.length === 0) {
-    return false;
-  }
-
-  for (const request of logRequests) {
-    for (const frame of result.data) {
-      if (request.maxLines && frame?.fields[0].values.length >= request.maxLines) {
-        return true;
-      }
-    }
-  }
-
-  return false;
+function cloneDataFrame(frame: DataQueryResponseData): DataQueryResponseData {
+  return {
+    ...frame,
+    fields: frame.fields.map((field: Field<unknown, ArrayVector>) => ({
+      ...field,
+      values: new ArrayVector(field.values.buffer),
+    })),
+  };
 }
