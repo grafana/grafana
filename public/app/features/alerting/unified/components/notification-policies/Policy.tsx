@@ -104,15 +104,12 @@ const Policy: FC<PolicyComponentProps> = ({
   const hasMuteTimings = Boolean(muteTimings.length);
   const hasFocus = routesMatchingFilters.some((route) => route.id === currentRoute.id);
 
-  // gather warnings and errors here
-  const warnings: ReactNode[] = [];
+  // gather errors here
   const errors: ReactNode[] = [];
 
   // if the route has no matchers, is not the default policy (that one has none) and it does not continue
   // then we should warn the user that it's a suspicious setup
-  if (!hasMatchers && !isDefaultPolicy && !continueMatching) {
-    warnings.push(wildcardRouteWarning);
-  }
+  const showMatchesAllLabelsWarning = !hasMatchers && !isDefaultPolicy && !continueMatching;
 
   // if the receiver / contact point has any errors show it on the policy
   const actualContactPoint = contactPoint ?? inheritedProperties?.receiver ?? '';
@@ -145,10 +142,18 @@ const Policy: FC<PolicyComponentProps> = ({
         className={styles.policyWrapper(hasFocus)}
         data-testid={isDefaultPolicy ? 'am-root-route-container' : 'am-route-container'}
       >
+        {/* continueMatching and showMatchesAllLabelsWarning are mutually exclusive so the icons can't overlap */}
         {continueMatching === true && (
           <Tooltip placement="top" content="This route will continue matching other policies">
-            <div className={styles.continueMatching} data-testid="continue-matching">
+            <div className={styles.gutterIcon} data-testid="continue-matching">
               <Icon name="arrow-down" />
+            </div>
+          </Tooltip>
+        )}
+        {showMatchesAllLabelsWarning && (
+          <Tooltip placement="top" content="This policy matches all labels">
+            <div className={styles.gutterIcon} data-testid="matches-all">
+              <Icon name="exclamation-triangle" />
             </div>
           </Tooltip>
         )}
@@ -169,6 +174,7 @@ const Policy: FC<PolicyComponentProps> = ({
                 <span className={styles.metadata}>No matchers</span>
               )}
               <Spacer />
+              {/* TODO maybe we should move errors to the gutter instead? */}
               {errors.length > 0 && (
                 <HoverCard
                   arrow
@@ -183,28 +189,6 @@ const Policy: FC<PolicyComponentProps> = ({
                 >
                   <span>
                     <Badge icon="exclamation-circle" color="red" text={pluralize('error', errors.length, true)} />
-                  </span>
-                </HoverCard>
-              )}
-              {warnings.length === 1 && warnings[0]}
-              {warnings.length > 1 && (
-                <HoverCard
-                  arrow
-                  placement="top"
-                  content={
-                    <Stack direction="column" gap={0.5}>
-                      {warnings.map((warning) => (
-                        <Fragment key={uniqueId()}>{warning}</Fragment>
-                      ))}
-                    </Stack>
-                  }
-                >
-                  <span>
-                    <Badge
-                      icon="exclamation-triangle"
-                      color="orange"
-                      text={pluralize('warning', warnings.length, true)}
-                    />
                   </span>
                 </HoverCard>
               )}
@@ -303,7 +287,7 @@ const Policy: FC<PolicyComponentProps> = ({
               {hasMuteTimings && (
                 <MetaText icon="calendar-slash" data-testid="mute-timings">
                   <span>Muted when</span>
-                  {/* TODO make a better mite timing overview, allow combining multiple in to one overview */}
+                  {/* TODO make a better mute timing overview, allow combining multiple in to one overview */}
                   {/* <HoverCard
                     arrow
                     placement="top"
@@ -526,8 +510,6 @@ const ContactPointsHoverDetails = ({ alertManagerSourceName, contactPoint, recei
   );
 };
 
-const wildcardRouteWarning = <Badge icon="exclamation-triangle" text="Matches all labels" color="orange" />;
-
 function getContactPointErrors(contactPoint: string, contactPointsState: ReceiversState): JSX.Element[] {
   const notifierStates = Object.entries(contactPointsState[contactPoint]?.notifiers ?? []);
   const contactPointErrors = notifierStates.reduce((acc: JSX.Element[] = [], [_, notifierStatuses]) => {
@@ -636,7 +618,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin-top: -${theme.spacing(hasChildPolicies ? 1.5 : 2)};
     margin-bottom: ${theme.spacing(1)};
   `,
-  continueMatching: css`
+  gutterIcon: css`
     position: absolute;
 
     top: 0;
