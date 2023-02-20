@@ -101,6 +101,7 @@ export function getOperationDefinitions(): QueryBuilderOperationDef[] {
       renderer: (model, def, innerExpr) => innerExpr,
       addOperationHandler: addNestedQueryHandler,
     },
+    createFunction({ id: PromOperationId.Abs }),
     createFunction({ id: PromOperationId.Absent }),
     createFunction({
       id: PromOperationId.Acos,
