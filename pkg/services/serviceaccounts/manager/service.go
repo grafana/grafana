@@ -88,7 +88,7 @@ func ProvideServiceAccountsService(
 	}
 
 	// hide apikeys tab if there are no apikeys present in db or hideapikeys already set
-	hideApiKeysTabIfNoAPIKeysPresent(log, store, kvStore)
+	hideApiKeysTabIfNoAPIKeysPresent(log, store, serviceAccountsStore)
 
 	return s, nil
 }
@@ -295,7 +295,7 @@ func validAPIKeyID(apiKeyID int64) error {
 
 // hideApiKeysTabIfNoAPIKeysPresent is used to remove the apikeys tab from the admin tabs
 // if there are no apikeys, this makes it so that we only issue service account tokens instead
-func hideApiKeysTabIfNoAPIKeysPresent(l *log.ConcreteLogger, store *sqlstore.SQLStore, kvStore kvstore.KVStore) {
+func hideApiKeysTabIfNoAPIKeysPresent(l *log.ConcreteLogger, store *sqlstore.SQLStore, serviceAccountsStore *database.ServiceAccountsStoreImpl) {
 	var err error
 	ctx := context.Background()
 	sess := store.GetSqlxSession()
@@ -320,8 +320,9 @@ func hideApiKeysTabIfNoAPIKeysPresent(l *log.ConcreteLogger, store *sqlstore.SQL
 		return
 	}
 	if len(apikeys) == 0 {
-		if err := kvStore.Set(ctx, orgID, "serviceaccounts", "hideApiKeys", "1"); err != nil {
-			l.Error("Failed to hide API keys tab", err)
+		err = serviceAccountsStore.HideApiKeysTab(ctx, orgID)
+		if err != nil {
+			l.Error(fmt.Sprintf("could not hide apikeys tab: %e", err))
 			return
 		}
 	}
