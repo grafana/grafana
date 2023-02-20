@@ -24,10 +24,12 @@ const defaultQuery: PromVisualQuery = {
   operations: [],
 };
 
+const listOfMetrics: string[] = ['all-metrics', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'];
+
 function createDatasource(withLabels?: boolean) {
   const languageProvider = new EmptyLanguageProviderMock() as unknown as PromQlLanguageProvider;
 
-  // display different results if their oare labels selected in the PromVisualQuery
+  // display different results if their are labels selected in the PromVisualQuery
   if (withLabels) {
     languageProvider.getSeries = () => Promise.resolve({ __name__: ['with-labels'] });
     languageProvider.metricsMetadata = {
@@ -38,12 +40,13 @@ function createDatasource(withLabels?: boolean) {
     };
   } else {
     // all metrics
-    languageProvider.getLabelValues = () => Promise.resolve(['all-metrics']);
+    languageProvider.getLabelValues = () => Promise.resolve(listOfMetrics);
     languageProvider.metricsMetadata = {
       'all-metrics': {
         type: 'all-metrics-type',
         help: 'all-metrics-help',
       },
+      // missing metadata for other metrics is tested for, see below
     };
   }
 
@@ -139,11 +142,51 @@ describe('MetricEncyclopediaModal', () => {
     expect(screen.getByText('all-metrics-help')).toBeInTheDocument();
   });
 
-  // it('paginates the list of metrics', async () => {
+  it('displays no metadata for a metric missing metadata when the metric is clicked', async () => {
+    setup(defaultQuery);
+    await waitFor(() => {
+      expect(screen.getByText('a')).toBeInTheDocument();
+    });
 
-  // });
+    const interactiveMetric = screen.getByText('a');
 
-  // it('shows an amount of metrics per page chosen by the user', async () => {
+    await userEvent.click(interactiveMetric);
 
-  // });
+    expect(screen.getByText('No metadata available')).toBeInTheDocument();
+  });
+
+  // Pagination
+  it('shows metrics within a range by pagination', async () => {
+    // default resultsPerPage is 10
+    setup(defaultQuery);
+    await waitFor(() => {
+      expect(screen.getByText('all-metrics')).toBeInTheDocument();
+      expect(screen.getByText('a')).toBeInTheDocument();
+      expect(screen.getByText('b')).toBeInTheDocument();
+      expect(screen.getByText('c')).toBeInTheDocument();
+      expect(screen.getByText('d')).toBeInTheDocument();
+      expect(screen.getByText('e')).toBeInTheDocument();
+      expect(screen.getByText('f')).toBeInTheDocument();
+      expect(screen.getByText('g')).toBeInTheDocument();
+      expect(screen.getByText('h')).toBeInTheDocument();
+      expect(screen.getByText('i')).toBeInTheDocument();
+    });
+  });
+
+  it('does not show metrics outside a range by pagination', async () => {
+    // default resultsPerPage is 10
+    setup(defaultQuery);
+    await waitFor(() => {
+      const metricOutsideRange = screen.queryByText('j');
+      expect(metricOutsideRange).toBeNull();
+    });
+  });
+
+  it('shows results metrics per page chosen by the user', async () => {
+    setup(defaultQuery);
+    const resultsPerPageInput = screen.getByTestId('results-per-page');
+    await userEvent.type(resultsPerPageInput, '11');
+    const metricInsideRange = screen.getByText('j');
+    expect(metricInsideRange).toBeInTheDocument();
+  });
 });

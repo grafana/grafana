@@ -27,9 +27,13 @@ type MetricData = {
   description?: string;
 };
 
+export const DEFAULT_RESULTS_PER_PAGE = 10;
+
 export const MetricEncyclopediaModal = (props: Props) => {
   const { datasource, isOpen, onClose, onChange, query } = props;
   const [openTabs, setOpenTabs] = useState<string[]>([]);
+  const [resultsPerPage, setResultsPerPage] = useState<number>(DEFAULT_RESULTS_PER_PAGE);
+  const [pageNum, setPageNum] = useState<number>(1);
 
   const [metrics, setMetrics] = useState<MetricsData>([]);
 
@@ -90,6 +94,25 @@ export const MetricEncyclopediaModal = (props: Props) => {
       label: t,
     };
   });
+
+  function calculatePageList(metrics: MetricsData, resultsPerPage: number) {
+    if (!metrics.length) {
+      return [];
+    }
+
+    const calcResultsPerPage: number = resultsPerPage === 0 ? 1 : resultsPerPage;
+
+    const pages = Math.floor(metrics.length / calcResultsPerPage) + 1;
+
+    return [...Array(pages).keys()].map((i) => i + 1);
+  }
+
+  function sliceMetrics(metrics: MetricsData, pageNum: number, resultsPerPage: number) {
+    const calcResultsPerPage: number = resultsPerPage === 0 ? 1 : resultsPerPage;
+    const start: number = pageNum === 1 ? 0 : (pageNum - 1) * calcResultsPerPage;
+    const end: number = start + calcResultsPerPage;
+    return metrics.slice(start, end);
+  }
 
   // *** Filtering: some metrics have no metadata so cannot be filtered
 
@@ -155,20 +178,37 @@ export const MetricEncyclopediaModal = (props: Props) => {
         </InlineLabel>
         <Select
           data-testid={testIds.searchPage}
-          options={[1, 2, 3, 4, 5, 6].map((p) => {
+          options={calculatePageList(metrics, resultsPerPage).map((p) => {
             return { value: p, label: '' + p };
           })}
-          value={1}
+          value={pageNum ?? 1}
           placeholder="select page"
-          onChange={() => {
-            // *** select page
-            // *** add select amount per page
+          onChange={(e) => {
+            const value = e.value ?? 1;
+            setPageNum(value);
+          }}
+        />
+        <InlineLabel width={10} className="query-keyword">
+          # per page
+        </InlineLabel>
+        <Input
+          data-testid={testIds.resultsPerPage}
+          value={resultsPerPage ?? 10}
+          placeholder="results per page"
+          onInput={(e) => {
+            const value = +e.currentTarget.value;
+
+            if (isNaN(value)) {
+              return;
+            }
+
+            setResultsPerPage(value);
           }}
         />
       </div>
       <div className={styles.center}>A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z</div>
       {metrics &&
-        metrics.map((metric: MetricData, idx) => {
+        sliceMetrics(metrics, pageNum, resultsPerPage).map((metric: MetricData, idx) => {
           return (
             <Collapse
               aria-label={`open and close ${metric.value} query starter card`}
@@ -262,4 +302,5 @@ export const testIds = {
   metricCard: 'metric-card',
   useMetric: 'use-metric',
   searchPage: 'search-page',
+  resultsPerPage: 'results-per-page',
 };
