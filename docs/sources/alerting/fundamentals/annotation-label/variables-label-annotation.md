@@ -11,7 +11,7 @@ weight: 117
 
 # Templating labels and annotations
 
-In Grafana it is possible to template labels and annotations just like in Prometheus. Those who have used Prometheus before should be familiar with `$labels` and `$value` as these variables contain the labels and value of the alert. You can use the same variables in Grafana to template labels and annotations, even if the alert does not use a Prometheus datasource.
+In Grafana, you can template labels and annotations just like in Prometheus. Those who have used Prometheus before should be familiar with `$labels` and `$value` as these variables contain the labels and value of the alert. You can use the same variables in Grafana to template labels and annotations, even if the alert does not use a Prometheus data source.
 
 ## Printing labels
 
