@@ -37,16 +37,16 @@ const (
 // ClientParams are hints to the auth service about how to handle the identity management
 // from the authenticating client.
 type ClientParams struct {
-	// Update the internal representation of the entity from the identity provided
+	// SyncUser updates the internal representation of the identity from the identity provided
 	SyncUser bool
-	// Add entity to teams
-	SyncTeamMembers bool
-	// Create entity in the DB if it doesn't exist
+	// AllowSignUp Adds identity to DB if it doesn't exist when, only work if SyncUser is enabled
 	AllowSignUp bool
-	// EnableDisabledUsers is a hint to the auth service that it should re-enable disabled users
+	// EnableDisabledUsers will enable disabled user, only work if SyncUser is enabled
 	EnableDisabledUsers bool
 	// FetchSyncedUser ensure that all required information is added to the identity
 	FetchSyncedUser bool
+	// Add entity to teams
+	SyncTeamMembers bool
 	// CacheAuthProxyKey  if this key is set we will try to cache the user id for proxy client
 	CacheAuthProxyKey string
 	// LookUpParams are the arguments used to look up the entity in the DB.
