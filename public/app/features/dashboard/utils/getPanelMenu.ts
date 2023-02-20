@@ -1,4 +1,4 @@
-import { PanelMenuItem } from '@grafana/data';
+import { isPluginExtensionLink, PanelMenuItem } from '@grafana/data';
 import {
   AngularComponent,
   getDataSourceSrv,
@@ -291,10 +291,13 @@ export function getPanelMenu(
   });
 
   for (const extension of extensions) {
-    subMenu.push({
-      text: truncateTitle(extension.title, 25),
-      href: extension.path,
-    });
+    if (isPluginExtensionLink(extension)) {
+      subMenu.push({
+        text: truncateTitle(extension.title, 25),
+        href: extension.path,
+      });
+      continue;
+    }
   }
 
   return menu;

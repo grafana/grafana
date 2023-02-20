@@ -1,5 +1,5 @@
-import { PanelMenuItem, PluginsExtensionTypes } from '@grafana/data';
-import { setPluginsExtensionRegistry } from '@grafana/runtime';
+import { PanelMenuItem, PluginExtensionLink, PluginExtensionTypes } from '@grafana/data';
+import { PluginExtensionRegistryItem, setPluginsExtensionRegistry } from '@grafana/runtime';
 import { LoadingState } from '@grafana/schema';
 import config from 'app/core/config';
 import * as actions from 'app/features/explore/state/main';
@@ -135,13 +135,12 @@ describe('getPanelMenu()', () => {
     it('should contain menu item from link extension', () => {
       setPluginsExtensionRegistry({
         [GrafanaExtensions.DashboardPanelMenu]: [
-          {
-            type: PluginsExtensionTypes.link,
+          createRegistryLinkItem({
             title: 'Declare incident',
             description: 'Declaring an incident in the app',
             path: '/a/grafana-basic-app/declare-incident',
             key: 1,
-          },
+          }),
         ],
       });
 
@@ -163,13 +162,12 @@ describe('getPanelMenu()', () => {
     it('should truncate menu item title to 25 chars', () => {
       setPluginsExtensionRegistry({
         [GrafanaExtensions.DashboardPanelMenu]: [
-          {
-            type: PluginsExtensionTypes.link,
+          createRegistryLinkItem({
             title: 'Declare incident when pressing this amazing menu item',
             description: 'Declaring an incident in the app',
             path: '/a/grafana-basic-app/declare-incident',
             key: 1,
-          },
+          }),
         ],
       });
 
@@ -191,14 +189,15 @@ describe('getPanelMenu()', () => {
     it('should hide menu item if configure function returns undefined', () => {
       setPluginsExtensionRegistry({
         [GrafanaExtensions.DashboardPanelMenu]: [
-          {
-            type: PluginsExtensionTypes.link,
-            title: 'Declare incident when pressing this amazing menu item',
-            description: 'Declaring an incident in the app',
-            path: '/a/grafana-basic-app/declare-incident',
-            key: 1,
-            configure: () => undefined,
-          },
+          createRegistryLinkItem(
+            {
+              title: 'Declare incident when pressing this amazing menu item',
+              description: 'Declaring an incident in the app',
+              path: '/a/grafana-basic-app/declare-incident',
+              key: 1,
+            },
+            () => undefined
+          ),
         ],
       });
 
@@ -218,16 +217,19 @@ describe('getPanelMenu()', () => {
     });
 
     it('should have a title configured via the extension', () => {
+      const configure = () => ({ title: 'Wohoo' });
+
       setPluginsExtensionRegistry({
         [GrafanaExtensions.DashboardPanelMenu]: [
-          {
-            type: PluginsExtensionTypes.link,
-            title: 'Declare incident when pressing this amazing menu item',
-            description: 'Declaring an incident in the app',
-            path: '/a/grafana-basic-app/declare-incident',
-            key: 1,
-            configure: () => ({ title: 'Wohoo' }),
-          },
+          createRegistryLinkItem(
+            {
+              title: 'Declare incident when pressing this amazing menu item',
+              description: 'Declaring an incident in the app',
+              path: '/a/grafana-basic-app/declare-incident',
+              key: 1,
+            },
+            configure
+          ),
         ],
       });
 
@@ -361,3 +363,35 @@ describe('getPanelMenu()', () => {
     });
   });
 });
+
+function createRegistryLinkItem(
+  link: Omit<PluginExtensionLink, 'type'>,
+  configure?: () => Partial<PluginExtensionLink>
+): PluginExtensionRegistryItem<PluginExtensionLink> {
+  const extension = {
+    ...link,
+    type: PluginExtensionTypes.link,
+  };
+
+  if (!configure) {
+    return {
+      extension,
+    };
+  }
+
+  return {
+    extension,
+    configure: (context: object) => {
+      const configured = configure();
+
+      if (!configured) {
+        return undefined;
+      }
+
+      return {
+        ...extension,
+        ...configured,
+      };
+    },
+  };
+}

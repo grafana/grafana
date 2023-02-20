@@ -65,7 +65,7 @@ function createRegistryLink(
 
   return Object.freeze({
     extension: extension,
-    configure: createConfigure(pluginId, config, extension),
+    configure: createLinkConfigure(pluginId, config, extension),
   });
 }
 
@@ -76,7 +76,7 @@ function hashKey(key: string): number {
 type RegistryConfigureType = PluginExtensionRegistryItem<PluginExtensionLink>['configure'];
 type ExtensionConfigureType = AppPluginExtensionLinkConfig['configure'];
 
-function createConfigure(
+function createLinkConfigure(
   pluginId: string,
   config: AppPluginExtensionLinkConfig,
   extension: PluginExtensionLink
@@ -86,14 +86,14 @@ function createConfigure(
   }
 
   return compose(
-    toRegistryConfigure(extension),
+    mapToRegistryType(extension),
     withValidation(pluginId),
     withErrorHandling(pluginId, config.title),
     config.configure
   );
 }
 
-function toRegistryConfigure(
+function mapToRegistryType(
   extension: PluginExtensionLink
 ): (configure: ExtensionConfigureType) => RegistryConfigureType {
   return (configure) => {
