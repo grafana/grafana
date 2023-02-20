@@ -123,6 +123,37 @@ return (
 
 The way the active page is matched in the breadcrumbs and section nav relies on the page routes being hierarchical. If you have a list page and an item page, the item page needs to be a subroute of the list page and the list page url needs to be specified in your `plugin.json`. For example, you might have a list of users at `/users`. This means that the item page for a specific user needs to be at `/users/:id`. This may require some refactoring of your routes.
 
+#### Using `PluginPage` with tabs
+
+You can also create a further layer of hierarchy by specifying `children` in the `pageNav` model to created a page with tabbed navigation.
+
+Example:
+
+```tsx
+const pageNav = {
+  text: 'My page',
+  description: 'Incident timeline and details',
+  url: '/a/myorgid-pluginname-app',
+  children: [
+    {
+      url: '/a/myorgid-pluginname-app/tab1',
+      text: 'Tab1',
+      active: true,
+    },
+    {
+      url: '/a/myorgid-pluginname-app/tab2',
+      text: 'Tab1',
+    },
+  ],
+};
+
+return (
+  <PluginPage pageNav={pageNav}>
+    {your page content here}
+  </PluginPage>
+);
+```
+
 #### Using `PluginPage` in a backwards-compatible way
 
 If you want to maintain backwards-compatibility with older versions of Grafana, one way is to implement a `PluginPage` wrapper. If `PluginPage` is available and the `topnav` feature is enabled then use the real `PluginPage`, otherwise fallback to whatever each plugin is doing today (including calling `onNavChanged`).
