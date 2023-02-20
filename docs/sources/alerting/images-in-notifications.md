@@ -36,7 +36,8 @@ To use images in notifications, Grafana must be set up to use [image rendering](
 
 If Grafana has been set up to use [image rendering]({{< relref "../setup-grafana/image-rendering/" >}}) images in notifications can be turned on via the `capture` option in `[unified_alerting.screenshots]`:
 
-    # Enable screenshots in notifications. This option requires the Grafana Image Renderer plugin.
+    # Enable screenshots in notifications. You must have either installed the Grafana image rendering
+    # plugin, or set up Grafana to use a remote rendering service.
     # For more information on configuration options, refer to [rendering].
     capture = true
 
