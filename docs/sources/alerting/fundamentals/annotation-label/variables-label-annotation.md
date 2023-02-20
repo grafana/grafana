@@ -13,9 +13,9 @@ weight: 117
 
 In Grafana, you can template labels and annotations just like in Prometheus. Those who have used Prometheus before should be familiar with `$labels` and `$value` as these variables contain the labels and value of the alert. You can use the same variables in Grafana to template labels and annotations, even if the alert does not use a Prometheus data source.
 
-## Printing labels
+## Print labels
 
-Suppose you want to create an alert rule that fires when an instance is down for more than 5 minutes. You want the alert to contain a summary telling you which instance is down. You can do this by creating a summary annotation that prints the instance label and the message "has been down for more than 5 minutes".
+If you want to create an alert rule that fires when an instance is down for more than 5 minutes and you want the alert to contain a summary telling you which instance is down, create a summary annotation that prints the instance label and the message "has been down for more than 5 minutes".
 
 ```
 Instance {{ $labels.instance }} has been down for more than 5 minutes
@@ -35,23 +35,23 @@ This is because it is attempting to use a non-existing field `name` in `$labels.
 Instance {{ index $labels "instance.name" }} has been down for more than 5 minutes
 ```
 
-## Printing the ValueString
+## Print the ValueString
 
 You can print the value of the alert with `$value`. However, where `$value` in Prometheus is a floating point number containing the value of the expression, in Grafana it is is a string containing the labels and values of all Threshold, Reduce and Maths expressions from the alert rule definition. It does not contain time series or tabular data, as a single query can return anywhere from 1 to 10,000s of rows or metrics.
 
-This `$value` variable is called the ValueString. If you were to use it in the template of a summary annotation:
+This `$value` variable is called the ValueString. If you use it in the template of a summary annotation:
 
 ```
 {{ $labels.instance }} has an average 95th percentile request latency above 1s: {{ $value }})
 ```
 
-you would get the following summary:
+you get the following summary:
 
 ```
 http_server has an average 95th percentile request latency above 1s: [ var='B' labels={instance=http_server} value=10 ]
 ```
 
-## Printing the values of individual expressions
+## Print the values of individual expressions
 
 You can also print the values of individual expressions with `$values`. For example, if you have an alert rule with a Reduce expression `B` and a Math expression `C`, you can print just the value of `B`:
 
@@ -59,7 +59,7 @@ You can also print the values of individual expressions with `$values`. For exam
 {{ $labels.instance }} has an average 95th percentile request latency above 1s: {{ $values.B }}
 ```
 
-and then you would get this summary:
+Then you get this summary:
 
 ```
 http_server has an average 95th percentile request latency above 1s: 11
