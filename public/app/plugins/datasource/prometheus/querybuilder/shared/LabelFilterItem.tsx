@@ -66,7 +66,7 @@ export function LabelFilterItem({
 
   return (
     <div data-testid="prometheus-dimensions-filter-item">
-      <InlineField error={CONFLICTING_LABEL_FILTER_ERROR_MESSAGE} invalid={isConflicting}>
+      <InlineField error={CONFLICTING_LABEL_FILTER_ERROR_MESSAGE} invalid={isConflicting ? true : undefined}>
         <InputGroup>
           <Select
             placeholder="Select label"

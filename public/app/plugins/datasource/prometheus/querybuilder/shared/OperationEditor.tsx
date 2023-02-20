@@ -136,7 +136,11 @@ export function OperationEditor({
   return (
     <Draggable draggableId={`operation-${index}`} index={index}>
       {(provided) => (
-        <InlineField error={'You have conflicting label filters'} invalid={isConflicting} className={styles.error}>
+        <InlineField
+          error={'You have conflicting label filters'}
+          invalid={isConflicting ? true : undefined}
+          className={styles.error}
+        >
           <div
             className={cx(
               styles.card,
