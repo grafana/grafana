@@ -76,11 +76,13 @@ First, enable the `topnav` feature flag in `custom.ini` to check how your plugin
 enable = topnav
 ```
 
-If your plugin uses the `onNavChanged` callback to inform Grafana of its nav model & sub pages, you should see that this results in duplicated navigation elements. e.g. if these pages are defined in `plugin.json` they will be added to the left section nav **and** rendered inside the page via tabs. If you disable `topnav` it should look just as before.
+#### Migrate from `onNavChanged`
+
+If your plugin uses the `onNavChanged` callback to inform Grafana of its nav model & sub pages, you should see that this results in duplicated navigation elements. If you disable `topnav` it should look just as before.
 
 When `topnav` is enabled we need to update the plugin to take advantage of the new `PluginPage` component and not call `onNavChanged`. `onNavChanged` is now deprecated.
 
-#### `PluginPage`
+#### Switch to `PluginPage` component
 
 Grafana now exposes a new `PluginPage` component from `@grafana/runtime` that hooks into the new navigation and page layouts and supports the old page layouts when the `topnav` feature is disabled. This new component will also handle rendering the section navigation. The section navigation can include other core sections and other plugins. To control what pages are displayed in the section navigation for a specific plugin, Grafana will use the pages added in `plugin.json` that have `addToNav` set to `true`.
 
@@ -100,7 +102,9 @@ return (
 
 Grafana will look at the URL to know what plugin and page should be active in the section nav, so this only works for pages you have specified in `plugin.json`. `PluginPage` will then render a page header based on the page name specified in `plugin.json`.
 
-The `PluginPage` component also exposes a `pageNav` property that is a `NavModelItem`. You can use this `pageNav` property for specific item pages. The `text` and `description` you specify in the `pageNav` model will be used to populate the breadcrumbs and page header.
+#### Using `PluginPage` for pages not defined in `plugin.json`
+
+The `PluginPage` component also exposes a `pageNav` property that is a `NavModelItem`. This `pageNav` property is useful for pages that are not defined in `plugin.json` (e.g. individual item pages). The `text` and `description` you specify in the `pageNav` model will be used to populate the breadcrumbs and page header.
 
 Example:
 
