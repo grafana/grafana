@@ -345,28 +345,33 @@ function combineFrames(dest: DataFrame, source: DataFrame) {
     );
   }
   dest.length += source.length;
-  combineMetadata(dest, source);
+  dest.meta = {
+    ...dest.meta,
+    stats: getCombinedMetadataStats(dest.meta?.stats ?? [], source.meta?.stats ?? []),
+  };
 }
 
-function combineMetadata(dest: DataFrame, source: DataFrame) {
-  if (!source.meta?.stats) {
-    return;
+const TOTAL_BYTES_STAT = 'Summary: total bytes processed';
+
+function getCombinedMetadataStats(
+  destStats: QueryResultMetaStat[],
+  sourceStats: QueryResultMetaStat[]
+): QueryResultMetaStat[] {
+  // in the current approach, we only handle a single stat
+  const destStat = destStats.find((s) => s.displayName === TOTAL_BYTES_STAT);
+  const sourceStat = sourceStats.find((s) => s.displayName === TOTAL_BYTES_STAT);
+
+  if (sourceStat != null && destStat != null) {
+    return [{ value: sourceStat.value + destStat.value, displayName: TOTAL_BYTES_STAT }];
   }
-  if (!dest.meta?.stats) {
-    if (!dest.meta) {
-      dest.meta = {};
-    }
-    Object.assign(dest.meta, { stats: source.meta.stats });
-    return;
+
+  // maybe one of them exist
+  const eitherStat = sourceStat ?? destStat;
+  if (eitherStat != null) {
+    return [eitherStat];
   }
-  dest.meta.stats.forEach((destStat: QueryResultMetaStat, i: number) => {
-    const sourceStat = source.meta?.stats?.find(
-      (sourceStat: QueryResultMetaStat) => destStat.displayName === sourceStat.displayName
-    );
-    if (sourceStat) {
-      destStat.value += sourceStat.value;
-    }
-  });
+
+  return [];
 }
 
 /**
