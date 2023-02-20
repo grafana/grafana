@@ -7,6 +7,7 @@ import { InlineSegmentGroup, Segment, SegmentAsync, useTheme2 } from '@grafana/u
 
 import { useFields } from '../../../hooks/useFields';
 import { useDispatch } from '../../../hooks/useStatelessReducer';
+import { MetricAggregation, MetricAggregationType } from '../../../types';
 import { MetricPicker } from '../../MetricPicker';
 import { useDatasource, useQuery } from '../ElasticsearchQueryContext';
 import { segmentStyles } from '../styles';
@@ -18,8 +19,6 @@ import {
   isMetricAggregationWithSettings,
   isPipelineAggregation,
   isPipelineAggregationWithMultipleBucketPaths,
-  MetricAggregation,
-  MetricAggregationType,
 } from './aggregations';
 import { changeMetricField, changeMetricType } from './state/actions';
 import { getStyles } from './styles';

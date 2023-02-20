@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/models"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -69,10 +68,11 @@ func (hs *HTTPServer) getUserUserProfile(c *contextmodel.ReqContext, userID int6
 		authLabel := login.GetAuthProviderLabel(getAuthQuery.Result.AuthModule)
 		userProfile.AuthLabels = append(userProfile.AuthLabels, authLabel)
 		userProfile.IsExternal = true
+		userProfile.IsExternallySynced = login.IsExternallySynced(hs.Cfg, authLabel)
 	}
 
 	userProfile.AccessControl = hs.getAccessControlMetadata(c, c.OrgID, "global.users:id:", strconv.FormatInt(userID, 10))
-	userProfile.AvatarUrl = dtos.GetGravatarUrl(userProfile.Email)
+	userProfile.AvatarURL = dtos.GetGravatarUrl(userProfile.Email)
 
 	return response.JSON(http.StatusOK, userProfile)
 }
@@ -429,12 +429,12 @@ func (hs *HTTPServer) ChangeUserPassword(c *contextmodel.ReqContext) response.Re
 
 	userQuery := user.GetUserByIDQuery{ID: c.UserID}
 
-	user, err := hs.userService.GetByID(c.Req.Context(), &userQuery)
+	usr, err := hs.userService.GetByID(c.Req.Context(), &userQuery)
 	if err != nil {
 		return response.Error(500, "Could not read user from database", err)
 	}
 
-	getAuthQuery := login.GetAuthInfoQuery{UserId: user.ID}
+	getAuthQuery := login.GetAuthInfoQuery{UserId: usr.ID}
 	if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
 		authModule := getAuthQuery.Result.AuthModule
 		if authModule == login.LDAPAuthModule || authModule == login.AuthProxyAuthModule {
@@ -442,21 +442,21 @@ func (hs *HTTPServer) ChangeUserPassword(c *contextmodel.ReqContext) response.Re
 		}
 	}
 
-	passwordHashed, err := util.EncodePassword(cmd.OldPassword, user.Salt)
+	passwordHashed, err := util.EncodePassword(cmd.OldPassword, usr.Salt)
 	if err != nil {
 		return response.Error(500, "Failed to encode password", err)
 	}
-	if passwordHashed != user.Password {
+	if passwordHashed != usr.Password {
 		return response.Error(401, "Invalid old password", nil)
 	}
 
-	password := models.Password(cmd.NewPassword)
+	password := user.Password(cmd.NewPassword)
 	if password.IsWeak() {
 		return response.Error(400, "New password is too short", nil)
 	}
 
 	cmd.UserID = c.UserID
-	cmd.NewPassword, err = util.EncodePassword(cmd.NewPassword, user.Salt)
+	cmd.NewPassword, err = util.EncodePassword(cmd.NewPassword, usr.Salt)
 	if err != nil {
 		return response.Error(500, "Failed to encode password", err)
 	}

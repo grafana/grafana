@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
-	alertingModels "github.com/grafana/alerting/alerting/models"
+	alertingModels "github.com/grafana/alerting/models"
 	"github.com/hashicorp/go-multierror"
 	prometheusModel "github.com/prometheus/common/model"
 	"go.opentelemetry.io/otel/attribute"
@@ -177,8 +177,7 @@ func (sch *schedule) DeleteAlertRule(keys ...ngmodels.AlertRuleKey) {
 	}
 	// Our best bet at this point is that we update the metrics with what we hope to schedule in the next tick.
 	alertRules, _ := sch.schedulableAlertRules.all()
-	sch.metrics.SchedulableAlertRules.Set(float64(len(alertRules)))
-	sch.metrics.SchedulableAlertRulesHash.Set(float64(hashUIDs(alertRules)))
+	sch.updateRulesMetrics(alertRules)
 }
 
 func (sch *schedule) schedulePeriodic(ctx context.Context, t *ticker.T) error {
@@ -209,6 +208,21 @@ type readyToRunItem struct {
 	evaluation
 }
 
+func (sch *schedule) updateRulesMetrics(alertRules []*ngmodels.AlertRule) {
+	orgs := make(map[int64]int64)
+	for _, rule := range alertRules {
+		orgs[rule.OrgID]++
+	}
+	for org, numRules := range orgs {
+		sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(org)).Set(float64(numRules))
+	}
+
+	// While these are the rules that we iterate over, at the moment there's no 100% guarantee that they'll be
+	// scheduled as rules could be removed before we get a chance to evaluate them.
+	sch.metrics.SchedulableAlertRules.Set(float64(len(alertRules)))
+	sch.metrics.SchedulableAlertRulesHash.Set(float64(hashUIDs(alertRules)))
+}
+
 func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.Group, tick time.Time) ([]readyToRunItem, map[ngmodels.AlertRuleKey]struct{}) {
 	tickNum := tick.Unix() / int64(sch.baseInterval.Seconds())
 
@@ -223,10 +237,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 	// so, at the end, the remaining registered alert rules are the deleted ones
 	registeredDefinitions := sch.registry.keyMap()
 
-	// While these are the rules that we iterate over, at the moment there's no 100% guarantee that they'll be
-	// scheduled as rules could be removed before we get a chance to evaluate them.
-	sch.metrics.SchedulableAlertRules.Set(float64(len(alertRules)))
-	sch.metrics.SchedulableAlertRulesHash.Set(float64(hashUIDs(alertRules)))
+	sch.updateRulesMetrics(alertRules)
 
 	readyToRun := make([]readyToRunItem, 0)
 	missingFolder := make(map[string][]string)
@@ -474,7 +485,11 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 					isPaused := ctx.rule.IsPaused
 					// fetch latest alert rule version
 					if currentRuleVersion != newVersion {
-						if currentRuleVersion > 0 { // do not clean up state if the eval loop has just started.
+						// Do not clean up state if the eval loop has just started.
+						// We need to reset state if the loop has started and the alert is already paused. It can happen,
+						// if we have an alert with state and we do file provision with stateful Grafana, that state
+						// lingers in DB and won't be cleaned up until next alert rule update.
+						if currentRuleVersion > 0 || isPaused {
 							logger.Debug("Got a new version of alert rule. Clear up the state and refresh extra labels", "version", currentRuleVersion, "newVersion", newVersion)
 							resetState(grafanaCtx, isPaused)
 						}

@@ -173,6 +173,25 @@ export const mockPromAlertingRule = (partial: Partial<AlertingRule> = {}): Alert
   };
 };
 
+export const mockGrafanaRulerRule = (partial: Partial<RulerGrafanaRuleDTO> = {}): RulerGrafanaRuleDTO => {
+  return {
+    for: '',
+    annotations: {},
+    labels: {},
+    grafana_alert: {
+      ...partial,
+      uid: '',
+      title: 'my rule',
+      namespace_uid: '',
+      namespace_id: 0,
+      condition: '',
+      no_data_state: GrafanaAlertStateDecision.NoData,
+      exec_err_state: GrafanaAlertStateDecision.Error,
+      data: [],
+    },
+  };
+};
+
 export const mockPromRecordingRule = (partial: Partial<RecordingRule> = {}): RecordingRule => {
   return {
     type: PromRuleType.Recording,
@@ -570,6 +589,7 @@ export function getGrafanaRule(override?: Partial<CombinedRule>) {
       name: 'Grafana',
       rulesSource: 'grafana',
     },
+    rulerRule: mockGrafanaRulerRule(),
     ...override,
   });
 }

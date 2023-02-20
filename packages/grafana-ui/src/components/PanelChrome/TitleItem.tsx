@@ -50,12 +50,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     item: css({
       color: `${theme.colors.text.secondary}`,
       label: 'panel-header-item',
-      backgroundColor: `${theme.colors.background.primary}`,
       cursor: 'auto',
       border: 'none',
       borderRadius: `${theme.shape.borderRadius()}`,
       padding: `${theme.spacing(0, 1)}`,
-      height: `${theme.spacing(theme.components.height.md)}`,
+      height: `${theme.spacing(theme.components.panel.headerHeight)}`,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',

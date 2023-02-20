@@ -1,7 +1,9 @@
 package rendering
 
 import (
+	"bytes"
 	"context"
+	"encoding/gob"
 	"fmt"
 	"time"
 
@@ -13,33 +15,38 @@ import (
 const renderKeyPrefix = "render-%s"
 
 type RenderUser struct {
-	OrgID   int64
-	UserID  int64
-	OrgRole string
+	OrgID   int64  `json:"org_id"`
+	UserID  int64  `json:"user_id"`
+	OrgRole string `json:"org_role"`
 }
 
 func (rs *RenderingService) GetRenderUser(ctx context.Context, key string) (*RenderUser, bool) {
-	val, err := rs.RemoteCacheService.Get(ctx, fmt.Sprintf(renderKeyPrefix, key))
+	val, err := rs.RemoteCacheService.GetByteArray(ctx, fmt.Sprintf(renderKeyPrefix, key))
 	if err != nil {
 		rs.log.Error("Failed to get render key from cache", "error", err)
 	}
-
-	if val != nil {
-		if user, ok := val.(*RenderUser); ok {
-			return user, true
-		}
+	ru := &RenderUser{}
+	buf := bytes.NewBuffer(val)
+	err = gob.NewDecoder(buf).Decode(&ru)
+	if err != nil {
+		return nil, false
 	}
 
-	return nil, false
+	return ru, true
 }
 
 func setRenderKey(cache *remotecache.RemoteCache, ctx context.Context, opts AuthOpts, renderKey string, expiry time.Duration) error {
-	err := cache.Set(ctx, fmt.Sprintf(renderKeyPrefix, renderKey), &RenderUser{
+	buf := bytes.NewBuffer(nil)
+	err := gob.NewEncoder(buf).Encode(&RenderUser{
 		OrgID:   opts.OrgID,
 		UserID:  opts.UserID,
 		OrgRole: string(opts.OrgRole),
-	}, expiry)
-	return err
+	})
+	if err != nil {
+		return err
+	}
+
+	return cache.SetByteArray(ctx, fmt.Sprintf(renderKeyPrefix, renderKey), buf.Bytes(), expiry)
 }
 
 func generateAndSetRenderKey(cache *remotecache.RemoteCache, ctx context.Context, opts AuthOpts, expiry time.Duration) (string, error) {

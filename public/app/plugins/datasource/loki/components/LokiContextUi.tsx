@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2, LogRowModel, SelectableValue } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { MultiSelect, Tag, Tooltip, useStyles2 } from '@grafana/ui';
 
 import LokiLanguageProvider from '../LanguageProvider';
@@ -48,9 +49,11 @@ export function LokiContextUi(props: LokiContextUiProps) {
   const styles = useStyles2(getStyles);
 
   const [contextFilters, setContextFilters] = useState<ContextFilter[]>([]);
+
   const [initialized, setInitialized] = useState(false);
   const timerHandle = React.useRef<number>();
   const previousInitialized = React.useRef<boolean>(false);
+  const previousContextFilters = React.useRef<ContextFilter[]>([]);
   useEffect(() => {
     if (!initialized) {
       return;
@@ -61,6 +64,13 @@ export function LokiContextUi(props: LokiContextUiProps) {
       previousInitialized.current = initialized;
       return;
     }
+
+    if (contextFilters.filter(({ enabled, fromParser }) => enabled && !fromParser).length === 0) {
+      setContextFilters(previousContextFilters.current);
+      return;
+    }
+
+    previousContextFilters.current = structuredClone(contextFilters);
 
     if (timerHandle.current) {
       clearTimeout(timerHandle.current);
@@ -102,6 +112,20 @@ export function LokiContextUi(props: LokiContextUiProps) {
     setInitialized(true);
   });
 
+  useEffect(() => {
+    reportInteraction('grafana_explore_logs_loki_log_context_loaded', {
+      logRowUid: row.uid,
+      type: 'load',
+    });
+
+    return () => {
+      reportInteraction('grafana_explore_logs_loki_log_context_loaded', {
+        logRowUid: row.uid,
+        type: 'unload',
+      });
+    };
+  }, [row.uid]);
+
   const realLabels = contextFilters.filter(({ fromParser }) => !fromParser);
   const realLabelsEnabled = realLabels.filter(({ enabled }) => enabled);
 
@@ -128,7 +152,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
             colorIndex={1}
           />
         </Tooltip>{' '}
-        Select labels to include in the context query:
+        Select labels to be included in the context query:
       </div>
       <div>
         <MultiSelect
@@ -141,7 +165,21 @@ export function LokiContextUi(props: LokiContextUiProps) {
           maxMenuHeight={200}
           menuShouldPortal={false}
           noOptionsMessage="No further labels available"
-          onChange={(keys) => {
+          onChange={(keys, actionMeta) => {
+            if (actionMeta.action === 'select-option') {
+              reportInteraction('grafana_explore_logs_loki_log_context_filtered', {
+                logRowUid: row.uid,
+                type: 'label',
+                action: 'select',
+              });
+            }
+            if (actionMeta.action === 'remove-value') {
+              reportInteraction('grafana_explore_logs_loki_log_context_filtered', {
+                logRowUid: row.uid,
+                type: 'label',
+                action: 'remove',
+              });
+            }
             return setContextFilters(
               contextFilters.map((filter) => {
                 if (filter.fromParser) {
@@ -167,7 +205,21 @@ export function LokiContextUi(props: LokiContextUiProps) {
             maxMenuHeight={200}
             noOptionsMessage="No further labels available"
             isClearable={true}
-            onChange={(keys) => {
+            onChange={(keys, actionMeta) => {
+              if (actionMeta.action === 'select-option') {
+                reportInteraction('grafana_explore_logs_loki_log_context_filtered', {
+                  logRowUid: row.uid,
+                  type: 'parsed_label',
+                  action: 'select',
+                });
+              }
+              if (actionMeta.action === 'remove-value') {
+                reportInteraction('grafana_explore_logs_loki_log_context_filtered', {
+                  logRowUid: row.uid,
+                  type: 'parsed_label',
+                  action: 'remove',
+                });
+              }
               setContextFilters(
                 contextFilters.map((filter) => {
                   if (!filter.fromParser) {
