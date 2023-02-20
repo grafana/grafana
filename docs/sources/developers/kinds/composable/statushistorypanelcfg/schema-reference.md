@@ -8,7 +8,7 @@ title: StatusHistoryPanelCfg kind
 
 ## StatusHistoryPanelCfg
 
-#### Maturity: experimental
+#### Maturity: [experimental](../../../maturity/#experimental)
 #### Version: 0.0
 
 
@@ -24,9 +24,9 @@ It extends [HideableFieldConfig](#hideablefieldconfig).
 
 | Property      | Type                                  | Required | Description                                                                  |
 |---------------|---------------------------------------|----------|------------------------------------------------------------------------------|
-| `fillOpacity` | integer                               | No       | Default: `70`.                                                               |
+| `fillOpacity` | integer                               | No       | Default: `70`.<br/>Constraint: `>=0 & <=100`.                                |
 | `hideFrom`    | [HideSeriesConfig](#hideseriesconfig) | No       | *(Inherited from [HideableFieldConfig](#hideablefieldconfig))*<br/>TODO docs |
-| `lineWidth`   | integer                               | No       | Default: `1`.                                                                |
+| `lineWidth`   | integer                               | No       | Default: `1`.<br/>Constraint: `>=0 & <=10`.                                  |
 
 ### HideSeriesConfig
 
@@ -46,16 +46,6 @@ TODO docs
 |------------|---------------------------------------|----------|-------------|
 | `hideFrom` | [HideSeriesConfig](#hideseriesconfig) | No       | TODO docs   |
 
-### HideSeriesConfig
-
-TODO docs
-
-| Property  | Type    | Required | Description |
-|-----------|---------|----------|-------------|
-| `legend`  | boolean | **Yes**  |             |
-| `tooltip` | boolean | **Yes**  |             |
-| `viz`     | boolean | **Yes**  |             |
-
 ### PanelOptions
 
 It extends [OptionsWithLegend](#optionswithlegend) and [OptionsWithTooltip](#optionswithtooltip) and [OptionsWithTimezones](#optionswithtimezones).
@@ -63,7 +53,7 @@ It extends [OptionsWithLegend](#optionswithlegend) and [OptionsWithTooltip](#opt
 | Property    | Type                                    | Required | Description                                                                |
 |-------------|-----------------------------------------|----------|----------------------------------------------------------------------------|
 | `legend`    | [VizLegendOptions](#vizlegendoptions)   | **Yes**  | *(Inherited from [OptionsWithLegend](#optionswithlegend))*<br/>TODO docs   |
-| `rowHeight` | number                                  | **Yes**  | Set the height of the rows Default: `0.9`.                                 |
+| `rowHeight` | number                                  | **Yes**  | Set the height of the rows Default: `0.9`.<br/>Constraint: `>=0 & <=1`.    |
 | `showValue` | string                                  | **Yes**  | TODO docs<br/>Possible values are: `auto`, `never`, `always`.              |
 | `tooltip`   | [VizTooltipOptions](#viztooltipoptions) | **Yes**  | *(Inherited from [OptionsWithTooltip](#optionswithtooltip))*<br/>TODO docs |
 | `colWidth`  | number                                  | No       | Controls the column width Default: `0.9`.                                  |
@@ -108,31 +98,6 @@ TODO docs
 | Property  | Type                                    | Required | Description |
 |-----------|-----------------------------------------|----------|-------------|
 | `tooltip` | [VizTooltipOptions](#viztooltipoptions) | **Yes**  | TODO docs   |
-
-### VizTooltipOptions
-
-TODO docs
-
-| Property | Type   | Required | Description                                                   |
-|----------|--------|----------|---------------------------------------------------------------|
-| `mode`   | string | **Yes**  | TODO docs<br/>Possible values are: `single`, `multi`, `none`. |
-| `sort`   | string | **Yes**  | TODO docs<br/>Possible values are: `asc`, `desc`, `none`.     |
-
-### VizLegendOptions
-
-TODO docs
-
-| Property      | Type     | Required | Description                                                                                                                             |
-|---------------|----------|----------|-----------------------------------------------------------------------------------------------------------------------------------------|
-| `calcs`       | string[] | **Yes**  |                                                                                                                                         |
-| `displayMode` | string   | **Yes**  | TODO docs<br/>Note: "hidden" needs to remain as an option for plugins compatibility<br/>Possible values are: `list`, `table`, `hidden`. |
-| `placement`   | string   | **Yes**  | TODO docs<br/>Possible values are: `bottom`, `right`.                                                                                   |
-| `showLegend`  | boolean  | **Yes**  |                                                                                                                                         |
-| `asTable`     | boolean  | No       |                                                                                                                                         |
-| `isVisible`   | boolean  | No       |                                                                                                                                         |
-| `sortBy`      | string   | No       |                                                                                                                                         |
-| `sortDesc`    | boolean  | No       |                                                                                                                                         |
-| `width`       | number   | No       |                                                                                                                                         |
 
 ### VizTooltipOptions
 
