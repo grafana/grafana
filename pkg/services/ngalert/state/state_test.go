@@ -134,7 +134,7 @@ func TestNormal(t *testing.T) {
 		endsAt:   mock.Now().Add(time.Minute),
 		expected: State{
 			State:       eval.Normal,
-			Cause:       NoCause,
+			Cause:       CauseNone,
 			StateReason: "this is a reason",
 			StartsAt:    mock.Now(),
 			EndsAt:      mock.Now().Add(time.Minute),
@@ -150,7 +150,7 @@ func TestNormal(t *testing.T) {
 		endsAt:   mock.Now().Add(time.Minute),
 		expected: State{
 			State:    eval.Normal,
-			Cause:    NoCause,
+			Cause:    CauseNone,
 			StartsAt: mock.Now(),
 			EndsAt:   mock.Now().Add(time.Minute),
 		},
@@ -159,7 +159,7 @@ func TestNormal(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			actual := test.state
-			actual.SetNormal(test.reason, NoCause, test.startsAt, test.endsAt)
+			actual.SetNormal(test.reason, CauseNone, test.startsAt, test.endsAt)
 			assert.Equal(t, test.expected, actual)
 		})
 	}

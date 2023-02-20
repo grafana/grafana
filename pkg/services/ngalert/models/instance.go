@@ -43,8 +43,8 @@ const (
 type InstanceCauseType string
 
 const (
-	// InstanceNoCause is for any state that does not come from firing or error.
-	InstanceNoCause InstanceCauseType = ""
+	// InstanceCauseNone is for any state that does not come from firing or error.
+	InstanceCauseNone InstanceCauseType = ""
 	// InstanceCauseFiring is to identify states caused by firing states.
 	InstanceCauseFiring InstanceCauseType = "Firing"
 	// InstanceCauseError is to identify states caused by erroring states.
@@ -64,7 +64,7 @@ func (i InstanceStateType) IsValid() bool {
 
 // IsValid checks that the value of InstanceCauseType is a valid string.
 func (i InstanceCauseType) IsValid() bool {
-	return i == InstanceNoCause ||
+	return i == InstanceCauseNone ||
 		i == InstanceCauseFiring ||
 		i == InstanceCauseError ||
 		i == InstanceCauseNoData
@@ -73,7 +73,7 @@ func (i InstanceCauseType) IsValid() bool {
 // validateCurrentStateAndCurrentPendingState checks that the possible combinations of CurrentState and
 // CurrentCause are valid.
 func validateCurrentStateAndCurrentPendingState(cState InstanceStateType, cCause InstanceCauseType) bool {
-	return (cState == InstanceStateNormal && (cCause == InstanceNoCause || cCause == InstanceCauseError || cCause == InstanceCauseNoData)) ||
+	return (cState == InstanceStateNormal && (cCause == InstanceCauseNone || cCause == InstanceCauseError || cCause == InstanceCauseNoData)) ||
 		(cState == InstanceStateFiring && (cCause == InstanceCauseFiring || cCause == InstanceCauseError || cCause == InstanceCauseNoData)) ||
 		(cState == InstanceStateNoData && cCause == InstanceCauseNoData) ||
 		(cState == InstanceStateError && cCause == InstanceCauseError) ||

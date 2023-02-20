@@ -48,7 +48,7 @@ func TestWarmStateCache(t *testing.T) {
 			CacheID:      `[["test1","testValue1"]]`,
 			Labels:       data.Labels{"test1": "testValue1"},
 			State:        eval.Normal,
-			Cause:        state.NoCause,
+			Cause:        state.CauseNone,
 			Results: []state.Evaluation{
 				{EvaluationTime: evaluationTime, EvaluationState: eval.Normal},
 			},
@@ -203,7 +203,7 @@ func TestWarmStateCache(t *testing.T) {
 			LabelsHash: hash,
 		},
 		CurrentState:      models.InstanceStateNormal,
-		CurrentCause:      models.InstanceNoCause,
+		CurrentCause:      models.InstanceCauseNone,
 		LastEvalTime:      evaluationTime,
 		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
 		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
@@ -489,7 +489,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 					Values: make(map[string]float64),
 					State:  eval.Normal,
-					Cause:  state.NoCause,
+					Cause:  state.CauseNone,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -545,7 +545,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 					Values: make(map[string]float64),
 					State:  eval.Normal,
-					Cause:  state.NoCause,
+					Cause:  state.CauseNone,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -629,7 +629,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 					Values: make(map[string]float64),
 					State:  eval.Normal,
-					Cause:  state.NoCause,
+					Cause:  state.CauseNone,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -1276,7 +1276,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 					Values: make(map[string]float64),
 					State:  eval.Normal,
-					Cause:  state.NoCause,
+					Cause:  state.CauseNone,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -1369,7 +1369,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 					Values: make(map[string]float64),
 					State:  eval.Normal,
-					Cause:  state.NoCause,
+					Cause:  state.CauseNone,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -1396,7 +1396,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 					Values: make(map[string]float64),
 					State:  eval.Normal,
-					Cause:  state.NoCause,
+					Cause:  state.CauseNone,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -1491,7 +1491,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 					Values: make(map[string]float64),
 					State:  eval.Normal,
-					Cause:  state.NoCause,
+					Cause:  state.CauseNone,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -2778,7 +2778,7 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 					Values: make(map[string]float64),
 					State:  eval.Normal,
-					Cause:  state.NoCause,
+					Cause:  state.CauseNone,
 					Results: []state.Evaluation{
 						{
 							EvaluationTime:  evaluationTime,
@@ -2897,7 +2897,7 @@ func TestStaleResultsHandler(t *testing.T) {
 				LabelsHash: hash1,
 			},
 			CurrentState:      models.InstanceStateNormal,
-			CurrentCause:      models.InstanceNoCause,
+			CurrentCause:      models.InstanceCauseNone,
 			Labels:            labels1,
 			LastEvalTime:      lastEval,
 			CurrentStateSince: lastEval,
@@ -3154,7 +3154,7 @@ func TestDeleteStateByRuleUID(t *testing.T) {
 				LabelsHash: hash1,
 			},
 			CurrentState: models.InstanceStateNormal,
-			CurrentCause: models.InstanceNoCause,
+			CurrentCause: models.InstanceCauseNone,
 			Labels:       labels1,
 		},
 		{
@@ -3192,7 +3192,7 @@ func TestDeleteStateByRuleUID(t *testing.T) {
 					CacheID:            `[["test1","testValue1"]]`,
 					Labels:             data.Labels{"test1": "testValue1"},
 					State:              eval.Normal,
-					Cause:              state.NoCause,
+					Cause:              state.CauseNone,
 					EvaluationDuration: 0,
 					Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
 				},
@@ -3292,7 +3292,7 @@ func TestResetStateByRuleUID(t *testing.T) {
 				LabelsHash: hash1,
 			},
 			CurrentState: models.InstanceStateNormal,
-			CurrentCause: models.InstanceNoCause,
+			CurrentCause: models.InstanceCauseNone,
 			Labels:       labels1,
 		},
 		{
@@ -3331,7 +3331,7 @@ func TestResetStateByRuleUID(t *testing.T) {
 					CacheID:            `[["test1","testValue1"]]`,
 					Labels:             data.Labels{"test1": "testValue1"},
 					State:              eval.Normal,
-					Cause:              state.NoCause,
+					Cause:              state.CauseNone,
 					EvaluationDuration: 0,
 					Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
 				},

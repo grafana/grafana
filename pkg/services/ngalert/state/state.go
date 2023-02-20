@@ -21,7 +21,7 @@ import (
 type Cause int
 
 const (
-	NoCause Cause = iota
+	CauseNone Cause = iota
 	CauseFiring
 	CauseError
 	CauseNoData
@@ -152,7 +152,7 @@ func (a *State) SetNormal(reason string, cause Cause, startsAt, endsAt time.Time
 // Resolve sets the State to Normal. It updates the StateReason, the end time, and sets Resolved to true.
 func (a *State) Resolve(reason string, endsAt time.Time) {
 	a.State = eval.Normal
-	a.Cause = NoCause
+	a.Cause = CauseNone
 	a.StateReason = reason
 	a.Resolved = true
 	a.EndsAt = endsAt

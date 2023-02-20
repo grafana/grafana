@@ -188,7 +188,7 @@ func (st *Manager) DeleteStateByRuleUID(ctx context.Context, ruleKey ngModels.Al
 		if s.State != eval.Normal {
 			startsAt = now
 		}
-		s.SetNormal(reason, NoCause, startsAt, now)
+		s.SetNormal(reason, CauseNone, startsAt, now)
 		// Set Resolved property so the scheduler knows to send a postable alert
 		// to Alertmanager.
 		s.Resolved = oldState == eval.Alerting
@@ -279,7 +279,7 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	switch result.State {
 	case eval.Normal:
 		logger.Debug("Setting next state", "handler", "resultNormal")
-		resultNormal(currentState, alertRule, result, logger, NoCause)
+		resultNormal(currentState, alertRule, result, logger, CauseNone)
 	case eval.Alerting:
 		logger.Debug("Setting next state", "handler", "resultAlerting")
 		resultAlerting(currentState, alertRule, result, logger, CauseFiring, "", nil)
@@ -435,8 +435,8 @@ func translateInstanceState(state ngModels.InstanceStateType) eval.State {
 
 func translateInstanceCause(pendingState ngModels.InstanceCauseType) Cause {
 	switch pendingState {
-	case ngModels.InstanceNoCause:
-		return NoCause
+	case ngModels.InstanceCauseNone:
+		return CauseNone
 	case ngModels.InstanceCauseFiring:
 		return CauseFiring
 	case ngModels.InstanceCauseError:
@@ -444,7 +444,7 @@ func translateInstanceCause(pendingState ngModels.InstanceCauseType) Cause {
 	case ngModels.InstanceCauseNoData:
 		return CauseNoData
 	default:
-		return NoCause
+		return CauseNone
 	}
 }
 

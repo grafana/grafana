@@ -2,7 +2,6 @@ package models
 
 import (
 	"errors"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -10,210 +9,223 @@ import (
 
 func TestInstanceStateType_IsValid(t *testing.T) {
 	testCases := []struct {
-		instanceType     InstanceStateType
-		expectedValidity bool
+		name         string
+		instanceType InstanceStateType
+		expected     bool
 	}{
 		{
-			instanceType:     InstanceStateFiring,
-			expectedValidity: true,
+			name:         "\"Alerting\" should be valid",
+			instanceType: InstanceStateFiring,
+			expected:     true,
 		},
 		{
-			instanceType:     InstanceStateNormal,
-			expectedValidity: true,
+			name:         "\"Normal\" should be valid",
+			instanceType: InstanceStateNormal,
+			expected:     true,
 		},
 		{
-			instanceType:     InstanceStatePending,
-			expectedValidity: true,
+			name:         "\"Pending\" should be valid",
+			instanceType: InstanceStatePending,
+			expected:     true,
 		},
 		{
-			instanceType:     InstanceStateNoData,
-			expectedValidity: true,
+			name:         "\"NoData\" should be valid",
+			instanceType: InstanceStateNoData,
+			expected:     true,
 		},
 		{
-			instanceType:     InstanceStateError,
-			expectedValidity: true,
+			name:         "\"Error\" should be valid",
+			instanceType: InstanceStateError,
+			expected:     true,
 		},
 		{
-			instanceType:     InstanceStateType("notAValidInstanceStateType"),
-			expectedValidity: false,
+			name:         "\"notAValidInstanceStateType\" should not be valid",
+			instanceType: InstanceStateType("notAValidInstanceStateType"),
+			expected:     false,
 		},
 	}
 
 	for _, tc := range testCases {
-		t.Run(buildTestInstanceStateTypeIsValidName(tc.instanceType, tc.expectedValidity), func(t *testing.T) {
-			require.Equal(t, tc.expectedValidity, tc.instanceType.IsValid())
+		t.Run(tc.name, func(t *testing.T) {
+			require.Equal(t, tc.expected, tc.instanceType.IsValid())
 		})
 	}
-}
-
-func buildTestInstanceStateTypeIsValidName(instanceType InstanceStateType, expectedValidity bool) string {
-	if expectedValidity {
-		return fmt.Sprintf("%q should be valid", instanceType)
-	}
-	return fmt.Sprintf("%q should not be valid", instanceType)
 }
 
 func TestInstanceCauseType_IsValid(t *testing.T) {
 	testCases := []struct {
+		name              string
 		instanceCauseType InstanceCauseType
-		expectedValidity  bool
+		expected          bool
 	}{
 		{
-			instanceCauseType: InstanceNoCause,
-			expectedValidity:  true,
+			name:              "\"\" should be valid",
+			instanceCauseType: InstanceCauseNone,
+			expected:          true,
 		},
 		{
+			name:              "\"Firing\" should be valid",
 			instanceCauseType: InstanceCauseFiring,
-			expectedValidity:  true,
+			expected:          true,
 		},
 		{
+			name:              "\"Error\" should be valid",
 			instanceCauseType: InstanceCauseError,
-			expectedValidity:  true,
+			expected:          true,
 		},
 		{
+			name:              "\"NoData\" should be valid",
 			instanceCauseType: InstanceCauseNoData,
-			expectedValidity:  true,
+			expected:          true,
 		},
 		{
+			name:              "\"notAValidInstancePendingStateType\" should not be valid",
 			instanceCauseType: InstanceCauseType("notAValidInstancePendingStateType"),
-			expectedValidity:  false,
+			expected:          false,
 		},
 	}
 
 	for _, tc := range testCases {
-		t.Run(buildTestInstancePendingStateTypeIsValidName(tc.instanceCauseType, tc.expectedValidity), func(t *testing.T) {
-			require.Equal(t, tc.expectedValidity, tc.instanceCauseType.IsValid())
+		t.Run(tc.name, func(t *testing.T) {
+			require.Equal(t, tc.expected, tc.instanceCauseType.IsValid())
 		})
 	}
-}
-
-func buildTestInstancePendingStateTypeIsValidName(instancePendingType InstanceCauseType, expectedValidity bool) string {
-	if expectedValidity {
-		return fmt.Sprintf("%q should be valid", instancePendingType)
-	}
-	return fmt.Sprintf("%q should not be valid", instancePendingType)
 }
 
 func TestAlertInstance_AreCurrentStateAndCurrentPendingStateValidTogether(t *testing.T) {
 	testCases := []struct {
+		name                string
 		currentState        InstanceStateType
 		currentPendingState InstanceCauseType
-		expectedValidity    bool
+		expected            bool
 	}{
 		{
+			name:                "CurrentState \"Normal\" and CurrentCause \"\" should be valid",
 			currentState:        InstanceStateNormal,
-			currentPendingState: InstanceNoCause,
-			expectedValidity:    true,
+			currentPendingState: InstanceCauseNone,
+			expected:            true,
 		},
 		{
+			name:                "CurrentState \"Normal\" and CurrentCause \"Firing\" should not be valid",
 			currentState:        InstanceStateNormal,
 			currentPendingState: InstanceCauseFiring,
-			expectedValidity:    false,
+			expected:            false,
 		},
 		{
+			name:                "CurrentState \"Normal\" and CurrentCause \"Error\" should be valid",
 			currentState:        InstanceStateNormal,
 			currentPendingState: InstanceCauseError,
-			expectedValidity:    true,
+			expected:            true,
 		},
 		{
+			name:                "CurrentState \"Normal\" and CurrentCause \"NoData\" should be valid",
 			currentState:        InstanceStateNormal,
 			currentPendingState: InstanceCauseNoData,
-			expectedValidity:    true,
+			expected:            true,
 		},
 		{
+			name:                "CurrentState \"Alerting\" and CurrentCause \"\" should not be valid",
 			currentState:        InstanceStateFiring,
-			currentPendingState: InstanceNoCause,
-			expectedValidity:    false,
+			currentPendingState: InstanceCauseNone,
+			expected:            false,
 		},
 		{
+			name:                "CurrentState \"Alerting\" and CurrentCause \"Firing\" should be valid",
 			currentState:        InstanceStateFiring,
 			currentPendingState: InstanceCauseFiring,
-			expectedValidity:    true,
+			expected:            true,
 		},
 		{
+			name:                "CurrentState \"Alerting\" and CurrentCause \"Error\" should be valid",
 			currentState:        InstanceStateFiring,
 			currentPendingState: InstanceCauseError,
-			expectedValidity:    true,
+			expected:            true,
 		},
 		{
+			name:                "CurrentState \"Alerting\" and CurrentCause \"NoData\" should be valid",
 			currentState:        InstanceStateFiring,
 			currentPendingState: InstanceCauseNoData,
-			expectedValidity:    true,
+			expected:            true,
 		},
 		{
+			name:                "CurrentState \"Error\" and CurrentCause \"\" should not be valid",
 			currentState:        InstanceStateError,
-			currentPendingState: InstanceNoCause,
-			expectedValidity:    false,
+			currentPendingState: InstanceCauseNone,
+			expected:            false,
 		},
 		{
+			name:                "CurrentState \"Error\" and CurrentCause \"Firing\" should not be valid",
 			currentState:        InstanceStateError,
 			currentPendingState: InstanceCauseFiring,
-			expectedValidity:    false,
+			expected:            false,
 		},
 		{
+			name:                "CurrentState \"Error\" and CurrentCause \"Error\" should be valid",
 			currentState:        InstanceStateError,
 			currentPendingState: InstanceCauseError,
-			expectedValidity:    true,
+			expected:            true,
 		},
 		{
+			name:                "CurrentState \"Error\" and CurrentCause \"NoData\" should not be valid",
 			currentState:        InstanceStateError,
 			currentPendingState: InstanceCauseNoData,
-			expectedValidity:    false,
+			expected:            false,
 		},
 		{
+			name:                "CurrentState \"NoData\" and CurrentCause \"\" should not be valid",
 			currentState:        InstanceStateNoData,
-			currentPendingState: InstanceNoCause,
-			expectedValidity:    false,
+			currentPendingState: InstanceCauseNone,
+			expected:            false,
 		},
 		{
+			name:                "CurrentState \"NoData\" and CurrentCause \"Firing\" should not be valid",
 			currentState:        InstanceStateNoData,
 			currentPendingState: InstanceCauseFiring,
-			expectedValidity:    false,
+			expected:            false,
 		},
 		{
+			name:                "CurrentState \"NoData\" and CurrentCause \"Error\" should not be valid",
 			currentState:        InstanceStateNoData,
 			currentPendingState: InstanceCauseError,
-			expectedValidity:    false,
+			expected:            false,
 		},
 		{
+			name:                "CurrentState \"NoData\" and CurrentCause \"NoData\" should be valid",
 			currentState:        InstanceStateNoData,
 			currentPendingState: InstanceCauseNoData,
-			expectedValidity:    true,
+			expected:            true,
 		},
 		{
+			name:                "CurrentState \"Pending\" and CurrentCause \"\" should not be valid",
 			currentState:        InstanceStatePending,
-			currentPendingState: InstanceNoCause,
-			expectedValidity:    false,
+			currentPendingState: InstanceCauseNone,
+			expected:            false,
 		},
 		{
+			name:                "CurrentState \"Pending\" and CurrentCause \"Firing\" should be valid",
 			currentState:        InstanceStatePending,
 			currentPendingState: InstanceCauseFiring,
-			expectedValidity:    true,
+			expected:            true,
 		},
 		{
+			name:                "CurrentState \"Pending\" and CurrentCause \"Error\" should be valid",
 			currentState:        InstanceStatePending,
 			currentPendingState: InstanceCauseError,
-			expectedValidity:    true,
+			expected:            true,
 		},
 		{
+			name:                "CurrentState \"Pending\" and CurrentCause \"NoData\" should not be valid",
 			currentState:        InstanceStatePending,
 			currentPendingState: InstanceCauseNoData,
-			expectedValidity:    false,
+			expected:            false,
 		},
 	}
 
 	for _, tc := range testCases {
-		t.Run(buildTestValidateCurrentStateAndCurrentPendingStateName(tc.currentState, tc.currentPendingState, tc.expectedValidity), func(t *testing.T) {
-			require.Equal(t, tc.expectedValidity, validateCurrentStateAndCurrentPendingState(tc.currentState, tc.currentPendingState))
+		t.Run(tc.name, func(t *testing.T) {
+			require.Equal(t, tc.expected, validateCurrentStateAndCurrentPendingState(tc.currentState, tc.currentPendingState))
 		})
 	}
-}
-
-func buildTestValidateCurrentStateAndCurrentPendingStateName(cState InstanceStateType, cPendingState InstanceCauseType, expectedValidity bool) string {
-	if expectedValidity {
-		return fmt.Sprintf("CurrentState %q and CurrentCause %q should be valid", cState, cPendingState)
-	}
-	return fmt.Sprintf("CurrentState %q and CurrentCause %q should not be valid", cState, cPendingState)
 }
 
 func TestValidateAlertInstance(t *testing.T) {
@@ -230,7 +242,7 @@ func TestValidateAlertInstance(t *testing.T) {
 			orgId:               0,
 			uid:                 "validUid",
 			currentState:        InstanceStateNormal,
-			currentPendingState: InstanceNoCause,
+			currentPendingState: InstanceCauseNone,
 			err:                 errors.New("alert instance is invalid due to missing alert rule organisation"),
 		},
 		{
@@ -238,7 +250,7 @@ func TestValidateAlertInstance(t *testing.T) {
 			orgId:               1,
 			uid:                 "",
 			currentState:        InstanceStateNormal,
-			currentPendingState: InstanceNoCause,
+			currentPendingState: InstanceCauseNone,
 			err:                 errors.New("alert instance is invalid due to missing alert rule uid"),
 		},
 		{
@@ -246,7 +258,7 @@ func TestValidateAlertInstance(t *testing.T) {
 			orgId:               1,
 			uid:                 "validUid",
 			currentState:        InstanceStateType("notAValidType"),
-			currentPendingState: InstanceNoCause,
+			currentPendingState: InstanceCauseNone,
 			err:                 errors.New("alert instance is invalid because the state \"notAValidType\" is invalid"),
 		},
 		{
@@ -270,7 +282,7 @@ func TestValidateAlertInstance(t *testing.T) {
 			orgId:               1,
 			uid:                 "validUid",
 			currentState:        InstanceStateNormal,
-			currentPendingState: InstanceNoCause,
+			currentPendingState: InstanceCauseNone,
 			err:                 nil,
 		},
 	}

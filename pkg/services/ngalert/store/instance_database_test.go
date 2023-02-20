@@ -39,7 +39,7 @@ func BenchmarkAlertInstanceOperations(b *testing.B) {
 				LabelsHash: labelsHash,
 			},
 			CurrentState:  models.InstanceStateFiring,
-			CurrentCause:  models.InstanceNoCause,
+			CurrentCause:  models.InstanceCauseNone,
 			CurrentReason: string(models.InstanceStateError),
 			Labels:        labels,
 		}
@@ -194,7 +194,7 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 				LabelsHash: hash,
 			},
 			CurrentState: models.InstanceStateNormal,
-			CurrentCause: models.InstanceNoCause,
+			CurrentCause: models.InstanceCauseNone,
 			Labels:       labels,
 		}
 		err := dbstore.SaveAlertInstances(ctx, instance)
@@ -277,7 +277,7 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 				LabelsHash: util.GenerateShortUID(),
 			},
 			CurrentState:  models.InstanceStateNormal,
-			CurrentCause:  models.InstanceNoCause,
+			CurrentCause:  models.InstanceCauseNone,
 			CurrentReason: "",
 			Labels:        labels,
 		}
@@ -288,7 +288,7 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 				LabelsHash: util.GenerateShortUID(),
 			},
 			CurrentState:  models.InstanceStateNormal,
-			CurrentCause:  models.InstanceNoCause,
+			CurrentCause:  models.InstanceCauseNone,
 			CurrentReason: models.StateReasonError,
 			Labels:        labels,
 		}
@@ -346,7 +346,7 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 				LabelsHash: instance1.LabelsHash,
 			},
 			CurrentState: models.InstanceStateNormal,
-			CurrentCause: models.InstanceNoCause,
+			CurrentCause: models.InstanceCauseNone,
 			Labels:       instance1.Labels,
 		}
 		err = dbstore.SaveAlertInstances(ctx, instance2)
