@@ -241,6 +241,10 @@ describe('getTraceName', () => {
           key: 'http.method',
           value: 'POST',
         },
+        {
+          key: 'http.status_code',
+          value: '200',
+        },
       ],
     },
     {
@@ -249,7 +253,16 @@ describe('getTraceName', () => {
       startTime: t,
       process: {},
       references: [],
-      tags: [],
+      tags: [
+        {
+          key: 'http.status_code',
+          value: '400',
+        },
+        {
+          key: 'http.url',
+          value: '/test:80',
+        },
+      ],
     },
   ];
 
@@ -282,7 +295,10 @@ describe('getTraceName', () => {
       startTime: 1583758670100,
       process: {},
       references: [],
-      tags: [{ key: 'http.method', value: 'POST' }],
+      tags: [
+        { key: 'http.method', value: 'POST' },
+        { key: 'http.status_code', value: '200' },
+      ],
     });
   });
 });
