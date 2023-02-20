@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
-import { uniqueId, pick, groupBy, upperFirst, merge, reduce, sumBy } from 'lodash';
+import { uniqueId, pick, groupBy, upperFirst, merge, reduce } from 'lodash';
 import pluralize from 'pluralize';
-import React, { FC, Fragment, ReactNode, useMemo } from 'react';
+import React, { FC, Fragment, ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 
 import { GrafanaTheme2, IconName } from '@grafana/data';
@@ -30,7 +30,6 @@ import { ReceiversState } from 'app/types';
 import { getNotificationsPermissions } from '../../utils/access-control';
 import { normalizeMatchers } from '../../utils/amroutes';
 import { createContactPointLink, createMuteTimingLink } from '../../utils/misc';
-import { findMatchingAlertGroups } from '../../utils/notification-policies';
 import { HoverCard } from '../HoverCard';
 import { Label } from '../Label';
 import { MetaText } from '../MetaText';
@@ -127,13 +126,13 @@ const Policy: FC<PolicyComponentProps> = ({
   const isEditable = canEditRoutes;
   const isDeletable = canDeleteRoutes && !isDefaultPolicy;
 
-  const matchingAlertGroups = useMemo(
-    () => findMatchingAlertGroups(routeTree, currentRoute, alertGroups),
-    [alertGroups, currentRoute, routeTree]
-  );
+  // const matchingAlertGroups = useMemo(
+  //   () => findMatchingAlertGroups(routeTree, currentRoute, alertGroups),
+  //   [alertGroups, currentRoute, routeTree]
+  // );
 
   // sum all alert instances for all groups we're handling
-  const numberOfAlertInstances = sumBy(matchingAlertGroups, (group) => group.alerts.length);
+  // const numberOfAlertInstances = sumBy(matchingAlertGroups, (group) => group.alerts.length);
 
   // TODO dead branch detection, warnings for all sort of configs that won't work or will never be activated
   return (
@@ -219,7 +218,7 @@ const Policy: FC<PolicyComponentProps> = ({
           {/* Metadata row */}
           <div className={styles.metadataRow}>
             <Stack direction="row" alignItems="center" gap={1}>
-              <MetaText
+              {/* <MetaText
                 icon="layers-alt"
                 onClick={() => {
                   onShowAlertInstances(matchingAlertGroups, matchers);
@@ -228,7 +227,7 @@ const Policy: FC<PolicyComponentProps> = ({
               >
                 <Strong>{numberOfAlertInstances}</Strong>
                 <span>{pluralize('instance', numberOfAlertInstances)}</span>
-              </MetaText>
+              </MetaText> */}
               {contactPoint && (
                 <MetaText icon="at" data-testid="contact-point">
                   <span>Delivered to</span>
