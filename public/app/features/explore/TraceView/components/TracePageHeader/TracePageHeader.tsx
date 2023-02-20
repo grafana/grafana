@@ -26,7 +26,7 @@ import LabeledList from '../common/LabeledList';
 import TraceName from '../common/TraceName';
 import { autoColor, TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from '../index';
 import { getTraceLinks } from '../model/link-patterns';
-import { getTraceName } from '../model/trace-viewer';
+import { getSpanWithHeaderTags, getTraceName } from '../model/trace-viewer';
 import { Trace } from '../types';
 import { uTxMuted } from '../uberUtilityStyles';
 import { formatDuration } from '../utils/date';
@@ -196,6 +196,8 @@ export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
     return { ...rest, value: renderer(trace, timeZone, styles) };
   });
 
+  const spanWithHeaderTags = getSpanWithHeaderTags(trace.spans);
+
   const title = (
     <h1 className={styles.TracePageHeaderTitle}>
       <TraceName traceName={getTraceName(trace.spans)} />{' '}
@@ -213,20 +215,16 @@ export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
     </h1>
   );
 
-  const method =
-    trace.spans[1] &&
-    trace.spans[1].tags.filter((tag) => {
-      return tag.key === 'http.method';
-    });
+  const method = spanWithHeaderTags?.tags.filter((tag) => {
+    return tag.key === 'http.method';
+  });
 
-  const status =
-    trace.spans[1] &&
-    trace.spans[1].tags.filter((tag) => {
-      return tag.key === 'http.status_code';
-    });
+  const status = spanWithHeaderTags?.tags.filter((tag) => {
+    return tag.key === 'http.status_code';
+  });
 
   let statusColor: BadgeColor = 'orange';
-  if (status.length > 0 && Number.isInteger(status[0].value)) {
+  if (status && status.length > 0 && Number.isInteger(status[0].value)) {
     if (status[0].value.toString().charAt(0) === '2') {
       statusColor = 'green';
     } else if (status[0].value.toString().charAt(0) === '4') {
@@ -234,11 +232,9 @@ export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
     }
   }
 
-  const url =
-    trace.spans[1] &&
-    trace.spans[1].tags.filter((tag) => {
-      return tag.key === 'http.url';
-    });
+  const url = spanWithHeaderTags?.tags.filter((tag) => {
+    return tag.key === 'http.url' || tag.key === 'http.target';
+  });
 
   return (
     <header className={styles.TracePageHeader}>
@@ -253,17 +249,17 @@ export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
         <div className={styles.subtitle}>
           {timestamp(trace, timeZone, styles)}
           <span className={styles.divider}>|</span>
-          {method.length > 0 && (
+          {method && method.length > 0 && (
             <span className={styles.tag}>
               <Badge text={method[0].value} color="blue" />
             </span>
           )}
-          {status.length > 0 && (
+          {status && status.length > 0 && (
             <span className={styles.tag}>
               <Badge text={status[0].value} color={statusColor} />
             </span>
           )}
-          {url.length > 0 && (
+          {url && url.length > 0 && (
             <Tooltip content={url[0].value} interactive={true}>
               <span className={styles.url}>{url[0].value}</span>
             </Tooltip>

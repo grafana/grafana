@@ -55,3 +55,34 @@ export const getTraceName = memoize(_getTraceNameImpl, (spans: TraceSpan[]) => {
   }
   return spans[0].traceID;
 });
+
+export function findSpanWithHeaderTags(spans: TraceSpan[]) {
+  let spanWithHeaderTags: TraceSpan | undefined;
+
+  for (let i = 0; i < spans.length; i++) {
+    const method = spans[i].tags.filter((tag) => {
+      return tag.key === 'http.method';
+    });
+
+    const status = spans[i].tags.filter((tag) => {
+      return tag.key === 'http.status_code';
+    });
+
+    const url = spans[i].tags.filter((tag) => {
+      return tag.key === 'http.url' || tag.key === 'http.target';
+    });
+
+    if (method.length > 0 || status.length > 0 || url.length > 0) {
+      spanWithHeaderTags = spans[i];
+      break;
+    }
+  }
+  return spanWithHeaderTags;
+}
+
+export const getSpanWithHeaderTags = memoize(findSpanWithHeaderTags, (spans: TraceSpan[]) => {
+  if (!spans.length) {
+    return 0;
+  }
+  return spans[0].traceID;
+});
