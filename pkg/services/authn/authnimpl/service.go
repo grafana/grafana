@@ -145,7 +145,7 @@ func ProvideService(
 	orgUserSyncService := sync.ProvideOrgSync(userService, orgService, accessControlService)
 	s.RegisterPostAuthHook(userSyncService.SyncUserHook, 10)
 	s.RegisterPostAuthHook(orgUserSyncService.SyncOrgUser, 30)
-	s.RegisterPostAuthHook(sync.ProvideUserLastSeenSync(userService).SyncLastSeen, 40)
+	s.RegisterPostAuthHook(userSyncService.SyncLastSeenHook, 40)
 	s.RegisterPostAuthHook(sync.ProvideAPIKeyLastSeenSync(apikeyService).SyncLastSeen, 50)
 
 	if features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) {

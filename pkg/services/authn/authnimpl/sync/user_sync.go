@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -138,6 +139,37 @@ func (s *UserSync) FetchSyncedUserHook(ctx context.Context, identity *authn.Iden
 
 	syncSignedInUserToIdentity(usr, identity)
 	return nil
+}
+
+func (s *UserSync) SyncLastSeenHook(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
+	namespace, id := identity.NamespacedID()
+
+	if namespace != authn.NamespaceUser && namespace != authn.NamespaceServiceAccount {
+		// skip sync
+		return nil
+	}
+
+	if !shouldUpdateLastSeen(identity.LastSeenAt) {
+		return nil
+	}
+
+	go func(userID int64) {
+		defer func() {
+			if err := recover(); err != nil {
+				s.log.Error("panic during user last seen sync", "err", err)
+			}
+		}()
+
+		if err := s.userService.UpdateLastSeenAt(context.Background(), &user.UpdateUserLastSeenAtCommand{UserID: userID}); err != nil {
+			s.log.Error("failed to update last_seen_at", "err", err, "userId", userID)
+		}
+	}(id)
+
+	return nil
+}
+
+func shouldUpdateLastSeen(t time.Time) bool {
+	return time.Since(t) > time.Minute*5
 }
 
 func (s *UserSync) updateAuthInfo(ctx context.Context, id *authn.Identity) error {
