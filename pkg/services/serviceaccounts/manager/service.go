@@ -25,6 +25,10 @@ import (
 const (
 	metricsCollectionInterval = time.Minute * 30
 	defaultSecretScanInterval = time.Minute * 5
+
+	// globallyHideAPIKeysTab is a global setting that hides the apikeys tab
+	// if there are no apikeys present in db or hideapikeys already set
+	GloballyHideAPIKeysTabOrgID int64 = -1
 )
 
 type ServiceAccountsService struct {
@@ -267,6 +271,17 @@ func (sa *ServiceAccountsService) RevertApiKey(ctx context.Context, orgID, keyID
 	}
 	return sa.store.RevertApiKey(ctx, orgID, keyID)
 }
+func (sa *ServiceAccountsService) CheckGloballyHideAPIKeysTab(ctx context.Context) bool {
+	found, err := sa.store.CheckGloballyHideAPIKeysTab(ctx)
+	if err != nil {
+		sa.log.Error("unable to check if apikeys tab should be hidden", "error", err)
+		return false
+	}
+	if !found {
+		return false
+	}
+	return true
+}
 
 func validOrgID(orgID int64) error {
 	if orgID == 0 {
@@ -311,20 +326,36 @@ func hideApiKeysTabIfNoAPIKeysPresent(l *log.ConcreteLogger, store *sqlstore.SQL
 	}
 
 	orgID := orgs[0].ID
-	apikeys := make([]*apikey.APIKey, 0)
-	if orgID != -1 {
-		err = sess.Select(ctx, &apikeys, "SELECT * FROM api_key where org_id =?", orgID)
+
+	type result struct {
+		Count int64
 	}
+	r := result{}
+	// counting both service account tokens and api keys
+	err = sess.Get(ctx, &r, `SELECT COUNT(*) AS count FROM api_key WHERE org_id = ?`, orgID)
 	if err != nil {
 		l.Error(fmt.Sprintf("could not query for apikeys in org: %e", err))
 		return
 	}
-	if len(apikeys) == 0 {
-		err = serviceAccountsStore.HideApiKeysTab(ctx, orgID)
-		if err != nil {
-			l.Error(fmt.Sprintf("could not hide apikeys tab: %e", err))
-			return
-		}
+	if r.Count != 0 {
+		l.Debug("do not want to hide apikeys tab for org with apikeys")
+		return
+	}
+	// r.Count == 0
+	// we have no apikeys or service account tokens
+
+	// setting hide the apikeys tab for the org
+	err = serviceAccountsStore.HideApiKeysTab(ctx, orgID)
+	if err != nil {
+		l.Error(fmt.Sprintf("could not hide apikeys tab: %e", err))
+		return
+	}
+	// setting a global variable to hide the apikeys tab for newly created orgs
+	// used with check global hide apikeys tab
+	err = serviceAccountsStore.HideApiKeysTab(ctx, GloballyHideAPIKeysTabOrgID)
+	if err != nil {
+		l.Error(fmt.Sprintf("could not hide apikeys tab: %e", err))
+		return
 	}
 	l.Info("hid the apikeys tab")
 }

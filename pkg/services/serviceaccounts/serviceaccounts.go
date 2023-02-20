@@ -6,6 +6,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/apikey"
 )
 
+const (
+	// GloballyHideAPIKeysTabOrgID is the org id used to indicate that the API keys tab should be hidden globally.
+	GloballyHideAPIKeysTabOrgID = -1
+)
+
 /*
 ServiceAccountService is the service that manages service accounts.
 
@@ -21,4 +26,6 @@ type Service interface {
 		saForm *UpdateServiceAccountForm) (*ServiceAccountProfileDTO, error)
 	AddServiceAccountToken(ctx context.Context, serviceAccountID int64,
 		cmd *AddServiceAccountTokenCommand) (*apikey.APIKey, error)
+	CheckGloballyHideAPIKeysTab(ctx context.Context) bool
+	HideApiKeysTab(ctx context.Context, orgID int64) error
 }

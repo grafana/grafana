@@ -147,6 +147,13 @@ func (hs *HTTPServer) CreateOrg(c *contextmodel.ReqContext) response.Response {
 
 	metrics.MApiOrgCreate.Inc()
 
+	// part of ongoing work with deprecation of apikeys
+	globalhideAPIkeys := hs.serviceAccountsService.CheckGloballyHideAPIKeysTab(c.Req.Context())
+	if globalhideAPIkeys {
+		// hide apikeys tab for the newly created org
+		hs.serviceAccountsService.HideApiKeysTab(c.Req.Context(), result.ID)
+	}
+
 	return response.JSON(http.StatusOK, &util.DynMap{
 		"orgId":   result.ID,
 		"message": "Organization created",

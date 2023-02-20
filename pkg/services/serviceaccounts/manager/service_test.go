@@ -21,6 +21,7 @@ type FakeServiceAccountStore struct {
 	ExpectedStats                           *serviceaccounts.Stats
 	ExpectedAPIKeys                         []apikey.APIKey
 	ExpectedAPIKey                          *apikey.APIKey
+	ExpectedBoolean                         bool
 	ExpectedError                           error
 }
 
@@ -107,6 +108,11 @@ func (f *FakeServiceAccountStore) DeleteServiceAccountToken(ctx context.Context,
 // GetUsageMetrics is a fake getting usage metrics.
 func (f *FakeServiceAccountStore) GetUsageMetrics(ctx context.Context) (*serviceaccounts.Stats, error) {
 	return f.ExpectedStats, f.ExpectedError
+}
+
+// GloballyHideApiKeysTab is a fake hiding the api keys tab globally.
+func (f *FakeServiceAccountStore) CheckGloballyHideAPIKeysTab(ctx context.Context) (bool, error) {
+	return f.ExpectedBoolean, f.ExpectedError
 }
 
 type SecretsCheckerFake struct {

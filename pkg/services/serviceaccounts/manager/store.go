@@ -36,4 +36,6 @@ type store interface {
 	AddServiceAccountToken(ctx context.Context, serviceAccountID int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) (*apikey.APIKey, error)
 	DeleteServiceAccountToken(ctx context.Context, orgID, serviceAccountID, tokenID int64) error
 	GetUsageMetrics(ctx context.Context) (*serviceaccounts.Stats, error)
+
+	CheckGloballyHideAPIKeysTab(ctx context.Context) (bool, error)
 }
