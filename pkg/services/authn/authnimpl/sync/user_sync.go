@@ -168,10 +168,6 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, identity *authn.Identit
 	return nil
 }
 
-func shouldUpdateLastSeen(t time.Time) bool {
-	return time.Since(t) > time.Minute*5
-}
-
 func (s *UserSync) updateAuthInfo(ctx context.Context, id *authn.Identity) error {
 	if id.AuthModule != "" && id.OAuthToken != nil && id.AuthID != "" {
 		return nil
@@ -377,4 +373,8 @@ func syncSignedInUserToIdentity(usr *user.SignedInUser, identity *authn.Identity
 	identity.LastSeenAt = usr.LastSeenAt
 	identity.IsDisabled = usr.IsDisabled
 	identity.IsGrafanaAdmin = &usr.IsGrafanaAdmin
+}
+
+func shouldUpdateLastSeen(t time.Time) bool {
+	return time.Since(t) > time.Minute*5
 }
