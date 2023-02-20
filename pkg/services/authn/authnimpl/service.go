@@ -8,9 +8,12 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"go.opentelemetry.io/otel/attribute"
 
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/network"
+	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
@@ -19,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn/authnimpl/sync"
 	"github.com/grafana/grafana/pkg/services/authn/clients"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/ldap/service"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
@@ -49,11 +53,14 @@ func ProvideService(
 	accessControlService accesscontrol.Service,
 	apikeyService apikey.Service, userService user.Service,
 	jwtService auth.JWTVerifierService,
+	usageStats usagestats.Service,
+	kvstore kvstore.KVStore,
 	userProtectionService login.UserProtectionService,
 	loginAttempts loginattempt.Service, quotaService quota.Service,
 	authInfoService login.AuthInfoService, renderService rendering.Service,
 	features *featuremgmt.FeatureManager, oauthTokenService oauthtoken.OAuthTokenService,
-	socialService social.Service,
+	socialService social.Service, cache *remotecache.RemoteCache,
+	ldapService service.LDAP,
 ) *Service {
 	s := &Service{
 		log:            log.New("authn.service"),
@@ -66,6 +73,8 @@ func ProvideService(
 		postLoginHooks: newQueue[authn.PostLoginHookFn](),
 	}
 
+	usageStats.RegisterMetricsFunc(s.getUsageStats)
+
 	s.RegisterClient(clients.ProvideRender(userService, renderService))
 	s.RegisterClient(clients.ProvideAPIKey(apikeyService, userService))
 
@@ -74,13 +83,13 @@ func ProvideService(
 	}
 
 	if s.cfg.AnonymousEnabled {
-		s.RegisterClient(clients.ProvideAnonymous(cfg, orgService))
+		s.RegisterClient(clients.ProvideAnonymous(cfg, orgService, kvstore))
 	}
 
 	var proxyClients []authn.ProxyClient
 	var passwordClients []authn.PasswordClient
 	if s.cfg.LDAPEnabled {
-		ldap := clients.ProvideLDAP(cfg)
+		ldap := clients.ProvideLDAP(cfg, ldapService)
 		proxyClients = append(proxyClients, ldap)
 		passwordClients = append(passwordClients, ldap)
 	}
@@ -104,7 +113,7 @@ func ProvideService(
 	}
 
 	if s.cfg.AuthProxyEnabled && len(proxyClients) > 0 {
-		proxy, err := clients.ProvideProxy(cfg, proxyClients...)
+		proxy, err := clients.ProvideProxy(cfg, cache, userService, proxyClients...)
 		if err != nil {
 			s.log.Error("failed to configure auth proxy", "err", err)
 		} else {

@@ -7,10 +7,6 @@
 package featuremgmt
 
 const (
-	// FlagReturnUnameHeader
-	// Return user login as header for authenticated requests
-	FlagReturnUnameHeader = "returnUnameHeader"
-
 	// FlagAlertingBigTransactions
 	// Use big transactions for alerting database writes
 	FlagAlertingBigTransactions = "alertingBigTransactions"
@@ -50,10 +46,6 @@ const (
 	// FlagPrometheusAzureOverrideAudience
 	// Experimental. Allow override default AAD audience for Azure Prometheus endpoint
 	FlagPrometheusAzureOverrideAudience = "prometheusAzureOverrideAudience"
-
-	// FlagShowFeatureFlagsInUI
-	// Show feature flags in the settings UI
-	FlagShowFeatureFlagsInUI = "showFeatureFlagsInUI"
 
 	// FlagPublicDashboards
 	// Enables public access to dashboards
@@ -98,18 +90,6 @@ const (
 	// FlagK8s
 	// Explore native k8s integrations
 	FlagK8s = "k8s"
-
-	// FlagK8sDashboards
-	// Save dashboards via k8s
-	FlagK8sDashboards = "k8sDashboards"
-
-	// FlagApiserver
-	// Add a k8s API server proxy
-	FlagApiserver = "apiserver"
-
-	// FlagSupportBundles
-	// Support bundles for troubleshooting
-	FlagSupportBundles = "supportBundles"
 
 	// FlagDashboardsFromStorage
 	// Load dashboards from the generic storage interface
@@ -211,10 +191,6 @@ const (
 	// Enable async query data support for Athena
 	FlagAthenaAsyncQueryDataSupport = "athenaAsyncQueryDataSupport"
 
-	// FlagIncreaseInMemDatabaseQueryCache
-	// Enable more in memory caching for database queries
-	FlagIncreaseInMemDatabaseQueryCache = "increaseInMemDatabaseQueryCache"
-
 	// FlagNewPanelChromeUI
 	// Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu
 	FlagNewPanelChromeUI = "newPanelChromeUI"
@@ -230,10 +206,6 @@ const (
 	// FlagMysqlAnsiQuotes
 	// Use double quotes to escape keyword in a MySQL query
 	FlagMysqlAnsiQuotes = "mysqlAnsiQuotes"
-
-	// FlagDatasourceLogger
-	// Logs all datasource requests
-	FlagDatasourceLogger = "datasourceLogger"
 
 	// FlagAccessControlOnCall
 	// Access control primitives for OnCall
@@ -263,10 +235,6 @@ const (
 	// Use new auth service to perform authentication
 	FlagAuthnService = "authnService"
 
-	// FlagSessionRemoteCache
-	// Enable using remote cache for user sessions
-	FlagSessionRemoteCache = "sessionRemoteCache"
-
 	// FlagDisablePrometheusExemplarSampling
 	// Disable Prometheus examplar sampling
 	FlagDisablePrometheusExemplarSampling = "disablePrometheusExemplarSampling"
@@ -294,4 +262,8 @@ const (
 	// FlagLogsContextDatasourceUi
 	// Allow datasource to provide custom UI for context view
 	FlagLogsContextDatasourceUi = "logsContextDatasourceUi"
+
+	// FlagLokiQuerySplitting
+	// Split large interval queries into subqueries with smaller time intervals
+	FlagLokiQuerySplitting = "lokiQuerySplitting"
 )

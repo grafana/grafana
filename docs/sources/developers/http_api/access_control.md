@@ -2,6 +2,7 @@
 aliases:
   - ../../http_api/access_control/
   - ../../http_api/accesscontrol/
+canonical: /docs/grafana/latest/developers/http_api/access_control/
 description: ''
 keywords:
   - grafana

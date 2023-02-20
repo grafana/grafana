@@ -92,6 +92,7 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, hasEditPerm bool, p
 			Section:        navtree.NavSectionCore,
 			Children:       starredItemsLinks,
 			EmptyMessageId: "starred-empty",
+			Url:            s.cfg.AppSubURL + "/dashboards?starred",
 		})
 	}
 
@@ -234,8 +235,7 @@ func (s *ServiceImpl) getHomeNode(c *contextmodel.ReqContext, prefs *pref.Prefer
 }
 
 func isSupportBundlesEnabled(s *ServiceImpl) bool {
-	return s.cfg.SectionWithEnvOverrides("support_bundles").Key("enabled").MustBool(true) &&
-		s.features.IsEnabled(featuremgmt.FlagSupportBundles)
+	return s.cfg.SectionWithEnvOverrides("support_bundles").Key("enabled").MustBool(true)
 }
 
 func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel.ReqContext) {

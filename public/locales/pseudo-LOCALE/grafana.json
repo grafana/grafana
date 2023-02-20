@@ -13,7 +13,7 @@
       "search": "Ŝęäřčĥ"
     },
     "search-box": {
-      "placeholder": "Ŝęäřčĥ Ğřäƒäŉä"
+      "placeholder": "Ŝęäřčĥ őř ĵūmp ŧő..."
     },
     "section": {
       "actions": "Åčŧįőŉş",
@@ -160,7 +160,7 @@
       "title": "Åľęřŧ řūľęş"
     },
     "alerting-receivers": {
-      "subtitle": "Đęčįđę ĥőŵ yőūř čőŉŧäčŧş äřę ŉőŧįƒįęđ ŵĥęŉ äŉ äľęřŧ ƒįřęş",
+      "subtitle": "Cĥőőşę ĥőŵ ŧő ŉőŧįƒy yőūř čőŉŧäčŧ pőįŉŧş ŵĥęŉ äŉ äľęřŧ įŉşŧäŉčę ƒįřęş",
       "title": "Cőŉŧäčŧ pőįŉŧş"
     },
     "alerting-silences": {
@@ -191,7 +191,7 @@
       "title": "Cřęäŧę"
     },
     "create-alert": {
-      "title": "Ńęŵ äľęřŧ řūľę"
+      "title": "Cřęäŧę äľęřŧ řūľę"
     },
     "create-dashboard": {
       "title": "Đäşĥþőäřđ"
@@ -287,6 +287,9 @@
       "title": "Přőƒįľę"
     },
     "profile/switch-org": "Ŝŵįŧčĥ őřģäŉįžäŧįőŉ",
+    "public": {
+      "title": "Pūþľįč đäşĥþőäřđş"
+    },
     "scenes": {
       "title": "Ŝčęŉęş"
     },

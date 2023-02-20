@@ -16,7 +16,6 @@
 export interface FeatureToggles {
   [name: string]: boolean | undefined; // support any string value
 
-  returnUnameHeader?: boolean;
   alertingBigTransactions?: boolean;
   trimDefaults?: boolean;
   disableEnvelopeEncryption?: boolean;
@@ -27,7 +26,6 @@ export interface FeatureToggles {
   queryOverLive?: boolean;
   panelTitleSearch?: boolean;
   prometheusAzureOverrideAudience?: boolean;
-  showFeatureFlagsInUI?: boolean;
   publicDashboards?: boolean;
   publicDashboardsEmailSharing?: boolean;
   lokiLive?: boolean;
@@ -39,9 +37,6 @@ export interface FeatureToggles {
   migrationLocking?: boolean;
   storage?: boolean;
   k8s?: boolean;
-  k8sDashboards?: boolean;
-  apiserver?: boolean;
-  supportBundles?: boolean;
   dashboardsFromStorage?: boolean;
   export?: boolean;
   exploreMixedDatasource?: boolean;
@@ -67,12 +62,10 @@ export interface FeatureToggles {
   cloudWatchCrossAccountQuerying?: boolean;
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
-  increaseInMemDatabaseQueryCache?: boolean;
   newPanelChromeUI?: boolean;
   queryLibrary?: boolean;
   showDashboardValidationWarnings?: boolean;
   mysqlAnsiQuotes?: boolean;
-  datasourceLogger?: boolean;
   accessControlOnCall?: boolean;
   nestedFolders?: boolean;
   accessTokenExpirationCheck?: boolean;
@@ -80,7 +73,6 @@ export interface FeatureToggles {
   datasourceOnboarding?: boolean;
   secureSocksDatasourceProxy?: boolean;
   authnService?: boolean;
-  sessionRemoteCache?: boolean;
   disablePrometheusExemplarSampling?: boolean;
   alertingBacktesting?: boolean;
   editPanelCSVDragAndDrop?: boolean;
@@ -88,4 +80,5 @@ export interface FeatureToggles {
   topNavCommandPalette?: boolean;
   logsSampleInExplore?: boolean;
   logsContextDatasourceUi?: boolean;
+  lokiQuerySplitting?: boolean;
 }

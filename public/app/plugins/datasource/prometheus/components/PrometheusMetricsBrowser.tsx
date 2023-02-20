@@ -191,7 +191,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
 export class UnthemedPrometheusMetricsBrowser extends React.Component<BrowserProps, BrowserState> {
   valueListsRef = React.createRef<HTMLDivElement>();
   state: BrowserState = {
-    labels: [] as SelectableLabel[],
+    labels: [],
     labelSearchTerm: '',
     metricSearchTerm: '',
     status: 'Ready',
