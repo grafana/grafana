@@ -143,31 +143,14 @@ const Policy: FC<PolicyComponentProps> = ({
         data-testid={isDefaultPolicy ? 'am-root-route-container' : 'am-route-container'}
       >
         {/* continueMatching and showMatchesAllLabelsWarning are mutually exclusive so the icons can't overlap */}
-        {continueMatching === true && (
-          <Tooltip placement="top" content="This route will continue matching other policies">
-            <div className={styles.gutterIcon} data-testid="continue-matching">
-              <Icon name="arrow-down" />
-            </div>
-          </Tooltip>
-        )}
-        {showMatchesAllLabelsWarning && (
-          <Tooltip placement="top" content="This policy matches all labels">
-            <div className={styles.gutterIcon} data-testid="matches-all">
-              <Icon name="exclamation-triangle" />
-            </div>
-          </Tooltip>
-        )}
+        {continueMatching && <ContinueMatchingIndicator />}
+        {showMatchesAllLabelsWarning && <AllMatchesIndicator />}
         <Stack direction="column" gap={0}>
           {/* Matchers and actions */}
           <div className={styles.matchersRow}>
             <Stack direction="row" alignItems="center" gap={1}>
               {isDefaultPolicy ? (
-                <>
-                  <strong>Default policy</strong>
-                  <span className={styles.metadata}>
-                    All alert instances will be handled by the default policy if no other matching policies are found.
-                  </span>
-                </>
+                <DefaultPolicyIndicator />
               ) : hasMatchers ? (
                 <Matchers matchers={matchers ?? []} />
               ) : (
@@ -175,23 +158,7 @@ const Policy: FC<PolicyComponentProps> = ({
               )}
               <Spacer />
               {/* TODO maybe we should move errors to the gutter instead? */}
-              {errors.length > 0 && (
-                <HoverCard
-                  arrow
-                  placement="top"
-                  content={
-                    <Stack direction="column" gap={0.5}>
-                      {errors.map((error) => (
-                        <Fragment key={uniqueId()}>{error}</Fragment>
-                      ))}
-                    </Stack>
-                  }
-                >
-                  <span>
-                    <Badge icon="exclamation-circle" color="red" text={pluralize('error', errors.length, true)} />
-                  </span>
-                </HoverCard>
-              )}
+              {errors.length > 0 && <Errors errors={errors} />}
               {!readOnly && (
                 <Stack direction="row" gap={0.5}>
                   <ButtonGroup>
@@ -287,31 +254,7 @@ const Policy: FC<PolicyComponentProps> = ({
               {hasMuteTimings && (
                 <MetaText icon="calendar-slash" data-testid="mute-timings">
                   <span>Muted when</span>
-                  {/* TODO make a better mute timing overview, allow combining multiple in to one overview */}
-                  {/* <HoverCard
-                    arrow
-                    placement="top"
-                    header={<MetaText icon="calendar-slash">Mute Timings</MetaText>}
-                    content={
-                      // TODO show a combined view of all mute timings here, combining the weekdays, years, months, etc
-                      <Stack direction="row" gap={0.5}>
-                        <Label label="Weekdays" value="Saturday and Sunday" />
-                      </Stack>
-                    }
-                  >
-                    <div>
-                      <Strong>{muteTimings.join(', ')}</Strong>
-                    </div>
-                  </HoverCard> */}
-                  <div>
-                    <Strong>
-                      {muteTimings.map((timing) => (
-                        <Link key={timing} to={createMuteTimingLink(timing, alertManagerSourceName)}>
-                          {timing}
-                        </Link>
-                      ))}
-                    </Strong>
-                  </div>
+                  <MuteTimings timings={muteTimings} alertManagerSourceName={alertManagerSourceName} />
                 </MetaText>
               )}
               {timingOptions && Object.values(timingOptions).some(Boolean) && (
@@ -321,29 +264,7 @@ const Policy: FC<PolicyComponentProps> = ({
                 <>
                   <MetaText icon="corner-down-right-alt" data-testid="inherited-properties">
                     <span>Inherited</span>
-                    <HoverCard
-                      arrow
-                      placement="top"
-                      content={
-                        <Stack direction="row" gap={0.5}>
-                          {Object.entries(inheritedProperties).map(([key, value]) => {
-                            // no idea how to do this with TypeScript
-                            return (
-                              <Label
-                                key={key}
-                                // @ts-ignore
-                                label={routePropertyToLabel(key)}
-                                value={<Strong>{Array.isArray(value) ? value.join(', ') : value}</Strong>}
-                              />
-                            );
-                          })}
-                        </Stack>
-                      }
-                    >
-                      <div>
-                        <Strong>{pluralize('property', Object.keys(inheritedProperties).length, true)}</Strong>
-                      </div>
-                    </HoverCard>
+                    <InheritedProperties properties={inheritedProperties} />
                   </MetaText>
                 </>
               )}
@@ -406,13 +327,126 @@ const Policy: FC<PolicyComponentProps> = ({
   );
 };
 
+const Errors: FC<{ errors: React.ReactNode[] }> = ({ errors }) => (
+  <HoverCard
+    arrow
+    placement="top"
+    content={
+      <Stack direction="column" gap={0.5}>
+        {errors.map((error) => (
+          <Fragment key={uniqueId()}>{error}</Fragment>
+        ))}
+      </Stack>
+    }
+  >
+    <span>
+      <Badge icon="exclamation-circle" color="red" text={pluralize('error', errors.length, true)} />
+    </span>
+  </HoverCard>
+);
+
+const ContinueMatchingIndicator: FC = () => {
+  const styles = useStyles2(getStyles);
+  return (
+    <Tooltip placement="top" content="This route will continue matching other policies">
+      <div className={styles.gutterIcon} data-testid="continue-matching">
+        <Icon name="arrow-down" />
+      </div>
+    </Tooltip>
+  );
+};
+
+const AllMatchesIndicator: FC = () => {
+  const styles = useStyles2(getStyles);
+  return (
+    <Tooltip placement="top" content="This policy matches all labels">
+      <div className={styles.gutterIcon} data-testid="matches-all">
+        <Icon name="exclamation-triangle" />
+      </div>
+    </Tooltip>
+  );
+};
+
+const DefaultPolicyIndicator: FC = () => {
+  const styles = useStyles2(getStyles);
+  return (
+    <>
+      <strong>Default policy</strong>
+      <span className={styles.metadata}>
+        All alert instances will be handled by the default policy if no other matching policies are found.
+      </span>
+    </>
+  );
+};
+
+const InheritedProperties: FC<{ properties: InhertitableProperties }> = ({ properties }) => (
+  <HoverCard
+    arrow
+    placement="top"
+    content={
+      <Stack direction="row" gap={0.5}>
+        {Object.entries(properties).map(([key, value]) => {
+          // no idea how to do this with TypeScript
+          return (
+            <Label
+              key={key}
+              // @ts-ignore
+              label={routePropertyToLabel(key)}
+              value={<Strong>{Array.isArray(value) ? value.join(', ') : value}</Strong>}
+            />
+          );
+        })}
+      </Stack>
+    }
+  >
+    <div>
+      <Strong>{pluralize('property', Object.keys(properties).length, true)}</Strong>
+    </div>
+  </HoverCard>
+);
+
+const MuteTimings: FC<{ timings: string[]; alertManagerSourceName: string }> = ({
+  timings,
+  alertManagerSourceName,
+}) => {
+  /* TODO make a better mute timing overview, allow combining multiple in to one overview */
+  /*
+    <HoverCard
+      arrow
+      placement="top"
+      header={<MetaText icon="calendar-slash">Mute Timings</MetaText>}
+      content={
+        // TODO show a combined view of all mute timings here, combining the weekdays, years, months, etc
+        <Stack direction="row" gap={0.5}>
+          <Label label="Weekdays" value="Saturday and Sunday" />
+        </Stack>
+      }
+    >
+      <div>
+        <Strong>{muteTimings.join(', ')}</Strong>
+      </div>
+    </HoverCard>
+  */
+  return (
+    <div>
+      <Strong>
+        {timings.map((timing) => (
+          <Link key={timing} to={createMuteTimingLink(timing, alertManagerSourceName)}>
+            {timing}
+          </Link>
+        ))}
+      </Strong>
+    </div>
+  );
+};
+
 const TIMING_OPTIONS_DEFAULTS = {
   group_wait: '30s',
   group_interval: '5m',
   repeat_interval: '4h',
 };
 
-const TimingOptionsMeta = ({ timingOptions }: { timingOptions: TimingOptions }) => {
+const TimingOptionsMeta: FC<{ timingOptions: TimingOptions }> = ({ timingOptions }) => {
   const groupWait = timingOptions.group_wait ?? TIMING_OPTIONS_DEFAULTS.group_wait;
   const groupInterval = timingOptions.group_interval ?? TIMING_OPTIONS_DEFAULTS.group_interval;
 
@@ -457,7 +491,11 @@ const INTEGRATION_ICONS: Record<string, IconName> = {
   telegram: 'telegram-alt',
 };
 
-const ContactPointsHoverDetails = ({ alertManagerSourceName, contactPoint, receivers }: ContactPointDetailsProps) => {
+const ContactPointsHoverDetails: FC<ContactPointDetailsProps> = ({
+  alertManagerSourceName,
+  contactPoint,
+  receivers,
+}) => {
   const details = receivers.find((receiver) => receiver.name === contactPoint);
   if (!details) {
     return (

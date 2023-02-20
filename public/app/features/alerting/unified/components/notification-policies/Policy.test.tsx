@@ -209,11 +209,11 @@ describe('Policy', () => {
     );
 
     const defaultPolicy = screen.getByTestId('am-root-route-container');
-    expect(within(defaultPolicy).queryByText('Matches all labels')).not.toBeInTheDocument();
+    expect(within(defaultPolicy).queryByTestId('matches-all')).not.toBeInTheDocument();
     expect(within(defaultPolicy).getByText('1 error')).toBeInTheDocument();
 
     const customPolicy = screen.getByTestId('am-route-container');
-    expect(within(customPolicy).getByText('Matches all labels'));
+    expect(within(customPolicy).getByTestId('matches-all')).toBeInTheDocument();
   });
 });
 
