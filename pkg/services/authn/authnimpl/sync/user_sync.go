@@ -50,7 +50,7 @@ func (s *UserSync) SyncUser(ctx context.Context, id *authn.Identity, _ *authn.Re
 	}
 
 	// Does user exist in the database?
-	usr, errUserInDB := s.UserInDB(ctx, &id.AuthModule, &id.AuthID, id.ClientParams.LookUpParams)
+	usr, errUserInDB := s.userInDB(ctx, &id.AuthModule, &id.AuthID, id.ClientParams.LookUpParams)
 	if errUserInDB != nil && !errors.Is(errUserInDB, user.ErrUserNotFound) {
 		s.log.Error("error retrieving user", "error", errUserInDB,
 			"auth_module", id.AuthModule, "auth_id", id.AuthID,
@@ -237,7 +237,7 @@ func (s *UserSync) createUser(ctx context.Context, id *authn.Identity) (*user.Us
 // Does user exist in the database?
 // Check first authinfo table, then user table
 // return user id if found, 0 if not found
-func (s *UserSync) UserInDB(ctx context.Context,
+func (s *UserSync) userInDB(ctx context.Context,
 	authID *string,
 	authModule *string,
 	params login.UserLookupParams) (*user.User, error) {
@@ -265,10 +265,10 @@ func (s *UserSync) UserInDB(ctx context.Context,
 	}
 
 	// Check user table to grab existing user
-	return s.LookupByOneOf(ctx, &params)
+	return s.lookupByOneOf(ctx, &params)
 }
 
-func (s *UserSync) LookupByOneOf(ctx context.Context, params *login.UserLookupParams) (*user.User, error) {
+func (s *UserSync) lookupByOneOf(ctx context.Context, params *login.UserLookupParams) (*user.User, error) {
 	var usr *user.User
 	var err error
 
