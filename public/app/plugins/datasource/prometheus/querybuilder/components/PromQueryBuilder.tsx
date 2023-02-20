@@ -8,7 +8,6 @@ import { Input } from '@grafana/ui';
 import { PrometheusDatasource } from '../../datasource';
 import { getMetadataString } from '../../language_provider';
 import promqlGrammar from '../../promql';
-import { MetricEncyclopediaModal } from '../MetricEncyclopediaModal';
 import { promQueryModeller } from '../PromQueryModeller';
 import { buildVisualQueryFromString } from '../parsing';
 import { OperationExplainedBox } from '../shared/OperationExplainedBox';
@@ -22,6 +21,7 @@ import { QueryBuilderLabelFilter, QueryBuilderOperation } from '../shared/types'
 import { PromVisualQuery } from '../types';
 
 import { LabelFilters } from './LabelFilters';
+import { MetricEncyclopediaModal } from './MetricEncyclopediaModal';
 import { MetricSelect, PROMETHEUS_QUERY_BUILDER_MAX_RESULTS } from './MetricSelect';
 import { NestedQueryList } from './NestedQueryList';
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './PromQueryBuilderExplained';

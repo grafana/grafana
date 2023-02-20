@@ -6,11 +6,10 @@ import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 // import { reportInteraction } from '@grafana/runtime';
 import { Button, Card, Collapse, InlineLabel, Input, Modal, Select, useStyles2 } from '@grafana/ui';
 
-import { PrometheusDatasource } from '../datasource';
-import { getMetadataHelp, getMetadataType } from '../language_provider';
-
-import { promQueryModeller } from './PromQueryModeller';
-import { PromVisualQuery } from './types';
+import { PrometheusDatasource } from '../../datasource';
+import { getMetadataHelp, getMetadataType } from '../../language_provider';
+import { promQueryModeller } from '../PromQueryModeller';
+import { PromVisualQuery } from '../types';
 
 type Props = {
   datasource: PrometheusDatasource;
@@ -95,7 +94,13 @@ export const MetricEncyclopediaModal = (props: Props) => {
   // *** Filtering: some metrics have no metadata so cannot be filtered
 
   return (
-    <Modal data-testid={testIds.metricModal} isOpen={isOpen} title="Select Metric" onDismiss={onClose}>
+    <Modal
+      data-testid={testIds.metricModal}
+      isOpen={isOpen}
+      title="Select Metric"
+      onDismiss={onClose}
+      aria-label="Metric Encyclopedia"
+    >
       <div className={styles.spacing}>Search metrics by type, function, labels and alphabetically.</div>
       <div className="gf-form">
         {/* *** IMPLEMENT FUZZY SEARCH */}
