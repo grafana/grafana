@@ -189,8 +189,9 @@ export const MetricEncyclopediaModal = (props: Props) => {
                   <Card.Description>
                     {metric.description && metric.type ? (
                       <>
-                        <div className={styles.rawQueryContainer}>Description: {metric.description}</div>
-                        <div className={styles.rawQueryContainer}>Type: {metric.type}</div>
+                        Type: <i>{metric.type}</i>
+                        <br />
+                        Description: <i>{metric.description}</i>
                       </>
                     ) : (
                       <i>No metadata available</i>
@@ -238,7 +239,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: 10px;
     `,
     card: css`
-      width: 49.5%;
+      width: 100%;
       display: flex;
       flex-direction: column;
     `,
