@@ -70,7 +70,7 @@ func NewValues(caps map[string]eval.NumberValueCapture) map[string]Value {
 }
 
 type Data struct {
-	Labels map[string]string
+	Labels Labels
 	Values map[string]Value
 	Value  string
 }
