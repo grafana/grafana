@@ -6,6 +6,7 @@ import {
   Matcher,
   TimeInterval,
   TimeRange,
+  ObjectMatcher,
 } from 'app/plugins/datasource/alertmanager/types';
 import { Labels } from 'app/types/unified-alerting-dto';
 
@@ -156,6 +157,11 @@ export function parseMatcher(matcher: string): Matcher {
     isRegex: operator === MatcherOperator.regex || operator === MatcherOperator.notRegex,
     isEqual: operator === MatcherOperator.equal || operator === MatcherOperator.regex,
   };
+}
+
+export function matcherToObjectMatcher(matcher: Matcher): ObjectMatcher {
+  const operator = matcherToOperator(matcher);
+  return [matcher.name, operator, matcher.value];
 }
 
 export function parseMatchers(matcherQueryString: string): Matcher[] {

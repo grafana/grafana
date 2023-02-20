@@ -11,12 +11,14 @@ import {
   AlertManagerCortexConfig,
   AlertManagerDataSourceJsonData,
   AlertManagerImplementation,
+  MatcherOperator,
   MuteTimeInterval,
   Route,
+  RouteWithID,
 } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction } from 'app/types';
 
-import NotificationPolicies from './NotificationPolicies';
+import NotificationPolicies, { findRoutesMatchingFilters } from './NotificationPolicies';
 import { fetchAlertManagerConfig, fetchStatus, updateAlertManagerConfig } from './api/alertmanager';
 import { discoverAlertmanagerFeatures } from './api/buildInfo';
 import * as grafanaApp from './components/receivers/grafanaAppReceivers/grafanaApp';
@@ -714,6 +716,78 @@ describe('NotificationPolicies', () => {
 
     expect(ui.rootReceiver.query()).toBeInTheDocument();
     expect(ui.setDefaultReceiverCTA.query()).toBeInTheDocument();
+  });
+});
+
+describe('findRoutesMatchingFilters', () => {
+  const simpleRouteTree: RouteWithID = {
+    id: '0',
+    receiver: 'default-receiver',
+    routes: [
+      {
+        id: '1',
+        receiver: 'simple-receiver',
+        matchers: ['hello=world', 'foo!=bar'],
+        routes: [
+          {
+            id: '2',
+            matchers: ['bar=baz'],
+          },
+        ],
+      },
+    ],
+  };
+
+  it('should not match non-existing', () => {
+    expect(
+      findRoutesMatchingFilters(simpleRouteTree, {
+        labelMatchersFilter: [['foo', MatcherOperator.equal, 'bar']],
+      })
+    ).toHaveLength(0);
+
+    expect(
+      findRoutesMatchingFilters(simpleRouteTree, {
+        contactPointFilter: 'does-not-exist',
+      })
+    ).toHaveLength(0);
+  });
+
+  it('should work with only label matchers', () => {
+    const matchingRoutes = findRoutesMatchingFilters(simpleRouteTree, {
+      labelMatchersFilter: [['hello', MatcherOperator.equal, 'world']],
+    });
+
+    expect(matchingRoutes).toHaveLength(1);
+    expect(matchingRoutes[0]).toHaveProperty('id', '1');
+  });
+
+  it('should work with only contact point and inheritance', () => {
+    const matchingRoutes = findRoutesMatchingFilters(simpleRouteTree, {
+      contactPointFilter: 'simple-receiver',
+    });
+
+    expect(matchingRoutes).toHaveLength(2);
+    expect(matchingRoutes[0]).toHaveProperty('id', '1');
+    expect(matchingRoutes[1]).toHaveProperty('id', '2');
+  });
+
+  it('should work with non-intersecting filters', () => {
+    const matchingRoutes = findRoutesMatchingFilters(simpleRouteTree, {
+      labelMatchersFilter: [['hello', MatcherOperator.equal, 'world']],
+      contactPointFilter: 'does-not-exist',
+    });
+
+    expect(matchingRoutes).toHaveLength(0);
+  });
+
+  it('should work with all filters', () => {
+    const matchingRoutes = findRoutesMatchingFilters(simpleRouteTree, {
+      labelMatchersFilter: [['hello', MatcherOperator.equal, 'world']],
+      contactPointFilter: 'simple-receiver',
+    });
+
+    expect(matchingRoutes).toHaveLength(1);
+    expect(matchingRoutes[0]).toHaveProperty('id', '1');
   });
 });
 

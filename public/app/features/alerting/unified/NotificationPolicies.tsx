@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import { intersectionBy } from 'lodash';
+import { intersectionBy, isEqual } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Alert, LoadingPlaceholder, Tab, TabContent, TabsBar, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import { ObjectMatcher, Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
 import { useCleanup } from '../../../core/hooks/useCleanup';
@@ -20,7 +20,7 @@ import { ProvisionedResource, ProvisioningAlert } from './components/Provisionin
 import { MuteTimingsTable } from './components/mute-timings/MuteTimingsTable';
 import {
   computeInheritedTree,
-  findRoutesMatchingFilter,
+  findRoutesMatchingPredicate,
   NotificationPoliciesFilter,
 } from './components/notification-policies/Filters';
 import {
@@ -35,9 +35,8 @@ import { useAlertManagersByPermission } from './hooks/useAlertManagerSources';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchAlertGroupsAction, fetchAlertManagerConfigAction, updateAlertManagerConfigAction } from './state/actions';
 import { FormAmRoute } from './types/amroutes';
-import { addUniqueIdentifierToRoute } from './utils/amroutes';
+import { addUniqueIdentifierToRoute, normalizeMatchers } from './utils/amroutes';
 import { isVanillaPrometheusAlertManagerDataSource } from './utils/datasource';
-import { findMatchingRoutes, Label } from './utils/notification-policies';
 import { initialAsyncRequestState } from './utils/redux';
 import { addRouteToParentRoute, mergePartialAmRouteWithRouteTree, omitRouteFromRouteTree } from './utils/routeTree';
 
@@ -56,7 +55,7 @@ const AmRoutes = () => {
   const [activeTab, setActiveTab] = useState<ActiveTab>(tab);
   const [updatingTree, setUpdatingTree] = useState<boolean>(false);
   const [contactPointFilter, setContactPointFilter] = useState<string | undefined>();
-  const [labelsFilter, setLabelsFilter] = useState<Label[] | undefined>();
+  const [labelMatchersFilter, setLabelMatchersFilter] = useState<ObjectMatcher[]>([]);
 
   const alertManagers = useAlertManagersByPermission('notification');
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
@@ -87,35 +86,13 @@ const AmRoutes = () => {
     return;
   }, [config?.route]);
 
-  // these are computed from the contactPoint and labels filter
+  // these are computed from the contactPoint and labels matchers filter
   const routesMatchingFilters = useMemo(() => {
-    let matchingRoutes: RouteWithID[] = [];
     if (!rootRoute) {
-      return matchingRoutes;
+      return [];
     }
-
-    const fullRoute = computeInheritedTree(rootRoute);
-
-    const routesMatchingContactPoint = contactPointFilter
-      ? findRoutesMatchingFilter(fullRoute, {
-          receiver: contactPointFilter,
-        })
-      : undefined;
-    if (routesMatchingContactPoint) {
-      matchingRoutes = routesMatchingContactPoint;
-    }
-
-    const routesMatchingLabels = labelsFilter ? findMatchingRoutes(rootRoute, labelsFilter) : undefined;
-    if (routesMatchingLabels) {
-      matchingRoutes = routesMatchingLabels;
-    }
-
-    if (routesMatchingContactPoint && routesMatchingLabels) {
-      matchingRoutes = intersectionBy(routesMatchingContactPoint, routesMatchingLabels, 'id');
-    }
-
-    return matchingRoutes;
-  }, [contactPointFilter, labelsFilter, rootRoute]);
+    return findRoutesMatchingFilters(rootRoute, { contactPointFilter, labelMatchersFilter });
+  }, [contactPointFilter, labelMatchersFilter, rootRoute]);
 
   const isProvisioned = Boolean(config?.route?.provenance);
 
@@ -266,7 +243,7 @@ const AmRoutes = () => {
                   {rootRoute && (
                     <NotificationPoliciesFilter
                       receivers={receivers}
-                      onChangeLabels={setLabelsFilter}
+                      onChangeMatchers={setLabelMatchersFilter}
                       onChangeReceiver={setContactPointFilter}
                     />
                   )}
@@ -299,6 +276,40 @@ const AmRoutes = () => {
       </TabContent>
     </AlertingPageWrapper>
   );
+};
+
+type RouteFilters = {
+  contactPointFilter?: string;
+  labelMatchersFilter?: ObjectMatcher[];
+};
+
+export const findRoutesMatchingFilters = (rootRoute: RouteWithID, filters: RouteFilters): RouteWithID[] => {
+  const { contactPointFilter, labelMatchersFilter = [] } = filters;
+
+  let matchedRoutes: RouteWithID[][] = [];
+
+  const fullRoute = computeInheritedTree(rootRoute);
+
+  const routesMatchingContactPoint = contactPointFilter
+    ? findRoutesMatchingPredicate(fullRoute, (route) => route.receiver === contactPointFilter)
+    : undefined;
+
+  if (routesMatchingContactPoint) {
+    matchedRoutes.push(routesMatchingContactPoint);
+  }
+
+  const routesMatchingLabelMatchers = labelMatchersFilter.length
+    ? findRoutesMatchingPredicate(fullRoute, (route) => {
+        const routeMatchers = normalizeMatchers(route);
+        return labelMatchersFilter.every((filter) => routeMatchers.some((matcher) => isEqual(filter, matcher)));
+      })
+    : undefined;
+
+  if (routesMatchingLabelMatchers) {
+    matchedRoutes.push(routesMatchingLabelMatchers);
+  }
+
+  return intersectionBy(...matchedRoutes, 'id');
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({

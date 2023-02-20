@@ -1,44 +1,41 @@
 import { css } from '@emotion/css';
-import { pick } from 'lodash';
+import { debounce, pick } from 'lodash';
 import React, { FC, useCallback, useEffect, useRef } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Button, Field, Icon, Input, Label as LabelElement, Select, Tooltip, useStyles2 } from '@grafana/ui';
-import { Receiver, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import { ObjectMatcher, Receiver, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
-import { parseMatchers } from '../../utils/alertmanager';
-import { Label } from '../../utils/notification-policies';
+import { matcherToObjectMatcher, parseMatchers } from '../../utils/alertmanager';
 
 interface NotificationPoliciesFilterProps {
   receivers: Receiver[];
-  onChangeLabels: (labels: Label[] | undefined) => void;
+  onChangeMatchers: (labels: ObjectMatcher[]) => void;
   onChangeReceiver: (receiver: string | undefined) => void;
 }
 
 const NotificationPoliciesFilter: FC<NotificationPoliciesFilterProps> = ({
   receivers,
   onChangeReceiver,
-  onChangeLabels,
+  onChangeMatchers,
 }) => {
   const [searchParams, setSearchParams] = useURLSearchParams();
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const { queryString, contactPoint } = getNotificationPoliciesFilters(searchParams);
   const styles = useStyles2(getStyles);
 
+  const handleChangeLabels = useCallback(() => debounce(onChangeMatchers, 500), [onChangeMatchers]);
+
   useEffect(() => {
     onChangeReceiver(contactPoint);
   }, [contactPoint, onChangeReceiver]);
 
   useEffect(() => {
-    if (queryString) {
-      const labels: Label[] = parseMatchers(queryString ?? '').map(({ name, value }) => [name, value]);
-      onChangeLabels(labels.length > 0 ? labels : undefined);
-    } else {
-      onChangeLabels(undefined);
-    }
-  }, [onChangeLabels, queryString]);
+    const matchers = parseMatchers(queryString ?? '').map(matcherToObjectMatcher);
+    handleChangeLabels()(matchers);
+  }, [handleChangeLabels, queryString]);
 
   const clearFilters = useCallback(() => {
     if (searchInputRef.current) {
@@ -110,18 +107,16 @@ const NotificationPoliciesFilter: FC<NotificationPoliciesFilterProps> = ({
   );
 };
 
-interface FilterState {
-  receiver: string;
-}
-
 /**
  * Find a list of route IDs that match given input filters
  */
-function findRoutesMatchingFilter(routeTree: RouteWithID, filters: FilterState): RouteWithID[] {
+type FilterPredicate = (route: RouteWithID) => boolean;
+
+export function findRoutesMatchingPredicate(routeTree: RouteWithID, predicateFn: FilterPredicate): RouteWithID[] {
   const matches: RouteWithID[] = [];
 
   function findMatch(route: RouteWithID) {
-    if (routeMatchesFilter(route, filters)) {
+    if (predicateFn(route)) {
       matches.push(route);
     }
 
@@ -130,14 +125,6 @@ function findRoutesMatchingFilter(routeTree: RouteWithID, filters: FilterState):
 
   findMatch(routeTree);
   return matches;
-}
-
-function routeMatchesFilter(route: RouteWithID, filters: FilterState) {
-  if (filters.receiver) {
-    return route.receiver === filters.receiver;
-  }
-
-  return false;
 }
 
 /**
@@ -180,4 +167,4 @@ const getStyles = () => ({
   `,
 });
 
-export { NotificationPoliciesFilter, findRoutesMatchingFilter };
+export { NotificationPoliciesFilter };
