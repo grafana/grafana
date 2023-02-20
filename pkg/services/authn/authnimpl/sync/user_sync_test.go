@@ -266,12 +266,13 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 			},
 			args: args{
 				ctx: context.Background(),
-
 				id: &authn.Identity{
-					ID:    "",
-					Login: "test",
-					Name:  "test",
-					Email: "test",
+					ID:         "",
+					AuthID:     "2032",
+					AuthModule: "oauth",
+					Login:      "test",
+					Name:       "test",
+					Email:      "test",
 					ClientParams: authn.ClientParams{
 						SyncUser: true,
 						LookUpParams: login.UserLookupParams{
@@ -285,6 +286,8 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 			wantErr: false,
 			wantID: &authn.Identity{
 				ID:             "user:1",
+				AuthID:         "2032",
+				AuthModule:     "oauth",
 				Login:          "test",
 				Name:           "test",
 				Email:          "test",
