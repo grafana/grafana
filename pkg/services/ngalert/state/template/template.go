@@ -49,20 +49,20 @@ func (v Value) String() string {
 	return strconv.FormatFloat(v.Value, 'f', -1, 64)
 }
 
-func NewValues(caps map[string]eval.NumberValueCapture) map[string]Value {
+func NewValues(captures map[string]eval.NumberValueCapture) map[string]Value {
 	values := make(map[string]Value)
-	for refID, cap := range caps {
+	for refID, capture := range captures {
 		var f float64
 		// A RefID might be missing a value if there was no data or an error.
 		// If that is the case, use "not a number". We don't use 0, or -1, as
 		// either of those are possible values for a RefID.
-		if cap.Value != nil {
-			f = *cap.Value
+		if capture.Value != nil {
+			f = *capture.Value
 		} else {
 			f = math.NaN()
 		}
 		values[refID] = Value{
-			Labels: Labels(cap.Labels),
+			Labels: Labels(capture.Labels),
 			Value:  f,
 		}
 	}
