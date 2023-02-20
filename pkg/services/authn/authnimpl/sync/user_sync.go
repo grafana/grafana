@@ -15,12 +15,26 @@ import (
 )
 
 var (
-	errSyncUserForbidden = errutil.NewBase(errutil.StatusForbidden,
-		"user.sync.forbidden", errutil.WithPublicMessage("User sync forbidden"))
-	errSyncUserInternal = errutil.NewBase(errutil.StatusInternal,
-		"user.sync.forbidden", errutil.WithPublicMessage("User sync failed"))
-	errUserProtection = errutil.NewBase(errutil.StatusForbidden,
-		"user.sync.protectedrole", errutil.WithPublicMessage("Unable to sync due to protected role"))
+	errSyncUserForbidden = errutil.NewBase(
+		errutil.StatusForbidden,
+		"user.sync.forbidden",
+		errutil.WithPublicMessage("User sync forbidden"),
+	)
+	errSyncUserInternal = errutil.NewBase(
+		errutil.StatusInternal,
+		"user.sync.forbidden",
+		errutil.WithPublicMessage("User sync failed"),
+	)
+	errUserProtection = errutil.NewBase(
+		errutil.StatusForbidden,
+		"user.sync.protected-role",
+		errutil.WithPublicMessage("Unable to sync due to protected role"),
+	)
+	errFetchingSignedInUser = errutil.NewBase(
+		errutil.StatusInternal,
+		"user.sync.fetch",
+		errutil.WithPublicMessage("Insufficient information to authenticate user"),
+	)
 )
 
 func ProvideUserSync(userService user.Service,
@@ -105,14 +119,25 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 	return nil
 }
 
-// syncUserToIdentity syncs a user to an identity.
-// This is used to update the identity with the latest user information.
-func syncUserToIdentity(usr *user.User, id *authn.Identity) {
-	id.ID = fmt.Sprintf("user:%d", usr.ID)
-	id.Login = usr.Login
-	id.Email = usr.Email
-	id.Name = usr.Name
-	id.IsGrafanaAdmin = &usr.IsAdmin
+func (s *UserSync) FetchSyncedUserHook(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
+	if !identity.ClientParams.FetchSyncedUser {
+		return nil
+	}
+	namespace, id := identity.NamespacedID()
+	if namespace != authn.NamespaceUser {
+		return nil
+	}
+
+	usr, err := s.userService.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{
+		UserID: id,
+		OrgID:  r.OrgID,
+	})
+	if err != nil {
+		return errFetchingSignedInUser.Errorf("failed to resolve user: %w", err)
+	}
+
+	syncSignedInUserToIdentity(usr, identity)
+	return nil
 }
 
 func (s *UserSync) updateAuthInfo(ctx context.Context, id *authn.Identity) error {
@@ -294,4 +319,30 @@ func (s *UserSync) lookupByOneOf(ctx context.Context, params *login.UserLookupPa
 	}
 
 	return usr, nil
+}
+
+// syncUserToIdentity syncs a user to an identity.
+// This is used to update the identity with the latest user information.
+func syncUserToIdentity(usr *user.User, id *authn.Identity) {
+	id.ID = fmt.Sprintf("user:%d", usr.ID)
+	id.Login = usr.Login
+	id.Email = usr.Email
+	id.Name = usr.Name
+	id.IsGrafanaAdmin = &usr.IsAdmin
+}
+
+// syncSignedInUserToIdentity syncs a user to an identity.
+func syncSignedInUserToIdentity(usr *user.SignedInUser, identity *authn.Identity) {
+	identity.Name = usr.Name
+	identity.Login = usr.Login
+	identity.Email = usr.Email
+	identity.OrgID = usr.OrgID
+	identity.OrgName = usr.OrgName
+	identity.OrgCount = usr.OrgCount
+	identity.OrgRoles = map[int64]org.RoleType{identity.OrgID: usr.OrgRole}
+	identity.HelpFlags1 = usr.HelpFlags1
+	identity.Teams = usr.Teams
+	identity.LastSeenAt = usr.LastSeenAt
+	identity.IsDisabled = usr.IsDisabled
+	identity.IsGrafanaAdmin = &usr.IsGrafanaAdmin
 }

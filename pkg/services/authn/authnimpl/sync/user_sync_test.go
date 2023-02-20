@@ -438,3 +438,33 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 		})
 	}
 }
+
+func TestUserSync_FetchSyncedUserHook(t *testing.T) {
+	type testCase struct {
+		desc        string
+		req         *authn.Request
+		identity    *authn.Identity
+		expectedErr error
+	}
+
+	tests := []testCase{
+		{
+			desc:     "should skip hook when flag is not enabled",
+			req:      &authn.Request{},
+			identity: &authn.Identity{ClientParams: authn.ClientParams{FetchSyncedUser: false}},
+		},
+		{
+			desc:     "should skip hook when identity is not a user",
+			req:      &authn.Request{},
+			identity: &authn.Identity{ID: "apikey:1", ClientParams: authn.ClientParams{FetchSyncedUser: true}},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			s := UserSync{}
+			err := s.FetchSyncedUserHook(context.Background(), tt.identity, tt.req)
+			require.ErrorIs(t, err, tt.expectedErr)
+		})
+	}
+}
