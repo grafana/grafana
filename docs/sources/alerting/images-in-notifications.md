@@ -77,7 +77,7 @@ Images in notifications are supported in the following notifiers and additional 
 | Pushover                | Yes                     | No                      |
 | Sensu Go                | No                      | No                      |
 | Slack                   | No                      | Yes                     |
-| Telegram                | No                      | No                      |
+| Telegram                | Yes                     | No                      |
 | Threema                 | No                      | No                      |
 | VictorOps               | No                      | No                      |
 | Webhook                 | No                      | Yes                     |
