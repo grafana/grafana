@@ -315,16 +315,11 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 	})
 }
 
-// CreateAlertRule creates a new alert rule. This function will ignore any
-// interval that is set in the rule struct and fetch the current group interval
-// from database.
+// UpdateAlertRule updates an alert rule.
 func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, rule models.AlertRule, provenance models.Provenance) (models.AlertRule, error) {
-	storedRule, storedProvenance, err := service.GetAlertRule(ctx, rule.OrgID, rule.UID)
+	storedRule, _, err := service.GetAlertRule(ctx, rule.OrgID, rule.UID)
 	if err != nil {
 		return models.AlertRule{}, err
-	}
-	if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
-		return models.AlertRule{}, fmt.Errorf("cannot changed provenance from '%s' to '%s'", storedProvenance, provenance)
 	}
 	rule.Updated = time.Now()
 	rule.ID = storedRule.ID
