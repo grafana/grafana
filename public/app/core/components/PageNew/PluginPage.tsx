@@ -17,6 +17,7 @@ export function PluginPage({ actions, children, info, pageNav, layout, renderTit
       renderTitle={renderTitle}
       info={info}
       subTitle={subTitle}
+      hiddenFooter={true}
     >
       <Page.Contents>{children}</Page.Contents>
     </Page>
