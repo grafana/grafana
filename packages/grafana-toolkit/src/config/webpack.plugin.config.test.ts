@@ -1,4 +1,4 @@
-import fs from 'fs';
+import fs, { BigIntStats } from 'fs';
 
 import { findModuleFiles, loadWebpackConfig } from './webpack.plugin.config';
 // eslint-disable-next-line no-duplicate-imports
@@ -24,7 +24,7 @@ describe('Plugin webpack config', () => {
     beforeAll(() => {
       jest.spyOn(fs, 'statSync').mockReturnValue({
         isDirectory: () => false,
-      } as any);
+      } as BigIntStats);
     });
 
     afterAll(() => {

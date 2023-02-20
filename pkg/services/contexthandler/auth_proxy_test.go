@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/ldap/service"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
@@ -110,7 +111,7 @@ func getContextHandler(t *testing.T) *ContextHandler {
 	}
 	orgService := orgtest.NewOrgServiceFake()
 
-	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginService, &userService, nil)
+	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginService, &userService, nil, service.NewLDAPFakeService())
 	authenticator := &fakeAuthenticator{}
 
 	return ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc,
