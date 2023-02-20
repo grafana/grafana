@@ -289,7 +289,9 @@ If your data source uses the same OAuth provider as Grafana itself, for example 
 
 To allow Grafana to pass the access token to the plugin, update the data source configuration and set the` jsonData.oauthPassThru` property to `true`. The [DataSourceHttpSettings](https://developers.grafana.com/ui/latest/index.html?path=/story/data-source-datasourcehttpsettings--basic) provides a toggle, the **Forward OAuth Identity** option, for this. You can also build an appropriate toggle to set `jsonData.oauthPassThru` in your data source configuration page UI.
 
-When configured, Grafana can forward authorization HTTP headers, like `Authorization` or `X-ID-Token`, to an external server. For doing so, it's just necessary to create the HTTP client using the [Grafana Plugin SDK](https://pkg.go.dev/github.com/grafana/grafana-plugin-sdk-go). This also ensures that the request has some recommended settings, like a default timeout.
+When configured, Grafana can forward authorization HTTP headers such as `Authorization` or `X-ID-Token` to a backend data source. This information is available across the `QueryData`, `CallResource` and `CheckHealth` requests.
+
+In order to achieve this, it is necessary to create a HTTP client using the [Grafana Plugin SDK](https://pkg.go.dev/github.com/grafana/grafana-plugin-sdk-go/backend/httpclient). This package provides functionality to expose request information which can be subsequently forwarded downstream and used directly within the plugin.
 
 ```go
 func NewDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
