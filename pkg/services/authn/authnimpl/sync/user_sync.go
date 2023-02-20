@@ -43,8 +43,8 @@ type UserSync struct {
 	log                   log.Logger
 }
 
-// SyncUser syncs a user with the database
-func (s *UserSync) SyncUser(ctx context.Context, id *authn.Identity, _ *authn.Request) error {
+// SyncUserHook syncs a user with the database
+func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *authn.Request) error {
 	if !id.ClientParams.SyncUser {
 		return nil
 	}

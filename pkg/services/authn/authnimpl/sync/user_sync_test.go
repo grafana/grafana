@@ -28,7 +28,7 @@ func ptrInt64(i int64) *int64 {
 	return &i
 }
 
-func TestUserSync_SyncUser(t *testing.T) {
+func TestUserSync_SyncUserHook(t *testing.T) {
 	userProtection := &authinfoservice.OSSUserProtectionImpl{}
 
 	authFakeNil := &logintest.AuthInfoServiceFake{
@@ -427,7 +427,7 @@ func TestUserSync_SyncUser(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := ProvideUserSync(tt.fields.userService, userProtection, tt.fields.authInfoService, tt.fields.quotaService)
-			err := s.SyncUser(tt.args.ctx, tt.args.id, nil)
+			err := s.SyncUserHook(tt.args.ctx, tt.args.id, nil)
 			if tt.wantErr {
 				require.Error(t, err)
 				return
