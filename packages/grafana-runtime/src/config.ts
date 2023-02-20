@@ -17,7 +17,6 @@ import {
   systemDateFormats,
   SystemDateFormatSettings,
   NewThemeOptions,
-  PluginsExtensionTypes,
 } from '@grafana/data';
 
 export interface AzureSettings {
@@ -25,21 +24,11 @@ export interface AzureSettings {
   managedIdentityEnabled: boolean;
 }
 
-export type PluginsExtensionLinkConfig = {
-  id: string;
-  placement: string;
-  type: PluginsExtensionTypes.link;
-  title: string;
-  description: string;
-  path: string;
-};
-
 export type AppPluginConfig = {
   id: string;
   path: string;
   version: string;
   preload: boolean;
-  extensions?: PluginsExtensionLinkConfig[];
 };
 
 export class GrafanaBootConfig implements GrafanaConfig {

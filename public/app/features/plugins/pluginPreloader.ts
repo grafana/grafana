@@ -1,33 +1,27 @@
-import { PluginsExtensionLinkConfigurer } from '@grafana/data';
-import { AppPluginConfig } from '@grafana/runtime';
+import { AppPluginExtensionLinkConfig } from '@grafana/data';
+import type { AppPluginConfig } from '@grafana/runtime';
 
-import { importPluginModule } from './plugin_loader';
+import * as pluginLoader from './plugin_loader';
 
-type PreloadPluginConfig = {
+export type PluginPreloadResult = {
+  pluginId: string;
+  linkExtensions: AppPluginExtensionLinkConfig[];
   error?: unknown;
-  extensionConfigs?: Record<string, PluginsExtensionLinkConfigurer>;
 };
 
-const configs: Record<string, PreloadPluginConfig> = {};
-
-export async function preloadPlugins(apps: Record<string, AppPluginConfig> = {}): Promise<void> {
+export async function preloadPlugins(apps: Record<string, AppPluginConfig> = {}): Promise<PluginPreloadResult[]> {
   const pluginsToPreload = Object.values(apps).filter((app) => app.preload);
-  await Promise.all(pluginsToPreload.map(preloadPlugin));
+  return Promise.all(pluginsToPreload.map(preload));
 }
 
-export function getPreloadPluginConfig(id: string): PreloadPluginConfig | undefined {
-  return configs[id];
-}
-
-async function preloadPlugin(config: AppPluginConfig): Promise<void> {
+async function preload(config: AppPluginConfig): Promise<PluginPreloadResult> {
   const { path, version, id: pluginId } = config;
   try {
-    const { plugin } = await importPluginModule(path, version);
-    const { extensionConfigs } = plugin;
-
-    configs[pluginId] = { extensionConfigs };
+    const { plugin } = await pluginLoader.importPluginModule(path, version);
+    const { linkExtensions = [] } = plugin;
+    return { pluginId, linkExtensions };
   } catch (error) {
-    configs[pluginId] = { error };
     console.error(`[Plugins] Failed to preload plugin: ${path} (version: ${version})`, error);
+    return { pluginId, linkExtensions: [], error };
   }
 }

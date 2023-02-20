@@ -70,7 +70,6 @@ import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
-import { createPluginExtensionsRegistry } from './features/plugins/extensions/registry';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
 import { preloadPlugins } from './features/plugins/pluginPreloader';
 import { QueryRunner } from './features/query/state/QueryRunner';
@@ -174,16 +173,14 @@ export class GrafanaApp {
       const modalManager = new ModalManager();
       modalManager.init();
 
-      await Promise.all([
+      const [, preloadResults] = await Promise.all([
         initI18nPromise,
-
         // Preload selected app plugins
-        await preloadPlugins(config.apps),
+        preloadPlugins(config.apps),
       ]);
 
-      // wait for preloaded plugins before initializing plugin extensions registry
-      const pluginExtensionRegistry = createPluginExtensionsRegistry(config.apps);
-      setPluginsExtensionRegistry(pluginExtensionRegistry);
+      const extensionsRegistry = createPluginExtensionRegistry(preloadResults);
+      setPluginsExtensionRegistry(extensionsRegistry);
 
       // initialize chrome service
       const queryParams = locationService.getSearchObject();

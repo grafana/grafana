@@ -52,10 +52,8 @@ export * from './slider';
 export * from './accesscontrol';
 export * from './icon';
 export {
-  type PluginsExtension,
-  type PluginsExtensionLink,
-  isPluginsExtensionLink,
-  type PluginsExtensionLinkOverride,
-  type PluginsExtensionLinkConfigurer,
-  PluginsExtensionTypes,
+  type PluginExtension,
+  type PluginExtensionLink,
+  isPluginExtensionLink,
+  PluginExtensionTypes,
 } from './pluginExtensions';

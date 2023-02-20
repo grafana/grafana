@@ -1,25 +1,23 @@
-export enum PluginsExtensionTypes {
+/**
+ * These types are exposed when rendering extension points
+ */
+
+export enum PluginExtensionTypes {
   link = 'link',
 }
 
-export type PluginsExtensionLinkConfigurer<T extends object = object> = (
-  link: PluginsExtensionLinkOverride,
-  context?: T
-) => Partial<PluginsExtensionLinkOverride> | undefined;
-
-export type PluginsExtensionLink = {
-  type: PluginsExtensionTypes.link;
+export type PluginExtension = {
+  type: PluginExtensionTypes;
   title: string;
   description: string;
-  path: string;
   key: number;
-  configure?: PluginsExtensionLinkConfigurer;
 };
 
-export type PluginsExtensionLinkOverride = Pick<PluginsExtensionLink, 'title' | 'description' | 'path'>;
+export type PluginExtensionLink = PluginExtension & {
+  type: PluginExtensionTypes.link;
+  path: string;
+};
 
-export type PluginsExtension = PluginsExtensionLink;
-
-export function isPluginsExtensionLink(extension: PluginsExtension): extension is PluginsExtensionLink {
-  return extension.type === PluginsExtensionTypes.link;
+export function isPluginExtensionLink(extension: PluginExtension): extension is PluginExtensionLink {
+  return extension.type === PluginExtensionTypes.link && 'path' in extension;
 }

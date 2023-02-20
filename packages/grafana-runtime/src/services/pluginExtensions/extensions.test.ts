@@ -1,5 +1,7 @@
+import { PluginExtensionLink, PluginExtensionTypes } from '@grafana/data';
+
 import { getPluginExtensions } from './extensions';
-import { setPluginsExtensionRegistry } from './registry';
+import { PluginExtensionRegistryItem, setPluginsExtensionRegistry } from './registry';
 
 describe('getPluginExtensions', () => {
   describe('when getting extensions for placement', () => {
@@ -9,29 +11,27 @@ describe('getPluginExtensions', () => {
     beforeAll(() => {
       setPluginsExtensionRegistry({
         [placement]: [
-          {
-            type: 'link',
+          createRegistryLinkItem({
             title: 'Declare incident',
             description: 'Declaring an incident in the app',
             path: `/a/${pluginId}/declare-incident`,
             key: 1,
-          },
+          }),
         ],
         'plugins/myorg-basic-app/start': [
-          {
-            type: 'link',
+          createRegistryLinkItem({
             title: 'Declare incident',
             description: 'Declaring an incident in the app',
             path: `/a/${pluginId}/declare-incident`,
             key: 2,
-          },
+          }),
         ],
       });
     });
 
     it('should return extensions with correct path', () => {
       const { extensions } = getPluginExtensions({ placement });
-      const [extension] = extensions;
+      const extension = extensions[0] as PluginExtensionLink;
 
       expect(extension.path).toBe(`/a/${pluginId}/declare-incident`);
       expect(extensions.length).toBe(1);
@@ -39,7 +39,7 @@ describe('getPluginExtensions', () => {
 
     it('should return extensions with correct description', () => {
       const { extensions } = getPluginExtensions({ placement });
-      const [extension] = extensions;
+      const extension = extensions[0] as PluginExtensionLink;
 
       expect(extension.description).toBe('Declaring an incident in the app');
       expect(extensions.length).toBe(1);
@@ -47,7 +47,7 @@ describe('getPluginExtensions', () => {
 
     it('should return extensions with correct title', () => {
       const { extensions } = getPluginExtensions({ placement });
-      const [extension] = extensions;
+      const extension = extensions[0] as PluginExtensionLink;
 
       expect(extension.title).toBe('Declare incident');
       expect(extensions.length).toBe(1);
@@ -62,3 +62,15 @@ describe('getPluginExtensions', () => {
     });
   });
 });
+
+function createRegistryLinkItem(
+  link: Omit<PluginExtensionLink, 'type'>
+): PluginExtensionRegistryItem<PluginExtensionLink> {
+  return {
+    configure: undefined,
+    extension: {
+      ...link,
+      type: PluginExtensionTypes.link,
+    },
+  };
+}
