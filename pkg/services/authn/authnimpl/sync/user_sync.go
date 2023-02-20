@@ -66,20 +66,6 @@ func (s *UserSync) SyncUser(ctx context.Context, id *authn.Identity, _ *authn.Re
 			return errSyncUserForbidden.Errorf("%w", login.ErrSignupNotAllowed)
 		}
 
-		// quota check (FIXME: (jguer) this should be done in the user service)
-		// we may insert in both user and org_user tables
-		// therefore we need to query check quota for both user and org services
-		for _, srv := range []string{user.QuotaTargetSrv, org.QuotaTargetSrv} {
-			limitReached, errLimit := s.quotaService.CheckQuotaReached(ctx, quota.TargetSrv(srv), nil)
-			if errLimit != nil {
-				s.log.Error("error getting user quota", "error", errLimit)
-				return errSyncUserInternal.Errorf("%w", login.ErrGettingUserQuota)
-			}
-			if limitReached {
-				return errSyncUserForbidden.Errorf("%w", login.ErrUsersQuotaReached)
-			}
-		}
-
 		// create user
 		var errCreate error
 		usr, errCreate = s.createUser(ctx, id)
@@ -108,7 +94,7 @@ func (s *UserSync) SyncUser(ctx context.Context, id *authn.Identity, _ *authn.Re
 
 	syncUserToIdentity(usr, id)
 
-	// persist latest auth info token
+	// persist the latest auth info token
 	if errAuthInfo := s.updateAuthInfo(ctx, id); errAuthInfo != nil {
 		s.log.Error("error creating user", "error", errAuthInfo,
 			"auth_module", id.AuthModule, "auth_id", id.AuthID,
@@ -203,12 +189,25 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 }
 
 func (s *UserSync) createUser(ctx context.Context, id *authn.Identity) (*user.User, error) {
+	// quota check (FIXME: (jguer) this should be done in the user service)
+	// we may insert in both user and org_user tables
+	// therefore we need to query check quota for both user and org services
+	for _, srv := range []string{user.QuotaTargetSrv, org.QuotaTargetSrv} {
+		limitReached, errLimit := s.quotaService.CheckQuotaReached(ctx, quota.TargetSrv(srv), nil)
+		if errLimit != nil {
+			s.log.Error("error getting user quota", "error", errLimit)
+			return nil, errSyncUserInternal.Errorf("%w", login.ErrGettingUserQuota)
+		}
+		if limitReached {
+			return nil, errSyncUserForbidden.Errorf("%w", login.ErrUsersQuotaReached)
+		}
+	}
+
 	isAdmin := false
 	if id.IsGrafanaAdmin != nil {
 		isAdmin = *id.IsGrafanaAdmin
 	}
 
-	// TODO: add quota check
 	usr, errCreateUser := s.userService.Create(ctx, &user.CreateUserCommand{
 		Login:        id.Login,
 		Email:        id.Email,
