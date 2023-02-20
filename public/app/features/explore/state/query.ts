@@ -578,9 +578,6 @@ export const runQueries = (
         }
       } else {
         for (const type of supplementaryQueryTypes) {
-          // TODO: revert -> each plugin needs to make this check to support query referencing
-          const visibleQueries = transaction.request.targets.filter((t) => !t.hide);
-
           // We always prepare provider, even is supplementary query is disabled because when the user
           // enables the query, we need to load the data, so we need the provider
           const dataProvider = getSupplementaryQueryProvider(
@@ -588,7 +585,6 @@ export const runQueries = (
             type,
             {
               ...transaction.request,
-              targets: visibleQueries,
               requestId: `${transaction.request.requestId}_${snakeCase(type)}`,
             },
             newQuerySource
@@ -603,7 +599,7 @@ export const runQueries = (
               })
             );
 
-            if (!canReuseSupplementaryQueryData(supplementaryQueries[type].data, visibleQueries, absoluteRange)) {
+            if (!canReuseSupplementaryQueryData(supplementaryQueries[type].data, queries, absoluteRange)) {
               dispatch(cleanSupplementaryQueryAction({ exploreId, type }));
               if (supplementaryQueries[type].enabled) {
                 dispatch(loadSupplementaryQueryData(exploreId, type));
@@ -614,7 +610,6 @@ export const runQueries = (
           } else if (hasLogsVolumeSupport(datasourceInstance) && type === SupplementaryQueryType.LogsVolume) {
             const dataProvider = datasourceInstance.getLogsVolumeDataProvider({
               ...transaction.request,
-              targets: visibleQueries,
               requestId: `${transaction.request.requestId}_${snakeCase(type)}`,
             });
             dispatch(
@@ -625,7 +620,7 @@ export const runQueries = (
               })
             );
 
-            if (!canReuseSupplementaryQueryData(supplementaryQueries[type].data, visibleQueries, absoluteRange)) {
+            if (!canReuseSupplementaryQueryData(supplementaryQueries[type].data, queries, absoluteRange)) {
               dispatch(cleanSupplementaryQueryAction({ exploreId, type }));
               if (supplementaryQueries[type].enabled) {
                 dispatch(loadSupplementaryQueryData(exploreId, type));
