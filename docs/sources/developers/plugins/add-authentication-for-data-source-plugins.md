@@ -323,9 +323,7 @@ func (ds *dataSource) QueryData(ctx context.Context, req *backend.QueryDataReque
 
 You can see a full working example here: [datasource-http-backend](https://github.com/grafana/grafana-plugin-examples/tree/main/examples/datasource-http-backend).
 
-The same approach works with `CheckHealth` and `CallResource` requests.
-
-If you need to do something else with these headers, you can also extract that information from the request:
+If you need to access HTTP header information directory, you can also extract that information from the request:
 
 ```go
 func (ds *dataSource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
@@ -391,7 +389,7 @@ func (ds *dataSource) CheckHealth(ctx context.Context, req *backend.CheckHealthR
 
 ## Forward user header for the logged-in user
 
-When [send_user_header]({{< relref "../../setup-grafana/configure-grafana/_index.md#send_user_header" >}}) is enabled, Grafana will pass the user header to the plugin in the `X-Grafana-User` header. The process is the same than [authorization headers](#forward-oauth-identity-for-the-logged-in-user) or [configured cookies](#forward-cookies-for-the-logged-in-user). This header can be auto injected in an outgoing request or extracted:
+When [send_user_header]({{< relref "../../setup-grafana/configure-grafana/_index.md#send_user_header" >}}) is enabled, Grafana will pass the user header to the plugin using the `X-Grafana-User` header. The process to achieve this is the same as forwarding [authorization headers](#forward-oauth-identity-for-the-logged-in-user) or [configured cookies](#forward-cookies-for-the-logged-in-user).
 
 ```go
 func (ds *dataSource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
