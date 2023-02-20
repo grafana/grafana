@@ -50,7 +50,7 @@ func (s *UserSync) SyncUser(ctx context.Context, id *authn.Identity, _ *authn.Re
 	}
 
 	// Does user exist in the database?
-	usr, errUserInDB := s.userInDB(ctx, &id.AuthModule, &id.AuthID, id.ClientParams.LookUpParams)
+	usr, errUserInDB := s.getUser(ctx, &id.AuthModule, &id.AuthID, id.ClientParams.LookUpParams)
 	if errUserInDB != nil && !errors.Is(errUserInDB, user.ErrUserNotFound) {
 		s.log.Error("error retrieving user", "error", errUserInDB,
 			"auth_module", id.AuthModule, "auth_id", id.AuthID,
@@ -234,14 +234,8 @@ func (s *UserSync) createUser(ctx context.Context, id *authn.Identity) (*user.Us
 	return usr, nil
 }
 
-// Does user exist in the database?
-// Check first authinfo table, then user table
-// return user id if found, 0 if not found
-func (s *UserSync) userInDB(ctx context.Context,
-	authID *string,
-	authModule *string,
-	params login.UserLookupParams) (*user.User, error) {
-	// Check authinfo table
+func (s *UserSync) getUser(ctx context.Context, authModule *string, authID *string, params login.UserLookupParams) (*user.User, error) {
+	// Check auth info fist
 	if authID != nil && authModule != nil {
 		query := &login.GetAuthInfoQuery{
 			AuthModule: *authModule,
