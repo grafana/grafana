@@ -222,26 +222,20 @@ func (i *Identity) Role() org.RoleType {
 	return i.OrgRoles[i.OrgID]
 }
 
-// TODO: improve error handling
+// NamespacedID returns the namespace, e.g. "user" and the id for that namespace
 func (i *Identity) NamespacedID() (string, int64) {
-	var (
-		id        int64
-		namespace string
-	)
-
 	split := strings.Split(i.ID, ":")
 	if len(split) != 2 {
 		return "", -1
 	}
 
-	id, errI := strconv.ParseInt(split[1], 10, 64)
-	if errI != nil {
+	id, err := strconv.ParseInt(split[1], 10, 64)
+	if err != nil {
+		// FIXME (kalleep): Improve error handling
 		return "", -1
 	}
 
-	namespace = split[0]
-
-	return namespace, id
+	return split[0], id
 }
 
 // NamespacedID builds a namespaced ID from a namespace and an ID.
