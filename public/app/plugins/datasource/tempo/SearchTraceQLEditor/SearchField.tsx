@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { FetchError, isFetchError } from '@grafana/runtime';
-import { InlineFieldRow, InlineField, Select, HorizontalGroup } from '@grafana/ui';
+import { Select, HorizontalGroup } from '@grafana/ui';
 
 import { createErrorNotification } from '../../../../core/copy/appNotification';
 import { notifyApp } from '../../../../core/reducers/appNotification';
@@ -10,24 +10,23 @@ import { dispatch } from '../../../../store/store';
 import { TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
 import { operators } from '../traceql/traceql';
-import { SearchFilter, TempoQuery } from '../types';
+import { SearchFilter } from '../types';
 
 interface Props {
+  id: string;
   datasource: TempoDatasource;
-
-  query: TempoQuery;
-  label: string;
   updateFilter: (f: SearchFilter) => void;
   deleteFilter: (t: string) => void;
   setError: (error: FetchError) => void;
   tagOptions?: Array<SelectableValue<string>>;
   isTagsLoading?: boolean;
   tag?: string;
+  operator?: string;
 }
-const SearchField = ({ datasource, label, tag, updateFilter, isTagsLoading, setError }: Props) => {
+const SearchField = ({ id, datasource, tag, operator, updateFilter, isTagsLoading, setError }: Props) => {
   const languageProvider = useMemo(() => new TempoLanguageProvider(datasource), [datasource]);
 
-  const [filter, setFilter] = useState<SearchFilter>({ tag, operator: '=' });
+  const [filter, setFilter] = useState<SearchFilter>({ id, tag, operator: operator || '=' });
   const [isLoadingValues, setIsLoadingValues] = useState(false);
   const [options, setOptions] = useState<Array<SelectableValue<string>>>([]);
 
@@ -75,41 +74,40 @@ const SearchField = ({ datasource, label, tag, updateFilter, isTagsLoading, setE
   }, [languageProvider, loadOptions, setError, filter.tag]);
 
   return (
-    <InlineFieldRow>
-      <InlineField label={label} labelWidth={14} grow>
-        <HorizontalGroup spacing={'sm'}>
-          <Select
-            inputId={`${label}-operator`}
-            options={operators.map((op) => ({ label: op, value: op }))}
-            value={filter.operator}
-            onChange={(v) => {
-              setFilter({ ...filter, operator: v?.value });
-            }}
-            isClearable={false}
-            aria-label={'select-service-name'}
-            allowCustomValue={true}
-          />
-          <Select
-            inputId="service"
-            isLoading={isLoadingValues}
-            options={options}
-            onOpenMenu={() => {
-              if (filter.tag) {
-                loadOptions(filter.tag);
-              }
-            }}
-            value={filter.value}
-            onChange={(v) => {
-              setFilter({ ...filter, value: v?.value });
-            }}
-            placeholder="Select a service"
-            isClearable
-            aria-label={'select-service-name'}
-            allowCustomValue={true}
-          />
-        </HorizontalGroup>
-      </InlineField>
-    </InlineFieldRow>
+    <HorizontalGroup spacing={'xs'}>
+      <Select
+        inputId={`${id}-operator`}
+        options={operators.map((op) => ({ label: op, value: op }))}
+        value={filter.operator}
+        onChange={(v) => {
+          setFilter({ ...filter, operator: v?.value });
+        }}
+        isClearable={false}
+        disabled={!!operator}
+        aria-label={`select-${id}-operator`}
+        allowCustomValue={true}
+        width={8}
+      />
+      <Select
+        inputId={`${id}-value`}
+        isLoading={isLoadingValues}
+        options={options}
+        onOpenMenu={() => {
+          if (filter.tag) {
+            loadOptions(filter.tag);
+          }
+        }}
+        value={filter.value}
+        onChange={(v) => {
+          setFilter({ ...filter, value: v?.value });
+        }}
+        placeholder="Select a value"
+        isClearable
+        aria-label={`select-${id}-value`}
+        allowCustomValue={true}
+        width={filter.value ? undefined : 18}
+      />
+    </HorizontalGroup>
   );
 };
 

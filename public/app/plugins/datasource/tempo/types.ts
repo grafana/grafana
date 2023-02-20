@@ -104,6 +104,7 @@ export type SearchResponse = {
 };
 
 export type SearchFilter = {
+  id: string; // uniquely identify the filter, will not be used in the query generation
   tag?: string;
   operator?: string;
   value?: string;

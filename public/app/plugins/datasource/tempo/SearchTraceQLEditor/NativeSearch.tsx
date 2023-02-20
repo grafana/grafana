@@ -3,11 +3,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { FetchError } from '@grafana/runtime';
-import { Alert, useStyles2 } from '@grafana/ui';
+import { Alert, HorizontalGroup, useStyles2 } from '@grafana/ui';
 
 import { TempoDatasource } from '../datasource';
 import { SearchFilter, TempoQuery } from '../types';
 
+import DurationInput from './DurationInput';
+import InlineSearchField from './InlineSearchField';
 import SearchField from './SearchField';
 
 interface Props {
@@ -27,12 +29,9 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
 
   const updateFilter = useCallback((s: SearchFilter) => {
     setFilters((state) => {
-      if (s.tag) {
-        const copy = { ...state };
-        copy[s.tag] = s;
-        return copy;
-      }
-      return state;
+      const copy = { ...state };
+      copy[s.id] = s;
+      return copy;
     });
   }, []);
 
@@ -41,6 +40,18 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
     delete filters[tag];
     setFilters(copy);
   };
+
+  const handleOnChange = useCallback(
+    (value) => {
+      if (value !== query.query) {
+        onChange({
+          ...query,
+          query: value,
+        });
+      }
+    },
+    [onChange, query]
+  );
 
   useEffect(() => {
     setTraceQlQuery(
@@ -51,6 +62,10 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
     );
   }, [filters]);
 
+  useEffect(() => {
+    handleOnChange(traceQlQuery);
+  }, [handleOnChange, traceQlQuery]);
+
   // const onKeyDown = (keyEvent: React.KeyboardEvent) => {
   //   if (keyEvent.key === 'Enter' && (keyEvent.shiftKey || keyEvent.ctrlKey)) {
   //     onRunQuery();
@@ -60,24 +75,32 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
   return (
     <>
       <div className={styles.container}>
-        <SearchField
-          label={'Service Name'}
-          datasource={datasource}
-          query={query}
-          setError={setError}
-          updateFilter={updateFilter}
-          deleteFilter={deleteFilter}
-          tag={'.service.name'}
-        />
-        <SearchField
-          label={'Span Name'}
-          datasource={datasource}
-          query={query}
-          setError={setError}
-          updateFilter={updateFilter}
-          deleteFilter={deleteFilter}
-          tag={'name'}
-        />
+        <InlineSearchField label={'Service Name'}>
+          <SearchField
+            id={'service-name'}
+            datasource={datasource}
+            setError={setError}
+            updateFilter={updateFilter}
+            deleteFilter={deleteFilter}
+            tag={'.service.name'}
+          />
+        </InlineSearchField>
+        <InlineSearchField label={'Span Name'}>
+          <SearchField
+            id={'tag-name'}
+            datasource={datasource}
+            setError={setError}
+            updateFilter={updateFilter}
+            deleteFilter={deleteFilter}
+            tag={'name'}
+          />
+        </InlineSearchField>
+        <InlineSearchField label={'Duration'}>
+          <HorizontalGroup>
+            <DurationInput id={'min-duration'} tag={'duration'} operators={['>', '>=']} updateFilter={updateFilter} />
+            <DurationInput id={'max-duration'} tag={'duration'} operators={['<', '<=']} updateFilter={updateFilter} />
+          </HorizontalGroup>
+        </InlineSearchField>
         <pre>{traceQlQuery}</pre>
       </div>
       {error ? (
