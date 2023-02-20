@@ -4889,7 +4889,7 @@ __metadata:
     rxjs: 7.8.0
     sinon: 14.0.1
     tinycolor2: 1.6.0
-    tslib: 2.4.1
+    tslib: 2.5.0
     typescript: 4.8.4
     uplot: 1.6.24
     xss: 1.0.14
@@ -4913,7 +4913,7 @@ __metadata:
     rollup-plugin-dts: ^5.0.0
     rollup-plugin-esbuild: 5.0.0
     rollup-plugin-node-externals: ^5.0.0
-    tslib: 2.4.1
+    tslib: 2.5.0
     typescript: 4.8.4
   languageName: unknown
   linkType: soft
@@ -4963,7 +4963,7 @@ __metadata:
     rollup-plugin-node-externals: ^5.0.0
     tracelib: 1.0.1
     ts-loader: 8.4.0
-    tslib: 2.4.1
+    tslib: 2.5.0
     typescript: 4.8.4
     uuid: 9.0.0
     webpack: 5.74.0
@@ -5125,7 +5125,7 @@ __metadata:
     rollup-plugin-terser: 7.0.2
     rxjs: 7.8.0
     systemjs: 0.20.19
-    tslib: 2.4.1
+    tslib: 2.5.0
     typescript: 4.8.4
   peerDependencies:
     react: 17.0.2
@@ -5161,7 +5161,7 @@ __metadata:
     rollup-plugin-dts: ^5.0.0
     rollup-plugin-esbuild: 5.0.0
     rollup-plugin-node-externals: ^5.0.0
-    tslib: 2.4.1
+    tslib: 2.5.0
     typescript: 4.8.4
   languageName: unknown
   linkType: soft
@@ -5403,7 +5403,7 @@ __metadata:
     storybook-dark-mode: 2.0.4
     style-loader: 3.3.1
     tinycolor2: 1.6.0
-    tslib: 2.4.1
+    tslib: 2.5.0
     typescript: 4.8.4
     uplot: 1.6.24
     uuid: 9.0.0
@@ -22223,7 +22223,7 @@ __metadata:
     ts-jest: 29.0.3
     ts-loader: 9.3.1
     ts-node: 10.9.1
-    tslib: 2.4.1
+    tslib: 2.5.0
     tween-functions: ^1.2.0
     typescript: 4.8.4
     uplot: 1.6.24
@@ -37535,6 +37535,13 @@ __metadata:
   version: 2.4.1
   resolution: "tslib@npm:2.4.1"
   checksum: 19480d6e0313292bd6505d4efe096a6b31c70e21cf08b5febf4da62e95c265c8f571f7b36fcc3d1a17e068032f59c269fab3459d6cd3ed6949eafecf64315fca
+  languageName: node
+  linkType: hard
+
+"tslib@npm:2.5.0":
+  version: 2.5.0
+  resolution: "tslib@npm:2.5.0"
+  checksum: ae3ed5f9ce29932d049908ebfdf21b3a003a85653a9a140d614da6b767a93ef94f460e52c3d787f0e4f383546981713f165037dc2274df212ea9f8a4541004e1
   languageName: node
   linkType: hard
 

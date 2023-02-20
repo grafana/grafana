@@ -108,7 +108,7 @@
     "slate-plain-serializer": "0.7.13",
     "slate-react": "0.22.10",
     "tinycolor2": "1.6.0",
-    "tslib": "2.4.1",
+    "tslib": "2.5.0",
     "uplot": "1.6.24",
     "uuid": "9.0.0"
   },

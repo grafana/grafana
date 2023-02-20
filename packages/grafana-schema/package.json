@@ -49,6 +49,6 @@
     "typescript": "4.8.4"
   },
   "dependencies": {
-    "tslib": "2.4.1"
+    "tslib": "2.5.0"
   }
 }
