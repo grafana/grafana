@@ -74,16 +74,17 @@ func (s *GrafanaService) Run(ctx context.Context) error {
 }
 
 func (s *GrafanaService) instrumentedCheckForUpdates(ctx context.Context) {
+	start := time.Now()
 	ctx, span := s.tracer.Start(ctx, "updatechecker.GrafanaService.checkForUpdates")
 	defer span.End()
 	ctxLogger := s.log.FromContext(ctx)
 	if err := s.checkForUpdates(ctx); err != nil {
 		span.SetStatus(codes.Error, fmt.Sprintf("update check failed: %s", err))
 		span.RecordError(err)
-		ctxLogger.Error("Update check failed", "error", err)
+		ctxLogger.Error("Update check failed", "error", err, "duration", time.Since(start))
 		return
 	}
-	ctxLogger.Debug("Update check succeeded")
+	ctxLogger.Info("Update check succeeded", "duration", time.Since(start))
 }
 
 func (s *GrafanaService) checkForUpdates(ctx context.Context) error {

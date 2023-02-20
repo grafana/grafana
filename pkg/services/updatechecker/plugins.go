@@ -97,16 +97,17 @@ func (s *PluginsService) HasUpdate(ctx context.Context, pluginID string) (string
 }
 
 func (s *PluginsService) instrumentedCheckForUpdates(ctx context.Context) {
+	start := time.Now()
 	ctx, span := s.tracer.Start(ctx, "updatechecker.PluginsService.checkForUpdates")
 	defer span.End()
 	ctxLogger := s.log.FromContext(ctx)
 	if err := s.checkForUpdates(ctx); err != nil {
 		span.SetStatus(codes.Error, fmt.Sprintf("update check failed: %s", err))
 		span.RecordError(err)
-		ctxLogger.Debug("Update check failed", "error", err)
+		ctxLogger.Debug("Update check failed", "error", err, "duration", time.Since(start))
 		return
 	}
-	ctxLogger.Debug("Update check succeeded")
+	ctxLogger.Info("Update check succeeded", "duration", time.Since(start))
 }
 
 func (s *PluginsService) checkForUpdates(ctx context.Context) error {
