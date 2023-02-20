@@ -10,7 +10,7 @@ import { EmptyLanguageProviderMock } from '../../language_provider.mock';
 import { PromOptions } from '../../types';
 import { PromVisualQuery } from '../types';
 
-import { MetricEncyclopediaModal } from './MetricEncyclopediaModal';
+import { MetricEncyclopediaModal, testIds } from './MetricEncyclopediaModal';
 
 // don't care about interaction tracking in our unit tests
 jest.mock('@grafana/runtime', () => ({
@@ -26,7 +26,7 @@ const defaultQuery: PromVisualQuery = {
 
 const listOfMetrics: string[] = ['all-metrics', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'];
 
-function createDatasource(withLabels?: boolean) {
+function createDatasource(metrics: string[], withLabels?: boolean) {
   const languageProvider = new EmptyLanguageProviderMock() as unknown as PromQlLanguageProvider;
 
   // display different results if their are labels selected in the PromVisualQuery
@@ -40,7 +40,7 @@ function createDatasource(withLabels?: boolean) {
     };
   } else {
     // all metrics
-    languageProvider.getLabelValues = () => Promise.resolve(listOfMetrics);
+    languageProvider.getLabelValues = () => Promise.resolve(metrics);
     languageProvider.metricsMetadata = {
       'all-metrics': {
         type: 'all-metrics-type',
@@ -73,25 +73,27 @@ function createProps(query: PromVisualQuery, datasource: PrometheusDatasource) {
   };
 }
 
-function setup(query: PromVisualQuery, withlabels?: boolean) {
+function setup(query: PromVisualQuery, metrics: string[], withlabels?: boolean) {
   const withLabels: boolean = query.labels.length > 0;
-  const datasource = createDatasource(withLabels);
+  const datasource = createDatasource(metrics, withLabels);
   const props = createProps(query, datasource);
 
   // render the modal only
-  render(<MetricEncyclopediaModal {...props} />);
+  const { container } = render(<MetricEncyclopediaModal {...props} />);
+
+  return container;
 }
 
 describe('MetricEncyclopediaModal', () => {
   it('renders the modal', async () => {
-    setup(defaultQuery);
+    setup(defaultQuery, listOfMetrics);
     await waitFor(() => {
       expect(screen.getByText('Select Metric')).toBeInTheDocument();
     });
   });
 
   it('renders a list of metrics', async () => {
-    setup(defaultQuery);
+    setup(defaultQuery, listOfMetrics);
     await waitFor(() => {
       expect(screen.getByText('all-metrics')).toBeInTheDocument();
     });
@@ -110,14 +112,14 @@ describe('MetricEncyclopediaModal', () => {
       operations: [],
     };
 
-    setup(query);
+    setup(query, listOfMetrics);
     await waitFor(() => {
       expect(screen.getByText('with-labels')).toBeInTheDocument();
     });
   });
 
   it('displays a type for a metric when the metric is clicked', async () => {
-    setup(defaultQuery);
+    setup(defaultQuery, listOfMetrics);
     await waitFor(() => {
       expect(screen.getByText('all-metrics')).toBeInTheDocument();
     });
@@ -130,7 +132,7 @@ describe('MetricEncyclopediaModal', () => {
   });
 
   it('displays a description for a metric', async () => {
-    setup(defaultQuery);
+    setup(defaultQuery, listOfMetrics);
     await waitFor(() => {
       expect(screen.getByText('all-metrics')).toBeInTheDocument();
     });
@@ -143,7 +145,7 @@ describe('MetricEncyclopediaModal', () => {
   });
 
   it('displays no metadata for a metric missing metadata when the metric is clicked', async () => {
-    setup(defaultQuery);
+    setup(defaultQuery, listOfMetrics);
     await waitFor(() => {
       expect(screen.getByText('a')).toBeInTheDocument();
     });
@@ -158,7 +160,7 @@ describe('MetricEncyclopediaModal', () => {
   // Pagination
   it('shows metrics within a range by pagination', async () => {
     // default resultsPerPage is 10
-    setup(defaultQuery);
+    setup(defaultQuery, listOfMetrics);
     await waitFor(() => {
       expect(screen.getByText('all-metrics')).toBeInTheDocument();
       expect(screen.getByText('a')).toBeInTheDocument();
@@ -175,7 +177,7 @@ describe('MetricEncyclopediaModal', () => {
 
   it('does not show metrics outside a range by pagination', async () => {
     // default resultsPerPage is 10
-    setup(defaultQuery);
+    setup(defaultQuery, listOfMetrics);
     await waitFor(() => {
       const metricOutsideRange = screen.queryByText('j');
       expect(metricOutsideRange).toBeNull();
@@ -183,10 +185,26 @@ describe('MetricEncyclopediaModal', () => {
   });
 
   it('shows results metrics per page chosen by the user', async () => {
-    setup(defaultQuery);
+    setup(defaultQuery, listOfMetrics);
     const resultsPerPageInput = screen.getByTestId('results-per-page');
     await userEvent.type(resultsPerPageInput, '11');
     const metricInsideRange = screen.getByText('j');
     expect(metricInsideRange).toBeInTheDocument();
   });
+
+  it('paginates millions of metrics and doee not run out of memory', async () => {
+    // 10 million metrics!!! HA HA HA HA! :)
+    const millionsOfMetrics: string[] = [...Array(10000000).keys()].map((i) => '' + i);
+    setup(defaultQuery, millionsOfMetrics);
+    await waitFor(() => {
+      // doesn't break on loading
+      expect(screen.getByText('0')).toBeInTheDocument();
+    });
+    const resultsPerPageInput = screen.getByTestId('results-per-page');
+    // doesn't break on changing results per page
+    await userEvent.type(resultsPerPageInput, '11');
+    const metricInsideRange = screen.getByText('10');
+    expect(metricInsideRange).toBeInTheDocument();
+  });
+  // Filtering
 });
