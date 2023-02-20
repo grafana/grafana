@@ -71,7 +71,7 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Name:      "rule_group_rules",
 				Help:      "The number of rules.",
 			},
-			[]string{"org"},
+			[]string{"org", "status"},
 		),
 		SchedulePeriodicDuration: promauto.With(r).NewHistogram(
 			prometheus.HistogramOpts{
