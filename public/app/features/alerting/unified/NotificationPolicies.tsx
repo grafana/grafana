@@ -51,7 +51,7 @@ const AmRoutes = () => {
   const styles = useStyles2(getStyles);
 
   const [queryParams, setQueryParams] = useQueryParams();
-  const { tab } = decodeQueryParams(queryParams);
+  const { tab } = getActiveTabFromUrl(queryParams);
 
   const [activeTab, setActiveTab] = useState<ActiveTab>(tab);
   const [updatingTree, setUpdatingTree] = useState<boolean>(false);
@@ -311,7 +311,7 @@ interface QueryParamValues {
   tab: ActiveTab;
 }
 
-function decodeQueryParams(queryParams: UrlQueryMap): QueryParamValues {
+function getActiveTabFromUrl(queryParams: UrlQueryMap): QueryParamValues {
   let tab = ActiveTab.NotificationPolicies; // default tab
 
   if (queryParams['tab'] === ActiveTab.NotificationPolicies) {

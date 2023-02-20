@@ -1,9 +1,10 @@
+import { css } from '@emotion/css';
 import { pick } from 'lodash';
 import React, { FC, useCallback, useEffect, useRef } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Button, Field, Icon, Input, Label as LabelElement, Select, Tooltip } from '@grafana/ui';
+import { Button, Field, Icon, Input, Label as LabelElement, Select, Tooltip, useStyles2 } from '@grafana/ui';
 import { Receiver, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
@@ -24,6 +25,7 @@ const NotificationPoliciesFilter: FC<NotificationPoliciesFilterProps> = ({
   const [searchParams, setSearchParams] = useURLSearchParams();
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const { queryString, contactPoint } = getNotificationPoliciesFilters(searchParams);
+  const styles = useStyles2(getStyles);
 
   useEffect(() => {
     onChangeReceiver(contactPoint);
@@ -53,7 +55,7 @@ const NotificationPoliciesFilter: FC<NotificationPoliciesFilterProps> = ({
   return (
     <Stack direction="row" alignItems="flex-end" gap={0.5}>
       <Field
-        style={{ marginBottom: 0 }}
+        className={styles.noBottom}
         label={
           <LabelElement>
             <Stack gap={0.5}>
@@ -167,6 +169,12 @@ const toOption = (receiver: Receiver) => ({
 const getNotificationPoliciesFilters = (searchParams: URLSearchParams) => ({
   queryString: searchParams.get('queryString') ?? undefined,
   contactPoint: searchParams.get('contactPoint') ?? undefined,
+});
+
+const getStyles = () => ({
+  noBottom: css`
+    margin-bottom: 0;
+  `,
 });
 
 export { NotificationPoliciesFilter, findRoutesMatchingFilter };

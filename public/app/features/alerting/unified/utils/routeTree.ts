@@ -1,7 +1,5 @@
 /**
  * Various helper functions to modify (immutably) the route tree, aka "notification policies"
- *
- * make sure to omit the "id" because Prometheus / Loki / Mimir will reject the payload
  */
 
 import { omit } from 'lodash';
