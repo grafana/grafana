@@ -30,7 +30,7 @@ func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *a
 	}
 
 	namespace, userID := id.NamespacedID()
-	if namespace != "user" || userID <= 0 {
+	if namespace != authn.NamespaceUser || userID <= 0 {
 		s.log.Warn("invalid namespace %q for user ID %q", namespace, userID)
 		return nil
 	}
