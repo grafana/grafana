@@ -4981,7 +4981,7 @@ __metadata:
     execa: 5.1.1
     lodash: 4.17.21
     mocha: 10.2.0
-    resolve-as-bin: 2.1.0
+    resolve-bin: 1.0.1
     rimraf: 4.2.0
     rollup: 2.79.1
     rollup-plugin-dts: ^5.0.0
@@ -16866,7 +16866,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cross-spawn@npm:^6.0.0, cross-spawn@npm:^6.0.5":
+"cross-spawn@npm:^6.0.0":
   version: 6.0.5
   resolution: "cross-spawn@npm:6.0.5"
   dependencies:
@@ -20925,6 +20925,13 @@ __metadata:
     make-dir: ^3.0.2
     pkg-dir: ^4.1.0
   checksum: 1e61c2e64f5c0b1c535bd85939ae73b0e5773142713273818cc0b393ee3555fb0fd44e1a5b161b8b6c3e03e98c2fcc9c227d784850a13a90a8ab576869576817
+  languageName: node
+  linkType: hard
+
+"find-parent-dir@npm:~0.3.0":
+  version: 0.3.1
+  resolution: "find-parent-dir@npm:0.3.1"
+  checksum: 55e722584760cfbc6611901c7ced5081345cf629e2ecd6a4f6704b13b5a1876c8d9d9db5fd4965ba23e1ecbc24a8b62af40379cfef1ffa0231719b9d924eebdd
   languageName: node
   linkType: hard
 
@@ -34255,12 +34262,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"resolve-as-bin@npm:2.1.0":
-  version: 2.1.0
-  resolution: "resolve-as-bin@npm:2.1.0"
+"resolve-bin@npm:1.0.1":
+  version: 1.0.1
+  resolution: "resolve-bin@npm:1.0.1"
   dependencies:
-    cross-spawn: ^6.0.5
-  checksum: 38cbdc57d50162a6aabca34762932637e9926a5b28e313e2027aa54132fe9894d57a9df061596b4be684b0320ee7ba0aef4537bb3919ee6df753fdc4a8b38222
+    find-parent-dir: ~0.3.0
+  checksum: 439678433138cbea49b848be68ae24aa2afa1b3bb82c30fa763ebbc5615e8c340debfe635ee902cdbb4be72528e4139e2adb0503370ee755ad3702d03976af4c
   languageName: node
   linkType: hard
 
