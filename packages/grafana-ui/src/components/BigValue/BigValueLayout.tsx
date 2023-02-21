@@ -459,7 +459,7 @@ export interface BigValueTextValues extends DisplayValue {
 
 function getTextValues(props: Props): BigValueTextValues {
   const { value, alignmentFactors, count } = props;
-  console.log(value, 'value in getTextValues');
+  // console.log(value, 'value in getTextValues');
   let { textMode } = props;
 
   const titleToAlignTo = alignmentFactors ? alignmentFactors.title : value.title;

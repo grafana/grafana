@@ -16,6 +16,20 @@ export function toPercentUnit(size: number, decimals: DecimalCount): FormattedVa
   return { text: toFixed(100 * size, decimals), suffix: '%' };
 }
 
+export function toIncreasingPercent(size: number, decimals: DecimalCount) {
+  if (size === null) {
+    return { text: '' };
+  }
+  return { text: `\u2191${toFixed(size, decimals)}`, suffix: '%' };
+}
+
+export function toDecreasingPercent(size: number, decimals: DecimalCount) {
+  if (size === null) {
+    return { text: '' };
+  }
+  return { text: `\u2193${toFixed(size, decimals)}`, suffix: '%' };
+}
+
 export function toHex0x(value: number, decimals: DecimalCount): FormattedValue {
   if (value == null) {
     return { text: '' };

@@ -12,7 +12,7 @@ export const plugin = new PanelPlugin<PanelOptions>(StatPanel)
   .useFieldConfig({
     useCustomConfig: (builder) => {
       builder.addSelect({
-        path: 'prefix',
+        path: 'directionPrefix',
         name: 'Directional prefix',
         description: 'Choose the direction the stat is progressing',
         settings: {

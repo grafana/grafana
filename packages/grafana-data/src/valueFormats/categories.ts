@@ -1,4 +1,12 @@
-import { toHex, sci, toHex0x, toPercent, toPercentUnit } from './arithmeticFormatters';
+import {
+  toHex,
+  sci,
+  toHex0x,
+  toPercent,
+  toPercentUnit,
+  toIncreasingPercent,
+  toDecreasingPercent,
+} from './arithmeticFormatters';
 import {
   dateTimeAsIso,
   dateTimeAsIsoNoDateIfToday,
@@ -47,6 +55,8 @@ export const getCategories = (): ValueFormatCategory[] => [
       },
       { name: 'Percent (0-100)', id: 'percent', fn: toPercent },
       { name: 'Percent (0.0-1.0)', id: 'percentunit', fn: toPercentUnit },
+      { name: 'Percent \u2191 Increase', id: 'percentincrease', fn: toIncreasingPercent },
+      { name: 'Percent \u2193 Decrease', id: 'percentdecrease', fn: toDecreasingPercent },
       { name: 'Humidity (%H)', id: 'humidity', fn: toFixedUnit('%H') },
       { name: 'Decibel', id: 'dB', fn: toFixedUnit('dB') },
       { name: 'Hexadecimal (0x)', id: 'hex0x', fn: toHex0x },
@@ -206,6 +216,23 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'From Now', id: 'dateTimeFromNow', fn: dateTimeFromNow },
     ],
   },
+  // {
+  //   name: 'Direction',
+  //   formats: [
+  //     { name: 'Datetime ISO', id: 'dateTimeAsIso', fn: dateTimeAsIso },
+  //     { name: 'Datetime ISO (No date if today)', id: 'dateTimeAsIsoNoDateIfToday', fn: dateTimeAsIsoNoDateIfToday },
+  //     { name: 'Datetime US', id: 'dateTimeAsUS', fn: dateTimeAsUS },
+  //     { name: 'Datetime US (No date if today)', id: 'dateTimeAsUSNoDateIfToday', fn: dateTimeAsUSNoDateIfToday },
+  //     { name: 'Datetime local', id: 'dateTimeAsLocal', fn: getDateTimeAsLocalFormat() },
+  //     {
+  //       name: 'Datetime local (No date if today)',
+  //       id: 'dateTimeAsLocalNoDateIfToday',
+  //       fn: getDateTimeAsLocalFormatNoDateIfToday(),
+  //     },
+  //     { name: 'Datetime default', id: 'dateTimeAsSystem', fn: dateTimeSystemFormatter },
+  //     { name: 'From Now', id: 'dateTimeFromNow', fn: dateTimeFromNow },
+  //   ],
+  // },
   {
     name: 'Energy',
     formats: [
