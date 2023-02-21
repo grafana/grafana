@@ -59,7 +59,7 @@ export const FolderView = ({
       limit: 1000,
     });
     for (const row of results.view) {
-      folders.push(queryResultToViewItem(row, results.view.dataFrame.meta));
+      folders.push(queryResultToViewItem(row, results.view));
     }
 
     return folders;

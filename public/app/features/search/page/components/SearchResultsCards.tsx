@@ -50,13 +50,12 @@ export const SearchResultsCards = React.memo(
         }
 
         const item = response.view.get(rowIndex);
-        const searchItem = queryResultToViewItem(item, response.view.dataFrame.meta);
+        const searchItem = queryResultToViewItem(item, response.view);
 
         if (item.location) {
           const first = item.location.split('/')[0];
           const finfo = meta.locationInfo[first];
           if (finfo) {
-            // searchItem.folderUid = item.location; // PR TODO: is this needed?
             searchItem.folderTitle = finfo.name;
           }
         }

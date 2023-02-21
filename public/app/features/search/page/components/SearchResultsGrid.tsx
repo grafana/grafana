@@ -76,7 +76,7 @@ export const SearchResultsGrid = ({
             const item = view.get(index);
             const kind = item.kind ?? 'dashboard';
 
-            const facade = queryResultToViewItem(item, view.dataFrame.meta);
+            const facade = queryResultToViewItem(item, view);
 
             if (kind === 'panel') {
               const type = item.panel_type;

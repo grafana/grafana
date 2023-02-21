@@ -1,4 +1,4 @@
-import { QueryResultMeta } from '@grafana/data';
+import { DataFrameView } from '@grafana/data';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { DashboardViewItem } from '../types';
@@ -40,7 +40,7 @@ function delay(ms: number) {
 
 export function queryResultToViewItem(
   item: DashboardQueryResult,
-  queryMeta?: QueryResultMeta // TODO: change this to the view instead
+  view?: DataFrameView<DashboardQueryResult> // TODO: change this to the view instead
 ): DashboardViewItem {
   return {
     kind: 'dashboard',
@@ -48,6 +48,6 @@ export function queryResultToViewItem(
     title: item.name,
     url: item.url,
     tags: item.tags ?? [],
-    folderTitle: queryMeta?.custom?.locationInfo?.[item.location]?.name,
+    folderTitle: view?.dataFrame.meta?.custom?.locationInfo?.[item.location]?.name,
   };
 }

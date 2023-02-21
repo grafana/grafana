@@ -56,7 +56,7 @@ export const FolderSection = ({
     }
 
     const raw = await getGrafanaSearcher().search({ ...query, tags });
-    const items = raw.view.map((v) => queryResultToViewItem(v, raw.view.dataFrame.meta));
+    const items = raw.view.map((v) => queryResultToViewItem(v, raw.view));
     return items;
   }, [sectionExpanded, tags]);
 
