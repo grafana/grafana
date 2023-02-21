@@ -367,5 +367,10 @@ var (
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 		},
+		{
+			Name:        "individualCookiePreferences",
+			Description: "Support overriding cookie preferences per user",
+			State:       FeatureStateAlpha,
+		},
 	}
 )
