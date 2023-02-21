@@ -259,6 +259,9 @@
     "manage-dashboards": {
       "title": "Browse"
     },
+    "manage-folder": {
+      "subtitle": "Manage folder dashboards and permissions"
+    },
     "monitoring": {
       "subtitle": "Monitoring and infrastructure apps",
       "title": "Monitoring"
@@ -406,11 +409,35 @@
     }
   },
   "search": {
+    "actions": {
+      "include-panels": "Include panels",
+      "remove-datasource-filter": "Datasource: {{datasource}}",
+      "sort-placeholder": "Sort",
+      "starred": "Starred",
+      "view-as-folders": "View by folders",
+      "view-as-grid": "Grid view",
+      "view-as-list": "View as list"
+    },
     "dashboard-actions": {
       "import": "Import",
       "new": "New",
       "new-dashboard": "New Dashboard",
       "new-folder": "New Folder"
+    },
+    "folder-view": {
+      "go-to-folder": "Go to folder",
+      "select-folder": "Select folder"
+    },
+    "results-table": {
+      "datasource-header": "Data source",
+      "location-header": "Location",
+      "name-header": "Name",
+      "tags-header": "Tags",
+      "type-header": "Type"
+    },
+    "search-input": {
+      "include-panels-placeholder": "Search for dashboards and panels",
+      "placeholder": "Search for dashboards"
     }
   },
   "share-modal": {
@@ -509,6 +536,11 @@
       "system-label": "System"
     },
     "title": "Preferences"
+  },
+  "tag-filter": {
+    "loading": "Loading...",
+    "no-tags": "No tags found",
+    "placeholder": "Filter by tag"
   },
   "time-picker": {
     "absolute": {

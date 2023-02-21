@@ -12,6 +12,7 @@ import {
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Checkbox, Icon, IconButton, IconName, TagList } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
+import { t } from 'app/core/internationalization';
 import { PluginIconName } from 'app/features/plugins/admin/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
@@ -63,7 +64,7 @@ export const generateColumns = (
         if (selection('*', '*')) {
           return (
             <div className={styles.checkboxHeader}>
-              <IconButton name={'check-square' as any} onClick={clearSelection} />
+              <IconButton name="check-square" onClick={clearSelection} />
             </div>
           );
         }
@@ -133,7 +134,7 @@ export const generateColumns = (
     id: `column-name`,
     field: access.name!,
     Header: () => {
-      return <div className={styles.headerNameStyle}>Name</div>;
+      return <div className={styles.headerNameStyle}>{t('search.results-table.name-header', 'Name')}</div>;
     },
     width,
   });
@@ -184,7 +185,9 @@ export const generateColumns = (
       },
       id: `column-location`,
       field: access.location ?? access.url,
-      Header: 'Location',
+      Header: () => {
+        t('search.results-table.location-header', 'Location');
+      },
       width,
     });
   }
@@ -281,7 +284,7 @@ function makeDataSourceColumn(
   return {
     id: `column-datasource`,
     field,
-    Header: 'Data source',
+    Header: () => t('search.results-table.datasource-header', 'Data source'),
     Cell: (p) => {
       const dslist = field.values.get(p.row.index);
       if (!dslist?.length) {
@@ -329,7 +332,7 @@ function makeTypeColumn(
   return {
     id: `column-type`,
     field: kindField ?? typeField,
-    Header: 'Type',
+    Header: () => t('search.results-table.type-header', 'Type'),
     Cell: (p) => {
       const i = p.row.index;
       const kind = kindField?.values.get(i) ?? 'dashboard';
@@ -400,7 +403,7 @@ function makeTagsColumn(
     },
     id: `column-tags`,
     field: field,
-    Header: 'Tags',
+    Header: () => t('search.results-table.tags-header', 'Tags'),
     width,
   };
 }

@@ -259,6 +259,9 @@
     "manage-dashboards": {
       "title": "ßřőŵşę"
     },
+    "manage-folder": {
+      "subtitle": "Mäŉäģę ƒőľđęř đäşĥþőäřđş äŉđ pęřmįşşįőŉş"
+    },
     "monitoring": {
       "subtitle": "Mőŉįŧőřįŉģ äŉđ įŉƒřäşŧřūčŧūřę äppş",
       "title": "Mőŉįŧőřįŉģ"
@@ -406,11 +409,35 @@
     }
   },
   "search": {
+    "actions": {
+      "include-panels": "Ĩŉčľūđę päŉęľş",
+      "remove-datasource-filter": "Đäŧäşőūřčę: {{datasource}}",
+      "sort-placeholder": "Ŝőřŧ",
+      "starred": "Ŝŧäřřęđ",
+      "view-as-folders": "Vįęŵ þy ƒőľđęřş",
+      "view-as-grid": "Ğřįđ vįęŵ",
+      "view-as-list": "Vįęŵ äş ľįşŧ"
+    },
     "dashboard-actions": {
       "import": "Ĩmpőřŧ",
       "new": "Ńęŵ",
       "new-dashboard": "Ńęŵ Đäşĥþőäřđ",
       "new-folder": "Ńęŵ Főľđęř"
+    },
+    "folder-view": {
+      "go-to-folder": "Ğő ŧő ƒőľđęř",
+      "select-folder": "Ŝęľęčŧ ƒőľđęř"
+    },
+    "results-table": {
+      "datasource-header": "Đäŧä şőūřčę",
+      "location-header": "Ŀőčäŧįőŉ",
+      "name-header": "Ńämę",
+      "tags-header": "Ŧäģş",
+      "type-header": "Ŧypę"
+    },
+    "search-input": {
+      "include-panels-placeholder": "Ŝęäřčĥ ƒőř đäşĥþőäřđş äŉđ päŉęľş",
+      "placeholder": "Ŝęäřčĥ ƒőř đäşĥþőäřđş"
     }
   },
   "share-modal": {
@@ -509,6 +536,11 @@
       "system-label": "Ŝyşŧęm"
     },
     "title": "Přęƒęřęŉčęş"
+  },
+  "tag-filter": {
+    "loading": "Ŀőäđįŉģ...",
+    "no-tags": "Ńő ŧäģş ƒőūŉđ",
+    "placeholder": "Fįľŧęř þy ŧäģ"
   },
   "time-picker": {
     "absolute": {

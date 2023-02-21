@@ -259,6 +259,9 @@
     "manage-dashboards": {
       "title": "Navegar"
     },
+    "manage-folder": {
+      "subtitle": ""
+    },
     "monitoring": {
       "subtitle": "Aplicaciones de supervisión e infraestructura",
       "title": "Seguimiento"
@@ -406,11 +409,35 @@
     }
   },
   "search": {
+    "actions": {
+      "include-panels": "",
+      "remove-datasource-filter": "",
+      "sort-placeholder": "",
+      "starred": "",
+      "view-as-folders": "",
+      "view-as-grid": "",
+      "view-as-list": ""
+    },
     "dashboard-actions": {
       "import": "",
       "new": "",
       "new-dashboard": "",
       "new-folder": ""
+    },
+    "folder-view": {
+      "go-to-folder": "",
+      "select-folder": ""
+    },
+    "results-table": {
+      "datasource-header": "",
+      "location-header": "",
+      "name-header": "",
+      "tags-header": "",
+      "type-header": ""
+    },
+    "search-input": {
+      "include-panels-placeholder": "",
+      "placeholder": ""
     }
   },
   "share-modal": {
@@ -509,6 +536,11 @@
       "system-label": ""
     },
     "title": "Preferencias"
+  },
+  "tag-filter": {
+    "loading": "",
+    "no-tags": "",
+    "placeholder": ""
   },
   "time-picker": {
     "absolute": {
