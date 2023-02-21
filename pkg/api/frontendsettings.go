@@ -405,10 +405,6 @@ func newAppDTO(plugin plugins.PluginDTO, settings pluginsettings.InfoDTO) *plugi
 		Preload: plugin.Preload,
 	}
 
-	if settings.Enabled {
-		app.Extensions = plugin.Extensions
-	}
-
 	return app
 }
 

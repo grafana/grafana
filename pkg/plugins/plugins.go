@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
-	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -146,8 +145,7 @@ type JSONData struct {
 	SkipDataQuery bool `json:"skipDataQuery"`
 
 	// App settings
-	AutoEnabled bool                        `json:"autoEnabled"`
-	Extensions  []*plugindef.ExtensionsLink `json:"extensions"`
+	AutoEnabled bool `json:"autoEnabled"`
 
 	// Datasource settings
 	Annotations  bool            `json:"annotations"`

@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -16,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
-	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -200,159 +198,5 @@ func TestHTTPServer_GetFrontendSettings_pluginsCDNBaseURL(t *testing.T) {
 			require.Equal(t, http.StatusOK, recorder.Code)
 			require.EqualValues(t, test.expected, got)
 		})
-	}
-}
-
-func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
-	type settings struct {
-		Apps map[string]*plugins.AppDTO `json:"apps"`
-	}
-
-	tests := []struct {
-		desc           string
-		pluginStore    func() plugins.Store
-		pluginSettings func() pluginSettings.Service
-		expected       settings
-	}{
-		{
-			desc: "app without extensions",
-			pluginStore: func() plugins.Store {
-				return &plugins.FakePluginStore{
-					PluginList: newPlugins("test-app", nil),
-				}
-			},
-			pluginSettings: func() pluginSettings.Service {
-				return &pluginSettings.FakePluginSettings{
-					Plugins: newAppSettings("test-app", true),
-				}
-			},
-			expected: settings{
-				Apps: map[string]*plugins.AppDTO{
-					"test-app": {
-						ID:         "test-app",
-						Preload:    false,
-						Path:       "/test-app/module.js",
-						Version:    "0.5.0",
-						Extensions: nil,
-					},
-				},
-			},
-		},
-		{
-			desc: "enabled app with link extensions",
-			pluginStore: func() plugins.Store {
-				return &plugins.FakePluginStore{
-					PluginList: newPlugins("test-app", []*plugindef.ExtensionsLink{
-						{
-							Id:          "1",
-							Placement:   "core/home/menu",
-							Type:        plugindef.ExtensionsLinkTypeLink,
-							Title:       "Title",
-							Description: "Home route of app",
-							Path:        "/home",
-						},
-					}),
-				}
-			},
-			pluginSettings: func() pluginSettings.Service {
-				return &pluginSettings.FakePluginSettings{
-					Plugins: newAppSettings("test-app", true),
-				}
-			},
-			expected: settings{
-				Apps: map[string]*plugins.AppDTO{
-					"test-app": {
-						ID:      "test-app",
-						Preload: false,
-						Path:    "/test-app/module.js",
-						Version: "0.5.0",
-						Extensions: []*plugindef.ExtensionsLink{
-							{
-								Id:          "1",
-								Placement:   "core/home/menu",
-								Type:        plugindef.ExtensionsLinkTypeLink,
-								Title:       "Title",
-								Description: "Home route of app",
-								Path:        "/home",
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			desc: "disabled app with link extensions",
-			pluginStore: func() plugins.Store {
-				return &plugins.FakePluginStore{
-					PluginList: newPlugins("test-app", []*plugindef.ExtensionsLink{
-						{
-							Id:          "1",
-							Placement:   "core/home/menu",
-							Type:        plugindef.ExtensionsLinkTypeLink,
-							Title:       "Title",
-							Description: "Home route of app",
-							Path:        "/home",
-						},
-					}),
-				}
-			},
-			pluginSettings: func() pluginSettings.Service {
-				return &pluginSettings.FakePluginSettings{
-					Plugins: newAppSettings("test-app", false),
-				}
-			},
-			expected: settings{
-				Apps: map[string]*plugins.AppDTO{
-					"test-app": {
-						ID:         "test-app",
-						Preload:    false,
-						Path:       "/test-app/module.js",
-						Version:    "0.5.0",
-						Extensions: nil,
-					},
-				},
-			},
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.desc, func(t *testing.T) {
-			cfg := setting.NewCfg()
-			m, _ := setupTestEnvironment(t, cfg, featuremgmt.WithFeatures(), test.pluginStore(), test.pluginSettings())
-			req := httptest.NewRequest(http.MethodGet, "/api/frontend/settings", nil)
-
-			recorder := httptest.NewRecorder()
-			m.ServeHTTP(recorder, req)
-			var got settings
-			err := json.Unmarshal(recorder.Body.Bytes(), &got)
-			require.NoError(t, err)
-			require.Equal(t, http.StatusOK, recorder.Code)
-			require.EqualValues(t, test.expected, got)
-		})
-	}
-}
-
-func newAppSettings(id string, enabled bool) map[string]*pluginSettings.DTO {
-	return map[string]*pluginSettings.DTO{
-		id: {
-			ID:       0,
-			OrgID:    1,
-			PluginID: id,
-			Enabled:  enabled,
-		},
-	}
-}
-
-func newPlugins(id string, extensions []*plugindef.ExtensionsLink) []plugins.PluginDTO {
-	return []plugins.PluginDTO{
-		{
-			Module: fmt.Sprintf("/%s/module.js", id),
-			JSONData: plugins.JSONData{
-				ID:         id,
-				Info:       plugins.Info{Version: "0.5.0"},
-				Type:       plugins.App,
-				Extensions: extensions,
-			},
-		},
 	}
 }

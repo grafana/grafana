@@ -24,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
-	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/plugins/storage"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -335,8 +334,6 @@ func (l *Loader) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error)
 		}
 	}
 
-	plugin.Extensions = filterExtensions(plugin)
-
 	return plugin, nil
 }
 
@@ -461,21 +458,4 @@ func (f *foundPlugins) stripDuplicates(existingPlugins map[string]struct{}, log 
 
 		pluginsByID[scannedPlugin.ID] = struct{}{}
 	}
-}
-
-func filterExtensions(plugin plugins.JSONData) []*plugindef.ExtensionsLink {
-	if plugin.Extensions == nil {
-		return nil
-	}
-
-	path := fmt.Sprintf("/a/%s/", plugin.ID)
-	result := make([]*plugindef.ExtensionsLink, 0)
-
-	for _, extension := range plugin.Extensions {
-		if strings.HasPrefix(extension.Path, path) {
-			result = append(result, extension)
-		}
-	}
-
-	return result
 }
