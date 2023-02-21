@@ -48,6 +48,6 @@ export function queryResultToViewItem(
     title: item.name,
     url: item.url,
     tags: item.tags ?? [],
-    folderTitle: queryMeta?.custom?.locationInfo[item.location].name,
+    folderTitle: queryMeta?.custom?.locationInfo?.[item.location]?.name,
   };
 }
