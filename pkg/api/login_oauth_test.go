@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -31,7 +32,7 @@ func setupSocialHTTPServerWithConfig(t *testing.T, cfg *setting.Cfg) *HTTPServer
 		Cfg:            cfg,
 		License:        &licensing.OSSLicensingService{Cfg: cfg},
 		SQLStore:       sqlStore,
-		SocialService:  social.ProvideService(cfg, featuremgmt.WithFeatures()),
+		SocialService:  social.ProvideService(cfg, featuremgmt.WithFeatures(), &usagestats.UsageStatsMock{}),
 		HooksService:   hooks.ProvideService(),
 		SecretsService: fakes.NewFakeSecretsService(),
 	}
