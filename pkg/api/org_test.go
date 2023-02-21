@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
-	"github.com/grafana/grafana/pkg/services/serviceaccounts/serviceaccounttest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
@@ -362,7 +361,6 @@ func TestAPIEndpoint_CreateOrgs_LegacyAccessControl(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				hs.orgService = &orgtest.FakeOrgService{ExpectedOrg: &org.Org{}}
-				hs.serviceAccountsService = &serviceaccounttest.FakeServiceAccountService{}
 			})
 
 			prev := setting.AllowUserOrgCreate
@@ -413,7 +411,6 @@ func TestAPIEndpoint_CreateOrgs_RBAC(t *testing.T) {
 				hs.userService = &usertest.FakeUserService{
 					ExpectedSignedInUser: &user.SignedInUser{OrgID: 0},
 				}
-				hs.serviceAccountsService = &serviceaccounttest.FakeServiceAccountService{}
 			})
 
 			req := webtest.RequestWithSignedInUser(server.NewPostRequest("/api/orgs", strings.NewReader(`{"name": "test"}`)), userWithPermissions(0, tt.permission))
