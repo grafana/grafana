@@ -28,7 +28,7 @@ func (hs *HTTPServer) pluginMetricsEndpoint(ctx *web.Context) {
 	pathParts := strings.SplitAfter(ctx.Req.URL.Path, "/")
 	pluginID := pathParts[len(pathParts)-1]
 
-	resp, err := hs.PluginClient.CollectMetrics(ctx.Req.Context(), &backend.CollectMetricsRequest{PluginContext: backend.PluginContext{PluginID: pluginID}})
+	resp, err := hs.pluginClient.CollectMetrics(ctx.Req.Context(), &backend.CollectMetricsRequest{PluginContext: backend.PluginContext{PluginID: pluginID}})
 	if err != nil {
 		if errors.Is(err, backendplugin.ErrPluginNotRegistered) {
 			ctx.Resp.WriteHeader(http.StatusNotFound)
