@@ -188,20 +188,20 @@ describe('labelFilterRenderer', () => {
 
 describe('isConflictingFilter', () => {
   it('should return true if the operation conflict with another label filter', () => {
-    const MOCK_OPERATION = { id: '__label_filter', params: ['abc', '!=', '123'] };
-    const MOCK_QUERY_OPERATIONS = [
+    const operation = { id: '__label_filter', params: ['abc', '!=', '123'] };
+    const queryOperations = [
       { id: '__label_filter', params: ['abc', '=', '123'] },
       { id: '__label_filter', params: ['abc', '!=', '123'] },
     ];
-    expect(isConflictingFilter(MOCK_OPERATION, MOCK_QUERY_OPERATIONS)).toBe(true);
+    expect(isConflictingFilter(operation, queryOperations)).toBe(true);
   });
 
   it("should return false if the operation doesn't conflict with another label filter", () => {
-    const MOCK_OPERATION = { id: '__label_filter', params: ['abc', '=', '123'] };
-    const MOCK_QUERY_OPERATIONS = [
+    const operation = { id: '__label_filter', params: ['abc', '=', '123'] };
+    const queryOperations = [
       { id: '__label_filter', params: ['abc', '=', '123'] },
       { id: '__label_filter', params: ['abc', '=', '123'] },
     ];
-    expect(isConflictingFilter(MOCK_OPERATION, MOCK_QUERY_OPERATIONS)).toBe(false);
+    expect(isConflictingFilter(operation, queryOperations)).toBe(false);
   });
 });

@@ -171,29 +171,29 @@ describe('createAggregationOperationWithParams', () => {
 
 describe('isConflictingSelector', () => {
   it('returns true if selector is conflicting', () => {
-    const MOCK_NEW_LABEL = { label: 'job', op: '!=', value: 'tns/app' };
-    const MOCK_LABELS = [
+    const newLabel = { label: 'job', op: '!=', value: 'tns/app' };
+    const labels = [
       { label: 'job', op: '=', value: 'tns/app' },
       { label: 'job', op: '!=', value: 'tns/app' },
     ];
-    expect(isConflictingSelector(MOCK_NEW_LABEL, MOCK_LABELS)).toBe(true);
+    expect(isConflictingSelector(newLabel, labels)).toBe(true);
   });
 
   it('returns false if selector is not complete', () => {
-    const MOCK_NEW_LABEL = { label: 'job', op: '', value: 'tns/app' };
-    const MOCK_LABELS = [
+    const newLabel = { label: 'job', op: '', value: 'tns/app' };
+    const labels = [
       { label: 'job', op: '=', value: 'tns/app' },
       { label: 'job', op: '', value: 'tns/app' },
     ];
-    expect(isConflictingSelector(MOCK_NEW_LABEL, MOCK_LABELS)).toBe(false);
+    expect(isConflictingSelector(newLabel, labels)).toBe(false);
   });
 
   it('returns false if selector is not conflicting', () => {
-    const MOCK_NEW_LABEL = { label: 'host', op: '=', value: 'docker-desktop' };
-    const MOCK_LABELS = [
+    const newLabel = { label: 'host', op: '=', value: 'docker-desktop' };
+    const labels = [
       { label: 'job', op: '=', value: 'tns/app' },
       { label: 'host', op: '=', value: 'docker-desktop' },
     ];
-    expect(isConflictingSelector(MOCK_NEW_LABEL, MOCK_LABELS)).toBe(false);
+    expect(isConflictingSelector(newLabel, labels)).toBe(false);
   });
 });
