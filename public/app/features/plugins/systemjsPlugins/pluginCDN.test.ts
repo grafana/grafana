@@ -88,6 +88,13 @@ describe('Plugin CDN', () => {
       const translatedLoad = translateForCDN({ ...load, source });
       expect(translatedLoad).toBe(expectedSource);
     });
+
+    it('should replace css paths', () => {
+      const source = `(0,o.loadPluginCss)({dark:"plugins/grafana-worldmap-panel/css/worldmap.dark.css",light:"plugins/grafana-worldmap-panel/css/worldmap.light.css"}),`;
+      const expectedSource = `(0,o.loadPluginCss)({dark:"http://my-host.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/css/worldmap.dark.css",light:"http://my-host.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/css/worldmap.light.css"}),`;
+      const translatedLoad = translateForCDN({ ...load, source });
+      expect(translatedLoad).toBe(expectedSource);
+    });
   });
 
   describe('extractPluginNameVersionFromUrl', () => {

@@ -19,7 +19,7 @@ export function translateForCDN(load: SystemJSLoad) {
   const baseAddress = `${config.pluginsCDNBaseURL}/${name}/${version}`;
 
   load.source = load.source.replace(/(\/?)(public\/plugins)/g, `${baseAddress}/$2`);
-  load.source = load.source.replace(/(["|'])(plugins\/.+.css)(["|'])/g, `$1${baseAddress}/public/$2$3`);
+  load.source = load.source.replace(/(["|'])(plugins\/.+?.css)(["|'])/g, `$1${baseAddress}/public/$2$3`);
   load.source = load.source.replace(
     /(\/\/#\ssourceMappingURL=)(.+)\.map/g,
     `$1${baseAddress}/public/plugins/${name}/$2.map`
