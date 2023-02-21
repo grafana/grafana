@@ -53,6 +53,7 @@ func TestGrafana_AuthenticateProxy(t *testing.T) {
 					SyncTeams:       true,
 					AllowSignUp:     true,
 					FetchSyncedUser: true,
+					SyncOrgRoles:    true,
 					LookUpParams: login.UserLookupParams{
 						Email: strPtr("email@email.com"),
 						Login: strPtr("test"),
@@ -71,9 +72,10 @@ func TestGrafana_AuthenticateProxy(t *testing.T) {
 				AuthModule: "authproxy",
 				AuthID:     "test@test.com",
 				ClientParams: authn.ClientParams{
-					SyncUser:    true,
-					SyncTeams:   true,
-					AllowSignUp: true,
+					SyncUser:     true,
+					SyncTeams:    true,
+					AllowSignUp:  true,
+					SyncOrgRoles: true,
 					LookUpParams: login.UserLookupParams{
 						Email: strPtr("test@test.com"),
 						Login: strPtr("test@test.com"),
