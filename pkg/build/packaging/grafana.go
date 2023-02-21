@@ -379,7 +379,7 @@ func executeFPM(options linuxPackageOptions, packageRoot, srcDir string) error {
 		"--vendor", vendor,
 		"-a", string(options.packageArch),
 	}
-	if options.prermSrc != nil && options.prermSrc != "" {
+	if options.prermSrc != "" {
 		args = append(args, "--before-remove", options.prermSrc)
 	}
 	if options.edition == config.EditionEnterprise || options.edition == config.EditionEnterprise2 || options.goArch == config.ArchARMv6 {
