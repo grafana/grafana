@@ -123,13 +123,18 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 		return nil, errOAuthEmailNotAllowed.Errorf("provided email is not allowed")
 	}
 
-	orgRoles := getOAuthOrgRole(userInfo, c.cfg)
+	orgRoles, isGrafanaAdmin, _ := getRoles(c.cfg, func() (org.RoleType, *bool, error) {
+		if c.cfg.OAuthSkipOrgRoleUpdateSync {
+			return "", nil, nil
+		}
+		return userInfo.Role, userInfo.IsGrafanaAdmin, nil
+	})
 
 	return &authn.Identity{
 		Login:          userInfo.Login,
 		Name:           userInfo.Name,
 		Email:          userInfo.Email,
-		IsGrafanaAdmin: userInfo.IsGrafanaAdmin,
+		IsGrafanaAdmin: isGrafanaAdmin,
 		AuthModule:     c.moduleName,
 		AuthID:         userInfo.Id,
 		Groups:         userInfo.Groups,
