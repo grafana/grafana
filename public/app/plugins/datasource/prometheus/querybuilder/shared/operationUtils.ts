@@ -341,7 +341,7 @@ export function isConflictingSelector(
     (label) => label.label === newLabel.label && label.value === newLabel.value && label.op !== newLabel.op
   );
 
-  const conflict = candidates.find((candidate) => {
+  const conflict = candidates.some((candidate) => {
     if (operationIsNegative && candidate?.op?.toString().startsWith('!') === false) {
       return true;
     }
@@ -351,5 +351,5 @@ export function isConflictingSelector(
     return false;
   });
 
-  return conflict !== undefined;
+  return conflict;
 }

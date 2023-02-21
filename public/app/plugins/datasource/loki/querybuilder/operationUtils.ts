@@ -170,7 +170,7 @@ export function isConflictingFilter(
       queryOperation.params[2] === operation.params[2]
   );
 
-  const conflict = candidates.find((candidate) => {
+  const conflict = candidates.some((candidate) => {
     if (operationIsNegative && candidate.params[1].toString().startsWith('!') === false) {
       return true;
     }
@@ -180,7 +180,7 @@ export function isConflictingFilter(
     return false;
   });
 
-  return conflict !== undefined;
+  return conflict;
 }
 
 export function pipelineRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
