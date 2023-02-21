@@ -353,6 +353,11 @@
   "navigation": {
     "kiosk": {
       "tv-alert": "按 ESC 退出 kiosk 模式"
+    },
+    "toolbar": {
+      "enable-kiosk": "",
+      "toggle-menu": "",
+      "toggle-search-bar": ""
     }
   },
   "news": {

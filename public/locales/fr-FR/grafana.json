@@ -353,6 +353,11 @@
   "navigation": {
     "kiosk": {
       "tv-alert": "Appuyez sur ESC pour quitter le mode kiosque"
+    },
+    "toolbar": {
+      "enable-kiosk": "",
+      "toggle-menu": "",
+      "toggle-search-bar": ""
     }
   },
   "news": {

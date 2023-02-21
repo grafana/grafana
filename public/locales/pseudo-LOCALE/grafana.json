@@ -353,6 +353,11 @@
   "navigation": {
     "kiosk": {
       "tv-alert": "Přęşş ĒŜC ŧő ęχįŧ ĸįőşĸ mőđę"
+    },
+    "toolbar": {
+      "enable-kiosk": "Ēŉäþľę ĸįőşĸ mőđę",
+      "toggle-menu": "Ŧőģģľę męŉū",
+      "toggle-search-bar": "Ŧőģģľę ŧőp şęäřčĥ þäř"
     }
   },
   "news": {
