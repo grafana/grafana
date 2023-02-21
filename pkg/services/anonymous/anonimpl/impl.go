@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
@@ -40,12 +41,14 @@ func (a *AnonSession) Key() (string, error) {
 type AnonSessionService struct {
 	remoteCache remotecache.CacheStorage
 	log         log.Logger
+	localCache  *localcache.CacheService
 }
 
 func ProvideAnonymousSessionService(remoteCache remotecache.CacheStorage, usageStats usagestats.Service) *AnonSessionService {
 	a := &AnonSessionService{
 		remoteCache: remoteCache,
 		log:         log.New("anonymous-session-service"),
+		localCache:  localcache.New(29*time.Minute, 15*time.Minute),
 	}
 
 	usageStats.RegisterMetricsFunc(a.UsageStatFn)
@@ -86,6 +89,12 @@ func (a *AnonSessionService) TagSession(ctx context.Context, httpReq *http.Reque
 	if err != nil {
 		return err
 	}
+
+	if _, ok := a.localCache.Get(key); ok {
+		return nil
+	}
+
+	a.localCache.SetDefault(key, struct{}{})
 
 	return a.remoteCache.Set(ctx, key, key, thirtyDays)
 }
