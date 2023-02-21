@@ -89,37 +89,34 @@ func runCountTestsForClient(t *testing.T, opts *setting.RemoteCacheOptions, sqls
 }
 
 func canPutGetAndDeleteCachedObjects(t *testing.T, client CacheStorage) {
-	cacheableStruct := CacheableStruct{String: "hej", Int64: 2000}
+	dataToCache := []byte("some bytes")
 
-	err := client.Set(context.Background(), "key1", cacheableStruct, 0)
+	err := client.SetByteArray(context.Background(), "key1", dataToCache, 0)
 	assert.Equal(t, err, nil, "expected nil. got: ", err)
 
-	data, err := client.Get(context.Background(), "key1")
+	data, err := client.GetByteArray(context.Background(), "key1")
 	assert.Equal(t, err, nil)
-	s, ok := data.(CacheableStruct)
 
-	assert.Equal(t, ok, true)
-	assert.Equal(t, s.String, "hej")
-	assert.Equal(t, s.Int64, int64(2000))
+	assert.Equal(t, string(data), "some bytes")
 
 	err = client.Delete(context.Background(), "key1")
 	assert.Equal(t, err, nil)
 
-	_, err = client.Get(context.Background(), "key1")
+	_, err = client.GetByteArray(context.Background(), "key1")
 	assert.Equal(t, err, ErrCacheItemNotFound)
 }
 
 func canNotFetchExpiredItems(t *testing.T, client CacheStorage) {
-	cacheableStruct := CacheableStruct{String: "hej", Int64: 2000}
+	dataToCache := []byte("some bytes")
 
-	err := client.Set(context.Background(), "key1", cacheableStruct, time.Second)
+	err := client.SetByteArray(context.Background(), "key1", dataToCache, time.Second)
 	assert.Equal(t, err, nil)
 
 	// not sure how this can be avoided when testing redis/memcached :/
 	<-time.After(time.Second + time.Millisecond)
 
 	// should not be able to read that value since its expired
-	_, err = client.Get(context.Background(), "key1")
+	_, err = client.GetByteArray(context.Background(), "key1")
 	assert.Equal(t, err, ErrCacheItemNotFound)
 }
 
@@ -133,16 +130,16 @@ func TestCachePrefix(t *testing.T) {
 	prefixCache := &prefixCacheStorage{cache: cache, prefix: "test/"}
 
 	// Set a value (with a prefix)
-	err := prefixCache.Set(context.Background(), "foo", "bar", time.Hour)
+	err := prefixCache.SetByteArray(context.Background(), "foo", []byte("bar"), time.Hour)
 	require.NoError(t, err)
 	// Get a value (with a prefix)
-	v, err := prefixCache.Get(context.Background(), "foo")
+	v, err := prefixCache.GetByteArray(context.Background(), "foo")
 	require.NoError(t, err)
-	require.Equal(t, "bar", v)
+	require.Equal(t, "bar", string(v))
 	// Get a value directly from the underlying cache, ensure the prefix is in the key
-	v, err = cache.Get(context.Background(), "test/foo")
+	v, err = cache.GetByteArray(context.Background(), "test/foo")
 	require.NoError(t, err)
-	require.Equal(t, "bar", v)
+	require.Equal(t, "bar", string(v))
 	// Get a value directly from the underlying cache without a prefix, should not be there
 	_, err = cache.Get(context.Background(), "foo")
 	require.Error(t, err)
