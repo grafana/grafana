@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 )
 
-func TestOrgSync_SyncOrgUser(t *testing.T) {
+func TestOrgSync_SyncOrgRolesHook(t *testing.T) {
 	orgService := &orgtest.FakeOrgService{ExpectedUserOrgDTO: []*org.UserOrgDTO{
 		{
 			OrgID: 1,
@@ -116,8 +116,8 @@ func TestOrgSync_SyncOrgUser(t *testing.T) {
 				accessControl: tt.fields.accessControl,
 				log:           tt.fields.log,
 			}
-			if err := s.SyncOrgUser(tt.args.ctx, tt.args.id, nil); (err != nil) != tt.wantErr {
-				t.Errorf("OrgSync.SyncOrgUser() error = %v, wantErr %v", err, tt.wantErr)
+			if err := s.SyncOrgRolesHook(tt.args.ctx, tt.args.id, nil); (err != nil) != tt.wantErr {
+				t.Errorf("OrgSync.SyncOrgRolesHook() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
 			assert.EqualValues(t, tt.wantID, tt.args.id)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -15,12 +16,26 @@ import (
 )
 
 var (
-	errSyncUserForbidden = errutil.NewBase(errutil.StatusForbidden,
-		"user.sync.forbidden", errutil.WithPublicMessage("User sync forbidden"))
-	errSyncUserInternal = errutil.NewBase(errutil.StatusInternal,
-		"user.sync.forbidden", errutil.WithPublicMessage("User sync failed"))
-	errUserProtection = errutil.NewBase(errutil.StatusForbidden,
-		"user.sync.protectedrole", errutil.WithPublicMessage("Unable to sync due to protected role"))
+	errSyncUserForbidden = errutil.NewBase(
+		errutil.StatusForbidden,
+		"user.sync.forbidden",
+		errutil.WithPublicMessage("User sync forbidden"),
+	)
+	errSyncUserInternal = errutil.NewBase(
+		errutil.StatusInternal,
+		"user.sync.forbidden",
+		errutil.WithPublicMessage("User sync failed"),
+	)
+	errUserProtection = errutil.NewBase(
+		errutil.StatusForbidden,
+		"user.sync.protected-role",
+		errutil.WithPublicMessage("Unable to sync due to protected role"),
+	)
+	errFetchingSignedInUser = errutil.NewBase(
+		errutil.StatusInternal,
+		"user.sync.fetch",
+		errutil.WithPublicMessage("Insufficient information to authenticate user"),
+	)
 )
 
 func ProvideUserSync(userService user.Service,
@@ -43,14 +58,14 @@ type UserSync struct {
 	log                   log.Logger
 }
 
-// SyncUser syncs a user with the database
-func (s *UserSync) SyncUser(ctx context.Context, id *authn.Identity, _ *authn.Request) error {
+// SyncUserHook syncs a user with the database
+func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *authn.Request) error {
 	if !id.ClientParams.SyncUser {
 		return nil
 	}
 
 	// Does user exist in the database?
-	usr, errUserInDB := s.UserInDB(ctx, &id.AuthModule, &id.AuthID, id.ClientParams.LookUpParams)
+	usr, errUserInDB := s.getUser(ctx, id.AuthModule, id.AuthID, id.ClientParams.LookUpParams)
 	if errUserInDB != nil && !errors.Is(errUserInDB, user.ErrUserNotFound) {
 		s.log.Error("error retrieving user", "error", errUserInDB,
 			"auth_module", id.AuthModule, "auth_id", id.AuthID,
@@ -64,20 +79,6 @@ func (s *UserSync) SyncUser(ctx context.Context, id *authn.Identity, _ *authn.Re
 			s.log.Warn("not allowing login, user not found in internal user database and allow signup = false",
 				"auth_module", id.AuthModule)
 			return errSyncUserForbidden.Errorf("%w", login.ErrSignupNotAllowed)
-		}
-
-		// quota check (FIXME: (jguer) this should be done in the user service)
-		// we may insert in both user and org_user tables
-		// therefore we need to query check quota for both user and org services
-		for _, srv := range []string{user.QuotaTargetSrv, org.QuotaTargetSrv} {
-			limitReached, errLimit := s.quotaService.CheckQuotaReached(ctx, quota.TargetSrv(srv), nil)
-			if errLimit != nil {
-				s.log.Error("error getting user quota", "error", errLimit)
-				return errSyncUserInternal.Errorf("%w", login.ErrGettingUserQuota)
-			}
-			if limitReached {
-				return errSyncUserForbidden.Errorf("%w", login.ErrUsersQuotaReached)
-			}
 		}
 
 		// create user
@@ -108,7 +109,7 @@ func (s *UserSync) SyncUser(ctx context.Context, id *authn.Identity, _ *authn.Re
 
 	syncUserToIdentity(usr, id)
 
-	// persist latest auth info token
+	// persist the latest auth info token
 	if errAuthInfo := s.updateAuthInfo(ctx, id); errAuthInfo != nil {
 		s.log.Error("error creating user", "error", errAuthInfo,
 			"auth_module", id.AuthModule, "auth_id", id.AuthID,
@@ -119,14 +120,52 @@ func (s *UserSync) SyncUser(ctx context.Context, id *authn.Identity, _ *authn.Re
 	return nil
 }
 
-// syncUserToIdentity syncs a user to an identity.
-// This is used to update the identity with the latest user information.
-func syncUserToIdentity(usr *user.User, id *authn.Identity) {
-	id.ID = fmt.Sprintf("user:%d", usr.ID)
-	id.Login = usr.Login
-	id.Email = usr.Email
-	id.Name = usr.Name
-	id.IsGrafanaAdmin = &usr.IsAdmin
+func (s *UserSync) FetchSyncedUserHook(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
+	if !identity.ClientParams.FetchSyncedUser {
+		return nil
+	}
+	namespace, id := identity.NamespacedID()
+	if namespace != authn.NamespaceUser {
+		return nil
+	}
+
+	usr, err := s.userService.GetSignedInUserWithCacheCtx(ctx, &user.GetSignedInUserQuery{
+		UserID: id,
+		OrgID:  r.OrgID,
+	})
+	if err != nil {
+		return errFetchingSignedInUser.Errorf("failed to resolve user: %w", err)
+	}
+
+	syncSignedInUserToIdentity(usr, identity)
+	return nil
+}
+
+func (s *UserSync) SyncLastSeenHook(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
+	namespace, id := identity.NamespacedID()
+
+	if namespace != authn.NamespaceUser && namespace != authn.NamespaceServiceAccount {
+		// skip sync
+		return nil
+	}
+
+	if !shouldUpdateLastSeen(identity.LastSeenAt) {
+		return nil
+	}
+
+	go func(userID int64) {
+		defer func() {
+			if err := recover(); err != nil {
+				s.log.Error("panic during user last seen sync", "err", err)
+			}
+		}()
+
+		if err := s.userService.UpdateLastSeenAt(context.Background(), &user.UpdateUserLastSeenAtCommand{UserID: userID}); err != nil {
+			s.log.Error("failed to update last_seen_at", "err", err, "userId", userID)
+		}
+	}(id)
+
+	return nil
 }
 
 func (s *UserSync) updateAuthInfo(ctx context.Context, id *authn.Identity) error {
@@ -135,7 +174,7 @@ func (s *UserSync) updateAuthInfo(ctx context.Context, id *authn.Identity) error
 	}
 
 	namespace, userID := id.NamespacedID()
-	if namespace != "user" && userID <= 0 { // FIXME: constant namespace
+	if namespace != authn.NamespaceUser && userID <= 0 {
 		return fmt.Errorf("invalid namespace %q for user ID %q", namespace, userID)
 	}
 
@@ -203,12 +242,25 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 }
 
 func (s *UserSync) createUser(ctx context.Context, id *authn.Identity) (*user.User, error) {
+	// quota check (FIXME: (jguer) this should be done in the user service)
+	// we may insert in both user and org_user tables
+	// therefore we need to query check quota for both user and org services
+	for _, srv := range []string{user.QuotaTargetSrv, org.QuotaTargetSrv} {
+		limitReached, errLimit := s.quotaService.CheckQuotaReached(ctx, quota.TargetSrv(srv), nil)
+		if errLimit != nil {
+			s.log.Error("error getting user quota", "error", errLimit)
+			return nil, errSyncUserInternal.Errorf("%w", login.ErrGettingUserQuota)
+		}
+		if limitReached {
+			return nil, errSyncUserForbidden.Errorf("%w", login.ErrUsersQuotaReached)
+		}
+	}
+
 	isAdmin := false
 	if id.IsGrafanaAdmin != nil {
 		isAdmin = *id.IsGrafanaAdmin
 	}
 
-	// TODO: add quota check
 	usr, errCreateUser := s.userService.Create(ctx, &user.CreateUserCommand{
 		Login:        id.Login,
 		Email:        id.Email,
@@ -234,18 +286,12 @@ func (s *UserSync) createUser(ctx context.Context, id *authn.Identity) (*user.Us
 	return usr, nil
 }
 
-// Does user exist in the database?
-// Check first authinfo table, then user table
-// return user id if found, 0 if not found
-func (s *UserSync) UserInDB(ctx context.Context,
-	authID *string,
-	authModule *string,
-	params login.UserLookupParams) (*user.User, error) {
-	// Check authinfo table
-	if authID != nil && authModule != nil {
+func (s *UserSync) getUser(ctx context.Context, authModule, authID string, params login.UserLookupParams) (*user.User, error) {
+	// Check auth info fist
+	if authID != "" && authModule != "" {
 		query := &login.GetAuthInfoQuery{
-			AuthModule: *authModule,
-			AuthId:     *authID,
+			AuthModule: authModule,
+			AuthId:     authID,
 		}
 		errGetAuthInfo := s.authInfoService.GetAuthInfo(ctx, query)
 		if errGetAuthInfo == nil {
@@ -265,10 +311,10 @@ func (s *UserSync) UserInDB(ctx context.Context,
 	}
 
 	// Check user table to grab existing user
-	return s.LookupByOneOf(ctx, &params)
+	return s.lookupByOneOf(ctx, &params)
 }
 
-func (s *UserSync) LookupByOneOf(ctx context.Context, params *login.UserLookupParams) (*user.User, error) {
+func (s *UserSync) lookupByOneOf(ctx context.Context, params *login.UserLookupParams) (*user.User, error) {
 	var usr *user.User
 	var err error
 
@@ -301,4 +347,34 @@ func (s *UserSync) LookupByOneOf(ctx context.Context, params *login.UserLookupPa
 	}
 
 	return usr, nil
+}
+
+// syncUserToIdentity syncs a user to an identity.
+// This is used to update the identity with the latest user information.
+func syncUserToIdentity(usr *user.User, id *authn.Identity) {
+	id.ID = fmt.Sprintf("user:%d", usr.ID)
+	id.Login = usr.Login
+	id.Email = usr.Email
+	id.Name = usr.Name
+	id.IsGrafanaAdmin = &usr.IsAdmin
+}
+
+// syncSignedInUserToIdentity syncs a user to an identity.
+func syncSignedInUserToIdentity(usr *user.SignedInUser, identity *authn.Identity) {
+	identity.Name = usr.Name
+	identity.Login = usr.Login
+	identity.Email = usr.Email
+	identity.OrgID = usr.OrgID
+	identity.OrgName = usr.OrgName
+	identity.OrgCount = usr.OrgCount
+	identity.OrgRoles = map[int64]org.RoleType{identity.OrgID: usr.OrgRole}
+	identity.HelpFlags1 = usr.HelpFlags1
+	identity.Teams = usr.Teams
+	identity.LastSeenAt = usr.LastSeenAt
+	identity.IsDisabled = usr.IsDisabled
+	identity.IsGrafanaAdmin = &usr.IsGrafanaAdmin
+}
+
+func shouldUpdateLastSeen(t time.Time) bool {
+	return time.Since(t) > time.Minute*5
 }

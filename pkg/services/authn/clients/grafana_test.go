@@ -50,7 +50,7 @@ func TestGrafana_AuthenticateProxy(t *testing.T) {
 				Groups:     []string{"grp1", "grp2"},
 				ClientParams: authn.ClientParams{
 					SyncUser:        true,
-					SyncTeamMembers: true,
+					SyncTeams:       true,
 					AllowSignUp:     true,
 					FetchSyncedUser: true,
 					LookUpParams: login.UserLookupParams{
@@ -71,9 +71,9 @@ func TestGrafana_AuthenticateProxy(t *testing.T) {
 				AuthModule: "authproxy",
 				AuthID:     "test@test.com",
 				ClientParams: authn.ClientParams{
-					SyncUser:        true,
-					SyncTeamMembers: true,
-					AllowSignUp:     true,
+					SyncUser:    true,
+					SyncTeams:   true,
+					AllowSignUp: true,
 					LookUpParams: login.UserLookupParams{
 						Email: strPtr("test@test.com"),
 						Login: strPtr("test@test.com"),
@@ -110,7 +110,7 @@ func TestGrafana_AuthenticateProxy(t *testing.T) {
 
 				assert.Equal(t, tt.expectedIdentity.ClientParams.SyncUser, identity.ClientParams.SyncUser)
 				assert.Equal(t, tt.expectedIdentity.ClientParams.AllowSignUp, identity.ClientParams.AllowSignUp)
-				assert.Equal(t, tt.expectedIdentity.ClientParams.SyncTeamMembers, identity.ClientParams.SyncTeamMembers)
+				assert.Equal(t, tt.expectedIdentity.ClientParams.SyncTeams, identity.ClientParams.SyncTeams)
 				assert.Equal(t, tt.expectedIdentity.ClientParams.EnableDisabledUsers, identity.ClientParams.EnableDisabledUsers)
 
 				assert.EqualValues(t, tt.expectedIdentity.ClientParams.LookUpParams.Email, identity.ClientParams.LookUpParams.Email)

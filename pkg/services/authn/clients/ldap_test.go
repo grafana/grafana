@@ -49,7 +49,7 @@ func TestLDAP_AuthenticateProxy(t *testing.T) {
 				Groups:     []string{"1", "2"},
 				ClientParams: authn.ClientParams{
 					SyncUser:            true,
-					SyncTeamMembers:     true,
+					SyncTeams:           true,
 					EnableDisabledUsers: true,
 					FetchSyncedUser:     true,
 					LookUpParams: login.UserLookupParams{
@@ -113,7 +113,7 @@ func TestLDAP_AuthenticatePassword(t *testing.T) {
 				Groups:     []string{"1", "2"},
 				ClientParams: authn.ClientParams{
 					SyncUser:            true,
-					SyncTeamMembers:     true,
+					SyncTeams:           true,
 					EnableDisabledUsers: true,
 					FetchSyncedUser:     true,
 					LookUpParams: login.UserLookupParams{

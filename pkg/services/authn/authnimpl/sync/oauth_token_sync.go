@@ -31,7 +31,7 @@ type OauthTokenSync struct {
 	sessionService auth.UserTokenService
 }
 
-func (s *OauthTokenSync) SyncOauthToken(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
+func (s *OauthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
 	namespace, id := identity.NamespacedID()
 	// only perform oauth token check if identity is a user
 	if namespace != authn.NamespaceUser {

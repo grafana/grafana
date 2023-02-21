@@ -24,13 +24,13 @@ type OrgSync struct {
 	log log.Logger
 }
 
-func (s *OrgSync) SyncOrgUser(ctx context.Context, id *authn.Identity, _ *authn.Request) error {
+func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *authn.Request) error {
 	if !id.ClientParams.SyncUser {
 		return nil
 	}
 
 	namespace, userID := id.NamespacedID()
-	if namespace != "user" || userID <= 0 {
+	if namespace != authn.NamespaceUser || userID <= 0 {
 		s.log.Warn("invalid namespace %q for user ID %q", namespace, userID)
 		return nil
 	}
