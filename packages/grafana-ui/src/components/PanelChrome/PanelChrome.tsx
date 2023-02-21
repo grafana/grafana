@@ -234,7 +234,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       backgroundColor: background,
       border: `1px solid ${borderColor}`,
       position: 'relative',
-      borderRadius: '3px',
+      borderRadius: theme.shape.borderRadius(1),
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
