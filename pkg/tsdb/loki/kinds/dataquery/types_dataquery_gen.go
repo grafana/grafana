@@ -12,39 +12,32 @@ package dataquery
 // Defines values for EditorMode.
 const (
 	EditorModeBuilder EditorMode = "builder"
-
-	EditorModeCode EditorMode = "code"
+	EditorModeCode    EditorMode = "code"
 )
 
 // Defines values for LokiQueryDirection.
 const (
 	LokiQueryDirectionBackward LokiQueryDirection = "backward"
-
-	LokiQueryDirectionForward LokiQueryDirection = "forward"
+	LokiQueryDirectionForward  LokiQueryDirection = "forward"
 )
 
 // Defines values for LokiQueryType.
 const (
 	LokiQueryTypeInstant LokiQueryType = "instant"
-
-	LokiQueryTypeRange LokiQueryType = "range"
-
-	LokiQueryTypeStream LokiQueryType = "stream"
+	LokiQueryTypeRange   LokiQueryType = "range"
+	LokiQueryTypeStream  LokiQueryType = "stream"
 )
 
 // Defines values for QueryEditorMode.
 const (
 	QueryEditorModeBuilder QueryEditorMode = "builder"
-
-	QueryEditorModeCode QueryEditorMode = "code"
+	QueryEditorModeCode    QueryEditorMode = "code"
 )
 
 // Defines values for SupportingQueryType.
 const (
 	SupportingQueryTypeDataSample SupportingQueryType = "dataSample"
-
 	SupportingQueryTypeLogsSample SupportingQueryType = "logsSample"
-
 	SupportingQueryTypeLogsVolume SupportingQueryType = "logsVolume"
 )
 
@@ -60,7 +53,7 @@ type LokiDataQuery struct {
 	// The LogQL query.
 	Expr string `json:"expr"`
 
-	// true if query is disabled (ie should not be returned to the dashboard)
+	// Hide true if query is disabled (ie should not be returned to the dashboard)
 	Hide *bool `json:"hide,omitempty"`
 
 	// @deprecated, now use queryType.
