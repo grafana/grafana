@@ -78,24 +78,28 @@ To set up a private data source connection, deploy the Grafana PDC agent, config
 
 
 
-1. Open a support ticket or let your account team know that you would like to try private data source connect. Share:
+1. In a terminal, create a new folder, navigate to it, and generate an SSH key using the following command:
+   
+    ```
+    $ ssh-keygen -f ${SLUG}  -N "" -t ed25519
+    ```
+
+    The flags used for ssh-keygen command mean the following:
+
+    - -f: The file name of the key file
+    - -N: The passphrase to use for the key pair, we want this empty
+    - -t: The encryption algorithm.
+        
+    Find more optional SSH flags in the [SSH documentation](https://www.man7.org/linux/man-pages/man1/ssh-keygen.1.html).
+
+    This command will generate two files: `${SLUG}` and `${SLUG}.pub`. You will send `${SLUG}.pub` to the Grafana team in the next step.
+2. Open a support ticket or let your account team know that you would like to try private data source connect. Share:
     - A list of the data sources you would like to enable PDC on.
     - The Grafana Cloud stack you would like to connect to your private network.
-    - A public key generated using this command:
-
-       ```
-       $ ssh-keygen -f ${SLUG}  -N "" -t ed25519
-       ```
-
-		The flags used for ssh-keygen command mean:
-
-        - -f: The file name of the key file
-        - -N: The passphrase to use for the key pair, we want this empty
-        - -t: The encryption algorithm.
-          
-        Find more optional SSH flags in the [SSH documentation](https://www.man7.org/linux/man-pages/man1/ssh-keygen.1.html).
-2. Grafana Labs will send you a certificate and public CA.
-3. Connect to Grafana Cloud using ssh or the pdc agent in the same directory as your private key, and the certificate and known_hosts file Grafana gave you. There are two options for connecting: SSH, or the PDC Agent Docker image.
+    - The `${SLUG}.pub` file you generated in the previous step.
+		
+3. Grafana Labs will send you a certificate and public CA.
+4. Connect to Grafana Cloud using ssh or the pdc agent in the same directory as your private key, and the certificate and known_hosts file Grafana gave you. There are two options for connecting: SSH, or the PDC Agent Docker image.
     - **Option 1:** Using SSH
         ```
         $ ssh -i ${SLUG} ${SLUG}@${PDC_GATEWAY} -p 22 -o UserKnownHostsFile=./known_hosts -o CertificateFile=${SLUG}-cert.pub -R 0 -vv
