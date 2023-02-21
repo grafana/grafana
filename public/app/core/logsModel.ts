@@ -25,6 +25,7 @@ import {
   LogsMetaItem,
   LogsMetaKind,
   LogsModel,
+  LogsVolumeCustomMetaData,
   LogsVolumeType,
   rangeUtil,
   ScopedVars,
@@ -676,14 +677,19 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
             if (sourceRefId.startsWith('log-volume-')) {
               sourceRefId = sourceRefId.substr('log-volume-'.length);
             }
+
+            const logsVolumeCustomMetaData: LogsVolumeCustomMetaData = {
+              logsVolumeType: LogsVolumeType.FullRange,
+              absoluteRange: { from: options.range.from.valueOf(), to: options.range.to.valueOf() },
+              datasourceName: datasource.name,
+              sourceQuery: options.targets.find((dataQuery) => dataQuery.refId === sourceRefId)!,
+            };
+
             dataFrame.meta = {
               ...dataFrame.meta,
               custom: {
                 ...dataFrame.meta?.custom,
-                logsVolumeType: LogsVolumeType.FullRange,
-                absoluteRange: { from: options.range.from.valueOf(), to: options.range.to.valueOf() },
-                datasourceName: datasource.name,
-                sourceQuery: options.targets.find((dataQuery) => dataQuery.refId === sourceRefId),
+                ...logsVolumeCustomMetaData,
               },
             };
             return updateLogsVolumeConfig(dataFrame, options.extractLevel, framesByRefId[dataFrame.refId].length === 1);

@@ -9,6 +9,7 @@ import {
   DataSourceApi,
   hasSupplementaryQuerySupport,
   LoadingState,
+  LogsVolumeCustomMetaData,
   LogsVolumeType,
   SupplementaryQueryType,
 } from '@grafana/data';
@@ -85,6 +86,13 @@ const createFallbackLogVolumeProvider = (
         targetRefIds.forEach((refId) => {
           if (rowsByRefId[refId]?.length) {
             const series = makeDataFramesForLogs(rowsByRefId[refId], bucketSize);
+            const logVolumeCustomMetaData: LogsVolumeCustomMetaData = {
+              logsVolumeType: LogsVolumeType.Limited,
+              absoluteRange: exploreData.logsResult?.visibleRange!,
+              datasourceName,
+              sourceQuery: queryTargets.find((query) => query.refId === refId)!,
+            };
+
             observer.next({
               data: series.map((d) => {
                 const custom = d.meta?.custom || {};
@@ -93,10 +101,7 @@ const createFallbackLogVolumeProvider = (
                   meta: {
                     custom: {
                       ...custom,
-                      logsVolumeType: LogsVolumeType.Limited,
-                      absoluteRange: exploreData.logsResult?.visibleRange,
-                      datasourceName,
-                      sourceQuery: queryTargets.find((query) => query.refId === refId),
+                      ...logVolumeCustomMetaData,
                     },
                   },
                 };

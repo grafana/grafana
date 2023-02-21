@@ -209,12 +209,11 @@ export enum LogsVolumeType {
 /**
  * Custom meta information required by Logs Volume responses
  */
-export type LogsVolumeCustom = {
+export type LogsVolumeCustomMetaData = {
   absoluteRange: AbsoluteTimeRange;
   logsVolumeType: LogsVolumeType;
-  datasourceUid: string;
   datasourceName: string;
-  targets: DataQuery[];
+  sourceQuery: DataQuery;
 };
 
 export const getLogsVolumeAbsoluteRange = (
