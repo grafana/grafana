@@ -14,6 +14,7 @@ export function DataSourceTypeCard({ onClick, dataSourcePlugin }: Props) {
   const isPhantom = dataSourcePlugin.module === 'phantom';
   const isClickable = !isPhantom && !dataSourcePlugin.unlicensed;
   const learnMoreLink = dataSourcePlugin.info?.links?.length > 0 ? dataSourcePlugin.info.links[0] : null;
+  const learnMoreLinkHref = learnMoreLink?.href ?? '_blank';
 
   const styles = useStyles2(getStyles);
 
@@ -50,7 +51,7 @@ export function DataSourceTypeCard({ onClick, dataSourcePlugin }: Props) {
             icon="external-link-alt"
             onClick={(e) => e.stopPropagation()}
             rel="noopener"
-            target="_blank"
+            target={learnMoreLinkHref}
             variant="secondary"
           >
             {learnMoreLink.name}
