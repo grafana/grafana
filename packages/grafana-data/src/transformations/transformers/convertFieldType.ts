@@ -150,7 +150,7 @@ function fieldToNumberField(field: Field): Field {
     if (valuesAsStrings) {
       // some numbers returned from datasources have commas
       // strip the commas, coerce the string to a number
-      toBeConverted = toBeConverted.replace(/,/g, '');
+      toBeConverted = toBeConverted?.replace?.(/,/g, '') ?? null;
     }
 
     const number = +toBeConverted;
