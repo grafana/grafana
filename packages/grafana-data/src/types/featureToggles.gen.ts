@@ -58,7 +58,6 @@ export interface FeatureToggles {
   topnav?: boolean;
   grpcServer?: boolean;
   entityStore?: boolean;
-  flameGraph?: boolean;
   cloudWatchCrossAccountQuerying?: boolean;
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
