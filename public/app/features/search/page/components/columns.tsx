@@ -133,9 +133,7 @@ export const generateColumns = (
     },
     id: `column-name`,
     field: access.name!,
-    Header: () => {
-      return <div className={styles.headerNameStyle}>{t('search.results-table.name-header', 'Name')}</div>;
-    },
+    Header: () => <div className={styles.headerNameStyle}>{t('search.results-table.name-header', 'Name')}</div>,
     width,
   });
   availableWidth -= width;
@@ -185,9 +183,7 @@ export const generateColumns = (
       },
       id: `column-location`,
       field: access.location ?? access.url,
-      Header: () => {
-        t('search.results-table.location-header', 'Location');
-      },
+      Header: () => t('search.results-table.location-header', 'Location'),
       width,
     });
   }
