@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"strings"
 	"sync"
 	"time"
@@ -19,6 +20,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+const grafanaLatestJSONURL = "https://raw.githubusercontent.com/grafana/grafana/main/latest.json"
 
 // Create and register metrics into the default Prometheus registry
 
@@ -96,7 +99,11 @@ func (s *GrafanaService) instrumentedCheckForUpdates(ctx context.Context) {
 func (s *GrafanaService) checkForUpdates(ctx context.Context) error {
 	ctxLogger := s.log.FromContext(ctx)
 	ctxLogger.Debug("Checking for updates")
-	resp, err := s.httpClient.Get("https://raw.githubusercontent.com/grafana/grafana/main/latest.json")
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, grafanaLatestJSONURL, nil)
+	if err != nil {
+		return err
+	}
+	resp, err := s.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to get latest.json repo from github.com: %w", err)
 	}

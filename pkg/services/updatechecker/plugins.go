@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"net/url"
 	"strings"
 	"sync"
@@ -125,7 +126,11 @@ func (s *PluginsService) checkForUpdates(ctx context.Context) error {
 		"slugIn":         []string{s.pluginIDsCSV(localPlugins)},
 		"grafanaVersion": []string{s.grafanaVersion},
 	}.Encode()
-	resp, err := s.httpClient.Get(requestURL)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, requestURL, nil)
+	if err != nil {
+		return err
+	}
+	resp, err := s.httpClient.Do(req)
 	if err != nil {
 		return fmt.Errorf("failed to get plugins repo from grafana.com: %w", err)
 	}

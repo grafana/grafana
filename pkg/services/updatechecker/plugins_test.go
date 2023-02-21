@@ -197,8 +197,8 @@ type fakeHTTPClient struct {
 	requestURL string
 }
 
-func (c *fakeHTTPClient) Get(url string) (*http.Response, error) {
-	c.requestURL = url
+func (c *fakeHTTPClient) Do(req *http.Request) (*http.Response, error) {
+	c.requestURL = req.URL.String()
 
 	resp := &http.Response{
 		Body: io.NopCloser(strings.NewReader(c.fakeResp)),
