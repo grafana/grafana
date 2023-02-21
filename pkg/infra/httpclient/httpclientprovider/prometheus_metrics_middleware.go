@@ -1,8 +1,14 @@
-package instrumentation
+package httpclientprovider
 
-import "github.com/prometheus/client_golang/prometheus"
+import (
+	"net/http"
+	"time"
 
-// PrometheusMetrics groups some metrics for an InstrumentedHTTPClient
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/prometheus/client_golang/prometheus"
+)
+
+// PrometheusMetrics groups some metrics for a PrometheusMetricsMiddleware
 type PrometheusMetrics struct {
 	requestsCounter          prometheus.Counter
 	failureCounter           prometheus.Counter
@@ -54,4 +60,29 @@ func (m *PrometheusMetrics) MustRegister(registry prometheus.Registerer) {
 func (m *PrometheusMetrics) WithMustRegister(registry prometheus.Registerer) *PrometheusMetrics {
 	m.MustRegister(registry)
 	return m
+}
+
+// PrometheusMetricsMiddleware is a middleware that will mutate the in flight, requests, duration and
+// failure count on the provided *PrometheusMetrics instance. This can be used to count the number of requests,
+// successful requests and errors that go through the httpclient, as well as to track the response times.
+// For the metrics to be exposed properly, the provided *PrometheusMetrics should already be registered in a Prometheus
+// registry.
+func PrometheusMetricsMiddleware(metrics *PrometheusMetrics) httpclient.Middleware {
+	return httpclient.MiddlewareFunc(func(opts httpclient.Options, next http.RoundTripper) http.RoundTripper {
+		return httpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
+			startTime := time.Now()
+			metrics.inFlightGauge.Inc()
+
+			res, err := next.RoundTrip(req)
+
+			metrics.inFlightGauge.Dec()
+			metrics.requestsCounter.Inc()
+			metrics.durationSecondsHistogram.Observe(time.Since(startTime).Seconds())
+			if err != nil || (res != nil && !(res.StatusCode >= 200 && res.StatusCode <= 299)) {
+				metrics.failureCounter.Inc()
+			}
+
+			return res, err
+		})
+	})
 }

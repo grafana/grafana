@@ -5,26 +5,26 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net/http"
 	"net/url"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/hashicorp/go-version"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/codes"
 
+	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/updatechecker/instrumentation"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 // Create and register metrics into the default Prometheus registry
 
-var pluginsUpdateCheckerMetrics = instrumentation.NewPrometheusMetrics("grafana_plugins_update_checker").
+var pluginsUpdateCheckerMetrics = httpclientprovider.NewPrometheusMetrics("grafana_plugins_update_checker").
 	WithMustRegister(prometheus.DefaultRegisterer)
 
 type PluginsService struct {
@@ -39,20 +39,27 @@ type PluginsService struct {
 	tracer         tracing.Tracer
 }
 
-func ProvidePluginsService(cfg *setting.Cfg, pluginStore plugins.Store, tracer tracing.Tracer) *PluginsService {
+func ProvidePluginsService(cfg *setting.Cfg, pluginStore plugins.Store, tracer tracing.Tracer) (*PluginsService, error) {
+	logger := log.New("plugins.update.checker")
+	cl, err := httpclient.New(httpclient.Options{
+		Middlewares: []httpclient.Middleware{
+			httpclientprovider.TracingMiddleware(logger, tracer),
+			httpclientprovider.PrometheusMetricsMiddleware(pluginsUpdateCheckerMetrics),
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	return &PluginsService{
-		enabled:        cfg.CheckForPluginUpdates,
-		grafanaVersion: cfg.BuildVersion,
-		httpClient: instrumentation.NewInstrumentedHTTPClient(
-			&http.Client{Timeout: time.Second * 10},
-			tracer,
-			instrumentation.WithMetrics(pluginsUpdateCheckerMetrics),
-		),
-		log:              log.New("plugins.update.checker"),
+		enabled:          cfg.CheckForPluginUpdates,
+		grafanaVersion:   cfg.BuildVersion,
+		httpClient:       cl,
+		log:              logger,
 		tracer:           tracer,
 		pluginStore:      pluginStore,
 		availableUpdates: make(map[string]string),
-	}
+	}, nil
 }
 
 func (s *PluginsService) IsDisabled() bool {
@@ -118,7 +125,7 @@ func (s *PluginsService) checkForUpdates(ctx context.Context) error {
 		"slugIn":         []string{s.pluginIDsCSV(localPlugins)},
 		"grafanaVersion": []string{s.grafanaVersion},
 	}.Encode()
-	resp, err := s.httpClient.Get(ctx, requestURL)
+	resp, err := s.httpClient.Get(requestURL)
 	if err != nil {
 		return fmt.Errorf("failed to get plugins repo from grafana.com: %w", err)
 	}

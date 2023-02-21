@@ -5,24 +5,24 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net/http"
 	"strings"
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/hashicorp/go-version"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/codes"
 
+	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/updatechecker/instrumentation"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 // Create and register metrics into the default Prometheus registry
 
-var grafanaUpdateCheckerMetrics = instrumentation.NewPrometheusMetrics("grafana_update_checker").
+var grafanaUpdateCheckerMetrics = httpclientprovider.NewPrometheusMetrics("grafana_update_checker").
 	WithMustRegister(prometheus.DefaultRegisterer)
 
 type GrafanaService struct {
@@ -37,18 +37,24 @@ type GrafanaService struct {
 	tracer         tracing.Tracer
 }
 
-func ProvideGrafanaService(cfg *setting.Cfg, tracer tracing.Tracer) *GrafanaService {
+func ProvideGrafanaService(cfg *setting.Cfg, tracer tracing.Tracer) (*GrafanaService, error) {
+	logger := log.New("grafana.update.checker")
+	cl, err := httpclient.New(httpclient.Options{
+		Middlewares: []httpclient.Middleware{
+			httpclientprovider.TracingMiddleware(logger, tracer),
+			httpclientprovider.PrometheusMetricsMiddleware(grafanaUpdateCheckerMetrics),
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
 	return &GrafanaService{
 		enabled:        cfg.CheckForGrafanaUpdates,
 		grafanaVersion: cfg.BuildVersion,
-		httpClient: instrumentation.NewInstrumentedHTTPClient(
-			&http.Client{Timeout: time.Second * 10},
-			tracer,
-			instrumentation.WithMetrics(grafanaUpdateCheckerMetrics),
-		),
-		log:    log.New("grafana.update.checker"),
-		tracer: tracer,
-	}
+		httpClient:     cl,
+		log:            logger,
+		tracer:         tracer,
+	}, nil
 }
 
 func (s *GrafanaService) IsDisabled() bool {
@@ -90,7 +96,7 @@ func (s *GrafanaService) instrumentedCheckForUpdates(ctx context.Context) {
 func (s *GrafanaService) checkForUpdates(ctx context.Context) error {
 	ctxLogger := s.log.FromContext(ctx)
 	ctxLogger.Debug("Checking for updates")
-	resp, err := s.httpClient.Get(ctx, "https://raw.githubusercontent.com/grafana/grafana/main/latest.json")
+	resp, err := s.httpClient.Get("https://raw.githubusercontent.com/grafana/grafana/main/latest.json")
 	if err != nil {
 		return fmt.Errorf("failed to get latest.json repo from github.com: %w", err)
 	}

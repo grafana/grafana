@@ -197,7 +197,7 @@ type fakeHTTPClient struct {
 	requestURL string
 }
 
-func (c *fakeHTTPClient) Get(ctx context.Context, url string) (*http.Response, error) {
+func (c *fakeHTTPClient) Get(url string) (*http.Response, error) {
 	c.requestURL = url
 
 	resp := &http.Response{
