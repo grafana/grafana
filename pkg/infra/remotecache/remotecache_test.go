@@ -44,6 +44,7 @@ func TestCachedBasedOnConfig(t *testing.T) {
 
 	client := createTestClient(t, cfg.RemoteCacheOptions, db.InitTestDB(t))
 	runTestsForClient(t, client)
+	runCountTestsForClient(t, cfg.RemoteCacheOptions, db.InitTestDB(t))
 }
 
 func TestInvalidCacheTypeReturnsError(t *testing.T) {
