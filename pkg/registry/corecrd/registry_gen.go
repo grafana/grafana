@@ -20,6 +20,7 @@ import (
 	publicdashboard "github.com/grafana/grafana/pkg/kinds/publicdashboard/crd"
 	serviceaccount "github.com/grafana/grafana/pkg/kinds/serviceaccount/crd"
 	team "github.com/grafana/grafana/pkg/kinds/team/crd"
+	user "github.com/grafana/grafana/pkg/kinds/user/crd"
 	"github.com/grafana/grafana/pkg/kindsys/k8ssys"
 	"github.com/grafana/grafana/pkg/registry/corekind"
 	"gopkg.in/yaml.v3"
@@ -36,7 +37,7 @@ import (
 // that are needed are known to the caller. Prefer All() when performing operations
 // generically across all kinds.
 type Registry struct {
-	all [7]k8ssys.Kind
+	all [8]k8ssys.Kind
 }
 
 // Dashboard returns the [k8ssys.Kind] instance for the Dashboard kind.
@@ -72,6 +73,11 @@ func (r *Registry) ServiceAccount() k8ssys.Kind {
 // Team returns the [k8ssys.Kind] instance for the Team kind.
 func (r *Registry) Team() k8ssys.Kind {
 	return r.all[6]
+}
+
+// User returns the [k8ssys.Kind] instance for the User kind.
+func (r *Registry) User() k8ssys.Kind {
+	return r.all[7]
 }
 
 func doNewRegistry(breg *corekind.Base) *Registry {
@@ -226,6 +232,27 @@ func doNewRegistry(breg *corekind.Base) *Registry {
 		panic(fmt.Sprintf("could not unmarshal CRD JSON for Team: %s", err))
 	}
 	reg.all[6] = kk
+
+	kk = k8ssys.Kind{
+		GrafanaKind: breg.User(),
+		Object:      &user.User{},
+		ObjectList:  &user.UserList{},
+	}
+	// TODO Having the committed form on disk in YAML is worth doing this for now...but fix this silliness
+	map7 := make(map[string]any)
+	err = yaml.Unmarshal(user.CRDYaml, map7)
+	if err != nil {
+		panic(fmt.Sprintf("generated CRD YAML for User failed to unmarshal: %s", err))
+	}
+	b, err = json.Marshal(map7)
+	if err != nil {
+		panic(fmt.Sprintf("could not re-marshal CRD JSON for User: %s", err))
+	}
+	err = json.Unmarshal(b, &kk.Schema)
+	if err != nil {
+		panic(fmt.Sprintf("could not unmarshal CRD JSON for User: %s", err))
+	}
+	reg.all[7] = kk
 
 	return reg
 }

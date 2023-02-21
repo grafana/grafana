@@ -1771,26 +1771,32 @@
     },
     "user": {
       "category": "core",
-      "codeowners": [],
+      "codeowners": [
+        "grafana/dataviz-squad",
+        "grafana/grafana-as-code",
+        "grafana/plugins-platform-frontend",
+        "grafana/user-essentials"
+      ],
       "crd": {
         "dummySchema": false,
-        "group": "",
-        "scope": ""
+        "group": "user.core.grafana.com",
+        "scope": "Namespaced"
       },
       "currentVersion": [
         0,
         0
       ],
-      "grafanaMaturityCount": 0,
+      "description": "User model",
+      "grafanaMaturityCount": 5,
       "lineageIsGroup": false,
       "links": {
-        "docs": "n/a",
-        "go": "n/a",
-        "schema": "n/a",
-        "ts": "n/a"
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/core/user/schema-reference",
+        "go": "https://github.com/grafana/grafana/tree/main/pkg/kinds/user",
+        "schema": "https://github.com/grafana/grafana/tree/main/kinds/user/user_kind.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/packages/grafana-schema/src/raw/user/x/user_types.gen.ts"
       },
       "machineName": "user",
-      "maturity": "planned",
+      "maturity": "merged",
       "name": "User",
       "pluralMachineName": "users",
       "pluralName": "Users"
@@ -2026,9 +2032,10 @@
           "preferences",
           "publicdashboard",
           "serviceaccount",
-          "team"
+          "team",
+          "user"
         ],
-        "count": 8
+        "count": 9
       },
       "planned": {
         "name": "planned",
@@ -2076,12 +2083,11 @@
           "testdatadatasourcecfg",
           "thumb",
           "tracespanelcfg",
-          "user",
           "welcomepanelcfg",
           "zipkindataquery",
           "zipkindatasourcecfg"
         ],
-        "count": 47
+        "count": 46
       },
       "stable": {
         "name": "stable",
