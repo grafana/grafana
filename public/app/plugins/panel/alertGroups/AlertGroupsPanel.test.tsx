@@ -22,7 +22,7 @@ import { PanelOptions } from './panelcfg.gen';
 jest.mock('app/features/alerting/unified/api/alertmanager');
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   config: {
     ...jest.requireActual('@grafana/runtime').config,
     buildInfo: {},

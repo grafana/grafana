@@ -412,6 +412,7 @@ func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataR
 				parameters: q.TimeSeriesQuery,
 				IntervalMS: query.Interval.Milliseconds(),
 				timeRange:  req.Queries[0].TimeRange,
+				logger:     logger,
 			}
 		case sloQueryType:
 			cmslo := &cloudMonitoringSLO{

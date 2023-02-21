@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -198,5 +199,112 @@ func TestHTTPServer_GetFrontendSettings_pluginsCDNBaseURL(t *testing.T) {
 			require.Equal(t, http.StatusOK, recorder.Code)
 			require.EqualValues(t, test.expected, got)
 		})
+	}
+}
+
+func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
+	type settings struct {
+		Apps map[string]*plugins.AppDTO `json:"apps"`
+	}
+
+	tests := []struct {
+		desc           string
+		pluginStore    func() plugins.Store
+		pluginSettings func() pluginSettings.Service
+		expected       settings
+	}{
+		{
+			desc: "disabled app with preload",
+			pluginStore: func() plugins.Store {
+				return &plugins.FakePluginStore{
+					PluginList: []plugins.PluginDTO{
+						{
+							Module: fmt.Sprintf("/%s/module.js", "test-app"),
+							JSONData: plugins.JSONData{
+								ID:      "test-app",
+								Info:    plugins.Info{Version: "0.5.0"},
+								Type:    plugins.App,
+								Preload: true,
+							},
+						},
+					},
+				}
+			},
+			pluginSettings: func() pluginSettings.Service {
+				return &pluginSettings.FakePluginSettings{
+					Plugins: newAppSettings("test-app", false),
+				}
+			},
+			expected: settings{
+				Apps: map[string]*plugins.AppDTO{
+					"test-app": {
+						ID:      "test-app",
+						Preload: false,
+						Path:    "/test-app/module.js",
+						Version: "0.5.0",
+					},
+				},
+			},
+		},
+		{
+			desc: "enalbed app with preload",
+			pluginStore: func() plugins.Store {
+				return &plugins.FakePluginStore{
+					PluginList: []plugins.PluginDTO{
+						{
+							Module: fmt.Sprintf("/%s/module.js", "test-app"),
+							JSONData: plugins.JSONData{
+								ID:      "test-app",
+								Info:    plugins.Info{Version: "0.5.0"},
+								Type:    plugins.App,
+								Preload: true,
+							},
+						},
+					},
+				}
+			},
+			pluginSettings: func() pluginSettings.Service {
+				return &pluginSettings.FakePluginSettings{
+					Plugins: newAppSettings("test-app", true),
+				}
+			},
+			expected: settings{
+				Apps: map[string]*plugins.AppDTO{
+					"test-app": {
+						ID:      "test-app",
+						Preload: true,
+						Path:    "/test-app/module.js",
+						Version: "0.5.0",
+					},
+				},
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			m, _ := setupTestEnvironment(t, cfg, featuremgmt.WithFeatures(), test.pluginStore(), test.pluginSettings())
+			req := httptest.NewRequest(http.MethodGet, "/api/frontend/settings", nil)
+
+			recorder := httptest.NewRecorder()
+			m.ServeHTTP(recorder, req)
+			var got settings
+			err := json.Unmarshal(recorder.Body.Bytes(), &got)
+			require.NoError(t, err)
+			require.Equal(t, http.StatusOK, recorder.Code)
+			require.EqualValues(t, test.expected, got)
+		})
+	}
+}
+
+func newAppSettings(id string, enabled bool) map[string]*pluginSettings.DTO {
+	return map[string]*pluginSettings.DTO{
+		id: {
+			ID:       0,
+			OrgID:    1,
+			PluginID: id,
+			Enabled:  enabled,
+		},
 	}
 }
