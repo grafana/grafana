@@ -10,7 +10,7 @@ Developers modifying the HTTP API endpoints need to make sure to add the necessa
 
 ## Example of endpoint annotation
 
-The following defines an `PATCH` endpoint under the `/serviceaccounts/{serviceAccountId}` path with tag `service_accounts` (used for grouping together several routes) and operation id `updateServiceAccount` (used for uniquely identifying routes and associate parameters and response with them).
+The following defines a `PATCH` endpoint under the `/serviceaccounts/{serviceAccountId}` path with tag `service_accounts` (used for grouping together several routes) and operation id `updateServiceAccount` (used for uniquely identifying routes and associate parameters and response with them).
 
 ```go
 
