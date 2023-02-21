@@ -143,16 +143,15 @@ func ProvideService(
 	// FIXME (jguer): move to User package
 	userSyncService := sync.ProvideUserSync(userService, userProtectionService, authInfoService, quotaService)
 	orgUserSyncService := sync.ProvideOrgSync(userService, orgService, accessControlService)
-	s.RegisterPostAuthHook(userSyncService.SyncUser, 10)
-	s.RegisterPostAuthHook(orgUserSyncService.SyncOrgUser, 30)
-	s.RegisterPostAuthHook(sync.ProvideUserLastSeenSync(userService).SyncLastSeen, 40)
-	s.RegisterPostAuthHook(sync.ProvideAPIKeyLastSeenSync(apikeyService).SyncLastSeen, 50)
+	s.RegisterPostAuthHook(userSyncService.SyncUserHook, 10)
+	s.RegisterPostAuthHook(orgUserSyncService.SyncOrgRolesHook, 30)
+	s.RegisterPostAuthHook(userSyncService.SyncLastSeenHook, 40)
 
 	if features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) {
-		s.RegisterPostAuthHook(sync.ProvideOauthTokenSync(oauthTokenService, sessionService).SyncOauthToken, 60)
+		s.RegisterPostAuthHook(sync.ProvideOauthTokenSync(oauthTokenService, sessionService).SyncOauthTokenHook, 60)
 	}
 
-	s.RegisterPostAuthHook(sync.ProvideFetchUserSync(userService).FetchSyncedUserHook, 100)
+	s.RegisterPostAuthHook(userSyncService.FetchSyncedUserHook, 100)
 
 	return s
 }
