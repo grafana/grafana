@@ -11,7 +11,7 @@ import { contextSrv } from '../../../../core/services/context_srv';
 import impressionSrv from '../../../../core/services/impression_srv';
 import { GENERAL_FOLDER_UID } from '../../constants';
 import { getGrafanaSearcher } from '../../service';
-import { queryResultToNestedFolderItem } from '../../service/utils';
+import { queryResultToViewItem } from '../../service/utils';
 import { DashboardViewItem } from '../../types';
 import { SearchResultsProps } from '../components/SearchResultsTable';
 
@@ -59,7 +59,7 @@ export const FolderView = ({
       limit: 1000,
     });
     for (const row of results.view) {
-      folders.push(queryResultToNestedFolderItem(row, results.view.dataFrame.meta));
+      folders.push(queryResultToViewItem(row, results.view.dataFrame.meta));
     }
 
     return folders;

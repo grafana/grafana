@@ -11,7 +11,7 @@ import { useUniqueId } from 'app/plugins/datasource/influxdb/components/useUniqu
 
 import { SearchItem } from '../..';
 import { getGrafanaSearcher, SearchQuery } from '../../service';
-import { queryResultToNestedFolderItem } from '../../service/utils';
+import { queryResultToViewItem } from '../../service/utils';
 import { DashboardViewItem } from '../../types';
 import { SelectionChecker, SelectionToggle } from '../selection';
 
@@ -56,7 +56,7 @@ export const FolderSection = ({
     }
 
     const raw = await getGrafanaSearcher().search({ ...query, tags });
-    const items = raw.view.map((v) => queryResultToNestedFolderItem(v, raw.view.dataFrame.meta));
+    const items = raw.view.map((v) => queryResultToViewItem(v, raw.view.dataFrame.meta));
     return items;
   }, [sectionExpanded, tags]);
 

@@ -9,7 +9,7 @@ import { useStyles2 } from '@grafana/ui';
 
 import { SearchCard } from '../../components/SearchCard';
 import { useSearchKeyboardNavigation } from '../../hooks/useSearchKeyboardSelection';
-import { queryResultToNestedFolderItem } from '../../service/utils';
+import { queryResultToViewItem } from '../../service/utils';
 import { DashboardViewItem } from '../../types';
 
 import { SearchResultsProps } from './SearchResultsTable';
@@ -76,7 +76,7 @@ export const SearchResultsGrid = ({
             const item = view.get(index);
             const kind = item.kind ?? 'dashboard';
 
-            const facade = queryResultToNestedFolderItem(item, view.dataFrame.meta);
+            const facade = queryResultToViewItem(item, view.dataFrame.meta);
 
             if (kind === 'panel') {
               const type = item.panel_type;

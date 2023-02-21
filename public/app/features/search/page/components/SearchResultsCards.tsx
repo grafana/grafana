@@ -10,7 +10,7 @@ import { useStyles2 } from '@grafana/ui';
 import { SearchItem } from '../../components/SearchItem';
 import { useSearchKeyboardNavigation } from '../../hooks/useSearchKeyboardSelection';
 import { SearchResultMeta } from '../../service';
-import { queryResultToNestedFolderItem } from '../../service/utils';
+import { queryResultToViewItem } from '../../service/utils';
 
 import { SearchResultsProps } from './SearchResultsTable';
 
@@ -50,7 +50,7 @@ export const SearchResultsCards = React.memo(
         }
 
         const item = response.view.get(rowIndex);
-        const searchItem = queryResultToNestedFolderItem(item, response.view.dataFrame.meta);
+        const searchItem = queryResultToViewItem(item, response.view.dataFrame.meta);
 
         if (item.location) {
           const first = item.location.split('/')[0];

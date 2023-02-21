@@ -38,7 +38,7 @@ function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export function queryResultToNestedFolderItem(
+export function queryResultToViewItem(
   item: DashboardQueryResult,
   queryMeta?: QueryResultMeta // TODO: change this to the view instead
 ): DashboardViewItem {
