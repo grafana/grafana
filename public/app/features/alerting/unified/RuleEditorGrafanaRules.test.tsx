@@ -19,7 +19,6 @@ import { disableRBAC, mockDataSource, MockDataSourceSrv } from './mocks';
 import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
 import * as config from './utils/config';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
-import * as ruleForm from './utils/rule-form';
 
 jest.mock('./components/rule-editor/ExpressionEditor', () => ({
   // eslint-disable-next-line react/display-name
@@ -31,7 +30,6 @@ jest.mock('./components/rule-editor/ExpressionEditor', () => ({
 jest.mock('./api/buildInfo');
 jest.mock('./api/ruler');
 jest.mock('../../../../app/features/manage-dashboards/state/actions');
-jest.spyOn(ruleForm, 'getDefaultQueriesAsync');
 
 // there's no angular scope in test and things go terribly wrong when trying to render the query editor row.
 // lets just skip it
@@ -47,7 +45,6 @@ jest.setTimeout(60 * 1000);
 const mocks = {
   getAllDataSources: jest.mocked(config.getAllDataSources),
   searchFolders: jest.mocked(searchFolders),
-  getDefaultQueriesAsync: jest.mocked(ruleForm.getDefaultQueriesAsync),
   api: {
     discoverFeatures: jest.mocked(discoverFeatures),
     fetchRulerRulesGroup: jest.mocked(fetchRulerRulesGroup),
@@ -76,11 +73,14 @@ describe('RuleEditor grafana managed rules', () => {
           name: 'Prom',
           isDefault: true,
         },
-        { alerting: false }
+        { alerting: true }
       ),
     };
 
-    setDataSourceSrv(new MockDataSourceSrv(dataSources));
+    const dsServer = new MockDataSourceSrv(dataSources);
+    jest.spyOn(dsServer, 'get').mockResolvedValue({ id: 1, name: 'prometheus', meta: {} });
+
+    setDataSourceSrv(dsServer);
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     mocks.api.setRulerRuleGroup.mockResolvedValue();
     mocks.api.fetchRulerRulesNamespace.mockResolvedValue([]);
@@ -123,17 +123,7 @@ describe('RuleEditor grafana managed rules', () => {
         rulerApiEnabled: false,
       },
     });
-    mocks.getDefaultQueriesAsync.mockResolvedValue({
-      queries: [
-        {
-          refId: 'A',
-          relativeTimeRange: { from: 900, to: 1000 },
-          datasourceUid: 'dsuid',
-          model: { refId: 'A' },
-          queryType: 'query',
-        },
-      ],
-    });
+
     renderRuleEditor();
     await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
 
@@ -169,28 +159,29 @@ describe('RuleEditor grafana managed rules', () => {
           {
             grafana_alert: {
               title: 'my great new rule',
-              condition: 'B',
+              condition: 'C',
               no_data_state: 'NoData',
               exec_err_state: GrafanaAlertStateDecision.Error,
               data: [
                 {
                   refId: 'A',
                   relativeTimeRange: {
-                    from: 900,
-                    to: 1000,
+                    from: 600,
+                    to: 0,
                   },
-                  datasourceUid: 'dsuid',
+                  datasourceUid: 'mock-ds-2',
                   model: {
+                    hide: false,
                     refId: 'A',
                   },
-                  queryType: 'query',
+                  queryType: '',
                 },
                 {
-                  refId: 'A',
+                  refId: 'B',
                   datasourceUid: '__expr__',
                   queryType: '',
                   model: {
-                    refId: 'A',
+                    refId: 'B',
                     hide: false,
                     type: 'reduce',
                     datasource: {
@@ -208,7 +199,7 @@ describe('RuleEditor grafana managed rules', () => {
                           type: 'and',
                         },
                         query: {
-                          params: ['A'],
+                          params: ['B'],
                         },
                         reducer: {
                           params: [],
@@ -221,11 +212,11 @@ describe('RuleEditor grafana managed rules', () => {
                   },
                 },
                 {
-                  refId: 'B',
+                  refId: 'C',
                   datasourceUid: '__expr__',
                   queryType: '',
                   model: {
-                    refId: 'B',
+                    refId: 'C',
                     hide: false,
                     type: 'threshold',
                     datasource: {
@@ -243,7 +234,7 @@ describe('RuleEditor grafana managed rules', () => {
                           type: 'and',
                         },
                         query: {
-                          params: ['B'],
+                          params: ['C'],
                         },
                         reducer: {
                           params: [],
@@ -251,7 +242,7 @@ describe('RuleEditor grafana managed rules', () => {
                         },
                       },
                     ],
-                    expression: 'A',
+                    expression: 'B',
                   },
                 },
               ],

@@ -159,7 +159,10 @@ describe('RuleEditor cloud: checking editable data sources', () => {
       return null;
     });
 
-    setDataSourceSrv(new MockDataSourceSrv(dataSources));
+    const dsServer = new MockDataSourceSrv(dataSources);
+    jest.spyOn(dsServer, 'get').mockResolvedValue({ id: 1, name: 'prometheus', meta: {} });
+
+    setDataSourceSrv(dsServer);
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     mocks.searchFolders.mockResolvedValue([]);
 

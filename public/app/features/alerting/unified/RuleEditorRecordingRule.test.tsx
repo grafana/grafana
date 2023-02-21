@@ -1,4 +1,4 @@
-import { waitFor, screen, within, waitForElementToBeRemoved } from '@testing-library/react';
+import { screen, waitFor, waitForElementToBeRemoved, within } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
@@ -75,7 +75,10 @@ describe('RuleEditor recording rules', () => {
       ),
     };
 
-    setDataSourceSrv(new MockDataSourceSrv(dataSources));
+    const dsServer = new MockDataSourceSrv(dataSources);
+    jest.spyOn(dsServer, 'get').mockResolvedValue({ id: 1, name: 'prometheus', meta: {} });
+
+    setDataSourceSrv(dsServer);
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     mocks.api.setRulerRuleGroup.mockResolvedValue();
     mocks.api.fetchRulerRulesNamespace.mockResolvedValue([]);
