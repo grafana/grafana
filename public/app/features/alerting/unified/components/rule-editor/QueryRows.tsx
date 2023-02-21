@@ -5,7 +5,9 @@ import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 import {
   CoreApp,
   DataQuery,
+  DataSourceApi,
   DataSourceInstanceSettings,
+  DataSourceJsonData,
   LoadingState,
   PanelData,
   RelativeTimeRange,
@@ -88,7 +90,13 @@ export class QueryRows extends PureComponent<Props> {
         if (settings.type === previousSettings?.type) {
           return copyModel(item, settings);
         }
-        return newModel(item, settings);
+        let ds;
+        try {
+          ds = await getDataSourceSrv().get(settings.uid); // get new ds
+        } catch (e) {
+          return newModel(item, settings);
+        }
+        return newModel(item, settings, ds);
       })
     );
 
@@ -227,14 +235,12 @@ function copyModel(item: AlertQuery, settings: DataSourceInstanceSettings): Omit
   };
 }
 
-async function newModel(
+function newModel(
   item: AlertQuery,
-  settings: DataSourceInstanceSettings
-): Promise<Omit<AlertQuery, 'datasource'>> {
-  let ds;
-  try {
-    ds = await getDataSourceSrv().get(settings.uid); // get new ds
-  } catch (e) {
+  settings: DataSourceInstanceSettings,
+  ds?: DataSourceApi<DataQuery, DataSourceJsonData, {}>
+): Omit<AlertQuery, 'datasource'> {
+  if (!ds) {
     return {
       refId: item.refId,
       relativeTimeRange: item.relativeTimeRange,

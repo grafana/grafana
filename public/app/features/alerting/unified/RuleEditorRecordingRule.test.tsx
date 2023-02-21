@@ -3,6 +3,7 @@ import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event'
 import React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
+import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { byRole, byText } from 'testing-library-selector';
 
 import { setDataSourceSrv } from '@grafana/runtime';
@@ -76,7 +77,7 @@ describe('RuleEditor recording rules', () => {
     };
 
     const dsServer = new MockDataSourceSrv(dataSources);
-    jest.spyOn(dsServer, 'get').mockResolvedValue({ id: 1, name: 'prometheus', meta: {} });
+    jest.spyOn(dsServer, 'get').mockResolvedValue(new MockDataSourceApi('ds'));
 
     setDataSourceSrv(dsServer);
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
