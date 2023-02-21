@@ -366,7 +366,7 @@ describe('getPanelMenu()', () => {
 
 function createRegistryLinkItem(
   link: Omit<PluginExtensionLink, 'type'>,
-  configure?: () => Partial<PluginExtensionLink>
+  configure?: () => Partial<PluginExtensionLink> | undefined
 ): PluginExtensionRegistryItem<PluginExtensionLink> {
   const extension = {
     ...link,
@@ -381,7 +381,7 @@ function createRegistryLinkItem(
 
   return {
     extension,
-    configure: (context: object) => {
+    configure: () => {
       const configured = configure();
 
       if (!configured) {

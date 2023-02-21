@@ -31,7 +31,9 @@ describe('getPluginExtensions', () => {
 
     it('should return extensions with correct path', () => {
       const { extensions } = getPluginExtensions({ placement });
-      const extension = getLinkExtension(extensions, 0);
+      const [extension] = extensions;
+
+      assertLinkExtension(extension);
 
       expect(extension.path).toBe(`/a/${pluginId}/declare-incident`);
       expect(extensions.length).toBe(1);
@@ -39,7 +41,9 @@ describe('getPluginExtensions', () => {
 
     it('should return extensions with correct description', () => {
       const { extensions } = getPluginExtensions({ placement });
-      const extension = getLinkExtension(extensions, 0);
+      const [extension] = extensions;
+
+      assertLinkExtension(extension);
 
       expect(extension.description).toBe('Declaring an incident in the app');
       expect(extensions.length).toBe(1);
@@ -47,7 +51,9 @@ describe('getPluginExtensions', () => {
 
     it('should return extensions with correct title', () => {
       const { extensions } = getPluginExtensions({ placement });
-      const extension = getLinkExtension(extensions, 0);
+      const [extension] = extensions;
+
+      assertLinkExtension(extension);
 
       expect(extension.title).toBe('Declare incident');
       expect(extensions.length).toBe(1);
@@ -75,10 +81,8 @@ function createRegistryLinkItem(
   };
 }
 
-function getLinkExtension(extensions: PluginExtension[], index: number): PluginExtensionLink {
-  const extension = extensions[index];
+function assertLinkExtension(extension: PluginExtension): asserts extension is PluginExtensionLink {
   if (!isPluginExtensionLink(extension)) {
-    throw new Error(`extension on index: ${index} is not a link extension`);
+    throw new Error(`extension is not a link extension`);
   }
-  return extension;
 }
