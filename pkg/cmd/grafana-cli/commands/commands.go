@@ -100,7 +100,7 @@ func runPluginCommand(command func(commandLine utils.CommandLine) error) func(co
 			return err
 		}
 
-		logger.Info(color.GreenString("Please restart Grafana after installing plugins. Refer to Grafana documentation for instructions if necessary.\n\n"))
+		logger.Info(color.GreenString("If you have recently installed a plugin, please restart Grafana. Refer to Grafana documentation for instructions if necessary.\n\n"))
 		return nil
 	}
 }
@@ -139,7 +139,7 @@ var pluginCommands = []*cli.Command{
 		Action:  runPluginCommand(cmd.upgradeAllCommand),
 	}, {
 		Name:   "ls",
-		Usage:  "list all installed plugins",
+		Usage:  "list installed plugins (excludes core plugins)",
 		Action: runPluginCommand(cmd.lsCommand),
 	}, {
 		Name:    "uninstall",
