@@ -530,17 +530,6 @@ func (s *ServiceAccountsStoreImpl) RevertApiKey(ctx context.Context, saId int64,
 	return nil
 }
 
-func (s *ServiceAccountsStoreImpl) CheckGloballyHideAPIKeysTab(ctx context.Context) (bool, error) {
-	val, _, err := s.kvStore.Get(ctx, serviceaccounts.GloballyHideAPIKeysTabOrgID, "serviceaccounts", "hideApiKeys")
-	if err != nil {
-		return false, err
-	}
-	if val != "1" {
-		return false, nil
-	}
-	return true, nil
-}
-
 func serviceAccountDeletions(dialect migrator.Dialect) []string {
 	deletes := []string{
 		"DELETE FROM star WHERE user_id = ?",

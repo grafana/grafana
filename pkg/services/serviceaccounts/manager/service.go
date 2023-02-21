@@ -271,17 +271,6 @@ func (sa *ServiceAccountsService) RevertApiKey(ctx context.Context, orgID, keyID
 	}
 	return sa.store.RevertApiKey(ctx, orgID, keyID)
 }
-func (sa *ServiceAccountsService) CheckGloballyHideAPIKeysTab(ctx context.Context) bool {
-	found, err := sa.store.CheckGloballyHideAPIKeysTab(ctx)
-	if err != nil {
-		sa.log.Error("unable to check if apikeys tab should be hidden", "error", err)
-		return false
-	}
-	if !found {
-		return false
-	}
-	return true
-}
 
 func validOrgID(orgID int64) error {
 	if orgID == 0 {

@@ -110,11 +110,6 @@ func (f *FakeServiceAccountStore) GetUsageMetrics(ctx context.Context) (*service
 	return f.ExpectedStats, f.ExpectedError
 }
 
-// GloballyHideApiKeysTab is a fake hiding the api keys tab globally.
-func (f *FakeServiceAccountStore) CheckGloballyHideAPIKeysTab(ctx context.Context) (bool, error) {
-	return f.ExpectedBoolean, f.ExpectedError
-}
-
 type SecretsCheckerFake struct {
 	ExpectedError error
 }
