@@ -230,8 +230,8 @@ type Dashboard struct {
 	// When set to true, the dashboard will redraw panels at an interval matching the pixel width.
 	// This will keep data "moving left" regardless of the query refresh rate.  This setting helps
 	// avoid dashboards presenting stale live data
-	LiveNow *bool          `json:"liveNow,omitempty"`
-	Panels  *[]interface{} `json:"panels,omitempty"`
+	LiveNow *bool         `json:"liveNow,omitempty"`
+	Panels  []interface{} `json:"panels,omitempty"`
 
 	// Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".
 	Refresh *interface{} `json:"refresh,omitempty"`
