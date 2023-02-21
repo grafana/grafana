@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import React from 'react';
 
 import {
@@ -12,6 +12,8 @@ import {
 } from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 import { LinkButton, useStyles2, VerticalGroup } from '@grafana/ui';
+
+import { renderValue } from '../utils/uiUtils';
 
 export interface Props {
   data?: DataFrame; // source data
@@ -58,28 +60,9 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
     displayValues.push([getFieldDisplayName(f, data), v, formattedValueToString(disp)]);
   }
 
-  const isUrl = (url: string) => {
-    const urlPattern = '(https?://)?([\\da-z.-]+)\\.([a-z.]{2,6})[/\\w .-]*/?';
-    const regex = new RegExp(urlPattern);
-
-    return regex.test(url);
-  };
-
   if (sortOrder && sortOrder !== SortOrder.None) {
     displayValues.sort((a, b) => arrayUtils.sortValues(sortOrder)(a[1], b[1]));
   }
-
-  const renderValue = (value: string) => {
-    if (isUrl(value)) {
-      return (
-        <a href={value} target={'_blank'} className={cx('external-link')} rel="noreferrer">
-          {value}
-        </a>
-      );
-    }
-
-    return value;
-  };
 
   const renderLinks = () =>
     links.length > 0 && (

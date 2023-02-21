@@ -116,3 +116,10 @@ export const getNextLayerName = (panel: GeomapPanel) => {
 
   return `Layer ${Date.now()}`;
 };
+
+export const isUrl = (url: string) => {
+  const urlPattern = '(https?://)?([\\da-z.-]+)\\.([a-z.]{2,6})[/\\w .-]*/?';
+  const regex = new RegExp(urlPattern);
+
+  return regex.test(url);
+};
