@@ -221,7 +221,8 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 			filter := permissions.NewAccessControlDashboardPermissionFilter(usr, tc.permission, tc.queryType, tc.features)
 			var result []string
 			err := db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-				recQry, q, params := filter.Where()
+				q, params := filter.Where()
+				recQry, _ := filter.With()
 				err := sess.SQL(recQry+"\nSELECT title FROM dashboard WHERE "+q, params...).Find(&result)
 				return err
 			})
