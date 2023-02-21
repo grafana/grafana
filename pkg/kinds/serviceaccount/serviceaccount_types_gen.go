@@ -12,10 +12,8 @@ package serviceaccount
 
 // Defines values for OrgRole.
 const (
-	OrgRoleAdmin OrgRole = "Admin"
-
+	OrgRoleAdmin  OrgRole = "Admin"
 	OrgRoleEditor OrgRole = "Editor"
-
 	OrgRoleViewer OrgRole = "Viewer"
 )
 
@@ -53,7 +51,7 @@ type ServiceAccount struct {
 	Role OrgRole `json:"role"`
 
 	// Teams is a list of teams the service account belongs to.
-	Teams *[]string `json:"teams,omitempty"`
+	Teams []string `json:"teams,omitempty"`
 
 	// Tokens is the number of active tokens for the service account.
 	// Tokens are used to authenticate the service account against Grafana.

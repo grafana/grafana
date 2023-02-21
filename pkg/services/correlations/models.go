@@ -16,6 +16,7 @@ var (
 	ErrInvalidConfigType                  = errors.New("invalid correlation config type")
 	ErrInvalidTransformationType          = errors.New("invalid transformation type")
 	ErrTransformationNotNested            = errors.New("transformations must be nested under config")
+	ErrTransformationRegexReqExp          = errors.New("regex transformations require expression")
 )
 
 type CorrelationConfigType string
@@ -43,6 +44,8 @@ func (t Transformations) Validate() error {
 	for _, v := range t {
 		if v.Type != "regex" && v.Type != "logfmt" {
 			return fmt.Errorf("%s: \"%s\"", ErrInvalidTransformationType, t)
+		} else if v.Type == "regex" && len(v.Expression) == 0 {
+			return fmt.Errorf("%s: \"%s\"", ErrTransformationRegexReqExp, t)
 		}
 	}
 	return nil

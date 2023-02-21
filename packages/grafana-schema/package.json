@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/schema",
-  "version": "9.4.0-pre",
+  "version": "9.5.0-pre",
   "description": "Grafana Schema Library",
   "keywords": [
     "typescript"
@@ -49,6 +49,6 @@
     "typescript": "4.8.4"
   },
   "dependencies": {
-    "tslib": "2.4.1"
+    "tslib": "2.5.0"
   }
 }
