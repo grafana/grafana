@@ -1,5 +1,4 @@
 import { isFunction, isObject } from 'lodash';
-import { compose } from 'redux';
 
 import {
   AppPluginExtensionLink,
@@ -85,12 +84,11 @@ function createLinkConfigure(
     return undefined;
   }
 
-  return compose(
-    mapToRegistryType(extension),
-    withValidation(pluginId),
-    withErrorHandling(pluginId, config.title),
-    config.configure
-  );
+  const validator = withValidation(pluginId);
+  const errorHandler = withErrorHandling(pluginId, config.title);
+  const mapper = mapToRegistryType(extension);
+
+  return mapper(validator(errorHandler(config.configure)));
 }
 
 function mapToRegistryType(
@@ -107,7 +105,9 @@ function mapToRegistryType(
       if (!configure) {
         return undefined;
       }
+
       const configured = configure(configurable, context);
+
       if (!configured) {
         return undefined;
       }
@@ -139,7 +139,7 @@ function withErrorHandling(pluginId: string, title: string) {
           return;
         }
 
-        if (!isObject(result) && !undefined) {
+        if (!isObject(result) && typeof result !== 'undefined') {
           console.error(
             `[Plugins] Will not configure extension '${title}' due to incorrect override returned from configuration function.`
           );

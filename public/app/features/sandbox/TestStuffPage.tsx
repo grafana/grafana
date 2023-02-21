@@ -2,7 +2,14 @@ import React, { useMemo, useState } from 'react';
 import { useObservable } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { ApplyFieldOverrideOptions, dateMath, FieldColorModeId, NavModelItem, PanelData } from '@grafana/data';
+import {
+  ApplyFieldOverrideOptions,
+  dateMath,
+  FieldColorModeId,
+  isPluginExtensionLink,
+  NavModelItem,
+  PanelData,
+} from '@grafana/data';
 import { getPluginExtensions } from '@grafana/runtime';
 import { DataTransformerConfig } from '@grafana/schema';
 import { Button, HorizontalGroup, LinkButton, Table } from '@grafana/ui';
@@ -158,6 +165,9 @@ function LinkToBasicApp({ placement }: { placement: string }) {
   return (
     <div>
       {extensions.map((extension) => {
+        if (!isPluginExtensionLink(extension)) {
+          return null;
+        }
         return (
           <LinkButton href={extension.path} title={extension.description} key={extension.key}>
             {extension.title}
