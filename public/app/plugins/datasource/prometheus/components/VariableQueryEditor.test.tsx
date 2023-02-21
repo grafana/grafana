@@ -4,13 +4,43 @@ import React from 'react';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import { PrometheusDatasource } from '../datasource';
+import { PromVariableQuery, PromVariableQueryType, StandardPromVariableQuery } from '../types';
 
-import { PromVariableQueryEditor, Props } from './VariableQueryEditor';
+import { PromVariableQueryEditor, Props, variableMigration } from './VariableQueryEditor';
 
 const refId = 'PrometheusVariableQueryEditor-VariableQuery';
 
 describe('PromVariableQueryEditor', () => {
   let props: Props;
+
+  test('Migrates from standard variable support to custom variable query', () => {
+    const query: StandardPromVariableQuery = {
+      query: 'label_names()',
+      refId: 'StandardVariableQuery',
+    };
+
+    const migration: PromVariableQuery = variableMigration(query);
+
+    const expected: PromVariableQuery = {
+      qryType: PromVariableQueryType.LabelNames,
+      refId: 'PrometheusDatasource-VariableQuery',
+    };
+
+    expect(migration).toEqual(expected);
+  });
+
+  test('Migrates from jsonnet grafana as code variable to custom variable query', () => {
+    const query = 'label_names()';
+
+    const migration: PromVariableQuery = variableMigration(query);
+
+    const expected: PromVariableQuery = {
+      qryType: PromVariableQueryType.LabelNames,
+      refId: 'PrometheusDatasource-VariableQuery',
+    };
+
+    expect(migration).toEqual(expected);
+  });
 
   beforeEach(() => {
     props = {

@@ -184,3 +184,8 @@ export interface PromVariableQuery extends DataQuery {
   varQuery?: string;
   seriesQuery?: string;
 }
+
+export type StandardPromVariableQuery = {
+  query: string;
+  refId: string;
+};
