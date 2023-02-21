@@ -111,7 +111,7 @@ RUN if grep -i -q alpine /etc/issue && [ `arch` = "x86_64" ]; then \
         -O /tmp/glibc-2.35-r0.apk && \
       wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.35-r0/glibc-bin-2.35-r0.apk \
         -O /tmp/glibc-bin-2.35-r0.apk && \
-      apk add --force-overwrite --no-cache --allow-untrusted /tmp/glibc-2.35-r0.apk /tmp/glibc-bin-2.35-r0.apk && \
+      apk add --force-overwrite --no-cache /tmp/glibc-2.35-r0.apk /tmp/glibc-bin-2.35-r0.apk && \
       rm -f /lib64/ld-linux-x86-64.so.2 && \
       ln -s /usr/glibc-compat/lib64/ld-linux-x86-64.so.2 /lib64/ld-linux-x86-64.so.2 && \
       rm -f /tmp/glibc-2.35-r0.apk && \
