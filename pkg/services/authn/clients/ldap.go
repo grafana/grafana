@@ -82,7 +82,7 @@ func identityFromLDAPInfo(orgID int64, info *login.ExternalUserInfo, allowSignup
 		Groups:         info.Groups,
 		ClientParams: authn.ClientParams{
 			SyncUser:            true,
-			SyncTeamMembers:     true,
+			SyncTeams:           true,
 			EnableDisabledUsers: true,
 			FetchSyncedUser:     true,
 			AllowSignUp:         allowSignup,
