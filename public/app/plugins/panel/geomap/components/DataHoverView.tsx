@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import {
@@ -59,7 +59,9 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
   }
 
   const isUrl = (url: string) => {
-    const regex = new RegExp('(https?://)?([\\da-z.-]+)\\.([a-z.]{2,6})[/\\w .-]*/?');
+    const urlPattern = '(https?://)?([\\da-z.-]+)\\.([a-z.]{2,6})[/\\w .-]*/?';
+    const regex = new RegExp(urlPattern);
+
     return regex.test(url);
   };
 
@@ -70,7 +72,7 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
   const renderValue = (value: string) => {
     if (isUrl(value)) {
       return (
-        <a href={value} target={'_blank'} className={styles.link} rel="noreferrer">
+        <a href={value} target={'_blank'} className={cx('external-link')} rel="noreferrer">
           {value}
         </a>
       );

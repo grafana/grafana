@@ -100,6 +100,6 @@ export const generateLabel = (feature: FeatureLike, idx: number): string => {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   collapsibleRow: css`
-    margin-bottom: 0px;
+    margin-bottom: 0;
   `,
 });
