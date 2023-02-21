@@ -161,27 +161,26 @@ export function isConflictingFilter(
   operation: QueryBuilderOperation,
   queryOperations: QueryBuilderOperation[]
 ): boolean {
-  let conflictingFilter = false;
+  const operationIsNegative = operation.params[1].toString().startsWith('!');
 
-  const labelFilters = queryOperations.filter((op) => {
-    return op.id === LokiOperationId.LabelFilter && op.params !== operation.params;
+  const candidates = queryOperations.filter(
+    (queryOperation) =>
+      queryOperation.id === LokiOperationId.LabelFilter &&
+      queryOperation.params[0] === operation.params[0] &&
+      queryOperation.params[2] === operation.params[2]
+  );
+
+  const conflict = candidates.find((candidate) => {
+    if (operationIsNegative && candidate.params[1].toString().startsWith('!') === false) {
+      return true;
+    }
+    if (operationIsNegative === false && candidate.params[1].toString().startsWith('!')) {
+      return true;
+    }
+    return false;
   });
 
-  // check if the new filter conflicts with any other label filter
-  labelFilters.forEach((filter) => {
-    if (operation.params[0] !== filter.params[0] || operation.params[2] !== filter.params[2]) {
-      return;
-    }
-
-    if (
-      (String(operation.params[1]).startsWith('!') && !String(filter.params[1]).startsWith('!')) ||
-      (String(filter.params[1]).startsWith('!') && !String(operation.params[1]).startsWith('!'))
-    ) {
-      conflictingFilter = true;
-    }
-  });
-
-  return conflictingFilter;
+  return conflict !== undefined;
 }
 
 export function pipelineRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
