@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 // *** Feature Tracking
 // import { reportInteraction } from '@grafana/runtime';
-import { Button, Card, Collapse, InlineLabel, Input, Modal, Select, useStyles2 } from '@grafana/ui';
+import { Button, Card, Collapse, InlineLabel, Input, Modal, MultiSelect, Select, useStyles2 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../datasource';
 import { getMetadataHelp, getMetadataType } from '../../language_provider';
@@ -27,15 +27,50 @@ type MetricData = {
   description?: string;
 };
 
+type PromTypeOption = {
+  type: string;
+  description: string;
+};
+
+const functions = ['rate', 'sum', 'histogram_quatile'];
+
+const promTypes: PromTypeOption[] = [
+  {
+    type: 'counter',
+    description:
+      'A cumulative metric that represents a single monotonically increasing counter whose value can only increase or be reset to zero on restart.',
+  },
+  {
+    type: 'gauge',
+    description: 'A metric that represents a single numerical value that can arbitrarily go up and down.',
+  },
+  {
+    type: 'histogram',
+    description:
+      'A histogram samples observations (usually things like request durations or response sizes) and counts them in configurable buckets.',
+  },
+  {
+    type: 'summary',
+    description:
+      'A summary samples observations (usually things like request durations and response sizes) and can calculate configurable quantiles over a sliding time window.',
+  },
+];
+
 export const DEFAULT_RESULTS_PER_PAGE = 10;
 
 export const MetricEncyclopediaModal = (props: Props) => {
   const { datasource, isOpen, onClose, onChange, query } = props;
+
+  // metric list
+  const [metrics, setMetrics] = useState<MetricsData>([]);
   const [openTabs, setOpenTabs] = useState<string[]>([]);
+
+  // pagination
   const [resultsPerPage, setResultsPerPage] = useState<number>(DEFAULT_RESULTS_PER_PAGE);
   const [pageNum, setPageNum] = useState<number>(1);
 
-  const [metrics, setMetrics] = useState<MetricsData>([]);
+  // filters
+  const [selectedTypes, setSelectedTypes] = useState<Array<SelectableValue<string>>>([]);
 
   const updateMetricsMetadata = useCallback(async () => {
     // *** Loading Gif?
@@ -77,10 +112,6 @@ export const MetricEncyclopediaModal = (props: Props) => {
 
   const styles = useStyles2(getStyles);
 
-  const functions = ['rate', 'sum', 'histogram_quatile'];
-
-  const promTypes = ['counter', 'gauge', 'histogram', 'summary'];
-
   const functionOptions: SelectableValue[] = functions.map((f: string) => {
     return {
       value: f,
@@ -88,10 +119,11 @@ export const MetricEncyclopediaModal = (props: Props) => {
     };
   });
 
-  const typeOptions: SelectableValue[] = promTypes.map((t: string) => {
+  const typeOptions: SelectableValue[] = promTypes.map((t: PromTypeOption) => {
     return {
-      value: t,
-      label: t,
+      value: t.type,
+      label: t.type,
+      description: t.description,
     };
   });
 
@@ -102,7 +134,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
 
     const calcResultsPerPage: number = resultsPerPage === 0 ? 1 : resultsPerPage;
 
-    const pages = Math.floor(metrics.length / calcResultsPerPage) + 1;
+    const pages = Math.floor(filterMetrics(metrics).length / calcResultsPerPage) + 1;
 
     return [...Array(pages).keys()].map((i) => i + 1);
   }
@@ -112,6 +144,23 @@ export const MetricEncyclopediaModal = (props: Props) => {
     const start: number = pageNum === 1 ? 0 : (pageNum - 1) * calcResultsPerPage;
     const end: number = start + calcResultsPerPage;
     return metrics.slice(start, end);
+  }
+
+  function filterMetrics(metrics: MetricsData): MetricsData {
+    let filteredMetrics: MetricsData = metrics;
+
+    // filter by type
+    if (selectedTypes.length > 0) {
+      // *** INCLUDE UN-TYPED METRICS
+      filteredMetrics = metrics.filter((m: MetricData) => {
+        const matchesSelectedType = selectedTypes.some((t) => t.value === m.type);
+        const missingTypeMetadata = !m.type;
+
+        return matchesSelectedType || missingTypeMetadata;
+      });
+    }
+
+    return filteredMetrics;
   }
 
   // *** Filtering: some metrics have no metadata so cannot be filtered
@@ -146,15 +195,17 @@ export const MetricEncyclopediaModal = (props: Props) => {
         <InlineLabel width={10} className="query-keyword">
           Type:
         </InlineLabel>
-        <Select
+        <MultiSelect
           data-testid={testIds.searchType}
           options={typeOptions}
-          value={''}
+          value={selectedTypes}
           placeholder="select type"
-          onChange={() => {
+          onChange={(v) => {
             // *** Filter by type
             // *** always include metrics without metadata but label it as unknown type
-            // Consider tabs select instead of actual select
+            // Consider tabs select instead of actual select or multi select
+            setSelectedTypes(v);
+            setPageNum(1);
           }}
         />
 
@@ -208,7 +259,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
       </div>
       <div className={styles.center}>A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z</div>
       {metrics &&
-        sliceMetrics(metrics, pageNum, resultsPerPage).map((metric: MetricData, idx) => {
+        sliceMetrics(filterMetrics(metrics), pageNum, resultsPerPage).map((metric: MetricData, idx) => {
           return (
             <Collapse
               aria-label={`open and close ${metric.value} query starter card`}
