@@ -623,7 +623,9 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 		sc := setupHTTPServer(t, true)
 		sc.hs.PluginSettings = &pluginSettings
 		sc.hs.pluginStore = pluginStore
-		sc.hs.pluginsUpdateChecker = updatechecker.ProvidePluginsService(sc.hs.Cfg, pluginStore, tracing.InitializeTracerForTest())
+		var err error
+		sc.hs.pluginsUpdateChecker, err = updatechecker.ProvidePluginsService(sc.hs.Cfg, pluginStore, tracing.InitializeTracerForTest())
+		require.NoError(t, err)
 		setInitCtxSignedInUser(sc.initCtx, testUser(tc.role, tc.isGrafanaAdmin))
 
 		t.Run(testName(tc), func(t *testing.T) {
