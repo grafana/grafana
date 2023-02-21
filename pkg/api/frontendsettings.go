@@ -122,13 +122,13 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		HelpEnabled:                         setting.HelpEnabled,
 		ProfileEnabled:                      setting.ProfileEnabled,
 		QueryHistoryEnabled:                 hs.Cfg.QueryHistoryEnabled,
-		GoogleAnalyticsId:                   setting.GoogleAnalyticsId,
-		GoogleAnalytics4Id:                  setting.GoogleAnalytics4Id,
-		GoogleAnalytics4SendManualPageViews: setting.GoogleAnalytics4SendManualPageViews,
-		RudderstackWriteKey:                 setting.RudderstackWriteKey,
-		RudderstackDataPlaneUrl:             setting.RudderstackDataPlaneUrl,
-		RudderstackSdkUrl:                   setting.RudderstackSdkUrl,
-		RudderstackConfigUrl:                setting.RudderstackConfigUrl,
+		GoogleAnalyticsId:                   hs.Cfg.GoogleAnalyticsID,
+		GoogleAnalytics4Id:                  hs.Cfg.GoogleAnalytics4ID,
+		GoogleAnalytics4SendManualPageViews: hs.Cfg.GoogleAnalytics4SendManualPageViews,
+		RudderstackWriteKey:                 hs.Cfg.RudderstackWriteKey,
+		RudderstackDataPlaneUrl:             hs.Cfg.RudderstackDataPlaneURL,
+		RudderstackSdkUrl:                   hs.Cfg.RudderstackSDKURL,
+		RudderstackConfigUrl:                hs.Cfg.RudderstackConfigURL,
 		FeedbackLinksEnabled:                hs.Cfg.FeedbackLinksEnabled,
 		ApplicationInsightsConnectionString: hs.Cfg.ApplicationInsightsConnectionString,
 		ApplicationInsightsEndpointUrl:      hs.Cfg.ApplicationInsightsEndpointUrl,
@@ -147,7 +147,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 
 		Auth: dtos.FrontendSettingsAuthDTO{
 			OAuthSkipOrgRoleUpdateSync:  hs.Cfg.OAuthSkipOrgRoleUpdateSync,
-			SAMLSkipOrgRoleSync:         hs.Cfg.SectionWithEnvOverrides("auth.saml").Key("skip_org_role_sync").MustBool(false),
+			SAMLSkipOrgRoleSync:         hs.Cfg.SAMLSkipOrgRoleSync,
 			LDAPSkipOrgRoleSync:         hs.Cfg.LDAPSkipOrgRoleSync,
 			GoogleSkipOrgRoleSync:       hs.Cfg.GoogleSkipOrgRoleSync,
 			JWTAuthSkipOrgRoleSync:      hs.Cfg.JWTAuthSkipOrgRoleSync,
@@ -254,24 +254,23 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 }
 
 func isSupportBundlesEnabled(hs *HTTPServer) bool {
-	return hs.Cfg.SectionWithEnvOverrides("support_bundles").Key("enabled").MustBool(true) &&
-		hs.Features.IsEnabled(featuremgmt.FlagSupportBundles)
+	return hs.Cfg.SectionWithEnvOverrides("support_bundles").Key("enabled").MustBool(true)
 }
 
 func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlugins AvailablePlugins) (map[string]plugins.DataSourceDTO, error) {
 	orgDataSources := make([]*datasources.DataSource, 0)
 	if c.OrgID != 0 {
 		query := datasources.GetDataSourcesQuery{OrgID: c.OrgID, DataSourceLimit: hs.Cfg.DataSourceLimit}
-		err := hs.DataSourcesService.GetDataSources(c.Req.Context(), &query)
+		dataSources, err := hs.DataSourcesService.GetDataSources(c.Req.Context(), &query)
 		if err != nil {
 			return nil, err
 		}
 
 		if c.IsPublicDashboardView {
 			// If RBAC is enabled, it will filter out all datasources for a public user, so we need to skip it
-			orgDataSources = query.Result
+			orgDataSources = dataSources
 		} else {
-			filtered, err := hs.filterDatasourcesByQueryPermission(c.Req.Context(), c.SignedInUser, query.Result)
+			filtered, err := hs.filterDatasourcesByQueryPermission(c.Req.Context(), c.SignedInUser, dataSources)
 			if err != nil {
 				return nil, err
 			}

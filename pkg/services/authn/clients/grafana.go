@@ -26,13 +26,17 @@ type Grafana struct {
 	userService user.Service
 }
 
+func (c *Grafana) String() string {
+	return "grafana"
+}
+
 func (c *Grafana) AuthenticateProxy(ctx context.Context, r *authn.Request, username string, additional map[string]string) (*authn.Identity, error) {
 	identity := &authn.Identity{
 		AuthModule: login.AuthProxyAuthModule,
 		AuthID:     username,
 		ClientParams: authn.ClientParams{
 			SyncUser:        true,
-			SyncTeamMembers: true,
+			SyncTeams:       true,
 			FetchSyncedUser: true,
 			AllowSignUp:     c.cfg.AuthProxyAutoSignUp,
 		},
