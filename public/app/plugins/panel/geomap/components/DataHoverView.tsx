@@ -58,9 +58,26 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
     displayValues.push([getFieldDisplayName(f, data), v, formattedValueToString(disp)]);
   }
 
+  const isUrl = (url: string) => {
+    const regex = new RegExp('(https?://)?([\\da-z.-]+)\\.([a-z.]{2,6})[/\\w .-]*/?');
+    return regex.test(url);
+  };
+
   if (sortOrder && sortOrder !== SortOrder.None) {
     displayValues.sort((a, b) => arrayUtils.sortValues(sortOrder)(a[1], b[1]));
   }
+
+  const renderValue = (value: string) => {
+    if (isUrl(value)) {
+      return (
+        <a href={value} target={'_blank'} className={styles.link} rel="noreferrer">
+          {value}
+        </a>
+      );
+    }
+
+    return value;
+  };
 
   const renderLinks = () =>
     links.length > 0 && (
@@ -98,13 +115,13 @@ export const DataHoverView = ({ data, rowIndex, columnIndex, sortOrder, mode, he
             displayValues.map((v, i) => (
               <tr key={`${i}/${rowIndex}`} className={i === columnIndex ? styles.highlight : ''}>
                 <th>{v[0]}:</th>
-                <td>{v[2]}</td>
+                <td>{renderValue(v[2])}</td>
               </tr>
             ))}
           {mode === TooltipDisplayMode.Single && columnIndex && (
             <tr key={`${columnIndex}/${rowIndex}`}>
               <th>{displayValues[columnIndex][0]}:</th>
-              <td>{displayValues[columnIndex][2]}</td>
+              <td>{renderValue(displayValues[columnIndex][2])}</td>
             </tr>
           )}
           {renderLinks()}
@@ -154,6 +171,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     highlight: css`
       background: ${theme.colors.action.hover};
+    `,
+    link: css`
+      color: #6e9fff;
     `,
   };
 };
