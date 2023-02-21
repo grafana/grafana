@@ -102,7 +102,7 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
         })
       }),
     });
-    
+
     // Sun circle
     const sunFeature = new Feature({
       geometry: new Point([]),
