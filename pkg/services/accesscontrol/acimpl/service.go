@@ -33,13 +33,13 @@ const (
 )
 
 func ProvideService(cfg *setting.Cfg, store db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
-	accessControl accesscontrol.AccessControl, features *featuremgmt.FeatureManager, moduleManager *modules.Modules) (*Service, error) {
+	accessControl accesscontrol.AccessControl, features *featuremgmt.FeatureManager, moduleManager modules.Manager) (*Service, error) {
 	return ProvideOSSService(cfg, database.ProvideService(store), cache, features, routeRegister, accessControl, moduleManager)
 }
 
 func ProvideOSSService(cfg *setting.Cfg, store store, cache *localcache.CacheService, features *featuremgmt.FeatureManager,
 	routeRegister routing.RouteRegister, accessControl accesscontrol.AccessControl,
-	moduleManager *modules.Modules) (*Service, error) {
+	moduleManager modules.Manager) (*Service, error) {
 	s := &Service{
 		cfg:           cfg,
 		store:         store,
@@ -78,7 +78,7 @@ type Service struct {
 	registrations accesscontrol.RegistrationList
 	roles         map[string]*accesscontrol.RoleDTO
 	features      *featuremgmt.FeatureManager
-	moduleManager *modules.Modules
+	moduleManager modules.Manager
 
 	routeRegister routing.RouteRegister
 	accessControl accesscontrol.AccessControl

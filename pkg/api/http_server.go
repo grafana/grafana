@@ -115,7 +115,7 @@ type HTTPServer struct {
 	middlewares      []web.Handler
 	namedMiddlewares []routing.RegisterNamedMiddleware
 	bus              bus.Bus
-	moduleManager    *modules.Modules
+	moduleManager    modules.Manager
 
 	PluginContextProvider        *plugincontext.Provider
 	RouteRegister                routing.RouteRegister
@@ -229,7 +229,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	pluginRequestValidator validations.PluginRequestValidator, pluginStaticRouteResolver plugins.StaticRouteResolver,
 	pluginDashboardService plugindashboards.Service, pluginStore plugins.Store, pluginClient plugins.Client,
 	pluginErrorResolver plugins.ErrorResolver, pluginInstaller plugins.Installer, settingsProvider setting.Provider,
-	dataSourceCache datasources.CacheService, userTokenService auth.UserTokenService, moduleManager *modules.Modules,
+	dataSourceCache datasources.CacheService, userTokenService auth.UserTokenService, moduleManager modules.Manager,
 	cleanUpService *cleanup.CleanUpService, shortURLService shorturls.Service, queryHistoryService queryhistory.Service, correlationsService correlations.Service,
 	thumbService thumbs.Service, remoteCache *remotecache.RemoteCache, provisioningService provisioning.ProvisioningService,
 	loginService login.Service, authenticator loginpkg.Authenticator, accessControl accesscontrol.AccessControl,

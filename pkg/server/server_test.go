@@ -3,80 +3,61 @@ package server
 import (
 	"context"
 	"errors"
-	"fmt"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/server/backgroundsvcs"
-	"github.com/grafana/grafana/pkg/server/modules"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type testService struct {
-	started    chan struct{}
-	runErr     error
-	isDisabled bool
-}
-
-func newTestService(runErr error, disabled bool) *testService {
-	return &testService{
-		started:    make(chan struct{}),
-		runErr:     runErr,
-		isDisabled: disabled,
-	}
-}
-
-func (s *testService) Run(ctx context.Context) error {
-	if s.isDisabled {
-		return fmt.Errorf("shouldn't run disabled service")
-	}
-
-	if s.runErr != nil {
-		return s.runErr
-	}
-	close(s.started)
-	<-ctx.Done()
-	return ctx.Err()
-}
-
-func (s *testService) IsDisabled() bool {
-	return s.isDisabled
-}
-
-func testServer(t *testing.T, services ...registry.BackgroundService) *Server {
-	t.Helper()
-	cfg := setting.NewCfg()
-	m := modules.ProvideService(cfg)
-	//err := m.Init()
-	//require.NoError(t, err)
-
-	s := newServer(Options{}, cfg, m, backgroundsvcs.NewBackgroundServiceRegistry(services...), nil)
-	// Required to skip configuration initialization that causes
-	// DI errors in this test.
-	s.isInitialized = true
-	return s
+func testServer(m *MockModuleService) *Server {
+	return newServer(Options{}, setting.NewCfg(), m, backgroundsvcs.NewBackgroundServiceRegistry(), nil)
 }
 
 func TestServer_Run_Error(t *testing.T) {
-	t.Skip("skipping test as need to migrate") // TODO fix
-
 	testErr := errors.New("boom")
-	s := testServer(t, newTestService(nil, false), newTestService(testErr, false))
-	err := s.Run(context.Background())
-	require.ErrorIs(t, err, testErr)
+
+	t.Run("Modules Init error bubbles up", func(t *testing.T) {
+		ctx := context.Background()
+		s := testServer(&MockModuleService{
+			initFunc: func(c context.Context) error {
+				require.Equal(t, ctx, c)
+				return testErr
+			},
+		})
+
+		err := s.Run(ctx)
+		require.ErrorIs(t, err, testErr)
+	})
+
+	t.Run("Modules Run error bubbles up", func(t *testing.T) {
+		ctx := context.Background()
+		s := testServer(&MockModuleService{
+			runFunc: func(c context.Context) error {
+				require.Equal(t, ctx, c)
+				return testErr
+			},
+		})
+
+		err := s.Run(ctx)
+		require.ErrorIs(t, err, testErr)
+	})
 }
 
 func TestServer_Shutdown(t *testing.T) {
-	t.Skip("skipping test as need to migrate") // TODO fix
-
 	ctx := context.Background()
-	s := testServer(t, newTestService(nil, false), newTestService(nil, true))
+
+	modulesShutdown := false
+	s := testServer(&MockModuleService{
+		shutdownFunc: func(_ context.Context) error {
+			modulesShutdown = true
+			return nil
+		},
+	})
 
 	ch := make(chan error)
-
 	go func() {
 		defer close(ch)
 		ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
@@ -89,4 +70,56 @@ func TestServer_Shutdown(t *testing.T) {
 
 	err = <-ch
 	require.NoError(t, err)
+	require.True(t, modulesShutdown)
+
+	t.Run("Modules Shutdown error bubbles up", func(t *testing.T) {
+		testErr := errors.New("boom")
+
+		s = testServer(&MockModuleService{
+			shutdownFunc: func(_ context.Context) error {
+				return testErr
+			},
+		})
+
+		ch = make(chan error)
+		go func() {
+			defer close(ch)
+			ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+			defer cancel()
+			err = s.Shutdown(ctx, "test interrupt")
+			ch <- err
+		}()
+		err = s.Run(ctx)
+		require.NoError(t, err)
+
+		err = <-ch
+		require.ErrorIs(t, err, testErr)
+	})
+}
+
+type MockModuleService struct {
+	initFunc     func(context.Context) error
+	runFunc      func(context.Context) error
+	shutdownFunc func(context.Context) error
+}
+
+func (m *MockModuleService) Init(ctx context.Context) error {
+	if m.initFunc != nil {
+		return m.initFunc(ctx)
+	}
+	return nil
+}
+
+func (m *MockModuleService) Run(ctx context.Context) error {
+	if m.runFunc != nil {
+		return m.runFunc(ctx)
+	}
+	return nil
+}
+
+func (m *MockModuleService) Shutdown(ctx context.Context) error {
+	if m.shutdownFunc != nil {
+		return m.shutdownFunc(ctx)
+	}
+	return nil
 }

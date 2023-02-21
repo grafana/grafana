@@ -60,7 +60,7 @@ func ProvideBackgroundServiceRegistry(
 	bundleService *supportbundlesimpl.Service,
 	usageStatsProvidersRegistry registry.UsageStatsProvidersRegistry,
 	provisioningService provisioning.ProvisioningService,
-	moduleManager *modules.Modules,
+	moduleManager modules.Manager,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service, _ *alerting.AlertNotificationService,
 	_ serviceaccounts.Service, _ *guardian.Provider,

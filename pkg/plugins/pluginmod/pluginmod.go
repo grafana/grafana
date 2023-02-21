@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvidePluginsModule(cfg *setting.Cfg, moduleManager *modules.Modules, coreRegistry *coreplugin.Registry,
+func ProvidePluginsModule(cfg *setting.Cfg, moduleManager modules.Manager, coreRegistry *coreplugin.Registry,
 	internalRegistry *registry.InMemory, pluginClient *client.Decorator) (*PluginsModule, error) {
 	m := &PluginsModule{
 		cfg:              cfg,
@@ -41,7 +41,7 @@ type PluginsModule struct {
 	PluginManager
 
 	cfg              *setting.Cfg
-	moduleManager    *modules.Modules
+	moduleManager    modules.Manager
 	coreRegistry     *coreplugin.Registry
 	internalRegistry *registry.InMemory
 	pluginClient     *client.Decorator

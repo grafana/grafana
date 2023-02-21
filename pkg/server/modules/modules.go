@@ -34,6 +34,17 @@ type Modules struct {
 	deps           map[string][]string
 }
 
+type Engine interface {
+	Init(context.Context) error
+	Run(context.Context) error
+	Shutdown(context.Context) error
+}
+
+type Manager interface {
+	RegisterModule(name string, initFn func() (services.Service, error), deps ...string) error
+	RegisterInvisibleModule(name string, initFn func() (services.Service, error), deps ...string) error
+}
+
 func ProvideService(cfg *setting.Cfg) *Modules {
 	logger := log.New("modules")
 	return &Modules{
@@ -44,7 +55,7 @@ func ProvideService(cfg *setting.Cfg) *Modules {
 	}
 }
 
-func (m *Modules) Init() error {
+func (m *Modules) Init(_ context.Context) error {
 	m.moduleManager.RegisterModule(All, nil)
 
 	deps := map[string][]string{
@@ -139,7 +150,7 @@ func (m *Modules) Run(ctx context.Context) error {
 	return err
 }
 
-func (m *Modules) Stop(ctx context.Context) error {
+func (m *Modules) Shutdown(ctx context.Context) error {
 	if m.serviceManager != nil {
 		m.serviceManager.StopAsync()
 

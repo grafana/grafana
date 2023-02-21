@@ -34,21 +34,21 @@ func New(opts Options, cfg *setting.Cfg, moduleService *modules.Modules, httpSer
 	backgroundServiceRegistry *backgroundsvcs.BackgroundServiceRegistry) (*Server, error) {
 	s := newServer(opts, cfg, moduleService, backgroundServiceRegistry, httpServer)
 
-	if err := s.init(); err != nil {
+	if err := s.init(context.Background()); err != nil {
 		return nil, err
 	}
 
 	return s, nil
 }
 
-func newServer(opts Options, cfg *setting.Cfg, moduleService *modules.Modules,
+func newServer(opts Options, cfg *setting.Cfg, modulesEngine modules.Engine,
 	backgroundServiceRegistry *backgroundsvcs.BackgroundServiceRegistry, httpServer *api.HTTPServer) *Server {
 	return &Server{
 		log:                       log.New("server"),
 		cfg:                       cfg,
 		shutdownFinished:          make(chan struct{}),
 		pidFile:                   opts.PidFile,
-		moduleService:             moduleService,
+		modulesEngine:             modulesEngine,
 		httpServer:                httpServer,
 		backgroundServiceRegistry: backgroundServiceRegistry,
 	}
@@ -56,7 +56,7 @@ func newServer(opts Options, cfg *setting.Cfg, moduleService *modules.Modules,
 
 // Server is responsible for managing the lifecycle of services.
 type Server struct {
-	moduleService    *modules.Modules
+	modulesEngine    modules.Engine
 	log              log.Logger
 	cfg              *setting.Cfg
 	shutdownOnce     sync.Once
@@ -70,7 +70,7 @@ type Server struct {
 }
 
 // init initializes the server and its services.
-func (s *Server) init() error {
+func (s *Server) init(ctx context.Context) error {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
@@ -87,21 +87,21 @@ func (s *Server) init() error {
 		return err
 	}
 
-	return s.moduleService.Init()
+	return s.modulesEngine.Init(ctx)
 }
 
 // Run initializes and starts services. This will block until all services have
 // exited. To initiate shutdown, call the Shutdown method in another goroutine.
 func (s *Server) Run(ctx context.Context) error {
 	defer close(s.shutdownFinished)
-	if err := s.init(); err != nil {
+	if err := s.init(ctx); err != nil {
 		return err
 	}
 
 	s.notifySystemd("READY=1")
 
 	s.log.Debug("Waiting on services...")
-	return s.moduleService.Run(ctx)
+	return s.modulesEngine.Run(ctx)
 }
 
 // Shutdown initiates Grafana graceful shutdown. This shuts down all
@@ -112,7 +112,7 @@ func (s *Server) Shutdown(ctx context.Context, reason string) error {
 	s.shutdownOnce.Do(func() {
 		s.log.Info("Shutdown started", "reason", reason)
 
-		if err = s.moduleService.Stop(ctx); err != nil {
+		if err = s.modulesEngine.Shutdown(ctx); err != nil {
 			s.log.Error("Failed to stop modules", "error", err)
 		}
 

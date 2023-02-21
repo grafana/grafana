@@ -368,6 +368,8 @@ var wireBasicSet = wire.NewSet(
 	authnimpl.ProvideService,
 	wire.Bind(new(authn.Service), new(*authnimpl.Service)),
 	supportbundlesimpl.ProvideService,
+	wire.Bind(new(modules.Engine), new(*modules.Modules)),
+	wire.Bind(new(modules.Manager), new(*modules.Modules)),
 	modules.ProvideService,
 )
 
