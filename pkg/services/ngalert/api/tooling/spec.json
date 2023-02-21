@@ -247,7 +247,7 @@
           }
         ],
         "responses": {
-          "201": {
+          "200": {
             "description": "postSilencesOKBody",
             "schema": {
               "$ref": "#/definitions/postSilencesOKBody"
@@ -783,7 +783,7 @@
           }
         ],
         "responses": {
-          "201": {
+          "200": {
             "description": "postSilencesOKBody",
             "schema": {
               "$ref": "#/definitions/postSilencesOKBody"
@@ -6112,7 +6112,6 @@
       }
     },
     "alertGroup": {
-      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -6137,7 +6136,6 @@
       "$ref": "#/definitions/alertGroup"
     },
     "alertGroups": {
-      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
@@ -6243,6 +6241,7 @@
       }
     },
     "gettableAlert": {
+      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
@@ -6299,6 +6298,7 @@
       "$ref": "#/definitions/gettableAlert"
     },
     "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
