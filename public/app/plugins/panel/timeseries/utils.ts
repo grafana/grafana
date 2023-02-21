@@ -181,23 +181,27 @@ export function regenerateLinksSupplier(
 }
 
 export function prepareTimeSeriesLong(series: DataFrame[]): DataFrame[] {
-  const stringFields = series[0].fields.filter((field) => field.type === FieldType.string).map((field) => field.name);
+  // Transform each dataframe of the series
+  // to handle different field names in different frames
+  return series.reduce((acc: DataFrame[], dataFrame: DataFrame) => {
+    // these could be different in each frame
+    const stringFields = dataFrame.fields.filter((field) => field.type === FieldType.string).map((field) => field.name);
 
-  const ctx = {
-    interpolate: (value: string) => value,
-  };
-
-  return partitionByValuesTransformer.transformer(
-    {
-      fields: stringFields,
-      naming: {
-        asLabels: true,
-        append: false,
-        withNames: false,
-        separator1: '=',
-        separator2: ' ',
+    // transform one dataFrame at a time and concat into DataFrame[]
+    const transformedSeries = partitionByValuesTransformer.transformer(
+      {
+        fields: stringFields,
+        naming: {
+          asLabels: true,
+          append: false,
+          withNames: false,
+          separator1: '=',
+          separator2: ' ',
+        },
       },
-    },
-    ctx
-  )(series);
+      { interpolate: (value: string) => value }
+    )([dataFrame]);
+
+    return acc.concat(transformedSeries);
+  }, []);
 }
