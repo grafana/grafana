@@ -357,5 +357,5 @@ func hideApiKeysTabIfNoAPIKeysPresent(l *log.ConcreteLogger, store *sqlstore.SQL
 		l.Error(fmt.Sprintf("could not hide apikeys tab: %e", err))
 		return
 	}
-	l.Info("hid the apikeys tab")
+	l.Info("Hid the API keys tab")
 }
