@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { groupBy, sortBy, toPairs, fromPairs } from 'lodash';
+import { groupBy } from 'lodash';
 import React, { useMemo } from 'react';
 
 import {
@@ -42,12 +42,7 @@ export const LogsVolumePanelList = ({
   splitOpen,
   timeZone,
 }: Props) => {
-  const logVolumes = useMemo(() => {
-    const groups = groupBy(logsVolumeData?.data || [], 'meta.custom.datasourceUid');
-    const pairs = toPairs(groups);
-    const sorted = sortBy(pairs, '1.0.meta.custom.datasourceName');
-    return fromPairs(sorted);
-  }, [logsVolumeData]);
+  const logVolumes = useMemo(() => groupBy(logsVolumeData?.data || [], 'meta.custom.refId'), [logsVolumeData]);
 
   const styles = useStyles2(getStyles);
 
@@ -91,9 +86,11 @@ export const LogsVolumePanelList = ({
     <div className={styles.listContainer}>
       {Object.keys(logVolumes).map((name, index) => {
         const logsVolumeData = { data: logVolumes[name] };
+        const logsVolumeInfo = getLogsVolumeDataSourceInfo(logVolumes[name]);
         const extraInfo = isLogsVolumeLimited(logVolumes[name])
           ? limitedInfo
-          : getLogsVolumeDataSourceInfo(logVolumes[name]).name;
+          : `${logsVolumeInfo.refId} (${logsVolumeInfo.name})`;
+
         return (
           <LogsVolumePanel
             extraInfo={extraInfo}

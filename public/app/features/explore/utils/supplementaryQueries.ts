@@ -128,6 +128,7 @@ const enrichWithSource = (uid: string, title: string) => {
               ...df.meta?.custom,
               datasourceUid: uid,
               datasourceName: title,
+              refId: df.refId,
             },
           },
         };
@@ -190,8 +191,7 @@ export const getSupplementaryQueryProvider = (
               const dsProvider = ds.getDataProvider(type, dsRequest);
               if (dsProvider) {
                 // 1) It provides data for current request - use the provider
-                // TODO: Check aggregation logic in data sources (can we get the refId?)
-                return dsProvider.pipe(enrichWithSource(ds.uid, ds.name));
+                return dsProvider;
               } else {
                 // 2) It doesn't provide data for current request -> return nothing
                 return of({

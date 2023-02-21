@@ -223,10 +223,11 @@ export const getLogsVolumeAbsoluteRange = (
   return dataFrames[0].meta?.custom?.absoluteRange || defaultRange;
 };
 
-export const getLogsVolumeDataSourceInfo = (dataFrames: DataFrame[]): { uid: string; name: string } => {
+export const getLogsVolumeDataSourceInfo = (dataFrames: DataFrame[]): { uid: string; name: string; refId: string } => {
   return {
     uid: dataFrames[0].meta?.custom?.datasourceUid || '',
     name: dataFrames[0].meta?.custom?.datasourceName || '',
+    refId: (dataFrames[0].refId || '').substr('log-volume-'.length),
   };
 };
 
