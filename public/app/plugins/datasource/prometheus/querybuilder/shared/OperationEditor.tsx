@@ -133,12 +133,20 @@ export function OperationEditor({
     isConflicting = isConflictingFilter(operation, query.operations);
   }
 
+  const isInvalid = (isDragging: boolean) => {
+    if (isDragging) {
+      return undefined;
+    }
+
+    return isConflicting ? true : undefined;
+  };
+
   return (
     <Draggable draggableId={`operation-${index}`} index={index}>
-      {(provided) => (
+      {(provided, snapshot) => (
         <InlineField
           error={'You have conflicting label filters'}
-          invalid={isConflicting ? true : undefined}
+          invalid={isInvalid(snapshot.isDragging)}
           className={styles.error}
         >
           <div
