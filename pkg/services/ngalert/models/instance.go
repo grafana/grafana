@@ -10,6 +10,7 @@ type AlertInstance struct {
 	AlertInstanceKey  `xorm:"extends"`
 	Labels            InstanceLabels
 	CurrentState      InstanceStateType
+	CurrentCause      InstanceCauseType
 	CurrentReason     string
 	CurrentStateSince time.Time
 	CurrentStateEnd   time.Time
@@ -38,14 +39,45 @@ const (
 	InstanceStateError InstanceStateType = "Error"
 )
 
-// IsValid checks that the value of InstanceStateType is a valid
-// string.
+// InstanceCauseType is an enum to differentiate between the different pending states.
+type InstanceCauseType string
+
+const (
+	// InstanceCauseNone is for any state that does not come from firing or error.
+	InstanceCauseNone InstanceCauseType = ""
+	// InstanceCauseFiring is to identify states caused by firing states.
+	InstanceCauseFiring InstanceCauseType = "Firing"
+	// InstanceCauseError is to identify states caused by erroring states.
+	InstanceCauseError InstanceCauseType = "Error"
+	// InstanceCauseNoData is to identify states caused by nodata states.
+	InstanceCauseNoData InstanceCauseType = "NoData"
+)
+
+// IsValid checks that the value of InstanceStateType is a valid string.
 func (i InstanceStateType) IsValid() bool {
 	return i == InstanceStateFiring ||
 		i == InstanceStateNormal ||
 		i == InstanceStateNoData ||
 		i == InstanceStatePending ||
 		i == InstanceStateError
+}
+
+// IsValid checks that the value of InstanceCauseType is a valid string.
+func (i InstanceCauseType) IsValid() bool {
+	return i == InstanceCauseNone ||
+		i == InstanceCauseFiring ||
+		i == InstanceCauseError ||
+		i == InstanceCauseNoData
+}
+
+// validateCurrentStateAndCurrentPendingState checks that the possible combinations of CurrentState and
+// CurrentCause are valid.
+func validateCurrentStateAndCurrentPendingState(cState InstanceStateType, cCause InstanceCauseType) bool {
+	return (cState == InstanceStateNormal && (cCause == InstanceCauseNone || cCause == InstanceCauseError || cCause == InstanceCauseNoData)) ||
+		(cState == InstanceStateFiring && (cCause == InstanceCauseFiring || cCause == InstanceCauseError || cCause == InstanceCauseNoData)) ||
+		(cState == InstanceStateNoData && cCause == InstanceCauseNoData) ||
+		(cState == InstanceStateError && cCause == InstanceCauseError) ||
+		(cState == InstanceStatePending && cCause == InstanceCauseFiring)
 }
 
 // ListAlertInstancesQuery is the query list alert Instances.
@@ -68,7 +100,15 @@ func ValidateAlertInstance(alertInstance AlertInstance) error {
 	}
 
 	if !alertInstance.CurrentState.IsValid() {
-		return fmt.Errorf("alert instance is invalid because the state '%v' is invalid", alertInstance.CurrentState)
+		return fmt.Errorf("alert instance is invalid because the state %q is invalid", alertInstance.CurrentState)
+	}
+
+	if !alertInstance.CurrentCause.IsValid() {
+		return fmt.Errorf("alert instance is invalid because the cause %q is invalid", alertInstance.CurrentCause)
+	}
+
+	if !validateCurrentStateAndCurrentPendingState(alertInstance.CurrentState, alertInstance.CurrentCause) {
+		return fmt.Errorf("alert instance is invalid because the state %q and cause %q are not a valid pair", alertInstance.CurrentState, alertInstance.CurrentCause)
 	}
 
 	return nil
