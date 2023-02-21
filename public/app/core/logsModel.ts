@@ -220,6 +220,7 @@ export function dataFrameToLogsModel(
         absoluteRange
       );
       logsModel.visibleRange = visibleRange;
+      logsModel.bucketSize = bucketSize;
       logsModel.series = makeDataFramesForLogs(sortedRows, bucketSize);
 
       if (logsModel.meta) {
@@ -671,6 +672,10 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
         } else {
           const framesByRefId = groupBy(dataQueryResponse.data, 'refId');
           logsVolumeData = dataQueryResponse.data.map((dataFrame) => {
+            let sourceRefId = dataFrame.refId;
+            if (sourceRefId.startsWith('log-volume-')) {
+              sourceRefId = sourceRefId.substr('log-volume-'.length);
+            }
             dataFrame.meta = {
               ...dataFrame.meta,
               custom: {
@@ -678,7 +683,7 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
                 logsVolumeType: LogsVolumeType.FullRange,
                 absoluteRange: { from: options.range.from.valueOf(), to: options.range.to.valueOf() },
                 datasourceName: datasource.name,
-                refId: dataFrame.refId,
+                sourceQuery: options.targets.find((dataQuery) => dataQuery.refId === sourceRefId),
               },
             };
             return updateLogsVolumeConfig(dataFrame, options.extractLevel, framesByRefId[dataFrame.refId].length === 1);

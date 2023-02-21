@@ -11,13 +11,13 @@ import {
   isLogsVolumeLimited,
   getLogsVolumeAbsoluteRange,
   GrafanaTheme2,
+  getLogsVolumeDataSourceInfo,
 } from '@grafana/data';
 import { Icon, Tooltip, TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { ExploreGraph } from './Graph/ExploreGraph';
 
 type Props = {
-  extraInfo?: string;
   logsVolumeData: DataQueryResponse | undefined;
   absoluteRange: AbsoluteTimeRange;
   timeZone: TimeZone;
@@ -30,7 +30,7 @@ type Props = {
 };
 
 export function LogsVolumePanel(props: Props) {
-  const { width, timeZone, splitOpen, onUpdateTimeRange, onHiddenSeriesChanged, extraInfo } = props;
+  const { width, timeZone, splitOpen, onUpdateTimeRange, onHiddenSeriesChanged } = props;
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
@@ -41,6 +41,14 @@ export function LogsVolumePanel(props: Props) {
   }
 
   const logsVolumeData = props.logsVolumeData;
+
+  const logsVolumeInfo = getLogsVolumeDataSourceInfo(logsVolumeData?.data);
+  let extraInfo = `${logsVolumeInfo.refId} (${logsVolumeInfo.name})`;
+
+  if (isLogsVolumeLimited(logsVolumeData.data)) {
+    extraInfo +=
+      '. This datasource does not support full-range histograms. The graph below is based on the logs seen in the response.';
+  }
 
   const range = isLogsVolumeLimited(logsVolumeData.data)
     ? getLogsVolumeAbsoluteRange(logsVolumeData.data, props.absoluteRange)
@@ -72,7 +80,7 @@ export function LogsVolumePanel(props: Props) {
     }
   }
 
-  let extraInfoComponent = <span>{extraInfo}</span>
+  let extraInfoComponent = <span>{extraInfo}</span>;
 
   if (logsVolumeData.state === LoadingState.Streaming) {
     extraInfoComponent = (

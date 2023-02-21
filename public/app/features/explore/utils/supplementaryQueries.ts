@@ -3,7 +3,6 @@ import { from, mergeMap, Observable, of } from 'rxjs';
 import { scan } from 'rxjs/operators';
 
 import {
-  DataFrame,
   DataQuery,
   DataQueryRequest,
   DataQueryResponse,
@@ -11,10 +10,10 @@ import {
   hasSupplementaryQuerySupport,
   LoadingState,
   LogsVolumeType,
-  MutableDataFrame,
   SupplementaryQueryType,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
+import { makeDataFramesForLogs } from 'app/core/logsModel';
 import store from 'app/core/store';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { ExplorePanelData, SupplementaryQueries } from 'app/types';
@@ -68,90 +67,62 @@ export const loadSupplementaryQueries = (): SupplementaryQueries => {
 };
 
 const createFallbackLogVolumeProvider = (
-  explorePanelData: Observable<ExplorePanelData>
+  explorePanelData: Observable<ExplorePanelData>,
+  queryTargets: DataQuery[],
+  datasourceName: string
 ): Observable<DataQueryResponse> => {
   return new Observable<DataQueryResponse>((observer) => {
     explorePanelData.subscribe((exploreData) => {
-      if (exploreData.logsResult?.series && exploreData.logsResult?.visibleRange) {
-        observer.next({
-          data: exploreData.logsResult.series.map((d) => {
-            const custom = d.meta?.custom || {};
-            return {
-              ...d,
-              meta: {
-                custom: {
-                  ...custom,
-                  logsVolumeType: LogsVolumeType.Limited,
-                  absoluteRange: exploreData.logsResult?.visibleRange,
-                },
-              },
-            };
-          }),
-          state: exploreData.state,
+      if (
+        exploreData.logsResult &&
+        exploreData.logsResult.rows &&
+        exploreData.logsResult.visibleRange &&
+        exploreData.logsResult.bucketSize !== undefined
+      ) {
+        const bucketSize = exploreData.logsResult.bucketSize;
+        const targetRefIds = queryTargets.map((query) => query.refId);
+        const rowsByRefId = groupBy(exploreData.logsResult.rows, 'dataFrame.refId');
+        targetRefIds.forEach((refId) => {
+          if (rowsByRefId[refId]?.length) {
+            const series = makeDataFramesForLogs(rowsByRefId[refId], bucketSize);
+            observer.next({
+              data: series.map((d) => {
+                const custom = d.meta?.custom || {};
+                return {
+                  ...d,
+                  meta: {
+                    custom: {
+                      ...custom,
+                      logsVolumeType: LogsVolumeType.Limited,
+                      absoluteRange: exploreData.logsResult?.visibleRange,
+                      datasourceName,
+                      sourceQuery: queryTargets.find((query) => query.refId === refId),
+                    },
+                  },
+                };
+              }),
+              state: exploreData.state,
+            });
+          }
         });
       }
     });
-  }).pipe(enrichWithSource('', 'All visible logs'));
+  });
 };
 
 const getSupplementaryQueryFallback = (
   type: SupplementaryQueryType,
-  explorePanelData: Observable<ExplorePanelData>
+  explorePanelData: Observable<ExplorePanelData>,
+  queryTargets: DataQuery[],
+  datasourceName: string
 ) => {
   if (type === SupplementaryQueryType.LogsVolume) {
-    return createFallbackLogVolumeProvider(explorePanelData);
+    return createFallbackLogVolumeProvider(explorePanelData, queryTargets, datasourceName);
   } else {
     return of({
       data: [],
       state: LoadingState.NotStarted,
     });
-  }
-};
-
-/**
- * Adds extra information to the data frame to indicate what data source it originated from.
- * This can be used by visualizations to split data frames by source (but visualization can
- * also decide to merge all results in a single view).
- */
-const enrichWithSource = (uid: string, title: string) => {
-  return mergeMap((response: DataQueryResponse) => {
-    const data = response.data || [new MutableDataFrame()];
-
-    return of({
-      ...response,
-      data: data.map((df) => {
-        return {
-          ...df,
-          meta: {
-            ...df.meta,
-            custom: {
-              ...df.meta?.custom,
-              datasourceUid: uid,
-              datasourceName: title,
-              refId: df.refId,
-            },
-          },
-        };
-      }),
-    });
-  });
-};
-
-/**
- * Cleans-up duplicated results. In case multiple data sources do not support logs volume histograms, ensures there's
- * only one result coming from the fallback.
- *
- * Note: The code seems simpler this way though it's less performant. In case of performance issues caused by processing
- * too many log lines in the fallback multiple times this can be optimised to create only one fallback all the time.
- */
-const supplementaryQueryFallbackCleanUp = (type: SupplementaryQueryType, acc: DataFrame[], next: DataQueryResponse) => {
-  if (
-    type === SupplementaryQueryType.LogsVolume &&
-    next.data[0]?.meta?.custom?.logsVolumeType === LogsVolumeType.Limited
-  ) {
-    return acc.filter((dataframe) => dataframe.meta?.custom?.logsVolumeType !== LogsVolumeType.Limited);
-  } else {
-    return acc;
   }
 };
 
@@ -203,19 +174,16 @@ export const getSupplementaryQueryProvider = (
               // 3) Data source doesn't support the supplementary query -> use fallback
               // the fallback cannot determine data availability based on request, it
               // works on the results once they are available so it never uses the cache
-              return getSupplementaryQueryFallback(type, explorePanelData);
+              return getSupplementaryQueryFallback(type, explorePanelData, query.targets, ds.name);
             }
           })
         );
       }),
       scan<DataQueryResponse, DataQueryResponse>(
         (acc, next) => {
-          // TODO: Double check if it's needed
           if (acc.state !== LoadingState.NotStarted && next.state === LoadingState.NotStarted) {
             return acc;
           }
-
-          // TODO: Simplify aggregation so each log volume returns single data frame per refId
 
           if (next.state !== LoadingState.Done) {
             return {
@@ -229,21 +197,18 @@ export const getSupplementaryQueryProvider = (
             return acc;
           }
 
-          const accData = supplementaryQueryFallbackCleanUp(type, acc.data, next);
-
           return {
             ...acc,
-            data: [...accData, ...next.data],
+            data: [...acc.data, ...next.data],
             state: LoadingState.Done,
           };
         },
         { data: [], state: LoadingState.NotStarted }
       )
     );
-  } else if (type === SupplementaryQueryType.LogsVolume) {
+  } else {
     // Create a fallback to results based logs volume
-    // TODO: use getSupplementaryQueryFallback
-    return createFallbackLogVolumeProvider(explorePanelData);
+    return getSupplementaryQueryFallback(type, explorePanelData, request.targets, datasourceInstance.name);
   }
   return undefined;
 };

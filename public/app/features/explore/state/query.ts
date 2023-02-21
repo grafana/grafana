@@ -1,6 +1,6 @@
 import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
 import deepEqual from 'fast-deep-equal';
-import { flatten, groupBy, snakeCase } from 'lodash';
+import { flatten, groupBy, head, map, mapValues, snakeCase, zipObject } from 'lodash';
 import { combineLatest, identity, Observable, of, SubscriptionLike, Unsubscribable } from 'rxjs';
 import { mergeMap, throttleTime } from 'rxjs/operators';
 
@@ -656,10 +656,14 @@ function canReuseSupplementaryQueryData(
     return false;
   }
 
-  const newQueriesByRefId = groupBy(newQueries, 'refId');
-  const existingDataByRefId = groupBy(
-    flatten(supplementaryQueryData.data.map((dataFrame: DataFrame) => dataFrame.meta?.custom?.targets || [])),
-    'refId'
+  const newQueriesByRefId = zipObject(map(newQueries, 'refId'), newQueries);
+
+  const existingDataByRefId = mapValues(
+    groupBy(
+      supplementaryQueryData.data.map((dataFrame: DataFrame) => dataFrame.meta?.custom?.sourceQuery),
+      'refId'
+    ),
+    head
   );
 
   const allQueriesAreTheSame = deepEqual(newQueriesByRefId, existingDataByRefId);

@@ -91,6 +91,7 @@ export interface LogsModel {
   // visibleRange is time range for histogram created from log results
   visibleRange?: AbsoluteTimeRange;
   queries?: DataQuery[];
+  bucketSize?: number;
 }
 
 export interface LogSearchMatch {
@@ -227,7 +228,7 @@ export const getLogsVolumeDataSourceInfo = (dataFrames: DataFrame[]): { uid: str
   return {
     uid: dataFrames[0].meta?.custom?.datasourceUid || '',
     name: dataFrames[0].meta?.custom?.datasourceName || '',
-    refId: (dataFrames[0].refId || '').substr('log-volume-'.length),
+    refId: dataFrames[0].meta?.custom?.sourceQuery?.refId || '',
   };
 };
 

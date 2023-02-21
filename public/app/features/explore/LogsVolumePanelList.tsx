@@ -7,7 +7,6 @@ import {
   DataFrame,
   DataQueryResponse,
   EventBus,
-  getLogsVolumeDataSourceInfo,
   GrafanaTheme2,
   isLogsVolumeLimited,
   LoadingState,
@@ -42,26 +41,19 @@ export const LogsVolumePanelList = ({
   splitOpen,
   timeZone,
 }: Props) => {
-  const logVolumes = useMemo(() => groupBy(logsVolumeData?.data || [], 'meta.custom.refId'), [logsVolumeData]);
+  const logVolumes = useMemo(
+    () => groupBy(logsVolumeData?.data || [], 'meta.custom.sourceQuery.refId'),
+    [logsVolumeData]
+  );
 
   const styles = useStyles2(getStyles);
 
   const numberOfLogVolumes = Object.keys(logVolumes).length;
-  const containsLimited = Object.values(logVolumes).some((data: DataFrame[]) => {
-    return isLogsVolumeLimited(data);
-  });
+
   const containsZoomed = Object.values(logVolumes).some((data: DataFrame[]) => {
     const zoomRatio = logsLevelZoomRatio(data, absoluteRange);
     return !isLogsVolumeLimited(data) && zoomRatio && zoomRatio < 1;
   });
-
-  let limitedInfo = '';
-  if (containsLimited) {
-    limitedInfo =
-      numberOfLogVolumes > 1
-        ? 'Some datasources do not support full-range histograms. The graph below is based on the logs seen in all responses.'
-        : 'This datasource does not support full-range histograms. The graph below is based on the logs seen in the response.';
-  }
 
   let zoomedInfo;
   if (containsZoomed) {
@@ -86,14 +78,8 @@ export const LogsVolumePanelList = ({
     <div className={styles.listContainer}>
       {Object.keys(logVolumes).map((name, index) => {
         const logsVolumeData = { data: logVolumes[name] };
-        const logsVolumeInfo = getLogsVolumeDataSourceInfo(logVolumes[name]);
-        const extraInfo = isLogsVolumeLimited(logVolumes[name])
-          ? limitedInfo
-          : `${logsVolumeInfo.refId} (${logsVolumeInfo.name})`;
-
         return (
           <LogsVolumePanel
-            extraInfo={extraInfo}
             key={index}
             absoluteRange={absoluteRange}
             width={width}
