@@ -3,10 +3,10 @@ package clientmiddleware
 import (
 	"context"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
-
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 )
@@ -43,7 +43,7 @@ func (m *TracingMiddleware) traceWrap(ctx context.Context, pluginContext backend
 	// Return ctx with span + cleanup func
 	return ctx, func(err error) {
 		if err != nil {
-			span.SetStatus(codes.Error, opName+" error: "+err.Error())
+			span.SetStatus(codes.Error, err.Error())
 			span.RecordError(err)
 		}
 		span.End()
