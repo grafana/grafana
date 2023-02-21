@@ -123,6 +123,8 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 		return nil, errOAuthEmailNotAllowed.Errorf("provided email is not allowed")
 	}
 
+	orgRoles := getOAuthOrgRole(userInfo, c.cfg)
+
 	return &authn.Identity{
 		Login:          userInfo.Login,
 		Name:           userInfo.Name,
@@ -132,13 +134,15 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 		AuthID:         userInfo.Id,
 		Groups:         userInfo.Groups,
 		OAuthToken:     token,
-		OrgRoles:       getOAuthOrgRole(userInfo, c.cfg),
+		OrgRoles:       orgRoles,
 		ClientParams: authn.ClientParams{
 			SyncUser:        true,
 			SyncTeams:       true,
 			FetchSyncedUser: true,
 			AllowSignUp:     c.connector.IsSignupAllowed(),
-			LookUpParams:    login.UserLookupParams{Email: &userInfo.Email},
+			// skip org role flag is checked and handled in the connector. For now we can skip the hook if no roles are passed
+			SyncOrgRoles: len(orgRoles) > 0,
+			LookUpParams: login.UserLookupParams{Email: &userInfo.Email},
 		},
 	}, nil
 }
