@@ -38,7 +38,7 @@ Different sources of time series data have dimensions stored natively, or common
 
 Time series databases (TSDBs) usually natively support dimensionality. Prometheus also stores dimensions in _labels_. In TSDBs such as Graphite or OpenTSDB the term _tags_ is used instead.
 
-In table databases such SQL, these dimensions are generally the `GROUP BY` parameters of a query.
+In table databases such as SQL, these dimensions are generally the `GROUP BY` parameters of a query.
 
 ## Multiple dimensions in table format
 
