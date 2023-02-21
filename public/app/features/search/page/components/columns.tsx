@@ -338,12 +338,12 @@ function makeTypeColumn(
         txt = kind;
         switch (txt) {
           case 'dashboard':
-            txt = 'Dashboard';
+            txt = t('search.results-table.type-dashboard', 'Dashboard');
             break;
 
           case 'folder':
             icon = 'folder';
-            txt = 'Folder';
+            txt = t('search.results-table.type-folder', 'Folder');
             break;
 
           case 'panel':

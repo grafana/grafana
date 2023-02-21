@@ -433,6 +433,8 @@
       "location-header": "Location",
       "name-header": "Name",
       "tags-header": "Tags",
+      "type-dashboard": "Dashboard",
+      "type-folder": "Folder",
       "type-header": "Type"
     },
     "search-input": {
