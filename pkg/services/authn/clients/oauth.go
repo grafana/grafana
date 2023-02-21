@@ -226,22 +226,3 @@ func hashOAuthState(state, secret, seed string) string {
 	hashBytes := sha256.Sum256([]byte(state + secret + seed))
 	return hex.EncodeToString(hashBytes[:])
 }
-
-func getOAuthOrgRole(userInfo *social.BasicUserInfo, cfg *setting.Cfg) map[int64]org.RoleType {
-	orgRoles := make(map[int64]org.RoleType, 0)
-	if cfg.OAuthSkipOrgRoleUpdateSync {
-		return orgRoles
-	}
-
-	if userInfo.Role == "" || !userInfo.Role.IsValid() {
-		return orgRoles
-	}
-
-	orgID := int64(1)
-	if cfg.AutoAssignOrg && cfg.AutoAssignOrgId > 0 {
-		orgID = int64(cfg.AutoAssignOrgId)
-	}
-
-	orgRoles[orgID] = userInfo.Role
-	return orgRoles
-}
