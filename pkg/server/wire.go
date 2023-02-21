@@ -213,6 +213,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(correlations.Service), new(*correlations.CorrelationsService)),
 	quotaimpl.ProvideService,
 	remotecache.ProvideService,
+	wire.Bind(new(remotecache.CacheStorage), new(*remotecache.RemoteCache)),
 	loginservice.ProvideService,
 	wire.Bind(new(login.Service), new(*loginservice.Implementation)),
 	authinfoservice.ProvideAuthInfoService,
