@@ -5,7 +5,17 @@ import { Link } from 'react-router-dom';
 
 import { DataQuery, DataSourceApi, DataSourceJsonData, GrafanaTheme2, UrlQueryMap } from '@grafana/data';
 import { config, logInfo } from '@grafana/runtime';
-import { Button, ConfirmModal, CustomScrollbar, Field, HorizontalGroup, Input, Spinner, useStyles2 } from '@grafana/ui';
+import {
+  Button,
+  ConfirmModal,
+  CustomScrollbar,
+  Field,
+  HorizontalGroup,
+  Input,
+  LoadingPlaceholder,
+  Spinner,
+  useStyles2,
+} from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
 import { useCleanup } from 'app/core/hooks/useCleanup';
@@ -330,7 +340,9 @@ export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
       ) : null}
       {showEditYaml ? <RuleInspector onClose={() => setShowEditYaml(false)} /> : null}
     </FormProvider>
-  ) : null;
+  ) : (
+    <LoadingPlaceholder text={'Loading defaults...'} />
+  );
 };
 
 const isCortexLokiOrRecordingRule = (watch: UseFormWatch<RuleFormValues>) => {

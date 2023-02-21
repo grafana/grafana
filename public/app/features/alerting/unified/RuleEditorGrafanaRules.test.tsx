@@ -8,7 +8,7 @@ import { byRole } from 'testing-library-selector';
 import { setDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardSearchHit } from 'app/features/search/types';
-import { PromApplication } from 'app/types/unified-alerting-dto';
+import { GrafanaAlertStateDecision, PromApplication } from 'app/types/unified-alerting-dto';
 
 import { searchFolders } from '../../../../app/features/manage-dashboards/state/actions';
 
@@ -171,7 +171,7 @@ describe('RuleEditor grafana managed rules', () => {
               title: 'my great new rule',
               condition: 'B',
               no_data_state: 'NoData',
-              exec_err_state: 'Error',
+              exec_err_state: GrafanaAlertStateDecision.Error,
               data: [
                 {
                   refId: 'A',
