@@ -306,7 +306,7 @@ func hideApiKeysTabIfNoAPIKeysPresent(l *log.ConcreteLogger, store *sqlstore.SQL
 	orgs := make([]*org.OrgDTO, 0)
 	err = sess.Select(ctx, &orgs, "SELECT id, name FROM org")
 	if err != nil {
-		l.Error(fmt.Sprintf("unable to query for org for hiding api keys: %e", err))
+		l.Error("Unable to query for org for hiding api keys", "error", err)
 		return
 	}
 	if len(orgs) != 1 {
@@ -346,5 +346,5 @@ func hideApiKeysTabIfNoAPIKeysPresent(l *log.ConcreteLogger, store *sqlstore.SQL
 		l.Error(fmt.Sprintf("could not hide apikeys tab: %e", err))
 		return
 	}
-	l.Info("hid the apikeys tab")
+	l.Info("Hid the API keys tab")
 }
