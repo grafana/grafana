@@ -237,9 +237,16 @@ func (h *ContextHandler) initContextWithAnonymousUser(reqContext *contextmodel.R
 		return false
 	}
 
-	if err := h.anonSessionService.TagSession(reqContext.Req.Context(), reqContext.Req); err != nil {
-		reqContext.Logger.Warn("Failed to tag anonymous session", "error", err)
-	}
+	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				reqContext.Logger.Warn("tag anon session panic", "err", err)
+			}
+		}()
+		if err := h.anonSessionService.TagSession(reqContext.Req.Context(), reqContext.Req); err != nil {
+			reqContext.Logger.Warn("Failed to tag anonymous session", "error", err)
+		}
+	}()
 
 	reqContext.IsSignedIn = false
 	reqContext.AllowAnonymous = true
