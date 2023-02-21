@@ -144,7 +144,8 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 
 			var result int
 			err := store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-				_, q, params := filter.Where()
+				q, params := filter.Where()
+				//q, params := filter.With()
 				_, err := sess.SQL("SELECT COUNT(*) FROM dashboard WHERE "+q, params...).Get(&result)
 				return err
 			})
@@ -203,6 +204,15 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 			},
 			features:       featuremgmt.WithFeatures(),
 			expectedResult: []string{"parent"},
+		},
+		{
+			desc:       "Should be able to view inherited dashboards and folders if nested folders are enabled",
+			permission: dashboards.PERMISSION_VIEW,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:parent"},
+			},
+			features:       featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
+			expectedResult: []string{"parent", "subfolder", "dashboard under parent folder", "dashboard under subfolder"},
 		},
 	}
 
