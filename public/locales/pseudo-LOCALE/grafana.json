@@ -111,6 +111,13 @@
   "folder-picker": {
     "loading": "Ŀőäđįŉģ ƒőľđęřş..."
   },
+  "grafana-ui": {
+    "segment-async": {
+      "error": "Fäįľęđ ŧő ľőäđ őpŧįőŉş",
+      "loading": "Ŀőäđįŉģ őpŧįőŉş...",
+      "no-options": "Ńő őpŧįőŉş ƒőūŉđ"
+    }
+  },
   "library-panel": {
     "add-modal": {
       "cancel": "Cäŉčęľ",
@@ -573,12 +580,20 @@
     "loading": "Ŀőäđįŉģ şęşşįőŉş..."
   },
   "variable": {
+    "adhoc": {
+      "placeholder": "Ŝęľęčŧ väľūę"
+    },
+    "dropdown": {
+      "placeholder": "Ēŉŧęř väřįäþľę väľūę"
+    },
     "picker": {
-      "input": "Ēŉŧęř väřįäþľę väľūę",
       "link-all": "Åľľ",
       "option-all": "Åľľ",
       "option-selected-values": "Ŝęľęčŧęđ",
       "option-tooltip": "Cľęäř şęľęčŧįőŉş"
+    },
+    "textbox": {
+      "placeholder": "Ēŉŧęř väřįäþľę väľūę"
     }
   }
 }

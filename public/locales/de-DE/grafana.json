@@ -111,6 +111,13 @@
   "folder-picker": {
     "loading": "Ordner werden geladen …"
   },
+  "grafana-ui": {
+    "segment-async": {
+      "error": "",
+      "loading": "",
+      "no-options": ""
+    }
+  },
   "library-panel": {
     "add-modal": {
       "cancel": "Abbrechen",
@@ -573,12 +580,20 @@
     "loading": "Sitzungen werden geladen …"
   },
   "variable": {
+    "adhoc": {
+      "placeholder": ""
+    },
+    "dropdown": {
+      "placeholder": ""
+    },
     "picker": {
-      "input": "Variablenwert eingeben",
       "link-all": "Alle",
       "option-all": "Alle",
       "option-selected-values": "Ausgewählt",
       "option-tooltip": "Auswahl löschen"
+    },
+    "textbox": {
+      "placeholder": ""
     }
   }
 }
