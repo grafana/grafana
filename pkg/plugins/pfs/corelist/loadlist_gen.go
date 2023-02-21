@@ -1,4 +1,4 @@
-// Copyright 2022 Grafana Labs
+// Copyright 2023 Grafana Labs
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -76,6 +76,7 @@ func coreTreeList(lib thema.Library) pfs.TreeList {
 		makeTreeOrPanic("public/app/plugins/panel/news", "news", lib),
 		makeTreeOrPanic("public/app/plugins/panel/nodeGraph", "nodeGraph", lib),
 		makeTreeOrPanic("public/app/plugins/panel/piechart", "piechart", lib),
+		makeTreeOrPanic("public/app/plugins/panel/pmm-update", "pmm_update_panel", lib),
 		makeTreeOrPanic("public/app/plugins/panel/stat", "stat", lib),
 		makeTreeOrPanic("public/app/plugins/panel/table-old", "table_old", lib),
 		makeTreeOrPanic("public/app/plugins/panel/text", "text", lib),
