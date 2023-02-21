@@ -25,10 +25,6 @@ import (
 const (
 	metricsCollectionInterval = time.Minute * 30
 	defaultSecretScanInterval = time.Minute * 5
-
-	// globallyHideAPIKeysTab is a global setting that hides the apikeys tab
-	// if there are no apikeys present in db or hideapikeys already set
-	GloballyHideAPIKeysTabOrgID int64 = -1
 )
 
 type ServiceAccountsService struct {
@@ -341,7 +337,7 @@ func hideApiKeysTabIfNoAPIKeysPresent(l *log.ConcreteLogger, store *sqlstore.SQL
 	}
 	// setting a global variable to hide the apikeys tab for newly created orgs
 	// used with check global hide apikeys tab
-	err = serviceAccountsStore.HideApiKeysTab(ctx, GloballyHideAPIKeysTabOrgID)
+	err = serviceAccountsStore.HideApiKeysTab(ctx, serviceaccounts.GloballyHideAPIKeysTabOrgID)
 	if err != nil {
 		l.Error(fmt.Sprintf("could not hide apikeys tab: %e", err))
 		return
