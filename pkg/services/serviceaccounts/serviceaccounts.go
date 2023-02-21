@@ -26,6 +26,4 @@ type Service interface {
 		saForm *UpdateServiceAccountForm) (*ServiceAccountProfileDTO, error)
 	AddServiceAccountToken(ctx context.Context, serviceAccountID int64,
 		cmd *AddServiceAccountTokenCommand) (*apikey.APIKey, error)
-	CheckGloballyHideAPIKeysTab(ctx context.Context) bool
-	HideApiKeysTab(ctx context.Context, orgID int64) error
 }
