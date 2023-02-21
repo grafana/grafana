@@ -323,7 +323,9 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, rule model
 	if err != nil {
 		return models.AlertRule{}, err
 	}
-	if storedProvenance != provenance && (storedProvenance == models.ProvenanceFile || storedProvenance == models.ProvenanceAPI && provenance == models.ProvenanceFile) {
+	isFileProvenance := storedProvenance == models.ProvenanceFile
+	isAPItoFileProvenance := storedProvenance == models.ProvenanceAPI && provenance == models.ProvenanceFile
+	if storedProvenance != provenance && (isFileProvenance || isAPItoFileProvenance) {
 		return models.AlertRule{}, fmt.Errorf("cannot changed provenance from '%s' to '%s'", storedProvenance, provenance)
 	}
 	rule.Updated = time.Now()

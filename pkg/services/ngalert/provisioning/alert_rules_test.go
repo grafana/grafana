@@ -213,7 +213,7 @@ func TestAlertRuleService(t *testing.T) {
 				errNil: false,
 			},
 			{
-				name:   "should not be able to update from provenance api to none",
+				name:   "should be able to update from provenance api to none",
 				from:   models.ProvenanceAPI,
 				to:     models.ProvenanceNone,
 				errNil: true,
