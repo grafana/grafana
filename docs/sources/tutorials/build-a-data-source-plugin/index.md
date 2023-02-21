@@ -38,6 +38,8 @@ In this tutorial, you'll:
 
 {{< docs/shared lookup="tutorials/create-plugin.md" source="grafana" version="latest" >}}
 
+Note there is a separate guide for [creating backend plugins](/docs/grafana/latest/tutorials/build-a-data-source-backend-plugin)
+
 ## Anatomy of a plugin
 
 {{< docs/shared lookup="tutorials/plugin-anatomy.md" source="grafana" version="latest" >}}
