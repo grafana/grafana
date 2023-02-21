@@ -19,10 +19,7 @@ export function relativeTemplateUrlToCDN(templateUrl: string, baseUrl: string) {
   }
 
   // use the 'plugin-cdn' key to load via cdn
-  // determine the 'root url' (the part after the host), which needs to be included or it will
-  // be repeated twice and cause a wrong URL to be constructed.
-  const rootPath = new URL(config.pluginsCDNBaseURL).pathname;
-  return `${baseUrl.replace('plugin-cdn' + rootPath, `${config.pluginsCDNBaseURL}/`)}/${templateUrl}`;
+  return `${baseUrl.replace('plugin-cdn/', `${config.pluginsCDNBaseURL}/`)}/${templateUrl}`;
 }
 
 coreModule.directive('pluginComponent', ['$compile', '$http', '$templateCache', '$location', pluginDirectiveLoader]);
