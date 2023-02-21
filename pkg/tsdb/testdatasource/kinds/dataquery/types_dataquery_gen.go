@@ -202,7 +202,7 @@ type TestDataDataQuery struct {
 		Count *int64     `json:"count,omitempty"`
 		Type  *NodesType `json:"type,omitempty"`
 	} `json:"nodes,omitempty"`
-	Points    [][]TestDataDataQuery_Points_Item `json:"points,omitempty"`
+	Points    [][]interface{} `json:"points,omitempty"`
 	PulseWave *struct {
 		OffCount *int64   `json:"offCount,omitempty"`
 		OffValue *float64 `json:"offValue,omitempty"`

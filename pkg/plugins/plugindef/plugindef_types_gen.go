@@ -408,7 +408,7 @@ type PluginDef struct {
 // Plugin category used on the Add data source page.
 type Category string
 
-// type indicates which type of Grafana plugin this is, of the defined
+// Type type indicates which type of Grafana plugin this is, of the defined
 // set of Grafana plugin types.
 type Type string
 
