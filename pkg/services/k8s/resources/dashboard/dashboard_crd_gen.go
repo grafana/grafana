@@ -64,15 +64,13 @@ func fromUnstructured(obj any) (*Dashboard, error) {
 
 // toUnstructured converts a Dashboard to an *unstructured.Unstructured.
 func toUnstructured(obj *dashboard.Dashboard, metadata metav1.ObjectMeta) (*unstructured.Unstructured, error) {
-	dashboardObj := &Dashboard{
-		crd.Base[dashboard.Dashboard]{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       CRD.GVK().Kind,
-				APIVersion: CRD.GVK().Group + "/" + CRD.GVK().Version,
-			},
-			ObjectMeta: metadata,
-			Spec:       *obj,
+	dashboardObj := crd.Base[dashboard.Dashboard]{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       CRD.GVK().Kind,
+			APIVersion: CRD.GVK().Group + "/" + CRD.GVK().Version,
 		},
+		ObjectMeta: metadata,
+		Spec:       *obj,
 	}
 
 	out, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&dashboardObj)

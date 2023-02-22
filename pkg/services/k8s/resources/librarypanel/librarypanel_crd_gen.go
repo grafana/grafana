@@ -64,15 +64,13 @@ func fromUnstructured(obj any) (*LibraryPanel, error) {
 
 // toUnstructured converts a LibraryPanel to an *unstructured.Unstructured.
 func toUnstructured(obj *librarypanel.LibraryPanel, metadata metav1.ObjectMeta) (*unstructured.Unstructured, error) {
-	librarypanelObj := &LibraryPanel{
-		crd.Base[librarypanel.LibraryPanel]{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       CRD.GVK().Kind,
-				APIVersion: CRD.GVK().Group + "/" + CRD.GVK().Version,
-			},
-			ObjectMeta: metadata,
-			Spec:       *obj,
+	librarypanelObj := crd.Base[librarypanel.LibraryPanel]{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       CRD.GVK().Kind,
+			APIVersion: CRD.GVK().Group + "/" + CRD.GVK().Version,
 		},
+		ObjectMeta: metadata,
+		Spec:       *obj,
 	}
 
 	out, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&librarypanelObj)

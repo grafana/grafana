@@ -64,15 +64,13 @@ func fromUnstructured(obj any) (*Team, error) {
 
 // toUnstructured converts a Team to an *unstructured.Unstructured.
 func toUnstructured(obj *team.Team, metadata metav1.ObjectMeta) (*unstructured.Unstructured, error) {
-	teamObj := &Team{
-		crd.Base[team.Team]{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       CRD.GVK().Kind,
-				APIVersion: CRD.GVK().Group + "/" + CRD.GVK().Version,
-			},
-			ObjectMeta: metadata,
-			Spec:       *obj,
+	teamObj := crd.Base[team.Team]{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       CRD.GVK().Kind,
+			APIVersion: CRD.GVK().Group + "/" + CRD.GVK().Version,
 		},
+		ObjectMeta: metadata,
+		Spec:       *obj,
 	}
 
 	out, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&teamObj)

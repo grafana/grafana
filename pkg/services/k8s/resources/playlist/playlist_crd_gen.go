@@ -64,15 +64,13 @@ func fromUnstructured(obj any) (*Playlist, error) {
 
 // toUnstructured converts a Playlist to an *unstructured.Unstructured.
 func toUnstructured(obj *playlist.Playlist, metadata metav1.ObjectMeta) (*unstructured.Unstructured, error) {
-	playlistObj := &Playlist{
-		crd.Base[playlist.Playlist]{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       CRD.GVK().Kind,
-				APIVersion: CRD.GVK().Group + "/" + CRD.GVK().Version,
-			},
-			ObjectMeta: metadata,
-			Spec:       *obj,
+	playlistObj := crd.Base[playlist.Playlist]{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       CRD.GVK().Kind,
+			APIVersion: CRD.GVK().Group + "/" + CRD.GVK().Version,
 		},
+		ObjectMeta: metadata,
+		Spec:       *obj,
 	}
 
 	out, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&playlistObj)

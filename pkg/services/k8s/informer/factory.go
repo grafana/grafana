@@ -81,13 +81,19 @@ func (f *Factory) initializeWatchers(ctx context.Context) {
 			f.informers[gvr].AddEventHandler(
 				cache.ResourceEventHandlerFuncs{
 					AddFunc: func(obj any) {
-						watcher.Add(ctx, obj)
+						if err := watcher.Add(ctx, obj); err != nil {
+							f.log.Error("error adding resource", "err", err)
+						}
 					},
 					UpdateFunc: func(oldObj, newObj any) {
-						watcher.Update(ctx, oldObj, newObj)
+						if err := watcher.Update(ctx, oldObj, newObj); err != nil {
+							f.log.Error("error updating resource", "err", err)
+						}
 					},
 					DeleteFunc: func(obj any) {
-						watcher.Delete(ctx, obj)
+						if err := watcher.Delete(ctx, obj); err != nil {
+							f.log.Error("error deleting resource", "err", err)
+						}
 					},
 				},
 			)

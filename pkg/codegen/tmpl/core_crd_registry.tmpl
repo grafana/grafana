@@ -82,7 +82,7 @@ func doNewRegistry(
   /************************ {{ $k.Props.Name }} ************************/
   err = clientset.RegisterKind(ctx, {{ $k.Props.MachineName }}.CRD)
 	if err != nil {
-    panic(fmt.Sprintf("generated CRD for {{ $k.Props.Name }} failed to register: %s", err))
+    panic(fmt.Sprintf("generated CRD for {{ $k.Props.Name }} failed to register: %s\n", err))
 	}
 
   resourceClient{{ $i }}, err := clientset.GetResourceClient({{ $k.Props.MachineName }}.CRD)
@@ -90,13 +90,13 @@ func doNewRegistry(
 		panic(fmt.Sprintf("generated CRD for {{ $k.Props.Name }} failed to get resource client: %s", err))
 	}
 
-	watcherWrapper{{ $i }} := {{ $k.Props.MachineName }}.NewWatcherWrapper({{ $k.Props.MachineName }}Watcher)
-	watcher{{ $i }}, err := informer.NewWatcherWithClient(resourceClient{{ $i }}, {{ $k.Props.MachineName }}.CRD)
-	if err != nil {
-		panic(fmt.Sprintf("generated CRD for {{ $k.Props.Name }} failed to create watcher: %s", err))
-	}
-	watcher{{ $i }}.Wrap(watcherWrapper{{ $i }}, true)
-	informerFactory.AddWatcher({{ $k.Props.MachineName}}.CRD, watcher{{ $i }})
+  watcherWrapper{{ $i }} := {{ $k.Props.MachineName }}.NewWatcherWrapper({{ $k.Props.MachineName }}Watcher)
+  watcher{{ $i }}, err := informer.NewWatcherWithClient(resourceClient{{ $i }}, {{ $k.Props.MachineName }}.CRD)
+  if err != nil {
+    panic(fmt.Sprintf("generated CRD for {{ $k.Props.Name }} failed to create watcher: %s", err))
+  }
+  watcher{{ $i }}.Wrap(watcherWrapper{{ $i }}, true)
+  informerFactory.AddWatcher({{ $k.Props.MachineName}}.CRD, watcher{{ $i }})
 
   // TODO Having the committed form on disk in YAML is worth doing this for now...but fix this silliness
   map{{ $i }} := make(map[string]any)

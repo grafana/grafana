@@ -141,7 +141,7 @@ func doNewRegistry(
 	/************************ Dashboard ************************/
 	err = clientset.RegisterKind(ctx, dashboard.CRD)
 	if err != nil {
-		panic(fmt.Sprintf("generated CRD for Dashboard failed to register: %s", err))
+		panic(fmt.Sprintf("generated CRD for Dashboard failed to register: %s\n", err))
 	}
 
 	resourceClient0, err := clientset.GetResourceClient(dashboard.CRD)
@@ -176,7 +176,7 @@ func doNewRegistry(
 	/************************ LibraryPanel ************************/
 	err = clientset.RegisterKind(ctx, librarypanel.CRD)
 	if err != nil {
-		panic(fmt.Sprintf("generated CRD for LibraryPanel failed to register: %s", err))
+		panic(fmt.Sprintf("generated CRD for LibraryPanel failed to register: %s\n", err))
 	}
 
 	resourceClient1, err := clientset.GetResourceClient(librarypanel.CRD)
@@ -211,7 +211,7 @@ func doNewRegistry(
 	/************************ Playlist ************************/
 	err = clientset.RegisterKind(ctx, playlist.CRD)
 	if err != nil {
-		panic(fmt.Sprintf("generated CRD for Playlist failed to register: %s", err))
+		panic(fmt.Sprintf("generated CRD for Playlist failed to register: %s\n", err))
 	}
 
 	resourceClient2, err := clientset.GetResourceClient(playlist.CRD)
@@ -246,7 +246,7 @@ func doNewRegistry(
 	/************************ Preferences ************************/
 	err = clientset.RegisterKind(ctx, preferences.CRD)
 	if err != nil {
-		panic(fmt.Sprintf("generated CRD for Preferences failed to register: %s", err))
+		panic(fmt.Sprintf("generated CRD for Preferences failed to register: %s\n", err))
 	}
 
 	resourceClient3, err := clientset.GetResourceClient(preferences.CRD)
@@ -281,7 +281,7 @@ func doNewRegistry(
 	/************************ PublicDashboard ************************/
 	err = clientset.RegisterKind(ctx, publicdashboard.CRD)
 	if err != nil {
-		panic(fmt.Sprintf("generated CRD for PublicDashboard failed to register: %s", err))
+		panic(fmt.Sprintf("generated CRD for PublicDashboard failed to register: %s\n", err))
 	}
 
 	resourceClient4, err := clientset.GetResourceClient(publicdashboard.CRD)
@@ -316,7 +316,7 @@ func doNewRegistry(
 	/************************ ServiceAccount ************************/
 	err = clientset.RegisterKind(ctx, serviceaccount.CRD)
 	if err != nil {
-		panic(fmt.Sprintf("generated CRD for ServiceAccount failed to register: %s", err))
+		panic(fmt.Sprintf("generated CRD for ServiceAccount failed to register: %s\n", err))
 	}
 
 	resourceClient5, err := clientset.GetResourceClient(serviceaccount.CRD)
@@ -351,7 +351,7 @@ func doNewRegistry(
 	/************************ Team ************************/
 	err = clientset.RegisterKind(ctx, team.CRD)
 	if err != nil {
-		panic(fmt.Sprintf("generated CRD for Team failed to register: %s", err))
+		panic(fmt.Sprintf("generated CRD for Team failed to register: %s\n", err))
 	}
 
 	resourceClient6, err := clientset.GetResourceClient(team.CRD)
