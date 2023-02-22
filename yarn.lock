@@ -11497,12 +11497,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/logfmt@npm:^1.2.1":
-  version: 1.2.2
-  resolution: "@types/logfmt@npm:1.2.2"
+"@types/logfmt@npm:^1.2.3":
+  version: 1.2.3
+  resolution: "@types/logfmt@npm:1.2.3"
   dependencies:
     "@types/node": "*"
-  checksum: 3f75ce7cc79886b6c3a2b7c467c49d72752a494cf316b87315c7609f9d3f29ffc6d400b6ae9e81c3997ef1e8b0a442974b60e86b3e45a8174b9b0415aba40701
+  checksum: d5872ab0432c687dc95a4c3a1c21c8eca24553415ef6a34f6cbbe0eefc4b7b8fb8b2af80df4a53fcf7cc7b212569df568bed1b17f7c2a976c4416f4a67b285de
   languageName: node
   linkType: hard
 
@@ -22002,7 +22002,7 @@ __metadata:
     "@types/js-yaml": ^4.0.5
     "@types/jsurl": ^1.2.28
     "@types/lodash": 4.14.187
-    "@types/logfmt": ^1.2.1
+    "@types/logfmt": ^1.2.3
     "@types/mousetrap": 1.6.10
     "@types/node": 18.14.0
     "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.0.6"
