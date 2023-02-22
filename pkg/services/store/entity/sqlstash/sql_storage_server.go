@@ -478,10 +478,10 @@ func (s *sqlEntityServer) fillCreationInfo(ctx context.Context, tx *session.Sess
 		if rows.Next() {
 			err = rows.Scan(&createdAt, &createdBy)
 		}
-		if err == nil {
-			err = rows.Close()
-		}
 	}
+	defer func() {
+		err = rows.Close()
+	}()
 	return err
 }
 
@@ -498,9 +498,11 @@ func (s *sqlEntityServer) selectForUpdate(ctx context.Context, tx *session.Sessi
 	if rows.Next() {
 		err = rows.Scan(&current.ETag, &current.Version, &current.UpdatedAt, &current.Size)
 	}
-	if err == nil {
+
+	defer func() {
 		err = rows.Close()
-	}
+	}()
+
 	return current, err
 }
 

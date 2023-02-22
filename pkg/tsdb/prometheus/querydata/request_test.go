@@ -357,6 +357,11 @@ func executeWithHeaders(tctx *testContext, query backend.DataQuery, qr interface
 	if err != nil {
 		return nil, err
 	}
+
+	defer func() {
+		err = promRes.Body.Close()
+	}()
+
 	tctx.httpProvider.setResponse(promRes)
 
 	res, err := tctx.queryData.Execute(context.Background(), &req)
