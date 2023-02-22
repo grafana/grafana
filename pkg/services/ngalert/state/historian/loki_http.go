@@ -12,8 +12,10 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/weaveworks/common/http/client"
+	"github.com/weaveworks/common/instrument"
 )
 
 const defaultClientTimeout = 30 * time.Second
@@ -88,9 +90,11 @@ type Selector struct {
 	Value string
 }
 
-func newLokiClient(cfg LokiConfig, req client.Requester, logger log.Logger) *httpLokiClient {
+func newLokiClient(cfg LokiConfig, req client.Requester, metrics *metrics.Historian, logger log.Logger) *httpLokiClient {
+	coll := instrument.NewHistogramCollector(metrics.WriteDuration)
+	tc := client.NewTimedClient(req, coll)
 	return &httpLokiClient{
-		client: req,
+		client: tc,
 		cfg:    cfg,
 		log:    logger.New("protocol", "http"),
 	}
