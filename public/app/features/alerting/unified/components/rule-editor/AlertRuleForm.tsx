@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React, { FC, useEffect, useMemo, useState } from 'react';
 import { DeepMap, FieldError, FormProvider, useForm, useFormContext, UseFormWatch } from 'react-hook-form';
 import { Link } from 'react-router-dom';
+import { useAsync } from 'react-use';
 
 import { DataQuery, DataSourceApi, DataSourceJsonData, GrafanaTheme2, UrlQueryMap } from '@grafana/data';
 import { config, logInfo } from '@grafana/runtime';
@@ -95,12 +96,10 @@ export const useGetDefaults = (queryParams: UrlQueryMap, existing: RuleWithLocat
     ds?: DataSourceApi<DataQuery, DataSourceJsonData, {}>;
   }>({ queries: null });
 
-  useEffect(() => {
-    const getDefaultQueries_ = async () => {
-      setDefaultDsAndQueries(await getDefaultQueriesAsync());
-    };
-    getDefaultQueries_();
+  useAsync(async () => {
+    setDefaultDsAndQueries(await getDefaultQueriesAsync());
   }, [existing]);
+
   const defaultsInQueryParams: string = queryParams['defaults'] as string;
   const defaultsInQueryParamsObject = useMemo(
     () => ({ ...(defaultsInQueryParams ? JSON.parse(defaultsInQueryParams) : {}) }),
