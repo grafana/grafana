@@ -187,13 +187,13 @@ function ColorCircle(props: { node: NodeDatum }) {
     elements: React.ReactNode[];
     percent: number;
   }>(
-    (acc, section) => {
+    (acc, section, index) => {
       const color = section.config.color?.fixedColor || '';
       const value = section.values.get(node.dataFrameRowIndex);
 
       const el = (
         <ArcSection
-          key={color}
+          key={index}
           r={nodeR}
           x={node.x!}
           y={node.y!}

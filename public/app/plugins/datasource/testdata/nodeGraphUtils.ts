@@ -132,7 +132,7 @@ export function generateRandomNodes(count = 10) {
     nodeFields[NodeGraphDataFrameFieldNames.secondaryStat].values.add(node.stat2);
     nodeFields.arc__success.values.add(node.success);
     nodeFields.arc__errors.values.add(node.error);
-    nodeFields[NodeGraphDataFrameFieldNames.icon].values.add(Math.random() > 0.9 ? 'monitor' : '');
+    nodeFields[NodeGraphDataFrameFieldNames.icon].values.add(Math.random() > 0.9 ? 'database' : '');
     for (const edge of node.edges) {
       const id = `${node.id}--${edge}`;
       // We can have duplicate edges when we added some more by random

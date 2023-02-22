@@ -340,6 +340,7 @@ function makeNode(index: number) {
     mainstat: 0.1,
     secondarystat: 2,
     color: 0.5,
+    icon: 'database',
   };
 }
 
@@ -375,11 +376,14 @@ function nodesFrame() {
       type: FieldType.number,
       config: { color: { fixedColor: 'red' } },
     },
-
     [NodeGraphDataFrameFieldNames.color]: {
       values: new ArrayVector(),
       type: FieldType.number,
       config: { color: { mode: 'continuous-GrYlRd' } },
+    },
+    [NodeGraphDataFrameFieldNames.icon]: {
+      values: new ArrayVector(),
+      type: FieldType.string,
     },
   };
 

@@ -15,11 +15,6 @@ jest.mock('react-use/lib/useMeasure', () => {
 });
 
 describe('NodeGraph', () => {
-  const origError = console.error;
-  const consoleErrorMock = jest.fn();
-  afterEach(() => (console.error = origError));
-  beforeEach(() => (console.error = consoleErrorMock));
-
   it('shows no data message without any data', async () => {
     render(<NodeGraph dataFrames={[]} getLinks={() => []} />);
 
@@ -88,6 +83,12 @@ describe('NodeGraph', () => {
         }}
       />
     );
+
+    // We mock this because for some reason the simulated click events don't have pageX/Y values resulting in some NaNs
+    // for positioning and this creates a warning message.
+    const origError = console.error;
+    console.error = jest.fn();
+
     const node = await screen.findByLabelText(/Node: service:0/);
     await userEvent.click(node);
     await screen.findByText(/Node traces/);
@@ -95,6 +96,7 @@ describe('NodeGraph', () => {
     const edge = await screen.findByLabelText(/Edge from/);
     await userEvent.click(edge);
     await screen.findByText(/Edge traces/);
+    console.error = origError;
   });
 
   it('lays out 3 nodes in single line', async () => {
