@@ -673,7 +673,7 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
         } else {
           const framesByRefId = groupBy(dataQueryResponse.data, 'refId');
           logsVolumeData = dataQueryResponse.data.map((dataFrame) => {
-            let sourceRefId = dataFrame.refId;
+            let sourceRefId = dataFrame.refId || '';
             if (sourceRefId.startsWith('log-volume-')) {
               sourceRefId = sourceRefId.substr('log-volume-'.length);
             }
