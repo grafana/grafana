@@ -294,7 +294,6 @@ export class LokiDatasource
   runQuery(fixedRequest: DataQueryRequest<LokiQuery> & { targets: LokiQuery[] }) {
     const startTime = new Date();
     return super.query(fixedRequest).pipe(
-      // in case of an empty query, this is somehow run twice. `share()` is no workaround here as the observable is generated from `of()`.
       map((response) =>
         transformBackendResult(response, fixedRequest.targets, this.instanceSettings.jsonData.derivedFields ?? [])
       ),
