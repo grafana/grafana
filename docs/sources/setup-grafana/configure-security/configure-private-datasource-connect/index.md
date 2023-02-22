@@ -21,7 +21,7 @@ By using private data source connect, you can query data that lives within your 
 
 Private data source connect routes queries and responses between your Grafana Cloud stack and your private data source through an agent deployed in your network.
 
-![Private Data Source Connect diagram](/static/assets/img/diagrams/grafana-pdc-diagram-1.png)
+![Private Data Source Connect diagram](/media/docs/grafana/grafana-pdc-diagram-1.png)
 
 - The SSH client running in your network is configured with reverse dynamic forwarding* (\_the* [-R &lt;port>](https://man.openbsd.org/ssh.1#R~2) _option_).\_ In this mode, SSH acts as a [SOCKS](https://en.wikipedia.org/wiki/SOCKS) proxy and forwards connections to destinations requested by Grafana.
 - You can restrict the destinations reachable by Grafana Cloud over this tunnel using the [PermitRemoteOpen](https://man.openbsd.org/ssh_config.5#PermitRemoteOpen) SSH option.
