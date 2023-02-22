@@ -125,7 +125,7 @@ type ProvisionedAlertRule struct {
 	// required: true
 	NoDataState NoDataState `json:"noDataState"`
 	// required: true
-	ExecErrState models.ExecutionErrorState `json:"execErrState"`
+	ExecErrState ExecutionErrorState `json:"execErrState"`
 	// required: true
 	For model.Duration `json:"for"`
 	// example: {"runbook_url": "https://supercoolrunbook.com/page/13"}
