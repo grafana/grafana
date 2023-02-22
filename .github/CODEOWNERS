@@ -30,6 +30,7 @@
 /UPGRADING_DEPENDENCIES.md @grafana/docs-grafana
 /WORKFLOW.md @torkelo
 /contribute/ @grafana/docs-grafana
+/devenv/README.md @grafana/docs-grafana
 
 # Technical documentation
 /docs/                                    @Eve832 @jdbaldry
