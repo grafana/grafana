@@ -118,8 +118,10 @@ export const getNextLayerName = (panel: GeomapPanel) => {
 };
 
 export const isUrl = (url: string) => {
-  const urlPattern = '(https?://)?([\\da-z.-]+)\\.([a-z.]{2,6})[/\\w .-]*/?';
-  const regex = new RegExp(urlPattern);
-
-  return regex.test(url);
+  try {
+    const newUrl = new URL(url);
+    return newUrl.protocol.includes('http');
+  } catch (_) {
+    return false;
+  }
 };
