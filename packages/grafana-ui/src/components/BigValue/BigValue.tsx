@@ -82,7 +82,6 @@ export class BigValue extends PureComponent<Props> {
 
   render() {
     const { onClick, className, hasLinks, theme } = this.props;
-    // console.log(this.props, 'props');
     const layout = buildLayout(this.props);
     const panelStyles = layout.getPanelStyles();
     const valueAndTitleContainerStyles = layout.getValueAndTitleContainerStyles();
