@@ -86,6 +86,10 @@ func doRequestPage(ctx context.Context, logger log.Logger, r *http.Request, dsIn
 		return cloudMonitoringResponse{}, err
 	}
 
+	defer func() {
+		err = res.Body.Close()
+	}()
+
 	dnext, err := unmarshalResponse(logger, res)
 	if err != nil {
 		return cloudMonitoringResponse{}, err

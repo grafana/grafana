@@ -54,10 +54,10 @@ func updateFolderTree(ctx context.Context, tx *session.SessionTx, tenant int64) 
 		}
 		all = append(all, &folder)
 	}
-	err = rows.Close()
-	if err != nil {
-		return err
-	}
+
+	defer func() {
+		err = rows.Close()
+	}()
 
 	root, lost, err := buildFolderTree(all)
 	if err != nil {
