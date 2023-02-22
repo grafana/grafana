@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	// systemJSCDNURLTemplate is a special path templated used by system.js to identify plugins CDN assets
+	// systemJSCDNURLTemplate is a special path template used by system.js to identify plugin CDN assets
 	systemJSCDNURLTemplate = "plugin-cdn/{id}/{version}/public/plugins/{id}/{assetPath}"
 )
 
