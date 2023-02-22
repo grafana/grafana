@@ -47,7 +47,7 @@
 /docs/sources/setup-grafana/              @chri2547
 /docs/sources/upgrade-guide/              @chri2547
 /docs/sources/whatsnew/                   @chri2547
-/docs/sources/developers/plugins/         @Eve832 @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
+/docs/sources/developers/plugins/         @Eve832 @josmperez @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
 /docs/sources/developers/plugins/backend/ @Eve832 @grafana/plugins-platform-backend
 
 # Backend code
