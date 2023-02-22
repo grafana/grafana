@@ -108,7 +108,7 @@ RUN rm dockerize-linux-amd64-v${DOCKERIZE_VERSION}.tar.gz
 # Use old Debian (LTS into 2024) in order to ensure binary compatibility with older glibc's.
 FROM debian:buster-20220822
 
-ENV GOVERSION=1.19.4 \
+ENV GOVERSION=1.20.1 \
     PATH=/usr/local/go/bin:$PATH \
     GOPATH=/go \
     NODEVERSION=18.12.0-1nodesource1 \
