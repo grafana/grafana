@@ -9,27 +9,22 @@ import (
 	"github.com/grafana/grafana/pkg/kindsys"
 )
 
-// CRDKindRegistryJenny generates a static registry of the CRD representations
-// of core Grafana kinds, layered on top of the publicly consumable generated
-// registry in pkg/corekinds.
-//
-// Path should be the relative path to the directory that will contain the
-// generated registry.
-func CRDKindRegistryJenny(path string) ManyToOne {
-	return &crdregjenny{
+// CRDWireSetJenny generates a WireSet for all CRDs.
+func CRDWireSetJenny(path string) ManyToOne {
+	return &crdWireSetJenny{
 		path: path,
 	}
 }
 
-type crdregjenny struct {
+type crdWireSetJenny struct {
 	path string
 }
 
-func (j *crdregjenny) JennyName() string {
-	return "CRDKindRegistryJenny"
+func (j *crdWireSetJenny) JennyName() string {
+	return "CRDWireSetJenny"
 }
 
-func (j *crdregjenny) Generate(kinds ...kindsys.Kind) (*codejen.File, error) {
+func (j *crdWireSetJenny) Generate(kinds ...kindsys.Kind) (*codejen.File, error) {
 	cores := make([]kindsys.Core, 0, len(kinds))
 	for _, d := range kinds {
 		if corekind, is := d.(kindsys.Core); is {
@@ -41,7 +36,7 @@ func (j *crdregjenny) Generate(kinds ...kindsys.Kind) (*codejen.File, error) {
 	}
 
 	buf := new(bytes.Buffer)
-	if err := tmpls.Lookup("core_crd_registry.tmpl").Execute(buf, tvars_kind_registry{
+	if err := tmpls.Lookup("core_crd_wireset.tmpl").Execute(buf, tvars_kind_registry{
 		PackageName:       "corecrd",
 		KindPackagePrefix: filepath.ToSlash("github.com/grafana/grafana/pkg/services/k8s/resources"),
 		Kinds:             cores,
@@ -57,5 +52,5 @@ func (j *crdregjenny) Generate(kinds ...kindsys.Kind) (*codejen.File, error) {
 		return nil, err
 	}
 
-	return codejen.NewFile(filepath.Join(j.path, "registry_gen.go"), b, j), nil
+	return codejen.NewFile(filepath.Join(j.path, "wireset_gen.go"), b, j), nil
 }
