@@ -48,7 +48,7 @@ export function getVersionMeta(version: string) {
   };
 }
 
-export let getVersionLinks = (): FooterLink[] => {
+export function getVersionLinks(): FooterLink[] {
   const { buildInfo, licenseInfo } = config;
   const links: FooterLink[] = [];
   const stateInfo = licenseInfo.stateInfo ? ` (${licenseInfo.stateInfo})` : '';
@@ -84,14 +84,10 @@ export let getVersionLinks = (): FooterLink[] => {
   }
 
   return links;
-};
+}
 
 export function setFooterLinksFn(fn: typeof getFooterLinks) {
   getFooterLinks = fn;
-}
-
-export function setVersionLinkFn(fn: typeof getFooterLinks) {
-  getVersionLinks = fn;
 }
 
 export interface Props {

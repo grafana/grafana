@@ -140,7 +140,7 @@
     "@types/js-yaml": "^4.0.5",
     "@types/jsurl": "^1.2.28",
     "@types/lodash": "4.14.187",
-    "@types/logfmt": "^1.2.1",
+    "@types/logfmt": "^1.2.3",
     "@types/mousetrap": "1.6.10",
     "@types/node": "18.14.0",
     "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.0.6",
