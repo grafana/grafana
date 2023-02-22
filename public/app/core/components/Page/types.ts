@@ -26,8 +26,6 @@ export interface PageProps extends HTMLAttributes<HTMLDivElement> {
   scrollRef?: RefCallback<HTMLDivElement>;
   /** Can be used to update the current scroll position */
   scrollTop?: number;
-  /** Set to true if you want page without footer */
-  hiddenFooter?: boolean;
 }
 
 export interface PageInfoItem {

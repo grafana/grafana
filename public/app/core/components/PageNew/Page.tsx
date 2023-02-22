@@ -6,7 +6,6 @@ import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { CustomScrollbar, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
-import { Footer } from '../Footer/Footer';
 import { PageType } from '../Page/types';
 import { usePageNav } from '../Page/usePageNav';
 import { usePageTitle } from '../Page/usePageTitle';
@@ -30,7 +29,6 @@ export const Page: PageType = ({
   toolbar,
   scrollTop,
   scrollRef,
-  hiddenFooter,
   ...otherProps
 }) => {
   const styles = useStyles2(getStyles);
@@ -70,7 +68,6 @@ export const Page: PageType = ({
                 {pageNav && pageNav.children && <PageTabs navItem={pageNav} />}
                 <div className={styles.pageContent}>{children}</div>
               </div>
-              {!hiddenFooter && <Footer />}
             </CustomScrollbar>
           </div>
         </div>
