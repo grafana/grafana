@@ -33,6 +33,7 @@ export interface DataResponse {
   error?: string;
   refId?: string;
   frames?: DataFrameJSON[];
+  status?: number;
 
   // Legacy TSDB format...
   series?: TimeSeries[];
@@ -83,9 +84,13 @@ export function toDataQueryResponse(
     for (const dr of data) {
       if (dr.error) {
         if (!rsp.error) {
+          let message = dr.error;
+          if (dr.status) {
+            message = `Status: ${dr.status}. Message: ${message}`;
+          }
           rsp.error = {
             refId: dr.refId,
-            message: dr.error,
+            message,
           };
           rsp.state = LoadingState.Error;
         }

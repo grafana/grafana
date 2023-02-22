@@ -1,3 +1,4 @@
+import { cloneDeep } from 'lodash';
 import { FetchError, FetchResponse } from 'src/services';
 
 import { DataQuery, toDataFrameDTO, DataFrame } from '@grafana/data';
@@ -385,6 +386,18 @@ describe('Query Response parser', () => {
           "refId": "A",
         },
       ]
+    `);
+  });
+
+  test('resultWithError and status code', () => {
+    const resultWithErrorAndStatus = cloneDeep(resWithError);
+    resultWithErrorAndStatus.data.results['A'].status = 400;
+    const res = toDataQueryResponse(resultWithErrorAndStatus);
+    expect(res.error).toMatchInlineSnapshot(`
+      {
+        "message": "Status: 400. Message: Hello Error",
+        "refId": "A",
+      }
     `);
   });
 
