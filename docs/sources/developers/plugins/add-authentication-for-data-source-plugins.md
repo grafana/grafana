@@ -291,7 +291,7 @@ To allow Grafana to pass the access token to the plugin, update the data source 
 
 When configured, Grafana can forward authorization HTTP headers such as `Authorization` or `X-ID-Token` to a backend data source. This information is available across the `QueryData`, `CallResource` and `CheckHealth` requests.
 
-In order to achieve this, it is necessary to create a HTTP client using the [Grafana Plugin SDK](https://pkg.go.dev/github.com/grafana/grafana-plugin-sdk-go/backend/httpclient). This package provides functionality to expose request information which can be subsequently forwarded downstream and used directly within the plugin.
+To get Grafana to forward the headers, create a HTTP client using the [Grafana Plugin SDK](https://pkg.go.dev/github.com/grafana/grafana-plugin-sdk-go/backend/httpclient). This package exposes request information which can be subsequently forwarded downstream and used directly within the plugin.
 
 ```go
 func NewDatasource(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
@@ -361,11 +361,11 @@ func (ds *dataSource) CallResource(ctx context.Context, req *backend.CallResourc
 
 ## Forward cookies for the logged-in user
 
-Your data source plugin can forward certain cookies for the logged-in Grafana user to the data source. Use the [DataSourceHttpSettings](https://developers.grafana.com/ui/latest/index.html?path=/story/data-source-datasourcehttpsettings--basic) component on the data source's configuration page. It provides the **Allowed cookies** option, where the names of cookies to pass to the plugin can be specified.
+Your data source plugin can forward cookies for the logged-in Grafana user to the data source. Use the [DataSourceHttpSettings](https://developers.grafana.com/ui/latest/index.html?path=/story/data-source-datasourcehttpsettings--basic) component on the data source's configuration page. It provides the **Allowed cookies** option, where you can specify the cookie names.
 
-When configured, as with [authorization headers](#forward-oauth-identity-for-the-logged-in-user), these cookies will be automatically injected if the SDK HTTP client is used.
+When configured, as with [authorization headers](#forward-oauth-identity-for-the-logged-in-user), these cookies are automatically injected if the SDK HTTP client is used.
 
-You can also extract them in the `QueryData`, `CallResource` and `CheckHealth` requests if required.
+You can also extract the cookies in the `QueryData`, `CallResource` and `CheckHealth` requests if required.
 
 ```go
 func (ds *dataSource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -389,7 +389,7 @@ func (ds *dataSource) CheckHealth(ctx context.Context, req *backend.CheckHealthR
 
 ## Forward user header for the logged-in user
 
-When [send_user_header]({{< relref "../../setup-grafana/configure-grafana/_index.md#send_user_header" >}}) is enabled, Grafana will pass the user header to the plugin using the `X-Grafana-User` header. The process to achieve this is the same as forwarding [authorization headers](#forward-oauth-identity-for-the-logged-in-user) or [configured cookies](#forward-cookies-for-the-logged-in-user).
+When [send_user_header]({{< relref "../../setup-grafana/configure-grafana/_index.md#send_user_header" >}}) is enabled, Grafana will pass the user header to the plugin using the `X-Grafana-User` header. You can forward this header as well as [authorization headers](#forward-oauth-identity-for-the-logged-in-user) or [configured cookies](#forward-cookies-for-the-logged-in-user).
 
 ```go
 func (ds *dataSource) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
