@@ -65,7 +65,7 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 	}
 
 	// Does user exist in the database?
-	usr, errUserInDB := s.getUser(ctx, id.AuthModule, id.AuthID, id.ClientParams.LookUpParams)
+	usr, _, errUserInDB := s.getUser(ctx, id)
 	if errUserInDB != nil && !errors.Is(errUserInDB, user.ErrUserNotFound) {
 		s.log.Error("error retrieving user", "error", errUserInDB,
 			"auth_module", id.AuthModule, "auth_id", id.AuthID,
@@ -286,35 +286,36 @@ func (s *UserSync) createUser(ctx context.Context, id *authn.Identity) (*user.Us
 	return usr, nil
 }
 
-func (s *UserSync) getUser(ctx context.Context, authModule, authID string, params login.UserLookupParams) (*user.User, error) {
+func (s *UserSync) getUser(ctx context.Context, identity *authn.Identity) (*user.User, *login.UserAuth, error) {
 	// Check auth info fist
-	if authID != "" && authModule != "" {
+	if identity.AuthID != "" && identity.AuthModule != "" {
 		query := &login.GetAuthInfoQuery{
-			AuthModule: authModule,
-			AuthId:     authID,
+			AuthId:     identity.AuthID,
+			AuthModule: identity.AuthModule,
 		}
 		errGetAuthInfo := s.authInfoService.GetAuthInfo(ctx, query)
 		if errGetAuthInfo == nil {
 			usr, errGetByID := s.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: query.Result.UserId})
 			if errGetByID == nil {
-				return usr, nil
+				return usr, query.Result, nil
 			}
 
 			if !errors.Is(errGetByID, user.ErrUserNotFound) {
-				return nil, errGetByID
+				return nil, nil, errGetByID
 			}
 		}
 
 		if !errors.Is(errGetAuthInfo, user.ErrUserNotFound) {
-			return nil, errGetAuthInfo
+			return nil, nil, errGetAuthInfo
 		}
 	}
 
 	// Check user table to grab existing user
-	return s.lookupByOneOf(ctx, &params)
+	usr, err := s.lookupByOneOf(ctx, identity.ClientParams.LookUpParams)
+	return usr, nil, err
 }
 
-func (s *UserSync) lookupByOneOf(ctx context.Context, params *login.UserLookupParams) (*user.User, error) {
+func (s *UserSync) lookupByOneOf(ctx context.Context, params login.UserLookupParams) (*user.User, error) {
 	var usr *user.User
 	var err error
 
