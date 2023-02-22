@@ -40,7 +40,6 @@ func TestGrafana_AuthenticateProxy(t *testing.T) {
 				proxyFieldEmail:  "email@email.com",
 			},
 			expectedIdentity: &authn.Identity{
-				OrgID:      1,
 				OrgRoles:   map[int64]org.RoleType{1: org.RoleViewer},
 				Login:      "test",
 				Name:       "name",
