@@ -18,8 +18,8 @@ var (
 	errExpiredAccessToken = errutil.NewBase(errutil.StatusUnauthorized, "oauth.expired-token")
 )
 
-func ProvideOauthTokenSync(service oauthtoken.OAuthTokenService, sessionService auth.UserTokenService) *OauthTokenSync {
-	return &OauthTokenSync{
+func ProvideOAuthTokenSync(service oauthtoken.OAuthTokenService, sessionService auth.UserTokenService) *OAuthTokenSync {
+	return &OAuthTokenSync{
 		log.New("oauth_token.sync"),
 		localcache.New(10*time.Minute, 15*time.Minute),
 		service,
@@ -27,14 +27,14 @@ func ProvideOauthTokenSync(service oauthtoken.OAuthTokenService, sessionService 
 	}
 }
 
-type OauthTokenSync struct {
+type OAuthTokenSync struct {
 	log            log.Logger
 	cache          *localcache.CacheService
 	service        oauthtoken.OAuthTokenService
 	sessionService auth.UserTokenService
 }
 
-func (s *OauthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
+func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
 	namespace, id := identity.NamespacedID()
 	// only perform oauth token check if identity is a user
 	if namespace != authn.NamespaceUser {

@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-func TestOauthTokenSync_SyncOauthTokenHook(t *testing.T) {
+func TestOauthTokenSync_SyncOAuthTokenHook(t *testing.T) {
 	type testCase struct {
 		desc     string
 		identity *authn.Identity
@@ -118,7 +118,7 @@ func TestOauthTokenSync_SyncOauthTokenHook(t *testing.T) {
 				},
 			}
 
-			sync := &OauthTokenSync{
+			sync := &OAuthTokenSync{
 				log:            log.NewNopLogger(),
 				cache:          localcache.New(0, 0),
 				service:        service,
