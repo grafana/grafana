@@ -13,26 +13,17 @@ import { operators } from '../traceql/traceql';
 import { SearchFilter } from '../types';
 
 interface Props {
-  id: string;
+  filter: SearchFilter;
   datasource: TempoDatasource;
   updateFilter: (f: SearchFilter) => void;
-  deleteFilter: (t: string) => void;
   setError: (error: FetchError) => void;
-  tagOptions?: Array<SelectableValue<string>>;
   isTagsLoading?: boolean;
-  tag?: string;
-  operator?: string;
+  tags: string[];
 }
-const SearchField = ({ id, datasource, tag, operator, updateFilter, isTagsLoading, setError }: Props) => {
+const SearchField = ({ filter, datasource, updateFilter, isTagsLoading, tags, setError }: Props) => {
   const languageProvider = useMemo(() => new TempoLanguageProvider(datasource), [datasource]);
-
-  const [filter, setFilter] = useState<SearchFilter>({ id, tag, operator: operator || '=' });
   const [isLoadingValues, setIsLoadingValues] = useState(false);
   const [options, setOptions] = useState<Array<SelectableValue<string>>>([]);
-
-  useEffect(() => {
-    updateFilter(filter);
-  }, [updateFilter, filter]);
 
   const loadOptions = useCallback(
     async (name: string, query = '') => {
@@ -75,21 +66,37 @@ const SearchField = ({ id, datasource, tag, operator, updateFilter, isTagsLoadin
 
   return (
     <HorizontalGroup spacing={'xs'}>
+      {filter.type === 'dynamic' && (
+        <Select
+          inputId={`${filter.id}-tag`}
+          isLoading={isTagsLoading}
+          options={tags.map((t) => ({ label: t, value: t }))}
+          onOpenMenu={() => tags}
+          value={filter.tag}
+          onChange={(v) => {
+            updateFilter({ ...filter, tag: v?.value });
+          }}
+          placeholder="Select a tag"
+          isClearable
+          aria-label={`select-${filter.id}-tag`}
+          allowCustomValue={true}
+          width={filter.tag ? undefined : 18}
+        />
+      )}
       <Select
-        inputId={`${id}-operator`}
+        inputId={`${filter.id}-operator`}
         options={operators.map((op) => ({ label: op, value: op }))}
         value={filter.operator}
         onChange={(v) => {
-          setFilter({ ...filter, operator: v?.value });
+          updateFilter({ ...filter, operator: v?.value });
         }}
         isClearable={false}
-        disabled={!!operator}
-        aria-label={`select-${id}-operator`}
+        aria-label={`select-${filter.id}-operator`}
         allowCustomValue={true}
         width={8}
       />
       <Select
-        inputId={`${id}-value`}
+        inputId={`${filter.id}-value`}
         isLoading={isLoadingValues}
         options={options}
         onOpenMenu={() => {
@@ -99,11 +106,11 @@ const SearchField = ({ id, datasource, tag, operator, updateFilter, isTagsLoadin
         }}
         value={filter.value}
         onChange={(v) => {
-          setFilter({ ...filter, value: v?.value });
+          updateFilter({ ...filter, value: v?.value });
         }}
         placeholder="Select a value"
         isClearable
-        aria-label={`select-${id}-value`}
+        aria-label={`select-${filter.id}-value`}
         allowCustomValue={true}
         width={filter.value ? undefined : 18}
       />

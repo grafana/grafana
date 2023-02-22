@@ -5,12 +5,17 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { FetchError } from '@grafana/runtime';
 import { Alert, HorizontalGroup, useStyles2 } from '@grafana/ui';
 
+import { createErrorNotification } from '../../../../core/copy/appNotification';
+import { notifyApp } from '../../../../core/reducers/appNotification';
+import { dispatch } from '../../../../store/store';
 import { TempoDatasource } from '../datasource';
+import { CompletionProvider } from '../traceql/autocomplete';
 import { SearchFilter, TempoQuery } from '../types';
 
 import DurationInput from './DurationInput';
 import InlineSearchField from './InlineSearchField';
 import SearchField from './SearchField';
+import TagsInput from './TagsInput';
 
 interface Props {
   datasource: TempoDatasource;
@@ -24,6 +29,8 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
   const styles = useStyles2(getStyles);
   const [error, setError] = useState<Error | FetchError | null>(null);
 
+  const [tags, setTags] = useState<string[]>([]);
+  const [isTagsLoading, setIsTagsLoading] = useState(true);
   const [filters, setFilters] = useState<Record<string, SearchFilter>>({});
   const [traceQlQuery, setTraceQlQuery] = useState<string>('');
 
@@ -35,11 +42,36 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
     });
   }, []);
 
-  const deleteFilter = (tag: string) => {
-    const copy = { ...filters };
-    delete filters[tag];
-    setFilters(copy);
-  };
+  // const deleteFilter = (tag: string) => {
+  //   const copy = { ...filters };
+  //   delete filters[tag];
+  //   setFilters(copy);
+  // };
+
+  useEffect(() => {
+    const fetchTags = async () => {
+      try {
+        await datasource.languageProvider.start();
+        const tags = datasource.languageProvider.getTags();
+
+        if (tags) {
+          // This is needed because the /api/v2/search/tag/${tag}/values API expects "status" and the v1 API expects "status.code"
+          // so Tempo doesn't send anything and we inject it here for the autocomplete
+          if (!tags.find((t) => t === 'status')) {
+            tags.push('status');
+          }
+          const tagsWithDot = tags.sort().map((t) => `.${t}`);
+          setTags(tagsWithDot);
+          setIsTagsLoading(false);
+        }
+      } catch (error) {
+        if (error instanceof Error) {
+          dispatch(notifyApp(createErrorNotification('Error', error)));
+        }
+      }
+    };
+    fetchTags();
+  }, [datasource]);
 
   const handleOnChange = useCallback(
     (value) => {
@@ -66,33 +98,25 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
     handleOnChange(traceQlQuery);
   }, [handleOnChange, traceQlQuery]);
 
-  // const onKeyDown = (keyEvent: React.KeyboardEvent) => {
-  //   if (keyEvent.key === 'Enter' && (keyEvent.shiftKey || keyEvent.ctrlKey)) {
-  //     onRunQuery();
-  //   }
-  // };
-
   return (
     <>
       <div className={styles.container}>
         <InlineSearchField label={'Service Name'}>
           <SearchField
-            id={'service-name'}
+            filter={{ id: 'service-name', type: 'static', tag: '.service.name', operator: '=' }}
             datasource={datasource}
             setError={setError}
             updateFilter={updateFilter}
-            deleteFilter={deleteFilter}
-            tag={'.service.name'}
+            tags={[]}
           />
         </InlineSearchField>
         <InlineSearchField label={'Span Name'}>
           <SearchField
-            id={'tag-name'}
+            filter={{ id: 'tag-name', type: 'static', tag: 'name', operator: '=' }}
             datasource={datasource}
             setError={setError}
             updateFilter={updateFilter}
-            deleteFilter={deleteFilter}
-            tag={'name'}
+            tags={[]}
           />
         </InlineSearchField>
         <InlineSearchField label={'Duration'}>
@@ -101,6 +125,17 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
             <DurationInput id={'max-duration'} tag={'duration'} operators={['<', '<=']} updateFilter={updateFilter} />
           </HorizontalGroup>
         </InlineSearchField>
+        <InlineSearchField label={'Tags'}>
+          <TagsInput
+            filters={Object.values(filters)}
+            datasource={datasource}
+            setError={setError}
+            updateFilter={updateFilter}
+            tags={[...CompletionProvider.intrinsics, ...tags]}
+            isTagsLoading={isTagsLoading}
+          />
+        </InlineSearchField>
+
         <pre>{traceQlQuery}</pre>
       </div>
       {error ? (

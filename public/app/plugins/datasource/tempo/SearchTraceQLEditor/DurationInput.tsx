@@ -11,8 +11,8 @@ interface Props {
   tag?: string;
   operators: string[];
 }
-const SearchField = ({ id, tag, operators, updateFilter }: Props) => {
-  const [filter, setFilter] = useState<SearchFilter>({ id, tag, operator: operators[0] });
+const DurationInput = ({ id, tag, operators, updateFilter }: Props) => {
+  const [filter, setFilter] = useState<SearchFilter>({ id, type: 'static', tag, operator: operators[0] });
 
   useEffect(() => {
     updateFilter(filter);
@@ -45,4 +45,4 @@ const SearchField = ({ id, tag, operators, updateFilter }: Props) => {
   );
 };
 
-export default SearchField;
+export default DurationInput;
