@@ -12,14 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-declare module 'combokeys' {
-  export default class Combokeys {
-    constructor(element: HTMLElement);
-    bind: (binding: string | string[], handler: CombokeysHandler) => void;
-    reset: () => void;
-  }
-}
-
 declare module 'react-helmet';
 declare module 'json-markup';
 declare module 'react-vis-force';
