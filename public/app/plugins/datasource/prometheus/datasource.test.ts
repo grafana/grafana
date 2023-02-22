@@ -185,6 +185,7 @@ describe('PrometheusDatasource', () => {
 
   describe('customQueryParams', () => {
     const target = { expr: 'test{job="testjob"}', format: 'time_series', refId: '' };
+
     function makeQuery(target: PromQuery) {
       return {
         range: { from: time({ seconds: 63 }), to: time({ seconds: 183 }) },
@@ -977,6 +978,19 @@ describe('PrometheusDatasource2', () => {
     };
 
     const response = createAnnotationResponse();
+    const emptyResponse = createEmptyAnnotationResponse();
+
+    describe('handle result with empty fields', () => {
+      it('should return empty results', async () => {
+        fetchMock.mockImplementation(() => of(emptyResponse));
+
+        await ds.annotationQuery(options).then((data) => {
+          results = data;
+        });
+
+        expect(results.length).toBe(0);
+      });
+    });
 
     describe('when time series query is cancelled', () => {
       it('should return empty results', async () => {
@@ -2391,6 +2405,31 @@ function createAnnotationResponse() {
               },
               data: {
                 values: [[123], [456]],
+              },
+            },
+          ],
+        },
+      },
+    },
+  };
+
+  return { ...response };
+}
+
+function createEmptyAnnotationResponse() {
+  const response = {
+    data: {
+      results: {
+        X: {
+          frames: [
+            {
+              schema: {
+                name: 'bar',
+                refId: 'X',
+                fields: [],
+              },
+              data: {
+                values: [],
               },
             },
           ],
