@@ -21,6 +21,10 @@ import (
 )
 
 func TestIntegrationAzureMonitor(t *testing.T) {
+	// Custom Azure clouds support will allow mocking Azure endpoints for integration testing
+	// https://github.com/grafana/grafana/issues/61124
+	t.Skip("skipping integration test until custom Azure clouds supported")
+
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
