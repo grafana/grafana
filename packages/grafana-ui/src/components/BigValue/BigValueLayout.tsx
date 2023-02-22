@@ -29,7 +29,6 @@ export abstract class BigValueLayout {
 
   constructor(private props: Props) {
     const { width, height, value, text } = props;
-    // console.log(value, 'values in bigvallayout');
 
     this.valueColor = value.color ?? 'gray';
     this.panelPadding = height > 100 ? 12 : 8;
@@ -459,7 +458,6 @@ export interface BigValueTextValues extends DisplayValue {
 
 function getTextValues(props: Props): BigValueTextValues {
   const { value, alignmentFactors, count } = props;
-  // console.log(value, 'value in getTextValues');
   let { textMode } = props;
 
   const titleToAlignTo = alignmentFactors ? alignmentFactors.title : value.title;
