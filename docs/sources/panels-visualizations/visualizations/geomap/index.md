@@ -82,7 +82,7 @@ There are three map layer types to choose from in the Geomap visualization.
 
 There are also five alpha layer types.
 
-- [Night / Day (alpha)]({{< relref "#night--day-layer-alpha" >}}) renders a night / day region.
+- [Night / Day layer]({{< relref "#night--day-layer" >}}) renders a night / day region.
 - **Icon at last point (alpha)** renders an icon at the last data point.
 - **Dynamic GeoJSON (alpha)** styles a GeoJSON file based on query results.
 - **Route (alpha)** render data points as a route.
@@ -332,7 +332,7 @@ An ArcGIS layer is a layer from an ESRI ArcGIS MapServer.
 - [**ArcGIS Services**](https://services.arcgisonline.com/arcgis/rest/services)
 - [**About ESRI**](https://www.esri.com/en-us/about/about-esri/overview)
 
-## Night / Day layer (Alpha)
+## Night / Day layer
 
 The Night / Day layer displays night and day regions based on the current time range.
 
