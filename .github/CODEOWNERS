@@ -12,27 +12,27 @@
 # This should make it easy to add new rules without breaking existing ones.
 
 # Documentation
-/docs/ @grafana/docs-grafana
+/.changelog-archive @grafana/docs-grafana
+/CHANGELOG.md @grafana/docs-grafana
+/CODE_OF_CONDUCT.md @grafana/docs-grafana
+/CONTRIBUTING.md @grafana/docs-grafana
+/GOVERNANCE.md @RichiH
+/HALL_OF_FAME.md @grafana/docs-grafana
+/ISSUE_TRIAGE.md @grafana/grafana-community-support
+/LICENSE @torkelo
+/LICENSING.md @torkelo
+/MAINTAINERS.md @RichiH
+/NOTICE.md @torkelo
+/README.md @grafana/docs-grafana
+/ROADMAP.md @torkelo
+/SECURITY.md @grafana/security-team
+/SUPPORT.md @torkelo
+/UPGRADING_DEPENDENCIES.md @grafana/docs-grafana
+/WORKFLOW.md @torkelo
 /contribute/ @grafana/docs-grafana
+/docs/ @grafana/docs-grafana
 /docs/sources/developers/plugins/ @grafana/docs-grafana @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
 /docs/sources/developers/plugins/backend/ @grafana/docs-grafana @grafana/plugins-platform-backend
-/.changelog-archive @grafana/docs-grafana
-CHANGELOG.md @grafana/docs-grafana
-CODE_OF_CONDUCT.md @grafana/docs-grafana
-CONTRIBUTING.md @grafana/docs-grafana
-GOVERNANCE.md @RichiH
-HALL_OF_FAME.md @grafana/docs-grafana
-ISSUE_TRIAGE.md @grafana/grafana-community-support
-LICENSE @torkelo
-LICENSING.md @torkelo
-MAINTAINERS.md @RichiH
-NOTICE.md @torkelo
-README.md @grafana/docs-grafana
-ROADMAP.md @torkelo
-SECURITY.md @grafana/security-team
-SUPPORT.md @torkelo
-UPGRADING_DEPENDENCIES.md @grafana/docs-grafana
-WORKFLOW.md @torkelo
 
 
 # Set up, dashboards/visualization, best practices: Chris Moyer
