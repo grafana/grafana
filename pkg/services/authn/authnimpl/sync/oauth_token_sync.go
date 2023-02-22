@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -20,6 +21,7 @@ var (
 func ProvideOauthTokenSync(service oauthtoken.OAuthTokenService, sessionService auth.UserTokenService) *OauthTokenSync {
 	return &OauthTokenSync{
 		log.New("oauth_token.sync"),
+		localcache.New(10*time.Minute, 15*time.Minute),
 		service,
 		sessionService,
 	}
@@ -27,6 +29,7 @@ func ProvideOauthTokenSync(service oauthtoken.OAuthTokenService, sessionService 
 
 type OauthTokenSync struct {
 	log            log.Logger
+	cache          *localcache.CacheService
 	service        oauthtoken.OAuthTokenService
 	sessionService auth.UserTokenService
 }
@@ -43,6 +46,11 @@ func (s *OauthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 		return nil
 	}
 
+	// if we recently have performed this it would be cached, so we can skip the hook
+	if _, ok := s.cache.Get(identity.ID); ok {
+		return nil
+	}
+
 	token, exists, _ := s.service.HasOAuthEntry(ctx, &user.SignedInUser{UserID: id})
 	// user is not authenticated through oauth so skip further checks
 	if !exists {
@@ -51,11 +59,16 @@ func (s *OauthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 
 	// token has no expire time configured, so we don't have to refresh it
 	if token.OAuthExpiry.IsZero() {
+		// cache the token check, so we don't perform it on every request
+		s.cache.Set(identity.ID, struct{}{}, getOAuthTokenCacheTTL(token.OAuthExpiry))
 		return nil
 	}
 
+	expires := token.OAuthExpiry.Round(0).Add(-oauthtoken.ExpiryDelta)
 	// token has not expired, so we don't have to refresh it
-	if !token.OAuthExpiry.Round(0).Add(-oauthtoken.ExpiryDelta).Before(time.Now()) {
+	if !expires.Before(time.Now()) {
+		// cache the token check, so we don't perform it on every request
+		s.cache.Set(identity.ID, struct{}{}, getOAuthTokenCacheTTL(expires))
 		return nil
 	}
 
@@ -76,4 +89,19 @@ func (s *OauthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 	}
 
 	return nil
+}
+
+const maxOAuthTokenCacheTTL = 10 * time.Minute
+
+func getOAuthTokenCacheTTL(t time.Time) time.Duration {
+	if t.IsZero() {
+		return maxOAuthTokenCacheTTL
+	}
+
+	ttl := t.Sub(time.Now())
+	if ttl > maxOAuthTokenCacheTTL {
+		return maxOAuthTokenCacheTTL
+	}
+
+	return ttl
 }
