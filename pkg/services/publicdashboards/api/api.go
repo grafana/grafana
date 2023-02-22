@@ -1,11 +1,14 @@
 package api
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -23,6 +26,7 @@ type Api struct {
 	RouteRegister          routing.RouteRegister
 	AccessControl          accesscontrol.AccessControl
 	Features               *featuremgmt.FeatureManager
+	Bus                    bus.Bus
 	Log                    log.Logger
 }
 
@@ -31,21 +35,29 @@ func ProvideApi(
 	rr routing.RouteRegister,
 	ac accesscontrol.AccessControl,
 	features *featuremgmt.FeatureManager,
+	bus bus.Bus,
 ) *Api {
 	api := &Api{
 		PublicDashboardService: pd,
 		RouteRegister:          rr,
 		AccessControl:          ac,
 		Features:               features,
+		Bus:                    bus,
 		Log:                    log.New("publicdashboards.api"),
 	}
 
 	// attach api if PublicDashboards feature flag is enabled
 	if features.IsEnabled(featuremgmt.FlagPublicDashboards) {
 		api.RegisterAPIEndpoints()
+		// add event listeners
+		api.Bus.AddEventListener(api.handleDashboardDeleted)
 	}
 
 	return api
+}
+
+func (api *Api) handleDashboardDeleted(ctx context.Context, event *events.DashboardDeleted) error {
+	return api.PublicDashboardService.HandleDashboardDeleted(ctx, event.UID, event.OrgID)
 }
 
 // RegisterAPIEndpoints Registers Endpoints on Grafana Router

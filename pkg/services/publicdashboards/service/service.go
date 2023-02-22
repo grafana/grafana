@@ -342,6 +342,10 @@ func (pd *PublicDashboardServiceImpl) Delete(ctx context.Context, orgId int64, u
 	return nil
 }
 
+func (pd *PublicDashboardServiceImpl) HandleDashboardDeleted(ctx context.Context, uid string, orgId int64) error {
+	return pd.store.HandleDashboardDeleted(ctx, uid, orgId)
+}
+
 // intervalMS and maxQueryData values are being calculated on the frontend for regular dashboards
 // we are doing the same for public dashboards but because this access would be public, we need a way to keep this
 // values inside reasonable bounds to avoid an attack that could hit data sources with a small interval and a big

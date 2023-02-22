@@ -254,6 +254,11 @@ func (d *PublicDashboardStoreImpl) Update(ctx context.Context, cmd SavePublicDas
 	return affectedRows, err
 }
 
+func (d *PublicDashboardStoreImpl) HandleDashboardDeleted(ctx context.Context, uid string, orgId int64) error {
+	_, err := d.Delete(ctx, orgId, uid)
+	return err
+}
+
 // Deletes a public dashboard
 func (d *PublicDashboardStoreImpl) Delete(ctx context.Context, orgId int64, uid string) (int64, error) {
 	dashboard := &PublicDashboard{OrgId: orgId, Uid: uid}

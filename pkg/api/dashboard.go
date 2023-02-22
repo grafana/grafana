@@ -10,12 +10,14 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/components/dashdiffs"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -335,6 +337,18 @@ func (hs *HTTPServer) deleteDashboard(c *contextmodel.ReqContext) response.Respo
 			}
 		}
 		return response.Error(500, "Failed to delete dashboard", err)
+	}
+
+	err = hs.bus.Publish(c.Req.Context(), &events.DashboardDeleted{
+		Timestamp: time.Now(),
+		Title:     "dashboard deleted",
+		ID:        dash.ID,
+		UID:       dash.UID,
+		OrgID:     dash.OrgID,
+		IsFolder:  dash.IsFolder,
+	})
+	if err != nil {
+		hs.log.Debug("error publishing dashboardDeleted event", "error", err)
 	}
 
 	if hs.Live != nil {
