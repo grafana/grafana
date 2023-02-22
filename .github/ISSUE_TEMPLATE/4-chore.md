@@ -5,7 +5,7 @@ labels: 'type: chore'
 ---
 
 <!--
-Please use this template to create your chore issue. You can use this template if you spot an out-of-date README, discover a misspelling, or happen upon deeply nested 7-layer for-loop that could be better handled another way. Please use this template for your non-bug related fixes/updates/refactors.
+Please use this template to create your chore issue. You can use this template if you spot an out-of-date README, discover a misspelling, or happen upon a deeply nested 7-layer for-loop that could be better handled another way. Please use this template for your non-bug related fixes/updates/refactors.
 
 - Questions should be posted to: https://community.grafana.com
 - Use query inspector to troubleshoot issues: https://bit.ly/2XNF6YS
