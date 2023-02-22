@@ -5,6 +5,7 @@ import {
   defaultVariableModel,
   GraphPanel,
   Panel,
+  RowPanel,
   VariableModel,
 } from '@grafana/schema';
 import { GetVariables } from 'app/features/variables/state/selectors';
@@ -23,13 +24,14 @@ export function createDashboardModelFixture(
     schemaVersion: 1,
     revision: 1,
     style: 'dark',
+    timezone: '',
     ...dashboardInput,
   };
 
   return new DashboardModel(dashboardJson, meta, getVariablesFromState);
 }
 
-export function createPanelJSONFixture(panelInput: Partial<Panel | GraphPanel> = {}): Panel {
+export function createPanelJSONFixture(panelInput: Partial<Panel | GraphPanel | RowPanel> = {}): Panel {
   return {
     fieldConfig: {
       defaults: {},

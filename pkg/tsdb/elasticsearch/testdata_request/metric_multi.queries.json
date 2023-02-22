@@ -14,8 +14,8 @@
         "field": "testtime"
       }
     ],
-    "timeField": "testtime",
-    "intervalMs": 30000,
+    "intervalMs": 1000,
+    "interval": 1000000000,
     "maxDataPoints": 814
   },
   {
@@ -34,8 +34,8 @@
         "field": "testtime"
       }
     ],
-    "timeField": "testtime",
-    "intervalMs": 30000,
+    "intervalMs": 1000,
+    "interval": 1000000000,
     "maxDataPoints": 814
   }
 ]

@@ -11,12 +11,21 @@ export interface Props {
   onNameChange: (name: string) => void;
   onDefaultChange: (value: boolean) => void;
   alertingSupported: boolean;
+  disabled?: boolean;
 }
 
-export function BasicSettings({ dataSourceName, isDefault, onDefaultChange, onNameChange, alertingSupported }: Props) {
+export function BasicSettings({
+  dataSourceName,
+  isDefault,
+  onDefaultChange,
+  onNameChange,
+  alertingSupported,
+  disabled,
+}: Props) {
   return (
     <>
-      {<AlertingEnabled enabled={alertingSupported} />}
+      <AlertingEnabled enabled={alertingSupported} />
+
       <div className="gf-form-group" aria-label="Datasource settings page basic settings">
         <div className="gf-form-inline">
           {/* Name */}
@@ -26,6 +35,7 @@ export function BasicSettings({ dataSourceName, isDefault, onDefaultChange, onNa
               tooltip="The name is used when you select the data source in panels. The default data source is
               'preselected in new panels."
               grow
+              disabled={disabled}
             >
               <Input
                 id="basic-settings-name"
@@ -40,7 +50,7 @@ export function BasicSettings({ dataSourceName, isDefault, onDefaultChange, onNa
           </div>
 
           {/* Is Default */}
-          <InlineField label="Default" labelWidth={8}>
+          <InlineField label="Default" labelWidth={8} disabled={disabled}>
             <InlineSwitch
               id="basic-settings-default"
               value={isDefault}

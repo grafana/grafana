@@ -1,8 +1,9 @@
 package plugindef
 
 import (
+	"regexp"
 	"strings"
-
+	
 	"github.com/grafana/thema"
 )
 
@@ -33,6 +34,18 @@ seqs: [
 				// Human-readable name of the plugin that is shown to the user in
 				// the UI.
 				name: string
+
+				// FIXME there appears to be a bug in thema that prevents this from working. Maybe it'd
+				// help to refer to it with an alias, but thema can't support using current list syntax.
+				// syntax (fixed by grafana/thema#82). Either way, for now, pascalName gets populated in Go.
+				let sani = (strings.ToTitle(regexp.ReplaceAllLiteral("[^a-zA-Z]+", name, "")))
+
+				// The PascalCase name for the plugin. Used for creating machine-friendly
+				// identifiers, typically in code generation.
+				//
+				// If not provided, defaults to name, but title-cased and sanitized (only
+				// alphabetical characters allowed).
+				pascalName: string & =~"^([A-Z][a-zA-Z]{1,62})$" | *sani
 
 				// Plugin category used on the Add data source page.
 				category?: "tsdb" | "logging" | "cloud" | "tracing" | "sql" | "enterprise" | "profiling" | "other"
@@ -86,7 +99,9 @@ seqs: [
 
 					// (Legacy) The Angular component to use for a page.
 					component?: string
-					role?:      "Admin" | "Editor" | "Viewer"
+
+					// The minimum role a user must have to see this page in the navigation menu.
+					role?: "Admin" | "Editor" | "Viewer"
 
 					// RBAC action the user must have to access the route
 					action?: string
@@ -94,7 +109,7 @@ seqs: [
 					// Used for app plugins.
 					path?: string
 
-					// Add the include to the side menu.
+					// Add the include to the navigation menu.
 					addToNav?: bool
 
 					// Page or dashboard when user clicks the icon in the side menu.
@@ -106,6 +121,23 @@ seqs: [
 					icon?: string
 					...
 				}
+
+				#ExtensionsLink: {
+					// Target where the link will be rendered
+					placement: =~"^(plugins|grafana)\/[a-z-/0-9]*$"
+					// Type of extension
+					type: "link"
+					// Title that will be displayed for the rendered link
+					title: string & strings.MinRunes(3) & strings.MaxRunes(22)
+					// Description for the rendered link
+					description: string & strings.MaxRunes(200)
+					// Path relative to the extending plugin e.g. /incidents/declare
+					path: =~"^\/.*"
+					...
+				}
+
+				// Extensions made by the current plugin.
+				extensions?: [...#ExtensionsLink]
 
 				// For data source plugins, if the plugin supports logs.
 				logs?: bool
@@ -160,9 +192,9 @@ seqs: [
 				// each of which has an action and an optional scope.
 				// Example: the role 'Schedules Reader' bundles permissions to view all schedules of the plugin.
 				#Role: {
-					name: string,
-					name: =~"^([A-Z][0-9A-Za-z ]+)$"
-					description: string,
+					name:        string
+					name:        =~"^([A-Z][0-9A-Za-z ]+)$"
+					description: string
 					permissions: [...#Permission]
 				}
 

@@ -1,20 +1,22 @@
-import { VizPanel } from '../components';
-import { Scene, EmbeddedScene } from '../components/Scene';
-import { SceneCanvasText } from '../components/SceneCanvasText';
-import { SceneSubMenu } from '../components/SceneSubMenu';
-import { SceneTimePicker } from '../components/SceneTimePicker';
-import { SceneFlexLayout } from '../components/layout/SceneFlexLayout';
-import { SceneTimeRange } from '../core/SceneTimeRange';
-import { VariableValueSelectors } from '../variables/components/VariableValueSelectors';
-import { SceneVariableSet } from '../variables/sets/SceneVariableSet';
-import { CustomVariable } from '../variables/variants/CustomVariable';
-import { DataSourceVariable } from '../variables/variants/DataSourceVariable';
-import { TestVariable } from '../variables/variants/TestVariable';
+import {
+  VizPanel,
+  SceneCanvasText,
+  SceneTimePicker,
+  SceneFlexLayout,
+  SceneTimeRange,
+  VariableValueSelectors,
+  SceneVariableSet,
+  CustomVariable,
+  DataSourceVariable,
+  TestVariable,
+} from '@grafana/scenes';
+
+import { DashboardScene } from '../dashboard/DashboardScene';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
-export function getVariablesDemo(standalone: boolean): Scene {
-  const state = {
+export function getVariablesDemo(): DashboardScene {
+  return new DashboardScene({
     title: 'Variables',
     $variables: new SceneVariableSet({
       variables: [
@@ -78,16 +80,12 @@ export function getVariablesDemo(standalone: boolean): Scene {
     }),
     $timeRange: new SceneTimeRange(),
     actions: [new SceneTimePicker({})],
-    subMenu: new SceneSubMenu({
-      children: [new VariableValueSelectors({})],
-    }),
-  };
-
-  return standalone ? new Scene(state) : new EmbeddedScene(state);
+    controls: [new VariableValueSelectors({})],
+  });
 }
 
-export function getVariablesDemoWithAll(): Scene {
-  const scene = new Scene({
+export function getVariablesDemoWithAll(): DashboardScene {
+  return new DashboardScene({
     title: 'Variables with All values',
     $variables: new SceneVariableSet({
       variables: [
@@ -149,10 +147,6 @@ export function getVariablesDemoWithAll(): Scene {
     }),
     $timeRange: new SceneTimeRange(),
     actions: [new SceneTimePicker({})],
-    subMenu: new SceneSubMenu({
-      children: [new VariableValueSelectors({})],
-    }),
+    controls: [new VariableValueSelectors({})],
   });
-
-  return scene;
 }

@@ -4,7 +4,6 @@ import (
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
-	"github.com/grafana/grafana/pkg/infra/supportbundles/supportbundlesimpl"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	uss "github.com/grafana/grafana/pkg/infra/usagestats/service"
 	"github.com/grafana/grafana/pkg/infra/usagestats/statscollector"
@@ -16,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	ldapapi "github.com/grafana/grafana/pkg/services/ldap/api"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/store/sanitizer"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
 	"github.com/grafana/grafana/pkg/services/thumbs"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
 )
@@ -53,7 +54,7 @@ func ProvideBackgroundServiceRegistry(
 	_ dashboardsnapshots.Service, _ *alerting.AlertNotificationService,
 	_ serviceaccounts.Service, _ *guardian.Provider,
 	_ *plugindashboardsservice.DashboardUpdater, _ *sanitizer.Provider,
-	_ *grpcserver.HealthService, _ entity.EntityStoreServer, _ *grpcserver.ReflectionService,
+	_ *grpcserver.HealthService, _ entity.EntityStoreServer, _ *grpcserver.ReflectionService, _ *ldapapi.Service,
 ) *BackgroundServiceRegistry {
 	return NewBackgroundServiceRegistry(
 		httpServer,

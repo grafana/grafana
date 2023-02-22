@@ -149,12 +149,13 @@ func validateForInterval(ruleNode *apimodels.PostableExtendedRuleNode) (time.Dur
 
 // validateRuleGroup validates API model (definitions.PostableRuleGroupConfig) and converts it to a collection of models.AlertRule.
 // Returns a slice that contains all rules described by API model or error if either group specification or an alert definition is not valid.
+// It also returns a map containing current existing alerts that don't contain the is_paused field in the body of the call.
 func validateRuleGroup(
 	ruleGroupConfig *apimodels.PostableRuleGroupConfig,
 	orgId int64,
 	namespace *folder.Folder,
 	conditionValidator func(ngmodels.Condition) error,
-	cfg *setting.UnifiedAlertingSettings) ([]*ngmodels.AlertRule, error) {
+	cfg *setting.UnifiedAlertingSettings) ([]*ngmodels.AlertRuleWithOptionals, error) {
 	if ruleGroupConfig.Name == "" {
 		return nil, errors.New("rule group name cannot be empty")
 	}
@@ -175,7 +176,7 @@ func validateRuleGroup(
 
 	// TODO should we validate that interval is >= cfg.MinInterval? Currently, we allow to save but fix the specified interval if it is < cfg.MinInterval
 
-	result := make([]*ngmodels.AlertRule, 0, len(ruleGroupConfig.Rules))
+	result := make([]*ngmodels.AlertRuleWithOptionals, 0, len(ruleGroupConfig.Rules))
 	uids := make(map[string]int, cap(result))
 	for idx := range ruleGroupConfig.Rules {
 		rule, err := validateRuleNode(&ruleGroupConfig.Rules[idx], ruleGroupConfig.Name, interval, orgId, namespace, conditionValidator, cfg)
@@ -189,8 +190,23 @@ func validateRuleGroup(
 			}
 			uids[rule.UID] = idx
 		}
+
+		var hasPause, isPaused bool
+		original := ruleGroupConfig.Rules[idx]
+		if alert := original.GrafanaManagedAlert; alert != nil {
+			if alert.IsPaused != nil {
+				isPaused = *alert.IsPaused
+				hasPause = true
+			}
+		}
+
+		ruleWithOptionals := ngmodels.AlertRuleWithOptionals{}
+		rule.IsPaused = isPaused
 		rule.RuleGroupIndex = idx + 1
-		result = append(result, rule)
+		ruleWithOptionals.AlertRule = *rule
+		ruleWithOptionals.HasPause = hasPause
+
+		result = append(result, &ruleWithOptionals)
 	}
 	return result, nil
 }

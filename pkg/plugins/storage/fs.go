@@ -220,7 +220,7 @@ func isSymlinkRelativeTo(basePath string, symlinkDestPath string, symlinkOrigPat
 func extractFile(file *zip.File, filePath string) (err error) {
 	fileMode := file.Mode()
 	// This is entry point for backend plugins so we want to make them executable
-	if strings.HasSuffix(filePath, "_linux_amd64") || strings.HasSuffix(filePath, "_darwin_amd64") {
+	if strings.HasSuffix(filePath, "_linux_amd64") || strings.HasSuffix(filePath, "_linux_arm") || strings.HasSuffix(filePath, "_linux_arm64") || strings.HasSuffix(filePath, "_darwin_amd64") || strings.HasSuffix(filePath, "_darwin_arm64") || strings.HasSuffix(filePath, "_windows_amd64.exe") {
 		fileMode = os.FileMode(0755)
 	}
 

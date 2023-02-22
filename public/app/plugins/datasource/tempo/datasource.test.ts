@@ -20,7 +20,6 @@ import {
   setDataSourceSrv,
   TemplateSrv,
 } from '@grafana/runtime';
-import config from 'app/core/config';
 
 import {
   DEFAULT_LIMIT,
@@ -442,7 +441,6 @@ describe('Tempo apm table', () => {
         },
       },
     });
-    config.featureToggles.tempoApmTable = true;
     setDataSourceSrv(backendSrvWithPrometheus as any);
     const response = await lastValueFrom(
       ds.query({ targets: [{ queryType: 'serviceMap' }], range: getDefaultTimeRange() } as any)
@@ -567,6 +565,16 @@ describe('Tempo apm table', () => {
     expect(builtQuery).toBe(
       'topk(5, sum(rate(traces_spanmetrics_calls_total{service="app",service="app"}[$__range])) by (span_name))'
     );
+
+    targets = { targets: [{ queryType: 'serviceMap', serviceMapQuery: '{client="${app}",service="$app"}' }] } as any;
+    builtQuery = buildExpr(
+      { expr: 'topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name))', params: [] },
+      '',
+      targets
+    );
+    expect(builtQuery).toBe(
+      'topk(5, sum(rate(traces_spanmetrics_calls_total{service="${app}",service="$app"}[$__range])) by (span_name))'
+    );
   });
 
   it('should build link expr correctly', () => {
@@ -669,17 +677,17 @@ describe('Tempo apm table', () => {
     ];
     const objToAlign = {
       'HTTP GET - root': {
-        value: 0.1234,
+        value: '0.1234',
       },
       'HTTP GET': {
-        value: 0.6789,
+        value: '0.6789',
       },
       'HTTP POST - post': {
-        value: 0.4321,
+        value: '0.4321',
       },
     };
 
-    let value = getRateAlignedValues(resp, objToAlign as any);
+    let value = getRateAlignedValues(resp, objToAlign);
     expect(value.toString()).toBe('0,0.6789,0.1234,0,0.4321');
   });
 

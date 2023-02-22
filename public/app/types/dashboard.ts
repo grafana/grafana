@@ -23,7 +23,6 @@ export interface DashboardMeta {
   folderId?: number;
   folderUid?: string;
   canMakeEditable?: boolean;
-  submenuEnabled?: boolean;
   provisioned?: boolean;
   provisionedExternalId?: string;
   isStarred?: boolean;
@@ -44,7 +43,6 @@ export interface DashboardMeta {
   publicDashboardAccessToken?: string;
   publicDashboardUid?: string;
   publicDashboardEnabled?: boolean;
-  hasPublicDashboard?: boolean;
   dashboardNotFound?: boolean;
 }
 
@@ -85,7 +83,7 @@ export enum DashboardInitPhase {
 
 export interface DashboardInitError {
   message: string;
-  error: any;
+  error: unknown;
 }
 
 export enum KioskMode {

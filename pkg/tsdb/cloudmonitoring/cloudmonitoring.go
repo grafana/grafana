@@ -380,7 +380,7 @@ func queryModel(query backend.DataQuery) (grafanaQuery, error) {
 }
 
 func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataRequest) ([]cloudMonitoringQueryExecutor, error) {
-	var cloudMonitoringQueryExecutors []cloudMonitoringQueryExecutor
+	cloudMonitoringQueryExecutors := make([]cloudMonitoringQueryExecutor, 0, len(req.Queries))
 	startTime := req.Queries[0].TimeRange.From
 	endTime := req.Queries[0].TimeRange.To
 	durationSeconds := int(endTime.Sub(startTime).Seconds())
@@ -412,6 +412,7 @@ func (s *Service) buildQueryExecutors(logger log.Logger, req *backend.QueryDataR
 				parameters: q.TimeSeriesQuery,
 				IntervalMS: query.Interval.Milliseconds(),
 				timeRange:  req.Queries[0].TimeRange,
+				logger:     logger,
 			}
 		case sloQueryType:
 			cmslo := &cloudMonitoringSLO{

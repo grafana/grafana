@@ -24,13 +24,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
+	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -202,7 +202,7 @@ func (ss *SQLStore) ensureMainOrgAndAdminUser(test bool) error {
 
 		// If this is a test database, don't exit early when any user is found.
 		if !test {
-			var stats models.SystemUserCountStats
+			var stats stats.SystemUserCountStats
 			// TODO: Should be able to rename "Count" to "count", for more standard SQL style
 			// Just have to make sure it gets deserialized properly into models.SystemUserCountStats
 			rawSQL := `SELECT COUNT(id) AS Count FROM ` + ss.Dialect.Quote("user")

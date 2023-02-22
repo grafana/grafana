@@ -14,6 +14,7 @@ import {
   DataSourceApi,
   DataSourceJsonData,
   DataSourceRef,
+  DataTransformContext,
   DataTransformerConfig,
   getDefaultTimeRange,
   LoadingState,
@@ -57,6 +58,7 @@ export interface QueryRunnerOptions<
   minInterval: string | undefined | null;
   scopedVars?: ScopedVars;
   cacheTimeout?: string | null;
+  queryCachingTTL?: number | null;
   transformations?: DataTransformerConfig[];
   app?: CoreApp;
 }
@@ -187,14 +189,11 @@ export class PanelQueryRunner {
             return of(data);
           }
 
-          const replace = (option: string): string => {
-            return getTemplateSrv().replace(option, data?.request?.scopedVars);
+          const ctx: DataTransformContext = {
+            interpolate: (v: string) => getTemplateSrv().replace(v, data?.request?.scopedVars),
           };
-          transformations.forEach((transform: any) => {
-            transform.replace = replace;
-          });
 
-          return transformDataFrame(transformations, data.series).pipe(map((series) => ({ ...data, series })));
+          return transformDataFrame(transformations, data.series, ctx).pipe(map((series) => ({ ...data, series })));
         })
       );
   };
@@ -211,6 +210,7 @@ export class PanelQueryRunner {
       timeRange,
       timeInfo,
       cacheTimeout,
+      queryCachingTTL,
       maxDataPoints,
       scopedVars,
       minInterval,
@@ -238,6 +238,7 @@ export class PanelQueryRunner {
       maxDataPoints: maxDataPoints,
       scopedVars: scopedVars || {},
       cacheTimeout,
+      queryCachingTTL,
       startTime: Date.now(),
       rangeRaw: timeRange.raw,
     };

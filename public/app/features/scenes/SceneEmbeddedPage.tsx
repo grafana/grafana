@@ -1,5 +1,5 @@
 // Libraries
-import React, { FC } from 'react';
+import React from 'react';
 
 import { NavModelItem } from '@grafana/data';
 import { Page } from 'app/core/components/Page/Page';
@@ -9,16 +9,17 @@ import { getSceneByTitle } from './scenes';
 
 export interface Props extends GrafanaRouteComponentProps<{ name: string }> {}
 
-export const SceneEmbeddedPage: FC<Props> = (props) => {
-  const scene = getSceneByTitle(props.match.params.name, false);
+export const SceneEmbeddedPage = (props: Props) => {
+  const scene = getSceneByTitle(props.match.params.name);
 
   if (!scene) {
     return <h2>Scene not found</h2>;
   }
 
   const pageNav: NavModelItem = {
-    text: scene.state.title,
+    text: 'Embedded Scene',
   };
+
   return (
     <Page navId="scenes" pageNav={pageNav}>
       <Page.Contents>

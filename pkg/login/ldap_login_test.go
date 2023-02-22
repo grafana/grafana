@@ -5,20 +5,22 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/ldap"
-	"github.com/grafana/grafana/pkg/services/login/logintest"
-	"github.com/grafana/grafana/pkg/services/multildap"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/ldap"
+	"github.com/grafana/grafana/pkg/services/ldap/multildap"
+	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/login/logintest"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var errTest = errors.New("test error")
 
 func TestLoginUsingLDAP(t *testing.T) {
 	LDAPLoginScenario(t, "When LDAP enabled and no server configured", func(sc *LDAPLoginScenarioContext) {
-		setting.LDAPEnabled = true
+		cfg := setting.NewCfg()
+		cfg.LDAPEnabled = true
 
 		sc.withLoginResult(false)
 		getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
@@ -30,7 +32,7 @@ func TestLoginUsingLDAP(t *testing.T) {
 		}
 
 		loginService := &logintest.LoginServiceFake{}
-		enabled, err := loginUsingLDAP(context.Background(), sc.loginUserQuery, loginService)
+		enabled, err := loginUsingLDAP(context.Background(), sc.loginUserQuery, loginService, cfg)
 		require.EqualError(t, err, errTest.Error())
 
 		assert.True(t, enabled)
@@ -38,11 +40,12 @@ func TestLoginUsingLDAP(t *testing.T) {
 	})
 
 	LDAPLoginScenario(t, "When LDAP disabled", func(sc *LDAPLoginScenarioContext) {
-		setting.LDAPEnabled = false
+		cfg := setting.NewCfg()
+		cfg.LDAPEnabled = false
 
 		sc.withLoginResult(false)
 		loginService := &logintest.LoginServiceFake{}
-		enabled, err := loginUsingLDAP(context.Background(), sc.loginUserQuery, loginService)
+		enabled, err := loginUsingLDAP(context.Background(), sc.loginUserQuery, loginService, cfg)
 		require.NoError(t, err)
 
 		assert.False(t, enabled)
@@ -62,8 +65,8 @@ func (auth *mockAuth) Ping() ([]*multildap.ServerStatus, error) {
 	return nil, nil
 }
 
-func (auth *mockAuth) Login(query *models.LoginUserQuery) (
-	*models.ExternalUserInfo,
+func (auth *mockAuth) Login(query *login.LoginUserQuery) (
+	*login.ExternalUserInfo,
 	error,
 ) {
 	auth.loginCalled = true
@@ -76,14 +79,14 @@ func (auth *mockAuth) Login(query *models.LoginUserQuery) (
 }
 
 func (auth *mockAuth) Users(logins []string) (
-	[]*models.ExternalUserInfo,
+	[]*login.ExternalUserInfo,
 	error,
 ) {
 	return nil, nil
 }
 
 func (auth *mockAuth) User(login string) (
-	*models.ExternalUserInfo,
+	*login.ExternalUserInfo,
 	ldap.ServerConfig,
 	error,
 ) {
@@ -103,7 +106,7 @@ func mockLDAPAuthenticator(valid bool) *mockAuth {
 		validLogin: valid,
 	}
 
-	newLDAP = func(servers []*ldap.ServerConfig) multildap.IMultiLDAP {
+	newLDAP = func(servers []*ldap.ServerConfig, _ *setting.Cfg) multildap.IMultiLDAP {
 		return mock
 	}
 
@@ -111,7 +114,7 @@ func mockLDAPAuthenticator(valid bool) *mockAuth {
 }
 
 type LDAPLoginScenarioContext struct {
-	loginUserQuery        *models.LoginUserQuery
+	loginUserQuery        *login.LoginUserQuery
 	LDAPAuthenticatorMock *mockAuth
 }
 
@@ -124,22 +127,13 @@ func LDAPLoginScenario(t *testing.T, desc string, fn LDAPLoginScenarioFunc) {
 		mock := &mockAuth{}
 
 		sc := &LDAPLoginScenarioContext{
-			loginUserQuery: &models.LoginUserQuery{
+			loginUserQuery: &login.LoginUserQuery{
 				Username:  "user",
 				Password:  "pwd",
 				IpAddress: "192.168.1.1:56433",
 			},
 			LDAPAuthenticatorMock: mock,
 		}
-
-		origNewLDAP := newLDAP
-		origGetLDAPConfig := getLDAPConfig
-		origLDAPEnabled := setting.LDAPEnabled
-		t.Cleanup(func() {
-			newLDAP = origNewLDAP
-			getLDAPConfig = origGetLDAPConfig
-			setting.LDAPEnabled = origLDAPEnabled
-		})
 
 		getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 			config := &ldap.Config{
@@ -153,7 +147,7 @@ func LDAPLoginScenario(t *testing.T, desc string, fn LDAPLoginScenarioFunc) {
 			return config, nil
 		}
 
-		newLDAP = func(server []*ldap.ServerConfig) multildap.IMultiLDAP {
+		newLDAP = func(server []*ldap.ServerConfig, _ *setting.Cfg) multildap.IMultiLDAP {
 			return mock
 		}
 

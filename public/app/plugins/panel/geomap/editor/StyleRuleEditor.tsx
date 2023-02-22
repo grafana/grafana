@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { FeatureLike } from 'ol/Feature';
-import React, { FC, useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useObservable } from 'react-use';
 import { Observable } from 'rxjs';
 
@@ -30,10 +30,9 @@ const comparators = [
   { label: '<=', value: ComparisonOperation.LTE },
 ];
 
-export const StyleRuleEditor: FC<StandardEditorProps<FeatureStyleConfig, any, unknown, StyleRuleEditorSettings>> = (
-  props
-) => {
-  const { value, onChange, item, context } = props;
+type Props = StandardEditorProps<FeatureStyleConfig, any, unknown, StyleRuleEditorSettings>;
+
+export const StyleRuleEditor = ({ value, onChange, item, context }: Props) => {
   const settings: StyleRuleEditorSettings = item.settings;
   const { features, layerInfo } = settings;
 

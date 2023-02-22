@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
-import { Router } from 'react-router-dom';
+import { match, Router } from 'react-router-dom';
 import { useEffectOnce } from 'react-use';
 import { AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
@@ -10,9 +10,11 @@ import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 import { createTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService, setDataSourceSrv } from '@grafana/runtime';
+import { Dashboard } from '@grafana/schema';
 import { notifyApp } from 'app/core/actions';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
+import { RouteDescriptor } from 'app/core/navigation/types';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 import { DashboardInitPhase, DashboardMeta, DashboardRoutes } from 'app/types';
 
@@ -20,6 +22,7 @@ import { configureStore } from '../../../store/configureStore';
 import { Props as LazyLoaderProps } from '../dashgrid/LazyLoader';
 import { DashboardSrv, setDashboardSrv } from '../services/DashboardSrv';
 import { DashboardModel } from '../state';
+import { createDashboardModelFixture } from '../state/__fixtures__/dashboardFixtures';
 
 import { Props, UnthemedDashboardPage } from './DashboardPage';
 
@@ -63,10 +66,6 @@ jest.mock('react-virtualized-auto-sizer', () => {
   return ({ children }: AutoSizerProps) => children({ height: 1, width: 1 });
 });
 
-// the mock below gets rid of this warning from recompose:
-// Warning: React.createFactory() is deprecated and will be removed in a future major release. Consider using JSX or use React.createElement() directly instead.
-jest.mock('@jaegertracing/jaeger-ui-components', () => ({}));
-
 interface ScenarioContext {
   dashboard?: DashboardModel | null;
   container?: HTMLElement;
@@ -77,7 +76,7 @@ interface ScenarioContext {
   setup: (fn: () => void) => void;
 }
 
-function getTestDashboard(overrides?: any, metaOverrides?: Partial<DashboardMeta>): DashboardModel {
+function getTestDashboard(overrides?: Partial<Dashboard>, metaOverrides?: Partial<DashboardMeta>): DashboardModel {
   const data = Object.assign(
     {
       title: 'My dashboard',
@@ -93,8 +92,7 @@ function getTestDashboard(overrides?: any, metaOverrides?: Partial<DashboardMeta
     overrides
   );
 
-  const meta = Object.assign({ canSave: true, canEdit: true }, metaOverrides);
-  return new DashboardModel(data, meta);
+  return createDashboardModelFixture(data, metaOverrides);
 }
 
 function dashboardPageScenario(description: string, scenarioFn: (ctx: ScenarioContext) => void) {
@@ -114,8 +112,8 @@ function dashboardPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
         const store = configureStore();
         const props: Props = {
           ...getRouteComponentProps({
-            match: { params: { slug: 'my-dash', uid: '11' } } as any,
-            route: { routeName: DashboardRoutes.Normal } as any,
+            match: { params: { slug: 'my-dash', uid: '11' } } as unknown as match,
+            route: { routeName: DashboardRoutes.Normal } as RouteDescriptor,
           }),
           navIndex: {
             dashboards: { text: 'Dashboards', id: 'dashboards', parentItem: { text: 'Home', id: HOME_NAV_ID } },
@@ -283,7 +281,7 @@ describe('DashboardPage', () => {
       ctx.rerender({
         match: {
           params: { uid: 'new-uid' },
-        } as any,
+        } as unknown as match,
         dashboard: getTestDashboard({ title: 'Another dashboard' }),
       });
     });
@@ -313,22 +311,6 @@ describe('DashboardPage', () => {
         dashboard: getTestDashboard(),
       });
       ctx.rerender({ dashboard: ctx.dashboard });
-    });
-
-    it('should not render page toolbar and submenu', () => {
-      expect(screen.queryAllByTestId(selectors.pages.Dashboard.DashNav.navV2)).toHaveLength(0);
-      expect(screen.queryAllByLabelText(selectors.pages.Dashboard.SubMenu.submenu)).toHaveLength(0);
-    });
-  });
-
-  dashboardPageScenario('When dashboard is public', (ctx) => {
-    ctx.setup(() => {
-      locationService.partial({ kiosk: false });
-      ctx.mount({
-        queryParams: {},
-        dashboard: getTestDashboard(),
-      });
-      ctx.rerender({ dashboard: ctx.dashboard, isPublic: true });
     });
 
     it('should not render page toolbar and submenu', () => {

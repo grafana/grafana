@@ -3,7 +3,7 @@ package teamguardian
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -13,6 +13,6 @@ type TeamGuardian interface {
 }
 
 type Store interface {
-	GetTeamMembers(context.Context, models.GetTeamMembersQuery) ([]*models.TeamMemberDTO, error)
+	GetTeamMembers(context.Context, team.GetTeamMembersQuery) ([]*team.TeamMemberDTO, error)
 	DeleteByUser(context.Context, int64) error
 }

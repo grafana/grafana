@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	alertingModels "github.com/grafana/alerting/models"
 
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/util/cmputil"
@@ -89,17 +90,9 @@ const (
 )
 
 const (
-	RuleUIDLabel      = "__alert_rule_uid__"
-	NamespaceUIDLabel = "__alert_rule_namespace_uid__"
-
 	// Annotations are actually a set of labels, so technically this is the label name of an annotation.
 	DashboardUIDAnnotation = "__dashboardUid__"
 	PanelIDAnnotation      = "__panelId__"
-	OrgIDAnnotation        = "__orgId__"
-
-	// This isn't a hard-coded secret token, hence the nolint.
-	//nolint:gosec
-	ImageTokenAnnotation = "__alertImageToken__"
 
 	// GrafanaReservedLabelPrefix contains the prefix for Grafana reserved labels. These differ from "__<label>__" labels
 	// in that they are not meant for internal-use only and will be passed-through to AMs and available to users in the same
@@ -111,26 +104,26 @@ const (
 
 	// StateReasonAnnotation is the name of the annotation that explains the difference between evaluation state and alert state (i.e. changing state when NoData or Error).
 	StateReasonAnnotation = GrafanaReservedLabelPrefix + "state_reason"
-
-	ValuesAnnotation      = "__values__"
-	ValueStringAnnotation = "__value_string__"
 )
 
 const (
 	StateReasonMissingSeries = "MissingSeries"
 	StateReasonError         = "Error"
+	StateReasonPaused        = "Paused"
+	StateReasonUpdated       = "Updated"
+	StateReasonRuleDeleted   = "RuleDeleted"
 )
 
 var (
 	// InternalLabelNameSet are labels that grafana automatically include as part of the labelset.
 	InternalLabelNameSet = map[string]struct{}{
-		RuleUIDLabel:      {},
-		NamespaceUIDLabel: {},
+		alertingModels.RuleUIDLabel:      {},
+		alertingModels.NamespaceUIDLabel: {},
 	}
 	InternalAnnotationNameSet = map[string]struct{}{
-		DashboardUIDAnnotation: {},
-		PanelIDAnnotation:      {},
-		ImageTokenAnnotation:   {},
+		DashboardUIDAnnotation:              {},
+		PanelIDAnnotation:                   {},
+		alertingModels.ImageTokenAnnotation: {},
 	}
 )
 
@@ -166,6 +159,18 @@ type AlertRule struct {
 	For         time.Duration
 	Annotations map[string]string
 	Labels      map[string]string
+	IsPaused    bool
+}
+
+// AlertRuleWithOptionals This is to avoid having to pass in additional arguments deep in the call stack. Alert rule
+// object is created in an early validation step without knowledge about current alert rule fields or if they need to be
+// overridden. This is done in a later step and, in that step, we did not have knowledge about if a field was optional
+// nor its possible value.
+type AlertRuleWithOptionals struct {
+	AlertRule
+	// This parameter is to know if an optional API field was sent and, therefore, patch it with the current field from
+	// DB in case it was not sent.
+	HasPause bool
 }
 
 // GetDashboardUID returns the DashboardUID or "".
@@ -271,6 +276,11 @@ type AlertRuleKeyWithVersion struct {
 	AlertRuleKey `xorm:"extends"`
 }
 
+type AlertRuleKeyWithVersionAndPauseStatus struct {
+	IsPaused                bool
+	AlertRuleKeyWithVersion `xorm:"extends"`
+}
+
 // AlertRuleGroupKey is the identifier of a group of alerts
 type AlertRuleGroupKey struct {
 	OrgID        int64
@@ -345,6 +355,7 @@ type AlertRuleVersion struct {
 	For         time.Duration
 	Annotations map[string]string
 	Labels      map[string]string
+	IsPaused    bool
 }
 
 // GetAlertRuleByUIDQuery is the query for retrieving/deleting an alert rule by UID and organisation ID.
@@ -443,7 +454,7 @@ func (c Condition) IsValid() bool {
 //   - AlertRule.Condition and AlertRule.Data
 //
 // If either of the pair is specified, neither is patched.
-func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRule) {
+func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRuleWithOptionals) {
 	if ruleToPatch.Title == "" {
 		ruleToPatch.Title = existingRule.Title
 	}
@@ -468,6 +479,9 @@ func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRule) {
 	}
 	if ruleToPatch.For == -1 {
 		ruleToPatch.For = existingRule.For
+	}
+	if !ruleToPatch.HasPause {
+		ruleToPatch.IsPaused = existingRule.IsPaused
 	}
 }
 

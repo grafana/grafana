@@ -2,10 +2,8 @@ import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { sceneGraph, SceneObject, isSceneObject, SceneLayoutChild } from '@grafana/scenes';
 import { Icon, useStyles2 } from '@grafana/ui';
-
-import { sceneGraph } from '../core/sceneGraph';
-import { SceneObject, isSceneObject, SceneLayoutChild } from '../core/types';
 
 export interface Props {
   node: SceneObject;

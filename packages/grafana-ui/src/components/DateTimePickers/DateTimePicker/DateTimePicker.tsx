@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
-import React, { FC, FormEvent, ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import React, { FormEvent, ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import Calendar from 'react-calendar';
 import { usePopper } from 'react-popper';
 import { useMedia } from 'react-use';
@@ -27,7 +27,7 @@ export interface Props {
   maxDate?: Date;
 }
 
-export const DateTimePicker: FC<Props> = ({ date, maxDate, label, onChange }) => {
+export const DateTimePicker = ({ date, maxDate, label, onChange }: Props) => {
   const [isOpen, setOpen] = useState(false);
 
   const ref = useRef<HTMLDivElement>(null);

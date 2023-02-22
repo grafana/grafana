@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 
 import { DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -10,6 +11,7 @@ import { contextSrv } from 'app/core/core';
 import { StoreState, AccessControlAction, useSelector } from 'app/types';
 
 import { getDataSources, getDataSourcesCount, useDataSourcesRoutes, useLoadDataSources } from '../state';
+import { trackCreateDashboardClicked, trackExploreClicked, trackDataSourcesListViewed } from '../tracking';
 import { constructDataSourceExploreUrl } from '../utils';
 
 import { DataSourcesListHeader } from './DataSourcesListHeader';
@@ -21,6 +23,8 @@ export function DataSourcesList() {
   const dataSourcesCount = useSelector(({ dataSources }: StoreState) => getDataSourcesCount(dataSources));
   const hasFetched = useSelector(({ dataSources }: StoreState) => dataSources.hasFetched);
   const hasCreateRights = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
+  const hasWriteRights = contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
+  const hasExploreRights = contextSrv.hasPermission(AccessControlAction.DataSourcesExplore);
 
   return (
     <DataSourcesListView
@@ -28,6 +32,8 @@ export function DataSourcesList() {
       dataSourcesCount={dataSourcesCount}
       isLoading={!hasFetched}
       hasCreateRights={hasCreateRights}
+      hasWriteRights={hasWriteRights}
+      hasExploreRights={hasExploreRights}
     />
   );
 }
@@ -37,12 +43,28 @@ export type ViewProps = {
   dataSourcesCount: number;
   isLoading: boolean;
   hasCreateRights: boolean;
+  hasWriteRights: boolean;
+  hasExploreRights: boolean;
 };
 
-export function DataSourcesListView({ dataSources, dataSourcesCount, isLoading, hasCreateRights }: ViewProps) {
+export function DataSourcesListView({
+  dataSources,
+  dataSourcesCount,
+  isLoading,
+  hasCreateRights,
+  hasWriteRights,
+  hasExploreRights,
+}: ViewProps) {
   const styles = useStyles2(getStyles);
   const dataSourcesRoutes = useDataSourcesRoutes();
-  const canExploreDataSources = contextSrv.hasPermission(AccessControlAction.DataSourcesExplore);
+  const location = useLocation();
+
+  useEffect(() => {
+    trackDataSourcesListViewed({
+      grafana_version: config.buildInfo.version,
+      path: location.pathname,
+    });
+  }, [location]);
 
   if (isLoading) {
     return <PageLoader />;
@@ -75,7 +97,7 @@ export function DataSourcesListView({ dataSources, dataSourcesCount, isLoading, 
           const dsLink = config.appSubUrl + dataSourcesRoutes.Edit.replace(/:uid/gi, dataSource.uid);
           return (
             <li key={dataSource.uid}>
-              <Card href={dsLink}>
+              <Card href={hasWriteRights ? dsLink : undefined}>
                 <Card.Heading>{dataSource.name}</Card.Heading>
                 <Card.Figure>
                   <img src={dataSource.typeLogoUrl} alt="" height="40px" width="40px" className={styles.logo} />
@@ -88,16 +110,40 @@ export function DataSourcesListView({ dataSources, dataSourcesCount, isLoading, 
                   ]}
                 </Card.Meta>
                 <Card.Tags>
-                  <LinkButton icon="apps" fill="outline" variant="secondary" href={config.appSubUrl + '/dashboard/new'}>
-                    Build a Dashboard
+                  {/* Build Dashboard */}
+                  <LinkButton
+                    icon="apps"
+                    fill="outline"
+                    variant="secondary"
+                    href={`dashboard/new-with-ds/${dataSource.uid}`}
+                    onClick={() => {
+                      trackCreateDashboardClicked({
+                        grafana_version: config.buildInfo.version,
+                        datasource_uid: dataSource.uid,
+                        plugin_name: dataSource.typeName,
+                        path: location.pathname,
+                      });
+                    }}
+                  >
+                    Build a dashboard
                   </LinkButton>
-                  {canExploreDataSources && (
+
+                  {/* Explore */}
+                  {hasExploreRights && (
                     <LinkButton
                       icon="compass"
                       fill="outline"
                       variant="secondary"
                       className={styles.button}
                       href={constructDataSourceExploreUrl(dataSource)}
+                      onClick={() => {
+                        trackExploreClicked({
+                          grafana_version: config.buildInfo.version,
+                          datasource_uid: dataSource.uid,
+                          plugin_name: dataSource.typeName,
+                          path: location.pathname,
+                        });
+                      }}
                     >
                       Explore
                     </LinkButton>

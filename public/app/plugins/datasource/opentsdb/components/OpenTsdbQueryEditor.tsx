@@ -74,10 +74,8 @@ export function OpenTsdbQueryEditor({
     }
   });
 
-  // previously called as an autocomplete on every input,
-  // in this we call it once on init and filter in the MetricSection component
-  async function suggestMetrics(): Promise<Array<{ value: string; description: string }>> {
-    return datasource.metricFindQuery('metrics()').then(getTextValues);
+  async function suggestMetrics(value: string): Promise<Array<{ value: string; description: string }>> {
+    return datasource.metricFindQuery(`metrics(${value})`).then(getTextValues);
   }
 
   // previously called as an autocomplete on every input,

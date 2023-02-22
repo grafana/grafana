@@ -102,7 +102,7 @@ export const PageHeader: FC<Props> = ({ navItem: model, renderTitle, actions, in
       <div className="page-header__inner">
         <span className="page-header__logo">
           {icon && <Icon name={icon} size="xxxl" style={{ marginTop }} />}
-          {main.img && <img className="page-header__img" src={main.img} alt={`logo of ${main.text}`} />}
+          {main.img && <img className="page-header__img" src={main.img} alt="" />}
         </span>
 
         <div className={cx('page-header__info-block', styles.headerText)}>

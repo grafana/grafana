@@ -32,7 +32,8 @@ export const heatmapTransformer: SynchronousDataTransformerInfo<HeatmapTransform
   description: 'calculate heatmap from source data',
   defaultOptions: {},
 
-  operator: (options) => (source) => source.pipe(map((data) => heatmapTransformer.transformer(options)(data))),
+  operator: (options, ctx) => (source) =>
+    source.pipe(map((data) => heatmapTransformer.transformer(options, ctx)(data))),
 
   transformer: (options: HeatmapTransformerOptions) => {
     return (data: DataFrame[]) => {
@@ -190,7 +191,7 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
     },
     fields: [
       {
-        name: 'xMax',
+        name: xField.type === FieldType.time ? 'xMax' : 'x',
         type: xField.type,
         values: new ArrayVector(xs),
         config: xField.config,

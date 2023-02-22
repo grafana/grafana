@@ -26,7 +26,7 @@ import {
 jest.mock('@grafana/data', () => ({
   ...jest.requireActual('@grafana/data'),
   dateTimeFormat: () => 'format() jest mocked',
-  dateTimeFormatTimeAgo: (ts: any) => 'fromNow() jest mocked',
+  dateTimeFormatTimeAgo: () => 'fromNow() jest mocked',
 }));
 
 const getTestContext = () => {
@@ -97,6 +97,8 @@ const createExplorePanelData = (args: Partial<ExplorePanelData>): ExplorePanelDa
     traceFrames: [],
     nodeGraphFrames: [],
     flameGraphFrames: [],
+    rawPrometheusFrames: [],
+    rawPrometheusResult: null,
   };
 
   return { ...defaults, ...args };
@@ -128,6 +130,8 @@ describe('decorateWithGraphLogsTraceTableAndFlameGraph', () => {
       graphResult: null,
       tableResult: null,
       logsResult: null,
+      rawPrometheusFrames: [],
+      rawPrometheusResult: null,
     });
   });
 
@@ -153,6 +157,8 @@ describe('decorateWithGraphLogsTraceTableAndFlameGraph', () => {
       graphResult: null,
       tableResult: null,
       logsResult: null,
+      rawPrometheusFrames: [],
+      rawPrometheusResult: null,
     });
   });
 
@@ -181,6 +187,8 @@ describe('decorateWithGraphLogsTraceTableAndFlameGraph', () => {
       graphResult: null,
       tableResult: null,
       logsResult: null,
+      rawPrometheusFrames: [],
+      rawPrometheusResult: null,
     });
   });
 });
