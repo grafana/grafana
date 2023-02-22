@@ -111,7 +111,7 @@ However, while `{{ $values.B }}` prints the number 6.789, it is actually a strin
 If the query in your alert rule returns no data, or fails because of a datasource error or timeout, then any Threshold, Reduce or Math expressions that use that query will also return no data or an error. When this happens these expression will be absent from `$values`. It is good practice to check that a RefID is present before using it as otherwise your template will break should your query return no data or an error. You can do this using an if statement:
 
 ```
-{{ if $values.B }}{{ $labels.service }} has over 5% of responses with 5xx errors: {{ humanize $values.B.Value }}%{{ end }}
+{{ if $values.B }}{{ $labels.service }} has over 5% of responses with 5xx errors: {{ humanizePercentage $values.B.Value }}{{ end }}
 ```
 
 ## Classic Conditions
@@ -122,36 +122,24 @@ If the rule uses Classic Conditions instead of Threshold, Reduce and Math expres
 The first condition is {{ $values.B0 }}, and the second condition is {{ $values.B1 }}
 ```
 
-## Reference
-
-### Variables
-
-The following template variables are available when expanding labels and annotations:
-
-| Name    | Description                                                                                                                                                                                                                                                                                                                                                                                                |
-| ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| $labels | The labels from the query or condition. For example, `{{ $labels.instance }}` and `{{ $labels.job }}`. This is unavailable when the rule uses a [classic condition]({{< relref "../../alerting-rules/create-grafana-managed-rule/#single-and-multi-dimensional-rule" >}}).                                                                                                                                 |
-| $values | The values of all reduce and math expressions that were evaluated for this alert rule. For example, `{{ $values.A }}`, `{{ $values.A.Labels }}` and `{{ $values.A.Value }}` where `A` is the `refID` of the reduce or math expression. If the rule uses a classic condition instead of a reduce and math expression, then `$values` contains the combination of the `refID` and position of the condition. |
-| $value  | The value string of the alert instance. For example, `[ var='A' labels={instance=foo} value=10 ]`.                                                                                                                                                                                                                                                                                                         |
-
-### Functions
+## Functions
 
 The following functions are also available when expanding labels and annotations:
 
-| Name                                      | Argument type                                                | Return type            | Description                                                                                                                                 |
-| ----------------------------------------- | ------------------------------------------------------------ | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| [humanize](#humanize)                     | number or string                                             | string                 | Converts a number to a more readable format, using metric prefixes.                                                                         |
-| [humanize1024](#humanize1024)             | number or string                                             | string                 | Like humanize, but uses 1024 as the base rather than 1000.                                                                                  |
-| [humanizeDuration](#humanizeduration)     | number or string                                             | string                 | Converts a duration in seconds to a more readable format.                                                                                   |
-| [humanizePercentage](#humanizepercentage) | number or string                                             | string                 | Converts a ratio value to a fraction of 100.                                                                                                |
-| [humanizeTimestamp](#humanizetimestamp)   | number or string                                             | string                 | Converts a Unix timestamp in seconds to a more readable format.                                                                             |
-| [title](#title)                           | string                                                       | string                 | strings.Title, capitalises first character of each word.                                                                                    |
-| [toUpper](#toupper)                       | string                                                       | string                 | strings.ToUpper, converts all characters to upper case.                                                                                     |
-| [toLower](#tolower)                       | string                                                       | string                 | strings.ToLower, converts all characters to lower case.                                                                                     |
-| [match](#match)                           | pattern, text                                                | boolean                | regexp.MatchString Tests for a unanchored regexp match.                                                                                     |
-| [reReplaceAll](#rereplaceall)             | pattern, replacement, text                                   | string                 | Regexp.ReplaceAllString Regexp substitution, unanchored.                                                                                    |
-| [graphLink](#graphlink)                   | string - JSON Object with `"expr"` and `"datasource"` fields | string                 | Returns the path to graphical view in [Explore](https://grafana.com/docs/grafana/latest/explore/) for the given expression and data source. |
-| [tableLink](#tablelink)                   | string- JSON Object with `"expr"` and `"datasource"` fields  | string                 | Returns the path to tabular view in [Explore](https://grafana.com/docs/grafana/latest/explore/) for the given expression and data source.   |
-| [args](#args)                             | []interface{}                                                | map[string]interface{} | Converts a list of objects to a map with keys, for example, arg0, arg1. Use this function to pass multiple arguments to templates.          |
-| [externalURL](#externalurl)               | nothing                                                      | string                 | Returns a string representing the external URL.                                                                                             |
-| [pathPrefix](#pathprefix)                 | nothing                                                      | string                 | Returns the path of the external URL.                                                                                                       |
+| Name                                      | Description                                                                                                                                 | Expects                                                      | Returns                |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ | ---------------------- |
+| [humanize](#humanize)                     | Converts a number to a more readable format, using metric prefixes.                                                                         | number or string                                             | string                 |
+| [humanize1024](#humanize1024)             | Like humanize, but uses 1024 as the base rather than 1000.                                                                                  | number or string                                             | string                 |
+| [humanizeDuration](#humanizeduration)     | Converts a duration in seconds to a more readable format.                                                                                   | number or string                                             | string                 |
+| [humanizePercentage](#humanizepercentage) | Converts a ratio value to a fraction of 100.                                                                                                | number or string                                             | string                 |
+| [humanizeTimestamp](#humanizetimestamp)   | Converts a Unix timestamp in seconds to a more readable format.                                                                             | number or string                                             | string                 |
+| [title](#title)                           | strings.Title, capitalises first character of each word.                                                                                    | string                                                       | string                 |
+| [toUpper](#toupper)                       | strings.ToUpper, converts all characters to upper case.                                                                                     | string                                                       | string                 |
+| [toLower](#tolower)                       | strings.ToLower, converts all characters to lower case.                                                                                     | string                                                       | string                 |
+| [match](#match)                           | regexp.MatchString Tests for a unanchored regexp match.                                                                                     | pattern, text                                                | boolean                |
+| [reReplaceAll](#rereplaceall)             | Regexp.ReplaceAllString Regexp substitution, unanchored.                                                                                    | pattern, replacement, text                                   | string                 |
+| [graphLink](#graphlink)                   | Returns the path to graphical view in [Explore](https://grafana.com/docs/grafana/latest/explore/) for the given expression and data source. | string - JSON Object with `"expr"` and `"datasource"` fields | string                 |
+| [tableLink](#tablelink)                   | Returns the path to tabular view in [Explore](https://grafana.com/docs/grafana/latest/explore/) for the given expression and data source.   | string- JSON Object with `"expr"` and `"datasource"` fields  | string                 |
+| [args](#args)                             | Converts a list of objects to a map with keys, for example, arg0, arg1. Use this function to pass multiple arguments to templates.          | []interface{}                                                | map[string]interface{} |
+| [externalURL](#externalurl)               | Returns a string representing the external URL.                                                                                             | nothing                                                      | string                 |
+| [pathPrefix](#pathprefix)                 | Returns the path of the external URL.                                                                                                       | nothing                                                      | string                 |
