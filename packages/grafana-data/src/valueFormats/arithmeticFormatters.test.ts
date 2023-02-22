@@ -25,7 +25,7 @@ describe('scientific formatting', () => {
     });
     it('renders the correct decimal scientific notation as expected', () => {
       const str = sci(1000, 2);
-      expect(formattedValueToString(str)).toBe('-1.00e+3');
+      expect(formattedValueToString(str)).toBe('1.00e+3');
     });
   });
 });
