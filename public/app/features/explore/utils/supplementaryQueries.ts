@@ -78,7 +78,8 @@ const createFallbackLogVolumeProvider = (
         exploreData.logsResult &&
         exploreData.logsResult.rows &&
         exploreData.logsResult.visibleRange &&
-        exploreData.logsResult.bucketSize !== undefined
+        exploreData.logsResult.bucketSize !== undefined &&
+        exploreData.state === LoadingState.Done
       ) {
         const bucketSize = exploreData.logsResult.bucketSize;
         const targetRefIds = queryTargets.map((query) => query.refId);
