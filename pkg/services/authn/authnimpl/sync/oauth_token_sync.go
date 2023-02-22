@@ -98,7 +98,7 @@ func getOAuthTokenCacheTTL(t time.Time) time.Duration {
 		return maxOAuthTokenCacheTTL
 	}
 
-	ttl := t.Sub(time.Now())
+	ttl := time.Until(t)
 	if ttl > maxOAuthTokenCacheTTL {
 		return maxOAuthTokenCacheTTL
 	}
