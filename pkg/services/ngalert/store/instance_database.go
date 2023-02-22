@@ -60,7 +60,7 @@ func (st DBstore) SaveAlertInstances(ctx context.Context, cmd ...models.AlertIns
 		//  per write.
 		keyNames := []string{"rule_org_id", "rule_uid", "labels_hash"}
 		fieldNames := []string{
-			"rule_org_id", "rule_uid", "labels", "labels_hash", "current_state", "current_cause",
+			"rule_org_id", "rule_uid", "labels", "labels_hash", "current_state",
 			"current_reason", "current_state_since", "current_state_end", "last_eval_time",
 		}
 		fieldsPerRow := len(fieldNames)
@@ -93,9 +93,8 @@ func (st DBstore) SaveAlertInstances(ctx context.Context, cmd ...models.AlertIns
 
 			args = append(args,
 				alertInstance.RuleOrgID, alertInstance.RuleUID, labelTupleJSON, alertInstance.LabelsHash,
-				alertInstance.CurrentState, alertInstance.CurrentCause, alertInstance.CurrentReason,
-				alertInstance.CurrentStateSince.Unix(), alertInstance.CurrentStateEnd.Unix(),
-				alertInstance.LastEvalTime.Unix())
+				alertInstance.CurrentState, alertInstance.CurrentReason, alertInstance.CurrentStateSince.Unix(),
+				alertInstance.CurrentStateEnd.Unix(), alertInstance.LastEvalTime.Unix())
 
 			// If we've reached the maximum batch size, write to the database.
 			if values(args) >= maxArgs {
@@ -147,15 +146,12 @@ func (st DBstore) SaveAlertInstance(ctx context.Context, alertInstance models.Al
 		if err != nil {
 			return err
 		}
-		params := append(make([]interface{}, 0), alertInstance.RuleOrgID, alertInstance.RuleUID, labelTupleJSON,
-			alertInstance.LabelsHash, alertInstance.CurrentState, alertInstance.CurrentCause,
-			alertInstance.CurrentReason, alertInstance.CurrentStateSince.Unix(), alertInstance.CurrentStateEnd.Unix(),
-			alertInstance.LastEvalTime.Unix())
+		params := append(make([]interface{}, 0), alertInstance.RuleOrgID, alertInstance.RuleUID, labelTupleJSON, alertInstance.LabelsHash, alertInstance.CurrentState, alertInstance.CurrentReason, alertInstance.CurrentStateSince.Unix(), alertInstance.CurrentStateEnd.Unix(), alertInstance.LastEvalTime.Unix())
 
 		upsertSQL := st.SQLStore.GetDialect().UpsertSQL(
 			"alert_instance",
 			[]string{"rule_org_id", "rule_uid", "labels_hash"},
-			[]string{"rule_org_id", "rule_uid", "labels", "labels_hash", "current_state", "current_cause", "current_reason", "current_state_since", "current_state_end", "last_eval_time"})
+			[]string{"rule_org_id", "rule_uid", "labels", "labels_hash", "current_state", "current_reason", "current_state_since", "current_state_end", "last_eval_time"})
 		_, err = sess.SQL(upsertSQL, params...).Query()
 		if err != nil {
 			return err

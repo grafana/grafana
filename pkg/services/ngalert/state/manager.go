@@ -147,7 +147,6 @@ func (st *Manager) Warm(ctx context.Context, rulesReader RuleReader) {
 				CacheID:              cacheID,
 				Labels:               lbs,
 				State:                translateInstanceState(entry.CurrentState),
-				Cause:                translateInstanceCause(entry.CurrentCause),
 				StateReason:          entry.CurrentReason,
 				LastEvaluationString: "",
 				StartsAt:             entry.CurrentStateSince,
@@ -188,7 +187,7 @@ func (st *Manager) DeleteStateByRuleUID(ctx context.Context, ruleKey ngModels.Al
 		if s.State != eval.Normal {
 			startsAt = now
 		}
-		s.SetNormal(reason, startsAt, now, CauseNone)
+		s.SetNormal(reason, startsAt, now, nil)
 		// Set Resolved property so the scheduler knows to send a postable alert
 		// to Alertmanager.
 		s.Resolved = oldState == eval.Alerting
@@ -279,10 +278,14 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 	switch result.State {
 	case eval.Normal:
 		logger.Debug("Setting next state", "handler", "resultNormal")
-		resultNormal(currentState, alertRule, result, logger, CauseNone)
+		// There is no reason for this state as this would be normal behaviour. Normal state will have reason when Error
+		// or NoData states are mapped to OK status by the user.
+		resultNormal(currentState, alertRule, result, logger, "")
 	case eval.Alerting:
 		logger.Debug("Setting next state", "handler", "resultAlerting")
-		resultAlerting(currentState, alertRule, result, logger, CauseFiring, "", nil)
+		// There is no reason for this state as this would be normal behaviour. Alerting state will have reason when
+		// Error or NoData states are mapped to OK status by the user.
+		resultAlerting(currentState, alertRule, result, logger, "")
 	case eval.Error:
 		logger.Debug("Setting next state", "handler", "resultError")
 		resultError(currentState, alertRule, result, logger)
@@ -291,15 +294,6 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 		resultNoData(currentState, alertRule, result, logger)
 	case eval.Pending: // we do not emit results with this state
 		logger.Debug("Ignoring set next state as result is pending")
-	}
-
-	// Set reason iff: result and state are different, reason is not Alerting or Normal
-	currentState.StateReason = ""
-
-	if currentState.State != result.State &&
-		result.State != eval.Normal &&
-		result.State != eval.Alerting {
-		currentState.StateReason = result.State.String()
 	}
 
 	// Set Resolved property so the scheduler knows to send a postable alert
@@ -367,7 +361,6 @@ func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, state
 			AlertInstanceKey:  key,
 			Labels:            ngModels.InstanceLabels(s.Labels),
 			CurrentState:      ngModels.InstanceStateType(s.State.State.String()),
-			CurrentCause:      ngModels.InstanceCauseType(s.Cause.String()),
 			CurrentReason:     s.StateReason,
 			LastEvalTime:      s.LastEvaluationTime,
 			CurrentStateSince: s.StartsAt,
@@ -430,21 +423,6 @@ func translateInstanceState(state ngModels.InstanceStateType) eval.State {
 		return eval.Pending
 	default:
 		return eval.Error
-	}
-}
-
-func translateInstanceCause(pendingState ngModels.InstanceCauseType) Cause {
-	switch pendingState {
-	case ngModels.InstanceCauseNone:
-		return CauseNone
-	case ngModels.InstanceCauseFiring:
-		return CauseFiring
-	case ngModels.InstanceCauseError:
-		return CauseError
-	case ngModels.InstanceCauseNoData:
-		return CauseNoData
-	default:
-		return CauseNone
 	}
 }
 

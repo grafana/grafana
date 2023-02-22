@@ -16,21 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/screenshot"
 )
 
-// Cause represents the cause that triggered a state. As we can get to some states through different paths (ie, normal,
-// firing) we need to have the ability to differentiate what path we took to correctly handle pending states.
-type Cause int
-
-const (
-	CauseNone Cause = iota
-	CauseFiring
-	CauseError
-	CauseNoData
-)
-
-func (s Cause) String() string {
-	return [...]string{"", "Firing", "Error", "NoData"}[s]
-}
-
 type State struct {
 	OrgID        int64
 	AlertRuleUID string
@@ -41,9 +26,6 @@ type State struct {
 
 	// State represents the current state.
 	State eval.State
-
-	// Cause represents the cause that triggered the State.
-	Cause Cause
 
 	// StateReason is a textual description to explain why the state has its current state.
 	StateReason string
@@ -100,9 +82,8 @@ func (a *State) GetAlertInstanceKey() (models.AlertInstanceKey, error) {
 }
 
 // SetAlerting sets the state to Alerting. It changes both the start and end time.
-func (a *State) SetAlerting(reason string, startsAt, endsAt time.Time, cause Cause, err error) {
+func (a *State) SetAlerting(reason string, startsAt, endsAt time.Time, err error) {
 	a.State = eval.Alerting
-	a.Cause = cause
 	a.StateReason = reason
 	a.StartsAt = startsAt
 	a.EndsAt = endsAt
@@ -110,9 +91,8 @@ func (a *State) SetAlerting(reason string, startsAt, endsAt time.Time, cause Cau
 }
 
 // SetPending the state to Pending. It changes both the start and end time.
-func (a *State) SetPending(reason string, startsAt, endsAt time.Time, cause Cause, err error) {
+func (a *State) SetPending(reason string, startsAt, endsAt time.Time, err error) {
 	a.State = eval.Pending
-	a.Cause = cause
 	a.StateReason = reason
 	a.StartsAt = startsAt
 	a.EndsAt = endsAt
@@ -122,7 +102,6 @@ func (a *State) SetPending(reason string, startsAt, endsAt time.Time, cause Caus
 // SetNoData sets the state to NoData. It changes both the start and end time.
 func (a *State) SetNoData(reason string, startsAt, endsAt time.Time) {
 	a.State = eval.NoData
-	a.Cause = CauseNoData
 	a.StateReason = reason
 	a.StartsAt = startsAt
 	a.EndsAt = endsAt
@@ -130,9 +109,8 @@ func (a *State) SetNoData(reason string, startsAt, endsAt time.Time) {
 }
 
 // SetError sets the state to Error. It changes both the start and end time.
-func (a *State) SetError(err error, startsAt, endsAt time.Time) {
+func (a *State) SetError(startsAt, endsAt time.Time, err error) {
 	a.State = eval.Error
-	a.Cause = CauseError
 	a.StateReason = models.StateReasonError
 	a.StartsAt = startsAt
 	a.EndsAt = endsAt
@@ -140,19 +118,17 @@ func (a *State) SetError(err error, startsAt, endsAt time.Time) {
 }
 
 // SetNormal sets the state to Normal. It changes both the start and end time.
-func (a *State) SetNormal(reason string, startsAt, endsAt time.Time, cause Cause) {
+func (a *State) SetNormal(reason string, startsAt, endsAt time.Time, err error) {
 	a.State = eval.Normal
-	a.Cause = cause
 	a.StateReason = reason
 	a.StartsAt = startsAt
 	a.EndsAt = endsAt
-	a.Error = nil
+	a.Error = err
 }
 
 // Resolve sets the State to Normal. It updates the StateReason, the end time, and sets Resolved to true.
 func (a *State) Resolve(reason string, endsAt time.Time) {
 	a.State = eval.Normal
-	a.Cause = CauseNone
 	a.StateReason = reason
 	a.Resolved = true
 	a.EndsAt = endsAt
@@ -207,35 +183,35 @@ func NewEvaluationValues(m map[string]eval.NumberValueCapture) map[string]*float
 	return result
 }
 
-func resultNormal(state *State, _ *models.AlertRule, result eval.Result, logger log.Logger, cause Cause) {
-	if state.State == eval.Normal && state.Cause == cause {
+func resultNormal(state *State, _ *models.AlertRule, result eval.Result, logger log.Logger, reason string) {
+	if state.State == eval.Normal && state.StateReason == reason {
 		logger.Debug("Keeping state", "state", state.State)
 	} else {
 		logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Normal)
 		// Normal states have the same start and end timestamps
-		state.SetNormal("", result.EvaluatedAt, result.EvaluatedAt, cause)
+		state.SetNormal(reason, result.EvaluatedAt, result.EvaluatedAt, result.Error)
 	}
 }
 
-func resultAlerting(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger, cause Cause, reason string, err error) {
+func resultAlerting(state *State, rule *models.AlertRule, result eval.Result, logger log.Logger, reason string) {
 	switch {
-	case state.State == eval.Alerting && state.Cause == cause:
+	case state.State == eval.Alerting && state.StateReason == reason:
 		logger.Debug("Keeping state", "state", state.State)
 		state.Maintain(rule.IntervalSeconds, result.EvaluatedAt)
-	case state.State == eval.Pending && state.Cause == cause:
+	case state.State == eval.Pending && state.StateReason == reason:
 		// If the previous state is Pending then check if the For duration has been observed
 		if result.EvaluatedAt.Sub(state.StartsAt) >= rule.For {
 			logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Alerting)
-			state.SetAlerting(reason, result.EvaluatedAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt), cause, err)
+			state.SetAlerting(reason, result.EvaluatedAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt), result.Error)
 		}
 	default:
 		if rule.For > 0 {
 			// If the alert rule has a For duration that should be observed then the state should be set to Pending
 			logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Pending)
-			state.SetPending(reason, result.EvaluatedAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt), cause, err)
+			state.SetPending(reason, result.EvaluatedAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt), result.Error)
 		} else {
 			logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Alerting)
-			state.SetAlerting(reason, result.EvaluatedAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt), cause, err)
+			state.SetAlerting(reason, result.EvaluatedAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt), result.Error)
 		}
 	}
 }
@@ -244,7 +220,7 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 	switch rule.ExecErrState {
 	case models.AlertingErrState:
 		logger.Debug("Execution error state is Alerting", "handler", "resultAlerting", "previous_handler", "resultError")
-		resultAlerting(state, rule, result, logger, CauseError, "error", result.Error)
+		resultAlerting(state, rule, result, logger, models.StateReasonError)
 	case models.ErrorErrState:
 		if state.State == eval.Error {
 			logger.Debug("Keeping state", "state", state.State)
@@ -252,7 +228,7 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 		} else {
 			// This is the first occurrence of an error
 			logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Error)
-			state.SetError(result.Error, result.EvaluatedAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
+			state.SetError(result.EvaluatedAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt), result.Error)
 
 			if result.Error != nil {
 				state.Annotations["Error"] = result.Error.Error()
@@ -272,10 +248,10 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 		}
 	case models.OkErrState:
 		logger.Debug("Execution error state is Normal", "handler", "resultNormal", "previous_handler", "resultError")
-		resultNormal(state, rule, result, logger, CauseError)
+		resultNormal(state, rule, result, logger, models.StateReasonError)
 	default:
 		err := fmt.Errorf("unsupported execution error state: %s", rule.ExecErrState)
-		state.SetError(err, state.StartsAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt))
+		state.SetError(state.StartsAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt), err)
 		state.Annotations["Error"] = err.Error()
 	}
 }
@@ -287,7 +263,7 @@ func resultNoData(state *State, rule *models.AlertRule, result eval.Result, _ lo
 		state.StartsAt = result.EvaluatedAt
 	}
 	state.EndsAt = nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt)
-	state.Cause = CauseNoData
+	state.StateReason = models.StateReasonNoData
 
 	switch rule.NoDataState {
 	case models.Alerting:

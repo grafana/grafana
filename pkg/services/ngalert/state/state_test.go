@@ -27,6 +27,7 @@ func TestSetAlerting(t *testing.T) {
 		reason   string
 		startsAt time.Time
 		endsAt   time.Time
+		error    error
 		expected State
 	}{{
 		name:     "state is set to Alerting",
@@ -35,11 +36,22 @@ func TestSetAlerting(t *testing.T) {
 		endsAt:   mock.Now().Add(time.Minute),
 		expected: State{
 			State:       eval.Alerting,
-			Cause:       CauseFiring,
 			StateReason: "this is a reason",
 			StartsAt:    mock.Now(),
 			EndsAt:      mock.Now().Add(time.Minute),
-			Error:       nil,
+		},
+	}, {
+		name:     "state is set to Alerting with error",
+		reason:   "this is a reason",
+		startsAt: mock.Now(),
+		endsAt:   mock.Now().Add(time.Minute),
+		error:    errors.New("this is an error"),
+		expected: State{
+			State:       eval.Alerting,
+			StateReason: "this is a reason",
+			StartsAt:    mock.Now(),
+			EndsAt:      mock.Now().Add(time.Minute),
+			Error:       errors.New("this is an error"),
 		},
 	}, {
 		name: "previous state is removed",
@@ -52,17 +64,15 @@ func TestSetAlerting(t *testing.T) {
 		endsAt:   mock.Now().Add(time.Minute),
 		expected: State{
 			State:    eval.Alerting,
-			Cause:    CauseFiring,
 			StartsAt: mock.Now(),
 			EndsAt:   mock.Now().Add(time.Minute),
-			Error:    nil,
 		},
 	}}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			actual := test.state
-			actual.SetAlerting(test.reason, test.startsAt, test.endsAt, CauseFiring, nil)
+			actual.SetAlerting(test.reason, test.startsAt, test.endsAt, test.error)
 			assert.Equal(t, test.expected, actual)
 		})
 	}
@@ -76,6 +86,7 @@ func TestSetPending(t *testing.T) {
 		reason   string
 		startsAt time.Time
 		endsAt   time.Time
+		error    error
 		expected State
 	}{{
 		name:     "state is set to Pending",
@@ -84,11 +95,22 @@ func TestSetPending(t *testing.T) {
 		endsAt:   mock.Now().Add(time.Minute),
 		expected: State{
 			State:       eval.Pending,
-			Cause:       CauseFiring,
 			StateReason: "this is a reason",
 			StartsAt:    mock.Now(),
 			EndsAt:      mock.Now().Add(time.Minute),
-			Error:       nil,
+		},
+	}, {
+		name:     "state is set to Pending with error",
+		reason:   "this is a reason",
+		startsAt: mock.Now(),
+		endsAt:   mock.Now().Add(time.Minute),
+		error:    errors.New("this is an error"),
+		expected: State{
+			State:       eval.Pending,
+			StateReason: "this is a reason",
+			StartsAt:    mock.Now(),
+			EndsAt:      mock.Now().Add(time.Minute),
+			Error:       errors.New("this is an error"),
 		},
 	}, {
 		name: "previous state is removed",
@@ -101,17 +123,15 @@ func TestSetPending(t *testing.T) {
 		endsAt:   mock.Now().Add(time.Minute),
 		expected: State{
 			State:    eval.Pending,
-			Cause:    CauseFiring,
 			StartsAt: mock.Now(),
 			EndsAt:   mock.Now().Add(time.Minute),
-			Error:    nil,
 		},
 	}}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			actual := test.state
-			actual.SetPending(test.reason, test.startsAt, test.endsAt, CauseFiring, nil)
+			actual.SetPending(test.reason, test.startsAt, test.endsAt, test.error)
 			assert.Equal(t, test.expected, actual)
 		})
 	}
@@ -125,6 +145,7 @@ func TestNormal(t *testing.T) {
 		reason   string
 		startsAt time.Time
 		endsAt   time.Time
+		error    error
 		expected State
 	}{{
 		name:     "state is set to Normal",
@@ -133,10 +154,22 @@ func TestNormal(t *testing.T) {
 		endsAt:   mock.Now().Add(time.Minute),
 		expected: State{
 			State:       eval.Normal,
-			Cause:       CauseNone,
 			StateReason: "this is a reason",
 			StartsAt:    mock.Now(),
 			EndsAt:      mock.Now().Add(time.Minute),
+		},
+	}, {
+		name:     "state is set to Normal with error",
+		reason:   "this is a reason",
+		startsAt: mock.Now(),
+		endsAt:   mock.Now().Add(time.Minute),
+		error:    errors.New("this is an error"),
+		expected: State{
+			State:       eval.Normal,
+			StateReason: "this is a reason",
+			StartsAt:    mock.Now(),
+			EndsAt:      mock.Now().Add(time.Minute),
+			Error:       errors.New("this is an error"),
 		},
 	}, {
 		name: "previous state is removed",
@@ -149,7 +182,6 @@ func TestNormal(t *testing.T) {
 		endsAt:   mock.Now().Add(time.Minute),
 		expected: State{
 			State:    eval.Normal,
-			Cause:    CauseNone,
 			StartsAt: mock.Now(),
 			EndsAt:   mock.Now().Add(time.Minute),
 		},
@@ -158,7 +190,7 @@ func TestNormal(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			actual := test.state
-			actual.SetNormal(test.reason, test.startsAt, test.endsAt, CauseNone)
+			actual.SetNormal(test.reason, test.startsAt, test.endsAt, test.error)
 			assert.Equal(t, test.expected, actual)
 		})
 	}
@@ -179,7 +211,6 @@ func TestNoData(t *testing.T) {
 		endsAt:   mock.Now().Add(time.Minute),
 		expected: State{
 			State:    eval.NoData,
-			Cause:    CauseNoData,
 			StartsAt: mock.Now(),
 			EndsAt:   mock.Now().Add(time.Minute),
 		},
@@ -194,7 +225,6 @@ func TestNoData(t *testing.T) {
 		endsAt:   mock.Now().Add(time.Minute),
 		expected: State{
 			State:    eval.NoData,
-			Cause:    CauseNoData,
 			StartsAt: mock.Now(),
 			EndsAt:   mock.Now().Add(time.Minute),
 		},
@@ -225,7 +255,6 @@ func TestSetError(t *testing.T) {
 		error:    errors.New("this is an error"),
 		expected: State{
 			State:       eval.Error,
-			Cause:       CauseError,
 			StateReason: ngmodels.StateReasonError,
 			Error:       errors.New("this is an error"),
 			StartsAt:    mock.Now(),
@@ -243,7 +272,6 @@ func TestSetError(t *testing.T) {
 		error:    errors.New("this is another error"),
 		expected: State{
 			State:       eval.Error,
-			Cause:       CauseError,
 			StateReason: ngmodels.StateReasonError,
 			Error:       errors.New("this is another error"),
 			StartsAt:    mock.Now(),
@@ -254,7 +282,7 @@ func TestSetError(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			actual := test.state
-			actual.SetError(test.error, test.startsAt, test.endsAt)
+			actual.SetError(test.startsAt, test.endsAt, test.error)
 			assert.Equal(t, test.expected, actual)
 		})
 	}
