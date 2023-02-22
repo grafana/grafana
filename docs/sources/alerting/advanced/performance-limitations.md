@@ -1,6 +1,6 @@
 ---
 aliases:
-  - alerting-limitations/
+  - performance-limitations
 description: Performance considerations and limitations
 keywords:
   - grafana
@@ -8,7 +8,7 @@ keywords:
   - performance
   - limitations
 title: Performance considerations and limitations
-weight: 450
+weight: 200
 ---
 
 # Performance considerations and limitations
