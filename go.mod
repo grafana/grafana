@@ -332,6 +332,8 @@ require (
 	github.com/unknwon/bra v0.0.0-20200517080246-1e3013ecaff8 // indirect
 	github.com/unknwon/com v1.0.1 // indirect
 	github.com/unknwon/log v0.0.0-20150304194804-e617c87089d3 // indirect
+	github.com/weaveworks/common v0.0.0-20230208133027-16871410fca4 // indirect
+	github.com/weaveworks/promrus v1.2.0 // indirect
 	go.opentelemetry.io/otel/metric v0.34.0 // indirect
 	go.starlark.net v0.0.0-20221020143700-22309ac47eac // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect

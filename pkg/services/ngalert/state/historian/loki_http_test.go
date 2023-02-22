@@ -84,7 +84,7 @@ func TestLokiHTTPClient(t *testing.T) {
 		client := newLokiClient(LokiConfig{
 			ReadPathURL:  url,
 			WritePathURL: url,
-		}, log.NewNopLogger())
+		}, NewRequester(), log.NewNopLogger())
 
 		// Unauthorized request should fail against Grafana Cloud.
 		err = client.ping(context.Background())
@@ -111,7 +111,7 @@ func TestLokiHTTPClient(t *testing.T) {
 			WritePathURL:      url,
 			BasicAuthUser:     "<your_username>",
 			BasicAuthPassword: "<your_password>",
-		}, log.NewNopLogger())
+		}, NewRequester(), log.NewNopLogger())
 
 		// When running on prem, you might need to set the tenant id,
 		// so the x-scope-orgid header is set.

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/weaveworks/common/http/client"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -47,10 +48,10 @@ type RemoteLokiBackend struct {
 	log            log.Logger
 }
 
-func NewRemoteLokiBackend(cfg LokiConfig) *RemoteLokiBackend {
+func NewRemoteLokiBackend(cfg LokiConfig, req client.Requester) *RemoteLokiBackend {
 	logger := log.New("ngalert.state.historian", "backend", "loki")
 	return &RemoteLokiBackend{
-		client:         newLokiClient(cfg, logger),
+		client:         newLokiClient(cfg, req, logger),
 		externalLabels: cfg.ExternalLabels,
 		log:            logger,
 	}

@@ -13,9 +13,16 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/weaveworks/common/http/client"
 )
 
 const defaultClientTimeout = 30 * time.Second
+
+func NewRequester() client.Requester {
+	return &http.Client{
+		Timeout: defaultClientTimeout,
+	}
+}
 
 type LokiConfig struct {
 	ReadPathURL       *url.URL
@@ -54,7 +61,7 @@ func NewLokiConfig(cfg setting.UnifiedAlertingStateHistorySettings) (LokiConfig,
 }
 
 type httpLokiClient struct {
-	client http.Client
+	client client.Requester
 	cfg    LokiConfig
 	log    log.Logger
 }
@@ -81,13 +88,11 @@ type Selector struct {
 	Value string
 }
 
-func newLokiClient(cfg LokiConfig, logger log.Logger) *httpLokiClient {
+func newLokiClient(cfg LokiConfig, req client.Requester, logger log.Logger) *httpLokiClient {
 	return &httpLokiClient{
-		client: http.Client{
-			Timeout: defaultClientTimeout,
-		},
-		cfg: cfg,
-		log: logger.New("protocol", "http"),
+		client: req,
+		cfg:    cfg,
+		log:    logger.New("protocol", "http"),
 	}
 }
 
