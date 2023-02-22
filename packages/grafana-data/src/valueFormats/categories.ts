@@ -216,23 +216,6 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'From Now', id: 'dateTimeFromNow', fn: dateTimeFromNow },
     ],
   },
-  // {
-  //   name: 'Direction',
-  //   formats: [
-  //     { name: 'Datetime ISO', id: 'dateTimeAsIso', fn: dateTimeAsIso },
-  //     { name: 'Datetime ISO (No date if today)', id: 'dateTimeAsIsoNoDateIfToday', fn: dateTimeAsIsoNoDateIfToday },
-  //     { name: 'Datetime US', id: 'dateTimeAsUS', fn: dateTimeAsUS },
-  //     { name: 'Datetime US (No date if today)', id: 'dateTimeAsUSNoDateIfToday', fn: dateTimeAsUSNoDateIfToday },
-  //     { name: 'Datetime local', id: 'dateTimeAsLocal', fn: getDateTimeAsLocalFormat() },
-  //     {
-  //       name: 'Datetime local (No date if today)',
-  //       id: 'dateTimeAsLocalNoDateIfToday',
-  //       fn: getDateTimeAsLocalFormatNoDateIfToday(),
-  //     },
-  //     { name: 'Datetime default', id: 'dateTimeAsSystem', fn: dateTimeSystemFormatter },
-  //     { name: 'From Now', id: 'dateTimeFromNow', fn: dateTimeFromNow },
-  //   ],
-  // },
   {
     name: 'Energy',
     formats: [
