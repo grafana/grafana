@@ -225,9 +225,9 @@ export const getLogsVolumeAbsoluteRange = (
 
 export const getLogsVolumeDataSourceInfo = (dataFrames: DataFrame[]): { uid: string; name: string; refId: string } => {
   return {
-    uid: dataFrames[0].meta?.custom?.datasourceUid || '',
-    name: dataFrames[0].meta?.custom?.datasourceName || '',
-    refId: dataFrames[0].meta?.custom?.sourceQuery?.refId || '',
+    uid: dataFrames[0]?.meta?.custom?.datasourceUid || '',
+    name: dataFrames[0]?.meta?.custom?.datasourceName || '',
+    refId: dataFrames[0]?.meta?.custom?.sourceQuery?.refId || '',
   };
 };
 
