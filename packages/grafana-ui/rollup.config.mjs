@@ -5,7 +5,7 @@ import esbuild from 'rollup-plugin-esbuild';
 import { externals } from 'rollup-plugin-node-externals';
 import svg from 'rollup-plugin-svg-import';
 
-const pkg = require('./package.json');
+import pkg from './package.json' assert { type: 'json' };
 
 export default [
   {
@@ -22,8 +22,7 @@ export default [
         sourcemap: true,
         dir: path.dirname(pkg.publishConfig.module),
         preserveModules: true,
-        // @ts-expect-error (TS cannot assure that `process.env.PROJECT_CWD` is a string)
-        preserveModulesRoot: path.join(process.env.PROJECT_CWD, `packages/grafana-ui/src`),
+        preserveModulesRoot: path.join(process.env.PROJECT_CWD, 'packages/grafana-ui/src'),
       },
     ],
   },

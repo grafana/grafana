@@ -8,6 +8,17 @@
       "rules": {
         "no-restricted-imports": "off"
       }
+    },
+    // rollup v3 uses esm modules
+    {
+      "files": ["rollup.config.mjs"],
+      "parser": "@babel/eslint-parser",
+      "parserOptions": {
+        "requireConfigFile": false,
+        "babelOptions": {
+          "plugins": ["@babel/plugin-syntax-import-assertions"]
+        }
+      }
     }
   ]
 }
