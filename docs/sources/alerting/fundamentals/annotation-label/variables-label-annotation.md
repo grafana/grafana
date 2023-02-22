@@ -126,20 +126,212 @@ The first condition is {{ $values.B0 }}, and the second condition is {{ $values.
 
 The following functions are also available when expanding labels and annotations:
 
-| Name                                      | Description                                                                                                                                 | Expects                                                      | Returns                |
-| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ | ---------------------- |
-| [humanize](#humanize)                     | Converts a number to a more readable format, using metric prefixes.                                                                         | number or string                                             | string                 |
-| [humanize1024](#humanize1024)             | Like humanize, but uses 1024 as the base rather than 1000.                                                                                  | number or string                                             | string                 |
-| [humanizeDuration](#humanizeduration)     | Converts a duration in seconds to a more readable format.                                                                                   | number or string                                             | string                 |
-| [humanizePercentage](#humanizepercentage) | Converts a ratio value to a fraction of 100.                                                                                                | number or string                                             | string                 |
-| [humanizeTimestamp](#humanizetimestamp)   | Converts a Unix timestamp in seconds to a more readable format.                                                                             | number or string                                             | string                 |
-| [title](#title)                           | strings.Title, capitalises first character of each word.                                                                                    | string                                                       | string                 |
-| [toUpper](#toupper)                       | strings.ToUpper, converts all characters to upper case.                                                                                     | string                                                       | string                 |
-| [toLower](#tolower)                       | strings.ToLower, converts all characters to lower case.                                                                                     | string                                                       | string                 |
-| [match](#match)                           | regexp.MatchString Tests for a unanchored regexp match.                                                                                     | pattern, text                                                | boolean                |
-| [reReplaceAll](#rereplaceall)             | Regexp.ReplaceAllString Regexp substitution, unanchored.                                                                                    | pattern, replacement, text                                   | string                 |
-| [graphLink](#graphlink)                   | Returns the path to graphical view in [Explore](https://grafana.com/docs/grafana/latest/explore/) for the given expression and data source. | string - JSON Object with `"expr"` and `"datasource"` fields | string                 |
-| [tableLink](#tablelink)                   | Returns the path to tabular view in [Explore](https://grafana.com/docs/grafana/latest/explore/) for the given expression and data source.   | string- JSON Object with `"expr"` and `"datasource"` fields  | string                 |
-| [args](#args)                             | Converts a list of objects to a map with keys, for example, arg0, arg1. Use this function to pass multiple arguments to templates.          | []interface{}                                                | map[string]interface{} |
-| [externalURL](#externalurl)               | Returns a string representing the external URL.                                                                                             | nothing                                                      | string                 |
-| [pathPrefix](#pathprefix)                 | Returns the path of the external URL.                                                                                                       | nothing                                                      | string                 |
+### args
+
+The `args` function translates a list of objects to a map with keys arg0, arg1 etc. This is intended to allow multiple arguments to be passed to templates.
+
+#### Example
+
+```
+{{define "x"}}{{.arg0}} {{.arg1}}{{end}}{{template "x" (args 1 "2")}}
+```
+
+```
+1 2
+```
+
+### externalURL
+
+The `externalURL` function returns the external URL of the Grafana server as configured in the ini file(s).
+
+#### Example
+
+```
+{{ externalURL }}
+```
+
+```
+https://example.com/grafana
+```
+
+### graphLink
+
+The `graphLink` function returns the path to the graphical view in [Explore](https://grafana.com/docs/grafana/latest/explore/) for the given expression and data source.
+
+#### Example
+
+```
+{{ graphLink "{\"expr\": \"up\", \"datasource\": \"gdev-prometheus\"}" }}
+```
+
+```
+/explore?left=["now-1h","now","gdev-prometheus",{"datasource":"gdev-prometheus","expr":"up","instant":false,"range":true}]
+```
+
+### humanize
+
+The `humanize` function humanizes decimal numbers.
+
+#### Example
+
+```
+{{ humanize 1000.0 }}
+```
+
+```
+1k
+```
+
+### humanize1024
+
+The `humanize1024` works similar to `humanize` but but uses 1024 as the base rather than 1000.
+
+#### Example
+
+```
+{{ humanize1024 1024.0 }}
+```
+
+```
+1ki
+```
+
+### humanizeDuration
+
+The `humanizeDuration` function humanizes a duration in seconds.
+
+#### Example
+
+```
+{{ humanizeDuration 60.0 }}
+```
+
+```
+1m 0s
+```
+
+### humanizePercentage
+
+The `humanizePercentage` function humanizes a ratio value to a percentage.
+
+#### Example
+
+```
+{{ humanizePercentage 0.2 }}
+```
+
+```
+20%
+```
+
+### humanizeTimestamp
+
+The `humanizeTimestamp` function humanizes a Unix timestamp.
+
+#### Example
+
+```
+{{ humanizeTimestamp 1577836800.0 }}
+```
+
+```
+2020-01-01 00:00:00 +0000 UTC
+```
+
+### match
+
+The `match` function matches the text against a regular expression pattern.
+
+#### Example
+
+```
+{{ match "a.*" "abc" }}
+```
+
+```
+true
+```
+
+### pathPrefix
+
+The `pathPrefix` function returns the path of the Grafana server as configured in the ini file(s).
+
+#### Example
+
+```
+{{ pathPrefix }}
+```
+
+```
+/grafana
+```
+
+### tableLink
+
+The `tableLink` function returns the path to the tabular view in [Explore](https://grafana.com/docs/grafana/latest/explore/) for the given expression and data source.
+
+#### Example
+
+```
+{{ tableLink "{\"expr\": \"up\", \"datasource\": \"gdev-prometheus\"}" }}
+```
+
+```
+/explore?left=["now-1h","now","gdev-prometheus",{"datasource":"gdev-prometheus","expr":"up","instant":true,"range":false}]
+```
+
+### title
+
+The `title` function capitalizes the first character of each word.
+
+#### Example
+
+```
+{{ title "hello, world!" }}
+```
+
+```
+Hello, World!
+```
+
+### toLower
+
+The `toLower` function returns all text in lowercase.
+
+#### Example
+
+```
+{{ toLower "Hello, world!" }}
+```
+
+```
+hello, world!
+```
+
+### toUpper
+
+The `toUpper` function returns all text in uppercase.
+
+#### Example
+
+```
+{{ toLower "Hello, world!" }}
+```
+
+```
+HELLO, WORLD!
+```
+
+### reReplaceAll
+
+The `reReplaceAll` function replaces text matching the regular expression.
+
+#### Example
+
+```
+{{ reReplaceAll "localhost:(.*)" "example.com:$1" "localhost:8080" }}
+```
+
+```
+example.com:8080
+```
