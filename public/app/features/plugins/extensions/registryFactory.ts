@@ -1,14 +1,20 @@
-import { isFunction, isObject } from 'lodash';
-
 import {
+  AppConfigureExtension,
   AppPluginExtensionLink,
   AppPluginExtensionLinkConfig,
   PluginExtensionLink,
   PluginExtensionTypes,
 } from '@grafana/data';
-import { PluginExtensionRegistry, PluginExtensionRegistryItem } from '@grafana/runtime';
+import type {
+  PluginExtensionRegistry,
+  PluginExtensionRegistryItem,
+  RegistryConfigureExtension,
+} from '@grafana/runtime';
 
 import { PluginPreloadResult } from '../pluginPreloader';
+
+import { createErrorHandling } from './errorHandling';
+import { createLinkValidator } from './validateLink';
 
 export function createPluginExtensionRegistry(preloadResults: PluginPreloadResult[]): PluginExtensionRegistry {
   const registry: PluginExtensionRegistry = {};
@@ -52,7 +58,7 @@ export function createPluginExtensionRegistry(preloadResults: PluginPreloadResul
 function createRegistryLink(
   pluginId: string,
   config: AppPluginExtensionLinkConfig
-): Readonly<PluginExtensionRegistryItem<PluginExtensionLink>> | undefined {
+): PluginExtensionRegistryItem<PluginExtensionLink> | undefined {
   const id = `${pluginId}${config.placement}${config.title}`;
   const extension = Object.freeze({
     type: PluginExtensionTypes.link,
@@ -72,105 +78,49 @@ function hashKey(key: string): number {
   return Array.from(key).reduce((s, c) => (Math.imul(31, s) + c.charCodeAt(0)) | 0, 0);
 }
 
-type RegistryConfigureType = PluginExtensionRegistryItem<PluginExtensionLink>['configure'];
-type ExtensionConfigureType = AppPluginExtensionLinkConfig['configure'];
-
 function createLinkConfigure(
   pluginId: string,
   config: AppPluginExtensionLinkConfig,
   extension: PluginExtensionLink
-): RegistryConfigureType {
+): RegistryConfigureExtension<PluginExtensionLink> | undefined {
   if (!config.configure) {
     return undefined;
   }
 
-  const validator = withValidation(pluginId);
-  const errorHandler = withErrorHandling(pluginId, config.title);
   const mapper = mapToRegistryType(extension);
+  const validator = createLinkValidator(pluginId);
+  const errorHandler = createErrorHandling<AppPluginExtensionLink>({
+    pluginId: pluginId,
+    title: config.title,
+    logger: console.warn,
+  });
 
   return mapper(validator(errorHandler(config.configure)));
 }
 
 function mapToRegistryType(
   extension: PluginExtensionLink
-): (configure: ExtensionConfigureType) => RegistryConfigureType {
+): (configure: AppConfigureExtension<AppPluginExtensionLink>) => RegistryConfigureExtension<PluginExtensionLink> {
+  const configurable: AppPluginExtensionLink = {
+    title: extension.title,
+    description: extension.description,
+    path: extension.path,
+  };
+
   return (configure) => {
-    const configurable: AppPluginExtensionLink = {
-      title: extension.title,
-      description: extension.description,
-      path: extension.path,
-    };
-
     return function mapper(context: object): PluginExtensionLink | undefined {
-      if (!configure) {
-        return undefined;
-      }
-
       const configured = configure(configurable, context);
 
       if (!configured) {
         return undefined;
       }
+
       return {
         ...extension,
         title: configured.title ?? extension.title,
         description: configured.description ?? extension.description,
         path: configured.path ?? extension.path,
       };
-    };
-  };
-}
-
-function withErrorHandling(pluginId: string, title: string) {
-  return (configurer: ExtensionConfigureType): ExtensionConfigureType => {
-    return function handleErrors(link, context) {
-      try {
-        if (!isFunction(configurer)) {
-          console.error(`[Plugins] Invalid configuration function provided for extension '${title}'.`);
-          return;
-        }
-
-        const result = configurer(link, context);
-        if (result instanceof Promise) {
-          console.error(
-            `[Plugins] Can't configure extension '${title}' with an async/promise-based configuration function.`
-          );
-          result.catch(() => {});
-          return;
-        }
-
-        if (!isObject(result) && typeof result !== 'undefined') {
-          console.error(
-            `[Plugins] Will not configure extension '${title}' due to incorrect override returned from configuration function.`
-          );
-          return;
-        }
-
-        return result;
-      } catch (error) {
-        console.error(`[Plugins] Error occured while configure extension '${title}'`, error);
-        return;
-      }
-    };
-  };
-}
-
-function withValidation(pluginId: string) {
-  return (configure: ExtensionConfigureType): ExtensionConfigureType => {
-    const pathPrefix = `/a/${pluginId}/`;
-
-    return function validateLink(link, context) {
-      if (!configure) {
-        return undefined;
-      }
-      const configured = configure(link, context);
-      const path = configured?.path;
-
-      if (path && !path.startsWith(pathPrefix)) {
-        return undefined;
-      }
-
-      return configured;
     };
   };
 }
