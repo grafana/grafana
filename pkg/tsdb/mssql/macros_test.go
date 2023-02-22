@@ -215,6 +215,10 @@ func TestMacroEngine(t *testing.T) {
 				expected string
 			}{
 				{
+					query:    "select count(1), $__timeGroup(test, 5m)",
+					expected: "select count(1), FLOOR(DATEDIFF(second, '1970-01-01', test)/300)*300",
+				},
+				{
 					query:    "select $__timeGroup(test, 5m)",
 					expected: "select FLOOR(DATEDIFF(second, '1970-01-01', test)/300)*300",
 				},
