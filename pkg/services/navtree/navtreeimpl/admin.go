@@ -80,14 +80,14 @@ func (s *ServiceImpl) getOrgAdminNode(c *contextmodel.ReqContext) (*navtree.NavL
 	}
 
 	hideApiKeys, _, _ := s.kvStore.Get(c.Req.Context(), c.OrgID, "serviceaccounts", "hideApiKeys")
-	apiKeys, err := s.apiKeyService.GetAllAPIKeys(c.Req.Context(), c.OrgID)
+	apiKeys, err := s.apiKeyService.CountAPIKeys(c.Req.Context(), c.OrgID)
 	if err != nil {
 		return nil, err
 	}
 	globalhideApiKeys, _, _ := s.kvStore.Get(c.Req.Context(), serviceaccounts.GloballyHideAPIKeysTabOrgID, "serviceaccounts", "hideApiKeys")
 
 	// Hide API keys if the global setting is set or if the org setting is set and there are no API keys
-	apiKeysHidden := globalhideApiKeys == "1" || (hideApiKeys == "1" && len(apiKeys) == 0)
+	apiKeysHidden := (globalhideApiKeys == "1" && apiKeys == 0) || (hideApiKeys == "1" && apiKeys == 0)
 	if hasAccess(ac.ReqOrgAdmin, ac.ApiKeyAccessEvaluator) && !apiKeysHidden {
 		configNodes = append(configNodes, &navtree.NavLink{
 			Text:     "API keys",

@@ -68,6 +68,9 @@ func (s *Service) AddAPIKey(ctx context.Context, cmd *apikey.AddCommand) error {
 func (s *Service) UpdateAPIKeyLastUsedDate(ctx context.Context, tokenID int64) error {
 	return s.store.UpdateAPIKeyLastUsedDate(ctx, tokenID)
 }
+func (s *Service) CountAPIKeys(ctx context.Context, orgID int64) (int64, error) {
+	return s.store.CountAPIKeys(ctx, orgID)
+}
 
 func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 	limits := &quota.Map{}
