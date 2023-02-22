@@ -359,9 +359,9 @@ The Route layer renders data points as a route.
 
 ### Options
 
-- **Size** route thickness, Fixed by default or Min and Max range of selected field
-- **Color** route color, Fixed by default or Standard Options color scheme on selected field
-- **Arrow** arrow styling to display along route, in order of data
+- **Size** sets the route thickness. Fixed by default, or Min and Max range of selected field.
+- **Color** sets the route color. Fixed by default or Standard Options color scheme on selected field.
+- **Arrow** sets the arrow styling to display along route, in order of data.
   - **None**
   - **Forward**
   - **Reverse**
