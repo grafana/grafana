@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 func TestCheckRoute(t *testing.T) {
@@ -23,15 +22,15 @@ func TestCheckRoute(t *testing.T) {
 		{
 			name:          "equal configs should not error",
 			shouldErr:     false,
-			currentConfig: gettableRoute(t, models.ProvenanceAPI),
-			newConfig:     postableRoute(t, models.ProvenanceAPI),
+			currentConfig: gettableRoute(t, definitions.ProvenanceAPI),
+			newConfig:     postableRoute(t, definitions.ProvenanceAPI),
 		},
 		{
 			name:          "editing a non provisioned object should not fail",
 			shouldErr:     false,
-			currentConfig: gettableRoute(t, models.ProvenanceNone),
+			currentConfig: gettableRoute(t, definitions.ProvenanceNone),
 			newConfig: func() definitions.PostableUserConfig {
-				cfg := postableRoute(t, models.ProvenanceNone)
+				cfg := postableRoute(t, definitions.ProvenanceNone)
 				cfg.AlertmanagerConfig.Route.Matchers[0].Value = "123"
 				return cfg
 			}(),
@@ -39,9 +38,9 @@ func TestCheckRoute(t *testing.T) {
 		{
 			name:          "editing a provisioned object should fail",
 			shouldErr:     true,
-			currentConfig: gettableRoute(t, models.ProvenanceAPI),
+			currentConfig: gettableRoute(t, definitions.ProvenanceAPI),
 			newConfig: func() definitions.PostableUserConfig {
-				cfg := postableRoute(t, models.ProvenanceAPI)
+				cfg := postableRoute(t, definitions.ProvenanceAPI)
 				cfg.AlertmanagerConfig.Route.Matchers[0].Value = "123"
 				return cfg
 			}(),
@@ -59,7 +58,7 @@ func TestCheckRoute(t *testing.T) {
 	}
 }
 
-func gettableRoute(t *testing.T, provenance models.Provenance) definitions.GettableUserConfig {
+func gettableRoute(t *testing.T, provenance definitions.Provenance) definitions.GettableUserConfig {
 	t.Helper()
 	return definitions.GettableUserConfig{
 		AlertmanagerConfig: definitions.GettableApiAlertingConfig{
@@ -94,7 +93,7 @@ func gettableRoute(t *testing.T, provenance models.Provenance) definitions.Getta
 	}
 }
 
-func postableRoute(t *testing.T, provenace models.Provenance) definitions.PostableUserConfig {
+func postableRoute(t *testing.T, provenace definitions.Provenance) definitions.PostableUserConfig {
 	t.Helper()
 	return definitions.PostableUserConfig{
 		AlertmanagerConfig: definitions.PostableApiAlertingConfig{
@@ -139,31 +138,31 @@ func TestCheckTemplates(t *testing.T) {
 		{
 			name:          "equal configs should not error",
 			shouldErr:     false,
-			currentConfig: gettableTemplates(t, "test-1", models.ProvenanceAPI),
+			currentConfig: gettableTemplates(t, "test-1", definitions.ProvenanceAPI),
 			newConfig:     postableTemplate(t, "test-1"),
 		},
 		{
 			name:          "removing a non provisioned object should not fail",
 			shouldErr:     false,
-			currentConfig: gettableTemplates(t, "test-1", models.ProvenanceNone),
+			currentConfig: gettableTemplates(t, "test-1", definitions.ProvenanceNone),
 			newConfig:     definitions.PostableUserConfig{},
 		},
 		{
 			name:          "removing a provisioned object should fail",
 			shouldErr:     true,
-			currentConfig: gettableTemplates(t, "test-1", models.ProvenanceAPI),
+			currentConfig: gettableTemplates(t, "test-1", definitions.ProvenanceAPI),
 			newConfig:     definitions.PostableUserConfig{},
 		},
 		{
 			name:          "adding a non provisioned object should not fail",
 			shouldErr:     false,
-			currentConfig: gettableTemplates(t, "test-1", models.ProvenanceAPI),
+			currentConfig: gettableTemplates(t, "test-1", definitions.ProvenanceAPI),
 			newConfig:     postableTemplate(t, "test-1", "test-2"),
 		},
 		{
 			name:          "editing a non provisioned object should not fail",
 			shouldErr:     false,
-			currentConfig: gettableTemplates(t, "test-1", models.ProvenanceNone),
+			currentConfig: gettableTemplates(t, "test-1", definitions.ProvenanceNone),
 			newConfig: func() definitions.PostableUserConfig {
 				cfg := postableTemplate(t, "test-1")
 				cfg.TemplateFiles["test-1"] = "some updated value"
@@ -173,7 +172,7 @@ func TestCheckTemplates(t *testing.T) {
 		{
 			name:          "editing a provisioned object should fail",
 			shouldErr:     true,
-			currentConfig: gettableTemplates(t, "test-1", models.ProvenanceAPI),
+			currentConfig: gettableTemplates(t, "test-1", definitions.ProvenanceAPI),
 			newConfig: func() definitions.PostableUserConfig {
 				cfg := postableTemplate(t, "test-1")
 				cfg.TemplateFiles["test-1"] = "some updated value"
@@ -193,13 +192,13 @@ func TestCheckTemplates(t *testing.T) {
 	}
 }
 
-func gettableTemplates(t *testing.T, name string, provenance models.Provenance) definitions.GettableUserConfig {
+func gettableTemplates(t *testing.T, name string, provenance definitions.Provenance) definitions.GettableUserConfig {
 	t.Helper()
 	return definitions.GettableUserConfig{
 		TemplateFiles: map[string]string{
 			name: "some-template",
 		},
-		TemplateFileProvenances: map[string]models.Provenance{
+		TemplateFileProvenances: map[string]definitions.Provenance{
 			name: provenance,
 		},
 	}
@@ -227,7 +226,7 @@ func TestCheckContactPoints(t *testing.T) {
 			name:      "equal configs should not error",
 			shouldErr: false,
 			currentConfig: []*definitions.GettableApiReceiver{
-				defaultGettableReceiver(t, "test-1", models.ProvenanceAPI),
+				defaultGettableReceiver(t, "test-1", definitions.ProvenanceAPI),
 			},
 			newConfig: []*definitions.PostableApiReceiver{
 				defaultPostableReceiver(t, "test-1"),
@@ -237,7 +236,7 @@ func TestCheckContactPoints(t *testing.T) {
 			name:      "removing a non provisioned object should not fail",
 			shouldErr: false,
 			currentConfig: []*definitions.GettableApiReceiver{
-				defaultGettableReceiver(t, "test-1", models.ProvenanceNone),
+				defaultGettableReceiver(t, "test-1", definitions.ProvenanceNone),
 			},
 			newConfig: []*definitions.PostableApiReceiver{},
 		},
@@ -245,7 +244,7 @@ func TestCheckContactPoints(t *testing.T) {
 			name:      "removing a provisioned object should fail",
 			shouldErr: true,
 			currentConfig: []*definitions.GettableApiReceiver{
-				defaultGettableReceiver(t, "test-1", models.ProvenanceAPI),
+				defaultGettableReceiver(t, "test-1", definitions.ProvenanceAPI),
 			},
 			newConfig: []*definitions.PostableApiReceiver{},
 		},
@@ -253,7 +252,7 @@ func TestCheckContactPoints(t *testing.T) {
 			name:      "adding a non provisioned object should not fail",
 			shouldErr: false,
 			currentConfig: []*definitions.GettableApiReceiver{
-				defaultGettableReceiver(t, "test-1", models.ProvenanceAPI),
+				defaultGettableReceiver(t, "test-1", definitions.ProvenanceAPI),
 			},
 			newConfig: []*definitions.PostableApiReceiver{
 				defaultPostableReceiver(t, "test-1"),
@@ -264,7 +263,7 @@ func TestCheckContactPoints(t *testing.T) {
 			name:      "editing a non provisioned object should not fail",
 			shouldErr: false,
 			currentConfig: []*definitions.GettableApiReceiver{
-				defaultGettableReceiver(t, "test-1", models.ProvenanceNone),
+				defaultGettableReceiver(t, "test-1", definitions.ProvenanceNone),
 			},
 			newConfig: []*definitions.PostableApiReceiver{
 				func() *definitions.PostableApiReceiver {
@@ -280,7 +279,7 @@ func TestCheckContactPoints(t *testing.T) {
 			name:      "editing a provisioned object should fail",
 			shouldErr: true,
 			currentConfig: []*definitions.GettableApiReceiver{
-				defaultGettableReceiver(t, "test-1", models.ProvenanceAPI),
+				defaultGettableReceiver(t, "test-1", definitions.ProvenanceAPI),
 			},
 			newConfig: []*definitions.PostableApiReceiver{
 				func() *definitions.PostableApiReceiver {
@@ -305,7 +304,7 @@ func TestCheckContactPoints(t *testing.T) {
 	}
 }
 
-func defaultGettableReceiver(t *testing.T, uid string, provenance models.Provenance) *definitions.GettableApiReceiver {
+func defaultGettableReceiver(t *testing.T, uid string, provenance definitions.Provenance) *definitions.GettableApiReceiver {
 	t.Helper()
 	return &definitions.GettableApiReceiver{
 		GettableGrafanaReceivers: definitions.GettableGrafanaReceivers{
@@ -368,8 +367,8 @@ func TestCheckMuteTimes(t *testing.T) {
 						TimeIntervals: defaultInterval(t),
 					},
 				},
-				map[string]models.Provenance{
-					"test-1": models.ProvenanceNone,
+				map[string]definitions.Provenance{
+					"test-1": definitions.ProvenanceNone,
 				}),
 			newConfig: postableMuteIntervals(t,
 				[]amConfig.MuteTimeInterval{
@@ -393,8 +392,8 @@ func TestCheckMuteTimes(t *testing.T) {
 						TimeIntervals: defaultInterval(t),
 					},
 				},
-				map[string]models.Provenance{
-					"test-1": models.ProvenanceNone,
+				map[string]definitions.Provenance{
+					"test-1": definitions.ProvenanceNone,
 				}),
 			newConfig: postableMuteIntervals(t, []amConfig.MuteTimeInterval{}),
 		},
@@ -412,8 +411,8 @@ func TestCheckMuteTimes(t *testing.T) {
 						TimeIntervals: defaultInterval(t),
 					},
 				},
-				map[string]models.Provenance{
-					"test-1": models.ProvenanceAPI,
+				map[string]definitions.Provenance{
+					"test-1": definitions.ProvenanceAPI,
 				}),
 			newConfig: postableMuteIntervals(t, []amConfig.MuteTimeInterval{
 				{
@@ -432,8 +431,8 @@ func TestCheckMuteTimes(t *testing.T) {
 						TimeIntervals: defaultInterval(t),
 					},
 				},
-				map[string]models.Provenance{
-					"test-1": models.ProvenanceNone,
+				map[string]definitions.Provenance{
+					"test-1": definitions.ProvenanceNone,
 				}),
 			newConfig: postableMuteIntervals(t,
 				[]amConfig.MuteTimeInterval{
@@ -457,8 +456,8 @@ func TestCheckMuteTimes(t *testing.T) {
 						TimeIntervals: defaultInterval(t),
 					},
 				},
-				map[string]models.Provenance{
-					"test-1": models.ProvenanceNone,
+				map[string]definitions.Provenance{
+					"test-1": definitions.ProvenanceNone,
 				}),
 			newConfig: postableMuteIntervals(t,
 				[]amConfig.MuteTimeInterval{
@@ -487,8 +486,8 @@ func TestCheckMuteTimes(t *testing.T) {
 						TimeIntervals: defaultInterval(t),
 					},
 				},
-				map[string]models.Provenance{
-					"test-1": models.ProvenanceAPI,
+				map[string]definitions.Provenance{
+					"test-1": definitions.ProvenanceAPI,
 				}),
 			newConfig: postableMuteIntervals(t,
 				[]amConfig.MuteTimeInterval{
@@ -520,7 +519,7 @@ func TestCheckMuteTimes(t *testing.T) {
 	}
 }
 
-func gettableMuteIntervals(t *testing.T, muteTimeIntervals []amConfig.MuteTimeInterval, provenances map[string]models.Provenance) definitions.GettableUserConfig {
+func gettableMuteIntervals(t *testing.T, muteTimeIntervals []amConfig.MuteTimeInterval, provenances map[string]definitions.Provenance) definitions.GettableUserConfig {
 	return definitions.GettableUserConfig{
 		AlertmanagerConfig: definitions.GettableApiAlertingConfig{
 			MuteTimeProvenances: provenances,
