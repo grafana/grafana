@@ -25,7 +25,7 @@ type OrgSync struct {
 }
 
 func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *authn.Request) error {
-	if !id.ClientParams.SyncUser {
+	if !id.ClientParams.SyncOrgRoles {
 		return nil
 	}
 
