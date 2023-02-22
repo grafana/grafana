@@ -1,4 +1,11 @@
-import { toHex, toHex0x } from './arithmeticFormatters';
+import {
+  toHex,
+  toHex0x,
+  toPercent,
+  toPercentUnit,
+  toIncreasingPercent,
+  toDecreasingPercent,
+} from './arithmeticFormatters';
 import { formattedValueToString } from './valueFormats';
 
 describe('hex', () => {
@@ -37,5 +44,12 @@ describe('hex 0x', () => {
   it('negative float', () => {
     const str = toHex0x(-65.458, 1);
     expect(formattedValueToString(str)).toBe('-0x41.8');
+  });
+});
+
+describe('percentages', () => {
+  it('render a percent as expected', () => {
+    const str = toPercent(33.3333, 2);
+    expect(formattedValueToString(str)).toBe('33.33%');
   });
 });
