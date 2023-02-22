@@ -21,7 +21,7 @@ func AlertRuleFromProvisionedAlertRule(a definitions.ProvisionedAlertRule) (mode
 		Condition:    a.Condition,
 		Data:         a.Data,
 		Updated:      a.Updated,
-		NoDataState:  a.NoDataState,
+		NoDataState:  models.NoDataState(a.NoDataState), // TODO there must be a validation
 		ExecErrState: a.ExecErrState,
 		For:          time.Duration(a.For),
 		Annotations:  a.Annotations,
@@ -43,7 +43,7 @@ func ProvisionedAlertRuleFromAlertRule(rule models.AlertRule, provenance models.
 		Condition:    rule.Condition,
 		Data:         rule.Data,
 		Updated:      rule.Updated,
-		NoDataState:  rule.NoDataState,
+		NoDataState:  definitions.NoDataState(rule.NoDataState), // TODO there may be a validation
 		ExecErrState: rule.ExecErrState,
 		Annotations:  rule.Annotations,
 		Labels:       rule.Labels,
