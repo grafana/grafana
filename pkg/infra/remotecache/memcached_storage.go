@@ -2,6 +2,7 @@ package remotecache
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/bradfitz/gomemcache/memcache"
@@ -10,6 +11,8 @@ import (
 )
 
 const memcachedCacheType = "memcached"
+
+var ErrNotImplemented = errors.New("count not implemented")
 
 type memcachedStorage struct {
 	c     *memcache.Client
@@ -67,6 +70,10 @@ func (s *memcachedStorage) Get(ctx context.Context, key string) (interface{}, er
 	}
 
 	return item.Val, nil
+}
+
+func (s *memcachedStorage) Count(ctx context.Context, prefix string) (int64, error) {
+	return 0, ErrNotImplemented
 }
 
 // Delete delete a key from the cache
