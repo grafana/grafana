@@ -1,3 +1,4 @@
+import { screen } from '@testing-library/react';
 import React from 'react';
 
 import { serializeStateToUrlParam } from '@grafana/data';
@@ -6,7 +7,7 @@ import { locationService } from '@grafana/runtime';
 import { makeLogsQueryResponse, makeMetricsQueryResponse } from './helper/query';
 import { setupExplore, tearDown, waitForExplore } from './helper/setup';
 
-describe('Handles running/not running query', () => {
+describe('ExplorePage handles running/not running query', () => {
   afterEach(() => {
     tearDown();
   });
@@ -59,42 +60,44 @@ describe('Handles running/not running query', () => {
     });
   });
 
-  it('handles url change and runs the new query', async () => {
+  describe('handles url change', () => {
     const urlParams = { left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]) };
-    const { datasources } = setupExplore({ urlParams });
-    jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
-    // Wait for rendering the logs
-    await screen.findByText(/custom log line/i);
 
-    jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse('different log'));
+    it('and runs the new query', async () => {
+      const { datasources } = setupExplore({ urlParams });
+      jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
+      // Wait for rendering the logs
+      await screen.findByText(/custom log line/i);
 
-    locationService.partial({
-      left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="different"}' }]),
+      jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse('different log'));
+
+      locationService.partial({
+        left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="different"}' }]),
+      });
+
+      // Editor renders the new query
+      await screen.findByText(`loki Editor input: { label="different"}`);
+      // Renders new response
+      await screen.findByText(/different log/i);
     });
 
-    // Editor renders the new query
-    await screen.findByText(`loki Editor input: { label="different"}`);
-    // Renders new response
-    await screen.findByText(/different log/i);
-  });
+    it('and runs the new query with different datasource', async () => {
+      const { datasources } = setupExplore({ urlParams });
+      jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
+      // Wait for rendering the logs
+      await screen.findByText(/custom log line/i);
+      await screen.findByText(`loki Editor input: { label="value"}`);
 
-  it('handles url change and runs the new query with different datasource', async () => {
-    const urlParams = { left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]) };
-    const { datasources } = setupExplore({ urlParams });
-    jest.mocked(datasources.loki.query).mockReturnValueOnce(makeLogsQueryResponse());
-    // Wait for rendering the logs
-    await screen.findByText(/custom log line/i);
-    await screen.findByText(`loki Editor input: { label="value"}`);
+      jest.mocked(datasources.elastic.query).mockReturnValueOnce(makeMetricsQueryResponse());
 
-    jest.mocked(datasources.elastic.query).mockReturnValueOnce(makeMetricsQueryResponse());
+      locationService.partial({
+        left: JSON.stringify(['now-1h', 'now', 'elastic', { expr: 'other query' }]),
+      });
 
-    locationService.partial({
-      left: JSON.stringify(['now-1h', 'now', 'elastic', { expr: 'other query' }]),
+      // Editor renders the new query
+      await screen.findByText(`elastic Editor input: other query`);
+      // Renders graph
+      await screen.findByText(/Graph/i);
     });
-
-    // Editor renders the new query
-    await screen.findByText(`elastic Editor input: other query`);
-    // Renders graph
-    await screen.findByText(/Graph/i);
   });
 });
