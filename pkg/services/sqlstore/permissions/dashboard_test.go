@@ -210,6 +210,7 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 			permission: dashboards.PERMISSION_VIEW,
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:parent"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:parent"},
 			},
 			features:       featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
 			expectedResult: []string{"parent", "subfolder", "dashboard under parent folder", "dashboard under subfolder"},
@@ -232,7 +233,8 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 			var result []string
 			err := db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 				q, params := filter.Where()
-				recQry, _ := filter.With()
+				recQry, recQryParams := filter.With()
+				params = append(recQryParams, params...)
 				err := sess.SQL(recQry+"\nSELECT title FROM dashboard WHERE "+q, params...).Find(&result)
 				return err
 			})

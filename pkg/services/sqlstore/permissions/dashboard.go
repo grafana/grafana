@@ -88,7 +88,7 @@ type clause struct {
 	params []interface{}
 }
 
-type AccessControlDashboardPermissionFilter struct {
+type accessControlDashboardPermissionFilter struct {
 	user             *user.SignedInUser
 	dashboardActions []string
 	folderActions    []string
@@ -100,7 +100,7 @@ type AccessControlDashboardPermissionFilter struct {
 }
 
 // NewAccessControlDashboardPermissionFilter creates a new AccessControlDashboardPermissionFilter that is configured with specific actions calculated based on the dashboards.PermissionType and query type
-func NewAccessControlDashboardPermissionFilter(user *user.SignedInUser, permissionLevel dashboards.PermissionType, queryType string, features featuremgmt.FeatureToggles) AccessControlDashboardPermissionFilter {
+func NewAccessControlDashboardPermissionFilter(user *user.SignedInUser, permissionLevel dashboards.PermissionType, queryType string, features featuremgmt.FeatureToggles) *accessControlDashboardPermissionFilter {
 	needEdit := permissionLevel > dashboards.PERMISSION_VIEW
 
 	var folderActions []string
@@ -136,23 +136,23 @@ func NewAccessControlDashboardPermissionFilter(user *user.SignedInUser, permissi
 		}
 	}
 
-	f := AccessControlDashboardPermissionFilter{user: user, folderActions: folderActions, dashboardActions: dashboardActions, features: features,
+	f := accessControlDashboardPermissionFilter{user: user, folderActions: folderActions, dashboardActions: dashboardActions, features: features,
 		recQueries: make([]clause, 0, maximumRecursiveQueries),
 	}
 
 	f.buildClauses()
 
-	return f
+	return &f
 }
 
 // Where returns:
 // - a where clause for filtering dashboards with expected permissions
 // - an array with the query parameters
-func (f *AccessControlDashboardPermissionFilter) Where() (string, []interface{}) {
+func (f *accessControlDashboardPermissionFilter) Where() (string, []interface{}) {
 	return f.where.string, f.where.params
 }
 
-func (f *AccessControlDashboardPermissionFilter) buildClauses() {
+func (f *accessControlDashboardPermissionFilter) buildClauses() {
 	if f.user == nil || f.user.Permissions == nil || f.user.Permissions[f.user.OrgID] == nil {
 		f.where = clause{string: "(1 = 0)"}
 		return
@@ -206,7 +206,7 @@ func (f *AccessControlDashboardPermissionFilter) buildClauses() {
 			switch f.features.IsEnabled(featuremgmt.FlagNestedFolders) {
 			case true:
 				recQueryName := fmt.Sprintf("RecQry%d", len(f.recQueries))
-				f.recQueries = append(f.recQueries, getFoldersWithPermissions(recQueryName, permSelector.String(), permSelectorArgs))
+				f.addRecQry(recQueryName, permSelector.String(), permSelectorArgs)
 				builder.WriteString(fmt.Sprintf("WHERE d.uid IN (SELECT uid FROM %s)", recQueryName))
 			default:
 				builder.WriteString("WHERE d.uid IN ")
@@ -247,7 +247,7 @@ func (f *AccessControlDashboardPermissionFilter) buildClauses() {
 			switch f.features.IsEnabled(featuremgmt.FlagNestedFolders) {
 			case true:
 				recQueryName := fmt.Sprintf("RecQry%d", len(f.recQueries))
-				f.recQueries = append(f.recQueries, getFoldersWithPermissions(recQueryName, permSelector.String(), permSelectorArgs))
+				f.addRecQry(recQueryName, permSelector.String(), permSelectorArgs)
 				builder.WriteString(fmt.Sprintf("(SELECT uid FROM %s)", recQueryName))
 			default:
 				builder.WriteString(permSelector.String())
@@ -265,7 +265,7 @@ func (f *AccessControlDashboardPermissionFilter) buildClauses() {
 
 // With returns:
 // - a with clause for fetching folders with inherited permissions if nested folders are enabled or an empty string
-func (f *AccessControlDashboardPermissionFilter) With() (string, []interface{}) {
+func (f *accessControlDashboardPermissionFilter) With() (string, []interface{}) {
 	sb := strings.Builder{}
 	var params []interface{}
 	if len(f.recQueries) > 0 {
@@ -281,14 +281,16 @@ func (f *AccessControlDashboardPermissionFilter) With() (string, []interface{}) 
 	return sb.String(), params
 }
 
-func getFoldersWithPermissions(queryName string, whereUIDSelect string, whereParams []interface{}) clause {
-	return clause{
+func (f *accessControlDashboardPermissionFilter) addRecQry(queryName string, whereUIDSelect string, whereParams []interface{}) {
+	c := make([]interface{}, len(whereParams))
+	copy(c, whereParams)
+	f.recQueries = append(f.recQueries, clause{
 		string: fmt.Sprintf(`%s AS (
 			SELECT uid, parent_uid, org_id FROM folder WHERE uid IN %s
 			UNION ALL SELECT f.uid, f.parent_uid, f.org_id FROM folder f INNER JOIN %s r ON f.parent_uid = r.uid and f.org_id = r.org_id
 		)`, queryName, whereUIDSelect, queryName),
-		params: whereParams,
-	}
+		params: c,
+	})
 }
 
 func actionsToCheck(actions []string, permissions map[string][]string, wildcards ...accesscontrol.Wildcards) []interface{} {
