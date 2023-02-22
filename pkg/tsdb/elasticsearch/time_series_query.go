@@ -54,7 +54,7 @@ func (e *timeSeriesQuery) execute() (*backend.QueryDataResponse, error) {
 		return &backend.QueryDataResponse{}, err
 	}
 
-	return parseResponse(res.Responses, queries)
+	return parseResponse(res.Responses, queries, e.client.GetTimeField())
 }
 
 func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilder, from, to int64) error {
