@@ -16,9 +16,9 @@ import (
 )
 
 type Watcher interface {
-	Add(context.Context, *PublicDashboard)
-	Update(context.Context, *PublicDashboard, *PublicDashboard)
-	Delete(context.Context, *PublicDashboard)
+	Add(context.Context, *PublicDashboard) error
+	Update(context.Context, *PublicDashboard, *PublicDashboard) error
+	Delete(context.Context, *PublicDashboard) error
 }
 
 type WatcherWrapper struct {
@@ -33,34 +33,30 @@ func NewWatcherWrapper(watcher Watcher) *WatcherWrapper {
 	}
 }
 
-func (w *WatcherWrapper) Add(ctx context.Context, obj any) {
+func (w *WatcherWrapper) Add(ctx context.Context, obj any) error {
 	conv, err := fromUnstructured(obj)
 	if err != nil {
-		w.log.Error("Failed to convert object", "err", err)
-		return
+		return err
 	}
-	w.watcher.Add(ctx, conv)
+	return w.watcher.Add(ctx, conv)
 }
 
-func (w *WatcherWrapper) Update(ctx context.Context, oldObj, newObj any) {
+func (w *WatcherWrapper) Update(ctx context.Context, oldObj, newObj any) error {
 	convOld, err := fromUnstructured(oldObj)
 	if err != nil {
-		w.log.Error("Failed to convert oldObj", "err", err)
-		return
+		return err
 	}
 	convNew, err := fromUnstructured(newObj)
 	if err != nil {
-		w.log.Error("Failed to convert newObj", "err", err)
-		return
+		return err
 	}
-	w.watcher.Update(ctx, convOld, convNew)
+	return w.watcher.Update(ctx, convOld, convNew)
 }
 
-func (w *WatcherWrapper) Delete(ctx context.Context, obj any) {
+func (w *WatcherWrapper) Delete(ctx context.Context, obj any) error {
 	conv, err := fromUnstructured(obj)
 	if err != nil {
-		w.log.Error("Failed to convert object", "err", err)
-		return
+		return err
 	}
-	w.watcher.Delete(ctx, conv)
+	return w.watcher.Delete(ctx, conv)
 }

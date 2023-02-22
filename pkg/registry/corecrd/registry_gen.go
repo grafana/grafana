@@ -144,8 +144,17 @@ func doNewRegistry(
 		panic(fmt.Sprintf("generated CRD for Dashboard failed to register: %s", err))
 	}
 
+	resourceClient0, err := clientset.GetResourceClient(dashboard.CRD)
+	if err != nil {
+		panic(fmt.Sprintf("generated CRD for Dashboard failed to get resource client: %s", err))
+	}
+
 	watcherWrapper0 := dashboard.NewWatcherWrapper(dashboardWatcher)
-	watcher0 := informer.NewWatcher(dashboard.CRD, watcherWrapper0)
+	watcher0, err := informer.NewWatcherWithClient(resourceClient0, dashboard.CRD)
+	if err != nil {
+		panic(fmt.Sprintf("generated CRD for Dashboard failed to create watcher: %s", err))
+	}
+	watcher0.Wrap(watcherWrapper0, true)
 	informerFactory.AddWatcher(dashboard.CRD, watcher0)
 
 	// TODO Having the committed form on disk in YAML is worth doing this for now...but fix this silliness
@@ -170,8 +179,17 @@ func doNewRegistry(
 		panic(fmt.Sprintf("generated CRD for LibraryPanel failed to register: %s", err))
 	}
 
+	resourceClient1, err := clientset.GetResourceClient(librarypanel.CRD)
+	if err != nil {
+		panic(fmt.Sprintf("generated CRD for LibraryPanel failed to get resource client: %s", err))
+	}
+
 	watcherWrapper1 := librarypanel.NewWatcherWrapper(librarypanelWatcher)
-	watcher1 := informer.NewWatcher(librarypanel.CRD, watcherWrapper1)
+	watcher1, err := informer.NewWatcherWithClient(resourceClient1, librarypanel.CRD)
+	if err != nil {
+		panic(fmt.Sprintf("generated CRD for LibraryPanel failed to create watcher: %s", err))
+	}
+	watcher1.Wrap(watcherWrapper1, true)
 	informerFactory.AddWatcher(librarypanel.CRD, watcher1)
 
 	// TODO Having the committed form on disk in YAML is worth doing this for now...but fix this silliness
@@ -196,8 +214,17 @@ func doNewRegistry(
 		panic(fmt.Sprintf("generated CRD for Playlist failed to register: %s", err))
 	}
 
+	resourceClient2, err := clientset.GetResourceClient(playlist.CRD)
+	if err != nil {
+		panic(fmt.Sprintf("generated CRD for Playlist failed to get resource client: %s", err))
+	}
+
 	watcherWrapper2 := playlist.NewWatcherWrapper(playlistWatcher)
-	watcher2 := informer.NewWatcher(playlist.CRD, watcherWrapper2)
+	watcher2, err := informer.NewWatcherWithClient(resourceClient2, playlist.CRD)
+	if err != nil {
+		panic(fmt.Sprintf("generated CRD for Playlist failed to create watcher: %s", err))
+	}
+	watcher2.Wrap(watcherWrapper2, true)
 	informerFactory.AddWatcher(playlist.CRD, watcher2)
 
 	// TODO Having the committed form on disk in YAML is worth doing this for now...but fix this silliness
@@ -222,8 +249,17 @@ func doNewRegistry(
 		panic(fmt.Sprintf("generated CRD for Preferences failed to register: %s", err))
 	}
 
+	resourceClient3, err := clientset.GetResourceClient(preferences.CRD)
+	if err != nil {
+		panic(fmt.Sprintf("generated CRD for Preferences failed to get resource client: %s", err))
+	}
+
 	watcherWrapper3 := preferences.NewWatcherWrapper(preferencesWatcher)
-	watcher3 := informer.NewWatcher(preferences.CRD, watcherWrapper3)
+	watcher3, err := informer.NewWatcherWithClient(resourceClient3, preferences.CRD)
+	if err != nil {
+		panic(fmt.Sprintf("generated CRD for Preferences failed to create watcher: %s", err))
+	}
+	watcher3.Wrap(watcherWrapper3, true)
 	informerFactory.AddWatcher(preferences.CRD, watcher3)
 
 	// TODO Having the committed form on disk in YAML is worth doing this for now...but fix this silliness
@@ -248,8 +284,17 @@ func doNewRegistry(
 		panic(fmt.Sprintf("generated CRD for PublicDashboard failed to register: %s", err))
 	}
 
+	resourceClient4, err := clientset.GetResourceClient(publicdashboard.CRD)
+	if err != nil {
+		panic(fmt.Sprintf("generated CRD for PublicDashboard failed to get resource client: %s", err))
+	}
+
 	watcherWrapper4 := publicdashboard.NewWatcherWrapper(publicdashboardWatcher)
-	watcher4 := informer.NewWatcher(publicdashboard.CRD, watcherWrapper4)
+	watcher4, err := informer.NewWatcherWithClient(resourceClient4, publicdashboard.CRD)
+	if err != nil {
+		panic(fmt.Sprintf("generated CRD for PublicDashboard failed to create watcher: %s", err))
+	}
+	watcher4.Wrap(watcherWrapper4, true)
 	informerFactory.AddWatcher(publicdashboard.CRD, watcher4)
 
 	// TODO Having the committed form on disk in YAML is worth doing this for now...but fix this silliness
@@ -274,8 +319,17 @@ func doNewRegistry(
 		panic(fmt.Sprintf("generated CRD for ServiceAccount failed to register: %s", err))
 	}
 
+	resourceClient5, err := clientset.GetResourceClient(serviceaccount.CRD)
+	if err != nil {
+		panic(fmt.Sprintf("generated CRD for ServiceAccount failed to get resource client: %s", err))
+	}
+
 	watcherWrapper5 := serviceaccount.NewWatcherWrapper(serviceaccountWatcher)
-	watcher5 := informer.NewWatcher(serviceaccount.CRD, watcherWrapper5)
+	watcher5, err := informer.NewWatcherWithClient(resourceClient5, serviceaccount.CRD)
+	if err != nil {
+		panic(fmt.Sprintf("generated CRD for ServiceAccount failed to create watcher: %s", err))
+	}
+	watcher5.Wrap(watcherWrapper5, true)
 	informerFactory.AddWatcher(serviceaccount.CRD, watcher5)
 
 	// TODO Having the committed form on disk in YAML is worth doing this for now...but fix this silliness
@@ -300,8 +354,17 @@ func doNewRegistry(
 		panic(fmt.Sprintf("generated CRD for Team failed to register: %s", err))
 	}
 
+	resourceClient6, err := clientset.GetResourceClient(team.CRD)
+	if err != nil {
+		panic(fmt.Sprintf("generated CRD for Team failed to get resource client: %s", err))
+	}
+
 	watcherWrapper6 := team.NewWatcherWrapper(teamWatcher)
-	watcher6 := informer.NewWatcher(team.CRD, watcherWrapper6)
+	watcher6, err := informer.NewWatcherWithClient(resourceClient6, team.CRD)
+	if err != nil {
+		panic(fmt.Sprintf("generated CRD for Team failed to create watcher: %s", err))
+	}
+	watcher6.Wrap(watcherWrapper6, true)
 	informerFactory.AddWatcher(team.CRD, watcher6)
 
 	// TODO Having the committed form on disk in YAML is worth doing this for now...but fix this silliness

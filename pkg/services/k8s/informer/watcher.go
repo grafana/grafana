@@ -86,13 +86,41 @@ func (o *Watcher) Wrap(watcher ResourceWatcher, syncToAdd bool) { // nolint: rev
 	}
 }
 
+func (o *Watcher) Add(ctx context.Context, object any) error {
+	obj, ok := object.(runtime.Object)
+	if !ok {
+		return fmt.Errorf("object is not a runtime.Object")
+	}
+	return o.doAdd(ctx, obj)
+}
+
+func (o *Watcher) Update(ctx context.Context, oldObj, newObj any) error {
+	oldRuntime, ok := oldObj.(runtime.Object)
+	if !ok {
+		return fmt.Errorf("oldObj is not a runtime.Object")
+	}
+	newRuntime, ok := newObj.(runtime.Object)
+	if !ok {
+		return fmt.Errorf("oldObj is not a runtime.Object")
+	}
+	return o.doUpdate(ctx, oldRuntime, newRuntime)
+}
+
+func (o *Watcher) Delete(ctx context.Context, object any) error {
+	obj, ok := object.(runtime.Object)
+	if !ok {
+		return fmt.Errorf("object is not a runtime.Object")
+	}
+	return o.doDelete(ctx, obj)
+}
+
 // Add is part of implementing ResourceWatcher,
 // and calls the underlying AddFunc, SyncFunc, or DeleteFunc based upon internal logic.
 // When the object is first added, AddFunc is called and a finalizer is attached to it.
 // Subsequent calls to Add will check the finalizer list and call SyncFunc if the finalizer is already attached,
 // or if metadata.DeletionTimestamp is non-nil, they will call DeleteFunc and remove the finalizer
 // (the finalizer prevents the resource from being hard deleted until it is removed).
-func (o *Watcher) Add(ctx context.Context, object runtime.Object) error {
+func (o *Watcher) doAdd(ctx context.Context, object runtime.Object) error {
 	if object == nil {
 		return fmt.Errorf("object cannot be nil")
 	}
@@ -153,7 +181,7 @@ func (o *Watcher) Add(ctx context.Context, object runtime.Object) error {
 // If the new object has a non-nil metadata.DeletionTimestamp in its metadata, DeleteFunc will be called,
 // and the object's finalizer will be removed to allow kubernetes to hard delete it.
 // Otherwise, UpdateFunc is called, provided the update is non-trivial (that is, the metadata.Generation has changed).
-func (o *Watcher) Update(ctx context.Context, old runtime.Object, new runtime.Object) error {
+func (o *Watcher) doUpdate(ctx context.Context, old runtime.Object, new runtime.Object) error {
 	// TODO: If old is nil, it _might_ be ok?
 	if old == nil {
 		return fmt.Errorf("old cannot be nil")
@@ -206,7 +234,7 @@ func (o *Watcher) Update(ctx context.Context, old runtime.Object, new runtime.Ob
 
 // Delete exists to implement ResourceWatcher,
 // but, due to deletes only happening after the finalizer is removed, this function does nothing.
-func (*Watcher) Delete(context.Context, runtime.Object) error {
+func (*Watcher) doDelete(context.Context, runtime.Object) error {
 	// Do nothing here, because we add finalizers, so we actually call delete code on updates/add-sync
 	return nil
 }
