@@ -2,35 +2,35 @@ import { DecimalCount } from '../types/displayValue';
 
 import { toFixed, FormattedValue } from './valueFormats';
 
-export function toPercent(size: number, decimals: DecimalCount): FormattedValue {
+export function toPercent(size: number | null, decimals: DecimalCount): FormattedValue {
   if (size === null) {
     return { text: '' };
   }
   return { text: toFixed(size, decimals), suffix: '%' };
 }
 
-export function toPercentUnit(size: number, decimals: DecimalCount): FormattedValue {
+export function toPercentUnit(size: number | null, decimals: DecimalCount): FormattedValue {
   if (size === null) {
     return { text: '' };
   }
   return { text: toFixed(100 * size, decimals), suffix: '%' };
 }
 
-export function toIncreasingPercent(size: number, decimals: DecimalCount) {
+export function toIncreasingPercent(size: number | null, decimals: DecimalCount) {
   if (size === null) {
     return { text: '' };
   }
   return { text: toFixed(size, decimals), suffix: '%', prefix: '\u2191' };
 }
 
-export function toDecreasingPercent(size: number, decimals: DecimalCount) {
+export function toDecreasingPercent(size: number | null, decimals: DecimalCount) {
   if (size === null) {
     return { text: '' };
   }
   return { text: toFixed(size, decimals), suffix: '%', prefix: '\u2193' };
 }
 
-export function toHex0x(value: number, decimals: DecimalCount): FormattedValue {
+export function toHex0x(value: number | null, decimals: DecimalCount): FormattedValue {
   if (value == null) {
     return { text: '' };
   }
@@ -43,7 +43,7 @@ export function toHex0x(value: number, decimals: DecimalCount): FormattedValue {
   return asHex;
 }
 
-export function toHex(value: number, decimals: DecimalCount): FormattedValue {
+export function toHex(value: number | null, decimals: DecimalCount): FormattedValue {
   if (value == null) {
     return { text: '' };
   }
@@ -52,7 +52,7 @@ export function toHex(value: number, decimals: DecimalCount): FormattedValue {
   };
 }
 
-export function sci(value: number, decimals: DecimalCount): FormattedValue {
+export function sci(value: number | null, decimals: DecimalCount): FormattedValue {
   if (value == null) {
     return { text: '' };
   }
