@@ -20,14 +20,14 @@ export function toIncreasingPercent(size: number, decimals: DecimalCount) {
   if (size === null) {
     return { text: '' };
   }
-  return { text: `\u2191${toFixed(size, decimals)}`, suffix: '%' };
+  return { text: toFixed(size, decimals), suffix: '%', prefix: '\u2191' };
 }
 
 export function toDecreasingPercent(size: number, decimals: DecimalCount) {
   if (size === null) {
     return { text: '' };
   }
-  return { text: `\u2193${toFixed(size, decimals)}`, suffix: '%' };
+  return { text: toFixed(size, decimals), suffix: '%', prefix: '\u2193' };
 }
 
 export function toHex0x(value: number, decimals: DecimalCount): FormattedValue {
