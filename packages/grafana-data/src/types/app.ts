@@ -1,3 +1,4 @@
+import { isString } from 'lodash';
 import { ComponentType } from 'react';
 
 import { KeyValue } from './data';
@@ -114,7 +115,16 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
   }
 
   configureExtensionLink<C extends object>(config: AppPluginExtensionLinkConfig<C>) {
-    this.linkExtensions.push(config as AppPluginExtensionLinkConfig);
+    const { path, description, title, placement } = config;
+    if (!isString(path) || !isString(description) || !isString(title) || !isString(placement)) {
+      // console.warn();
+      return this;
+    }
+
+    if (placement.startsWith('grafana/') || placement.startsWith('plugins/')) {
+      this.linkExtensions.push(config as AppPluginExtensionLinkConfig);
+    }
+
     return this;
   }
 }
