@@ -133,7 +133,7 @@ type ProvisionedAlertRule struct {
 	// example: {"team": "sre-team-1"}
 	Labels map[string]string `json:"labels,omitempty"`
 	// readonly: true
-	Provenance models.Provenance `json:"provenance,omitempty"`
+	Provenance Provenance `json:"provenance,omitempty"`
 	// example: false
 	IsPaused bool `json:"isPaused"`
 }

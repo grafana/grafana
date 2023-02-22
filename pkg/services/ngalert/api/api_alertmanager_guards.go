@@ -10,7 +10,6 @@ import (
 	"github.com/prometheus/alertmanager/pkg/labels"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util/cmputil"
 )
 
@@ -34,7 +33,7 @@ func checkRoutes(currentConfig apimodels.GettableUserConfig, newConfig apimodels
 	reporter := cmputil.DiffReporter{}
 	options := []cmp.Option{cmp.Reporter(&reporter), cmpopts.EquateEmpty(), cmpopts.IgnoreUnexported(labels.Matcher{})}
 	routesEqual := cmp.Equal(currentConfig.AlertmanagerConfig.Route, newConfig.AlertmanagerConfig.Route, options...)
-	if !routesEqual && currentConfig.AlertmanagerConfig.Route.Provenance != ngmodels.ProvenanceNone {
+	if !routesEqual && currentConfig.AlertmanagerConfig.Route.Provenance != apimodels.ProvenanceNone {
 		return fmt.Errorf("policies were provisioned and cannot be changed through the UI")
 	}
 	return nil
@@ -42,11 +41,11 @@ func checkRoutes(currentConfig apimodels.GettableUserConfig, newConfig apimodels
 
 func checkTemplates(currentConfig apimodels.GettableUserConfig, newConfig apimodels.PostableUserConfig) error {
 	for name, template := range currentConfig.TemplateFiles {
-		provenance := ngmodels.ProvenanceNone
+		provenance := apimodels.ProvenanceNone
 		if prov, present := currentConfig.TemplateFileProvenances[name]; present {
 			provenance = prov
 		}
-		if provenance == ngmodels.ProvenanceNone {
+		if provenance == apimodels.ProvenanceNone {
 			continue // we are only interested in non none
 		}
 		found := false
@@ -76,7 +75,7 @@ func checkContactPoints(currReceivers []*apimodels.GettableApiReceiver, newRecei
 	}
 	for _, existingReceiver := range currReceivers {
 		for _, contactPoint := range existingReceiver.GrafanaManagedReceivers {
-			if contactPoint.Provenance == ngmodels.ProvenanceNone {
+			if contactPoint.Provenance == apimodels.ProvenanceNone {
 				continue // we are only interested in non none
 			}
 			postedContactPoint, present := newCPs[contactPoint.UID]
@@ -131,11 +130,11 @@ func checkMuteTimes(currentConfig apimodels.GettableUserConfig, newConfig apimod
 		newMTs[newMuteTime.Name] = newMuteTime
 	}
 	for _, muteTime := range currentConfig.AlertmanagerConfig.MuteTimeIntervals {
-		provenance := ngmodels.ProvenanceNone
+		provenance := apimodels.ProvenanceNone
 		if prov, present := currentConfig.AlertmanagerConfig.MuteTimeProvenances[muteTime.Name]; present {
 			provenance = prov
 		}
-		if provenance == ngmodels.ProvenanceNone {
+		if provenance == apimodels.ProvenanceNone {
 			continue // we are only interested in non none
 		}
 		postedMT, present := newMTs[muteTime.Name]

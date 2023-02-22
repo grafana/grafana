@@ -47,7 +47,7 @@ func ProvisionedAlertRuleFromAlertRule(rule models.AlertRule, provenance models.
 		ExecErrState: rule.ExecErrState,
 		Annotations:  rule.Annotations,
 		Labels:       rule.Labels,
-		Provenance:   provenance,
+		Provenance:   definitions.Provenance(provenance), // TODO validate enum conversion?
 		IsPaused:     rule.IsPaused,
 	}
 }
