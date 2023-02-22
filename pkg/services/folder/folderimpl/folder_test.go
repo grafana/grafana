@@ -44,7 +44,7 @@ func TestIntegrationProvideFolderService(t *testing.T) {
 	})
 }
 
-func TestIntegrationFolderService(t *testing.T) {
+func TestIntegrationFolderService(t *testing.T) { //have to mock the result of nested folder
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -218,7 +218,7 @@ func TestIntegrationFolderService(t *testing.T) {
 				require.Equal(t, f, reqResult)
 			})
 
-			t.Run("When deleting folder by uid should not return access denied error", func(t *testing.T) {
+			t.Run("When deleting folder by uid should not return access denied error", func(t *testing.T) { //
 				f := folder.NewFolder(util.GenerateShortUID(), "")
 				f.ID = rand.Int63()
 				f.UID = util.GenerateShortUID()
@@ -721,6 +721,49 @@ func TestNestedFolderService(t *testing.T) {
 			require.True(t, nestedFolderStore.DeleteCalled)
 		})
 
+		t.Run("create returns error if maximum depth reached", func(t *testing.T) {
+			// This test creates and deletes the dashboard, so needs some extra setup.
+			g := guardian.New
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
+			t.Cleanup(func() {
+				guardian.New = g
+			})
+
+			// dashboard store commands that should be called.
+			dashStore := &dashboards.FakeDashboardStore{}
+			dashStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*dashboards.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil).Times(2)
+			dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand")).Return(&dashboards.Dashboard{}, nil)
+			var actualCmd *dashboards.DeleteDashboardCommand
+			dashStore.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+				actualCmd = args.Get(1).(*dashboards.DeleteDashboardCommand)
+			}).Return(nil).Once()
+
+			dashboardFolderStore := foldertest.NewFakeFolderStore(t)
+			dashboardFolderStore.On("GetFolderByID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(&folder.Folder{}, nil)
+
+			parents := make([]*folder.Folder, 0, folder.MaxNestedFolderDepth)
+			for i := 0; i < folder.MaxNestedFolderDepth; i++ {
+				parents = append(parents, &folder.Folder{UID: fmt.Sprintf("folder%d", i)})
+			}
+
+			nestedFolderStore := NewFakeStore()
+			//nestedFolderStore.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
+			nestedFolderStore.ExpectedParentFolders = parents
+
+			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
+				ExpectedEvaluate: true,
+			})
+			_, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
+				Title:        "folder",
+				OrgID:        orgID,
+				ParentUID:    parents[len(parents)-1].UID,
+				UID:          util.GenerateShortUID(),
+				SignedInUser: usr,
+			})
+			assert.ErrorIs(t, err, folder.ErrMaximumDepthReached)
+			require.NotNil(t, actualCmd)
+		})
+		// can do 3-4 layers instead of full 8 ; check that when do
 		t.Run("create returns error if maximum depth reached", func(t *testing.T) {
 			// This test creates and deletes the dashboard, so needs some extra setup.
 			g := guardian.New

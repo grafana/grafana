@@ -443,25 +443,27 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 			NEW: we need to also delete those entries from the dashboard table.
 		*/
 
-		dashFolder, err := s.dashboardFolderStore.GetFolderByUID(ctx, cmd.OrgID, cmd.UID)
-		if err != nil {
-			return err
-		}
-
-		guard, err := guardian.NewByUID(ctx, dashFolder.UID, cmd.OrgID, cmd.SignedInUser)
-		if err != nil {
-			return err
-		}
-
-		if canSave, err := guard.CanDelete(); err != nil || !canSave {
+		for _, folder := range result {
+			dashFolder, err := s.dashboardFolderStore.GetFolderByUID(ctx, cmd.OrgID, folder)
 			if err != nil {
-				return toFolderError(err)
+				return err
 			}
-			return dashboards.ErrFolderAccessDenied
-		}
-		err = s.legacyDelete(ctx, cmd, dashFolder)
-		if err != nil {
-			return err
+
+			guard, err := guardian.NewByUID(ctx, dashFolder.UID, cmd.OrgID, cmd.SignedInUser)
+			if err != nil {
+				return err
+			}
+
+			if canSave, err := guard.CanDelete(); err != nil || !canSave {
+				if err != nil {
+					return toFolderError(err)
+				}
+				return dashboards.ErrFolderAccessDenied
+			}
+			err = s.legacyDelete(ctx, cmd, dashFolder)
+			if err != nil {
+				return err
+			}
 		}
 		return nil
 	})
