@@ -43,3 +43,8 @@ func (pd *PublicDashboardServiceWrapperImpl) FindByDashboardUid(ctx context.Cont
 
 	return pubdash, nil
 }
+
+func (pd *PublicDashboardServiceWrapperImpl) HandleDashboardDeleted(ctx context.Context, uid string, orgId int64) error {
+	// TODO handle when dashboard is a folder
+	return pd.store.HandleDashboardDeleted(ctx, uid, orgId)
+}

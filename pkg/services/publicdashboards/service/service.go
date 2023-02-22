@@ -343,7 +343,7 @@ func (pd *PublicDashboardServiceImpl) Delete(ctx context.Context, orgId int64, u
 }
 
 func (pd *PublicDashboardServiceImpl) HandleDashboardDeleted(ctx context.Context, uid string, orgId int64) error {
-	return pd.store.HandleDashboardDeleted(ctx, uid, orgId)
+	return pd.serviceWrapper.HandleDashboardDeleted(ctx, uid, orgId)
 }
 
 // intervalMS and maxQueryData values are being calculated on the frontend for regular dashboards
