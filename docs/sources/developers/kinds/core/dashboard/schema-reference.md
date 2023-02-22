@@ -126,7 +126,7 @@ Datasource to use for annotation.
 
 | Property | Type                                                                                                                  | Required | Description |
 |----------|-----------------------------------------------------------------------------------------------------------------------|----------|-------------|
-| `object` | Possible types are: [Panel](#Panel), [RowPanel](#RowPanel), [GraphPanel](#GraphPanel), [HeatmapPanel](#HeatmapPanel). |          |             |
+| `object` | Possible types are: [Panel](#panel), [RowPanel](#rowpanel), [GraphPanel](#graphpanel), [HeatmapPanel](#heatmappanel). |          |             |
 
 ### DataTransformerConfig
 
@@ -207,7 +207,7 @@ TODO docs
 
 | Property | Type                                                                                                                          | Required | Description |
 |----------|-------------------------------------------------------------------------------------------------------------------------------|----------|-------------|
-| `object` | Possible types are: [ValueMap](#ValueMap), [RangeMap](#RangeMap), [RegexMap](#RegexMap), [SpecialValueMap](#SpecialValueMap). |          |             |
+| `object` | Possible types are: [ValueMap](#valuemap), [RangeMap](#rangemap), [RegexMap](#regexmap), [SpecialValueMap](#specialvaluemap). |          |             |
 
 ### RangeMap
 
@@ -489,7 +489,7 @@ Name of default datasource.
 
 | Property | Type                                                                                           | Required | Description |
 |----------|------------------------------------------------------------------------------------------------|----------|-------------|
-| `object` | Possible types are: [Panel](#Panel), [GraphPanel](#GraphPanel), [HeatmapPanel](#HeatmapPanel). |          |             |
+| `object` | Possible types are: [Panel](#panel), [GraphPanel](#graphpanel), [HeatmapPanel](#heatmappanel). |          |             |
 
 ### GraphPanel
 

@@ -648,7 +648,7 @@ func constraintDescr(prop *schema) string {
 func enumStr(propValue *schema) string {
 	var vals []string
 	for _, v := range propValue.OneOf {
-		vals = append(vals, fmt.Sprintf("[%s](#%s)", v.Title, v.Title))
+		vals = append(vals, fmt.Sprintf("[%s](#%s)", v.Title, strings.ToLower(v.Title)))
 	}
 	return "Possible types are: " + strings.Join(vals, ", ") + "."
 }

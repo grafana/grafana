@@ -32,7 +32,7 @@ It extends [DataQuery](#dataquery).
 
 | Property | Type                                                                                                                                                                | Required | Description |
 |----------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|-------------|
-| `object` | Possible types are: [DateHistogram](#DateHistogram), [Histogram](#Histogram), [Terms](#Terms), [Filters](#Filters), [GeoHashGrid](#GeoHashGrid), [Nested](#Nested). |          |             |
+| `object` | Possible types are: [DateHistogram](#datehistogram), [Histogram](#histogram), [Terms](#terms), [Filters](#filters), [GeoHashGrid](#geohashgrid), [Nested](#nested). |          |             |
 
 ### DateHistogram
 
@@ -141,7 +141,7 @@ properties for the given context.
 
 | Property | Type                                                                                                 | Required | Description |
 |----------|------------------------------------------------------------------------------------------------------|----------|-------------|
-| `object` | Possible types are: [Count](#Count), [PipelineMetricAggregation](#PipelineMetricAggregation), [](#). |          |             |
+| `object` | Possible types are: [Count](#count), [PipelineMetricAggregation](#pipelinemetricaggregation), [](#). |          |             |
 
 ### Count
 
@@ -165,7 +165,7 @@ It extends [BaseMetricAggregation](#basemetricaggregation).
 
 | Property | Type                                                                                                                                            | Required | Description |
 |----------|-------------------------------------------------------------------------------------------------------------------------------------------------|----------|-------------|
-| `object` | Possible types are: [MovingAverage](#MovingAverage), [Derivative](#Derivative), [CumulativeSum](#CumulativeSum), [BucketScript](#BucketScript). |          |             |
+| `object` | Possible types are: [MovingAverage](#movingaverage), [Derivative](#derivative), [CumulativeSum](#cumulativesum), [BucketScript](#bucketscript). |          |             |
 
 ### BucketScript
 
