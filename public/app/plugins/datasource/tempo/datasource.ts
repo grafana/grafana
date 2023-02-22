@@ -34,6 +34,7 @@ import { LokiOptions } from '../loki/types';
 import { PrometheusDatasource } from '../prometheus/datasource';
 import { PromQuery } from '../prometheus/types';
 
+import { generateQueryFromFilters } from './SearchTraceQLEditor/utils';
 import {
   failedMetric,
   histogramMetric,
@@ -225,8 +226,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
     if (targets.traceqlSearch?.length) {
       try {
-        const appliedQuery = this.applyVariables(targets.traceqlSearch[0], options.scopedVars);
-        const queryValue = appliedQuery?.query || '';
+        const queryValue = generateQueryFromFilters(targets.traceqlSearch[0].filters);
         reportInteraction('grafana_traces_traceql_search_queried', {
           datasourceType: 'tempo',
           app: options.app ?? '',

@@ -102,14 +102,3 @@ export type SearchResponse = {
   traces: TraceSearchMetadata[];
   metrics: SearchMetrics;
 };
-
-export type SearchFilterType = 'static' | 'dynamic';
-
-export type SearchFilter = {
-  id: string; // uniquely identify the filter, will not be used in the query generation
-  type: SearchFilterType; // static fields are pre-set in the UI, dynamic fields are added by the user
-  tag?: string;
-  operator?: string;
-  value?: string;
-  valueType?: string;
-};

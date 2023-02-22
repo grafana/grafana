@@ -17,7 +17,40 @@ export const DataQueryModelVersion = Object.freeze([0, 0]);
  */
 export type TempoQueryType = ('traceql' | 'traceqlSearch' | 'search' | 'serviceMap' | 'upload' | 'nativeSearch' | 'clear');
 
+export interface SearchFilter {
+  /**
+   * Uniquely identify the filter, will not be used in the query generation
+   */
+  id: string;
+  /**
+   * The operator that connects the tag to the value, for example: =, >, !=, =~
+   */
+  operator?: string;
+  /**
+   * The tag for the search filter, for example: .http.status_code, .service.name, status
+   */
+  tag?: string;
+  /**
+   * The type of the filter, can either be static (pre defined in the UI) or dynamic
+   */
+  type: SearchFilterType;
+  /**
+   * The value for the search filter
+   */
+  value?: string;
+  /**
+   * The type of the value, used for example to check whether we need to wrap the value in quotes when generating the query
+   */
+  valueType?: string;
+}
+
+/**
+ * static fields are pre-set in the UI, dynamic fields are added by the user
+ */
+export type SearchFilterType = ('static' | 'dynamic');
+
 export interface Tempo extends common.DataQuery {
+  filters: Array<SearchFilter>;
   /**
    * Defines the maximum number of traces that are returned from Tempo
    */
@@ -51,3 +84,7 @@ export interface Tempo extends common.DataQuery {
    */
   spanName?: string;
 }
+
+export const defaultTempo: Partial<Tempo> = {
+  filters: [],
+};

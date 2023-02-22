@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { FetchError } from '@grafana/runtime';
@@ -8,14 +8,16 @@ import { Alert, HorizontalGroup, useStyles2 } from '@grafana/ui';
 import { createErrorNotification } from '../../../../core/copy/appNotification';
 import { notifyApp } from '../../../../core/reducers/appNotification';
 import { dispatch } from '../../../../store/store';
+import { SearchFilter } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import { CompletionProvider } from '../traceql/autocomplete';
-import { SearchFilter, TempoQuery } from '../types';
+import { TempoQuery } from '../types';
 
 import DurationInput from './DurationInput';
 import InlineSearchField from './InlineSearchField';
 import SearchField from './SearchField';
 import TagsInput from './TagsInput';
+import { generateQueryFromFilters, replaceAt } from './utils';
 
 interface Props {
   datasource: TempoDatasource;
@@ -25,28 +27,38 @@ interface Props {
   onRunQuery: () => void;
 }
 
-const TraceQLSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props) => {
+const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
   const styles = useStyles2(getStyles);
   const [error, setError] = useState<Error | FetchError | null>(null);
 
   const [tags, setTags] = useState<string[]>([]);
   const [isTagsLoading, setIsTagsLoading] = useState(true);
-  const [filters, setFilters] = useState<Record<string, SearchFilter>>({});
   const [traceQlQuery, setTraceQlQuery] = useState<string>('');
 
-  const updateFilter = useCallback((s: SearchFilter) => {
-    setFilters((state) => {
-      const copy = { ...state };
-      copy[s.id] = s;
-      return copy;
-    });
-  }, []);
+  const updateFilter = (s: SearchFilter) => {
+    const copy = { ...query };
+    copy.filters ||= [];
+    const indexOfFilter = copy.filters.findIndex((f) => f.id === s.id) || -1;
+    if (indexOfFilter > 0) {
+      // update in place if the filter already exists, for consistency and to avoid UI bugs
+      copy.filters = replaceAt(copy.filters, indexOfFilter, s);
+    } else {
+      copy.filters.push(s);
+    }
+    onChange(copy);
+  };
+
+  useEffect(() => {
+    setTraceQlQuery(generateQueryFromFilters(query.filters || []));
+  }, [query]);
 
   // const deleteFilter = (tag: string) => {
   //   const copy = { ...filters };
   //   delete filters[tag];
   //   setFilters(copy);
   // };
+
+  const findFilter = (id: string) => query.filters?.find((f) => f.id === id);
 
   useEffect(() => {
     const fetchTags = async () => {
@@ -73,37 +85,14 @@ const TraceQLSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Prop
     fetchTags();
   }, [datasource]);
 
-  const handleOnChange = useCallback(
-    (value) => {
-      if (value !== query.query) {
-        onChange({
-          ...query,
-          query: value,
-        });
-      }
-    },
-    [onChange, query]
-  );
-
-  useEffect(() => {
-    setTraceQlQuery(
-      `{${Object.values(filters)
-        .filter((f) => f.value)
-        .map((f) => `${f.tag} ${f.operator} ${!f.valueType || f.valueType === 'string' ? `"${f.value}"` : f.value}`)
-        .join(' && ')}}`
-    );
-  }, [filters]);
-
-  useEffect(() => {
-    handleOnChange(traceQlQuery);
-  }, [handleOnChange, traceQlQuery]);
-
   return (
     <>
       <div className={styles.container}>
         <InlineSearchField label={'Service Name'}>
           <SearchField
-            filter={{ id: 'service-name', type: 'static', tag: '.service.name', operator: '=' }}
+            filter={
+              findFilter('service-name') || { id: 'service-name', type: 'static', tag: '.service.name', operator: '=' }
+            }
             datasource={datasource}
             setError={setError}
             updateFilter={updateFilter}
@@ -112,7 +101,7 @@ const TraceQLSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Prop
         </InlineSearchField>
         <InlineSearchField label={'Span Name'}>
           <SearchField
-            filter={{ id: 'tag-name', type: 'static', tag: 'name', operator: '=' }}
+            filter={findFilter('tag-name') || { id: 'tag-name', type: 'static', tag: 'name', operator: '=' }}
             datasource={datasource}
             setError={setError}
             updateFilter={updateFilter}
@@ -121,13 +110,37 @@ const TraceQLSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Prop
         </InlineSearchField>
         <InlineSearchField label={'Duration'}>
           <HorizontalGroup>
-            <DurationInput id={'min-duration'} tag={'duration'} operators={['>', '>=']} updateFilter={updateFilter} />
-            <DurationInput id={'max-duration'} tag={'duration'} operators={['<', '<=']} updateFilter={updateFilter} />
+            <DurationInput
+              filter={
+                findFilter('min-duration') || {
+                  id: 'min-duration',
+                  type: 'static',
+                  tag: 'duration',
+                  operator: '>',
+                  valueType: 'duration',
+                }
+              }
+              operators={['>', '>=']}
+              updateFilter={updateFilter}
+            />
+            <DurationInput
+              filter={
+                findFilter('max-duration') || {
+                  id: 'max-duration',
+                  type: 'static',
+                  tag: 'duration',
+                  operator: '<',
+                  valueType: 'duration',
+                }
+              }
+              operators={['<', '<=']}
+              updateFilter={updateFilter}
+            />
           </HorizontalGroup>
         </InlineSearchField>
         <InlineSearchField label={'Tags'}>
           <TagsInput
-            filters={Object.values(filters)}
+            filters={query.filters}
             datasource={datasource}
             setError={setError}
             updateFilter={updateFilter}
@@ -152,7 +165,7 @@ export default TraceQLSearch;
 
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css`
-    max-width: 500px;
+    //max-width: 500px;
   `,
   alert: css`
     max-width: 75ch;

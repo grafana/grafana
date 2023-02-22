@@ -1,16 +1,14 @@
-import { DataSourceApi } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { SearchFilter } from '../dataquery.gen';
 
-export async function getDS(uid?: string): Promise<DataSourceApi | undefined> {
-  if (!uid) {
-    return undefined;
-  }
+export const generateQueryFromFilters = (filters: SearchFilter[]) => {
+  return `{${filters
+    .filter((f) => f.value)
+    .map((f) => `${f.tag} ${f.operator} ${!f.valueType || f.valueType === 'string' ? `"${f.value}"` : f.value}`)
+    .join(' && ')}}`;
+};
 
-  const dsSrv = getDataSourceSrv();
-  try {
-    return await dsSrv.get(uid);
-  } catch (error) {
-    console.error('Failed to load data source', error);
-    return undefined;
-  }
+export function replaceAt<T>(array: T[], index: number, value: T) {
+  const ret = array.slice(0);
+  ret[index] = value;
+  return ret;
 }

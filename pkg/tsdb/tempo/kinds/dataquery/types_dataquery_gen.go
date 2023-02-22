@@ -9,6 +9,20 @@
 
 package dataquery
 
+// Defines values for SearchFilterType.
+const (
+	SearchFilterTypeDynamic SearchFilterType = "dynamic"
+
+	SearchFilterTypeStatic SearchFilterType = "static"
+)
+
+// Defines values for FiltersType.
+const (
+	FiltersTypeDynamic FiltersType = "dynamic"
+
+	FiltersTypeStatic FiltersType = "static"
+)
+
 // Defines values for TempoQueryType.
 const (
 	TempoQueryTypeClear TempoQueryType = "clear"
@@ -26,6 +40,30 @@ const (
 	TempoQueryTypeUpload TempoQueryType = "upload"
 )
 
+// SearchFilter defines model for SearchFilter.
+type SearchFilter struct {
+	// Uniquely identify the filter, will not be used in the query generation
+	Id string `json:"id"`
+
+	// The operator that connects the tag to the value, for example: =, >, !=, =~
+	Operator *string `json:"operator,omitempty"`
+
+	// The tag for the search filter, for example: .http.status_code, .service.name, status
+	Tag *string `json:"tag,omitempty"`
+
+	// The type of the filter, can either be static (pre defined in the UI) or dynamic
+	Type SearchFilterType `json:"type"`
+
+	// The value for the search filter
+	Value *string `json:"value,omitempty"`
+
+	// The type of the value, used for example to check whether we need to wrap the value in quotes when generating the query
+	ValueType *string `json:"valueType,omitempty"`
+}
+
+// The type of the filter, can either be static (pre defined in the UI) or dynamic
+type SearchFilterType string
+
 // TempoDataQuery defines model for TempoDataQuery.
 type TempoDataQuery struct {
 	// For mixed data sources the selected datasource is on the query level.
@@ -33,6 +71,25 @@ type TempoDataQuery struct {
 	// TODO find a better way to do this ^ that's friendly to schema
 	// TODO this shouldn't be unknown but DataSourceRef | null
 	Datasource *interface{} `json:"datasource,omitempty"`
+	Filters    []struct {
+		// Uniquely identify the filter, will not be used in the query generation
+		Id string `json:"id"`
+
+		// The operator that connects the tag to the value, for example: =, >, !=, =~
+		Operator *string `json:"operator,omitempty"`
+
+		// The tag for the search filter, for example: .http.status_code, .service.name, status
+		Tag *string `json:"tag,omitempty"`
+
+		// The type of the filter, can either be static (pre defined in the UI) or dynamic
+		Type FiltersType `json:"type"`
+
+		// The value for the search filter
+		Value *string `json:"value,omitempty"`
+
+		// The type of the value, used for example to check whether we need to wrap the value in quotes when generating the query
+		ValueType *string `json:"valueType,omitempty"`
+	} `json:"filters"`
 
 	// true if query is disabled (ie should not be returned to the dashboard)
 	Hide *bool `json:"hide,omitempty"`
@@ -71,6 +128,9 @@ type TempoDataQuery struct {
 	// Query traces by span name
 	SpanName *string `json:"spanName,omitempty"`
 }
+
+// The type of the filter, can either be static (pre defined in the UI) or dynamic
+type FiltersType string
 
 // search = Loki search, nativeSearch = Tempo search for backwards compatibility
 type TempoQueryType string

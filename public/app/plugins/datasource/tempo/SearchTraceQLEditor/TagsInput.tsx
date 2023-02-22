@@ -4,8 +4,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { FetchError } from '@grafana/runtime';
 import { HorizontalGroup, VerticalGroup, Button } from '@grafana/ui';
 
+import { SearchFilter } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
-import { SearchFilter } from '../types';
 
 import SearchField from './SearchField';
 
@@ -18,10 +18,14 @@ interface Props {
   isTagsLoading: boolean;
 }
 const TagsInput = ({ updateFilter, filters, datasource, setError, tags, isTagsLoading }: Props) => {
-  const handleOnAdd = useCallback(() => updateFilter({ id: uuidv4(), type: 'dynamic', operator: '=' }), [updateFilter]);
+  const generateId = () => uuidv4().slice(0, 8);
+  const handleOnAdd = useCallback(
+    () => updateFilter({ id: generateId(), type: 'dynamic', operator: '=' }),
+    [updateFilter]
+  );
 
   useEffect(() => {
-    if (!filters.find((f) => f.type === 'dynamic')) {
+    if (!filters?.find((f) => f.type === 'dynamic')) {
       handleOnAdd();
     }
   }, [filters, handleOnAdd]);
@@ -30,7 +34,7 @@ const TagsInput = ({ updateFilter, filters, datasource, setError, tags, isTagsLo
     <HorizontalGroup spacing={'xs'} align={'flex-start'}>
       <VerticalGroup spacing={'xs'}>
         {filters
-          .filter((f) => f.type === 'dynamic')
+          ?.filter((f) => f.type === 'dynamic')
           .map((f) => (
             <SearchField
               filter={f}

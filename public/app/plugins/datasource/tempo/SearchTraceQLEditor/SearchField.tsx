@@ -7,10 +7,10 @@ import { Select, HorizontalGroup } from '@grafana/ui';
 import { createErrorNotification } from '../../../../core/copy/appNotification';
 import { notifyApp } from '../../../../core/reducers/appNotification';
 import { dispatch } from '../../../../store/store';
+import { SearchFilter } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
 import { operators } from '../traceql/traceql';
-import { SearchFilter } from '../types';
 
 interface Props {
   filter: SearchFilter;

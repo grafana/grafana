@@ -1,50 +1,37 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 
 import { Select, HorizontalGroup, Input } from '@grafana/ui';
 
-import { SearchFilter } from '../types';
+import { SearchFilter } from '../dataquery.gen';
 
 interface Props {
-  id: string;
+  filter: SearchFilter;
   updateFilter: (f: SearchFilter) => void;
   isTagsLoading?: boolean;
-  tag?: string;
   operators: string[];
 }
-const DurationInput = ({ id, tag, operators, updateFilter }: Props) => {
-  const [filter, setFilter] = useState<SearchFilter>({
-    id,
-    type: 'static',
-    tag,
-    operator: operators[0],
-    valueType: 'duration',
-  });
-
-  useEffect(() => {
-    updateFilter(filter);
-  }, [updateFilter, filter]);
-
+const DurationInput = ({ filter, operators, updateFilter }: Props) => {
   return (
     <HorizontalGroup spacing={'xs'}>
       <Select
-        inputId={`${id}-operator`}
+        inputId={`${filter.id}-operator`}
         options={operators.map((op) => ({ label: op, value: op }))}
         value={filter.operator}
         onChange={(v) => {
-          setFilter({ ...filter, operator: v?.value });
+          updateFilter({ ...filter, operator: v?.value });
         }}
         isClearable={false}
-        aria-label={`select-${id}-operator`}
+        aria-label={`select-${filter.id}-operator`}
         allowCustomValue={true}
         width={8}
       />
       <Input
         value={filter.value}
         onChange={(v) => {
-          setFilter({ ...filter, value: v.currentTarget.value });
+          updateFilter({ ...filter, value: v.currentTarget.value });
         }}
         placeholder="e.g. 100ms, 1.2s"
-        aria-label={`select-${id}-value`}
+        aria-label={`select-${filter.id}-value`}
         width={18}
       />
     </HorizontalGroup>
