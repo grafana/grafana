@@ -46,7 +46,7 @@ func (a *Anonymous) Authenticate(ctx context.Context, r *authn.Request) (*authn.
 				a.log.Warn("tag anon session panic", "err", err)
 			}
 		}()
-		if err := a.anonSessionService.TagSession(ctx, r.HTTPRequest); err != nil {
+		if err := a.anonSessionService.TagSession(context.Background(), r.HTTPRequest); err != nil {
 			a.log.Warn("Failed to tag anonymous session", "error", err)
 		}
 	}()
