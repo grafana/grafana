@@ -1,5 +1,4 @@
 import { screen } from '@testing-library/react';
-import React from 'react';
 
 import { serializeStateToUrlParam } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
