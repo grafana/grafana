@@ -9,21 +9,7 @@ import { defaultPanelOptions, PanelOptions } from './panelcfg.gen';
 import { StatSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<PanelOptions>(StatPanel)
-  .useFieldConfig({
-    useCustomConfig: (builder) => {
-      builder.addSelect({
-        path: 'directionPrefix',
-        name: 'Directional prefix',
-        description: 'Choose the direction the stat is progressing',
-        settings: {
-          options: [
-            { value: '^', label: 'Up arrow' },
-            { value: 'v', label: 'Down Arrow' },
-          ],
-        },
-      });
-    },
-  })
+  .useFieldConfig()
   .setPanelOptions((builder) => {
     const mainCategory = ['Stat styles'];
 
