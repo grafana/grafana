@@ -120,23 +120,6 @@ var (
 			RequiresDevMode: true,
 		},
 		{
-			Name:            "k8sDashboards",
-			Description:     "Save dashboards via k8s",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-		},
-		{
-			Name:            "apiserver",
-			Description:     "Add a k8s API server proxy",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-		},
-		{
-			Name:        "supportBundles",
-			Description: "Support bundles for troubleshooting",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:            "dashboardsFromStorage",
 			Description:     "Load dashboards from the generic storage interface",
 			State:           FeatureStateAlpha,
@@ -377,6 +360,17 @@ var (
 			Description:  "Allow datasource to provide custom UI for context view",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+		},
+		{
+			Name:         "lokiQuerySplitting",
+			Description:  "Split large interval queries into subqueries with smaller time intervals",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:        "individualCookiePreferences",
+			Description: "Support overriding cookie preferences per user",
+			State:       FeatureStateAlpha,
 		},
 	}
 )

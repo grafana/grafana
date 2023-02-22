@@ -34,6 +34,7 @@ export const backendSrv = {
   getFolderByUid: jest.fn(),
   post: jest.fn(),
   resolveCancelerIfExists: jest.fn(),
+  search: jest.fn(),
   datasourceRequest: jest.fn(() => Promise.resolve(makePromResponse())),
 
   // Observable support

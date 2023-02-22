@@ -56,11 +56,7 @@ We’ve rethought the panel information architecture, added additional interacti
 
 Grafana’s new panel is available only for React-based panels; no Angular-based panels are redesigned. For example, Angular-based panel will still have the old Graph and Table visualizations.
 
-<!--
-
 {{< video-embed src="/media/docs/grafana/screen-recording-panel-header-redesign-whats-new-9-4.mp4" max-width="750px" caption="Panel header redesign" >}}
-
--->
 
 However, we have more planned: we’re going to make even more improvements to the accessibility of panels and improvements to panels without a header.
 
@@ -128,7 +124,7 @@ Learn more about service accounts in our [Service account documentation]({{< rel
 
 ### OAuth providers setting for skip org role sync
 
-While Grafana integrates with many different auth providers, we have received requests for a feature that enables you to bypass organization role synchronization for individual provides rather than for all configured providers. This option is now available for users who want to be able to use Grafana to manage their org roles.
+While Grafana integrates with many different auth providers, we have received requests for a feature that enables you to bypass organization role synchronization for individual providers rather than for all configured providers. This option is now available for users who want to be able to use Grafana to manage their org roles.
 
 This option enables you to skip synchronization from your configured OAuth provider specifically in the auth provider section under `skip_org_role_sync`. Previously users could only do this for certain providers using the `oauth_skip_org_role_sync_update` option, but this would include all of the configured providers.
 

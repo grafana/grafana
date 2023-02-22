@@ -35,15 +35,8 @@ export function TopNavBarMenu({ node: nodePlain }: TopNavBarMenuProps) {
       }
     >
       {node.children?.map((item) => {
-        const showExternalLinkIcon = /^https?:\/\//.test(item.url || '');
         return item.url ? (
-          <MenuItem
-            url={item.url}
-            label={item.text}
-            icon={showExternalLinkIcon ? 'external-link-alt' : undefined}
-            target={item.target}
-            key={item.id}
-          />
+          <MenuItem url={item.url} label={item.text} icon={item.icon} target={item.target} key={item.id} />
         ) : (
           <MenuItem icon={item.icon} onClick={item.onClick} label={item.text} key={item.id} />
         );

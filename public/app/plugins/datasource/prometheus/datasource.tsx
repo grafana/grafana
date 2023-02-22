@@ -830,6 +830,9 @@ export class PrometheusDatasource
     const eventList: AnnotationEvent[] = [];
 
     for (const frame of frames) {
+      if (frame.fields.length === 0) {
+        continue;
+      }
       const timeField = frame.fields[0];
       const valueField = frame.fields[1];
       const labels = valueField?.labels || {};
