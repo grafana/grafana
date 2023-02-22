@@ -100,7 +100,7 @@ The summary will contain just the value:
 api has an over 5% of responses with 5xx errors: 6.789%
 ```
 
-However, while `{{ $values.B }}` prints the number 6.789, it is actually a string as you are printing the object that contains both the labels and value for RefID B, not of the floating point value of B. To use the floating point value of RefID B you must use the `Value` field from `$values.B`. If you were to humanize the floating point value in the summary of an alert:
+However, while `{{ $values.B }}` prints the number 6.789, it is actually a string as you are printing the object that contains both the labels and value for RefID B, not the floating point value of B. To use the floating point value of RefID B you must use the `Value` field from `$values.B`. If you were to humanize the floating point value in the summary of an alert:
 
 ```
 {{ $labels.service }} has over 5% of responses with 5xx errors: {{ humanize $values.B.Value }}%
