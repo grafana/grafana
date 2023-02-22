@@ -47,6 +47,8 @@ type ClientParams struct {
 	FetchSyncedUser bool
 	// SyncTeams will sync the groups from identity to teams in grafana, enterprise only feature
 	SyncTeams bool
+	// SyncOrgRoles will sync the roles from the identity to orgs in grafana
+	SyncOrgRoles bool
 	// CacheAuthProxyKey  if this key is set we will try to cache the user id for proxy client
 	CacheAuthProxyKey string
 	// LookUpParams are the arguments used to look up the entity in the DB.
