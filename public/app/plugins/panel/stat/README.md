@@ -2,7 +2,7 @@
 
 The Stat panel is **included** with Grafana.
 
-The Stat panel visualization shows one large stattistic with an optional graph sparkline. The background or value color can be controlled using thresholds.
+The Stat panel visualization shows one large statistic with an optional graph sparkline. The background or value color can be controlled using thresholds.
 
 By default, the Stat panel displays one of the following:
 
