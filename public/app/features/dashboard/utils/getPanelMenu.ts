@@ -5,6 +5,7 @@ import {
   getPluginExtensions,
   locationService,
   reportInteraction,
+  PluginExtensionPanelContext,
 } from '@grafana/runtime';
 import { LoadingState } from '@grafana/schema';
 import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
@@ -287,7 +288,7 @@ export function getPanelMenu(
 
   const { extensions } = getPluginExtensions({
     placement: GrafanaExtensions.DashboardPanelMenu,
-    context: { title: panel.title, type: panel.type },
+    context: createExtensionContext(panel, dashboard),
   });
 
   for (const extension of extensions) {
@@ -309,4 +310,27 @@ function truncateTitle(title: string, length: number): string {
   }
   const part = title.slice(0, length - 3);
   return `${part.trimEnd()}...`;
+}
+
+function createExtensionContext(panel: PanelModel, dashboard: DashboardModel): PluginExtensionPanelContext {
+  return Object.freeze({
+    id: panel.id,
+    pluginId: panel.type,
+    title: panel.title,
+    timeRange: Object.freeze(dashboard.time),
+    timeZone: dashboard.timezone,
+    dashboard: Object.freeze({
+      uid: dashboard.uid,
+      title: dashboard.title,
+      tags: Object.freeze(Array.from<string>(dashboard.tags)),
+    }),
+    targets: Object.freeze(
+      panel.targets.map((t) =>
+        Object.freeze({
+          refId: t.refId,
+          pluginId: t.datasource?.type ?? 'unknown',
+        })
+      )
+    ),
+  });
 }

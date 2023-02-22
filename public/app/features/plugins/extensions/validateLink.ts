@@ -9,6 +9,9 @@ export function createLinkValidator(pluginId: string) {
       const path = configured?.path;
 
       if (path && !path.startsWith(pathPrefix)) {
+        console.warn(
+          `[Plugins] Disabled extension for ${pluginId} beause configure didn't return a path with the correct prefix: '${pathPrefix}'`
+        );
         return undefined;
       }
 

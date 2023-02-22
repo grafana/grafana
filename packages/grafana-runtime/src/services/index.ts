@@ -19,3 +19,4 @@ export {
   type PluginExtensionsResult,
   getPluginExtensions,
 } from './pluginExtensions/extensions';
+export { type PluginExtensionPanelContext } from './pluginExtensions/contexts';

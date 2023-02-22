@@ -180,6 +180,7 @@ export class GrafanaApp {
 
       // Preload selected app plugins
       const preloadResults = await preloadPlugins(config.apps);
+
       // Create extension registry out of the preloaded plugins
       const extensionsRegistry = createPluginExtensionRegistry(preloadResults);
       setPluginsExtensionRegistry(extensionsRegistry);
