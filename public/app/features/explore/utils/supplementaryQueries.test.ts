@@ -1,5 +1,5 @@
 import { flatten } from 'lodash';
-import { from, Observable, take, toArray } from 'rxjs';
+import { from, Observable } from 'rxjs';
 
 import {
   DataFrame,
@@ -9,6 +9,9 @@ import {
   DataSourceWithSupplementaryQueriesSupport,
   FieldType,
   LoadingState,
+  LogLevel,
+  LogsVolumeType,
+  MutableDataFrame,
   SupplementaryQueryType,
   toDataFrame,
 } from '@grafana/data';
@@ -64,19 +67,50 @@ const createSupplementaryQueryResponse = (type: SupplementaryQueryType, id: stri
     toDataFrame({
       refId: `1-${type}-${id}`,
       fields: [{ name: 'value', type: FieldType.string, values: [1] }],
+      meta: {
+        custom: {
+          logsVolumeType: LogsVolumeType.FullRange,
+        },
+      },
     }),
     toDataFrame({
       refId: `2-${type}-${id}`,
       fields: [{ name: 'value', type: FieldType.string, values: [2] }],
+      meta: {
+        custom: {
+          logsVolumeType: LogsVolumeType.FullRange,
+        },
+      },
     }),
   ];
+};
+
+const mockRow = (refId: string) => {
+  return {
+    rowIndex: 0,
+    entryFieldIndex: 0,
+    dataFrame: new MutableDataFrame({ refId, fields: [{ name: 'A', values: [] }] }),
+    entry: '',
+    hasAnsi: false,
+    hasUnescapedContent: false,
+    labels: {},
+    logLevel: LogLevel.info,
+    raw: '',
+    timeEpochMs: 0,
+    timeEpochNs: '0',
+    timeFromNow: '',
+    timeLocal: '',
+    timeUtc: '',
+    uid: '1',
+  };
 };
 
 const mockExploreDataWithLogs = () =>
   mockExplorePanelData({
     logsResult: {
-      series: [toDataFrame({ refId: 'logs', fields: [{ name: 'line', type: FieldType.string, values: ['line'] }] })],
+      rows: [mockRow('0'), mockRow('1')],
       visibleRange: { from: 0, to: 1 },
+      bucketSize: 1000,
     },
   });
 
@@ -133,7 +167,7 @@ const assertDataFrom = (type: SupplementaryQueryType, ...datasources: string[]) 
 };
 
 const assertDataFromLogsResults = () => {
-  return [{ refId: 'logs' }];
+  return [{ meta: { custom: { logsVolumeType: LogsVolumeType.Limited } } }];
 };
 
 describe('SupplementaryQueries utils', function () {
@@ -143,10 +177,10 @@ describe('SupplementaryQueries utils', function () {
 
       await expect(testProvider).toEmitValuesWith((received) => {
         expect(received).toMatchObject([
-          { data: [], state: 'Loading' },
+          { data: [], state: LoadingState.Loading },
           {
             data: assertDataFrom(SupplementaryQueryType.LogsVolume, 'logs-volume-a'),
-            state: 'Done',
+            state: LoadingState.Done,
           },
         ]);
       });
@@ -154,19 +188,24 @@ describe('SupplementaryQueries utils', function () {
     it('Uses fallback for logs volume', async () => {
       const testProvider = await setup('no-data-providers', SupplementaryQueryType.LogsVolume);
 
-      await expect(testProvider!.pipe(take(1), toArray())).toEmitValuesWith((received) => {
-        expect(received[0]).toMatchObject([
-          // No loading state as we don't know if result will contain logs
+      await expect(testProvider).toEmitValuesWith((received) => {
+        expect(received).toMatchObject([
           {
-            data: [{ refId: 'logs' }],
-            state: 'Done',
+            data: assertDataFromLogsResults(),
+            state: LoadingState.Done,
           },
         ]);
       });
     });
     it('Does not use a fallback for logs sample', async () => {
       const testProvider = await setup('no-data-providers', SupplementaryQueryType.LogsSample);
-      expect(testProvider).toBeUndefined();
+      await expect(testProvider).toEmitValuesWith((received) => {
+        expect(received).toMatchObject([
+          {
+            state: LoadingState.NotStarted,
+          },
+        ]);
+      });
     });
   });
 
@@ -180,15 +219,15 @@ describe('SupplementaryQueries utils', function () {
           ]);
           await expect(testProvider).toEmitValuesWith((received) => {
             expect(received).toMatchObject([
-              { data: [], state: 'Loading' },
+              { data: [], state: LoadingState.Loading },
               {
                 data: assertDataFrom(SupplementaryQueryType.LogsVolume, 'logs-volume-a'),
-                state: 'Done',
+                state: LoadingState.Done,
               },
               { data: assertDataFrom(SupplementaryQueryType.LogsVolume, 'logs-volume-a'), state: 'Loading' },
               {
                 data: assertDataFrom(SupplementaryQueryType.LogsVolume, 'logs-volume-a', 'logs-volume-b'),
-                state: 'Done',
+                state: LoadingState.Done,
               },
             ]);
           });
@@ -202,16 +241,15 @@ describe('SupplementaryQueries utils', function () {
             'no-data-providers-2',
           ]);
 
-          // ExplorePanelData never completes so we limit number of assertions
-          await expect(testProvider!.pipe(take(2), toArray())).toEmitValuesWith((received) => {
-            expect(received[0]).toMatchObject([
+          await expect(testProvider).toEmitValuesWith((received) => {
+            expect(received).toMatchObject([
               {
                 data: assertDataFromLogsResults(),
-                state: 'Done',
+                state: LoadingState.Done,
               },
               {
-                data: assertDataFromLogsResults(),
-                state: 'Done',
+                data: [...assertDataFromLogsResults(), ...assertDataFromLogsResults()],
+                state: LoadingState.Done,
               },
             ]);
           });
@@ -226,28 +264,24 @@ describe('SupplementaryQueries utils', function () {
             'logs-volume-b',
             'no-data-providers-2',
           ]);
-          await expect(testProvider!.pipe(take(6), toArray())).toEmitValuesWith((received) => {
-            expect(received[0]).toMatchObject([
+          await expect(testProvider).toEmitValuesWith((received) => {
+            expect(received).toMatchObject([
               {
                 data: [],
-                state: 'Loading',
+                state: LoadingState.Loading,
               },
               {
                 data: assertDataFrom(SupplementaryQueryType.LogsVolume, 'logs-volume-a'),
-                state: 'Done',
+                state: LoadingState.Done,
               },
               {
                 data: [
                   ...assertDataFrom(SupplementaryQueryType.LogsVolume, 'logs-volume-a'),
                   ...assertDataFromLogsResults(),
                 ],
-                state: 'Done',
+                state: LoadingState.Done,
               },
               {
-                data: [
-                  ...assertDataFrom(SupplementaryQueryType.LogsVolume, 'logs-volume-a'),
-                  ...assertDataFromLogsResults(),
-                ],
                 state: 'Loading',
               },
               {
@@ -256,15 +290,7 @@ describe('SupplementaryQueries utils', function () {
                   ...assertDataFromLogsResults(),
                   ...assertDataFrom(SupplementaryQueryType.LogsVolume, 'logs-volume-b'),
                 ],
-                state: 'Done',
-              },
-              {
-                data: [
-                  ...assertDataFrom(SupplementaryQueryType.LogsVolume, 'logs-volume-a'),
-                  ...assertDataFrom(SupplementaryQueryType.LogsVolume, 'logs-volume-b'),
-                  ...assertDataFromLogsResults(),
-                ],
-                state: 'Done',
+                state: LoadingState.Done,
               },
             ]);
           });
@@ -284,7 +310,7 @@ describe('SupplementaryQueries utils', function () {
               { data: [], state: 'Loading' },
               {
                 data: assertDataFrom(SupplementaryQueryType.LogsSample, 'logs-sample-a'),
-                state: 'Done',
+                state: LoadingState.Done,
               },
               { data: assertDataFrom(SupplementaryQueryType.LogsSample, 'logs-sample-a'), state: 'Loading' },
               {
@@ -315,29 +341,29 @@ describe('SupplementaryQueries utils', function () {
         it('Returns results only for data sources supporting logs sample', async () => {
           const testProvider = await setup('mixed', SupplementaryQueryType.LogsSample, [
             'logs-sample-a',
-            'no-data-provider',
+            'no-data-providers',
             'logs-sample-b',
-            'no-data-provider-2',
+            'no-data-providers-2',
           ]);
           await expect(testProvider).toEmitValuesWith((received) => {
             expect(received).toMatchObject([
-              { data: [], state: 'Loading' },
+              { data: [], state: LoadingState.Loading },
               {
                 data: assertDataFrom(SupplementaryQueryType.LogsSample, 'logs-sample-a'),
-                state: 'Done',
+                state: LoadingState.Done,
               },
               {
                 data: assertDataFrom(SupplementaryQueryType.LogsSample, 'logs-sample-a'),
-                state: 'Done',
+                state: LoadingState.Done,
               },
-              { data: assertDataFrom(SupplementaryQueryType.LogsSample, 'logs-sample-a'), state: 'Loading' },
+              { data: assertDataFrom(SupplementaryQueryType.LogsSample, 'logs-sample-a'), state: LoadingState.Loading },
               {
                 data: assertDataFrom(SupplementaryQueryType.LogsSample, 'logs-sample-a', 'logs-sample-b'),
-                state: 'Done',
+                state: LoadingState.Done,
               },
               {
                 data: assertDataFrom(SupplementaryQueryType.LogsSample, 'logs-sample-a', 'logs-sample-b'),
-                state: 'Done',
+                state: LoadingState.Done,
               },
             ]);
           });

@@ -110,6 +110,7 @@ const createFallbackLogVolumeProvider = (
             });
           }
         });
+        observer.complete();
       }
     });
   });
