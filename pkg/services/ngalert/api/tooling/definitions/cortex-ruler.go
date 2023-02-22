@@ -396,3 +396,70 @@ type GettableGrafanaRule struct {
 	Provenance      Provenance          `json:"provenance,omitempty" yaml:"provenance,omitempty"`
 	IsPaused        bool                `json:"is_paused" yaml:"is_paused"`
 }
+
+// AlertQuery represents a single query associated with an alert definition.
+type AlertQuery struct {
+	// RefID is the unique identifier of the query, set by the frontend call.
+	RefID string `json:"refId"`
+	// QueryType is an optional identifier for the type of query.
+	// It can be used to distinguish different types of queries.
+	QueryType string `json:"queryType"`
+	// RelativeTimeRange is the relative Start and End of the query as sent by the frontend.
+	RelativeTimeRange RelativeTimeRange `json:"relativeTimeRange"`
+
+	// Grafana data source unique identifier; it should be '__expr__' for a Server Side Expression operation.
+	DatasourceUID string `json:"datasourceUid"`
+
+	// JSON is the raw JSON query and includes the above properties as well as custom properties.
+	Model json.RawMessage `json:"model"`
+}
+
+// RelativeTimeRange is the per query start and end time
+// for requests.
+type RelativeTimeRange struct {
+	From Duration `json:"from" yaml:"from"`
+	To   Duration `json:"to" yaml:"to"`
+}
+
+// Duration is a type used for marshalling durations.
+type Duration time.Duration
+
+func (d Duration) String() string {
+	return time.Duration(d).String()
+}
+
+func (d Duration) MarshalJSON() ([]byte, error) {
+	return json.Marshal(time.Duration(d).Seconds())
+}
+
+func (d *Duration) UnmarshalJSON(b []byte) error {
+	var v interface{}
+	if err := json.Unmarshal(b, &v); err != nil {
+		return err
+	}
+	switch value := v.(type) {
+	case float64:
+		*d = Duration(time.Duration(value) * time.Second)
+		return nil
+	default:
+		return fmt.Errorf("invalid duration %v", v)
+	}
+}
+
+func (d Duration) MarshalYAML() (interface{}, error) {
+	return time.Duration(d).Seconds(), nil
+}
+
+func (d *Duration) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var v interface{}
+	if err := unmarshal(&v); err != nil {
+		return err
+	}
+	switch value := v.(type) {
+	case int:
+		*d = Duration(time.Duration(value) * time.Second)
+		return nil
+	default:
+		return fmt.Errorf("invalid duration %v", v)
+	}
+}
