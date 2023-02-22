@@ -257,6 +257,8 @@ func (d *PublicDashboardStoreImpl) Update(ctx context.Context, cmd SavePublicDas
 func (d *PublicDashboardStoreImpl) HandleDashboardDeleted(ctx context.Context, uid string, orgId int64) error {
 	_, err := d.Delete(ctx, orgId, uid)
 	return err
+
+	// TODO if its a folder, need to bulk delete
 }
 
 // Deletes a public dashboard
