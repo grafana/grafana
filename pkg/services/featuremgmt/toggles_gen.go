@@ -266,4 +266,8 @@ const (
 	// FlagLokiQuerySplitting
 	// Split large interval queries into subqueries with smaller time intervals
 	FlagLokiQuerySplitting = "lokiQuerySplitting"
+
+	// FlagTraceqlSearch
+	// Enables the &#39;TraceQL Search&#39; tab for the Tempo datasource which provides a UI to generate TraceQL queries
+	FlagTraceqlSearch = "traceqlSearch"
 )

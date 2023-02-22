@@ -21,6 +21,8 @@ const (
 
 	TempoQueryTypeTraceql TempoQueryType = "traceql"
 
+	TempoQueryTypeTraceqlSearch TempoQueryType = "traceqlSearch"
+
 	TempoQueryTypeUpload TempoQueryType = "upload"
 )
 

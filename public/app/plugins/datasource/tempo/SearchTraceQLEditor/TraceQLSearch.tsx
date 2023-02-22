@@ -25,7 +25,7 @@ interface Props {
   onRunQuery: () => void;
 }
 
-const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props) => {
+const TraceQLSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props) => {
   const styles = useStyles2(getStyles);
   const [error, setError] = useState<Error | FetchError | null>(null);
 
@@ -89,7 +89,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
     setTraceQlQuery(
       `{${Object.values(filters)
         .filter((f) => f.value)
-        .map((f) => `${f.tag} ${f.operator} ${f.value}`)
+        .map((f) => `${f.tag} ${f.operator} ${!f.valueType || f.valueType === 'string' ? `"${f.value}"` : f.value}`)
         .join(' && ')}}`
     );
   }, [filters]);
@@ -148,7 +148,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
   );
 };
 
-export default NativeSearch;
+export default TraceQLSearch;
 
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css`

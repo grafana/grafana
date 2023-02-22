@@ -12,7 +12,13 @@ interface Props {
   operators: string[];
 }
 const DurationInput = ({ id, tag, operators, updateFilter }: Props) => {
-  const [filter, setFilter] = useState<SearchFilter>({ id, type: 'static', tag, operator: operators[0] });
+  const [filter, setFilter] = useState<SearchFilter>({
+    id,
+    type: 'static',
+    tag,
+    operator: operators[0],
+    valueType: 'duration',
+  });
 
   useEffect(() => {
     updateFilter(filter);

@@ -15,7 +15,7 @@ export const DataQueryModelVersion = Object.freeze([0, 0]);
 /**
  * search = Loki search, nativeSearch = Tempo search for backwards compatibility
  */
-export type TempoQueryType = ('traceql' | 'search' | 'serviceMap' | 'upload' | 'nativeSearch' | 'clear');
+export type TempoQueryType = ('traceql' | 'traceqlSearch' | 'search' | 'serviceMap' | 'upload' | 'nativeSearch' | 'clear');
 
 export interface Tempo extends common.DataQuery {
   /**

@@ -50,7 +50,7 @@ composableKinds: DataQuery: {
 						limit?: int64
 
 						// search = Loki search, nativeSearch = Tempo search for backwards compatibility
-						#TempoQueryType: "traceql" | "search" | "serviceMap" | "upload" | "nativeSearch" | "clear" @cuetsy(kind="type")
+						#TempoQueryType: "traceql" | "traceqlSearch" | "search" | "serviceMap" | "upload" | "nativeSearch" | "clear" @cuetsy(kind="type")
 					},
 				]
 			},

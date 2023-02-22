@@ -5,7 +5,7 @@ import React from 'react';
 import { TempoDatasource } from '../datasource';
 import { TempoQuery } from '../types';
 
-import NativeSearch from './NativeSearch';
+import TraceQLSearch from './TraceQLSearch';
 
 const getOptionsV1 = jest.fn().mockImplementation(() => {
   return new Promise((resolve) => {
@@ -64,7 +64,7 @@ describe('NativeSearch', () => {
 
   it('should show loader when there is a delay', async () => {
     render(
-      <NativeSearch datasource={{} as TempoDatasource} query={mockQuery} onChange={jest.fn()} onRunQuery={jest.fn()} />
+      <TraceQLSearch datasource={{} as TempoDatasource} query={mockQuery} onChange={jest.fn()} onRunQuery={jest.fn()} />
     );
 
     const select = screen.getByRole('combobox', { name: 'select-service-name' });
@@ -91,7 +91,7 @@ describe('NativeSearch', () => {
     };
 
     render(
-      <NativeSearch
+      <TraceQLSearch
         datasource={{} as TempoDatasource}
         query={mockQuery}
         onChange={handleOnChange}
@@ -114,7 +114,7 @@ describe('NativeSearch', () => {
 
   it('should filter the span dropdown when user types a search value', async () => {
     render(
-      <NativeSearch datasource={{} as TempoDatasource} query={mockQuery} onChange={() => {}} onRunQuery={() => {}} />
+      <TraceQLSearch datasource={{} as TempoDatasource} query={mockQuery} onChange={() => {}} onRunQuery={() => {}} />
     );
 
     const select = await screen.findByRole('combobox', { name: 'select-service-name' });
@@ -140,7 +140,7 @@ describe('NativeSearch', () => {
     };
 
     render(
-      <NativeSearch datasource={{} as TempoDatasource} query={mockQuery} onChange={() => {}} onRunQuery={() => {}} />
+      <TraceQLSearch datasource={{} as TempoDatasource} query={mockQuery} onChange={() => {}} onRunQuery={() => {}} />
     );
 
     const asyncServiceSelect = screen.getByRole('combobox', { name: 'select-service-name' });

@@ -26,7 +26,7 @@ const SearchField = ({ filter, datasource, updateFilter, isTagsLoading, tags, se
   const [options, setOptions] = useState<Array<SelectableValue<string>>>([]);
 
   const loadOptions = useCallback(
-    async (name: string, query = '') => {
+    async (name: string) => {
       setIsLoadingValues(true);
 
       try {
@@ -80,7 +80,6 @@ const SearchField = ({ filter, datasource, updateFilter, isTagsLoading, tags, se
           isClearable
           aria-label={`select-${filter.id}-tag`}
           allowCustomValue={true}
-          width={filter.tag ? undefined : 18}
         />
       )}
       <Select
@@ -106,13 +105,12 @@ const SearchField = ({ filter, datasource, updateFilter, isTagsLoading, tags, se
         }}
         value={filter.value}
         onChange={(v) => {
-          updateFilter({ ...filter, value: v?.value });
+          updateFilter({ ...filter, value: v?.value, valueType: v?.type });
         }}
         placeholder="Select a value"
         isClearable
         aria-label={`select-${filter.id}-value`}
         allowCustomValue={true}
-        width={filter.value ? undefined : 18}
       />
     </HorizontalGroup>
   );

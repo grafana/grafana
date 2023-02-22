@@ -91,6 +91,7 @@ Alpha features might be changed or removed without prior notice.
 | `editPanelCSVDragAndDrop`          | Enables drag and drop for CSV and Excel files                                                                                                                                |
 | `logsContextDatasourceUi`          | Allow datasource to provide custom UI for context view                                                                                                                       |
 | `lokiQuerySplitting`               | Split large interval queries into subqueries with smaller time intervals                                                                                                     |
+| `traceqlSearch`                    | Enables the 'TraceQL Search' tab for the Tempo datasource which provides a UI to generate TraceQL queries                                                                    |
 
 ## Development feature toggles
 

@@ -223,6 +223,37 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         return of({ error: { message: error instanceof Error ? error.message : 'Unknown error occurred' }, data: [] });
       }
     }
+    if (targets.traceqlSearch?.length) {
+      try {
+        const appliedQuery = this.applyVariables(targets.traceqlSearch[0], options.scopedVars);
+        const queryValue = appliedQuery?.query || '';
+        reportInteraction('grafana_traces_traceql_search_queried', {
+          datasourceType: 'tempo',
+          app: options.app ?? '',
+          grafana_version: config.buildInfo.version,
+          query: queryValue ?? '',
+        });
+        subQueries.push(
+          this._request('/api/search', {
+            q: queryValue,
+            limit: options.targets[0].limit,
+            start: options.range.from.unix(),
+            end: options.range.to.unix(),
+          }).pipe(
+            map((response) => {
+              return {
+                data: createTableFrameFromTraceQlQuery(response.data.traces, this.instanceSettings),
+              };
+            }),
+            catchError((error) => {
+              return of({ error: { message: error.data.message }, data: [] });
+            })
+          )
+        );
+      } catch (error) {
+        return of({ error: { message: error instanceof Error ? error.message : 'Unknown error occurred' }, data: [] });
+      }
+    }
 
     if (targets.upload?.length) {
       if (this.uploadedJson) {

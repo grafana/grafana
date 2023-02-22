@@ -111,4 +111,5 @@ export type SearchFilter = {
   tag?: string;
   operator?: string;
   value?: string;
+  valueType?: string;
 };
