@@ -451,8 +451,14 @@ export interface DataQueryResponse {
 
   /**
    * Optionally include error info along with the response data
+   * @deprecated use errors instead
    */
   error?: DataQueryError;
+
+  /**
+   * Optionally include multiple errors for different targets
+   */
+  errors?: DataQueryError[];
 
   /**
    * Use this to control which state the response should have

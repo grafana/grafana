@@ -87,8 +87,13 @@ export function toDataQueryResponse(
             refId: dr.refId,
             message: dr.error,
           };
-          rsp.state = LoadingState.Error;
         }
+        if (rsp.errors) {
+          rsp.errors.push({ refId: dr.refId, message: dr.error });
+        } else {
+          rsp.errors = [{ refId: dr.refId, message: dr.error }];
+        }
+        rsp.state = LoadingState.Error;
       }
 
       if (dr.frames?.length) {
