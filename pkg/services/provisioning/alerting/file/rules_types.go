@@ -9,6 +9,7 @@ import (
 
 	"github.com/prometheus/common/model"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/provisioning/values"
 )
@@ -176,56 +177,13 @@ func (queryV1 *QueryV1) mapToModel() (models.AlertQuery, error) {
 	}, nil
 }
 
-// Response structs
-
-// AlertingFileExport is the full provisioned file export.
-// swagger:model
-type AlertingFileExport struct {
-	APIVersion int64                  `json:"apiVersion" yaml:"apiVersion"`
-	Groups     []AlertRuleGroupExport `json:"groups" yaml:"groups"`
-}
-
-// AlertRuleGroupExport is the provisioned file export of AlertRuleGroupV1.
-type AlertRuleGroupExport struct {
-	OrgID    int64             `json:"orgId" yaml:"orgId"`
-	Name     string            `json:"name" yaml:"name"`
-	Folder   string            `json:"folder" yaml:"folder"`
-	Interval model.Duration    `json:"interval" yaml:"interval"`
-	Rules    []AlertRuleExport `json:"rules" yaml:"rules"`
-}
-
-// AlertRuleExport is the provisioned file export of models.AlertRule.
-type AlertRuleExport struct {
-	UID          string                     `json:"uid" yaml:"uid"`
-	Title        string                     `json:"title" yaml:"title"`
-	Condition    string                     `json:"condition" yaml:"condition"`
-	Data         []AlertQueryExport         `json:"data" yaml:"data"`
-	DashboardUID string                     `json:"dasboardUid,omitempty" yaml:"dashboardUid,omitempty"`
-	PanelID      int64                      `json:"panelId,omitempty" yaml:"panelId,omitempty"`
-	NoDataState  models.NoDataState         `json:"noDataState" yaml:"noDataState"`
-	ExecErrState models.ExecutionErrorState `json:"execErrState" yaml:"execErrState"`
-	For          model.Duration             `json:"for" yaml:"for"`
-	Annotations  map[string]string          `json:"annotations,omitempty" yaml:"annotations,omitempty"`
-	Labels       map[string]string          `json:"labels,omitempty" yaml:"labels,omitempty"`
-	IsPaused     bool                       `json:"isPaused" yaml:"isPaused"`
-}
-
-// AlertQueryExport is the provisioned export of models.AlertQuery.
-type AlertQueryExport struct {
-	RefID             string                   `json:"refId" yaml:"refId"`
-	QueryType         string                   `json:"queryType,omitempty" yaml:"queryType,omitempty"`
-	RelativeTimeRange models.RelativeTimeRange `json:"relativeTimeRange,omitempty" yaml:"relativeTimeRange,omitempty"`
-	DatasourceUID     string                   `json:"datasourceUid" yaml:"datasourceUid"`
-	Model             map[string]interface{}   `json:"model" yaml:"model"`
-}
-
 // NewAlertingFileExport creates an AlertingFileExport DTO from []AlertRuleGroupWithFolderTitle.
-func NewAlertingFileExport(groups []AlertRuleGroupWithFolderTitle) (AlertingFileExport, error) {
-	f := AlertingFileExport{APIVersion: 1}
+func NewAlertingFileExport(groups []AlertRuleGroupWithFolderTitle) (definitions.AlertingFileExport, error) {
+	f := definitions.AlertingFileExport{APIVersion: 1}
 	for _, group := range groups {
 		export, err := newAlertRuleGroupExport(group)
 		if err != nil {
-			return AlertingFileExport{}, err
+			return definitions.AlertingFileExport{}, err
 		}
 		f.Groups = append(f.Groups, export)
 	}
@@ -233,31 +191,31 @@ func NewAlertingFileExport(groups []AlertRuleGroupWithFolderTitle) (AlertingFile
 }
 
 // newAlertRuleGroupExport creates a AlertRuleGroupExport DTO from models.AlertRuleGroup.
-func newAlertRuleGroupExport(d AlertRuleGroupWithFolderTitle) (AlertRuleGroupExport, error) {
-	rules := make([]AlertRuleExport, 0, len(d.Rules))
+func newAlertRuleGroupExport(d AlertRuleGroupWithFolderTitle) (definitions.AlertRuleGroupExport, error) {
+	rules := make([]definitions.AlertRuleExport, 0, len(d.Rules))
 	for i := range d.Rules {
 		alert, err := newAlertRuleExport(d.Rules[i])
 		if err != nil {
-			return AlertRuleGroupExport{}, err
+			return definitions.AlertRuleGroupExport{}, err
 		}
 		rules = append(rules, alert)
 	}
-	return AlertRuleGroupExport{
+	return definitions.AlertRuleGroupExport{
 		OrgID:    d.OrgID,
 		Name:     d.Title,
 		Folder:   d.FolderTitle,
-		Interval: model.Duration(time.Duration(d.Interval) * time.Second),
+		Interval: definitions.Duration(time.Duration(d.Interval) * time.Second),
 		Rules:    rules,
 	}, nil
 }
 
 // newAlertRuleExport creates a AlertRuleExport DTO from models.AlertRule.
-func newAlertRuleExport(rule models.AlertRule) (AlertRuleExport, error) {
-	data := make([]AlertQueryExport, 0, len(rule.Data))
+func newAlertRuleExport(rule models.AlertRule) (definitions.AlertRuleExport, error) {
+	data := make([]definitions.AlertQueryExport, 0, len(rule.Data))
 	for i := range rule.Data {
 		query, err := newAlertQueryExport(rule.Data[i])
 		if err != nil {
-			return AlertRuleExport{}, err
+			return definitions.AlertRuleExport{}, err
 		}
 		data = append(data, query)
 	}
@@ -272,16 +230,16 @@ func newAlertRuleExport(rule models.AlertRule) (AlertRuleExport, error) {
 		panelID = *rule.PanelID
 	}
 
-	return AlertRuleExport{
+	return definitions.AlertRuleExport{
 		UID:          rule.UID,
 		Title:        rule.Title,
-		For:          model.Duration(rule.For),
+		For:          definitions.Duration(rule.For),
 		Condition:    rule.Condition,
 		Data:         data,
 		DashboardUID: dashboardUID,
 		PanelID:      panelID,
-		NoDataState:  rule.NoDataState,
-		ExecErrState: rule.ExecErrState,
+		NoDataState:  definitions.NoDataState(rule.NoDataState),
+		ExecErrState: definitions.ExecutionErrorState(rule.ExecErrState),
 		Annotations:  rule.Annotations,
 		Labels:       rule.Labels,
 		IsPaused:     rule.IsPaused,
@@ -289,18 +247,21 @@ func newAlertRuleExport(rule models.AlertRule) (AlertRuleExport, error) {
 }
 
 // newAlertQueryExport creates a AlertQueryExport DTO from models.AlertQuery.
-func newAlertQueryExport(query models.AlertQuery) (AlertQueryExport, error) {
+func newAlertQueryExport(query models.AlertQuery) (definitions.AlertQueryExport, error) {
 	// We unmarshal the json.RawMessage model into a map in order to facilitate yaml marshalling.
 	var mdl map[string]interface{}
 	err := json.Unmarshal(query.Model, &mdl)
 	if err != nil {
-		return AlertQueryExport{}, err
+		return definitions.AlertQueryExport{}, err
 	}
-	return AlertQueryExport{
-		RefID:             query.RefID,
-		QueryType:         query.QueryType,
-		RelativeTimeRange: query.RelativeTimeRange,
-		DatasourceUID:     query.DatasourceUID,
-		Model:             mdl,
+	return definitions.AlertQueryExport{
+		RefID:     query.RefID,
+		QueryType: query.QueryType,
+		RelativeTimeRange: definitions.RelativeTimeRange{
+			From: definitions.Duration(query.RelativeTimeRange.From),
+			To:   definitions.Duration(query.RelativeTimeRange.To),
+		},
+		DatasourceUID: query.DatasourceUID,
+		Model:         mdl,
 	}, nil
 }
