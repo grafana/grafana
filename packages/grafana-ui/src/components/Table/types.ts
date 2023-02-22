@@ -3,9 +3,9 @@ import { FC } from 'react';
 import { CellProps, Column, Row, TableState, UseExpandedRowProps } from 'react-table';
 
 import { DataFrame, Field, KeyValue, SelectableValue } from '@grafana/data';
+import { TableCellHeight } from '@grafana/schema';
 
 import { TableStyles } from './styles';
-import { TableCellHeight } from '@grafana/schema';
 
 export {
   type TableFieldOptions,
