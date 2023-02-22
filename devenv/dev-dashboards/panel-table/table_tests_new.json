@@ -3,7 +3,10 @@
     "list": [
       {
         "builtIn": 1,
-        "datasource": "-- Grafana --",
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
@@ -13,12 +16,16 @@
     ]
   },
   "editable": true,
-  "gnetId": null,
+  "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "links": [],
+  "liveNow": false,
   "panels": [
     {
-      "datasource": null,
+      "datasource": {
+        "type": "datasource",
+        "uid": "grafana"
+      },
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -26,11 +33,23 @@
         "y": 0
       },
       "id": 7,
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "grafana"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "Cell styles",
       "type": "row"
     },
     {
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "testdata",
+        "uid": "jrsS70dMz"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -38,8 +57,12 @@
           },
           "custom": {
             "align": "center",
-            "displayMode": "color-background",
-            "filterable": false
+            "cellOptions": {
+              "mode": "gradient",
+              "type": "color-background"
+            },
+            "filterable": false,
+            "inspect": false
           },
           "mappings": [],
           "thresholds": {
@@ -124,6 +147,15 @@
       },
       "id": 4,
       "options": {
+        "cellHeight": "md",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
         "showHeader": true,
         "sortBy": [
           {
@@ -132,17 +164,19 @@
           }
         ]
       },
-      "pluginVersion": "",
+      "pluginVersion": "9.4.0-pre",
       "targets": [
         {
+          "datasource": {
+            "type": "testdata",
+            "uid": "jrsS70dMz"
+          },
           "refId": "A",
           "scenarioId": "random_walk",
           "seriesCount": 15,
           "stringInput": ""
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Colored background",
       "transformations": [
         {
@@ -159,15 +193,21 @@
       "type": "table"
     },
     {
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "testdata",
+        "uid": "jrsS70dMz"
+      },
       "fieldConfig": {
         "defaults": {
           "color": {
             "mode": "thresholds"
           },
           "custom": {
-            "align": null,
-            "filterable": false
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false,
+            "inspect": false
           },
           "mappings": [],
           "thresholds": {
@@ -192,8 +232,11 @@
             },
             "properties": [
               {
-                "id": "custom.displayMode",
-                "value": "gradient-gauge"
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "gradient",
+                  "type": "gauge"
+                }
               }
             ]
           },
@@ -255,6 +298,15 @@
       },
       "id": 2,
       "options": {
+        "cellHeight": "md",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
         "showHeader": true,
         "sortBy": [
           {
@@ -263,16 +315,18 @@
           }
         ]
       },
-      "pluginVersion": "",
+      "pluginVersion": "9.4.0-pre",
       "targets": [
         {
+          "datasource": {
+            "type": "testdata",
+            "uid": "jrsS70dMz"
+          },
           "refId": "A",
           "scenarioId": "random_walk_table",
           "stringInput": ""
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Bar gauge cells",
       "transformations": [
         {
@@ -295,7 +349,10 @@
       "type": "table"
     },
     {
-      "datasource": "gdev-testdata",
+      "datasource": {
+        "type": "testdata",
+        "uid": "jrsS70dMz"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -303,8 +360,11 @@
             "mode": "thresholds"
           },
           "custom": {
-            "align": null,
-            "filterable": false
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": false,
+            "inspect": false
           },
           "mappings": [],
           "thresholds": {
@@ -329,8 +389,11 @@
             },
             "properties": [
               {
-                "id": "custom.displayMode",
-                "value": "lcd-gauge"
+                "id": "custom.cellOptions",
+                "value": {
+                  "mode": "lcd",
+                  "type": "gauge"
+                }
               },
               {
                 "id": "custom.align",
@@ -348,19 +411,30 @@
       },
       "id": 5,
       "options": {
+        "cellHeight": "md",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
         "showHeader": true,
         "sortBy": []
       },
-      "pluginVersion": "",
+      "pluginVersion": "9.4.0-pre",
       "targets": [
         {
+          "datasource": {
+            "type": "testdata",
+            "uid": "jrsS70dMz"
+          },
           "refId": "A",
           "scenarioId": "random_walk_table",
           "stringInput": ""
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Retro LCD cell",
       "transformations": [
         {
@@ -386,227 +460,10 @@
       "type": "table"
     },
     {
-      "collapsed": false,
-      "datasource": "gdev-testdata",
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 17
+      "datasource": {
+        "type": "testdata",
+        "uid": "jrsS70dMz"
       },
-      "id": 9,
-      "panels": [],
-      "title": "Data links",
-      "type": "row"
-    },
-    {
-      "datasource": "gdev-testdata",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "custom": {
-            "align": "center",
-            "displayMode": "color-text",
-            "filterable": false
-          },
-          "decimals": 2,
-          "mappings": [],
-          "thresholds": {
-            "mode": "percentage",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "blue",
-                "value": 20
-              },
-              {
-                "color": "orange",
-                "value": 50
-              },
-              {
-                "color": "red",
-                "value": 70
-              }
-            ]
-          },
-          "unit": "percent"
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Time"
-            },
-            "properties": [
-              {
-                "id": "custom.align",
-                "value": null
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "{name=\"S1\", server=\"A\"}"
-            },
-            "properties": [
-              {
-                "id": "links",
-                "value": [
-                  {
-                    "title": "Details",
-                    "url": "http://detail?serverLabel=${__field.labels.server}&valueNumeric=${__value.numeric}"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 18
-      },
-      "id": 3,
-      "maxDataPoints": "10",
-      "options": {
-        "showHeader": true
-      },
-      "pluginVersion": "",
-      "targets": [
-        {
-          "alias": "S1",
-          "labels": "server=A",
-          "refId": "A",
-          "scenarioId": "random_walk",
-          "seriesCount": 1,
-          "stringInput": ""
-        },
-        {
-          "alias": "S2",
-          "labels": "server=B",
-          "refId": "B",
-          "scenarioId": "random_walk",
-          "seriesCount": 1,
-          "stringInput": ""
-        },
-        {
-          "alias": "S3",
-          "labels": "server=C",
-          "refId": "C",
-          "scenarioId": "random_walk",
-          "seriesCount": 1,
-          "stringInput": ""
-        }
-      ],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "Data link with labels and numeric value",
-      "transformations": [
-        {
-          "id": "seriesToColumns",
-          "options": {}
-        }
-      ],
-      "type": "table"
-    },
-    {
-      "datasource": "gdev-testdata",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "custom": {
-            "align": "center",
-            "displayMode": "auto",
-            "filterable": false
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "percentage",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "blue",
-                "value": 20
-              },
-              {
-                "color": "orange",
-                "value": 60
-              },
-              {
-                "color": "red",
-                "value": 70
-              }
-            ]
-          },
-          "unit": "degree"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 5,
-        "x": 12,
-        "y": 18
-      },
-      "id": 10,
-      "options": {
-        "showHeader": false,
-        "sortBy": [
-          {
-            "desc": true,
-            "displayName": "Last"
-          }
-        ]
-      },
-      "pluginVersion": "",
-      "targets": [
-        {
-          "refId": "A",
-          "scenarioId": "random_walk_table",
-          "seriesCount": 5,
-          "stringInput": ""
-        }
-      ],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "No header",
-      "transformations": [
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": {
-              "Min": true,
-              "Time": true,
-              "Value": true
-            },
-            "indexByName": {
-              "Info": 2,
-              "Max": 4,
-              "Min": 3,
-              "Time": 0,
-              "Value": 1
-            },
-            "renameByName": {}
-          }
-        }
-      ],
-      "type": "table"
-    },
-    {
-      "datasource": "gdev-testdata",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -614,7 +471,10 @@
           },
           "custom": {
             "align": "auto",
-            "displayMode": "auto"
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
           },
           "mappings": [],
           "thresholds": {
@@ -622,7 +482,7 @@
             "steps": [
               {
                 "color": "green",
-                "value": 0
+                "value": null
               },
               {
                 "color": "red",
@@ -631,31 +491,567 @@
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "rate"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "color": "rgba(83, 241, 15, 1)",
+                  "type": "area-chart"
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 8,
-        "w": 12,
+        "w": 9,
         "x": 0,
-        "y": 26
+        "y": 17
       },
-      "id": 12,
+      "id": 14,
       "options": {
+        "cellHeight": "md",
         "footer": {
-          "show": true,
+          "countRows": false,
           "fields": "",
           "reducer": [
             "sum"
-          ]
+          ],
+          "show": false
         },
         "showHeader": true
       },
-      "pluginVersion": "",
-      "title": "Footer",
+      "pluginVersion": "9.4.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "type": "testdata",
+            "uid": "jrsS70dMz"
+          },
+          "labels": "cluster=eu,service=checkout",
+          "min": 0.1,
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "seriesCount": 3
+        }
+      ],
+      "title": "Area chart cell",
+      "transformations": [
+        {
+          "id": "timeSeriesTable",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "indexByName": {},
+            "renameByName": {
+              "Trend": "rate"
+            }
+          }
+        }
+      ],
       "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "jrsS70dMz"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "rate"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "color": "rgba(63, 245, 27, 1)",
+                  "fillOpacity": 40,
+                  "gradientMode": "opacity",
+                  "lineWidth": 1,
+                  "showPoints": "auto",
+                  "type": "area-chart"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "latency"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "color": "rgba(242, 184, 15, 1)",
+                  "fillOpacity": 40,
+                  "gradientMode": "opacity",
+                  "type": "area-chart"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 9,
+        "x": 9,
+        "y": 17
+      },
+      "id": 15,
+      "options": {
+        "cellHeight": "md",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "9.4.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "type": "testdata",
+            "uid": "jrsS70dMz"
+          },
+          "labels": "cluster=eu,service=checkout",
+          "min": 0.1,
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "seriesCount": 3
+        },
+        {
+          "datasource": {
+            "type": "testdata",
+            "uid": "jrsS70dMz"
+          },
+          "hide": false,
+          "labels": "cluster=eu,service=checkout",
+          "min": 0.1,
+          "refId": "B",
+          "scenarioId": "random_walk",
+          "seriesCount": 3
+        }
+      ],
+      "title": "Multiple area chart cells per row",
+      "transformations": [
+        {
+          "id": "timeSeriesTable",
+          "options": {}
+        },
+        {
+          "id": "joinByField",
+          "options": {
+            "byField": "service",
+            "mode": "outer"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "cluster 2": true
+            },
+            "indexByName": {},
+            "renameByName": {
+              "Trend": "rate",
+              "Trend #A": "rate",
+              "Trend #B": "latency",
+              "cluster 1": "cluster"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "collapsed": true,
+      "datasource": {
+        "type": "testdata",
+        "uid": "jrsS70dMz"
+      },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 25
+      },
+      "id": 9,
+      "panels": [
+        {
+          "datasource": {
+            "type": "testdata",
+            "uid": "jrsS70dMz"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "center",
+                "cellOptions": {
+                  "type": "color-text"
+                },
+                "filterable": false,
+                "inspect": false
+              },
+              "decimals": 2,
+              "mappings": [],
+              "thresholds": {
+                "mode": "percentage",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "blue",
+                    "value": 20
+                  },
+                  {
+                    "color": "orange",
+                    "value": 50
+                  },
+                  {
+                    "color": "red",
+                    "value": 70
+                  }
+                ]
+              },
+              "unit": "percent"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Time"
+                },
+                "properties": [
+                  {
+                    "id": "custom.align"
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "{name=\"S1\", server=\"A\"}"
+                },
+                "properties": [
+                  {
+                    "id": "links",
+                    "value": [
+                      {
+                        "title": "Details",
+                        "url": "http://detail?serverLabel=${__field.labels.server}&valueNumeric=${__value.numeric}"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 26
+          },
+          "id": 3,
+          "maxDataPoints": "10",
+          "options": {
+            "cellHeight": "md",
+            "footer": {
+              "countRows": false,
+              "fields": "",
+              "reducer": [
+                "sum"
+              ],
+              "show": false
+            },
+            "showHeader": true
+          },
+          "pluginVersion": "9.4.0-pre",
+          "targets": [
+            {
+              "alias": "S1",
+              "datasource": {
+                "type": "testdata",
+                "uid": "jrsS70dMz"
+              },
+              "labels": "server=A",
+              "refId": "A",
+              "scenarioId": "random_walk",
+              "seriesCount": 1,
+              "stringInput": ""
+            },
+            {
+              "alias": "S2",
+              "datasource": {
+                "type": "testdata",
+                "uid": "jrsS70dMz"
+              },
+              "labels": "server=B",
+              "refId": "B",
+              "scenarioId": "random_walk",
+              "seriesCount": 1,
+              "stringInput": ""
+            },
+            {
+              "alias": "S3",
+              "datasource": {
+                "type": "testdata",
+                "uid": "jrsS70dMz"
+              },
+              "labels": "server=C",
+              "refId": "C",
+              "scenarioId": "random_walk",
+              "seriesCount": 1,
+              "stringInput": ""
+            }
+          ],
+          "title": "Data link with labels and numeric value",
+          "transformations": [
+            {
+              "id": "seriesToColumns",
+              "options": {}
+            }
+          ],
+          "type": "table"
+        },
+        {
+          "datasource": {
+            "type": "testdata",
+            "uid": "jrsS70dMz"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "center",
+                "cellOptions": {
+                  "type": "auto"
+                },
+                "filterable": false,
+                "inspect": false
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "percentage",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "blue",
+                    "value": 20
+                  },
+                  {
+                    "color": "orange",
+                    "value": 60
+                  },
+                  {
+                    "color": "red",
+                    "value": 70
+                  }
+                ]
+              },
+              "unit": "degree"
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 5,
+            "x": 12,
+            "y": 26
+          },
+          "id": 10,
+          "options": {
+            "cellHeight": "md",
+            "footer": {
+              "countRows": false,
+              "fields": "",
+              "reducer": [
+                "sum"
+              ],
+              "show": false
+            },
+            "showHeader": false,
+            "sortBy": [
+              {
+                "desc": true,
+                "displayName": "Last"
+              }
+            ]
+          },
+          "pluginVersion": "9.4.0-pre",
+          "targets": [
+            {
+              "datasource": {
+                "type": "testdata",
+                "uid": "jrsS70dMz"
+              },
+              "refId": "A",
+              "scenarioId": "random_walk_table",
+              "seriesCount": 5,
+              "stringInput": ""
+            }
+          ],
+          "title": "No header",
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Min": true,
+                  "Time": true,
+                  "Value": true
+                },
+                "indexByName": {
+                  "Info": 2,
+                  "Max": 4,
+                  "Min": 3,
+                  "Time": 0,
+                  "Value": 1
+                },
+                "renameByName": {}
+              }
+            }
+          ],
+          "type": "table"
+        },
+        {
+          "datasource": {
+            "type": "testdata",
+            "uid": "jrsS70dMz"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "cellOptions": {
+                  "type": "auto"
+                },
+                "inspect": false
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 34
+          },
+          "id": 12,
+          "options": {
+            "cellHeight": "md",
+            "footer": {
+              "countRows": false,
+              "fields": "",
+              "reducer": [
+                "sum"
+              ],
+              "show": true
+            },
+            "showHeader": true
+          },
+          "pluginVersion": "9.4.0-pre",
+          "targets": [
+            {
+              "datasource": {
+                "type": "testdata",
+                "uid": "jrsS70dMz"
+              },
+              "refId": "A"
+            }
+          ],
+          "title": "Footer",
+          "type": "table"
+        }
+      ],
+      "targets": [
+        {
+          "datasource": {
+            "type": "testdata",
+            "uid": "jrsS70dMz"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Data links",
+      "type": "row"
     }
   ],
-  "schemaVersion": 27,
+  "refresh": "",
+  "revision": 1,
+  "schemaVersion": 38,
   "style": "dark",
   "tags": [
     "gdev",
@@ -684,5 +1080,6 @@
   "timezone": "",
   "title": "Panel Tests - React Table",
   "uid": "U_bZIMRMk",
-  "version": 6
+  "version": 15,
+  "weekStart": ""
 }
