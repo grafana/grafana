@@ -6,8 +6,6 @@ import (
 	"time"
 
 	"github.com/prometheus/common/model"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 // swagger:route Get /api/ruler/grafana/api/v1/rules ruler RouteGetGrafanaRulesConfig
@@ -370,7 +368,7 @@ const (
 type PostableGrafanaRule struct {
 	Title        string              `json:"title" yaml:"title"`
 	Condition    string              `json:"condition" yaml:"condition"`
-	Data         []models.AlertQuery `json:"data" yaml:"data"`
+	Data         []AlertQuery        `json:"data" yaml:"data"`
 	UID          string              `json:"uid" yaml:"uid"`
 	NoDataState  NoDataState         `json:"no_data_state" yaml:"no_data_state"`
 	ExecErrState ExecutionErrorState `json:"exec_err_state" yaml:"exec_err_state"`
@@ -383,7 +381,7 @@ type GettableGrafanaRule struct {
 	OrgID           int64               `json:"orgId" yaml:"orgId"`
 	Title           string              `json:"title" yaml:"title"`
 	Condition       string              `json:"condition" yaml:"condition"`
-	Data            []models.AlertQuery `json:"data" yaml:"data"`
+	Data            []AlertQuery        `json:"data" yaml:"data"`
 	Updated         time.Time           `json:"updated" yaml:"updated"`
 	IntervalSeconds int64               `json:"intervalSeconds" yaml:"intervalSeconds"`
 	Version         int64               `json:"version" yaml:"version"`

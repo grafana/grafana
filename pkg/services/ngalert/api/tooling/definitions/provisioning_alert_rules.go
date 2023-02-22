@@ -5,7 +5,6 @@ import (
 
 	"github.com/prometheus/common/model"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/provisioning/alerting/file"
 )
 
@@ -119,7 +118,7 @@ type ProvisionedAlertRule struct {
 	Condition string `json:"condition"`
 	// required: true
 	// example: [{"refId":"A","queryType":"","relativeTimeRange":{"from":0,"to":0},"datasourceUid":"__expr__","model":{"conditions":[{"evaluator":{"params":[0,0],"type":"gt"},"operator":{"type":"and"},"query":{"params":[]},"reducer":{"params":[],"type":"avg"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1 == 1","hide":false,"intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"}}]
-	Data []models.AlertQuery `json:"data"`
+	Data []AlertQuery `json:"data"`
 	// readonly: true
 	Updated time.Time `json:"updated,omitempty"`
 	// required: true
