@@ -3,108 +3,124 @@ description: Learn about templating of labels and annotations
 keywords:
   - grafana
   - alerting
-  - guide
-  - fundamentals
+  - templating
+  - labels
+  - annotations
 title: Templating labels and annotations
 weight: 117
 ---
 
 # Templating labels and annotations
 
-In Grafana it is possible to template labels and annotations just like in Prometheus. Those who have used Prometheus before should be familiar with `$labels` and `$value` as these variables contain the labels and value of the alert. You can use the same variables in Grafana to template labels and annotations, even if the alert does not use a Prometheus datasource.
+In Grafana you template labels and annotations just like you would in Prometheus. If you have used Prometheus before then you should be familiar with the `$labels` and `$value` variables which contain the labels and value of the alert. You can use the same variables in Grafana, even if the alert does not use a Prometheus datasource. If you haven't used Prometheus before then don't worry as each of these variables, and how to template them, will be explained as you follow the rest of this page.
 
-For example, suppose you want to create an alert rule in Grafana that fires when one of your instances is down for more than 5 minutes, and that each alert fired should have a summary annotation to tell you which instance is down:
+## Go's templating language
+
+Templates for labels and annotations are written in Go's templating language, [text/template](https://pkg.go.dev/text/template).
+
+### Opening and closing tags
+
+In text/template, templates start with `{{` and end with `}}` irrespective of whether the template prints a variable or executes control structures such as if statements. This is different from other templating languages such as Jinja where printing a variable uses `{{` and `}}` and control structures use `{%` and `%}`.
+
+### Print
+
+To print the value of something use `{{` and `}}`. You can print the the result of a function or the value of a variable. For example, to print the `$labels` variable you would write the following:
+
+```
+{{ $labels }}
+```
+
+### Iterate over labels
+
+To iterate over each label in `$labels` you can use a `range`. Here `$k` refers to the name and `$v` refers to the value of the current label. For example, if your query returned a label `instance=test` then `$k` would be `instance` and `$v` would be `test`.
+
+```
+{{ range $k, $v := $labels }}
+{{ $k }}={{ $v }}
+{{ end }}
+```
+
+## The labels, value and values variables
+
+### The labels variable
+
+The `$labels` variable contains the labels from the query. For example, a query that checks if an instance is down might return an instance label with the name of the instance that is down. For example, suppose you have an alert rule that fires when one of your instances has been down for more than 5 minutes. You want to add a summary to the alert that tells you which instance is down. With the `$labels` variable, you can create a summary that prints the instance label in the summary:
 
 ```
 Instance {{ $labels.instance }} has been down for more than 5 minutes
 ```
 
-## Labels with dots
+### Labels with dots
 
-If the label contains a dot (full stop or period) in its name then the following will not work:
+If the label you want to print contains a dot (full stop or period) in its name using the same dot in the template will not work:
 
 ```
 Instance {{ $labels.instance.name }} has been down for more than 5 minutes
 ```
 
-This is because it is attempting to use a non-existing field `name` in `$labels.instance` rather than `instance.name` in `$labels`. Instead use the `index` function to print `instance.name`:
+This is because the template is attempting to use a non-existing field called `name` in `$labels.instance`. You should instead use the `index` function, which prints the label `instance.name` in the `$labels` variable:
 
 ```
 Instance {{ index $labels "instance.name" }} has been down for more than 5 minutes
 ```
 
-## Use values in labels and annotations
+### The value variable
 
-Grafana supports `$value` when templating labels and annotations. However, while `$value` in Prometheus is a floating point number contains the value of the expression, `$value` in Grafana is a string containing the labels and values of all Threshold, Reduce and Maths expressions. It does not contain the value of queries as a single query can return anywhere from 1 to 10,000s of rows or metrics.
+The `$value` variable works different from Prometheus. In Prometheus `$value` is a floating point number containing the value of the expression, but in Grafana it is a string containing the labels and values of all Threshold, Reduce and Math expressions, and Classic Conditions for this alert rule. It does not contain the results of queries, as these can return anywhere from 10s to 10,000s of rows or metrics.
 
-This `$value` variable is called the Value String. If you were to use it in the template of a summary annotation:
-
-```
-{{ $labels.instance }} has an average 95th percentile request latency above 1s: {{ $value }})
-```
-
-you will get the following summary:
+If you were to use the `$value` variable in the summary of an alert:
 
 ```
-http_server has an average 95th percentile request latency above 1s: [ var='B' labels={instance=http_server} value=10 ]
+{{ $labels.service }} has over 5% of responses with 5xx errors: {{ $value }})
 ```
 
-To get just the value of `B` you can instead use `$values`:
+The summary might look something like the following:
 
 ```
-{{ $labels.instance }} has an average 95th percentile request latency above 1s: {{ $values.B }}
+api has an over 5% of responses with 5xx errors: [ var='B' labels={service=api} value=6.789 ]
 ```
 
-and then you will get this summary:
+Here `var='B'` refers to the expression with the RefID B. In Grafana, all queries and expressions are identified by a RefID that identifies each query and expression in an alert rule. Similarly `labels={service=api}` refers to the labels, and `value=6.789` refers to the value.
+
+You might have observed that there is no RefID A. That is because in most alert rules the RefID A refers to a query, and since queries can return many rows or time series they are not included in `$value`.
+
+### The values variable
+
+If the `$value` variable contains more information than you need, you can instead print the labels and value of individual expressions using `$values`. Unlike `$value`, the `$values` variable is a table of objects containing the labels and floating point values of each expression, indexed by their RefID.
+
+If you were to print the value of the expression with RefID `B` in the summary of the alert:
 
 ```
-http_server has an average 95th percentile request latency above 1s: 11
+{{ $labels.service }} has over 5% of responses with 5xx errors: {{ $values.B }}%
 ```
 
-## Alert rules with multiple queries, or expressions
-
-If you have an alert rule with multiple queries and expressions, or a single query with a Reduce and Math expression, like in the following example:
-
-{{< figure src="/static/img/docs/alerting/unified/grafana-alerting-histogram-quantile.png" class="docs-image--no-shadow" caption="An alert rule that uses histogram_quantile to compute 95th percentile" >}}
-
-Then the Value String will not just include the value of the alert condition, but the labels and values of all Threshold, Reduce and Maths expressions.
-
-**Example 1**: The Value String of an alert rule with a single query and Reduce expression `B`:
+The summary will contain just the value:
 
 ```
-[ var='B' labels={instance=http_server} value=11 ]
+api has an over 5% of responses with 5xx errors: 6.789%
 ```
 
-**Example 2**: The Value String of an alert rule with a single query, Reduce expression `B` and a Math expression `C`:
+However, while `{{ $values.B }}` prints the number 6.789, it is actually a string as you are printing the object that contains both the labels and value for RefID B, not of the floating point value of B. To use the floating point value of RefID B you must use the `Value` field from `$values.B`. If you were to humanize the floating point value in the summary of an alert:
 
 ```
-[ var='B' labels={instance=http_server} value=11, var='C' labels={instance=http_server} value=1 ]
+{{ $labels.service }} has over 5% of responses with 5xx errors: {{ humanize $values.B.Value }}%
 ```
 
-If you were to write a summary annotation such as:
+### No data, execution errors and timeouts
+
+If the query in your alert rule returns no data, or fails because of a datasource error or timeout, then any Threshold, Reduce or Math expressions that use that query will also return no data or an error. When this happens these expression will be absent from `$values`. It is good practice to check that a RefID is present before using it as otherwise your template will break should your query return no data or an error. You can do this using an if statement:
 
 ```
-{{ $labels.instance }} has an average 95th percentile request latency above 1s: {{ $values.C }})
-```
-
-You would find that because the condition of the alert `C` is a Math expression with a boolean comparison, it must return either a `0` or a `1`. What you want instead is the average of the 95th percentile, and you can get this from the reduce expression `B`:
-
-```
-{{ $labels.instance }} has an average 95th percentile request latency above 1s: {{ $values.B }})
-```
-
-## No data and execution errors or timeouts
-
-Should query `A` return no data then the reduce expression `B` will also return no data. This means that
-`{{ $values.B }}` will be nil. To ensure that labels and annotations can still be templated even when a query returns no data, we can use an if statement to check for this condition:
-
-```
-{{ if $values.B }}{{ $labels.instance }} has a 95th percentile request latency above 1s: {{ $values.B }}){{ end }}
+{{ if $values.B }}{{ $labels.service }} has over 5% of responses with 5xx errors: {{ humanize $values.B.Value }}%{{ end }}
 ```
 
 ## Classic Conditions
 
-If the rule uses Classic Conditions instead of Reduce and Math expressions, then `$values` contains the combination of the Ref ID and position of the condition. For example, `{{ $values.A0 }}` and `{{ $values.A1 }}`.
+If the rule uses Classic Conditions instead of Threshold, Reduce and Math expressions, then the `$values` variable is indexed by both the Ref ID and position of the condition in the Classic Condition. For example, if you have a Classic Condition with RefID B containing two conditions, then `$values` will contain two conditions `B0` and `B1`.
+
+```
+The first condition is {{ $values.B0 }}, and the second condition is {{ $values.B1 }}
+```
 
 ## Reference
 
@@ -139,113 +155,3 @@ The following functions are also available when expanding labels and annotations
 | [args](#args)                             | []interface{}                                                | map[string]interface{} | Converts a list of objects to a map with keys, for example, arg0, arg1. Use this function to pass multiple arguments to templates.          |
 | [externalURL](#externalurl)               | nothing                                                      | string                 | Returns a string representing the external URL.                                                                                             |
 | [pathPrefix](#pathprefix)                 | nothing                                                      | string                 | Returns the path of the external URL.                                                                                                       |
-
-#### humanize
-
-**Template string** `{ humanize $value }`
-
-**Input** `1234567.0`
-
-**Expected** `1.235M`
-
-#### humanize1024
-
-**TemplateString** `{ humanize1024 $value } `
-
-**Input** `1048576.0`
-
-**Expected** `1Mi`
-
-#### humanizeDuration
-
-**TemplateString** `{ humanizeDuration $value }`
-
-**Input** `899.99`
-
-**Expected** `14m 59s`
-
-#### humanizePercentage
-
-**TemplateString** `{ humanizePercentage $value }`
-
-**Input** `0.1234567`
-
-**Expected** `12.35%`
-
-#### humanizeTimestamp
-
-**TemplateString** `{ $value | humanizeTimestamp }`
-
-**Input** `1435065584.128`
-
-**Expected** `2015-06-23 13:19:44.128 +0000 UTC`
-
-#### title
-
-**TemplateString** `{ $value | title }`
-
-**Input** `aa bb CC`
-
-**Expected** `Aa Bb Cc`
-
-#### toUpper
-
-**TemplateString** `{ $value | toUpper }`
-
-**Input** `aa bb CC`
-
-**Expected** `AA BB CC`
-
-#### toLower
-
-**TemplateString** `{ $value | toLower }`
-
-**Input** `aA bB CC`
-
-**Expected** `aa bb cc`
-
-#### match
-
-**TemplateString** `{ match "a+" $labels.instance }`
-
-**Input** `aa`
-
-**Expected** `true`
-
-#### reReplaceAll
-
-**TemplateString** `{{ reReplaceAll "localhost:(.*)" "my.domain:$1" $labels.instance }}`
-
-**Input** `localhost:3000`
-
-**Expected** `my.domain:3000`
-
-#### graphLink
-
-**TemplateString** `{{ graphLink "{\"expr\": \"up\", \"datasource\": \"gdev-prometheus\"}" }}`
-
-**Expected** `/explore?left=["now-1h","now","gdev-prometheus",{"datasource":"gdev-prometheus","expr":"up","instant":false,"range":true}]`
-
-#### tableLink
-
-**TemplateString** `{{ tableLink "{\"expr\": \"up\", \"datasource\": \"gdev-prometheus\"}" }}`
-
-**Expected** `/explore?left=["now-1h","now","gdev-prometheus",{"datasource":"gdev-prometheus","expr":"up","instant":true,"range":false}]`
-
-#### args
-
-**TemplateString** `{{define "x"}}{{.arg0}} {{.arg1}}{{end}}{{template "x" (args 1 "2")}}`
-
-**Expected** `1 2`
-
-#### externalURL
-
-**TemplateString** `{ externalURL }`
-
-**Expected** `http://localhost/path/prefix`
-
-#### pathPrefix
-
-**TemplateString** `{ pathPrefix }`
-
-**Expected** `/path/prefix`
