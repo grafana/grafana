@@ -633,7 +633,7 @@ export class CloudWatchDatasource
                 this.replace(val, options.scopedVars, true, fieldName)
               );
             } else {
-              anyQuery[fieldName] = this.replace(anyQuery[fieldName], options.scopedVars, true, fieldName);
+              anyQuery[fieldName] = this.replace(anyQuery[fieldName], options.scopedVars, false, fieldName);
             }
           }
         }

@@ -18,7 +18,7 @@ export async function addDataLinksToLogsResponse(
   getRegion: (region: string) => string,
   tracingDatasourceUid?: string
 ): Promise<void> {
-  const replace = (target: string, fieldName?: string) => replaceFn(target, request.scopedVars, true, fieldName);
+  const replace = (target: string, fieldName?: string) => replaceFn(target, request.scopedVars, false, fieldName);
 
   for (const dataFrame of response.data as DataFrame[]) {
     const curTarget = request.targets.find((target) => target.refId === dataFrame.refId) as CloudWatchLogsQuery;
