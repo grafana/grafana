@@ -3,15 +3,15 @@
 import { AlertState, DataSourceInstanceSettings } from '@grafana/data';
 
 import {
+  Annotations,
+  GrafanaAlertState,
+  GrafanaAlertStateWithReason,
+  Labels,
+  mapStateWithReasonToBaseState,
   PromAlertingRuleState,
   PromRuleType,
   RulerRuleDTO,
-  Labels,
-  Annotations,
   RulerRuleGroupDTO,
-  GrafanaAlertState,
-  GrafanaAlertStateWithReason,
-  mapStateWithReasonToBaseState,
 } from './unified-alerting-dto';
 
 export type Alert = {
@@ -109,6 +109,13 @@ export interface RuleWithLocation<T = RulerRuleDTO> {
   namespace: string;
   group: RulerRuleGroupDTO;
   rule: T;
+}
+
+export interface CombinedRuleWithLocation {
+  rule: CombinedRule;
+  dataSourceName: string;
+  namespaceName: string;
+  groupName: string;
 }
 
 export interface PromRuleWithLocation {

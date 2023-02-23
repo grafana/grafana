@@ -6,6 +6,7 @@ import {
   AlertingRule,
   CloudRuleIdentifier,
   CombinedRuleGroup,
+  CombinedRuleWithLocation,
   GrafanaRuleIdentifier,
   PrometheusRuleIdentifier,
   PromRuleWithLocation,
@@ -26,10 +27,12 @@ import {
   RulerRuleDTO,
 } from 'app/types/unified-alerting-dto';
 
+import { CombinedRuleNamespace } from '../../../../types/unified-alerting';
 import { State } from '../components/StateTag';
 import { RuleHealth } from '../search/rulesSearchParser';
 
 import { RULER_NOT_SUPPORTED_MSG } from './constants';
+import { getRulesSourceName } from './datasource';
 import { AsyncRequestState } from './redux';
 
 export function isAlertingRule(rule: Rule | undefined): rule is AlertingRule {
@@ -112,6 +115,22 @@ export const flattenRules = (rules: RuleNamespace[]) => {
   }, []);
 };
 
+export const getAlertingRule = (rule: CombinedRuleWithLocation) =>
+  isAlertingRule(rule.rule.promRule) ? rule.rule.promRule : null;
+
+export const flattenCombinedRules = (rules: CombinedRuleNamespace[]) => {
+  return rules.reduce<CombinedRuleWithLocation[]>((acc, { rulesSource, name: namespaceName, groups }) => {
+    groups.forEach(({ name: groupName, rules }) => {
+      rules.forEach((rule) => {
+        if (isAlertingRule(rule.promRule!)) {
+          acc.push({ dataSourceName: getRulesSourceName(rulesSource), namespaceName, groupName, rule });
+        }
+      });
+    });
+    return acc;
+  }, []);
+};
+
 export function alertStateToState(state: PromAlertingRuleState | GrafanaAlertStateWithReason | AlertState): State {
   let key: PromAlertingRuleState | GrafanaAlertState | AlertState;
   if (Object.values(AlertState).includes(state as AlertState)) {
@@ -140,8 +159,8 @@ const alertStateToStateMap: Record<PromAlertingRuleState | GrafanaAlertState | A
   [AlertState.Unknown]: 'info',
 };
 
-export function getFirstActiveAt(promRule: AlertingRule) {
-  if (!promRule.alerts) {
+export function getFirstActiveAt(promRule?: AlertingRule) {
+  if (!promRule?.alerts) {
     return null;
   }
   return promRule.alerts.reduce((prev, alert) => {
