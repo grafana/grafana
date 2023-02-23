@@ -195,9 +195,13 @@ export function loadDataSourceMeta(dataSource: DataSourceSettings): ThunkResult<
   };
 }
 
-export function addDataSource(plugin: DataSourcePluginMeta, editRoute = DATASOURCES_ROUTES.Edit): ThunkResult<void> {
+export function addDataSource(
+  plugin: DataSourcePluginMeta,
+  editRoute = DATASOURCES_ROUTES.Edit
+): ThunkResult<Promise<void>> {
   return async (dispatch, getStore) => {
-    await dispatch(loadDataSources());
+    const response = await api.getDataSources();
+    dispatch(dataSourcesLoaded(response));
 
     const dataSources = getStore().dataSources.dataSources;
     const isFirstDataSource = dataSources.length === 0;
