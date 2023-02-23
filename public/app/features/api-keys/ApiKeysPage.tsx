@@ -136,37 +136,39 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
     return (
       <Page {...defaultPageProps}>
         <Page.Contents isLoading={false}>
-          {({}) => {
-            const showTable = apiKeysCount > 0;
-            return (
-              <>
-                {!apiKeysMigrated && showTable && <MigrateToServiceAccountsCard onMigrate={this.onMigrateAll} />}
-                {apiKeysCount === 0 && (
-                  <APIKeysMigratedCard onHideApiKeys={this.onHideApiKeys} apikeys={apiKeysCount} />
-                )}
-                {showTable ? (
-                  <ApiKeysActionBar
-                    searchQuery={searchQuery}
-                    disabled={!canCreate}
-                    onSearchChange={this.onSearchQueryChange}
-                  />
-                ) : null}
-                {showTable ? (
-                  <VerticalGroup>
-                    <InlineField disabled={includeExpiredDisabled} label="Include expired keys">
-                      <InlineSwitch id="showExpired" value={includeExpired} onChange={this.onIncludeExpiredChange} />
-                    </InlineField>
-                    <ApiKeysTable
-                      apiKeys={apiKeys}
-                      timeZone={timeZone}
-                      onMigrate={this.onMigrateApiKey}
-                      onDelete={this.onDeleteApiKey}
+          <ApiKeysController>
+            {({}) => {
+              const showTable = apiKeysCount > 0;
+              return (
+                <>
+                  {!apiKeysMigrated && showTable && <MigrateToServiceAccountsCard onMigrate={this.onMigrateAll} />}
+                  {apiKeysCount === 0 && (
+                    <APIKeysMigratedCard onHideApiKeys={this.onHideApiKeys} apikeys={apiKeysCount} />
+                  )}
+                  {showTable ? (
+                    <ApiKeysActionBar
+                      searchQuery={searchQuery}
+                      disabled={!canCreate}
+                      onSearchChange={this.onSearchQueryChange}
                     />
-                  </VerticalGroup>
-                ) : null}
-              </>
-            );
-          }}
+                  ) : null}
+                  {showTable ? (
+                    <VerticalGroup>
+                      <InlineField disabled={includeExpiredDisabled} label="Include expired keys">
+                        <InlineSwitch id="showExpired" value={includeExpired} onChange={this.onIncludeExpiredChange} />
+                      </InlineField>
+                      <ApiKeysTable
+                        apiKeys={apiKeys}
+                        timeZone={timeZone}
+                        onMigrate={this.onMigrateApiKey}
+                        onDelete={this.onDeleteApiKey}
+                      />
+                    </VerticalGroup>
+                  ) : null}
+                </>
+              );
+            }}
+          </ApiKeysController>
         </Page.Contents>
       </Page>
     );
