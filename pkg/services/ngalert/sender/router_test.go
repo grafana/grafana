@@ -521,11 +521,11 @@ func TestBuildExternalURL(t *testing.T) {
 				URL: "https://localhost:9000/path/to/am",
 				JsonData: func() *simplejson.Json {
 					r := simplejson.New()
-					r.Set("implementation", "cortex")
+					r.Set("implementation", "prometheus")
 					return r
 				}(),
 			},
-			expectedURL: "https://localhost:9000/path/to/am/alertmanager",
+			expectedURL: "https://localhost:9000/path/to/am",
 		},
 	}
 	for _, test := range tests {
