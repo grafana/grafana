@@ -167,7 +167,7 @@ func TestExpandTemplate(t *testing.T) {
 		alertInstance: eval.Result{
 			EvaluationString: "invalid",
 		},
-		expectedError: errors.New(`error executing template __alert_test: template: __alert_test:1:79: executing "__alert_test" at <humanize $value>: error calling humanize: strconv.ParseFloat: parsing "invalid": invalid syntax`),
+		expectedError: errors.New(`failed to expand template '{{- $labels := .Labels -}}{{- $values := .Values -}}{{- $value := .Value -}}{{ humanize $value }}': error executing template __alert_test: template: __alert_test:1:79: executing "__alert_test" at <humanize $value>: error calling humanize: strconv.ParseFloat: parsing "invalid": invalid syntax`),
 	}, {
 		name: "humanize1024 float64",
 		text: "{{ range $key, $val := $values }}{{ humanize1024 .Value }}:{{ end }}",
@@ -202,7 +202,7 @@ func TestExpandTemplate(t *testing.T) {
 		alertInstance: eval.Result{
 			EvaluationString: "invalid",
 		},
-		expectedError: errors.New(`error executing template __alert_test: template: __alert_test:1:79: executing "__alert_test" at <humanize1024 $value>: error calling humanize1024: strconv.ParseFloat: parsing "invalid": invalid syntax`),
+		expectedError: errors.New(`failed to expand template '{{- $labels := .Labels -}}{{- $values := .Values -}}{{- $value := .Value -}}{{ humanize1024 $value }}': error executing template __alert_test: template: __alert_test:1:79: executing "__alert_test" at <humanize1024 $value>: error calling humanize1024: strconv.ParseFloat: parsing "invalid": invalid syntax`),
 	}, {
 		name: "humanizeDuration - seconds - float64",
 		text: "{{ range $key, $val := $values }}{{ humanizeDuration .Value }}:{{ end }}",
@@ -321,7 +321,7 @@ func TestExpandTemplate(t *testing.T) {
 		alertInstance: eval.Result{
 			EvaluationString: "invalid",
 		},
-		expectedError: errors.New(`error executing template __alert_test: template: __alert_test:1:79: executing "__alert_test" at <humanizeDuration $value>: error calling humanizeDuration: strconv.ParseFloat: parsing "invalid": invalid syntax`),
+		expectedError: errors.New(`failed to expand template '{{- $labels := .Labels -}}{{- $values := .Values -}}{{- $value := .Value -}}{{ humanizeDuration $value }}': error executing template __alert_test: template: __alert_test:1:79: executing "__alert_test" at <humanizeDuration $value>: error calling humanizeDuration: strconv.ParseFloat: parsing "invalid": invalid syntax`),
 	}, {
 		name:     "humanizePercentage - float64",
 		text:     "{{ -0.22222 | humanizePercentage }}:{{ 0.0 | humanizePercentage }}:{{ 0.1234567 | humanizePercentage }}:{{ 1.23456 | humanizePercentage }}",
@@ -333,7 +333,7 @@ func TestExpandTemplate(t *testing.T) {
 	}, {
 		name:          "humanizePercentage - string with error",
 		text:          `{{ "invalid" | humanizePercentage }}`,
-		expectedError: errors.New(`error executing template __alert_test: template: __alert_test:1:91: executing "__alert_test" at <humanizePercentage>: error calling humanizePercentage: strconv.ParseFloat: parsing "invalid": invalid syntax`),
+		expectedError: errors.New(`failed to expand template '{{- $labels := .Labels -}}{{- $values := .Values -}}{{- $value := .Value -}}{{ "invalid" | humanizePercentage }}': error executing template __alert_test: template: __alert_test:1:91: executing "__alert_test" at <humanizePercentage>: error calling humanizePercentage: strconv.ParseFloat: parsing "invalid": invalid syntax`),
 	}, {
 		name:     "humanizeTimestamp - float64",
 		text:     "{{ 1435065584.128 | humanizeTimestamp }}",

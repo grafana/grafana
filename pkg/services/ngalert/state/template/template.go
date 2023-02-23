@@ -101,7 +101,7 @@ func Expand(ctx context.Context, name, tmpl string, data Data, externalURL *url.
 
 	result, err := expander.Expand()
 	if err != nil {
-		return "", err
+		return "", ExpandError{Tmpl: tmpl, Err: err}
 	}
 
 	// We need to replace <no value> with [no value] as some integrations think <no value> is invalid HTML. For example,
