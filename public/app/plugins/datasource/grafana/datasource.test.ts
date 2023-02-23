@@ -25,7 +25,7 @@ describe('grafana data source', () => {
     let calledBackendSrvParams: any;
     let ds: GrafanaDatasource;
     beforeEach(() => {
-      getMock.mockImplementation((url: string, options: any) => {
+      getMock.mockImplementation((url, options) => {
         calledBackendSrvParams = options;
         return Promise.resolve([]);
       });
