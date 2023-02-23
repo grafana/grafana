@@ -23,6 +23,7 @@
         "package.json",
         "tsconfig.json",
         "lerna.json",
+        ".babelrc",
         ".prettierrc.js",
         ".eslintrc",
         "**/*.mdx"
