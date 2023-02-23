@@ -183,6 +183,13 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, logger 
 		return dataResponseErrorWithExecuted(err)
 	}
 
+	defer func() {
+		err := res.Body.Close()
+		if err != nil {
+			logger.Warn("failed to close response body", "error", err)
+		}
+	}()
+
 	argResponse, err := e.unmarshalResponse(logger, res)
 	if err != nil {
 		return dataResponseErrorWithExecuted(err)
