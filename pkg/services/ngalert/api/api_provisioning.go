@@ -81,7 +81,8 @@ func (srv *ProvisioningSrv) RouteGetPolicyTree(c *contextmodel.ReqContext) respo
 }
 
 func (srv *ProvisioningSrv) RoutePutPolicyTree(c *contextmodel.ReqContext, tree definitions.Route) response.Response {
-	err := srv.policies.UpdatePolicyTree(c.Req.Context(), c.OrgID, tree, alerting_models.ProvenanceAPI)
+	provenance := determineProvenance(c)
+	err := srv.policies.UpdatePolicyTree(c.Req.Context(), c.OrgID, tree, provenance)
 	if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
 		return ErrResp(http.StatusNotFound, err, "")
 	}
