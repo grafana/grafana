@@ -3037,6 +3037,6 @@
   "title": "Azure / Resources Overview",
   "uid": "Mtwt2BV7k",
   "version": 3,
-  "description": "The dashboard provides insights of Azure Resource Graph Explorer overview, compute, Paas, networking, monitoring and security. Queries used in this Azure Monitor dashboard we sourced from the [Azure Inventory Workbook](https://github.com/scautomation/Azure-Inventory-Workbook) by Billy York. You can find more sample Azure Resource Graph queries by Billy at this [GitHub](https://github.com/scautomation/AzureResourceGraph-Examples) repository.",
+  "description": "The dashboard provides insights of Azure Resource Graph Explorer overview, Compute, PaaS, Networking, Monitoring, and Security. Queries used in this Azure Monitor dashboard were sourced from the [Azure Inventory Workbook](https://github.com/scautomation/Azure-Inventory-Workbook) by Billy York. You can find more sample Azure Resource Graph queries by Billy at this [GitHub](https://github.com/scautomation/AzureResourceGraph-Examples) repository.",
   "gnetId": 14986
 }
