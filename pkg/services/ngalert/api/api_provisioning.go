@@ -322,7 +322,8 @@ func (srv *ProvisioningSrv) RoutePutAlertRule(c *contextmodel.ReqContext, ar def
 }
 
 func (srv *ProvisioningSrv) RouteDeleteAlertRule(c *contextmodel.ReqContext, UID string) response.Response {
-	err := srv.alertRules.DeleteAlertRule(c.Req.Context(), c.OrgID, UID, alerting_models.ProvenanceAPI)
+	provenance := determineProvenance(c)
+	err := srv.alertRules.DeleteAlertRule(c.Req.Context(), c.OrgID, UID, provenance)
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
@@ -407,7 +408,8 @@ func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *contextmodel.ReqContext, a
 	if err != nil {
 		ErrResp(http.StatusBadRequest, err, "")
 	}
-	err = srv.alertRules.ReplaceRuleGroup(c.Req.Context(), c.OrgID, groupModel, c.UserID, alerting_models.ProvenanceAPI)
+	provenance := determineProvenance(c)
+	err = srv.alertRules.ReplaceRuleGroup(c.Req.Context(), c.OrgID, groupModel, c.UserID, provenance)
 	if errors.Is(err, alerting_models.ErrAlertRuleFailedValidation) {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
