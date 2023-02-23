@@ -61,7 +61,7 @@ You can configure the following settings for support bundles:
 ```ini
 # Enable support bundle creation (default: true)
 enabled = true
-# Only server admins can generate and view support bundles (default: true)
+# Only server admins can generate and view support bundles. When set to false, organization admins can generate and view support bundles (default: true)
 server_admin_only = true
 # If set, bundles will be encrypted with the provided public keys separated by whitespace
 public_keys = ""

@@ -88,7 +88,7 @@ func TestService_bundleEncryptDecrypt(t *testing.T) {
 	confirmFilesInTar(t, tarBytes)
 }
 
-func TestService_bundleEncryptDecryptMultipleReceipients(t *testing.T) {
+func TestService_bundleEncryptDecryptMultipleRecipients(t *testing.T) {
 	s := &Service{
 		log:                  log.New("test"),
 		bundleRegistry:       bundleregistry.ProvideService(),

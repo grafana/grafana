@@ -102,7 +102,7 @@ func (s *Service) bundle(ctx context.Context, collectors []string, uid string) (
 		for _, key := range s.encryptionPublicKeys {
 			recipient, err := age.ParseX25519Recipient(key)
 			if err != nil {
-				return nil, fmt.Errorf("unable to parse support bundle receipient public key: %w", err)
+				return nil, fmt.Errorf("unable to parse support bundle recipient public key: %w", err)
 			}
 			receipients = append(receipients, recipient)
 		}
