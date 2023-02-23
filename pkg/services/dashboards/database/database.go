@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"time"
 
 	"xorm.io/xorm"
@@ -708,6 +709,40 @@ func (d *DashboardStore) deleteDashboard(cmd *dashboards.DeleteDashboardCommand,
 		"DELETE FROM annotation WHERE dashboard_id = ?",
 		"DELETE FROM dashboard_provisioning WHERE dashboard_id = ?",
 		"DELETE FROM dashboard_acl WHERE dashboard_id = ?",
+	}
+
+	if d.features.IsEnabled(featuremgmt.FlagPublicDashboardsEmailSharing) {
+		// Find the related pubdash
+		pubdash := &models.PublicDashboard{DashboardUid: dashboard.UID, OrgId: dashboard.OrgID}
+		_, err := sess.Get(pubdash)
+		if err != nil {
+			return err
+		}
+		pubdashEmailSharingTables := []string{
+			"DELETE FROM dashboard_public_email_share WHERE public_dashboard_uid = ?",
+			"DELETE FROM dashboard_public_magic_link WHERE public_dashboard_uid = ?",
+			"DELETE FROM dashboard_public_session WHERE public_dashboard_uid = ?",
+		}
+		pubdashUids := make([]string, 1)
+		if dashboard.IsFolder {
+			// get all the pubdash uids from the dashboards in the folder
+			err := sess.SQL("SELECT uid from dashboard_public WHERE dashboard_uid IN (SELECT uid FROM dashboard WHERE folder_id = ?)", dashboard.ID).Find(&pubdashUids)
+			if err != nil {
+				return err
+			}
+		} else {
+			pubdashUids = append(pubdashUids, pubdash.Uid)
+		}
+
+		// delete everything for email sharing
+		for _, uid := range pubdashUids {
+			for _, sql := range pubdashEmailSharingTables {
+				_, err := sess.Exec(sql, uid)
+				if err != nil {
+					return err
+				}
+			}
+		}
 	}
 
 	if dashboard.IsFolder {
