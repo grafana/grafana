@@ -17,6 +17,7 @@ import { PluginIconName } from 'app/features/plugins/admin/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
 import { QueryResponse, SearchResultMeta } from '../../service';
+import { getIconForKind } from '../../service/utils';
 import { SelectionChecker, SelectionToggle } from '../selection';
 
 import { ExplainScorePopup } from './ExplainScorePopup';
@@ -248,16 +249,6 @@ export const generateColumns = (
 
   return columns;
 };
-
-function getIconForKind(v: string): IconName {
-  if (v === 'dashboard') {
-    return 'apps';
-  }
-  if (v === 'folder') {
-    return 'folder';
-  }
-  return 'question-circle';
-}
 
 function hasValue(f: Field): boolean {
   for (let i = 0; i < f.values.length; i++) {
