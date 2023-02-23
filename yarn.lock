@@ -5392,7 +5392,7 @@ __metadata:
     slate-plain-serializer: 0.7.13
     slate-react: 0.22.10
     storybook-addon-turbo-build: 1.1.0
-    storybook-dark-mode: 2.0.4
+    storybook-dark-mode: 2.1.1
     style-loader: 3.3.1
     tinycolor2: 1.6.0
     tslib: 2.5.0
@@ -9762,6 +9762,13 @@ __metadata:
     lodash: ^4.17.21
     regenerator-runtime: ^0.13.7
   checksum: 6351c5b1cbe5820f0f0dfcc3e4e7da8cca3c8d73a06c5803e65cb86e9e81ccbae53cec8e1b579af0ac9a5bbb6d4b6ac03ffe26af2220dc5dfe8f065067f0e2d7
+  languageName: node
+  linkType: hard
+
+"@storybook/global@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "@storybook/global@npm:5.0.0"
+  checksum: ede0ad35ec411fe31c61150dbd118fef344d1d0e72bf5d3502368e35cf68126f6b7ae4a0ab5e2ffe2f0baa3b4286f03ad069ba3e098e1725449ef08b7e154ba8
   languageName: node
   linkType: hard
 
@@ -35775,17 +35782,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"storybook-dark-mode@npm:2.0.4":
-  version: 2.0.4
-  resolution: "storybook-dark-mode@npm:2.0.4"
+"storybook-dark-mode@npm:2.1.1":
+  version: 2.1.1
+  resolution: "storybook-dark-mode@npm:2.1.1"
   dependencies:
     "@storybook/addons": ^6.5.14
     "@storybook/api": ^6.5.14
     "@storybook/components": ^6.5.14
     "@storybook/core-events": ^6.5.14
+    "@storybook/global": ^5.0.0
     "@storybook/theming": ^6.5.14
     fast-deep-equal: ^3.1.3
-    global: ^4.4.0
     memoizerific: ^1.11.3
   peerDependencies:
     react: ^16.8.0 || ^17.0.0 || ^18.0.0
@@ -35795,7 +35802,7 @@ __metadata:
       optional: true
     react-dom:
       optional: true
-  checksum: afe57016b041bd39c54ece8346546175f9cc59c1761d2d8a88bbc8cbfed40a296cfaff07af94bfd8c1c06e54aecc72f1798426fa1e7c8866544607ab45e03dfa
+  checksum: 44d6313013a1d63f47c95e2e8e0d11c24d467b3540259e152ceb3236636dbadf7a46c6f7f183946b105ee53173cb13815f1f88ca6da41fc74673c3c11f619863
   languageName: node
   linkType: hard
 
