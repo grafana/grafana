@@ -1,7 +1,14 @@
 import { SyntaxNode } from '@lezer/common';
 import { escapeRegExp } from 'lodash';
 
-import { ArrayVector, DataQueryResponse, DataQueryResponseData, Field, QueryResultMetaStat } from '@grafana/data';
+import {
+  ArrayVector,
+  DataFrame,
+  DataQueryResponse,
+  DataQueryResponseData,
+  Field,
+  QueryResultMetaStat,
+} from '@grafana/data';
 import {
   parser,
   LineFilter,
@@ -300,9 +307,11 @@ export function getStreamSelectorsFromQuery(query: string): string[] {
 export function requestSupportsPartitioning(allQueries: LokiQuery[]) {
   const queries = allQueries.filter((query) => !query.hide);
   /*
-   * For now, we will not split when more than 1 query is requested.
+   * For now, we only split if there is a single query.
+   * - we do not split for zero queries
+   * - we do not split for multiple queries
    */
-  if (queries.length > 1) {
+  if (queries.length !== 1) {
     return false;
   }
 
@@ -330,7 +339,7 @@ export function combineResponses(currentResult: DataQueryResponse | null, newRes
   return currentResult;
 }
 
-function combineFrames(dest: DataQueryResponseData, source: DataQueryResponseData) {
+function combineFrames(dest: DataFrame, source: DataFrame) {
   const totalFields = dest.fields.length;
   for (let i = 0; i < totalFields; i++) {
     dest.fields[i].values = new ArrayVector(
@@ -338,28 +347,33 @@ function combineFrames(dest: DataQueryResponseData, source: DataQueryResponseDat
     );
   }
   dest.length += source.length;
-  combineMetadata(dest, source);
+  dest.meta = {
+    ...dest.meta,
+    stats: getCombinedMetadataStats(dest.meta?.stats ?? [], source.meta?.stats ?? []),
+  };
 }
 
-function combineMetadata(dest: DataQueryResponseData = {}, source: DataQueryResponseData = {}) {
-  if (!source.meta?.stats) {
-    return;
+const TOTAL_BYTES_STAT = 'Summary: total bytes processed';
+
+function getCombinedMetadataStats(
+  destStats: QueryResultMetaStat[],
+  sourceStats: QueryResultMetaStat[]
+): QueryResultMetaStat[] {
+  // in the current approach, we only handle a single stat
+  const destStat = destStats.find((s) => s.displayName === TOTAL_BYTES_STAT);
+  const sourceStat = sourceStats.find((s) => s.displayName === TOTAL_BYTES_STAT);
+
+  if (sourceStat != null && destStat != null) {
+    return [{ value: sourceStat.value + destStat.value, displayName: TOTAL_BYTES_STAT }];
   }
-  if (!dest.meta?.stats) {
-    if (!dest.meta) {
-      dest.meta = {};
-    }
-    Object.assign(dest.meta, { stats: source.meta.stats });
-    return;
+
+  // maybe one of them exist
+  const eitherStat = sourceStat ?? destStat;
+  if (eitherStat != null) {
+    return [eitherStat];
   }
-  dest.meta.stats.forEach((destStat: QueryResultMetaStat, i: number) => {
-    const sourceStat = source.meta.stats?.find(
-      (sourceStat: QueryResultMetaStat) => destStat.displayName === sourceStat.displayName
-    );
-    if (sourceStat) {
-      destStat.value += sourceStat.value;
-    }
-  });
+
+  return [];
 }
 
 /**
