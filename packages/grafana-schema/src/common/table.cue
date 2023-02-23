@@ -58,7 +58,6 @@ TableBarGaugeCellOptions: {
 TableAreaChartCellOptions: {
 	GraphFieldConfig
 	type: TableCellDisplayMode & "area-chart"
-	color?: string
 } @cuetsy(kind="interface")
 
 // Colored background cell options

@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 
 import { createFieldConfigRegistry } from '@grafana/data';
 import { GraphFieldConfig, TableAreaChartCellOptions } from '@grafana/schema';
-import { VerticalGroup, Field, useStyles2, ColorPickerInput } from '@grafana/ui';
+import { VerticalGroup, Field, useStyles2 } from '@grafana/ui';
 import { defaultAreaChartCellConfig } from '@grafana/ui/src/components/Table/AreaChartCell';
 
 import { getGraphFieldConfig } from '../../timeseries/config';
@@ -55,9 +55,6 @@ export const AreaChartCellOptionsEditor = (props: TableCellEditorProps<TableArea
           </Field>
         );
       })}
-      <Field label="Color">
-        <ColorPickerInput value={cellOptions.color} onChange={(color) => onChange({ ...cellOptions, color })} />
-      </Field>
     </VerticalGroup>
   );
 };

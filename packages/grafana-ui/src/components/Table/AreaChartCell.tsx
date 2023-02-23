@@ -12,7 +12,6 @@ import {
 } from '@grafana/data';
 import {
   BarAlignment,
-  FieldColorModeId,
   GraphDrawStyle,
   GraphFieldConfig,
   GraphGradientMode,
@@ -59,7 +58,7 @@ export const AreaChartCell: FC<TableCellProps> = (props) => {
   const cellOptions = getTableAreaChartCellOptions(field);
 
   const config: FieldConfig<GraphFieldConfig> = {
-    color: cellOptions.color ? { mode: FieldColorModeId.Fixed, fixedColor: cellOptions.color } : field.config.color,
+    color: field.config.color,
     custom: {
       ...defaultAreaChartCellConfig,
       ...cellOptions,

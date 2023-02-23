@@ -153,6 +153,7 @@
           "show": false
         },
         "showHeader": true,
+        "showRowNums": false,
         "sortBy": [
           {
             "desc": true,
@@ -160,13 +161,10 @@
           }
         ]
       },
-      "pluginVersion": "9.4.0-pre",
+      "pluginVersion": "9.5.0-pre",
       "targets": [
         {
-          "datasource": {
-            "type": "testdata",
-            "uid": "jrsS70dMz"
-          },
+          "datasource": "gdev-testdata",
           "refId": "A",
           "scenarioId": "random_walk",
           "seriesCount": 15,
@@ -196,6 +194,7 @@
             "mode": "thresholds"
           },
           "custom": {
+            "align": "auto",
             "cellOptions": {
               "type": "auto"
             },
@@ -300,6 +299,7 @@
           "show": false
         },
         "showHeader": true,
+        "showRowNums": false,
         "sortBy": [
           {
             "desc": false,
@@ -307,13 +307,10 @@
           }
         ]
       },
-      "pluginVersion": "9.4.0-pre",
+      "pluginVersion": "9.5.0-pre",
       "targets": [
         {
-          "datasource": {
-            "type": "testdata",
-            "uid": "jrsS70dMz"
-          },
+          "datasource": "gdev-testdata",
           "refId": "A",
           "scenarioId": "random_walk_table",
           "stringInput": ""
@@ -349,6 +346,7 @@
             "mode": "thresholds"
           },
           "custom": {
+            "align": "auto",
             "cellOptions": {
               "type": "auto"
             },
@@ -409,15 +407,13 @@
           "show": false
         },
         "showHeader": true,
+        "showRowNums": false,
         "sortBy": []
       },
-      "pluginVersion": "9.4.0-pre",
+      "pluginVersion": "9.5.0-pre",
       "targets": [
         {
-          "datasource": {
-            "type": "testdata",
-            "uid": "jrsS70dMz"
-          },
+          "datasource": "gdev-testdata",
           "refId": "A",
           "scenarioId": "random_walk_table",
           "stringInput": ""
@@ -485,8 +481,13 @@
               {
                 "id": "custom.cellOptions",
                 "value": {
-                  "color": "rgba(83, 241, 15, 1)",
                   "type": "area-chart"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "continuous-GrYlRd"
                 }
               }
             ]
@@ -510,15 +511,13 @@
           ],
           "show": false
         },
-        "showHeader": true
+        "showHeader": true,
+        "showRowNums": false
       },
-      "pluginVersion": "9.4.0-pre",
+      "pluginVersion": "9.5.0-pre",
       "targets": [
         {
-          "datasource": {
-            "type": "testdata",
-            "uid": "jrsS70dMz"
-          },
+          "datasource": "gdev-testdata",
           "labels": "cluster=eu,service=checkout",
           "min": 0.1,
           "refId": "A",
@@ -583,12 +582,18 @@
               {
                 "id": "custom.cellOptions",
                 "value": {
-                  "color": "rgba(63, 245, 27, 1)",
+                  "drawStyle": "bars",
                   "fillOpacity": 40,
                   "gradientMode": "opacity",
                   "lineWidth": 1,
                   "showPoints": "auto",
                   "type": "area-chart"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "continuous-GrYlRd"
                 }
               }
             ]
@@ -602,10 +607,16 @@
               {
                 "id": "custom.cellOptions",
                 "value": {
-                  "color": "rgba(242, 184, 15, 1)",
                   "fillOpacity": 40,
-                  "gradientMode": "opacity",
+                  "gradientMode": "hue",
                   "type": "area-chart"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "orange",
+                  "mode": "fixed"
                 }
               }
             ]
@@ -619,6 +630,7 @@
         "y": 17
       },
       "id": 15,
+      "maxDataPoints": 100,
       "options": {
         "cellHeight": "md",
         "footer": {
@@ -629,15 +641,13 @@
           ],
           "show": false
         },
-        "showHeader": true
+        "showHeader": true,
+        "showRowNums": false
       },
-      "pluginVersion": "9.4.0-pre",
+      "pluginVersion": "9.5.0-pre",
       "targets": [
         {
-          "datasource": {
-            "type": "testdata",
-            "uid": "jrsS70dMz"
-          },
+          "datasource": "gdev-testdata",
           "labels": "cluster=eu,service=checkout",
           "min": 0.1,
           "refId": "A",
@@ -645,10 +655,7 @@
           "seriesCount": 3
         },
         {
-          "datasource": {
-            "type": "testdata",
-            "uid": "jrsS70dMz"
-          },
+          "datasource": "gdev-testdata",
           "hide": false,
           "labels": "cluster=eu,service=checkout",
           "min": 0.1,
@@ -699,10 +706,7 @@
       "id": 9,
       "targets": [
         {
-          "datasource": {
-            "type": "testdata",
-            "uid": "jrsS70dMz"
-          },
+          "datasource": "gdev-testdata",
           "refId": "A"
         }
       ],
@@ -796,16 +800,14 @@
           ],
           "show": false
         },
-        "showHeader": true
+        "showHeader": true,
+        "showRowNums": false
       },
-      "pluginVersion": "9.4.0-pre",
+      "pluginVersion": "9.5.0-pre",
       "targets": [
         {
           "alias": "S1",
-          "datasource": {
-            "type": "testdata",
-            "uid": "jrsS70dMz"
-          },
+          "datasource": "gdev-testdata",
           "labels": "server=A",
           "refId": "A",
           "scenarioId": "random_walk",
@@ -814,10 +816,7 @@
         },
         {
           "alias": "S2",
-          "datasource": {
-            "type": "testdata",
-            "uid": "jrsS70dMz"
-          },
+          "datasource": "gdev-testdata",
           "labels": "server=B",
           "refId": "B",
           "scenarioId": "random_walk",
@@ -826,10 +825,7 @@
         },
         {
           "alias": "S3",
-          "datasource": {
-            "type": "testdata",
-            "uid": "jrsS70dMz"
-          },
+          "datasource": "gdev-testdata",
           "labels": "server=C",
           "refId": "C",
           "scenarioId": "random_walk",
@@ -904,6 +900,7 @@
           "show": false
         },
         "showHeader": false,
+        "showRowNums": false,
         "sortBy": [
           {
             "desc": true,
@@ -911,13 +908,10 @@
           }
         ]
       },
-      "pluginVersion": "9.4.0-pre",
+      "pluginVersion": "9.5.0-pre",
       "targets": [
         {
-          "datasource": {
-            "type": "testdata",
-            "uid": "jrsS70dMz"
-          },
+          "datasource": "gdev-testdata",
           "refId": "A",
           "scenarioId": "random_walk_table",
           "seriesCount": 5,
@@ -999,10 +993,7 @@
       "pluginVersion": "9.4.0-pre",
       "targets": [
         {
-          "datasource": {
-            "type": "testdata",
-            "uid": "jrsS70dMz"
-          },
+          "datasource": "gdev-testdata",
           "refId": "A"
         }
       ],
@@ -1041,6 +1032,6 @@
   "timezone": "",
   "title": "Panel Tests - React Table",
   "uid": "U_bZIMRMk",
-  "version": 15,
+  "version": 33,
   "weekStart": ""
 }
