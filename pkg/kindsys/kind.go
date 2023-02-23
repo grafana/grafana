@@ -16,6 +16,21 @@ const (
 	MaturityMature       Maturity = "mature"
 )
 
+func NewMaturity(str string) Maturity {
+	switch str {
+	case "merged":
+		return MaturityMerged
+	case "experimental":
+		return MaturityExperimental
+	case "stable":
+		return MaturityStable
+	case "mature":
+		return MaturityMature
+	default:
+		return MaturityExperimental
+	}
+}
+
 func maturityIdx(m Maturity) int {
 	// icky to do this globally, this is effectively setting a default
 	if string(m) == "" {
