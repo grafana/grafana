@@ -116,8 +116,8 @@ func (srv *ProvisioningSrv) RouteGetContactPoints(c *contextmodel.ReqContext) re
 }
 
 func (srv *ProvisioningSrv) RoutePostContactPoint(c *contextmodel.ReqContext, cp definitions.EmbeddedContactPoint) response.Response {
-	// TODO: provenance is hardcoded for now, change it later to make it more flexible
-	contactPoint, err := srv.contactPointService.CreateContactPoint(c.Req.Context(), c.OrgID, cp, alerting_models.ProvenanceAPI)
+	provenance := determineProvenance(c)
+	contactPoint, err := srv.contactPointService.CreateContactPoint(c.Req.Context(), c.OrgID, cp, provenance)
 	if errors.Is(err, provisioning.ErrValidation) {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
@@ -129,7 +129,8 @@ func (srv *ProvisioningSrv) RoutePostContactPoint(c *contextmodel.ReqContext, cp
 
 func (srv *ProvisioningSrv) RoutePutContactPoint(c *contextmodel.ReqContext, cp definitions.EmbeddedContactPoint, UID string) response.Response {
 	cp.UID = UID
-	err := srv.contactPointService.UpdateContactPoint(c.Req.Context(), c.OrgID, cp, alerting_models.ProvenanceAPI)
+	provenance := determineProvenance(c)
+	err := srv.contactPointService.UpdateContactPoint(c.Req.Context(), c.OrgID, cp, provenance)
 	if errors.Is(err, provisioning.ErrValidation) {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}

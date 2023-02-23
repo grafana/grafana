@@ -261,7 +261,9 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	if err != nil {
 		return err
 	}
-	if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
+	isFileProvenance := storedProvenance == models.ProvenanceFile
+	isAPItoFileProvenance := storedProvenance == models.ProvenanceAPI && provenance == models.ProvenanceFile
+	if storedProvenance != provenance && (isFileProvenance || isAPItoFileProvenance) {
 		return fmt.Errorf("cannot changed provenance from '%s' to '%s'", storedProvenance, provenance)
 	}
 	// transform to internal model
