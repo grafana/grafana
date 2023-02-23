@@ -44,7 +44,7 @@ In this tutorial, you'll:
 
 ## Data source plugins
 
-A data source in Grafana must extend the `DataSourceApi` interface, which requires you to defines two methods: `query` and `testDatasource`.
+A data source in Grafana must extend the `DataSourceApi` interface, which requires you to define two methods: `query` and `testDatasource`.
 
 ### The `query` method
 
@@ -183,11 +183,12 @@ We want to be able to control the frequency of the sine wave, so let's add anoth
 
 Now that you've defined the query model you wish to support, the next step is to bind the model to a form. The `FormField` is a text field component from `grafana/ui` that lets you register a listener which will be invoked whenever the form field value changes.
 
-1. Add a new form field to the query editor to control the new frequency property.
+1. Define the `frequency` from the `query` object and add a new form field to the query editor to control the new frequency property in the `render` method.
 
    **QueryEditor.tsx**
 
    ```ts
+   const query = defaults(this.props.query, defaultQuery);
    const { queryText, constant, frequency } = query;
    ```
 
@@ -296,7 +297,7 @@ Just like query editor, the form field in the config editor calls the registered
 
 1. In the `query` method, use the `resolution` property to calculate the step size.
 
-   **src/DataSource.ts**
+   **src/datasource.ts**
 
    ```ts
    const step = duration / this.resolution;
@@ -312,7 +313,7 @@ The main advantage of `getBackendSrv` is that it proxies requests through the Gr
 
 1. Import `getBackendSrv`.
 
-   **src/DataSource.ts**
+   **src/datasource.ts**
 
    ```ts
    import { getBackendSrv } from '@grafana/runtime';
