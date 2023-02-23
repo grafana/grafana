@@ -5,6 +5,7 @@ import { useAsync, useLocalStorage } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Card, Checkbox, CollapsableSection, Icon, IconName, Spinner, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { getSectionStorageKey } from 'app/features/search/utils';
 import { useUniqueId } from 'app/plugins/datasource/influxdb/components/useUniqueId';
 
@@ -174,7 +175,10 @@ export const FolderSection = ({
         <>
           {selectionToggle && selection && (
             <div onClick={onToggleFolder}>
-              <Checkbox value={selection(section.kind, section.uid)} aria-label="Select folder" />
+              <Checkbox
+                value={selection(section.kind, section.uid)}
+                aria-label={t('search.folder-view.select-folder', 'Select folder')}
+              />
             </div>
           )}
 
@@ -186,7 +190,8 @@ export const FolderSection = ({
             <span id={labelId}>{section.title}</span>
             {section.url && section.uid !== 'general' && (
               <a href={section.url} className={styles.link}>
-                <span className={styles.separator}>|</span> <Icon name="folder-upload" /> Go to folder
+                <span className={styles.separator}>|</span> <Icon name="folder-upload" />{' '}
+                {t('search.folder-view.go-to-folder', 'Go to folder')}
               </a>
             )}
           </div>
