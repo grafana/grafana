@@ -156,7 +156,7 @@ func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.
 	defer func() {
 		err := res.Body.Close()
 		if err != nil {
-			s.log.Error("failed to close query range response body", "error", err)
+			s.log.Warn("failed to close query range response body", "error", err)
 		}
 	}()
 
@@ -173,7 +173,7 @@ func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *model
 	defer func() {
 		err := res.Body.Close()
 		if err != nil {
-			s.log.Error("failed to close response body", "error", err)
+			s.log.Warn("failed to close response body", "error", err)
 		}
 	}()
 
@@ -190,7 +190,7 @@ func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *mode
 	defer func() {
 		err := res.Body.Close()
 		if err != nil {
-			s.log.Error("failed to close response body", "error", err)
+			s.log.Warn("failed to close response body", "error", err)
 		}
 	}()
 

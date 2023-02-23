@@ -181,7 +181,7 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, logger l
 	defer func() {
 		err := res.Body.Close()
 		if err != nil {
-			logger.Error("failed to close response body", "error", err)
+			logger.Warn("failed to close response body", "error", err)
 		}
 	}()
 
