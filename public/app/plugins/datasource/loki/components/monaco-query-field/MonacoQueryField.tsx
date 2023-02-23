@@ -8,6 +8,10 @@ import { selectors } from '@grafana/e2e-selectors';
 import { languageConfiguration, monarchlanguage } from '@grafana/monaco-logql';
 import { useTheme2, ReactMonacoEditor, Monaco, monacoTypes, MonacoEditor } from '@grafana/ui';
 
+import { isValidQuery } from '../../queryUtils';
+import { makeStatsRequest } from '../../querybuilder/components/LokiQueryBuilderOptions';
+import { LokiQuery } from '../../types';
+
 import { Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';
 import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider';
@@ -138,6 +142,28 @@ const MonacoQueryField = ({ history, onBlur, onRunQuery, initialValue, datasourc
     editor.onDidChangeModelContent(checkDecorators);
   };
 
+  let typingTimer: NodeJS.Timeout;
+
+  const onType = (queryExpr: string) => {
+    clearTimeout(typingTimer);
+
+    typingTimer = setTimeout(() => {
+      if (isValidQuery(queryExpr) === false) {
+        return;
+      }
+
+      const timerange = datasource.getTimeRange();
+      const previousTimerange = undefined;
+      const query = { expr: queryExpr } as unknown as LokiQuery;
+      const previousQuery = undefined;
+      const setQueryStats = undefined;
+      // setQueryStats needs to change..
+      // it needs to be the setQueryStats from the LokiQueryBuilderOptions.tsx
+
+      makeStatsRequest(datasource, timerange, previousTimerange, query, previousQuery, setQueryStats);
+    }, 1000);
+  };
+
   return (
     <div
       aria-label={selectors.components.QueryField.container}
@@ -181,6 +207,8 @@ const MonacoQueryField = ({ history, onBlur, onRunQuery, initialValue, datasourc
               severity: monaco.MarkerSeverity.Error,
               ...boundary,
             }));
+
+            onType(query);
             monaco.editor.setModelMarkers(model, 'owner', markers);
           });
           const dataProvider = new CompletionDataProvider(langProviderRef.current, historyRef);

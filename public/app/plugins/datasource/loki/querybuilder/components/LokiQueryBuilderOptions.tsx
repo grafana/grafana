@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { usePrevious } from 'react-use';
 
-import { CoreApp, SelectableValue } from '@grafana/data';
+import { CoreApp, SelectableValue, TimeRange } from '@grafana/data';
 import { EditorField, EditorRow } from '@grafana/experimental';
 import { reportInteraction } from '@grafana/runtime';
 import { RadioButtonGroup, Select, AutoSizeInput } from '@grafana/ui';
@@ -26,9 +26,8 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
     const [queryStats, setQueryStats] = useState<QueryStats>();
 
     const timerange = datasource.getTimeRange();
-    const prevTimerange = usePrevious(timerange);
-
-    const prevQuery = usePrevious(query);
+    const previousTimerange = usePrevious(timerange);
+    const previousQuery = usePrevious(query);
 
     const onQueryTypeChange = (value: LokiQueryType) => {
       onChange({ ...query, queryType: value });
@@ -58,25 +57,8 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
     }
 
     useEffect(() => {
-      if (
-        query.expr === prevQuery?.expr &&
-        timerange.raw.from === prevTimerange?.raw.from &&
-        timerange.raw.to === prevTimerange?.raw.to
-      ) {
-        return;
-      }
-
-      if (!query.expr) {
-        setQueryStats(undefined);
-        return;
-      }
-
-      (async () => {
-        const response = await datasource.getQueryStats(query);
-        console.log(response);
-        Object.values(response).every((v) => v === 0) ? setQueryStats(undefined) : setQueryStats(response);
-      })();
-    }, [query, prevQuery, datasource, timerange, prevTimerange]);
+      makeStatsRequest(datasource, timerange, previousTimerange, query, previousQuery, setQueryStats);
+    }, [datasource, timerange, previousTimerange, query, previousQuery, setQueryStats]);
 
     let queryType = query.queryType ?? (query.instant ? LokiQueryType.Instant : LokiQueryType.Range);
     let showMaxLines = isLogsQuery(query.expr);
@@ -157,6 +139,34 @@ function getCollapsedInfo(
   }
 
   return items;
+}
+
+export async function makeStatsRequest(
+  datasource: LokiDatasource,
+  timerange: TimeRange,
+  prevTimerange: TimeRange | undefined,
+  query: LokiQuery,
+  prevQuery: LokiQuery | undefined,
+  setQueryStats: ((stats: QueryStats | undefined) => void) | undefined // REMOVE UNDEFINED ONCE FIXED (see below)
+  // to fix this i need to make setQueryStats available in MonacoQueryField.tsx
+) {
+  if (
+    query.expr === prevQuery?.expr &&
+    timerange.raw.from === prevTimerange?.raw.from &&
+    timerange.raw.to === prevTimerange?.raw.to
+  ) {
+    return;
+  }
+
+  if (!query.expr) {
+    setQueryStats?.(undefined); // REMOVE ? ONCE FIXED
+    return;
+  }
+
+  const response = await datasource.getQueryStats(query);
+  console.log('stats has been requested:', response);
+
+  Object.values(response).every((v) => v === 0) ? setQueryStats?.(undefined) : setQueryStats?.(response); // REMOVE ? ONCE FIXED
 }
 
 LokiQueryBuilderOptions.displayName = 'LokiQueryBuilderOptions';
