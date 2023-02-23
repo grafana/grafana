@@ -46,10 +46,7 @@
       "type": "row"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "jrsS70dMz"
-      },
+      "datasource": "gdev-testdata",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -192,10 +189,7 @@
       "type": "table"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "jrsS70dMz"
-      },
+      "datasource": "gdev-testdata",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -347,10 +341,7 @@
       "type": "table"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "jrsS70dMz"
-      },
+      "datasource": "gdev-testdata",
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -457,10 +448,7 @@
       "type": "table"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "jrsS70dMz"
-      },
+      "datasource": "gdev-testdata",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -558,10 +546,7 @@
       "type": "table"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "jrsS70dMz"
-      },
+      "datasource": "gdev-testdata",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -704,10 +689,7 @@
       "type": "table"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "jrsS70dMz"
-      },
+      "datasource": "gdev-testdata",
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -728,10 +710,7 @@
       "type": "row"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "jrsS70dMz"
-      },
+      "datasource": "gdev-testdata",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -868,10 +847,7 @@
       "type": "table"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "jrsS70dMz"
-      },
+      "datasource": "gdev-testdata",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -972,10 +948,7 @@
       "type": "table"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "jrsS70dMz"
-      },
+      "datasource": "gdev-testdata",
       "fieldConfig": {
         "defaults": {
           "color": {
