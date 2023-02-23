@@ -1,5 +1,4 @@
 import { locationUtil, NavModelItem } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
 import { t } from 'app/core/internationalization';
 import { changeTheme } from 'app/core/services/theme';
 
