@@ -1,0 +1,15 @@
+{
+  "name": "metrics",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "app.js",
+  "scripts": {
+    "start": "nodemon seed"
+  },
+  "dependencies": {
+    "fastify": "^4.13.0",
+    "nodemon": "^2.0.20",
+    "prom-client": "^14.1.1"
+  }
+}

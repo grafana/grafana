@@ -1,0 +1,22 @@
+services:
+  # ops-cortex:
+  #   image: prom/prometheus
+  #   ports:
+  #     - "9092:9090"
+  #   working_dir: /home
+  #   entrypoint: sh entrypoint.sh
+  #   volumes:
+  #     - ./docker/blocks/ops/ops-cortex/openmetrics:/home/openmetrics
+  #     - ./docker/blocks/ops/ops-cortex/entrypoint.sh:/home/entrypoint.sh
+  #     - ./docker/blocks/ops/ops-cortex/prometheus.yml:/etc/prometheus/prometheus.yml
+  #     - ./docker/blocks/ops/ops-cortex/recording.yml:/etc/prometheus/recording.yml
+    
+  metrics:
+    build: ./docker/blocks/ops/metrics
+    working_dir: /app
+    entrypoint: /bin/sh entrypoint.sh
+    ports:
+      - "9092:9090"
+    volumes:
+      - ./docker/blocks/ops/metrics:/app/
+      - /app/node_modules

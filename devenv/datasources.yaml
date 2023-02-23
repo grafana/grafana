@@ -285,3 +285,12 @@ datasources:
     access: proxy
     url: http://localhost:3200
     editable: false
+  
+  - name: gdev-ops-cortex
+    uid: 000000134
+    type: prometheus
+    access: proxy
+    url: http://localhost:9090
+    jsonData:
+      prometheusType: Prometheus
+      prometheusVersion: 2.42.0

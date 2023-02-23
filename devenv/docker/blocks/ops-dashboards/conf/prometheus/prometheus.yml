@@ -1,0 +1,15 @@
+global:
+  scrape_interval:     1s
+  evaluation_interval: 10s
+
+rule_files:
+  - "recording.yml"
+
+scrape_configs:
+  - job_name: 'hosted-grafana/grafana'
+    static_configs:
+      - targets: ['host.docker.internal:3000']
+
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
