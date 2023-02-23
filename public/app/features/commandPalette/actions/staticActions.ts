@@ -75,17 +75,6 @@ export default (navBarTree: NavModelItem[]): CommandPaletteAction[] => {
     },
   ];
 
-  if (!config.featureToggles.topNavCommandPalette) {
-    globalActions.unshift({
-      id: 'go/search',
-      name: t('command-palette.action.search', 'Search'),
-      keywords: 'navigate',
-      perform: () => locationService.push('?search=open'),
-      section: t('command-palette.section.pages', 'Pages'),
-      priority: DEFAULT_PRIORITY,
-    });
-  }
-
   const navBarActions = navTreeToActions(navBarTree);
 
   return [...globalActions, ...navBarActions];

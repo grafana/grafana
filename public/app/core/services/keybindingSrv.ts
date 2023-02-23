@@ -41,10 +41,6 @@ export class KeybindingSrv {
       this.bind('g a', this.openAlerting);
       this.bind('g p', this.goToProfile);
       this.bind('g e', this.goToExplore);
-      if (!config.featureToggles.topNavCommandPalette) {
-        this.bind('s o', this.openSearch);
-        this.bind('f', this.openSearch);
-      }
       this.bind('t a', this.makeAbsoluteTime);
       this.bind('esc', this.exit);
       this.bindGlobalEsc();

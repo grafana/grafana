@@ -135,13 +135,11 @@ const RenderResults = ({ searchResults }: RenderResultsProps) => {
 };
 
 const getSearchStyles = (theme: GrafanaTheme2) => {
-  const topNavCommandPalette = Boolean(config.featureToggles.topNavCommandPalette);
-
   return {
     positioner: css({
       zIndex: theme.zIndex.portal,
       marginTop: '0px',
-      paddingTop: topNavCommandPalette ? '4px !important' : undefined,
+      paddingTop: '4px !important',
       '&::before': {
         content: '""',
         position: 'fixed',
