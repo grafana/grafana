@@ -494,14 +494,14 @@ func TestBuildExternalURL(t *testing.T) {
 		{
 			name: "adds /alertmanager to path when implementation is mimir",
 			ds: &datasources.DataSource{
-				URL: "https://localhost:9000/path/to/am",
+				URL: "https://localhost:9000",
 				JsonData: func() *simplejson.Json {
 					r := simplejson.New()
 					r.Set("implementation", "mimir")
 					return r
 				}(),
 			},
-			expectedURL: "https://localhost:9000/path/to/am/alertmanager",
+			expectedURL: "https://localhost:9000/alertmanager",
 		},
 		{
 			name: "adds /alertmanager to path when implementation is cortex",

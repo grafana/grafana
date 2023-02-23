@@ -248,6 +248,9 @@ func (d *AlertsRouter) buildExternalURL(ds *datasources.DataSource) (string, err
 		impl := ds.JsonData.Get("implementation").MustString("")
 		switch impl {
 		case "mimir", "cortex":
+			if parsed.Path == "" {
+				parsed.Path = "/"
+			}
 			parsed = parsed.JoinPath("/alertmanager")
 		default:
 		}
