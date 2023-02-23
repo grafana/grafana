@@ -27,7 +27,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
   ({ app, query, onChange, onRunQuery, maxLines, datasource, queryStats, setQueryStats }) => {
     const timerange = datasource.getTimeRange();
     const previousTimerange = usePrevious(timerange);
-    const previousQuery = usePrevious(query);
+    const previousQuery = usePrevious(query.expr);
 
     const onQueryTypeChange = (value: LokiQueryType) => {
       onChange({ ...query, queryType: value });
@@ -57,7 +57,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
     }
 
     useEffect(() => {
-      makeStatsRequest(datasource, timerange, previousTimerange, query, previousQuery, setQueryStats);
+      makeStatsRequest(datasource, timerange, previousTimerange, query.expr, previousQuery, setQueryStats);
     }, [datasource, timerange, previousTimerange, query, previousQuery, setQueryStats]);
 
     let queryType = query.queryType ?? (query.instant ? LokiQueryType.Instant : LokiQueryType.Range);
@@ -145,19 +145,19 @@ export async function makeStatsRequest(
   datasource: LokiDatasource,
   timerange: TimeRange,
   prevTimerange: TimeRange | undefined,
-  query: LokiQuery,
-  prevQuery: LokiQuery | undefined,
+  query: string,
+  prevQuery: string | undefined,
   setQueryStats: React.Dispatch<React.SetStateAction<QueryStats | undefined>>
 ) {
   if (
-    query.expr === prevQuery?.expr &&
+    query === prevQuery &&
     timerange.raw.from === prevTimerange?.raw.from &&
     timerange.raw.to === prevTimerange?.raw.to
   ) {
     return;
   }
 
-  if (!query.expr) {
+  if (!query) {
     setQueryStats(undefined);
     return;
   }

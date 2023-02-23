@@ -152,17 +152,16 @@ const MonacoQueryField = ({
 
   let typingTimer: NodeJS.Timeout;
 
-  const onType = (queryExpr: string) => {
+  const onType = (query: string) => {
     clearTimeout(typingTimer);
 
     typingTimer = setTimeout(() => {
-      if (isValidQuery(queryExpr) === false) {
+      if (isValidQuery(query) === false) {
         return;
       }
 
       const timerange = datasource.getTimeRange();
       const previousTimerange = undefined;
-      const query = { expr: queryExpr } as unknown as LokiQuery;
       const previousQuery = undefined;
 
       makeStatsRequest(datasource, timerange, previousTimerange, query, previousQuery, setQueryStats!);
