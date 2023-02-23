@@ -258,6 +258,15 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 		return mathexp.Results{}, QueryError{RefID: dn.refID, Err: response.Error}
 	}
 
+	k, use, err := shouldUseDataplane(response.Frames)
+	if use {
+		if err != nil {
+			logger.Warn("dataplane data detected but falling back to old processing due to error", "error", err)
+		}
+		logger.Debug("handling SSE data source query through dataplane", "query", dn.refID)
+		return handleDataplaneFrames(k, response.Frames)
+	}
+
 	dataSource := dn.datasource.Type
 	if isAllFrameVectors(dataSource, response.Frames) { // Prometheus Specific Handling
 		vals, err = framesToNumbers(response.Frames)
