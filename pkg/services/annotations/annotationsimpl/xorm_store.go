@@ -301,13 +301,15 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query *annotations.ItemQue
 			}
 		}
 
+		var acFilter acFilter
 		if !ac.IsDisabled(r.cfg) {
-			acFilter, acArgs, err := r.getAccessControlFilter(query.SignedInUser)
+			var err error
+			acFilter, err = r.getAccessControlFilter(query.SignedInUser)
 			if err != nil {
 				return err
 			}
-			sql.WriteString(fmt.Sprintf(" AND (%s)", acFilter))
-			params = append(params, acArgs...)
+			sql.WriteString(fmt.Sprintf(" AND (%s)", acFilter.where))
+			params = append(params, acFilter.whereParams...)
 		}
 
 		if query.Limit == 0 {
@@ -316,6 +318,14 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query *annotations.ItemQue
 
 		// order of ORDER BY arguments match the order of a sql index for performance
 		sql.WriteString(" ORDER BY a.org_id, a.epoch_end DESC, a.epoch DESC" + r.db.GetDialect().Limit(query.Limit) + " ) dt on dt.id = annotation.id")
+		if acFilter.recQueries != "" {
+			var sb bytes.Buffer
+			sb.WriteString(acFilter.recQueries)
+			sb.WriteString(sql.String())
+			sql = sb
+			params = append(acFilter.recParams, params...)
+		}
+
 		if err := sess.SQL(sql.String(), params...).Find(&items); err != nil {
 			items = nil
 			return err
@@ -327,13 +337,23 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query *annotations.ItemQue
 	return items, err
 }
 
-func (r *xormRepositoryImpl) getAccessControlFilter(user *user.SignedInUser) (string, []interface{}, error) {
+type acFilter struct {
+	where       string
+	whereParams []interface{}
+	recQueries  string
+	recParams   []interface{}
+}
+
+func (r *xormRepositoryImpl) getAccessControlFilter(user *user.SignedInUser) (acFilter, error) {
+	var recQueries string
+	var recQueriesParams []interface{}
+
 	if user == nil || user.Permissions[user.OrgID] == nil {
-		return "", nil, errors.New("missing permissions")
+		return acFilter{}, errors.New("missing permissions")
 	}
 	scopes, has := user.Permissions[user.OrgID][ac.ActionAnnotationsRead]
 	if !has {
-		return "", nil, errors.New("missing permissions")
+		return acFilter{}, errors.New("missing permissions")
 	}
 	types, hasWildcardScope := ac.ParseScopes(ac.ScopeAnnotationsProvider.GetResourceScopeType(""), scopes)
 	if hasWildcardScope {
@@ -349,13 +369,22 @@ func (r *xormRepositoryImpl) getAccessControlFilter(user *user.SignedInUser) (st
 		}
 		// annotation read permission with scope annotations:type:dashboard allows listing annotations from dashboards which the user can view
 		if t == annotations.Dashboard.String() {
-			_, dashboardFilter, dashboardParams := permissions.NewAccessControlDashboardPermissionFilter(user, dashboards.PERMISSION_VIEW, searchstore.TypeDashboard, r.features).Where()
+			filterRBAC := permissions.NewAccessControlDashboardPermissionFilter(user, dashboards.PERMISSION_VIEW, searchstore.TypeDashboard, r.features)
+			dashboardFilter, dashboardParams := filterRBAC.Where()
+			recQueries, recQueriesParams = filterRBAC.With()
 			filter := fmt.Sprintf("a.dashboard_id IN(SELECT id FROM dashboard WHERE %s)", dashboardFilter)
 			filters = append(filters, filter)
 			params = dashboardParams
 		}
 	}
-	return strings.Join(filters, " OR "), params, nil
+
+	f := acFilter{
+		where:       strings.Join(filters, " OR "),
+		whereParams: params,
+		recQueries:  recQueries,
+		recParams:   recQueriesParams,
+	}
+	return f, nil
 }
 
 func (r *xormRepositoryImpl) Delete(ctx context.Context, params *annotations.DeleteParams) error {

@@ -1,6 +1,7 @@
 package permissions
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 
@@ -266,7 +267,7 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 // With returns:
 // - a with clause for fetching folders with inherited permissions if nested folders are enabled or an empty string
 func (f *accessControlDashboardPermissionFilter) With() (string, []interface{}) {
-	sb := strings.Builder{}
+	var sb bytes.Buffer
 	var params []interface{}
 	if len(f.recQueries) > 0 {
 		sb.WriteString("WITH RECURSIVE ")

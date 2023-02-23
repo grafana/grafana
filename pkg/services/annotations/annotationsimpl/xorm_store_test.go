@@ -10,14 +10,21 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardstore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
@@ -616,6 +623,154 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 			results, err := repo.Get(context.Background(), &annotations.ItemQuery{
 				OrgID:        1,
 				SignedInUser: user,
+			})
+			if tc.expectedError {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Len(t, results, len(tc.expectedAnnotationIds))
+			for _, r := range results {
+				assert.Contains(t, tc.expectedAnnotationIds, r.ID)
+			}
+		})
+	}
+}
+
+func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	orgID := int64(1)
+	usr := &user.SignedInUser{
+		UserID: 1,
+		OrgID:  orgID,
+	}
+
+	var dash1AnnotationID int64
+	var dash2AnnotationID int64
+	setupTest := func(features featuremgmt.FeatureToggles) xormRepositoryImpl {
+		sql := db.InitTestDB(t)
+
+		var maximumTagsLength int64 = 60
+		repo := xormRepositoryImpl{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql, sql.Cfg), maximumTagsLength: maximumTagsLength, features: features}
+
+		// dashboard store commands that should be called.
+		dashStore, err := database.ProvideDashboardStore(sql, sql.Cfg, features, tagimpl.ProvideService(sql, sql.Cfg), quotatest.New(false, nil))
+		require.NoError(t, err)
+
+		origNewGuardian := guardian.New
+		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true, CanSaveValue: true})
+		t.Cleanup(func() {
+			guardian.New = origNewGuardian
+		})
+
+		folderSvc := folderimpl.ProvideService(mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), sql.Cfg, dashStore, folderimpl.ProvideDashboardFolderStore(sql), sql, features)
+
+		// create parent folder
+		parent, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
+			UID:          "parent",
+			OrgID:        orgID,
+			Title:        "parent",
+			SignedInUser: usr,
+		})
+		require.NoError(t, err)
+
+		// create subfolder
+		subfolder, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
+			UID:          "subfolder",
+			ParentUID:    "parent",
+			OrgID:        orgID,
+			Title:        "subfolder",
+			SignedInUser: usr,
+		})
+		require.NoError(t, err)
+
+		testDashboard1 := dashboards.SaveDashboardCommand{
+			UserID:   1,
+			OrgID:    1,
+			IsFolder: false,
+			Dashboard: simplejson.NewFromAny(map[string]interface{}{
+				"title": "Dashboard under parent",
+			}),
+			FolderID:  parent.ID,
+			FolderUID: parent.UID,
+		}
+		dashboard, err := dashStore.SaveDashboard(context.Background(), testDashboard1)
+		require.NoError(t, err)
+
+		testDashboard2 := dashboards.SaveDashboardCommand{
+			UserID: 1,
+			OrgID:  1,
+			Dashboard: simplejson.NewFromAny(map[string]interface{}{
+				"title": "Dashboard under subfolder",
+			}),
+			FolderID:  subfolder.ID,
+			FolderUID: subfolder.UID,
+		}
+		dashboard2, err := dashStore.SaveDashboard(context.Background(), testDashboard2)
+		require.NoError(t, err)
+
+		dash1Annotation := &annotations.Item{
+			OrgID:       1,
+			DashboardID: dashboard.ID,
+			Epoch:       10,
+		}
+		err = repo.Add(context.Background(), dash1Annotation)
+		require.NoError(t, err)
+		dash1AnnotationID = dash1Annotation.ID
+
+		dash2Annotation := &annotations.Item{
+			OrgID:       1,
+			DashboardID: dashboard2.ID,
+			Epoch:       10,
+			Tags:        []string{"foo:bar"},
+		}
+		err = repo.Add(context.Background(), dash2Annotation)
+		require.NoError(t, err)
+		dash2AnnotationID = dash2Annotation.ID
+
+		role := setupRBACRole(t, repo, usr)
+		setupRBACPermission(t, repo, role, usr)
+
+		return repo
+	}
+
+	testCases := []struct {
+		desc                  string
+		features              featuremgmt.FeatureToggles
+		permissions           map[string][]string
+		expectedAnnotationIds []int64
+		expectedError         bool
+	}{
+		{
+			desc:     "Should find only annotations from dashboards under folders that user can read",
+			features: featuremgmt.WithFeatures(),
+			permissions: map[string][]string{
+				accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsTypeDashboard},
+				dashboards.ActionDashboardsRead:     {fmt.Sprintf("folders:uid:parent")},
+			},
+			expectedAnnotationIds: []int64{dash1AnnotationID},
+		},
+		{
+			desc:     "Should find only annotations from dashboards under inherited folders if nested folder are enabled",
+			features: featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
+			permissions: map[string][]string{
+				accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsTypeDashboard},
+				dashboards.ActionDashboardsRead:     {fmt.Sprintf("folders:uid:parent")},
+			},
+			expectedAnnotationIds: []int64{dash1AnnotationID, dash2AnnotationID},
+		},
+	}
+
+	for _, tc := range testCases {
+		repo := setupTest(tc.features)
+		t.Run(tc.desc, func(t *testing.T) {
+			usr.Permissions = map[int64]map[string][]string{1: tc.permissions}
+			results, err := repo.Get(context.Background(), &annotations.ItemQuery{
+				OrgID:        1,
+				SignedInUser: usr,
 			})
 			if tc.expectedError {
 				require.Error(t, err)

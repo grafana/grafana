@@ -53,7 +53,10 @@ func (sb *SQLBuilder) WriteDashboardPermissionFilter(user *user.SignedInUser, pe
 		recQry string
 	)
 	if !ac.IsDisabled(sb.cfg) {
-		recQry, sql, params = permissions.NewAccessControlDashboardPermissionFilter(user, permission, "", sb.features).Where()
+		filterRBAC := permissions.NewAccessControlDashboardPermissionFilter(user, permission, "", sb.features)
+		sql, params = filterRBAC.Where()
+		// TODO: fixme
+		recQry, _ = filterRBAC.With()
 	} else {
 		sql, params = permissions.DashboardPermissionFilter{
 			OrgRole:         user.OrgRole,
