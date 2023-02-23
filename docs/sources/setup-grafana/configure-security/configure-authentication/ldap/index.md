@@ -82,7 +82,7 @@ start_tls = false
 # full list of supported ciphers and TLS versions: https://go.dev/src/crypto/tls/cipher_suites.go
 tls_ciphers = []
 # Minimum TLS version allowed. Accepted values are TLS1.1, TLS1.2, TLS1.3
-min_tls_version = "TLS1.2"
+min_tls_version = ""
 # set to true if you want to skip SSL cert validation
 ssl_skip_verify = false
 # set to the path to your root CA certificate or leave unset to use system defaults
