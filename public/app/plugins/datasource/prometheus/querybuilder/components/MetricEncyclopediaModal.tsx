@@ -82,6 +82,8 @@ export const DEFAULT_RESULTS_PER_PAGE = 10;
 export const MetricEncyclopediaModal = (props: Props) => {
   const { datasource, isOpen, onClose, onChange, query } = props;
 
+  const [variables, setVariables] = useState<Array<SelectableValue<string>>>([]);
+
   // metric list
   const [metrics, setMetrics] = useState<MetricsData>([]);
   const [openTabs, setOpenTabs] = useState<string[]>([]);
@@ -132,7 +134,16 @@ export const MetricEncyclopediaModal = (props: Props) => {
         }),
       }))
     );
-  }, [datasource.languageProvider, query]);
+
+    setVariables(
+      datasource.getVariables().map((v) => {
+        return {
+          value: v,
+          label: v,
+        };
+      })
+    );
+  }, [query, datasource]);
 
   useEffect(() => {
     updateMetricsMetadata();
@@ -244,7 +255,9 @@ export const MetricEncyclopediaModal = (props: Props) => {
       onDismiss={onClose}
       aria-label="Metric Encyclopedia"
     >
-      <div className={styles.spacing}>Search metrics by type, function, labels and alphabetically.</div>
+      <div className={styles.spacing}>
+        Search metrics by type, function, labels, alphabetically or select a variable.
+      </div>
       <div className="gf-form">
         {/* *** IMPLEMENT FUZZY SEARCH */}
         <InlineLabel width={10} className="query-keyword">
@@ -338,6 +351,23 @@ export const MetricEncyclopediaModal = (props: Props) => {
             }
 
             setResultsPerPage(value);
+          }}
+        />
+      </div>
+      <div className="gf-form">
+        <InlineLabel width={10} className="query-keyword">
+          Variables
+        </InlineLabel>
+        <Select
+          // data-testid={testIds.selectType}
+          inputId="my-select"
+          options={variables}
+          value={''}
+          placeholder="Select variable"
+          onChange={(v) => {
+            const value: string = v.value ?? '';
+            onChange({ ...query, metric: value });
+            onClose();
           }}
         />
       </div>

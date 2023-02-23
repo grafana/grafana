@@ -194,6 +194,15 @@ describe('MetricEncyclopediaModal', () => {
     const metricStartingWithSomethingElse = screen.queryByText('a');
     expect(metricStartingWithSomethingElse).toBeNull();
   });
+
+  // it('allows a user to select a template variable', async () => {
+  //   // default resultsPerPage is 10
+  //   setup(defaultQuery, listOfMetrics);
+  //   // how do you test the MultiSelect?
+  //   // this does not work
+  //   // https://developers.grafana.com/ui/latest/index.html?path=/docs/forms-select--multi-select-basic
+
+  // });
 });
 
 const defaultQuery: PromVisualQuery = {
