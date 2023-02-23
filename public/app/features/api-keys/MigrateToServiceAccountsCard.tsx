@@ -35,7 +35,7 @@ export const MigrateToServiceAccountsCard = ({ onMigrate, disabled }: Props): JS
       </div>
       <div className={styles.actionRow}>
         <Button className={styles.actionButton} onClick={() => setIsModalOpen(true)}>
-          Migrate to service accounts now
+          Migrate all service accounts
         </Button>
         <ConfirmModal
           title={'Migrate API keys to service accounts'}

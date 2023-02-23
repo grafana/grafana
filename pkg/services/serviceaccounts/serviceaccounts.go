@@ -6,11 +6,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apikey"
 )
 
-const (
-	// GloballyHideAPIKeysTabOrgID is the org id used to indicate that the API keys tab should be hidden globally.
-	GloballyHideAPIKeysTabOrgID = -1
-)
-
 /*
 ServiceAccountService is the service that manages service accounts.
 

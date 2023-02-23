@@ -87,9 +87,6 @@ func ProvideServiceAccountsService(
 		}
 	}
 
-	// hide apikeys tab if there are no apikeys present in db or hideapikeys already set
-	hideApiKeysTabIfNoAPIKeysPresent(log, store, serviceAccountsStore)
-
 	return s, nil
 }
 
@@ -291,56 +288,4 @@ func validAPIKeyID(apiKeyID int64) error {
 		return serviceaccounts.ErrServiceAccountInvalidAPIKeyID
 	}
 	return nil
-}
-
-// hideApiKeysTabIfNoAPIKeysPresent is used to remove the apikeys tab from the admin tabs
-// if there are no apikeys, this makes it so that we only issue service account tokens instead
-func hideApiKeysTabIfNoAPIKeysPresent(l *log.ConcreteLogger, store *sqlstore.SQLStore, serviceAccountsStore *database.ServiceAccountsStoreImpl) {
-	var err error
-	ctx := context.Background()
-	sess := store.GetSqlxSession()
-	orgs := make([]*org.OrgDTO, 0)
-	err = sess.Select(ctx, &orgs, "SELECT id, name FROM org")
-	if err != nil {
-		l.Error("Unable to query for org for hiding api keys", "error", err)
-		return
-	}
-	if len(orgs) != 1 {
-		l.Info("do not want to hide apikeys for more than 1 org")
-		return
-	}
-
-	orgID := orgs[0].ID
-
-	type result struct {
-		Count int64
-	}
-	r := result{}
-	// counting both service account tokens and api keys
-	err = sess.Get(ctx, &r, `SELECT COUNT(*) AS count FROM api_key WHERE org_id = ?`, orgID)
-	if err != nil {
-		l.Error(fmt.Sprintf("could not query for apikeys in org: %e", err))
-		return
-	}
-	if r.Count != 0 {
-		l.Debug("do not want to hide apikeys tab for org with apikeys")
-		return
-	}
-	// r.Count == 0
-	// we have no apikeys or service account tokens
-
-	// setting hide the apikeys tab for the org
-	err = serviceAccountsStore.HideApiKeysTab(ctx, orgID)
-	if err != nil {
-		l.Error(fmt.Sprintf("could not hide apikeys tab: %e", err))
-		return
-	}
-	// setting a global variable to hide the apikeys tab for newly created orgs
-	// used with check global hide apikeys tab
-	err = serviceAccountsStore.HideApiKeysTab(ctx, serviceaccounts.GloballyHideAPIKeysTabOrgID)
-	if err != nil {
-		l.Error(fmt.Sprintf("could not hide apikeys tab: %e", err))
-		return
-	}
-	l.Info("Hid the API keys tab")
 }

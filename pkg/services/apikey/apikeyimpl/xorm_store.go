@@ -72,7 +72,7 @@ func (ss *sqlStore) CountAPIKeys(ctx context.Context, orgID int64) (int64, error
 
 	r := result{}
 	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		rawSQL := "SELECT COUNT(*) AS count FROM api_key WHERE org_id=? and service_account_id IS NULL"
+		rawSQL := fmt.Sprintf("SELECT COUNT(*) AS count FROM api_key WHERE org_id=%d and service_account_id IS NULL", orgID)
 		if _, err := sess.SQL(rawSQL).Get(&r); err != nil {
 			return err
 		}
