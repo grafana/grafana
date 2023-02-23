@@ -4,12 +4,13 @@ import { InlineFieldRow, InlineField } from '@grafana/ui';
 
 interface Props {
   label: string;
+  tooltip?: string;
   children: React.ReactElement;
 }
-const SearchField: FC<Props> = ({ label, children }) => {
+const SearchField: FC<Props> = ({ label, tooltip, children }) => {
   return (
     <InlineFieldRow>
-      <InlineField label={label} labelWidth={14} grow>
+      <InlineField label={label} labelWidth={16} grow tooltip={tooltip}>
         {children}
       </InlineField>
     </InlineFieldRow>

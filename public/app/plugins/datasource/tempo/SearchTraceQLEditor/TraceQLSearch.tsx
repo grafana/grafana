@@ -3,13 +3,15 @@ import React, { useState, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { FetchError } from '@grafana/runtime';
-import { Alert, HorizontalGroup, useStyles2 } from '@grafana/ui';
+import { Alert, HorizontalGroup, useStyles2, VerticalGroup } from '@grafana/ui';
 
 import { createErrorNotification } from '../../../../core/copy/appNotification';
 import { notifyApp } from '../../../../core/reducers/appNotification';
 import { dispatch } from '../../../../store/store';
 import { SearchFilter } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
+import { TempoQueryBuilderOptions } from '../traceql/TempoQueryBuilderOptions';
+import { TraceQLEditor } from '../traceql/TraceQLEditor';
 import { CompletionProvider } from '../traceql/autocomplete';
 import { TempoQuery } from '../types';
 
@@ -38,8 +40,8 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
   const updateFilter = (s: SearchFilter) => {
     const copy = { ...query };
     copy.filters ||= [];
-    const indexOfFilter = copy.filters.findIndex((f) => f.id === s.id) || -1;
-    if (indexOfFilter > 0) {
+    const indexOfFilter = copy.filters.findIndex((f) => f.id === s.id);
+    if (indexOfFilter >= 0) {
       // update in place if the filter already exists, for consistency and to avoid UI bugs
       copy.filters = replaceAt(copy.filters, indexOfFilter, s);
     } else {
@@ -87,70 +89,87 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
 
   return (
     <>
-      <div className={styles.container}>
-        <InlineSearchField label={'Service Name'}>
-          <SearchField
-            filter={
-              findFilter('service-name') || { id: 'service-name', type: 'static', tag: '.service.name', operator: '=' }
-            }
-            datasource={datasource}
-            setError={setError}
-            updateFilter={updateFilter}
-            tags={[]}
-          />
-        </InlineSearchField>
-        <InlineSearchField label={'Span Name'}>
-          <SearchField
-            filter={findFilter('tag-name') || { id: 'tag-name', type: 'static', tag: 'name', operator: '=' }}
-            datasource={datasource}
-            setError={setError}
-            updateFilter={updateFilter}
-            tags={[]}
-          />
-        </InlineSearchField>
-        <InlineSearchField label={'Duration'}>
-          <HorizontalGroup>
-            <DurationInput
+      <VerticalGroup spacing={'sm'}>
+        <div>
+          <InlineSearchField label={'Service Name'}>
+            <SearchField
               filter={
-                findFilter('min-duration') || {
-                  id: 'min-duration',
+                findFilter('service-name') || {
+                  id: 'service-name',
                   type: 'static',
-                  tag: 'duration',
-                  operator: '>',
-                  valueType: 'duration',
+                  tag: '.service.name',
+                  operator: '=',
                 }
               }
-              operators={['>', '>=']}
+              datasource={datasource}
+              setError={setError}
               updateFilter={updateFilter}
+              tags={[]}
             />
-            <DurationInput
-              filter={
-                findFilter('max-duration') || {
-                  id: 'max-duration',
-                  type: 'static',
-                  tag: 'duration',
-                  operator: '<',
-                  valueType: 'duration',
+          </InlineSearchField>
+          <InlineSearchField label={'Span Name'}>
+            <SearchField
+              filter={findFilter('tag-name') || { id: 'tag-name', type: 'static', tag: 'name', operator: '=' }}
+              datasource={datasource}
+              setError={setError}
+              updateFilter={updateFilter}
+              tags={[]}
+            />
+          </InlineSearchField>
+          <InlineSearchField label={'Duration'} tooltip="The span duration, i.e.	end - start time of the span">
+            <HorizontalGroup>
+              <DurationInput
+                filter={
+                  findFilter('min-duration') || {
+                    id: 'min-duration',
+                    type: 'static',
+                    tag: 'duration',
+                    operator: '>',
+                    valueType: 'duration',
+                  }
                 }
-              }
-              operators={['<', '<=']}
+                operators={['>', '>=']}
+                updateFilter={updateFilter}
+              />
+              <DurationInput
+                filter={
+                  findFilter('max-duration') || {
+                    id: 'max-duration',
+                    type: 'static',
+                    tag: 'duration',
+                    operator: '<',
+                    valueType: 'duration',
+                  }
+                }
+                operators={['<', '<=']}
+                updateFilter={updateFilter}
+              />
+            </HorizontalGroup>
+          </InlineSearchField>
+          <InlineSearchField label={'Tags'}>
+            <TagsInput
+              filters={query.filters}
+              datasource={datasource}
+              setError={setError}
               updateFilter={updateFilter}
+              tags={[...CompletionProvider.intrinsics, ...tags]}
+              isTagsLoading={isTagsLoading}
             />
-          </HorizontalGroup>
-        </InlineSearchField>
-        <InlineSearchField label={'Tags'}>
-          <TagsInput
-            filters={query.filters}
+          </InlineSearchField>
+        </div>
+        <VerticalGroup spacing={'xs'}>
+          <small>Generated Query</small>
+          <TraceQLEditor
+            placeholder=""
+            value={traceQlQuery}
+            onChange={() => {}}
+            onRunQuery={() => {}}
             datasource={datasource}
-            setError={setError}
-            updateFilter={updateFilter}
-            tags={[...CompletionProvider.intrinsics, ...tags]}
-            isTagsLoading={isTagsLoading}
+            readOnly={true}
           />
-        </InlineSearchField>
-
-        <pre>{traceQlQuery}</pre>
-      </div>
+        </VerticalGroup>
+        <TempoQueryBuilderOptions onChange={onChange} query={query} />
+      </VerticalGroup>
       {error ? (
         <Alert title="Unable to connect to Tempo search" severity="info" className={styles.alert}>
           Please ensure that Tempo is configured with search enabled. If you would like to hide this tab, you can
@@ -164,8 +183,8 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
 export default TraceQLSearch;
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    //max-width: 500px;
+  generatedQueryLabel: css`
+    width: auto;
   `,
   alert: css`
     max-width: 75ch;
