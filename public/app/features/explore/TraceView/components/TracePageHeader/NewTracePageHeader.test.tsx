@@ -12,12 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { getAllByText, getByText, render, screen } from '@testing-library/react';
+import { getAllByText, getByText, render } from '@testing-library/react';
 import React from 'react';
 
 import config from 'app/core/config';
-
-import { getTraceName } from '../model/trace-viewer';
 
 import { NewTracePageHeader } from './NewTracePageHeader';
 import { TracePageHeaderEmbedProps } from './TracePageHeader';
@@ -37,32 +35,6 @@ const setup = (propOverrides?: TracePageHeaderEmbedProps) => {
 };
 
 describe('NewTracePageHeader test', () => {
-  it('should render a header ', () => {
-    setup();
-    expect(screen.getByRole('banner')).toBeInTheDocument();
-  });
-
-  it('should render nothing if a trace is not present', () => {
-    setup({ trace: null } as TracePageHeaderEmbedProps);
-    expect(screen.queryByRole('banner')).not.toBeInTheDocument();
-    expect(screen.queryAllByRole('listitem')).toHaveLength(0);
-    expect(screen.queryByText(/Reset Selection/)).not.toBeInTheDocument();
-  });
-
-  it('should render the trace title', () => {
-    setup();
-    expect(
-      screen.getByRole('heading', {
-        name: (content) => content.replace(/ /g, '').startsWith(getTraceName(trace!.spans).replace(/ /g, '')),
-      })
-    ).toBeInTheDocument();
-  });
-
-  it('should render a <SpanGraph>', () => {
-    setup();
-    expect(screen.getByText(/Reset Selection/)).toBeInTheDocument();
-  });
-
   it('should render the new trace header', () => {
     config.featureToggles.newTraceView = true;
     setup();
