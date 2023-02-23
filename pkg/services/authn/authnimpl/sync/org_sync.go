@@ -31,21 +31,21 @@ func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *a
 
 	namespace, userID := id.NamespacedID()
 	if namespace != authn.NamespaceUser || userID <= 0 {
-		s.log.Warn("failed to sync org role, invalid namespace for identity", "id", id.ID)
+		s.log.Warn("Failed to sync org role, invalid namespace for identity", "id", id.ID)
 		return nil
 	}
 
 	s.log.Debug("syncing organization roles", "id", userID, "extOrgRoles", id.OrgRoles)
 	// don't sync org roles if none is specified
 	if len(id.OrgRoles) == 0 {
-		s.log.Debug("not syncing organization roles since external user doesn't have any")
+		s.log.Debug("Not syncing organization roles since external user doesn't have any")
 		return nil
 	}
 
 	orgsQuery := &org.GetUserOrgListQuery{UserID: userID}
 	result, err := s.orgService.GetUserOrgList(ctx, orgsQuery)
 	if err != nil {
-		s.log.Error("failed to get user's organizations", "id", id.ID, "error", err)
+		s.log.Error("Failed to get user's organizations", "id", id.ID, "error", err)
 		return nil
 	}
 
@@ -63,7 +63,7 @@ func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *a
 			// update role
 			cmd := &org.UpdateOrgUserCommand{OrgID: orga.OrgID, UserID: userID, Role: extRole}
 			if err := s.orgService.UpdateOrgUser(ctx, cmd); err != nil {
-				s.log.Error("failed to update active org user", "id", id.ID, "error", err)
+				s.log.Error("Failed to update active org user", "id", id.ID, "error", err)
 				return nil
 			}
 		}
@@ -81,7 +81,7 @@ func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *a
 		cmd := &org.AddOrgUserCommand{UserID: userID, Role: orgRole, OrgID: orgId}
 		err := s.orgService.AddOrgUser(ctx, cmd)
 		if err != nil && !errors.Is(err, org.ErrOrgNotFound) {
-			s.log.Error("failed to update active org for user", "id", id.ID, "error", err)
+			s.log.Error("Failed to update active org for user", "id", id.ID, "error", err)
 			return nil
 		}
 	}
@@ -92,7 +92,7 @@ func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *a
 			"userId", userID, "orgId", orgID)
 		cmd := &org.RemoveOrgUserCommand{OrgID: orgID, UserID: userID}
 		if err := s.orgService.RemoveOrgUser(ctx, cmd); err != nil {
-			s.log.Error("failed to remove user from org", "id", id.ID, "orgId", orgID, "error", err)
+			s.log.Error("Failed to remove user from org", "id", id.ID, "orgId", orgID, "error", err)
 
 			if errors.Is(err, org.ErrLastOrgAdmin) {
 				continue
@@ -101,7 +101,7 @@ func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *a
 		}
 
 		if err := s.accessControl.DeleteUserPermissions(ctx, orgID, cmd.UserID); err != nil {
-			s.log.Error("failed to delete permissions for user", "id", id.ID, "orgId", orgID, "error", err)
+			s.log.Error("Failed to delete permissions for user", "id", id.ID, "orgId", orgID, "error", err)
 			return nil
 		}
 	}
