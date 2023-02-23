@@ -72,6 +72,7 @@ export interface Props {
   height: number;
   onInstanceStateChange: (value: any) => void;
   timezone?: string;
+  hideMenu?: boolean;
 }
 
 export interface State {
@@ -673,7 +674,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
           statusMessageOnClick={this.onOpenErrorInspect}
           description={!!panel.description ? this.onShowPanelDescription : undefined}
           titleItems={titleItems}
-          menu={menu}
+          menu={this.props.hideMenu ? undefined : menu}
           dragClass={dragClass}
           dragClassCancel="grid-drag-cancel"
           padding={padding}
