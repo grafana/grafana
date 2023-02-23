@@ -40,6 +40,8 @@ The new navigation is gradually rolling out to all users on Grafana Cloud. If yo
 
 > **Note:** The Grafana documentation has not yet been updated to reflect changes to the navigation.
 
+> **Note:** Plugin developers should refer to [the migration guide]({{< relref "../developers/plugins/migration-guide.md#supporting-new-navigation-layout" >}}) to upgrade their plugins to work seamlessly with the new navigation layout.
+
 {{< figure src="/media/docs/grafana/navigation-9-4.png" max-width="750px" caption="Grafana new navigation" >}}
 
 ## Dashboards and visualizations
