@@ -209,12 +209,19 @@ type readyToRunItem struct {
 }
 
 func (sch *schedule) updateRulesMetrics(alertRules []*ngmodels.AlertRule) {
-	orgs := make(map[int64]int64)
+	orgs := make(map[int64]int64, len(alertRules))
+	orgsPaused := make(map[int64]int64, len(alertRules))
 	for _, rule := range alertRules {
 		orgs[rule.OrgID]++
+		if rule.IsPaused {
+			orgsPaused[rule.OrgID]++
+		}
 	}
-	for org, numRules := range orgs {
-		sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(org)).Set(float64(numRules))
+
+	for orgID, numRules := range orgs {
+		numRulesPaused := orgsPaused[orgID]
+		sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(orgID), metrics.AlertRuleActiveLabelValue).Set(float64(numRules - numRulesPaused))
+		sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(orgID), metrics.AlertRulePausedLabelValue).Set(float64(numRulesPaused))
 	}
 
 	// While these are the rules that we iterate over, at the moment there's no 100% guarantee that they'll be
