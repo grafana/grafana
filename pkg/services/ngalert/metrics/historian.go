@@ -7,17 +7,17 @@ import (
 )
 
 type Historian struct {
-	WriteDuration *prometheus.HistogramVec
+	WriteDuration *instrument.HistogramCollector
 }
 
 func NewHistorianMetrics(r prometheus.Registerer) *Historian {
 	return &Historian{
-		WriteDuration: promauto.With(r).NewHistogramVec(prometheus.HistogramOpts{
+		WriteDuration: instrument.NewHistogramCollector(promauto.With(r).NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: Namespace,
 			Subsystem: Subsystem,
 			Name:      "state_history_request_duration_seconds",
 			Help:      "Histogram of request durations to the state history store.",
 			Buckets:   instrument.DefBuckets,
-		}, instrument.HistogramCollectorBuckets),
+		}, instrument.HistogramCollectorBuckets)),
 	}
 }

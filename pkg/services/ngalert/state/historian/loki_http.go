@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/weaveworks/common/http/client"
-	"github.com/weaveworks/common/instrument"
 )
 
 const defaultClientTimeout = 30 * time.Second
@@ -91,8 +90,7 @@ type Selector struct {
 }
 
 func newLokiClient(cfg LokiConfig, req client.Requester, metrics *metrics.Historian, logger log.Logger) *httpLokiClient {
-	coll := instrument.NewHistogramCollector(metrics.WriteDuration)
-	tc := client.NewTimedClient(req, coll)
+	tc := client.NewTimedClient(req, metrics.WriteDuration)
 	return &httpLokiClient{
 		client: tc,
 		cfg:    cfg,
