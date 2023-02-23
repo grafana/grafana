@@ -139,6 +139,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 					SyncTeams:       true,
 					AllowSignUp:     true,
 					FetchSyncedUser: true,
+					SyncOrgRoles:    true,
 					LookUpParams:    login.UserLookupParams{Email: strPtr("some@email.com")},
 				},
 			},

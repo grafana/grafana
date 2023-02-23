@@ -8,7 +8,6 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"go.opentelemetry.io/otel/attribute"
 
-	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
@@ -16,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/anonymous"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -54,7 +54,7 @@ func ProvideService(
 	apikeyService apikey.Service, userService user.Service,
 	jwtService auth.JWTVerifierService,
 	usageStats usagestats.Service,
-	kvstore kvstore.KVStore,
+	anonSessionService anonymous.Service,
 	userProtectionService login.UserProtectionService,
 	loginAttempts loginattempt.Service, quotaService quota.Service,
 	authInfoService login.AuthInfoService, renderService rendering.Service,
@@ -83,7 +83,7 @@ func ProvideService(
 	}
 
 	if s.cfg.AnonymousEnabled {
-		s.RegisterClient(clients.ProvideAnonymous(cfg, orgService, kvstore))
+		s.RegisterClient(clients.ProvideAnonymous(cfg, orgService, anonSessionService))
 	}
 
 	var proxyClients []authn.ProxyClient
@@ -144,11 +144,12 @@ func ProvideService(
 	userSyncService := sync.ProvideUserSync(userService, userProtectionService, authInfoService, quotaService)
 	orgUserSyncService := sync.ProvideOrgSync(userService, orgService, accessControlService)
 	s.RegisterPostAuthHook(userSyncService.SyncUserHook, 10)
+	s.RegisterPostAuthHook(userSyncService.EnableDisabledUserHook, 20)
 	s.RegisterPostAuthHook(orgUserSyncService.SyncOrgRolesHook, 30)
 	s.RegisterPostAuthHook(userSyncService.SyncLastSeenHook, 40)
 
 	if features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) {
-		s.RegisterPostAuthHook(sync.ProvideOauthTokenSync(oauthTokenService, sessionService).SyncOauthTokenHook, 60)
+		s.RegisterPostAuthHook(sync.ProvideOAuthTokenSync(oauthTokenService, sessionService).SyncOauthTokenHook, 60)
 	}
 
 	s.RegisterPostAuthHook(userSyncService.FetchSyncedUserHook, 100)

@@ -63,5 +63,9 @@ func (cmd Command) upgradeAllCommand(c utils.CommandLine) error {
 		}
 	}
 
+	if len(pluginsToUpgrade) > 0 {
+		logRestartNotice()
+	}
+
 	return nil
 }
