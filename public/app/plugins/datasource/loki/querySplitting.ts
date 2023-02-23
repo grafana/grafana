@@ -174,8 +174,9 @@ function getNextRequestPointers(requests: LokiGroupedRequest, requestIndex: numb
 }
 
 export function runPartitionedQueries(datasource: LokiDatasource, request: DataQueryRequest<LokiQuery>) {
-  const logQueries = request.targets.filter((query) => isLogsQuery(query.expr));
-  const metricQueries = request.targets.filter((query) => !logQueries.includes(query));
+  const queries = request.targets.filter((query) => !query.hide);
+  const logQueries = queries.filter((query) => isLogsQuery(query.expr));
+  const metricQueries = queries.filter((query) => !logQueries.includes(query));
 
   const requests = [];
   if (logQueries.length) {
