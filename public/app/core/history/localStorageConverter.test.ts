@@ -24,6 +24,7 @@ jest.mock('@grafana/runtime', () => ({
 const validRichHistory: RichHistoryQuery = {
   comment: 'comment',
   createdAt: 1,
+  lastExecutedAt: 1,
   datasourceName: 'name-of-dev-test',
   datasourceUid: 'dev-test',
   id: '1',

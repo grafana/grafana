@@ -44,6 +44,7 @@ const mockFilters: RichHistorySearchFilters = {
 const mockItem: RichHistoryQuery<MockQuery> = {
   id: '2',
   createdAt: 2,
+  lastExecutedAt: 2,
   starred: true,
   datasourceUid: 'dev-test',
   datasourceName: 'name-of-dev-test',
@@ -54,6 +55,7 @@ const mockItem: RichHistoryQuery<MockQuery> = {
 const mockItem2: RichHistoryQuery<MockQuery> = {
   id: '3',
   createdAt: 3,
+  lastExecutedAt: 2,
   starred: true,
   datasourceUid: 'dev-test-2',
   datasourceName: 'name-of-dev-test-2',

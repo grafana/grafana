@@ -3,10 +3,10 @@ import React, { useCallback, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { useAsync } from 'react-use';
 
-import { GrafanaTheme2, DataSourceApi } from '@grafana/data';
+import { GrafanaTheme2, DataSourceApi, dateTimeFormat } from '@grafana/data';
 import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
-import { TextArea, Button, IconButton, useStyles2, LoadingPlaceholder } from '@grafana/ui';
+import { TextArea, Button, IconButton, useStyles2, LoadingPlaceholder, Icon } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import appEvents from 'app/core/app_events';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
@@ -82,6 +82,17 @@ const getStyles = (theme: GrafanaTheme2) => {
         max-width: ${theme.typography.fontSize}px;
         margin-right: ${theme.spacing(1)};
       }
+    `,
+    cardRowLeft: css`
+      display: flex;
+      flex-direction: row;
+      gap: ${theme.spacing(1)};
+    `,
+    time: css`
+      font-size: ${theme.typography.bodySmall.fontSize};
+      color: ${theme.colors.text.secondary};
+      display: flex;
+      gap: ${theme.spacing(0.5)};
     `,
     queryActionButtons: css`
       max-width: ${rightColumnContentWidth};
@@ -322,7 +333,23 @@ export function RichHistoryCard(props: Props) {
   return (
     <div className={styles.queryCard}>
       <div className={styles.cardRow}>
-        <DatasourceInfo dsApi={value?.dsInstance} size="sm" />
+        <div className={styles.cardRowLeft}>
+          <DatasourceInfo dsApi={value?.dsInstance} size="sm" />
+
+          {query.lastExecutedAt && (
+            <time
+              className={styles.time}
+              dateTime={dateTimeFormat(query.lastExecutedAt, {
+                format: 'YYYY-MM-DD HH:mm:ss',
+              })}
+            >
+              <Icon name="clock-nine" />
+              {dateTimeFormat(query.lastExecutedAt, {
+                format: 'HH:mm:ss',
+              })}
+            </time>
+          )}
+        </div>
 
         {queryActionButtons}
       </div>

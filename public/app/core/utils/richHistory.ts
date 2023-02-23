@@ -54,8 +54,6 @@ export async function addToRichHistory(
         datasourceUid: datasourceUid,
         datasourceName: datasourceName ?? '',
         queries: newQueriesToSave,
-        starred,
-        comment: comment ?? '',
       });
       warning = result.warning;
     } catch (error) {
@@ -63,8 +61,6 @@ export async function addToRichHistory(
         if (error.name === RichHistoryServiceError.StorageFull) {
           richHistoryStorageFull = true;
           showQuotaExceededError && dispatch(notifyApp(createErrorNotification(error.message)));
-        } else if (error.name !== RichHistoryServiceError.DuplicatedEntry) {
-          dispatch(notifyApp(createErrorNotification('Rich History update failed', error.message)));
         }
       }
       // Saving failed. Do not add new entry.
@@ -229,7 +225,7 @@ export function createQueryHeading(query: RichHistoryQuery, sortOrder: SortOrder
   if (sortOrder === SortOrder.DatasourceAZ || sortOrder === SortOrder.DatasourceZA) {
     heading = query.datasourceName;
   } else {
-    heading = createDateStringFromTs(query.createdAt);
+    heading = createDateStringFromTs(query.lastExecutedAt);
   }
   return heading;
 }

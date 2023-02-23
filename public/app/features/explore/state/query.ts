@@ -12,7 +12,6 @@ import {
   hasLogsVolumeSupport,
   hasQueryExportSupport,
   hasQueryImportSupport,
-  HistoryItem,
   LoadingState,
   PanelEvents,
   QueryFixAction,
@@ -36,8 +35,8 @@ import { CorrelationData } from 'app/features/correlations/useCorrelations';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { store } from 'app/store/store';
-import { ExploreItemState, ExplorePanelData, ThunkDispatch, ThunkResult } from 'app/types';
-import { ExploreId, ExploreState, QueryOptions, SupplementaryQueries } from 'app/types/explore';
+import { ExploreItemState, ExplorePanelData, ThunkResult } from 'app/types';
+import { ExploreId, QueryOptions, SupplementaryQueries } from 'app/types/explore';
 
 import { notifyApp } from '../../../core/actions';
 import { createErrorNotification } from '../../../core/copy/appNotification';
@@ -394,25 +393,27 @@ export function modifyQueries(
   };
 }
 
-async function handleHistory(
-  dispatch: ThunkDispatch,
-  state: ExploreState,
-  history: Array<HistoryItem<DataQuery>>,
-  datasource: DataSourceApi,
-  queries: DataQuery[],
-  exploreId: ExploreId
-) {
-  const datasourceId = datasource.meta.id;
-  const nextHistory = updateHistory(history, datasourceId, queries);
-  dispatch(historyUpdatedAction({ exploreId, history: nextHistory }));
+function saveHistory(exploreId: ExploreId, queries: DataQuery[]): ThunkResult<Promise<void>> {
+  return async (dispatch, getState) => {
+    const exploreItemState = getState().explore[exploreId];
+    if (!exploreItemState || !exploreItemState.datasourceInstance) {
+      return;
+    }
+    const datasource = exploreItemState.datasourceInstance;
+    const datasourceId = exploreItemState.datasourceInstance?.meta.id;
 
-  dispatch(addHistoryItem(datasource.uid, datasource.name, queries));
+    // History is used to provide completion items for query editors
+    const nextHistory = updateHistory(exploreItemState.history, datasourceId, queries);
+    dispatch(historyUpdatedAction({ exploreId, history: nextHistory }));
 
-  // Because filtering happens in the backend we cannot add a new entry without checking if it matches currently
-  // used filters. Instead, we refresh the query history list.
-  // TODO: run only if Query History list is opened (#47252)
-  await dispatch(loadRichHistory(ExploreId.left));
-  await dispatch(loadRichHistory(ExploreId.right));
+    await dispatch(addHistoryItem(datasource.uid, datasource.name, queries));
+
+    // Because filtering happens in the backend we cannot add a new entry without checking if it matches currently
+    // used filters. Instead, we refresh the query history list.
+    // TODO: run only if Query History list is opened (#47252)
+    await dispatch(loadRichHistory(ExploreId.left));
+    await dispatch(loadRichHistory(ExploreId.right));
+  };
 }
 
 /**
@@ -456,7 +457,7 @@ export const runQueries = (
     }));
 
     if (datasourceInstance != null) {
-      handleHistory(dispatch, getState().explore, exploreItemState.history, datasourceInstance, queries, exploreId);
+      dispatch(saveHistory(exploreId, queries));
     }
 
     dispatch(stateSave({ replace: options?.replaceUrl }));

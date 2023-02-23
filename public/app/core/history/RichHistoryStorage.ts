@@ -7,7 +7,6 @@ import { RichHistoryQuery } from '../../types';
  */
 export enum RichHistoryServiceError {
   StorageFull = 'StorageFull',
-  DuplicatedEntry = 'DuplicatedEntry',
 }
 
 /**
@@ -30,6 +29,11 @@ export type RichHistoryStorageWarningDetails = {
 
 export type RichHistoryResults = { richHistory: RichHistoryQuery[]; total?: number };
 
+export type RichHistoryBaseEntry = Omit<
+  RichHistoryQuery,
+  'id' | 'createdAt' | 'lastExecutedAt' | 'comment' | 'starred'
+>;
+
 /**
  * @internal
  * @alpha
@@ -38,10 +42,10 @@ export default interface RichHistoryStorage {
   getRichHistory(filters: RichHistorySearchFilters): Promise<RichHistoryResults>;
 
   /**
-   * Creates new RichHistoryQuery, returns object with unique id and created date
+   * Adds a new entry to RichHistory. If the history contains an entry with the same queries, lastExecutedAt is updated instead.
    */
   addToRichHistory(
-    newRichHistoryQuery: Omit<RichHistoryQuery, 'id' | 'createdAt'>
+    newRichHistoryEntry: RichHistoryBaseEntry
   ): Promise<{ warning?: RichHistoryStorageWarningDetails; richHistoryQuery: RichHistoryQuery }>;
 
   deleteAll(): Promise<void>;

@@ -14,6 +14,7 @@ const storedHistory: Array<RichHistoryQuery<MockQuery>> = [
   {
     id: '1',
     createdAt: 1,
+    lastExecutedAt: 1,
     comment: '',
     datasourceUid: 'datasource uid',
     datasourceName: 'datasource history name',
@@ -26,6 +27,7 @@ const storedHistory: Array<RichHistoryQuery<MockQuery>> = [
   {
     id: '2',
     createdAt: 2,
+    lastExecutedAt: 2,
     comment: 'comment 2',
     datasourceUid: 'datasource uid 2',
     datasourceName: 'datasource history name 2',

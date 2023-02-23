@@ -3,7 +3,6 @@ import { Observable, SubscriptionLike, Unsubscribable } from 'rxjs';
 import {
   AbsoluteTimeRange,
   DataFrame,
-  DataQuery,
   DataQueryRequest,
   DataSourceApi,
   HistoryItem,
@@ -16,6 +15,7 @@ import {
   ExplorePanelsState,
   SupplementaryQueryType,
 } from '@grafana/data';
+import { DataQuery } from '@grafana/schema';
 import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistoryTypes';
 
 import { CorrelationData } from '../features/correlations/useCorrelations';
@@ -235,10 +235,18 @@ export interface QueryTransaction {
   scanning?: boolean;
 }
 
+/**
+ * Normalized Rich History model.
+ */
 export type RichHistoryQuery<T extends DataQuery = DataQuery> = {
   id: string;
   createdAt: number;
+  /**
+   * Last known time this entry was executed.
+   */
+  lastExecutedAt: number;
   datasourceUid: string;
+  // TODO: maybe this is not needed?
   datasourceName: string;
   starred: boolean;
   comment: string;

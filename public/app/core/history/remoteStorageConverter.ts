@@ -10,6 +10,7 @@ export const fromDTO = (dto: RichHistoryRemoteStorageDTO): RichHistoryQuery => {
   return {
     id: dto.uid,
     createdAt: dto.createdAt * 1000,
+    lastExecutedAt: dto.lastExecutedAt * 1000,
     datasourceName: datasource?.name || '', // will be show on the list as coming from a removed data source
     datasourceUid: dto.datasourceUid,
     starred: dto.starred,
@@ -22,6 +23,7 @@ export const toDTO = (richHistory: RichHistoryQuery): RichHistoryRemoteStorageDT
   return {
     uid: richHistory.id,
     createdAt: Math.floor(richHistory.createdAt / 1000),
+    lastExecutedAt: Math.floor(richHistory.lastExecutedAt / 1000),
     datasourceUid: richHistory.datasourceUid,
     starred: richHistory.starred,
     comment: richHistory.comment,

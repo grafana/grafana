@@ -29,4 +29,12 @@ func addQueryHistoryMigrations(mg *Migrator) {
 	mg.AddMigration("alter table query_history alter column created_by type to bigint", NewRawSQLMigration("").
 		Mysql("ALTER TABLE query_history MODIFY created_by BIGINT;").
 		Postgres("ALTER TABLE query_history ALTER COLUMN created_by TYPE BIGINT;"))
+
+	// First we add the new column, defaulting to null
+	mg.AddMigration("add last_executed_at column", NewAddColumnMigration(queryHistoryV1, &Column{
+		Name: "last_executed_at", Type: DB_Int, Nullable: true,
+	}))
+
+	// Then we update all the entries to have the same value as created_at
+	mg.AddMigration("add default data", NewRawSQLMigration("UPDATE query_history set last_executed_at = created_at WHERE last_executed_at IS NULL;"))
 }

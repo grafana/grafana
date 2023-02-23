@@ -59,6 +59,7 @@ describe('RichHistoryRemoteStorage', () => {
     const richHistoryQuery: RichHistoryQuery = {
       id: '123',
       createdAt: 200 * 1000,
+      lastExecutedAt: 200 * 1000,
       datasourceUid: 'ds1',
       datasourceName: 'name-of-ds1',
       starred: true,
@@ -69,6 +70,7 @@ describe('RichHistoryRemoteStorage', () => {
     const dto = {
       uid: richHistoryQuery.id,
       createdAt: richHistoryQuery.createdAt / 1000,
+      lastExecutedAt: richHistoryQuery.createdAt / 1000,
       datasourceUid: richHistoryQuery.datasourceUid,
       starred: richHistoryQuery.starred,
       comment: richHistoryQuery.comment,

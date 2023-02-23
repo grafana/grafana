@@ -1,12 +1,17 @@
 import { find, isEqual, omit } from 'lodash';
 
-import { DataQuery, SelectableValue } from '@grafana/data';
+import { SelectableValue } from '@grafana/data';
+import { DataQuery } from '@grafana/schema';
 import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistory';
 
 import { RichHistoryQuery } from '../../types';
 import store from '../store';
 
-import RichHistoryStorage, { RichHistoryServiceError, RichHistoryStorageWarning } from './RichHistoryStorage';
+import RichHistoryStorage, {
+  RichHistoryBaseEntry,
+  RichHistoryServiceError,
+  RichHistoryStorageWarning,
+} from './RichHistoryStorage';
 import { fromDTO, toDTO } from './localStorageConverter';
 import {
   createRetentionPeriodBoundary,
@@ -17,9 +22,20 @@ import {
 export const RICH_HISTORY_KEY = 'grafana.explore.richHistory';
 export const MAX_HISTORY_ITEMS = 10000;
 
+const removeUniqueProperties = (query: DataQuery) => omit(query, ['key', 'refId']);
+
+/**
+ * DTO for storing rich history in local storage.
+ */
 export type RichHistoryLocalStorageDTO = {
   // works as an unique identifier
   ts: number;
+  /**
+   * Last time the query was executed.
+   * It may be undefined for entries created before we started keeping track of
+   * execution time.
+   */
+  lastExecutedAt?: number;
   datasourceName: string;
   starred: boolean;
   comment: string;
@@ -44,39 +60,63 @@ export default class RichHistoryLocalStorage implements RichHistoryStorage {
     return { richHistory, total: richHistory.length };
   }
 
-  async addToRichHistory(newRichHistoryQuery: Omit<RichHistoryQuery, 'id' | 'createdAt'>) {
+  async addToRichHistory(newEntry: RichHistoryBaseEntry) {
     const ts = Date.now();
-    const richHistoryQuery = {
-      id: ts.toString(),
-      createdAt: ts,
-      ...newRichHistoryQuery,
-    };
+    const history = getRichHistoryDTOs();
 
-    const newRichHistoryQueryDTO = toDTO(richHistoryQuery);
-    const currentRichHistoryDTOs = cleanUp(getRichHistoryDTOs());
+    // we need to cleanup the new entry from properties that we don't want to take into account when comparing against entries in local storage.
+    const baseQuery = omit({ ...newEntry, queries: newEntry.queries.map(removeUniqueProperties) }, [
+      'lastExecutedAt',
+      'starred',
+      'ts',
+      'comment',
+      'datasourceUid',
+    ]);
 
-    /* Compare queries of a new query and last saved queries. If they are the same, (except selected properties,
-     * which can be different) don't save it in rich history.
-     */
-    const newQueriesToCompare = newRichHistoryQueryDTO.queries.map((q) => omit(q, ['key', 'refId']));
-    const lastQueriesToCompare =
-      currentRichHistoryDTOs.length > 0 &&
-      currentRichHistoryDTOs[0].queries.map((q) => {
-        return omit(q, ['key', 'refId']);
-      });
+    let richHistoryQuery: RichHistoryQuery;
 
-    if (isEqual(newQueriesToCompare, lastQueriesToCompare)) {
-      const error = new Error('Entry already exists');
-      error.name = RichHistoryServiceError.DuplicatedEntry;
-      throw error;
+    const existingMatchingEntryIndex = history.findIndex((historyItem) => {
+      return isEqual(
+        omit({ ...historyItem, queries: historyItem.queries.map(removeUniqueProperties) }, [
+          'lastExecutedAt',
+          'starred',
+          'ts',
+          'comment',
+        ]),
+        baseQuery
+      );
+    });
+
+    if (existingMatchingEntryIndex >= 0) {
+      // an entry exists, remove it from the list.
+      const current = history.splice(existingMatchingEntryIndex, 1)[0];
+
+      richHistoryQuery = {
+        ...current,
+        id: ts.toString(),
+        createdAt: current.ts,
+        lastExecutedAt: ts,
+        datasourceUid: newEntry.datasourceUid,
+      };
+    } else {
+      // no entry is found
+      richHistoryQuery = {
+        ...newEntry,
+        id: ts.toString(),
+        createdAt: ts,
+        lastExecutedAt: ts,
+        starred: false,
+        comment: '',
+      };
     }
 
-    const { queriesToKeep, limitExceeded } = checkLimits(currentRichHistoryDTOs);
+    // finally add the new entry to the top of the history
+    history.unshift(toDTO(richHistoryQuery));
 
-    const updatedHistory: RichHistoryLocalStorageDTO[] = [newRichHistoryQueryDTO, ...queriesToKeep];
+    const limitExceeded = pruneExceeding(history);
 
     try {
-      store.setObject(RICH_HISTORY_KEY, updatedHistory);
+      store.setObject(RICH_HISTORY_KEY, cleanUp(history));
     } catch (error) {
       if (error instanceof Error && error.name === 'QuotaExceededError') {
         throwError(RichHistoryServiceError.StorageFull, `Saving rich history failed: ${error.message}`);
@@ -166,21 +206,19 @@ function cleanUp(richHistory: RichHistoryLocalStorageDTO[]): RichHistoryLocalSto
   const retentionPeriod: number = store.getObject(RICH_HISTORY_SETTING_KEYS.retentionPeriod, 7);
   const retentionPeriodLastTs = createRetentionPeriodBoundary(retentionPeriod, false);
 
-  /* Keep only queries, that are within the selected retention period or that are starred.
-   * If no queries, initialize with empty array
-   */
-  return richHistory.filter((q) => q.ts > retentionPeriodLastTs || q.starred === true) || [];
+  // Keep only queries that are within the selected retention period or that are starred.
+  return richHistory.filter((q) => q.starred || (q.lastExecutedAt || q.ts) > retentionPeriodLastTs);
 }
 
 /**
- * Ensures the entry can be added. Throws an error if current limit has been hit.
- * Returns queries that should be saved back giving space for one extra query.
+ * Ensures the entry can be added.
+ * Removes non-starred queries from the history until its length is less than or equal to `MAX_HISTORY_ITEMS`.
+ *  @returns `true` if the limit was exceeded and some queries were removed.
+ *
+ * TODO: Remote storage also removes starred queries if only removing non-starred queries is not enough.
+ * Should we do the same here?
  */
-function checkLimits(queriesToKeep: RichHistoryLocalStorageDTO[]): {
-  queriesToKeep: RichHistoryLocalStorageDTO[];
-  limitExceeded: boolean;
-} {
-  // remove oldest non-starred items to give space for the recent query
+function pruneExceeding(queriesToKeep: RichHistoryLocalStorageDTO[]): boolean {
   let limitExceeded = false;
   let current = queriesToKeep.length - 1;
   while (current >= 0 && queriesToKeep.length >= MAX_HISTORY_ITEMS) {
@@ -191,7 +229,7 @@ function checkLimits(queriesToKeep: RichHistoryLocalStorageDTO[]): {
     current--;
   }
 
-  return { queriesToKeep, limitExceeded };
+  return limitExceeded;
 }
 
 function getRichHistoryDTOs(): RichHistoryLocalStorageDTO[] {

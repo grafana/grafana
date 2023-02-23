@@ -81,7 +81,7 @@ export const addHistoryItem = (
   datasourceUid: string,
   datasourceName: string,
   queries: DataQuery[]
-): ThunkResult<void> => {
+): ThunkResult<Promise<void>> => {
   return async (dispatch, getState) => {
     const { richHistoryStorageFull, limitExceeded } = await addToRichHistory(
       datasourceUid,
@@ -134,7 +134,7 @@ export const deleteRichHistory = (): ThunkResult<void> => {
   };
 };
 
-export const loadRichHistory = (exploreId: ExploreId): ThunkResult<void> => {
+export const loadRichHistory = (exploreId: ExploreId): ThunkResult<Promise<void>> => {
   return async (dispatch, getState) => {
     const filters = getState().explore![exploreId]?.richHistorySearchFilters;
     if (filters) {

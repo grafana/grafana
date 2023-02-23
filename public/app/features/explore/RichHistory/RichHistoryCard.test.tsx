@@ -104,6 +104,7 @@ const setup = (propOverrides?: Partial<Props<MockQuery>>) => {
     query: {
       id: '1',
       createdAt: 1,
+      lastExecutedAt: 1,
       datasourceUid: 'loki',
       datasourceName: 'Loki',
       starred: false,
@@ -131,6 +132,7 @@ const setup = (propOverrides?: Partial<Props<MockQuery>>) => {
 const starredQueryWithComment: RichHistoryQuery<MockQuery> = {
   id: '1',
   createdAt: 1,
+  lastExecutedAt: 1,
   datasourceUid: 'Test datasource uid',
   datasourceName: 'Test datasource',
   starred: true,
@@ -168,6 +170,7 @@ describe('RichHistoryCard', () => {
       query: {
         id: '2',
         createdAt: 1,
+        lastExecutedAt: 1,
         datasourceUid: 'non-existent DS',
         datasourceName: 'Test datasource',
         starred: false,
@@ -189,6 +192,7 @@ describe('RichHistoryCard', () => {
         query: {
           id: '2',
           createdAt: 1,
+          lastExecutedAt: 1,
           datasourceUid: 'non-existent DS',
           datasourceName: 'Test datasource',
           starred: false,
@@ -210,6 +214,7 @@ describe('RichHistoryCard', () => {
         query: {
           id: '2',
           createdAt: 1,
+          lastExecutedAt: 1,
           datasourceUid: 'loki',
           datasourceName: 'Test datasource',
           starred: false,
@@ -231,6 +236,7 @@ describe('RichHistoryCard', () => {
         query: {
           id: '2',
           createdAt: 1,
+          lastExecutedAt: 1,
           datasourceUid: 'prometheus',
           datasourceName: 'Test datasource',
           starred: false,
@@ -252,6 +258,7 @@ describe('RichHistoryCard', () => {
         query: {
           id: '2',
           createdAt: 1,
+          lastExecutedAt: 1,
           datasourceUid: 'mixed',
           datasourceName: 'Mixed',
           starred: false,
@@ -286,6 +293,7 @@ describe('RichHistoryCard', () => {
         query: {
           id: '2',
           createdAt: 1,
+          lastExecutedAt: 1,
           datasourceUid: 'mixed',
           datasourceName: 'Mixed',
           starred: false,
@@ -311,6 +319,7 @@ describe('RichHistoryCard', () => {
         query: {
           id: '2',
           createdAt: 1,
+          lastExecutedAt: 1,
           datasourceUid: 'nonexistent-ds',
           datasourceName: 'nonexistent-ds',
           starred: false,
@@ -336,6 +345,7 @@ describe('RichHistoryCard', () => {
         query: {
           id: '2',
           createdAt: 1,
+          lastExecutedAt: 1,
           datasourceUid: 'loki',
           datasourceName: 'Loki',
           starred: false,
@@ -364,6 +374,7 @@ describe('RichHistoryCard', () => {
         query: {
           id: '2',
           createdAt: 1,
+          lastExecutedAt: 1,
           datasourceUid: 'mixed',
           datasourceName: 'Mixed',
           starred: false,

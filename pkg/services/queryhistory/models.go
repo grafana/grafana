@@ -2,8 +2,6 @@ package queryhistory
 
 import (
 	"errors"
-
-	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 var (
@@ -14,14 +12,15 @@ var (
 
 // QueryHistory is the model for query history definitions
 type QueryHistory struct {
-	ID            int64  `xorm:"pk autoincr 'id'"`
-	UID           string `xorm:"uid"`
-	DatasourceUID string `xorm:"datasource_uid"`
-	OrgID         int64  `xorm:"org_id"`
-	CreatedBy     int64
-	CreatedAt     int64
-	Comment       string
-	Queries       *simplejson.Json
+	ID             int64  `xorm:"pk autoincr 'id'"`
+	UID            string `xorm:"uid"`
+	DatasourceUID  string `xorm:"datasource_uid"`
+	OrgID          int64  `xorm:"org_id"`
+	CreatedBy      int64
+	CreatedAt      int64
+	LastExecutedAt int64
+	Comment        string
+	Queries        []map[string]interface{}
 }
 
 // QueryHistory is the model for query history star definitions
@@ -43,13 +42,14 @@ type SearchInQueryHistoryQuery struct {
 }
 
 type QueryHistoryDTO struct {
-	UID           string           `json:"uid" xorm:"uid"`
-	DatasourceUID string           `json:"datasourceUid" xorm:"datasource_uid"`
-	CreatedBy     int64            `json:"createdBy"`
-	CreatedAt     int64            `json:"createdAt"`
-	Comment       string           `json:"comment"`
-	Queries       *simplejson.Json `json:"queries"`
-	Starred       bool             `json:"starred"`
+	UID            string                   `json:"uid" xorm:"uid"`
+	DatasourceUID  string                   `json:"datasourceUid" xorm:"datasource_uid"`
+	CreatedBy      int64                    `json:"createdBy"`
+	CreatedAt      int64                    `json:"createdAt"`
+	LastExecutedAt int64                    `json:"lastExecutedAt"`
+	Comment        string                   `json:"comment"`
+	Queries        []map[string]interface{} `json:"queries"`
+	Starred        bool                     `json:"starred"`
 }
 
 // QueryHistoryResponse is a response struct for QueryHistoryDTO
@@ -75,11 +75,12 @@ type QueryHistoryDeleteQueryResponse struct {
 }
 
 type QueryToMigrate struct {
-	DatasourceUID string           `json:"datasourceUid"`
-	Queries       *simplejson.Json `json:"queries"`
-	CreatedAt     int64            `json:"createdAt"`
-	Comment       string           `json:"comment"`
-	Starred       bool             `json:"starred"`
+	DatasourceUID  string                   `json:"datasourceUid"`
+	Queries        []map[string]interface{} `json:"queries"`
+	CreatedAt      int64                    `json:"createdAt"`
+	LastExecutedAt int64                    `json:"lastExecutedAt"`
+	Comment        string                   `json:"comment"`
+	Starred        bool                     `json:"starred"`
 }
 
 type QueryHistoryMigrationResponse struct {
@@ -96,7 +97,7 @@ type CreateQueryInQueryHistoryCommand struct {
 	DatasourceUID string `json:"datasourceUid"`
 	// The JSON model of queries.
 	// required: true
-	Queries *simplejson.Json `json:"queries"`
+	Queries []map[string]interface{} `json:"queries"`
 }
 
 // PatchQueryCommentInQueryHistoryCommand is the command for updating comment for query in query history

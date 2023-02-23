@@ -9,6 +9,7 @@ export const fromDTO = (dto: RichHistoryLocalStorageDTO): RichHistoryQuery => {
   return {
     id: dto.ts.toString(),
     createdAt: dto.ts,
+    lastExecutedAt: dto.lastExecutedAt || dto.ts,
     datasourceName: dto.datasourceName,
     datasourceUid: datasource?.uid || '', // will be show on the list as coming from a removed data source
     starred: dto.starred,
@@ -26,6 +27,7 @@ export const toDTO = (richHistoryQuery: RichHistoryQuery): RichHistoryLocalStora
 
   return {
     ts: richHistoryQuery.createdAt,
+    lastExecutedAt: richHistoryQuery.lastExecutedAt,
     datasourceName: richHistoryQuery.datasourceName,
     starred: richHistoryQuery.starred,
     comment: richHistoryQuery.comment,

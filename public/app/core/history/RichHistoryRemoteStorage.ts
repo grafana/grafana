@@ -1,18 +1,25 @@
 import { lastValueFrom } from 'rxjs';
 
-import { DataQuery } from '@grafana/data';
 import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import { RichHistoryQuery } from 'app/types/explore';
 
 import { PreferencesService } from '../services/PreferencesService';
 import { RichHistorySearchFilters, RichHistorySettings, SortOrder } from '../utils/richHistoryTypes';
 
-import RichHistoryStorage, { RichHistoryStorageWarningDetails } from './RichHistoryStorage';
+import RichHistoryStorage, { RichHistoryBaseEntry, RichHistoryStorageWarningDetails } from './RichHistoryStorage';
 import { fromDTO, toDTO } from './remoteStorageConverter';
 
+/**
+ * DTO for storing rich history in Grafana DB.
+ */
 export type RichHistoryRemoteStorageDTO = {
   uid: string;
   createdAt: number;
+  /**
+   * Last time the query was executed.
+   */
+  lastExecutedAt: number;
   datasourceUid: string;
   starred: boolean;
   comment: string;
@@ -50,11 +57,11 @@ export default class RichHistoryRemoteStorage implements RichHistoryStorage {
   }
 
   async addToRichHistory(
-    newRichHistoryQuery: Omit<RichHistoryQuery, 'id' | 'createdAt'>
+    newEntry: RichHistoryBaseEntry
   ): Promise<{ warning?: RichHistoryStorageWarningDetails; richHistoryQuery: RichHistoryQuery }> {
-    const { result } = await getBackendSrv().post(`/api/query-history`, {
-      dataSourceUid: newRichHistoryQuery.datasourceUid,
-      queries: newRichHistoryQuery.queries,
+    const { result } = await getBackendSrv().post<{ result: RichHistoryRemoteStorageDTO }>(`/api/query-history`, {
+      dataSourceUid: newEntry.datasourceUid,
+      queries: newEntry.queries,
     });
     return {
       richHistoryQuery: fromDTO(result),

@@ -49,6 +49,7 @@ const storedHistory: Array<RichHistoryQuery<MockQuery>> = [
   {
     id: '1',
     createdAt: 1,
+    lastExecutedAt: 1,
     comment: '',
     datasourceUid: 'datasource uid',
     datasourceName: 'datasource history name',
@@ -80,7 +81,16 @@ describe('richHistory', () => {
     jest.setSystemTime(new Date(1970, 0, 1));
 
     richHistoryStorageMock.addToRichHistory = jest.fn((r) => {
-      return Promise.resolve({ richHistoryQuery: { ...r, id: 'GENERATED ID', createdAt: Date.now() } });
+      return Promise.resolve({
+        richHistoryQuery: {
+          ...r,
+          id: 'GENERATED ID',
+          createdAt: Date.now(),
+          lastExecutedAt: Date.now(),
+          starred: false,
+          comment: '',
+        },
+      });
     });
     richHistoryStorageMock.deleteAll = jest.fn().mockResolvedValue({});
     richHistoryStorageMock.deleteRichHistory = jest.fn().mockResolvedValue({});
@@ -136,7 +146,14 @@ describe('richHistory', () => {
 
       richHistoryStorageMock.addToRichHistory = jest.fn((query) => {
         return Promise.resolve({
-          richHistoryQuery: { ...query, id: 'GENERATED ID', createdAt: Date.now() },
+          richHistoryQuery: {
+            ...query,
+            id: 'GENERATED ID',
+            createdAt: Date.now(),
+            lastExecutedAt: Date.now(),
+            starred: false,
+            comment: '',
+          },
           warning: {
             type: RichHistoryStorageWarning.LimitExceeded,
             message: 'Limit exceeded',

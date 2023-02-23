@@ -23,6 +23,7 @@ jest.mock('@grafana/runtime', () => ({
 const validRichHistory: RichHistoryQuery = {
   comment: 'comment',
   createdAt: 1000,
+  lastExecutedAt: 1000,
   datasourceName: 'name-of-dev-test',
   datasourceUid: 'dev-test',
   id: 'ID',
@@ -37,6 +38,7 @@ const validDTO: RichHistoryRemoteStorageDTO = {
   starred: true,
   uid: 'ID',
   createdAt: 1,
+  lastExecutedAt: 1,
 };
 
 describe('RemoteStorage converter', () => {

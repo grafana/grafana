@@ -71,11 +71,11 @@ export const sortQueries = (array: RichHistoryQuery[], sortOrder: SortOrder) => 
 
   if (sortOrder === SortOrder.Ascending) {
     sortFunc = (a: RichHistoryQuery, b: RichHistoryQuery) =>
-      a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : 0;
+      a.lastExecutedAt < b.lastExecutedAt ? -1 : a.lastExecutedAt > b.lastExecutedAt ? 1 : 0;
   }
   if (sortOrder === SortOrder.Descending) {
     sortFunc = (a: RichHistoryQuery, b: RichHistoryQuery) =>
-      a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0;
+      a.lastExecutedAt < b.lastExecutedAt ? 1 : a.lastExecutedAt > b.lastExecutedAt ? -1 : 0;
   }
 
   if (sortOrder === SortOrder.DatasourceZA) {
