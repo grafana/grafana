@@ -159,6 +159,23 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, identity *authn.Identit
 	return nil
 }
 
+func (s *UserSync) EnableDisabledUserHook(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
+	if !identity.ClientParams.EnableDisabledUsers {
+		return nil
+	}
+
+	if !identity.IsDisabled {
+		return nil
+	}
+
+	namespace, id := identity.NamespacedID()
+	if namespace != authn.NamespaceUser {
+		return nil
+	}
+
+	return s.userService.Disable(ctx, &user.DisableUserCommand{UserID: id, IsDisabled: false})
+}
+
 func (s *UserSync) upsertAuthConnection(ctx context.Context, userID int64, identity *authn.Identity, createConnection bool) error {
 	if identity.AuthModule == "" {
 		return nil
@@ -214,17 +231,6 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 		s.log.Debug("Syncing user info", "id", usr.ID, "update", updateCmd)
 		if err := s.userService.Update(ctx, updateCmd); err != nil {
 			return err
-		}
-	}
-
-	// FIXME(kalleep): Should this be its own hook?
-	if usr.IsDisabled && id.ClientParams.EnableDisabledUsers {
-		usr.IsDisabled = false
-		if errDisableUser := s.userService.Disable(
-			ctx,
-			&user.DisableUserCommand{UserID: usr.ID, IsDisabled: false},
-		); errDisableUser != nil {
-			return errDisableUser
 		}
 	}
 
