@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardstore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -657,7 +656,7 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 		repo := xormRepositoryImpl{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql, sql.Cfg), maximumTagsLength: maximumTagsLength, features: features}
 
 		// dashboard store commands that should be called.
-		dashStore, err := database.ProvideDashboardStore(sql, sql.Cfg, features, tagimpl.ProvideService(sql, sql.Cfg), quotatest.New(false, nil))
+		dashStore, err := dashboardstore.ProvideDashboardStore(sql, sql.Cfg, features, tagimpl.ProvideService(sql, sql.Cfg), quotatest.New(false, nil))
 		require.NoError(t, err)
 
 		origNewGuardian := guardian.New
@@ -749,7 +748,7 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 			features: featuremgmt.WithFeatures(),
 			permissions: map[string][]string{
 				accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsTypeDashboard},
-				dashboards.ActionDashboardsRead:     {fmt.Sprintf("folders:uid:parent")},
+				dashboards.ActionDashboardsRead:     {"folders:uid:parent"},
 			},
 			expectedAnnotationIds: []int64{dash1AnnotationID},
 		},
@@ -758,7 +757,7 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 			features: featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
 			permissions: map[string][]string{
 				accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsTypeDashboard},
-				dashboards.ActionDashboardsRead:     {fmt.Sprintf("folders:uid:parent")},
+				dashboards.ActionDashboardsRead:     {"folders:uid:parent"},
 			},
 			expectedAnnotationIds: []int64{dash1AnnotationID, dash2AnnotationID},
 		},

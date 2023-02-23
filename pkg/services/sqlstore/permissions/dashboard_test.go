@@ -380,7 +380,6 @@ func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol
 	require.NoError(t, err)
 
 	err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-
 		role := &accesscontrol.Role{
 			OrgID:   0,
 			UID:     "basic_viewer",
