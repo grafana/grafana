@@ -107,7 +107,7 @@ it('can convert strings with commas to numbers', () => {
   const stringyNumbers = {
     name: 'stringy nums',
     type: FieldType.string,
-    values: new ArrayVector(['1,000', '1,000,000']),
+    values: new ArrayVector(['1,000', '1,000,000', null, undefined, '', '1']),
     config: {},
   };
 
@@ -116,7 +116,7 @@ it('can convert strings with commas to numbers', () => {
   expect(numbers).toEqual({
     name: 'stringy nums',
     type: FieldType.number,
-    values: new ArrayVector([1000, 1000000]),
+    values: new ArrayVector([1000, 1000000, 0, null, 0, 1]),
     config: {},
   });
 });
