@@ -53,6 +53,6 @@ type LibraryPanel struct {
 	// Library element UID
 	Uid string `json:"uid"`
 
-	// panel version, incremented each time the dashboard is updated.
+	// Version panel version, incremented each time the dashboard is updated.
 	Version int64 `json:"version"`
 }
