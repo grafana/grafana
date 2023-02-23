@@ -66,13 +66,13 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 	// Does user exist in the database?
 	usr, userAuth, errUserInDB := s.getUser(ctx, id)
 	if errUserInDB != nil && !errors.Is(errUserInDB, user.ErrUserNotFound) {
-		s.log.Error("Failed to fetch user", "error", errUserInDB, "auth_module", id.AuthModule, "auth_id", id.AuthID)
+		s.log.FromContext(ctx).Error("Failed to fetch user", "error", errUserInDB, "auth_module", id.AuthModule, "auth_id", id.AuthID)
 		return errSyncUserInternal.Errorf("unable to retrieve user")
 	}
 
 	if errors.Is(errUserInDB, user.ErrUserNotFound) {
 		if !id.ClientParams.AllowSignUp {
-			s.log.Warn("Failed to create user, signup is not allowed for module", "auth_module", id.AuthModule, "auth_id", id.AuthID)
+			s.log.FromContext(ctx).Warn("Failed to create user, signup is not allowed for module", "auth_module", id.AuthModule, "auth_id", id.AuthID)
 			return errSyncUserForbidden.Errorf("%w", login.ErrSignupNotAllowed)
 		}
 
@@ -80,7 +80,7 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 		var errCreate error
 		usr, errCreate = s.createUser(ctx, id)
 		if errCreate != nil {
-			s.log.Error("Failed to create user", "error", errCreate, "auth_module", id.AuthModule, "auth_id", id.AuthID)
+			s.log.FromContext(ctx).Error("Failed to create user", "error", errCreate, "auth_module", id.AuthModule, "auth_id", id.AuthID)
 			return errSyncUserInternal.Errorf("unable to create user")
 		}
 	}
@@ -91,7 +91,7 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 
 	// update user
 	if errUpdate := s.updateUserAttributes(ctx, usr, id, userAuth); errUpdate != nil {
-		s.log.Error("Failed to update user", "error", errUpdate, "auth_module", id.AuthModule, "auth_id", id.AuthID)
+		s.log.FromContext(ctx).Error("Failed to update user", "error", errUpdate, "auth_module", id.AuthModule, "auth_id", id.AuthID)
 		return errSyncUserInternal.Errorf("unable to update user")
 	}
 
@@ -164,7 +164,7 @@ func (s *UserSync) upsertAuthConnection(ctx context.Context, userID int64, ident
 		})
 	}
 
-	s.log.Debug("Updating user_auth info", "user_id", userID)
+	s.log.FromContext(ctx).Debug("Updating auth connection for user", "id", identity.ID)
 	return s.authInfoService.UpdateAuthInfo(ctx, &login.UpdateAuthInfoCommand{
 		UserId:     userID,
 		AuthId:     identity.AuthID,
@@ -199,7 +199,7 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 	}
 
 	if needsUpdate {
-		s.log.Debug("Syncing user info", "id", id.ID, "update", updateCmd)
+		s.log.FromContext(ctx).Debug("Syncing user info", "id", id.ID, "update", updateCmd)
 		if err := s.userService.Update(ctx, updateCmd); err != nil {
 			return err
 		}
@@ -234,7 +234,7 @@ func (s *UserSync) createUser(ctx context.Context, id *authn.Identity) (*user.Us
 	for _, srv := range []string{user.QuotaTargetSrv, org.QuotaTargetSrv} {
 		limitReached, errLimit := s.quotaService.CheckQuotaReached(ctx, quota.TargetSrv(srv), nil)
 		if errLimit != nil {
-			s.log.Error("Failed to check quota", "error", errLimit)
+			s.log.FromContext(ctx).Error("Failed to check quota", "error", errLimit)
 			return nil, errSyncUserInternal.Errorf("%w", login.ErrGettingUserQuota)
 		}
 		if limitReached {

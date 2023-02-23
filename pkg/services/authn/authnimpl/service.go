@@ -259,12 +259,12 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (i
 	addr := web.RemoteAddr(r.HTTPRequest)
 	ip, err := network.GetIPFromAddress(addr)
 	if err != nil {
-		s.log.FromContext(ctx).Debug("failed to parse ip from address", "client", c.Name(), "id", identity.ID, "addr", addr, "error", err)
+		s.log.FromContext(ctx).Debug("Failed to parse ip from address", "client", c.Name(), "id", identity.ID, "addr", addr, "error", err)
 	}
 
 	sessionToken, err := s.sessionService.CreateToken(ctx, &user.User{ID: id}, ip, r.HTTPRequest.UserAgent())
 	if err != nil {
-		s.log.FromContext(ctx).Error("failed to create session", "client", client, "id", identity.ID, "err", err)
+		s.log.FromContext(ctx).Error("Failed to create session", "client", client, "id", identity.ID, "err", err)
 		return nil, err
 	}
 
