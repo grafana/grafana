@@ -66,6 +66,11 @@ func TestValueString(t *testing.T) {
 	}
 }
 
+func TestExpandError(t *testing.T) {
+	err := ExpandError{Tmpl: "{{", Err: errors.New("unexpected {{")}
+	assert.Equal(t, "failed to expand template '{{': unexpected {{", err.Error())
+}
+
 func TestExpandTemplate(t *testing.T) {
 	pathPrefix := "/path/prefix"
 	externalURL, err := url.Parse("http://localhost" + pathPrefix)
