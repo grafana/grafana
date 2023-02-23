@@ -3,7 +3,7 @@ import { RawTimeRange, TimeZone } from '@grafana/data';
 type Dashboard = {
   uid: string;
   title: string;
-  tags: string[];
+  tags: Readonly<Array<Readonly<string>>>;
 };
 
 type Target = {
@@ -11,12 +11,12 @@ type Target = {
   refId: string;
 };
 
-export type PluginExtensionPanelContext = {
+export type PluginExtensionPanelContext = Readonly<{
   pluginId: string;
   id: number;
   title: string;
-  timeRange: RawTimeRange;
+  timeRange: Readonly<RawTimeRange>;
   timeZone: TimeZone;
-  dashboard: Dashboard;
-  targets: Target[];
-};
+  dashboard: Readonly<Dashboard>;
+  targets: Readonly<Array<Readonly<Target>>>;
+}>;

@@ -336,6 +336,7 @@ describe('getPanelMenu()', () => {
     it('should pass context that can not be edited in configure function', () => {
       const configure = (context: PluginExtensionPanelContext) => {
         // trying to change values in the context
+        // @ts-ignore
         context.pluginId = 'changed';
 
         return {
