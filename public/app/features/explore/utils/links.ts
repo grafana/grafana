@@ -40,13 +40,17 @@ const dataLinkHasAllVariablesDefined = (link: DataLink, scopedVars: ScopedVars) 
       stringifiedQuery = JSON.stringify(link.internal.query || {});
       // Hook into format function to verify if all values are non-empty
       // Format function is run on all existing field values allowing us to check it's value is non-empty
-      getTemplateSrv().replace(stringifiedQuery, scopedVars, (f: string) => {
-        hasAllRequiredVarDefined = hasAllRequiredVarDefined && !!f;
-        return '';
-      });
+      getTemplateSrv().replace(
+        stringifiedQuery,
+        scopedVars,
+        (f: string) => {
+          hasAllRequiredVarDefined = hasAllRequiredVarDefined && !!f;
+          return '';
+        },
+        true
+      );
     } catch (err) {}
   }
-
   return hasAllRequiredVarDefined;
 };
 
