@@ -25,7 +25,7 @@ export function SearchCardExpanded({ className, imageHeight, imageWidth, item, l
   const imageSrc = getThumbnailURL(item.uid!, theme.isLight);
   const styles = getStyles(theme, imageHeight, imageWidth);
 
-  const folderTitle = item.folderTitle || 'General';
+  const folderTitle = item.parentTitle || 'General';
 
   return (
     <a className={classNames(className, styles.card)} key={item.uid} href={item.url} onClick={onClick}>

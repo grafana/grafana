@@ -54,14 +54,17 @@ export interface DashboardSearchItem {
  * Type used in the folder view components
  */
 export interface DashboardViewItem {
-  kind: 'folder' | 'dashboard';
+  kind: 'folder' | 'dashboard' | 'panel';
   uid: string;
   title: string;
   url?: string;
   tags?: string[];
 
   icon?: string;
-  folderTitle?: string;
+
+  // Most commonly parent folder title, but can be dashboard if panelTitleSearch is enabled
+  parentTitle?: string;
+  parentKind?: string;
 
   // Used only for psuedo-folders, such as Starred or Recent
   itemsUIDs?: string[];

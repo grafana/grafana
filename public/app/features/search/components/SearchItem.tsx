@@ -6,6 +6,7 @@ import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Card, Icon, IconName, TagList, useStyles2 } from '@grafana/ui';
 
 import { SEARCH_ITEM_HEIGHT } from '../constants';
+import { getIconForKind } from '../service/utils';
 import { DashboardViewItem, OnToggleChecked } from '../types';
 
 import { SearchCheckbox } from './SearchCheckbox';
@@ -54,7 +55,6 @@ export const SearchItem: FC<Props> = ({ item, isSelected, editable, onToggleChec
     [item, onToggleChecked]
   );
 
-  const folderTitle = item.folderTitle || 'General';
   return (
     <Card
       data-testid={selectors.dashboardItem(item.title)}
@@ -74,9 +74,10 @@ export const SearchItem: FC<Props> = ({ item, isSelected, editable, onToggleChec
       </Card.Figure>
       <Card.Meta separator={''}>
         <span className={styles.metaContainer}>
-          <Icon name={'folder'} aria-hidden />
-          {folderTitle}
+          <Icon name={getIconForKind(item.parentKind ?? 'folder')} aria-hidden />
+          {item.parentTitle || 'General'}
         </span>
+
         {item.sortMetaName && (
           <span className={styles.metaContainer}>
             <Icon name={getIconFromMeta(item.sortMetaName)} />

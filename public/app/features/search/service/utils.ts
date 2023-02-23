@@ -1,4 +1,4 @@
-import { DataFrameView } from '@grafana/data';
+import { DataFrameView, IconName } from '@grafana/data';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { DashboardViewItem } from '../types';
@@ -38,6 +38,18 @@ function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+export function getIconForKind(kind: string): IconName {
+  if (kind === 'dashboard') {
+    return 'apps';
+  }
+
+  if (kind === 'folder') {
+    return 'folder';
+  }
+
+  return 'question-circle';
+}
+
 export function queryResultToViewItem(
   item: DashboardQueryResult,
   view?: DataFrameView<DashboardQueryResult>,
@@ -51,7 +63,6 @@ export function queryResultToViewItem(
     title: item.name,
     url: item.url,
     tags: item.tags ?? [],
-    folderTitle: meta?.locationInfo?.[item.location]?.name,
   };
 
   // Set enterprise sort value property
@@ -66,11 +77,12 @@ export function queryResultToViewItem(
   }
 
   if (item.location) {
-    const first = item.location.split('/')[0];
-    const finfo = meta?.locationInfo[first];
-    if (finfo) {
-      console.log('setting in here', JSON.parse(JSON.stringify({ viewItem, item, meta })));
-      viewItem.folderTitle = finfo.name;
+    const ancestors = item.location.split('/');
+    const parentUid = ancestors[ancestors.length - 1];
+    const parentInfo = meta?.locationInfo[parentUid];
+    if (parentInfo) {
+      viewItem.parentTitle = parentInfo.name;
+      viewItem.parentKind = parentInfo.kind;
     }
   }
 
