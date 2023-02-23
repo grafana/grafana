@@ -23,6 +23,7 @@ var (
 	errAPIKeyRevoked = errutil.NewBase(errutil.StatusUnauthorized, "api-key.revoked", errutil.WithPublicMessage("Revoked API key"))
 )
 
+var _ authn.HookClient = new(APIKey)
 var _ authn.ContextAwareClient = new(APIKey)
 
 func ProvideAPIKey(apiKeyService apikey.Service, userService user.Service) *APIKey {
@@ -139,6 +140,26 @@ func (s *APIKey) Test(ctx context.Context, r *authn.Request) bool {
 
 func (s *APIKey) Priority() uint {
 	return 30
+}
+
+func (s *APIKey) Hook(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
+	namespace, id := identity.NamespacedID()
+	if namespace != authn.NamespaceAPIKey {
+		return nil
+	}
+
+	go func(apikeyID int64) {
+		defer func() {
+			if err := recover(); err != nil {
+				s.log.Error("panic during user last seen sync", "err", err)
+			}
+		}()
+		if err := s.apiKeyService.UpdateAPIKeyLastUsedDate(context.Background(), apikeyID); err != nil {
+			s.log.Warn("failed to update last use date for api key", "id", apikeyID)
+		}
+	}(id)
+
+	return nil
 }
 
 func looksLikeApiKey(token string) bool {
