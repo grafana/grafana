@@ -95,6 +95,6 @@ The command palette enables you to:
 
 ![Command Palette screenshot](/media/docs/grafana/CommandPalette_doc_1.png)
 
-To open the Command Palette, press `cmd+K` in macOS or `ctrl+k` in Linux/Windows. You can also click on the input placed in the navigation bar.
+To open the command palette, press `cmd+K` in macOS or `ctrl+k` in Linux/Windows. You can also click on the input located in the navigation bar.
 
 > **Note:** To go to the previous step, press `backspace` with the command palette input empty.
