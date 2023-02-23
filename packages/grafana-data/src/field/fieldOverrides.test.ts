@@ -31,36 +31,48 @@ import {
 } from './fieldOverrides';
 import { getFieldDisplayName } from './fieldState';
 
-const property1: any = {
+const property1: FieldConfigPropertyItem = {
   id: 'custom.property1', // Match field properties
   path: 'property1', // Match field properties
   isCustom: true,
-  process: (value: any) => value,
+  process: (value) => value,
   shouldApply: () => true,
+  override: jest.fn(),
+  editor: jest.fn(),
+  name: 'Property 1',
 };
 
-const property2 = {
+const property2: FieldConfigPropertyItem = {
   id: 'custom.property2', // Match field properties
   path: 'property2', // Match field properties
   isCustom: true,
-  process: (value: any) => value,
+  process: (value) => value,
   shouldApply: () => true,
+  override: jest.fn(),
+  editor: jest.fn(),
+  name: 'Property 2',
 };
 
-const property3: any = {
+const property3: FieldConfigPropertyItem = {
   id: 'custom.property3.nested', // Match field properties
   path: 'property3.nested', // Match field properties
   isCustom: true,
-  process: (value: any) => value,
+  process: (value) => value,
   shouldApply: () => true,
+  override: jest.fn(),
+  editor: jest.fn(),
+  name: 'Property 3',
 };
 
-const shouldApplyFalse: any = {
+const shouldApplyFalse: FieldConfigPropertyItem = {
   id: 'custom.shouldApplyFalse', // Match field properties
   path: 'shouldApplyFalse', // Match field properties
   isCustom: true,
-  process: (value: any) => value,
+  process: (value) => value,
   shouldApply: () => false,
+  override: jest.fn(),
+  editor: jest.fn(),
+  name: 'Should Apply False',
 };
 
 export const customFieldRegistry: FieldConfigOptionsRegistry = new Registry<FieldConfigPropertyItem>(() => {
@@ -68,9 +80,9 @@ export const customFieldRegistry: FieldConfigOptionsRegistry = new Registry<Fiel
 });
 
 locationUtil.initialize({
-  config: { appSubUrl: '/subUrl' } as any,
-  getVariablesUrlParams: (() => {}) as any,
-  getTimeRangeForUrl: (() => {}) as any,
+  config: { appSubUrl: '/subUrl' } as GrafanaConfig,
+  getVariablesUrlParams: jest.fn(),
+  getTimeRangeForUrl: jest.fn(),
 });
 
 describe('Global MinMax', () => {
@@ -181,7 +193,7 @@ describe('applyFieldOverrides', () => {
           defaults: {},
           overrides: [],
         },
-        replaceVariables: (value: any) => value,
+        replaceVariables: (value) => value,
         theme: createTheme(),
         fieldConfigRegistry: new FieldConfigOptionsRegistry(),
       });
@@ -300,7 +312,7 @@ describe('applyFieldOverrides', () => {
   });
 
   it('getLinks should use applied field config', () => {
-    const replaceVariablesCalls: any[] = [];
+    const replaceVariablesCalls: ScopedVars[] = [];
 
     const data = applyFieldOverrides({
       data: [f0], // the frame
@@ -375,8 +387,8 @@ describe('setFieldConfigDefaults', () => {
     };
 
     const context: FieldOverrideEnv = {
-      data: [] as any,
-      field: { type: FieldType.number } as any,
+      data: [],
+      field: { type: FieldType.number } as Field,
       dataFrameIndex: 0,
       fieldConfigRegistry: customFieldRegistry,
     };
@@ -410,8 +422,8 @@ describe('setFieldConfigDefaults', () => {
     };
 
     const context: FieldOverrideEnv = {
-      data: [] as any,
-      field: { type: FieldType.number } as any,
+      data: [],
+      field: { type: FieldType.number } as Field,
       dataFrameIndex: 0,
       fieldConfigRegistry: customFieldRegistry,
     };
@@ -444,8 +456,8 @@ describe('setDynamicConfigValue', () => {
       },
       {
         fieldConfigRegistry: customFieldRegistry,
-        data: [] as any,
-        field: { type: FieldType.number } as any,
+        data: [],
+        field: { type: FieldType.number } as Field,
         dataFrameIndex: 0,
       }
     );
@@ -467,8 +479,8 @@ describe('setDynamicConfigValue', () => {
       },
       {
         fieldConfigRegistry: customFieldRegistry,
-        data: [] as any,
-        field: { type: FieldType.number } as any,
+        data: [],
+        field: { type: FieldType.number } as Field,
         dataFrameIndex: 0,
       }
     );
@@ -488,8 +500,8 @@ describe('setDynamicConfigValue', () => {
       },
       {
         fieldConfigRegistry: customFieldRegistry,
-        data: [] as any,
-        field: { type: FieldType.number } as any,
+        data: [],
+        field: { type: FieldType.number } as Field,
         dataFrameIndex: 0,
       }
     );
@@ -513,8 +525,8 @@ describe('setDynamicConfigValue', () => {
       },
       {
         fieldConfigRegistry: customFieldRegistry,
-        data: [] as any,
-        field: { type: FieldType.number } as any,
+        data: [],
+        field: { type: FieldType.number } as Field,
         dataFrameIndex: 0,
       }
     );
@@ -539,8 +551,8 @@ describe('setDynamicConfigValue', () => {
       },
       {
         fieldConfigRegistry: customFieldRegistry,
-        data: [] as any,
-        field: { type: FieldType.number } as any,
+        data: [],
+        field: { type: FieldType.number } as Field,
         dataFrameIndex: 0,
       }
     );
@@ -553,8 +565,8 @@ describe('setDynamicConfigValue', () => {
       },
       {
         fieldConfigRegistry: customFieldRegistry,
-        data: [] as any,
-        field: { type: FieldType.number } as any,
+        data: [],
+        field: { type: FieldType.number } as Field,
         dataFrameIndex: 0,
       }
     );

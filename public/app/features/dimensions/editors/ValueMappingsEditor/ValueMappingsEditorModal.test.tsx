@@ -7,10 +7,10 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { ValueMappingsEditorModal, Props } from './ValueMappingsEditorModal';
 
-const setup = (spy?: any, propOverrides?: object) => {
+const setup = (spy?: jest.Mock, propOverrides?: Partial<Props>) => {
   const props: Props = {
     onClose: jest.fn(),
-    onChange: (mappings: any) => {
+    onChange: (mappings) => {
       if (spy) {
         spy(mappings);
       }
