@@ -209,29 +209,19 @@ type readyToRunItem struct {
 }
 
 func (sch *schedule) updateRulesMetrics(alertRules []*ngmodels.AlertRule) {
-	liveRulesPerOrg := make(map[int64]int64)
-	pausedRulesPerOrg := make(map[int64]int64)
+	orgs := make(map[int64]int64, len(alertRules))
+	orgsPaused := make(map[int64]int64, len(alertRules))
 	for _, rule := range alertRules {
+		orgs[rule.OrgID]++
 		if rule.IsPaused {
-			pausedRulesPerOrg[rule.OrgID]++
-			continue
-		}
-		liveRulesPerOrg[rule.OrgID]++
-	}
-	for orgID, numRules := range liveRulesPerOrg {
-		sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(orgID), "live").Set(float64(numRules))
-		if v, exists := pausedRulesPerOrg[orgID]; !exists {
-			sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(orgID), "paused").Set(0)
-		} else {
-			sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(orgID), "paused").Set(float64(v))
+			orgsPaused[rule.OrgID]++
 		}
 	}
-	for orgID, numRules := range pausedRulesPerOrg {
-		if _, exists := liveRulesPerOrg[orgID]; exists {
-			continue
-		}
-		sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(orgID), "paused").Set(float64(numRules))
-		sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(orgID), "live").Set(0)
+
+	for orgID, numRules := range orgs {
+		numRulesPaused := orgsPaused[orgID]
+		sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(orgID), metrics.AlertRuleActiveLabelValue).Set(float64(numRules - numRulesPaused))
+		sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(orgID), metrics.AlertRulePausedLabelValue).Set(float64(numRulesPaused))
 	}
 
 	// While these are the rules that we iterate over, at the moment there's no 100% guarantee that they'll be
