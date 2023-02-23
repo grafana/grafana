@@ -17,6 +17,7 @@ function renderComponent({ initialValue = '', onRunQuery = jest.fn(), onBlur = j
       onRunQuery={onRunQuery}
       onBlur={onBlur}
       placeholder="Enter a Loki query (run with Shift+Enter)"
+      setQueryStats={() => {}}
     />
   );
 }

@@ -9,7 +9,7 @@ export type Props = Omit<MonacoProps, 'onRunQuery' | 'onBlur'> & {
   onChange: (query: string) => void;
   onRunQuery: () => void;
   runQueryOnBlur: boolean;
-  setQueryStats: React.Dispatch<React.SetStateAction<QueryStats | undefined>>;
+  setQueryStats?: React.Dispatch<React.SetStateAction<QueryStats | undefined>>;
 };
 
 export const MonacoQueryFieldWrapper = (props: Props) => {

@@ -165,7 +165,7 @@ const MonacoQueryField = ({
       const query = { expr: queryExpr } as unknown as LokiQuery;
       const previousQuery = undefined;
 
-      makeStatsRequest(datasource, timerange, previousTimerange, query, previousQuery, setQueryStats);
+      makeStatsRequest(datasource, timerange, previousTimerange, query, previousQuery, setQueryStats!);
     }, 1000);
   };
 
