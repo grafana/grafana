@@ -35,7 +35,8 @@ Watch this video to learn more about creating alerts: {{< vimeo 720001934 >}}
    - From the **Condition** drop-down, select the query or expression to trigger the alert rule.
    - For **Evaluate every**, specify the frequency of evaluation. Must be a multiple of 10 seconds. For examples, `1m`, `30s`.
    - For **Evaluate for**, specify the duration for which the condition must be true before an alert fires.
-     > **Note:** Once a condition is breached, the alert goes into the Pending state. If the condition remains breached for the duration specified, the alert transitions to the `Firing` state, otherwise it reverts back to the `Normal` state.
+     > **Note:** Once a condition is breached, the alert goes into the Pending state. If the condition remains breached for the duration specified, the alert transitions to the `Firing` state, otherwise it reverts back to the `Normal` state. If an immediate notification is required, set the value "0" in the Evaluate for field
+
    - In **Configure no data and error handling**, configure alerting behavior in the absence of data. Use the guidelines in [No data and error handling](#no-data-and-error-handling).
    - Click **Preview alerts** to check the result of running the query at this moment. Preview excludes no data and error handling.
 
