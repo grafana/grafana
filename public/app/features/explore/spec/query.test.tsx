@@ -6,7 +6,7 @@ import { locationService } from '@grafana/runtime';
 import { makeLogsQueryResponse, makeMetricsQueryResponse } from './helper/query';
 import { setupExplore, tearDown, waitForExplore } from './helper/setup';
 
-describe('ExplorePage handles running/not running query', () => {
+describe('Explore: handle running/not running query', () => {
   afterEach(() => {
     tearDown();
   });
