@@ -242,6 +242,20 @@ func (d *AlertsRouter) buildExternalURL(ds *datasources.DataSource) (string, err
 	if err != nil {
 		return "", fmt.Errorf("failed to parse alertmanager datasource url: %w", err)
 	}
+
+	// If this is a Mimir or Cortex implementation, the Alert API is under a different path than config API
+	if ds.JsonData != nil {
+		impl := ds.JsonData.Get("implementation").MustString("")
+		switch impl {
+		case "mimir", "cortex":
+			if parsed.Path == "" {
+				parsed.Path = "/"
+			}
+			parsed = parsed.JoinPath("/alertmanager")
+		default:
+		}
+	}
+
 	// if basic auth is enabled we need to build the url with basic auth baked in
 	if !ds.BasicAuth {
 		return parsed.String(), nil
