@@ -495,7 +495,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 	sql := db.InitTestDB(t)
 
 	var maximumTagsLength int64 = 60
-	repo := xormRepositoryImpl{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql, sql.Cfg), maximumTagsLength: maximumTagsLength}
+	repo := xormRepositoryImpl{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql, sql.Cfg), maximumTagsLength: maximumTagsLength, features: featuremgmt.WithFeatures()}
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := dashboardstore.ProvideDashboardStore(sql, sql.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql, sql.Cfg), quotaService)
 	require.NoError(t, err)
