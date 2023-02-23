@@ -84,7 +84,7 @@ To filter dashboard search result by a tag, complete one of the following steps:
 
 > **Note:** When using only a keyboard, press the `tab` key and navigate to the **Filter by tag** drop-down menu, press the down arrow key `▼` to activate the menu and locate a tag, and press `Enter` to select the tag.
 
-## Command Palette
+## Command palette
 
 The command palette enables you to:
 
