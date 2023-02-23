@@ -2183,7 +2183,7 @@ default_baselayer_config = `{
 
 ### enable_custom_baselayers
 
-Set this to `true` to disable loading other custom base maps and hide them in the Grafana UI. Default is `false`.
+Set this to `false` to disable loading other custom base maps and hide them in the Grafana UI. Default is `true`.
 
 ## [dashboard_previews]
 
