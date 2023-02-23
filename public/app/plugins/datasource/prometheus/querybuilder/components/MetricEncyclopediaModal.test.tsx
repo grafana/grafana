@@ -46,6 +46,10 @@ function createDatasource(metrics: string[], withLabels?: boolean) {
         type: 'all-metrics-type',
         help: 'all-metrics-help',
       },
+      a: {
+        type: 'counter',
+        help: 'a-metric-help',
+      },
       // missing metadata for other metrics is tested for, see below
     };
   }
@@ -147,10 +151,10 @@ describe('MetricEncyclopediaModal', () => {
   it('displays no metadata for a metric missing metadata when the metric is clicked', async () => {
     setup(defaultQuery, listOfMetrics);
     await waitFor(() => {
-      expect(screen.getByText('a')).toBeInTheDocument();
+      expect(screen.getByText('b')).toBeInTheDocument();
     });
 
-    const interactiveMetric = screen.getByText('a');
+    const interactiveMetric = screen.getByText('b');
 
     await userEvent.click(interactiveMetric);
 
@@ -206,5 +210,37 @@ describe('MetricEncyclopediaModal', () => {
     const metricInsideRange = screen.getByText('10');
     expect(metricInsideRange).toBeInTheDocument();
   });
-  // Filtering
+
+  // // Filtering
+  // it('filters results based on selected type', async () => {
+  //   // default resultsPerPage is 10
+  //   setup(defaultQuery, listOfMetrics);
+  //   // how do you test the MultiSelect?
+  //   // this does not work
+  //   // https://developers.grafana.com/ui/latest/index.html?path=/docs/forms-select--multi-select-basic
+
+  // });
+
+  // it('sorts alphabetically but puts metrics with no metadata last', async () => {
+  //   // default resultsPerPage is 10
+  //   setup(defaultQuery, listOfMetrics);
+  //   // how do you test the MultiSelect?
+  //   // this does not work
+  //   // https://developers.grafana.com/ui/latest/index.html?path=/docs/forms-select--multi-select-basic
+
+  // });
+
+  it('filters by alphebetical letter choice', async () => {
+    setup(defaultQuery, listOfMetrics);
+    // pick the letter J
+    const letterJ = screen.getByTestId('letter-J');
+    await userEvent.click(letterJ);
+
+    // check metrics that start with J
+    const metricStartingWithJ = screen.getByText('j');
+    expect(metricStartingWithJ).toBeInTheDocument();
+    // check metrics that don't start with J
+    const metricStartingWithSomethingElse = screen.queryByText('a');
+    expect(metricStartingWithSomethingElse).toBeNull();
+  });
 });

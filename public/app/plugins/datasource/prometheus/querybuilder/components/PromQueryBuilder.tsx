@@ -207,7 +207,7 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
 
   const lang = { grammar: promqlGrammar, name: 'promql' };
   const MetricEncyclopedia = config.featureToggles.prometheusMetricEncyclopedia;
-  // debugger
+
   return (
     <>
       <EditorRow>

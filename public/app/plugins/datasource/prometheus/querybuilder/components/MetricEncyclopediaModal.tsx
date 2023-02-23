@@ -4,7 +4,18 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 // *** Feature Tracking
 // import { reportInteraction } from '@grafana/runtime';
-import { Button, Card, Collapse, InlineLabel, Input, Modal, MultiSelect, Select, useStyles2 } from '@grafana/ui';
+import {
+  Button,
+  Card,
+  Collapse,
+  InlineLabel,
+  InlineSwitch,
+  Input,
+  Modal,
+  MultiSelect,
+  Select,
+  useStyles2,
+} from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../datasource';
 import { getMetadataHelp, getMetadataType } from '../../language_provider';
@@ -70,7 +81,9 @@ export const MetricEncyclopediaModal = (props: Props) => {
   const [pageNum, setPageNum] = useState<number>(1);
 
   // filters
+  const [excludeNullMetadata, setExcludeNullMetadata] = useState<boolean>(false);
   const [selectedTypes, setSelectedTypes] = useState<Array<SelectableValue<string>>>([]);
+  const [letterSearch, setLetterSearch] = useState<string | null>(null);
 
   const updateMetricsMetadata = useCallback(async () => {
     // *** Loading Gif?
@@ -146,13 +159,29 @@ export const MetricEncyclopediaModal = (props: Props) => {
     return metrics.slice(start, end);
   }
 
-  function filterMetrics(metrics: MetricsData): MetricsData {
+  function hasMetaDataFilters() {
+    return selectedTypes.length > 0;
+  }
+  // *** Filtering: some metrics have no metadata so cannot be filtered
+  function filterMetrics(metrics: MetricsData, skipLetterSearch?: boolean): MetricsData {
     let filteredMetrics: MetricsData = metrics;
+
+    if (excludeNullMetadata) {
+      filteredMetrics = filteredMetrics.filter((m: MetricData) => m.type);
+    }
+
+    // user searches metrics that start with *
+    if (letterSearch && !skipLetterSearch) {
+      filteredMetrics = filteredMetrics.filter((m: MetricData) => {
+        const letters: string[] = [letterSearch, letterSearch.toLowerCase()];
+        return letters.includes(m.value[0]);
+      });
+    }
 
     // filter by type
     if (selectedTypes.length > 0) {
       // *** INCLUDE UN-TYPED METRICS
-      filteredMetrics = metrics.filter((m: MetricData) => {
+      filteredMetrics = filteredMetrics.filter((m: MetricData) => {
         const matchesSelectedType = selectedTypes.some((t) => t.value === m.type);
         const missingTypeMetadata = !m.type;
 
@@ -163,7 +192,14 @@ export const MetricEncyclopediaModal = (props: Props) => {
     return filteredMetrics;
   }
 
-  // *** Filtering: some metrics have no metadata so cannot be filtered
+  // the metrics that go in the modal
+  function displayedMetrics() {
+    const filteredSorted: MetricsData = filterMetrics(metrics).sort(alphabetically(true, hasMetaDataFilters()));
+
+    const displayedMetrics: MetricsData = sliceMetrics(filteredSorted, pageNum, resultsPerPage);
+
+    return displayedMetrics;
+  }
 
   return (
     <Modal
@@ -190,16 +226,27 @@ export const MetricEncyclopediaModal = (props: Props) => {
             // *** Filter by text
           }}
         />
+        <InlineSwitch
+          label="Exclude null metadata"
+          showLabel={true}
+          value={excludeNullMetadata}
+          onChange={() => {
+            setExcludeNullMetadata(!excludeNullMetadata);
+            setPageNum(1);
+          }}
+          title="Exclude all metrics with no metadata when filtering"
+        />
       </div>
       <div className="gf-form">
-        <InlineLabel width={10} className="query-keyword">
+        <InlineLabel htmlFor="my-select" width={10} className="query-keyword">
           Type:
         </InlineLabel>
         <MultiSelect
-          data-testid={testIds.searchType}
+          data-testid={testIds.selectType}
+          inputId="my-select"
           options={typeOptions}
           value={selectedTypes}
-          placeholder="select type"
+          placeholder="Select type"
           onChange={(v) => {
             // *** Filter by type
             // *** always include metrics without metadata but label it as unknown type
@@ -257,9 +304,70 @@ export const MetricEncyclopediaModal = (props: Props) => {
           }}
         />
       </div>
-      <div className={styles.center}>A|B|C|D|E|F|G|H|I|J|K|L|M|N|O|P|Q|R|S|T|U|V|W|X|Y|Z</div>
+      <div className={styles.center}>
+        {[
+          'A',
+          'B',
+          'C',
+          'D',
+          'E',
+          'F',
+          'G',
+          'H',
+          'I',
+          'J',
+          'K',
+          'L',
+          'M',
+          'N',
+          'O',
+          'P',
+          'Q',
+          'R',
+          'S',
+          'T',
+          'U',
+          'V',
+          'W',
+          'X',
+          'Y',
+          'Z',
+        ].map((letter, idx, coll) => {
+          const active: boolean = filterMetrics(metrics, true).some((m: MetricData) => {
+            return m.value[0] === letter || m.value[0] === letter?.toLowerCase();
+          });
+
+          // starts with letter search
+          // filter by starts with letter
+          // if same letter searched null out remove letter search
+          function updateLetterSearch() {
+            if (letterSearch === letter) {
+              setLetterSearch(null);
+            } else {
+              setLetterSearch(letter);
+            }
+            setPageNum(1);
+          }
+          // selected letter to filter by
+          const selectedClass: string = letterSearch === letter ? styles.bold : '';
+          // these letters are represented in the list of metrics
+          const activeClass: string = active ? '' : styles.gray;
+
+          return (
+            <span
+              onClick={active ? updateLetterSearch : () => {}}
+              className={`${selectedClass} ${activeClass}`}
+              key={letter}
+              data-testid={'letter-' + letter}
+            >
+              {letter + ' '}
+              {/* {idx !== coll.length - 1 ? '|': ''} */}
+            </span>
+          );
+        })}
+      </div>
       {metrics &&
-        sliceMetrics(filterMetrics(metrics), pageNum, resultsPerPage).map((metric: MetricData, idx) => {
+        displayedMetrics().map((metric: MetricData, idx) => {
           return (
             <Collapse
               aria-label={`open and close ${metric.value} query starter card`}
@@ -342,16 +450,56 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: ${theme.spacing(1)};
       margin-top: ${theme.spacing(1)};
     `,
+    // alphabeticalSearch: css`
+    //   height: 50px;
+    // `,
+    bold: css`
+      font-style: italic;
+      cursor: pointer;
+      color: #6e9fff;
+    `,
+    gray: css`
+      color: grey;
+    `,
   };
 };
 
 export const testIds = {
   metricModal: 'metric-modal',
   searchMetric: 'search-metric',
-  searchType: 'search-type',
+  selectType: 'select-type',
   searchFunction: 'search-function',
   metricCard: 'metric-card',
   useMetric: 'use-metric',
   searchPage: 'search-page',
   resultsPerPage: 'results-per-page',
 };
+
+function alphabetically(ascending: boolean, metadataFilters: boolean) {
+  return function (a: MetricData, b: MetricData) {
+    // equal items sort equally
+    if (a.value === b.value) {
+      return 0;
+    }
+
+    // *** NO METADATA? SORT LAST
+    // undefined metadata sort after anything else
+    // if filters are on
+    if (metadataFilters) {
+      if (a.type === undefined) {
+        return 1;
+      }
+      if (b.type === undefined) {
+        return -1;
+      }
+    }
+
+    // otherwise, if we're ascending, lowest sorts first
+    if (ascending) {
+      return a.value < b.value ? -1 : 1;
+    }
+
+    // if descending, highest sorts first
+    return a.value < b.value ? 1 : -1;
+  };
+}
