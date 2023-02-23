@@ -1,10 +1,9 @@
-import { isString } from 'lodash';
 import { ComponentType } from 'react';
 
 import { KeyValue } from './data';
 import { NavModel } from './navModel';
 import { PluginMeta, GrafanaPlugin, PluginIncludeType } from './plugin';
-import { PluginExtensionLink } from './pluginExtensions';
+import { extensionLinkConfigIsValid, PluginExtensionLink } from './pluginExtensions';
 
 /**
  * @public
@@ -116,15 +115,13 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
 
   configureExtensionLink<C extends object>(config: AppPluginExtensionLinkConfig<C>) {
     const { path, description, title, placement } = config;
-    if (!isString(path) || !isString(description) || !isString(title) || !isString(placement)) {
-      // console.warn();
+
+    if (!extensionLinkConfigIsValid({ path, description, title, placement })) {
+      console.warn('[Plugins] Disabled extension because configureExtensionLink returned an invalid object.');
       return this;
     }
 
-    if (placement.startsWith('grafana/') || placement.startsWith('plugins/')) {
-      this.linkExtensions.push(config as AppPluginExtensionLinkConfig);
-    }
-
+    this.linkExtensions.push(config as AppPluginExtensionLinkConfig);
     return this;
   }
 }
