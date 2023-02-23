@@ -31,7 +31,7 @@ import { alpha } from '@grafana/data/src/themes/colorManipulator';
 import { LineString, Point, SimpleGeometry } from 'ol/geom';
 import FlowLine from 'ol-ext/style/FlowLine';
 import tinycolor from 'tinycolor2';
-import { getStyleDimension } from '../../utils/utils';
+import { getStyleDimension, isSegmentVisible } from '../../utils/utils';
 
 // Configuration options for Circle overlays
 export interface RouteConfig {
@@ -111,10 +111,13 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
         if (geom instanceof SimpleGeometry) {
           const coordinates = geom.getCoordinates();
           if (coordinates) {
-            let j = 0; // Index start for segment optimization
+            let startIndex = 0; // Index start for segment optimization
+            const pixelTolerance = 2; // For segment to be visible, it must be > 2 pixels (due to round ends)
             for (let i = 0; i < coordinates.length - 1; i++) {
+              const segmentStartCoords = coordinates[startIndex];
+              const segmentEndCoords = coordinates[i + 1];
               const color1 = tinycolor(
-                theme.visualization.getColorByName((dims.color && dims.color.get(j)) ?? style.base.color)
+                theme.visualization.getColorByName((dims.color && dims.color.get(startIndex)) ?? style.base.color)
               )
                 .setAlpha(opacity)
                 .toString();
@@ -124,7 +127,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
                 .setAlpha(opacity)
                 .toString();
 
-              const arrowSize1 = (dims.size && dims.size.get(j)) ?? style.base.size;
+              const arrowSize1 = (dims.size && dims.size.get(startIndex)) ?? style.base.size;
               const arrowSize2 = (dims.size && dims.size.get(i + 1)) ?? style.base.size;
 
               const flowStyle = new FlowLine({
@@ -132,7 +135,7 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
                 lineCap: config.arrow == 0 ? 'round' : 'square',
                 color: color1,
                 color2: color2,
-                width: (dims.size && dims.size.get(j)) ?? style.base.size,
+                width: (dims.size && dims.size.get(startIndex)) ?? style.base.size,
                 width2: (dims.size && dims.size.get(i + 1)) ?? style.base.size,
               });
               if (config.arrow) {
@@ -145,17 +148,12 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
                   flowStyle.setArrowSize((arrowSize1 ?? 0) * 1.5);
                 }
               }
-              const LS = new LineString([coordinates[j], coordinates[i + 1]]);
-              //TODO: let's try to find a less intensive check
-              const pixel1 = map.getPixelFromCoordinate(coordinates[j]);
-              const pixel2 = map.getPixelFromCoordinate(coordinates[i + 1]);
-              const deltaX = Math.abs(pixel1[0] - pixel2[0]);
-              const deltaY = Math.abs(pixel1[1] - pixel2[1]);
               // Only render segment if change in pixel coordinates is significant enough
-              if (deltaX > 2 || deltaY > 2) {
+              if (isSegmentVisible(map, pixelTolerance, segmentStartCoords, segmentEndCoords)) {
+                const LS = new LineString([segmentStartCoords, segmentEndCoords]);
                 flowStyle.setGeometry(LS);
                 styles.push(flowStyle);
-                j = i + 1;
+                startIndex = i + 1; // Because a segment was created, move onto the next one
               }
             }
             // If no segments created, render a single point
