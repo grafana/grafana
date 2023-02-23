@@ -125,10 +125,10 @@ export function isSegmentVisible(
 ): boolean {
   // For a segment, calculate x and y pixel lengths
   //TODO: let's try to find a less intensive check
-  const pixel1 = map.getPixelFromCoordinate(segmentStartCoords);
-  const pixel2 = map.getPixelFromCoordinate(segmentEndCoords);
-  const deltaX = Math.abs(pixel1[0] - pixel2[0]);
-  const deltaY = Math.abs(pixel1[1] - pixel2[1]);
+  const pixelStart = map.getPixelFromCoordinate(segmentStartCoords);
+  const pixelEnd = map.getPixelFromCoordinate(segmentEndCoords);
+  const deltaX = Math.abs(pixelStart[0] - pixelEnd[0]);
+  const deltaY = Math.abs(pixelStart[1] - pixelEnd[1]);
   // If greater than pixel tolerance in either direction, segment is visible
   if (deltaX > pixelTolerance || deltaY > pixelTolerance) {
     return true;
