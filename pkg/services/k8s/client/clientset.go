@@ -5,10 +5,9 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/google/wire"
-	"github.com/grafana/grafana/pkg/kindsys/k8ssys"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/k8s/crd"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
@@ -21,8 +20,6 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
 )
-
-var WireSet = wire.NewSet(ProvideClientset, ProvideRESTConfig)
 
 var (
 	// ErrCRDAlreadyRegistered is returned when trying to register a duplicate CRD.
@@ -101,7 +98,7 @@ func (c *Clientset) IsDisabled() bool {
 }
 
 // RegisterSchema registers a k8ssys.Kind with the Kubernetes API.
-func (c *Clientset) RegisterKind(ctx context.Context, gcrd k8ssys.Kind) error {
+func (c *Clientset) RegisterKind(ctx context.Context, gcrd crd.Kind) error {
 	gvk := gcrd.GVK()
 	gv := gvk.GroupVersion()
 
@@ -129,7 +126,7 @@ func (c *Clientset) RegisterKind(ctx context.Context, gcrd k8ssys.Kind) error {
 }
 
 // GetResourceClient returns a dynamic client for the given Kind and optional namespace.
-func (c *Clientset) GetResourceClient(gcrd k8ssys.Kind, namespace ...string) (dynamic.ResourceInterface, error) {
+func (c *Clientset) GetResourceClient(gcrd crd.Kind, namespace ...string) (dynamic.ResourceInterface, error) {
 	gvk := gcrd.GVK()
 	gk := gvk.GroupKind()
 

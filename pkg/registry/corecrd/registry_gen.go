@@ -10,23 +10,68 @@
 package corecrd
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
-	dashboard "github.com/grafana/grafana/pkg/kinds/dashboard/crd"
-	librarypanel "github.com/grafana/grafana/pkg/kinds/librarypanel/crd"
-	playlist "github.com/grafana/grafana/pkg/kinds/playlist/crd"
-	preferences "github.com/grafana/grafana/pkg/kinds/preferences/crd"
-	publicdashboard "github.com/grafana/grafana/pkg/kinds/publicdashboard/crd"
-	serviceaccount "github.com/grafana/grafana/pkg/kinds/serviceaccount/crd"
-	team "github.com/grafana/grafana/pkg/kinds/team/crd"
-	"github.com/grafana/grafana/pkg/kindsys/k8ssys"
 	"github.com/grafana/grafana/pkg/registry/corekind"
+	"github.com/grafana/grafana/pkg/services/k8s/client"
+	"github.com/grafana/grafana/pkg/services/k8s/crd"
+	"github.com/grafana/grafana/pkg/services/k8s/informer"
+	"github.com/grafana/grafana/pkg/services/k8s/resources/dashboard"
+	"github.com/grafana/grafana/pkg/services/k8s/resources/librarypanel"
+	"github.com/grafana/grafana/pkg/services/k8s/resources/playlist"
+	"github.com/grafana/grafana/pkg/services/k8s/resources/preferences"
+	"github.com/grafana/grafana/pkg/services/k8s/resources/publicdashboard"
+	"github.com/grafana/grafana/pkg/services/k8s/resources/serviceaccount"
+	"github.com/grafana/grafana/pkg/services/k8s/resources/team"
+	"github.com/grafana/thema"
 	"gopkg.in/yaml.v3"
 )
 
+// New constructs a new [Registry].
+//
+// All calling code within grafana/grafana is expected to use Grafana's
+// singleton [thema.Runtime], returned from [cuectx.GrafanaThemaRuntime]. If nil
+// is passed, the singleton will be used.
+func New(
+	rt *thema.Runtime,
+	clientSet *client.Clientset,
+	informerFactory *informer.Factory,
+	dashboardWatcher dashboard.Watcher,
+	librarypanelWatcher librarypanel.Watcher,
+	playlistWatcher playlist.Watcher,
+	preferencesWatcher preferences.Watcher,
+	publicdashboardWatcher publicdashboard.Watcher,
+	serviceaccountWatcher serviceaccount.Watcher,
+	teamWatcher team.Watcher,
+) *Registry {
+	breg := corekind.NewBase(rt)
+	return doNewRegistry(
+		breg,
+		clientSet,
+		informerFactory,
+		dashboardWatcher,
+		librarypanelWatcher,
+		playlistWatcher,
+		preferencesWatcher,
+		publicdashboardWatcher,
+		serviceaccountWatcher,
+		teamWatcher,
+	)
+}
+
+// All returns a slice of all core Grafana CRDs in the registry.
+//
+// The returned slice is guaranteed to be alphabetically sorted by kind name.
+func (r *Registry) All() []crd.Kind {
+	all := make([]crd.Kind, len(r.all))
+	copy(all, r.all[:])
+	return all
+}
+
 // Registry is a list of all of Grafana's core structured kinds, wrapped in a
-// standard [k8ssys.CRD] interface that makes them usable for interactions
+// standard [crd.CRD] interface that makes them usable for interactions
 // with certain Kubernetes controller and apimachinery libraries.
 //
 // There are two access methods: individually via literal named methods, or as
@@ -36,55 +81,64 @@ import (
 // that are needed are known to the caller. Prefer All() when performing operations
 // generically across all kinds.
 type Registry struct {
-	all [7]k8ssys.Kind
+	all [7]crd.Kind
 }
 
-// Dashboard returns the [k8ssys.Kind] instance for the Dashboard kind.
-func (r *Registry) Dashboard() k8ssys.Kind {
+// Dashboard returns the [crd.Kind] instance for the Dashboard kind.
+func (r *Registry) Dashboard() crd.Kind {
 	return r.all[0]
 }
 
-// LibraryPanel returns the [k8ssys.Kind] instance for the LibraryPanel kind.
-func (r *Registry) LibraryPanel() k8ssys.Kind {
+// LibraryPanel returns the [crd.Kind] instance for the LibraryPanel kind.
+func (r *Registry) LibraryPanel() crd.Kind {
 	return r.all[1]
 }
 
-// Playlist returns the [k8ssys.Kind] instance for the Playlist kind.
-func (r *Registry) Playlist() k8ssys.Kind {
+// Playlist returns the [crd.Kind] instance for the Playlist kind.
+func (r *Registry) Playlist() crd.Kind {
 	return r.all[2]
 }
 
-// Preferences returns the [k8ssys.Kind] instance for the Preferences kind.
-func (r *Registry) Preferences() k8ssys.Kind {
+// Preferences returns the [crd.Kind] instance for the Preferences kind.
+func (r *Registry) Preferences() crd.Kind {
 	return r.all[3]
 }
 
-// PublicDashboard returns the [k8ssys.Kind] instance for the PublicDashboard kind.
-func (r *Registry) PublicDashboard() k8ssys.Kind {
+// PublicDashboard returns the [crd.Kind] instance for the PublicDashboard kind.
+func (r *Registry) PublicDashboard() crd.Kind {
 	return r.all[4]
 }
 
-// ServiceAccount returns the [k8ssys.Kind] instance for the ServiceAccount kind.
-func (r *Registry) ServiceAccount() k8ssys.Kind {
+// ServiceAccount returns the [crd.Kind] instance for the ServiceAccount kind.
+func (r *Registry) ServiceAccount() crd.Kind {
 	return r.all[5]
 }
 
-// Team returns the [k8ssys.Kind] instance for the Team kind.
-func (r *Registry) Team() k8ssys.Kind {
+// Team returns the [crd.Kind] instance for the Team kind.
+func (r *Registry) Team() crd.Kind {
 	return r.all[6]
 }
 
-func doNewRegistry(breg *corekind.Base) *Registry {
-	var err error
-	var b []byte
-	var kk k8ssys.Kind
-	reg := &Registry{}
+func doNewRegistry(
+	breg *corekind.Base,
+	clientset *client.Clientset,
+	informerFactory *informer.Factory,
+	dashboardWatcher dashboard.Watcher,
+	librarypanelWatcher librarypanel.Watcher,
+	playlistWatcher playlist.Watcher,
+	preferencesWatcher preferences.Watcher,
+	publicdashboardWatcher publicdashboard.Watcher,
+	serviceaccountWatcher serviceaccount.Watcher,
+	teamWatcher team.Watcher,
+) *Registry {
+	var (
+		err error
+		b   []byte
+		reg = &Registry{}
+		ctx = context.Background()
+	)
 
-	kk = k8ssys.Kind{
-		GrafanaKind: breg.Dashboard(),
-		Object:      &dashboard.Dashboard{},
-		ObjectList:  &dashboard.DashboardList{},
-	}
+	/************************ Dashboard ************************/
 	// TODO Having the committed form on disk in YAML is worth doing this for now...but fix this silliness
 	map0 := make(map[string]any)
 	err = yaml.Unmarshal(dashboard.CRDYaml, map0)
@@ -95,17 +149,22 @@ func doNewRegistry(breg *corekind.Base) *Registry {
 	if err != nil {
 		panic(fmt.Sprintf("could not re-marshal CRD JSON for Dashboard: %s", err))
 	}
-	err = json.Unmarshal(b, &kk.Schema)
+	err = json.Unmarshal(b, &dashboard.CRD.Schema)
 	if err != nil {
 		panic(fmt.Sprintf("could not unmarshal CRD JSON for Dashboard: %s", err))
 	}
-	reg.all[0] = kk
 
-	kk = k8ssys.Kind{
-		GrafanaKind: breg.LibraryPanel(),
-		Object:      &librarypanel.LibraryPanel{},
-		ObjectList:  &librarypanel.LibraryPanelList{},
+	err = clientset.RegisterKind(ctx, dashboard.CRD)
+	if err != nil {
+		panic(fmt.Sprintf("generated CRD for Dashboard failed to register: %s\n", err))
 	}
+
+	watcherWrapper0 := dashboard.NewWatcherWrapper(dashboardWatcher)
+	informerFactory.AddWatcher(dashboard.CRD, watcherWrapper0)
+
+	reg.all[0] = dashboard.CRD
+
+	/************************ LibraryPanel ************************/
 	// TODO Having the committed form on disk in YAML is worth doing this for now...but fix this silliness
 	map1 := make(map[string]any)
 	err = yaml.Unmarshal(librarypanel.CRDYaml, map1)
@@ -116,17 +175,22 @@ func doNewRegistry(breg *corekind.Base) *Registry {
 	if err != nil {
 		panic(fmt.Sprintf("could not re-marshal CRD JSON for LibraryPanel: %s", err))
 	}
-	err = json.Unmarshal(b, &kk.Schema)
+	err = json.Unmarshal(b, &librarypanel.CRD.Schema)
 	if err != nil {
 		panic(fmt.Sprintf("could not unmarshal CRD JSON for LibraryPanel: %s", err))
 	}
-	reg.all[1] = kk
 
-	kk = k8ssys.Kind{
-		GrafanaKind: breg.Playlist(),
-		Object:      &playlist.Playlist{},
-		ObjectList:  &playlist.PlaylistList{},
+	err = clientset.RegisterKind(ctx, librarypanel.CRD)
+	if err != nil {
+		panic(fmt.Sprintf("generated CRD for LibraryPanel failed to register: %s\n", err))
 	}
+
+	watcherWrapper1 := librarypanel.NewWatcherWrapper(librarypanelWatcher)
+	informerFactory.AddWatcher(librarypanel.CRD, watcherWrapper1)
+
+	reg.all[1] = librarypanel.CRD
+
+	/************************ Playlist ************************/
 	// TODO Having the committed form on disk in YAML is worth doing this for now...but fix this silliness
 	map2 := make(map[string]any)
 	err = yaml.Unmarshal(playlist.CRDYaml, map2)
@@ -137,17 +201,22 @@ func doNewRegistry(breg *corekind.Base) *Registry {
 	if err != nil {
 		panic(fmt.Sprintf("could not re-marshal CRD JSON for Playlist: %s", err))
 	}
-	err = json.Unmarshal(b, &kk.Schema)
+	err = json.Unmarshal(b, &playlist.CRD.Schema)
 	if err != nil {
 		panic(fmt.Sprintf("could not unmarshal CRD JSON for Playlist: %s", err))
 	}
-	reg.all[2] = kk
 
-	kk = k8ssys.Kind{
-		GrafanaKind: breg.Preferences(),
-		Object:      &preferences.Preferences{},
-		ObjectList:  &preferences.PreferencesList{},
+	err = clientset.RegisterKind(ctx, playlist.CRD)
+	if err != nil {
+		panic(fmt.Sprintf("generated CRD for Playlist failed to register: %s\n", err))
 	}
+
+	watcherWrapper2 := playlist.NewWatcherWrapper(playlistWatcher)
+	informerFactory.AddWatcher(playlist.CRD, watcherWrapper2)
+
+	reg.all[2] = playlist.CRD
+
+	/************************ Preferences ************************/
 	// TODO Having the committed form on disk in YAML is worth doing this for now...but fix this silliness
 	map3 := make(map[string]any)
 	err = yaml.Unmarshal(preferences.CRDYaml, map3)
@@ -158,17 +227,22 @@ func doNewRegistry(breg *corekind.Base) *Registry {
 	if err != nil {
 		panic(fmt.Sprintf("could not re-marshal CRD JSON for Preferences: %s", err))
 	}
-	err = json.Unmarshal(b, &kk.Schema)
+	err = json.Unmarshal(b, &preferences.CRD.Schema)
 	if err != nil {
 		panic(fmt.Sprintf("could not unmarshal CRD JSON for Preferences: %s", err))
 	}
-	reg.all[3] = kk
 
-	kk = k8ssys.Kind{
-		GrafanaKind: breg.PublicDashboard(),
-		Object:      &publicdashboard.PublicDashboard{},
-		ObjectList:  &publicdashboard.PublicDashboardList{},
+	err = clientset.RegisterKind(ctx, preferences.CRD)
+	if err != nil {
+		panic(fmt.Sprintf("generated CRD for Preferences failed to register: %s\n", err))
 	}
+
+	watcherWrapper3 := preferences.NewWatcherWrapper(preferencesWatcher)
+	informerFactory.AddWatcher(preferences.CRD, watcherWrapper3)
+
+	reg.all[3] = preferences.CRD
+
+	/************************ PublicDashboard ************************/
 	// TODO Having the committed form on disk in YAML is worth doing this for now...but fix this silliness
 	map4 := make(map[string]any)
 	err = yaml.Unmarshal(publicdashboard.CRDYaml, map4)
@@ -179,17 +253,22 @@ func doNewRegistry(breg *corekind.Base) *Registry {
 	if err != nil {
 		panic(fmt.Sprintf("could not re-marshal CRD JSON for PublicDashboard: %s", err))
 	}
-	err = json.Unmarshal(b, &kk.Schema)
+	err = json.Unmarshal(b, &publicdashboard.CRD.Schema)
 	if err != nil {
 		panic(fmt.Sprintf("could not unmarshal CRD JSON for PublicDashboard: %s", err))
 	}
-	reg.all[4] = kk
 
-	kk = k8ssys.Kind{
-		GrafanaKind: breg.ServiceAccount(),
-		Object:      &serviceaccount.ServiceAccount{},
-		ObjectList:  &serviceaccount.ServiceAccountList{},
+	err = clientset.RegisterKind(ctx, publicdashboard.CRD)
+	if err != nil {
+		panic(fmt.Sprintf("generated CRD for PublicDashboard failed to register: %s\n", err))
 	}
+
+	watcherWrapper4 := publicdashboard.NewWatcherWrapper(publicdashboardWatcher)
+	informerFactory.AddWatcher(publicdashboard.CRD, watcherWrapper4)
+
+	reg.all[4] = publicdashboard.CRD
+
+	/************************ ServiceAccount ************************/
 	// TODO Having the committed form on disk in YAML is worth doing this for now...but fix this silliness
 	map5 := make(map[string]any)
 	err = yaml.Unmarshal(serviceaccount.CRDYaml, map5)
@@ -200,17 +279,22 @@ func doNewRegistry(breg *corekind.Base) *Registry {
 	if err != nil {
 		panic(fmt.Sprintf("could not re-marshal CRD JSON for ServiceAccount: %s", err))
 	}
-	err = json.Unmarshal(b, &kk.Schema)
+	err = json.Unmarshal(b, &serviceaccount.CRD.Schema)
 	if err != nil {
 		panic(fmt.Sprintf("could not unmarshal CRD JSON for ServiceAccount: %s", err))
 	}
-	reg.all[5] = kk
 
-	kk = k8ssys.Kind{
-		GrafanaKind: breg.Team(),
-		Object:      &team.Team{},
-		ObjectList:  &team.TeamList{},
+	err = clientset.RegisterKind(ctx, serviceaccount.CRD)
+	if err != nil {
+		panic(fmt.Sprintf("generated CRD for ServiceAccount failed to register: %s\n", err))
 	}
+
+	watcherWrapper5 := serviceaccount.NewWatcherWrapper(serviceaccountWatcher)
+	informerFactory.AddWatcher(serviceaccount.CRD, watcherWrapper5)
+
+	reg.all[5] = serviceaccount.CRD
+
+	/************************ Team ************************/
 	// TODO Having the committed form on disk in YAML is worth doing this for now...but fix this silliness
 	map6 := make(map[string]any)
 	err = yaml.Unmarshal(team.CRDYaml, map6)
@@ -221,11 +305,20 @@ func doNewRegistry(breg *corekind.Base) *Registry {
 	if err != nil {
 		panic(fmt.Sprintf("could not re-marshal CRD JSON for Team: %s", err))
 	}
-	err = json.Unmarshal(b, &kk.Schema)
+	err = json.Unmarshal(b, &team.CRD.Schema)
 	if err != nil {
 		panic(fmt.Sprintf("could not unmarshal CRD JSON for Team: %s", err))
 	}
-	reg.all[6] = kk
+
+	err = clientset.RegisterKind(ctx, team.CRD)
+	if err != nil {
+		panic(fmt.Sprintf("generated CRD for Team failed to register: %s\n", err))
+	}
+
+	watcherWrapper6 := team.NewWatcherWrapper(teamWatcher)
+	informerFactory.AddWatcher(team.CRD, watcherWrapper6)
+
+	reg.all[6] = team.CRD
 
 	return reg
 }
