@@ -1,16 +1,21 @@
 import type { AppConfigureExtension, AppPluginExtensionLink } from '@grafana/data';
 
-export function createLinkValidator(pluginId: string) {
-  const pathPrefix = `/a/${pluginId}/`;
+type Options = {
+  pluginId: string;
+  title: string;
+  logger: (msg: string, error?: unknown) => void;
+};
+
+export function createLinkValidator(options: Options) {
+  const { pluginId, title, logger } = options;
 
   return (configure: AppConfigureExtension<AppPluginExtensionLink>): AppConfigureExtension<AppPluginExtensionLink> => {
     return function validateLink(link, context) {
       const configured = configure(link, context);
-      const path = configured?.path;
 
-      if (path && !path.startsWith(pathPrefix)) {
-        console.warn(
-          `[Plugins] Disabled extension for ${pluginId} beause configure didn't return a path with the correct prefix: '${pathPrefix}'`
+      if (!isValidLinkPath(pluginId, configured?.path)) {
+        logger(
+          `[Plugins] Disabled extension '${title}' for '${pluginId}' beause configure didn't return a path with the correct prefix: '${`/a/${pluginId}/`}'`
         );
         return undefined;
       }
@@ -18,4 +23,8 @@ export function createLinkValidator(pluginId: string) {
       return configured;
     };
   };
+}
+
+export function isValidLinkPath(pluginId: string, path?: string): boolean {
+  return path?.startsWith(`/a/${pluginId}/`) === true;
 }

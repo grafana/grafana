@@ -6,6 +6,7 @@ const validateLink = jest.fn((configure, extension, context) => configure?.(exte
 const errorHandler = jest.fn((configure, extension, context) => configure?.(extension, context));
 
 jest.mock('./errorHandling', () => ({
+  ...jest.requireActual('./errorHandling'),
   createErrorHandling: jest.fn(() => {
     return jest.fn((configure) => {
       return jest.fn((extension, context) => errorHandler(configure, extension, context));
@@ -14,6 +15,7 @@ jest.mock('./errorHandling', () => ({
 }));
 
 jest.mock('./validateLink', () => ({
+  ...jest.requireActual('./validateLink'),
   createLinkValidator: jest.fn(() => {
     return jest.fn((configure) => {
       return jest.fn((extension, context) => validateLink(configure, extension, context));
@@ -239,6 +241,25 @@ describe('Creating extensions registry', () => {
         },
       },
     ]);
+  });
+
+  it('should not register extensions with invalid path configured', () => {
+    const registry = createPluginExtensionRegistry([
+      {
+        pluginId: 'belugacdn-app',
+        linkExtensions: [
+          {
+            placement: 'grafana/dashboard/panel/menu',
+            title: 'Open incident',
+            description: 'You can create an incident from this context',
+            path: '/incidents/declare',
+          },
+        ],
+      },
+    ]);
+
+    const numberOfPlacements = Object.keys(registry).length;
+    expect(numberOfPlacements).toBe(0);
   });
 
   it('should wrap configure function with link extension validator', () => {

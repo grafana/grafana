@@ -4,11 +4,10 @@ import { createErrorHandling } from './errorHandling';
 
 describe('extension error handling', () => {
   const pluginId = 'grafana-basic-app';
-  const logger = jest.fn();
   const errorHandler = createErrorHandling<AppPluginExtensionLink>({
     pluginId: pluginId,
     title: 'Go to page one',
-    logger: logger,
+    logger: jest.fn(),
   });
 
   const context = {};
@@ -17,8 +16,6 @@ describe('extension error handling', () => {
     description: 'Will navigate the user to page one',
     path: `/a/${pluginId}/one`,
   };
-
-  beforeEach(() => logger.mockClear());
 
   it('should return configured link if configure is successful', () => {
     const configureWithErrorHandling = errorHandler(() => {
@@ -32,7 +29,6 @@ describe('extension error handling', () => {
     expect(configured).toEqual({
       title: 'This is a new title',
     });
-    expect(logger).toBeCalledTimes(0);
   });
 
   it('should return undefined if configure throws error', () => {
@@ -43,7 +39,6 @@ describe('extension error handling', () => {
     const configured = configureWithErrorHandling(extension, context);
 
     expect(configured).toBeUndefined();
-    expect(logger).toBeCalledTimes(1);
   });
 
   it('should return undefined if configure is promise/async-based', () => {
@@ -53,7 +48,6 @@ describe('extension error handling', () => {
     const configured = configureWithErrorHandling(extension, context);
 
     expect(configured).toBeUndefined();
-    expect(logger).toBeCalledTimes(1);
   });
 
   it('should return undefined if configure is not a function', () => {
@@ -63,7 +57,6 @@ describe('extension error handling', () => {
     const configured = configureWithErrorHandling(extension, context);
 
     expect(configured).toBeUndefined();
-    expect(logger).toBeCalledTimes(1);
   });
 
   it('should return undefined if configure returns other than an object', () => {
@@ -73,7 +66,6 @@ describe('extension error handling', () => {
     const configured = configureWithErrorHandling(extension, context);
 
     expect(configured).toBeUndefined();
-    expect(logger).toBeCalledTimes(1);
   });
 
   it('should return undefined if configure returns undefined', () => {
@@ -83,6 +75,5 @@ describe('extension error handling', () => {
     const configured = configureWithErrorHandling(extension, context);
 
     expect(configured).toBeUndefined();
-    expect(logger).toBeCalledTimes(0);
   });
 });

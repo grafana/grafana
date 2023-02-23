@@ -14,7 +14,7 @@ import type {
 import { PluginPreloadResult } from '../pluginPreloader';
 
 import { createErrorHandling } from './errorHandling';
-import { createLinkValidator } from './validateLink';
+import { createLinkValidator, isValidLinkPath } from './validateLink';
 
 export function createPluginExtensionRegistry(preloadResults: PluginPreloadResult[]): PluginExtensionRegistry {
   const registry: PluginExtensionRegistry = {};
@@ -59,6 +59,10 @@ function createRegistryLink(
   pluginId: string,
   config: AppPluginExtensionLinkConfig
 ): PluginExtensionRegistryItem<PluginExtensionLink> | undefined {
+  if (!isValidLinkPath(pluginId, config.path)) {
+    return undefined;
+  }
+
   const id = `${pluginId}${config.placement}${config.title}`;
   const extension = Object.freeze({
     type: PluginExtensionTypes.link,
@@ -87,13 +91,15 @@ function createLinkConfigure(
     return undefined;
   }
 
-  const mapper = mapToRegistryType(extension);
-  const validator = createLinkValidator(pluginId);
-  const errorHandler = createErrorHandling<AppPluginExtensionLink>({
+  const options = {
     pluginId: pluginId,
     title: config.title,
     logger: console.warn,
-  });
+  };
+
+  const mapper = mapToRegistryType(extension);
+  const validator = createLinkValidator(options);
+  const errorHandler = createErrorHandling<AppPluginExtensionLink>(options);
 
   return mapper(validator(errorHandler(config.configure)));
 }

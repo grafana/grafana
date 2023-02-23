@@ -4,7 +4,11 @@ import { createLinkValidator } from './validateLink';
 
 describe('extension link validator', () => {
   const pluginId = 'grafana-basic-app';
-  const validator = createLinkValidator(pluginId);
+  const validator = createLinkValidator({
+    pluginId,
+    title: 'Link to something',
+    logger: jest.fn(),
+  });
 
   const context = {};
   const extension: AppPluginExtensionLink = {

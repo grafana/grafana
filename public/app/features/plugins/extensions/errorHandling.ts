@@ -5,7 +5,7 @@ import type { AppConfigureExtension } from '@grafana/data';
 type Options = {
   pluginId: string;
   title: string;
-  logger: (message: string, error?: unknown) => void;
+  logger: (msg: string, error?: unknown) => void;
 };
 
 export function createErrorHandling<T>(options: Options) {
