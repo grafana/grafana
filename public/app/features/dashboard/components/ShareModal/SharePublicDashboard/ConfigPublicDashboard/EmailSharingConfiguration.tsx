@@ -43,7 +43,7 @@ export const EmailSharingConfiguration = () => {
   const dashboard = dashboardState.getModel()!;
 
   const { data: publicDashboard } = useGetPublicDashboardQuery(dashboard.uid);
-  const [update] = useUpdatePublicDashboardMutation();
+  const [updateShareType] = useUpdatePublicDashboardMutation();
   const [addEmail, { isLoading: isAddEmailLoading }] = useAddEmailSharingMutation();
 
   const onShareTypeChange = (shareType: PublicDashboardShareType) => {
@@ -55,9 +55,7 @@ export const EmailSharingConfiguration = () => {
       },
     };
 
-    console.log('el req', req);
-
-    update(req);
+    updateShareType(req);
   };
 
   const onSubmit = (data: EmailSharingConfigurationForm) => {
@@ -95,62 +93,61 @@ export const EmailSharingConfiguration = () => {
                 />
               </Field>
               {watch('shareType') === PublicDashboardShareType.EMAIL && (
-                <Field
-                  label="Invite"
-                  description="Invite people by email separated by comma "
-                  error={errors?.email?.message}
-                  invalid={!!errors.email}
-                >
-                  <div className={styles.emailContainer}>
-                    <Input
-                      className={styles.emailInput}
-                      // data-testid="requestAccessEmail"
-                      placeholder="email"
-                      autoCapitalize="none"
-                      {...register('email', {
-                        required: 'Email is required',
-                        pattern: { value: validEmailRegex, message: 'Invalid email' },
-                      })}
-                    />
-                    <Button type="submit" variant="primary">
-                      Invite {isAddEmailLoading && <Spinner />}
-                    </Button>
-                  </div>
-                </Field>
+                <>
+                  <Field
+                    label="Invite"
+                    description="Invite people by email separated by comma "
+                    error={errors?.email?.message}
+                    invalid={!!errors.email}
+                  >
+                    <div className={styles.emailContainer}>
+                      <Input
+                        className={styles.emailInput}
+                        placeholder="email"
+                        autoCapitalize="none"
+                        {...register('email', {
+                          required: 'Email is required',
+                          pattern: { value: validEmailRegex, message: 'Invalid email' },
+                        })}
+                      />
+                      <Button type="submit" variant="primary">
+                        Invite {isAddEmailLoading && <Spinner />}
+                      </Button>
+                    </div>
+                  </Field>
+                  {!!publicDashboard?.recipients?.length && (
+                    <div className={styles.table}>
+                      <table className="filter-table">
+                        <tbody>
+                          {publicDashboard.recipients.map((recipient) => (
+                            <tr key={recipient.uid}>
+                              <td>{recipient.recipient}</td>
+                              <td>
+                                <ButtonGroup className={styles.tableButtonsContainer}>
+                                  <Button
+                                    type="button"
+                                    variant="destructive"
+                                    fill="text"
+                                    aria-label="Revoke"
+                                    className={styles.button}
+                                    title="Revoke"
+                                    onClick={() => {}}
+                                  >
+                                    Revoke
+                                  </Button>
+                                </ButtonGroup>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}
         </Form>
-        {!!publicDashboard?.recipients?.length && (
-          <table className="filter-table">
-            <tbody>
-              {publicDashboard.recipients.map((recipient) => (
-                <tr key={recipient.uid}>
-                  <td>{recipient.recipient}</td>
-                  <td>
-                    <ButtonGroup
-                      className={css`
-                        display: flex;
-                        justify-content: end;
-                      `}
-                    >
-                      <Button
-                        type="button"
-                        variant="primary"
-                        fill="text"
-                        aria-label="Resend"
-                        title="Resend"
-                        onClick={() => {}}
-                      >
-                        Revoke
-                      </Button>
-                    </ButtonGroup>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
       </VerticalGroup>
     </div>
   );
@@ -167,5 +164,19 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   emailInput: css`
     flex-grow: 1;
+  `,
+  table: css`
+    width: 100%;
+    max-height: 110px;
+    overflow-y: scroll;
+    margin-bottom: ${theme.spacing(1)};
+  `,
+  tableButtonsContainer: css`
+    display: flex;
+    justify-content: end;
+  `,
+  button: css`
+    padding: 0;
+    font-weight: 100;
   `,
 });
