@@ -7,8 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/grafana/alerting/alerting"
-	"github.com/grafana/alerting/alerting/notifier/channels"
+	alertingNotify "github.com/grafana/alerting/notify"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	api "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -90,20 +89,20 @@ func Load(rawConfig []byte) (*api.PostableUserConfig, error) {
 }
 
 // AlertingConfiguration provides configuration for an Alertmanager.
-// It implements the alerting.Configuration interface.
+// It implements the notify.Configuration interface.
 type AlertingConfiguration struct {
 	AlertmanagerConfig    api.PostableApiAlertingConfig
 	RawAlertmanagerConfig []byte
 
-	AlertmanagerTemplates *alerting.Template
+	AlertmanagerTemplates *alertingNotify.Template
 
-	IntegrationsFunc         func(receivers []*api.PostableApiReceiver, templates *alerting.Template) (map[string][]*alerting.Integration, error)
-	ReceiverIntegrationsFunc func(r *api.PostableGrafanaReceiver, tmpl *alerting.Template) (channels.NotificationChannel, error)
+	IntegrationsFunc         func(receivers []*api.PostableApiReceiver, templates *alertingNotify.Template) (map[string][]*alertingNotify.Integration, error)
+	ReceiverIntegrationsFunc func(r *api.PostableGrafanaReceiver, tmpl *alertingNotify.Template) (alertingNotify.NotificationChannel, error)
 }
 
-func (a AlertingConfiguration) BuildReceiverIntegrationsFunc() func(next *alerting.GrafanaReceiver, tmpl *alerting.Template) (alerting.Notifier, error) {
-	return func(next *alerting.GrafanaReceiver, tmpl *alerting.Template) (alerting.Notifier, error) {
-		//TODO: We shouldn't need to do all of this marshalling - there should be no difference between types.
+func (a AlertingConfiguration) BuildReceiverIntegrationsFunc() func(next *alertingNotify.GrafanaReceiver, tmpl *alertingNotify.Template) (alertingNotify.Notifier, error) {
+	return func(next *alertingNotify.GrafanaReceiver, tmpl *alertingNotify.Template) (alertingNotify.Notifier, error) {
+		// TODO: We shouldn't need to do all of this marshalling - there should be no difference between types.
 		var out api.RawMessage
 		settingsJSON, err := json.Marshal(next.Settings)
 		if err != nil {
@@ -126,27 +125,27 @@ func (a AlertingConfiguration) BuildReceiverIntegrationsFunc() func(next *alerti
 	}
 }
 
-func (a AlertingConfiguration) DispatcherLimits() alerting.DispatcherLimits {
+func (a AlertingConfiguration) DispatcherLimits() alertingNotify.DispatcherLimits {
 	return &nilLimits{}
 }
 
-func (a AlertingConfiguration) InhibitRules() []alerting.InhibitRule {
+func (a AlertingConfiguration) InhibitRules() []alertingNotify.InhibitRule {
 	return a.AlertmanagerConfig.InhibitRules
 }
 
-func (a AlertingConfiguration) MuteTimeIntervals() []alerting.MuteTimeInterval {
+func (a AlertingConfiguration) MuteTimeIntervals() []alertingNotify.MuteTimeInterval {
 	return a.AlertmanagerConfig.MuteTimeIntervals
 }
 
-func (a AlertingConfiguration) ReceiverIntegrations() (map[string][]*alerting.Integration, error) {
+func (a AlertingConfiguration) ReceiverIntegrations() (map[string][]*alertingNotify.Integration, error) {
 	return a.IntegrationsFunc(a.AlertmanagerConfig.Receivers, a.AlertmanagerTemplates)
 }
 
-func (a AlertingConfiguration) RoutingTree() *alerting.Route {
+func (a AlertingConfiguration) RoutingTree() *alertingNotify.Route {
 	return a.AlertmanagerConfig.Route.AsAMRoute()
 }
 
-func (a AlertingConfiguration) Templates() *alerting.Template {
+func (a AlertingConfiguration) Templates() *alertingNotify.Template {
 	return a.AlertmanagerTemplates
 }
 

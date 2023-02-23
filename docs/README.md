@@ -52,7 +52,7 @@ To specify different menu text from the page title, use the front matter paramet
 
 ### Add images
 
-Images are currently hosted in the grafana/website repo.
+Please see our help documentation on [Image, diagram, and screenshot guidelines](https://grafana.com/docs/writers-toolkit/writing-guide/image-guidelines/) for comprehensive information.
 
 ---
 

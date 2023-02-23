@@ -4,34 +4,29 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"errors"
+	"fmt"
 	"net"
 	"strings"
 	"time"
 
+	"golang.org/x/sync/singleflight"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-const (
-	ttl              = 15 * time.Second
-	urgentRotateTime = 1 * time.Minute
-)
+const urgentRotateTime = 1 * time.Minute
 
 var getTime = time.Now
 
 func ProvideUserAuthTokenService(sqlStore db.DB,
 	serverLockService *serverlock.ServerLockService,
-	remoteCache *remotecache.RemoteCache,
-	features *featuremgmt.FeatureManager,
 	quotaService quota.Service,
 	cfg *setting.Cfg) (*UserAuthTokenService, error) {
 	s := &UserAuthTokenService{
@@ -39,8 +34,7 @@ func ProvideUserAuthTokenService(sqlStore db.DB,
 		serverLockService: serverLockService,
 		cfg:               cfg,
 		log:               log.New("auth"),
-		remoteCache:       remoteCache,
-		features:          features,
+		singleflight:      new(singleflight.Group),
 	}
 
 	defaultLimits, err := readQuotaConfig(cfg)
@@ -56,8 +50,6 @@ func ProvideUserAuthTokenService(sqlStore db.DB,
 		return s, err
 	}
 
-	remotecache.Register(auth.UserToken{})
-
 	return s, nil
 }
 
@@ -66,8 +58,7 @@ type UserAuthTokenService struct {
 	serverLockService *serverlock.ServerLockService
 	cfg               *setting.Cfg
 	log               log.Logger
-	remoteCache       *remotecache.RemoteCache
-	features          *featuremgmt.FeatureManager
+	singleflight      *singleflight.Group
 }
 
 func (s *UserAuthTokenService) CreateToken(ctx context.Context, user *user.User, clientIP net.IP, userAgent string) (*auth.UserToken, error) {
@@ -118,52 +109,7 @@ func (s *UserAuthTokenService) CreateToken(ctx context.Context, user *user.User,
 	return &userToken, err
 }
 
-func (s *UserAuthTokenService) lookupTokenWithCache(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
-	hashedToken := hashToken(unhashedToken)
-	cacheKey := "auth_token:" + hashedToken
-
-	session, errCache := s.remoteCache.Get(ctx, cacheKey)
-	if errCache == nil {
-		token := session.(auth.UserToken)
-		return &token, nil
-	} else {
-		if errors.Is(errCache, remotecache.ErrCacheItemNotFound) {
-			s.log.Debug("user auth token not found in cache",
-				"cacheKey", cacheKey)
-		} else {
-			s.log.Warn("failed to get user auth token from cache",
-				"cacheKey", cacheKey, "error", errCache)
-		}
-	}
-
-	token, err := s.lookupToken(ctx, unhashedToken)
-	if err != nil {
-		return nil, err
-	}
-
-	// only cache tokens until their near rotation time
-	// Near rotation time = tokens last rotation plus the rotation interval minus 2 ttl (=30s by default)
-	nextRotation := time.Unix(token.RotatedAt, 0).
-		Add(-2 * ttl). // subtract 2 ttl to make sure we don't cache tokens that are about to expire
-		Add(time.Duration(s.cfg.TokenRotationIntervalMinutes) * time.Minute)
-	if now := getTime(); now.Before(nextRotation) {
-		if err := s.remoteCache.Set(ctx, cacheKey, *token, ttl); err != nil {
-			s.log.Warn("could not cache token", "error", err, "cacheKey", cacheKey, "userId", token.UserId)
-		}
-	}
-
-	return token, nil
-}
-
 func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
-	if s.features != nil && s.features.IsEnabled(featuremgmt.FlagSessionRemoteCache) {
-		return s.lookupTokenWithCache(ctx, unhashedToken)
-	}
-
-	return s.lookupToken(ctx, unhashedToken)
-}
-
-func (s *UserAuthTokenService) lookupToken(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
 	hashedToken := hashToken(unhashedToken)
 	var model userAuthToken
 	var exists bool
@@ -202,6 +148,7 @@ func (s *UserAuthTokenService) lookupToken(ctx context.Context, unhashedToken st
 		}
 	}
 
+	// Current incoming token is the previous auth token in the DB and the auth_token_seen is true
 	if model.AuthToken != hashedToken && model.PrevAuthToken == hashedToken && model.AuthTokenSeen {
 		modelCopy := model
 		modelCopy.AuthTokenSeen = false
@@ -229,6 +176,7 @@ func (s *UserAuthTokenService) lookupToken(ctx context.Context, unhashedToken st
 		}
 	}
 
+	// Current incoming token is not seen and it is the latest valid auth token in the db
 	if !model.AuthTokenSeen && model.AuthToken == hashedToken {
 		modelCopy := model
 		modelCopy.AuthTokenSeen = true
@@ -268,83 +216,102 @@ func (s *UserAuthTokenService) lookupToken(ctx context.Context, unhashedToken st
 }
 
 func (s *UserAuthTokenService) TryRotateToken(ctx context.Context, token *auth.UserToken,
-	clientIP net.IP, userAgent string) (bool, error) {
+	clientIP net.IP, userAgent string) (bool, *auth.UserToken, error) {
 	if token == nil {
-		return false, nil
+		return false, nil, nil
 	}
 
 	model, err := userAuthTokenFromUserToken(token)
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
 	now := getTime()
 
-	var needsRotation bool
-	rotatedAt := time.Unix(model.RotatedAt, 0)
-	if model.AuthTokenSeen {
-		needsRotation = rotatedAt.Before(now.Add(-time.Duration(s.cfg.TokenRotationIntervalMinutes) * time.Minute))
-	} else {
-		needsRotation = rotatedAt.Before(now.Add(-urgentRotateTime))
+	type rotationResult struct {
+		rotated  bool
+		newToken *auth.UserToken
 	}
 
-	if !needsRotation {
-		return false, nil
-	}
-
-	ctxLogger := s.log.FromContext(ctx)
-	ctxLogger.Debug("token needs rotation", "tokenId", model.Id, "authTokenSeen", model.AuthTokenSeen, "rotatedAt", rotatedAt)
-
-	clientIPStr := clientIP.String()
-	if len(clientIP) == 0 {
-		clientIPStr = ""
-	}
-	newToken, err := util.RandomHex(16)
-	if err != nil {
-		return false, err
-	}
-	hashedToken := hashToken(newToken)
-
-	// very important that auth_token_seen is set after the prev_auth_token = case when ... for mysql to function correctly
-	sql := `
-		UPDATE user_auth_token
-		SET
-			seen_at = 0,
-			user_agent = ?,
-			client_ip = ?,
-			prev_auth_token = case when auth_token_seen = ? then auth_token else prev_auth_token end,
-			auth_token = ?,
-			auth_token_seen = ?,
-			rotated_at = ?
-		WHERE id = ? AND (auth_token_seen = ? OR rotated_at < ?)`
-
-	var affected int64
-	err = s.sqlStore.WithTransactionalDbSession(ctx, func(dbSession *db.Session) error {
-		res, err := dbSession.Exec(sql, userAgent, clientIPStr, s.sqlStore.GetDialect().BooleanStr(true), hashedToken,
-			s.sqlStore.GetDialect().BooleanStr(false), now.Unix(), model.Id, s.sqlStore.GetDialect().BooleanStr(true),
-			now.Add(-30*time.Second).Unix())
-		if err != nil {
-			return err
+	rotResult, err, _ := s.singleflight.Do(fmt.Sprint(model.Id), func() (interface{}, error) {
+		var needsRotation bool
+		rotatedAt := time.Unix(model.RotatedAt, 0)
+		if model.AuthTokenSeen {
+			needsRotation = rotatedAt.Before(now.Add(-time.Duration(s.cfg.TokenRotationIntervalMinutes) * time.Minute))
+		} else {
+			needsRotation = rotatedAt.Before(now.Add(-urgentRotateTime))
 		}
 
-		affected, err = res.RowsAffected()
-		return err
+		if !needsRotation {
+			return &rotationResult{rotated: false}, nil
+		}
+
+		ctxLogger := s.log.FromContext(ctx)
+		ctxLogger.Debug("token needs rotation", "tokenId", model.Id, "authTokenSeen", model.AuthTokenSeen, "rotatedAt", rotatedAt)
+
+		clientIPStr := clientIP.String()
+		if len(clientIP) == 0 {
+			clientIPStr = ""
+		}
+		newToken, err := util.RandomHex(16)
+		if err != nil {
+			return nil, err
+		}
+		hashedToken := hashToken(newToken)
+
+		// very important that auth_token_seen is set after the prev_auth_token = case when ... for mysql to function correctly
+		sql := `
+			UPDATE user_auth_token
+			SET
+				seen_at = 0,
+				user_agent = ?,
+				client_ip = ?,
+				prev_auth_token = case when auth_token_seen = ? then auth_token else prev_auth_token end,
+				auth_token = ?,
+				auth_token_seen = ?,
+				rotated_at = ?
+			WHERE id = ? AND (auth_token_seen = ? OR rotated_at < ?)`
+
+		var affected int64
+		err = s.sqlStore.WithTransactionalDbSession(ctx, func(dbSession *db.Session) error {
+			res, err := dbSession.Exec(sql, userAgent, clientIPStr, s.sqlStore.GetDialect().BooleanStr(true), hashedToken,
+				s.sqlStore.GetDialect().BooleanStr(false), now.Unix(), model.Id, s.sqlStore.GetDialect().BooleanStr(true),
+				now.Add(-30*time.Second).Unix())
+			if err != nil {
+				return err
+			}
+
+			affected, err = res.RowsAffected()
+			return err
+		})
+
+		if err != nil {
+			return nil, err
+		}
+
+		if affected > 0 {
+			ctxLogger.Debug("auth token rotated", "affected", affected, "auth_token_id", model.Id, "userId", model.UserId)
+			model.UnhashedToken = newToken
+			var result auth.UserToken
+			if err := model.toUserToken(&result); err != nil {
+				return nil, err
+			}
+			return &rotationResult{
+				rotated:  true,
+				newToken: &result,
+			}, nil
+		}
+
+		return &rotationResult{rotated: false}, nil
 	})
 
 	if err != nil {
-		return false, err
+		return false, nil, err
 	}
 
-	ctxLogger.Debug("auth token rotated", "affected", affected, "auth_token_id", model.Id, "userId", model.UserId)
-	if affected > 0 {
-		model.UnhashedToken = newToken
-		if err := model.toUserToken(token); err != nil {
-			return false, err
-		}
-		return true, nil
-	}
+	result := rotResult.(*rotationResult)
 
-	return false, nil
+	return result.rotated, result.newToken, nil
 }
 
 func (s *UserAuthTokenService) RevokeToken(ctx context.Context, token *auth.UserToken, soft bool) error {

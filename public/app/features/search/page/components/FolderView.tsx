@@ -19,6 +19,7 @@ type Props = Pick<SearchResultsProps, 'selection' | 'selectionToggle' | 'onTagSe
   tags?: string[];
   hidePseudoFolders?: boolean;
 };
+
 export const FolderView = ({
   selection,
   selectionToggle,
@@ -31,6 +32,7 @@ export const FolderView = ({
 
   const results = useAsync(async () => {
     const folders: DashboardSection[] = [];
+
     if (!hidePseudoFolders) {
       if (contextSrv.isSignedIn) {
         const stars = await getBackendSrv().get('api/user/stars');
@@ -44,6 +46,7 @@ export const FolderView = ({
         folders.push({ title: 'Recent', icon: 'clock-nine', kind: 'query-recent', uid: '__recent', itemsUIDs });
       }
     }
+
     folders.push({ title: 'General', url: '/dashboards', kind: 'folder', uid: GENERAL_FOLDER_UID });
 
     const searcher = getGrafanaSearcher();

@@ -13790,6 +13790,9 @@
           "type": "integer",
           "format": "int64"
         },
+        "is_paused": {
+          "type": "boolean"
+        },
         "namespace_id": {
           "type": "integer",
           "format": "int64"
@@ -19073,6 +19076,7 @@
       }
     },
     "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
@@ -19315,6 +19319,7 @@
       }
     },
     "receiver": {
+      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "active",

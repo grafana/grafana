@@ -1,23 +1,20 @@
 import { render, screen } from '@testing-library/react';
+import { History, Location } from 'history';
 import React, { ComponentType } from 'react';
-import { Provider } from 'react-redux';
-import { BrowserRouter } from 'react-router-dom';
-import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
+import { match } from 'react-router-dom';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { setEchoSrv } from '@grafana/runtime';
 
-import { configureStore } from '../../store/configureStore';
-import { GrafanaContext } from '../context/GrafanaContext';
 import { Echo } from '../services/echo/Echo';
 
 import { GrafanaRoute, Props } from './GrafanaRoute';
 
 function setup(overrides: Partial<Props>) {
-  const store = configureStore();
   const props: Props = {
-    location: { search: '?query=hello&test=asd' } as any,
-    history: {} as any,
-    match: {} as any,
+    location: { search: '?query=hello&test=asd' } as Location,
+    history: {} as History,
+    match: {} as match,
     route: {
       path: '/',
       component: () => <div />,
@@ -26,13 +23,9 @@ function setup(overrides: Partial<Props>) {
   };
 
   render(
-    <BrowserRouter>
-      <GrafanaContext.Provider value={getGrafanaContextMock()}>
-        <Provider store={store}>
-          <GrafanaRoute {...props} />
-        </Provider>
-      </GrafanaContext.Provider>
-    </BrowserRouter>
+    <TestProvider>
+      <GrafanaRoute {...props} />
+    </TestProvider>
   );
 }
 

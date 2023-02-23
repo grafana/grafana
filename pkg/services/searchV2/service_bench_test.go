@@ -39,7 +39,7 @@ func setupBenchEnv(b *testing.B, folderCount, dashboardsPerFolder int) (*Standar
 	}
 	querySvc := querylibraryimpl.ProvideService(cfg, features)
 	searchService, ok := ProvideService(cfg, sqlStore, store.NewDummyEntityEventsService(), actest.FakeService{},
-		tracing.InitializeTracerForTest(), features, orgSvc, nil, querySvc).(*StandardSearchService)
+		tracing.InitializeTracerForTest(), features, orgSvc, nil, querySvc, nil).(*StandardSearchService)
 	require.True(b, ok)
 
 	err = runSearchService(searchService)

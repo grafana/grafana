@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
+var _ authn.HookClient = new(Session)
 var _ authn.ContextAwareClient = new(Session)
 
 func ProvideSession(sessionService auth.UserTokenService, userService user.Service,
@@ -64,7 +65,6 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 		return nil, err
 	}
 
-	// FIXME (jguer): oauth token refresh not implemented
 	identity := authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, signedInUser.UserID), signedInUser, authn.ClientParams{})
 	identity.SessionToken = token
 
@@ -87,7 +87,7 @@ func (s *Session) Priority() uint {
 	return 60
 }
 
-func (s *Session) RefreshTokenHook(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
+func (s *Session) Hook(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
 	if identity.SessionToken == nil {
 		return nil
 	}
@@ -107,13 +107,14 @@ func (s *Session) RefreshTokenHook(ctx context.Context, identity *authn.Identity
 			s.log.Debug("failed to get client IP address", "addr", addr, "err", err)
 			ip = nil
 		}
-		rotated, err := s.sessionService.TryRotateToken(ctx, identity.SessionToken, ip, userAgent)
+		rotated, newToken, err := s.sessionService.TryRotateToken(ctx, identity.SessionToken, ip, userAgent)
 		if err != nil {
 			s.log.Error("failed to rotate token", "error", err)
 			return
 		}
 
 		if rotated {
+			identity.SessionToken = newToken
 			s.log.Debug("rotated session token", "user", identity.ID)
 
 			maxAge := int(s.loginMaxLifetime.Seconds())

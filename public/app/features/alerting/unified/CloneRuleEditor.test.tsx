@@ -2,8 +2,7 @@ import { render, waitFor, waitForElementToBeRemoved } from '@testing-library/rea
 import { setupServer } from 'msw/node';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
+import { TestProvider } from 'test/helpers/TestProvider';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors/src';
@@ -91,11 +90,9 @@ function getProvidersWrapper() {
     const formApi = useForm<RuleFormValues>({ defaultValues: getDefaultFormValues() });
 
     return (
-      <MemoryRouter>
-        <Provider store={store}>
-          <FormProvider {...formApi}>{children}</FormProvider>
-        </Provider>
-      </MemoryRouter>
+      <TestProvider store={store}>
+        <FormProvider {...formApi}>{children}</FormProvider>
+      </TestProvider>
     );
   };
 }
