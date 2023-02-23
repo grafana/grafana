@@ -88,9 +88,7 @@ function adjustTargetsFromResponseState(targets: LokiQuery[], response: DataQuer
 
 export function runPartitionedQuery(datasource: LokiDatasource, request: DataQueryRequest<LokiQuery>) {
   let mergedResponse: DataQueryResponse | null;
-  const queries = request.targets.filter((query) => !query.hide);
-  // we assume there is just a single query in the request
-  const query = queries[0];
+  const query = request.targets[0];
   const partition = partitionTimeRange(
     isLogsQuery(query.expr),
     request.range,
@@ -160,4 +158,25 @@ export function runPartitionedQuery(datasource: LokiDatasource, request: DataQue
   });
 
   return response;
+}
+
+export function runPartitionedQueries(datasource: LokiDatasource, request: DataQueryRequest<LokiQuery>) {
+  const logQueries = request.targets.filter((query) => isLogsQuery(query.expr));
+  const metricQueries = request.targets.filter((query) => !logQueries.includes(query));
+
+  const queries = [];
+  if (logQueries.length) {
+    queries.push({
+      queries: logQueries,
+      partition: partitionTimeRange(true, request.range, request.intervalMs, logQueries[0].resolution ?? 1),
+    });
+  }
+  if (metricQueries.length) {
+    queries.push({
+      queries: logQueries,
+      partition: partitionTimeRange(false, request.range, request.intervalMs, logQueries[0].resolution ?? 1),
+    });
+  }
+  console.log(queries);
+  return runPartitionedQuery(datasource, request);
 }

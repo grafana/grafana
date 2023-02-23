@@ -68,7 +68,7 @@ import {
   getLabelFilterPositions,
 } from './modifyQuery';
 import { getQueryHints } from './queryHints';
-import { runPartitionedQuery } from './querySplitting';
+import { runPartitionedQueries } from './querySplitting';
 import {
   getLogQueryFromMetricsQuery,
   getNormalizedLokiQuery,
@@ -285,7 +285,7 @@ export class LokiDatasource
     }
 
     if (config.featureToggles.lokiQuerySplitting && requestSupportsPartitioning(fixedRequest.targets)) {
-      return runPartitionedQuery(this, fixedRequest);
+      return runPartitionedQueries(this, fixedRequest);
     }
 
     return this.runQuery(fixedRequest);
