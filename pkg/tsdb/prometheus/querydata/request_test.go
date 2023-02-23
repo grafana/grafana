@@ -358,15 +358,15 @@ func executeWithHeaders(tctx *testContext, query backend.DataQuery, qr interface
 		return nil, err
 	}
 
-	defer func() {
-		err = promRes.Body.Close()
-	}()
-
 	tctx.httpProvider.setResponse(promRes)
 
 	res, err := tctx.queryData.Execute(context.Background(), &req)
+	errClose := promRes.Body.Close()
 	if err != nil {
 		return nil, err
+	}
+	if errClose != nil {
+		return nil, errClose
 	}
 
 	return res.Responses[req.Queries[0].RefID].Frames, nil
