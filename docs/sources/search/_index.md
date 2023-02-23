@@ -97,4 +97,4 @@ The command palette enables you to:
 
 To open the Command Palette, press `cmd+K` in macOS or `ctrl+k` in Linux/Windows. You can also click on the input placed in the navigation bar.
 
-> **Note:** To go to the previous step, press `backspace` with the Command Palette input empty.
+> **Note:** To go to the previous step, press `backspace` with the command palette input empty.
