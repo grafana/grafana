@@ -66,7 +66,7 @@ require (
 	github.com/google/wire v0.5.0
 	github.com/gorilla/websocket v1.5.0
 	github.com/grafana/alerting v0.0.0-20230203015918-0e4e2675d7aa
-	github.com/grafana/cuetsy v0.1.5
+	github.com/grafana/cuetsy v0.1.6
 	github.com/grafana/grafana-aws-sdk v0.12.0
 	github.com/grafana/grafana-azure-sdk-go v1.6.0
 	github.com/grafana/grafana-plugin-sdk-go v0.149.1

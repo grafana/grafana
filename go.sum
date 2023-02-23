@@ -1248,8 +1248,8 @@ github.com/grafana/alerting v0.0.0-20230203015918-0e4e2675d7aa h1:ue2fctL9LHJWYw
 github.com/grafana/alerting v0.0.0-20230203015918-0e4e2675d7aa/go.mod h1:NoSLbfmUwE+omWFReFrLtbtOItmvTbuQERJ6XFYp9ME=
 github.com/grafana/codejen v0.0.3 h1:tAWxoTUuhgmEqxJPOLtJoxlPBbMULFwKFOcRsPRPXDw=
 github.com/grafana/codejen v0.0.3/go.mod h1:zmwwM/DRyQB7pfuBjTWII3CWtxcXh8LTwAYGfDfpR6s=
-github.com/grafana/cuetsy v0.1.5 h1:mnFwAXdbqCsyL8r7kkdUMJ4kOAR26cxIPmrZj7JzTeY=
-github.com/grafana/cuetsy v0.1.5/go.mod h1:4KWkUOslwvRTpEv7wdQG0jDFTuJmU+0L9x0h4kWxa2A=
+github.com/grafana/cuetsy v0.1.6 h1:61QGIDy1rVABU3OkoarOn0+qPdGopIJr34PyWVmGDfs=
+github.com/grafana/cuetsy v0.1.6/go.mod h1:4KWkUOslwvRTpEv7wdQG0jDFTuJmU+0L9x0h4kWxa2A=
 github.com/grafana/dskit v0.0.0-20230202092222-880a7f8141cc h1:lQFgXpsZNDdi0whUROW15r/akzLIdXAn6xr5vqlZucI=
 github.com/grafana/dskit v0.0.0-20230202092222-880a7f8141cc/go.mod h1:ulYLLoSd71AWIjxgifLO86Lndx82Yj+IcV+fFnh8tkI=
 github.com/grafana/go-mssqldb v0.0.0-20210326084033-d0ce3c521036 h1:GplhUk6Xes5JIhUUrggPcPBhOn+eT8+WsHiebvq7GgA=
@@ -1262,8 +1262,6 @@ github.com/grafana/grafana-google-sdk-go v0.0.0-20211104130251-b190293eaf58 h1:2
 github.com/grafana/grafana-google-sdk-go v0.0.0-20211104130251-b190293eaf58/go.mod h1:Vo2TKWfDVmNTELBUM+3lkrZvFtBws0qSZdXhQxRdJrE=
 github.com/grafana/grafana-plugin-sdk-go v0.94.0/go.mod h1:3VXz4nCv6wH5SfgB3mlW39s+c+LetqSCjFj7xxPC5+M=
 github.com/grafana/grafana-plugin-sdk-go v0.114.0/go.mod h1:D7x3ah+1d4phNXpbnOaxa/osSaZlwh9/ZUnGGzegRbk=
-github.com/grafana/grafana-plugin-sdk-go v0.148.0 h1:M8v6L9agAFMlZMnak1yInII+aVF5FjZ1Qv4Q+GANyk4=
-github.com/grafana/grafana-plugin-sdk-go v0.148.0/go.mod h1:NMgO3t2gR5wyLx8bWZ9CTmpDk5Txp4wYFccFLHdYn3Q=
 github.com/grafana/grafana-plugin-sdk-go v0.149.1 h1:n4Mx8oUE+exa1DGdWSUmp2DuZUDhURQEzPG05HUGfnc=
 github.com/grafana/grafana-plugin-sdk-go v0.149.1/go.mod h1:NMgO3t2gR5wyLx8bWZ9CTmpDk5Txp4wYFccFLHdYn3Q=
 github.com/grafana/phlare/api v0.1.2 h1:1jrwd3KnsXMzj/tJih9likx5EvbY3pbvLbDqAAYem30=

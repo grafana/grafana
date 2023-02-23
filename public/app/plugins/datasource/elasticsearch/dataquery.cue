@@ -364,7 +364,7 @@ composableKinds: DataQuery: {
 						// #MovingAverage's settings are overridden in types.ts
 						#MovingAverage: {
 							#BasePipelineMetricAggregation
-							type: "moving_avg"
+							type: #PipelineMetricAggregationType & "moving_avg"
 							settings?: {...}
 						} @cuetsy(kind="interface")
 
