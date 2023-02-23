@@ -21,7 +21,7 @@ var (
 func ProvideOAuthTokenSync(service oauthtoken.OAuthTokenService, sessionService auth.UserTokenService) *OAuthTokenSync {
 	return &OAuthTokenSync{
 		log.New("oauth_token.sync"),
-		localcache.New(10*time.Minute, 15*time.Minute),
+		localcache.New(maxOAuthTokenCacheTTL, 15*time.Minute),
 		service,
 		sessionService,
 	}
