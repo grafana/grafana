@@ -403,10 +403,6 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       params.db = this.database;
     }
 
-    if (options?.policy) {
-      params.rp = options.policy;
-    }
-
     const { q } = data;
 
     if (method === 'POST' && has(data, 'q')) {
