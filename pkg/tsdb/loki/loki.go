@@ -168,6 +168,11 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datas
 		queryRes := backend.DataResponse{}
 
 		if err != nil {
+			traceId := tracing.TraceIDFromContext(ctx, false)
+			// tracing might be disabled
+			if traceId != "" {
+				err = fmt.Errorf("%v (traceId:%s)", err, traceId)
+			}
 			queryRes.Error = err
 		} else {
 			queryRes.Frames = frames
