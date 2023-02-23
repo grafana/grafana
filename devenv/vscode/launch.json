@@ -14,7 +14,7 @@
       "args": [
           "--homepath=${workspaceFolder}",
           "--packaging=dev",
-          "cfg:app_mode=development",
+          "cfg:app_mode=development"
       ]
   }
   ]
