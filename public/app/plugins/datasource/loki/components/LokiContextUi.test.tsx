@@ -18,8 +18,8 @@ describe('LokiContextUi', () => {
   const savedGlobal = global;
   beforeAll(() => {
     // TODO: `structuredClone` is not yet in jsdom https://github.com/jsdom/jsdom/issues/3363
-    if (!(global as any).structuredClone) {
-      (global as any).structuredClone = function structuredClone(objectToClone: any) {
+    if (!global.structuredClone) {
+      global.structuredClone = function structuredClone(objectToClone: unknown) {
         const stringified = JSON.stringify(objectToClone);
         const parsed = JSON.parse(stringified);
         return parsed;

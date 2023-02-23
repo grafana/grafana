@@ -379,6 +379,9 @@ func executeFPM(options linuxPackageOptions, packageRoot, srcDir string) error {
 		"--vendor", vendor,
 		"-a", string(options.packageArch),
 	}
+	if options.prermSrc != "" {
+		args = append(args, "--before-remove", options.prermSrc)
+	}
 	if options.edition == config.EditionEnterprise || options.edition == config.EditionEnterprise2 || options.goArch == config.ArchARMv6 {
 		args = append(args, "--conflicts", "grafana")
 	}
@@ -727,6 +730,7 @@ func realPackageVariant(ctx context.Context, v config.Variant, edition config.Ed
 			initdScriptFilePath:    "/etc/init.d/grafana-server",
 			systemdServiceFilePath: "/usr/lib/systemd/system/grafana-server.service",
 			postinstSrc:            filepath.Join(grafanaDir, "packaging", "deb", "control", "postinst"),
+			prermSrc:               filepath.Join(grafanaDir, "packaging", "deb", "control", "prerm"),
 			initdScriptSrc:         filepath.Join(grafanaDir, "packaging", "deb", "init.d", "grafana-server"),
 			defaultFileSrc:         filepath.Join(grafanaDir, "packaging", "deb", "default", "grafana-server"),
 			systemdFileSrc:         filepath.Join(grafanaDir, "packaging", "deb", "systemd", "grafana-server.service"),
@@ -843,6 +847,7 @@ type linuxPackageOptions struct {
 	initdScriptFilePath    string
 	systemdServiceFilePath string
 	postinstSrc            string
+	prermSrc               string
 	initdScriptSrc         string
 	defaultFileSrc         string
 	systemdFileSrc         string

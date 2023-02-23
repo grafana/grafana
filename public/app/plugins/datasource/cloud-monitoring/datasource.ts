@@ -223,14 +223,16 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
   // This is a manual port of the migration code in cloudmonitoring.go
   // DO NOT UPDATE THIS CODE WITHOUT UPDATING THE BACKEND CODE
   migrateQuery(query: CloudMonitoringQuery): CloudMonitoringQuery {
+    const { hide, refId, datasource, key, queryType, maxLines, metric, intervalMs, type, ...rest } = query as any;
     if (
       !query.hasOwnProperty('metricQuery') &&
       !query.hasOwnProperty('sloQuery') &&
       !query.hasOwnProperty('timeSeriesQuery') &&
       !query.hasOwnProperty('timeSeriesList')
     ) {
-      const { hide, refId, datasource, key, queryType, maxLines, metric, intervalMs, type, ...rest } = query as any;
       return {
+        datasource,
+        key,
         refId,
         intervalMs,
         hide,
