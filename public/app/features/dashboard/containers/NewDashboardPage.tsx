@@ -1,27 +1,16 @@
 import React, { useState } from 'react';
-import { useEffectOnce } from 'react-use';
 
 import { config } from '@grafana/runtime';
 import { t } from 'app/core/internationalization';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { EmptyStateNoDatasource } from 'app/features/datasources/components/EmptyStateNoDatasource';
-import { loadDataSources } from 'app/features/datasources/state';
-import { useDispatch, useSelector } from 'app/types';
+import { useLoadDataSources } from 'app/features/datasources/state';
+import { useSelector } from 'app/types';
 
 import DashboardPage from './DashboardPage';
 
 export default function NewDashboardPage(props: GrafanaRouteComponentProps) {
-  const dispatch = useDispatch();
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffectOnce(() => {
-    (async () => {
-      if (config.featureToggles.datasourceOnboarding) {
-        await dispatch(loadDataSources());
-        setIsLoading(false);
-      }
-    })();
-  });
+  const { isLoading } = useLoadDataSources();
 
   const { hasDatasource } = useSelector((state) => ({
     hasDatasource: state.dataSources.dataSourcesCount > 0,

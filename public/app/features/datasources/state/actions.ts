@@ -28,6 +28,7 @@ import {
   dataSourceMetaLoaded,
   dataSourcePluginsLoad,
   dataSourcePluginsLoaded,
+  dataSourcesLoad,
   dataSourcesLoaded,
   initDataSourceSettingsFailed,
   initDataSourceSettingsSucceeded,
@@ -146,6 +147,7 @@ export const testDataSource = (
 
 export function loadDataSources(): ThunkResult<Promise<void>> {
   return async (dispatch) => {
+    dispatch(dataSourcesLoad());
     const response = await api.getDataSources();
     dispatch(dataSourcesLoaded(response));
   };
