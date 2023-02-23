@@ -2,15 +2,17 @@ package pluginscdn
 
 import (
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/plugins/config"
 )
 
 const (
+	// cdnAssetPathTemplate is the relative path template used to locate plugin CDN assets
+	cdnAssetPathTemplate = "{id}/{version}/public/plugins/{id}/{assetPath}"
+
 	// systemJSCDNURLTemplate is a special path template used by system.js to identify plugin CDN assets
-	systemJSCDNURLTemplate = "plugin-cdn/{id}/{version}/public/plugins/{id}/{assetPath}"
+	systemJSCDNURLTemplate = "plugin-cdn/" + cdnAssetPathTemplate
 )
 
 var ErrPluginNotCDN = errors.New("plugin is not a cdn plugin")
@@ -29,7 +31,7 @@ func ProvideService(cfg *config.Cfg) *Service {
 // and invalid base url.
 func (s *Service) NewCDNURLConstructor(pluginID, pluginVersion string) URLConstructor {
 	return URLConstructor{
-		cdnURLTemplate: s.cfg.PluginsCDNURLTemplate,
+		cdnURLTemplate: strings.TrimRight(s.cfg.PluginsCDNURLTemplate, "/") + "/" + cdnAssetPathTemplate,
 		pluginID:       pluginID,
 		pluginVersion:  pluginVersion,
 	}
@@ -52,13 +54,7 @@ func (s *Service) BaseURL() (string, error) {
 	if !s.IsEnabled() {
 		return "", nil
 	}
-	// Everything before the first "{id}" is static and thus considered as the "base path".
-	// If it does not exist, it returns an error.
-	basePathEndPos := strings.Index(s.cfg.PluginsCDNURLTemplate, "/{id}/")
-	if basePathEndPos == -1 {
-		return "", fmt.Errorf("invalid cdn url template: /{id}/ not found")
-	}
-	return s.cfg.PluginsCDNURLTemplate[:basePathEndPos], nil
+	return s.cfg.PluginsCDNURLTemplate, nil
 }
 
 // SystemJSAssetPath returns a system-js path for the specified asset on the plugins CDN.

@@ -173,7 +173,7 @@ func Test_GetPluginAssetCDNRedirect(t *testing.T) {
 			},
 		}
 		cfg := setting.NewCfg()
-		cfg.PluginsCDNURLTemplate = "https://cdn.example.com/{id}/{version}/public/plugins/{id}/{assetPath}"
+		cfg.PluginsCDNURLTemplate = "https://cdn.example.com"
 		cfg.PluginSettings = map[string]map[string]string{
 			cdnPluginID: {"cdn": "true"},
 		}
