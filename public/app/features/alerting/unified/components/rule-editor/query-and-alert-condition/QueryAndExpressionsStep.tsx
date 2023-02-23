@@ -4,7 +4,7 @@ import { useFormContext } from 'react-hook-form';
 import { LoadingState, PanelData, getDefaultRelativeTimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Stack } from '@grafana/experimental';
-import { config } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Alert, Button, Field, Tooltip } from '@grafana/ui';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
@@ -13,6 +13,7 @@ import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler
 import { AlertingQueryRunner } from '../../../state/AlertingQueryRunner';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
+import { ExpressionEditor } from '../ExpressionEditor';
 import { ExpressionsEditor } from '../ExpressionsEditor';
 import { QueryEditor } from '../QueryEditor';
 import { RecordingRuleEditor } from '../RecordingRuleEditor';
@@ -175,12 +176,19 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule, onData
     [queries]
   );
 
-  const onChangeRecordingRuleQueries = useCallback(
+  const onChangeRecordingRulesQueries = useCallback(
     (updatedQueries: AlertQuery[]) => {
+      const dataSourceSettings = getDataSourceSrv().getInstanceSettings(updatedQueries[0].datasourceUid);
+      if (!dataSourceSettings) {
+        throw new Error('The Data source has not been defined.');
+      }
+
+      setValue('dataSourceName', dataSourceSettings.name);
+      setValue('expression', updatedQueries[0].model.expr || '');
       dispatch(setRecordingRulesQueries(updatedQueries));
       runRecordingQueries();
     },
-    [runRecordingQueries]
+    [runRecordingQueries, setValue]
   );
 
   const recordingRuleDefaultDatasource = rulesSourcesWithRuler[0];
@@ -224,7 +232,7 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule, onData
           <RecordingRuleEditor
             queries={recordingRulesQueries}
             runQueries={runRecordingQueries}
-            onChangeQuery={onChangeRecordingRuleQueries}
+            onChangeQuery={onChangeRecordingRulesQueries}
             panelData={panelData}
           />
         </Field>

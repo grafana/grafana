@@ -466,6 +466,10 @@ export const saveRuleFormAction = createAsyncThunk(
           // in case of system (cortex/loki)
           let identifier: RuleIdentifier;
           if (type === RuleFormType.cloudAlerting || type === RuleFormType.cloudRecording) {
+            if (type === RuleFormType.cloudRecording) {
+              values.queries = values.recordingRulesQueries;
+            }
+
             if (!values.dataSourceName) {
               throw new Error('The Data source has not been defined.');
             }
