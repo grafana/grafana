@@ -78,6 +78,11 @@ port = 636
 use_ssl = true
 # If set to true, use LDAP with STARTTLS instead of LDAPS
 start_tls = false
+# Accepted TLS Ciphers (default if empty, ex value: ["TLS_AES_256_GCM_SHA384"])
+# full list of supported ciphers and TLS versions: https://go.dev/src/crypto/tls/cipher_suites.go
+tls_ciphers = []
+# Minimum TLS version allowed. Accepted values are TLS1.1, TLS1.2, TLS1.3
+min_tls_version = "TLS1.2"
 # set to true if you want to skip SSL cert validation
 ssl_skip_verify = false
 # set to the path to your root CA certificate or leave unset to use system defaults
