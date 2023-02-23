@@ -179,7 +179,7 @@ func (srv *ProvisioningSrv) RoutePutTemplate(c *contextmodel.ReqContext, body de
 	tmpl := definitions.NotificationTemplate{
 		Name:       name,
 		Template:   body.Template,
-		Provenance: definitions.Provenance(alerting_models.ProvenanceAPI),
+		Provenance: determineProvenance(c),
 	}
 	modified, err := srv.templates.SetTemplate(c.Req.Context(), c.OrgID, tmpl)
 	if err != nil {
