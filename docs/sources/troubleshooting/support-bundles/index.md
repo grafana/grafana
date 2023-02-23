@@ -112,5 +112,5 @@ age --decrypt -i keyfile -o output.tar.gz downloaded.tar.gz.age
 Example:
 
 ```bash
-age --decrypt -i age.key -o data.tar.gz af6684b4-d613-4b31-9fc3-7cb579199bea.tar.gz.age
+age --decrypt -i key.txt -o data.tar.gz af6684b4-d613-4b31-9fc3-7cb579199bea.tar.gz.age
 ```
