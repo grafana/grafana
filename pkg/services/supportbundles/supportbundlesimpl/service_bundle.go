@@ -98,16 +98,16 @@ func (s *Service) bundle(ctx context.Context, collectors []string, uid string) (
 	final := buf
 	if len(s.encryptionPublicKeys) > 0 {
 		final = bytes.Buffer{}
-		receipients := make([]age.Recipient, 0, len(s.encryptionPublicKeys))
+		recipients := make([]age.Recipient, 0, len(s.encryptionPublicKeys))
 		for _, key := range s.encryptionPublicKeys {
 			recipient, err := age.ParseX25519Recipient(key)
 			if err != nil {
 				return nil, fmt.Errorf("unable to parse support bundle recipient public key: %w", err)
 			}
-			receipients = append(receipients, recipient)
+			recipients = append(recipients, recipient)
 		}
 
-		w, err := age.Encrypt(&final, receipients...)
+		w, err := age.Encrypt(&final, recipients...)
 		if err != nil {
 			return nil, fmt.Errorf("unable to open support bundle encryption header: %w", err)
 		}

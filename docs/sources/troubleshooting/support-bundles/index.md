@@ -67,20 +67,26 @@ server_admin_only = true
 public_keys = ""
 ```
 
-### Support bundle encryption
+## Encrypting a support bundle
 
-You can encrypt support bundles with an [age](age-encryption.org) formatted public key.
+Support bundles can be encrypted with [age](age-encryption.org) before they are sent to
+recipients. This is useful when you want to send a support bundle to Grafana through a
+channel that is not private.
+
+### Generate a key pair
 
 Ensure [age](https://github.com/FiloSottile/age#installation) is installed on your system.
-
-#### Generating a key pair
 
 ```bash
 $ age-keygen -o key.txt
 Public key: age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p
 ```
 
-To do this, add the public key to the `public_keys` setting in the `support_bundle` section of the Grafana configuration file.
+### Support bundle encryption
+
+Ensure [age](https://github.com/FiloSottile/age#installation) is installed on your system.
+
+Add the public key to the `public_keys` setting in the `support_bundle` section of the Grafana configuration file.
 
 ```ini
 [support_bundle]
@@ -97,9 +103,10 @@ Example:
 public_keys = "age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p ageccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
 ```
 
-New support bundles will be encrypted with the provided public keys and their file extension will be `tar.gz.age`.
+Restart Grafana and new support bundles will be encrypted with the provided
+public keys and their file extension will be `tar.gz.age`.
 
-#### Decrypting a support bundle
+#### Decrypt a support bundle
 
 Ensure [age](https://github.com/FiloSottile/age#installation) is installed on your system.
 
