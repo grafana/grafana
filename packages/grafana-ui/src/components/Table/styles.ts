@@ -9,6 +9,7 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
   const cellPadding = 6;
   const cellHeight = getCellHeight(theme, cellHeightOption, cellPadding);
   const rowHeight = cellHeight + 2;
+  const headerHeight = 28;
   const rowHoverBg = theme.colors.emphasize(theme.colors.background.primary, 0.03);
 
   const buildCellContainerStyle = (color?: string, background?: string, overflowOnHover?: boolean) => {
@@ -105,14 +106,14 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
     `,
     thead: css`
       label: thead;
-      height: ${rowHeight}px;
+      height: ${headerHeight}px;
       overflow-y: auto;
       overflow-x: hidden;
       position: relative;
     `,
     tfoot: css`
       label: tfoot;
-      height: ${rowHeight}px;
+      height: ${headerHeight}px;
       border-top: 1px solid ${borderColor};
       overflow-y: auto;
       overflow-x: hidden;
@@ -123,10 +124,12 @@ export function useTableStyles(theme: GrafanaTheme2, cellHeightOption: TableCell
       border-bottom: 1px solid ${borderColor};
     `,
     headerCell: css`
-      padding: ${cellPadding}px;
+      height: 100%;
+      padding: 0 ${cellPadding}px;
       overflow: hidden;
       white-space: nowrap;
       display: flex;
+      align-items: center;
       font-weight: ${theme.typography.fontWeightMedium};
 
       &:last-child {
