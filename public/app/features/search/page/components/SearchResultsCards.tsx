@@ -9,7 +9,6 @@ import { useStyles2 } from '@grafana/ui';
 
 import { SearchItem } from '../../components/SearchItem';
 import { useSearchKeyboardNavigation } from '../../hooks/useSearchKeyboardSelection';
-import { SearchResultMeta } from '../../service';
 import { queryResultToViewItem } from '../../service/utils';
 
 import { SearchResultsProps } from './SearchResultsTable';
@@ -42,8 +41,6 @@ export const SearchResultsCards = React.memo(
 
     const RenderRow = useCallback(
       ({ index: rowIndex, style }: { index: number; style: CSSProperties }) => {
-        const meta = response.view.dataFrame.meta?.custom as SearchResultMeta;
-
         let className = '';
         if (rowIndex === highlightIndex.y) {
           className += ' ' + styles.selectedRow;
@@ -51,14 +48,6 @@ export const SearchResultsCards = React.memo(
 
         const item = response.view.get(rowIndex);
         const searchItem = queryResultToViewItem(item, response.view);
-
-        if (item.location) {
-          const first = item.location.split('/')[0];
-          const finfo = meta.locationInfo[first];
-          if (finfo) {
-            searchItem.folderTitle = finfo.name;
-          }
-        }
 
         return (
           <div style={style} key={item.uid} className={className} role="row">

@@ -3,7 +3,7 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { DashboardViewItem } from '../types';
 
-import { DashboardQueryResult, SearchQuery } from './types';
+import { DashboardQueryResult, SearchQuery, SearchResultMeta } from './types';
 
 /** prepare the query replacing folder:current */
 export async function replaceCurrentFolderQuery(query: SearchQuery): Promise<SearchQuery> {
@@ -40,14 +40,39 @@ function delay(ms: number) {
 
 export function queryResultToViewItem(
   item: DashboardQueryResult,
-  view?: DataFrameView<DashboardQueryResult> // TODO: change this to the view instead
+  view?: DataFrameView<DashboardQueryResult>,
+  index = -1
 ): DashboardViewItem {
-  return {
+  const meta = view?.dataFrame.meta?.custom as SearchResultMeta | undefined;
+
+  const viewItem: DashboardViewItem = {
     kind: 'dashboard',
     uid: item.uid,
     title: item.name,
     url: item.url,
     tags: item.tags ?? [],
-    folderTitle: view?.dataFrame.meta?.custom?.locationInfo?.[item.location]?.name,
+    folderTitle: meta?.locationInfo?.[item.location]?.name,
   };
+
+  // Set enterprise sort value property
+  const sortFieldName = meta?.sortBy;
+  if (sortFieldName) {
+    console.log('have sortFieldName', sortFieldName);
+    const sortFieldValue = item[sortFieldName];
+    if (typeof sortFieldValue === 'string' || typeof sortFieldValue === 'number') {
+      viewItem.sortMetaName = sortFieldName;
+      viewItem.sortMeta = sortFieldValue;
+    }
+  }
+
+  if (item.location) {
+    const first = item.location.split('/')[0];
+    const finfo = meta?.locationInfo[first];
+    if (finfo) {
+      console.log('setting in here', JSON.parse(JSON.stringify({ viewItem, item, meta })));
+      viewItem.folderTitle = finfo.name;
+    }
+  }
+
+  return viewItem;
 }

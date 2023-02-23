@@ -61,12 +61,14 @@ export interface DashboardViewItem {
   tags?: string[];
 
   icon?: string;
-  folderTitle?: string; // where does this come from?
-  sortMeta?: string; // PR TODO: test with enterprise
-  sortMetaName?: string; // PR TODO: test with enterprise
+  folderTitle?: string;
 
   // Used only for psuedo-folders, such as Starred or Recent
   itemsUIDs?: string[];
+
+  // For enterprise sort options
+  sortMeta?: number | string; // value sorted by
+  sortMetaName?: string; // name of the value being sorted e.g. 'Views'
 }
 
 export interface SearchAction extends Action {
