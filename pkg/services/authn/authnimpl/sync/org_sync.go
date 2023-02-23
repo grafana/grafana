@@ -31,7 +31,7 @@ func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *a
 
 	namespace, userID := id.NamespacedID()
 	if namespace != authn.NamespaceUser || userID <= 0 {
-		s.log.Warn("invalid namespace %q for user ID %q", namespace, userID)
+		s.log.Warn("failed to sync org role, invalid namespace for identity", "id", id.ID)
 		return nil
 	}
 
@@ -45,7 +45,7 @@ func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *a
 	orgsQuery := &org.GetUserOrgListQuery{UserID: userID}
 	result, err := s.orgService.GetUserOrgList(ctx, orgsQuery)
 	if err != nil {
-		s.log.Error("failed to get user's organizations", "userId", userID, "error", err)
+		s.log.Error("failed to get user's organizations", "id", id.ID, "error", err)
 		return nil
 	}
 
@@ -63,7 +63,7 @@ func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *a
 			// update role
 			cmd := &org.UpdateOrgUserCommand{OrgID: orga.OrgID, UserID: userID, Role: extRole}
 			if err := s.orgService.UpdateOrgUser(ctx, cmd); err != nil {
-				s.log.Error("failed to update active org user", "userId", userID, "error", err)
+				s.log.Error("failed to update active org user", "id", id.ID, "error", err)
 				return nil
 			}
 		}
@@ -81,28 +81,27 @@ func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *a
 		cmd := &org.AddOrgUserCommand{UserID: userID, Role: orgRole, OrgID: orgId}
 		err := s.orgService.AddOrgUser(ctx, cmd)
 		if err != nil && !errors.Is(err, org.ErrOrgNotFound) {
-			s.log.Error("failed to update active org user", "userId", userID, "error", err)
+			s.log.Error("failed to update active org for user", "id", id.ID, "error", err)
 			return nil
 		}
 	}
 
 	// delete any removed org roles
-	for _, orgId := range deleteOrgIds {
+	for _, orgID := range deleteOrgIds {
 		s.log.Debug("Removing user's organization membership as part of syncing with OAuth login",
-			"userId", userID, "orgId", orgId)
-		cmd := &org.RemoveOrgUserCommand{OrgID: orgId, UserID: userID}
+			"userId", userID, "orgId", orgID)
+		cmd := &org.RemoveOrgUserCommand{OrgID: orgID, UserID: userID}
 		if err := s.orgService.RemoveOrgUser(ctx, cmd); err != nil {
+			s.log.Error("failed to remove user from org", "id", id.ID, "orgId", orgID, "error", err)
+
 			if errors.Is(err, org.ErrLastOrgAdmin) {
-				s.log.Error(err.Error(), "userId", cmd.UserID, "orgId", cmd.OrgID)
 				continue
 			}
-
-			s.log.Error("failed to delete user org membership", "userId", userID, "error", err)
 			return nil
 		}
 
-		if err := s.accessControl.DeleteUserPermissions(ctx, orgId, cmd.UserID); err != nil {
-			s.log.Error("failed to delete permissions for user", "error", err, "userID", cmd.UserID, "orgID", orgId)
+		if err := s.accessControl.DeleteUserPermissions(ctx, orgID, cmd.UserID); err != nil {
+			s.log.Error("failed to delete permissions for user", "id", id.ID, "orgId", orgID, "error", err)
 			return nil
 		}
 	}

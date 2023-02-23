@@ -3,7 +3,6 @@ package sync
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -67,17 +66,13 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 	// Does user exist in the database?
 	usr, userAuth, errUserInDB := s.getUser(ctx, id)
 	if errUserInDB != nil && !errors.Is(errUserInDB, user.ErrUserNotFound) {
-		s.log.Error("error retrieving user", "error", errUserInDB,
-			"auth_module", id.AuthModule, "auth_id", id.AuthID,
-			"lookup_params", id.ClientParams.LookUpParams,
-		)
+		s.log.Error("failed to fetch user", "error", errUserInDB, "auth_module", id.AuthModule, "auth_id", id.AuthID)
 		return errSyncUserInternal.Errorf("unable to retrieve user")
 	}
 
 	if errors.Is(errUserInDB, user.ErrUserNotFound) {
 		if !id.ClientParams.AllowSignUp {
-			s.log.Warn("not allowing login, user not found in internal user database and allow signup = false",
-				"auth_module", id.AuthModule)
+			s.log.Warn("failed to create user, signup is not allowed for module", "auth_module", id.AuthModule, "auth_id", id.AuthID)
 			return errSyncUserForbidden.Errorf("%w", login.ErrSignupNotAllowed)
 		}
 
@@ -85,10 +80,7 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 		var errCreate error
 		usr, errCreate = s.createUser(ctx, id)
 		if errCreate != nil {
-			s.log.Error("error creating user", "error", errCreate,
-				"auth_module", id.AuthModule, "auth_id", id.AuthID,
-				"id_login", id.Login, "id_email", id.Email,
-			)
+			s.log.Error("failed to create user", "error", errCreate, "auth_module", id.AuthModule, "auth_id", id.AuthID)
 			return errSyncUserInternal.Errorf("unable to create user")
 		}
 	}
@@ -99,11 +91,7 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 
 	// update user
 	if errUpdate := s.updateUserAttributes(ctx, usr, id, userAuth); errUpdate != nil {
-		s.log.Error("error updating user", "error", errUpdate,
-			"auth_module", id.AuthModule, "auth_id", id.AuthID,
-			"login", usr.Login, "email", usr.Email,
-			"id_login", id.Login, "id_email", id.Email,
-		)
+		s.log.Error("failed to update user", "error", errUpdate, "auth_module", id.AuthModule, "auth_id", id.AuthID)
 		return errSyncUserInternal.Errorf("unable to update user")
 	}
 
@@ -211,7 +199,7 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 	}
 
 	if needsUpdate {
-		s.log.Debug("Syncing user info", "id", usr.ID, "update", updateCmd)
+		s.log.Debug("syncing user info", "id", id.ID, "update", updateCmd)
 		if err := s.userService.Update(ctx, updateCmd); err != nil {
 			return err
 		}
@@ -246,7 +234,7 @@ func (s *UserSync) createUser(ctx context.Context, id *authn.Identity) (*user.Us
 	for _, srv := range []string{user.QuotaTargetSrv, org.QuotaTargetSrv} {
 		limitReached, errLimit := s.quotaService.CheckQuotaReached(ctx, quota.TargetSrv(srv), nil)
 		if errLimit != nil {
-			s.log.Error("error getting user quota", "error", errLimit)
+			s.log.Error("failed to check quota", "error", errLimit)
 			return nil, errSyncUserInternal.Errorf("%w", login.ErrGettingUserQuota)
 		}
 		if limitReached {
@@ -358,7 +346,7 @@ func (s *UserSync) lookupByOneOf(ctx context.Context, params login.UserLookupPar
 // syncUserToIdentity syncs a user to an identity.
 // This is used to update the identity with the latest user information.
 func syncUserToIdentity(usr *user.User, id *authn.Identity) {
-	id.ID = fmt.Sprintf("user:%d", usr.ID)
+	id.ID = authn.NamespacedID(authn.NamespaceUser, usr.ID)
 	id.Login = usr.Login
 	id.Email = usr.Email
 	id.Name = usr.Name
