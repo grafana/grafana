@@ -25,6 +25,12 @@ const SearchField = ({ filter, datasource, updateFilter, isTagsLoading, tags, se
   const [isLoadingValues, setIsLoadingValues] = useState(false);
   const [options, setOptions] = useState<Array<SelectableValue<string>>>([]);
 
+  useEffect(() => {
+    if (Array.isArray(filter.value) && filter.value.length > 1 && !['=~', '!~'].includes(filter.operator || '')) {
+      updateFilter({ ...filter, operator: '=~' });
+    }
+  }, [updateFilter, filter]);
+
   const loadOptions = useCallback(
     async (name: string) => {
       setIsLoadingValues(true);
@@ -104,13 +110,18 @@ const SearchField = ({ filter, datasource, updateFilter, isTagsLoading, tags, se
           }
         }}
         value={filter.value}
-        onChange={(v) => {
-          updateFilter({ ...filter, value: v?.value, valueType: v?.type });
+        onChange={(val) => {
+          if (Array.isArray(val)) {
+            updateFilter({ ...filter, value: val.map((v) => v.value), valueType: val[0]?.type });
+          } else {
+            updateFilter({ ...filter, value: val?.value, valueType: val?.type });
+          }
         }}
         placeholder="Select a value"
         isClearable
         aria-label={`select-${filter.id}-value`}
         allowCustomValue={true}
+        isMulti
       />
     </HorizontalGroup>
   );

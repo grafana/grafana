@@ -37,7 +37,7 @@ export interface SearchFilter {
   /**
    * The value for the search filter
    */
-  value?: string;
+  value?: (string | Array<string>);
   /**
    * The type of the value, used for example to check whether we need to wrap the value in quotes when generating the query
    */

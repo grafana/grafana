@@ -55,7 +55,7 @@ type SearchFilter struct {
 	Type SearchFilterType `json:"type"`
 
 	// The value for the search filter
-	Value *string `json:"value,omitempty"`
+	Value *interface{} `json:"value,omitempty"`
 
 	// The type of the value, used for example to check whether we need to wrap the value in quotes when generating the query
 	ValueType *string `json:"valueType,omitempty"`
@@ -85,7 +85,7 @@ type TempoDataQuery struct {
 		Type FiltersType `json:"type"`
 
 		// The value for the search filter
-		Value *string `json:"value,omitempty"`
+		Value *interface{} `json:"value,omitempty"`
 
 		// The type of the value, used for example to check whether we need to wrap the value in quotes when generating the query
 		ValueType *string `json:"valueType,omitempty"`

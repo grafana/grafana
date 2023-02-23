@@ -55,6 +55,6 @@ properties for the given context.
 | `operator`  | string | No       | The operator that connects the tag to the value, for example: =, >, !=, =~                                              |
 | `tag`       | string | No       | The tag for the search filter, for example: .http.status_code, .service.name, status                                    |
 | `valueType` | string | No       | The type of the value, used for example to check whether we need to wrap the value in quotes when generating the query  |
-| `value`     | string | No       | The value for the search filter                                                                                         |
+| `value`     |        | No       | The value for the search filter                                                                                         |
 
 

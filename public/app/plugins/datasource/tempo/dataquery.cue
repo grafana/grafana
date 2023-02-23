@@ -62,7 +62,7 @@ composableKinds: DataQuery: {
 							// The operator that connects the tag to the value, for example: =, >, !=, =~
 							operator?: string
 							// The value for the search filter
-							value?: string
+							value?: string | [...string]
 							// The type of the value, used for example to check whether we need to wrap the value in quotes when generating the query
 							valueType?: string
 						} @cuetsy(kind="interface")
