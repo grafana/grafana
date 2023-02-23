@@ -10,7 +10,6 @@ import { useTheme2, ReactMonacoEditor, Monaco, monacoTypes, MonacoEditor } from 
 
 import { isValidQuery } from '../../queryUtils';
 import { makeStatsRequest } from '../../querybuilder/components/LokiQueryBuilderOptions';
-import { LokiQuery } from '../../types';
 
 import { Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';
