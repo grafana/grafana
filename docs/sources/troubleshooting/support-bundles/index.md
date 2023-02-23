@@ -53,3 +53,64 @@ To generate a support bundle and send the support bundle to Grafana Labs via a s
    Grafana downloads the support bundle to an archive (tar.gz) file.
 
 1. Attach the archive (tar.gz) file to a support ticket that you send to Grafana Labs Technical Support.
+
+## Support bundle configuration
+
+You can configure the following settings for support bundles:
+
+```ini
+# Enable support bundle creation (default: true)
+enabled = true
+# Only server admins can generate and view support bundles (default: true)
+server_admin_only = true
+# If set, bundles will be encrypted with the provided public keys separated by whitespace
+public_keys = ""
+```
+
+### Support bundle encryption
+
+You can encrypt support bundles with an [age](age-encryption.org) formatted public key.
+
+Ensure [age](https://github.com/FiloSottile/age#installation) is installed on your system.
+
+#### Generating a key pair
+
+```bash
+$ age-keygen -o key.txt
+Public key: age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p
+```
+
+To do this, add the public key to the `public_keys` setting in the `support_bundle` section of the Grafana configuration file.
+
+```ini
+[support_bundle]
+public_keys = "age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p"
+```
+
+> Multiple public keys can be defined by separating them with whitespace.
+> All included public keys will be able to decrypt the support bundle.
+
+Example:
+
+```ini
+[support_bundle]
+public_keys = "age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p ageccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+```
+
+New support bundles will be encrypted with the provided public keys and their file extension will be `tar.gz.age`.
+
+#### Decrypting a support bundle
+
+Ensure [age](https://github.com/FiloSottile/age#installation) is installed on your system.
+
+Execute the following command to decrypt the support bundle:
+
+```bash
+age --decrypt -i keyfile -o output.tar.gz downloaded.tar.gz.age
+```
+
+Example:
+
+```bash
+age --decrypt -i age.key -o data.tar.gz af6684b4-d613-4b31-9fc3-7cb579199bea.tar.gz.age
+```

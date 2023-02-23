@@ -62,7 +62,7 @@ func ProvideService(
 		bundleRegistry:       bundleRegistry,
 		cfg:                  cfg,
 		enabled:              section.Key("enabled").MustBool(true),
-		encryptionPublicKeys: section.Key("encryption_public_key").Strings(" "),
+		encryptionPublicKeys: section.Key("public_keys").Strings(" "),
 		features:             features,
 		log:                  log.New("supportbundle.service"),
 		pluginSettings:       pluginSettings,
