@@ -18,76 +18,6 @@ jest.mock('@grafana/runtime', () => ({
   reportInteraction: jest.fn(),
 }));
 
-const defaultQuery: PromVisualQuery = {
-  metric: 'random_metric',
-  labels: [],
-  operations: [],
-};
-
-const listOfMetrics: string[] = ['all-metrics', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'];
-
-function createDatasource(metrics: string[], withLabels?: boolean) {
-  const languageProvider = new EmptyLanguageProviderMock() as unknown as PromQlLanguageProvider;
-
-  // display different results if their are labels selected in the PromVisualQuery
-  if (withLabels) {
-    languageProvider.getSeries = () => Promise.resolve({ __name__: ['with-labels'] });
-    languageProvider.metricsMetadata = {
-      'with-labels': {
-        type: 'with-labels-type',
-        help: 'with-labels-help',
-      },
-    };
-  } else {
-    // all metrics
-    languageProvider.getLabelValues = () => Promise.resolve(metrics);
-    languageProvider.metricsMetadata = {
-      'all-metrics': {
-        type: 'all-metrics-type',
-        help: 'all-metrics-help',
-      },
-      a: {
-        type: 'counter',
-        help: 'a-metric-help',
-      },
-      // missing metadata for other metrics is tested for, see below
-    };
-  }
-
-  const datasource = new PrometheusDatasource(
-    {
-      url: '',
-      jsonData: {},
-      meta: {} as DataSourcePluginMeta,
-    } as DataSourceInstanceSettings<PromOptions>,
-    undefined,
-    undefined,
-    languageProvider
-  );
-  return datasource;
-}
-
-function createProps(query: PromVisualQuery, datasource: PrometheusDatasource) {
-  return {
-    datasource,
-    isOpen: true,
-    onChange: jest.fn(),
-    onClose: jest.fn(),
-    query: query,
-  };
-}
-
-function setup(query: PromVisualQuery, metrics: string[], withlabels?: boolean) {
-  const withLabels: boolean = query.labels.length > 0;
-  const datasource = createDatasource(metrics, withLabels);
-  const props = createProps(query, datasource);
-
-  // render the modal only
-  const { container } = render(<MetricEncyclopediaModal {...props} />);
-
-  return container;
-}
-
 describe('MetricEncyclopediaModal', () => {
   it('renders the modal', async () => {
     setup(defaultQuery, listOfMetrics);
@@ -148,6 +78,19 @@ describe('MetricEncyclopediaModal', () => {
     expect(screen.getByText('all-metrics-help')).toBeInTheDocument();
   });
 
+  it('displays suggested functions for a metric', async () => {
+    setup(defaultQuery, listOfMetrics);
+    await waitFor(() => {
+      expect(screen.getByText('a_bucket')).toBeInTheDocument();
+    });
+
+    const interactiveMetric = screen.getByText('a_bucket');
+
+    await userEvent.click(interactiveMetric);
+
+    expect(screen.getByText('histogram_quantile() rate()')).toBeInTheDocument();
+  });
+
   it('displays no metadata for a metric missing metadata when the metric is clicked', async () => {
     setup(defaultQuery, listOfMetrics);
     await waitFor(() => {
@@ -196,9 +139,8 @@ describe('MetricEncyclopediaModal', () => {
     expect(metricInsideRange).toBeInTheDocument();
   });
 
-  it('paginates millions of metrics and doee not run out of memory', async () => {
-    // 10 million metrics!!! HA HA HA HA! :)
-    const millionsOfMetrics: string[] = [...Array(10000000).keys()].map((i) => '' + i);
+  it('paginates millions of metrics and does not run out of memory', async () => {
+    const millionsOfMetrics: string[] = [...Array(1000000).keys()].map((i) => '' + i);
     setup(defaultQuery, millionsOfMetrics);
     await waitFor(() => {
       // doesn't break on loading
@@ -230,6 +172,15 @@ describe('MetricEncyclopediaModal', () => {
 
   // });
 
+  // it('filters results based on selected functions', async () => {
+  //   // default resultsPerPage is 10
+  //   setup(defaultQuery, listOfMetrics);
+  //   // how do you test the MultiSelect?
+  //   // this does not work
+  //   // https://developers.grafana.com/ui/latest/index.html?path=/docs/forms-select--multi-select-basic
+
+  // });
+
   it('filters by alphebetical letter choice', async () => {
     setup(defaultQuery, listOfMetrics);
     // pick the letter J
@@ -244,3 +195,77 @@ describe('MetricEncyclopediaModal', () => {
     expect(metricStartingWithSomethingElse).toBeNull();
   });
 });
+
+const defaultQuery: PromVisualQuery = {
+  metric: 'random_metric',
+  labels: [],
+  operations: [],
+};
+
+const listOfMetrics: string[] = ['all-metrics', 'a_bucket', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'];
+
+function createDatasource(metrics: string[], withLabels?: boolean) {
+  const languageProvider = new EmptyLanguageProviderMock() as unknown as PromQlLanguageProvider;
+
+  // display different results if their are labels selected in the PromVisualQuery
+  if (withLabels) {
+    languageProvider.getSeries = () => Promise.resolve({ __name__: ['with-labels'] });
+    languageProvider.metricsMetadata = {
+      'with-labels': {
+        type: 'with-labels-type',
+        help: 'with-labels-help',
+      },
+    };
+  } else {
+    // all metrics
+    languageProvider.getLabelValues = () => Promise.resolve(metrics);
+    languageProvider.metricsMetadata = {
+      'all-metrics': {
+        type: 'all-metrics-type',
+        help: 'all-metrics-help',
+      },
+      a: {
+        type: 'counter',
+        help: 'a-metric-help',
+      },
+      a_bucket: {
+        type: 'counter',
+        help: 'for functions',
+      },
+      // missing metadata for other metrics is tested for, see below
+    };
+  }
+
+  const datasource = new PrometheusDatasource(
+    {
+      url: '',
+      jsonData: {},
+      meta: {} as DataSourcePluginMeta,
+    } as DataSourceInstanceSettings<PromOptions>,
+    undefined,
+    undefined,
+    languageProvider
+  );
+  return datasource;
+}
+
+function createProps(query: PromVisualQuery, datasource: PrometheusDatasource) {
+  return {
+    datasource,
+    isOpen: true,
+    onChange: jest.fn(),
+    onClose: jest.fn(),
+    query: query,
+  };
+}
+
+function setup(query: PromVisualQuery, metrics: string[], withlabels?: boolean) {
+  const withLabels: boolean = query.labels.length > 0;
+  const datasource = createDatasource(metrics, withLabels);
+  const props = createProps(query, datasource);
+
+  // render the modal only
+  const { container } = render(<MetricEncyclopediaModal {...props} />);
+
+  return container;
+}

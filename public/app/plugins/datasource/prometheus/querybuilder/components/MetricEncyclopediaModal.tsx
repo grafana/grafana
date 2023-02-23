@@ -36,32 +36,42 @@ type MetricData = {
   value: string;
   type?: string;
   description?: string;
+  functions?: string[];
 };
 
-type PromTypeOption = {
-  type: string;
+type PromFilterOption = {
+  value: string;
   description: string;
 };
 
-const functions = ['rate', 'sum', 'histogram_quatile'];
-
-const promTypes: PromTypeOption[] = [
+const promFunctions: PromFilterOption[] = [
   {
-    type: 'counter',
+    value: 'rate()',
+    description: 'Calculates the per-second average rate of increase of the time series in the range vector.',
+  },
+  {
+    value: 'histogram_quantile()',
+    description: 'Calculates the φ-quantile (0 ≤ φ ≤ 1) from a conventional histogram or from a native histogram.',
+  },
+];
+
+const promTypes: PromFilterOption[] = [
+  {
+    value: 'counter',
     description:
       'A cumulative metric that represents a single monotonically increasing counter whose value can only increase or be reset to zero on restart.',
   },
   {
-    type: 'gauge',
+    value: 'gauge',
     description: 'A metric that represents a single numerical value that can arbitrarily go up and down.',
   },
   {
-    type: 'histogram',
+    value: 'histogram',
     description:
       'A histogram samples observations (usually things like request durations or response sizes) and counts them in configurable buckets.',
   },
   {
-    type: 'summary',
+    value: 'summary',
     description:
       'A summary samples observations (usually things like request durations and response sizes) and can calculate configurable quantiles over a sliding time window.',
   },
@@ -83,6 +93,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
   // filters
   const [excludeNullMetadata, setExcludeNullMetadata] = useState<boolean>(false);
   const [selectedTypes, setSelectedTypes] = useState<Array<SelectableValue<string>>>([]);
+  const [selectedFunctions, setSelectedFunctions] = useState<Array<SelectableValue<string>>>([]);
   const [letterSearch, setLetterSearch] = useState<string | null>(null);
 
   const updateMetricsMetadata = useCallback(async () => {
@@ -115,6 +126,10 @@ export const MetricEncyclopediaModal = (props: Props) => {
         value: m,
         type: getMetadataType(m, datasource.languageProvider.metricsMetadata!),
         description: getMetadataHelp(m, datasource.languageProvider.metricsMetadata!),
+        functions: suggestFunctionHints({
+          value: m,
+          type: getMetadataType(m, datasource.languageProvider.metricsMetadata!),
+        }),
       }))
     );
   }, [datasource.languageProvider, query]);
@@ -125,17 +140,18 @@ export const MetricEncyclopediaModal = (props: Props) => {
 
   const styles = useStyles2(getStyles);
 
-  const functionOptions: SelectableValue[] = functions.map((f: string) => {
+  const functionOptions: SelectableValue[] = promFunctions.map((f: PromFilterOption) => {
     return {
-      value: f,
-      label: f,
+      value: f.value,
+      label: f.value,
+      description: f.description,
     };
   });
 
-  const typeOptions: SelectableValue[] = promTypes.map((t: PromTypeOption) => {
+  const typeOptions: SelectableValue[] = promTypes.map((t: PromFilterOption) => {
     return {
-      value: t.type,
-      label: t.type,
+      value: t.value,
+      label: t.value,
       description: t.description,
     };
   });
@@ -175,6 +191,25 @@ export const MetricEncyclopediaModal = (props: Props) => {
       filteredMetrics = filteredMetrics.filter((m: MetricData) => {
         const letters: string[] = [letterSearch, letterSearch.toLowerCase()];
         return letters.includes(m.value[0]);
+      });
+    }
+
+    if (selectedFunctions.length > 0) {
+      filteredMetrics = filteredMetrics.filter((m: MetricData) => {
+        let matchesSelectedFunctions = false;
+
+        if (m.functions && m.functions.length > 0) {
+          matchesSelectedFunctions = selectedFunctions.some((f) => {
+            if (f.value) {
+              return m.functions?.includes(f.value);
+            }
+            return false;
+          });
+        }
+
+        const missingTypeMetadata = !m.type;
+
+        return matchesSelectedFunctions || missingTypeMetadata;
       });
     }
 
@@ -259,14 +294,16 @@ export const MetricEncyclopediaModal = (props: Props) => {
         <InlineLabel width={10} className="query-keyword">
           Functions:
         </InlineLabel>
-        <Select
+        <MultiSelect
           data-testid={testIds.searchMetric}
           options={functionOptions}
-          value={''}
-          placeholder="select functions"
-          onChange={() => {
-            // *** Filter by functions(query patterns) available for certain types
+          value={selectedFunctions}
+          placeholder="Select functions"
+          onChange={(v) => {
+            // *** Filter by functions(query_hints) available for certain types
             // Consider tabs select instead of actual select
+            setSelectedFunctions(v);
+            setPageNum(1);
           }}
         />
       </div>
@@ -388,9 +425,16 @@ export const MetricEncyclopediaModal = (props: Props) => {
                   <Card.Description>
                     {metric.description && metric.type ? (
                       <>
-                        Type: <i>{metric.type}</i>
+                        Type: <span className={styles.metadata}>{metric.type}</span>
                         <br />
-                        Description: <i>{metric.description}</i>
+                        {metric.functions && metric.functions.length > 0 && (
+                          <>
+                            Suggested functions:{' '}
+                            <span className={styles.metadata}>{metric.functions.map((f: string) => f + ' ')}</span>
+                            <br />
+                          </>
+                        )}
+                        Description: <span className={styles.metadata}>{metric.description}</span>
                       </>
                     ) : (
                       <i>No metadata available</i>
@@ -461,6 +505,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     gray: css`
       color: grey;
     `,
+    metadata: css`
+      color: rgb(204, 204, 220);
+    `,
   };
 };
 
@@ -502,4 +549,50 @@ function alphabetically(ascending: boolean, metadataFilters: boolean) {
     // if descending, highest sorts first
     return a.value < b.value ? 1 : -1;
   };
+}
+
+// a more simple implementation of query_hints
+function suggestFunctionHints(metric: MetricData) {
+  const suggestions: string[] = [];
+  // ..._bucket metric needs a histogram_quantile()
+  const histogramMetric = metric.value.match(/^\w+_bucket$|^\w+_bucket{.*}$/);
+  if (histogramMetric) {
+    // const label = 'Selected metric has buckets.';
+    suggestions.push('histogram_quantile()');
+  }
+
+  // Use metric metadata for exact types
+  const nameMatch = metric.value.match(/\b(\w+_(total|sum|count))\b/);
+  let counterNameMetric = nameMatch ? nameMatch[1] : '';
+  const metricsMetadata = metric.type;
+
+  if (metricsMetadata) {
+    // Tokenize the query into its identifiers (see https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels)
+    const queryTokens = Array.from(metric.value.matchAll(/\$?[a-zA-Z_:][a-zA-Z0-9_:]*/g))
+      .map(([match]) => match)
+      // Exclude variable identifiers
+      .filter((token) => !token.startsWith('$'))
+      // Split composite keys to match the tokens returned by the language provider
+      .flatMap((token) => token.split(':'));
+    // Determine whether any of the query identifier tokens refers to a counter metric
+    counterNameMetric =
+      queryTokens.find((metricName) => {
+        // Only considering first type information, could be non-deterministic
+        const metadataType = metric.type;
+        if (metadataType && metadataType.toLowerCase() === 'counter') {
+          return true;
+        } else {
+          return false;
+        }
+      }) ?? '';
+
+    if (counterNameMetric) {
+      suggestions.push('rate()');
+    }
+  }
+
+  return suggestions;
+  // OTHER QUERY HINTS NOT FOR FUNCTIONS, LEAVING THESE OUT
+  // 1. Check for recording rules expansion
+  // 2. For multiple series suggest operator sum() relies on returned query
 }
