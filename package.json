@@ -84,7 +84,7 @@
     ]
   },
   "devDependencies": {
-    "@babel/runtime": "7.20.1",
+    "@babel/runtime": "7.21.0",
     "@betterer/betterer": "5.4.0",
     "@betterer/cli": "5.4.0",
     "@betterer/eslint": "5.4.0",
