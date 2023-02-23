@@ -10691,13 +10691,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/combokeys@npm:^2.4.6":
-  version: 2.4.6
-  resolution: "@types/combokeys@npm:2.4.6"
-  checksum: f69687925a388e0e92fb141782c759832b131839bc43cac5d729679d6f5364a01ae955f931cdc5f4ee92521ddc881acffff32187d768d62116961b9450f1e102
-  languageName: node
-  linkType: hard
-
 "@types/command-exists@npm:^1.2.0":
   version: 1.2.0
   resolution: "@types/command-exists@npm:1.2.0"
@@ -22029,7 +22022,6 @@ __metadata:
     "@testing-library/user-event": 14.4.3
     "@types/angular": 1.8.4
     "@types/angular-route": 1.7.2
-    "@types/combokeys": ^2.4.6
     "@types/common-tags": ^1.8.0
     "@types/d3": 7.4.0
     "@types/d3-force": ^3.0.0

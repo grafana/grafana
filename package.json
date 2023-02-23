@@ -122,7 +122,6 @@
     "@testing-library/user-event": "14.4.3",
     "@types/angular": "1.8.4",
     "@types/angular-route": "1.7.2",
-    "@types/combokeys": "^2.4.6",
     "@types/common-tags": "^1.8.0",
     "@types/d3": "7.4.0",
     "@types/d3-force": "^3.0.0",

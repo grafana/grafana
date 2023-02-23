@@ -13,18 +13,22 @@
 // limitations under the License.
 
 import Combokeys from 'combokeys';
+import * as React from 'react';
 
 import keyboardMappings from './keyboard-mappings';
 
-export type CombokeysHandler = (event: KeyboardEvent, s?: string) => void;
+export type CombokeysHandler =
+  | (() => void)
+  | ((event: React.KeyboardEvent) => void)
+  | ((event: React.KeyboardEvent, s: string) => void);
 
 export type ShortcutCallbacks = {
   [name: string]: CombokeysHandler;
 };
 
-let instance: Combokeys.Combokeys | undefined;
+let instance: Combokeys | undefined;
 
-function getInstance(): Combokeys.Combokeys {
+function getInstance(): Combokeys {
   if (instance) {
     return instance;
   }

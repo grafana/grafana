@@ -1,4 +1,4 @@
-import Combokeys from 'combokeys';
+import Mousetrap from 'mousetrap';
 import React, { useEffect, useState } from 'react';
 import { Features, ToggleFeatures } from 'react-enable';
 
@@ -13,20 +13,21 @@ interface Props {
   pageNav?: NavModelItem;
 }
 
-const combokeys = new Combokeys(document.body);
+const SHOW_TOGGLES_KEY_COMBO = 'ctrl+1';
+const combokeys = new Mousetrap(document.body);
 
 export const AlertingPageWrapper = ({ children, pageId, pageNav, isLoading }: React.PropsWithChildren<Props>) => {
   const [showFeatureToggle, setShowFeatureToggles] = useState(false);
 
   useEffect(() => {
-    combokeys.bind('ctrl+1', () => {
+    combokeys.bind(SHOW_TOGGLES_KEY_COMBO, () => {
       setShowFeatureToggles((show) => !show);
     });
 
     return () => {
-      combokeys.unbind('ctrl+1');
+      combokeys.unbind(SHOW_TOGGLES_KEY_COMBO);
     };
-  }, [showFeatureToggle]);
+  }, []);
 
   return (
     <Features features={FEATURES}>
