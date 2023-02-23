@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { usePrevious } from 'react-use';
 
 import { CoreApp, SelectableValue, TimeRange } from '@grafana/data';
@@ -19,12 +19,12 @@ export interface Props {
   maxLines: number;
   app?: CoreApp;
   datasource: LokiDatasource;
+  queryStats: QueryStats | undefined;
+  setQueryStats: React.Dispatch<React.SetStateAction<QueryStats | undefined>>;
 }
 
 export const LokiQueryBuilderOptions = React.memo<Props>(
-  ({ app, query, onChange, onRunQuery, maxLines, datasource }) => {
-    const [queryStats, setQueryStats] = useState<QueryStats>();
-
+  ({ app, query, onChange, onRunQuery, maxLines, datasource, queryStats, setQueryStats }) => {
     const timerange = datasource.getTimeRange();
     const previousTimerange = usePrevious(timerange);
     const previousQuery = usePrevious(query);
@@ -147,8 +147,7 @@ export async function makeStatsRequest(
   prevTimerange: TimeRange | undefined,
   query: LokiQuery,
   prevQuery: LokiQuery | undefined,
-  setQueryStats: ((stats: QueryStats | undefined) => void) | undefined // REMOVE UNDEFINED ONCE FIXED (see below)
-  // to fix this i need to make setQueryStats available in MonacoQueryField.tsx
+  setQueryStats: React.Dispatch<React.SetStateAction<QueryStats | undefined>>
 ) {
   if (
     query.expr === prevQuery?.expr &&
@@ -159,14 +158,12 @@ export async function makeStatsRequest(
   }
 
   if (!query.expr) {
-    setQueryStats?.(undefined); // REMOVE ? ONCE FIXED
+    setQueryStats(undefined);
     return;
   }
 
   const response = await datasource.getQueryStats(query);
-  console.log('stats has been requested:', response);
-
-  Object.values(response).every((v) => v === 0) ? setQueryStats?.(undefined) : setQueryStats?.(response); // REMOVE ? ONCE FIXED
+  Object.values(response).every((v) => v === 0) ? setQueryStats(undefined) : setQueryStats(response);
 }
 
 LokiQueryBuilderOptions.displayName = 'LokiQueryBuilderOptions';

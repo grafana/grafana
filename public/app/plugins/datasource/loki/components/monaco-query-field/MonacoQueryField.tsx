@@ -91,7 +91,15 @@ const getStyles = (theme: GrafanaTheme2, placeholder: string) => {
   };
 };
 
-const MonacoQueryField = ({ history, onBlur, onRunQuery, initialValue, datasource, placeholder }: Props) => {
+const MonacoQueryField = ({
+  history,
+  onBlur,
+  onRunQuery,
+  initialValue,
+  datasource,
+  placeholder,
+  setQueryStats,
+}: Props) => {
   const id = uuidv4();
   // we need only one instance of `overrideServices` during the lifetime of the react component
   const overrideServicesRef = useRef(getOverrideServices());
@@ -156,9 +164,6 @@ const MonacoQueryField = ({ history, onBlur, onRunQuery, initialValue, datasourc
       const previousTimerange = undefined;
       const query = { expr: queryExpr } as unknown as LokiQuery;
       const previousQuery = undefined;
-      const setQueryStats = undefined;
-      // setQueryStats needs to change..
-      // it needs to be the setQueryStats from the LokiQueryBuilderOptions.tsx
 
       makeStatsRequest(datasource, timerange, previousTimerange, query, previousQuery, setQueryStats);
     }, 1000);
