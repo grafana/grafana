@@ -34,7 +34,7 @@ Here is an example showing height distribution of people.
 
 For more information about histogram visualization options, refer to [Histogram]({{< relref "../../panels-visualizations/visualizations/histogram/" >}}).
 
-Histograms only look at _value distributions_ over a specific time range. The problem with histograms is that you cannot see any trends or changes in the distribution over time. This is where heatmaps become useful.
+Histograms only look at _value distributions_ over a specific time range. The problem with histograms is that you cannot see any trends or changes in the distribution over time. This is where Histograms become useful.
 
 ## Heatmaps
 
