@@ -630,7 +630,7 @@ type ElasticsearchDataQuery struct {
 	Alias *string `json:"alias,omitempty"`
 
 	// List of bucket aggregations
-	BucketAggs []_BucketAggs_Item `json:"bucketAggs,omitempty"`
+	BucketAggs []BucketAggsItem `json:"bucketAggs,omitempty"`
 
 	// For mixed data sources the selected datasource is on the query level.
 	// For non mixed scenarios this is undefined.
@@ -645,7 +645,7 @@ type ElasticsearchDataQuery struct {
 	Key *string `json:"key,omitempty"`
 
 	// List of metric aggregations
-	Metrics []_Metrics_Item `json:"metrics,omitempty"`
+	Metrics []MetricsItem `json:"metrics,omitempty"`
 
 	// Lucene query
 	Query *string `json:"query,omitempty"`
