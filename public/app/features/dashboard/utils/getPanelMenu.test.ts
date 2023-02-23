@@ -1,5 +1,10 @@
-import { PanelMenuItem, PluginExtensionLink, PluginExtensionTypes } from '@grafana/data';
-import { PluginExtensionRegistryItem, setPluginsExtensionRegistry } from '@grafana/runtime';
+import { PanelMenuItem, PluginExtension, PluginExtensionLink, PluginExtensionTypes } from '@grafana/data';
+import {
+  PluginExtensionPanelContext,
+  PluginExtensionRegistryItem,
+  RegistryConfigureExtension,
+  setPluginsExtensionRegistry,
+} from '@grafana/runtime';
 import { LoadingState } from '@grafana/schema';
 import config from 'app/core/config';
 import * as actions from 'app/features/explore/state/main';
@@ -135,7 +140,8 @@ describe('getPanelMenu()', () => {
     it('should contain menu item from link extension', () => {
       setPluginsExtensionRegistry({
         [GrafanaExtensions.DashboardPanelMenu]: [
-          createRegistryLinkItem({
+          createRegistryItem<PluginExtensionLink>({
+            type: PluginExtensionTypes.link,
             title: 'Declare incident',
             description: 'Declaring an incident in the app',
             path: '/a/grafana-basic-app/declare-incident',
@@ -162,7 +168,8 @@ describe('getPanelMenu()', () => {
     it('should truncate menu item title to 25 chars', () => {
       setPluginsExtensionRegistry({
         [GrafanaExtensions.DashboardPanelMenu]: [
-          createRegistryLinkItem({
+          createRegistryItem<PluginExtensionLink>({
+            type: PluginExtensionTypes.link,
             title: 'Declare incident when pressing this amazing menu item',
             description: 'Declaring an incident in the app',
             path: '/a/grafana-basic-app/declare-incident',
@@ -186,11 +193,51 @@ describe('getPanelMenu()', () => {
       );
     });
 
+    it('should use extension for panel menu returned by configure function', () => {
+      const configure = () => ({
+        title: 'Wohoo',
+        type: PluginExtensionTypes.link,
+        description: 'Declaring an incident in the app',
+        path: '/a/grafana-basic-app/declare-incident',
+        key: 1,
+      });
+
+      setPluginsExtensionRegistry({
+        [GrafanaExtensions.DashboardPanelMenu]: [
+          createRegistryItem<PluginExtensionLink>(
+            {
+              type: PluginExtensionTypes.link,
+              title: 'Declare incident when pressing this amazing menu item',
+              description: 'Declaring an incident in the app',
+              path: '/a/grafana-basic-app/declare-incident',
+              key: 1,
+            },
+            configure
+          ),
+        ],
+      });
+
+      const panel = new PanelModel({});
+      const dashboard = createDashboardModelFixture({});
+      const menuItems = getPanelMenu(dashboard, panel, LoadingState.Loading);
+      const moreSubMenu = menuItems.find((i) => i.text === 'More...')?.subMenu;
+
+      expect(moreSubMenu).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            text: 'Wohoo',
+            href: '/a/grafana-basic-app/declare-incident',
+          }),
+        ])
+      );
+    });
+
     it('should hide menu item if configure function returns undefined', () => {
       setPluginsExtensionRegistry({
         [GrafanaExtensions.DashboardPanelMenu]: [
-          createRegistryLinkItem(
+          createRegistryItem<PluginExtensionLink>(
             {
+              type: PluginExtensionTypes.link,
               title: 'Declare incident when pressing this amazing menu item',
               description: 'Declaring an incident in the app',
               path: '/a/grafana-basic-app/declare-incident',
@@ -216,13 +263,14 @@ describe('getPanelMenu()', () => {
       );
     });
 
-    it('should have a title configured via the extension', () => {
-      const configure = () => ({ title: 'Wohoo' });
+    it('should pass context with correct values when configuring extension', () => {
+      const configure = jest.fn();
 
       setPluginsExtensionRegistry({
         [GrafanaExtensions.DashboardPanelMenu]: [
-          createRegistryLinkItem(
+          createRegistryItem<PluginExtensionLink>(
             {
+              type: PluginExtensionTypes.link,
               title: 'Declare incident when pressing this amazing menu item',
               description: 'Declaring an incident in the app',
               path: '/a/grafana-basic-app/declare-incident',
@@ -233,19 +281,113 @@ describe('getPanelMenu()', () => {
         ],
       });
 
-      const panel = new PanelModel({});
-      const dashboard = createDashboardModelFixture({});
-      const menuItems = getPanelMenu(dashboard, panel, LoadingState.Loading);
-      const moreSubMenu = menuItems.find((i) => i.text === 'More...')?.subMenu;
+      const panel = new PanelModel({
+        type: 'timeseries',
+        id: 1,
+        title: 'My panel',
+        targets: [
+          {
+            refId: 'A',
+            datasource: {
+              type: 'testdata',
+            },
+          },
+        ],
+      });
 
-      expect(moreSubMenu).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            text: 'Wohoo',
-            href: '/a/grafana-basic-app/declare-incident',
-          }),
-        ])
-      );
+      const dashboard = createDashboardModelFixture({
+        timezone: 'utc',
+        time: {
+          from: 'now-5m',
+          to: 'now',
+        },
+        tags: ['database', 'panel'],
+        uid: '123',
+        title: 'My dashboard',
+      });
+
+      getPanelMenu(dashboard, panel, LoadingState.Loading);
+
+      const context: PluginExtensionPanelContext = {
+        pluginId: 'timeseries',
+        id: 1,
+        title: 'My panel',
+        timeZone: 'utc',
+        timeRange: {
+          from: 'now-5m',
+          to: 'now',
+        },
+        targets: [
+          {
+            refId: 'A',
+            pluginId: 'testdata',
+          },
+        ],
+        dashboard: {
+          tags: ['database', 'panel'],
+          uid: '123',
+          title: 'My dashboard',
+        },
+      };
+
+      expect(configure).toBeCalledWith(context);
+    });
+
+    it('should pass context that can not be edited in configure function', () => {
+      const configure = (context: PluginExtensionPanelContext) => {
+        // trying to change values in the context
+        context.pluginId = 'changed';
+
+        return {
+          type: PluginExtensionTypes.link,
+          title: 'Declare incident when pressing this amazing menu item',
+          description: 'Declaring an incident in the app',
+          path: '/a/grafana-basic-app/declare-incident',
+          key: 1,
+        };
+      };
+
+      setPluginsExtensionRegistry({
+        [GrafanaExtensions.DashboardPanelMenu]: [
+          createRegistryItem<PluginExtensionLink>(
+            {
+              type: PluginExtensionTypes.link,
+              title: 'Declare incident when pressing this amazing menu item',
+              description: 'Declaring an incident in the app',
+              path: '/a/grafana-basic-app/declare-incident',
+              key: 1,
+            },
+            configure
+          ),
+        ],
+      });
+
+      const panel = new PanelModel({
+        type: 'timeseries',
+        id: 1,
+        title: 'My panel',
+        targets: [
+          {
+            refId: 'A',
+            datasource: {
+              type: 'testdata',
+            },
+          },
+        ],
+      });
+
+      const dashboard = createDashboardModelFixture({
+        timezone: 'utc',
+        time: {
+          from: 'now-5m',
+          to: 'now',
+        },
+        tags: ['database', 'panel'],
+        uid: '123',
+        title: 'My dashboard',
+      });
+
+      expect(() => getPanelMenu(dashboard, panel, LoadingState.Loading)).toThrowError(TypeError);
     });
   });
 
@@ -364,15 +506,10 @@ describe('getPanelMenu()', () => {
   });
 });
 
-function createRegistryLinkItem(
-  link: Omit<PluginExtensionLink, 'type'>,
-  configure?: () => Partial<PluginExtensionLink> | undefined
-): PluginExtensionRegistryItem<PluginExtensionLink> {
-  const extension = {
-    ...link,
-    type: PluginExtensionTypes.link,
-  };
-
+function createRegistryItem<T extends PluginExtension>(
+  extension: T,
+  configure?: (context: PluginExtensionPanelContext) => T | undefined
+): PluginExtensionRegistryItem<T> {
   if (!configure) {
     return {
       extension,
@@ -381,17 +518,6 @@ function createRegistryLinkItem(
 
   return {
     extension,
-    configure: () => {
-      const configured = configure();
-
-      if (!configured) {
-        return undefined;
-      }
-
-      return {
-        ...extension,
-        ...configured,
-      };
-    },
+    configure: configure as RegistryConfigureExtension<T>,
   };
 }
