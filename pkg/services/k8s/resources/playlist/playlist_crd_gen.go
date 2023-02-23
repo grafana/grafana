@@ -53,13 +53,13 @@ func fromUnstructured(obj any) (*Playlist, error) {
 		return nil, fmt.Errorf("failed to convert to *unstructured.Unstructured")
 	}
 
-	var playlist *Playlist
+	var playlist crd.Base[playlist.Playlist]
 	err := runtime.DefaultUnstructuredConverter.FromUnstructured(uObj.UnstructuredContent(), &playlist)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert to Playlist: %w", err)
 	}
 
-	return playlist, nil
+	return &Playlist{playlist}, nil
 }
 
 // toUnstructured converts a Playlist to an *unstructured.Unstructured.

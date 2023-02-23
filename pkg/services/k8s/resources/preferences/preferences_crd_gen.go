@@ -53,13 +53,13 @@ func fromUnstructured(obj any) (*Preferences, error) {
 		return nil, fmt.Errorf("failed to convert to *unstructured.Unstructured")
 	}
 
-	var preferences *Preferences
+	var preferences crd.Base[preferences.Preferences]
 	err := runtime.DefaultUnstructuredConverter.FromUnstructured(uObj.UnstructuredContent(), &preferences)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert to Preferences: %w", err)
 	}
 
-	return preferences, nil
+	return &Preferences{preferences}, nil
 }
 
 // toUnstructured converts a Preferences to an *unstructured.Unstructured.

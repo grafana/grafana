@@ -53,13 +53,13 @@ func fromUnstructured(obj any) (*Team, error) {
 		return nil, fmt.Errorf("failed to convert to *unstructured.Unstructured")
 	}
 
-	var team *Team
+	var team crd.Base[team.Team]
 	err := runtime.DefaultUnstructuredConverter.FromUnstructured(uObj.UnstructuredContent(), &team)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert to Team: %w", err)
 	}
 
-	return team, nil
+	return &Team{team}, nil
 }
 
 // toUnstructured converts a Team to an *unstructured.Unstructured.

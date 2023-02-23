@@ -6,7 +6,6 @@ import (
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -20,9 +19,9 @@ import (
 
 type ServiceWrapper struct {
 	dashboards.DashboardService
-	log               log.Logger
-	dashboardResource dynamic.ResourceInterface
-	namespace         string
+	log       log.Logger
+	clientset *client.Clientset
+	namespace string
 }
 
 var _ dashboards.DashboardService = (*ServiceWrapper)(nil)
@@ -32,16 +31,11 @@ func ProvideServiceWrapper(
 	clientset *client.Clientset,
 ) (*ServiceWrapper, error) {
 
-	dashboardResource, err := clientset.GetResourceClient(CRD)
-	if err != nil {
-		return nil, err
-	}
-
 	return &ServiceWrapper{
-		DashboardService:  dashboardService,
-		log:               log.New("k8s.dashboards.service"),
-		dashboardResource: dashboardResource,
-		namespace:         "default",
+		DashboardService: dashboardService,
+		log:              log.New("k8s.dashboards.service-wrapper"),
+		clientset:        clientset,
+		namespace:        "default",
 	}, nil
 }
 
@@ -49,18 +43,21 @@ func ProvideServiceWrapper(
 func (s *ServiceWrapper) SaveDashboard(ctx context.Context, dto *dashboards.SaveDashboardDTO, allowUiUpdate bool) (*dashboards.Dashboard, error) {
 	/////////////////
 	// do  work
+	dashboardResource, err := s.clientset.GetResourceClient(CRD)
+	if err != nil {
+		return nil, fmt.Errorf("ProvideServiceWrapper failed to get dashboard resource client: %w", err)
+	}
 
 	updateDashboard := false
 	resourceVersion := ""
 
 	// FIXME this is not reliable and is spaghetti
-	var err error
 	uid := dto.Dashboard.UID
 	if uid == "" {
 		uid = util.GenerateShortUID()
 	} else {
 		// check if dashboard exists in k8s. if it does, we're gonna do an update, if
-		rv, ok, err := getResourceVersion(ctx, s.dashboardResource, uid)
+		rv, ok, err := getResourceVersion(ctx, dashboardResource, uid)
 		if !ok {
 			return nil, err
 		}
@@ -125,10 +122,10 @@ func (s *ServiceWrapper) SaveDashboard(ctx context.Context, dto *dashboards.Save
 
 	if updateDashboard {
 		s.log.Debug("k8s action: update")
-		uObj, err = s.dashboardResource.Update(ctx, uObj, metav1.UpdateOptions{})
+		uObj, err = dashboardResource.Update(ctx, uObj, metav1.UpdateOptions{})
 	} else {
 		s.log.Debug("k8s action: create")
-		uObj, err = s.dashboardResource.Create(ctx, uObj, metav1.CreateOptions{})
+		uObj, err = dashboardResource.Create(ctx, uObj, metav1.CreateOptions{})
 	}
 
 	// create or update error

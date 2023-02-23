@@ -53,13 +53,13 @@ func fromUnstructured(obj any) (*ServiceAccount, error) {
 		return nil, fmt.Errorf("failed to convert to *unstructured.Unstructured")
 	}
 
-	var serviceaccount *ServiceAccount
+	var serviceaccount crd.Base[serviceaccount.ServiceAccount]
 	err := runtime.DefaultUnstructuredConverter.FromUnstructured(uObj.UnstructuredContent(), &serviceaccount)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert to ServiceAccount: %w", err)
 	}
 
-	return serviceaccount, nil
+	return &ServiceAccount{serviceaccount}, nil
 }
 
 // toUnstructured converts a ServiceAccount to an *unstructured.Unstructured.

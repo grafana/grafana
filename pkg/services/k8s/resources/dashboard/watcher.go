@@ -2,16 +2,13 @@ package dashboard
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/k8s/client"
 	"github.com/grafana/grafana/pkg/services/user"
-	"k8s.io/client-go/dynamic"
 )
 
 var _ Watcher = (*watcher)(nil)
@@ -19,7 +16,6 @@ var _ Watcher = (*watcher)(nil)
 type watcher struct {
 	enabled              bool
 	log                  log.Logger
-	dashboardResource    dynamic.ResourceInterface
 	dashboardService     dashboards.DashboardService
 	userService          user.Service
 	accessControlService accesscontrol.Service
@@ -30,31 +26,27 @@ func ProvideWatcher(
 	dashboardService *service.DashboardServiceImpl,
 	userService user.Service,
 	accessControlService accesscontrol.Service,
-	clientSet *client.Clientset,
 ) (*watcher, error) {
-	dashboardResource, err := clientSet.GetResourceClient(CRD)
-	if err != nil {
-		return nil, err
-	}
 	c := watcher{
 		enabled:              features.IsEnabled(featuremgmt.FlagK8s),
 		log:                  log.New("k8s.dashboards.controller"),
 		dashboardService:     dashboardService,
 		userService:          userService,
 		accessControlService: accessControlService,
-		dashboardResource:    dashboardResource,
 	}
 	return &c, nil
 }
 
 func (c *watcher) Add(ctx context.Context, obj *Dashboard) error {
+	c.log.Debug("adding dashboard", "obj", obj)
 	dto, err := k8sDashboardToDashboardDTO(obj)
 	if err != nil {
 		return err
 	}
 
 	if existing, err := c.dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{UID: dto.Dashboard.UID, OrgID: dto.OrgID}); err == nil && existing.Version >= dto.Dashboard.Version {
-		return fmt.Errorf("dashboard already exists, skipping")
+		c.log.Debug("dashboard already exists, skipping")
+		return nil
 	}
 
 	signedInUser, err := c.getSignedInUser(ctx, dto.OrgID, dto.Dashboard.UpdatedBy)
@@ -86,7 +78,8 @@ func (c *watcher) Update(ctx context.Context, oldObj, newObj *Dashboard) error {
 	}
 	rv := existing.Data.Get("resourceVersion").MustString()
 	if rv == newObj.ResourceVersion {
-		return fmt.Errorf("resourceVersion is already saved resourceVersion: %s", rv)
+		c.log.Debug("dashboard already exists, skipping")
+		return nil
 	}
 
 	// Always overwrite
@@ -109,7 +102,7 @@ func (c *watcher) Update(ctx context.Context, oldObj, newObj *Dashboard) error {
 func (c *watcher) Delete(ctx context.Context, obj *Dashboard) error {
 	dto, err := k8sDashboardToDashboardDTO(obj)
 	if err != nil {
-		return fmt.Errorf("dashboard delete failed %w", err)
+		return err
 	}
 	existing, err := c.dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{UID: dto.Dashboard.UID, OrgID: dto.OrgID})
 	// no dashboard found, nothing to delete

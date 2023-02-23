@@ -80,24 +80,6 @@ func doNewRegistry(
 
 {{range $i, $k := .Kinds }}
   /************************ {{ $k.Props.Name }} ************************/
-  err = clientset.RegisterKind(ctx, {{ $k.Props.MachineName }}.CRD)
-	if err != nil {
-    panic(fmt.Sprintf("generated CRD for {{ $k.Props.Name }} failed to register: %s\n", err))
-	}
-
-  resourceClient{{ $i }}, err := clientset.GetResourceClient({{ $k.Props.MachineName }}.CRD)
-	if err != nil {
-		panic(fmt.Sprintf("generated CRD for {{ $k.Props.Name }} failed to get resource client: %s", err))
-	}
-
-  watcherWrapper{{ $i }} := {{ $k.Props.MachineName }}.NewWatcherWrapper({{ $k.Props.MachineName }}Watcher)
-  watcher{{ $i }}, err := informer.NewWatcherWithClient(resourceClient{{ $i }}, {{ $k.Props.MachineName }}.CRD)
-  if err != nil {
-    panic(fmt.Sprintf("generated CRD for {{ $k.Props.Name }} failed to create watcher: %s", err))
-  }
-  watcher{{ $i }}.Wrap(watcherWrapper{{ $i }}, true)
-  informerFactory.AddWatcher({{ $k.Props.MachineName}}.CRD, watcher{{ $i }})
-
   // TODO Having the committed form on disk in YAML is worth doing this for now...but fix this silliness
   map{{ $i }} := make(map[string]any)
   err = yaml.Unmarshal({{ $k.Props.MachineName }}.CRDYaml, map{{ $i }})
@@ -112,6 +94,15 @@ func doNewRegistry(
   if err != nil {
     panic(fmt.Sprintf("could not unmarshal CRD JSON for {{ $k.Props.Name }}: %s", err))
   }
+
+  err = clientset.RegisterKind(ctx, {{ $k.Props.MachineName }}.CRD)
+	if err != nil {
+    panic(fmt.Sprintf("generated CRD for {{ $k.Props.Name }} failed to register: %s\n", err))
+	}
+
+  watcherWrapper{{ $i }} := {{ $k.Props.MachineName }}.NewWatcherWrapper({{ $k.Props.MachineName }}Watcher)
+  informerFactory.AddWatcher({{ $k.Props.MachineName}}.CRD, watcherWrapper{{ $i }})
+
   reg.all[{{ $i }}] = {{ $k.Props.MachineName }}.CRD
 {{end}}
 

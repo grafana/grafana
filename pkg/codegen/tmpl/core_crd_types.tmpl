@@ -44,13 +44,13 @@ func fromUnstructured(obj any) (*{{ .Props.Name }}, error) {
 		return nil, fmt.Errorf("failed to convert to *unstructured.Unstructured")
 	}
 
-	var {{ .Props.MachineName }} *{{ .Props.Name }}
+	var {{ .Props.MachineName }} crd.Base[{{.Props.MachineName }}.{{ .Props.Name }}]
 	err := runtime.DefaultUnstructuredConverter.FromUnstructured(uObj.UnstructuredContent(), &{{ .Props.MachineName }})
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert to {{ .Props.Name }}: %w", err)
 	}
 
-	return {{ .Props.MachineName }}, nil
+	return &{{ .Props.Name }}{ {{ .Props.MachineName }} }, nil
 }
 
 // toUnstructured converts a {{ .Props.Name }} to an *unstructured.Unstructured.

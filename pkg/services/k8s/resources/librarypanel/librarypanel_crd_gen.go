@@ -53,13 +53,13 @@ func fromUnstructured(obj any) (*LibraryPanel, error) {
 		return nil, fmt.Errorf("failed to convert to *unstructured.Unstructured")
 	}
 
-	var librarypanel *LibraryPanel
+	var librarypanel crd.Base[librarypanel.LibraryPanel]
 	err := runtime.DefaultUnstructuredConverter.FromUnstructured(uObj.UnstructuredContent(), &librarypanel)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert to LibraryPanel: %w", err)
 	}
 
-	return librarypanel, nil
+	return &LibraryPanel{librarypanel}, nil
 }
 
 // toUnstructured converts a LibraryPanel to an *unstructured.Unstructured.

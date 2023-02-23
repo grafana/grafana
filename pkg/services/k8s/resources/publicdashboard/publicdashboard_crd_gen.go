@@ -53,13 +53,13 @@ func fromUnstructured(obj any) (*PublicDashboard, error) {
 		return nil, fmt.Errorf("failed to convert to *unstructured.Unstructured")
 	}
 
-	var publicdashboard *PublicDashboard
+	var publicdashboard crd.Base[publicdashboard.PublicDashboard]
 	err := runtime.DefaultUnstructuredConverter.FromUnstructured(uObj.UnstructuredContent(), &publicdashboard)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert to PublicDashboard: %w", err)
 	}
 
-	return publicdashboard, nil
+	return &PublicDashboard{publicdashboard}, nil
 }
 
 // toUnstructured converts a PublicDashboard to an *unstructured.Unstructured.
