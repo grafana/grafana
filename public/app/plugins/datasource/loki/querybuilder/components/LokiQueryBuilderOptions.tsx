@@ -24,6 +24,10 @@ export interface Props {
 export const LokiQueryBuilderOptions = React.memo<Props>(
   ({ app, query, onChange, onRunQuery, maxLines, datasource }) => {
     const [queryStats, setQueryStats] = useState<QueryStats>();
+
+    const timerange = datasource.getTimeRange();
+    const prevTimerange = usePrevious(timerange);
+
     const prevQuery = usePrevious(query);
 
     const onQueryTypeChange = (value: LokiQueryType) => {
@@ -54,7 +58,11 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
     }
 
     useEffect(() => {
-      if (query.expr === prevQuery?.expr) {
+      if (
+        query.expr === prevQuery?.expr &&
+        timerange.raw.from === prevTimerange?.raw.from &&
+        timerange.raw.to === prevTimerange?.raw.to
+      ) {
         return;
       }
 
@@ -63,14 +71,12 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
         return;
       }
 
-      const makeAsyncRequest = async () => {
-        const res = await datasource.getQueryStats(query);
-
-        // this filters out the case where the user has not configured loki to use tsdb, in that case all keys in the query stats will be 0
-        Object.values(res).every((v) => v === 0) ? setQueryStats(undefined) : setQueryStats(res);
-      };
-      makeAsyncRequest();
-    }, [query, prevQuery, datasource]);
+      (async () => {
+        const response = await datasource.getQueryStats(query);
+        console.log(response);
+        Object.values(response).every((v) => v === 0) ? setQueryStats(undefined) : setQueryStats(response);
+      })();
+    }, [query, prevQuery, datasource, timerange, prevTimerange]);
 
     let queryType = query.queryType ?? (query.instant ? LokiQueryType.Instant : LokiQueryType.Range);
     let showMaxLines = isLogsQuery(query.expr);
