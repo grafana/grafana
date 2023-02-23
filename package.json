@@ -345,7 +345,7 @@
     "kbar": "0.1.0-beta.36",
     "lodash": "4.17.21",
     "logfmt": "^1.3.2",
-    "lru-cache": "7.16.0",
+    "lru-cache": "7.17.0",
     "lru-memoize": "^1.1.0",
     "memoize-one": "6.0.0",
     "moment": "2.29.4",
