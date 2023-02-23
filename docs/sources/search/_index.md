@@ -86,7 +86,7 @@ To filter dashboard search result by a tag, complete one of the following steps:
 
 ## Command Palette
 
-By typing in this field, you can:
+The command palette enables you to:
 
 1. Search and open dashboards and folders.
 2. Create dashboards and alert rules.
