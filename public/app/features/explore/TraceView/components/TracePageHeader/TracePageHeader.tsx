@@ -18,22 +18,21 @@ import { get as _get, maxBy as _maxBy, values as _values } from 'lodash';
 import * as React from 'react';
 
 import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { Badge, BadgeColor, Tooltip, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 
 import ExternalLinks from '../common/ExternalLinks';
 import LabeledList from '../common/LabeledList';
 import TraceName from '../common/TraceName';
 import { autoColor, TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from '../index';
 import { getTraceLinks } from '../model/link-patterns';
-import { getSpanWithHeaderTags, getTraceName } from '../model/trace-viewer';
+import { getTraceName } from '../model/trace-viewer';
 import { Trace } from '../types';
 import { uTxMuted } from '../uberUtilityStyles';
 import { formatDuration } from '../utils/date';
 
 import SpanGraph from './SpanGraph';
 
-const getStyles = (theme: GrafanaTheme2) => {
+export const getStyles = (theme: GrafanaTheme2) => {
   return {
     theme,
     TracePageHeader: css`
@@ -104,25 +103,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     titleBorderBottom: css`
       border-bottom: 1px solid ${autoColor(theme, '#e8e8e8')};
     `,
-    subtitle: css`
-      flex: 1;
-      line-height: 1em;
-      margin: -0.5em 0 1.5em 0.5em;
-    `,
-    tag: css`
-      margin: 0 0.5em 0 0;
-    `,
-    url: css`
-      margin: -2.5px 0.3em;
-      overflow: hidden;
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      max-width: 30%;
-      display: inline-block;
-    `,
-    divider: css`
-      margin: 0 0.75em;
-    `,
   };
 };
 
@@ -134,7 +114,7 @@ export type TracePageHeaderEmbedProps = {
   timeZone: TimeZone;
 };
 
-const timestamp = (trace: Trace, timeZone: TimeZone, styles: ReturnType<typeof getStyles>) => {
+export const timestamp = (trace: Trace, timeZone: TimeZone, styles: ReturnType<typeof getStyles>) => {
   // Convert date from micro to milli seconds
   const dateStr = dateTimeFormat(trace.startTime / 1000, { timeZone, defaultWithMS: true });
   const match = dateStr.match(/^(.+)(:\d\d\.\d+)$/);
@@ -196,8 +176,6 @@ export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
     return { ...rest, value: renderer(trace, timeZone, styles) };
   });
 
-  const spanWithHeaderTags = getSpanWithHeaderTags(trace.spans);
-
   const title = (
     <h1 className={styles.TracePageHeaderTitle}>
       <TraceName traceName={getTraceName(trace.spans)} />{' '}
@@ -205,69 +183,13 @@ export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
     </h1>
   );
 
-  const newTitle = (
-    <h1 className={cx(styles.TracePageHeaderTitle)}>
-      <TraceName traceName={getTraceName(trace.spans)} />
-      <small>
-        <span className={styles.divider}>|</span>
-        {formatDuration(trace.duration)}
-      </small>
-    </h1>
-  );
-
-  const method = spanWithHeaderTags?.tags.filter((tag) => {
-    return tag.key === 'http.method';
-  });
-
-  const status = spanWithHeaderTags?.tags.filter((tag) => {
-    return tag.key === 'http.status_code';
-  });
-
-  let statusColor: BadgeColor = 'orange';
-  if (status && status.length > 0 && Number.isInteger(status[0].value)) {
-    if (status[0].value.toString().charAt(0) === '2') {
-      statusColor = 'green';
-    } else if (status[0].value.toString().charAt(0) === '4') {
-      statusColor = 'red';
-    }
-  }
-
-  const url = spanWithHeaderTags?.tags.filter((tag) => {
-    return tag.key === 'http.url' || tag.key === 'http.target';
-  });
-
   return (
     <header className={styles.TracePageHeader}>
-      <div
-        className={cx(styles.TracePageHeaderTitleRow, !config.featureToggles.newTraceView && styles.titleBorderBottom)}
-      >
+      <div className={cx(styles.TracePageHeaderTitleRow, styles.titleBorderBottom)}>
         {links && links.length > 0 && <ExternalLinks links={links} className={styles.TracePageHeaderBack} />}
-        {config.featureToggles.newTraceView ? newTitle : title}
+        {title}
       </div>
-
-      {config.featureToggles.newTraceView ? (
-        <div className={styles.subtitle}>
-          {timestamp(trace, timeZone, styles)}
-          <span className={styles.divider}>|</span>
-          {method && method.length > 0 && (
-            <span className={styles.tag}>
-              <Badge text={method[0].value} color="blue" />
-            </span>
-          )}
-          {status && status.length > 0 && (
-            <span className={styles.tag}>
-              <Badge text={status[0].value} color={statusColor} />
-            </span>
-          )}
-          {url && url.length > 0 && (
-            <Tooltip content={url[0].value} interactive={true}>
-              <span className={styles.url}>{url[0].value}</span>
-            </Tooltip>
-          )}
-        </div>
-      ) : (
-        summaryItems && <LabeledList className={styles.TracePageHeaderOverviewItems} items={summaryItems} />
-      )}
+      {summaryItems && <LabeledList className={styles.TracePageHeaderOverviewItems} items={summaryItems} />}
 
       <SpanGraph
         trace={trace}
