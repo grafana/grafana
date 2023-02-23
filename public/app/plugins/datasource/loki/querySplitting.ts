@@ -95,7 +95,6 @@ export function runGroupedQueries(datasource: LokiDatasource, requests: LokiGrou
   let shouldStop = false;
   let subquerySubsciption: Subscription | null = null;
   const runNextRequest = (subscriber: Subscriber<DataQueryResponse>, requestN: number, requestIndex: number) => {
-    console.log(requestIndex, requestN);
     if (shouldStop) {
       subscriber.complete();
       return;
@@ -162,7 +161,7 @@ export function runGroupedQueries(datasource: LokiDatasource, requests: LokiGrou
 
 function getNextRequestPointers(requests: LokiGroupedRequest, requestIndex: number, requestN: number) {
   // There's a pending metric request:
-  if (requestIndex === 0 && requests[1].partition[requestN - 1]) {
+  if (requestIndex === 0 && requests[1]?.partition[requestN - 1]) {
     return {
       nextRequestIndex: 1,
       nextRequestN: requestN,
