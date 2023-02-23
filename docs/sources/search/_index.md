@@ -91,7 +91,7 @@ The command palette enables you to:
 - Search for and open dashboards and folders
 - Create dashboards and alert rules
 - Locate pages within Grafana
-4. Change the theme: dark or light.
+- Change the theme to dark or light
 
 ![Command Palette screenshot](/media/docs/grafana/CommandPalette_doc_1.png)
 
