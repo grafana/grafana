@@ -189,7 +189,7 @@ devenv:
 else
 devenv: ${KIND} devenv-down ## Start optional services, e.g. postgres, prometheus, and elasticsearch.
 ifneq (,$(findstring apiserver,$(targets)))
-	@${KIND} create cluster --name grafana-devenv
+	@${KIND} create cluster --name grafana-devenv --config=devenv/kind-config.yml
 	$(eval targets := $(filter-out apiserver,$(targets)))
 endif
 
