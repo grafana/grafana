@@ -55,16 +55,19 @@ describe('Policy', () => {
     expect(defaultPolicy).toBeInTheDocument();
     expect(within(defaultPolicy).getByText('Default policy')).toBeVisible();
 
-    // should be editable
-    const editDefaultPolicy = within(defaultPolicy).getByRole('button', { name: 'Edit' });
-    expect(editDefaultPolicy).not.toBeDisabled();
+    // click "more actions" and check if we can edit and delete
+    expect(await within(defaultPolicy).getByTestId('more-actions')).toBeInTheDocument();
+    await userEvent.click(within(defaultPolicy).getByTestId('more-actions'));
 
+    // should be editable
+    const editDefaultPolicy = screen.getByRole('menuitem', { name: 'Edit' });
+    expect(editDefaultPolicy).toBeInTheDocument();
+    expect(editDefaultPolicy).not.toBeDisabled();
     await userEvent.click(editDefaultPolicy);
     expect(onEditPolicy).toHaveBeenCalledWith(routeTree, true);
 
-    // click "more actions" and check if we can delete
-    await userEvent.click(within(defaultPolicy).getByTestId('more-actions'));
-    expect(await screen.queryByRole('menuitem', { name: 'Delete' })).not.toBeInTheDocument();
+    // should not be deletable
+    expect(screen.queryByRole('menuitem', { name: 'Delete' })).not.toBeInTheDocument();
 
     // default policy should show the metadata
 
@@ -96,10 +99,10 @@ describe('Policy', () => {
     // all policies should be editable and deletable
     for (const container of customPolicies) {
       const policy = within(container);
-      expect(policy.getByRole('button', { name: 'Edit' })).not.toBeDisabled();
 
       // click "more actions" and check if we can delete
       await userEvent.click(policy.getByTestId('more-actions'));
+      expect(await screen.queryByRole('menuitem', { name: 'Edit' })).not.toBeDisabled();
       expect(await screen.queryByRole('menuitem', { name: 'Delete' })).not.toBeDisabled();
 
       await userEvent.click(screen.getByRole('menuitem', { name: 'Delete' }));
