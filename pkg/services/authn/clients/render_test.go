@@ -84,7 +84,7 @@ func TestRender_Authenticate(t *testing.T) {
 					Header: map[string][]string{"Cookie": {"renderKey=123"}},
 				},
 			},
-			expectedErr: ErrInvalidRenderKey,
+			expectedErr: errInvalidRenderKey,
 		},
 	}
 

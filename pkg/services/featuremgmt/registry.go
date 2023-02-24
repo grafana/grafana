@@ -342,12 +342,6 @@ var (
 			RequiresRestart: false,
 		},
 		{
-			Name:         "topNavCommandPalette",
-			Description:  "Launch the Command Palette from the top navigation search box",
-			State:        FeatureStateBeta,
-			FrontendOnly: true,
-		},
-		{
 
 			Name:         "logsSampleInExplore",
 			Description:  "Enables access to the logs sample feature in Explore",
@@ -366,6 +360,11 @@ var (
 			Description:  "Split large interval queries into subqueries with smaller time intervals",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+		},
+		{
+			Name:        "individualCookiePreferences",
+			Description: "Support overriding cookie preferences per user",
+			State:       FeatureStateAlpha,
 		},
 	}
 )
