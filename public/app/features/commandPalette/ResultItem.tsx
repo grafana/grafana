@@ -36,10 +36,11 @@ export const ResultItem = React.forwardRef(
     let name = action.name;
 
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const hasAction = Boolean(action.command?.perform || (action as ActionImpl & { url?: string }).url);
+    const hasAction = (action: ActionImpl) =>
+      Boolean(action.command?.perform || (action as ActionImpl & { url?: string }).url);
 
     // TODO: does this needs adjusting for i18n?
-    if (action.children.length && !hasAction && !name.endsWith('...')) {
+    if (action.children.length && !hasAction(action) && !name.endsWith('...')) {
       name += '...';
     }
 
@@ -48,18 +49,33 @@ export const ResultItem = React.forwardRef(
         <div className={styles.actionContainer}>
           {action.icon}
           <div className={styles.textContainer}>
-            <div>
-              {ancestors.length > 0 &&
-                ancestors.map((ancestor) => (
+            {ancestors.map((ancestor) => (
+              <>
+                {!hasAction(ancestor) && (
                   <React.Fragment key={ancestor.id}>
                     <span className={styles.breadcrumbAncestor}>{ancestor.name}</span>
                     <span className={styles.breadcrumbAncestor}>&rsaquo;</span>
                   </React.Fragment>
-                ))}
-              <span>{name}</span>
-            </div>
+                )}
+              </>
+            ))}
+            <span>{name}</span>
           </div>
-          {action.subtitle && <span className={styles.subtitleText}>{action.subtitle}</span>}
+          {(action.subtitle || ancestors.some((ancestor) => hasAction(ancestor))) && (
+            <div className={styles.subtitleText}>
+              {action.subtitle ??
+                ancestors.map((ancestor, index) => (
+                  <>
+                    {hasAction(ancestor) && (
+                      <React.Fragment key={ancestor.id}>
+                        <span className={styles.breadcrumbAncestor}>{ancestor.name}</span>
+                        {index < ancestors.length - 1 && <span className={styles.breadcrumbAncestor}>&rsaquo;</span>}
+                      </React.Fragment>
+                    )}
+                  </>
+                ))}
+            </div>
+          )}
         </div>
       </div>
     );
@@ -98,30 +114,30 @@ const getResultItemStyles = (theme: GrafanaTheme2) => {
     actionContainer: css({
       display: 'flex',
       gap: theme.spacing(1),
-      alignItems: 'center',
+      alignItems: 'baseline',
       fontSize: theme.typography.fontSize,
+      // justifyContent: 'space-between',
+      width: '100%',
     }),
     textContainer: css({
-      display: 'flex',
-      flexDirection: 'column',
-    }),
-    shortcut: css({
-      padding: theme.spacing(0, 1),
-      background: theme.colors.background.secondary,
-      borderRadius: theme.shape.borderRadius(),
-      fontSize: theme.typography.fontSize,
+      display: 'block',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
     }),
     breadcrumbAncestor: css({
       marginRight: theme.spacing(1),
       color: theme.colors.text.secondary,
     }),
     subtitleText: css({
-      fontSize: theme.typography.fontSize - 2,
-    }),
-    shortcutContainer: css({
-      display: 'grid',
-      gridAutoFlow: 'column',
-      gap: theme.spacing(1),
+      ...theme.typography.bodySmall,
+      color: theme.colors.text.secondary,
+      display: 'block',
+      flexBasis: '20%',
+      flexGrow: 1,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
     }),
   };
 };

@@ -57,7 +57,7 @@ export async function getSearchResultActions(searchQuery: string): Promise<Comma
   });
 
   const goToSearchResultActions: CommandPaletteAction[] = data.view.map((item) => {
-    const { url, name, kind } = item; // items are backed by DataFrameView, so must hold the url in a closure
+    const { url, name, kind, location } = item; // items are backed by DataFrameView, so must hold the url in a closure
     return {
       id: `go/${kind}${url}`,
       name: `${name}`,
@@ -67,6 +67,7 @@ export async function getSearchResultActions(searchQuery: string): Promise<Comma
           : t('command-palette.section.folder-search-results', 'Folders'),
       priority: SEARCH_RESULTS_PRORITY,
       url: locationUtil.stripBaseFromUrl(url),
+      subtitle: data.view.dataFrame.meta?.custom?.locationInfo[location]?.name,
     };
   });
 
