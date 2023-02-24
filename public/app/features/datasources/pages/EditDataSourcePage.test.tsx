@@ -80,7 +80,7 @@ describe('<EditDataSourcePage>', () => {
         dataSource: dataSource,
         dataSourceMeta: dataSourceMeta,
         layoutMode: LayoutModes.Grid,
-        hasFetched: true,
+        isLoadingDataSources: false,
       },
       navIndex: {
         ...navIndex,
