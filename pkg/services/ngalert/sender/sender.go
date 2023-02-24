@@ -5,6 +5,7 @@ import (
 	"crypto/md5"
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"sort"
 	"strings"
@@ -41,7 +42,12 @@ type ExternalAlertmanager struct {
 	sdManager *discovery.Manager
 }
 
-func NewExternalAlertmanagerSender() *ExternalAlertmanager {
+// NewExternalAlertmanagerSender will create a new sender.
+// The httpHeaders map can be used to pass http headers that should be set for
+// any given request to the datasource_uid defined as the maps key.
+//
+// i.e: {"<datasource_uid>": {"x-org-id": "123", "token": "abc123"}}
+func NewExternalAlertmanagerSender(httpHeaders map[string]map[string]string) *ExternalAlertmanager {
 	l := log.New("ngalert.sender.external-alertmanager")
 	sdCtx, sdCancel := context.WithCancel(context.Background())
 	s := &ExternalAlertmanager{
@@ -52,7 +58,34 @@ func NewExternalAlertmanagerSender() *ExternalAlertmanager {
 	s.manager = notifier.NewManager(
 		// Injecting a new registry here means these metrics are not exported.
 		// Once we fix the individual Alertmanager metrics we should fix this scenario too.
-		&notifier.Options{QueueCapacity: defaultMaxQueueCapacity, Registerer: prometheus.NewRegistry()},
+		&notifier.Options{
+			QueueCapacity: defaultMaxQueueCapacity,
+			Registerer:    prometheus.NewRegistry(),
+			// Overwrite the Do function to set the http headers that might be configured
+			// for the external alertmanager.
+			Do: func(ctx context.Context, client *http.Client, req *http.Request) (*http.Response, error) {
+				if client == nil {
+					client = http.DefaultClient
+				}
+				// As a workaround, we pass the datasource_uid as part of the query parameters
+				// of the url, so we can retrive it here and don't mix up datasources with the
+				// same url -- as the url would be the only identifier otherwise.
+				datasourceID := req.URL.Query().Get(datasourceUIDQueryKey)
+				if headers, ok := httpHeaders[datasourceID]; ok {
+					for k, v := range headers {
+						req.Header.Set(k, v)
+					}
+				}
+				req.URL.Query().Del(datasourceUIDQueryKey)
+
+				if headers, ok := httpHeaders[req.RequestURI]; ok {
+					for k, v := range headers {
+						req.Header.Set(k, v)
+					}
+				}
+				return client.Do(req.WithContext(ctx))
+			},
+		},
 		s.logger,
 	)
 

@@ -437,20 +437,31 @@ func TestBuildExternalURL(t *testing.T) {
 		{
 			name: "datasource without auth",
 			ds: &datasources.DataSource{
+				UID: "1",
 				URL: "https://localhost:9000",
 			},
-			expectedURL: "https://localhost:9000",
+			expectedURL: "https://localhost:9000?datasource_uid=1",
+		},
+		{
+			name: "datasource with uid",
+			ds: &datasources.DataSource{
+				UID: "1",
+				URL: "https://localhost:9000",
+			},
+			expectedURL: "https://localhost:9000?datasource_uid=1",
 		},
 		{
 			name: "datasource without auth and with path",
 			ds: &datasources.DataSource{
+				UID: "1",
 				URL: "https://localhost:9000/path/to/am",
 			},
-			expectedURL: "https://localhost:9000/path/to/am",
+			expectedURL: "https://localhost:9000/path/to/am?datasource_uid=1",
 		},
 		{
 			name: "datasource with auth",
 			ds: &datasources.DataSource{
+				UID: "1",
 				URL:           "https://localhost:9000",
 				BasicAuth:     true,
 				BasicAuthUser: "johndoe",
@@ -458,11 +469,12 @@ func TestBuildExternalURL(t *testing.T) {
 					"basicAuthPassword": []byte("123"),
 				},
 			},
-			expectedURL: "https://johndoe:123@localhost:9000",
+			expectedURL: "https://johndoe:123@localhost:9000?datasource_uid=1",
 		},
 		{
 			name: "datasource with auth and path",
 			ds: &datasources.DataSource{
+				UID: "1",
 				URL:           "https://localhost:9000/path/to/am",
 				BasicAuth:     true,
 				BasicAuthUser: "johndoe",
@@ -470,11 +482,12 @@ func TestBuildExternalURL(t *testing.T) {
 					"basicAuthPassword": []byte("123"),
 				},
 			},
-			expectedURL: "https://johndoe:123@localhost:9000/path/to/am",
+			expectedURL: "https://johndoe:123@localhost:9000/path/to/am?datasource_uid=1",
 		},
 		{
 			name: "with no scheme specified in the datasource",
 			ds: &datasources.DataSource{
+				UID: "1",
 				URL:           "localhost:9000/path/to/am",
 				BasicAuth:     true,
 				BasicAuthUser: "johndoe",
@@ -482,18 +495,20 @@ func TestBuildExternalURL(t *testing.T) {
 					"basicAuthPassword": []byte("123"),
 				},
 			},
-			expectedURL: "http://johndoe:123@localhost:9000/path/to/am",
+			expectedURL: "http://johndoe:123@localhost:9000/path/to/am?datasource_uid=1",
 		},
 		{
 			name: "with no scheme specified not auth in the datasource",
 			ds: &datasources.DataSource{
+				UID: "1",
 				URL: "localhost:9000/path/to/am",
 			},
-			expectedURL: "http://localhost:9000/path/to/am",
+			expectedURL: "http://localhost:9000/path/to/am?datasource_uid=1",
 		},
 		{
 			name: "adds /alertmanager to path when implementation is mimir",
 			ds: &datasources.DataSource{
+				UID: "1",
 				URL: "https://localhost:9000",
 				JsonData: func() *simplejson.Json {
 					r := simplejson.New()
@@ -501,11 +516,12 @@ func TestBuildExternalURL(t *testing.T) {
 					return r
 				}(),
 			},
-			expectedURL: "https://localhost:9000/alertmanager",
+			expectedURL: "https://localhost:9000/alertmanager?datasource_uid=1",
 		},
 		{
 			name: "adds /alertmanager to path when implementation is cortex",
 			ds: &datasources.DataSource{
+				UID: "1",
 				URL: "https://localhost:9000/path/to/am",
 				JsonData: func() *simplejson.Json {
 					r := simplejson.New()
@@ -513,11 +529,12 @@ func TestBuildExternalURL(t *testing.T) {
 					return r
 				}(),
 			},
-			expectedURL: "https://localhost:9000/path/to/am/alertmanager",
+			expectedURL: "https://localhost:9000/path/to/am/alertmanager?datasource_uid=1",
 		},
 		{
 			name: "do nothing when implementation is prometheus",
 			ds: &datasources.DataSource{
+				UID: "1",
 				URL: "https://localhost:9000/path/to/am",
 				JsonData: func() *simplejson.Json {
 					r := simplejson.New()
@@ -525,7 +542,7 @@ func TestBuildExternalURL(t *testing.T) {
 					return r
 				}(),
 			},
-			expectedURL: "https://localhost:9000/path/to/am",
+			expectedURL: "https://localhost:9000/path/to/am?datasource_uid=1",
 		},
 	}
 	for _, test := range tests {

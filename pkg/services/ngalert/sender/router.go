@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/url"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -48,6 +49,10 @@ type AlertsRouter struct {
 	datasourceService datasources.DataSourceService
 	secretService     secrets.Service
 }
+
+// datasourceUIDQueryKey is used to set or get the datasource UID as part of the
+// query parameters in a URL.
+const datasourceUIDQueryKey = "datasource_uid"
 
 func NewAlertsRouter(multiOrgNotifier *notifier.MultiOrgAlertmanager, store store.AdminConfigurationStore,
 	clk clock.Clock, appURL *url.URL, disabledOrgs map[int64]struct{}, configPollInterval time.Duration,
@@ -105,7 +110,7 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 			continue
 		}
 
-		alertmanagers, err := d.alertmanagersFromDatasources(cfg.OrgID)
+		alertmanagers, headers, err := d.alertmanagersFromDatasources(cfg.OrgID)
 		if err != nil {
 			d.logger.Error("Failed to get alertmanagers from datasources", "org", cfg.OrgID, "error", err)
 			continue
@@ -129,7 +134,7 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 		d.logger.Debug("Alertmanagers found in the configuration", "alertmanagers", redactedAMs)
 
 		// We have a running sender, check if we need to apply a new config.
-		amHash := asSHA256(alertmanagers)
+		amHash := asSHA256(append(alertmanagers, headersString(headers)))
 		if ok {
 			if d.externalAlertmanagersCfgHash[cfg.OrgID] == amHash {
 				d.logger.Debug("Sender configuration is the same as the one running, no-op", "org", cfg.OrgID, "alertmanagers", redactedAMs)
@@ -148,7 +153,7 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 
 		// No sender and have Alertmanager(s) to send to - start a new one.
 		d.logger.Info("Creating new sender for the external alertmanagers", "org", cfg.OrgID, "alertmanagers", redactedAMs)
-		s := NewExternalAlertmanagerSender()
+		s := NewExternalAlertmanagerSender(headers)
 		d.externalAlertmanagers[cfg.OrgID] = s
 		s.Run()
 
@@ -184,6 +189,38 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 	return nil
 }
 
+// headersString computes all the headers in a sorted way as a
+// single string so it can be used for hashing and comparing.
+func headersString(headers map[string]map[string]string) string {
+	var result strings.Builder
+
+	keys := make([]string, 0, len(headers))
+	for k := range headers {
+		keys = append(keys, k)
+	}
+
+	sort.Strings(keys)
+
+	for _, k := range keys {
+
+		result.WriteString(k)
+
+		header := headers[k]
+		headerKeys := make([]string, 0, len(header))
+		for key := range header {
+			headerKeys = append(headerKeys, key)
+		}
+
+		sort.Strings(headerKeys)
+
+		for _, key := range headerKeys {
+			result.WriteString(fmt.Sprintf("%s:%s", key, header[key]))
+		}
+	}
+
+	return result.String()
+}
+
 func buildRedactedAMs(l log.Logger, alertmanagers []string, ordId int64) []string {
 	var redactedAMs []string
 	for _, am := range alertmanagers {
@@ -204,8 +241,9 @@ func asSHA256(strings []string) string {
 	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
-func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]string, error) {
+func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]string, map[string]map[string]string, error) {
 	var alertmanagers []string
+	var headers = map[string]map[string]string{}
 	// We might have alertmanager datasources that are acting as external
 	// alertmanager, let's fetch them.
 	query := &datasources.GetDataSourcesByTypeQuery{
@@ -216,7 +254,7 @@ func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]string, erro
 	defer cancel()
 	dataSources, err := d.datasourceService.GetDataSourcesByType(ctx, query)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch datasources for org: %w", err)
+		return nil, nil, fmt.Errorf("failed to fetch datasources for org: %w", err)
 	}
 	for _, ds := range dataSources {
 		if !ds.JsonData.Get(definitions.HandleGrafanaManagedAlerts).MustBool(false) {
@@ -230,9 +268,38 @@ func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]string, erro
 				"error", err)
 			continue
 		}
+		m, err := ds.JsonData.Map()
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to fetch headers for datasource: %w", err)
+		}
+
+		const headerName = "httpHeaderName"
+
+		for k := range m {
+			if !strings.HasPrefix(k, headerName) {
+				continue
+			}
+			// The header field names are saved as "httpHeaderName1", "httpHeaderName2" etc.
+			// We need to extract the number to create the right key that will enable us the
+			// extract the coresponding value in the secure json value, as it uses the same index
+			// but a different name i.e. "httpHeaderValue1".
+			index := strings.TrimLeft(k, headerName)
+			val, ok := ds.SecureJsonData["httpHeaderValue"+index]
+			if !ok {
+				return nil, nil, fmt.Errorf("failed to find the value for the declared header field %s", k)
+			}
+			decVal, err := d.secretService.Decrypt(ctx, val)
+			if err != nil {
+				return nil, nil, fmt.Errorf("failed to decrypt the value for the declared header field %s: %w", k, err)
+			}
+			if headers[ds.UID] == nil {
+				headers[ds.UID] = map[string]string{}
+			}
+			headers[ds.UID][k] = string(decVal)
+		}
 		alertmanagers = append(alertmanagers, amURL)
 	}
-	return alertmanagers, nil
+	return alertmanagers, nil, nil
 }
 
 func (d *AlertsRouter) buildExternalURL(ds *datasources.DataSource) (string, error) {
@@ -242,6 +309,11 @@ func (d *AlertsRouter) buildExternalURL(ds *datasources.DataSource) (string, err
 	if err != nil {
 		return "", fmt.Errorf("failed to parse alertmanager datasource url: %w", err)
 	}
+
+	// Add the datasource_id so we can identify the exect datasource again later down in the call stack.
+	q := parsed.Query()
+	q.Add(datasourceUIDQueryKey, ds.UID)
+	parsed.RawQuery = q.Encode()
 
 	// If this is a Mimir or Cortex implementation, the Alert API is under a different path than config API
 	if ds.JsonData != nil {
@@ -265,8 +337,8 @@ func (d *AlertsRouter) buildExternalURL(ds *datasources.DataSource) (string, err
 	if password == "" {
 		return "", fmt.Errorf("basic auth enabled but no password set")
 	}
-	return fmt.Sprintf("%s://%s:%s@%s%s%s", parsed.Scheme, ds.BasicAuthUser,
-		password, parsed.Host, parsed.Path, parsed.RawQuery), nil
+	parsed.User = url.UserPassword(ds.BasicAuthUser, password)
+	return parsed.String(), nil
 }
 
 func (d *AlertsRouter) Send(key models.AlertRuleKey, alerts definitions.PostableAlerts) {
