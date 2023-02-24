@@ -16,8 +16,6 @@ import { DashboardScene } from '../dashboard/DashboardScene';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
-//(window as any).grafanaSceneLogging = true;
-
 export function getVariablesDemo(): DashboardScene {
   return new DashboardScene({
     title: 'Variables',
