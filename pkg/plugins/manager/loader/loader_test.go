@@ -411,7 +411,7 @@ func TestLoader_Load(t *testing.T) {
 			name:  "Load CDN plugin",
 			class: plugins.External,
 			cfg: &config.Cfg{
-				PluginsCDNURLTemplate: "https://cdn.example.com/{id}/{version}/public/plugins/{id}/{assetPath}",
+				PluginsCDNURLTemplate: "https://cdn.example.com",
 				PluginSettings: setting.PluginSettings{
 					"grafana-worldmap-panel": {"cdn": "true"},
 				},
