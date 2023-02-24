@@ -84,17 +84,19 @@ export const EmailSharingConfiguration = () => {
                 <InputControl
                   name="shareType"
                   control={control}
-                  render={({ field }) => (
-                    <RadioButtonGroup
-                      {...field}
-                      options={options}
-                      onChange={(shareType: PublicDashboardShareType) => {
-                        setValue('shareType', shareType);
-                        onShareTypeChange(shareType);
-                      }}
-                      data-testid={selectors.ShareType}
-                    />
-                  )}
+                  render={({ field }) => {
+                    const { ref, ...rest } = field;
+                    return (
+                      <RadioButtonGroup
+                        {...rest}
+                        options={options}
+                        onChange={(shareType: PublicDashboardShareType) => {
+                          setValue('shareType', shareType);
+                          onShareTypeChange(shareType);
+                        }}
+                      />
+                    );
+                  }}
                 />
               </Field>
               {watch('shareType') === PublicDashboardShareType.EMAIL && (
@@ -102,8 +104,8 @@ export const EmailSharingConfiguration = () => {
                   <Field
                     label="Invite"
                     description="Invite people by email separated by comma "
-                    error={errors?.email?.message}
-                    invalid={!!errors.email}
+                    error={errors.email?.message}
+                    invalid={!!errors.email?.message || undefined}
                   >
                     <div className={styles.emailContainer}>
                       <Input
@@ -120,7 +122,7 @@ export const EmailSharingConfiguration = () => {
                         type="submit"
                         variant="primary"
                         disabled={!isValid || isAddEmailLoading}
-                        data-testid={selectors.EmailSharingButton}
+                        data-testid={selectors.EmailSharingInviteButton}
                       >
                         Invite {isAddEmailLoading && <Spinner />}
                       </Button>

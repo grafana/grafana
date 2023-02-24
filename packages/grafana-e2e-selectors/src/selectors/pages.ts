@@ -203,7 +203,7 @@ export const Pages = {
       EmailSharingConfiguration: {
         ShareType: 'data-testid public dashboard share type',
         EmailSharingInput: 'data-testid public dashboard email sharing input',
-        EmailSharingButton: 'data-testid public dashboard email sharing invite button',
+        EmailSharingInviteButton: 'data-testid public dashboard email sharing invite button',
         EmailSharingList: 'data-testid public dashboard email sharing list',
       },
     },
