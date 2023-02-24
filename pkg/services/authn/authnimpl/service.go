@@ -234,6 +234,10 @@ func (s *Service) RegisterPostAuthHook(hook authn.PostAuthHookFn, priority uint)
 }
 
 func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (identity *authn.Identity, err error) {
+	ctx, span := s.tracer.Start(ctx, "authn.Login")
+	defer span.End()
+	span.SetAttributes(attributeKeyClient, client, attribute.Key(attributeKeyClient).String(client))
+
 	defer func() {
 		for _, hook := range s.postLoginHooks.items {
 			hook.v(ctx, identity, r, err)
