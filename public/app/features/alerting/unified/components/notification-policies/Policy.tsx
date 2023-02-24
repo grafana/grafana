@@ -6,17 +6,7 @@ import { Link } from 'react-router-dom';
 
 import { GrafanaTheme2, IconName } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import {
-  Badge,
-  Button,
-  ButtonGroup,
-  Dropdown,
-  getTagColorsFromName,
-  Icon,
-  Menu,
-  Tooltip,
-  useStyles2,
-} from '@grafana/ui';
+import { Badge, Button, Dropdown, getTagColorsFromName, Icon, Menu, Tooltip, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import {
   RouteWithID,
@@ -119,13 +109,14 @@ const Policy: FC<PolicyComponentProps> = ({
   });
 
   const childPolicies = currentRoute.routes ?? [];
-  const hasChildPolicies = Boolean(childPolicies.length);
   const isGrouping = Array.isArray(groupBy) && groupBy.length > 0;
   const hasInheritedProperties = inheritedProperties && Object.keys(inheritedProperties).length > 0;
 
   const isEditable = canEditRoutes;
   const isDeletable = canDeleteRoutes && !isDefaultPolicy;
 
+  // disabled for now – see https://github.com/grafana/grafana/pull/61952#issuecomment-1437010087
+  //
   // const matchingAlertGroups = useMemo(
   //   () => findMatchingAlertGroups(routeTree, currentRoute, alertGroups),
   //   [alertGroups, currentRoute, routeTree]
@@ -160,56 +151,40 @@ const Policy: FC<PolicyComponentProps> = ({
               {errors.length > 0 && <Errors errors={errors} />}
               {!readOnly && (
                 <Stack direction="row" gap={0.5}>
-                  <ButtonGroup>
-                    <Button
-                      variant="secondary"
-                      icon="pen"
-                      size="sm"
-                      disabled={!isEditable}
-                      onClick={() => onEditPolicy(currentRoute, isDefaultPolicy)}
-                      type="button"
-                    >
-                      Edit
-                    </Button>
-                    <Dropdown
-                      overlay={
-                        <Menu>
-                          {hasChildPolicies ? (
+                  <Button
+                    variant="secondary"
+                    icon="plus"
+                    size="sm"
+                    onClick={() => onAddPolicy(currentRoute)}
+                    type="button"
+                  >
+                    New nested policy
+                  </Button>
+                  <Dropdown
+                    overlay={
+                      <Menu>
+                        <Menu.Item
+                          icon="pen"
+                          disabled={!isEditable}
+                          label="Edit"
+                          onClick={() => onEditPolicy(currentRoute, isDefaultPolicy)}
+                        />
+                        {isDeletable && (
+                          <>
+                            <Menu.Divider />
                             <Menu.Item
-                              icon="plus"
-                              label="Add additional policy"
-                              onClick={() => onAddPolicy(currentRoute)}
+                              destructive
+                              icon="trash-alt"
+                              label="Delete"
+                              onClick={() => onDeletePolicy(currentRoute)}
                             />
-                          ) : (
-                            <Menu.Item
-                              icon="corner-down-right-alt"
-                              label="Create nested policy"
-                              onClick={() => onAddPolicy(currentRoute)}
-                            />
-                          )}
-                          {isDeletable && (
-                            <>
-                              <Menu.Divider />
-                              <Menu.Item
-                                destructive
-                                icon="trash-alt"
-                                label="Delete"
-                                onClick={() => onDeletePolicy(currentRoute)}
-                              />
-                            </>
-                          )}
-                        </Menu>
-                      }
-                    >
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        icon="angle-down"
-                        type="button"
-                        data-testid="more-actions"
-                      />
-                    </Dropdown>
-                  </ButtonGroup>
+                          </>
+                        )}
+                      </Menu>
+                    }
+                  >
+                    <Button variant="secondary" size="sm" icon="ellipsis-h" type="button" data-testid="more-actions" />
+                  </Dropdown>
                 </Stack>
               )}
             </Stack>
