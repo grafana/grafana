@@ -696,7 +696,7 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
           });
 
           observer.next({
-            state: dataQueryResponse.state ?? LoadingState.Streaming,
+            state: dataQueryResponse.state,
             error: undefined,
             data: logsVolumeData,
           });

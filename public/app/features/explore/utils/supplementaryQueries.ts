@@ -1,5 +1,5 @@
 import { cloneDeep, groupBy } from 'lodash';
-import { from, mergeMap, Observable, of } from 'rxjs';
+import { distinct, from, mergeMap, Observable, of } from 'rxjs';
 import { scan } from 'rxjs/operators';
 
 import {
@@ -188,19 +188,18 @@ export const getSupplementaryQueryProvider = (
       }),
       scan<DataQueryResponse, DataQueryResponse>(
         (acc, next) => {
-          if (acc.state !== LoadingState.NotStarted && next.state === LoadingState.NotStarted) {
+          if (acc.error || next.state === LoadingState.NotStarted) {
             return acc;
           }
 
-          if (next.state !== LoadingState.Done) {
+          if (next.state === LoadingState.Loading && acc.state === LoadingState.NotStarted) {
             return {
-              data: acc.data,
-              state: next.state,
-              error: next.error,
+              ...acc,
+              state: LoadingState.Loading,
             };
           }
 
-          if (acc.error) {
+          if (next.state && next.state !== LoadingState.Done) {
             return acc;
           }
 
@@ -211,7 +210,8 @@ export const getSupplementaryQueryProvider = (
           };
         },
         { data: [], state: LoadingState.NotStarted }
-      )
+      ),
+      distinct()
     );
   } else {
     // Create a fallback to results based logs volume

@@ -224,7 +224,6 @@ describe('SupplementaryQueries utils', function () {
                 data: assertDataFrom(SupplementaryQueryType.LogsVolume, 'logs-volume-a'),
                 state: LoadingState.Done,
               },
-              { data: assertDataFrom(SupplementaryQueryType.LogsVolume, 'logs-volume-a'), state: 'Loading' },
               {
                 data: assertDataFrom(SupplementaryQueryType.LogsVolume, 'logs-volume-a', 'logs-volume-b'),
                 state: LoadingState.Done,
@@ -282,9 +281,6 @@ describe('SupplementaryQueries utils', function () {
                 state: LoadingState.Done,
               },
               {
-                state: 'Loading',
-              },
-              {
                 data: [
                   ...assertDataFrom(SupplementaryQueryType.LogsVolume, 'logs-volume-a'),
                   ...assertDataFromLogsResults(),
@@ -307,15 +303,14 @@ describe('SupplementaryQueries utils', function () {
           ]);
           await expect(testProvider).toEmitValuesWith((received) => {
             expect(received).toMatchObject([
-              { data: [], state: 'Loading' },
+              { data: [], state: LoadingState.Loading },
               {
                 data: assertDataFrom(SupplementaryQueryType.LogsSample, 'logs-sample-a'),
                 state: LoadingState.Done,
               },
-              { data: assertDataFrom(SupplementaryQueryType.LogsSample, 'logs-sample-a'), state: 'Loading' },
               {
                 data: assertDataFrom(SupplementaryQueryType.LogsSample, 'logs-sample-a', 'logs-sample-b'),
-                state: 'Done',
+                state: LoadingState.Done,
               },
             ]);
           });
@@ -329,10 +324,7 @@ describe('SupplementaryQueries utils', function () {
             'no-data-providers-2',
           ]);
           await expect(testProvider).toEmitValuesWith((received) => {
-            expect(received).toMatchObject([
-              { state: LoadingState.NotStarted, data: [] },
-              { state: LoadingState.NotStarted, data: [] },
-            ]);
+            expect(received).toMatchObject([{ state: LoadingState.NotStarted, data: [] }]);
           });
         });
       });
@@ -350,15 +342,6 @@ describe('SupplementaryQueries utils', function () {
               { data: [], state: LoadingState.Loading },
               {
                 data: assertDataFrom(SupplementaryQueryType.LogsSample, 'logs-sample-a'),
-                state: LoadingState.Done,
-              },
-              {
-                data: assertDataFrom(SupplementaryQueryType.LogsSample, 'logs-sample-a'),
-                state: LoadingState.Done,
-              },
-              { data: assertDataFrom(SupplementaryQueryType.LogsSample, 'logs-sample-a'), state: LoadingState.Loading },
-              {
-                data: assertDataFrom(SupplementaryQueryType.LogsSample, 'logs-sample-a', 'logs-sample-b'),
                 state: LoadingState.Done,
               },
               {
