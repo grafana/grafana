@@ -11,13 +11,14 @@ import SearchField from './SearchField';
 
 interface Props {
   updateFilter: (f: SearchFilter) => void;
+  deleteFilter: (f: SearchFilter) => void;
   filters: SearchFilter[];
   datasource: TempoDatasource;
   setError: (error: FetchError) => void;
   tags: string[];
   isTagsLoading: boolean;
 }
-const TagsInput = ({ updateFilter, filters, datasource, setError, tags, isTagsLoading }: Props) => {
+const TagsInput = ({ updateFilter, deleteFilter, filters, datasource, setError, tags, isTagsLoading }: Props) => {
   const generateId = () => uuidv4().slice(0, 8);
   const handleOnAdd = useCallback(
     () => updateFilter({ id: generateId(), type: 'dynamic', operator: '=' }),
@@ -44,6 +45,7 @@ const TagsInput = ({ updateFilter, filters, datasource, setError, tags, isTagsLo
               updateFilter={updateFilter}
               tags={tags}
               isTagsLoading={isTagsLoading}
+              deleteFilter={deleteFilter}
             />
           ))}
       </VerticalGroup>

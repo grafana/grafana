@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { FetchError, isFetchError } from '@grafana/runtime';
-import { Select, HorizontalGroup } from '@grafana/ui';
+import { Select, HorizontalGroup, Button } from '@grafana/ui';
 
 import { createErrorNotification } from '../../../../core/copy/appNotification';
 import { notifyApp } from '../../../../core/reducers/appNotification';
@@ -16,11 +16,12 @@ interface Props {
   filter: SearchFilter;
   datasource: TempoDatasource;
   updateFilter: (f: SearchFilter) => void;
+  deleteFilter?: (f: SearchFilter) => void;
   setError: (error: FetchError) => void;
   isTagsLoading?: boolean;
   tags: string[];
 }
-const SearchField = ({ filter, datasource, updateFilter, isTagsLoading, tags, setError }: Props) => {
+const SearchField = ({ filter, datasource, updateFilter, deleteFilter, isTagsLoading, tags, setError }: Props) => {
   const languageProvider = useMemo(() => new TempoLanguageProvider(datasource), [datasource]);
   const [isLoadingValues, setIsLoadingValues] = useState(false);
   const [options, setOptions] = useState<Array<SelectableValue<string>>>([]);
@@ -123,6 +124,11 @@ const SearchField = ({ filter, datasource, updateFilter, isTagsLoading, tags, se
         allowCustomValue={true}
         isMulti
       />
+      {filter.type === 'dynamic' && (
+        <Button variant={'secondary'} onClick={() => deleteFilter?.(filter)} tooltip={'Remove tag'}>
+          x
+        </Button>
+      )}
     </HorizontalGroup>
   );
 };

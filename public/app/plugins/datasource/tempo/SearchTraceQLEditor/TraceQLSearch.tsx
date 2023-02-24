@@ -50,15 +50,13 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
     onChange(copy);
   };
 
+  const deleteFilter = (s: SearchFilter) => {
+    onChange({ ...query, filters: query.filters.filter((f) => f.id !== s.id) });
+  };
+
   useEffect(() => {
     setTraceQlQuery(generateQueryFromFilters(query.filters || []));
   }, [query]);
-
-  // const deleteFilter = (tag: string) => {
-  //   const copy = { ...filters };
-  //   delete filters[tag];
-  //   setFilters(copy);
-  // };
 
   const findFilter = (id: string) => query.filters?.find((f) => f.id === id);
 
@@ -152,6 +150,7 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
               datasource={datasource}
               setError={setError}
               updateFilter={updateFilter}
+              deleteFilter={deleteFilter}
               tags={[...CompletionProvider.intrinsics, ...tags]}
               isTagsLoading={isTagsLoading}
             />
