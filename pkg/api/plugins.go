@@ -263,6 +263,8 @@ func (hs *HTTPServer) UpdatePluginSetting(c *contextmodel.ReqContext) response.R
 		return response.Error(500, "Failed to update plugin setting", err)
 	}
 
+	hs.PluginContextProvider.InvalidateSettingsCache(c.Req.Context(), pluginID)
+
 	return response.Success("Plugin settings updated")
 }
 
