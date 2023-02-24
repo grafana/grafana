@@ -164,8 +164,7 @@ export const KBarResults: React.FC<KBarResultsProps> = (props) => {
           // ActionImpl constructor copies all properties from action onto ActionImpl
           // so our url property is secretly there, but completely untyped
           // Preferably this change is upstreamed and ActionImpl has this
-          const url = item.url;
-          const target = item.target;
+          const { target, url } = item;
 
           const handlers = typeof item !== 'string' && {
             onPointerMove: () =>
