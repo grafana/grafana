@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import React from 'react';
+import { useForm } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
@@ -7,13 +8,11 @@ import {
   Button,
   ButtonGroup,
   Field,
-  Form,
   Input,
   InputControl,
   RadioButtonGroup,
   Spinner,
   useStyles2,
-  VerticalGroup,
 } from '@grafana/ui/src';
 import {
   useAddEmailSharingMutation,
@@ -47,6 +46,22 @@ export const EmailSharingConfiguration = () => {
   const [addEmail, { isLoading: isAddEmailLoading }] = useAddEmailSharingMutation();
   const [deleteEmail, { isLoading: isDeleteLoading }] = useDeleteEmailSharingMutation();
 
+  const {
+    register,
+    setValue,
+    control,
+    watch,
+    handleSubmit,
+    formState: { isValid, errors },
+    reset,
+  } = useForm<EmailSharingConfigurationForm>({
+    defaultValues: {
+      shareType: publicDashboard?.share || PublicDashboardShareType.PUBLIC,
+      email: '',
+    },
+    mode: 'onChange',
+  });
+
   const onShareTypeChange = (shareType: PublicDashboardShareType) => {
     const req = {
       dashboard,
@@ -62,114 +77,99 @@ export const EmailSharingConfiguration = () => {
     deleteEmail({ recipient: email, dashboardUid: dashboard.uid, uid: publicDashboard!.uid });
   };
 
-  const onSubmit = (data: EmailSharingConfigurationForm) => {
-    addEmail({ recipient: data.email, uid: publicDashboard!.uid, dashboardUid: dashboard.uid });
+  const onSubmit = async (data: EmailSharingConfigurationForm) => {
+    await addEmail({ recipient: data.email, uid: publicDashboard!.uid, dashboardUid: dashboard.uid }).unwrap();
+    reset();
   };
 
   return (
-    <div className={styles.container}>
-      <VerticalGroup spacing="sm">
-        <Form
-          maxWidth="none"
-          onSubmit={onSubmit}
-          validateOn="onChange"
-          defaultValues={{
-            shareType: publicDashboard?.share || PublicDashboardShareType.PUBLIC,
-            email: '',
+    <form className={styles.container} onSubmit={handleSubmit(onSubmit)}>
+      <Field label="Can view dashboard">
+        <InputControl
+          name="shareType"
+          control={control}
+          render={({ field }) => {
+            const { ref, ...rest } = field;
+            return (
+              <RadioButtonGroup
+                {...rest}
+                options={options}
+                onChange={(shareType: PublicDashboardShareType) => {
+                  setValue('shareType', shareType);
+                  onShareTypeChange(shareType);
+                }}
+              />
+            );
           }}
-        >
-          {({ register, errors, setValue, control, watch, formState: { isValid } }) => (
-            <div>
-              <Field label="Can view dashboard">
-                <InputControl
-                  name="shareType"
-                  control={control}
-                  render={({ field }) => {
-                    const { ref, ...rest } = field;
-                    return (
-                      <RadioButtonGroup
-                        {...rest}
-                        options={options}
-                        onChange={(shareType: PublicDashboardShareType) => {
-                          setValue('shareType', shareType);
-                          onShareTypeChange(shareType);
-                        }}
-                      />
-                    );
-                  }}
-                />
-              </Field>
-              {watch('shareType') === PublicDashboardShareType.EMAIL && (
-                <>
-                  <Field
-                    label="Invite"
-                    description="Invite people by email separated by comma "
-                    error={errors.email?.message}
-                    invalid={!!errors.email?.message || undefined}
-                  >
-                    <div className={styles.emailContainer}>
-                      <Input
-                        className={styles.emailInput}
-                        placeholder="email"
-                        autoCapitalize="none"
-                        {...register('email', {
-                          required: 'Email is required',
-                          pattern: { value: validEmailRegex, message: 'Invalid email' },
-                        })}
-                        data-testid={selectors.EmailSharingInput}
-                      />
-                      <Button
-                        type="submit"
-                        variant="primary"
-                        disabled={!isValid || isAddEmailLoading}
-                        data-testid={selectors.EmailSharingInviteButton}
-                      >
-                        Invite {isAddEmailLoading && <Spinner />}
-                      </Button>
-                    </div>
-                  </Field>
-                  {!!publicDashboard?.recipients?.length && (
-                    <div className={styles.table} data-testid={selectors.EmailSharingList}>
-                      <table className="filter-table">
-                        <tbody>
-                          {publicDashboard.recipients.map((recipient) => (
-                            <tr key={recipient}>
-                              <td>{recipient}</td>
-                              <td>
-                                <ButtonGroup className={styles.tableButtonsContainer}>
-                                  <Button
-                                    type="button"
-                                    variant="destructive"
-                                    fill="text"
-                                    aria-label="Revoke"
-                                    className={styles.revokeButton}
-                                    title="Revoke"
-                                    disabled={isDeleteLoading}
-                                    onClick={() => onDeleteEmail(recipient)}
-                                  >
-                                    Revoke
-                                  </Button>
-                                </ButtonGroup>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </>
-              )}
+        />
+      </Field>
+      {watch('shareType') === PublicDashboardShareType.EMAIL && (
+        <>
+          <Field
+            label="Invite"
+            description="Invite people by email separated by comma "
+            error={errors.email?.message}
+            invalid={!!errors.email?.message || undefined}
+          >
+            <div className={styles.emailContainer}>
+              <Input
+                className={styles.emailInput}
+                placeholder="email"
+                autoCapitalize="none"
+                {...register('email', {
+                  required: 'Email is required',
+                  pattern: { value: validEmailRegex, message: 'Invalid email' },
+                })}
+                data-testid={selectors.EmailSharingInput}
+              />
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={!isValid || isAddEmailLoading}
+                data-testid={selectors.EmailSharingInviteButton}
+              >
+                Invite {isAddEmailLoading && <Spinner />}
+              </Button>
+            </div>
+          </Field>
+          {!!publicDashboard?.recipients?.length && (
+            <div className={styles.table} data-testid={selectors.EmailSharingList}>
+              <table className="filter-table">
+                <tbody>
+                  {publicDashboard.recipients.map((recipient) => (
+                    <tr key={recipient}>
+                      <td>{recipient}</td>
+                      <td>
+                        <ButtonGroup className={styles.tableButtonsContainer}>
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            fill="text"
+                            aria-label="Revoke"
+                            className={styles.revokeButton}
+                            title="Revoke"
+                            disabled={isDeleteLoading}
+                            onClick={() => onDeleteEmail(recipient)}
+                          >
+                            Revoke
+                          </Button>
+                        </ButtonGroup>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
-        </Form>
-      </VerticalGroup>
-    </div>
+        </>
+      )}
+    </form>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css`
-    margin-bottom: ${theme.spacing(1)};
+    margin-bottom: ${theme.spacing(2)};
   `,
   emailContainer: css`
     display: flex;
