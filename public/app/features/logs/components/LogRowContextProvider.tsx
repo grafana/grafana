@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
 import {
@@ -211,31 +211,45 @@ export const LogRowContextProvider: React.FunctionComponent<LogRowContextProvide
     }
   }, [results]);
 
-  return children({
-    result: {
+  const updateLimit = useCallback(() => {
+    setLimit(limit + 10);
+
+    const { datasourceType, uid: logRowUid } = row;
+    reportInteraction('grafana_explore_logs_log_context_load_more_clicked', {
+      datasourceType,
+      logRowUid,
+      newLimit: limit + 10,
+    });
+  }, [limit, row]);
+
+  const runContextQuery = useCallback(async () => {
+    const results = await getRowContexts(getRowContext, row, limit, logsSortOrder);
+    results.doNotCheckForMore = true;
+    setResults(results);
+  }, [getRowContext, limit, logsSortOrder, row]);
+
+  const resultData = useMemo(
+    () => ({
       before: result ? result.data[0] : [],
       after: result ? result.data[1] : [],
-    },
-    errors: {
+    }),
+    [result]
+  );
+
+  const errorsData = useMemo(
+    () => ({
       before: result ? result.errors[0] : undefined,
       after: result ? result.errors[1] : undefined,
-    },
-    hasMoreContextRows,
-    updateLimit: () => {
-      setLimit(limit + 10);
+    }),
+    [result]
+  );
 
-      const { datasourceType, uid: logRowUid } = row;
-      reportInteraction('grafana_explore_logs_log_context_load_more_clicked', {
-        datasourceType,
-        logRowUid,
-        newLimit: limit + 10,
-      });
-    },
-    runContextQuery: async () => {
-      const results = await getRowContexts(getRowContext, row, limit, logsSortOrder);
-      results.doNotCheckForMore = true;
-      setResults(results);
-    },
+  return children({
+    result: resultData,
+    errors: errorsData,
+    hasMoreContextRows,
+    updateLimit,
+    runContextQuery,
     limit,
     logsSortOrder,
   });
