@@ -70,7 +70,6 @@ Content-Type: application/json
   "uid" : "1",
   "name": "my playlist",
   "interval": "5m",
-  "orgId": "my org",
   "items": [
     {
       "id": 1,
@@ -246,7 +245,6 @@ Content-Type: application/json
   "uid" : "1",
   "name": "my playlist",
   "interval": "5m",
-  "orgId": "my org",
   "items": [
     {
       "id": 1,

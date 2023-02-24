@@ -490,7 +490,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const DatasourceCheatsheet = datasource.components?.QueryEditorHelp;
 
     return (
-      <div aria-label={selectors.components.QueryEditorRows.rows}>
+      <div data-testid="query-editor-row" aria-label={selectors.components.QueryEditorRows.rows}>
         <QueryOperationRow
           id={this.id}
           draggable={true}

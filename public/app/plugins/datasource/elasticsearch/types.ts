@@ -123,7 +123,6 @@ interface MetricConfiguration<T extends MetricAggregationType> {
   supportsInlineScript: boolean;
   supportsMissing: boolean;
   isPipelineAgg: boolean;
-  xpack?: boolean;
   /**
    * A valid semver range for which the metric is known to be available.
    * If omitted defaults to '*'.

@@ -11,10 +11,8 @@ package dataquery
 
 // Defines values for ParcaQueryType.
 const (
-	ParcaQueryTypeBoth ParcaQueryType = "both"
-
+	ParcaQueryTypeBoth    ParcaQueryType = "both"
 	ParcaQueryTypeMetrics ParcaQueryType = "metrics"
-
 	ParcaQueryTypeProfile ParcaQueryType = "profile"
 )
 
@@ -26,7 +24,7 @@ type ParcaDataQuery struct {
 	// TODO this shouldn't be unknown but DataSourceRef | null
 	Datasource *interface{} `json:"datasource,omitempty"`
 
-	// true if query is disabled (ie should not be returned to the dashboard)
+	// Hide true if query is disabled (ie should not be returned to the dashboard)
 	Hide *bool `json:"hide,omitempty"`
 
 	// Unique, guid like, string used in explore mode
