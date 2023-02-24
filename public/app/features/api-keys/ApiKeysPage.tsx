@@ -37,7 +37,6 @@ function mapStateToProps(state: StoreState) {
     includeExpired: getIncludeExpired(state.apiKeys),
     includeExpiredDisabled: getIncludeExpiredDisabled(state.apiKeys),
     canCreate: canCreate,
-    apiKeysMigrated: state.apiKeys.apiKeysMigrated,
   };
 }
 

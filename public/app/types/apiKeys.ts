@@ -21,5 +21,4 @@ export interface ApiKeysState {
   keysIncludingExpired: ApiKey[];
   searchQuery: string;
   hasFetched: boolean;
-  apiKeysMigrated: boolean;
 }

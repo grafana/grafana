@@ -1,9 +1,7 @@
 ﻿import { getBackendSrv } from 'app/core/services/backend_srv';
-import store from 'app/core/store';
-import { API_KEYS_MIGRATION_INFO_STORAGE_KEY } from 'app/features/serviceaccounts/constants';
 import { ThunkResult } from 'app/types';
 
-import { apiKeysLoaded, includeExpiredToggled, isFetching, apiKeysMigrationStatusLoaded } from './reducers';
+import { apiKeysLoaded, includeExpiredToggled, isFetching } from './reducers';
 
 export function loadApiKeys(): ThunkResult<void> {
   return async (dispatch) => {
@@ -38,7 +36,6 @@ export function migrateAll(): ThunkResult<void> {
   return async (dispatch) => {
     try {
       await getBackendSrv().post('/api/serviceaccounts/migrate');
-      store.set(API_KEYS_MIGRATION_INFO_STORAGE_KEY, true);
     } finally {
       dispatch(loadApiKeys());
     }

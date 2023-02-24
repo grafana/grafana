@@ -26,7 +26,6 @@ type store interface {
 	RetrieveServiceAccount(ctx context.Context, orgID, serviceAccountID int64) (*serviceaccounts.ServiceAccountProfileDTO, error)
 	RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error)
 	DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error
-	GetAPIKeysMigrationStatus(ctx context.Context, orgID int64) (*serviceaccounts.APIKeysMigrationStatus, error)
 	HideApiKeysTab(ctx context.Context, orgID int64) error
 	MigrateApiKeysToServiceAccounts(ctx context.Context, orgID int64) error
 	MigrateApiKey(ctx context.Context, orgID int64, keyId int64) error
