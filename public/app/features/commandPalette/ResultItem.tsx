@@ -35,8 +35,8 @@ export const ResultItem = React.forwardRef(
 
     let name = action.name;
 
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const hasAction = (action: ActionImpl) =>
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       Boolean(action.command?.perform || (action as ActionImpl & { url?: string }).url);
 
     // TODO: does this needs adjusting for i18n?
@@ -50,14 +50,14 @@ export const ResultItem = React.forwardRef(
           {action.icon}
           <div className={styles.textContainer}>
             {ancestors.map((ancestor) => (
-              <>
+              <React.Fragment key={ancestor.id}>
                 {!hasAction(ancestor) && (
-                  <React.Fragment key={ancestor.id}>
+                  <>
                     <span className={styles.breadcrumbAncestor}>{ancestor.name}</span>
                     <span className={styles.breadcrumbAncestor}>&rsaquo;</span>
-                  </React.Fragment>
+                  </>
                 )}
-              </>
+              </React.Fragment>
             ))}
             <span>{name}</span>
           </div>
@@ -65,14 +65,14 @@ export const ResultItem = React.forwardRef(
             <div className={styles.subtitleText}>
               {action.subtitle ??
                 ancestors.map((ancestor, index) => (
-                  <>
+                  <React.Fragment key={ancestor.id}>
                     {hasAction(ancestor) && (
-                      <React.Fragment key={ancestor.id}>
+                      <>
                         <span className={styles.breadcrumbAncestor}>{ancestor.name}</span>
                         {index < ancestors.length - 1 && <span className={styles.breadcrumbAncestor}>&rsaquo;</span>}
-                      </React.Fragment>
+                      </>
                     )}
-                  </>
+                  </React.Fragment>
                 ))}
             </div>
           )}
