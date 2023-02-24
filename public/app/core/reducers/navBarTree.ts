@@ -63,8 +63,14 @@ const navTreeSlice = createSlice({
         }
       }
     },
+    removePluginFromNavTree: (state, action: PayloadAction<{ id: string }>) => {
+      const pluginItemIndex = state.findIndex((navItem) => navItem.id === action.payload.id);
+      if (pluginItemIndex > -1) {
+        state.splice(pluginItemIndex, 1);
+      }
+    },
   },
 });
 
-export const { setStarred, updateDashboardName } = navTreeSlice.actions;
+export const { setStarred, removePluginFromNavTree, updateDashboardName } = navTreeSlice.actions;
 export const navTreeReducer = navTreeSlice.reducer;
