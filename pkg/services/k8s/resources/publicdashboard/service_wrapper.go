@@ -2,11 +2,11 @@ package publicdashboard
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/kinds/publicdashboard"
 	"github.com/grafana/grafana/pkg/services/k8s/client"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	publicdashboardModels "github.com/grafana/grafana/pkg/services/publicdashboards/models"
@@ -42,21 +42,20 @@ func ProvideService(
 
 // SaveDashboard saves the dashboard to kubernetes
 func (s *ServiceWrapper) Create(ctx context.Context, u *user.SignedInUser, dto *publicdashboardModels.SavePublicDashboardDTO) (*publicdashboardModels.PublicDashboard, error) {
-
 	// get resource client
 	publicdashboardResource, err := s.clientset.GetResourceClient(CRD)
 	if err != nil {
-		return nil, fmt.Errorf("ProvideServiceWrapper failed to get dashboard resource client: %w", err)
+		return nil, fmt.Errorf("ProvideServiceWrapper failed to get public dashboard resource client: %w", err)
 	}
 
 	if dto.PublicDashboard.Uid != "" {
-		return nil, fmt.Errorf("You cannot provide a uid when creating a public dashboard")
+		return nil, fmt.Errorf("you cannot provide a uid when creating a public dashboard")
 	}
 	dto.PublicDashboard.Uid = util.GenerateShortUID()
 
 	annotations, err := annotationsFromPublicDashboardDTO(dto)
 	if err != nil {
-		return nil, fmt.Errorf("Error getting annotations from public dashboard dto", err)
+		return nil, fmt.Errorf("error getting annotations from public dashboard dto: %s", err)
 	}
 
 	// convert DTO to k8s
@@ -66,19 +65,12 @@ func (s *ServiceWrapper) Create(ctx context.Context, u *user.SignedInUser, dto *
 		Annotations: annotations,
 	}
 
-	//if resourceVersion != "" {
-	//meta.ResourceVersion = resourceVersion
-	//}
-
-	pubdashbytes, err := json.Marshal(dto.PublicDashboard)
-	if err != nil {
-		return nil, err
-	}
-
-	pd, _, err := Kind.JSONValueMux(pubdashbytes)
-	if err != nil {
-		return nil, fmt.Errorf("dashboard JSONValueMux failed: %w", err)
-	}
+	// create a publicdashboard kind object and assign values used in create
+	pd := &publicdashboard.PublicDashboard{}
+	pd.DashboardUid = dto.DashboardUid
+	pd.AnnotationsEnabled = dto.PublicDashboard.AnnotationsEnabled
+	pd.TimeSelectionEnabled = dto.PublicDashboard.TimeSelectionEnabled
+	pd.IsEnabled = dto.PublicDashboard.IsEnabled
 
 	uObj, err := toUnstructured(pd, meta)
 	if err != nil {
@@ -87,7 +79,6 @@ func (s *ServiceWrapper) Create(ctx context.Context, u *user.SignedInUser, dto *
 
 	// call k8s resource client
 	uObj, err = publicdashboardResource.Create(ctx, uObj, metav1.CreateOptions{})
-
 	if err != nil {
 		return nil, err
 	}

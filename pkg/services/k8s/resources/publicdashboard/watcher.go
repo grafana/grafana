@@ -2,6 +2,7 @@ package publicdashboard
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -15,18 +16,23 @@ var _ Watcher = (*watcher)(nil)
 
 type watcher struct {
 	log                    log.Logger
-	publicDashboardService publicdashboardService.PublicDashboardServiceImpl
+	publicDashboardService *publicdashboardService.PublicDashboardServiceImpl
 	userService            user.Service
 	accessControlService   accesscontrol.Service
 }
 
-func ProvideWatcher() *watcher {
-	return &watcher{}
+func ProvideWatcher(userService user.Service, publicDashboardService *publicdashboardService.PublicDashboardServiceImpl, accessControlService accesscontrol.Service) *watcher {
+	return &watcher{
+		log:                    log.New("k8s.publicdashboard.service-watcher"),
+		publicDashboardService: publicDashboardService,
+		userService:            userService,
+		accessControlService:   accessControlService,
+	}
 }
 
 func (w *watcher) Add(ctx context.Context, obj *PublicDashboard) error {
 	w.log.Debug("adding public dashboard", "obj", obj)
-	// convert to dto
+	//convert to dto
 	dto, err := k8sPublicDashboardToDTO(obj)
 	if err != nil {
 		return err
@@ -59,6 +65,7 @@ func (w *watcher) Delete(ctx context.Context, obj *PublicDashboard) error {
 
 func (w *watcher) getSignedInUser(ctx context.Context, orgID int64, userID int64) (*user.SignedInUser, error) {
 	querySignedInUser := user.GetSignedInUserQuery{UserID: userID, OrgID: orgID}
+	fmt.Printf("POTATO: %#v\n", querySignedInUser)
 	signedInUser, err := w.userService.GetSignedInUserWithCacheCtx(ctx, &querySignedInUser)
 	if err != nil {
 		return nil, err
@@ -80,6 +87,13 @@ func (w *watcher) getSignedInUser(ctx context.Context, orgID int64, userID int64
 }
 
 func k8sPublicDashboardToDTO(pd *PublicDashboard) (*publicdashboardModels.SavePublicDashboardDTO, error) {
+
+	// make sure we have an accessToken
+	if pd.Spec.AccessToken == nil {
+		at := ""
+		pd.Spec.AccessToken = &at
+	}
+
 	dto := &publicdashboardModels.SavePublicDashboardDTO{
 		DashboardUid: pd.Spec.DashboardUid,
 		PublicDashboard: &publicdashboardModels.PublicDashboard{
@@ -126,7 +140,7 @@ func parseAnnotations(pd *PublicDashboard, dto *publicdashboardModels.SavePublic
 	}
 
 	if v, ok := a["timeSettings"]; ok {
-		var ts *publicdashboardModels.TimeSettings
+		ts := &publicdashboardModels.TimeSettings{}
 		err = ts.FromDB([]byte(v))
 		if err != nil {
 			return nil, err
