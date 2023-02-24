@@ -265,7 +265,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
         </InlineLabel>
         <Input
           data-testid={testIds.searchMetric}
-          placeholder="search query"
+          placeholder="Search metric text"
           value={''}
           onChange={(e) => {
             // *** Filter by text in name, description or type
@@ -416,9 +416,9 @@ export const MetricEncyclopediaModal = (props: Props) => {
             setPageNum(1);
           }
           // selected letter to filter by
-          const selectedClass: string = letterSearch === letter ? styles.bold : '';
+          const selectedClass: string = letterSearch === letter ? styles.selAlpha : '';
           // these letters are represented in the list of metrics
-          const activeClass: string = active ? '' : styles.gray;
+          const activeClass: string = active ? styles.active : styles.gray;
 
           return (
             <span
@@ -496,62 +496,6 @@ export const MetricEncyclopediaModal = (props: Props) => {
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    cardsContainer: css`
-      display: flex;
-      flex-direction: row;
-      flex-wrap: wrap;
-      justify-content: space-between;
-    `,
-    spacing: css`
-      margin-bottom: ${theme.spacing(1)};
-    `,
-    center: css`
-      text-align: center;
-      padding: 10px;
-    `,
-    card: css`
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-    `,
-    rawQueryContainer: css`
-      flex-grow: 1;
-    `,
-    rawQuery: css`
-      background-color: ${theme.colors.background.primary};
-      padding: ${theme.spacing(1)};
-      margin-top: ${theme.spacing(1)};
-    `,
-    // alphabeticalSearch: css`
-    //   height: 50px;
-    // `,
-    bold: css`
-      font-style: italic;
-      cursor: pointer;
-      color: #6e9fff;
-    `,
-    gray: css`
-      color: grey;
-    `,
-    metadata: css`
-      color: rgb(204, 204, 220);
-    `,
-  };
-};
-
-export const testIds = {
-  metricModal: 'metric-modal',
-  searchMetric: 'search-metric',
-  selectType: 'select-type',
-  searchFunction: 'search-function',
-  metricCard: 'metric-card',
-  useMetric: 'use-metric',
-  searchPage: 'search-page',
-  resultsPerPage: 'results-per-page',
-};
-
 function alphabetically(ascending: boolean, metadataFilters: boolean) {
   return function (a: MetricData, b: MetricData) {
     // equal items sort equally
@@ -626,3 +570,59 @@ function suggestFunctionHints(metric: MetricData) {
   // 1. Check for recording rules expansion
   // 2. For multiple series suggest operator sum() relies on returned query
 }
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    cardsContainer: css`
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: space-between;
+    `,
+    spacing: css`
+      margin-bottom: ${theme.spacing(1)};
+    `,
+    center: css`
+      text-align: center;
+      padding: 10px;
+    `,
+    card: css`
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+    `,
+    rawQueryContainer: css`
+      flex-grow: 1;
+    `,
+    rawQuery: css`
+      background-color: ${theme.colors.background.primary};
+      padding: ${theme.spacing(1)};
+      margin-top: ${theme.spacing(1)};
+    `,
+    selAlpha: css`
+      font-style: italic;
+      cursor: pointer;
+      color: #6e9fff;
+    `,
+    active: css`
+      cursor: pointer;
+    `,
+    gray: css`
+      color: grey;
+    `,
+    metadata: css`
+      color: rgb(204, 204, 220);
+    `,
+  };
+};
+
+export const testIds = {
+  metricModal: 'metric-modal',
+  searchMetric: 'search-metric',
+  selectType: 'select-type',
+  searchFunction: 'search-function',
+  metricCard: 'metric-card',
+  useMetric: 'use-metric',
+  searchPage: 'search-page',
+  resultsPerPage: 'results-per-page',
+};

@@ -110,6 +110,7 @@ describe('MetricEncyclopediaModal', () => {
     setup(defaultQuery, listOfMetrics);
     await waitFor(() => {
       expect(screen.getByText('all-metrics')).toBeInTheDocument();
+      expect(screen.getByText('a_bucket')).toBeInTheDocument();
       expect(screen.getByText('a')).toBeInTheDocument();
       expect(screen.getByText('b')).toBeInTheDocument();
       expect(screen.getByText('c')).toBeInTheDocument();
@@ -118,7 +119,6 @@ describe('MetricEncyclopediaModal', () => {
       expect(screen.getByText('f')).toBeInTheDocument();
       expect(screen.getByText('g')).toBeInTheDocument();
       expect(screen.getByText('h')).toBeInTheDocument();
-      expect(screen.getByText('i')).toBeInTheDocument();
     });
   });
 
@@ -134,7 +134,7 @@ describe('MetricEncyclopediaModal', () => {
   it('shows results metrics per page chosen by the user', async () => {
     setup(defaultQuery, listOfMetrics);
     const resultsPerPageInput = screen.getByTestId('results-per-page');
-    await userEvent.type(resultsPerPageInput, '11');
+    await userEvent.type(resultsPerPageInput, '12');
     const metricInsideRange = screen.getByText('j');
     expect(metricInsideRange).toBeInTheDocument();
   });
