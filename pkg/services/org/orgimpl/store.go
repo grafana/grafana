@@ -76,9 +76,12 @@ func (ss *sqlStore) Insert(ctx context.Context, org *org.Org) (int64, error) {
 	var orgID int64
 	var err error
 	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		if orgID, err = sess.InsertOne(org); err != nil {
+		if _, err = sess.Insert(org); err != nil {
 			return err
 		}
+
+		orgID = org.ID
+
 		if org.ID != 0 {
 			// it sets the setval in the sequence
 			if err := ss.dialect.PostInsertId("org", sess.Session); err != nil {

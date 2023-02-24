@@ -29,8 +29,8 @@ func TestOrgService(t *testing.T) {
 	})
 
 	t.Run("create org with auto assign org ID", func(t *testing.T) {
-		setting.AutoAssignOrg = true
-		setting.AutoAssignOrgId = 1
+		orgService.cfg.AutoAssignOrg = true
+		orgService.cfg.AutoAssignOrgId = 1
 		orgStore.ExpectedOrgID = 1
 		orgStore.ExpectedOrg = &org.Org{}
 		_, err := orgService.GetIDForNewUser(context.Background(), org.GetOrgIDForNewUserCommand{})
@@ -38,16 +38,16 @@ func TestOrgService(t *testing.T) {
 	})
 
 	t.Run("create org with auto assign org ID and orgID", func(t *testing.T) {
-		setting.AutoAssignOrg = true
-		setting.AutoAssignOrgId = 1
+		orgService.cfg.AutoAssignOrg = true
+		orgService.cfg.AutoAssignOrgId = 1
 		orgStore.ExpectedOrgID = 1
 		orgStore.ExpectedOrg = &org.Org{}
 		_, err := orgService.GetIDForNewUser(context.Background(), org.GetOrgIDForNewUserCommand{OrgID: 1})
 		require.NoError(t, err)
 	})
 
-	setting.AutoAssignOrg = false
-	setting.AutoAssignOrgId = 0
+	orgService.cfg.AutoAssignOrg = false
+	orgService.cfg.AutoAssignOrgId = 0
 
 	t.Run("delete user from all orgs", func(t *testing.T) {
 		err := orgService.DeleteUserFromAll(context.Background(), 1)
