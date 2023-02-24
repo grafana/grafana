@@ -103,7 +103,7 @@ Example:
 public_keys = "age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p age1yu8vzu554pv3klw46yhdv4raz36k5w3vy30lpxn46923lqngudyqvxacer"
 ```
 
-Restart Grafana and new support bundles will be encrypted with the provided
+When you restart Grafana, new support bundles will be encrypted with the provided
 public keys. The support bundle file extension is `tar.gz.age`.
 
 #### Decrypt a support bundle
