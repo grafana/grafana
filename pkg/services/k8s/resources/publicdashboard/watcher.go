@@ -2,50 +2,50 @@ package publicdashboard
 
 import (
 	"context"
-	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	publicdashboardStore "github.com/grafana/grafana/pkg/services/publicdashboards/database"
 	publicdashboardModels "github.com/grafana/grafana/pkg/services/publicdashboards/models"
-	publicdashboardService "github.com/grafana/grafana/pkg/services/publicdashboards/service"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
 var _ Watcher = (*watcher)(nil)
 
 type watcher struct {
-	log                    log.Logger
-	publicDashboardService *publicdashboardService.PublicDashboardServiceImpl
-	userService            user.Service
-	accessControlService   accesscontrol.Service
+	log                  log.Logger
+	publicDashboardStore *publicdashboardStore.PublicDashboardStoreImpl
+	userService          user.Service
+	accessControlService accesscontrol.Service
 }
 
-func ProvideWatcher(userService user.Service, publicDashboardService *publicdashboardService.PublicDashboardServiceImpl, accessControlService accesscontrol.Service) *watcher {
+func ProvideWatcher(userService user.Service, publicDashboardStore *publicdashboardStore.PublicDashboardStoreImpl, accessControlService accesscontrol.Service) *watcher {
 	return &watcher{
-		log:                    log.New("k8s.publicdashboard.service-watcher"),
-		publicDashboardService: publicDashboardService,
-		userService:            userService,
-		accessControlService:   accessControlService,
+		log:                  log.New("k8s.publicdashboard.service-watcher"),
+		publicDashboardStore: publicDashboardStore,
+		userService:          userService,
+		accessControlService: accessControlService,
 	}
 }
 
 func (w *watcher) Add(ctx context.Context, obj *PublicDashboard) error {
-	w.log.Debug("adding public dashboard", "obj", obj)
 	//convert to dto
 	dto, err := k8sPublicDashboardToDTO(obj)
 	if err != nil {
 		return err
 	}
 
-	// get user
-	signedInUser, err := w.getSignedInUser(ctx, dto.OrgId, dto.UserId)
-	if err != nil {
-		return err
+	w.log.Debug("adding public dashboard", "obj", obj)
+
+	// convert to cmd
+	cmd := publicdashboardModels.SavePublicDashboardCommand{
+		PublicDashboard: *dto.PublicDashboard,
 	}
 
 	// call service
-	_, err = w.publicDashboardService.Create(ctx, signedInUser, dto)
+	_, err = w.publicDashboardStore.Create(ctx, cmd)
 	if err != nil {
 		return err
 	}
@@ -63,31 +63,7 @@ func (w *watcher) Delete(ctx context.Context, obj *PublicDashboard) error {
 	return nil
 }
 
-func (w *watcher) getSignedInUser(ctx context.Context, orgID int64, userID int64) (*user.SignedInUser, error) {
-	querySignedInUser := user.GetSignedInUserQuery{UserID: userID, OrgID: orgID}
-	fmt.Printf("POTATO: %#v\n", querySignedInUser)
-	signedInUser, err := w.userService.GetSignedInUserWithCacheCtx(ctx, &querySignedInUser)
-	if err != nil {
-		return nil, err
-	}
-
-	if signedInUser.Permissions == nil {
-		signedInUser.Permissions = make(map[int64]map[string][]string)
-	}
-
-	if signedInUser.Permissions[signedInUser.OrgID] == nil {
-		permissions, err := w.accessControlService.GetUserPermissions(ctx, signedInUser, accesscontrol.Options{})
-		if err != nil {
-			return nil, err
-		}
-		signedInUser.Permissions[signedInUser.OrgID] = accesscontrol.GroupScopesByAction(permissions)
-	}
-
-	return signedInUser, nil
-}
-
 func k8sPublicDashboardToDTO(pd *PublicDashboard) (*publicdashboardModels.SavePublicDashboardDTO, error) {
-
 	// make sure we have an accessToken
 	if pd.Spec.AccessToken == nil {
 		at := ""
@@ -97,9 +73,12 @@ func k8sPublicDashboardToDTO(pd *PublicDashboard) (*publicdashboardModels.SavePu
 	dto := &publicdashboardModels.SavePublicDashboardDTO{
 		DashboardUid: pd.Spec.DashboardUid,
 		PublicDashboard: &publicdashboardModels.PublicDashboard{
-			Uid:          pd.Spec.Uid,
-			AccessToken:  *pd.Spec.AccessToken,
-			DashboardUid: pd.Spec.DashboardUid,
+			Uid:                  pd.Spec.Uid,
+			AccessToken:          *pd.Spec.AccessToken,
+			DashboardUid:         pd.Spec.DashboardUid,
+			AnnotationsEnabled:   pd.Spec.AnnotationsEnabled,
+			TimeSelectionEnabled: pd.Spec.TimeSelectionEnabled,
+			IsEnabled:            pd.Spec.IsEnabled,
 		},
 	}
 
@@ -128,15 +107,36 @@ func parseAnnotations(pd *PublicDashboard, dto *publicdashboardModels.SavePublic
 		}
 	}
 
-	if v, ok := a["userId"]; ok {
-		dto.UserId, err = strconv.ParseInt(v, 10, 64)
-		if err != nil {
-			return nil, err
+	if v, ok := a["dashboardUid"]; ok {
+		dto.DashboardUid = v
+	}
+
+	if v, ok := a["updatedBy"]; ok {
+		updatedBy, err := strconv.ParseInt(v, 10, 64)
+		if err == nil {
+			dto.PublicDashboard.UpdatedBy = updatedBy
 		}
 	}
 
-	if v, ok := a["dashboardUid"]; ok {
-		dto.DashboardUid = v
+	if v, ok := a["updatedAt"]; ok {
+		updatedAt, err := strconv.ParseInt(v, 10, 64)
+		if err == nil {
+			dto.PublicDashboard.UpdatedAt = time.Unix(0, updatedAt)
+		}
+	}
+
+	if v, ok := a["createdBy"]; ok {
+		createdBy, err := strconv.ParseInt(v, 10, 64)
+		if err == nil {
+			dto.PublicDashboard.CreatedBy = createdBy
+		}
+	}
+
+	if v, ok := a["createdAt"]; ok {
+		createdAt, err := strconv.ParseInt(v, 10, 64)
+		if err == nil {
+			dto.PublicDashboard.CreatedAt = time.Unix(0, createdAt)
+		}
 	}
 
 	if v, ok := a["timeSettings"]; ok {
