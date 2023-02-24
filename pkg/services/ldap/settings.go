@@ -235,5 +235,9 @@ func tlsCiphersToIDs(names []string) ([]uint16, error) {
 		ids = append(ids, id)
 	}
 
-	return ids, fmt.Errorf("unknown ciphers: %v", missing)
+	if len(missing) > 0 {
+		return ids, fmt.Errorf("unknown ciphers: %v", missing)
+	}
+	
+	return ids, nil
 }
