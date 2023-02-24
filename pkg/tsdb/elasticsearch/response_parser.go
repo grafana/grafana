@@ -64,7 +64,7 @@ func parseResponse(responses []*es.SearchResponse, targets []*Query, configuredF
 			}
 			result.Responses[target.RefID] = queryRes
 		} else if isLogsQuery(target) {
-			err := processLogResponse(res, target, configuredFields, &queryRes)
+			err := processLogsResponse(res, target, configuredFields, &queryRes)
 			if err != nil {
 				return &backend.QueryDataResponse{}, err
 			}
@@ -85,7 +85,7 @@ func parseResponse(responses []*es.SearchResponse, targets []*Query, configuredF
 	return &result, nil
 }
 
-func processLogResponse(res *es.SearchResponse, target *Query, configuredFields es.ConfiguredFields, queryRes *backend.DataResponse) error {
+func processLogsResponse(res *es.SearchResponse, target *Query, configuredFields es.ConfiguredFields, queryRes *backend.DataResponse) error {
 	propNames := make(map[string]bool)
 	docs := make([]map[string]interface{}, len(res.Hits.Hits))
 
@@ -113,11 +113,7 @@ func processLogResponse(res *es.SearchResponse, target *Query, configuredFields 
 		}
 
 		for key := range doc {
-			if configuredFields.LogLevelField != "" && key == configuredFields.LogLevelField {
-				propNames["level"] = true
-			} else {
-				propNames[key] = true
-			}
+			propNames[key] = true
 		}
 		// TODO: Implement highlighting
 
@@ -958,7 +954,7 @@ func flatten(target map[string]interface{}) map[string]interface{} {
 }
 
 // sortPropNames orders propNames so that timeField is first (if it exists), log message field is second
-// (if shouldSortLogMessageField is true) and rest of propNames are ordered alphabetically
+// if shouldSortLogMessageField is true, and rest of propNames are ordered alphabetically
 func sortPropNames(propNames map[string]bool, configuredFields es.ConfiguredFields, shouldSortLogMessageField bool) []string {
 	hasTimeField := false
 	hasLogMessageField := false
