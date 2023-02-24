@@ -67,7 +67,7 @@ export function InstallControlsButton({
       }
       appEvents.emit(AppEvents.alertSuccess, [`Uninstalled ${plugin.name}`]);
       if (plugin.type === 'app') {
-        dispatch(removePluginFromNavTree({ id: plugin.id }));
+        dispatch(removePluginFromNavTree({ pluginID: plugin.id }));
         setNeedReload(false);
       }
     }

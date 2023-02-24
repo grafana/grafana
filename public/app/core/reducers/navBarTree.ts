@@ -63,8 +63,9 @@ const navTreeSlice = createSlice({
         }
       }
     },
-    removePluginFromNavTree: (state, action: PayloadAction<{ id: string }>) => {
-      const pluginItemIndex = state.findIndex((navItem) => navItem.id === action.payload.id);
+    removePluginFromNavTree: (state, action: PayloadAction<{ pluginID: string }>) => {
+      const navID = 'plugin-page-' + action.payload.pluginID;
+      const pluginItemIndex = state.findIndex((navItem) => navItem.id === navID);
       if (pluginItemIndex > -1) {
         state.splice(pluginItemIndex, 1);
       }
