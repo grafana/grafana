@@ -1,7 +1,6 @@
 import {
   VizPanel,
   SceneCanvasText,
-  SceneSubMenu,
   SceneTimePicker,
   SceneFlexLayout,
   SceneTimeRange,
@@ -10,15 +9,15 @@ import {
   CustomVariable,
   DataSourceVariable,
   TestVariable,
-  EmbeddedScene,
+  NestedScene,
 } from '@grafana/scenes';
 
-import { Scene } from '../components/Scene';
+import { DashboardScene } from '../dashboard/DashboardScene';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
-export function getVariablesDemo(standalone: boolean): Scene | EmbeddedScene {
-  const state = {
+export function getVariablesDemo(): DashboardScene {
+  return new DashboardScene({
     title: 'Variables',
     $variables: new SceneVariableSet({
       variables: [
@@ -62,19 +61,40 @@ export function getVariablesDemo(standalone: boolean): Scene | EmbeddedScene {
       direction: 'row',
       children: [
         new SceneFlexLayout({
+          direction: 'column',
           children: [
-            new VizPanel({
-              pluginId: 'timeseries',
-              title: 'handler: $handler',
-              $data: getQueryRunnerWithRandomWalkQuery({
-                alias: 'handler: $handler',
-              }),
+            new SceneFlexLayout({
+              children: [
+                new VizPanel({
+                  pluginId: 'timeseries',
+                  title: 'handler: $handler',
+                  $data: getQueryRunnerWithRandomWalkQuery({
+                    alias: 'handler: $handler',
+                  }),
+                }),
+                new SceneCanvasText({
+                  placement: { width: '40%' },
+                  text: 'server: ${server} pod:${pod}',
+                  fontSize: 20,
+                  align: 'center',
+                }),
+              ],
             }),
-            new SceneCanvasText({
-              placement: { width: '40%' },
-              text: 'server: ${server} pod:${pod}',
-              fontSize: 20,
-              align: 'center',
+            new NestedScene({
+              title: 'Collapsable inner scene',
+              canCollapse: true,
+              body: new SceneFlexLayout({
+                direction: 'row',
+                children: [
+                  new VizPanel({
+                    pluginId: 'timeseries',
+                    title: 'handler: $handler',
+                    $data: getQueryRunnerWithRandomWalkQuery({
+                      alias: 'handler: $handler',
+                    }),
+                  }),
+                ],
+              }),
             }),
           ],
         }),
@@ -82,16 +102,12 @@ export function getVariablesDemo(standalone: boolean): Scene | EmbeddedScene {
     }),
     $timeRange: new SceneTimeRange(),
     actions: [new SceneTimePicker({})],
-    subMenu: new SceneSubMenu({
-      children: [new VariableValueSelectors({})],
-    }),
-  };
-
-  return standalone ? new Scene(state) : new EmbeddedScene(state);
+    controls: [new VariableValueSelectors({})],
+  });
 }
 
-export function getVariablesDemoWithAll(): Scene {
-  const scene = new Scene({
+export function getVariablesDemoWithAll(): DashboardScene {
+  return new DashboardScene({
     title: 'Variables with All values',
     $variables: new SceneVariableSet({
       variables: [
@@ -153,10 +169,6 @@ export function getVariablesDemoWithAll(): Scene {
     }),
     $timeRange: new SceneTimeRange(),
     actions: [new SceneTimePicker({})],
-    subMenu: new SceneSubMenu({
-      children: [new VariableValueSelectors({})],
-    }),
+    controls: [new VariableValueSelectors({})],
   });
-
-  return scene;
 }

@@ -1,5 +1,6 @@
 import { of } from 'rxjs';
 
+import { EventBusExtended } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
 import { BackendSrv } from 'app/core/services/backend_srv';
 
@@ -125,7 +126,7 @@ function mockBackendSrv(data: string) {
     return of(mockedResponse);
   });
 
-  const appEventsMock = {} as any;
+  const appEventsMock = {} as EventBusExtended;
 
   const user: User = {
     isSignedIn: props.isSignedIn,

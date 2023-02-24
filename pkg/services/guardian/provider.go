@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -36,7 +35,7 @@ func InitLegacyGuardian(store db.DB, dashSvc dashboards.DashboardService, teamSv
 		return newDashboardGuardianByUID(ctx, dashUID, orgId, user, store, dashSvc, teamSvc)
 	}
 
-	NewByDashboard = func(ctx context.Context, dash *models.Dashboard, orgId int64, user *user.SignedInUser) (DashboardGuardian, error) {
+	NewByDashboard = func(ctx context.Context, dash *dashboards.Dashboard, orgId int64, user *user.SignedInUser) (DashboardGuardian, error) {
 		return newDashboardGuardianByDashboard(ctx, dash, orgId, user, store, dashSvc, teamSvc)
 	}
 }
@@ -53,7 +52,7 @@ func InitAccessControlGuardian(
 		return NewAccessControlDashboardGuardianByUID(ctx, dashUID, user, store, ac, folderPermissionsService, dashboardPermissionsService, dashboardService)
 	}
 
-	NewByDashboard = func(ctx context.Context, dash *models.Dashboard, orgId int64, user *user.SignedInUser) (DashboardGuardian, error) {
+	NewByDashboard = func(ctx context.Context, dash *dashboards.Dashboard, orgId int64, user *user.SignedInUser) (DashboardGuardian, error) {
 		return NewAccessControlDashboardGuardianByDashboard(ctx, dash, user, store, ac, folderPermissionsService, dashboardPermissionsService, dashboardService)
 	}
 }

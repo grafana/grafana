@@ -6,7 +6,6 @@ import (
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -20,8 +19,6 @@ type Cfg struct {
 	PluginSettings       setting.PluginSettings
 	PluginsAllowUnsigned []string
 
-	EnterpriseLicensePath string
-
 	// AWS Plugin Auth
 	AWSAllowedAuthProviders []string
 	AWSAssumeRoleEnabled    bool
@@ -32,6 +29,8 @@ type Cfg struct {
 	BuildVersion string // TODO Remove
 
 	LogDatasourceRequests bool
+
+	PluginsCDNURLTemplate string
 }
 
 func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg) *Cfg {
@@ -59,13 +58,13 @@ func NewCfg(settingProvider setting.Provider, grafanaCfg *setting.Cfg) *Cfg {
 		PluginsPath:             grafanaCfg.PluginsPath,
 		BuildVersion:            grafanaCfg.BuildVersion,
 		DevMode:                 settingProvider.KeyValue("", "app_mode").MustBool(grafanaCfg.Env == setting.Dev),
-		EnterpriseLicensePath:   settingProvider.KeyValue("enterprise", "license_path").MustString(grafanaCfg.EnterpriseLicensePath),
 		PluginSettings:          extractPluginSettings(settingProvider),
 		PluginsAllowUnsigned:    allowedUnsigned,
 		AWSAllowedAuthProviders: allowedAuth,
 		AWSAssumeRoleEnabled:    aws.KeyValue("assume_role_enabled").MustBool(grafanaCfg.AWSAssumeRoleEnabled),
 		Azure:                   grafanaCfg.Azure,
-		LogDatasourceRequests:   grafanaCfg.IsFeatureToggleEnabled(featuremgmt.FlagDatasourceLogger),
+		LogDatasourceRequests:   grafanaCfg.PluginLogBackendRequests,
+		PluginsCDNURLTemplate:   grafanaCfg.PluginsCDNURLTemplate,
 	}
 }
 

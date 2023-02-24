@@ -2,13 +2,13 @@ import * as React from 'react';
 import { Redirect, Route, Switch } from 'react-router-dom';
 
 import { NavLandingPage } from 'app/core/components/AppChrome/NavLandingPage';
-import { contextSrv } from 'app/core/core';
 import { DataSourcesRoutesContext } from 'app/features/datasources/state';
-import { AccessControlAction, StoreState, useSelector } from 'app/types';
+import { StoreState, useSelector } from 'app/types';
 
 import { ROUTES } from './constants';
 import {
   ConnectDataPage,
+  DataSourceDashboardsPage,
   DataSourceDetailsPage,
   DataSourcesListPage,
   EditDataSourcePage,
@@ -18,7 +18,6 @@ import {
 export default function Connections() {
   const navIndex = useSelector((state: StoreState) => state.navIndex);
   const isConnectDataPageOverriden = Boolean(navIndex['standalone-plugin-page-/connections/connect-data']);
-  const canAdminPlugins = contextSrv.hasPermission(AccessControlAction.PluginsInstall);
 
   return (
     <DataSourcesRoutesContext.Provider
@@ -30,30 +29,25 @@ export default function Connections() {
       }}
     >
       <Switch>
+        {/* Redirect to "Connect data" by default */}
+        <Route exact sensitive path={ROUTES.Base} component={() => <Redirect to={ROUTES.ConnectData} />} />
         <Route
           exact
-          path={ROUTES.Base}
-          component={() => {
-            if (canAdminPlugins) {
-              return <Redirect to={ROUTES.ConnectData} />;
-            }
-
-            return <Redirect to={ROUTES.DataSources} />;
-          }}
-        />
-        <Route
-          exact
+          sensitive
           path={ROUTES.YourConnections}
           component={() => <NavLandingPage navId="connections-your-connections" />}
         />
-        <Route exact path={ROUTES.DataSources} component={DataSourcesListPage} />
-        <Route exact path={ROUTES.DataSourcesDetails} component={DataSourceDetailsPage} />
-        <Route exact path={ROUTES.DataSourcesNew} component={NewDataSourcePage} />
-        <Route exact path={ROUTES.DataSourcesEdit} component={EditDataSourcePage} />
-        {!isConnectDataPageOverriden && <Route path={ROUTES.ConnectData} component={ConnectDataPage} />}
+        <Route exact sensitive path={ROUTES.DataSources} component={DataSourcesListPage} />
+        <Route exact sensitive path={ROUTES.DataSourcesDetails} component={DataSourceDetailsPage} />
+        <Route exact sensitive path={ROUTES.DataSourcesNew} component={NewDataSourcePage} />
+        <Route exact sensitive path={ROUTES.DataSourcesEdit} component={EditDataSourcePage} />
+        <Route exact sensitive path={ROUTES.DataSourcesDashboards} component={DataSourceDashboardsPage} />
 
-        {/* Default page */}
-        <Route component={DataSourcesListPage} />
+        {/* "Connect data" page - we don't register a route in case a plugin already registers a standalone page for it */}
+        {!isConnectDataPageOverriden && <Route exact sensitive path={ROUTES.ConnectData} component={ConnectDataPage} />}
+
+        {/* Not found */}
+        <Route component={() => <Redirect to="/notfound" />} />
       </Switch>
     </DataSourcesRoutesContext.Provider>
   );

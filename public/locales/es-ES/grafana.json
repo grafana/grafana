@@ -12,9 +12,13 @@
       "light-theme": "",
       "search": ""
     },
+    "search-box": {
+      "placeholder": ""
+    },
     "section": {
       "actions": "",
       "dashboard-search-results": "",
+      "folder-search-results": "",
       "pages": "",
       "preferences": "",
       "recent-dashboards": ""
@@ -107,6 +111,13 @@
   "folder-picker": {
     "loading": "Cargando carpetas..."
   },
+  "grafana-ui": {
+    "segment-async": {
+      "error": "",
+      "loading": "",
+      "no-options": ""
+    }
+  },
   "library-panel": {
     "add-modal": {
       "cancel": "Cancelar",
@@ -127,15 +138,6 @@
     "admin": {
       "subtitle": "Administrar la configuración de todo el servidor y el acceso a recursos como organizaciones, usuarios y licencias",
       "title": "Administrador del servidor"
-    },
-    "admin-access": {
-      "title": "Usuarios y acceso"
-    },
-    "admin-general": {
-      "title": "General"
-    },
-    "admin-plugins": {
-      "title": "Complementos y datos"
     },
     "alerting": {
       "subtitle": "Conozca los problemas de sus sistemas justo después de que se produzcan",
@@ -235,7 +237,6 @@
     "help/documentation": "Documentación",
     "help/keyboard-shortcuts": "Atajos de teclado",
     "help/support": "Asistencia",
-    "help/support-bundle": "Paquetes de apoyo",
     "home": {
       "title": "Inicio"
     },
@@ -258,9 +259,15 @@
     "manage-dashboards": {
       "title": "Navegar"
     },
+    "manage-folder": {
+      "subtitle": ""
+    },
     "monitoring": {
       "subtitle": "Aplicaciones de supervisión e infraestructura",
       "title": "Seguimiento"
+    },
+    "new": {
+      "title": ""
     },
     "new-dashboard": {
       "title": "Nuevo panel de control"
@@ -291,11 +298,15 @@
       "title": "Preferencias"
     },
     "profile/switch-org": "Cambiar de organización",
+    "public": {
+      "title": ""
+    },
     "scenes": {
       "title": "Escenas"
     },
     "search": {
-      "placeholder": "Buscar Grafana"
+      "placeholder": "Buscar Grafana",
+      "placeholderCommandPalette": ""
     },
     "search-dashboards": {
       "title": "Buscar paneles de control"
@@ -345,6 +356,11 @@
   "navigation": {
     "kiosk": {
       "tv-alert": "Pulse ESC para salir del modo de quiosco"
+    },
+    "toolbar": {
+      "enable-kiosk": "",
+      "toggle-menu": "",
+      "toggle-search-bar": ""
     }
   },
   "news": {
@@ -356,13 +372,22 @@
   },
   "panel": {
     "header-menu": {
+      "copy": "",
+      "create-library-panel": "",
+      "duplicate": "",
+      "edit": "",
+      "explore": "",
+      "get-help": "",
       "hide-legend": "Ocultar leyenda",
       "inspect": "Inspeccionar",
       "inspect-data": "Datos",
       "inspect-json": "JSON de panel",
       "more": "Más...",
+      "query": "",
+      "remove": "",
       "share": "Compartir",
       "show-legend": "Mostrar leyenda",
+      "unlink-library-panel": "",
       "view": "Vista"
     }
   },
@@ -381,6 +406,40 @@
     },
     "select-button": {
       "auto-refresh": "Establecer intervalo de actualización automática"
+    }
+  },
+  "search": {
+    "actions": {
+      "include-panels": "",
+      "remove-datasource-filter": "",
+      "sort-placeholder": "",
+      "starred": "",
+      "view-as-folders": "",
+      "view-as-grid": "",
+      "view-as-list": ""
+    },
+    "dashboard-actions": {
+      "import": "",
+      "new": "",
+      "new-dashboard": "",
+      "new-folder": ""
+    },
+    "folder-view": {
+      "go-to-folder": "",
+      "select-folder": ""
+    },
+    "results-table": {
+      "datasource-header": "",
+      "location-header": "",
+      "name-header": "",
+      "tags-header": "",
+      "type-dashboard": "",
+      "type-folder": "",
+      "type-header": ""
+    },
+    "search-input": {
+      "include-panels-placeholder": "",
+      "placeholder": ""
     }
   },
   "share-modal": {
@@ -475,9 +534,15 @@
     "theme": {
       "dark-label": "Oscuro",
       "default-label": "Por defecto",
-      "light-label": "Claro"
+      "light-label": "Claro",
+      "system-label": ""
     },
     "title": "Preferencias"
+  },
+  "tag-filter": {
+    "loading": "",
+    "no-tags": "",
+    "placeholder": ""
   },
   "time-picker": {
     "absolute": {
@@ -541,8 +606,7 @@
       "name-error": "El nombre es obligatorio",
       "name-label": "Nombre",
       "username-label": "Nombre de usuario"
-    },
-    "title": "Editar perfil"
+    }
   },
   "user-session": {
     "browser-column": "Navegador y sistema operativo",
@@ -555,12 +619,20 @@
     "loading": "Cargando sesiones..."
   },
   "variable": {
+    "adhoc": {
+      "placeholder": ""
+    },
+    "dropdown": {
+      "placeholder": ""
+    },
     "picker": {
-      "input": "Introducir el valor de la variable",
       "link-all": "Todo",
       "option-all": "Todo",
       "option-selected-values": "Seleccionados",
       "option-tooltip": "Eliminar selecciones"
+    },
+    "textbox": {
+      "placeholder": ""
     }
   }
 }

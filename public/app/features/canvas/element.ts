@@ -27,6 +27,26 @@ export interface CanvasElementOptions<TConfig = any> {
   placement?: Placement;
   background?: BackgroundConfig;
   border?: LineConfig;
+  connections?: CanvasConnection[];
+}
+
+// Unit is percentage from the middle of the element
+// 0, 0 middle; -1, -1 bottom left; 1, 1 top right
+export interface ConnectionCoordinates {
+  x: number;
+  y: number;
+}
+
+export enum ConnectionPath {
+  Straight = 'straight',
+}
+
+export interface CanvasConnection {
+  source: ConnectionCoordinates;
+  target: ConnectionCoordinates;
+  targetName?: string;
+  path: ConnectionPath;
+  // See https://github.com/anseki/leader-line#options for more examples of more properties
 }
 
 export interface CanvasElementProps<TConfig = any, TData = any> {

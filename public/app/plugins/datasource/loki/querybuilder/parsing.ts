@@ -241,7 +241,7 @@ function getLineFilter(expr: string, node: SyntaxNode): { operation?: QueryBuild
       },
     };
   }
-  const mapFilter: any = {
+  const mapFilter: Record<string, LokiOperationId> = {
     '|=': LokiOperationId.LineContains,
     '!=': LokiOperationId.LineContainsNot,
     '|~': LokiOperationId.LineMatchesRegex,
@@ -413,10 +413,11 @@ function handleRangeAggregation(expr: string, node: SyntaxNode, context: Context
   const number = node.getChild(NumberLezer);
   const logExpr = node.getChild(LogRangeExpr);
   const params = number !== null && number !== undefined ? [getString(expr, number)] : [];
+  const range = logExpr?.getChild(Range);
+  const rangeValue = range ? getString(expr, range) : null;
 
-  let match = getString(expr, node).match(/\[(.+)\]/);
-  if (match?.[1]) {
-    params.unshift(match[1]);
+  if (rangeValue) {
+    params.unshift(rangeValue.substring(1, rangeValue.length - 1));
   }
 
   const op = {
@@ -468,13 +469,13 @@ function handleVectorAggregation(expr: string, node: SyntaxNode, context: Contex
   return op;
 }
 
-const operatorToOpName = binaryScalarDefs.reduce((acc, def) => {
+const operatorToOpName = binaryScalarDefs.reduce<Record<string, { id: string; comparison?: boolean }>>((acc, def) => {
   acc[def.sign] = {
     id: def.id,
     comparison: def.comparison,
   };
   return acc;
-}, {} as Record<string, { id: string; comparison?: boolean }>);
+}, {});
 
 /**
  * Right now binary expressions can be represented in 2 way in visual query. As additional operation in case it is

@@ -12,9 +12,13 @@
       "light-theme": "",
       "search": ""
     },
+    "search-box": {
+      "placeholder": ""
+    },
     "section": {
       "actions": "",
       "dashboard-search-results": "",
+      "folder-search-results": "",
       "pages": "",
       "preferences": "",
       "recent-dashboards": ""
@@ -107,6 +111,13 @@
   "folder-picker": {
     "loading": "Chargement des dossiers..."
   },
+  "grafana-ui": {
+    "segment-async": {
+      "error": "",
+      "loading": "",
+      "no-options": ""
+    }
+  },
   "library-panel": {
     "add-modal": {
       "cancel": "Annuler",
@@ -127,15 +138,6 @@
     "admin": {
       "subtitle": "Gérer les paramètres à l'échelle du serveur et l'accès aux ressources telles que les organisations, les utilisateurs et les licences",
       "title": "Administrateur de serveur"
-    },
-    "admin-access": {
-      "title": "Utilisateurs et droits d'accès"
-    },
-    "admin-general": {
-      "title": "Général"
-    },
-    "admin-plugins": {
-      "title": "Modules complémentaires et données"
     },
     "alerting": {
       "subtitle": "En savoir plus sur les problèmes dans vos systèmes quelques instants après qu'ils se produisent",
@@ -235,7 +237,6 @@
     "help/documentation": "Documentation",
     "help/keyboard-shortcuts": "Raccourcis clavier",
     "help/support": "Assistance",
-    "help/support-bundle": "Packs d’assistance",
     "home": {
       "title": "Accueil"
     },
@@ -258,9 +259,15 @@
     "manage-dashboards": {
       "title": "Parcourir"
     },
+    "manage-folder": {
+      "subtitle": ""
+    },
     "monitoring": {
       "subtitle": "Applications de suivi et d'infrastructure",
       "title": "Suivi"
+    },
+    "new": {
+      "title": ""
     },
     "new-dashboard": {
       "title": "Nouveau tableau de bord"
@@ -291,11 +298,15 @@
       "title": "Préférences"
     },
     "profile/switch-org": "Passer à une autre organisation",
+    "public": {
+      "title": ""
+    },
     "scenes": {
       "title": "Scènes"
     },
     "search": {
-      "placeholder": "Rechercher dans Grafana"
+      "placeholder": "Rechercher dans Grafana",
+      "placeholderCommandPalette": ""
     },
     "search-dashboards": {
       "title": "Rechercher dans les tableaux de bord"
@@ -345,6 +356,11 @@
   "navigation": {
     "kiosk": {
       "tv-alert": "Appuyez sur ESC pour quitter le mode kiosque"
+    },
+    "toolbar": {
+      "enable-kiosk": "",
+      "toggle-menu": "",
+      "toggle-search-bar": ""
     }
   },
   "news": {
@@ -356,13 +372,22 @@
   },
   "panel": {
     "header-menu": {
+      "copy": "",
+      "create-library-panel": "",
+      "duplicate": "",
+      "edit": "",
+      "explore": "",
+      "get-help": "",
       "hide-legend": "Masquer la légende",
       "inspect": "Inspecter",
       "inspect-data": "Données",
       "inspect-json": "Panneau JSON",
       "more": "Plus...",
+      "query": "",
+      "remove": "",
       "share": "Partager",
       "show-legend": "Afficher la légende",
+      "unlink-library-panel": "",
       "view": "Afficher"
     }
   },
@@ -381,6 +406,40 @@
     },
     "select-button": {
       "auto-refresh": "Définir l'intervalle d'actualisation automatique"
+    }
+  },
+  "search": {
+    "actions": {
+      "include-panels": "",
+      "remove-datasource-filter": "",
+      "sort-placeholder": "",
+      "starred": "",
+      "view-as-folders": "",
+      "view-as-grid": "",
+      "view-as-list": ""
+    },
+    "dashboard-actions": {
+      "import": "",
+      "new": "",
+      "new-dashboard": "",
+      "new-folder": ""
+    },
+    "folder-view": {
+      "go-to-folder": "",
+      "select-folder": ""
+    },
+    "results-table": {
+      "datasource-header": "",
+      "location-header": "",
+      "name-header": "",
+      "tags-header": "",
+      "type-dashboard": "",
+      "type-folder": "",
+      "type-header": ""
+    },
+    "search-input": {
+      "include-panels-placeholder": "",
+      "placeholder": ""
     }
   },
   "share-modal": {
@@ -475,9 +534,15 @@
     "theme": {
       "dark-label": "Sombre",
       "default-label": "Par défaut",
-      "light-label": "Clair"
+      "light-label": "Clair",
+      "system-label": ""
     },
     "title": "Préférences"
+  },
+  "tag-filter": {
+    "loading": "",
+    "no-tags": "",
+    "placeholder": ""
   },
   "time-picker": {
     "absolute": {
@@ -541,8 +606,7 @@
       "name-error": "Un nom est obligatoire",
       "name-label": "Nom",
       "username-label": "Nom d’utilisateur"
-    },
-    "title": "Modifier le profil"
+    }
   },
   "user-session": {
     "browser-column": "Navigateur et système d'exploitation",
@@ -555,12 +619,20 @@
     "loading": "Chargement des sessions..."
   },
   "variable": {
+    "adhoc": {
+      "placeholder": ""
+    },
+    "dropdown": {
+      "placeholder": ""
+    },
     "picker": {
-      "input": "Entrer la valeur de la variable",
       "link-all": "Tout",
       "option-all": "Tout",
       "option-selected-values": "Sélection",
       "option-tooltip": "Effacer les sélections"
+    },
+    "textbox": {
+      "placeholder": ""
     }
   }
 }

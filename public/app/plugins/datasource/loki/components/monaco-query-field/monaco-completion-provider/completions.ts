@@ -273,9 +273,9 @@ async function getAfterUnwrapCompletions(
   logQuery: string,
   dataProvider: CompletionDataProvider
 ): Promise<Completion[]> {
-  const { extractedLabelKeys } = await dataProvider.getParserAndLabelKeys(logQuery);
+  const { unwrapLabelKeys } = await dataProvider.getParserAndLabelKeys(logQuery);
 
-  const labelCompletions: Completion[] = extractedLabelKeys.map((label) => ({
+  const labelCompletions: Completion[] = unwrapLabelKeys.map((label) => ({
     type: 'LABEL_NAME',
     label,
     insertText: label,

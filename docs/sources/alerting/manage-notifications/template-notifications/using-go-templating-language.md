@@ -12,13 +12,13 @@ weight: 100
 
 # Using Go's templating language
 
-You write message templates in Go's templating language, [text/template](https://pkg.go.dev/text/template).
+You write notification templates in Go's templating language, [text/template](https://pkg.go.dev/text/template).
 
-Before you start creating your own message templates, we recommend that you read through this topic, which provides you with an overview of Go's templating language and writing templates in text/template.
+Before you start creating your own notification templates, we recommend that you read through this topic, which provides you with an overview of Go's templating language and writing templates in text/template.
 
 ## Dot
 
-In text/template there is a special cursor called dot, and is written as `.`. You can think of this cursor as a variable whose value changes depending where in the template it is used. For example, at the start of a message template `.` refers to something called [`ExtendedData`]({{< relref "./reference#extendeddata" >}}) which contains a number of fields including `Alerts`, `Status`, `GroupLabels`, `CommonLabels`, `CommonAnnotations` and `ExternalURL`. However, dot might refer to something else when used in a range over a list, when used inside a `with`, or when writing feature templates to be used in other templates. You can see examples of this in [Create message templates]({{< relref "./create-message-templates" >}}), and all data and functions in the [Reference]({{< relref "./reference" >}}).
+In text/template there is a special cursor called dot, and is written as `.`. You can think of this cursor as a variable whose value changes depending where in the template it is used. For example, at the start of a notification template `.` refers to something called [`ExtendedData`]({{< relref "./reference#extendeddata" >}}) which contains a number of fields including `Alerts`, `Status`, `GroupLabels`, `CommonLabels`, `CommonAnnotations` and `ExternalURL`. However, dot might refer to something else when used in a range over a list, when used inside a `with`, or when writing feature templates to be used in other templates. You can see examples of this in [Create notification templates]({{< relref "./create-notification-templates" >}}), and all data and functions in the [Reference]({{< relref "./reference" >}}).
 
 ## Opening and closing tags
 
@@ -143,7 +143,7 @@ This is alert {{ $index }} out of {{ $num_alerts }}
 
 ## Define templates
 
-You can define templates using `define` and the name of the template in double quotes. You should not define templates with the same name as other templates, including default templates such as `__subject`, `__text_values_list`, `__text_alert_list`, `default.title` and `default.message`. Where a template has been created with the same name as a default template, or a template in another message template, Grafana might use either template. Grafana does not prevent, or show an error message, when there are two or more templates with the same name.
+You can define templates using `define` and the name of the template in double quotes. You should not define templates with the same name as other templates, including default templates such as `__subject`, `__text_values_list`, `__text_alert_list`, `default.title` and `default.message`. Where a template has been created with the same name as a default template, or a template in another notification template, Grafana might use either template. Grafana does not prevent, or show an error message, when there are two or more templates with the same name.
 
 ```
 {{ define "print_labels" }}

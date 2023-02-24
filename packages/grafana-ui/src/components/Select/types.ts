@@ -112,9 +112,14 @@ export interface VirtualizedSelectProps<T> extends Omit<SelectCommonProps<T>, 'v
   options?: Array<Pick<SelectableValue<T>, 'label' | 'value'>>;
 }
 
+/** The AsyncVirtualizedSelect component uses a slightly different SelectableValue, description and other props are not supported */
+export interface VirtualizedSelectAsyncProps<T>
+  extends Omit<SelectCommonProps<T>, 'virtualized'>,
+    SelectAsyncProps<T> {}
+
 export interface MultiSelectCommonProps<T> extends Omit<SelectCommonProps<T>, 'onChange' | 'isMulti' | 'value'> {
   value?: Array<SelectableValue<T>> | T[];
-  onChange: (item: Array<SelectableValue<T>>) => {} | void;
+  onChange: (item: Array<SelectableValue<T>>, actionMeta: ActionMeta) => {} | void;
 }
 
 // This is the type of *our* SelectBase component, not ReactSelect's prop, although

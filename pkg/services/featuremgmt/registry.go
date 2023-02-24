@@ -10,11 +10,6 @@ var (
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{
 		{
-			Name:        "returnUnameHeader",
-			Description: "Return user login as header for authenticated requests",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:        "alertingBigTransactions",
 			Description: "Use big transactions for alerting database writes",
 			State:       FeatureStateAlpha,
@@ -40,17 +35,6 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:            "dashboardPreviewsAdmin",
-			Description:     "Manage the dashboard previews crawler process from the UI",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-		},
-		{
-			Name:        "live-config",
-			Description: "Save Grafana Live configuration in SQL tables",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:        "live-pipeline",
 			Description: "Enable a generic live processing pipeline",
 			State:       FeatureStateAlpha,
@@ -73,27 +57,9 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
-			Name:         "tempoApmTable",
-			Description:  "Show APM table",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-		},
-		{
 			Name:        "prometheusAzureOverrideAudience",
 			Description: "Experimental. Allow override default AAD audience for Azure Prometheus endpoint",
 			State:       FeatureStateBeta,
-		},
-		{
-			Name:         "influxdbBackendMigration",
-			Description:  "Query InfluxDB InfluxQL without the proxy",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-		},
-		{
-			Name:            "showFeatureFlagsInUI",
-			Description:     "Show feature flags in the settings UI",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
 		},
 		{
 			Name:        "publicDashboards",
@@ -116,13 +82,6 @@ var (
 			Name:        "lokiDataframeApi",
 			Description: "Use experimental loki api for WebSocket streaming (early prototype)",
 			State:       FeatureStateAlpha,
-		},
-		{
-			Name:         "lokiMonacoEditor",
-			Description:  "Access to Monaco query editor for Loki",
-			State:        FeatureStateStable,
-			Expression:   "true",
-			FrontendOnly: true,
 		},
 		{
 			Name:        "swaggerUi",
@@ -161,11 +120,6 @@ var (
 			RequiresDevMode: true,
 		},
 		{
-			Name:        "supportBundles",
-			Description: "Support bundles for troubleshooting",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:            "dashboardsFromStorage",
 			Description:     "Load dashboards from the generic storage interface",
 			State:           FeatureStateAlpha,
@@ -178,13 +132,6 @@ var (
 			RequiresDevMode: true,
 		},
 		{
-			Name:            "azureMonitorResourcePickerForMetrics",
-			Description:     "New UI for Azure Monitor Metrics Query",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-			FrontendOnly:    true,
-		},
-		{
 			Name:         "exploreMixedDatasource",
 			Description:  "Enable mixed datasource in Explore",
 			State:        FeatureStateAlpha,
@@ -194,13 +141,6 @@ var (
 			Name:         "tracing",
 			Description:  "Adds trace ID to error notifications",
 			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-		},
-		{
-			Name:         "commandPalette",
-			Description:  "Enable command palette",
-			State:        FeatureStateStable,
-			Expression:   "true", // enabled by default
 			FrontendOnly: true,
 		},
 		{
@@ -283,8 +223,8 @@ var (
 		},
 		{
 			Name:        "topnav",
-			Description: "New top nav and page layouts",
-			State:       FeatureStateAlpha,
+			Description: "Displays new top nav and page layouts",
+			State:       FeatureStateBeta,
 		},
 		{
 			Name:            "grpcServer",
@@ -305,8 +245,9 @@ var (
 		},
 		{
 			Name:        "cloudWatchCrossAccountQuerying",
-			Description: "Use cross-account querying in CloudWatch datasource",
-			State:       FeatureStateAlpha,
+			Description: "Enables cross-account querying in CloudWatch datasources",
+			State:       FeatureStateStable,
+			Expression:  "true", //enabled by default
 		},
 		{
 			Name:         "redshiftAsyncQueryDataSupport",
@@ -319,11 +260,6 @@ var (
 			Description:  "Enable async query data support for Athena",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
-		},
-		{
-			Name:        "increaseInMemDatabaseQueryCache",
-			Description: "Enable more in memory caching for database queries",
-			State:       FeatureStateAlpha,
 		},
 		{
 			Name:         "newPanelChromeUI",
@@ -346,11 +282,6 @@ var (
 			Name:        "mysqlAnsiQuotes",
 			Description: "Use double quotes to escape keyword in a MySQL query",
 			State:       FeatureStateAlpha,
-		},
-		{
-			Name:        "datasourceLogger",
-			Description: "Logs all datasource requests",
-			State:       FeatureStateBeta,
 		},
 		{
 			Name:        "accessControlOnCall",
@@ -389,11 +320,6 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:        "sessionRemoteCache",
-			Description: "Enable using remote cache for user sessions",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:        "disablePrometheusExemplarSampling",
 			Description: "Disable Prometheus examplar sampling",
 			State:       FeatureStateStable,
@@ -401,6 +327,43 @@ var (
 		{
 			Name:        "alertingBacktesting",
 			Description: "Rule backtesting API for alerting",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:         "editPanelCSVDragAndDrop",
+			Description:  "Enables drag and drop for CSV and Excel files",
+			FrontendOnly: true,
+			State:        FeatureStateAlpha,
+		},
+		{
+			Name:            "alertingNoNormalState",
+			Description:     "Stop maintaining state of alerts that are not firing",
+			State:           FeatureStateBeta,
+			RequiresRestart: false,
+		},
+		{
+
+			Name:         "logsSampleInExplore",
+			Description:  "Enables access to the logs sample feature in Explore",
+			State:        FeatureStateStable,
+			Expression:   "true", //turned on by default
+			FrontendOnly: true,
+		},
+		{
+			Name:         "logsContextDatasourceUi",
+			Description:  "Allow datasource to provide custom UI for context view",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:         "lokiQuerySplitting",
+			Description:  "Split large interval queries into subqueries with smaller time intervals",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:        "individualCookiePreferences",
+			Description: "Support overriding cookie preferences per user",
 			State:       FeatureStateAlpha,
 		},
 	}

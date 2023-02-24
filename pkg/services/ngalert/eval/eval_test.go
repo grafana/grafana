@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 	ptr "github.com/xorcare/pointer"
@@ -379,7 +380,7 @@ func TestValidate(t *testing.T) {
 			condition: func(services services) models.Condition {
 				dsQuery := models.GenerateAlertQuery()
 				ds := &datasources.DataSource{
-					Uid:  dsQuery.DatasourceUID,
+					UID:  dsQuery.DatasourceUID,
 					Type: util.GenerateShortUID(),
 				}
 				services.cache.DataSources = append(services.cache.DataSources, ds)
@@ -405,7 +406,7 @@ func TestValidate(t *testing.T) {
 			condition: func(services services) models.Condition {
 				dsQuery := models.GenerateAlertQuery()
 				ds := &datasources.DataSource{
-					Uid:  dsQuery.DatasourceUID,
+					UID:  dsQuery.DatasourceUID,
 					Type: util.GenerateShortUID(),
 				}
 				services.cache.DataSources = append(services.cache.DataSources, ds)
@@ -444,7 +445,7 @@ func TestValidate(t *testing.T) {
 			condition: func(services services) models.Condition {
 				dsQuery := models.GenerateAlertQuery()
 				ds := &datasources.DataSource{
-					Uid:  dsQuery.DatasourceUID,
+					UID:  dsQuery.DatasourceUID,
 					Type: util.GenerateShortUID(),
 				}
 				services.cache.DataSources = append(services.cache.DataSources, ds)
@@ -464,11 +465,11 @@ func TestValidate(t *testing.T) {
 				dsQuery1 := models.GenerateAlertQuery()
 				dsQuery2 := models.GenerateAlertQuery()
 				ds1 := &datasources.DataSource{
-					Uid:  dsQuery1.DatasourceUID,
+					UID:  dsQuery1.DatasourceUID,
 					Type: util.GenerateShortUID(),
 				}
 				ds2 := &datasources.DataSource{
-					Uid:  dsQuery2.DatasourceUID,
+					UID:  dsQuery2.DatasourceUID,
 					Type: util.GenerateShortUID(),
 				}
 				services.cache.DataSources = append(services.cache.DataSources, ds1, ds2)
@@ -499,7 +500,7 @@ func TestValidate(t *testing.T) {
 			condition: func(services services) models.Condition {
 				dsQuery := models.GenerateAlertQuery()
 				ds := &datasources.DataSource{
-					Uid:  dsQuery.DatasourceUID,
+					UID:  dsQuery.DatasourceUID,
 					Type: util.GenerateShortUID(),
 				}
 				services.cache.DataSources = append(services.cache.DataSources, ds)
@@ -543,4 +544,39 @@ func TestValidate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestEvaluateRaw(t *testing.T) {
+	t.Run("should timeout if request takes too long", func(t *testing.T) {
+		unexpectedResponse := &backend.QueryDataResponse{}
+
+		e := conditionEvaluator{
+			pipeline: nil,
+			expressionService: &fakeExpressionService{
+				hook: func(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error) {
+					ts := time.Now()
+					for time.Since(ts) <= 10*time.Second {
+						if ctx.Err() != nil {
+							return nil, ctx.Err()
+						}
+						time.Sleep(10 * time.Millisecond)
+					}
+					return unexpectedResponse, nil
+				},
+			},
+			condition:   models.Condition{},
+			evalTimeout: 10 * time.Millisecond,
+		}
+
+		_, err := e.EvaluateRaw(context.Background(), time.Now())
+		require.ErrorIs(t, err, context.DeadlineExceeded)
+	})
+}
+
+type fakeExpressionService struct {
+	hook func(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error)
+}
+
+func (f fakeExpressionService) ExecutePipeline(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error) {
+	return f.hook(ctx, now, pipeline)
 }

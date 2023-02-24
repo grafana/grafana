@@ -1,11 +1,10 @@
 import { render, act, waitFor } from '@testing-library/react';
 import React from 'react';
-import { Provider } from 'react-redux';
-import { Router } from 'react-router-dom';
+import { TestProvider } from 'test/helpers/TestProvider';
 import { byTestId } from 'testing-library-selector';
 
 import { DataSourceApi } from '@grafana/data';
-import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import { setDataSourceSrv } from '@grafana/runtime';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -14,6 +13,7 @@ import { toKeyedAction } from 'app/features/variables/state/keyedVariablesReduce
 import { PrometheusDatasource } from 'app/plugins/datasource/prometheus/datasource';
 import { PromOptions } from 'app/plugins/datasource/prometheus/types';
 import { configureStore } from 'app/store/configureStore';
+import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { PanelAlertTabContent } from './PanelAlertTabContent';
 import { fetchRules } from './api/prometheus';
@@ -27,6 +27,7 @@ import {
   mockPromRuleNamespace,
   mockRulerGrafanaRule,
 } from './mocks';
+import { RuleFormValues } from './types/rule-form';
 import * as config from './utils/config';
 import { Annotation } from './utils/constants';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
@@ -67,15 +68,11 @@ const renderAlertTabContent = (
   panel: PanelModel,
   initialStore?: ReturnType<typeof configureStore>
 ) => {
-  const store = initialStore ?? configureStore();
-
   return act(async () => {
     render(
-      <Provider store={store}>
-        <Router history={locationService.getHistory()}>
-          <PanelAlertTabContent dashboard={dashboard} panel={panel} />
-        </Router>
-      </Provider>
+      <TestProvider store={initialStore}>
+        <PanelAlertTabContent dashboard={dashboard} panel={panel} />
+      </TestProvider>
     );
   });
 };
@@ -304,7 +301,18 @@ describe('PanelAlertTabContent', () => {
     expect(match).toHaveLength(2);
 
     const defaults = JSON.parse(decodeURIComponent(match![1]));
-    expect(defaults).toMatchSnapshot();
+    const defaultsWithDeterministicTime: Partial<RuleFormValues> = {
+      ...defaults,
+      queries: defaults.queries.map((q: AlertQuery) => {
+        return {
+          ...q,
+          // Fix computed time stamp to avoid assertion flakiness
+          ...(q.relativeTimeRange ? { relativeTimeRange: { from: 21600, to: 0 } } : {}),
+        };
+      }),
+    };
+
+    expect(defaultsWithDeterministicTime).toMatchSnapshot();
 
     expect(mocks.api.fetchRulerRules).toHaveBeenCalledWith(
       { dataSourceName: GRAFANA_RULES_SOURCE_NAME, apiVersion: 'legacy' },

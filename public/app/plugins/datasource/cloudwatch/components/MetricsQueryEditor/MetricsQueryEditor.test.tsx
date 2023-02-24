@@ -5,6 +5,7 @@ import selectEvent from 'react-select-event';
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import * as ui from '@grafana/ui';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { CustomVariableModel, initialVariableModelState } from '../../../../../features/variables/types';
@@ -44,13 +45,13 @@ const setup = () => {
   };
   templateSrv.init([variable]);
 
-  const datasource = new CloudWatchDatasource(instanceSettings, templateSrv as any, {} as any);
+  const datasource = new CloudWatchDatasource(instanceSettings, templateSrv, {} as TimeSrv);
   datasource.metricFindQuery = async () => [{ value: 'test', label: 'test', text: 'test' }];
-  datasource.api.getNamespaces = jest.fn().mockResolvedValue([]);
-  datasource.api.getMetrics = jest.fn().mockResolvedValue([]);
-  datasource.api.getRegions = jest.fn().mockResolvedValue([]);
-  datasource.api.getDimensionKeys = jest.fn().mockResolvedValue([]);
-  datasource.api.isMonitoringAccount = jest.fn().mockResolvedValue(false);
+  datasource.resources.getNamespaces = jest.fn().mockResolvedValue([]);
+  datasource.resources.getMetrics = jest.fn().mockResolvedValue([]);
+  datasource.resources.getRegions = jest.fn().mockResolvedValue([]);
+  datasource.resources.getDimensionKeys = jest.fn().mockResolvedValue([]);
+  datasource.resources.isMonitoringAccount = jest.fn().mockResolvedValue(false);
 
   const props: Props = {
     query: {
@@ -93,7 +94,9 @@ describe('QueryEditor', () => {
       if (props.query.queryMode !== 'Metrics') {
         fail(`expected props.query.queryMode to be 'Metrics', got '${props.query.queryMode}' instead`);
       }
-      props.datasource.api.getDimensionValues = jest.fn().mockResolvedValue([[{ label: 'dimVal1', value: 'dimVal1' }]]);
+      props.datasource.resources.getDimensionValues = jest
+        .fn()
+        .mockResolvedValue([[{ label: 'dimVal1', value: 'dimVal1' }]]);
       props.query.metricQueryType = MetricQueryType.Search;
       props.query.metricEditorMode = MetricEditorMode.Builder;
       props.query.dimensions = { instanceId: 'instance-123' };

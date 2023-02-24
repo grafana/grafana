@@ -15,6 +15,7 @@ import {
   FieldType,
   MutableDataFrame,
   RawTimeRange,
+  SupplementaryQueryType,
   TimeRange,
   toUtc,
 } from '@grafana/data';
@@ -25,15 +26,14 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { createFetchResponse } from '../../../../test/helpers/createFetchResponse';
 
-import { Filters } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 import { ElasticDatasource, enhanceDataFrame } from './datasource';
 import { createElasticDatasource } from './mocks';
-import { ElasticsearchOptions, ElasticsearchQuery } from './types';
+import { Filters, ElasticsearchOptions, ElasticsearchQuery } from './types';
 
 const ELASTICSEARCH_MOCK_URL = 'http://elasticsearch.local';
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
   reportInteraction: jest.fn(),
   getDataSourceSrv: () => {
@@ -60,7 +60,7 @@ const DATAQUERY_BASE = {
 };
 
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
-  ...(jest.requireActual('app/features/dashboard/services/TimeSrv') as unknown as object),
+  ...jest.requireActual('app/features/dashboard/services/TimeSrv'),
   getTimeSrv: () => ({
     timeRange: () => createTimeRange(toUtc(TIMESRV_START), toUtc(TIMESRV_END)),
   }),
@@ -313,7 +313,7 @@ describe('ElasticDatasource', () => {
         database: 'mock-index',
       });
 
-      const query: DataQueryRequest<ElasticsearchQuery> = {
+      const query = {
         range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2019, 7, 1, 10])),
         targets: [
           {
@@ -331,7 +331,7 @@ describe('ElasticDatasource', () => {
             timeField: '@timestamp',
           },
         ],
-      } as DataQueryRequest<ElasticsearchQuery>;
+      } as unknown as DataQueryRequest<ElasticsearchQuery>;
 
       const queryBuilderSpy = jest.spyOn(ds.queryBuilder, 'getLogsQuery');
       let response: DataQueryResponse = { data: [] };
@@ -923,6 +923,56 @@ describe('ElasticDatasource', () => {
     const interpolatedQuery = ds.interpolateVariablesInQueries([query], {})[0];
 
     expect((interpolatedQuery.bucketAggs![0] as Filters).settings!.filters![0].query).toBe('*');
+  });
+
+  describe('getSupplementaryQuery', () => {
+    let ds: ElasticDatasource;
+    beforeEach(() => {
+      ds = getTestContext().ds;
+    });
+
+    it('does not return logs volume query for metric query', () => {
+      expect(
+        ds.getSupplementaryQuery(SupplementaryQueryType.LogsVolume, {
+          refId: 'A',
+          metrics: [{ type: 'count', id: '1' }],
+          bucketAggs: [{ type: 'filters', settings: { filters: [{ query: 'foo', label: '' }] }, id: '1' }],
+          query: 'foo="bar"',
+        })
+      ).toEqual(undefined);
+    });
+
+    it('returns logs volume query for log query', () => {
+      expect(
+        ds.getSupplementaryQuery(SupplementaryQueryType.LogsVolume, {
+          refId: 'A',
+          metrics: [{ type: 'logs', id: '1' }],
+          query: 'foo="bar"',
+        })
+      ).toEqual({
+        bucketAggs: [
+          {
+            field: '',
+            id: '3',
+            settings: {
+              interval: 'auto',
+              min_doc_count: '0',
+              trimEdges: '0',
+            },
+            type: 'date_histogram',
+          },
+        ],
+        metrics: [
+          {
+            id: '1',
+            type: 'count',
+          },
+        ],
+        query: 'foo="bar"',
+        refId: 'log-volume-A',
+        timeField: '',
+      });
+    });
   });
 });
 

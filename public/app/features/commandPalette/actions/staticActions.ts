@@ -1,13 +1,9 @@
 import { locationUtil, NavModelItem } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
 import { t } from 'app/core/internationalization';
 import { changeTheme } from 'app/core/services/theme';
 
 import { CommandPaletteAction } from '../types';
-import { DEFAULT_PRIORITY, PREFERENCES_PRIORITY } from '../values';
-
-// We reuse this, but translations cannot be in module scope (t must be called after i18n has set up,)
-const getPagesSectionTranslation = () => t('command-palette.section.pages', 'Pages');
+import { ACTIONS_PRIORITY, DEFAULT_PRIORITY, PREFERENCES_PRIORITY } from '../values';
 
 // TODO: Clean this once ID is mandatory on nav items
 function idForNavItem(navItem: NavModelItem) {
@@ -25,15 +21,19 @@ function navTreeToActions(navTree: NavModelItem[], parent?: NavModelItem): Comma
       continue;
     }
 
-    const section = isCreateAction ? t('command-palette.section.actions', 'Actions') : getPagesSectionTranslation();
+    const section = isCreateAction
+      ? t('command-palette.section.actions', 'Actions')
+      : t('command-palette.section.pages', 'Pages');
+
+    const priority = isCreateAction ? ACTIONS_PRIORITY : DEFAULT_PRIORITY;
 
     const action = {
       id: idForNavItem(navItem),
       name: text, // TODO: translate
       section: section,
-      perform: url ? () => locationService.push(locationUtil.stripBaseFromUrl(url)) : undefined,
-      parent: parent && idForNavItem(parent),
-      priority: DEFAULT_PRIORITY,
+      url: url && locationUtil.stripBaseFromUrl(url),
+      parent: parent && !isCreateAction && idForNavItem(parent),
+      priority: priority,
     };
 
     navActions.push(action);
@@ -50,20 +50,10 @@ function navTreeToActions(navTree: NavModelItem[], parent?: NavModelItem): Comma
 export default (navBarTree: NavModelItem[]): CommandPaletteAction[] => {
   const globalActions: CommandPaletteAction[] = [
     {
-      id: 'go/search',
-      name: t('command-palette.action.search', 'Search'),
-      keywords: 'navigate',
-      perform: () => locationService.push('?search=open'),
-      section: t('command-palette.section.pages', 'Pages'),
-      shortcut: ['s', 'o'],
-      priority: DEFAULT_PRIORITY,
-    },
-    {
       id: 'preferences/theme',
       name: t('command-palette.action.change-theme', 'Change theme...'),
       keywords: 'interface color dark light',
       section: t('command-palette.section.preferences', 'Preferences'),
-      shortcut: ['c', 't'],
       priority: PREFERENCES_PRIORITY,
     },
     {
