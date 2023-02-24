@@ -85,7 +85,38 @@ Consider the following scenarios:
 
 These are just a few examples of how Grafana can be used in M2M scenarios. The platform is highly flexible and can be used in a variety of other M2M applications, making it a powerful tool for organizations looking to gain insights into their systems and devices.
 
-### 🚧 Service Accounts
+### Service accounts
+
+You can use a service account to run automated workloads in Grafana, such as dashboard provisioning, configuration, or report generation. Create service accounts and service accounts tokens to authenticate applications, such as Terraform, with the Grafana API.
+
+> **Note:** Service accounts will eventually replace [API keys]({{< relref "../api-keys/" >}}) as the primary way to authenticate applications that interact with Grafana.
+
+A common use case for creating a service account is to perform operations on automated or triggered tasks. You can use service accounts to:
+
+- Schedule reports for specific dashboards to be delivered on a daily/weekly/monthly basis
+- Define alerts in your system to be used in Grafana
+- Set up an external SAML authentication provider
+- Interact with Grafana without signing in as a user
+
+In [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}), you can also use service accounts in combination with [role-based access control]({{< relref "../roles-and-permissions/access-control/" >}}) to grant very specific permissions to applications that interact with Grafana.
+
+> **Note:** Service accounts can only act in the organization they are created for. If you have the same task that is needed for multiple organizations, we recommend creating service accounts in each organization.
+
+{{< vimeo 742056367 >}}
+<br>
+
+## Service account tokens
+
+A service account token is a generated random string that acts as an alternative to a password when authenticating with Grafana's HTTP API.
+
+When you create a service account, you can associate one or more access tokens with it. You can use service access tokens the same way as API Keys, for example to access Grafana HTTP API programmatically.
+
+You can create multiple tokens for the same service account. You might want to do this if:
+
+- multiple applications use the same permissions, but you would like to audit or manage their actions separately.
+- you need to rotate or replace a compromised token.
+
+Service account access tokens inherit permissions from the service account.
 
 ### 🚧 Personal access tokens
 
