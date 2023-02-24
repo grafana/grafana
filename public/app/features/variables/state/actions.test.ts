@@ -2,6 +2,9 @@ import { AnyAction } from 'redux';
 
 import { LoadingState } from '@grafana/data';
 import * as runtime from '@grafana/runtime';
+import { DataSourceSrv, LocationService } from '@grafana/runtime';
+import { BackendSrv } from 'app/core/services/backend_srv';
+import { DashboardModel } from 'app/features/dashboard/state';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { toAsyncOfResult } from '../../query/state/DashboardQueryRunner/testHelpers';
@@ -73,7 +76,7 @@ jest.mock('app/features/dashboard/services/TimeSrv', () => ({
 runtime.setDataSourceSrv({
   get: getDatasource,
   getList: getMetricSources,
-} as any);
+} as unknown as DataSourceSrv);
 
 describe('shared actions', () => {
   describe('when initDashboardTemplating is dispatched', () => {
@@ -85,7 +88,7 @@ describe('shared actions', () => {
       const custom = customBuilder().build();
       const textbox = textboxBuilder().build();
       const list = [query, constant, datasource, custom, textbox];
-      const dashboard: any = { templating: { list } };
+      const dashboard = { templating: { list } } as DashboardModel;
 
       reduxTester<TemplatingReducerType>()
         .givenRootReducer(getTemplatingRootReducer())
@@ -150,7 +153,7 @@ describe('shared actions', () => {
       const key = 'key';
       const var1 = queryBuilder().withName('var1').withQuery('$var2').build();
       const var2 = queryBuilder().withName('var2').withQuery('$var1').build();
-      const dashboard: any = { templating: { list: [var1, var2] } };
+      const dashboard = { templating: { list: [var1, var2] } } as DashboardModel;
       const preloadedState = getPreloadedState(key, {});
 
       await expect(async () => {
@@ -170,16 +173,16 @@ describe('shared actions', () => {
       const custom = customBuilder().build();
       const textbox = textboxBuilder().build();
       const list = [query, constant, datasource, custom, textbox];
-      const dashboard: any = { templating: { list } };
+      const dashboard = { templating: { list } } as DashboardModel;
       const preloadedState = getPreloadedState(key, {});
-      const locationService: any = { getSearchObject: () => ({}) };
+      const locationService = { getSearchObject: () => ({}) } as LocationService;
       runtime.setLocationService(locationService);
-      const variableQueryRunner: any = {
+      const variableQueryRunner = {
         cancelRequest: jest.fn(),
         queueRequest: jest.fn(),
         getResponse: () => toAsyncOfResult({ state: LoadingState.Done, identifier: toKeyedVariableIdentifier(query) }),
         destroy: jest.fn(),
-      };
+      } as unknown as VariableQueryRunner;
       setVariableQueryRunner(variableQueryRunner);
 
       const tester = await reduxTester<TemplatingReducerType>({ preloadedState })
@@ -261,9 +264,9 @@ describe('shared actions', () => {
         .build();
 
       const list = [stats, substats];
-      const dashboard: any = { templating: { list } };
+      const dashboard = { templating: { list } } as DashboardModel;
       const query = { orgId: '1', 'var-stats': 'response', 'var-substats': ALL_VARIABLE_TEXT };
-      const locationService: any = { getSearchObject: () => query };
+      const locationService = { getSearchObject: () => query } as unknown as LocationService;
       runtime.setLocationService(locationService);
       const preloadedState = getPreloadedState(key, {});
 
@@ -745,9 +748,9 @@ describe('shared actions', () => {
 
   describe('cancelVariables', () => {
     const cancelAllInFlightRequestsMock = jest.fn();
-    const backendSrvMock: any = {
+    const backendSrvMock = {
       cancelAllInFlightRequests: cancelAllInFlightRequestsMock,
-    };
+    } as unknown as BackendSrv;
 
     describe('when called', () => {
       it('then cancelAllInFlightRequests should be called and correct actions are dispatched', async () => {
