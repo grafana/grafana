@@ -275,6 +275,9 @@ type Permission struct {
 
 // PluginDef defines model for PluginDef.
 type PluginDef struct {
+	// Schema definition for the plugin.json file. Used to verify the validy it.
+	Schema *string `json:"$schema,omitempty"`
+
 	// For data source plugins, if the plugin supports alerting.
 	Alerting *bool `json:"alerting,omitempty"`
 
