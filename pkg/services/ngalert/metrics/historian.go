@@ -12,19 +12,11 @@ type Historian struct {
 	WritesTotal           prometheus.Counter
 	WritesFailed          prometheus.Counter
 	ActiveWriteGoroutines prometheus.Gauge
-	PersistDuration       prometheus.Histogram
 	WriteDuration         *instrument.HistogramCollector
 }
 
 func NewHistorianMetrics(r prometheus.Registerer) *Historian {
 	return &Historian{
-		WriteDuration: instrument.NewHistogramCollector(promauto.With(r).NewHistogramVec(prometheus.HistogramOpts{
-			Namespace: Namespace,
-			Subsystem: Subsystem,
-			Name:      "state_history_request_duration_seconds",
-			Help:      "Histogram of request durations to the state history store.",
-			Buckets:   instrument.DefBuckets,
-		}, instrument.HistogramCollectorBuckets)),
 		TransitionsTotal: promauto.With(r).NewCounterVec(prometheus.CounterOpts{
 			Namespace: Namespace,
 			Subsystem: Subsystem,
@@ -49,12 +41,12 @@ func NewHistorianMetrics(r prometheus.Registerer) *Historian {
 			Name:      "state_history_batch_writes_failed_total",
 			Help:      "The total number of failed writes of state history batches.",
 		}),
-		PersistDuration: promauto.With(r).NewHistogram(prometheus.HistogramOpts{
+		WriteDuration: instrument.NewHistogramCollector(promauto.With(r).NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: Namespace,
 			Subsystem: Subsystem,
-			Name:      "state_history_persist_duration_seconds",
-			Help:      "Histogram of write times to the state history store.",
-			Buckets:   prometheus.DefBuckets,
-		}),
+			Name:      "state_history_request_duration_seconds",
+			Help:      "Histogram of request durations to the state history store.",
+			Buckets:   instrument.DefBuckets,
+		}, instrument.HistogramCollectorBuckets)),
 	}
 }

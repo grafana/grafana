@@ -74,12 +74,6 @@ func (h *RemoteLokiBackend) RecordStatesAsync(ctx context.Context, rule history_
 	go func() {
 		defer close(errCh)
 
-		start := h.clock.Now()
-		defer func() {
-			dur := h.clock.Now().Sub(start)
-			h.metrics.PersistDuration.Observe(dur.Seconds())
-		}()
-
 		org := fmt.Sprint(rule.OrgID)
 		defer h.metrics.WritesTotal.Inc()
 		samples := 0
