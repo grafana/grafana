@@ -13,6 +13,7 @@ type Historian struct {
 	WritesTotal       *prometheus.CounterVec
 	WritesFailed      *prometheus.CounterVec
 	WriteDuration     *instrument.HistogramCollector
+	BytesWritten      prometheus.Counter
 }
 
 func NewHistorianMetrics(r prometheus.Registerer) *Historian {
@@ -54,5 +55,11 @@ func NewHistorianMetrics(r prometheus.Registerer) *Historian {
 			Help:      "Histogram of request durations to the state history store.",
 			Buckets:   instrument.DefBuckets,
 		}, instrument.HistogramCollectorBuckets)),
+		BytesWritten: promauto.With(r).NewCounter(prometheus.CounterOpts{
+			Namespace: Namespace,
+			Subsystem: Subsystem,
+			Name:      "state_history_bytes_total",
+			Help:      "The total number of bytes written to the state history store.",
+		}),
 	}
 }
