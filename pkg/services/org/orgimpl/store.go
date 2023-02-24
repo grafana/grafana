@@ -25,7 +25,9 @@ const MainOrgName = "Main Org."
 
 type store interface {
 	Get(context.Context, int64) (*org.Org, error)
+	// Insert adds a new organization. returns organization id
 	Insert(context.Context, *org.Org) (int64, error)
+	// InsertOrgUser adds a new membership record for a user in an organization. returns membership id
 	InsertOrgUser(context.Context, *org.OrgUser) (int64, error)
 	DeleteUserFromAll(context.Context, int64) error
 	Update(ctx context.Context, cmd *org.UpdateOrgCommand) error
@@ -101,11 +103,11 @@ func (ss *sqlStore) Insert(ctx context.Context, org *org.Org) (int64, error) {
 	return orgID, nil
 }
 
+// InsertOrgUser adds a new membership record for a user in an organization.
 func (ss *sqlStore) InsertOrgUser(ctx context.Context, cmd *org.OrgUser) (int64, error) {
-	var orgID int64
 	var err error
 	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		if orgID, err = sess.Insert(cmd); err != nil {
+		if _, err = sess.Insert(cmd); err != nil {
 			return err
 		}
 		return nil
@@ -113,7 +115,7 @@ func (ss *sqlStore) InsertOrgUser(ctx context.Context, cmd *org.OrgUser) (int64,
 	if err != nil {
 		return 0, err
 	}
-	return orgID, nil
+	return cmd.ID, nil
 }
 
 func (ss *sqlStore) DeleteUserFromAll(ctx context.Context, userID int64) error {
