@@ -186,7 +186,7 @@ export const ServiceAccountsListPageUnconnected = ({
         {apiKeysMigrated && showApiKeysMigrationInfo && (
           <Alert
             title="API keys migrated to Service accounts. Your keys are now called tokens and live inside respective service
-          accounts. Learn more."
+          accounts."
             severity="success"
             onRemove={onMigrationInfoClose}
           ></Alert>

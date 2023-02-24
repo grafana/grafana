@@ -40,16 +40,8 @@ export function migrateAll(): ThunkResult<void> {
       await getBackendSrv().post('/api/serviceaccounts/migrate');
       store.set(API_KEYS_MIGRATION_INFO_STORAGE_KEY, true);
     } finally {
-      dispatch(getApiKeysMigrationStatus());
       dispatch(loadApiKeys());
     }
-  };
-}
-
-export function getApiKeysMigrationStatus(): ThunkResult<void> {
-  return async (dispatch) => {
-    const result = await getBackendSrv().get('/api/serviceaccounts/migrationstatus');
-    dispatch(apiKeysMigrationStatusLoaded(!!result?.migrated));
   };
 }
 

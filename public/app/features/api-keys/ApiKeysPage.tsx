@@ -20,7 +20,6 @@ import {
   migrateAll,
   loadApiKeys,
   toggleIncludeExpired,
-  getApiKeysMigrationStatus,
   hideApiKeys,
 } from './state/actions';
 import { setSearchQuery } from './state/reducers';
@@ -53,7 +52,6 @@ const mapDispatchToProps = {
   migrateAll,
   setSearchQuery,
   toggleIncludeExpired,
-  getApiKeysMigrationStatus,
   hideApiKeys,
 };
 
@@ -74,7 +72,6 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
 
   componentDidMount() {
     this.fetchApiKeys();
-    this.props.getApiKeysMigrationStatus();
   }
 
   async fetchApiKeys() {
@@ -122,7 +119,6 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
       includeExpired,
       includeExpiredDisabled,
       canCreate,
-      apiKeysMigrated,
     } = this.props;
 
     if (!hasFetched) {
@@ -141,7 +137,7 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
               const showTable = apiKeysCount > 0;
               return (
                 <>
-                  {!apiKeysMigrated && showTable && <MigrateToServiceAccountsCard onMigrate={this.onMigrateAll} />}
+                  {apiKeysCount !== 0 && <MigrateToServiceAccountsCard onMigrate={this.onMigrateAll} />}
                   {apiKeysCount === 0 && (
                     <APIKeysMigratedCard onHideApiKeys={this.onHideApiKeys} apikeys={apiKeysCount} />
                   )}

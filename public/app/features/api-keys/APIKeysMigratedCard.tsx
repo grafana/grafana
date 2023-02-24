@@ -14,13 +14,10 @@ export const APIKeysMigratedCard = ({ onHideApiKeys, apikeys }: Props): JSX.Elem
   const styles = useStyles2(getStyles);
 
   return (
-    <Alert
-      title="API keys were migrated to Grafana service accounts. If you see any API keys please migrate them to Service account tokens."
-      severity="info"
-    >
+    <Alert title="If you see any API keys please migrate them to Service account tokens." severity="info">
       <div className={styles.text}>
-        We have migrated API keys into Grafana service accounts. API keys are safe and continue working as they used to,
-        you can find them inside the respective service account.
+        Migrated API keys are safe and continue working as they used to. You can find them inside the respective service
+        account.
       </div>
       <div className={styles.actionRow}>
         <Button className={styles.actionButton} onClick={() => setIsModalOpen(true)} disabled={apikeys !== 0}>
@@ -29,10 +26,11 @@ export const APIKeysMigratedCard = ({ onHideApiKeys, apikeys }: Props): JSX.Elem
         <ConfirmModal
           title={'Hide API Keys page'}
           isOpen={isModalOpen}
-          body={'Are you sure you want to hide API keys page and use service accounts from now on?'}
+          body={'Did you want to hide the API keys page?'}
           confirmText={'Yes, hide API keys page.'}
           onConfirm={onHideApiKeys}
           onDismiss={() => setIsModalOpen(false)}
+          confirmButtonVariant="primary"
         />
         <a href="org/serviceaccounts">View service accounts page</a>
       </div>
