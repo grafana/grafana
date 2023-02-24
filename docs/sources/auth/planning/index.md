@@ -14,11 +14,9 @@ keywords:
 
 # Planning your IAM integration strategy
 
-This topic describes the decisions you should make when using an identity and access management (IAM) provider to manage access to Grafana. When you prepare before you implement, you can decide which integration strategy best meets your needs.
+This topic describes the decisions you should make when using an Identity and Access Management (IAM) provider to manage access to Grafana. IAM ensures that users have secure access to sensitive data and [Grafana resources], simplifying user management and authentication.
 
-Identity and Access Management (IAM) is needed to handle secure access to [Grafana resources]. Integrating Grafana with the proper solution is a key step to allow user access to sensitive data and resources, and to simplify user management and authentication.
-
-## Benefits of having an IAM integration
+## Benefits of integrating with an IAM provider
 
 Integrating with an IAM provider provides the following benefits:
 
@@ -46,32 +44,32 @@ For information about enabling anonymous access, refer to the [documentation](..
 
 ## Ways to organize users
 
-1. **Security**: Different groups of users or customers should only have access to their intended resources.
-1. **Simplicity**: Reduce scope of dashboards and resources available.
-1. **Cost attribution**: Track and bill costs to their customers, departments, or divisions.
-1. **Customization**: Each group of users could have a personalized experience like different dashboards or theme colours.
+Organize users in subgroups that are sensible to the organization. These are some examples:
+
+- **Security**: Different groups of users or customers should only have access to their intended resources.
+- **Simplicity**: Reduce the scope of dashboards and resources available.
+- **Cost attribution**: Track and bill costs to their customers, departments, or divisions.
+- **Customization**: Each group of users could have a personalized experience like different dashboards or theme colours.
 
 ### Users in Grafana Teams
 
-It makes sense to organize users in [Teams] in order to assign them roles and permissions reflecting the current organization. For example, instead of assigning five users access to the same dashboard, you can create a team that consists of those users and assign dashboard permissions to the team. A user can belong to multiple teams.
+You can organize users into [Teams] and assign them roles and permissions reflecting the current organization. For example, instead of assigning five users access to the same dashboard, you can create a team that consists of those users and assign dashboard permissions to the team. A user can belong to multiple teams.
 
-A user can be a Member or an Administrator for a given team. Members of a team inherit permissions from the team, but they cannot edit the team itself. Team Administrators can add members to a team and update its settings, such as the team name, team member’s team roles, UI preferences, and the default dashboard to be displayed upon login for the team members.
+A user can be a Member or an Administrator for a given team. Members of a team inherit permissions from the team, but they cannot edit the team itself. Team Administrators can add members to a team and update its settings, such as the team name, team members' team roles, UI preferences, and the default dashboard to be displayed upon login for the team members.
 
-Teams is a perfect solution to work with a small subset of users. Teams can share resources among other teams.
+Teams are a perfect solution for working with a small subset of users. Teams can share resources with other teams.
 
 ### Users in Grafana Organizations
 
-[Grafana Organizations] was born as a concept to isolate users from dashboards and datasources by having multiple organizations under a single instance of Grafana. This means that users under different organizations won't share any resources such as dashboards, folders, and datasources.
+[Grafana Organizations] isolate users from dashboards and data sources by having multiple organizations under a single instance of Grafana. This means users under different organizations won't share any resources such as dashboards, folders, and data sources.
 
-Grafana Organizations provide a measure of isolation within Grafana by default. The intention is to present different user experiences, which give the sense of different instances of Grafana within a single instance. However, **we recommend aginast Grafana Organizations** because they lack the scalability of [Folders].
+By default, organizations provide a measure of isolation within Grafana. They can be used to present different user experiences, which gives the appearance that there are multiple instances of Grafana within a single instance. However, because they lack the scalability of [Folders], we do not recommend using organizations as a way to group users.
 
 ### Choosing between teams and organizations
 
-[Grafana Teams] and Grafana Organizations serve similar purposes in the Grafana platform. Both are designed to help manage and control access to resources, Teams provide a more focused approach for smaller groups or projects. Teams allow for easy collaboration and shared ownership of resources among members, making it simple to manage access and control on who has access to said resources.
+[Grafana teams] and Grafana organizations serve similar purposes in the Grafana platform. While both are designed to help manage and control access to resources, teams provide a more focused approach for smaller groups or projects. Teams also enable collaboration and shared ownership of resources among members, making it simple to manage access and control who has access to which resources.
 
-Organizations, on the other hand, provide a higher level of management for multiple teams and resources, and are designed for larger enterprises or organizations with a complex setup or multiple and different business models.
-
-That being said, Teams provide many of the same benefits as Organizations, and can be seen as a more streamlined and simplified approach to managing resources and access. As such, it is possible that in the future, Teams may eventually replace Organizations as the primary way to manage resources in Grafana.
+In contrast, organizations provide a higher level of management for multiple teams and resources. They are designed for larger enterprises or organizations with a complex setup or multiple or different business models.
 
 ## Access to external systems
 
