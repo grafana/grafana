@@ -37,16 +37,18 @@ const (
 // ClientParams are hints to the auth service about how to handle the identity management
 // from the authenticating client.
 type ClientParams struct {
-	// Update the internal representation of the entity from the identity provided
+	// SyncUser updates the internal representation of the identity from the identity provided
 	SyncUser bool
-	// Add entity to teams
-	SyncTeamMembers bool
-	// Create entity in the DB if it doesn't exist
+	// AllowSignUp Adds identity to DB if it doesn't exist when, only work if SyncUser is enabled
 	AllowSignUp bool
-	// EnableDisabledUsers is a hint to the auth service that it should re-enable disabled users
+	// EnableDisabledUsers will enable disabled user, only work if SyncUser is enabled
 	EnableDisabledUsers bool
 	// FetchSyncedUser ensure that all required information is added to the identity
 	FetchSyncedUser bool
+	// SyncTeams will sync the groups from identity to teams in grafana, enterprise only feature
+	SyncTeams bool
+	// SyncOrgRoles will sync the roles from the identity to orgs in grafana
+	SyncOrgRoles bool
 	// CacheAuthProxyKey  if this key is set we will try to cache the user id for proxy client
 	CacheAuthProxyKey string
 	// LookUpParams are the arguments used to look up the entity in the DB.
@@ -222,26 +224,20 @@ func (i *Identity) Role() org.RoleType {
 	return i.OrgRoles[i.OrgID]
 }
 
-// TODO: improve error handling
+// NamespacedID returns the namespace, e.g. "user" and the id for that namespace
 func (i *Identity) NamespacedID() (string, int64) {
-	var (
-		id        int64
-		namespace string
-	)
-
 	split := strings.Split(i.ID, ":")
 	if len(split) != 2 {
 		return "", -1
 	}
 
-	id, errI := strconv.ParseInt(split[1], 10, 64)
-	if errI != nil {
+	id, err := strconv.ParseInt(split[1], 10, 64)
+	if err != nil {
+		// FIXME (kalleep): Improve error handling
 		return "", -1
 	}
 
-	namespace = split[0]
-
-	return namespace, id
+	return split[0], id
 }
 
 // NamespacedID builds a namespaced ID from a namespace and an ID.

@@ -45,7 +45,6 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `topnav`                          | Displays new top nav and page layouts                                           |
 | `accessControlOnCall`             | Access control primitives for OnCall                                            |
 | `alertingNoNormalState`           | Stop maintaining state of alerts that are not firing                            |
-| `topNavCommandPalette`            | Launch the Command Palette from the top navigation search box                   |
 
 ## Alpha feature toggles
 
@@ -90,6 +89,7 @@ Alpha features might be changed or removed without prior notice.
 | `editPanelCSVDragAndDrop`          | Enables drag and drop for CSV and Excel files                                                                                                                                |
 | `logsContextDatasourceUi`          | Allow datasource to provide custom UI for context view                                                                                                                       |
 | `lokiQuerySplitting`               | Split large interval queries into subqueries with smaller time intervals                                                                                                     |
+| `individualCookiePreferences`      | Support overriding cookie preferences per user                                                                                                                               |
 
 ## Development feature toggles
 
