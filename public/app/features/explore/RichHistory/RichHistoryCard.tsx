@@ -42,6 +42,7 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 
 interface OwnProps<T extends DataQuery = DataQuery> {
   query: RichHistoryQuery<T>;
+  showDate?: boolean;
 }
 
 export type Props<T extends DataQuery = DataQuery> = ConnectedProps<typeof connector> & OwnProps<T>;
@@ -150,17 +151,17 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-export function RichHistoryCard(props: Props) {
-  const {
-    query,
-    commentHistoryItem,
-    starHistoryItem,
-    deleteHistoryItem,
-    changeDatasource,
-    exploreId,
-    datasourceInstance,
-    setQueries,
-  } = props;
+export function RichHistoryCard({
+  query,
+  commentHistoryItem,
+  starHistoryItem,
+  deleteHistoryItem,
+  changeDatasource,
+  exploreId,
+  datasourceInstance,
+  setQueries,
+  showDate = false,
+}: Props) {
   const [activeUpdateComment, setActiveUpdateComment] = useState(false);
   const [comment, setComment] = useState<string | undefined>(query.comment);
   const { value, loading } = useAsync(async () => {
@@ -345,7 +346,7 @@ export function RichHistoryCard(props: Props) {
             >
               <Icon name="clock-nine" />
               {dateTimeFormat(query.lastExecutedAt, {
-                format: 'HH:mm:ss',
+                format: showDate ? 'YYYY-MM-DD HH:mm:ss' : 'HH:mm:ss',
               })}
             </time>
           )}
