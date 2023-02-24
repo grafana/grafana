@@ -21,7 +21,7 @@ func (c OpentelemetryCfg) IsEnabled() bool {
 // NewOpentelemetryCfg creates a new OpentelemetryCfg based on the provided Grafana config.
 // If Opentelemetry (OTLP) is disabled, a zero-value OpentelemetryCfg is returned.
 func NewOpentelemetryCfg(grafanaCfg *setting.Cfg) (OpentelemetryCfg, error) {
-	_, ots, err := parseSettings(grafanaCfg)
+	ots, err := parseSettingsOpentelemetry(grafanaCfg)
 	if err != nil {
 		return OpentelemetryCfg{}, fmt.Errorf("parse settings: %w", err)
 	}

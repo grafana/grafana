@@ -47,6 +47,13 @@ func TestCallResource(t *testing.T) {
 	require.NoError(t, err)
 
 	cfg := setting.NewCfg()
+	// TODO: These are very annoying and cause an error down the line if the sections are not present.
+	//  Imo, the tracing sections should not be required when parsing the tracing settings, so the errors
+	//	for "section not found" should not exist at all, and tracing should be disabled when they are not present.
+	cfg.Raw.Section("tracing.opentelemetry")
+	cfg.Raw.Section("tracing.opentelemetry.jaeger")
+	cfg.Raw.Section("tracing.opentelemetry.otlp")
+
 	cfg.StaticRootPath = staticRootPath
 	cfg.IsFeatureToggleEnabled = func(_ string) bool {
 		return false
@@ -55,7 +62,9 @@ func TestCallResource(t *testing.T) {
 
 	coreRegistry := coreplugin.ProvideCoreRegistry(nil, &cloudwatch.CloudWatchService{}, nil, nil, nil, nil,
 		nil, nil, nil, nil, testdatasource.ProvideService(cfg, featuremgmt.WithFeatures()), nil, nil, nil, nil, nil, nil)
-	pCfg := config.ProvideConfig(setting.ProvideProvider(cfg), cfg)
+	var pCfg *config.Cfg
+	pCfg, err = config.ProvideConfig(setting.ProvideProvider(cfg), cfg)
+	require.NoError(t, err)
 	reg := registry.ProvideService()
 	cdn := pluginscdn.ProvideService(pCfg)
 	l := loader.ProvideService(pCfg, fakes.NewFakeLicensingService(), signature.NewUnsignedAuthorizer(pCfg),
