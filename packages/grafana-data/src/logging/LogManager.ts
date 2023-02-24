@@ -3,11 +3,11 @@ import { Logger } from './Logger';
 import { LogAppender, LoggingConfig, LogLevel } from './types';
 
 export class LogManager {
-  private _root = new Logger('', new ConsoleAppender(), null);
   private _loggers: Record<string, Logger> = {};
   private _loggerNameSeparator = '/';
   private _compositeAppender = new CompositeAppender();
   private _appenders: Record<string, LogAppender> = {};
+  private _root = new Logger('', this._compositeAppender, null);
 
   constructor() {
     this.registerAppender('console', new ConsoleAppender());
