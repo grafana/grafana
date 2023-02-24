@@ -327,6 +327,7 @@ tsconfig.json @grafana/frontend-ops
 /.yarnrc.yml @grafana/frontend-ops
 /yarn.lock @grafana/frontend-ops
 /.linguirc @grafana/user-essentials
+/babel.config.json @grafana/frontend-ops
 lerna.json @grafana/frontend-ops
 /.prettierrc.js @grafana/frontend-ops
 /.eslintrc @grafana/frontend-ops
@@ -600,6 +601,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/scripts/pr-get-job-link.js @grafana/plugins-platform-frontend
 /.github/workflows/stale.yml @grafana/user-essentials
 /.github/workflows/update-changelog.yml @grafana/grafana-release-eng
+/.github/workflows/snyk.yml @grafana/security-team
 
 
 # Conf
