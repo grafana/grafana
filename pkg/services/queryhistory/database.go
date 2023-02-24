@@ -476,3 +476,8 @@ func (s QueryHistoryService) enforceQueryHistoryRowLimit(ctx context.Context, li
 
 	return int(deletedRowsCount), nil
 }
+
+func (s QueryHistoryService) cleanupDB(ctx context.Context) error {
+
+	return nil
+}
