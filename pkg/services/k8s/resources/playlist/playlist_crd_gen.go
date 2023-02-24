@@ -22,9 +22,10 @@ import (
 )
 
 var coreReg = corekind.NewBase(nil)
+var Kind = coreReg.Playlist()
 
 var CRD = crd.Kind{
-	GrafanaKind: coreReg.Playlist(),
+	GrafanaKind: Kind,
 	Object:      &Playlist{},
 	ObjectList:  &PlaylistList{},
 }

@@ -22,9 +22,10 @@ import (
 )
 
 var coreReg = corekind.NewBase(nil)
+var Kind = coreReg.Team()
 
 var CRD = crd.Kind{
-	GrafanaKind: coreReg.Team(),
+	GrafanaKind: Kind,
 	Object:      &Team{},
 	ObjectList:  &TeamList{},
 }

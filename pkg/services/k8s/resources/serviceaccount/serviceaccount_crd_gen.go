@@ -22,9 +22,10 @@ import (
 )
 
 var coreReg = corekind.NewBase(nil)
+var Kind = coreReg.ServiceAccount()
 
 var CRD = crd.Kind{
-	GrafanaKind: coreReg.ServiceAccount(),
+	GrafanaKind: Kind,
 	Object:      &ServiceAccount{},
 	ObjectList:  &ServiceAccountList{},
 }
