@@ -81,7 +81,7 @@ Grafana supports a wide range of contact points with varied support for images i
 | ----------------------- | --------------------------- | ------------------------- |
 | DingDing                | No                          | No                        |
 | Discord                 | Yes                         | Yes                       |
-| Email                   | Yes                         | Yes                       |
+| Email                   | No                          | Yes                       |
 | Google Hangouts Chat    | No                          | Yes                       |
 | Kafka                   | No                          | No                        |
 | Line                    | No                          | No                        |
