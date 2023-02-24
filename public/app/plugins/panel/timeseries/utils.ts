@@ -189,16 +189,7 @@ export function prepareTimeSeriesLong(series: DataFrame[]): DataFrame[] {
 
     // transform one dataFrame at a time and concat into DataFrame[]
     const transformedSeries = partitionByValuesTransformer.transformer(
-      {
-        fields: stringFields,
-        naming: {
-          asLabels: true,
-          append: false,
-          withNames: false,
-          separator1: '=',
-          separator2: ' ',
-        },
-      },
+      { fields: stringFields },
       { interpolate: (value: string) => value }
     )([dataFrame]);
 
