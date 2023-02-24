@@ -153,6 +153,24 @@ describe('MetricEncyclopediaModal', () => {
     expect(metricInsideRange).toBeInTheDocument();
   });
 
+  // Fuzzy search
+  // it('searches by name with a fuzzy search', async () => {
+  //   setup(defaultQuery, listOfMetrics);
+  //   const resultsPerPageInput = screen.getByTestId('search-metric');
+  //   await userEvent.type(resultsPerPageInput, 'a_buck');
+  //   let metricABucket = screen.getByText('a_bucket');
+  //   expect(metricABucket).toBeInTheDocument();
+  // });
+
+  // it('searches by all metadata with a fuzzy search', async () => {
+  //   // set fullMetaSearch true
+  //   setup(defaultQuery, listOfMetrics);
+  //   const resultsPerPageInput = screen.getByTestId('search-metric');
+  //   await userEvent.type(resultsPerPageInput, 'count');
+  //   let metricABucket = screen.getByText('a_bucket');
+  //   expect(metricABucket).toBeInTheDocument();
+  // });
+
   // // Filtering
   // it('filters results based on selected type', async () => {
   //   // default resultsPerPage is 10

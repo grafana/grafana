@@ -1,5 +1,8 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect, useState } from 'react';
+import uFuzzy from '@leeoniya/ufuzzy';
+// import debounce from 'lodash'
+import { debounce } from 'lodash';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 // *** Feature Tracking
@@ -8,6 +11,7 @@ import {
   Button,
   Card,
   Collapse,
+  InlineField,
   InlineLabel,
   InlineSwitch,
   Input,
@@ -80,12 +84,16 @@ const promTypes: PromFilterOption[] = [
 export const DEFAULT_RESULTS_PER_PAGE = 10;
 
 export const MetricEncyclopediaModal = (props: Props) => {
+  const uf = UseUfuzzy();
+
   const { datasource, isOpen, onClose, onChange, query } = props;
 
   const [variables, setVariables] = useState<Array<SelectableValue<string>>>([]);
 
   // metric list
   const [metrics, setMetrics] = useState<MetricsData>([]);
+  const [haystack, setHaystack] = useState<string[]>([]);
+  const [nameHaystack, setNameHaystack] = useState<string[]>([]);
   const [openTabs, setOpenTabs] = useState<string[]>([]);
 
   // pagination
@@ -93,6 +101,10 @@ export const MetricEncyclopediaModal = (props: Props) => {
   const [pageNum, setPageNum] = useState<number>(1);
 
   // filters
+  const [fuzzySearchQuery, setFuzzySearchQuery] = useState<string>('');
+  const [fuzzyMetaSearchResults, setFuzzyMetaSearchResults] = useState<number[]>([]);
+  const [fuzzyNameSearchResults, setNameFuzzySearchResults] = useState<number[]>([]);
+  const [fullMetaSearch, setFullMetaSearch] = useState<boolean>(false);
   const [excludeNullMetadata, setExcludeNullMetadata] = useState<boolean>(false);
   const [selectedTypes, setSelectedTypes] = useState<Array<SelectableValue<string>>>([]);
   const [selectedFunctions, setSelectedFunctions] = useState<Array<SelectableValue<string>>>([]);
@@ -107,8 +119,8 @@ export const MetricEncyclopediaModal = (props: Props) => {
     }
 
     // Error handling for when metrics metadata returns as undefined
-    // *** There will be no metadata filtering if this happens
-    // *** only metrics filter and pagination !!!
+    // *** Will have to handle metadata filtering if this happens
+    // *** only display metrics fuzzy search, function filter and pagination
     if (!datasource.languageProvider.metricsMetadata) {
       datasource.languageProvider.metricsMetadata = {};
     }
@@ -123,18 +135,30 @@ export const MetricEncyclopediaModal = (props: Props) => {
       metrics = (await datasource.languageProvider.getLabelValues('__name__')) ?? [];
     }
 
-    setMetrics(
-      metrics.map((m) => ({
+    let haystackData: string[] = [];
+    let haystackNameData: string[] = [];
+    let metricsData: MetricsData = metrics.map((m) => {
+      const type = getMetadataType(m, datasource.languageProvider.metricsMetadata!);
+      const description = getMetadataHelp(m, datasource.languageProvider.metricsMetadata!);
+      const functions = suggestFunctionHints({
         value: m,
-        type: getMetadataType(m, datasource.languageProvider.metricsMetadata!),
-        description: getMetadataHelp(m, datasource.languageProvider.metricsMetadata!),
-        functions: suggestFunctionHints({
-          value: m,
-          type: getMetadataType(m, datasource.languageProvider.metricsMetadata!),
-        }),
-      }))
-    );
+        type: type,
+      });
 
+      // string[] = name + type + description + functions
+      haystackData.push(`${m} ${type} ${description} ${functions.reduce((acc, f) => acc + ' ' + f, '')}`.toLowerCase());
+      haystackNameData.push(m);
+      return {
+        value: m,
+        type: type,
+        description: description,
+        functions: functions,
+      };
+    });
+
+    setMetrics(metricsData);
+    setHaystack(haystackData);
+    setNameHaystack(haystackNameData);
     setVariables(
       datasource.getVariables().map((v) => {
         return {
@@ -189,9 +213,34 @@ export const MetricEncyclopediaModal = (props: Props) => {
   function hasMetaDataFilters() {
     return selectedTypes.length > 0;
   }
+
+  function fuzzySearch(query: string) {
+    // search either the names or all metadata
+    // fuzzy search go!
+    const metaIdxs = uf.filter(haystack, query.toLowerCase());
+    setFuzzyMetaSearchResults(metaIdxs);
+
+    const nameIdxs = uf.filter(nameHaystack, query.toLowerCase());
+    setNameFuzzySearchResults(nameIdxs);
+  }
+
+  const debouncedFuzzySearch = debounce((query: string) => {
+    fuzzySearch(query);
+  }, 300);
+
   // *** Filtering: some metrics have no metadata so cannot be filtered
   function filterMetrics(metrics: MetricsData, skipLetterSearch?: boolean): MetricsData {
     let filteredMetrics: MetricsData = metrics;
+
+    if (fuzzySearchQuery) {
+      filteredMetrics = filteredMetrics.filter((m: MetricData, idx) => {
+        if (fullMetaSearch) {
+          return fuzzyMetaSearchResults.includes(idx);
+        } else {
+          return fuzzyNameSearchResults.includes(idx);
+        }
+      });
+    }
 
     if (excludeNullMetadata) {
       filteredMetrics = filteredMetrics.filter((m: MetricData) => m.type);
@@ -259,31 +308,34 @@ export const MetricEncyclopediaModal = (props: Props) => {
         Search metrics by type, function, labels, alphabetically or select a variable.
       </div>
       <div className="gf-form">
-        {/* *** IMPLEMENT FUZZY SEARCH */}
         <InlineLabel width={10} className="query-keyword">
           Search
         </InlineLabel>
         <Input
           data-testid={testIds.searchMetric}
           placeholder="Search metric text"
-          value={''}
-          onChange={(e) => {
-            // *** Filter by text in name, description or type
-          }}
-          onBlur={() => {
-            // *** Filter by text
-          }}
-        />
-        <InlineSwitch
-          label="Exclude null metadata"
-          showLabel={true}
-          value={excludeNullMetadata}
-          onChange={() => {
-            setExcludeNullMetadata(!excludeNullMetadata);
+          value={fuzzySearchQuery}
+          onInput={(e) => {
+            const value = e.currentTarget.value ?? '';
+            setFuzzySearchQuery(value);
+            debouncedFuzzySearch(value);
             setPageNum(1);
           }}
-          title="Exclude all metrics with no metadata when filtering"
         />
+        <InlineField
+          label="Search all metadata"
+          className={styles.labelColor}
+          tooltip={<div>Include all metadata in fuzzy search</div>}
+        >
+          <InlineSwitch
+            showLabel={true}
+            value={fullMetaSearch}
+            onChange={() => {
+              setFullMetaSearch(!fullMetaSearch);
+              setPageNum(1);
+            }}
+          />
+        </InlineField>
       </div>
       <div className="gf-form">
         <InlineLabel htmlFor="my-select" width={10} className="query-keyword">
@@ -308,7 +360,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
           Functions:
         </InlineLabel>
         <MultiSelect
-          data-testid={testIds.searchMetric}
+          data-testid={testIds.searchFunction}
           options={functionOptions}
           value={selectedFunctions}
           placeholder="Select functions"
@@ -370,7 +422,22 @@ export const MetricEncyclopediaModal = (props: Props) => {
             onClose();
           }}
         />
+        <InlineField
+          label="Exclude null metadata"
+          className={styles.labelColor}
+          tooltip={<div>Exclude all metrics with no metadata when filtering</div>}
+        >
+          <InlineSwitch
+            showLabel={true}
+            value={excludeNullMetadata}
+            onChange={() => {
+              setExcludeNullMetadata(!excludeNullMetadata);
+              setPageNum(1);
+            }}
+          />
+        </InlineField>
       </div>
+
       <div className={styles.center}>
         {[
           'A',
@@ -571,6 +638,22 @@ function suggestFunctionHints(metric: MetricData) {
   // 2. For multiple series suggest operator sum() relies on returned query
 }
 
+function UseUfuzzy(): uFuzzy {
+  const ref = useRef<uFuzzy>();
+
+  if (!ref.current) {
+    ref.current = new uFuzzy({
+      intraMode: 1,
+      intraIns: 1,
+      intraSub: 1,
+      intraTrn: 1,
+      intraDel: 1,
+    });
+  }
+
+  return ref.current;
+}
+
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     cardsContainer: css`
@@ -591,14 +674,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: flex;
       flex-direction: column;
     `,
-    rawQueryContainer: css`
-      flex-grow: 1;
-    `,
-    rawQuery: css`
-      background-color: ${theme.colors.background.primary};
-      padding: ${theme.spacing(1)};
-      margin-top: ${theme.spacing(1)};
-    `,
     selAlpha: css`
       font-style: italic;
       cursor: pointer;
@@ -612,6 +687,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     metadata: css`
       color: rgb(204, 204, 220);
+    `,
+    labelColor: css`
+      color: #6e9fff;
     `,
   };
 };
