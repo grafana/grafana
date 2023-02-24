@@ -15,11 +15,3 @@ Please use this template to create your chore issue. You can use this template i
 **What is the chore?**:
 
 **Is there anything else we need to know?**:
-
-**Environment**:
-- Grafana version:
-- Data source type & version:
-- OS Grafana is installed on:
-- User OS & Browser:
-- Grafana plugins:
-- Others:
