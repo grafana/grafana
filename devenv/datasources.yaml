@@ -7,6 +7,7 @@ deleteDatasources:
   - name: gdev-influxdb2-influxql
   - name: gdev-loki-0.3
   - name: gdev-loki-0.4
+  - name: gdev-loki
   - name: gdev-elasticsearch-v2-metrics
   - name: gdev-elasticsearch-v2-logs
   - name: gdev-elasticsearch-v5-metrics
@@ -234,6 +235,7 @@ datasources:
       customMetricsNamespaces: "CWAgent"
 
   - name: gdev-loki
+    uid: gdev-loki
     type: loki
     access: proxy
     url: http://localhost:3100
@@ -268,7 +270,7 @@ datasources:
           transformations:
             - type: "regex"
               expression: 'url=http[s]?:\/\/(\S*)'
-              variable: "path"
+              mapValue: "path"
 
   - name: gdev-jaeger
     type: jaeger

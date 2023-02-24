@@ -16,7 +16,15 @@ export interface TemplateSrv {
   /**
    * Replace the values within the target string.  See also {@link InterpolateFunction}
    */
-  replace(target?: string, scopedVars?: ScopedVars, format?: string | Function, formatOverride?: boolean): string;
+  replace(target?: string, scopedVars?: ScopedVars, format?: string | Function): string;
+
+  /*
+  Return the variables and values only
+  */
+  getVariablesMapInTemplate(
+    target: string,
+    scopedVars: ScopedVars
+  ): Record<string, string | number | boolean | undefined>;
 
   /**
    * Checks if a target contains template variables.

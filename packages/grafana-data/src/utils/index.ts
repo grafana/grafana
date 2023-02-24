@@ -18,7 +18,7 @@ export { arrayUtils };
 export { getFlotPairs, getFlotPairsConstant } from './flotPairs';
 export { locationUtil } from './location';
 export { urlUtil, type UrlQueryMap, type UrlQueryValue, serializeStateToUrlParam } from './url';
-export { DataLinkBuiltInVars, mapInternalLinkToExplore } from './dataLinks';
+export { DataLinkBuiltInVars, mapInternalLinkToExplore, dataLinkHasAllVariablesDefined } from './dataLinks';
 export { DocsId } from './docs';
 export { makeClassES5Compatible } from './makeClassES5Compatible';
 export { anyToNumber } from './anyToNumber';

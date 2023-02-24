@@ -12,6 +12,7 @@ import {
   SplitOpen,
   DataLink,
   DisplayValue,
+  dataLinkHasAllVariablesDefined,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -21,7 +22,7 @@ import { getLinkSrv } from '../../panel/panellinks/link_srv';
 
 type DataLinkFilter = (link: DataLink, scopedVars: ScopedVars) => boolean;
 
-const dataLinkHasRequiredPermissions = (link: DataLink) => {
+const dataLinkHasRequiredPermissionsFilter = (link: DataLink) => {
   return !link.internal || contextSrv.hasAccessToExplore();
 };
 
@@ -31,7 +32,7 @@ const dataLinkHasRequiredPermissions = (link: DataLink) => {
  * @param link
  * @param scopedVars
  */
-const dataLinkHasAllVariablesDefined = (link: DataLink, scopedVars: ScopedVars) => {
+const dataLinkVariablesDefinedFilter = (link: DataLink, scopedVars: ScopedVars) => {
   let hasAllRequiredVarDefined = true;
 
   if (link.internal) {
@@ -40,15 +41,10 @@ const dataLinkHasAllVariablesDefined = (link: DataLink, scopedVars: ScopedVars) 
       stringifiedQuery = JSON.stringify(link.internal.query || {});
       // Hook into format function to verify if all values are non-empty
       // Format function is run on all existing field values allowing us to check it's value is non-empty
-      getTemplateSrv().replace(
-        stringifiedQuery,
-        scopedVars,
-        (f: string) => {
-          hasAllRequiredVarDefined = hasAllRequiredVarDefined && !!f;
-          return '';
-        },
-        true
-      );
+      getTemplateSrv().replace(stringifiedQuery, scopedVars, (f: string) => {
+        hasAllRequiredVarDefined = hasAllRequiredVarDefined && !!f;
+        return '';
+      });
     } catch (err) {}
   }
   return hasAllRequiredVarDefined;
@@ -58,7 +54,7 @@ const dataLinkHasAllVariablesDefined = (link: DataLink, scopedVars: ScopedVars) 
  * Fixed list of filters used in Explore. DataLinks that do not pass all the filters will not
  * be passed back to the visualization.
  */
-const DATA_LINK_FILTERS: DataLinkFilter[] = [dataLinkHasAllVariablesDefined, dataLinkHasRequiredPermissions];
+const DATA_LINK_FILTERS: DataLinkFilter[] = [dataLinkVariablesDefinedFilter, dataLinkHasRequiredPermissionsFilter];
 
 /**
  * Get links from the field of a dataframe and in addition check if there is associated
@@ -121,7 +117,7 @@ export const getFieldLinksForExplore = (options: {
       return DATA_LINK_FILTERS.every((filter) => filter(link, scopedVars));
     });
 
-    return links.map((link) => {
+    const fieldLinks = links.map((link) => {
       if (!link.internal) {
         const replace: InterpolateFunction = (value, vars) =>
           getTemplateSrv().replace(value, { ...vars, ...scopedVars });
@@ -150,17 +146,29 @@ export const getFieldLinksForExplore = (options: {
           });
         }
 
-        return mapInternalLinkToExplore({
+        const allVars = { ...scopedVars, ...internalLinkSpecificVars };
+        const hasAllDefined = dataLinkHasAllVariablesDefined(
           link,
-          internalLink: link.internal,
-          scopedVars: { ...scopedVars, ...internalLinkSpecificVars },
-          range,
-          field,
-          onClickFn: splitOpenFn,
-          replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
-        });
+          allVars,
+          getTemplateSrv().getVariablesMapInTemplate.bind(getTemplateSrv())
+        );
+        if (hasAllDefined) {
+          return mapInternalLinkToExplore({
+            link,
+            internalLink: link.internal,
+            scopedVars: allVars,
+            range,
+            field,
+            onClickFn: splitOpenFn,
+            replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
+          });
+        } else {
+          return undefined;
+        }
       }
     });
+
+    return fieldLinks.filter((link): link is LinkModel<Field> => !!link);
   }
 
   return [];

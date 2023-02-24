@@ -23,6 +23,8 @@ interface FieldAccessorCache {
   [key: string]: (obj: any) => any;
 }
 
+type VarValue = string | number | boolean | undefined;
+
 export interface TemplateSrvDependencies {
   getFilteredVariables: typeof getFilteredVariables;
   getVariables: typeof getVariables;
@@ -275,7 +277,7 @@ export class TemplateSrv implements BaseTemplateSrv {
     return value;
   }
 
-  replace(target?: string, scopedVars?: ScopedVars, format?: string | Function, formatOverride?: boolean): string {
+  replace(target?: string, scopedVars?: ScopedVars, format?: string | Function): string {
     if (scopedVars && scopedVars.__sceneObject) {
       return sceneGraph.interpolate(
         scopedVars.__sceneObject.value,
@@ -294,7 +296,7 @@ export class TemplateSrv implements BaseTemplateSrv {
     return target.replace(this.regex, (match, var1, var2, fmt2, var3, fieldPath, fmt3) => {
       const variableName = var1 || var2 || var3;
       const variable = this.getVariableAtIndex(variableName);
-      const fmt = formatOverride ? format : fmt2 || fmt3 || format;
+      const fmt = fmt2 || fmt3 || format;
 
       if (scopedVars) {
         const value = this.getVariableValue(variableName, fieldPath, scopedVars);
@@ -302,8 +304,6 @@ export class TemplateSrv implements BaseTemplateSrv {
 
         if (value !== null && value !== undefined) {
           return this.formatValue(value, fmt, variable, text);
-        } else if (formatOverride) {
-          return this.formatValue(false, fmt);
         }
       }
 
@@ -347,6 +347,21 @@ export class TemplateSrv implements BaseTemplateSrv {
       const res = this.formatValue(value, fmt, variable, text);
       return res;
     });
+  }
+
+  getVariablesMapInTemplate(target: string, scopedVars: ScopedVars): Record<string, VarValue> {
+    const regexp = new RegExp(this.regex);
+    const values: Record<string, VarValue> = {};
+
+    target.replace(regexp, (match, var1, var2, fmt2, var3, fieldPath) => {
+      const variableName = var1 || var2 || var3;
+      values[variableName] = this.getVariableValue(variableName, fieldPath, scopedVars);
+
+      // Don't care about the result anyway
+      return '';
+    });
+
+    return values;
   }
 
   isAllValue(value: any) {
