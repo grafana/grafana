@@ -1,11 +1,10 @@
-package resources
+package {{ .Props.MachineName }}
 
 import (
 	"github.com/google/wire"
-	{{range .Kinds }}
-	"{{ $.KindPackagePrefix }}/{{ .Props.MachineName }}"{{end}}
 )
 
-var WireSet = wire.NewSet({{range $i, $k := .Kinds }}
-	{{ $k.Props.MachineName }}.WireSet,{{end}}
+var GeneratedWireSet = wire.NewSet(
+	ProvideWatcher,
+	wire.Bind(new(Watcher), new(*watcher)),
 )

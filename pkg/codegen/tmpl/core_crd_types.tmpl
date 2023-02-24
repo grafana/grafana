@@ -23,7 +23,7 @@ var CRD = crd.Kind{
 
 // The CRD YAML representation of the {{ .Props.Name }} kind.
 //
-//go:embed {{ .Props.MachineName }}.crd.yml
+//go:embed crd_gen.yml
 var CRDYaml []byte
 
 // {{ .Props.Name }} is the Go CRD representation of a single {{ .Props.Name }} object.

@@ -3,6 +3,7 @@ package codegen
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/grafana/codejen"
@@ -37,8 +38,31 @@ func (j crdWatcherJenny) Generate(kind kindsys.Kind) (*codejen.File, error) {
 	}
 
 	name := kind.Props().Common().MachineName
-	path := filepath.Join(j.parentpath, name, name+"_watcher_gen.go")
+	path := filepath.Join(j.parentpath, name, "watcher_gen.go")
 	b, err := postprocessGoFile(genGoFile{
+		path: path,
+		in:   buf.Bytes(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	codejen.NewFile(path, b, j)
+
+	// check if watcher impl exists
+	// if it does, then we don't want to overwrite it
+	path = filepath.Join("..", j.parentpath, name, "watcher.go")
+	if _, err = os.Stat(path); err == nil {
+		return nil, nil
+	}
+
+	buf = new(bytes.Buffer)
+	if err := tmpls.Lookup("core_crd_watcher_impl.tmpl").Execute(buf, kind); err != nil {
+		return nil, fmt.Errorf("failed executing crd watcher template: %w", err)
+	}
+
+	path = filepath.Join(j.parentpath, name, "watcher.go")
+	b, err = postprocessGoFile(genGoFile{
 		path: path,
 		in:   buf.Bytes(),
 	})

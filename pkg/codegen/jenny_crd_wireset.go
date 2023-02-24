@@ -9,48 +9,43 @@ import (
 	"github.com/grafana/grafana/pkg/kindsys"
 )
 
-// CRDWireSetJenny generates a WireSet for all CRDs.
-func CRDWireSetJenny(path string) ManyToOne {
-	return &crdWireSetJenny{
-		path: path,
+// CRDWireSetJenny generates the OpenAPI CRD representation for a core
+// structured kind that is expected by Kubernetes controller machinery.
+func CRDWireSetJenny(path string) OneToOne {
+	return crdWireSetJenny{
+		parentpath: path,
 	}
 }
 
 type crdWireSetJenny struct {
-	path string
+	parentpath string
 }
 
-func (j *crdWireSetJenny) JennyName() string {
+func (j crdWireSetJenny) JennyName() string {
 	return "CRDWireSetJenny"
 }
 
-func (j *crdWireSetJenny) Generate(kinds ...kindsys.Kind) (*codejen.File, error) {
-	cores := make([]kindsys.Core, 0, len(kinds))
-	for _, d := range kinds {
-		if corekind, is := d.(kindsys.Core); is {
-			cores = append(cores, corekind)
-		}
-	}
-	if len(cores) == 0 {
+func (j crdWireSetJenny) Generate(kind kindsys.Kind) (*codejen.File, error) {
+	_, isCore := kind.(kindsys.Core)
+	_, isCustom := kind.(kindsys.Core)
+	if !(isCore || isCustom) {
 		return nil, nil
 	}
 
 	buf := new(bytes.Buffer)
-	if err := tmpls.Lookup("core_crd_wireset.tmpl").Execute(buf, tvars_kind_registry{
-		PackageName:       "corecrd",
-		KindPackagePrefix: filepath.ToSlash("github.com/grafana/grafana/pkg/services/k8s/resources"),
-		Kinds:             cores,
-	}); err != nil {
-		return nil, fmt.Errorf("failed executing core crd registry template: %w", err)
+	if err := tmpls.Lookup("core_crd_wireset.tmpl").Execute(buf, kind); err != nil {
+		return nil, fmt.Errorf("failed executing crd wireset template: %w", err)
 	}
 
+	name := kind.Props().Common().MachineName
+	path := filepath.Join(j.parentpath, name, "wire_gen.go")
 	b, err := postprocessGoFile(genGoFile{
-		path: j.path,
+		path: path,
 		in:   buf.Bytes(),
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return codejen.NewFile(filepath.Join(j.path, "wireset_gen.go"), b, j), nil
+	return codejen.NewFile(path, b, j), nil
 }

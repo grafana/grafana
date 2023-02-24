@@ -32,7 +32,7 @@ var CRD = crd.Kind{
 
 // The CRD YAML representation of the Dashboard kind.
 //
-//go:embed dashboard.crd.yml
+//go:embed crd_gen.yml
 var CRDYaml []byte
 
 // Dashboard is the Go CRD representation of a single Dashboard object.

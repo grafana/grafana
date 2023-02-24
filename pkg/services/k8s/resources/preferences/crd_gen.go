@@ -32,7 +32,7 @@ var CRD = crd.Kind{
 
 // The CRD YAML representation of the Preferences kind.
 //
-//go:embed preferences.crd.yml
+//go:embed crd_gen.yml
 var CRDYaml []byte
 
 // Preferences is the Go CRD representation of a single Preferences object.

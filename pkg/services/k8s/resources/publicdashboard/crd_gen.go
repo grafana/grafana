@@ -32,7 +32,7 @@ var CRD = crd.Kind{
 
 // The CRD YAML representation of the PublicDashboard kind.
 //
-//go:embed publicdashboard.crd.yml
+//go:embed crd_gen.yml
 var CRDYaml []byte
 
 // PublicDashboard is the Go CRD representation of a single PublicDashboard object.

@@ -7,4 +7,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/k8s/resources"
 )
 
-var WireSet = wire.NewSet(resources.WireSet, client.WireSet, informer.WireSet)
+var WireSet = wire.NewSet(
+	client.WireSet,
+	informer.WireSet,
+	resources.GeneratedWireSet,
+)

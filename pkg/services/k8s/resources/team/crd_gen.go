@@ -32,7 +32,7 @@ var CRD = crd.Kind{
 
 // The CRD YAML representation of the Team kind.
 //
-//go:embed team.crd.yml
+//go:embed crd_gen.yml
 var CRDYaml []byte
 
 // Team is the Go CRD representation of a single Team object.

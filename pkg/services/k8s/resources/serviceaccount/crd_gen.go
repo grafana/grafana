@@ -32,7 +32,7 @@ var CRD = crd.Kind{
 
 // The CRD YAML representation of the ServiceAccount kind.
 //
-//go:embed serviceaccount.crd.yml
+//go:embed crd_gen.yml
 var CRDYaml []byte
 
 // ServiceAccount is the Go CRD representation of a single ServiceAccount object.

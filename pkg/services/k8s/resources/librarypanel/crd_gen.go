@@ -32,7 +32,7 @@ var CRD = crd.Kind{
 
 // The CRD YAML representation of the LibraryPanel kind.
 //
-//go:embed librarypanel.crd.yml
+//go:embed crd_gen.yml
 var CRDYaml []byte
 
 // LibraryPanel is the Go CRD representation of a single LibraryPanel object.

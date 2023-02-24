@@ -112,7 +112,7 @@ func (j yamlCRDJenny) Generate(k kindsys.Kind) (*codejen.File, error) {
 		contents = b.Bytes()
 	}
 
-	return codejen.NewFile(filepath.Join(j.parentpath, props.MachineName, props.MachineName+".crd.yml"), contents, j), nil
+	return codejen.NewFile(filepath.Join(j.parentpath, props.MachineName, "crd_gen.yml"), contents, j), nil
 }
 
 // customResourceDefinition differs from crd.CustomResourceDefinition in that it doesn't use the metav1

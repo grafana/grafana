@@ -6,8 +6,6 @@ import (
 )
 
 var WireSet = wire.NewSet(
-	ProvideWatcher,
-	wire.Bind(new(Watcher), new(*watcher)),
 	ProvideServiceWrapper,
 	wire.Bind(new(dashboards.DashboardServiceWrapper), new(*ServiceWrapper)),
 )

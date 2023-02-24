@@ -32,7 +32,7 @@ var CRD = crd.Kind{
 
 // The CRD YAML representation of the Playlist kind.
 //
-//go:embed playlist.crd.yml
+//go:embed crd_gen.yml
 var CRDYaml []byte
 
 // Playlist is the Go CRD representation of a single Playlist object.
