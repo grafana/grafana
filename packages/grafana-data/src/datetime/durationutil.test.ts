@@ -13,6 +13,12 @@ describe('Duration util', () => {
       const endDate = addDurationToDate(startDate, { months: 1, weeks: 1, days: 1, hours: 1, minutes: 1, seconds: 1 });
       expect(intervalToAbbreviatedDurationString({ start: startDate, end: endDate })).toEqual('1M 8d 1h 1m 1s');
     });
+
+    it('should return an empty string if start date is after end date', () => {
+      const endDate = new Date();
+      const startDate = addDurationToDate(endDate, { minutes: 1 });
+      expect(intervalToAbbreviatedDurationString({ start: startDate, end: endDate })).toEqual('');
+    });
   });
 
   describe('parseDuration', () => {
