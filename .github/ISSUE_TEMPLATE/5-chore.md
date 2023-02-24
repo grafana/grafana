@@ -1,6 +1,6 @@
 ---
 name: Chore
-about: Work on a chore needing completion
+about: Create an issue for a chore needing completion
 labels: 'type: chore'
 ---
 
