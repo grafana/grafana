@@ -29,6 +29,7 @@ type NGAlert struct {
 	stateMetrics                *State
 	multiOrgAlertmanagerMetrics *MultiOrgAlertmanager
 	apiMetrics                  *API
+	historianMetrics            *Historian
 }
 
 // NewNGAlert manages the metrics of all the alerting components.
@@ -39,6 +40,7 @@ func NewNGAlert(r prometheus.Registerer) *NGAlert {
 		stateMetrics:                NewStateMetrics(r),
 		multiOrgAlertmanagerMetrics: NewMultiOrgAlertmanagerMetrics(r),
 		apiMetrics:                  NewAPIMetrics(r),
+		historianMetrics:            NewHistorianMetrics(r),
 	}
 }
 
@@ -66,4 +68,8 @@ func (moa *MultiOrgAlertmanager) RemoveOrgRegistry(id int64) {
 // GetOrCreateOrgRegistry gets or creates a *prometheus.Registry for the specified org. It is safe to call concurrently.
 func (moa *MultiOrgAlertmanager) GetOrCreateOrgRegistry(id int64) prometheus.Registerer {
 	return moa.registries.GetOrCreateOrgRegistry(id)
+}
+
+func (ng *NGAlert) GetHistorianMetrics() *Historian {
+	return ng.historianMetrics
 }
