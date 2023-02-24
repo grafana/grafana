@@ -25,12 +25,25 @@ const SearchField = ({ filter, datasource, updateFilter, deleteFilter, isTagsLoa
   const languageProvider = useMemo(() => new TempoLanguageProvider(datasource), [datasource]);
   const [isLoadingValues, setIsLoadingValues] = useState(false);
   const [options, setOptions] = useState<Array<SelectableValue<string>>>([]);
+  // We automatically change the operator to the regex op when users select 2 or more values
+  // However, they expect this to be automatically rolled back to the previous operator once
+  // there's only one value selected, so we store the previous operator and value
+  const [prevOperator, setPrevOperator] = useState(filter.operator);
+  const [prevValue, setPrevValue] = useState(filter.value);
 
   useEffect(() => {
-    if (Array.isArray(filter.value) && filter.value.length > 1 && !['=~', '!~'].includes(filter.operator || '')) {
+    if (Array.isArray(filter.value) && filter.value.length > 1 && filter.operator !== '=~') {
+      setPrevOperator(filter.operator);
       updateFilter({ ...filter, operator: '=~' });
     }
-  }, [updateFilter, filter]);
+    if (Array.isArray(filter.value) && filter.value.length <= 1 && (prevValue?.length || 0) > 1) {
+      updateFilter({ ...filter, operator: prevOperator, value: filter.value[0] });
+    }
+  }, [prevValue, prevOperator, updateFilter, filter]);
+
+  useEffect(() => {
+    setPrevValue(filter.value);
+  }, [filter.value]);
 
   const loadOptions = useCallback(
     async (name: string) => {
