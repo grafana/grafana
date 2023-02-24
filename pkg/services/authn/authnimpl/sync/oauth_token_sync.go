@@ -74,15 +74,15 @@ func (s *OAuthTokenSync) SyncOauthTokenHook(ctx context.Context, identity *authn
 
 	if err := s.service.TryTokenRefresh(ctx, token); err != nil {
 		if !errors.Is(err, oauthtoken.ErrNoRefreshTokenFound) {
-			s.log.FromContext(ctx).Error("could not refresh oauth access token for user", "userId", id, "err", err)
+			s.log.FromContext(ctx).Error("Failed to refresh OAuth access token", "id", identity.ID, "error", err)
 		}
 
 		if err := s.service.InvalidateOAuthTokens(ctx, token); err != nil {
-			s.log.FromContext(ctx).Error("could not invalidate OAuth tokens", "userId", id, "err", err)
+			s.log.FromContext(ctx).Error("Failed invalidate OAuth tokens", "id", identity.ID, "error", err)
 		}
 
 		if err := s.sessionService.RevokeToken(ctx, identity.SessionToken, false); err != nil {
-			s.log.FromContext(ctx).Error("could not revoke token", "userId", id, "tokenId", identity.SessionToken.Id, "err", err)
+			s.log.FromContext(ctx).Error("Failed to revoke session token", "id", identity.ID, "tokenId", identity.SessionToken.Id, "error", err)
 		}
 
 		return errExpiredAccessToken.Errorf("oauth access token could not be refreshed: %w", auth.ErrInvalidSessionToken)
