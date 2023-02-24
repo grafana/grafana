@@ -92,6 +92,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
 
   // metric list
   const [metrics, setMetrics] = useState<MetricsData>([]);
+  const [hasMetadata, setHasMetadata] = useState<boolean>(true);
   const [haystack, setHaystack] = useState<string[]>([]);
   const [nameHaystack, setNameHaystack] = useState<string[]>([]);
   const [openTabs, setOpenTabs] = useState<string[]>([]);
@@ -122,6 +123,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
     // *** Will have to handle metadata filtering if this happens
     // *** only display metrics fuzzy search, function filter and pagination
     if (!datasource.languageProvider.metricsMetadata) {
+      setHasMetadata(false);
       datasource.languageProvider.metricsMetadata = {};
     }
 
@@ -159,6 +161,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
     setMetrics(metricsData);
     setHaystack(haystackData);
     setNameHaystack(haystackNameData);
+
     setVariables(
       datasource.getVariables().map((v) => {
         return {
@@ -305,7 +308,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
       aria-label="Metric Encyclopedia"
     >
       <div className={styles.spacing}>
-        Search metrics by type, function, labels, alphabetically or select a variable.
+        Search {metrics.length} metrics by type, function, labels, alphabetically or select a variable.
       </div>
       <div className="gf-form">
         <InlineLabel width={10} className="query-keyword">
@@ -322,39 +325,45 @@ export const MetricEncyclopediaModal = (props: Props) => {
             setPageNum(1);
           }}
         />
-        <InlineField
-          label="Search all metadata"
-          className={styles.labelColor}
-          tooltip={<div>Include all metadata in fuzzy search</div>}
-        >
-          <InlineSwitch
-            showLabel={true}
-            value={fullMetaSearch}
-            onChange={() => {
-              setFullMetaSearch(!fullMetaSearch);
-              setPageNum(1);
-            }}
-          />
-        </InlineField>
+        {hasMetadata && (
+          <InlineField
+            label="Search all metadata"
+            className={styles.labelColor}
+            tooltip={<div>Include all metadata in fuzzy search</div>}
+          >
+            <InlineSwitch
+              showLabel={true}
+              value={fullMetaSearch}
+              onChange={() => {
+                setFullMetaSearch(!fullMetaSearch);
+                setPageNum(1);
+              }}
+            />
+          </InlineField>
+        )}
       </div>
       <div className="gf-form">
-        <InlineLabel htmlFor="my-select" width={10} className="query-keyword">
-          Type:
-        </InlineLabel>
-        <MultiSelect
-          data-testid={testIds.selectType}
-          inputId="my-select"
-          options={typeOptions}
-          value={selectedTypes}
-          placeholder="Select type"
-          onChange={(v) => {
-            // *** Filter by type
-            // *** always include metrics without metadata but label it as unknown type
-            // Consider tabs select instead of actual select or multi select
-            setSelectedTypes(v);
-            setPageNum(1);
-          }}
-        />
+        {hasMetadata && (
+          <>
+            <InlineLabel htmlFor="my-select" width={10} className="query-keyword">
+              Type:
+            </InlineLabel>
+            <MultiSelect
+              data-testid={testIds.selectType}
+              inputId="my-select"
+              options={typeOptions}
+              value={selectedTypes}
+              placeholder="Select type"
+              onChange={(v) => {
+                // *** Filter by type
+                // *** always include metrics without metadata but label it as unknown type
+                // Consider tabs select instead of actual select or multi select
+                setSelectedTypes(v);
+                setPageNum(1);
+              }}
+            />
+          </>
+        )}
 
         <InlineLabel width={10} className="query-keyword">
           Functions:
@@ -422,20 +431,22 @@ export const MetricEncyclopediaModal = (props: Props) => {
             onClose();
           }}
         />
-        <InlineField
-          label="Exclude null metadata"
-          className={styles.labelColor}
-          tooltip={<div>Exclude all metrics with no metadata when filtering</div>}
-        >
-          <InlineSwitch
-            showLabel={true}
-            value={excludeNullMetadata}
-            onChange={() => {
-              setExcludeNullMetadata(!excludeNullMetadata);
-              setPageNum(1);
-            }}
-          />
-        </InlineField>
+        {hasMetadata && (
+          <InlineField
+            label="Exclude null metadata"
+            className={styles.labelColor}
+            tooltip={<div>Exclude all metrics with no metadata when filtering</div>}
+          >
+            <InlineSwitch
+              showLabel={true}
+              value={excludeNullMetadata}
+              onChange={() => {
+                setExcludeNullMetadata(!excludeNullMetadata);
+                setPageNum(1);
+              }}
+            />
+          </InlineField>
+        )}
       </div>
 
       <div className={styles.center}>
