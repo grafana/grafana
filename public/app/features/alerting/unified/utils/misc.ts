@@ -110,6 +110,14 @@ export function makeFolderSettingsLink(folder: FolderDTO): string {
   return createUrl(`/dashboards/f/${folder.uid}/${folder.title}/settings`);
 }
 
+export function makeDashboardLink(dashboardUID: string): string {
+  return createUrl(`/d/${encodeURIComponent(dashboardUID)}`);
+}
+
+export function makePanelLink(dashboardUID: string, panelId: string): string {
+  return createUrl(`/d/${encodeURIComponent(dashboardUID)}`, { viewPanel: panelId });
+}
+
 // keep retrying fn if it's error passes shouldRetry(error) and timeout has not elapsed yet
 export function retryWhile<T, E = Error>(
   fn: () => Promise<T>,

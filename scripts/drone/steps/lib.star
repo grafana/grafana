@@ -940,7 +940,7 @@ def build_docs_website_step():
         # Use latest revision here, since we want to catch if it breaks
         "image": "grafana/docs-base:latest",
         "commands": [
-            "mkdir -p /hugo/content/docs/grafana",
+            "mkdir -p /hugo/content/docs/grafana/latest",
             "cp -r docs/sources/* /hugo/content/docs/grafana/latest/",
             "cd /hugo && make prod",
         ],
