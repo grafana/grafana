@@ -10,11 +10,6 @@ export enum PublicDashboardShareType {
   EMAIL = 'email',
 }
 
-export interface SharingRecipient {
-  uid: string;
-  recipient: string;
-}
-
 export interface PublicDashboardSettings {
   annotationsEnabled: boolean;
   isEnabled: boolean;
@@ -27,7 +22,7 @@ export interface PublicDashboard extends PublicDashboardSettings {
   dashboardUid: string;
   timeSettings?: object;
   share: PublicDashboardShareType;
-  recipients?: SharingRecipient[];
+  recipients?: string[];
 }
 
 // Instance methods
@@ -68,3 +63,5 @@ export const getUnsupportedDashboardDatasources = (panels: PanelModel[]): string
 export const generatePublicDashboardUrl = (publicDashboard: PublicDashboard): string => {
   return `${getConfig().appUrl}public-dashboards/${publicDashboard.accessToken}`;
 };
+
+export const validEmailRegex = /^[A-Z\d._%+-]+@[A-Z\d.-]+\.[A-Z]{2,}$/i;

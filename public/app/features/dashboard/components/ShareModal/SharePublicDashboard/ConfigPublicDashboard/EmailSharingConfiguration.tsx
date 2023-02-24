@@ -17,12 +17,13 @@ import {
 } from '@grafana/ui/src';
 import {
   useAddEmailSharingMutation,
+  useDeleteEmailSharingMutation,
   useGetPublicDashboardQuery,
   useUpdatePublicDashboardMutation,
 } from 'app/features/dashboard/api/publicDashboardApi';
 import { useSelector } from 'app/types';
 
-import { PublicDashboardShareType } from '../SharePublicDashboardUtils';
+import { PublicDashboardShareType, validEmailRegex } from '../SharePublicDashboardUtils';
 
 interface EmailSharingConfigurationForm {
   shareType: PublicDashboardShareType;
@@ -34,8 +35,7 @@ const options: Array<SelectableValue<PublicDashboardShareType>> = [
   { label: 'Only specified people', value: PublicDashboardShareType.EMAIL },
 ];
 
-const validEmailRegex = /^[A-Z\d._%+-]+@[A-Z\d.-]+\.[A-Z]{2,}$/i;
-const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
+const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard.EmailSharingConfiguration;
 
 export const EmailSharingConfiguration = () => {
   const styles = useStyles2(getStyles);
@@ -45,6 +45,7 @@ export const EmailSharingConfiguration = () => {
   const { data: publicDashboard } = useGetPublicDashboardQuery(dashboard.uid);
   const [updateShareType] = useUpdatePublicDashboardMutation();
   const [addEmail, { isLoading: isAddEmailLoading }] = useAddEmailSharingMutation();
+  const [deleteEmail, { isLoading: isDeleteLoading }] = useDeleteEmailSharingMutation();
 
   const onShareTypeChange = (shareType: PublicDashboardShareType) => {
     const req = {
@@ -57,9 +58,12 @@ export const EmailSharingConfiguration = () => {
 
     updateShareType(req);
   };
+  const onDeleteEmail = (email: string) => {
+    deleteEmail({ recipient: email, dashboardUid: dashboard.uid, uid: publicDashboard!.uid });
+  };
 
   const onSubmit = (data: EmailSharingConfigurationForm) => {
-    addEmail({ email: data.email, accessToken: publicDashboard!.accessToken!, dashboardUid: dashboard.uid });
+    addEmail({ recipient: data.email, uid: publicDashboard!.uid, dashboardUid: dashboard.uid });
   };
 
   return (
@@ -74,7 +78,7 @@ export const EmailSharingConfiguration = () => {
             email: '',
           }}
         >
-          {({ register, errors, setValue, control, watch, formState: { isSubmitSuccessful } }) => (
+          {({ register, errors, setValue, control, watch, formState: { isValid } }) => (
             <div>
               <Field label="Can view dashboard">
                 <InputControl
@@ -88,6 +92,7 @@ export const EmailSharingConfiguration = () => {
                         setValue('shareType', shareType);
                         onShareTypeChange(shareType);
                       }}
+                      data-testid={selectors.ShareType}
                     />
                   )}
                 />
@@ -109,19 +114,25 @@ export const EmailSharingConfiguration = () => {
                           required: 'Email is required',
                           pattern: { value: validEmailRegex, message: 'Invalid email' },
                         })}
+                        data-testid={selectors.EmailSharingInput}
                       />
-                      <Button type="submit" variant="primary">
+                      <Button
+                        type="submit"
+                        variant="primary"
+                        disabled={!isValid || isAddEmailLoading}
+                        data-testid={selectors.EmailSharingButton}
+                      >
                         Invite {isAddEmailLoading && <Spinner />}
                       </Button>
                     </div>
                   </Field>
                   {!!publicDashboard?.recipients?.length && (
-                    <div className={styles.table}>
+                    <div className={styles.table} data-testid={selectors.EmailSharingList}>
                       <table className="filter-table">
                         <tbody>
                           {publicDashboard.recipients.map((recipient) => (
-                            <tr key={recipient.uid}>
-                              <td>{recipient.recipient}</td>
+                            <tr key={recipient}>
+                              <td>{recipient}</td>
                               <td>
                                 <ButtonGroup className={styles.tableButtonsContainer}>
                                   <Button
@@ -129,9 +140,10 @@ export const EmailSharingConfiguration = () => {
                                     variant="destructive"
                                     fill="text"
                                     aria-label="Revoke"
-                                    className={styles.button}
+                                    className={styles.revokeButton}
                                     title="Revoke"
-                                    onClick={() => {}}
+                                    disabled={isDeleteLoading}
+                                    onClick={() => onDeleteEmail(recipient)}
                                   >
                                     Revoke
                                   </Button>
@@ -175,7 +187,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     justify-content: end;
   `,
-  button: css`
+  revokeButton: css`
     padding: 0;
     font-weight: 100;
   `,
