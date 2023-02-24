@@ -152,7 +152,6 @@ class TempoQueryFieldComponent extends React.PureComponent<Props> {
             query={query}
             onChange={onChange}
             onBlur={this.props.onBlur}
-            onRunQuery={this.props.onRunQuery}
           />
         )}
         {query.queryType === 'upload' && (

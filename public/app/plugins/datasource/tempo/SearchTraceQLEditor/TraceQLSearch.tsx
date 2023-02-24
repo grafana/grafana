@@ -26,7 +26,6 @@ interface Props {
   query: TempoQuery;
   onChange: (value: TempoQuery) => void;
   onBlur?: () => void;
-  onRunQuery: () => void;
 }
 
 const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
