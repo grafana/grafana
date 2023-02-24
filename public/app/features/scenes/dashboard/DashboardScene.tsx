@@ -87,8 +87,10 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     controls: css({
       display: 'flex',
-      gap: theme.spacing(1),
+      paddingBottom: theme.spacing(2),
+      flexWrap: 'wrap',
       alignItems: 'center',
+      gap: theme.spacing(1),
     }),
   };
 }

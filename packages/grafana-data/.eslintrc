@@ -1,12 +1,26 @@
 {
   "rules": {
-    "no-restricted-imports": ["error", { "patterns": ["@grafana/runtime", "@grafana/ui", "@grafana/data", "@grafana/e2e/*"] }]
+    "no-restricted-imports": [
+      "error",
+      { "patterns": ["@grafana/runtime", "@grafana/ui", "@grafana/data", "@grafana/e2e/*"] }
+    ]
   },
   "overrides": [
     {
       "files": ["**/*.test.{ts,tsx}"],
       "rules": {
         "no-restricted-imports": "off"
+      }
+    },
+    // rollup v3 uses esm modules
+    {
+      "files": ["rollup.config.mjs"],
+      "parser": "@babel/eslint-parser",
+      "parserOptions": {
+        "requireConfigFile": false,
+        "babelOptions": {
+          "plugins": ["@babel/plugin-syntax-import-assertions"]
+        }
       }
     }
   ]

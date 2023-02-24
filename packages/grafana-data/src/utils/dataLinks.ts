@@ -125,11 +125,7 @@ function interpolateObjectRecursive<T extends Object>(
 }
 
 /**
- * This function takes some code from  template service replace() function to figure out if all variables are
- * interpolated. This is so we don't show links that do not work. This cuts a lots of corners though and that is why
- * it's a local function. We sort of don't care about the dashboard template variables for example. Also we only link
- * to loki/splunk/elastic, so it should be less probable that user needs part of a query that looks like a variable but
- * is actually part of the query language.
+ * Use variable map from templateSrv to determine if all variables have values
  * @param query
  * @param scopedVars
  * @param getVarMap
@@ -140,7 +136,6 @@ export function dataLinkHasAllVariablesDefined<T extends DataLink>(
   getVarMap: Function
 ): boolean {
   const vars = getVarMap(getStringsFromObject(query), scopedVars);
-  console.log('varmap', vars, scopedVars);
   return Object.values(vars).every((val) => val !== undefined && val !== null);
 }
 
