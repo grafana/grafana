@@ -38,7 +38,7 @@ func writeFiltersSQL(query SearchInQueryHistoryQuery, user *user.SignedInUser, s
 
 func writeSortSQL(query SearchInQueryHistoryQuery, sqlStore db.DB, builder *db.SQLBuilder) {
 	if query.Sort == "time-asc" {
-		builder.Write(" ORDER BY last_executed_ad ASC ")
+		builder.Write(" ORDER BY last_executed_at ASC ")
 	} else {
 		builder.Write(" ORDER BY last_executed_at DESC ")
 	}
