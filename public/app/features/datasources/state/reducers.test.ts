@@ -47,7 +47,7 @@ describe('dataSourcesReducer', () => {
       reducerTester<DataSourcesState>()
         .givenReducer(dataSourcesReducer, initialState)
         .whenActionIsDispatched(dataSourcesLoaded(dataSources))
-        .thenStateShouldEqual({ ...initialState, hasFetched: true, dataSources, dataSourcesCount: 1 });
+        .thenStateShouldEqual({ ...initialState, isLoadingDataSources: false, dataSources, dataSourcesCount: 1 });
     });
   });
 
@@ -89,19 +89,19 @@ describe('dataSourcesReducer', () => {
       reducerTester<DataSourcesState>()
         .givenReducer(dataSourcesReducer, state)
         .whenActionIsDispatched(dataSourcePluginsLoad())
-        .thenStateShouldEqual({ ...initialState, isLoadingDataSources: true });
+        .thenStateShouldEqual({ ...initialState, isLoadingDataSourcePlugins: true });
     });
   });
 
   describe('when dataSourcePluginsLoaded is dispatched', () => {
     it('then state should be correct', () => {
       const dataSourceTypes = [mockPlugin()];
-      const state: DataSourcesState = { ...initialState, isLoadingDataSources: true };
+      const state: DataSourcesState = { ...initialState, isLoadingDataSourcePlugins: true };
 
       reducerTester<DataSourcesState>()
         .givenReducer(dataSourcesReducer, state)
         .whenActionIsDispatched(dataSourcePluginsLoaded({ plugins: dataSourceTypes, categories: [] }))
-        .thenStateShouldEqual({ ...initialState, plugins: dataSourceTypes, isLoadingDataSources: false });
+        .thenStateShouldEqual({ ...initialState, plugins: dataSourceTypes, isLoadingDataSourcePlugins: false });
     });
   });
 
