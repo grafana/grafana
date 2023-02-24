@@ -7,6 +7,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 // *** Feature Tracking
 // import { reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import {
   Button,
   Card,
@@ -556,6 +557,17 @@ export const MetricEncyclopediaModal = (props: Props) => {
                       data-testid={testIds.useMetric}
                       onClick={() => {
                         onChange({ ...query, metric: metric.value });
+                        reportInteraction('grafana_prom_metric_encycopedia_tracking', {
+                          metric: metric.value,
+                          hasVariables: variables.length > 0,
+                          hasMetadata: hasMetadata,
+                          totalMetricCount: metrics.length,
+                          fuzzySearchQuery: fuzzySearchQuery,
+                          fullMetaSearch: fullMetaSearch,
+                          selectedTypes: selectedTypes,
+                          selectedFunctions: selectedFunctions,
+                          letterSearch: letterSearch,
+                        });
                         onClose();
                       }}
                     >
