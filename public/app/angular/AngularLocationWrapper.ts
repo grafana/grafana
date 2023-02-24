@@ -32,7 +32,7 @@ export class AngularLocationWrapper {
   }
 
   hash(newHash?: string | null) {
-    navigationLogger('AngularLocationWrapper', false, 'Angular compat layer: hash');
+    navigationLogger.debug('AngularLocationWrapper', false, 'Angular compat layer: hash');
 
     if (!newHash) {
       return locationService.getLocation().hash.slice(1);
@@ -46,7 +46,7 @@ export class AngularLocationWrapper {
   }
 
   path(pathname?: any) {
-    navigationLogger('AngularLocationWrapper', false, 'Angular compat layer: path');
+    navigationLogger.debug('AngularLocationWrapper', false, 'Angular compat layer: path');
 
     const location = locationService.getLocation();
 
@@ -85,7 +85,7 @@ export class AngularLocationWrapper {
   }
 
   search(search?: any, paramValue?: any) {
-    navigationLogger('AngularLocationWrapper', false, 'Angular compat layer: search');
+    navigationLogger.debug('AngularLocationWrapper', false, 'Angular compat layer: search');
     if (!search) {
       return locationService.getSearchObject();
     }
@@ -122,12 +122,12 @@ export class AngularLocationWrapper {
   }
 
   state(state?: any) {
-    navigationLogger('AngularLocationWrapper', false, 'Angular compat layer: state');
+    navigationLogger.debug('AngularLocationWrapper', false, 'Angular compat layer: state');
     throw new Error('AngularLocationWrapper method not implemented.');
   }
 
   url(newUrl?: any) {
-    navigationLogger('AngularLocationWrapper', false, 'Angular compat layer: url');
+    navigationLogger.debug('AngularLocationWrapper', false, 'Angular compat layer: url');
 
     if (newUrl !== undefined) {
       if (newUrl.startsWith('#')) {

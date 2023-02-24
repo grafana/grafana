@@ -17,7 +17,7 @@ export function interceptLinkClicks(e: MouseEvent) {
     if (href && !target) {
       const params = urlUtil.parseKeyValue(href.split('?')[1]);
       const orgIdChange = params.orgId && Number(params.orgId) !== config.bootData.user.orgId;
-      navigationLogger('utils', false, 'intercepting link click', e);
+      navigationLogger.debug('utils', false, 'intercepting link click', e);
       e.preventDefault();
 
       href = locationUtil.stripBaseFromUrl(href);

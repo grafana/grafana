@@ -1,7 +1,6 @@
 import * as H from 'history';
 
-import { deprecationWarning, UrlQueryMap, urlUtil } from '@grafana/data';
-import { attachDebugger, createLogger } from '@grafana/ui';
+import { deprecationWarning, frontendLogging, UrlQueryMap, urlUtil } from '@grafana/data';
 
 import { config } from '../config';
 
@@ -155,10 +154,5 @@ export const setLocationService = (location: LocationService) => {
   locationService = location;
 };
 
-const navigationLog = createLogger('Router');
-
 /** @internal */
-export const navigationLogger = navigationLog.logger;
-
-// For debugging purposes the location service is attached to global _debug variable
-attachDebugger('location', locationService, navigationLog);
+export const navigationLogger = frontendLogging.getLogger('navigation');

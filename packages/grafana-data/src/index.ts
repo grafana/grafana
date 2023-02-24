@@ -16,6 +16,7 @@ export * from './events';
 export * from './themes';
 export * from './monaco';
 export * from './geo/layer';
+export * from './logging';
 export {
   type ValueMatcherOptions,
   type BasicValueMatcherOptions,

@@ -2,7 +2,8 @@ import React, { Suspense, useEffect, useLayoutEffect } from 'react';
 // @ts-ignore
 import Drop from 'tether-drop';
 
-import { locationSearchToObject, navigationLogger, reportPageview } from '@grafana/runtime';
+import { frontendLogging } from '@grafana/data';
+import { locationSearchToObject, reportPageview } from '@grafana/runtime';
 import { ErrorBoundary } from '@grafana/ui';
 
 import { useGrafana } from '../context/GrafanaContext';
@@ -12,6 +13,8 @@ import { GrafanaRouteLoading } from './GrafanaRouteLoading';
 import { GrafanaRouteComponentProps, RouteDescriptor } from './types';
 
 export interface Props extends Omit<GrafanaRouteComponentProps, 'queryParams'> {}
+
+const navigationLogger = frontendLogging.getLogger('navigation');
 
 export function GrafanaRoute(props: Props) {
   const { chrome, keybindings } = useGrafana();
@@ -25,10 +28,10 @@ export function GrafanaRoute(props: Props) {
   useEffect(() => {
     updateBodyClassNames(props.route);
     cleanupDOM();
-    navigationLogger('GrafanaRoute', false, 'Mounted', props.match);
+    navigationLogger.debug('GrafanaRoute', false, 'Mounted', props.match);
 
     return () => {
-      navigationLogger('GrafanaRoute', false, 'Unmounted', props.route);
+      navigationLogger.debug('GrafanaRoute', false, 'Unmounted', props.route);
       updateBodyClassNames(props.route, true);
     };
     // props.match instance change even though only query params changed so to make this effect only trigger on route mount we have to disable exhaustive-deps
@@ -38,10 +41,10 @@ export function GrafanaRoute(props: Props) {
   useEffect(() => {
     cleanupDOM();
     reportPageview();
-    navigationLogger('GrafanaRoute', false, 'Updated', props);
+    navigationLogger.debug('GrafanaRoute', false, 'Updated', props);
   });
 
-  navigationLogger('GrafanaRoute', false, 'Rendered', props.route);
+  navigationLogger.debug('GrafanaRoute', false, 'Rendered', props.route);
 
   return (
     <ErrorBoundary>

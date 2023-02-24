@@ -10,6 +10,7 @@ import {
   DashboardCursorSync,
   EventFilterOptions,
   FieldConfigSource,
+  frontendLogging,
   getDataSourceRef,
   getDefaultTimeRange,
   LinkModel,
@@ -60,6 +61,7 @@ import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
 import { liveTimer } from './liveTimer';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
+const panelLogger = frontendLogging.getLogger('dashboard/panel');
 
 export interface Props {
   panel: PanelModel;
@@ -317,6 +319,8 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         }
         break;
     }
+
+    panelLogger.debug('onDataUpdate', this.props.panel.id, 'data', data);
 
     this.setState({ isFirstLoad, errorMessage, data, liveTime: undefined });
   }
@@ -623,6 +627,10 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     const { dashboard, panel, isViewing, isEditing, width, height, plugin } = this.props;
     const { errorMessage, data } = this.state;
     const { transparent } = panel;
+
+    if (panelLogger.isDebugEnabled()) {
+      panelLogger.debug('Rendering panel', this.props.panel.id, 'state', this.state);
+    }
 
     const alertState = data.alertState?.state;
 

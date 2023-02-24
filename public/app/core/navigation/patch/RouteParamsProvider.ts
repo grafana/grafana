@@ -5,7 +5,7 @@ import { navigationLogger } from '@grafana/runtime';
 
 export class RouteParamsProvider {
   constructor() {
-    navigationLogger('Patch angular', false, 'RouteParamsProvider');
+    navigationLogger.debug('Patch angular', false, 'RouteParamsProvider');
   }
   $get = () => {
     // throw new Error('TODO: Refactor $routeParams');

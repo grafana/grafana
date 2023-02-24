@@ -17,6 +17,7 @@ import {
   systemDateFormats,
   SystemDateFormatSettings,
   NewThemeOptions,
+  frontendLogging,
 } from '@grafana/data';
 
 export interface AzureSettings {
@@ -251,6 +252,8 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
     }
   });
 }
+
+(window as any).grafanaLogging = frontendLogging;
 
 const bootData = (window as any).grafanaBootData || {
   settings: {},
