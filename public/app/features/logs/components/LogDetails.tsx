@@ -71,7 +71,8 @@ class UnThemedLogDetails extends PureComponent<Props> {
     const labelsAvailable = Object.keys(labels).length > 0;
     const fieldsAndLinks = getAllFields(row, getFieldLinks);
     const links = fieldsAndLinks.filter((f) => f.links?.length).sort();
-    const fields = fieldsAndLinks.filter((f) => f.links?.length === 0).sort();
+    // do not show the log message unless there is a link attached
+    const fields = fieldsAndLinks.filter((f) => f.links?.length === 0 && f.fieldIndex !== row.entryFieldIndex).sort();
     const fieldsAvailable = fields && fields.length > 0;
     const linksAvailable = links && links.length > 0;
 

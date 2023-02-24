@@ -1,4 +1,3 @@
-import { property } from 'lodash';
 import React from 'react';
 
 import {
@@ -25,7 +24,6 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
 import { LokiQuery } from '../../../plugins/datasource/loki/types';
-import { variableRegex } from '../../variables/utils';
 import { getFieldLinksForExplore } from '../utils/links';
 
 import { SpanLinkFunc, Trace, TraceSpan } from './components';
