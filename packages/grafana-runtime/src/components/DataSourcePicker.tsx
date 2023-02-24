@@ -1,7 +1,10 @@
 // Libraries
-import React, { PureComponent } from 'react';
+// eslint-disable-next-line import/order
+import React, { PureComponent, ReactNode } from 'react';
 
 // Components
+import { DropzoneOptions } from 'react-dropzone';
+
 import {
   DataSourceInstanceSettings,
   DataSourceRef,
@@ -10,7 +13,8 @@ import {
   SelectableValue,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { ActionMeta, HorizontalGroup, PluginSignatureBadge, Select } from '@grafana/ui';
+import { DataSourceJsonData } from '@grafana/schema';
+import { ActionMeta, HorizontalGroup, PluginSignatureBadge, Select, DatasourceSelect } from '@grafana/ui';
 
 import { getDataSourceSrv } from '../services/dataSourceSrv';
 
@@ -22,6 +26,7 @@ import { ExpressionDatasourceRef } from './../utils/DataSourceWithBackend';
  * @internal
  */
 export interface DataSourcePickerProps {
+  drawer?: boolean;
   onChange: (ds: DataSourceInstanceSettings) => void;
   current: DataSourceRef | string | null; // uid
   hideTextValue?: boolean;
@@ -49,6 +54,8 @@ export interface DataSourcePickerProps {
   invalid?: boolean;
   disabled?: boolean;
   isLoading?: boolean;
+  fileUploadOptions?: DropzoneOptions;
+  children?: JSX.Element | ReactNode;
 }
 
 /**
@@ -89,19 +96,36 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
     }
   }
 
-  onChange = (item: SelectableValue<string>, actionMeta: ActionMeta) => {
-    if (actionMeta.action === 'clear' && this.props.onClear) {
-      this.props.onClear();
-      return;
-    }
-
-    const dsSettings = this.dataSourceSrv.getInstanceSettings(item.value);
+  onChange = (ds?: string) => {
+    const dsSettings = this.dataSourceSrv.getInstanceSettings(ds);
 
     if (dsSettings) {
       this.props.onChange(dsSettings);
       this.setState({ error: undefined });
     }
   };
+
+  onPickerChange = (item: SelectableValue<string>, actionMeta: ActionMeta) => {
+    if (actionMeta.action === 'clear' && this.props.onClear) {
+      this.props.onClear();
+      return;
+    }
+    this.onChange(item.value);
+  };
+
+  private getCurrentDs(): DataSourceInstanceSettings<DataSourceJsonData> | string | DataSourceRef | null | undefined {
+    const { current, noDefault } = this.props;
+    if (!current && noDefault) {
+      return;
+    }
+
+    const ds = this.dataSourceSrv.getInstanceSettings(current);
+    if (ds) {
+      return ds;
+    }
+
+    return getDataSourceUID(current);
+  }
 
   private getCurrentValue(): SelectableValue<string> | undefined {
     const { current, hideTextValue, noDefault } = this.props;
@@ -135,32 +159,32 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
     };
   }
 
-  getDataSourceOptions() {
+  getDatasources() {
     const { alerting, tracing, metrics, mixed, dashboard, variables, annotations, pluginId, type, filter, logs } =
       this.props;
 
-    const options = this.dataSourceSrv
-      .getList({
-        alerting,
-        tracing,
-        metrics,
-        logs,
-        dashboard,
-        mixed,
-        variables,
-        annotations,
-        pluginId,
-        filter,
-        type,
-      })
-      .map((ds) => ({
-        value: ds.name,
-        label: `${ds.name}${ds.isDefault ? ' (default)' : ''}`,
-        imgUrl: ds.meta.info.logos.small,
-        meta: ds.meta,
-      }));
+    return this.dataSourceSrv.getList({
+      alerting,
+      tracing,
+      metrics,
+      logs,
+      dashboard,
+      mixed,
+      variables,
+      annotations,
+      pluginId,
+      filter,
+      type,
+    });
+  }
 
-    return options;
+  getDataSourceOptions() {
+    return this.getDatasources().map((ds) => ({
+      value: ds.name,
+      label: `${ds.name}${ds.isDefault ? ' (default)' : ''}`,
+      imgUrl: ds.meta.info.logos.small,
+      meta: ds.meta,
+    }));
   }
 
   render() {
@@ -174,6 +198,8 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
       inputId,
       disabled = false,
       isLoading = false,
+      children,
+      drawer,
     } = this.props;
     const { error } = this.state;
     const options = this.getDataSourceOptions();
@@ -182,37 +208,48 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
 
     return (
       <div aria-label={selectors.components.DataSourcePicker.container}>
-        <Select
-          isLoading={isLoading}
-          disabled={disabled}
-          aria-label={selectors.components.DataSourcePicker.inputV2}
-          inputId={inputId || 'data-source-picker'}
-          className="ds-picker select-container"
-          isMulti={false}
-          isClearable={isClearable}
-          backspaceRemovesValue={false}
-          onChange={this.onChange}
-          options={options}
-          autoFocus={autoFocus}
-          onBlur={onBlur}
-          width={width}
-          openMenuOnFocus={openMenuOnFocus}
-          maxMenuHeight={500}
-          placeholder={placeholder}
-          noOptionsMessage="No datasources found"
-          value={value ?? null}
-          invalid={Boolean(error) || Boolean(this.props.invalid)}
-          getOptionLabel={(o) => {
-            if (o.meta && isUnsignedPluginSignature(o.meta.signature) && o !== value) {
-              return (
-                <HorizontalGroup align="center" justify="space-between" height="auto">
-                  <span>{o.label}</span> <PluginSignatureBadge status={o.meta.signature} />
-                </HorizontalGroup>
-              );
-            }
-            return o.label || '';
-          }}
-        />
+        {drawer ? (
+          <DatasourceSelect
+            datasources={this.getDatasources()}
+            onChange={this.onChange}
+            current={this.getCurrentDs()}
+            fileUploadOptions={this.props.fileUploadOptions}
+          >
+            {children}
+          </DatasourceSelect>
+        ) : (
+          <Select
+            isLoading={isLoading}
+            disabled={disabled}
+            aria-label={selectors.components.DataSourcePicker.inputV2}
+            inputId={inputId || 'data-source-picker'}
+            className="ds-picker select-container"
+            isMulti={false}
+            isClearable={isClearable}
+            backspaceRemovesValue={false}
+            onChange={this.onPickerChange}
+            options={options}
+            autoFocus={autoFocus}
+            onBlur={onBlur}
+            width={width}
+            openMenuOnFocus={openMenuOnFocus}
+            maxMenuHeight={500}
+            placeholder={placeholder}
+            noOptionsMessage="No datasources found"
+            value={value ?? null}
+            invalid={Boolean(error) || Boolean(this.props.invalid)}
+            getOptionLabel={(o) => {
+              if (o.meta && isUnsignedPluginSignature(o.meta.signature) && o !== value) {
+                return (
+                  <HorizontalGroup align="center" justify="space-between" height="auto">
+                    <span>{o.label}</span> <PluginSignatureBadge status={o.meta.signature} />
+                  </HorizontalGroup>
+                );
+              }
+              return o.label || '';
+            }}
+          />
+        )}
       </div>
     );
   }
