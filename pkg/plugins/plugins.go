@@ -433,10 +433,6 @@ func (p *Plugin) IsBundledPlugin() bool {
 	return p.Class == Bundled
 }
 
-func (p *Plugin) IsCDNPlugin() bool {
-	return p.Class == CDN
-}
-
 func (p *Plugin) IsExternalPlugin() bool {
 	return p.Class == External
 }
@@ -447,7 +443,6 @@ const (
 	Core     Class = "core"
 	Bundled  Class = "bundled"
 	External Class = "external"
-	CDN      Class = "cdn"
 )
 
 var PluginTypes = []Type{

@@ -28,7 +28,7 @@ func (s *Service) Base(pluginJSON plugins.JSONData, class plugins.Class, pluginD
 		return path.Join("public/app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir)), nil
 	}
 	if s.cdn.PluginSupported(pluginJSON.ID) {
-		return s.cdn.SystemJSAssetPath(pluginJSON.ID, "")
+		return s.cdn.SystemJSAssetPath(pluginJSON.ID, pluginJSON.Info.Version, "")
 	}
 	return path.Join("public/plugins", pluginJSON.ID), nil
 }
@@ -39,7 +39,7 @@ func (s *Service) Module(pluginJSON plugins.JSONData, class plugins.Class, plugi
 		return path.Join("app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir), "module"), nil
 	}
 	if s.cdn.PluginSupported(pluginJSON.ID) {
-		return s.cdn.SystemJSAssetPath(pluginJSON.ID, "module")
+		return s.cdn.SystemJSAssetPath(pluginJSON.ID, pluginJSON.Info.Version, "module")
 	}
 	return path.Join("plugins", pluginJSON.ID, "module"), nil
 }

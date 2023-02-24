@@ -44,8 +44,7 @@ func (s *Service) IsEnabled() bool {
 
 // PluginSupported returns true if the CDN is enabled in the config and if the specified plugin ID has CDN enabled.
 func (s *Service) PluginSupported(pluginID string) bool {
-	return s.IsEnabled() &&
-		s.cfg.PluginSettings[pluginID]["cdn_enabled"] != "" && s.cfg.PluginSettings[pluginID]["cdn_version"] != ""
+	return s.IsEnabled() && s.cfg.PluginSettings[pluginID]["cdn"] != ""
 }
 
 // BaseURL returns the absolute base URL of the plugins CDN.
@@ -61,11 +60,11 @@ func (s *Service) BaseURL() (string, error) {
 // SystemJSAssetPath returns a system-js path for the specified asset on the plugins CDN.
 // The returned path will follow the template specified in systemJSCDNURLTemplate.
 // If assetPath is an empty string, the base path for the plugin is returned.
-func (s *Service) SystemJSAssetPath(pluginID, assetPath string) (string, error) {
+func (s *Service) SystemJSAssetPath(pluginID, pluginVersion, assetPath string) (string, error) {
 	u, err := URLConstructor{
 		cdnURLTemplate: systemJSCDNURLTemplate,
 		pluginID:       pluginID,
-		pluginVersion:  s.cfg.PluginSettings[pluginID]["cdn_version"],
+		pluginVersion:  pluginVersion,
 	}.Path(assetPath)
 	if err != nil {
 		return "", err
@@ -75,9 +74,9 @@ func (s *Service) SystemJSAssetPath(pluginID, assetPath string) (string, error) 
 
 // AssetURL returns the URL of a CDN asset for a CDN plugin. If the specified plugin is not a CDN plugin,
 // it returns ErrPluginNotCDN.
-func (s *Service) AssetURL(pluginID, assetPath string) (string, error) {
+func (s *Service) AssetURL(pluginID, pluginVersion, assetPath string) (string, error) {
 	if !s.PluginSupported(pluginID) {
 		return "", ErrPluginNotCDN
 	}
-	return s.NewCDNURLConstructor(pluginID, s.cfg.PluginSettings[pluginID]["cdn_version"]).StringPath(assetPath)
+	return s.NewCDNURLConstructor(pluginID, pluginVersion).StringPath(assetPath)
 }

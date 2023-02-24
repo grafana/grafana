@@ -157,9 +157,6 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, found []*
 					l.log.Warn("Plugin missing module.js", "pluginID", plugin.ID,
 						"warning", "Missing module.js, If you loaded this plugin from git, make sure to compile it.")
 				}
-				if errors.Is(err, plugins.ErrPluginFileRead) {
-					l.log.Warn("Could not verify module.js", "pluginID", plugin.ID)
-				}
 			}
 		}
 

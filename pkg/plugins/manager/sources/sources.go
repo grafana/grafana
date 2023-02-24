@@ -32,7 +32,6 @@ func (s *Service) List(_ context.Context) []plugins.PluginSource {
 		{Class: plugins.Core, Paths: corePluginPaths(s.gCfg.StaticRootPath)},
 		{Class: plugins.Bundled, Paths: []string{s.gCfg.BundledPluginsPath}},
 		{Class: plugins.External, Paths: append([]string{s.cfg.PluginsPath}, pluginFSPaths(s.cfg.PluginSettings)...)},
-		{Class: plugins.CDN, Paths: s.pluginCDNURLs(s.cfg.PluginSettings)},
 	}
 }
 
@@ -54,25 +53,4 @@ func pluginFSPaths(ps map[string]map[string]string) []string {
 		pluginSettingDirs = append(pluginSettingDirs, path)
 	}
 	return pluginSettingDirs
-}
-
-// pluginCDNURLs provides a list of URLs for plugins that are marked as CDN enabled via the config
-func (s *Service) pluginCDNURLs(ps map[string]map[string]string) []string {
-	if !s.cdnService.IsEnabled() {
-		return []string{}
-	}
-
-	var pluginCDNURLs []string
-	for pluginID := range ps {
-		if !s.cdnService.PluginSupported(pluginID) {
-			continue
-		}
-		u, err := s.cdnService.AssetURL(pluginID, "") // base CDN URL
-		if err != nil {
-			s.log.Warn("....")
-			continue
-		}
-		pluginCDNURLs = append(pluginCDNURLs, u)
-	}
-	return pluginCDNURLs
 }

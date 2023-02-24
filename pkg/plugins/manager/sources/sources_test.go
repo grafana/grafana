@@ -36,7 +36,6 @@ func TestSources_List(t *testing.T) {
 			{Class: plugins.Core, Paths: []string{"app/plugins/datasource", "app/plugins/panel"}},
 			{Class: plugins.Bundled, Paths: []string{"path1"}},
 			{Class: plugins.External, Paths: []string{"path2", "path3"}},
-			{Class: plugins.CDN, Paths: []string{"https://grafana.plugin"}},
 		}
 		require.Equal(t, expected, srcs)
 	})

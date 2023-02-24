@@ -394,7 +394,7 @@ func (hs *HTTPServer) serveLocalPluginAsset(c *contextmodel.ReqContext, plugin p
 
 // redirectCDNPluginAsset redirects the http request to specified asset path on the configured plugins CDN.
 func (hs *HTTPServer) redirectCDNPluginAsset(c *contextmodel.ReqContext, plugin plugins.PluginDTO, assetPath string) {
-	remoteURL, err := hs.pluginsCDNService.AssetURL(plugin.ID, assetPath)
+	remoteURL, err := hs.pluginsCDNService.AssetURL(plugin.ID, plugin.Info.Version, assetPath)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to get CDN plugin asset remote URL", err)
 		return

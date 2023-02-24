@@ -105,12 +105,6 @@ func Calculate(mlog log.Logger, class plugins.Class, plugin plugins.FoundPlugin)
 		}, nil
 	}
 
-	if class == plugins.CDN {
-		return plugins.Signature{
-			Status: plugins.SignatureValid,
-		}, nil
-	}
-
 	if len(plugin.FS.Files()) == 0 {
 		mlog.Warn("No plugin file information in directory", "pluginID", plugin.JSONData.ID)
 		return plugins.Signature{
