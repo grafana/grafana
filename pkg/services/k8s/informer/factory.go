@@ -18,6 +18,12 @@ import (
 var _ registry.BackgroundService = (*Factory)(nil)
 var _ registry.CanBeDisabled = (*Factory)(nil)
 
+type ResourceWatcher interface {
+	Add(context.Context, any) error
+	Update(ctx context.Context, old, new any) error
+	Delete(context.Context, any) error
+}
+
 type Factory struct {
 	dynamicinformer.DynamicSharedInformerFactory
 
