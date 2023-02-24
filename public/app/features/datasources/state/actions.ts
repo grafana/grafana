@@ -200,6 +200,9 @@ export function addDataSource(
   editRoute = DATASOURCES_ROUTES.Edit
 ): ThunkResult<Promise<void>> {
   return async (dispatch, getStore) => {
+    // update the list of datasources first.
+    // We later use this list to check whether the name of the datasource
+    // being created is unuque or not and assign a new name to it if needed.
     const response = await api.getDataSources();
     dispatch(dataSourcesLoaded(response));
 
