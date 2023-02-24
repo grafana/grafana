@@ -8,9 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
-	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
-
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
@@ -27,9 +24,11 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/store"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/searchV2"
@@ -85,7 +84,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 		Azure:                  &azsettings.AzureSettings{},
 		IsFeatureToggleEnabled: func(_ string) bool { return false },
 	}
-	
+
 	cfg.Raw.Section("tracing.opentelemetry")
 	cfg.Raw.Section("tracing.opentelemetry.jaeger")
 	cfg.Raw.Section("tracing.opentelemetry.otlp")
