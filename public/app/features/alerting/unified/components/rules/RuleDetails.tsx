@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { CombinedRule } from 'app/types/unified-alerting';
 
+import { useCleanAnnotations } from '../../utils/annotations';
 import { isRecordingRulerRule } from '../../utils/rules';
 import { AlertLabels } from '../AlertLabels';
 import { DetailsField } from '../DetailsField';
@@ -30,7 +31,7 @@ export const RuleDetails: FC<Props> = ({ rule }) => {
     namespace: { rulesSource },
   } = rule;
 
-  const annotations = Object.entries(rule.annotations).filter(([_, value]) => !!value.trim());
+  const annotations = useCleanAnnotations(rule.annotations);
 
   return (
     <div>
