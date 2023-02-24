@@ -7,6 +7,7 @@ import (
 )
 
 type Historian struct {
+	Info              *prometheus.GaugeVec
 	TransitionsTotal  *prometheus.CounterVec
 	TransitionsFailed *prometheus.CounterVec
 	WritesTotal       *prometheus.CounterVec
@@ -16,6 +17,12 @@ type Historian struct {
 
 func NewHistorianMetrics(r prometheus.Registerer) *Historian {
 	return &Historian{
+		Info: promauto.With(r).NewGaugeVec(prometheus.GaugeOpts{
+			Namespace: Namespace,
+			Subsystem: Subsystem,
+			Name:      "state_history_info",
+			Help:      "Metadata about the state history backend.",
+		}, []string{"backend"}),
 		TransitionsTotal: promauto.With(r).NewCounterVec(prometheus.CounterOpts{
 			Namespace: Namespace,
 			Subsystem: Subsystem,
