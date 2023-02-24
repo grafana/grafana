@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -172,6 +173,62 @@ func TestInitializer_envVars(t *testing.T) {
 		assert.Equal(t, "GF_ENTERPRISE_LICENSE_PATH=/path/to/ent/license", envVars[3])
 		assert.Equal(t, "GF_ENTERPRISE_LICENSE_TEXT=token", envVars[4])
 	})
+}
+
+func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
+	p := &plugins.Plugin{}
+
+	for _, tc := range []struct {
+		name    string
+		otelCfg tracing.OpentelemetryCfg
+		exp     func(t *testing.T, envVars []string)
+	}{
+		{
+			name:    "disabled",
+			otelCfg: tracing.OpentelemetryCfg{},
+			exp: func(t *testing.T, envVars []string) {
+				assert.Len(t, envVars, 1)
+				assert.Equal(t, "GF_VERSION=", envVars[0])
+			},
+		},
+		{
+			name: "otlp no propagation",
+			otelCfg: tracing.OpentelemetryCfg{
+				Address:     "127.0.0.1:4317",
+				Propagation: "",
+			},
+			exp: func(t *testing.T, envVars []string) {
+				assert.Len(t, envVars, 3)
+				assert.Equal(t, "GF_VERSION=", envVars[0])
+				assert.Equal(t, "GF_TRACING_OPENTELEMETRY_OTLP_ADDRESS=127.0.0.1:4317", envVars[1])
+				assert.Equal(t, "GF_TRACING_OPENTELEMETRY_OTLP_PROPAGATION=", envVars[2])
+			},
+		},
+		{
+			name: "otlp propagation",
+			otelCfg: tracing.OpentelemetryCfg{
+				Address:     "127.0.0.1:4317",
+				Propagation: "w3c",
+			},
+			exp: func(t *testing.T, envVars []string) {
+				assert.Len(t, envVars, 3)
+				assert.Equal(t, "GF_VERSION=", envVars[0])
+				assert.Equal(t, "GF_TRACING_OPENTELEMETRY_OTLP_ADDRESS=127.0.0.1:4317", envVars[1])
+				assert.Equal(t, "GF_TRACING_OPENTELEMETRY_OTLP_PROPAGATION=w3c", envVars[2])
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			i := &Initializer{
+				cfg: &config.Cfg{
+					Opentelemetry: tc.otelCfg,
+				},
+				log: log.NewNopLogger(),
+			}
+			envVars := i.envVars(p)
+			tc.exp(t, envVars)
+		})
+	}
 }
 
 func TestInitializer_getAWSEnvironmentVariables(t *testing.T) {

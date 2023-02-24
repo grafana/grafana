@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
@@ -63,7 +62,17 @@ func (i *Initializer) envVars(plugin *plugins.Plugin) []string {
 
 	hostEnv = append(hostEnv, i.awsEnvVars()...)
 	hostEnv = append(hostEnv, azsettings.WriteToEnvStr(i.cfg.Azure)...)
-	return getPluginSettings(plugin.ID, i.cfg).asEnvVar("GF_PLUGIN", hostEnv)
+
+	if i.cfg.Opentelemetry.IsEnabled() {
+		hostEnv = append(
+			hostEnv,
+			fmt.Sprintf("GF_TRACING_OPENTELEMETRY_OTLP_ADDRESS=%s", i.cfg.Opentelemetry.Address),
+			fmt.Sprintf("GF_TRACING_OPENTELEMETRY_OTLP_PROPAGATION=%s", i.cfg.Opentelemetry.Propagation),
+		)
+	}
+
+	ev := getPluginSettings(plugin.ID, i.cfg).asEnvVar("GF_PLUGIN", hostEnv)
+	return ev
 }
 
 func (i *Initializer) awsEnvVars() []string {
