@@ -56,9 +56,7 @@ export const getTraceName = memoize(_getTraceNameImpl, (spans: TraceSpan[]) => {
   return spans[0].traceID;
 });
 
-export function findSpanWithHeaderTags(spans: TraceSpan[]) {
-  let spanWithHeaderTags: TraceSpan | undefined;
-
+export function findHeaderTags(spans: TraceSpan[]) {
   for (let i = 0; i < spans.length; i++) {
     const method = spans[i].tags.filter((tag) => {
       return tag.key === 'http.method';
@@ -69,18 +67,17 @@ export function findSpanWithHeaderTags(spans: TraceSpan[]) {
     });
 
     const url = spans[i].tags.filter((tag) => {
-      return tag.key === 'http.url' || tag.key === 'http.target';
+      return tag.key === 'http.url' || tag.key === 'http.target' || tag.key === 'http.path';
     });
 
     if (method.length > 0 || status.length > 0 || url.length > 0) {
-      spanWithHeaderTags = spans[i];
-      break;
+      return { method, status, url };
     }
   }
-  return spanWithHeaderTags;
+  return {};
 }
 
-export const getSpanWithHeaderTags = memoize(findSpanWithHeaderTags, (spans: TraceSpan[]) => {
+export const getHeaderTags = memoize(findHeaderTags, (spans: TraceSpan[]) => {
   if (!spans.length) {
     return 0;
   }

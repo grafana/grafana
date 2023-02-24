@@ -22,7 +22,7 @@ import { Badge, BadgeColor, Tooltip, useStyles2 } from '@grafana/ui';
 import ExternalLinks from '../common/ExternalLinks';
 import TraceName from '../common/TraceName';
 import { getTraceLinks } from '../model/link-patterns';
-import { getSpanWithHeaderTags, getTraceName } from '../model/trace-viewer';
+import { getHeaderTags, getTraceName } from '../model/trace-viewer';
 import { formatDuration } from '../utils/date';
 
 import SpanGraph from './SpanGraph';
@@ -67,7 +67,7 @@ export function NewTracePageHeader(props: TracePageHeaderEmbedProps) {
     return null;
   }
 
-  const spanWithHeaderTags = getSpanWithHeaderTags(trace.spans);
+  const { method, status, url } = getHeaderTags(trace.spans);
 
   const title = (
     <h1 className={cx(styles.TracePageHeaderTitle)}>
@@ -79,26 +79,14 @@ export function NewTracePageHeader(props: TracePageHeaderEmbedProps) {
     </h1>
   );
 
-  const method = spanWithHeaderTags?.tags.filter((tag) => {
-    return tag.key === 'http.method';
-  });
-
-  const status = spanWithHeaderTags?.tags.filter((tag) => {
-    return tag.key === 'http.status_code';
-  });
-
-  let statusColor: BadgeColor = 'orange';
+  let statusColor: BadgeColor = 'green';
   if (status && status.length > 0 && Number.isInteger(status[0].value)) {
-    if (status[0].value.toString().charAt(0) === '2') {
-      statusColor = 'green';
-    } else if (status[0].value.toString().charAt(0) === '4') {
+    if (status[0].value.toString().charAt(0) === '4') {
+      statusColor = 'orange';
+    } else if (status[0].value.toString().charAt(0) === '5') {
       statusColor = 'red';
     }
   }
-
-  const url = spanWithHeaderTags?.tags.filter((tag) => {
-    return tag.key === 'http.url' || tag.key === 'http.target';
-  });
 
   return (
     <header className={styles.TracePageHeader}>
@@ -109,7 +97,7 @@ export function NewTracePageHeader(props: TracePageHeaderEmbedProps) {
 
       <div className={styles.subtitle}>
         {timestamp(trace, timeZone, styles)}
-        <span className={styles.divider}>|</span>
+        {method || status || url ? <span className={styles.divider}>|</span> : undefined}
         {method && method.length > 0 && (
           <span className={styles.tag}>
             <Badge text={method[0].value} color="blue" />

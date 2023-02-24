@@ -14,7 +14,7 @@
 
 import { TraceSpan } from '../types';
 
-import { getSpanWithHeaderTags, _getTraceNameImpl as getTraceName } from './trace-viewer';
+import { getHeaderTags, _getTraceNameImpl as getTraceName } from './trace-viewer';
 
 describe('getTraceName', () => {
   const firstSpanId = 'firstSpanId';
@@ -289,16 +289,20 @@ describe('getTraceName', () => {
   });
 
   it('returns span with header tags', () => {
-    expect(getSpanWithHeaderTags(spansWithHeaderTags as unknown as TraceSpan[])).toEqual({
-      spanID: 'secondSpanId',
-      traceID: 'currentTraceId',
-      startTime: 1583758670100,
-      process: {},
-      references: [],
-      tags: [
-        { key: 'http.method', value: 'POST' },
-        { key: 'http.status_code', value: '200' },
+    expect(getHeaderTags(spansWithHeaderTags as unknown as TraceSpan[])).toEqual({
+      method: [
+        {
+          key: 'http.method',
+          value: 'POST',
+        },
       ],
+      status: [
+        {
+          key: 'http.status_code',
+          value: '200',
+        },
+      ],
+      url: [],
     });
   });
 });
