@@ -1,5 +1,4 @@
 import { locationUtil, NavModelItem } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
 import { t } from 'app/core/internationalization';
 import { changeTheme } from 'app/core/services/theme';
 
@@ -74,17 +73,6 @@ export default (navBarTree: NavModelItem[]): CommandPaletteAction[] => {
       priority: PREFERENCES_PRIORITY,
     },
   ];
-
-  if (!config.featureToggles.topNavCommandPalette) {
-    globalActions.unshift({
-      id: 'go/search',
-      name: t('command-palette.action.search', 'Search'),
-      keywords: 'navigate',
-      perform: () => locationService.push('?search=open'),
-      section: t('command-palette.section.pages', 'Pages'),
-      priority: DEFAULT_PRIORITY,
-    });
-  }
 
   const navBarActions = navTreeToActions(navBarTree);
 
