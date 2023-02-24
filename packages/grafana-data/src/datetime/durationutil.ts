@@ -1,4 +1,4 @@
-import { Duration, Interval } from 'date-fns';
+import { Duration, Interval, isAfter } from 'date-fns';
 import add from 'date-fns/add';
 import intervalToDuration from 'date-fns/intervalToDuration';
 
