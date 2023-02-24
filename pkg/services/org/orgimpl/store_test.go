@@ -415,6 +415,10 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 
 	t.Run("Given single org and 2 users inserted", func(t *testing.T) {
 		ss = db.InitTestDB(t)
+		ss.Cfg.AutoAssignOrg = true
+		ss.Cfg.AutoAssignOrgId = 1
+		ss.Cfg.AutoAssignOrgRole = "Viewer"
+
 		_, usrSvc := createOrgAndUserSvc(t, ss, ss.Cfg)
 
 		testUser := &user.SignedInUser{
@@ -422,17 +426,17 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 				1: {accesscontrol.ActionOrgUsersRead: []string{accesscontrol.ScopeUsersAll}},
 			},
 		}
-		ss.Cfg.AutoAssignOrg = true
-		ss.Cfg.AutoAssignOrgId = 1
-		ss.Cfg.AutoAssignOrgRole = "Viewer"
 
 		ac1cmd := &user.CreateUserCommand{Login: "ac1", Email: "ac1@test.com", Name: "ac1 name"}
 		ac2cmd := &user.CreateUserCommand{Login: "ac2", Email: "ac2@test.com", Name: "ac2 name"}
 
 		ac1, err := usrSvc.CreateUserForTests(context.Background(), ac1cmd)
 		testUser.OrgID = ac1.OrgID
+		require.Equal(t, int64(1), ac1.OrgID)
 		require.NoError(t, err)
-		_, err = usrSvc.Create(context.Background(), ac2cmd)
+
+		ac2, err := usrSvc.Create(context.Background(), ac2cmd)
+		require.Equal(t, int64(1), ac2.OrgID)
 		require.NoError(t, err)
 
 		t.Run("Can get organization users paginated with query", func(t *testing.T) {
