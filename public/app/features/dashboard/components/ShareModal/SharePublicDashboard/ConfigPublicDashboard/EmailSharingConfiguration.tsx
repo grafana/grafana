@@ -79,7 +79,7 @@ export const EmailSharingConfiguration = () => {
 
   const onSubmit = async (data: EmailSharingConfigurationForm) => {
     await addEmail({ recipient: data.email, uid: publicDashboard!.uid, dashboardUid: dashboard.uid }).unwrap();
-    reset();
+    reset({ email: '', shareType: PublicDashboardShareType.EMAIL });
   };
 
   return (
@@ -107,7 +107,7 @@ export const EmailSharingConfiguration = () => {
         <>
           <Field
             label="Invite"
-            description="Invite people by email separated by comma "
+            description="Invite people by email separated by comma"
             error={errors.email?.message}
             invalid={!!errors.email?.message || undefined}
           >
@@ -173,7 +173,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   emailContainer: css`
     display: flex;
-    flex-direction: row;
     gap: ${theme.spacing(1)};
   `,
   emailInput: css`
