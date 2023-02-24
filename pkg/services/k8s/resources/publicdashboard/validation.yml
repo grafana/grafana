@@ -1,0 +1,17 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: "validation.publicdashboard.core.grafana.com"
+webhooks:
+- name: "validation.publicdashboard.core.grafana.com"
+  rules:
+  - apiGroups:   ["publicdashboard.core.grafana.com"]
+    apiVersions: ["*"]
+    operations:  ["CREATE"]
+    resources:   ["publicdashboards.publicdashboard.core.grafana.com"]
+    scope:       "Namespaced"
+  clientConfig:
+    url: "http://localhost:3000/my-webhook-path"
+  admissionReviewVersions: ["*"]
+  sideEffects: None
+  timeoutSeconds: 5
