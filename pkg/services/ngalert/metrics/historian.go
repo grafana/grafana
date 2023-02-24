@@ -7,12 +7,11 @@ import (
 )
 
 type Historian struct {
-	TransitionsTotal      *prometheus.CounterVec
-	TransitionsFailed     *prometheus.CounterVec
-	WritesTotal           prometheus.Counter
-	WritesFailed          prometheus.Counter
-	ActiveWriteGoroutines prometheus.Gauge
-	WriteDuration         *instrument.HistogramCollector
+	TransitionsTotal  *prometheus.CounterVec
+	TransitionsFailed *prometheus.CounterVec
+	WritesTotal       prometheus.Counter
+	WritesFailed      prometheus.Counter
+	WriteDuration     *instrument.HistogramCollector
 }
 
 func NewHistorianMetrics(r prometheus.Registerer) *Historian {
