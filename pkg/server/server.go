@@ -9,9 +9,6 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/grafana/grafana/pkg/server/backgroundsvcs"
-
-	"github.com/grafana/grafana/pkg/api"
 	_ "github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -30,9 +27,8 @@ type Options struct {
 }
 
 // New returns a new instance of Server.
-func New(opts Options, cfg *setting.Cfg, moduleService *modules.Modules, httpServer *api.HTTPServer,
-	backgroundServiceRegistry *backgroundsvcs.BackgroundServiceRegistry) (*Server, error) {
-	s := newServer(opts, cfg, moduleService, backgroundServiceRegistry, httpServer)
+func New(opts Options, cfg *setting.Cfg, moduleService *modules.Modules) (*Server, error) {
+	s := newServer(opts, cfg, moduleService)
 
 	if err := s.init(context.Background()); err != nil {
 		return nil, err
@@ -41,16 +37,13 @@ func New(opts Options, cfg *setting.Cfg, moduleService *modules.Modules, httpSer
 	return s, nil
 }
 
-func newServer(opts Options, cfg *setting.Cfg, modulesEngine modules.Engine,
-	backgroundServiceRegistry *backgroundsvcs.BackgroundServiceRegistry, httpServer *api.HTTPServer) *Server {
+func newServer(opts Options, cfg *setting.Cfg, modulesEngine modules.Engine) *Server {
 	return &Server{
-		log:                       log.New("server"),
-		cfg:                       cfg,
-		shutdownFinished:          make(chan struct{}),
-		pidFile:                   opts.PidFile,
-		modulesEngine:             modulesEngine,
-		httpServer:                httpServer,
-		backgroundServiceRegistry: backgroundServiceRegistry,
+		log:              log.New("server"),
+		cfg:              cfg,
+		shutdownFinished: make(chan struct{}),
+		pidFile:          opts.PidFile,
+		modulesEngine:    modulesEngine,
 	}
 }
 
@@ -64,9 +57,6 @@ type Server struct {
 	mtx              sync.Mutex
 	pidFile          string
 	shutdownFinished chan struct{}
-
-	httpServer                *api.HTTPServer
-	backgroundServiceRegistry *backgroundsvcs.BackgroundServiceRegistry
 }
 
 // init initializes the server and its services.

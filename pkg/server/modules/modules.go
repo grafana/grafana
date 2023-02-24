@@ -7,7 +7,11 @@ import (
 	"github.com/grafana/dskit/modules"
 	"github.com/grafana/dskit/services"
 
+	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins/pluginmod"
+	"github.com/grafana/grafana/pkg/server/backgroundsvcs"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -24,14 +28,16 @@ const (
 )
 
 type Modules struct {
-	targets []string
-	cfg     *setting.Cfg
-	log     log.Logger
-
 	moduleManager  *modules.Manager
 	serviceManager *services.Manager
-	serviceMap     map[string]services.Service
-	deps           map[string][]string
+	targets        []string
+	cfg            *setting.Cfg
+	log            log.Logger
+
+	httpServer         *api.HTTPServer
+	backgroundServices *backgroundsvcs.BackgroundServiceRegistry
+	accessControl      *acimpl.Service
+	plugins            *pluginmod.PluginsModule
 }
 
 type Engine interface {
@@ -40,22 +46,29 @@ type Engine interface {
 	Shutdown(context.Context) error
 }
 
-type Manager interface {
-	RegisterModule(name string, initFn func() (services.Service, error), deps ...string) error
-	RegisterInvisibleModule(name string, initFn func() (services.Service, error), deps ...string) error
-}
-
-func ProvideService(cfg *setting.Cfg) *Modules {
+func ProvideService(cfg *setting.Cfg, httpServer *api.HTTPServer, accessControl *acimpl.Service,
+	backgroundServices *backgroundsvcs.BackgroundServiceRegistry, plugins *pluginmod.PluginsModule) *Modules {
 	logger := log.New("modules")
 	return &Modules{
-		targets:       cfg.Target,
-		cfg:           cfg,
-		log:           logger,
-		moduleManager: modules.NewManager(logger),
+		targets:            cfg.Target,
+		cfg:                cfg,
+		log:                logger,
+		moduleManager:      modules.NewManager(logger),
+		httpServer:         httpServer,
+		backgroundServices: backgroundServices,
+		accessControl:      accessControl,
+		plugins:            plugins,
 	}
 }
 
 func (m *Modules) Init(_ context.Context) error {
+	m.moduleManager.RegisterModule(PluginManagerServer, m.initPluginManagerServer)
+	m.moduleManager.RegisterModule(PluginManagerClient, m.initPluginManagerClient, modules.UserInvisibleModule)
+	m.moduleManager.RegisterModule(PluginManagement, m.initPluginManagement, modules.UserInvisibleModule)
+	m.moduleManager.RegisterModule(Plugins, nil, modules.UserInvisibleModule)
+	m.moduleManager.RegisterModule(AccessControl, m.initAccessControl)
+	m.moduleManager.RegisterModule(HTTPServer, m.initHTTPServer)
+	m.moduleManager.RegisterModule(Core, m.initBackgroundServices)
 	m.moduleManager.RegisterModule(All, nil)
 
 	deps := map[string][]string{
@@ -82,8 +95,6 @@ func (m *Modules) Init(_ context.Context) error {
 		}
 	}
 
-	m.deps = deps
-
 	return nil
 }
 
@@ -92,7 +103,6 @@ func (m *Modules) Run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	m.serviceMap = serviceMap
 
 	var svcs []services.Service
 	for _, s := range serviceMap {
@@ -194,4 +204,28 @@ func (m *Modules) RegisterInvisibleModule(name string, initFn func() (services.S
 		return err
 	}
 	return nil
+}
+
+func (m *Modules) initHTTPServer() (services.Service, error) {
+	return m.httpServer, nil
+}
+
+func (m *Modules) initAccessControl() (services.Service, error) {
+	return m.accessControl, nil
+}
+
+func (m *Modules) initBackgroundServices() (services.Service, error) {
+	return m.backgroundServices, nil
+}
+
+func (m *Modules) initPluginManagerServer() (services.Service, error) {
+	return m.plugins.InitServer()
+}
+
+func (m *Modules) initPluginManagerClient() (services.Service, error) {
+	return m.plugins.InitClient()
+}
+
+func (m *Modules) initPluginManagement() (services.Service, error) {
+	return m.plugins.InitPluginManagement()
 }

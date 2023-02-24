@@ -8,12 +8,11 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/server/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 func testServer(m *MockModuleService) *Server {
-	return newServer(Options{}, setting.NewCfg(), m, backgroundsvcs.NewBackgroundServiceRegistry(), nil)
+	return newServer(Options{}, setting.NewCfg(), m)
 }
 
 func TestServer_Run_Error(t *testing.T) {

@@ -16,7 +16,6 @@ import (
 	uss "github.com/grafana/grafana/pkg/infra/usagestats/service"
 	"github.com/grafana/grafana/pkg/infra/usagestats/statscollector"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/server/modules"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/cleanup"
@@ -60,7 +59,6 @@ func ProvideBackgroundServiceRegistry(
 	bundleService *supportbundlesimpl.Service,
 	usageStatsProvidersRegistry registry.UsageStatsProvidersRegistry,
 	provisioningService provisioning.ProvisioningService,
-	moduleManager modules.Manager,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service, _ *alerting.AlertNotificationService,
 	_ serviceaccounts.Service, _ *guardian.Provider,
@@ -97,14 +95,7 @@ func ProvideBackgroundServiceRegistry(
 		bundleService,
 		dashboardUpdater,
 	)
-
-	err := moduleManager.RegisterModule(modules.Core, func() (services.Service, error) {
-		r.BasicService = services.NewBasicService(r.start, r.run, r.stop)
-		return r, nil
-	})
-	if err != nil {
-		return nil, err
-	}
+	r.BasicService = services.NewBasicService(r.start, r.run, r.stop)
 
 	r.usageStatsProvidersRegistry = usageStatsProvidersRegistry
 	r.statsCollectorService = statsCollector

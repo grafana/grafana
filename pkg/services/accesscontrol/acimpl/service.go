@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/server/modules"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/api"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
@@ -33,13 +32,12 @@ const (
 )
 
 func ProvideService(cfg *setting.Cfg, store db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
-	accessControl accesscontrol.AccessControl, features *featuremgmt.FeatureManager, moduleManager modules.Manager) (*Service, error) {
-	return ProvideOSSService(cfg, database.ProvideService(store), cache, features, routeRegister, accessControl, moduleManager)
+	accessControl accesscontrol.AccessControl, features *featuremgmt.FeatureManager) (*Service, error) {
+	return ProvideOSSService(cfg, database.ProvideService(store), cache, features, routeRegister, accessControl)
 }
 
 func ProvideOSSService(cfg *setting.Cfg, store store, cache *localcache.CacheService, features *featuremgmt.FeatureManager,
-	routeRegister routing.RouteRegister, accessControl accesscontrol.AccessControl,
-	moduleManager modules.Manager) (*Service, error) {
+	routeRegister routing.RouteRegister, accessControl accesscontrol.AccessControl) (*Service, error) {
 	s := &Service{
 		cfg:           cfg,
 		store:         store,
@@ -49,15 +47,8 @@ func ProvideOSSService(cfg *setting.Cfg, store store, cache *localcache.CacheSer
 		features:      features,
 		routeRegister: routeRegister,
 		accessControl: accessControl,
-		moduleManager: moduleManager,
 	}
-	err := s.moduleManager.RegisterModule(modules.AccessControl, func() (services.Service, error) {
-		s.BasicService = services.NewBasicService(s.start, s.run, nil)
-		return s, nil
-	})
-	if err != nil {
-		return nil, err
-	}
+	s.BasicService = services.NewBasicService(s.start, s.run, nil)
 	return s, nil
 }
 
@@ -78,7 +69,6 @@ type Service struct {
 	registrations accesscontrol.RegistrationList
 	roles         map[string]*accesscontrol.RoleDTO
 	features      *featuremgmt.FeatureManager
-	moduleManager modules.Manager
 
 	routeRegister routing.RouteRegister
 	accessControl accesscontrol.AccessControl
