@@ -60,13 +60,7 @@ func (h *AnnotationBackend) RecordStatesAsync(ctx context.Context, rule history_
 	errCh := make(chan error, 1)
 	go func() {
 		defer close(errCh)
-
-		org := fmt.Sprint(rule.OrgID)
-		defer h.metrics.WritesTotal.WithLabelValues(fmt.Sprint(rule.OrgID)).Inc()
-		defer h.metrics.TransitionsTotal.WithLabelValues(org).Add(float64(len(annotations)))
-
 		errCh <- h.recordAnnotations(ctx, panel, annotations, rule.OrgID, logger)
-
 	}()
 	return errCh
 }
@@ -198,10 +192,13 @@ func (h *AnnotationBackend) recordAnnotations(ctx context.Context, panel *panelK
 		}
 	}
 
+	org := fmt.Sprint(orgID)
+	h.metrics.WritesTotal.WithLabelValues(org).Inc()
+	h.metrics.TransitionsTotal.WithLabelValues(org).Add(float64(len(annotations)))
 	if err := h.annotations.SaveMany(ctx, annotations); err != nil {
 		logger.Error("Error saving alert annotation batch", "error", err)
-		h.metrics.WritesFailed.WithLabelValues(fmt.Sprint(orgID)).Inc()
-		h.metrics.TransitionsFailed.WithLabelValues(fmt.Sprint(orgID)).Add(float64(len(annotations)))
+		h.metrics.WritesFailed.WithLabelValues(org).Inc()
+		h.metrics.TransitionsFailed.WithLabelValues(org).Add(float64(len(annotations)))
 		return fmt.Errorf("error saving alert annotation batch: %w", err)
 	}
 

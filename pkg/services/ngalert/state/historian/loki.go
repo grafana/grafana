@@ -76,12 +76,12 @@ func (h *RemoteLokiBackend) RecordStatesAsync(ctx context.Context, rule history_
 		defer close(errCh)
 
 		org := fmt.Sprint(rule.OrgID)
-		defer h.metrics.WritesTotal.WithLabelValues(org).Inc()
+		h.metrics.WritesTotal.WithLabelValues(org).Inc()
 		samples := 0
 		for _, s := range streams {
 			samples += len(s.Values)
 		}
-		defer h.metrics.TransitionsTotal.WithLabelValues(org).Add(float64(samples))
+		h.metrics.TransitionsTotal.WithLabelValues(org).Add(float64(samples))
 
 		if err := h.recordStreams(ctx, streams, logger); err != nil {
 			logger.Error("Failed to save alert state history batch", "error", err)
