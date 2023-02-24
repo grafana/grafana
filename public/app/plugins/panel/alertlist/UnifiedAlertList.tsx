@@ -316,4 +316,8 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   customGroupDetails: css`
     margin-bottom: ${theme.spacing(0.5)};
   `,
+  link: css`
+    word-break: break-all;
+    color: ${theme.colors.primary.text};
+  `,
 });

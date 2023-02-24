@@ -4,7 +4,7 @@ import useLocation from 'react-use/lib/useLocation';
 
 import { GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Icon, LinkButton, useStyles2 } from '@grafana/ui';
+import { Icon, useStyles2 } from '@grafana/ui';
 import alertDef from 'app/features/alerting/state/alertDef';
 import { Spacer } from 'app/features/alerting/unified/components/Spacer';
 import { fromCombinedRule, stringifyIdentifier } from 'app/features/alerting/unified/utils/rule-id';
@@ -66,9 +66,12 @@ const UngroupedModeView: FC<UngroupedModeProps> = ({ rules, options }) => {
                       </div>
                       <Spacer />
                       {href && (
-                        <LinkButton target="_blank" rel="noopener" href={href} size="sm" icon="external-link-alt">
-                          Details
-                        </LinkButton>
+                        <a href={href} target="__blank" className={styles.link} rel="noopener">
+                          <Stack alignItems="center" gap={1}>
+                            View alert rule
+                            <Icon name={'external-link-alt'} size="sm" />
+                          </Stack>
+                        </a>
                       )}
                     </Stack>
                     <div className={styles.alertDuration}>
