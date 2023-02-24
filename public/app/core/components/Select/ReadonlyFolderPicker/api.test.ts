@@ -1,13 +1,13 @@
 import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceConsoleOutput';
 import * as api from '../../../../features/manage-dashboards/state/actions';
-import { DashboardSearchItem } from '../../../../features/search/types';
+import { DashboardSearchHit } from '../../../../features/search/types';
 import { PermissionLevelString } from '../../../../types';
 
 import { ALL_FOLDER, GENERAL_FOLDER } from './ReadonlyFolderPicker';
 import { getFolderAsOption, getFoldersAsOptions } from './api';
 
 function getTestContext(
-  searchHits: DashboardSearchItem[] = [],
+  searchHits: DashboardSearchHit[] = [],
   folderById: { id: number; title: string } = { id: 1, title: 'Folder 1' }
 ) {
   jest.clearAllMocks();

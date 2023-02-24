@@ -127,6 +127,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, disabled = false) => {
     `,
     content: css`
       margin-left: 0;
+      position: absolute;
+      top: 116%;
+      z-index: ${theme.zIndex.dropdown};
     `,
     pickerInput: cx(
       inputStyles.input,

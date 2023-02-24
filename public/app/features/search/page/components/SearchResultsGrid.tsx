@@ -9,7 +9,8 @@ import { useStyles2 } from '@grafana/ui';
 
 import { SearchCard } from '../../components/SearchCard';
 import { useSearchKeyboardNavigation } from '../../hooks/useSearchKeyboardSelection';
-import { DashboardSearchItemType, DashboardSectionItem } from '../../types';
+import { queryResultToViewItem } from '../../service/utils';
+import { DashboardViewItem } from '../../types';
 
 import { SearchResultsProps } from './SearchResultsTable';
 
@@ -28,11 +29,9 @@ export const SearchResultsGrid = ({
   // Hacked to reuse existing SearchCard (and old DashboardSectionItem)
   const itemProps = {
     editable: selection != null,
-    onToggleChecked: (item: any) => {
-      const d = item as DashboardSectionItem;
-      const t = d.type === DashboardSearchItemType.DashFolder ? 'folder' : 'dashboard';
+    onToggleChecked: (item: DashboardViewItem) => {
       if (selectionToggle) {
-        selectionToggle(t, d.uid!);
+        selectionToggle(item.kind, item.uid);
       }
     },
     onTagSelected,
@@ -77,17 +76,7 @@ export const SearchResultsGrid = ({
             const item = view.get(index);
             const kind = item.kind ?? 'dashboard';
 
-            const facade: DashboardSectionItem = {
-              uid: item.uid,
-              title: item.name,
-              url: item.url,
-              uri: item.url,
-              type: kind === 'folder' ? DashboardSearchItemType.DashFolder : DashboardSearchItemType.DashDB,
-              id: 666, // do not use me!
-              isStarred: false,
-              tags: item.tags ?? [],
-              checked: selection ? selection(kind, item.uid) : false,
-            };
+            const facade = queryResultToViewItem(item, view);
 
             if (kind === 'panel') {
               const type = item.panel_type;
@@ -112,7 +101,12 @@ export const SearchResultsGrid = ({
             // And without this wrapper there is no room for that margin
             return item ? (
               <li style={style} className={className}>
-                <SearchCard key={item.uid} {...itemProps} item={facade} />
+                <SearchCard
+                  key={item.uid}
+                  {...itemProps}
+                  item={facade}
+                  isSelected={selection ? selection(facade.kind, facade.uid) : false}
+                />
               </li>
             ) : null;
           }}
