@@ -80,33 +80,38 @@ export const filterRules = (
   namespaces: CombinedRuleNamespace[],
   filterState: RulesFilter = { labels: [], freeFormWords: [] }
 ): CombinedRuleNamespace[] => {
-  return (
-    namespaces
-      .filter((ns) =>
-        filterState.namespace ? ns.name.toLowerCase().includes(filterState.namespace.toLowerCase()) : true
-      )
-      .filter(({ rulesSource }) =>
-        filterState.dataSourceName && isCloudRulesSource(rulesSource)
-          ? rulesSource.name === filterState.dataSourceName
-          : true
-      )
-      // If a namespace and group have rules that match the rules filters then keep them.
-      .reduce(reduceNamespaces(filterState), [] as CombinedRuleNamespace[])
-  );
+  let filteredNamespaces = namespaces;
+  const namespaceFilter = filterState.namespace?.toLowerCase();
+  const dataSourceFilter = filterState.dataSourceName;
+
+  if (namespaceFilter) {
+    filteredNamespaces = filteredNamespaces.filter((ns) => ns.name.toLowerCase().includes(namespaceFilter));
+  }
+  if (dataSourceFilter) {
+    filteredNamespaces = filteredNamespaces.filter(({ rulesSource }) =>
+      isCloudRulesSource(rulesSource) ? rulesSource.name === dataSourceFilter : true
+    );
+  }
+
+  // If a namespace and group have rules that match the rules filters then keep them.
+  return filteredNamespaces.reduce(reduceNamespaces(filterState), [] as CombinedRuleNamespace[]);
 };
 
-const reduceNamespaces = (filterStateFilters: RulesFilter) => {
+const reduceNamespaces = (filterState: RulesFilter) => {
   return (namespaceAcc: CombinedRuleNamespace[], namespace: CombinedRuleNamespace) => {
-    const groups = namespace.groups
-      .filter((g) =>
-        filterStateFilters.groupName ? g.name.toLowerCase().includes(filterStateFilters.groupName.toLowerCase()) : true
-      )
-      .reduce(reduceGroups(filterStateFilters), [] as CombinedRuleGroup[]);
+    const groupNameFilter = filterState.groupName?.toLowerCase();
+    let filteredGroups = namespace.groups;
 
-    if (groups.length) {
+    if (groupNameFilter) {
+      filteredGroups = filteredGroups.filter((g) => g.name.toLowerCase().includes(groupNameFilter));
+    }
+
+    filteredGroups = filteredGroups.reduce(reduceGroups(filterState), [] as CombinedRuleGroup[]);
+
+    if (filteredGroups.length) {
       namespaceAcc.push({
         ...namespace,
-        groups,
+        groups: filteredGroups,
       });
     }
 
