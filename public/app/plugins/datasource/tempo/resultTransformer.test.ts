@@ -7,6 +7,7 @@ import {
   DataSourceInstanceSettings,
   dateTime,
   ArrayVector,
+  PluginMetaInfo,
 } from '@grafana/data';
 
 import {
@@ -36,7 +37,7 @@ const defaultSettings: DataSourceInstanceSettings = {
     id: 'tempo',
     name: 'tempo',
     type: PluginType.datasource,
-    info: {} as any,
+    info: {} as PluginMetaInfo,
     module: '',
     baseUrl: '',
   },

@@ -60,7 +60,7 @@ describe('AzureResourceGraphDatasource', () => {
       const templateVariables = createTemplateVariables(templateableProps);
       templateSrv.init(Array.from(templateVariables.values()).map((item) => item.templateVariable));
       const query = createMockQuery();
-      const azureResourceGraph: { [index: string]: any } = {};
+      const azureResourceGraph = {};
       for (const [path, templateVariable] of templateVariables.entries()) {
         set(azureResourceGraph, path, `$${templateVariable.variableName}`);
       }
