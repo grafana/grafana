@@ -4,7 +4,10 @@ import { lastValueFrom } from 'rxjs';
 import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime/src';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
-import { PublicDashboard } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
+import {
+  PublicDashboard,
+  PublicDashboardSettings,
+} from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { ListPublicDashboardResponse } from 'app/features/manage-dashboards/types';
 
@@ -55,7 +58,10 @@ export const publicDashboardApi = createApi({
       },
       providesTags: (result, error, dashboardUid) => [{ type: 'PublicDashboard', id: dashboardUid }],
     }),
-    createPublicDashboard: builder.mutation<PublicDashboard, { dashboard: DashboardModel; payload: PublicDashboard }>({
+    createPublicDashboard: builder.mutation<
+      PublicDashboard,
+      { dashboard: DashboardModel; payload: Partial<PublicDashboardSettings> }
+    >({
       query: (params) => ({
         url: `/uid/${params.dashboard.uid}/public-dashboards`,
         method: 'POST',
@@ -63,7 +69,7 @@ export const publicDashboardApi = createApi({
       }),
       async onQueryStarted({ dashboard, payload }, { dispatch, queryFulfilled }) {
         const { data } = await queryFulfilled;
-        dispatch(notifyApp(createSuccessNotification('Public dashboard created!')));
+        dispatch(notifyApp(createSuccessNotification('Dashboard is public!')));
 
         // Update runtime meta flag
         dashboard.updateMeta({
@@ -71,7 +77,7 @@ export const publicDashboardApi = createApi({
           publicDashboardEnabled: data.isEnabled,
         });
       },
-      invalidatesTags: (result, error, { payload }) => [{ type: 'PublicDashboard', id: payload.dashboardUid }],
+      invalidatesTags: (result, error, { dashboard }) => [{ type: 'PublicDashboard', id: dashboard.uid }],
     }),
     updatePublicDashboard: builder.mutation<PublicDashboard, { dashboard: DashboardModel; payload: PublicDashboard }>({
       query: (params) => ({

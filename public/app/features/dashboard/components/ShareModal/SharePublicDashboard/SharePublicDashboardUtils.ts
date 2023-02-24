@@ -1,24 +1,21 @@
 import { getConfig } from 'app/core/config';
 import { VariableModel } from 'app/features/variables/types';
-import { DashboardDataDTO, DashboardMeta } from 'app/types/dashboard';
 
 import { PanelModel } from '../../../state';
 
 import { supportedDatasources } from './SupportedPubdashDatasources';
 
-export interface PublicDashboard {
-  accessToken?: string;
+export interface PublicDashboardSettings {
   annotationsEnabled: boolean;
   isEnabled: boolean;
-  uid: string;
-  dashboardUid: string;
-  timeSettings?: object;
   timeSelectionEnabled: boolean;
 }
 
-export interface DashboardResponse {
-  dashboard: DashboardDataDTO;
-  meta: DashboardMeta;
+export interface PublicDashboard extends PublicDashboardSettings {
+  accessToken?: string;
+  uid: string;
+  dashboardUid: string;
+  timeSettings?: object;
 }
 
 // Instance methods
