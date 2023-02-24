@@ -22,9 +22,10 @@ import (
 )
 
 var coreReg = corekind.NewBase(nil)
+var Kind = coreReg.LibraryPanel()
 
 var CRD = crd.Kind{
-	GrafanaKind: coreReg.LibraryPanel(),
+	GrafanaKind: Kind,
 	Object:      &LibraryPanel{},
 	ObjectList:  &LibraryPanelList{},
 }

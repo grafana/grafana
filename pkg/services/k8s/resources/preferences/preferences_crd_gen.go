@@ -22,9 +22,10 @@ import (
 )
 
 var coreReg = corekind.NewBase(nil)
+var Kind = coreReg.Preferences()
 
 var CRD = crd.Kind{
-	GrafanaKind: coreReg.Preferences(),
+	GrafanaKind: Kind,
 	Object:      &Preferences{},
 	ObjectList:  &PreferencesList{},
 }

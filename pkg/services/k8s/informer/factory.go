@@ -27,6 +27,12 @@ type Factory struct {
 	informers map[schema.GroupVersionResource]cache.SharedIndexInformer
 }
 
+type ResourceWatcher interface {
+	Add(context.Context, any) error
+	Update(ctx context.Context, old, new any) error
+	Delete(context.Context, any) error
+}
+
 func ProvideFactory(
 	cfg *rest.Config,
 	features featuremgmt.FeatureToggles,

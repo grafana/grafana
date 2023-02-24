@@ -22,9 +22,10 @@ import (
 )
 
 var coreReg = corekind.NewBase(nil)
+var Kind = coreReg.PublicDashboard()
 
 var CRD = crd.Kind{
-	GrafanaKind: coreReg.PublicDashboard(),
+	GrafanaKind: Kind,
 	Object:      &PublicDashboard{},
 	ObjectList:  &PublicDashboardList{},
 }

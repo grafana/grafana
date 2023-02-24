@@ -13,9 +13,10 @@ import (
 )
 
 var coreReg = corekind.NewBase(nil)
+var Kind = coreReg.{{ .Props.Name }}()
 
 var CRD = crd.Kind{
-	GrafanaKind: coreReg.{{ .Props.Name }}(),
+	GrafanaKind: Kind,
 	Object:      &{{ .Props.Name }}{},
 	ObjectList:  &{{ .Props.Name }}List{},
 }
