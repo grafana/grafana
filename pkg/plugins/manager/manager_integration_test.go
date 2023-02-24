@@ -85,6 +85,10 @@ func TestIntegrationPluginManager(t *testing.T) {
 		Azure:                  &azsettings.AzureSettings{},
 		IsFeatureToggleEnabled: func(_ string) bool { return false },
 	}
+	
+	cfg.Raw.Section("tracing.opentelemetry")
+	cfg.Raw.Section("tracing.opentelemetry.jaeger")
+	cfg.Raw.Section("tracing.opentelemetry.otlp")
 
 	tracer := tracing.InitializeTracerForTest()
 	features := featuremgmt.WithFeatures()
