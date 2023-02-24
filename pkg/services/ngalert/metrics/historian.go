@@ -33,18 +33,18 @@ func NewHistorianMetrics(r prometheus.Registerer) *Historian {
 			Namespace: Namespace,
 			Subsystem: Subsystem,
 			Name:      "state_history_transitions_failed_total",
-			Help:      "The total number of state transitions that failed to be written.",
+			Help:      "The total number of state transitions that failed to be written - they are not retried.",
 		}, []string{"org"}),
 		WritesTotal: promauto.With(r).NewCounterVec(prometheus.CounterOpts{
 			Namespace: Namespace,
 			Subsystem: Subsystem,
-			Name:      "state_history_batch_writes_total",
+			Name:      "state_history_writes_total",
 			Help:      "The total number of state history batches that were attempted to be written.",
 		}, []string{"org"}),
 		WritesFailed: promauto.With(r).NewCounterVec(prometheus.CounterOpts{
 			Namespace: Namespace,
 			Subsystem: Subsystem,
-			Name:      "state_history_batch_writes_failed_total",
+			Name:      "state_history_writes_failed_total",
 			Help:      "The total number of failed writes of state history batches.",
 		}, []string{"org"}),
 		WriteDuration: instrument.NewHistogramCollector(promauto.With(r).NewHistogramVec(prometheus.HistogramOpts{
