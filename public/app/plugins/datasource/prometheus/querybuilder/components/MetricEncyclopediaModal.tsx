@@ -309,7 +309,8 @@ export const MetricEncyclopediaModal = (props: Props) => {
       aria-label="Metric Encyclopedia"
     >
       <div className={styles.spacing}>
-        Search {metrics.length} metrics by type, function, labels, alphabetically or select a variable.
+        Search {metrics.length} metric{metrics.length > 1 ? 's' : ''} by type, function, labels, alphabetically or
+        select a variable.
       </div>
       {query.labels.length > 0 && (
         <div className={styles.spacing}>
