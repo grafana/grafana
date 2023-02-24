@@ -33,7 +33,7 @@ func (s *OrgSync) SyncOrgRolesHook(ctx context.Context, id *authn.Identity, _ *a
 
 	namespace, userID := id.NamespacedID()
 	if namespace != authn.NamespaceUser || userID <= 0 {
-		ctxLogger.Warn("Failed to sync org role, invalid namespace for identity", "id", id.ID)
+		ctxLogger.Warn("Failed to sync org role, invalid namespace for identity", "id", id.ID, "namespace", namespace)
 		return nil
 	}
 
