@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/go-multierror"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -22,12 +23,13 @@ var (
 var _ authn.PasswordClient = new(Password)
 
 func ProvidePassword(loginAttempts loginattempt.Service, clients ...authn.PasswordClient) *Password {
-	return &Password{loginAttempts, clients}
+	return &Password{loginAttempts, clients, log.New("authn.password")}
 }
 
 type Password struct {
 	loginAttempts loginattempt.Service
 	clients       []authn.PasswordClient
+	log           log.Logger
 }
 
 func (c *Password) AuthenticatePassword(ctx context.Context, r *authn.Request, username, password string) (*authn.Identity, error) {
@@ -51,6 +53,7 @@ func (c *Password) AuthenticatePassword(ctx context.Context, r *authn.Request, u
 		clientErrs = multierror.Append(clientErrs, clientErr)
 		// we always try next client on any error
 		if clientErr != nil {
+			c.log.FromContext(ctx).Debug("Failed to authenticate password identity", "client", pwClient, "error", clientErr)
 			continue
 		}
 
