@@ -1,13 +1,13 @@
-import { css, cx } from '@emotion/css';
+import { cx } from '@emotion/css';
 import React, { PureComponent } from 'react';
 
-import { CoreApp, DataFrame, Field, GrafanaTheme2, LinkModel, LogRowModel } from '@grafana/data';
+import { CoreApp, DataFrame, Field, LinkModel, LogRowModel } from '@grafana/data';
 import { Themeable2, withTheme2 } from '@grafana/ui';
 
 import { calculateLogsLabelStats, calculateStats } from '../utils';
 
 import { LogDetailsRow } from './LogDetailsRow';
-import { getLogLevelStyles, getLogRowStyles } from './getLogRowStyles';
+import { getLogLevelStyles, LogRowStyles } from './getLogRowStyles';
 import { getAllFields } from './logParser';
 
 export interface Props extends Themeable2 {
@@ -18,6 +18,7 @@ export interface Props extends Themeable2 {
   className?: string;
   hasError?: boolean;
   app?: CoreApp;
+  styles: LogRowStyles;
 
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
@@ -26,25 +27,6 @@ export interface Props extends Themeable2 {
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
 }
-
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    logsRowLevelDetails: css`
-      label: logs-row__level_details;
-      &::after {
-        top: -3px;
-      }
-    `,
-    logDetails: css`
-      label: logDetailsDefaultCursor;
-      cursor: default;
-
-      &:hover {
-        background-color: ${theme.colors.background.primary};
-      }
-    `,
-  };
-};
 
 class UnThemedLogDetails extends PureComponent<Props> {
   render() {
@@ -63,10 +45,9 @@ class UnThemedLogDetails extends PureComponent<Props> {
       displayedFields,
       getFieldLinks,
       wrapLogMessage,
+      styles,
     } = this.props;
-    const rowStyles = getLogRowStyles(theme);
     const levelStyles = getLogLevelStyles(theme, row.logLevel);
-    const styles = getStyles(theme);
     const labels = row.labels ? row.labels : {};
     const labelsAvailable = Object.keys(labels).length > 0;
     const fieldsAndLinks = getAllFields(row, getFieldLinks);
@@ -78,19 +59,19 @@ class UnThemedLogDetails extends PureComponent<Props> {
     // If logs with error, we are not showing the level color
     const levelClassName = hasError
       ? ''
-      : `${levelStyles.logsRowLevelColor} ${rowStyles.logsRowLevel} ${styles.logsRowLevelDetails}`;
+      : `${levelStyles.logsRowLevelColor} ${styles.logsRowLevel} ${styles.logsRowLevelDetails}`;
 
     return (
       <tr className={cx(className, styles.logDetails)}>
         {showDuplicates && <td />}
         <td className={levelClassName} aria-label="Log level" />
         <td colSpan={4}>
-          <div className={rowStyles.logDetailsContainer}>
-            <table className={rowStyles.logDetailsTable}>
+          <div className={styles.logDetailsContainer}>
+            <table className={styles.logDetailsTable}>
               <tbody>
                 {(labelsAvailable || fieldsAvailable) && (
                   <tr>
-                    <td colSpan={100} className={rowStyles.logDetailsHeading} aria-label="Fields">
+                    <td colSpan={100} className={styles.logDetailsHeading} aria-label="Fields">
                       Fields
                     </td>
                   </tr>
@@ -139,7 +120,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
 
                 {linksAvailable && (
                   <tr>
-                    <td colSpan={100} className={rowStyles.logDetailsHeading} aria-label="Data Links">
+                    <td colSpan={100} className={styles.logDetailsHeading} aria-label="Data Links">
                       Links
                     </td>
                   </tr>

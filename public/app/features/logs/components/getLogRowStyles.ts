@@ -263,6 +263,21 @@ export const getLogRowStyles = (theme: GrafanaTheme2) => {
       padding: 0;
       user-select: text;
     `,
+    // Log details
+    logsRowLevelDetails: css`
+      label: logs-row__level_details;
+      &::after {
+        top: -3px;
+      }
+    `,
+    logDetails: css`
+      label: logDetailsDefaultCursor;
+      cursor: default;
+
+      &:hover {
+        background-color: ${theme.colors.background.primary};
+      }
+    `,
   };
 };
 
