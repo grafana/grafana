@@ -5,7 +5,15 @@ import React, { PureComponent } from 'react';
 
 import { CoreApp, Field, GrafanaTheme2, LinkModel, LogLabelStatsModel, LogRowModel } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { ClipboardButton, DataLinkButton, Themeable2, ToolbarButton, ToolbarButtonRow, withTheme2 } from '@grafana/ui';
+import {
+  ClipboardButton,
+  DataLinkButton,
+  measureText,
+  Themeable2,
+  ToolbarButton,
+  ToolbarButtonRow,
+  withTheme2,
+} from '@grafana/ui';
 
 import { LogLabelStats } from './LogLabelStats';
 import { getLogRowStyles } from './getLogRowStyles';
@@ -32,6 +40,7 @@ interface State {
   showFieldsStats: boolean;
   fieldCount: number;
   fieldStats: LogLabelStatsModel[] | null;
+  showLineScroll: boolean;
 }
 
 const getStyles = memoizeOne((theme: GrafanaTheme2, activeButton: boolean) => {
@@ -111,6 +120,16 @@ const getStyles = memoizeOne((theme: GrafanaTheme2, activeButton: boolean) => {
       label: wrapLine;
       white-space: pre-wrap;
     `,
+    parsedValue: css`
+      display: inline;
+    `,
+    longLineScroll: css`
+      height: ${theme.spacing(theme.components.height.sm * 2.4)};
+      overflow-y: scroll;
+      border: 1px solid ${theme.colors.border.medium};
+      padding: ${theme.spacing(0.5)};
+      margin-bottom: ${theme.spacing(0.5)};
+    `,
     toolbarButtonRow: css`
       label: toolbarButtonRow;
       gap: ${theme.spacing(0.5)};
@@ -160,11 +179,29 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     showFieldsStats: false,
     fieldCount: 0,
     fieldStats: null,
+    showLineScroll: false,
   };
+
+  logRowRef: React.RefObject<HTMLTableCellElement> = React.createRef();
 
   componentDidUpdate() {
     if (this.state.showFieldsStats) {
       this.updateStats();
+    }
+  }
+
+  componentDidMount(): void {
+    // convert rem to px
+    const fontSizePx =
+      parseFloat(this.props.theme.typography.bodySmall.fontSize) *
+      parseFloat(getComputedStyle(document.documentElement).fontSize);
+    const parsedValWidth = measureText(this.props.parsedValue, fontSizePx).width;
+    const refWidth = this.logRowRef.current?.clientWidth;
+    const linesBeforeScroll = 3;
+    if (refWidth && refWidth * linesBeforeScroll < parsedValWidth) {
+      this.setState({ showLineScroll: true });
+    } else {
+      this.setState({ showLineScroll: false });
     }
   }
 
@@ -323,10 +360,11 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
 
           {/* Key - value columns */}
           <td className={style.logDetailsLabel}>{parsedKey}</td>
-          <td className={cx(styles.wordBreakAll, wrapLogMessage && styles.wrapLine)}>
+          <td ref={this.logRowRef} className={cx(styles.wordBreakAll, wrapLogMessage && styles.wrapLine)}>
             <div className={styles.logDetailsValue}>
-              {parsedValue}
-
+              <div className={cx(this.state.showLineScroll ? styles.longLineScroll : styles.parsedValue)}>
+                {parsedValue}
+              </div>
               <div className={cx('show-on-hover', styles.copyButton)}>
                 <ClipboardButton
                   getText={() => parsedValue}
