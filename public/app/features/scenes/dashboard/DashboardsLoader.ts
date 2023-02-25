@@ -266,6 +266,7 @@ export function createVizPanelFromPanelModel(panel: PanelModel) {
     $data: new SceneQueryRunner({
       transformations: panel.transformations,
       queries: panel.targets,
+      maxDataPoints: panel.maxDataPoints ?? undefined,
     }),
   });
 }
