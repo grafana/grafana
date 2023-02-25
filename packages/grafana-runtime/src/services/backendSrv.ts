@@ -118,6 +118,7 @@ export interface FetchError<T = any> {
   status: number;
   statusText?: string;
   data: T;
+  message?: string;
   cancelled?: boolean;
   isHandled?: boolean;
   config: BackendSrvRequest;

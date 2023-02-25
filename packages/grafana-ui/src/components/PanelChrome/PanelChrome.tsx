@@ -116,6 +116,14 @@ export function PanelChrome({
 
   const headerContent = (
     <>
+      {statusMessage && (
+        <PanelStatus
+          className={cx(styles.errorContainer, dragClassCancel)}
+          message={statusMessage}
+          onClick={statusMessageOnClick}
+          ariaLabel="Panel status"
+        />
+      )}
       {title && (
         <h6 title={title} className={styles.title}>
           {title}
@@ -173,15 +181,6 @@ export function PanelChrome({
             {leftItems && <div className={styles.leftItems}>{itemsRenderer(leftItems, (item) => item)}</div>}
           </div>
         </div>
-      )}
-
-      {statusMessage && (
-        <PanelStatus
-          className={cx(styles.errorContainer, dragClassCancel)}
-          message={statusMessage}
-          onClick={statusMessageOnClick}
-          ariaLabel="Panel status"
-        />
       )}
 
       <div className={styles.content} style={contentStyle}>

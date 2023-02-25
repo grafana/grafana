@@ -317,6 +317,11 @@ export class BackendSrv implements BackendService {
     let description = '';
     let message = err.data.message;
 
+    // Sometimes we have a better error message on err.message
+    if (message === 'Unexpected error' && err.message) {
+      message = err.message;
+    }
+
     if (message.length > 80) {
       description = message;
       message = 'Error';
