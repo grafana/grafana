@@ -31,7 +31,11 @@ func (cmd Command) upgradeCommand(c utils.CommandLine) error {
 			return fmt.Errorf("failed to remove plugin '%s': %w", pluginName, err)
 		}
 
-		return installPlugin(context.Background(), pluginName, "", c)
+		err := installPlugin(context.Background(), pluginName, "", c)
+		if err == nil {
+			logRestartNotice()
+		}
+		return err
 	}
 
 	logger.Infof("%s %s is up to date \n", color.GreenString("✔"), pluginName)

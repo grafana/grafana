@@ -26,7 +26,6 @@ type Service struct {
 	cfg                *setting.Cfg
 	sqlstore           db.DB
 	plugins            plugins.Store
-	social             social.Service
 	usageStats         usagestats.Service
 	statsService       stats.Service
 	features           *featuremgmt.FeatureManager
@@ -56,7 +55,6 @@ func ProvideService(
 		cfg:                cfg,
 		sqlstore:           store,
 		plugins:            plugins,
-		social:             social,
 		usageStats:         us,
 		statsService:       statsService,
 		features:           features,
@@ -178,25 +176,6 @@ func (s *Service) collectSystemStats(ctx context.Context) (map[string]interface{
 	m["stats.packaging."+s.cfg.Packaging+".count"] = 1
 	m["stats.distributor."+s.cfg.ReportingDistributor+".count"] = 1
 
-	// Add stats about auth configuration
-	authTypes := map[string]bool{}
-	authTypes["anonymous"] = s.cfg.AnonymousEnabled
-	authTypes["basic_auth"] = s.cfg.BasicAuthEnabled
-	authTypes["ldap"] = s.cfg.LDAPEnabled
-	authTypes["auth_proxy"] = s.cfg.AuthProxyEnabled
-
-	for provider, enabled := range s.social.GetOAuthProviders() {
-		authTypes["oauth_"+provider] = enabled
-	}
-
-	for authType, enabled := range authTypes {
-		enabledValue := 0
-		if enabled {
-			enabledValue = 1
-		}
-		m["stats.auth_enabled."+authType+".count"] = enabledValue
-	}
-
 	m["stats.uptime"] = int64(time.Since(s.startTime).Seconds())
 
 	featureUsageStats := s.features.GetUsageStats(ctx)
@@ -260,11 +239,12 @@ func (s *Service) collectDatasourceStats(ctx context.Context) (map[string]interf
 func (s *Service) collectElasticStats(ctx context.Context) (map[string]interface{}, error) {
 	m := map[string]interface{}{}
 	esDataSourcesQuery := datasources.GetDataSourcesByTypeQuery{Type: datasources.DS_ES}
-	if err := s.datasources.GetDataSourcesByType(ctx, &esDataSourcesQuery); err != nil {
+	dataSources, err := s.datasources.GetDataSourcesByType(ctx, &esDataSourcesQuery)
+	if err != nil {
 		s.log.Error("Failed to get elasticsearch json data", "error", err)
 		return nil, err
 	}
-	for _, data := range esDataSourcesQuery.Result {
+	for _, data := range dataSources {
 		esVersion, err := data.JsonData.Get("esVersion").String()
 		if err != nil {
 			continue

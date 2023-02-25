@@ -40,7 +40,8 @@ type evalAppliedInfo struct {
 
 func TestProcessTicks(t *testing.T) {
 	testTracer := tracing.InitializeTracerForTest()
-	testMetrics := metrics.NewNGAlert(prometheus.NewPedanticRegistry())
+	reg := prometheus.NewPedanticRegistry()
+	testMetrics := metrics.NewNGAlert(reg)
 	ctx := context.Background()
 	dispatcherGroup, ctx := errgroup.WithContext(ctx)
 
@@ -113,6 +114,18 @@ func TestProcessTicks(t *testing.T) {
 		assertEvalRun(t, evalAppliedCh, tick, alertRule1.GetKey())
 	})
 
+	t.Run("after 1st tick rule metrics should report one active alert rule", func(t *testing.T) {
+		expectedMetric := fmt.Sprintf(
+			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, both active and paused.
+        	            	# TYPE grafana_alerting_rule_group_rules gauge
+        	            	grafana_alerting_rule_group_rules{org="%[1]d",state="active"} 1
+        	            	grafana_alerting_rule_group_rules{org="%[1]d",state="paused"} 0
+				`, alertRule1.OrgID)
+
+		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
+		require.NoError(t, err)
+	})
+
 	// add alert rule under main org with three base intervals
 	alertRule2 := models.AlertRuleGen(models.WithOrgID(mainOrgID), models.WithInterval(3*cfg.BaseInterval), models.WithTitle("rule-2"))()
 	ruleStore.PutRule(ctx, alertRule2)
@@ -126,6 +139,18 @@ func TestProcessTicks(t *testing.T) {
 		require.Equal(t, tick, scheduled[0].scheduledAt)
 		require.Emptyf(t, stopped, "None rules are expected to be stopped")
 		assertEvalRun(t, evalAppliedCh, tick, alertRule1.GetKey())
+	})
+
+	t.Run("after 2nd tick rule metrics should report two active alert rules", func(t *testing.T) {
+		expectedMetric := fmt.Sprintf(
+			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, both active and paused.
+        	            	# TYPE grafana_alerting_rule_group_rules gauge
+        	            	grafana_alerting_rule_group_rules{org="%[1]d",state="active"} 2
+        	            	grafana_alerting_rule_group_rules{org="%[1]d",state="paused"} 0
+				`, alertRule1.OrgID)
+
+		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
+		require.NoError(t, err)
 	})
 
 	t.Run("on 3rd tick two alert rules should be evaluated", func(t *testing.T) {
@@ -157,7 +182,95 @@ func TestProcessTicks(t *testing.T) {
 		assertEvalRun(t, evalAppliedCh, tick, alertRule1.GetKey())
 	})
 
-	t.Run("on 5th tick deleted rule should not be evaluated but stopped", func(t *testing.T) {
+	t.Run("on 5th tick an alert rule is paused (it still enters evaluation but it is early skipped)", func(t *testing.T) {
+		tick = tick.Add(cfg.BaseInterval)
+
+		alertRule1.IsPaused = true
+
+		scheduled, stopped := sched.processTick(ctx, dispatcherGroup, tick)
+
+		require.Len(t, scheduled, 1)
+		require.Equal(t, alertRule1, scheduled[0].rule)
+		require.Equal(t, tick, scheduled[0].scheduledAt)
+		require.Emptyf(t, stopped, "None rules are expected to be stopped")
+
+		assertEvalRun(t, evalAppliedCh, tick, alertRule1.GetKey())
+	})
+
+	t.Run("after 5th tick rule metrics should report one active and one paused alert rules", func(t *testing.T) {
+		expectedMetric := fmt.Sprintf(
+			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, both active and paused.
+        	            	# TYPE grafana_alerting_rule_group_rules gauge
+        	            	grafana_alerting_rule_group_rules{org="%[1]d",state="active"} 1
+        	            	grafana_alerting_rule_group_rules{org="%[1]d",state="paused"} 1
+				`, alertRule1.OrgID)
+
+		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
+		require.NoError(t, err)
+	})
+
+	t.Run("on 6th tick all alert rule are paused (it still enters evaluation but it is early skipped)", func(t *testing.T) {
+		tick = tick.Add(cfg.BaseInterval)
+
+		alertRule2.IsPaused = true
+
+		scheduled, stopped := sched.processTick(ctx, dispatcherGroup, tick)
+
+		require.Len(t, scheduled, 2)
+		var keys []models.AlertRuleKey
+		for _, item := range scheduled {
+			keys = append(keys, item.rule.GetKey())
+			require.Equal(t, tick, item.scheduledAt)
+		}
+		require.Contains(t, keys, alertRule1.GetKey())
+		require.Contains(t, keys, alertRule2.GetKey())
+
+		require.Emptyf(t, stopped, "None rules are expected to be stopped")
+
+		assertEvalRun(t, evalAppliedCh, tick, keys...)
+	})
+
+	t.Run("after 6th tick rule metrics should report two paused alert rules", func(t *testing.T) {
+		expectedMetric := fmt.Sprintf(
+			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, both active and paused.
+        	            	# TYPE grafana_alerting_rule_group_rules gauge
+        	            	grafana_alerting_rule_group_rules{org="%[1]d",state="active"} 0
+        	            	grafana_alerting_rule_group_rules{org="%[1]d",state="paused"} 2
+				`, alertRule1.OrgID)
+
+		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
+		require.NoError(t, err)
+	})
+
+	t.Run("on 7th tick unpause all alert rules", func(t *testing.T) {
+		tick = tick.Add(cfg.BaseInterval)
+
+		alertRule1.IsPaused = false
+		alertRule2.IsPaused = false
+
+		scheduled, stopped := sched.processTick(ctx, dispatcherGroup, tick)
+
+		require.Len(t, scheduled, 1)
+		require.Equal(t, alertRule1, scheduled[0].rule)
+		require.Equal(t, tick, scheduled[0].scheduledAt)
+		require.Emptyf(t, stopped, "None rules are expected to be stopped")
+
+		assertEvalRun(t, evalAppliedCh, tick, alertRule1.GetKey())
+	})
+
+	t.Run("after 7th tick rule metrics should report two active alert rules", func(t *testing.T) {
+		expectedMetric := fmt.Sprintf(
+			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, both active and paused.
+        	            	# TYPE grafana_alerting_rule_group_rules gauge
+        	            	grafana_alerting_rule_group_rules{org="%[1]d",state="active"} 2
+        	            	grafana_alerting_rule_group_rules{org="%[1]d",state="paused"} 0
+				`, alertRule1.OrgID)
+
+		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
+		require.NoError(t, err)
+	})
+
+	t.Run("on 8th tick deleted rule should not be evaluated but stopped", func(t *testing.T) {
 		tick = tick.Add(cfg.BaseInterval)
 
 		ruleStore.DeleteRule(alertRule1)
@@ -172,7 +285,19 @@ func TestProcessTicks(t *testing.T) {
 		assertStopRun(t, stopAppliedCh, alertRule1.GetKey())
 	})
 
-	t.Run("on 6th tick one alert rule should be evaluated", func(t *testing.T) {
+	t.Run("after 8th tick rule metrics should report one active alert rule", func(t *testing.T) {
+		expectedMetric := fmt.Sprintf(
+			`# HELP grafana_alerting_rule_group_rules The number of alert rules that are scheduled, both active and paused.
+        	            	# TYPE grafana_alerting_rule_group_rules gauge
+        	            	grafana_alerting_rule_group_rules{org="%[1]d",state="active"} 1
+        	            	grafana_alerting_rule_group_rules{org="%[1]d",state="paused"} 0
+				`, alertRule1.OrgID)
+
+		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetric), "grafana_alerting_rule_group_rules")
+		require.NoError(t, err)
+	})
+
+	t.Run("on 9th tick one alert rule should be evaluated", func(t *testing.T) {
 		tick = tick.Add(cfg.BaseInterval)
 
 		scheduled, stopped := sched.processTick(ctx, dispatcherGroup, tick)
@@ -185,7 +310,7 @@ func TestProcessTicks(t *testing.T) {
 		assertEvalRun(t, evalAppliedCh, tick, alertRule2.GetKey())
 	})
 
-	t.Run("on 7th tick a new alert rule should be evaluated", func(t *testing.T) {
+	t.Run("on 10th tick a new alert rule should be evaluated", func(t *testing.T) {
 		// create alert rule with one base interval
 		alertRule3 := models.AlertRuleGen(models.WithOrgID(mainOrgID), models.WithInterval(cfg.BaseInterval), models.WithTitle("rule-3"))()
 		ruleStore.PutRule(ctx, alertRule3)

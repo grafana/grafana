@@ -2,11 +2,14 @@ package historian
 
 import (
 	"context"
+	"encoding/json"
 	"net/url"
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -83,7 +86,7 @@ func TestLokiHTTPClient(t *testing.T) {
 		client := newLokiClient(LokiConfig{
 			ReadPathURL:  url,
 			WritePathURL: url,
-		}, log.NewNopLogger())
+		}, NewRequester(), metrics.NewHistorianMetrics(prometheus.NewRegistry()), log.NewNopLogger())
 
 		// Unauthorized request should fail against Grafana Cloud.
 		err = client.ping(context.Background())
@@ -101,7 +104,7 @@ func TestLokiHTTPClient(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("smoke test querying Loki", func(t *testing.T) {
+	t.Run("smoke test range querying Loki", func(t *testing.T) {
 		url, err := url.Parse("https://logs-prod-eu-west-0.grafana.net")
 		require.NoError(t, err)
 
@@ -110,7 +113,7 @@ func TestLokiHTTPClient(t *testing.T) {
 			WritePathURL:      url,
 			BasicAuthUser:     "<your_username>",
 			BasicAuthPassword: "<your_password>",
-		}, log.NewNopLogger())
+		}, NewRequester(), metrics.NewHistorianMetrics(prometheus.NewRegistry()), log.NewNopLogger())
 
 		// When running on prem, you might need to set the tenant id,
 		// so the x-scope-orgid header is set.
@@ -127,7 +130,7 @@ func TestLokiHTTPClient(t *testing.T) {
 		end := time.Now().UnixNano()
 
 		// Authorized request should not fail against Grafana Cloud.
-		res, err := client.query(context.Background(), selectors, start, end)
+		res, err := client.rangeQuery(context.Background(), selectors, start, end)
 		require.NoError(t, err)
 		require.NotNil(t, res)
 	})
@@ -154,4 +157,68 @@ func TestNewSelector(t *testing.T) {
 
 	selector, err = NewSelector("label", "invalid", "value")
 	require.Error(t, err)
+}
+
+func TestRow(t *testing.T) {
+	t.Run("marshal", func(t *testing.T) {
+		row := sample{
+			T: time.Unix(0, 1234),
+			V: "some sample",
+		}
+
+		jsn, err := json.Marshal(&row)
+
+		require.NoError(t, err)
+		require.JSONEq(t, `["1234", "some sample"]`, string(jsn))
+	})
+
+	t.Run("unmarshal", func(t *testing.T) {
+		jsn := []byte(`["1234", "some sample"]`)
+
+		row := sample{}
+		err := json.Unmarshal(jsn, &row)
+
+		require.NoError(t, err)
+		require.Equal(t, int64(1234), row.T.UnixNano())
+		require.Equal(t, "some sample", row.V)
+	})
+
+	t.Run("unmarshal invalid", func(t *testing.T) {
+		jsn := []byte(`{"key": "wrong shape"}`)
+
+		row := sample{}
+		err := json.Unmarshal(jsn, &row)
+
+		require.ErrorContains(t, err, "failed to deserialize sample")
+	})
+
+	t.Run("unmarshal bad timestamp", func(t *testing.T) {
+		jsn := []byte(`["not-unix-nano", "some sample"]`)
+
+		row := sample{}
+		err := json.Unmarshal(jsn, &row)
+
+		require.ErrorContains(t, err, "timestamp in Loki sample")
+	})
+}
+
+func TestStream(t *testing.T) {
+	t.Run("marshal", func(t *testing.T) {
+		stream := stream{
+			Stream: map[string]string{"a": "b"},
+			Values: []sample{
+				{T: time.Unix(0, 1), V: "one"},
+				{T: time.Unix(0, 2), V: "two"},
+			},
+		}
+
+		jsn, err := json.Marshal(stream)
+
+		require.NoError(t, err)
+		require.JSONEq(
+			t,
+			`{"stream": {"a": "b"}, "values": [["1", "one"], ["2", "two"]]}`,
+			string(jsn),
+		)
+	})
 }

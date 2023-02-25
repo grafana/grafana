@@ -1,6 +1,12 @@
 import { createAction, createReducer } from '@reduxjs/toolkit';
 
-import { DataQuery, getDefaultRelativeTimeRange, RelativeTimeRange } from '@grafana/data';
+import {
+  DataQuery,
+  DataSourceApi,
+  DataSourceJsonData,
+  getDefaultRelativeTimeRange,
+  RelativeTimeRange,
+} from '@grafana/data';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { findDataSourceFromExpressionRecursive } from 'app/features/alerting/utils/dataSourceFromExpression';
 import {
@@ -12,7 +18,6 @@ import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/t
 import { defaultCondition } from 'app/features/expressions/utils/expressionTypes';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
 import { queriesWithUpdatedReferences, refIdExists } from '../util';
 
 export interface QueriesAndExpressionsState {
@@ -33,7 +38,10 @@ const initialState: QueriesAndExpressionsState = {
 };
 
 export const duplicateQuery = createAction<AlertQuery>('duplicateQuery');
-export const addNewDataQuery = createAction('addNewDataQuery');
+export const addNewDataQuery = createAction<{
+  ds: DataSourceApi<DataQuery, DataSourceJsonData, {}>;
+  defaultQuery: Partial<DataQuery> | undefined;
+}>('addNewDataQuery');
 export const setDataQueries = createAction<AlertQuery[]>('setDataQueries');
 
 export const addNewExpression = createAction('addNewExpression');
@@ -51,20 +59,17 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
     .addCase(duplicateQuery, (state, { payload }) => {
       state.queries = addQuery(state.queries, payload);
     })
-    .addCase(addNewDataQuery, (state) => {
-      const datasource = getDefaultOrFirstCompatibleDataSource();
-      if (!datasource) {
-        return;
-      }
-
+    .addCase(addNewDataQuery, (state, { payload }) => {
+      const datasource = payload.ds;
       state.queries = addQuery(state.queries, {
         datasourceUid: datasource.uid,
         model: {
-          refId: '',
           datasource: {
             type: datasource.type,
             uid: datasource.uid,
           },
+          ...payload.defaultQuery,
+          refId: '',
         },
       });
     })

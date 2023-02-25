@@ -147,9 +147,7 @@ export function PanelChrome({
       aria-label={ariaLabel}
     >
       <div className={styles.loadingBarContainer}>
-        {loadingState === LoadingState.Loading ? (
-          <LoadingBar width={'28%'} height={'2px'} ariaLabel="Panel loading bar" />
-        ) : null}
+        {loadingState === LoadingState.Loading ? <LoadingBar width={width} ariaLabel="Panel loading bar" /> : null}
       </div>
 
       {(hoverHeader || !hasHeader) && menu && (
@@ -167,6 +165,7 @@ export function PanelChrome({
               <PanelMenu
                 menu={menu}
                 title={title}
+                placement="bottom-end"
                 menuButtonClass={cx(styles.menuItem, dragClassCancel, 'show-on-hover')}
               />
             )}
@@ -236,7 +235,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       backgroundColor: background,
       border: `1px solid ${borderColor}`,
       position: 'relative',
-      borderRadius: '3px',
+      borderRadius: theme.shape.borderRadius(1),
       height: '100%',
       display: 'flex',
       flexDirection: 'column',

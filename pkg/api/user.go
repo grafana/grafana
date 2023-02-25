@@ -68,6 +68,7 @@ func (hs *HTTPServer) getUserUserProfile(c *contextmodel.ReqContext, userID int6
 		authLabel := login.GetAuthProviderLabel(getAuthQuery.Result.AuthModule)
 		userProfile.AuthLabels = append(userProfile.AuthLabels, authLabel)
 		userProfile.IsExternal = true
+		userProfile.IsExternallySynced = login.IsExternallySynced(hs.Cfg, authLabel)
 	}
 
 	userProfile.AccessControl = hs.getAccessControlMetadata(c, c.OrgID, "global.users:id:", strconv.FormatInt(userID, 10))

@@ -372,12 +372,10 @@ type fakeDatasourceService struct {
 	datasources.DataSourceService
 }
 
-func (f *fakeDatasourceService) GetDefaultDataSource(ctx context.Context, query *datasources.GetDefaultDataSourceQuery) error {
-	query.Result = f.ExpectedDatasource
-	return nil
+func (f *fakeDatasourceService) GetDefaultDataSource(ctx context.Context, query *datasources.GetDefaultDataSourceQuery) (*datasources.DataSource, error) {
+	return f.ExpectedDatasource, nil
 }
 
-func (f *fakeDatasourceService) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) error {
-	query.Result = f.ExpectedDatasource
-	return nil
+func (f *fakeDatasourceService) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
+	return f.ExpectedDatasource, nil
 }
