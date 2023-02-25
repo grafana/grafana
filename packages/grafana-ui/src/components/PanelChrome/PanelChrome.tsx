@@ -122,13 +122,10 @@ export function PanelChrome({
         </h6>
       )}
 
-      <PanelDescription description={description} className={dragClassCancel} />
-
-      {titleItems !== undefined && (
-        <div className={cx(styles.titleItems, dragClassCancel)} data-testid="title-items-container">
-          {titleItems}
-        </div>
-      )}
+      <div className={cx(styles.titleItems, dragClassCancel)} data-testid="title-items-container">
+        {titleItems}
+        <PanelDescription description={description} className={dragClassCancel} />
+      </div>
 
       {loadingState === LoadingState.Streaming && (
         <Tooltip content="Streaming">
@@ -150,14 +147,29 @@ export function PanelChrome({
         {loadingState === LoadingState.Loading ? <LoadingBar width={width} ariaLabel="Panel loading bar" /> : null}
       </div>
 
-      {(hoverHeader || !hasHeader) && menu && (
-        <HoverWidget menu={menu} title={title} offset={hoverHeaderOffset} dragClass={dragClass}>
-          {headerContent}
-        </HoverWidget>
+      {hoverHeader && (
+        <>
+          {menu && (
+            <HoverWidget menu={menu} title={title} offset={hoverHeaderOffset} dragClass={dragClass}>
+              {headerContent}
+            </HoverWidget>
+          )}
+          {statusMessage && (
+            <div className={styles.errorContainerFloating}>
+              <PanelStatus message={statusMessage} onClick={statusMessageOnClick} ariaLabel="Panel status" />
+            </div>
+          )}
+        </>
       )}
 
       {hasHeader && (
         <div className={cx(styles.headerContainer, dragClass)} style={headerStyles} data-testid="header-container">
+          {statusMessage && (
+            <div className={styles.errorContainerInHeader}>
+              <PanelStatus message={statusMessage} onClick={statusMessageOnClick} ariaLabel="Panel status" />
+            </div>
+          )}
+
           {headerContent}
 
           <div className={styles.rightAligned}>
@@ -173,15 +185,6 @@ export function PanelChrome({
             {leftItems && <div className={styles.leftItems}>{itemsRenderer(leftItems, (item) => item)}</div>}
           </div>
         </div>
-      )}
-
-      {statusMessage && (
-        <PanelStatus
-          className={cx(styles.errorContainer, dragClassCancel)}
-          message={statusMessage}
-          onClick={statusMessageOnClick}
-          ariaLabel="Panel status"
-        />
       )}
 
       <div className={styles.content} style={contentStyle}>
@@ -316,14 +319,16 @@ const getStyles = (theme: GrafanaTheme2) => {
       visibility: 'hidden',
       border: 'none',
     }),
-    errorContainer: css({
+    errorContainerInHeader: css({
+      label: 'error-container',
+      marginRight: theme.spacing(1),
+      marginLeft: theme.spacing(-1),
+    }),
+    errorContainerFloating: css({
       label: 'error-container',
       position: 'absolute',
-      left: '50%',
-      transform: 'translateX(-50%)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
+      left: 0,
+      top: 0,
       zIndex: theme.zIndex.tooltip,
     }),
     leftItems: css({
