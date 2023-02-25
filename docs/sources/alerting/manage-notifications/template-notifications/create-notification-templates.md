@@ -36,7 +36,7 @@ To create a template, complete the following steps.
 
 `{{ define "email.subject" }}` and `{{ end }}` is automatically added to the start and end of the content:
 
-{{< figure max-width="940px" src="/static/img/docs/alerting/unified/edit-notification-template-email-subject-9-4.png" caption="Edit notification template email.subject" >}}
+{{< figure max-width="940px" src="/static/img/docs/alerting/unified/edit-notification-template-email-subject-9-4.png" caption="Create notification template email.subject" >}}
 
 To create a notification template that contains more than one template:
 
