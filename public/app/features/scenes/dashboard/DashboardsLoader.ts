@@ -263,6 +263,9 @@ export function createVizPanelFromPanelModel(panel: PanelModel) {
     options: panel.options,
     fieldConfig: panel.fieldConfig,
     pluginVersion: panel.pluginVersion,
+    displayMode: panel.transparent ? 'transparent' : undefined,
+    // To be replaced with it's own option persited option instead derived
+    hoverHeader: !panel.title && !panel.timeFrom && !panel.timeShift,
     $data: new SceneQueryRunner({
       transformations: panel.transformations,
       queries: panel.targets,
