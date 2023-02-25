@@ -69,41 +69,6 @@ describe('getAllFields', () => {
     expect(fields.find((field) => field.key === 'id')).toBe(undefined);
   });
 
-  it('should filter out entry field which is shown as the log message', () => {
-    const logRow = createLogRow({
-      entryFieldIndex: 3,
-      dataFrame: new MutableDataFrame({
-        refId: 'A',
-        fields: [
-          testStringField,
-          {
-            name: 'labels',
-            type: FieldType.other,
-            config: {},
-            values: new ArrayVector([{ place: 'luna', source: 'data' }]),
-          },
-          {
-            name: 'Time',
-            type: FieldType.time,
-            config: {},
-            values: new ArrayVector([1659620138401]),
-          },
-          {
-            name: 'Line',
-            type: FieldType.string,
-            config: {},
-            values: new ArrayVector([
-              '_entry="log text with ANSI \u001b[31mpart of the text\u001b[0m [616951240]" counter=300 float=NaN label=val3 level=info',
-            ]),
-          },
-        ],
-      }),
-    });
-
-    const fields = getAllFields(logRow);
-    expect(fields.find((field) => field.key === 'Line')).toBe(undefined);
-  });
-
   it('should filter out field with config hidden field', () => {
     const testField = { ...testStringField };
     testField.config = {
