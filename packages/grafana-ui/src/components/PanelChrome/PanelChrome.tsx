@@ -84,19 +84,7 @@ export function PanelChrome({
 }: PanelChromeProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
-
-  // To Do rely on hoverHeader prop for header, not separate props
-  // once hoverHeader is implemented
-  //
-  // Backwards compatibility for having a designated space for the header
-
-  const hasHeader =
-    hoverHeader === false &&
-    (title.length > 0 ||
-      titleItems !== undefined ||
-      description !== '' ||
-      loadingState === LoadingState.Streaming ||
-      (leftItems?.length ?? 0) > 0);
+  const hasHeader = !hoverHeader;
 
   const headerHeight = getHeaderHeight(theme, hasHeader);
   const { contentStyle, innerWidth, innerHeight } = getContentStyle(padding, theme, width, headerHeight, height);
@@ -138,11 +126,7 @@ export function PanelChrome({
   );
 
   return (
-    <div
-      className={cx(styles.container, { [styles.regularHeader]: hasHeader })}
-      style={containerStyles}
-      aria-label={ariaLabel}
-    >
+    <div className={styles.container} style={containerStyles} aria-label={ariaLabel}>
       <div className={styles.loadingBarContainer}>
         {loadingState === LoadingState.Loading ? <LoadingBar width={width} ariaLabel="Panel loading bar" /> : null}
       </div>
@@ -248,6 +232,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         visibility: 'hidden',
         opacity: '0',
       },
+
       '&:focus-visible, &:hover': {
         // only show menu icon on hover or focused panel
         '.show-on-hover': {
@@ -259,8 +244,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       '&:focus-visible': {
         outline: `1px solid ${theme.colors.action.focus}`,
       },
-    }),
-    regularHeader: css({
+
       '&:focus-within': {
         '.show-on-hover': {
           visibility: 'visible',
