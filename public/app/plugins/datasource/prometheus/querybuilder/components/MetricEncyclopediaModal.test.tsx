@@ -10,7 +10,7 @@ import { EmptyLanguageProviderMock } from '../../language_provider.mock';
 import { PromOptions } from '../../types';
 import { PromVisualQuery } from '../types';
 
-import { MetricEncyclopediaModal } from './MetricEncyclopediaModal';
+import { MetricEncyclopediaModal, testIds } from './MetricEncyclopediaModal';
 
 // don't care about interaction tracking in our unit tests
 jest.mock('@grafana/runtime', () => ({
@@ -22,7 +22,7 @@ describe('MetricEncyclopediaModal', () => {
   it('renders the modal', async () => {
     setup(defaultQuery, listOfMetrics);
     await waitFor(() => {
-      expect(screen.getByText('Select Metric')).toBeInTheDocument();
+      expect(screen.getByText('Metric Encyclopedia')).toBeInTheDocument();
     });
   });
 
@@ -104,6 +104,48 @@ describe('MetricEncyclopediaModal', () => {
     expect(screen.getByText('No metadata available')).toBeInTheDocument();
   });
 
+  // Filtering
+  it('has a filter for selected type', async () => {
+    setup(defaultQuery, listOfMetrics);
+
+    await waitFor(() => {
+      const selectType = screen.getByText('Select type');
+      expect(selectType).toBeInTheDocument();
+    });
+  });
+
+  it('has a filter for selected functions', async () => {
+    setup(defaultQuery, listOfMetrics);
+
+    await waitFor(() => {
+      const selectType = screen.getByText('Select functions');
+      expect(selectType).toBeInTheDocument();
+    });
+  });
+
+  it('filters by alphebetical letter choice', async () => {
+    setup(defaultQuery, listOfMetrics);
+    // pick the letter J
+    const letterJ = screen.getByTestId('letter-J');
+    await userEvent.click(letterJ);
+
+    // check metrics that start with J
+    const metricStartingWithJ = screen.getByText('j');
+    expect(metricStartingWithJ).toBeInTheDocument();
+    // check metrics that don't start with J
+    const metricStartingWithSomethingElse = screen.queryByText('a');
+    expect(metricStartingWithSomethingElse).toBeNull();
+  });
+
+  it('allows a user to select a template variable', async () => {
+    setup(defaultQuery, listOfMetrics);
+
+    await waitFor(() => {
+      const selectType = screen.getByText('Select a template variable');
+      expect(selectType).toBeInTheDocument();
+    });
+  });
+
   // Pagination
   it('shows metrics within a range by pagination', async () => {
     // default resultsPerPage is 10
@@ -133,7 +175,7 @@ describe('MetricEncyclopediaModal', () => {
 
   it('shows results metrics per page chosen by the user', async () => {
     setup(defaultQuery, listOfMetrics);
-    const resultsPerPageInput = screen.getByTestId('results-per-page');
+    const resultsPerPageInput = screen.getByTestId(testIds.resultsPerPage);
     await userEvent.type(resultsPerPageInput, '12');
     const metricInsideRange = screen.getByText('j');
     expect(metricInsideRange).toBeInTheDocument();
@@ -146,7 +188,7 @@ describe('MetricEncyclopediaModal', () => {
       // doesn't break on loading
       expect(screen.getByText('0')).toBeInTheDocument();
     });
-    const resultsPerPageInput = screen.getByTestId('results-per-page');
+    const resultsPerPageInput = screen.getByTestId(testIds.resultsPerPage);
     // doesn't break on changing results per page
     await userEvent.type(resultsPerPageInput, '11');
     const metricInsideRange = screen.getByText('10');
@@ -154,73 +196,52 @@ describe('MetricEncyclopediaModal', () => {
   });
 
   // Fuzzy search
-  // it('searches by name with a fuzzy search', async () => {
-  //   setup(defaultQuery, listOfMetrics);
-  //   const resultsPerPageInput = screen.getByTestId('search-metric');
-  //   await userEvent.type(resultsPerPageInput, 'a_buck');
-  //   let metricABucket = screen.getByText('a_bucket');
-  //   expect(metricABucket).toBeInTheDocument();
-  // });
-
-  // it('searches by all metadata with a fuzzy search', async () => {
-  //   // set fullMetaSearch true
-  //   setup(defaultQuery, listOfMetrics);
-  //   const resultsPerPageInput = screen.getByTestId('search-metric');
-  //   await userEvent.type(resultsPerPageInput, 'count');
-  //   let metricABucket = screen.getByText('a_bucket');
-  //   expect(metricABucket).toBeInTheDocument();
-  // });
-
-  // // Filtering
-  // it('filters results based on selected type', async () => {
-  //   // default resultsPerPage is 10
-  //   setup(defaultQuery, listOfMetrics);
-  //   // how do you test the MultiSelect?
-  //   // this does not work
-  //   // https://developers.grafana.com/ui/latest/index.html?path=/docs/forms-select--multi-select-basic
-
-  // });
-
-  // it('sorts alphabetically but puts metrics with no metadata last', async () => {
-  //   // default resultsPerPage is 10
-  //   setup(defaultQuery, listOfMetrics);
-  //   // how do you test the MultiSelect?
-  //   // this does not work
-  //   // https://developers.grafana.com/ui/latest/index.html?path=/docs/forms-select--multi-select-basic
-
-  // });
-
-  // it('filters results based on selected functions', async () => {
-  //   // default resultsPerPage is 10
-  //   setup(defaultQuery, listOfMetrics);
-  //   // how do you test the MultiSelect?
-  //   // this does not work
-  //   // https://developers.grafana.com/ui/latest/index.html?path=/docs/forms-select--multi-select-basic
-
-  // });
-
-  it('filters by alphebetical letter choice', async () => {
+  it('searches and filter by metric name with a fuzzy search', async () => {
+    // search for a_bucket by name
     setup(defaultQuery, listOfMetrics);
-    // pick the letter J
-    const letterJ = screen.getByTestId('letter-J');
-    await userEvent.click(letterJ);
+    let metricAll: HTMLElement | null;
+    let metricABucket: HTMLElement | null;
+    await waitFor(() => {
+      metricAll = screen.getByText('all-metrics');
+      metricABucket = screen.getByText('a_bucket');
+      expect(metricAll).toBeInTheDocument();
+      expect(metricABucket).toBeInTheDocument();
+    });
+    const searchMetric = screen.getByTestId(testIds.searchMetric);
+    expect(searchMetric).toBeInTheDocument();
+    await userEvent.type(searchMetric, 'a_b');
 
-    // check metrics that start with J
-    const metricStartingWithJ = screen.getByText('j');
-    expect(metricStartingWithJ).toBeInTheDocument();
-    // check metrics that don't start with J
-    const metricStartingWithSomethingElse = screen.queryByText('a');
-    expect(metricStartingWithSomethingElse).toBeNull();
+    await waitFor(() => {
+      metricABucket = screen.getByText('a_bucket');
+      expect(metricABucket).toBeInTheDocument();
+      metricAll = screen.queryByText('all-metrics');
+      expect(metricAll).toBeNull();
+    });
   });
 
-  // it('allows a user to select a template variable', async () => {
-  //   // default resultsPerPage is 10
-  //   setup(defaultQuery, listOfMetrics);
-  //   // how do you test the MultiSelect?
-  //   // this does not work
-  //   // https://developers.grafana.com/ui/latest/index.html?path=/docs/forms-select--multi-select-basic
+  it('searches by all metric metadata with a fuzzy search', async () => {
+    // search for a_bucket by metadata type counter but only type countt
+    setup(defaultQuery, listOfMetrics);
+    let metricABucket: HTMLElement | null;
 
-  // });
+    await waitFor(() => {
+      metricABucket = screen.getByText('a_bucket');
+      expect(metricABucket).toBeInTheDocument();
+    });
+
+    const metadataSwitch = screen.getByTestId(testIds.searchWithMetadata);
+    expect(metadataSwitch).toBeInTheDocument();
+    await userEvent.click(metadataSwitch);
+
+    const searchMetric = screen.getByTestId(testIds.searchMetric);
+    expect(searchMetric).toBeInTheDocument();
+    await userEvent.type(searchMetric, 'countt');
+
+    await waitFor(() => {
+      metricABucket = screen.getByText('a_bucket');
+      expect(metricABucket).toBeInTheDocument();
+    });
+  });
 });
 
 const defaultQuery: PromVisualQuery = {

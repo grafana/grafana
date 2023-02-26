@@ -348,6 +348,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
             tooltip={<div>{tooltips.metadataSearchSwicth}</div>}
           >
             <InlineSwitch
+              data-testid={testIds.searchWithMetadata}
               showLabel={true}
               value={fullMetaSearch}
               onChange={() => {
@@ -735,6 +736,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 export const testIds = {
   metricModal: 'metric-modal',
   searchMetric: 'search-metric',
+  searchWithMetadata: 'search-with-metadata',
   selectType: 'select-type',
   searchFunction: 'search-function',
   metricCard: 'metric-card',
