@@ -82,6 +82,15 @@ const promTypes: PromFilterOption[] = [
   },
 ];
 
+const tooltips = {
+  search: 'Filter metric names by text',
+  metadataSearchSwicth: 'Include all metadata in search by text',
+  type: 'Prometheus supports four types of metrics, they are - Counter - Gauge - Histogram - Summary',
+  functions: 'These are suggested functions for metrics based on type and name',
+  variables: 'Select a predefined Grafana template variable for your metric',
+  excludeNoMetadata: 'Exclude all metrics with no metadata when filtering',
+};
+
 export const DEFAULT_RESULTS_PER_PAGE = 10;
 
 export const MetricEncyclopediaModal = (props: Props) => {
@@ -304,7 +313,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
     <Modal
       data-testid={testIds.metricModal}
       isOpen={isOpen}
-      title="Select Metric"
+      title="Metric Encyclopedia"
       onDismiss={onClose}
       aria-label="Metric Encyclopedia"
     >
@@ -314,11 +323,11 @@ export const MetricEncyclopediaModal = (props: Props) => {
       </div>
       {query.labels.length > 0 && (
         <div className={styles.spacing}>
-          <i>These metrics have been prefiltered by labels chosen in the label filter</i>
+          <i>These metrics have been pre-filtered by labels chosen in the label filter</i>
         </div>
       )}
       <div className="gf-form">
-        <InlineLabel width={10} className="query-keyword">
+        <InlineLabel width={15} className="query-keyword" tooltip={<div>{tooltips.search}</div>}>
           Search
         </InlineLabel>
         <Input
@@ -336,7 +345,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
           <InlineField
             label="Search all metadata"
             className={styles.labelColor}
-            tooltip={<div>Include all metadata in fuzzy search</div>}
+            tooltip={<div>{tooltips.metadataSearchSwicth}</div>}
           >
             <InlineSwitch
               showLabel={true}
@@ -352,8 +361,8 @@ export const MetricEncyclopediaModal = (props: Props) => {
       <div className="gf-form">
         {hasMetadata && (
           <>
-            <InlineLabel htmlFor="my-select" width={10} className="query-keyword">
-              Type:
+            <InlineLabel htmlFor="my-select" width={15} className="query-keyword" tooltip={<div>{tooltips.type}</div>}>
+              Type
             </InlineLabel>
             <MultiSelect
               data-testid={testIds.selectType}
@@ -372,8 +381,8 @@ export const MetricEncyclopediaModal = (props: Props) => {
           </>
         )}
 
-        <InlineLabel width={10} className="query-keyword">
-          Functions:
+        <InlineLabel width={15} className="query-keyword" tooltip={<div>{tooltips.functions}</div>}>
+          Functions
         </InlineLabel>
         <MultiSelect
           data-testid={testIds.searchFunction}
@@ -389,7 +398,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
         />
       </div>
       <div className="gf-form">
-        <InlineLabel width={10} className="query-keyword">
+        <InlineLabel width={15} className="query-keyword">
           Page
         </InlineLabel>
         <Select
@@ -404,7 +413,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
             setPageNum(value);
           }}
         />
-        <InlineLabel width={10} className="query-keyword">
+        <InlineLabel width={15} className="query-keyword">
           # per page
         </InlineLabel>
         <Input
@@ -423,7 +432,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
         />
       </div>
       <div className="gf-form">
-        <InlineLabel width={10} className="query-keyword">
+        <InlineLabel width={15} className="query-keyword" tooltip={<div>{tooltips.variables}</div>}>
           Variables
         </InlineLabel>
         <Select
@@ -431,7 +440,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
           inputId="my-select"
           options={variables}
           value={''}
-          placeholder="Select variable"
+          placeholder="Select a template variable"
           onChange={(v) => {
             const value: string = v.value ?? '';
             onChange({ ...query, metric: value });
@@ -442,7 +451,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
           <InlineField
             label="Exclude null metadata"
             className={styles.labelColor}
-            tooltip={<div>Exclude all metrics with no metadata when filtering</div>}
+            tooltip={<div>{tooltips.excludeNoMetadata}</div>}
           >
             <InlineSwitch
               showLabel={true}
