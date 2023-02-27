@@ -161,7 +161,7 @@ func TestMiddlewareContext(t *testing.T) {
 		sc.resp.Header().Add("Cache-Control", "private, max-age=86400")
 		sc.resp.Header().Add("X-Grafana-Cache", "true")
 		sc.exec()
-		assert.Equal(t, "private", sc.resp.Header().Get("Cache-Control"))
+		assert.Equal(t, "private, max-age=86400", sc.resp.Header().Get("Cache-Control"))
 	})
 
 	middlewareScenario(t, "middleware should not pass cache-control on resources with public cache control", func(t *testing.T, sc *scenarioContext) {
