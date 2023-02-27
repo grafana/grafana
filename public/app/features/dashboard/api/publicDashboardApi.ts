@@ -1,7 +1,7 @@
 import { BaseQueryFn, createApi } from '@reduxjs/toolkit/query/react';
 import { lastValueFrom } from 'rxjs';
 
-import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime/src';
+import { BackendSrvRequest, FetchError, getBackendSrv, isFetchError } from '@grafana/runtime/src';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
 import {
@@ -12,9 +12,16 @@ import { DashboardModel } from 'app/features/dashboard/state';
 import { ListPublicDashboardResponse } from 'app/features/manage-dashboards/types';
 
 type ReqOptions = {
-  manageError?: (err: { status: number }) => { error: unknown };
+  manageError?: (err: unknown) => { error: unknown };
   showErrorAlert?: boolean;
 };
+
+/**
+ * Type predicate to narrow an unknown error to an object with a string 'message' property
+ */
+function isFetchBaseQueryError(error: unknown): error is { error: FetchError } {
+  return typeof error === 'object' && error != null && 'error' in error;
+}
 
 const backendSrvBaseQuery =
   ({ baseUrl }: { baseUrl: string }): BaseQueryFn<BackendSrvRequest & ReqOptions> =>
@@ -29,12 +36,11 @@ const backendSrvBaseQuery =
       );
       return { data: responseData, meta };
     } catch (error) {
-      // @ts-ignore
       return requestOptions.manageError ? requestOptions.manageError(error) : { error };
     }
   };
 
-const getConfigError = (err: { status: number }) => ({ error: err.status !== 404 ? err : null });
+const getConfigError = (err: unknown) => ({ error: isFetchError(err) && err.status !== 404 ? err : null });
 
 export const publicDashboardApi = createApi({
   reducerPath: 'publicDashboardApi',
@@ -52,9 +58,9 @@ export const publicDashboardApi = createApi({
         try {
           await queryFulfilled;
         } catch (e) {
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          const customError = e as { error: { data: { message: string } } };
-          dispatch(notifyApp(createErrorNotification(customError?.error?.data?.message)));
+          if (isFetchBaseQueryError(e) && isFetchError(e.error)) {
+            dispatch(notifyApp(createErrorNotification(e.error.data.message)));
+          }
         }
       },
       providesTags: (result, error, dashboardUid) => [{ type: 'PublicDashboard', id: dashboardUid }],
