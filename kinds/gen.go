@@ -24,10 +24,18 @@ import (
 )
 
 func main() {
+	all := getAllKinds()
+	genCoreKinds(all)
+	genK8sImpl(all)
+}
+
+func genCoreKinds(all []kindsys.Kind) {
 	if len(os.Args) > 1 {
 		fmt.Fprintf(os.Stderr, "plugin thema code generator does not currently accept any arguments\n, got %q", os.Args)
 		os.Exit(1)
 	}
+
+	groot := getRootDir()
 
 	// Core kinds composite code generator. Produces all generated code in
 	// grafana/grafana that derives from core kinds.
@@ -45,7 +53,7 @@ func main() {
 		codegen.CRDResourcesWireSetJenny(filepath.Join("pkg", "services", "k8s", "resources")),
 		codegen.CRDWireSetJenny(filepath.Join("pkg", "services", "k8s", "resources")),
 		codegen.CRDTypesJenny(filepath.Join("pkg", "services", "k8s", "resources")),
-		codegen.CRDWatcherJenny(filepath.Join("pkg", "services", "k8s", "resources")),
+		codegen.CRDWatcherJenny(filepath.Join("pkg", "services", "k8s", "resources"), "core_crd_watcher.tmpl", "watcher_gen.go"),
 		codegen.YamlCRDJenny(filepath.Join("pkg", "services", "k8s", "resources")),
 		codegen.CRDKindRegistryJenny(filepath.Join("pkg", "registry", "corecrd")),
 		codegen.DocsJenny(filepath.Join("docs", "sources", "developers", "kinds", "core")),
@@ -54,13 +62,53 @@ func main() {
 	header := codegen.SlashHeaderMapper("kinds/gen.go")
 	coreKindsGen.AddPostprocessors(header)
 
-	cwd, err := os.Getwd()
+	jfs, err := coreKindsGen.GenerateFS(all...)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "could not get working directory: %s", err)
-		os.Exit(1)
+		die(fmt.Errorf("core kinddirs codegen failed: %w", err))
 	}
-	groot := filepath.Dir(cwd)
 
+	commfsys := elsedie(genCommon(filepath.Join(groot, "pkg", "kindsys")))("common schemas failed")
+	commfsys = elsedie(commfsys.Map(header))("failed gen header on common fsys")
+	if err = jfs.Merge(commfsys); err != nil {
+		die(err)
+	}
+
+	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
+		if err = jfs.Verify(context.Background(), groot); err != nil {
+			die(fmt.Errorf("generated code is out of sync with inputs:\n%s\nrun `make gen-cue` to regenerate", err))
+		}
+	} else if err = jfs.Write(context.Background(), groot); err != nil {
+		die(fmt.Errorf("error while writing generated code to disk:\n%s", err))
+	}
+}
+
+func genK8sImpl(all []kindsys.Kind) {
+	groot := getRootDir()
+
+	k8sImplGen := codejen.JennyListWithNamer(func(def kindsys.Kind) string {
+		return def.Props().Common().MachineName
+	})
+
+	// All the jennies that comprise the core kinds generator pipeline
+	k8sImplGen.Append(
+		codegen.CRDWatcherJenny(filepath.Join("pkg", "services", "k8s", "resources"), "core_crd_watcher_impl.tmpl", "watcher.go"),
+	)
+
+	jfs, err := k8sImplGen.GenerateFS(all...)
+	if err != nil {
+		die(fmt.Errorf("core kinddirs codegen failed: %w", err))
+	}
+	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
+		if err := jfs.Verify(context.Background(), groot); err != nil {
+			die(fmt.Errorf("generated code is out of sync with inputs:\n%s\nrun `make gen-cue` to regenerate", err))
+		}
+	} else if err := jfs.Write(context.Background(), groot); err != nil {
+		die(fmt.Errorf("error while writing generated code to disk:\n%s", err))
+	}
+}
+
+func getAllKinds() []kindsys.Kind {
+	groot := getRootDir()
 	rt := cuectx.GrafanaThemaRuntime()
 	var all []kindsys.Kind
 
@@ -86,24 +134,16 @@ func main() {
 		return nameFor(all[i].Props()) < nameFor(all[j].Props())
 	})
 
-	jfs, err := coreKindsGen.GenerateFS(all...)
+	return all
+}
+
+func getRootDir() string {
+	cwd, err := os.Getwd()
 	if err != nil {
-		die(fmt.Errorf("core kinddirs codegen failed: %w", err))
+		fmt.Fprintf(os.Stderr, "could not get working directory: %s", err)
+		os.Exit(1)
 	}
-
-	commfsys := elsedie(genCommon(filepath.Join(groot, "pkg", "kindsys")))("common schemas failed")
-	commfsys = elsedie(commfsys.Map(header))("failed gen header on common fsys")
-	if err = jfs.Merge(commfsys); err != nil {
-		die(err)
-	}
-
-	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
-		if err = jfs.Verify(context.Background(), groot); err != nil {
-			die(fmt.Errorf("generated code is out of sync with inputs:\n%s\nrun `make gen-cue` to regenerate", err))
-		}
-	} else if err = jfs.Write(context.Background(), groot); err != nil {
-		die(fmt.Errorf("error while writing generated code to disk:\n%s", err))
-	}
+	return filepath.Dir(cwd)
 }
 
 func nameFor(m kindsys.SomeKindProperties) string {
