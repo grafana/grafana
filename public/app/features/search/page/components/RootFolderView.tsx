@@ -10,7 +10,7 @@ import { Alert, Spinner, useStyles2 } from '@grafana/ui';
 import { contextSrv } from '../../../../core/services/context_srv';
 import impressionSrv from '../../../../core/services/impression_srv';
 import { GENERAL_FOLDER_UID } from '../../constants';
-import { getGrafanaSearcher } from '../../service';
+import { getFolderChildren } from '../../service/folders';
 
 import { FolderSection } from './FolderSection';
 import { SearchResultsProps } from './SearchResultsTable';
@@ -30,8 +30,7 @@ export const RootFolderView = ({
   const styles = useStyles2(getStyles);
 
   const results = useAsync(async () => {
-    const searcher = getGrafanaSearcher();
-    const folders = await searcher.getFolderChildren();
+    const folders = await getFolderChildren();
 
     if (!hidePseudoFolders) {
       if (contextSrv.isSignedIn) {

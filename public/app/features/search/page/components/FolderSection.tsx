@@ -12,6 +12,7 @@ import { useUniqueId } from 'app/plugins/datasource/influxdb/components/useUniqu
 import { SearchItem } from '../..';
 import { GENERAL_FOLDER_UID } from '../../constants';
 import { getGrafanaSearcher } from '../../service';
+import { getFolderChildren } from '../../service/folders';
 import { DashboardViewItem } from '../../types';
 import { SelectionChecker, SelectionToggle } from '../selection';
 
@@ -43,8 +44,7 @@ export const FolderSection = ({
       return Promise.resolve([]);
     }
 
-    const searcher = getGrafanaSearcher();
-    const childItems = searcher.getFolderChildren(section.uid);
+    const childItems = getFolderChildren(section.uid);
 
     return childItems;
   }, [sectionExpanded, tags]);
@@ -88,67 +88,17 @@ export const FolderSection = ({
     }
 
     return results.value.map((item) => {
-      if (item.kind === 'dashboard') {
-        return (
-          <SearchItem
-            key={item.uid}
-            item={item}
-            onTagSelected={onTagSelected}
-            onToggleChecked={(item) => {
-              if (selectionToggle) {
-                selectionToggle('dashboard', item.uid);
-              }
-            }}
-            editable={Boolean(selection != null)}
-            onClickItem={onClickItem}
-            isSelected={selection?.(item.kind, item.uid)}
-          />
-        );
-      }
-
-      if (item.kind === 'folder') {
-        return (
-          <SearchItem
-            key={item.uid}
-            item={item}
-            onTagSelected={onTagSelected}
-            onToggleChecked={(item) => {
-              if (selectionToggle) {
-                selectionToggle('dashboard', item.uid);
-              }
-            }}
-            editable={Boolean(selection != null)}
-            onClickItem={onClickItem}
-            isSelected={selection?.(item.kind, item.uid)}
-          />
-        );
-      }
-
-      throw new Error('Unhandled kind in FolderSection');
-
-      // if (selection && selectionToggle) {
-      //   const type = v.type === DashboardSearchItemType.DashFolder ? 'folder' : 'dashboard';
-
-      //   v = {
-      //     ...v,
-      //     checked: selection(type, v.uid!),
-      //   };
-      // }
-
-      // return (
-      //   <SearchItem
-      //     key={v.uid}
-      //     item={v}
-      //     onTagSelected={onTagSelected}
-      //     onToggleChecked={(item) => {
-      //       if (selectionToggle) {
-      //         selectionToggle('dashboard', item.uid!);
-      //       }
-      //     }}
-      //     editable={Boolean(selection != null)}
-      //     onClickItem={onClickItem}
-      //   />
-      // );
+      return (
+        <SearchItem
+          key={item.uid}
+          item={item}
+          onTagSelected={onTagSelected}
+          onToggleChecked={(item) => selectionToggle?.(item.kind, item.uid)}
+          editable={Boolean(selection != null)}
+          onClickItem={onClickItem}
+          isSelected={selection?.(item.kind, item.uid)}
+        />
+      );
     });
   };
 

@@ -40,8 +40,4 @@ export class DummySearcher implements GrafanaSearcher {
   getFolderViewSort(): string {
     return '';
   }
-
-  async getFolderChildren(folderUid?: string): Promise<DashboardViewItem[]> {
-    return [];
-  }
 }

@@ -216,10 +216,6 @@ export class BlugeSearcher implements GrafanaSearcher {
     };
   }
 
-  async getFolderChildren(folderUid?: string): Promise<DashboardViewItem[]> {
-    throw new Error('PR TODO: Searcher not supported - use sql searcher');
-  }
-
   getFolderViewSort(): string {
     return 'name_sort';
   }

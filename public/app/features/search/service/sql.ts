@@ -225,47 +225,8 @@ export class SQLSearcher implements GrafanaSearcher {
     };
   }
 
-  async getFolderChildren(parentUid?: string): Promise<DashboardViewItem[]> {
-    if (!config.featureToggles.nestedFolders) {
-      throw new Error('PR TODO: Require nestedFolders enabled');
-    }
-
-    if (!parentUid) {
-      // We don't show dashboards at root in folder view yet - they're shown under a dummy 'general'
-      // folder that FolderView adds in
-      const folders = await getChildFolders();
-      return folders;
-    }
-
-    const dashboardsResults = await this.search({
-      kind: ['dashboard'],
-      query: '*',
-      location: parentUid,
-      limit: 1000,
-    });
-
-    const dashboardItems = dashboardsResults.view.map((item) => {
-      return queryResultToViewItem(item, dashboardsResults.view);
-    });
-
-    const folders = await getChildFolders(parentUid);
-
-    return [...folders, ...dashboardItems];
-  }
-
   getFolderViewSort = () => {
     // sorts alphabetically in memory after retrieving the folders from the database
     return '';
   };
-}
-
-async function getChildFolders(parentUid?: string): Promise<DashboardViewItem[]> {
-  const folders = await backendSrv.get<NestedFolderDTO[]>('/api/folders', { parentUid });
-
-  return folders.map((item) => ({
-    kind: 'folder',
-    uid: item.uid,
-    title: item.title,
-    url: `/dashboards/f/${item.uid}/`,
-  }));
 }
