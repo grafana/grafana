@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/url"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -182,6 +183,38 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 	d.logger.Debug("Finish of admin configuration sync")
 
 	return nil
+}
+
+// headersString transforms all the headers in a sorted way as a
+// single string so it can be used for hashing and comparing.
+func headersString(headers map[string]map[string]string) string {
+	var result strings.Builder
+
+	keys := make([]string, 0, len(headers))
+	for k := range headers {
+		keys = append(keys, k)
+	}
+
+	sort.Strings(keys)
+
+	for _, k := range keys {
+
+		result.WriteString(k)
+
+		header := headers[k]
+		headerKeys := make([]string, 0, len(header))
+		for key := range header {
+			headerKeys = append(headerKeys, key)
+		}
+
+		sort.Strings(headerKeys)
+
+		for _, key := range headerKeys {
+			result.WriteString(fmt.Sprintf("%s:%s", key, header[key]))
+		}
+	}
+
+	return result.String()
 }
 
 func buildRedactedAMs(l log.Logger, alertmanagers []string, ordId int64) []string {
