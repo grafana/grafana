@@ -266,4 +266,8 @@ const (
 	// FlagIndividualCookiePreferences
 	// Support overriding cookie preferences per user
 	FlagIndividualCookiePreferences = "individualCookiePreferences"
+
+	// FlagDrawerDataSourcePicker
+	// Changed UX for selecting datasources, opens in a drawer
+	FlagDrawerDataSourcePicker = "DrawerDataSourcePicker"
 )

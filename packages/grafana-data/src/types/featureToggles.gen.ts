@@ -81,4 +81,5 @@ export interface FeatureToggles {
   logsContextDatasourceUi?: boolean;
   lokiQuerySplitting?: boolean;
   individualCookiePreferences?: boolean;
+  DrawerDataSourcePicker?: boolean;
 }

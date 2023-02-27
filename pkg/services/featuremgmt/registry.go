@@ -366,5 +366,11 @@ var (
 			Description: "Support overriding cookie preferences per user",
 			State:       FeatureStateAlpha,
 		},
+		{
+			Name:         "DrawerDataSourcePicker",
+			Description:  "Changed UX for selecting datasources, opens in a drawer",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
 	}
 )
