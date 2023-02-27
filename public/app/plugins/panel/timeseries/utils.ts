@@ -140,14 +140,15 @@ const setClassicPaletteIdxs = (frames: DataFrame[], theme: GrafanaTheme2) => {
 
   frames.forEach((frame) => {
     frame.fields.forEach((field) => {
-      if (field.type === FieldType.number) { // || FieldType.enum
+      // TODO: also add FieldType.enum type here after https://github.com/grafana/grafana/pull/60491
+      if (field.type === FieldType.number) {
         field.state = {
           ...field.state,
           seriesIndex: seriesIndex++, // TODO: skip this for fields with custom renderers (e.g. Candlestick)?
         };
         field.display = getDisplayProcessor({ field, theme });
       }
-    })
+    });
   });
 };
 
