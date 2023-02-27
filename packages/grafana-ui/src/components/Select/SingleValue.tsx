@@ -2,10 +2,11 @@ import { css, cx } from '@emotion/css';
 import React from 'react';
 import { components, GroupBase, SingleValueProps } from 'react-select';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue, IconName } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 import { useDelayedSwitch } from '../../utils/useDelayedSwitch';
+import { Icon } from '../Icon/Icon';
 import { Spinner } from '../Spinner/Spinner';
 import { FadeTransition } from '../transitions/FadeTransition';
 import { SlideOutTransition } from '../transitions/SlideOutTransition';
@@ -37,6 +38,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     position: absolute;
   `;
 
+  const optionIcon = css`
+    margin-right: ${theme.spacing(1)};
+    color: ${theme.colors.text.secondary};
+  `;
+
   const disabled = css`
     color: ${theme.colors.text.disabled};
   `;
@@ -45,7 +51,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     color: ${theme.colors.text.disabled};
   `;
 
-  return { singleValue, spinnerWrapper, spinnerIcon, disabled, isOpen };
+  return { singleValue, spinnerWrapper, spinnerIcon, optionIcon, disabled, isOpen };
 };
 
 type StylesType = ReturnType<typeof getStyles>;
@@ -70,12 +76,16 @@ export const SingleValue = <T extends unknown>(props: Props<T>) => {
           alt={(data.label ?? data.value) as string}
         />
       ) : (
-        <SlideOutTransition horizontal size={16} visible={loading} duration={150}>
-          <div className={styles.spinnerWrapper}>
-            <Spinner className={styles.spinnerIcon} inline />
-          </div>
-        </SlideOutTransition>
+        <>
+          <SlideOutTransition horizontal size={16} visible={loading} duration={150}>
+            <div className={styles.spinnerWrapper}>
+              <Spinner className={styles.spinnerIcon} inline />
+            </div>
+          </SlideOutTransition>
+          {data.icon && <Icon name={data.icon as IconName} role="img" className={styles.optionIcon} />}
+        </>
       )}
+
       {!data.hideText && children}
     </components.SingleValue>
   );
