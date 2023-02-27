@@ -115,9 +115,6 @@ var (
 	AuthProxyEnabled        bool
 	AuthProxyHeaderProperty string
 
-	// Basic Auth
-	BasicAuthEnabled bool
-
 	// Global setting objects.
 	Raw *ini.File
 
@@ -1489,8 +1486,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	// basic auth
 	authBasic := iniFile.Section("auth.basic")
-	BasicAuthEnabled = authBasic.Key("enabled").MustBool(true)
-	cfg.BasicAuthEnabled = BasicAuthEnabled
+	cfg.BasicAuthEnabled = authBasic.Key("enabled").MustBool(true)
 
 	// JWT auth
 	authJWT := iniFile.Section("auth.jwt")
