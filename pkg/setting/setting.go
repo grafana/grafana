@@ -108,10 +108,6 @@ var (
 	SigV4AuthEnabled bool
 	AzureAuthEnabled bool
 
-	// Auth proxy settings
-	AuthProxyEnabled        bool
-	AuthProxyHeaderProperty string
-
 	// Global setting objects.
 	Raw *ini.File
 
@@ -1504,12 +1500,10 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	cfg.JWTAuthSkipOrgRoleSync = authJWT.Key("skip_org_role_sync").MustBool(false)
 
 	authProxy := iniFile.Section("auth.proxy")
-	AuthProxyEnabled = authProxy.Key("enabled").MustBool(false)
-	cfg.AuthProxyEnabled = AuthProxyEnabled
+	cfg.AuthProxyEnabled = authProxy.Key("enabled").MustBool(false)
 
 	cfg.AuthProxyHeaderName = valueAsString(authProxy, "header_name", "")
-	AuthProxyHeaderProperty = valueAsString(authProxy, "header_property", "")
-	cfg.AuthProxyHeaderProperty = AuthProxyHeaderProperty
+	cfg.AuthProxyHeaderProperty = valueAsString(authProxy, "header_property", "")
 	cfg.AuthProxyAutoSignUp = authProxy.Key("auto_sign_up").MustBool(true)
 	cfg.AuthProxyEnableLoginToken = authProxy.Key("enable_login_token").MustBool(false)
 
