@@ -251,10 +251,6 @@ const (
 	// Stop maintaining state of alerts that are not firing
 	FlagAlertingNoNormalState = "alertingNoNormalState"
 
-	// FlagTopNavCommandPalette
-	// Launch the Command Palette from the top navigation search box
-	FlagTopNavCommandPalette = "topNavCommandPalette"
-
 	// FlagLogsSampleInExplore
 	// Enables access to the logs sample feature in Explore
 	FlagLogsSampleInExplore = "logsSampleInExplore"
@@ -266,6 +262,10 @@ const (
 	// FlagLokiQuerySplitting
 	// Split large interval queries into subqueries with smaller time intervals
 	FlagLokiQuerySplitting = "lokiQuerySplitting"
+
+	// FlagIndividualCookiePreferences
+	// Support overriding cookie preferences per user
+	FlagIndividualCookiePreferences = "individualCookiePreferences"
 
 	// FlagTraceqlSearch
 	// Enables the &#39;TraceQL Search&#39; tab for the Tempo datasource which provides a UI to generate TraceQL queries

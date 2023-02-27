@@ -41,8 +41,7 @@ const isBasicAggregation = (metric: MetricAggregation) => !metricAggregationConf
 
 const getTypeOptions = (
   previousMetrics: MetricAggregation[],
-  esVersion: string,
-  xpack = false
+  esVersion: string
 ): Array<SelectableValue<MetricAggregationType>> => {
   // we'll include Pipeline Aggregations only if at least one previous metric is a "Basic" one
   const includePipelineAggregations = previousMetrics.some(isBasicAggregation);
@@ -53,8 +52,6 @@ const getTypeOptions = (
       .filter(([_, { versionRange = '*' }]) => satisfies(esVersion, versionRange))
       // Filtering out Pipeline Aggregations if there's no basic metric selected before
       .filter(([_, config]) => includePipelineAggregations || !config.isPipelineAgg)
-      // Filtering out X-Pack plugins if X-Pack is disabled
-      .filter(([_, config]) => (config.xpack ? xpack : true))
       .map(([key, { label }]) => ({
         label,
         value: key as MetricAggregationType,
@@ -90,7 +87,7 @@ export const MetricEditor = ({ value }: Props) => {
       <InlineSegmentGroup>
         <Segment
           className={cx(styles.color, segmentStyles)}
-          options={getTypeOptions(previousMetrics, datasource.esVersion, datasource.xpack)}
+          options={getTypeOptions(previousMetrics, datasource.esVersion)}
           onChange={(e) => dispatch(changeMetricType({ id: value.id, type: e.value! }))}
           value={toOption(value)}
         />

@@ -8,7 +8,13 @@ import {
   migrateVariableEditorBackToVariableSupport,
   migrateVariableQueryToEditor,
 } from '../migrations/variableMigration';
-import { PromOptions, PromQuery, PromVariableQuery, PromVariableQueryType as QueryType } from '../types';
+import {
+  PromOptions,
+  PromQuery,
+  PromVariableQuery,
+  PromVariableQueryType as QueryType,
+  StandardPromVariableQuery,
+} from '../types';
 
 export const variableOptions = [
   { label: 'Label names', value: QueryType.LabelNames },
@@ -44,8 +50,9 @@ export const PromVariableQueryEditor: FC<Props> = ({ onChange, query, datasource
     if (!query) {
       return;
     }
-    // Changing from standard to custom variable editor changes the string attr from expr to query
-    const variableQuery = query.query ? migrateVariableQueryToEditor(query.query) : query;
+    // 1. Changing from standard to custom variable editor changes the string attr from expr to query
+    // 2. jsonnet grafana as code passes a variable as a string
+    const variableQuery = variableMigration(query);
 
     setQryType(variableQuery.qryType);
     setLabel(variableQuery.label ?? '');
@@ -255,3 +262,13 @@ export const PromVariableQueryEditor: FC<Props> = ({ onChange, query, datasource
     </InlineFieldRow>
   );
 };
+
+export function variableMigration(query: string | PromVariableQuery | StandardPromVariableQuery): PromVariableQuery {
+  if (typeof query === 'string') {
+    return migrateVariableQueryToEditor(query);
+  } else if (query.query) {
+    return migrateVariableQueryToEditor(query.query);
+  } else {
+    return query;
+  }
+}

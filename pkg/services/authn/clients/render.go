@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	ErrInvalidRenderKey = errutil.NewBase(errutil.StatusUnauthorized, "render-auth.invalid-key", errutil.WithPublicMessage("Invalid Render Key"))
+	errInvalidRenderKey = errutil.NewBase(errutil.StatusUnauthorized, "render-auth.invalid-key", errutil.WithPublicMessage("Invalid Render Key"))
 )
 
 const (
@@ -39,7 +39,7 @@ func (c *Render) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 	key := getRenderKey(r)
 	renderUsr, ok := c.renderService.GetRenderUser(ctx, key)
 	if !ok {
-		return nil, ErrInvalidRenderKey.Errorf("found no render user for key: %s", key)
+		return nil, errInvalidRenderKey.Errorf("found no render user for key: %s", key)
 	}
 
 	var identity *authn.Identity

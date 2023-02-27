@@ -25,19 +25,12 @@ const (
 
 // Defines values for TempoQueryType.
 const (
-	TempoQueryTypeClear TempoQueryType = "clear"
-
+	TempoQueryTypeClear        TempoQueryType = "clear"
 	TempoQueryTypeNativeSearch TempoQueryType = "nativeSearch"
-
-	TempoQueryTypeSearch TempoQueryType = "search"
-
-	TempoQueryTypeServiceMap TempoQueryType = "serviceMap"
-
-	TempoQueryTypeTraceql TempoQueryType = "traceql"
-
-	TempoQueryTypeTraceqlSearch TempoQueryType = "traceqlSearch"
-
-	TempoQueryTypeUpload TempoQueryType = "upload"
+	TempoQueryTypeSearch       TempoQueryType = "search"
+	TempoQueryTypeServiceMap   TempoQueryType = "serviceMap"
+	TempoQueryTypeTraceql      TempoQueryType = "traceql"
+	TempoQueryTypeUpload       TempoQueryType = "upload"
 )
 
 // SearchFilter defines model for SearchFilter.
@@ -91,7 +84,7 @@ type TempoDataQuery struct {
 		ValueType *string `json:"valueType,omitempty"`
 	} `json:"filters"`
 
-	// true if query is disabled (ie should not be returned to the dashboard)
+	// Hide true if query is disabled (ie should not be returned to the dashboard)
 	Hide *bool `json:"hide,omitempty"`
 
 	// Unique, guid like, string used in explore mode
@@ -129,8 +122,5 @@ type TempoDataQuery struct {
 	SpanName *string `json:"spanName,omitempty"`
 }
 
-// The type of the filter, can either be static (pre defined in the UI) or dynamic
-type FiltersType string
-
-// search = Loki search, nativeSearch = Tempo search for backwards compatibility
+// TempoQueryType search = Loki search, nativeSearch = Tempo search for backwards compatibility
 type TempoQueryType string
