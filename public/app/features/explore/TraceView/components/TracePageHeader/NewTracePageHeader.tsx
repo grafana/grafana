@@ -99,17 +99,21 @@ export function NewTracePageHeader(props: TracePageHeaderEmbedProps) {
         {timestamp(trace, timeZone, styles)}
         {method || status || url ? <span className={styles.divider}>|</span> : undefined}
         {method && method.length > 0 && (
-          <span className={styles.tag}>
-            <Badge text={method[0].value} color="blue" />
-          </span>
+          <Tooltip content={'http.method'} interactive={true}>
+            <span className={styles.tag}>
+              <Badge text={method[0].value} color="blue" />
+            </span>
+          </Tooltip>
         )}
         {status && status.length > 0 && (
-          <span className={styles.tag}>
-            <Badge text={status[0].value} color={statusColor} />
-          </span>
+          <Tooltip content={'http.status_code'} interactive={true}>
+            <span className={styles.tag}>
+              <Badge text={status[0].value} color={statusColor} />
+            </span>
+          </Tooltip>
         )}
         {url && url.length > 0 && (
-          <Tooltip content={url[0].value} interactive={true}>
+          <Tooltip content={'http.url or http.target or http.path'} interactive={true}>
             <span className={styles.url}>{url[0].value}</span>
           </Tooltip>
         )}
