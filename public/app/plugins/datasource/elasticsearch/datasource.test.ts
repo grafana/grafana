@@ -26,15 +26,14 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { createFetchResponse } from '../../../../test/helpers/createFetchResponse';
 
-import { Filters } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 import { ElasticDatasource, enhanceDataFrame } from './datasource';
 import { createElasticDatasource } from './mocks';
-import { ElasticsearchOptions, ElasticsearchQuery } from './types';
+import { Filters, ElasticsearchOptions, ElasticsearchQuery } from './types';
 
 const ELASTICSEARCH_MOCK_URL = 'http://elasticsearch.local';
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
   reportInteraction: jest.fn(),
   getDataSourceSrv: () => {
@@ -61,7 +60,7 @@ const DATAQUERY_BASE = {
 };
 
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
-  ...(jest.requireActual('app/features/dashboard/services/TimeSrv') as unknown as object),
+  ...jest.requireActual('app/features/dashboard/services/TimeSrv'),
   getTimeSrv: () => ({
     timeRange: () => createTimeRange(toUtc(TIMESRV_START), toUtc(TIMESRV_END)),
   }),

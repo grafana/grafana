@@ -410,7 +410,7 @@ func createMultiOrgAlertmanager(t *testing.T, orgs []int64) *notifier.MultiOrgAl
 	m := metrics.NewNGAlert(registry)
 	secretsService := secretsManager.SetupTestService(t, fake_secrets.NewFakeSecretsStore())
 	decryptFn := secretsService.GetDecryptedValue
-	moa, err := notifier.NewMultiOrgAlertmanager(cfg, &cfgStore, &orgStore, kvStore, provisioning.NewFakeProvisioningStore(), decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService)
+	moa, err := notifier.NewMultiOrgAlertmanager(cfg, cfgStore, &orgStore, kvStore, provisioning.NewFakeProvisioningStore(), decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService)
 	require.NoError(t, err)
 	require.NoError(t, moa.LoadAndSyncAlertmanagersForOrgs(context.Background()))
 	require.Eventually(t, func() bool {
@@ -490,6 +490,42 @@ func TestBuildExternalURL(t *testing.T) {
 				URL: "localhost:9000/path/to/am",
 			},
 			expectedURL: "http://localhost:9000/path/to/am",
+		},
+		{
+			name: "adds /alertmanager to path when implementation is mimir",
+			ds: &datasources.DataSource{
+				URL: "https://localhost:9000",
+				JsonData: func() *simplejson.Json {
+					r := simplejson.New()
+					r.Set("implementation", "mimir")
+					return r
+				}(),
+			},
+			expectedURL: "https://localhost:9000/alertmanager",
+		},
+		{
+			name: "adds /alertmanager to path when implementation is cortex",
+			ds: &datasources.DataSource{
+				URL: "https://localhost:9000/path/to/am",
+				JsonData: func() *simplejson.Json {
+					r := simplejson.New()
+					r.Set("implementation", "cortex")
+					return r
+				}(),
+			},
+			expectedURL: "https://localhost:9000/path/to/am/alertmanager",
+		},
+		{
+			name: "do nothing when implementation is prometheus",
+			ds: &datasources.DataSource{
+				URL: "https://localhost:9000/path/to/am",
+				JsonData: func() *simplejson.Json {
+					r := simplejson.New()
+					r.Set("implementation", "prometheus")
+					return r
+				}(),
+			},
+			expectedURL: "https://localhost:9000/path/to/am",
 		},
 	}
 	for _, test := range tests {

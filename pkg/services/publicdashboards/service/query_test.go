@@ -485,9 +485,9 @@ func TestGetAnnotations(t *testing.T) {
 
 		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return([]*annotations.ItemDTO{
 			{
-				Id:          1,
-				DashboardId: 1,
-				PanelId:     1,
+				ID:          1,
+				DashboardID: 1,
+				PanelID:     1,
 				Tags:        []string{"tag1"},
 				TimeEnd:     2,
 				Time:        2,
@@ -545,9 +545,9 @@ func TestGetAnnotations(t *testing.T) {
 
 		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return([]*annotations.ItemDTO{
 			{
-				Id:          1,
-				DashboardId: 1,
-				PanelId:     1,
+				ID:          1,
+				DashboardID: 1,
+				PanelID:     1,
 				Tags:        []string{},
 				TimeEnd:     1,
 				Time:        2,
@@ -617,9 +617,9 @@ func TestGetAnnotations(t *testing.T) {
 
 		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return([]*annotations.ItemDTO{
 			{
-				Id:          1,
-				DashboardId: 1,
-				PanelId:     1,
+				ID:          1,
+				DashboardID: 1,
+				PanelID:     1,
 				Tags:        []string{},
 				TimeEnd:     1,
 				Time:        2,
@@ -888,9 +888,10 @@ func TestBuildMetricRequest(t *testing.T) {
 					"type": "mysql",
 					"uid":  "ds1",
 				},
-				"intervalMs":    int64(10000000),
-				"maxDataPoints": int64(200),
-				"refId":         "A",
+				"intervalMs":      int64(10000000),
+				"maxDataPoints":   int64(200),
+				"queryCachingTTL": int64(0),
+				"refId":           "A",
 			}),
 			reqDTO.Queries[0],
 		)
@@ -902,9 +903,10 @@ func TestBuildMetricRequest(t *testing.T) {
 					"type": "prometheus",
 					"uid":  "ds2",
 				},
-				"intervalMs":    int64(10000000),
-				"maxDataPoints": int64(200),
-				"refId":         "B",
+				"intervalMs":      int64(10000000),
+				"maxDataPoints":   int64(200),
+				"queryCachingTTL": int64(0),
+				"refId":           "B",
 			}),
 			reqDTO.Queries[1],
 		)

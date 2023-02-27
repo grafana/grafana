@@ -213,7 +213,7 @@ export class PrometheusDatasource
     }
 
     let queryUrl = this.url + url;
-    if (url.startsWith(`/api/datasources/${this.id}`)) {
+    if (url.startsWith(`/api/datasources/uid/${this.uid}`)) {
       // This url is meant to be a replacement for the whole URL. Replace the entire URL
       queryUrl = url;
     }
@@ -263,7 +263,7 @@ export class PrometheusDatasource
     if (GET_AND_POST_METADATA_ENDPOINTS.some((endpoint) => url.includes(endpoint))) {
       try {
         return await lastValueFrom(
-          this._request<T>(`/api/datasources/${this.id}/resources${url}`, params, {
+          this._request<T>(`/api/datasources/uid/${this.uid}/resources${url}`, params, {
             method: this.httpMethod,
             hideFromInspector: true,
             showErrorAlert: false,
@@ -281,7 +281,7 @@ export class PrometheusDatasource
     }
 
     return await lastValueFrom(
-      this._request<T>(`/api/datasources/${this.id}/resources${url}`, params, {
+      this._request<T>(`/api/datasources/uid/${this.uid}/resources${url}`, params, {
         method: 'GET',
         hideFromInspector: true,
         ...options,
@@ -702,7 +702,7 @@ export class PrometheusDatasource
     }
 
     return this._request<PromDataSuccessResponse<PromVectorData | PromScalarData>>(
-      `/api/datasources/${this.id}/resources${url}`,
+      `/api/datasources/uid/${this.uid}/resources${url}`,
       data,
       {
         requestId: query.requestId,
@@ -830,6 +830,9 @@ export class PrometheusDatasource
     const eventList: AnnotationEvent[] = [];
 
     for (const frame of frames) {
+      if (frame.fields.length === 0) {
+        continue;
+      }
       const timeField = frame.fields[0];
       const valueField = frame.fields[1];
       const labels = valueField?.labels || {};

@@ -17,7 +17,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15.6
+  image: alpine:3.17.1
   name: identify-runner
 - commands:
   - mkdir -p bin
@@ -73,7 +73,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15.6
+  image: alpine:3.17.1
   name: identify-runner
 - commands:
   - mkdir -p bin
@@ -128,7 +128,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15.6
+  image: alpine:3.17.1
   name: identify-runner
 - commands:
   - mkdir -p bin
@@ -232,7 +232,7 @@ steps:
   name: clone-enterprise
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15.6
+  image: alpine:3.17.1
   name: identify-runner
 - commands:
   - yarn install --immutable
@@ -307,7 +307,7 @@ steps:
   name: clone-enterprise
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15.6
+  image: alpine:3.17.1
   name: identify-runner
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
@@ -393,7 +393,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15.6
+  image: alpine:3.17.1
   name: identify-runner
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
@@ -477,7 +477,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15.6
+  image: alpine:3.17.1
   name: identify-runner
 - commands:
   - mkdir -p bin
@@ -600,7 +600,7 @@ steps:
   name: build-plugins
 - commands:
   - . scripts/build/gpg-test-vars.sh && ./bin/build package --jobs 8 --edition oss
-    --build-id ${DRONE_BUILD_NUMBER} --variants linux-amd64,linux-amd64-musl,darwin-amd64,windows-amd64
+    --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - build-plugins
   - build-backend
@@ -680,7 +680,7 @@ steps:
     paths:
       include:
       - pkg/tsdb/azuremonitor/**
-      - public/app/plugins/datasource/grafana-azure-monitor-datasource/**
+      - public/app/plugins/datasource/azuremonitor/**
       - e2e/cloud-plugins-suite/azure-monitor.spec.ts
     repo:
     - grafana/grafana
@@ -847,7 +847,7 @@ steps:
   name: compile-build-cmd
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15.6
+  image: alpine:3.17.1
   name: identify-runner
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -957,7 +957,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15.6
+  image: alpine:3.17.1
   name: identify-runner
 - commands:
   - yarn install --immutable
@@ -985,7 +985,7 @@ steps:
   image: grafana/build-container:v1.7.1
   name: lint-docs
 - commands:
-  - mkdir -p /hugo/content/docs/grafana
+  - mkdir -p /hugo/content/docs/grafana/latest
   - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
   - cd /hugo && make prod
   image: grafana/docs-base:latest
@@ -1074,7 +1074,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15.6
+  image: alpine:3.17.1
   name: identify-runner
 - commands:
   - yarn install --immutable
@@ -1102,7 +1102,7 @@ steps:
   image: grafana/build-container:v1.7.1
   name: lint-docs
 - commands:
-  - mkdir -p /hugo/content/docs/grafana
+  - mkdir -p /hugo/content/docs/grafana/latest
   - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
   - cd /hugo && make prod
   image: grafana/docs-base:latest
@@ -1141,7 +1141,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15.6
+  image: alpine:3.17.1
   name: identify-runner
 - commands:
   - mkdir -p bin
@@ -1201,7 +1201,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15.6
+  image: alpine:3.17.1
   name: identify-runner
 - commands:
   - yarn install --immutable
@@ -1252,7 +1252,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15.6
+  image: alpine:3.17.1
   name: identify-runner
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
@@ -1329,7 +1329,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15.6
+  image: alpine:3.17.1
   name: identify-runner
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
@@ -1391,7 +1391,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15.6
+  image: alpine:3.17.1
   name: identify-runner
 - commands:
   - mkdir -p bin
@@ -1558,7 +1558,7 @@ steps:
     paths:
       include:
       - pkg/tsdb/azuremonitor/**
-      - public/app/plugins/datasource/grafana-azure-monitor-datasource/**
+      - public/app/plugins/datasource/azuremonitor/**
       - e2e/cloud-plugins-suite/azure-monitor.spec.ts
     repo:
     - grafana/grafana
@@ -1839,7 +1839,7 @@ steps:
   name: compile-build-cmd
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15.6
+  image: alpine:3.17.1
   name: identify-runner
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -2117,7 +2117,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15.6
+  image: alpine:3.17.1
   name: identify-runner
 - commands:
   - mkdir -p bin
@@ -2423,7 +2423,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15.6
+  image: alpine:3.17.1
   name: identify-runner
 - commands:
   - mkdir -p bin
@@ -2480,7 +2480,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15.6
+  image: alpine:3.17.1
   name: identify-runner
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
@@ -2580,7 +2580,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15.6
+  image: alpine:3.17.1
   name: identify-runner
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -2743,7 +2743,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15.6
+  image: alpine:3.17.1
   name: identify-runner
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
@@ -3059,7 +3059,7 @@ steps:
   name: init-enterprise
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15.6
+  image: alpine:3.17.1
   name: identify-runner
 - commands:
   - mkdir -p bin
@@ -3150,7 +3150,7 @@ steps:
   name: init-enterprise
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15.6
+  image: alpine:3.17.1
   name: identify-runner
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
@@ -3259,7 +3259,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15.6
+  image: alpine:3.17.1
   name: identify-runner
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
@@ -3345,7 +3345,9 @@ steps:
   name: mysql-integration-tests
 - commands:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
-  - ./bin/grabpl integration-tests
+  - go clean -testcache
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=5m {}'
   depends_on:
   - wire-install
   environment:
@@ -3489,7 +3491,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15.6
+  image: alpine:3.17.1
   name: identify-runner
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
@@ -3739,7 +3741,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15.6
+  image: alpine:3.17.1
   name: identify-runner
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
@@ -3980,7 +3982,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15.6
+  image: alpine:3.17.1
   name: identify-runner
 - commands:
   - mkdir -p bin
@@ -4076,7 +4078,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15.6
+  image: alpine:3.17.1
   name: identify-runner
 - commands:
   - mkdir -p bin
@@ -4155,7 +4157,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15.6
+  image: alpine:3.17.1
   name: identify-runner
 - commands:
   - mkdir -p bin
@@ -4772,7 +4774,7 @@ volumes:
   name: docker
 ---
 clone:
-  retries: 3
+  disable: true
 depends_on: []
 environment:
   EDITION: enterprise
@@ -4863,7 +4865,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15.6
+  image: alpine:3.17.1
   name: identify-runner
 - commands:
   - mkdir -p bin
@@ -5142,7 +5144,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15.6
+  image: alpine:3.17.1
   name: identify-runner
 - commands:
   - mkdir -p bin
@@ -5196,7 +5198,7 @@ services: []
 steps:
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15.6
+  image: alpine:3.17.1
   name: identify-runner
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
@@ -5293,7 +5295,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15.6
+  image: alpine:3.17.1
   name: identify-runner
 - commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
@@ -5446,7 +5448,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15.6
+  image: alpine:3.17.1
   name: identify-runner
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
@@ -5764,7 +5766,7 @@ steps:
   name: init-enterprise
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15.6
+  image: alpine:3.17.1
   name: identify-runner
 - commands:
   - mkdir -p bin
@@ -5851,7 +5853,7 @@ steps:
   name: init-enterprise
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15.6
+  image: alpine:3.17.1
   name: identify-runner
 - commands:
   - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
@@ -5957,7 +5959,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15.6
+  image: alpine:3.17.1
   name: identify-runner
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
@@ -6042,7 +6044,9 @@ steps:
   name: mysql-integration-tests
 - commands:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
-  - ./bin/grabpl integration-tests
+  - go clean -testcache
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=5m {}'
   depends_on:
   - wire-install
   environment:
@@ -6176,7 +6180,7 @@ steps:
   name: grabpl
 - commands:
   - echo $DRONE_RUNNER_NAME
-  image: alpine:3.15.6
+  image: alpine:3.17.1
   name: identify-runner
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
@@ -6270,7 +6274,7 @@ steps:
   name: build-backend-enterprise2
 - commands:
   - ./bin/build package --jobs 8 --edition enterprise2 --build-id ${DRONE_BUILD_NUMBER}
-    --variants linux-amd64 --sign
+    --sign
   depends_on:
   - build-plugins
   - build-backend-enterprise2
@@ -6656,6 +6660,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: 3e72bf092e103764489c02760188a3529c06c2e91ea34fa234794491f274a5a0
+hmac: 1847568b29364d0ba065b1f65d6536f24f636dbf36ce2cdccf05e8f80e2b9caf
 
 ...

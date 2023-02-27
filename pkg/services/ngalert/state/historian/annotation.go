@@ -79,10 +79,11 @@ func (h *AnnotationBackend) QueryStates(ctx context.Context, query ngmodels.Hist
 	}
 
 	q := annotations.ItemQuery{
-		AlertId: rq.Result.ID,
-		OrgId:   query.OrgID,
-		From:    query.From.Unix(),
-		To:      query.To.Unix(),
+		AlertID:      rq.Result.ID,
+		OrgID:        query.OrgID,
+		From:         query.From.Unix(),
+		To:           query.To.Unix(),
+		SignedInUser: query.SignedInUser,
 	}
 	items, err := h.annotations.Find(ctx, &q)
 	if err != nil {
@@ -120,7 +121,7 @@ func (h *AnnotationBackend) QueryStates(ctx context.Context, query ngmodels.Hist
 	for _, item := range items {
 		data, err := json.Marshal(item.Data)
 		if err != nil {
-			logger.Error("Annotation service gave an annotation with unparseable data, skipping", "id", item.Id, "err", err)
+			logger.Error("Annotation service gave an annotation with unparseable data, skipping", "id", item.ID, "err", err)
 			continue
 		}
 		times = append(times, time.Unix(item.Time, 0))
@@ -150,8 +151,8 @@ func buildAnnotations(rule history_model.RuleMeta, states []state.StateTransitio
 		annotationText, annotationData := buildAnnotationTextAndData(rule, state.State)
 
 		item := annotations.Item{
-			AlertId:   rule.ID,
-			OrgId:     state.OrgID,
+			AlertID:   rule.ID,
+			OrgID:     state.OrgID,
 			PrevState: state.PreviousFormatted(),
 			NewState:  state.Formatted(),
 			Text:      annotationText,
@@ -173,8 +174,8 @@ func (h *AnnotationBackend) recordAnnotationsSync(ctx context.Context, panel *pa
 		}
 
 		for i := range annotations {
-			annotations[i].DashboardId = dashID
-			annotations[i].PanelId = panel.panelID
+			annotations[i].DashboardID = dashID
+			annotations[i].PanelID = panel.panelID
 		}
 	}
 

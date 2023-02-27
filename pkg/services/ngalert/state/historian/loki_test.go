@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -59,11 +60,12 @@ func TestRemoteLokiBackend(t *testing.T) {
 
 			require.Len(t, res, 1)
 			exp := map[string]string{
-				"folderUID": rule.NamespaceUID,
-				"group":     rule.Group,
-				"orgID":     fmt.Sprint(rule.OrgID),
-				"ruleUID":   rule.UID,
-				"a":         "b",
+				StateHistoryLabelKey: StateHistoryLabelValue,
+				"folderUID":          rule.NamespaceUID,
+				"group":              rule.Group,
+				"orgID":              fmt.Sprint(rule.OrgID),
+				"ruleUID":            rule.UID,
+				"a":                  "b",
 			}
 			require.Equal(t, exp, res[0].Stream)
 		})
@@ -139,6 +141,115 @@ func TestRemoteLokiBackend(t *testing.T) {
 	})
 }
 
+func TestMerge(t *testing.T) {
+	testCases := []struct {
+		name         string
+		res          queryRes
+		ruleID       string
+		expectedTime []time.Time
+	}{
+		{
+			name: "Should return values from multiple streams in right order",
+			res: queryRes{
+				Data: queryData{
+					Result: []stream{
+						{
+							Stream: map[string]string{
+								"current": "pending",
+							},
+							Values: []sample{
+								{time.Unix(0, 1), `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": "b"}}`},
+							},
+						},
+						{
+							Stream: map[string]string{
+								"current": "firing",
+							},
+							Values: []sample{
+								{time.Unix(0, 2), `{"schemaVersion": 1, "previous": "pending", "current": "firing", "values":{"a": "b"}}`},
+							},
+						},
+					},
+				},
+			},
+			ruleID: "123456",
+			expectedTime: []time.Time{
+				time.Unix(0, 1),
+				time.Unix(0, 2),
+			},
+		},
+		{
+			name: "Should handle empty values",
+			res: queryRes{
+				Data: queryData{
+					Result: []stream{
+						{
+							Stream: map[string]string{
+								"current": "normal",
+							},
+							Values: []sample{},
+						},
+					},
+				},
+			},
+			ruleID:       "123456",
+			expectedTime: []time.Time{},
+		},
+		{
+			name: "Should handle multiple values in one stream",
+			res: queryRes{
+				Data: queryData{
+					Result: []stream{
+						{
+							Stream: map[string]string{
+								"current": "normal",
+							},
+							Values: []sample{
+								{time.Unix(0, 1), `{"schemaVersion": 1, "previous": "firing", "current": "normal", "values":{"a": "b"}}`},
+								{time.Unix(0, 2), `{"schemaVersion": 1, "previous": "firing", "current": "normal", "values":{"a": "b"}}`},
+							},
+						},
+						{
+							Stream: map[string]string{
+								"current": "firing",
+							},
+							Values: []sample{
+								{time.Unix(0, 3), `{"schemaVersion": 1, "previous": "pending", "current": "firing", "values":{"a": "b"}}`},
+							},
+						},
+					},
+				},
+			},
+			ruleID: "123456",
+			expectedTime: []time.Time{
+				time.Unix(0, 1),
+				time.Unix(0, 2),
+				time.Unix(0, 3),
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			m, err := merge(tc.res, tc.ruleID)
+			require.NoError(t, err)
+
+			var dfTimeColumn *data.Field
+			for _, f := range m.Fields {
+				if f.Name == dfTime {
+					dfTimeColumn = f
+				}
+			}
+
+			require.NotNil(t, dfTimeColumn)
+
+			for i := 0; i < len(tc.expectedTime); i++ {
+				require.Equal(t, tc.expectedTime[i], dfTimeColumn.At(i))
+			}
+		})
+	}
+}
+
 func singleFromNormal(st *state.State) []state.StateTransition {
 	return []state.StateTransition{
 		{
@@ -165,11 +276,11 @@ func requireSingleEntry(t *testing.T, res []stream) lokiEntry {
 	return requireEntry(t, res[0].Values[0])
 }
 
-func requireEntry(t *testing.T, row row) lokiEntry {
+func requireEntry(t *testing.T, row sample) lokiEntry {
 	t.Helper()
 
 	var entry lokiEntry
-	err := json.Unmarshal([]byte(row.Val), &entry)
+	err := json.Unmarshal([]byte(row.V), &entry)
 	require.NoError(t, err)
 	return entry
 }

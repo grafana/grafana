@@ -115,6 +115,8 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   onSortChange = (sort: string | undefined) => {
     if (sort) {
       localStorage.setItem(SEARCH_SELECTED_SORT, sort);
+    } else {
+      localStorage.removeItem(SEARCH_SELECTED_SORT);
     }
 
     if (this.state.layout === SearchLayout.Folders) {
@@ -169,10 +171,6 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
 
     if (!this.state.includePanels && !q.kind) {
       q.kind = ['dashboard', 'folder']; // skip panels
-    }
-
-    if (q.query === '*' && !q.sort?.length) {
-      q.sort = 'name_sort';
     }
 
     return q;

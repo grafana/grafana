@@ -5,7 +5,7 @@ import { TestProvider } from 'test/helpers/TestProvider';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
 
-import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import { DataSourceSrv, locationService, setDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import {
   AlertManagerCortexConfig,
@@ -201,7 +201,7 @@ describe('AmRoutes', () => {
   afterEach(() => {
     jest.resetAllMocks();
 
-    setDataSourceSrv(undefined as any);
+    setDataSourceSrv(undefined as unknown as DataSourceSrv);
   });
 
   it('loads and shows routes', async () => {

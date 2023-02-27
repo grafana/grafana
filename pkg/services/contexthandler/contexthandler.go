@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	loginpkg "github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
+	"github.com/grafana/grafana/pkg/services/anonymous"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
@@ -53,48 +54,50 @@ func ProvideService(cfg *setting.Cfg, tokenService auth.UserTokenService, jwtSer
 	tracer tracing.Tracer, authProxy *authproxy.AuthProxy, loginService login.Service,
 	apiKeyService apikey.Service, authenticator loginpkg.Authenticator, userService user.Service,
 	orgService org.Service, oauthTokenService oauthtoken.OAuthTokenService, features *featuremgmt.FeatureManager,
-	authnService authn.Service,
+	authnService authn.Service, anonSessionService anonymous.Service,
 ) *ContextHandler {
 	return &ContextHandler{
-		Cfg:               cfg,
-		AuthTokenService:  tokenService,
-		JWTAuthService:    jwtService,
-		RemoteCache:       remoteCache,
-		RenderService:     renderService,
-		SQLStore:          sqlStore,
-		tracer:            tracer,
-		authProxy:         authProxy,
-		authenticator:     authenticator,
-		loginService:      loginService,
-		apiKeyService:     apiKeyService,
-		userService:       userService,
-		orgService:        orgService,
-		oauthTokenService: oauthTokenService,
-		features:          features,
-		authnService:      authnService,
-		singleflight:      new(singleflight.Group),
+		Cfg:                cfg,
+		AuthTokenService:   tokenService,
+		JWTAuthService:     jwtService,
+		RemoteCache:        remoteCache,
+		RenderService:      renderService,
+		SQLStore:           sqlStore,
+		tracer:             tracer,
+		authProxy:          authProxy,
+		authenticator:      authenticator,
+		loginService:       loginService,
+		apiKeyService:      apiKeyService,
+		userService:        userService,
+		orgService:         orgService,
+		oauthTokenService:  oauthTokenService,
+		features:           features,
+		authnService:       authnService,
+		anonSessionService: anonSessionService,
+		singleflight:       new(singleflight.Group),
 	}
 }
 
 // ContextHandler is a middleware.
 type ContextHandler struct {
-	Cfg               *setting.Cfg
-	AuthTokenService  auth.UserTokenService
-	JWTAuthService    auth.JWTVerifierService
-	RemoteCache       *remotecache.RemoteCache
-	RenderService     rendering.Service
-	SQLStore          db.DB
-	tracer            tracing.Tracer
-	authProxy         *authproxy.AuthProxy
-	authenticator     loginpkg.Authenticator
-	loginService      login.Service
-	apiKeyService     apikey.Service
-	userService       user.Service
-	orgService        org.Service
-	oauthTokenService oauthtoken.OAuthTokenService
-	features          *featuremgmt.FeatureManager
-	authnService      authn.Service
-	singleflight      *singleflight.Group
+	Cfg                *setting.Cfg
+	AuthTokenService   auth.UserTokenService
+	JWTAuthService     auth.JWTVerifierService
+	RemoteCache        *remotecache.RemoteCache
+	RenderService      rendering.Service
+	SQLStore           db.DB
+	tracer             tracing.Tracer
+	authProxy          *authproxy.AuthProxy
+	authenticator      loginpkg.Authenticator
+	loginService       login.Service
+	apiKeyService      apikey.Service
+	userService        user.Service
+	orgService         org.Service
+	oauthTokenService  oauthtoken.OAuthTokenService
+	features           *featuremgmt.FeatureManager
+	authnService       authn.Service
+	singleflight       *singleflight.Group
+	anonSessionService anonymous.Service
 	// GetTime returns the current time.
 	// Stubbable by tests.
 	GetTime func() time.Time
@@ -214,11 +217,6 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 			}
 		}
 
-		// this can be used by proxies to identify certain users
-		if h.features.IsEnabled(featuremgmt.FlagReturnUnameHeader) {
-			w.Header().Add("grafana-uname", reqContext.Login)
-		}
-
 		next.ServeHTTP(w, r)
 	})
 }
@@ -238,6 +236,17 @@ func (h *ContextHandler) initContextWithAnonymousUser(reqContext *contextmodel.R
 		reqContext.Logger.Error("Anonymous access organization error.", "org_name", h.Cfg.AnonymousOrgName, "error", err)
 		return false
 	}
+
+	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				reqContext.Logger.Warn("tag anon session panic", "err", err)
+			}
+		}()
+		if err := h.anonSessionService.TagSession(context.Background(), reqContext.Req); err != nil {
+			reqContext.Logger.Warn("Failed to tag anonymous session", "error", err)
+		}
+	}()
 
 	reqContext.IsSignedIn = false
 	reqContext.AllowAnonymous = true
@@ -270,7 +279,7 @@ func (h *ContextHandler) getAPIKey(ctx context.Context, keyString string) (*apik
 	}
 
 	// fetch key
-	keyQuery := apikey.GetByNameQuery{KeyName: decoded.Name, OrgId: decoded.OrgId}
+	keyQuery := apikey.GetByNameQuery{KeyName: decoded.Name, OrgID: decoded.OrgId}
 	if err := h.apiKeyService.GetApiKeyByName(ctx, &keyQuery); err != nil {
 		return nil, err
 	}
@@ -357,15 +366,15 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *contextmodel.ReqConte
 		if err := h.apiKeyService.UpdateAPIKeyLastUsedDate(context.Background(), id); err != nil {
 			reqContext.Logger.Warn("failed to update last use date for api key", "id", id)
 		}
-	}(apiKey.Id)
+	}(apiKey.ID)
 
 	if apiKey.ServiceAccountId == nil || *apiKey.ServiceAccountId < 1 { //There is no service account attached to the apikey
 		// Use the old APIkey method.  This provides backwards compatibility.
 		// will probably have to be supported for a long time.
 		reqContext.SignedInUser = &user.SignedInUser{}
 		reqContext.OrgRole = apiKey.Role
-		reqContext.ApiKeyID = apiKey.Id
-		reqContext.OrgID = apiKey.OrgId
+		reqContext.ApiKeyID = apiKey.ID
+		reqContext.OrgID = apiKey.OrgID
 		reqContext.IsSignedIn = true
 		return true
 	}
@@ -373,7 +382,7 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *contextmodel.ReqConte
 	//There is a service account attached to the API key
 
 	//Use service account linked to API key as the signed in user
-	querySignedInUser := user.GetSignedInUserQuery{UserID: *apiKey.ServiceAccountId, OrgID: apiKey.OrgId}
+	querySignedInUser := user.GetSignedInUserQuery{UserID: *apiKey.ServiceAccountId, OrgID: apiKey.OrgID}
 	querySignedInUserResult, err := h.userService.GetSignedInUserWithCacheCtx(reqContext.Req.Context(), &querySignedInUser)
 	if err != nil {
 		reqContext.Logger.Error(
