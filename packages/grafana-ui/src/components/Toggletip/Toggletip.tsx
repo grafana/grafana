@@ -87,7 +87,7 @@ export const Toggletip = React.memo(
               ref={setTooltipRef}
               {...getTooltipProps({ className: containerStyle })}
             >
-              {!!title && (
+              {boolean(title) && (
                 <div className="toggletip-header">
                   {typeof title === 'string' && title}
                   {title && React.isValidElement(title) && React.cloneElement(title)}
