@@ -41,24 +41,24 @@ func (prov *defaultAlertRuleProvisioner) Provision(ctx context.Context,
 	files []*AlertingFile) error {
 	for _, file := range files {
 		for _, group := range file.Groups {
-			folderUID, err := prov.getOrCreateFolderUID(ctx, group.Folder, group.OrgID)
+			folderUID, err := prov.getOrCreateFolderUID(ctx, group.FolderTitle, group.OrgID)
 			if err != nil {
 				return err
 			}
 			prov.logger.Debug("provisioning alert rule group",
 				"org", group.OrgID,
-				"folder", group.Folder,
+				"folder", group.FolderTitle,
 				"folderUID", folderUID,
-				"name", group.Name)
+				"name", group.Title)
 			for _, rule := range group.Rules {
 				rule.NamespaceUID = folderUID
-				rule.RuleGroup = group.Name
-				err = prov.provisionRule(ctx, group.OrgID, rule, group.Folder, folderUID)
+				rule.RuleGroup = group.Title
+				err = prov.provisionRule(ctx, group.OrgID, rule)
 				if err != nil {
 					return err
 				}
 			}
-			err = prov.ruleService.UpdateRuleGroup(ctx, group.OrgID, folderUID, group.Name, int64(group.Interval.Seconds()))
+			err = prov.ruleService.UpdateRuleGroup(ctx, group.OrgID, folderUID, group.Title, group.Interval)
 			if err != nil {
 				return err
 			}
@@ -77,9 +77,7 @@ func (prov *defaultAlertRuleProvisioner) Provision(ctx context.Context,
 func (prov *defaultAlertRuleProvisioner) provisionRule(
 	ctx context.Context,
 	orgID int64,
-	rule alert_models.AlertRule,
-	folder,
-	folderUID string) error {
+	rule alert_models.AlertRule) error {
 	prov.logger.Debug("provisioning alert rule", "uid", rule.UID, "org", rule.OrgID)
 	_, _, err := prov.ruleService.GetAlertRule(ctx, orgID, rule.UID)
 	if err != nil && !errors.Is(err, alert_models.ErrAlertRuleNotFound) {

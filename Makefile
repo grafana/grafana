@@ -16,6 +16,8 @@ GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
 
+targets := $(shell echo '$(sources)' | tr "," " ")
+
 all: deps build
 
 ##@ Dependencies
@@ -49,6 +51,7 @@ $(SPEC_TARGET): $(SWAGGER) ## Generate API Swagger specification
 	-x "github.com/prometheus/alertmanager" \
 	-i pkg/api/swagger_tags.json \
 	--exclude-tag=alpha
+	go run pkg/services/ngalert/api/tooling/cmd/clean-swagger/main.go -if $@ -of $@
 
 swagger-api-spec: gen-go $(SPEC_TARGET) $(MERGED_SPEC_TARGET) validate-api-spec
 
@@ -56,7 +59,7 @@ validate-api-spec: $(MERGED_SPEC_TARGET) $(SWAGGER) ## Validate API spec
 	$(SWAGGER) validate $(<)
 
 clean-api-spec:
-	rm $(SPEC_TARGET) $(MERGED_SPEC_TARGET) $(OAPI_SPEC_TARGET)
+	rm -f $(SPEC_TARGET) $(MERGED_SPEC_TARGET) $(OAPI_SPEC_TARGET)
 
 ##@ OpenAPI 3
 OAPI_SPEC_TARGET = public/openapi3.json
@@ -84,7 +87,7 @@ fix-cue: $(CUE)
 gen-jsonnet:
 	go generate ./devenv/jsonnet
 
-build-go: $(MERGED_SPEC_TARGET) gen-go ## Build all Go binaries.
+build-go: gen-go ## Build all Go binaries.
 	@echo "build go files"
 	$(GO) run build.go $(GO_BUILD_FLAGS) build
 
@@ -184,8 +187,11 @@ ifeq ($(sources),)
 devenv:
 	@printf 'You have to define sources for this command \nexample: make devenv sources=postgres,openldap\n'
 else
-devenv: devenv-down ## Start optional services, e.g. postgres, prometheus, and elasticsearch.
-	$(eval targets := $(shell echo '$(sources)' | tr "," " "))
+devenv: ${KIND} devenv-down ## Start optional services, e.g. postgres, prometheus, and elasticsearch.
+ifneq (,$(findstring apiserver,$(targets)))
+	@${KIND} create cluster --name grafana-devenv
+	$(eval targets := $(filter-out apiserver,$(targets)))
+endif
 
 	@cd devenv; \
 	./create_docker_compose.sh $(targets) || \
@@ -196,6 +202,7 @@ devenv: devenv-down ## Start optional services, e.g. postgres, prometheus, and e
 endif
 
 devenv-down: ## Stop optional services.
+	@${KIND} delete cluster --name grafana
 	@cd devenv; \
 	test -f docker-compose.yaml && \
 	docker-compose down || exit 0;
@@ -239,8 +246,12 @@ drone: $(DRONE)
 	$(DRONE) lint .drone.yml --trusted
 	$(DRONE) --server https://drone.grafana.net sign --save grafana/grafana
 
+# Generate an Emacs tags table (https://www.gnu.org/software/emacs/manual/html_node/emacs/Tags-Tables.html) for Starlark files.
+scripts/drone/TAGS: $(shell find scripts/drone -name '*.star')
+	etags --lang none --regex="/def \(\w+\)[^:]+:/\1/" --regex="/\s*\(\w+\) =/\1/" $^ -o $@
+
 format-drone:
-	black --include '\.star$$' -S scripts/drone/ .drone.star
+	buildifier -r scripts/drone
 
 help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)

@@ -23,6 +23,7 @@ import {
   restoreCustomOverrideRules,
 } from '@grafana/data';
 import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
+import { LibraryPanel, LibraryPanelRef } from '@grafana/schema';
 import config from 'app/core/config';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { getNextRefIdChar } from 'app/core/utils/query';
@@ -35,7 +36,6 @@ import {
   RenderEvent,
 } from 'app/types/events';
 
-import { LibraryElementDTO, LibraryPanelRef } from '../../library-panels/types';
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import { getVariablesUrlParams } from '../../variables/getAllVariableValuesForUrl';
 import { getTimeSrv } from '../services/TimeSrv';
@@ -104,6 +104,7 @@ const mustKeepProps: { [str: string]: boolean } = {
   hasRefreshed: true,
   events: true,
   cacheTimeout: true,
+  queryCachingTTL: true,
   cachedPluginOptions: true,
   transparent: true,
   pluginVersion: true,
@@ -172,7 +173,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   links?: DataLink[];
   declare transparent: boolean;
 
-  libraryPanel?: LibraryPanelRef | LibraryElementDTO;
+  libraryPanel?: LibraryPanelRef | LibraryPanel;
 
   autoMigrateFrom?: string;
 
@@ -184,6 +185,8 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   hasSavedPanelEditChange?: boolean;
   hasRefreshed?: boolean;
   cacheTimeout?: string | null;
+  queryCachingTTL?: number | null;
+
   cachedPluginOptions: Record<string, PanelOptionsCache> = {};
   legend?: { show: boolean; sort?: string; sortDesc?: boolean };
   plugin?: PanelPlugin;
@@ -339,6 +342,9 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     if (manuallyUpdated) {
       this.configRev++;
     }
+
+    // Maybe a bit heavy. Could add a "GridPosChanged" event instead?
+    this.render();
   }
 
   runAllPanelQueries({
@@ -363,6 +369,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       minInterval: this.interval,
       scopedVars: this.scopedVars,
       cacheTimeout: this.cacheTimeout,
+      queryCachingTTL: this.queryCachingTTL,
       transformations: this.transformations,
       app: this.isEditing ? CoreApp.PanelEditor : this.isViewing ? CoreApp.PanelViewer : CoreApp.Dashboard,
     });
@@ -529,6 +536,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     }
 
     this.cacheTimeout = options.cacheTimeout;
+    this.queryCachingTTL = options.queryCachingTTL;
     this.timeFrom = options.timeRange?.from;
     this.timeShift = options.timeRange?.shift;
     this.hideTimeOverride = options.timeRange?.hide;
@@ -680,7 +688,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     return this.replaceVariables(this.title, undefined, 'text');
   }
 
-  initLibraryPanel(libPanel: LibraryElementDTO) {
+  initLibraryPanel(libPanel: LibraryPanel) {
     for (const [key, val] of Object.entries(libPanel.model)) {
       switch (key) {
         case 'id':

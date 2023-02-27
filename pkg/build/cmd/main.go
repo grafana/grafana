@@ -5,9 +5,17 @@ import (
 	"os"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/build/docker"
 	"github.com/urfave/cli/v2"
+
+	"github.com/grafana/grafana/pkg/build/docker"
 )
+
+var additionalCommands []*cli.Command = make([]*cli.Command, 0, 5)
+
+//nolint:unused
+func registerAppCommand(c *cli.Command) {
+	additionalCommands = append(additionalCommands, c)
+}
 
 func main() {
 	app := cli.NewApp()
@@ -133,6 +141,12 @@ func main() {
 			Action: VerifyDrone,
 		},
 		{
+			Name:      "verify-starlark",
+			Usage:     "Verify Starlark configuration",
+			ArgsUsage: "<workspace path>",
+			Action:    VerifyStarlark,
+		},
+		{
 			Name:   "export-version",
 			Usage:  "Exports version in dist/grafana.version",
 			Action: ExportVersion,
@@ -184,6 +198,59 @@ func main() {
 			Usage: "Handle Grafana artifacts",
 			Subcommands: cli.Commands{
 				{
+					Name:   "publish",
+					Usage:  "Publish Grafana artifacts",
+					Action: PublishArtifactsAction,
+					Flags: []cli.Flag{
+						&editionFlag,
+						&cli.BoolFlag{
+							Name:  "security",
+							Usage: "Security release",
+						},
+						&cli.StringFlag{
+							Name:  "security-dest-bucket",
+							Usage: "Google Cloud Storage bucket for security packages (or $SECURITY_DEST_BUCKET)",
+						},
+						&cli.StringFlag{
+							Name:  "tag",
+							Usage: "Grafana version tag",
+						},
+						&cli.StringFlag{
+							Name:  "src-bucket",
+							Value: "grafana-prerelease",
+							Usage: "Google Cloud Storage bucket",
+						},
+						&cli.StringFlag{
+							Name:  "dest-bucket",
+							Value: "grafana-downloads",
+							Usage: "Google Cloud Storage bucket for published packages",
+						},
+						&cli.StringFlag{
+							Name:  "enterprise2-dest-bucket",
+							Value: "grafana-downloads-enterprise2",
+							Usage: "Google Cloud Storage bucket for published packages",
+						},
+						&cli.StringFlag{
+							Name:  "enterprise2-security-prefix",
+							Usage: "Bucket path prefix for enterprise2 security releases (or $ENTERPRISE2_SECURITY_PREFIX)",
+						},
+						&cli.StringFlag{
+							Name:  "static-assets-bucket",
+							Value: "grafana-static-assets",
+							Usage: "Google Cloud Storage bucket for static assets",
+						},
+						&cli.StringSliceFlag{
+							Name:  "static-asset-editions",
+							Usage: "All the editions of the static assets (or $STATIC_ASSET_EDITIONS)",
+						},
+						&cli.StringFlag{
+							Name:  "storybook-bucket",
+							Value: "grafana-storybook",
+							Usage: "Google Cloud Storage bucket for storybooks",
+						},
+					},
+				},
+				{
 					Name:  "docker",
 					Usage: "Handle Grafana Docker images",
 					Subcommands: cli.Commands{
@@ -220,10 +287,7 @@ func main() {
 							ArgsUsage: "[version]",
 							Action:    NpmReleaseAction,
 							Flags: []cli.Flag{
-								&cli.StringFlag{
-									Name:  "tag",
-									Usage: "Grafana version tag",
-								},
+								&tagFlag,
 							},
 						},
 						{
@@ -231,10 +295,7 @@ func main() {
 							Usage:  "Store npm packages tarball",
 							Action: NpmStoreAction,
 							Flags: []cli.Flag{
-								&cli.StringFlag{
-									Name:  "tag",
-									Usage: "Grafana version tag",
-								},
+								&tagFlag,
 							},
 						},
 						{
@@ -242,10 +303,7 @@ func main() {
 							Usage:  "Retrieve npm packages tarball",
 							Action: NpmRetrieveAction,
 							Flags: []cli.Flag{
-								&cli.StringFlag{
-									Name:  "tag",
-									Usage: "Grafana version tag",
-								},
+								&tagFlag,
 							},
 						},
 					},
@@ -356,6 +414,8 @@ func main() {
 			},
 		},
 	}
+
+	app.Commands = append(app.Commands, additionalCommands...)
 
 	if err := app.Run(os.Args); err != nil {
 		log.Fatalln(err)

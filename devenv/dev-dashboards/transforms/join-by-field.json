@@ -24,6 +24,7 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
+  "id": 1351,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -37,7 +38,7 @@
       },
       "id": 9,
       "panels": [],
-      "title": "Input",
+      "title": "Join by time",
       "type": "row"
     },
     {
@@ -48,225 +49,37 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "thresholds"
+            "mode": "palette-classic"
           },
           "custom": {
-            "align": "auto",
-            "cellOptions": {
-              "type": "auto"
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
             },
-            "inspect": false
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 0,
-        "y": 1
-      },
-      "id": 11,
-      "options": {
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": [
-            "sum"
-          ],
-          "show": false
-        },
-        "showHeader": true
-      },
-      "pluginVersion": "9.4.0-pre",
-      "targets": [
-        {
-          "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
-          },
-          "rawFrameContent": "[{\r\n  \"name\": \"tags\",\r\n  \"fields\": [\r\n    { \"name\": \"tags__time\", \"values\": [100, 101, 200] },\r\n    { \"name\": \"tags__name\", \"values\": [\"v1.2\", \"v1.2b\", \"v1.3\"] }\r\n  ]\r\n}]",
-          "refId": "tags",
-          "scenarioId": "raw_frame"
-        }
-      ],
-      "title": "tags",
-      "type": "table"
-    },
-    {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "custom": {
-            "align": "auto",
-            "cellOptions": {
-              "type": "auto"
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
             },
-            "inspect": false
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 8,
-        "y": 1
-      },
-      "id": 13,
-      "options": {
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": [
-            "sum"
-          ],
-          "show": false
-        },
-        "showHeader": true
-      },
-      "pluginVersion": "9.4.0-pre",
-      "targets": [
-        {
-          "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
-          },
-          "rawFrameContent": "[{\r\n  \"name\": \"releases\",\r\n\"fields\": [\r\n  { \"name\": \"releases__time\", \"values\": [150, 250] },\r\n  { \"name\": \"releases__tag\", \"values\": [\"v1.2\", \"v1.3\"] }\r\n]}]",
-          "refId": "releases",
-          "scenarioId": "raw_frame"
-        }
-      ],
-      "title": "releases",
-      "type": "table"
-    },
-    {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "custom": {
-            "align": "auto",
-            "cellOptions": {
-              "type": "auto"
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
             },
-            "inspect": false
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 8,
-        "x": 16,
-        "y": 1
-      },
-      "id": 19,
-      "options": {
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": [
-            "sum"
-          ],
-          "show": false
-        },
-        "showHeader": true
-      },
-      "pluginVersion": "9.4.0-pre",
-      "targets": [
-        {
-          "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
-          },
-          "rawFrameContent": "[{\r\n  \"name\": \"features\",\r\n\"fields\": [\r\n  { \"name\": \"features__name\", \"values\": [\"A\", \"B\", \"C\", \"D\", \"E\"] },\r\n  { \"name\": \"features__tag\", \"values\": [\"v1.2\", \"v1.3\", \"v1.2b\", \"v1.3\", \"v1.2\"] }\r\n]}]",
-          "refId": "features",
-          "scenarioId": "raw_frame"
-        }
-      ],
-      "title": "features",
-      "type": "table"
-    },
-    {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 9
-      },
-      "id": 21,
-      "panels": [],
-      "title": "Output",
-      "type": "row"
-    },
-    {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "custom": {
-            "align": "auto",
-            "cellOptions": {
-              "type": "auto"
-            },
-            "inspect": false
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "mappings": [],
           "thresholds": {
@@ -288,71 +101,39 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 10
+        "y": 1
       },
-      "id": 23,
+      "id": 11,
       "options": {
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": [
-            "sum"
-          ],
-          "show": false
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
         },
-        "showHeader": true
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
       },
-      "pluginVersion": "9.4.0-pre",
       "targets": [
         {
           "datasource": {
             "type": "testdata",
             "uid": "PD8C576611E62080A"
           },
-          "rawFrameContent": "[{\r\n  \"name\": \"tags\",\r\n  \"fields\": [\r\n    { \"name\": \"tags__time\", \"values\": [100, 101, 200] },\r\n    { \"name\": \"tags__name\", \"values\": [\"v1.2\", \"v1.2b\", \"v1.3\"] }\r\n  ]\r\n}]",
-          "refId": "tags",
-          "scenarioId": "raw_frame"
-        },
-        {
-          "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
-          },
-          "rawFrameContent": "[{\r\n  \"name\": \"releases\",\r\n  \"fields\": [\r\n    { \"name\": \"releases__time\", \"values\": [150, 250] },\r\n    { \"name\": \"releases__tag\", \"values\": [\"v1.2\", \"v1.3\"] }\r\n]}]",
-          "refId": "releases",
-          "scenarioId": "raw_frame"
-        },
-        {
-          "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
-          },
-          "rawFrameContent": "[{\r\n  \"name\": \"features\",\r\n  \"fields\": [\r\n    { \"name\": \"features__name\", \"values\": [\"A\", \"B\", \"C\", \"D\", \"E\"] },\r\n    { \"name\": \"features__tag\", \"values\": [\"v1.2\", \"v1.3\", \"v1.2b\", \"v1.3\", \"v1.2\"] }\r\n]}]",
-          "refId": "features",
-          "scenarioId": "raw_frame"
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "seriesCount": 4
         }
       ],
-      "title": "OUTER JOIN",
-      "transformations": [
-        {
-          "id": "joinByField",
-          "options": {
-            "fields": {
-              "A": "features__name",
-              "features": "features__tag",
-              "releases": "releases__tag",
-              "tags": "tags__name"
-            },
-            "mode": "outer"
-          }
-        }
-      ],
-      "type": "table"
+      "title": "Timeseries data",
+      "type": "timeseries"
     },
     {
       "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
+        "type": "datasource",
+        "uid": "-- Dashboard --"
       },
       "fieldConfig": {
         "defaults": {
@@ -361,9 +142,7 @@
           },
           "custom": {
             "align": "auto",
-            "cellOptions": {
-              "type": "auto"
-            },
+            "displayMode": "auto",
             "inspect": false
           },
           "mappings": [],
@@ -386,12 +165,11 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 10
+        "y": 1
       },
-      "id": 24,
+      "id": 13,
       "options": {
         "footer": {
-          "countRows": false,
           "fields": "",
           "reducer": [
             "sum"
@@ -400,47 +178,430 @@
         },
         "showHeader": true
       },
-      "pluginVersion": "9.4.0-pre",
+      "pluginVersion": "9.2.0-pre",
       "targets": [
         {
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "datasource",
+            "uid": "-- Dashboard --"
           },
-          "rawFrameContent": "[{\r\n  \"name\": \"tags\",\r\n  \"fields\": [\r\n    { \"name\": \"tags__time\", \"values\": [100, 101, 200] },\r\n    { \"name\": \"tags__name\", \"values\": [\"v1.2\", \"v1.2b\", \"v1.3\"] }\r\n  ]\r\n}]",
-          "refId": "tags",
-          "scenarioId": "raw_frame"
-        },
-        {
-          "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
-          },
-          "rawFrameContent": "[{\r\n  \"name\": \"releases\",\r\n  \"fields\": [\r\n    { \"name\": \"releases__time\", \"values\": [150, 250] },\r\n    { \"name\": \"releases__tag\", \"values\": [\"v1.2\", \"v1.3\"] }\r\n]}]",
-          "refId": "releases",
-          "scenarioId": "raw_frame"
-        },
-        {
-          "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
-          },
-          "rawFrameContent": "[{\r\n  \"name\": \"features\",\r\n  \"fields\": [\r\n    { \"name\": \"features__name\", \"values\": [\"A\", \"B\", \"C\", \"D\", \"E\"] },\r\n    { \"name\": \"features__tag\", \"values\": [\"v1.2\", \"v1.3\", \"v1.2b\", \"v1.3\", \"v1.2\"] }\r\n]}]",
-          "refId": "features",
-          "scenarioId": "raw_frame"
+          "panelId": 11,
+          "refId": "A"
         }
       ],
-      "title": "INNER JOIN",
+      "title": "Same data (as a table)",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto",
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
+      "id": 16,
+      "options": {
+        "footer": {
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true
+      },
+      "pluginVersion": "9.2.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 11,
+          "refId": "A"
+        }
+      ],
+      "title": "OUTER join on time (default)",
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {}
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 14
+      },
+      "id": 5,
+      "panels": [],
+      "title": "Join by string field",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "PD8C576611E62080A"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto",
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 15
+      },
+      "id": 2,
+      "options": {
+        "footer": {
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "frameIndex": 0,
+        "showHeader": true
+      },
+      "pluginVersion": "9.2.0-pre",
+      "targets": [
+        {
+          "csvContent": "OrderID,CustomerID,Time\n100,A,10000\n101,B,20000\n102,C,30000",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "refId": "Orders",
+          "scenarioId": "csv_content"
+        },
+        {
+          "csvContent": "CustomerID,Name,Country\nA,Customer A,USA\nB,Customer B,Germany\nC,Customer C,Spain\nD,Customer D,Canada",
+          "datasource": {
+            "type": "testdata",
+            "uid": "PD8C576611E62080A"
+          },
+          "hide": false,
+          "refId": "Customers",
+          "scenarioId": "csv_content"
+        }
+      ],
+      "title": "Orders",
+      "transformations": [],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto",
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 15
+      },
+      "id": 3,
+      "options": {
+        "footer": {
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "frameIndex": 1,
+        "showHeader": true
+      },
+      "pluginVersion": "9.2.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 2,
+          "refId": "A"
+        }
+      ],
+      "title": "Customers",
+      "transformations": [],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto",
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "CustomerID"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 101
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "OrderID"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 89
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 23
+      },
+      "id": 6,
+      "options": {
+        "footer": {
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "frameIndex": 0,
+        "showHeader": true,
+        "sortBy": []
+      },
+      "pluginVersion": "9.2.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 2,
+          "refId": "A"
+        }
+      ],
+      "title": "OUTER join on CustomerID (keeps missing values)",
       "transformations": [
         {
           "id": "joinByField",
           "options": {
-            "fields": {
-              "A": "features__name",
-              "features": "features__tag",
-              "releases": "releases__tag",
-              "tags": "tags__name"
+            "byField": "CustomerID",
+            "mode": "outer"
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "displayMode": "auto",
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "CustomerID"
             },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 101
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "OrderID"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 89
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 23
+      },
+      "id": 7,
+      "options": {
+        "footer": {
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "frameIndex": 0,
+        "showHeader": true,
+        "sortBy": []
+      },
+      "pluginVersion": "9.2.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "-- Dashboard --"
+          },
+          "panelId": 2,
+          "refId": "A"
+        }
+      ],
+      "title": "INNER join on CustomerID ",
+      "transformations": [
+        {
+          "id": "joinByField",
+          "options": {
+            "byField": "CustomerID",
             "mode": "inner"
           }
         }
@@ -448,8 +609,7 @@
       "type": "table"
     }
   ],
-  "revision": 1,
-  "schemaVersion": 38,
+  "schemaVersion": 37,
   "style": "dark",
   "tags": [
     "gdev",
@@ -464,8 +624,8 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Join by field",
+  "title": "Transforms - Join by field",
   "uid": "gw0K4rmVz",
-  "version": 1,
+  "version": 6,
   "weekStart": ""
 }

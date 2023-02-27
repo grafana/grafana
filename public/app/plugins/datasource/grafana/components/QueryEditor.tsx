@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import pluralize from 'pluralize';
 import React, { PureComponent } from 'react';
+import { DropEvent, FileRejection } from 'react-dropzone';
 
 import {
   QueryEditorProps,
@@ -24,12 +25,13 @@ import {
   InlineFieldRow,
   InlineLabel,
   FileDropzone,
+  FileDropzoneDefaultChildren,
   DropzoneFile,
   Themeable2,
   withTheme2,
 } from '@grafana/ui';
 import { hasAlphaPanels } from 'app/core/config';
-import { readSpreadsheet } from 'app/core/utils/sheet';
+import * as DFImport from 'app/features/dataframe-import';
 import { SearchQuery } from 'app/features/search/service';
 
 import { GrafanaDatasource } from '../datasource';
@@ -375,8 +377,21 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
     return null;
   };
 
-  onDropAccepted = (files: File[]) => {
-    this.props.onChange({ ...this.props.query, file: { name: files[0].name, size: files[0].size } });
+  onFileDrop = (acceptedFiles: File[], fileRejections: FileRejection[], event: DropEvent) => {
+    DFImport.filesToDataframes(acceptedFiles).subscribe((next) => {
+      const snapshot: DataFrameJSON[] = [];
+      next.dataFrames.forEach((df) => {
+        const dataframeJson = dataFrameToJSON(df);
+        snapshot.push(dataframeJson);
+      });
+      this.props.onChange({
+        ...this.props.query,
+        file: { name: next.file.name, size: next.file.size },
+        queryType: GrafanaQueryType.Snapshot,
+        snapshot,
+      });
+      this.props.onRunQuery();
+    });
   };
 
   renderSnapshotQuery() {
@@ -397,9 +412,15 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
             <FileDropzone
               readAs="readAsArrayBuffer"
               fileListRenderer={this.fileListRenderer}
-              options={{ onDropAccepted: this.onDropAccepted, maxSize: 200000, multiple: false }}
-              onLoad={this.onFileDrop}
-            ></FileDropzone>
+              options={{
+                onDrop: this.onFileDrop,
+                maxSize: DFImport.maxFileSize,
+                multiple: false,
+                accept: DFImport.acceptedFiles,
+              }}
+            >
+              <FileDropzoneDefaultChildren primaryText={this.props?.query?.file ? 'Replace file' : 'Upload file'} />
+            </FileDropzone>
             {file && (
               <div className={styles.file}>
                 <span>{file?.name}</span>
@@ -422,28 +443,6 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
       search,
     });
     onRunQuery();
-  };
-
-  onFileDrop = (result: ArrayBuffer | String | null) => {
-    const snapshot: DataFrameJSON[] = [];
-
-    if (result) {
-      if (!result || result instanceof String) {
-        return;
-      }
-      const dataFrames = readSpreadsheet(result);
-      dataFrames.forEach((df) => {
-        const dataframeJson = dataFrameToJSON(df);
-        snapshot.push(dataframeJson);
-      });
-    }
-
-    this.props.onChange({
-      ...this.props.query,
-      queryType: GrafanaQueryType.Snapshot,
-      snapshot,
-    });
-    this.props.onRunQuery();
   };
 
   render() {

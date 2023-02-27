@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 import { useAsyncFn, useInterval } from 'react-use';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
 import { logInfo } from '@grafana/runtime';
 import { Button, LinkButton, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
@@ -32,6 +33,8 @@ const VIEWS = {
   state: RuleListStateView,
 };
 
+const onExport = () => window.open('/api/v1/provisioning/alert-rules/export?download=true&format=yaml');
+
 const RuleList = withErrorBoundary(
   () => {
     const dispatch = useDispatch();
@@ -43,7 +46,7 @@ const RuleList = withErrorBoundary(
     const [queryParams] = useQueryParams();
     const { filterState, hasActiveFilters } = useRulesFilter();
 
-    const { canCreateGrafanaRules, canCreateCloudRules } = useRulesAccess();
+    const { canCreateGrafanaRules, canCreateCloudRules, canReadProvisioning } = useRulesAccess();
 
     const view = VIEWS[queryParams['view'] as keyof typeof VIEWS]
       ? (queryParams['view'] as keyof typeof VIEWS)
@@ -106,15 +109,22 @@ const RuleList = withErrorBoundary(
                 )}
                 <RuleStats namespaces={filteredNamespaces} includeTotal />
               </div>
-              {(canCreateGrafanaRules || canCreateCloudRules) && (
-                <LinkButton
-                  href={urlUtil.renderUrl('alerting/new', { returnTo: location.pathname + location.search })}
-                  icon="plus"
-                  onClick={() => logInfo(LogMessages.alertRuleFromScratch)}
-                >
-                  New alert rule
-                </LinkButton>
-              )}
+              <Stack direction="row" gap={0.5}>
+                {canReadProvisioning && (
+                  <Button icon="download-alt" type="button" onClick={onExport}>
+                    Export
+                  </Button>
+                )}
+                {(canCreateGrafanaRules || canCreateCloudRules) && (
+                  <LinkButton
+                    href={urlUtil.renderUrl('alerting/new', { returnTo: location.pathname + location.search })}
+                    icon="plus"
+                    onClick={() => logInfo(LogMessages.alertRuleFromScratch)}
+                  >
+                    Create alert rule
+                  </LinkButton>
+                )}
+              </Stack>
             </div>
           </>
         )}

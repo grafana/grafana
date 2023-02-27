@@ -7,9 +7,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
 // TestIntegrationIndexView tests the Grafana index view.

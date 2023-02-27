@@ -41,6 +41,7 @@ import {
   PromRuleType,
   RulerAlertingRuleDTO,
   RulerGrafanaRuleDTO,
+  RulerRecordingRuleDTO,
   RulerRuleGroupDTO,
   RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
@@ -134,6 +135,18 @@ export const mockRulerAlertingRule = (partial: Partial<RulerAlertingRuleDTO> = {
   ...partial,
 });
 
+export const mockRulerRecordingRule = (partial: Partial<RulerRecordingRuleDTO> = {}): RulerAlertingRuleDTO => ({
+  alert: 'alert1',
+  expr: 'up = 1',
+  labels: {
+    severity: 'warning',
+  },
+  annotations: {
+    summary: 'test alert',
+  },
+  ...partial,
+});
+
 export const mockRulerRuleGroup = (partial: Partial<RulerRuleGroupDTO> = {}): RulerRuleGroupDTO => ({
   name: 'group1',
   rules: [mockRulerAlertingRule()],
@@ -157,6 +170,25 @@ export const mockPromAlertingRule = (partial: Partial<AlertingRule> = {}): Alert
     state: PromAlertingRuleState.Firing,
     health: 'OK',
     ...partial,
+  };
+};
+
+export const mockGrafanaRulerRule = (partial: Partial<RulerGrafanaRuleDTO> = {}): RulerGrafanaRuleDTO => {
+  return {
+    for: '',
+    annotations: {},
+    labels: {},
+    grafana_alert: {
+      ...partial,
+      uid: '',
+      title: 'my rule',
+      namespace_uid: '',
+      namespace_id: 0,
+      condition: '',
+      no_data_state: GrafanaAlertStateDecision.NoData,
+      exec_err_state: GrafanaAlertStateDecision.Error,
+      data: [],
+    },
   };
 };
 
@@ -557,6 +589,7 @@ export function getGrafanaRule(override?: Partial<CombinedRule>) {
       name: 'Grafana',
       rulesSource: 'grafana',
     },
+    rulerRule: mockGrafanaRulerRule(),
     ...override,
   });
 }

@@ -11,35 +11,34 @@ import (
 )
 
 type FakeDataSourceService struct {
-	lastId                int64
+	lastID                int64
 	DataSources           []*datasources.DataSource
 	SimulatePluginFailure bool
 }
 
 var _ datasources.DataSourceService = &FakeDataSourceService{}
 
-func (s *FakeDataSourceService) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) error {
-	for _, datasource := range s.DataSources {
-		idMatch := query.Id != 0 && query.Id == datasource.Id
-		uidMatch := query.Uid != "" && query.Uid == datasource.Uid
-		nameMatch := query.Name != "" && query.Name == datasource.Name
+func (s *FakeDataSourceService) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
+	for _, dataSource := range s.DataSources {
+		idMatch := query.ID != 0 && query.ID == dataSource.ID
+		uidMatch := query.UID != "" && query.UID == dataSource.UID
+		nameMatch := query.Name != "" && query.Name == dataSource.Name
 		if idMatch || nameMatch || uidMatch {
-			query.Result = datasource
-
-			return nil
+			return dataSource, nil
 		}
 	}
-	return datasources.ErrDataSourceNotFound
+	return nil, datasources.ErrDataSourceNotFound
 }
 
-func (s *FakeDataSourceService) GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) error {
+func (s *FakeDataSourceService) GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) ([]*datasources.DataSource, error) {
+	var dataSources []*datasources.DataSource
 	for _, datasource := range s.DataSources {
-		orgMatch := query.OrgId != 0 && query.OrgId == datasource.OrgId
+		orgMatch := query.OrgID != 0 && query.OrgID == datasource.OrgID
 		if orgMatch {
-			query.Result = append(query.Result, datasource)
+			dataSources = append(dataSources, datasource)
 		}
 	}
-	return nil
+	return dataSources, nil
 }
 
 func (s *FakeDataSourceService) GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) error {
@@ -47,38 +46,39 @@ func (s *FakeDataSourceService) GetAllDataSources(ctx context.Context, query *da
 	return nil
 }
 
-func (s *FakeDataSourceService) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) error {
+func (s *FakeDataSourceService) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) ([]*datasources.DataSource, error) {
+	var dataSources []*datasources.DataSource
 	for _, datasource := range s.DataSources {
-		if query.OrgId > 0 && datasource.OrgId != query.OrgId {
+		if query.OrgID > 0 && datasource.OrgID != query.OrgID {
 			continue
 		}
 		typeMatch := query.Type != "" && query.Type == datasource.Type
 		if typeMatch {
-			query.Result = append(query.Result, datasource)
+			dataSources = append(dataSources, datasource)
 		}
 	}
-	return nil
+	return dataSources, nil
 }
 
-func (s *FakeDataSourceService) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) error {
-	if s.lastId == 0 {
-		s.lastId = int64(len(s.DataSources) - 1)
+func (s *FakeDataSourceService) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) (*datasources.DataSource, error) {
+	if s.lastID == 0 {
+		s.lastID = int64(len(s.DataSources) - 1)
 	}
-	cmd.Result = &datasources.DataSource{
-		Id:    s.lastId + 1,
+	dataSource := &datasources.DataSource{
+		ID:    s.lastID + 1,
 		Name:  cmd.Name,
 		Type:  cmd.Type,
-		Uid:   cmd.Uid,
-		OrgId: cmd.OrgId,
+		UID:   cmd.UID,
+		OrgID: cmd.OrgID,
 	}
-	s.DataSources = append(s.DataSources, cmd.Result)
-	return nil
+	s.DataSources = append(s.DataSources, dataSource)
+	return dataSource, nil
 }
 
 func (s *FakeDataSourceService) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error {
 	for i, datasource := range s.DataSources {
-		idMatch := cmd.ID != 0 && cmd.ID == datasource.Id
-		uidMatch := cmd.UID != "" && cmd.UID == datasource.Uid
+		idMatch := cmd.ID != 0 && cmd.ID == datasource.ID
+		uidMatch := cmd.UID != "" && cmd.UID == datasource.UID
 		nameMatch := cmd.Name != "" && cmd.Name == datasource.Name
 		if idMatch || nameMatch || uidMatch {
 			s.DataSources = append(s.DataSources[:i], s.DataSources[i+1:]...)
@@ -88,23 +88,23 @@ func (s *FakeDataSourceService) DeleteDataSource(ctx context.Context, cmd *datas
 	return datasources.ErrDataSourceNotFound
 }
 
-func (s *FakeDataSourceService) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) error {
+func (s *FakeDataSourceService) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error) {
 	for _, datasource := range s.DataSources {
-		idMatch := cmd.Id != 0 && cmd.Id == datasource.Id
-		uidMatch := cmd.Uid != "" && cmd.Uid == datasource.Uid
+		idMatch := cmd.ID != 0 && cmd.ID == datasource.ID
+		uidMatch := cmd.UID != "" && cmd.UID == datasource.UID
 		nameMatch := cmd.Name != "" && cmd.Name == datasource.Name
 		if idMatch || nameMatch || uidMatch {
 			if cmd.Name != "" {
 				datasource.Name = cmd.Name
 			}
-			return nil
+			return datasource, nil
 		}
 	}
-	return datasources.ErrDataSourceNotFound
+	return nil, datasources.ErrDataSourceNotFound
 }
 
-func (s *FakeDataSourceService) GetDefaultDataSource(ctx context.Context, query *datasources.GetDefaultDataSourceQuery) error {
-	return nil
+func (s *FakeDataSourceService) GetDefaultDataSource(ctx context.Context, query *datasources.GetDefaultDataSourceQuery) (*datasources.DataSource, error) {
+	return nil, nil
 }
 
 func (s *FakeDataSourceService) GetHTTPTransport(ctx context.Context, ds *datasources.DataSource, provider httpclient.Provider, customMiddlewares ...sdkhttpclient.Middleware) (http.RoundTripper, error) {

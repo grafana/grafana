@@ -6,7 +6,7 @@ import (
 
 // swagger:model
 type UpdatePrefsCmd struct {
-	// Enum: light,dark
+	// Enum: light,dark,system
 	Theme string `json:"theme"`
 	// The numerical :id of a favorited dashboard
 	// Default:0
@@ -17,6 +17,7 @@ type UpdatePrefsCmd struct {
 	WeekStart    string                       `json:"weekStart"`
 	QueryHistory *pref.QueryHistoryPreference `json:"queryHistory,omitempty"`
 	Language     string                       `json:"language"`
+	Cookies      []pref.CookieType            `json:"cookies,omitempty"`
 }
 
 // swagger:model
@@ -32,4 +33,5 @@ type PatchPrefsCmd struct {
 	Language         *string                      `json:"language,omitempty"`
 	QueryHistory     *pref.QueryHistoryPreference `json:"queryHistory,omitempty"`
 	HomeDashboardUID *string                      `json:"homeDashboardUID,omitempty"`
+	Cookies          []pref.CookieType            `json:"cookies,omitempty"`
 }
