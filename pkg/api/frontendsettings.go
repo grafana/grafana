@@ -113,7 +113,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		AlertingNoDataOrNullValues:          setting.AlertingNoDataOrNullValues,
 		AlertingMinInterval:                 setting.AlertingMinInterval,
 		LiveEnabled:                         hs.Cfg.LiveMaxConnections != 0,
-		AutoAssignOrg:                       setting.AutoAssignOrg,
+		AutoAssignOrg:                       hs.Cfg.AutoAssignOrg,
 		VerifyEmailEnabled:                  setting.VerifyEmailEnabled,
 		SigV4AuthEnabled:                    setting.SigV4AuthEnabled,
 		AzureAuthEnabled:                    setting.AzureAuthEnabled,
