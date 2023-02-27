@@ -108,8 +108,6 @@ var (
 	SigV4AuthEnabled bool
 	AzureAuthEnabled bool
 
-	AnonymousEnabled bool
-
 	// Auth proxy settings
 	AuthProxyEnabled        bool
 	AuthProxyHeaderProperty string
@@ -1478,8 +1476,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	readAuthOktaSettings(iniFile, cfg)
 
 	// anonymous access
-	AnonymousEnabled = iniFile.Section("auth.anonymous").Key("enabled").MustBool(false)
-	cfg.AnonymousEnabled = AnonymousEnabled
+	cfg.AnonymousEnabled = iniFile.Section("auth.anonymous").Key("enabled").MustBool(false)
 	cfg.AnonymousOrgName = valueAsString(iniFile.Section("auth.anonymous"), "org_name", "")
 	cfg.AnonymousOrgRole = valueAsString(iniFile.Section("auth.anonymous"), "org_role", "")
 	cfg.AnonymousHideVersion = iniFile.Section("auth.anonymous").Key("hide_version").MustBool(false)
