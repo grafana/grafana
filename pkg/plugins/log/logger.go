@@ -4,7 +4,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
-func New(name string) Logger { //_ ...interface{}
+func New(name string) Logger {
 	return &grafanaInfraLogWrapper{
 		l: log.New(name),
 	}
