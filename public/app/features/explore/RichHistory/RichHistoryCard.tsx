@@ -337,19 +337,17 @@ export function RichHistoryCard({
         <div className={styles.cardRowLeft}>
           <DatasourceInfo dsApi={value?.dsInstance} size="sm" />
 
-          {query.lastExecutedAt && (
-            <time
-              className={styles.time}
-              dateTime={dateTimeFormat(query.lastExecutedAt, {
-                format: 'YYYY-MM-DD HH:mm:ss',
-              })}
-            >
-              <Icon name="clock-nine" />
-              {dateTimeFormat(query.lastExecutedAt, {
-                format: showDate ? 'YYYY-MM-DD HH:mm:ss' : 'HH:mm:ss',
-              })}
-            </time>
-          )}
+          <time
+            className={styles.time}
+            dateTime={dateTimeFormat(query.lastExecutedAt || query.createdAt, {
+              format: 'YYYY-MM-DD HH:mm:ss',
+            })}
+          >
+            <Icon name="clock-nine" />
+            {dateTimeFormat(query.lastExecutedAt || query.createdAt, {
+              format: showDate ? 'YYYY-MM-DD HH:mm:ss' : 'HH:mm:ss',
+            })}
+          </time>
         </div>
 
         {queryActionButtons}
