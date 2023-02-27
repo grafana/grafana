@@ -95,8 +95,6 @@ func processRawDocumentResponse(res *es.SearchResponse, target *Query, timeField
 			"highlight": hit["highlight"],
 		}
 
-
-
 		if hit["_source"] != nil {
 			source, ok := hit["_source"].(map[string]interface{})
 			if ok {
@@ -133,7 +131,7 @@ func processRawDocumentResponse(res *es.SearchResponse, target *Query, timeField
 	isFilterable := true
 	field := data.NewField(target.RefID, nil, fieldVector)
 	field.Config = &data.FieldConfig{Filterable: &isFilterable}
-	
+
 	frames := data.Frames{}
 	frame := data.NewFrame(target.RefID, field)
 	frames = append(frames, frame)
