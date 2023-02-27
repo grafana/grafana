@@ -647,8 +647,9 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 		OrgID:  orgID,
 	}
 
-	var dash1AnnotationID int64
-	var dash2AnnotationID int64
+	annotation1Text := "annotation 1"
+	annotation2Text := "annotation 2"
+	var role *accesscontrol.Role
 	setupTest := func(features featuremgmt.FeatureToggles) xormRepositoryImpl {
 		sql := db.InitTestDB(t)
 
@@ -715,33 +716,31 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 			OrgID:       1,
 			DashboardID: dashboard.ID,
 			Epoch:       10,
+			Text:        annotation1Text,
 		}
 		err = repo.Add(context.Background(), dash1Annotation)
 		require.NoError(t, err)
-		dash1AnnotationID = dash1Annotation.ID
 
 		dash2Annotation := &annotations.Item{
 			OrgID:       1,
 			DashboardID: dashboard2.ID,
 			Epoch:       10,
-			Tags:        []string{"foo:bar"},
+			Text:        annotation2Text,
 		}
 		err = repo.Add(context.Background(), dash2Annotation)
 		require.NoError(t, err)
-		dash2AnnotationID = dash2Annotation.ID
 
-		role := setupRBACRole(t, repo, usr)
-		setupRBACPermission(t, repo, role, usr)
+		role = setupRBACRole(t, repo, usr)
 
 		return repo
 	}
 
 	testCases := []struct {
-		desc                  string
-		features              featuremgmt.FeatureToggles
-		permissions           map[string][]string
-		expectedAnnotationIds []int64
-		expectedError         bool
+		desc                   string
+		features               featuremgmt.FeatureToggles
+		permissions            map[string][]string
+		expectedAnnotationText []string
+		expectedError          bool
 	}{
 		{
 			desc:     "Should find only annotations from dashboards under folders that user can read",
@@ -750,7 +749,7 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 				accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsTypeDashboard},
 				dashboards.ActionDashboardsRead:     {"folders:uid:parent"},
 			},
-			expectedAnnotationIds: []int64{dash1AnnotationID},
+			expectedAnnotationText: []string{annotation1Text},
 		},
 		{
 			desc:     "Should find only annotations from dashboards under inherited folders if nested folder are enabled",
@@ -759,7 +758,7 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 				accesscontrol.ActionAnnotationsRead: {accesscontrol.ScopeAnnotationsTypeDashboard},
 				dashboards.ActionDashboardsRead:     {"folders:uid:parent"},
 			},
-			expectedAnnotationIds: []int64{dash1AnnotationID, dash2AnnotationID},
+			expectedAnnotationText: []string{annotation1Text, annotation2Text},
 		},
 	}
 
@@ -767,6 +766,8 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 		repo := setupTest(tc.features)
 		t.Run(tc.desc, func(t *testing.T) {
 			usr.Permissions = map[int64]map[string][]string{1: tc.permissions}
+			setupRBACPermission(t, repo, role, usr)
+
 			results, err := repo.Get(context.Background(), &annotations.ItemQuery{
 				OrgID:        1,
 				SignedInUser: usr,
@@ -776,9 +777,9 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 				return
 			}
 			require.NoError(t, err)
-			assert.Len(t, results, len(tc.expectedAnnotationIds))
+			assert.Len(t, results, len(tc.expectedAnnotationText))
 			for _, r := range results {
-				assert.Contains(t, tc.expectedAnnotationIds, r.ID)
+				assert.Contains(t, tc.expectedAnnotationText, r.Text)
 			}
 		})
 	}
