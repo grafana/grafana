@@ -1,4 +1,3 @@
-import { css } from '@emotion/css';
 import classNames from 'classnames';
 import React, { PureComponent } from 'react';
 import { Subscription } from 'rxjs';
@@ -55,7 +54,7 @@ import { DashboardModel, PanelModel } from '../state';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
 
 import { PanelHeader } from './PanelHeader/PanelHeader';
-import { PanelHeaderMenuWrapper } from './PanelHeader/PanelHeaderMenuWrapper';
+import { PanelHeaderMenuWrapperNew } from './PanelHeader/PanelHeaderMenuWrapper';
 import { PanelHeaderTitleItems } from './PanelHeader/PanelHeaderTitleItems';
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
 import { liveTimer } from './liveTimer';
@@ -73,6 +72,7 @@ export interface Props {
   height: number;
   onInstanceStateChange: (value: any) => void;
   timezone?: string;
+  hideMenu?: boolean;
 }
 
 export interface State {
@@ -653,56 +653,16 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       />
     );
 
-    const overrideStyles: { menuItemsClassName?: string; menuWrapperClassName?: string; pos?: React.CSSProperties } = {
-      menuItemsClassName: undefined,
-      menuWrapperClassName: undefined,
-      pos: { top: 0, left: '-156px' },
-    };
-
-    if (config.featureToggles.newPanelChromeUI) {
-      // set override styles
-      overrideStyles.menuItemsClassName = css`
-        width: inherit;
-        top: inherit;
-        left: inherit;
-        position: inherit;
-        float: inherit;
-      `;
-      overrideStyles.menuWrapperClassName = css`
-        position: inherit;
-        width: inherit;
-        top: inherit;
-        left: inherit;
-        float: inherit;
-        .dropdown-submenu > .dropdown-menu {
-          position: absolute;
-        }
-      `;
-      overrideStyles.pos = undefined;
-    }
-
-    // custom styles is neeeded to override legacy panel-menu styles and prevent menu from being cut off
-    let menu;
-    if (!dashboard.meta.publicDashboardAccessToken) {
-      menu = (
-        <div data-testid="panel-dropdown">
-          <PanelHeaderMenuWrapper
-            style={overrideStyles.pos}
-            panel={panel}
-            dashboard={dashboard}
-            loadingState={data.state}
-            onClose={() => {}}
-            menuItemsClassName={overrideStyles.menuItemsClassName}
-            menuWrapperClassName={overrideStyles.menuWrapperClassName}
-          />
-        </div>
-      );
-    }
-
     const dragClass = !(isViewing || isEditing) ? 'grid-drag-handle' : '';
     if (config.featureToggles.newPanelChromeUI) {
       // Shift the hover menu down if it's on the top row so it doesn't get clipped by topnav
       const hoverHeaderOffset = (panel.gridPos?.y ?? 0) === 0 ? -16 : undefined;
+
+      const menu = (
+        <div data-testid="panel-dropdown">
+          <PanelHeaderMenuWrapperNew panel={panel} dashboard={dashboard} loadingState={data.state} />
+        </div>
+      );
 
       return (
         <PanelChrome
@@ -714,7 +674,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
           statusMessageOnClick={this.onOpenErrorInspect}
           description={!!panel.description ? this.onShowPanelDescription : undefined}
           titleItems={titleItems}
-          menu={menu}
+          menu={this.props.hideMenu ? undefined : menu}
           dragClass={dragClass}
           dragClassCancel="grid-drag-cancel"
           padding={padding}

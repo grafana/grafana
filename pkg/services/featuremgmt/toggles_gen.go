@@ -251,10 +251,6 @@ const (
 	// Stop maintaining state of alerts that are not firing
 	FlagAlertingNoNormalState = "alertingNoNormalState"
 
-	// FlagTopNavCommandPalette
-	// Launch the Command Palette from the top navigation search box
-	FlagTopNavCommandPalette = "topNavCommandPalette"
-
 	// FlagLogsSampleInExplore
 	// Enables access to the logs sample feature in Explore
 	FlagLogsSampleInExplore = "logsSampleInExplore"

@@ -1,6 +1,7 @@
 import {
   ArrayVector,
   DataFrame,
+  DataFrameType,
   Field,
   FieldType,
   getDisplayProcessor,
@@ -14,6 +15,7 @@ import {
 import { GraphFieldConfig, LineInterpolation } from '@grafana/schema';
 import { applyNullInsertThreshold } from '@grafana/ui/src/components/GraphNG/nullInsertThreshold';
 import { nullToValue } from '@grafana/ui/src/components/GraphNG/nullToValue';
+import { partitionByValuesTransformer } from 'app/features/transformers/partitionByValues/partitionByValues';
 
 /**
  * Returns null if there are no graphable fields
@@ -25,6 +27,10 @@ export function prepareGraphableFields(
 ): DataFrame[] | null {
   if (!series?.length) {
     return null;
+  }
+
+  if (series.every((df) => df.meta?.type === DataFrameType.TimeSeriesLong)) {
+    series = prepareTimeSeriesLong(series);
   }
 
   let copy: Field;
@@ -172,4 +178,21 @@ export function regenerateLinksSupplier(
   });
 
   return alignedDataFrame;
+}
+
+export function prepareTimeSeriesLong(series: DataFrame[]): DataFrame[] {
+  // Transform each dataframe of the series
+  // to handle different field names in different frames
+  return series.reduce((acc: DataFrame[], dataFrame: DataFrame) => {
+    // these could be different in each frame
+    const stringFields = dataFrame.fields.filter((field) => field.type === FieldType.string).map((field) => field.name);
+
+    // transform one dataFrame at a time and concat into DataFrame[]
+    const transformedSeries = partitionByValuesTransformer.transformer(
+      { fields: stringFields },
+      { interpolate: (value: string) => value }
+    )([dataFrame]);
+
+    return acc.concat(transformedSeries);
+  }, []);
 }

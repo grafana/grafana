@@ -7,7 +7,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -84,7 +86,7 @@ func TestLokiHTTPClient(t *testing.T) {
 		client := newLokiClient(LokiConfig{
 			ReadPathURL:  url,
 			WritePathURL: url,
-		}, log.NewNopLogger())
+		}, NewRequester(), metrics.NewHistorianMetrics(prometheus.NewRegistry()), log.NewNopLogger())
 
 		// Unauthorized request should fail against Grafana Cloud.
 		err = client.ping(context.Background())
@@ -111,7 +113,7 @@ func TestLokiHTTPClient(t *testing.T) {
 			WritePathURL:      url,
 			BasicAuthUser:     "<your_username>",
 			BasicAuthPassword: "<your_password>",
-		}, log.NewNopLogger())
+		}, NewRequester(), metrics.NewHistorianMetrics(prometheus.NewRegistry()), log.NewNopLogger())
 
 		// When running on prem, you might need to set the tenant id,
 		// so the x-scope-orgid header is set.

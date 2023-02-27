@@ -4096,17 +4096,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@discoveryjs/json-ext@npm:0.5.7, @discoveryjs/json-ext@npm:^0.5.3":
+  version: 0.5.7
+  resolution: "@discoveryjs/json-ext@npm:0.5.7"
+  checksum: 2176d301cc258ea5c2324402997cf8134ebb212469c0d397591636cea8d3c02f2b3cf9fd58dcb748c7a0dade77ebdc1b10284fa63e608c033a1db52fddc69918
+  languageName: node
+  linkType: hard
+
 "@discoveryjs/json-ext@npm:^0.5.0":
   version: 0.5.5
   resolution: "@discoveryjs/json-ext@npm:0.5.5"
   checksum: 40844548d87689d742a098c3bfe342cc7f0d0500a814fce4592886de68f7e027937938324578311998d49a1f1e5d0394c578bb814fab04375b521637cb7a0dea
-  languageName: node
-  linkType: hard
-
-"@discoveryjs/json-ext@npm:^0.5.3":
-  version: 0.5.7
-  resolution: "@discoveryjs/json-ext@npm:0.5.7"
-  checksum: 2176d301cc258ea5c2324402997cf8134ebb212469c0d397591636cea8d3c02f2b3cf9fd58dcb748c7a0dade77ebdc1b10284fa63e608c033a1db52fddc69918
   languageName: node
   linkType: hard
 
@@ -4966,7 +4966,7 @@ __metadata:
     tslib: 2.5.0
     typescript: 4.8.4
     uuid: 9.0.0
-    webpack: 5.74.0
+    webpack: 5.75.0
     yaml: ^2.0.0
   bin:
     grafana-e2e: bin/grafana-e2e.js
@@ -5133,9 +5133,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:^0.0.11":
-  version: 0.0.11
-  resolution: "@grafana/scenes@npm:0.0.11"
+"@grafana/scenes@npm:^0.0.14":
+  version: 0.0.14
+  resolution: "@grafana/scenes@npm:0.0.14"
   dependencies:
     "@grafana/e2e-selectors": canary
     "@grafana/experimental": 1.0.1
@@ -5143,7 +5143,7 @@ __metadata:
     react-use: 17.4.0
     react-virtualized-auto-sizer: 1.0.7
     uuid: ^9.0.0
-  checksum: 8cb56817f784c045ff8e91793e79722ed5ec22927a4528539de6f243eaf511f0f924ee1c883f88707eb0ef69cea39de29752da88f98156f25e1860e794ffcd9b
+  checksum: 77cb6ff3ec8f716ce35399fb9f51c4d701025a71af2cb9f7d33a26b973ebfdabed49ba9b3d72dfdb5fbf43043a8b944a4f297c027261df14b3e0bd189096c905
   languageName: node
   linkType: hard
 
@@ -5400,14 +5400,14 @@ __metadata:
     slate-plain-serializer: 0.7.13
     slate-react: 0.22.10
     storybook-addon-turbo-build: 1.1.0
-    storybook-dark-mode: 2.0.4
+    storybook-dark-mode: 2.1.1
     style-loader: 3.3.1
     tinycolor2: 1.6.0
     tslib: 2.5.0
     typescript: 4.8.4
     uplot: 1.6.24
     uuid: 9.0.0
-    webpack: 5.74.0
+    webpack: 5.75.0
   peerDependencies:
     react: ^16.8.0 || ^17.0.0
     react-dom: ^16.8.0 || ^17.0.0
@@ -5427,6 +5427,18 @@ __metadata:
   dependencies:
     "@hapi/hoek": ^9.0.0
   checksum: 604dfd5dde76d5c334bd03f9001fce69c7ce529883acf92da96f4fe7e51221bf5e5110e964caca287a6a616ba027c071748ab636ff178ad750547fba611d6014
+  languageName: node
+  linkType: hard
+
+"@headlessui/react@npm:^1.5.0":
+  version: 1.7.11
+  resolution: "@headlessui/react@npm:1.7.11"
+  dependencies:
+    client-only: ^0.0.1
+  peerDependencies:
+    react: ^16 || ^17 || ^18
+    react-dom: ^16 || ^17 || ^18
+  checksum: 3c9abbc5eaf039fccd309b34269aad761f518c4863e482afddf47579384243ecc0d7b69ecd2f05997e4e079237efa8846c568f5ed8d32df358814a239600de1f
   languageName: node
   linkType: hard
 
@@ -7672,10 +7684,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@opentelemetry/api@npm:1.3.0":
-  version: 1.3.0
-  resolution: "@opentelemetry/api@npm:1.3.0"
-  checksum: 33d284b67b6fab20ff72961d289c6487d3cb27caf7489f0231d7030551f82871e081e744b0390751d8aef3bf1614bd79f854788901a354e15274f552581fb374
+"@opentelemetry/api@npm:1.4.0":
+  version: 1.4.0
+  resolution: "@opentelemetry/api@npm:1.4.0"
+  checksum: 8dc522194e20d2e8aa6cac155dbce19d3fc9cfac59e953ece1064158c6348ccd9560ee99d2f2381e82c2f8c9a129b57fa7b640027383315504de1fa712b6d7f1
   languageName: node
   linkType: hard
 
@@ -7832,10 +7844,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@opentelemetry/semantic-conventions@npm:1.8.0":
-  version: 1.8.0
-  resolution: "@opentelemetry/semantic-conventions@npm:1.8.0"
-  checksum: df30ad9486b6c611c4110fab80815301a7cc9cb320983d6c5792a1b411dc4e4f04c489b2abfdea0da7f7bbb27b9f3c456764ba07f23432900a9bbcbc5f98ff58
+"@opentelemetry/semantic-conventions@npm:1.9.1":
+  version: 1.9.1
+  resolution: "@opentelemetry/semantic-conventions@npm:1.9.1"
+  checksum: 6217ba14b8f0068a3400f054c1f9d918b2e22d1cf8d31112baa712b8d196e207aed7421c6df37ed1403f7109f51c7834c230cbe180313eee07db6f7e0a7797bc
   languageName: node
   linkType: hard
 
@@ -9819,6 +9831,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@storybook/global@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "@storybook/global@npm:5.0.0"
+  checksum: ede0ad35ec411fe31c61150dbd118fef344d1d0e72bf5d3502368e35cf68126f6b7ae4a0ab5e2ffe2f0baa3b4286f03ad069ba3e098e1725449ef08b7e154ba8
+  languageName: node
+  linkType: hard
+
 "@storybook/manager-webpack4@npm:6.5.16":
   version: 6.5.16
   resolution: "@storybook/manager-webpack4@npm:6.5.16"
@@ -11497,12 +11516,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/logfmt@npm:^1.2.1":
-  version: 1.2.2
-  resolution: "@types/logfmt@npm:1.2.2"
+"@types/logfmt@npm:^1.2.3":
+  version: 1.2.3
+  resolution: "@types/logfmt@npm:1.2.3"
   dependencies:
     "@types/node": "*"
-  checksum: 3f75ce7cc79886b6c3a2b7c467c49d72752a494cf316b87315c7609f9d3f29ffc6d400b6ae9e81c3997ef1e8b0a442974b60e86b3e45a8174b9b0415aba40701
+  checksum: d5872ab0432c687dc95a4c3a1c21c8eca24553415ef6a34f6cbbe0eefc4b7b8fb8b2af80df4a53fcf7cc7b212569df568bed1b17f7c2a976c4416f4a67b285de
   languageName: node
   linkType: hard
 
@@ -13073,6 +13092,25 @@ __metadata:
   version: 1.9.5
   resolution: "@xobotyi/scrollbar-width@npm:1.9.5"
   checksum: e880c8696bd6c7eedaad4e89cc7bcfcd502c22dc6c061288ffa7f5a4fe5dab4aa2358bdd68e7357bf0334dc8b56724ed9bee05e010b60d83a3bb0d855f3d886f
+  languageName: node
+  linkType: hard
+
+"@xstate/react@npm:^3.0.0":
+  version: 3.2.1
+  resolution: "@xstate/react@npm:3.2.1"
+  dependencies:
+    use-isomorphic-layout-effect: ^1.0.0
+    use-sync-external-store: ^1.0.0
+  peerDependencies:
+    "@xstate/fsm": ^2.0.0
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0
+    xstate: ^4.36.0
+  peerDependenciesMeta:
+    "@xstate/fsm":
+      optional: true
+    xstate:
+      optional: true
+  checksum: f3b4816b1ed7128254d53a0b03cfa53d928a2efda9180364eb22e6b36660fc3b39bcc6d77843a40874551cf9c89fc597d371ad923997d85a66005d340805feef
   languageName: node
   linkType: hard
 
@@ -15858,6 +15896,13 @@ __metadata:
   version: 3.0.0
   resolution: "cli-width@npm:3.0.0"
   checksum: 4c94af3769367a70e11ed69aa6095f1c600c0ff510f3921ab4045af961820d57c0233acfa8b6396037391f31b4c397e1f614d234294f979ff61430a6c166c3f6
+  languageName: node
+  linkType: hard
+
+"client-only@npm:^0.0.1":
+  version: 0.0.1
+  resolution: "client-only@npm:0.0.1"
+  checksum: 0c16bf660dadb90610553c1d8946a7fdfb81d624adea073b8440b7d795d5b5b08beb3c950c6a2cf16279365a3265158a236876d92bce16423c485c322d7dfaf8
   languageName: node
   linkType: hard
 
@@ -21940,7 +21985,7 @@ __metadata:
     "@grafana/lezer-logql": 0.1.1
     "@grafana/monaco-logql": ^0.0.6
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": ^0.0.11
+    "@grafana/scenes": ^0.0.14
     "@grafana/schema": "workspace:*"
     "@grafana/toolkit": "workspace:*"
     "@grafana/tsconfig": ^1.2.0-rc1
@@ -21950,9 +21995,9 @@ __metadata:
     "@lezer/common": 1.0.1
     "@lezer/highlight": 1.1.2
     "@lezer/lr": 1.3.1
-    "@opentelemetry/api": 1.3.0
+    "@opentelemetry/api": 1.4.0
     "@opentelemetry/exporter-collector": 0.25.0
-    "@opentelemetry/semantic-conventions": 1.8.0
+    "@opentelemetry/semantic-conventions": 1.9.1
     "@pmmmwh/react-refresh-webpack-plugin": 0.5.8
     "@popperjs/core": 2.11.6
     "@prometheus-io/lezer-promql": ^0.37.0-rc.1
@@ -22002,7 +22047,7 @@ __metadata:
     "@types/js-yaml": ^4.0.5
     "@types/jsurl": ^1.2.28
     "@types/lodash": 4.14.187
-    "@types/logfmt": ^1.2.1
+    "@types/logfmt": ^1.2.3
     "@types/mousetrap": 1.6.10
     "@types/node": 18.14.0
     "@types/ol-ext": "npm:@siedlerchr/types-ol-ext@3.0.6"
@@ -22127,7 +22172,7 @@ __metadata:
     lint-staged: 13.1.0
     lodash: 4.17.21
     logfmt: ^1.3.2
-    lru-cache: 7.16.0
+    lru-cache: 7.17.0
     lru-memoize: ^1.1.0
     memoize-one: 6.0.0
     mini-css-extract-plugin: 2.7.2
@@ -22167,6 +22212,7 @@ __metadata:
     react-dom: 17.0.2
     react-draggable: 4.4.5
     react-dropzone: ^14.2.3
+    react-enable: ^3.0.1
     react-grid-layout: 1.3.4
     react-highlight-words: 0.20.0
     react-hook-form: 7.5.3
@@ -22199,7 +22245,7 @@ __metadata:
     reselect: 4.1.6
     rimraf: 3.0.2
     rst2html: "github:thoward/rst2html#990cb89f2a300cdd9151790be377c4c0840df809"
-    rudder-sdk-js: 2.24.0
+    rudder-sdk-js: 2.25.0
     rxjs: 7.8.0
     sass: 1.58.2
     sass-loader: 13.2.0
@@ -22231,8 +22277,8 @@ __metadata:
     vendor: "link:./public/vendor"
     visjs-network: 4.25.0
     wait-on: 6.0.1
-    webpack: 5.74.0
-    webpack-bundle-analyzer: 4.7.0
+    webpack: 5.75.0
+    webpack-bundle-analyzer: 4.8.0
     webpack-cli: 4.10.0
     webpack-dev-server: 4.11.1
     webpack-manifest-plugin: 5.0.0
@@ -26909,10 +26955,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lru-cache@npm:7.16.0":
-  version: 7.16.0
-  resolution: "lru-cache@npm:7.16.0"
-  checksum: 1a5511a0e695154c37f443c495ebcf3170ec8c291df62e140329cf0c48e2549db836e69371853a28286dc9de73a98f486a7566c64246249a6041c43d4a28bc60
+"lru-cache@npm:7.17.0":
+  version: 7.17.0
+  resolution: "lru-cache@npm:7.17.0"
+  checksum: 28c2a98ad313b8d61beac1f08257b6f0ca990e39d24a9bc831030b6e209447cfb11c6d9d1a774282189bfc9609d1dfd17ebe485228dd68f7b96b6b9b7740894e
   languageName: node
   linkType: hard
 
@@ -32695,6 +32741,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-enable@npm:^3.0.1":
+  version: 3.0.1
+  resolution: "react-enable@npm:3.0.1"
+  dependencies:
+    "@headlessui/react": ^1.5.0
+    "@xstate/react": ^3.0.0
+    tslib: ^1.14.1
+    xstate: ^4.31.0
+  peerDependencies:
+    react: ^17 || ^18
+    react-dom: ^17 || ^18
+  checksum: 1426b2433785eab34054b82594c085772a8ce334e71ca8d49d4171cd3f37dc8d5273e4717f1c70efb1411ef89220a4bba156a9fae5c6eb2a9a80c178307567f4
+  languageName: node
+  linkType: hard
+
 "react-error-boundary@npm:^3.1.0":
   version: 3.1.3
   resolution: "react-error-boundary@npm:3.1.3"
@@ -34414,10 +34475,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rudder-sdk-js@npm:2.24.0":
-  version: 2.24.0
-  resolution: "rudder-sdk-js@npm:2.24.0"
-  checksum: 8eba88d41cbfea5d350a27a0b5d432145ea2107200813e0bd85b87128f6011974c0924ba8da7a4f3123be43f26fb0577032c74acc10cfc02ac40e529dfb13dee
+"rudder-sdk-js@npm:2.25.0":
+  version: 2.25.0
+  resolution: "rudder-sdk-js@npm:2.25.0"
+  checksum: f4ddc07760ae234219bfc804bdd6135dacc830246584b83a418b983cee6261670795e32c3e72c920f950a4e2017ee186a768656fa286b46c97a657795d9c71c2
   languageName: node
   linkType: hard
 
@@ -35901,17 +35962,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"storybook-dark-mode@npm:2.0.4":
-  version: 2.0.4
-  resolution: "storybook-dark-mode@npm:2.0.4"
+"storybook-dark-mode@npm:2.1.1":
+  version: 2.1.1
+  resolution: "storybook-dark-mode@npm:2.1.1"
   dependencies:
     "@storybook/addons": ^6.5.14
     "@storybook/api": ^6.5.14
     "@storybook/components": ^6.5.14
     "@storybook/core-events": ^6.5.14
+    "@storybook/global": ^5.0.0
     "@storybook/theming": ^6.5.14
     fast-deep-equal: ^3.1.3
-    global: ^4.4.0
     memoizerific: ^1.11.3
   peerDependencies:
     react: ^16.8.0 || ^17.0.0 || ^18.0.0
@@ -35921,7 +35982,7 @@ __metadata:
       optional: true
     react-dom:
       optional: true
-  checksum: afe57016b041bd39c54ece8346546175f9cc59c1761d2d8a88bbc8cbfed40a296cfaff07af94bfd8c1c06e54aecc72f1798426fa1e7c8866544607ab45e03dfa
+  checksum: 44d6313013a1d63f47c95e2e8e0d11c24d467b3540259e152ceb3236636dbadf7a46c6f7f183946b105ee53173cb13815f1f88ca6da41fc74673c3c11f619863
   languageName: node
   linkType: hard
 
@@ -37545,7 +37606,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tslib@npm:^1.10.0, tslib@npm:^1.8.1, tslib@npm:^1.9.3":
+"tslib@npm:^1.10.0, tslib@npm:^1.14.1, tslib@npm:^1.8.1, tslib@npm:^1.9.3":
   version: 1.14.1
   resolution: "tslib@npm:1.14.1"
   checksum: dbe628ef87f66691d5d2959b3e41b9ca0045c3ee3c7c7b906cc1e328b39f199bb1ad9e671c39025bd56122ac57dfbf7385a94843b1cc07c60a4db74795829acd
@@ -38311,7 +38372,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"use-isomorphic-layout-effect@npm:^1.1.2":
+"use-isomorphic-layout-effect@npm:^1.0.0, use-isomorphic-layout-effect@npm:^1.1.2":
   version: 1.1.2
   resolution: "use-isomorphic-layout-effect@npm:1.1.2"
   peerDependencies:
@@ -38329,6 +38390,15 @@ __metadata:
   peerDependencies:
     react: ^16.8.0 || ^17.0.0
   checksum: 71f4598ce422b64a971dc93f45dc245158977f8882f56be82d4629c21577c22244959ac3aa99bd9559d64007b632d58aa43b256981afe56603c77ce3fdee165f
+  languageName: node
+  linkType: hard
+
+"use-sync-external-store@npm:^1.0.0":
+  version: 1.2.0
+  resolution: "use-sync-external-store@npm:1.2.0"
+  peerDependencies:
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0
+  checksum: 5c639e0f8da3521d605f59ce5be9e094ca772bd44a4ce7322b055a6f58eeed8dda3c94cabd90c7a41fb6fa852210092008afe48f7038792fd47501f33299116a
   languageName: node
   linkType: hard
 
@@ -38884,10 +38954,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webpack-bundle-analyzer@npm:4.7.0":
-  version: 4.7.0
-  resolution: "webpack-bundle-analyzer@npm:4.7.0"
+"webpack-bundle-analyzer@npm:4.8.0":
+  version: 4.8.0
+  resolution: "webpack-bundle-analyzer@npm:4.8.0"
   dependencies:
+    "@discoveryjs/json-ext": 0.5.7
     acorn: ^8.0.4
     acorn-walk: ^8.0.0
     chalk: ^4.1.0
@@ -38899,7 +38970,7 @@ __metadata:
     ws: ^7.3.1
   bin:
     webpack-bundle-analyzer: lib/bin/analyzer.js
-  checksum: 4ce3b379c61ce16b2219756843407cc99f2b82cd191f653043f1b705a3e32b3af03834af0dfded98ab852313a892a148bed1a8effaacd6440f028c19f41581f3
+  checksum: acd86f68abb2bcb1a240043c6e2d8e53079499363afed94b96c0ec1abcc4fca2b7a7cbeeb5e13027d02a993c6ea8153194c69e7697faf47528bdaff1e2ce297e
   languageName: node
   linkType: hard
 
@@ -39121,7 +39192,44 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webpack@npm:5.74.0, webpack@npm:>=4.43.0 <6.0.0":
+"webpack@npm:5.75.0":
+  version: 5.75.0
+  resolution: "webpack@npm:5.75.0"
+  dependencies:
+    "@types/eslint-scope": ^3.7.3
+    "@types/estree": ^0.0.51
+    "@webassemblyjs/ast": 1.11.1
+    "@webassemblyjs/wasm-edit": 1.11.1
+    "@webassemblyjs/wasm-parser": 1.11.1
+    acorn: ^8.7.1
+    acorn-import-assertions: ^1.7.6
+    browserslist: ^4.14.5
+    chrome-trace-event: ^1.0.2
+    enhanced-resolve: ^5.10.0
+    es-module-lexer: ^0.9.0
+    eslint-scope: 5.1.1
+    events: ^3.2.0
+    glob-to-regexp: ^0.4.1
+    graceful-fs: ^4.2.9
+    json-parse-even-better-errors: ^2.3.1
+    loader-runner: ^4.2.0
+    mime-types: ^2.1.27
+    neo-async: ^2.6.2
+    schema-utils: ^3.1.0
+    tapable: ^2.1.1
+    terser-webpack-plugin: ^5.1.3
+    watchpack: ^2.4.0
+    webpack-sources: ^3.2.3
+  peerDependenciesMeta:
+    webpack-cli:
+      optional: true
+  bin:
+    webpack: bin/webpack.js
+  checksum: 2bcc5f3c195f375944e8af2f00bf2feea39cb9fda5f763b0d1b00077f1c51783db25c94d3fae96a07dead9fa085e6ae7474417e5ab31719c9776ea5969ceb83a
+  languageName: node
+  linkType: hard
+
+"webpack@npm:>=4.43.0 <6.0.0":
   version: 5.74.0
   resolution: "webpack@npm:5.74.0"
   dependencies:
@@ -39666,6 +39774,13 @@ __metadata:
   bin:
     xss: bin/xss
   checksum: 77c6a60a5f96490098ef837c3b49321c0f31963f323c748cb0a01bc02fc6e465a6accbe4c54cad62f8d6ffe647d984be173879433af861883f6213d9416d3f53
+  languageName: node
+  linkType: hard
+
+"xstate@npm:^4.31.0":
+  version: 4.36.0
+  resolution: "xstate@npm:4.36.0"
+  checksum: c8c4c7bb02b0a1f402dc967ce29489551457f0bb5e021328b4cddf34d7eb6b66ad5c131003d33808f5a9ef2cbd2f6ae31ac5904314ee5e6adc7616589b746310
   languageName: node
   linkType: hard
 
