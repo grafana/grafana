@@ -65,7 +65,7 @@ func DecodeBasicAuthHeader(header string) (string, string, error) {
 	return userAndPass[0], userAndPass[1], nil
 }
 
-// RandomHex returns a random string from a n seed.
+// RandomHex returns a hex encoding of n random bytes.
 func RandomHex(n int) (string, error) {
 	bytes := make([]byte, n)
 	if _, err := rand.Read(bytes); err != nil {
