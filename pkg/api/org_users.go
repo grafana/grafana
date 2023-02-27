@@ -170,18 +170,14 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *contextmodel.ReqContext)
 		})
 	}
 
-	if !c.SignedInUser.IsGrafanaAdmin {
-		result = filterAdminUsers(result)
-	}
-
 	return response.JSON(http.StatusOK, result)
 }
 
-func filterAdminUsers(inDTOs []*dtos.UserLookupDTO) []*dtos.UserLookupDTO {
+func filterAdminUsers(inDTOs []*org.OrgUserDTO) []*org.OrgUserDTO {
 
-	outDTOs := make([]*dtos.UserLookupDTO, 0)
+	outDTOs := make([]*org.OrgUserDTO, 0)
 	for _, dto := range inDTOs {
-		if isSoracomAdminUser(dto.Login) {
+		if isSoracomAdminUser(dto.Login) || dto.Role == "Admin" {
 			continue
 		}
 		outDTOs = append(outDTOs, dto)
@@ -373,6 +369,10 @@ func (hs *HTTPServer) searchOrgUsersHelper(c *contextmodel.ReqContext, query *or
 			filteredUsers[i].AuthLabels = []string{login.GetAuthProviderLabel(module)}
 			filteredUsers[i].IsExternallySynced = hs.isExternallySynced(hs.Cfg, module)
 		}
+	}
+
+	if !c.SignedInUser.GetIsGrafanaAdmin() {
+		filteredUsers = filterAdminUsers(filteredUsers)
 	}
 
 	result.OrgUsers = filteredUsers
