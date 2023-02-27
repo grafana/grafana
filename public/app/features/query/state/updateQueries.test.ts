@@ -277,9 +277,9 @@ describe('updateQueries with import', () => {
       expect(importSpy).toBeCalledWith(queries.map((q) => ({ ...q, exported: true })));
 
       expect(updated).toMatchInlineSnapshot(`
-        Array [
-          Object {
-            "datasource": Object {
+        [
+          {
+            "datasource": {
               "type": "new-type",
               "uid": "new-uid",
             },
@@ -287,8 +287,8 @@ describe('updateQueries with import', () => {
             "imported": true,
             "refId": "A",
           },
-          Object {
-            "datasource": Object {
+          {
+            "datasource": {
               "type": "new-type",
               "uid": "new-uid",
             },
@@ -400,17 +400,17 @@ describe('updateQueries with import', () => {
       expect(importSpy).toBeCalledWith(queries, { uid: 'old-uid', type: 'old-type', meta: { id: 'old-type' } });
 
       expect(updated).toMatchInlineSnapshot(`
-        Array [
-          Object {
-            "datasource": Object {
+        [
+          {
+            "datasource": {
               "type": "new-type",
               "uid": "new-uid",
             },
             "imported": true,
             "refId": "A",
           },
-          Object {
-            "datasource": Object {
+          {
+            "datasource": {
               "type": "new-type",
               "uid": "new-uid",
             },

@@ -12,12 +12,14 @@ keywords:
   - silence
   - mute
 title: Manage silences
-weight: 450
+weight: 600
 ---
 
 # Manage silences
 
 Silences stop notifications from getting created and last for only a specified window of time.
+
+**Note that inhibition rules are not supported in the Grafana Alertmanager.**
 
 ## Add silences
 

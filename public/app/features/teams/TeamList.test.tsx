@@ -2,7 +2,6 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
-import { mockToolkitActionCreator } from 'test/core/redux/mocks';
 
 import { contextSrv, User } from 'app/core/services/context_srv';
 
@@ -11,7 +10,6 @@ import { OrgRole, Team } from '../../types';
 
 import { Props, TeamList } from './TeamList';
 import { getMockTeam, getMultipleMockTeams } from './__mocks__/teamMocks';
-import { setSearchQuery, setTeamsSearchPage } from './state/reducers';
 
 jest.mock('app/core/config', () => ({
   ...jest.requireActual('app/core/config'),
@@ -22,13 +20,14 @@ const setup = (propOverrides?: object) => {
   const store = configureStore();
   const props: Props = {
     teams: [] as Team[],
+    noTeams: false,
     loadTeams: jest.fn(),
     deleteTeam: jest.fn(),
-    setSearchQuery: mockToolkitActionCreator(setSearchQuery),
-    setTeamsSearchPage: mockToolkitActionCreator(setTeamsSearchPage),
-    searchQuery: '',
-    searchPage: 1,
-    teamsCount: 0,
+    changePage: jest.fn(),
+    changeQuery: jest.fn(),
+    query: '',
+    page: 1,
+    totalPages: 0,
     hasFetched: false,
     editorsCanAdmin: false,
     signedInUser: {
@@ -59,7 +58,7 @@ describe('TeamList', () => {
       it('should enable the new team button', () => {
         setup({
           teams: getMultipleMockTeams(1),
-          teamsCount: 1,
+          totalCount: 1,
           hasFetched: true,
           editorsCanAdmin: true,
           signedInUser: {
@@ -76,7 +75,7 @@ describe('TeamList', () => {
       it('should disable the new team button', () => {
         setup({
           teams: getMultipleMockTeams(1),
-          teamsCount: 1,
+          totalCount: 1,
           hasFetched: true,
           editorsCanAdmin: true,
           signedInUser: {
@@ -94,7 +93,7 @@ describe('TeamList', () => {
 it('should call delete team', async () => {
   const mockDelete = jest.fn();
   const mockTeam = getMockTeam();
-  setup({ deleteTeam: mockDelete, teams: [mockTeam], teamsCount: 1, hasFetched: true });
+  setup({ deleteTeam: mockDelete, teams: [mockTeam], totalCount: 1, hasFetched: true });
   await userEvent.click(screen.getByRole('button', { name: `Delete team ${mockTeam.name}` }));
   await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
   await waitFor(() => {

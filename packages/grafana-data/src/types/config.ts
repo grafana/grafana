@@ -117,7 +117,7 @@ export interface CurrentUserDTO {
   login: string;
   email: string;
   name: string;
-  lightTheme: boolean;
+  theme: string; // dark | light | system
   orgCount: number;
   orgId: number;
   orgName: string;
@@ -127,7 +127,11 @@ export interface CurrentUserDTO {
   timezone: string;
   weekStart: string;
   locale: string;
+  language: string;
   permissions?: Record<string, boolean>;
+
+  /** @deprecated Use theme instead */
+  lightTheme: boolean;
 }
 
 /** Contains essential user and config info
@@ -151,6 +155,7 @@ export interface BootData {
  */
 export interface GrafanaConfig {
   isPublicDashboardView: boolean;
+  snapshotEnabled: boolean;
   datasources: { [str: string]: DataSourceInstanceSettings };
   panels: { [key: string]: PanelPluginMeta };
   auth: AuthSettings;
@@ -209,6 +214,7 @@ export interface GrafanaConfig {
   angularSupportEnabled: boolean;
   feedbackLinksEnabled: boolean;
   secretsManagerPluginEnabled: boolean;
+  supportBundlesEnabled: boolean;
   googleAnalyticsId: string | undefined;
   googleAnalytics4Id: string | undefined;
   googleAnalytics4SendManualPageViews: boolean;
@@ -222,5 +228,12 @@ export interface AuthSettings {
   OAuthSkipOrgRoleUpdateSync?: boolean;
   SAMLSkipOrgRoleSync?: boolean;
   LDAPSkipOrgRoleSync?: boolean;
+  JWTAuthSkipOrgRoleSync?: boolean;
+  GrafanaComSkipOrgRoleSync?: boolean;
+  GithubSkipOrgRoleSync?: boolean;
+  GitLabSkipOrgRoleSync?: boolean;
+  OktaSkipOrgRoleSync?: boolean;
+  AzureADSkipOrgRoleSync?: boolean;
+  GoogleSkipOrgRoleSync?: boolean;
   DisableSyncLock?: boolean;
 }

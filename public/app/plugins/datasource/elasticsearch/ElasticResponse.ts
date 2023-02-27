@@ -288,6 +288,11 @@ export class ElasticResponse {
         continue;
       }
 
+      if (aggDef.type === 'nested') {
+        this.processBuckets(esAgg, target, seriesList, table, props, depth + 1);
+        continue;
+      }
+
       if (depth === maxDepth) {
         if (aggDef.type === 'date_histogram') {
           this.processMetrics(esAgg, target, seriesList, props);
@@ -484,7 +489,11 @@ export class ElasticResponse {
     if (this.targets.some((target) => queryDef.hasMetricOfType(target, 'raw_data'))) {
       return this.processResponseToDataFrames(false);
     }
-    return this.processResponseToSeries();
+    const result = this.processResponseToSeries();
+    return {
+      ...result,
+      data: result.data.map((item) => toDataFrame(item)),
+    };
   }
 
   getLogs(logMessageField?: string, logLevelField?: string): DataQueryResponse {

@@ -26,9 +26,9 @@ const intrinsics = ['duration', 'name', 'status', 'parent'];
 
 const scopes: string[] = ['resource', 'span'];
 
-const booleans = ['false', 'true'];
+const keywords = intrinsics.concat(scopes);
 
-const keywords = intrinsics.concat(scopes).concat(booleans);
+const statusValues = ['ok', 'unset', 'error', 'false', 'true'];
 
 export const language = {
   ignoreCase: false,
@@ -37,6 +37,7 @@ export const language = {
 
   keywords,
   operators,
+  statusValues,
 
   // we include these common regular expressions
   symbols: /[=><!~?:&|+\-*\/^%]+/,
@@ -53,12 +54,16 @@ export const language = {
       // labels
       [/[a-z_.][\w./_-]*(?=\s*(=|!=|>|<|>=|<=|=~|!~))/, 'tag'],
 
+      //trace ID
+      [/^\s*[0-9A-Fa-f]+\s*$/, 'tag'],
+
       // all keywords have the same color
       [
         /[a-zA-Z_.]\w*/,
         {
           cases: {
             '@keywords': 'type',
+            '@statusValues': 'type.identifier',
             '@default': 'identifier',
           },
         },

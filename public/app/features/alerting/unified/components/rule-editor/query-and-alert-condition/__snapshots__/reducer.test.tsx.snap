@@ -1,42 +1,42 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Query and expressions reducer should add a new expression 1`] = `
-Object {
-  "queries": Array [
-    Object {
+{
+  "queries": [
+    {
       "datasourceUid": "abc123",
-      "model": Object {
+      "model": {
         "refId": "A",
       },
       "queryType": "query",
       "refId": "A",
     },
-    Object {
+    {
       "datasourceUid": "-100",
-      "model": Object {
-        "conditions": Array [
-          Object {
-            "evaluator": Object {
-              "params": Array [
+      "model": {
+        "conditions": [
+          {
+            "evaluator": {
+              "params": [
                 0,
                 0,
               ],
               "type": "gt",
             },
-            "operator": Object {
+            "operator": {
               "type": "and",
             },
-            "query": Object {
-              "params": Array [],
+            "query": {
+              "params": [],
             },
-            "reducer": Object {
-              "params": Array [],
+            "reducer": {
+              "params": [],
               "type": "avg",
             },
             "type": "query",
           },
         ],
-        "datasource": Object {
+        "datasource": {
           "name": "Expression",
           "type": "__expr__",
           "uid": "__expr__",
@@ -55,20 +55,20 @@ Object {
 `;
 
 exports[`Query and expressions reducer should add query 1`] = `
-Object {
-  "queries": Array [
-    Object {
+{
+  "queries": [
+    {
       "datasourceUid": "abc123",
-      "model": Object {
+      "model": {
         "refId": "A",
       },
       "queryType": "query",
       "refId": "A",
     },
-    Object {
+    {
       "datasourceUid": "c8eceabb-0275-4108-8f03-8f74faf4bf6d",
-      "model": Object {
-        "datasource": Object {
+      "model": {
+        "datasource": {
           "type": "prometheus",
           "uid": "c8eceabb-0275-4108-8f03-8f74faf4bf6d",
         },
@@ -77,7 +77,7 @@ Object {
       },
       "queryType": "",
       "refId": "B",
-      "relativeTimeRange": Object {
+      "relativeTimeRange": {
         "from": 600,
         "to": 0,
       },
@@ -87,25 +87,25 @@ Object {
 `;
 
 exports[`Query and expressions reducer should duplicate query 1`] = `
-Object {
-  "queries": Array [
-    Object {
+{
+  "queries": [
+    {
       "datasourceUid": "abc123",
-      "model": Object {
+      "model": {
         "refId": "A",
       },
       "queryType": "query",
       "refId": "A",
     },
-    Object {
+    {
       "datasourceUid": "abc123",
-      "model": Object {
+      "model": {
         "hide": false,
         "refId": "B",
       },
       "queryType": "",
       "refId": "B",
-      "relativeTimeRange": Object {
+      "relativeTimeRange": {
         "from": 600,
         "to": 0,
       },
@@ -115,11 +115,11 @@ Object {
 `;
 
 exports[`Query and expressions reducer should remove an expression or alert query 1`] = `
-Object {
-  "queries": Array [
-    Object {
+{
+  "queries": [
+    {
       "datasourceUid": "abc123",
-      "model": Object {
+      "model": {
         "refId": "A",
       },
       "queryType": "query",
@@ -130,44 +130,44 @@ Object {
 `;
 
 exports[`Query and expressions reducer should rewire expressions 1`] = `
-Object {
-  "queries": Array [
-    Object {
+{
+  "queries": [
+    {
       "datasourceUid": "abc123",
-      "model": Object {
+      "model": {
         "refId": "A",
       },
       "queryType": "query",
       "refId": "A",
     },
-    Object {
+    {
       "datasourceUid": "-100",
-      "model": Object {
-        "conditions": Array [
-          Object {
-            "evaluator": Object {
-              "params": Array [
+      "model": {
+        "conditions": [
+          {
+            "evaluator": {
+              "params": [
                 0,
                 0,
               ],
               "type": "gt",
             },
-            "operator": Object {
+            "operator": {
               "type": "and",
             },
-            "query": Object {
-              "params": Array [
+            "query": {
+              "params": [
                 "C",
               ],
             },
-            "reducer": Object {
-              "params": Array [],
+            "reducer": {
+              "params": [],
               "type": "avg",
             },
             "type": "query",
           },
         ],
-        "datasource": Object {
+        "datasource": {
           "name": "Expression",
           "type": "__expr__",
           "uid": "__expr__",
@@ -184,36 +184,36 @@ Object {
 `;
 
 exports[`Query and expressions reducer should set data queries 1`] = `
-Object {
-  "queries": Array [
-    Object {
+{
+  "queries": [
+    {
       "datasourceUid": "-100",
-      "model": Object {
-        "conditions": Array [
-          Object {
-            "evaluator": Object {
-              "params": Array [
+      "model": {
+        "conditions": [
+          {
+            "evaluator": {
+              "params": [
                 0,
                 0,
               ],
               "type": "gt",
             },
-            "operator": Object {
+            "operator": {
               "type": "and",
             },
-            "query": Object {
-              "params": Array [
+            "query": {
+              "params": [
                 "A",
               ],
             },
-            "reducer": Object {
-              "params": Array [],
+            "reducer": {
+              "params": [],
               "type": "avg",
             },
             "type": "query",
           },
         ],
-        "datasource": Object {
+        "datasource": {
           "name": "Expression",
           "type": "__expr__",
           "uid": "__expr__",
@@ -230,36 +230,36 @@ Object {
 `;
 
 exports[`Query and expressions reducer should update an expression 1`] = `
-Object {
-  "queries": Array [
-    Object {
+{
+  "queries": [
+    {
       "datasourceUid": "-100",
-      "model": Object {
-        "conditions": Array [
-          Object {
-            "evaluator": Object {
-              "params": Array [
+      "model": {
+        "conditions": [
+          {
+            "evaluator": {
+              "params": [
                 0,
                 0,
               ],
               "type": "gt",
             },
-            "operator": Object {
+            "operator": {
               "type": "and",
             },
-            "query": Object {
-              "params": Array [
+            "query": {
+              "params": [
                 "A",
               ],
             },
-            "reducer": Object {
-              "params": Array [],
+            "reducer": {
+              "params": [],
               "type": "avg",
             },
             "type": "query",
           },
         ],
-        "datasource": Object {
+        "datasource": {
           "name": "Expression",
           "type": "__expr__",
           "uid": "__expr__",
@@ -276,44 +276,44 @@ Object {
 `;
 
 exports[`Query and expressions reducer should update an expression refId and rewire expressions 1`] = `
-Object {
-  "queries": Array [
-    Object {
+{
+  "queries": [
+    {
       "datasourceUid": "abc123",
-      "model": Object {
+      "model": {
         "refId": "C",
       },
       "queryType": "query",
       "refId": "C",
     },
-    Object {
+    {
       "datasourceUid": "-100",
-      "model": Object {
-        "conditions": Array [
-          Object {
-            "evaluator": Object {
-              "params": Array [
+      "model": {
+        "conditions": [
+          {
+            "evaluator": {
+              "params": [
                 0,
                 0,
               ],
               "type": "gt",
             },
-            "operator": Object {
+            "operator": {
               "type": "and",
             },
-            "query": Object {
-              "params": Array [
+            "query": {
+              "params": [
                 "C",
               ],
             },
-            "reducer": Object {
-              "params": Array [],
+            "reducer": {
+              "params": [],
               "type": "avg",
             },
             "type": "query",
           },
         ],
-        "datasource": Object {
+        "datasource": {
           "name": "Expression",
           "type": "__expr__",
           "uid": "__expr__",
@@ -330,42 +330,42 @@ Object {
 `;
 
 exports[`Query and expressions reducer should update expression type 1`] = `
-Object {
-  "queries": Array [
-    Object {
+{
+  "queries": [
+    {
       "datasourceUid": "abc123",
-      "model": Object {
+      "model": {
         "refId": "A",
       },
       "queryType": "query",
       "refId": "A",
     },
-    Object {
+    {
       "datasourceUid": "-100",
-      "model": Object {
-        "conditions": Array [
-          Object {
-            "evaluator": Object {
-              "params": Array [
+      "model": {
+        "conditions": [
+          {
+            "evaluator": {
+              "params": [
                 0,
                 0,
               ],
               "type": "gt",
             },
-            "operator": Object {
+            "operator": {
               "type": "and",
             },
-            "query": Object {
-              "params": Array [],
+            "query": {
+              "params": [],
             },
-            "reducer": Object {
-              "params": Array [],
+            "reducer": {
+              "params": [],
               "type": "avg",
             },
             "type": "query",
           },
         ],
-        "datasource": Object {
+        "datasource": {
           "name": "Expression",
           "type": "__expr__",
           "uid": "__expr__",

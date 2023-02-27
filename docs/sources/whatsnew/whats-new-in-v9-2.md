@@ -1,6 +1,4 @@
 ---
-_build:
-  list: false
 aliases:
   - ../guides/whats-new-in-v9-2/
 description: Feature and improvement highlights for Grafana v9.2

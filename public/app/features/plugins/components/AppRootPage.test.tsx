@@ -5,13 +5,13 @@ import { Route, Router } from 'react-router-dom';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { AppPlugin, PluginType, AppRootProps, NavModelItem } from '@grafana/data';
+import { getMockPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 import { locationService, setEchoSrv } from '@grafana/runtime';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { GrafanaRoute } from 'app/core/navigation/GrafanaRoute';
 import { Echo } from 'app/core/services/echo/Echo';
 import { configureStore } from 'app/store/configureStore';
 
-import { getMockPlugin } from '../__mocks__/pluginMocks';
 import { getPluginSettings } from '../pluginSettings';
 import { importAppPlugin } from '../plugin_loader';
 

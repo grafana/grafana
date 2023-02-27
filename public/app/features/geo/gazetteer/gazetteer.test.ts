@@ -60,7 +60,7 @@ describe('Placename lookup from geojson format', () => {
     const gaz = await getGazetteer('local');
     expect(gaz.error).toBeUndefined();
     expect(getCenterPointWGS84(gaz.find('A')?.geometry())).toMatchInlineSnapshot(`
-      Array [
+      [
         0,
         0,
       ]
@@ -71,7 +71,7 @@ describe('Placename lookup from geojson format', () => {
     const gaz = await getGazetteer('airports');
     expect(gaz.error).toBeUndefined();
     expect(getCenterPointWGS84(gaz.find('B')?.geometry())).toMatchInlineSnapshot(`
-      Array [
+      [
         1,
         1,
       ]
@@ -83,7 +83,7 @@ describe('Placename lookup from geojson format', () => {
     const gaz = await getGazetteer('airports');
     expect(gaz.error).toBeUndefined();
     expect(getCenterPointWGS84(gaz.find('C')?.geometry())).toMatchInlineSnapshot(`
-      Array [
+      [
         2,
         2,
       ]

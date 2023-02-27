@@ -1,15 +1,17 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	amConfig "github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/pkg/labels"
+
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/util/cmputil"
-	amConfig "github.com/prometheus/alertmanager/config"
-	"github.com/prometheus/alertmanager/pkg/labels"
 )
 
 func (srv AlertmanagerSrv) provenanceGuard(currentConfig apimodels.GettableUserConfig, newConfig apimodels.PostableUserConfig) error {
@@ -96,11 +98,16 @@ func checkContactPoints(currReceivers []*apimodels.GettableApiReceiver, newRecei
 					return editErr
 				}
 			}
-			existingSettings, err := contactPoint.Settings.Map()
+			existingSettings := map[string]interface{}{}
+			err := json.Unmarshal(contactPoint.Settings, &existingSettings)
 			if err != nil {
 				return err
 			}
-			newSettings, err := postedContactPoint.Settings.Map()
+			newSettings := map[string]interface{}{}
+			err = json.Unmarshal(contactPoint.Settings, &newSettings)
+			if err != nil {
+				return err
+			}
 			if err != nil {
 				return err
 			}

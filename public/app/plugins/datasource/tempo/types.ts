@@ -37,7 +37,7 @@ export interface TempoJsonData extends DataSourceJsonData {
 }
 
 // search = Loki search, nativeSearch = Tempo search for backwards compatibility
-export type TempoQueryType = 'traceql' | 'search' | 'traceId' | 'serviceMap' | 'upload' | 'nativeSearch' | 'clear';
+export type TempoQueryType = 'traceql' | 'search' | 'serviceMap' | 'upload' | 'nativeSearch' | 'clear';
 
 export interface TempoQuery extends DataQuery {
   query: string;

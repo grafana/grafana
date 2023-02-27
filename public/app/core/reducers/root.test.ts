@@ -28,12 +28,15 @@ describe('rootReducer', () => {
 
       reducerTester<StoreState>()
         .givenReducer(rootReducer, state)
-        .whenActionIsDispatched(teamsLoaded(teams))
+        .whenActionIsDispatched(teamsLoaded({ teams: teams, page: 1, noTeams: false, perPage: 30, totalCount: 1 }))
         .thenStatePredicateShouldEqual((resultingState) => {
           expect(resultingState.teams).toEqual({
             hasFetched: true,
-            searchQuery: '',
-            searchPage: 1,
+            noTeams: false,
+            perPage: 30,
+            totalPages: 1,
+            query: '',
+            page: 1,
             teams,
           });
           return true;
@@ -47,8 +50,11 @@ describe('rootReducer', () => {
       const state: StoreState = {
         teams: {
           hasFetched: true,
-          searchQuery: '',
-          searchPage: 1,
+          query: '',
+          page: 1,
+          noTeams: false,
+          totalPages: 1,
+          perPage: 30,
           teams,
         },
       } as StoreState;

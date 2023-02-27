@@ -64,7 +64,7 @@ func makeMockedAPIWithUrl(url string, statusCode int, contentType string, respon
 		Transport: &mockedRoundTripper{statusCode: statusCode, contentType: contentType, responseBytes: responseBytes, requestCallback: requestCallback},
 	}
 
-	return newLokiAPI(&client, url, log.New("test"), nil)
+	return newLokiAPI(&client, url, log.New("test"))
 }
 
 func makeCompressedMockedAPIWithUrl(url string, statusCode int, contentType string, responseBytes []byte, requestCallback mockRequestCallback) *LokiAPI {
@@ -72,5 +72,5 @@ func makeCompressedMockedAPIWithUrl(url string, statusCode int, contentType stri
 		Transport: &mockedCompressedRoundTripper{statusCode: statusCode, contentType: contentType, responseBytes: responseBytes, requestCallback: requestCallback},
 	}
 
-	return newLokiAPI(&client, url, log.New("test"), nil)
+	return newLokiAPI(&client, url, log.New("test"))
 }

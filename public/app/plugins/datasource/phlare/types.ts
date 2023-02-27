@@ -27,6 +27,6 @@ export const defaultQuery: Partial<Query> = {
 /**
  * These are options configured for each DataSource instance.
  */
-export interface FireDataSourceOptions extends DataSourceJsonData {
+export interface PhlareDataSourceOptions extends DataSourceJsonData {
   minStep?: string;
 }

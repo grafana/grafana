@@ -53,7 +53,7 @@ For details on a specific data source's unique query editor features, refer to i
 - For data sources installed as plugins, refer to its own documentation.
   - Data source plugins in Grafana's [plugin catalog](/grafana/plugins/) link to or include their documentation in their catalog listings.
     For details about the plugin catalog, refer to [Plugin management]({{< relref "../../administration/plugin-management/" >}}).
-  - For links to [Grafana Enterprise]({{< relref "../../enterprise/" >}}) data source plugin documentation, refer to the [Enterprise plugins index](/docs/plugins/).
+  - For links to Grafana Enterprise data source plugin documentation, refer to the [Enterprise plugins index](/docs/plugins/).
 
 ### Query syntax
 
@@ -178,8 +178,6 @@ Panel data source query options include:
 
 - **Time shift:** Overrides the time range for individual panels by shifting its start and end relative to the time picker.
   For example, you can shift the time range for the panel to be two hours earlier than the dashboard time picker.
-
-  For more information, refer to [Time range controls]({{< relref "../../dashboards/manage-dashboards/#configure-dashboard-time-range-controls" >}}).
 
   > **Note:** Panel time overrides have no effect when the dashboard's time range is absolute.
 

@@ -5,17 +5,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
-
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 func TestSearchRequest(t *testing.T) {
 	timeField := "@timestamp"
 
 	setup := func() *SearchRequestBuilder {
-		return NewSearchRequestBuilder(intervalv2.Interval{Value: 15 * time.Second, Text: "15s"})
+		return NewSearchRequestBuilder(15 * time.Second)
 	}
 
 	t.Run("When building search request", func(t *testing.T) {
@@ -401,7 +400,7 @@ func TestSearchRequest(t *testing.T) {
 func TestMultiSearchRequest(t *testing.T) {
 	t.Run("When adding one search request", func(t *testing.T) {
 		b := NewMultiSearchRequestBuilder()
-		b.Search(intervalv2.Interval{Value: 15 * time.Second, Text: "15s"})
+		b.Search(15 * time.Second)
 
 		t.Run("When building search request should contain one search request", func(t *testing.T) {
 			mr, err := b.Build()
@@ -412,8 +411,8 @@ func TestMultiSearchRequest(t *testing.T) {
 
 	t.Run("When adding two search requests", func(t *testing.T) {
 		b := NewMultiSearchRequestBuilder()
-		b.Search(intervalv2.Interval{Value: 15 * time.Second, Text: "15s"})
-		b.Search(intervalv2.Interval{Value: 15 * time.Second, Text: "15s"})
+		b.Search(15 * time.Second)
+		b.Search(15 * time.Second)
 
 		t.Run("When building search request should contain two search requests", func(t *testing.T) {
 			mr, err := b.Build()

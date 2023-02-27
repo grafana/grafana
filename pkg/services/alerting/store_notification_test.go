@@ -7,13 +7,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-
-	"github.com/stretchr/testify/require"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
 )
 
 func TestIntegrationAlertNotificationSQLAccess(t *testing.T) {
@@ -285,7 +285,7 @@ func TestIntegrationAlertNotificationSQLAccess(t *testing.T) {
 			err := store.UpdateAlertNotification(context.Background(), newCmd)
 			require.Nil(t, err)
 			require.Equal(t, "NewName", newCmd.Result.Name)
-			require.Equal(t, 60*time.Second, newCmd.Result.Frequency)
+			require.Equal(t, time.Minute, newCmd.Result.Frequency)
 			require.True(t, newCmd.Result.DisableResolveMessage)
 		})
 

@@ -3,9 +3,26 @@ package definitions
 import (
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/prometheus/common/model"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/provisioning/alerting/file"
 )
+
+// swagger:route GET /api/v1/provisioning/alert-rules provisioning stable RouteGetAlertRules
+//
+// Get all the alert rules.
+//
+//     Responses:
+//       200: ProvisionedAlertRules
+
+// swagger:route GET /api/v1/provisioning/alert-rules/export provisioning stable RouteGetAlertRulesExport
+//
+// Export all alert rules in provisioning file format.
+//
+//     Responses:
+//       200: AlertingFileExport
+//       404: description: Not found.
 
 // swagger:route GET /api/v1/provisioning/alert-rules/{UID} provisioning stable RouteGetAlertRule
 //
@@ -13,6 +30,19 @@ import (
 //
 //     Responses:
 //       200: ProvisionedAlertRule
+//       404: description: Not found.
+
+// swagger:route GET /api/v1/provisioning/alert-rules/{UID}/export provisioning stable RouteGetAlertRuleExport
+//
+// Export an alert rule in provisioning file format.
+//
+//     Produces:
+//     - application/json
+//     - application/yaml
+//     - text/yaml
+//
+//     Responses:
+//       200: AlertingFileExport
 //       404: description: Not found.
 
 // swagger:route POST /api/v1/provisioning/alert-rules provisioning stable RoutePostAlertRule
@@ -44,7 +74,7 @@ import (
 //     Responses:
 //       204: description: The alert rule was deleted successfully.
 
-// swagger:parameters RouteGetAlertRule RoutePutAlertRule RouteDeleteAlertRule
+// swagger:parameters RouteGetAlertRule RoutePutAlertRule RouteDeleteAlertRule RouteGetAlertRuleExport
 type AlertRuleUIDReference struct {
 	// Alert rule UID
 	// in:path
@@ -62,6 +92,9 @@ type AlertRuleHeaders struct {
 	// in:header
 	XDisableProvenance string `json:"X-Disable-Provenance"`
 }
+
+// swagger:model
+type ProvisionedAlertRules []ProvisionedAlertRule
 
 type ProvisionedAlertRule struct {
 	ID  int64  `json:"id"`
@@ -142,12 +175,33 @@ func NewAlertRule(rule models.AlertRule, provenance models.Provenance) Provision
 	}
 }
 
+func NewAlertRules(rules []*models.AlertRule) ProvisionedAlertRules {
+	result := make([]ProvisionedAlertRule, 0, len(rules))
+	for _, r := range rules {
+		result = append(result, NewAlertRule(*r, models.ProvenanceNone))
+	}
+	return result
+}
+
 // swagger:route GET /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group} provisioning stable RouteGetAlertRuleGroup
 //
 // Get a rule group.
 //
 //     Responses:
 //       200: AlertRuleGroup
+//       404: description: Not found.
+
+// swagger:route GET /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export provisioning stable RouteGetAlertRuleGroupExport
+//
+// Export an alert rule group in provisioning file format.
+//
+//     Produces:
+//     - application/json
+//     - application/yaml
+//     - text/yaml
+//
+//     Responses:
+//       200: AlertingFileExport
 //       404: description: Not found.
 
 // swagger:route PUT /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group} provisioning stable RoutePutAlertRuleGroup
@@ -161,13 +215,13 @@ func NewAlertRule(rule models.AlertRule, provenance models.Provenance) Provision
 //       200: AlertRuleGroup
 //       400: ValidationError
 
-// swagger:parameters RouteGetAlertRuleGroup RoutePutAlertRuleGroup
+// swagger:parameters RouteGetAlertRuleGroup RoutePutAlertRuleGroup RouteGetAlertRuleGroupExport
 type FolderUIDPathParam struct {
 	// in:path
 	FolderUID string `json:"FolderUID"`
 }
 
-// swagger:parameters RouteGetAlertRuleGroup RoutePutAlertRuleGroup
+// swagger:parameters RouteGetAlertRuleGroup RoutePutAlertRuleGroup RouteGetAlertRuleGroupExport
 type RuleGroupPathParam struct {
 	// in:path
 	Group string `json:"Group"`
@@ -184,6 +238,15 @@ type AlertRuleGroupMetadata struct {
 	Interval int64 `json:"interval"`
 }
 
+// swagger:parameters RouteGetAlertRuleGroupExport RouteGetAlertRuleExport RouteGetAlertRulesExport
+type ExportQueryParams struct {
+	// Whether to initiate a download of the file or not.
+	// in: query
+	// required: false
+	// default: false
+	Download bool `json:"download"`
+}
+
 // swagger:model
 type AlertRuleGroup struct {
 	Title     string                 `json:"title"`
@@ -191,6 +254,10 @@ type AlertRuleGroup struct {
 	Interval  int64                  `json:"interval"`
 	Rules     []ProvisionedAlertRule `json:"rules"`
 }
+
+// AlertingFileExport is the full provisioned file export.
+// swagger:model
+type AlertingFileExport = file.AlertingFileExport
 
 func (a *AlertRuleGroup) ToModel() (models.AlertRuleGroup, error) {
 	ruleGroup := models.AlertRuleGroup{

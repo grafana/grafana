@@ -1,5 +1,5 @@
 ---
-title: TBD...
+title: TBD
 ---
 
 ## TBD

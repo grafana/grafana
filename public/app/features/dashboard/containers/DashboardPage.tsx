@@ -28,7 +28,6 @@ import { DashboardPrompt } from '../components/DashboardPrompt/DashboardPrompt';
 import { DashboardSettings } from '../components/DashboardSettings';
 import { PanelInspector } from '../components/Inspector/PanelInspector';
 import { PanelEditor } from '../components/PanelEditor/PanelEditor';
-import { PublicDashboardFooter } from '../components/PublicDashboardFooter/PublicDashboardsFooter';
 import { SubMenu } from '../components/SubMenu/SubMenu';
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { liveTimer } from '../dashgrid/liveTimer';
@@ -45,7 +44,7 @@ export interface DashboardPageRouteParams {
 
 export type DashboardPageRouteSearchParams = {
   tab?: string;
-  folderId?: string;
+  folderUid?: string;
   editPanel?: string;
   viewPanel?: string;
   editview?: string;
@@ -75,12 +74,7 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-type OwnProps = {
-  isPublic?: boolean;
-};
-
-export type Props = OwnProps &
-  Themeable2 &
+export type Props = Themeable2 &
   GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams> &
   ConnectedProps<typeof connector>;
 
@@ -129,7 +123,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   }
 
   initDashboard() {
-    const { dashboard, isPublic, match, queryParams } = this.props;
+    const { dashboard, match, queryParams } = this.props;
 
     if (dashboard) {
       this.closeDashboard();
@@ -139,10 +133,10 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       urlSlug: match.params.slug,
       urlUid: match.params.uid,
       urlType: match.params.type,
-      urlFolderId: queryParams.folderId,
+      urlFolderUid: queryParams.folderUid,
       panelType: queryParams.panelType,
       routeName: this.props.route.routeName,
-      fixUrl: !isPublic,
+      fixUrl: true,
       accessToken: match.params.accessToken,
       keybindingSrv: this.context.keybindings,
     });
@@ -341,9 +335,9 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, initError, queryParams, isPublic } = this.props;
+    const { dashboard, initError, queryParams } = this.props;
     const { editPanel, viewPanel, updateScrollTop, pageNav, sectionNav } = this.state;
-    const kioskMode = !isPublic ? getKioskMode(this.props.queryParams) : KioskMode.Full;
+    const kioskMode = getKioskMode(this.props.queryParams);
 
     if (!dashboard || !pageNav || !sectionNav) {
       return <DashboardLoading initPhase={this.props.initPhase} />;
@@ -392,7 +386,12 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
             </section>
           )}
 
-          <DashboardGrid dashboard={dashboard} viewPanel={viewPanel} editPanel={editPanel} />
+          <DashboardGrid
+            dashboard={dashboard}
+            isEditable={!!dashboard.meta.canEdit}
+            viewPanel={viewPanel}
+            editPanel={editPanel}
+          />
 
           {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
         </Page>
@@ -413,10 +412,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
             sectionNav={sectionNav}
           />
         )}
-        {
-          // TODO: assess if there are other places where we may want a footer, which may reveal a better place to add this
-          isPublic && <PublicDashboardFooter />
-        }
       </>
     );
   }

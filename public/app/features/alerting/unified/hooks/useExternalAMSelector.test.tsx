@@ -6,7 +6,7 @@ import { Provider } from 'react-redux';
 import 'whatwg-fetch';
 
 import { DataSourceJsonData, DataSourceSettings } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, setBackendSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
 
@@ -17,12 +17,8 @@ import { useExternalDataSourceAlertmanagers } from './useExternalAmSelector';
 
 const server = setupServer();
 
-jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
-  getBackendSrv: () => backendSrv,
-}));
-
 beforeAll(() => {
+  setBackendSrv(backendSrv);
   server.listen({ onUnhandledRequest: 'error' });
 });
 
@@ -85,8 +81,8 @@ describe('useExternalDataSourceAlertmanagers', () => {
     const wrapper: React.FC = ({ children }) => <Provider store={store}>{children}</Provider>;
 
     // Act
-    const { result, waitForNextUpdate } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper });
-    await waitForNextUpdate();
+    const { result, waitForValueToChange } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper });
+    await waitForValueToChange(() => result.current[0].status);
 
     // Assert
     const { current } = result;
@@ -118,8 +114,8 @@ describe('useExternalDataSourceAlertmanagers', () => {
     const wrapper: React.FC = ({ children }) => <Provider store={store}>{children}</Provider>;
 
     // Act
-    const { result, waitForNextUpdate } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper });
-    await waitForNextUpdate();
+    const { result, waitForValueToChange } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper });
+    await waitForValueToChange(() => result.current[0].status);
 
     // Assert
     const { current } = result;
@@ -184,8 +180,8 @@ describe('useExternalDataSourceAlertmanagers', () => {
     const wrapper: React.FC = ({ children }) => <Provider store={store}>{children}</Provider>;
 
     // Act
-    const { result, waitForNextUpdate } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper });
-    await waitForNextUpdate();
+    const { result, waitForValueToChange } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper });
+    await waitForValueToChange(() => result.current[0].status);
 
     // Assert
     const { current } = result;
@@ -217,11 +213,11 @@ describe('useExternalDataSourceAlertmanagers', () => {
     const wrapper: React.FC = ({ children }) => <Provider store={store}>{children}</Provider>;
 
     // Act
-    const { result, waitForNextUpdate } = renderHook(() => useExternalDataSourceAlertmanagers(), {
+    const { result, waitForValueToChange } = renderHook(() => useExternalDataSourceAlertmanagers(), {
       wrapper,
     });
 
-    await waitForNextUpdate();
+    await waitForValueToChange(() => result.current[0].status);
 
     // Assert
     expect(result.current).toHaveLength(1);

@@ -10,14 +10,14 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/stretchr/testify/require"
 )
 
 func TestIntegrationElasticsearch(t *testing.T) {
@@ -31,7 +31,7 @@ func TestIntegrationElasticsearch(t *testing.T) {
 	grafanaListeningAddr, testEnv := testinfra.StartGrafanaEnv(t, dir, path)
 	ctx := context.Background()
 
-	createUser(t, testEnv.SQLStore, user.CreateUserCommand{
+	testinfra.CreateUser(t, testEnv.SQLStore, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin",
 		Login:          "admin",
@@ -78,6 +78,11 @@ func TestIntegrationElasticsearch(t *testing.T) {
 			"rawQuery":  "*",
 			"type":      "",
 			"timeField": "@timestamp",
+			"metrics": []interface{}{
+				map[string]interface{}{
+					"type": "logs",
+				},
+			},
 		})
 		buf1 := &bytes.Buffer{}
 		err = json.NewEncoder(buf1).Encode(dtos.MetricRequest{
@@ -106,15 +111,4 @@ func TestIntegrationElasticsearch(t *testing.T) {
 		require.Equal(t, "basicAuthUser", username)
 		require.Equal(t, "basicAuthPassword", pwd)
 	})
-}
-
-func createUser(t *testing.T, store *sqlstore.SQLStore, cmd user.CreateUserCommand) int64 {
-	t.Helper()
-
-	store.Cfg.AutoAssignOrg = true
-	store.Cfg.AutoAssignOrgId = 1
-
-	u, err := store.CreateUser(context.Background(), cmd)
-	require.NoError(t, err)
-	return u.ID
 }

@@ -14,12 +14,16 @@ import (
 	"github.com/fatih/color"
 	"github.com/urfave/cli/v2"
 
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -36,6 +40,7 @@ func initConflictCfg(cmd *utils.ContextCommandLine) (*setting.Cfg, error) {
 		HomePath: cmd.HomePath(),
 		Args:     append(configOptions, "cfg:log.level=error"), // tailing arguments have precedence over the options string
 	})
+
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +60,21 @@ func initializeConflictResolver(cmd *utils.ContextCommandLine, f Formatter, ctx 
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "failed to get users with conflicting logins", err)
 	}
-	resolver := ConflictResolver{Users: conflicts, Store: s}
+	quotaService := quotaimpl.ProvideService(s, cfg)
+	userService, err := userimpl.ProvideService(s, nil, cfg, nil, nil, quotaService)
+	if err != nil {
+		return nil, fmt.Errorf("%v: %w", "failed to get user service", err)
+	}
+	routing := routing.ProvideRegister()
+	featMgmt, err := featuremgmt.ProvideManagerService(cfg, nil)
+	if err != nil {
+		return nil, fmt.Errorf("%v: %w", "failed to get feature management service", err)
+	}
+	acService, err := acimpl.ProvideService(cfg, s, routing, nil, nil, featMgmt)
+	if err != nil {
+		return nil, fmt.Errorf("%v: %w", "failed to get access control", err)
+	}
+	resolver := ConflictResolver{Users: conflicts, Store: s, userService: userService, ac: acService}
 	resolver.BuildConflictBlocks(conflicts, f)
 	return &resolver, nil
 }
@@ -203,6 +222,12 @@ func getDocumentationForFile() string {
 #
 # If you feel like you want to wait with a specific block,
 # delete all lines regarding that conflict block.
+# email - the user’s email
+# login - the user’s login/username
+# last_seen_at - the user’s last login
+# auth_module - if the user was created/signed in using an authentication provider
+# conflict_email - a boolean if we consider the email to be a conflict
+# conflict_login - a boolean if we consider the login to be a conflict
 #
 `
 }
@@ -327,11 +352,7 @@ func (r *ConflictResolver) MergeConflictingUsers(ctx context.Context) error {
 
 		// creating a session for each block of users
 		// we want to rollback incase something happens during update / delete
-		if err := r.Store.WithDbSession(ctx, func(sess *db.Session) error {
-			err := sess.Begin()
-			if err != nil {
-				return fmt.Errorf("could not open a db session: %w", err)
-			}
+		if err := r.Store.InTransaction(ctx, func(ctx context.Context) error {
 			for _, u := range users {
 				if u.Direction == "+" {
 					id, err := strconv.ParseInt(u.ID, 10, 64)
@@ -347,36 +368,34 @@ func (r *ConflictResolver) MergeConflictingUsers(ctx context.Context) error {
 					fromUserIds = append(fromUserIds, id)
 				}
 			}
-			if _, err := sess.ID(intoUserId).Where(sqlstore.NotServiceAccountFilter(r.Store)).Get(&intoUser); err != nil {
+			if _, err := r.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: intoUserId}); err != nil {
 				return fmt.Errorf("could not find intoUser: %w", err)
 			}
-
 			for _, fromUserId := range fromUserIds {
-				var fromUser user.User
-				exists, err := sess.ID(fromUserId).Where(sqlstore.NotServiceAccountFilter(r.Store)).Get(&fromUser)
+				_, err := r.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: fromUserId})
+				if err != nil && errors.Is(err, user.ErrUserNotFound) {
+					fmt.Printf("user with id %d does not exist, skipping\n", fromUserId)
+				}
 				if err != nil {
 					return fmt.Errorf("could not find fromUser: %w", err)
 				}
-				if !exists {
-					fmt.Printf("user with id %d does not exist, skipping\n", fromUserId)
-				}
-				// // delete the user
-				delErr := r.Store.DeleteUserInSession(ctx, sess, &models.DeleteUserCommand{UserId: fromUserId})
+				//  delete the user
+				delErr := r.userService.Delete(ctx, &user.DeleteUserCommand{UserID: fromUserId})
 				if delErr != nil {
 					return fmt.Errorf("error during deletion of user: %w", delErr)
 				}
+				delACErr := r.ac.DeleteUserPermissions(ctx, 0, fromUserId)
+				if delACErr != nil {
+					return fmt.Errorf("error during deletion of user access control: %w", delACErr)
+				}
 			}
-			commitErr := sess.Commit()
-			if commitErr != nil {
-				return fmt.Errorf("could not commit operation for useridentification %s: %w", block, commitErr)
-			}
-			userStore := userimpl.ProvideStore(r.Store, setting.NewCfg())
+
 			updateMainCommand := &user.UpdateUserCommand{
 				UserID: intoUser.ID,
 				Login:  strings.ToLower(intoUser.Login),
 				Email:  strings.ToLower(intoUser.Email),
 			}
-			updateErr := userStore.Update(ctx, updateMainCommand)
+			updateErr := r.userService.Update(ctx, updateMainCommand)
 			if updateErr != nil {
 				return fmt.Errorf("could not update user: %w", updateErr)
 			}
@@ -592,6 +611,8 @@ func (r *ConflictResolver) ToStringPresentation() string {
 
 type ConflictResolver struct {
 	Store           *sqlstore.SQLStore
+	userService     user.Service
+	ac              accesscontrol.Service
 	Config          *setting.Cfg
 	Users           ConflictingUsers
 	ValidUsers      ConflictingUsers

@@ -1,5 +1,3 @@
-import { get, set } from 'lodash';
-
 import { toUtc } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
@@ -237,7 +235,7 @@ describe('AzureLogAnalyticsDatasource', () => {
 
       const ds = new AzureMonitorDatasource(ctx.instanceSettings, templateSrv);
       query.queryType = AzureQueryType.LogAnalytics;
-      query.azureLogAnalytics = { resource: `$${singleVariable.name}` };
+      query.azureLogAnalytics = { resources: [`$${singleVariable.name}`] };
       expect(ds.targetContainsTemplate(query)).toEqual(true);
     });
 
@@ -270,7 +268,7 @@ describe('AzureLogAnalyticsDatasource', () => {
       const query: AzureMonitorQuery = {
         refId: 'A',
         azureLogAnalytics: {
-          resource: '/sub/124/rg/cloud/vm/server',
+          resources: ['/sub/124/rg/cloud/vm/server'],
           query: 'perf | take 100',
         },
       };
@@ -303,7 +301,7 @@ describe('AzureLogAnalyticsDatasource', () => {
         refId: 'A',
         hide: true,
         azureLogAnalytics: {
-          resource: '/sub/124/rg/cloud/vm/server',
+          resources: ['/sub/124/rg/cloud/vm/server'],
           query: 'perf | take 100',
         },
       };
@@ -315,7 +313,7 @@ describe('AzureLogAnalyticsDatasource', () => {
       const query: AzureMonitorQuery = {
         refId: 'A',
         azureLogAnalytics: {
-          resource: '/sub/124/rg/cloud/vm/server',
+          resources: ['/sub/124/rg/cloud/vm/server'],
         },
       };
 
@@ -352,9 +350,9 @@ describe('AzureLogAnalyticsDatasource', () => {
       templateSrv.init(Array.from(templateVariables.values()).map((item) => item.templateVariable));
       const query = createMockQuery();
       const azureLogAnalytics: { [index: string]: any } = {};
-      for (const [path, templateVariable] of templateVariables.entries()) {
-        set(azureLogAnalytics, path, `$${templateVariable.variableName}`);
-      }
+      azureLogAnalytics.query = '$query';
+      azureLogAnalytics.workspace = '$workspace';
+      azureLogAnalytics.resources = ['$resource'];
       query.queryType = AzureQueryType.LogAnalytics;
       query.azureLogAnalytics = {
         ...query.azureLogAnalytics,
@@ -362,9 +360,11 @@ describe('AzureLogAnalyticsDatasource', () => {
       };
       const templatedQuery = ctx.ds.interpolateVariablesInQueries([query], {});
       expect(templatedQuery[0]).toHaveProperty('datasource');
-      for (const [path, templateVariable] of templateVariables.entries()) {
-        expect(get(templatedQuery[0].azureLogAnalytics, path)).toEqual(templateVariable.templateVariable.current.value);
-      }
+      expect(templatedQuery[0].azureLogAnalytics).toMatchObject({
+        query: templateVariables.get('query')?.templateVariable.current.value,
+        workspace: templateVariables.get('workspace')?.templateVariable.current.value,
+        resources: [templateVariables.get('resource')?.templateVariable.current.value],
+      });
     });
   });
 });

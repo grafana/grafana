@@ -18,23 +18,34 @@ const setup = () => {
         dataSourcesCount={3}
         isLoading={false}
         hasCreateRights={true}
+        hasWriteRights={true}
+        hasExploreRights={true}
       />
     </Provider>
   );
 };
 
 describe('<DataSourcesList>', () => {
-  it('should render list of datasources', () => {
+  it('should render action bar', async () => {
     setup();
 
-    expect(screen.getAllByRole('listitem')).toHaveLength(3);
-    expect(screen.getAllByRole('heading')).toHaveLength(3);
+    expect(await screen.findByPlaceholderText('Search by name or type')).toBeInTheDocument();
+    expect(await screen.findByRole('combobox', { name: 'Sort' })).toBeInTheDocument();
   });
 
-  it('should render all elements in the list item', () => {
+  it('should render list of datasources', async () => {
     setup();
 
-    expect(screen.getByRole('heading', { name: 'dataSource-0' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'dataSource-0' })).toBeInTheDocument();
+    expect(await screen.findAllByRole('listitem')).toHaveLength(3);
+    expect(await screen.findAllByRole('heading')).toHaveLength(3);
+    expect(await screen.findAllByRole('link', { name: /Build a dashboard/i })).toHaveLength(3);
+    expect(await screen.findAllByRole('link', { name: 'Explore' })).toHaveLength(3);
+  });
+
+  it('should render all elements in the list item', async () => {
+    setup();
+
+    expect(await screen.findByRole('heading', { name: 'dataSource-0' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'dataSource-0' })).toBeInTheDocument();
   });
 });

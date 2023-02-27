@@ -94,7 +94,8 @@ export function getPageStyles(theme: GrafanaTheme2) {
       align-items: flex-start;
 
       > a,
-      > button {
+      > button,
+      > div:nth-child(2) {
         margin-left: ${theme.spacing(2)};
       }
     }

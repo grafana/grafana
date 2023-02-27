@@ -1,5 +1,6 @@
 import { lastValueFrom } from 'rxjs';
 
+import { defaultDashboard } from '@grafana/schema';
 import { DashboardModel } from 'app/features/dashboard/state';
 
 import { getBackendSrv } from '../../../core/services/backend_srv';
@@ -59,6 +60,7 @@ export async function getLibraryPanel(uid: string, isHandled = false): Promise<L
   // kinda heavy weight migration process!!!
   const { result } = response.data;
   const dash = new DashboardModel({
+    ...defaultDashboard,
     schemaVersion: 35, // should be saved in the library panel
     panels: [result.model],
   });
@@ -77,10 +79,10 @@ export async function getLibraryPanelByName(name: string): Promise<LibraryElemen
 
 export async function addLibraryPanel(
   panelSaveModel: PanelModelWithLibraryPanel,
-  folderId: number
+  folderUid: string
 ): Promise<LibraryElementDTO> {
   const { result } = await getBackendSrv().post(`/api/library-elements`, {
-    folderId,
+    folderUid,
     name: panelSaveModel.libraryPanel.name,
     model: panelSaveModel,
     kind: LibraryElementKind.Panel,
@@ -90,9 +92,10 @@ export async function addLibraryPanel(
 
 export async function updateLibraryPanel(panelSaveModel: PanelModelWithLibraryPanel): Promise<LibraryElementDTO> {
   const { libraryPanel, ...model } = panelSaveModel;
-  const { uid, name, version } = libraryPanel;
+  const { uid, name, version, folderUid } = libraryPanel;
   const kind = LibraryElementKind.Panel;
   const { result } = await getBackendSrv().patch(`/api/library-elements/${uid}`, {
+    folderUid,
     name,
     model,
     version,

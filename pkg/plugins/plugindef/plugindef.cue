@@ -2,6 +2,7 @@ package plugindef
 
 import (
 	"strings"
+	"regexp"
 
 	"github.com/grafana/thema"
 )
@@ -16,7 +17,7 @@ seqs: [
 				// grafana.com, then the plugin id has to follow the naming
 				// conventions.
 				id: string & strings.MinRunes(1)
-				id: =~"^([0-9a-z]+\\-([0-9a-z]+\\-)?(\(strings.Join([ for t in _types {t}], "|"))))|(alertGroups|alertlist|annolist|barchart|bargauge|candlestick|canvas|dashlist|debug|gauge|geomap|gettingstarted|graph|heatmap|heatmap-old|histogram|icon|live|logs|news|nodeGraph|piechart|pluginlist|stat|state-timeline|status-history|table|table-old|text|timeseries|traces|welcome|xychart|alertmanager|cloudwatch|dashboard|elasticsearch|grafana|grafana-azure-monitor-datasource|graphite|influxdb|jaeger|loki|mixed|mssql|mysql|opentsdb|postgres|prometheus|stackdriver|tempo|testdata|zipkin|phlare|parca)$"
+				id: =~"^([0-9a-z]+\\-([0-9a-z]+\\-)?(\(strings.Join([ for t in _types {t}], "|"))))|(alertGroups|alertlist|annolist|barchart|bargauge|candlestick|canvas|dashlist|debug|gauge|geomap|gettingstarted|graph|heatmap|histogram|icon|live|logs|news|nodeGraph|piechart|pluginlist|stat|state-timeline|status-history|table|table-old|text|timeseries|traces|welcome|xychart|alertmanager|cloudwatch|dashboard|elasticsearch|grafana|grafana-azure-monitor-datasource|graphite|influxdb|jaeger|loki|mixed|mssql|mysql|opentsdb|postgres|prometheus|stackdriver|tempo|testdata|zipkin|phlare|parca)$"
 
 				// The set of all plugin types. This hidden field exists solely
 				// so that the set can be string-interpolated into other fields.
@@ -33,6 +34,18 @@ seqs: [
 				// Human-readable name of the plugin that is shown to the user in
 				// the UI.
 				name: string
+
+				// FIXME there appears to be a bug in thema that prevents this from working. Maybe it'd
+				// help to refer to it with an alias, but thema can't support using current list syntax.
+				// syntax (fixed by grafana/thema#82). Either way, for now, pascalName gets populated in Go.
+				let sani = (strings.ToTitle(regexp.ReplaceAllLiteral("[^a-zA-Z]+", name, "")))
+
+				// The PascalCase name for the plugin. Used for creating machine-friendly
+				// identifiers, typically in code generation.
+				//
+				// If not provided, defaults to name, but title-cased and sanitized (only
+				// alphabetical characters allowed).
+				pascalName: string & =~"^([A-Z][a-zA-Z]{1,62})$" | *sani
 
 				// Plugin category used on the Add data source page.
 				category?: "tsdb" | "logging" | "cloud" | "tracing" | "sql" | "enterprise" | "profiling" | "other"
@@ -87,6 +100,9 @@ seqs: [
 					// (Legacy) The Angular component to use for a page.
 					component?: string
 					role?:      "Admin" | "Editor" | "Viewer"
+
+					// RBAC action the user must have to access the route
+					action?: string
 
 					// Used for app plugins.
 					path?: string
@@ -163,7 +179,7 @@ seqs: [
 					permissions: [...#Permission]
 				}
 
-				// Permission describes an RBAC permission on the plugin. A permission has an action and an option
+				// Permission describes an RBAC permission on the plugin. A permission has an action and an optional
 				// scope.
 				// Example: action: 'test-app.schedules:read', scope: 'test-app.schedules:*'
 				#Permission: {

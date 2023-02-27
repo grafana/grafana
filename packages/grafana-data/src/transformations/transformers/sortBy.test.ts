@@ -48,9 +48,9 @@ describe('SortBy transformer', () => {
 
     await expect(transformDataFrame([cfg], [testFrame])).toEmitValuesWith((received) => {
       expect(getFieldSnapshot(received[0][0].fields[0])).toMatchInlineSnapshot(`
-        Object {
+        {
           "name": "time",
-          "values": Array [
+          "values": [
             5,
             6,
             7,
@@ -78,9 +78,9 @@ describe('SortBy transformer', () => {
 
     await expect(transformDataFrame([cfg], [testFrame])).toEmitValuesWith((received) => {
       expect(getFieldSnapshot(received[0][0].fields[0])).toMatchInlineSnapshot(`
-        Object {
+        {
           "name": "time",
-          "values": Array [
+          "values": [
             10,
             9,
             8,

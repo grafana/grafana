@@ -11,7 +11,7 @@ export interface SaveDashboardData {
 }
 
 export interface SaveDashboardOptions extends CloneOptions {
-  folderId?: number;
+  folderUid?: string;
   overwrite?: boolean;
   message?: string;
   makeEditable?: boolean;
@@ -20,7 +20,7 @@ export interface SaveDashboardOptions extends CloneOptions {
 export interface SaveDashboardCommand {
   dashboard: DashboardDataDTO;
   message?: string;
-  folderId?: number;
+  folderUid?: string;
   overwrite?: boolean;
 }
 

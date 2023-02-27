@@ -5,7 +5,7 @@ import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 import { StoreState, ThunkResult } from 'app/types';
 
-import { invalidatePluginInCache } from '../../pluginCacheBuster';
+import { invalidatePluginInCache } from '../../systemjsPlugins/pluginCacheBuster';
 import {
   getRemotePlugins,
   getPluginErrors,
@@ -15,8 +15,8 @@ import {
   uninstallPlugin,
 } from '../api';
 import { STATE_PREFIX } from '../constants';
-import { mergeLocalsAndRemotes, updatePanels } from '../helpers';
-import { CatalogPlugin, RemotePlugin } from '../types';
+import { mapLocalToCatalog, mergeLocalsAndRemotes, updatePanels } from '../helpers';
+import { CatalogPlugin, RemotePlugin, LocalPlugin } from '../types';
 
 export const fetchAll = createAsyncThunk(`${STATE_PREFIX}/fetchAll`, async (_, thunkApi) => {
   try {
@@ -28,6 +28,15 @@ export const fetchAll = createAsyncThunk(`${STATE_PREFIX}/fetchAll`, async (_, t
     ]);
 
     return mergeLocalsAndRemotes(localPlugins, remotePlugins, pluginErrors);
+  } catch (e) {
+    return thunkApi.rejectWithValue('Unknown error.');
+  }
+});
+
+export const fetchAllLocal = createAsyncThunk(`${STATE_PREFIX}/fetchAllLocal`, async (_, thunkApi) => {
+  try {
+    const localPlugins = await getLocalPlugins();
+    return localPlugins.map((plugin: LocalPlugin) => mapLocalToCatalog(plugin));
   } catch (e) {
     return thunkApi.rejectWithValue('Unknown error.');
   }

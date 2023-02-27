@@ -38,11 +38,11 @@ export const ErrorIndicator: React.FC<ErrorIndicatorProps> = ({ error, onClick }
 
 const getStyles = () => {
   return {
-    clickable: css`
-      cursor: pointer;
-    `,
-    icon: css`
-      color: ${commonColorsPalette.red88};
-    `,
+    clickable: css({
+      cursor: 'pointer',
+    }),
+    icon: css({
+      color: `${commonColorsPalette.red88}`,
+    }),
   };
 };

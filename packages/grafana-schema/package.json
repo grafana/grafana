@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/schema",
-  "version": "9.3.2",
+  "version": "9.4.0-beta1",
   "description": "Grafana Schema Library",
   "keywords": [
     "typescript"
@@ -40,12 +40,11 @@
     "@rollup/plugin-commonjs": "23.0.2",
     "@rollup/plugin-json": "5.0.1",
     "@rollup/plugin-node-resolve": "15.0.1",
-    "@swc/helpers": "0.4.12",
-    "esbuild": "0.15.12",
+    "esbuild": "0.16.17",
     "rimraf": "3.0.2",
     "rollup": "2.79.1",
     "rollup-plugin-dts": "^5.0.0",
-    "rollup-plugin-esbuild": "4.10.1",
+    "rollup-plugin-esbuild": "5.0.0",
     "rollup-plugin-node-externals": "^5.0.0",
     "typescript": "4.8.4"
   },

@@ -58,6 +58,7 @@ export function LokiQueryCodeEditor({
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css`
+      max-width: 100%;
       .gf-form {
         margin-bottom: 0.5;
       }

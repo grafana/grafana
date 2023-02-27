@@ -13,22 +13,15 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/middleware/csrf"
-	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/oauthtoken"
-	"github.com/grafana/grafana/pkg/services/querylibrary"
-	"github.com/grafana/grafana/pkg/services/searchV2"
-	"github.com/grafana/grafana/pkg/services/store/object/httpobjectstore"
-	"github.com/grafana/grafana/pkg/services/userauth"
-
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -37,14 +30,17 @@ import (
 	loginpkg "github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/middleware/csrf"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/registry/corekind"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/apikey"
+	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/comments"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -58,10 +54,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/export"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
+	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -69,6 +67,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
@@ -78,9 +77,11 @@ import (
 	publicdashboardsApi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
+	"github.com/grafana/grafana/pkg/services/querylibrary"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secretsKV "github.com/grafana/grafana/pkg/services/secrets/kvstore"
@@ -89,7 +90,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/star"
+	starApi "github.com/grafana/grafana/pkg/services/star/api"
+	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/services/store"
+	"github.com/grafana/grafana/pkg/services/store/entity/httpentitystore"
+	"github.com/grafana/grafana/pkg/services/store/k8saccess"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/teamguardian"
@@ -97,6 +102,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/thumbs"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -120,15 +126,15 @@ type HTTPServer struct {
 	navTreeService               navtree.Service
 	CacheService                 *localcache.CacheService
 	DataSourceCache              datasources.CacheService
-	AuthTokenService             models.UserTokenService
+	AuthTokenService             auth.UserTokenService
 	QuotaService                 quota.Service
 	RemoteCacheService           *remotecache.RemoteCache
 	ProvisioningService          provisioning.ProvisioningService
 	Login                        login.Service
-	License                      models.Licensing
+	License                      licensing.Licensing
 	AccessControl                accesscontrol.AccessControl
 	DataProxy                    *datasourceproxy.DataSourceProxyService
-	PluginRequestValidator       models.PluginRequestValidator
+	PluginRequestValidator       validations.PluginRequestValidator
 	pluginClient                 plugins.Client
 	pluginStore                  plugins.Store
 	pluginInstaller              plugins.Installer
@@ -144,12 +150,12 @@ type HTTPServer struct {
 	ThumbService                 thumbs.Service
 	ExportService                export.ExportService
 	StorageService               store.StorageService
-	httpObjectStore              httpobjectstore.HTTPObjectStore
+	httpEntityStore              httpentitystore.HTTPEntityStore
 	SearchV2HTTPService          searchV2.SearchHTTPService
 	QueryLibraryHTTPService      querylibrary.HTTPService
 	QueryLibraryService          querylibrary.Service
 	ContextHandler               *contexthandler.ContextHandler
-	SQLStore                     sqlstore.Store
+	SQLStore                     db.DB
 	AlertEngine                  *alerting.AlertEngine
 	AlertNG                      *ngalert.AlertNG
 	LibraryPanelService          librarypanels.Service
@@ -196,6 +202,7 @@ type HTTPServer struct {
 	playlistService              playlist.Service
 	apiKeyService                apikey.Service
 	kvStore                      kvstore.KVStore
+	pluginsCDNService            *pluginscdn.Service
 
 	userService            user.Service
 	tempUserService        tempUser.Service
@@ -206,8 +213,10 @@ type HTTPServer struct {
 	accesscontrolService   accesscontrol.Service
 	annotationsRepo        annotations.Repository
 	tagService             tag.Service
-	userAuthService        userauth.Service
 	oauthTokenService      oauthtoken.OAuthTokenService
+	statsService           stats.Service
+	authnService           authn.Service
+	starApi                *starApi.API
 }
 
 type ServerOptions struct {
@@ -215,12 +224,12 @@ type ServerOptions struct {
 }
 
 func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routing.RouteRegister, bus bus.Bus,
-	renderService rendering.Service, licensing models.Licensing, hooksService *hooks.HooksService,
+	renderService rendering.Service, licensing licensing.Licensing, hooksService *hooks.HooksService,
 	cacheService *localcache.CacheService, sqlStore *sqlstore.SQLStore, alertEngine *alerting.AlertEngine,
-	pluginRequestValidator models.PluginRequestValidator, pluginStaticRouteResolver plugins.StaticRouteResolver,
+	pluginRequestValidator validations.PluginRequestValidator, pluginStaticRouteResolver plugins.StaticRouteResolver,
 	pluginDashboardService plugindashboards.Service, pluginStore plugins.Store, pluginClient plugins.Client,
 	pluginErrorResolver plugins.ErrorResolver, pluginInstaller plugins.Installer, settingsProvider setting.Provider,
-	dataSourceCache datasources.CacheService, userTokenService models.UserTokenService,
+	dataSourceCache datasources.CacheService, userTokenService auth.UserTokenService,
 	cleanUpService *cleanup.CleanUpService, shortURLService shorturls.Service, queryHistoryService queryhistory.Service, correlationsService correlations.Service,
 	thumbService thumbs.Service, remoteCache *remotecache.RemoteCache, provisioningService provisioning.ProvisioningService,
 	loginService login.Service, authenticator loginpkg.Authenticator, accessControl accesscontrol.AccessControl,
@@ -233,7 +242,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	pluginsUpdateChecker *updatechecker.PluginsService, searchUsersService searchusers.Service,
 	dataSourcesService datasources.DataSourceService, queryDataService *query.Service,
 	ldapGroups ldap.Groups, teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service,
-	authInfoService login.AuthInfoService, storageService store.StorageService, httpObjectStore httpobjectstore.HTTPObjectStore,
+	authInfoService login.AuthInfoService, storageService store.StorageService, httpEntityStore httpentitystore.HTTPEntityStore,
 	notificationService *notifications.NotificationService, dashboardService dashboards.DashboardService,
 	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService folder.Service,
 	datasourcePermissionsService permissions.DatasourcePermissionsService, alertNotificationService *alerting.AlertNotificationService,
@@ -249,8 +258,11 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	loginAttemptService loginAttempt.Service, orgService org.Service, teamService team.Service,
 	accesscontrolService accesscontrol.Service, dashboardThumbsService thumbs.DashboardThumbService, navTreeService navtree.Service,
 	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService,
-	userAuthService userauth.Service, queryLibraryHTTPService querylibrary.HTTPService, queryLibraryService querylibrary.Service,
-	oauthTokenService oauthtoken.OAuthTokenService,
+	queryLibraryHTTPService querylibrary.HTTPService, queryLibraryService querylibrary.Service, oauthTokenService oauthtoken.OAuthTokenService,
+	statsService stats.Service, authnService authn.Service,
+	pluginsCDNService *pluginscdn.Service,
+	k8saccess k8saccess.K8SAccess, // required so that the router is registered
+	starApi *starApi.API,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -311,7 +323,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		secretsMigrator:              secretsMigrator,
 		secretsPluginMigrator:        secretsPluginMigrator,
 		secretsStore:                 secretsStore,
-		httpObjectStore:              httpObjectStore,
+		httpEntityStore:              httpEntityStore,
 		DataSourcesService:           dataSourcesService,
 		searchUsersService:           searchUsersService,
 		ldapGroups:                   ldapGroups,
@@ -352,10 +364,13 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		accesscontrolService:         accesscontrolService,
 		annotationsRepo:              annotationRepo,
 		tagService:                   tagService,
-		userAuthService:              userAuthService,
 		QueryLibraryHTTPService:      queryLibraryHTTPService,
 		QueryLibraryService:          queryLibraryService,
 		oauthTokenService:            oauthTokenService,
+		statsService:                 statsService,
+		authnService:                 authnService,
+		pluginsCDNService:            pluginsCDNService,
+		starApi:                      starApi,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
@@ -489,11 +504,11 @@ func (hs *HTTPServer) getListener() (net.Listener, error) {
 
 func (hs *HTTPServer) configureHttps() error {
 	if hs.Cfg.CertFile == "" {
-		return fmt.Errorf("cert_file cannot be empty when using HTTPS")
+		return errors.New("cert_file cannot be empty when using HTTPS")
 	}
 
 	if hs.Cfg.KeyFile == "" {
-		return fmt.Errorf("cert_key cannot be empty when using HTTPS")
+		return errors.New("cert_key cannot be empty when using HTTPS")
 	}
 
 	if _, err := os.Stat(hs.Cfg.CertFile); os.IsNotExist(err) {
@@ -529,19 +544,19 @@ func (hs *HTTPServer) configureHttps() error {
 
 func (hs *HTTPServer) configureHttp2() error {
 	if hs.Cfg.CertFile == "" {
-		return fmt.Errorf("cert_file cannot be empty when using HTTP2")
+		return errors.New("cert_file cannot be empty when using HTTP2")
 	}
 
 	if hs.Cfg.KeyFile == "" {
-		return fmt.Errorf("cert_key cannot be empty when using HTTP2")
+		return errors.New("cert_key cannot be empty when using HTTP2")
 	}
 
 	if _, err := os.Stat(hs.Cfg.CertFile); os.IsNotExist(err) {
-		return fmt.Errorf(`cannot find SSL cert_file at %q`, hs.Cfg.CertFile)
+		return fmt.Errorf("cannot find SSL cert_file at %q", hs.Cfg.CertFile)
 	}
 
 	if _, err := os.Stat(hs.Cfg.KeyFile); os.IsNotExist(err) {
-		return fmt.Errorf(`cannot find SSL key_file at %q`, hs.Cfg.KeyFile)
+		return fmt.Errorf("cannot find SSL key_file at %q", hs.Cfg.KeyFile)
 	}
 
 	tlsCfg := &tls.Config{
@@ -597,6 +612,10 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 		hs.mapStatic(m, hs.Cfg.ImagesDir, "", "/public/img/attachments")
 	}
 
+	if len(hs.Cfg.CustomResponseHeaders) > 0 {
+		m.Use(middleware.AddCustomResponseHeaders(hs.Cfg))
+	}
+
 	m.Use(middleware.AddDefaultResponseHeaders(hs.Cfg))
 
 	if hs.Cfg.ServeFromSubPath && hs.Cfg.AppSubURL != "" {
@@ -623,7 +642,10 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	}
 
 	m.Use(middleware.HandleNoCacheHeader)
-	m.UseMiddleware(middleware.AddCSPHeader(hs.Cfg, hs.log))
+
+	if hs.Cfg.CSPEnabled || hs.Cfg.CSPReportOnlyEnabled {
+		m.UseMiddleware(middleware.ContentSecurityPolicy(hs.Cfg, hs.log))
+	}
 
 	for _, mw := range hs.middlewares {
 		m.Use(mw)
@@ -656,9 +678,8 @@ func (hs *HTTPServer) healthzHandler(ctx *web.Context) {
 		return
 	}
 
-	ctx.Resp.WriteHeader(200)
-	_, err := ctx.Resp.Write([]byte("Ok"))
-	if err != nil {
+	ctx.Resp.WriteHeader(http.StatusOK)
+	if _, err := ctx.Resp.Write([]byte("Ok")); err != nil {
 		hs.log.Error("could not write to response", "err", err)
 	}
 }
@@ -682,10 +703,10 @@ func (hs *HTTPServer) apiHealthHandler(ctx *web.Context) {
 	if !hs.databaseHealthy(ctx.Req.Context()) {
 		data.Set("database", "failing")
 		ctx.Resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		ctx.Resp.WriteHeader(503)
+		ctx.Resp.WriteHeader(http.StatusServiceUnavailable)
 	} else {
 		ctx.Resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
-		ctx.Resp.WriteHeader(200)
+		ctx.Resp.WriteHeader(http.StatusOK)
 	}
 
 	dataBytes, err := data.EncodePretty()

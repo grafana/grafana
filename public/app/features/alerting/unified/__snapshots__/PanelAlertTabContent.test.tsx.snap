@@ -1,28 +1,28 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`PanelAlertTabContent Will render alerts belonging to panel and a button to create alert from panel queries 1`] = `
-Object {
-  "annotations": Array [
-    Object {
+{
+  "annotations": [
+    {
       "key": "__dashboardUid__",
       "value": "12",
     },
-    Object {
+    {
       "key": "__panelId__",
       "value": "34",
     },
   ],
   "condition": "C",
-  "folder": Object {
+  "folder": {
     "id": 1,
     "title": "super folder",
   },
   "name": "mypanel",
-  "queries": Array [
-    Object {
+  "queries": [
+    {
       "datasourceUid": "mock-ds-2",
-      "model": Object {
-        "datasource": Object {
+      "model": {
+        "datasource": {
           "type": "prometheus",
           "uid": "mock-ds-2",
         },
@@ -33,36 +33,36 @@ Object {
       },
       "queryType": "",
       "refId": "A",
-      "relativeTimeRange": Object {
+      "relativeTimeRange": {
         "from": 21600,
         "to": 0,
       },
     },
-    Object {
+    {
       "datasourceUid": "-100",
-      "model": Object {
-        "conditions": Array [
-          Object {
-            "evaluator": Object {
-              "params": Array [],
+      "model": {
+        "conditions": [
+          {
+            "evaluator": {
+              "params": [],
               "type": "gt",
             },
-            "operator": Object {
+            "operator": {
               "type": "and",
             },
-            "query": Object {
-              "params": Array [
+            "query": {
+              "params": [
                 "B",
               ],
             },
-            "reducer": Object {
-              "params": Array [],
+            "reducer": {
+              "params": [],
               "type": "last",
             },
             "type": "query",
           },
         ],
-        "datasource": Object {
+        "datasource": {
           "type": "__expr__",
           "uid": "-100",
         },
@@ -75,33 +75,33 @@ Object {
       "queryType": "",
       "refId": "B",
     },
-    Object {
+    {
       "datasourceUid": "-100",
-      "model": Object {
-        "conditions": Array [
-          Object {
-            "evaluator": Object {
-              "params": Array [
+      "model": {
+        "conditions": [
+          {
+            "evaluator": {
+              "params": [
                 0,
               ],
               "type": "gt",
             },
-            "operator": Object {
+            "operator": {
               "type": "and",
             },
-            "query": Object {
-              "params": Array [
+            "query": {
+              "params": [
                 "C",
               ],
             },
-            "reducer": Object {
-              "params": Array [],
+            "reducer": {
+              "params": [],
               "type": "last",
             },
             "type": "query",
           },
         ],
-        "datasource": Object {
+        "datasource": {
           "type": "__expr__",
           "uid": "-100",
         },

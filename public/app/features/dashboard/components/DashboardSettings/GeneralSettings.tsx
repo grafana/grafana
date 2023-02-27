@@ -30,8 +30,8 @@ export function GeneralSettingsUnconnected({
 }: Props): JSX.Element {
   const [renderCounter, setRenderCounter] = useState(0);
 
-  const onFolderChange = (folder: { id: number; title: string }) => {
-    dashboard.meta.folderId = folder.id;
+  const onFolderChange = (folder: { uid: string; title: string }) => {
+    dashboard.meta.folderUid = folder.uid;
     dashboard.meta.folderTitle = folder.title;
     dashboard.meta.hasUnsavedFolderChange = true;
   };
@@ -109,7 +109,7 @@ export function GeneralSettingsUnconnected({
             <FolderPicker
               inputId="dashboard-folder-input"
               initialTitle={dashboard.meta.folderTitle}
-              initialFolderId={dashboard.meta.folderId}
+              initialFolderUid={dashboard.meta.folderUid}
               onChange={onFolderChange}
               enableCreateNew={true}
               dashboardId={dashboard.id}

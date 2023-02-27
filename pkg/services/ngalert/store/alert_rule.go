@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -67,8 +68,8 @@ func (st DBstore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, ruleUI
 }
 
 // IncreaseVersionForAllRulesInNamespace Increases version for all rules that have specified namespace. Returns all rules that belong to the namespace
-func (st DBstore) IncreaseVersionForAllRulesInNamespace(ctx context.Context, orgID int64, namespaceUID string) ([]ngmodels.AlertRuleKeyWithVersion, error) {
-	var keys []ngmodels.AlertRuleKeyWithVersion
+func (st DBstore) IncreaseVersionForAllRulesInNamespace(ctx context.Context, orgID int64, namespaceUID string) ([]ngmodels.AlertRuleKeyWithVersionAndPauseStatus, error) {
+	var keys []ngmodels.AlertRuleKeyWithVersionAndPauseStatus
 	err := st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		now := TimeNow()
 		_, err := sess.Exec("UPDATE alert_rule SET version = version + 1, updated = ? WHERE namespace_uid = ? AND org_id = ?", now, namespaceUID, orgID)
@@ -326,12 +327,12 @@ func (st DBstore) GetRuleGroupInterval(ctx context.Context, orgID int64, namespa
 func (st DBstore) GetUserVisibleNamespaces(ctx context.Context, orgID int64, user *user.SignedInUser) (map[string]*folder.Folder, error) {
 	namespaceMap := make(map[string]*folder.Folder)
 
-	searchQuery := models.FindPersistedDashboardsQuery{
+	searchQuery := dashboards.FindPersistedDashboardsQuery{
 		OrgId:        orgID,
 		SignedInUser: user,
 		Type:         searchstore.TypeAlertFolder,
 		Limit:        -1,
-		Permission:   models.PERMISSION_VIEW,
+		Permission:   dashboards.PERMISSION_VIEW,
 		Sort:         models.SortOption{},
 		Filters: []interface{}{
 			searchstore.FolderWithAlertsFilter{},
@@ -368,14 +369,18 @@ func (st DBstore) GetUserVisibleNamespaces(ctx context.Context, orgID int64, use
 
 // GetNamespaceByTitle is a handler for retrieving a namespace by its title. Alerting rules follow a Grafana folder-like structure which we call namespaces.
 func (st DBstore) GetNamespaceByTitle(ctx context.Context, namespace string, orgID int64, user *user.SignedInUser, withCanSave bool) (*folder.Folder, error) {
-	folder, err := st.FolderService.Get(ctx, &folder.GetFolderQuery{OrgID: orgID, Title: &namespace})
+	folder, err := st.FolderService.Get(ctx, &folder.GetFolderQuery{OrgID: orgID, Title: &namespace, SignedInUser: user})
 	if err != nil {
 		return nil, err
 	}
 
 	// if access control is disabled, check that the user is allowed to save in the folder.
 	if withCanSave && st.AccessControl.IsDisabled() {
-		g := guardian.New(ctx, folder.ID, orgID, user)
+		g, err := guardian.NewByUID(ctx, folder.UID, orgID, user)
+		if err != nil {
+			return folder, err
+		}
+
 		if canSave, err := g.CanSave(); err != nil || !canSave {
 			if err != nil {
 				st.Logger.Error("checking can save permission has failed", "userId", user.UserID, "username", user.Login, "namespace", namespace, "orgId", orgID, "error", err)
@@ -389,7 +394,7 @@ func (st DBstore) GetNamespaceByTitle(ctx context.Context, namespace string, org
 
 // GetNamespaceByUID is a handler for retrieving a namespace by its UID. Alerting rules follow a Grafana folder-like structure which we call namespaces.
 func (st DBstore) GetNamespaceByUID(ctx context.Context, uid string, orgID int64, user *user.SignedInUser) (*folder.Folder, error) {
-	folder, err := st.FolderService.Get(ctx, &folder.GetFolderQuery{OrgID: orgID, Title: &uid})
+	folder, err := st.FolderService.Get(ctx, &folder.GetFolderQuery{OrgID: orgID, Title: &uid, SignedInUser: user})
 	if err != nil {
 		return nil, err
 	}

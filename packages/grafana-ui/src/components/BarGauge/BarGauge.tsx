@@ -20,7 +20,7 @@ import {
   VizOrientation,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { VizTextDisplayOptions } from '@grafana/schema';
+import { BarGaugeDisplayMode, VizTextDisplayOptions } from '@grafana/schema';
 
 import { Themeable2 } from '../../types';
 import { calculateFontSize, measureText } from '../../utils/measureText';
@@ -49,12 +49,6 @@ export interface Props extends Themeable2 {
   className?: string;
   showUnfilled?: boolean;
   alignmentFactors?: DisplayValueAlignmentFactors;
-}
-
-export enum BarGaugeDisplayMode {
-  Basic = 'basic',
-  Lcd = 'lcd',
-  Gradient = 'gradient',
 }
 
 export class BarGauge extends PureComponent<Props> {
@@ -471,7 +465,7 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
   };
 
   const emptyBar: CSSProperties = {
-    background: `rgba(${theme.isDark ? '255,255,255' : '0,0,0'}, 0.07)`,
+    background: theme.colors.background.secondary,
     flexGrow: 1,
     display: 'flex',
     borderRadius: '3px',

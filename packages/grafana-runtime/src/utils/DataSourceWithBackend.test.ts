@@ -55,11 +55,11 @@ describe('DataSourceWithBackend', () => {
 
     expect(mock.calls.length).toBe(1);
     expect(args).toMatchInlineSnapshot(`
-      Object {
-        "data": Object {
-          "queries": Array [
-            Object {
-              "datasource": Object {
+      {
+        "data": {
+          "queries": [
+            {
+              "datasource": {
                 "type": "dummy",
                 "uid": "abc",
               },
@@ -68,8 +68,8 @@ describe('DataSourceWithBackend', () => {
               "maxDataPoints": 10,
               "refId": "A",
             },
-            Object {
-              "datasource": Object {
+            {
+              "datasource": {
                 "type": "sample",
                 "uid": "<mockuid>",
               },
@@ -80,7 +80,7 @@ describe('DataSourceWithBackend', () => {
             },
           ],
         },
-        "headers": Object {
+        "headers": {
           "X-Dashboard-Uid": "dashA",
           "X-Datasource-Uid": "abc, <mockuid>",
           "X-Panel-Id": "123",
@@ -122,11 +122,11 @@ describe('DataSourceWithBackend', () => {
 
     expect(mock.calls.length).toBe(1);
     expect(args).toMatchInlineSnapshot(`
-      Object {
-        "data": Object {
-          "queries": Array [
-            Object {
-              "datasource": Object {
+      {
+        "data": {
+          "queries": [
+            {
+              "datasource": {
                 "type": "dummy",
                 "uid": "abc",
               },
@@ -135,8 +135,8 @@ describe('DataSourceWithBackend', () => {
               "maxDataPoints": 10,
               "refId": "A",
             },
-            Object {
-              "datasource": Object {
+            {
+              "datasource": {
                 "type": "sample",
                 "uid": "<mockuid>",
               },
@@ -147,7 +147,7 @@ describe('DataSourceWithBackend', () => {
             },
           ],
         },
-        "headers": Object {
+        "headers": {
           "X-Dashboard-Uid": "dashA",
           "X-Datasource-Uid": "abc, <mockuid>",
           "X-Panel-Id": "123",

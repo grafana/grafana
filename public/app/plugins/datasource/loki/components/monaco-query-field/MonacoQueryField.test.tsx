@@ -1,7 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import LokiLanguageProvider from '../../LanguageProvider';
 import { createLokiDatasource } from '../../mocks';
 
 import MonacoQueryField from './MonacoQueryField';
@@ -9,11 +8,10 @@ import { Props } from './MonacoQueryFieldProps';
 
 function renderComponent({ initialValue = '', onRunQuery = jest.fn(), onBlur = jest.fn() }: Partial<Props> = {}) {
   const datasource = createLokiDatasource();
-  const languageProvider = new LokiLanguageProvider(datasource);
 
   render(
     <MonacoQueryField
-      languageProvider={languageProvider}
+      datasource={datasource}
       initialValue={initialValue}
       history={[]}
       onRunQuery={onRunQuery}

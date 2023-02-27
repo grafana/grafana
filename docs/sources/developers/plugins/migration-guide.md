@@ -451,7 +451,7 @@ We strongly recommend that you not allow unsigned plugins in your Grafana instal
 
 To sign your plugin, see [Sign a plugin](https://grafana.com/docs/grafana/latest/developers/plugins/sign-a-plugin/#sign-a-plugin).
 
-You can still run and develop an unsigned plugin by running your Grafana instance in [development mode](https://grafana.com/docs/grafana/latest/administration/configuration/#app_mode). Alternatively, you can use the [allow_loading_unsigned_plugins configuration setting.](../../administration/configuration.md#allow_loading_unsigned_plugins)
+You can still run and develop an unsigned plugin by running your Grafana instance in [development mode](https://grafana.com/docs/grafana/latest/administration/configuration/#app_mode). Alternatively, you can use the [allow_loading_unsigned_plugins]({{< relref "../../setup-grafana/configure-grafana/#allow_loading_unsigned_plugins" >}}) configuration setting.
 
 ### Update react-hook-form from v6 to v7
 
@@ -722,9 +722,7 @@ For plugins prior to Grafana 7.0, all options are considered _Display options_. 
 
 While backend plugins were available as an experimental feature in previous versions of Grafana, the support has been greatly improved for Grafana 7. Backend plugins for Grafana 7.0 are backwards-compatible and will continue to work. However, the old backend plugin system has been deprecated, and we recommend that you use the new SDK for backend plugins.
 
-Since Grafana 7.0 introduced [signing of backend plugins](../../administration/plugins), community plugins won’t load by default if they’re unsigned.
-
-To learn more, refer to [Backend plugins](backend/_index.md).
+Since Grafana 7.0 introduced signing of backend plugins, community plugins won’t load by default if they’re unsigned.
 
 ### Migrate a plugin from Angular to React
 
@@ -812,8 +810,6 @@ async query(options: DataQueryRequest<MyQuery>): Promise<DataQueryResponse> {
 }
 ```
 
-For more information, refer to [Data frames](data-frames.md).
-
 ### Troubleshoot plugin migration
 
-As of Grafana 7.0, backend plugins can now be cryptographically signed to verify their origin. By default, Grafana ignores unsigned plugins. For more information, refer to [Allow unsigned plugins](../../administration/plugins/#allow-unsigned-plugins).
+As of Grafana 7.0, backend plugins can now be cryptographically signed to verify their origin. By default, Grafana ignores unsigned plugins. For more information, refer to [Allow unsigned plugins]({{< relref "../../administration/plugin-management/#allow-unsigned-plugins" >}}).

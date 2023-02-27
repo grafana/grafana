@@ -2,20 +2,11 @@ import { css } from '@emotion/css';
 import React, { FC, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { GrafanaTheme2, urlUtil } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import {
-  Button,
-  ClipboardButton,
-  ConfirmModal,
-  HorizontalGroup,
-  LinkButton,
-  Tooltip,
-  useStyles2,
-  useTheme2,
-} from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
+import { config, locationService } from '@grafana/runtime';
+import { Button, ClipboardButton, ConfirmModal, LinkButton, Tooltip, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 import { useDispatch } from 'app/types';
 import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
 
@@ -25,31 +16,13 @@ import { getRulesSourceName, isCloudRulesSource } from '../../utils/datasource';
 import { createViewLink } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
 import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
+import { createUrl } from '../../utils/url';
 
 export const matchesWidth = (width: number) => window.matchMedia(`(max-width: ${width}px)`).matches;
 
 interface Props {
   rule: CombinedRule;
   rulesSource: RulesSource;
-}
-function DontShowIfSmallDevice({ children }: { children: JSX.Element | string }) {
-  const theme = useTheme2();
-  const smBreakpoint = theme.breakpoints.values.xxl;
-  const [isSmallScreen, setIsSmallScreen] = useState(matchesWidth(smBreakpoint));
-  const style = useStyles2(getStyles);
-
-  useMediaQueryChange({
-    breakpoint: smBreakpoint,
-    onChange: (e) => {
-      setIsSmallScreen(e.matches);
-    },
-  });
-
-  if (isSmallScreen) {
-    return null;
-  } else {
-    return <div className={style.buttonText}>{children}</div>;
-  }
 }
 
 export const RuleActionsButtons: FC<Props> = ({ rule, rulesSource }) => {
@@ -59,6 +32,7 @@ export const RuleActionsButtons: FC<Props> = ({ rule, rulesSource }) => {
   const style = useStyles2(getStyles);
   const { namespace, group, rulerRule } = rule;
   const [ruleToDelete, setRuleToDelete] = useState<CombinedRule>();
+  const [provRuleCloneUrl, setProvRuleCloneUrl] = useState<string | undefined>(undefined);
 
   const rulesSourceName = getRulesSourceName(rulesSource);
 
@@ -96,56 +70,79 @@ export const RuleActionsButtons: FC<Props> = ({ rule, rulesSource }) => {
     return window.location.href.split('?')[0];
   };
 
+  const sourceName = getRulesSourceName(rulesSource);
+
   if (!isViewMode) {
     buttons.push(
       <Tooltip placement="top" content={'View'}>
         <LinkButton
           className={style.button}
-          size="xs"
+          title="View"
+          size="sm"
           key="view"
           variant="secondary"
           icon="eye"
           href={createViewLink(rulesSource, rule, returnTo)}
-        >
-          <DontShowIfSmallDevice>View</DontShowIfSmallDevice>
-        </LinkButton>
+        ></LinkButton>
       </Tooltip>
     );
   }
 
-  if (isEditable && rulerRule && !isFederated && !isProvisioned) {
-    const sourceName = getRulesSourceName(rulesSource);
+  if (isEditable && rulerRule && !isFederated) {
     const identifier = ruleId.fromRulerRule(sourceName, namespace.name, group.name, rulerRule);
 
-    const editURL = urlUtil.renderUrl(
-      `${config.appSubUrl}/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/edit`,
-      {
+    if (!isProvisioned) {
+      const editURL = createUrl(`/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/edit`, {
         returnTo,
-      }
-    );
+      });
 
-    if (isViewMode) {
+      if (isViewMode) {
+        buttons.push(
+          <ClipboardButton
+            key="copy"
+            icon="copy"
+            onClipboardError={(copiedText) => {
+              notifyApp.error('Error while copying URL', copiedText);
+            }}
+            className={style.button}
+            size="sm"
+            getText={buildShareUrl}
+          >
+            Copy link to rule
+          </ClipboardButton>
+        );
+      }
+
       buttons.push(
-        <ClipboardButton
-          key="copy"
-          icon="copy"
-          onClipboardError={(copiedText) => {
-            notifyApp.error('Error while copying URL', copiedText);
-          }}
-          className={style.button}
-          size="sm"
-          getText={buildShareUrl}
-        >
-          Copy link to rule
-        </ClipboardButton>
+        <Tooltip placement="top" content={'Edit'}>
+          <LinkButton
+            title="Edit"
+            className={style.button}
+            size="sm"
+            key="edit"
+            variant="secondary"
+            icon="pen"
+            href={editURL}
+          />
+        </Tooltip>
       );
     }
 
+    const cloneUrl = createUrl('/alerting/new', { copyFrom: ruleId.stringifyIdentifier(identifier) });
+    // For provisioned rules an additional confirmation step is required
+    // Users have to be aware that the cloned rule will NOT be marked as provisioned
     buttons.push(
-      <Tooltip placement="top" content={'Edit'}>
-        <LinkButton className={style.button} size="xs" key="edit" variant="secondary" icon="pen" href={editURL}>
-          <DontShowIfSmallDevice>Edit</DontShowIfSmallDevice>
-        </LinkButton>
+      <Tooltip placement="top" content="Duplicate">
+        <LinkButton
+          title="Duplicate"
+          className={style.button}
+          size="sm"
+          key="clone"
+          variant="secondary"
+          icon="copy"
+          href={isProvisioned ? undefined : cloneUrl}
+          onClick={isProvisioned ? () => setProvRuleCloneUrl(cloneUrl) : undefined}
+        />
       </Tooltip>
     );
   }
@@ -154,16 +151,15 @@ export const RuleActionsButtons: FC<Props> = ({ rule, rulesSource }) => {
     buttons.push(
       <Tooltip placement="top" content={'Delete'}>
         <Button
+          title="Delete"
           className={style.button}
-          size="xs"
+          size="sm"
           type="button"
           key="delete"
           variant="secondary"
           icon="trash-alt"
           onClick={() => setRuleToDelete(rule)}
-        >
-          <DontShowIfSmallDevice>Delete</DontShowIfSmallDevice>
-        </Button>
+        />
       </Tooltip>
     );
   }
@@ -171,11 +167,11 @@ export const RuleActionsButtons: FC<Props> = ({ rule, rulesSource }) => {
   if (buttons.length) {
     return (
       <>
-        <div className={style.wrapper}>
-          <HorizontalGroup width="auto">
-            {buttons.length ? buttons.map((button, index) => <div key={index}>{button}</div>) : <div />}
-          </HorizontalGroup>
-        </div>
+        <Stack gap={1}>
+          {buttons.map((button, index) => (
+            <React.Fragment key={index}>{button}</React.Fragment>
+          ))}
+        </Stack>
         {!!ruleToDelete && (
           <ConfirmModal
             isOpen={true}
@@ -187,6 +183,24 @@ export const RuleActionsButtons: FC<Props> = ({ rule, rulesSource }) => {
             onDismiss={() => setRuleToDelete(undefined)}
           />
         )}
+        <ConfirmModal
+          isOpen={!!provRuleCloneUrl}
+          title="Clone provisioned rule"
+          body={
+            <div>
+              <p>
+                The new rule will <span className={style.bold}>NOT</span> be marked as a provisioned rule.
+              </p>
+              <p>
+                You will need to set a new alert group for the cloned rule because the original one has been provisioned
+                and cannot be used for rules created in the UI.
+              </p>
+            </div>
+          }
+          confirmText="Clone"
+          onConfirm={() => provRuleCloneUrl && locationService.push(provRuleCloneUrl)}
+          onDismiss={() => setProvRuleCloneUrl(undefined)}
+        />
       </>
     );
   }
@@ -199,20 +213,10 @@ function inViewMode(pathname: string): boolean {
 }
 
 export const getStyles = (theme: GrafanaTheme2) => ({
-  wrapper: css`
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    flex-wrap: wrap;
-  `,
   button: css`
-    height: 24px;
-    font-size: ${theme.typography.size.sm};
-    svg {
-      margin-right: 0;
-    }
+    padding: 0 ${theme.spacing(2)};
   `,
-  buttonText: css`
-    margin-left: 8px;
+  bold: css`
+    font-weight: ${theme.typography.fontWeightBold};
   `,
 });

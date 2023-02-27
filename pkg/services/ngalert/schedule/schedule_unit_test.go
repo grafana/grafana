@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
+	alertingModels "github.com/grafana/alerting/alerting/models"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
@@ -21,6 +22,8 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -36,6 +39,7 @@ type evalAppliedInfo struct {
 }
 
 func TestProcessTicks(t *testing.T) {
+	testTracer := tracing.InitializeTracerForTest()
 	testMetrics := metrics.NewNGAlert(prometheus.NewPedanticRegistry())
 	ctx := context.Background()
 	dispatcherGroup, ctx := errgroup.WithContext(ctx)
@@ -54,20 +58,31 @@ func TestProcessTicks(t *testing.T) {
 	notifier := &AlertsSenderMock{}
 	notifier.EXPECT().Send(mock.Anything, mock.Anything).Return()
 
-	schedCfg := SchedulerCfg{
-		Cfg:         cfg,
-		C:           mockedClock,
-		RuleStore:   ruleStore,
-		Metrics:     testMetrics.GetSchedulerMetrics(),
-		AlertSender: notifier,
-	}
-	st := state.NewManager(testMetrics.GetStateMetrics(), nil, nil, &state.NoopImageService{}, mockedClock, &state.FakeHistorian{})
-
 	appUrl := &url.URL{
 		Scheme: "http",
 		Host:   "localhost",
 	}
-	sched := NewScheduler(schedCfg, appUrl, st)
+
+	schedCfg := SchedulerCfg{
+		BaseInterval: cfg.BaseInterval,
+		C:            mockedClock,
+		AppURL:       appUrl,
+		RuleStore:    ruleStore,
+		Metrics:      testMetrics.GetSchedulerMetrics(),
+		AlertSender:  notifier,
+		Tracer:       testTracer,
+	}
+	managerCfg := state.ManagerCfg{
+		Metrics:       testMetrics.GetStateMetrics(),
+		ExternalURL:   nil,
+		InstanceStore: nil,
+		Images:        &state.NoopImageService{},
+		Clock:         mockedClock,
+		Historian:     &state.FakeHistorian{},
+	}
+	st := state.NewManager(managerCfg)
+
+	sched := NewScheduler(schedCfg, st)
 
 	evalAppliedCh := make(chan evalAppliedInfo, 1)
 	stopAppliedCh := make(chan models.AlertRuleKey, 1)
@@ -220,7 +235,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			go func() {
 				ctx, cancel := context.WithCancel(context.Background())
 				t.Cleanup(cancel)
-				_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan, make(chan ruleVersion))
+				_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan, make(chan ruleVersionAndPauseStatus))
 			}()
 
 			expectedTime := time.UnixMicro(rand.Int63())
@@ -237,8 +252,8 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			t.Run("it should add extra labels", func(t *testing.T) {
 				states := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
 				for _, s := range states {
-					assert.Equal(t, rule.UID, s.Labels[models.RuleUIDLabel])
-					assert.Equal(t, rule.NamespaceUID, s.Labels[models.NamespaceUIDLabel])
+					assert.Equal(t, rule.UID, s.Labels[alertingModels.RuleUIDLabel])
+					assert.Equal(t, rule.NamespaceUID, s.Labels[alertingModels.NamespaceUIDLabel])
 					assert.Equal(t, rule.Title, s.Labels[prometheusModel.AlertNameLabel])
 					assert.Equal(t, folderTitle, s.Labels[models.FolderTitleLabel])
 				}
@@ -332,7 +347,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 
 			ctx, cancel := context.WithCancel(context.Background())
 			go func() {
-				err := sch.ruleRoutine(ctx, models.AlertRuleKey{}, make(chan *evaluation), make(chan ruleVersion))
+				err := sch.ruleRoutine(ctx, models.AlertRuleKey{}, make(chan *evaluation), make(chan ruleVersionAndPauseStatus))
 				stoppedChan <- err
 			}()
 
@@ -351,7 +366,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 
 			ctx, cancel := util.WithCancelCause(context.Background())
 			go func() {
-				err := sch.ruleRoutine(ctx, rule.GetKey(), make(chan *evaluation), make(chan ruleVersion))
+				err := sch.ruleRoutine(ctx, rule.GetKey(), make(chan *evaluation), make(chan ruleVersionAndPauseStatus))
 				stoppedChan <- err
 			}()
 
@@ -368,13 +383,14 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 
 		evalChan := make(chan *evaluation)
 		evalAppliedChan := make(chan time.Time)
-		updateChan := make(chan ruleVersion)
+		updateChan := make(chan ruleVersionAndPauseStatus)
 
 		sender := AlertsSenderMock{}
 		sender.EXPECT().Send(rule.GetKey(), mock.Anything).Return()
 
 		sch, ruleStore, _, _ := createSchedule(evalAppliedChan, &sender)
 		ruleStore.PutRule(context.Background(), rule)
+		sch.schedulableAlertRules.set([]*models.AlertRule{rule}, map[string]string{rule.NamespaceUID: "folderName"})
 
 		go func() {
 			ctx, cancel := context.WithCancel(context.Background())
@@ -415,12 +431,12 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			}
 			expectedToBeSent++
 		}
-		require.Greaterf(t, expectedToBeSent, 0, "State manger was expected to return at least one state that can be expired")
+		require.Greaterf(t, expectedToBeSent, 0, "State manager was expected to return at least one state that can be expired")
 
 		t.Run("should do nothing if version in channel is the same", func(t *testing.T) {
-			updateChan <- ruleVersion(rule.Version - 1)
-			updateChan <- ruleVersion(rule.Version)
-			updateChan <- ruleVersion(rule.Version) // second time just to make sure that previous messages were handled
+			updateChan <- ruleVersionAndPauseStatus{ruleVersion(rule.Version - 1), false}
+			updateChan <- ruleVersionAndPauseStatus{ruleVersion(rule.Version), false}
+			updateChan <- ruleVersionAndPauseStatus{ruleVersion(rule.Version), false} // second time just to make sure that previous messages were handled
 
 			actualStates := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
 			require.Len(t, actualStates, len(states))
@@ -429,7 +445,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		})
 
 		t.Run("should clear the state and expire firing alerts if version in channel is greater", func(t *testing.T) {
-			updateChan <- ruleVersion(rule.Version + rand.Int63n(1000) + 1)
+			updateChan <- ruleVersionAndPauseStatus{ruleVersion(rule.Version + rand.Int63n(1000) + 1), false}
 
 			require.Eventually(t, func() bool {
 				return len(sender.Calls) > 0
@@ -459,7 +475,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		go func() {
 			ctx, cancel := context.WithCancel(context.Background())
 			t.Cleanup(cancel)
-			_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan, make(chan ruleVersion))
+			_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan, make(chan ruleVersionAndPauseStatus))
 		}()
 
 		evalChan <- &evaluation{
@@ -529,7 +545,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			go func() {
 				ctx, cancel := context.WithCancel(context.Background())
 				t.Cleanup(cancel)
-				_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan, make(chan ruleVersion))
+				_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan, make(chan ruleVersionAndPauseStatus))
 			}()
 
 			evalChan <- &evaluation{
@@ -562,7 +578,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		go func() {
 			ctx, cancel := context.WithCancel(context.Background())
 			t.Cleanup(cancel)
-			_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan, make(chan ruleVersion))
+			_ = sch.ruleRoutine(ctx, rule.GetKey(), evalChan, make(chan ruleVersionAndPauseStatus))
 		}()
 
 		evalChan <- &evaluation{
@@ -586,12 +602,12 @@ func TestSchedule_UpdateAlertRule(t *testing.T) {
 			info, _ := sch.registry.getOrCreateInfo(context.Background(), key)
 			version := rand.Int63()
 			go func() {
-				sch.UpdateAlertRule(key, version)
+				sch.UpdateAlertRule(key, version, false)
 			}()
 
 			select {
 			case v := <-info.updateCh:
-				require.Equal(t, ruleVersion(version), v)
+				require.Equal(t, ruleVersionAndPauseStatus{ruleVersion(version), false}, v)
 			case <-time.After(5 * time.Second):
 				t.Fatal("No message was received on update channel")
 			}
@@ -601,14 +617,14 @@ func TestSchedule_UpdateAlertRule(t *testing.T) {
 			key := models.GenerateRuleKey(rand.Int63())
 			info, _ := sch.registry.getOrCreateInfo(context.Background(), key)
 			info.stop(nil)
-			sch.UpdateAlertRule(key, rand.Int63())
+			sch.UpdateAlertRule(key, rand.Int63(), false)
 		})
 	})
 	t.Run("when rule does not exist", func(t *testing.T) {
 		t.Run("should exit", func(t *testing.T) {
 			sch := setupScheduler(t, nil, nil, nil, nil, nil)
 			key := models.GenerateRuleKey(rand.Int63())
-			sch.UpdateAlertRule(key, rand.Int63())
+			sch.UpdateAlertRule(key, rand.Int63(), false)
 		})
 	})
 }
@@ -636,6 +652,7 @@ func TestSchedule_DeleteAlertRule(t *testing.T) {
 
 func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStore, registry *prometheus.Registry, senderMock *AlertsSenderMock, evalMock eval.EvaluatorFactory) *schedule {
 	t.Helper()
+	testTracer := tracing.InitializeTracerForTest()
 
 	mockedClock := clock.NewMock()
 
@@ -649,7 +666,7 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 
 	var evaluator = evalMock
 	if evalMock == nil {
-		evaluator = eval.NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, nil, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil))
+		evaluator = eval.NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, nil, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil), &plugins.FakePluginStore{})
 	}
 
 	if registry == nil {
@@ -673,16 +690,27 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 	}
 
 	schedCfg := SchedulerCfg{
-		Cfg:              cfg,
+		BaseInterval:     cfg.BaseInterval,
+		MaxAttempts:      cfg.MaxAttempts,
 		C:                mockedClock,
+		AppURL:           appUrl,
 		EvaluatorFactory: evaluator,
 		RuleStore:        rs,
 		Metrics:          m.GetSchedulerMetrics(),
 		AlertSender:      senderMock,
+		Tracer:           testTracer,
 	}
+	managerCfg := state.ManagerCfg{
+		Metrics:       m.GetStateMetrics(),
+		ExternalURL:   nil,
+		InstanceStore: is,
+		Images:        &state.NoopImageService{},
+		Clock:         mockedClock,
+		Historian:     &state.FakeHistorian{},
+	}
+	st := state.NewManager(managerCfg)
 
-	st := state.NewManager(m.GetStateMetrics(), nil, is, &state.NoopImageService{}, mockedClock, &state.FakeHistorian{})
-	return NewScheduler(schedCfg, appUrl, st)
+	return NewScheduler(schedCfg, st)
 }
 
 func withQueryForState(t *testing.T, evalResult eval.State) models.AlertRuleMutator {

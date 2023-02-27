@@ -2,9 +2,12 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Dropdown, Icon, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { Dropdown, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { useSelector } from 'app/types';
+
+import { Branding } from '../Branding/Branding';
 
 import { NewsContainer } from './News/NewsContainer';
 import { OrganizationSwitcher } from './Organization/OrganizationSwitcher';
@@ -12,6 +15,7 @@ import { QuickAdd } from './QuickAdd/QuickAdd';
 import { SignInLink } from './TopBar/SignInLink';
 import { TopNavBarMenu } from './TopBar/TopNavBarMenu';
 import { TopSearchBarSection } from './TopBar/TopSearchBarSection';
+import { TopSearchBarCommandPaletteTrigger } from './TopSearchBarCommandPaletteTrigger';
 import { TopSearchBarInput } from './TopSearchBarInput';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
 
@@ -22,17 +26,24 @@ export function TopSearchBar() {
   const helpNode = navIndex['help'];
   const profileNode = navIndex['profile'];
 
+  const search =
+    config.featureToggles.commandPalette && config.featureToggles.topNavCommandPalette ? (
+      <TopSearchBarCommandPaletteTrigger />
+    ) : (
+      <TopSearchBarInput />
+    );
+
   return (
     <div className={styles.layout}>
       <TopSearchBarSection>
         <a className={styles.logo} href="/" title="Go to home">
-          <Icon name="grafana" size="xl" />
+          <Branding.MenuLogo className={styles.img} />
         </a>
         <OrganizationSwitcher />
       </TopSearchBarSection>
-      <TopSearchBarSection>
-        <TopSearchBarInput />
-      </TopSearchBarSection>
+
+      <TopSearchBarSection>{search}</TopSearchBarSection>
+
       <TopSearchBarSection align="right">
         <QuickAdd />
         {helpNode && (
@@ -63,21 +74,26 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
     gap: theme.spacing(1),
     alignItems: 'center',
-    padding: theme.spacing(0, 2),
+    padding: theme.spacing(0, 1, 0, 2),
     borderBottom: `1px solid ${theme.colors.border.weak}`,
     justifyContent: 'space-between',
 
     [theme.breakpoints.up('sm')]: {
-      gridTemplateColumns: '1fr 1fr 1fr',
+      gridTemplateColumns: '1.5fr minmax(240px, 1fr) 1.5fr', // search should not be smaller than 240px
       display: 'grid',
 
       justifyContent: 'flex-start',
     },
   }),
+  img: css({
+    height: theme.spacing(3),
+    width: theme.spacing(3),
+  }),
   logo: css({
     display: 'flex',
   }),
   profileButton: css({
+    padding: theme.spacing(0, 0.25),
     img: {
       borderRadius: '50%',
       height: '24px',

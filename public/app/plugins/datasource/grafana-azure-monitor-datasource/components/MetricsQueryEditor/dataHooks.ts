@@ -4,7 +4,7 @@ import { rangeUtil } from '@grafana/data';
 
 import Datasource from '../../datasource';
 import TimegrainConverter from '../../time_grain_converter';
-import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../../types';
+import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery, AzureMonitorResource } from '../../types';
 import { toOption } from '../../utils/common';
 import { useAsyncState } from '../../utils/useAsyncState';
 
@@ -38,9 +38,20 @@ export interface MetricMetadata {
 
 type OnChangeFn = (newQuery: AzureMonitorQuery) => void;
 
+const getResourceGroupAndName = (resources?: AzureMonitorResource[]) => {
+  if (!resources || !resources.length) {
+    return { resourceGroup: '', resourceName: '' };
+  }
+  return {
+    resourceGroup: resources[0].resourceGroup ?? '',
+    resourceName: resources[0].resourceName ?? '',
+  };
+};
+
 export const useMetricNamespaces: DataHook = (query, datasource, onChange, setError) => {
   const { subscription } = query;
-  const { metricNamespace, resourceGroup, resourceName } = query.azureMonitor ?? {};
+  const { metricNamespace, resources } = query.azureMonitor ?? {};
+  const { resourceGroup, resourceName } = getResourceGroupAndName(resources);
 
   const metricNamespaces = useAsyncState(
     async () => {
@@ -75,7 +86,8 @@ export const useMetricNamespaces: DataHook = (query, datasource, onChange, setEr
 
 export const useMetricNames: DataHook = (query, datasource, onChange, setError) => {
   const { subscription } = query;
-  const { metricNamespace, metricName, resourceGroup, resourceName, customNamespace } = query.azureMonitor ?? {};
+  const { metricNamespace, metricName, resources, customNamespace } = query.azureMonitor ?? {};
+  const { resourceGroup, resourceName } = getResourceGroupAndName(resources);
 
   return useAsyncState(
     async () => {
@@ -110,8 +122,8 @@ const defaultMetricMetadata: MetricMetadata = {
 export const useMetricMetadata = (query: AzureMonitorQuery, datasource: Datasource, onChange: OnChangeFn) => {
   const [metricMetadata, setMetricMetadata] = useState<MetricMetadata>(defaultMetricMetadata);
   const { subscription } = query;
-  const { resourceGroup, resourceName, metricNamespace, metricName, aggregation, timeGrain, customNamespace } =
-    query.azureMonitor ?? {};
+  const { resources, metricNamespace, metricName, aggregation, timeGrain, customNamespace } = query.azureMonitor ?? {};
+  const { resourceGroup, resourceName } = getResourceGroupAndName(resources);
 
   // Fetch new metric metadata when the fields change
   useEffect(() => {

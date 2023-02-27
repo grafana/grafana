@@ -26,6 +26,9 @@ export function TopNavBarMenu({ node: nodePlain }: TopNavBarMenuProps) {
   return (
     <Menu
       header={
+        // this is needed to prevent bubbling the event to `Menu` and then closing when highlighting header text
+        // see https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/docs/rules/no-static-element-interactions.md#case-the-event-handler-is-only-being-used-to-capture-bubbled-events
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
         <div onClick={(e) => e.stopPropagation()} className={styles.header}>
           <div>{getNavTitle(node.id) ?? node.text}</div>
           {node.subTitle && <div className={styles.subTitle}>{node.subTitle}</div>}

@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 )
 
+// this client wraps the CloudWatch API and handles pagination and the composition of the MetricResponse DTO
 type metricsClient struct {
 	models.CloudWatchMetricsAPIProvider
 	config *setting.Cfg

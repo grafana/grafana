@@ -1,4 +1,6 @@
 ---
+aliases:
+  - /docs/grafana/next/datasources/cloudmonitoring/
 description: Google authentication
 keywords:
   - grafana

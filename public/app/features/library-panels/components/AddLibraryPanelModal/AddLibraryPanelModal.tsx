@@ -13,11 +13,11 @@ import { usePanelSave } from '../../utils/usePanelSave';
 interface AddLibraryPanelContentsProps {
   onDismiss: () => void;
   panel: PanelModel;
-  initialFolderId?: number;
+  initialFolderUid?: string;
 }
 
-export const AddLibraryPanelContents = ({ panel, initialFolderId, onDismiss }: AddLibraryPanelContentsProps) => {
-  const [folderId, setFolderId] = useState(initialFolderId);
+export const AddLibraryPanelContents = ({ panel, initialFolderUid, onDismiss }: AddLibraryPanelContentsProps) => {
+  const [folderUid, setFolderUid] = useState(initialFolderUid);
   const [panelName, setPanelName] = useState(panel.title);
   const [debouncedPanelName, setDebouncedPanelName] = useState(panel.title);
   const [waiting, setWaiting] = useState(false);
@@ -28,15 +28,15 @@ export const AddLibraryPanelContents = ({ panel, initialFolderId, onDismiss }: A
   const { saveLibraryPanel } = usePanelSave();
   const onCreate = useCallback(() => {
     panel.libraryPanel = { uid: '', name: panelName };
-    saveLibraryPanel(panel, folderId!).then((res) => {
+    saveLibraryPanel(panel, folderUid!).then((res) => {
       if (!(res instanceof Error)) {
         onDismiss();
       }
     });
-  }, [panel, panelName, folderId, onDismiss, saveLibraryPanel]);
+  }, [panel, panelName, folderUid, onDismiss, saveLibraryPanel]);
   const isValidName = useAsync(async () => {
     try {
-      return !(await getLibraryPanelByName(panelName)).some((lp) => lp.folderId === folderId);
+      return !(await getLibraryPanelByName(panelName)).some((lp) => lp.folderUid === folderUid);
     } catch (err) {
       if (isFetchError(err)) {
         err.isHandled = true;
@@ -45,7 +45,7 @@ export const AddLibraryPanelContents = ({ panel, initialFolderId, onDismiss }: A
     } finally {
       setWaiting(false);
     }
-  }, [debouncedPanelName, folderId]);
+  }, [debouncedPanelName, folderUid]);
 
   const invalidInput =
     !isValidName?.value && isValidName.value !== undefined && panelName === debouncedPanelName && !waiting;
@@ -72,8 +72,8 @@ export const AddLibraryPanelContents = ({ panel, initialFolderId, onDismiss }: A
         )}
       >
         <FolderPicker
-          onChange={({ id }) => setFolderId(id)}
-          initialFolderId={initialFolderId}
+          onChange={({ uid }) => setFolderUid(uid)}
+          initialFolderUid={initialFolderUid}
           inputId="share-panel-library-panel-folder-picker"
         />
       </Field>
@@ -94,10 +94,10 @@ interface Props extends AddLibraryPanelContentsProps {
   isOpen?: boolean;
 }
 
-export const AddLibraryPanelModal = ({ isOpen = false, panel, initialFolderId, ...props }: Props) => {
+export const AddLibraryPanelModal = ({ isOpen = false, panel, initialFolderUid, ...props }: Props) => {
   return (
     <Modal title="Create library panel" isOpen={isOpen} onDismiss={props.onDismiss}>
-      <AddLibraryPanelContents panel={panel} initialFolderId={initialFolderId} onDismiss={props.onDismiss} />
+      <AddLibraryPanelContents panel={panel} initialFolderUid={initialFolderUid} onDismiss={props.onDismiss} />
     </Modal>
   );
 };

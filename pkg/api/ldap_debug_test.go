@@ -13,26 +13,28 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/authtest"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/ldap"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/multildap"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
 type LDAPMock struct {
-	Results []*models.ExternalUserInfo
+	Results []*login.ExternalUserInfo
 }
 
-var userSearchResult *models.ExternalUserInfo
+var userSearchResult *login.ExternalUserInfo
 var userSearchConfig ldap.ServerConfig
 var userSearchError error
 var pingResult []*multildap.ServerStatus
@@ -42,16 +44,16 @@ func (m *LDAPMock) Ping() ([]*multildap.ServerStatus, error) {
 	return pingResult, pingError
 }
 
-func (m *LDAPMock) Login(query *models.LoginUserQuery) (*models.ExternalUserInfo, error) {
-	return &models.ExternalUserInfo{}, nil
+func (m *LDAPMock) Login(query *login.LoginUserQuery) (*login.ExternalUserInfo, error) {
+	return &login.ExternalUserInfo{}, nil
 }
 
-func (m *LDAPMock) Users(logins []string) ([]*models.ExternalUserInfo, error) {
-	s := []*models.ExternalUserInfo{}
+func (m *LDAPMock) Users(logins []string) ([]*login.ExternalUserInfo, error) {
+	s := []*login.ExternalUserInfo{}
 	return s, nil
 }
 
-func (m *LDAPMock) User(login string) (*models.ExternalUserInfo, ldap.ServerConfig, error) {
+func (m *LDAPMock) User(login string) (*login.ExternalUserInfo, ldap.ServerConfig, error) {
 	return userSearchResult, userSearchConfig, userSearchError
 }
 
@@ -70,7 +72,7 @@ func getUserFromLDAPContext(t *testing.T, requestURL string, searchOrgRst []*org
 
 	hs := &HTTPServer{Cfg: setting.NewCfg(), ldapGroups: ldap.ProvideGroupsService(), orgService: &orgtest.FakeOrgService{ExpectedOrgs: searchOrgRst}}
 
-	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		sc.context = c
 		return hs.GetUserFromLDAP(c)
 	})
@@ -104,7 +106,7 @@ func TestGetUserFromLDAPAPIEndpoint_UserNotFound(t *testing.T) {
 
 func TestGetUserFromLDAPAPIEndpoint_OrgNotfound(t *testing.T) {
 	isAdmin := true
-	userSearchResult = &models.ExternalUserInfo{
+	userSearchResult = &login.ExternalUserInfo{
 		Name:           "John Doe",
 		Email:          "john.doe@example.com",
 		Login:          "johndoe",
@@ -159,7 +161,7 @@ func TestGetUserFromLDAPAPIEndpoint_OrgNotfound(t *testing.T) {
 
 func TestGetUserFromLDAPAPIEndpoint(t *testing.T) {
 	isAdmin := true
-	userSearchResult = &models.ExternalUserInfo{
+	userSearchResult = &login.ExternalUserInfo{
 		Name:           "John Doe",
 		Email:          "john.doe@example.com",
 		Login:          "johndoe",
@@ -234,7 +236,7 @@ func TestGetUserFromLDAPAPIEndpoint(t *testing.T) {
 
 func TestGetUserFromLDAPAPIEndpoint_WithTeamHandler(t *testing.T) {
 	isAdmin := true
-	userSearchResult = &models.ExternalUserInfo{
+	userSearchResult = &login.ExternalUserInfo{
 		Name:           "John Doe",
 		Email:          "john.doe@example.com",
 		Login:          "johndoe",
@@ -317,7 +319,7 @@ func getLDAPStatusContext(t *testing.T) *scenarioContext {
 
 	hs := &HTTPServer{Cfg: setting.NewCfg()}
 
-	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		sc.context = c
 		return hs.GetLDAPStatus(c)
 	})
@@ -379,13 +381,13 @@ func postSyncUserWithLDAPContext(t *testing.T, requestURL string, preHook func(*
 
 	hs := &HTTPServer{
 		Cfg:              sc.cfg,
-		AuthTokenService: auth.NewFakeUserAuthTokenService(),
+		AuthTokenService: authtest.NewFakeUserAuthTokenService(),
 		Login:            loginservice.LoginServiceMock{},
 		authInfoService:  sc.authInfoService,
 		userService:      userService,
 	}
 
-	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		sc.context = c
 		return hs.PostSyncUserWithLDAP(c)
 	})
@@ -416,7 +418,7 @@ func TestPostSyncUserWithLDAPAPIEndpoint_Success(t *testing.T) {
 			return &LDAPMock{}
 		}
 
-		userSearchResult = &models.ExternalUserInfo{
+		userSearchResult = &login.ExternalUserInfo{
 			Login: "ldap-daniel",
 		}
 	}, userServiceMock)
@@ -485,7 +487,7 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotInLDAP(t *testing.T) {
 	userServiceMock := usertest.NewUserServiceFake()
 	userServiceMock.ExpectedUser = &user.User{Login: "ldap-daniel", ID: 34}
 	sc := postSyncUserWithLDAPContext(t, "/api/admin/ldap/sync/34", func(t *testing.T, sc *scenarioContext) {
-		sc.authInfoService.ExpectedExternalUser = &models.ExternalUserInfo{IsDisabled: true, UserId: 34}
+		sc.authInfoService.ExpectedExternalUser = &login.ExternalUserInfo{IsDisabled: true, UserId: 34}
 		getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 			return &ldap.Config{}, nil
 		}
@@ -514,7 +516,14 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotInLDAP(t *testing.T) {
 // ***
 
 func TestLDAP_AccessControl(t *testing.T) {
-	tests := []accessControlTestCase{
+	type testCase struct {
+		desc         string
+		method       string
+		url          string
+		expectedCode int
+		permissions  []accesscontrol.Permission
+	}
+	tests := []testCase{
 		{
 			url:          "/api/admin/ldap/reload",
 			method:       http.MethodPost,
@@ -589,8 +598,8 @@ func TestLDAP_AccessControl(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		t.Run(test.desc, func(t *testing.T) {
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
 			enabled := setting.LDAPEnabled
 			configFile := setting.LDAPConfigFile
 
@@ -604,27 +613,28 @@ func TestLDAP_AccessControl(t *testing.T) {
 			assert.NoError(t, err)
 			setting.LDAPConfigFile = path
 
-			cfg := setting.NewCfg()
-			cfg.LDAPEnabled = true
-			sc, hs := setupAccessControlScenarioContext(t, cfg, test.url, test.permissions)
-			hs.SQLStore = &mockstore.SQLStoreMock{ExpectedUser: &user.User{}}
-			hs.userService = &usertest.FakeUserService{ExpectedUser: &user.User{}}
-			hs.authInfoService = &logintest.AuthInfoServiceFake{}
-			hs.Login = &loginservice.LoginServiceMock{}
-			hs.orgService = &orgtest.FakeOrgService{}
-			sc.resp = httptest.NewRecorder()
-			sc.req, err = http.NewRequest(test.method, test.url, nil)
-			assert.NoError(t, err)
-
+			server := SetupAPITestServer(t, func(hs *HTTPServer) {
+				cfg := setting.NewCfg()
+				cfg.LDAPEnabled = true
+				hs.Cfg = cfg
+				hs.SQLStore = dbtest.NewFakeDB()
+				hs.orgService = orgtest.NewOrgServiceFake()
+				hs.userService = &usertest.FakeUserService{ExpectedUser: &user.User{}}
+				hs.ldapGroups = &ldap.OSSGroups{}
+				hs.Login = &loginservice.LoginServiceMock{}
+				hs.authInfoService = &logintest.AuthInfoServiceFake{}
+			})
 			// Add minimal setup to pass handler
-			userSearchResult = &models.ExternalUserInfo{}
+			userSearchResult = &login.ExternalUserInfo{}
 			userSearchError = nil
 			newLDAP = func(_ []*ldap.ServerConfig) multildap.IMultiLDAP {
 				return &LDAPMock{}
 			}
 
-			sc.exec()
-			assert.Equal(t, test.expectedCode, sc.resp.Code)
+			res, err := server.Send(webtest.RequestWithSignedInUser(server.NewRequest(tt.method, tt.url, nil), userWithPermissions(1, tt.permissions)))
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectedCode, res.StatusCode)
+			require.NoError(t, res.Body.Close())
 		})
 	}
 }

@@ -17,6 +17,7 @@ import {
 
 import { FetchError, FetchResponse } from '../services';
 
+import { HealthCheckResultDetails } from './DataSourceWithBackend';
 import { toDataQueryError } from './toDataQueryError';
 
 export const cachedResponseNotice: QueryResultMetaNotice = { severity: 'info', text: 'Cached response' };
@@ -130,7 +131,7 @@ export function toDataQueryResponse(
       rsp.state = LoadingState.Error;
     }
     if (!rsp.error) {
-      rsp.error = toDataQueryError(res as DataQueryError);
+      rsp.error = toDataQueryError(res);
     }
   }
 
@@ -160,6 +161,12 @@ function addCacheNotice(frame: DataFrameJSON): DataFrameJSON {
   };
 }
 
+export interface TestingStatus {
+  message?: string | null;
+  status?: string | null;
+  details?: HealthCheckResultDetails;
+}
+
 /**
  * Data sources using api/ds/query to test data sources can use this function to
  * handle errors and convert them to TestingStatus object.
@@ -171,7 +178,7 @@ function addCacheNotice(frame: DataFrameJSON): DataFrameJSON {
  *
  * @returns {TestingStatus}
  */
-export function toTestingStatus(err: FetchError): any {
+export function toTestingStatus(err: FetchError): TestingStatus {
   const queryResponse = toDataQueryResponse(err);
   // POST api/ds/query errors returned as { message: string, error: string } objects
   if (queryResponse.error?.data?.message) {

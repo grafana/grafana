@@ -159,13 +159,13 @@ export const SearchView = ({ showManage, folderDTO, hidePseudoFolders, keyboardE
     );
   };
 
-  if (folderDTO && !state.loading && !state.result?.totalRows && !state.query.length) {
+  if (folderDTO && !state.loading && !state.result?.totalRows && !stateManager.hasSearchFilters()) {
     return (
       <EmptyListCTA
         title="This folder doesn't have any dashboards yet"
         buttonIcon="plus"
         buttonTitle="Create Dashboard"
-        buttonLink={`dashboard/new?folderId=${folderDTO.id}`}
+        buttonLink={`dashboard/new?folderUid=${folderDTO.uid}`}
         proTip="Add/move dashboards to your folder at ->"
         proTipLink="dashboards"
         proTipLinkTitle="Manage dashboards"

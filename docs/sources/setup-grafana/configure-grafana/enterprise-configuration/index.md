@@ -456,7 +456,7 @@ The default is `25`.
 
 ### url
 
-The full Redis URL of your Redis server. For example: `redis://username:password@localhost:6739/0`. To enable TLS, use the `rediss` scheme.
+The full Redis URL of your Redis server. For example: `redis://username:password@localhost:6739/0`. To enable TLS, use the `redis` scheme.
 
 The default is `"redis://localhost:6379"`.
 
@@ -467,7 +467,7 @@ If you use the full Redis URLs, then you can specify the scheme, username, and p
 
 > **Note:** If you have specify `cluster`, the value for `url` is ignored.
 
-> **Note:** You can enable TLS for cluster mode using the `rediss` scheme in Grafana Enterprise v8.5 and later versions.
+> **Note:** You can enable TLS for cluster mode using the `redis` scheme in Grafana Enterprise v8.5 and later versions.
 
 ### prefix
 

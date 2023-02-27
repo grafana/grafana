@@ -5,7 +5,7 @@ import { DataFrameJSON, SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, InlineSwitch, Input, Label, Select } from '@grafana/ui';
 
 import { EditorProps } from '../QueryEditor';
-import { SimulationQuery } from '../types';
+import { SimulationQuery } from '../dataquery.gen';
 
 import { SimulationSchemaForm } from './SimulationSchemaForm';
 
@@ -64,7 +64,7 @@ export const SimulationQueryEditor = ({ onChange, query, ds }: EditorProps) => {
   };
 
   const onUIDChanged = (e: FormEvent<HTMLInputElement>) => {
-    const { value } = e.target as HTMLInputElement;
+    const { value } = e.currentTarget;
     onUpdateKey({ ...simKey, uid: value ?? undefined });
   };
 

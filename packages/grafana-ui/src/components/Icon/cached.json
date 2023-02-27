@@ -1,4 +1,5 @@
 [
+  "unicons/adjust-circle",
   "unicons/angle-double-down",
   "unicons/angle-double-right",
   "unicons/angle-down",
@@ -72,6 +73,7 @@
   "unicons/import",
   "unicons/info",
   "unicons/info-circle",
+  "unicons/k6",
   "unicons/key-skeleton-alt",
   "unicons/keyboard",
   "unicons/link",
@@ -147,6 +149,8 @@
   "custom/gf-interpolation-step-after",
   "custom/gf-interpolation-step-before",
   "custom/gf-logs",
+  "custom/gf-movepane-left",
+  "custom/gf-movepane-right",
   "mono/favorite",
   "mono/grafana",
   "mono/heart",

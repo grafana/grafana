@@ -17,8 +17,8 @@ class ValidationError extends Error {
 export class ValidationSrv {
   rootName = 'general';
 
-  validateNewDashboardName(folderId: any, name: string) {
-    return this.validate(folderId, name, 'A dashboard or a folder with the same name already exists');
+  validateNewDashboardName(folderUid: any, name: string) {
+    return this.validate(folderUid, name, 'A dashboard or a folder with the same name already exists');
   }
 
   validateNewFolderName(name?: string) {

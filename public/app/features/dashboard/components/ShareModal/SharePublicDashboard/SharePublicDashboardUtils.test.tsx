@@ -1,4 +1,6 @@
+import { DataSourceRef, DataQuery } from '@grafana/data/src/types/query';
 import { updateConfig } from 'app/core/config';
+import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { VariableModel } from 'app/features/variables/types';
 
 import {
@@ -6,6 +8,7 @@ import {
   dashboardHasTemplateVariables,
   publicDashboardPersisted,
   generatePublicDashboardUrl,
+  getUnsupportedDashboardDatasources,
 } from './SharePublicDashboardUtils';
 
 describe('dashboardHasTemplateVariables', () => {
@@ -43,5 +46,31 @@ describe('publicDashboardPersisted', () => {
     expect(publicDashboardPersisted(pubdash)).toBe(false);
     pubdash = {} as PublicDashboard;
     expect(publicDashboardPersisted(pubdash)).toBe(false);
+  });
+});
+
+describe('getUnsupportedDashboardDatasources', () => {
+  it('itIsSupported', () => {
+    const pm = {
+      targets: [
+        {
+          datasource: { type: 'prometheus' } as DataSourceRef,
+        } as DataQuery,
+      ] as DataQuery[],
+    } as PanelModel;
+    const panelArray: PanelModel[] = [pm];
+    expect(getUnsupportedDashboardDatasources(panelArray)).toEqual([]);
+  });
+
+  it('itIsNotSupported', () => {
+    const pm = {
+      targets: [
+        {
+          datasource: { type: 'blah' } as DataSourceRef,
+        } as DataQuery,
+      ] as DataQuery[],
+    } as PanelModel;
+    const panelArray: PanelModel[] = [pm];
+    expect(getUnsupportedDashboardDatasources(panelArray)).toEqual(['blah']);
   });
 });

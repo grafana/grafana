@@ -4,7 +4,7 @@ import React from 'react';
 
 import { OrgUser } from 'app/types';
 
-import UsersTable, { Props } from './UsersTable';
+import { UsersTable, Props } from './UsersTable';
 import { getMockUsers } from './__mocks__/userMocks';
 
 jest.mock('app/core/core', () => ({
@@ -47,6 +47,12 @@ describe('Render', () => {
     setup({ users: usersData });
 
     expect(screen.getByText('Disabled')).toBeInTheDocument();
+  });
+  it('should render LDAP label', () => {
+    const usersData = getMockUsers(5);
+    usersData[0].authLabels = ['LDAP'];
+    setup({ users: usersData });
+    expect(screen.getByText(usersData[0].authLabels[0])).toBeInTheDocument();
   });
 });
 

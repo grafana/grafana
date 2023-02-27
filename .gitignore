@@ -104,6 +104,7 @@ debug.test
 /packaging/**/*.tar.gz
 /packaging/**/*.tar.gz.sha256
 pkg/cmd/grafana-server/__debug_bin
+pkg/services/quota/quotaimpl/storage/storage.json
 
 # Ignore OSX indexing
 .DS_Store
@@ -155,6 +156,8 @@ compilation-stats.json
 /e2e/benchmarks/**/results/*
 /e2e/benchmarks/**/results
 /e2e/build_results.zip
+/e2e/extensions
+/e2e/extensions-suite
 
 # grafana server
 /scripts/grafana-server/server.log

@@ -166,7 +166,7 @@ export function OperationEditor({
 function useFlash(flash?: boolean) {
   const [keepFlash, setKeepFlash] = useState(true);
   useEffect(() => {
-    let t: any;
+    let t: ReturnType<typeof setTimeout>;
     if (flash) {
       t = setTimeout(() => {
         setKeepFlash(false);

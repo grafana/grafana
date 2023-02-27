@@ -8,7 +8,7 @@ import { styleMixins, useStyles2 } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 import { getPropertiesForVariant } from '../Button';
 import { Icon } from '../Icon/Icon';
-import { Tooltip } from '../Tooltip/Tooltip';
+import { Tooltip } from '../Tooltip';
 
 type CommonProps = {
   /** Icon name */

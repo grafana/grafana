@@ -10,9 +10,11 @@ import {
   labelsToGroupedOptions,
   stringArrayToFilters,
   alignmentPeriodLabel,
+  getMetricType,
+  setMetricType,
 } from './functions';
 import { newMockDatasource } from './specs/testData';
-import { AlignmentTypes, MetricDescriptor, MetricKind, ValueTypes } from './types';
+import { AlignmentTypes, MetricDescriptor, MetricKind, TimeSeriesList, ValueTypes } from './types';
 
 jest.mock('@grafana/runtime', () => ({
   ...(jest.requireActual('@grafana/runtime') as unknown as object),
@@ -234,6 +236,25 @@ describe('functions', () => {
 
       const label = alignmentPeriodLabel({ perSeriesAligner: 'ALIGN_DELTA', alignmentPeriod: '10' }, datasource);
       expect(label).toBe('10s interval (delta)');
+    });
+  });
+
+  describe('getMetricType', () => {
+    it('returns metric type', () => {
+      const metricType = getMetricType({ filters: ['metric.type', '=', 'test'] } as TimeSeriesList);
+      expect(metricType).toBe('test');
+    });
+  });
+
+  describe('setMetricType', () => {
+    it('sets a metric type if the filter did not exist', () => {
+      const metricType = setMetricType({} as TimeSeriesList, 'test');
+      expect(metricType.filters).toEqual(['metric.type', '=', 'test']);
+    });
+
+    it('sets a metric type if the filter exists', () => {
+      const metricType = setMetricType({ filters: ['metric.type', '=', 'test'] } as TimeSeriesList, 'other');
+      expect(metricType.filters).toEqual(['metric.type', '=', 'other']);
     });
   });
 });

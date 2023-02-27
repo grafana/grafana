@@ -186,7 +186,7 @@ function useColumns(alertManagerSourceName: string) {
         renderCell: function renderStateTag({ data: { status } }) {
           return <SilenceStateTag state={status.state} />;
         },
-        size: '88px',
+        size: 4,
       },
       {
         id: 'matchers',
@@ -194,7 +194,7 @@ function useColumns(alertManagerSourceName: string) {
         renderCell: function renderMatchers({ data: { matchers } }) {
           return <Matchers matchers={matchers || []} />;
         },
-        size: 9,
+        size: 10,
       },
       {
         id: 'alerts',
@@ -202,7 +202,7 @@ function useColumns(alertManagerSourceName: string) {
         renderCell: function renderSilencedAlerts({ data: { silencedAlerts } }) {
           return <span data-testid="alerts">{silencedAlerts.length}</span>;
         },
-        size: 1,
+        size: 4,
       },
       {
         id: 'schedule',
@@ -215,12 +215,11 @@ function useColumns(alertManagerSourceName: string) {
             <>
               {' '}
               {startsAtDate?.format(dateDisplayFormat)} {'-'}
-              <br />
               {endsAtDate?.format(dateDisplayFormat)}
             </>
           );
         },
-        size: '150px',
+        size: 7,
       },
     ];
     if (showActions) {
@@ -250,7 +249,7 @@ function useColumns(alertManagerSourceName: string) {
             </Stack>
           );
         },
-        size: '147px',
+        size: 5,
       });
     }
     return columns;

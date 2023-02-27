@@ -12,12 +12,17 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/authtest"
+	"github.com/grafana/grafana/pkg/services/auth/jwt"
+	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
@@ -38,7 +43,7 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 
 	req, err := http.NewRequest("POST", "http://example.com", nil)
 	require.NoError(t, err)
-	ctx := &models.ReqContext{
+	ctx := &contextmodel.ReqContext{
 		Context: &web.Context{Req: req},
 		Logger:  log.New("Test"),
 	}
@@ -78,11 +83,11 @@ func getContextHandler(t *testing.T) *ContextHandler {
 	cfg.AuthProxyHeaderName = "X-Killa"
 	cfg.AuthProxyEnabled = true
 	cfg.AuthProxyHeaderProperty = "username"
-	remoteCacheSvc, err := remotecache.ProvideService(cfg, sqlStore)
+	remoteCacheSvc, err := remotecache.ProvideService(cfg, sqlStore, fakes.NewFakeSecretsService())
 	require.NoError(t, err)
-	userAuthTokenSvc := auth.NewFakeUserAuthTokenService()
+	userAuthTokenSvc := authtest.NewFakeUserAuthTokenService()
 	renderSvc := &fakeRenderService{}
-	authJWTSvc := models.NewFakeJWTService()
+	authJWTSvc := jwt.NewFakeJWTService()
 	tracer := tracing.InitializeTracerForTest()
 
 	loginService := loginservice.LoginServiceMock{ExpectedUser: &user.User{ID: userID}}
@@ -99,32 +104,16 @@ func getContextHandler(t *testing.T) *ContextHandler {
 	}
 	orgService := orgtest.NewOrgServiceFake()
 
-	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginService, &userService, &FakeGetSignUserStore{})
+	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginService, &userService, nil)
 	authenticator := &fakeAuthenticator{}
 
 	return ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc,
 		renderSvc, sqlStore, tracer, authProxy, loginService, nil, authenticator,
-		&userService, orgService, nil, nil, nil)
-}
-
-type FakeGetSignUserStore struct {
-	db.DB
-}
-
-func (f *FakeGetSignUserStore) GetSignedInUser(ctx context.Context, query *models.GetSignedInUserQuery) error {
-	if query.UserId != userID {
-		return user.ErrUserNotFound
-	}
-
-	query.Result = &user.SignedInUser{
-		UserID: userID,
-		OrgID:  orgID,
-	}
-	return nil
+		&userService, orgService, nil, featuremgmt.WithFeatures(), &authntest.FakeService{})
 }
 
 type fakeAuthenticator struct{}
 
-func (fa *fakeAuthenticator) AuthenticateUser(c context.Context, query *models.LoginUserQuery) error {
+func (fa *fakeAuthenticator) AuthenticateUser(c context.Context, query *login.LoginUserQuery) error {
 	return nil
 }

@@ -8,8 +8,33 @@ const getStyles = (theme: GrafanaTheme2) => ({
     tableLayout: 'fixed',
   }),
 
+  selectedLogGroupsContainer: css({
+    marginLeft: theme.spacing(0.5),
+    marginBottom: theme.spacing(0.5),
+    display: 'flex',
+    flexFlow: 'wrap',
+    gap: theme.spacing(1),
+    button: {
+      margin: 'unset',
+    },
+  }),
+
+  limitLabel: css({
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
+    maxWidth: 'none',
+    svg: {
+      marginRight: theme.spacing(0.5),
+    },
+  }),
+
+  logGroupCountLabel: css({
+    color: theme.colors.text.secondary,
+    maxWidth: 'none',
+  }),
+
   tableScroller: css({
-    maxHeight: '50vh',
+    maxHeight: '40vh',
     overflow: 'auto',
   }),
 
@@ -25,9 +50,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: theme.spacing(1, 1, 1, 0),
     width: '25%',
     '&:first-of-type': {
-      width: '50%',
+      width: '80%',
       padding: theme.spacing(1, 1, 1, 2),
     },
+  }),
+
+  nestedEntry: css({
+    display: 'flex',
+    alignItems: 'center',
   }),
 
   logGroupSearchResults: css({
@@ -50,26 +80,19 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'flex',
   }),
 
+  searchField: css({
+    width: '100%',
+    marginRight: theme.spacing(1),
+  }),
+
   resultLimit: css({
     margin: '4px 0',
     fontStyle: 'italic',
   }),
 
-  selectedLogGroup: css({
-    background: theme.colors.background.secondary,
-    borderRadius: theme.shape.borderRadius(),
-    margin: theme.spacing(0.25, 1, 0.25, 0),
-    padding: theme.spacing(0.25, 0, 0.25, 1),
-    color: theme.colors.text.primary,
-    fontSize: theme.typography.size.sm,
-  }),
-
-  search: css({
-    marginRight: '10px',
-  }),
-
   removeButton: css({
     verticalAlign: 'middle',
+    marginLeft: theme.spacing(0.5),
   }),
 
   addBtn: css({

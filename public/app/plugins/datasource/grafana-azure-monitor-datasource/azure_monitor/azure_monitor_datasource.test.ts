@@ -5,7 +5,7 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import createMockQuery from '../__mocks__/query';
 import { createTemplateVariables } from '../__mocks__/utils';
-import { singleVariable, subscriptionsVariable } from '../__mocks__/variables';
+import { multiVariable, singleVariable, subscriptionsVariable } from '../__mocks__/variables';
 import AzureMonitorDatasource from '../datasource';
 import { AzureDataSourceJsonData, AzureMonitorLocationsResponse, AzureQueryType } from '../types';
 
@@ -43,12 +43,12 @@ describe('AzureMonitorDatasource', () => {
       },
       {
         description: 'filter query with no resourceGroup',
-        query: createMockQuery({ azureMonitor: { resourceGroup: undefined } }),
+        query: createMockQuery({ azureMonitor: { resources: [{ resourceGroup: undefined }] } }),
         filtered: false,
       },
       {
         description: 'filter query with no resourceName',
-        query: createMockQuery({ azureMonitor: { resourceName: undefined } }),
+        query: createMockQuery({ azureMonitor: { resources: [{ resourceName: undefined }] } }),
         filtered: false,
       },
       {
@@ -117,9 +117,69 @@ describe('AzureMonitorDatasource', () => {
       expect(templatedQuery).toMatchObject({
         subscription,
         azureMonitor: {
-          resourceGroup,
           metricNamespace,
-          resourceName,
+          resources: [{ resourceGroup, resourceName }],
+        },
+      });
+    });
+
+    it('expand template variables in resource groups and names', () => {
+      const resourceGroup = '$rg';
+      const resourceName = '$rn';
+      templateSrv.init([
+        {
+          id: 'rg',
+          name: 'rg',
+          current: {
+            value: `rg1,rg2`,
+          },
+        },
+        {
+          id: 'rn',
+          name: 'rn',
+          current: {
+            value: `rn1,rn2`,
+          },
+        },
+      ]);
+      const query = createMockQuery({
+        azureMonitor: {
+          resources: [{ resourceGroup, resourceName }],
+        },
+      });
+      const templatedQuery = ctx.ds.azureMonitorDatasource.applyTemplateVariables(query, {});
+      expect(templatedQuery).toMatchObject({
+        azureMonitor: {
+          resources: [
+            { resourceGroup: 'rg1', resourceName: 'rn1' },
+            { resourceGroup: 'rg2', resourceName: 'rn1' },
+            { resourceGroup: 'rg1', resourceName: 'rn2' },
+            { resourceGroup: 'rg2', resourceName: 'rn2' },
+          ],
+        },
+      });
+    });
+
+    it('expand template variables for a region', () => {
+      const region = '$reg';
+      templateSrv.init([
+        {
+          id: 'reg',
+          name: 'reg',
+          current: {
+            value: `eastus`,
+          },
+        },
+      ]);
+      const query = createMockQuery({
+        azureMonitor: {
+          region,
+        },
+      });
+      const templatedQuery = ctx.ds.azureMonitorDatasource.applyTemplateVariables(query, {});
+      expect(templatedQuery).toMatchObject({
+        azureMonitor: {
+          region: 'eastus',
         },
       });
     });
@@ -307,6 +367,30 @@ describe('AzureMonitorDatasource', () => {
           expect(results.supportedTimeGrains.length).toEqual(5); // 4 time grains from the API + auto
         });
     });
+
+    it('should replace a template variable for the metric name', () => {
+      templateSrv.init([
+        {
+          id: 'metric',
+          name: 'metric',
+          current: {
+            value: 'UsedCapacity',
+          },
+        },
+      ]);
+      return ctx.ds.azureMonitorDatasource
+        .getMetricMetadata({
+          resourceUri:
+            '/subscriptions/mock-subscription-id/resourceGroups/nodeapp/providers/microsoft.insights/components/resource1',
+          metricNamespace: 'microsoft.insights/components',
+          metricName: '$metric',
+        })
+        .then((results) => {
+          expect(results.primaryAggType).toEqual('Total');
+          expect(results.supportedAggTypes.length).toEqual(6);
+          expect(results.supportedTimeGrains.length).toEqual(5); // 4 time grains from the API + auto
+        });
+    });
   });
 
   describe('When performing interpolateVariablesInQueries for azure_monitor_metrics', () => {
@@ -322,8 +406,8 @@ describe('AzureMonitorDatasource', () => {
 
     it('should return a query with any template variables replaced', () => {
       const templateableProps = [
-        'resourceGroup',
-        'resourceName',
+        'resources[0].resourceGroup',
+        'resources[0].resourceName',
         'metricNamespace',
         'timeGrain',
         'aggregation',
@@ -496,6 +580,7 @@ describe('AzureMonitorDatasource', () => {
       let subscription = 'mock-subscription-id';
       let resourceGroup = 'nodeapp';
       let metricNamespace = 'microsoft.insights/components';
+      let region = '';
 
       beforeEach(() => {
         subscription = 'mock-subscription-id';
@@ -521,7 +606,9 @@ describe('AzureMonitorDatasource', () => {
           ctx.ds.azureMonitorDatasource.getResource = jest.fn().mockImplementation((path: string) => {
             const basePath = `azuremonitor/subscriptions/${subscription}/resourceGroups`;
             expect(path).toBe(
-              `${basePath}/${resourceGroup}/resources?api-version=2021-04-01&$filter=resourceType eq '${metricNamespace}'`
+              `${basePath}/${resourceGroup}/resources?api-version=2021-04-01&$filter=resourceType eq '${metricNamespace}'${
+                region ? ` and location eq '${region}'` : ''
+              }`
             );
             return Promise.resolve(response);
           });
@@ -545,6 +632,52 @@ describe('AzureMonitorDatasource', () => {
               expect(results.length).toEqual(1);
               expect(results[0].text).toEqual('nodeapp');
               expect(results[0].value).toEqual('nodeapp');
+            });
+        });
+
+        it('should return include a region', () => {
+          region = 'eastus';
+          return ctx.ds
+            .getResourceNames(subscription, resourceGroup, metricNamespace, region)
+            .then((results: Array<{ text: string; value: string }>) => {
+              expect(results.length).toEqual(1);
+              expect(results[0].text).toEqual('nodeapp');
+              expect(results[0].value).toEqual('nodeapp');
+            });
+        });
+
+        it('should return multiple resources from a template variable', () => {
+          const tsrv = new TemplateSrv();
+          tsrv.replace = jest
+            .fn()
+            .mockImplementation((value: string) => (value === `$${multiVariable.id}` ? 'foo,bar' : value ?? ''));
+          const ds = new AzureMonitorDatasource(ctx.instanceSettings, templateSrv);
+          ds.azureMonitorDatasource.templateSrv = tsrv;
+          ds.azureMonitorDatasource.getResource = jest
+            .fn()
+            .mockImplementationOnce((path: string) => {
+              expect(path).toMatch('foo');
+              return Promise.resolve(response);
+            })
+            .mockImplementationOnce((path: string) => {
+              expect(path).toMatch('bar');
+              return Promise.resolve({
+                value: [
+                  {
+                    name: resourceGroup + '2',
+                    type: metricNamespace,
+                  },
+                ],
+              });
+            });
+          return ds
+            .getResourceNames(subscription, `$${multiVariable.id}`, metricNamespace)
+            .then((results: Array<{ text: string; value: string }>) => {
+              expect(results.length).toEqual(2);
+              expect(results[0].text).toEqual('nodeapp');
+              expect(results[0].value).toEqual('nodeapp');
+              expect(results[1].text).toEqual('nodeapp2');
+              expect(results[1].value).toEqual('nodeapp2');
             });
         });
       });
@@ -858,16 +991,16 @@ describe('AzureMonitorDatasource', () => {
           })
           .then((results: any) => {
             expect(results.dimensions).toMatchInlineSnapshot(`
-              Array [
-                Object {
+              [
+                {
                   "label": "Response type",
                   "value": "ResponseType",
                 },
-                Object {
+                {
                   "label": "Geo type",
                   "value": "GeoType",
                 },
-                Object {
+                {
                   "label": "API name",
                   "value": "ApiName",
                 },
@@ -901,7 +1034,7 @@ describe('AzureMonitorDatasource', () => {
 
           const ds = new AzureMonitorDatasource(ctx.instanceSettings, templateSrv);
           query.queryType = AzureQueryType.AzureMonitor;
-          query.azureLogAnalytics = { resource: `$${singleVariable.name}` };
+          query.azureLogAnalytics = { resources: [`$${singleVariable.name}`] };
           expect(ds.targetContainsTemplate(query)).toEqual(false);
         });
       });

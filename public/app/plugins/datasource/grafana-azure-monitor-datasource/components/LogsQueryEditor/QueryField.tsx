@@ -33,12 +33,12 @@ const QueryField: React.FC<AzureQueryEditorFieldProps> = ({ query, datasource, o
   }
 
   useEffect(() => {
-    if (!query.azureLogAnalytics?.resource) {
+    if (!query.azureLogAnalytics?.resources || !query.azureLogAnalytics.resources.length) {
       return;
     }
 
     const promises = [
-      datasource.azureLogAnalyticsDatasource.getKustoSchema(query.azureLogAnalytics.resource),
+      datasource.azureLogAnalyticsDatasource.getKustoSchema(query.azureLogAnalytics.resources[0]),
       getPromise(),
     ] as const;
 
@@ -56,7 +56,7 @@ const QueryField: React.FC<AzureQueryEditorFieldProps> = ({ query, datasource, o
           worker?.setSchema(schema, 'https://help.kusto.windows.net', 'Samples');
         });
     });
-  }, [datasource.azureLogAnalyticsDatasource, query.azureLogAnalytics?.resource]);
+  }, [datasource.azureLogAnalyticsDatasource, query.azureLogAnalytics?.resources]);
 
   const handleEditorMount = useCallback((editor: MonacoEditor, monaco: Monaco) => {
     monacoPromiseRef.current?.resolve?.({ editor, monaco });

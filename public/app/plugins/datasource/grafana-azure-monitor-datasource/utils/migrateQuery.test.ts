@@ -53,8 +53,12 @@ const modernMetricsQuery: AzureMonitorQuery = {
     dimensionFilters: [{ dimension: 'dependency/success', filters: ['*'], operator: 'eq' }],
     metricName: 'dependencies/duration',
     metricNamespace: 'microsoft.insights/components',
-    resourceGroup: 'cloud-datasources',
-    resourceName: 'AppInsightsTestData',
+    resources: [
+      {
+        resourceGroup: 'cloud-datasources',
+        resourceName: 'AppInsightsTestData',
+      },
+    ],
     timeGrain: 'PT5M',
     top: '10',
   },
@@ -173,12 +177,23 @@ describe('AzureMonitor: migrateQuery', () => {
           subscription: modernMetricsQuery.subscription,
           azureMonitor: expect.objectContaining({
             metricNamespace: modernMetricsQuery.azureMonitor!.metricNamespace,
-            resourceGroup: modernMetricsQuery.azureMonitor!.resourceGroup,
-            resourceName: modernMetricsQuery.azureMonitor!.resourceName,
+            resources: modernMetricsQuery.azureMonitor!.resources,
             resourceUri: undefined,
           }),
         })
       );
     });
+  });
+
+  it('should migrate a sigle resource for Logs', () => {
+    const q = {
+      ...modernMetricsQuery,
+      azureLogAnalytics: {
+        ...modernMetricsQuery.azureLogAnalytics,
+        resource: 'foo',
+      },
+    };
+    const result = migrateQuery(q);
+    expect(result.azureLogAnalytics?.resources).toEqual(['foo']);
   });
 });

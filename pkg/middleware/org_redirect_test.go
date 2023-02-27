@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -48,8 +48,8 @@ func TestOrgRedirectMiddleware(t *testing.T) {
 		middlewareScenario(t, tc.desc, func(t *testing.T, sc *scenarioContext) {
 			sc.withTokenSessionCookie("token")
 			sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: 1, UserID: 12}
-			sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
-				return &models.UserToken{
+			sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
+				return &auth.UserToken{
 					UserId:        0,
 					UnhashedToken: "",
 				}, nil
@@ -68,8 +68,8 @@ func TestOrgRedirectMiddleware(t *testing.T) {
 		sc.userService.ExpectedSetUsingOrgError = fmt.Errorf("")
 		sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: 1, UserID: 12}
 
-		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
-			return &models.UserToken{
+		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
+			return &auth.UserToken{
 				UserId:        12,
 				UnhashedToken: "",
 			}, nil

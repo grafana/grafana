@@ -16,16 +16,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/alerting/alerting/notifier/channels"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -98,7 +98,8 @@ func TestIntegrationTestReceivers(t *testing.T) {
 					"type": "email",
 					"disableResolveMessage": false,
 					"settings": {
-						"addresses":"example@email.com"
+						"addresses":"example@email.com",
+						"singleEmail": true
 					},
 					"secureFields": {}
 				}
@@ -713,6 +714,10 @@ func TestIntegrationNotificationChannels(t *testing.T) {
 	amConfig := getAlertmanagerConfig(mockChannel.server.Addr)
 	mockEmail := &mockEmailHandler{}
 
+	// Set up responses
+	mockChannel.responses["slack_recv1"] = `{"ok": true}`
+	mockChannel.responses["slack_recvX"] = `{"ok": true}`
+
 	// Overriding some URLs to send to the mock channel.
 	os, opa, ot, opu, ogb, ol, oth := channels.SlackAPIEndpoint, channels.PagerdutyEventAPIURL,
 		channels.TelegramAPIURL, channels.PushoverEndpoint, channels.GetBoundary,
@@ -736,7 +741,7 @@ func TestIntegrationNotificationChannels(t *testing.T) {
 	env.NotificationService.EmailHandlerSync = mockEmail.sendEmailCommandHandlerSync
 	// As we are using a NotificationService mock here, but the test expects real NotificationService -
 	// we try to issue a real POST request here
-	env.NotificationService.WebhookHandler = func(_ context.Context, cmd *models.SendWebhookSync) error {
+	env.NotificationService.WebhookHandler = func(_ context.Context, cmd *notifications.SendWebhookSync) error {
 		if res, err := http.Post(cmd.Url, "", strings.NewReader(cmd.Body)); err == nil {
 			_ = res.Body.Close()
 		}
@@ -996,6 +1001,7 @@ type mockNotificationChannel struct {
 	server *http.Server
 
 	receivedNotifications  map[string][]string
+	responses              map[string]string
 	notificationErrorCount int
 	notificationsMtx       sync.RWMutex
 }
@@ -1013,6 +1019,7 @@ func newMockNotificationChannel(t *testing.T, grafanaListedAddr string) *mockNot
 			Addr: listener.Addr().String(),
 		},
 		receivedNotifications: make(map[string][]string),
+		responses:             make(map[string]string),
 		t:                     t,
 	}
 
@@ -1042,6 +1049,7 @@ func (nc *mockNotificationChannel) ServeHTTP(res http.ResponseWriter, req *http.
 
 	nc.receivedNotifications[key] = append(nc.receivedNotifications[key], body)
 	res.WriteHeader(http.StatusOK)
+	fmt.Fprint(res, nc.responses[paths[0]])
 }
 
 func (nc *mockNotificationChannel) totalNotifications() int {
@@ -1158,10 +1166,10 @@ func (nc *mockNotificationChannel) Close() error {
 }
 
 type mockEmailHandler struct {
-	emails []*models.SendEmailCommandSync
+	emails []*notifications.SendEmailCommandSync
 }
 
-func (e *mockEmailHandler) sendEmailCommandHandlerSync(_ context.Context, cmd *models.SendEmailCommandSync) error {
+func (e *mockEmailHandler) sendEmailCommandHandlerSync(_ context.Context, cmd *notifications.SendEmailCommandSync) error {
 	// We 0 out the start time since that is a variable that we cannot predict.
 	alerts := cmd.Data["Alerts"].(channels.ExtendedAlerts)
 	for i := range alerts {
@@ -1178,7 +1186,7 @@ type mockEmailHandlerWithTimeout struct {
 	timeout time.Duration
 }
 
-func (e *mockEmailHandlerWithTimeout) sendEmailCommandHandlerSync(ctx context.Context, cmd *models.SendEmailCommandSync) error {
+func (e *mockEmailHandlerWithTimeout) sendEmailCommandHandlerSync(ctx context.Context, cmd *notifications.SendEmailCommandSync) error {
 	select {
 	case <-time.After(e.timeout):
 		return e.mockEmailHandler.sendEmailCommandHandlerSync(ctx, cmd)
@@ -2273,9 +2281,9 @@ var expAlertmanagerConfigFromAPI = `
 }
 `
 
-var expEmailNotifications = []*models.SendEmailCommandSync{
+var expEmailNotifications = []*notifications.SendEmailCommandSync{
 	{
-		SendEmailCommand: models.SendEmailCommand{
+		SendEmailCommand: notifications.SendEmailCommand{
 			To:          []string{"test@email.com"},
 			SingleEmail: true,
 			Template:    "ng_alert_notification",
@@ -2328,7 +2336,7 @@ var expNonEmailNotifications = map[string][]string{
 			  "text": "Integration Test ",
 			  "fallback": "Integration Test [FIRING:1] SlackAlert1 (default)",
 			  "footer": "Grafana v",
-			  "footer_icon": "https://grafana.com/assets/img/fav32.png",
+			  "footer_icon": "https://grafana.com/static/assets/img/fav32.png",
 			  "color": "#D63232",
 			  "ts": %s,
               "mrkdwn_in": ["pretext"],
@@ -2348,7 +2356,7 @@ var expNonEmailNotifications = map[string][]string{
 			  "text": "**Firing**\n\nValue: A=1\nLabels:\n - alertname = SlackAlert2\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_SlackAlert2/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%%3DSlackAlert2&matcher=grafana_folder%%3Ddefault\n",
 			  "fallback": "[FIRING:1] SlackAlert2 (default)",
 			  "footer": "Grafana v",
-			  "footer_icon": "https://grafana.com/assets/img/fav32.png",
+			  "footer_icon": "https://grafana.com/static/assets/img/fav32.png",
 			  "color": "#D63232",
 			  "ts": %s,
               "mrkdwn_in": ["pretext"],
@@ -2486,7 +2494,7 @@ var expNonEmailNotifications = map[string][]string{
 			{
 			  "color": 14037554,
 			  "footer": {
-				"icon_url": "https://grafana.com/assets/img/fav32.png",
+				"icon_url": "https://grafana.com/static/assets/img/fav32.png",
 				"text": "Grafana v"
 			  },
 			  "title": "[FIRING:1] DiscordAlert (default)",
@@ -2522,10 +2530,10 @@ var expNonEmailNotifications = map[string][]string{
 		}`,
 	},
 	"pushover_recv/pushover_test": {
-		"--abcd\r\nContent-Disposition: form-data; name=\"user\"\r\n\r\nmysecretkey\r\n--abcd\r\nContent-Disposition: form-data; name=\"token\"\r\n\r\nmysecrettoken\r\n--abcd\r\nContent-Disposition: form-data; name=\"priority\"\r\n\r\n0\r\n--abcd\r\nContent-Disposition: form-data; name=\"sound\"\r\n\r\n\r\n--abcd\r\nContent-Disposition: form-data; name=\"title\"\r\n\r\n[FIRING:1] PushoverAlert (default)\r\n--abcd\r\nContent-Disposition: form-data; name=\"url\"\r\n\r\nhttp://localhost:3000/alerting/list\r\n--abcd\r\nContent-Disposition: form-data; name=\"url_title\"\r\n\r\nShow alert rule\r\n--abcd\r\nContent-Disposition: form-data; name=\"message\"\r\n\r\n**Firing**\n\nValue: A=1\nLabels:\n - alertname = PushoverAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_PushoverAlert/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%3DPushoverAlert&matcher=grafana_folder%3Ddefault\n\r\n--abcd\r\nContent-Disposition: form-data; name=\"html\"\r\n\r\n1\r\n--abcd--\r\n",
+		"--abcd\r\nContent-Disposition: form-data; name=\"user\"\r\n\r\nmysecretkey\r\n--abcd\r\nContent-Disposition: form-data; name=\"token\"\r\n\r\nmysecrettoken\r\n--abcd\r\nContent-Disposition: form-data; name=\"priority\"\r\n\r\n0\r\n--abcd\r\nContent-Disposition: form-data; name=\"sound\"\r\n\r\n\r\n--abcd\r\nContent-Disposition: form-data; name=\"title\"\r\n\r\n[FIRING:1] PushoverAlert (default)\r\n--abcd\r\nContent-Disposition: form-data; name=\"url\"\r\n\r\nhttp://localhost:3000/alerting/list\r\n--abcd\r\nContent-Disposition: form-data; name=\"url_title\"\r\n\r\nShow alert rule\r\n--abcd\r\nContent-Disposition: form-data; name=\"message\"\r\n\r\n**Firing**\n\nValue: A=1\nLabels:\n - alertname = PushoverAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_PushoverAlert/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%3DPushoverAlert&matcher=grafana_folder%3Ddefault\r\n--abcd\r\nContent-Disposition: form-data; name=\"html\"\r\n\r\n1\r\n--abcd--\r\n",
 	},
 	"telegram_recv/bot6sh027hs034h": {
-		"--abcd\r\nContent-Disposition: form-data; name=\"chat_id\"\r\n\r\ntelegram_chat_id\r\n--abcd\r\nContent-Disposition: form-data; name=\"parse_mode\"\r\n\r\nhtml\r\n--abcd\r\nContent-Disposition: form-data; name=\"text\"\r\n\r\n**Firing**\n\nValue: A=1\nLabels:\n - alertname = TelegramAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_TelegramAlert/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%3DTelegramAlert&matcher=grafana_folder%3Ddefault\n\r\n--abcd--\r\n",
+		"--abcd\r\nContent-Disposition: form-data; name=\"chat_id\"\r\n\r\ntelegram_chat_id\r\n--abcd\r\nContent-Disposition: form-data; name=\"parse_mode\"\r\n\r\nHTML\r\n--abcd\r\nContent-Disposition: form-data; name=\"text\"\r\n\r\n**Firing**\n\nValue: A=1\nLabels:\n - alertname = TelegramAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_TelegramAlert/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%3DTelegramAlert&matcher=grafana_folder%3Ddefault\n\r\n--abcd--\r\n",
 	},
 	"googlechat_recv/googlechat_test": {
 		`{
@@ -2641,7 +2649,7 @@ var expNonEmailNotifications = map[string][]string{
 
 // expNotificationErrors maps a receiver name with its expected error string.
 var expNotificationErrors = map[string]string{
-	"slack_failed_recv": "request to Slack API failed with status code 500",
+	"slack_failed_recv": "failed to send Slack message: unexpected 5xx status code: 500",
 }
 
 // expInactiveReceivers is a set of receivers expected to be unused.

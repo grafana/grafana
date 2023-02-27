@@ -10,6 +10,9 @@
  * @alpha
  */
 export const Components = {
+  Breadcrumbs: {
+    breadcrumb: (title: string) => `data-testid ${title} breadcrumb`,
+  },
   TimePicker: {
     openButton: 'data-testid TimePicker Open Button',
     fromField: 'Time Range from field',
@@ -107,7 +110,7 @@ export const Components = {
       expand: 'Drawer expand',
       contract: 'Drawer contract',
       close: 'Drawer close',
-      rcContentWrapper: () => '.drawer-content-wrapper',
+      rcContentWrapper: () => '.rc-drawer-content-wrapper',
     },
   },
   PanelEditor: {
@@ -224,6 +227,9 @@ export const Components = {
       },
     },
     searchInput: 'search transformations',
+  },
+  NavToolbar: {
+    container: 'data-testid Nav toolbar',
   },
   PageToolbar: {
     container: () => '.page-toolbar',

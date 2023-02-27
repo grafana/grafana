@@ -51,5 +51,5 @@ var newAccountsService = func(pluginCtx backend.PluginContext, reqCtxFactory mod
 		return nil, err
 	}
 
-	return services.NewAccountsService(oamClient.OAMClientProvider), nil
+	return services.NewAccountsService(oamClient.OAMAPIProvider), nil
 }

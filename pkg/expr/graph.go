@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/expr/mathexp"
-
 	"gonum.org/v1/gonum/graph/simple"
 	"gonum.org/v1/gonum/graph/topo"
+
+	"github.com/grafana/grafana/pkg/expr/mathexp"
 )
 
 // NodeType is the type of a DPNode. Currently either a expression command or datasource query.
@@ -63,6 +63,10 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 // BuildPipeline builds a graph of the nodes, and returns the nodes in an
 // executable order.
 func (s *Service) buildPipeline(req *Request) (DataPipeline, error) {
+	if req != nil && len(req.Headers) == 0 {
+		req.Headers = map[string]string{}
+	}
+
 	graph, err := s.buildDependencyGraph(req)
 	if err != nil {
 		return nil, err
@@ -144,12 +148,11 @@ func (s *Service) buildGraph(req *Request) (*simple.DirectedGraph, error) {
 		}
 
 		rn := &rawNode{
-			Query:         rawQueryProp,
-			RefID:         query.RefID,
-			TimeRange:     query.TimeRange,
-			QueryType:     query.QueryType,
-			DataSource:    query.DataSource,
-			QueryEnricher: query.QueryEnricher,
+			Query:      rawQueryProp,
+			RefID:      query.RefID,
+			TimeRange:  query.TimeRange,
+			QueryType:  query.QueryType,
+			DataSource: query.DataSource,
 		}
 
 		var node Node

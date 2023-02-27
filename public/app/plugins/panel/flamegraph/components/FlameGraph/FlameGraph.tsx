@@ -17,6 +17,7 @@
 // TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 // THIS SOFTWARE.
 import { css } from '@emotion/css';
+import uFuzzy from '@leeoniya/ufuzzy';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useMeasure } from 'react-use';
 
@@ -107,6 +108,11 @@ const FlameGraph = ({
         theme: createTheme() /* theme does not matter for us here */,
       });
 
+      const ufuzzy = new uFuzzy({
+        intraMode: 0,
+        intraIns: 0,
+      });
+
       for (let levelIndex = 0; levelIndex < levels.length; levelIndex++) {
         const level = levels[levelIndex];
         // Get all the dimensions of the rectangles for the level. We do this by level instead of per rectangle, because
@@ -114,7 +120,7 @@ const FlameGraph = ({
         const dimensions = getRectDimensionsForLevel(level, levelIndex, totalTicks, rangeMin, pixelsPerTick, processor);
         for (const rect of dimensions) {
           // Render each rectangle based on the computed dimensions
-          renderRect(ctx, rect, totalTicks, rangeMin, rangeMax, search, levelIndex, topLevelIndex);
+          renderRect(ctx, rect, totalTicks, rangeMin, rangeMax, search, levelIndex, topLevelIndex, ufuzzy);
         }
       }
     },

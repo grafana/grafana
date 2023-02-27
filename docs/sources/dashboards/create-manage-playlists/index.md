@@ -20,8 +20,6 @@ Grafana automatically scales dashboards to any resolution, which makes them perf
 
 You can access the Playlist feature from Grafana's side menu, in the Dashboards submenu.
 
-{{< figure src="/static/img/docs/v50/playlist.png" max-width="25rem">}}
-
 ## Access, share, and control a playlist
 
 Use the information in this section to access existing playlists. Start and control the display of a playlist using one of the five available modes.
@@ -79,8 +77,6 @@ You can create a playlist to present dashboards in a sequence, with a set order 
 1. If needed, rearrange the order of the dashboard you have added using the up and down arrow icon.
 1. Optionally, remove a dashboard from the playlist by clicking the x icon beside dashboard.
 1. Click **Save**.
-
-{{< figure src="/static/img/docs/dashboards/create-playlist-8-2.png" max-width="25rem">}}
 
 ## Save a playlist
 
