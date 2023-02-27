@@ -187,8 +187,7 @@
     "barchartpanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/dataviz-squad",
-        "grafana/grafana-bi-squad"
+        "grafana/dataviz-squad"
       ],
       "currentVersion": [
         0,
