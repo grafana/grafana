@@ -111,8 +111,7 @@ export interface RuleWithLocation<T = RulerRuleDTO> {
   rule: T;
 }
 
-export interface CombinedRuleWithLocation {
-  rule: CombinedRule;
+export interface CombinedRuleWithLocation extends CombinedRule {
   dataSourceName: string;
   namespaceName: string;
   groupName: string;

@@ -134,16 +134,18 @@ function sortRules(sortOrder: SortOrder, rules: CombinedRuleWithLocation[]) {
     return sortBy(rules, (rule) => alertDef.alertStateSortScore[rule.state]);
   } else if (sortOrder === SortOrder.TimeAsc) {
     return sortBy(rules, (rule) => {
+      //at this point rules are all AlertingRule, this check is only needed for Typescript checks
       const alertingRule: AlertingRule | undefined = getAlertingRule(rule) ?? undefined;
       return getFirstActiveAt(alertingRule) || new Date();
     });
   } else if (sortOrder === SortOrder.TimeDesc) {
     return sortBy(rules, (rule) => {
+      //at this point rules are all AlertingRule, this check is only needed for Typescript checks
       const alertingRule: AlertingRule | undefined = getAlertingRule(rule) ?? undefined;
       return getFirstActiveAt(alertingRule) || new Date();
     }).reverse();
   }
-  const result = sortBy(rules, (rule) => rule.rule.name.toLowerCase());
+  const result = sortBy(rules, (rule) => rule.name.toLowerCase());
   if (sortOrder === SortOrder.AlphaDesc) {
     result.reverse();
   }
@@ -157,13 +159,13 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: Combined
   let filteredRules = [...rules];
   if (options.dashboardAlerts) {
     const dashboardUid = getDashboardSrv().getCurrent()?.uid;
-    filteredRules = filteredRules.filter(({ rule: { annotations = {} } }) =>
+    filteredRules = filteredRules.filter(({ annotations = {} }) =>
       Object.entries(annotations).some(([key, value]) => key === Annotation.dashboardUID && value === dashboardUid)
     );
   }
   if (options.alertName) {
     const replacedName = replaceVariables(options.alertName);
-    filteredRules = filteredRules.filter(({ rule: { name } }) =>
+    filteredRules = filteredRules.filter(({ name }) =>
       name.toLocaleLowerCase().includes(replacedName.toLocaleLowerCase())
     );
   }
@@ -190,8 +192,7 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: Combined
       const filteredAlerts = (alertingRule?.alerts ?? []).filter(({ labels }) => labelsMatchMatchers(labels, matchers));
       if (filteredAlerts.length) {
         const alertRule: AlertingRule | null = getAlertingRule(rule);
-        alertRule &&
-          rules.push({ ...rule, rule: { ...rule.rule, promRule: { ...alertRule, alerts: filteredAlerts } } });
+        alertRule && rules.push({ ...rule, promRule: { ...alertRule, alerts: filteredAlerts } });
       }
       return rules;
     }, []);

@@ -38,10 +38,12 @@ const UngroupedModeView: FC<UngroupedModeProps> = ({ rules, options }) => {
     <>
       <ol className={styles.alertRuleList}>
         {rulesToDisplay.map((ruleWithLocation, index) => {
-          const { rule, namespaceName, groupName, dataSourceName } = ruleWithLocation;
-          const alertingRule: AlertingRule | undefined = isAlertingRule(rule.promRule) ? rule.promRule : undefined;
+          const { namespaceName, groupName, dataSourceName } = ruleWithLocation;
+          const alertingRule: AlertingRule | undefined = isAlertingRule(ruleWithLocation.promRule)
+            ? ruleWithLocation.promRule
+            : undefined;
           const firstActiveAt = getFirstActiveAt(alertingRule);
-          const indentifier = fromCombinedRule(ruleWithLocation.dataSourceName, ruleWithLocation.rule);
+          const indentifier = fromCombinedRule(ruleWithLocation.dataSourceName, ruleWithLocation);
           const strIndentifier = stringifyIdentifier(indentifier);
 
           const href = createUrl(
@@ -50,7 +52,10 @@ const UngroupedModeView: FC<UngroupedModeProps> = ({ rules, options }) => {
           );
           if (alertingRule) {
             return (
-              <li className={styles.alertRuleItem} key={`alert-${namespaceName}-${groupName}-${rule.name}-${index}`}>
+              <li
+                className={styles.alertRuleItem}
+                key={`alert-${namespaceName}-${groupName}-${ruleWithLocation.name}-${index}`}
+              >
                 <div className={stateStyle.icon}>
                   <Icon
                     name={alertDef.getStateDisplayModel(alertingRule.state).iconClass}
@@ -61,8 +66,8 @@ const UngroupedModeView: FC<UngroupedModeProps> = ({ rules, options }) => {
                 <div className={styles.alertNameWrapper}>
                   <div className={styles.instanceDetails}>
                     <Stack direction="row" gap={1} wrap={false}>
-                      <div className={styles.alertName} title={rule.name}>
-                        {rule.name}
+                      <div className={styles.alertName} title={ruleWithLocation.name}>
+                        {ruleWithLocation.name}
                       </div>
                       <Spacer />
                       {href && (

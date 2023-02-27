@@ -116,14 +116,14 @@ export const flattenRules = (rules: RuleNamespace[]) => {
 };
 
 export const getAlertingRule = (rule: CombinedRuleWithLocation) =>
-  isAlertingRule(rule.rule.promRule) ? rule.rule.promRule : null;
+  isAlertingRule(rule.promRule) ? rule.promRule : null;
 
 export const flattenCombinedRules = (rules: CombinedRuleNamespace[]) => {
   return rules.reduce<CombinedRuleWithLocation[]>((acc, { rulesSource, name: namespaceName, groups }) => {
     groups.forEach(({ name: groupName, rules }) => {
       rules.forEach((rule) => {
-        if (isAlertingRule(rule.promRule!)) {
-          acc.push({ dataSourceName: getRulesSourceName(rulesSource), namespaceName, groupName, rule });
+        if (rule.promRule && isAlertingRule(rule.promRule)) {
+          acc.push({ dataSourceName: getRulesSourceName(rulesSource), namespaceName, groupName, ...rule });
         }
       });
     });
