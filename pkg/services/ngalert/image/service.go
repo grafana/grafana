@@ -165,6 +165,7 @@ func (s *ScreenshotImageService) NewImage(ctx context.Context, r *models.AlertRu
 		// Once deduplicated concurrent screenshots are then rate-limited
 		screenshot, err := s.limiter.Do(screenshotCtx, opts, s.screenshots.Take)
 		if err != nil {
+			logger.Warn("Failed to take screenshot", "error", err)
 			if errors.Is(err, dashboards.ErrDashboardNotFound) {
 				return nil, models.ErrNoDashboard
 			}
