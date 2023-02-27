@@ -259,13 +259,11 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
         </>
       )}
       {parsedQuery.queryType === VariableQueryType.LogGroups && (
-        <>
-          <VariableTextField
-            value={query.logGroupPrefix ?? ''}
-            onBlur={(value: string) => onQueryChange({ ...parsedQuery, logGroupPrefix: value })}
-            label="Log group prefix"
-          />
-        </>
+        <VariableTextField
+          value={query.logGroupPrefix ?? ''}
+          onBlur={(value: string) => onQueryChange({ ...parsedQuery, logGroupPrefix: value })}
+          label="Log group prefix"
+        />
       )}
     </>
   );
