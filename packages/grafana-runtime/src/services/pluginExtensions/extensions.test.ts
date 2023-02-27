@@ -59,7 +59,7 @@ describe('getPluginExtensions', () => {
       expect(extensions.length).toBe(1);
     });
 
-    it('should return an empty array when extensions can be found', () => {
+    it('should return an empty array when extensions cannot be found', () => {
       const { extensions } = getPluginExtensions({
         placement: 'plugins/not-installed-app/news',
       });
