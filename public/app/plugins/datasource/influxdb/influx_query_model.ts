@@ -1,4 +1,4 @@
-import { map, find, filter, indexOf } from 'lodash';
+import { filter, find, indexOf, map } from 'lodash';
 
 import { escapeRegex, ScopedVars } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
@@ -20,7 +20,9 @@ export default class InfluxQueryModel {
     this.templateSrv = templateSrv;
     this.scopedVars = scopedVars;
 
-    target.policy = target.policy || 'default';
+    // InfluxDB automatically generated an RP named autogen and set it as the DEFAULT RP for the database.
+    // https://docs.influxdata.com/influxdb/v1.8/concepts/glossary/#retention-policy-rp
+    target.policy = target.policy || 'autogen';
     target.resultFormat = target.resultFormat || 'time_series';
     target.orderByTime = target.orderByTime || 'ASC';
     target.tags = target.tags || [];
