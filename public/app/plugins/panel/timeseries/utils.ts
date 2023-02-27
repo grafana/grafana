@@ -128,11 +128,27 @@ export function prepareGraphableFields(
   }
 
   if (frames.length) {
+    setClassicPaletteIdxs(frames);
     return frames;
   }
 
   return null;
 }
+
+const setClassicPaletteIdxs = (frames: DataFrame[]) => {
+  let seriesIndex = 0;
+
+  frames.forEach((frame) => {
+    frame.fields.forEach((field) => {
+      if (field.type === FieldType.number) { // || FieldType.enum
+        field.state = {
+          ...field.state,
+          seriesIndex: seriesIndex++, // TODO: skip this for fields with custom renderers (e.g. Candlestick)?
+        };
+      }
+    })
+  });
+};
 
 export function getTimezones(timezones: string[] | undefined, defaultTimezone: string): string[] {
   if (!timezones || !timezones.length) {
