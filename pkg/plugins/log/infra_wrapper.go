@@ -2,58 +2,56 @@ package log
 
 import (
 	"fmt"
-
-	"github.com/grafana/grafana/pkg/infra/log"
 )
 
-var _ PrettyLogger = (*InfraLogWrapper)(nil)
+var _ PrettyLogger = (*prettyLogger)(nil)
 
-type InfraLogWrapper struct {
-	log log.Logger
+type prettyLogger struct {
+	log Logger
 }
 
-func NewPrettyLogger(name string) *InfraLogWrapper {
-	return &InfraLogWrapper{
-		log: log.New(name),
+func NewPrettyLogger(name string) *prettyLogger {
+	return &prettyLogger{
+		log: New(name),
 	}
 }
 
-func (l *InfraLogWrapper) Successf(format string, args ...interface{}) {
+func (l *prettyLogger) Successf(format string, args ...interface{}) {
 	l.log.Info(fmt.Sprintf(format, args...))
 }
 
-func (l *InfraLogWrapper) Failuref(format string, args ...interface{}) {
+func (l *prettyLogger) Failuref(format string, args ...interface{}) {
 	l.log.Error(fmt.Sprintf(format, args...))
 }
 
-func (l *InfraLogWrapper) Info(args ...interface{}) {
+func (l *prettyLogger) Info(args ...interface{}) {
 	l.log.Info(fmt.Sprint(args...))
 }
 
-func (l *InfraLogWrapper) Infof(format string, args ...interface{}) {
+func (l *prettyLogger) Infof(format string, args ...interface{}) {
 	l.log.Info(fmt.Sprintf(format, args...))
 }
 
-func (l *InfraLogWrapper) Debug(args ...interface{}) {
+func (l *prettyLogger) Debug(args ...interface{}) {
 	l.log.Debug(fmt.Sprint(args...))
 }
 
-func (l *InfraLogWrapper) Debugf(format string, args ...interface{}) {
+func (l *prettyLogger) Debugf(format string, args ...interface{}) {
 	l.log.Debug(fmt.Sprintf(format, args...))
 }
 
-func (l *InfraLogWrapper) Warn(args ...interface{}) {
+func (l *prettyLogger) Warn(args ...interface{}) {
 	l.log.Warn(fmt.Sprint(args...))
 }
 
-func (l *InfraLogWrapper) Warnf(format string, args ...interface{}) {
+func (l *prettyLogger) Warnf(format string, args ...interface{}) {
 	l.log.Warn(fmt.Sprintf(format, args...))
 }
 
-func (l *InfraLogWrapper) Error(args ...interface{}) {
+func (l *prettyLogger) Error(args ...interface{}) {
 	l.log.Error(fmt.Sprint(args...))
 }
 
-func (l *InfraLogWrapper) Errorf(format string, args ...interface{}) {
+func (l *prettyLogger) Errorf(format string, args ...interface{}) {
 	l.log.Error(fmt.Sprintf(format, args...))
 }

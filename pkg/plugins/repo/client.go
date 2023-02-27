@@ -46,7 +46,7 @@ func (c *Client) download(_ context.Context, pluginZipURL, checksum string, comp
 		}
 	}()
 
-	c.log.Debugf("Installing plugin from %s", pluginZipURL)
+	c.log.Debugf("Installing plugin from ze %s", pluginZipURL)
 
 	err = c.downloadFile(tmpFile, pluginZipURL, checksum, compatOpts)
 	if err != nil {
