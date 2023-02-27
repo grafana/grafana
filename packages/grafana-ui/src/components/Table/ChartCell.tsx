@@ -32,7 +32,7 @@ export const defaultChartCellConfig: GraphFieldConfig = {
   lineWidth: 1,
   fillOpacity: 17,
   gradientMode: GraphGradientMode.Hue,
-  pointSize: 1,
+  pointSize: 2,
   barAlignment: BarAlignment.Center,
   showPoints: VisibilityMode.Never,
 };

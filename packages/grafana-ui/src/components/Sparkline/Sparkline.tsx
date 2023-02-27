@@ -44,6 +44,7 @@ const defaultConfig: GraphFieldConfig = {
   drawStyle: GraphDrawStyle.Line,
   showPoints: VisibilityMode.Auto,
   axisPlacement: AxisPlacement.Hidden,
+  pointSize: 2,
 };
 
 /** @internal */

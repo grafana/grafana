@@ -34,10 +34,12 @@ export const ChartCellOptionsEditor = (props: TableCellEditorProps<TableChartCel
 
   const style = useStyles2(getStyles);
 
+  const values = { ...defaultChartCellConfig, ...cellOptions };
+
   return (
     <VerticalGroup>
       {registry.list(optionIds.map((id) => `custom.${id}`)).map((item) => {
-        if (item.showIf && !item.showIf({ ...defaultChartCellConfig, ...cellOptions })) {
+        if (item.showIf && !item.showIf(values)) {
           return null;
         }
         const Editor = item.editor;
@@ -48,7 +50,7 @@ export const ChartCellOptionsEditor = (props: TableCellEditorProps<TableChartCel
           <Field label={item.name} key={item.id} className={style.field}>
             <Editor
               onChange={(val) => onChange({ ...cellOptions, [path]: val })}
-              value={(isOptionKey(path, cellOptions) ? cellOptions[path] : undefined) ?? item.defaultValue}
+              value={(isOptionKey(path, values) ? values[path] : undefined) ?? item.defaultValue}
               item={item}
               context={{ data: [] }}
             />
