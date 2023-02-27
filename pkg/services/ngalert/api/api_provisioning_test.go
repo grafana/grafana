@@ -274,7 +274,7 @@ func TestProvisioningApi(t *testing.T) {
 				require.Equal(t, 201, response.Status())
 				created := deserializeRule(t, response.Body())
 				require.Equal(t, int64(3), created.OrgID)
-				require.Equal(t, definitions.ProvenanceNone, created.Provenance)
+				require.Equal(t, definitions.Provenance(models.ProvenanceNone), created.Provenance)
 			})
 
 			t.Run("PUT sets expected fields with no provenance", func(t *testing.T) {
@@ -293,7 +293,7 @@ func TestProvisioningApi(t *testing.T) {
 				require.Equal(t, 200, response.Status())
 				created := deserializeRule(t, response.Body())
 				require.Equal(t, int64(3), created.OrgID)
-				require.Equal(t, definitions.ProvenanceNone, created.Provenance)
+				require.Equal(t, definitions.Provenance(models.ProvenanceNone), created.Provenance)
 			})
 		})
 

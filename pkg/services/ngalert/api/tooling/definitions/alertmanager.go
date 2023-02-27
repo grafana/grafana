@@ -568,14 +568,6 @@ func (c *PostableUserConfig) UnmarshalYAML(value *yaml.Node) error {
 
 type Provenance string
 
-const (
-	// ProvenanceNone reflects the provenance when no provenance is stored
-	// for the requested object in the database.
-	ProvenanceNone Provenance = ""
-	ProvenanceAPI  Provenance = "api"
-	ProvenanceFile Provenance = "file"
-)
-
 // swagger:model
 type GettableUserConfig struct {
 	TemplateFiles           map[string]string         `yaml:"template_files" json:"template_files"`
