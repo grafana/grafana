@@ -24,7 +24,9 @@ export interface Props extends FieldProps {
 
 const SHOW_SUCCESS_DURATION = 2 * 1000;
 
-export const AutoSaveField = React.forwardRef<FieldProps, Props>((props) => {
+type GenericProps<T> = Omit<Props, 'children'> & { children: (onChange: (newValue: T) => void) => React.ReactElement };
+
+export function AutoSaveField<T = string>(props: GenericProps<T>) {
   const {
     invalid,
     loading,
@@ -32,6 +34,7 @@ export const AutoSaveField = React.forwardRef<FieldProps, Props>((props) => {
     saveErrorMessage = 'Error saving this value',
     error,
     children,
+    disabled,
     ...restProps
   } = props;
 
@@ -96,12 +99,18 @@ export const AutoSaveField = React.forwardRef<FieldProps, Props>((props) => {
         invalid={invalid || fieldState.showError}
         error={error || (fieldState.showError && saveErrorMessage)}
       >
-        {React.cloneElement(children, {
-          ref: inputRef,
-          onChange: (event: React.FormEvent<HTMLInputElement>) => {
-            lodashDebounce(event.currentTarget.value);
-          },
-        })}
+        <div ref={inputRef}>
+          {React.cloneElement(
+            children((newValue) => {
+              lodashDebounce(newValue);
+            }),
+            {
+              loading: loading || fieldState.isLoading,
+              invalid: invalid || fieldState.showError,
+              disabled,
+            }
+          )}
+        </div>
       </Field>
       {fieldState.showSuccess && (
         <InlineToast
@@ -115,6 +124,6 @@ export const AutoSaveField = React.forwardRef<FieldProps, Props>((props) => {
       )}
     </>
   );
-});
+}
 
 AutoSaveField.displayName = 'AutoSaveField';
