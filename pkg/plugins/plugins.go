@@ -3,6 +3,7 @@ package plugins
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -20,7 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var ErrFileNotExist = fmt.Errorf("file does not exist")
+var ErrFileNotExist = errors.New("file does not exist")
 
 type Plugin struct {
 	JSONData
@@ -88,14 +89,6 @@ func (p PluginDTO) IsApp() bool {
 
 func (p PluginDTO) IsCorePlugin() bool {
 	return p.Class == Core
-}
-
-func (p PluginDTO) IsExternalPlugin() bool {
-	return p.Class == External
-}
-
-func (p PluginDTO) IsSecretsManager() bool {
-	return p.JSONData.Type == SecretsManager
 }
 
 func (p PluginDTO) File(name string) (fs.File, error) {
@@ -403,23 +396,15 @@ func (p *Plugin) StaticRoute() *StaticRoute {
 }
 
 func (p *Plugin) IsRenderer() bool {
-	return p.Type == "renderer"
+	return p.Type == Renderer
 }
 
 func (p *Plugin) IsSecretsManager() bool {
-	return p.Type == "secretsmanager"
-}
-
-func (p *Plugin) IsDataSource() bool {
-	return p.Type == "datasource"
-}
-
-func (p *Plugin) IsPanel() bool {
-	return p.Type == "panel"
+	return p.Type == SecretsManager
 }
 
 func (p *Plugin) IsApp() bool {
-	return p.Type == "app"
+	return p.Type == App
 }
 
 func (p *Plugin) IsCorePlugin() bool {
