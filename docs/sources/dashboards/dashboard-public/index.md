@@ -62,7 +62,7 @@ If you are using Docker, use an environment variable to enable public dashboards
 - Click **Revoke public URL** to delete the public dashboard.
 - The link no longer works. You must create a new public URL as in [Make a dashboard public](#make-a-dashboard-public).
 
-#### Supported Datasources
+#### Supported datasources
 
 Public dashboards _should_ work with any datasource that has the properties `backend` and `alerting` both set to true in it's `package.json`. However, this cannot always be
 guaranteed because plugin developers can override this functionality. The following lists include data sources confirmed to work with public dashboards and data sources that should work but have not been confirmed as compatible.
