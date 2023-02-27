@@ -3,7 +3,6 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Dropdown, ToolbarButton, useStyles2 } from '@grafana/ui';
-import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { useSelector } from 'app/types';
 
@@ -16,7 +15,6 @@ import { SignInLink } from './TopBar/SignInLink';
 import { TopNavBarMenu } from './TopBar/TopNavBarMenu';
 import { TopSearchBarSection } from './TopBar/TopSearchBarSection';
 import { TopSearchBarCommandPaletteTrigger } from './TopSearchBarCommandPaletteTrigger';
-import { TopSearchBarInput } from './TopSearchBarInput';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
 
 export function TopSearchBar() {
@@ -25,12 +23,6 @@ export function TopSearchBar() {
 
   const helpNode = navIndex['help'];
   const profileNode = navIndex['profile'];
-
-  const search = config.featureToggles.topNavCommandPalette ? (
-    <TopSearchBarCommandPaletteTrigger />
-  ) : (
-    <TopSearchBarInput />
-  );
 
   return (
     <div className={styles.layout}>
@@ -41,7 +33,9 @@ export function TopSearchBar() {
         <OrganizationSwitcher />
       </TopSearchBarSection>
 
-      <TopSearchBarSection>{search}</TopSearchBarSection>
+      <TopSearchBarSection>
+        <TopSearchBarCommandPaletteTrigger />
+      </TopSearchBarSection>
 
       <TopSearchBarSection align="right">
         <QuickAdd />
