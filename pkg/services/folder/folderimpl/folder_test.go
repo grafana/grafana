@@ -12,6 +12,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -67,6 +69,7 @@ func TestIntegrationFolderService(t *testing.T) { //have to mock the result of n
 			store:                nestedFolderStore,
 			features:             features,
 			bus:                  bus.ProvideBus(tracing.InitializeTracerForTest()),
+			db:                   db,
 		}
 
 		t.Run("Given user has no permissions", func(t *testing.T) {
@@ -366,7 +369,7 @@ func TestNestedFolderService(t *testing.T) {
 
 			nestedFolderStore := NewFakeStore()
 
-			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures(), nil)
+			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures(), nil, dbtest.NewFakeDB())
 			_, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
 				OrgID:        orgID,
 				Title:        "myFolder",
@@ -378,7 +381,8 @@ func TestNestedFolderService(t *testing.T) {
 			require.False(t, nestedFolderStore.CreateCalled)
 		})
 
-		t.Run("When delete folder, no delete in folder table done", func(t *testing.T) {
+		// FIX THIS TEST
+		t.Run("When delete folder, no delete in folder table done", func(t *testing.T) { //
 			var actualCmd *dashboards.DeleteDashboardCommand
 			dashStore := &dashboards.FakeDashboardStore{}
 			dashStore.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
@@ -390,7 +394,7 @@ func TestNestedFolderService(t *testing.T) {
 
 			nestedFolderStore := NewFakeStore()
 
-			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures(), nil)
+			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures(), nil, dbtest.NewFakeDB())
 			err := folderSvc.Delete(context.Background(), &folder.DeleteFolderCommand{UID: "myFolder", OrgID: orgID, SignedInUser: usr})
 			require.NoError(t, err)
 			require.NotNil(t, actualCmd)
@@ -419,7 +423,7 @@ func TestNestedFolderService(t *testing.T) {
 
 			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
 				ExpectedEvaluate: true,
-			})
+			}, dbtest.NewFakeDB())
 			_, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
 				OrgID:        orgID,
 				Title:        "myFolder",
@@ -450,7 +454,7 @@ func TestNestedFolderService(t *testing.T) {
 
 			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
 				ExpectedEvaluate: true,
-			})
+			}, dbtest.NewFakeDB())
 			f, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
 				OrgID:        orgID,
 				Title:        "myFolder",
@@ -504,7 +508,7 @@ func TestNestedFolderService(t *testing.T) {
 
 			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
 				ExpectedEvaluate: true,
-			})
+			}, dbtest.NewFakeDB())
 			_, err := folderSvc.Create(context.Background(), &cmd)
 			require.Error(t, err, folder.ErrCircularReference)
 			// CreateFolder should not call the folder store's create method.
@@ -539,7 +543,7 @@ func TestNestedFolderService(t *testing.T) {
 			// the service return success as long as the legacy create succeeds
 			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
 				ExpectedEvaluate: true,
-			})
+			}, dbtest.NewFakeDB())
 			_, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
 				OrgID:        orgID,
 				Title:        "myFolder",
@@ -569,7 +573,7 @@ func TestNestedFolderService(t *testing.T) {
 
 			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
 				ExpectedEvaluate: true,
-			})
+			}, dbtest.NewFakeDB())
 			_, err := folderSvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "newFolder", OrgID: orgID, SignedInUser: usr})
 			require.Error(t, err, dashboards.ErrFolderAccessDenied)
 		})
@@ -590,7 +594,7 @@ func TestNestedFolderService(t *testing.T) {
 
 			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
 				ExpectedEvaluate: true,
-			})
+			}, dbtest.NewFakeDB())
 			_, err := folderSvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "newFolder", OrgID: orgID, SignedInUser: usr})
 			require.Error(t, err, dashboards.ErrFolderAccessDenied)
 		})
@@ -616,7 +620,7 @@ func TestNestedFolderService(t *testing.T) {
 
 			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
 				ExpectedEvaluate: true,
-			})
+			}, dbtest.NewFakeDB())
 			f, err := folderSvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "newFolder", OrgID: orgID, SignedInUser: usr})
 			require.NoError(t, err)
 			require.NotNil(t, f)
@@ -638,7 +642,7 @@ func TestNestedFolderService(t *testing.T) {
 
 			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
 				ExpectedEvaluate: true,
-			})
+			}, dbtest.NewFakeDB())
 			f, err := folderSvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "newFolder", OrgID: orgID, SignedInUser: usr})
 			require.Error(t, err, folder.ErrCircularReference)
 			require.Nil(t, f)
@@ -664,7 +668,7 @@ func TestNestedFolderService(t *testing.T) {
 
 			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
 				ExpectedEvaluate: true,
-			})
+			}, dbtest.NewFakeDB())
 			f, err := folderSvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "newFolder2", OrgID: orgID, SignedInUser: usr})
 			require.Error(t, err, folder.ErrMaximumDepthReached)
 			require.Nil(t, f)
@@ -686,12 +690,13 @@ func TestNestedFolderService(t *testing.T) {
 
 			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
 				ExpectedEvaluate: true,
-			})
+			}, dbtest.NewFakeDB())
 			f, err := folderSvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "newFolder2", OrgID: orgID, SignedInUser: usr})
 			require.Error(t, err, folder.ErrCircularReference)
 			require.Nil(t, f)
 		})
 
+		// FIX THIS TEST
 		t.Run("delete with success", func(t *testing.T) {
 			g := guardian.New
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
@@ -713,7 +718,7 @@ func TestNestedFolderService(t *testing.T) {
 
 			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
 				ExpectedEvaluate: true,
-			})
+			}, dbtest.NewFakeDB())
 			err := folderSvc.Delete(context.Background(), &folder.DeleteFolderCommand{UID: "myFolder", OrgID: orgID, SignedInUser: usr})
 			require.NoError(t, err)
 			require.NotNil(t, actualCmd)
@@ -752,7 +757,7 @@ func TestNestedFolderService(t *testing.T) {
 
 			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
 				ExpectedEvaluate: true,
-			})
+			}, dbtest.NewFakeDB())
 			_, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
 				Title:        "folder",
 				OrgID:        orgID,
@@ -795,7 +800,7 @@ func TestNestedFolderService(t *testing.T) {
 
 			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
 				ExpectedEvaluate: true,
-			})
+			}, dbtest.NewFakeDB())
 			_, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
 				Title:        "folder",
 				OrgID:        orgID,
@@ -824,7 +829,7 @@ func TestNestedFolderService(t *testing.T) {
 
 			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
 				ExpectedEvaluate: true,
-			})
+			}, dbtest.NewFakeDB())
 			_, err := folderSvc.Get(context.Background(), &folder.GetFolderQuery{
 				OrgID:        orgID,
 				ID:           &folder.GeneralFolder.ID,
@@ -835,7 +840,7 @@ func TestNestedFolderService(t *testing.T) {
 	})
 }
 
-func setup(t *testing.T, dashStore dashboards.Store, dashboardFolderStore folder.FolderStore, nestedFolderStore store, features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl) folder.Service {
+func setup(t *testing.T, dashStore dashboards.Store, dashboardFolderStore folder.FolderStore, nestedFolderStore store, features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl, db db.DB) folder.Service {
 	t.Helper()
 
 	// nothing enabled yet
@@ -849,5 +854,6 @@ func setup(t *testing.T, dashStore dashboards.Store, dashboardFolderStore folder
 		store:                nestedFolderStore,
 		features:             features,
 		accessControl:        ac,
+		db:                   db,
 	}
 }
