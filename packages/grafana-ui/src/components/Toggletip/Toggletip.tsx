@@ -94,7 +94,7 @@ export const Toggletip = React.memo(
                 </div>
               )}
               {closeButton && (
-                <div data-testid="toggletip-header-close" className="toggletip-header-close">
+                <div data-testid="toggletip-header-close" className={style.headerClose}>
                   <IconButton
                     aria-label="Close Toggletip"
                     name="times"
