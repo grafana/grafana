@@ -106,7 +106,7 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 			continue
 		}
 
-		alertmanagers, _, err := d.alertmanagersFromDatasources(cfg.OrgID)
+		alertmanagers, headers, err := d.alertmanagersFromDatasources(cfg.OrgID)
 		if err != nil {
 			d.logger.Error("Failed to get alertmanagers from datasources", "org", cfg.OrgID, "error", err)
 			continue
@@ -130,7 +130,7 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 		d.logger.Debug("Alertmanagers found in the configuration", "alertmanagers", redactedAMs)
 
 		// We have a running sender, check if we need to apply a new config.
-		amHash := asSHA256(alertmanagers)
+		amHash := asSHA256(append(alertmanagers, headersString(headers)))
 		if ok {
 			if d.externalAlertmanagersCfgHash[cfg.OrgID] == amHash {
 				d.logger.Debug("Sender configuration is the same as the one running, no-op", "org", cfg.OrgID, "alertmanagers", redactedAMs)
