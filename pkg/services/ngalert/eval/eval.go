@@ -12,6 +12,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -19,9 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
-
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 var logger = log.New("ngalert.eval")
@@ -163,9 +163,10 @@ type Result struct {
 	// Results contains the results of all queries, reduce and math expressions
 	Results map[string]data.Frames
 
-	// Values contains the RefID and value of reduce and math expressions.
-	// It does not contain values for classic conditions as the values
-	// in classic conditions do not have a RefID.
+	// Values contains the labels and values for all Threshold, Reduce and Math expressions,
+	// and all conditions of a Classic Condition that are firing. Threshold, Reduce and Math
+	// expressions are indexed by their Ref ID, while conditions in a Classic Condition are
+	// indexed by their Ref ID and the index of the condition. For example, B0, B1, etc.
 	Values map[string]NumberValueCapture
 
 	EvaluatedAt        time.Time
@@ -605,7 +606,7 @@ func (e *evaluatorImpl) Validate(ctx EvaluationContext, condition models.Conditi
 		return err
 	}
 	for _, query := range req.Queries {
-		if query.DataSource == nil || expr.IsDataSource(query.DataSource.Uid) {
+		if query.DataSource == nil || expr.IsDataSource(query.DataSource.UID) {
 			continue
 		}
 		p, found := e.pluginsStore.Plugin(ctx.Ctx, query.DataSource.Type)

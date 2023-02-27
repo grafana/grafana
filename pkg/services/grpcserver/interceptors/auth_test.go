@@ -4,6 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/metadata"
+
 	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -12,8 +15,6 @@ import (
 	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/stretchr/testify/require"
-	"google.golang.org/grpc/metadata"
 )
 
 func TestAuthenticator_Authenticate(t *testing.T) {
@@ -21,8 +22,8 @@ func TestAuthenticator_Authenticate(t *testing.T) {
 	serviceAccountId := int64(1)
 	t.Run("accepts service api key with admin role", func(t *testing.T) {
 		s := newFakeAPIKey(&apikey.APIKey{
-			Id:               1,
-			OrgId:            1,
+			ID:               1,
+			OrgID:            1,
 			Key:              "admin-api-key",
 			Name:             "Admin API Key",
 			ServiceAccountId: &serviceAccountId,
@@ -37,8 +38,8 @@ func TestAuthenticator_Authenticate(t *testing.T) {
 
 	t.Run("rejects non-admin role", func(t *testing.T) {
 		s := newFakeAPIKey(&apikey.APIKey{
-			Id:               1,
-			OrgId:            1,
+			ID:               1,
+			OrgID:            1,
 			Key:              "admin-api-key",
 			Name:             "Admin API Key",
 			ServiceAccountId: &serviceAccountId,
@@ -53,8 +54,8 @@ func TestAuthenticator_Authenticate(t *testing.T) {
 
 	t.Run("removes auth header from context", func(t *testing.T) {
 		s := newFakeAPIKey(&apikey.APIKey{
-			Id:               1,
-			OrgId:            1,
+			ID:               1,
+			OrgID:            1,
 			Key:              "admin-api-key",
 			Name:             "Admin API Key",
 			ServiceAccountId: &serviceAccountId,
@@ -75,8 +76,8 @@ func TestAuthenticator_Authenticate(t *testing.T) {
 
 	t.Run("sets SignInUser", func(t *testing.T) {
 		s := newFakeAPIKey(&apikey.APIKey{
-			Id:               1,
-			OrgId:            1,
+			ID:               1,
+			OrgID:            1,
 			Key:              "admin-api-key",
 			Name:             "Admin API Key",
 			ServiceAccountId: &serviceAccountId,
@@ -93,8 +94,8 @@ func TestAuthenticator_Authenticate(t *testing.T) {
 
 	t.Run("sets SignInUser permissions", func(t *testing.T) {
 		s := newFakeAPIKey(&apikey.APIKey{
-			Id:               1,
-			OrgId:            1,
+			ID:               1,
+			OrgID:            1,
 			Key:              "admin-api-key",
 			Name:             "Admin API Key",
 			ServiceAccountId: &serviceAccountId,

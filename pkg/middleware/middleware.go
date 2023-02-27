@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -21,26 +21,29 @@ var (
 	ReqOrgAdmin            = RoleAuth(org.RoleAdmin)
 )
 
-func HandleNoCacheHeader(ctx *models.ReqContext) {
+func HandleNoCacheHeader(ctx *contextmodel.ReqContext) {
 	ctx.SkipCache = ctx.Req.Header.Get("X-Grafana-NoCache") == "true"
 }
 
 func AddDefaultResponseHeaders(cfg *setting.Cfg) web.Handler {
+	t := web.NewTree()
+	t.Add("/api/datasources/uid/:uid/resources/*", nil)
+	t.Add("/api/datasources/:id/resources/*", nil)
 	return func(c *web.Context) {
-		c.Resp.Before(func(w web.ResponseWriter) {
-			// if response has already been written, skip.
+		c.Resp.Before(func(w web.ResponseWriter) { // if response has already been written, skip.
 			if w.Written() {
 				return
 			}
 
-			if !strings.HasPrefix(c.Req.URL.Path, "/api/datasources/proxy/") {
+			_, _, resourceURLMatch := t.Match(c.Req.URL.Path)
+			resourceCachable := resourceURLMatch && allowCacheControl(c.Resp)
+			if !strings.HasPrefix(c.Req.URL.Path, "/api/datasources/proxy/") && !resourceCachable {
 				addNoCacheHeaders(c.Resp)
 			}
 
 			if !cfg.AllowEmbedding {
 				addXFrameOptionsDenyHeader(w)
 			}
-
 			addSecurityHeaders(w, cfg)
 		})
 	}
@@ -94,4 +97,25 @@ func AddCustomResponseHeaders(cfg *setting.Cfg) web.Handler {
 			}
 		})
 	}
+}
+
+func allowCacheControl(rw web.ResponseWriter) bool {
+	ccHeaderValues := rw.Header().Values("Cache-Control")
+
+	if len(ccHeaderValues) == 0 {
+		return false
+	}
+
+	foundPrivate := false
+	foundPublic := false
+	for _, val := range ccHeaderValues {
+		if val == "private" {
+			foundPrivate = true
+		}
+		if val == "public" {
+			foundPublic = true
+		}
+	}
+
+	return foundPrivate && !foundPublic && rw.Header().Get("X-Grafana-Cache") != ""
 }

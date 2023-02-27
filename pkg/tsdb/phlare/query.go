@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
+	"github.com/grafana/grafana/pkg/tsdb/phlare/kinds/dataquery"
 	"github.com/xlab/treeprint"
 
 	googlev1 "github.com/grafana/phlare/api/gen/proto/go/google/v1"
@@ -21,21 +22,17 @@ import (
 
 type queryModel struct {
 	WithStreaming bool
-	ProfileTypeID string   `json:"profileTypeId"`
-	LabelSelector string   `json:"labelSelector"`
-	GroupBy       []string `json:"groupBy"`
+	dataquery.PhlareDataQuery
 }
 
 type dsJsonModel struct {
 	MinStep string `json:"minStep"`
 }
 
-// These constants need to match the ones in the frontend.
-const queryTypeProfile = "profile"
-
 const (
-	queryTypeMetrics = "metrics"
-	queryTypeBoth    = "both"
+	queryTypeProfile = string(dataquery.PhlareQueryTypeProfile)
+	queryTypeMetrics = string(dataquery.PhlareQueryTypeMetrics)
+	queryTypeBoth    = string(dataquery.PhlareQueryTypeBoth)
 )
 
 // query processes single Phlare query transforming the response to data.Frame packaged in DataResponse
@@ -66,7 +63,7 @@ func (d *PhlareDatasource) query(ctx context.Context, pCtx backend.PluginContext
 			}
 		}
 		req := connect.NewRequest(&querierv1.SelectSeriesRequest{
-			ProfileTypeID: qm.ProfileTypeID,
+			ProfileTypeID: qm.ProfileTypeId,
 			LabelSelector: qm.LabelSelector,
 			Start:         query.TimeRange.From.UnixMilli(),
 			End:           query.TimeRange.To.UnixMilli(),
@@ -82,7 +79,7 @@ func (d *PhlareDatasource) query(ctx context.Context, pCtx backend.PluginContext
 			return response
 		}
 		// add the frames to the response.
-		response.Frames = append(response.Frames, seriesToDataFrames(seriesResp, qm.ProfileTypeID)...)
+		response.Frames = append(response.Frames, seriesToDataFrames(seriesResp, qm.ProfileTypeId)...)
 	}
 
 	if query.QueryType == queryTypeProfile || query.QueryType == queryTypeBoth {
@@ -94,7 +91,7 @@ func (d *PhlareDatasource) query(ctx context.Context, pCtx backend.PluginContext
 			response.Error = err
 			return response
 		}
-		frame := responseToDataFrames(resp, qm.ProfileTypeID)
+		frame := responseToDataFrames(resp, qm.ProfileTypeId)
 		response.Frames = append(response.Frames, frame)
 
 		// If query called with streaming on then return a channel
@@ -116,7 +113,7 @@ func (d *PhlareDatasource) query(ctx context.Context, pCtx backend.PluginContext
 func makeRequest(qm queryModel, query backend.DataQuery) *connect.Request[querierv1.SelectMergeProfileRequest] {
 	return &connect.Request[querierv1.SelectMergeProfileRequest]{
 		Msg: &querierv1.SelectMergeProfileRequest{
-			ProfileTypeID: qm.ProfileTypeID,
+			ProfileTypeID: qm.ProfileTypeId,
 			LabelSelector: qm.LabelSelector,
 			Start:         query.TimeRange.From.UnixMilli(),
 			End:           query.TimeRange.To.UnixMilli(),

@@ -33,12 +33,12 @@ func parsePluginOrPanic(path string, pkgname string, rt *thema.Runtime) pfs.Pars
 func corePlugins(rt *thema.Runtime) []pfs.ParsedPlugin {
 	return []pfs.ParsedPlugin{
 		parsePluginOrPanic("public/app/plugins/datasource/alertmanager", "alertmanager", rt),
+		parsePluginOrPanic("public/app/plugins/datasource/azuremonitor", "grafana_azure_monitor_datasource", rt),
 		parsePluginOrPanic("public/app/plugins/datasource/cloud-monitoring", "stackdriver", rt),
 		parsePluginOrPanic("public/app/plugins/datasource/cloudwatch", "cloudwatch", rt),
 		parsePluginOrPanic("public/app/plugins/datasource/dashboard", "dashboard", rt),
 		parsePluginOrPanic("public/app/plugins/datasource/elasticsearch", "elasticsearch", rt),
 		parsePluginOrPanic("public/app/plugins/datasource/grafana", "grafana", rt),
-		parsePluginOrPanic("public/app/plugins/datasource/grafana-azure-monitor-datasource", "grafana_azure_monitor_datasource", rt),
 		parsePluginOrPanic("public/app/plugins/datasource/graphite", "graphite", rt),
 		parsePluginOrPanic("public/app/plugins/datasource/jaeger", "jaeger", rt),
 		parsePluginOrPanic("public/app/plugins/datasource/loki", "loki", rt),
@@ -71,6 +71,8 @@ func corePlugins(rt *thema.Runtime) []pfs.ParsedPlugin {
 		parsePluginOrPanic("public/app/plugins/panel/nodeGraph", "nodeGraph", rt),
 		parsePluginOrPanic("public/app/plugins/panel/piechart", "piechart", rt),
 		parsePluginOrPanic("public/app/plugins/panel/stat", "stat", rt),
+		parsePluginOrPanic("public/app/plugins/panel/state-timeline", "state_timeline", rt),
+		parsePluginOrPanic("public/app/plugins/panel/status-history", "status_history", rt),
 		parsePluginOrPanic("public/app/plugins/panel/table-old", "table_old", rt),
 		parsePluginOrPanic("public/app/plugins/panel/text", "text", rt),
 		parsePluginOrPanic("public/app/plugins/panel/traces", "traces", rt),

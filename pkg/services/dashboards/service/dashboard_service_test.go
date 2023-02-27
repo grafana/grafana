@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -24,7 +25,7 @@ func TestDashboardService(t *testing.T) {
 		fakeStore := dashboards.FakeDashboardStore{}
 		defer fakeStore.AssertExpectations(t)
 
-		folderStore := dashboards.NewFakeFolderStore(t)
+		folderStore := foldertest.NewFakeFolderStore(t)
 
 		service := &DashboardServiceImpl{
 			cfg:                setting.NewCfg(),

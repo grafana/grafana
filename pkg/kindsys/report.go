@@ -194,17 +194,14 @@ func buildKindStateReport() *KindStateReport {
 	for _, k := range b.All() {
 		seen[k.Props().Common().Name] = true
 		lin := k.Lineage()
-		switch k.Props().(type) {
-		case kindsys.CoreProperties:
-			links := buildCoreLinks(lin, k.Decl().Properties)
-			r.add(Kind{
-				SomeKindProperties:   k.Props(),
-				Category:             "core",
-				Links:                links,
-				GrafanaMaturityCount: grafanaMaturityAttrCount(lin.Latest().Underlying()),
-				CodeOwners:           findCodeOwners(of, links),
-			})
-		}
+		links := buildCoreLinks(lin, k.Def().Properties)
+		r.add(Kind{
+			SomeKindProperties:   k.Props(),
+			Category:             "core",
+			Links:                links,
+			GrafanaMaturityCount: grafanaMaturityAttrCount(lin.Latest().Underlying()),
+			CodeOwners:           findCodeOwners(of, links),
+		})
 	}
 
 	for _, kn := range plannedCoreKinds {
@@ -230,7 +227,7 @@ func buildKindStateReport() *KindStateReport {
 	for _, pp := range corelist.New(nil) {
 		for _, si := range all {
 			if ck, has := pp.ComposableKinds[si.Name()]; has {
-				links := buildComposableLinks(pp.Properties, ck.Decl().Properties)
+				links := buildComposableLinks(pp.Properties, ck.Def().Properties)
 				r.add(Kind{
 					SomeKindProperties:   ck.Props(),
 					Category:             "composable",
@@ -299,7 +296,6 @@ var irregularPluginNames = map[string]string{
 	"azuremonitor":          "grafana-azure-monitor-datasource",
 	"microsoftsqlserver":    "mssql",
 	"postgresql":            "postgres",
-	"testdatadb":            "testdata",
 }
 
 func buildComposableLinks(pp plugindef.PluginDef, cp kindsys.ComposableProperties) KindLinks {

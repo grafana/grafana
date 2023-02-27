@@ -3,7 +3,6 @@ package dashboards
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/models"
 	alertmodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -15,7 +14,7 @@ import (
 type DashboardService interface {
 	BuildSaveDashboardCommand(ctx context.Context, dto *SaveDashboardDTO, shouldValidateAlerts bool, validateProvisionedDashboard bool) (*SaveDashboardCommand, error)
 	DeleteDashboard(ctx context.Context, dashboardId int64, orgId int64) error
-	FindDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error)
+	FindDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error)
 	GetDashboard(ctx context.Context, query *GetDashboardQuery) (*Dashboard, error)
 	GetDashboardACLInfoList(ctx context.Context, query *GetDashboardACLInfoListQuery) ([]*DashboardACLInfoDTO, error)
 	GetDashboards(ctx context.Context, query *GetDashboardsQuery) ([]*Dashboard, error)
@@ -26,7 +25,7 @@ type DashboardService interface {
 	ImportDashboard(ctx context.Context, dto *SaveDashboardDTO) (*Dashboard, error)
 	MakeUserAdmin(ctx context.Context, orgID int64, userID, dashboardID int64, setViewAndEditPermissions bool) error
 	SaveDashboard(ctx context.Context, dto *SaveDashboardDTO, allowUiUpdate bool) (*Dashboard, error)
-	SearchDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) error
+	SearchDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) error
 	UpdateDashboardACL(ctx context.Context, uid int64, items []*DashboardACL) error
 	DeleteACLByUser(ctx context.Context, userID int64) error
 	CountDashboardsInFolder(ctx context.Context, query *CountDashboardsInFolderQuery) (int64, error)
@@ -57,7 +56,7 @@ type DashboardProvisioningService interface {
 type Store interface {
 	DeleteDashboard(ctx context.Context, cmd *DeleteDashboardCommand) error
 	DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *DeleteOrphanedProvisionedDashboardsCommand) error
-	FindDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error)
+	FindDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error)
 	GetDashboard(ctx context.Context, query *GetDashboardQuery) (*Dashboard, error)
 	GetDashboardACLInfoList(ctx context.Context, query *GetDashboardACLInfoListQuery) ([]*DashboardACLInfoDTO, error)
 	GetDashboardUIDByID(ctx context.Context, query *GetDashboardRefByIDQuery) (*DashboardRef, error)
@@ -84,16 +83,4 @@ type Store interface {
 	// CountDashboardsInFolder returns the number of dashboards associated with
 	// the given parent folder ID.
 	CountDashboardsInFolder(ctx context.Context, request *CountDashboardsInFolderRequest) (int64, error)
-}
-
-// FolderStore is a folder store.
-//
-//go:generate mockery --name FolderStore --structname FakeFolderStore --inpackage --filename folder_store_mock.go
-type FolderStore interface {
-	// GetFolderByTitle retrieves a folder by its title
-	GetFolderByTitle(ctx context.Context, orgID int64, title string) (*folder.Folder, error)
-	// GetFolderByUID retrieves a folder by its UID
-	GetFolderByUID(ctx context.Context, orgID int64, uid string) (*folder.Folder, error)
-	// GetFolderByID retrieves a folder by its ID
-	GetFolderByID(ctx context.Context, orgID int64, id int64) (*folder.Folder, error)
 }
