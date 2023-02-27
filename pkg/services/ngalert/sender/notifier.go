@@ -523,8 +523,8 @@ func (n *Manager) sendAll(alerts ...*Alert) bool {
 			ctx, cancel := context.WithTimeout(n.ctx, time.Duration(ams.cfg.Timeout))
 			defer cancel()
 
-			go func(client *http.Client, url string) {
-				if err := n.sendOne(ctx, client, url, payload); err != nil {
+			go func(client *http.Client, url string, headers map[string]string) {
+				if err := n.sendOne(ctx, client, url, payload, headers); err != nil {
 					level.Error(n.logger).Log("alertmanager", url, "count", len(alerts), "msg", "Error sending alert", "err", err)
 					n.metrics.errors.WithLabelValues(url).Inc()
 				} else {
@@ -534,7 +534,7 @@ func (n *Manager) sendAll(alerts ...*Alert) bool {
 				n.metrics.sent.WithLabelValues(url).Add(float64(len(alerts)))
 
 				wg.Done()
-			}(ams.client, am.url().String())
+			}(ams.client, am.url().String(), am.headers())
 		}
 
 		ams.mtx.RUnlock()
@@ -573,13 +573,16 @@ func labelsToOpenAPILabelSet(modelLabelSet labels.Labels) models.LabelSet {
 	return apiLabelSet
 }
 
-func (n *Manager) sendOne(ctx context.Context, c *http.Client, url string, b []byte) error {
+func (n *Manager) sendOne(ctx context.Context, c *http.Client, url string, b []byte, headers map[string]string) error {
 	req, err := http.NewRequest("POST", url, bytes.NewReader(b))
 	if err != nil {
 		return err
 	}
 	req.Header.Set("User-Agent", userAgent)
 	req.Header.Set("Content-Type", contentTypeJSON)
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
 	resp, err := n.opts.Do(ctx, c, req)
 	if err != nil {
 		return err
