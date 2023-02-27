@@ -3,7 +3,7 @@ import { ComponentType } from 'react';
 import { KeyValue } from './data';
 import { NavModel } from './navModel';
 import { PluginMeta, GrafanaPlugin, PluginIncludeType } from './plugin';
-import { extensionLinkConfigIsValid, PluginExtensionLink } from './pluginExtensions';
+import { extensionLinkConfigIsValid, type PluginExtensionCommand, type PluginExtensionLink } from './pluginExtensions';
 
 /**
  * @public
@@ -66,8 +66,19 @@ export type AppPluginExtensionLinkConfig<C extends object = object> = {
   configure?: AppConfigureExtension<AppPluginExtensionLink, C>;
 };
 
+export type AppPluginExtensionCommand = Pick<PluginExtensionCommand, 'description' | 'title'>;
+
+export type AppPluginExtensionCommandConfig<C extends object = object> = {
+  title: string;
+  description: string;
+  placement: string;
+  configure?: AppConfigureExtension<AppPluginExtensionCommand, C>;
+  handler: (context: C) => void;
+};
+
 export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppPluginMeta<T>> {
   private linkExtensions: AppPluginExtensionLinkConfig[] = [];
+  private commandExtensions: AppPluginExtensionCommandConfig[] = [];
 
   // Content under: /a/${plugin-id}/*
   root?: ComponentType<AppRootProps<T>>;
@@ -113,6 +124,10 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
     return this.linkExtensions;
   }
 
+  get extensionCommands(): AppPluginExtensionCommandConfig[] {
+    return this.commandExtensions;
+  }
+
   configureExtensionLink<C extends object>(config: AppPluginExtensionLinkConfig<C>) {
     const { path, description, title, placement } = config;
 
@@ -122,6 +137,11 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
     }
 
     this.linkExtensions.push(config as AppPluginExtensionLinkConfig);
+    return this;
+  }
+
+  configureExtensionCommand<C extends object>(config: AppPluginExtensionCommandConfig<C>) {
+    this.commandExtensions.push(config as AppPluginExtensionCommandConfig);
     return this;
   }
 }

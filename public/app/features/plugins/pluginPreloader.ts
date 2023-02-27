@@ -1,4 +1,4 @@
-import { AppPluginExtensionLinkConfig } from '@grafana/data';
+import type { AppPluginExtensionCommandConfig, AppPluginExtensionLinkConfig } from '@grafana/data';
 import type { AppPluginConfig } from '@grafana/runtime';
 
 import * as pluginLoader from './plugin_loader';
@@ -6,6 +6,7 @@ import * as pluginLoader from './plugin_loader';
 export type PluginPreloadResult = {
   pluginId: string;
   linkExtensions: AppPluginExtensionLinkConfig[];
+  commandExtensions: AppPluginExtensionCommandConfig[];
   error?: unknown;
 };
 
@@ -19,9 +20,9 @@ async function preload(config: AppPluginConfig): Promise<PluginPreloadResult> {
   try {
     const { plugin } = await pluginLoader.importPluginModule(path, version);
     const { linkExtensions = [] } = plugin;
-    return { pluginId, linkExtensions };
+    return { pluginId, linkExtensions, commandExtensions: [] };
   } catch (error) {
     console.error(`[Plugins] Failed to preload plugin: ${path} (version: ${version})`, error);
-    return { pluginId, linkExtensions: [], error };
+    return { pluginId, linkExtensions: [], commandExtensions: [], error };
   }
 }

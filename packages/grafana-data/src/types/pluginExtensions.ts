@@ -4,6 +4,7 @@
 
 export enum PluginExtensionTypes {
   link = 'link',
+  command = 'command',
 }
 
 export type PluginExtension = {
@@ -18,8 +19,17 @@ export type PluginExtensionLink = PluginExtension & {
   path: string;
 };
 
+export type PluginExtensionCommand = PluginExtension & {
+  type: PluginExtensionTypes.command;
+  emit: () => void;
+};
+
 export function isPluginExtensionLink(extension: PluginExtension): extension is PluginExtensionLink {
   return extension.type === PluginExtensionTypes.link && 'path' in extension;
+}
+
+export function isPluginExtensionCommand(extension: PluginExtension): extension is PluginExtensionCommand {
+  return extension.type === PluginExtensionTypes.command;
 }
 
 export function extensionLinkConfigIsValid(props: {

@@ -55,5 +55,7 @@ export {
   type PluginExtension,
   type PluginExtensionLink,
   isPluginExtensionLink,
+  type PluginExtensionCommand,
+  isPluginExtensionCommand,
   PluginExtensionTypes,
 } from './pluginExtensions';
