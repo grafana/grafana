@@ -7,16 +7,16 @@ import { Select, HorizontalGroup, Button } from '@grafana/ui';
 import { createErrorNotification } from '../../../../core/copy/appNotification';
 import { notifyApp } from '../../../../core/reducers/appNotification';
 import { dispatch } from '../../../../store/store';
-import { SearchFilter } from '../dataquery.gen';
+import { TraceqlFilter } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
 import { operators } from '../traceql/traceql';
 
 interface Props {
-  filter: SearchFilter;
+  filter: TraceqlFilter;
   datasource: TempoDatasource;
-  updateFilter: (f: SearchFilter) => void;
-  deleteFilter?: (f: SearchFilter) => void;
+  updateFilter: (f: TraceqlFilter) => void;
+  deleteFilter?: (f: TraceqlFilter) => void;
   setError: (error: FetchError) => void;
   isTagsLoading?: boolean;
   tags: string[];

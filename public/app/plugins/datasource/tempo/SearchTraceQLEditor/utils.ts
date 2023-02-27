@@ -1,13 +1,13 @@
-import { SearchFilter } from '../dataquery.gen';
+import { TraceqlFilter } from '../dataquery.gen';
 
-export const generateQueryFromFilters = (filters: SearchFilter[]) => {
+export const generateQueryFromFilters = (filters: TraceqlFilter[]) => {
   return `{${filters
     .filter((f) => f.tag && f.operator && f.value?.length)
     .map((f) => `${f.tag} ${f.operator} ${valueHelper(f)}`)
     .join(' && ')}}`;
 };
 
-const valueHelper = (f: SearchFilter) => {
+const valueHelper = (f: TraceqlFilter) => {
   if (Array.isArray(f.value) && f.value.length > 1) {
     return `"${f.value.join('|')}"`;
   }

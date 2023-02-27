@@ -8,7 +8,7 @@ import { Alert, HorizontalGroup, useStyles2, VerticalGroup } from '@grafana/ui';
 import { createErrorNotification } from '../../../../core/copy/appNotification';
 import { notifyApp } from '../../../../core/reducers/appNotification';
 import { dispatch } from '../../../../store/store';
-import { SearchFilter } from '../dataquery.gen';
+import { TraceqlFilter } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import { TempoQueryBuilderOptions } from '../traceql/TempoQueryBuilderOptions';
 import { TraceQLEditor } from '../traceql/TraceQLEditor';
@@ -36,7 +36,7 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
   const [isTagsLoading, setIsTagsLoading] = useState(true);
   const [traceQlQuery, setTraceQlQuery] = useState<string>('');
 
-  const updateFilter = (s: SearchFilter) => {
+  const updateFilter = (s: TraceqlFilter) => {
     const copy = { ...query };
     copy.filters ||= [];
     const indexOfFilter = copy.filters.findIndex((f) => f.id === s.id);
@@ -49,7 +49,7 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
     onChange(copy);
   };
 
-  const deleteFilter = (s: SearchFilter) => {
+  const deleteFilter = (s: TraceqlFilter) => {
     onChange({ ...query, filters: query.filters.filter((f) => f.id !== s.id) });
   };
 

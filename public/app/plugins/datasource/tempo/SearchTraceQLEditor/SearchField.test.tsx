@@ -4,7 +4,7 @@ import React from 'react';
 
 import { FetchError } from '@grafana/runtime';
 
-import { SearchFilter } from '../dataquery.gen';
+import { TraceqlFilter } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 
 import SearchField from './SearchField';
@@ -52,7 +52,7 @@ describe('SearchField', () => {
     const updateFilter = jest.fn((val) => {
       return val;
     });
-    const filter: SearchFilter = { id: 'test1', type: 'static', valueType: 'string', tag: 'test-tag' };
+    const filter: TraceqlFilter = { id: 'test1', type: 'static', valueType: 'string', tag: 'test-tag' };
     const { container } = renderSearchField(updateFilter, filter);
 
     expect(container.querySelector(`input[aria-label="select-test1-tag"]`)).not.toBeInTheDocument();
@@ -64,7 +64,7 @@ describe('SearchField', () => {
     const updateFilter = jest.fn((val) => {
       return val;
     });
-    const filter: SearchFilter = { id: 'test1', operator: '=', type: 'static', valueType: 'string', tag: 'test-tag' };
+    const filter: TraceqlFilter = { id: 'test1', operator: '=', type: 'static', valueType: 'string', tag: 'test-tag' };
     const { container } = renderSearchField(updateFilter, filter);
 
     const select = await container.querySelector(`input[aria-label="select-test1-operator"]`);
@@ -84,7 +84,7 @@ describe('SearchField', () => {
     const updateFilter = jest.fn((val) => {
       return val;
     });
-    const filter: SearchFilter = {
+    const filter: TraceqlFilter = {
       id: 'test1',
       value: 'old',
       type: 'static',
@@ -122,7 +122,7 @@ describe('SearchField', () => {
     const updateFilter = jest.fn((val) => {
       return val;
     });
-    const filter: SearchFilter = {
+    const filter: TraceqlFilter = {
       id: 'test1',
       type: 'dynamic',
       valueType: 'string',
@@ -155,7 +155,7 @@ describe('SearchField', () => {
   });
 });
 
-const renderSearchField = (updateFilter: (f: SearchFilter) => void, filter: SearchFilter, tags?: string[]) => {
+const renderSearchField = (updateFilter: (f: TraceqlFilter) => void, filter: TraceqlFilter, tags?: string[]) => {
   return render(
     <SearchField
       datasource={{} as TempoDatasource}

@@ -2,11 +2,11 @@ import React from 'react';
 
 import { Select, HorizontalGroup, Input } from '@grafana/ui';
 
-import { SearchFilter } from '../dataquery.gen';
+import { TraceqlFilter } from '../dataquery.gen';
 
 interface Props {
-  filter: SearchFilter;
-  updateFilter: (f: SearchFilter) => void;
+  filter: TraceqlFilter;
+  updateFilter: (f: TraceqlFilter) => void;
   isTagsLoading?: boolean;
   operators: string[];
 }

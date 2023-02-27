@@ -4,15 +4,15 @@ import { v4 as uuidv4 } from 'uuid';
 import { FetchError } from '@grafana/runtime';
 import { HorizontalGroup, VerticalGroup, Button } from '@grafana/ui';
 
-import { SearchFilter } from '../dataquery.gen';
+import { TraceqlFilter } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 
 import SearchField from './SearchField';
 
 interface Props {
-  updateFilter: (f: SearchFilter) => void;
-  deleteFilter: (f: SearchFilter) => void;
-  filters: SearchFilter[];
+  updateFilter: (f: TraceqlFilter) => void;
+  deleteFilter: (f: TraceqlFilter) => void;
+  filters: TraceqlFilter[];
   datasource: TempoDatasource;
   setError: (error: FetchError) => void;
   tags: string[];

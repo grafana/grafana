@@ -9,56 +9,40 @@
 
 package dataquery
 
-// Defines values for SearchFilterType.
+// Defines values for TempoQueryFiltersType.
 const (
-	SearchFilterTypeDynamic SearchFilterType = "dynamic"
-
-	SearchFilterTypeStatic SearchFilterType = "static"
-)
-
-// Defines values for FiltersType.
-const (
-	FiltersTypeDynamic FiltersType = "dynamic"
-
-	FiltersTypeStatic FiltersType = "static"
+	TempoQueryFiltersTypeDynamic TempoQueryFiltersType = "dynamic"
+	TempoQueryFiltersTypeStatic  TempoQueryFiltersType = "static"
 )
 
 // Defines values for TempoQueryType.
 const (
-	TempoQueryTypeClear        TempoQueryType = "clear"
-	TempoQueryTypeNativeSearch TempoQueryType = "nativeSearch"
-	TempoQueryTypeSearch       TempoQueryType = "search"
-	TempoQueryTypeServiceMap   TempoQueryType = "serviceMap"
-	TempoQueryTypeTraceql      TempoQueryType = "traceql"
-	TempoQueryTypeUpload       TempoQueryType = "upload"
+	TempoQueryTypeClear         TempoQueryType = "clear"
+	TempoQueryTypeNativeSearch  TempoQueryType = "nativeSearch"
+	TempoQueryTypeSearch        TempoQueryType = "search"
+	TempoQueryTypeServiceMap    TempoQueryType = "serviceMap"
+	TempoQueryTypeTraceql       TempoQueryType = "traceql"
+	TempoQueryTypeTraceqlSearch TempoQueryType = "traceqlSearch"
+	TempoQueryTypeUpload        TempoQueryType = "upload"
 )
 
-// SearchFilter defines model for SearchFilter.
-type SearchFilter struct {
-	// Uniquely identify the filter, will not be used in the query generation
-	Id string `json:"id"`
+// Defines values for TraceqlFilterType.
+const (
+	TraceqlFilterTypeDynamic TraceqlFilterType = "dynamic"
+	TraceqlFilterTypeStatic  TraceqlFilterType = "static"
+)
 
-	// The operator that connects the tag to the value, for example: =, >, !=, =~
-	Operator *string `json:"operator,omitempty"`
-
-	// The tag for the search filter, for example: .http.status_code, .service.name, status
-	Tag *string `json:"tag,omitempty"`
-
-	// The type of the filter, can either be static (pre defined in the UI) or dynamic
-	Type SearchFilterType `json:"type"`
-
-	// The value for the search filter
-	Value *interface{} `json:"value,omitempty"`
-
-	// The type of the value, used for example to check whether we need to wrap the value in quotes when generating the query
-	ValueType *string `json:"valueType,omitempty"`
-}
-
-// The type of the filter, can either be static (pre defined in the UI) or dynamic
-type SearchFilterType string
+// Defines values for TraceqlSearchFilterType.
+const (
+	TraceqlSearchFilterTypeDynamic TraceqlSearchFilterType = "dynamic"
+	TraceqlSearchFilterTypeStatic  TraceqlSearchFilterType = "static"
+)
 
 // TempoDataQuery defines model for TempoDataQuery.
-type TempoDataQuery struct {
+type TempoDataQuery = map[string]interface{}
+
+// TempoQuery defines model for TempoQuery.
+type TempoQuery struct {
 	// For mixed data sources the selected datasource is on the query level.
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
@@ -75,7 +59,7 @@ type TempoDataQuery struct {
 		Tag *string `json:"tag,omitempty"`
 
 		// The type of the filter, can either be static (pre defined in the UI) or dynamic
-		Type FiltersType `json:"type"`
+		Type TempoQueryFiltersType `json:"type"`
 
 		// The value for the search filter
 		Value *interface{} `json:"value,omitempty"`
@@ -122,5 +106,35 @@ type TempoDataQuery struct {
 	SpanName *string `json:"spanName,omitempty"`
 }
 
+// The type of the filter, can either be static (pre defined in the UI) or dynamic
+type TempoQueryFiltersType string
+
 // TempoQueryType search = Loki search, nativeSearch = Tempo search for backwards compatibility
 type TempoQueryType string
+
+// TraceqlFilter defines model for TraceqlFilter.
+type TraceqlFilter struct {
+	// Uniquely identify the filter, will not be used in the query generation
+	Id string `json:"id"`
+
+	// The operator that connects the tag to the value, for example: =, >, !=, =~
+	Operator *string `json:"operator,omitempty"`
+
+	// The tag for the search filter, for example: .http.status_code, .service.name, status
+	Tag *string `json:"tag,omitempty"`
+
+	// The type of the filter, can either be static (pre defined in the UI) or dynamic
+	Type TraceqlFilterType `json:"type"`
+
+	// The value for the search filter
+	Value *interface{} `json:"value,omitempty"`
+
+	// The type of the value, used for example to check whether we need to wrap the value in quotes when generating the query
+	ValueType *string `json:"valueType,omitempty"`
+}
+
+// The type of the filter, can either be static (pre defined in the UI) or dynamic
+type TraceqlFilterType string
+
+// TraceqlSearchFilterType static fields are pre-set in the UI, dynamic fields are added by the user
+type TraceqlSearchFilterType string
