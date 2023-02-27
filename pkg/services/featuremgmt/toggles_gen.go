@@ -272,6 +272,6 @@ const (
 	FlagPrometheusMetricEncyclopedia = "prometheusMetricEncyclopedia"
 
 	// FlagTimeSeriesTable
-	// Enable time series table transformer &amp; area chart cell type
+	// Enable time series table transformer &amp; chart cell type
 	FlagTimeSeriesTable = "timeSeriesTable"
 )
