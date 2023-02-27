@@ -55,8 +55,9 @@ type Plugin struct {
 type PluginDTO struct {
 	JSONData
 
-	logger    log.Logger
-	pluginDir string
+	logger            log.Logger
+	pluginDir         string
+	supportsStreaming bool
 
 	Class Class
 
@@ -74,13 +75,10 @@ type PluginDTO struct {
 	// SystemJS fields
 	Module  string
 	BaseURL string
-
-	// temporary
-	backend.StreamHandler
 }
 
 func (p PluginDTO) SupportsStreaming() bool {
-	return p.StreamHandler != nil
+	return p.supportsStreaming
 }
 
 func (p PluginDTO) IsApp() bool {
@@ -367,23 +365,21 @@ type PluginClient interface {
 }
 
 func (p *Plugin) ToDTO() PluginDTO {
-	c, _ := p.Client()
-
 	return PluginDTO{
-		logger:          p.Logger(),
-		pluginDir:       p.PluginDir,
-		JSONData:        p.JSONData,
-		Class:           p.Class,
-		IncludedInAppID: p.IncludedInAppID,
-		DefaultNavURL:   p.DefaultNavURL,
-		Pinned:          p.Pinned,
-		Signature:       p.Signature,
-		SignatureType:   p.SignatureType,
-		SignatureOrg:    p.SignatureOrg,
-		SignatureError:  p.SignatureError,
-		Module:          p.Module,
-		BaseURL:         p.BaseURL,
-		StreamHandler:   c,
+		logger:            p.Logger(),
+		pluginDir:         p.PluginDir,
+		JSONData:          p.JSONData,
+		Class:             p.Class,
+		IncludedInAppID:   p.IncludedInAppID,
+		DefaultNavURL:     p.DefaultNavURL,
+		Pinned:            p.Pinned,
+		Signature:         p.Signature,
+		SignatureType:     p.SignatureType,
+		SignatureOrg:      p.SignatureOrg,
+		SignatureError:    p.SignatureError,
+		Module:            p.Module,
+		BaseURL:           p.BaseURL,
+		supportsStreaming: p.client != nil && p.client.(backend.StreamHandler) != nil,
 	}
 }
 
