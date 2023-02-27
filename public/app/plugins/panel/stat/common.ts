@@ -7,7 +7,9 @@ import {
   PanelOptionsEditorBuilder,
   ReducerID,
   standardEditorsRegistry,
+  SelectableValue,
 } from '@grafana/data';
+import { getOverwriteSymbols } from '@grafana/data/src/valueFormats/categories';
 import { SingleStatBaseOptions, VizOrientation } from '@grafana/schema';
 
 export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
@@ -105,5 +107,12 @@ export function addOrientationOption<T extends SingleStatBaseOptions>(
       ],
     },
     defaultValue: VizOrientation.Auto,
+  });
+}
+
+export function getSymbolsToPrepend(): SelectableValue[] {
+  return getOverwriteSymbols().formats.map((overrideSymbol) => {
+    const { id, name } = overrideSymbol;
+    return { value: id, label: name };
   });
 }

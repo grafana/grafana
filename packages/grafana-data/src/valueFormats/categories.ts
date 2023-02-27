@@ -4,8 +4,8 @@ import {
   toHex0x,
   toPercent,
   toPercentUnit,
-  toIncreasingPercent,
-  toDecreasingPercent,
+  // toIncreasingPercent,
+  // toDecreasingPercent,
 } from './arithmeticFormatters';
 import {
   dateTimeAsIso,
@@ -440,22 +440,20 @@ export const getCategories = (): ValueFormatCategory[] => [
   },
 ];
 
-export const getOverwriteSymbols = (): ValueFormatCategory[] => {
-  return [
-    {
-      name: 'Overwrite Symbols',
-      formats: [
-        // { name: 'Percent Increase (\u2191_%)', id: 'percentincrease', fn: toIncreasingPercent },
-        // { name: 'Percent Decrease (\u2193_%)', id: 'percentdecrease', fn: toDecreasingPercent },
-        { name: 'Less than (<_)', id: 'lessThan', fn: addBIPrefix('lessThan') },
-        { name: 'Greater than (>_)', id: 'greaterThan', fn: addBIPrefix('greaterThan') },
-        { name: 'Approximately (~_)', id: 'approximately', fn: addBIPrefix('approximately') },
-        { name: 'Fiscal quarter (FQ_)', id: 'fiscalQuarter', fn: addBIPrefix('fiscalQuarter') },
-        { name: 'Quarter (Qtr_)', id: 'quarter', fn: addBIPrefix('quarter') },
-        { name: 'Fiscal year (FY_)', id: 'fiscalYear', fn: addBIPrefix('fiscalYear') },
-        { name: 'Delta (\u0394_)', id: 'delta', fn: addBIPrefix('delta') },
-        { name: 'Mean (\u00B5_)', id: 'mean', fn: addBIPrefix('mean') },
-      ],
-    },
-  ];
+export const getOverwriteSymbols = (): ValueFormatCategory => {
+  return {
+    name: 'Overwrite Symbols',
+    formats: [
+      // { name: 'Percent Increase (\u2191_%)', id: 'percentincrease', fn: toIncreasingPercent },
+      // { name: 'Percent Decrease (\u2193_%)', id: 'percentdecrease', fn: toDecreasingPercent },
+      { name: 'Less than (<)', id: 'lessThan', fn: addBIPrefix('lessThan') },
+      { name: 'Greater than (>)', id: 'greaterThan', fn: addBIPrefix('greaterThan') },
+      { name: 'Approximately (~)', id: 'approximately', fn: addBIPrefix('approximately') },
+      { name: 'Fiscal quarter (FQ)', id: 'fiscalQuarter', fn: addBIPrefix('fiscalQuarter') },
+      { name: 'Quarter (Qtr)', id: 'quarter', fn: addBIPrefix('quarter') },
+      { name: 'Fiscal year (FY)', id: 'fiscalYear', fn: addBIPrefix('fiscalYear') },
+      { name: 'Delta (\u0394)', id: 'delta', fn: addBIPrefix('delta') },
+      { name: 'Mean (\u00B5)', id: 'mean', fn: addBIPrefix('mean') },
+    ],
+  };
 };

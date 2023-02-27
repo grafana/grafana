@@ -1,34 +1,21 @@
 import { PanelPlugin } from '@grafana/data';
-import { BigValueColorMode, BigValueGraphMode, BigValueJustifyMode, BigValueTextMode } from '@grafana/schema';
+import {
+  BigValueColorMode,
+  BigValueGraphMode,
+  BigValueJustifyMode,
+  BigValueTextMode,
+  // BigValueSymbolOverwriteMode,
+} from '@grafana/schema';
 import { commonOptionsBuilder, sharedSingleStatMigrationHandler } from '@grafana/ui';
 
 import { statPanelChangedHandler } from './StatMigrations';
 import { StatPanel } from './StatPanel';
-import { addStandardDataReduceOptions, addOrientationOption } from './common';
+import { addStandardDataReduceOptions, addOrientationOption, getSymbolsToPrepend } from './common';
 import { defaultPanelOptions, PanelOptions } from './panelcfg.gen';
 import { StatSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<PanelOptions>(StatPanel)
-  .useFieldConfig({
-    useCustomConfig: (builder) => {
-      builder.addSelect({
-        path: 'unitFormattingOverride',
-        name: 'Unit formatting override',
-        description: 'Prepend the standard unit formats with a number of options',
-        category: ['Unit formatting override'],
-        settings: {
-          options: [
-            { value: BigValueTextMode.Auto, label: 'Auto' },
-            { value: BigValueTextMode.Value, label: 'Value' },
-            { value: BigValueTextMode.ValueAndName, label: 'Value and name' },
-            { value: BigValueTextMode.Name, label: 'Name' },
-            { value: BigValueTextMode.None, label: 'None' },
-          ],
-        },
-        defaultValue: defaultPanelOptions.textMode,
-      });
-    },
-  })
+  .useFieldConfig()
   .setPanelOptions((builder) => {
     const mainCategory = ['Stat styles'];
 
@@ -92,6 +79,17 @@ export const plugin = new PanelPlugin<PanelOptions>(StatPanel)
           ],
         },
       });
+
+    builder.addSelect({
+      path: 'prependUnit',
+      name: 'Prepend unit',
+      description: 'Prepend a standard unit along with standard formatting options',
+      category: ['Prepend unit'],
+      settings: {
+        options: getSymbolsToPrepend(),
+      },
+      defaultValue: '',
+    });
   })
   .setNoPadding()
   .setPanelChangeHandler(statPanelChangedHandler)

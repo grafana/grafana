@@ -485,6 +485,15 @@ export enum BigValueTextMode {
 }
 
 /**
+ * TODO docs
+ */
+export enum BigValueSymbolOverwriteMode {
+  Less = 'lessThan',
+  // "Greater Than" = 'greaterThan',
+  // "Approximately" = 'approximately',
+}
+
+/**
  * TODO -- should not be table specific!
  * TODO docs
  */
