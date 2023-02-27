@@ -55,9 +55,9 @@ describe('SearchField', () => {
     const filter: TraceqlFilter = { id: 'test1', type: 'static', valueType: 'string', tag: 'test-tag' };
     const { container } = renderSearchField(updateFilter, filter);
 
-    expect(container.querySelector(`input[aria-label="select-test1-tag"]`)).not.toBeInTheDocument();
-    expect(container.querySelector(`input[aria-label="select-test1-operator"]`)).toBeInTheDocument();
-    expect(container.querySelector(`input[aria-label="select-test1-value"]`)).toBeInTheDocument();
+    expect(container.querySelector(`input[aria-label="select test1 tag"]`)).not.toBeInTheDocument();
+    expect(container.querySelector(`input[aria-label="select test1 operator"]`)).toBeInTheDocument();
+    expect(container.querySelector(`input[aria-label="select test1 value"]`)).toBeInTheDocument();
   });
 
   it('should update operator when new value is selected in operator input', async () => {
@@ -67,7 +67,7 @@ describe('SearchField', () => {
     const filter: TraceqlFilter = { id: 'test1', operator: '=', type: 'static', valueType: 'string', tag: 'test-tag' };
     const { container } = renderSearchField(updateFilter, filter);
 
-    const select = await container.querySelector(`input[aria-label="select-test1-operator"]`);
+    const select = await container.querySelector(`input[aria-label="select test1 operator"]`);
     expect(select).not.toBeNull();
     expect(select).toBeInTheDocument();
     if (select) {
@@ -93,7 +93,7 @@ describe('SearchField', () => {
     };
     const { container } = renderSearchField(updateFilter, filter);
 
-    const select = await container.querySelector(`input[aria-label="select-test1-value"]`);
+    const select = await container.querySelector(`input[aria-label="select test1 value"]`);
     expect(select).not.toBeNull();
     expect(select).toBeInTheDocument();
     if (select) {
@@ -129,7 +129,7 @@ describe('SearchField', () => {
     };
     const { container } = renderSearchField(updateFilter, filter, ['tag1', 'tag22', 'tag33']);
 
-    const select = await container.querySelector(`input[aria-label="select-test1-tag"]`);
+    const select = await container.querySelector(`input[aria-label="select test1 tag"]`);
     expect(select).not.toBeNull();
     expect(select).toBeInTheDocument();
     if (select) {
