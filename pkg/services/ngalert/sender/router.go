@@ -106,7 +106,7 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 			continue
 		}
 
-		alertmanagers, err := d.alertmanagersFromDatasources(cfg.OrgID)
+		alertmanagers, _, err := d.alertmanagersFromDatasources(cfg.OrgID)
 		if err != nil {
 			d.logger.Error("Failed to get alertmanagers from datasources", "org", cfg.OrgID, "error", err)
 			continue
@@ -237,8 +237,11 @@ func asSHA256(strings []string) string {
 	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
-func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]string, error) {
-	var alertmanagers []string
+func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]string, map[string]map[string]string, error) {
+	var (
+		alertmanagers []string
+		headers = map[string]map[string]string{}
+	)
 	// We might have alertmanager datasources that are acting as external
 	// alertmanager, let's fetch them.
 	query := &datasources.GetDataSourcesByTypeQuery{
@@ -249,7 +252,7 @@ func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]string, erro
 	defer cancel()
 	dataSources, err := d.datasourceService.GetDataSourcesByType(ctx, query)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch datasources for org: %w", err)
+		return nil, nil, fmt.Errorf("failed to fetch datasources for org: %w", err)
 	}
 	for _, ds := range dataSources {
 		if !ds.JsonData.Get(definitions.HandleGrafanaManagedAlerts).MustBool(false) {
@@ -263,9 +266,39 @@ func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]string, erro
 				"error", err)
 			continue
 		}
+		m, err := ds.JsonData.Map()
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to fetch headers for datasource: %w", err)
+		}
+
+		const headerName = "httpHeaderName"
+
+		for k, v := range m {
+			if !strings.HasPrefix(k, headerName) {
+				continue
+			}
+			keyName := v.(string)
+			// The header field names are saved as "httpHeaderName1", "httpHeaderName2" etc.
+			// We need to extract the number to create the right key that will enable us the
+			// extract the coresponding value in the secure json value, as it uses the same index
+			// but a different name i.e. "httpHeaderValue1".
+			index := strings.TrimLeft(k, headerName)
+			val, ok := ds.SecureJsonData["httpHeaderValue"+index]
+			if !ok {
+				return nil, nil, fmt.Errorf("failed to find the value for the declared header field %s", k)
+			}
+			decVal, err := d.secretService.Decrypt(ctx, val)
+			if err != nil {
+				return nil, nil, fmt.Errorf("failed to decrypt the value for the declared header field %s: %w", k, err)
+			}
+			if headers[ds.UID] == nil {
+				headers[ds.UID] = map[string]string{}
+			}
+			headers[ds.UID][keyName] = string(decVal)
+		}
 		alertmanagers = append(alertmanagers, amURL)
 	}
-	return alertmanagers, nil
+	return alertmanagers, headers, nil
 }
 
 func (d *AlertsRouter) buildExternalURL(ds *datasources.DataSource) (string, error) {
