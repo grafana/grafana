@@ -126,165 +126,162 @@ export const Toggletip = React.memo(
 Toggletip.displayName = 'Toggletip';
 
 function getStyles(theme: GrafanaTheme2) {
-  function buildToggletipTheme(toggletipBg: string, toggletipBorder: string, toggletipText: string) {
-    return css`
-      background-color: ${toggletipBg};
-      border-radius: 3px;
-      border: 1px solid ${toggletipBorder};
-      box-shadow: ${theme.shadows.z2};
-      color: ${toggletipText};
-      font-size: ${theme.typography.bodySmall.fontSize};
-      padding: ${theme.spacing(3, 3)};
-      transition: opacity 0.3s;
-      z-index: ${theme.zIndex.tooltip};
-      max-width: 400px;
-      overflow-wrap: break-word;
-
-      &[data-popper-interactive='false'] {
-        pointer-events: none;
-      }
-
-      .toggletip-arrow {
+function buildToggletipTheme(toggletipBg: string, toggletipBorder: string, toggletipText: string) {
+    return {
+      arrow: css`
         height: 1rem;
-        position: absolute;
         width: 1rem;
+        position: absolute;
         pointer-events: none;
-      }
 
-      .toggletip-arrow::before {
-        border-style: solid;
-        content: '';
-        display: block;
-        height: 0;
-        margin: auto;
-        width: 0;
-      }
+        &::before {
+          border-style: solid;
+          content: '';
+          display: block;
+          height: 0;
+          margin: auto;
+          width: 0;
+        }
 
-      .toggletip-arrow::after {
-        border-style: solid;
-        content: '';
-        display: block;
-        height: 0;
-        margin: auto;
-        position: absolute;
-        width: 0;
-      }
-
-      &[data-popper-placement*='bottom'] .toggletip-arrow {
-        left: 0;
-        margin-top: -7px;
-        top: 0;
-      }
-
-      &[data-popper-placement*='bottom'] .toggletip-arrow::before {
-        border-color: transparent transparent ${toggletipBorder} transparent;
-        border-width: 0 8px 7px 8px;
-        position: absolute;
-        top: -1px;
-      }
-
-      &[data-popper-placement*='bottom'] .toggletip-arrow::after {
-        border-color: transparent transparent ${toggletipBg} transparent;
-        border-width: 0 8px 7px 8px;
-      }
-
-      &[data-popper-placement*='top'] .toggletip-arrow {
-        bottom: 0;
-        left: 0;
-        margin-bottom: -14px;
-      }
-
-      &[data-popper-placement*='top'] .toggletip-arrow::before {
-        border-color: ${toggletipBorder} transparent transparent transparent;
-        border-width: 7px 8px 0 7px;
-        position: absolute;
-        top: 1px;
-      }
-
-      &[data-popper-placement*='top'] .toggletip-arrow::after {
-        border-color: ${toggletipBg} transparent transparent transparent;
-        border-width: 7px 8px 0 7px;
-      }
-
-      &[data-popper-placement*='right'] .toggletip-arrow {
-        left: 0;
-        margin-left: -11px;
-      }
-
-      &[data-popper-placement*='right'] .toggletip-arrow::before {
-        border-color: transparent ${toggletipBorder} transparent transparent;
-        border-width: 7px 6px 7px 0;
-      }
-
-      &[data-popper-placement*='right'] .toggletip-arrow::after {
-        border-color: transparent ${toggletipBg} transparent transparent;
-        border-width: 6px 7px 7px 0;
-        left: 2px;
-        top: 1px;
-      }
-
-      &[data-popper-placement*='left'] .toggletip-arrow {
-        margin-right: -11px;
-        right: 0;
-      }
-
-      &[data-popper-placement*='left'] .toggletip-arrow::before {
-        border-color: transparent transparent transparent ${toggletipBorder};
-        border-width: 7px 0 6px 7px;
-      }
-
-      &[data-popper-placement*='left'] .toggletip-arrow::after {
-        border-color: transparent transparent transparent ${toggletipBg};
-        border-width: 6px 0 5px 5px;
-        left: 1px;
-        top: 1px;
-      }
-
-      code {
-        border: none;
-        display: inline;
-        background: ${colorManipulator.darken(toggletipBg, 0.1)};
+        &::after {
+          border-style: solid;
+          content: '';
+          display: block;
+          height: 0;
+          margin: auto;
+          position: absolute;
+          width: 0;
+        }
+      `,
+      container: css`
+        background-color: ${toggletipBg};
+        border-radius: 3px;
+        border: 1px solid ${toggletipBorder};
+        box-shadow: ${theme.shadows.z2};
         color: ${toggletipText};
-      }
+        font-size: ${theme.typography.bodySmall.fontSize};
+        padding: ${theme.spacing(3, 3)};
+        transition: opacity 0.3s;
+        z-index: ${theme.zIndex.tooltip};
+        max-width: 400px;
+        overflow-wrap: break-word;
 
-      pre {
-        background: ${colorManipulator.darken(toggletipBg, 0.1)};
-        color: ${toggletipText};
-      }
+        &[data-popper-interactive='false'] {
+          pointer-events: none;
+        }
 
-      a {
-        color: ${toggletipText};
-        text-decoration: underline;
-      }
+        &[data-popper-placement*='bottom'] > div[data-popper-arrow='true'] {
+          left: 0;
+          margin-top: -7px;
+          top: 0;
 
-      a:hover {
-        text-decoration: none;
-      }
+          &::before {
+            border-color: transparent transparent ${toggletipBorder} transparent;
+            border-width: 0 8px 7px 8px;
+            position: absolute;
+            top: -1px;
+          }
 
-      .toggletip-header-close {
+          &::after {
+            border-color: transparent transparent ${toggletipBg} transparent;
+            border-width: 0 8px 7px 8px;
+          }
+        }
+
+        &[data-popper-placement*='top'] > div[data-popper-arrow='true'] {
+          bottom: 0;
+          left: 0;
+          margin-bottom: -14px;
+
+          &::before {
+            border-color: ${toggletipBorder} transparent transparent transparent;
+            border-width: 7px 8px 0 7px;
+            position: absolute;
+            top: 1px;
+          }
+
+          &::after {
+            border-color: ${toggletipBg} transparent transparent transparent;
+            border-width: 7px 8px 0 7px;
+          }
+        }
+
+        &[data-popper-placement*='right'] > div[data-popper-arrow='true'] {
+          left: 0;
+          margin-left: -11px;
+
+          &::before {
+            border-color: transparent ${toggletipBorder} transparent transparent;
+            border-width: 7px 6px 7px 0;
+          }
+
+          &::after {
+            border-color: transparent ${toggletipBg} transparent transparent;
+            border-width: 6px 7px 7px 0;
+            left: 2px;
+            top: 1px;
+          }
+        }
+
+        &[data-popper-placement*='left'] > div[data-popper-arrow='true'] {
+          margin-right: -11px;
+          right: 0;
+
+          &::before {
+            border-color: transparent transparent transparent ${toggletipBorder};
+            border-width: 7px 0 6px 7px;
+          }
+
+          &::after {
+            border-color: transparent transparent transparent ${toggletipBg};
+            border-width: 6px 0 5px 5px;
+            left: 1px;
+            top: 1px;
+          }
+        }
+
+        code {
+          border: none;
+          display: inline;
+          background: ${colorManipulator.darken(toggletipBg, 0.1)};
+          color: ${toggletipText};
+        }
+
+        pre {
+          background: ${colorManipulator.darken(toggletipBg, 0.1)};
+          color: ${toggletipText};
+        }
+
+        a {
+          color: ${toggletipText};
+          text-decoration: underline;
+        }
+
+        a:hover {
+          text-decoration: none;
+        }
+      `,
+      headerClose: css`
         color: ${theme.colors.text.secondary};
         position: absolute;
         right: ${theme.spacing(1)};
         top: ${theme.spacing(1)};
         background-color: transparent;
         border: 0;
-      }
-
-      .toggletip-header {
+      `,
+      header: css`
         padding-top: ${theme.spacing(1)};
         padding-bottom: ${theme.spacing(2)};
-      }
-
-      .toggletip-body {
+      `,
+      body: css`
         padding-top: ${theme.spacing(1)};
         padding-bottom: ${theme.spacing(1)};
-      }
-
-      .toggletip-footer {
+      `,
+      footer: css`
         padding-top: ${theme.spacing(2)};
         padding-bottom: ${theme.spacing(1)};
-      }
-    `;
+      `,
+    };
   }
 
   const info = buildToggletipTheme(
