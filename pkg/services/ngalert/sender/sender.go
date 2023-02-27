@@ -39,6 +39,11 @@ type ExternalAlertmanager struct {
 	sdManager *discovery.Manager
 }
 
+type externalAMcfg struct {
+	amURL   string
+	headers map[string]string
+}
+
 func NewExternalAlertmanagerSender() *ExternalAlertmanager {
 	l := log.New("ngalert.sender.external-alertmanager")
 	sdCtx, sdCancel := context.WithCancel(context.Background())
@@ -60,7 +65,7 @@ func NewExternalAlertmanagerSender() *ExternalAlertmanager {
 }
 
 // ApplyConfig syncs a configuration with the sender.
-func (s *ExternalAlertmanager) ApplyConfig(orgId, id int64, alertmanagers []string) error {
+func (s *ExternalAlertmanager) ApplyConfig(orgId, id int64, alertmanagers []externalAMcfg) error {
 	notifierCfg, err := buildNotifierConfig(alertmanagers)
 	if err != nil {
 		return err
@@ -131,10 +136,10 @@ func (s *ExternalAlertmanager) DroppedAlertmanagers() []*url.URL {
 	return s.manager.DroppedAlertmanagers()
 }
 
-func buildNotifierConfig(alertmanagers []string) (*Config, error) {
+func buildNotifierConfig(alertmanagers []externalAMcfg) (*Config, error) {
 	amConfigs := make([]*AlertmanagerConfig, 0, len(alertmanagers))
-	for _, amURL := range alertmanagers {
-		u, err := url.Parse(amURL)
+	for _, am := range alertmanagers {
+		u, err := url.Parse(am.amURL)
 		if err != nil {
 			return nil, err
 		}
@@ -153,6 +158,7 @@ func buildNotifierConfig(alertmanagers []string) (*Config, error) {
 			PathPrefix:              u.Path,
 			Timeout:                 model.Duration(defaultTimeout),
 			ServiceDiscoveryConfigs: sdConfig,
+			Headers:                 am.headers,
 		}
 
 		// Check the URL for basic authentication information first

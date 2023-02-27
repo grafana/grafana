@@ -106,7 +106,7 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 			continue
 		}
 
-		alertmanagers, headers, err := d.alertmanagersFromDatasources(cfg.OrgID)
+		alertmanagers, err := d.alertmanagersFromDatasources(cfg.OrgID)
 		if err != nil {
 			d.logger.Error("Failed to get alertmanagers from datasources", "org", cfg.OrgID, "error", err)
 			continue
@@ -129,8 +129,12 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 		redactedAMs := buildRedactedAMs(d.logger, alertmanagers, cfg.OrgID)
 		d.logger.Debug("Alertmanagers found in the configuration", "alertmanagers", redactedAMs)
 
+		var urls []string
+		for _, cfg := range alertmanagers {
+			urls = append(urls, cfg.amURL)
+		}
 		// We have a running sender, check if we need to apply a new config.
-		amHash := asSHA256(append(alertmanagers, headersString(headers)))
+		amHash := asSHA256(append(urls, headersString(alertmanagers)))
 		if ok {
 			if d.externalAlertmanagersCfgHash[cfg.OrgID] == amHash {
 				d.logger.Debug("Sender configuration is the same as the one running, no-op", "org", cfg.OrgID, "alertmanagers", redactedAMs)
@@ -187,40 +191,29 @@ func (d *AlertsRouter) SyncAndApplyConfigFromDatabase() error {
 
 // headersString transforms all the headers in a sorted way as a
 // single string so it can be used for hashing and comparing.
-func headersString(headers map[string]map[string]string) string {
+func headersString(externalAMS []externalAMcfg) string {
 	var result strings.Builder
 
-	keys := make([]string, 0, len(headers))
-	for k := range headers {
-		keys = append(keys, k)
-	}
-
-	sort.Strings(keys)
-
-	for _, k := range keys {
-
-		result.WriteString(k)
-
-		header := headers[k]
-		headerKeys := make([]string, 0, len(header))
-		for key := range header {
+	for _, am := range externalAMS {
+		headerKeys := make([]string, 0, len(am.headers))
+		for key := range am.headers {
 			headerKeys = append(headerKeys, key)
 		}
 
 		sort.Strings(headerKeys)
 
 		for _, key := range headerKeys {
-			result.WriteString(fmt.Sprintf("%s:%s", key, header[key]))
+			result.WriteString(fmt.Sprintf("%s:%s", key, am.headers[key]))
 		}
 	}
 
 	return result.String()
 }
 
-func buildRedactedAMs(l log.Logger, alertmanagers []string, ordId int64) []string {
+func buildRedactedAMs(l log.Logger, alertmanagers []externalAMcfg, ordId int64) []string {
 	var redactedAMs []string
 	for _, am := range alertmanagers {
-		parsedAM, err := url.Parse(am)
+		parsedAM, err := url.Parse(am.amURL)
 		if err != nil {
 			l.Error("Failed to parse alertmanager string", "org", ordId, "error", err)
 			continue
@@ -237,10 +230,9 @@ func asSHA256(strings []string) string {
 	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
-func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]string, map[string]map[string]string, error) {
+func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]externalAMcfg, error) {
 	var (
-		alertmanagers []string
-		headers = map[string]map[string]string{}
+		alertmanagers []externalAMcfg
 	)
 	// We might have alertmanager datasources that are acting as external
 	// alertmanager, let's fetch them.
@@ -252,7 +244,7 @@ func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]string, map[
 	defer cancel()
 	dataSources, err := d.datasourceService.GetDataSourcesByType(ctx, query)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to fetch datasources for org: %w", err)
+		return nil, fmt.Errorf("failed to fetch datasources for org: %w", err)
 	}
 	for _, ds := range dataSources {
 		if !ds.JsonData.Get(definitions.HandleGrafanaManagedAlerts).MustBool(false) {
@@ -268,11 +260,11 @@ func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]string, map[
 		}
 		m, err := ds.JsonData.Map()
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to fetch headers for datasource: %w", err)
+			return nil, fmt.Errorf("failed to fetch headers for datasource: %w", err)
 		}
 
 		const headerName = "httpHeaderName"
-
+		var headers map[string]string
 		for k, v := range m {
 			if !strings.HasPrefix(k, headerName) {
 				continue
@@ -285,20 +277,23 @@ func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]string, map[
 			index := strings.TrimLeft(k, headerName)
 			val, ok := ds.SecureJsonData["httpHeaderValue"+index]
 			if !ok {
-				return nil, nil, fmt.Errorf("failed to find the value for the declared header field %s", k)
+				return nil, fmt.Errorf("failed to find the value for the declared header field %s", k)
 			}
 			decVal, err := d.secretService.Decrypt(ctx, val)
 			if err != nil {
-				return nil, nil, fmt.Errorf("failed to decrypt the value for the declared header field %s: %w", k, err)
+				return nil, fmt.Errorf("failed to decrypt the value for the declared header field %s: %w", k, err)
 			}
-			if headers[ds.UID] == nil {
-				headers[ds.UID] = map[string]string{}
+			if headers == nil {
+				headers = map[string]string{}
 			}
-			headers[ds.UID][keyName] = string(decVal)
+			headers[keyName] = string(decVal)
 		}
-		alertmanagers = append(alertmanagers, amURL)
+		alertmanagers = append(alertmanagers, externalAMcfg{
+			amURL:   amURL,
+			headers: headers,
+		})
 	}
-	return alertmanagers, headers, nil
+	return alertmanagers, nil
 }
 
 func (d *AlertsRouter) buildExternalURL(ds *datasources.DataSource) (string, error) {
