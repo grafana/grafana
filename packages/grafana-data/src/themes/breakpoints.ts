@@ -16,8 +16,8 @@ export interface ThemeBreakpoints {
   values: ThemeBreakpointValues;
   keys: string[];
   unit: string;
-  up: (key: ThemeBreakpointsKey) => string;
-  down: (key: ThemeBreakpointsKey) => string;
+  up: (key: ThemeBreakpointsKey | number) => string;
+  down: (key: ThemeBreakpointsKey | number) => string;
 }
 
 /** @internal */
