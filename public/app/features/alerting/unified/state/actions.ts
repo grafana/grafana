@@ -1,7 +1,7 @@
-import { createAsyncThunk, AsyncThunk } from '@reduxjs/toolkit';
+import { AsyncThunk, createAsyncThunk } from '@reduxjs/toolkit';
 import { isEmpty } from 'lodash';
 
-import { locationService, config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import {
   AlertmanagerAlert,
   AlertManagerCortexConfig,
@@ -33,7 +33,7 @@ import {
 
 import { contextSrv } from '../../../../core/core';
 import { backendSrv } from '../../../../core/services/backend_srv';
-import { logInfo, LogMessages, withPerformanceLogging, trackNewAlerRuleFormSaved } from '../Analytics';
+import { logInfo, LogMessages, trackNewAlerRuleFormSaved, withPerformanceLogging } from '../Analytics';
 import {
   addAlertManagers,
   createOrUpdateSilence,
