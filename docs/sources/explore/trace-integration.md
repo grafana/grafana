@@ -79,7 +79,7 @@ You can navigate from a span in a trace view directly to logs relevant for that 
 
 Click the document icon to open a split view in Explore with the configured data source and query relevant logs for the span.
 
-## Service graph view
+## Service Graph view
 
 The Grafana service graph view visualizes the span metrics (traces data for rates, error rates, and durations (RED)) and service graphs.
 Once the requirements are set up, this pre-configured view is immediately available.
