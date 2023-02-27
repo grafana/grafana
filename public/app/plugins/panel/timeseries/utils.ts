@@ -128,14 +128,14 @@ export function prepareGraphableFields(
   }
 
   if (frames.length) {
-    setClassicPaletteIdxs(frames);
+    setClassicPaletteIdxs(frames, theme);
     return frames;
   }
 
   return null;
 }
 
-const setClassicPaletteIdxs = (frames: DataFrame[]) => {
+const setClassicPaletteIdxs = (frames: DataFrame[], theme: GrafanaTheme2) => {
   let seriesIndex = 0;
 
   frames.forEach((frame) => {
@@ -145,6 +145,7 @@ const setClassicPaletteIdxs = (frames: DataFrame[]) => {
           ...field.state,
           seriesIndex: seriesIndex++, // TODO: skip this for fields with custom renderers (e.g. Candlestick)?
         };
+        field.display = getDisplayProcessor({ field, theme });
       }
     })
   });
