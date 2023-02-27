@@ -46,8 +46,12 @@ func newMetrics(reg prometheus.Registerer) *metrics {
 	}
 
 	if reg != nil {
-		reg.MustRegister(m.failedLogin)
-		reg.MustRegister(m.successfulLogin)
+		reg.MustRegister(
+			m.failedAuth,
+			m.successfulAuth,
+			m.failedLogin,
+			m.successfulLogin,
+		)
 	}
 
 	return m
