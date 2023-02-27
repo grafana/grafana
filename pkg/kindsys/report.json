@@ -892,7 +892,9 @@
     },
     "logspanelcfg": {
       "category": "composable",
-      "codeowners": [],
+      "codeowners": [
+        "grafana/observability-logs"
+      ],
       "currentVersion": [
         0,
         0
@@ -900,13 +902,13 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
-        "docs": "n/a",
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/logspanelcfg/schema-reference",
         "go": "n/a",
-        "schema": "n/a",
-        "ts": "n/a"
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/logs/panelcfg.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/logs/panelcfg.gen.ts"
       },
       "machineName": "logspanelcfg",
-      "maturity": "planned",
+      "maturity": "experimental",
       "name": "LogsPanelCfg",
       "pluralMachineName": "logspanelcfgs",
       "pluralName": "LogsPanelCfgs",
@@ -1994,6 +1996,7 @@
           "geomappanelcfg",
           "histogrampanelcfg",
           "librarypanel",
+          "logspanelcfg",
           "lokidataquery",
           "newspanelcfg",
           "nodegraphpanelcfg",
@@ -2008,7 +2011,7 @@
           "textpanelcfg",
           "xychartpanelcfg"
         ],
-        "count": 24
+        "count": 25
       },
       "mature": {
         "name": "mature",
@@ -2056,7 +2059,6 @@
           "jaegerdataquery",
           "jaegerdatasourcecfg",
           "livepanelcfg",
-          "logspanelcfg",
           "lokidatasourcecfg",
           "microsoftsqlserverdataquery",
           "microsoftsqlserverdatasourcecfg",
@@ -2080,7 +2082,7 @@
           "zipkindataquery",
           "zipkindatasourcecfg"
         ],
-        "count": 47
+        "count": 46
       },
       "stable": {
         "name": "stable",
