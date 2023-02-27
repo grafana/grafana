@@ -280,21 +280,36 @@ export class QueryGroup extends PureComponent<Props, State> {
             Data source
           </InlineFormLabel>
           <div className={styles.dataSourceRowItem}>
-            <DataSourcePickerWithHistory
-              onChange={this.onChangeDataSource}
-              current={options.dataSource}
-              metrics={true}
-              mixed={true}
-              dashboard={true}
-              variables={true}
-              drawer={true}
-              fileUploadOptions={{
-                onDrop: this.onFileDrop,
-                maxSize: DFImport.maxFileSize,
-                multiple: false,
-                accept: DFImport.acceptedFiles,
-              }}
-            ></DataSourcePickerWithHistory>
+            {config.featureToggles.drawerDataSourcePicker ? (
+              <DataSourcePickerWithHistory
+                onChange={this.onChangeDataSource}
+                current={options.dataSource}
+                metrics={true}
+                mixed={true}
+                dashboard={true}
+                variables={true}
+                drawer={true}
+                fileUploadOptions={
+                  config.featureToggles.editPanelCSVDragAndDrop
+                    ? {
+                        onDrop: this.onFileDrop,
+                        maxSize: DFImport.maxFileSize,
+                        multiple: false,
+                        accept: DFImport.acceptedFiles,
+                      }
+                    : undefined
+                }
+              ></DataSourcePickerWithHistory>
+            ) : (
+              <DataSourcePicker
+                onChange={this.onChangeDataSource}
+                current={options.dataSource}
+                metrics={true}
+                mixed={true}
+                dashboard={true}
+                variables={true}
+              ></DataSourcePicker>
+            )}
           </div>
           {dataSource && (
             <>

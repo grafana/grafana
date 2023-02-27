@@ -367,7 +367,7 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:         "DrawerDataSourcePicker",
+			Name:         "drawerDataSourcePicker",
 			Description:  "Changed UX for selecting datasources, opens in a drawer",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,

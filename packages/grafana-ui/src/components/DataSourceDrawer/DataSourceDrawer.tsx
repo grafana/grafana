@@ -133,23 +133,25 @@ function PickerContent(props: PickerContentProps) {
             ))}
           </CustomScrollbar>
         </div>
-        <div className={styles.additionalContent}>
-          <FileDropzone
-            readAs="readAsArrayBuffer"
-            fileListRenderer={() => undefined}
-            options={{
-              ...fileUploadOptions,
-              onDrop: (...args) => {
-                onDismiss();
-                if (fileUploadOptions?.onDrop) {
-                  fileUploadOptions.onDrop(...args);
-                }
-              },
-            }}
-          >
-            <FileDropzoneDefaultChildren primaryText={'Upload file'} />
-          </FileDropzone>
-        </div>
+        {fileUploadOptions && (
+          <div className={styles.additionalContent}>
+            <FileDropzone
+              readAs="readAsArrayBuffer"
+              fileListRenderer={() => undefined}
+              options={{
+                ...fileUploadOptions,
+                onDrop: (...args) => {
+                  onDismiss();
+                  if (fileUploadOptions?.onDrop) {
+                    fileUploadOptions.onDrop(...args);
+                  }
+                },
+              }}
+            >
+              <FileDropzoneDefaultChildren primaryText={'Upload file'} />
+            </FileDropzone>
+          </div>
+        )}
       </div>
     </Drawer>
   );
