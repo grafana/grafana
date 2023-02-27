@@ -1,7 +1,9 @@
 package queryhistory
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"time"
@@ -12,7 +14,6 @@ import (
 )
 
 // deletes runtime unique properties from the queries (such as `key` and `refId`)
-// so that we can compare queries
 func pruneExtraQueryProperties(queries []map[string]interface{}) []map[string]interface{} {
 	prunedQueries := make([]map[string]interface{}, 0)
 	for _, query := range queries {
@@ -475,4 +476,48 @@ func (s QueryHistoryService) enforceQueryHistoryRowLimit(ctx context.Context, li
 	}
 
 	return int(deletedRowsCount), nil
+}
+
+func (s QueryHistoryService) pruneStarred(ctx context.Context) error {
+	err := s.store.WithDbSession(ctx, func(session *db.Session) error {
+		var dtos []QueryHistoryDTO
+
+		dtosBuilder := db.SQLBuilder{}
+		dtosBuilder.Write(`SELECT
+			query_history.uid,
+			query_history.queries,
+		`)
+		writeStarredSQL(SearchInQueryHistoryQuery{OnlyStarred: true}, s.store, &dtosBuilder)
+
+		var sql bytes.Buffer
+		sql.WriteString("WHERE query_history.queries " + s.store.GetDialect().LikeStr() + " ? OR query_history.queries " + s.store.GetDialect().LikeStr() + " ? ")
+		dtosBuilder.Write(sql.String(), "%\"refId\":%", "%\"key\":%")
+
+		err := session.SQL(dtosBuilder.GetSQLString(), dtosBuilder.GetParams()...).Find(&dtos)
+		if err != nil {
+			return fmt.Errorf("failed to retrive starred queries with unique properties: %w", err)
+		}
+
+		batchSize := 500
+		updateBuilder := db.SQLBuilder{}
+		for i, dto := range dtos {
+			dto.Queries = pruneExtraQueryProperties(dto.Queries)
+			queries, _ := json.Marshal(dto.Queries)
+
+			updateBuilder.Write("UPDATE query_history SET queries = ? WHERE uid = ?;", string(queries), dto.UID)
+
+			if (i+1)%batchSize == 0 || len(dtos) == (i+1) {
+				_, err := session.SQL(updateBuilder.GetSQLString(), updateBuilder.GetParams()...).Exist()
+				if err != nil {
+					return fmt.Errorf("failed to prune starred queries of unique properties: %w", err)
+				}
+
+				updateBuilder = db.SQLBuilder{}
+			}
+		}
+
+		return nil
+	})
+
+	return err
 }

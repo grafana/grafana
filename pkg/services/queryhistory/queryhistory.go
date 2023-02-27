@@ -18,8 +18,9 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.Rout
 		log:           log.New("query-history"),
 	}
 
-	// Register routes only when query history is enabled
+	// Register routes and prune starred queries only when query history is enabled
 	if s.Cfg.QueryHistoryEnabled {
+		go s.pruneStarredQueries()
 		s.registerAPIEndpoints()
 	}
 
@@ -79,4 +80,8 @@ func (s QueryHistoryService) DeleteStaleQueriesInQueryHistory(ctx context.Contex
 
 func (s QueryHistoryService) EnforceRowLimitInQueryHistory(ctx context.Context, limit int, starredQueries bool) (int, error) {
 	return s.enforceQueryHistoryRowLimit(ctx, limit, starredQueries)
+}
+
+func (s QueryHistoryService) pruneStarredQueries() error {
+	return s.pruneStarred(context.Background())
 }
