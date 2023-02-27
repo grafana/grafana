@@ -85,7 +85,7 @@ export const Toggletip = React.memo(
             <div
               data-testid="toggletip-content"
               ref={setTooltipRef}
-              {...getTooltipProps({ className: containerStyle })}
+              {...getTooltipProps({ className: style.container })}
             >
               {boolean(title) && (
                 <div className="toggletip-header">
