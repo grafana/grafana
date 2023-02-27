@@ -6,11 +6,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
+var _ PrettyLogger = (*InfraLogWrapper)(nil)
+
 type InfraLogWrapper struct {
 	log log.Logger
 }
 
-func EnhancedLogger(name string) *InfraLogWrapper {
+func NewPrettyLogger(name string) *InfraLogWrapper {
 	return &InfraLogWrapper{
 		log: log.New(name),
 	}
