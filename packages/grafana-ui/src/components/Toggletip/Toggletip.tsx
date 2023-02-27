@@ -103,7 +103,7 @@ export const Toggletip = React.memo(
                   />
                 </div>
               )}
-              <div ref={contentRef} {...getArrowProps({ className: 'toggletip-arrow' })} />
+              <div ref={contentRef} {...getArrowProps({ className: style.arrow })} />
               <div className="toggletip-body">
                 {typeof content === 'string' && content}
                 {React.isValidElement(content) && React.cloneElement(content)}
