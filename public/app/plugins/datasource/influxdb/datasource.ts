@@ -43,7 +43,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   withCredentials: any;
   access: 'direct' | 'proxy';
   interval: any;
-  responseParser: any;
+  responseParser: ResponseParser;
   httpMode: string;
   isFlux: boolean;
   isProxyAccess: boolean;
