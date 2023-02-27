@@ -54,7 +54,7 @@ export const ResultItem = React.forwardRef(
                 {!hasAction(ancestor) && (
                   <>
                     <span className={styles.breadcrumbAncestor}>{ancestor.name}</span>
-                    <span className={styles.breadcrumbAncestor}>&rsaquo;</span>
+                    <span className={styles.breadcrumbSeparator}>&rsaquo;</span>
                   </>
                 )}
               </React.Fragment>
@@ -69,7 +69,7 @@ export const ResultItem = React.forwardRef(
                     {hasAction(ancestor) && (
                       <>
                         <span className={styles.breadcrumbAncestor}>{ancestor.name}</span>
-                        {index < ancestors.length - 1 && <span className={styles.breadcrumbAncestor}>&rsaquo;</span>}
+                        {index < ancestors.length - 1 && <span className={styles.breadcrumbSeparator}>&rsaquo;</span>}
                       </>
                     )}
                   </React.Fragment>
@@ -126,8 +126,12 @@ const getResultItemStyles = (theme: GrafanaTheme2) => {
       whiteSpace: 'nowrap',
     }),
     breadcrumbAncestor: css({
-      marginRight: theme.spacing(1),
       color: theme.colors.text.secondary,
+    }),
+    breadcrumbSeparator: css({
+      color: theme.colors.text.secondary,
+      marginLeft: theme.spacing(0.5),
+      marginRight: theme.spacing(0.5),
     }),
     subtitleText: css({
       ...theme.typography.bodySmall,
@@ -135,6 +139,8 @@ const getResultItemStyles = (theme: GrafanaTheme2) => {
       display: 'block',
       flexBasis: '20%',
       flexGrow: 1,
+      flexShrink: 0,
+      maxWidth: 'fit-content',
       overflow: 'hidden',
       textOverflow: 'ellipsis',
       whiteSpace: 'nowrap',
