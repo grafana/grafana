@@ -725,7 +725,7 @@ func alertmanagerFromGroup(tg *targetgroup.Group, cfg *AlertmanagerConfig) ([]al
 
 		lset := relabel.Process(labels.New(lbls...), cfg.RelabelConfigs...)
 		if lset == nil {
-			droppedAlertManagers = append(droppedAlertManagers, alertmanagerLabels{lbls, map[string]string{}})
+			droppedAlertManagers = append(droppedAlertManagers, alertmanagerLabels{lbls, cfg.Headers})
 			continue
 		}
 
@@ -770,7 +770,7 @@ func alertmanagerFromGroup(tg *targetgroup.Group, cfg *AlertmanagerConfig) ([]al
 			}
 		}
 
-		res = append(res, alertmanagerLabels{lset, map[string]string{}})
+		res = append(res, alertmanagerLabels{lset, cfg.Headers})
 	}
 	return res, droppedAlertManagers, nil
 }
