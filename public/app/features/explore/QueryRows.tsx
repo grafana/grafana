@@ -51,16 +51,22 @@ export const QueryRows = ({ exploreId }: Props) => {
 
   const onChange = useCallback(
     async (newQueries: DataQuery[]) => {
-      dispatch(changeQueriesAction({ queries: newQueries, exploreId }));
+      let queriesImported = false;
 
       for (const newQuery of newQueries) {
         for (const oldQuery of queries) {
           if (newQuery.refId === oldQuery.refId && newQuery.datasource?.type !== oldQuery.datasource?.type) {
-            const queryDatasource = await getDataSourceSrv().get(newQuery.datasource);
+            const queryDatasource = await getDataSourceSrv().get(oldQuery.datasource);
             const targetDS = await getDataSourceSrv().get({ uid: newQuery.datasource?.uid });
             dispatch(importQueries(exploreId, queries, queryDatasource, targetDS, newQuery.refId));
+            queriesImported = true;
           }
         }
+      }
+
+      // Importing queries changes the same state, therefore if we are importing queries we don't want to change the state again
+      if (!queriesImported) {
+        dispatch(changeQueriesAction({ queries: newQueries, exploreId }));
       }
 
       // if we are removing a query we want to run the remaining ones
