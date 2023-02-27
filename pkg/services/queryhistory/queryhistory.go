@@ -5,31 +5,22 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.RouteRegister, kvStore kvstore.KVStore) *QueryHistoryService {
-	logger := log.New("query-history")
-
+func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.RouteRegister) *QueryHistoryService {
 	s := &QueryHistoryService{
 		store:         sqlStore,
-		kvStore:       kvstore.WithNamespace(kvStore, 0, "queyhistory"),
 		Cfg:           cfg,
 		RouteRegister: routeRegister,
-		log:           logger,
+		log:           log.New("query-history"),
 	}
 
 	// Register routes only when query history is enabled
 	if s.Cfg.QueryHistoryEnabled {
 		s.registerAPIEndpoints()
-
-		_, exists, _ := kvStore.Get(context.Background(), kvstore.AllOrganizations, "query-history-migration", "LOL")
-		if !exists {
-			logger.Error("LOL")
-		}
 	}
 
 	return s
@@ -49,7 +40,6 @@ type Service interface {
 
 type QueryHistoryService struct {
 	store         db.DB
-	kvStore       *kvstore.NamespacedKVStore
 	Cfg           *setting.Cfg
 	RouteRegister routing.RouteRegister
 	log           log.Logger
@@ -89,8 +79,4 @@ func (s QueryHistoryService) DeleteStaleQueriesInQueryHistory(ctx context.Contex
 
 func (s QueryHistoryService) EnforceRowLimitInQueryHistory(ctx context.Context, limit int, starredQueries bool) (int, error) {
 	return s.enforceQueryHistoryRowLimit(ctx, limit, starredQueries)
-}
-
-func (s QueryHistoryService) CleanupDB(ctx context.Context) error {
-	return s.cleanupDB(ctx)
 }
