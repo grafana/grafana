@@ -36,6 +36,51 @@ const options: Array<SelectableValue<PublicDashboardShareType>> = [
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard.EmailSharingConfiguration;
 
+const EmailList = ({
+  recipients,
+  dashboardUid,
+  publicDashboardUid,
+}: {
+  recipients: string[];
+  dashboardUid: string;
+  publicDashboardUid: string;
+}) => {
+  const styles = useStyles2(getStyles);
+  const [deleteEmail, { isLoading: isDeleteLoading }] = useDeleteEmailSharingMutation();
+
+  const onDeleteEmail = (email: string) => {
+    deleteEmail({ recipient: email, dashboardUid: dashboardUid, uid: publicDashboardUid });
+  };
+
+  return (
+    <table className={styles.table} data-testid={selectors.EmailSharingList}>
+      <tbody>
+        {recipients.map((recipient) => (
+          <tr key={recipient}>
+            <td>{recipient}</td>
+            <td>
+              <ButtonGroup className={styles.tableButtonsContainer}>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  fill="text"
+                  aria-label="Revoke"
+                  title="Revoke"
+                  size="sm"
+                  disabled={isDeleteLoading}
+                  onClick={() => onDeleteEmail(recipient)}
+                >
+                  Revoke
+                </Button>
+              </ButtonGroup>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+};
+
 export const EmailSharingConfiguration = () => {
   const styles = useStyles2(getStyles);
   const dashboardState = useSelector((store) => store.dashboard);
@@ -44,7 +89,6 @@ export const EmailSharingConfiguration = () => {
   const { data: publicDashboard } = useGetPublicDashboardQuery(dashboard.uid);
   const [updateShareType] = useUpdatePublicDashboardMutation();
   const [addEmail, { isLoading: isAddEmailLoading }] = useAddEmailSharingMutation();
-  const [deleteEmail, { isLoading: isDeleteLoading }] = useDeleteEmailSharingMutation();
 
   const {
     register,
@@ -72,9 +116,6 @@ export const EmailSharingConfiguration = () => {
     };
 
     updateShareType(req);
-  };
-  const onDeleteEmail = (email: string) => {
-    deleteEmail({ recipient: email, dashboardUid: dashboard.uid, uid: publicDashboard!.uid });
   };
 
   const onSubmit = async (data: EmailSharingConfigurationForm) => {
@@ -133,33 +174,11 @@ export const EmailSharingConfiguration = () => {
             </div>
           </Field>
           {!!publicDashboard?.recipients?.length && (
-            <div className={styles.table} data-testid={selectors.EmailSharingList}>
-              <table className="filter-table">
-                <tbody>
-                  {publicDashboard.recipients.map((recipient) => (
-                    <tr key={recipient}>
-                      <td>{recipient}</td>
-                      <td>
-                        <ButtonGroup className={styles.tableButtonsContainer}>
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            fill="text"
-                            aria-label="Revoke"
-                            className={styles.revokeButton}
-                            title="Revoke"
-                            disabled={isDeleteLoading}
-                            onClick={() => onDeleteEmail(recipient)}
-                          >
-                            Revoke
-                          </Button>
-                        </ButtonGroup>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <EmailList
+              recipients={publicDashboard.recipients}
+              dashboardUid={dashboard.uid}
+              publicDashboardUid={publicDashboard.uid}
+            />
           )}
         </>
       )}
@@ -179,17 +198,31 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flex-grow: 1;
   `,
   table: css`
-    width: 100%;
-    max-height: 110px;
+    display: flex;
+    max-height: 220px;
     overflow-y: scroll;
     margin-bottom: ${theme.spacing(1)};
+
+    & tbody {
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+    }
+
+    & tr {
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: ${theme.spacing(0.5, 1)};
+
+      :nth-child(odd) {
+        background: ${theme.colors.background.secondary};
+      }
+    }
   `,
   tableButtonsContainer: css`
     display: flex;
     justify-content: end;
-  `,
-  revokeButton: css`
-    padding: 0;
-    font-weight: 100;
   `,
 });
