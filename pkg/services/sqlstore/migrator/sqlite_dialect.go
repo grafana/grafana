@@ -1,11 +1,9 @@
 package migrator
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
-	"github.com/mattn/go-sqlite3"
 	"xorm.io/xorm"
 )
 
@@ -126,29 +124,6 @@ func (db *SQLite3) TruncateDBTables() error {
 		return fmt.Errorf("failed to cleanup sqlite_sequence: %w", err)
 	}
 	return nil
-}
-
-func (db *SQLite3) isThisError(err error, errcode int) bool {
-	var driverErr sqlite3.Error
-	if errors.As(err, &driverErr) {
-		if int(driverErr.ExtendedCode) == errcode {
-			return true
-		}
-	}
-
-	return false
-}
-
-func (db *SQLite3) ErrorMessage(err error) string {
-	var driverErr sqlite3.Error
-	if errors.As(err, &driverErr) {
-		return driverErr.Error()
-	}
-	return ""
-}
-
-func (db *SQLite3) IsUniqueConstraintViolation(err error) bool {
-	return db.isThisError(err, int(sqlite3.ErrConstraintUnique))
 }
 
 func (db *SQLite3) IsDeadlock(err error) bool {
