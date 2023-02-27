@@ -161,10 +161,9 @@ export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
         condition: 'C',
         ...defaultsInQueryParamsObject,
         type: RuleFormType.grafana,
-        evaluateEvery: evaluateEvery,
       });
     }
-  }, [defaultDsAndQueries.queries, reset, existing, prefill, defaultsInQueryParamsObject, evaluateEvery]);
+  }, [defaultDsAndQueries.queries, reset, existing, prefill, defaultsInQueryParamsObject]);
 
   const type = watch('type');
   const dataSourceName = watch('dataSourceName');
