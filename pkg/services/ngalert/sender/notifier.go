@@ -607,9 +607,13 @@ func (n *Manager) Stop() {
 // alertmanager holds Alertmanager endpoint information.
 type alertmanager interface {
 	url() *url.URL
+	headers() map[string]string
 }
 
-type alertmanagerLabels struct{ labels.Labels }
+type alertmanagerLabels struct {
+	labels.Labels
+	h map[string]string
+}
 
 const pathLabel = "__alerts_path__"
 
@@ -619,6 +623,10 @@ func (a alertmanagerLabels) url() *url.URL {
 		Host:   a.Get(model.AddressLabel),
 		Path:   a.Get(pathLabel),
 	}
+}
+
+func (a alertmanagerLabels) headers() map[string]string {
+	return a.h
 }
 
 // alertmanagerSet contains a set of Alertmanagers discovered via a group of service
@@ -718,7 +726,7 @@ func alertmanagerFromGroup(tg *targetgroup.Group, cfg *config.AlertmanagerConfig
 
 		lset := relabel.Process(labels.New(lbls...), cfg.RelabelConfigs...)
 		if lset == nil {
-			droppedAlertManagers = append(droppedAlertManagers, alertmanagerLabels{lbls})
+			droppedAlertManagers = append(droppedAlertManagers, alertmanagerLabels{lbls, map[string]string{}})
 			continue
 		}
 
@@ -763,7 +771,7 @@ func alertmanagerFromGroup(tg *targetgroup.Group, cfg *config.AlertmanagerConfig
 			}
 		}
 
-		res = append(res, alertmanagerLabels{lset})
+		res = append(res, alertmanagerLabels{lset, map[string]string{}})
 	}
 	return res, droppedAlertManagers, nil
 }
