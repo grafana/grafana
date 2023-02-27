@@ -41,7 +41,7 @@ export const Toggletip = React.memo(
     footer,
   }: ToggletipProps) => {
     const styles = useStyles2(getStyles);
-    const containerStyle = styles[theme];
+    const style = styles[theme];
     const contentRef = useRef(null);
     const [controlledVisible, setControlledVisible] = React.useState(false);
 
