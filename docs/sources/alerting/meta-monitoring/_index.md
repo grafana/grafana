@@ -41,19 +41,27 @@ The Grafana ruler, which is responsible for evaluating alert rules, and the Graf
 
 This metric is a counter that shows you the number of `normal`, `pending`, `alerting`, `nodata` and `error` alerts. For example, you might want to create an alert that fires when `grafana_alerting_alerts{state="error"}` is greater than 0.
 
-### grafana_alerting_schedule_alert_rules
+#### grafana_alerting_schedule_alert_rules
 
 This metric is a gauge that shows you the number of alert rules scheduled. An alert rule is scheduled unless it is paused, and the value of this metric should match the total number of non-paused alert rules in Grafana.
 
-### grafana_alerting_schedule_periodic_duration_seconds_bucket
+#### grafana_alerting_schedule_periodic_duration_seconds_bucket
 
-### grafana_alerting_schedule_query_alert_rules_duration_seconds_bucket
+This metric is a histogram that shows you the time it takes to process an individual tick in the scheduler that evaluates alert rules. If the scheduler takes longer than 10 seconds to process a tick then pending evaluations will start to accumulate such that alert rules might later than expected.
 
-### grafana_alerting_scheduler_behind_seconds
+#### grafana_alerting_schedule_query_alert_rules_duration_seconds_bucket
 
-### grafana_alerting_notification_latency_seconds_bucket
+This metric is a histogram that shows you how long it takes the scheduler to fetch the latest rules from the database. If this metric is elevated then so will `schedule_periodic_duration_seconds`.
 
-> In Grafana Cloud some of these metrics are available via the Prometheus usage datasource that is provisioned for all Grafana Cloud customers.
+#### grafana_alerting_scheduler_behind_seconds
+
+This metric is a gauge that shows you the number of seconds that the scheduler is behind where it should be. This number will increase if `schedule_periodic_duration_seconds` is longer than 10 seconds, and decrease when it is less than 10 seconds. The smallest possible value of this metric is 0.
+
+#### grafana_alerting_notification_latency_seconds_bucket
+
+This metric is a histogram that shows you the number of seconds taken to send notifications for firing and resolved alerts. This metric will let you observe slow or over-utilized integrations, such as an SMTP server that is being given emails faster than it can send them.
+
+> These metrics are not available at present in Grafana Cloud.
 
 ## Grafana Mimir
 
