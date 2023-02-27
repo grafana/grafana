@@ -17,6 +17,7 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { DataSourcePicker, getDataSourceSrv } from '@grafana/runtime';
 import { Button, CustomScrollbar, HorizontalGroup, InlineFormLabel, Modal, stylesFactory } from '@grafana/ui';
+import { DataSourcePickerWithHistory } from 'app/core/components/DataSourcePickerWithHistory/DataSourcePickerWithHistory';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -279,7 +280,7 @@ export class QueryGroup extends PureComponent<Props, State> {
             Data source
           </InlineFormLabel>
           <div className={styles.dataSourceRowItem}>
-            <DataSourcePicker
+            <DataSourcePickerWithHistory
               onChange={this.onChangeDataSource}
               current={options.dataSource}
               metrics={true}
@@ -293,7 +294,7 @@ export class QueryGroup extends PureComponent<Props, State> {
                 multiple: false,
                 accept: DFImport.acceptedFiles,
               }}
-            ></DataSourcePicker>
+            ></DataSourcePickerWithHistory>
           </div>
           {dataSource && (
             <>

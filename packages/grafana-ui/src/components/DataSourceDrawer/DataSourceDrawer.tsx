@@ -14,9 +14,9 @@ import { ModalsController } from '../Modal/ModalsContext';
 import { PluginSignatureBadge } from '../PluginSignatureBadge/PluginSignatureBadge';
 import { Tag } from '../Tags/Tag';
 
-import { DatasourceDrawerProps, DatasourceSelectProps } from './types';
+import { PickerContentProps, DataSourceDrawerProps } from './types';
 
-export function DatasourceSelect(props: DatasourceSelectProps) {
+export function DataSourceDrawer(props: DataSourceDrawerProps) {
   const { current, onChange } = props;
   const styles = useStyles2(getStyles);
 
@@ -69,8 +69,8 @@ function DataSourceDisplay(props: {
   return <span>{ds.uid} - not found</span>;
 }
 
-export function PickerContent(props: DatasourceDrawerProps) {
-  const { onChange, children, fileUploadOptions, onDismiss } = props;
+function PickerContent(props: PickerContentProps) {
+  const { recentlyUsed = [], onChange, children, fileUploadOptions, onDismiss } = props;
   const changeCallback = useCallback(
     (ds: string) => {
       onChange(ds);
@@ -100,6 +100,29 @@ export function PickerContent(props: DatasourceDrawerProps) {
         </div>
         <div className={styles.dataSourceList}>
           <CustomScrollbar>
+            {props.datasources
+              .filter((ds) => recentlyUsed.indexOf(ds.uid) !== -1)
+              .map((ds) => {
+                return (
+                  <Card key={ds.uid} onClick={() => changeCallback(ds.uid)}>
+                    <Card.Figure>
+                      <img alt={`${ds.meta.name} logo`} src={ds.meta.info.logos.large}></img>
+                    </Card.Figure>
+                    <Card.Meta>
+                      {[
+                        ds.meta.name,
+                        ds.url,
+                        ds.isDefault && <Tag key="default-tag" name={'default'} colorIndex={1} />,
+                      ]}
+                    </Card.Meta>
+                    <Card.Tags>
+                      <PluginSignatureBadge status={ds.meta.signature} />
+                    </Card.Tags>
+                    <Card.Heading>{ds.name}</Card.Heading>
+                  </Card>
+                );
+              })}
+            <hr />
             {props.datasources //TODO: break this out
               .filter((ds) => ds.name.toLocaleLowerCase().indexOf(filterTerm.toLocaleLowerCase()) !== -1)
               .map((ds) => {

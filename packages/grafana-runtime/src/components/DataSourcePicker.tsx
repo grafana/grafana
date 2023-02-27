@@ -14,7 +14,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { DataSourceJsonData } from '@grafana/schema';
-import { ActionMeta, HorizontalGroup, PluginSignatureBadge, Select, DatasourceSelect } from '@grafana/ui';
+import { ActionMeta, HorizontalGroup, PluginSignatureBadge, Select, DataSourceDrawer } from '@grafana/ui';
 
 import { getDataSourceSrv } from '../services/dataSourceSrv';
 
@@ -35,6 +35,7 @@ export interface DataSourcePickerProps {
   openMenuOnFocus?: boolean;
   placeholder?: string;
   tracing?: boolean;
+  recentlyUsed?: string[];
   mixed?: boolean;
   dashboard?: boolean;
   metrics?: boolean;
@@ -200,6 +201,7 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
       isLoading = false,
       children,
       drawer,
+      recentlyUsed,
     } = this.props;
     const { error } = this.state;
     const options = this.getDataSourceOptions();
@@ -209,14 +211,15 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
     return (
       <div aria-label={selectors.components.DataSourcePicker.container}>
         {drawer ? (
-          <DatasourceSelect
+          <DataSourceDrawer
             datasources={this.getDatasources()}
             onChange={this.onChange}
+            recentlyUsed={recentlyUsed}
             current={this.getCurrentDs()}
             fileUploadOptions={this.props.fileUploadOptions}
           >
             {children}
-          </DatasourceSelect>
+          </DataSourceDrawer>
         ) : (
           <Select
             isLoading={isLoading}

@@ -287,5 +287,5 @@ export * from './PanelChrome/types';
 export { Label as BrowserLabel } from './BrowserLabel/Label';
 export { PanelContainer } from './PanelContainer/PanelContainer';
 
-export { DatasourceSelect } from './DatasourceSelect/DatasourceSelect';
-export * from './DatasourceSelect/types';
+export { DataSourceDrawer } from './DataSourceDrawer/DataSourceDrawer';
+export * from './DataSourceDrawer/types';
