@@ -70,9 +70,10 @@ function DataSourceDisplay(props: {
 }
 
 function DataSourceCard(props: DataSourceCardProps) {
-  const { ds, onChange } = props;
+  const { selected, ds, onChange } = props;
+  const styles = useStyles2(getStyles);
   return (
-    <Card key={ds.uid} onClick={() => onChange(ds.uid)}>
+    <Card className={selected ? styles.selectedDataSource : undefined} key={ds.uid} onClick={() => onChange(ds.uid)}>
       <Card.Figure>
         <img alt={`${ds.meta.name} logo`} src={ds.meta.info.logos.large}></img>
       </Card.Figure>
@@ -88,7 +89,7 @@ function DataSourceCard(props: DataSourceCardProps) {
 }
 
 function PickerContent(props: PickerContentProps) {
-  const { recentlyUsed = [], onChange, fileUploadOptions, onDismiss } = props;
+  const { recentlyUsed = [], onChange, fileUploadOptions, onDismiss, current } = props;
   const changeCallback = useCallback(
     (ds: string) => {
       onChange(ds);
@@ -125,11 +126,21 @@ function PickerContent(props: PickerContentProps) {
               .map((uid) => props.datasources.find((ds) => ds.uid === uid))
               .filter(filterDataSources)
               .map((ds) => (
-                <DataSourceCard key={ds!.uid} ds={ds!} onChange={changeCallback} />
+                <DataSourceCard
+                  selected={isDataSourceMatch(ds, current)}
+                  key={ds!.uid}
+                  ds={ds!}
+                  onChange={changeCallback}
+                />
               ))}
             {recentlyUsed && recentlyUsed.length > 0 && <hr />}
             {props.datasources.filter(filterDataSources).map((ds) => (
-              <DataSourceCard key={ds.uid} ds={ds} onChange={changeCallback} />
+              <DataSourceCard
+                selected={isDataSourceMatch(ds, current)}
+                key={ds.uid}
+                ds={ds}
+                onChange={changeCallback}
+              />
             ))}
           </CustomScrollbar>
         </div>
@@ -159,6 +170,9 @@ function PickerContent(props: PickerContentProps) {
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    selectedDataSource: css`
+      background-color: ${theme.colors.emphasize(theme.colors.background.secondary, 0.1)};
+    `,
     drawerContent: css`
       display: flex;
       flex-direction: column;
@@ -183,4 +197,20 @@ function getStyles(theme: GrafanaTheme2) {
       padding-top: ${theme.spacing(1)};
     `,
   };
+}
+
+function isDataSourceMatch(
+  ds: DataSourceInstanceSettings<DataSourceJsonData> | undefined,
+  current: string | DataSourceInstanceSettings<DataSourceJsonData> | DataSourceRef | null | undefined
+): boolean | undefined {
+  if (!ds) {
+    return false;
+  }
+  if (!current) {
+    return false;
+  }
+  if (typeof current === 'string') {
+    return ds.uid === current;
+  }
+  return ds.uid === current.uid;
 }

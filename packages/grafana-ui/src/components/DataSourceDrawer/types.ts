@@ -14,6 +14,7 @@ export interface DataSourceDrawerProps {
 
 export interface DataSourceCardProps {
   onChange: (uid: string) => void;
+  selected?: boolean;
   ds: DataSourceInstanceSettings<DataSourceJsonData>;
 }
 
