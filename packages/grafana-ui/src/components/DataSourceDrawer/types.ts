@@ -14,6 +14,11 @@ export interface DataSourceDrawerProps {
   recentlyUsed?: string[];
 }
 
+export interface DataSourceCardProps {
+  onChange: (uid: string) => void;
+  ds: DataSourceInstanceSettings<DataSourceJsonData>;
+}
+
 export interface PickerContentProps extends DataSourceDrawerProps {
   onDismiss: () => void;
 }

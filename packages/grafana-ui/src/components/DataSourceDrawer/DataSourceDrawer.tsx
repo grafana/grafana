@@ -14,7 +14,7 @@ import { ModalsController } from '../Modal/ModalsContext';
 import { PluginSignatureBadge } from '../PluginSignatureBadge/PluginSignatureBadge';
 import { Tag } from '../Tags/Tag';
 
-import { PickerContentProps, DataSourceDrawerProps } from './types';
+import { PickerContentProps, DataSourceDrawerProps, DataSourceCardProps } from './types';
 
 export function DataSourceDrawer(props: DataSourceDrawerProps) {
   const { current, onChange } = props;
@@ -69,6 +69,24 @@ function DataSourceDisplay(props: {
   return <span>{ds.uid} - not found</span>;
 }
 
+function DataSourceCard(props: DataSourceCardProps) {
+  const { ds, onChange } = props;
+  return (
+    <Card key={ds.uid} onClick={() => onChange(ds.uid)}>
+      <Card.Figure>
+        <img alt={`${ds.meta.name} logo`} src={ds.meta.info.logos.large}></img>
+      </Card.Figure>
+      <Card.Meta>
+        {[ds.meta.name, ds.url, ds.isDefault && <Tag key="default-tag" name={'default'} colorIndex={1} />]}
+      </Card.Meta>
+      <Card.Tags>
+        <PluginSignatureBadge status={ds.meta.signature} />
+      </Card.Tags>
+      <Card.Heading>{ds.name}</Card.Heading>
+    </Card>
+  );
+}
+
 function PickerContent(props: PickerContentProps) {
   const { recentlyUsed = [], onChange, children, fileUploadOptions, onDismiss } = props;
   const changeCallback = useCallback(
@@ -80,6 +98,8 @@ function PickerContent(props: PickerContentProps) {
   const [filterTerm, onFilterChange] = useState<string>('');
   const styles = useStyles2(getStyles);
 
+  const filterDataSources = (ds: DataSourceInstanceSettings<DataSourceJsonData>): boolean =>
+    ds.name.toLocaleLowerCase().indexOf(filterTerm.toLocaleLowerCase()) !== -1;
   return (
     <Drawer
       closeOnMaskClick={true}
@@ -102,49 +122,14 @@ function PickerContent(props: PickerContentProps) {
           <CustomScrollbar>
             {props.datasources
               .filter((ds) => recentlyUsed.indexOf(ds.uid) !== -1)
-              .map((ds) => {
-                return (
-                  <Card key={ds.uid} onClick={() => changeCallback(ds.uid)}>
-                    <Card.Figure>
-                      <img alt={`${ds.meta.name} logo`} src={ds.meta.info.logos.large}></img>
-                    </Card.Figure>
-                    <Card.Meta>
-                      {[
-                        ds.meta.name,
-                        ds.url,
-                        ds.isDefault && <Tag key="default-tag" name={'default'} colorIndex={1} />,
-                      ]}
-                    </Card.Meta>
-                    <Card.Tags>
-                      <PluginSignatureBadge status={ds.meta.signature} />
-                    </Card.Tags>
-                    <Card.Heading>{ds.name}</Card.Heading>
-                  </Card>
-                );
-              })}
-            <hr />
-            {props.datasources //TODO: break this out
-              .filter((ds) => ds.name.toLocaleLowerCase().indexOf(filterTerm.toLocaleLowerCase()) !== -1)
-              .map((ds) => {
-                return (
-                  <Card key={ds.uid} onClick={() => changeCallback(ds.uid)}>
-                    <Card.Figure>
-                      <img alt={`${ds.meta.name} logo`} src={ds.meta.info.logos.large}></img>
-                    </Card.Figure>
-                    <Card.Meta>
-                      {[
-                        ds.meta.name,
-                        ds.url,
-                        ds.isDefault && <Tag key="default-tag" name={'default'} colorIndex={1} />,
-                      ]}
-                    </Card.Meta>
-                    <Card.Tags>
-                      <PluginSignatureBadge status={ds.meta.signature} />
-                    </Card.Tags>
-                    <Card.Heading>{ds.name}</Card.Heading>
-                  </Card>
-                );
-              })}
+              .filter(filterDataSources)
+              .map((ds) => (
+                <DataSourceCard key={ds.uid} ds={ds} onChange={changeCallback} />
+              ))}
+            {recentlyUsed && recentlyUsed.length > 0 && <hr />}
+            {props.datasources.filter(filterDataSources).map((ds) => (
+              <DataSourceCard key={ds.uid} ds={ds} onChange={changeCallback} />
+            ))}
           </CustomScrollbar>
         </div>
         <div className={styles.additionalContent}>{children}</div>
@@ -154,10 +139,10 @@ function PickerContent(props: PickerContentProps) {
             fileListRenderer={() => undefined}
             options={{
               ...fileUploadOptions,
-              onDrop: (a, f, e) => {
+              onDrop: (...args) => {
                 onDismiss();
                 if (fileUploadOptions?.onDrop) {
-                  fileUploadOptions.onDrop(a, f, e);
+                  fileUploadOptions.onDrop(...args);
                 }
               },
             }}
