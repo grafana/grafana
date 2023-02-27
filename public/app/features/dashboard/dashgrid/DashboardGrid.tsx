@@ -20,6 +20,7 @@ export interface Props {
   isEditable: boolean;
   editPanel: PanelModel | null;
   viewPanel: PanelModel | null;
+  hidePanelMenus?: boolean;
 }
 
 export interface State {
@@ -196,6 +197,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
         isViewing={panel.isViewing}
         width={width}
         height={height}
+        hideMenu={this.props.hidePanelMenus}
       />
     );
   }

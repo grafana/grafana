@@ -187,7 +187,7 @@
     "barchartpanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/grafana-bi-squad"
+        "grafana/dataviz-squad"
       ],
       "currentVersion": [
         0,
@@ -211,7 +211,7 @@
     "bargaugepanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/user-essentials"
+        "grafana/dataviz-squad"
       ],
       "currentVersion": [
         0,
@@ -281,8 +281,8 @@
     "dashboard": {
       "category": "core",
       "codeowners": [
+        "grafana/dataviz-squad",
         "grafana/grafana-as-code",
-        "grafana/grafana-bi-squad",
         "grafana/plugins-platform-frontend",
         "grafana/user-essentials"
       ],
@@ -525,7 +525,7 @@
     "gaugepanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/user-essentials"
+        "grafana/dataviz-squad"
       ],
       "currentVersion": [
         0,
@@ -548,7 +548,9 @@
     },
     "geomappanelcfg": {
       "category": "composable",
-      "codeowners": [],
+      "codeowners": [
+        "grafana/dataviz-squad"
+      ],
       "currentVersion": [
         0,
         0
@@ -556,13 +558,13 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
-        "docs": "n/a",
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/geomappanelcfg/schema-reference",
         "go": "n/a",
-        "schema": "n/a",
-        "ts": "n/a"
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/geomap/panelcfg.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/geomap/panelcfg.gen.ts"
       },
       "machineName": "geomappanelcfg",
-      "maturity": "planned",
+      "maturity": "experimental",
       "name": "GeomapPanelCfg",
       "pluralMachineName": "geomappanelcfgs",
       "pluralName": "GeomapPanelCfgs",
@@ -747,7 +749,7 @@
     "histogrampanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/grafana-bi-squad"
+        "grafana/dataviz-squad"
       ],
       "currentVersion": [
         0,
@@ -837,8 +839,8 @@
     "librarypanel": {
       "category": "core",
       "codeowners": [
+        "grafana/dataviz-squad",
         "grafana/grafana-as-code",
-        "grafana/grafana-bi-squad",
         "grafana/plugins-platform-frontend",
         "grafana/user-essentials"
       ],
@@ -890,7 +892,9 @@
     },
     "logspanelcfg": {
       "category": "composable",
-      "codeowners": [],
+      "codeowners": [
+        "grafana/observability-logs"
+      ],
       "currentVersion": [
         0,
         0
@@ -898,13 +902,13 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
-        "docs": "n/a",
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/logspanelcfg/schema-reference",
         "go": "n/a",
-        "schema": "n/a",
-        "ts": "n/a"
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/logs/panelcfg.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/logs/panelcfg.gen.ts"
       },
       "machineName": "logspanelcfg",
-      "maturity": "planned",
+      "maturity": "experimental",
       "name": "LogsPanelCfg",
       "pluralMachineName": "logspanelcfgs",
       "pluralName": "LogsPanelCfgs",
@@ -1187,7 +1191,7 @@
     "piechartpanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/grafana-bi-squad"
+        "grafana/dataviz-squad"
       ],
       "currentVersion": [
         0,
@@ -1211,8 +1215,8 @@
     "playlist": {
       "category": "core",
       "codeowners": [
+        "grafana/dataviz-squad",
         "grafana/grafana-as-code",
-        "grafana/grafana-bi-squad",
         "grafana/plugins-platform-frontend",
         "grafana/user-essentials"
       ],
@@ -1287,8 +1291,8 @@
     "preferences": {
       "category": "core",
       "codeowners": [
+        "grafana/dataviz-squad",
         "grafana/grafana-as-code",
-        "grafana/grafana-bi-squad",
         "grafana/plugins-platform-frontend",
         "grafana/user-essentials"
       ],
@@ -1363,8 +1367,8 @@
     "publicdashboard": {
       "category": "core",
       "codeowners": [
+        "grafana/dataviz-squad",
         "grafana/grafana-as-code",
-        "grafana/grafana-bi-squad",
         "grafana/plugins-platform-frontend",
         "grafana/user-essentials"
       ],
@@ -1447,8 +1451,8 @@
     "serviceaccount": {
       "category": "core",
       "codeowners": [
+        "grafana/dataviz-squad",
         "grafana/grafana-as-code",
-        "grafana/grafana-bi-squad",
         "grafana/plugins-platform-frontend",
         "grafana/user-essentials"
       ],
@@ -1479,7 +1483,7 @@
     "statetimelinepanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/grafana-bi-squad"
+        "grafana/dataviz-squad"
       ],
       "currentVersion": [
         0,
@@ -1503,7 +1507,7 @@
     "statpanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/user-essentials"
+        "grafana/dataviz-squad"
       ],
       "currentVersion": [
         0,
@@ -1527,7 +1531,7 @@
     "statushistorypanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/grafana-bi-squad"
+        "grafana/dataviz-squad"
       ],
       "currentVersion": [
         0,
@@ -1573,8 +1577,8 @@
     "team": {
       "category": "core",
       "codeowners": [
+        "grafana/dataviz-squad",
         "grafana/grafana-as-code",
-        "grafana/grafana-bi-squad",
         "grafana/plugins-platform-frontend",
         "grafana/user-essentials"
       ],
@@ -1817,7 +1821,7 @@
     "xychartpanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/grafana-bi-squad"
+        "grafana/dataviz-squad"
       ],
       "currentVersion": [
         0,
@@ -1989,8 +1993,10 @@
           "debugpanelcfg",
           "elasticsearchdataquery",
           "gaugepanelcfg",
+          "geomappanelcfg",
           "histogrampanelcfg",
           "librarypanel",
+          "logspanelcfg",
           "lokidataquery",
           "newspanelcfg",
           "nodegraphpanelcfg",
@@ -2005,7 +2011,7 @@
           "textpanelcfg",
           "xychartpanelcfg"
         ],
-        "count": 23
+        "count": 25
       },
       "mature": {
         "name": "mature",
@@ -2041,7 +2047,6 @@
           "elasticsearchdatasourcecfg",
           "flamegraphpanelcfg",
           "folder",
-          "geomappanelcfg",
           "gettingstartedpanelcfg",
           "googlecloudmonitoringdataquery",
           "googlecloudmonitoringdatasourcecfg",
@@ -2054,7 +2059,6 @@
           "jaegerdataquery",
           "jaegerdatasourcecfg",
           "livepanelcfg",
-          "logspanelcfg",
           "lokidatasourcecfg",
           "microsoftsqlserverdataquery",
           "microsoftsqlserverdatasourcecfg",
@@ -2078,7 +2082,7 @@
           "zipkindataquery",
           "zipkindatasourcecfg"
         ],
-        "count": 48
+        "count": 46
       },
       "stable": {
         "name": "stable",

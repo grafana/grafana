@@ -13,7 +13,7 @@ describe('getPluginExtensions', () => {
             type: 'link',
             title: 'Declare incident',
             description: 'Declaring an incident in the app',
-            href: `/a/${pluginId}/declare-incident`,
+            path: `/a/${pluginId}/declare-incident`,
             key: 1,
           },
         ],
@@ -22,26 +22,26 @@ describe('getPluginExtensions', () => {
 
     it('should return a collection of extensions to the plugin', () => {
       const { extensions, error } = getPluginExtensions({
-        target: `plugins/${pluginId}/${linkId}`,
+        placement: `plugins/${pluginId}/${linkId}`,
       });
 
-      expect(extensions[0].href).toBe(`/a/${pluginId}/declare-incident`);
+      expect(extensions[0].path).toBe(`/a/${pluginId}/declare-incident`);
       expect(error).toBeUndefined();
     });
 
     it('should return a description for the requested link', () => {
       const { extensions, error } = getPluginExtensions({
-        target: `plugins/${pluginId}/${linkId}`,
+        placement: `plugins/${pluginId}/${linkId}`,
       });
 
-      expect(extensions[0].href).toBe(`/a/${pluginId}/declare-incident`);
+      expect(extensions[0].path).toBe(`/a/${pluginId}/declare-incident`);
       expect(extensions[0].description).toBe('Declaring an incident in the app');
       expect(error).toBeUndefined();
     });
 
     it('should return an empty array when no links can be found', () => {
       const { extensions, error } = getPluginExtensions({
-        target: `an-unknown-app/${linkId}`,
+        placement: `an-unknown-app/${linkId}`,
       });
 
       expect(extensions.length).toBe(0);

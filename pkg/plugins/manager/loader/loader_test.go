@@ -412,7 +412,7 @@ func TestLoader_Load(t *testing.T) {
 			name:  "Load CDN plugin",
 			class: plugins.External,
 			cfg: &config.Cfg{
-				PluginsCDNURLTemplate: "https://cdn.example.com/{id}/{version}/public/plugins/{id}/{assetPath}",
+				PluginsCDNURLTemplate: "https://cdn.example.com",
 				PluginSettings: setting.PluginSettings{
 					"grafana-worldmap-panel": {"cdn": "true"},
 				},
@@ -502,14 +502,14 @@ func TestLoader_Load(t *testing.T) {
 					},
 					Extensions: []*plugindef.ExtensionsLink{
 						{
-							Target:      "plugins/grafana-slo-app/slo-breach",
+							Placement:   "plugins/grafana-slo-app/slo-breach",
 							Title:       "Declare incident",
 							Type:        plugindef.ExtensionsLinkTypeLink,
 							Description: "Declares a new incident",
 							Path:        "/incidents/declare",
 						},
 						{
-							Target:      "plugins/grafana-slo-app/slo-breach",
+							Placement:   "plugins/grafana-slo-app/slo-breach",
 							Title:       "Declare incident",
 							Type:        plugindef.ExtensionsLinkTypeLink,
 							Description: "Declares a new incident (path without backslash)",

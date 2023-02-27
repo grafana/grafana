@@ -177,8 +177,7 @@ func (sch *schedule) DeleteAlertRule(keys ...ngmodels.AlertRuleKey) {
 	}
 	// Our best bet at this point is that we update the metrics with what we hope to schedule in the next tick.
 	alertRules, _ := sch.schedulableAlertRules.all()
-	sch.metrics.SchedulableAlertRules.Set(float64(len(alertRules)))
-	sch.metrics.SchedulableAlertRulesHash.Set(float64(hashUIDs(alertRules)))
+	sch.updateRulesMetrics(alertRules)
 }
 
 func (sch *schedule) schedulePeriodic(ctx context.Context, t *ticker.T) error {
@@ -209,6 +208,28 @@ type readyToRunItem struct {
 	evaluation
 }
 
+func (sch *schedule) updateRulesMetrics(alertRules []*ngmodels.AlertRule) {
+	orgs := make(map[int64]int64, len(alertRules))
+	orgsPaused := make(map[int64]int64, len(alertRules))
+	for _, rule := range alertRules {
+		orgs[rule.OrgID]++
+		if rule.IsPaused {
+			orgsPaused[rule.OrgID]++
+		}
+	}
+
+	for orgID, numRules := range orgs {
+		numRulesPaused := orgsPaused[orgID]
+		sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(orgID), metrics.AlertRuleActiveLabelValue).Set(float64(numRules - numRulesPaused))
+		sch.metrics.GroupRules.WithLabelValues(fmt.Sprint(orgID), metrics.AlertRulePausedLabelValue).Set(float64(numRulesPaused))
+	}
+
+	// While these are the rules that we iterate over, at the moment there's no 100% guarantee that they'll be
+	// scheduled as rules could be removed before we get a chance to evaluate them.
+	sch.metrics.SchedulableAlertRules.Set(float64(len(alertRules)))
+	sch.metrics.SchedulableAlertRulesHash.Set(float64(hashUIDs(alertRules)))
+}
+
 func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.Group, tick time.Time) ([]readyToRunItem, map[ngmodels.AlertRuleKey]struct{}) {
 	tickNum := tick.Unix() / int64(sch.baseInterval.Seconds())
 
@@ -223,10 +244,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 	// so, at the end, the remaining registered alert rules are the deleted ones
 	registeredDefinitions := sch.registry.keyMap()
 
-	// While these are the rules that we iterate over, at the moment there's no 100% guarantee that they'll be
-	// scheduled as rules could be removed before we get a chance to evaluate them.
-	sch.metrics.SchedulableAlertRules.Set(float64(len(alertRules)))
-	sch.metrics.SchedulableAlertRulesHash.Set(float64(hashUIDs(alertRules)))
+	sch.updateRulesMetrics(alertRules)
 
 	readyToRun := make([]readyToRunItem, 0)
 	missingFolder := make(map[string][]string)

@@ -19,10 +19,10 @@ import (
 )
 
 // GET /api/user/signup/options
-func GetSignUpOptions(c *contextmodel.ReqContext) response.Response {
+func (hs *HTTPServer) GetSignUpOptions(c *contextmodel.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, util.DynMap{
 		"verifyEmailEnabled": setting.VerifyEmailEnabled,
-		"autoAssignOrg":      setting.AutoAssignOrg,
+		"autoAssignOrg":      hs.Cfg.AutoAssignOrg,
 	})
 }
 

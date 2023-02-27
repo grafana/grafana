@@ -1,8 +1,9 @@
-import { waitFor, screen, within, waitForElementToBeRemoved } from '@testing-library/react';
+import { screen, waitFor, waitForElementToBeRemoved, within } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
+import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { byRole } from 'testing-library-selector';
 
 import { setDataSourceSrv } from '@grafana/runtime';
@@ -19,7 +20,6 @@ import { disableRBAC, mockDataSource, MockDataSourceSrv } from './mocks';
 import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
 import * as config from './utils/config';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
-import { getDefaultQueries } from './utils/rule-form';
 
 jest.mock('./components/rule-editor/ExpressionEditor', () => ({
   // eslint-disable-next-line react/display-name
@@ -74,11 +74,14 @@ describe('RuleEditor grafana managed rules', () => {
           name: 'Prom',
           isDefault: true,
         },
-        { alerting: false }
+        { alerting: true }
       ),
     };
 
-    setDataSourceSrv(new MockDataSourceSrv(dataSources));
+    const dsServer = new MockDataSourceSrv(dataSources);
+    jest.spyOn(dsServer, 'get').mockResolvedValue(new MockDataSourceApi('ds'));
+
+    setDataSourceSrv(dsServer);
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     mocks.api.setRulerRuleGroup.mockResolvedValue();
     mocks.api.fetchRulerRulesNamespace.mockResolvedValue([]);
@@ -121,6 +124,7 @@ describe('RuleEditor grafana managed rules', () => {
         rulerApiEnabled: false,
       },
     });
+
     renderRuleEditor();
     await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
 
@@ -142,6 +146,7 @@ describe('RuleEditor grafana managed rules', () => {
 
     // save and check what was sent to backend
     await userEvent.click(ui.buttons.save.get());
+
     // 9seg
     await waitFor(() => expect(mocks.api.setRulerRuleGroup).toHaveBeenCalled());
     // 9seg
@@ -149,20 +154,107 @@ describe('RuleEditor grafana managed rules', () => {
       { dataSourceName: GRAFANA_RULES_SOURCE_NAME, apiVersion: 'legacy' },
       'Folder A',
       {
-        interval: '1m',
         name: 'group1',
+        interval: '1m',
         rules: [
           {
-            annotations: { description: 'some description' },
-            labels: { severity: 'warn' },
-            for: '5m',
             grafana_alert: {
-              condition: 'B',
-              data: getDefaultQueries(),
-              exec_err_state: GrafanaAlertStateDecision.Error,
-              is_paused: false,
-              no_data_state: 'NoData',
               title: 'my great new rule',
+              condition: 'C',
+              no_data_state: 'NoData',
+              exec_err_state: GrafanaAlertStateDecision.Error,
+              data: [
+                {
+                  refId: 'A',
+                  relativeTimeRange: {
+                    from: 600,
+                    to: 0,
+                  },
+                  datasourceUid: 'mock-ds-2',
+                  model: {
+                    hide: false,
+                    refId: 'A',
+                  },
+                  queryType: '',
+                },
+                {
+                  refId: 'B',
+                  datasourceUid: '__expr__',
+                  queryType: '',
+                  model: {
+                    refId: 'B',
+                    hide: false,
+                    type: 'reduce',
+                    datasource: {
+                      uid: '__expr__',
+                      type: '__expr__',
+                    },
+                    conditions: [
+                      {
+                        type: 'query',
+                        evaluator: {
+                          params: [],
+                          type: 'gt',
+                        },
+                        operator: {
+                          type: 'and',
+                        },
+                        query: {
+                          params: ['B'],
+                        },
+                        reducer: {
+                          params: [],
+                          type: 'last',
+                        },
+                      },
+                    ],
+                    reducer: 'last',
+                    expression: 'A',
+                  },
+                },
+                {
+                  refId: 'C',
+                  datasourceUid: '__expr__',
+                  queryType: '',
+                  model: {
+                    refId: 'C',
+                    hide: false,
+                    type: 'threshold',
+                    datasource: {
+                      uid: '__expr__',
+                      type: '__expr__',
+                    },
+                    conditions: [
+                      {
+                        type: 'query',
+                        evaluator: {
+                          params: [0],
+                          type: 'gt',
+                        },
+                        operator: {
+                          type: 'and',
+                        },
+                        query: {
+                          params: ['C'],
+                        },
+                        reducer: {
+                          params: [],
+                          type: 'last',
+                        },
+                      },
+                    ],
+                    expression: 'B',
+                  },
+                },
+              ],
+              is_paused: false,
+            },
+            for: '5m',
+            annotations: {
+              description: 'some description',
+            },
+            labels: {
+              severity: 'warn',
             },
           },
         ],

@@ -36,14 +36,14 @@
   ],
   "extensions": [
     {
-      "target": "plugins/grafana-slo-app/slo-breach",
+      "placement": "plugins/grafana-slo-app/slo-breach",
       "type": "link",
       "title": "Declare incident",
       "description": "Declares a new incident",
       "path": "/incidents/declare"
     },
     {
-      "target": "plugins/grafana-slo-app/slo-breach",
+      "placement": "plugins/grafana-slo-app/slo-breach",
       "type": "link",
       "title": "Declare incident",
       "description": "Declares a new incident (path without backslash)",

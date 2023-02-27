@@ -157,6 +157,14 @@ export function messageFromError(e: Error | FetchError | SerializedError): strin
   return (e as Error)?.message || String(e);
 }
 
+export function isAsyncRequestMapSliceSettled<T>(slice: AsyncRequestMapSlice<T>): boolean {
+  return Object.values(slice).every(isAsyncRequestStateSettled);
+}
+
+export function isAsyncRequestStateSettled<T>(state: AsyncRequestState<T>): boolean {
+  return state.dispatched && !state.loading;
+}
+
 export function isAsyncRequestMapSliceFulfilled<T>(slice: AsyncRequestMapSlice<T>): boolean {
   return Object.values(slice).every(isAsyncRequestStateFulfilled);
 }
