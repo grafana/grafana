@@ -574,6 +574,10 @@ type AlertmanagerConfig struct {
 	ServiceDiscoveryConfigs discovery.Configs       `yaml:"-"`
 	HTTPClientConfig        config.HTTPClientConfig `yaml:",inline"`
 
+	// Info: change in fork
+	// HTTP header fields for the HTTP Request to this Alertmanager
+	Headers map[string]string
+
 	// The URL scheme to use when talking to Alertmanagers.
 	Scheme string `yaml:"scheme,omitempty"`
 	// Path prefix to add in front of the push endpoint path.
