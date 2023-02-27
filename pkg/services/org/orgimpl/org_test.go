@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/org"
@@ -19,35 +20,47 @@ func TestOrgService(t *testing.T) {
 	}
 
 	t.Run("create org", func(t *testing.T) {
-		_, err := orgService.GetIDForNewUser(context.Background(), org.GetOrgIDForNewUserCommand{})
+		orgService.cfg.AutoAssignOrg = false
+		orgService.cfg.AutoAssignOrgId = 1
+		orgStore.ExpectedOrgID = 3
+		id, err := orgService.GetIDForNewUser(context.Background(), org.GetOrgIDForNewUserCommand{})
 		require.NoError(t, err)
+		assert.Equal(t, int64(3), id)
 	})
 
-	t.Run("create org", func(t *testing.T) {
-		_, err := orgService.GetIDForNewUser(context.Background(), org.GetOrgIDForNewUserCommand{})
+	// Should return a new org instead of the org defined in the command
+	t.Run("no autoassign - org defined", func(t *testing.T) {
+		orgService.cfg.AutoAssignOrg = false
+		orgService.cfg.AutoAssignOrgId = 1
+		orgStore.ExpectedOrgID = 3
+		orgStore.ExpectedOrg = &org.Org{ID: 1}
+		id, err := orgService.GetIDForNewUser(context.Background(), org.GetOrgIDForNewUserCommand{OrgID: 1})
 		require.NoError(t, err)
+		assert.Equal(t, int64(3), id)
 	})
 
 	t.Run("create org with auto assign org ID", func(t *testing.T) {
-		setting.AutoAssignOrg = true
-		setting.AutoAssignOrgId = 1
+		orgService.cfg.AutoAssignOrg = true
+		orgService.cfg.AutoAssignOrgId = 1
 		orgStore.ExpectedOrgID = 1
-		orgStore.ExpectedOrg = &org.Org{}
-		_, err := orgService.GetIDForNewUser(context.Background(), org.GetOrgIDForNewUserCommand{})
+		orgStore.ExpectedOrg = &org.Org{ID: 1}
+		id, err := orgService.GetIDForNewUser(context.Background(), org.GetOrgIDForNewUserCommand{})
 		require.NoError(t, err)
+		assert.Equal(t, int64(1), id)
 	})
 
 	t.Run("create org with auto assign org ID and orgID", func(t *testing.T) {
-		setting.AutoAssignOrg = true
-		setting.AutoAssignOrgId = 1
+		orgService.cfg.AutoAssignOrg = true
+		orgService.cfg.AutoAssignOrgId = 1
 		orgStore.ExpectedOrgID = 1
-		orgStore.ExpectedOrg = &org.Org{}
-		_, err := orgService.GetIDForNewUser(context.Background(), org.GetOrgIDForNewUserCommand{OrgID: 1})
+		orgStore.ExpectedOrg = &org.Org{ID: 1}
+		id, err := orgService.GetIDForNewUser(context.Background(), org.GetOrgIDForNewUserCommand{OrgID: 1})
 		require.NoError(t, err)
+		assert.Equal(t, int64(1), id)
 	})
 
-	setting.AutoAssignOrg = false
-	setting.AutoAssignOrgId = 0
+	orgService.cfg.AutoAssignOrg = false
+	orgService.cfg.AutoAssignOrgId = 0
 
 	t.Run("delete user from all orgs", func(t *testing.T) {
 		err := orgService.DeleteUserFromAll(context.Background(), 1)
