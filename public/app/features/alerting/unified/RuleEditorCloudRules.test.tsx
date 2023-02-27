@@ -1,8 +1,9 @@
-import { waitFor, screen, within, waitForElementToBeRemoved } from '@testing-library/react';
+import { screen, waitFor, waitForElementToBeRemoved, within } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption } from 'test/helpers/selectOptionInTest';
+import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { byRole } from 'testing-library-selector';
 
 import { setDataSourceSrv } from '@grafana/runtime';
@@ -79,8 +80,10 @@ describe('RuleEditor cloud', () => {
         { alerting: true }
       ),
     };
+    const dsServer = new MockDataSourceSrv(dataSources);
+    jest.spyOn(dsServer, 'get').mockResolvedValue(new MockDataSourceApi('ds'));
 
-    setDataSourceSrv(new MockDataSourceSrv(dataSources));
+    setDataSourceSrv(dsServer);
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     mocks.api.setRulerRuleGroup.mockResolvedValue();
     mocks.api.fetchRulerRulesNamespace.mockResolvedValue([]);

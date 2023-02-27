@@ -41,8 +41,8 @@ export const DeletePublicDashboardButton = ({
     <ModalsController>
       {({ showModal, hideModal }) => (
         <Button
-          aria-label="Delete public dashboard"
-          title="Delete public dashboard"
+          aria-label="Revoke public URL"
+          title="Revoke public URL"
           onClick={() =>
             showModal(DeletePublicDashboardModal, {
               dashboardTitle: publicDashboard.title,
