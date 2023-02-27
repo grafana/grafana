@@ -44,6 +44,10 @@ func setUpGetOrgUsersDB(t *testing.T, sqlStore *sqlstore.SQLStore) {
 	usrSvc, err := userimpl.ProvideService(sqlStore, orgService, sqlStore.Cfg, nil, nil, quotaService)
 	require.NoError(t, err)
 
+	id, err := orgService.GetOrCreate(context.Background(), "testOrg")
+	require.NoError(t, err)
+	require.Equal(t, testOrgID, id)
+
 	_, err = usrSvc.Create(context.Background(), &user.CreateUserCommand{Email: "testUser@grafana.com", Login: testUserLogin})
 	require.NoError(t, err)
 	_, err = usrSvc.Create(context.Background(), &user.CreateUserCommand{Email: "user1@grafana.com", Login: "user1"})
