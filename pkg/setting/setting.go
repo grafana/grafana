@@ -102,7 +102,6 @@ var (
 	ExternalUserMngLinkUrl  string
 	ExternalUserMngLinkName string
 	ExternalUserMngInfo     string
-	OAuthAutoLogin          bool
 	ViewersCanEdit          bool
 
 	// HTTP auth
@@ -298,6 +297,7 @@ type Cfg struct {
 	AuthProxySyncTTL          int
 
 	// OAuth
+	OAuthAutoLogin    bool
 	OAuthCookieMaxAge int
 
 	// JWT Auth
@@ -1440,8 +1440,8 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
 
 	// Deprecated
-	OAuthAutoLogin = auth.Key("oauth_auto_login").MustBool(false)
-	if OAuthAutoLogin {
+	cfg.OAuthAutoLogin = auth.Key("oauth_auto_login").MustBool(false)
+	if cfg.OAuthAutoLogin {
 		cfg.Logger.Warn("[Deprecated] The oauth_auto_login configuration setting is deprecated. Please use auto_login inside auth provider section instead.")
 	}
 
