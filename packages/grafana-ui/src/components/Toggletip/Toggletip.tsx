@@ -87,12 +87,7 @@ export const Toggletip = React.memo(
               ref={setTooltipRef}
               {...getTooltipProps({ className: style.container })}
             >
-              {boolean(title) && (
-                <div className={style.header}>
-                  {typeof title === 'string' && title}
-                  {title && React.isValidElement(title) && React.cloneElement(title)}
-                </div>
-              )}
+              {Boolean(title) && <div className={style.header}>{title}</div>}
               {closeButton && (
                 <div data-testid="toggletip-header-close" className={style.headerClose}>
                   <IconButton
@@ -105,16 +100,10 @@ export const Toggletip = React.memo(
               )}
               <div ref={contentRef} {...getArrowProps({ className: style.arrow })} />
               <div className={style.body}>
-                {typeof content === 'string' && content}
-                {React.isValidElement(content) && React.cloneElement(content)}
+                {(typeof content === 'string' || React.isValidElement(content)) && content}
                 {typeof content === 'function' && update && content({ update })}
               </div>
-              {!!footer && (
-                <div className={style.footer}>
-                  {typeof footer === 'string' && footer}
-                  {footer && React.isValidElement(footer) && React.cloneElement(footer)}
-                </div>
-              )}
+              {Boolean(footer) && <div className={style.footer}>{footer}</div>}
             </div>
           </Portal>
         )}
@@ -126,7 +115,7 @@ export const Toggletip = React.memo(
 Toggletip.displayName = 'Toggletip';
 
 function getStyles(theme: GrafanaTheme2) {
-function buildToggletipTheme(toggletipBg: string, toggletipBorder: string, toggletipText: string) {
+  function buildToggletipTheme(toggletipBg: string, toggletipBorder: string, toggletipText: string) {
     return {
       arrow: css`
         height: 1rem;
