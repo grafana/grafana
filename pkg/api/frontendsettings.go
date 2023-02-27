@@ -132,7 +132,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		FeedbackLinksEnabled:                hs.Cfg.FeedbackLinksEnabled,
 		ApplicationInsightsConnectionString: hs.Cfg.ApplicationInsightsConnectionString,
 		ApplicationInsightsEndpointUrl:      hs.Cfg.ApplicationInsightsEndpointUrl,
-		DisableLoginForm:                    setting.DisableLoginForm,
+		DisableLoginForm:                    hs.Cfg.DisableLoginForm,
 		DisableUserSignUp:                   !setting.AllowUserSignUp,
 		LoginHint:                           setting.LoginHint,
 		PasswordHint:                        setting.PasswordHint,

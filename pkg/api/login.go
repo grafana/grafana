@@ -245,7 +245,7 @@ func (hs *HTTPServer) LoginPost(c *contextmodel.ReqContext) response.Response {
 		}, c)
 	}()
 
-	if setting.DisableLoginForm {
+	if hs.Cfg.DisableLoginForm {
 		resp = response.Error(http.StatusUnauthorized, "Login is disabled", nil)
 		return resp
 	}
