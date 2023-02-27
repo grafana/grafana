@@ -11,7 +11,7 @@ import (
 )
 
 // CRDWatcherJenny generates WatcherWrapper implementations for a CRD.
-func CRDWatcherJenny(path string) OneToOne {
+func CRDWatcherJenny(path string) OneToMany {
 	return crdWatcherJenny{
 		parentpath: path,
 	}
@@ -25,7 +25,8 @@ func (j crdWatcherJenny) JennyName() string {
 	return "CRDWatcherJenny"
 }
 
-func (j crdWatcherJenny) Generate(kind kindsys.Kind) (*codejen.File, error) {
+func (j crdWatcherJenny) Generate(kind kindsys.Kind) (codejen.Files, error) {
+	files := make(codejen.Files, 0)
 	_, isCore := kind.(kindsys.Core)
 	_, isCustom := kind.(kindsys.Core)
 	if !(isCore || isCustom) {
@@ -47,13 +48,17 @@ func (j crdWatcherJenny) Generate(kind kindsys.Kind) (*codejen.File, error) {
 		return nil, err
 	}
 
-	codejen.NewFile(path, b, j)
+	file := codejen.NewFile(path, b, j)
+	if file == nil {
+		return nil, fmt.Errorf("failed to create file %q", path)
+	}
+	files = append(files, *file)
 
 	// check if watcher impl exists
 	// if it does, then we don't want to overwrite it
 	path = filepath.Join("..", j.parentpath, name, "watcher.go")
 	if _, err = os.Stat(path); err == nil {
-		return nil, nil
+		return files, nil
 	}
 
 	buf = new(bytes.Buffer)
@@ -70,5 +75,11 @@ func (j crdWatcherJenny) Generate(kind kindsys.Kind) (*codejen.File, error) {
 		return nil, err
 	}
 
-	return codejen.NewFile(path, b, j), nil
+	file = codejen.NewFile(path, b, j)
+	if file == nil {
+		return nil, fmt.Errorf("failed to create file %q", path)
+	}
+	files = append(files, *file)
+
+	return files, nil
 }

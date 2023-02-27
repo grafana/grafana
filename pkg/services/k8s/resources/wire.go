@@ -8,4 +8,5 @@ import (
 
 var WireSet = wire.NewSet(
 	dashboard.WireSet,
+	GeneratedWireSet,
 )

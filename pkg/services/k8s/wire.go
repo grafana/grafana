@@ -10,5 +10,5 @@ import (
 var WireSet = wire.NewSet(
 	client.WireSet,
 	informer.WireSet,
-	resources.GeneratedWireSet,
+	resources.WireSet,
 )
