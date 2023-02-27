@@ -61,7 +61,7 @@ export const ResultItem = React.forwardRef(
             ))}
             <span>{name}</span>
           </div>
-          {action.subtitle && <div className={styles.subtitleText}>{action.subtitle}</div>}
+          {action.subtitle && <span className={styles.subtitleText}>{action.subtitle}</span>}
         </div>
       </div>
     );
