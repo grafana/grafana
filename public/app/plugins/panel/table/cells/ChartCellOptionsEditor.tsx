@@ -47,7 +47,7 @@ export const ChartCellOptionsEditor = (props: TableCellEditorProps<TableChartCel
         return (
           <Field label={item.name} key={item.id} className={style.field}>
             <Editor
-              onChange={(val) => onChange({ ...cellOptions, [item.path]: val })}
+              onChange={(val) => onChange({ ...cellOptions, [path]: val })}
               value={(isOptionKey(path, cellOptions) ? cellOptions[path] : undefined) ?? item.defaultValue}
               item={item}
               context={{ data: [] }}

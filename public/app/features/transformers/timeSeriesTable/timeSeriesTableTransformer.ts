@@ -27,7 +27,7 @@ export const timeSeriesTableTransformer: DataTransformerInfo<TimeSeriesTableTran
 };
 
 /*
-For each refId (queryName) convert all time series frames intol a single table frame, adding each series
+For each refId (queryName) convert all time series frames into a single table frame, adding each series
 as values of a "Trend" frame field. This allows "Trend" to be rendered as area chart type.
 Any non time series frames are returned as is. 
 */
