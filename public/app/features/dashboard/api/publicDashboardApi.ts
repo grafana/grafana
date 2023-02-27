@@ -16,9 +16,6 @@ type ReqOptions = {
   showErrorAlert?: boolean;
 };
 
-/**
- * Type predicate to narrow an unknown error to an object with a string 'message' property
- */
 function isFetchBaseQueryError(error: unknown): error is { error: FetchError } {
   return typeof error === 'object' && error != null && 'error' in error;
 }
