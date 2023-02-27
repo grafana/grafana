@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/hashicorp/go-multierror"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -62,12 +63,14 @@ func ProvideService(
 	socialService social.Service, cache *remotecache.RemoteCache,
 	ldapService service.LDAP,
 ) *Service {
+
 	s := &Service{
 		log:            log.New("authn.service"),
 		cfg:            cfg,
 		clients:        make(map[string]authn.Client),
 		clientQueue:    newQueue[authn.ContextAwareClient](),
 		tracer:         tracer,
+		metrics:        newMetrics(prometheus.DefaultRegisterer),
 		sessionService: sessionService,
 		postAuthHooks:  newQueue[authn.PostAuthHookFn](),
 		postLoginHooks: newQueue[authn.PostLoginHookFn](),
@@ -164,7 +167,9 @@ type Service struct {
 	clients     map[string]authn.Client
 	clientQueue *queue[authn.ContextAwareClient]
 
-	tracer         tracing.Tracer
+	tracer  tracing.Tracer
+	metrics *metrics
+
 	sessionService auth.UserTokenService
 
 	// postAuthHooks are called after a successful authentication. They can modify the identity.
@@ -246,11 +251,13 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (i
 
 	c, ok := s.clients[client]
 	if !ok {
+		s.metrics.failedLogin.WithLabelValues(client).Inc()
 		return nil, authn.ErrClientNotConfigured.Errorf("client not configured: %s", client)
 	}
 
 	identity, err = s.authenticate(ctx, c, r)
 	if err != nil {
+		s.metrics.failedLogin.WithLabelValues(client).Inc()
 		return nil, err
 	}
 
@@ -258,21 +265,25 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (i
 
 	// Login is only supported for users
 	if namespace != authn.NamespaceUser || id <= 0 {
+		s.metrics.failedLogin.WithLabelValues(client).Inc()
 		return nil, authn.ErrUnsupportedIdentity.Errorf("expected identity of type user but got: %s", namespace)
 	}
 
 	addr := web.RemoteAddr(r.HTTPRequest)
 	ip, err := network.GetIPFromAddress(addr)
 	if err != nil {
+		s.metrics.failedLogin.WithLabelValues(client).Inc()
 		s.log.FromContext(ctx).Debug("Failed to parse ip from address", "client", c.Name(), "id", identity.ID, "addr", addr, "error", err)
 	}
 
 	sessionToken, err := s.sessionService.CreateToken(ctx, &user.User{ID: id}, ip, r.HTTPRequest.UserAgent())
 	if err != nil {
+		s.metrics.failedLogin.WithLabelValues(client).Inc()
 		s.log.FromContext(ctx).Error("Failed to create session", "client", client, "id", identity.ID, "err", err)
 		return nil, err
 	}
 
+	s.metrics.successfulLogin.WithLabelValues(client).Inc()
 	identity.SessionToken = sessionToken
 	return identity, nil
 }
