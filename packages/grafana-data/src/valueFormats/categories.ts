@@ -72,21 +72,21 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'G unit', id: 'accG', fn: toFixedUnit('g') },
     ],
   },
-  {
-    name: 'Business Intel',
-    formats: [
-      { name: 'Percent Increase (\u2191_%)', id: 'percentincrease', fn: toIncreasingPercent },
-      { name: 'Percent Decrease (\u2193_%)', id: 'percentdecrease', fn: toDecreasingPercent },
-      { name: 'Less than (<_)', id: 'lessThan', fn: addBIPrefix('lessThan') },
-      { name: 'Greater than (>_)', id: 'greaterThan', fn: addBIPrefix('greaterThan') },
-      { name: 'Approximately (~_)', id: 'approximately', fn: addBIPrefix('approximately') },
-      { name: 'Fiscal quarter (FQ_)', id: 'fiscalQuarter', fn: addBIPrefix('fiscalQuarter') },
-      { name: 'Quarter (Qtr_)', id: 'quarter', fn: addBIPrefix('quarter') },
-      { name: 'Fiscal year (FY_)', id: 'fiscalYear', fn: addBIPrefix('fiscalYear') },
-      { name: 'Delta (\u0394_)', id: 'delta', fn: addBIPrefix('delta') },
-      { name: 'Mean (\u00B5_)', id: 'mean', fn: addBIPrefix('mean') },
-    ],
-  },
+  // {
+  //   name: 'Business Intel',
+  //   formats: [
+  //     { name: 'Percent Increase (\u2191_%)', id: 'percentincrease', fn: toIncreasingPercent },
+  //     { name: 'Percent Decrease (\u2193_%)', id: 'percentdecrease', fn: toDecreasingPercent },
+  //     { name: 'Less than (<_)', id: 'lessThan', fn: addBIPrefix('lessThan') },
+  //     { name: 'Greater than (>_)', id: 'greaterThan', fn: addBIPrefix('greaterThan') },
+  //     { name: 'Approximately (~_)', id: 'approximately', fn: addBIPrefix('approximately') },
+  //     { name: 'Fiscal quarter (FQ_)', id: 'fiscalQuarter', fn: addBIPrefix('fiscalQuarter') },
+  //     { name: 'Quarter (Qtr_)', id: 'quarter', fn: addBIPrefix('quarter') },
+  //     { name: 'Fiscal year (FY_)', id: 'fiscalYear', fn: addBIPrefix('fiscalYear') },
+  //     { name: 'Delta (\u0394_)', id: 'delta', fn: addBIPrefix('delta') },
+  //     { name: 'Mean (\u00B5_)', id: 'mean', fn: addBIPrefix('mean') },
+  //   ],
+  // },
   {
     name: 'Angle',
     formats: [
@@ -439,3 +439,23 @@ export const getCategories = (): ValueFormatCategory[] => [
     ],
   },
 ];
+
+export const getOverwriteSymbols = (): ValueFormatCategory[] => {
+  return [
+    {
+      name: 'Overwrite Symbols',
+      formats: [
+        // { name: 'Percent Increase (\u2191_%)', id: 'percentincrease', fn: toIncreasingPercent },
+        // { name: 'Percent Decrease (\u2193_%)', id: 'percentdecrease', fn: toDecreasingPercent },
+        { name: 'Less than (<_)', id: 'lessThan', fn: addBIPrefix('lessThan') },
+        { name: 'Greater than (>_)', id: 'greaterThan', fn: addBIPrefix('greaterThan') },
+        { name: 'Approximately (~_)', id: 'approximately', fn: addBIPrefix('approximately') },
+        { name: 'Fiscal quarter (FQ_)', id: 'fiscalQuarter', fn: addBIPrefix('fiscalQuarter') },
+        { name: 'Quarter (Qtr_)', id: 'quarter', fn: addBIPrefix('quarter') },
+        { name: 'Fiscal year (FY_)', id: 'fiscalYear', fn: addBIPrefix('fiscalYear') },
+        { name: 'Delta (\u0394_)', id: 'delta', fn: addBIPrefix('delta') },
+        { name: 'Mean (\u00B5_)', id: 'mean', fn: addBIPrefix('mean') },
+      ],
+    },
+  ];
+};

@@ -9,7 +9,26 @@ import { defaultPanelOptions, PanelOptions } from './panelcfg.gen';
 import { StatSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<PanelOptions>(StatPanel)
-  .useFieldConfig()
+  .useFieldConfig({
+    useCustomConfig: (builder) => {
+      builder.addSelect({
+        path: 'unitFormattingOverride',
+        name: 'Unit formatting override',
+        description: 'Prepend the standard unit formats with a number of options',
+        category: ['Unit formatting override'],
+        settings: {
+          options: [
+            { value: BigValueTextMode.Auto, label: 'Auto' },
+            { value: BigValueTextMode.Value, label: 'Value' },
+            { value: BigValueTextMode.ValueAndName, label: 'Value and name' },
+            { value: BigValueTextMode.Name, label: 'Name' },
+            { value: BigValueTextMode.None, label: 'None' },
+          ],
+        },
+        defaultValue: defaultPanelOptions.textMode,
+      });
+    },
+  })
   .setPanelOptions((builder) => {
     const mainCategory = ['Stat styles'];
 
