@@ -16,14 +16,14 @@ export function toPercentUnit(size: number | null, decimals: DecimalCount): Form
   return { text: toFixed(100 * size, decimals), suffix: '%' };
 }
 
-export function toIncreasingPercent(size: number | null, decimals: DecimalCount) {
+export function toIncreasingPercent(size: number | null, decimals: DecimalCount): FormattedValue {
   if (size === null) {
     return { text: '' };
   }
   return { text: toFixed(size, decimals), suffix: '%', prefix: '\u2191' };
 }
 
-export function toDecreasingPercent(size: number | null, decimals: DecimalCount) {
+export function toDecreasingPercent(size: number | null, decimals: DecimalCount): FormattedValue {
   if (size === null) {
     return { text: '' };
   }

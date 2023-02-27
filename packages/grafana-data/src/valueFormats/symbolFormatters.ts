@@ -1,6 +1,6 @@
 import { DecimalCount } from '../types/displayValue';
 
-import { scaledUnits, ValueFormatter } from './valueFormats';
+import { scaledUnits, ValueFormatter, FormattedValue, toFixed } from './valueFormats';
 
 export function currency(symbol: string, asSuffix?: boolean): ValueFormatter {
   const units = ['', 'K', 'M', 'B', 'T'];
@@ -16,6 +16,31 @@ export function currency(symbol: string, asSuffix?: boolean): ValueFormatter {
       scaled.prefix = symbol;
     }
     return scaled;
+  };
+}
+
+export function addBIPrefix(prefixKey: string): ValueFormatter {
+  return (value: number, decimals: DecimalCount): FormattedValue => {
+    const symbolMap: { [key: string]: string } = {
+      lessThan: '<',
+      greaterThan: '>',
+      approximately: '~',
+      positive: '+',
+      fiscalQuarter: 'FQ',
+      quarter: 'Qtr',
+      fiscalYear: 'FY',
+      delta: '\u0394',
+      mean: '\u00B5',
+    };
+
+    const newPrefix: string = symbolMap[prefixKey];
+
+    // Invalid prefix? Return original text in a text object.
+    if (!newPrefix) {
+      return { text: toFixed(value, decimals) };
+    }
+
+    return { prefix: newPrefix, text: toFixed(value, decimals) };
   };
 }
 

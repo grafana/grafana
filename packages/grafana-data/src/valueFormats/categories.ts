@@ -31,7 +31,7 @@ import {
   toTimeTicks,
   dateTimeSystemFormatter,
 } from './dateTimeFormatters';
-import { binaryPrefix, currency, SIPrefix } from './symbolFormatters';
+import { binaryPrefix, currency, SIPrefix, addBIPrefix } from './symbolFormatters';
 import {
   locale,
   scaledUnits,
@@ -55,8 +55,6 @@ export const getCategories = (): ValueFormatCategory[] => [
       },
       { name: 'Percent (0-100)', id: 'percent', fn: toPercent },
       { name: 'Percent (0.0-1.0)', id: 'percentunit', fn: toPercentUnit },
-      { name: 'Percent \u2191 Increase', id: 'percentincrease', fn: toIncreasingPercent },
-      { name: 'Percent \u2193 Decrease', id: 'percentdecrease', fn: toDecreasingPercent },
       { name: 'Humidity (%H)', id: 'humidity', fn: toFixedUnit('%H') },
       { name: 'Decibel', id: 'dB', fn: toFixedUnit('dB') },
       { name: 'Hexadecimal (0x)', id: 'hex0x', fn: toHex0x },
@@ -72,6 +70,21 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Meters/sec²', id: 'accMS2', fn: toFixedUnit('m/sec²') },
       { name: 'Feet/sec²', id: 'accFS2', fn: toFixedUnit('f/sec²') },
       { name: 'G unit', id: 'accG', fn: toFixedUnit('g') },
+    ],
+  },
+  {
+    name: 'Business Intel',
+    formats: [
+      { name: 'Percent Increase (\u2191_%)', id: 'percentincrease', fn: toIncreasingPercent },
+      { name: 'Percent Decrease (\u2193_%)', id: 'percentdecrease', fn: toDecreasingPercent },
+      { name: 'Less than (<_)', id: 'lessThan', fn: addBIPrefix('lessThan') },
+      { name: 'Greater than (>_)', id: 'greaterThan', fn: addBIPrefix('greaterThan') },
+      { name: 'Approximately (~_)', id: 'approximately', fn: addBIPrefix('approximately') },
+      { name: 'Fiscal quarter (FQ_)', id: 'fiscalQuarter', fn: addBIPrefix('fiscalQuarter') },
+      { name: 'Quarter (Qtr_)', id: 'quarter', fn: addBIPrefix('quarter') },
+      { name: 'Fiscal year (FY_)', id: 'fiscalYear', fn: addBIPrefix('fiscalYear') },
+      { name: 'Delta (\u0394_)', id: 'delta', fn: addBIPrefix('delta') },
+      { name: 'Mean (\u00B5_)', id: 'mean', fn: addBIPrefix('mean') },
     ],
   },
   {
