@@ -63,7 +63,6 @@ func ProvideService(
 	socialService social.Service, cache *remotecache.RemoteCache,
 	ldapService service.LDAP,
 ) *Service {
-
 	s := &Service{
 		log:            log.New("authn.service"),
 		cfg:            cfg,
