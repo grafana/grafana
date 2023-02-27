@@ -35,12 +35,12 @@ export const ResultItem = React.forwardRef(
 
     let name = action.name;
 
-    const hasAction = (action: ActionImpl) =>
+    const hasCommandOrLink = (action: ActionImpl) =>
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       Boolean(action.command?.perform || (action as ActionImpl & { url?: string }).url);
 
     // TODO: does this needs adjusting for i18n?
-    if (action.children.length && !hasAction(action) && !name.endsWith('...')) {
+    if (action.children.length && !hasCommandOrLink(action) && !name.endsWith('...')) {
       name += '...';
     }
 
@@ -51,7 +51,7 @@ export const ResultItem = React.forwardRef(
           <div className={styles.textContainer}>
             {ancestors.map((ancestor) => (
               <React.Fragment key={ancestor.id}>
-                {!hasAction(ancestor) && (
+                {!hasCommandOrLink(ancestor) && (
                   <>
                     <span className={styles.breadcrumbAncestor}>{ancestor.name}</span>
                     <span className={styles.breadcrumbSeparator}>&rsaquo;</span>
@@ -61,21 +61,7 @@ export const ResultItem = React.forwardRef(
             ))}
             <span>{name}</span>
           </div>
-          {(action.subtitle || ancestors.some((ancestor) => hasAction(ancestor))) && (
-            <div className={styles.subtitleText}>
-              {action.subtitle ??
-                ancestors.map((ancestor, index) => (
-                  <React.Fragment key={ancestor.id}>
-                    {hasAction(ancestor) && (
-                      <>
-                        <span className={styles.breadcrumbAncestor}>{ancestor.name}</span>
-                        {index < ancestors.length - 1 && <span className={styles.breadcrumbSeparator}>&rsaquo;</span>}
-                      </>
-                    )}
-                  </React.Fragment>
-                ))}
-            </div>
-          )}
+          {action.subtitle && <div className={styles.subtitleText}>{action.subtitle}</div>}
         </div>
       </div>
     );
@@ -116,7 +102,6 @@ const getResultItemStyles = (theme: GrafanaTheme2) => {
       gap: theme.spacing(1),
       alignItems: 'baseline',
       fontSize: theme.typography.fontSize,
-      // justifyContent: 'space-between',
       width: '100%',
     }),
     textContainer: css({
@@ -130,8 +115,8 @@ const getResultItemStyles = (theme: GrafanaTheme2) => {
     }),
     breadcrumbSeparator: css({
       color: theme.colors.text.secondary,
-      marginLeft: theme.spacing(0.5),
-      marginRight: theme.spacing(0.5),
+      marginLeft: theme.spacing(1),
+      marginRight: theme.spacing(1),
     }),
     subtitleText: css({
       ...theme.typography.bodySmall,
