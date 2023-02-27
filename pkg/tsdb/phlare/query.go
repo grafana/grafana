@@ -244,6 +244,7 @@ func treeFromSample(profile *googlev1.Profile, sample *googlev1.Sample) *Profile
 		current.Value = sample.Value[0]
 		current.Level = len(locations)
 
+		// Ids in pprof format are 1 based. So to get the index in array from the id we need to subtract one.
 		lines := profile.Location[locations[0]-1].Line
 		if len(lines) == 0 {
 			locations = locations[1:]
