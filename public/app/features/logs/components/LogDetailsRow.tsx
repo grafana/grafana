@@ -376,8 +376,8 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
                 />
               </div>
 
-              {links?.map((link) => (
-                <span key={link.title}>
+              {links?.map((link, i) => (
+                <span key={`${link.title}-${i}`}>
                   &nbsp;
                   <DataLinkButton link={link} />
                 </span>

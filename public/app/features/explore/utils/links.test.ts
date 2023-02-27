@@ -481,6 +481,31 @@ describe('getFieldLinksForExplore', () => {
     const links = getFieldLinksForExplore({ field, rowIndex: ROW_WITH_NULL_VALUE.index, range, dataFrame });
     expect(links).toHaveLength(0);
   });
+
+  it('does not return internal links when not all query variables are matched', () => {
+    const transformationLink: DataLink = {
+      title: '',
+      url: '',
+      internal: {
+        query: { query: 'http_requests{app=${application} env=${diffVar}}' },
+        datasourceUid: 'uid_1',
+        datasourceName: 'test_ds',
+        transformations: [{ type: SupportedTransformationTypes.Logfmt }],
+      },
+    };
+
+    const { field, range, dataFrame } = setup(transformationLink, true, {
+      name: 'msg',
+      type: FieldType.string,
+      values: new ArrayVector(['application=foo host=dev-001']),
+      config: {
+        links: [transformationLink],
+      },
+    });
+
+    const links = [getFieldLinksForExplore({ field, rowIndex: 0, range, dataFrame })];
+    expect(links[0]).toHaveLength(0);
+  });
 });
 
 const ROW_WITH_TEXT_VALUE = { value: 'foo', index: 0 };
