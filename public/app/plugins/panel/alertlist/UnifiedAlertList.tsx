@@ -28,6 +28,7 @@ import {
   GRAFANA_DATASOURCE_NAME,
   GRAFANA_RULES_SOURCE_NAME,
 } from 'app/features/alerting/unified/utils/datasource';
+import { initialAsyncRequestState } from 'app/features/alerting/unified/utils/redux';
 import { flattenCombinedRules, getFirstActiveAt } from 'app/features/alerting/unified/utils/rules';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
@@ -69,14 +70,21 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
     };
   }, [dispatch, dashboard]);
 
+  const { prom, ruler } = useUnifiedAlertingSelector((state) => ({
+    prom: state.promRules[GRAFANA_RULES_SOURCE_NAME] || initialAsyncRequestState,
+    ruler: state.rulerRules[GRAFANA_RULES_SOURCE_NAME] || initialAsyncRequestState,
+  }));
+
+  const loading = prom.loading || ruler.loading;
+  const haveResults = !!prom.result || !!ruler.result;
+
   const promRulesRequests = useUnifiedAlertingSelector((state) => state.promRules);
+  const rulerRulesRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
   const combinedRules = useCombinedRuleNamespaces();
 
-  const dispatched = rulesDataSourceNames.some((name) => promRulesRequests[name]?.dispatched);
-  const loading = rulesDataSourceNames.some((name) => promRulesRequests[name]?.loading);
-  const haveResults = rulesDataSourceNames.some(
-    (name) => promRulesRequests[name]?.result?.length && !promRulesRequests[name]?.error
-  );
+  const somePromRulesDispatched = rulesDataSourceNames.some((name) => promRulesRequests[name]?.dispatched);
+  const someRulerRulesDispatched = rulesDataSourceNames.some((name) => rulerRulesRequests[name]?.dispatched);
+  const dispatched = somePromRulesDispatched || someRulerRulesDispatched;
 
   const styles = useStyles2(getStyles);
 
@@ -176,9 +184,9 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: Combined
       return false;
     }
     return (
-      (options.stateFilter.firing && alertingRule?.state === PromAlertingRuleState.Firing) ||
-      (options.stateFilter.pending && alertingRule?.state === PromAlertingRuleState.Pending) ||
-      (options.stateFilter.normal && alertingRule?.state === PromAlertingRuleState.Inactive)
+      (options.stateFilter.firing && alertingRule.state === PromAlertingRuleState.Firing) ||
+      (options.stateFilter.pending && alertingRule.state === PromAlertingRuleState.Pending) ||
+      (options.stateFilter.normal && alertingRule.state === PromAlertingRuleState.Inactive)
     );
   });
 

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import React, { FC } from 'react';
-import useLocation from 'react-use/lib/useLocation';
+import { useLocation } from 'react-use';
 
 import { GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
