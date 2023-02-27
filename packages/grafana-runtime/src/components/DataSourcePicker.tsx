@@ -1,6 +1,6 @@
 // Libraries
 // eslint-disable-next-line import/order
-import React, { PureComponent, ReactNode } from 'react';
+import React, { PureComponent } from 'react';
 
 // Components
 import { DropzoneOptions } from 'react-dropzone';
@@ -56,7 +56,6 @@ export interface DataSourcePickerProps {
   disabled?: boolean;
   isLoading?: boolean;
   fileUploadOptions?: DropzoneOptions;
-  children?: JSX.Element | ReactNode;
 }
 
 /**
@@ -199,7 +198,6 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
       inputId,
       disabled = false,
       isLoading = false,
-      children,
       drawer,
       recentlyUsed,
     } = this.props;
@@ -217,9 +215,7 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
             recentlyUsed={recentlyUsed}
             current={this.getCurrentDs()}
             fileUploadOptions={this.props.fileUploadOptions}
-          >
-            {children}
-          </DataSourceDrawer>
+          />
         ) : (
           <Select
             isLoading={isLoading}

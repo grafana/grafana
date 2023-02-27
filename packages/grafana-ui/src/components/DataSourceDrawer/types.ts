@@ -1,4 +1,3 @@
-import { ReactNode } from 'react';
 import { DropzoneOptions } from 'react-dropzone';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
@@ -9,7 +8,6 @@ export interface DataSourceDrawerProps {
   onFileDrop?: () => void;
   onChange: (ds: string) => void;
   current: DataSourceInstanceSettings<DataSourceJsonData> | string | DataSourceRef | null | undefined;
-  children?: JSX.Element | ReactNode;
   fileUploadOptions?: DropzoneOptions;
   recentlyUsed?: string[];
 }

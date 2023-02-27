@@ -40,6 +40,7 @@
     "@grafana/data": "9.5.0-pre",
     "@grafana/e2e-selectors": "9.5.0-pre",
     "@grafana/faro-web-sdk": "1.0.0-beta2",
+    "@grafana/schema": "9.5.0-pre",
     "@grafana/ui": "9.5.0-pre",
     "@sentry/browser": "6.19.7",
     "history": "4.10.1",

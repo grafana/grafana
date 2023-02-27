@@ -33,7 +33,12 @@ export const DataSourcePickerWithHistory = (props: DataSourcePickerWithHistoryPr
 
 function updateHistory(values: DataSourcePickerHistoryItem[], newValue: DataSourcePickerHistoryItem) {
   const newHistory = values;
-  newHistory.push(newValue);
+  const existingIndex = newHistory.findIndex((dpi) => dpi.uid === newValue.uid);
+  if (existingIndex !== -1) {
+    newHistory[existingIndex] = newValue;
+  } else {
+    newHistory.push(newValue);
+  }
 
   newHistory.sort((a, b) => {
     const al = dateTime(a.lastUse);

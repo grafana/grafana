@@ -88,18 +88,21 @@ function DataSourceCard(props: DataSourceCardProps) {
 }
 
 function PickerContent(props: PickerContentProps) {
-  const { recentlyUsed = [], onChange, children, fileUploadOptions, onDismiss } = props;
+  const { recentlyUsed = [], onChange, fileUploadOptions, onDismiss } = props;
   const changeCallback = useCallback(
     (ds: string) => {
       onChange(ds);
     },
     [onChange]
   );
+
   const [filterTerm, onFilterChange] = useState<string>('');
   const styles = useStyles2(getStyles);
 
-  const filterDataSources = (ds: DataSourceInstanceSettings<DataSourceJsonData>): boolean =>
-    ds.name.toLocaleLowerCase().indexOf(filterTerm.toLocaleLowerCase()) !== -1;
+  const filterDataSources = (ds?: DataSourceInstanceSettings<DataSourceJsonData>): boolean => {
+    return ds?.name.toLocaleLowerCase().indexOf(filterTerm.toLocaleLowerCase()) !== -1;
+  };
+
   return (
     <Drawer
       closeOnMaskClick={true}
@@ -110,21 +113,19 @@ function PickerContent(props: PickerContentProps) {
       <div className={styles.drawerContent}>
         <div className={styles.filterContainer}>
           <Input
-            onChange={
-              (e) => {
-                onFilterChange(e.currentTarget.value);
-              } /* useCallback */
-            }
+            onChange={(e) => {
+              onFilterChange(e.currentTarget.value);
+            }}
             value={filterTerm}
           ></Input>
         </div>
         <div className={styles.dataSourceList}>
           <CustomScrollbar>
-            {props.datasources
-              .filter((ds) => recentlyUsed.indexOf(ds.uid) !== -1)
+            {recentlyUsed
+              .map((uid) => props.datasources.find((ds) => ds.uid === uid))
               .filter(filterDataSources)
               .map((ds) => (
-                <DataSourceCard key={ds.uid} ds={ds} onChange={changeCallback} />
+                <DataSourceCard key={ds!.uid} ds={ds!} onChange={changeCallback} />
               ))}
             {recentlyUsed && recentlyUsed.length > 0 && <hr />}
             {props.datasources.filter(filterDataSources).map((ds) => (
@@ -132,7 +133,6 @@ function PickerContent(props: PickerContentProps) {
             ))}
           </CustomScrollbar>
         </div>
-        <div className={styles.additionalContent}>{children}</div>
         <div className={styles.additionalContent}>
           <FileDropzone
             readAs="readAsArrayBuffer"
