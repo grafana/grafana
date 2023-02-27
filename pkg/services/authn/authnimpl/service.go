@@ -193,12 +193,14 @@ func (s *Service) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 			}
 
 			if identity != nil {
+				s.metrics.successfulAuth.WithLabelValues(item.v.Name()).Inc()
 				return identity, nil
 			}
 		}
 	}
 
 	if authErr != nil {
+		s.metrics.failedAuth.Inc()
 		return nil, authErr
 	}
 
