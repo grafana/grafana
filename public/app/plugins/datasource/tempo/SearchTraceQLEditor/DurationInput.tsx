@@ -21,7 +21,7 @@ const DurationInput = ({ filter, operators, updateFilter }: Props) => {
           updateFilter({ ...filter, operator: v?.value });
         }}
         isClearable={false}
-        aria-label={`select-${filter.id}-operator`}
+        aria-label={`select ${filter.id} operator`}
         allowCustomValue={true}
         width={8}
       />
@@ -31,7 +31,7 @@ const DurationInput = ({ filter, operators, updateFilter }: Props) => {
           updateFilter({ ...filter, value: v.currentTarget.value });
         }}
         placeholder="e.g. 100ms, 1.2s"
-        aria-label={`select-${filter.id}-value`}
+        aria-label={`select ${filter.id} value`}
         width={18}
       />
     </HorizontalGroup>

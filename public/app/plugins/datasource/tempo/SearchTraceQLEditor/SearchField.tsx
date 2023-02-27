@@ -98,7 +98,7 @@ const SearchField = ({ filter, datasource, updateFilter, deleteFilter, isTagsLoa
           }}
           placeholder="Select a tag"
           isClearable
-          aria-label={`select-${filter.id}-tag`}
+          aria-label={`select ${filter.id} tag`}
           allowCustomValue={true}
         />
       )}
@@ -110,7 +110,7 @@ const SearchField = ({ filter, datasource, updateFilter, deleteFilter, isTagsLoa
           updateFilter({ ...filter, operator: v?.value });
         }}
         isClearable={false}
-        aria-label={`select-${filter.id}-operator`}
+        aria-label={`select ${filter.id} operator`}
         allowCustomValue={true}
         width={8}
       />
@@ -133,12 +133,17 @@ const SearchField = ({ filter, datasource, updateFilter, deleteFilter, isTagsLoa
         }}
         placeholder="Select a value"
         isClearable
-        aria-label={`select-${filter.id}-value`}
+        aria-label={`select ${filter.id} value`}
         allowCustomValue={true}
         isMulti
       />
       {filter.type === 'dynamic' && (
-        <Button variant={'secondary'} onClick={() => deleteFilter?.(filter)} tooltip={'Remove tag'}>
+        <Button
+          variant={'secondary'}
+          onClick={() => deleteFilter?.(filter)}
+          tooltip={'Remove tag'}
+          aria-label={`remove tag with ID ${filter.id}`}
+        >
           x
         </Button>
       )}

@@ -7,49 +7,48 @@ import { TempoQuery } from '../types';
 
 import TraceQLSearch from './TraceQLSearch';
 
-const getOptionsV1 = jest.fn().mockImplementation(() => {
+const getOptionsV2 = jest.fn().mockImplementation(() => {
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve([
         {
           value: 'customer',
           label: 'customer',
+          type: 'string',
         },
         {
           value: 'driver',
           label: 'driver',
+          type: 'string',
         },
       ]);
     }, 1000);
   });
 });
 
+const getTags = jest.fn().mockImplementation(() => {
+  return ['foo', 'bar'];
+});
+
 jest.mock('../language_provider', () => {
   return jest.fn().mockImplementation(() => {
-    return { getOptionsV1 };
+    return { getOptionsV2, getTags };
   });
 });
 
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getTemplateSrv: () => ({
-    replace: jest.fn(),
-    containsTemplate: (val: string): boolean => {
-      return val.includes('$');
-    },
-  }),
-}));
-
-let mockQuery = {
-  refId: 'A',
-  queryType: 'nativeSearch',
-  key: 'Q-595a9bbc-2a25-49a7-9249-a52a0a475d83-0',
-  serviceName: 'driver',
-  spanName: 'customer',
-} as TempoQuery;
-
-describe('NativeSearch', () => {
+describe('TraceQLSearch', () => {
   let user: ReturnType<typeof userEvent.setup>;
+
+  let query: TempoQuery = {
+    refId: 'A',
+    queryType: 'traceqlSearch',
+    key: 'Q-595a9bbc-2a25-49a7-9249-a52a0a475d83-0',
+    query: '',
+    filters: [{ id: 'min-duration', operator: '>', type: 'static', valueType: 'duration', tag: 'duration' }],
+  };
+  const onChange = (q: TempoQuery) => {
+    query = q;
+  };
 
   beforeEach(() => {
     jest.useFakeTimers();
@@ -62,103 +61,71 @@ describe('NativeSearch', () => {
     jest.useRealTimers();
   });
 
-  it('should show loader when there is a delay', async () => {
-    render(
-      <TraceQLSearch datasource={{} as TempoDatasource} query={mockQuery} onChange={jest.fn()} onRunQuery={jest.fn()} />
+  it('should update operator when new value is selected in operator input', async () => {
+    const { container } = render(
+      <TraceQLSearch datasource={{} as TempoDatasource} query={query} onChange={onChange} />
     );
 
-    const select = screen.getByRole('combobox', { name: 'select-service-name' });
+    const minDurationOperator = container.querySelector(`input[aria-label="select min-duration operator"]`);
+    expect(minDurationOperator).not.toBeNull();
+    expect(minDurationOperator).toBeInTheDocument();
+    expect(await screen.findByText('>')).toBeInTheDocument();
 
-    await user.click(select);
-    const loader = screen.getByText('Loading options...');
-
-    expect(loader).toBeInTheDocument();
-
-    jest.advanceTimersByTime(1000);
-
-    await waitFor(() => expect(screen.queryByText('Loading options...')).not.toBeInTheDocument());
+    if (minDurationOperator) {
+      await user.click(minDurationOperator);
+      jest.advanceTimersByTime(1000);
+      const regexOp = await screen.findByText('>=');
+      await user.click(regexOp);
+      const minDurationFilter = query.filters.find((f) => f.id === 'min-duration');
+      expect(minDurationFilter).not.toBeNull();
+      expect(minDurationFilter?.operator).toBe('>=');
+    }
   });
 
-  it('should call the `onChange` function on click of the Input', async () => {
-    const promise = Promise.resolve();
-    const handleOnChange = jest.fn(() => promise);
-    const fakeOptionChoice = {
-      key: 'Q-595a9bbc-2a25-49a7-9249-a52a0a475d83-0',
-      queryType: 'nativeSearch',
-      refId: 'A',
-      serviceName: 'driver',
-      spanName: 'customer',
-    };
-
-    render(
-      <TraceQLSearch
-        datasource={{} as TempoDatasource}
-        query={mockQuery}
-        onChange={handleOnChange}
-        onRunQuery={() => {}}
-      />
+  it('should add new filter when new value is selected in the service name section', async () => {
+    const { container } = render(
+      <TraceQLSearch datasource={{} as TempoDatasource} query={query} onChange={onChange} />
     );
+    const serviceNameValue = container.querySelector(`input[aria-label="select service-name value"]`);
+    expect(serviceNameValue).not.toBeNull();
+    expect(serviceNameValue).toBeInTheDocument();
 
-    const select = await screen.findByRole('combobox', { name: 'select-service-name' });
+    expect(query.filters.find((f) => f.id === 'service-name')).not.toBeDefined();
 
-    expect(select).toBeInTheDocument();
-    await user.click(select);
-    jest.advanceTimersByTime(1000);
-
-    await user.type(select, 'd');
-    const driverOption = await screen.findByText('driver');
-    await user.click(driverOption);
-
-    expect(handleOnChange).toHaveBeenCalledWith(fakeOptionChoice);
+    if (serviceNameValue) {
+      await user.click(serviceNameValue);
+      jest.advanceTimersByTime(1000);
+      const customerValue = await screen.findByText('customer');
+      await user.click(customerValue);
+      const nameFilter = query.filters.find((f) => f.id === 'service-name');
+      expect(nameFilter).not.toBeNull();
+      expect(nameFilter?.operator).toBe('=');
+      expect(nameFilter?.value).toStrictEqual(['customer']);
+      expect(nameFilter?.tag).toBe('.service.name');
+    }
   });
 
-  it('should filter the span dropdown when user types a search value', async () => {
-    render(
-      <TraceQLSearch datasource={{} as TempoDatasource} query={mockQuery} onChange={() => {}} onRunQuery={() => {}} />
-    );
+  it('should add new filter when new filter button is clicked and remove filter when remove button is clicked', async () => {
+    render(<TraceQLSearch datasource={{} as TempoDatasource} query={query} onChange={onChange} />);
 
-    const select = await screen.findByRole('combobox', { name: 'select-service-name' });
-    await user.click(select);
+    const dynamicFilters = query.filters.filter((f) => f.type === 'dynamic');
+    expect(dynamicFilters.length).toBe(1);
+    const addButton = await screen.findByText('+');
+    await user.click(addButton);
     jest.advanceTimersByTime(1000);
-    expect(select).toBeInTheDocument();
 
-    await user.type(select, 'd');
-    let option = await screen.findByText('driver');
-    expect(option).toBeDefined();
+    // We have to rerender here so it picks up the new dynamic field
+    render(<TraceQLSearch datasource={{} as TempoDatasource} query={query} onChange={onChange} />);
 
-    await user.type(select, 'a');
-    option = await screen.findByText('Hit enter to add');
-    expect(option).toBeDefined();
-  });
+    const newDynamicFilters = query.filters.filter((f) => f.type === 'dynamic');
+    expect(newDynamicFilters.length).toBe(2);
 
-  it('should add variable to select menu options', async () => {
-    mockQuery = {
-      ...mockQuery,
-      refId: '121314',
-      serviceName: '$service',
-      spanName: '$span',
-    };
-
-    render(
-      <TraceQLSearch datasource={{} as TempoDatasource} query={mockQuery} onChange={() => {}} onRunQuery={() => {}} />
-    );
-
-    const asyncServiceSelect = screen.getByRole('combobox', { name: 'select-service-name' });
-    expect(asyncServiceSelect).toBeInTheDocument();
-    await user.click(asyncServiceSelect);
-    jest.advanceTimersByTime(3000);
-
-    await user.type(asyncServiceSelect, '$');
-    const serviceOption = await screen.findByText('$service');
-    expect(serviceOption).toBeDefined();
-
-    const asyncSpanSelect = screen.getByRole('combobox', { name: 'select-span-name' });
-    expect(asyncSpanSelect).toBeInTheDocument();
-    await user.click(asyncSpanSelect);
-    jest.advanceTimersByTime(3000);
-
-    await user.type(asyncSpanSelect, '$');
-    const operationOption = await screen.findByText('$span');
-    expect(operationOption).toBeDefined();
+    const notInitialDynamic = newDynamicFilters.find((f) => f.id !== dynamicFilters[0].id);
+    const secondDynamicRemoveButton = await screen.findByLabelText(`remove tag with ID ${notInitialDynamic?.id}`);
+    await waitFor(() => expect(secondDynamicRemoveButton).toBeInTheDocument());
+    if (secondDynamicRemoveButton) {
+      await user.click(secondDynamicRemoveButton);
+      expect(query.filters.filter((f) => f.type === 'dynamic')).toStrictEqual(dynamicFilters);
+    }
   });
 });
