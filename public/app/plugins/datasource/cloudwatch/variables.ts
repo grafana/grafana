@@ -96,7 +96,14 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
     return this.api.getDimensionKeys({ namespace, region }).then((keys) => keys.map(selectableValueToMetricFindOption));
   }
 
-  async handleDimensionValuesQuery({ namespace, region, dimensionKey, metricName, dimensionFilters }: VariableQuery) {
+  async handleDimensionValuesQuery({
+    namespace,
+    region,
+    dimensionKey,
+    metricName,
+    dimensionFilters,
+    accountId,
+  }: VariableQuery) {
     if (!dimensionKey || !metricName) {
       return [];
     }
@@ -107,6 +114,7 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
         metricName,
         dimensionKey,
         dimensionFilters,
+        accountId,
       })
       .then((values) => values.map(selectableValueToMetricFindOption));
   }

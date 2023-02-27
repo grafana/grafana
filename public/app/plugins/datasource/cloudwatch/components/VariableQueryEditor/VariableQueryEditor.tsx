@@ -137,6 +137,15 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
       )}
       {parsedQuery.queryType === VariableQueryType.DimensionValues && (
         <>
+          {accountState.value?.length && config.featureToggles.cloudWatchCrossAccountQuerying && (
+            <VariableQueryField
+              label="Account"
+              value={query.accountId ?? null}
+              onChange={(accountId?: string) => onQueryChange({ ...parsedQuery, accountId })}
+              options={accountState?.value.length ? [ALL_ACCOUNTS_OPTION, ...accountState?.value] : []}
+              allowCustomValue={false}
+            />
+          )}
           <VariableQueryField
             value={metricName || null}
             options={metrics}
