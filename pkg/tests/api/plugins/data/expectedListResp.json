@@ -135,22 +135,22 @@
         }
       ],
       "logos": {
-        "small": "public/app/plugins/datasource/grafana-azure-monitor-datasource/img/logo.jpg",
-        "large": "public/app/plugins/datasource/grafana-azure-monitor-datasource/img/logo.jpg"
+        "small": "public/app/plugins/datasource/azuremonitor/img/logo.jpg",
+        "large": "public/app/plugins/datasource/azuremonitor/img/logo.jpg"
       },
       "build": {},
       "screenshots": [
         {
           "name": "Azure Contoso Loans",
-          "path": "public/app/plugins/datasource/grafana-azure-monitor-datasource/img/contoso_loans_grafana_dashboard.png"
+          "path": "public/app/plugins/datasource/azuremonitor/img/contoso_loans_grafana_dashboard.png"
         },
         {
           "name": "Azure Monitor Network",
-          "path": "public/app/plugins/datasource/grafana-azure-monitor-datasource/img/azure_monitor_network.png"
+          "path": "public/app/plugins/datasource/azuremonitor/img/azure_monitor_network.png"
         },
         {
           "name": "Azure Monitor CPU",
-          "path": "public/app/plugins/datasource/grafana-azure-monitor-datasource/img/azure_monitor_cpu.png"
+          "path": "public/app/plugins/datasource/azuremonitor/img/azure_monitor_cpu.png"
         }
       ],
       "version": "1.0.0",

@@ -23,9 +23,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ------------------ |
 | `disableEnvelopeEncryption`         | Disable envelope encryption (emergency only)                                         |                    |
 | `database_metrics`                  | Add Prometheus metrics for database tables                                           |                    |
-| `lokiMonacoEditor`                  | Access to Monaco query editor for Loki                                               | Yes                |
 | `featureHighlights`                 | Highlight Grafana Enterprise features                                                |                    |
-| `commandPalette`                    | Enable command palette                                                               | Yes                |
 | `cloudWatchDynamicLabels`           | Use dynamic labels instead of alias patterns in CloudWatch datasource                | Yes                |
 | `internationalization`              | Enables internationalization                                                         | Yes                |
 | `cloudWatchCrossAccountQuerying`    | Enables cross-account querying in CloudWatch datasources                             | Yes                |
@@ -45,10 +43,9 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `newDBLibrary`                    | Use jmoiron/sqlx rather than xorm for a few backend services                    |
 | `validateDashboardsOnSave`        | Validate dashboard JSON POSTed to api/dashboards/db                             |
 | `autoMigrateGraphPanels`          | Replace the angular graph panel with timeseries                                 |
-| `datasourceLogger`                | Logs all datasource requests                                                    |
+| `topnav`                          | Displays new top nav and page layouts                                           |
 | `accessControlOnCall`             | Access control primitives for OnCall                                            |
 | `alertingNoNormalState`           | Stop maintaining state of alerts that are not firing                            |
-| `topNavCommandPalette`            | Launch the Command Palette from the top navigation search box                   |
 
 ## Alpha feature toggles
 
@@ -57,21 +54,17 @@ Alpha features might be changed or removed without prior notice.
 
 | Feature toggle name                | Description                                                                                                                                                                  |
 | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `returnUnameHeader`                | Return user login as header for authenticated requests                                                                                                                       |
 | `alertingBigTransactions`          | Use big transactions for alerting database writes                                                                                                                            |
 | `dashboardPreviews`                | Create and show thumbnails for dashboard search results                                                                                                                      |
-| `live-config`                      | Save Grafana Live configuration in SQL tables                                                                                                                                |
 | `live-pipeline`                    | Enable a generic live processing pipeline                                                                                                                                    |
 | `live-service-web-worker`          | This will use a webworker thread to processes events rather than the main thread                                                                                             |
 | `queryOverLive`                    | Use Grafana Live WebSocket to execute backend queries                                                                                                                        |
-| `tempoApmTable`                    | Show APM table                                                                                                                                                               |
 | `publicDashboards`                 | Enables public access to dashboards                                                                                                                                          |
 | `lokiLive`                         | Support WebSocket streaming for loki (early prototype)                                                                                                                       |
 | `lokiDataframeApi`                 | Use experimental loki api for WebSocket streaming (early prototype)                                                                                                          |
 | `dashboardComments`                | Enable dashboard-wide comments                                                                                                                                               |
 | `annotationComments`               | Enable annotation comments                                                                                                                                                   |
 | `storage`                          | Configurable storage for dashboards, datasources, and resources                                                                                                              |
-| `supportBundles`                   | Support bundles for troubleshooting                                                                                                                                          |
 | `exploreMixedDatasource`           | Enable mixed datasource in Explore                                                                                                                                           |
 | `tracing`                          | Adds trace ID to error notifications                                                                                                                                         |
 | `correlations`                     | Correlations page                                                                                                                                                            |
@@ -83,11 +76,9 @@ Alpha features might be changed or removed without prior notice.
 | `disableSecretsCompatibility`      | Disable duplicated secret storage in legacy tables                                                                                                                           |
 | `logRequestsInstrumentedAsUnknown` | Logs the path for requests that are instrumented as unknown                                                                                                                  |
 | `dataConnectionsConsole`           | Enables a new top-level page called Connections. This page is an experiment that provides a better experience when you install and configure data sources and other plugins. |
-| `topnav`                           | New top nav and page layouts                                                                                                                                                 |
 | `flameGraph`                       | Show the flame graph                                                                                                                                                         |
 | `redshiftAsyncQueryDataSupport`    | Enable async query data support for Redshift                                                                                                                                 |
 | `athenaAsyncQueryDataSupport`      | Enable async query data support for Athena                                                                                                                                   |
-| `increaseInMemDatabaseQueryCache`  | Enable more in memory caching for database queries                                                                                                                           |
 | `newPanelChromeUI`                 | Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu                                                                                          |
 | `showDashboardValidationWarnings`  | Show warnings when dashboards do not validate against the schema                                                                                                             |
 | `mysqlAnsiQuotes`                  | Use double quotes to escape keyword in a MySQL query                                                                                                                         |
@@ -95,10 +86,11 @@ Alpha features might be changed or removed without prior notice.
 | `datasourceOnboarding`             | Enable data source onboarding page                                                                                                                                           |
 | `secureSocksDatasourceProxy`       | Enable secure socks tunneling for supported core datasources                                                                                                                 |
 | `authnService`                     | Use new auth service to perform authentication                                                                                                                               |
-| `sessionRemoteCache`               | Enable using remote cache for user sessions                                                                                                                                  |
 | `alertingBacktesting`              | Rule backtesting API for alerting                                                                                                                                            |
 | `editPanelCSVDragAndDrop`          | Enables drag and drop for CSV and Excel files                                                                                                                                |
 | `logsContextDatasourceUi`          | Allow datasource to provide custom UI for context view                                                                                                                       |
+| `lokiQuerySplitting`               | Split large interval queries into subqueries with smaller time intervals                                                                                                     |
+| `individualCookiePreferences`      | Support overriding cookie preferences per user                                                                                                                               |
 
 ## Development feature toggles
 
@@ -106,11 +98,8 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 
 | Feature toggle name            | Description                                                             |
 | ------------------------------ | ----------------------------------------------------------------------- |
-| `dashboardPreviewsAdmin`       | Manage the dashboard previews crawler process from the UI               |
-| `showFeatureFlagsInUI`         | Show feature flags in the settings UI                                   |
 | `publicDashboardsEmailSharing` | Allows public dashboard sharing to be restricted to only allowed emails |
 | `k8s`                          | Explore native k8s integrations                                         |
-| `k8sDashboards`                | Save dashboards via k8s                                                 |
 | `dashboardsFromStorage`        | Load dashboards from the generic storage interface                      |
 | `export`                       | Export grafana instance (to git, etc)                                   |
 | `grpcServer`                   | Run GRPC server                                                         |

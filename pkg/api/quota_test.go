@@ -25,14 +25,6 @@ var (
 	testUpdateOrgQuotaCmd = `{ "limit": 20 }`
 )
 
-var testOrgQuota = setting.OrgQuota{
-	User:       10,
-	DataSource: 10,
-	Dashboard:  10,
-	ApiKey:     10,
-	AlertRule:  10,
-}
-
 func TestAPIEndpoint_GetCurrentOrgQuotas_LegacyAccessControl(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.Quota.Enabled = true

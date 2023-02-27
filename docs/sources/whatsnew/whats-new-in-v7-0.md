@@ -226,10 +226,6 @@ SAML support in Grafana Enterprise is improved by adding Role and Team Sync. Rea
 
 Okta gets its own provider which adds support for Team Sync. Read more about it in the [Okta documentation]({{< relref "../setup-grafana/configure-security/configure-authentication/okta/" >}}).
 
-## Upgrading
-
-See [upgrade notes]({{< relref "../setup-grafana/upgrade-grafana/#upgrading-to-v7-0" >}}).
-
 ## Changelog
 
 Check out [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) for a complete list of new features, changes, and bug fixes.

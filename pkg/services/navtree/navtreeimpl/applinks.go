@@ -266,8 +266,8 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-incident-app":             {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 2, Text: "Incident"},
 		"grafana-ml-app":                   {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 3, Text: "Machine Learning"},
 		"grafana-cloud-link-app":           {SectionID: navtree.NavIDCfg},
-		"grafana-easystart-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightSavedItems + 1, Text: "Connections", Icon: "adjust-circle"},
-		"grafana-k6-app":                   {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAlertsAndIncidents + 1, Text: "Performance testing", Icon: "k6"},
+		"grafana-easystart-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightApps + 1, Text: "Connections", Icon: "adjust-circle"},
+		"k6-app":                           {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAlertsAndIncidents + 1, Text: "Performance testing", Icon: "k6"},
 	}
 
 	s.navigationAppPathConfig = map[string]NavigationAppConfig{

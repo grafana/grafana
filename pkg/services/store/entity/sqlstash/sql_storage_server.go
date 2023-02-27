@@ -474,15 +474,19 @@ func (s *sqlEntityServer) fillCreationInfo(ctx context.Context, tx *session.Sess
 	}
 
 	rows, err := tx.Query(ctx, "SELECT created_at,created_by FROM entity WHERE grn=?", grn)
-	if err == nil {
-		if rows.Next() {
-			err = rows.Scan(&createdAt, &createdBy)
-		}
-		if err == nil {
-			err = rows.Close()
-		}
+	if err != nil {
+		return err
 	}
-	return err
+
+	if rows.Next() {
+		err = rows.Scan(&createdAt, &createdBy)
+	}
+
+	errClose := rows.Close()
+	if err != nil {
+		return err
+	}
+	return errClose
 }
 
 func (s *sqlEntityServer) selectForUpdate(ctx context.Context, tx *session.SessionTx, grn string) (*entity.EntityVersionInfo, error) {
@@ -498,10 +502,13 @@ func (s *sqlEntityServer) selectForUpdate(ctx context.Context, tx *session.Sessi
 	if rows.Next() {
 		err = rows.Scan(&current.ETag, &current.Version, &current.UpdatedAt, &current.Size)
 	}
-	if err == nil {
-		err = rows.Close()
+
+	errClose := rows.Close()
+	if err != nil {
+		return nil, err
 	}
-	return current, err
+
+	return current, errClose
 }
 
 func (s *sqlEntityServer) writeSearchInfo(

@@ -107,12 +107,6 @@ var exporters = []Exporter{
 				Description: "saved links",
 				process:     exportSystemShortURL,
 			},
-			{
-				Key:         "system_live",
-				Name:        "Grafana live",
-				Description: "archived messages",
-				process:     exportLive,
-			},
 		},
 	},
 	{

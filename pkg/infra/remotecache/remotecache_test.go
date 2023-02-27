@@ -44,6 +44,7 @@ func TestCachedBasedOnConfig(t *testing.T) {
 
 	client := createTestClient(t, cfg.RemoteCacheOptions, db.InitTestDB(t))
 	runTestsForClient(t, client)
+	runCountTestsForClient(t, cfg.RemoteCacheOptions, db.InitTestDB(t))
 }
 
 func TestInvalidCacheTypeReturnsError(t *testing.T) {
@@ -54,6 +55,37 @@ func TestInvalidCacheTypeReturnsError(t *testing.T) {
 func runTestsForClient(t *testing.T, client CacheStorage) {
 	canPutGetAndDeleteCachedObjects(t, client)
 	canNotFetchExpiredItems(t, client)
+}
+
+func runCountTestsForClient(t *testing.T, opts *setting.RemoteCacheOptions, sqlstore db.DB) {
+	client := createTestClient(t, opts, sqlstore)
+	expectError := false
+	if opts.Name == memcachedCacheType {
+		expectError = true
+	}
+
+	t.Run("can count items", func(t *testing.T) {
+		cacheableStruct := CacheableStruct{String: "hej", Int64: 2000}
+
+		err := client.Set(context.Background(), "pref-key1", cacheableStruct, 0)
+		require.NoError(t, err)
+
+		err = client.Set(context.Background(), "pref-key2", cacheableStruct, 0)
+		require.NoError(t, err)
+
+		err = client.Set(context.Background(), "key3-not-pref", cacheableStruct, 0)
+		require.NoError(t, err)
+
+		n, errC := client.Count(context.Background(), "pref-")
+		if expectError {
+			require.ErrorIs(t, ErrNotImplemented, errC)
+			assert.Equal(t, int64(0), n)
+			return
+		}
+
+		require.NoError(t, errC)
+		assert.Equal(t, int64(2), n)
+	})
 }
 
 func canPutGetAndDeleteCachedObjects(t *testing.T, client CacheStorage) {

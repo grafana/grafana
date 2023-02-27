@@ -25,6 +25,12 @@ export const Components = {
     },
     absoluteTimeRangeTitle: 'data-testid-absolute-time-range-narrow',
   },
+  DataSourcePermissions: {
+    form: () => 'form[name="addPermission"]',
+    roleType: 'Role to add new permission to',
+    rolePicker: 'Built-in role picker',
+    permissionLevel: 'Permission Level',
+  },
   DataSource: {
     TestData: {
       QueryTab: {
@@ -71,6 +77,7 @@ export const Components = {
     },
     Visualization: {
       Graph: {
+        container: 'Graph container',
         VisualizationTab: {
           legendSection: 'Legend section',
         },
@@ -228,6 +235,14 @@ export const Components = {
     },
     searchInput: 'search transformations',
   },
+  NavBar: {
+    Configuration: {
+      button: 'Configuration',
+    },
+    Reporting: {
+      button: 'Reporting',
+    },
+  },
   NavToolbar: {
     container: 'data-testid Nav toolbar',
   },
@@ -381,5 +396,11 @@ export const Components = {
   },
   DebugOverlay: {
     wrapper: 'debug-overlay',
+  },
+  OrgRolePicker: {
+    input: 'Role',
+  },
+  AnalyticsToolbarButton: {
+    button: 'Dashboard insights',
   },
 };

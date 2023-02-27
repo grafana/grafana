@@ -134,8 +134,8 @@ The result of evaluating the `role_attribute_path` JMESPath expression must be a
 
 > **Warning**: Currently if no organization role mapping is found for a user, Grafana doesn't
 > update the user's organization role. This is going to change in Grafana 10. To avoid overriding manually set roles,
-> enable the `oauth_skip_org_role_update_sync` option.
-> See [configure-grafana]({{< relref "../../../configure-grafana#oauth_skip_org_role_update_sync" >}}) for more information.
+> enable the `skip_org_role_sync` option in the [auth.github] section.
+> See [configure-grafana]({{< relref "../../../configure-grafana#authgithub-skip-org-role-sync" >}}) for more information.
 
 On first login, if the`role_attribute_path` property does not return a role, then the user is assigned the role
 specified by [the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
