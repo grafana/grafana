@@ -110,7 +110,7 @@ export const Toggletip = React.memo(
                 {typeof content === 'function' && update && content({ update })}
               </div>
               {!!footer && (
-                <div className="toggletip-footer">
+                <div className={style.footer}>
                   {typeof footer === 'string' && footer}
                   {footer && React.isValidElement(footer) && React.cloneElement(footer)}
                 </div>
