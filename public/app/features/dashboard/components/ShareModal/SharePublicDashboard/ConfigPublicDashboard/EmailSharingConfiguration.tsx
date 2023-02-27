@@ -148,7 +148,7 @@ export const EmailSharingConfiguration = () => {
         <>
           <Field
             label="Invite"
-            description="Invite people by email separated by comma"
+            description="Invite people by email"
             error={errors.email?.message}
             invalid={!!errors.email?.message || undefined}
           >
