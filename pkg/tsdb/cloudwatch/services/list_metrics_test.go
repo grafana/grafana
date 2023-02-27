@@ -60,7 +60,7 @@ func TestListMetricsService_GetDimensionKeysByDimensionFilter(t *testing.T) {
 	t.Run("Should filter out duplicates and keys matching dimension filter keys", func(t *testing.T) {
 		fakeMetricsClient := &mocks.FakeMetricsClient{}
 		fakeMetricsClient.On("ListMetricsWithPageLimit", mock.Anything).Return(metricResponse, nil)
-		listMetricsService := NewListMetricsService(fakeMetricsClient)
+		listMetricsService := NewListMetricsService(fakeMetricsClient, false)
 
 		resp, err := listMetricsService.GetDimensionKeysByDimensionFilter(resources.DimensionKeysRequest{
 			ResourceRequest: &resources.ResourceRequest{Region: "us-east-1"},
@@ -113,7 +113,10 @@ func TestListMetricsService_GetDimensionKeysByDimensionFilter(t *testing.T) {
 				MetricName:      "",
 				DimensionFilter: []*resources.Dimension{{Name: "InstanceId", Value: ""}},
 			},
-			listMetricsWithPageLimitInput: &cloudwatch.ListMetricsInput{Dimensions: []*cloudwatch.DimensionFilter{{Name: aws.String("InstanceId")}}},
+			listMetricsWithPageLimitInput: &cloudwatch.ListMetricsInput{
+				Dimensions:            []*cloudwatch.DimensionFilter{{Name: aws.String("InstanceId")}},
+				IncludeLinkedAccounts: aws.Bool(true),
+			},
 		},
 	}
 
@@ -121,7 +124,7 @@ func TestListMetricsService_GetDimensionKeysByDimensionFilter(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			fakeMetricsClient := &mocks.FakeMetricsClient{}
 			fakeMetricsClient.On("ListMetricsWithPageLimit", mock.Anything).Return(metricResponse, nil)
-			listMetricsService := NewListMetricsService(fakeMetricsClient)
+			listMetricsService := NewListMetricsService(fakeMetricsClient, true)
 			res, err := listMetricsService.GetDimensionKeysByDimensionFilter(tc.input)
 			require.NoError(t, err)
 			require.NotEmpty(t, res)
@@ -134,7 +137,7 @@ func TestListMetricsService_GetDimensionValuesByDimensionFilter(t *testing.T) {
 	t.Run("Should filter out duplicates and keys matching dimension filter keys", func(t *testing.T) {
 		fakeMetricsClient := &mocks.FakeMetricsClient{}
 		fakeMetricsClient.On("ListMetricsWithPageLimit", mock.Anything).Return(metricResponse, nil)
-		listMetricsService := NewListMetricsService(fakeMetricsClient)
+		listMetricsService := NewListMetricsService(fakeMetricsClient, false)
 
 		resp, err := listMetricsService.GetDimensionValuesByDimensionFilter(resources.DimensionValuesRequest{
 			ResourceRequest: &resources.ResourceRequest{Region: "us-east-1"},
@@ -188,7 +191,7 @@ func TestListMetricsService_GetDimensionValuesByDimensionFilter(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			fakeMetricsClient := &mocks.FakeMetricsClient{}
 			fakeMetricsClient.On("ListMetricsWithPageLimit", mock.Anything).Return(metricResponse, nil)
-			listMetricsService := NewListMetricsService(fakeMetricsClient)
+			listMetricsService := NewListMetricsService(fakeMetricsClient, true)
 			res, err := listMetricsService.GetDimensionValuesByDimensionFilter(tc.input)
 			require.NoError(t, err)
 			require.Empty(t, res)

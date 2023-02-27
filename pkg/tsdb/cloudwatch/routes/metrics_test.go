@@ -29,6 +29,24 @@ func Test_Metrics_Route(t *testing.T) {
 		mockListMetricsService.AssertNumberOfCalls(t, "GetMetricsByNamespace", 1)
 	})
 
+	t.Run("calls GetMetricsByNamespace with OwningAccount when a CustomNamespaceRequestType with AccountID is passed", func(t *testing.T) {
+		mockListMetricsService := mocks.ListMetricsServiceMock{}
+		mockListMetricsService.On("GetMetricsByNamespace", mock.Anything).Return([]resources.ResourceResponse[resources.Metric]{}, nil)
+		newListMetricsService = func(pluginCtx backend.PluginContext, reqCtxFactory models.RequestContextFactoryFunc, region string) (models.ListMetricsProvider, error) {
+			return &mockListMetricsService, nil
+		}
+		rr := httptest.NewRecorder()
+		req := httptest.NewRequest("GET", "/metrics?region=us-east-2&namespace=customNamespace&accountId=12345", nil)
+		handler := http.HandlerFunc(ResourceRequestMiddleware(MetricsHandler, logger, nil))
+		handler.ServeHTTP(rr, req)
+		mockListMetricsService.AssertNumberOfCalls(t, "GetMetricsByNamespace", 1)
+		accountID := "12345"
+		mockListMetricsService.AssertCalled(t, "GetMetricsByNamespace", &resources.MetricsRequest{
+			ResourceRequest: &resources.ResourceRequest{Region: "us-east-2", AccountId: &accountID},
+			Namespace:       "customNamespace",
+		})
+	})
+
 	t.Run("calls GetAllHardCodedMetrics when a AllMetricsRequestType is passed", func(t *testing.T) {
 		origGetAllHardCodedMetrics := services.GetAllHardCodedMetrics
 		t.Cleanup(func() {

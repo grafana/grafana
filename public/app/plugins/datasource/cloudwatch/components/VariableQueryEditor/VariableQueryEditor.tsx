@@ -90,7 +90,6 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
     }
     return { ...query, metricName, dimensionKey, dimensionFilters };
   };
-  console.log(accountState.value?.length, config.featureToggles.cloudWatchCrossAccountQuerying);
 
   const hasRegionField = [
     VariableQueryType.Metrics,
@@ -101,6 +100,12 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
     VariableQueryType.ResourceArns,
     VariableQueryType.LogGroups,
     VariableQueryType.Accounts,
+  ].includes(parsedQuery.queryType);
+  const hasAccountIDField = [
+    VariableQueryType.Metrics,
+    VariableQueryType.DimensionKeys,
+    VariableQueryType.DimensionValues,
+    VariableQueryType.LogGroups,
   ].includes(parsedQuery.queryType);
   const hasNamespaceField = [
     VariableQueryType.Metrics,
@@ -128,6 +133,18 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
           inputId={`variable-query-region-${query.refId}`}
         />
       )}
+      {hasAccountIDField &&
+        accountState.value &&
+        accountState.value?.length > 0 &&
+        config.featureToggles.cloudWatchCrossAccountQuerying && (
+          <VariableQueryField
+            label="Account"
+            value={query.accountId ?? null}
+            onChange={(accountId?: string) => onQueryChange({ ...parsedQuery, accountId })}
+            options={accountState?.value.length ? [ALL_ACCOUNTS_OPTION, ...accountState?.value] : []}
+            allowCustomValue={false}
+          />
+        )}
       {hasNamespaceField && (
         <VariableQueryField
           value={namespace}
@@ -243,15 +260,6 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
       )}
       {parsedQuery.queryType === VariableQueryType.LogGroups && (
         <>
-          {accountState.value?.length && config.featureToggles.cloudWatchCrossAccountQuerying && (
-            <VariableQueryField
-              label="Account"
-              value={query.accountId ?? null}
-              onChange={(accountId?: string) => onQueryChange({ ...parsedQuery, accountId })}
-              options={accountState?.value.length ? [ALL_ACCOUNTS_OPTION, ...accountState?.value] : []}
-              allowCustomValue={false}
-            />
-          )}
           <VariableTextField
             value={query.logGroupPrefix ?? ''}
             onBlur={(value: string) => onQueryChange({ ...parsedQuery, logGroupPrefix: value })}

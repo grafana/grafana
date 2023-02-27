@@ -6,6 +6,7 @@ import (
 	"net/url"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/services"
@@ -50,5 +51,5 @@ var newListMetricsService = func(pluginCtx backend.PluginContext, reqCtxFactory 
 		return nil, err
 	}
 
-	return services.NewListMetricsService(metricClient.MetricsClientProvider), nil
+	return services.NewListMetricsService(metricClient.MetricsClientProvider, metricClient.Features.IsEnabled(featuremgmt.FlagCloudWatchCrossAccountQuerying)), nil
 }
