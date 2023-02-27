@@ -3,7 +3,6 @@ package queryhistory
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"time"
@@ -498,21 +497,13 @@ func (s QueryHistoryService) pruneStarred(ctx context.Context) error {
 			return fmt.Errorf("failed to retrive starred queries with unique properties: %w", err)
 		}
 
-		batchSize := 500
-		updateBuilder := db.SQLBuilder{}
-		for i, dto := range dtos {
-			dto.Queries = pruneExtraQueryProperties(dto.Queries)
-			queries, _ := json.Marshal(dto.Queries)
+		for _, dto := range dtos {
+			queries := pruneExtraQueryProperties(dto.Queries)
 
-			updateBuilder.Write("UPDATE query_history SET queries = ? WHERE uid = ?;", string(queries), dto.UID)
+			session.Limit(1).Update(&QueryHistory{Queries: queries}, &QueryHistory{UID: dto.UID})
 
-			if (i+1)%batchSize == 0 || len(dtos) == (i+1) {
-				_, err := session.SQL(updateBuilder.GetSQLString(), updateBuilder.GetParams()...).Exist()
-				if err != nil {
-					return fmt.Errorf("failed to prune starred queries of unique properties: %w", err)
-				}
-
-				updateBuilder = db.SQLBuilder{}
+			if err != nil {
+				return fmt.Errorf("failed to prune starred queries of unique properties: %w", err)
 			}
 		}
 
