@@ -486,7 +486,7 @@ Limits the number of rows that Grafana will process from SQL (relational) data s
 
 ### user_agent
 
-Sets a custom value for `User-Agent` header for outgoing data proxy requests. If empty, default value will be `Grafana/<BuildVersion>` (e.g. `Grafana/9.0.0`).
+Sets a custom value for the `User-Agent` header for outgoing data proxy requests. If empty, the default value is `Grafana/<BuildVersion>` (for example `Grafana/9.0.0`).
 
 <hr />
 
