@@ -250,26 +250,6 @@ func (srv *CleanUpService) deleteStaleShortURLs(ctx context.Context) {
 }
 
 func (srv *CleanUpService) deleteStaleQueryHistory(ctx context.Context) {
-	/*
-		The problem with the following approach is that effectively entries are first unstarred
-		and eventually deleted only during the next cleanup.
-		If we change `DeleteStaleQueriesInQueryHistory` do delete also starred entries when only
-		deleting only non starred entries is not enough to bring the number of rows below the limit
-		(on a per user basis, e.g. 1000), the we wouldn't need the next 2 calls.
-		Or, for extra safety, we'd only have to cleanup orphaned entries in the starred table when:
-			1. qury_uid is not present in the query_history table
-			OR
-			2. user_id is not present in the user table
-			OR
-			3. org_id is not present in the org table
-
-		Moreover, we could also delete entries from the query_history table if:
-			1. created_by is not present in the user table (debatable if we want to introduce team history)
-				OR
-			2. org_id is not present in the org table
-				OR
-			3. datasource_uid is not present in the datasource table
-	*/
 	logger := srv.log.FromContext(ctx)
 
 	// Delete query history that were last ecexuted mor than 14 days ago with exception of starred queries

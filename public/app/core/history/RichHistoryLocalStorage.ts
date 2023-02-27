@@ -214,9 +214,6 @@ function cleanUp(richHistory: RichHistoryLocalStorageDTO[]): RichHistoryLocalSto
  * Ensures the entry can be added.
  * Removes non-starred queries from the history until its length is less than or equal to `MAX_HISTORY_ITEMS`.
  *  @returns `true` if the limit was exceeded and some queries were removed.
- *
- * TODO: Remote storage also removes starred queries if only removing non-starred queries is not enough.
- * Should we do the same here?
  */
 function pruneExceeding(queriesToKeep: RichHistoryLocalStorageDTO[]): boolean {
   let limitExceeded = false;

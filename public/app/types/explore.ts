@@ -246,7 +246,6 @@ export type RichHistoryQuery<T extends DataQuery = DataQuery> = {
    */
   lastExecutedAt: number;
   datasourceUid: string;
-  // TODO: maybe this is not needed?
   datasourceName: string;
   starred: boolean;
   comment: string;
