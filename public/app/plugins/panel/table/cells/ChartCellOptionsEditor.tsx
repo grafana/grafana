@@ -2,14 +2,14 @@ import { css } from '@emotion/css';
 import React, { useMemo } from 'react';
 
 import { createFieldConfigRegistry } from '@grafana/data';
-import { GraphFieldConfig, TableAreaChartCellOptions } from '@grafana/schema';
+import { GraphFieldConfig, TableChartCellOptions } from '@grafana/schema';
 import { VerticalGroup, Field, useStyles2 } from '@grafana/ui';
-import { defaultAreaChartCellConfig } from '@grafana/ui/src/components/Table/AreaChartCell';
+import { defaultChartCellConfig } from '@grafana/ui/src/components/Table/ChartCell';
 
 import { getGraphFieldConfig } from '../../timeseries/config';
 import { TableCellEditorProps } from '../TableCellOptionEditor';
 
-type OptionKey = keyof TableAreaChartCellOptions;
+type OptionKey = keyof TableChartCellOptions;
 
 const optionIds: Array<keyof GraphFieldConfig> = [
   'drawStyle',
@@ -24,12 +24,12 @@ const optionIds: Array<keyof GraphFieldConfig> = [
   'pointSize',
 ];
 
-export const AreaChartCellOptionsEditor = (props: TableCellEditorProps<TableAreaChartCellOptions>) => {
+export const ChartCellOptionsEditor = (props: TableCellEditorProps<TableChartCellOptions>) => {
   const { cellOptions, onChange } = props;
 
   const registry = useMemo(() => {
-    const config = getGraphFieldConfig(defaultAreaChartCellConfig);
-    return createFieldConfigRegistry(config, 'AreaChartCell');
+    const config = getGraphFieldConfig(defaultChartCellConfig);
+    return createFieldConfigRegistry(config, 'ChartCell');
   }, []);
 
   const style = useStyles2(getStyles);
@@ -37,7 +37,7 @@ export const AreaChartCellOptionsEditor = (props: TableCellEditorProps<TableArea
   return (
     <VerticalGroup>
       {registry.list(optionIds.map((id) => `custom.${id}`)).map((item) => {
-        if (item.showIf && !item.showIf({ ...defaultAreaChartCellConfig, ...cellOptions })) {
+        if (item.showIf && !item.showIf({ ...defaultChartCellConfig, ...cellOptions })) {
           return null;
         }
         const Editor = item.editor;
@@ -60,7 +60,7 @@ export const AreaChartCellOptionsEditor = (props: TableCellEditorProps<TableArea
 };
 
 // jumping through hoops to avoid using "any"
-function isOptionKey(key: string, options: TableAreaChartCellOptions): key is OptionKey {
+function isOptionKey(key: string, options: TableChartCellOptions): key is OptionKey {
   return key in options;
 }
 

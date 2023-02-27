@@ -502,7 +502,7 @@
                             {
                                 "id": "custom.cellOptions",
                                 "value": {
-                                    "type": "area-chart"
+                                    "type": "chart"
                                 }
                             },
                             {
@@ -614,7 +614,7 @@
                                     "gradientMode": "opacity",
                                     "lineWidth": 1,
                                     "showPoints": "auto",
-                                    "type": "area-chart"
+                                    "type": "chart"
                                 }
                             },
                             {
@@ -636,7 +636,7 @@
                                 "value": {
                                     "fillOpacity": 40,
                                     "gradientMode": "hue",
-                                    "type": "area-chart"
+                                    "type": "chart"
                                 }
                             },
                             {

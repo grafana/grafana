@@ -6,8 +6,8 @@ import { config } from '@grafana/runtime';
 import { TableCellOptions } from '@grafana/schema';
 import { Field, Select, TableCellDisplayMode } from '@grafana/ui';
 
-import { AreaChartCellOptionsEditor } from './cells/AreaChartCellOptionsEditor';
 import { BarGaugeCellOptionsEditor } from './cells/BarGaugeCellOptionsEditor';
+import { ChartCellOptionsEditor } from './cells/ChartCellOptionsEditor';
 import { ColorBackgroundCellOptionsEditor } from './cells/ColorBackgroundCellOptionsEditor';
 
 // The props that any cell type editor are expected
@@ -66,21 +66,21 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
       {cellType === TableCellDisplayMode.ColorBackground && (
         <ColorBackgroundCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
       )}
-      {cellType === TableCellDisplayMode.AreaChart && (
-        <AreaChartCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
+      {cellType === TableCellDisplayMode.Chart && (
+        <ChartCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
       )}
     </>
   );
 };
 
-const areaChartDisplayModeOption: SelectableValue<TableCellOptions> = {
-  value: { type: TableCellDisplayMode.AreaChart },
-  label: 'Area chart',
+const ChartDisplayModeOption: SelectableValue<TableCellOptions> = {
+  value: { type: TableCellDisplayMode.Chart },
+  label: 'Chart',
 };
 
 const cellDisplayModeOptions: Array<SelectableValue<TableCellOptions>> = [
   { value: { type: TableCellDisplayMode.Auto }, label: 'Auto' },
-  ...(config.featureToggles.timeSeriesTable ? [areaChartDisplayModeOption] : []),
+  ...(config.featureToggles.timeSeriesTable ? [ChartDisplayModeOption] : []),
   { value: { type: TableCellDisplayMode.ColorText }, label: 'Colored text' },
   { value: { type: TableCellDisplayMode.ColorBackground }, label: 'Colored background' },
   { value: { type: TableCellDisplayMode.Gauge }, label: 'Gauge' },

@@ -25,8 +25,8 @@ import {
   TableCellOptions,
 } from '@grafana/schema';
 
-import { AreaChartCell } from './AreaChartCell';
 import { BarGaugeCell } from './BarGaugeCell';
+import { ChartCell } from './ChartCell';
 import { DefaultCell } from './DefaultCell';
 import { getFooterValue } from './FooterRow';
 import { GeoCell } from './GeoCell';
@@ -193,8 +193,8 @@ export function getCellComponent(displayMode: TableCellDisplayMode, field: Field
       return ImageCell;
     case TableCellDisplayMode.Gauge:
       return BarGaugeCell;
-    case TableCellDisplayMode.AreaChart:
-      return AreaChartCell;
+    case TableCellDisplayMode.Chart:
+      return ChartCell;
     case TableCellDisplayMode.JSONView:
       return JSONViewCell;
   }
@@ -206,7 +206,7 @@ export function getCellComponent(displayMode: TableCellDisplayMode, field: Field
   if (field.type === FieldType.frame) {
     const firstValue = field.values.get(0);
     if (isDataFrame(firstValue) && isTimeSeriesFrame(firstValue)) {
-      return AreaChartCell;
+      return ChartCell;
     }
 
     return JSONViewCell;

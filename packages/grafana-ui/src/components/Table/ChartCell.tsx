@@ -16,7 +16,7 @@ import {
   GraphFieldConfig,
   GraphGradientMode,
   LineInterpolation,
-  TableAreaChartCellOptions,
+  TableChartCellOptions,
   TableCellDisplayMode,
   VisibilityMode,
 } from '@grafana/schema';
@@ -26,7 +26,7 @@ import { Sparkline } from '../Sparkline/Sparkline';
 import { TableCellProps } from './types';
 import { getCellOptions } from './utils';
 
-export const defaultAreaChartCellConfig: GraphFieldConfig = {
+export const defaultChartCellConfig: GraphFieldConfig = {
   drawStyle: GraphDrawStyle.Line,
   lineInterpolation: LineInterpolation.Smooth,
   lineWidth: 1,
@@ -37,7 +37,7 @@ export const defaultAreaChartCellConfig: GraphFieldConfig = {
   showPoints: VisibilityMode.Never,
 };
 
-export const AreaChartCell: FC<TableCellProps> = (props) => {
+export const ChartCell: FC<TableCellProps> = (props) => {
   const { field, innerWidth, tableStyles, cell, cellProps } = props;
 
   const sparkline = getSparkline(cell.value);
@@ -55,12 +55,12 @@ export const AreaChartCell: FC<TableCellProps> = (props) => {
   sparkline.y.config.max = range.max;
   sparkline.y.state = { range };
 
-  const cellOptions = getTableAreaChartCellOptions(field);
+  const cellOptions = getTableChartCellOptions(field);
 
   const config: FieldConfig<GraphFieldConfig> = {
     color: field.config.color,
     custom: {
-      ...defaultAreaChartCellConfig,
+      ...defaultChartCellConfig,
       ...cellOptions,
     },
   };
@@ -102,13 +102,13 @@ function getSparkline(value: unknown): FieldSparkline | undefined {
   return;
 }
 
-function getTableAreaChartCellOptions(field: Field): TableAreaChartCellOptions {
+function getTableChartCellOptions(field: Field): TableChartCellOptions {
   let options = getCellOptions(field);
   if (options.type === TableCellDisplayMode.Auto) {
-    options = { ...options, type: TableCellDisplayMode.AreaChart };
+    options = { ...options, type: TableCellDisplayMode.Chart };
   }
-  if (options.type === TableCellDisplayMode.AreaChart) {
+  if (options.type === TableCellDisplayMode.Chart) {
     return options;
   }
-  throw new Error(`Excpected options type ${TableCellDisplayMode.AreaChart} but got ${options.type}`);
+  throw new Error(`Excpected options type ${TableCellDisplayMode.Chart} but got ${options.type}`);
 }
