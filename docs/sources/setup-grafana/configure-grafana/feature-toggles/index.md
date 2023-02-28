@@ -67,6 +67,7 @@ Alpha features might be changed or removed without prior notice.
 | `storage`                          | Configurable storage for dashboards, datasources, and resources                                                                                                              |
 | `exploreMixedDatasource`           | Enable mixed datasource in Explore                                                                                                                                           |
 | `tracing`                          | Adds trace ID to error notifications                                                                                                                                         |
+| `newTraceView`                     | Shows the new trace view design                                                                                                                                              |
 | `correlations`                     | Correlations page                                                                                                                                                            |
 | `datasourceQueryMultiStatus`       | Introduce HTTP 207 Multi Status for api/ds/query                                                                                                                             |
 | `traceToMetrics`                   | Enable trace to metrics links                                                                                                                                                |

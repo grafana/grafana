@@ -8,9 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestStore_ProvideService(t *testing.T) {
@@ -22,21 +20,23 @@ func TestStore_ProvideService(t *testing.T) {
 				return nil, nil
 			},
 		}
-		cfg := &setting.Cfg{
-			BundledPluginsPath: "path1",
-		}
-		pCfg := &config.Cfg{
-			PluginsPath: "path2",
-			PluginSettings: setting.PluginSettings{
-				"blah": map[string]string{
-					"path": "path3",
-				},
-			},
-		}
 
-		_, err := ProvideService(cfg, pCfg, fakes.NewFakePluginRegistry(), l)
+		srcs := &fakes.FakeSources{ListFunc: func(_ context.Context) []plugins.PluginSource {
+			return []plugins.PluginSource{
+				{
+					Class: plugins.Bundled,
+					Paths: []string{"path1"},
+				},
+				{
+					Class: plugins.External,
+					Paths: []string{"path2", "path3"},
+				},
+			}
+		}}
+
+		_, err := ProvideService(fakes.NewFakePluginRegistry(), srcs, l)
 		require.NoError(t, err)
-		require.Equal(t, []string{"app/plugins/datasource", "app/plugins/panel", "path1", "path2", "path3"}, addedPaths)
+		require.Equal(t, []string{"path1", "path2", "path3"}, addedPaths)
 	})
 }
 

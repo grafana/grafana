@@ -321,6 +321,25 @@ Sentry frontend logging provider will be removed with next major version. Issue 
 - **Toolkit:** Deprecate all plugin related commands. [#60290](https://github.com/grafana/grafana/pull/60290), [@academo](https://github.com/academo)
 - **Grafana UI:** Add experimental InteractiveTable component. [#58223](https://github.com/grafana/grafana/pull/58223), [@Elfo404](https://github.com/Elfo404)
 
+<!-- 9.3.8 START -->
+
+# 9.3.8 (2023-02-28)
+
+<!-- 9.3.8 END -->
+
+<!-- 9.3.7 START -->
+
+# 9.3.7 (2023-02-28)
+
+### Bug fixes
+
+- **Alerting:** Validate that tags are 100 characters or less. [#62335](https://github.com/grafana/grafana/pull/62335), [@grobinson-grafana](https://github.com/grobinson-grafana)
+- **Expressions:** Fixes the issue showing expressions editor. [#62510](https://github.com/grafana/grafana/pull/62510), [@itsmylife](https://github.com/itsmylife)
+- **Logs:** Fix stats not being updated when log results change. [#62317](https://github.com/grafana/grafana/pull/62317), [@svennergr](https://github.com/svennergr)
+- **Plugins:** Fix circular reference in customOptions leading to MarshalJSON errors. [#62328](https://github.com/grafana/grafana/pull/62328), [@yoziru](https://github.com/yoziru)
+- **Time Series Panel:** Fix legend text selection in Firefox. [#60809](https://github.com/grafana/grafana/pull/60809), [@codeincarnate](https://github.com/codeincarnate)
+
+<!-- 9.3.7 END -->
 <!-- 9.4.0-beta1 END -->
 <!-- 9.3.6 START -->
 
@@ -647,6 +666,10 @@ The following functions and classes related to logs are deprecated in the `grafa
 - **Grafana UI:** Clean up bundle. [#56100](https://github.com/grafana/grafana/pull/56100), [@jackw](https://github.com/jackw)
 - **Toolkit:** Deprecate `component:create` command. [#56086](https://github.com/grafana/grafana/pull/56086), [@academo](https://github.com/academo)
 - **Toolkit:** Remove changelog command. [#56073](https://github.com/grafana/grafana/pull/56073), [@gitstart](https://github.com/gitstart)
+
+<!-- 9.2.13 START -->
+
+<!-- 9.2.13 END -->
 
 <!-- 9.2.10 START -->
 
@@ -2329,6 +2352,12 @@ Make sure to handle possible errors on the callsite where using `backendSrv.fetc
 In the Loki data source, for consistency and performance reasons, we changed how we represent `NaN` (not a number) values received from Loki. In the past versions, we converted these to `null` in the frontend (for dashboard and explore), and kept as `NaN` in the alerting path. Starting with this version, we will always keep it as `NaN`. This change should be mostly invisible for the users. Issue [#45389](https://github.com/grafana/grafana/issues/45389)
 
 The dependency to [grafana/aws-sdk](https://github.com/grafana/grafana-aws-sdk-react) is moved from [grafana/ui](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/package.json) to the plugin. This means that any plugin that use SIGV4 auth need to pass a SIGV4 editor component as a prop to the `DataSourceHttpSettings` component. Issue [#43559](https://github.com/grafana/grafana/issues/43559)
+
+<!-- 8.5.21 START -->
+
+# 8.5.21 (2023-02-28)
+
+<!-- 8.5.21 END -->
 
 <!-- 8.5.20 START -->
 
