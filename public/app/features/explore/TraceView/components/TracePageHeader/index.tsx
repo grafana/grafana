@@ -13,3 +13,4 @@
 // limitations under the License.
 
 export { default } from './TracePageHeader';
+export { NewTracePageHeader } from './NewTracePageHeader';
