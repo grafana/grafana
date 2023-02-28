@@ -30,35 +30,33 @@ describe('createPluginExtensionRegistry()', () => {
   });
 
   describe('when registering links', () => {
+    const placement = 'grafana/dashboard/panel/menu';
+    const samplePluginId = 'belugacdn-app';
+    const sampleLinkExtension = {
+      placement,
+      title: 'Open incident',
+      description: 'You can create an incident from this context',
+      path: `/a/${samplePluginId}/incidents/declare`,
+    };
+
     it('should register a link extension', () => {
       const registry = createPluginExtensionRegistry([
         {
-          pluginId: 'belugacdn-app',
-          linkExtensions: [
-            {
-              placement: 'grafana/dashboard/panel/menu',
-              title: 'Open incident',
-              description: 'You can create an incident from this context',
-              path: '/a/belugacdn-app/incidents/declare',
-            },
-          ],
+          pluginId: samplePluginId,
+          linkExtensions: [sampleLinkExtension],
           commandExtensions: [],
         },
       ]);
 
-      const numberOfPlacements = Object.keys(registry).length;
-      const extensions = registry['grafana/dashboard/panel/menu'];
-
-      expect(numberOfPlacements).toBe(1);
-      expect(extensions).toEqual([
+      expect(registry[placement]).toEqual([
         {
           configure: undefined,
           extension: {
-            title: 'Open incident',
-            type: PluginExtensionTypes.link,
-            description: 'You can create an incident from this context',
-            path: '/a/belugacdn-app/incidents/declare',
             key: -68154691,
+            type: PluginExtensionTypes.link,
+            title: sampleLinkExtension.title,
+            description: sampleLinkExtension.description,
+            path: sampleLinkExtension.path,
           },
         },
       ]);
