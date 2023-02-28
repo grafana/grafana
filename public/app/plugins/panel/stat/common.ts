@@ -147,17 +147,30 @@ function getStatPrefixes(): CustomStatFormats {
   };
 }
 
-export function formatValueForCustomPrefix(fieldValues: FieldDisplay[], chosenPrefix: string): FieldDisplay[] {
-  const customPrefix = getStatPrefixes().prefixes[chosenPrefix];
+export function formatValueForCustomPrefix(fieldValues: FieldDisplay[], prefix: string): FieldDisplay[] {
+  const customPrefixes = getStatPrefixes().prefixes;
+  const prefixList = Object.keys(customPrefixes).map((key) => customPrefixes[key].symbol);
+  const chosenPrefix = customPrefixes[prefix] ?? '';
 
   return fieldValues.map((fieldValue) => {
     const { fieldType, display } = fieldValue;
     if (fieldType === FieldType.number) {
       const previousPrefix = display.prefix ?? '';
-      const updatedPrefix = customPrefix + previousPrefix;
+      console.log(previousPrefix, 'previous prefix');
+      const strippedPreviousPrefix = stripStringOfValues(previousPrefix, prefixList);
+      const updatedPrefix = chosenPrefix + strippedPreviousPrefix;
       const updatedDisplay = { ...display, prefix: updatedPrefix };
+      console.log('🚀 ~ file: common.ts:163 ~ returnfieldValues.map ~ updatedPrefix:', updatedPrefix);
       return { ...fieldValue, display: updatedDisplay };
     }
     return fieldValue;
   });
+}
+
+function stripStringOfValues(prefixToStrip: string, itemsToStrip: string[]): string {
+  if (prefixToStrip === '') {
+    return prefixToStrip;
+  }
+
+  return prefixToStrip.replace(/[itemsToStrip]/g, '');
 }
