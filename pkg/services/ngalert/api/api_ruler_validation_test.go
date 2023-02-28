@@ -56,11 +56,11 @@ func validRule() apimodels.PostableExtendedRuleNode {
 		GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
 			Title:     fmt.Sprintf("TEST-ALERT-%d", rand.Int63()),
 			Condition: "A",
-			Data: []models.AlertQuery{
+			Data: []apimodels.AlertQuery{
 				{
 					RefID:     "A",
 					QueryType: "TEST",
-					RelativeTimeRange: models.RelativeTimeRange{
+					RelativeTimeRange: apimodels.RelativeTimeRange{
 						From: 10,
 						To:   0,
 					},
@@ -248,7 +248,7 @@ func TestValidateRuleNode_NoUID(t *testing.T) {
 				require.Equal(t, orgId, alert.OrgID)
 				require.Equal(t, api.GrafanaManagedAlert.Title, alert.Title)
 				require.Equal(t, api.GrafanaManagedAlert.Condition, alert.Condition)
-				require.Equal(t, api.GrafanaManagedAlert.Data, alert.Data)
+				require.Equal(t, AlertQueriesFromApiAlertQueries(api.GrafanaManagedAlert.Data), alert.Data)
 				require.Equal(t, time.Time{}, alert.Updated)
 				require.Equal(t, int64(interval.Seconds()), alert.IntervalSeconds)
 				require.Equal(t, int64(0), alert.Version)
@@ -411,7 +411,7 @@ func TestValidateRuleNodeFailures_NoUID(t *testing.T) {
 			name: "fail if there are not data (empty)",
 			rule: func() *apimodels.PostableExtendedRuleNode {
 				r := validRule()
-				r.GrafanaManagedAlert.Data = make([]models.AlertQuery, 0, 1)
+				r.GrafanaManagedAlert.Data = make([]apimodels.AlertQuery, 0, 1)
 				return &r
 			},
 		},
@@ -535,7 +535,7 @@ func TestValidateRuleNode_UID(t *testing.T) {
 				r.GrafanaManagedAlert.Condition = ""
 				r.GrafanaManagedAlert.Data = nil
 				if rand.Int63()%2 == 0 {
-					r.GrafanaManagedAlert.Data = make([]models.AlertQuery, 0)
+					r.GrafanaManagedAlert.Data = make([]apimodels.AlertQuery, 0)
 				}
 				return &r
 			},
@@ -630,7 +630,7 @@ func TestValidateRuleNodeFailures_UID(t *testing.T) {
 			name: "fail if there are not data (empty) but condition is set",
 			rule: func() *apimodels.PostableExtendedRuleNode {
 				r := validRule()
-				r.GrafanaManagedAlert.Data = make([]models.AlertQuery, 0, 1)
+				r.GrafanaManagedAlert.Data = make([]apimodels.AlertQuery, 0, 1)
 				r.GrafanaManagedAlert.Condition = "A"
 				return &r
 			},

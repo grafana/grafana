@@ -47,7 +47,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 				Expr: "",
 				GrafanaManagedCondition: &definitions.EvalAlertConditionCommand{
 					Condition: data1.RefID,
-					Data:      []models.AlertQuery{data1, data2},
+					Data:      ApiAlertQueriesFromAlertQueries([]models.AlertQuery{data1, data2}),
 					Now:       time.Time{},
 				},
 			})
@@ -83,7 +83,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 				Expr: "",
 				GrafanaManagedCondition: &definitions.EvalAlertConditionCommand{
 					Condition: data1.RefID,
-					Data:      []models.AlertQuery{data1, data2},
+					Data:      ApiAlertQueriesFromAlertQueries([]models.AlertQuery{data1, data2}),
 					Now:       currentTime,
 				},
 			})
@@ -124,7 +124,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 				Expr: "",
 				GrafanaManagedCondition: &definitions.EvalAlertConditionCommand{
 					Condition: data1.RefID,
-					Data:      []models.AlertQuery{data1},
+					Data:      ApiAlertQueriesFromAlertQueries([]models.AlertQuery{data1}),
 					Now:       currentTime,
 				},
 			})
@@ -138,7 +138,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 				Expr: "",
 				GrafanaManagedCondition: &definitions.EvalAlertConditionCommand{
 					Condition: data1.RefID,
-					Data:      []models.AlertQuery{data1},
+					Data:      ApiAlertQueriesFromAlertQueries([]models.AlertQuery{data1}),
 					Now:       currentTime,
 				},
 			})
@@ -174,7 +174,7 @@ func TestRouteEvalQueries(t *testing.T) {
 			}
 
 			response := srv.RouteEvalQueries(rc, definitions.EvalQueriesPayload{
-				Data: []models.AlertQuery{data1, data2},
+				Data: ApiAlertQueriesFromAlertQueries([]models.AlertQuery{data1, data2}),
 				Now:  time.Time{},
 			})
 
@@ -211,7 +211,7 @@ func TestRouteEvalQueries(t *testing.T) {
 			srv := createTestingApiSrv(ds, ac, eval_mocks.NewEvaluatorFactory(evaluator))
 
 			response := srv.RouteEvalQueries(rc, definitions.EvalQueriesPayload{
-				Data: []models.AlertQuery{data1, data2},
+				Data: ApiAlertQueriesFromAlertQueries([]models.AlertQuery{data1, data2}),
 				Now:  currentTime,
 			})
 
@@ -256,7 +256,7 @@ func TestRouteEvalQueries(t *testing.T) {
 			srv := createTestingApiSrv(ds, ac, eval_mocks.NewEvaluatorFactory(evaluator))
 
 			response := srv.RouteEvalQueries(rc, definitions.EvalQueriesPayload{
-				Data: []models.AlertQuery{data1},
+				Data: ApiAlertQueriesFromAlertQueries([]models.AlertQuery{data1}),
 				Now:  currentTime,
 			})
 
@@ -266,7 +266,7 @@ func TestRouteEvalQueries(t *testing.T) {
 			rc.IsSignedIn = true
 
 			response = srv.RouteEvalQueries(rc, definitions.EvalQueriesPayload{
-				Data: []models.AlertQuery{data1},
+				Data: ApiAlertQueriesFromAlertQueries([]models.AlertQuery{data1}),
 				Now:  currentTime,
 			})
 
