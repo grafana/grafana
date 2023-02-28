@@ -321,6 +321,12 @@ Sentry frontend logging provider will be removed with next major version. Issue 
 - **Toolkit:** Deprecate all plugin related commands. [#60290](https://github.com/grafana/grafana/pull/60290), [@academo](https://github.com/academo)
 - **Grafana UI:** Add experimental InteractiveTable component. [#58223](https://github.com/grafana/grafana/pull/58223), [@Elfo404](https://github.com/Elfo404)
 
+<!-- 9.3.8 START -->
+
+# 9.3.8 (2023-02-28)
+
+<!-- 9.3.8 END -->
+
 <!-- 9.3.7 START -->
 
 # 9.3.7 (2023-02-28)
