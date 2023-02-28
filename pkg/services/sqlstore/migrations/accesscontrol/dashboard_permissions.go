@@ -8,22 +8,21 @@ import (
 
 	"xorm.io/xorm"
 
-	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
-var dashboardPermissionTranslation = map[models.PermissionType][]string{
-	models.PERMISSION_VIEW: {
+var dashboardPermissionTranslation = map[dashboards.PermissionType][]string{
+	dashboards.PERMISSION_VIEW: {
 		dashboards.ActionDashboardsRead,
 	},
-	models.PERMISSION_EDIT: {
+	dashboards.PERMISSION_EDIT: {
 		dashboards.ActionDashboardsRead,
 		dashboards.ActionDashboardsWrite,
 		dashboards.ActionDashboardsDelete,
 	},
-	models.PERMISSION_ADMIN: {
+	dashboards.PERMISSION_ADMIN: {
 		dashboards.ActionDashboardsRead,
 		dashboards.ActionDashboardsWrite,
 		dashboards.ActionDashboardsCreate,
@@ -33,17 +32,17 @@ var dashboardPermissionTranslation = map[models.PermissionType][]string{
 	},
 }
 
-var folderPermissionTranslation = map[models.PermissionType][]string{
-	models.PERMISSION_VIEW: append(dashboardPermissionTranslation[models.PERMISSION_VIEW], []string{
+var folderPermissionTranslation = map[dashboards.PermissionType][]string{
+	dashboards.PERMISSION_VIEW: append(dashboardPermissionTranslation[dashboards.PERMISSION_VIEW], []string{
 		dashboards.ActionFoldersRead,
 	}...),
-	models.PERMISSION_EDIT: append(dashboardPermissionTranslation[models.PERMISSION_EDIT], []string{
+	dashboards.PERMISSION_EDIT: append(dashboardPermissionTranslation[dashboards.PERMISSION_EDIT], []string{
 		dashboards.ActionDashboardsCreate,
 		dashboards.ActionFoldersRead,
 		dashboards.ActionFoldersWrite,
 		dashboards.ActionFoldersDelete,
 	}...),
-	models.PERMISSION_ADMIN: append(dashboardPermissionTranslation[models.PERMISSION_ADMIN], []string{
+	dashboards.PERMISSION_ADMIN: append(dashboardPermissionTranslation[dashboards.PERMISSION_ADMIN], []string{
 		dashboards.ActionFoldersRead,
 		dashboards.ActionFoldersWrite,
 		dashboards.ActionFoldersDelete,
@@ -98,9 +97,9 @@ func (m dashboardPermissionsMigrator) Exec(sess *xorm.Session, migrator *migrato
 	return nil
 }
 
-func (m dashboardPermissionsMigrator) migratePermissions(dashboards []dashboard, aclMap map[int64][]dashboards.DashboardACL, migrator *migrator.Migrator) error {
+func (m dashboardPermissionsMigrator) migratePermissions(dashes []dashboard, aclMap map[int64][]dashboards.DashboardACL, migrator *migrator.Migrator) error {
 	permissionMap := map[int64]map[string][]*ac.Permission{}
-	for _, d := range dashboards {
+	for _, d := range dashes {
 		if d.ID == -1 {
 			continue
 		}
@@ -112,11 +111,11 @@ func (m dashboardPermissionsMigrator) migratePermissions(dashboards []dashboard,
 		if (d.IsFolder || d.FolderID == 0) && len(acls) == 0 && !d.HasAcl {
 			permissionMap[d.OrgID]["managed:builtins:editor:permissions"] = append(
 				permissionMap[d.OrgID]["managed:builtins:editor:permissions"],
-				m.mapPermission(d.ID, models.PERMISSION_EDIT, d.IsFolder)...,
+				m.mapPermission(d.ID, dashboards.PERMISSION_EDIT, d.IsFolder)...,
 			)
 			permissionMap[d.OrgID]["managed:builtins:viewer:permissions"] = append(
 				permissionMap[d.OrgID]["managed:builtins:viewer:permissions"],
-				m.mapPermission(d.ID, models.PERMISSION_VIEW, d.IsFolder)...,
+				m.mapPermission(d.ID, dashboards.PERMISSION_VIEW, d.IsFolder)...,
 			)
 		} else {
 			for _, a := range deduplicateAcl(acls) {
@@ -151,9 +150,7 @@ func (m dashboardPermissionsMigrator) migratePermissions(dashboards []dashboard,
 		return fmt.Errorf("failed to bulk-create roles: %w", err)
 	}
 
-	for i := range createdRoles {
-		allRoles = append(allRoles, createdRoles[i])
-	}
+	allRoles = append(allRoles, createdRoles...)
 
 	if err := m.bulkAssignRoles(createdRoles); err != nil {
 		return fmt.Errorf("failed to bulk-assign roles: %w", err)
@@ -195,7 +192,7 @@ func (m dashboardPermissionsMigrator) setPermissions(allRoles []*ac.Role, permis
 	return nil
 }
 
-func (m dashboardPermissionsMigrator) mapPermission(id int64, p models.PermissionType, isFolder bool) []*ac.Permission {
+func (m dashboardPermissionsMigrator) mapPermission(id int64, p dashboards.PermissionType, isFolder bool) []*ac.Permission {
 	if isFolder {
 		actions := folderPermissionTranslation[p]
 		scope := dashboards.ScopeFoldersProvider.GetResourceScope(strconv.FormatInt(id, 10))
@@ -559,15 +556,15 @@ func (m *managedFolderAlertActionsRepeatMigrator) Exec(sess *xorm.Session, mg *m
 }
 
 func hasFolderAdmin(permissions []ac.Permission) bool {
-	return hasActions(folderPermissionTranslation[models.PERMISSION_ADMIN], permissions)
+	return hasActions(folderPermissionTranslation[dashboards.PERMISSION_ADMIN], permissions)
 }
 
 func hasFolderEdit(permissions []ac.Permission) bool {
-	return hasActions(folderPermissionTranslation[models.PERMISSION_EDIT], permissions)
+	return hasActions(folderPermissionTranslation[dashboards.PERMISSION_EDIT], permissions)
 }
 
 func hasFolderView(permissions []ac.Permission) bool {
-	return hasActions(folderPermissionTranslation[models.PERMISSION_VIEW], permissions)
+	return hasActions(folderPermissionTranslation[dashboards.PERMISSION_VIEW], permissions)
 }
 
 func hasActions(actions []string, permissions []ac.Permission) bool {

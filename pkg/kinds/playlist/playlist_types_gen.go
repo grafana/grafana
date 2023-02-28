@@ -12,12 +12,28 @@ package playlist
 
 // Defines values for ItemType.
 const (
-	ItemTypeDashboardById ItemType = "dashboard_by_id"
-
+	ItemTypeDashboardById  ItemType = "dashboard_by_id"
 	ItemTypeDashboardByTag ItemType = "dashboard_by_tag"
-
 	ItemTypeDashboardByUid ItemType = "dashboard_by_uid"
 )
+
+// Playlist defines model for Playlist.
+type Playlist struct {
+	// Interval sets the time between switching views in a playlist.
+	// FIXME: Is this based on a standardized format or what options are available? Can datemath be used?
+	Interval string `json:"interval"`
+
+	// The ordered list of items that the playlist will iterate over.
+	// FIXME! This should not be optional, but changing it makes the godegen awkward
+	Items []Item `json:"items,omitempty"`
+
+	// Name of the playlist.
+	Name string `json:"name"`
+
+	// Unique playlist identifier. Generated on creation, either by the
+	// creator of the playlist of by the application.
+	Uid string `json:"uid"`
+}
 
 // Item defines model for Item.
 type Item struct {
@@ -40,21 +56,3 @@ type Item struct {
 
 // Type of the item.
 type ItemType string
-
-// Playlist defines model for playlist.
-type Playlist struct {
-	// Interval sets the time between switching views in a playlist.
-	// FIXME: Is this based on a standardized format or what options are available? Can datemath be used?
-	Interval string `json:"interval"`
-
-	// The ordered list of items that the playlist will iterate over.
-	// FIXME! This should not be optional, but changing it makes the godegen awkward
-	Items *[]Item `json:"items,omitempty"`
-
-	// Name of the playlist.
-	Name string `json:"name"`
-
-	// Unique playlist identifier. Generated on creation, either by the
-	// creator of the playlist of by the application.
-	Uid string `json:"uid"`
-}

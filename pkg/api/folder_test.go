@@ -14,16 +14,17 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -70,7 +71,6 @@ func TestFoldersAPIEndpoint(t *testing.T) {
 			{Error: dashboards.ErrFolderAccessDenied, ExpectedStatusCode: 403},
 			{Error: dashboards.ErrFolderNotFound, ExpectedStatusCode: 404},
 			{Error: dashboards.ErrFolderVersionMismatch, ExpectedStatusCode: 412},
-			{Error: dashboards.ErrFolderFailedGenerateUniqueUid, ExpectedStatusCode: 500},
 		}
 
 		cmd := folder.CreateFolderCommand{
@@ -123,7 +123,6 @@ func TestFoldersAPIEndpoint(t *testing.T) {
 			{Error: dashboards.ErrFolderAccessDenied, ExpectedStatusCode: 403},
 			{Error: dashboards.ErrFolderNotFound, ExpectedStatusCode: 404},
 			{Error: dashboards.ErrFolderVersionMismatch, ExpectedStatusCode: 412},
-			{Error: dashboards.ErrFolderFailedGenerateUniqueUid, ExpectedStatusCode: 500},
 		}
 
 		title := "Folder upd"
@@ -150,7 +149,7 @@ func TestHTTPServer_FolderMetadata(t *testing.T) {
 		hs.AccessControl = acmock.New()
 		hs.QuotaService = quotatest.New(false, nil)
 		hs.SearchService = &mockSearchService{
-			ExpectedResult: models.HitList{},
+			ExpectedResult: model.HitList{},
 		}
 	})
 
@@ -241,29 +240,25 @@ func createFolderScenario(t *testing.T, desc string, url string, routePattern st
 		aclMockResp := []*dashboards.DashboardACLInfoDTO{}
 		teamSvc := &teamtest.FakeService{}
 		dashSvc := &dashboards.FakeDashboardService{}
-		dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
-			q := args.Get(1).(*dashboards.GetDashboardACLInfoListQuery)
-			q.Result = aclMockResp
-		}).Return(nil)
-		dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
-			q := args.Get(1).(*dashboards.GetDashboardQuery)
-			q.Result = &dashboards.Dashboard{
-				ID:  q.ID,
-				UID: q.UID,
-			}
-		}).Return(nil)
+		qResult1 := aclMockResp
+		dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(qResult1, nil)
+		qResult := &dashboards.Dashboard{}
+		dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(qResult, nil)
 		store := dbtest.NewFakeDB()
 		guardian.InitLegacyGuardian(store, dashSvc, teamSvc)
+		folderPermissions := acmock.NewMockedPermissionsService()
+		folderPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 		hs := HTTPServer{
-			AccessControl:        acmock.New(),
-			folderService:        folderService,
-			Cfg:                  setting.NewCfg(),
-			Features:             featuremgmt.WithFeatures(),
-			accesscontrolService: actest.FakeService{},
+			AccessControl:            acmock.New(),
+			folderService:            folderService,
+			Cfg:                      setting.NewCfg(),
+			Features:                 featuremgmt.WithFeatures(),
+			accesscontrolService:     actest.FakeService{},
+			folderPermissionsService: folderPermissions,
 		}
 
 		sc := setupScenarioContext(t, url)
-		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
@@ -293,7 +288,7 @@ func updateFolderScenario(t *testing.T, desc string, url string, routePattern st
 		}
 
 		sc := setupScenarioContext(t, url)
-		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c

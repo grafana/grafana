@@ -140,7 +140,7 @@ export function EditDataSourceView({
   if (pageId) {
     return (
       <DataSourcePluginContextProvider instanceSettings={dsi}>
-        <DataSourcePluginConfigPage pageId={pageId} plugin={plugin} />;
+        <DataSourcePluginConfigPage pageId={pageId} plugin={plugin} />
       </DataSourcePluginContextProvider>
     );
   }

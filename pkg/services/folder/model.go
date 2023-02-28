@@ -42,6 +42,12 @@ type Folder struct {
 	HasACL    bool
 }
 
+var GeneralFolder = Folder{ID: 0, Title: "General"}
+
+func (f *Folder) IsGeneral() bool {
+	return f.ID == GeneralFolder.ID && f.Title == GeneralFolder.Title
+}
+
 type FolderDTO struct {
 	Folder
 
@@ -95,8 +101,8 @@ type UpdateFolderCommand struct {
 // MoveFolderCommand captures the information required by the folder service
 // to move a folder.
 type MoveFolderCommand struct {
-	UID          string `json:"uid"`
-	NewParentUID string `json:"newParentUid"`
+	UID          string `json:"-"`
+	NewParentUID string `json:"parentUid"`
 	OrgID        int64  `json:"-"`
 
 	SignedInUser *user.SignedInUser `json:"-"`

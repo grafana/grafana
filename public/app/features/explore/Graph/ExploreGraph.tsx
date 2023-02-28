@@ -1,7 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { identity } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
-import { useCounter } from 'react-use';
 
 import {
   AbsoluteTimeRange,
@@ -37,6 +36,7 @@ import { ExploreGraphStyle } from 'app/types';
 import { seriesVisibilityConfigFactory } from '../../dashboard/dashgrid/SeriesVisibilityConfigFactory';
 
 import { applyGraphStyle } from './exploreGraphStyleUtils';
+import { useStructureRev } from './useStructureRev';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
 
@@ -76,7 +76,15 @@ export function ExploreGraph({
   const theme = useTheme2();
   const style = useStyles2(getStyles);
   const [showAllTimeSeries, setShowAllTimeSeries] = useState(false);
-  const [structureRev, { inc }] = useCounter(0);
+
+  const timeRange = {
+    from: dateTime(absoluteRange.from),
+    to: dateTime(absoluteRange.to),
+    raw: {
+      from: dateTime(absoluteRange.from),
+      to: dateTime(absoluteRange.to),
+    },
+  };
 
   const fieldConfigRegistry = useMemo(
     () => createFieldConfigRegistry(getGraphFieldConfig(defaultGraphConfig), 'Explore'),
@@ -98,34 +106,20 @@ export function ExploreGraph({
     overrides: [],
   });
 
-  const timeRange = {
-    from: dateTime(absoluteRange.from),
-    to: dateTime(absoluteRange.to),
-    raw: {
-      from: dateTime(absoluteRange.from),
-      to: dateTime(absoluteRange.to),
-    },
-  };
-
   const styledFieldConfig = useMemo(() => applyGraphStyle(fieldConfig, graphStyle), [fieldConfig, graphStyle]);
 
   const dataWithConfig = useMemo(() => {
     return applyFieldOverrides({
       fieldConfig: styledFieldConfig,
-      data,
+      data: showAllTimeSeries ? data : data.slice(0, MAX_NUMBER_OF_TIME_SERIES),
       timeZone,
       replaceVariables: (value) => value, // We don't need proper replace here as it is only used in getLinks and we use getFieldLinks
       theme,
       fieldConfigRegistry,
     });
-  }, [fieldConfigRegistry, data, timeZone, theme, styledFieldConfig]);
+  }, [fieldConfigRegistry, data, timeZone, theme, styledFieldConfig, showAllTimeSeries]);
 
-  const seriesToShow = showAllTimeSeries ? dataWithConfig : dataWithConfig.slice(0, MAX_NUMBER_OF_TIME_SERIES);
-
-  // We need to increment structureRev when the number of series changes.
-  // the function passed to useMemo runs during rendering, so when we get a different
-  // amount of data, structureRev is incremented before we render it
-  useMemo(inc, [dataWithConfig.length, styledFieldConfig, seriesToShow.length, inc]);
+  const structureRev = useStructureRev(dataWithConfig);
 
   useEffect(() => {
     if (onHiddenSeriesChanged) {
@@ -164,7 +158,7 @@ export function ExploreGraph({
 
   return (
     <PanelContextProvider value={panelContext}>
-      {dataWithConfig.length > MAX_NUMBER_OF_TIME_SERIES && !showAllTimeSeries && (
+      {data.length > MAX_NUMBER_OF_TIME_SERIES && !showAllTimeSeries && (
         <div className={cx([style.timeSeriesDisclaimer])}>
           <Icon className={style.disclaimerIcon} name="exclamation-triangle" />
           Showing only {MAX_NUMBER_OF_TIME_SERIES} time series.
@@ -174,12 +168,12 @@ export function ExploreGraph({
             onClick={() => setShowAllTimeSeries(true)}
             className={style.showAllButton}
           >
-            Show all {dataWithConfig.length}
+            Show all {data.length}
           </Button>
         </div>
       )}
       <PanelRenderer
-        data={{ series: seriesToShow, timeRange, state: loadingState, annotations, structureRev }}
+        data={{ series: dataWithConfig, timeRange, state: loadingState, annotations, structureRev }}
         pluginId="timeseries"
         title=""
         width={width}

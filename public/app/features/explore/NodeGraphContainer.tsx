@@ -4,7 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import { useToggle, useWindowSize } from 'react-use';
 
 import { applyFieldOverrides, DataFrame, GrafanaTheme2, SplitOpen } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { Collapse, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { NodeGraph } from '../../plugins/panel/nodeGraph';
@@ -59,6 +59,7 @@ export function UnconnectedNodeGraphContainer(props: Props) {
     toggleOpen();
     reportInteraction('grafana_traces_node_graph_panel_clicked', {
       datasourceType: datasourceType,
+      grafana_version: config.buildInfo.version,
       isExpanded: !open,
     });
   };

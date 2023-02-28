@@ -88,7 +88,7 @@ type AlertQuery struct {
 	// RelativeTimeRange is the relative Start and End of the query as sent by the frontend.
 	RelativeTimeRange RelativeTimeRange `json:"relativeTimeRange"`
 
-	// Grafana data source unique identifier; it should be '-100' for a Server Side Expression operation.
+	// Grafana data source unique identifier; it should be '__expr__' for a Server Side Expression operation.
 	DatasourceUID string `json:"datasourceUid"`
 
 	// JSON is the raw JSON query and includes the above properties as well as custom properties.

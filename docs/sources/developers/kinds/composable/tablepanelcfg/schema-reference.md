@@ -6,20 +6,18 @@ title: TablePanelCfg kind
 ---
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
 
-# TablePanelCfg kind
+## TablePanelCfg
 
-## Maturity: experimental
-## Version: 0.0
+#### Maturity: [experimental](../../../maturity/#experimental)
+#### Version: 0.0
 
-## Properties
+
 
 | Property       | Type                    | Required | Description |
 |----------------|-------------------------|----------|-------------|
 | `PanelOptions` | [object](#paneloptions) | **Yes**  |             |
 
-## PanelOptions
-
-### Properties
+### PanelOptions
 
 | Property        | Type                                              | Required | Description                                                                                               |
 |-----------------|---------------------------------------------------|----------|-----------------------------------------------------------------------------------------------------------|
@@ -33,17 +31,15 @@ title: TablePanelCfg kind
 
 Sort by field state
 
-#### Properties
-
 | Property      | Type    | Required | Description |
 |---------------|---------|----------|-------------|
 | `displayName` | string  | **Yes**  |             |
 | `desc`        | boolean | No       |             |
 
-### footer
+### Footer
 
 TODO: should be array (options builder is limited)
-The default value is: `map[countRows:false reducer:[] show:false]`.
+
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
 

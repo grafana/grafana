@@ -51,6 +51,27 @@ export interface DataQuery {
   refId: string;
 }
 
+export interface BaseDimensionConfig {
+  field?: string;
+  fixed: (string | number);
+}
+
+export interface ScaleDimensionConfig extends BaseDimensionConfig {
+  max: number;
+  min: number;
+}
+
+/**
+ * This is actually an empty interface used mainly for naming?
+ */
+export interface ColorDimensionConfig extends BaseDimensionConfig {}
+
+export enum TextDimensionMode {
+  Field = 'field',
+  Fixed = 'fixed',
+  Template = 'template',
+}
+
 export interface MapLayerOptions {
   /**
    * Custom options depending on the type
@@ -86,6 +107,11 @@ export enum FrameGeometrySourceMode {
   Coords = 'coords',
   Geohash = 'geohash',
   Lookup = 'lookup',
+}
+
+export enum LogsSortOrder {
+  Ascending = 'Ascending',
+  Descending = 'Descending',
 }
 
 /**
@@ -465,6 +491,11 @@ export enum BigValueTextMode {
 export type FieldTextAlignment = ('auto' | 'left' | 'right' | 'center');
 
 /**
+ * Controls the value alignment in the TimelineChart component
+ */
+export type TimelineValueAlignment = ('center' | 'left' | 'right');
+
+/**
  * TODO docs
  */
 export interface VizTextDisplayOptions {
@@ -667,6 +698,10 @@ export interface DataSourceRef {
   uid?: string;
 }
 
+export interface TextDimensionConfig extends BaseDimensionConfig {
+  mode: TextDimensionMode;
+}
+
 export interface FrameGeometrySource {
   /**
    * Path to Gazetteer
@@ -681,6 +716,13 @@ export interface FrameGeometrySource {
   lookup?: string;
   mode: FrameGeometrySourceMode;
   wkt?: string;
+}
+
+export enum LogsDedupStrategy {
+  exact = 'exact',
+  none = 'none',
+  numbers = 'numbers',
+  signature = 'signature',
 }
 
 export interface Labels {}

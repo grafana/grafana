@@ -1,12 +1,8 @@
 import React, { useRef } from 'react';
 
 import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
-import {
-  DataSourcePluginOptionsEditorProps,
-  DataSourceSettings,
-  onUpdateDatasourceJsonDataOptionChecked,
-} from '@grafana/data';
-import { AlertingSettings, DataSourceHttpSettings, Alert, InlineField, InlineSwitch } from '@grafana/ui';
+import { DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana/data';
+import { AlertingSettings, DataSourceHttpSettings, Alert, SecureSocksProxySettings } from '@grafana/ui';
 import { config } from 'app/core/config';
 
 import { PromOptions } from '../types';
@@ -29,8 +25,6 @@ export const ConfigEditor = (props: Props) => {
     azureSettingsUI: AzureAuthSettings,
   };
 
-  const socksProxy = config.featureToggles.secureSocksDatasourceProxy;
-
   return (
     <>
       {options.access === 'direct' && (
@@ -49,23 +43,8 @@ export const ConfigEditor = (props: Props) => {
         renderSigV4Editor={<SIGV4ConnectionConfig {...props}></SIGV4ConnectionConfig>}
       />
 
-      {socksProxy && (
-        <>
-          <h3 className="page-heading">Secure Socks Proxy</h3>
-          <div className="gf-form-group">
-            <div className="gf-form-inline"></div>
-            <InlineField
-              labelWidth={28}
-              label="Enabled"
-              tooltip="Connect to this datasource via the secure socks proxy."
-            >
-              <InlineSwitch
-                value={options.jsonData.enableSecureSocksProxy ?? false}
-                onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'enableSecureSocksProxy')}
-              />
-            </InlineField>
-          </div>
-        </>
+      {config.featureToggles.secureSocksDatasourceProxy && (
+        <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
       )}
 
       <AlertingSettings<PromOptions> options={options} onOptionsChange={onOptionsChange} />

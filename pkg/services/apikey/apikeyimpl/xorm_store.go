@@ -30,11 +30,11 @@ func (ss *sqlStore) GetAPIKeys(ctx context.Context, query *apikey.GetApiKeysQuer
 
 		if query.IncludeExpired {
 			sess = dbSession.Limit(100, 0).
-				Where("org_id=?", query.OrgId).
+				Where("org_id=?", query.OrgID).
 				Asc("name")
 		} else {
 			sess = dbSession.Limit(100, 0).
-				Where("org_id=? and ( expires IS NULL or expires >= ?)", query.OrgId, timeNow().Unix()).
+				Where("org_id=? and ( expires IS NULL or expires >= ?)", query.OrgID, timeNow().Unix()).
 				Asc("name")
 		}
 
@@ -68,7 +68,7 @@ func (ss *sqlStore) GetAllAPIKeys(ctx context.Context, orgID int64) ([]*apikey.A
 func (ss *sqlStore) DeleteApiKey(ctx context.Context, cmd *apikey.DeleteCommand) error {
 	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		rawSQL := "DELETE FROM api_key WHERE id=? and org_id=? and service_account_id IS NULL"
-		result, err := sess.Exec(rawSQL, cmd.Id, cmd.OrgId)
+		result, err := sess.Exec(rawSQL, cmd.ID, cmd.OrgID)
 		if err != nil {
 			return err
 		}
@@ -84,7 +84,7 @@ func (ss *sqlStore) DeleteApiKey(ctx context.Context, cmd *apikey.DeleteCommand)
 
 func (ss *sqlStore) AddAPIKey(ctx context.Context, cmd *apikey.AddCommand) error {
 	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		key := apikey.APIKey{OrgId: cmd.OrgId, Name: cmd.Name}
+		key := apikey.APIKey{OrgID: cmd.OrgID, Name: cmd.Name}
 		exists, _ := sess.Get(&key)
 		if exists {
 			return apikey.ErrDuplicate
@@ -101,7 +101,7 @@ func (ss *sqlStore) AddAPIKey(ctx context.Context, cmd *apikey.AddCommand) error
 
 		isRevoked := false
 		t := apikey.APIKey{
-			OrgId:            cmd.OrgId,
+			OrgID:            cmd.OrgID,
 			Name:             cmd.Name,
 			Role:             cmd.Role,
 			Key:              cmd.Key,
@@ -123,7 +123,7 @@ func (ss *sqlStore) AddAPIKey(ctx context.Context, cmd *apikey.AddCommand) error
 func (ss *sqlStore) GetApiKeyById(ctx context.Context, query *apikey.GetByIDQuery) error {
 	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		var key apikey.APIKey
-		has, err := sess.ID(query.ApiKeyId).Get(&key)
+		has, err := sess.ID(query.ApiKeyID).Get(&key)
 
 		if err != nil {
 			return err
@@ -139,7 +139,7 @@ func (ss *sqlStore) GetApiKeyById(ctx context.Context, query *apikey.GetByIDQuer
 func (ss *sqlStore) GetApiKeyByName(ctx context.Context, query *apikey.GetByNameQuery) error {
 	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		var key apikey.APIKey
-		has, err := sess.Where("org_id=? AND name=?", query.OrgId, query.KeyName).Get(&key)
+		has, err := sess.Where("org_id=? AND name=?", query.OrgID, query.KeyName).Get(&key)
 
 		if err != nil {
 			return err

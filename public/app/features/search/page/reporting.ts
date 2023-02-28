@@ -6,7 +6,7 @@ import { EventTrackingNamespace, SearchLayout } from '../types';
 interface QueryProps {
   layout: SearchLayout;
   starred: boolean;
-  sortValue: string;
+  sortValue?: string;
   query: string;
   tagCount: number;
   includePanels?: boolean;

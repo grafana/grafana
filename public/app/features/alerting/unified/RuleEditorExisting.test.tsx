@@ -1,8 +1,8 @@
-import { render, waitFor, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { Provider } from 'react-redux';
-import { Route, Router } from 'react-router-dom';
+import { Route } from 'react-router-dom';
+import { TestProvider } from 'test/helpers/TestProvider';
 import { ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOptionMatch } from 'test/helpers/selectOptionInTest';
 import { byRole } from 'testing-library-selector';
@@ -11,7 +11,6 @@ import { locationService, setDataSourceSrv } from '@grafana/runtime';
 import { ADD_NEW_FOLER_OPTION } from 'app/core/components/Select/FolderPicker';
 import { contextSrv } from 'app/core/services/context_srv';
 import { DashboardSearchHit } from 'app/features/search/types';
-import { configureStore } from 'app/store/configureStore';
 import { GrafanaAlertStateDecision } from 'app/types/unified-alerting-dto';
 
 import { searchFolders } from '../../../../app/features/manage-dashboards/state/actions';
@@ -26,7 +25,7 @@ import { disableRBAC, mockDataSource, MockDataSourceSrv, mockFolder } from './mo
 import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
 import * as config from './utils/config';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
-import { getDefaultQueries } from './utils/rule-form';
+import * as ruleForm from './utils/rule-form';
 
 jest.mock('./components/rule-editor/ExpressionEditor', () => ({
   // eslint-disable-next-line react/display-name
@@ -47,12 +46,14 @@ jest.mock('app/features/query/components/QueryEditorRow', () => ({
 }));
 
 jest.spyOn(config, 'getAllDataSources');
+jest.spyOn(ruleForm, 'getDefaultQueriesAsync');
 
 jest.setTimeout(60 * 1000);
 
 const mocks = {
   getAllDataSources: jest.mocked(config.getAllDataSources),
   searchFolders: jest.mocked(searchFolders),
+  getDefaultQueriesAsync: jest.mocked(ruleForm.getDefaultQueriesAsync),
   api: {
     discoverFeatures: jest.mocked(discoverFeatures),
     fetchRulerRulesGroup: jest.mocked(fetchRulerRulesGroup),
@@ -64,16 +65,12 @@ const mocks = {
 };
 
 function renderRuleEditor(identifier?: string) {
-  const store = configureStore();
-
   locationService.push(identifier ? `/alerting/${identifier}/edit` : `/alerting/new`);
 
   return render(
-    <Provider store={store}>
-      <Router history={locationService.getHistory()}>
-        <Route path={['/alerting/new', '/alerting/:id/edit']} component={RuleEditor} />
-      </Router>
-    </Provider>
+    <TestProvider>
+      <Route path={['/alerting/new', '/alerting/:id/edit']} component={RuleEditor} />
+    </TestProvider>
   );
 }
 
@@ -124,6 +121,17 @@ describe('RuleEditor grafana managed rules', () => {
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     mocks.api.setRulerRuleGroup.mockResolvedValue();
     mocks.api.fetchRulerRulesNamespace.mockResolvedValue([]);
+    mocks.getDefaultQueriesAsync.mockResolvedValue({
+      queries: [
+        {
+          refId: 'A',
+          relativeTimeRange: { from: 900, to: 1000 },
+          datasourceUid: 'dsuid',
+          model: { refId: 'A' },
+          queryType: 'query',
+        },
+      ],
+    });
     mocks.api.fetchRulerRules.mockResolvedValue({
       [folder.title]: [
         {
@@ -138,8 +146,16 @@ describe('RuleEditor grafana managed rules', () => {
                 uid,
                 namespace_uid: 'abcd',
                 namespace_id: 1,
-                condition: 'B',
-                data: getDefaultQueries(),
+                condition: 'A',
+                data: [
+                  {
+                    refId: 'A',
+                    relativeTimeRange: { from: 900, to: 1000 },
+                    datasourceUid: 'dsuid',
+                    model: { refId: 'A' },
+                    queryType: 'query',
+                  },
+                ],
                 exec_err_state: GrafanaAlertStateDecision.Error,
                 no_data_state: GrafanaAlertStateDecision.NoData,
                 title: 'my great new rule',
@@ -207,9 +223,18 @@ describe('RuleEditor grafana managed rules', () => {
             for: '5m',
             grafana_alert: {
               uid,
-              condition: 'B',
-              data: getDefaultQueries(),
+              condition: 'A',
+              data: [
+                {
+                  refId: 'A',
+                  relativeTimeRange: { from: 900, to: 1000 },
+                  datasourceUid: 'dsuid',
+                  model: { refId: 'A' },
+                  queryType: 'query',
+                },
+              ],
               exec_err_state: GrafanaAlertStateDecision.Error,
+              is_paused: false,
               no_data_state: 'NoData',
               title: 'my great new rule',
             },

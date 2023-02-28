@@ -18,9 +18,9 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -39,7 +39,7 @@ const (
 	anonString = "Anonymous"
 )
 
-func (hs *HTTPServer) isDashboardStarredByUser(c *models.ReqContext, dashID int64) (bool, error) {
+func (hs *HTTPServer) isDashboardStarredByUser(c *contextmodel.ReqContext, dashID int64) (bool, error) {
 	if !c.IsSignedIn {
 		return false, nil
 	}
@@ -63,7 +63,7 @@ func dashboardGuardianResponse(err error) response.Response {
 // 200: trimDashboardResponse
 // 401: unauthorisedError
 // 500: internalServerError
-func (hs *HTTPServer) TrimDashboard(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) TrimDashboard(c *contextmodel.ReqContext) response.Response {
 	cmd := dashboards.TrimDashboardCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -93,7 +93,7 @@ func (hs *HTTPServer) TrimDashboard(c *models.ReqContext) response.Response {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response {
 	uid := web.Params(c.Req)[":uid"]
 	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgID, 0, uid)
 	if rsp != nil {
@@ -190,15 +190,16 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	// lookup folder title
 	if dash.FolderID > 0 {
 		query := dashboards.GetDashboardQuery{ID: dash.FolderID, OrgID: c.OrgID}
-		if err := hs.DashboardService.GetDashboard(c.Req.Context(), &query); err != nil {
+		queryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
+		if err != nil {
 			if errors.Is(err, dashboards.ErrFolderNotFound) {
 				return response.Error(404, "Folder not found", err)
 			}
 			return response.Error(500, "Dashboard folder could not be read", err)
 		}
-		meta.FolderUid = query.Result.UID
-		meta.FolderTitle = query.Result.Title
-		meta.FolderUrl = query.Result.GetURL()
+		meta.FolderUid = queryResult.UID
+		meta.FolderTitle = queryResult.Title
+		meta.FolderUrl = queryResult.GetURL()
 	}
 
 	provisioningData, err := hs.dashboardProvisioningService.GetProvisionedDashboardDataByDashboardID(c.Req.Context(), dash.ID)
@@ -241,7 +242,7 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, dto)
 }
 
-func (hs *HTTPServer) getAnnotationPermissionsByScope(c *models.ReqContext, actions *dtos.AnnotationActions, scope string) {
+func (hs *HTTPServer) getAnnotationPermissionsByScope(c *contextmodel.ReqContext, actions *dtos.AnnotationActions, scope string) {
 	var err error
 
 	evaluate := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsCreate, scope)
@@ -281,11 +282,12 @@ func (hs *HTTPServer) getDashboardHelper(ctx context.Context, orgID int64, id in
 		query = dashboards.GetDashboardQuery{ID: id, OrgID: orgID}
 	}
 
-	if err := hs.DashboardService.GetDashboard(ctx, &query); err != nil {
+	queryResult, err := hs.DashboardService.GetDashboard(ctx, &query)
+	if err != nil {
 		return nil, response.Error(404, "Dashboard not found", err)
 	}
 
-	return query.Result, nil
+	return queryResult, nil
 }
 
 // DeleteDashboardByUID swagger:route DELETE /dashboards/uid/{uid} dashboards deleteDashboardByUID
@@ -300,11 +302,11 @@ func (hs *HTTPServer) getDashboardHelper(ctx context.Context, orgID int64, id in
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) DeleteDashboardByUID(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) DeleteDashboardByUID(c *contextmodel.ReqContext) response.Response {
 	return hs.deleteDashboard(c)
 }
 
-func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) deleteDashboard(c *contextmodel.ReqContext) response.Response {
 	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgID, 0, web.Params(c.Req)[":uid"])
 	if rsp != nil {
 		return rsp
@@ -363,7 +365,7 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 // 412: preconditionFailedError
 // 422: unprocessableEntityError
 // 500: internalServerError
-func (hs *HTTPServer) PostDashboard(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) PostDashboard(c *contextmodel.ReqContext) response.Response {
 	cmd := dashboards.SaveDashboardCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -394,7 +396,7 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext) response.Response {
 	return hs.postDashboard(c, cmd)
 }
 
-func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd dashboards.SaveDashboardCommand) response.Response {
+func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.SaveDashboardCommand) response.Response {
 	ctx := c.Req.Context()
 	var err error
 	cmd.OrgID = c.OrgID
@@ -515,7 +517,7 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd dashboards.SaveDas
 // 200: getHomeDashboardResponse
 // 401: unauthorisedError
 // 500: internalServerError
-func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetHomeDashboard(c *contextmodel.ReqContext) response.Response {
 	prefsQuery := pref.GetPreferenceWithDefaultsQuery{OrgID: c.OrgID, UserID: c.SignedInUser.UserID, Teams: c.Teams}
 	homePage := hs.Cfg.HomePage
 
@@ -531,9 +533,9 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) response.Response {
 
 	if preference.HomeDashboardID != 0 {
 		slugQuery := dashboards.GetDashboardRefByIDQuery{ID: preference.HomeDashboardID}
-		err := hs.DashboardService.GetDashboardUIDByID(c.Req.Context(), &slugQuery)
+		slugQueryResult, err := hs.DashboardService.GetDashboardUIDByID(c.Req.Context(), &slugQuery)
 		if err == nil {
-			url := dashboards.GetDashboardURL(slugQuery.Result.UID, slugQuery.Result.Slug)
+			url := dashboards.GetDashboardURL(slugQueryResult.UID, slugQueryResult.Slug)
 			dashRedirect := dtos.DashboardRedirect{RedirectUri: url}
 			return response.JSON(http.StatusOK, &dashRedirect)
 		}
@@ -573,7 +575,7 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, &dash)
 }
 
-func (hs *HTTPServer) addGettingStartedPanelToHomeDashboard(c *models.ReqContext, dash *simplejson.Json) {
+func (hs *HTTPServer) addGettingStartedPanelToHomeDashboard(c *contextmodel.ReqContext, dash *simplejson.Json) {
 	// We only add this getting started panel for Admins who have not dismissed it,
 	// and if a custom default home dashboard hasn't been configured
 	if !c.HasUserRole(org.RoleAdmin) ||
@@ -624,7 +626,7 @@ func (hs *HTTPServer) addGettingStartedPanelToHomeDashboard(c *models.ReqContext
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) GetDashboardVersions(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetDashboardVersions(c *contextmodel.ReqContext) response.Response {
 	var dashID int64
 
 	var err error
@@ -707,7 +709,7 @@ func (hs *HTTPServer) GetDashboardVersions(c *models.ReqContext) response.Respon
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) GetDashboardVersion(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetDashboardVersion(c *contextmodel.ReqContext) response.Response {
 	var dashID int64
 
 	var err error
@@ -737,9 +739,10 @@ func (hs *HTTPServer) GetDashboardVersion(c *models.ReqContext) response.Respons
 
 	version, _ := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 32)
 	query := dashver.GetDashboardVersionQuery{
-		OrgID:       c.OrgID,
-		DashboardID: dash.ID,
-		Version:     int(version),
+		OrgID:        c.OrgID,
+		DashboardID:  dash.ID,
+		DashboardUID: dash.UID,
+		Version:      int(version),
 	}
 
 	res, err := hs.dashboardVersionService.Get(c.Req.Context(), &query)
@@ -755,7 +758,7 @@ func (hs *HTTPServer) GetDashboardVersion(c *models.ReqContext) response.Respons
 	dashVersionMeta := &dashver.DashboardVersionMeta{
 		ID:            res.ID,
 		DashboardID:   res.DashboardID,
-		DashboardUID:  dashUID,
+		DashboardUID:  dash.UID,
 		Data:          res.Data,
 		ParentVersion: res.ParentVersion,
 		RestoredFrom:  res.RestoredFrom,
@@ -782,7 +785,7 @@ func (hs *HTTPServer) GetDashboardVersion(c *models.ReqContext) response.Respons
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) ValidateDashboard(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) ValidateDashboard(c *contextmodel.ReqContext) response.Response {
 	cmd := dashboards.ValidateDashboardCommand{}
 
 	if err := web.Bind(c.Req, &cmd); err != nil {
@@ -844,7 +847,7 @@ func (hs *HTTPServer) ValidateDashboard(c *models.ReqContext) response.Response 
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) CalculateDashboardDiff(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) CalculateDashboardDiff(c *contextmodel.ReqContext) response.Response {
 	apiOptions := dtos.CalculateDiffOptions{}
 	if err := web.Bind(c.Req, &apiOptions); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -956,7 +959,7 @@ func (hs *HTTPServer) CalculateDashboardDiff(c *models.ReqContext) response.Resp
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) RestoreDashboardVersion(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) RestoreDashboardVersion(c *contextmodel.ReqContext) response.Response {
 	var dashID int64
 
 	var err error
@@ -987,7 +990,7 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *models.ReqContext) response.Res
 		return dashboardGuardianResponse(err)
 	}
 
-	versionQuery := dashver.GetDashboardVersionQuery{DashboardID: dashID, Version: apiCmd.Version, OrgID: c.OrgID}
+	versionQuery := dashver.GetDashboardVersionQuery{DashboardID: dashID, DashboardUID: dash.UID, Version: apiCmd.Version, OrgID: c.OrgID}
 	version, err := hs.dashboardVersionService.Get(c.Req.Context(), &versionQuery)
 	if err != nil {
 		return response.Error(404, "Dashboard version not found", nil)
@@ -1014,19 +1017,19 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *models.ReqContext) response.Res
 // 200: getDashboardsTagsResponse
 // 401: unauthorisedError
 // 500: internalServerError
-func (hs *HTTPServer) GetDashboardTags(c *models.ReqContext) {
+func (hs *HTTPServer) GetDashboardTags(c *contextmodel.ReqContext) {
 	query := dashboards.GetDashboardTagsQuery{OrgID: c.OrgID}
-	err := hs.DashboardService.GetDashboardTags(c.Req.Context(), &query)
+	queryResult, err := hs.DashboardService.GetDashboardTags(c.Req.Context(), &query)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to get tags from database", err)
 		return
 	}
 
-	c.JSON(http.StatusOK, query.Result)
+	c.JSON(http.StatusOK, queryResult)
 }
 
 // GetDashboardUIDs converts internal ids to UIDs
-func (hs *HTTPServer) GetDashboardUIDs(c *models.ReqContext) {
+func (hs *HTTPServer) GetDashboardUIDs(c *contextmodel.ReqContext) {
 	ids := strings.Split(web.Params(c.Req)[":ids"], ",")
 	uids := make([]string, 0, len(ids))
 
@@ -1037,11 +1040,11 @@ func (hs *HTTPServer) GetDashboardUIDs(c *models.ReqContext) {
 			continue
 		}
 		q.ID = id
-		err = hs.DashboardService.GetDashboardUIDByID(c.Req.Context(), q)
+		qResult, err := hs.DashboardService.GetDashboardUIDByID(c.Req.Context(), q)
 		if err != nil {
 			continue
 		}
-		uids = append(uids, q.Result.UID)
+		uids = append(uids, qResult.UID)
 	}
 	c.JSON(http.StatusOK, uids)
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -15,9 +14,9 @@ import (
 // 1) Permissions for the dashboard
 // 2) permissions for its parent folder
 // 3) if no specific permissions have been set for the dashboard or its parent folder then get the default permissions
-func (d *DashboardStore) GetDashboardACLInfoList(ctx context.Context, query *dashboards.GetDashboardACLInfoListQuery) error {
+func (d *DashboardStore) GetDashboardACLInfoList(ctx context.Context, query *dashboards.GetDashboardACLInfoListQuery) ([]*dashboards.DashboardACLInfoDTO, error) {
+	queryResult := make([]*dashboards.DashboardACLInfoDTO, 0)
 	outerErr := d.store.WithDbSession(ctx, func(dbSession *db.Session) error {
-		query.Result = make([]*dashboards.DashboardACLInfoDTO, 0)
 		falseStr := d.store.GetDialect().BooleanStr(false)
 
 		if query.DashboardID == 0 {
@@ -41,7 +40,7 @@ func (d *DashboardStore) GetDashboardACLInfoList(ctx context.Context, query *das
 				falseStr + ` AS inherited
 		FROM dashboard_acl as da
 		WHERE da.dashboard_id = -1`
-			return dbSession.SQL(sql).Find(&query.Result)
+			return dbSession.SQL(sql).Find(&queryResult)
 		}
 
 		rawSQL := `
@@ -83,18 +82,18 @@ func (d *DashboardStore) GetDashboardACLInfoList(ctx context.Context, query *das
 			ORDER BY da.id ASC
 			`
 
-		return dbSession.SQL(rawSQL, query.OrgID, query.DashboardID).Find(&query.Result)
+		return dbSession.SQL(rawSQL, query.OrgID, query.DashboardID).Find(&queryResult)
 	})
 
 	if outerErr != nil {
-		return outerErr
+		return nil, outerErr
 	}
 
-	for _, p := range query.Result {
+	for _, p := range queryResult {
 		p.PermissionName = p.Permission.String()
 	}
 
-	return nil
+	return queryResult, nil
 }
 
 // HasEditPermissionInFolders validates that an user have access to a certain folder
@@ -108,7 +107,7 @@ func (d *DashboardStore) HasEditPermissionInFolders(ctx context.Context, query *
 		builder := db.NewSqlBuilder(d.cfg, d.store.GetDialect())
 		builder.Write("SELECT COUNT(dashboard.id) AS count FROM dashboard WHERE dashboard.org_id = ? AND dashboard.is_folder = ?",
 			query.SignedInUser.OrgID, d.store.GetDialect().BooleanStr(true))
-		builder.WriteDashboardPermissionFilter(query.SignedInUser, models.PERMISSION_EDIT)
+		builder.WriteDashboardPermissionFilter(query.SignedInUser, dashboards.PERMISSION_EDIT)
 
 		type folderCount struct {
 			Count int64
@@ -140,7 +139,7 @@ func (d *DashboardStore) HasAdminPermissionInDashboardsOrFolders(ctx context.Con
 
 		builder := db.NewSqlBuilder(d.cfg, d.store.GetDialect())
 		builder.Write("SELECT COUNT(dashboard.id) AS count FROM dashboard WHERE dashboard.org_id = ?", query.SignedInUser.OrgID)
-		builder.WriteDashboardPermissionFilter(query.SignedInUser, models.PERMISSION_ADMIN)
+		builder.WriteDashboardPermissionFilter(query.SignedInUser, dashboards.PERMISSION_ADMIN)
 
 		type folderCount struct {
 			Count int64

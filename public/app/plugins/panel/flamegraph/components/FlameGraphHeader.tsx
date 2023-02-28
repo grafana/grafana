@@ -12,6 +12,7 @@ type Props = {
   app: CoreApp;
   search: string;
   setTopLevelIndex: (level: number) => void;
+  setSelectedBarIndex: (bar: number) => void;
   setRangeMin: (range: number) => void;
   setRangeMax: (range: number) => void;
   setSearch: (search: string) => void;
@@ -24,6 +25,7 @@ const FlameGraphHeader = ({
   app,
   search,
   setTopLevelIndex,
+  setSelectedBarIndex,
   setRangeMin,
   setRangeMax,
   setSearch,
@@ -64,6 +66,7 @@ const FlameGraphHeader = ({
           size={'md'}
           onClick={() => {
             setTopLevelIndex(0);
+            setSelectedBarIndex(0);
             setRangeMin(0);
             setRangeMax(1);
             setSearch('');

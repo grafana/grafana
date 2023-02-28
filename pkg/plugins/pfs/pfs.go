@@ -220,7 +220,7 @@ func ParsePluginFS(fsys fs.FS, rt *thema.Runtime) (ParsedPlugin, error) {
 			return ParsedPlugin{}, err
 		}
 
-		compo, err := kindsys.BindComposable(rt, kindsys.Decl[kindsys.ComposableProperties]{
+		compo, err := kindsys.BindComposable(rt, kindsys.Def[kindsys.ComposableProperties]{
 			Properties: props,
 			V:          iv,
 		})
@@ -235,7 +235,7 @@ func ParsePluginFS(fsys fs.FS, rt *thema.Runtime) (ParsedPlugin, error) {
 }
 
 func ensureCueMod(fsys fs.FS, pdef plugindef.PluginDef) (fs.FS, error) {
-	if modf, err := fs.ReadFile(fsys, filepath.Join("cue.mod", "module.cue")); err != nil {
+	if modf, err := fs.ReadFile(fsys, "cue.mod/module.cue"); err != nil {
 		if !errors.Is(err, fs.ErrNotExist) {
 			return nil, err
 		}

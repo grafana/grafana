@@ -47,6 +47,10 @@ export interface MatcherConfig<TConfig = any> extends raw.MatcherConfig {
   options?: TConfig;
 }
 
+export interface DataTransformerConfig<TOptions = any> extends raw.DataTransformerConfig {
+  options: TOptions;
+}
+
 export const defaultDashboard = raw.defaultDashboard as Dashboard;
 export const defaultVariableModel = {
   ...raw.defaultVariableModel,
