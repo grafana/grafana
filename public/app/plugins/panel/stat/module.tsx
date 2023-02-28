@@ -4,7 +4,7 @@ import { commonOptionsBuilder, sharedSingleStatMigrationHandler } from '@grafana
 
 import { statPanelChangedHandler } from './StatMigrations';
 import { StatPanel } from './StatPanel';
-import { addStandardDataReduceOptions, addOrientationOption, getSymbolsToPrepend } from './common';
+import { addStandardDataReduceOptions, addOrientationOption, getSelectablePrefixValues } from './common';
 import { defaultPanelOptions, PanelOptions } from './panelcfg.gen';
 import { StatSuggestionsSupplier } from './suggestions';
 
@@ -17,7 +17,7 @@ export const plugin = new PanelPlugin<PanelOptions>(StatPanel)
         description: 'Prepend a common unit along with standard formatting options',
         category: ['Stat-specific unit formatting options'],
         settings: {
-          options: getSymbolsToPrepend(),
+          options: getSelectablePrefixValues(),
         },
         defaultValue: '',
       });
@@ -86,17 +86,6 @@ export const plugin = new PanelPlugin<PanelOptions>(StatPanel)
           ],
         },
       });
-
-    // builder.addSelect({
-    //   path: 'prependUnit',
-    //   name: 'Prepend unit',
-    //   description: 'Prepend a common unit along with standard formatting options',
-    //   category: ['Prepend unit'],
-    //   settings: {
-    //     options: getSymbolsToPrepend(),
-    //   },
-    //   defaultValue: '',
-    // });
   })
   .setNoPadding()
   .setPanelChangeHandler(statPanelChangedHandler)

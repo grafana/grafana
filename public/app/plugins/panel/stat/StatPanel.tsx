@@ -16,6 +16,7 @@ import { BigValue, DataLinksContextMenu, VizRepeater, VizRepeaterRenderValueProp
 import { DataLinksContextMenuApi } from '@grafana/ui/src/components/DataLinks/DataLinksContextMenu';
 import { config } from 'app/core/config';
 
+import { formatValueForCustomPrefix } from './common';
 import { PanelOptions } from './panelcfg.gen';
 
 export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
@@ -122,25 +123,12 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
       timeZone,
     });
 
-    const updatedVals = this.formatValueForCustomPrefix(fieldDisplayValues, customPrefix);
+    const prefixedDisplayValues = formatValueForCustomPrefix(fieldDisplayValues, customPrefix);
 
-    console.log(updatedVals);
+    console.log(prefixedDisplayValues);
 
-    return updatedVals;
+    return prefixedDisplayValues;
   };
-
-  formatValueForCustomPrefix(fieldValues: FieldDisplay[], customPrefix: string): FieldDisplay[] {
-    return fieldValues.map((fieldValue) => {
-      const { fieldType, display } = fieldValue;
-      if (fieldType === FieldType.number) {
-        const previousPrefix = display.prefix ?? '';
-        const updatedPrefix = customPrefix + previousPrefix;
-        const updatedDisplay = { ...display, prefix: updatedPrefix };
-        return { ...fieldValue, display: updatedDisplay };
-      }
-      return fieldValue;
-    });
-  }
 
   render() {
     const { height, options, width, data, renderCounter } = this.props;
@@ -161,22 +149,3 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
     );
   }
 }
-
-export const getOverwriteSymbols = () => {
-  return {
-    name: 'Custom Prefix Symbols',
-    formats: [
-      // { name: 'Percent Increase (\u2191_%)', id: 'percentincrease', fn: toIncreasingPercent },
-      // { name: 'Percent Decrease (\u2193_%)', id: 'percentdecrease', fn: toDecreasingPercent },
-      { name: 'Remove Custom Prefix', id: 'remove' },
-      { name: 'Less than (<)', id: 'lessThan' },
-      { name: 'Greater than (>)', id: 'greaterThan' },
-      { name: 'Approximately (~)', id: 'approximately' },
-      { name: 'Fiscal quarter (FQ)', id: 'fiscalQuarter' },
-      { name: 'Quarter (Qtr)', id: 'quarter' },
-      { name: 'Fiscal year (FY)', id: 'fiscalYear' },
-      { name: 'Delta (\u0394)', id: 'delta' },
-      { name: 'Mean (\u00B5)', id: 'mean' },
-    ],
-  };
-};

@@ -8,10 +8,18 @@ import {
   ReducerID,
   standardEditorsRegistry,
   SelectableValue,
+  FieldDisplay,
+  FieldType,
 } from '@grafana/data';
 import { SingleStatBaseOptions, VizOrientation } from '@grafana/schema';
 
-import { getOverwriteSymbols } from './StatPanel';
+interface CustomStatFormats {
+  prefixes: CustomStatPrefixes;
+}
+
+interface CustomStatPrefixes {
+  [key: string]: { description: string; symbol: string };
+}
 
 export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
   builder: PanelOptionsEditorBuilder<T>,
@@ -111,9 +119,45 @@ export function addOrientationOption<T extends SingleStatBaseOptions>(
   });
 }
 
-export function getSymbolsToPrepend(): SelectableValue[] {
-  return getOverwriteSymbols().formats.map((overrideSymbol) => {
-    const { id, name } = overrideSymbol;
-    return { value: id, label: name };
+export function getSelectablePrefixValues(): SelectableValue[] {
+  const selectableFormattingPrefixes = [];
+  const prefixOptions = getStatPrefixes().prefixes;
+
+  for (const key in prefixOptions) {
+    const selectablePrefix = { value: key, label: prefixOptions[key].description };
+    selectableFormattingPrefixes.push(selectablePrefix);
+  }
+
+  return selectableFormattingPrefixes;
+}
+
+function getStatPrefixes(): CustomStatFormats {
+  return {
+    prefixes: {
+      remove: { description: 'Remove Custom Prefix', symbol: '' },
+      lessThan: { description: 'Less than (<)', symbol: '<' },
+      greaterThan: { description: 'Greater than (>)', symbol: '>' },
+      approximately: { description: 'Approximately (~)', symbol: '~' },
+      fiscalQuarter: { description: 'Fiscal quarter (FQ)', symbol: 'FQ' },
+      quarter: { description: 'Quarter (Qtr)', symbol: 'Qtr' },
+      fiscalYear: { description: 'Fiscal year (FY)', symbol: 'FY' },
+      delta: { description: 'Delta (\u0394)', symbol: '\u0394' },
+      mean: { description: 'Mean (\u00B5)', symbol: '\u00B5' },
+    },
+  };
+}
+
+export function formatValueForCustomPrefix(fieldValues: FieldDisplay[], chosenPrefix: string): FieldDisplay[] {
+  const customPrefix = getStatPrefixes().prefixes[chosenPrefix];
+
+  return fieldValues.map((fieldValue) => {
+    const { fieldType, display } = fieldValue;
+    if (fieldType === FieldType.number) {
+      const previousPrefix = display.prefix ?? '';
+      const updatedPrefix = customPrefix + previousPrefix;
+      const updatedDisplay = { ...display, prefix: updatedPrefix };
+      return { ...fieldValue, display: updatedDisplay };
+    }
+    return fieldValue;
   });
 }
