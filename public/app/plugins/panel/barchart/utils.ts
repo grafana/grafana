@@ -548,9 +548,9 @@ export function prepareBarChartDisplayValues(
 export const isLegendOrdered = (options: VizLegendOptions) => Boolean(options?.sortBy && options.sortDesc !== null);
 
 export function toNumericLong(data: DataFrame[]): DataFrame {
-  const names: string[] = [];
-  const vals: number[] = [];
   let first: Field | undefined = undefined;
+  const names: string[] = [];
+  const values: number[] = [];
   for (const frame of data) {
     for (const field of frame.fields) {
       if (field.type === FieldType.number) {
@@ -560,17 +560,21 @@ export function toNumericLong(data: DataFrame[]): DataFrame {
         const name = getFieldDisplayName(field, frame, data);
         field.values.toArray().forEach((v) => {
           names.push(name);
-          vals.push(v);
+          values.push(v);
         });
       }
     }
   }
   return {
     ...data[0],
+    meta: {
+      ...data[0].meta,
+      type: DataFrameType.NumericLong,
+    },
     fields: [
       { name: 'Name', type: FieldType.string, values: new ArrayVector(names), config: {} },
-      { name: 'Value', type: FieldType.number, values: new ArrayVector(vals), config: first?.config ?? {} },
+      { name: 'Value', type: FieldType.number, values: new ArrayVector(values), config: first?.config ?? {} },
     ],
-    length: vals.length,
+    length: values.length,
   };
 }
