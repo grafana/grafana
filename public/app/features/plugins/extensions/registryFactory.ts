@@ -179,7 +179,7 @@ function mapLinkToRegistryType(
   };
 
   return (configure) => {
-    return function mapper(context: object): PluginExtensionLink | undefined {
+    return function mapper(context?: object): PluginExtensionLink | undefined {
       const configured = configure(configurable, context);
 
       if (!configured) {
@@ -206,7 +206,7 @@ function mapCommandToRegistryType(
   };
 
   return (configure) => {
-    return function mapper(context: object): PluginExtensionCommand | undefined {
+    return function mapper(context?: object): PluginExtensionCommand | undefined {
       const configured = configure(configurable, context);
 
       if (!configured) {

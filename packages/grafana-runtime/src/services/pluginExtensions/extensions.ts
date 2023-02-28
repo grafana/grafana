@@ -19,11 +19,6 @@ export function getPluginExtensions<T extends object = {}>(
   const items = registry[placement] ?? [];
 
   const extensions = items.reduce<PluginExtension[]>((result, item) => {
-    if (!context || !item.configure) {
-      result.push(item.extension);
-      return result;
-    }
-
     const extension = item.configure(context);
     if (extension) {
       result.push(extension);

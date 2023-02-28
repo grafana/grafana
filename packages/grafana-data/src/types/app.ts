@@ -54,7 +54,7 @@ export interface AppPluginMeta<T extends KeyValue = KeyValue> extends PluginMeta
  * These types are towards the plugin developer when extending Grafana or other
  * plugins from the module.ts
  */
-export type AppConfigureExtension<T, C = object> = (extension: T, context: C) => Partial<T> | undefined;
+export type AppConfigureExtension<T, C = object> = (extension: T, context?: C) => Partial<T> | undefined;
 
 export type AppPluginExtensionLink = Pick<PluginExtensionLink, 'description' | 'path' | 'title'>;
 

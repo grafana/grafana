@@ -1,10 +1,10 @@
 import { PluginExtension } from '@grafana/data';
 
 export type RegistryConfigureExtension<T extends PluginExtension = PluginExtension, C extends object = object> = (
-  context: C
+  context?: C
 ) => T | undefined;
 
-export type `PluginExtensionRegistryItem`<T extends PluginExtension = PluginExtension, C extends object = object> = {
+export type PluginExtensionRegistryItem<T extends PluginExtension = PluginExtension, C extends object = object> = {
   extension: T;
   configure: RegistryConfigureExtension<T, C>;
 };
