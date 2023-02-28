@@ -81,8 +81,6 @@ export const DEFAULT_FIELD_DISPLAY_VALUES_LIMIT = 25;
 
 export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): FieldDisplay[] => {
   const { replaceVariables, reduceOptions, timeZone, theme } = options;
-  console.log('🚀 ~ file: fieldDisplay.ts:83 ~ getFieldDisplayValues ~ options:', options);
-  // console.log(options.fieldConfig.defaults, 'default options');
 
   const calcs = reduceOptions.calcs.length ? reduceOptions.calcs : [ReducerID.last];
 
@@ -112,7 +110,6 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
 
     for (let i = 0; i < dataFrame.fields.length && !hitLimit; i++) {
       const field = dataFrame.fields[i];
-      console.log('🚀 ~ file: fieldDisplay.ts:111 ~ getFieldDisplayValues ~ field:', field);
       const { type: fieldType } = field;
       const fieldLinksSupplier = field.getLinks;
 
@@ -161,7 +158,6 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
           field.state = setIndexForPaletteColor(field, values.length);
 
           const displayValue = display(field.values.get(j));
-          // console.log(displayValue, 'display value');
           const rowName = getSmartDisplayNameForRow(dataFrame, field, j, replaceVariables, scopedVars);
           const overrideColor = lookupRowColorFromOverride(rowName, options.fieldConfig, theme);
 
@@ -248,7 +244,6 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
     values.push(createNoValuesFieldDisplay(options));
   }
 
-  // console.log(values, 'values');
   return values;
 };
 
