@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -614,6 +615,8 @@ func buildUserAnalyticsSettings(signedInUser user.SignedInUser) user.AnalyticsSe
 		settings.Identifier = signedInUser.Email
 	}
 
-	settings.HashedIdentifier = hashUserIdentifier(settings.Identifier, "SECRET")
+	if os.Getenv("GF_ANALYTICS_SECRET") != "" {
+		settings.HashedIdentifier = hashUserIdentifier(settings.Identifier, os.Getenv("GF_ANALYTICS_SECRET"))
+	}
 	return settings
 }
