@@ -109,6 +109,11 @@ export enum FrameGeometrySourceMode {
   Lookup = 'lookup',
 }
 
+export enum LogsSortOrder {
+  Ascending = 'Ascending',
+  Descending = 'Descending',
+}
+
 /**
  * TODO docs
  */
@@ -695,6 +700,13 @@ export interface FrameGeometrySource {
   lookup?: string;
   mode: FrameGeometrySourceMode;
   wkt?: string;
+}
+
+export enum LogsDedupStrategy {
+  exact = 'exact',
+  none = 'none',
+  numbers = 'numbers',
+  signature = 'signature',
 }
 
 export interface Labels {}
