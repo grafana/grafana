@@ -268,6 +268,6 @@ const (
 	FlagIndividualCookiePreferences = "individualCookiePreferences"
 
 	// FlagDrawerDataSourcePicker
-	// Changed UX for selecting datasources, opens in a drawer
+	// Changes the user experience for data source selection to a drawer.
 	FlagDrawerDataSourcePicker = "drawerDataSourcePicker"
 )

@@ -368,7 +368,7 @@ var (
 		},
 		{
 			Name:         "drawerDataSourcePicker",
-			Description:  "Changed UX for selecting datasources, opens in a drawer",
+			Description:  "Changes the user experience for data source selection to a drawer.",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 		},
