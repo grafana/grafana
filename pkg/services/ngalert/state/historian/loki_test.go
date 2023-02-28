@@ -5,6 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"net/url"
 	"sort"
 	"testing"
@@ -260,7 +262,7 @@ func TestMerge(t *testing.T) {
 func TestRecordStates(t *testing.T) {
 	t.Run("writes state transitions to loki", func(t *testing.T) {
 		req := NewFakeRequester()
-		loki := createTestLokiBackend(req, prometheus.NewRegistry())
+		loki := createTestLokiBackend(req, metrics.NewHistorianMetrics(prometheus.NewRegistry()))
 		rule := createTestRule()
 		states := singleFromNormal(&state.State{
 			State:  eval.Alerting,
@@ -275,25 +277,33 @@ func TestRecordStates(t *testing.T) {
 
 	t.Run("emits expected write metrics", func(t *testing.T) {
 		reg := prometheus.NewRegistry()
-		loki := createTestLokiBackend(NewFakeRequester(), reg)
+		met := metrics.NewHistorianMetrics(reg)
+		loki := createTestLokiBackend(NewFakeRequester(), met)
+		errLoki := createTestLokiBackend(NewFakeRequester().WithResponse(badResponse()), met)
 		rule := createTestRule()
 		states := singleFromNormal(&state.State{
 			State:  eval.Alerting,
 			Labels: data.Labels{"a": "b"},
 		})
 
-		err := <-loki.RecordStatesAsync(context.Background(), rule, states)
+		_ = <-loki.RecordStatesAsync(context.Background(), rule, states)
+		_ = <-errLoki.RecordStatesAsync(context.Background(), rule, states)
 
-		require.NoError(t, err)
 		exp := bytes.NewBufferString(`
+# HELP grafana_alerting_state_history_transitions_failed_total The total number of state transitions that failed to be written - they are not retried.
+# TYPE grafana_alerting_state_history_transitions_failed_total counter
+grafana_alerting_state_history_transitions_failed_total{org="1"} 1
 # HELP grafana_alerting_state_history_transitions_total The total number of state transitions processed by the state historian.
 # TYPE grafana_alerting_state_history_transitions_total counter
-grafana_alerting_state_history_transitions_total{org="1"} 1
+grafana_alerting_state_history_transitions_total{org="1"} 2
+# HELP grafana_alerting_state_history_writes_failed_total The total number of failed writes of state history batches.
+# TYPE grafana_alerting_state_history_writes_failed_total counter
+grafana_alerting_state_history_writes_failed_total{org="1"} 1
 # HELP grafana_alerting_state_history_writes_total The total number of state history batches that were attempted to be written.
 # TYPE grafana_alerting_state_history_writes_total counter
-grafana_alerting_state_history_writes_total{org="1"} 1
+grafana_alerting_state_history_writes_total{org="1"} 2
 `)
-		err = testutil.GatherAndCompare(reg, exp,
+		err := testutil.GatherAndCompare(reg, exp,
 			"grafana_alerting_state_history_transitions_total",
 			"grafana_alerting_state_history_transitions_failed_total",
 			"grafana_alerting_state_history_writes_total",
@@ -303,13 +313,12 @@ grafana_alerting_state_history_writes_total{org="1"} 1
 	})
 }
 
-func createTestLokiBackend(req client.Requester, reg prometheus.Registerer) *RemoteLokiBackend {
+func createTestLokiBackend(req client.Requester, met *metrics.Historian) *RemoteLokiBackend {
 	url, _ := url.Parse("http://some.url")
 	cfg := LokiConfig{
 		WritePathURL: url,
 		ReadPathURL:  url,
 	}
-	met := metrics.NewHistorianMetrics(reg)
 	return NewRemoteLokiBackend(cfg, req, met)
 }
 
@@ -346,4 +355,14 @@ func requireEntry(t *testing.T, row sample) lokiEntry {
 	err := json.Unmarshal([]byte(row.V), &entry)
 	require.NoError(t, err)
 	return entry
+}
+
+func badResponse() *http.Response {
+	return &http.Response{
+		Status:        "400 Bad Request",
+		StatusCode:    http.StatusBadRequest,
+		Body:          ioutil.NopCloser(bytes.NewBufferString("")),
+		ContentLength: int64(0),
+		Header:        make(http.Header, 0),
+	}
 }
