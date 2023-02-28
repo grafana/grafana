@@ -21,7 +21,7 @@ export type PluginExtensionLink = PluginExtension & {
 
 export type PluginExtensionCommand = PluginExtension & {
   type: PluginExtensionTypes.command;
-  emit: () => void;
+  callHandlerWithContext: () => void;
 };
 
 export function isPluginExtensionLink(extension: PluginExtension): extension is PluginExtensionLink {

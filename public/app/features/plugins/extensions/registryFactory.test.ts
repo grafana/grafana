@@ -29,7 +29,7 @@ describe('Creating extensions registry', () => {
     errorHandler.mockClear();
   });
 
-  it('should register an extension', () => {
+  it('should register a link extension', () => {
     const registry = createPluginExtensionRegistry([
       {
         pluginId: 'belugacdn-app',
@@ -63,7 +63,7 @@ describe('Creating extensions registry', () => {
     ]);
   });
 
-  it('should register extensions from one plugin with multiple placements', () => {
+  it('should register link extensions from one plugin with multiple placements', () => {
     const registry = createPluginExtensionRegistry([
       {
         pluginId: 'belugacdn-app',
@@ -116,7 +116,7 @@ describe('Creating extensions registry', () => {
     ]);
   });
 
-  it('should register extensions from multiple plugins with multiple placements', () => {
+  it('should register link extensions from multiple plugins with multiple placements', () => {
     const registry = createPluginExtensionRegistry([
       {
         pluginId: 'belugacdn-app',
@@ -248,7 +248,7 @@ describe('Creating extensions registry', () => {
     ]);
   });
 
-  it('should not register extensions with invalid path configured', () => {
+  it('should not register link extensions with invalid path configured', () => {
     const registry = createPluginExtensionRegistry([
       {
         pluginId: 'belugacdn-app',
@@ -330,5 +330,168 @@ describe('Creating extensions registry', () => {
     extension?.configure?.(context);
 
     expect(errorHandler).toBeCalledWith(expect.any(Function), configurable, context);
+  });
+
+  it('should register a command extension', () => {
+    const registry = createPluginExtensionRegistry([
+      {
+        pluginId: 'belugacdn-app',
+        linkExtensions: [],
+        commandExtensions: [
+          {
+            placement: 'grafana/dashboard/panel/menu',
+            title: 'Open incident',
+            description: 'You can create an incident from this context',
+            handler: () => {},
+          },
+        ],
+      },
+    ]);
+
+    const numberOfPlacements = Object.keys(registry).length;
+    const extensions = registry['grafana/dashboard/panel/menu'];
+
+    expect(numberOfPlacements).toBe(1);
+    expect(extensions).toEqual([
+      {
+        configure: undefined,
+        extension: {
+          title: 'Open incident',
+          type: PluginExtensionTypes.command,
+          description: 'You can create an incident from this context',
+          key: -68154691,
+          callHandlerWithContext: expect.any(Function),
+        },
+      },
+    ]);
+  });
+
+  it('should register command extensions from one plugin with multiple placements', () => {
+    const registry = createPluginExtensionRegistry([
+      {
+        pluginId: 'belugacdn-app',
+        linkExtensions: [],
+        commandExtensions: [
+          {
+            placement: 'grafana/dashboard/panel/menu',
+            title: 'Open incident',
+            description: 'You can create an incident from this context',
+            handler: () => {},
+          },
+          {
+            placement: 'plugins/grafana-slo-app/slo-breached',
+            title: 'Open incident',
+            description: 'You can create an incident from this context',
+            handler: () => {},
+          },
+        ],
+      },
+    ]);
+
+    const numberOfPlacements = Object.keys(registry).length;
+    const panelExtensions = registry['grafana/dashboard/panel/menu'];
+    const sloExtensions = registry['plugins/grafana-slo-app/slo-breached'];
+
+    expect(numberOfPlacements).toBe(2);
+    expect(panelExtensions).toEqual([
+      {
+        configure: undefined,
+        extension: {
+          title: 'Open incident',
+          type: PluginExtensionTypes.command,
+          description: 'You can create an incident from this context',
+          key: -68154691,
+          callHandlerWithContext: expect.any(Function),
+        },
+      },
+    ]);
+    expect(sloExtensions).toEqual([
+      {
+        configure: undefined,
+        extension: {
+          title: 'Open incident',
+          type: PluginExtensionTypes.command,
+          description: 'You can create an incident from this context',
+          key: -1638987831,
+          callHandlerWithContext: expect.any(Function),
+        },
+      },
+    ]);
+  });
+
+  it('should register command extensions from multiple plugins with multiple placements', () => {
+    const registry = createPluginExtensionRegistry([
+      {
+        pluginId: 'belugacdn-app',
+        linkExtensions: [],
+        commandExtensions: [
+          {
+            placement: 'grafana/dashboard/panel/menu',
+            title: 'Open incident',
+            description: 'You can create an incident from this context',
+            handler: () => {},
+          },
+          {
+            placement: 'plugins/grafana-slo-app/slo-breached',
+            title: 'Open incident',
+            description: 'You can create an incident from this context',
+            handler: () => {},
+          },
+        ],
+      },
+      {
+        pluginId: 'grafana-monitoring-app',
+        linkExtensions: [],
+        commandExtensions: [
+          {
+            placement: 'grafana/dashboard/panel/menu',
+            title: 'Open Incident',
+            description: 'You can create an incident from this context',
+            handler: () => {},
+          },
+        ],
+      },
+    ]);
+
+    const numberOfPlacements = Object.keys(registry).length;
+    const panelExtensions = registry['grafana/dashboard/panel/menu'];
+    const sloExtensions = registry['plugins/grafana-slo-app/slo-breached'];
+
+    expect(numberOfPlacements).toBe(2);
+    expect(panelExtensions).toEqual([
+      {
+        configure: undefined,
+        extension: {
+          title: 'Open incident',
+          type: PluginExtensionTypes.command,
+          description: 'You can create an incident from this context',
+          key: -68154691,
+          callHandlerWithContext: expect.any(Function),
+        },
+      },
+      {
+        configure: undefined,
+        extension: {
+          title: 'Open Incident',
+          type: PluginExtensionTypes.command,
+          description: 'You can create an incident from this context',
+          key: -540306829,
+          callHandlerWithContext: expect.any(Function),
+        },
+      },
+    ]);
+
+    expect(sloExtensions).toEqual([
+      {
+        configure: undefined,
+        extension: {
+          title: 'Open incident',
+          type: PluginExtensionTypes.command,
+          description: 'You can create an incident from this context',
+          key: -1638987831,
+          callHandlerWithContext: expect.any(Function),
+        },
+      },
+    ]);
   });
 });

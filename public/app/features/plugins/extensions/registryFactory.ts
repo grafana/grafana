@@ -1,7 +1,9 @@
 import {
   AppConfigureExtension,
+  AppPluginExtensionCommandConfig,
   AppPluginExtensionLink,
   AppPluginExtensionLinkConfig,
+  PluginExtensionCommand,
   PluginExtensionLink,
   PluginExtensionTypes,
 } from '@grafana/data';
@@ -21,7 +23,7 @@ export function createPluginExtensionRegistry(preloadResults: PluginPreloadResul
 
   for (const result of preloadResults) {
     const limiter: Record<string, number> = {};
-    const { pluginId, linkExtensions, error } = result;
+    const { pluginId, linkExtensions, commandExtensions, error } = result;
 
     if (!Array.isArray(linkExtensions) || error) {
       continue;
@@ -46,6 +48,26 @@ export function createPluginExtensionRegistry(preloadResults: PluginPreloadResul
 
       registry[placement].push(item);
     }
+
+    for (const extension of commandExtensions) {
+      const placement = extension.placement;
+
+      limiter[placement] = (limiter[placement] ?? 0) + 1;
+      const item = createRegistryCommand(pluginId, extension);
+
+      // If there was an issue initialising the plugin, skip adding its extensions to the registry
+      // or if the plugin already have placed 2 items at the extension point.
+      if (!item || limiter[placement] > 2) {
+        continue;
+      }
+
+      if (!Array.isArray(registry[placement])) {
+        registry[placement] = [item];
+        continue;
+      }
+
+      registry[placement].push(item);
+    }
   }
 
   for (const item of Object.keys(registry)) {
@@ -53,6 +75,25 @@ export function createPluginExtensionRegistry(preloadResults: PluginPreloadResul
   }
 
   return Object.freeze(registry);
+}
+
+function createRegistryCommand(
+  pluginId: string,
+  config: AppPluginExtensionCommandConfig
+): PluginExtensionRegistryItem<PluginExtensionCommand> | undefined {
+  const id = `${pluginId}${config.placement}${config.title}`;
+
+  const extension = Object.freeze({
+    type: PluginExtensionTypes.command,
+    title: config.title,
+    description: config.description,
+    key: hashKey(id),
+    callHandlerWithContext: () => {},
+  });
+
+  return Object.freeze({
+    extension: extension,
+  });
 }
 
 function createRegistryLink(

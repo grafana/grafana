@@ -72,8 +72,8 @@ export type AppPluginExtensionCommandConfig<C extends object = object> = {
   title: string;
   description: string;
   placement: string;
-  configure?: AppConfigureExtension<AppPluginExtensionCommand, C>;
   handler: (context: C) => void;
+  configure?: AppConfigureExtension<AppPluginExtensionCommand, C>;
 };
 
 export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppPluginMeta<T>> {
