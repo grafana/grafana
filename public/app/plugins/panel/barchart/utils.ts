@@ -17,6 +17,8 @@ import {
   VizOrientation,
   DataFrameType,
   getFieldDisplayName,
+  Labels,
+  formatLabels,
 } from '@grafana/data';
 import { maybeSortFrame } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import {
@@ -367,6 +369,7 @@ export function prepareBarChartDisplayValues(
   if (!series?.length) {
     return { warn: 'No data in response' };
   }
+  let frame = series[0];
 
   // Convert numeric wide and multi to long
   if (
@@ -376,19 +379,19 @@ export function prepareBarChartDisplayValues(
       return t === DataFrameType.NumericWide || t === DataFrameType.NumericMulti;
     })
   ) {
-    const frame = toNumericLong(series);
+    frame = toNumericLong(series);
     frame.fields.forEach((f) => (f.display = getDisplayProcessor({ field: f, theme })));
-    series = [frame];
+  } else {
+    // Bar chart requires a single frame
+    frame =
+      series.length === 1
+        ? maybeSortFrame(
+            series[0],
+            series[0].fields.findIndex((f) => f.type === FieldType.time)
+          )
+        : outerJoinDataFrames({ frames: series })!;
   }
 
-  // Bar chart requires a single frame
-  const frame =
-    series.length === 1
-      ? maybeSortFrame(
-          series[0],
-          series[0].fields.findIndex((f) => f.type === FieldType.time)
-        )
-      : outerJoinDataFrames({ frames: series });
   if (!frame) {
     return { warn: 'Unable to join data' };
   }
@@ -409,70 +412,7 @@ export function prepareBarChartDisplayValues(
       return { warn: 'Configured x field not found' };
     }
   }
-
-  let stringField: Field | undefined = undefined;
-  let timeField: Field | undefined = undefined;
-  let fields: Field[] = [];
-  for (const field of frame.fields) {
-    if (field === xField) {
-      continue;
-    }
-
-    switch (field.type) {
-      case FieldType.string:
-        if (!stringField) {
-          stringField = field;
-        }
-        break;
-
-      case FieldType.time:
-        if (!timeField) {
-          timeField = field;
-        }
-        break;
-
-      case FieldType.number: {
-        const copy = {
-          ...field,
-          state: {
-            ...field.state,
-            seriesIndex: fields.length, // off by one?
-          },
-          config: {
-            ...field.config,
-            custom: {
-              ...field.config.custom,
-              stacking: {
-                group: '_',
-                mode: options.stacking,
-              },
-            },
-          },
-          values: new ArrayVector(
-            field.values.toArray().map((v) => {
-              if (!(Number.isFinite(v) || v == null)) {
-                return null;
-              }
-              return v;
-            })
-          ),
-        };
-
-        if (options.stacking === StackingMode.Percent) {
-          copy.config.unit = 'percentunit';
-          copy.display = getDisplayProcessor({ field: copy, theme });
-        }
-
-        fields.push(copy);
-      }
-    }
-  }
-
-  let firstField = xField;
-  if (!firstField) {
-    firstField = stringField || timeField;
-  }
-
+  let { firstField, fields, aligned } = getBarFields(frame, xField, options, theme);
   if (!firstField) {
     return {
       warn: 'Bar charts requires a string or time field',
@@ -530,7 +470,7 @@ export function prepareBarChartDisplayValues(
   fields.unshift(firstField);
 
   return {
-    aligned: frame,
+    aligned,
     colorByField,
     viz: [
       {
@@ -545,11 +485,198 @@ export function prepareBarChartDisplayValues(
   };
 }
 
+function getBarFields(
+  frame: DataFrame,
+  xField: Field | undefined,
+  options: PanelOptions,
+  theme: GrafanaTheme2
+): {
+  firstField: Field | undefined;
+  fields: Field[];
+  aligned: DataFrame;
+} {
+  let stringFields: Field[] | undefined = undefined;
+  let timeField: Field | undefined = undefined;
+  let fields: Field[] = [];
+  for (const field of frame.fields) {
+    if (field === xField) {
+      continue;
+    }
+
+    switch (field.type) {
+      case FieldType.string:
+        if (!stringFields) {
+          stringFields = [];
+        }
+        stringFields.push(field);
+        break;
+
+      case FieldType.time:
+        if (!timeField) {
+          timeField = field;
+        }
+        break;
+
+      case FieldType.number: {
+        const copy = {
+          ...field,
+          state: {
+            ...field.state,
+            seriesIndex: fields.length, // off by one?
+          },
+          config: {
+            ...field.config,
+            custom: {
+              ...field.config.custom,
+              stacking: {
+                group: '_',
+                mode: options.stacking,
+              },
+            },
+          },
+          values: new ArrayVector(
+            field.values.toArray().map((v) => {
+              if (!(Number.isFinite(v) || v == null)) {
+                return null;
+              }
+              return v;
+            })
+          ),
+        };
+
+        if (options.stacking === StackingMode.Percent) {
+          copy.config.unit = 'percentunit';
+          copy.display = getDisplayProcessor({ field: copy, theme });
+        }
+
+        fields.push(copy);
+      }
+    }
+  }
+
+  let firstField = xField;
+  if (!firstField) {
+    if (stringFields?.length) {
+      firstField = stringFields[0];
+
+      // When multiple strings exist display them as labels
+      if (stringFields?.length > 1) {
+        const names = new Array(frame.length);
+        for (let i = 0; i < frame.length; i++) {
+          const labels: Labels = {};
+          for (const f of stringFields) {
+            labels[f.name] = f.values.get(i);
+          }
+          names[i] = formatLabels(labels);
+        }
+        firstField = {
+          name: 'Name',
+          type: FieldType.string,
+          config: {},
+          values: new ArrayVector(names),
+        };
+        firstField.display = getDisplayProcessor({ field: firstField, theme });
+      }
+    } else if (timeField) {
+      firstField = timeField;
+    }
+
+    // Try converting to numericWide
+    if (!firstField && fields.length) {
+      frame = toNumericLong([frame]);
+      frame.fields.forEach((f) => (f.display = getDisplayProcessor({ field: f, theme })));
+      return getBarFields(frame, undefined, options, theme);
+    }
+  }
+  return { firstField, fields, aligned: frame };
+}
+
 export const isLegendOrdered = (options: VizLegendOptions) => Boolean(options?.sortBy && options.sortDesc !== null);
+
+interface LabelInfo {
+  key: string;
+  labels: Labels;
+  index: number;
+}
 
 // This function should eventually live in a transformation
 export function toNumericLong(data: DataFrame[]): DataFrame {
   let first: Field | undefined = undefined;
+  const uniqueLabels = new Map<string, string[]>();
+  const labelInfo = new Map<string, LabelInfo>();
+  const labeledNumbers = new Map<string, number[]>();
+  for (const frame of data) {
+    for (const field of frame.fields) {
+      if (field.type === FieldType.number) {
+        if (field.labels) {
+          if (!first) {
+            first = field;
+          }
+          const key = formatLabels(field.labels);
+          let info = labelInfo.get(key);
+          if (!info) {
+            info = {
+              key,
+              labels: field.labels,
+              index: labelInfo.size,
+            };
+            labelInfo.set(key, info);
+
+            // Fill in the unique values
+            for (const [key, value] of Object.entries(field.labels)) {
+              let v = uniqueLabels.get(key);
+              if (!v) {
+                v = [];
+                uniqueLabels.set(key, v);
+              }
+              v[info.index] = value;
+            }
+          }
+          field.values.toArray().forEach((v, index) => {
+            const name = index === 0 ? field.name : `${field.name} (${index + 1})`;
+            let values = labeledNumbers.get(name);
+            if (!values) {
+              values = [];
+              labeledNumbers.set(name, values);
+            }
+            values[info!.index] = v;
+          });
+        }
+      }
+    }
+  }
+  if (labeledNumbers.size) {
+    const frame: DataFrame = {
+      name: data[0].name,
+      refId: data[0].refId,
+      meta: {
+        ...data[0].meta,
+        type: DataFrameType.NumericLong,
+      },
+      fields: [],
+      length: labelInfo.size,
+    };
+    labeledNumbers.forEach((value, key) => {
+      frame.fields.push({
+        name: key,
+        type: FieldType.number,
+        config: first?.config ?? {},
+        values: new ArrayVector(value),
+      });
+    });
+
+    uniqueLabels.forEach((value, key) => {
+      frame.fields.push({
+        name: key,
+        type: FieldType.string,
+        config: {},
+        values: new ArrayVector(value),
+      });
+    });
+    return frame;
+  }
+
+  // Labels were not used, default to simple name+value pair
   const names: string[] = [];
   const values: number[] = [];
   for (const frame of data) {
@@ -567,7 +694,8 @@ export function toNumericLong(data: DataFrame[]): DataFrame {
     }
   }
   return {
-    ...data[0],
+    name: data[0].name,
+    refId: data[0].refId,
     meta: {
       ...data[0].meta,
       type: DataFrameType.NumericLong,
