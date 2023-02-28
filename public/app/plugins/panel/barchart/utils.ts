@@ -15,6 +15,8 @@ import {
   reduceField,
   TimeZone,
   VizOrientation,
+  DataFrameType,
+  getFieldDisplayName,
 } from '@grafana/data';
 import { maybeSortFrame } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import {
@@ -366,6 +368,19 @@ export function prepareBarChartDisplayValues(
     return { warn: 'No data in response' };
   }
 
+  // Convert numeric wide and multi to long
+  if (
+    !options.xField &&
+    series.every((v) => {
+      const t = v.meta?.type;
+      return t === DataFrameType.NumericWide || t === DataFrameType.NumericMulti;
+    })
+  ) {
+    const frame = toNumericLong(series);
+    frame.fields.forEach((f) => (f.display = getDisplayProcessor({ field: f, theme })));
+    series = [frame];
+  }
+
   // Bar chart requires a single frame
   const frame =
     series.length === 1
@@ -531,3 +546,31 @@ export function prepareBarChartDisplayValues(
 }
 
 export const isLegendOrdered = (options: VizLegendOptions) => Boolean(options?.sortBy && options.sortDesc !== null);
+
+export function toNumericLong(data: DataFrame[]): DataFrame {
+  const names: string[] = [];
+  const vals: number[] = [];
+  let first: Field | undefined = undefined;
+  for (const frame of data) {
+    for (const field of frame.fields) {
+      if (field.type === FieldType.number) {
+        if (!first) {
+          first = field;
+        }
+        const name = getFieldDisplayName(field, frame, data);
+        field.values.toArray().forEach((v) => {
+          names.push(name);
+          vals.push(v);
+        });
+      }
+    }
+  }
+  return {
+    ...data[0],
+    fields: [
+      { name: 'Name', type: FieldType.string, values: new ArrayVector(names), config: {} },
+      { name: 'Value', type: FieldType.number, values: new ArrayVector(vals), config: first?.config ?? {} },
+    ],
+    length: vals.length,
+  };
+}
