@@ -39,7 +39,6 @@ type RuleStore interface {
 
 func NewAnnotationBackend(annotations annotations.Repository, dashboards dashboards.DashboardService, rules RuleStore, metrics *metrics.Historian) *AnnotationBackend {
 	logger := log.New("ngalert.state.historian", "backend", "annotations")
-	metrics.Info.WithLabelValues("annotations").Set(1)
 	return &AnnotationBackend{
 		annotations: annotations,
 		dashboards:  newDashboardResolver(dashboards, defaultDashboardCacheExpiry),
