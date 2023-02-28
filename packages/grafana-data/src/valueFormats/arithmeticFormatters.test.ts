@@ -1,12 +1,4 @@
-import {
-  sci,
-  toHex,
-  toHex0x,
-  toPercent,
-  toPercentUnit,
-  toIncreasingPercent,
-  toDecreasingPercent,
-} from './arithmeticFormatters';
+import { sci, toHex, toHex0x, toPercent, toPercentUnit } from './arithmeticFormatters';
 import { formattedValueToString } from './valueFormats';
 
 describe('scientific formatting', () => {
@@ -99,26 +91,6 @@ describe('percentage formatting', () => {
     it('renders a percent unit as expected', () => {
       const str = toPercentUnit(size, 2);
       expect(formattedValueToString(str)).toBe('3333.33%');
-    });
-  });
-  describe('toIncreasingPercent', () => {
-    it('follows the sad path as expected', () => {
-      const str = toIncreasingPercent(null, decimals);
-      expect(formattedValueToString(str)).toBe('');
-    });
-    it('renders an increasing percent as expected', () => {
-      const str = toIncreasingPercent(size, 2);
-      expect(formattedValueToString(str)).toBe('\u219133.33%');
-    });
-  });
-  describe('toDecreasingPercent', () => {
-    it('follows the sad path as expected', () => {
-      const str = toDecreasingPercent(null, decimals);
-      expect(formattedValueToString(str)).toBe('');
-    });
-    it('renders a decreasing percent as expected', () => {
-      const str = toDecreasingPercent(size, 2);
-      expect(formattedValueToString(str)).toBe('\u219333.33%');
     });
   });
 });
