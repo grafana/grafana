@@ -9,32 +9,30 @@ import { defaultPanelOptions, PanelOptions } from './panelcfg.gen';
 import { StatSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<PanelOptions>(StatPanel)
-  // Add a custom selection field for custom stat prefix
-  // .useFieldConfig({
-  //   useCustomConfig: (builder) =>
-  //     builder.addSelect({
-  //       path: 'prependUnit',
-  //       name: 'Prepend common unit',
-  //       description: 'Prepend a common unit along with standard formatting options',
-  //       category: ['Stat-specific unit formatting options'],
-  //       settings: {
-  //         options: getSelectablePrefixValues(),
-  //       },
-  //       defaultValue: undefined,
-  //     }),
-  // })
+  // Add a custom text fields for custom stat units
   .useFieldConfig({
     useCustomConfig: (builder) =>
-      builder.addTextInput({
-        path: 'customPrefix',
-        name: 'Custom Prefix',
-        description: 'Enter a custom prefix here',
-        defaultValue: '',
-        settings: {
-          placeholder: 'Enter custom prefix',
-        },
-        category: ['Custom prefix'],
-      }),
+      builder
+        .addTextInput({
+          path: 'customPrefix',
+          name: 'Custom Prefix',
+          description: 'Enter a custom prefix here',
+          defaultValue: '',
+          settings: {
+            placeholder: 'Enter custom prefix',
+          },
+          category: ['Custom prefix'],
+        })
+        .addTextInput({
+          path: 'customSuffix',
+          name: 'Custom Suffix',
+          description: 'Enter a custom suffix here',
+          defaultValue: '',
+          settings: {
+            placeholder: 'Enter custom suffix',
+          },
+          category: ['Custom suffix'],
+        }),
   })
   .setPanelOptions((builder) => {
     const mainCategory = ['Stat styles'];
