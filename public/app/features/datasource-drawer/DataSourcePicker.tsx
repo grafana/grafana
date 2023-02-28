@@ -12,12 +12,6 @@ import { DataSourceDrawer } from './DataSourceDrawer';
 import { DataSourcePickerProps } from './types';
 
 /**
- * Component props description for the {@link DataSourcePicker}
- *
- * @internal
- */
-
-/**
  * Component state description for the {@link DataSourcePicker}
  *
  * @internal
