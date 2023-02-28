@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"sort"
@@ -279,7 +279,7 @@ func TestRecordStates(t *testing.T) {
 		reg := prometheus.NewRegistry()
 		met := metrics.NewHistorianMetrics(reg)
 		loki := createTestLokiBackend(NewFakeRequester(), met)
-		errLoki := createTestLokiBackend(NewFakeRequester().WithResponse(badResponse()), met) //nolint:bodyclose false positive
+		errLoki := createTestLokiBackend(NewFakeRequester().WithResponse(badResponse()), met) //nolint:bodyclose
 		rule := createTestRule()
 		states := singleFromNormal(&state.State{
 			State:  eval.Alerting,
@@ -361,7 +361,7 @@ func badResponse() *http.Response {
 	return &http.Response{
 		Status:        "400 Bad Request",
 		StatusCode:    http.StatusBadRequest,
-		Body:          ioutil.NopCloser(bytes.NewBufferString("")),
+		Body:          io.NopCloser(bytes.NewBufferString("")),
 		ContentLength: int64(0),
 		Header:        make(http.Header, 0),
 	}
