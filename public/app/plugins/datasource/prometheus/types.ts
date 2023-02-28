@@ -13,7 +13,10 @@ export interface PromQuery extends GenPromQuery {
   legendFormat?: string;
   valueWithRefId?: boolean;
   requestId?: string;
-  query?: string;
+  showingGraph?: boolean;
+  showingTable?: boolean;
+  /** Code, Builder or Explain */
+  editorMode?: QueryEditorMode;
 }
 
 export interface PromOptions extends DataSourceJsonData {

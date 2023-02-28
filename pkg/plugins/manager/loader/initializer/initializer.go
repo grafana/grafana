@@ -9,9 +9,9 @@ import (
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
 type Initializer struct {
