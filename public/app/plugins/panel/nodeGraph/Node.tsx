@@ -125,7 +125,7 @@ function NodeContents({ node, hovering }: { node: NodeDatum; hovering: HoverStat
   }
 
   return node.icon ? (
-    <foreignObject x={node.x - 35} y={node.y - 18} width="70" height="40">
+    <foreignObject x={node.x - 35} y={node.y - 20} width="70" height="40">
       <div style={{ width: 70, overflow: 'hidden', display: 'flex', justifyContent: 'center', marginTop: -4 }}>
         <Icon data-testid={`node-icon-${node.icon}`} name={node.icon} size={'xxxl'} />
       </div>
