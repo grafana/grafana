@@ -286,9 +286,11 @@ export function getPanelMenu(
     });
   }
 
+  const context = createExtensionContext(panel, dashboard);
+
   const { extensions } = getPluginExtensions({
     placement: GrafanaExtensions.DashboardPanelMenu,
-    context: createExtensionContext(panel, dashboard),
+    context: context,
   });
 
   for (const extension of extensions) {
@@ -300,13 +302,13 @@ export function getPanelMenu(
       continue;
     }
 
-    // if (isPluginExtensionCommand(extension)) {
-    //   subMenu.push({
-    //     text: truncateTitle(extension.title, 25),
-    //     onClick: extension.callHandlerWithContext,
-    //   });
-    //   continue;
-    // }
+    if (isPluginExtensionCommand(extension)) {
+      subMenu.push({
+        text: truncateTitle(extension.title, 25),
+        onClick: extension.callHandlerWithContext,
+      });
+      continue;
+    }
   }
 
   return menu;
