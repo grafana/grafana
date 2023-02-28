@@ -12,6 +12,8 @@ import {
 } from '@grafana/data';
 import { SingleStatBaseOptions, VizOrientation } from '@grafana/schema';
 
+import { PanelOptions } from './panelcfg.gen';
+
 export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
   builder: PanelOptionsEditorBuilder<T>,
   includeFieldMatcher = true
