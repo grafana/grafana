@@ -350,3 +350,14 @@ func NewFakeRoleRegistry() *FakeRoleRegistry {
 func (f *FakeRoleRegistry) DeclarePluginRoles(_ context.Context, _ string, _ string, _ []plugins.RoleRegistration) error {
 	return f.ExpectedErr
 }
+
+type FakeSources struct {
+	ListFunc func(_ context.Context) []plugins.PluginSource
+}
+
+func (s *FakeSources) List(ctx context.Context) []plugins.PluginSource {
+	if s.ListFunc != nil {
+		return s.ListFunc(ctx)
+	}
+	return []plugins.PluginSource{}
+}
