@@ -9,8 +9,9 @@ import {
   standardEditorsRegistry,
   SelectableValue,
 } from '@grafana/data';
-import { getOverwriteSymbols } from '@grafana/data/src/valueFormats/categories';
 import { SingleStatBaseOptions, VizOrientation } from '@grafana/schema';
+
+import { getOverwriteSymbols } from './StatPanel';
 
 export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
   builder: PanelOptionsEditorBuilder<T>,

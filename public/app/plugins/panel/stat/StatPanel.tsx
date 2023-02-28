@@ -162,21 +162,21 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
   }
 }
 
-// const getOverwriteSymbols = ():  => {
-//   return {
-//     name: 'Custom Prefix Symbols',
-//     formats: [
-//       // { name: 'Percent Increase (\u2191_%)', id: 'percentincrease', fn: toIncreasingPercent },
-//       // { name: 'Percent Decrease (\u2193_%)', id: 'percentdecrease', fn: toDecreasingPercent },
-//       { name: 'Remove Custom Prefix', id: 'remove', fn: addBIPrefix('lessThan') },
-//       { name: 'Less than (<)', id: 'lessThan', fn: addBIPrefix('lessThan') },
-//       { name: 'Greater than (>)', id: 'greaterThan', fn: addBIPrefix('greaterThan') },
-//       { name: 'Approximately (~)', id: 'approximately', fn: addBIPrefix('approximately') },
-//       { name: 'Fiscal quarter (FQ)', id: 'fiscalQuarter', fn: addBIPrefix('fiscalQuarter') },
-//       { name: 'Quarter (Qtr)', id: 'quarter', fn: addBIPrefix('quarter') },
-//       { name: 'Fiscal year (FY)', id: 'fiscalYear', fn: addBIPrefix('fiscalYear') },
-//       { name: 'Delta (\u0394)', id: 'delta', fn: addBIPrefix('delta') },
-//       { name: 'Mean (\u00B5)', id: 'mean', fn: addBIPrefix('mean') },
-//     ],
-//   };
-// };
+export const getOverwriteSymbols = () => {
+  return {
+    name: 'Custom Prefix Symbols',
+    formats: [
+      // { name: 'Percent Increase (\u2191_%)', id: 'percentincrease', fn: toIncreasingPercent },
+      // { name: 'Percent Decrease (\u2193_%)', id: 'percentdecrease', fn: toDecreasingPercent },
+      { name: 'Remove Custom Prefix', id: 'remove' },
+      { name: 'Less than (<)', id: 'lessThan' },
+      { name: 'Greater than (>)', id: 'greaterThan' },
+      { name: 'Approximately (~)', id: 'approximately' },
+      { name: 'Fiscal quarter (FQ)', id: 'fiscalQuarter' },
+      { name: 'Quarter (Qtr)', id: 'quarter' },
+      { name: 'Fiscal year (FY)', id: 'fiscalYear' },
+      { name: 'Delta (\u0394)', id: 'delta' },
+      { name: 'Mean (\u00B5)', id: 'mean' },
+    ],
+  };
+};
