@@ -14,7 +14,7 @@ describe('DataSourcePickerWithHistory', () => {
     });
 
     it('should update an already existing history item with the new lastUsed date', () => {
-      const laterB = { uid: 'b', lastUse: later.lastUse };
+      const laterB = { uid: early.uid, lastUse: later.lastUse };
       expect(updateHistory([early], laterB)).toEqual([laterB]);
     });
 
