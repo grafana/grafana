@@ -72,10 +72,11 @@ export interface RowsHeatmapOptions {
 
 export interface PanelOptions {
   calculate?: boolean;
+  calculation?: ui.HeatmapCalculationOptions;
   cellGap?: number;
   cellRadius?: number;
   cellValues?: CellValues;
-  color?: HeatmapColorOptions;
+  color: HeatmapColorOptions;
   exemplars: ExemplarConfig;
   filterValues?: FilterValueRange;
   legend: HeatmapLegend;
@@ -90,10 +91,10 @@ export const defaultPanelOptions: Partial<PanelOptions> = {
   cellGap: 1,
   cellValues: {},
   color: {
-    mode: 'scheme',
+    mode: HeatmapColorMode.Scheme,
     scheme: 'Oranges',
     fill: 'dark-orange',
-    scale: 'exponential',
+    scale: HeatmapColorScale.Exponential,
     reverse: false,
     exponent: 0.5,
     steps: 64,
@@ -108,7 +109,7 @@ export const defaultPanelOptions: Partial<PanelOptions> = {
     show: true,
   },
   rowsFrame: {
-    layout: 'auto',
+    layout: ui.HeatmapCellLayout.auto,
   },
   showValue: ui.VisibilityMode.Auto,
   tooltip: {
@@ -116,7 +117,7 @@ export const defaultPanelOptions: Partial<PanelOptions> = {
     yHistogram: false,
   },
   yAxis: {
-    axisPlacement: 'left',
+    axisPlacement: ui.AxisPlacement.Left,
   },
 };
 

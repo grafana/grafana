@@ -25,8 +25,8 @@ composableKinds: PanelCfg: {
 			{
 				schemas: [
 					{
-						HeatmapColorMode:  "opacity" | "scheme"     @cuetsy(kind="enum",memberNames="Opacity|Scheme")
-						HeatmapColorScale: "linear" | "exponential" @cuetsy(kind="enum",memberNames="Linear|Exponential")
+						HeatmapColorMode:  "opacity" | "scheme"     @cuetsy(kind="enum")
+						HeatmapColorScale: "linear" | "exponential" @cuetsy(kind="enum")
 						HeatmapColorOptions: {
 							mode:     HeatmapColorMode
 							scheme:   string            // when in scheme mode -- the d3 scheme name
@@ -70,8 +70,9 @@ composableKinds: PanelCfg: {
 							layout?: ui.HeatmapCellLayout
 						} @cuetsy(kind="interface")
 						PanelOptions: {
-							calculate?: bool | *false
-							color?:     HeatmapColorOptions | *{
+							calculate?:   bool | *false
+							calculation?: ui.HeatmapCalculationOptions
+							color:        HeatmapColorOptions | *{
 								mode:     HeatmapColorMode & "scheme"
 								scheme:   "Oranges"
 								fill:     "dark-orange"

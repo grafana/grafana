@@ -746,30 +746,6 @@
       "pluralName": "GraphOldPanelCfgs",
       "schemaInterface": "PanelCfg"
     },
-    "heatmappanelcfg": {
-      "category": "composable",
-      "codeowners": [
-        "grafana/dataviz-squad"
-      ],
-      "currentVersion": [
-        0,
-        0
-      ],
-      "grafanaMaturityCount": 0,
-      "lineageIsGroup": true,
-      "links": {
-        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/heatmappanelcfg/schema-reference",
-        "go": "n/a",
-        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/heatmap/panelcfg.cue",
-        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/heatmap/panelcfg.gen.ts"
-      },
-      "machineName": "heatmappanelcfg",
-      "maturity": "merged",
-      "name": "HeatmapPanelCfg",
-      "pluralMachineName": "heatmappanelcfgs",
-      "pluralName": "HeatmapPanelCfgs",
-      "schemaInterface": "PanelCfg"
-    },
     "histogrampanelcfg": {
       "category": "composable",
       "codeowners": [
@@ -1944,7 +1920,6 @@
           "graphitedataquery",
           "graphitedatasourcecfg",
           "grapholdpanelcfg",
-          "heatmappanelcfg",
           "histogrampanelcfg",
           "iconpanelcfg",
           "jaegerdataquery",
@@ -1983,7 +1958,7 @@
           "zipkindataquery",
           "zipkindatasourcecfg"
         ],
-        "count": 66
+        "count": 65
       },
       "core": {
         "name": "core",
@@ -2049,14 +2024,13 @@
           "alertgroupspanelcfg",
           "azuremonitordataquery",
           "cloudwatchdataquery",
-          "heatmappanelcfg",
           "playlist",
           "preferences",
           "publicdashboard",
           "serviceaccount",
           "team"
         ],
-        "count": 9
+        "count": 8
       },
       "planned": {
         "name": "planned",

@@ -1,13 +1,15 @@
 import { FieldConfigSource, PanelModel, PanelTypeChangedHandler } from '@grafana/data';
-import { AxisPlacement, ScaleDistribution, VisibilityMode } from '@grafana/schema';
 import {
+  AxisPlacement,
+  ScaleDistribution,
+  VisibilityMode,
   HeatmapCellLayout,
   HeatmapCalculationMode,
   HeatmapCalculationOptions,
-} from 'app/features/transformers/calculateHeatmap/models.gen';
+} from '@grafana/schema';
 
-import { PanelOptions, defaultPanelOptions, HeatmapColorMode } from './models.gen';
 import { colorSchemes } from './palettes';
+import { PanelOptions, defaultPanelOptions, HeatmapColorMode } from './panelcfg.gen';
 
 /** Called when the version number changes */
 export const heatmapMigrationHandler = (panel: PanelModel): Partial<PanelOptions> => {
@@ -84,7 +86,7 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
     calculate,
     calculation,
     color: {
-      ...defaultPanelOptions.color,
+      ...defaultPanelOptions.color!,
       steps: 128, // best match with existing colors
     },
     cellGap: cellGap ? cellGap : 1, // default to size 1
@@ -113,7 +115,7 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
       yHistogram: Boolean(angular.tooltip?.showHistogram),
     },
     exemplars: {
-      ...defaultPanelOptions.exemplars,
+      ...defaultPanelOptions.exemplars!,
     },
   };
 
@@ -132,7 +134,7 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
       if (!scheme) {
         scheme = colorSchemes.find((v) => current.indexOf(v.name) >= 0);
       }
-      options.color.scheme = scheme ? scheme.name : defaultPanelOptions.color.scheme;
+      options.color.scheme = scheme ? scheme.name : defaultPanelOptions.color!.scheme;
       break;
     }
     case 'opacity': {

@@ -114,20 +114,36 @@ TODO docs
 
 ### PanelOptions
 
-| Property       | Type                              | Required | Description                                                                                                        |
-|----------------|-----------------------------------|----------|--------------------------------------------------------------------------------------------------------------------|
-| `exemplars`    | [ExemplarConfig](#exemplarconfig) | **Yes**  |                                                                                                                    |
-| `legend`       | [HeatmapLegend](#heatmaplegend)   | **Yes**  |                                                                                                                    |
-| `showValue`    | string                            | **Yes**  | TODO docs<br/>Possible values are: `auto`, `never`, `always`.                                                      |
-| `tooltip`      | [HeatmapTooltip](#heatmaptooltip) | **Yes**  |                                                                                                                    |
-| `yAxis`        | [object](#yaxis)                  | **Yes**  | Default: `map[axisPlacement:left]`.                                                                                |
-| `calculate`    | boolean                           | No       | Default: `false`.                                                                                                  |
-| `cellGap`      | integer                           | No       | Default: `1`.<br/>Constraint: `>=0 & <=25`.                                                                        |
-| `cellRadius`   | number                            | No       |                                                                                                                    |
-| `cellValues`   | [object](#cellvalues)             | No       | Default: `map[]`.                                                                                                  |
-| `color`        | [object](#color)                  | No       | Default: `map[exponent:0.5 fill:dark-orange mode:scheme reverse:false scale:exponential scheme:Oranges steps:64]`. |
-| `filterValues` | [object](#filtervalues)           | No       | Default: `map[le:1e-09]`.                                                                                          |
-| `rowsFrame`    | [object](#rowsframe)              | No       | Default: `map[layout:auto]`.                                                                                       |
+| Property       | Type                                                    | Required | Description                                                                                                        |
+|----------------|---------------------------------------------------------|----------|--------------------------------------------------------------------------------------------------------------------|
+| `color`        | [object](#color)                                        | **Yes**  | Default: `map[exponent:0.5 fill:dark-orange mode:scheme reverse:false scale:exponential scheme:Oranges steps:64]`. |
+| `exemplars`    | [ExemplarConfig](#exemplarconfig)                       | **Yes**  |                                                                                                                    |
+| `legend`       | [HeatmapLegend](#heatmaplegend)                         | **Yes**  |                                                                                                                    |
+| `showValue`    | string                                                  | **Yes**  | TODO docs<br/>Possible values are: `auto`, `never`, `always`.                                                      |
+| `tooltip`      | [HeatmapTooltip](#heatmaptooltip)                       | **Yes**  |                                                                                                                    |
+| `yAxis`        | [object](#yaxis)                                        | **Yes**  | Default: `map[axisPlacement:left]`.                                                                                |
+| `calculate`    | boolean                                                 | No       | Default: `false`.                                                                                                  |
+| `calculation`  | [HeatmapCalculationOptions](#heatmapcalculationoptions) | No       |                                                                                                                    |
+| `cellGap`      | integer                                                 | No       | Default: `1`.<br/>Constraint: `>=0 & <=25`.                                                                        |
+| `cellRadius`   | number                                                  | No       |                                                                                                                    |
+| `cellValues`   | [object](#cellvalues)                                   | No       | Default: `map[]`.                                                                                                  |
+| `filterValues` | [object](#filtervalues)                                 | No       | Default: `map[le:1e-09]`.                                                                                          |
+| `rowsFrame`    | [object](#rowsframe)                                    | No       | Default: `map[layout:auto]`.                                                                                       |
+
+### HeatmapCalculationOptions
+
+| Property   | Type                                                              | Required | Description |
+|------------|-------------------------------------------------------------------|----------|-------------|
+| `xBuckets` | [HeatmapCalculationBucketConfig](#heatmapcalculationbucketconfig) | No       |             |
+| `yBuckets` | [HeatmapCalculationBucketConfig](#heatmapcalculationbucketconfig) | No       |             |
+
+### HeatmapCalculationBucketConfig
+
+| Property | Type                                                | Required | Description                           |
+|----------|-----------------------------------------------------|----------|---------------------------------------|
+| `mode`   | string                                              | No       | Possible values are: `size`, `count`. |
+| `scale`  | [ScaleDistributionConfig](#scaledistributionconfig) | No       | TODO docs                             |
+| `value`  | string                                              | No       |                                       |
 
 ### CellValues
 

@@ -24,6 +24,7 @@ import (
 var skipPlugins = map[string]bool{
 	"canvas":      true,
 	"candlestick": true,
+	"heatmap":     true,
 	"table":       true,
 	"timeseries":  true,
 	"influxdb":    true, // plugin.json fails validation (defaultMatchFormat)
