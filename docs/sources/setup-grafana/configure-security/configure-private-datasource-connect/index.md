@@ -138,6 +138,30 @@ To set up a private data source connection, follow these steps:
      - -v (optional): Sets the verbosity to debug.
      - -o [PermitRemoteOpen](https://man.openbsd.org/ssh_config.5#PermitRemoteOpen) (optional): This can be specified to restrict the destinations reachable by Grafana Cloud over this connection.
 
+   - **Option 3:** Using Kubernetes
+
+     Create a kubernetes secret with the private key, and the certificate and known_hosts file Grafana Labs provided to you.
+
+     ```
+     $ kubectl create secret generic -n ${NAMESPACE} grafana-pdc-agent \
+     --from-file=key=./${SLUG} \
+     --from-file=known_hosts=./known_hosts \
+     --from-file=cert.pub=./${SLUG}-cert.pub
+     ```
+
+     Generate a kubernetes deployment to deploy the agent.
+
+     ```
+     SLUG=${SLUG} PDC_GATEWAY=${PDC_GATEWAY}  NAMESPACE=${NAMESPACE} /bin/sh -c "$(curl -fsSL https://raw.githubusercontent.com/grafana/pdc-agent/main/production/kubernetes/install-agent.sh)"
+     kubectl apply -f deployment.yaml
+     ```
+
+     The environment variables used in the previous commands are as follows:
+
+     - ${PDC_GATEWAY}: The URL of the private data source connect in Grafana Cloud. The Grafana team will give you this URL. The URL follows the format `grafana-private-datasource-connect-<cluster>.grafana.net`
+     - ${SLUG}: The name of the stack you want to connect to your data source. For example, the stack `test.grafana.net` has the slug `test.`
+     - ${NAMESPACE}: The kubernetes namespace for the pdc-agent.
+
 1. (Optional) For high availability, you can install additional instances of the agent on your network with the same configuration.
 
    These can be deployed to different regions, data centers, or providers as long as they are on the same network.
