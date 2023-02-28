@@ -8,6 +8,7 @@ export interface DataSourceDrawerProps {
   onFileDrop?: () => void;
   onChange: (ds: string) => void;
   current: DataSourceInstanceSettings<DataSourceJsonData> | string | DataSourceRef | null | undefined;
+  enableFileUpload?: boolean;
   fileUploadOptions?: DropzoneOptions;
   recentlyUsed?: string[];
 }
@@ -37,11 +38,12 @@ export interface DataSourcePickerProps {
   filter?: (dataSource: DataSourceInstanceSettings) => boolean;
   onClear?: () => void;
   disabled?: boolean;
+  enableFileUpload?: boolean;
   fileUploadOptions?: DropzoneOptions;
 }
 
 export interface DataSourcePickerWithHistoryProps extends Omit<DataSourcePickerProps, 'recentlyUsed'> {
-  key?: string;
+  localStorageKey?: string;
 }
 
 export interface DataSourcePickerHistoryItem {

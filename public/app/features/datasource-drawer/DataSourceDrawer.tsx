@@ -45,7 +45,7 @@ export function DataSourceDrawer(props: DataSourceDrawerProps) {
 }
 
 function PickerContent(props: PickerContentProps) {
-  const { recentlyUsed = [], onChange, fileUploadOptions, onDismiss, current } = props;
+  const { datasources, enableFileUpload, recentlyUsed = [], onChange, fileUploadOptions, onDismiss, current } = props;
   const changeCallback = useCallback(
     (ds: string) => {
       onChange(ds);
@@ -56,17 +56,12 @@ function PickerContent(props: PickerContentProps) {
   const [filterTerm, onFilterChange] = useState<string>('');
   const styles = useStyles2(getStyles);
 
-  const filterDataSources = (ds?: DataSourceInstanceSettings<DataSourceJsonData>): boolean => {
+  const filteredDataSources = datasources.filter((ds) => {
     return ds?.name.toLocaleLowerCase().indexOf(filterTerm.toLocaleLowerCase()) !== -1;
-  };
+  });
 
   return (
-    <Drawer
-      closeOnMaskClick={true}
-      onClose={() => {
-        onDismiss();
-      }}
-    >
+    <Drawer closeOnMaskClick={true} onClose={onDismiss}>
       <div className={styles.drawerContent}>
         <div className={styles.filterContainer}>
           <Input
@@ -79,18 +74,22 @@ function PickerContent(props: PickerContentProps) {
         <div className={styles.dataSourceList}>
           <CustomScrollbar>
             {recentlyUsed
-              .map((uid) => props.datasources.find((ds) => ds.uid === uid))
-              .filter(filterDataSources)
-              .map((ds) => (
-                <DataSourceCard
-                  selected={isDataSourceMatch(ds, current)}
-                  key={ds!.uid}
-                  ds={ds!}
-                  onChange={changeCallback}
-                />
-              ))}
+              .map((uid) => filteredDataSources.find((ds) => ds.uid === uid))
+              .map((ds) => {
+                if (!ds) {
+                  return null;
+                }
+                return (
+                  <DataSourceCard
+                    selected={isDataSourceMatch(ds, current)}
+                    key={ds.uid}
+                    ds={ds}
+                    onChange={changeCallback}
+                  />
+                );
+              })}
             {recentlyUsed && recentlyUsed.length > 0 && <hr />}
-            {props.datasources.filter(filterDataSources).map((ds) => (
+            {filteredDataSources.map((ds) => (
               <DataSourceCard
                 selected={isDataSourceMatch(ds, current)}
                 key={ds.uid}
@@ -100,7 +99,7 @@ function PickerContent(props: PickerContentProps) {
             ))}
           </CustomScrollbar>
         </div>
-        {fileUploadOptions && (
+        {enableFileUpload && (
           <div className={styles.additionalContent}>
             <FileDropzone
               readAs="readAsArrayBuffer"

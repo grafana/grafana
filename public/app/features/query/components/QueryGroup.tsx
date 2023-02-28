@@ -288,16 +288,13 @@ export class QueryGroup extends PureComponent<Props, State> {
                 mixed={true}
                 dashboard={true}
                 variables={true}
-                fileUploadOptions={
-                  config.featureToggles.editPanelCSVDragAndDrop
-                    ? {
-                        onDrop: this.onFileDrop,
-                        maxSize: DFImport.maxFileSize,
-                        multiple: false,
-                        accept: DFImport.acceptedFiles,
-                      }
-                    : undefined
-                }
+                enableFileUpload={config.featureToggles.editPanelCSVDragAndDrop}
+                fileUploadOptions={{
+                  onDrop: this.onFileDrop,
+                  maxSize: DFImport.maxFileSize,
+                  multiple: false,
+                  accept: DFImport.acceptedFiles,
+                }}
               ></DataSourcePickerWithHistory>
             ) : (
               <DataSourcePicker

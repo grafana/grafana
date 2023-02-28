@@ -29,10 +29,6 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
 
   state: DataSourcePickerState = {};
 
-  constructor(props: DataSourcePickerProps) {
-    super(props);
-  }
-
   componentDidMount() {
     const { current } = this.props;
     const dsSettings = this.dataSourceSrv.getInstanceSettings(current);
@@ -84,7 +80,7 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
   }
 
   render() {
-    const { recentlyUsed } = this.props;
+    const { recentlyUsed, fileUploadOptions, enableFileUpload } = this.props;
 
     return (
       <div>
@@ -93,7 +89,8 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
           onChange={this.onChange}
           recentlyUsed={recentlyUsed}
           current={this.getCurrentDs()}
-          fileUploadOptions={this.props.fileUploadOptions}
+          fileUploadOptions={fileUploadOptions}
+          enableFileUpload={enableFileUpload}
         />
       </div>
     );

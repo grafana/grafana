@@ -12,7 +12,7 @@ export const DataSourcePickerWithHistory = (props: DataSourcePickerWithHistoryPr
   return (
     <LocalStorageValueProvider<DataSourcePickerHistoryItem[]>
       defaultValue={[]}
-      storageKey={props.key ?? DS_PICKER_STORAGE_KEY}
+      storageKey={props.localStorageKey ?? DS_PICKER_STORAGE_KEY}
     >
       {(rawValues, onSaveToStore) => {
         return (
