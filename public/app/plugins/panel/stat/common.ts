@@ -150,7 +150,7 @@ function getStatPrefixes(): CustomStatFormats {
 export function formatValueForCustomPrefix(fieldValues: FieldDisplay[], prefix: string): FieldDisplay[] {
   const customPrefixes = getStatPrefixes().prefixes;
   const prefixList = Object.keys(customPrefixes).map((key) => customPrefixes[key].symbol);
-  const chosenPrefix = customPrefixes[prefix] ?? '';
+  const chosenPrefix = customPrefixes[prefix]?.symbol ?? '';
 
   return fieldValues.map((fieldValue) => {
     const { fieldType, display } = fieldValue;
@@ -172,5 +172,8 @@ function stripStringOfValues(prefixToStrip: string, itemsToStrip: string[]): str
     return prefixToStrip;
   }
 
-  return prefixToStrip.replace(/[itemsToStrip]/g, '');
+  for (let i = 0; i < itemsToStrip.length; i++) {
+    prefixToStrip = prefixToStrip.replace(new RegExp(itemsToStrip[i], 'g'), '');
+  }
+  return prefixToStrip;
 }
