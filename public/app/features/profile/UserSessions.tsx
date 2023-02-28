@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import { t } from 'i18next';
 import React, { PureComponent } from 'react';
 
@@ -27,46 +28,48 @@ class UserSessions extends PureComponent<Props> {
             <h3 className="page-sub-heading">Sessions</h3>
             <div className="gf-form-group">
               <table className="filter-table form-inline" data-testid={selectors.components.UserProfile.sessionsTable}>
-                <thead>
-                  <tr>
-                    <th>
-                      <Trans i18nKey="user-session.seen-at-column">Last seen</Trans>
-                    </th>
-                    <th>
-                      <Trans i18nKey="user-session.created-at-column">Logged on</Trans>
-                    </th>
-                    <th>
-                      <Trans i18nKey="user-session.ip-column">IP address</Trans>
-                    </th>
-                    <th>
-                      <Trans i18nKey="user-session.browser-column">Browser & OS</Trans>
-                    </th>
-                    <th></th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {sessions.map((session: UserSession, index) => (
-                    <tr key={index}>
-                      {session.isActive ? <td>Now</td> : <td>{session.seenAt}</td>}
-                      <td>{i18nDate(session.createdAt, { dateStyle: 'long' })}</td>
-                      <td>{session.clientIp}</td>
-                      <td>
-                        {session.browser} on {session.os} {session.osVersion}
-                      </td>
-                      <td>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => revokeUserSession(session.id)}
-                          aria-label={t('user-session.revoke', 'Revoke user session')}
-                        >
-                          <Icon name="power" />
-                        </Button>
-                      </td>
+                <div className={styles.table}>
+                  <thead>
+                    <tr className={styles.block}>
+                      <th>
+                        <Trans i18nKey="user-session.seen-at-column">Last seen</Trans>
+                      </th>
+                      <th>
+                        <Trans i18nKey="user-session.created-at-column">Logged on</Trans>
+                      </th>
+                      <th>
+                        <Trans i18nKey="user-session.ip-column">IP address</Trans>
+                      </th>
+                      <th>
+                        <Trans i18nKey="user-session.browser-column">Browser & OS</Trans>
+                      </th>
+                      <th></th>
                     </tr>
-                  ))}
-                </tbody>
+                  </thead>
+
+                  <tbody>
+                    {sessions.map((session: UserSession, index) => (
+                      <tr className={styles.block} key={index}>
+                        {session.isActive ? <td>Now</td> : <td>{session.seenAt}</td>}
+                        <td>{i18nDate(session.createdAt, { dateStyle: 'long' })}</td>
+                        <td>{session.clientIp}</td>
+                        <td>
+                          {session.browser} on {session.os} {session.osVersion}
+                        </td>
+                        <td>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => revokeUserSession(session.id)}
+                            aria-label={t('user-session.revoke', 'Revoke user session')}
+                          >
+                            <Icon name="power" />
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </div>
               </table>
             </div>
           </>
@@ -75,5 +78,17 @@ class UserSessions extends PureComponent<Props> {
     );
   }
 }
+
+const styles = {
+  table: css`
+    display: flex;
+    flex-wrap: wrap;
+  `,
+  block: css`
+    min-width: 30vw;
+    display: flex;
+    flex-direction: column;
+  `,
+};
 
 export default UserSessions;
