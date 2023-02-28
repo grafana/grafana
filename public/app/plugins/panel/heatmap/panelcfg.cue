@@ -27,10 +27,10 @@ composableKinds: PanelCfg: {
 						HeatmapColorMode:  "opacity" | "scheme"     @cuetsy(kind="enum")
 						HeatmapColorScale: "linear" | "exponential" @cuetsy(kind="enum")
 						HeatmapColorOptions: {
-							mode:     HeatmapColorMode
+							mode?:    HeatmapColorMode // TODO: remove optional when https://github.com/grafana/cuetsy/issues/74 is fixed
 							scheme:   string
 							fill:     string
-							scale:    HeatmapColorScale
+							scale?:   HeatmapColorScale // TODO: remove optional when https://github.com/grafana/cuetsy/issues/74 is fixed
 							exponent: float32
 							steps:    uint8 & >=2 & <=128
 							reverse:  bool
@@ -74,10 +74,10 @@ composableKinds: PanelCfg: {
 							// Calculation options for the heatmap
 							calculation?: ui.HeatmapCalculationOptions
 							color:        HeatmapColorOptions | *{
-								mode:     HeatmapColorMode & "scheme"
-								scheme:   "Oranges"
-								fill:     "dark-orange"
-								scale:    HeatmapColorScale & "exponential"
+								// mode:     HeatmapColorMode // TODO: fix after remove when https://github.com/grafana/cuetsy/issues/74 is fixed
+								scheme: "Oranges"
+								fill:   "dark-orange"
+								// scale:    HeatmapColorScale // TODO: fix after remove when https://github.com/grafana/cuetsy/issues/74 is fixed
 								reverse:  false
 								exponent: 0.5
 								steps:    64
@@ -87,9 +87,10 @@ composableKinds: PanelCfg: {
 								le: 1e-9
 							}
 							// Controls tick alignment
-							rowsFrame?: RowsHeatmapOptions | *{
-								layout: ui.HeatmapCellLayout & "auto"
-							}
+							rowsFrame?: RowsHeatmapOptions
+							// | *{
+							// 	layout: ui.HeatmapCellLayout & "auto" // TODO: fix after remove when https://github.com/grafana/cuetsy/issues/74 is fixed
+							// }
 							showValue: ui.VisibilityMode | *"auto"
 							// Controls gap between cells
 							cellGap?:    uint8 & >=0 & <=25 | *1
@@ -97,9 +98,10 @@ composableKinds: PanelCfg: {
 							// Controls cell value unit
 							cellValues?: CellValues | *{}
 							// Controls yAxis placement
-							yAxis: YAxisConfig | *{
-								axisPlacement: ui.AxisPlacement & "left"
-							}
+							yAxis: YAxisConfig
+							// | *{
+							// 	axisPlacement: ui.AxisPlacement & "left" // TODO: fix after remove when https://github.com/grafana/cuetsy/issues/74 is fixed
+							// }
 							// Controls legend options
 							legend: HeatmapLegend | *{
 								show: true

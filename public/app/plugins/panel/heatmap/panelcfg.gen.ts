@@ -27,9 +27,9 @@ export interface HeatmapColorOptions {
   fill: string;
   max?: number;
   min?: number;
-  mode: HeatmapColorMode;
+  mode?: HeatmapColorMode;
   reverse: boolean;
-  scale: HeatmapColorScale;
+  scale?: HeatmapColorScale;
   scheme: string;
   steps: number;
 }
@@ -71,18 +71,56 @@ export interface RowsHeatmapOptions {
 }
 
 export interface PanelOptions {
+  /**
+   * Controls if the data is already a calculated heatmap (from the data source/transformer), or one that should be calculated in the panel
+   */
   calculate?: boolean;
+  /**
+   * Calculation options for the heatmap
+   */
   calculation?: ui.HeatmapCalculationOptions;
+  /**
+   * Controls gap between cells
+   */
   cellGap?: number;
   cellRadius?: number;
+  /**
+   * Controls cell value unit
+   */
   cellValues?: CellValues;
   color: HeatmapColorOptions;
+  /**
+   * Controls exemplar options
+   */
   exemplars: ExemplarConfig;
+  /**
+   * Filters values between a given range
+   */
   filterValues?: FilterValueRange;
+  /**
+   * | *{
+   * 	axisPlacement: ui.AxisPlacement & "left" // TODO: fix after remove when https://github.com/grafana/cuetsy/issues/74 is fixed
+   * }
+   * Controls legend options
+   */
   legend: HeatmapLegend;
+  /**
+   * Controls tick alignment
+   */
   rowsFrame?: RowsHeatmapOptions;
+  /**
+   * | *{
+   * 	layout: ui.HeatmapCellLayout & "auto" // TODO: fix after remove when https://github.com/grafana/cuetsy/issues/74 is fixed
+   * }
+   */
   showValue: ui.VisibilityMode;
+  /**
+   * Controls tooltip options
+   */
   tooltip: HeatmapTooltip;
+  /**
+   * Controls yAxis placement
+   */
   yAxis: YAxisConfig;
 }
 
@@ -91,10 +129,14 @@ export const defaultPanelOptions: Partial<PanelOptions> = {
   cellGap: 1,
   cellValues: {},
   color: {
-    mode: HeatmapColorMode.Scheme,
+    /**
+     * mode:     HeatmapColorMode // TODO: fix after remove when https://github.com/grafana/cuetsy/issues/74 is fixed
+     */
     scheme: 'Oranges',
     fill: 'dark-orange',
-    scale: HeatmapColorScale.Exponential,
+    /**
+     * scale:    HeatmapColorScale // TODO: fix after remove when https://github.com/grafana/cuetsy/issues/74 is fixed
+     */
     reverse: false,
     exponent: 0.5,
     steps: 64,
@@ -108,16 +150,10 @@ export const defaultPanelOptions: Partial<PanelOptions> = {
   legend: {
     show: true,
   },
-  rowsFrame: {
-    layout: ui.HeatmapCellLayout.auto,
-  },
   showValue: ui.VisibilityMode.Auto,
   tooltip: {
     show: true,
     yHistogram: false,
-  },
-  yAxis: {
-    axisPlacement: ui.AxisPlacement.Left,
   },
 };
 
