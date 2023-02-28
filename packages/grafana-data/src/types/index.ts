@@ -38,6 +38,7 @@ export * from './geometry';
 export { isUnsignedPluginSignature } from './pluginSignature';
 export type {
   CurrentUserDTO,
+  AnalyticsSettings,
   BootData,
   OAuth,
   OAuthSettings,

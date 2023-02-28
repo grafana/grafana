@@ -594,3 +594,20 @@ func (s *Service) supportBundleCollector() supportbundles.Collector {
 		Fn:                collectorFn,
 	}
 }
+
+func hashUserIdentifier(identifier string) string {
+	return identifier
+}
+
+func buildUserAnalyticsSettings(signedInUser user.SignedInUser) user.AnalyticsSettings {
+	var settings user.AnalyticsSettings
+
+	if signedInUser.ExternalAuthID != "" {
+		settings.Identifier = signedInUser.ExternalAuthID
+	} else {
+		settings.Identifier = signedInUser.Email
+	}
+
+	settings.HashedIdentifier = hashUserIdentifier(settings.Identifier)
+	return settings
+}

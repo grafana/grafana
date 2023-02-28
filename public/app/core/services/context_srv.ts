@@ -1,6 +1,6 @@
 import { extend } from 'lodash';
 
-import { OrgRole, rangeUtil, WithAccessControlMetadata } from '@grafana/data';
+import { AnalyticsSettings, OrgRole, rangeUtil, WithAccessControlMetadata } from '@grafana/data';
 import { featureEnabled, getBackendSrv } from '@grafana/runtime';
 import { AccessControlAction, UserPermission } from 'app/types';
 import { CurrentUserInternal } from 'app/types/config';
@@ -28,6 +28,7 @@ export class User implements Omit<CurrentUserInternal, 'lightTheme'> {
   helpFlags1: number;
   hasEditPermissionInFolders: boolean;
   permissions?: UserPermission;
+  analytics: AnalyticsSettings;
   fiscalYearStartMonth: number;
 
   constructor() {
@@ -51,6 +52,9 @@ export class User implements Omit<CurrentUserInternal, 'lightTheme'> {
     this.language = '';
     this.weekStart = '';
     this.gravatarUrl = '';
+    this.analytics = {
+      identifier: '',
+    };
 
     if (config.bootData.user) {
       extend(this, config.bootData.user);
