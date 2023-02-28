@@ -9,30 +9,30 @@ import { defaultPanelOptions, PanelOptions } from './panelcfg.gen';
 import { StatSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<PanelOptions>(StatPanel)
-  // Add a custom text fields for custom stat units
   .useFieldConfig({
-    useCustomConfig: (builder) =>
-      builder
+    // Add a custom text fields for custom stat units
+    useCustomConfig: (builder) => {
+      const category = ['Custom units'];
+      return builder
         .addTextInput({
           path: 'customPrefix',
-          name: 'Custom Prefix',
-          description: 'Enter a custom prefix here',
+          name: 'Prefix',
           defaultValue: '',
           settings: {
             placeholder: 'Enter custom prefix',
           },
-          category: ['Custom prefix'],
+          category,
         })
         .addTextInput({
           path: 'customSuffix',
-          name: 'Custom Suffix',
-          description: 'Enter a custom suffix here',
+          name: 'Suffix',
           defaultValue: '',
           settings: {
             placeholder: 'Enter custom suffix',
           },
-          category: ['Custom suffix'],
-        }),
+          category,
+        });
+    },
   })
   .setPanelOptions((builder) => {
     const mainCategory = ['Stat styles'];

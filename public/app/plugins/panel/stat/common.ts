@@ -8,7 +8,7 @@ import {
   ReducerID,
   standardEditorsRegistry,
   FieldDisplay,
-  FieldType,
+  // FieldType,
 } from '@grafana/data';
 import { SingleStatBaseOptions, VizOrientation } from '@grafana/schema';
 
