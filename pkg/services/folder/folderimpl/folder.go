@@ -426,49 +426,46 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 	}
 	result := []string{cmd.UID}
 	err := s.db.InTransaction(ctx, func(ctx context.Context) error {
-		if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
-			subfolders, err := s.nestedFolderDelete(ctx, cmd)
-			if err != nil {
-				logger.Error("the delete folder on folder table failed with err: ", "error", err)
-				return err
-			}
-			result = append(result, subfolders...)
-		}
-
-		// folder table parent_uid column, when you delete nested folder you already do a recursive call
-		/*
-			Overall goal: What we need to do is to delete dashboard table entries for folders when deleting them from the folder table as well.
-
-			So when we have the initial folder to delete, we find the children folders (by ID/UID?) during a recursive call in nestedFolderDelete and use those to delete the folder table entries for the children.
-			NEW: we need to also delete those entries from the dashboard table.
-		*/
-
-		for _, folder := range result {
-			dashFolder, err := s.dashboardFolderStore.GetFolderByUID(ctx, cmd.OrgID, folder)
-			if err != nil {
-				return err
-			}
-
-			guard, err := guardian.NewByUID(ctx, dashFolder.UID, cmd.OrgID, cmd.SignedInUser)
-			if err != nil {
-				return err
-			}
-
-			if canSave, err := guard.CanDelete(); err != nil || !canSave {
-				if err != nil {
-					return toFolderError(err)
-				}
-				return dashboards.ErrFolderAccessDenied
-			}
-			err = s.legacyDelete(ctx, cmd, dashFolder)
-			if err != nil {
-				return err
-			}
-		}
-		return nil
+		return deleteFn(ctx, cmd, logger, result, s)
 	})
 
 	return err
+}
+
+// update so that we create result slice inside the function
+func deleteFn(ctx context.Context, cmd *folder.DeleteFolderCommand, logger log.Logger, result []string, s *Service) error {
+	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+		subfolders, err := s.nestedFolderDelete(ctx, cmd)
+		if err != nil {
+			logger.Error("the delete folder on folder table failed with err: ", "error", err)
+			return err
+		}
+		result = append(result, subfolders...)
+	}
+
+	for _, folder := range result {
+		dashFolder, err := s.dashboardFolderStore.GetFolderByUID(ctx, cmd.OrgID, folder)
+		if err != nil {
+			return err
+		}
+
+		guard, err := guardian.NewByUID(ctx, dashFolder.UID, cmd.OrgID, cmd.SignedInUser)
+		if err != nil {
+			return err
+		}
+
+		if canSave, err := guard.CanDelete(); err != nil || !canSave {
+			if err != nil {
+				return toFolderError(err)
+			}
+			return dashboards.ErrFolderAccessDenied
+		}
+		err = s.legacyDelete(ctx, cmd, dashFolder)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (s *Service) legacyDelete(ctx context.Context, cmd *folder.DeleteFolderCommand, dashFolder *folder.Folder) error {
@@ -548,6 +545,7 @@ func (s *Service) nestedFolderDelete(ctx context.Context, cmd *folder.DeleteFold
 		return result, err
 	}
 	for _, f := range folders {
+		// 		result = append(result, f.UID)
 		logger.Info("deleting subfolder", "org_id", f.OrgID, "uid", f.UID)
 		subfolders, err := s.nestedFolderDelete(ctx, &folder.DeleteFolderCommand{UID: f.UID, OrgID: f.OrgID, ForceDeleteRules: cmd.ForceDeleteRules, SignedInUser: cmd.SignedInUser})
 		if err != nil {
