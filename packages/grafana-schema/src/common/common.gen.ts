@@ -747,9 +747,6 @@ export interface TableFieldOptions {
 
 export const defaultTableFieldOptions: Partial<TableFieldOptions> = {
   align: 'auto',
-  cellOptions: {
-    type: 'auto',
-  },
   inspect: false,
 };
 

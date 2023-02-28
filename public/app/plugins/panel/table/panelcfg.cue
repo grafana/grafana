@@ -26,11 +26,14 @@ composableKinds: PanelCfg: {
 				schemas: [
 					{
 						PanelOptions: {
-							frameIndex:     number | *0
-							showHeader:     bool | *true
+							frameIndex: number | *0
+							// Controls whether the panel should show the header
+							showHeader: bool | *true
+							// Controls whether the columns should be numbered
+							showRowNums?:   bool | *false
 							showTypeIcons?: bool | *false
 							sortBy?: [...ui.TableSortByFieldState]
-							// TODO: should be array (options builder is limited)
+							// Controls footer options
 							footer?: ui.TableFooterOptions | *{
 								show:      false
 								countRows: false

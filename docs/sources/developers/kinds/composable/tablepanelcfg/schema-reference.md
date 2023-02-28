@@ -19,13 +19,14 @@ title: TablePanelCfg kind
 
 ### PanelOptions
 
-| Property        | Type                                              | Required | Description                                                                                               |
-|-----------------|---------------------------------------------------|----------|-----------------------------------------------------------------------------------------------------------|
-| `frameIndex`    | number                                            | **Yes**  | Default: `0`.                                                                                             |
-| `showHeader`    | boolean                                           | **Yes**  | Default: `true`.                                                                                          |
-| `footer`        | [object](#footer)                                 | No       | TODO: should be array (options builder is limited) Default: `map[countRows:false reducer:[] show:false]`. |
-| `showTypeIcons` | boolean                                           | No       | Default: `false`.                                                                                         |
-| `sortBy`        | [TableSortByFieldState](#tablesortbyfieldstate)[] | No       |                                                                                                           |
+| Property        | Type                                              | Required | Description                                                                    |
+|-----------------|---------------------------------------------------|----------|--------------------------------------------------------------------------------|
+| `frameIndex`    | number                                            | **Yes**  | Default: `0`.                                                                  |
+| `showHeader`    | boolean                                           | **Yes**  | Controls whether the panel should show the header Default: `true`.             |
+| `footer`        | [object](#footer)                                 | No       | Controls footer options Default: `map[countRows:false reducer:[] show:false]`. |
+| `showRowNums`   | boolean                                           | No       | Controls whether the columns should be numbered Default: `false`.              |
+| `showTypeIcons` | boolean                                           | No       | Default: `false`.                                                              |
+| `sortBy`        | [TableSortByFieldState](#tablesortbyfieldstate)[] | No       |                                                                                |
 
 ### TableSortByFieldState
 
@@ -38,7 +39,7 @@ Sort by field state
 
 ### Footer
 
-TODO: should be array (options builder is limited)
+Controls footer options
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|

@@ -14,11 +14,18 @@ export const PanelCfgModelVersion = Object.freeze([0, 0]);
 
 export interface PanelOptions {
   /**
-   * TODO: should be array (options builder is limited)
+   * Controls footer options
    */
   footer?: ui.TableFooterOptions;
   frameIndex: number;
+  /**
+   * Controls whether the panel should show the header
+   */
   showHeader: boolean;
+  /**
+   * Controls whether the columns should be numbered
+   */
+  showRowNums?: boolean;
   showTypeIcons?: boolean;
   sortBy?: Array<ui.TableSortByFieldState>;
 }
@@ -31,6 +38,7 @@ export const defaultPanelOptions: Partial<PanelOptions> = {
   },
   frameIndex: 0,
   showHeader: true,
+  showRowNums: false,
   showTypeIcons: false,
   sortBy: [],
 };

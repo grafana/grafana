@@ -70,7 +70,7 @@ TableFieldOptions: {
 	align: FieldTextAlignment | *"auto"
 	// This field is deprecated in favor of using cellOptions
 	displayMode?: TableCellDisplayMode
-	cellOptions: TableCellOptions | *{ type: TableCellDisplayMode & "auto" }
+	cellOptions: TableCellOptions
 	hidden?:     bool // ?? default is missing or false ??
 	inspect: bool | *false
 	filterable?: bool
