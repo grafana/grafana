@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
@@ -42,4 +41,9 @@ func (pd *PublicDashboardServiceWrapperImpl) FindByDashboardUid(ctx context.Cont
 	}
 
 	return pubdash, nil
+}
+
+func (pd *PublicDashboardServiceWrapperImpl) HandlePublicDashboardDeleted(ctx context.Context, pubdash *PublicDashboard) error {
+	_, err := pd.store.Delete(ctx, pubdash.OrgId, pubdash.Uid)
+	return err
 }

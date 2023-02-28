@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 // Define the storage implementation. We're generating the mock implementation
@@ -266,4 +267,17 @@ func (d *PublicDashboardStoreImpl) Delete(ctx context.Context, orgId int64, uid 
 	})
 
 	return affectedRows, err
+}
+
+func (d *PublicDashboardStoreImpl) GetPublicDashboardsByDashboard(ctx context.Context, dashboard *dashboards.Dashboard) ([]*PublicDashboard, error) {
+	var pubdashes []*PublicDashboard
+
+	err := d.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		return sess.SQL("SELECT * from dashboard_public WHERE dashboard_uid IN (SELECT uid FROM dashboard WHERE folder_id = ?)", dashboard.ID).Find(&pubdashes)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return pubdashes, nil
 }

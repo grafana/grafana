@@ -34,6 +34,8 @@ type Service interface {
 
 	ExistsEnabledByAccessToken(ctx context.Context, accessToken string) (bool, error)
 	ExistsEnabledByDashboardUid(ctx context.Context, dashboardUid string) (bool, error)
+
+	HandleDashboardDeleted(ctx context.Context, dashboard *dashboards.Dashboard) error
 }
 
 // ServiceWrapper these methods have different behavior between OSS and Enterprise. The latter would call the OSS service first
@@ -41,6 +43,7 @@ type Service interface {
 //go:generate mockery --name ServiceWrapper --structname FakePublicDashboardServiceWrapper --inpackage --filename public_dashboard_service_wrapper_mock.go
 type ServiceWrapper interface {
 	FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error)
+	HandlePublicDashboardDeleted(ctx context.Context, pubdash *PublicDashboard) error
 }
 
 //go:generate mockery --name Store --structname FakePublicDashboardStore --inpackage --filename public_dashboard_store_mock.go
@@ -55,6 +58,7 @@ type Store interface {
 	Delete(ctx context.Context, orgId int64, uid string) (int64, error)
 
 	GetOrgIdByAccessToken(ctx context.Context, accessToken string) (int64, error)
+	GetPublicDashboardsByDashboard(ctx context.Context, dashboard *dashboards.Dashboard) ([]*PublicDashboard, error)
 	ExistsEnabledByAccessToken(ctx context.Context, accessToken string) (bool, error)
 	ExistsEnabledByDashboardUid(ctx context.Context, dashboardUid string) (bool, error)
 }

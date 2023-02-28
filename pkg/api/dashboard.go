@@ -326,6 +326,9 @@ func (hs *HTTPServer) deleteDashboard(c *contextmodel.ReqContext) response.Respo
 		hs.log.Error("Failed to disconnect library elements", "dashboard", dash.ID, "user", c.SignedInUser.UserID, "error", err)
 	}
 
+	// deletes all related public dashboard entities
+	err = hs.PublicDashboardsApi.PublicDashboardService.HandleDashboardDeleted(c.Req.Context(), dash)
+
 	err = hs.DashboardService.DeleteDashboard(c.Req.Context(), dash.ID, c.OrgID)
 	if err != nil {
 		var dashboardErr dashboards.DashboardErr
