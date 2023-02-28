@@ -12,18 +12,11 @@ export interface DataSourceDrawerProps {
   recentlyUsed?: string[];
 }
 
-export interface DataSourceCardProps {
-  onChange: (uid: string) => void;
-  selected?: boolean;
-  ds: DataSourceInstanceSettings<DataSourceJsonData>;
-}
-
 export interface PickerContentProps extends DataSourceDrawerProps {
   onDismiss: () => void;
 }
 
 export interface DataSourcePickerProps {
-  drawer?: boolean;
   onChange: (ds: DataSourceInstanceSettings) => void;
   current: DataSourceRef | string | null; // uid
   tracing?: boolean;

@@ -288,7 +288,6 @@ export class QueryGroup extends PureComponent<Props, State> {
                 mixed={true}
                 dashboard={true}
                 variables={true}
-                drawer={true}
                 fileUploadOptions={
                   config.featureToggles.editPanelCSVDragAndDrop
                     ? {
