@@ -81,7 +81,7 @@ Click the document icon to open a split view in Explore with the configured data
 
 ## Service Graph view
 
-The Grafana service graph view visualizes the span metrics (traces data for rates, error rates, and durations (RED)) and service graphs.
+The Service Graph view visualizes the span metrics (traces data for rates, error rates, and durations (RED)) and service graphs.
 Once the requirements are set up, this pre-configured view is immediately available.
 
 For more information, refer to the [service graph view table section](https://grafana.com/docs/grafana/latest/datasources/tempo/#service-graph-view-table) of the Tempo data source page and the [service graph view page](https://grafana.com/docs/tempo/latest/metrics-generator/service-graph-view/) in the Tempo documentation.
