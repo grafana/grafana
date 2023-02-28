@@ -30,6 +30,7 @@ RUN yarn build
 
 FROM ${GO_IMAGE} as go-builder
 
+ARG GO_BUILD_TAGS="oss"
 ARG WIRE_TAGS="oss"
 ARG BINGO="true"
 
@@ -60,7 +61,7 @@ COPY scripts scripts
 COPY conf conf
 COPY .github .github
 
-RUN make build-go GO_BUILD_TAGS=${WIRE_TAGS} WIRE_TAGS=${WIRE_TAGS}
+RUN make build-go GO_BUILD_TAGS=${GO_BUILD_TAGS} WIRE_TAGS=${WIRE_TAGS}
 
 FROM ${BASE_IMAGE} as tgz-builder
 
