@@ -25,7 +25,6 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
     menuProps: DataLinksContextMenuApi
   ): JSX.Element => {
     const { timeRange, options } = this.props;
-    // console.log('🚀 ~ file: StatPanel.tsx:27 ~ StatPanel ~ this.props:', this.props);
     const { value, alignmentFactors, width, height, count, orientation } = valueProps;
     const { openMenu, targetClassName } = menuProps;
     let sparkline = value.sparkline;
@@ -85,10 +84,8 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
   getValues = (): FieldDisplay[] => {
     const { data, options, replaceVariables, fieldConfig, timeZone } = this.props;
     // Test if there are custom units to prepend/append
-    const customPrefix = fieldConfig.defaults?.custom?.prependUnit ?? '';
-    console.log('🚀 ~ file: StatPanel.tsx:89 ~ StatPanel ~ customPrefix:', customPrefix);
-    const customSuffix = fieldConfig.defaults?.custom?.appendUnit ?? '';
-    console.log('🚀 ~ file: StatPanel.tsx:91 ~ StatPanel ~ customSuffix:', customSuffix);
+    const customPrefix = fieldConfig.defaults?.custom?.customPrefix ?? '';
+    const customSuffix = fieldConfig.defaults?.custom?.customSuffix ?? '';
 
     let globalRange: NumericRange | undefined = undefined;
 
