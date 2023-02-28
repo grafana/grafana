@@ -628,7 +628,7 @@ func TestTakeImage(t *testing.T) {
 		defer ctrl.Finish()
 
 		ctx := context.Background()
-		r := ngmodels.AlertRule{DashboardUID: util.Pointer("foo"), PanelID: util.Pointer(1)}
+		r := ngmodels.AlertRule{DashboardUID: util.Pointer("foo"), PanelID: util.Pointer(int64(1))}
 		s := NewMockImageCapturer(ctrl)
 
 		s.EXPECT().NewImage(ctx, &r).Return(nil, screenshot.ErrScreenshotsUnavailable)
@@ -642,7 +642,7 @@ func TestTakeImage(t *testing.T) {
 		defer ctrl.Finish()
 
 		ctx := context.Background()
-		r := ngmodels.AlertRule{DashboardUID: util.Pointer("foo"), PanelID: util.Pointer(1)}
+		r := ngmodels.AlertRule{DashboardUID: util.Pointer("foo"), PanelID: util.Pointer(int64(1))}
 		s := NewMockImageCapturer(ctrl)
 
 		s.EXPECT().NewImage(ctx, &r).Return(nil, errors.New("unknown error"))
@@ -656,7 +656,7 @@ func TestTakeImage(t *testing.T) {
 		defer ctrl.Finish()
 
 		ctx := context.Background()
-		r := ngmodels.AlertRule{DashboardUID: util.Pointer("foo"), PanelID: util.Pointer(1)}
+		r := ngmodels.AlertRule{DashboardUID: util.Pointer("foo"), PanelID: util.Pointer(int64(1))}
 		s := NewMockImageCapturer(ctrl)
 
 		s.EXPECT().NewImage(ctx, &r).Return(&ngmodels.Image{Path: "foo.png"}, nil)

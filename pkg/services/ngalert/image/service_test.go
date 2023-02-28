@@ -69,7 +69,7 @@ func TestScreenshotImageService(t *testing.T) {
 			OrgID:        1,
 			UID:          "foo",
 			DashboardUID: util.Pointer("foo"),
-			PanelID:      util.Pointer(1)})
+			PanelID:      util.Pointer(int64(1))})
 		require.NoError(t, err)
 		assert.Equal(t, expected, *image)
 	})
@@ -106,7 +106,7 @@ func TestScreenshotImageService(t *testing.T) {
 			OrgID:        1,
 			UID:          "bar",
 			DashboardUID: util.Pointer("bar"),
-			PanelID:      util.Pointer(1)})
+			PanelID:      util.Pointer(int64(1))})
 		require.NoError(t, err)
 		assert.Equal(t, expected, *image)
 	})
@@ -121,7 +121,7 @@ func TestScreenshotImageService(t *testing.T) {
 			OrgID:        1,
 			UID:          "baz",
 			DashboardUID: util.Pointer("baz"),
-			PanelID:      util.Pointer(1)})
+			PanelID:      util.Pointer(int64(1))})
 		require.NoError(t, err)
 		assert.Equal(t, expected, *image)
 	})
@@ -142,7 +142,7 @@ func TestScreenshotImageService(t *testing.T) {
 			OrgID:        1,
 			UID:          "qux",
 			DashboardUID: util.Pointer("qux"),
-			PanelID:      util.Pointer(1)})
+			PanelID:      util.Pointer(int64(1))})
 		assert.EqualError(t, err, "context deadline exceeded")
 		assert.Nil(t, image)
 	})

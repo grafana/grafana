@@ -32,7 +32,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 			desc: "zero valued single instance is single Normal state result",
 			execResults: ExecutionResults{
 				Condition: []*data.Frame{
-					data.NewFrame("", data.NewField("", nil, []*float64{util.Pointer(0)})),
+					data.NewFrame("", data.NewField("", nil, []*float64{util.Pointer(0.0)})),
 				},
 			},
 			expectResultLength: 1,
@@ -46,7 +46,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 			desc: "non-zero valued single instance is single Alerting state result",
 			execResults: ExecutionResults{
 				Condition: []*data.Frame{
-					data.NewFrame("", data.NewField("", nil, []*float64{util.Pointer(1)})),
+					data.NewFrame("", data.NewField("", nil, []*float64{util.Pointer(1.0)})),
 				},
 			},
 			expectResultLength: 1,
@@ -141,7 +141,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 			execResults: ExecutionResults{
 				Condition: []*data.Frame{
 					data.NewFrame("",
-						data.NewField("", nil, []*float64{util.Pointer(23)}),
+						data.NewField("", nil, []*float64{util.Pointer(23.0)}),
 						data.NewField("", nil, []*float64{}),
 					),
 				},
@@ -177,7 +177,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 			execResults: ExecutionResults{
 				Condition: []*data.Frame{
 					data.NewFrame("",
-						data.NewField("", nil, []*float64{util.Pointer(2), util.Pointer(3)}),
+						data.NewField("", nil, []*float64{util.Pointer(2.0), util.Pointer(3.0)}),
 					),
 				},
 			},
@@ -228,10 +228,10 @@ func TestEvaluateExecutionResult(t *testing.T) {
 			execResults: ExecutionResults{
 				Condition: []*data.Frame{
 					data.NewFrame("",
-						data.NewField("", nil, []*float64{util.Pointer(1)}),
+						data.NewField("", nil, []*float64{util.Pointer(1.0)}),
 					),
 					data.NewFrame("",
-						data.NewField("", nil, []*float64{util.Pointer(2)}),
+						data.NewField("", nil, []*float64{util.Pointer(2.0)}),
 					),
 				},
 			},
@@ -271,7 +271,7 @@ func TestEvaluateExecutionResult(t *testing.T) {
 						data.NewField("", nil, []float64{3}),
 					),
 					data.NewFrame("",
-						data.NewField("", data.Labels{"a": "b"}, []*float64{util.Pointer(2)}),
+						data.NewField("", data.Labels{"a": "b"}, []*float64{util.Pointer(2.0)}),
 					),
 				},
 			},

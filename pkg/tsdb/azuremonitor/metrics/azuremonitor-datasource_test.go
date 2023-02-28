@@ -482,7 +482,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 						makeDates(time.Date(2019, 2, 9, 14, 44, 0, 0, time.UTC), 5, time.Minute),
 					).SetConfig(&data.FieldConfig{Links: []data.DataLink{countLink}}),
 					data.NewField("Percentage CPU", nil, []*float64{
-						util.Pointer(4), util.Pointer(4), util.Pointer(4), util.Pointer(4), util.Pointer(4),
+						util.Pointer(4.0), util.Pointer(4.0), util.Pointer(4.0), util.Pointer(4.0), util.Pointer(4.0),
 					}).SetConfig(&data.FieldConfig{Unit: "percent", Links: []data.DataLink{countLink}})),
 			},
 		},
@@ -501,7 +501,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour),
 					).SetConfig(&data.FieldConfig{Links: []data.DataLink{averageLink}}),
 					data.NewField("Blob Count", data.Labels{"blobtype": "PageBlob"},
-						[]*float64{util.Pointer(3), util.Pointer(3), util.Pointer(3), util.Pointer(3), util.Pointer(3), nil}).
+						[]*float64{util.Pointer(3.0), util.Pointer(3.0), util.Pointer(3.0), util.Pointer(3.0), util.Pointer(3.0), nil}).
 						SetConfig(&data.FieldConfig{Unit: "short", Links: []data.DataLink{averageLink}, DisplayName: "Blob Count grafana"})),
 
 				data.NewFrame("",
@@ -509,7 +509,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour),
 					).SetConfig(&data.FieldConfig{Links: []data.DataLink{averageLink}}),
 					data.NewField("Blob Count", data.Labels{"blobtype": "BlockBlob"},
-						[]*float64{util.Pointer(1), util.Pointer(1), util.Pointer(1), util.Pointer(1), util.Pointer(1), nil}).
+						[]*float64{util.Pointer(1.0), util.Pointer(1.0), util.Pointer(1.0), util.Pointer(1.0), util.Pointer(1.0), nil}).
 						SetConfig(&data.FieldConfig{Unit: "short", Links: []data.DataLink{averageLink}, DisplayName: "Blob Count grafana"})),
 
 				data.NewFrame("",
@@ -517,7 +517,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour),
 					).SetConfig(&data.FieldConfig{Links: []data.DataLink{averageLink}}),
 					data.NewField("Blob Count", data.Labels{"blobtype": "Azure Data Lake Storage"},
-						[]*float64{util.Pointer(0), util.Pointer(0), util.Pointer(0), util.Pointer(0), util.Pointer(0), nil}).
+						[]*float64{util.Pointer(0.0), util.Pointer(0.0), util.Pointer(0.0), util.Pointer(0.0), util.Pointer(0.0), nil}).
 						SetConfig(&data.FieldConfig{Unit: "short", Links: []data.DataLink{averageLink}, DisplayName: "Blob Count grafana"})),
 			},
 		},
@@ -557,14 +557,14 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour),
 					).SetConfig(&data.FieldConfig{Links: []data.DataLink{averageLink}}),
 					data.NewField("Blob Count", data.Labels{"blobtype": "PageBlob"},
-						[]*float64{util.Pointer(3), util.Pointer(3), util.Pointer(3), util.Pointer(3), util.Pointer(3), nil}).SetConfig(&data.FieldConfig{Unit: "short", DisplayName: "blobtype=PageBlob", Links: []data.DataLink{averageLink}})),
+						[]*float64{util.Pointer(3.0), util.Pointer(3.0), util.Pointer(3.0), util.Pointer(3.0), util.Pointer(3.0), nil}).SetConfig(&data.FieldConfig{Unit: "short", DisplayName: "blobtype=PageBlob", Links: []data.DataLink{averageLink}})),
 
 				data.NewFrame("",
 					data.NewField("Time", nil,
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour),
 					).SetConfig(&data.FieldConfig{Links: []data.DataLink{averageLink}}),
 					data.NewField("Blob Count", data.Labels{"blobtype": "BlockBlob"}, []*float64{
-						util.Pointer(1), util.Pointer(1), util.Pointer(1), util.Pointer(1), util.Pointer(1), nil,
+						util.Pointer(1.0), util.Pointer(1.0), util.Pointer(1.0), util.Pointer(1.0), util.Pointer(1.0), nil,
 					}).SetConfig(&data.FieldConfig{Unit: "short", DisplayName: "blobtype=BlockBlob", Links: []data.DataLink{averageLink}})),
 
 				data.NewFrame("",
@@ -572,7 +572,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour),
 					).SetConfig(&data.FieldConfig{Links: []data.DataLink{averageLink}}),
 					data.NewField("Blob Count", data.Labels{"blobtype": "Azure Data Lake Storage"}, []*float64{
-						util.Pointer(0), util.Pointer(0), util.Pointer(0), util.Pointer(0), util.Pointer(0), nil,
+						util.Pointer(0.0), util.Pointer(0.0), util.Pointer(0.0), util.Pointer(0.0), util.Pointer(0.0), nil,
 					}).SetConfig(&data.FieldConfig{Unit: "short", DisplayName: "blobtype=Azure Data Lake Storage", Links: []data.DataLink{averageLink}})),
 			},
 		},
@@ -592,7 +592,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 						makeDates(time.Date(2020, 06, 30, 9, 58, 0, 0, time.UTC), 3, time.Hour),
 					).SetConfig(&data.FieldConfig{Links: []data.DataLink{averageLink}}),
 					data.NewField("Blob Capacity", data.Labels{"blobtype": "PageBlob", "tier": "Standard"},
-						[]*float64{util.Pointer(675530), util.Pointer(675530), util.Pointer(675530)}).SetConfig(
+						[]*float64{util.Pointer(675530.0), util.Pointer(675530.0), util.Pointer(675530.0)}).SetConfig(
 						&data.FieldConfig{Unit: "decbytes", DisplayName: "danieltest {Blob Type=PageBlob, Tier=Standard}", Links: []data.DataLink{averageLink}})),
 
 				data.NewFrame("",
@@ -600,7 +600,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 						makeDates(time.Date(2020, 06, 30, 9, 58, 0, 0, time.UTC), 3, time.Hour),
 					).SetConfig(&data.FieldConfig{Links: []data.DataLink{averageLink}}),
 					data.NewField("Blob Capacity", data.Labels{"blobtype": "BlockBlob", "tier": "Hot"},
-						[]*float64{util.Pointer(0), util.Pointer(0), util.Pointer(0)}).SetConfig(
+						[]*float64{util.Pointer(0.0), util.Pointer(0.0), util.Pointer(0.0)}).SetConfig(
 						&data.FieldConfig{Unit: "decbytes", DisplayName: "danieltest {Blob Type=BlockBlob, Tier=Hot}", Links: []data.DataLink{averageLink}})),
 
 				data.NewFrame("",
@@ -608,7 +608,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 						makeDates(time.Date(2020, 06, 30, 9, 58, 0, 0, time.UTC), 3, time.Hour),
 					).SetConfig(&data.FieldConfig{Links: []data.DataLink{averageLink}}),
 					data.NewField("Blob Capacity", data.Labels{"blobtype": "Azure Data Lake Storage", "tier": "Cool"},
-						[]*float64{util.Pointer(0), util.Pointer(0), util.Pointer(0)}).SetConfig(
+						[]*float64{util.Pointer(0.0), util.Pointer(0.0), util.Pointer(0.0)}).SetConfig(
 						&data.FieldConfig{Unit: "decbytes", DisplayName: "danieltest {Blob Type=Azure Data Lake Storage, Tier=Cool}", Links: []data.DataLink{averageLink}})),
 			},
 		},

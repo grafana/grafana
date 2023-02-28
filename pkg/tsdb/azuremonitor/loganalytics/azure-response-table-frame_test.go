@@ -82,9 +82,9 @@ func TestLogTableToFrame(t *testing.T) {
 					data.NewField("Max", nil, []*float64{nil, nil, nil}),
 					data.NewField("SampleCount", nil, []*int32{nil, nil, nil}),
 					data.NewField("CounterValue", nil, []*float64{
-						util.Pointer(2040),
-						util.Pointer(2066),
-						util.Pointer(2066),
+						util.Pointer(2040.0),
+						util.Pointer(2066.0),
+						util.Pointer(2066.0),
 					}),
 					data.NewField("TimeGenerated", nil, []*time.Time{
 						util.Pointer(time.Date(2020, 4, 23, 11, 46, 3, 857e6, time.UTC)),
@@ -109,13 +109,13 @@ func TestLogTableToFrame(t *testing.T) {
 					data.NewField("XDateTime", nil, []*time.Time{util.Pointer(time.Date(2006, 1, 2, 22, 4, 5, 1*1e8, time.UTC))}),
 					data.NewField("XDynamic", nil, []*string{util.Pointer(`[{"person":"Daniel"},{"cats":23},{"diagnosis":"cat problem"}]`)}),
 					data.NewField("XGuid", nil, []*string{util.Pointer("74be27de-1e4e-49d9-b579-fe0b331d3642")}),
-					data.NewField("XInt", nil, []*int32{util.Pointer(2147483647)}),
-					data.NewField("XLong", nil, []*int64{util.Pointer(9223372036854775807)}),
+					data.NewField("XInt", nil, []*int32{util.Pointer(int32(2147483647))}),
+					data.NewField("XLong", nil, []*int64{util.Pointer(int64(9223372036854775807))}),
 					data.NewField("XReal", nil, []*float64{util.Pointer(1.797693134862315708145274237317043567981e+308)}),
 					data.NewField("XTimeSpan", nil, []*string{util.Pointer("00:00:00.0000001")}),
-					data.NewField("XDecimal", nil, []*float64{util.Pointer(79228162514264337593543950335)}),
+					data.NewField("XDecimal", nil, []*float64{util.Pointer(79228162514264337593543950335.0)}),
 					data.NewField("XObject", nil, []*string{util.Pointer(`"{\"person\": \"Daniel\", \"cats\": 23, \"diagnosis\": \"cat problem\"}"`)}),
-					data.NewField("XNumber", nil, []*float64{util.Pointer(79228162514264337593543950335)}),
+					data.NewField("XNumber", nil, []*float64{util.Pointer(79228162514264337593543950335.0)}),
 				)
 				frame.Meta = &data.FrameMeta{
 					Custom: &LogAnalyticsMeta{ColumnTypes: []string{"bool", "string", "datetime",

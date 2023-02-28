@@ -276,7 +276,7 @@ func TestFrameToSeriesSlice(t *testing.T) {
 				}),
 				data.NewField(`Values Int64s`, data.Labels{"Animal Factor": "cat"}, []*int64{
 					nil,
-					util.Pointer(3),
+					util.Pointer(int64(3)),
 				}),
 				data.NewField(`Values Floats`, data.Labels{"Animal Factor": "sloth"}, []float64{
 					2.0,

@@ -96,7 +96,7 @@ func TestExpandTemplate(t *testing.T) {
 				"A": {
 					Var:    "A",
 					Labels: data.Labels{"instance": "foo"},
-					Value:  util.Pointer(1),
+					Value:  util.Pointer(1.0),
 				},
 			},
 		},
@@ -122,7 +122,7 @@ func TestExpandTemplate(t *testing.T) {
 				"A": {
 					Var:    "A",
 					Labels: data.Labels{},
-					Value:  util.Pointer(1),
+					Value:  util.Pointer(1.0),
 				},
 			},
 		},
@@ -211,37 +211,37 @@ func TestExpandTemplate(t *testing.T) {
 				"A": {
 					Var:    "A",
 					Labels: data.Labels{},
-					Value:  util.Pointer(0),
+					Value:  util.Pointer(0.0),
 				},
 				"B": {
 					Var:    "B",
 					Labels: data.Labels{},
-					Value:  util.Pointer(1),
+					Value:  util.Pointer(1.0),
 				},
 				"C": {
 					Var:    "C",
 					Labels: data.Labels{},
-					Value:  util.Pointer(60),
+					Value:  util.Pointer(60.0),
 				},
 				"D": {
 					Var:    "D",
 					Labels: data.Labels{},
-					Value:  util.Pointer(3600),
+					Value:  util.Pointer(3600.0),
 				},
 				"E": {
 					Var:    "E",
 					Labels: data.Labels{},
-					Value:  util.Pointer(86400),
+					Value:  util.Pointer(86400.0),
 				},
 				"F": {
 					Var:    "F",
 					Labels: data.Labels{},
-					Value:  util.Pointer(86400 + 3600),
+					Value:  util.Pointer(86400.0 + 3600.0),
 				},
 				"G": {
 					Var:    "G",
 					Labels: data.Labels{},
-					Value:  util.Pointer(-(86400*2 + 3600*3 + 60*4 + 5)),
+					Value:  util.Pointer(-(86400*2 + 3600*3 + 60*4 + 5.0)),
 				},
 				"H": {
 					Var:    "H",
