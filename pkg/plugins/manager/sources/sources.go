@@ -4,26 +4,23 @@ import (
 	"context"
 	"path/filepath"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
-	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
+	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Service struct {
-	gCfg       *setting.Cfg
-	cfg        *config.Cfg
-	cdnService *pluginscdn.Service
-	log        log.Logger
+	gCfg *setting.Cfg
+	cfg  *config.Cfg
+	log  log.Logger
 }
 
-func ProvideService(gCfg *setting.Cfg, cfg *config.Cfg, pluginsCDNService *pluginscdn.Service) *Service {
+func ProvideService(gCfg *setting.Cfg, cfg *config.Cfg) *Service {
 	return &Service{
-		gCfg:       gCfg,
-		cfg:        cfg,
-		cdnService: pluginsCDNService,
-		log:        log.New("plugin.sources"),
+		gCfg: gCfg,
+		cfg:  cfg,
+		log:  log.New("plugin.sources"),
 	}
 }
 

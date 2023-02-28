@@ -12,9 +12,8 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -279,7 +278,7 @@ func TestFinder_Find(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			f := newFS(&logtest.Fake{})
+			f := newFS(log.NewTestLogger())
 			pluginBundles, err := f.Find(context.Background(), tc.pluginDirs...)
 			if (err != nil) && !errors.Is(err, tc.err) {
 				t.Errorf("Find() error = %v, expected error %v", err, tc.err)
@@ -303,10 +302,7 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 			walk = origWalk
 		})
 
-		finder := &FS{
-			log: log.New(),
-		}
-
+		finder := newFS(log.NewTestLogger())
 		paths, err := finder.getAbsPluginJSONPaths("test")
 		require.NoError(t, err)
 		require.Empty(t, paths)
@@ -321,10 +317,7 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 			walk = origWalk
 		})
 
-		finder := &FS{
-			log: log.New(),
-		}
-
+		finder := newFS(log.NewTestLogger())
 		paths, err := finder.getAbsPluginJSONPaths("test")
 		require.NoError(t, err)
 		require.Empty(t, paths)
@@ -339,10 +332,7 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 			walk = origWalk
 		})
 
-		finder := &FS{
-			log: log.New(),
-		}
-
+		finder := newFS(log.NewTestLogger())
 		paths, err := finder.getAbsPluginJSONPaths("test")
 		require.Error(t, err)
 		require.Empty(t, paths)
@@ -459,7 +449,7 @@ func TestFinder_readPluginJSON(t *testing.T) {
 		},
 	}
 
-	f := newFS(&logtest.Fake{})
+	f := newFS(log.NewTestLogger())
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := f.readPluginJSON(tt.pluginPath)

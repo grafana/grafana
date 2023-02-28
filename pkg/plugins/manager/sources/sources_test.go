@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
-	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -29,7 +28,7 @@ func TestSources_List(t *testing.T) {
 			},
 		}
 
-		s := ProvideService(cfg, pCfg, pluginscdn.ProvideService(pCfg))
+		s := ProvideService(cfg, pCfg)
 		srcs := s.List(context.Background())
 
 		expected := []plugins.PluginSource{

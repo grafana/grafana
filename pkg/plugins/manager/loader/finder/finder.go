@@ -3,8 +3,8 @@ package finder
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
 type Service struct {

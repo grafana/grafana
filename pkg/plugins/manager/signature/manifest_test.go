@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -152,7 +152,7 @@ func TestCalculate(t *testing.T) {
 			setting.AppUrl = tc.appURL
 
 			basePath := filepath.Join(parentDir, "testdata/non-pvt-with-root-url/plugin")
-			sig, err := Calculate(log.NewNopLogger(), plugins.External, plugins.FoundPlugin{
+			sig, err := Calculate(log.NewTestLogger(), plugins.External, plugins.FoundPlugin{
 				JSONData: plugins.JSONData{
 					ID: "test-datasource",
 					Info: plugins.Info{
@@ -178,7 +178,7 @@ func TestCalculate(t *testing.T) {
 		basePath := "../testdata/renderer-added-file/plugin"
 
 		runningWindows = true
-		sig, err := Calculate(log.NewNopLogger(), plugins.External, plugins.FoundPlugin{
+		sig, err := Calculate(log.NewTestLogger(), plugins.External, plugins.FoundPlugin{
 			JSONData: plugins.JSONData{
 				ID:   "test-renderer",
 				Type: plugins.Renderer,
