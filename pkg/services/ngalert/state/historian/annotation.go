@@ -25,7 +25,7 @@ import (
 
 // AnnotationBackend is an implementation of state.Historian that uses Grafana Annotations as the backing datastore.
 type AnnotationBackend struct {
-	annotations annotations.Repository
+	annotations AnnotationStore
 	dashboards  *dashboardResolver
 	rules       RuleStore
 	clock       clock.Clock
@@ -37,7 +37,12 @@ type RuleStore interface {
 	GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAlertRuleByUIDQuery) error
 }
 
-func NewAnnotationBackend(annotations annotations.Repository, dashboards dashboards.DashboardService, rules RuleStore, metrics *metrics.Historian) *AnnotationBackend {
+type AnnotationStore interface {
+	Find(ctx context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error)
+	SaveMany(ctx context.Context, items []annotations.Item) error
+}
+
+func NewAnnotationBackend(annotations AnnotationStore, dashboards dashboards.DashboardService, rules RuleStore, metrics *metrics.Historian) *AnnotationBackend {
 	logger := log.New("ngalert.state.historian", "backend", "annotations")
 	return &AnnotationBackend{
 		annotations: annotations,
