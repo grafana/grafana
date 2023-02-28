@@ -1,8 +1,11 @@
 package historian
 
 import (
+	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"sort"
 	"testing"
 	"time"
@@ -10,9 +13,13 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
+	"github.com/weaveworks/common/http/client"
 )
 
 func TestRemoteLokiBackend(t *testing.T) {
@@ -248,6 +255,62 @@ func TestMerge(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRecordStates(t *testing.T) {
+	t.Run("writes state transitions to loki", func(t *testing.T) {
+		req := NewFakeRequester()
+		loki := createTestLokiBackend(req, prometheus.NewRegistry())
+		rule := createTestRule()
+		states := singleFromNormal(&state.State{
+			State:  eval.Alerting,
+			Labels: data.Labels{"a": "b"},
+		})
+
+		err := <-loki.RecordStatesAsync(context.Background(), rule, states)
+
+		require.NoError(t, err)
+		require.Contains(t, "/loki/api/v1/push", req.lastRequest.URL.Path)
+	})
+
+	t.Run("emits expected write metrics", func(t *testing.T) {
+		reg := prometheus.NewRegistry()
+		loki := createTestLokiBackend(NewFakeRequester(), reg)
+		rule := createTestRule()
+		states := singleFromNormal(&state.State{
+			State:  eval.Alerting,
+			Labels: data.Labels{"a": "b"},
+		})
+
+		err := <-loki.RecordStatesAsync(context.Background(), rule, states)
+
+		require.NoError(t, err)
+		exp := bytes.NewBufferString(`
+# HELP grafana_alerting_state_history_transitions_total The total number of state transitions processed by the state historian.
+# TYPE grafana_alerting_state_history_transitions_total counter
+grafana_alerting_state_history_transitions_total{org="1"} 1
+# HELP grafana_alerting_state_history_writes_total The total number of state history batches that were attempted to be written.
+# TYPE grafana_alerting_state_history_writes_total counter
+grafana_alerting_state_history_writes_total{org="1"} 1
+`)
+		err = testutil.GatherAndCompare(reg, exp,
+			"grafana_alerting_state_history_transitions_total",
+			"grafana_alerting_state_history_transitions_failed_total",
+			"grafana_alerting_state_history_writes_total",
+			"grafana_alerting_state_history_writes_failed_total",
+		)
+		require.NoError(t, err)
+	})
+}
+
+func createTestLokiBackend(req client.Requester, reg prometheus.Registerer) *RemoteLokiBackend {
+	url, _ := url.Parse("http://some.url")
+	cfg := LokiConfig{
+		WritePathURL: url,
+		ReadPathURL:  url,
+	}
+	met := metrics.NewHistorianMetrics(reg)
+	return NewRemoteLokiBackend(cfg, req, met)
 }
 
 func singleFromNormal(st *state.State) []state.StateTransition {
