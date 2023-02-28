@@ -9,13 +9,9 @@ import {
   PanelOptions,
 } from './panelcfg.gen';
 
-defaultPanelOptionsGen.color!.mode = HeatmapColorMode.Scheme;
-defaultPanelOptionsGen.color!.scale = HeatmapColorScale.Exponential;
-defaultPanelOptionsGen.yAxis = {
-  axisPlacement: AxisPlacement.Left,
-};
-defaultPanelOptionsGen.rowsFrame = {
-  layout: HeatmapCellLayout.auto,
-};
-
-export const defaultPanelOptions = defaultPanelOptionsGen as PanelOptions;
+export const defaultPanelOptions = {
+  ...defaultPanelOptionsGen,
+  color: { ...defaultPanelOptionsGen.color, mode: HeatmapColorMode.Scheme, scale: HeatmapColorScale.Exponential },
+  yAxis: { ...defaultPanelOptionsGen.yAxis, axisPlacement: AxisPlacement.Left },
+  rowsFrame: { ...defaultPanelOptionsGen.rowsFrame, layout: HeatmapCellLayout.auto },
+} as PanelOptions;

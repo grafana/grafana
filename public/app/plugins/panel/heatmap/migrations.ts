@@ -86,7 +86,7 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
     calculate,
     calculation,
     color: {
-      ...defaultPanelOptions.color!,
+      ...defaultPanelOptions.color,
       steps: 128, // best match with existing colors
     },
     cellGap: cellGap ? cellGap : 1, // default to size 1
@@ -115,7 +115,7 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
       yHistogram: Boolean(angular.tooltip?.showHistogram),
     },
     exemplars: {
-      ...defaultPanelOptions.exemplars!,
+      ...defaultPanelOptions.exemplars,
     },
   };
 
@@ -134,7 +134,7 @@ export function angularToReactHeatmap(angular: any): { fieldConfig: FieldConfigS
       if (!scheme) {
         scheme = colorSchemes.find((v) => current.indexOf(v.name) >= 0);
       }
-      options.color.scheme = scheme ? scheme.name : defaultPanelOptions.color!.scheme;
+      options.color.scheme = scheme ? scheme.name : defaultPanelOptions.color.scheme;
       break;
     }
     case 'opacity': {
