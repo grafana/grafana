@@ -405,15 +405,15 @@ export function prepareBarChartDisplayValues(
     }
   }
 
-  let xField: Field | undefined = undefined;
+  let configuredXField: Field | undefined = undefined;
   if (options.xField) {
-    xField = findField(frame, options.xField);
-    if (!xField) {
+    configuredXField = findField(frame, options.xField);
+    if (!configuredXField) {
       return { warn: 'Configured x field not found' };
     }
   }
-  let { firstField, fields, aligned } = getBarFields(frame, xField, options, theme);
-  if (!firstField) {
+  let { xField, fields, aligned } = getBarFields(frame, configuredXField, options, theme);
+  if (!xField) {
     return {
       warn: 'Bar charts requires a string or time field',
     };
@@ -463,24 +463,24 @@ export function prepareBarChartDisplayValues(
       return copy;
     });
 
-    legendFields.unshift(firstField);
+    legendFields.unshift(xField);
   }
 
   // String field is first
-  fields.unshift(firstField);
+  fields.unshift(xField);
 
   return {
     aligned,
     colorByField,
     viz: [
       {
-        length: firstField.values.length,
+        length: xField.values.length,
         fields: fields, // ideally: fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.viz)),
       },
     ],
     legend: {
       fields: legendFields,
-      length: firstField.values.length,
+      length: xField.values.length,
     },
   };
 }
@@ -491,13 +491,13 @@ function getBarFields(
   options: PanelOptions,
   theme: GrafanaTheme2
 ): {
-  firstField: Field | undefined;
+  xField: Field | undefined;
   fields: Field[];
   aligned: DataFrame;
 } {
   let stringFields: Field[] | undefined = undefined;
   let timeField: Field | undefined = undefined;
-  let fields: Field[] = [];
+  let fields: Field[] = []; // number fields
   for (const field of frame.fields) {
     if (field === xField) {
       continue;
@@ -554,10 +554,9 @@ function getBarFields(
     }
   }
 
-  let firstField = xField;
-  if (!firstField) {
+  if (!xField) {
     if (stringFields?.length) {
-      firstField = stringFields[0];
+      xField = stringFields[0];
 
       // When multiple strings exist display them as labels
       if (stringFields?.length > 1) {
@@ -569,26 +568,26 @@ function getBarFields(
           }
           names[i] = formatLabels(labels);
         }
-        firstField = {
+        xField = {
           name: 'Name',
           type: FieldType.string,
           config: {},
           values: new ArrayVector(names),
         };
-        firstField.display = getDisplayProcessor({ field: firstField, theme });
+        xField.display = getDisplayProcessor({ field: xField, theme });
       }
     } else if (timeField) {
-      firstField = timeField;
+      xField = timeField;
     }
 
     // Try converting to numericWide
-    if (!firstField && fields.length) {
+    if (!xField && fields.length) {
       frame = toNumericLong([frame]);
       frame.fields.forEach((f) => (f.display = getDisplayProcessor({ field: f, theme })));
       return getBarFields(frame, undefined, options, theme);
     }
   }
-  return { firstField, fields, aligned: frame };
+  return { xField, fields, aligned: frame };
 }
 
 export const isLegendOrdered = (options: VizLegendOptions) => Boolean(options?.sortBy && options.sortDesc !== null);

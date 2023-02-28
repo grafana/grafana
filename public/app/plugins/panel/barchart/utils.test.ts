@@ -9,6 +9,8 @@ import {
   getDefaultTimeRange,
   MutableDataFrame,
   VizOrientation,
+  DataFrame,
+  ArrayVector,
 } from '@grafana/data';
 import {
   LegendDisplayMode,
@@ -166,13 +168,16 @@ describe('BarChart utils', () => {
     });
 
     it('will warn when there is no string or time field', () => {
-      const df = new MutableDataFrame({
+      const vals = [1, 2, 3, 4, 5];
+      const df: DataFrame = {
+        length: vals.length,
         fields: [
-          { name: 'a', type: FieldType.other, values: [1, 2, 3, 4, 5] },
-          { name: 'value', values: [1, 2, 3, 4, 5] },
+          { name: 'a', type: FieldType.other, values: new ArrayVector(vals), config: {} },
+          { name: 'value', type: FieldType.geo, values: new ArrayVector(vals), config: {} },
         ],
-      });
-      const result = prepareBarChartDisplayValues([df], createTheme(), { stacking: StackingMode.None } as PanelOptions);
+      };
+      const result = prepareBarChartDisplayValues([df], createTheme(), {} as PanelOptions);
+
       const warning = assertIsDefined('warn' in result ? result : null);
       expect(warning.warn).toEqual('Bar charts requires a string or time field');
       expect(warning).not.toHaveProperty('viz');
