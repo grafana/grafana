@@ -108,7 +108,7 @@ function PickerContent(props: PickerContentProps) {
                 ...fileUploadOptions,
                 onDrop: (...args) => {
                   onDismiss();
-                    fileUploadOptions?.onDrop?.(...args);
+                  fileUploadOptions?.onDrop?.(...args);
                 },
               }}
             >
