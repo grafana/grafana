@@ -6,7 +6,7 @@ export type RegistryConfigureExtension<T extends PluginExtension = PluginExtensi
 
 export type PluginExtensionRegistryItem<T extends PluginExtension = PluginExtension, C extends object = object> = {
   extension: T;
-  configure?: RegistryConfigureExtension<T, C>;
+  configure: RegistryConfigureExtension<T, C>;
 };
 
 export type PluginExtensionRegistry = Record<string, PluginExtensionRegistryItem[]>;
