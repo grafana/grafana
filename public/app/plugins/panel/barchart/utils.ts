@@ -590,8 +590,6 @@ function getBarFields(
   return { xField, fields, aligned: frame };
 }
 
-export const isLegendOrdered = (options: VizLegendOptions) => Boolean(options?.sortBy && options.sortDesc !== null);
-
 interface LabelInfo {
   key: string;
   labels: Labels;
@@ -706,3 +704,5 @@ export function toNumericLong(data: DataFrame[]): DataFrame {
     length: values.length,
   };
 }
+
+export const isLegendOrdered = (options: VizLegendOptions) => Boolean(options?.sortBy && options.sortDesc !== null);
