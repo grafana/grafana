@@ -41,6 +41,7 @@ describe('Creating extensions registry', () => {
             path: '/a/belugacdn-app/incidents/declare',
           },
         ],
+        commandExtensions: [],
       },
     ]);
 
@@ -80,6 +81,7 @@ describe('Creating extensions registry', () => {
             path: '/a/belugacdn-app/incidents/declare',
           },
         ],
+        commandExtensions: [],
       },
     ]);
 
@@ -132,6 +134,7 @@ describe('Creating extensions registry', () => {
             path: '/a/belugacdn-app/incidents/declare',
           },
         ],
+        commandExtensions: [],
       },
       {
         pluginId: 'grafana-monitoring-app',
@@ -143,6 +146,7 @@ describe('Creating extensions registry', () => {
             path: '/a/grafana-monitoring-app/incidents/declare',
           },
         ],
+        commandExtensions: [],
       },
     ]);
 
@@ -212,6 +216,7 @@ describe('Creating extensions registry', () => {
             path: '/a/belugacdn-app/incidents/declare',
           },
         ],
+        commandExtensions: [],
       },
     ]);
 
@@ -255,6 +260,7 @@ describe('Creating extensions registry', () => {
             path: '/incidents/declare',
           },
         ],
+        commandExtensions: [],
       },
     ]);
 
@@ -275,6 +281,7 @@ describe('Creating extensions registry', () => {
             configure: () => ({}),
           },
         ],
+        commandExtensions: [],
       },
     ]);
 
@@ -306,6 +313,7 @@ describe('Creating extensions registry', () => {
             configure: () => ({}),
           },
         ],
+        commandExtensions: [],
       },
     ]);
 
