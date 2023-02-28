@@ -173,10 +173,14 @@ func (f *FS) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error) {
 		return plugins.JSONData{}, ErrInvalidPluginJSONFilePath
 	}
 
-	// nolint:gosec
-	// We can ignore the gosec G304 warning on this one because `currentPath` is based
-	// on plugin the folder structure on disk and not user input.
-	reader, err := os.Open(pluginJSONPath)
+	absPluginJSONPath, err := filepath.Abs(pluginJSONPath)
+	if err != nil {
+		return plugins.JSONData{}, err
+	}
+
+	// Wrapping in filepath.Clean to properly handle
+	// gosec G304 Potential file inclusion via variable rule.
+	reader, err := os.Open(filepath.Clean(absPluginJSONPath))
 	if err != nil {
 		return plugins.JSONData{}, err
 	}
