@@ -281,6 +281,34 @@ describe('createPluginExtensionRegistry()', () => {
       expect(numberOfPlacements).toBe(0);
     });
 
+    it('should add default configure function when none provided via extension config', () => {
+      const registry = createPluginExtensionRegistry([
+        {
+          pluginId: 'belugacdn-app',
+          linkExtensions: [
+            {
+              placement: 'grafana/dashboard/panel/menu',
+              title: 'Open incident',
+              description: 'You can create an incident from this context',
+              path: '/a/belugacdn-app/incidents/declare',
+            },
+          ],
+          commandExtensions: [],
+        },
+      ]);
+
+      const [extension] = registry['grafana/dashboard/panel/menu'];
+      const configured = extension.configure();
+
+      expect(configured).toEqual({
+        title: 'Open incident',
+        type: PluginExtensionTypes.link,
+        description: 'You can create an incident from this context',
+        path: '/a/belugacdn-app/incidents/declare',
+        key: -68154691,
+      });
+    });
+
     it('should wrap configure function with link extension validator', () => {
       const registry = createPluginExtensionRegistry([
         {

@@ -286,14 +286,10 @@ export function getPanelMenu(
     });
   }
 
-  const context = createExtensionContext(panel, dashboard);
-
   const { extensions } = getPluginExtensions({
     placement: GrafanaExtensions.DashboardPanelMenu,
-    context: context,
+    context: createExtensionContext(panel, dashboard),
   });
-
-  console.log({ extensions });
 
   for (const extension of extensions) {
     if (isPluginExtensionLink(extension)) {
