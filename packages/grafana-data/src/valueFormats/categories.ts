@@ -1,12 +1,4 @@
-import {
-  toHex,
-  sci,
-  toHex0x,
-  toPercent,
-  toPercentUnit,
-  // toIncreasingPercent,
-  // toDecreasingPercent,
-} from './arithmeticFormatters';
+import { toHex, sci, toHex0x, toPercent, toPercentUnit } from './arithmeticFormatters';
 import {
   dateTimeAsIso,
   dateTimeAsIsoNoDateIfToday,
@@ -31,7 +23,7 @@ import {
   toTimeTicks,
   dateTimeSystemFormatter,
 } from './dateTimeFormatters';
-import { binaryPrefix, currency, SIPrefix, addBIPrefix } from './symbolFormatters';
+import { binaryPrefix, currency, SIPrefix } from './symbolFormatters';
 import {
   locale,
   scaledUnits,
@@ -439,21 +431,3 @@ export const getCategories = (): ValueFormatCategory[] => [
     ],
   },
 ];
-
-export const getOverwriteSymbols = (): ValueFormatCategory => {
-  return {
-    name: 'Overwrite Symbols',
-    formats: [
-      // { name: 'Percent Increase (\u2191_%)', id: 'percentincrease', fn: toIncreasingPercent },
-      // { name: 'Percent Decrease (\u2193_%)', id: 'percentdecrease', fn: toDecreasingPercent },
-      { name: 'Less than (<)', id: 'lessThan', fn: addBIPrefix('lessThan') },
-      { name: 'Greater than (>)', id: 'greaterThan', fn: addBIPrefix('greaterThan') },
-      { name: 'Approximately (~)', id: 'approximately', fn: addBIPrefix('approximately') },
-      { name: 'Fiscal quarter (FQ)', id: 'fiscalQuarter', fn: addBIPrefix('fiscalQuarter') },
-      { name: 'Quarter (Qtr)', id: 'quarter', fn: addBIPrefix('quarter') },
-      { name: 'Fiscal year (FY)', id: 'fiscalYear', fn: addBIPrefix('fiscalYear') },
-      { name: 'Delta (\u0394)', id: 'delta', fn: addBIPrefix('delta') },
-      { name: 'Mean (\u00B5)', id: 'mean', fn: addBIPrefix('mean') },
-    ],
-  };
-};
