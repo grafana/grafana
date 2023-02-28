@@ -1,3 +1,4 @@
+import uFuzzy from '@leeoniya/ufuzzy';
 import produce from 'immer';
 import { compact, isEmpty } from 'lodash';
 import { useCallback, useEffect, useMemo } from 'react';
@@ -18,8 +19,8 @@ export function useRulesFilter() {
   const [queryParams, updateQueryParams] = useURLSearchParams();
   const searchQuery = queryParams.get('search') ?? '';
 
-  const filterState = getSearchFilterFromQuery(searchQuery);
-  const hasActiveFilters = Object.values(filterState).some((filter) => !isEmpty(filter));
+  const filterState = useMemo(() => getSearchFilterFromQuery(searchQuery), [searchQuery]);
+  const hasActiveFilters = useMemo(() => Object.values(filterState).some((filter) => !isEmpty(filter)), [filterState]);
 
   const updateFilters = useCallback(
     (newFilter: RulesFilter) => {
@@ -76,6 +77,14 @@ export const useFilteredRules = (namespaces: CombinedRuleNamespace[], filterStat
   return useMemo(() => filterRules(namespaces, filterState), [namespaces, filterState]);
 };
 
+const ufuzzy = new uFuzzy({
+  intraMode: 1,
+  intraIns: 1,
+  intraSub: 1,
+  intraTrn: 1,
+  intraDel: 1,
+});
+
 export const filterRules = (
   namespaces: CombinedRuleNamespace[],
   filterState: RulesFilter = { labels: [], freeFormWords: [] }
@@ -85,7 +94,7 @@ export const filterRules = (
   const dataSourceFilter = filterState.dataSourceName;
 
   if (namespaceFilter) {
-    filteredNamespaces = filteredNamespaces.filter((ns) => ns.name.toLowerCase().includes(namespaceFilter));
+    filteredNamespaces = filteredNamespaces.filter((ns) => ufuzzy.filter([ns.name], namespaceFilter).length > 0);
   }
   if (dataSourceFilter) {
     filteredNamespaces = filteredNamespaces.filter(({ rulesSource }) =>
@@ -103,7 +112,7 @@ const reduceNamespaces = (filterState: RulesFilter) => {
     let filteredGroups = namespace.groups;
 
     if (groupNameFilter) {
-      filteredGroups = filteredGroups.filter((g) => g.name.toLowerCase().includes(groupNameFilter));
+      filteredGroups = filteredGroups.filter((g) => ufuzzy.filter([g.name], groupNameFilter).length > 0);
     }
 
     filteredGroups = filteredGroups.reduce(reduceGroups(filterState), [] as CombinedRuleGroup[]);
@@ -121,8 +130,10 @@ const reduceNamespaces = (filterState: RulesFilter) => {
 
 // Reduces groups to only groups that have rules matching the filters
 const reduceGroups = (filterState: RulesFilter) => {
+  const ruleNameQuery = filterState.ruleName ?? filterState.freeFormWords.join(' ');
+
   return (groupAcc: CombinedRuleGroup[], group: CombinedRuleGroup) => {
-    const rules = group.rules.filter((rule) => {
+    const rules = group.rules.filter((rule, ruleIdx) => {
       if (filterState.ruleType && filterState.ruleType !== rule.promRule?.type) {
         return false;
       }
@@ -132,16 +143,7 @@ const reduceGroups = (filterState: RulesFilter) => {
         return false;
       }
 
-      const ruleNameLc = rule.name?.toLocaleLowerCase();
-      // Free Form Query is used to filter by rule name
-      if (
-        filterState.freeFormWords.length > 0 &&
-        !filterState.freeFormWords.every((w) => ruleNameLc.includes(w.toLocaleLowerCase()))
-      ) {
-        return false;
-      }
-
-      if (filterState.ruleName && !rule.name?.toLocaleLowerCase().includes(filterState.ruleName.toLocaleLowerCase())) {
+      if (ruleNameQuery && ufuzzy.filter([rule.name], ruleNameQuery).length === 0) {
         return false;
       }
 
