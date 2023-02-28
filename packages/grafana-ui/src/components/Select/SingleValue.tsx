@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import React from 'react';
 import { components, GroupBase, SingleValueProps } from 'react-select';
 
-import { GrafanaTheme2, SelectableValue, IconName } from '@grafana/data';
+import { GrafanaTheme2, SelectableValue, toIconName } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 import { useDelayedSwitch } from '../../utils/useDelayedSwitch';
@@ -12,46 +12,41 @@ import { FadeTransition } from '../transitions/FadeTransition';
 import { SlideOutTransition } from '../transitions/SlideOutTransition';
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const singleValue = css`
-    label: singleValue;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    box-sizing: border-box;
-    max-width: 100%;
-    grid-area: 1 / 1 / 2 / 3;
-  `;
-
-  const spinnerWrapper = css`
-    width: 16px;
-    height: 16px;
-    display: inline-block;
-    margin-right: 10px;
-    position: relative;
-    vertical-align: middle;
-    overflow: hidden;
-  `;
-
-  const spinnerIcon = css`
-    width: 100%;
-    height: 100%;
-    position: absolute;
-  `;
-
-  const optionIcon = css`
-    margin-right: ${theme.spacing(1)};
-    color: ${theme.colors.text.secondary};
-  `;
-
-  const disabled = css`
-    color: ${theme.colors.text.disabled};
-  `;
-
-  const isOpen = css`
-    color: ${theme.colors.text.disabled};
-  `;
-
-  return { singleValue, spinnerWrapper, spinnerIcon, optionIcon, disabled, isOpen };
+  return {
+    singleValue: css`
+      label: singleValue;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      box-sizing: border-box;
+      max-width: 100%;
+      grid-area: 1 / 1 / 2 / 3;
+    `,
+    spinnerWrapper: css`
+      width: 16px;
+      height: 16px;
+      display: inline-block;
+      margin-right: 10px;
+      position: relative;
+      vertical-align: middle;
+      overflow: hidden;
+    `,
+    spinnerIcon: css`
+      width: 100%;
+      height: 100%;
+      position: absolute;
+    `,
+    optionIcon: css`
+      margin-right: ${theme.spacing(1)};
+      color: ${theme.colors.text.secondary};
+    `,
+    disabled: css`
+      color: ${theme.colors.text.disabled};
+    `,
+    isOpen: css`
+      color: ${theme.colors.text.disabled};
+    `,
+  };
 };
 
 type StylesType = ReturnType<typeof getStyles>;
@@ -62,6 +57,7 @@ export const SingleValue = <T extends unknown>(props: Props<T>) => {
   const { children, data, isDisabled } = props;
   const styles = useStyles2(getStyles);
   const loading = useDelayedSwitch(data.loading || false, { delay: 250, duration: 750 });
+  const icon = data.icon ? toIconName(data.icon) : undefined;
 
   return (
     <components.SingleValue
@@ -82,7 +78,7 @@ export const SingleValue = <T extends unknown>(props: Props<T>) => {
               <Spinner className={styles.spinnerIcon} inline />
             </div>
           </SlideOutTransition>
-          {data.icon && <Icon name={data.icon as IconName} role="img" className={styles.optionIcon} />}
+          {icon && <Icon name={icon} role="img" className={styles.optionIcon} />}
         </>
       )}
 
