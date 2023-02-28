@@ -19,31 +19,6 @@ export function currency(symbol: string, asSuffix?: boolean): ValueFormatter {
   };
 }
 
-export function addBIPrefix(prefixKey: string): ValueFormatter {
-  return (value: number, decimals: DecimalCount): FormattedValue => {
-    const symbolMap: { [key: string]: string } = {
-      lessThan: '<',
-      greaterThan: '>',
-      approximately: '~',
-      positive: '+',
-      fiscalQuarter: 'FQ',
-      quarter: 'Qtr',
-      fiscalYear: 'FY',
-      delta: '\u0394',
-      mean: '\u00B5',
-    };
-
-    const newPrefix: string = symbolMap[prefixKey];
-
-    // Invalid prefix? Return original text in a text object.
-    if (!newPrefix) {
-      return { text: toFixed(value, decimals) };
-    }
-
-    return { prefix: newPrefix, text: toFixed(value, decimals) };
-  };
-}
-
 const SI_PREFIXES = ['f', 'p', 'n', 'µ', 'm', '', 'k', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'];
 const SI_BASE_INDEX = SI_PREFIXES.indexOf('');
 
