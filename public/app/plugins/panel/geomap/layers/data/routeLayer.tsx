@@ -45,6 +45,10 @@ export interface RouteConfig {
   fieldColor?: FieldConfigPropertyItem<any, FieldColor | undefined, FieldColorConfigSettings>;
 }
 
+interface fieldColor {
+  mode: string;
+}
+
 const defaultOptions: RouteConfig = {
   style: {
     ...defaultStyleConfig,
@@ -108,7 +112,13 @@ export const routeLayer: MapLayerRegistryItem<RouteConfig> = {
     } else {
       vectorLayer.setStyle((feature: FeatureLike) => {
         const idx = feature.get('rowIndex') as number;
+        if (config.layerColorScheme && config.fieldColor) {
+          //TODO: make this line less outrageous
+          style.dims!.color!.field!.config.color!.mode = (config?.fieldColor as unknown as fieldColor).mode;
+        }
         const dims = style.dims;
+
+        console.log(style);
         if (!dims || !isNumber(idx)) {
           return routeStyle(style.base);
         }
