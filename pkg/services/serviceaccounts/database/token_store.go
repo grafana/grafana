@@ -58,9 +58,9 @@ func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, s
 		if err := s.apiKeyService.AddAPIKey(ctx, addKeyCmd); err != nil {
 			switch {
 			case errors.Is(err, apikey.ErrDuplicate):
-				return ErrDuplicateToken
+				return serviceaccounts.ErrDuplicateToken
 			case errors.Is(err, apikey.ErrInvalidExpiration):
-				return ErrInvalidTokenExpiration
+				return serviceaccounts.ErrInvalidTokenExpiration
 			}
 
 			return err
@@ -81,7 +81,7 @@ func (s *ServiceAccountsStoreImpl) DeleteServiceAccountToken(ctx context.Context
 		}
 		affected, err := result.RowsAffected()
 		if affected == 0 {
-			return ErrServiceAccountTokenNotFound
+			return serviceaccounts.ErrServiceAccountTokenNotFound
 		}
 
 		return err
@@ -98,7 +98,7 @@ func (s *ServiceAccountsStoreImpl) RevokeServiceAccountToken(ctx context.Context
 		}
 		affected, err := result.RowsAffected()
 		if affected == 0 {
-			return ErrServiceAccountTokenNotFound
+			return serviceaccounts.ErrServiceAccountTokenNotFound
 		}
 
 		return err

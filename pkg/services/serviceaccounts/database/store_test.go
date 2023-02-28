@@ -328,7 +328,7 @@ func TestStore_RevertApiKey(t *testing.T) {
 			desc:                        "should fail reverting to api key when the token is assigned to a different service account",
 			key:                         tests.TestApiKey{Name: "Test1", Role: org.RoleEditor, OrgId: 1},
 			forceMismatchServiceAccount: true,
-			expectedErr:                 ErrServiceAccountAndTokenMismatch,
+			expectedErr:                 serviceaccounts.ErrServiceAccountAndTokenMismatch,
 		},
 	}
 
