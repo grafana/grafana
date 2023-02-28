@@ -132,7 +132,7 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
         y2 = parentVerticalCenter - (info.target.y * parentRect.height) / 2;
       }
 
-      const isSelected = selectedConnection === info;
+      const isSelected = selectedConnection === info && scene.panel.context.instanceState.selectedConnection;
       const selectedStyles = { stroke: '#44aaff', strokeWidth: 3 };
       const connectionCursorStyle = scene.isEditingEnabled ? 'grab' : '';
 
