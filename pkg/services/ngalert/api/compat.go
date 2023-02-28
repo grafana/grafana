@@ -62,7 +62,7 @@ func ProvisionedAlertRuleFromAlertRules(rules []*models.AlertRule) definitions.P
 }
 
 // AlertQueriesFromApiAlertQuery converts a collection of definitions.AlertQuery to collection of models.AlertQuery
-func AlertQueriesFromApiAlertQuery(queries []definitions.AlertQuery) []models.AlertQuery {
+func AlertQueriesFromApiAlertQueries(queries []definitions.AlertQuery) []models.AlertQuery {
 	result := make([]models.AlertQuery, 0, len(queries))
 	for _, q := range queries {
 		result = append(result, models.AlertQuery{
