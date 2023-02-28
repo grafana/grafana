@@ -18,10 +18,10 @@ import (
 	"github.com/influxdata/influxdb-client-go/v2/api"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/xorcare/pointer"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 //--------------------------------------------------------------
@@ -152,9 +152,9 @@ func TestAggregateGrouping(t *testing.T) {
 	expectedFrame := data.NewFrame("",
 		data.NewField("Time", nil, []*time.Time{&t1, &t2, &t3}),
 		data.NewField("Value", map[string]string{"host": "hostname.ru"}, []*float64{
-			pointer.Float64(8.291),
-			pointer.Float64(0.534),
-			pointer.Float64(0.667),
+			util.Pointer(8.291),
+			util.Pointer(0.534),
+			util.Pointer(0.667),
 		}),
 	)
 	expectedFrame.Meta = &data.FrameMeta{}
@@ -187,7 +187,7 @@ func TestNonStandardTimeColumn(t *testing.T) {
 		data.NewField("_start_water", map[string]string{"st": "1"}, []*time.Time{&t1}),
 		data.NewField("_stop_water", map[string]string{"st": "1"}, []*time.Time{&t2}),
 		data.NewField("_value", map[string]string{"st": "1"}, []*float64{
-			pointer.Float64(156.304),
+			util.Pointer(156.304),
 		}),
 	)
 	expectedFrame.Meta = &data.FrameMeta{}
