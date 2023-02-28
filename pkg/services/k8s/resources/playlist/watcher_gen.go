@@ -60,3 +60,49 @@ func (w *WatcherWrapper) Delete(ctx context.Context, obj any) error {
 	}
 	return w.watcher.Delete(ctx, conv)
 }
+
+var _ Watcher = (*watcher)(nil)
+
+func (w *watcher) Add(ctx context.Context, obj *Playlist) error {
+	// It is required that this method be implemented by hand in another file in
+	// this package. See the comment block at the bottom of this file.
+	return w.add(ctx, obj)
+}
+
+func (w *watcher) Update(ctx context.Context, oldObj, newObj *Playlist) error {
+	// It is required that this method be implemented by hand in another file in
+	// this package. See the comment block at the bottom of this file.
+	return w.update(ctx, oldObj, newObj)
+}
+
+func (w *watcher) Delete(ctx context.Context, obj *Playlist) error {
+	// It is required that this method be implemented by hand in another file in
+	// this package. See the comment block at the bottom of this file.
+	return w.delete(ctx, obj)
+}
+
+///////////////////////////////////////////
+// It is required that parts of this package be handwritten, including
+// an implementation of the watcher struct. Copy the following to watcher.go
+// and uncomment it to get started.
+//
+// Alternatively, copying the watcher.go file from another kind might be helpful.
+///////////////////////////////////////////
+
+// package playlist
+//
+// import (
+// "github.com/grafana/grafana/pkg/infra/log"
+// )
+//
+// type watcher struct {
+// 	log log.Logger
+// }
+//
+//
+// func ProvideWatcher() (*watcher, error) {
+// 	w := watcher{
+// 		log: log.New("k8s.playlist.watcher"),
+// 	}
+// 	return &w, nil
+// }
