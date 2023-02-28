@@ -62,6 +62,20 @@ describe('createPluginExtensionRegistry()', () => {
       ]);
     });
 
+    it('should only register a link extension to a single placement', () => {
+      const registry = createPluginExtensionRegistry([
+        {
+          pluginId: samplePluginId,
+          linkExtensions: [sampleLinkExtension],
+          commandExtensions: [],
+        },
+      ]);
+
+      const numberOfPlacements = Object.keys(registry).length;
+      expect(numberOfPlacements).toBe(1);
+      expect(registry[placement]).toBeDefined();
+    });
+
     it('should register link extensions from one plugin with multiple placements', () => {
       const registry = createPluginExtensionRegistry([
         {
