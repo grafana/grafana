@@ -76,7 +76,7 @@ func validateRuleNode(
 		}
 	}
 
-	queries := AlertQueriesFromApiAlertQuery(ruleNode.GrafanaManagedAlert.Data)
+	queries := AlertQueriesFromApiAlertQueries(ruleNode.GrafanaManagedAlert.Data)
 	if len(queries) != 0 {
 		cond := ngmodels.Condition{
 			Condition: ruleNode.GrafanaManagedAlert.Condition,

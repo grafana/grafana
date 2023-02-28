@@ -40,7 +40,7 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 		return errorToResponse(backendTypeDoesNotMatchPayloadTypeError(apimodels.GrafanaBackend, body.Type().String()))
 	}
 
-	queries := AlertQueriesFromApiAlertQuery(body.GrafanaManagedCondition.Data)
+	queries := AlertQueriesFromApiAlertQueries(body.GrafanaManagedCondition.Data)
 
 	if !authorizeDatasourceAccessForRule(&ngmodels.AlertRule{Data: queries}, func(evaluator accesscontrol.Evaluator) bool {
 		return accesscontrol.HasAccess(srv.accessControl, c)(accesscontrol.ReqSignedIn, evaluator)
@@ -114,7 +114,7 @@ func (srv TestingApiSrv) RouteTestRuleConfig(c *contextmodel.ReqContext, body ap
 }
 
 func (srv TestingApiSrv) RouteEvalQueries(c *contextmodel.ReqContext, cmd apimodels.EvalQueriesPayload) response.Response {
-	queries := AlertQueriesFromApiAlertQuery(cmd.Data)
+	queries := AlertQueriesFromApiAlertQueries(cmd.Data)
 	if !authorizeDatasourceAccessForRule(&ngmodels.AlertRule{Data: queries}, func(evaluator accesscontrol.Evaluator) bool {
 		return accesscontrol.HasAccess(srv.accessControl, c)(accesscontrol.ReqSignedIn, evaluator)
 	}) {
@@ -172,7 +172,7 @@ func (srv TestingApiSrv) BacktestAlertRule(c *contextmodel.ReqContext, cmd apimo
 		return ErrResp(400, err, "")
 	}
 
-	queries := AlertQueriesFromApiAlertQuery(cmd.Data)
+	queries := AlertQueriesFromApiAlertQueries(cmd.Data)
 	if !authorizeDatasourceAccessForRule(&ngmodels.AlertRule{Data: queries}, func(evaluator accesscontrol.Evaluator) bool {
 		return accesscontrol.HasAccess(srv.accessControl, c)(accesscontrol.ReqSignedIn, evaluator)
 	}) {

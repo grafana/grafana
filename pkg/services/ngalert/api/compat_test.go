@@ -15,7 +15,7 @@ func TestToModel(t *testing.T) {
 			FolderUID: "123",
 			Interval:  10,
 		}
-		tm, err := AlertRuleGroupFromApi(ruleGroup)
+		tm, err := AlertRuleGroupFromApiAlertRuleGroup(ruleGroup)
 		require.NoError(t, err)
 		require.Nil(t, tm.Rules)
 	})
@@ -30,7 +30,7 @@ func TestToModel(t *testing.T) {
 				},
 			},
 		}
-		tm, err := AlertRuleGroupFromApi(ruleGroup)
+		tm, err := AlertRuleGroupFromApiAlertRuleGroup(ruleGroup)
 		require.NoError(t, err)
 		require.Len(t, tm.Rules, 1)
 	})

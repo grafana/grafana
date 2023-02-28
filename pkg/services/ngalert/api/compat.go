@@ -19,7 +19,7 @@ func AlertRuleFromProvisionedAlertRule(a definitions.ProvisionedAlertRule) (mode
 		RuleGroup:    a.RuleGroup,
 		Title:        a.Title,
 		Condition:    a.Condition,
-		Data:         AlertQueriesFromApiAlertQuery(a.Data),
+		Data:         AlertQueriesFromApiAlertQueries(a.Data),
 		Updated:      a.Updated,
 		NoDataState:  models.NoDataState(a.NoDataState),          // TODO there must be a validation
 		ExecErrState: models.ExecutionErrorState(a.ExecErrState), // TODO there must be a validation
@@ -41,7 +41,7 @@ func ProvisionedAlertRuleFromAlertRule(rule models.AlertRule, provenance models.
 		Title:        rule.Title,
 		For:          model.Duration(rule.For),
 		Condition:    rule.Condition,
-		Data:         AlertQueriesToApiAlertQueries(rule.Data),
+		Data:         ApiAlertQueriesFromAlertQueries(rule.Data),
 		Updated:      rule.Updated,
 		NoDataState:  definitions.NoDataState(rule.NoDataState),          // TODO there may be a validation
 		ExecErrState: definitions.ExecutionErrorState(rule.ExecErrState), // TODO there may be a validation
@@ -61,7 +61,7 @@ func ProvisionedAlertRuleFromAlertRules(rules []*models.AlertRule) definitions.P
 	return result
 }
 
-// AlertQueriesFromApiAlertQuery converts a collection of definitions.AlertQuery to collection of models.AlertQuery
+// AlertQueriesFromApiAlertQueries converts a collection of definitions.AlertQuery to collection of models.AlertQuery
 func AlertQueriesFromApiAlertQueries(queries []definitions.AlertQuery) []models.AlertQuery {
 	result := make([]models.AlertQuery, 0, len(queries))
 	for _, q := range queries {
@@ -79,8 +79,8 @@ func AlertQueriesFromApiAlertQueries(queries []definitions.AlertQuery) []models.
 	return result
 }
 
-// AlertQueriesToApiAlertQueries converts a collection of models.AlertQuery to collection of definitions.AlertQuery
-func AlertQueriesToApiAlertQueries(queries []models.AlertQuery) []definitions.AlertQuery {
+// ApiAlertQueriesFromAlertQueries converts a collection of models.AlertQuery to collection of definitions.AlertQuery
+func ApiAlertQueriesFromAlertQueries(queries []models.AlertQuery) []definitions.AlertQuery {
 	result := make([]definitions.AlertQuery, 0, len(queries))
 	for _, q := range queries {
 		result = append(result, definitions.AlertQuery{
@@ -97,7 +97,7 @@ func AlertQueriesToApiAlertQueries(queries []models.AlertQuery) []definitions.Al
 	return result
 }
 
-func AlertRuleGroupFromApi(a definitions.AlertRuleGroup) (models.AlertRuleGroup, error) {
+func AlertRuleGroupFromApiAlertRuleGroup(a definitions.AlertRuleGroup) (models.AlertRuleGroup, error) {
 	ruleGroup := models.AlertRuleGroup{
 		Title:     a.Title,
 		FolderUID: a.FolderUID,
@@ -113,7 +113,7 @@ func AlertRuleGroupFromApi(a definitions.AlertRuleGroup) (models.AlertRuleGroup,
 	return ruleGroup, nil
 }
 
-func AlertRuleGroupToApi(d models.AlertRuleGroup) definitions.AlertRuleGroup {
+func ApiAlertRuleGroupFromAlertRuleGroup(d models.AlertRuleGroup) definitions.AlertRuleGroup {
 	rules := make([]definitions.ProvisionedAlertRule, 0, len(d.Rules))
 	for i := range d.Rules {
 		rules = append(rules, ProvisionedAlertRuleFromAlertRule(d.Rules[i], d.Provenance))
