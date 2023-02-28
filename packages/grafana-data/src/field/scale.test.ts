@@ -38,12 +38,12 @@ describe('getScaleCalculator', () => {
 
     const theme = createTheme();
     const calc = getScaleCalculator(field, theme);
-    expect(calc(true as any)).toEqual({
+    expect(calc(true as unknown as number)).toEqual({
       percent: 1,
       color: theme.visualization.getColorByName('green'),
       threshold: undefined,
     });
-    expect(calc(false as any)).toEqual({
+    expect(calc(false as unknown as number)).toEqual({
       percent: 0,
       color: theme.visualization.getColorByName('red'),
       threshold: undefined,

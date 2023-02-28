@@ -15,8 +15,8 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -34,7 +34,7 @@ func toMacaronPath(path string) string {
 	}))
 }
 
-func getDatasourceByUID(ctx *models.ReqContext, cache datasources.CacheService, expectedType apimodels.Backend) (*datasources.DataSource, error) {
+func getDatasourceByUID(ctx *contextmodel.ReqContext, cache datasources.CacheService, expectedType apimodels.Backend) (*datasources.DataSource, error) {
 	datasourceUID := web.Params(ctx.Req)[":DatasourceUID"]
 	ds, err := cache.GetDatasourceByUID(ctx.Req.Context(), datasourceUID, ctx.SignedInUser, ctx.SkipCache)
 	if err != nil {
@@ -69,12 +69,12 @@ func (w *safeMacaronWrapper) CloseNotify() <-chan bool {
 
 // createProxyContext creates a new request context that is provided down to the data source proxy.
 // The request context
-// 1. overwrites the underlying response writer used by a *models.ReqContext because AlertingProxy needs to intercept
+// 1. overwrites the underlying response writer used by a *contextmodel.ReqContext because AlertingProxy needs to intercept
 // the response from the data source to analyze it and probably change
 // 2. elevates the current user permissions to Editor if both conditions are met: RBAC is enabled, user does not have Editor role.
 // This is needed to bypass the plugin authorization, which still relies on the legacy roles.
 // This elevation can be considered safe because all upstream calls are protected by the RBAC on web request router level.
-func (p *AlertingProxy) createProxyContext(ctx *models.ReqContext, request *http.Request, response *response.NormalResponse) *models.ReqContext {
+func (p *AlertingProxy) createProxyContext(ctx *contextmodel.ReqContext, request *http.Request, response *response.NormalResponse) *contextmodel.ReqContext {
 	cpy := *ctx
 	cpyMCtx := *cpy.Context
 	cpyMCtx.Resp = web.NewResponseWriter(ctx.Req.Method, &safeMacaronWrapper{response})
@@ -100,7 +100,7 @@ type AlertingProxy struct {
 
 // withReq proxies a different request
 func (p *AlertingProxy) withReq(
-	ctx *models.ReqContext,
+	ctx *contextmodel.ReqContext,
 	method string,
 	u *url.URL,
 	body io.Reader,

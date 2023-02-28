@@ -1,15 +1,13 @@
+import { config } from '@grafana/runtime';
+import { t } from 'app/core/internationalization';
+
 // Maps the ID of the nav item to a translated phrase to later pass to <Trans />
 // Because the navigation content is dynamic (defined in the backend), we can not use
 // the normal inline message definition method.
 
-import { config } from '@grafana/runtime';
-import { t } from 'app/core/internationalization';
-
-// The keys of the TRANSLATED_MENU_ITEMS object (NOT the id inside the defineMessage function)
-// must match the ID of the navigation item, as defined in the backend nav model
-
 // see pkg/api/index.go
 export function getNavTitle(navId: string | undefined) {
+  // the switch cases must match the ID of the navigation item, as defined in the backend nav model
   switch (navId) {
     case 'home':
       return t('nav.home.title', 'Home');
@@ -24,7 +22,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'import':
       return t('nav.create-import.title', 'Import');
     case 'alert':
-      return t('nav.create-alert.title', 'New alert rule');
+      return t('nav.create-alert.title', 'Create alert rule');
     case 'starred':
       return t('nav.starred.title', 'Starred');
     case 'starred-empty':
@@ -41,6 +39,8 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.snapshots.title', 'Snapshots');
     case 'dashboards/library-panels':
       return t('nav.library-panels.title', 'Library panels');
+    case 'dashboards/public':
+      return t('nav.public.title', 'Public dashboards');
     case 'dashboards/new':
       return t('nav.new-dashboard.title', 'New dashboard');
     case 'dashboards/folder/new':
@@ -126,7 +126,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'help':
       return t('nav.help.title', 'Help');
     case 'profile/settings':
-      return t('nav.profile/settings.title', 'Preferences');
+      return t('nav.profile/settings.title', 'Profile');
     case 'profile/notifications':
       return t('nav.profile/notifications.title', 'Notification history');
     case 'profile/password':
@@ -148,6 +148,8 @@ export function getNavSubTitle(navId: string | undefined) {
       return config.featureToggles.topnav
         ? t('nav.dashboards.subtitle', 'Create and manage dashboards to visualize your data')
         : undefined;
+    case 'manage-folder':
+      return t('nav.manage-folder.subtitle', 'Manage folder dashboards and permissions');
     case 'dashboards/playlists':
       return t('nav.playlists.subtitle', 'Groups of dashboards that are displayed in a sequence');
     case 'dashboards/snapshots':
@@ -162,7 +164,10 @@ export function getNavSubTitle(navId: string | undefined) {
     case 'alert-list':
       return t('nav.alerting-list.subtitle', 'Rules that determine whether an alert will fire');
     case 'receivers':
-      return t('nav.alerting-receivers.subtitle', 'Decide how your contacts are notified when an alert fires');
+      return t(
+        'nav.alerting-receivers.subtitle',
+        'Choose how to notify your contact points when an alert instance fires'
+      );
     case 'am-routes':
       return t('nav.alerting-am-routes.subtitle', 'Determine how alerts are routed to contact points');
     case 'silences':

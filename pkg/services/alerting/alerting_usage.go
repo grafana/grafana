@@ -29,12 +29,12 @@ type UsageStatsQuerier interface {
 // configured in Grafana.
 func (e *AlertEngine) QueryUsageStats(ctx context.Context) (*UsageStats, error) {
 	cmd := &models.GetAllAlertsQuery{}
-	err := e.AlertStore.GetAllAlertQueryHandler(ctx, cmd)
+	res, err := e.AlertStore.GetAllAlertQueryHandler(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	dsUsage, err := e.mapRulesToUsageStats(ctx, cmd.Result)
+	dsUsage, err := e.mapRulesToUsageStats(ctx, res)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func (e *AlertEngine) mapRulesToUsageStats(ctx context.Context, rules []*models.
 	for _, a := range rules {
 		dss, err := e.parseAlertRuleModel(a.Settings)
 		if err != nil {
-			e.log.Debug("could not parse settings for alert rule", "id", a.Id)
+			e.log.Debug("could not parse settings for alert rule", "id", a.ID)
 			continue
 		}
 
@@ -63,14 +63,14 @@ func (e *AlertEngine) mapRulesToUsageStats(ctx context.Context, rules []*models.
 	// map of datsource types and frequency
 	result := map[string]int{}
 	for k, v := range typeCount {
-		query := &datasources.GetDataSourceQuery{Id: k}
-		err := e.datasourceService.GetDataSource(ctx, query)
+		query := &datasources.GetDataSourceQuery{ID: k}
+		dataSource, err := e.datasourceService.GetDataSource(ctx, query)
 		if err != nil {
 			return map[string]int{}, nil
 		}
 
 		// aggregate datasource usages based on datasource type
-		result[query.Result.Type] += v
+		result[dataSource.Type] += v
 	}
 
 	return result, nil

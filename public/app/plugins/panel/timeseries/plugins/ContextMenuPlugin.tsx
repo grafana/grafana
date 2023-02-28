@@ -151,13 +151,12 @@ export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({
             items: i.items.map((j) => {
               return {
                 ...j,
-                onClick: (e?: React.MouseEvent<HTMLElement>) => {
+                onClick: (e: React.MouseEvent<HTMLElement>) => {
                   if (!coords) {
                     return;
                   }
-                  if (j.onClick) {
-                    j.onClick(e, { coords });
-                  }
+
+                  j.onClick?.(e, { coords });
                 },
               };
             }),

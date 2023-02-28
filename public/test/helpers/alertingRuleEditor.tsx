@@ -1,13 +1,13 @@
 import { render } from '@testing-library/react';
 import React from 'react';
-import { Provider } from 'react-redux';
-import { Router, Route } from 'react-router-dom';
+import { Route } from 'react-router-dom';
 import { byRole, byTestId } from 'testing-library-selector';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
 import RuleEditor from 'app/features/alerting/unified/RuleEditor';
-import { configureStore } from 'app/store/configureStore';
+
+import { TestProvider } from './TestProvider';
 
 export const ui = {
   inputs: {
@@ -36,15 +36,11 @@ export const ui = {
 };
 
 export function renderRuleEditor(identifier?: string) {
-  const store = configureStore();
-
   locationService.push(identifier ? `/alerting/${identifier}/edit` : `/alerting/new`);
 
   return render(
-    <Provider store={store}>
-      <Router history={locationService.getHistory()}>
-        <Route path={['/alerting/new', '/alerting/:id/edit']} component={RuleEditor} />
-      </Router>
-    </Provider>
+    <TestProvider>
+      <Route path={['/alerting/new', '/alerting/:id/edit']} component={RuleEditor} />
+    </TestProvider>
   );
 }

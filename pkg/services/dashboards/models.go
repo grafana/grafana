@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -198,8 +199,6 @@ type SaveDashboardCommand struct {
 	IsFolder     bool             `json:"isFolder"`
 
 	UpdatedAt time.Time
-
-	Result *Dashboard `json:"-"`
 }
 
 type ValidateDashboardCommand struct {
@@ -209,7 +208,6 @@ type ValidateDashboardCommand struct {
 type TrimDashboardCommand struct {
 	Dashboard *simplejson.Json `json:"dashboard" binding:"Required"`
 	Meta      *simplejson.Json `json:"meta"`
-	Result    *Dashboard       `json:"-"`
 }
 
 type DashboardProvisioning struct {
@@ -240,8 +238,6 @@ type GetDashboardQuery struct {
 	ID    int64  // optional if slug is set
 	UID   string // optional if slug is set
 	OrgID int64
-
-	Result *Dashboard
 }
 
 type DashboardTagCloudItem struct {
@@ -250,33 +246,18 @@ type DashboardTagCloudItem struct {
 }
 
 type GetDashboardTagsQuery struct {
-	OrgID  int64
-	Result []*DashboardTagCloudItem
+	OrgID int64
 }
 
 type GetDashboardsQuery struct {
 	DashboardIDs  []int64
 	DashboardUIDs []string
 	OrgID         int64
-	Result        []*Dashboard
 }
 
 type GetDashboardsByPluginIDQuery struct {
 	OrgID    int64
 	PluginID string
-	Result   []*Dashboard
-}
-
-type GetDashboardSlugByIdQuery struct {
-	ID     int64
-	Result string
-}
-
-type GetDashboardsBySlugQuery struct {
-	OrgID int64
-	Slug  string
-
-	Result []*Dashboard
 }
 
 type DashboardRef struct {
@@ -285,8 +266,7 @@ type DashboardRef struct {
 }
 
 type GetDashboardRefByIDQuery struct {
-	ID     int64
-	Result *DashboardRef
+	ID int64
 }
 
 type SaveDashboardDTO struct {
@@ -334,9 +314,10 @@ func FromDashboard(dash *Dashboard) *folder.Folder {
 	return &folder.Folder{
 		ID:        dash.ID,
 		UID:       dash.UID,
+		OrgID:     dash.OrgID,
 		Title:     dash.Title,
 		HasACL:    dash.HasACL,
-		Url:       GetFolderURL(dash.UID, dash.Slug),
+		URL:       GetFolderURL(dash.UID, dash.Slug),
 		Version:   dash.Version,
 		Created:   dash.Created,
 		CreatedBy: dash.CreatedBy,
@@ -358,7 +339,7 @@ type DashboardACL struct {
 	UserID     int64         `xorm:"user_id"`
 	TeamID     int64         `xorm:"team_id"`
 	Role       *org.RoleType // pointer to be nullable
-	Permission models.PermissionType
+	Permission PermissionType
 
 	Created time.Time
 	Updated time.Time
@@ -374,23 +355,23 @@ type DashboardACLInfoDTO struct {
 	Created time.Time `json:"created"`
 	Updated time.Time `json:"updated"`
 
-	UserID         int64                 `json:"userId" xorm:"user_id"`
-	UserLogin      string                `json:"userLogin"`
-	UserEmail      string                `json:"userEmail"`
-	UserAvatarURL  string                `json:"userAvatarUrl" xorm:"user_avatar_url"`
-	TeamID         int64                 `json:"teamId" xorm:"team_id"`
-	TeamEmail      string                `json:"teamEmail"`
-	TeamAvatarURL  string                `json:"teamAvatarUrl" xorm:"team_avatar_url"`
-	Team           string                `json:"team"`
-	Role           *org.RoleType         `json:"role,omitempty"`
-	Permission     models.PermissionType `json:"permission"`
-	PermissionName string                `json:"permissionName"`
-	UID            string                `json:"uid" xorm:"uid"`
-	Title          string                `json:"title"`
-	Slug           string                `json:"slug"`
-	IsFolder       bool                  `json:"isFolder"`
-	URL            string                `json:"url" xorm:"url"`
-	Inherited      bool                  `json:"inherited"`
+	UserID         int64          `json:"userId" xorm:"user_id"`
+	UserLogin      string         `json:"userLogin"`
+	UserEmail      string         `json:"userEmail"`
+	UserAvatarURL  string         `json:"userAvatarUrl" xorm:"user_avatar_url"`
+	TeamID         int64          `json:"teamId" xorm:"team_id"`
+	TeamEmail      string         `json:"teamEmail"`
+	TeamAvatarURL  string         `json:"teamAvatarUrl" xorm:"team_avatar_url"`
+	Team           string         `json:"team"`
+	Role           *org.RoleType  `json:"role,omitempty"`
+	Permission     PermissionType `json:"permission"`
+	PermissionName string         `json:"permissionName"`
+	UID            string         `json:"uid" xorm:"uid"`
+	Title          string         `json:"title"`
+	Slug           string         `json:"slug"`
+	IsFolder       bool           `json:"isFolder"`
+	URL            string         `json:"url" xorm:"url"`
+	Inherited      bool           `json:"inherited"`
 }
 
 func (dto *DashboardACLInfoDTO) hasSameRoleAs(other *DashboardACLInfoDTO) bool {
@@ -418,5 +399,24 @@ func (dto *DashboardACLInfoDTO) IsDuplicateOf(other *DashboardACLInfoDTO) bool {
 type GetDashboardACLInfoListQuery struct {
 	DashboardID int64
 	OrgID       int64
-	Result      []*DashboardACLInfoDTO
+}
+
+type FindPersistedDashboardsQuery struct {
+	Title         string
+	OrgId         int64
+	SignedInUser  *user.SignedInUser
+	IsStarred     bool
+	DashboardIds  []int64
+	DashboardUIDs []string
+	Type          string
+	FolderIds     []int64
+	Tags          []string
+	Limit         int64
+	Page          int64
+	Permission    PermissionType
+	Sort          model.SortOption
+
+	Filters []interface{}
+
+	Result model.HitList
 }

@@ -10,13 +10,14 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -30,14 +31,16 @@ var (
 		{Action: dashboards.ActionDashboardsWrite, Scope: dashboards.ScopeFoldersAll},
 	}
 	// DashboardServiceImpl implements the DashboardService interface
-	_ dashboards.DashboardService = (*DashboardServiceImpl)(nil)
+	_ dashboards.DashboardService             = (*DashboardServiceImpl)(nil)
+	_ dashboards.DashboardProvisioningService = (*DashboardServiceImpl)(nil)
+	_ dashboards.PluginService                = (*DashboardServiceImpl)(nil)
 )
 
 type DashboardServiceImpl struct {
 	cfg                  *setting.Cfg
 	log                  log.Logger
 	dashboardStore       dashboards.Store
-	folderStore          dashboards.FolderStore
+	folderStore          folder.FolderStore
 	dashAlertExtractor   alerting.DashAlertExtractor
 	features             featuremgmt.FeatureToggles
 	folderPermissions    accesscontrol.FolderPermissionsService
@@ -45,13 +48,15 @@ type DashboardServiceImpl struct {
 	ac                   accesscontrol.AccessControl
 }
 
+// This is the uber service that implements a three smaller services
 func ProvideDashboardService(
-	cfg *setting.Cfg, dashboardStore dashboards.Store, folderStore dashboards.FolderStore, dashAlertExtractor alerting.DashAlertExtractor,
+	cfg *setting.Cfg, dashboardStore dashboards.Store, folderStore folder.FolderStore, dashAlertExtractor alerting.DashAlertExtractor,
 	features featuremgmt.FeatureToggles, folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, ac accesscontrol.AccessControl,
+	folderSvc folder.Service,
 ) *DashboardServiceImpl {
-	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardIDScopeResolver(dashboardStore, folderStore))
-	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(dashboardStore, folderStore))
+	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardIDScopeResolver(dashboardStore, folderStore, folderSvc))
+	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(dashboardStore, folderStore, folderSvc))
 
 	return &DashboardServiceImpl{
 		cfg:                  cfg,
@@ -396,7 +401,7 @@ func (dr *DashboardServiceImpl) MakeUserAdmin(ctx context.Context, orgID int64, 
 			OrgID:       orgID,
 			DashboardID: dashboardID,
 			UserID:      userID,
-			Permission:  models.PERMISSION_ADMIN,
+			Permission:  dashboards.PERMISSION_ADMIN,
 			Created:     time.Now(),
 			Updated:     time.Now(),
 		},
@@ -408,7 +413,7 @@ func (dr *DashboardServiceImpl) MakeUserAdmin(ctx context.Context, orgID int64, 
 				OrgID:       orgID,
 				DashboardID: dashboardID,
 				Role:        &rtEditor,
-				Permission:  models.PERMISSION_EDIT,
+				Permission:  dashboards.PERMISSION_EDIT,
 				Created:     time.Now(),
 				Updated:     time.Now(),
 			},
@@ -416,7 +421,7 @@ func (dr *DashboardServiceImpl) MakeUserAdmin(ctx context.Context, orgID int64, 
 				OrgID:       orgID,
 				DashboardID: dashboardID,
 				Role:        &rtViewer,
-				Permission:  models.PERMISSION_VIEW,
+				Permission:  dashboards.PERMISSION_VIEW,
 				Created:     time.Now(),
 				Updated:     time.Now(),
 			},
@@ -482,7 +487,7 @@ func (dr *DashboardServiceImpl) UnprovisionDashboard(ctx context.Context, dashbo
 	return dr.dashboardStore.UnprovisionDashboard(ctx, dashboardId)
 }
 
-func (dr *DashboardServiceImpl) GetDashboardsByPluginID(ctx context.Context, query *dashboards.GetDashboardsByPluginIDQuery) error {
+func (dr *DashboardServiceImpl) GetDashboardsByPluginID(ctx context.Context, query *dashboards.GetDashboardsByPluginIDQuery) ([]*dashboards.Dashboard, error) {
 	return dr.dashboardStore.GetDashboardsByPluginID(ctx, query)
 }
 
@@ -492,14 +497,14 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 		var permissions []accesscontrol.SetResourcePermissionCommand
 		if !provisioned && dto.User.IsRealUser() && !dto.User.IsAnonymous {
 			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
-				UserID: dto.User.UserID, Permission: models.PERMISSION_ADMIN.String(),
+				UserID: dto.User.UserID, Permission: dashboards.PERMISSION_ADMIN.String(),
 			})
 		}
 
 		if !inFolder {
 			permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
-				{BuiltinRole: string(org.RoleEditor), Permission: models.PERMISSION_EDIT.String()},
-				{BuiltinRole: string(org.RoleViewer), Permission: models.PERMISSION_VIEW.String()},
+				{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_EDIT.String()},
+				{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_VIEW.String()},
 			}...)
 		}
 
@@ -521,24 +526,23 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 	return nil
 }
 
-func (dr *DashboardServiceImpl) GetDashboard(ctx context.Context, query *dashboards.GetDashboardQuery) error {
-	_, err := dr.dashboardStore.GetDashboard(ctx, query)
-	return err
+func (dr *DashboardServiceImpl) GetDashboard(ctx context.Context, query *dashboards.GetDashboardQuery) (*dashboards.Dashboard, error) {
+	return dr.dashboardStore.GetDashboard(ctx, query)
 }
 
-func (dr *DashboardServiceImpl) GetDashboardUIDByID(ctx context.Context, query *dashboards.GetDashboardRefByIDQuery) error {
+func (dr *DashboardServiceImpl) GetDashboardUIDByID(ctx context.Context, query *dashboards.GetDashboardRefByIDQuery) (*dashboards.DashboardRef, error) {
 	return dr.dashboardStore.GetDashboardUIDByID(ctx, query)
 }
 
-func (dr *DashboardServiceImpl) GetDashboards(ctx context.Context, query *dashboards.GetDashboardsQuery) error {
+func (dr *DashboardServiceImpl) GetDashboards(ctx context.Context, query *dashboards.GetDashboardsQuery) ([]*dashboards.Dashboard, error) {
 	return dr.dashboardStore.GetDashboards(ctx, query)
 }
 
-func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
 	return dr.dashboardStore.FindDashboards(ctx, query)
 }
 
-func (dr *DashboardServiceImpl) SearchDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) error {
+func (dr *DashboardServiceImpl) SearchDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) error {
 	res, err := dr.FindDashboards(ctx, query)
 	if err != nil {
 		return err
@@ -549,25 +553,25 @@ func (dr *DashboardServiceImpl) SearchDashboards(ctx context.Context, query *mod
 	return nil
 }
 
-func getHitType(item dashboards.DashboardSearchProjection) models.HitType {
-	var hitType models.HitType
+func getHitType(item dashboards.DashboardSearchProjection) model.HitType {
+	var hitType model.HitType
 	if item.IsFolder {
-		hitType = models.DashHitFolder
+		hitType = model.DashHitFolder
 	} else {
-		hitType = models.DashHitDB
+		hitType = model.DashHitDB
 	}
 
 	return hitType
 }
 
-func makeQueryResult(query *models.FindPersistedDashboardsQuery, res []dashboards.DashboardSearchProjection) {
-	query.Result = make([]*models.Hit, 0)
-	hits := make(map[int64]*models.Hit)
+func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashboards.DashboardSearchProjection) {
+	query.Result = make([]*model.Hit, 0)
+	hits := make(map[int64]*model.Hit)
 
 	for _, item := range res {
 		hit, exists := hits[item.ID]
 		if !exists {
-			hit = &models.Hit{
+			hit = &model.Hit{
 				ID:          item.ID,
 				UID:         item.UID,
 				Title:       item.Title,
@@ -598,19 +602,19 @@ func makeQueryResult(query *models.FindPersistedDashboardsQuery, res []dashboard
 	}
 }
 
-func (dr *DashboardServiceImpl) GetDashboardACLInfoList(ctx context.Context, query *dashboards.GetDashboardACLInfoListQuery) error {
+func (dr *DashboardServiceImpl) GetDashboardACLInfoList(ctx context.Context, query *dashboards.GetDashboardACLInfoListQuery) ([]*dashboards.DashboardACLInfoDTO, error) {
 	return dr.dashboardStore.GetDashboardACLInfoList(ctx, query)
 }
 
-func (dr *DashboardServiceImpl) HasAdminPermissionInDashboardsOrFolders(ctx context.Context, query *models.HasAdminPermissionInDashboardsOrFoldersQuery) error {
+func (dr *DashboardServiceImpl) HasAdminPermissionInDashboardsOrFolders(ctx context.Context, query *folder.HasAdminPermissionInDashboardsOrFoldersQuery) (bool, error) {
 	return dr.dashboardStore.HasAdminPermissionInDashboardsOrFolders(ctx, query)
 }
 
-func (dr *DashboardServiceImpl) HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error {
+func (dr *DashboardServiceImpl) HasEditPermissionInFolders(ctx context.Context, query *folder.HasEditPermissionInFoldersQuery) (bool, error) {
 	return dr.dashboardStore.HasEditPermissionInFolders(ctx, query)
 }
 
-func (dr *DashboardServiceImpl) GetDashboardTags(ctx context.Context, query *dashboards.GetDashboardTagsQuery) error {
+func (dr *DashboardServiceImpl) GetDashboardTags(ctx context.Context, query *dashboards.GetDashboardTagsQuery) ([]*dashboards.DashboardTagCloudItem, error) {
 	return dr.dashboardStore.GetDashboardTags(ctx, query)
 }
 

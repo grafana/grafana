@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/fatih/color"
 	"github.com/urfave/cli/v2"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -99,8 +98,6 @@ func runPluginCommand(command func(commandLine utils.CommandLine) error) func(co
 		if err := command(cmd); err != nil {
 			return err
 		}
-
-		logger.Info(color.GreenString("Please restart Grafana after installing plugins. Refer to Grafana documentation for instructions if necessary.\n\n"))
 		return nil
 	}
 }
@@ -139,7 +136,7 @@ var pluginCommands = []*cli.Command{
 		Action:  runPluginCommand(cmd.upgradeAllCommand),
 	}, {
 		Name:   "ls",
-		Usage:  "list all installed plugins",
+		Usage:  "list installed plugins (excludes core plugins)",
 		Action: runPluginCommand(cmd.lsCommand),
 	}, {
 		Name:    "uninstall",

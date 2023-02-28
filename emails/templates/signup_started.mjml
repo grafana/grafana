@@ -2,7 +2,7 @@
   <mj-head>
     <!-- ⬇ Don't forget to specifify an email subject below! ⬇ -->
     <mj-title>
-      {{ Subject .Subject "Welcome to Grafana, please complete your sign up!" }}
+      {{ Subject .Subject .TemplateData "Welcome to Grafana, please complete your sign up!" }}
     </mj-title>
     <mj-include path="./partials/layout/head.mjml" />
   </mj-head>
