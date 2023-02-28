@@ -64,6 +64,7 @@ export interface FieldDisplay {
   rowIndex?: number; // only filled in when the value is from a row (ie, not a reduction)
   getLinks?: () => LinkModel[];
   hasLinks: boolean;
+  fieldType?: FieldType;
 }
 
 export interface GetFieldDisplayValuesOptions {
@@ -80,6 +81,9 @@ export const DEFAULT_FIELD_DISPLAY_VALUES_LIMIT = 25;
 
 export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): FieldDisplay[] => {
   const { replaceVariables, reduceOptions, timeZone, theme } = options;
+  console.log('🚀 ~ file: fieldDisplay.ts:83 ~ getFieldDisplayValues ~ options:', options);
+  // console.log(options.fieldConfig.defaults, 'default options');
+
   const calcs = reduceOptions.calcs.length ? reduceOptions.calcs : [ReducerID.last];
 
   const values: FieldDisplay[] = [];
@@ -108,6 +112,8 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
 
     for (let i = 0; i < dataFrame.fields.length && !hitLimit; i++) {
       const field = dataFrame.fields[i];
+      console.log('🚀 ~ file: fieldDisplay.ts:111 ~ getFieldDisplayValues ~ field:', field);
+      const { type: fieldType } = field;
       const fieldLinksSupplier = field.getLinks;
 
       // To filter out time field, need an option for this
@@ -155,6 +161,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
           field.state = setIndexForPaletteColor(field, values.length);
 
           const displayValue = display(field.values.get(j));
+          // console.log(displayValue, 'display value');
           const rowName = getSmartDisplayNameForRow(dataFrame, field, j, replaceVariables, scopedVars);
           const overrideColor = lookupRowColorFromOverride(rowName, options.fieldConfig, theme);
 
@@ -176,6 +183,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
                   })
               : () => [],
             hasLinks: hasLinks(field),
+            fieldType,
           });
 
           if (values.length >= limit) {
@@ -229,6 +237,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
                   })
               : () => [],
             hasLinks: hasLinks(field),
+            fieldType,
           });
         }
       }
@@ -239,6 +248,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
     values.push(createNoValuesFieldDisplay(options));
   }
 
+  // console.log(values, 'values');
   return values;
 };
 

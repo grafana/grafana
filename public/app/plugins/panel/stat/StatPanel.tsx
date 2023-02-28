@@ -24,8 +24,8 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
     menuProps: DataLinksContextMenuApi
   ): JSX.Element => {
     const { timeRange, options } = this.props;
-    // console.log("🚀 ~ file: StatPanel.tsx:27 ~ StatPanel ~ this.props:", this.props)
-    console.log(this.props.fieldConfig.defaults.custom, 'custome config');
+    // console.log('🚀 ~ file: StatPanel.tsx:27 ~ StatPanel ~ this.props:', this.props);
+    // console.log(this.props.fieldConfig.defaults.custom, 'custome config');
     const { value, alignmentFactors, width, height, count, orientation } = valueProps;
     const { openMenu, targetClassName } = menuProps;
     let sparkline = value.sparkline;
@@ -84,12 +84,17 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
 
   getValues = (): FieldDisplay[] => {
     const { data, options, replaceVariables, fieldConfig, timeZone } = this.props;
+    // Test if there is a custom unit to prepend
+    const customPrefix = fieldConfig.defaults?.custom?.prependUnit;
+
+    // console.log(fieldConfig, 'fieldconfig');
 
     let globalRange: NumericRange | undefined = undefined;
 
     for (let frame of data.series) {
       for (let field of frame.fields) {
         let { config } = field;
+        // console.log(config, 'config');
         // mostly copied from fieldOverrides, since they are skipped during streaming
         // Set the Min/Max value automatically
         if (field.type === FieldType.number) {
@@ -107,7 +112,7 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
       }
     }
 
-    return getFieldDisplayValues({
+    const fieldDisplayValues = getFieldDisplayValues({
       fieldConfig,
       reduceOptions: options.reduceOptions,
       replaceVariables,
@@ -116,7 +121,26 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
       sparkline: options.graphMode !== BigValueGraphMode.None,
       timeZone,
     });
+
+    const updatedVals = this.formatValueForCustomPrefix(fieldDisplayValues, customPrefix);
+
+    console.log(updatedVals);
+
+    return updatedVals;
   };
+
+  formatValueForCustomPrefix(fieldValues: FieldDisplay[], customPrefix: string): FieldDisplay[] {
+    return fieldValues.map((fieldValue) => {
+      const { fieldType, display } = fieldValue;
+      if (fieldType === FieldType.number) {
+        const previousPrefix = display.prefix ?? '';
+        const updatedPrefix = customPrefix + previousPrefix;
+        const updatedDisplay = { ...display, prefix: updatedPrefix };
+        return { ...fieldValue, display: updatedDisplay };
+      }
+      return fieldValue;
+    });
+  }
 
   render() {
     const { height, options, width, data, renderCounter } = this.props;
