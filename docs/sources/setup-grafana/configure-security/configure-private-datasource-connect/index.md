@@ -93,52 +93,9 @@ To set up a private data source connection, follow these steps:
 
 1. Connect to Grafana Cloud using the ssh or the pdc agent in the same directory as your private key, and the certificate and known_hosts file Grafana Labs provided to you.
 
-   There are two options for connecting: SSH, or the PDC Agent Docker image.
-
-   - **Option 1:** Using SSH
-
-     ```
-     $ ssh -i ${SLUG} ${SLUG}@${PDC_GATEWAY} -p 22 -o UserKnownHostsFile=./known_hosts -o CertificateFile=${SLUG}-cert.pub -R 0 -vv
-     ```
-
-     The flags used in the ssh command are as follows:
-
-     - -i ${SLUG}: The private key
-     - -p 22: The port to connect to
-     - -o [UserKnownHostsFile](https://man.openbsd.org/ssh_config.5#UserKnownHostsFile): The list of Grafana PDC servers to trust when establishing a connection for the first time
-     - -o [CertificateFile](https://man.openbsd.org/ssh_config.5#CertificateFile): Your public certificate
-     - -R 0: Runs ssh with remote port forwarding, which enables it to act as a socks server
-     - -vv (optional): Sets the verbosity to debug2, so hostnames can be seen. It can be set to -v, if this is not desired.
-     - -o [PermitRemoteOpen](https://man.openbsd.org/ssh_config.5#PermitRemoteOpen) (optional): This can be specified to restrict the destinations reachable by Grafana Cloud over this connection.
-
-     Refer to the [OpenSSH documentation](https://linux.die.net/man/1/ssh) for a complete list of available ssh command flags.
-
-     Additionally:
-
-     - ${PDC_GATEWAY}: The URL of the private data source connect in Grafana Cloud. The Grafana team will give you this URL. The URL follows the format `grafana-private-datasource-connect-&lt;cluster>.grafana.net`
-     - ${SLUG}: The name of the stack you want to connect to your data source. For example, the stack `test.grafana.net` has the slug `test.`
-
-   - **Option 2:** Using the [pdc-agent](https://github.com/grafana/pdc-agent) docker [image](https://hub.docker.com/r/grafana/pdc-agent/tags)
-
-     ```
-     docker run --rm --name pdc-agent -v $(pwd):/etc/keys grafana/pdc-agent:latest -i /etc/keys/${SLUG} ${SLUG}@host.docker.internal -p 2222 -o BatchMode=yes -o UserKnownHostsFile=/etc/keys/known_hosts -o CertificateFile=/etc/keys/${SLUG}-cert.pub -R 0 -v
-     ```
-
-     The flags used on this are a combination of:
-
-     - –-rm: Remove the docker container when it exits
-     - --name pdc-agent: This names the docker process pdc-agent
-     - -v $(pwd):/etc/keys: Copies the working directory into the /etc/keys directory in the Docker container
-     - -i /etc/keys/${SLUG}: The private key
-     - -p 2222: The docker container port
-     - -o [BatchMode](https://man.openbsd.org/ssh_config.5#BatchMode): Skips the passphrase checking
-     - -o [UserKnownHostsFile](https://man.openbsd.org/ssh_config.5#UserKnownHostsFile): The list of Grafana PDC servers to trust when establishing a connection for the first time
-     - -o [CertificateFile](https://man.openbsd.org/ssh_config.5#CertificateFile): Your public certificate
-     - -R 0: Runs ssh with remote port forwarding (which allows it to act as a socks server)
-     - -v (optional): Sets the verbosity to debug.
-     - -o [PermitRemoteOpen](https://man.openbsd.org/ssh_config.5#PermitRemoteOpen) (optional): This can be specified to restrict the destinations reachable by Grafana Cloud over this connection.
-
-   - **Option 3:** Using Kubernetes
+   There are three options for connecting: using Kubernetes, SSH, or the PDC Agent Docker image.
+   
+   - **Option 1:** Using Kubernetes
 
      Create a kubernetes secret with the private key, and the certificate and known_hosts file Grafana Labs provided to you.
 
@@ -161,6 +118,49 @@ To set up a private data source connection, follow these steps:
      - ${PDC_GATEWAY}: The URL of the private data source connect in Grafana Cloud. The Grafana team will give you this URL. The URL follows the format `grafana-private-datasource-connect-<cluster>.grafana.net`
      - ${SLUG}: The name of the stack you want to connect to your data source. For example, the stack `test.grafana.net` has the slug `test.`
      - ${NAMESPACE}: The kubernetes namespace for the pdc-agent.
+
+   - **Option 2:** Using SSH
+
+     ```
+     $ ssh -i ${SLUG} ${SLUG}@${PDC_GATEWAY} -p 22 -o UserKnownHostsFile=./known_hosts -o CertificateFile=${SLUG}-cert.pub -R 0 -vv
+     ```
+
+     The flags used in the ssh command are as follows:
+
+     - -i ${SLUG}: The private key
+     - -p 22: The port to connect to
+     - -o [UserKnownHostsFile](https://man.openbsd.org/ssh_config.5#UserKnownHostsFile): The list of Grafana PDC servers to trust when establishing a connection for the first time
+     - -o [CertificateFile](https://man.openbsd.org/ssh_config.5#CertificateFile): Your public certificate
+     - -R 0: Runs ssh with remote port forwarding, which enables it to act as a socks server
+     - -vv (optional): Sets the verbosity to debug2, so hostnames can be seen. It can be set to -v, if this is not desired.
+     - -o [PermitRemoteOpen](https://man.openbsd.org/ssh_config.5#PermitRemoteOpen) (optional): This can be specified to restrict the destinations reachable by Grafana Cloud over this connection.
+
+     Refer to the [OpenSSH documentation](https://linux.die.net/man/1/ssh) for a complete list of available ssh command flags.
+
+     Additionally:
+
+     - ${PDC_GATEWAY}: The URL of the private data source connect in Grafana Cloud. The Grafana team will give you this URL. The URL follows the format `grafana-private-datasource-connect-&lt;cluster>.grafana.net`
+     - ${SLUG}: The name of the stack you want to connect to your data source. For example, the stack `test.grafana.net` has the slug `test.`
+
+   - **Option 3:** Using the [pdc-agent](https://github.com/grafana/pdc-agent) docker [image](https://hub.docker.com/r/grafana/pdc-agent/tags)
+
+     ```
+     docker run --rm --name pdc-agent -v $(pwd):/etc/keys grafana/pdc-agent:latest -i /etc/keys/${SLUG} ${SLUG}@host.docker.internal -p 2222 -o BatchMode=yes -o UserKnownHostsFile=/etc/keys/known_hosts -o CertificateFile=/etc/keys/${SLUG}-cert.pub -R 0 -v
+     ```
+
+     The flags used on this are a combination of:
+
+     - –-rm: Remove the docker container when it exits
+     - --name pdc-agent: This names the docker process pdc-agent
+     - -v $(pwd):/etc/keys: Copies the working directory into the /etc/keys directory in the Docker container
+     - -i /etc/keys/${SLUG}: The private key
+     - -p 2222: The docker container port
+     - -o [BatchMode](https://man.openbsd.org/ssh_config.5#BatchMode): Skips the passphrase checking
+     - -o [UserKnownHostsFile](https://man.openbsd.org/ssh_config.5#UserKnownHostsFile): The list of Grafana PDC servers to trust when establishing a connection for the first time
+     - -o [CertificateFile](https://man.openbsd.org/ssh_config.5#CertificateFile): Your public certificate
+     - -R 0: Runs ssh with remote port forwarding (which allows it to act as a socks server)
+     - -v (optional): Sets the verbosity to debug.
+     - -o [PermitRemoteOpen](https://man.openbsd.org/ssh_config.5#PermitRemoteOpen) (optional): This can be specified to restrict the destinations reachable by Grafana Cloud over this connection.
 
 1. (Optional) For high availability, you can install additional instances of the agent on your network with the same configuration.
 
