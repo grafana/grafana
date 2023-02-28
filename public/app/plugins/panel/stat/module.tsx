@@ -9,9 +9,10 @@ import { defaultPanelOptions, PanelOptions } from './panelcfg.gen';
 import { StatSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<PanelOptions>(StatPanel)
+  // Add a custom selection field for custom stat prefix
   .useFieldConfig({
-    useCustomConfig(builder) {
-      return builder.addSelect({
+    useCustomConfig: (builder) =>
+      builder.addSelect({
         path: 'prependUnit',
         name: 'Prepend common unit',
         description: 'Prepend a common unit along with standard formatting options',
@@ -19,9 +20,8 @@ export const plugin = new PanelPlugin<PanelOptions>(StatPanel)
         settings: {
           options: getSelectablePrefixValues(),
         },
-        defaultValue: '',
-      });
-    },
+        defaultValue: undefined,
+      }),
   })
   .setPanelOptions((builder) => {
     const mainCategory = ['Stat styles'];

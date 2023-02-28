@@ -10,6 +10,7 @@ import {
   SelectableValue,
   FieldDisplay,
   FieldType,
+  FieldConfigEditorBuilder,
 } from '@grafana/data';
 import { SingleStatBaseOptions, VizOrientation } from '@grafana/schema';
 
@@ -119,6 +120,7 @@ export function addOrientationOption<T extends SingleStatBaseOptions>(
   });
 }
 
+// Build the SelectableValues for the panel dropdown
 export function getSelectablePrefixValues(): SelectableValue[] {
   const selectableFormattingPrefixes = [];
   const prefixOptions = getStatPrefixes().prefixes;
@@ -131,10 +133,13 @@ export function getSelectablePrefixValues(): SelectableValue[] {
   return selectableFormattingPrefixes;
 }
 
+// Custom stat panel prefixes; add more when use cases arise
 function getStatPrefixes(): CustomStatFormats {
   return {
     prefixes: {
       remove: { description: 'Remove Custom Prefix', symbol: '' },
+      increase: { description: 'Increase (\u2191)', symbol: '\u2191' },
+      decrease: { description: 'Decrease (\u2193)', symbol: '\u2193' },
       lessThan: { description: 'Less than (<)', symbol: '<' },
       greaterThan: { description: 'Greater than (>)', symbol: '>' },
       approximately: { description: 'Approximately (~)', symbol: '~' },
@@ -148,19 +153,26 @@ function getStatPrefixes(): CustomStatFormats {
 }
 
 export function formatValueForCustomPrefix(fieldValues: FieldDisplay[], prefix: string): FieldDisplay[] {
+  console.log('🚀 ~ file: common.ts:151 ~ formatValueForCustomPrefix ~ prefix:', prefix);
+  // Grab all custom stat panel prefix objects
   const customPrefixes = getStatPrefixes().prefixes;
+  // Built list of only the prefix symbols; used for stripping previous symbols when new prefix is chosen
   const prefixList = Object.keys(customPrefixes).map((key) => customPrefixes[key].symbol);
+  // The user-chosen stat prefix
   const chosenPrefix = customPrefixes[prefix]?.symbol ?? '';
 
+  // Test all field values for FieldType.number
   return fieldValues.map((fieldValue) => {
     const { fieldType, display } = fieldValue;
+    // `FieldType.number` is the only type on which unit formatting is enforced
     if (fieldType === FieldType.number) {
       const previousPrefix = display.prefix ?? '';
-      console.log(previousPrefix, 'previous prefix');
+      // Strip all previous custom stat formatting
       const strippedPreviousPrefix = stripStringOfValues(previousPrefix, prefixList);
+      // Append the new prefix; if `remove` was chosen, `chosenPrefix` will resolve to an empty string
       const updatedPrefix = chosenPrefix + strippedPreviousPrefix;
+      // Put everything back together
       const updatedDisplay = { ...display, prefix: updatedPrefix };
-      console.log('🚀 ~ file: common.ts:163 ~ returnfieldValues.map ~ updatedPrefix:', updatedPrefix);
       return { ...fieldValue, display: updatedDisplay };
     }
     return fieldValue;
@@ -168,12 +180,15 @@ export function formatValueForCustomPrefix(fieldValues: FieldDisplay[], prefix: 
 }
 
 function stripStringOfValues(prefixToStrip: string, itemsToStrip: string[]): string {
+  // Early return if no prefixes exist
   if (prefixToStrip === '') {
     return prefixToStrip;
   }
 
+  // Test for any previous prefixes and remove them
   for (let i = 0; i < itemsToStrip.length; i++) {
     prefixToStrip = prefixToStrip.replace(new RegExp(itemsToStrip[i], 'g'), '');
   }
+
   return prefixToStrip;
 }

@@ -86,7 +86,7 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
   getValues = (): FieldDisplay[] => {
     const { data, options, replaceVariables, fieldConfig, timeZone } = this.props;
     // Test if there is a custom unit to prepend
-    const customPrefix = fieldConfig.defaults?.custom?.prependUnit;
+    const customPrefix = fieldConfig.defaults?.custom?.prependUnit ?? '';
 
     // console.log(fieldConfig, 'fieldconfig');
 
