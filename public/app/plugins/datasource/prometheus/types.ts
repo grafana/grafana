@@ -13,6 +13,7 @@ export interface PromQuery extends GenPromQuery {
   legendFormat?: string;
   valueWithRefId?: boolean;
   requestId?: string;
+  query?: string;
 }
 
 export interface PromOptions extends DataSourceJsonData {
@@ -167,6 +168,7 @@ export enum PromVariableQueryType {
 
 export interface PromVariableQuery extends DataQuery {
   query?: string;
+  expr?: string;
   qryType?: PromVariableQueryType;
   label?: string;
   metric?: string;
