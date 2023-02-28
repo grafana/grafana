@@ -11,12 +11,11 @@ import (
 )
 
 type ListMetricsService struct {
-	metricsAPI            models.MetricsClientProvider
-	isCrossAccountEnabled bool
+	models.MetricsClientProvider
 }
 
-func NewListMetricsService(metricsClient models.MetricsClientProvider, isCrossAccountEnabled bool) models.ListMetricsProvider {
-	return &ListMetricsService{metricsClient, isCrossAccountEnabled}
+func NewListMetricsService(metricsClient models.MetricsClientProvider) models.ListMetricsProvider {
+	return &ListMetricsService{metricsClient}
 }
 
 func (l *ListMetricsService) GetDimensionKeysByDimensionFilter(r resources.DimensionKeysRequest) ([]resources.ResourceResponse[string], error) {
@@ -28,9 +27,9 @@ func (l *ListMetricsService) GetDimensionKeysByDimensionFilter(r resources.Dimen
 		input.MetricName = aws.String(r.MetricName)
 	}
 	setDimensionFilter(input, r.DimensionFilter)
-	l.setAccount(input, r.ResourceRequest)
+	setAccount(input, r.ResourceRequest)
 
-	metrics, err := l.metricsAPI.ListMetricsWithPageLimit(input)
+	metrics, err := l.ListMetricsWithPageLimit(input)
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "unable to call AWS API", err)
 	}
@@ -71,9 +70,9 @@ func (l *ListMetricsService) GetDimensionValuesByDimensionFilter(r resources.Dim
 		MetricName: aws.String(r.MetricName),
 	}
 	setDimensionFilter(input, r.DimensionFilter)
-	l.setAccount(input, r.ResourceRequest)
+	setAccount(input, r.ResourceRequest)
 
-	metrics, err := l.metricsAPI.ListMetricsWithPageLimit(input)
+	metrics, err := l.ListMetricsWithPageLimit(input)
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "unable to call AWS API", err)
 	}
@@ -101,8 +100,8 @@ func (l *ListMetricsService) GetDimensionValuesByDimensionFilter(r resources.Dim
 
 func (l *ListMetricsService) GetMetricsByNamespace(r resources.MetricsRequest) ([]resources.ResourceResponse[resources.Metric], error) {
 	input := &cloudwatch.ListMetricsInput{Namespace: aws.String(r.Namespace)}
-	l.setAccount(input, r.ResourceRequest)
-	metrics, err := l.metricsAPI.ListMetricsWithPageLimit(input)
+	setAccount(input, r.ResourceRequest)
+	metrics, err := l.ListMetricsWithPageLimit(input)
 	if err != nil {
 		return nil, err
 	}
@@ -132,11 +131,11 @@ func setDimensionFilter(input *cloudwatch.ListMetricsInput, dimensionFilter []*r
 	}
 }
 
-func (l *ListMetricsService) setAccount(input *cloudwatch.ListMetricsInput, r *resources.ResourceRequest) {
-	if l.isCrossAccountEnabled {
+func setAccount(input *cloudwatch.ListMetricsInput, r *resources.ResourceRequest) {
+	if r != nil && r.AccountId != nil {
 		input.IncludeLinkedAccounts = aws.Bool(true)
-	}
-	if !r.ShouldTargetAllAccounts() {
-		input.OwningAccount = r.AccountId
+		if !r.ShouldTargetAllAccounts() {
+			input.OwningAccount = r.AccountId
+		}
 	}
 }
