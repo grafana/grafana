@@ -127,6 +127,11 @@ export interface HeatmapCalculationBucketConfig {
   value?: string;
 }
 
+export enum LogsSortOrder {
+  Ascending = 'Ascending',
+  Descending = 'Descending',
+}
+
 /**
  * TODO docs
  */
@@ -718,6 +723,13 @@ export interface FrameGeometrySource {
 export interface HeatmapCalculationOptions {
   xBuckets?: HeatmapCalculationBucketConfig;
   yBuckets?: HeatmapCalculationBucketConfig;
+}
+
+export enum LogsDedupStrategy {
+  exact = 'exact',
+  none = 'none',
+  numbers = 'numbers',
+  signature = 'signature',
 }
 
 export interface Labels {}

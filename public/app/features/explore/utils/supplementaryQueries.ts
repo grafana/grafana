@@ -17,7 +17,7 @@ export const loadSupplementaryQueries = (): SupplementaryQueries => {
   // We default to true for all supp queries
   let supplementaryQueries: SupplementaryQueries = {
     [SupplementaryQueryType.LogsVolume]: { enabled: true },
-    [SupplementaryQueryType.LogsSample]: { enabled: true },
+    [SupplementaryQueryType.LogsSample]: { enabled: false },
   };
 
   for (const type of supplementaryQueryTypes) {
@@ -34,6 +34,11 @@ export const loadSupplementaryQueries = (): SupplementaryQueries => {
         localStorage.removeItem(oldLogsVolumeEnabledKey);
         continue;
       }
+    }
+
+    // We want to skip LogsSample and default it to false for now to trigger it only on user action
+    if (type === SupplementaryQueryType.LogsSample) {
+      continue;
     }
 
     // Only if "false" value in local storage, we disable it

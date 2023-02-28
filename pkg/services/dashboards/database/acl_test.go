@@ -7,13 +7,13 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -45,9 +45,9 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 		err := updateDashboardACL(t, dashboardStore, savedFolder.ID, dashboards.DashboardACL{
 			OrgID:       1,
 			DashboardID: savedFolder.ID,
-			Permission:  models.PERMISSION_EDIT,
+			Permission:  dashboards.PERMISSION_EDIT,
 		})
-		require.Equal(t, models.ErrDashboardACLInfoMissing, err)
+		require.Equal(t, dashboards.ErrDashboardACLInfoMissing, err)
 	})
 
 	t.Run("Folder acl should include default acl", func(t *testing.T) {
@@ -103,7 +103,7 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 				OrgID:       1,
 				UserID:      currentUser.ID,
 				DashboardID: savedFolder.ID,
-				Permission:  models.PERMISSION_EDIT,
+				Permission:  dashboards.PERMISSION_EDIT,
 			})
 			require.Nil(t, err)
 
@@ -122,7 +122,7 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 					OrgID:       1,
 					UserID:      currentUser.ID,
 					DashboardID: childDash.ID,
-					Permission:  models.PERMISSION_EDIT,
+					Permission:  dashboards.PERMISSION_EDIT,
 				})
 				require.Nil(t, err)
 
@@ -147,7 +147,7 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 				OrgID:       1,
 				UserID:      currentUser.ID,
 				DashboardID: childDash.ID,
-				Permission:  models.PERMISSION_EDIT,
+				Permission:  dashboards.PERMISSION_EDIT,
 			})
 			require.Nil(t, err)
 
@@ -174,7 +174,7 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 				OrgID:       1,
 				UserID:      currentUser.ID,
 				DashboardID: savedFolder.ID,
-				Permission:  models.PERMISSION_EDIT,
+				Permission:  dashboards.PERMISSION_EDIT,
 			})
 			require.Nil(t, err)
 
@@ -183,7 +183,7 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 			require.Nil(t, err)
 
 			require.Equal(t, savedFolder.ID, q1Result[0].DashboardID)
-			require.Equal(t, models.PERMISSION_EDIT, q1Result[0].Permission)
+			require.Equal(t, dashboards.PERMISSION_EDIT, q1Result[0].Permission)
 			require.Equal(t, "Edit", q1Result[0].PermissionName)
 			require.Equal(t, currentUser.ID, q1Result[0].UserID)
 			require.Equal(t, currentUser.Login, q1Result[0].UserLogin)
@@ -208,7 +208,7 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 				OrgID:       1,
 				TeamID:      team1.ID,
 				DashboardID: savedFolder.ID,
-				Permission:  models.PERMISSION_EDIT,
+				Permission:  dashboards.PERMISSION_EDIT,
 			})
 			require.Nil(t, err)
 
@@ -216,7 +216,7 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 			q1Result, err := dashboardStore.GetDashboardACLInfoList(context.Background(), q1)
 			require.Nil(t, err)
 			require.Equal(t, savedFolder.ID, q1Result[0].DashboardID)
-			require.Equal(t, models.PERMISSION_EDIT, q1Result[0].Permission)
+			require.Equal(t, dashboards.PERMISSION_EDIT, q1Result[0].Permission)
 			require.Equal(t, team1.ID, q1Result[0].TeamID)
 		})
 
@@ -229,7 +229,7 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 				OrgID:       1,
 				TeamID:      team1.ID,
 				DashboardID: savedFolder.ID,
-				Permission:  models.PERMISSION_ADMIN,
+				Permission:  dashboards.PERMISSION_ADMIN,
 			})
 			require.Nil(t, err)
 
@@ -238,7 +238,7 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 			require.Nil(t, err)
 			require.Equal(t, 1, len(q3Result))
 			require.Equal(t, savedFolder.ID, q3Result[0].DashboardID)
-			require.Equal(t, models.PERMISSION_ADMIN, q3Result[0].Permission)
+			require.Equal(t, dashboards.PERMISSION_ADMIN, q3Result[0].Permission)
 			require.Equal(t, team1.ID, q3Result[0].TeamID)
 		})
 	})
@@ -279,7 +279,7 @@ func createUser(t *testing.T, sqlStore *sqlstore.SQLStore, name string, role str
 	qs := quotaimpl.ProvideService(sqlStore, sqlStore.Cfg)
 	orgService, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, qs)
 	require.NoError(t, err)
-	usrSvc, err := userimpl.ProvideService(sqlStore, orgService, sqlStore.Cfg, nil, nil, qs)
+	usrSvc, err := userimpl.ProvideService(sqlStore, orgService, sqlStore.Cfg, nil, nil, qs, supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
 
 	currentUserCmd := user.CreateUserCommand{Login: name, Email: name + "@test.com", Name: "a " + name, IsAdmin: isAdmin}

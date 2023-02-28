@@ -87,6 +87,12 @@ RUN curl -fLO http://storage.googleapis.com/grafana-downloads/ci-dependencies/sh
 RUN echo $SHELLCHECK_CHKSUM shellcheck-v${SHELLCHECK_VERSION}.linux.x86_64.tar.xz | sha512sum --check --strict --status
 RUN tar xf shellcheck-v${SHELLCHECK_VERSION}.linux.x86_64.tar.xz && mv shellcheck-v${SHELLCHECK_VERSION}/shellcheck /tmp/
 
+ARG BUILDIFIER_VERSION=5.1.0
+ARG BUILDIFIER_CHKSUM=52bf6b102cb4f88464e197caac06d69793fa2b05f5ad50a7e7bf6fbd656648a3
+RUN curl -fLO https://github.com/bazelbuild/buildtools/releases/download/${BUILDIFIER_VERSION}/buildifier-linux-amd64
+RUN echo $BUILDIFIER_CHKSUM buildifier-linux-amd64 | sha256sum --check --strict --status
+RUN mv buildifier-linux-amd64 /tmp/buildifier && chmod +x /tmp/buildifier
+
 ARG CUE_VERSION=0.3.0-alpha5
 ARG CUE_CHKSUM=9d3131e470cdb5182afd9966688f1c052d383145cce005a947156b5591da39b7
 RUN curl -fLO https://github.com/cuelang/cue/releases/download/v${CUE_VERSION}/cue_${CUE_VERSION}_Linux_x86_64.tar.gz
@@ -102,10 +108,10 @@ RUN rm dockerize-linux-amd64-v${DOCKERIZE_VERSION}.tar.gz
 # Use old Debian (LTS into 2024) in order to ensure binary compatibility with older glibc's.
 FROM debian:buster-20220822
 
-ENV GOVERSION=1.19.4 \
+ENV GOVERSION=1.20.1 \
     PATH=/usr/local/go/bin:$PATH \
     GOPATH=/go \
-    NODEVERSION=16.14.0-1nodesource1 \
+    NODEVERSION=18.12.0-1nodesource1 \
     YARNVERSION=1.22.19-1
 
 # Use ARG so as not to persist environment variable in image
@@ -113,6 +119,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 COPY --from=toolchain /tmp/x86_64-centos6-linux-gnu.tar.xz /tmp/osxcross.tar.xz /tmp/
 COPY --from=toolchain /tmp/shellcheck /usr/local/bin/
+COPY --from=toolchain /tmp/buildifier /usr/local/bin/
 COPY --from=toolchain /tmp/cue /usr/local/bin/
 COPY --from=toolchain /tmp/dockerize /usr/local/bin/
 
@@ -141,7 +148,7 @@ RUN apt-get update && \
     gem install --conservative -N fpm && \
     ln -s /usr/bin/llvm-dsymutil-6.0 /usr/bin/dsymutil && \
     curl -fsS https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add -  && \
-    curl -O https://deb.nodesource.com/node_16.x/pool/main/n/nodejs/nodejs_${NODEVERSION}_amd64.deb &&\
+    curl -O https://deb.nodesource.com/node_18.x/pool/main/n/nodejs/nodejs_${NODEVERSION}_amd64.deb &&\
     dpkg -i nodejs_${NODEVERSION}_amd64.deb &&\
     rm nodejs_${NODEVERSION}_amd64.deb &&\
     curl -fsS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \

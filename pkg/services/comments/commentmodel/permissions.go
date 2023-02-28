@@ -73,11 +73,11 @@ func (c *PermissionChecker) CheckReadPermissions(ctx context.Context, orgId int6
 		if err != nil {
 			return false, nil
 		}
-		items, err := c.annotationsRepo.Find(ctx, &annotations.ItemQuery{AnnotationId: annotationID, OrgId: orgId, SignedInUser: signedInUser})
+		items, err := c.annotationsRepo.Find(ctx, &annotations.ItemQuery{AnnotationID: annotationID, OrgID: orgId, SignedInUser: signedInUser})
 		if err != nil || len(items) != 1 {
 			return false, nil
 		}
-		dashboardID := items[0].DashboardId
+		dashboardID := items[0].DashboardID
 		if dashboardID == 0 {
 			return false, nil
 		}
@@ -131,11 +131,11 @@ func (c *PermissionChecker) CheckWritePermissions(ctx context.Context, orgId int
 		if err != nil {
 			return false, nil
 		}
-		items, err := c.annotationsRepo.Find(ctx, &annotations.ItemQuery{AnnotationId: annotationID, OrgId: orgId, SignedInUser: signedInUser})
+		items, err := c.annotationsRepo.Find(ctx, &annotations.ItemQuery{AnnotationID: annotationID, OrgID: orgId, SignedInUser: signedInUser})
 		if err != nil || len(items) != 1 {
 			return false, nil
 		}
-		dashboardID := items[0].DashboardId
+		dashboardID := items[0].DashboardID
 		if dashboardID == 0 {
 			return false, nil
 		}

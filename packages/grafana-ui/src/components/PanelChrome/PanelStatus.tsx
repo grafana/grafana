@@ -22,6 +22,7 @@ export function PanelStatus({ className, message, onClick, ariaLabel = 'status' 
       onClick={onClick}
       variant={'destructive'}
       icon="exclamation-triangle"
+      iconSize="md"
       tooltip={message || ''}
       aria-label={ariaLabel}
     />
