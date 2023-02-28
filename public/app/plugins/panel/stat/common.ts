@@ -7,20 +7,10 @@ import {
   PanelOptionsEditorBuilder,
   ReducerID,
   standardEditorsRegistry,
-  SelectableValue,
   FieldDisplay,
   FieldType,
-  FieldConfigEditorBuilder,
 } from '@grafana/data';
 import { SingleStatBaseOptions, VizOrientation } from '@grafana/schema';
-
-interface CustomStatFormats {
-  prefixes: CustomStatPrefixes;
-}
-
-interface CustomStatPrefixes {
-  [key: string]: { description: string; symbol: string };
-}
 
 export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
   builder: PanelOptionsEditorBuilder<T>,
@@ -120,75 +110,52 @@ export function addOrientationOption<T extends SingleStatBaseOptions>(
   });
 }
 
-// Build the SelectableValues for the panel dropdown
-export function getSelectablePrefixValues(): SelectableValue[] {
-  const selectableFormattingPrefixes = [];
-  const prefixOptions = getStatPrefixes().prefixes;
+export function formatDisplayValuesWithCustomUnits(
+  fieldValues: FieldDisplay[],
+  customUnits: { customPrefix: string; customSuffix: string }
+): FieldDisplay[] {
+  // test for custom values
+  // test for already existing units
+  // clean previous values
+  // prepend/append as necessary
 
-  for (const key in prefixOptions) {
-    const selectablePrefix = { value: key, label: prefixOptions[key].description };
-    selectableFormattingPrefixes.push(selectablePrefix);
-  }
+  // console.log('🚀 ~ file: common.ts:151 ~ formatValueForCustomPrefix ~ prefix:', prefix);
+  // // Grab all custom stat panel prefix objects
+  // const customPrefixes = getStatPrefixes().prefixes;
+  // // Built list of only the prefix symbols; used for stripping previous symbols when new prefix is chosen
+  // const prefixList = Object.keys(customPrefixes).map((key) => customPrefixes[key].symbol);
+  // // The user-chosen stat prefix
+  // const chosenPrefix = customPrefixes[prefix]?.symbol ?? '';
 
-  return selectableFormattingPrefixes;
+  // // Test all field values for FieldType.number
+  // return fieldValues.map((fieldValue) => {
+  //   const { fieldType, display } = fieldValue;
+  //   // `FieldType.number` is the only type on which unit formatting is enforced
+  //   if (fieldType === FieldType.number) {
+  //     const previousPrefix = display.prefix ?? '';
+  //     // Strip all previous custom stat formatting
+  //     const strippedPreviousPrefix = stripStringOfValues(previousPrefix, prefixList);
+  //     // Append the new prefix; if `remove` was chosen, `chosenPrefix` will resolve to an empty string
+  //     const updatedPrefix = chosenPrefix + strippedPreviousPrefix;
+  //     // Put everything back together
+  //     const updatedDisplay = { ...display, prefix: updatedPrefix };
+  //     return { ...fieldValue, display: updatedDisplay };
+  //   }
+  //   return fieldValue;
+  // });
+  return [];
 }
 
-// Custom stat panel prefixes; add more when use cases arise
-function getStatPrefixes(): CustomStatFormats {
-  return {
-    prefixes: {
-      remove: { description: 'Remove Custom Prefix', symbol: '' },
-      increase: { description: 'Increase (\u2191)', symbol: '\u2191' },
-      decrease: { description: 'Decrease (\u2193)', symbol: '\u2193' },
-      lessThan: { description: 'Less than (<)', symbol: '<' },
-      greaterThan: { description: 'Greater than (>)', symbol: '>' },
-      approximately: { description: 'Approximately (~)', symbol: '~' },
-      fiscalQuarter: { description: 'Fiscal quarter (FQ)', symbol: 'FQ' },
-      quarter: { description: 'Quarter (Qtr)', symbol: 'Qtr' },
-      fiscalYear: { description: 'Fiscal year (FY)', symbol: 'FY' },
-      delta: { description: 'Delta (\u0394)', symbol: '\u0394' },
-      mean: { description: 'Mean (\u00B5)', symbol: '\u00B5' },
-    },
-  };
-}
+// function stripStringOfValues(prefixToStrip: string, itemsToStrip: string[]): string {
+//   // Early return if no prefixes exist
+//   if (prefixToStrip === '') {
+//     return prefixToStrip;
+//   }
 
-export function formatValueForCustomPrefix(fieldValues: FieldDisplay[], prefix: string): FieldDisplay[] {
-  console.log('🚀 ~ file: common.ts:151 ~ formatValueForCustomPrefix ~ prefix:', prefix);
-  // Grab all custom stat panel prefix objects
-  const customPrefixes = getStatPrefixes().prefixes;
-  // Built list of only the prefix symbols; used for stripping previous symbols when new prefix is chosen
-  const prefixList = Object.keys(customPrefixes).map((key) => customPrefixes[key].symbol);
-  // The user-chosen stat prefix
-  const chosenPrefix = customPrefixes[prefix]?.symbol ?? '';
+//   // Test for any previous prefixes and remove them
+//   for (let i = 0; i < itemsToStrip.length; i++) {
+//     prefixToStrip = prefixToStrip.replace(new RegExp(itemsToStrip[i], 'g'), '');
+//   }
 
-  // Test all field values for FieldType.number
-  return fieldValues.map((fieldValue) => {
-    const { fieldType, display } = fieldValue;
-    // `FieldType.number` is the only type on which unit formatting is enforced
-    if (fieldType === FieldType.number) {
-      const previousPrefix = display.prefix ?? '';
-      // Strip all previous custom stat formatting
-      const strippedPreviousPrefix = stripStringOfValues(previousPrefix, prefixList);
-      // Append the new prefix; if `remove` was chosen, `chosenPrefix` will resolve to an empty string
-      const updatedPrefix = chosenPrefix + strippedPreviousPrefix;
-      // Put everything back together
-      const updatedDisplay = { ...display, prefix: updatedPrefix };
-      return { ...fieldValue, display: updatedDisplay };
-    }
-    return fieldValue;
-  });
-}
-
-function stripStringOfValues(prefixToStrip: string, itemsToStrip: string[]): string {
-  // Early return if no prefixes exist
-  if (prefixToStrip === '') {
-    return prefixToStrip;
-  }
-
-  // Test for any previous prefixes and remove them
-  for (let i = 0; i < itemsToStrip.length; i++) {
-    prefixToStrip = prefixToStrip.replace(new RegExp(itemsToStrip[i], 'g'), '');
-  }
-
-  return prefixToStrip;
-}
+//   return prefixToStrip;
+// }

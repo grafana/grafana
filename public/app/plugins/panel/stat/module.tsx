@@ -4,23 +4,36 @@ import { commonOptionsBuilder, sharedSingleStatMigrationHandler } from '@grafana
 
 import { statPanelChangedHandler } from './StatMigrations';
 import { StatPanel } from './StatPanel';
-import { addStandardDataReduceOptions, addOrientationOption, getSelectablePrefixValues } from './common';
+import { addStandardDataReduceOptions, addOrientationOption } from './common';
 import { defaultPanelOptions, PanelOptions } from './panelcfg.gen';
 import { StatSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<PanelOptions>(StatPanel)
   // Add a custom selection field for custom stat prefix
+  // .useFieldConfig({
+  //   useCustomConfig: (builder) =>
+  //     builder.addSelect({
+  //       path: 'prependUnit',
+  //       name: 'Prepend common unit',
+  //       description: 'Prepend a common unit along with standard formatting options',
+  //       category: ['Stat-specific unit formatting options'],
+  //       settings: {
+  //         options: getSelectablePrefixValues(),
+  //       },
+  //       defaultValue: undefined,
+  //     }),
+  // })
   .useFieldConfig({
     useCustomConfig: (builder) =>
-      builder.addSelect({
-        path: 'prependUnit',
-        name: 'Prepend common unit',
-        description: 'Prepend a common unit along with standard formatting options',
-        category: ['Stat-specific unit formatting options'],
+      builder.addTextInput({
+        path: 'customPrefix',
+        name: 'Custom Prefix',
+        description: 'Enter a custom prefix here',
+        defaultValue: '',
         settings: {
-          options: getSelectablePrefixValues(),
+          placeholder: 'Enter custom prefix',
         },
-        defaultValue: undefined,
+        category: ['Custom prefix'],
       }),
   })
   .setPanelOptions((builder) => {

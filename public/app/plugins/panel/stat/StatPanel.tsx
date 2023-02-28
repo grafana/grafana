@@ -16,7 +16,7 @@ import { BigValue, DataLinksContextMenu, VizRepeater, VizRepeaterRenderValueProp
 import { DataLinksContextMenuApi } from '@grafana/ui/src/components/DataLinks/DataLinksContextMenu';
 import { config } from 'app/core/config';
 
-import { formatValueForCustomPrefix } from './common';
+import { formatDisplayValuesWithCustomUnits } from './common';
 import { PanelOptions } from './panelcfg.gen';
 
 export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
@@ -26,7 +26,7 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
   ): JSX.Element => {
     const { timeRange, options } = this.props;
     // console.log('🚀 ~ file: StatPanel.tsx:27 ~ StatPanel ~ this.props:', this.props);
-    // console.log(this.props.fieldConfig.defaults.custom, 'custome config');
+    console.log(this.props.fieldConfig.defaults?.custom, 'custom config');
     const { value, alignmentFactors, width, height, count, orientation } = valueProps;
     const { openMenu, targetClassName } = menuProps;
     let sparkline = value.sparkline;
@@ -85,8 +85,9 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
 
   getValues = (): FieldDisplay[] => {
     const { data, options, replaceVariables, fieldConfig, timeZone } = this.props;
-    // Test if there is a custom unit to prepend
+    // Test if there are custom units to prepend/append
     const customPrefix = fieldConfig.defaults?.custom?.prependUnit ?? '';
+    const customSuffix = fieldConfig.defaults?.custom?.appendUnit ?? '';
 
     // console.log(fieldConfig, 'fieldconfig');
 
@@ -95,7 +96,6 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
     for (let frame of data.series) {
       for (let field of frame.fields) {
         let { config } = field;
-        // console.log(config, 'config');
         // mostly copied from fieldOverrides, since they are skipped during streaming
         // Set the Min/Max value automatically
         if (field.type === FieldType.number) {
@@ -123,11 +123,14 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
       timeZone,
     });
 
-    const prefixedDisplayValues = formatValueForCustomPrefix(fieldDisplayValues, customPrefix);
+    const customFormattedDisplayValues = formatDisplayValuesWithCustomUnits(fieldDisplayValues, {
+      customPrefix,
+      customSuffix,
+    });
 
-    console.log(prefixedDisplayValues);
+    console.log(customFormattedDisplayValues);
 
-    return prefixedDisplayValues;
+    return customFormattedDisplayValues;
   };
 
   render() {
