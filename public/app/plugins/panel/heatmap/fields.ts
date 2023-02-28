@@ -20,7 +20,7 @@ import {
   rowsToCellsHeatmap,
 } from 'app/features/transformers/calculateHeatmap/heatmap';
 
-import { CellValues, PanelOptions } from './panelcfg.gen';
+import { CellValues, PanelOptions } from './types';
 import { boundedMinMax } from './utils';
 
 export interface HeatmapData {

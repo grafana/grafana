@@ -9,7 +9,7 @@ import {
 } from '@grafana/schema';
 
 import { colorSchemes } from './palettes';
-import { PanelOptions, defaultPanelOptions, HeatmapColorMode } from './panelcfg.gen';
+import { PanelOptions, defaultPanelOptions, HeatmapColorMode } from './types';
 
 /** Called when the version number changes */
 export const heatmapMigrationHandler = (panel: PanelModel): Partial<PanelOptions> => {

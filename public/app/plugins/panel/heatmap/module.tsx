@@ -18,8 +18,8 @@ import { HeatmapPanel } from './HeatmapPanel';
 import { prepareHeatmapData } from './fields';
 import { heatmapChangedHandler, heatmapMigrationHandler } from './migrations';
 import { colorSchemes, quantizeScheme } from './palettes';
-import { PanelOptions, defaultPanelOptions, HeatmapColorMode, HeatmapColorScale } from './panelcfg.gen';
 import { HeatmapSuggestionsSupplier } from './suggestions';
+import { PanelOptions, defaultPanelOptions, HeatmapColorMode, HeatmapColorScale } from './types';
 
 export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPanel)
   .useFieldConfig({
@@ -43,22 +43,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
   .setPanelChangeHandler(heatmapChangedHandler)
   .setMigrationHandler(heatmapMigrationHandler)
   .setPanelOptions((builder, context) => {
-    //avoid type assertion
-    const panelOpts: PanelOptions = {
-      ...defaultPanelOptions,
-      calculation: defaultPanelOptions.calculation!,
-      cellValues: defaultPanelOptions.cellValues!,
-      color: defaultPanelOptions.color!,
-      tooltip: defaultPanelOptions.tooltip!,
-      legend: defaultPanelOptions.legend!,
-      yAxis: defaultPanelOptions.yAxis!,
-      exemplars: defaultPanelOptions.exemplars!,
-      filterValues: defaultPanelOptions.filterValues!,
-      rowsFrame: defaultPanelOptions.rowsFrame!,
-      showValue: defaultPanelOptions.showValue!,
-    };
-
-    const opts = context.options ?? panelOpts;
+    const opts = context.options ?? defaultPanelOptions;
 
     let isOrdinalY = false;
 
@@ -72,7 +57,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
     builder.addRadio({
       path: 'calculate',
       name: 'Calculate from data',
-      defaultValue: panelOpts.calculate,
+      defaultValue: defaultPanelOptions.calculate,
       category,
       settings: {
         options: [
@@ -92,7 +77,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       .addRadio({
         path: 'yAxis.axisPlacement',
         name: 'Placement',
-        defaultValue: panelOpts.yAxis.axisPlacement ?? AxisPlacement.Left,
+        defaultValue: defaultPanelOptions.yAxis.axisPlacement ?? AxisPlacement.Left,
         category,
         settings: {
           options: [
@@ -145,7 +130,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       .addNumberInput({
         path: 'yAxis.axisWidth',
         name: 'Axis width',
-        defaultValue: panelOpts.yAxis.axisWidth,
+        defaultValue: defaultPanelOptions.yAxis.axisWidth,
         settings: {
           placeholder: 'Auto',
           min: 5, // smaller should just be hidden
@@ -155,7 +140,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       .addTextInput({
         path: 'yAxis.axisLabel',
         name: 'Axis label',
-        defaultValue: panelOpts.yAxis.axisLabel,
+        defaultValue: defaultPanelOptions.yAxis.axisLabel,
         settings: {
           placeholder: 'Auto',
         },
@@ -166,7 +151,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       builder.addRadio({
         path: 'rowsFrame.layout',
         name: 'Tick alignment',
-        defaultValue: panelOpts.rowsFrame?.layout ?? HeatmapCellLayout.auto,
+        defaultValue: defaultPanelOptions.rowsFrame?.layout ?? HeatmapCellLayout.auto,
         category,
         settings: {
           options: [
@@ -181,7 +166,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
     builder.addBooleanSwitch({
       path: 'yAxis.reverse',
       name: 'Reverse',
-      defaultValue: panelOpts.yAxis.reverse === true,
+      defaultValue: defaultPanelOptions.yAxis.reverse === true,
       category,
     });
 
@@ -190,7 +175,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
     builder.addRadio({
       path: `color.mode`,
       name: 'Mode',
-      defaultValue: panelOpts.color.mode,
+      defaultValue: defaultPanelOptions.color.mode,
       category,
       settings: {
         options: [
@@ -203,7 +188,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
     builder.addColorPicker({
       path: `color.fill`,
       name: 'Color',
-      defaultValue: panelOpts.color.fill,
+      defaultValue: defaultPanelOptions.color.fill,
       category,
       showIf: (opts) => opts.color.mode === HeatmapColorMode.Opacity,
     });
@@ -211,7 +196,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
     builder.addRadio({
       path: `color.scale`,
       name: 'Scale',
-      defaultValue: panelOpts.color.scale,
+      defaultValue: defaultPanelOptions.color.scale,
       category,
       settings: {
         options: [
@@ -225,7 +210,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
     builder.addSliderInput({
       path: 'color.exponent',
       name: 'Exponent',
-      defaultValue: panelOpts.color.exponent,
+      defaultValue: defaultPanelOptions.color.exponent,
       category,
       settings: {
         min: 0.1, // 1 for on/off?
@@ -240,7 +225,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       path: `color.scheme`,
       name: 'Scheme',
       description: '',
-      defaultValue: panelOpts.color.scheme,
+      defaultValue: defaultPanelOptions.color.scheme,
       category,
       settings: {
         options: colorSchemes.map((scheme) => ({
@@ -256,7 +241,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       .addSliderInput({
         path: 'color.steps',
         name: 'Steps',
-        defaultValue: panelOpts.color.steps,
+        defaultValue: defaultPanelOptions.color.steps,
         category,
         settings: {
           min: 2,
@@ -267,7 +252,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       .addBooleanSwitch({
         path: 'color.reverse',
         name: 'Reverse',
-        defaultValue: panelOpts.color.reverse,
+        defaultValue: defaultPanelOptions.color.reverse,
         category,
       })
       .addCustomEditor({
@@ -289,7 +274,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       .addNumberInput({
         path: 'color.min',
         name: 'Start color scale from value',
-        defaultValue: panelOpts.color.min,
+        defaultValue: defaultPanelOptions.color.min,
         settings: {
           placeholder: 'Auto (min)',
         },
@@ -298,7 +283,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       .addNumberInput({
         path: 'color.max',
         name: 'End color scale at value',
-        defaultValue: panelOpts.color.max,
+        defaultValue: defaultPanelOptions.color.max,
         settings: {
           placeholder: 'Auto (max)',
         },
@@ -311,7 +296,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       builder.addTextInput({
         path: 'rowsFrame.value',
         name: 'Value name',
-        defaultValue: panelOpts.rowsFrame?.value,
+        defaultValue: defaultPanelOptions.rowsFrame?.value,
         settings: {
           placeholder: 'Value',
         },
@@ -342,7 +327,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       // .addRadio({
       //   path: 'showValue',
       //   name: 'Show values',
-      //   defaultValue: panelOpts.showValue,
+      //   defaultValue: defaultPanelOptions.showValue,
       //   category,
       //   settings: {
       //     options: [
@@ -355,7 +340,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       .addSliderInput({
         name: 'Cell gap',
         path: 'cellGap',
-        defaultValue: panelOpts.cellGap,
+        defaultValue: defaultPanelOptions.cellGap,
         category,
         settings: {
           min: 0,
@@ -365,7 +350,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       .addNumberInput({
         path: 'filterValues.le',
         name: 'Hide cells with values <=',
-        defaultValue: panelOpts.filterValues?.le,
+        defaultValue: defaultPanelOptions.filterValues?.le,
         settings: {
           placeholder: 'None',
         },
@@ -374,7 +359,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
       .addNumberInput({
         path: 'filterValues.ge',
         name: 'Hide cells with values >=',
-        defaultValue: panelOpts.filterValues?.ge,
+        defaultValue: defaultPanelOptions.filterValues?.ge,
         settings: {
           placeholder: 'None',
         },
@@ -383,7 +368,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
     // .addSliderInput({
     //   name: 'Cell radius',
     //   path: 'cellRadius',
-    //   defaultValue: panelOpts.cellRadius,
+    //   defaultValue: defaultPanelOptions.cellRadius,
     //   category,
     //   settings: {
     //     min: 0,
@@ -396,14 +381,14 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
     builder.addBooleanSwitch({
       path: 'tooltip.show',
       name: 'Show tooltip',
-      defaultValue: panelOpts.tooltip.show,
+      defaultValue: defaultPanelOptions.tooltip.show,
       category,
     });
 
     builder.addBooleanSwitch({
       path: 'tooltip.yHistogram',
       name: 'Show histogram (Y axis)',
-      defaultValue: panelOpts.tooltip.yHistogram,
+      defaultValue: defaultPanelOptions.tooltip.yHistogram,
       category,
       showIf: (opts) => opts.tooltip.show,
     });
@@ -412,7 +397,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
     builder.addBooleanSwitch({
       path: 'legend.show',
       name: 'Show legend',
-      defaultValue: panelOpts.legend.show,
+      defaultValue: defaultPanelOptions.legend.show,
       category,
     });
 
@@ -420,7 +405,7 @@ export const plugin = new PanelPlugin<PanelOptions, GraphFieldConfig>(HeatmapPan
     builder.addColorPicker({
       path: 'exemplars.color',
       name: 'Color',
-      defaultValue: panelOpts.exemplars.color,
+      defaultValue: defaultPanelOptions.exemplars.color,
       category,
     });
   })

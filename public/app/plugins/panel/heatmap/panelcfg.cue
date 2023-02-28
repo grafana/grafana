@@ -19,7 +19,6 @@ import (
 )
 
 composableKinds: PanelCfg: {
-	// maturity: "experimental"
 	lineage: {
 		seqs: [
 			{
@@ -29,10 +28,10 @@ composableKinds: PanelCfg: {
 						HeatmapColorScale: "linear" | "exponential" @cuetsy(kind="enum")
 						HeatmapColorOptions: {
 							mode:     HeatmapColorMode
-							scheme:   string            // when in scheme mode -- the d3 scheme name
-							fill:     string            // when opacity mode, the target color
-							scale:    HeatmapColorScale // for opacity mode
-							exponent: float32           // when scale== sqrt
+							scheme:   string
+							fill:     string
+							scale:    HeatmapColorScale
+							exponent: float32
 							steps:    uint8 & >=2 & <=128
 							reverse:  bool
 							min?:     float32
@@ -70,7 +69,9 @@ composableKinds: PanelCfg: {
 							layout?: ui.HeatmapCellLayout
 						} @cuetsy(kind="interface")
 						PanelOptions: {
-							calculate?:   bool | *false
+							// Controls if the data is already a calculated heatmap (from the data source/transformer), or one that should be calculated in the panel
+							calculate?: bool | *false
+							// Calculation options for the heatmap
 							calculation?: ui.HeatmapCalculationOptions
 							color:        HeatmapColorOptions | *{
 								mode:     HeatmapColorMode & "scheme"
@@ -81,26 +82,34 @@ composableKinds: PanelCfg: {
 								exponent: 0.5
 								steps:    64
 							}
+							// Filters values between a given range
 							filterValues?: FilterValueRange | *{
 								le: 1e-9
 							}
+							// Controls tick alignment
 							rowsFrame?: RowsHeatmapOptions | *{
 								layout: ui.HeatmapCellLayout & "auto"
 							}
-							showValue:   ui.VisibilityMode | *"auto"
+							showValue: ui.VisibilityMode | *"auto"
+							// Controls gap between cells
 							cellGap?:    uint8 & >=0 & <=25 | *1
-							cellRadius?: float32 // was cardRadius (not used, but migrated from angular)
+							cellRadius?: float32
+							// Controls cell value unit
 							cellValues?: CellValues | *{}
-							yAxis:       YAxisConfig | *{
+							// Controls yAxis placement
+							yAxis: YAxisConfig | *{
 								axisPlacement: ui.AxisPlacement & "left"
 							}
+							// Controls legend options
 							legend: HeatmapLegend | *{
 								show: true
 							}
+							// Controls tooltip options
 							tooltip: HeatmapTooltip | *{
 								show:       true
 								yHistogram: false
 							}
+							// Controls exemplar options
 							exemplars: ExemplarConfig | *{
 								color: "rgba(255,0,255,0.7)"
 							}

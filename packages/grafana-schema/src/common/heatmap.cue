@@ -1,6 +1,6 @@
 package common
 
-HeatmapCalculationMode: "size" | "count" @cuetsy(kind="enum",memberNames="Size|Count")
+HeatmapCalculationMode: "size" | "count" @cuetsy(kind="enum")
 
 HeatmapCellLayout: "le" | "ge" | "unknown" | "auto" @cuetsy(kind="enum",memberNames="le|ge|unknown|auto")
 
