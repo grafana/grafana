@@ -6,6 +6,7 @@ import { Checkbox } from '../Forms/Checkbox';
 import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
 import { Input } from '../Input/Input';
 import { Select } from '../Select/Select';
+import { Switch } from '../Switch/Switch';
 import { TextArea } from '../TextArea/TextArea';
 
 import { AutoSaveField } from './AutoSaveField';
@@ -64,12 +65,17 @@ const themeOptions = [
   { value: 'light', label: 'Light' },
   { value: 'system', label: 'System' },
 ];
+enum ThemeSwitchOption {
+  Light = 'light',
+  Dark = 'dark',
+}
 
 export const AutoSaveFieldError: Story = (args) => {
   const [selected, setSelected] = useState('');
   const [checkBoxTest, setCheckBoxTest] = useState(false);
   const [textAreaValue, setTextAreaValue] = useState('');
   const [inputTextValue, setInputTextValue] = useState('');
+  const [switchTest, setSwitchTest] = useState(false);
 
   return (
     <div>
@@ -135,6 +141,20 @@ export const AutoSaveFieldError: Story = (args) => {
           />
         )}
       </AutoSaveField>
+      <AutoSaveField onFinishChange={getError} label="Switch as a child" {...args}>
+        {(onChange) => (
+          <Switch
+            label="Switch test"
+            name="switch-test"
+            value={switchTest}
+            onChange={(e) => {
+              const value = e.currentTarget.checked ? ThemeSwitchOption.Dark : ThemeSwitchOption.Light;
+              onChange(value);
+              setSwitchTest(e.currentTarget.checked);
+            }}
+          />
+        )}
+      </AutoSaveField>
     </div>
   );
 };
@@ -147,6 +167,8 @@ export const AutoSaveFieldSuccess: Story = (args) => {
   const [checkBoxTest, setCheckBoxTest] = useState(false);
   const [textAreaValue, setTextAreaValue] = useState('');
   const [inputTextValue, setInputTextValue] = useState('');
+  const [switchTest, setSwitchTest] = useState(false);
+
   return (
     <div>
       <AutoSaveField onFinishChange={getSuccess} label="Text as a child" {...args}>
@@ -207,6 +229,20 @@ export const AutoSaveFieldSuccess: Story = (args) => {
               const value = e.currentTarget.value;
               onChange(value);
               setTextAreaValue(e.currentTarget.value);
+            }}
+          />
+        )}
+      </AutoSaveField>
+      <AutoSaveField onFinishChange={getSuccess} label="Switch as a child" {...args}>
+        {(onChange) => (
+          <Switch
+            label="Switch test"
+            name="switch-test"
+            value={switchTest}
+            onChange={(e) => {
+              const value = e.currentTarget.checked ? ThemeSwitchOption.Dark : ThemeSwitchOption.Light;
+              onChange(value);
+              setSwitchTest(e.currentTarget.checked);
             }}
           />
         )}
