@@ -279,15 +279,15 @@ func TestRecordStates(t *testing.T) {
 		reg := prometheus.NewRegistry()
 		met := metrics.NewHistorianMetrics(reg)
 		loki := createTestLokiBackend(NewFakeRequester(), met)
-		errLoki := createTestLokiBackend(NewFakeRequester().WithResponse(badResponse()), met)
+		errLoki := createTestLokiBackend(NewFakeRequester().WithResponse(badResponse()), met) //nolint:bodyclose false positive
 		rule := createTestRule()
 		states := singleFromNormal(&state.State{
 			State:  eval.Alerting,
 			Labels: data.Labels{"a": "b"},
 		})
 
-		_ = <-loki.RecordStatesAsync(context.Background(), rule, states)
-		_ = <-errLoki.RecordStatesAsync(context.Background(), rule, states)
+		<-loki.RecordStatesAsync(context.Background(), rule, states)
+		<-errLoki.RecordStatesAsync(context.Background(), rule, states)
 
 		exp := bytes.NewBufferString(`
 # HELP grafana_alerting_state_history_transitions_failed_total The total number of state transitions that failed to be written - they are not retried.

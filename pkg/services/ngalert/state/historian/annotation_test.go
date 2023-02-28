@@ -71,8 +71,8 @@ func TestAnnotationHistorian(t *testing.T) {
 			Labels: data.Labels{"a": "b"},
 		})
 
-		_ = <-anns.RecordStatesAsync(context.Background(), rule, states)
-		_ = <-errAnns.RecordStatesAsync(context.Background(), rule, states)
+		<-anns.RecordStatesAsync(context.Background(), rule, states)
+		<-errAnns.RecordStatesAsync(context.Background(), rule, states)
 
 		exp := bytes.NewBufferString(`
 # HELP grafana_alerting_state_history_transitions_failed_total The total number of state transitions that failed to be written - they are not retried.

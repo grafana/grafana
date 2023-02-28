@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/services/annotations"
@@ -20,7 +20,7 @@ func NewFakeRequester() *fakeRequester {
 		resp: &http.Response{
 			Status:        "200 OK",
 			StatusCode:    200,
-			Body:          ioutil.NopCloser(bytes.NewBufferString("")),
+			Body:          io.NopCloser(bytes.NewBufferString("")),
 			ContentLength: int64(0),
 			Header:        make(http.Header, 0),
 		},
