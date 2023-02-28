@@ -19,8 +19,8 @@ async function preload(config: AppPluginConfig): Promise<PluginPreloadResult> {
   const { path, version, id: pluginId } = config;
   try {
     const { plugin } = await pluginLoader.importPluginModule(path, version);
-    const { linkExtensions = [] } = plugin;
-    return { pluginId, linkExtensions, commandExtensions: [] };
+    const { linkExtensions = [], commandExtensions = [] } = plugin;
+    return { pluginId, linkExtensions, commandExtensions };
   } catch (error) {
     console.error(`[Plugins] Failed to preload plugin: ${path} (version: ${version})`, error);
     return { pluginId, linkExtensions: [], commandExtensions: [], error };

@@ -129,7 +129,7 @@ function createLinkConfigure(
   pluginId: string,
   config: AppPluginExtensionLinkConfig,
   extension: PluginExtensionLink
-): RegistryConfigureExtension<PluginExtensionLink> | undefined {
+): RegistryConfigureExtension<PluginExtensionLink> {
   if (!config.configure) {
     return () => extension;
   }
@@ -151,7 +151,7 @@ function createCommandConfigure(
   pluginId: string,
   config: AppPluginExtensionCommandConfig,
   extension: PluginExtensionCommand
-): RegistryConfigureExtension<PluginExtensionCommand> | undefined {
+): RegistryConfigureExtension<PluginExtensionCommand> {
   const mapper = mapCommandToRegistryType(extension, config);
 
   if (!config.configure) {

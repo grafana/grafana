@@ -293,6 +293,8 @@ export function getPanelMenu(
     context: context,
   });
 
+  console.log({ extensions });
+
   for (const extension of extensions) {
     if (isPluginExtensionLink(extension)) {
       subMenu.push({
