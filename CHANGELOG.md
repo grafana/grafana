@@ -323,7 +323,7 @@ Sentry frontend logging provider will be removed with next major version. Issue 
 
 <!-- 9.3.7 START -->
 
-# 9.3.7 (2023-02-05)
+# 9.3.7 (2023-02-28)
 
 ### Bug fixes
 
