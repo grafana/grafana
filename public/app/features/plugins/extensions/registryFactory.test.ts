@@ -537,5 +537,64 @@ describe('createPluginExtensionRegistry()', () => {
         },
       ]);
     });
+
+    it('should add default configure function when none provided via extension config', () => {
+      const registry = createPluginExtensionRegistry([
+        {
+          pluginId: 'belugacdn-app',
+          linkExtensions: [],
+          commandExtensions: [
+            {
+              placement: 'grafana/dashboard/panel/menu',
+              title: 'Open incident',
+              description: 'You can create an incident from this context',
+              handler: () => {},
+            },
+          ],
+        },
+      ]);
+
+      const [extension] = registry['grafana/dashboard/panel/menu'];
+      const configured = extension.configure();
+
+      expect(configured).toEqual({
+        title: 'Open incident',
+        type: PluginExtensionTypes.command,
+        description: 'You can create an incident from this context',
+        key: -68154691,
+        callHandlerWithContext: expect.any(Function),
+      });
+    });
+
+    it('should wrap configure function with extension error handling', () => {
+      const registry = createPluginExtensionRegistry([
+        {
+          pluginId: 'belugacdn-app',
+          linkExtensions: [],
+          commandExtensions: [
+            {
+              placement: 'grafana/dashboard/panel/menu',
+              title: 'Open incident',
+              description: 'You can create an incident from this context',
+              handler: () => {},
+              configure: () => ({}),
+            },
+          ],
+        },
+      ]);
+
+      const extensions = registry['grafana/dashboard/panel/menu'];
+      const [extension] = extensions;
+
+      const context = {};
+      const configurable = {
+        title: 'Open incident',
+        description: 'You can create an incident from this context',
+      };
+
+      extension?.configure?.(context);
+
+      expect(errorHandler).toBeCalledWith(expect.any(Function), configurable, context);
+    });
   });
 });

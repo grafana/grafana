@@ -152,19 +152,16 @@ function createCommandConfigure(
   config: AppPluginExtensionCommandConfig,
   extension: PluginExtensionCommand
 ): RegistryConfigureExtension<PluginExtensionCommand> {
-  const mapper = mapCommandToRegistryType(extension, config);
-
   if (!config.configure) {
-    return mapper(() => extension);
+    return () => extension;
   }
 
-  const options = {
+  const mapper = mapCommandToRegistryType(extension, config);
+  const errorHandler = createErrorHandling<AppPluginExtensionCommand>({
     pluginId: pluginId,
     title: config.title,
     logger: console.warn,
-  };
-
-  const errorHandler = createErrorHandling<AppPluginExtensionCommand>(options);
+  });
 
   return mapper(errorHandler(config.configure));
 }
