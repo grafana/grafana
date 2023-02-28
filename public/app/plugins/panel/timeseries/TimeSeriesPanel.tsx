@@ -1,9 +1,16 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 
-import { Field, PanelProps } from '@grafana/data';
+import { DataFrameFieldIndex, Field, PanelProps } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode } from '@grafana/schema';
-import { KeyboardPlugin, TimeSeries, TooltipPlugin, usePanelContext, ZoomPlugin } from '@grafana/ui';
+import {
+  ClickOutsideWrapper,
+  KeyboardPlugin,
+  TimeSeries,
+  TooltipPlugin,
+  usePanelContext,
+  ZoomPlugin,
+} from '@grafana/ui';
 import { config } from 'app/core/config';
 import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 
@@ -36,6 +43,8 @@ export const TimeSeriesPanel = ({
   const getFieldLinks = (field: Field, rowIndex: number) => {
     return getFieldLinksForExplore({ field, rowIndex, splitOpenFn: onSplitOpen, range: timeRange });
   };
+
+  const [clickedExemplarFieldIndex, setClickedExemplarFieldIndex] = useState<DataFrameFieldIndex | undefined>();
 
   const frames = useMemo(() => prepareGraphableFields(data.series, config.theme2, timeRange), [data, timeRange]);
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
@@ -133,13 +142,21 @@ export const TimeSeriesPanel = ({
               />
             )}
             {data.annotations && (
-              <ExemplarsPlugin
-                visibleSeries={getVisibleLabels(config, frames)}
-                config={config}
-                exemplars={data.annotations}
-                timeZone={timeZone}
-                getFieldLinks={getFieldLinks}
-              />
+              <ClickOutsideWrapper
+                onClick={() => {
+                  setClickedExemplarFieldIndex(undefined);
+                }}
+              >
+                <ExemplarsPlugin
+                  setClickOutsideExemplar={setClickedExemplarFieldIndex}
+                  clickOutsideExemplar={clickedExemplarFieldIndex}
+                  visibleSeries={getVisibleLabels(config, frames)}
+                  config={config}
+                  exemplars={data.annotations}
+                  timeZone={timeZone}
+                  getFieldLinks={getFieldLinks}
+                />
+              </ClickOutsideWrapper>
             )}
 
             {((canEditThresholds && onThresholdsChange) || showThresholds) && (

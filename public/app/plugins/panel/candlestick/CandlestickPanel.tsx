@@ -1,13 +1,21 @@
 // this file is pretty much a copy-paste of TimeSeriesPanel.tsx :(
 // with some extra renderers passed to the <TimeSeries> component
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import uPlot from 'uplot';
 
-import { Field, getDisplayProcessor, getLinksSupplier, PanelProps } from '@grafana/data';
+import { DataFrameFieldIndex, Field, getDisplayProcessor, getLinksSupplier, PanelProps } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TooltipDisplayMode } from '@grafana/schema';
-import { TimeSeries, TooltipPlugin, UPlotConfigBuilder, usePanelContext, useTheme2, ZoomPlugin } from '@grafana/ui';
+import {
+  ClickOutsideWrapper,
+  TimeSeries,
+  TooltipPlugin,
+  UPlotConfigBuilder,
+  usePanelContext,
+  useTheme2,
+  ZoomPlugin,
+} from '@grafana/ui';
 import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
 import { ScaleProps } from '@grafana/ui/src/components/uPlot/config/UPlotScaleBuilder';
 import { config } from 'app/core/config';
@@ -44,6 +52,8 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
   const getFieldLinks = (field: Field, rowIndex: number) => {
     return getFieldLinksForExplore({ field, rowIndex, splitOpenFn: onSplitOpen, range: timeRange });
   };
+
+  const [clickedExemplarFieldIndex, setClickedExemplarFieldIndex] = useState<DataFrameFieldIndex | undefined>();
 
   const theme = useTheme2();
 
@@ -317,12 +327,16 @@ export const CandlestickPanel: React.FC<CandlestickPanelProps> = ({
               />
             )}
             {data.annotations && (
-              <ExemplarsPlugin
-                config={config}
-                exemplars={data.annotations}
-                timeZone={timeZone}
-                getFieldLinks={getFieldLinks}
-              />
+              <ClickOutsideWrapper onClick={() => setClickedExemplarFieldIndex(undefined)}>
+                <ExemplarsPlugin
+                  setClickOutsideExemplar={setClickedExemplarFieldIndex}
+                  clickOutsideExemplar={clickedExemplarFieldIndex}
+                  config={config}
+                  exemplars={data.annotations}
+                  timeZone={timeZone}
+                  getFieldLinks={getFieldLinks}
+                />
+              </ClickOutsideWrapper>
             )}
 
             {((canEditThresholds && onThresholdsChange) || showThresholds) && (

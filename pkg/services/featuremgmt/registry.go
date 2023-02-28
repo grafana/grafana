@@ -366,5 +366,11 @@ var (
 			Description: "Support overriding cookie preferences per user",
 			State:       FeatureStateAlpha,
 		},
+		{
+			Name:         "exemplarTimeSeriesModalLocking",
+			Description:  "Changes default exemplar modal behavior in time series and candlestick panel to allow modal position locking on click",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
 	}
 )

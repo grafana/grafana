@@ -21,6 +21,8 @@ interface ExemplarsPluginProps {
   timeZone: TimeZone;
   getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
   visibleSeries?: VisibleExemplarLabels;
+  clickOutsideExemplar: DataFrameFieldIndex | undefined;
+  setClickOutsideExemplar: React.Dispatch<DataFrameFieldIndex | undefined>;
 }
 
 export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
@@ -29,6 +31,8 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
   getFieldLinks,
   config,
   visibleSeries,
+  clickOutsideExemplar,
+  setClickOutsideExemplar,
 }) => {
   const plotInstance = useRef<uPlot>();
 
@@ -83,6 +87,8 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
 
       return (
         <ExemplarMarker
+          setClickedExemplarFieldIndex={setClickOutsideExemplar}
+          clickedExemplarFieldIndex={clickOutsideExemplar}
           timeZone={timeZone}
           getFieldLinks={getFieldLinks}
           dataFrame={dataFrame}
@@ -92,7 +98,7 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
         />
       );
     },
-    [config, timeZone, getFieldLinks, visibleSeries]
+    [config, timeZone, getFieldLinks, visibleSeries, setClickOutsideExemplar, clickOutsideExemplar]
   );
 
   return (
@@ -138,6 +144,7 @@ interface LabelWithExemplarUIData {
   labels: Labels;
   color?: string;
 }
+
 /**
  * Get color of active series in legend
  */
