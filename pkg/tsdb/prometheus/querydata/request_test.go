@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/kinds/dataquery"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	p "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
@@ -20,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
@@ -65,9 +67,11 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		require.NoError(t, err)
 
 		qm := models.QueryModel{
-			LegendFormat:  "legend {{app}}",
-			UtcOffsetSec:  0,
-			ExemplarQuery: true,
+			LegendFormat: kindsys.Ptr("legend {{app}}"),
+			UtcOffsetSec: kindsys.Ptr(int64(0)),
+			PrometheusDataQuery: dataquery.PrometheusDataQuery{
+				Exemplar: kindsys.Ptr(true),
+			},
 		}
 		b, err := json.Marshal(&qm)
 		require.NoError(t, err)
@@ -110,9 +114,13 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		}
 
 		qm := models.QueryModel{
-			LegendFormat: "legend {{app}}",
-			UtcOffsetSec: 0,
-			RangeQuery:   true,
+			LegendFormat: kindsys.Ptr("legend {{app}}"),
+			UtcOffsetSec: kindsys.Ptr(int64(0)),
+			PrometheusDataQuery: dataquery.PrometheusDataQuery{
+				Range:      kindsys.Ptr(true),
+				Interval:   kindsys.Ptr("1s"),
+				IntervalMs: kindsys.Ptr(int64(1000)),
+			},
 		}
 		b, err := json.Marshal(&qm)
 		require.NoError(t, err)
@@ -157,9 +165,13 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		}
 
 		qm := models.QueryModel{
-			LegendFormat: "",
-			UtcOffsetSec: 0,
-			RangeQuery:   true,
+			LegendFormat: kindsys.Ptr(""),
+			UtcOffsetSec: kindsys.Ptr(int64(0)),
+			PrometheusDataQuery: dataquery.PrometheusDataQuery{
+				Range:      kindsys.Ptr(true),
+				Interval:   kindsys.Ptr("1s"),
+				IntervalMs: kindsys.Ptr(int64(1000)),
+			},
 		}
 		b, err := json.Marshal(&qm)
 		require.NoError(t, err)
@@ -200,9 +212,13 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		}
 
 		qm := models.QueryModel{
-			LegendFormat: "",
-			UtcOffsetSec: 0,
-			RangeQuery:   true,
+			LegendFormat: kindsys.Ptr(""),
+			UtcOffsetSec: kindsys.Ptr(int64(0)),
+			PrometheusDataQuery: dataquery.PrometheusDataQuery{
+				Range:      kindsys.Ptr(true),
+				Interval:   kindsys.Ptr("1s"),
+				IntervalMs: kindsys.Ptr(int64(1000)),
+			},
 		}
 		b, err := json.Marshal(&qm)
 		require.NoError(t, err)
@@ -241,9 +257,13 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		}
 
 		qm := models.QueryModel{
-			LegendFormat: "",
-			UtcOffsetSec: 0,
-			RangeQuery:   true,
+			LegendFormat: kindsys.Ptr(""),
+			UtcOffsetSec: kindsys.Ptr(int64(0)),
+			PrometheusDataQuery: dataquery.PrometheusDataQuery{
+				Range:      kindsys.Ptr(true),
+				Interval:   kindsys.Ptr("1s"),
+				IntervalMs: kindsys.Ptr(int64(1000)),
+			},
 		}
 		b, err := json.Marshal(&qm)
 		require.NoError(t, err)
@@ -276,9 +296,13 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			},
 		}
 		qm := models.QueryModel{
-			LegendFormat: "legend {{app}}",
-			UtcOffsetSec: 0,
-			InstantQuery: true,
+			LegendFormat: kindsys.Ptr("legend {{app}}"),
+			UtcOffsetSec: kindsys.Ptr(int64(0)),
+			PrometheusDataQuery: dataquery.PrometheusDataQuery{
+				Instant:    kindsys.Ptr(true),
+				Interval:   kindsys.Ptr("1s"),
+				IntervalMs: kindsys.Ptr(int64(1000)),
+			},
 		}
 		b, err := json.Marshal(&qm)
 		require.NoError(t, err)
@@ -315,9 +339,13 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			},
 		}
 		qm := models.QueryModel{
-			LegendFormat: "",
-			UtcOffsetSec: 0,
-			InstantQuery: true,
+			LegendFormat: kindsys.Ptr(""),
+			UtcOffsetSec: kindsys.Ptr(int64(0)),
+			PrometheusDataQuery: dataquery.PrometheusDataQuery{
+				Instant:    kindsys.Ptr(true),
+				Interval:   kindsys.Ptr("1s"),
+				IntervalMs: kindsys.Ptr(int64(1000)),
+			},
 		}
 		b, err := json.Marshal(&qm)
 		require.NoError(t, err)
@@ -357,16 +385,11 @@ func executeWithHeaders(tctx *testContext, query backend.DataQuery, qr interface
 	if err != nil {
 		return nil, err
 	}
-
 	tctx.httpProvider.setResponse(promRes)
 
 	res, err := tctx.queryData.Execute(context.Background(), &req)
-	errClose := promRes.Body.Close()
 	if err != nil {
 		return nil, err
-	}
-	if errClose != nil {
-		return nil, errClose
 	}
 
 	return res.Responses[req.Queries[0].RefID].Frames, nil

@@ -2,27 +2,17 @@ import { DataQuery, DataSourceJsonData, QueryResultMeta, ScopedVars } from '@gra
 
 import { PromApplication } from '../../../types/unified-alerting-dto';
 
+import { Prometheus as GenPromQuery } from './dataquery.gen';
 import { QueryEditorMode } from './querybuilder/shared/types';
 
-export interface PromQuery extends DataQuery {
-  expr: string;
-  format?: string;
-  instant?: boolean;
-  range?: boolean;
-  exemplar?: boolean;
-  hinting?: boolean;
-  interval?: string;
-  intervalFactor?: number;
-  // Timezone offset to align start & end time on backend
+export interface PromQuery extends GenPromQuery {
+  /**
+   * Timezone offset to align start & end time on backend
+   */
   utcOffsetSec?: number;
   legendFormat?: string;
   valueWithRefId?: boolean;
   requestId?: string;
-  showingGraph?: boolean;
-  showingTable?: boolean;
-  /** Code, Builder or Explain */
-  editorMode?: QueryEditorMode;
-  query?: string;
 }
 
 export interface PromOptions extends DataSourceJsonData {
@@ -177,7 +167,6 @@ export enum PromVariableQueryType {
 
 export interface PromVariableQuery extends DataQuery {
   query?: string;
-  expr?: string;
   qryType?: PromVariableQueryType;
   label?: string;
   metric?: string;

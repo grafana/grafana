@@ -88,11 +88,12 @@ func TestClient(t *testing.T) {
 		t.Run("sends correct POST query", func(t *testing.T) {
 			client := NewClient(doer, http.MethodPost, "http://localhost:9090")
 			req := &models.Query{
-				Expr:       "rate(ALERTS{job=\"test\" [$__rate_interval]})",
-				Start:      time.Unix(0, 0),
-				End:        time.Unix(1234, 0),
-				RangeQuery: true,
-				Step:       1 * time.Second,
+				Expr:         "rate(ALERTS{job=\"test\" [$__rate_interval]})",
+				Start:        time.Unix(0, 0),
+				End:          time.Unix(1234, 0),
+				RangeQuery:   true,
+				Step:         1 * time.Second,
+				UtcOffsetSec: int64(1),
 			}
 			res, err := client.QueryRange(context.Background(), req)
 			defer func() {
@@ -115,11 +116,12 @@ func TestClient(t *testing.T) {
 		t.Run("sends correct GET query", func(t *testing.T) {
 			client := NewClient(doer, http.MethodGet, "http://localhost:9090")
 			req := &models.Query{
-				Expr:       "rate(ALERTS{job=\"test\" [$__rate_interval]})",
-				Start:      time.Unix(0, 0),
-				End:        time.Unix(1234, 0),
-				RangeQuery: true,
-				Step:       1 * time.Second,
+				Expr:         "rate(ALERTS{job=\"test\" [$__rate_interval]})",
+				Start:        time.Unix(0, 0),
+				End:          time.Unix(1234, 0),
+				RangeQuery:   true,
+				Step:         1 * time.Second,
+				UtcOffsetSec: int64(1),
 			}
 			res, err := client.QueryRange(context.Background(), req)
 			defer func() {
