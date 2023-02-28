@@ -155,7 +155,7 @@ const FlameGraph = ({
 
         // if clicking on a block in the canvas
         if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
-          setContextMenuEvent({ e });
+          setContextMenuEvent({ e, levelIndex, barIndex });
         } else {
           // if clicking on the canvas but there is no block beneath the cursor
           setContextMenuEvent(undefined);
@@ -234,8 +234,6 @@ const FlameGraph = ({
       <FlameGraphTooltip tooltipRef={tooltipRef} tooltipData={tooltipData!} />
       <FlameGraphContextMenu
         contextMenuEvent={contextMenuEvent!}
-        rangeMin={rangeMin}
-        rangeMax={rangeMax}
         levels={levels}
         totalTicks={totalTicks}
         graphRef={graphRef}
@@ -265,7 +263,7 @@ const getStyles = (selectedView: SelectedView, app: CoreApp, flameGraphHeight: n
 
 // Convert pixel coordinates to bar coordinates in the levels array so that we can add mouse events like clicks to
 // the canvas.
-export const convertPixelCoordinatesToBarCoordinates = (
+const convertPixelCoordinatesToBarCoordinates = (
   e: MouseEvent,
   pixelsPerTick: number,
   levels: ItemWithStart[][],

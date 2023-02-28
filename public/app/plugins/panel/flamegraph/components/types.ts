@@ -17,6 +17,8 @@ export type Metadata = {
 
 export type ContextMenuEvent = {
   e: MouseEvent;
+  levelIndex: number;
+  barIndex: number;
 };
 
 export enum SampleUnit {

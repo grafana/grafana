@@ -4,13 +4,10 @@ import { MenuItem, ContextMenu } from '@grafana/ui';
 
 import { ContextMenuEvent } from '../types';
 
-import { convertPixelCoordinatesToBarCoordinates } from './FlameGraph';
 import { ItemWithStart } from './dataTransform';
 
 type Props = {
   contextMenuEvent: ContextMenuEvent;
-  rangeMin: number;
-  rangeMax: number;
   levels: ItemWithStart[][];
   totalTicks: number;
   graphRef: React.RefObject<HTMLCanvasElement>;
@@ -23,8 +20,6 @@ type Props = {
 
 const FlameGraphContextMenu = ({
   contextMenuEvent,
-  rangeMin,
-  rangeMax,
   graphRef,
   totalTicks,
   levels,
@@ -41,23 +36,16 @@ const FlameGraphContextMenu = ({
           label="Focus block"
           icon={'eye'}
           onClick={() => {
-            if (graphRef.current) {
-              const pixelsPerTick = graphRef.current!.clientWidth / totalTicks / (rangeMax - rangeMin);
-              const { levelIndex, barIndex } = convertPixelCoordinatesToBarCoordinates(
-                contextMenuEvent.e,
-                pixelsPerTick,
-                levels,
-                totalTicks,
-                rangeMin
+            if (graphRef.current && contextMenuEvent) {
+              setTopLevelIndex(contextMenuEvent.levelIndex);
+              setSelectedBarIndex(contextMenuEvent.barIndex);
+              setRangeMin(levels[contextMenuEvent.levelIndex][contextMenuEvent.barIndex].start / totalTicks);
+              setRangeMax(
+                (levels[contextMenuEvent.levelIndex][contextMenuEvent.barIndex].start +
+                  levels[contextMenuEvent.levelIndex][contextMenuEvent.barIndex].value) /
+                  totalTicks
               );
-
-              if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
-                setTopLevelIndex(levelIndex);
-                setSelectedBarIndex(barIndex);
-                setRangeMin(levels[levelIndex][barIndex].start / totalTicks);
-                setRangeMax((levels[levelIndex][barIndex].start + levels[levelIndex][barIndex].value) / totalTicks);
-                setContextMenuEvent(undefined);
-              }
+              setContextMenuEvent(undefined);
             }
           }}
         />
@@ -65,22 +53,11 @@ const FlameGraphContextMenu = ({
           label="Copy function name"
           icon={'copy'}
           onClick={() => {
-            if (graphRef.current) {
-              const pixelsPerTick = graphRef.current!.clientWidth / totalTicks / (rangeMax - rangeMin);
-              const { levelIndex, barIndex } = convertPixelCoordinatesToBarCoordinates(
-                contextMenuEvent.e,
-                pixelsPerTick,
-                levels,
-                totalTicks,
-                rangeMin
-              );
-
-              if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
-                const bar = levels[levelIndex][barIndex];
-                navigator.clipboard.writeText(bar.label).then(() => {
-                  setContextMenuEvent(undefined);
-                });
-              }
+            if (graphRef.current && contextMenuEvent) {
+              const bar = levels[contextMenuEvent.levelIndex][contextMenuEvent.barIndex];
+              navigator.clipboard.writeText(bar.label).then(() => {
+                setContextMenuEvent(undefined);
+              });
             }
           }}
         />
