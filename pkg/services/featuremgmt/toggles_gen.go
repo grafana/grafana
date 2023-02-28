@@ -107,6 +107,10 @@ const (
 	// Adds trace ID to error notifications
 	FlagTracing = "tracing"
 
+	// FlagNewTraceView
+	// Shows the new trace view design
+	FlagNewTraceView = "newTraceView"
+
 	// FlagCorrelations
 	// Correlations page
 	FlagCorrelations = "correlations"
@@ -250,10 +254,6 @@ const (
 	// FlagAlertingNoNormalState
 	// Stop maintaining state of alerts that are not firing
 	FlagAlertingNoNormalState = "alertingNoNormalState"
-
-	// FlagTopNavCommandPalette
-	// Launch the Command Palette from the top navigation search box
-	FlagTopNavCommandPalette = "topNavCommandPalette"
 
 	// FlagLogsSampleInExplore
 	// Enables access to the logs sample feature in Explore

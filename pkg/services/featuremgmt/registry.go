@@ -144,6 +144,12 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:         "newTraceView",
+			Description:  "Shows the new trace view design",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
 			Name:        "correlations",
 			Description: "Correlations page",
 			State:       FeatureStateAlpha,
@@ -340,12 +346,6 @@ var (
 			Description:     "Stop maintaining state of alerts that are not firing",
 			State:           FeatureStateBeta,
 			RequiresRestart: false,
-		},
-		{
-			Name:         "topNavCommandPalette",
-			Description:  "Launch the Command Palette from the top navigation search box",
-			State:        FeatureStateBeta,
-			FrontendOnly: true,
 		},
 		{
 
