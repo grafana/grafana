@@ -24,7 +24,7 @@ import { useMeasure } from 'react-use';
 import { CoreApp, createTheme, DataFrame, FieldType, getDisplayProcessor } from '@grafana/data';
 
 import { PIXELS_PER_LEVEL } from '../../constants';
-import { TooltipData, SelectedView, ContextMenuEvent } from '../types';
+import { TooltipData, SelectedView, ContextMenuData } from '../types';
 
 import FlameGraphContextMenu from './FlameGraphContextMenu';
 import FlameGraphMetadata from './FlameGraphMetadata';
@@ -78,7 +78,7 @@ const FlameGraph = ({
   const graphRef = useRef<HTMLCanvasElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [tooltipData, setTooltipData] = useState<TooltipData>();
-  const [contextMenuEvent, setContextMenuEvent] = useState<ContextMenuEvent>();
+  const [contextMenuData, setContextMenuData] = useState<ContextMenuData>();
 
   const [ufuzzy] = useState(() => {
     return new uFuzzy();
@@ -155,15 +155,15 @@ const FlameGraph = ({
 
         // if clicking on a block in the canvas
         if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
-          setContextMenuEvent({ e, levelIndex, barIndex });
+          setContextMenuData({ e, levelIndex, barIndex });
         } else {
           // if clicking on the canvas but there is no block beneath the cursor
-          setContextMenuEvent(undefined);
+          setContextMenuData(undefined);
         }
       };
 
       graphRef.current!.onmousemove = (e) => {
-        if (tooltipRef.current && contextMenuEvent === undefined) {
+        if (tooltipRef.current && contextMenuData === undefined) {
           setTooltipData(undefined);
           const pixelsPerTick = graphRef.current!.clientWidth / totalTicks / (rangeMax - rangeMin);
           const { levelIndex, barIndex } = convertPixelCoordinatesToBarCoordinates(
@@ -203,8 +203,8 @@ const FlameGraph = ({
     selectedView,
     valueField,
     setSelectedBarIndex,
-    setContextMenuEvent,
-    contextMenuEvent,
+    setContextMenuData,
+    contextMenuData,
   ]);
 
   // hide context menu if outside of the flame graph canvas is clicked
@@ -212,12 +212,12 @@ const FlameGraph = ({
     const handleOnClick = (e: MouseEvent) => {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       if ((e.target as HTMLElement).parentElement?.id !== 'flameGraphCanvasContainer') {
-        setContextMenuEvent(undefined);
+        setContextMenuData(undefined);
       }
     };
     window.addEventListener('click', handleOnClick);
     return () => window.removeEventListener('click', handleOnClick);
-  }, [setContextMenuEvent]);
+  }, [setContextMenuData]);
 
   return (
     <div className={styles.graph} ref={sizeRef}>
@@ -232,17 +232,19 @@ const FlameGraph = ({
         <canvas ref={graphRef} data-testid="flameGraph" />
       </div>
       <FlameGraphTooltip tooltipRef={tooltipRef} tooltipData={tooltipData!} />
-      <FlameGraphContextMenu
-        contextMenuEvent={contextMenuEvent!}
-        levels={levels}
-        totalTicks={totalTicks}
-        graphRef={graphRef}
-        setContextMenuEvent={setContextMenuEvent}
-        setTopLevelIndex={setTopLevelIndex}
-        setSelectedBarIndex={setSelectedBarIndex}
-        setRangeMin={setRangeMin}
-        setRangeMax={setRangeMax}
-      />
+      {contextMenuData && (
+        <FlameGraphContextMenu
+          contextMenuData={contextMenuData!}
+          levels={levels}
+          totalTicks={totalTicks}
+          graphRef={graphRef}
+          setContextMenuData={setContextMenuData}
+          setTopLevelIndex={setTopLevelIndex}
+          setSelectedBarIndex={setSelectedBarIndex}
+          setRangeMin={setRangeMin}
+          setRangeMax={setRangeMax}
+        />
+      )}
     </div>
   );
 };
