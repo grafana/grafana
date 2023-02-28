@@ -14,6 +14,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"github.com/grafana/grafana/pkg/tsdb/phlare/kinds/dataquery"
+	"github.com/xlab/treeprint"
+
+	googlev1 "github.com/grafana/phlare/api/gen/proto/go/google/v1"
 	querierv1 "github.com/grafana/phlare/api/gen/proto/go/querier/v1"
 )
 
@@ -81,10 +84,10 @@ func (d *PhlareDatasource) query(ctx context.Context, pCtx backend.PluginContext
 
 	if query.QueryType == queryTypeProfile || query.QueryType == queryTypeBoth {
 		req := makeRequest(qm, query)
-		logger.Debug("Sending SelectMergeStacktracesRequest", "request", req, "queryModel", qm)
-		resp, err := d.client.SelectMergeStacktraces(ctx, makeRequest(qm, query))
+		logger.Debug("Sending SelectMergeProfile", "request", req, "queryModel", qm)
+		resp, err := d.client.SelectMergeProfile(ctx, req)
 		if err != nil {
-			logger.Error("Querying SelectMergeStacktraces()", "err", err)
+			logger.Error("Querying SelectMergeProfile()", "err", err)
 			response.Error = err
 			return response
 		}
@@ -107,9 +110,9 @@ func (d *PhlareDatasource) query(ctx context.Context, pCtx backend.PluginContext
 	return response
 }
 
-func makeRequest(qm queryModel, query backend.DataQuery) *connect.Request[querierv1.SelectMergeStacktracesRequest] {
-	return &connect.Request[querierv1.SelectMergeStacktracesRequest]{
-		Msg: &querierv1.SelectMergeStacktracesRequest{
+func makeRequest(qm queryModel, query backend.DataQuery) *connect.Request[querierv1.SelectMergeProfileRequest] {
+	return &connect.Request[querierv1.SelectMergeProfileRequest]{
+		Msg: &querierv1.SelectMergeProfileRequest{
 			ProfileTypeID: qm.ProfileTypeId,
 			LabelSelector: qm.LabelSelector,
 			Start:         query.TimeRange.From.UnixMilli(),
@@ -121,114 +124,180 @@ func makeRequest(qm queryModel, query backend.DataQuery) *connect.Request[querie
 // responseToDataFrames turns Phlare response to data.Frame. We encode the data into a nested set format where we have
 // [level, value, label] columns and by ordering the items in a depth first traversal order we can recreate the whole
 // tree back.
-func responseToDataFrames(resp *connect.Response[querierv1.SelectMergeStacktracesResponse], profileTypeID string) *data.Frame {
-	tree := levelsToTree(resp.Msg.Flamegraph.Levels, resp.Msg.Flamegraph.Names)
+func responseToDataFrames(resp *connect.Response[googlev1.Profile], profileTypeID string) *data.Frame {
+	tree := profileAsTree(resp.Msg)
 	return treeToNestedSetDataFrame(tree, profileTypeID)
 }
 
-// START_OFFSET is offset of the bar relative to previous sibling
-const START_OFFSET = 0
-
-// VALUE_OFFSET is value or width of the bar
-const VALUE_OFFSET = 1
-
-// SELF_OFFSET is self value of the bar
-const SELF_OFFSET = 2
-
-// NAME_OFFSET is index into the names array
-const NAME_OFFSET = 3
-
-// ITEM_OFFSET Next bar. Each bar of the profile is represented by 4 number in a flat array.
-const ITEM_OFFSET = 4
-
 type ProfileTree struct {
-	Start int64
-	Value int64
-	Self  int64
-	Level int
-	Name  string
-	Nodes []*ProfileTree
+	Level      int
+	Value      int64
+	Self       int64
+	Function   *Function
+	Inlined    []*Function
+	locationID uint64
+
+	Nodes  []*ProfileTree
+	Parent *ProfileTree
 }
 
-// levelsToTree converts flamebearer format into a tree. This is needed to then convert it into nested set format
-// dataframe. This should be temporary, and ideally we should get some sort of tree struct directly from Phlare API.
-func levelsToTree(levels []*querierv1.Level, names []string) *ProfileTree {
-	tree := &ProfileTree{
-		Start: 0,
-		Value: levels[0].Values[VALUE_OFFSET],
-		Self:  levels[0].Values[SELF_OFFSET],
-		Level: 0,
-		Name:  names[levels[0].Values[0]],
+type Function struct {
+	FunctionName string
+	FileName     string // optional
+	Line         int64  // optional
+}
+
+func (f Function) String() string {
+	return fmt.Sprintf("%s:%s:%d", f.FileName, f.FunctionName, f.Line)
+}
+
+func (pt ProfileTree) String() string {
+	type branch struct {
+		nodes []*ProfileTree
+		treeprint.Tree
 	}
-
-	parentsStack := []*ProfileTree{tree}
-	currentLevel := 1
-
-	// Cycle through each level
-	for {
-		if currentLevel >= len(levels) {
-			break
+	tree := treeprint.New()
+	for _, n := range []ProfileTree{pt} {
+		b := tree.AddBranch(fmt.Sprintf("%s: level %d self %d total %d", n.Function, n.Level, n.Self, n.Value))
+		remaining := append([]*branch{}, &branch{nodes: n.Nodes, Tree: b})
+		for len(remaining) > 0 {
+			current := remaining[0]
+			remaining = remaining[1:]
+			for _, n := range current.nodes {
+				if len(n.Nodes) > 0 {
+					remaining = append(remaining,
+						&branch{
+							nodes: n.Nodes, Tree: current.Tree.AddBranch(fmt.Sprintf("%s: level %d self %d total %d", n.Function, n.Level, n.Self, n.Value)),
+						},
+					)
+				} else {
+					current.Tree.AddNode(fmt.Sprintf("%s: level %d self %d total %d", n.Function, n.Level, n.Self, n.Value))
+				}
+			}
 		}
+	}
+	return tree.String()
+}
 
-		// If we still have levels to go, this should not happen. Something is probably wrong with the flamebearer data.
-		if len(parentsStack) == 0 {
-			logger.Error("parentsStack is empty but we are not at the the last level", "currentLevel", currentLevel)
-			break
-		}
-
-		var nextParentsStack []*ProfileTree
-		currentParent := parentsStack[:1][0]
-		parentsStack = parentsStack[1:]
-		itemIndex := 0
-		// cumulative offset as items in flamebearer format have just relative to prev item
-		offset := int64(0)
-
-		// Cycle through bar in a level
-		for {
-			if itemIndex >= len(levels[currentLevel].Values) {
+// merge merges the node into the tree.
+// it assumes src has only one leaf.
+func (pt *ProfileTree) merge(src *ProfileTree) {
+	// find the node path where n should be inserted.
+	var parent, found *ProfileTree
+	// visit depth first the dst tree following the src tree
+	remaining := []*ProfileTree{pt}
+	for len(remaining) > 0 {
+		n := remaining[0]
+		remaining = remaining[1:]
+		if src.locationID == n.locationID {
+			if len(src.Nodes) == 0 {
+				// we have found the leaf
+				found = n
 				break
 			}
-
-			itemStart := levels[currentLevel].Values[itemIndex+START_OFFSET] + offset
-			itemValue := levels[currentLevel].Values[itemIndex+VALUE_OFFSET]
-			selfValue := levels[currentLevel].Values[itemIndex+SELF_OFFSET]
-			itemEnd := itemStart + itemValue
-			parentEnd := currentParent.Start + currentParent.Value
-
-			if itemStart >= currentParent.Start && itemEnd <= parentEnd {
-				// We have an item that is in the bounds of current parent item, so it should be its child
-				treeItem := &ProfileTree{
-					Start: itemStart,
-					Value: itemValue,
-					Self:  selfValue,
-					Level: currentLevel,
-					Name:  names[levels[currentLevel].Values[itemIndex+NAME_OFFSET]],
-				}
-				// Add to parent
-				currentParent.Nodes = append(currentParent.Nodes, treeItem)
-				// Add this item as parent for the next level
-				nextParentsStack = append(nextParentsStack, treeItem)
-				itemIndex += ITEM_OFFSET
-
-				// Update offset for next item. This is changing relative offset to absolute one.
-				offset = itemEnd
-			} else {
-				// We went out of parents bounds so lets move to next parent. We will evaluate the same item again, but
-				// we will check if it is a child of the next parent item in line.
-				if len(parentsStack) == 0 {
-					logger.Error("parentsStack is empty but there are still items in current level", "currentLevel", currentLevel, "itemIndex", itemIndex)
-					break
-				}
-				currentParent = parentsStack[:1][0]
-				parentsStack = parentsStack[1:]
-				continue
-			}
+			// move src and last parent visited
+			parent = n
+			src = src.Nodes[0]
+			remaining = n.Nodes
+			continue
 		}
-		parentsStack = nextParentsStack
-		currentLevel++
+	}
+	if found == nil {
+		if parent == nil {
+			// Nothing in common can't be merged.
+			return
+		}
+		src.Parent = parent
+		parent.Nodes = append(parent.Nodes, src)
+		for p := parent; p != nil; p = p.Parent {
+			p.Value = p.Value + src.Value
+		}
+		return
+	}
+	found.Value = found.Value + src.Self
+	for p := found.Parent; p != nil; p = p.Parent {
+		p.Value = p.Value + src.Self
+	}
+	found.Self = found.Self + src.Self
+}
+
+func treeFromSample(profile *googlev1.Profile, sample *googlev1.Sample) *ProfileTree {
+	if len(sample.LocationId) == 0 {
+		return &ProfileTree{
+			Level: 0,
+			Value: sample.Value[0],
+			Function: &Function{
+				FunctionName: "root",
+			},
+		}
 	}
 
-	return tree
+	// The leaf is at locations[0].
+	locations := sample.LocationId
+
+	current := &ProfileTree{
+		Self:  sample.Value[0],
+		Level: 0,
+	}
+	for len(locations) > 0 {
+		current.locationID = locations[0]
+		current.Value = sample.Value[0]
+		current.Level = len(locations)
+
+		// Ids in pprof format are 1 based. So to get the index in array from the id we need to subtract one.
+		lines := profile.Location[locations[0]-1].Line
+		if len(lines) == 0 {
+			locations = locations[1:]
+			continue
+		}
+		// The leaf is at lines[len(lines)-1].
+		current.Function = &Function{
+			FunctionName: profile.StringTable[profile.Function[lines[len(lines)-1].FunctionId-1].Name],
+			FileName:     profile.StringTable[profile.Function[lines[len(lines)-1].FunctionId-1].Filename],
+			Line:         lines[len(lines)-1].Line,
+		}
+		lines = lines[:len(lines)-1]
+
+		// If there are more than one line, each line inlined into the next line.
+		for len(lines) > 0 {
+			current.Inlined = append(current.Inlined, &Function{
+				FunctionName: profile.StringTable[profile.Function[lines[0].FunctionId-1].Name],
+				FileName:     profile.StringTable[profile.Function[lines[0].FunctionId-1].Filename],
+				Line:         lines[0].Line,
+			})
+			lines = lines[1:]
+		}
+		parent := &ProfileTree{
+			Nodes: []*ProfileTree{current},
+		}
+		current.Parent = parent
+		current = parent
+		locations = locations[1:]
+	}
+	if current.Function == nil {
+		current.Function = &Function{
+			FunctionName: "root",
+		}
+		current.Value = sample.Value[0]
+		current.locationID = 0
+		current.Self = 0
+		current.Level = 0
+	}
+	return current
+}
+
+func profileAsTree(profile *googlev1.Profile) *ProfileTree {
+	if profile == nil {
+		return nil
+	}
+	if len(profile.Sample) == 0 {
+		return nil
+	}
+	n := treeFromSample(profile, profile.Sample[0])
+	for _, sample := range profile.Sample[1:] {
+		n.merge(treeFromSample(profile, sample))
+	}
+	return n
 }
 
 type CustomMeta struct {
@@ -252,13 +321,19 @@ func treeToNestedSetDataFrame(tree *ProfileTree, profileTypeID string) *data.Fra
 	valueField.Config = &data.FieldConfig{Unit: normalizeUnit(parts[2])}
 	selfField.Config = &data.FieldConfig{Unit: normalizeUnit(parts[2])}
 	labelField := data.NewField("label", nil, []string{})
-	frame.Fields = data.Fields{levelField, valueField, selfField, labelField}
+	lineNumberField := data.NewField("line", nil, []int64{})
+	fileNameField := data.NewField("fileName", nil, []string{})
+	frame.Fields = data.Fields{levelField, valueField, selfField, labelField, lineNumberField, fileNameField}
 
 	walkTree(tree, func(tree *ProfileTree) {
 		levelField.Append(int64(tree.Level))
 		valueField.Append(tree.Value)
 		selfField.Append(tree.Self)
-		labelField.Append(tree.Name)
+		// todo: inline functions
+		// tree.Inlined
+		labelField.Append(tree.Function.FunctionName)
+		lineNumberField.Append(tree.Function.Line)
+		fileNameField.Append(tree.Function.FileName)
 	})
 	return frame
 }
