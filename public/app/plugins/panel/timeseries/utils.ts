@@ -122,11 +122,29 @@ export function prepareGraphableFields(
   }
 
   if (frames.length) {
+    setClassicPaletteIdxs(frames, theme);
     return frames;
   }
 
   return null;
 }
+
+const setClassicPaletteIdxs = (frames: DataFrame[], theme: GrafanaTheme2) => {
+  let seriesIndex = 0;
+
+  frames.forEach((frame) => {
+    frame.fields.forEach((field) => {
+      // TODO: also add FieldType.enum type here after https://github.com/grafana/grafana/pull/60491
+      if (field.type === FieldType.number || field.type === FieldType.boolean) {
+        field.state = {
+          ...field.state,
+          seriesIndex: seriesIndex++, // TODO: skip this for fields with custom renderers (e.g. Candlestick)?
+        };
+        field.display = getDisplayProcessor({ field, theme });
+      }
+    });
+  });
+};
 
 export function getTimezones(timezones: string[] | undefined, defaultTimezone: string): string[] {
   if (!timezones || !timezones.length) {
