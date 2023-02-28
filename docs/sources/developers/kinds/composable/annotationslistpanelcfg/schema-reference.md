@@ -8,7 +8,7 @@ title: AnnotationsListPanelCfg kind
 
 ## AnnotationsListPanelCfg
 
-#### Maturity: experimental
+#### Maturity: [experimental](../../../maturity/#experimental)
 #### Version: 0.0
 
 
@@ -21,7 +21,7 @@ title: AnnotationsListPanelCfg kind
 
 | Property                | Type     | Required | Description       |
 |-------------------------|----------|----------|-------------------|
-| `limit`                 | integer  | **Yes**  | Default: `10`.    |
+| `limit`                 | uint32   | **Yes**  | Default: `10`.    |
 | `navigateAfter`         | string   | **Yes**  | Default: `10m`.   |
 | `navigateBefore`        | string   | **Yes**  | Default: `10m`.   |
 | `navigateToPanel`       | boolean  | **Yes**  | Default: `true`.  |

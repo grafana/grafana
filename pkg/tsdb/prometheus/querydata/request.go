@@ -153,6 +153,13 @@ func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.
 
 func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.Query, headers map[string]string) backend.DataResponse {
 	res, err := c.QueryRange(ctx, q)
+	defer func() {
+		err := res.Body.Close()
+		if err != nil {
+			s.log.Warn("failed to close query range response body", "error", err)
+		}
+	}()
+
 	if err != nil {
 		return backend.DataResponse{
 			Error: err,
@@ -163,6 +170,13 @@ func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.
 
 func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *models.Query, headers map[string]string) backend.DataResponse {
 	res, err := c.QueryInstant(ctx, q)
+	defer func() {
+		err := res.Body.Close()
+		if err != nil {
+			s.log.Warn("failed to close response body", "error", err)
+		}
+	}()
+
 	if err != nil {
 		return backend.DataResponse{
 			Error: err,
@@ -173,6 +187,13 @@ func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *model
 
 func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *models.Query, headers map[string]string) backend.DataResponse {
 	res, err := c.QueryExemplars(ctx, q)
+	defer func() {
+		err := res.Body.Close()
+		if err != nil {
+			s.log.Warn("failed to close response body", "error", err)
+		}
+	}()
+
 	if err != nil {
 		return backend.DataResponse{
 			Error: err,

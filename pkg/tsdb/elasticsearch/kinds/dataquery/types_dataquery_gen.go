@@ -9,6 +9,10 @@
 
 package dataquery
 
+import (
+	"encoding/json"
+)
+
 // Defines values for AverageType.
 const (
 	AverageTypeAvg AverageType = "avg"
@@ -17,141 +21,92 @@ const (
 // Defines values for BaseBucketAggregationType.
 const (
 	BaseBucketAggregationTypeDateHistogram BaseBucketAggregationType = "date_histogram"
-
-	BaseBucketAggregationTypeFilters BaseBucketAggregationType = "filters"
-
-	BaseBucketAggregationTypeGeohashGrid BaseBucketAggregationType = "geohash_grid"
-
-	BaseBucketAggregationTypeHistogram BaseBucketAggregationType = "histogram"
-
-	BaseBucketAggregationTypeNested BaseBucketAggregationType = "nested"
-
-	BaseBucketAggregationTypeTerms BaseBucketAggregationType = "terms"
+	BaseBucketAggregationTypeFilters       BaseBucketAggregationType = "filters"
+	BaseBucketAggregationTypeGeohashGrid   BaseBucketAggregationType = "geohash_grid"
+	BaseBucketAggregationTypeHistogram     BaseBucketAggregationType = "histogram"
+	BaseBucketAggregationTypeNested        BaseBucketAggregationType = "nested"
+	BaseBucketAggregationTypeTerms         BaseBucketAggregationType = "terms"
 )
 
 // Defines values for BaseMetricAggregationType.
 const (
-	BaseMetricAggregationTypeAvg BaseMetricAggregationType = "avg"
-
-	BaseMetricAggregationTypeBucketScript BaseMetricAggregationType = "bucket_script"
-
-	BaseMetricAggregationTypeCardinality BaseMetricAggregationType = "cardinality"
-
-	BaseMetricAggregationTypeCount BaseMetricAggregationType = "count"
-
+	BaseMetricAggregationTypeAvg           BaseMetricAggregationType = "avg"
+	BaseMetricAggregationTypeBucketScript  BaseMetricAggregationType = "bucket_script"
+	BaseMetricAggregationTypeCardinality   BaseMetricAggregationType = "cardinality"
+	BaseMetricAggregationTypeCount         BaseMetricAggregationType = "count"
 	BaseMetricAggregationTypeCumulativeSum BaseMetricAggregationType = "cumulative_sum"
-
-	BaseMetricAggregationTypeDerivative BaseMetricAggregationType = "derivative"
-
+	BaseMetricAggregationTypeDerivative    BaseMetricAggregationType = "derivative"
 	BaseMetricAggregationTypeExtendedStats BaseMetricAggregationType = "extended_stats"
-
-	BaseMetricAggregationTypeLogs BaseMetricAggregationType = "logs"
-
-	BaseMetricAggregationTypeMax BaseMetricAggregationType = "max"
-
-	BaseMetricAggregationTypeMin BaseMetricAggregationType = "min"
-
-	BaseMetricAggregationTypeMovingAvg BaseMetricAggregationType = "moving_avg"
-
-	BaseMetricAggregationTypeMovingFn BaseMetricAggregationType = "moving_fn"
-
-	BaseMetricAggregationTypePercentiles BaseMetricAggregationType = "percentiles"
-
-	BaseMetricAggregationTypeRate BaseMetricAggregationType = "rate"
-
-	BaseMetricAggregationTypeRawData BaseMetricAggregationType = "raw_data"
-
-	BaseMetricAggregationTypeRawDocument BaseMetricAggregationType = "raw_document"
-
-	BaseMetricAggregationTypeSerialDiff BaseMetricAggregationType = "serial_diff"
-
-	BaseMetricAggregationTypeSum BaseMetricAggregationType = "sum"
-
-	BaseMetricAggregationTypeTopMetrics BaseMetricAggregationType = "top_metrics"
+	BaseMetricAggregationTypeLogs          BaseMetricAggregationType = "logs"
+	BaseMetricAggregationTypeMax           BaseMetricAggregationType = "max"
+	BaseMetricAggregationTypeMin           BaseMetricAggregationType = "min"
+	BaseMetricAggregationTypeMovingAvg     BaseMetricAggregationType = "moving_avg"
+	BaseMetricAggregationTypeMovingFn      BaseMetricAggregationType = "moving_fn"
+	BaseMetricAggregationTypePercentiles   BaseMetricAggregationType = "percentiles"
+	BaseMetricAggregationTypeRate          BaseMetricAggregationType = "rate"
+	BaseMetricAggregationTypeRawData       BaseMetricAggregationType = "raw_data"
+	BaseMetricAggregationTypeRawDocument   BaseMetricAggregationType = "raw_document"
+	BaseMetricAggregationTypeSerialDiff    BaseMetricAggregationType = "serial_diff"
+	BaseMetricAggregationTypeSum           BaseMetricAggregationType = "sum"
+	BaseMetricAggregationTypeTopMetrics    BaseMetricAggregationType = "top_metrics"
 )
 
 // Defines values for BaseMovingAverageModelSettingsModel.
 const (
-	BaseMovingAverageModelSettingsModelEwma BaseMovingAverageModelSettingsModel = "ewma"
-
-	BaseMovingAverageModelSettingsModelHolt BaseMovingAverageModelSettingsModel = "holt"
-
+	BaseMovingAverageModelSettingsModelEwma        BaseMovingAverageModelSettingsModel = "ewma"
+	BaseMovingAverageModelSettingsModelHolt        BaseMovingAverageModelSettingsModel = "holt"
 	BaseMovingAverageModelSettingsModelHoltWinters BaseMovingAverageModelSettingsModel = "holt_winters"
-
-	BaseMovingAverageModelSettingsModelLinear BaseMovingAverageModelSettingsModel = "linear"
-
-	BaseMovingAverageModelSettingsModelSimple BaseMovingAverageModelSettingsModel = "simple"
+	BaseMovingAverageModelSettingsModelLinear      BaseMovingAverageModelSettingsModel = "linear"
+	BaseMovingAverageModelSettingsModelSimple      BaseMovingAverageModelSettingsModel = "simple"
 )
 
 // Defines values for BasePipelineMetricAggregationType.
 const (
-	BasePipelineMetricAggregationTypeAvg BasePipelineMetricAggregationType = "avg"
-
-	BasePipelineMetricAggregationTypeBucketScript BasePipelineMetricAggregationType = "bucket_script"
-
-	BasePipelineMetricAggregationTypeCardinality BasePipelineMetricAggregationType = "cardinality"
-
-	BasePipelineMetricAggregationTypeCount BasePipelineMetricAggregationType = "count"
-
+	BasePipelineMetricAggregationTypeAvg           BasePipelineMetricAggregationType = "avg"
+	BasePipelineMetricAggregationTypeBucketScript  BasePipelineMetricAggregationType = "bucket_script"
+	BasePipelineMetricAggregationTypeCardinality   BasePipelineMetricAggregationType = "cardinality"
+	BasePipelineMetricAggregationTypeCount         BasePipelineMetricAggregationType = "count"
 	BasePipelineMetricAggregationTypeCumulativeSum BasePipelineMetricAggregationType = "cumulative_sum"
-
-	BasePipelineMetricAggregationTypeDerivative BasePipelineMetricAggregationType = "derivative"
-
+	BasePipelineMetricAggregationTypeDerivative    BasePipelineMetricAggregationType = "derivative"
 	BasePipelineMetricAggregationTypeExtendedStats BasePipelineMetricAggregationType = "extended_stats"
+	BasePipelineMetricAggregationTypeLogs          BasePipelineMetricAggregationType = "logs"
+	BasePipelineMetricAggregationTypeMax           BasePipelineMetricAggregationType = "max"
+	BasePipelineMetricAggregationTypeMin           BasePipelineMetricAggregationType = "min"
+	BasePipelineMetricAggregationTypeMovingAvg     BasePipelineMetricAggregationType = "moving_avg"
+	BasePipelineMetricAggregationTypeMovingFn      BasePipelineMetricAggregationType = "moving_fn"
+	BasePipelineMetricAggregationTypePercentiles   BasePipelineMetricAggregationType = "percentiles"
+	BasePipelineMetricAggregationTypeRate          BasePipelineMetricAggregationType = "rate"
+	BasePipelineMetricAggregationTypeRawData       BasePipelineMetricAggregationType = "raw_data"
+	BasePipelineMetricAggregationTypeRawDocument   BasePipelineMetricAggregationType = "raw_document"
+	BasePipelineMetricAggregationTypeSerialDiff    BasePipelineMetricAggregationType = "serial_diff"
+	BasePipelineMetricAggregationTypeSum           BasePipelineMetricAggregationType = "sum"
+	BasePipelineMetricAggregationTypeTopMetrics    BasePipelineMetricAggregationType = "top_metrics"
+)
 
-	BasePipelineMetricAggregationTypeLogs BasePipelineMetricAggregationType = "logs"
-
-	BasePipelineMetricAggregationTypeMax BasePipelineMetricAggregationType = "max"
-
-	BasePipelineMetricAggregationTypeMin BasePipelineMetricAggregationType = "min"
-
-	BasePipelineMetricAggregationTypeMovingAvg BasePipelineMetricAggregationType = "moving_avg"
-
-	BasePipelineMetricAggregationTypeMovingFn BasePipelineMetricAggregationType = "moving_fn"
-
-	BasePipelineMetricAggregationTypePercentiles BasePipelineMetricAggregationType = "percentiles"
-
-	BasePipelineMetricAggregationTypeRate BasePipelineMetricAggregationType = "rate"
-
-	BasePipelineMetricAggregationTypeRawData BasePipelineMetricAggregationType = "raw_data"
-
-	BasePipelineMetricAggregationTypeRawDocument BasePipelineMetricAggregationType = "raw_document"
-
-	BasePipelineMetricAggregationTypeSerialDiff BasePipelineMetricAggregationType = "serial_diff"
-
-	BasePipelineMetricAggregationTypeSum BasePipelineMetricAggregationType = "sum"
-
-	BasePipelineMetricAggregationTypeTopMetrics BasePipelineMetricAggregationType = "top_metrics"
+// Defines values for BucketAggregationSettingsOrder.
+const (
+	BucketAggregationSettingsOrderAsc  BucketAggregationSettingsOrder = "asc"
+	BucketAggregationSettingsOrderDesc BucketAggregationSettingsOrder = "desc"
 )
 
 // Defines values for BucketAggregationType.
 const (
 	BucketAggregationTypeDateHistogram BucketAggregationType = "date_histogram"
-
-	BucketAggregationTypeFilters BucketAggregationType = "filters"
-
-	BucketAggregationTypeGeohashGrid BucketAggregationType = "geohash_grid"
-
-	BucketAggregationTypeHistogram BucketAggregationType = "histogram"
-
-	BucketAggregationTypeNested BucketAggregationType = "nested"
-
-	BucketAggregationTypeTerms BucketAggregationType = "terms"
+	BucketAggregationTypeFilters       BucketAggregationType = "filters"
+	BucketAggregationTypeGeohashGrid   BucketAggregationType = "geohash_grid"
+	BucketAggregationTypeHistogram     BucketAggregationType = "histogram"
+	BucketAggregationTypeNested        BucketAggregationType = "nested"
+	BucketAggregationTypeTerms         BucketAggregationType = "terms"
 )
 
 // Defines values for BucketAggregationWithFieldType.
 const (
 	BucketAggregationWithFieldTypeDateHistogram BucketAggregationWithFieldType = "date_histogram"
-
-	BucketAggregationWithFieldTypeFilters BucketAggregationWithFieldType = "filters"
-
-	BucketAggregationWithFieldTypeGeohashGrid BucketAggregationWithFieldType = "geohash_grid"
-
-	BucketAggregationWithFieldTypeHistogram BucketAggregationWithFieldType = "histogram"
-
-	BucketAggregationWithFieldTypeNested BucketAggregationWithFieldType = "nested"
-
-	BucketAggregationWithFieldTypeTerms BucketAggregationWithFieldType = "terms"
+	BucketAggregationWithFieldTypeFilters       BucketAggregationWithFieldType = "filters"
+	BucketAggregationWithFieldTypeGeohashGrid   BucketAggregationWithFieldType = "geohash_grid"
+	BucketAggregationWithFieldTypeHistogram     BucketAggregationWithFieldType = "histogram"
+	BucketAggregationWithFieldTypeNested        BucketAggregationWithFieldType = "nested"
+	BucketAggregationWithFieldTypeTerms         BucketAggregationWithFieldType = "terms"
 )
 
 // Defines values for BucketScriptType.
@@ -179,42 +134,34 @@ const (
 	DerivativeTypeDerivative DerivativeType = "derivative"
 )
 
+// Defines values for BucketAggsSettingsOrder.
+const (
+	BucketAggsSettingsOrderAsc  BucketAggsSettingsOrder = "asc"
+	BucketAggsSettingsOrderDesc BucketAggsSettingsOrder = "desc"
+)
+
 // Defines values for ExtendedStatValue.
 const (
-	ExtendedStatValueAvg ExtendedStatValue = "avg"
-
-	ExtendedStatValueCount ExtendedStatValue = "count"
-
-	ExtendedStatValueMax ExtendedStatValue = "max"
-
-	ExtendedStatValueMin ExtendedStatValue = "min"
-
-	ExtendedStatValueStdDeviation ExtendedStatValue = "std_deviation"
-
+	ExtendedStatValueAvg                     ExtendedStatValue = "avg"
+	ExtendedStatValueCount                   ExtendedStatValue = "count"
+	ExtendedStatValueMax                     ExtendedStatValue = "max"
+	ExtendedStatValueMin                     ExtendedStatValue = "min"
+	ExtendedStatValueStdDeviation            ExtendedStatValue = "std_deviation"
 	ExtendedStatValueStdDeviationBoundsLower ExtendedStatValue = "std_deviation_bounds_lower"
-
 	ExtendedStatValueStdDeviationBoundsUpper ExtendedStatValue = "std_deviation_bounds_upper"
-
-	ExtendedStatValueSum ExtendedStatValue = "sum"
+	ExtendedStatValueSum                     ExtendedStatValue = "sum"
 )
 
 // Defines values for ExtendedStatMetaType.
 const (
-	ExtendedStatMetaTypeAvg ExtendedStatMetaType = "avg"
-
-	ExtendedStatMetaTypeCount ExtendedStatMetaType = "count"
-
-	ExtendedStatMetaTypeMax ExtendedStatMetaType = "max"
-
-	ExtendedStatMetaTypeMin ExtendedStatMetaType = "min"
-
-	ExtendedStatMetaTypeStdDeviation ExtendedStatMetaType = "std_deviation"
-
+	ExtendedStatMetaTypeAvg                     ExtendedStatMetaType = "avg"
+	ExtendedStatMetaTypeCount                   ExtendedStatMetaType = "count"
+	ExtendedStatMetaTypeMax                     ExtendedStatMetaType = "max"
+	ExtendedStatMetaTypeMin                     ExtendedStatMetaType = "min"
+	ExtendedStatMetaTypeStdDeviation            ExtendedStatMetaType = "std_deviation"
 	ExtendedStatMetaTypeStdDeviationBoundsLower ExtendedStatMetaType = "std_deviation_bounds_lower"
-
 	ExtendedStatMetaTypeStdDeviationBoundsUpper ExtendedStatMetaType = "std_deviation_bounds_upper"
-
-	ExtendedStatMetaTypeSum ExtendedStatMetaType = "sum"
+	ExtendedStatMetaTypeSum                     ExtendedStatMetaType = "sum"
 )
 
 // Defines values for ExtendedStatsType.
@@ -249,166 +196,94 @@ const (
 
 // Defines values for MetricAggregationType.
 const (
-	MetricAggregationTypeAvg MetricAggregationType = "avg"
-
-	MetricAggregationTypeBucketScript MetricAggregationType = "bucket_script"
-
-	MetricAggregationTypeCardinality MetricAggregationType = "cardinality"
-
-	MetricAggregationTypeCount MetricAggregationType = "count"
-
+	MetricAggregationTypeAvg           MetricAggregationType = "avg"
+	MetricAggregationTypeBucketScript  MetricAggregationType = "bucket_script"
+	MetricAggregationTypeCardinality   MetricAggregationType = "cardinality"
+	MetricAggregationTypeCount         MetricAggregationType = "count"
 	MetricAggregationTypeCumulativeSum MetricAggregationType = "cumulative_sum"
-
-	MetricAggregationTypeDerivative MetricAggregationType = "derivative"
-
+	MetricAggregationTypeDerivative    MetricAggregationType = "derivative"
 	MetricAggregationTypeExtendedStats MetricAggregationType = "extended_stats"
-
-	MetricAggregationTypeLogs MetricAggregationType = "logs"
-
-	MetricAggregationTypeMax MetricAggregationType = "max"
-
-	MetricAggregationTypeMin MetricAggregationType = "min"
-
-	MetricAggregationTypeMovingAvg MetricAggregationType = "moving_avg"
-
-	MetricAggregationTypeMovingFn MetricAggregationType = "moving_fn"
-
-	MetricAggregationTypePercentiles MetricAggregationType = "percentiles"
-
-	MetricAggregationTypeRate MetricAggregationType = "rate"
-
-	MetricAggregationTypeRawData MetricAggregationType = "raw_data"
-
-	MetricAggregationTypeRawDocument MetricAggregationType = "raw_document"
-
-	MetricAggregationTypeSerialDiff MetricAggregationType = "serial_diff"
-
-	MetricAggregationTypeSum MetricAggregationType = "sum"
-
-	MetricAggregationTypeTopMetrics MetricAggregationType = "top_metrics"
+	MetricAggregationTypeLogs          MetricAggregationType = "logs"
+	MetricAggregationTypeMax           MetricAggregationType = "max"
+	MetricAggregationTypeMin           MetricAggregationType = "min"
+	MetricAggregationTypeMovingAvg     MetricAggregationType = "moving_avg"
+	MetricAggregationTypeMovingFn      MetricAggregationType = "moving_fn"
+	MetricAggregationTypePercentiles   MetricAggregationType = "percentiles"
+	MetricAggregationTypeRate          MetricAggregationType = "rate"
+	MetricAggregationTypeRawData       MetricAggregationType = "raw_data"
+	MetricAggregationTypeRawDocument   MetricAggregationType = "raw_document"
+	MetricAggregationTypeSerialDiff    MetricAggregationType = "serial_diff"
+	MetricAggregationTypeSum           MetricAggregationType = "sum"
+	MetricAggregationTypeTopMetrics    MetricAggregationType = "top_metrics"
 )
 
 // Defines values for MetricAggregationWithFieldType.
 const (
-	MetricAggregationWithFieldTypeAvg MetricAggregationWithFieldType = "avg"
-
-	MetricAggregationWithFieldTypeBucketScript MetricAggregationWithFieldType = "bucket_script"
-
-	MetricAggregationWithFieldTypeCardinality MetricAggregationWithFieldType = "cardinality"
-
-	MetricAggregationWithFieldTypeCount MetricAggregationWithFieldType = "count"
-
+	MetricAggregationWithFieldTypeAvg           MetricAggregationWithFieldType = "avg"
+	MetricAggregationWithFieldTypeBucketScript  MetricAggregationWithFieldType = "bucket_script"
+	MetricAggregationWithFieldTypeCardinality   MetricAggregationWithFieldType = "cardinality"
+	MetricAggregationWithFieldTypeCount         MetricAggregationWithFieldType = "count"
 	MetricAggregationWithFieldTypeCumulativeSum MetricAggregationWithFieldType = "cumulative_sum"
-
-	MetricAggregationWithFieldTypeDerivative MetricAggregationWithFieldType = "derivative"
-
+	MetricAggregationWithFieldTypeDerivative    MetricAggregationWithFieldType = "derivative"
 	MetricAggregationWithFieldTypeExtendedStats MetricAggregationWithFieldType = "extended_stats"
-
-	MetricAggregationWithFieldTypeLogs MetricAggregationWithFieldType = "logs"
-
-	MetricAggregationWithFieldTypeMax MetricAggregationWithFieldType = "max"
-
-	MetricAggregationWithFieldTypeMin MetricAggregationWithFieldType = "min"
-
-	MetricAggregationWithFieldTypeMovingAvg MetricAggregationWithFieldType = "moving_avg"
-
-	MetricAggregationWithFieldTypeMovingFn MetricAggregationWithFieldType = "moving_fn"
-
-	MetricAggregationWithFieldTypePercentiles MetricAggregationWithFieldType = "percentiles"
-
-	MetricAggregationWithFieldTypeRate MetricAggregationWithFieldType = "rate"
-
-	MetricAggregationWithFieldTypeRawData MetricAggregationWithFieldType = "raw_data"
-
-	MetricAggregationWithFieldTypeRawDocument MetricAggregationWithFieldType = "raw_document"
-
-	MetricAggregationWithFieldTypeSerialDiff MetricAggregationWithFieldType = "serial_diff"
-
-	MetricAggregationWithFieldTypeSum MetricAggregationWithFieldType = "sum"
-
-	MetricAggregationWithFieldTypeTopMetrics MetricAggregationWithFieldType = "top_metrics"
+	MetricAggregationWithFieldTypeLogs          MetricAggregationWithFieldType = "logs"
+	MetricAggregationWithFieldTypeMax           MetricAggregationWithFieldType = "max"
+	MetricAggregationWithFieldTypeMin           MetricAggregationWithFieldType = "min"
+	MetricAggregationWithFieldTypeMovingAvg     MetricAggregationWithFieldType = "moving_avg"
+	MetricAggregationWithFieldTypeMovingFn      MetricAggregationWithFieldType = "moving_fn"
+	MetricAggregationWithFieldTypePercentiles   MetricAggregationWithFieldType = "percentiles"
+	MetricAggregationWithFieldTypeRate          MetricAggregationWithFieldType = "rate"
+	MetricAggregationWithFieldTypeRawData       MetricAggregationWithFieldType = "raw_data"
+	MetricAggregationWithFieldTypeRawDocument   MetricAggregationWithFieldType = "raw_document"
+	MetricAggregationWithFieldTypeSerialDiff    MetricAggregationWithFieldType = "serial_diff"
+	MetricAggregationWithFieldTypeSum           MetricAggregationWithFieldType = "sum"
+	MetricAggregationWithFieldTypeTopMetrics    MetricAggregationWithFieldType = "top_metrics"
 )
 
 // Defines values for MetricAggregationWithInlineScriptType.
 const (
-	MetricAggregationWithInlineScriptTypeAvg MetricAggregationWithInlineScriptType = "avg"
-
-	MetricAggregationWithInlineScriptTypeBucketScript MetricAggregationWithInlineScriptType = "bucket_script"
-
-	MetricAggregationWithInlineScriptTypeCardinality MetricAggregationWithInlineScriptType = "cardinality"
-
-	MetricAggregationWithInlineScriptTypeCount MetricAggregationWithInlineScriptType = "count"
-
+	MetricAggregationWithInlineScriptTypeAvg           MetricAggregationWithInlineScriptType = "avg"
+	MetricAggregationWithInlineScriptTypeBucketScript  MetricAggregationWithInlineScriptType = "bucket_script"
+	MetricAggregationWithInlineScriptTypeCardinality   MetricAggregationWithInlineScriptType = "cardinality"
+	MetricAggregationWithInlineScriptTypeCount         MetricAggregationWithInlineScriptType = "count"
 	MetricAggregationWithInlineScriptTypeCumulativeSum MetricAggregationWithInlineScriptType = "cumulative_sum"
-
-	MetricAggregationWithInlineScriptTypeDerivative MetricAggregationWithInlineScriptType = "derivative"
-
+	MetricAggregationWithInlineScriptTypeDerivative    MetricAggregationWithInlineScriptType = "derivative"
 	MetricAggregationWithInlineScriptTypeExtendedStats MetricAggregationWithInlineScriptType = "extended_stats"
-
-	MetricAggregationWithInlineScriptTypeLogs MetricAggregationWithInlineScriptType = "logs"
-
-	MetricAggregationWithInlineScriptTypeMax MetricAggregationWithInlineScriptType = "max"
-
-	MetricAggregationWithInlineScriptTypeMin MetricAggregationWithInlineScriptType = "min"
-
-	MetricAggregationWithInlineScriptTypeMovingAvg MetricAggregationWithInlineScriptType = "moving_avg"
-
-	MetricAggregationWithInlineScriptTypeMovingFn MetricAggregationWithInlineScriptType = "moving_fn"
-
-	MetricAggregationWithInlineScriptTypePercentiles MetricAggregationWithInlineScriptType = "percentiles"
-
-	MetricAggregationWithInlineScriptTypeRate MetricAggregationWithInlineScriptType = "rate"
-
-	MetricAggregationWithInlineScriptTypeRawData MetricAggregationWithInlineScriptType = "raw_data"
-
-	MetricAggregationWithInlineScriptTypeRawDocument MetricAggregationWithInlineScriptType = "raw_document"
-
-	MetricAggregationWithInlineScriptTypeSerialDiff MetricAggregationWithInlineScriptType = "serial_diff"
-
-	MetricAggregationWithInlineScriptTypeSum MetricAggregationWithInlineScriptType = "sum"
-
-	MetricAggregationWithInlineScriptTypeTopMetrics MetricAggregationWithInlineScriptType = "top_metrics"
+	MetricAggregationWithInlineScriptTypeLogs          MetricAggregationWithInlineScriptType = "logs"
+	MetricAggregationWithInlineScriptTypeMax           MetricAggregationWithInlineScriptType = "max"
+	MetricAggregationWithInlineScriptTypeMin           MetricAggregationWithInlineScriptType = "min"
+	MetricAggregationWithInlineScriptTypeMovingAvg     MetricAggregationWithInlineScriptType = "moving_avg"
+	MetricAggregationWithInlineScriptTypeMovingFn      MetricAggregationWithInlineScriptType = "moving_fn"
+	MetricAggregationWithInlineScriptTypePercentiles   MetricAggregationWithInlineScriptType = "percentiles"
+	MetricAggregationWithInlineScriptTypeRate          MetricAggregationWithInlineScriptType = "rate"
+	MetricAggregationWithInlineScriptTypeRawData       MetricAggregationWithInlineScriptType = "raw_data"
+	MetricAggregationWithInlineScriptTypeRawDocument   MetricAggregationWithInlineScriptType = "raw_document"
+	MetricAggregationWithInlineScriptTypeSerialDiff    MetricAggregationWithInlineScriptType = "serial_diff"
+	MetricAggregationWithInlineScriptTypeSum           MetricAggregationWithInlineScriptType = "sum"
+	MetricAggregationWithInlineScriptTypeTopMetrics    MetricAggregationWithInlineScriptType = "top_metrics"
 )
 
 // Defines values for MetricAggregationWithMissingSupportType.
 const (
-	MetricAggregationWithMissingSupportTypeAvg MetricAggregationWithMissingSupportType = "avg"
-
-	MetricAggregationWithMissingSupportTypeBucketScript MetricAggregationWithMissingSupportType = "bucket_script"
-
-	MetricAggregationWithMissingSupportTypeCardinality MetricAggregationWithMissingSupportType = "cardinality"
-
-	MetricAggregationWithMissingSupportTypeCount MetricAggregationWithMissingSupportType = "count"
-
+	MetricAggregationWithMissingSupportTypeAvg           MetricAggregationWithMissingSupportType = "avg"
+	MetricAggregationWithMissingSupportTypeBucketScript  MetricAggregationWithMissingSupportType = "bucket_script"
+	MetricAggregationWithMissingSupportTypeCardinality   MetricAggregationWithMissingSupportType = "cardinality"
+	MetricAggregationWithMissingSupportTypeCount         MetricAggregationWithMissingSupportType = "count"
 	MetricAggregationWithMissingSupportTypeCumulativeSum MetricAggregationWithMissingSupportType = "cumulative_sum"
-
-	MetricAggregationWithMissingSupportTypeDerivative MetricAggregationWithMissingSupportType = "derivative"
-
+	MetricAggregationWithMissingSupportTypeDerivative    MetricAggregationWithMissingSupportType = "derivative"
 	MetricAggregationWithMissingSupportTypeExtendedStats MetricAggregationWithMissingSupportType = "extended_stats"
-
-	MetricAggregationWithMissingSupportTypeLogs MetricAggregationWithMissingSupportType = "logs"
-
-	MetricAggregationWithMissingSupportTypeMax MetricAggregationWithMissingSupportType = "max"
-
-	MetricAggregationWithMissingSupportTypeMin MetricAggregationWithMissingSupportType = "min"
-
-	MetricAggregationWithMissingSupportTypeMovingAvg MetricAggregationWithMissingSupportType = "moving_avg"
-
-	MetricAggregationWithMissingSupportTypeMovingFn MetricAggregationWithMissingSupportType = "moving_fn"
-
-	MetricAggregationWithMissingSupportTypePercentiles MetricAggregationWithMissingSupportType = "percentiles"
-
-	MetricAggregationWithMissingSupportTypeRate MetricAggregationWithMissingSupportType = "rate"
-
-	MetricAggregationWithMissingSupportTypeRawData MetricAggregationWithMissingSupportType = "raw_data"
-
-	MetricAggregationWithMissingSupportTypeRawDocument MetricAggregationWithMissingSupportType = "raw_document"
-
-	MetricAggregationWithMissingSupportTypeSerialDiff MetricAggregationWithMissingSupportType = "serial_diff"
-
-	MetricAggregationWithMissingSupportTypeSum MetricAggregationWithMissingSupportType = "sum"
-
-	MetricAggregationWithMissingSupportTypeTopMetrics MetricAggregationWithMissingSupportType = "top_metrics"
+	MetricAggregationWithMissingSupportTypeLogs          MetricAggregationWithMissingSupportType = "logs"
+	MetricAggregationWithMissingSupportTypeMax           MetricAggregationWithMissingSupportType = "max"
+	MetricAggregationWithMissingSupportTypeMin           MetricAggregationWithMissingSupportType = "min"
+	MetricAggregationWithMissingSupportTypeMovingAvg     MetricAggregationWithMissingSupportType = "moving_avg"
+	MetricAggregationWithMissingSupportTypeMovingFn      MetricAggregationWithMissingSupportType = "moving_fn"
+	MetricAggregationWithMissingSupportTypePercentiles   MetricAggregationWithMissingSupportType = "percentiles"
+	MetricAggregationWithMissingSupportTypeRate          MetricAggregationWithMissingSupportType = "rate"
+	MetricAggregationWithMissingSupportTypeRawData       MetricAggregationWithMissingSupportType = "raw_data"
+	MetricAggregationWithMissingSupportTypeRawDocument   MetricAggregationWithMissingSupportType = "raw_document"
+	MetricAggregationWithMissingSupportTypeSerialDiff    MetricAggregationWithMissingSupportType = "serial_diff"
+	MetricAggregationWithMissingSupportTypeSum           MetricAggregationWithMissingSupportType = "sum"
+	MetricAggregationWithMissingSupportTypeTopMetrics    MetricAggregationWithMissingSupportType = "top_metrics"
 )
 
 // Defines values for MinType.
@@ -443,28 +318,20 @@ const (
 
 // Defines values for MovingAverageModel.
 const (
-	MovingAverageModelEwma MovingAverageModel = "ewma"
-
-	MovingAverageModelHolt MovingAverageModel = "holt"
-
+	MovingAverageModelEwma        MovingAverageModel = "ewma"
+	MovingAverageModelHolt        MovingAverageModel = "holt"
 	MovingAverageModelHoltWinters MovingAverageModel = "holt_winters"
-
-	MovingAverageModelLinear MovingAverageModel = "linear"
-
-	MovingAverageModelSimple MovingAverageModel = "simple"
+	MovingAverageModelLinear      MovingAverageModel = "linear"
+	MovingAverageModelSimple      MovingAverageModel = "simple"
 )
 
 // Defines values for MovingAverageModelOptionValue.
 const (
-	MovingAverageModelOptionValueEwma MovingAverageModelOptionValue = "ewma"
-
-	MovingAverageModelOptionValueHolt MovingAverageModelOptionValue = "holt"
-
+	MovingAverageModelOptionValueEwma        MovingAverageModelOptionValue = "ewma"
+	MovingAverageModelOptionValueHolt        MovingAverageModelOptionValue = "holt"
 	MovingAverageModelOptionValueHoltWinters MovingAverageModelOptionValue = "holt_winters"
-
-	MovingAverageModelOptionValueLinear MovingAverageModelOptionValue = "linear"
-
-	MovingAverageModelOptionValueSimple MovingAverageModelOptionValue = "simple"
+	MovingAverageModelOptionValueLinear      MovingAverageModelOptionValue = "linear"
+	MovingAverageModelOptionValueSimple      MovingAverageModelOptionValue = "simple"
 )
 
 // Defines values for MovingAverageSimpleModelSettingsModel.
@@ -489,58 +356,35 @@ const (
 
 // Defines values for PipelineMetricAggregationType.
 const (
-	PipelineMetricAggregationTypeBucketScript PipelineMetricAggregationType = "bucket_script"
-
+	PipelineMetricAggregationTypeBucketScript  PipelineMetricAggregationType = "bucket_script"
 	PipelineMetricAggregationTypeCumulativeSum PipelineMetricAggregationType = "cumulative_sum"
-
-	PipelineMetricAggregationTypeDerivative PipelineMetricAggregationType = "derivative"
-
-	PipelineMetricAggregationTypeMovingAvg PipelineMetricAggregationType = "moving_avg"
-
-	PipelineMetricAggregationTypeMovingFn PipelineMetricAggregationType = "moving_fn"
-
-	PipelineMetricAggregationTypeSerialDiff PipelineMetricAggregationType = "serial_diff"
+	PipelineMetricAggregationTypeDerivative    PipelineMetricAggregationType = "derivative"
+	PipelineMetricAggregationTypeMovingAvg     PipelineMetricAggregationType = "moving_avg"
+	PipelineMetricAggregationTypeMovingFn      PipelineMetricAggregationType = "moving_fn"
+	PipelineMetricAggregationTypeSerialDiff    PipelineMetricAggregationType = "serial_diff"
 )
 
 // Defines values for PipelineMetricAggregationWithMultipleBucketPathsType.
 const (
-	PipelineMetricAggregationWithMultipleBucketPathsTypeAvg PipelineMetricAggregationWithMultipleBucketPathsType = "avg"
-
-	PipelineMetricAggregationWithMultipleBucketPathsTypeBucketScript PipelineMetricAggregationWithMultipleBucketPathsType = "bucket_script"
-
-	PipelineMetricAggregationWithMultipleBucketPathsTypeCardinality PipelineMetricAggregationWithMultipleBucketPathsType = "cardinality"
-
-	PipelineMetricAggregationWithMultipleBucketPathsTypeCount PipelineMetricAggregationWithMultipleBucketPathsType = "count"
-
+	PipelineMetricAggregationWithMultipleBucketPathsTypeAvg           PipelineMetricAggregationWithMultipleBucketPathsType = "avg"
+	PipelineMetricAggregationWithMultipleBucketPathsTypeBucketScript  PipelineMetricAggregationWithMultipleBucketPathsType = "bucket_script"
+	PipelineMetricAggregationWithMultipleBucketPathsTypeCardinality   PipelineMetricAggregationWithMultipleBucketPathsType = "cardinality"
+	PipelineMetricAggregationWithMultipleBucketPathsTypeCount         PipelineMetricAggregationWithMultipleBucketPathsType = "count"
 	PipelineMetricAggregationWithMultipleBucketPathsTypeCumulativeSum PipelineMetricAggregationWithMultipleBucketPathsType = "cumulative_sum"
-
-	PipelineMetricAggregationWithMultipleBucketPathsTypeDerivative PipelineMetricAggregationWithMultipleBucketPathsType = "derivative"
-
+	PipelineMetricAggregationWithMultipleBucketPathsTypeDerivative    PipelineMetricAggregationWithMultipleBucketPathsType = "derivative"
 	PipelineMetricAggregationWithMultipleBucketPathsTypeExtendedStats PipelineMetricAggregationWithMultipleBucketPathsType = "extended_stats"
-
-	PipelineMetricAggregationWithMultipleBucketPathsTypeLogs PipelineMetricAggregationWithMultipleBucketPathsType = "logs"
-
-	PipelineMetricAggregationWithMultipleBucketPathsTypeMax PipelineMetricAggregationWithMultipleBucketPathsType = "max"
-
-	PipelineMetricAggregationWithMultipleBucketPathsTypeMin PipelineMetricAggregationWithMultipleBucketPathsType = "min"
-
-	PipelineMetricAggregationWithMultipleBucketPathsTypeMovingAvg PipelineMetricAggregationWithMultipleBucketPathsType = "moving_avg"
-
-	PipelineMetricAggregationWithMultipleBucketPathsTypeMovingFn PipelineMetricAggregationWithMultipleBucketPathsType = "moving_fn"
-
-	PipelineMetricAggregationWithMultipleBucketPathsTypePercentiles PipelineMetricAggregationWithMultipleBucketPathsType = "percentiles"
-
-	PipelineMetricAggregationWithMultipleBucketPathsTypeRate PipelineMetricAggregationWithMultipleBucketPathsType = "rate"
-
-	PipelineMetricAggregationWithMultipleBucketPathsTypeRawData PipelineMetricAggregationWithMultipleBucketPathsType = "raw_data"
-
-	PipelineMetricAggregationWithMultipleBucketPathsTypeRawDocument PipelineMetricAggregationWithMultipleBucketPathsType = "raw_document"
-
-	PipelineMetricAggregationWithMultipleBucketPathsTypeSerialDiff PipelineMetricAggregationWithMultipleBucketPathsType = "serial_diff"
-
-	PipelineMetricAggregationWithMultipleBucketPathsTypeSum PipelineMetricAggregationWithMultipleBucketPathsType = "sum"
-
-	PipelineMetricAggregationWithMultipleBucketPathsTypeTopMetrics PipelineMetricAggregationWithMultipleBucketPathsType = "top_metrics"
+	PipelineMetricAggregationWithMultipleBucketPathsTypeLogs          PipelineMetricAggregationWithMultipleBucketPathsType = "logs"
+	PipelineMetricAggregationWithMultipleBucketPathsTypeMax           PipelineMetricAggregationWithMultipleBucketPathsType = "max"
+	PipelineMetricAggregationWithMultipleBucketPathsTypeMin           PipelineMetricAggregationWithMultipleBucketPathsType = "min"
+	PipelineMetricAggregationWithMultipleBucketPathsTypeMovingAvg     PipelineMetricAggregationWithMultipleBucketPathsType = "moving_avg"
+	PipelineMetricAggregationWithMultipleBucketPathsTypeMovingFn      PipelineMetricAggregationWithMultipleBucketPathsType = "moving_fn"
+	PipelineMetricAggregationWithMultipleBucketPathsTypePercentiles   PipelineMetricAggregationWithMultipleBucketPathsType = "percentiles"
+	PipelineMetricAggregationWithMultipleBucketPathsTypeRate          PipelineMetricAggregationWithMultipleBucketPathsType = "rate"
+	PipelineMetricAggregationWithMultipleBucketPathsTypeRawData       PipelineMetricAggregationWithMultipleBucketPathsType = "raw_data"
+	PipelineMetricAggregationWithMultipleBucketPathsTypeRawDocument   PipelineMetricAggregationWithMultipleBucketPathsType = "raw_document"
+	PipelineMetricAggregationWithMultipleBucketPathsTypeSerialDiff    PipelineMetricAggregationWithMultipleBucketPathsType = "serial_diff"
+	PipelineMetricAggregationWithMultipleBucketPathsTypeSum           PipelineMetricAggregationWithMultipleBucketPathsType = "sum"
+	PipelineMetricAggregationWithMultipleBucketPathsTypeTopMetrics    PipelineMetricAggregationWithMultipleBucketPathsType = "top_metrics"
 )
 
 // Defines values for RateType.
@@ -570,8 +414,7 @@ const (
 
 // Defines values for TermsSettingsOrder.
 const (
-	TermsSettingsOrderAsc TermsSettingsOrder = "asc"
-
+	TermsSettingsOrderAsc  TermsSettingsOrder = "asc"
 	TermsSettingsOrderDesc TermsSettingsOrder = "desc"
 )
 
@@ -582,8 +425,7 @@ const (
 
 // Defines values for TermsOrder.
 const (
-	TermsOrderAsc TermsOrder = "asc"
-
+	TermsOrderAsc  TermsOrder = "asc"
 	TermsOrderDesc TermsOrder = "desc"
 )
 
@@ -644,12 +486,9 @@ type BaseMovingAverageModelSettingsModel string
 
 // BasePipelineMetricAggregation defines model for BasePipelineMetricAggregation.
 type BasePipelineMetricAggregation struct {
-	Field *string `json:"field,omitempty"`
-	Hide  *bool   `json:"hide,omitempty"`
-	Id    string  `json:"id"`
-
-	// TODO: Type is temporarily commented out as it causes a type error in the generated code. In the meantime, we decided to manually extend the type in types.ts.
-	// type:         #PipelineMetricAggregationType
+	Field       *string                           `json:"field,omitempty"`
+	Hide        *bool                             `json:"hide,omitempty"`
+	Id          string                            `json:"id"`
 	PipelineAgg *string                           `json:"pipelineAgg,omitempty"`
 	Type        BasePipelineMetricAggregationType `json:"type"`
 }
@@ -658,7 +497,35 @@ type BasePipelineMetricAggregation struct {
 type BasePipelineMetricAggregationType string
 
 // BucketAggregation defines model for BucketAggregation.
-type BucketAggregation interface{}
+type BucketAggregation struct {
+	Field    *string                     `json:"field,omitempty"`
+	Id       *string                     `json:"id,omitempty"`
+	Settings *BucketAggregation_Settings `json:"settings,omitempty"`
+	Type     *interface{}                `json:"type,omitempty"`
+	union    json.RawMessage
+}
+
+// BucketAggregationSettingsOrder defines model for BucketAggregation.Settings.Order.
+type BucketAggregationSettingsOrder string
+
+// BucketAggregation_Settings defines model for BucketAggregation.Settings.
+type BucketAggregation_Settings struct {
+	Filters []struct {
+		Label string `json:"label"`
+		Query string `json:"query"`
+	} `json:"filters,omitempty"`
+	Interval             *string                         `json:"interval,omitempty"`
+	MinDocCount          *string                         `json:"min_doc_count,omitempty"`
+	Missing              *string                         `json:"missing,omitempty"`
+	Offset               *string                         `json:"offset,omitempty"`
+	Order                *BucketAggregationSettingsOrder `json:"order,omitempty"`
+	OrderBy              *string                         `json:"orderBy,omitempty"`
+	Precision            *string                         `json:"precision,omitempty"`
+	Size                 *string                         `json:"size,omitempty"`
+	TimeZone             *string                         `json:"timeZone,omitempty"`
+	TrimEdges            *string                         `json:"trimEdges,omitempty"`
+	AdditionalProperties map[string]interface{}          `json:"-"`
+}
 
 // BucketAggregationType defines model for BucketAggregationType.
 type BucketAggregationType string
@@ -676,12 +543,9 @@ type BucketAggregationWithFieldType string
 
 // BucketScript defines model for BucketScript.
 type BucketScript struct {
-	Hide *bool  `json:"hide,omitempty"`
-	Id   string `json:"id"`
-
-	// TODO: Type is temporarily commented out as it causes a type error in the generated code. In the meantime, we decided to manually extend the type in types.ts.
-	// type: #PipelineMetricAggregationType
-	PipelineVariables *[]struct {
+	Hide              *bool  `json:"hide,omitempty"`
+	Id                string `json:"id"`
+	PipelineVariables []struct {
 		Name        string `json:"name"`
 		PipelineAgg string `json:"pipelineAgg"`
 	} `json:"pipelineVariables,omitempty"`
@@ -706,12 +570,9 @@ type CountType string
 
 // CumulativeSum defines model for CumulativeSum.
 type CumulativeSum struct {
-	Field *string `json:"field,omitempty"`
-	Hide  *bool   `json:"hide,omitempty"`
-	Id    string  `json:"id"`
-
-	// TODO: Type is temporarily commented out as it causes a type error in the generated code. In the meantime, we decided to manually extend the type in types.ts.
-	// type:         #PipelineMetricAggregationType
+	Field       *string `json:"field,omitempty"`
+	Hide        *bool   `json:"hide,omitempty"`
+	Id          string  `json:"id"`
 	PipelineAgg *string `json:"pipelineAgg,omitempty"`
 	Settings    *struct {
 		Format *string `json:"format,omitempty"`
@@ -750,12 +611,9 @@ type DateHistogramSettings struct {
 
 // Derivative defines model for Derivative.
 type Derivative struct {
-	Field *string `json:"field,omitempty"`
-	Hide  *bool   `json:"hide,omitempty"`
-	Id    string  `json:"id"`
-
-	// TODO: Type is temporarily commented out as it causes a type error in the generated code. In the meantime, we decided to manually extend the type in types.ts.
-	// type:         #PipelineMetricAggregationType
+	Field       *string `json:"field,omitempty"`
+	Hide        *bool   `json:"hide,omitempty"`
+	Id          string  `json:"id"`
 	PipelineAgg *string `json:"pipelineAgg,omitempty"`
 	Settings    *struct {
 		Unit *string `json:"unit,omitempty"`
@@ -768,8 +626,11 @@ type DerivativeType string
 
 // ElasticsearchDataQuery defines model for ElasticsearchDataQuery.
 type ElasticsearchDataQuery struct {
-	Alias      *string        `json:"alias,omitempty"`
-	BucketAggs *[]interface{} `json:"bucketAggs,omitempty"`
+	// Alias pattern
+	Alias *string `json:"alias,omitempty"`
+
+	// List of bucket aggregations
+	BucketAggs []_BucketAggs_Item `json:"bucketAggs,omitempty"`
 
 	// For mixed data sources the selected datasource is on the query level.
 	// For non mixed scenarios this is undefined.
@@ -777,21 +638,95 @@ type ElasticsearchDataQuery struct {
 	// TODO this shouldn't be unknown but DataSourceRef | null
 	Datasource *interface{} `json:"datasource,omitempty"`
 
-	// true if query is disabled (ie should not be returned to the dashboard)
+	// Hide true if query is disabled (ie should not be returned to the dashboard)
 	Hide *bool `json:"hide,omitempty"`
 
 	// Unique, guid like, string used in explore mode
-	Key     *string        `json:"key,omitempty"`
-	Metrics *[]interface{} `json:"metrics,omitempty"`
-	Query   *string        `json:"query,omitempty"`
+	Key *string `json:"key,omitempty"`
+
+	// List of metric aggregations
+	Metrics []_Metrics_Item `json:"metrics,omitempty"`
+
+	// Lucene query
+	Query *string `json:"query,omitempty"`
 
 	// Specify the query flavor
 	// TODO make this required and give it a default
 	QueryType *string `json:"queryType,omitempty"`
 
 	// A - Z
-	RefId     string  `json:"refId"`
+	RefId string `json:"refId"`
+
+	// Name of time field
 	TimeField *string `json:"timeField,omitempty"`
+}
+
+// BucketAggsSettingsOrder defines model for ElasticsearchDataQuery.BucketAggs.Settings.Order.
+type BucketAggsSettingsOrder string
+
+// _BucketAggs_Settings defines model for ElasticsearchDataQuery.BucketAggs.Settings.
+type _BucketAggs_Settings struct {
+	Filters []struct {
+		Label string `json:"label"`
+		Query string `json:"query"`
+	} `json:"filters,omitempty"`
+	Interval             *string                  `json:"interval,omitempty"`
+	MinDocCount          *string                  `json:"min_doc_count,omitempty"`
+	Missing              *string                  `json:"missing,omitempty"`
+	Offset               *string                  `json:"offset,omitempty"`
+	Order                *BucketAggsSettingsOrder `json:"order,omitempty"`
+	OrderBy              *string                  `json:"orderBy,omitempty"`
+	Precision            *string                  `json:"precision,omitempty"`
+	Size                 *string                  `json:"size,omitempty"`
+	TimeZone             *string                  `json:"timeZone,omitempty"`
+	TrimEdges            *string                  `json:"trimEdges,omitempty"`
+	AdditionalProperties map[string]interface{}   `json:"-"`
+}
+
+// _BucketAggs_Item defines model for ElasticsearchDataQuery.bucketAggs.Item.
+type _BucketAggs_Item struct {
+	Field    *string               `json:"field,omitempty"`
+	Id       *string               `json:"id,omitempty"`
+	Settings *_BucketAggs_Settings `json:"settings,omitempty"`
+	Type     *interface{}          `json:"type,omitempty"`
+	union    json.RawMessage
+}
+
+// _Metrics_Settings defines model for ElasticsearchDataQuery.Metrics.Settings.
+type _Metrics_Settings struct {
+	Format               *string                `json:"format,omitempty"`
+	Lag                  *string                `json:"lag,omitempty"`
+	Limit                *string                `json:"limit,omitempty"`
+	Metrics              []string               `json:"metrics,omitempty"`
+	Missing              *string                `json:"missing,omitempty"`
+	Mode                 *string                `json:"mode,omitempty"`
+	Order                *string                `json:"order,omitempty"`
+	OrderBy              *string                `json:"orderBy,omitempty"`
+	Percents             []string               `json:"percents,omitempty"`
+	PrecisionThreshold   *string                `json:"precision_threshold,omitempty"`
+	Script               *interface{}           `json:"script,omitempty"`
+	Shift                *string                `json:"shift,omitempty"`
+	Sigma                *string                `json:"sigma,omitempty"`
+	Size                 *string                `json:"size,omitempty"`
+	Unit                 *string                `json:"unit,omitempty"`
+	Window               *string                `json:"window,omitempty"`
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
+
+// _Metrics_Item defines model for ElasticsearchDataQuery.metrics.Item.
+type _Metrics_Item struct {
+	Field             *string                `json:"field,omitempty"`
+	Hide              *bool                  `json:"hide,omitempty"`
+	Id                *string                `json:"id,omitempty"`
+	Meta              map[string]interface{} `json:"meta,omitempty"`
+	PipelineAgg       *string                `json:"pipelineAgg,omitempty"`
+	PipelineVariables []struct {
+		Name        string `json:"name"`
+		PipelineAgg string `json:"pipelineAgg"`
+	} `json:"pipelineVariables,omitempty"`
+	Settings *_Metrics_Settings `json:"settings,omitempty"`
+	Type     *interface{}       `json:"type,omitempty"`
+	union    json.RawMessage
 }
 
 // ExtendedStat defines model for ExtendedStat.
@@ -808,10 +743,10 @@ type ExtendedStatMetaType string
 
 // ExtendedStats defines model for ExtendedStats.
 type ExtendedStats struct {
-	Field    *string                 `json:"field,omitempty"`
-	Hide     *bool                   `json:"hide,omitempty"`
-	Id       string                  `json:"id"`
-	Meta     *map[string]interface{} `json:"meta,omitempty"`
+	Field    *string                `json:"field,omitempty"`
+	Hide     *bool                  `json:"hide,omitempty"`
+	Id       string                 `json:"id"`
+	Meta     map[string]interface{} `json:"meta,omitempty"`
 	Settings *struct {
 		Missing *string      `json:"missing,omitempty"`
 		Script  *interface{} `json:"script,omitempty"`
@@ -833,7 +768,7 @@ type Filter struct {
 type Filters struct {
 	Id       string `json:"id"`
 	Settings *struct {
-		Filters *[]struct {
+		Filters []struct {
 			Label string `json:"label"`
 			Query string `json:"query"`
 		} `json:"filters,omitempty"`
@@ -846,7 +781,7 @@ type FiltersType string
 
 // FiltersSettings defines model for FiltersSettings.
 type FiltersSettings struct {
-	Filters *[]struct {
+	Filters []struct {
 		Label string `json:"label"`
 		Query string `json:"query"`
 	} `json:"filters,omitempty"`
@@ -890,9 +825,6 @@ type HistogramSettings struct {
 	MinDocCount *string `json:"min_doc_count,omitempty"`
 }
 
-// InlineScript defines model for InlineScript.
-type InlineScript interface{}
-
 // Logs defines model for Logs.
 type Logs struct {
 	Hide     *bool  `json:"hide,omitempty"`
@@ -922,7 +854,41 @@ type Max struct {
 type MaxType string
 
 // MetricAggregation defines model for MetricAggregation.
-type MetricAggregation interface{}
+type MetricAggregation struct {
+	Field             *string                `json:"field,omitempty"`
+	Hide              *bool                  `json:"hide,omitempty"`
+	Id                *string                `json:"id,omitempty"`
+	Meta              map[string]interface{} `json:"meta,omitempty"`
+	PipelineAgg       *string                `json:"pipelineAgg,omitempty"`
+	PipelineVariables []struct {
+		Name        string `json:"name"`
+		PipelineAgg string `json:"pipelineAgg"`
+	} `json:"pipelineVariables,omitempty"`
+	Settings *MetricAggregation_Settings `json:"settings,omitempty"`
+	Type     *interface{}                `json:"type,omitempty"`
+	union    json.RawMessage
+}
+
+// MetricAggregation_Settings defines model for MetricAggregation.Settings.
+type MetricAggregation_Settings struct {
+	Format               *string                `json:"format,omitempty"`
+	Lag                  *string                `json:"lag,omitempty"`
+	Limit                *string                `json:"limit,omitempty"`
+	Metrics              []string               `json:"metrics,omitempty"`
+	Missing              *string                `json:"missing,omitempty"`
+	Mode                 *string                `json:"mode,omitempty"`
+	Order                *string                `json:"order,omitempty"`
+	OrderBy              *string                `json:"orderBy,omitempty"`
+	Percents             []string               `json:"percents,omitempty"`
+	PrecisionThreshold   *string                `json:"precision_threshold,omitempty"`
+	Script               *interface{}           `json:"script,omitempty"`
+	Shift                *string                `json:"shift,omitempty"`
+	Sigma                *string                `json:"sigma,omitempty"`
+	Size                 *string                `json:"size,omitempty"`
+	Unit                 *string                `json:"unit,omitempty"`
+	Window               *string                `json:"window,omitempty"`
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
 
 // MetricAggregationType defines model for MetricAggregationType.
 type MetricAggregationType string
@@ -965,7 +931,41 @@ type MetricAggregationWithMissingSupport struct {
 type MetricAggregationWithMissingSupportType string
 
 // MetricAggregationWithSettings defines model for MetricAggregationWithSettings.
-type MetricAggregationWithSettings interface{}
+type MetricAggregationWithSettings struct {
+	Field             *string                `json:"field,omitempty"`
+	Hide              *bool                  `json:"hide,omitempty"`
+	Id                *string                `json:"id,omitempty"`
+	Meta              map[string]interface{} `json:"meta,omitempty"`
+	PipelineAgg       *string                `json:"pipelineAgg,omitempty"`
+	PipelineVariables []struct {
+		Name        string `json:"name"`
+		PipelineAgg string `json:"pipelineAgg"`
+	} `json:"pipelineVariables,omitempty"`
+	Settings *MetricAggregationWithSettings_Settings `json:"settings,omitempty"`
+	Type     *interface{}                            `json:"type,omitempty"`
+	union    json.RawMessage
+}
+
+// MetricAggregationWithSettings_Settings defines model for MetricAggregationWithSettings.Settings.
+type MetricAggregationWithSettings_Settings struct {
+	Format               *string                `json:"format,omitempty"`
+	Lag                  *string                `json:"lag,omitempty"`
+	Limit                *string                `json:"limit,omitempty"`
+	Metrics              []string               `json:"metrics,omitempty"`
+	Missing              *string                `json:"missing,omitempty"`
+	Mode                 *string                `json:"mode,omitempty"`
+	Order                *string                `json:"order,omitempty"`
+	OrderBy              *string                `json:"orderBy,omitempty"`
+	Percents             []string               `json:"percents,omitempty"`
+	PrecisionThreshold   *string                `json:"precision_threshold,omitempty"`
+	Script               *interface{}           `json:"script,omitempty"`
+	Shift                *string                `json:"shift,omitempty"`
+	Sigma                *string                `json:"sigma,omitempty"`
+	Size                 *string                `json:"size,omitempty"`
+	Unit                 *string                `json:"unit,omitempty"`
+	Window               *string                `json:"window,omitempty"`
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
 
 // Min defines model for Min.
 type Min struct {
@@ -984,12 +984,9 @@ type MinType string
 
 // #MovingAverage's settings are overridden in types.ts
 type MovingAverage struct {
-	Field *string `json:"field,omitempty"`
-	Hide  *bool   `json:"hide,omitempty"`
-	Id    string  `json:"id"`
-
-	// TODO: Type is temporarily commented out as it causes a type error in the generated code. In the meantime, we decided to manually extend the type in types.ts.
-	// type:         #PipelineMetricAggregationType
+	Field       *string                `json:"field,omitempty"`
+	Hide        *bool                  `json:"hide,omitempty"`
+	Id          string                 `json:"id"`
 	PipelineAgg *string                `json:"pipelineAgg,omitempty"`
 	Settings    map[string]interface{} `json:"settings,omitempty"`
 	Type        MovingAverageType      `json:"type"`
@@ -1079,12 +1076,9 @@ type MovingAverageSimpleModelSettingsModel string
 
 // MovingFunction defines model for MovingFunction.
 type MovingFunction struct {
-	Field *string `json:"field,omitempty"`
-	Hide  *bool   `json:"hide,omitempty"`
-	Id    string  `json:"id"`
-
-	// TODO: Type is temporarily commented out as it causes a type error in the generated code. In the meantime, we decided to manually extend the type in types.ts.
-	// type:         #PipelineMetricAggregationType
+	Field       *string `json:"field,omitempty"`
+	Hide        *bool   `json:"hide,omitempty"`
+	Id          string  `json:"id"`
 	PipelineAgg *string `json:"pipelineAgg,omitempty"`
 	Settings    *struct {
 		Script *interface{} `json:"script,omitempty"`
@@ -1115,7 +1109,7 @@ type Percentiles struct {
 	Id       string  `json:"id"`
 	Settings *struct {
 		Missing  *string      `json:"missing,omitempty"`
-		Percents *[]string    `json:"percents,omitempty"`
+		Percents []string     `json:"percents,omitempty"`
 		Script   *interface{} `json:"script,omitempty"`
 	} `json:"settings,omitempty"`
 	Type PercentilesType `json:"type"`
@@ -1125,19 +1119,36 @@ type Percentiles struct {
 type PercentilesType string
 
 // PipelineMetricAggregation defines model for PipelineMetricAggregation.
-type PipelineMetricAggregation interface{}
+type PipelineMetricAggregation struct {
+	Field             *string `json:"field,omitempty"`
+	Hide              *bool   `json:"hide,omitempty"`
+	Id                *string `json:"id,omitempty"`
+	PipelineAgg       *string `json:"pipelineAgg,omitempty"`
+	PipelineVariables []struct {
+		Name        string `json:"name"`
+		PipelineAgg string `json:"pipelineAgg"`
+	} `json:"pipelineVariables,omitempty"`
+	Settings *PipelineMetricAggregation_Settings `json:"settings,omitempty"`
+	Type     *interface{}                        `json:"type,omitempty"`
+	union    json.RawMessage
+}
+
+// PipelineMetricAggregation_Settings defines model for PipelineMetricAggregation.Settings.
+type PipelineMetricAggregation_Settings struct {
+	Format               *string                `json:"format,omitempty"`
+	Script               *interface{}           `json:"script,omitempty"`
+	Unit                 *string                `json:"unit,omitempty"`
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
 
 // PipelineMetricAggregationType defines model for PipelineMetricAggregationType.
 type PipelineMetricAggregationType string
 
 // PipelineMetricAggregationWithMultipleBucketPaths defines model for PipelineMetricAggregationWithMultipleBucketPaths.
 type PipelineMetricAggregationWithMultipleBucketPaths struct {
-	Hide *bool  `json:"hide,omitempty"`
-	Id   string `json:"id"`
-
-	// TODO: Type is temporarily commented out as it causes a type error in the generated code. In the meantime, we decided to manually extend the type in types.ts.
-	// type: #PipelineMetricAggregationType
-	PipelineVariables *[]struct {
+	Hide              *bool  `json:"hide,omitempty"`
+	Id                string `json:"id"`
+	PipelineVariables []struct {
 		Name        string `json:"name"`
 		PipelineAgg string `json:"pipelineAgg"`
 	} `json:"pipelineVariables,omitempty"`
@@ -1196,12 +1207,9 @@ type RawDocumentType string
 
 // SerialDiff defines model for SerialDiff.
 type SerialDiff struct {
-	Field *string `json:"field,omitempty"`
-	Hide  *bool   `json:"hide,omitempty"`
-	Id    string  `json:"id"`
-
-	// TODO: Type is temporarily commented out as it causes a type error in the generated code. In the meantime, we decided to manually extend the type in types.ts.
-	// type:         #PipelineMetricAggregationType
+	Field       *string `json:"field,omitempty"`
+	Hide        *bool   `json:"hide,omitempty"`
+	Id          string  `json:"id"`
 	PipelineAgg *string `json:"pipelineAgg,omitempty"`
 	Settings    *struct {
 		Lag *string `json:"lag,omitempty"`
@@ -1264,9 +1272,9 @@ type TopMetrics struct {
 	Hide     *bool  `json:"hide,omitempty"`
 	Id       string `json:"id"`
 	Settings *struct {
-		Metrics *[]string `json:"metrics,omitempty"`
-		Order   *string   `json:"order,omitempty"`
-		OrderBy *string   `json:"orderBy,omitempty"`
+		Metrics []string `json:"metrics,omitempty"`
+		Order   *string  `json:"order,omitempty"`
+		OrderBy *string  `json:"orderBy,omitempty"`
 	} `json:"settings,omitempty"`
 	Type TopMetricsType `json:"type"`
 }

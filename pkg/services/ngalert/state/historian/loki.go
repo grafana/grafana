@@ -5,14 +5,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
-	"strconv"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/weaveworks/common/http/client"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
@@ -34,23 +35,27 @@ const (
 	StateHistoryLabelValue = "state-history"
 )
 
+const defaultQueryRange = 6 * time.Hour
+
 type remoteLokiClient interface {
 	ping(context.Context) error
 	push(context.Context, []stream) error
-	query(ctx context.Context, selectors []Selector, start, end int64) (QueryRes, error)
+	rangeQuery(ctx context.Context, selectors []Selector, start, end int64) (queryRes, error)
 }
 
 type RemoteLokiBackend struct {
 	client         remoteLokiClient
 	externalLabels map[string]string
+	metrics        *metrics.Historian
 	log            log.Logger
 }
 
-func NewRemoteLokiBackend(cfg LokiConfig) *RemoteLokiBackend {
+func NewRemoteLokiBackend(cfg LokiConfig, req client.Requester, metrics *metrics.Historian) *RemoteLokiBackend {
 	logger := log.New("ngalert.state.historian", "backend", "loki")
 	return &RemoteLokiBackend{
-		client:         newLokiClient(cfg, logger),
+		client:         newLokiClient(cfg, req, metrics, logger),
 		externalLabels: cfg.ExternalLabels,
+		metrics:        metrics,
 		log:            logger,
 	}
 }
@@ -78,8 +83,17 @@ func (h *RemoteLokiBackend) QueryStates(ctx context.Context, query models.Histor
 	if err != nil {
 		return nil, fmt.Errorf("failed to build the provided selectors: %w", err)
 	}
+
+	now := time.Now().UTC()
+	if query.To.IsZero() {
+		query.To = now
+	}
+	if query.From.IsZero() {
+		query.From = now.Add(-defaultQueryRange)
+	}
+
 	// Timestamps are expected in RFC3339Nano.
-	res, err := h.client.query(ctx, selectors, query.From.UnixNano(), query.To.UnixNano())
+	res, err := h.client.rangeQuery(ctx, selectors, query.From.UnixNano(), query.To.UnixNano())
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +142,7 @@ func buildSelectors(query models.HistoryQuery) ([]Selector, error) {
 }
 
 // merge will put all the results in one array sorted by timestamp.
-func merge(res QueryRes, ruleUID string) (*data.Frame, error) {
+func merge(res queryRes, ruleUID string) (*data.Frame, error) {
 	// Find the total number of elements in all arrays.
 	totalLen := 0
 	for _, arr := range res.Data.Result {
@@ -154,7 +168,7 @@ func merge(res QueryRes, ruleUID string) (*data.Frame, error) {
 	pointers := make([]int, len(res.Data.Result))
 	for {
 		minTime := int64(math.MaxInt64)
-		minEl := [2]string{}
+		minEl := sample{}
 		minElStreamIdx := -1
 		// Find the element with the earliest time among all arrays.
 		for i, stream := range res.Data.Result {
@@ -162,10 +176,7 @@ func merge(res QueryRes, ruleUID string) (*data.Frame, error) {
 			if len(stream.Values) == pointers[i] {
 				continue
 			}
-			curTime, err := strconv.ParseInt(stream.Values[pointers[i]][0], 10, 64)
-			if err != nil {
-				return nil, fmt.Errorf("failed to parse timestamp from loki response: %w", err)
-			}
+			curTime := stream.Values[pointers[i]].T.UnixNano()
 			if pointers[i] < len(stream.Values) && curTime < minTime {
 				minTime = curTime
 				minEl = stream.Values[pointers[i]]
@@ -177,22 +188,19 @@ func merge(res QueryRes, ruleUID string) (*data.Frame, error) {
 			break
 		}
 		var entry lokiEntry
-		err := json.Unmarshal([]byte(minEl[1]), &entry)
+		err := json.Unmarshal([]byte(minEl.V), &entry)
 		if err != nil {
 			return nil, fmt.Errorf("failed to unmarshal entry: %w", err)
 		}
 		// Append the minimum element to the merged slice and move the pointer.
-		tsNano, err := strconv.ParseInt(minEl[0], 10, 64)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse timestamp in response: %w", err)
-		}
+		tsNano := minEl.T.UnixNano()
 		// TODO: In general, perhaps we should omit the offending line and log, rather than failing the request entirely.
 		streamLbls := res.Data.Result[minElStreamIdx].Stream
 		lblsJson, err := json.Marshal(streamLbls)
 		if err != nil {
 			return nil, fmt.Errorf("failed to serialize stream labels: %w", err)
 		}
-		line, err := jsonifyRow(minEl[1])
+		line, err := jsonifyRow(minEl.V)
 		if err != nil {
 			return nil, fmt.Errorf("a line was in an invalid format: %w", err)
 		}
@@ -211,7 +219,7 @@ func merge(res QueryRes, ruleUID string) (*data.Frame, error) {
 }
 
 func statesToStreams(rule history_model.RuleMeta, states []state.StateTransition, externalLabels map[string]string, logger log.Logger) []stream {
-	buckets := make(map[string][]row) // label repr -> entries
+	buckets := make(map[string][]sample) // label repr -> entries
 	for _, state := range states {
 		if !shouldRecord(state) {
 			continue
@@ -244,9 +252,9 @@ func statesToStreams(rule history_model.RuleMeta, states []state.StateTransition
 		}
 		line := string(jsn)
 
-		buckets[repr] = append(buckets[repr], row{
-			At:  state.State.LastEvaluationTime,
-			Val: line,
+		buckets[repr] = append(buckets[repr], sample{
+			T: state.State.LastEvaluationTime,
+			V: line,
 		})
 	}
 

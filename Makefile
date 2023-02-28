@@ -16,6 +16,8 @@ GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
 
+targets := $(shell echo '$(sources)' | tr "," " ")
+
 all: deps build
 
 ##@ Dependencies
@@ -174,7 +176,7 @@ build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	DOCKER_BUILDKIT=1 \
 	docker build \
 	--build-arg BASE_IMAGE=ubuntu:20.04 \
-	--build-arg GO_IMAGE=golang:1.19.4 \
+	--build-arg GO_IMAGE=golang:1.20.1 \
 	--tag grafana/grafana:dev-ubuntu .
 
 ##@ Services
@@ -185,8 +187,11 @@ ifeq ($(sources),)
 devenv:
 	@printf 'You have to define sources for this command \nexample: make devenv sources=postgres,openldap\n'
 else
-devenv: devenv-down ## Start optional services, e.g. postgres, prometheus, and elasticsearch.
-	$(eval targets := $(shell echo '$(sources)' | tr "," " "))
+devenv: ${KIND} devenv-down ## Start optional services, e.g. postgres, prometheus, and elasticsearch.
+ifneq (,$(findstring apiserver,$(targets)))
+	@${KIND} create cluster --name grafana-devenv
+	$(eval targets := $(filter-out apiserver,$(targets)))
+endif
 
 	@cd devenv; \
 	./create_docker_compose.sh $(targets) || \
@@ -197,6 +202,7 @@ devenv: devenv-down ## Start optional services, e.g. postgres, prometheus, and e
 endif
 
 devenv-down: ## Stop optional services.
+	@${KIND} delete cluster --name grafana
 	@cd devenv; \
 	test -f docker-compose.yaml && \
 	docker-compose down || exit 0;

@@ -6,7 +6,6 @@ import {
   EventBus,
   DataHoverEvent,
   DataHoverClearEvent,
-  PluginState,
 } from '@grafana/data';
 import Map from 'ol/Map';
 import VectorLayer from 'ol/layer/Vector';
@@ -58,7 +57,6 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
   name: 'Night / Day',
   description: 'Show day and night regions',
   isBaseMap: false,
-  state: PluginState.alpha,
 
   /**
    * Function that configures transformation and returns a transformer
@@ -102,7 +100,7 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
         })
       }),
     });
-    
+
     // Sun circle
     const sunFeature = new Feature({
       geometry: new Point([]),
