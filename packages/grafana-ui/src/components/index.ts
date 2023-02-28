@@ -286,6 +286,3 @@ export { type GraphNGLegendEvent } from './GraphNG/types';
 export * from './PanelChrome/types';
 export { Label as BrowserLabel } from './BrowserLabel/Label';
 export { PanelContainer } from './PanelContainer/PanelContainer';
-
-export { DataSourceDrawer } from './DataSourceDrawer/DataSourceDrawer';
-export * from './DataSourceDrawer/types';

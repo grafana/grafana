@@ -1,10 +1,9 @@
 import React from 'react';
 
 import { dateTime } from '@grafana/data';
-import { DataSourcePicker } from '@grafana/runtime';
+import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
 
-import { LocalStorageValueProvider } from '../LocalStorageValueProvider';
-
+import { DataSourcePicker } from './DataSourcePicker';
 import { DataSourcePickerHistoryItem, DataSourcePickerWithHistoryProps } from './types';
 
 const DS_PICKER_STORAGE_KEY = 'DATASOURCE_PICKER';

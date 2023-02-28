@@ -14,7 +14,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { DataSourceJsonData } from '@grafana/schema';
-import { ActionMeta, HorizontalGroup, PluginSignatureBadge, Select, DataSourceDrawer } from '@grafana/ui';
+import { ActionMeta, HorizontalGroup, PluginSignatureBadge, Select } from '@grafana/ui';
 
 import { getDataSourceSrv } from '../services/dataSourceSrv';
 
@@ -198,8 +198,6 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
       inputId,
       disabled = false,
       isLoading = false,
-      drawer,
-      recentlyUsed,
     } = this.props;
     const { error } = this.state;
     const options = this.getDataSourceOptions();
@@ -208,47 +206,37 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
 
     return (
       <div aria-label={selectors.components.DataSourcePicker.container}>
-        {drawer ? (
-          <DataSourceDrawer
-            datasources={this.getDatasources()}
-            onChange={this.onChange}
-            recentlyUsed={recentlyUsed}
-            current={this.getCurrentDs()}
-            fileUploadOptions={this.props.fileUploadOptions}
-          />
-        ) : (
-          <Select
-            isLoading={isLoading}
-            disabled={disabled}
-            aria-label={selectors.components.DataSourcePicker.inputV2}
-            inputId={inputId || 'data-source-picker'}
-            className="ds-picker select-container"
-            isMulti={false}
-            isClearable={isClearable}
-            backspaceRemovesValue={false}
-            onChange={this.onPickerChange}
-            options={options}
-            autoFocus={autoFocus}
-            onBlur={onBlur}
-            width={width}
-            openMenuOnFocus={openMenuOnFocus}
-            maxMenuHeight={500}
-            placeholder={placeholder}
-            noOptionsMessage="No datasources found"
-            value={value ?? null}
-            invalid={Boolean(error) || Boolean(this.props.invalid)}
-            getOptionLabel={(o) => {
-              if (o.meta && isUnsignedPluginSignature(o.meta.signature) && o !== value) {
-                return (
-                  <HorizontalGroup align="center" justify="space-between" height="auto">
-                    <span>{o.label}</span> <PluginSignatureBadge status={o.meta.signature} />
-                  </HorizontalGroup>
-                );
-              }
-              return o.label || '';
-            }}
-          />
-        )}
+        <Select
+          isLoading={isLoading}
+          disabled={disabled}
+          aria-label={selectors.components.DataSourcePicker.inputV2}
+          inputId={inputId || 'data-source-picker'}
+          className="ds-picker select-container"
+          isMulti={false}
+          isClearable={isClearable}
+          backspaceRemovesValue={false}
+          onChange={this.onPickerChange}
+          options={options}
+          autoFocus={autoFocus}
+          onBlur={onBlur}
+          width={width}
+          openMenuOnFocus={openMenuOnFocus}
+          maxMenuHeight={500}
+          placeholder={placeholder}
+          noOptionsMessage="No datasources found"
+          value={value ?? null}
+          invalid={Boolean(error) || Boolean(this.props.invalid)}
+          getOptionLabel={(o) => {
+            if (o.meta && isUnsignedPluginSignature(o.meta.signature) && o !== value) {
+              return (
+                <HorizontalGroup align="center" justify="space-between" height="auto">
+                  <span>{o.label}</span> <PluginSignatureBadge status={o.meta.signature} />
+                </HorizontalGroup>
+              );
+            }
+            return o.label || '';
+          }}
+        />
       </div>
     );
   }
