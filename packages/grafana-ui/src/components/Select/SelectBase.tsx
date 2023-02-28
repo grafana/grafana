@@ -181,7 +181,7 @@ export function SelectBase<T>({
 
   let ReactSelectComponent = ReactSelect;
 
-  const creatableProps: ComponentProps<typeof Creatable> = {};
+  const creatableProps: ComponentProps<typeof Creatable<SelectableValue<T>>> = {};
   let asyncSelectProps: any = {};
   let selectedValue;
   if (isMulti && loadOptions) {
