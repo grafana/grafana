@@ -367,10 +367,10 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 			for _, group := range groups {
 				for _, actualRule := range group.Rules {
 					if actualRule.GrafanaManagedAlert.UID == expectedRules[0].UID {
-						require.Equal(t, models.ProvenanceAPI, actualRule.GrafanaManagedAlert.Provenance)
+						require.Equal(t, apimodels.Provenance(models.ProvenanceAPI), actualRule.GrafanaManagedAlert.Provenance)
 						found = true
 					} else {
-						require.Equal(t, models.ProvenanceNone, actualRule.GrafanaManagedAlert.Provenance)
+						require.Equal(t, apimodels.Provenance(models.ProvenanceNone), actualRule.GrafanaManagedAlert.Provenance)
 					}
 				}
 			}

@@ -3,6 +3,7 @@ package plugins
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/fs"
 	"path"
@@ -19,7 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var ErrFileNotExist = fmt.Errorf("file does not exist")
+var ErrFileNotExist = errors.New("file does not exist")
 
 type Plugin struct {
 	JSONData
@@ -53,9 +54,10 @@ type Plugin struct {
 type PluginDTO struct {
 	JSONData
 
-	logger log.Logger
-
-	fs FS
+	fs                FS
+	logger            log.Logger
+	pluginDir         string
+	supportsStreaming bool
 
 	Class Class
 
@@ -91,14 +93,6 @@ func (p PluginDTO) IsApp() bool {
 
 func (p PluginDTO) IsCorePlugin() bool {
 	return p.Class == Core
-}
-
-func (p PluginDTO) IsExternalPlugin() bool {
-	return p.Class == External
-}
-
-func (p PluginDTO) IsSecretsManager() bool {
-	return p.JSONData.Type == SecretsManager
 }
 
 func (p PluginDTO) File(name string) (fs.File, error) {
@@ -411,14 +405,6 @@ func (p *Plugin) IsRenderer() bool {
 
 func (p *Plugin) IsSecretsManager() bool {
 	return p.Type == SecretsManager
-}
-
-func (p *Plugin) IsDataSource() bool {
-	return p.Type == DataSource
-}
-
-func (p *Plugin) IsPanel() bool {
-	return p.Type == Panel
 }
 
 func (p *Plugin) IsApp() bool {
