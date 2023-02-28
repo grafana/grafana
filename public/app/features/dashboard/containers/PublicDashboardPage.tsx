@@ -14,6 +14,7 @@ import { DashNavTimeControls } from '../components/DashNav/DashNavTimeControls';
 import { DashboardFailed } from '../components/DashboardLoading/DashboardFailed';
 import { DashboardLoading } from '../components/DashboardLoading/DashboardLoading';
 import { PublicDashboardFooter } from '../components/PublicDashboardFooter/PublicDashboardsFooter';
+import { PublicDashboardNotAvailable } from '../components/PublicDashboardNotAvailable/PublicDashboardNotAvailable';
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { getTimeSrv } from '../services/TimeSrv';
 import { DashboardModel } from '../state';
@@ -56,6 +57,9 @@ const PublicDashboardPage = (props: Props) => {
   const dashboardState = useSelector((store) => store.dashboard);
   const dashboard = dashboardState.getModel();
 
+  console.log('no encontrado', dashboard?.meta.dashboardNotFound);
+  console.log('está enabled', dashboard?.meta.publicDashboardEnabled);
+
   useEffect(() => {
     dispatch(
       initDashboard({
@@ -89,6 +93,14 @@ const PublicDashboardPage = (props: Props) => {
 
   if (!dashboard) {
     return <DashboardLoading initPhase={dashboardState.initPhase} />;
+  }
+
+  if (!dashboard.meta.publicDashboardEnabled) {
+    return <PublicDashboardNotAvailable paused />;
+  }
+
+  if (dashboard.meta.dashboardNotFound) {
+    return <PublicDashboardNotAvailable />;
   }
 
   return (
