@@ -17,7 +17,6 @@ export interface PanelOptions extends common.SingleStatBaseOptions {
   graphMode: common.BigValueGraphMode;
   justifyMode: common.BigValueJustifyMode;
   textMode: common.BigValueTextMode;
-  symbolOverwriteMode: common.BigValueSymbolOverwriteMode;
 }
 
 export const defaultPanelOptions: Partial<PanelOptions> = {
