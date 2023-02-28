@@ -5,7 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
+
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var _ fs.FS = (*LocalFS)(nil)
@@ -30,7 +31,12 @@ func NewLocalFS(m map[string]struct{}, basePath string) LocalFS {
 }
 
 func (f LocalFS) Open(name string) (fs.File, error) {
-	if kv, exists := f.m[filepath.Join(f.basePath, name)]; exists {
+	cleanPath, err := util.CleanRelativePath(name)
+	if err != nil {
+		return nil, err
+	}
+
+	if kv, exists := f.m[filepath.Join(f.basePath, cleanPath)]; exists {
 		if kv.f != nil {
 			return kv.f, nil
 		}
@@ -59,20 +65,15 @@ func (f LocalFS) Files() []string {
 var _ fs.File = (*LocalFile)(nil)
 
 type LocalFile struct {
-	mu   sync.RWMutex
 	f    *os.File
 	path string
 }
 
 func (p *LocalFile) Stat() (fs.FileInfo, error) {
-	p.mu.RLock()
-	defer p.mu.RUnlock()
 	return os.Stat(p.path)
 }
 
 func (p *LocalFile) Read(bytes []byte) (int, error) {
-	p.mu.Lock()
-	defer p.mu.Unlock()
 	var err error
 	p.f, err = os.Open(p.path)
 	if err != nil {
@@ -82,8 +83,6 @@ func (p *LocalFile) Read(bytes []byte) (int, error) {
 }
 
 func (p *LocalFile) Close() error {
-	p.mu.Lock()
-	defer p.mu.Unlock()
 	if p.f != nil {
 		return p.f.Close()
 	}
