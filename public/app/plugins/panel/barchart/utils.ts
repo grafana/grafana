@@ -547,6 +547,7 @@ export function prepareBarChartDisplayValues(
 
 export const isLegendOrdered = (options: VizLegendOptions) => Boolean(options?.sortBy && options.sortDesc !== null);
 
+// This function should eventually live in a transformation
 export function toNumericLong(data: DataFrame[]): DataFrame {
   let first: Field | undefined = undefined;
   const names: string[] = [];
