@@ -1,17 +1,4 @@
-export {
-  HeatmapColorMode,
-  HeatmapColorScale,
-  HeatmapColorOptions,
-  YAxisConfig,
-  CellValues,
-  FilterValueRange,
-  HeatmapTooltip,
-  HeatmapLegend,
-  ExemplarConfig,
-  RowsHeatmapOptions,
-  PanelOptions,
-  PanelFieldConfig,
-} from './panelcfg.gen';
+export * from './panelcfg.gen';
 
 import { AxisPlacement, HeatmapCellLayout } from '@grafana/schema';
 
