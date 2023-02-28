@@ -75,8 +75,6 @@ type PluginDTO struct {
 	// SystemJS fields
 	Module  string
 	BaseURL string
-
-	supportsStreaming bool
 }
 
 func (p PluginDTO) SupportsStreaming() bool {
