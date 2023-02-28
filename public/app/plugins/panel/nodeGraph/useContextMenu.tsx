@@ -193,14 +193,14 @@ function HeaderRow({ label, value }: { label: string; value: string }) {
 }
 
 /**
- * Shows some of the field values in a table on top of the context menu.
+ * Shows some field values in a table on top of the context menu.
  */
 function NodeHeader({ node, nodes }: { node: NodeDatum; nodes?: DataFrame }) {
   const rows = [];
   if (nodes) {
     const fields = getNodeFields(nodes);
     for (const f of [fields.title, fields.subTitle, fields.mainStat, fields.secondaryStat, ...fields.details]) {
-      if (f) {
+      if (f && f.values.get(node.dataFrameRowIndex)) {
         rows.push(<FieldRow field={f} index={node.dataFrameRowIndex} />);
       }
     }
@@ -231,12 +231,12 @@ function EdgeHeader(props: { edge: EdgeDatum; edges: DataFrame }) {
   const valueTarget = fields.target?.values.get(index) || '';
 
   const rows = [];
-  if (fields.source && fields.target) {
+  if (valueSource && valueTarget) {
     rows.push(<HeaderRow label={'Source → Target'} value={`${valueSource} → ${valueTarget}`} />);
   }
 
   for (const f of [fields.mainStat, fields.secondaryStat, ...fields.details]) {
-    if (f) {
+    if (f && f.values.get(index)) {
       rows.push(<FieldRow field={f} index={index} />);
     }
   }
