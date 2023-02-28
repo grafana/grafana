@@ -1,18 +1,21 @@
 import { clone } from 'lodash';
 import moment from 'moment';
 
+import {ArrayVector} from "@grafana/data/src";
+
 /**
  *
  * @param length - Number of values to add
  * @param start - First timestamp (ms)
  * @param step - step duration (ms)
  */
-export const getMockTimeFrameArray = (length: number, start: number, step: number): number[] => {
+export const getMockTimeFrameArray = (length: number, start: number, step: number): ArrayVector => {
   let timeValues = [];
   for (let i = 0; i < length; i++) {
     timeValues.push(start + i * step);
   }
-  return timeValues;
+
+  return new ArrayVector(timeValues);
 };
 
 /**
@@ -36,14 +39,14 @@ export const mockOriginalRange = (startDateString?: string, endDateString?: stri
  * @param low
  * @param high
  */
-export const getMockValueFrameArray = (length: number, low = 0, high = 1): number[] => {
-  let timeValues = [];
+export const getMockValueFrameArray = (length: number, low = 0, high = 1): ArrayVector => {
+  let values = [];
   for (let i = 0; i < length; i++) {
     // timeValues.push(randomNumber(low, high)); @todo
-    timeValues.push(i % 2 === 0 ? low : high);
+    values.push(i % 2 === 0 ? low : high);
   }
 
-  return timeValues;
+  return new ArrayVector(values)
 };
 
 const timeFrameWithMissingValuesInMiddle = getMockTimeFrameArray(721, 1675262550000, 30000);
@@ -51,9 +54,9 @@ const timeFrameWithMissingValuesAtStart = getMockTimeFrameArray(721, 16752625500
 const timeFrameWithMissingValuesAtEnd = getMockTimeFrameArray(721, 1675262550000, 30000);
 
 // Deleting some out the middle
-timeFrameWithMissingValuesInMiddle.splice(360, 721 - 684);
-timeFrameWithMissingValuesAtStart.splice(0, 721 - 684);
-timeFrameWithMissingValuesAtEnd.splice(721 - 684, 721 - 684);
+timeFrameWithMissingValuesInMiddle.toArray().splice(360, 721 - 684);
+timeFrameWithMissingValuesAtStart.toArray().splice(0, 721 - 684);
+timeFrameWithMissingValuesAtEnd.toArray().splice(721 - 684, 721 - 684);
 
 const twoRequestsOneCachedMissingData = {
   first: {
