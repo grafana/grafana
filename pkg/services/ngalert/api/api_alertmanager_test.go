@@ -223,7 +223,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 			response := sut.RouteGetAlertingConfig(rc)
 
 			body := asGettableUserConfig(t, response)
-			require.Equal(t, ngmodels.ProvenanceNone, body.AlertmanagerConfig.Route.Provenance)
+			require.Equal(t, apimodels.Provenance(ngmodels.ProvenanceNone), body.AlertmanagerConfig.Route.Provenance)
 		})
 		t.Run("contact point from GET config has no provenance", func(t *testing.T) {
 			sut := createSut(t, nil)
@@ -232,7 +232,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 			response := sut.RouteGetAlertingConfig(rc)
 
 			body := asGettableUserConfig(t, response)
-			require.Equal(t, ngmodels.ProvenanceNone, body.AlertmanagerConfig.Receivers[0].GrafanaManagedReceivers[0].Provenance)
+			require.Equal(t, apimodels.Provenance(ngmodels.ProvenanceNone), body.AlertmanagerConfig.Receivers[0].GrafanaManagedReceivers[0].Provenance)
 		})
 		t.Run("templates from GET config have no provenance", func(t *testing.T) {
 			sut := createSut(t, nil)
@@ -254,7 +254,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 			response := sut.RouteGetAlertingConfig(rc)
 
 			body := asGettableUserConfig(t, response)
-			require.Equal(t, ngmodels.ProvenanceAPI, body.AlertmanagerConfig.Route.Provenance)
+			require.Equal(t, apimodels.Provenance(ngmodels.ProvenanceAPI), body.AlertmanagerConfig.Route.Provenance)
 		})
 		t.Run("contact point from GET config has expected provenance", func(t *testing.T) {
 			sut := createSut(t, nil)
@@ -274,7 +274,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 			response = sut.RouteGetAlertingConfig(rc)
 			body = asGettableUserConfig(t, response)
 
-			require.Equal(t, ngmodels.ProvenanceAPI, body.AlertmanagerConfig.Receivers[0].GrafanaManagedReceivers[0].Provenance)
+			require.Equal(t, apimodels.Provenance(ngmodels.ProvenanceAPI), body.AlertmanagerConfig.Receivers[0].GrafanaManagedReceivers[0].Provenance)
 		})
 		t.Run("templates from GET config have expected provenance", func(t *testing.T) {
 			sut := createSut(t, nil)
@@ -286,7 +286,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 			body := asGettableUserConfig(t, response)
 			require.NotNil(t, body.TemplateFileProvenances)
 			require.Len(t, body.TemplateFileProvenances, 1)
-			require.Equal(t, ngmodels.ProvenanceAPI, body.TemplateFileProvenances["a"])
+			require.Equal(t, apimodels.Provenance(ngmodels.ProvenanceAPI), body.TemplateFileProvenances["a"])
 		})
 	})
 }
