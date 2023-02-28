@@ -23,7 +23,6 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -641,7 +640,7 @@ func createMultiOrgAlertmanager(t *testing.T) *notifier.MultiOrgAlertmanager {
 	require.NoError(t, err)
 
 	// Add another configuration so we have more than one in the history.
-	cmd := models.SaveAlertmanagerConfigurationCmd{
+	cmd := ngmodels.SaveAlertmanagerConfigurationCmd{
 		AlertmanagerConfiguration: validConfig,
 		FetchedConfigurationHash:  fmt.Sprintf("%x", md5.Sum([]byte(validConfig))),
 		ConfigurationVersion:      "v1",
