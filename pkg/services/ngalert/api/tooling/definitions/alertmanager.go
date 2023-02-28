@@ -665,10 +665,10 @@ func (c *GettableUserConfig) GetGrafanaReceiverMap() map[string]*GettableGrafana
 }
 
 type GettableHistoricUserConfig struct {
-	TemplateFiles           map[string]string            `yaml:"template_files" json:"template_files"`
-	TemplateFileProvenances map[string]models.Provenance `yaml:"template_file_provenances,omitempty" json:"template_file_provenances,omitempty"`
-	AlertmanagerConfig      GettableApiAlertingConfig    `yaml:"alertmanager_config" json:"alertmanager_config"`
-	LastApplied             *strfmt.DateTime             `yaml:"last_applied,omitempty" json:"last_applied,omitempty"`
+	TemplateFiles           map[string]string         `yaml:"template_files" json:"template_files"`
+	TemplateFileProvenances map[string]Provenance     `yaml:"template_file_provenances,omitempty" json:"template_file_provenances,omitempty"`
+	AlertmanagerConfig      GettableApiAlertingConfig `yaml:"alertmanager_config" json:"alertmanager_config"`
+	LastApplied             *strfmt.DateTime          `yaml:"last_applied,omitempty" json:"last_applied,omitempty"`
 }
 
 // swagger:response GettableHistoricUserConfigs
