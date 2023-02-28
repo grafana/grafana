@@ -8,8 +8,10 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
@@ -23,7 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 )
 
-func TestAnnotationHistorian_Integration(t *testing.T) {
+func TestAnnotationHistorian(t *testing.T) {
 	t.Run("alert annotations are queryable", func(t *testing.T) {
 		anns := createTestAnnotationBackendSut(t)
 		items := []annotations.Item{createAnnotation()}
@@ -42,6 +44,19 @@ func TestAnnotationHistorian_Integration(t *testing.T) {
 			require.Equal(t, frame.Fields[i].Len(), 1)
 		}
 	})
+
+	t.Run("writes state transitions as annotations succeeds", func(t *testing.T) {
+		anns := createTestAnnotationBackendSut(t)
+		rule := createTestRule()
+		states := singleFromNormal(&state.State{
+			State:  eval.Alerting,
+			Labels: data.Labels{"a": "b"},
+		})
+
+		err := <-anns.RecordStatesAsync(context.Background(), rule, states)
+
+		require.NoError(t, err)
+	})
 }
 
 func createTestAnnotationBackendSut(t *testing.T) *AnnotationBackend {
@@ -52,7 +67,9 @@ func createTestAnnotationBackendSut(t *testing.T) *AnnotationBackend {
 		models.AlertRuleGen(withOrgID(1), withUID("my-rule"))(),
 	}
 	metrics := metrics.NewHistorianMetrics(prometheus.NewRegistry())
-	return NewAnnotationBackend(fakeAnnoRepo, &dashboards.FakeDashboardService{}, rules, metrics)
+	dbs := &dashboards.FakeDashboardService{}
+	dbs.On("GetDashboard", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil)
+	return NewAnnotationBackend(fakeAnnoRepo, dbs, rules, metrics)
 }
 
 func createAnnotation() annotations.Item {
