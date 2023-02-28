@@ -180,7 +180,7 @@ function fieldToBooleanField(field: Field): Field {
 }
 
 function fieldToStringField(field: Field, dateFormat?: string): Field {
-  let values = field.values.toArray().slice();
+  let values = field.values.toArray();
 
   switch (field.type) {
     case FieldType.time:

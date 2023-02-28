@@ -358,7 +358,7 @@ describe('field convert types transformer', () => {
     expect(stringified.values.toArray()).toEqual([
       '2021-07',
       '2021-07',
-      '2021-07', // can group by month now
+      '2021-07', // can group by month
       '2021-08',
       '2021-08',
     ]);
