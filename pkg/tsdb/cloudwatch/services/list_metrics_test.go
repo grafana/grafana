@@ -113,9 +113,7 @@ func TestListMetricsService_GetDimensionKeysByDimensionFilter(t *testing.T) {
 				MetricName:      "",
 				DimensionFilter: []*resources.Dimension{{Name: "InstanceId", Value: ""}},
 			},
-			listMetricsWithPageLimitInput: &cloudwatch.ListMetricsInput{
-				Dimensions: []*cloudwatch.DimensionFilter{{Name: aws.String("InstanceId")}},
-			},
+			listMetricsWithPageLimitInput: &cloudwatch.ListMetricsInput{Dimensions: []*cloudwatch.DimensionFilter{{Name: aws.String("InstanceId")}}},
 		},
 	}
 
