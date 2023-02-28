@@ -78,6 +78,7 @@ export function toNumericLong(data: DataFrame[]): DataFrame {
       length: labelInfo.size,
     };
     labeledNumbers.forEach((value, key) => {
+      value.length = labelInfo.size;
       frame.fields.push({
         name: key,
         type: FieldType.number,
@@ -87,6 +88,7 @@ export function toNumericLong(data: DataFrame[]): DataFrame {
     });
 
     uniqueLabels.forEach((value, key) => {
+      value.length = labelInfo.size;
       frame.fields.push({
         name: key,
         type: FieldType.string,
