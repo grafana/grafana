@@ -2,6 +2,9 @@ package userimpl
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -595,8 +598,11 @@ func (s *Service) supportBundleCollector() supportbundles.Collector {
 	}
 }
 
-func hashUserIdentifier(identifier string) string {
-	return identifier
+func hashUserIdentifier(identifier string, secret string) string {
+	key := []byte(secret)
+	h := hmac.New(sha256.New, key)
+	h.Write([]byte(identifier))
+	return hex.EncodeToString(h.Sum(nil))
 }
 
 func buildUserAnalyticsSettings(signedInUser user.SignedInUser) user.AnalyticsSettings {
@@ -608,6 +614,6 @@ func buildUserAnalyticsSettings(signedInUser user.SignedInUser) user.AnalyticsSe
 		settings.Identifier = signedInUser.Email
 	}
 
-	settings.HashedIdentifier = hashUserIdentifier(settings.Identifier)
+	settings.HashedIdentifier = hashUserIdentifier(settings.Identifier, "SECRET")
 	return settings
 }
