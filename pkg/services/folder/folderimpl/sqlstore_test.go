@@ -759,35 +759,22 @@ func TestIntegrationNestedDelete(t *testing.T) { //have to mock the result of ne
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
 
 			t.Run("When deleting folder by uid should not return access denied error", func(t *testing.T) {
+				// fix the test by creating subfolders in the dashboard table as well (CreateSubTree only adds them to folder table)
 				ancestorUIDs := CreateSubTree(t, nestedFolderStore, orgID, "", 3, "")
 				fmt.Println("ancestorUIDs", ancestorUIDs)
-
-				count, err := dashStore.CountDashboardsInFolder(context.Background(), &dashboards.CountDashboardsInFolderRequest{FolderID: 1, OrgID: orgID})
-				require.NoError(t, err)
-				// 				// fmt.Println("count1:", count)
-
-				err = nestedFolderStore.Delete(context.Background(), ancestorUIDs[0], orgID)
+				cmd := folder.DeleteFolderCommand{UID: ancestorUIDs[0], OrgID: orgID, SignedInUser: &user.SignedInUser{UserID: 1, OrgID: orgID}}
+				err = service.Delete(context.Background(), &cmd)
 				require.NoError(t, err)
 
-				children, err := nestedFolderStore.GetChildren(context.Background(), folder.GetChildrenQuery{
-					UID:   ancestorUIDs[0],
-					OrgID: orgID,
-				})
-				require.NoError(t, err)
-				fmt.Println("children:", children)
-				for _, c := range children {
-					fmt.Println(c.ID)
+				for _, uid := range ancestorUIDs {
+					_, err := service.getFolderByUID(context.Background(), orgID, uid)
+					require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
+					f, err := service.store.Get(context.Background(), folder.GetFolderQuery{UID: &uid, OrgID: orgID})
+					assert.Error(t, err) // change this and next one to "require"
+					fmt.Println("uid:", f.UID, f.ParentUID, f.ID)
+					assert.ErrorAs(t, err, folder.ErrFolderNotFound)
 				}
-
-				count, err = dashStore.CountDashboardsInFolder(context.Background(), &dashboards.CountDashboardsInFolderRequest{FolderID: 1, OrgID: orgID})
-				require.NoError(t, err)
-				// check that count is 0
-
-				fmt.Println(service)
-
-				require.NotNil(t, err) // remove
 			})
-
 			t.Cleanup(func() {
 				guardian.New = origNewGuardian
 			})
