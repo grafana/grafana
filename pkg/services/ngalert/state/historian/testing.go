@@ -25,7 +25,6 @@ func NewFakeRequester() *fakeRequester {
 			Header:        make(http.Header, 0),
 		},
 	}
-
 }
 
 func (f *fakeRequester) WithResponse(resp *http.Response) *fakeRequester {
