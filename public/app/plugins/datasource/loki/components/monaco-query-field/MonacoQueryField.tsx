@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { debounce } from 'lodash';
 import React, { useRef, useEffect } from 'react';
 import { useLatest } from 'react-use';
 import { v4 as uuidv4 } from 'uuid';
@@ -149,23 +150,17 @@ const MonacoQueryField = ({
     editor.onDidChangeModelContent(checkDecorators);
   };
 
-  let typingTimer: NodeJS.Timeout;
+  const onType = debounce((query: string) => {
+    if (isValidQuery(query) === false) {
+      return;
+    }
 
-  const onType = (query: string) => {
-    clearTimeout(typingTimer);
+    const timerange = datasource.getTimeRange();
+    const previousTimerange = undefined;
+    const previousQuery = undefined;
 
-    typingTimer = setTimeout(() => {
-      if (isValidQuery(query) === false) {
-        return;
-      }
-
-      const timerange = datasource.getTimeRange();
-      const previousTimerange = undefined;
-      const previousQuery = undefined;
-
-      makeStatsRequest(datasource, timerange, previousTimerange, query, previousQuery, setQueryStats!);
-    }, 1000);
-  };
+    makeStatsRequest(datasource, timerange, previousTimerange, query, previousQuery, setQueryStats!);
+  }, 1000);
 
   return (
     <div
