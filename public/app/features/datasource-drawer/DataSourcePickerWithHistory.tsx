@@ -30,7 +30,7 @@ export const DataSourcePickerWithHistory = (props: DataSourcePickerWithHistoryPr
   );
 };
 
-function updateHistory(values: DataSourcePickerHistoryItem[], newValue: DataSourcePickerHistoryItem) {
+export function updateHistory(values: DataSourcePickerHistoryItem[], newValue: DataSourcePickerHistoryItem) {
   const newHistory = values;
   const existingIndex = newHistory.findIndex((dpi) => dpi.uid === newValue.uid);
   if (existingIndex !== -1) {

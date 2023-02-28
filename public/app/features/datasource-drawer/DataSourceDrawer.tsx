@@ -147,7 +147,7 @@ function getStyles(theme: GrafanaTheme2) {
   };
 }
 
-function isDataSourceMatch(
+export function isDataSourceMatch(
   ds: DataSourceInstanceSettings<DataSourceJsonData> | undefined,
   current: string | DataSourceInstanceSettings<DataSourceJsonData> | DataSourceRef | null | undefined
 ): boolean | undefined {
