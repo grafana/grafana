@@ -144,6 +144,12 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:         "newTraceView",
+			Description:  "Shows the new trace view design",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
 			Name:        "correlations",
 			Description: "Correlations page",
 			State:       FeatureStateAlpha,

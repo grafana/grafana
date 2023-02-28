@@ -315,6 +315,11 @@ export function requestSupportsPartitioning(allQueries: LokiQuery[]) {
     return false;
   }
 
+  const instantQueries = queries.some((query) => query.queryType === LokiQueryType.Instant);
+  if (instantQueries) {
+    return false;
+  }
+
   if (queries[0].refId.includes('do-not-chunk')) {
     return false;
   }
