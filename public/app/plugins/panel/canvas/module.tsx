@@ -44,6 +44,8 @@ export const plugin = new PanelPlugin<PanelOptions>(CanvasPanel)
       builder.addNestedOptions(getLayerEditor(state));
 
       const selection = state.selected;
+      const connectionSelection = state.selectedConnection;
+
       if (selection?.length === 1) {
         const element = selection[0];
         if (!(element instanceof FrameState)) {

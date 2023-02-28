@@ -52,6 +52,7 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
 
         setSelectedConnection(undefined);
         setSelectedConnectionSource(undefined);
+        scene.connectionSelection.next(undefined);
       }
     } else {
       // Prevent removing event listener if key is not delete
@@ -72,6 +73,7 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
     if (shouldResetSelectedConnection) {
       setSelectedConnection(undefined);
       setSelectedConnectionSource(undefined);
+      scene.connectionSelection.next(undefined);
     }
   };
 
@@ -79,6 +81,7 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
     if (scene.isEditingEnabled) {
       setSelectedConnection(connection);
       setSelectedConnectionSource(source);
+      scene.connectionSelection.next(connection);
 
       document.addEventListener('keyup', onKeyUp);
       scene.selecto!.rootContainer!.addEventListener('click', clearSelectedConnection);

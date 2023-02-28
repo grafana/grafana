@@ -9,7 +9,7 @@ import { AppEvents, GrafanaTheme2, PanelData } from '@grafana/data';
 import { locationService } from '@grafana/runtime/src';
 import { Portal, stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
-import { CanvasFrameOptions, DEFAULT_CANVAS_ELEMENT_CONFIG } from 'app/features/canvas';
+import { CanvasConnection, CanvasFrameOptions, DEFAULT_CANVAS_ELEMENT_CONFIG } from 'app/features/canvas';
 import {
   ColorDimensionConfig,
   DimensionContext,
@@ -50,6 +50,7 @@ export class Scene {
   readonly selection = new ReplaySubject<ElementState[]>(1);
   readonly moved = new Subject<number>(); // called after resize/drag for editor updates
   readonly byName = new Map<string, ElementState>();
+  readonly connectionSelection = new ReplaySubject<CanvasConnection | undefined>(1);
 
   root: RootElement;
 
