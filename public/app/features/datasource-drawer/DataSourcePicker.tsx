@@ -1,5 +1,3 @@
-// Libraries
-// eslint-disable-next-line import/order
 import React, { PureComponent } from 'react';
 
 // Components
