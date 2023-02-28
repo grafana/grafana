@@ -22,7 +22,7 @@ func NewHistorianMetrics(r prometheus.Registerer) *Historian {
 			Namespace: Namespace,
 			Subsystem: Subsystem,
 			Name:      "state_history_info",
-			Help:      "Metadata about the state history backend.",
+			Help:      "Information about the state history backend.",
 		}, []string{"backend"}),
 		TransitionsTotal: promauto.With(r).NewCounterVec(prometheus.CounterOpts{
 			Namespace: Namespace,
@@ -58,8 +58,8 @@ func NewHistorianMetrics(r prometheus.Registerer) *Historian {
 		BytesWritten: promauto.With(r).NewCounter(prometheus.CounterOpts{
 			Namespace: Namespace,
 			Subsystem: Subsystem,
-			Name:      "state_history_bytes_total",
-			Help:      "The total number of bytes written to the state history store.",
+			Name:      "state_history_writes_bytes_total",
+			Help:      "The total number of bytes sent within a batch to the state history store.",
 		}),
 	}
 }
