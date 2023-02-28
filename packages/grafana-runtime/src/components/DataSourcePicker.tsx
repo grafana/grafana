@@ -1,10 +1,7 @@
 // Libraries
-// eslint-disable-next-line import/order
 import React, { PureComponent } from 'react';
 
 // Components
-import { DropzoneOptions } from 'react-dropzone';
-
 import {
   DataSourceInstanceSettings,
   DataSourceRef,
@@ -13,7 +10,6 @@ import {
   SelectableValue,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { DataSourceJsonData } from '@grafana/schema';
 import { ActionMeta, HorizontalGroup, PluginSignatureBadge, Select } from '@grafana/ui';
 
 import { getDataSourceSrv } from '../services/dataSourceSrv';
@@ -26,7 +22,6 @@ import { ExpressionDatasourceRef } from './../utils/DataSourceWithBackend';
  * @internal
  */
 export interface DataSourcePickerProps {
-  drawer?: boolean;
   onChange: (ds: DataSourceInstanceSettings) => void;
   current: DataSourceRef | string | null; // uid
   hideTextValue?: boolean;
@@ -35,7 +30,6 @@ export interface DataSourcePickerProps {
   openMenuOnFocus?: boolean;
   placeholder?: string;
   tracing?: boolean;
-  recentlyUsed?: string[];
   mixed?: boolean;
   dashboard?: boolean;
   metrics?: boolean;
@@ -55,7 +49,6 @@ export interface DataSourcePickerProps {
   invalid?: boolean;
   disabled?: boolean;
   isLoading?: boolean;
-  fileUploadOptions?: DropzoneOptions;
 }
 
 /**
@@ -96,36 +89,19 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
     }
   }
 
-  onChange = (ds?: string) => {
-    const dsSettings = this.dataSourceSrv.getInstanceSettings(ds);
+  onChange = (item: SelectableValue<string>, actionMeta: ActionMeta) => {
+    if (actionMeta.action === 'clear' && this.props.onClear) {
+      this.props.onClear();
+      return;
+    }
+
+    const dsSettings = this.dataSourceSrv.getInstanceSettings(item.value);
 
     if (dsSettings) {
       this.props.onChange(dsSettings);
       this.setState({ error: undefined });
     }
   };
-
-  onPickerChange = (item: SelectableValue<string>, actionMeta: ActionMeta) => {
-    if (actionMeta.action === 'clear' && this.props.onClear) {
-      this.props.onClear();
-      return;
-    }
-    this.onChange(item.value);
-  };
-
-  private getCurrentDs(): DataSourceInstanceSettings<DataSourceJsonData> | string | DataSourceRef | null | undefined {
-    const { current, noDefault } = this.props;
-    if (!current && noDefault) {
-      return;
-    }
-
-    const ds = this.dataSourceSrv.getInstanceSettings(current);
-    if (ds) {
-      return ds;
-    }
-
-    return getDataSourceUID(current);
-  }
 
   private getCurrentValue(): SelectableValue<string> | undefined {
     const { current, hideTextValue, noDefault } = this.props;
@@ -159,32 +135,32 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
     };
   }
 
-  getDatasources() {
+  getDataSourceOptions() {
     const { alerting, tracing, metrics, mixed, dashboard, variables, annotations, pluginId, type, filter, logs } =
       this.props;
 
-    return this.dataSourceSrv.getList({
-      alerting,
-      tracing,
-      metrics,
-      logs,
-      dashboard,
-      mixed,
-      variables,
-      annotations,
-      pluginId,
-      filter,
-      type,
-    });
-  }
+    const options = this.dataSourceSrv
+      .getList({
+        alerting,
+        tracing,
+        metrics,
+        logs,
+        dashboard,
+        mixed,
+        variables,
+        annotations,
+        pluginId,
+        filter,
+        type,
+      })
+      .map((ds) => ({
+        value: ds.name,
+        label: `${ds.name}${ds.isDefault ? ' (default)' : ''}`,
+        imgUrl: ds.meta.info.logos.small,
+        meta: ds.meta,
+      }));
 
-  getDataSourceOptions() {
-    return this.getDatasources().map((ds) => ({
-      value: ds.name,
-      label: `${ds.name}${ds.isDefault ? ' (default)' : ''}`,
-      imgUrl: ds.meta.info.logos.small,
-      meta: ds.meta,
-    }));
+    return options;
   }
 
   render() {
@@ -215,7 +191,7 @@ export class DataSourcePicker extends PureComponent<DataSourcePickerProps, DataS
           isMulti={false}
           isClearable={isClearable}
           backspaceRemovesValue={false}
-          onChange={this.onPickerChange}
+          onChange={this.onChange}
           options={options}
           autoFocus={autoFocus}
           onBlur={onBlur}

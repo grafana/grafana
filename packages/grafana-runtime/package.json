@@ -40,12 +40,10 @@
     "@grafana/data": "9.5.0-pre",
     "@grafana/e2e-selectors": "9.5.0-pre",
     "@grafana/faro-web-sdk": "1.0.0-beta2",
-    "@grafana/schema": "9.5.0-pre",
     "@grafana/ui": "9.5.0-pre",
     "@sentry/browser": "6.19.7",
     "history": "4.10.1",
     "lodash": "4.17.21",
-    "react-dropzone": "^14.2.3",
     "rxjs": "7.8.0",
     "systemjs": "0.20.19",
     "tslib": "2.5.0"
