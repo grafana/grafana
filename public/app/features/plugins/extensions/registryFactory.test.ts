@@ -50,7 +50,7 @@ describe('createPluginExtensionRegistry()', () => {
 
       expect(registry[placement]).toEqual([
         {
-          configure: undefined,
+          configure: expect.any(Function),
           extension: {
             key: -68154691,
             type: PluginExtensionTypes.link,
@@ -105,7 +105,7 @@ describe('createPluginExtensionRegistry()', () => {
       expect(numberOfPlacements).toBe(2);
       expect(panelExtensions).toEqual([
         {
-          configure: undefined,
+          configure: expect.any(Function),
           extension: {
             title: 'Open incident',
             type: PluginExtensionTypes.link,
@@ -117,7 +117,7 @@ describe('createPluginExtensionRegistry()', () => {
       ]);
       expect(sloExtensions).toEqual([
         {
-          configure: undefined,
+          configure: expect.any(Function),
           extension: {
             title: 'Open incident',
             type: PluginExtensionTypes.link,
@@ -170,7 +170,7 @@ describe('createPluginExtensionRegistry()', () => {
       expect(numberOfPlacements).toBe(2);
       expect(panelExtensions).toEqual([
         {
-          configure: undefined,
+          configure: expect.any(Function),
           extension: {
             title: 'Open incident',
             type: PluginExtensionTypes.link,
@@ -180,7 +180,7 @@ describe('createPluginExtensionRegistry()', () => {
           },
         },
         {
-          configure: undefined,
+          configure: expect.any(Function),
           extension: {
             title: 'Open Incident',
             type: PluginExtensionTypes.link,
@@ -193,7 +193,7 @@ describe('createPluginExtensionRegistry()', () => {
 
       expect(sloExtensions).toEqual([
         {
-          configure: undefined,
+          configure: expect.any(Function),
           extension: {
             title: 'Open incident',
             type: PluginExtensionTypes.link,
@@ -239,7 +239,7 @@ describe('createPluginExtensionRegistry()', () => {
       expect(numberOfPlacements).toBe(1);
       expect(panelExtensions).toEqual([
         {
-          configure: undefined,
+          configure: expect.any(Function),
           extension: {
             title: 'Open incident',
             type: PluginExtensionTypes.link,
@@ -249,7 +249,7 @@ describe('createPluginExtensionRegistry()', () => {
           },
         },
         {
-          configure: undefined,
+          configure: expect.any(Function),
           extension: {
             title: 'Open incident 2',
             type: PluginExtensionTypes.link,
@@ -369,7 +369,7 @@ describe('createPluginExtensionRegistry()', () => {
       expect(numberOfPlacements).toBe(1);
       expect(extensions).toEqual([
         {
-          configure: undefined,
+          configure: expect.any(Function),
           extension: {
             title: 'Open incident',
             type: PluginExtensionTypes.command,
@@ -410,7 +410,7 @@ describe('createPluginExtensionRegistry()', () => {
       expect(numberOfPlacements).toBe(2);
       expect(panelExtensions).toEqual([
         {
-          configure: undefined,
+          configure: expect.any(Function),
           extension: {
             title: 'Open incident',
             type: PluginExtensionTypes.command,
@@ -422,7 +422,7 @@ describe('createPluginExtensionRegistry()', () => {
       ]);
       expect(sloExtensions).toEqual([
         {
-          configure: undefined,
+          configure: expect.any(Function),
           extension: {
             title: 'Open incident',
             type: PluginExtensionTypes.command,
@@ -475,7 +475,7 @@ describe('createPluginExtensionRegistry()', () => {
       expect(numberOfPlacements).toBe(2);
       expect(panelExtensions).toEqual([
         {
-          configure: undefined,
+          configure: expect.any(Function),
           extension: {
             title: 'Open incident',
             type: PluginExtensionTypes.command,
@@ -485,7 +485,7 @@ describe('createPluginExtensionRegistry()', () => {
           },
         },
         {
-          configure: undefined,
+          configure: expect.any(Function),
           extension: {
             title: 'Open Incident',
             type: PluginExtensionTypes.command,
@@ -498,7 +498,7 @@ describe('createPluginExtensionRegistry()', () => {
 
       expect(sloExtensions).toEqual([
         {
-          configure: undefined,
+          configure: expect.any(Function),
           extension: {
             title: 'Open incident',
             type: PluginExtensionTypes.command,

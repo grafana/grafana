@@ -72,7 +72,7 @@ export type AppPluginExtensionCommandConfig<C extends object = object> = {
   title: string;
   description: string;
   placement: string;
-  handler: (context: C) => void;
+  handler: (context?: C) => void;
   configure?: AppConfigureExtension<AppPluginExtensionCommand, C>;
 };
 

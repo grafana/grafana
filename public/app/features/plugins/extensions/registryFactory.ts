@@ -1,5 +1,6 @@
 import {
   AppConfigureExtension,
+  AppPluginExtensionCommand,
   AppPluginExtensionCommandConfig,
   AppPluginExtensionLink,
   AppPluginExtensionLinkConfig,
@@ -88,11 +89,12 @@ function createRegistryCommand(
     title: config.title,
     description: config.description,
     key: hashKey(id),
-    callHandlerWithContext: () => {},
+    callHandlerWithContext: () => config.handler(),
   });
 
   return Object.freeze({
     extension: extension,
+    configure: createCommandConfigure(pluginId, config, extension),
   });
 }
 
@@ -129,7 +131,7 @@ function createLinkConfigure(
   extension: PluginExtensionLink
 ): RegistryConfigureExtension<PluginExtensionLink> | undefined {
   if (!config.configure) {
-    return undefined;
+    return () => extension;
   }
 
   const options = {
@@ -138,14 +140,36 @@ function createLinkConfigure(
     logger: console.warn,
   };
 
-  const mapper = mapToRegistryType(extension);
+  const mapper = mapLinkToRegistryType(extension);
   const validator = createLinkValidator(options);
   const errorHandler = createErrorHandling<AppPluginExtensionLink>(options);
 
   return mapper(validator(errorHandler(config.configure)));
 }
 
-function mapToRegistryType(
+function createCommandConfigure(
+  pluginId: string,
+  config: AppPluginExtensionCommandConfig,
+  extension: PluginExtensionCommand
+): RegistryConfigureExtension<PluginExtensionCommand> | undefined {
+  const mapper = mapCommandToRegistryType(extension, config);
+
+  if (!config.configure) {
+    return mapper(() => extension);
+  }
+
+  const options = {
+    pluginId: pluginId,
+    title: config.title,
+    logger: console.warn,
+  };
+
+  const errorHandler = createErrorHandling<AppPluginExtensionCommand>(options);
+
+  return mapper(errorHandler(config.configure));
+}
+
+function mapLinkToRegistryType(
   extension: PluginExtensionLink
 ): (configure: AppConfigureExtension<AppPluginExtensionLink>) => RegistryConfigureExtension<PluginExtensionLink> {
   const configurable: AppPluginExtensionLink = {
@@ -167,6 +191,33 @@ function mapToRegistryType(
         title: configured.title ?? extension.title,
         description: configured.description ?? extension.description,
         path: configured.path ?? extension.path,
+      };
+    };
+  };
+}
+
+function mapCommandToRegistryType(
+  extension: PluginExtensionCommand,
+  config: AppPluginExtensionCommandConfig
+): (configure: AppConfigureExtension<AppPluginExtensionCommand>) => RegistryConfigureExtension<PluginExtensionCommand> {
+  const configurable: AppPluginExtensionCommand = {
+    title: extension.title,
+    description: extension.description,
+  };
+
+  return (configure) => {
+    return function mapper(context: object): PluginExtensionCommand | undefined {
+      const configured = configure(configurable, context);
+
+      if (!configured) {
+        return undefined;
+      }
+
+      return {
+        ...extension,
+        title: configured.title ?? extension.title,
+        description: configured.description ?? extension.description,
+        callHandlerWithContext: () => config.handler(context),
       };
     };
   };
