@@ -24,6 +24,8 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
     menuProps: DataLinksContextMenuApi
   ): JSX.Element => {
     const { timeRange, options } = this.props;
+    // console.log("🚀 ~ file: StatPanel.tsx:27 ~ StatPanel ~ this.props:", this.props)
+    console.log(this.props.fieldConfig.defaults.custom, 'custome config');
     const { value, alignmentFactors, width, height, count, orientation } = valueProps;
     const { openMenu, targetClassName } = menuProps;
     let sparkline = value.sparkline;

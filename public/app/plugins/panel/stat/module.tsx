@@ -1,11 +1,5 @@
 import { PanelPlugin } from '@grafana/data';
-import {
-  BigValueColorMode,
-  BigValueGraphMode,
-  BigValueJustifyMode,
-  BigValueTextMode,
-  // BigValueSymbolOverwriteMode,
-} from '@grafana/schema';
+import { BigValueColorMode, BigValueGraphMode, BigValueJustifyMode, BigValueTextMode } from '@grafana/schema';
 import { commonOptionsBuilder, sharedSingleStatMigrationHandler } from '@grafana/ui';
 
 import { statPanelChangedHandler } from './StatMigrations';
@@ -15,7 +9,20 @@ import { defaultPanelOptions, PanelOptions } from './panelcfg.gen';
 import { StatSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<PanelOptions>(StatPanel)
-  .useFieldConfig()
+  .useFieldConfig({
+    useCustomConfig(builder) {
+      return builder.addSelect({
+        path: 'prependUnit',
+        name: 'Prepend common unit',
+        description: 'Prepend a common unit along with standard formatting options',
+        category: ['Stat-specific unit formatting options'],
+        settings: {
+          options: getSymbolsToPrepend(),
+        },
+        defaultValue: '',
+      });
+    },
+  })
   .setPanelOptions((builder) => {
     const mainCategory = ['Stat styles'];
 
@@ -80,16 +87,16 @@ export const plugin = new PanelPlugin<PanelOptions>(StatPanel)
         },
       });
 
-    builder.addSelect({
-      path: 'prependUnit',
-      name: 'Prepend unit',
-      description: 'Prepend a standard unit along with standard formatting options',
-      category: ['Prepend unit'],
-      settings: {
-        options: getSymbolsToPrepend(),
-      },
-      defaultValue: '',
-    });
+    // builder.addSelect({
+    //   path: 'prependUnit',
+    //   name: 'Prepend unit',
+    //   description: 'Prepend a common unit along with standard formatting options',
+    //   category: ['Prepend unit'],
+    //   settings: {
+    //     options: getSymbolsToPrepend(),
+    //   },
+    //   defaultValue: '',
+    // });
   })
   .setNoPadding()
   .setPanelChangeHandler(statPanelChangedHandler)
