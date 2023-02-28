@@ -37,6 +37,7 @@ type alertRule struct {
 	Updated         time.Time
 	Annotations     map[string]string
 	Labels          map[string]string
+	IsPaused        bool
 }
 
 type alertRuleVersion struct {
@@ -61,6 +62,7 @@ type alertRuleVersion struct {
 	For         duration
 	Annotations map[string]string
 	Labels      map[string]string
+	IsPaused    bool
 }
 
 func (a *alertRule) makeVersion() *alertRuleVersion {
@@ -84,6 +86,7 @@ func (a *alertRule) makeVersion() *alertRuleVersion {
 		For:             a.For,
 		Annotations:     a.Annotations,
 		Labels:          map[string]string{},
+		IsPaused:        a.IsPaused,
 	}
 }
 
@@ -120,6 +123,11 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 
 	name := normalizeRuleName(da.Name, uid)
 
+	isPaused := false
+	if da.State == "paused" {
+		isPaused = true
+	}
+
 	ar := &alertRule{
 		OrgID:           da.OrgId,
 		Title:           name, // TODO: Make sure all names are unique, make new name on constraint insert error.
@@ -135,6 +143,7 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 		Annotations:     annotations,
 		Labels:          lbls,
 		RuleGroupIndex:  1,
+		IsPaused:        isPaused,
 	}
 
 	ar.NoDataState, err = transNoData(da.ParsedSettings.NoDataState)

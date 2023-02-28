@@ -475,7 +475,6 @@ def enterprise2_pipelines(prefix = "", ver_mode = ver_mode, trigger = release_tr
             package_step(
                 edition = "enterprise2",
                 ver_mode = ver_mode,
-                variants = ["linux-amd64"],
             ),
             upload_cdn,
             copy_packages_for_docker_step(edition = "enterprise2"),
@@ -647,8 +646,14 @@ def artifacts_page_pipeline():
         pipeline(
             name = "publish-artifacts-page",
             trigger = trigger,
-            steps = [download_grabpl_step(), artifacts_page_step()],
-            edition = "all",
-            environment = {"EDITION": "all"},
+            steps = [
+                download_grabpl_step(),
+                clone_enterprise_step(source = "${DRONE_TAG}"),
+                init_enterprise_step("release"),
+                compile_build_cmd("enterprise"),
+                artifacts_page_step(),
+            ],
+            edition = "enterprise",
+            environment = {"EDITION": "enterprise"},
         ),
     ]

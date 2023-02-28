@@ -12,10 +12,8 @@ package playlist
 
 // Defines values for ItemType.
 const (
-	ItemTypeDashboardById ItemType = "dashboard_by_id"
-
+	ItemTypeDashboardById  ItemType = "dashboard_by_id"
 	ItemTypeDashboardByTag ItemType = "dashboard_by_tag"
-
 	ItemTypeDashboardByUid ItemType = "dashboard_by_uid"
 )
 
@@ -27,7 +25,7 @@ type Playlist struct {
 
 	// The ordered list of items that the playlist will iterate over.
 	// FIXME! This should not be optional, but changing it makes the godegen awkward
-	Items *[]Item `json:"items,omitempty"`
+	Items []Item `json:"items,omitempty"`
 
 	// Name of the playlist.
 	Name string `json:"name"`

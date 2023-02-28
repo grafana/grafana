@@ -18,7 +18,7 @@
 // THIS SOFTWARE.
 import { css } from '@emotion/css';
 import uFuzzy from '@leeoniya/ufuzzy';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { CoreApp, createTheme, DataFrame, FieldType, getDisplayProcessor } from '@grafana/data';
@@ -80,6 +80,26 @@ const FlameGraph = ({
   const [tooltipData, setTooltipData] = useState<TooltipData>();
   const [contextMenuEvent, setContextMenuEvent] = useState<ContextMenuEvent>();
 
+  const [ufuzzy] = useState(() => {
+    return new uFuzzy();
+  });
+
+  const uniqueLabels = useMemo(() => {
+    return [...new Set<string>(data.fields.find((f) => f.name === 'label')?.values.toArray())];
+  }, [data]);
+
+  const foundLabels = useMemo(() => {
+    const foundLabels = new Set<string>();
+
+    if (search) {
+      for (let idx of ufuzzy.filter(uniqueLabels, search)) {
+        foundLabels.add(uniqueLabels[idx]);
+      }
+    }
+
+    return foundLabels;
+  }, [ufuzzy, search, uniqueLabels]);
+
   const render = useCallback(
     (pixelsPerTick: number) => {
       if (!levels.length) {
@@ -103,11 +123,6 @@ const FlameGraph = ({
         theme: createTheme() /* theme does not matter for us here */,
       });
 
-      const ufuzzy = new uFuzzy({
-        intraMode: 0,
-        intraIns: 0,
-      });
-
       for (let levelIndex = 0; levelIndex < levels.length; levelIndex++) {
         const level = levels[levelIndex];
         // Get all the dimensions of the rectangles for the level. We do this by level instead of per rectangle, because
@@ -115,11 +130,11 @@ const FlameGraph = ({
         const dimensions = getRectDimensionsForLevel(level, levelIndex, totalTicks, rangeMin, pixelsPerTick, processor);
         for (const rect of dimensions) {
           // Render each rectangle based on the computed dimensions
-          renderRect(ctx, rect, totalTicks, rangeMin, rangeMax, search, levelIndex, topLevelIndex, ufuzzy);
+          renderRect(ctx, rect, totalTicks, rangeMin, rangeMax, search, levelIndex, topLevelIndex, foundLabels);
         }
       }
     },
-    [levels, wrapperWidth, valueField, totalTicks, rangeMin, rangeMax, search, topLevelIndex]
+    [levels, wrapperWidth, valueField, totalTicks, rangeMin, rangeMax, search, topLevelIndex, foundLabels]
   );
 
   useEffect(() => {

@@ -54,13 +54,13 @@ func TestIntegrationGraphite(t *testing.T) {
 	}
 
 	uid := "graphite"
-	err := testEnv.Server.HTTPServer.DataSourcesService.AddDataSource(ctx, &datasources.AddDataSourceCommand{
-		OrgId:          1,
+	_, err := testEnv.Server.HTTPServer.DataSourcesService.AddDataSource(ctx, &datasources.AddDataSourceCommand{
+		OrgID:          1,
 		Access:         datasources.DS_ACCESS_PROXY,
 		Name:           "graphite",
 		Type:           datasources.DS_GRAPHITE,
-		Uid:            uid,
-		Url:            outgoingServer.URL,
+		UID:            uid,
+		URL:            outgoingServer.URL,
 		BasicAuth:      true,
 		BasicAuthUser:  "basicAuthUser",
 		JsonData:       jsonData,

@@ -92,6 +92,26 @@ describe('LabelsField with suggestions', () => {
     expect(screen.getByTestId('label-key-2').textContent).toBe('key3');
     expect(screen.getByTestId('label-value-2').textContent).toBe('value3');
   });
+  it('Should be able to write new keys and values using the dropdowns, case sensitive', async () => {
+    renderAlertLabels('grafana');
+
+    await waitFor(() => expect(screen.getAllByTestId('alertlabel-key-picker')).toHaveLength(2));
+    expect(screen.getByTestId('label-key-0').textContent).toBe('key1');
+    expect(screen.getByTestId('label-key-1').textContent).toBe('key2');
+    expect(screen.getByTestId('label-value-0').textContent).toBe('value1');
+    expect(screen.getByTestId('label-value-1').textContent).toBe('value2');
+
+    const LastKeyDropdown = within(screen.getByTestId('label-key-1'));
+    const LastValueDropdown = within(screen.getByTestId('label-value-1'));
+
+    await userEvent.type(LastKeyDropdown.getByRole('combobox'), 'KEY2{enter}');
+    expect(screen.getByTestId('label-key-0').textContent).toBe('key1');
+    expect(screen.getByTestId('label-key-1').textContent).toBe('KEY2');
+
+    await userEvent.type(LastValueDropdown.getByRole('combobox'), 'VALUE2{enter}');
+    expect(screen.getByTestId('label-value-0').textContent).toBe('value1');
+    expect(screen.getByTestId('label-value-1').textContent).toBe('VALUE2');
+  });
 });
 
 describe('LabelsField without suggestions', () => {

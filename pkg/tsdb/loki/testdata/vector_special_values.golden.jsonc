@@ -2,6 +2,10 @@
 //  
 //  Frame[0] {
 //      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
 //      "executedQueryString": "Expr: query1"
 //  }
 //  Name: {level="error", location="moon"}
@@ -18,6 +22,10 @@
 //  
 //  Frame[1] {
 //      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
 //      "executedQueryString": "Expr: query1"
 //  }
 //  Name: {level="info", location="moon"}
@@ -34,6 +42,10 @@
 //  
 //  Frame[2] {
 //      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
 //      "executedQueryString": "Expr: query1"
 //  }
 //  Name: {level="debug", location="moon"}
@@ -56,6 +68,10 @@
         "name": "{level=\"error\", location=\"moon\"}",
         "meta": {
           "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ],
           "executedQueryString": "Expr: query1"
         },
         "fields": [
@@ -106,6 +122,10 @@
         "name": "{level=\"info\", location=\"moon\"}",
         "meta": {
           "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ],
           "executedQueryString": "Expr: query1"
         },
         "fields": [
@@ -156,6 +176,10 @@
         "name": "{level=\"debug\", location=\"moon\"}",
         "meta": {
           "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ],
           "executedQueryString": "Expr: query1"
         },
         "fields": [
