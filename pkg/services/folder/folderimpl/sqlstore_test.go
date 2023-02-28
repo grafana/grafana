@@ -9,12 +9,20 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -717,4 +725,72 @@ func assertChildrenUIDs(t *testing.T, store *sqlStore, f *folder.Folder, expecte
 		actualChildrenUIDs = append(actualChildrenUIDs, f.UID)
 	}
 	assert.Equal(t, expected, actualChildrenUIDs)
+}
+
+func TestIntegrationNestedDelete(t *testing.T) { //have to mock the result of nested folder
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	t.Run("Nested folder deletion", func(t *testing.T) {
+		db := sqlstore.InitTestDB(t)
+		quotaService := quotatest.New(false, nil)
+		dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(db, db.Cfg), quotaService)
+		require.NoError(t, err)
+		nestedFolderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures([]interface{}{"nestedFolders"}))
+		folderStore := ProvideDashboardFolderStore(db)
+
+		cfg := setting.NewCfg()
+		cfg.RBACEnabled = false
+		features := featuremgmt.WithFeatures()
+
+		service := &Service{
+			cfg:                  cfg,
+			log:                  log.New("test-folder-service"),
+			dashboardStore:       dashStore,
+			dashboardFolderStore: folderStore,
+			store:                nestedFolderStore,
+			features:             features,
+			bus:                  bus.ProvideBus(tracing.InitializeTracerForTest()),
+			db:                   db,
+		}
+
+		t.Run("Given user has permission to save", func(t *testing.T) {
+			origNewGuardian := guardian.New
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
+
+			t.Run("When deleting folder by uid should not return access denied error", func(t *testing.T) {
+				ancestorUIDs := CreateSubTree(t, nestedFolderStore, orgID, "", 3, "")
+				fmt.Println("ancestorUIDs", ancestorUIDs)
+
+				count, err := dashStore.CountDashboardsInFolder(context.Background(), &dashboards.CountDashboardsInFolderRequest{FolderID: 1, OrgID: orgID})
+				require.NoError(t, err)
+				// 				// fmt.Println("count1:", count)
+
+				err = nestedFolderStore.Delete(context.Background(), ancestorUIDs[0], orgID)
+				require.NoError(t, err)
+
+				children, err := nestedFolderStore.GetChildren(context.Background(), folder.GetChildrenQuery{
+					UID:   ancestorUIDs[0],
+					OrgID: orgID,
+				})
+				require.NoError(t, err)
+				fmt.Println("children:", children)
+				for _, c := range children {
+					fmt.Println(c.ID)
+				}
+
+				count, err = dashStore.CountDashboardsInFolder(context.Background(), &dashboards.CountDashboardsInFolderRequest{FolderID: 1, OrgID: orgID})
+				require.NoError(t, err)
+				// check that count is 0
+
+				fmt.Println(service)
+
+				require.NotNil(t, err) // remove
+			})
+
+			t.Cleanup(func() {
+				guardian.New = origNewGuardian
+			})
+		})
+	})
 }
