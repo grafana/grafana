@@ -446,7 +446,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       const wasAngular = [
         'graph', // timeseries
         'table-old', // now table
-        'grafana-piechart-panel', // now pie
+        'grafana-piechart-panel', // now piechart
         'grafana-worldmap-panel', // now geomap
       ].includes(this.autoMigrateFrom);
       this.callPanelTypeChangeHandler(
