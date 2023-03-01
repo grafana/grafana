@@ -194,8 +194,8 @@ type GetSignedInUserQuery struct {
 }
 
 type AnalyticsSettings struct {
-	Identifier       string
-	HashedIdentifier string
+	Identifier         string
+	IntercomIdentifier string
 }
 
 type SignedInUser struct {

@@ -98,7 +98,7 @@ export type OAuthSettings = Partial<Record<OAuth, { name: string; icon?: IconNam
 
 export interface AnalyticsSettings {
   identifier: string;
-  hashedIdentifier?: string;
+  intercomIdentifier?: string;
 }
 
 /** Current user info included in bootData

@@ -70,12 +70,12 @@ export class RudderstackBackend implements EchoBackend<PageviewEchoEvent, Rudder
     window.rudderanalytics?.load?.(options.writeKey, options.dataPlaneUrl, { configUrl: options.configUrl });
 
     if (options.user) {
-      const { identifier, hashedIdentifier } = options.user.analytics;
+      const { identifier, intercomIdentifier } = options.user.analytics;
       const apiOptions: apiOptions = {};
 
-      if (hashedIdentifier) {
+      if (intercomIdentifier) {
         apiOptions.Intercom = {
-          user_hash: hashedIdentifier,
+          user_hash: intercomIdentifier,
         };
       }
 

@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
@@ -606,7 +605,7 @@ func hashUserIdentifier(identifier string, secret string) string {
 	return hex.EncodeToString(h.Sum(nil))
 }
 
-func buildUserAnalyticsSettings(signedInUser user.SignedInUser) user.AnalyticsSettings {
+func buildUserAnalyticsSettings(signedInUser user.SignedInUser, intercomSecret string) user.AnalyticsSettings {
 	var settings user.AnalyticsSettings
 
 	if signedInUser.ExternalAuthID != "" {
@@ -615,8 +614,8 @@ func buildUserAnalyticsSettings(signedInUser user.SignedInUser) user.AnalyticsSe
 		settings.Identifier = signedInUser.Email
 	}
 
-	if os.Getenv("GF_ANALYTICS_SECRET") != "" {
-		settings.HashedIdentifier = hashUserIdentifier(settings.Identifier, os.Getenv("GF_ANALYTICS_SECRET"))
+	if intercomSecret != "" {
+		settings.IntercomIdentifier = hashUserIdentifier(settings.Identifier, intercomSecret)
 	}
 	return settings
 }

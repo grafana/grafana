@@ -433,7 +433,7 @@ func (ss *sqlStore) GetSignedInUser(ctx context.Context, query *user.GetSignedIn
 			signedInUser.ExternalAuthID = ""
 		}
 
-		signedInUser.Analytics = buildUserAnalyticsSettings(signedInUser)
+		signedInUser.Analytics = buildUserAnalyticsSettings(signedInUser, ss.cfg.IntercomSecret)
 		return nil
 	})
 	return &signedInUser, err

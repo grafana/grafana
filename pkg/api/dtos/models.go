@@ -52,8 +52,8 @@ type CurrentUser struct {
 }
 
 type AnalyticsSettings struct {
-	Identifier       string `json:"identifier"`
-	HashedIdentifier string `json:"hashedIdentifier,omitempty"`
+	Identifier         string `json:"identifier"`
+	IntercomIdentifier string `json:"intercomIdentifier,omitempty"`
 }
 
 type UserPermissionsMap map[string]bool
