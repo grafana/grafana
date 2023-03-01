@@ -333,7 +333,7 @@ func createFolderWithACL(t *testing.T, sqlStore db.DB, title string, user user.S
 	return folder
 }
 
-func updateFolderACL(t *testing.T, dashboardStore *database.DashboardStore, folderID int64, items []folderACLItem) {
+func updateFolderACL(t *testing.T, dashboardStore dashboards.Store, folderID int64, items []folderACLItem) {
 	t.Helper()
 
 	if len(items) == 0 {

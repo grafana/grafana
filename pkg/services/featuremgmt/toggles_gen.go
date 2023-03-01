@@ -63,10 +63,6 @@ const (
 	// Use experimental loki api for WebSocket streaming (early prototype)
 	FlagLokiDataframeApi = "lokiDataframeApi"
 
-	// FlagSwaggerUi
-	// Serves swagger UI
-	FlagSwaggerUi = "swaggerUi"
-
 	// FlagFeatureHighlights
 	// Highlight Grafana Enterprise features
 	FlagFeatureHighlights = "featureHighlights"
