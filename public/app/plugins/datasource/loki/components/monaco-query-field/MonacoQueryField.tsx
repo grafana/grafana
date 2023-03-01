@@ -10,7 +10,7 @@ import { languageConfiguration, monarchlanguage } from '@grafana/monaco-logql';
 import { useTheme2, ReactMonacoEditor, Monaco, monacoTypes, MonacoEditor } from '@grafana/ui';
 
 import { isValidQuery } from '../../queryUtils';
-import { makeStatsRequest } from '../../querybuilder/components/LokiQueryBuilderOptions';
+import { makeStatsRequest, shouldUpdateStats } from '../stats';
 
 import { Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';
@@ -150,7 +150,7 @@ const MonacoQueryField = ({
     editor.onDidChangeModelContent(checkDecorators);
   };
 
-  const onType = debounce((query: string) => {
+  const onType = debounce(async (query: string) => {
     if (isValidQuery(query) === false) {
       return;
     }
@@ -159,7 +159,11 @@ const MonacoQueryField = ({
     const previousTimerange = undefined;
     const previousQuery = undefined;
 
-    makeStatsRequest(datasource, timerange, previousTimerange, query, previousQuery, setQueryStats!);
+    const update = shouldUpdateStats(query, previousQuery, timerange, previousTimerange);
+    if (update) {
+      const stats = await makeStatsRequest(datasource, query);
+      stats ? setQueryStats!(stats) : setQueryStats!(undefined);
+    }
   }, 1000);
 
   return (

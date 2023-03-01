@@ -1,13 +1,14 @@
 import React, { useEffect } from 'react';
 import { usePrevious } from 'react-use';
 
-import { CoreApp, SelectableValue, TimeRange } from '@grafana/data';
+import { CoreApp, SelectableValue } from '@grafana/data';
 import { EditorField, EditorRow } from '@grafana/experimental';
 import { reportInteraction } from '@grafana/runtime';
 import { RadioButtonGroup, Select, AutoSizeInput } from '@grafana/ui';
 import { QueryOptionGroup } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryOptionGroup';
 
 import { preprocessMaxLines, queryTypeOptions, RESOLUTION_OPTIONS } from '../../components/LokiOptionFields';
+import { makeStatsRequest, shouldUpdateStats } from '../../components/stats';
 import { LokiDatasource } from '../../datasource';
 import { isLogsQuery } from '../../queryUtils';
 import { LokiQuery, LokiQueryType, QueryStats } from '../../types';
@@ -57,7 +58,14 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
     }
 
     useEffect(() => {
-      makeStatsRequest(datasource, timerange, previousTimerange, query.expr, previousQuery, setQueryStats);
+      const update = shouldUpdateStats(query.expr, previousQuery, timerange, previousTimerange);
+      if (update) {
+        const makeAsyncRequest = async () => {
+          const stats = await makeStatsRequest(datasource, query.expr);
+          stats ? setQueryStats(stats) : setQueryStats(undefined);
+        };
+        makeAsyncRequest();
+      }
     }, [datasource, timerange, previousTimerange, query, previousQuery, setQueryStats]);
 
     let queryType = query.queryType ?? (query.instant ? LokiQueryType.Instant : LokiQueryType.Range);
@@ -139,31 +147,6 @@ function getCollapsedInfo(
   }
 
   return items;
-}
-
-export async function makeStatsRequest(
-  datasource: LokiDatasource,
-  timerange: TimeRange,
-  prevTimerange: TimeRange | undefined,
-  query: string,
-  prevQuery: string | undefined,
-  setQueryStats: React.Dispatch<React.SetStateAction<QueryStats | undefined>>
-) {
-  if (
-    query === prevQuery &&
-    timerange.raw.from === prevTimerange?.raw.from &&
-    timerange.raw.to === prevTimerange?.raw.to
-  ) {
-    return;
-  }
-
-  if (!query) {
-    setQueryStats(undefined);
-    return;
-  }
-
-  const response = await datasource.getQueryStats(query);
-  Object.values(response).every((v) => v === 0) ? setQueryStats(undefined) : setQueryStats(response);
 }
 
 LokiQueryBuilderOptions.displayName = 'LokiQueryBuilderOptions';
