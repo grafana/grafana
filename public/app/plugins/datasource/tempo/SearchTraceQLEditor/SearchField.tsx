@@ -142,7 +142,7 @@ const SearchField = ({
           }
         }}
         placeholder="Select a value"
-        isClearable
+        isClearable={false}
         aria-label={`select ${filter.id} value`}
         allowCustomValue={true}
         isMulti
