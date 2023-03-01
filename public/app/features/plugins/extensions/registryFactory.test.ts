@@ -178,59 +178,34 @@ describe('createPluginExtensionRegistry()', () => {
     });
 
     it('should register maximum 2 extensions per plugin and placement', () => {
+      const link1 = {
+        placement: 'grafana/dashboard/panel/menu',
+        title: 'Open incident',
+        description: 'You can create an incident from this context',
+        path: '/a/belugacdn-app/incidents/declare',
+      };
+      const link2 = {
+        placement: 'grafana/dashboard/panel/menu',
+        title: 'Open incident 2',
+        description: 'You can create an incident from this context',
+        path: '/a/belugacdn-app/incidents/declare',
+      };
+      const link3 = {
+        placement: 'grafana/dashboard/panel/menu',
+        title: 'Open incident 3',
+        description: 'You can create an incident from this context',
+        path: '/a/belugacdn-app/incidents/declare',
+      };
       const registry = createPluginExtensionRegistry([
         {
           pluginId: 'belugacdn-app',
-          linkExtensions: [
-            {
-              placement: 'grafana/dashboard/panel/menu',
-              title: 'Open incident',
-              description: 'You can create an incident from this context',
-              path: '/a/belugacdn-app/incidents/declare',
-            },
-            {
-              placement: 'grafana/dashboard/panel/menu',
-              title: 'Open incident 2',
-              description: 'You can create an incident from this context',
-              path: '/a/belugacdn-app/incidents/declare',
-            },
-            {
-              placement: 'grafana/dashboard/panel/menu',
-              title: 'Open incident 3',
-              description: 'You can create an incident from this context',
-              path: '/a/belugacdn-app/incidents/declare',
-            },
-          ],
+          linkExtensions: [link1, link2, link3],
           commandExtensions: [],
         },
       ]);
 
-      const numberOfPlacements = Object.keys(registry).length;
-      const panelExtensions = registry['grafana/dashboard/panel/menu'];
-
-      expect(numberOfPlacements).toBe(1);
-      expect(panelExtensions).toEqual([
-        {
-          configure: expect.any(Function),
-          extension: {
-            title: 'Open incident',
-            type: PluginExtensionTypes.link,
-            description: 'You can create an incident from this context',
-            path: '/a/belugacdn-app/incidents/declare',
-            key: -68154691,
-          },
-        },
-        {
-          configure: expect.any(Function),
-          extension: {
-            title: 'Open incident 2',
-            type: PluginExtensionTypes.link,
-            description: 'You can create an incident from this context',
-            path: '/a/belugacdn-app/incidents/declare',
-            key: -1072147569,
-          },
-        },
-      ]);
+      shouldHaveNumberOfPlacements(registry, 1);
+      shouldHaveExtensionsAtPlacement({ placement: link1.placement, extensions: [link1, link2], registry });
     });
 
     it('should not register link extensions with invalid path configured', () => {
