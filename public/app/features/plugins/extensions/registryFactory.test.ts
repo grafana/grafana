@@ -414,34 +414,30 @@ describe('createPluginExtensionRegistry()', () => {
       });
     });
 
-    it('should wrap configure function with extension error handling', () => {
+    it('should wrap the configure function with error handling', () => {
       const registry = createPluginExtensionRegistry([
         {
           pluginId: 'belugacdn-app',
           linkExtensions: [],
           commandExtensions: [
             {
-              placement: 'grafana/dashboard/panel/menu',
-              title: 'Open incident',
-              description: 'You can create an incident from this context',
-              handler: () => {},
+              ...commandConfig1,
               configure: () => ({}),
             },
           ],
         },
       ]);
 
-      const extensions = registry['grafana/dashboard/panel/menu'];
-      const [extension] = extensions;
-
+      const [{ configure }] = registry[commandConfig1.placement];
       const context = {};
       const configurable = {
-        title: 'Open incident',
-        description: 'You can create an incident from this context',
+        title: commandConfig1.title,
+        description: commandConfig2.description,
       };
 
-      extension?.configure?.(context);
+      configure(context);
 
+      // The error handler is wrapping (decorating) the configure function, so it can provide standard error messages
       expect(errorHandler).toBeCalledWith(expect.any(Function), configurable, context);
     });
   });
