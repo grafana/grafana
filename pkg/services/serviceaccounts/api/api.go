@@ -41,7 +41,6 @@ type service interface {
 	SearchOrgServiceAccounts(ctx context.Context, query *serviceaccounts.SearchOrgServiceAccountsQuery) (*serviceaccounts.SearchOrgServiceAccountsResult, error)
 	ListTokens(ctx context.Context, query *serviceaccounts.GetSATokensQuery) ([]apikey.APIKey, error)
 	DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error
-	GetAPIKeysMigrationStatus(ctx context.Context, orgID int64) (*serviceaccounts.APIKeysMigrationStatus, error)
 	HideApiKeysTab(ctx context.Context, orgID int64) error
 	MigrateApiKeysToServiceAccounts(ctx context.Context, orgID int64) error
 	MigrateApiKey(ctx context.Context, orgID int64, keyId int64) error
@@ -89,8 +88,6 @@ func (api *ServiceAccountsAPI) RegisterAPIEndpoints() {
 			accesscontrol.EvalPermission(serviceaccounts.ActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.CreateToken))
 		serviceAccountsRoute.Delete("/:serviceAccountId/tokens/:tokenId", auth(middleware.ReqOrgAdmin,
 			accesscontrol.EvalPermission(serviceaccounts.ActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteToken))
-		serviceAccountsRoute.Get("/migrationstatus", auth(middleware.ReqOrgAdmin,
-			accesscontrol.EvalPermission(serviceaccounts.ActionRead)), routing.Wrap(api.GetAPIKeysMigrationStatus))
 		serviceAccountsRoute.Post("/hideApiKeys", auth(middleware.ReqOrgAdmin,
 			accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.HideApiKeysTab))
 		serviceAccountsRoute.Post("/migrate", auth(middleware.ReqOrgAdmin,
@@ -362,15 +359,6 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *contextmode
 	}
 
 	return response.JSON(http.StatusOK, serviceAccountSearch)
-}
-
-// GET /api/serviceaccounts/migrationstatus
-func (api *ServiceAccountsAPI) GetAPIKeysMigrationStatus(ctx *contextmodel.ReqContext) response.Response {
-	upgradeStatus, err := api.service.GetAPIKeysMigrationStatus(ctx.Req.Context(), ctx.OrgID)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Internal server error", err)
-	}
-	return response.JSON(http.StatusOK, upgradeStatus)
 }
 
 // POST /api/serviceaccounts/hideapikeys

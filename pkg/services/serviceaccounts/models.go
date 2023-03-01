@@ -130,10 +130,6 @@ type ServiceAccountProfileDTO struct {
 
 type ServiceAccountFilter string // used for filtering
 
-type APIKeysMigrationStatus struct {
-	Migrated bool `json:"migrated"`
-}
-
 const (
 	FilterOnlyExpiredTokens ServiceAccountFilter = "expiredTokens"
 	FilterOnlyDisabled      ServiceAccountFilter = "disabled"
