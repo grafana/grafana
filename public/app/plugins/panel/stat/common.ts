@@ -115,12 +115,12 @@ export function addOrientationOption<T extends SingleStatBaseOptions>(
 
 export function formatDisplayValuesWithCustomUnits(
   fieldValues: FieldDisplay[],
-  customUnits: { customPrefix: string; customSuffix: string }
+  config: PanelFieldConfig
 ): FieldDisplay[] {
-  const { customPrefix, customSuffix } = customUnits;
+  const { prefix, suffix } = config;
 
   // If there are no custom units, do nothing and return the `fieldValues`
-  if (!customPrefix && !customSuffix) {
+  if (!prefix && !suffix) {
     return fieldValues;
   }
 
@@ -130,10 +130,10 @@ export function formatDisplayValuesWithCustomUnits(
     if (sourceField?.type === FieldType.number) {
       // Update prefix; prepend custom prefix
       const previousPrefix = display.prefix ?? '';
-      const updatedPrefix = customPrefix + previousPrefix;
+      const updatedPrefix = prefix + previousPrefix;
       // Update suffix; append custom suffix
       const previousSuffix = display.suffix ?? '';
-      const updatedSuffix = previousSuffix + customSuffix;
+      const updatedSuffix = previousSuffix + suffix;
       // Put everything back together
       const updatedDisplay = { ...display, prefix: updatedPrefix, suffix: updatedSuffix };
       return { ...fieldValue, display: updatedDisplay };
