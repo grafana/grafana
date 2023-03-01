@@ -134,6 +134,14 @@ const defaults: any = {
   savedQueryLink: null,
 };
 
+const autoMigrateAngular: Record<string, string> = {
+  graph: 'timeseries',
+  'table-old': 'table',
+  'grafana-singlestat-panel': 'stat',
+  'grafana-piechart-panel': 'piechart',
+  'grafana-worldmap-panel': 'geomap',
+};
+
 export class PanelModel implements DataConfigSource, IPanelModel {
   /* persisted id, used in URL to identify a panel */
   id!: number;
@@ -256,18 +264,14 @@ export class PanelModel implements DataConfigSource, IPanelModel {
         this.autoMigrateFrom = this.type;
         this.type = 'heatmap';
         break;
-      case 'grafana-piechart-panel':
-        if (!config.panels[this.type] || !config.angularSupportEnabled) {
-          this.autoMigrateFrom = this.type;
-          this.type = 'piechart';
-        }
-        break;
-      case 'grafana-worldmap-panel':
-        if (!config.panels[this.type] || !config.angularSupportEnabled) {
-          this.autoMigrateFrom = this.type;
-          this.type = 'geomap';
-        }
-        break;
+    }
+
+    // Auto-migrate old angular panels
+    if (!this.autoMigrateFrom && autoMigrateAngular[this.type]) {
+      if (!config.panels[this.type] || !config.angularSupportEnabled) {
+        this.autoMigrateFrom = this.type;
+        this.type = autoMigrateAngular[this.type];
+      }
     }
 
     // defaults
@@ -443,12 +447,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     const version = getPluginVersion(plugin);
 
     if (this.autoMigrateFrom) {
-      const wasAngular = [
-        'graph', // timeseries
-        'table-old', // now table
-        'grafana-piechart-panel', // now piechart
-        'grafana-worldmap-panel', // now geomap
-      ].includes(this.autoMigrateFrom);
+      const wasAngular = autoMigrateAngular[this.autoMigrateFrom] != null;
       this.callPanelTypeChangeHandler(
         plugin,
         this.autoMigrateFrom,
