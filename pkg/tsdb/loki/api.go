@@ -12,16 +12,16 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	jsoniter "github.com/json-iterator/go"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util/converter"
-	jsoniter "github.com/json-iterator/go"
 )
 
 type LokiAPI struct {
-	client  *http.Client
-	url     string
-	log     log.Logger
-	headers map[string]string
+	client *http.Client
+	url    string
+	log    log.Logger
 }
 
 type RawLokiResponse struct {
@@ -29,17 +29,11 @@ type RawLokiResponse struct {
 	Encoding string
 }
 
-func newLokiAPI(client *http.Client, url string, log log.Logger, headers map[string]string) *LokiAPI {
-	return &LokiAPI{client: client, url: url, log: log, headers: headers}
+func newLokiAPI(client *http.Client, url string, log log.Logger) *LokiAPI {
+	return &LokiAPI{client: client, url: url, log: log}
 }
 
-func addHeaders(req *http.Request, headers map[string]string) {
-	for name, value := range headers {
-		req.Header.Set(name, value)
-	}
-}
-
-func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery, headers map[string]string) (*http.Request, error) {
+func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery) (*http.Request, error) {
 	qs := url.Values{}
 	qs.Set("query", query.Expr)
 
@@ -92,10 +86,11 @@ func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery, hea
 		return nil, err
 	}
 
-	addHeaders(req, headers)
-
-	if query.VolumeQuery {
-		req.Header.Set("X-Query-Tags", "Source=logvolhist")
+	if query.SupportingQueryType != SupportingQueryNone {
+		value := getSupportingQueryHeaderValue(req, query.SupportingQueryType)
+		if value != "" {
+			req.Header.Set("X-Query-Tags", "Source="+value)
+		}
 	}
 
 	return req, nil
@@ -145,7 +140,7 @@ func makeLokiError(body io.ReadCloser) error {
 }
 
 func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery) (data.Frames, error) {
-	req, err := makeDataRequest(ctx, api.url, query, api.headers)
+	req, err := makeDataRequest(ctx, api.url, query)
 	if err != nil {
 		return nil, err
 	}
@@ -168,14 +163,6 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery) (data.Frames
 	iter := jsoniter.Parse(jsoniter.ConfigDefault, resp.Body, 1024)
 	res := converter.ReadPrometheusStyleResult(iter, converter.Options{MatrixWideSeries: false, VectorWideSeries: false})
 
-	if res == nil {
-		// it's hard to say if this is an error-case or not.
-		// we know the http-response was a success-response
-		// (otherwise we wouldn't be here in the code),
-		// so we will go with a success, with no data.
-		return data.Frames{}, nil
-	}
-
 	if res.Error != nil {
 		return nil, res.Error
 	}
@@ -183,7 +170,7 @@ func (api *LokiAPI) DataQuery(ctx context.Context, query lokiQuery) (data.Frames
 	return res.Frames, nil
 }
 
-func makeRawRequest(ctx context.Context, lokiDsUrl string, resourcePath string, headers map[string]string) (*http.Request, error) {
+func makeRawRequest(ctx context.Context, lokiDsUrl string, resourcePath string) (*http.Request, error) {
 	lokiUrl, err := url.Parse(lokiDsUrl)
 	if err != nil {
 		return nil, err
@@ -204,13 +191,11 @@ func makeRawRequest(ctx context.Context, lokiDsUrl string, resourcePath string, 
 		return nil, err
 	}
 
-	addHeaders(req, headers)
-
 	return req, nil
 }
 
 func (api *LokiAPI) RawQuery(ctx context.Context, resourcePath string) (RawLokiResponse, error) {
-	req, err := makeRawRequest(ctx, api.url, resourcePath, api.headers)
+	req, err := makeRawRequest(ctx, api.url, resourcePath)
 	if err != nil {
 		return RawLokiResponse{}, err
 	}
@@ -241,4 +226,19 @@ func (api *LokiAPI) RawQuery(ctx context.Context, resourcePath string) (RawLokiR
 	}
 
 	return encodedBytes, nil
+}
+
+func getSupportingQueryHeaderValue(req *http.Request, supportingQueryType SupportingQueryType) string {
+	value := ""
+	switch supportingQueryType {
+	case SupportingQueryLogsVolume:
+		value = "logvolhist"
+	case SupportingQueryLogsSample:
+		value = "logsample"
+	case SupportingQueryDataSample:
+		value = "datasample"
+	default: //ignore
+	}
+
+	return value
 }

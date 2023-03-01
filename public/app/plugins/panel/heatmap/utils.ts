@@ -14,6 +14,7 @@ import {
   incrRoundDn,
   incrRoundUp,
   TimeRange,
+  FieldType,
 } from '@grafana/data';
 import { AxisPlacement, ScaleDirection, ScaleDistribution, ScaleOrientation } from '@grafana/schema';
 import { UPlotConfigBuilder } from '@grafana/ui';
@@ -98,7 +99,13 @@ export function prepConfig(opts: PrepConfigOpts) {
   } = opts;
 
   const xScaleKey = 'x';
-  const xScaleUnit = 'time';
+  let xScaleUnit = 'time';
+  let isTime = true;
+
+  if (dataRef.current?.heatmap?.fields[0].type !== FieldType.time) {
+    xScaleUnit = dataRef.current?.heatmap?.fields[0].config?.unit ?? 'x';
+    isTime = false;
+  }
 
   const pxRatio = devicePixelRatio;
 
@@ -145,22 +152,24 @@ export function prepConfig(opts: PrepConfigOpts) {
       u.setSelect({ left: 0, top: 0, width: 0, height: 0 }, false);
     });
 
-  // this is a tmp hack because in mode: 2, uplot does not currently call scales.x.range() for setData() calls
-  // scales.x.range() typically reads back from drilled-down panelProps.timeRange via getTimeRange()
-  builder.addHook('setData', (u) => {
-    //let [min, max] = (u.scales!.x!.range! as uPlot.Range.Function)(u, 0, 100, xScaleKey);
+  if (isTime) {
+    // this is a tmp hack because in mode: 2, uplot does not currently call scales.x.range() for setData() calls
+    // scales.x.range() typically reads back from drilled-down panelProps.timeRange via getTimeRange()
+    builder.addHook('setData', (u) => {
+      //let [min, max] = (u.scales!.x!.range! as uPlot.Range.Function)(u, 0, 100, xScaleKey);
 
-    let { min: xMin, max: xMax } = u.scales!.x;
+      let { min: xMin, max: xMax } = u.scales!.x;
 
-    let min = getTimeRange().from.valueOf();
-    let max = getTimeRange().to.valueOf();
+      let min = getTimeRange().from.valueOf();
+      let max = getTimeRange().to.valueOf();
 
-    if (xMin !== min || xMax !== max) {
-      queueMicrotask(() => {
-        u.setScale(xScaleKey, { min, max });
-      });
-    }
-  });
+      if (xMin !== min || xMax !== max) {
+        queueMicrotask(() => {
+          u.setScale(xScaleKey, { min, max });
+        });
+      }
+    });
+  }
 
   // rect of .u-over (grid area)
   builder.addHook('syncRect', (u, r) => {
@@ -236,19 +245,42 @@ export function prepConfig(opts: PrepConfigOpts) {
 
   builder.addScale({
     scaleKey: xScaleKey,
-    isTime: true,
+    isTime,
     orientation: ScaleOrientation.Horizontal,
     direction: ScaleDirection.Right,
     // TODO: expand by x bucket size and layout
-    range: () => {
-      return [getTimeRange().from.valueOf(), getTimeRange().to.valueOf()];
+    range: (u, dataMin, dataMax) => {
+      if (isTime) {
+        return [getTimeRange().from.valueOf(), getTimeRange().to.valueOf()];
+      } else {
+        if (dataRef.current?.xLayout === HeatmapCellLayout.le) {
+          return [dataMin - dataRef.current?.xBucketSize!, dataMax];
+        } else if (dataRef.current?.xLayout === HeatmapCellLayout.ge) {
+          return [dataMin, dataMax + dataRef.current?.xBucketSize!];
+        } else {
+          let offset = dataRef.current?.xBucketSize! / 2;
+
+          return [dataMin - offset, dataMax + offset];
+        }
+      }
     },
   });
+
+  let incrs;
+
+  if (!isTime) {
+    incrs = [];
+
+    for (let i = 0; i < 10; i++) {
+      incrs.push(i * dataRef.current?.xBucketSize!);
+    }
+  }
 
   builder.addAxis({
     scaleKey: xScaleKey,
     placement: AxisPlacement.Bottom,
-    isTime: true,
+    incrs,
+    isTime,
     theme: theme,
     timeZone,
   });
@@ -264,10 +296,10 @@ export function prepConfig(opts: PrepConfigOpts) {
   const yAxisReverse = Boolean(yAxisConfig.reverse);
   const isSparseHeatmap = heatmapType === DataFrameType.HeatmapCells && !isHeatmapCellsDense(dataRef.current?.heatmap!);
   const shouldUseLogScale = yScale.type !== ScaleDistribution.Linear || isSparseHeatmap;
-  const isOrdianalY = readHeatmapRowsCustomMeta(dataRef.current?.heatmap).yOrdinalDisplay != null;
+  const isOrdinalY = readHeatmapRowsCustomMeta(dataRef.current?.heatmap).yOrdinalDisplay != null;
 
   // random to prevent syncing y in other heatmaps
-  // TODO: try to match TimeSeries y keygen algo to sync with TimeSeries panels (when not isOrdianalY)
+  // TODO: try to match TimeSeries y keygen algo to sync with TimeSeries panels (when not isOrdinalY)
   const yScaleKey = 'y_' + (Math.random() + 1).toString(36).substring(7);
 
   builder.addScale({
@@ -289,7 +321,7 @@ export function prepConfig(opts: PrepConfigOpts) {
               ? uPlot.rangeLog(dataMin, dataMax, (yScale.log ?? 2) as unknown as uPlot.Scale.LogBase, true)
               : [dataMin, dataMax];
 
-            if (shouldUseLogScale && !isOrdianalY) {
+            if (shouldUseLogScale && !isOrdinalY) {
               let yExp = u.scales[yScaleKey].log!;
               let log = yExp === 2 ? Math.log2 : Math.log10;
 
@@ -354,7 +386,7 @@ export function prepConfig(opts: PrepConfigOpts) {
                 scaleMax *= yExp / 2;
               }
 
-              if (!isOrdianalY) {
+              if (!isOrdinalY) {
                 // guard against <= 0
                 if (explicitMin != null && explicitMin > 0) {
                   // snap down to magnitude
@@ -389,7 +421,7 @@ export function prepConfig(opts: PrepConfigOpts) {
                 // how to expand scale range if inferred non-regular or log buckets?
               }
 
-              if (!isOrdianalY) {
+              if (!isOrdinalY) {
                 scaleMin = explicitMin ?? scaleMin;
                 scaleMax = explicitMax ?? scaleMax;
               }
@@ -409,7 +441,7 @@ export function prepConfig(opts: PrepConfigOpts) {
     label: yAxisConfig.axisLabel,
     theme: theme,
     formatValue: (v, decimals) => formattedValueToString(dispY(v, decimals)),
-    splits: isOrdianalY
+    splits: isOrdinalY
       ? (self: uPlot) => {
           const meta = readHeatmapRowsCustomMeta(dataRef.current?.heatmap);
           if (!meta.yOrdinalDisplay) {
@@ -437,7 +469,7 @@ export function prepConfig(opts: PrepConfigOpts) {
           return splits;
         }
       : undefined,
-    values: isOrdianalY
+    values: isOrdinalY
       ? (self: uPlot, splits) => {
           const meta = readHeatmapRowsCustomMeta(dataRef.current?.heatmap);
           if (meta.yOrdinalDisplay) {

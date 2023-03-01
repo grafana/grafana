@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/http_api/annotations/
-  - /docs/grafana/latest/http_api/annotations/
+  - ../../http_api/annotations/
+canonical: /docs/grafana/latest/developers/http_api/annotations/
 description: Grafana Annotations HTTP API
 keywords:
   - grafana
@@ -11,7 +11,7 @@ keywords:
   - annotation
   - annotations
   - comment
-title: 'Annotations HTTP API'
+title: Annotations HTTP API
 ---
 
 # Annotations API

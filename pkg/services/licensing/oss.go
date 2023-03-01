@@ -2,7 +2,7 @@ package licensing
 
 import (
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/setting"
@@ -54,12 +54,20 @@ func ProvideService(cfg *setting.Cfg, hooksService *hooks.HooksService) *OSSLice
 		Cfg:          cfg,
 		HooksService: hooksService,
 	}
-	l.HooksService.AddIndexDataHook(func(indexData *dtos.IndexViewData, req *models.ReqContext) {
+	l.HooksService.AddIndexDataHook(func(indexData *dtos.IndexViewData, req *contextmodel.ReqContext) {
 		if !req.IsGrafanaAdmin {
 			return
 		}
 
-		if adminNode := indexData.NavTree.FindById(navtree.NavIDAdmin); adminNode != nil {
+		var adminNodeID string
+
+		if cfg.IsFeatureToggleEnabled("topnav") {
+			adminNodeID = navtree.NavIDCfg
+		} else {
+			adminNodeID = navtree.NavIDAdmin
+		}
+
+		if adminNode := indexData.NavTree.FindById(adminNodeID); adminNode != nil {
 			adminNode.Children = append(adminNode.Children, &navtree.NavLink{
 				Text: "Stats and license",
 				Id:   "upgrading",

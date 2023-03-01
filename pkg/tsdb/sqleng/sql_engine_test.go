@@ -407,7 +407,7 @@ func TestSQLEngine(t *testing.T) {
 				log:                    log.New("test"),
 				queryResultTransformer: transformer,
 			}
-			resultErr := dp.transformQueryError(dp.log, tc.err)
+			resultErr := dp.TransformQueryError(dp.log, tc.err)
 			assert.ErrorIs(t, resultErr, tc.expectedErr)
 			assert.Equal(t, tc.expectQueryResultTransformerWasCalled, transformer.transformQueryErrorWasCalled)
 		}

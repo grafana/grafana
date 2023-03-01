@@ -11,13 +11,14 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
 type queryDataTestRoundTripper struct {
 	requestCallback func(req *http.Request) error
 	body            []byte
+	statusCode      int
 }
 
 // we fake the http-request-call. we return a fixed byte-array (defined by the test snapshot),
@@ -29,22 +30,29 @@ func (rt *queryDataTestRoundTripper) RoundTrip(req *http.Request) (*http.Respons
 	}
 
 	return &http.Response{
-		StatusCode: http.StatusOK,
+		StatusCode: rt.statusCode,
 		Header:     http.Header{},
 		Body:       io.NopCloser(bytes.NewReader(rt.body)),
 	}, nil
 }
 
 // we setup a fake datasource-info
-func newFlowTestDsInfo(body []byte, reuestCallback func(req *http.Request) error) *es.DatasourceInfo {
+func newFlowTestDsInfo(body []byte, statusCode int, requestCallback func(req *http.Request) error) *es.DatasourceInfo {
 	client := http.Client{
-		Transport: &queryDataTestRoundTripper{body: body, requestCallback: reuestCallback},
+		Transport: &queryDataTestRoundTripper{body: body, statusCode: statusCode, requestCallback: requestCallback},
 	}
+
+	configuredFields := es.ConfiguredFields{
+		TimeField:       "testtime",
+		LogMessageField: "line",
+		LogLevelField:   "lvl",
+	}
+
 	return &es.DatasourceInfo{
 		ESVersion:                  semver.MustParse("8.5.0"),
 		Interval:                   "Daily",
 		Database:                   "[testdb-]YYYY.MM.DD",
-		TimeField:                  "testtime",
+		ConfiguredFields:           configuredFields,
 		TimeInterval:               "1s",
 		URL:                        "http://localhost:9200",
 		HTTPClient:                 &client,
@@ -56,6 +64,7 @@ func newFlowTestDsInfo(body []byte, reuestCallback func(req *http.Request) error
 
 type queryDataTestQueryJSON struct {
 	IntervalMs    int64
+	Interval      time.Duration
 	MaxDataPoints int64
 	RefID         string
 }
@@ -90,7 +99,7 @@ func newFlowTestQueries(allJsonBytes []byte) ([]backend.DataQuery, error) {
 		query := backend.DataQuery{
 			RefID:         jsonInfo.RefID,
 			MaxDataPoints: jsonInfo.MaxDataPoints,
-			Interval:      time.Duration(jsonInfo.IntervalMs) * time.Millisecond,
+			Interval:      jsonInfo.Interval,
 			TimeRange:     timeRange,
 			JSON:          jsonBytes,
 		}
@@ -104,7 +113,7 @@ type queryDataTestResult struct {
 	requestBytes []byte
 }
 
-func queryDataTest(queriesBytes []byte, responseBytes []byte) (queryDataTestResult, error) {
+func queryDataTestWithResponseCode(queriesBytes []byte, responseStatusCode int, responseBytes []byte) (queryDataTestResult, error) {
 	queries, err := newFlowTestQueries(queriesBytes)
 	if err != nil {
 		return queryDataTestResult{}, err
@@ -113,7 +122,7 @@ func queryDataTest(queriesBytes []byte, responseBytes []byte) (queryDataTestResu
 	requestBytesStored := false
 	var requestBytes []byte
 
-	dsInfo := newFlowTestDsInfo(responseBytes, func(req *http.Request) error {
+	dsInfo := newFlowTestDsInfo(responseBytes, responseStatusCode, func(req *http.Request) error {
 		requestBytes, err = io.ReadAll(req.Body)
 
 		bodyCloseError := req.Body.Close()
@@ -130,7 +139,7 @@ func queryDataTest(queriesBytes []byte, responseBytes []byte) (queryDataTestResu
 		return nil
 	})
 
-	result, err := queryData(context.Background(), queries, dsInfo, intervalv2.NewCalculator())
+	result, err := queryData(context.Background(), queries, dsInfo)
 	if err != nil {
 		return queryDataTestResult{}, err
 	}
@@ -143,4 +152,8 @@ func queryDataTest(queriesBytes []byte, responseBytes []byte) (queryDataTestResu
 		response:     result,
 		requestBytes: requestBytes,
 	}, nil
+}
+
+func queryDataTest(queriesBytes []byte, responseBytes []byte) (queryDataTestResult, error) {
+	return queryDataTestWithResponseCode(queriesBytes, 200, responseBytes)
 }

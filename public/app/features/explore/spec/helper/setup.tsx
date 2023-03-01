@@ -29,7 +29,7 @@ import { LokiDatasource } from '../../../../plugins/datasource/loki/datasource';
 import { LokiQuery } from '../../../../plugins/datasource/loki/types';
 import { ExploreId } from '../../../../types';
 import { initialUserState } from '../../../profile/state/reducers';
-import Wrapper from '../../Wrapper';
+import { ExplorePage } from '../../ExplorePage';
 
 type DatasourceSetup = { settings: DataSourceInstanceSettings; api: DataSourceApi };
 
@@ -120,7 +120,7 @@ export function setupExplore(options?: SetupOptions): {
     locationService.partial(urlParams);
   }
 
-  const route = { component: Wrapper };
+  const route = { component: ExplorePage };
 
   const { unmount, container } = render(
     <Provider store={storeState}>
@@ -203,16 +203,12 @@ export const localStorageHasAlreadyBeenMigrated = () => {
 };
 
 export const setupLocalStorageRichHistory = (dsName: string) => {
-  window.localStorage.setItem(
-    RICH_HISTORY_KEY,
-    JSON.stringify([
-      {
-        ts: Date.now(),
-        datasourceName: dsName,
-        starred: true,
-        comment: '',
-        queries: [{ refId: 'A' }],
-      } as RichHistoryLocalStorageDTO,
-    ])
-  );
+  const richHistoryDTO: RichHistoryLocalStorageDTO = {
+    ts: Date.now(),
+    datasourceName: dsName,
+    starred: true,
+    comment: '',
+    queries: [{ refId: 'A' }],
+  };
+  window.localStorage.setItem(RICH_HISTORY_KEY, JSON.stringify([richHistoryDTO]));
 };

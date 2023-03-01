@@ -14,13 +14,13 @@ import {
   getTagValues,
 } from '../../influxQLMetadataQuery';
 import {
-  normalizeQuery,
-  addNewSelectPart,
-  removeSelectPart,
   addNewGroupByPart,
-  removeGroupByPart,
-  changeSelectPart,
+  addNewSelectPart,
   changeGroupByPart,
+  changeSelectPart,
+  normalizeQuery,
+  removeGroupByPart,
+  removeSelectPart,
 } from '../../queryUtils';
 import { InfluxQuery, InfluxQueryTag } from '../../types';
 import { DEFAULT_RESULT_FORMAT } from '../constants';
@@ -32,7 +32,7 @@ import { InputSection } from './InputSection';
 import { OrderByTimeSection } from './OrderByTimeSection';
 import { PartListSection } from './PartListSection';
 import { TagsSection } from './TagsSection';
-import { getNewSelectPartOptions, getNewGroupByPartOptions, makePartList } from './partListUtils';
+import { getNewGroupByPartOptions, getNewSelectPartOptions, makePartList } from './partListUtils';
 
 type Props = {
   query: InfluxQuery;
@@ -52,8 +52,12 @@ function getTemplateVariableOptions() {
 }
 
 // helper function to make it easy to call this from the widget-render-code
-function withTemplateVariableOptions(optionsPromise: Promise<string[]>): Promise<string[]> {
-  return optionsPromise.then((options) => [...getTemplateVariableOptions(), ...options]);
+function withTemplateVariableOptions(optionsPromise: Promise<string[]>, filter?: string): Promise<string[]> {
+  let templateVariableOptions = getTemplateVariableOptions();
+  if (filter) {
+    templateVariableOptions = templateVariableOptions.filter((tvo) => tvo.indexOf(filter) > -1);
+  }
+  return optionsPromise.then((options) => [...templateVariableOptions, ...options]);
 }
 
 // it is possible to add fields into the `InfluxQueryTag` structures, and they do work,
@@ -142,7 +146,8 @@ export const Editor = (props: Props): JSX.Element => {
                   filterTags(query.tags ?? [], keys),
                   datasource
                 )
-              )
+              ),
+              filter
             )
           }
           onChange={handleFromSectionChange}

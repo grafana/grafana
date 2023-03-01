@@ -92,5 +92,6 @@ type GettableAlertmanagers struct {
 
 // swagger:model
 type AlertingStatus struct {
-	AlertmanagersChoice AlertmanagersChoice `json:"alertmanagersChoice"`
+	AlertmanagersChoice      AlertmanagersChoice `json:"alertmanagersChoice"`
+	NumExternalAlertmanagers int                 `json:"numExternalAlertmanagers"`
 }

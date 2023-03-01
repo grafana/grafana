@@ -176,8 +176,8 @@ ALTER TABLE public.client OWNER TO keycloak;
 
 CREATE TABLE public.client_attributes (
     client_id character varying(36) NOT NULL,
-    value character varying(4000),
-    name character varying(255) NOT NULL
+    name character varying(255) NOT NULL,
+    value text
 );
 
 
@@ -195,18 +195,6 @@ CREATE TABLE public.client_auth_flow_bindings (
 
 
 ALTER TABLE public.client_auth_flow_bindings OWNER TO keycloak;
-
---
--- Name: client_default_roles; Type: TABLE; Schema: public; Owner: keycloak
---
-
-CREATE TABLE public.client_default_roles (
-    client_id character varying(36) NOT NULL,
-    role_id character varying(36) NOT NULL
-);
-
-
-ALTER TABLE public.client_default_roles OWNER TO keycloak;
 
 --
 -- Name: client_initial_access; Type: TABLE; Schema: public; Owner: keycloak
@@ -270,8 +258,8 @@ ALTER TABLE public.client_scope_attributes OWNER TO keycloak;
 --
 
 CREATE TABLE public.client_scope_client (
-    client_id character varying(36) NOT NULL,
-    scope_id character varying(36) NOT NULL,
+    client_id character varying(255) NOT NULL,
+    scope_id character varying(255) NOT NULL,
     default_scope boolean DEFAULT false NOT NULL
 );
 
@@ -912,7 +900,8 @@ CREATE TABLE public.realm (
     refresh_token_max_reuse integer DEFAULT 0,
     allow_user_managed_access boolean DEFAULT false NOT NULL,
     sso_max_lifespan_remember_me integer DEFAULT 0 NOT NULL,
-    sso_idle_timeout_remember_me integer DEFAULT 0 NOT NULL
+    sso_idle_timeout_remember_me integer DEFAULT 0 NOT NULL,
+    default_role character varying(255)
 );
 
 
@@ -924,8 +913,8 @@ ALTER TABLE public.realm OWNER TO keycloak;
 
 CREATE TABLE public.realm_attribute (
     name character varying(255) NOT NULL,
-    value character varying(255),
-    realm_id character varying(36) NOT NULL
+    realm_id character varying(36) NOT NULL,
+    value text
 );
 
 
@@ -942,18 +931,6 @@ CREATE TABLE public.realm_default_groups (
 
 
 ALTER TABLE public.realm_default_groups OWNER TO keycloak;
-
---
--- Name: realm_default_roles; Type: TABLE; Schema: public; Owner: keycloak
---
-
-CREATE TABLE public.realm_default_roles (
-    realm_id character varying(36) NOT NULL,
-    role_id character varying(36) NOT NULL
-);
-
-
-ALTER TABLE public.realm_default_roles OWNER TO keycloak;
 
 --
 -- Name: realm_enabled_event_types; Type: TABLE; Schema: public; Owner: keycloak
@@ -1696,44 +1673,52 @@ a5a8fed6-0bca-4646-9946-2fe84175353b	t	f	account	0	f	d0b8b6b6-2a02-412c-84d1-716
 -- Data for Name: client_attributes; Type: TABLE DATA; Schema: public; Owner: keycloak
 --
 
-COPY public.client_attributes (client_id, value, name) FROM stdin;
-11c67f5b-dde7-4680-b05b-c9c59d78bda4	S256	pkce.code.challenge.method
-2f521d09-7304-4b5e-a94b-7cc7300b8b50	S256	pkce.code.challenge.method
-230081b5-9161-45c3-9e08-9eda5412f7f7	S256	pkce.code.challenge.method
-805aebc8-9d01-42b6-bcce-6ce48ca63ef0	S256	pkce.code.challenge.method
-09b79548-8426-4c0e-8e0b-7488467532c7	true	backchannel.logout.session.required
-09b79548-8426-4c0e-8e0b-7488467532c7	false	backchannel.logout.revoke.offline.tokens
-09b79548-8426-4c0e-8e0b-7488467532c7	false	saml.server.signature
-09b79548-8426-4c0e-8e0b-7488467532c7	false	saml.server.signature.keyinfo.ext
-09b79548-8426-4c0e-8e0b-7488467532c7	false	saml.assertion.signature
-09b79548-8426-4c0e-8e0b-7488467532c7	false	saml.client.signature
-09b79548-8426-4c0e-8e0b-7488467532c7	false	saml.encrypt
-09b79548-8426-4c0e-8e0b-7488467532c7	false	saml.authnstatement
-09b79548-8426-4c0e-8e0b-7488467532c7	false	saml.onetimeuse.condition
-09b79548-8426-4c0e-8e0b-7488467532c7	false	saml_force_name_id_format
-09b79548-8426-4c0e-8e0b-7488467532c7	false	saml.multivalued.roles
-09b79548-8426-4c0e-8e0b-7488467532c7	false	saml.force.post.binding
-09b79548-8426-4c0e-8e0b-7488467532c7	false	exclude.session.state.from.auth.response
-09b79548-8426-4c0e-8e0b-7488467532c7	false	tls.client.certificate.bound.access.tokens
-09b79548-8426-4c0e-8e0b-7488467532c7	false	client_credentials.use_refresh_token
-09b79548-8426-4c0e-8e0b-7488467532c7	false	display.on.consent.screen
-09b79548-8426-4c0e-8e0b-7488467532c7		backchannel.logout.url
-169f1dea-80f0-4a99-8509-9abb70ab0a5c	true	backchannel.logout.session.required
-169f1dea-80f0-4a99-8509-9abb70ab0a5c	false	backchannel.logout.revoke.offline.tokens
-169f1dea-80f0-4a99-8509-9abb70ab0a5c	false	saml.server.signature
-169f1dea-80f0-4a99-8509-9abb70ab0a5c	false	saml.server.signature.keyinfo.ext
-169f1dea-80f0-4a99-8509-9abb70ab0a5c	false	saml.assertion.signature
-169f1dea-80f0-4a99-8509-9abb70ab0a5c	false	saml.client.signature
-169f1dea-80f0-4a99-8509-9abb70ab0a5c	false	saml.encrypt
-169f1dea-80f0-4a99-8509-9abb70ab0a5c	false	saml.authnstatement
-169f1dea-80f0-4a99-8509-9abb70ab0a5c	false	saml.onetimeuse.condition
-169f1dea-80f0-4a99-8509-9abb70ab0a5c	false	saml_force_name_id_format
-169f1dea-80f0-4a99-8509-9abb70ab0a5c	false	saml.multivalued.roles
-169f1dea-80f0-4a99-8509-9abb70ab0a5c	false	saml.force.post.binding
-169f1dea-80f0-4a99-8509-9abb70ab0a5c	false	exclude.session.state.from.auth.response
-169f1dea-80f0-4a99-8509-9abb70ab0a5c	false	tls.client.certificate.bound.access.tokens
-169f1dea-80f0-4a99-8509-9abb70ab0a5c	false	client_credentials.use_refresh_token
-169f1dea-80f0-4a99-8509-9abb70ab0a5c	false	display.on.consent.screen
+COPY public.client_attributes (client_id, name, value) FROM stdin;
+11c67f5b-dde7-4680-b05b-c9c59d78bda4	pkce.code.challenge.method	S256
+2f521d09-7304-4b5e-a94b-7cc7300b8b50	pkce.code.challenge.method	S256
+230081b5-9161-45c3-9e08-9eda5412f7f7	pkce.code.challenge.method	S256
+805aebc8-9d01-42b6-bcce-6ce48ca63ef0	pkce.code.challenge.method	S256
+09b79548-8426-4c0e-8e0b-7488467532c7	backchannel.logout.session.required	true
+09b79548-8426-4c0e-8e0b-7488467532c7	backchannel.logout.revoke.offline.tokens	false
+09b79548-8426-4c0e-8e0b-7488467532c7	saml.server.signature	false
+09b79548-8426-4c0e-8e0b-7488467532c7	saml.server.signature.keyinfo.ext	false
+09b79548-8426-4c0e-8e0b-7488467532c7	saml.assertion.signature	false
+09b79548-8426-4c0e-8e0b-7488467532c7	saml.client.signature	false
+09b79548-8426-4c0e-8e0b-7488467532c7	saml.encrypt	false
+09b79548-8426-4c0e-8e0b-7488467532c7	saml.authnstatement	false
+09b79548-8426-4c0e-8e0b-7488467532c7	saml.onetimeuse.condition	false
+09b79548-8426-4c0e-8e0b-7488467532c7	saml_force_name_id_format	false
+09b79548-8426-4c0e-8e0b-7488467532c7	saml.multivalued.roles	false
+09b79548-8426-4c0e-8e0b-7488467532c7	saml.force.post.binding	false
+09b79548-8426-4c0e-8e0b-7488467532c7	exclude.session.state.from.auth.response	false
+09b79548-8426-4c0e-8e0b-7488467532c7	tls.client.certificate.bound.access.tokens	false
+09b79548-8426-4c0e-8e0b-7488467532c7	client_credentials.use_refresh_token	false
+09b79548-8426-4c0e-8e0b-7488467532c7	display.on.consent.screen	false
+09b79548-8426-4c0e-8e0b-7488467532c7	backchannel.logout.url	
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	backchannel.logout.session.required	true
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	backchannel.logout.revoke.offline.tokens	false
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	saml.server.signature	false
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	saml.server.signature.keyinfo.ext	false
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	saml.assertion.signature	false
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	saml.client.signature	false
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	saml.encrypt	false
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	saml.authnstatement	false
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	saml.onetimeuse.condition	false
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	saml_force_name_id_format	false
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	saml.multivalued.roles	false
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	saml.force.post.binding	false
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	exclude.session.state.from.auth.response	false
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	tls.client.certificate.bound.access.tokens	false
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	client_credentials.use_refresh_token	false
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	display.on.consent.screen	false
+2f521d09-7304-4b5e-a94b-7cc7300b8b50	post.logout.redirect.uris	+
+a5a8fed6-0bca-4646-9946-2fe84175353b	post.logout.redirect.uris	+
+09b79548-8426-4c0e-8e0b-7488467532c7	post.logout.redirect.uris	+
+11c67f5b-dde7-4680-b05b-c9c59d78bda4	post.logout.redirect.uris	+
+230081b5-9161-45c3-9e08-9eda5412f7f7	post.logout.redirect.uris	+
+eed689c6-49da-4d91-98eb-cd495bcc07a3	post.logout.redirect.uris	+
+169f1dea-80f0-4a99-8509-9abb70ab0a5c	post.logout.redirect.uris	+
+805aebc8-9d01-42b6-bcce-6ce48ca63ef0	post.logout.redirect.uris	+
 \.
 
 
@@ -1742,18 +1727,6 @@ COPY public.client_attributes (client_id, value, name) FROM stdin;
 --
 
 COPY public.client_auth_flow_bindings (client_id, flow_id, binding_name) FROM stdin;
-\.
-
-
---
--- Data for Name: client_default_roles; Type: TABLE DATA; Schema: public; Owner: keycloak
---
-
-COPY public.client_default_roles (client_id, role_id) FROM stdin;
-eed689c6-49da-4d91-98eb-cd495bcc07a3	86a4b6a9-93db-4177-a72f-95fd937a2c8d
-eed689c6-49da-4d91-98eb-cd495bcc07a3	619ba870-921e-4f28-b26c-89b11f39dddf
-a5a8fed6-0bca-4646-9946-2fe84175353b	f1311ecb-6a6a-49d6-bb16-5132daf93a64
-a5a8fed6-0bca-4646-9946-2fe84175353b	18a7066b-fe71-410e-9581-69f78347ec29
 \.
 
 
@@ -1799,6 +1772,8 @@ c61f5b19-c17e-49a1-91b8-a0296411b928	microprofile-jwt	grafana	Microprofile - JWT
 f619a55a-d565-4cc0-8bf4-4dbaab5382fe	username	grafana		openid-connect
 0a7c7dde-23d7-4a93-bdee-4a8963aee9a4	login	grafana	login	openid-connect
 d4723cd4-f717-44b7-a9b0-6c32c5ecd23f	name	grafana	user name	openid-connect
+d30340a8-630b-416e-8c93-3ccf932d34f3	acr	grafana	OpenID Connect scope for add acr (authentication context class reference) to the token	openid-connect
+a96603aa-e6db-4b3e-8baa-679c75ccfc8f	acr	master	OpenID Connect scope for add acr (authentication context class reference) to the token	openid-connect
 \.
 
 
@@ -1861,6 +1836,10 @@ f619a55a-d565-4cc0-8bf4-4dbaab5382fe	true	include.in.token.scope
 0a7c7dde-23d7-4a93-bdee-4a8963aee9a4	true	include.in.token.scope
 d4723cd4-f717-44b7-a9b0-6c32c5ecd23f	true	display.on.consent.screen
 d4723cd4-f717-44b7-a9b0-6c32c5ecd23f	true	include.in.token.scope
+d30340a8-630b-416e-8c93-3ccf932d34f3	false	display.on.consent.screen
+d30340a8-630b-416e-8c93-3ccf932d34f3	false	include.in.token.scope
+a96603aa-e6db-4b3e-8baa-679c75ccfc8f	false	display.on.consent.screen
+a96603aa-e6db-4b3e-8baa-679c75ccfc8f	false	include.in.token.scope
 \.
 
 
@@ -2231,6 +2210,14 @@ e9c997c8-ad6b-4a99-81e1-c248e94fbeac	85e6229e-e246-4e9a-8b39-7bae49754f7d
 c7e799a5-1250-4bc8-b7c6-ffdc58361477	daaedcc6-e7a6-488e-921e-7022aa808da7
 4a3204aa-320e-4584-b8ee-ea2989b3f330	b8a4faaf-86d9-43eb-bb18-0eaa654b35a7
 85afffb5-2069-4873-b6c8-08159c1e4bdd	5e2301d7-2a9e-4f2d-a940-9bd442b15d8c
+b4c89bc8-3945-4963-80b5-3da62e8c54ad	c49bddc6-ec92-4caa-bc04-57ba80a92eb9
+b4c89bc8-3945-4963-80b5-3da62e8c54ad	0f3d47bb-002a-4cd0-a502-725f224308a7
+b4c89bc8-3945-4963-80b5-3da62e8c54ad	f1311ecb-6a6a-49d6-bb16-5132daf93a64
+b4c89bc8-3945-4963-80b5-3da62e8c54ad	18a7066b-fe71-410e-9581-69f78347ec29
+9d6199e6-31e7-4497-be50-3b93faafec97	16d5987b-dcbb-4650-8f52-3469f3974846
+9d6199e6-31e7-4497-be50-3b93faafec97	c014bfd1-a210-4e7a-8a26-35d1f5e8f1ed
+9d6199e6-31e7-4497-be50-3b93faafec97	86a4b6a9-93db-4177-a72f-95fd937a2c8d
+9d6199e6-31e7-4497-be50-3b93faafec97	619ba870-921e-4f28-b26c-89b11f39dddf
 \.
 
 
@@ -2252,94 +2239,118 @@ c9582964-cfdd-49a1-99fb-847604b0c78c	\N	password	1a85b7e0-4baa-420b-89f8-1cea43a
 --
 
 COPY public.databasechangelog (id, author, filename, dateexecuted, orderexecuted, exectype, md5sum, description, comments, tag, liquibase, contexts, labels, deployment_id) FROM stdin;
-1.0.0.Final-KEYCLOAK-5461	sthorger@redhat.com	META-INF/jpa-changelog-1.0.0.Final.xml	2022-02-02 16:47:26.017844	1	EXECUTED	7:4e70412f24a3f382c82183742ec79317	createTable tableName=APPLICATION_DEFAULT_ROLES; createTable tableName=CLIENT; createTable tableName=CLIENT_SESSION; createTable tableName=CLIENT_SESSION_ROLE; createTable tableName=COMPOSITE_ROLE; createTable tableName=CREDENTIAL; createTable tab...		\N	3.5.4	\N	\N	3820445829
-1.0.0.Final-KEYCLOAK-5461	sthorger@redhat.com	META-INF/db2-jpa-changelog-1.0.0.Final.xml	2022-02-02 16:47:26.03122	2	MARK_RAN	7:cb16724583e9675711801c6875114f28	createTable tableName=APPLICATION_DEFAULT_ROLES; createTable tableName=CLIENT; createTable tableName=CLIENT_SESSION; createTable tableName=CLIENT_SESSION_ROLE; createTable tableName=COMPOSITE_ROLE; createTable tableName=CREDENTIAL; createTable tab...		\N	3.5.4	\N	\N	3820445829
-1.1.0.Beta1	sthorger@redhat.com	META-INF/jpa-changelog-1.1.0.Beta1.xml	2022-02-02 16:47:26.06085	3	EXECUTED	7:0310eb8ba07cec616460794d42ade0fa	delete tableName=CLIENT_SESSION_ROLE; delete tableName=CLIENT_SESSION; delete tableName=USER_SESSION; createTable tableName=CLIENT_ATTRIBUTES; createTable tableName=CLIENT_SESSION_NOTE; createTable tableName=APP_NODE_REGISTRATIONS; addColumn table...		\N	3.5.4	\N	\N	3820445829
-1.1.0.Final	sthorger@redhat.com	META-INF/jpa-changelog-1.1.0.Final.xml	2022-02-02 16:47:26.065284	4	EXECUTED	7:5d25857e708c3233ef4439df1f93f012	renameColumn newColumnName=EVENT_TIME, oldColumnName=TIME, tableName=EVENT_ENTITY		\N	3.5.4	\N	\N	3820445829
-1.2.0.Beta1	psilva@redhat.com	META-INF/jpa-changelog-1.2.0.Beta1.xml	2022-02-02 16:47:26.130908	5	EXECUTED	7:c7a54a1041d58eb3817a4a883b4d4e84	delete tableName=CLIENT_SESSION_ROLE; delete tableName=CLIENT_SESSION_NOTE; delete tableName=CLIENT_SESSION; delete tableName=USER_SESSION; createTable tableName=PROTOCOL_MAPPER; createTable tableName=PROTOCOL_MAPPER_CONFIG; createTable tableName=...		\N	3.5.4	\N	\N	3820445829
-1.2.0.Beta1	psilva@redhat.com	META-INF/db2-jpa-changelog-1.2.0.Beta1.xml	2022-02-02 16:47:26.133863	6	MARK_RAN	7:2e01012df20974c1c2a605ef8afe25b7	delete tableName=CLIENT_SESSION_ROLE; delete tableName=CLIENT_SESSION_NOTE; delete tableName=CLIENT_SESSION; delete tableName=USER_SESSION; createTable tableName=PROTOCOL_MAPPER; createTable tableName=PROTOCOL_MAPPER_CONFIG; createTable tableName=...		\N	3.5.4	\N	\N	3820445829
-1.2.0.RC1	bburke@redhat.com	META-INF/jpa-changelog-1.2.0.CR1.xml	2022-02-02 16:47:26.183318	7	EXECUTED	7:0f08df48468428e0f30ee59a8ec01a41	delete tableName=CLIENT_SESSION_ROLE; delete tableName=CLIENT_SESSION_NOTE; delete tableName=CLIENT_SESSION; delete tableName=USER_SESSION_NOTE; delete tableName=USER_SESSION; createTable tableName=MIGRATION_MODEL; createTable tableName=IDENTITY_P...		\N	3.5.4	\N	\N	3820445829
-1.2.0.RC1	bburke@redhat.com	META-INF/db2-jpa-changelog-1.2.0.CR1.xml	2022-02-02 16:47:26.186858	8	MARK_RAN	7:a77ea2ad226b345e7d689d366f185c8c	delete tableName=CLIENT_SESSION_ROLE; delete tableName=CLIENT_SESSION_NOTE; delete tableName=CLIENT_SESSION; delete tableName=USER_SESSION_NOTE; delete tableName=USER_SESSION; createTable tableName=MIGRATION_MODEL; createTable tableName=IDENTITY_P...		\N	3.5.4	\N	\N	3820445829
-1.2.0.Final	keycloak	META-INF/jpa-changelog-1.2.0.Final.xml	2022-02-02 16:47:26.19172	9	EXECUTED	7:a3377a2059aefbf3b90ebb4c4cc8e2ab	update tableName=CLIENT; update tableName=CLIENT; update tableName=CLIENT		\N	3.5.4	\N	\N	3820445829
-1.3.0	bburke@redhat.com	META-INF/jpa-changelog-1.3.0.xml	2022-02-02 16:47:26.242162	10	EXECUTED	7:04c1dbedc2aa3e9756d1a1668e003451	delete tableName=CLIENT_SESSION_ROLE; delete tableName=CLIENT_SESSION_PROT_MAPPER; delete tableName=CLIENT_SESSION_NOTE; delete tableName=CLIENT_SESSION; delete tableName=USER_SESSION_NOTE; delete tableName=USER_SESSION; createTable tableName=ADMI...		\N	3.5.4	\N	\N	3820445829
-1.4.0	bburke@redhat.com	META-INF/jpa-changelog-1.4.0.xml	2022-02-02 16:47:26.275929	11	EXECUTED	7:36ef39ed560ad07062d956db861042ba	delete tableName=CLIENT_SESSION_AUTH_STATUS; delete tableName=CLIENT_SESSION_ROLE; delete tableName=CLIENT_SESSION_PROT_MAPPER; delete tableName=CLIENT_SESSION_NOTE; delete tableName=CLIENT_SESSION; delete tableName=USER_SESSION_NOTE; delete table...		\N	3.5.4	\N	\N	3820445829
-1.4.0	bburke@redhat.com	META-INF/db2-jpa-changelog-1.4.0.xml	2022-02-02 16:47:26.278548	12	MARK_RAN	7:d909180b2530479a716d3f9c9eaea3d7	delete tableName=CLIENT_SESSION_AUTH_STATUS; delete tableName=CLIENT_SESSION_ROLE; delete tableName=CLIENT_SESSION_PROT_MAPPER; delete tableName=CLIENT_SESSION_NOTE; delete tableName=CLIENT_SESSION; delete tableName=USER_SESSION_NOTE; delete table...		\N	3.5.4	\N	\N	3820445829
-1.5.0	bburke@redhat.com	META-INF/jpa-changelog-1.5.0.xml	2022-02-02 16:47:26.287616	13	EXECUTED	7:cf12b04b79bea5152f165eb41f3955f6	delete tableName=CLIENT_SESSION_AUTH_STATUS; delete tableName=CLIENT_SESSION_ROLE; delete tableName=CLIENT_SESSION_PROT_MAPPER; delete tableName=CLIENT_SESSION_NOTE; delete tableName=CLIENT_SESSION; delete tableName=USER_SESSION_NOTE; delete table...		\N	3.5.4	\N	\N	3820445829
-1.6.1_from15	mposolda@redhat.com	META-INF/jpa-changelog-1.6.1.xml	2022-02-02 16:47:26.299798	14	EXECUTED	7:7e32c8f05c755e8675764e7d5f514509	addColumn tableName=REALM; addColumn tableName=KEYCLOAK_ROLE; addColumn tableName=CLIENT; createTable tableName=OFFLINE_USER_SESSION; createTable tableName=OFFLINE_CLIENT_SESSION; addPrimaryKey constraintName=CONSTRAINT_OFFL_US_SES_PK2, tableName=...		\N	3.5.4	\N	\N	3820445829
-1.6.1_from16-pre	mposolda@redhat.com	META-INF/jpa-changelog-1.6.1.xml	2022-02-02 16:47:26.302088	15	MARK_RAN	7:980ba23cc0ec39cab731ce903dd01291	delete tableName=OFFLINE_CLIENT_SESSION; delete tableName=OFFLINE_USER_SESSION		\N	3.5.4	\N	\N	3820445829
-1.6.1_from16	mposolda@redhat.com	META-INF/jpa-changelog-1.6.1.xml	2022-02-02 16:47:26.303889	16	MARK_RAN	7:2fa220758991285312eb84f3b4ff5336	dropPrimaryKey constraintName=CONSTRAINT_OFFLINE_US_SES_PK, tableName=OFFLINE_USER_SESSION; dropPrimaryKey constraintName=CONSTRAINT_OFFLINE_CL_SES_PK, tableName=OFFLINE_CLIENT_SESSION; addColumn tableName=OFFLINE_USER_SESSION; update tableName=OF...		\N	3.5.4	\N	\N	3820445829
-1.6.1	mposolda@redhat.com	META-INF/jpa-changelog-1.6.1.xml	2022-02-02 16:47:26.306641	17	EXECUTED	7:d41d8cd98f00b204e9800998ecf8427e	empty		\N	3.5.4	\N	\N	3820445829
-1.7.0	bburke@redhat.com	META-INF/jpa-changelog-1.7.0.xml	2022-02-02 16:47:26.338791	18	EXECUTED	7:91ace540896df890cc00a0490ee52bbc	createTable tableName=KEYCLOAK_GROUP; createTable tableName=GROUP_ROLE_MAPPING; createTable tableName=GROUP_ATTRIBUTE; createTable tableName=USER_GROUP_MEMBERSHIP; createTable tableName=REALM_DEFAULT_GROUPS; addColumn tableName=IDENTITY_PROVIDER; ...		\N	3.5.4	\N	\N	3820445829
-1.8.0	mposolda@redhat.com	META-INF/jpa-changelog-1.8.0.xml	2022-02-02 16:47:26.381463	19	EXECUTED	7:c31d1646dfa2618a9335c00e07f89f24	addColumn tableName=IDENTITY_PROVIDER; createTable tableName=CLIENT_TEMPLATE; createTable tableName=CLIENT_TEMPLATE_ATTRIBUTES; createTable tableName=TEMPLATE_SCOPE_MAPPING; dropNotNullConstraint columnName=CLIENT_ID, tableName=PROTOCOL_MAPPER; ad...		\N	3.5.4	\N	\N	3820445829
-1.8.0-2	keycloak	META-INF/jpa-changelog-1.8.0.xml	2022-02-02 16:47:26.390165	20	EXECUTED	7:df8bc21027a4f7cbbb01f6344e89ce07	dropDefaultValue columnName=ALGORITHM, tableName=CREDENTIAL; update tableName=CREDENTIAL		\N	3.5.4	\N	\N	3820445829
-authz-3.4.0.CR1-resource-server-pk-change-part1	glavoie@gmail.com	META-INF/jpa-changelog-authz-3.4.0.CR1.xml	2022-02-02 16:47:26.679075	45	EXECUTED	7:6a48ce645a3525488a90fbf76adf3bb3	addColumn tableName=RESOURCE_SERVER_POLICY; addColumn tableName=RESOURCE_SERVER_RESOURCE; addColumn tableName=RESOURCE_SERVER_SCOPE		\N	3.5.4	\N	\N	3820445829
-1.8.0	mposolda@redhat.com	META-INF/db2-jpa-changelog-1.8.0.xml	2022-02-02 16:47:26.392862	21	MARK_RAN	7:f987971fe6b37d963bc95fee2b27f8df	addColumn tableName=IDENTITY_PROVIDER; createTable tableName=CLIENT_TEMPLATE; createTable tableName=CLIENT_TEMPLATE_ATTRIBUTES; createTable tableName=TEMPLATE_SCOPE_MAPPING; dropNotNullConstraint columnName=CLIENT_ID, tableName=PROTOCOL_MAPPER; ad...		\N	3.5.4	\N	\N	3820445829
-1.8.0-2	keycloak	META-INF/db2-jpa-changelog-1.8.0.xml	2022-02-02 16:47:26.395652	22	MARK_RAN	7:df8bc21027a4f7cbbb01f6344e89ce07	dropDefaultValue columnName=ALGORITHM, tableName=CREDENTIAL; update tableName=CREDENTIAL		\N	3.5.4	\N	\N	3820445829
-1.9.0	mposolda@redhat.com	META-INF/jpa-changelog-1.9.0.xml	2022-02-02 16:47:26.40969	23	EXECUTED	7:ed2dc7f799d19ac452cbcda56c929e47	update tableName=REALM; update tableName=REALM; update tableName=REALM; update tableName=REALM; update tableName=CREDENTIAL; update tableName=CREDENTIAL; update tableName=CREDENTIAL; update tableName=REALM; update tableName=REALM; customChange; dr...		\N	3.5.4	\N	\N	3820445829
-1.9.1	keycloak	META-INF/jpa-changelog-1.9.1.xml	2022-02-02 16:47:26.414344	24	EXECUTED	7:80b5db88a5dda36ece5f235be8757615	modifyDataType columnName=PRIVATE_KEY, tableName=REALM; modifyDataType columnName=PUBLIC_KEY, tableName=REALM; modifyDataType columnName=CERTIFICATE, tableName=REALM		\N	3.5.4	\N	\N	3820445829
-1.9.1	keycloak	META-INF/db2-jpa-changelog-1.9.1.xml	2022-02-02 16:47:26.416193	25	MARK_RAN	7:1437310ed1305a9b93f8848f301726ce	modifyDataType columnName=PRIVATE_KEY, tableName=REALM; modifyDataType columnName=CERTIFICATE, tableName=REALM		\N	3.5.4	\N	\N	3820445829
-1.9.2	keycloak	META-INF/jpa-changelog-1.9.2.xml	2022-02-02 16:47:26.437367	26	EXECUTED	7:b82ffb34850fa0836be16deefc6a87c4	createIndex indexName=IDX_USER_EMAIL, tableName=USER_ENTITY; createIndex indexName=IDX_USER_ROLE_MAPPING, tableName=USER_ROLE_MAPPING; createIndex indexName=IDX_USER_GROUP_MAPPING, tableName=USER_GROUP_MEMBERSHIP; createIndex indexName=IDX_USER_CO...		\N	3.5.4	\N	\N	3820445829
-authz-2.0.0	psilva@redhat.com	META-INF/jpa-changelog-authz-2.0.0.xml	2022-02-02 16:47:26.481647	27	EXECUTED	7:9cc98082921330d8d9266decdd4bd658	createTable tableName=RESOURCE_SERVER; addPrimaryKey constraintName=CONSTRAINT_FARS, tableName=RESOURCE_SERVER; addUniqueConstraint constraintName=UK_AU8TT6T700S9V50BU18WS5HA6, tableName=RESOURCE_SERVER; createTable tableName=RESOURCE_SERVER_RESOU...		\N	3.5.4	\N	\N	3820445829
-authz-2.5.1	psilva@redhat.com	META-INF/jpa-changelog-authz-2.5.1.xml	2022-02-02 16:47:26.484459	28	EXECUTED	7:03d64aeed9cb52b969bd30a7ac0db57e	update tableName=RESOURCE_SERVER_POLICY		\N	3.5.4	\N	\N	3820445829
-2.1.0-KEYCLOAK-5461	bburke@redhat.com	META-INF/jpa-changelog-2.1.0.xml	2022-02-02 16:47:26.523006	29	EXECUTED	7:f1f9fd8710399d725b780f463c6b21cd	createTable tableName=BROKER_LINK; createTable tableName=FED_USER_ATTRIBUTE; createTable tableName=FED_USER_CONSENT; createTable tableName=FED_USER_CONSENT_ROLE; createTable tableName=FED_USER_CONSENT_PROT_MAPPER; createTable tableName=FED_USER_CR...		\N	3.5.4	\N	\N	3820445829
-2.2.0	bburke@redhat.com	META-INF/jpa-changelog-2.2.0.xml	2022-02-02 16:47:26.532066	30	EXECUTED	7:53188c3eb1107546e6f765835705b6c1	addColumn tableName=ADMIN_EVENT_ENTITY; createTable tableName=CREDENTIAL_ATTRIBUTE; createTable tableName=FED_CREDENTIAL_ATTRIBUTE; modifyDataType columnName=VALUE, tableName=CREDENTIAL; addForeignKeyConstraint baseTableName=FED_CREDENTIAL_ATTRIBU...		\N	3.5.4	\N	\N	3820445829
-2.3.0	bburke@redhat.com	META-INF/jpa-changelog-2.3.0.xml	2022-02-02 16:47:26.541837	31	EXECUTED	7:d6e6f3bc57a0c5586737d1351725d4d4	createTable tableName=FEDERATED_USER; addPrimaryKey constraintName=CONSTR_FEDERATED_USER, tableName=FEDERATED_USER; dropDefaultValue columnName=TOTP, tableName=USER_ENTITY; dropColumn columnName=TOTP, tableName=USER_ENTITY; addColumn tableName=IDE...		\N	3.5.4	\N	\N	3820445829
-2.4.0	bburke@redhat.com	META-INF/jpa-changelog-2.4.0.xml	2022-02-02 16:47:26.545809	32	EXECUTED	7:454d604fbd755d9df3fd9c6329043aa5	customChange		\N	3.5.4	\N	\N	3820445829
-2.5.0	bburke@redhat.com	META-INF/jpa-changelog-2.5.0.xml	2022-02-02 16:47:26.549823	33	EXECUTED	7:57e98a3077e29caf562f7dbf80c72600	customChange; modifyDataType columnName=USER_ID, tableName=OFFLINE_USER_SESSION		\N	3.5.4	\N	\N	3820445829
-2.5.0-unicode-oracle	hmlnarik@redhat.com	META-INF/jpa-changelog-2.5.0.xml	2022-02-02 16:47:26.55176	34	MARK_RAN	7:e4c7e8f2256210aee71ddc42f538b57a	modifyDataType columnName=DESCRIPTION, tableName=AUTHENTICATION_FLOW; modifyDataType columnName=DESCRIPTION, tableName=CLIENT_TEMPLATE; modifyDataType columnName=DESCRIPTION, tableName=RESOURCE_SERVER_POLICY; modifyDataType columnName=DESCRIPTION,...		\N	3.5.4	\N	\N	3820445829
-2.5.0-unicode-other-dbs	hmlnarik@redhat.com	META-INF/jpa-changelog-2.5.0.xml	2022-02-02 16:47:26.567305	35	EXECUTED	7:09a43c97e49bc626460480aa1379b522	modifyDataType columnName=DESCRIPTION, tableName=AUTHENTICATION_FLOW; modifyDataType columnName=DESCRIPTION, tableName=CLIENT_TEMPLATE; modifyDataType columnName=DESCRIPTION, tableName=RESOURCE_SERVER_POLICY; modifyDataType columnName=DESCRIPTION,...		\N	3.5.4	\N	\N	3820445829
-2.5.0-duplicate-email-support	slawomir@dabek.name	META-INF/jpa-changelog-2.5.0.xml	2022-02-02 16:47:26.570727	36	EXECUTED	7:26bfc7c74fefa9126f2ce702fb775553	addColumn tableName=REALM		\N	3.5.4	\N	\N	3820445829
-2.5.0-unique-group-names	hmlnarik@redhat.com	META-INF/jpa-changelog-2.5.0.xml	2022-02-02 16:47:26.578396	37	EXECUTED	7:a161e2ae671a9020fff61e996a207377	addUniqueConstraint constraintName=SIBLING_NAMES, tableName=KEYCLOAK_GROUP		\N	3.5.4	\N	\N	3820445829
-2.5.1	bburke@redhat.com	META-INF/jpa-changelog-2.5.1.xml	2022-02-02 16:47:26.581391	38	EXECUTED	7:37fc1781855ac5388c494f1442b3f717	addColumn tableName=FED_USER_CONSENT		\N	3.5.4	\N	\N	3820445829
-3.0.0	bburke@redhat.com	META-INF/jpa-changelog-3.0.0.xml	2022-02-02 16:47:26.584204	39	EXECUTED	7:13a27db0dae6049541136adad7261d27	addColumn tableName=IDENTITY_PROVIDER		\N	3.5.4	\N	\N	3820445829
-3.2.0-fix	keycloak	META-INF/jpa-changelog-3.2.0.xml	2022-02-02 16:47:26.585877	40	MARK_RAN	7:550300617e3b59e8af3a6294df8248a3	addNotNullConstraint columnName=REALM_ID, tableName=CLIENT_INITIAL_ACCESS		\N	3.5.4	\N	\N	3820445829
-3.2.0-fix-with-keycloak-5416	keycloak	META-INF/jpa-changelog-3.2.0.xml	2022-02-02 16:47:26.587657	41	MARK_RAN	7:e3a9482b8931481dc2772a5c07c44f17	dropIndex indexName=IDX_CLIENT_INIT_ACC_REALM, tableName=CLIENT_INITIAL_ACCESS; addNotNullConstraint columnName=REALM_ID, tableName=CLIENT_INITIAL_ACCESS; createIndex indexName=IDX_CLIENT_INIT_ACC_REALM, tableName=CLIENT_INITIAL_ACCESS		\N	3.5.4	\N	\N	3820445829
-3.2.0-fix-offline-sessions	hmlnarik	META-INF/jpa-changelog-3.2.0.xml	2022-02-02 16:47:26.591561	42	EXECUTED	7:72b07d85a2677cb257edb02b408f332d	customChange		\N	3.5.4	\N	\N	3820445829
-3.2.0-fixed	keycloak	META-INF/jpa-changelog-3.2.0.xml	2022-02-02 16:47:26.669981	43	EXECUTED	7:a72a7858967bd414835d19e04d880312	addColumn tableName=REALM; dropPrimaryKey constraintName=CONSTRAINT_OFFL_CL_SES_PK2, tableName=OFFLINE_CLIENT_SESSION; dropColumn columnName=CLIENT_SESSION_ID, tableName=OFFLINE_CLIENT_SESSION; addPrimaryKey constraintName=CONSTRAINT_OFFL_CL_SES_P...		\N	3.5.4	\N	\N	3820445829
-3.3.0	keycloak	META-INF/jpa-changelog-3.3.0.xml	2022-02-02 16:47:26.673701	44	EXECUTED	7:94edff7cf9ce179e7e85f0cd78a3cf2c	addColumn tableName=USER_ENTITY		\N	3.5.4	\N	\N	3820445829
-authz-3.4.0.CR1-resource-server-pk-change-part2-KEYCLOAK-6095	hmlnarik@redhat.com	META-INF/jpa-changelog-authz-3.4.0.CR1.xml	2022-02-02 16:47:26.681987	46	EXECUTED	7:e64b5dcea7db06077c6e57d3b9e5ca14	customChange		\N	3.5.4	\N	\N	3820445829
-authz-3.4.0.CR1-resource-server-pk-change-part3-fixed	glavoie@gmail.com	META-INF/jpa-changelog-authz-3.4.0.CR1.xml	2022-02-02 16:47:26.683661	47	MARK_RAN	7:fd8cf02498f8b1e72496a20afc75178c	dropIndex indexName=IDX_RES_SERV_POL_RES_SERV, tableName=RESOURCE_SERVER_POLICY; dropIndex indexName=IDX_RES_SRV_RES_RES_SRV, tableName=RESOURCE_SERVER_RESOURCE; dropIndex indexName=IDX_RES_SRV_SCOPE_RES_SRV, tableName=RESOURCE_SERVER_SCOPE		\N	3.5.4	\N	\N	3820445829
-authz-3.4.0.CR1-resource-server-pk-change-part3-fixed-nodropindex	glavoie@gmail.com	META-INF/jpa-changelog-authz-3.4.0.CR1.xml	2022-02-02 16:47:26.702743	48	EXECUTED	7:542794f25aa2b1fbabb7e577d6646319	addNotNullConstraint columnName=RESOURCE_SERVER_CLIENT_ID, tableName=RESOURCE_SERVER_POLICY; addNotNullConstraint columnName=RESOURCE_SERVER_CLIENT_ID, tableName=RESOURCE_SERVER_RESOURCE; addNotNullConstraint columnName=RESOURCE_SERVER_CLIENT_ID, ...		\N	3.5.4	\N	\N	3820445829
-authn-3.4.0.CR1-refresh-token-max-reuse	glavoie@gmail.com	META-INF/jpa-changelog-authz-3.4.0.CR1.xml	2022-02-02 16:47:26.706593	49	EXECUTED	7:edad604c882df12f74941dac3cc6d650	addColumn tableName=REALM		\N	3.5.4	\N	\N	3820445829
-3.4.0	keycloak	META-INF/jpa-changelog-3.4.0.xml	2022-02-02 16:47:26.734467	50	EXECUTED	7:0f88b78b7b46480eb92690cbf5e44900	addPrimaryKey constraintName=CONSTRAINT_REALM_DEFAULT_ROLES, tableName=REALM_DEFAULT_ROLES; addPrimaryKey constraintName=CONSTRAINT_COMPOSITE_ROLE, tableName=COMPOSITE_ROLE; addPrimaryKey constraintName=CONSTR_REALM_DEFAULT_GROUPS, tableName=REALM...		\N	3.5.4	\N	\N	3820445829
-3.4.0-KEYCLOAK-5230	hmlnarik@redhat.com	META-INF/jpa-changelog-3.4.0.xml	2022-02-02 16:47:26.78037	51	EXECUTED	7:d560e43982611d936457c327f872dd59	createIndex indexName=IDX_FU_ATTRIBUTE, tableName=FED_USER_ATTRIBUTE; createIndex indexName=IDX_FU_CONSENT, tableName=FED_USER_CONSENT; createIndex indexName=IDX_FU_CONSENT_RU, tableName=FED_USER_CONSENT; createIndex indexName=IDX_FU_CREDENTIAL, t...		\N	3.5.4	\N	\N	3820445829
-3.4.1	psilva@redhat.com	META-INF/jpa-changelog-3.4.1.xml	2022-02-02 16:47:26.783989	52	EXECUTED	7:c155566c42b4d14ef07059ec3b3bbd8e	modifyDataType columnName=VALUE, tableName=CLIENT_ATTRIBUTES		\N	3.5.4	\N	\N	3820445829
-3.4.2	keycloak	META-INF/jpa-changelog-3.4.2.xml	2022-02-02 16:47:26.786619	53	EXECUTED	7:b40376581f12d70f3c89ba8ddf5b7dea	update tableName=REALM		\N	3.5.4	\N	\N	3820445829
-3.4.2-KEYCLOAK-5172	mkanis@redhat.com	META-INF/jpa-changelog-3.4.2.xml	2022-02-02 16:47:26.788788	54	EXECUTED	7:a1132cc395f7b95b3646146c2e38f168	update tableName=CLIENT		\N	3.5.4	\N	\N	3820445829
-4.0.0-KEYCLOAK-6335	bburke@redhat.com	META-INF/jpa-changelog-4.0.0.xml	2022-02-02 16:47:26.794881	55	EXECUTED	7:d8dc5d89c789105cfa7ca0e82cba60af	createTable tableName=CLIENT_AUTH_FLOW_BINDINGS; addPrimaryKey constraintName=C_CLI_FLOW_BIND, tableName=CLIENT_AUTH_FLOW_BINDINGS		\N	3.5.4	\N	\N	3820445829
-4.0.0-CLEANUP-UNUSED-TABLE	bburke@redhat.com	META-INF/jpa-changelog-4.0.0.xml	2022-02-02 16:47:26.799493	56	EXECUTED	7:7822e0165097182e8f653c35517656a3	dropTable tableName=CLIENT_IDENTITY_PROV_MAPPING		\N	3.5.4	\N	\N	3820445829
-4.0.0-KEYCLOAK-6228	bburke@redhat.com	META-INF/jpa-changelog-4.0.0.xml	2022-02-02 16:47:26.810686	57	EXECUTED	7:c6538c29b9c9a08f9e9ea2de5c2b6375	dropUniqueConstraint constraintName=UK_JKUWUVD56ONTGSUHOGM8UEWRT, tableName=USER_CONSENT; dropNotNullConstraint columnName=CLIENT_ID, tableName=USER_CONSENT; addColumn tableName=USER_CONSENT; addUniqueConstraint constraintName=UK_JKUWUVD56ONTGSUHO...		\N	3.5.4	\N	\N	3820445829
-4.0.0-KEYCLOAK-5579-fixed	mposolda@redhat.com	META-INF/jpa-changelog-4.0.0.xml	2022-02-02 16:47:26.861332	58	EXECUTED	7:6d4893e36de22369cf73bcb051ded875	dropForeignKeyConstraint baseTableName=CLIENT_TEMPLATE_ATTRIBUTES, constraintName=FK_CL_TEMPL_ATTR_TEMPL; renameTable newTableName=CLIENT_SCOPE_ATTRIBUTES, oldTableName=CLIENT_TEMPLATE_ATTRIBUTES; renameColumn newColumnName=SCOPE_ID, oldColumnName...		\N	3.5.4	\N	\N	3820445829
-authz-4.0.0.CR1	psilva@redhat.com	META-INF/jpa-changelog-authz-4.0.0.CR1.xml	2022-02-02 16:47:26.877018	59	EXECUTED	7:57960fc0b0f0dd0563ea6f8b2e4a1707	createTable tableName=RESOURCE_SERVER_PERM_TICKET; addPrimaryKey constraintName=CONSTRAINT_FAPMT, tableName=RESOURCE_SERVER_PERM_TICKET; addForeignKeyConstraint baseTableName=RESOURCE_SERVER_PERM_TICKET, constraintName=FK_FRSRHO213XCX4WNKOG82SSPMT...		\N	3.5.4	\N	\N	3820445829
-authz-4.0.0.Beta3	psilva@redhat.com	META-INF/jpa-changelog-authz-4.0.0.Beta3.xml	2022-02-02 16:47:26.881203	60	EXECUTED	7:2b4b8bff39944c7097977cc18dbceb3b	addColumn tableName=RESOURCE_SERVER_POLICY; addColumn tableName=RESOURCE_SERVER_PERM_TICKET; addForeignKeyConstraint baseTableName=RESOURCE_SERVER_PERM_TICKET, constraintName=FK_FRSRPO2128CX4WNKOG82SSRFY, referencedTableName=RESOURCE_SERVER_POLICY		\N	3.5.4	\N	\N	3820445829
-authz-4.2.0.Final	mhajas@redhat.com	META-INF/jpa-changelog-authz-4.2.0.Final.xml	2022-02-02 16:47:26.886177	61	EXECUTED	7:2aa42a964c59cd5b8ca9822340ba33a8	createTable tableName=RESOURCE_URIS; addForeignKeyConstraint baseTableName=RESOURCE_URIS, constraintName=FK_RESOURCE_SERVER_URIS, referencedTableName=RESOURCE_SERVER_RESOURCE; customChange; dropColumn columnName=URI, tableName=RESOURCE_SERVER_RESO...		\N	3.5.4	\N	\N	3820445829
-authz-4.2.0.Final-KEYCLOAK-9944	hmlnarik@redhat.com	META-INF/jpa-changelog-authz-4.2.0.Final.xml	2022-02-02 16:47:26.890482	62	EXECUTED	7:9ac9e58545479929ba23f4a3087a0346	addPrimaryKey constraintName=CONSTRAINT_RESOUR_URIS_PK, tableName=RESOURCE_URIS		\N	3.5.4	\N	\N	3820445829
-4.2.0-KEYCLOAK-6313	wadahiro@gmail.com	META-INF/jpa-changelog-4.2.0.xml	2022-02-02 16:47:26.893518	63	EXECUTED	7:14d407c35bc4fe1976867756bcea0c36	addColumn tableName=REQUIRED_ACTION_PROVIDER		\N	3.5.4	\N	\N	3820445829
-4.3.0-KEYCLOAK-7984	wadahiro@gmail.com	META-INF/jpa-changelog-4.3.0.xml	2022-02-02 16:47:26.895621	64	EXECUTED	7:241a8030c748c8548e346adee548fa93	update tableName=REQUIRED_ACTION_PROVIDER		\N	3.5.4	\N	\N	3820445829
-4.6.0-KEYCLOAK-7950	psilva@redhat.com	META-INF/jpa-changelog-4.6.0.xml	2022-02-02 16:47:26.89756	65	EXECUTED	7:7d3182f65a34fcc61e8d23def037dc3f	update tableName=RESOURCE_SERVER_RESOURCE		\N	3.5.4	\N	\N	3820445829
-4.6.0-KEYCLOAK-8377	keycloak	META-INF/jpa-changelog-4.6.0.xml	2022-02-02 16:47:26.908059	66	EXECUTED	7:b30039e00a0b9715d430d1b0636728fa	createTable tableName=ROLE_ATTRIBUTE; addPrimaryKey constraintName=CONSTRAINT_ROLE_ATTRIBUTE_PK, tableName=ROLE_ATTRIBUTE; addForeignKeyConstraint baseTableName=ROLE_ATTRIBUTE, constraintName=FK_ROLE_ATTRIBUTE_ID, referencedTableName=KEYCLOAK_ROLE...		\N	3.5.4	\N	\N	3820445829
-4.6.0-KEYCLOAK-8555	gideonray@gmail.com	META-INF/jpa-changelog-4.6.0.xml	2022-02-02 16:47:26.912693	67	EXECUTED	7:3797315ca61d531780f8e6f82f258159	createIndex indexName=IDX_COMPONENT_PROVIDER_TYPE, tableName=COMPONENT		\N	3.5.4	\N	\N	3820445829
-4.7.0-KEYCLOAK-1267	sguilhen@redhat.com	META-INF/jpa-changelog-4.7.0.xml	2022-02-02 16:47:26.915771	68	EXECUTED	7:c7aa4c8d9573500c2d347c1941ff0301	addColumn tableName=REALM		\N	3.5.4	\N	\N	3820445829
-4.7.0-KEYCLOAK-7275	keycloak	META-INF/jpa-changelog-4.7.0.xml	2022-02-02 16:47:26.924465	69	EXECUTED	7:b207faee394fc074a442ecd42185a5dd	renameColumn newColumnName=CREATED_ON, oldColumnName=LAST_SESSION_REFRESH, tableName=OFFLINE_USER_SESSION; addNotNullConstraint columnName=CREATED_ON, tableName=OFFLINE_USER_SESSION; addColumn tableName=OFFLINE_USER_SESSION; customChange; createIn...		\N	3.5.4	\N	\N	3820445829
-4.8.0-KEYCLOAK-8835	sguilhen@redhat.com	META-INF/jpa-changelog-4.8.0.xml	2022-02-02 16:47:26.928034	70	EXECUTED	7:ab9a9762faaba4ddfa35514b212c4922	addNotNullConstraint columnName=SSO_MAX_LIFESPAN_REMEMBER_ME, tableName=REALM; addNotNullConstraint columnName=SSO_IDLE_TIMEOUT_REMEMBER_ME, tableName=REALM		\N	3.5.4	\N	\N	3820445829
-authz-7.0.0-KEYCLOAK-10443	psilva@redhat.com	META-INF/jpa-changelog-authz-7.0.0.xml	2022-02-02 16:47:26.93061	71	EXECUTED	7:b9710f74515a6ccb51b72dc0d19df8c4	addColumn tableName=RESOURCE_SERVER		\N	3.5.4	\N	\N	3820445829
-8.0.0-adding-credential-columns	keycloak	META-INF/jpa-changelog-8.0.0.xml	2022-02-02 16:47:26.933771	72	EXECUTED	7:ec9707ae4d4f0b7452fee20128083879	addColumn tableName=CREDENTIAL; addColumn tableName=FED_USER_CREDENTIAL		\N	3.5.4	\N	\N	3820445829
-8.0.0-updating-credential-data-not-oracle	keycloak	META-INF/jpa-changelog-8.0.0.xml	2022-02-02 16:47:26.937673	73	EXECUTED	7:03b3f4b264c3c68ba082250a80b74216	update tableName=CREDENTIAL; update tableName=CREDENTIAL; update tableName=CREDENTIAL; update tableName=FED_USER_CREDENTIAL; update tableName=FED_USER_CREDENTIAL; update tableName=FED_USER_CREDENTIAL		\N	3.5.4	\N	\N	3820445829
-8.0.0-updating-credential-data-oracle	keycloak	META-INF/jpa-changelog-8.0.0.xml	2022-02-02 16:47:26.939218	74	MARK_RAN	7:64c5728f5ca1f5aa4392217701c4fe23	update tableName=CREDENTIAL; update tableName=CREDENTIAL; update tableName=CREDENTIAL; update tableName=FED_USER_CREDENTIAL; update tableName=FED_USER_CREDENTIAL; update tableName=FED_USER_CREDENTIAL		\N	3.5.4	\N	\N	3820445829
-8.0.0-credential-cleanup-fixed	keycloak	META-INF/jpa-changelog-8.0.0.xml	2022-02-02 16:47:26.945819	75	EXECUTED	7:b48da8c11a3d83ddd6b7d0c8c2219345	dropDefaultValue columnName=COUNTER, tableName=CREDENTIAL; dropDefaultValue columnName=DIGITS, tableName=CREDENTIAL; dropDefaultValue columnName=PERIOD, tableName=CREDENTIAL; dropDefaultValue columnName=ALGORITHM, tableName=CREDENTIAL; dropColumn ...		\N	3.5.4	\N	\N	3820445829
-8.0.0-resource-tag-support	keycloak	META-INF/jpa-changelog-8.0.0.xml	2022-02-02 16:47:26.950255	76	EXECUTED	7:a73379915c23bfad3e8f5c6d5c0aa4bd	addColumn tableName=MIGRATION_MODEL; createIndex indexName=IDX_UPDATE_TIME, tableName=MIGRATION_MODEL		\N	3.5.4	\N	\N	3820445829
-9.0.0-always-display-client	keycloak	META-INF/jpa-changelog-9.0.0.xml	2022-02-02 16:47:26.955505	77	EXECUTED	7:39e0073779aba192646291aa2332493d	addColumn tableName=CLIENT		\N	3.5.4	\N	\N	3820445829
-9.0.0-drop-constraints-for-column-increase	keycloak	META-INF/jpa-changelog-9.0.0.xml	2022-02-02 16:47:26.957216	78	MARK_RAN	7:81f87368f00450799b4bf42ea0b3ec34	dropUniqueConstraint constraintName=UK_FRSR6T700S9V50BU18WS5PMT, tableName=RESOURCE_SERVER_PERM_TICKET; dropUniqueConstraint constraintName=UK_FRSR6T700S9V50BU18WS5HA6, tableName=RESOURCE_SERVER_RESOURCE; dropPrimaryKey constraintName=CONSTRAINT_O...		\N	3.5.4	\N	\N	3820445829
-9.0.0-increase-column-size-federated-fk	keycloak	META-INF/jpa-changelog-9.0.0.xml	2022-02-02 16:47:26.966746	79	EXECUTED	7:20b37422abb9fb6571c618148f013a15	modifyDataType columnName=CLIENT_ID, tableName=FED_USER_CONSENT; modifyDataType columnName=CLIENT_REALM_CONSTRAINT, tableName=KEYCLOAK_ROLE; modifyDataType columnName=OWNER, tableName=RESOURCE_SERVER_POLICY; modifyDataType columnName=CLIENT_ID, ta...		\N	3.5.4	\N	\N	3820445829
-9.0.0-recreate-constraints-after-column-increase	keycloak	META-INF/jpa-changelog-9.0.0.xml	2022-02-02 16:47:26.969643	80	MARK_RAN	7:1970bb6cfb5ee800736b95ad3fb3c78a	addNotNullConstraint columnName=CLIENT_ID, tableName=OFFLINE_CLIENT_SESSION; addNotNullConstraint columnName=OWNER, tableName=RESOURCE_SERVER_PERM_TICKET; addNotNullConstraint columnName=REQUESTER, tableName=RESOURCE_SERVER_PERM_TICKET; addNotNull...		\N	3.5.4	\N	\N	3820445829
-9.0.1-add-index-to-client.client_id	keycloak	META-INF/jpa-changelog-9.0.1.xml	2022-02-02 16:47:26.975764	81	EXECUTED	7:45d9b25fc3b455d522d8dcc10a0f4c80	createIndex indexName=IDX_CLIENT_ID, tableName=CLIENT		\N	3.5.4	\N	\N	3820445829
-9.0.1-KEYCLOAK-12579-drop-constraints	keycloak	META-INF/jpa-changelog-9.0.1.xml	2022-02-02 16:47:26.977227	82	MARK_RAN	7:890ae73712bc187a66c2813a724d037f	dropUniqueConstraint constraintName=SIBLING_NAMES, tableName=KEYCLOAK_GROUP		\N	3.5.4	\N	\N	3820445829
-9.0.1-KEYCLOAK-12579-add-not-null-constraint	keycloak	META-INF/jpa-changelog-9.0.1.xml	2022-02-02 16:47:26.980058	83	EXECUTED	7:0a211980d27fafe3ff50d19a3a29b538	addNotNullConstraint columnName=PARENT_GROUP, tableName=KEYCLOAK_GROUP		\N	3.5.4	\N	\N	3820445829
-9.0.1-KEYCLOAK-12579-recreate-constraints	keycloak	META-INF/jpa-changelog-9.0.1.xml	2022-02-02 16:47:26.981645	84	MARK_RAN	7:a161e2ae671a9020fff61e996a207377	addUniqueConstraint constraintName=SIBLING_NAMES, tableName=KEYCLOAK_GROUP		\N	3.5.4	\N	\N	3820445829
-9.0.1-add-index-to-events	keycloak	META-INF/jpa-changelog-9.0.1.xml	2022-02-02 16:47:26.985465	85	EXECUTED	7:01c49302201bdf815b0a18d1f98a55dc	createIndex indexName=IDX_EVENT_TIME, tableName=EVENT_ENTITY		\N	3.5.4	\N	\N	3820445829
-map-remove-ri	keycloak	META-INF/jpa-changelog-11.0.0.xml	2022-02-02 16:47:26.98869	86	EXECUTED	7:3dace6b144c11f53f1ad2c0361279b86	dropForeignKeyConstraint baseTableName=REALM, constraintName=FK_TRAF444KK6QRKMS7N56AIWQ5Y; dropForeignKeyConstraint baseTableName=KEYCLOAK_ROLE, constraintName=FK_KJHO5LE2C0RAL09FL8CM9WFW9		\N	3.5.4	\N	\N	3820445829
-map-remove-ri	keycloak	META-INF/jpa-changelog-12.0.0.xml	2022-02-02 16:47:26.992854	87	EXECUTED	7:578d0b92077eaf2ab95ad0ec087aa903	dropForeignKeyConstraint baseTableName=REALM_DEFAULT_GROUPS, constraintName=FK_DEF_GROUPS_GROUP; dropForeignKeyConstraint baseTableName=REALM_DEFAULT_ROLES, constraintName=FK_H4WPD7W4HSOOLNI3H0SW7BTJE; dropForeignKeyConstraint baseTableName=CLIENT...		\N	3.5.4	\N	\N	3820445829
-12.1.0-add-realm-localization-table	keycloak	META-INF/jpa-changelog-12.0.0.xml	2022-02-02 16:47:26.999694	88	EXECUTED	7:c95abe90d962c57a09ecaee57972835d	createTable tableName=REALM_LOCALIZATIONS; addPrimaryKey tableName=REALM_LOCALIZATIONS		\N	3.5.4	\N	\N	3820445829
+authn-3.4.0.CR1-refresh-token-max-reuse	glavoie@gmail.com	META-INF/jpa-changelog-authz-3.4.0.CR1.xml	2022-02-02 16:47:26.706593	49	EXECUTED	\N	addColumn tableName=REALM		\N	3.5.4	\N	\N	3820445829
+1.0.0.Final-KEYCLOAK-5461	sthorger@redhat.com	META-INF/jpa-changelog-1.0.0.Final.xml	2022-02-02 16:47:26.017844	1	EXECUTED	\N	createTable tableName=APPLICATION_DEFAULT_ROLES; createTable tableName=CLIENT; createTable tableName=CLIENT_SESSION; createTable tableName=CLIENT_SESSION_ROLE; createTable tableName=COMPOSITE_ROLE; createTable tableName=CREDENTIAL; createTable tab...		\N	3.5.4	\N	\N	3820445829
+1.0.0.Final-KEYCLOAK-5461	sthorger@redhat.com	META-INF/db2-jpa-changelog-1.0.0.Final.xml	2022-02-02 16:47:26.03122	2	MARK_RAN	\N	createTable tableName=APPLICATION_DEFAULT_ROLES; createTable tableName=CLIENT; createTable tableName=CLIENT_SESSION; createTable tableName=CLIENT_SESSION_ROLE; createTable tableName=COMPOSITE_ROLE; createTable tableName=CREDENTIAL; createTable tab...		\N	3.5.4	\N	\N	3820445829
+1.1.0.Beta1	sthorger@redhat.com	META-INF/jpa-changelog-1.1.0.Beta1.xml	2022-02-02 16:47:26.06085	3	EXECUTED	\N	delete tableName=CLIENT_SESSION_ROLE; delete tableName=CLIENT_SESSION; delete tableName=USER_SESSION; createTable tableName=CLIENT_ATTRIBUTES; createTable tableName=CLIENT_SESSION_NOTE; createTable tableName=APP_NODE_REGISTRATIONS; addColumn table...		\N	3.5.4	\N	\N	3820445829
+1.1.0.Final	sthorger@redhat.com	META-INF/jpa-changelog-1.1.0.Final.xml	2022-02-02 16:47:26.065284	4	EXECUTED	\N	renameColumn newColumnName=EVENT_TIME, oldColumnName=TIME, tableName=EVENT_ENTITY		\N	3.5.4	\N	\N	3820445829
+4.8.0-KEYCLOAK-8835	sguilhen@redhat.com	META-INF/jpa-changelog-4.8.0.xml	2022-02-02 16:47:26.928034	70	EXECUTED	\N	addNotNullConstraint columnName=SSO_MAX_LIFESPAN_REMEMBER_ME, tableName=REALM; addNotNullConstraint columnName=SSO_IDLE_TIMEOUT_REMEMBER_ME, tableName=REALM		\N	3.5.4	\N	\N	3820445829
+1.2.0.Beta1	psilva@redhat.com	META-INF/jpa-changelog-1.2.0.Beta1.xml	2022-02-02 16:47:26.130908	5	EXECUTED	\N	delete tableName=CLIENT_SESSION_ROLE; delete tableName=CLIENT_SESSION_NOTE; delete tableName=CLIENT_SESSION; delete tableName=USER_SESSION; createTable tableName=PROTOCOL_MAPPER; createTable tableName=PROTOCOL_MAPPER_CONFIG; createTable tableName=...		\N	3.5.4	\N	\N	3820445829
+1.2.0.Beta1	psilva@redhat.com	META-INF/db2-jpa-changelog-1.2.0.Beta1.xml	2022-02-02 16:47:26.133863	6	MARK_RAN	\N	delete tableName=CLIENT_SESSION_ROLE; delete tableName=CLIENT_SESSION_NOTE; delete tableName=CLIENT_SESSION; delete tableName=USER_SESSION; createTable tableName=PROTOCOL_MAPPER; createTable tableName=PROTOCOL_MAPPER_CONFIG; createTable tableName=...		\N	3.5.4	\N	\N	3820445829
+1.2.0.RC1	bburke@redhat.com	META-INF/jpa-changelog-1.2.0.CR1.xml	2022-02-02 16:47:26.183318	7	EXECUTED	\N	delete tableName=CLIENT_SESSION_ROLE; delete tableName=CLIENT_SESSION_NOTE; delete tableName=CLIENT_SESSION; delete tableName=USER_SESSION_NOTE; delete tableName=USER_SESSION; createTable tableName=MIGRATION_MODEL; createTable tableName=IDENTITY_P...		\N	3.5.4	\N	\N	3820445829
+1.2.0.RC1	bburke@redhat.com	META-INF/db2-jpa-changelog-1.2.0.CR1.xml	2022-02-02 16:47:26.186858	8	MARK_RAN	\N	delete tableName=CLIENT_SESSION_ROLE; delete tableName=CLIENT_SESSION_NOTE; delete tableName=CLIENT_SESSION; delete tableName=USER_SESSION_NOTE; delete tableName=USER_SESSION; createTable tableName=MIGRATION_MODEL; createTable tableName=IDENTITY_P...		\N	3.5.4	\N	\N	3820445829
+1.2.0.Final	keycloak	META-INF/jpa-changelog-1.2.0.Final.xml	2022-02-02 16:47:26.19172	9	EXECUTED	\N	update tableName=CLIENT; update tableName=CLIENT; update tableName=CLIENT		\N	3.5.4	\N	\N	3820445829
+1.3.0	bburke@redhat.com	META-INF/jpa-changelog-1.3.0.xml	2022-02-02 16:47:26.242162	10	EXECUTED	\N	delete tableName=CLIENT_SESSION_ROLE; delete tableName=CLIENT_SESSION_PROT_MAPPER; delete tableName=CLIENT_SESSION_NOTE; delete tableName=CLIENT_SESSION; delete tableName=USER_SESSION_NOTE; delete tableName=USER_SESSION; createTable tableName=ADMI...		\N	3.5.4	\N	\N	3820445829
+1.4.0	bburke@redhat.com	META-INF/jpa-changelog-1.4.0.xml	2022-02-02 16:47:26.275929	11	EXECUTED	\N	delete tableName=CLIENT_SESSION_AUTH_STATUS; delete tableName=CLIENT_SESSION_ROLE; delete tableName=CLIENT_SESSION_PROT_MAPPER; delete tableName=CLIENT_SESSION_NOTE; delete tableName=CLIENT_SESSION; delete tableName=USER_SESSION_NOTE; delete table...		\N	3.5.4	\N	\N	3820445829
+1.4.0	bburke@redhat.com	META-INF/db2-jpa-changelog-1.4.0.xml	2022-02-02 16:47:26.278548	12	MARK_RAN	\N	delete tableName=CLIENT_SESSION_AUTH_STATUS; delete tableName=CLIENT_SESSION_ROLE; delete tableName=CLIENT_SESSION_PROT_MAPPER; delete tableName=CLIENT_SESSION_NOTE; delete tableName=CLIENT_SESSION; delete tableName=USER_SESSION_NOTE; delete table...		\N	3.5.4	\N	\N	3820445829
+1.5.0	bburke@redhat.com	META-INF/jpa-changelog-1.5.0.xml	2022-02-02 16:47:26.287616	13	EXECUTED	\N	delete tableName=CLIENT_SESSION_AUTH_STATUS; delete tableName=CLIENT_SESSION_ROLE; delete tableName=CLIENT_SESSION_PROT_MAPPER; delete tableName=CLIENT_SESSION_NOTE; delete tableName=CLIENT_SESSION; delete tableName=USER_SESSION_NOTE; delete table...		\N	3.5.4	\N	\N	3820445829
+1.6.1_from15	mposolda@redhat.com	META-INF/jpa-changelog-1.6.1.xml	2022-02-02 16:47:26.299798	14	EXECUTED	\N	addColumn tableName=REALM; addColumn tableName=KEYCLOAK_ROLE; addColumn tableName=CLIENT; createTable tableName=OFFLINE_USER_SESSION; createTable tableName=OFFLINE_CLIENT_SESSION; addPrimaryKey constraintName=CONSTRAINT_OFFL_US_SES_PK2, tableName=...		\N	3.5.4	\N	\N	3820445829
+1.6.1_from16-pre	mposolda@redhat.com	META-INF/jpa-changelog-1.6.1.xml	2022-02-02 16:47:26.302088	15	MARK_RAN	\N	delete tableName=OFFLINE_CLIENT_SESSION; delete tableName=OFFLINE_USER_SESSION		\N	3.5.4	\N	\N	3820445829
+1.6.1_from16	mposolda@redhat.com	META-INF/jpa-changelog-1.6.1.xml	2022-02-02 16:47:26.303889	16	MARK_RAN	\N	dropPrimaryKey constraintName=CONSTRAINT_OFFLINE_US_SES_PK, tableName=OFFLINE_USER_SESSION; dropPrimaryKey constraintName=CONSTRAINT_OFFLINE_CL_SES_PK, tableName=OFFLINE_CLIENT_SESSION; addColumn tableName=OFFLINE_USER_SESSION; update tableName=OF...		\N	3.5.4	\N	\N	3820445829
+1.6.1	mposolda@redhat.com	META-INF/jpa-changelog-1.6.1.xml	2022-02-02 16:47:26.306641	17	EXECUTED	\N	empty		\N	3.5.4	\N	\N	3820445829
+1.7.0	bburke@redhat.com	META-INF/jpa-changelog-1.7.0.xml	2022-02-02 16:47:26.338791	18	EXECUTED	\N	createTable tableName=KEYCLOAK_GROUP; createTable tableName=GROUP_ROLE_MAPPING; createTable tableName=GROUP_ATTRIBUTE; createTable tableName=USER_GROUP_MEMBERSHIP; createTable tableName=REALM_DEFAULT_GROUPS; addColumn tableName=IDENTITY_PROVIDER; ...		\N	3.5.4	\N	\N	3820445829
+1.8.0	mposolda@redhat.com	META-INF/jpa-changelog-1.8.0.xml	2022-02-02 16:47:26.381463	19	EXECUTED	\N	addColumn tableName=IDENTITY_PROVIDER; createTable tableName=CLIENT_TEMPLATE; createTable tableName=CLIENT_TEMPLATE_ATTRIBUTES; createTable tableName=TEMPLATE_SCOPE_MAPPING; dropNotNullConstraint columnName=CLIENT_ID, tableName=PROTOCOL_MAPPER; ad...		\N	3.5.4	\N	\N	3820445829
+1.8.0-2	keycloak	META-INF/jpa-changelog-1.8.0.xml	2022-02-02 16:47:26.390165	20	EXECUTED	\N	dropDefaultValue columnName=ALGORITHM, tableName=CREDENTIAL; update tableName=CREDENTIAL		\N	3.5.4	\N	\N	3820445829
+authz-3.4.0.CR1-resource-server-pk-change-part1	glavoie@gmail.com	META-INF/jpa-changelog-authz-3.4.0.CR1.xml	2022-02-02 16:47:26.679075	45	EXECUTED	\N	addColumn tableName=RESOURCE_SERVER_POLICY; addColumn tableName=RESOURCE_SERVER_RESOURCE; addColumn tableName=RESOURCE_SERVER_SCOPE		\N	3.5.4	\N	\N	3820445829
+1.8.0	mposolda@redhat.com	META-INF/db2-jpa-changelog-1.8.0.xml	2022-02-02 16:47:26.392862	21	MARK_RAN	\N	addColumn tableName=IDENTITY_PROVIDER; createTable tableName=CLIENT_TEMPLATE; createTable tableName=CLIENT_TEMPLATE_ATTRIBUTES; createTable tableName=TEMPLATE_SCOPE_MAPPING; dropNotNullConstraint columnName=CLIENT_ID, tableName=PROTOCOL_MAPPER; ad...		\N	3.5.4	\N	\N	3820445829
+1.8.0-2	keycloak	META-INF/db2-jpa-changelog-1.8.0.xml	2022-02-02 16:47:26.395652	22	MARK_RAN	\N	dropDefaultValue columnName=ALGORITHM, tableName=CREDENTIAL; update tableName=CREDENTIAL		\N	3.5.4	\N	\N	3820445829
+1.9.0	mposolda@redhat.com	META-INF/jpa-changelog-1.9.0.xml	2022-02-02 16:47:26.40969	23	EXECUTED	\N	update tableName=REALM; update tableName=REALM; update tableName=REALM; update tableName=REALM; update tableName=CREDENTIAL; update tableName=CREDENTIAL; update tableName=CREDENTIAL; update tableName=REALM; update tableName=REALM; customChange; dr...		\N	3.5.4	\N	\N	3820445829
+1.9.1	keycloak	META-INF/jpa-changelog-1.9.1.xml	2022-02-02 16:47:26.414344	24	EXECUTED	\N	modifyDataType columnName=PRIVATE_KEY, tableName=REALM; modifyDataType columnName=PUBLIC_KEY, tableName=REALM; modifyDataType columnName=CERTIFICATE, tableName=REALM		\N	3.5.4	\N	\N	3820445829
+1.9.1	keycloak	META-INF/db2-jpa-changelog-1.9.1.xml	2022-02-02 16:47:26.416193	25	MARK_RAN	\N	modifyDataType columnName=PRIVATE_KEY, tableName=REALM; modifyDataType columnName=CERTIFICATE, tableName=REALM		\N	3.5.4	\N	\N	3820445829
+1.9.2	keycloak	META-INF/jpa-changelog-1.9.2.xml	2022-02-02 16:47:26.437367	26	EXECUTED	\N	createIndex indexName=IDX_USER_EMAIL, tableName=USER_ENTITY; createIndex indexName=IDX_USER_ROLE_MAPPING, tableName=USER_ROLE_MAPPING; createIndex indexName=IDX_USER_GROUP_MAPPING, tableName=USER_GROUP_MEMBERSHIP; createIndex indexName=IDX_USER_CO...		\N	3.5.4	\N	\N	3820445829
+9.0.1-KEYCLOAK-12579-recreate-constraints	keycloak	META-INF/jpa-changelog-9.0.1.xml	2022-02-02 16:47:26.981645	84	MARK_RAN	\N	addUniqueConstraint constraintName=SIBLING_NAMES, tableName=KEYCLOAK_GROUP		\N	3.5.4	\N	\N	3820445829
+authz-2.0.0	psilva@redhat.com	META-INF/jpa-changelog-authz-2.0.0.xml	2022-02-02 16:47:26.481647	27	EXECUTED	\N	createTable tableName=RESOURCE_SERVER; addPrimaryKey constraintName=CONSTRAINT_FARS, tableName=RESOURCE_SERVER; addUniqueConstraint constraintName=UK_AU8TT6T700S9V50BU18WS5HA6, tableName=RESOURCE_SERVER; createTable tableName=RESOURCE_SERVER_RESOU...		\N	3.5.4	\N	\N	3820445829
+authz-2.5.1	psilva@redhat.com	META-INF/jpa-changelog-authz-2.5.1.xml	2022-02-02 16:47:26.484459	28	EXECUTED	\N	update tableName=RESOURCE_SERVER_POLICY		\N	3.5.4	\N	\N	3820445829
+2.1.0-KEYCLOAK-5461	bburke@redhat.com	META-INF/jpa-changelog-2.1.0.xml	2022-02-02 16:47:26.523006	29	EXECUTED	\N	createTable tableName=BROKER_LINK; createTable tableName=FED_USER_ATTRIBUTE; createTable tableName=FED_USER_CONSENT; createTable tableName=FED_USER_CONSENT_ROLE; createTable tableName=FED_USER_CONSENT_PROT_MAPPER; createTable tableName=FED_USER_CR...		\N	3.5.4	\N	\N	3820445829
+2.2.0	bburke@redhat.com	META-INF/jpa-changelog-2.2.0.xml	2022-02-02 16:47:26.532066	30	EXECUTED	\N	addColumn tableName=ADMIN_EVENT_ENTITY; createTable tableName=CREDENTIAL_ATTRIBUTE; createTable tableName=FED_CREDENTIAL_ATTRIBUTE; modifyDataType columnName=VALUE, tableName=CREDENTIAL; addForeignKeyConstraint baseTableName=FED_CREDENTIAL_ATTRIBU...		\N	3.5.4	\N	\N	3820445829
+2.3.0	bburke@redhat.com	META-INF/jpa-changelog-2.3.0.xml	2022-02-02 16:47:26.541837	31	EXECUTED	\N	createTable tableName=FEDERATED_USER; addPrimaryKey constraintName=CONSTR_FEDERATED_USER, tableName=FEDERATED_USER; dropDefaultValue columnName=TOTP, tableName=USER_ENTITY; dropColumn columnName=TOTP, tableName=USER_ENTITY; addColumn tableName=IDE...		\N	3.5.4	\N	\N	3820445829
+2.4.0	bburke@redhat.com	META-INF/jpa-changelog-2.4.0.xml	2022-02-02 16:47:26.545809	32	EXECUTED	\N	customChange		\N	3.5.4	\N	\N	3820445829
+2.5.0	bburke@redhat.com	META-INF/jpa-changelog-2.5.0.xml	2022-02-02 16:47:26.549823	33	EXECUTED	\N	customChange; modifyDataType columnName=USER_ID, tableName=OFFLINE_USER_SESSION		\N	3.5.4	\N	\N	3820445829
+2.5.0-unicode-oracle	hmlnarik@redhat.com	META-INF/jpa-changelog-2.5.0.xml	2022-02-02 16:47:26.55176	34	MARK_RAN	\N	modifyDataType columnName=DESCRIPTION, tableName=AUTHENTICATION_FLOW; modifyDataType columnName=DESCRIPTION, tableName=CLIENT_TEMPLATE; modifyDataType columnName=DESCRIPTION, tableName=RESOURCE_SERVER_POLICY; modifyDataType columnName=DESCRIPTION,...		\N	3.5.4	\N	\N	3820445829
+2.5.0-unicode-other-dbs	hmlnarik@redhat.com	META-INF/jpa-changelog-2.5.0.xml	2022-02-02 16:47:26.567305	35	EXECUTED	\N	modifyDataType columnName=DESCRIPTION, tableName=AUTHENTICATION_FLOW; modifyDataType columnName=DESCRIPTION, tableName=CLIENT_TEMPLATE; modifyDataType columnName=DESCRIPTION, tableName=RESOURCE_SERVER_POLICY; modifyDataType columnName=DESCRIPTION,...		\N	3.5.4	\N	\N	3820445829
+2.5.0-duplicate-email-support	slawomir@dabek.name	META-INF/jpa-changelog-2.5.0.xml	2022-02-02 16:47:26.570727	36	EXECUTED	\N	addColumn tableName=REALM		\N	3.5.4	\N	\N	3820445829
+2.5.0-unique-group-names	hmlnarik@redhat.com	META-INF/jpa-changelog-2.5.0.xml	2022-02-02 16:47:26.578396	37	EXECUTED	\N	addUniqueConstraint constraintName=SIBLING_NAMES, tableName=KEYCLOAK_GROUP		\N	3.5.4	\N	\N	3820445829
+2.5.1	bburke@redhat.com	META-INF/jpa-changelog-2.5.1.xml	2022-02-02 16:47:26.581391	38	EXECUTED	\N	addColumn tableName=FED_USER_CONSENT		\N	3.5.4	\N	\N	3820445829
+3.0.0	bburke@redhat.com	META-INF/jpa-changelog-3.0.0.xml	2022-02-02 16:47:26.584204	39	EXECUTED	\N	addColumn tableName=IDENTITY_PROVIDER		\N	3.5.4	\N	\N	3820445829
+3.2.0-fix	keycloak	META-INF/jpa-changelog-3.2.0.xml	2022-02-02 16:47:26.585877	40	MARK_RAN	\N	addNotNullConstraint columnName=REALM_ID, tableName=CLIENT_INITIAL_ACCESS		\N	3.5.4	\N	\N	3820445829
+3.2.0-fix-with-keycloak-5416	keycloak	META-INF/jpa-changelog-3.2.0.xml	2022-02-02 16:47:26.587657	41	MARK_RAN	\N	dropIndex indexName=IDX_CLIENT_INIT_ACC_REALM, tableName=CLIENT_INITIAL_ACCESS; addNotNullConstraint columnName=REALM_ID, tableName=CLIENT_INITIAL_ACCESS; createIndex indexName=IDX_CLIENT_INIT_ACC_REALM, tableName=CLIENT_INITIAL_ACCESS		\N	3.5.4	\N	\N	3820445829
+3.2.0-fix-offline-sessions	hmlnarik	META-INF/jpa-changelog-3.2.0.xml	2022-02-02 16:47:26.591561	42	EXECUTED	\N	customChange		\N	3.5.4	\N	\N	3820445829
+3.2.0-fixed	keycloak	META-INF/jpa-changelog-3.2.0.xml	2022-02-02 16:47:26.669981	43	EXECUTED	\N	addColumn tableName=REALM; dropPrimaryKey constraintName=CONSTRAINT_OFFL_CL_SES_PK2, tableName=OFFLINE_CLIENT_SESSION; dropColumn columnName=CLIENT_SESSION_ID, tableName=OFFLINE_CLIENT_SESSION; addPrimaryKey constraintName=CONSTRAINT_OFFL_CL_SES_P...		\N	3.5.4	\N	\N	3820445829
+3.3.0	keycloak	META-INF/jpa-changelog-3.3.0.xml	2022-02-02 16:47:26.673701	44	EXECUTED	\N	addColumn tableName=USER_ENTITY		\N	3.5.4	\N	\N	3820445829
+authz-3.4.0.CR1-resource-server-pk-change-part2-KEYCLOAK-6095	hmlnarik@redhat.com	META-INF/jpa-changelog-authz-3.4.0.CR1.xml	2022-02-02 16:47:26.681987	46	EXECUTED	\N	customChange		\N	3.5.4	\N	\N	3820445829
+authz-3.4.0.CR1-resource-server-pk-change-part3-fixed	glavoie@gmail.com	META-INF/jpa-changelog-authz-3.4.0.CR1.xml	2022-02-02 16:47:26.683661	47	MARK_RAN	\N	dropIndex indexName=IDX_RES_SERV_POL_RES_SERV, tableName=RESOURCE_SERVER_POLICY; dropIndex indexName=IDX_RES_SRV_RES_RES_SRV, tableName=RESOURCE_SERVER_RESOURCE; dropIndex indexName=IDX_RES_SRV_SCOPE_RES_SRV, tableName=RESOURCE_SERVER_SCOPE		\N	3.5.4	\N	\N	3820445829
+authz-3.4.0.CR1-resource-server-pk-change-part3-fixed-nodropindex	glavoie@gmail.com	META-INF/jpa-changelog-authz-3.4.0.CR1.xml	2022-02-02 16:47:26.702743	48	EXECUTED	\N	addNotNullConstraint columnName=RESOURCE_SERVER_CLIENT_ID, tableName=RESOURCE_SERVER_POLICY; addNotNullConstraint columnName=RESOURCE_SERVER_CLIENT_ID, tableName=RESOURCE_SERVER_RESOURCE; addNotNullConstraint columnName=RESOURCE_SERVER_CLIENT_ID, ...		\N	3.5.4	\N	\N	3820445829
+3.4.0	keycloak	META-INF/jpa-changelog-3.4.0.xml	2022-02-02 16:47:26.734467	50	EXECUTED	\N	addPrimaryKey constraintName=CONSTRAINT_REALM_DEFAULT_ROLES, tableName=REALM_DEFAULT_ROLES; addPrimaryKey constraintName=CONSTRAINT_COMPOSITE_ROLE, tableName=COMPOSITE_ROLE; addPrimaryKey constraintName=CONSTR_REALM_DEFAULT_GROUPS, tableName=REALM...		\N	3.5.4	\N	\N	3820445829
+3.4.0-KEYCLOAK-5230	hmlnarik@redhat.com	META-INF/jpa-changelog-3.4.0.xml	2022-02-02 16:47:26.78037	51	EXECUTED	\N	createIndex indexName=IDX_FU_ATTRIBUTE, tableName=FED_USER_ATTRIBUTE; createIndex indexName=IDX_FU_CONSENT, tableName=FED_USER_CONSENT; createIndex indexName=IDX_FU_CONSENT_RU, tableName=FED_USER_CONSENT; createIndex indexName=IDX_FU_CREDENTIAL, t...		\N	3.5.4	\N	\N	3820445829
+3.4.1	psilva@redhat.com	META-INF/jpa-changelog-3.4.1.xml	2022-02-02 16:47:26.783989	52	EXECUTED	\N	modifyDataType columnName=VALUE, tableName=CLIENT_ATTRIBUTES		\N	3.5.4	\N	\N	3820445829
+3.4.2	keycloak	META-INF/jpa-changelog-3.4.2.xml	2022-02-02 16:47:26.786619	53	EXECUTED	\N	update tableName=REALM		\N	3.5.4	\N	\N	3820445829
+3.4.2-KEYCLOAK-5172	mkanis@redhat.com	META-INF/jpa-changelog-3.4.2.xml	2022-02-02 16:47:26.788788	54	EXECUTED	\N	update tableName=CLIENT		\N	3.5.4	\N	\N	3820445829
+4.0.0-KEYCLOAK-6335	bburke@redhat.com	META-INF/jpa-changelog-4.0.0.xml	2022-02-02 16:47:26.794881	55	EXECUTED	\N	createTable tableName=CLIENT_AUTH_FLOW_BINDINGS; addPrimaryKey constraintName=C_CLI_FLOW_BIND, tableName=CLIENT_AUTH_FLOW_BINDINGS		\N	3.5.4	\N	\N	3820445829
+4.0.0-CLEANUP-UNUSED-TABLE	bburke@redhat.com	META-INF/jpa-changelog-4.0.0.xml	2022-02-02 16:47:26.799493	56	EXECUTED	\N	dropTable tableName=CLIENT_IDENTITY_PROV_MAPPING		\N	3.5.4	\N	\N	3820445829
+4.0.0-KEYCLOAK-6228	bburke@redhat.com	META-INF/jpa-changelog-4.0.0.xml	2022-02-02 16:47:26.810686	57	EXECUTED	\N	dropUniqueConstraint constraintName=UK_JKUWUVD56ONTGSUHOGM8UEWRT, tableName=USER_CONSENT; dropNotNullConstraint columnName=CLIENT_ID, tableName=USER_CONSENT; addColumn tableName=USER_CONSENT; addUniqueConstraint constraintName=UK_JKUWUVD56ONTGSUHO...		\N	3.5.4	\N	\N	3820445829
+4.0.0-KEYCLOAK-5579-fixed	mposolda@redhat.com	META-INF/jpa-changelog-4.0.0.xml	2022-02-02 16:47:26.861332	58	EXECUTED	\N	dropForeignKeyConstraint baseTableName=CLIENT_TEMPLATE_ATTRIBUTES, constraintName=FK_CL_TEMPL_ATTR_TEMPL; renameTable newTableName=CLIENT_SCOPE_ATTRIBUTES, oldTableName=CLIENT_TEMPLATE_ATTRIBUTES; renameColumn newColumnName=SCOPE_ID, oldColumnName...		\N	3.5.4	\N	\N	3820445829
+authz-4.0.0.CR1	psilva@redhat.com	META-INF/jpa-changelog-authz-4.0.0.CR1.xml	2022-02-02 16:47:26.877018	59	EXECUTED	\N	createTable tableName=RESOURCE_SERVER_PERM_TICKET; addPrimaryKey constraintName=CONSTRAINT_FAPMT, tableName=RESOURCE_SERVER_PERM_TICKET; addForeignKeyConstraint baseTableName=RESOURCE_SERVER_PERM_TICKET, constraintName=FK_FRSRHO213XCX4WNKOG82SSPMT...		\N	3.5.4	\N	\N	3820445829
+authz-4.0.0.Beta3	psilva@redhat.com	META-INF/jpa-changelog-authz-4.0.0.Beta3.xml	2022-02-02 16:47:26.881203	60	EXECUTED	\N	addColumn tableName=RESOURCE_SERVER_POLICY; addColumn tableName=RESOURCE_SERVER_PERM_TICKET; addForeignKeyConstraint baseTableName=RESOURCE_SERVER_PERM_TICKET, constraintName=FK_FRSRPO2128CX4WNKOG82SSRFY, referencedTableName=RESOURCE_SERVER_POLICY		\N	3.5.4	\N	\N	3820445829
+authz-4.2.0.Final	mhajas@redhat.com	META-INF/jpa-changelog-authz-4.2.0.Final.xml	2022-02-02 16:47:26.886177	61	EXECUTED	\N	createTable tableName=RESOURCE_URIS; addForeignKeyConstraint baseTableName=RESOURCE_URIS, constraintName=FK_RESOURCE_SERVER_URIS, referencedTableName=RESOURCE_SERVER_RESOURCE; customChange; dropColumn columnName=URI, tableName=RESOURCE_SERVER_RESO...		\N	3.5.4	\N	\N	3820445829
+authz-4.2.0.Final-KEYCLOAK-9944	hmlnarik@redhat.com	META-INF/jpa-changelog-authz-4.2.0.Final.xml	2022-02-02 16:47:26.890482	62	EXECUTED	\N	addPrimaryKey constraintName=CONSTRAINT_RESOUR_URIS_PK, tableName=RESOURCE_URIS		\N	3.5.4	\N	\N	3820445829
+4.2.0-KEYCLOAK-6313	wadahiro@gmail.com	META-INF/jpa-changelog-4.2.0.xml	2022-02-02 16:47:26.893518	63	EXECUTED	\N	addColumn tableName=REQUIRED_ACTION_PROVIDER		\N	3.5.4	\N	\N	3820445829
+4.3.0-KEYCLOAK-7984	wadahiro@gmail.com	META-INF/jpa-changelog-4.3.0.xml	2022-02-02 16:47:26.895621	64	EXECUTED	\N	update tableName=REQUIRED_ACTION_PROVIDER		\N	3.5.4	\N	\N	3820445829
+4.6.0-KEYCLOAK-7950	psilva@redhat.com	META-INF/jpa-changelog-4.6.0.xml	2022-02-02 16:47:26.89756	65	EXECUTED	\N	update tableName=RESOURCE_SERVER_RESOURCE		\N	3.5.4	\N	\N	3820445829
+4.6.0-KEYCLOAK-8377	keycloak	META-INF/jpa-changelog-4.6.0.xml	2022-02-02 16:47:26.908059	66	EXECUTED	\N	createTable tableName=ROLE_ATTRIBUTE; addPrimaryKey constraintName=CONSTRAINT_ROLE_ATTRIBUTE_PK, tableName=ROLE_ATTRIBUTE; addForeignKeyConstraint baseTableName=ROLE_ATTRIBUTE, constraintName=FK_ROLE_ATTRIBUTE_ID, referencedTableName=KEYCLOAK_ROLE...		\N	3.5.4	\N	\N	3820445829
+4.6.0-KEYCLOAK-8555	gideonray@gmail.com	META-INF/jpa-changelog-4.6.0.xml	2022-02-02 16:47:26.912693	67	EXECUTED	\N	createIndex indexName=IDX_COMPONENT_PROVIDER_TYPE, tableName=COMPONENT		\N	3.5.4	\N	\N	3820445829
+4.7.0-KEYCLOAK-1267	sguilhen@redhat.com	META-INF/jpa-changelog-4.7.0.xml	2022-02-02 16:47:26.915771	68	EXECUTED	\N	addColumn tableName=REALM		\N	3.5.4	\N	\N	3820445829
+4.7.0-KEYCLOAK-7275	keycloak	META-INF/jpa-changelog-4.7.0.xml	2022-02-02 16:47:26.924465	69	EXECUTED	\N	renameColumn newColumnName=CREATED_ON, oldColumnName=LAST_SESSION_REFRESH, tableName=OFFLINE_USER_SESSION; addNotNullConstraint columnName=CREATED_ON, tableName=OFFLINE_USER_SESSION; addColumn tableName=OFFLINE_USER_SESSION; customChange; createIn...		\N	3.5.4	\N	\N	3820445829
+authz-7.0.0-KEYCLOAK-10443	psilva@redhat.com	META-INF/jpa-changelog-authz-7.0.0.xml	2022-02-02 16:47:26.93061	71	EXECUTED	\N	addColumn tableName=RESOURCE_SERVER		\N	3.5.4	\N	\N	3820445829
+8.0.0-adding-credential-columns	keycloak	META-INF/jpa-changelog-8.0.0.xml	2022-02-02 16:47:26.933771	72	EXECUTED	\N	addColumn tableName=CREDENTIAL; addColumn tableName=FED_USER_CREDENTIAL		\N	3.5.4	\N	\N	3820445829
+8.0.0-updating-credential-data-not-oracle	keycloak	META-INF/jpa-changelog-8.0.0.xml	2022-02-02 16:47:26.937673	73	EXECUTED	\N	update tableName=CREDENTIAL; update tableName=CREDENTIAL; update tableName=CREDENTIAL; update tableName=FED_USER_CREDENTIAL; update tableName=FED_USER_CREDENTIAL; update tableName=FED_USER_CREDENTIAL		\N	3.5.4	\N	\N	3820445829
+8.0.0-updating-credential-data-oracle	keycloak	META-INF/jpa-changelog-8.0.0.xml	2022-02-02 16:47:26.939218	74	MARK_RAN	\N	update tableName=CREDENTIAL; update tableName=CREDENTIAL; update tableName=CREDENTIAL; update tableName=FED_USER_CREDENTIAL; update tableName=FED_USER_CREDENTIAL; update tableName=FED_USER_CREDENTIAL		\N	3.5.4	\N	\N	3820445829
+8.0.0-credential-cleanup-fixed	keycloak	META-INF/jpa-changelog-8.0.0.xml	2022-02-02 16:47:26.945819	75	EXECUTED	\N	dropDefaultValue columnName=COUNTER, tableName=CREDENTIAL; dropDefaultValue columnName=DIGITS, tableName=CREDENTIAL; dropDefaultValue columnName=PERIOD, tableName=CREDENTIAL; dropDefaultValue columnName=ALGORITHM, tableName=CREDENTIAL; dropColumn ...		\N	3.5.4	\N	\N	3820445829
+8.0.0-resource-tag-support	keycloak	META-INF/jpa-changelog-8.0.0.xml	2022-02-02 16:47:26.950255	76	EXECUTED	\N	addColumn tableName=MIGRATION_MODEL; createIndex indexName=IDX_UPDATE_TIME, tableName=MIGRATION_MODEL		\N	3.5.4	\N	\N	3820445829
+9.0.0-always-display-client	keycloak	META-INF/jpa-changelog-9.0.0.xml	2022-02-02 16:47:26.955505	77	EXECUTED	\N	addColumn tableName=CLIENT		\N	3.5.4	\N	\N	3820445829
+9.0.0-drop-constraints-for-column-increase	keycloak	META-INF/jpa-changelog-9.0.0.xml	2022-02-02 16:47:26.957216	78	MARK_RAN	\N	dropUniqueConstraint constraintName=UK_FRSR6T700S9V50BU18WS5PMT, tableName=RESOURCE_SERVER_PERM_TICKET; dropUniqueConstraint constraintName=UK_FRSR6T700S9V50BU18WS5HA6, tableName=RESOURCE_SERVER_RESOURCE; dropPrimaryKey constraintName=CONSTRAINT_O...		\N	3.5.4	\N	\N	3820445829
+9.0.0-increase-column-size-federated-fk	keycloak	META-INF/jpa-changelog-9.0.0.xml	2022-02-02 16:47:26.966746	79	EXECUTED	\N	modifyDataType columnName=CLIENT_ID, tableName=FED_USER_CONSENT; modifyDataType columnName=CLIENT_REALM_CONSTRAINT, tableName=KEYCLOAK_ROLE; modifyDataType columnName=OWNER, tableName=RESOURCE_SERVER_POLICY; modifyDataType columnName=CLIENT_ID, ta...		\N	3.5.4	\N	\N	3820445829
+9.0.0-recreate-constraints-after-column-increase	keycloak	META-INF/jpa-changelog-9.0.0.xml	2022-02-02 16:47:26.969643	80	MARK_RAN	\N	addNotNullConstraint columnName=CLIENT_ID, tableName=OFFLINE_CLIENT_SESSION; addNotNullConstraint columnName=OWNER, tableName=RESOURCE_SERVER_PERM_TICKET; addNotNullConstraint columnName=REQUESTER, tableName=RESOURCE_SERVER_PERM_TICKET; addNotNull...		\N	3.5.4	\N	\N	3820445829
+9.0.1-add-index-to-client.client_id	keycloak	META-INF/jpa-changelog-9.0.1.xml	2022-02-02 16:47:26.975764	81	EXECUTED	\N	createIndex indexName=IDX_CLIENT_ID, tableName=CLIENT		\N	3.5.4	\N	\N	3820445829
+9.0.1-KEYCLOAK-12579-drop-constraints	keycloak	META-INF/jpa-changelog-9.0.1.xml	2022-02-02 16:47:26.977227	82	MARK_RAN	\N	dropUniqueConstraint constraintName=SIBLING_NAMES, tableName=KEYCLOAK_GROUP		\N	3.5.4	\N	\N	3820445829
+9.0.1-KEYCLOAK-12579-add-not-null-constraint	keycloak	META-INF/jpa-changelog-9.0.1.xml	2022-02-02 16:47:26.980058	83	EXECUTED	\N	addNotNullConstraint columnName=PARENT_GROUP, tableName=KEYCLOAK_GROUP		\N	3.5.4	\N	\N	3820445829
+9.0.1-add-index-to-events	keycloak	META-INF/jpa-changelog-9.0.1.xml	2022-02-02 16:47:26.985465	85	EXECUTED	\N	createIndex indexName=IDX_EVENT_TIME, tableName=EVENT_ENTITY		\N	3.5.4	\N	\N	3820445829
+map-remove-ri	keycloak	META-INF/jpa-changelog-11.0.0.xml	2022-02-02 16:47:26.98869	86	EXECUTED	\N	dropForeignKeyConstraint baseTableName=REALM, constraintName=FK_TRAF444KK6QRKMS7N56AIWQ5Y; dropForeignKeyConstraint baseTableName=KEYCLOAK_ROLE, constraintName=FK_KJHO5LE2C0RAL09FL8CM9WFW9		\N	3.5.4	\N	\N	3820445829
+map-remove-ri	keycloak	META-INF/jpa-changelog-12.0.0.xml	2022-02-02 16:47:26.992854	87	EXECUTED	\N	dropForeignKeyConstraint baseTableName=REALM_DEFAULT_GROUPS, constraintName=FK_DEF_GROUPS_GROUP; dropForeignKeyConstraint baseTableName=REALM_DEFAULT_ROLES, constraintName=FK_H4WPD7W4HSOOLNI3H0SW7BTJE; dropForeignKeyConstraint baseTableName=CLIENT...		\N	3.5.4	\N	\N	3820445829
+12.1.0-add-realm-localization-table	keycloak	META-INF/jpa-changelog-12.0.0.xml	2022-02-02 16:47:26.999694	88	EXECUTED	\N	createTable tableName=REALM_LOCALIZATIONS; addPrimaryKey tableName=REALM_LOCALIZATIONS		\N	3.5.4	\N	\N	3820445829
+8.0.0-updating-credential-data-not-oracle-fixed	keycloak	META-INF/jpa-changelog-8.0.0.xml	2023-01-09 14:34:23.080082	89	MARK_RAN	8:83f7a671792ca98b3cbd3a1a34862d3d	update tableName=CREDENTIAL; update tableName=CREDENTIAL; update tableName=CREDENTIAL; update tableName=FED_USER_CREDENTIAL; update tableName=FED_USER_CREDENTIAL; update tableName=FED_USER_CREDENTIAL		\N	4.8.0	\N	\N	3274862955
+8.0.0-updating-credential-data-oracle-fixed	keycloak	META-INF/jpa-changelog-8.0.0.xml	2023-01-09 14:34:23.099857	90	MARK_RAN	8:f58ad148698cf30707a6efbdf8061aa7	update tableName=CREDENTIAL; update tableName=CREDENTIAL; update tableName=CREDENTIAL; update tableName=FED_USER_CREDENTIAL; update tableName=FED_USER_CREDENTIAL; update tableName=FED_USER_CREDENTIAL		\N	4.8.0	\N	\N	3274862955
+default-roles	keycloak	META-INF/jpa-changelog-13.0.0.xml	2023-01-09 14:34:23.144776	91	EXECUTED	8:72d03345fda8e2f17093d08801947773	addColumn tableName=REALM; customChange		\N	4.8.0	\N	\N	3274862955
+default-roles-cleanup	keycloak	META-INF/jpa-changelog-13.0.0.xml	2023-01-09 14:34:23.155298	92	EXECUTED	8:61c9233951bd96ffecd9ba75f7d978a4	dropTable tableName=REALM_DEFAULT_ROLES; dropTable tableName=CLIENT_DEFAULT_ROLES		\N	4.8.0	\N	\N	3274862955
+13.0.0-KEYCLOAK-16844	keycloak	META-INF/jpa-changelog-13.0.0.xml	2023-01-09 14:34:23.162911	93	EXECUTED	8:ea82e6ad945cec250af6372767b25525	createIndex indexName=IDX_OFFLINE_USS_PRELOAD, tableName=OFFLINE_USER_SESSION		\N	4.8.0	\N	\N	3274862955
+map-remove-ri-13.0.0	keycloak	META-INF/jpa-changelog-13.0.0.xml	2023-01-09 14:34:23.17617	94	EXECUTED	8:d3f4a33f41d960ddacd7e2ef30d126b3	dropForeignKeyConstraint baseTableName=DEFAULT_CLIENT_SCOPE, constraintName=FK_R_DEF_CLI_SCOPE_SCOPE; dropForeignKeyConstraint baseTableName=CLIENT_SCOPE_CLIENT, constraintName=FK_C_CLI_SCOPE_SCOPE; dropForeignKeyConstraint baseTableName=CLIENT_SC...		\N	4.8.0	\N	\N	3274862955
+13.0.0-KEYCLOAK-17992-drop-constraints	keycloak	META-INF/jpa-changelog-13.0.0.xml	2023-01-09 14:34:23.1803	95	MARK_RAN	8:1284a27fbd049d65831cb6fc07c8a783	dropPrimaryKey constraintName=C_CLI_SCOPE_BIND, tableName=CLIENT_SCOPE_CLIENT; dropIndex indexName=IDX_CLSCOPE_CL, tableName=CLIENT_SCOPE_CLIENT; dropIndex indexName=IDX_CL_CLSCOPE, tableName=CLIENT_SCOPE_CLIENT		\N	4.8.0	\N	\N	3274862955
+13.0.0-increase-column-size-federated	keycloak	META-INF/jpa-changelog-13.0.0.xml	2023-01-09 14:34:23.190613	96	EXECUTED	8:9d11b619db2ae27c25853b8a37cd0dea	modifyDataType columnName=CLIENT_ID, tableName=CLIENT_SCOPE_CLIENT; modifyDataType columnName=SCOPE_ID, tableName=CLIENT_SCOPE_CLIENT		\N	4.8.0	\N	\N	3274862955
+13.0.0-KEYCLOAK-17992-recreate-constraints	keycloak	META-INF/jpa-changelog-13.0.0.xml	2023-01-09 14:34:23.193934	97	MARK_RAN	8:3002bb3997451bb9e8bac5c5cd8d6327	addNotNullConstraint columnName=CLIENT_ID, tableName=CLIENT_SCOPE_CLIENT; addNotNullConstraint columnName=SCOPE_ID, tableName=CLIENT_SCOPE_CLIENT; addPrimaryKey constraintName=C_CLI_SCOPE_BIND, tableName=CLIENT_SCOPE_CLIENT; createIndex indexName=...		\N	4.8.0	\N	\N	3274862955
+json-string-accomodation-fixed	keycloak	META-INF/jpa-changelog-13.0.0.xml	2023-01-09 14:34:23.202965	98	EXECUTED	8:dfbee0d6237a23ef4ccbb7a4e063c163	addColumn tableName=REALM_ATTRIBUTE; update tableName=REALM_ATTRIBUTE; dropColumn columnName=VALUE, tableName=REALM_ATTRIBUTE; renameColumn newColumnName=VALUE, oldColumnName=VALUE_NEW, tableName=REALM_ATTRIBUTE		\N	4.8.0	\N	\N	3274862955
+14.0.0-KEYCLOAK-11019	keycloak	META-INF/jpa-changelog-14.0.0.xml	2023-01-09 14:34:23.212244	99	EXECUTED	8:75f3e372df18d38c62734eebb986b960	createIndex indexName=IDX_OFFLINE_CSS_PRELOAD, tableName=OFFLINE_CLIENT_SESSION; createIndex indexName=IDX_OFFLINE_USS_BY_USER, tableName=OFFLINE_USER_SESSION; createIndex indexName=IDX_OFFLINE_USS_BY_USERSESS, tableName=OFFLINE_USER_SESSION		\N	4.8.0	\N	\N	3274862955
+14.0.0-KEYCLOAK-18286	keycloak	META-INF/jpa-changelog-14.0.0.xml	2023-01-09 14:34:23.2164	100	MARK_RAN	8:7fee73eddf84a6035691512c85637eef	createIndex indexName=IDX_CLIENT_ATT_BY_NAME_VALUE, tableName=CLIENT_ATTRIBUTES		\N	4.8.0	\N	\N	3274862955
+14.0.0-KEYCLOAK-18286-revert	keycloak	META-INF/jpa-changelog-14.0.0.xml	2023-01-09 14:34:23.227895	101	MARK_RAN	8:7a11134ab12820f999fbf3bb13c3adc8	dropIndex indexName=IDX_CLIENT_ATT_BY_NAME_VALUE, tableName=CLIENT_ATTRIBUTES		\N	4.8.0	\N	\N	3274862955
+14.0.0-KEYCLOAK-18286-supported-dbs	keycloak	META-INF/jpa-changelog-14.0.0.xml	2023-01-09 14:34:23.235491	102	EXECUTED	8:c0f6eaac1f3be773ffe54cb5b8482b70	createIndex indexName=IDX_CLIENT_ATT_BY_NAME_VALUE, tableName=CLIENT_ATTRIBUTES		\N	4.8.0	\N	\N	3274862955
+14.0.0-KEYCLOAK-18286-unsupported-dbs	keycloak	META-INF/jpa-changelog-14.0.0.xml	2023-01-09 14:34:23.238498	103	MARK_RAN	8:18186f0008b86e0f0f49b0c4d0e842ac	createIndex indexName=IDX_CLIENT_ATT_BY_NAME_VALUE, tableName=CLIENT_ATTRIBUTES		\N	4.8.0	\N	\N	3274862955
+KEYCLOAK-17267-add-index-to-user-attributes	keycloak	META-INF/jpa-changelog-14.0.0.xml	2023-01-09 14:34:23.24435	104	EXECUTED	8:09c2780bcb23b310a7019d217dc7b433	createIndex indexName=IDX_USER_ATTRIBUTE_NAME, tableName=USER_ATTRIBUTE		\N	4.8.0	\N	\N	3274862955
+KEYCLOAK-18146-add-saml-art-binding-identifier	keycloak	META-INF/jpa-changelog-14.0.0.xml	2023-01-09 14:34:23.250444	105	EXECUTED	8:276a44955eab693c970a42880197fff2	customChange		\N	4.8.0	\N	\N	3274862955
+15.0.0-KEYCLOAK-18467	keycloak	META-INF/jpa-changelog-15.0.0.xml	2023-01-09 14:34:23.261701	106	EXECUTED	8:ba8ee3b694d043f2bfc1a1079d0760d7	addColumn tableName=REALM_LOCALIZATIONS; update tableName=REALM_LOCALIZATIONS; dropColumn columnName=TEXTS, tableName=REALM_LOCALIZATIONS; renameColumn newColumnName=TEXTS, oldColumnName=TEXTS_NEW, tableName=REALM_LOCALIZATIONS; addNotNullConstrai...		\N	4.8.0	\N	\N	3274862955
+17.0.0-9562	keycloak	META-INF/jpa-changelog-17.0.0.xml	2023-01-09 14:34:23.269577	107	EXECUTED	8:5e06b1d75f5d17685485e610c2851b17	createIndex indexName=IDX_USER_SERVICE_ACCOUNT, tableName=USER_ENTITY		\N	4.8.0	\N	\N	3274862955
+18.0.0-10625-IDX_ADMIN_EVENT_TIME	keycloak	META-INF/jpa-changelog-18.0.0.xml	2023-01-09 14:34:23.276738	108	EXECUTED	8:4b80546c1dc550ac552ee7b24a4ab7c0	createIndex indexName=IDX_ADMIN_EVENT_TIME, tableName=ADMIN_EVENT_ENTITY		\N	4.8.0	\N	\N	3274862955
+19.0.0-10135	keycloak	META-INF/jpa-changelog-19.0.0.xml	2023-01-09 14:34:23.297485	109	EXECUTED	8:af510cd1bb2ab6339c45372f3e491696	customChange		\N	4.8.0	\N	\N	3274862955
+20.0.0-12964-supported-dbs	keycloak	META-INF/jpa-changelog-20.0.0.xml	2023-01-09 14:34:23.305463	110	EXECUTED	8:05c99fc610845ef66ee812b7921af0ef	createIndex indexName=IDX_GROUP_ATT_BY_NAME_VALUE, tableName=GROUP_ATTRIBUTE		\N	4.8.0	\N	\N	3274862955
+20.0.0-12964-unsupported-dbs	keycloak	META-INF/jpa-changelog-20.0.0.xml	2023-01-09 14:34:23.309005	111	MARK_RAN	8:314e803baf2f1ec315b3464e398b8247	createIndex indexName=IDX_GROUP_ATT_BY_NAME_VALUE, tableName=GROUP_ATTRIBUTE		\N	4.8.0	\N	\N	3274862955
+client-attributes-string-accomodation-fixed	keycloak	META-INF/jpa-changelog-20.0.0.xml	2023-01-09 14:34:23.318788	112	EXECUTED	8:56e4677e7e12556f70b604c573840100	addColumn tableName=CLIENT_ATTRIBUTES; update tableName=CLIENT_ATTRIBUTES; dropColumn columnName=VALUE, tableName=CLIENT_ATTRIBUTES; renameColumn newColumnName=VALUE, oldColumnName=VALUE_NEW, tableName=CLIENT_ATTRIBUTES		\N	4.8.0	\N	\N	3274862955
 \.
 
 
@@ -2375,6 +2386,8 @@ grafana	d6ffe9fc-a03c-4496-85dc-dbb5e7754587	f
 grafana	d6077ed7-b265-4f82-9336-24614967bd5d	t
 grafana	699671ab-e7c1-4fcf-beb8-ea54f1471fc1	t
 grafana	c61f5b19-c17e-49a1-91b8-a0296411b928	f
+grafana	d30340a8-630b-416e-8c93-3ccf932d34f3	t
+master	a96603aa-e6db-4b3e-8baa-679c75ccfc8f	t
 \.
 
 
@@ -2601,6 +2614,10 @@ c029a218-4519-4537-ae12-d8f3c27a0003	grafana	f	Grafana Server Admin	serveradmin	
 c9a776f9-2740-435f-a725-4dbcc17a6c91	grafana	f	Grafana Viewer	viewer	grafana	\N	grafana
 c4c74006-c346-48cf-8cf1-1617e3e1cde1	grafana	f	Grafana Editor	editor	grafana	\N	grafana
 31150c12-e9fe-4465-a792-816b7298a595	grafana	f	Grafana Server Administrator	grafanaadmin	grafana	\N	grafana
+b4c89bc8-3945-4963-80b5-3da62e8c54ad	grafana	f	${role_default-roles-grafana}	default-roles-grafana	grafana	\N	grafana
+9d6199e6-31e7-4497-be50-3b93faafec97	master	f	${role_default-roles-master}	default-roles-master	master	\N	master
+c9a895d1-c901-46b0-91cf-2c67902b4a93	a5a8fed6-0bca-4646-9946-2fe84175353b	t	${role_view-groups}	view-groups	grafana	a5a8fed6-0bca-4646-9946-2fe84175353b	\N
+52f4a142-a4fc-44a3-95a3-53111b9c97dd	eed689c6-49da-4d91-98eb-cd495bcc07a3	t	${role_view-groups}	view-groups	master	eed689c6-49da-4d91-98eb-cd495bcc07a3	\N
 \.
 
 
@@ -2610,6 +2627,7 @@ c4c74006-c346-48cf-8cf1-1617e3e1cde1	grafana	f	Grafana Editor	editor	grafana	\N	
 
 COPY public.migration_model (id, version, update_time) FROM stdin;
 g5slr	12.0.1	1643820448
+wupxt	20.0.2	1673274863
 \.
 
 
@@ -2697,6 +2715,8 @@ df78645e-c32b-4160-b79f-42e622d71982	locale	openid-connect	oidc-usermodel-attrib
 0108b99f-2f31-4e73-9597-cb29e0e8c486	username	openid-connect	oidc-usermodel-property-mapper	\N	f619a55a-d565-4cc0-8bf4-4dbaab5382fe
 70b0a264-a7c3-43ff-b24f-14ca4f5f118e	login	openid-connect	oidc-usermodel-property-mapper	\N	0a7c7dde-23d7-4a93-bdee-4a8963aee9a4
 2f8ee9af-b6dd-4790-9e7b-cce83a603566	name	openid-connect	oidc-full-name-mapper	\N	d4723cd4-f717-44b7-a9b0-6c32c5ecd23f
+854a81a5-8e06-4257-98ec-0e3087356223	acr loa level	openid-connect	oidc-acr-mapper	\N	d30340a8-630b-416e-8c93-3ccf932d34f3
+53832401-d27c-489e-801f-9807cdaa4b08	acr loa level	openid-connect	oidc-acr-mapper	\N	a96603aa-e6db-4b3e-8baa-679c75ccfc8f
 \.
 
 
@@ -3001,6 +3021,10 @@ df78645e-c32b-4160-b79f-42e622d71982	String	jsonType.label
 2f8ee9af-b6dd-4790-9e7b-cce83a603566	true	access.token.claim
 2f8ee9af-b6dd-4790-9e7b-cce83a603566	true	userinfo.token.claim
 1fc8999a-04d9-421b-8557-e417a3750358	true	id.token.claim
+854a81a5-8e06-4257-98ec-0e3087356223	true	id.token.claim
+854a81a5-8e06-4257-98ec-0e3087356223	true	access.token.claim
+53832401-d27c-489e-801f-9807cdaa4b08	true	id.token.claim
+53832401-d27c-489e-801f-9807cdaa4b08	true	access.token.claim
 \.
 
 
@@ -3008,9 +3032,9 @@ df78645e-c32b-4160-b79f-42e622d71982	String	jsonType.label
 -- Data for Name: realm; Type: TABLE DATA; Schema: public; Owner: keycloak
 --
 
-COPY public.realm (id, access_code_lifespan, user_action_lifespan, access_token_lifespan, account_theme, admin_theme, email_theme, enabled, events_enabled, events_expiration, login_theme, name, not_before, password_policy, registration_allowed, remember_me, reset_password_allowed, social, ssl_required, sso_idle_timeout, sso_max_lifespan, update_profile_on_soc_login, verify_email, master_admin_client, login_lifespan, internationalization_enabled, default_locale, reg_email_as_username, admin_events_enabled, admin_events_details_enabled, edit_username_allowed, otp_policy_counter, otp_policy_window, otp_policy_period, otp_policy_digits, otp_policy_alg, otp_policy_type, browser_flow, registration_flow, direct_grant_flow, reset_credentials_flow, client_auth_flow, offline_session_idle_timeout, revoke_refresh_token, access_token_life_implicit, login_with_email_allowed, duplicate_emails_allowed, docker_auth_flow, refresh_token_max_reuse, allow_user_managed_access, sso_max_lifespan_remember_me, sso_idle_timeout_remember_me) FROM stdin;
-master	60	300	60	\N	\N	\N	t	f	0	\N	master	1643820855	\N	f	f	f	f	EXTERNAL	1800	36000	f	f	3cd285ea-0f6e-43b6-ab5c-d021c33a551b	1800	f	\N	f	f	f	f	0	1	30	6	HmacSHA1	totp	ef998ef5-ca12-45db-a252-2e71b1419039	1695e7d2-ad80-4502-8479-8121a6e2a2f0	5f6f801e-0588-4a6e-860a-35483f5c1ec7	954b046d-2b24-405e-84ee-c44ffe603df2	023dc515-c259-42bb-88a8-2e8d84abca92	2592000	f	900	t	f	032b05cf-0007-44da-a370-b42039f6b762	0	f	0	0
-grafana	60	300	300	\N	\N	\N	t	f	0	\N	grafana	1662482026	\N	f	f	f	f	EXTERNAL	1800	36000	f	f	ef7f6eac-9fff-44aa-a86c-5125d52acc82	1800	f	\N	f	f	f	f	0	1	30	6	HmacSHA1	totp	a38aeb47-f27e-4e68-82ff-7cc7371a47a7	9d02badd-cb1c-4655-bf5e-f888861433ff	b478ecfb-db7e-4797-a245-8fc3b4dec884	3085fb68-fc1f-4e1c-a8be-33fb45194b04	cbb4b3ca-ced6-4046-8b59-f1c3959c7948	2592000	f	900	t	f	95e02703-f5bc-4e04-8bef-f6adc2d8173f	0	f	0	0
+COPY public.realm (id, access_code_lifespan, user_action_lifespan, access_token_lifespan, account_theme, admin_theme, email_theme, enabled, events_enabled, events_expiration, login_theme, name, not_before, password_policy, registration_allowed, remember_me, reset_password_allowed, social, ssl_required, sso_idle_timeout, sso_max_lifespan, update_profile_on_soc_login, verify_email, master_admin_client, login_lifespan, internationalization_enabled, default_locale, reg_email_as_username, admin_events_enabled, admin_events_details_enabled, edit_username_allowed, otp_policy_counter, otp_policy_window, otp_policy_period, otp_policy_digits, otp_policy_alg, otp_policy_type, browser_flow, registration_flow, direct_grant_flow, reset_credentials_flow, client_auth_flow, offline_session_idle_timeout, revoke_refresh_token, access_token_life_implicit, login_with_email_allowed, duplicate_emails_allowed, docker_auth_flow, refresh_token_max_reuse, allow_user_managed_access, sso_max_lifespan_remember_me, sso_idle_timeout_remember_me, default_role) FROM stdin;
+grafana	60	300	300	\N	\N	\N	t	f	0	\N	grafana	1662482026	\N	f	f	f	f	EXTERNAL	1800	36000	f	f	ef7f6eac-9fff-44aa-a86c-5125d52acc82	1800	f	\N	f	f	f	f	0	1	30	6	HmacSHA1	totp	a38aeb47-f27e-4e68-82ff-7cc7371a47a7	9d02badd-cb1c-4655-bf5e-f888861433ff	b478ecfb-db7e-4797-a245-8fc3b4dec884	3085fb68-fc1f-4e1c-a8be-33fb45194b04	cbb4b3ca-ced6-4046-8b59-f1c3959c7948	2592000	f	900	t	f	95e02703-f5bc-4e04-8bef-f6adc2d8173f	0	f	0	0	b4c89bc8-3945-4963-80b5-3da62e8c54ad
+master	60	300	60	\N	\N	\N	t	f	0	\N	master	1643820855	\N	f	f	f	f	EXTERNAL	1800	36000	f	f	3cd285ea-0f6e-43b6-ab5c-d021c33a551b	1800	f	\N	f	f	f	f	0	1	30	6	HmacSHA1	totp	ef998ef5-ca12-45db-a252-2e71b1419039	1695e7d2-ad80-4502-8479-8121a6e2a2f0	5f6f801e-0588-4a6e-860a-35483f5c1ec7	954b046d-2b24-405e-84ee-c44ffe603df2	023dc515-c259-42bb-88a8-2e8d84abca92	2592000	f	900	t	f	032b05cf-0007-44da-a370-b42039f6b762	0	f	0	0	9d6199e6-31e7-4497-be50-3b93faafec97
 \.
 
 
@@ -3018,63 +3042,67 @@ grafana	60	300	300	\N	\N	\N	t	f	0	\N	grafana	1662482026	\N	f	f	f	f	EXTERNAL	1800
 -- Data for Name: realm_attribute; Type: TABLE DATA; Schema: public; Owner: keycloak
 --
 
-COPY public.realm_attribute (name, value, realm_id) FROM stdin;
-_browser_header.contentSecurityPolicyReportOnly		master
-_browser_header.xContentTypeOptions	nosniff	master
-_browser_header.xRobotsTag	none	master
-_browser_header.xFrameOptions	SAMEORIGIN	master
-_browser_header.contentSecurityPolicy	frame-src 'self'; frame-ancestors 'self'; object-src 'none';	master
-_browser_header.xXSSProtection	1; mode=block	master
-_browser_header.strictTransportSecurity	max-age=31536000; includeSubDomains	master
-bruteForceProtected	false	master
-permanentLockout	false	master
-maxFailureWaitSeconds	900	master
-minimumQuickLoginWaitSeconds	60	master
-waitIncrementSeconds	60	master
-quickLoginCheckMilliSeconds	1000	master
-maxDeltaTimeSeconds	43200	master
-failureFactor	30	master
-displayName	Keycloak	master
-displayNameHtml	<div class="kc-logo-text"><span>Keycloak</span></div>	master
-offlineSessionMaxLifespanEnabled	false	master
-offlineSessionMaxLifespan	5184000	master
-_browser_header.contentSecurityPolicyReportOnly		grafana
-_browser_header.xContentTypeOptions	nosniff	grafana
-_browser_header.xRobotsTag	none	grafana
-_browser_header.xFrameOptions	SAMEORIGIN	grafana
-_browser_header.contentSecurityPolicy	frame-src 'self'; frame-ancestors 'self'; object-src 'none';	grafana
-_browser_header.xXSSProtection	1; mode=block	grafana
-_browser_header.strictTransportSecurity	max-age=31536000; includeSubDomains	grafana
-bruteForceProtected	false	grafana
-permanentLockout	false	grafana
-maxFailureWaitSeconds	900	grafana
-minimumQuickLoginWaitSeconds	60	grafana
-waitIncrementSeconds	60	grafana
-quickLoginCheckMilliSeconds	1000	grafana
-maxDeltaTimeSeconds	43200	grafana
-failureFactor	30	grafana
-offlineSessionMaxLifespanEnabled	false	grafana
-offlineSessionMaxLifespan	5184000	grafana
-actionTokenGeneratedByAdminLifespan	43200	grafana
-actionTokenGeneratedByUserLifespan	300	grafana
-webAuthnPolicyRpEntityName	keycloak	grafana
-webAuthnPolicySignatureAlgorithms	ES256	grafana
-webAuthnPolicyRpId		grafana
-webAuthnPolicyAttestationConveyancePreference	not specified	grafana
-webAuthnPolicyAuthenticatorAttachment	not specified	grafana
-webAuthnPolicyRequireResidentKey	not specified	grafana
-webAuthnPolicyUserVerificationRequirement	not specified	grafana
-webAuthnPolicyCreateTimeout	0	grafana
-webAuthnPolicyAvoidSameAuthenticatorRegister	false	grafana
-webAuthnPolicyRpEntityNamePasswordless	keycloak	grafana
-webAuthnPolicySignatureAlgorithmsPasswordless	ES256	grafana
-webAuthnPolicyRpIdPasswordless		grafana
-webAuthnPolicyAttestationConveyancePreferencePasswordless	not specified	grafana
-webAuthnPolicyAuthenticatorAttachmentPasswordless	not specified	grafana
-webAuthnPolicyRequireResidentKeyPasswordless	not specified	grafana
-webAuthnPolicyUserVerificationRequirementPasswordless	not specified	grafana
-webAuthnPolicyCreateTimeoutPasswordless	0	grafana
-webAuthnPolicyAvoidSameAuthenticatorRegisterPasswordless	false	grafana
+COPY public.realm_attribute (name, realm_id, value) FROM stdin;
+_browser_header.contentSecurityPolicyReportOnly	master	
+_browser_header.xContentTypeOptions	master	nosniff
+_browser_header.xRobotsTag	master	none
+_browser_header.xFrameOptions	master	SAMEORIGIN
+_browser_header.contentSecurityPolicy	master	frame-src 'self'; frame-ancestors 'self'; object-src 'none';
+_browser_header.xXSSProtection	master	1; mode=block
+_browser_header.strictTransportSecurity	master	max-age=31536000; includeSubDomains
+bruteForceProtected	master	false
+permanentLockout	master	false
+maxFailureWaitSeconds	master	900
+minimumQuickLoginWaitSeconds	master	60
+waitIncrementSeconds	master	60
+quickLoginCheckMilliSeconds	master	1000
+maxDeltaTimeSeconds	master	43200
+failureFactor	master	30
+displayName	master	Keycloak
+displayNameHtml	master	<div class="kc-logo-text"><span>Keycloak</span></div>
+offlineSessionMaxLifespanEnabled	master	false
+offlineSessionMaxLifespan	master	5184000
+_browser_header.contentSecurityPolicyReportOnly	grafana	
+_browser_header.xContentTypeOptions	grafana	nosniff
+_browser_header.xRobotsTag	grafana	none
+_browser_header.xFrameOptions	grafana	SAMEORIGIN
+_browser_header.contentSecurityPolicy	grafana	frame-src 'self'; frame-ancestors 'self'; object-src 'none';
+_browser_header.xXSSProtection	grafana	1; mode=block
+_browser_header.strictTransportSecurity	grafana	max-age=31536000; includeSubDomains
+bruteForceProtected	grafana	false
+permanentLockout	grafana	false
+maxFailureWaitSeconds	grafana	900
+minimumQuickLoginWaitSeconds	grafana	60
+waitIncrementSeconds	grafana	60
+quickLoginCheckMilliSeconds	grafana	1000
+maxDeltaTimeSeconds	grafana	43200
+failureFactor	grafana	30
+offlineSessionMaxLifespanEnabled	grafana	false
+offlineSessionMaxLifespan	grafana	5184000
+actionTokenGeneratedByAdminLifespan	grafana	43200
+actionTokenGeneratedByUserLifespan	grafana	300
+webAuthnPolicyRpEntityName	grafana	keycloak
+webAuthnPolicyRpId	grafana	
+webAuthnPolicySignatureAlgorithms	grafana	ES256
+webAuthnPolicyAttestationConveyancePreference	grafana	not specified
+webAuthnPolicyAuthenticatorAttachment	grafana	not specified
+webAuthnPolicyRequireResidentKey	grafana	not specified
+webAuthnPolicyUserVerificationRequirement	grafana	not specified
+webAuthnPolicyCreateTimeout	grafana	0
+webAuthnPolicyAvoidSameAuthenticatorRegister	grafana	false
+webAuthnPolicyRpEntityNamePasswordless	grafana	keycloak
+webAuthnPolicySignatureAlgorithmsPasswordless	grafana	ES256
+webAuthnPolicyRpIdPasswordless	grafana	
+webAuthnPolicyAttestationConveyancePreferencePasswordless	grafana	not specified
+webAuthnPolicyAuthenticatorAttachmentPasswordless	grafana	not specified
+webAuthnPolicyRequireResidentKeyPasswordless	grafana	not specified
+webAuthnPolicyUserVerificationRequirementPasswordless	grafana	not specified
+webAuthnPolicyCreateTimeoutPasswordless	grafana	0
+webAuthnPolicyAvoidSameAuthenticatorRegisterPasswordless	grafana	false
+client-policies.profiles	grafana	{"profiles":[]}
+client-policies.policies	grafana	{"policies":[]}
+client-policies.profiles	master	{"profiles":[]}
+client-policies.policies	master	{"policies":[]}
 \.
 
 
@@ -3083,18 +3111,6 @@ webAuthnPolicyAvoidSameAuthenticatorRegisterPasswordless	false	grafana
 --
 
 COPY public.realm_default_groups (realm_id, group_id) FROM stdin;
-\.
-
-
---
--- Data for Name: realm_default_roles; Type: TABLE DATA; Schema: public; Owner: keycloak
---
-
-COPY public.realm_default_roles (realm_id, role_id) FROM stdin;
-master	16d5987b-dcbb-4650-8f52-3469f3974846
-master	c014bfd1-a210-4e7a-8a26-35d1f5e8f1ed
-grafana	c49bddc6-ec92-4caa-bc04-57ba80a92eb9
-grafana	0f3d47bb-002a-4cd0-a502-725f224308a7
 \.
 
 
@@ -3283,6 +3299,8 @@ COPY public.role_attribute (id, role_id, name, value) FROM stdin;
 COPY public.scope_mapping (client_id, role_id) FROM stdin;
 11c67f5b-dde7-4680-b05b-c9c59d78bda4	619ba870-921e-4f28-b26c-89b11f39dddf
 230081b5-9161-45c3-9e08-9eda5412f7f7	18a7066b-fe71-410e-9581-69f78347ec29
+230081b5-9161-45c3-9e08-9eda5412f7f7	c9a895d1-c901-46b0-91cf-2c67902b4a93
+11c67f5b-dde7-4680-b05b-c9c59d78bda4	52f4a142-a4fc-44a3-95a3-53111b9c97dd
 \.
 
 
@@ -3510,14 +3528,6 @@ ALTER TABLE ONLY public.broker_link
 
 ALTER TABLE ONLY public.client_user_session_note
     ADD CONSTRAINT constr_cl_usr_ses_note PRIMARY KEY (client_session, name);
-
-
---
--- Name: client_default_roles constr_client_default_roles; Type: CONSTRAINT; Schema: public; Owner: keycloak
---
-
-ALTER TABLE ONLY public.client_default_roles
-    ADD CONSTRAINT constr_client_default_roles PRIMARY KEY (client_id, role_id);
 
 
 --
@@ -4057,14 +4067,6 @@ ALTER TABLE ONLY public.protocol_mapper_config
 
 
 --
--- Name: realm_default_roles constraint_realm_default_roles; Type: CONSTRAINT; Schema: public; Owner: keycloak
---
-
-ALTER TABLE ONLY public.realm_default_roles
-    ADD CONSTRAINT constraint_realm_default_roles PRIMARY KEY (realm_id, role_id);
-
-
---
 -- Name: redirect_uris constraint_redirect_uris; Type: CONSTRAINT; Schema: public; Owner: keycloak
 --
 
@@ -4225,14 +4227,6 @@ ALTER TABLE ONLY public.identity_provider
 
 
 --
--- Name: client_default_roles uk_8aelwnibji49avxsrtuf6xjow; Type: CONSTRAINT; Schema: public; Owner: keycloak
---
-
-ALTER TABLE ONLY public.client_default_roles
-    ADD CONSTRAINT uk_8aelwnibji49avxsrtuf6xjow UNIQUE (role_id);
-
-
---
 -- Name: client uk_b71cjlbenv945rb6gcon438at; Type: CONSTRAINT; Schema: public; Owner: keycloak
 --
 
@@ -4289,14 +4283,6 @@ ALTER TABLE ONLY public.resource_server_scope
 
 
 --
--- Name: realm_default_roles uk_h4wpd7w4hsoolni3h0sw7btje; Type: CONSTRAINT; Schema: public; Owner: keycloak
---
-
-ALTER TABLE ONLY public.realm_default_roles
-    ADD CONSTRAINT uk_h4wpd7w4hsoolni3h0sw7btje UNIQUE (role_id);
-
-
---
 -- Name: user_consent uk_jkuwuvd56ontgsuhogm8uewrt; Type: CONSTRAINT; Schema: public; Owner: keycloak
 --
 
@@ -4318,6 +4304,13 @@ ALTER TABLE ONLY public.realm
 
 ALTER TABLE ONLY public.user_entity
     ADD CONSTRAINT uk_ru8tt6t700s9v50bu18ws5ha6 UNIQUE (realm_id, username);
+
+
+--
+-- Name: idx_admin_event_time; Type: INDEX; Schema: public; Owner: keycloak
+--
+
+CREATE INDEX idx_admin_event_time ON public.admin_event_entity USING btree (realm_id, admin_event_time);
 
 
 --
@@ -4360,13 +4353,6 @@ CREATE INDEX idx_auth_flow_realm ON public.authentication_flow USING btree (real
 --
 
 CREATE INDEX idx_cl_clscope ON public.client_scope_client USING btree (scope_id);
-
-
---
--- Name: idx_client_def_roles_client; Type: INDEX; Schema: public; Owner: keycloak
---
-
-CREATE INDEX idx_client_def_roles_client ON public.client_default_roles USING btree (client_id);
 
 
 --
@@ -4573,6 +4559,13 @@ CREATE INDEX idx_fu_role_mapping_ru ON public.fed_user_role_mapping USING btree 
 
 
 --
+-- Name: idx_group_att_by_name_value; Type: INDEX; Schema: public; Owner: keycloak
+--
+
+CREATE INDEX idx_group_att_by_name_value ON public.group_attribute USING btree (name, ((value)::character varying(250)));
+
+
+--
 -- Name: idx_group_attr_group; Type: INDEX; Schema: public; Owner: keycloak
 --
 
@@ -4615,10 +4608,38 @@ CREATE INDEX idx_keycloak_role_realm ON public.keycloak_role USING btree (realm)
 
 
 --
+-- Name: idx_offline_css_preload; Type: INDEX; Schema: public; Owner: keycloak
+--
+
+CREATE INDEX idx_offline_css_preload ON public.offline_client_session USING btree (client_id, offline_flag);
+
+
+--
+-- Name: idx_offline_uss_by_user; Type: INDEX; Schema: public; Owner: keycloak
+--
+
+CREATE INDEX idx_offline_uss_by_user ON public.offline_user_session USING btree (user_id, realm_id, offline_flag);
+
+
+--
+-- Name: idx_offline_uss_by_usersess; Type: INDEX; Schema: public; Owner: keycloak
+--
+
+CREATE INDEX idx_offline_uss_by_usersess ON public.offline_user_session USING btree (realm_id, offline_flag, user_session_id);
+
+
+--
 -- Name: idx_offline_uss_createdon; Type: INDEX; Schema: public; Owner: keycloak
 --
 
 CREATE INDEX idx_offline_uss_createdon ON public.offline_user_session USING btree (created_on);
+
+
+--
+-- Name: idx_offline_uss_preload; Type: INDEX; Schema: public; Owner: keycloak
+--
+
+CREATE INDEX idx_offline_uss_preload ON public.offline_user_session USING btree (offline_flag, created_on, user_session_id);
 
 
 --
@@ -4647,13 +4668,6 @@ CREATE INDEX idx_realm_clscope ON public.client_scope USING btree (realm_id);
 --
 
 CREATE INDEX idx_realm_def_grp_realm ON public.realm_default_groups USING btree (realm_id);
-
-
---
--- Name: idx_realm_def_roles_realm; Type: INDEX; Schema: public; Owner: keycloak
---
-
-CREATE INDEX idx_realm_def_roles_realm ON public.realm_default_roles USING btree (realm_id);
 
 
 --
@@ -4790,6 +4804,13 @@ CREATE INDEX idx_user_attribute ON public.user_attribute USING btree (user_id);
 
 
 --
+-- Name: idx_user_attribute_name; Type: INDEX; Schema: public; Owner: keycloak
+--
+
+CREATE INDEX idx_user_attribute_name ON public.user_attribute USING btree (name, value);
+
+
+--
 -- Name: idx_user_consent; Type: INDEX; Schema: public; Owner: keycloak
 --
 
@@ -4829,6 +4850,13 @@ CREATE INDEX idx_user_reqactions ON public.user_required_action USING btree (use
 --
 
 CREATE INDEX idx_user_role_mapping ON public.user_role_mapping USING btree (user_id);
+
+
+--
+-- Name: idx_user_service_account; Type: INDEX; Schema: public; Owner: keycloak
+--
+
+CREATE INDEX idx_user_service_account ON public.user_entity USING btree (realm_id, service_account_client_link);
 
 
 --
@@ -5060,22 +5088,6 @@ ALTER TABLE ONLY public.user_role_mapping
 
 
 --
--- Name: client_scope_client fk_c_cli_scope_client; Type: FK CONSTRAINT; Schema: public; Owner: keycloak
---
-
-ALTER TABLE ONLY public.client_scope_client
-    ADD CONSTRAINT fk_c_cli_scope_client FOREIGN KEY (client_id) REFERENCES public.client(id);
-
-
---
--- Name: client_scope_client fk_c_cli_scope_scope; Type: FK CONSTRAINT; Schema: public; Owner: keycloak
---
-
-ALTER TABLE ONLY public.client_scope_client
-    ADD CONSTRAINT fk_c_cli_scope_scope FOREIGN KEY (scope_id) REFERENCES public.client_scope(id);
-
-
---
 -- Name: client_scope_attributes fk_cl_scope_attr_scope; Type: FK CONSTRAINT; Schema: public; Owner: keycloak
 --
 
@@ -5137,14 +5149,6 @@ ALTER TABLE ONLY public.component
 
 ALTER TABLE ONLY public.realm_default_groups
     ADD CONSTRAINT fk_def_groups_realm FOREIGN KEY (realm_id) REFERENCES public.realm(id);
-
-
---
--- Name: realm_default_roles fk_evudb1ppw84oxfax2drs03icc; Type: FK CONSTRAINT; Schema: public; Owner: keycloak
---
-
-ALTER TABLE ONLY public.realm_default_roles
-    ADD CONSTRAINT fk_evudb1ppw84oxfax2drs03icc FOREIGN KEY (realm_id) REFERENCES public.realm(id);
 
 
 --
@@ -5324,14 +5328,6 @@ ALTER TABLE ONLY public.group_attribute
 
 
 --
--- Name: keycloak_group fk_group_realm; Type: FK CONSTRAINT; Schema: public; Owner: keycloak
---
-
-ALTER TABLE ONLY public.keycloak_group
-    ADD CONSTRAINT fk_group_realm FOREIGN KEY (realm_id) REFERENCES public.realm(id);
-
-
---
 -- Name: group_role_mapping fk_group_role_group; Type: FK CONSTRAINT; Schema: public; Owner: keycloak
 --
 
@@ -5380,27 +5376,11 @@ ALTER TABLE ONLY public.web_origins
 
 
 --
--- Name: client_default_roles fk_nuilts7klwqw2h8m2b5joytky; Type: FK CONSTRAINT; Schema: public; Owner: keycloak
---
-
-ALTER TABLE ONLY public.client_default_roles
-    ADD CONSTRAINT fk_nuilts7klwqw2h8m2b5joytky FOREIGN KEY (client_id) REFERENCES public.client(id);
-
-
---
 -- Name: scope_mapping fk_ouse064plmlr732lxjcn1q5f1; Type: FK CONSTRAINT; Schema: public; Owner: keycloak
 --
 
 ALTER TABLE ONLY public.scope_mapping
     ADD CONSTRAINT fk_ouse064plmlr732lxjcn1q5f1 FOREIGN KEY (client_id) REFERENCES public.client(id);
-
-
---
--- Name: client fk_p56ctinxxb9gsk57fo49f9tac; Type: FK CONSTRAINT; Schema: public; Owner: keycloak
---
-
-ALTER TABLE ONLY public.client
-    ADD CONSTRAINT fk_p56ctinxxb9gsk57fo49f9tac FOREIGN KEY (realm_id) REFERENCES public.realm(id);
 
 
 --
@@ -5433,22 +5413,6 @@ ALTER TABLE ONLY public.protocol_mapper_config
 
 ALTER TABLE ONLY public.default_client_scope
     ADD CONSTRAINT fk_r_def_cli_scope_realm FOREIGN KEY (realm_id) REFERENCES public.realm(id);
-
-
---
--- Name: default_client_scope fk_r_def_cli_scope_scope; Type: FK CONSTRAINT; Schema: public; Owner: keycloak
---
-
-ALTER TABLE ONLY public.default_client_scope
-    ADD CONSTRAINT fk_r_def_cli_scope_scope FOREIGN KEY (scope_id) REFERENCES public.client_scope(id);
-
-
---
--- Name: client_scope fk_realm_cli_scope; Type: FK CONSTRAINT; Schema: public; Owner: keycloak
---
-
-ALTER TABLE ONLY public.client_scope
-    ADD CONSTRAINT fk_realm_cli_scope FOREIGN KEY (realm_id) REFERENCES public.realm(id);
 
 
 --

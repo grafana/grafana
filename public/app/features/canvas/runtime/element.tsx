@@ -10,6 +10,7 @@ import {
 } from 'app/features/canvas';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { DimensionContext } from 'app/features/dimensions';
+import { getConnectionsByTarget, isConnectionTarget } from 'app/plugins/panel/canvas/utils';
 
 import { Constraint, HorizontalConstraint, Placement, VerticalConstraint } from '../types';
 
@@ -285,6 +286,8 @@ export class ElementState implements LayerElement {
 
     this.applyLayoutStylesToDiv();
     this.revId++;
+
+    this.getScene()?.save();
   }
 
   updateData(ctx: DimensionContext) {
@@ -380,6 +383,12 @@ export class ElementState implements LayerElement {
 
     const scene = this.getScene();
     if (oldName !== newName && scene) {
+      if (isConnectionTarget(this, scene.byName)) {
+        getConnectionsByTarget(this, scene).forEach((connection) => {
+          connection.info.targetName = newName;
+        });
+      }
+
       scene.byName.delete(oldName);
       scene.byName.set(newName, this);
     }
@@ -444,6 +453,45 @@ export class ElementState implements LayerElement {
     }
   };
 
+  handleMouseEnter = (event: React.MouseEvent, isSelected: boolean | undefined) => {
+    const scene = this.getScene();
+    if (!scene?.isEditingEnabled) {
+      this.handleTooltip(event);
+    } else if (!isSelected) {
+      scene?.connections.handleMouseEnter(event);
+    }
+  };
+
+  handleTooltip = (event: React.MouseEvent) => {
+    const scene = this.getScene();
+    if (scene?.tooltipCallback) {
+      const rect = this.div?.getBoundingClientRect();
+      scene.tooltipCallback({
+        anchorPoint: { x: rect?.right ?? event.pageX, y: rect?.top ?? event.pageY },
+        element: this,
+        isOpen: false,
+      });
+    }
+  };
+
+  handleMouseLeave = (event: React.MouseEvent) => {
+    const scene = this.getScene();
+    if (scene?.tooltipCallback && !scene?.tooltip?.isOpen) {
+      scene.tooltipCallback(undefined);
+    }
+  };
+
+  onElementClick = (event: React.MouseEvent) => {
+    const scene = this.getScene();
+    if (scene?.tooltipCallback && scene.tooltip?.anchorPoint) {
+      scene.tooltipCallback({
+        anchorPoint: { x: scene.tooltip.anchorPoint.x, y: scene.tooltip.anchorPoint.y },
+        element: this,
+        isOpen: true,
+      });
+    }
+  };
+
   render() {
     const { item, div } = this;
     const scene = this.getScene();
@@ -451,7 +499,13 @@ export class ElementState implements LayerElement {
     const isSelected = div && scene && scene.selecto && scene.selecto.getSelectedTargets().includes(div);
 
     return (
-      <div key={this.UID} ref={this.initElement}>
+      <div
+        key={this.UID}
+        ref={this.initElement}
+        onMouseEnter={(e: React.MouseEvent) => this.handleMouseEnter(e, isSelected)}
+        onMouseLeave={!scene?.isEditingEnabled ? this.handleMouseLeave : undefined}
+        onClick={!scene?.isEditingEnabled ? this.onElementClick : undefined}
+      >
         <item.display
           key={`${this.UID}/${this.revId}`}
           config={this.options.config}

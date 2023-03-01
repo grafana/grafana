@@ -1,6 +1,7 @@
 import {
   ArrayVector,
   DataFrame,
+  DataFrameType,
   Field,
   FieldType,
   getDisplayProcessor,
@@ -14,6 +15,7 @@ import {
 import { GraphFieldConfig, LineInterpolation } from '@grafana/schema';
 import { applyNullInsertThreshold } from '@grafana/ui/src/components/GraphNG/nullInsertThreshold';
 import { nullToValue } from '@grafana/ui/src/components/GraphNG/nullToValue';
+import { partitionByValuesTransformer } from 'app/features/transformers/partitionByValues/partitionByValues';
 
 /**
  * Returns null if there are no graphable fields
@@ -25,6 +27,10 @@ export function prepareGraphableFields(
 ): DataFrame[] | null {
   if (!series?.length) {
     return null;
+  }
+
+  if (series.every((df) => df.meta?.type === DataFrameType.TimeSeriesLong)) {
+    series = prepareTimeSeriesLong(series);
   }
 
   let copy: Field;
@@ -122,11 +128,29 @@ export function prepareGraphableFields(
   }
 
   if (frames.length) {
+    setClassicPaletteIdxs(frames, theme);
     return frames;
   }
 
   return null;
 }
+
+const setClassicPaletteIdxs = (frames: DataFrame[], theme: GrafanaTheme2) => {
+  let seriesIndex = 0;
+
+  frames.forEach((frame) => {
+    frame.fields.forEach((field) => {
+      // TODO: also add FieldType.enum type here after https://github.com/grafana/grafana/pull/60491
+      if (field.type === FieldType.number || field.type === FieldType.boolean) {
+        field.state = {
+          ...field.state,
+          seriesIndex: seriesIndex++, // TODO: skip this for fields with custom renderers (e.g. Candlestick)?
+        };
+        field.display = getDisplayProcessor({ field, theme });
+      }
+    });
+  });
+};
 
 export function getTimezones(timezones: string[] | undefined, defaultTimezone: string): string[] {
   if (!timezones || !timezones.length) {
@@ -142,20 +166,16 @@ export function regenerateLinksSupplier(
   timeZone: string
 ): DataFrame {
   alignedDataFrame.fields.forEach((field) => {
-    const frameIndex = field.state?.origin?.frameIndex;
-
-    if (frameIndex === undefined) {
+    if (field.state?.origin?.frameIndex === undefined || frames[field.state?.origin?.frameIndex] === undefined) {
       return;
     }
-
-    const frame = frames[frameIndex];
-    const tempFields: Field[] = [];
 
     /* check if field has sortedVector values
       if it does, sort all string fields in the original frame by the order array already used for the field
       otherwise just attach the fields to the temporary frame used to get the links
     */
-    for (const frameField of frame.fields) {
+    const tempFields: Field[] = [];
+    for (const frameField of frames[field.state?.origin?.frameIndex].fields) {
       if (frameField.type === FieldType.string) {
         if (field.values instanceof SortedVector) {
           const copiedField = { ...frameField };
@@ -176,4 +196,21 @@ export function regenerateLinksSupplier(
   });
 
   return alignedDataFrame;
+}
+
+export function prepareTimeSeriesLong(series: DataFrame[]): DataFrame[] {
+  // Transform each dataframe of the series
+  // to handle different field names in different frames
+  return series.reduce((acc: DataFrame[], dataFrame: DataFrame) => {
+    // these could be different in each frame
+    const stringFields = dataFrame.fields.filter((field) => field.type === FieldType.string).map((field) => field.name);
+
+    // transform one dataFrame at a time and concat into DataFrame[]
+    const transformedSeries = partitionByValuesTransformer.transformer(
+      { fields: stringFields },
+      { interpolate: (value: string) => value }
+    )([dataFrame]);
+
+    return acc.concat(transformedSeries);
+  }, []);
 }

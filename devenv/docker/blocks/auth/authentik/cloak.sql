@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 12.12
--- Dumped by pg_dump version 12.12
+-- Dumped from database version 12.13
+-- Dumped by pg_dump version 12.13
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -2497,6 +2497,7 @@ COPY public.authentik_blueprints_blueprintinstance (created, last_updated, manag
 
 COPY public.authentik_core_application (policybindingmodel_ptr_id, name, slug, meta_launch_url, meta_description, meta_publisher, provider_id, meta_icon, "group", open_in_new_tab) FROM stdin;
 77d294b5-8a50-4d6d-8edd-5b15e5871826	Grafana	grafana				1			t
+506b1180-4069-4dda-9405-e185f355c34d	Grafana SAML	grafana-saml				2			t
 \.
 
 
@@ -2505,13 +2506,8 @@ COPY public.authentik_core_application (policybindingmodel_ptr_id, name, slug, m
 --
 
 COPY public.authentik_core_authenticatedsession (expires, expiring, uuid, session_key, last_ip, last_user_agent, last_used, user_id) FROM stdin;
-2022-11-08 09:17:04.214445+00	t	5e425054-99e2-42a5-825b-6f91340c588d	c62hjlwggmigklbysnjtp27ngqnnpbet	192.168.48.1	Mozilla/5.0 (X11; Linux x86_64; rv:106.0) Gecko/20100101 Firefox/106.0	2022-10-25 09:17:04.214738+00	1
-2022-11-08 09:53:30.259637+00	t	0b7411fe-871e-4936-84ec-03cd5955dc71	jeye9zabh725eoyreourgd4exswni4hz	192.168.48.1	goauthentik.io/outpost/2022.10.0	2022-10-25 09:53:30.259801+00	6
-2022-11-08 09:53:37.37657+00	t	959492a1-cf7e-40d3-8619-793981ce2226	8uc0fdpimytzcilq3tb53nsjpzjfp6x6	192.168.48.1	goauthentik.io/outpost/2022.10.0	2022-10-25 09:53:37.376711+00	6
-2022-11-08 09:53:47.038795+00	t	030b257a-ac48-4695-8d31-05ab564cc005	hevohjgfg5iptplcsylpfxlrifwn3l7q	192.168.48.1	goauthentik.io/outpost/2022.10.0	2022-10-25 09:53:47.03893+00	6
-2022-11-08 09:53:47.787505+00	t	6d327213-04a9-4ff3-8117-5f29157020fa	dp93085lk6qggac9wo1qw4k7p8iih95g	192.168.48.1	goauthentik.io/outpost/2022.10.0	2022-10-25 09:53:47.787698+00	6
-2022-11-08 09:54:00.199533+00	t	90cb55c3-56d4-4310-8516-549284316c46	02oy1th515jtb7atyhocmfusdjx5oczl	192.168.48.1	goauthentik.io/outpost/2022.10.0	2022-10-25 09:54:00.199672+00	6
-2022-11-08 09:54:00.960305+00	t	a203616f-cf71-4b30-88fb-440cb75d18eb	wqs1feozyr605vl93efmaiaqt999abiy	192.168.48.1	goauthentik.io/outpost/2022.10.0	2022-10-25 09:54:00.960442+00	5
+2023-01-16 14:16:55.806987+00	t	b7327320-c234-46b6-a1ee-05ca2d8e6871	zhvx6kegjga3td4qm1baw0nl6v6vidqd	172.24.0.1	Mozilla/5.0 (X11; Linux x86_64; rv:108.0) Gecko/20100101 Firefox/108.0	2023-01-02 14:16:55.807308+00	1
+2023-01-16 16:38:22.075322+00	t	f785c0cb-0a2c-4b03-8f0d-5577684f3e8e	av8uhyv2bz1v0g09wti608pzujwin3fh	172.24.0.1	Mozilla/5.0 (X11; Linux x86_64; rv:108.0) Gecko/20100101 Firefox/108.0	2023-01-02 16:38:22.07557+00	5
 \.
 
 
@@ -2525,6 +2521,7 @@ a9c6327c-cfca-4d5b-a0af-421645e43c31	ldapsearch	{}	\N	f
 17bb354e-cea2-48db-b322-9f9c8b53b8bb	admin	{}	\N	f
 7e216c1b-2a0f-4772-ac3d-7bdaf7511a2e	editor	{}	\N	f
 10d9a55e-195b-41a0-9fe6-63382d5b8208	viewer	{}	\N	f
+ca14281c-e025-4691-b5a2-3ee415920e80	extra-group	{}	\N	f
 \.
 
 
@@ -2561,6 +2558,7 @@ e8809202-4ff0-4086-b078-196e6152e826	authentik default OpenLDAP Mapping: cn	retu
 
 COPY public.authentik_core_provider (id, authorization_flow_id, name) FROM stdin;
 1	87ca9599-5323-451c-8603-2f5bee7a0c12	grafana-ldap
+2	a7ef54bb-7959-4559-979d-9345c022e086	grafana-saml
 \.
 
 
@@ -2569,6 +2567,13 @@ COPY public.authentik_core_provider (id, authorization_flow_id, name) FROM stdin
 --
 
 COPY public.authentik_core_provider_property_mappings (id, provider_id, propertymapping_id) FROM stdin;
+1	2	05712cf6-0557-4ae7-95e7-3a0538962b67
+2	2	38ac59c3-e754-44e7-9790-5108a2cd027c
+3	2	ef027c1a-728f-44e5-9072-6942d3e8d15e
+4	2	29fab284-b6db-433a-9c3c-7575aba47b2b
+5	2	c5d93ce6-8cda-42fa-9c19-3837ba67788a
+6	2	765b25ee-0e8b-4394-a56c-e27abf68f5ce
+7	2	b3fa1ee7-9507-4869-a29a-3c17c2482839
 \.
 
 
@@ -2606,12 +2611,12 @@ COPY public.authentik_core_token (token_uuid, expires, expiring, description, us
 COPY public.authentik_core_user (id, password, last_login, username, first_name, last_name, email, is_active, date_joined, uuid, name, password_change_date, attributes, path) FROM stdin;
 2	!n7aLj0jKk3WIaSvfbaqM1nyy6fWejHsM54lRFljX	\N	AnonymousUser				t	2022-10-25 09:01:03.467789+00	fe23113c-e658-40b0-872b-d522b6d84e95		2022-10-25 09:01:03.468042+00	{}	users
 7	pbkdf2_sha256$390000$s67BmqSPGYWQPDnZ01phY4$ky7qvH0SBsnsqeEM19AB0B4Ki8zIcmfshf7/r7aiodE=	\N	authentik-viewer			authentik-viewer@localhost	t	2022-10-25 09:56:58.979268+00	ee7aa163-4303-4c2d-99c7-293ffd9d08dd	authentik-viewer	2022-10-25 09:57:13.55852+00	{}	users
-1	pbkdf2_sha256$390000$c4McOkDtg2Hps9uyXGdezW$8g7sh3praXa6Jo1AHfrng1dsf8dktric2hQYlUyAGyY=	2022-10-25 09:17:04.22378+00	akadmin			admin@localhost	t	2022-10-25 09:00:53.707692+00	d719cb26-008d-4bff-8f5c-13d1bf53de25	authentik Default Admin	2022-10-25 09:09:42.841946+00	{}	users
 8	pbkdf2_sha256$390000$g9w4rydmb2SLrzWYyInNZZ$W5G+Y2iayJp1KIp9wHuiozJ79Mdibo3zFx+Zxvofm5s=	\N	authentik-editor			authentik-editor@localhost	t	2022-10-25 09:57:43.64112+00	3678963f-023e-48b3-97a1-0910b4fbbfea	authentik-editor	2022-10-25 09:57:54.40015+00	{}	users
-4	!yrI1uXKCdF0svOmz83ldwXJnWMOUY8oY52dzYNT1	\N	ak-outpost-efe635b92ce74de4977f9f25b9f36d97				t	2022-10-25 09:13:37.843347+00	a7dc29a9-11b7-4d35-aec1-260ae1ea62f5	Outpost ldap-outpost Service-Account	2022-10-25 09:13:37.843557+00	{"goauthentik.io/user/override-ips": true, "goauthentik.io/user/service-account": true}	goauthentik.io/outposts
-3	!8j4wiqLzHmjS9fUEU0e0DsXx4z8Cj8W6lXnOCbo3	\N	ak-outpost-0c24aadcf97e4720a70f72a190b0cafc				t	2022-10-25 09:01:07.984838+00	b9835bf9-2711-41ef-86d2-b07124b9fef9	Outpost authentik Embedded Outpost Service-Account	2022-10-25 09:01:07.98507+00	{"goauthentik.io/user/override-ips": true, "goauthentik.io/user/service-account": true}	goauthentik.io/outposts
 6	pbkdf2_sha256$390000$k0Ykknoutfj56D2AaJFxWJ$bmAmMoNISoYnUn+DQnepRd39Mp1pnY74yfAoiHwRYRc=	2022-10-25 09:54:00.207978+00	ldapservice			ldapservice@localhost	t	2022-10-25 09:49:18.218809+00	94fafa12-9abd-4567-9627-3c6998f38cca	ldapservice	2022-10-25 09:49:50.76013+00	{}	users
-5	pbkdf2_sha256$390000$GmvsVEytoLZGHoKB8LdomP$Xi06ESYoLZ/ijL0FZDT964KM9C9WoPhQtv6Rfl3b6Nc=	2022-10-25 09:54:00.969255+00	authentik-admin			authentik-admin@localhost	t	2022-10-25 09:37:30.689793+00	a7d3e4ed-8b75-456f-b3aa-f53f45afd3a4	authentik-admin	2022-10-25 09:37:49.480346+00	{}	users
+1	pbkdf2_sha256$390000$c4McOkDtg2Hps9uyXGdezW$8g7sh3praXa6Jo1AHfrng1dsf8dktric2hQYlUyAGyY=	2023-01-02 14:16:55.816269+00	akadmin			admin@localhost	t	2022-10-25 09:00:53.707692+00	d719cb26-008d-4bff-8f5c-13d1bf53de25	authentik Default Admin	2022-10-25 09:09:42.841946+00	{}	users
+5	pbkdf2_sha256$390000$GmvsVEytoLZGHoKB8LdomP$Xi06ESYoLZ/ijL0FZDT964KM9C9WoPhQtv6Rfl3b6Nc=	2023-01-02 16:38:22.084529+00	authentik-admin			authentik-admin@localhost	t	2022-10-25 09:37:30.689793+00	a7d3e4ed-8b75-456f-b3aa-f53f45afd3a4	authentik-admin	2022-10-25 09:37:49.480346+00	{}	users
+3	!8j4wiqLzHmjS9fUEU0e0DsXx4z8Cj8W6lXnOCbo3	\N	ak-outpost-0c24aadcf97e4720a70f72a190b0cafc				t	2022-10-25 09:01:07.984838+00	b9835bf9-2711-41ef-86d2-b07124b9fef9	Outpost authentik Embedded Outpost Service-Account	2022-10-25 09:01:07.98507+00	{"goauthentik.io/user/override-ips": true, "goauthentik.io/user/service-account": true}	goauthentik.io/outposts
+4	!yrI1uXKCdF0svOmz83ldwXJnWMOUY8oY52dzYNT1	\N	ak-outpost-efe635b92ce74de4977f9f25b9f36d97				t	2022-10-25 09:13:37.843347+00	a7dc29a9-11b7-4d35-aec1-260ae1ea62f5	Outpost ldap-outpost Service-Account	2022-10-25 09:13:37.843557+00	{"goauthentik.io/user/override-ips": true, "goauthentik.io/user/service-account": true}	goauthentik.io/outposts
 \.
 
 
@@ -2625,6 +2630,8 @@ COPY public.authentik_core_user_ak_groups (id, user_id, group_id) FROM stdin;
 3	5	17bb354e-cea2-48db-b322-9f9c8b53b8bb
 4	8	7e216c1b-2a0f-4772-ac3d-7bdaf7511a2e
 5	7	10d9a55e-195b-41a0-9fe6-63382d5b8208
+6	8	ca14281c-e025-4691-b5a2-3ee415920e80
+7	5	ca14281c-e025-4691-b5a2-3ee415920e80
 \.
 
 
@@ -2641,10 +2648,10 @@ COPY public.authentik_core_user_groups (id, user_id, group_id) FROM stdin;
 --
 
 COPY public.authentik_core_user_user_permissions (id, user_id, permission_id) FROM stdin;
-2	3	21
-28	4	21
-29	4	321
-30	4	348
+31	4	21
+32	4	321
+33	4	348
+34	3	21
 \.
 
 
@@ -2701,6 +2708,7 @@ a4594d02-c239-4607-b95b-3043d3d3b565	login_failed	authentik.events.signals	{"sta
 ede37431-b8b6-4b88-baaf-78a58802305c	login_failed	authentik.events.signals	{"stage": {"pk": "02b4a829f9ab45d0adcc11e3c165f1c4", "app": "authentik_stages_password", "name": "default-authentication-password", "model_name": "passwordstage"}, "password": "********************", "username": "akadmin", "http_request": {"args": {"query": "goauthentik.io%2Foutpost%2Fldap=true"}, "path": "/api/v3/flows/executor/default-authentication-flow/", "method": "POST"}}	192.168.48.1	2022-10-25 09:42:31.137414+00	{"pk": 2, "email": "", "username": "AnonymousUser"}	2023-10-25 09:42:31.132685+00	t	{"pk": "1b45e4ae6c1b4ea89691df11c97baeef", "app": "authentik_tenants", "name": "Default tenant", "model_name": "tenant"}
 8d8dab83-750e-44f3-b5f9-e33b85e2f8b2	model_updated	authentik.events.signals	{"model": {"pk": 1, "app": "authentik_providers_ldap", "name": "grafana-ldap", "model_name": "ldapprovider"}, "http_request": {"args": {}, "path": "/api/v3/providers/ldap/1/", "method": "PUT"}}	192.168.48.1	2022-10-25 09:43:27.594287+00	{"pk": 1, "email": "admin@localhost", "username": "akadmin"}	2023-10-25 09:43:27.59388+00	t	{"pk": "1b45e4ae6c1b4ea89691df11c97baeef", "app": "authentik_tenants", "name": "Default tenant", "model_name": "tenant"}
 dacab0a4-45f4-43be-8471-44d99f3b8f4f	login_failed	authentik.events.signals	{"stage": {"pk": "02b4a829f9ab45d0adcc11e3c165f1c4", "app": "authentik_stages_password", "name": "default-authentication-password", "model_name": "passwordstage"}, "password": "********************", "username": "akadmin", "http_request": {"args": {"query": "goauthentik.io%2Foutpost%2Fldap=true"}, "path": "/api/v3/flows/executor/default-authentication-flow/", "method": "POST"}}	192.168.48.1	2022-10-25 09:43:30.63453+00	{"pk": 2, "email": "", "username": "AnonymousUser"}	2023-10-25 09:43:30.629991+00	t	{"pk": "1b45e4ae6c1b4ea89691df11c97baeef", "app": "authentik_tenants", "name": "Default tenant", "model_name": "tenant"}
+12d75a37-20ee-44f4-9f1b-9f99d6dfdeea	update_available	authentik.admin.tasks	{"message": "Changelog: https://goauthentik.io/docs/releases/2022.12#fixed-in-2022121", "new_version": "2022.12.1"}	\N	2023-01-02 14:17:08.672486+00	{}	2024-01-02 14:17:08.671057+00	t	{"pk": "3fe5e3c1df6f42e1a4a934178957c3b6", "app": "authentik_tenants", "name": "Tenant fallback", "model_name": "tenant"}
 63133b06-3f6d-4b91-8dab-3de201e71ab5	model_updated	authentik.events.signals	{"model": {"pk": 1, "app": "authentik_providers_ldap", "name": "grafana-ldap", "model_name": "ldapprovider"}, "http_request": {"args": {}, "path": "/api/v3/providers/ldap/1/", "method": "PUT"}}	192.168.48.1	2022-10-25 09:44:12.026999+00	{"pk": 1, "email": "admin@localhost", "username": "akadmin"}	2023-10-25 09:44:12.026611+00	t	{"pk": "1b45e4ae6c1b4ea89691df11c97baeef", "app": "authentik_tenants", "name": "Default tenant", "model_name": "tenant"}
 8b1c946c-4713-47ff-a104-9053e97e4a70	model_created	authentik.events.signals	{"model": {"pk": "f4abcb7d5f9248908760afb9effda665", "app": "authentik_stages_identification", "name": "ldap-identification-stage", "model_name": "identificationstage"}, "http_request": {"args": {}, "path": "/api/v3/stages/identification/", "method": "POST"}}	192.168.48.1	2022-10-25 09:45:15.819069+00	{"pk": 1, "email": "admin@localhost", "username": "akadmin"}	2023-10-25 09:45:15.81859+00	t	{"pk": "1b45e4ae6c1b4ea89691df11c97baeef", "app": "authentik_tenants", "name": "Default tenant", "model_name": "tenant"}
 bcd2fae1-ef0b-4f9c-807d-67a66817d063	model_created	authentik.events.signals	{"model": {"pk": "95715d75025b4e5e9d2396826479906d", "app": "authentik_stages_password", "name": "ldap-authentication-password", "model_name": "passwordstage"}, "http_request": {"args": {}, "path": "/api/v3/stages/password/", "method": "POST"}}	192.168.48.1	2022-10-25 09:45:43.056738+00	{"pk": 1, "email": "admin@localhost", "username": "akadmin"}	2023-10-25 09:45:43.056256+00	t	{"pk": "1b45e4ae6c1b4ea89691df11c97baeef", "app": "authentik_tenants", "name": "Default tenant", "model_name": "tenant"}
@@ -2715,6 +2723,7 @@ dfab21a9-ad29-4980-a762-80a1f0c42ab5	model_created	authentik.events.signals	{"mo
 d273c74c-ec69-445b-87aa-0a7869c359b6	password_set	authentik.events.signals	{}	255.255.255.255	2022-10-25 09:49:44.127166+00	{"pk": 6, "email": "ldapservice@localhost", "username": "ldapservice"}	2023-10-25 09:49:44.12686+00	t	{"pk": "124e241c825640d9b416596b2daab8b3", "app": "authentik_tenants", "name": "Tenant fallback", "model_name": "tenant"}
 9969bf93-4d3f-4325-97db-4037c6e9ed59	model_updated	authentik.events.signals	{"model": {"pk": 6, "app": "authentik_core", "name": "ldapservice", "model_name": "user"}, "http_request": {"args": {}, "path": "/api/v3/core/users/6/set_password/", "method": "POST"}}	192.168.48.1	2022-10-25 09:49:44.253791+00	{"pk": 1, "email": "admin@localhost", "username": "akadmin"}	2023-10-25 09:49:44.253274+00	t	{"pk": "1b45e4ae6c1b4ea89691df11c97baeef", "app": "authentik_tenants", "name": "Default tenant", "model_name": "tenant"}
 f8e8270f-871a-41bd-b02e-f3c29e9897f8	password_set	authentik.events.signals	{}	255.255.255.255	2022-10-25 09:49:45.195476+00	{"pk": 6, "email": "ldapservice@localhost", "username": "ldapservice"}	2023-10-25 09:49:45.195113+00	t	{"pk": "669e359eaf174055957065109edc72a8", "app": "authentik_tenants", "name": "Tenant fallback", "model_name": "tenant"}
+a36d1d0c-a444-4dcd-b27c-297ecfce47fc	authorize_application	authentik.providers.saml.views.flows	{"flow": "a7ef54bb79594559979d9345c022e086", "http_request": {"args": {"query": "SAMLRequest=nJJBj9MwEIX%2FiuV7aicNSWttIpWtEJUWqLaFA7epM9lacuzgmQD771GzRVok1MMebc97n%2BfN3BEMfjSbic%2FhEX9MSCx%2BDz6QuTw0ckrBRCBHJsCAZNiaw%2BbTgykW2gARJnYxyFeS8bZmTJGjjV6K3baRrstWuu7zWndlX%2BaAuF6eynVV9brP39WnWq9sUeVVibUU3zCRi6GRxUJLsSOacBeIIXAjC10sM51nujjmlVnmZrlerMr6uxRbJHYBeFaemUejlI8W%2FDkSm7XWWsE4emfnEnVpQT0l6CFANh%2BIojq50LnwpBJ2LqFlJcXmb%2FP3MdA0YDpg%2Buksfn18%2BA9neeHMdmBJiv01hfcvvrcju8LJfDwe99n%2By%2BEo23lsZs4giQ8xDcC3TS43rsv6udRgYMfPsr3xzwEZOmC4U69Q7XVdPsOAu%2B0%2Bemef34DnBIEcBpZi4338dZ8QGBvJaUKp2hfkv0vZ%2FgkAAP%2F%2F&RelayState=TUVNeGt5N3FINDA5UGVEM1JuSHA1dU82TFBWUUZPSzVEcFR2U2RqQ1hrb2lOdmdKMEp8U2RLaHBycFZ6&SigAlg=http%3A%2F%2Fwww.w3.org%2F2001%2F04%2Fxmldsig-more%23rsa-sha256&Signature=w3j4ku9na9TCOBB0lF%2FHA5VTsVQb%2Fa0kuSgILzVcbLTq%2BcAcPRNmEcpVqZPHcWtIfJPw%2F%2FP0HsQhKiPm70JbrVBbZPsZO3ysTe%2Fa9bhpot1yf9HHbkFWShcT%2BA5hgap1DEvJMSZD8N5%2Fkq%2BO47s9%2F0ngZeN%2FErO41mXDrvEGXFEJfHCgU18BOAwbKN9eGj09idnldNiUJ4mm1HEbAHI935KS6buBDnLgM0dYIYZzEIBKewt7j8poD98hRyV9GnCBrN%2FH2D7yOf3IGwKBc4hdMhYbeqBKcj4MTywBEQIc1uY9nUdtRI4N1Nrfmwd2KOpribVB%2FE6musXjb%2Fxo5%2BRmvyMASQGb%2Foo1QIfDZ87lRbRNKffw8KTI7dTusJTl%2BH6mYEtWU5rd%2B6bsiSLFiLl%2F7wpFOHlynTaqte2J1Cg7RAaJt8o0V7vb3%2BpS9CxaFY%2BF8J7MLc3drOTLy9EReBgV2vmdkwS2lE92EYkOzm987nusuUGP2f8ET5oUr1udHw1w2UPdyoJHdTYiHwLUufCM1%2BgaJsoZALfzgW0vKe8ghMUrHl03M9mddynTF%2B%2F9y%2FtIp3INVoWeS6WRHhX0bwlkwBXpL675KkW7q%2F0rVYJ3m6BOt9JkzXPv3l42yQPYs8KY3TXvbwIf2m0L%2FTORX5Jnhs09rWhQrNv%2BrONgD1mUrsA%3D"}, "path": "/api/v3/flows/executor/default-provider-authorization-implicit-consent/", "method": "GET"}, "authorized_application": {"pk": "506b118040694dda9405e185f355c34d", "app": "authentik_core", "name": "Grafana SAML", "model_name": "application"}}	172.24.0.1	2023-01-02 16:31:40.277118+00	{"pk": 1, "email": "admin@localhost", "username": "akadmin"}	2024-01-02 16:31:40.276431+00	t	{"pk": "1b45e4ae6c1b4ea89691df11c97baeef", "app": "authentik_tenants", "name": "Default tenant", "model_name": "tenant"}
 c07b9726-c9a6-41d9-8750-298dc6c02bb9	model_updated	authentik.events.signals	{"model": {"pk": 6, "app": "authentik_core", "name": "ldapservice", "model_name": "user"}, "http_request": {"args": {}, "path": "/api/v3/core/users/6/set_password/", "method": "POST"}}	192.168.48.1	2022-10-25 09:49:45.334164+00	{"pk": 1, "email": "admin@localhost", "username": "akadmin"}	2023-10-25 09:49:45.333246+00	t	{"pk": "1b45e4ae6c1b4ea89691df11c97baeef", "app": "authentik_tenants", "name": "Default tenant", "model_name": "tenant"}
 0e5513c2-7946-4809-b7ad-e8ee39eb06f7	password_set	authentik.events.signals	{}	255.255.255.255	2022-10-25 09:49:50.747043+00	{"pk": 6, "email": "ldapservice@localhost", "username": "ldapservice"}	2023-10-25 09:49:50.746711+00	t	{"pk": "669e359eaf174055957065109edc72a8", "app": "authentik_tenants", "name": "Tenant fallback", "model_name": "tenant"}
 3c0fb3f6-a496-4f75-8748-065b52ecef2d	model_updated	authentik.events.signals	{"model": {"pk": 6, "app": "authentik_core", "name": "ldapservice", "model_name": "user"}, "http_request": {"args": {}, "path": "/api/v3/core/users/6/set_password/", "method": "POST"}}	192.168.48.1	2022-10-25 09:49:50.876408+00	{"pk": 1, "email": "admin@localhost", "username": "akadmin"}	2023-10-25 09:49:50.87598+00	t	{"pk": "1b45e4ae6c1b4ea89691df11c97baeef", "app": "authentik_tenants", "name": "Default tenant", "model_name": "tenant"}
@@ -2744,6 +2753,33 @@ a8885c27-5608-4eb5-a0d1-1f19dea20bda	model_created	authentik.events.signals	{"mo
 3454a52b-238c-4cb6-8db5-64c8303e339c	model_updated	authentik.events.signals	{"model": {"pk": "17bb354ecea248dbb3229f9c8b53b8bb", "app": "authentik_core", "name": "admin", "model_name": "group"}, "http_request": {"args": {}, "path": "/api/v3/core/groups/17bb354e-cea2-48db-b322-9f9c8b53b8bb/", "method": "PUT"}}	192.168.48.1	2022-10-25 09:59:21.181345+00	{"pk": 1, "email": "admin@localhost", "username": "akadmin"}	2023-10-25 09:59:21.180942+00	t	{"pk": "1b45e4ae6c1b4ea89691df11c97baeef", "app": "authentik_tenants", "name": "Default tenant", "model_name": "tenant"}
 fdf81360-a8a8-4c8f-988d-2ed85c613a49	model_updated	authentik.events.signals	{"model": {"pk": "7e216c1b2a0f4772ac3d7bdaf7511a2e", "app": "authentik_core", "name": "editor", "model_name": "group"}, "http_request": {"args": {}, "path": "/api/v3/core/groups/7e216c1b-2a0f-4772-ac3d-7bdaf7511a2e/", "method": "PUT"}}	192.168.48.1	2022-10-25 09:59:30.4796+00	{"pk": 1, "email": "admin@localhost", "username": "akadmin"}	2023-10-25 09:59:30.478673+00	t	{"pk": "1b45e4ae6c1b4ea89691df11c97baeef", "app": "authentik_tenants", "name": "Default tenant", "model_name": "tenant"}
 a3998ed2-5beb-4a26-b395-f5b579d632ca	model_updated	authentik.events.signals	{"model": {"pk": "10d9a55e195b41a09fe663382d5b8208", "app": "authentik_core", "name": "viewer", "model_name": "group"}, "http_request": {"args": {}, "path": "/api/v3/core/groups/10d9a55e-195b-41a0-9fe6-63382d5b8208/", "method": "PUT"}}	192.168.48.1	2022-10-25 09:59:42.963339+00	{"pk": 1, "email": "admin@localhost", "username": "akadmin"}	2023-10-25 09:59:42.962914+00	t	{"pk": "1b45e4ae6c1b4ea89691df11c97baeef", "app": "authentik_tenants", "name": "Default tenant", "model_name": "tenant"}
+2b3c7de7-f3cb-4e4d-bbcd-36ff4d1add8e	login	authentik.events.signals	{"auth_method": "password", "http_request": {"args": {"query": "next=%2F"}, "path": "/api/v3/flows/executor/default-authentication-flow/", "method": "GET"}, "auth_method_args": {}}	172.24.0.1	2023-01-02 14:16:55.819839+00	{"pk": 1, "email": "admin@localhost", "username": "akadmin"}	2024-01-02 14:16:55.819267+00	t	{"pk": "1b45e4ae6c1b4ea89691df11c97baeef", "app": "authentik_tenants", "name": "Default tenant", "model_name": "tenant"}
+eeb1be95-4ade-4812-93b0-2c87db29716c	update_available	authentik.admin.tasks	{"message": "Changelog: https://goauthentik.io/docs/releases/2022.12#fixed-in-2022121", "new_version": "2022.12.1"}	\N	2023-01-02 14:17:08.645256+00	{}	2024-01-02 14:17:08.643976+00	t	{"pk": "3fe5e3c1df6f42e1a4a934178957c3b6", "app": "authentik_tenants", "name": "Tenant fallback", "model_name": "tenant"}
+fa558ccb-705b-43b8-9a2e-86d4f1d8d0a0	system_task_exception	authentik.events.monitored_tasks	{"message": "Task notification_transport encountered an error: Traceback (most recent call last):\\n  File \\"/usr/local/lib/python3.10/site-packages/celery/app/trace.py\\", line 451, in trace_task\\n    R = retval = fun(*args, **kwargs)\\n  File \\"/usr/local/lib/python3.10/site-packages/sentry_sdk/integrations/celery.py\\", line 207, in _inner\\n    reraise(*exc_info)\\n  File \\"/usr/local/lib/python3.10/site-packages/sentry_sdk/_compat.py\\", line 56, in reraise\\n    raise value\\n  File \\"/usr/local/lib/python3.10/site-packages/sentry_sdk/integrations/celery.py\\", line 202, in _inner\\n    return f(*args, **kwargs)\\n  File \\"/usr/local/lib/python3.10/site-packages/celery/app/trace.py\\", line 734, in __protected_call__\\n    return self.run(*args, **kwargs)\\n  File \\"/usr/local/lib/python3.10/site-packages/celery/app/autoretry.py\\", line 54, in run\\n    ret = task.retry(exc=exc, **retry_kwargs)\\n  File \\"/usr/local/lib/python3.10/site-packages/celery/app/task.py\\", line 717, in retry\\n    raise_with_context(exc)\\n  File \\"/usr/local/lib/python3.10/site-packages/celery/app/autoretry.py\\", line 34, in run\\n    return task._orig_run(*args, **kwargs)\\n  File \\"/authentik/events/tasks.py\\", line 130, in notification_transport\\n    raise exc\\n  File \\"/authentik/events/tasks.py\\", line 126, in notification_transport\\n    transport.send(notification)\\n  File \\"/authentik/events/models.py\\", line 341, in send\\n    return self.send_email(notification)\\n  File \\"/authentik/events/models.py\\", line 463, in send_email\\n    raise NotificationTransportError from exc\\nauthentik.events.models.NotificationTransportError: "}	\N	2023-01-02 14:17:13.924879+00	{}	2024-01-02 14:17:13.924102+00	t	{"pk": "3fe5e3c1df6f42e1a4a934178957c3b6", "app": "authentik_tenants", "name": "Tenant fallback", "model_name": "tenant"}
+c1d32b85-3711-44c1-bd8b-918eba2599e2	system_task_exception	authentik.events.monitored_tasks	{"message": "Task notification_transport encountered an error: Traceback (most recent call last):\\n  File \\"/usr/local/lib/python3.10/site-packages/celery/app/trace.py\\", line 451, in trace_task\\n    R = retval = fun(*args, **kwargs)\\n  File \\"/usr/local/lib/python3.10/site-packages/sentry_sdk/integrations/celery.py\\", line 207, in _inner\\n    reraise(*exc_info)\\n  File \\"/usr/local/lib/python3.10/site-packages/sentry_sdk/_compat.py\\", line 56, in reraise\\n    raise value\\n  File \\"/usr/local/lib/python3.10/site-packages/sentry_sdk/integrations/celery.py\\", line 202, in _inner\\n    return f(*args, **kwargs)\\n  File \\"/usr/local/lib/python3.10/site-packages/celery/app/trace.py\\", line 734, in __protected_call__\\n    return self.run(*args, **kwargs)\\n  File \\"/usr/local/lib/python3.10/site-packages/celery/app/autoretry.py\\", line 54, in run\\n    ret = task.retry(exc=exc, **retry_kwargs)\\n  File \\"/usr/local/lib/python3.10/site-packages/celery/app/task.py\\", line 717, in retry\\n    raise_with_context(exc)\\n  File \\"/usr/local/lib/python3.10/site-packages/celery/app/autoretry.py\\", line 34, in run\\n    return task._orig_run(*args, **kwargs)\\n  File \\"/authentik/events/tasks.py\\", line 130, in notification_transport\\n    raise exc\\n  File \\"/authentik/events/tasks.py\\", line 126, in notification_transport\\n    transport.send(notification)\\n  File \\"/authentik/events/models.py\\", line 341, in send\\n    return self.send_email(notification)\\n  File \\"/authentik/events/models.py\\", line 463, in send_email\\n    raise NotificationTransportError from exc\\nauthentik.events.models.NotificationTransportError: "}	\N	2023-01-02 14:17:14.593626+00	{}	2024-01-02 14:17:14.592229+00	t	{"pk": "3fe5e3c1df6f42e1a4a934178957c3b6", "app": "authentik_tenants", "name": "Tenant fallback", "model_name": "tenant"}
+521e9674-7fa5-4d70-b266-9b8048b640b0	model_created	authentik.events.signals	{"model": {"pk": 2, "app": "authentik_providers_saml", "name": "grafana-saml", "model_name": "samlprovider"}, "http_request": {"args": {}, "path": "/api/v3/providers/saml/", "method": "POST"}}	172.24.0.1	2023-01-02 14:20:39.41267+00	{"pk": 1, "email": "admin@localhost", "username": "akadmin"}	2024-01-02 14:20:39.41213+00	t	{"pk": "1b45e4ae6c1b4ea89691df11c97baeef", "app": "authentik_tenants", "name": "Default tenant", "model_name": "tenant"}
+8a5a4f65-cbd8-4617-a52a-515f7e008164	model_created	authentik.events.signals	{"model": {"pk": "506b118040694dda9405e185f355c34d", "app": "authentik_core", "name": "Grafana SAML", "model_name": "application"}, "http_request": {"args": {}, "path": "/api/v3/core/applications/", "method": "POST"}}	172.24.0.1	2023-01-02 14:21:07.723593+00	{"pk": 1, "email": "admin@localhost", "username": "akadmin"}	2024-01-02 14:21:07.722493+00	t	{"pk": "1b45e4ae6c1b4ea89691df11c97baeef", "app": "authentik_tenants", "name": "Default tenant", "model_name": "tenant"}
+7ee95403-f95f-4a94-be59-0eb1210a3b55	authorize_application	authentik.providers.saml.views.flows	{"flow": "a7ef54bb79594559979d9345c022e086", "http_request": {"args": {"query": ""}, "path": "/api/v3/flows/executor/default-provider-authorization-implicit-consent/", "method": "GET"}, "authorized_application": {"pk": "506b118040694dda9405e185f355c34d", "app": "authentik_core", "name": "Grafana SAML", "model_name": "application"}}	172.24.0.1	2023-01-02 14:21:13.310418+00	{"pk": 1, "email": "admin@localhost", "username": "akadmin"}	2024-01-02 14:21:13.30943+00	t	{"pk": "1b45e4ae6c1b4ea89691df11c97baeef", "app": "authentik_tenants", "name": "Default tenant", "model_name": "tenant"}
+2e67f976-24c8-4f39-9fb8-160c8df5fc48	authorize_application	authentik.providers.saml.views.flows	{"flow": "a7ef54bb79594559979d9345c022e086", "http_request": {"args": {"query": ""}, "path": "/api/v3/flows/executor/default-provider-authorization-implicit-consent/", "method": "GET"}, "authorized_application": {"pk": "506b118040694dda9405e185f355c34d", "app": "authentik_core", "name": "Grafana SAML", "model_name": "application"}}	172.24.0.1	2023-01-02 14:21:43.965265+00	{"pk": 1, "email": "admin@localhost", "username": "akadmin"}	2024-01-02 14:21:43.964033+00	t	{"pk": "1b45e4ae6c1b4ea89691df11c97baeef", "app": "authentik_tenants", "name": "Default tenant", "model_name": "tenant"}
+a2a95f65-9f92-496e-b577-55c844b90891	model_updated	authentik.events.signals	{"model": {"pk": 2, "app": "authentik_providers_saml", "name": "grafana-saml", "model_name": "samlprovider"}, "http_request": {"args": {}, "path": "/api/v3/providers/saml/2/", "method": "PUT"}}	172.24.0.1	2023-01-02 14:22:28.185263+00	{"pk": 1, "email": "admin@localhost", "username": "akadmin"}	2024-01-02 14:22:28.184795+00	t	{"pk": "1b45e4ae6c1b4ea89691df11c97baeef", "app": "authentik_tenants", "name": "Default tenant", "model_name": "tenant"}
+95797e9f-e818-4f5d-9fdb-2d499833ae4c	model_updated	authentik.events.signals	{"model": {"pk": 2, "app": "authentik_providers_saml", "name": "grafana-saml", "model_name": "samlprovider"}, "http_request": {"args": {}, "path": "/api/v3/providers/saml/2/", "method": "PUT"}}	172.24.0.1	2023-01-02 14:23:24.663957+00	{"pk": 1, "email": "admin@localhost", "username": "akadmin"}	2024-01-02 14:23:24.663405+00	t	{"pk": "1b45e4ae6c1b4ea89691df11c97baeef", "app": "authentik_tenants", "name": "Default tenant", "model_name": "tenant"}
+aa49c5e8-b508-4046-907e-cfdca67edf75	configuration_error	authentik.providers.saml.views.sso	{"message": "Failed to verify signature", "provider": {"pk": 2, "app": "authentik_providers_saml", "name": "grafana-saml", "model_name": "samlprovider"}}	\N	2023-01-02 16:20:27.103437+00	{}	2024-01-02 16:20:27.102874+00	t	{"pk": "69cc7a86348f4144973b0cbaaea44e3f", "app": "authentik_tenants", "name": "Tenant fallback", "model_name": "tenant"}
+9aac6d1c-02e9-4e51-b705-85a86f1919df	system_task_exception	authentik.events.monitored_tasks	{"message": "Task notification_transport encountered an error: Traceback (most recent call last):\\n  File \\"/usr/local/lib/python3.10/site-packages/celery/app/trace.py\\", line 451, in trace_task\\n    R = retval = fun(*args, **kwargs)\\n  File \\"/usr/local/lib/python3.10/site-packages/sentry_sdk/integrations/celery.py\\", line 207, in _inner\\n    reraise(*exc_info)\\n  File \\"/usr/local/lib/python3.10/site-packages/sentry_sdk/_compat.py\\", line 56, in reraise\\n    raise value\\n  File \\"/usr/local/lib/python3.10/site-packages/sentry_sdk/integrations/celery.py\\", line 202, in _inner\\n    return f(*args, **kwargs)\\n  File \\"/usr/local/lib/python3.10/site-packages/celery/app/trace.py\\", line 734, in __protected_call__\\n    return self.run(*args, **kwargs)\\n  File \\"/usr/local/lib/python3.10/site-packages/celery/app/autoretry.py\\", line 54, in run\\n    ret = task.retry(exc=exc, **retry_kwargs)\\n  File \\"/usr/local/lib/python3.10/site-packages/celery/app/task.py\\", line 717, in retry\\n    raise_with_context(exc)\\n  File \\"/usr/local/lib/python3.10/site-packages/celery/app/autoretry.py\\", line 34, in run\\n    return task._orig_run(*args, **kwargs)\\n  File \\"/authentik/events/tasks.py\\", line 130, in notification_transport\\n    raise exc\\n  File \\"/authentik/events/tasks.py\\", line 126, in notification_transport\\n    transport.send(notification)\\n  File \\"/authentik/events/models.py\\", line 341, in send\\n    return self.send_email(notification)\\n  File \\"/authentik/events/models.py\\", line 463, in send_email\\n    raise NotificationTransportError from exc\\nauthentik.events.models.NotificationTransportError: "}	\N	2023-01-02 16:20:32.525925+00	{}	2024-01-02 16:20:32.524994+00	t	{"pk": "3fe5e3c1df6f42e1a4a934178957c3b6", "app": "authentik_tenants", "name": "Tenant fallback", "model_name": "tenant"}
+d93d9f43-d318-4f57-8fc5-58859aafd0a6	authorize_application	authentik.providers.saml.views.flows	{"flow": "a7ef54bb79594559979d9345c022e086", "http_request": {"args": {"query": ""}, "path": "/api/v3/flows/executor/default-provider-authorization-implicit-consent/", "method": "GET"}, "authorized_application": {"pk": "506b118040694dda9405e185f355c34d", "app": "authentik_core", "name": "Grafana SAML", "model_name": "application"}}	172.24.0.1	2023-01-02 16:20:39.35962+00	{"pk": 1, "email": "admin@localhost", "username": "akadmin"}	2024-01-02 16:20:39.358773+00	t	{"pk": "1b45e4ae6c1b4ea89691df11c97baeef", "app": "authentik_tenants", "name": "Default tenant", "model_name": "tenant"}
+9a1859e1-089a-46c9-a2a9-5ca91e1a14da	model_updated	authentik.events.signals	{"model": {"pk": 2, "app": "authentik_providers_saml", "name": "grafana-saml", "model_name": "samlprovider"}, "http_request": {"args": {}, "path": "/api/v3/providers/saml/2/", "method": "PUT"}}	172.24.0.1	2023-01-02 16:21:00.718418+00	{"pk": 1, "email": "admin@localhost", "username": "akadmin"}	2024-01-02 16:21:00.717578+00	t	{"pk": "1b45e4ae6c1b4ea89691df11c97baeef", "app": "authentik_tenants", "name": "Default tenant", "model_name": "tenant"}
+58277880-d969-4e13-ba98-dfca29dc2815	model_updated	authentik.events.signals	{"model": {"pk": 2, "app": "authentik_providers_saml", "name": "grafana-saml", "model_name": "samlprovider"}, "http_request": {"args": {}, "path": "/api/v3/providers/saml/2/", "method": "PUT"}}	172.24.0.1	2023-01-02 16:21:20.595211+00	{"pk": 1, "email": "admin@localhost", "username": "akadmin"}	2024-01-02 16:21:20.594713+00	t	{"pk": "1b45e4ae6c1b4ea89691df11c97baeef", "app": "authentik_tenants", "name": "Default tenant", "model_name": "tenant"}
+9c9fc310-2115-4aee-a0f0-d91abc0dae03	authorize_application	authentik.providers.saml.views.flows	{"flow": "a7ef54bb79594559979d9345c022e086", "http_request": {"args": {"query": ""}, "path": "/api/v3/flows/executor/default-provider-authorization-implicit-consent/", "method": "GET"}, "authorized_application": {"pk": "506b118040694dda9405e185f355c34d", "app": "authentik_core", "name": "Grafana SAML", "model_name": "application"}}	172.24.0.1	2023-01-02 16:21:26.679637+00	{"pk": 1, "email": "admin@localhost", "username": "akadmin"}	2024-01-02 16:21:26.67829+00	t	{"pk": "1b45e4ae6c1b4ea89691df11c97baeef", "app": "authentik_tenants", "name": "Default tenant", "model_name": "tenant"}
+2f1ac464-0e79-47ea-b3df-bf70f90d22c7	authorize_application	authentik.providers.saml.views.flows	{"flow": "a7ef54bb79594559979d9345c022e086", "http_request": {"args": {"query": ""}, "path": "/api/v3/flows/executor/default-provider-authorization-implicit-consent/", "method": "GET"}, "authorized_application": {"pk": "506b118040694dda9405e185f355c34d", "app": "authentik_core", "name": "Grafana SAML", "model_name": "application"}}	172.24.0.1	2023-01-02 16:21:47.199639+00	{"pk": 1, "email": "admin@localhost", "username": "akadmin"}	2024-01-02 16:21:47.198789+00	t	{"pk": "1b45e4ae6c1b4ea89691df11c97baeef", "app": "authentik_tenants", "name": "Default tenant", "model_name": "tenant"}
+d4549f57-3afb-4e6f-8726-be968bbc902f	model_updated	authentik.events.signals	{"model": {"pk": 2, "app": "authentik_providers_saml", "name": "grafana-saml", "model_name": "samlprovider"}, "http_request": {"args": {}, "path": "/api/v3/providers/saml/2/", "method": "PUT"}}	172.24.0.1	2023-01-02 16:22:24.896791+00	{"pk": 1, "email": "admin@localhost", "username": "akadmin"}	2024-01-02 16:22:24.895837+00	t	{"pk": "1b45e4ae6c1b4ea89691df11c97baeef", "app": "authentik_tenants", "name": "Default tenant", "model_name": "tenant"}
+8d6e7456-f3f6-4806-a1ae-286cd50c6e54	authorize_application	authentik.providers.saml.views.flows	{"flow": "a7ef54bb79594559979d9345c022e086", "http_request": {"args": {"query": ""}, "path": "/api/v3/flows/executor/default-provider-authorization-implicit-consent/", "method": "GET"}, "authorized_application": {"pk": "506b118040694dda9405e185f355c34d", "app": "authentik_core", "name": "Grafana SAML", "model_name": "application"}}	172.24.0.1	2023-01-02 16:22:37.062381+00	{"pk": 1, "email": "admin@localhost", "username": "akadmin"}	2024-01-02 16:22:37.061613+00	t	{"pk": "1b45e4ae6c1b4ea89691df11c97baeef", "app": "authentik_tenants", "name": "Default tenant", "model_name": "tenant"}
+7203b3e8-4475-498f-b837-5775a0501e86	authorize_application	authentik.providers.saml.views.flows	{"flow": "a7ef54bb79594559979d9345c022e086", "http_request": {"args": {"query": ""}, "path": "/api/v3/flows/executor/default-provider-authorization-implicit-consent/", "method": "GET"}, "authorized_application": {"pk": "506b118040694dda9405e185f355c34d", "app": "authentik_core", "name": "Grafana SAML", "model_name": "application"}}	172.24.0.1	2023-01-02 16:26:08.685203+00	{"pk": 1, "email": "admin@localhost", "username": "akadmin"}	2024-01-02 16:26:08.684412+00	t	{"pk": "1b45e4ae6c1b4ea89691df11c97baeef", "app": "authentik_tenants", "name": "Default tenant", "model_name": "tenant"}
+7384e1a4-157e-47dd-ad30-f0c4030a1b54	authorize_application	authentik.providers.saml.views.flows	{"flow": "a7ef54bb79594559979d9345c022e086", "http_request": {"args": {"query": "SAMLRequest=nJJBj9MwEIX%2FiuV76sRRmtbaRCpbISotUG0LB25TZ7q15NjBMwH236Nmi1QklANH2%2FPe53kzDwS9H8xm5Et4xu8jEotfvQ9krg%2BNHFMwEciRCdAjGbbmsPn4ZPQiN0CEiV0M8k4yzGuGFDna6KXYbRvpumxZl%2BeyrivbrWoN5akDrOtTpYuyWq3XS1utKnvSxVmKr5jIxdBIvcil2BGNuAvEELiROtdllhdZro%2FF0uiVKcpFWa%2B%2FSbFFYheAJ%2BWFeTBK%2BWjBXyKxWed5rmAYvLNTibq2oF4SnCFANh2Iojq50LnwohJ2LqFlJcXmT%2FOPMdDYYzpg%2BuEsfnl%2B%2BgenvHImO7Akxf6Wwrs33%2FnIbnAyH47Hfbb%2FfDjKdhqbmTJI4n1MPfC8yfXGddl5KjUY2PGrbGf%2B2SNDBwwP6g7V3tblE%2FS42%2B6jd%2Fb1P%2FCcIJDDwFJsvI8%2FHxMCYyM5jShV%2B4b8eynb3wEAAP%2F%2F&RelayState=MVFtczE2eEVENFo0amhyUEtoUFkySDJ5Wm5CRkRQWXJYaW42eTBMNTIyYkZNRENhS0Z8WkV6SHRydFZ6&SigAlg=http%3A%2F%2Fwww.w3.org%2F2001%2F04%2Fxmldsig-more%23rsa-sha256&Signature=Uds21tE5ZR3SmvxFqy9VrYyL8ujqShawaGcz0V77dayLPpeykS6JN36ZoTD4eHSPUqmHqvTziWpLC8O2IlbfANmm8%2F58AOWsxSaKjdqwlKgWeLSQUrqhDXLOdOfabzMXPFkcBg9jS7P%2FXRl4rGSyjS%2BCYTJdazdrM8w5JOBvO%2B%2B2NGfxbo1hcHbGprQTt7ScDsxt7WPcEE0GRVhEbOZAym%2Fp6ZwCGB%2FkxC%2BGN68hdbXKD%2B51X0SIdF8Apy%2BYw4nshrIqteXb6jcoTwfNQdNY25wnuJ3J4LXaE5ZqajjjIIfPFYjBsnRFuzFUed3372rahiX5ax0SWp7Fj3uxyG6%2FQil9MYSvCX1Kw0rQf5zKP%2FFohivJ3vtbgHsVa6mqgWPR%2BFyiX5xZbDi4DaHGof%2F7NM5f9g3CgcaQr5v8%2BK8eHn%2Fl1EjDlJSDr2BSJ3NX68581527VAcWZ2OjXRIeodh5DKBrQ9F9%2BTW4AEuTlRBPUWdL15209HG6MDcN5p6M0OgYh%2B6STW5FY0aqgSFBjxjXAGk%2BlKQTq%2BrpJnLQXxgJlby3%2BYkyO92Ick34NsxoaDr5ySYYtM6M%2FuZP9443t8B9xun407wdaja3CNWP8iXuM2%2FhS1JCDud%2Fb8oCq14l0sITUqUK4R%2BCEd7odJDUuSNdDjHiM%2BEW1mf3MyuB68M1dhE%3D"}, "path": "/api/v3/flows/executor/default-provider-authorization-implicit-consent/", "method": "GET"}, "authorized_application": {"pk": "506b118040694dda9405e185f355c34d", "app": "authentik_core", "name": "Grafana SAML", "model_name": "application"}}	172.24.0.1	2023-01-02 16:28:13.791097+00	{"pk": 1, "email": "admin@localhost", "username": "akadmin"}	2024-01-02 16:28:13.789745+00	t	{"pk": "1b45e4ae6c1b4ea89691df11c97baeef", "app": "authentik_tenants", "name": "Default tenant", "model_name": "tenant"}
+b4315108-6c82-4ff3-aeea-56a31d071961	model_updated	authentik.events.signals	{"model": {"pk": 2, "app": "authentik_providers_saml", "name": "grafana-saml", "model_name": "samlprovider"}, "http_request": {"args": {}, "path": "/api/v3/providers/saml/2/", "method": "PUT"}}	172.24.0.1	2023-01-02 16:30:58.798901+00	{"pk": 1, "email": "admin@localhost", "username": "akadmin"}	2024-01-02 16:30:58.797248+00	t	{"pk": "1b45e4ae6c1b4ea89691df11c97baeef", "app": "authentik_tenants", "name": "Default tenant", "model_name": "tenant"}
+439439e2-e8e7-4af6-b3ef-e563b36f674a	model_created	authentik.events.signals	{"model": {"pk": "ca14281ce0254691b5a23ee415920e80", "app": "authentik_core", "name": "extra-group", "model_name": "group"}, "http_request": {"args": {}, "path": "/api/v3/core/groups/", "method": "POST"}}	172.24.0.1	2023-01-02 16:33:50.270344+00	{"pk": 1, "email": "admin@localhost", "username": "akadmin"}	2024-01-02 16:33:50.269707+00	t	{"pk": "1b45e4ae6c1b4ea89691df11c97baeef", "app": "authentik_tenants", "name": "Default tenant", "model_name": "tenant"}
+c5efd86a-6999-4a7b-8fd9-305b26d96bc6	login	authentik.events.signals	{"auth_method": "password", "http_request": {"args": {"query": "next=%2Fapplication%2Fsaml%2Fgrafana-saml%2Fsso%2Fbinding%2Fredirect%2F%3FSAMLRequest%3DnJJBb9swDIX%252FiqC7I1t2U0%252BoDWQNhgXotqDJdtiNlelGgCx5Ir2t%252F36ImwEZMPjQoyS%252B94mPvCMY%252FGg2E5%252FCI%252F6YkFj8Hnwgc35o5JSCiUCOTIABybA1h82nB6NXuQEiTOxikFeScVkzpsjRRi%252FFbttI12VY6luLsF5bjbaobxHqQvc3T1VVV7qsir4rboq%252BRim%252BYSIXQyP1KpdiRzThLhBD4EbqXJdZXmS5PhZrU9am0Kt19V2KLRK7ADwLT8yjUcpHC%252F4Uic27PM8VjKN3di5R5w7Uc4IeAmTzgSiqJxc6F55Vws4ltKyk2Pzt%252FT4GmgZMB0w%252FncWvjw%252F%252F4ZRnzmwHlqTYX0J4%252F%252Bq7nNgFTubj8bjP9l8OR9nOUzNzBEl8iGkAXjY537gu6%252BdSg4Edv8h24Z8DMnTAcKeuUO1lWz7DgLvtPnpnX96A5wSBHAaWYuN9%252FHWfEBgbyWlCqdpX5L872f4JAAD%252F%252Fw%253D%253D%26RelayState%3DR3cwMXZJMU9xZUVaY1RZVmxVMDkwVk1DSEVkQzYzR2hBU3NNUHNkVlZxSEt1SDdrUDJ8Z2pPbHA5cFZ6%26SigAlg%3Dhttp%253A%252F%252Fwww.w3.org%252F2001%252F04%252Fxmldsig-more%2523rsa-sha256%26Signature%3DBX5F2GCFaeadEWb17AxG2mVisyVfBGrNRczpBwqe0TwTQZKySlVpaED8Vqak2hSyOC9HdKSkRmYGBJqrKPImbGzdeptgxXqlr8usnoBmxy1UF8GKrOM2ptPOqMsXargtigpS7mLatQN1spTkxyDUnfQfCknvH%252BgjQymkGDjtMtOQLEP2y3webPtuBiwv43Wl4YzojxSXALALITtANMgCqdsE8omJ%252FtuZZG2iu31j%252BJk3OTDWhZn6QBNNrV%252FMEPZOVD5CpnxagNhPC4J74rmWP2JA6Yu%252BcqFaCBTlty0do7D%252FQVvdzjHgrnAaosxltAtUkDWS47%252Fo1Ed9Jp2jTzsLzOh2%252F2EXZB7UrPIiQL28THjChuMv9ohoVrwHi6Z77SSJzJJYQmUKPC6IUg4PeoUY%252FpghlrtqxTDeghePUcLuMTusLu4wf%252BdMEvhwi20Eaz6ABr7F0TYAxnKfdEwsG%252FEIkBHa109%252Fv3YqDKKbKUuJKyUeu%252F%252Bo9YwbZG5eRDqKoBoNRbAyDOBVqXMgkTNUEhs5qtLDbOlgcim%252F5Tum5usf921zEn0Z01vGTO2bjrjdRbdJiAfAPhOj%252F69n7rJn%252FklU8NtXdiNHYZn0MLAdOKpBChjnfjehCp08n%252BG4ZcCXMe62gnD2Art0HJf30z2N76vJsoyrXMypc%252BN6WpUQSpsgb6w%253D"}, "path": "/api/v3/flows/executor/default-authentication-flow/", "method": "GET"}, "auth_method_args": {}}	172.24.0.1	2023-01-02 16:38:22.087813+00	{"pk": 5, "email": "authentik-admin@localhost", "username": "authentik-admin"}	2024-01-02 16:38:22.087203+00	t	{"pk": "1b45e4ae6c1b4ea89691df11c97baeef", "app": "authentik_tenants", "name": "Default tenant", "model_name": "tenant"}
+0ffd3d0e-31f3-4b55-bdf7-d00160afcfdc	authorize_application	authentik.providers.saml.views.flows	{"flow": "a7ef54bb79594559979d9345c022e086", "http_request": {"args": {"query": "SAMLRequest=nJJBb9swDIX%2FiqC7I1t2U0%2BoDWQNhgXotqDJdtiNlelGgCx5Ir2t%2F36ImwEZMPjQoyS%2B94mPvCMY%2FGg2E5%2FCI%2F6YkFj8Hnwgc35o5JSCiUCOTIABybA1h82nB6NXuQEiTOxikFeScVkzpsjRRi%2FFbttI12VY6luLsF5bjbaobxHqQvc3T1VVV7qsir4rboq%2BRim%2BYSIXQyP1KpdiRzThLhBD4EbqXJdZXmS5PhZrU9am0Kt19V2KLRK7ADwLT8yjUcpHC%2F4Uic27PM8VjKN3di5R5w7Uc4IeAmTzgSiqJxc6F55Vws4ltKyk2Pzt%2FT4GmgZMB0w%2FncWvjw%2F%2F4ZRnzmwHlqTYX0J4%2F%2Bq7nNgFTubj8bjP9l8OR9nOUzNzBEl8iGkAXjY537gu6%2BdSg4Edv8h24Z8DMnTAcKeuUO1lWz7DgLvtPnpnX96A5wSBHAaWYuN9%2FHWfEBgbyWlCqdpX5L872f4JAAD%2F%2Fw%3D%3D&RelayState=R3cwMXZJMU9xZUVaY1RZVmxVMDkwVk1DSEVkQzYzR2hBU3NNUHNkVlZxSEt1SDdrUDJ8Z2pPbHA5cFZ6&SigAlg=http%3A%2F%2Fwww.w3.org%2F2001%2F04%2Fxmldsig-more%23rsa-sha256&Signature=BX5F2GCFaeadEWb17AxG2mVisyVfBGrNRczpBwqe0TwTQZKySlVpaED8Vqak2hSyOC9HdKSkRmYGBJqrKPImbGzdeptgxXqlr8usnoBmxy1UF8GKrOM2ptPOqMsXargtigpS7mLatQN1spTkxyDUnfQfCknvH%2BgjQymkGDjtMtOQLEP2y3webPtuBiwv43Wl4YzojxSXALALITtANMgCqdsE8omJ%2FtuZZG2iu31j%2BJk3OTDWhZn6QBNNrV%2FMEPZOVD5CpnxagNhPC4J74rmWP2JA6Yu%2BcqFaCBTlty0do7D%2FQVvdzjHgrnAaosxltAtUkDWS47%2Fo1Ed9Jp2jTzsLzOh2%2F2EXZB7UrPIiQL28THjChuMv9ohoVrwHi6Z77SSJzJJYQmUKPC6IUg4PeoUY%2FpghlrtqxTDeghePUcLuMTusLu4wf%2BdMEvhwi20Eaz6ABr7F0TYAxnKfdEwsG%2FEIkBHa109%2Fv3YqDKKbKUuJKyUeu%2F%2Bo9YwbZG5eRDqKoBoNRbAyDOBVqXMgkTNUEhs5qtLDbOlgcim%2F5Tum5usf921zEn0Z01vGTO2bjrjdRbdJiAfAPhOj%2F69n7rJn%2FklU8NtXdiNHYZn0MLAdOKpBChjnfjehCp08n%2BG4ZcCXMe62gnD2Art0HJf30z2N76vJsoyrXMypc%2BN6WpUQSpsgb6w%3D"}, "path": "/api/v3/flows/executor/default-provider-authorization-implicit-consent/", "method": "GET"}, "authorized_application": {"pk": "506b118040694dda9405e185f355c34d", "app": "authentik_core", "name": "Grafana SAML", "model_name": "application"}}	172.24.0.1	2023-01-02 16:38:22.508665+00	{"pk": 5, "email": "authentik-admin@localhost", "username": "authentik-admin"}	2024-01-02 16:38:22.508022+00	t	{"pk": "1b45e4ae6c1b4ea89691df11c97baeef", "app": "authentik_tenants", "name": "Default tenant", "model_name": "tenant"}
+025e97e0-ee2c-4178-a410-2b832340a35a	authorize_application	authentik.providers.saml.views.flows	{"flow": "a7ef54bb79594559979d9345c022e086", "http_request": {"args": {"query": ""}, "path": "/api/v3/flows/executor/default-provider-authorization-implicit-consent/", "method": "GET"}, "authorized_application": {"pk": "506b118040694dda9405e185f355c34d", "app": "authentik_core", "name": "Grafana SAML", "model_name": "application"}}	172.24.0.1	2023-01-02 16:40:38.094961+00	{"pk": 1, "email": "admin@localhost", "username": "akadmin"}	2024-01-02 16:40:38.094424+00	t	{"pk": "1b45e4ae6c1b4ea89691df11c97baeef", "app": "authentik_tenants", "name": "Default tenant", "model_name": "tenant"}
+8cdc9b41-47bb-440b-9ce8-3fa9d7c81800	authorize_application	authentik.providers.saml.views.flows	{"flow": "a7ef54bb79594559979d9345c022e086", "http_request": {"args": {"query": "SAMLRequest=nJJBj9MwEIX%2FSuR7ajvpJsTaRCpbISotUG0LB25TZ7q15NjBMwH236Nmi1Qk1MMebc97n%2BfN3BMMfjSriU%2FhCX9MSJz9Hnwgc35oxZSCiUCOTIABybA1u9WnR1MslAEiTOxiEFeS8bZmTJGjjV5km3UrXJ%2Frpa5RN1Dp4nBodF%2FZEnVT9XWpbH1X3tW2Pmo8vBPZN0zkYmhFsVAi2xBNuAnEELgVhSrKXOlcFXtdmWVl1HJRNvq7yNZI7ALwrDwxj0ZKHy34UyQ2jVJKwjh6Z%2BcSeW5BPic4QoB8PhBFeXChd%2BFZJuxdQstSZKu%2FzT%2FEQNOAaYfpp7P49enxP5zyzJntwJLItpcU3r%2F63o7sAifzcb%2Ff5tsvu73o5rGZOYOUfYhpAL5tcr5xfX6cSw0Gdvwiuhv%2FHJChB4Z7eYXqLuvyGQbcrLfRO%2FvyBjwnCOQwsMhW3sdfDwmBsRWcJhSye0X%2Bu5TdnwAAAP%2F%2F&RelayState=VVk1bmU0UDk4clBnUnNOVk5PNFBzV3hQamFHUVgxdEszS094WUN3SEZtWnlLczg0VXV8U2F5SGhydFZ6&SigAlg=http%3A%2F%2Fwww.w3.org%2F2001%2F04%2Fxmldsig-more%23rsa-sha256&Signature=mW4CQva3Vem85Dq5yo%2BBclqHaloTreonGr4VCel4SvbiRfF5jgQDGEcxn7kcxDw8JZym8iquo7Ivx%2BM%2FuciSTWOMp2n%2FTzbkkR7QxSfYjBLUXTsoh0JBZvh2fVsJMr10rYaW%2Frig8mGmP697eEhRyma9t5HJnu6mkvE%2Biszr3qQmv85nX%2B9Ac6IBOQOsiSheeKqdZm3Yj3gb3IGZjJ5Y8xmGZSmQ%2BLbiB7AerHM8KNUqysRBoyDBcG5YTtTNao4ImNBkCxh0a45Geur3y0LwEmt0lQkY2YJzW4Uh%2B3dKCK2yRqnTZfEK7nvH37Ue0uc1Fx9zH6hjgijSqWfYAYEJWf%2B4sM%2BhMZ8tHV93bLzzaPXH%2FfhAYyo%2FMREW2AKlIYElK6dQA68wblp%2FxYXm%2BXgJoYs%2FHQqPrQLU%2BE2Bd5Me5xvUIfD2KBR3Lx9GsY8%2F0n21HTajAgxga3NuscTGlP9Is%2FLdOxfu9IY3d77ecSTTUWgkcR%2BRyEo1ApUGLWZrAp5WK1IWMbfBf0hhPmQCccjgjN%2B8kDgAE9ETst36804uotZH6VY4iuTJhdnX4EPcFl848E6BwnrnlP%2FyJ16Qb7nQGWn2zGVGFTncEtwH%2FaUb1LKp6yTuMSuSQRcqzNyFuvJDBvmWiGTbGzlt9VCbwtIVTInSI3NLin%2BMErSktt5AFVg%3D"}, "path": "/api/v3/flows/executor/default-provider-authorization-implicit-consent/", "method": "GET"}, "authorized_application": {"pk": "506b118040694dda9405e185f355c34d", "app": "authentik_core", "name": "Grafana SAML", "model_name": "application"}}	172.24.0.1	2023-01-02 16:46:04.805431+00	{"pk": 1, "email": "admin@localhost", "username": "akadmin"}	2024-01-02 16:46:04.80479+00	t	{"pk": "1b45e4ae6c1b4ea89691df11c97baeef", "app": "authentik_tenants", "name": "Default tenant", "model_name": "tenant"}
 \.
 
 
@@ -2752,6 +2788,9 @@ a3998ed2-5beb-4a26-b395-f5b579d632ca	model_updated	authentik.events.signals	{"mo
 --
 
 COPY public.authentik_events_notification (uuid, severity, body, created, seen, event_id, user_id) FROM stdin;
+2e407e51-2f8e-4386-8f0e-44075f108506	alert	Changelog: https://goauthentik.io/docs/releases/2022.12#fixed-in-2022121	2023-01-02 14:17:10.978208+00	f	eeb1be95-4ade-4812-93b0-2c87db29716c	1
+b60edc8e-400f-4598-8985-b16194cd6fe1	alert	Changelog: https://goauthentik.io/docs/releases/2022.12#fixed-in-2022121	2023-01-02 14:17:11.648064+00	f	12d75a37-20ee-44f4-9f1b-9f99d6dfdeea	1
+b124e245-e4fc-457d-9171-329220ca358f	alert	Failed to verify signature	2023-01-02 16:20:28.230329+00	f	aa49c5e8-b508-4046-907e-cfdca67edf75	1
 \.
 
 
@@ -3065,10 +3104,11 @@ cba52268-0d9a-40bd-ae7f-b723f5e05671	any
 417e795d-6832-40b6-b083-4462357471cb	any
 0a3c97a9-ac46-45cb-8718-a2984fff154a	any
 081ce9e5-201f-48e9-af60-7c10076f0857	any
-0e32dc99-655c-42f4-aca4-f3f271e010fd	any
 105415a2-7753-4a7f-bdf5-ed9841420289	any
 e4c83e8e-69f4-4993-a0c2-f99552fd76d0	any
 9fdfd009-537e-4b36-8cc8-98f62620f410	any
+0e32dc99-655c-42f4-aca4-f3f271e010fd	any
+506b1180-4069-4dda-9405-e185f355c34d	any
 \.
 
 
@@ -3082,6 +3122,8 @@ COPY public.authentik_policies_reputation_reputation (reputation_uuid, identifie
 d36ccca8-c986-4517-8110-761eac3d8be0	akadmin	192.168.48.1	{}	-2	2022-10-25 09:17:04.253267+00
 f433dfcb-3aa4-4d93-8abc-6fe2c4a77f77	ldapservice	192.168.48.1	{}	5	2022-10-25 09:53:31.155505+00
 2f00817d-e5f1-4e9d-bc4e-8210b2ca2258	authentik-admin	192.168.48.1	{}	1	2022-10-25 09:54:01.492491+00
+85999073-85b3-4f12-93b8-a98b770daa41	akadmin	172.24.0.1	{}	1	2023-01-02 14:16:56.149781+00
+0eb5ae80-8ca7-4431-bac6-2032e2e5ef97	authentik-admin	172.24.0.1	{}	1	2023-01-02 16:38:23.763498+00
 \.
 
 
@@ -3182,6 +3224,7 @@ c5d93ce6-8cda-42fa-9c19-3837ba67788a	http://schemas.xmlsoap.org/claims/Group	\N
 --
 
 COPY public.authentik_providers_saml_samlprovider (provider_ptr_id, acs_url, audience, issuer, assertion_valid_not_before, assertion_valid_not_on_or_after, session_valid_not_on_or_after, digest_algorithm, signature_algorithm, signing_kp_id, sp_binding, verification_kp_id, name_id_mapping_id) FROM stdin;
+2	http://localhost:3000/saml/acs		http://localhost:3000/saml/metadata	minutes=-5	minutes=5	minutes=86400	http://www.w3.org/2001/04/xmlenc#sha256	http://www.w3.org/2001/04/xmldsig-more#rsa-sha256	6304c995-9003-4fc4-9ba2-3d32016fb04e	post	\N	38ac59c3-e754-44e7-9790-5108a2cd027c
 \.
 
 
@@ -4053,9 +4096,9 @@ COPY public.guardian_groupobjectpermission (id, object_pk, content_type_id, grou
 --
 
 COPY public.guardian_userobjectpermission (id, object_pk, content_type_id, permission_id, user_id) FROM stdin;
-2	0c24aadc-f97e-4720-a70f-72a190b0cafc	15	63	3
-20	efe635b9-2ce7-4de4-977f-9f25b9f36d97	15	63	4
-21	1	30	125	4
+22	efe635b9-2ce7-4de4-977f-9f25b9f36d97	15	63	4
+23	1	30	125	4
+24	0c24aadc-f97e-4720-a70f-72a190b0cafc	15	63	3
 \.
 
 
@@ -4108,14 +4151,14 @@ SELECT pg_catalog.setval('public.auth_permission_id_seq', 356, true);
 -- Name: authentik_core_provider_id_seq; Type: SEQUENCE SET; Schema: public; Owner: authentik
 --
 
-SELECT pg_catalog.setval('public.authentik_core_provider_id_seq', 1, true);
+SELECT pg_catalog.setval('public.authentik_core_provider_id_seq', 2, true);
 
 
 --
 -- Name: authentik_core_provider_property_mappings_id_seq; Type: SEQUENCE SET; Schema: public; Owner: authentik
 --
 
-SELECT pg_catalog.setval('public.authentik_core_provider_property_mappings_id_seq', 1, false);
+SELECT pg_catalog.setval('public.authentik_core_provider_property_mappings_id_seq', 7, true);
 
 
 --
@@ -4143,14 +4186,14 @@ SELECT pg_catalog.setval('public.authentik_core_user_id_seq', 8, true);
 -- Name: authentik_core_user_pb_groups_id_seq; Type: SEQUENCE SET; Schema: public; Owner: authentik
 --
 
-SELECT pg_catalog.setval('public.authentik_core_user_pb_groups_id_seq', 5, true);
+SELECT pg_catalog.setval('public.authentik_core_user_pb_groups_id_seq', 7, true);
 
 
 --
 -- Name: authentik_core_user_user_permissions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: authentik
 --
 
-SELECT pg_catalog.setval('public.authentik_core_user_user_permissions_id_seq', 30, true);
+SELECT pg_catalog.setval('public.authentik_core_user_user_permissions_id_seq', 34, true);
 
 
 --
@@ -4290,7 +4333,7 @@ SELECT pg_catalog.setval('public.guardian_groupobjectpermission_id_seq', 1, fals
 -- Name: guardian_userobjectpermission_id_seq; Type: SEQUENCE SET; Schema: public; Owner: authentik
 --
 
-SELECT pg_catalog.setval('public.guardian_userobjectpermission_id_seq', 21, true);
+SELECT pg_catalog.setval('public.guardian_userobjectpermission_id_seq', 24, true);
 
 
 --

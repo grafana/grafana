@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/slugify"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	alert_models "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -42,24 +41,24 @@ func (prov *defaultAlertRuleProvisioner) Provision(ctx context.Context,
 	files []*AlertingFile) error {
 	for _, file := range files {
 		for _, group := range file.Groups {
-			folderUID, err := prov.getOrCreateFolderUID(ctx, group.Folder, group.OrgID)
+			folderUID, err := prov.getOrCreateFolderUID(ctx, group.FolderTitle, group.OrgID)
 			if err != nil {
 				return err
 			}
 			prov.logger.Debug("provisioning alert rule group",
 				"org", group.OrgID,
-				"folder", group.Folder,
+				"folder", group.FolderTitle,
 				"folderUID", folderUID,
-				"name", group.Name)
+				"name", group.Title)
 			for _, rule := range group.Rules {
 				rule.NamespaceUID = folderUID
-				rule.RuleGroup = group.Name
-				err = prov.provisionRule(ctx, group.OrgID, rule, group.Folder, folderUID)
+				rule.RuleGroup = group.Title
+				err = prov.provisionRule(ctx, group.OrgID, rule)
 				if err != nil {
 					return err
 				}
 			}
-			err = prov.ruleService.UpdateRuleGroup(ctx, group.OrgID, folderUID, group.Name, int64(group.Interval.Seconds()))
+			err = prov.ruleService.UpdateRuleGroup(ctx, group.OrgID, folderUID, group.Title, group.Interval)
 			if err != nil {
 				return err
 			}
@@ -78,9 +77,7 @@ func (prov *defaultAlertRuleProvisioner) Provision(ctx context.Context,
 func (prov *defaultAlertRuleProvisioner) provisionRule(
 	ctx context.Context,
 	orgID int64,
-	rule alert_models.AlertRule,
-	folder,
-	folderUID string) error {
+	rule alert_models.AlertRule) error {
 	prov.logger.Debug("provisioning alert rule", "uid", rule.UID, "org", rule.OrgID)
 	_, _, err := prov.ruleService.GetAlertRule(ctx, orgID, rule.UID)
 	if err != nil && !errors.Is(err, alert_models.ErrAlertRuleNotFound) {
@@ -99,11 +96,11 @@ func (prov *defaultAlertRuleProvisioner) provisionRule(
 
 func (prov *defaultAlertRuleProvisioner) getOrCreateFolderUID(
 	ctx context.Context, folderName string, orgID int64) (string, error) {
-	cmd := &models.GetDashboardQuery{
+	cmd := &dashboards.GetDashboardQuery{
 		Slug:  slugify.Slugify(folderName),
-		OrgId: orgID,
+		OrgID: orgID,
 	}
-	err := prov.dashboardService.GetDashboard(ctx, cmd)
+	cmdResult, err := prov.dashboardService.GetDashboard(ctx, cmd)
 	if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {
 		return "", err
 	}
@@ -111,22 +108,22 @@ func (prov *defaultAlertRuleProvisioner) getOrCreateFolderUID(
 	// dashboard folder not found. create one.
 	if errors.Is(err, dashboards.ErrDashboardNotFound) {
 		dash := &dashboards.SaveDashboardDTO{}
-		dash.Dashboard = models.NewDashboardFolder(folderName)
+		dash.Dashboard = dashboards.NewDashboardFolder(folderName)
 		dash.Dashboard.IsFolder = true
 		dash.Overwrite = true
-		dash.OrgId = orgID
-		dash.Dashboard.SetUid(util.GenerateShortUID())
+		dash.OrgID = orgID
+		dash.Dashboard.SetUID(util.GenerateShortUID())
 		dbDash, err := prov.dashboardProvService.SaveFolderForProvisionedDashboards(ctx, dash)
 		if err != nil {
 			return "", err
 		}
 
-		return dbDash.Uid, nil
+		return dbDash.UID, nil
 	}
 
-	if !cmd.Result.IsFolder {
+	if !cmdResult.IsFolder {
 		return "", fmt.Errorf("got invalid response. expected folder, found dashboard")
 	}
 
-	return cmd.Result.Uid, nil
+	return cmdResult.UID, nil
 }

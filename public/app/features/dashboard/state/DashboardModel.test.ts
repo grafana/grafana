@@ -1,5 +1,7 @@
 import { keys as _keys } from 'lodash';
 
+import { VariableHide } from '@grafana/data';
+import { defaultVariableModel } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { getDashboardModel } from '../../../../test/helpers/getDashboardModel';
@@ -10,6 +12,13 @@ import { createQueryVariableAdapter } from '../../variables/query/adapter';
 import { setTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { DashboardModel } from '../state/DashboardModel';
 import { PanelModel } from '../state/PanelModel';
+
+import {
+  createAnnotationJSONFixture,
+  createDashboardModelFixture,
+  createPanelJSONFixture,
+  createVariableJSONFixture,
+} from './__fixtures__/dashboardFixtures';
 
 jest.mock('app/core/services/context_srv');
 
@@ -26,7 +35,7 @@ describe('DashboardModel', () => {
     let model: DashboardModel;
 
     beforeEach(() => {
-      model = new DashboardModel({}, {});
+      model = createDashboardModelFixture();
     });
 
     it('should have title', () => {
@@ -47,8 +56,8 @@ describe('DashboardModel', () => {
     let model: DashboardModel;
 
     beforeEach(() => {
-      model = new DashboardModel({
-        panels: [{ id: 5 }],
+      model = createDashboardModelFixture({
+        panels: [createPanelJSONFixture({ id: 5 })],
       });
     });
 
@@ -59,8 +68,7 @@ describe('DashboardModel', () => {
 
   describe('getSaveModelClone', () => {
     it('should sort keys', () => {
-      const model = new DashboardModel({});
-      model.autoUpdate = null;
+      const model = createDashboardModelFixture();
 
       const saveModel = model.getSaveModelClone();
       const keys = _keys(saveModel);
@@ -70,7 +78,7 @@ describe('DashboardModel', () => {
     });
 
     it('should remove add panel panels', () => {
-      const model = new DashboardModel({});
+      const model = createDashboardModelFixture();
       model.addPanel({
         type: 'add-panel',
       });
@@ -87,7 +95,7 @@ describe('DashboardModel', () => {
     });
 
     it('should save model in edit mode', () => {
-      const model = new DashboardModel({});
+      const model = createDashboardModelFixture();
       model.addPanel({ type: 'graph' });
 
       const panel = model.initEditPanel(model.panels[0]);
@@ -105,7 +113,7 @@ describe('DashboardModel', () => {
     let dashboard: DashboardModel;
 
     beforeEach(() => {
-      dashboard = new DashboardModel({});
+      dashboard = createDashboardModelFixture();
     });
 
     it('adding panel should new up panel model', () => {
@@ -148,7 +156,7 @@ describe('DashboardModel', () => {
     let model: DashboardModel;
 
     beforeEach(() => {
-      model = new DashboardModel({ editable: false });
+      model = createDashboardModelFixture({ editable: false });
     });
 
     it('Should set meta canEdit and canSave to false', () => {
@@ -167,12 +175,11 @@ describe('DashboardModel', () => {
     let target: any;
 
     beforeEach(() => {
-      model = new DashboardModel({
+      model = createDashboardModelFixture({
+        schemaVersion: 1,
         panels: [
-          {
+          createPanelJSONFixture({
             type: 'graph',
-            grid: {},
-            yaxes: [{}, {}],
             targets: [
               {
                 alias: '$tag_datacenter $tag_source $col',
@@ -211,7 +218,7 @@ describe('DashboardModel', () => {
                 ],
               },
             ],
-          },
+          }),
         ],
       });
 
@@ -233,13 +240,9 @@ describe('DashboardModel', () => {
     let model: DashboardModel;
 
     beforeEach(() => {
-      model = new DashboardModel({
-        annotations: {
-          enable: true,
-        },
-        templating: {
-          enable: true,
-        },
+      model = createDashboardModelFixture({
+        annotations: {},
+        templating: {},
       });
     });
 
@@ -258,7 +261,7 @@ describe('DashboardModel', () => {
     let dashboard: DashboardModel;
 
     beforeEach(() => {
-      dashboard = new DashboardModel({ timezone: 'utc' });
+      dashboard = createDashboardModelFixture({ timezone: 'utc' });
     });
 
     it('Should format timestamp with second resolution by default', () => {
@@ -278,7 +281,7 @@ describe('DashboardModel', () => {
     let model: DashboardModel;
 
     beforeEach(() => {
-      model = new DashboardModel({});
+      model = createDashboardModelFixture();
     });
 
     it('should not show submenu', () => {
@@ -290,9 +293,21 @@ describe('DashboardModel', () => {
     let model: DashboardModel;
 
     beforeEach(() => {
-      model = new DashboardModel({
+      model = createDashboardModelFixture({
+        schemaVersion: 30,
         annotations: {
-          list: [{}],
+          list: [
+            {
+              datasource: { uid: 'fake-uid', type: 'prometheus' },
+              showIn: 0,
+              name: 'Fake annotation',
+              type: 'dashboard',
+              iconColor: 'rgba(0, 211, 255, 1)',
+              enable: true,
+              hide: false,
+              builtIn: 0,
+            },
+          ],
         },
       });
     });
@@ -306,15 +321,15 @@ describe('DashboardModel', () => {
     let model: DashboardModel;
 
     beforeEach(() => {
-      model = new DashboardModel(
+      model = createDashboardModelFixture(
         {
           templating: {
-            list: [{}],
+            list: [createVariableJSONFixture({})],
           },
         },
         {},
         // getVariablesFromState stub to return a variable
-        () => [{} as any]
+        jest.fn().mockImplementation(() => [{}])
       );
     });
 
@@ -327,9 +342,14 @@ describe('DashboardModel', () => {
     let model: DashboardModel;
 
     beforeEach(() => {
-      model = new DashboardModel({
+      model = createDashboardModelFixture({
         templating: {
-          list: [{ hide: 2 }],
+          list: [
+            {
+              ...defaultVariableModel,
+              hide: VariableHide.hideVariable,
+            },
+          ],
         },
       });
     });
@@ -343,9 +363,9 @@ describe('DashboardModel', () => {
     let dashboard: DashboardModel;
 
     beforeEach(() => {
-      dashboard = new DashboardModel({
+      dashboard = createDashboardModelFixture({
         annotations: {
-          list: [{ hide: true }],
+          list: [createAnnotationJSONFixture({ hide: true })],
         },
       });
     });
@@ -359,13 +379,13 @@ describe('DashboardModel', () => {
     let dashboard: DashboardModel;
 
     beforeEach(() => {
-      dashboard = new DashboardModel({
+      dashboard = createDashboardModelFixture({
         panels: [
-          { id: 1, type: 'graph', gridPos: { x: 0, y: 0, w: 24, h: 2 } },
-          { id: 2, type: 'row', gridPos: { x: 0, y: 2, w: 24, h: 2 } },
-          { id: 3, type: 'graph', gridPos: { x: 0, y: 4, w: 12, h: 2 } },
-          { id: 4, type: 'graph', gridPos: { x: 12, y: 4, w: 12, h: 2 } },
-          { id: 5, type: 'row', gridPos: { x: 0, y: 6, w: 24, h: 2 } },
+          createPanelJSONFixture({ id: 1, type: 'graph', gridPos: { x: 0, y: 0, w: 24, h: 2 } }),
+          createPanelJSONFixture({ id: 2, type: 'row', gridPos: { x: 0, y: 2, w: 24, h: 2 } }),
+          createPanelJSONFixture({ id: 3, type: 'graph', gridPos: { x: 0, y: 4, w: 12, h: 2 } }),
+          createPanelJSONFixture({ id: 4, type: 'graph', gridPos: { x: 12, y: 4, w: 12, h: 2 } }),
+          createPanelJSONFixture({ id: 5, type: 'row', gridPos: { x: 0, y: 6, w: 24, h: 2 } }),
         ],
       });
       dashboard.toggleRow(dashboard.panels[1]);
@@ -410,7 +430,7 @@ describe('DashboardModel', () => {
     let dashboard: DashboardModel;
 
     beforeEach(() => {
-      dashboard = new DashboardModel({
+      dashboard = createDashboardModelFixture({
         panels: [
           { id: 1, type: 'graph', gridPos: { x: 0, y: 0, w: 24, h: 6 } },
           {
@@ -423,7 +443,7 @@ describe('DashboardModel', () => {
               { id: 4, type: 'graph', gridPos: { x: 12, y: 7, w: 12, h: 2 } },
             ],
           },
-          { id: 5, type: 'row', gridPos: { x: 0, y: 7, w: 1, h: 1 } },
+          { id: 5, type: 'row', collapsed: false, panels: [], gridPos: { x: 0, y: 7, w: 1, h: 1 } },
         ],
       });
       dashboard.toggleRow(dashboard.panels[1]);
@@ -481,7 +501,7 @@ describe('DashboardModel', () => {
     let dashboard: DashboardModel;
 
     beforeEach(() => {
-      dashboard = new DashboardModel({
+      dashboard = createDashboardModelFixture({
         panels: [
           { id: 1, type: 'graph', gridPos: { x: 0, y: 0, w: 24, h: 6 } },
           {
@@ -490,11 +510,14 @@ describe('DashboardModel', () => {
             gridPos: { x: 0, y: 6, w: 24, h: 1 },
             collapsed: true,
             panels: [
+              // this whole test is about dealing with out-of-spec (or at least ambigious) data...
+              //@ts-expect-error
               { id: 3, type: 'graph', gridPos: { w: 12, h: 2 } },
+              //@ts-expect-error
               { id: 4, type: 'graph', gridPos: { w: 12, h: 2 } },
             ],
           },
-          { id: 5, type: 'row', gridPos: { x: 0, y: 7, w: 1, h: 1 } },
+          { id: 5, type: 'row', collapsed: false, panels: [], gridPos: { x: 0, y: 7, w: 1, h: 1 } },
         ],
       });
       dashboard.toggleRow(dashboard.panels[1]);
@@ -523,7 +546,7 @@ describe('DashboardModel', () => {
 
     beforeEach(() => {
       consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
-      model = new DashboardModel({
+      model = createDashboardModelFixture({
         time: {
           from: 'now-6h',
           to: 'now',
@@ -630,8 +653,8 @@ describe('DashboardModel', () => {
       expect(saveModel.panels[1].scopedVars).toBe(undefined);
 
       model.collapseRows();
-      const savedModelWithCollapsedRows: any = model.getSaveModelClone();
-      expect(savedModelWithCollapsedRows.panels[0].panels.length).toBe(1);
+      const savedModelWithCollapsedRows = model.getSaveModelClone();
+      expect(savedModelWithCollapsedRows.panels[0].panels!.length).toBe(1);
     });
 
     it('getSaveModelClone should not remove repeated panels and scopedVars during snapshot', () => {
@@ -685,8 +708,8 @@ describe('DashboardModel', () => {
       expect(saveModel.panels.find((x) => x.type !== 'row')?.scopedVars?.app.value).toBe('se1');
 
       model.collapseRows();
-      const savedModelWithCollapsedRows: any = model.getSaveModelClone();
-      expect(savedModelWithCollapsedRows.panels[0].panels.length).toBe(2);
+      const savedModelWithCollapsedRows = model.getSaveModelClone();
+      expect(savedModelWithCollapsedRows.panels[0].panels!.length).toBe(2);
     });
   });
 
@@ -838,14 +861,13 @@ describe('DashboardModel', () => {
     let model: DashboardModel;
 
     beforeEach(() => {
-      const data = {
+      model = createDashboardModelFixture({
         panels: [
           { id: 1, type: 'graph', gridPos: { x: 0, y: 0, w: 24, h: 2 }, legend: { show: true } },
           { id: 3, type: 'graph', gridPos: { x: 0, y: 4, w: 12, h: 2 }, legend: { show: false } },
           { id: 4, type: 'graph', gridPos: { x: 12, y: 4, w: 12, h: 2 }, legend: { show: false } },
         ],
-      };
-      model = new DashboardModel(data);
+      });
     });
 
     it('toggleLegendsForAll should toggle all legends on on first execution', () => {
@@ -876,7 +898,7 @@ describe('DashboardModel', () => {
     `(
       'when called with canEdit:{$canEdit}, canMakeEditable:{$canMakeEditable}, canAdd:{$canAdd} and expected:{$expected}',
       ({ canEdit, canMakeEditable, canAdd, expected }) => {
-        const dashboard = new DashboardModel(
+        const dashboard = createDashboardModelFixture(
           {},
           {
             annotationsPermissions: {
@@ -909,7 +931,7 @@ describe('DashboardModel', () => {
     `(
       'when called with canEdit:{$canEdit}, canMakeEditable:{$canMakeEditable}, canEditWithOrgPermission:{$canEditWithOrgPermission} and expected:{$expected}',
       ({ canEdit, canMakeEditable, canEditWithOrgPermission, expected }) => {
-        const dashboard = new DashboardModel(
+        const dashboard = createDashboardModelFixture(
           {},
           {
             annotationsPermissions: {
@@ -940,7 +962,7 @@ describe('DashboardModel', () => {
     `(
       'when called with canEdit:{$canEdit}, canMakeEditable:{$canMakeEditable}, canEditWithDashboardPermission:{$canEditWithDashboardPermission} and expected:{$expected}',
       ({ canEdit, canMakeEditable, canEditWithDashboardPermission, expected }) => {
-        const dashboard = new DashboardModel(
+        const dashboard = createDashboardModelFixture(
           {},
           {
             annotationsPermissions: {
@@ -973,7 +995,7 @@ describe('DashboardModel', () => {
     `(
       'when called with canEdit:{$canEdit}, canMakeEditable:{$canMakeEditable}, canDeleteWithOrgPermission:{$canDeleteWithOrgPermission} and expected:{$expected}',
       ({ canEdit, canMakeEditable, canDeleteWithOrgPermission, expected }) => {
-        const dashboard = new DashboardModel(
+        const dashboard = createDashboardModelFixture(
           {},
           {
             annotationsPermissions: {
@@ -1004,7 +1026,7 @@ describe('DashboardModel', () => {
     `(
       'when called with canEdit:{$canEdit}, canMakeEditable:{$canMakeEditable}, canDeleteWithDashboardPermission:{$canDeleteWithDashboardPermission} and expected:{$expected}',
       ({ canEdit, canMakeEditable, canDeleteWithDashboardPermission, expected }) => {
-        const dashboard = new DashboardModel(
+        const dashboard = createDashboardModelFixture(
           {},
           {
             annotationsPermissions: {
@@ -1025,9 +1047,9 @@ describe('DashboardModel', () => {
 
   describe('canEditPanel', () => {
     it('returns false if the dashboard cannot be edited', () => {
-      const dashboard = new DashboardModel({
+      const dashboard = createDashboardModelFixture({
         panels: [
-          { id: 1, type: 'row', gridPos: { x: 0, y: 0, w: 24, h: 6 } },
+          { id: 1, type: 'row', collapsed: false, panels: [], gridPos: { x: 0, y: 0, w: 24, h: 6 } },
           { id: 2, type: 'graph', gridPos: { x: 0, y: 7, w: 12, h: 2 } },
         ],
       });
@@ -1037,9 +1059,9 @@ describe('DashboardModel', () => {
     });
 
     it('returns false if no panel is passed in', () => {
-      const dashboard = new DashboardModel({
+      const dashboard = createDashboardModelFixture({
         panels: [
-          { id: 1, type: 'row', gridPos: { x: 0, y: 0, w: 24, h: 6 } },
+          { id: 1, type: 'row', collapsed: false, panels: [], gridPos: { x: 0, y: 0, w: 24, h: 6 } },
           { id: 2, type: 'graph', gridPos: { x: 0, y: 7, w: 12, h: 2 } },
         ],
       });
@@ -1047,9 +1069,9 @@ describe('DashboardModel', () => {
     });
 
     it('returns false if the panel is a repeat', () => {
-      const dashboard = new DashboardModel({
+      const dashboard = createDashboardModelFixture({
         panels: [
-          { id: 1, type: 'row', gridPos: { x: 0, y: 0, w: 24, h: 6 } },
+          { id: 1, type: 'row', collapsed: false, panels: [], gridPos: { x: 0, y: 0, w: 24, h: 6 } },
           { id: 2, type: 'graph', gridPos: { x: 0, y: 7, w: 12, h: 2 } },
           { id: 3, type: 'graph', gridPos: { x: 0, y: 7, w: 12, h: 2 }, repeatPanelId: 2 },
         ],
@@ -1059,9 +1081,9 @@ describe('DashboardModel', () => {
     });
 
     it('returns false if the panel is a row', () => {
-      const dashboard = new DashboardModel({
+      const dashboard = createDashboardModelFixture({
         panels: [
-          { id: 1, type: 'row', gridPos: { x: 0, y: 0, w: 24, h: 6 } },
+          { id: 1, type: 'row', collapsed: false, panels: [], gridPos: { x: 0, y: 0, w: 24, h: 6 } },
           { id: 2, type: 'graph', gridPos: { x: 0, y: 7, w: 12, h: 2 } },
         ],
       });
@@ -1070,9 +1092,9 @@ describe('DashboardModel', () => {
     });
 
     it('returns true otherwise', () => {
-      const dashboard = new DashboardModel({
+      const dashboard = createDashboardModelFixture({
         panels: [
-          { id: 1, type: 'row', gridPos: { x: 0, y: 0, w: 24, h: 6 } },
+          { id: 1, type: 'row', collapsed: false, panels: [], gridPos: { x: 0, y: 0, w: 24, h: 6 } },
           { id: 2, type: 'graph', gridPos: { x: 0, y: 7, w: 12, h: 2 } },
         ],
       });
@@ -1084,8 +1106,8 @@ describe('DashboardModel', () => {
 
 describe('exitViewPanel', () => {
   function getTestContext() {
-    const panel: any = { setIsViewing: jest.fn() };
-    const dashboard = new DashboardModel({});
+    const panel = new PanelModel({ setIsViewing: jest.fn() });
+    const dashboard = createDashboardModelFixture();
     dashboard.startRefresh = jest.fn();
     dashboard.panelInView = panel;
 
@@ -1121,8 +1143,8 @@ describe('exitViewPanel', () => {
 
 describe('exitPanelEditor', () => {
   function getTestContext(pauseAutoRefresh = false) {
-    const panel: any = { destroy: jest.fn() };
-    const dashboard = new DashboardModel({});
+    const panel = new PanelModel({ destroy: jest.fn() });
+    const dashboard = createDashboardModelFixture();
     const timeSrvMock = {
       pauseAutoRefresh: jest.fn(),
       resumeAutoRefresh: jest.fn(),
@@ -1172,7 +1194,7 @@ describe('exitPanelEditor', () => {
 
 describe('initEditPanel', () => {
   function getTestContext() {
-    const dashboard = new DashboardModel({});
+    const dashboard = createDashboardModelFixture();
     const timeSrvMock = {
       pauseAutoRefresh: jest.fn(),
       resumeAutoRefresh: jest.fn(),

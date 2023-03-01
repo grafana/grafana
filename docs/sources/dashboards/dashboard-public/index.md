@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/dashboards/dashboard-manage/
-  - /docs/grafana/latest/features/dashboard/dashboards/
-  - /docs/grafana/latest/dashboards/dashboard-public/
+  - ../features/dashboard/dashboards/
+  - dashboard-manage/
 title: Public dashboards
 weight: 8
 ---
@@ -33,26 +32,37 @@ Add the `publicDashboards` feature toggle to your `custom.ini` file.
 publicDashboards = true
 ```
 
+If you are using Docker, use an environment variable to enable public dashboards:
+
+```
+--env GF_FEATURE_TOGGLES_ENABLE=publicDashboards
+```
+
 > **Note:** For Grafana Cloud, you will need to contact support to have the feature enabled.
 
 #### Make a dashboard public
 
 - Click on the sharing icon to the right of the dashboard title.
-- Click on the Public Dashboard tab.
+- Click on the **Public dashboard** tab.
 - Acknowledge the implications of making the dashboard public by checking all the checkboxes.
-- Turn on the Enabled toggle.
-- Click `Save Sharing Configuration` to make the dashboard public and make your link live.
+- Click **Generate public URL** to make the dashboard public and make your link live.
 - Copy the public dashboard link if you'd like to share it. You can always come back later for it.
+
+#### Pause access
+
+- Click on the sharing icon to the right of the dashboard title.
+- Click on the **Public dashboard** tab.
+- Enable the **Pause sharing dashboard** toggle.
+- The dashboard is no longer accessible, even with the link, until you make it shareable again.
 
 #### Revoke access
 
 - Click on the sharing icon to the right of the dashboard title.
-- Click on the Public Dashboard tab.
-- Turn off the Enabled toggle.
-- Click `Save Sharing Configuration` to save your changes.
-- Anyone with the link will not be able to access the dashboard publicly anymore.
+- Click on the **Public dashboard** tab.
+- Click **Revoke public URL** to delete the public dashboard.
+- The link no longer works. You must create a new public URL as in [Make a dashboard public](#make-a-dashboard-public).
 
-#### Supported Datasources
+#### Supported datasources
 
 Public dashboards _should_ work with any datasource that has the properties `backend` and `alerting` both set to true in it's `package.json`. However, this cannot always be
 guaranteed because plugin developers can override this functionality. The following lists include data sources confirmed to work with public dashboards and data sources that should work but have not been confirmed as compatible.

@@ -5,7 +5,16 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 import { FixedSizeList } from 'react-window';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
-import { FilterInput, LoadingPlaceholder, useStyles2, Icon, Modal, Button, Alert } from '@grafana/ui';
+import {
+  FilterInput,
+  LoadingPlaceholder,
+  useStyles2,
+  Icon,
+  Modal,
+  Button,
+  Alert,
+  clearButtonStyles,
+} from '@grafana/ui';
 
 import { dashboardApi } from '../../api/dashboardApi';
 
@@ -99,17 +108,18 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
     const isSelected = selectedDashboardUid === dashboard.uid;
 
     return (
-      <div
+      <button
+        type="button"
         title={dashboard.title}
         style={style}
-        className={cx(styles.row, { [styles.rowOdd]: index % 2 === 1, [styles.rowSelected]: isSelected })}
+        className={cx(styles.rowButton, { [styles.rowOdd]: index % 2 === 1, [styles.rowSelected]: isSelected })}
         onClick={() => handleDashboardChange(dashboard.uid)}
       >
         <div className={styles.dashboardTitle}>{dashboard.title}</div>
         <div className={styles.dashboardFolder}>
           <Icon name="folder" /> {dashboard.folderTitle ?? 'General'}
         </div>
-      </div>
+      </button>
     );
   };
 
@@ -118,13 +128,14 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
     const isSelected = selectedPanelId === panel.id.toString();
 
     return (
-      <div
+      <button
+        type="button"
         style={style}
-        className={cx(styles.row, { [styles.rowOdd]: index % 2 === 1, [styles.rowSelected]: isSelected })}
+        className={cx(styles.rowButton, { [styles.rowOdd]: index % 2 === 1, [styles.rowSelected]: isSelected })}
         onClick={() => setSelectedPanelId(panel.id.toString())}
       >
         {panel.title || '<No title>'}
-      </div>
+      </button>
     );
   };
 
@@ -221,60 +232,66 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
   );
 };
 
-const getPickerStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: min-content auto;
-    gap: ${theme.spacing(2)};
-    flex: 1;
-  `,
-  column: css`
-    flex: 1 1 auto;
-  `,
-  dashboardTitle: css`
-    height: 22px;
-    font-weight: ${theme.typography.fontWeightBold};
-  `,
-  dashboardFolder: css`
-    height: 20px;
-    font-size: ${theme.typography.bodySmall.fontSize};
-    color: ${theme.colors.text.secondary};
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-start;
-    column-gap: ${theme.spacing(1)};
-    align-items: center;
-  `,
-  row: css`
-    padding: ${theme.spacing(0.5)};
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    cursor: pointer;
-    border: 2px solid transparent;
-  `,
-  rowSelected: css`
-    border-color: ${theme.colors.primary.border};
-  `,
-  rowOdd: css`
-    background-color: ${theme.colors.background.secondary};
-  `,
-  loadingPlaceholder: css`
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  `,
-  modal: css`
-    height: 100%;
-  `,
-  modalContent: css`
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-  `,
-  modalAlert: css`
-    flex-grow: 0;
-  `,
-});
+const getPickerStyles = (theme: GrafanaTheme2) => {
+  const clearButton = clearButtonStyles(theme);
+
+  return {
+    container: css`
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: min-content auto;
+      gap: ${theme.spacing(2)};
+      flex: 1;
+    `,
+    column: css`
+      flex: 1 1 auto;
+    `,
+    dashboardTitle: css`
+      height: 22px;
+      font-weight: ${theme.typography.fontWeightBold};
+    `,
+    dashboardFolder: css`
+      height: 20px;
+      font-size: ${theme.typography.bodySmall.fontSize};
+      color: ${theme.colors.text.secondary};
+      display: flex;
+      flex-direction: row;
+      justify-content: flex-start;
+      column-gap: ${theme.spacing(1)};
+      align-items: center;
+    `,
+    rowButton: css`
+      ${clearButton};
+      padding: ${theme.spacing(0.5)};
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-align: left;
+      white-space: nowrap;
+      cursor: pointer;
+      border: 2px solid transparent;
+    `,
+    rowSelected: css`
+      border-color: ${theme.colors.primary.border};
+    `,
+    rowOdd: css`
+      background-color: ${theme.colors.background.secondary};
+    `,
+    loadingPlaceholder: css`
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    `,
+    modal: css`
+      height: 100%;
+    `,
+    modalContent: css`
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    `,
+    modalAlert: css`
+      flex-grow: 0;
+    `,
+  };
+};

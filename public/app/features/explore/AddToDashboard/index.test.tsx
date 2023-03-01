@@ -3,8 +3,8 @@ import userEvent from '@testing-library/user-event';
 import React, { ReactNode } from 'react';
 import { Provider } from 'react-redux';
 
-import { DataQuery } from '@grafana/data';
 import { locationService, setEchoSrv } from '@grafana/runtime';
+import { DataQuery, defaultDashboard } from '@grafana/schema';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Echo } from 'app/core/services/echo/Echo';
@@ -194,14 +194,13 @@ describe('AddToDashboardButton', () => {
           const openSpy = jest.spyOn(global, 'open').mockReturnValue(true);
 
           jest.spyOn(backendSrv, 'getDashboardByUid').mockResolvedValue({
-            dashboard: { templating: { list: [] }, title: 'Dashboard Title', uid: 'someUid' },
+            dashboard: { ...defaultDashboard, templating: { list: [] }, title: 'Dashboard Title', uid: 'someUid' },
             meta: {},
           });
           jest.spyOn(backendSrv, 'search').mockResolvedValue([
             {
               uid: 'someUid',
               isStarred: false,
-              items: [],
               title: 'Dashboard Title',
               tags: [],
               type: DashboardSearchItemType.DashDB,
@@ -236,14 +235,13 @@ describe('AddToDashboardButton', () => {
           const pushSpy = jest.spyOn(locationService, 'push');
 
           jest.spyOn(backendSrv, 'getDashboardByUid').mockResolvedValue({
-            dashboard: { templating: { list: [] }, title: 'Dashboard Title', uid: 'someUid' },
+            dashboard: { ...defaultDashboard, templating: { list: [] }, title: 'Dashboard Title', uid: 'someUid' },
             meta: {},
           });
           jest.spyOn(backendSrv, 'search').mockResolvedValue([
             {
               uid: 'someUid',
               isStarred: false,
-              items: [],
               title: 'Dashboard Title',
               tags: [],
               type: DashboardSearchItemType.DashDB,
@@ -359,7 +357,6 @@ describe('AddToDashboardButton', () => {
         {
           uid: 'someUid',
           isStarred: false,
-          items: [],
           title: 'Dashboard Title',
           tags: [],
           type: DashboardSearchItemType.DashDB,

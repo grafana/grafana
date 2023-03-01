@@ -8,11 +8,15 @@ export interface Props extends Omit<React.HTMLProps<HTMLInputElement>, 'onChange
   onChange: (value: string) => void;
   onNavigate: (key: NavigationKey, clearOthers: boolean) => void;
   value: string | null;
+  currenthighlightindex?: number;
 }
 
 export class VariableInput extends PureComponent<Props> {
   onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (NavigationKey[event.keyCode]) {
+    if (
+      NavigationKey[event.keyCode] &&
+      !(event.keyCode === NavigationKey.select && this.props.currenthighlightindex === -1)
+    ) {
       const clearOthers = event.ctrlKey || event.metaKey || event.shiftKey;
       this.props.onNavigate(event.keyCode as NavigationKey, clearOthers);
       event.preventDefault();
@@ -39,7 +43,7 @@ export class VariableInput extends PureComponent<Props> {
         value={value ?? ''}
         onChange={this.onChange}
         onKeyDown={this.onKeyDown}
-        placeholder={t('variable.picker.input', 'Enter variable value')}
+        placeholder={t('variable.dropdown.placeholder', 'Enter variable value')}
       />
     );
   }

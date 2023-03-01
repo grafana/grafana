@@ -86,11 +86,12 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 					INNER JOIN (
 						SELECT u.id AS user_id
 						FROM ` + s.sql.GetDialect().Quote("user") + ` AS u WHERE u.is_admin
-					) AS sa ON 1 = 1 
+					) AS sa ON 1 = 1
 					WHERE br.role = ?
 		) AS up
 		WHERE (org_id = ? OR org_id = ?)
 		`
+
 		params := []interface{}{accesscontrol.RoleGrafanaAdmin, accesscontrol.GlobalOrgID, orgID}
 
 		if options.ActionPrefix != "" {
@@ -104,6 +105,11 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 		if options.Scope != "" {
 			q += ` AND scope = ?`
 			params = append(params, options.Scope)
+		}
+
+		if options.UserID != 0 {
+			q += ` AND user_id = ?`
+			params = append(params, options.UserID)
 		}
 
 		return sess.SQL(q, params...).
@@ -121,7 +127,7 @@ func (s *AccessControlStore) SearchUsersPermissions(ctx context.Context, orgID i
 }
 
 // GetUsersBasicRoles returns the list of user basic roles (Admin, Editor, Viewer, Grafana Admin) indexed by UserID
-func (s *AccessControlStore) GetUsersBasicRoles(ctx context.Context, orgID int64) (map[int64][]string, error) {
+func (s *AccessControlStore) GetUsersBasicRoles(ctx context.Context, userFilter []int64, orgID int64) (map[int64][]string, error) {
 	type UserOrgRole struct {
 		UserID  int64  `xorm:"id"`
 		OrgRole string `xorm:"role"`
@@ -132,12 +138,19 @@ func (s *AccessControlStore) GetUsersBasicRoles(ctx context.Context, orgID int64
 		// Find roles
 		q := `
 		SELECT u.id, ou.role, u.is_admin
-		FROM ` + s.sql.GetDialect().Quote("user") + ` AS u 
+		FROM ` + s.sql.GetDialect().Quote("user") + ` AS u
 		LEFT JOIN org_user AS ou ON u.id = ou.user_id
-		WHERE u.is_admin OR ou.org_id = ?
+		WHERE (u.is_admin OR ou.org_id = ?)
 		`
+		params := []interface{}{orgID}
+		if len(userFilter) > 0 {
+			q += "AND u.id IN (?" + strings.Repeat(",?", len(userFilter)-1) + ")"
+			for _, u := range userFilter {
+				params = append(params, u)
+			}
+		}
 
-		return sess.SQL(q, orgID).Find(&dbRoles)
+		return sess.SQL(q, params...).Find(&dbRoles)
 	}); err != nil {
 		return nil, err
 	}

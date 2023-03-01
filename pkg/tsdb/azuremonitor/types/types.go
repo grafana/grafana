@@ -66,6 +66,7 @@ type AzureMonitorQuery struct {
 	Alias      string
 	TimeRange  backend.TimeRange
 	BodyFilter string
+	Dimensions []AzureMonitorDimensionFilter
 }
 
 // AzureMonitorResponse is the json response from the Azure Monitor API
@@ -158,6 +159,12 @@ type AzureMonitorDimensionFilter struct {
 	Filter *string `json:"filter,omitempty"`
 }
 
+type AzureMonitorDimensionFilterBackend struct {
+	Key      string   `json:"key"`
+	Operator int      `json:"operator"`
+	Values   []string `json:"values"`
+}
+
 func (a AzureMonitorDimensionFilter) ConstructFiltersString() string {
 	var filterStrings []string
 	for _, filter := range a.Filters {
@@ -173,12 +180,14 @@ func (a AzureMonitorDimensionFilter) ConstructFiltersString() string {
 // LogJSONQuery is the frontend JSON query model for an Azure Log Analytics query.
 type LogJSONQuery struct {
 	AzureLogAnalytics struct {
-		Query        string `json:"query"`
-		ResultFormat string `json:"resultFormat"`
-		Resource     string `json:"resource"`
+		Query        string   `json:"query"`
+		ResultFormat string   `json:"resultFormat"`
+		Resources    []string `json:"resources"`
 
 		// Deprecated: Queries should be migrated to use Resource instead
 		Workspace string `json:"workspace"`
+		// Deprecated: Use Resources instead
+		Resource string `json:"resource"`
 	} `json:"azureLogAnalytics"`
 }
 

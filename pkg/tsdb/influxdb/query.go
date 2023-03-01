@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
@@ -44,7 +45,7 @@ func (query *Query) Build(queryContext *backend.QueryDataRequest) (string, error
 }
 
 func (query *Query) renderTags() []string {
-	var res []string
+	res := make([]string, 0, len(query.Tags))
 	for i, tag := range query.Tags {
 		str := ""
 
@@ -91,7 +92,7 @@ func (query *Query) renderTimeFilter(queryContext *backend.QueryDataRequest) str
 func (query *Query) renderSelectors(queryContext *backend.QueryDataRequest) string {
 	res := "SELECT "
 
-	var selectors []string
+	selectors := make([]string, 0, len(query.Selects))
 	for _, sel := range query.Selects {
 		stk := ""
 		for _, s := range *sel {

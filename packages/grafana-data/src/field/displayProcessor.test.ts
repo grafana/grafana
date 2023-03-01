@@ -17,11 +17,14 @@ function getDisplayProcessorFromConfig(config: FieldConfig, fieldType: FieldType
   });
 }
 
-function assertSame(input: any, processors: DisplayProcessor[], match: DisplayValue) {
+function assertSame(input: unknown, processors: DisplayProcessor[], match: DisplayValue) {
   processors.forEach((processor) => {
     const value = processor(input);
     for (const key of Object.keys(match)) {
-      expect((value as any)[key]).toEqual((match as any)[key]);
+      // need to type assert on the object keys here
+      // see e.g. https://github.com/Microsoft/TypeScript/issues/12870
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      expect(value[key as keyof typeof match]).toEqual(match[key as keyof typeof match]);
     }
   });
 }

@@ -10,10 +10,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
+	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -80,9 +79,9 @@ func (p *Provider) pluginContext(ctx context.Context, pluginID string, user *use
 
 	ps, err := p.getCachedPluginSettings(ctx, pluginID, user)
 	if err != nil {
-		// models.ErrPluginSettingNotFound is expected if there's no row found for plugin setting in database (if non-app plugin).
+		// pluginsettings.ErrPluginSettingNotFound is expected if there's no row found for plugin setting in database (if non-app plugin).
 		// If it's not this expected error something is wrong with cache or database and we return the error to the client.
-		if !errors.Is(err, models.ErrPluginSettingNotFound) {
+		if !errors.Is(err, pluginsettings.ErrPluginSettingNotFound) {
 			return backend.PluginContext{}, false, fmt.Errorf("%v: %w", "Failed to get plugin settings", err)
 		}
 	} else {
@@ -107,7 +106,7 @@ func (p *Provider) pluginContext(ctx context.Context, pluginID string, user *use
 }
 
 func (p *Provider) getCachedPluginSettings(ctx context.Context, pluginID string, user *user.SignedInUser) (*pluginsettings.DTO, error) {
-	cacheKey := pluginSettingsCachePrefix + pluginID
+	cacheKey := getCacheKey(pluginID)
 
 	if cached, found := p.cacheService.Get(cacheKey); found {
 		ps := cached.(*pluginsettings.DTO)
@@ -128,8 +127,16 @@ func (p *Provider) getCachedPluginSettings(ctx context.Context, pluginID string,
 	return ps, nil
 }
 
+func (p *Provider) InvalidateSettingsCache(_ context.Context, pluginID string) {
+	p.cacheService.Delete(getCacheKey(pluginID))
+}
+
 func (p *Provider) decryptSecureJsonDataFn(ctx context.Context) func(ds *datasources.DataSource) (map[string]string, error) {
 	return func(ds *datasources.DataSource) (map[string]string, error) {
 		return p.dataSourceService.DecryptedValues(ctx, ds)
 	}
+}
+
+func getCacheKey(pluginID string) string {
+	return pluginSettingsCachePrefix + pluginID
 }

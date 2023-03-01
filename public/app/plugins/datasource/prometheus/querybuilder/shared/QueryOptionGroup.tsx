@@ -2,42 +2,58 @@ import { css } from '@emotion/css';
 import React from 'react';
 import { useToggle } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { getValueFormat, GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Icon, useStyles2 } from '@grafana/ui';
+import { QueryStats } from 'app/plugins/datasource/loki/types';
 
 export interface Props {
   title: string;
   collapsedInfo: string[];
+  queryStats?: QueryStats;
   children: React.ReactNode;
 }
 
-export function QueryOptionGroup({ title, children, collapsedInfo }: Props) {
+export function QueryOptionGroup({ title, children, collapsedInfo, queryStats }: Props) {
   const [isOpen, toggleOpen] = useToggle(false);
   const styles = useStyles2(getStyles);
 
+  const convertUnits = (): string => {
+    const { text, suffix } = getValueFormat('bytes')(queryStats!.bytes, 1);
+    return text + suffix;
+  };
+
   return (
-    <Stack gap={0} direction="column">
-      <div className={styles.header} onClick={toggleOpen} title="Click to edit options">
-        <div className={styles.toggle}>
-          <Icon name={isOpen ? 'angle-down' : 'angle-right'} />
-        </div>
-        <h6 className={styles.title}>{title}</h6>
-        {!isOpen && (
-          <div className={styles.description}>
-            {collapsedInfo.map((x, i) => (
-              <span key={i}>{x}</span>
-            ))}
+    <div className={styles.wrapper}>
+      <Stack gap={0} direction="column">
+        <div className={styles.header} onClick={toggleOpen} title="Click to edit options">
+          <div className={styles.toggle}>
+            <Icon name={isOpen ? 'angle-down' : 'angle-right'} />
           </div>
-        )}
-      </div>
-      {isOpen && <div className={styles.body}>{children}</div>}
-    </Stack>
+          <h6 className={styles.title}>{title}</h6>
+          {!isOpen && (
+            <div className={styles.description}>
+              {collapsedInfo.map((x, i) => (
+                <span key={i}>{x}</span>
+              ))}
+            </div>
+          )}
+        </div>
+        {isOpen && <div className={styles.body}>{children}</div>}
+      </Stack>
+      {queryStats && <p className={styles.stats}>This query will process approximately {convertUnits()}.</p>}
+    </div>
   );
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
+    wrapper: css({
+      width: '100%',
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'baseline',
+    }),
     switchLabel: css({
       color: theme.colors.text.secondary,
       cursor: 'pointer',
@@ -78,6 +94,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     toggle: css({
       color: theme.colors.text.secondary,
       marginRight: `${theme.spacing(1)}`,
+    }),
+    stats: css({
+      margin: '0px',
+      color: theme.colors.text.secondary,
+      fontSize: theme.typography.bodySmall.fontSize,
     }),
   };
 };

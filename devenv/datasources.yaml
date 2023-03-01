@@ -76,11 +76,12 @@ datasources:
   - name: gdev-influxdb1-influxql
     type: influxdb
     access: proxy
-    database: site
     user: grafana
     url: http://localhost:8087
     secureJsonData:
       password: grafana
+    jsonData:
+      dbName: site
 
   - name: gdev-influxdb-flux
     type: influxdb
@@ -98,9 +99,9 @@ datasources:
   - name: gdev-influxdb-influxql
     type: influxdb
     access: proxy
-    database: mybucket
     url: http://localhost:8086
     jsonData:
+      dbName: mybucket
       httpHeaderName1: "Authorization"
     secureJsonData:
       httpHeaderValue1: "Token mytoken"
@@ -160,33 +161,36 @@ datasources:
   - name: gdev-mysql
     type: mysql
     url: localhost:3306
-    database: grafana
     user: grafana
+    jsonData:
+      database: grafana
     secureJsonData:
       password: password
 
   - name: gdev-mysql-ds-tests
     type: mysql
     url: localhost:3306
-    database: grafana_ds_tests
     user: grafana
+    jsonData:
+      database: grafana_ds_tests
     secureJsonData:
       password: password
 
   - name: gdev-mssql
     type: mssql
     url: localhost:1433
-    database: grafana
     user: grafana
+    jsonData:
+      database: grafana
     secureJsonData:
       password: Password!
 
   - name: gdev-mssql-tls
     type: mssql
     url: localhost:1434
-    database: grafana
     user: grafana
     jsonData:
+      database: grafana
       encrypt: "true"
       tlsSkipVerify: true
     secureJsonData:
@@ -195,30 +199,31 @@ datasources:
   - name: gdev-mssql-ds-tests
     type: mssql
     url: localhost:1433
-    database: grafanatest
     user: grafana
+    jsonData:
+      database: grafanatest
     secureJsonData:
       password: Password!
 
   - name: gdev-postgres
     type: postgres
     url: localhost:5432
-    database: grafana
     user: grafana
     secureJsonData:
       password: password
     jsonData:
       sslmode: "disable"
+      database: grafana
 
   - name: gdev-postgres-ds-tests
     type: postgres
     url: localhost:5432
-    database: grafanadstest
     user: grafanatest
     secureJsonData:
       password: grafanatest
     jsonData:
       sslmode: "disable"
+      database: grafanadstest
 
   - name: gdev-cloudwatch
     type: cloudwatch

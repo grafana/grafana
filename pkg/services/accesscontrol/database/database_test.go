@@ -10,12 +10,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	rs "github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -89,7 +90,7 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 			}
 
 			for _, id := range tt.teamPermissions {
-				_, err := permissionStore.SetTeamResourcePermission(context.Background(), tt.orgID, team.Id, rs.SetResourcePermissionCommand{
+				_, err := permissionStore.SetTeamResourcePermission(context.Background(), tt.orgID, team.ID, rs.SetResourcePermissionCommand{
 					Actions:    []string{"dashboards:read"},
 					Resource:   "dashboards",
 					ResourceID: id,
@@ -117,7 +118,7 @@ func TestAccessControlStore_GetUserPermissions(t *testing.T) {
 			}
 
 			userID := user.ID
-			teamIDs := []int64{team.Id}
+			teamIDs := []int64{team.ID}
 			if tt.anonymousUser {
 				userID = 0
 				teamIDs = []int64{}
@@ -217,7 +218,7 @@ func TestAccessControlStore_DeleteUserPermissions(t *testing.T) {
 	})
 }
 
-func createUserAndTeam(t *testing.T, userSrv user.Service, teamSvc team.Service, orgID int64) (*user.User, models.Team) {
+func createUserAndTeam(t *testing.T, userSrv user.Service, teamSvc team.Service, orgID int64) (*user.User, team.Team) {
 	t.Helper()
 
 	user, err := userSrv.Create(context.Background(), &user.CreateUserCommand{
@@ -229,7 +230,7 @@ func createUserAndTeam(t *testing.T, userSrv user.Service, teamSvc team.Service,
 	team, err := teamSvc.CreateTeam("team", "", orgID)
 	require.NoError(t, err)
 
-	err = teamSvc.AddTeamMember(user.ID, orgID, team.Id, false, models.PERMISSION_VIEW)
+	err = teamSvc.AddTeamMember(user.ID, orgID, team.ID, false, dashboards.PERMISSION_VIEW)
 	require.NoError(t, err)
 
 	return user, team
@@ -262,6 +263,7 @@ func createUsersAndTeams(t *testing.T, svcs helperServices, orgID int64, users [
 			IsAdmin: users[i].isAdmin,
 		})
 		require.NoError(t, err)
+		require.Equal(t, orgID, user.OrgID)
 
 		// User is not member of the org
 		if users[i].orgRole == "" {
@@ -276,14 +278,14 @@ func createUsersAndTeams(t *testing.T, svcs helperServices, orgID int64, users [
 		team, err := svcs.teamSvc.CreateTeam(fmt.Sprintf("team%v", i+1), "", orgID)
 		require.NoError(t, err)
 
-		err = svcs.teamSvc.AddTeamMember(user.ID, orgID, team.Id, false, models.PERMISSION_VIEW)
+		err = svcs.teamSvc.AddTeamMember(user.ID, orgID, team.ID, false, dashboards.PERMISSION_VIEW)
 		require.NoError(t, err)
 
 		err = svcs.orgSvc.UpdateOrgUser(context.Background(),
 			&org.UpdateOrgUserCommand{Role: users[i].orgRole, OrgID: orgID, UserID: user.ID})
 		require.NoError(t, err)
 
-		res = append(res, dbUser{userID: user.ID, teamID: team.Id})
+		res = append(res, dbUser{userID: user.ID, teamID: team.ID})
 	}
 
 	return res
@@ -291,12 +293,20 @@ func createUsersAndTeams(t *testing.T, svcs helperServices, orgID int64, users [
 
 func setupTestEnv(t testing.TB) (*AccessControlStore, rs.Store, user.Service, team.Service, org.Service) {
 	sql, cfg := db.InitTestDBwithCfg(t)
+	cfg.AutoAssignOrg = true
+	cfg.AutoAssignOrgRole = "Viewer"
+	cfg.AutoAssignOrgId = 1
 	acstore := ProvideService(sql)
 	permissionStore := rs.NewStore(sql)
 	teamService := teamimpl.ProvideService(sql, cfg)
 	orgService, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil))
 	require.NoError(t, err)
-	userService, err := userimpl.ProvideService(sql, orgService, cfg, teamService, localcache.ProvideService(), quotatest.New(false, nil))
+
+	orgID, err := orgService.GetOrCreate(context.Background(), "test")
+	require.Equal(t, int64(1), orgID)
+	require.NoError(t, err)
+
+	userService, err := userimpl.ProvideService(sql, orgService, cfg, teamService, localcache.ProvideService(), quotatest.New(false, nil), supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
 	return acstore, permissionStore, userService, teamService, orgService
 }
@@ -413,6 +423,34 @@ func TestIntegrationAccessControlStore_SearchUsersPermissions(t *testing.T) {
 			},
 		},
 		{
+			name: "all assignments for one user by actionPrefix",
+			users: []testUser{
+				{orgRole: org.RoleAdmin, isAdmin: true},
+				{orgRole: org.RoleEditor, isAdmin: false},
+			},
+			permCmds: []rs.SetResourcePermissionsCommand{
+				// User assignments
+				{User: accesscontrol.User{ID: 1, IsExternal: false}, SetResourcePermissionCommand: readTeamPerm("1")},
+				{User: accesscontrol.User{ID: 2, IsExternal: false}, SetResourcePermissionCommand: readTeamPerm("2")},
+				// Team assignments
+				{TeamID: 1, SetResourcePermissionCommand: readTeamPerm("10")},
+				{TeamID: 2, SetResourcePermissionCommand: readTeamPerm("20")},
+				// Basic Assignments
+				{BuiltinRole: string(org.RoleAdmin), SetResourcePermissionCommand: readTeamPerm("100")},
+				{BuiltinRole: string(org.RoleEditor), SetResourcePermissionCommand: readTeamPerm("200")},
+				// Server Admin Assignment
+				{BuiltinRole: accesscontrol.RoleGrafanaAdmin, SetResourcePermissionCommand: readTeamPerm("1000")},
+			},
+			options: accesscontrol.SearchOptions{
+				ActionPrefix: "teams:",
+				UserID:       1,
+			},
+			wantPerm: map[int64][]accesscontrol.Permission{
+				1: {{Action: "teams:read", Scope: "teams:id:1"}, {Action: "teams:read", Scope: "teams:id:10"},
+					{Action: "teams:read", Scope: "teams:id:100"}, {Action: "teams:read", Scope: "teams:id:1000"}},
+			},
+		},
+		{
 			name:  "filter permissions by action prefix",
 			users: []testUser{{orgRole: org.RoleAdmin, isAdmin: true}},
 			permCmds: []rs.SetResourcePermissionsCommand{
@@ -519,10 +557,11 @@ func TestIntegrationAccessControlStore_SearchUsersPermissions(t *testing.T) {
 func TestAccessControlStore_GetUsersBasicRoles(t *testing.T) {
 	ctx := context.Background()
 	tests := []struct {
-		name      string
-		users     []testUser
-		wantRoles map[int64][]string
-		wantErr   bool
+		name       string
+		users      []testUser
+		userFilter []int64
+		wantRoles  map[int64][]string
+		wantErr    bool
 	}{
 		{
 			name:      "user with basic role",
@@ -548,6 +587,17 @@ func TestAccessControlStore_GetUsersBasicRoles(t *testing.T) {
 				2: {accesscontrol.RoleGrafanaAdmin},
 			},
 		},
+		{
+			name:       "when filtered to one user, returns results only for that user",
+			userFilter: []int64{2},
+			users: []testUser{
+				{orgRole: org.RoleAdmin, isAdmin: false},
+				{orgRole: org.RoleEditor, isAdmin: true},
+			},
+			wantRoles: map[int64][]string{
+				2: {string(org.RoleEditor), accesscontrol.RoleGrafanaAdmin},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -555,7 +605,7 @@ func TestAccessControlStore_GetUsersBasicRoles(t *testing.T) {
 			dbUsers := createUsersAndTeams(t, helperServices{userSvc, teamSvc, orgSvc}, 1, tt.users)
 
 			// Test
-			dbRoles, err := acStore.GetUsersBasicRoles(ctx, 1)
+			dbRoles, err := acStore.GetUsersBasicRoles(ctx, tt.userFilter, 1)
 			if tt.wantErr {
 				require.NotNil(t, err)
 				return

@@ -2,7 +2,9 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { Components } from '@grafana/e2e-selectors';
 import { Icon, IconButton, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 import { useSelector } from 'app/types';
 
@@ -36,18 +38,33 @@ export function NavToolbar({
   const breadcrumbs = buildBreadcrumbs(sectionNav, pageNav, homeNav);
 
   return (
-    <div className={styles.pageToolbar}>
+    <div data-testid={Components.NavToolbar.container} className={styles.pageToolbar}>
       <div className={styles.menuButton}>
-        <IconButton name="bars" tooltip="Toggle menu" tooltipPlacement="bottom" size="xl" onClick={onToggleMegaMenu} />
+        <IconButton
+          name="bars"
+          tooltip={t('navigation.toolbar.toggle-menu', 'Toggle menu')}
+          tooltipPlacement="bottom"
+          size="xl"
+          onClick={onToggleMegaMenu}
+        />
       </div>
       <Breadcrumbs breadcrumbs={breadcrumbs} className={styles.breadcrumbs} />
       <div className={styles.actions}>
         {actions}
         {actions && <NavToolbarSeparator />}
         {searchBarHidden && (
-          <ToolbarButton onClick={onToggleKioskMode} narrow title="Enable kiosk mode" icon="monitor" />
+          <ToolbarButton
+            onClick={onToggleKioskMode}
+            narrow
+            title={t('navigation.toolbar.enable-kiosk', 'Enable kiosk mode')}
+            icon="monitor"
+          />
         )}
-        <ToolbarButton onClick={onToggleSearchBar} narrow title="Toggle top search bar">
+        <ToolbarButton
+          onClick={onToggleSearchBar}
+          narrow
+          title={t('navigation.toolbar.toggle-search-bar', 'Toggle top search bar')}
+        >
           <Icon name={searchBarHidden ? 'angle-down' : 'angle-up'} size="xl" />
         </ToolbarButton>
       </div>

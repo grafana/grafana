@@ -32,6 +32,8 @@ func mockGithubRepositoryClient(context.Context, string) githubRepositoryService
 
 func TestPublishGithub(t *testing.T) {
 	t.Setenv("DRONE_BUILD_EVENT", "promote")
+	t.Setenv("DRONE_TAG", "v1.0.0")
+	t.Setenv("DRONE_COMMIT", "abcdefgh")
 	testApp, testPath := setupPublishGithubTests(t)
 	mockErrUnauthorized := errors.New("401")
 

@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/explore/
-  - /docs/grafana/latest/features/explore/
+  - features/explore/
 keywords:
   - explore
   - loki

@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/fundamentals/
-  - /docs/grafana/latest/alerting/metrics/
-  - /docs/grafana/latest/alerting/unified-alerting/fundamentals/
+  - metrics/
+  - unified-alerting/fundamentals/
 title: Explore Alerting
 weight: 105
 ---

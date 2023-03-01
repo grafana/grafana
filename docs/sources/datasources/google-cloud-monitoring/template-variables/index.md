@@ -1,7 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/data-sources/google-cloud-monitoring/template-variables/
-description: Guide for using template variables when querying the Google Cloud Monitoring data source
+  - ../../data-sources/google-cloud-monitoring/template-variables/
+description: Guide for using template variables when querying the Google Cloud Monitoring
+  data source
 keywords:
   - grafana
   - google

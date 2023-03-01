@@ -3,14 +3,19 @@ package pfs
 import (
 	"fmt"
 	"io/fs"
+	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
+	"testing/fstest"
 
 	"cuelang.org/go/cue"
-	"cuelang.org/go/cue/ast"
+	"cuelang.org/go/cue/build"
+	"cuelang.org/go/cue/cuecontext"
 	"cuelang.org/go/cue/errors"
 	"cuelang.org/go/cue/parser"
-	"github.com/grafana/grafana"
+	"cuelang.org/go/cue/token"
+	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/thema"
@@ -19,14 +24,42 @@ import (
 	"github.com/yalue/merged_fs"
 )
 
-// PermittedCUEImports returns the list of packages that may be imported in a
-// plugin models.cue file.
+// PackageName is the name of the CUE package that Grafana will load when
+// looking for a Grafana plugin's kind declarations.
+const PackageName = "grafanaplugin"
+
+var onceGP sync.Once
+var defaultGP cue.Value
+
+func doLoadGP(ctx *cue.Context) cue.Value {
+	v, err := cuectx.BuildGrafanaInstance(ctx, filepath.Join("pkg", "plugins", "pfs"), "pfs", nil)
+	if err != nil {
+		// should be unreachable
+		panic(err)
+	}
+	return v.LookupPath(cue.MakePath(cue.Str("GrafanaPlugin")))
+}
+
+func loadGP(ctx *cue.Context) cue.Value {
+	if ctx == nil || ctx == cuectx.GrafanaCUEContext() {
+		onceGP.Do(func() {
+			defaultGP = doLoadGP(ctx)
+		})
+		return defaultGP
+	}
+	return doLoadGP(ctx)
+}
+
+// PermittedCUEImports returns the list of import paths that may be used in a
+// plugin's grafanaplugin cue package.
 //
 // TODO probably move this into kindsys
 func PermittedCUEImports() []string {
 	return []string{
 		"github.com/grafana/thema",
-		"github.com/grafana/grafana/packages/grafana-schema/src/schema",
+		"github.com/grafana/grafana/pkg/kindsys",
+		"github.com/grafana/grafana/pkg/plugins/pfs",
+		"github.com/grafana/grafana/packages/grafana-schema/src/common",
 	}
 }
 
@@ -41,12 +74,7 @@ func importAllowed(path string) bool {
 
 var allowedImportsStr string
 
-type slotandname struct {
-	name string
-	slot *kindsys.Slot
-}
-
-var allslots []slotandname
+var allsi []kindsys.SchemaInterface
 
 func init() {
 	all := make([]string, 0, len(PermittedCUEImports()))
@@ -55,264 +83,168 @@ func init() {
 	}
 	allowedImportsStr = strings.Join(all, "\n")
 
-	for n, s := range kindsys.AllSlots(nil) {
-		allslots = append(allslots, slotandname{
-			name: n,
-			slot: s,
-		})
+	for _, s := range kindsys.SchemaInterfaces(nil) {
+		allsi = append(allsi, s)
 	}
 
-	sort.Slice(allslots, func(i, j int) bool {
-		return allslots[i].name < allslots[j].name
+	sort.Slice(allsi, func(i, j int) bool {
+		return allsi[i].Name() < allsi[j].Name()
 	})
 }
 
-// Tree represents the contents of a plugin filesystem tree.
-type Tree struct {
-	raw      fs.FS
-	rootinfo PluginInfo
-}
-
-func (t *Tree) FS() fs.FS {
-	return t.raw
-}
-
-func (t *Tree) RootPlugin() PluginInfo {
-	return t.rootinfo
-}
-
-// SubPlugins returned a map of the PluginInfos for subplugins
-// within the tree, if any, keyed by subpath.
-func (t *Tree) SubPlugins() map[string]PluginInfo {
-	// TODO implement these once ParsePluginFS descends
-	return nil
-}
-
-// TreeList is a slice of validated plugin fs Trees with helper methods
-// for filtering to particular subsets of its members.
-type TreeList []*Tree
-
-// LineagesForSlot returns the set of plugin-defined lineages that implement a
-// particular named Grafana slot (See ["github.com/grafana/grafana/pkg/framework/coremodel".Slot]).
-func (tl TreeList) LineagesForSlot(slotname string) map[string]thema.Lineage {
-	m := make(map[string]thema.Lineage)
-	for _, tree := range tl {
-		rootp := tree.RootPlugin()
-		rid := rootp.Meta().Id
-
-		if lin, has := rootp.SlotImplementations()[slotname]; has {
-			m[rid] = lin
-		}
+// ParsePluginFS takes a virtual filesystem and checks that it contains a valid
+// set of files that statically define a Grafana plugin.
+//
+// The fsys must contain a plugin.json at the root, which must be valid
+// according to the [plugindef] schema. If any .cue files exist in the
+// grafanaplugin package, these will also be loaded and validated according to
+// the [GrafanaPlugin] specification. This includes the validation of any custom
+// or composable kinds and their contained lineages, via [thema.BindLineage].
+//
+// This function parses exactly one plugin. It does not descend into
+// subdirectories to search for additional plugin.json or .cue files.
+//
+// Calling this with a nil [thema.Runtime] (the singleton returned from
+// [cuectx.GrafanaThemaRuntime] is used) will memoize certain CUE operations.
+// Prefer passing nil unless a different thema.Runtime is specifically required.
+//
+// [GrafanaPlugin]: https://github.com/grafana/grafana/blob/main/pkg/plugins/pfs/grafanaplugin.cue
+func ParsePluginFS(fsys fs.FS, rt *thema.Runtime) (ParsedPlugin, error) {
+	if fsys == nil {
+		return ParsedPlugin{}, ErrEmptyFS
+	}
+	if rt == nil {
+		rt = cuectx.GrafanaThemaRuntime()
 	}
 
-	return m
-}
-
-// PluginInfo represents everything knowable about a single plugin from static
-// analysis of its filesystem tree contents.
-type PluginInfo struct {
-	meta      plugindef.PluginDef
-	slotimpls map[string]thema.Lineage
-	imports   []*ast.ImportSpec
-}
-
-// CUEImports lists the CUE import statements in the plugin's models.cue file,
-// if any.
-func (pi PluginInfo) CUEImports() []*ast.ImportSpec {
-	return pi.imports
-}
-
-// SlotImplementations returns a map of the plugin's Thema lineages that
-// implement particular slots, keyed by the name of the slot.
-//
-// Returns an empty map if the plugin has not implemented any slots.
-func (pi PluginInfo) SlotImplementations() map[string]thema.Lineage {
-	return pi.slotimpls
-}
-
-// Meta returns the metadata declared in the plugin's plugin.json file.
-func (pi PluginInfo) Meta() plugindef.PluginDef {
-	return pi.meta
-}
-
-// ParsePluginFS takes an fs.FS and checks that it represents exactly one valid
-// plugin fs tree, with the fs.FS root as the root of the tree.
-//
-// It does not descend into subdirectories to search for additional plugin.json
-// files.
-//
-// Calling this with a nil thema.Runtime will take advantage of memoization.
-// Prefer this approach unless a different thema.Runtime is specifically
-// required.
-//
-// TODO no descent is ok for core plugins, but won't cut it in general
-func ParsePluginFS(f fs.FS, rt *thema.Runtime) (*Tree, error) {
-	if f == nil {
-		return nil, ErrEmptyFS
-	}
 	lin, err := plugindef.Lineage(rt)
 	if err != nil {
 		panic(fmt.Sprintf("plugindef lineage is invalid or broken, needs dev attention: %s", err))
 	}
-	mux := vmux.NewValueMux(lin.TypedSchema(), vmux.NewJSONCodec("plugin.json"))
 	ctx := rt.Context()
 
-	b, err := fs.ReadFile(f, "plugin.json")
+	b, err := fs.ReadFile(fsys, "plugin.json")
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
-			return nil, ErrNoRootFile
+			return ParsedPlugin{}, ErrNoRootFile
 		}
-		return nil, fmt.Errorf("error reading plugin.json: %w", err)
+		return ParsedPlugin{}, fmt.Errorf("error reading plugin.json: %w", err)
 	}
 
-	tree := &Tree{
-		raw: f,
-		rootinfo: PluginInfo{
-			slotimpls: make(map[string]thema.Lineage),
-		},
+	pp := ParsedPlugin{
+		ComposableKinds: make(map[string]kindsys.Composable),
+		// CustomKinds:     make(map[string]kindsys.Custom),
 	}
-	r := &tree.rootinfo
 
 	// Pass the raw bytes into the muxer, get the populated PluginDef type out that we want.
 	// TODO stop ignoring second return. (for now, lacunas are a WIP and can't occur until there's >1 schema in the plugindef lineage)
-	pmeta, _, err := mux(b)
+	pinst, _, err := vmux.NewTypedMux(lin.TypedSchema(), vmux.NewJSONCodec("plugin.json"))(b)
 	if err != nil {
-		// TODO more nuanced error handling by class of Thema failure
-		return nil, ewrap(err, ErrInvalidRootFile)
+		return ParsedPlugin{}, errors.Wrap(errors.Promote(err, ""), ErrInvalidRootFile)
 	}
-	r.meta = *pmeta
+	pp.Properties = *(pinst.ValueP())
+	// FIXME remove this once it's being correctly populated coming out of lineage
+	if pp.Properties.PascalName == "" {
+		pp.Properties.PascalName = plugindef.DerivePascalName(pp.Properties)
+	}
 
-	if modbyt, err := fs.ReadFile(f, "models.cue"); err == nil {
-		// TODO introduce layered CUE dependency-injecting loader
-		//
-		// Until CUE has proper dependency management (and possibly even after), loading
-		// CUE files with non-stdlib imports requires injecting the imported packages
-		// into cue.mod/pkg/<import path>, unless the imports are within the same CUE
-		// module. Thema introduced a system for this for its dependers, which we use
-		// here, but we'll need to layer the same on top for importable Grafana packages.
-		// Needing to do this twice strongly suggests it needs a generic, standalone
-		// library.
+	if cuefiles, err := fs.Glob(fsys, "*.cue"); err != nil {
+		return ParsedPlugin{}, fmt.Errorf("error globbing for cue files in fsys: %w", err)
+	} else if len(cuefiles) == 0 {
+		return pp, nil
+	}
 
-		mfs := merged_fs.NewMergedFS(f, grafana.CueSchemaFS)
+	gpv := loadGP(rt.Context())
 
-		// Note that this actually will load any .cue files in the fs.FS root dir in the plugindef.PkgName.
-		// That's...maybe good? But not what it says on the tin
-		bi, err := load.InstanceWithThema(mfs, "", load.Package(plugindef.PkgName))
-		if err != nil {
-			return nil, fmt.Errorf("loading models.cue failed: %w", err)
+	fsys, err = ensureCueMod(fsys, pp.Properties)
+	if err != nil {
+		return ParsedPlugin{}, fmt.Errorf("%s has invalid cue.mod: %w", pp.Properties.Id, err)
+	}
+
+	bi, err := cuectx.LoadInstanceWithGrafana(fsys, "", load.Package(PackageName))
+	if err != nil || bi.Err != nil {
+		if err == nil {
+			err = bi.Err
 		}
+		return ParsedPlugin{}, errors.Wrap(errors.Newf(token.NoPos, "%s did not load", pp.Properties.Id), err)
+	}
 
-		pf, _ := parser.ParseFile("models.cue", modbyt, parser.ParseComments)
+	f, _ := parser.ParseFile("plugin.json", fmt.Sprintf(`{
+		"id": %q,
+		"pascalName": %q
+	}`, pp.Properties.Id, pp.Properties.PascalName))
 
-		for _, im := range pf.Imports {
+	for _, f := range bi.Files {
+		for _, im := range f.Imports {
 			ip := strings.Trim(im.Path.Value, "\"")
 			if !importAllowed(ip) {
-				return nil, ewrap(errors.Newf(im.Pos(), "import %q in models.cue not allowed, plugins may only import from:\n%s\n", ip, allowedImportsStr), ErrDisallowedCUEImport)
+				return ParsedPlugin{}, errors.Wrap(errors.Newf(im.Pos(),
+					"import of %q in grafanaplugin cue package not allowed, plugins may only import from:\n%s\n", ip, allowedImportsStr),
+					ErrDisallowedCUEImport)
 			}
-			r.imports = append(r.imports, im)
-		}
-
-		val := ctx.BuildInstance(bi)
-		if val.Err() != nil {
-			return nil, ewrap(fmt.Errorf("models.cue is invalid CUE: %w", val.Err()), ErrInvalidCUE)
-		}
-		for _, s := range allslots {
-			iv := val.LookupPath(cue.ParsePath(s.slot.Name()))
-			lin, err := bindSlotLineage(iv, s.slot, r.meta, rt)
-			if lin != nil {
-				r.slotimpls[s.slot.Name()] = lin
-			}
-			if err != nil {
-				return nil, err
-			}
+			pp.CUEImports = append(pp.CUEImports, im)
 		}
 	}
 
-	return tree, nil
-}
+	// build.Instance.Files has a comment indicating the CUE authors want to change
+	// its behavior. This is a tripwire to tell us if/when they do that - otherwise, if
+	// the change they make ends up making bi.Files empty, the above loop will silently
+	// become a no-op, and we'd lose enforcement of import restrictions in plugins without
+	// realizing it.
+	if len(bi.Files) != len(bi.BuildFiles) {
+		panic("Refactor required - upstream CUE implementation changed, bi.Files is no longer populated")
+	}
 
-func bindSlotLineage(v cue.Value, s *kindsys.Slot, meta plugindef.PluginDef, rt *thema.Runtime, opts ...thema.BindOption) (thema.Lineage, error) {
-	accept, required := s.ForPluginType(string(meta.Type))
-	exists := v.Exists()
+	// Inject the JSON directly into the build so it gets loaded together
+	bi.BuildFiles = append(bi.BuildFiles, &build.File{
+		Filename: "plugin.json",
+		Encoding: build.JSON,
+		Form:     build.Data,
+		Source:   b,
+	})
+	bi.Files = append(bi.Files, f)
 
-	if !accept {
-		if exists {
-			// If it's not accepted for the type, but is declared, error out. This keeps a
-			// precise boundary on what's actually expected for plugins to do, which makes
-			// for clearer docs and guarantees for users.
-			return nil, ewrap(fmt.Errorf("%s: %s plugins may not provide a %s slot implementation in models.cue", meta.Id, meta.Type, s.Name()), ErrImplementedSlots)
+	gpi := ctx.BuildInstance(bi).Unify(gpv)
+	if gpi.Err() != nil {
+		return ParsedPlugin{}, errors.Wrap(errors.Promote(ErrInvalidGrafanaPluginInstance, pp.Properties.Id), gpi.Err())
+	}
+
+	for _, si := range allsi {
+		iv := gpi.LookupPath(cue.MakePath(cue.Str("composableKinds"), cue.Str(si.Name())))
+		if !iv.Exists() {
+			continue
 		}
-		return nil, nil
-	}
 
-	if !exists && required {
-		return nil, ewrap(fmt.Errorf("%s: %s plugins must provide a %s slot implementation in models.cue", meta.Id, meta.Type, s.Name()), ErrImplementedSlots)
-	}
-
-	// TODO make this opt real in thema, then uncomment to enforce joinSchema
-	// lin, err := thema.BindLineage(iv, rt, thema.SatisfiesJoinSchema(s.MetaSchema()))
-	lin, err := thema.BindLineage(v, rt, opts...)
-	if err != nil {
-		return nil, ewrap(fmt.Errorf("%s: invalid thema lineage for slot %s: %w", meta.Id, s.Name(), err), ErrInvalidLineage)
-	}
-
-	sanid := sanitizePluginId(meta.Id)
-	if lin.Name() != sanid {
-		errf := func(format string, args ...interface{}) error {
-			var errin error
-			if n := v.LookupPath(cue.ParsePath("name")).Source(); n != nil {
-				errin = errors.Newf(n.Pos(), format, args...)
-			} else {
-				errin = fmt.Errorf(format, args...)
-			}
-			return ewrap(errin, ErrLineageNameMismatch)
+		props, err := kindsys.ToKindProps[kindsys.ComposableProperties](iv)
+		if err != nil {
+			return ParsedPlugin{}, err
 		}
-		if sanid != meta.Id {
-			return nil, errf("%s: %q slot lineage name must be the sanitized plugin id (%q), got %q", meta.Id, s.Name(), sanid, lin.Name())
-		} else {
-			return nil, errf("%s: %q slot lineage name must be the plugin id, got %q", meta.Id, s.Name(), lin.Name())
+
+		compo, err := kindsys.BindComposable(rt, kindsys.Def[kindsys.ComposableProperties]{
+			Properties: props,
+			V:          iv,
+		})
+		if err != nil {
+			return ParsedPlugin{}, err
 		}
+		pp.ComposableKinds[si.Name()] = compo
 	}
-	return lin, nil
+
+	// TODO custom kinds
+	return pp, nil
 }
 
-// Plugin IDs are allowed to contain characters that aren't allowed in thema
-// Lineage names, CUE package names, Go package names, TS or Go type names, etc.
-func sanitizePluginId(s string) string {
-	return strings.Map(func(r rune) rune {
-		switch {
-		case r >= 'a' && r <= 'z':
-			fallthrough
-		case r >= 'A' && r <= 'Z':
-			fallthrough
-		case r >= '0' && r <= '9':
-			fallthrough
-		case r == '_':
-			return r
-		case r == '-':
-			return '_'
-		default:
-			return -1
+func ensureCueMod(fsys fs.FS, pdef plugindef.PluginDef) (fs.FS, error) {
+	if modf, err := fs.ReadFile(fsys, "cue.mod/module.cue"); err != nil {
+		if !errors.Is(err, fs.ErrNotExist) {
+			return nil, err
 		}
-	}, s)
-}
-
-func ewrap(actual, is error) error {
-	return &errPassthrough{
-		actual: actual,
-		is:     is,
+		return merged_fs.NewMergedFS(fsys, fstest.MapFS{
+			"cue.mod/module.cue": &fstest.MapFile{Data: []byte(fmt.Sprintf(`module: "grafana.com/grafana/plugins/%s"`, pdef.Id))},
+		}), nil
+	} else if _, err := cuecontext.New().CompileBytes(modf).LookupPath(cue.MakePath(cue.Str("module"))).String(); err != nil {
+		return nil, fmt.Errorf("error reading cue module name: %w", err)
 	}
-}
 
-type errPassthrough struct {
-	actual error
-	is     error
-}
-
-func (e *errPassthrough) Is(err error) bool {
-	return errors.Is(err, e.actual) || errors.Is(err, e.is)
-}
-
-func (e *errPassthrough) Error() string {
-	return e.actual.Error()
+	return fsys, nil
 }

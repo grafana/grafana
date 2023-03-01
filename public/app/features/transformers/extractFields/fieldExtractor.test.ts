@@ -1,4 +1,5 @@
-import { fieldExtractors, FieldExtractorID } from './fieldExtractors';
+import { fieldExtractors } from './fieldExtractors';
+import { FieldExtractorID } from './types';
 
 describe('Extract fields from text', () => {
   it('JSON extractor', async () => {

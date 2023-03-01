@@ -9,6 +9,7 @@ import {
   FieldConfigPropertyItem,
   FieldConfigSource,
   FieldType,
+  GrafanaConfig,
   InterpolateFunction,
   ScopedVars,
   ThresholdsMode,
@@ -30,36 +31,48 @@ import {
 } from './fieldOverrides';
 import { getFieldDisplayName } from './fieldState';
 
-const property1: any = {
+const property1: FieldConfigPropertyItem = {
   id: 'custom.property1', // Match field properties
   path: 'property1', // Match field properties
   isCustom: true,
-  process: (value: any) => value,
+  process: (value) => value,
   shouldApply: () => true,
+  override: jest.fn(),
+  editor: jest.fn(),
+  name: 'Property 1',
 };
 
-const property2 = {
+const property2: FieldConfigPropertyItem = {
   id: 'custom.property2', // Match field properties
   path: 'property2', // Match field properties
   isCustom: true,
-  process: (value: any) => value,
+  process: (value) => value,
   shouldApply: () => true,
+  override: jest.fn(),
+  editor: jest.fn(),
+  name: 'Property 2',
 };
 
-const property3: any = {
+const property3: FieldConfigPropertyItem = {
   id: 'custom.property3.nested', // Match field properties
   path: 'property3.nested', // Match field properties
   isCustom: true,
-  process: (value: any) => value,
+  process: (value) => value,
   shouldApply: () => true,
+  override: jest.fn(),
+  editor: jest.fn(),
+  name: 'Property 3',
 };
 
-const shouldApplyFalse: any = {
+const shouldApplyFalse: FieldConfigPropertyItem = {
   id: 'custom.shouldApplyFalse', // Match field properties
   path: 'shouldApplyFalse', // Match field properties
   isCustom: true,
-  process: (value: any) => value,
+  process: (value) => value,
   shouldApply: () => false,
+  override: jest.fn(),
+  editor: jest.fn(),
+  name: 'Should Apply False',
 };
 
 export const customFieldRegistry: FieldConfigOptionsRegistry = new Registry<FieldConfigPropertyItem>(() => {
@@ -67,9 +80,9 @@ export const customFieldRegistry: FieldConfigOptionsRegistry = new Registry<Fiel
 });
 
 locationUtil.initialize({
-  config: { appSubUrl: '/subUrl' } as any,
-  getVariablesUrlParams: (() => {}) as any,
-  getTimeRangeForUrl: (() => {}) as any,
+  config: { appSubUrl: '/subUrl' } as GrafanaConfig,
+  getVariablesUrlParams: jest.fn(),
+  getTimeRangeForUrl: jest.fn(),
 });
 
 describe('Global MinMax', () => {
@@ -180,7 +193,7 @@ describe('applyFieldOverrides', () => {
           defaults: {},
           overrides: [],
         },
-        replaceVariables: (value: any) => value,
+        replaceVariables: (value) => value,
         theme: createTheme(),
         fieldConfigRegistry: new FieldConfigOptionsRegistry(),
       });
@@ -299,7 +312,7 @@ describe('applyFieldOverrides', () => {
   });
 
   it('getLinks should use applied field config', () => {
-    const replaceVariablesCalls: any[] = [];
+    const replaceVariablesCalls: ScopedVars[] = [];
 
     const data = applyFieldOverrides({
       data: [f0], // the frame
@@ -374,8 +387,8 @@ describe('setFieldConfigDefaults', () => {
     };
 
     const context: FieldOverrideEnv = {
-      data: [] as any,
-      field: { type: FieldType.number } as any,
+      data: [],
+      field: { type: FieldType.number } as Field,
       dataFrameIndex: 0,
       fieldConfigRegistry: customFieldRegistry,
     };
@@ -409,8 +422,8 @@ describe('setFieldConfigDefaults', () => {
     };
 
     const context: FieldOverrideEnv = {
-      data: [] as any,
-      field: { type: FieldType.number } as any,
+      data: [],
+      field: { type: FieldType.number } as Field,
       dataFrameIndex: 0,
       fieldConfigRegistry: customFieldRegistry,
     };
@@ -443,8 +456,8 @@ describe('setDynamicConfigValue', () => {
       },
       {
         fieldConfigRegistry: customFieldRegistry,
-        data: [] as any,
-        field: { type: FieldType.number } as any,
+        data: [],
+        field: { type: FieldType.number } as Field,
         dataFrameIndex: 0,
       }
     );
@@ -466,8 +479,8 @@ describe('setDynamicConfigValue', () => {
       },
       {
         fieldConfigRegistry: customFieldRegistry,
-        data: [] as any,
-        field: { type: FieldType.number } as any,
+        data: [],
+        field: { type: FieldType.number } as Field,
         dataFrameIndex: 0,
       }
     );
@@ -487,8 +500,8 @@ describe('setDynamicConfigValue', () => {
       },
       {
         fieldConfigRegistry: customFieldRegistry,
-        data: [] as any,
-        field: { type: FieldType.number } as any,
+        data: [],
+        field: { type: FieldType.number } as Field,
         dataFrameIndex: 0,
       }
     );
@@ -512,8 +525,8 @@ describe('setDynamicConfigValue', () => {
       },
       {
         fieldConfigRegistry: customFieldRegistry,
-        data: [] as any,
-        field: { type: FieldType.number } as any,
+        data: [],
+        field: { type: FieldType.number } as Field,
         dataFrameIndex: 0,
       }
     );
@@ -538,8 +551,8 @@ describe('setDynamicConfigValue', () => {
       },
       {
         fieldConfigRegistry: customFieldRegistry,
-        data: [] as any,
-        field: { type: FieldType.number } as any,
+        data: [],
+        field: { type: FieldType.number } as Field,
         dataFrameIndex: 0,
       }
     );
@@ -552,8 +565,8 @@ describe('setDynamicConfigValue', () => {
       },
       {
         fieldConfigRegistry: customFieldRegistry,
-        data: [] as any,
-        field: { type: FieldType.number } as any,
+        data: [],
+        field: { type: FieldType.number } as Field,
         dataFrameIndex: 0,
       }
     );
@@ -566,9 +579,9 @@ describe('setDynamicConfigValue', () => {
 describe('getLinksSupplier', () => {
   it('will replace variables in url and title of the data link', () => {
     locationUtil.initialize({
-      config: {} as any,
-      getVariablesUrlParams: (() => {}) as any,
-      getTimeRangeForUrl: (() => {}) as any,
+      config: {} as GrafanaConfig,
+      getVariablesUrlParams: () => ({}),
+      getTimeRangeForUrl: () => ({ from: 'now-7d', to: 'now' }),
     });
 
     const f0 = new MutableDataFrame({
@@ -601,9 +614,9 @@ describe('getLinksSupplier', () => {
 
   it('handles internal links', () => {
     locationUtil.initialize({
-      config: { appSubUrl: '' } as any,
-      getVariablesUrlParams: (() => {}) as any,
-      getTimeRangeForUrl: (() => {}) as any,
+      config: { appSubUrl: '' } as GrafanaConfig,
+      getVariablesUrlParams: () => ({}),
+      getTimeRangeForUrl: () => ({ from: 'now-7d', to: 'now' }),
     });
 
     const datasourceUid = '1234';
@@ -641,7 +654,7 @@ describe('getLinksSupplier', () => {
     );
 
     const links = supplier({ valueRowIndex: 0 });
-    const encodeURIParams = `{"datasource":"${datasourceUid}","queries":["12345"],"panelsState":{}}`;
+    const encodeURIParams = `{"datasource":"${datasourceUid}","queries":["12345"]}`;
     expect(links.length).toBe(1);
     expect(links[0]).toEqual(
       expect.objectContaining({
@@ -650,6 +663,93 @@ describe('getLinksSupplier', () => {
         onClick: undefined,
       })
     );
+  });
+
+  describe('dynamic links', () => {
+    beforeEach(() => {
+      locationUtil.initialize({
+        config: {} as GrafanaConfig,
+        getVariablesUrlParams: () => ({}),
+        getTimeRangeForUrl: () => ({ from: 'now-7d', to: 'now' }),
+      });
+    });
+    it('handles link click handlers', () => {
+      const onClickSpy = jest.fn();
+      const replaceSpy = jest.fn();
+      const f0 = new MutableDataFrame({
+        name: 'A',
+        fields: [
+          {
+            name: 'message',
+            type: FieldType.string,
+            values: [10, 20],
+            config: {
+              links: [
+                {
+                  url: 'should not be ignored',
+                  onClick: onClickSpy,
+                  title: 'title to be interpolated',
+                },
+                {
+                  url: 'should not be ignored',
+                  title: 'title to be interpolated',
+                },
+              ],
+            },
+          },
+        ],
+      });
+
+      const supplier = getLinksSupplier(f0, f0.fields[0], {}, replaceSpy);
+      const links = supplier({});
+
+      expect(links.length).toBe(2);
+      expect(links[0].href).toEqual('should not be ignored');
+      expect(links[0].onClick).toBeDefined();
+
+      links[0].onClick!({});
+
+      expect(onClickSpy).toBeCalledTimes(1);
+    });
+
+    it('handles links built dynamically', () => {
+      const replaceSpy = jest.fn().mockReturnValue('url interpolated 10');
+      const onBuildUrlSpy = jest.fn();
+
+      const f0 = new MutableDataFrame({
+        name: 'A',
+        fields: [
+          {
+            name: 'message',
+            type: FieldType.string,
+            values: [10, 20],
+            config: {
+              links: [
+                {
+                  url: 'should be ignored',
+                  onBuildUrl: () => {
+                    onBuildUrlSpy();
+                    return 'url to be interpolated';
+                  },
+                  title: 'title to be interpolated',
+                },
+                {
+                  url: 'should not be ignored',
+                  title: 'title to be interpolated',
+                },
+              ],
+            },
+          },
+        ],
+      });
+
+      const supplier = getLinksSupplier(f0, f0.fields[0], {}, replaceSpy);
+      const links = supplier({});
+
+      expect(onBuildUrlSpy).toBeCalledTimes(1);
+      expect(links.length).toBe(2);
+      expect(links[0].href).toEqual('url interpolated 10');
+    });
   });
 });
 

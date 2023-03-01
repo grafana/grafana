@@ -30,15 +30,9 @@ func (st DBstore) ListAlertInstances(ctx context.Context, cmd *models.ListAlertI
 		if cmd.RuleUID != "" {
 			addToQuery(` AND rule_uid = ?`, cmd.RuleUID)
 		}
-
-		if cmd.State != "" {
-			addToQuery(` AND current_state = ?`, cmd.State)
+		if st.FeatureToggles.IsEnabled(featuremgmt.FlagAlertingNoNormalState) {
+			s.WriteString(fmt.Sprintf(" AND NOT (current_state = '%s' AND current_reason = '')", models.InstanceStateNormal))
 		}
-
-		if cmd.StateReason != "" {
-			addToQuery(` AND current_reason = ?`, cmd.StateReason)
-		}
-
 		if err := sess.SQL(s.String(), params...).Find(&alertInstances); err != nil {
 			return err
 		}

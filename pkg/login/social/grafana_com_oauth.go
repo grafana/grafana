@@ -5,15 +5,17 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/grafana/grafana/pkg/services/org"
-
 	"golang.org/x/oauth2"
+
+	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/services/org"
 )
 
 type SocialGrafanaCom struct {
 	*SocialBase
 	url                  string
 	allowedOrganizations []string
+	skipOrgRoleSync      bool
 }
 
 type OrgRecord struct {
@@ -40,6 +42,7 @@ func (s *SocialGrafanaCom) IsOrganizationMember(organizations []OrgRecord) bool 
 	return false
 }
 
+// UserInfo is used for login credentials for the user
 func (s *SocialGrafanaCom) UserInfo(client *http.Client, _ *oauth2.Token) (*BasicUserInfo, error) {
 	var data struct {
 		Id    int         `json:"id"`
@@ -60,12 +63,17 @@ func (s *SocialGrafanaCom) UserInfo(client *http.Client, _ *oauth2.Token) (*Basi
 		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}
 
+	// on login we do not want to display the role from the external provider
+	var role roletype.RoleType
+	if !s.skipOrgRoleSync {
+		role = org.RoleType(data.Role)
+	}
 	userInfo := &BasicUserInfo{
 		Id:    fmt.Sprintf("%d", data.Id),
 		Name:  data.Name,
 		Login: data.Login,
 		Email: data.Email,
-		Role:  org.RoleType(data.Role),
+		Role:  role,
 	}
 
 	if !s.IsOrganizationMember(data.Orgs) {

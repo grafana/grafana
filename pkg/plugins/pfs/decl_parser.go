@@ -3,7 +3,6 @@ package pfs
 import (
 	"fmt"
 	"io/fs"
-	"log"
 	"os"
 	"path/filepath"
 	"sort"
@@ -24,7 +23,9 @@ func NewDeclParser(rt *thema.Runtime, skip map[string]bool) *declParser {
 	}
 }
 
+// TODO convert this to be the new parser for Tree
 func (psr *declParser) Parse(root fs.FS) ([]*PluginDecl, error) {
+	// TODO remove hardcoded tree structure assumption, work from root of provided fs
 	plugins, err := fs.Glob(root, "**/**/plugin.json")
 	if err != nil {
 		return nil, fmt.Errorf("error finding plugin dirs: %w", err)
@@ -32,39 +33,35 @@ func (psr *declParser) Parse(root fs.FS) ([]*PluginDecl, error) {
 
 	decls := make([]*PluginDecl, 0)
 	for _, plugin := range plugins {
-		path := filepath.Dir(plugin)
+		path := filepath.ToSlash(filepath.Dir(plugin))
 		base := filepath.Base(path)
 		if skip, ok := psr.skip[base]; ok && skip {
 			continue
 		}
 
 		dir := os.DirFS(path)
-		ptree, err := ParsePluginFS(dir, psr.rt)
+		pp, err := ParsePluginFS(dir, psr.rt)
 		if err != nil {
-			log.Println(fmt.Errorf("parsing plugin failed for %s: %s", dir, err))
+			return nil, fmt.Errorf("parsing plugin failed for %s: %s", dir, err)
+		}
+
+		if len(pp.ComposableKinds) == 0 {
+			decls = append(decls, EmptyPluginDecl(path, pp.Properties))
 			continue
 		}
 
-		p := ptree.RootPlugin()
-		slots := p.SlotImplementations()
-
-		if len(slots) == 0 {
-			decls = append(decls, EmptyPluginDecl(path, p.Meta()))
-			continue
-		}
-
-		for slotName, lin := range slots {
-			slot, err := kindsys.FindSlot(slotName)
+		for slotName, kind := range pp.ComposableKinds {
+			slot, err := kindsys.FindSchemaInterface(slotName)
 			if err != nil {
-				log.Println(fmt.Errorf("parsing plugin failed for %s: %s", dir, err))
-				continue
+				return nil, fmt.Errorf("parsing plugin failed for %s: %s", dir, err)
 			}
 			decls = append(decls, &PluginDecl{
-				Slot:       slot,
-				Lineage:    lin,
-				Imports:    p.CUEImports(),
-				PluginMeta: p.Meta(),
-				PluginPath: path,
+				SchemaInterface: &slot,
+				Lineage:         kind.Lineage(),
+				Imports:         pp.CUEImports,
+				PluginMeta:      pp.Properties,
+				PluginPath:      path,
+				KindDecl:        kind.Def(),
 			})
 		}
 	}

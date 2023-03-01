@@ -12,15 +12,16 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/preference/preftest"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -37,7 +38,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 		store.Cfg = hs.Cfg
 		hs.teamService = teamimpl.ProvideService(store, hs.Cfg)
 		hs.SQLStore = store
-		mock := &mockstore.SQLStoreMock{}
+		mock := dbtest.NewFakeDB()
 
 		loggedInUserScenarioWithRole(t, "When admin is calling GET on", "GET", "/api/teams/search", "/api/teams/search",
 			org.RoleAdmin, func(sc *scenarioContext) {
@@ -49,7 +50,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 				sc.handlerFunc = hs.SearchTeams
 				sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 				require.Equal(t, http.StatusOK, sc.resp.Code)
-				var resp models.SearchTeamQueryResult
+				var resp team.SearchTeamQueryResult
 				err = json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 				require.NoError(t, err)
 
@@ -65,13 +66,13 @@ func TestTeamAPIEndpoint(t *testing.T) {
 				require.NoError(t, err)
 
 				// Adding the test user to the teams in order for him to list them
-				err = hs.teamService.AddTeamMember(testUserID, testOrgID, team1.Id, false, 0)
+				err = hs.teamService.AddTeamMember(testUserID, testOrgID, team1.ID, false, 0)
 				require.NoError(t, err)
 
 				sc.handlerFunc = hs.SearchTeams
 				sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 				require.Equal(t, http.StatusOK, sc.resp.Code)
-				var resp models.SearchTeamQueryResult
+				var resp team.SearchTeamQueryResult
 				err = json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 				require.NoError(t, err)
 
@@ -87,15 +88,15 @@ func TestTeamAPIEndpoint(t *testing.T) {
 				require.NoError(t, err)
 
 				// Adding the test user to the teams in order for him to list them
-				err = hs.teamService.AddTeamMember(testUserID, testOrgID, team1.Id, false, 0)
+				err = hs.teamService.AddTeamMember(testUserID, testOrgID, team1.ID, false, 0)
 				require.NoError(t, err)
-				err = hs.teamService.AddTeamMember(testUserID, testOrgID, team2.Id, false, 0)
+				err = hs.teamService.AddTeamMember(testUserID, testOrgID, team2.ID, false, 0)
 				require.NoError(t, err)
 
 				sc.handlerFunc = hs.SearchTeams
 				sc.fakeReqWithParams("GET", sc.url, map[string]string{"perpage": "10", "page": "2"}).exec()
 				require.Equal(t, http.StatusOK, sc.resp.Code)
-				var resp models.SearchTeamQueryResult
+				var resp team.SearchTeamQueryResult
 				err = json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 				require.NoError(t, err)
 
@@ -107,7 +108,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 	t.Run("When creating team with API key", func(t *testing.T) {
 		hs := setupSimpleHTTPServer(nil)
 		hs.Cfg.EditorsCanAdmin = true
-		hs.SQLStore = mockstore.NewSQLStoreMock()
+		hs.SQLStore = dbtest.NewFakeDB()
 		hs.teamService = &teamtest.FakeService{}
 		teamName := "team foo"
 
@@ -123,13 +124,13 @@ func TestTeamAPIEndpoint(t *testing.T) {
 
 		t.Run("with no real signed in user", func(t *testing.T) {
 			logger := &logtest.Fake{}
-			c := &models.ReqContext{
+			c := &contextmodel.ReqContext{
 				Context:      &web.Context{Req: req},
 				SignedInUser: &user.SignedInUser{},
 				Logger:       logger,
 			}
 			c.OrgRole = org.RoleEditor
-			c.Req.Body = mockRequestBody(models.CreateTeamCommand{Name: teamName})
+			c.Req.Body = mockRequestBody(team.CreateTeamCommand{Name: teamName})
 			c.Req.Header.Add("Content-Type", "application/json")
 			r := hs.CreateTeam(c)
 
@@ -140,13 +141,13 @@ func TestTeamAPIEndpoint(t *testing.T) {
 
 		t.Run("with real signed in user", func(t *testing.T) {
 			logger := &logtest.Fake{}
-			c := &models.ReqContext{
+			c := &contextmodel.ReqContext{
 				Context:      &web.Context{Req: req},
 				SignedInUser: &user.SignedInUser{UserID: 42},
 				Logger:       logger,
 			}
 			c.OrgRole = org.RoleEditor
-			c.Req.Body = mockRequestBody(models.CreateTeamCommand{Name: teamName})
+			c.Req.Body = mockRequestBody(team.CreateTeamCommand{Name: teamName})
 			c.Req.Header.Add("Content-Type", "application/json")
 			r := hs.CreateTeam(c)
 			assert.Equal(t, 200, r.Status())
@@ -270,7 +271,7 @@ func TestTeamAPIEndpoint_SearchTeams_RBAC(t *testing.T) {
 func TestTeamAPIEndpoint_GetTeamByID_RBAC(t *testing.T) {
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = setting.NewCfg()
-		hs.teamService = &teamtest.FakeService{ExpectedTeamDTO: &models.TeamDTO{}}
+		hs.teamService = &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{}}
 	})
 
 	url := fmt.Sprintf(detailTeamURL, 1)
@@ -313,7 +314,7 @@ func TestTeamAPIEndpoint_GetTeamByID_RBAC(t *testing.T) {
 func TestTeamAPIEndpoint_UpdateTeam_RBAC(t *testing.T) {
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = setting.NewCfg()
-		hs.teamService = &teamtest.FakeService{ExpectedTeamDTO: &models.TeamDTO{}}
+		hs.teamService = &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{}}
 	})
 
 	request := func(teamID int64, user *user.SignedInUser) (*http.Response, error) {
@@ -356,7 +357,7 @@ func TestTeamAPIEndpoint_UpdateTeam_RBAC(t *testing.T) {
 func TestTeamAPIEndpoint_DeleteTeam_RBAC(t *testing.T) {
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = setting.NewCfg()
-		hs.teamService = &teamtest.FakeService{ExpectedTeamDTO: &models.TeamDTO{}}
+		hs.teamService = &teamtest.FakeService{ExpectedTeamDTO: &team.TeamDTO{}}
 	})
 
 	request := func(teamID int64, user *user.SignedInUser) (*http.Response, error) {

@@ -1,14 +1,16 @@
 import { dateTime, TimeRange } from '@grafana/data';
 import { setDataSourceSrv } from '@grafana/runtime';
+import { FormatRegistryID, TestVariable } from '@grafana/scenes';
 
 import { silenceConsoleOutput } from '../../../test/core/utils/silenceConsoleOutput';
 import { initTemplateSrv } from '../../../test/helpers/initTemplateSrv';
 import { mockDataSource, MockDataSourceSrv } from '../alerting/unified/mocks';
-import { FormatRegistryID } from '../scenes/variables/interpolation/formatRegistry';
 import { VariableAdapter, variableAdapters } from '../variables/adapters';
 import { createAdHocVariableAdapter } from '../variables/adhoc/adapter';
 import { createQueryVariableAdapter } from '../variables/query/adapter';
 import { VariableModel } from '../variables/types';
+
+import { TemplateSrv } from './template_srv';
 
 const key = 'key';
 
@@ -17,9 +19,18 @@ variableAdapters.setInit(() => [
   createAdHocVariableAdapter() as unknown as VariableAdapter<VariableModel>,
 ]);
 
+const interpolateMock = jest.fn();
+
+jest.mock('@grafana/scenes', () => ({
+  ...jest.requireActual('@grafana/scenes'),
+  sceneGraph: {
+    interpolate: (...args: unknown[]) => interpolateMock(...args),
+  },
+}));
+
 describe('templateSrv', () => {
   silenceConsoleOutput();
-  let _templateSrv: any;
+  let _templateSrv: TemplateSrv;
 
   describe('init', () => {
     beforeEach(() => {
@@ -39,7 +50,7 @@ describe('templateSrv', () => {
 
     it('scoped vars should support objects', () => {
       const target = _templateSrv.replace('${series.name} ${series.nested.field}', {
-        series: { value: { name: 'Server1', nested: { field: 'nested' } } },
+        series: { value: { name: 'Server1', nested: { field: 'nested' } }, text: 'foo' },
       });
       expect(target).toBe('Server1 nested');
     });
@@ -54,14 +65,14 @@ describe('templateSrv', () => {
 
     it('scoped vars should support objects with propert names with dot', () => {
       const target = _templateSrv.replace('${series.name} ${series.nested["field.with.dot"]}', {
-        series: { value: { name: 'Server1', nested: { 'field.with.dot': 'nested' } } },
+        series: { value: { name: 'Server1', nested: { 'field.with.dot': 'nested' } }, text: 'foo' },
       });
       expect(target).toBe('Server1 nested');
     });
 
     it('scoped vars should support arrays of objects', () => {
       const target = _templateSrv.replace('${series.rows[0].name} ${series.rows[1].name}', {
-        series: { value: { rows: [{ name: 'first' }, { name: 'second' }] } },
+        series: { value: { rows: [{ name: 'first' }, { name: 'second' }] }, text: 'foo' },
       });
       expect(target).toBe('first second');
     });
@@ -649,8 +660,8 @@ describe('templateSrv', () => {
     });
 
     it('should not pass object to custom function', () => {
-      let passedValue: any = null;
-      _templateSrv.replace('this.${test}.filters', {}, (value: any) => {
+      let passedValue: string | null = null;
+      _templateSrv.replace('this.${test}.filters', {}, (value: string) => {
         passedValue = value;
       });
 
@@ -665,8 +676,8 @@ describe('templateSrv', () => {
     });
 
     it('should not pass object to custom function', () => {
-      let passedValue: any = null;
-      _templateSrv.replace('this.${test}.filters', {}, (value: any) => {
+      let passedValue: string | null = null;
+      _templateSrv.replace('this.${test}.filters', {}, (value: string) => {
         passedValue = value;
       });
 
@@ -808,6 +819,21 @@ describe('templateSrv', () => {
     it('query variable with adhoc value and queryparam format should return correct queryparam', () => {
       const target = _templateSrv.replace('${adhoc}', { adhoc: { value: 'value2', text: 'value2' } }, 'queryparam');
       expect(target).toBe('var-adhoc=value2');
+    });
+  });
+
+  describe('scenes compatibility', () => {
+    beforeEach(() => {
+      _templateSrv = initTemplateSrv(key, []);
+    });
+    it('should use scene interpolator when scoped var provided', () => {
+      const variable = new TestVariable({});
+
+      _templateSrv.replace('test ${test}', { __sceneObject: { value: variable, text: 'foo' } });
+
+      expect(interpolateMock).toHaveBeenCalledTimes(1);
+      expect(interpolateMock.mock.calls[0][0]).toEqual(variable);
+      expect(interpolateMock.mock.calls[0][1]).toEqual('test ${test}');
     });
   });
 });

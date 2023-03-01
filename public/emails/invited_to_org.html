@@ -3,7 +3,7 @@
 
 <head>
   <title>
-    {{ Subject .Subject "{{ .InvitedBy }} has added you to the {{ .OrgName }} organization" }}
+    {{ Subject .Subject .TemplateData "{{ .InvitedBy }} has added you to the {{ .OrgName }} organization" }}
   </title>
   <!--[if !mso]><!-->
   <meta http-equiv="X-UA-Compatible" content="IE=edge">

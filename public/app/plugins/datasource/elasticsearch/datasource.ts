@@ -1,6 +1,6 @@
 import { cloneDeep, find, first as _first, isNumber, isObject, isString, map as _map } from 'lodash';
 import { generate, lastValueFrom, Observable, of, throwError } from 'rxjs';
-import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty } from 'rxjs/operators';
+import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty, tap } from 'rxjs/operators';
 
 import {
   DataFrame,
@@ -10,7 +10,7 @@ import {
   DataSourceInstanceSettings,
   DataSourceWithLogsContextSupport,
   DataSourceWithQueryImportSupport,
-  DataSourceWithLogsVolumeSupport,
+  DataSourceWithSupplementaryQueriesSupport,
   DateTime,
   dateTime,
   Field,
@@ -24,6 +24,7 @@ import {
   toUtc,
   QueryFixAction,
   CoreApp,
+  SupplementaryQueryType,
 } from '@grafana/data';
 import { BackendSrvRequest, DataSourceWithBackend, getBackendSrv, getDataSourceSrv, config } from '@grafana/runtime';
 import { queryLogsVolume } from 'app/core/logsModel';
@@ -38,21 +39,19 @@ import { IndexPattern } from './IndexPattern';
 import LanguageProvider from './LanguageProvider';
 import { ElasticQueryBuilder } from './QueryBuilder';
 import { ElasticsearchAnnotationsQueryEditor } from './components/QueryEditor/AnnotationQueryEditor';
-import {
-  BucketAggregation,
-  isBucketAggregationWithField,
-} from './components/QueryEditor/BucketAggregationsEditor/aggregations';
+import { isBucketAggregationWithField } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 import { bucketAggregationConfig } from './components/QueryEditor/BucketAggregationsEditor/utils';
 import {
   isMetricAggregationWithField,
   isPipelineAggregationWithMultipleBucketPaths,
-  Logs,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import { defaultBucketAgg, hasMetricOfType } from './queryDef';
-import { DataLinkConfig, ElasticsearchOptions, ElasticsearchQuery, TermsQuery } from './types';
+import { trackQuery } from './tracking';
+import { Logs, BucketAggregation, DataLinkConfig, ElasticsearchOptions, ElasticsearchQuery, TermsQuery } from './types';
 import { coerceESVersion, getScriptValue, isSupportedVersion } from './utils';
 
+export const REF_ID_STARTER_LOG_VOLUME = 'log-volume-';
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
 const ELASTIC_META_FIELDS = [
@@ -72,7 +71,7 @@ export class ElasticDatasource
   implements
     DataSourceWithLogsContextSupport,
     DataSourceWithQueryImportSupport<ElasticsearchQuery>,
-    DataSourceWithLogsVolumeSupport<ElasticsearchQuery>
+    DataSourceWithSupplementaryQueriesSupport<ElasticsearchQuery>
 {
   basicAuth?: string;
   withCredentials?: boolean;
@@ -416,7 +415,7 @@ export class ElasticDatasource
       (query): ElasticsearchQuery => ({
         ...query,
         datasource: this.getRef(),
-        query: this.interpolateLuceneQuery(query.query || '', scopedVars),
+        query: this.addAdHocFilters(this.interpolateLuceneQuery(query.query || '', scopedVars)),
         bucketAggs: query.bucketAggs?.map(interpolateBucketAgg),
       })
     );
@@ -578,65 +577,107 @@ export class ElasticDatasource
     return logResponse;
   };
 
-  getLogsVolumeDataProvider(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> | undefined {
-    const isLogsVolumeAvailable = request.targets.some((target) => {
-      return target.metrics?.length === 1 && target.metrics[0].type === 'logs';
-    });
-    if (!isLogsVolumeAvailable) {
+  getDataProvider(
+    type: SupplementaryQueryType,
+    request: DataQueryRequest<ElasticsearchQuery>
+  ): Observable<DataQueryResponse> | undefined {
+    if (!this.getSupportedSupplementaryQueryTypes().includes(type)) {
       return undefined;
     }
-    const logsVolumeRequest = cloneDeep(request);
-    logsVolumeRequest.targets = logsVolumeRequest.targets.map((target) => {
-      const bucketAggs: BucketAggregation[] = [];
-      const timeField = this.timeField ?? '@timestamp';
+    switch (type) {
+      case SupplementaryQueryType.LogsVolume:
+        return this.getLogsVolumeDataProvider(request);
+      default:
+        return undefined;
+    }
+  }
 
-      if (this.logLevelField) {
+  getSupportedSupplementaryQueryTypes(): SupplementaryQueryType[] {
+    return [SupplementaryQueryType.LogsVolume];
+  }
+
+  getSupplementaryQuery(type: SupplementaryQueryType, query: ElasticsearchQuery): ElasticsearchQuery | undefined {
+    if (!this.getSupportedSupplementaryQueryTypes().includes(type)) {
+      return undefined;
+    }
+
+    let isQuerySuitable = false;
+
+    switch (type) {
+      case SupplementaryQueryType.LogsVolume:
+        // it has to be a logs-producing range-query
+        isQuerySuitable = !!(query.metrics?.length === 1 && query.metrics[0].type === 'logs');
+        if (!isQuerySuitable) {
+          return undefined;
+        }
+        const bucketAggs: BucketAggregation[] = [];
+        const timeField = this.timeField ?? '@timestamp';
+
+        if (this.logLevelField) {
+          bucketAggs.push({
+            id: '2',
+            type: 'terms',
+            settings: {
+              min_doc_count: '0',
+              size: '0',
+              order: 'desc',
+              orderBy: '_count',
+              missing: LogLevel.unknown,
+            },
+            field: this.logLevelField,
+          });
+        }
         bucketAggs.push({
-          id: '2',
-          type: 'terms',
+          id: '3',
+          type: 'date_histogram',
           settings: {
+            interval: 'auto',
             min_doc_count: '0',
-            size: '0',
-            order: 'desc',
-            orderBy: '_count',
-            missing: LogLevel.unknown,
+            trimEdges: '0',
           },
-          field: this.logLevelField,
+          field: timeField,
         });
+
+        return {
+          refId: `${REF_ID_STARTER_LOG_VOLUME}${query.refId}`,
+          query: query.query,
+          metrics: [{ type: 'count', id: '1' }],
+          timeField,
+          bucketAggs,
+        };
+
+      default:
+        return undefined;
+    }
+  }
+
+  getLogsVolumeDataProvider(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> | undefined {
+    const logsVolumeRequest = cloneDeep(request);
+    const targets = logsVolumeRequest.targets
+      .map((target) => this.getSupplementaryQuery(SupplementaryQueryType.LogsVolume, target))
+      .filter((query): query is ElasticsearchQuery => !!query);
+
+    if (!targets.length) {
+      return undefined;
+    }
+
+    return queryLogsVolume(
+      this,
+      { ...logsVolumeRequest, targets },
+      {
+        range: request.range,
+        targets: request.targets,
+        extractLevel: (dataFrame) => getLogLevelFromKey(dataFrame.name || ''),
       }
-      bucketAggs.push({
-        id: '3',
-        type: 'date_histogram',
-        settings: {
-          interval: 'auto',
-          min_doc_count: '0',
-          trimEdges: '0',
-        },
-        field: timeField,
-      });
-
-      const logsVolumeQuery: ElasticsearchQuery = {
-        refId: target.refId,
-        query: target.query,
-        metrics: [{ type: 'count', id: '1' }],
-        timeField,
-        bucketAggs,
-      };
-      return logsVolumeQuery;
-    });
-
-    return queryLogsVolume(this, logsVolumeRequest, {
-      range: request.range,
-      targets: request.targets,
-      extractLevel: (dataFrame) => getLogLevelFromKey(dataFrame.name || ''),
-    });
+    );
   }
 
   query(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> {
     const shouldRunTroughBackend =
       request.app === CoreApp.Explore && config.featureToggles.elasticsearchBackendMigration;
     if (shouldRunTroughBackend) {
-      return super.query(request);
+      const start = new Date();
+      return super.query(request).pipe(tap((response) => trackQuery(response, request, start)));
     }
     let payload = '';
     const targets = this.interpolateVariablesInQueries(cloneDeep(request.targets), request.scopedVars);
@@ -703,6 +744,7 @@ export class ElasticDatasource
 
     const url = this.getMultiSearchUrl();
 
+    const start = new Date();
     return this.post(url, payload).pipe(
       map((res) => {
         const er = new ElasticResponse(sentTargets, res);
@@ -718,7 +760,8 @@ export class ElasticDatasource
         }
 
         return er.getTimeSeries();
-      })
+      }),
+      tap((response) => trackQuery(response, request, start))
     );
   }
 
@@ -964,6 +1007,37 @@ export class ElasticDatasource
       }
     }
     return { ...query, query: expression };
+  }
+
+  addAdHocFilters(query: string) {
+    const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
+    if (adhocFilters.length === 0) {
+      return query;
+    }
+    const esFilters = adhocFilters.map((filter) => {
+      const { key, operator, value } = filter;
+      if (!key || !value) {
+        return;
+      }
+      switch (operator) {
+        case '=':
+          return `${key}:"${value}"`;
+        case '!=':
+          return `-${key}:"${value}"`;
+        case '=~':
+          return `${key}:/${value}/`;
+        case '!~':
+          return `-${key}:/${value}/`;
+        case '>':
+          return `${key}:>${value}`;
+        case '<':
+          return `${key}:<${value}`;
+      }
+      return;
+    });
+
+    const finalQuery = [query, ...esFilters].filter((f) => f).join(' AND ');
+    return finalQuery;
   }
 }
 

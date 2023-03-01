@@ -2,8 +2,7 @@
 _build:
   list: false
 aliases:
-  - /docs/grafana/latest/guides/whats-new-in-v7-0/
-  - /docs/grafana/latest/whatsnew/whats-new-in-v7-0/
+  - ../guides/whats-new-in-v7-0/
 description: Feature and improvement highlights for Grafana v7
 keywords:
   - grafana
@@ -226,10 +225,6 @@ SAML support in Grafana Enterprise is improved by adding Role and Team Sync. Rea
 ### Okta OAuth Team Sync
 
 Okta gets its own provider which adds support for Team Sync. Read more about it in the [Okta documentation]({{< relref "../setup-grafana/configure-security/configure-authentication/okta/" >}}).
-
-## Upgrading
-
-See [upgrade notes]({{< relref "../setup-grafana/upgrade-grafana/#upgrading-to-v7-0" >}}).
 
 ## Changelog
 

@@ -2,7 +2,7 @@ import { useObservable } from 'react-use';
 import { BehaviorSubject } from 'rxjs';
 
 import { AppEvents, NavModelItem, UrlQueryValue } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { locationService, reportInteraction } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
 import store from 'app/core/store';
@@ -21,16 +21,14 @@ export interface AppChromeState {
   kioskMode: KioskMode | null;
 }
 
-const defaultSection: NavModelItem = { text: 'Grafana' };
-
 export class AppChromeService {
   searchBarStorageKey = 'SearchBar_Hidden';
   private currentRoute?: RouteDescriptor;
-  private routeChangeHandled?: boolean;
+  private routeChangeHandled = true;
 
   readonly state = new BehaviorSubject<AppChromeState>({
     chromeless: true, // start out hidden to not flash it on pages without chrome
-    sectionNav: defaultSection,
+    sectionNav: { text: t('nav.home.title', 'Home') },
     searchBarHidden: store.getBool(this.searchBarStorageKey, false),
     kioskMode: null,
   });
@@ -52,7 +50,7 @@ export class AppChromeService {
     if (!this.routeChangeHandled) {
       newState.actions = undefined;
       newState.pageNav = undefined;
-      newState.sectionNav = defaultSection;
+      newState.sectionNav = { text: t('nav.home.title', 'Home') };
       newState.chromeless = this.currentRoute?.chromeless;
       this.routeChangeHandled = true;
     }
@@ -62,9 +60,27 @@ export class AppChromeService {
     // KioskMode overrides chromeless state
     newState.chromeless = newState.kioskMode === KioskMode.Full || this.currentRoute?.chromeless;
 
-    if (!isShallowEqual(current, newState)) {
+    if (!this.ignoreStateUpdate(newState, current)) {
       this.state.next(newState);
     }
+  }
+
+  ignoreStateUpdate(newState: AppChromeState, current: AppChromeState) {
+    if (isShallowEqual(newState, current)) {
+      return true;
+    }
+
+    // Some updates can have new instance of sectionNav or pageNav but with same values
+    if (newState.sectionNav !== current.sectionNav || newState.pageNav !== current.pageNav) {
+      if (
+        navItemsAreTheSame(newState.sectionNav, current.sectionNav) &&
+        navItemsAreTheSame(newState.pageNav, current.pageNav)
+      ) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   useState() {
@@ -73,7 +89,9 @@ export class AppChromeService {
   }
 
   onToggleMegaMenu = () => {
-    this.update({ megaMenuOpen: !this.state.getValue().megaMenuOpen });
+    const isOpen = !this.state.getValue().megaMenuOpen;
+    reportInteraction('grafana_toggle_menu_clicked', { action: isOpen ? 'open' : 'close' });
+    this.update({ megaMenuOpen: isOpen });
   };
 
   setMegaMenu = (megaMenuOpen: boolean) => {
@@ -133,4 +151,18 @@ export class AppChromeService {
 
     return null;
   }
+}
+
+/**
+ * Checks if text, url and active child url are the same
+ **/
+function navItemsAreTheSame(a: NavModelItem | undefined, b: NavModelItem | undefined) {
+  if (a === b) {
+    return true;
+  }
+
+  const aActiveChild = a?.children?.find((child) => child.active);
+  const bActiveChild = b?.children?.find((child) => child.active);
+
+  return a?.text === b?.text && a?.url === b?.url && aActiveChild?.url === bActiveChild?.url;
 }

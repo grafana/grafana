@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/alerting-rules/create-grafana-managed-rule/
-  - /docs/grafana/latest/alerting/unified-alerting/alerting-rules/create-grafana-managed-rule/
+  - ../unified-alerting/alerting-rules/create-grafana-managed-rule/
 description: Create Grafana managed alert rule
 keywords:
   - grafana
@@ -22,7 +21,7 @@ Watch this video to learn more about creating alerts: {{< vimeo 720001934 >}}
 ## Add Grafana managed rule
 
 1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page listing existing alerts.
-1. Click **New alert rule**. The new alerting rule page opens where the Grafana managed alerts option is selected by default.
+1. Click **Create alert rule**. The new alerting rule page opens where the Grafana managed alerts option is selected by default.
 1. In Step 1, add the rule name.
    - In **Rule name**, add a descriptive name. This name is displayed in the alert rule list. It is also the `alertname` label for every alert instance that is created from this rule.
 1. In Step 2, add queries and expressions to evaluate, and then select the alert condition.
@@ -32,12 +31,18 @@ Watch this video to learn more about creating alerts: {{< vimeo 720001934 >}}
    - Click **Run queries** to verify that the query is successful.
    - Next, select the query or expression for your alert condition.
 1. In Step 3, specify the alert evaluation interval.
+
    - From the **Condition** drop-down, select the query or expression to trigger the alert rule.
    - For **Evaluate every**, specify the frequency of evaluation. Must be a multiple of 10 seconds. For examples, `1m`, `30s`.
    - For **Evaluate for**, specify the duration for which the condition must be true before an alert fires.
      > **Note:** Once a condition is breached, the alert goes into the Pending state. If the condition remains breached for the duration specified, the alert transitions to the `Firing` state, otherwise it reverts back to the `Normal` state.
    - In **Configure no data and error handling**, configure alerting behavior in the absence of data. Use the guidelines in [No data and error handling](#no-data-and-error-handling).
    - Click **Preview alerts** to check the result of running the query at this moment. Preview excludes no data and error handling.
+
+     **Note:**
+
+     You can pause alert rule evaluation to prevent noisy alerting while tuning your alerts. Pausing stops alert rule evaluation and does not create any alert instances. This is different to mute timings, which stop notifications from being delivered, but still allow for alert rule evaluation and the creation of alert instances.
+
 1. In Step 4, add the storage location, rule group, as well as additional metadata associated with the rule.
    - From the **Folder** drop-down, select the folder where you want to store the rule.
    - For **Group**, specify a pre-defined group. Newly created rules are appended to the end of the group. Rules within a group are run sequentially at a regular interval, with the same evaluation time.

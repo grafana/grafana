@@ -1,12 +1,11 @@
 import React from 'react';
 import { ColumnInstance, HeaderGroup } from 'react-table';
 
+import { fieldReducers, ReducerID } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { useStyles2 } from '../../themes';
-
 import { EmptyCell, FooterCell } from './FooterCell';
-import { getTableStyles, TableStyles } from './styles';
+import { TableStyles } from './styles';
 import { FooterItem } from './types';
 
 export interface FooterRowProps {
@@ -14,13 +13,12 @@ export interface FooterRowProps {
   footerGroups: HeaderGroup[];
   footerValues: FooterItem[];
   isPaginationVisible: boolean;
-  height: number;
+  tableStyles: TableStyles;
 }
 
 export const FooterRow = (props: FooterRowProps) => {
-  const { totalColumnsWidth, footerGroups, height, isPaginationVisible } = props;
+  const { totalColumnsWidth, footerGroups, isPaginationVisible, tableStyles } = props;
   const e2eSelectorsTable = selectors.components.Panels.Visualization.Table;
-  const tableStyles = useStyles2(getTableStyles);
 
   return (
     <div
@@ -33,14 +31,8 @@ export const FooterRow = (props: FooterRowProps) => {
       {footerGroups.map((footerGroup: HeaderGroup) => {
         const { key, ...footerGroupProps } = footerGroup.getFooterGroupProps();
         return (
-          <div
-            className={tableStyles.tfoot}
-            {...footerGroupProps}
-            key={key}
-            data-testid={e2eSelectorsTable.footer}
-            style={height ? { height: `${height}px` } : undefined}
-          >
-            {footerGroup.headers.map((column: ColumnInstance) => renderFooterCell(column, tableStyles, height))}
+          <div className={tableStyles.tfoot} {...footerGroupProps} key={key} data-testid={e2eSelectorsTable.footer}>
+            {footerGroup.headers.map((column: ColumnInstance) => renderFooterCell(column, tableStyles))}
           </div>
         );
       })}
@@ -48,7 +40,7 @@ export const FooterRow = (props: FooterRowProps) => {
   );
 };
 
-function renderFooterCell(column: ColumnInstance, tableStyles: TableStyles, height?: number) {
+function renderFooterCell(column: ColumnInstance, tableStyles: TableStyles) {
   const footerProps = column.getHeaderProps();
 
   if (!footerProps) {
@@ -58,9 +50,6 @@ function renderFooterCell(column: ColumnInstance, tableStyles: TableStyles, heig
   footerProps.style = footerProps.style ?? {};
   footerProps.style.position = 'absolute';
   footerProps.style.justifyContent = (column as any).justifyContent;
-  if (height) {
-    footerProps.style.height = height;
-  }
 
   return (
     <div className={tableStyles.headerCell} {...footerProps}>
@@ -75,12 +64,13 @@ export function getFooterValue(index: number, footerValues?: FooterItem[], isCou
   }
 
   if (isCountRowsSet) {
-    const count = footerValues[index];
-    if (typeof count !== 'string') {
+    if (footerValues[index] === undefined) {
       return EmptyCell;
     }
 
-    return FooterCell({ value: [{ Count: count }] });
+    const key = fieldReducers.get(ReducerID.count).name;
+
+    return FooterCell({ value: [{ [key]: String(footerValues[index]) }] });
   }
 
   return FooterCell({ value: footerValues[index] });

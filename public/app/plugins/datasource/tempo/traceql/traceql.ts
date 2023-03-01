@@ -26,9 +26,9 @@ const intrinsics = ['duration', 'name', 'status', 'parent'];
 
 const scopes: string[] = ['resource', 'span'];
 
-const booleans = ['false', 'true'];
+const keywords = intrinsics.concat(scopes);
 
-const keywords = intrinsics.concat(scopes).concat(booleans);
+const statusValues = ['ok', 'unset', 'error', 'false', 'true'];
 
 export const language = {
   ignoreCase: false,
@@ -37,6 +37,7 @@ export const language = {
 
   keywords,
   operators,
+  statusValues,
 
   // we include these common regular expressions
   symbols: /[=><!~?:&|+\-*\/^%]+/,
@@ -44,14 +45,18 @@ export const language = {
   digits: /\d+(_+\d+)*/,
   octaldigits: /[0-7]+(_+[0-7]+)*/,
   binarydigits: /[0-1]+(_+[0-1]+)*/,
-  hexdigits: /[[0-9a-fA-F]+(_+[0-9a-fA-F]+)*/,
-  integersuffix: /(ll|LL|u|U|l|L)?(ll|LL|u|U|l|L)?/,
-  floatsuffix: /[fFlL]?/,
 
   tokenizer: {
     root: [
       // labels
       [/[a-z_.][\w./_-]*(?=\s*(=|!=|>|<|>=|<=|=~|!~))/, 'tag'],
+      [/[a-z_.][\w./_-]*/, 'tag'],
+
+      // durations
+      [/[0-9.]+(s|ms|ns|m)/, 'number'],
+
+      // trace ID
+      [/^\s*[0-9A-Fa-f]+\s*$/, 'tag'],
 
       // all keywords have the same color
       [
@@ -59,6 +64,7 @@ export const language = {
         {
           cases: {
             '@keywords': 'type',
+            '@statusValues': 'type.identifier',
             '@default': 'identifier',
           },
         },
@@ -87,14 +93,12 @@ export const language = {
       ],
 
       // numbers
-      [/\d+/, 'number'],
-      [/\d*\d+[eE]([\-+]?\d+)?(@floatsuffix)/, 'number.float'],
-      [/\d*\.\d+([eE][\-+]?\d+)?(@floatsuffix)/, 'number.float'],
-      [/0[xX][0-9a-fA-F']*[0-9a-fA-F](@integersuffix)/, 'number.hex'],
-      [/0[0-7']*[0-7](@integersuffix)/, 'number.octal'],
-      [/0[bB][0-1']*[0-1](@integersuffix)/, 'number.binary'],
-      [/\d[\d']*\d(@integersuffix)/, 'number'],
-      [/\d(@integersuffix)/, 'number'],
+      [/(@digits)[eE]([\-+]?(@digits))?[fFdD]?/, 'number.float'],
+      [/(@digits)\.(@digits)([eE][\-+]?(@digits))?[fFdD]?/, 'number.float'],
+      [/0(@octaldigits)[Ll]?/, 'number.octal'],
+      [/0[bB](@binarydigits)[Ll]?/, 'number.binary'],
+      [/(@digits)[fFdD]/, 'number.float'],
+      [/(@digits)[lL]?/, 'number'],
     ],
 
     string_double: [

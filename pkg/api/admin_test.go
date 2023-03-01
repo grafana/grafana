@@ -1,25 +1,28 @@
 package api
 
 import (
+	"io"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/stats/statstest"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
-type getSettingsTestCase struct {
-	desc         string
-	expectedCode int
-	expectedBody string
-	permissions  []accesscontrol.Permission
-}
-
 func TestAPI_AdminGetSettings(t *testing.T) {
-	tests := []getSettingsTestCase{
+	type testCase struct {
+		desc         string
+		expectedCode int
+		expectedBody string
+		permissions  []accesscontrol.Permission
+	}
+	tests := []testCase{
 		{
 			desc:         "should return all settings",
 			expectedCode: http.StatusOK,
@@ -76,31 +79,37 @@ func TestAPI_AdminGetSettings(t *testing.T) {
 	_, err = proxy.NewKey("enable_login_token", "false")
 	assert.NoError(t, err)
 
-	for _, test := range tests {
-		t.Run(test.desc, func(t *testing.T) {
-			sc, hs := setupAccessControlScenarioContext(t, cfg, "/api/admin/settings", test.permissions)
-			hs.SettingsProvider = &setting.OSSImpl{Cfg: cfg}
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			server := SetupAPITestServer(t, func(hs *HTTPServer) {
+				hs.Cfg = cfg
+				hs.SettingsProvider = setting.ProvideProvider(hs.Cfg)
+			})
 
-			sc.resp = httptest.NewRecorder()
-			var err error
-			sc.req, err = http.NewRequest(http.MethodGet, "/api/admin/settings", nil)
-			assert.NoError(t, err)
-
-			sc.exec()
-
-			assert.Equal(t, test.expectedCode, sc.resp.Code)
-			assert.Equal(t, test.expectedBody, sc.resp.Body.String())
+			res, err := server.Send(webtest.RequestWithSignedInUser(server.NewGetRequest("/api/admin/settings"), userWithPermissions(1, tt.permissions)))
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectedCode, res.StatusCode)
+			body, err := io.ReadAll(res.Body)
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectedBody, string(body))
+			require.NoError(t, res.Body.Close())
 		})
 	}
 }
 
 func TestAdmin_AccessControl(t *testing.T) {
-	tests := []accessControlTestCase{
+	type testCase struct {
+		desc         string
+		url          string
+		permissions  []accesscontrol.Permission
+		expectedCode int
+	}
+
+	tests := []testCase{
 		{
 			expectedCode: http.StatusOK,
 			desc:         "AdminGetStats should return 200 for user with correct permissions",
 			url:          "/api/admin/stats",
-			method:       http.MethodGet,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: accesscontrol.ActionServerStatsRead,
@@ -111,7 +120,6 @@ func TestAdmin_AccessControl(t *testing.T) {
 			expectedCode: http.StatusForbidden,
 			desc:         "AdminGetStats should return 403 for user without required permissions",
 			url:          "/api/admin/stats",
-			method:       http.MethodGet,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: "wrong",
@@ -122,7 +130,6 @@ func TestAdmin_AccessControl(t *testing.T) {
 			expectedCode: http.StatusOK,
 			desc:         "AdminGetSettings should return 200 for user with correct permissions",
 			url:          "/api/admin/settings",
-			method:       http.MethodGet,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: accesscontrol.ActionSettingsRead,
@@ -133,7 +140,6 @@ func TestAdmin_AccessControl(t *testing.T) {
 			expectedCode: http.StatusForbidden,
 			desc:         "AdminGetSettings should return 403 for user without required permissions",
 			url:          "/api/admin/settings",
-			method:       http.MethodGet,
 			permissions: []accesscontrol.Permission{
 				{
 					Action: "wrong",
@@ -142,20 +148,19 @@ func TestAdmin_AccessControl(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		t.Run(test.desc, func(t *testing.T) {
-			cfg := setting.NewCfg()
-			sc, hs := setupAccessControlScenarioContext(t, cfg, test.url, test.permissions)
-			sc.resp = httptest.NewRecorder()
-			hs.SettingsProvider = &setting.OSSImpl{Cfg: cfg}
-			hs.SQLStore = mockstore.NewSQLStoreMock()
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			server := SetupAPITestServer(t, func(hs *HTTPServer) {
+				hs.Cfg = setting.NewCfg()
+				hs.SQLStore = dbtest.NewFakeDB()
+				hs.SettingsProvider = &setting.OSSImpl{Cfg: hs.Cfg}
+				hs.statsService = statstest.NewFakeService()
+			})
 
-			var err error
-			sc.req, err = http.NewRequest(test.method, test.url, nil)
-			assert.NoError(t, err)
-
-			sc.exec()
-			assert.Equal(t, test.expectedCode, sc.resp.Code)
+			res, err := server.Send(webtest.RequestWithSignedInUser(server.NewGetRequest(tt.url), userWithPermissions(1, tt.permissions)))
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectedCode, res.StatusCode)
+			require.NoError(t, res.Body.Close())
 		})
 	}
 }

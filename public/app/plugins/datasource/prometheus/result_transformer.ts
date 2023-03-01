@@ -196,7 +196,7 @@ export function transformDFToTable(dfs: DataFrame[]): DataFrame[] {
     // Fill labelsFields with labels from dataFrames
     dataFramesByRefId[refId].forEach((df) => {
       const frameValueField = df.fields[1];
-      const promLabels = frameValueField.labels ?? {};
+      const promLabels = frameValueField?.labels ?? {};
 
       Object.keys(promLabels)
         .sort()
@@ -216,8 +216,10 @@ export function transformDFToTable(dfs: DataFrame[]): DataFrame[] {
 
     // Fill valueField, timeField and labelFields with values
     dataFramesByRefId[refId].forEach((df) => {
-      df.fields[0].values.toArray().forEach((value) => timeField.values.add(value));
-      df.fields[1].values.toArray().forEach((value) => {
+      const timeFields = df.fields[0]?.values ?? new ArrayVector();
+      const dataFields = df.fields[1]?.values ?? new ArrayVector();
+      timeFields.toArray().forEach((value) => timeField.values.add(value));
+      dataFields.toArray().forEach((value) => {
         valueField.values.add(parseSampleValue(value));
         const labelsForField = df.fields[1].labels ?? {};
         labelFields.forEach((field) => field.values.add(getLabelValue(labelsForField, field.name)));
@@ -228,7 +230,8 @@ export function transformDFToTable(dfs: DataFrame[]): DataFrame[] {
     return {
       refId,
       fields,
-      meta: { ...dfs[0].meta, preferredVisualisationType: 'table' as PreferredVisualisationType },
+      // Prometheus specific UI for instant queries
+      meta: { ...dfs[0].meta, preferredVisualisationType: 'rawPrometheus' as PreferredVisualisationType },
       length: timeField.values.length,
     };
   });
@@ -263,7 +266,7 @@ export function transform(
     valueWithRefId: transformOptions.target.valueWithRefId,
     meta: {
       // Fix for showing of Prometheus results in Explore table
-      preferredVisualisationType: transformOptions.query.instant ? 'table' : 'graph',
+      preferredVisualisationType: transformOptions.query.instant ? 'rawPrometheus' : 'graph',
     },
   };
   const prometheusResult = response.data.data;
@@ -354,7 +357,7 @@ function getDataLinks(options: ExemplarTraceIdDestination): DataLink[] {
         title: options.urlDisplayLabel || `Query with ${dsSettings?.name}`,
         url: '',
         internal: {
-          query: { query: '${__value.raw}', queryType: 'traceId' },
+          query: { query: '${__value.raw}', queryType: 'traceql' },
           datasourceUid: options.datasourceUid,
           datasourceName: dsSettings?.name ?? 'Data source not found',
         },

@@ -1,11 +1,23 @@
-import { cx } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { PureComponent } from 'react';
+import DropZone, { FileRejection, DropEvent, ErrorCode } from 'react-dropzone';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { NavModel, NavModelItem, TimeRange, PageLayoutType, locationUtil } from '@grafana/data';
+import {
+  NavModel,
+  NavModelItem,
+  TimeRange,
+  PageLayoutType,
+  locationUtil,
+  dataFrameToJSON,
+  DataFrameJSON,
+  GrafanaTheme2,
+  getValueFormat,
+  formattedValueToString,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
-import { Themeable2, withTheme2 } from '@grafana/ui';
+import { Icon, Themeable2, withTheme2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaContext, GrafanaContextType } from 'app/core/context/GrafanaContext';
@@ -14,8 +26,10 @@ import { getKioskMode } from 'app/core/navigation/kiosk';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { PanelModel } from 'app/features/dashboard/state';
+import * as DFImport from 'app/features/dataframe-import';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { getPageNavFromSlug, getRootContentNavModel } from 'app/features/storage/StorageFolderPage';
+import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 import { DashboardRoutes, KioskMode, StoreState } from 'app/types';
 import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 
@@ -28,7 +42,6 @@ import { DashboardPrompt } from '../components/DashboardPrompt/DashboardPrompt';
 import { DashboardSettings } from '../components/DashboardSettings';
 import { PanelInspector } from '../components/Inspector/PanelInspector';
 import { PanelEditor } from '../components/PanelEditor/PanelEditor';
-import { PublicDashboardFooter } from '../components/PublicDashboardFooter/PublicDashboardsFooter';
 import { SubMenu } from '../components/SubMenu/SubMenu';
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { liveTimer } from '../dashgrid/liveTimer';
@@ -75,12 +88,7 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-type OwnProps = {
-  isPublic?: boolean;
-};
-
-export type Props = OwnProps &
-  Themeable2 &
+export type Props = Themeable2 &
   GrafanaRouteComponentProps<DashboardPageRouteParams, DashboardPageRouteSearchParams> &
   ConnectedProps<typeof connector>;
 
@@ -103,6 +111,60 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
   private forceRouteReloadCounter = 0;
   state: State = this.getCleanState();
+
+  onFileDrop = (acceptedFiles: File[], fileRejections: FileRejection[], event: DropEvent) => {
+    const grafanaDS = {
+      type: 'grafana',
+      uid: 'grafana',
+    };
+    DFImport.filesToDataframes(acceptedFiles).subscribe((next) => {
+      const snapshot: DataFrameJSON[] = [];
+      next.dataFrames.forEach((df) => {
+        const dataframeJson = dataFrameToJSON(df);
+        snapshot.push(dataframeJson);
+      });
+      this.props.dashboard?.addPanel({
+        type: 'table',
+        gridPos: { x: 0, y: 0, w: 12, h: 8 },
+        title: next.file.name,
+        datasource: grafanaDS,
+        targets: [
+          {
+            queryType: GrafanaQueryType.Snapshot,
+            snapshot,
+            file: { name: next.file.name, size: next.file.size },
+            datasource: grafanaDS,
+          },
+        ],
+      });
+    });
+
+    fileRejections.forEach((fileRejection) => {
+      const errors = fileRejection.errors.map((error) => {
+        switch (error.code) {
+          case ErrorCode.FileTooLarge:
+            const formattedSize = getValueFormat('decbytes')(DFImport.maxFileSize);
+            return `File size must be less than ${formattedValueToString(formattedSize)}.`;
+          case ErrorCode.FileInvalidType:
+            return `File type must be one of the following types ${DFImport.formatFileTypes(DFImport.acceptedFiles)}.`;
+          default:
+            return error.message;
+        }
+      });
+      this.props.notifyApp(
+        createErrorNotification(
+          `Failed to load ${fileRejection.file.name}`,
+          undefined,
+          undefined,
+          <ul>
+            {errors.map((err) => {
+              return <li key={err}>{err}</li>;
+            })}
+          </ul>
+        )
+      );
+    });
+  };
 
   getCleanState(): State {
     return {
@@ -129,7 +191,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   }
 
   initDashboard() {
-    const { dashboard, isPublic, match, queryParams } = this.props;
+    const { dashboard, match, queryParams } = this.props;
 
     if (dashboard) {
       this.closeDashboard();
@@ -142,7 +204,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
       urlFolderUid: queryParams.folderUid,
       panelType: queryParams.panelType,
       routeName: this.props.route.routeName,
-      fixUrl: !isPublic,
+      fixUrl: true,
       accessToken: match.params.accessToken,
       keybindingSrv: this.context.keybindings,
     });
@@ -341,9 +403,9 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   }
 
   render() {
-    const { dashboard, initError, queryParams, isPublic } = this.props;
+    const { dashboard, initError, queryParams } = this.props;
     const { editPanel, viewPanel, updateScrollTop, pageNav, sectionNav } = this.state;
-    const kioskMode = !isPublic ? getKioskMode(this.props.queryParams) : KioskMode.Full;
+    const kioskMode = getKioskMode(this.props.queryParams);
 
     if (!dashboard || !pageNav || !sectionNav) {
       return <DashboardLoading initPhase={this.props.initPhase} />;
@@ -384,16 +446,47 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           scrollTop={updateScrollTop}
         >
           <DashboardPrompt dashboard={dashboard} />
-
           {initError && <DashboardFailed />}
           {showSubMenu && (
             <section aria-label={selectors.pages.Dashboard.SubMenu.submenu}>
               <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
             </section>
           )}
-
-          <DashboardGrid dashboard={dashboard} viewPanel={viewPanel} editPanel={editPanel} />
-
+          {config.featureToggles.editPanelCSVDragAndDrop ? (
+            <DropZone
+              onDrop={this.onFileDrop}
+              accept={DFImport.acceptedFiles}
+              maxSize={DFImport.maxFileSize}
+              noClick={true}
+            >
+              {({ getRootProps, isDragActive }) => {
+                const styles = getStyles(this.props.theme, isDragActive);
+                return (
+                  <div {...getRootProps({ className: styles.dropZone })}>
+                    <div className={styles.dropOverlay}>
+                      <div className={styles.dropHint}>
+                        <Icon name="upload" size="xxxl"></Icon>
+                        <h3>Create tables from spreadsheets</h3>
+                      </div>
+                    </div>
+                    <DashboardGrid
+                      dashboard={dashboard}
+                      isEditable={!!dashboard.meta.canEdit}
+                      viewPanel={viewPanel}
+                      editPanel={editPanel}
+                    />
+                  </div>
+                );
+              }}
+            </DropZone>
+          ) : (
+            <DashboardGrid
+              dashboard={dashboard}
+              isEditable={!!dashboard.meta.canEdit}
+              viewPanel={viewPanel}
+              editPanel={editPanel}
+            />
+          )}
           {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} />}
         </Page>
         {editPanel && (
@@ -413,10 +506,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
             sectionNav={sectionNav}
           />
         )}
-        {
-          // TODO: assess if there are other places where we may want a footer, which may reveal a better place to add this
-          isPublic && <PublicDashboardFooter />
-        }
       </>
     );
   }
@@ -482,6 +571,32 @@ function updateStatePageNavFromProps(props: Props, state: State): State {
     ...state,
     pageNav,
     sectionNav,
+  };
+}
+
+function getStyles(theme: GrafanaTheme2, isDragActive: boolean) {
+  return {
+    dropZone: css`
+      height: 100%;
+    `,
+    dropOverlay: css`
+      background-color: ${isDragActive ? theme.colors.action.hover : `inherit`};
+      border: ${isDragActive ? `2px dashed ${theme.colors.border.medium}` : 0};
+      position: absolute;
+      display: ${isDragActive ? 'flex' : 'none'};
+      z-index: ${theme.zIndex.modal};
+      top: 0px;
+      left: 0px;
+      height: 100%;
+      width: 100%;
+      align-items: center;
+      justify-content: center;
+    `,
+    dropHint: css`
+      align-items: center;
+      display: flex;
+      flex-direction: column;
+    `,
   };
 }
 

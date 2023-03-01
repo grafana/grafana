@@ -1,8 +1,8 @@
 # syntax=docker/dockerfile:1
 
-ARG BASE_IMAGE=alpine:3.15
-ARG JS_IMAGE=node:16-alpine3.15
-ARG GO_IMAGE=golang:1.19.3-alpine3.15
+ARG BASE_IMAGE=alpine:3.17
+ARG JS_IMAGE=node:18-alpine3.17
+ARG GO_IMAGE=golang:1.20.1-alpine3.17
 
 ARG GO_SRC=go-builder
 ARG JS_SRC=js-builder
@@ -18,7 +18,7 @@ COPY .yarn .yarn
 COPY packages packages
 COPY plugins-bundled plugins-bundled
 
-RUN yarn install
+RUN yarn install --immutable
 
 COPY tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js babel.config.json .linguirc ./
 COPY public public
@@ -30,6 +30,10 @@ RUN yarn build
 
 FROM ${GO_IMAGE} as go-builder
 
+ARG GO_BUILD_TAGS="oss"
+ARG WIRE_TAGS="oss"
+ARG BINGO="true"
+
 # Install build dependencies
 RUN if grep -i -q alpine /etc/issue; then \
       apk add --no-cache gcc g++ make; \
@@ -40,21 +44,24 @@ WORKDIR /tmp/grafana
 COPY go.* ./
 COPY .bingo .bingo
 
-RUN go mod download && \
-    go install github.com/bwplotka/bingo@latest && \
-    bingo get
+RUN go mod download
+RUN if [[ "$BINGO" = "true" ]]; then \
+      go install github.com/bwplotka/bingo@latest && \
+      bingo get -v; \
+    fi
 
 COPY embed.go Makefile build.go package.json ./
 COPY cue.mod cue.mod
 COPY kinds kinds
 COPY packages/grafana-schema packages/grafana-schema
 COPY public/app/plugins public/app/plugins
-COPY public/api-spec.json public/api-spec.json
+COPY public/api-merged.json public/api-merged.json
 COPY pkg pkg
 COPY scripts scripts
 COPY conf conf
+COPY .github .github
 
-RUN make build-go
+RUN make build-go GO_BUILD_TAGS=${GO_BUILD_TAGS} WIRE_TAGS=${WIRE_TAGS}
 
 FROM ${BASE_IMAGE} as tgz-builder
 
@@ -105,11 +112,12 @@ RUN if grep -i -q alpine /etc/issue; then \
 
 # glibc support for alpine x86_64 only
 RUN if grep -i -q alpine /etc/issue && [ `arch` = "x86_64" ]; then \
+      wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://alpine-pkgs.sgerrand.com/sgerrand.rsa.pub && \
       wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.35-r0/glibc-2.35-r0.apk \
         -O /tmp/glibc-2.35-r0.apk && \
       wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.35-r0/glibc-bin-2.35-r0.apk \
         -O /tmp/glibc-bin-2.35-r0.apk && \
-      apk add --no-cache --allow-untrusted /tmp/glibc-2.35-r0.apk /tmp/glibc-bin-2.35-r0.apk && \
+      apk add --force-overwrite --no-cache /tmp/glibc-2.35-r0.apk /tmp/glibc-bin-2.35-r0.apk && \
       rm -f /lib64/ld-linux-x86-64.so.2 && \
       ln -s /usr/glibc-compat/lib64/ld-linux-x86-64.so.2 /lib64/ld-linux-x86-64.so.2 && \
       rm -f /tmp/glibc-2.35-r0.apk && \

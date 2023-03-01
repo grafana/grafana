@@ -68,7 +68,7 @@ func runScenario(name string, opts Options) func(t *testing.T) {
 		}
 
 		fname := name + "-frame"
-		experimental.CheckGoldenJSONResponse(t, "testdata", fname, rsp, update)
+		experimental.CheckGoldenJSONResponse(t, "testdata", fname, &rsp, update)
 	}
 }
 

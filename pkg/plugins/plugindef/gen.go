@@ -8,19 +8,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"go/ast"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"cuelang.org/go/cue/cuecontext"
+	"github.com/dave/dst"
 	"github.com/grafana/codejen"
 	"github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/encoding/gocode"
 	"github.com/grafana/thema/encoding/jsonschema"
-	"golang.org/x/tools/go/ast/astutil"
 )
 
 var dirPlugindef = filepath.Join("pkg", "plugins", "plugindef")
@@ -41,8 +39,8 @@ func main() {
 		fmt.Fprintf(os.Stderr, "could not get working directory: %s", err)
 		os.Exit(1)
 	}
-	grootp := strings.Split(cwd, string(os.PathSeparator))
-	groot := filepath.Join(string(os.PathSeparator), filepath.Join(grootp[:len(grootp)-3]...))
+
+	groot := filepath.Clean(filepath.Join(cwd, "../../.."))
 
 	jfs := elsedie(jl.GenerateFS(lin))("plugindef jenny pipeline failed")
 	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
@@ -62,15 +60,15 @@ func (j *jennytypego) JennyName() string {
 }
 
 func (j *jennytypego) Generate(lin thema.Lineage) (*codejen.File, error) {
-	b, err := gocode.GenerateTypesOpenAPI(lin.Latest(), &gocode.TypeConfigOpenAPI{
-		ApplyFuncs: []astutil.ApplyFunc{
-			codegen.PrefixReplacer("Plugindef", "PluginDef"),
-		},
+	f, err := codegen.GoTypesJenny{}.Generate(codegen.SchemaForGen{
+		Name:    "PluginDef",
+		Schema:  lin.Latest(),
+		IsGroup: false,
 	})
-	if err != nil {
-		return nil, err
+	if f != nil {
+		f.RelativePath = filepath.Join(dirPlugindef, f.RelativePath)
 	}
-	return codejen.NewFile(filepath.Join(dirPlugindef, "plugindef_types_gen.go"), b, j), nil
+	return f, err
 }
 
 // one-off jenny for plugindef go bindings
@@ -83,7 +81,7 @@ func (j *jennybindgo) JennyName() string {
 func (j *jennybindgo) Generate(lin thema.Lineage) (*codejen.File, error) {
 	b, err := gocode.GenerateLineageBinding(lin, &gocode.BindingConfig{
 		TitleName:      "PluginDef",
-		Assignee:       ast.NewIdent("*PluginDef"),
+		Assignee:       dst.NewIdent("*PluginDef"),
 		PrivateFactory: true,
 	})
 	if err != nil {

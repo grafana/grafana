@@ -17,7 +17,8 @@
 // TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 // THIS SOFTWARE.
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import uFuzzy from '@leeoniya/ufuzzy';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { CoreApp, createTheme, DataFrame, FieldType, getDisplayProcessor } from '@grafana/data';
@@ -25,6 +26,7 @@ import { CoreApp, createTheme, DataFrame, FieldType, getDisplayProcessor } from 
 import { PIXELS_PER_LEVEL } from '../../constants';
 import { TooltipData, SelectedView } from '../types';
 
+import FlameGraphMetadata from './FlameGraphMetadata';
 import FlameGraphTooltip, { getTooltipData } from './FlameGraphTooltip';
 import { ItemWithStart } from './dataTransform';
 import { getBarX, getRectDimensionsForLevel, renderRect } from './rendering';
@@ -35,10 +37,12 @@ type Props = {
   flameGraphHeight?: number;
   levels: ItemWithStart[][];
   topLevelIndex: number;
+  selectedBarIndex: number;
   rangeMin: number;
   rangeMax: number;
   search: string;
   setTopLevelIndex: (level: number) => void;
+  setSelectedBarIndex: (bar: number) => void;
   setRangeMin: (range: number) => void;
   setRangeMax: (range: number) => void;
   selectedView: SelectedView;
@@ -51,10 +55,12 @@ const FlameGraph = ({
   flameGraphHeight,
   levels,
   topLevelIndex,
+  selectedBarIndex,
   rangeMin,
   rangeMax,
   search,
   setTopLevelIndex,
+  setSelectedBarIndex,
   setRangeMin,
   setRangeMax,
   selectedView,
@@ -83,6 +89,26 @@ const FlameGraph = ({
     },
     [levels, totalTicks, rangeMin]
   );
+
+  const [ufuzzy] = useState(() => {
+    return new uFuzzy();
+  });
+
+  const uniqueLabels = useMemo(() => {
+    return [...new Set<string>(data.fields.find((f) => f.name === 'label')?.values.toArray())];
+  }, [data]);
+
+  const foundLabels = useMemo(() => {
+    const foundLabels = new Set<string>();
+
+    if (search) {
+      for (let idx of ufuzzy.filter(uniqueLabels, search)) {
+        foundLabels.add(uniqueLabels[idx]);
+      }
+    }
+
+    return foundLabels;
+  }, [ufuzzy, search, uniqueLabels]);
 
   const render = useCallback(
     (pixelsPerTick: number) => {
@@ -114,11 +140,11 @@ const FlameGraph = ({
         const dimensions = getRectDimensionsForLevel(level, levelIndex, totalTicks, rangeMin, pixelsPerTick, processor);
         for (const rect of dimensions) {
           // Render each rectangle based on the computed dimensions
-          renderRect(ctx, rect, totalTicks, rangeMin, rangeMax, search, levelIndex, topLevelIndex);
+          renderRect(ctx, rect, totalTicks, rangeMin, rangeMax, search, levelIndex, topLevelIndex, foundLabels);
         }
       }
     },
-    [levels, wrapperWidth, valueField, totalTicks, rangeMin, rangeMax, search, topLevelIndex]
+    [levels, wrapperWidth, valueField, totalTicks, rangeMin, rangeMax, search, topLevelIndex, foundLabels]
   );
 
   useEffect(() => {
@@ -134,6 +160,7 @@ const FlameGraph = ({
 
         if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
           setTopLevelIndex(levelIndex);
+          setSelectedBarIndex(barIndex);
           setRangeMin(levels[levelIndex][barIndex].start / totalTicks);
           setRangeMax((levels[levelIndex][barIndex].start + levels[levelIndex][barIndex].value) / totalTicks);
         }
@@ -175,10 +202,18 @@ const FlameGraph = ({
     setRangeMax,
     selectedView,
     valueField,
+    setSelectedBarIndex,
   ]);
 
   return (
     <div className={styles.graph} ref={sizeRef}>
+      <FlameGraphMetadata
+        levels={levels}
+        topLevelIndex={topLevelIndex}
+        selectedBarIndex={selectedBarIndex}
+        valueField={valueField}
+        totalTicks={totalTicks}
+      />
       <canvas ref={graphRef} data-testid="flameGraph" />
       <FlameGraphTooltip tooltipRef={tooltipRef} tooltipData={tooltipData!} showTooltip={showTooltip} />
     </div>
@@ -192,8 +227,8 @@ const getStyles = (selectedView: SelectedView, app: CoreApp, flameGraphHeight: n
     overflow: scroll;
     width: ${selectedView === SelectedView.FlameGraph ? '100%' : '50%'};
     ${app !== CoreApp.Explore
-      ? `height: calc(${flameGraphHeight}px - 44px)`
-      : ''}; // 44px to adjust for header pushing content down
+      ? `height: calc(${flameGraphHeight}px - 50px)`
+      : ''}; // 50px to adjust for header pushing content down
   `,
 });
 

@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"errors"
+	"net/http"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -9,10 +10,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/auth"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/setting"
@@ -25,7 +27,7 @@ type AuthOptions struct {
 	ReqNoAnonynmous bool
 }
 
-func accessForbidden(c *models.ReqContext) {
+func accessForbidden(c *contextmodel.ReqContext) {
 	if c.IsApiRequest() {
 		c.JsonApiErr(403, "Permission denied", nil)
 		return
@@ -34,9 +36,9 @@ func accessForbidden(c *models.ReqContext) {
 	c.Redirect(setting.AppSubUrl + "/")
 }
 
-func notAuthorized(c *models.ReqContext) {
+func notAuthorized(c *contextmodel.ReqContext) {
 	if c.IsApiRequest() {
-		c.JsonApiErr(401, "Unauthorized", nil)
+		c.WriteErrOrFallback(http.StatusUnauthorized, http.StatusText(http.StatusUnauthorized), c.LookupTokenErr)
 		return
 	}
 
@@ -44,7 +46,7 @@ func notAuthorized(c *models.ReqContext) {
 	c.Redirect(setting.AppSubUrl + "/login")
 }
 
-func tokenRevoked(c *models.ReqContext, err *auth.TokenRevokedError) {
+func tokenRevoked(c *contextmodel.ReqContext, err *auth.TokenRevokedError) {
 	if c.IsApiRequest() {
 		c.JSON(401, map[string]interface{}{
 			"message": "Token revoked",
@@ -60,7 +62,7 @@ func tokenRevoked(c *models.ReqContext, err *auth.TokenRevokedError) {
 	c.Redirect(setting.AppSubUrl + "/login")
 }
 
-func writeRedirectCookie(c *models.ReqContext) {
+func writeRedirectCookie(c *contextmodel.ReqContext) {
 	redirectTo := c.Req.RequestURI
 	if setting.AppSubUrl != "" && !strings.HasPrefix(redirectTo, setting.AppSubUrl) {
 		redirectTo = setting.AppSubUrl + c.Req.RequestURI
@@ -81,14 +83,14 @@ func removeForceLoginParams(str string) string {
 	return forceLoginParamsRegexp.ReplaceAllString(str, "")
 }
 
-func EnsureEditorOrViewerCanEdit(c *models.ReqContext) {
+func EnsureEditorOrViewerCanEdit(c *contextmodel.ReqContext) {
 	if !c.SignedInUser.HasRole(org.RoleEditor) && !setting.ViewersCanEdit {
 		accessForbidden(c)
 	}
 }
 
-func CanAdminPlugins(cfg *setting.Cfg) func(c *models.ReqContext) {
-	return func(c *models.ReqContext) {
+func CanAdminPlugins(cfg *setting.Cfg) func(c *contextmodel.ReqContext) {
+	return func(c *contextmodel.ReqContext) {
 		if !plugins.ReqCanAdminPlugins(cfg)(c) {
 			accessForbidden(c)
 			return
@@ -97,7 +99,7 @@ func CanAdminPlugins(cfg *setting.Cfg) func(c *models.ReqContext) {
 }
 
 func RoleAuth(roles ...org.RoleType) web.Handler {
-	return func(c *models.ReqContext) {
+	return func(c *contextmodel.ReqContext) {
 		ok := false
 		for _, role := range roles {
 			if role == c.OrgRole {
@@ -112,7 +114,7 @@ func RoleAuth(roles ...org.RoleType) web.Handler {
 }
 
 func Auth(options *AuthOptions) web.Handler {
-	return func(c *models.ReqContext) {
+	return func(c *contextmodel.ReqContext) {
 		forceLogin := false
 		if c.AllowAnonymous {
 			forceLogin = shouldForceLogin(c)
@@ -151,7 +153,7 @@ func Auth(options *AuthOptions) web.Handler {
 // Intended for when feature flags open up access to APIs that
 // are otherwise only available to admins.
 func AdminOrEditorAndFeatureEnabled(enabled bool) web.Handler {
-	return func(c *models.ReqContext) {
+	return func(c *contextmodel.ReqContext) {
 		if c.OrgRole == org.RoleAdmin {
 			return
 		}
@@ -167,7 +169,7 @@ func AdminOrEditorAndFeatureEnabled(enabled bool) web.Handler {
 // SnapshotPublicModeOrSignedIn creates a middleware that allows access
 // if snapshot public mode is enabled or if user is signed in.
 func SnapshotPublicModeOrSignedIn(cfg *setting.Cfg) web.Handler {
-	return func(c *models.ReqContext) {
+	return func(c *contextmodel.ReqContext) {
 		if cfg.SnapshotPublicMode {
 			return
 		}
@@ -179,7 +181,7 @@ func SnapshotPublicModeOrSignedIn(cfg *setting.Cfg) web.Handler {
 	}
 }
 
-func ReqNotSignedIn(c *models.ReqContext) {
+func ReqNotSignedIn(c *contextmodel.ReqContext) {
 	if c.IsSignedIn {
 		c.Redirect(setting.AppSubUrl + "/")
 	}
@@ -188,7 +190,7 @@ func ReqNotSignedIn(c *models.ReqContext) {
 // NoAuth creates a middleware that doesn't require any authentication.
 // If forceLogin param is set it will redirect the user to the login page.
 func NoAuth() web.Handler {
-	return func(c *models.ReqContext) {
+	return func(c *contextmodel.ReqContext) {
 		if shouldForceLogin(c) {
 			notAuthorized(c)
 			return
@@ -198,7 +200,7 @@ func NoAuth() web.Handler {
 
 // shouldForceLogin checks if user should be enforced to login.
 // Returns true if forceLogin parameter is set.
-func shouldForceLogin(c *models.ReqContext) bool {
+func shouldForceLogin(c *contextmodel.ReqContext) bool {
 	forceLogin := false
 	forceLoginParam, err := strconv.ParseBool(c.Req.URL.Query().Get("forceLogin"))
 	if err == nil {
@@ -208,27 +210,29 @@ func shouldForceLogin(c *models.ReqContext) bool {
 	return forceLogin
 }
 
-func OrgAdminDashOrFolderAdminOrTeamAdmin(ss db.DB, ds dashboards.DashboardService, ts team.Service) func(c *models.ReqContext) {
-	return func(c *models.ReqContext) {
+func OrgAdminDashOrFolderAdminOrTeamAdmin(ss db.DB, ds dashboards.DashboardService, ts team.Service) func(c *contextmodel.ReqContext) {
+	return func(c *contextmodel.ReqContext) {
 		if c.OrgRole == org.RoleAdmin {
 			return
 		}
 
-		hasAdminPermissionInDashOrFoldersQuery := models.HasAdminPermissionInDashboardsOrFoldersQuery{SignedInUser: c.SignedInUser}
-		if err := ds.HasAdminPermissionInDashboardsOrFolders(c.Req.Context(), &hasAdminPermissionInDashOrFoldersQuery); err != nil {
+		hasAdminPermissionInDashOrFoldersQuery := folder.HasAdminPermissionInDashboardsOrFoldersQuery{SignedInUser: c.SignedInUser}
+		hasAdminPermissionInDashOrFoldersQueryResult, err := ds.HasAdminPermissionInDashboardsOrFolders(c.Req.Context(), &hasAdminPermissionInDashOrFoldersQuery)
+		if err != nil {
 			c.JsonApiErr(500, "Failed to check if user is a folder admin", err)
 		}
 
-		if hasAdminPermissionInDashOrFoldersQuery.Result {
+		if hasAdminPermissionInDashOrFoldersQueryResult {
 			return
 		}
 
-		isAdminOfTeamsQuery := models.IsAdminOfTeamsQuery{SignedInUser: c.SignedInUser}
-		if err := ts.IsAdminOfTeams(c.Req.Context(), &isAdminOfTeamsQuery); err != nil {
+		isAdminOfTeamsQuery := team.IsAdminOfTeamsQuery{SignedInUser: c.SignedInUser}
+		isAdminOfTeamsQueryResult, err := ts.IsAdminOfTeams(c.Req.Context(), &isAdminOfTeamsQuery)
+		if err != nil {
 			c.JsonApiErr(500, "Failed to check if user is a team admin", err)
 		}
 
-		if isAdminOfTeamsQuery.Result {
+		if isAdminOfTeamsQueryResult {
 			return
 		}
 

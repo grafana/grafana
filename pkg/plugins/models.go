@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
@@ -226,6 +227,9 @@ type DataSourceDTO struct {
 	BasicAuth       string `json:"basicAuth,omitempty"`
 	WithCredentials bool   `json:"withCredentials,omitempty"`
 
+	// This is populated by an Enterprise hook
+	CachingConfig QueryCachingConfig `json:"cachingConfig,omitempty"`
+
 	// InfluxDB
 	Username string `json:"username,omitempty"`
 	Password string `json:"password,omitempty"`
@@ -250,6 +254,14 @@ type PanelDTO struct {
 	Module        string `json:"module"`
 }
 
+type AppDTO struct {
+	ID         string                      `json:"id"`
+	Path       string                      `json:"path"`
+	Version    string                      `json:"version"`
+	Preload    bool                        `json:"preload"`
+	Extensions []*plugindef.ExtensionsLink `json:"extensions,omitempty"`
+}
+
 const (
 	signatureMissing  ErrorCode = "signatureMissing"
 	signatureModified ErrorCode = "signatureModified"
@@ -261,11 +273,6 @@ type ErrorCode string
 type Error struct {
 	ErrorCode `json:"errorCode"`
 	PluginID  string `json:"pluginId,omitempty"`
-}
-
-type PreloadPlugin struct {
-	Path    string `json:"path"`
-	Version string `json:"version"`
 }
 
 // Access-Control related definitions
@@ -287,4 +294,9 @@ type Role struct {
 type Permission struct {
 	Action string `json:"action"`
 	Scope  string `json:"scope"`
+}
+
+type QueryCachingConfig struct {
+	Enabled bool  `json:"enabled"`
+	TTLMS   int64 `json:"TTLMs"`
 }

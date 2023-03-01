@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
@@ -651,6 +652,7 @@ func (s *Service) handleLogsScenario(ctx context.Context, req *backend.QueryData
 }
 
 func RandomWalk(query backend.DataQuery, model *simplejson.Json, index int) *data.Frame {
+	rand := rand.New(rand.NewSource(time.Now().UnixNano()))
 	timeWalkerMs := query.TimeRange.From.UnixNano() / int64(time.Millisecond)
 	to := query.TimeRange.To.UnixNano() / int64(time.Millisecond)
 	startValue := model.Get("startValue").MustFloat64(rand.Float64() * 100)
@@ -703,6 +705,7 @@ func RandomWalk(query backend.DataQuery, model *simplejson.Json, index int) *dat
 }
 
 func randomWalkTable(query backend.DataQuery, model *simplejson.Json) *data.Frame {
+	rand := rand.New(rand.NewSource(time.Now().UnixNano()))
 	timeWalkerMs := query.TimeRange.From.UnixNano() / int64(time.Millisecond)
 	to := query.TimeRange.To.UnixNano() / int64(time.Millisecond)
 	withNil := model.Get("withNil").MustBool(false)
@@ -915,6 +918,7 @@ func predictablePulse(query backend.DataQuery, model *simplejson.Json) (*data.Fr
 }
 
 func randomHeatmapData(query backend.DataQuery, fnBucketGen func(index int) float64) *data.Frame {
+	rand := rand.New(rand.NewSource(time.Now().UnixNano()))
 	frame := data.NewFrame("data", data.NewField("time", nil, []*time.Time{}))
 	for i := 0; i < 10; i++ {
 		frame.Fields = append(frame.Fields, data.NewField(strconv.FormatInt(int64(fnBucketGen(i)), 10), nil, []*float64{}))

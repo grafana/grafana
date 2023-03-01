@@ -111,7 +111,7 @@ export interface FieldValueEntityLookup {
   NegInf?: number[];
 }
 
-const ENTITY_MAP: Record<keyof FieldValueEntityLookup, any> = {
+const ENTITY_MAP: Record<keyof FieldValueEntityLookup, number | undefined> = {
   Inf: Infinity,
   NegInf: -Infinity,
   Undef: undefined,

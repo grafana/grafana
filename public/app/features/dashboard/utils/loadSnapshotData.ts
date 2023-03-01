@@ -1,8 +1,14 @@
-import { applyFieldOverrides, ArrayDataFrame, getDefaultTimeRange, LoadingState, PanelData } from '@grafana/data';
+import {
+  applyFieldOverrides,
+  ArrayDataFrame,
+  getDefaultTimeRange,
+  getProcessedDataFrames,
+  LoadingState,
+  PanelData,
+} from '@grafana/data';
 import { config } from 'app/core/config';
 
 import { SnapshotWorker } from '../../query/state/DashboardQueryRunner/SnapshotWorker';
-import { getProcessedDataFrames } from '../../query/state/runRequest';
 import { getTimeSrv } from '../services/TimeSrv';
 import { DashboardModel, PanelModel } from '../state';
 

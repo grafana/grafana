@@ -5,10 +5,10 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/comments/commentmodel"
-
-	"github.com/stretchr/testify/require"
 )
 
 func createSqlStorage(t *testing.T) Storage {

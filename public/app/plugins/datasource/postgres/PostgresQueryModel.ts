@@ -1,8 +1,8 @@
 import { ScopedVars } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
+import { FormatRegistryID } from '@grafana/scenes';
 import { applyQueryDefaults } from 'app/features/plugins/sql/defaults';
 import { SQLQuery, SqlQueryModel } from 'app/features/plugins/sql/types';
-import { FormatRegistryID } from 'app/features/scenes/variables/interpolation/formatRegistry';
 
 export class PostgresQueryModel implements SqlQueryModel {
   target: SQLQuery;

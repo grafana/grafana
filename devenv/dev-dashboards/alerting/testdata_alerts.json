@@ -90,13 +90,7 @@
       "id": 4,
       "isNew": true,
       "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
+        "show": true
       },
       "lines": true,
       "linewidth": 2,
@@ -233,13 +227,7 @@
       "id": 7,
       "isNew": true,
       "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
+        "show": true
       },
       "lines": true,
       "linewidth": 2,
@@ -399,13 +387,7 @@
       "id": 6,
       "isNew": true,
       "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
+        "show": true
       },
       "lines": true,
       "linewidth": 2,
@@ -537,13 +519,7 @@
       "id": 3,
       "isNew": true,
       "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
+        "show": true
       },
       "lines": true,
       "linewidth": 2,
@@ -679,13 +655,7 @@
       "id": 5,
       "isNew": true,
       "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
+        "show": true
       },
       "lines": true,
       "linewidth": 2,

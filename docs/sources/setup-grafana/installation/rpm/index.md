@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/installation/installation/rpm/
-  - /docs/grafana/latest/installation/rpm/
-  - /docs/grafana/latest/setup-grafana/installation/rpm/
+  - ../../installation/installation/rpm/
+  - ../../installation/rpm/
 description: Grafana Installation guide for RPM-based Linux, such as Centos, Fedora,
   OpenSuse, and Red Hat.
 title: Install on RPM-based Linux
@@ -21,7 +20,7 @@ The old URLs will still work, serving the content from the new repository, but y
 
 ## Note on upgrading
 
-While the process for upgrading Grafana is very similar to installing Grafana, there are some key backup steps you should perform. Read [Upgrading Grafana]({{< relref "../../upgrade-grafana/" >}}) for tips and guidance on updating an existing installation.
+While the process for upgrading Grafana is very similar to installing Grafana, there are some key backup steps you should perform. Read [Upgrading Grafana]({{< relref "../../../upgrade-guide/" >}}) for tips and guidance on updating an existing installation.
 
 ## 1. Download and install
 

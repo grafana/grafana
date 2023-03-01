@@ -10,18 +10,16 @@ interface Props {
   children?: React.ReactNode;
 }
 
-const stopPropagation = (event: React.MouseEvent) => event.stopPropagation();
-
 export const TimeZoneGroup = (props: Props) => {
   const { children, label } = props;
   const styles = useStyles2(getStyles);
 
   if (!label) {
-    return <div onClick={stopPropagation}>{children}</div>;
+    return <div>{children}</div>;
   }
 
   return (
-    <div onClick={stopPropagation}>
+    <div>
       <div className={styles.header}>
         <span className={styles.label}>{label}</span>
       </div>

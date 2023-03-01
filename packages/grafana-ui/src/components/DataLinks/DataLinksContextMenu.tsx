@@ -62,7 +62,7 @@ export const DataLinksContextMenu = ({ children, links, style }: DataLinksContex
         onClick={linkModel.onClick}
         target={linkModel.target}
         title={linkModel.title}
-        style={{ ...style, overflow: 'hidden', display: 'flex', flexGrow: 1 }}
+        style={{ ...style, overflow: 'hidden', display: 'flex' }}
         aria-label={selectors.components.DataLinksContextMenu.singleLink}
       >
         {children({})}

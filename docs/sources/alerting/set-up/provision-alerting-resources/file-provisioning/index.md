@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/provision-alerting-resources/file-provisioning
-  - /docs/grafana/latest/alerting/provision-alerting-resources/file-provisioning
+  - ../../provision-alerting-resources/file-provisioning/
 description: Create and manage resources using file provisioning
 keywords:
   - grafana
@@ -23,20 +22,20 @@ Details on how to set up the files and which fields are required for each object
 
 **Note:**
 
-Provisioning takes place during the initial set up of your Grafana system, but you can re-run it at any time using the [Grafana Alerting provisioning API](https://grafana.com/docs/grafana/latest/developers/http_api/admin/#reload-provisioning-configurations).
+Provisioning takes place during the initial set up of your Grafana system, but you can re-run it at any time using the [Grafana Admin API](https://grafana.com/docs/grafana/latest/developers/http_api/admin/#reload-provisioning-configurations).
 
 ### Provision alert rules
 
 Create or delete alert rules in your Grafana instance(s).
 
-1. Create an alert rule in Grafana.
-1. Use the [Alerting provisioning API](https://grafana.com/docs/grafana/latest/developers/http_api/alerting/#get-alerts) to extract the alert rule.
+1. Create alert rules in Grafana.
+1. Use the [Alerting provisioning API](https://grafana.com/docs/grafana/latest/developers/http_api/alerting_provisioning/#route-get-alert-rule-export) export endpoints to download a provisioning file for your alert rules.
 1. Copy the contents into a YAML or JSON configuration file in the default provisioning directory or in your configured directory.
 
    Example configuration files can be found below.
 
 1. Ensure that your files are in the right directory on the node running the Grafana server, so that they deploy alongside your Grafana instance(s).
-1. Delete the alert rule in Grafana.
+1. Delete the alert rules in Grafana that will be provisioned.
 
    **Note:**
 
@@ -70,7 +69,7 @@ groups:
         #                  evaluation - should be obtained trough the API
         data:
           - refId: A
-            datasourceUid: '-100'
+            datasourceUid: '__expr__'
             model:
               conditions:
                 - evaluator:
@@ -87,7 +86,7 @@ groups:
                   type: query
               datasource:
                 type: __expr__
-                uid: '-100'
+                uid: '__expr__'
               expression: 1==0
               intervalMs: 1000
               maxDataPoints: 43200
@@ -177,7 +176,7 @@ deleteContactPoints:
 #### Settings
 
 Here are some examples of settings you can use for the different
-contact point types.
+contact point integrations.
 
 ##### Alertmanager
 
@@ -314,7 +313,7 @@ settings:
 ```yaml
 type: pagerduty
 settings:
-  # <string, required>
+  # <string, required> the 32-character Events API key https://support.pagerduty.com/docs/api-access-keys#events-api-keys
   integrationKey: XXX
   # <string> options: critical, error, warning, info
   severity: critical
@@ -517,10 +516,17 @@ policies:
     #        a very low alert volume or your upstream notification system performs
     #        its own grouping.
     group_by: ['...']
-    # <list> a list of matchers that an alert has to fulfill to match the node
+    # <list> a list of prometheus-like matchers that an alert rule has to fulfill to match the node (allowed chars
+    #        [a-zA-Z_:])
     matchers:
       - alertname = Watchdog
+      - service_id_X = serviceX
       - severity =~ "warning|critical"
+    # <list> a list of grafana-like matchers that an alert rule has to fulfill to match the node
+    object_matchers:
+      - ['alertname', '=', 'CPUUsage']
+      - ['service_id-X', '=', 'serviceX']
+      - ['severity', '=~', 'warning|critical']
     # <list> Times when the route should be muted. These must match the name of a
     #        mute time interval.
     #        Additionally, the root node cannot have any mute times.

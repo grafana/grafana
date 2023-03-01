@@ -22,7 +22,7 @@ describe('ElasticQueryBuilder', () => {
       // The following `missing: null as any` is because previous versions of the DS where
       // storing null in the query model when inputting an empty string,
       // which were then removed in the query builder.
-      // The new version doesn't store empty strings at all. This tests ensures backward compatinility.
+      // The new version doesn't store empty strings at all. This tests ensures backward compatibility.
       metrics: [{ type: 'avg', id: '0', settings: { missing: null as any, script: '1' } }],
       timeField: '@timestamp',
       bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '1' }],
@@ -585,6 +585,23 @@ describe('ElasticQueryBuilder', () => {
     expect(firstLevel.histogram.field).toBe('bytes');
     expect(firstLevel.histogram.interval).toBe('10');
     expect(firstLevel.histogram.min_doc_count).toBe('2');
+  });
+
+  it('with nested', () => {
+    const query = builder.build({
+      refId: 'A',
+      metrics: [{ id: '1', type: 'count' }],
+      bucketAggs: [
+        {
+          type: 'nested',
+          field: 'nested_field',
+          id: '3',
+        },
+      ],
+    });
+
+    const firstLevel = query.aggs['3'];
+    expect(firstLevel.nested.path).toBe('nested_field');
   });
 
   // This test wasn't migrated, as adhoc variables are going to be interpolated before

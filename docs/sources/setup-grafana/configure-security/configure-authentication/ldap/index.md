@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/auth/ldap/
-  - /docs/grafana/latest/installation/ldap/
-  - /docs/grafana/latest/setup-grafana/configure-security/configure-authentication/ldap/
+  - ../../../auth/ldap/
+  - ../../../installation/ldap/
 description: Grafana LDAP Authentication Guide
 title: Configure LDAP Authentication
 weight: 800
@@ -13,7 +12,7 @@ weight: 800
 The LDAP integration in Grafana allows your Grafana users to login with their LDAP credentials. You can also specify mappings between LDAP
 group memberships and Grafana Organization user roles.
 
-> [Enhanced LDAP authentication]({{< relref "../enhanced-ldap/" >}}) is available in [Grafana Cloud Advanced](https://grafana.com/docs/grafana-cloud/) and in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}).
+> [Enhanced LDAP authentication]({{< relref "../enhanced-ldap/" >}}) is available in [Grafana Cloud Advanced](/docs/grafana-cloud/) and in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}).
 
 > Refer to [Role-based access control]({{< relref "../../../../administration/roles-and-permissions/access-control/" >}}) to understand how you can control access with role-based permissions.
 
@@ -79,6 +78,11 @@ port = 636
 use_ssl = true
 # If set to true, use LDAP with STARTTLS instead of LDAPS
 start_tls = false
+# The value of an accepted TLS cipher. By default, this value is empty. Example value: ["TLS_AES_256_GCM_SHA384"])
+# For a complete list of supported ciphers and TLS versions, refer to: https://go.dev/src/crypto/tls/cipher_suites.go
+tls_ciphers = []
+# This is the minimum TLS version allowed. By default, this value is empty. Accepted values are: TLS1.1, TLS1.2, TLS1.3.
+min_tls_version = ""
 # set to true if you want to skip SSL cert validation
 ssl_skip_verify = false
 # set to the path to your root CA certificate or leave unset to use system defaults

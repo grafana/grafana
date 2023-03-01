@@ -38,32 +38,30 @@ export const validMetricSearchBuilderQuery: CloudWatchMetricsQuery = {
 };
 
 export const validMetricQueryBuilderQuery: CloudWatchMetricsQuery = {
-  id: '',
   queryMode: 'Metrics',
-  region: 'us-east-2',
-  namespace: 'AWS/EC2',
-  period: '3000',
-  alias: '',
-  metricName: 'CPUUtilization',
-  dimensions: { InstanceId: 'i-123' },
-  matchExact: true,
-  statistic: 'Average',
+  refId: '',
+  id: '',
+  region: 'us-east-1',
+  namespace: 'ec2',
+  dimensions: { somekey: 'somevalue' },
+  metricQueryType: MetricQueryType.Query,
+  metricEditorMode: MetricEditorMode.Builder,
   sql: {
-    select: {
+    from: {
       type: QueryEditorExpressionType.Function,
-      name: 'AVERAGE',
+      name: 'SCHEMA',
       parameters: [
         {
           type: QueryEditorExpressionType.FunctionParameter,
-          name: 'CPUUtilization',
+          name: 'AWS/EC2',
+        },
+        {
+          type: QueryEditorExpressionType.FunctionParameter,
+          name: 'InstanceId',
         },
       ],
     },
   },
-  refId: 'A',
-  metricQueryType: MetricQueryType.Query,
-  metricEditorMode: MetricEditorMode.Builder,
-  hide: false,
 };
 
 export const validMetricQueryCodeQuery: CloudWatchMetricsQuery = {
@@ -91,4 +89,5 @@ export const validLogsQuery: CloudWatchLogsQuery = {
   id: '',
   region: 'us-east-2',
   refId: 'A',
+  expression: `fields @timestamp, @message | sort @timestamp desc | limit 25`,
 };

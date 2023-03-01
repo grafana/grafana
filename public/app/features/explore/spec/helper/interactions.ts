@@ -71,7 +71,7 @@ export const commentQueryHistory = async (
   const input = withinExplore(exploreId).getByPlaceholderText('An optional description of what the query does.');
   await userEvent.clear(input);
   await userEvent.type(input, comment);
-  await invokeAction(queryIndex, 'Submit button', exploreId);
+  await invokeAction(queryIndex, 'Save comment', exploreId);
 };
 
 export const deleteQueryHistory = async (queryIndex: number, exploreId: ExploreId = ExploreId.left) => {

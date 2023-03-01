@@ -3,7 +3,7 @@ import React, { FC, useState } from 'react';
 
 import { Button, Collapse, Field, Form, Input, InputControl, Link, MultiSelect, Select, useStyles2 } from '@grafana/ui';
 
-import { AmRouteReceiver, FormAmRoute } from '../../types/amroutes';
+import { FormAmRoute } from '../../types/amroutes';
 import {
   mapMultiSelectValueToStrings,
   mapSelectValueToString,
@@ -14,6 +14,7 @@ import {
 } from '../../utils/amroutes';
 import { makeAMLink } from '../../utils/misc';
 import { timeOptions } from '../../utils/time';
+import { AmRouteReceiver } from '../receivers/grafanaAppReceivers/types';
 
 import { getFormStyles } from './formStyles';
 

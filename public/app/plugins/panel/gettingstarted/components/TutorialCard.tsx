@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, MouseEvent, useCallback } from 'react';
+import React, { MouseEvent, useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
@@ -13,7 +13,7 @@ interface Props {
   card: TutorialCardType;
 }
 
-export const TutorialCard: FC<Props> = ({ card }) => {
+export const TutorialCard = ({ card }: Props) => {
   const styles = useStyles2(useCallback((theme: GrafanaTheme2) => getStyles(theme, card.done), [card.done]));
   const iconStyles = useStyles2(useCallback((theme: GrafanaTheme2) => iconStyle(theme, card.done), [card.done]));
 

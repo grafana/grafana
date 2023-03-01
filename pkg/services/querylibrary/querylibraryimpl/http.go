@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/querylibrary"
 )
 
@@ -21,7 +21,7 @@ func (s *queriesServiceHTTPHandler) IsDisabled() bool {
 	return s.service.IsDisabled()
 }
 
-func (s *queriesServiceHTTPHandler) delete(c *models.ReqContext) response.Response {
+func (s *queriesServiceHTTPHandler) delete(c *contextmodel.ReqContext) response.Response {
 	uid := c.Query("uid")
 	err := s.service.Delete(c.Req.Context(), c.SignedInUser, uid)
 	if err != nil {
@@ -40,7 +40,7 @@ func (s *queriesServiceHTTPHandler) RegisterHTTPRoutes(routes routing.RouteRegis
 	routes.Delete("/", reqSignedIn, routing.Wrap(s.delete))
 }
 
-func (s *queriesServiceHTTPHandler) getBatch(c *models.ReqContext) response.Response {
+func (s *queriesServiceHTTPHandler) getBatch(c *contextmodel.ReqContext) response.Response {
 	uids := c.QueryStrings("uid")
 
 	queries, err := s.service.GetBatch(c.Req.Context(), c.SignedInUser, uids)
@@ -51,7 +51,7 @@ func (s *queriesServiceHTTPHandler) getBatch(c *models.ReqContext) response.Resp
 	return response.JSON(200, queries)
 }
 
-func (s *queriesServiceHTTPHandler) update(c *models.ReqContext) response.Response {
+func (s *queriesServiceHTTPHandler) update(c *contextmodel.ReqContext) response.Response {
 	body, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		return response.Error(500, "error reading bytes", err)

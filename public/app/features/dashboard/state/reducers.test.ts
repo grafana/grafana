@@ -1,6 +1,6 @@
 import { DashboardInitPhase, DashboardState, OrgRole, PermissionLevel } from 'app/types';
 
-import { DashboardModel } from './DashboardModel';
+import { createDashboardModelFixture, createPanelJSONFixture } from './__fixtures__/dashboardFixtures';
 import {
   dashboardInitCompleted,
   dashboardInitFailed,
@@ -35,9 +35,9 @@ describe('dashboard reducer', () => {
       state = dashboardReducer(
         state,
         dashboardInitCompleted(
-          new DashboardModel({
+          createDashboardModelFixture({
             title: 'My dashboard',
-            panels: [{ id: 1 }, { id: 2 }],
+            panels: [createPanelJSONFixture({ id: 1 }), createPanelJSONFixture({ id: 2 })],
           })
         )
       );

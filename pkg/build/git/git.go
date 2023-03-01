@@ -8,8 +8,9 @@ import (
 	"regexp"
 
 	"github.com/google/go-github/v45/github"
-	"github.com/grafana/grafana/pkg/build/stringutil"
 	"golang.org/x/oauth2"
+
+	"github.com/grafana/grafana/pkg/build/stringutil"
 )
 
 const (
@@ -105,8 +106,7 @@ func AddLabelToPR(ctx context.Context, client LabelsService, prID int, newLabel 
 
 func DeleteEnterpriseBranch(ctx context.Context, client GitService, branchName string) error {
 	ref := "heads/" + branchName
-	_, err := client.DeleteRef(ctx, RepoOwner, EnterpriseRepo, ref)
-	if err != nil {
+	if _, err := client.DeleteRef(ctx, RepoOwner, EnterpriseRepo, ref); err != nil {
 		return err
 	}
 

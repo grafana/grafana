@@ -1,14 +1,13 @@
 ---
 aliases:
-  - /docs/grafana/latest/datasources/add-a-data-source/
-  - /docs/grafana/latest/datasources/datasource_permissions/
-  - /docs/grafana/latest/features/datasources/add-a-data-source/
-  - /docs/grafana/latest/enterprise/datasource_permissions/
-  - /docs/grafana/latest/permissions/datasource_permissions/
-  - /docs/grafana/latest/administration/data-source-management/
-  - /docs/grafana/latest/enterprise/query-caching/
-title: Data source management
+  - ../datasources/add-a-data-source/
+  - ../datasources/datasource_permissions/
+  - ../enterprise/datasource_permissions/
+  - ../enterprise/query-caching/
+  - ../features/datasources/add-a-data-source/
+  - ../permissions/datasource_permissions/
 description: Data source management information for Grafana administrators
+title: Data source management
 weight: 100
 ---
 
@@ -127,7 +126,7 @@ You can make a panel retrieve fresh data more frequently by increasing the **Max
 
 ### Data sources that work with query caching
 
-Query caching works for all [Enterprise data sources](https://grafana.com/grafana/plugins/?type=datasource&enterprise=1) as well as the following [built-in data sources]({{< relref "../../datasources/" >}}):
+Query caching works for all [Enterprise data sources](/grafana/plugins/?type=datasource&enterprise=1) as well as the following [built-in data sources]({{< relref "../../datasources/" >}}):
 
 - CloudWatch Metrics
 - Google Cloud Monitoring
@@ -154,6 +153,10 @@ By default, data source queries are not cached. To enable query caching for a si
 1. Open the Cache tab.
 1. Press the Enable button.
 1. (Optional) Choose custom TTLs for the data source's queries and resources caching. If you skip this step, then Grafana uses the default TTL.
+
+You can optionally override a data source's configured TTL for individual dashboard panels. This can be be useful when you have queries whose results change more or less often than the configured TTL. In the Edit Panel view, select the caching-enabled data source, expand the Query options, and enter your the TTL in milliseconds.
+
+{{< figure max-width="500px" src="/media/docs/grafana/per-panel-cache-ttl-9-4.png" caption="Set Cache TTL for a single panel" >}}
 
 > **Note:** If query caching is enabled and the Cache tab is not visible in a data source's settings, then query caching is not available for that data source.
 
@@ -195,7 +198,7 @@ To view available data source plugins, go to the [plugin catalog](/grafana/plugi
 For details about the plugin catalog, refer to [Plugin management]({{< relref "../../administration/plugin-management/" >}}).
 
 You can further filter the plugin catalog's results for data sources provided by the Grafana community, Grafana Labs, and partners.
-If you use [Grafana Enterprise]{{< relref "../../enterprise/" >}}, you can also filter by Enterprise-supported plugins.
+If you use [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}), you can also filter by Enterprise-supported plugins.
 
 For more documentation on a specific data source plugin's features, including its query language and editor, refer to its plugin catalog page.
 

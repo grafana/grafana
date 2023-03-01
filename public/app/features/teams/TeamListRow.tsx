@@ -35,11 +35,11 @@ export const TeamListRow = ({ team, roleOptions, isTeamAdmin, displayRolePicker,
       </td>
       <td className="link-td">
         {canReadTeam ? (
-          <a href={teamUrl} aria-label={team.email?.length > 0 ? undefined : 'Empty email cell'}>
+          <a href={teamUrl} aria-label={team.email || 'Empty email cell'}>
             {team.email}
           </a>
         ) : (
-          <div style={{ padding: '0px 8px' }} aria-label={team.email?.length > 0 ? undefined : 'Empty email cell'}>
+          <div style={{ padding: '0px 8px' }} aria-label={team.email || 'Empty email cell'}>
             {team.email}
           </div>
         )}

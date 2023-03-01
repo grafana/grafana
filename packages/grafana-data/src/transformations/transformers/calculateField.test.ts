@@ -1,6 +1,6 @@
 import { DataFrameView } from '../../dataframe';
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { ScopedVars } from '../../types';
+import { DataTransformContext, ScopedVars } from '../../types';
 import { FieldType } from '../../types/dataFrame';
 import { BinaryOperationID } from '../../utils';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
@@ -235,7 +235,9 @@ describe('calculateField transformer w/ timeseries', () => {
         },
         replaceFields: true,
       },
-      replace: (target: string | undefined, scopedVars?: ScopedVars, format?: string | Function): string => {
+    };
+    const context: DataTransformContext = {
+      interpolate: (target: string | undefined, scopedVars?: ScopedVars, format?: string | Function): string => {
         if (!target) {
           return '';
         }
@@ -262,7 +264,7 @@ describe('calculateField transformer w/ timeseries', () => {
       },
     };
 
-    await expect(transformDataFrame([cfg], [seriesA])).toEmitValuesWith((received) => {
+    await expect(transformDataFrame([cfg], [seriesA], context)).toEmitValuesWith((received) => {
       const data = received[0];
       const filtered = data[0];
       const rows = new DataFrameView(filtered).toArray();

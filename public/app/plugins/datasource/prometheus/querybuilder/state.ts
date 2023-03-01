@@ -16,7 +16,7 @@ export function changeEditorMode(query: PromQuery, editorMode: QueryEditorMode, 
   onChange({ ...query, editorMode });
 }
 
-function getDefaultEditorMode(expr: string) {
+function getDefaultEditorMode(expr: string, defaultEditor: QueryEditorMode = QueryEditorMode.Builder): QueryEditorMode {
   // If we already have an expression default to code view
   if (expr != null && expr !== '') {
     return QueryEditorMode.Code;
@@ -28,18 +28,22 @@ function getDefaultEditorMode(expr: string) {
     case QueryEditorMode.Code:
       return value;
     default:
-      return QueryEditorMode.Builder;
+      return defaultEditor;
   }
 }
 
 /**
  * Returns query with defaults, and boolean true/false depending on change was required
  */
-export function getQueryWithDefaults(query: PromQuery, app: CoreApp | undefined): PromQuery {
+export function getQueryWithDefaults(
+  query: PromQuery,
+  app: CoreApp | undefined,
+  defaultEditor?: QueryEditorMode
+): PromQuery {
   let result = query;
 
   if (!query.editorMode) {
-    result = { ...query, editorMode: getDefaultEditorMode(query.expr) };
+    result = { ...query, editorMode: getDefaultEditorMode(query.expr, defaultEditor) };
   }
 
   if (query.expr == null) {

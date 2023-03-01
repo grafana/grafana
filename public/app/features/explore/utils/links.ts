@@ -11,9 +11,11 @@ import {
   getFieldDisplayValuesProxy,
   SplitOpen,
   DataLink,
+  DisplayValue,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
+import { getTransformationVars } from 'app/features/correlations/transformations';
 
 import { getLinkSrv } from '../../panel/panellinks/link_srv';
 
@@ -23,6 +25,12 @@ const dataLinkHasRequiredPermissions = (link: DataLink) => {
   return !link.internal || contextSrv.hasAccessToExplore();
 };
 
+/**
+ * Check if every variable in the link has a value. If not this returns false. If there are no variables in the link
+ * this will return true.
+ * @param link
+ * @param scopedVars
+ */
 const dataLinkHasAllVariablesDefined = (link: DataLink, scopedVars: ScopedVars) => {
   let hasAllRequiredVarDefined = true;
 
@@ -64,7 +72,7 @@ export const getFieldLinksForExplore = (options: {
   dataFrame?: DataFrame;
 }): Array<LinkModel<Field>> => {
   const { field, vars, splitOpenFn, range, rowIndex, dataFrame } = options;
-  const scopedVars: any = { ...(vars || {}) };
+  const scopedVars: ScopedVars = { ...(vars || {}) };
   scopedVars['__value'] = {
     value: {
       raw: field.values.get(rowIndex),
@@ -72,18 +80,35 @@ export const getFieldLinksForExplore = (options: {
     text: 'Raw value',
   };
 
+  let fieldDisplayValuesProxy: Record<string, DisplayValue> | undefined = undefined;
+
   // If we have a dataFrame we can allow referencing other columns and their values in the interpolation.
   if (dataFrame) {
+    fieldDisplayValuesProxy = getFieldDisplayValuesProxy({
+      frame: dataFrame,
+      rowIndex,
+    });
+
     scopedVars['__data'] = {
       value: {
         name: dataFrame.name,
         refId: dataFrame.refId,
-        fields: getFieldDisplayValuesProxy({
-          frame: dataFrame,
-          rowIndex,
-        }),
+        fields: fieldDisplayValuesProxy,
       },
       text: 'Data',
+    };
+
+    dataFrame.fields.forEach((f) => {
+      if (fieldDisplayValuesProxy && fieldDisplayValuesProxy[f.name]) {
+        scopedVars[f.name] = {
+          value: fieldDisplayValuesProxy[f.name],
+        };
+      }
+    });
+
+    // add this for convenience
+    scopedVars['__targetField'] = {
+      value: fieldDisplayValuesProxy[field.name],
     };
   }
 
@@ -103,10 +128,28 @@ export const getFieldLinksForExplore = (options: {
         }
         return linkModel;
       } else {
+        let internalLinkSpecificVars: ScopedVars = {};
+        if (link.internal?.transformations) {
+          link.internal?.transformations.forEach((transformation) => {
+            let fieldValue;
+            if (transformation.field) {
+              const transformField = dataFrame?.fields.find((field) => field.name === transformation.field);
+              fieldValue = transformField?.values.get(rowIndex);
+            } else {
+              fieldValue = field.values.get(rowIndex);
+            }
+
+            internalLinkSpecificVars = {
+              ...internalLinkSpecificVars,
+              ...getTransformationVars(transformation, fieldValue, field.name),
+            };
+          });
+        }
+
         return mapInternalLinkToExplore({
           link,
           internalLink: link.internal,
-          scopedVars: scopedVars,
+          scopedVars: { ...scopedVars, ...internalLinkSpecificVars },
           range,
           field,
           onClickFn: splitOpenFn,

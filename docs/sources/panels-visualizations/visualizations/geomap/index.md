@@ -1,27 +1,26 @@
 ---
 aliases:
-  - /docs/grafana/latest/features/panels/geomap/
-  - /docs/grafana/latest/panels/visualizations/geomap/
-  - /docs/grafana/latest/visualizations/geomap/
-  - /docs/grafana/latest/features/panels/geomap/arcgis/
-  - /docs/grafana/latest/panels/visualizations/geomap/arcgis/
-  - /docs/grafana/latest/features/panels/geomap/carto/
-  - /docs/grafana/latest/panels/visualizations/geomap/carto/
-  - /docs/grafana/latest/features/panels/geomap/controls/
-  - /docs/grafana/latest/panels/visualizations/geomap/controls/
-  - /docs/grafana/latest/features/panels/geomap/daynight/
-  - /docs/grafana/latest/panels/visualizations/geomap/daynight/
-  - /docs/grafana/latest/features/panels/geomap/geojson/
-  - /docs/grafana/latest/panels/visualizations/geomap/geojson/
-  - /docs/grafana/latest/features/panels/geomap/heatmap/
-  - /docs/grafana/latest/panels/visualizations/geomap/heatmap/
-  - /docs/grafana/latest/features/panels/geomap/markers/
-  - /docs/grafana/latest/panels/visualizations/geomap/markers/
-  - /docs/grafana/latest/features/panels/geomap/osm/
-  - /docs/grafana/latest/panels/visualizations/geomap/osm/
-  - /docs/grafana/latest/features/panels/geomap/zyx/
-  - /docs/grafana/latest/panels/visualizations/geomap/zyx/
-  - /docs/grafana/latest/panels-visualizations/visualizations/geomap/
+  - ../../features/panels/geomap/
+  - ../../features/panels/geomap/arcgis/
+  - ../../features/panels/geomap/carto/
+  - ../../features/panels/geomap/controls/
+  - ../../features/panels/geomap/daynight/
+  - ../../features/panels/geomap/geojson/
+  - ../../features/panels/geomap/heatmap/
+  - ../../features/panels/geomap/markers/
+  - ../../features/panels/geomap/osm/
+  - ../../features/panels/geomap/zyx/
+  - ../../panels/visualizations/geomap/
+  - ../../panels/visualizations/geomap/arcgis/
+  - ../../panels/visualizations/geomap/carto/
+  - ../../panels/visualizations/geomap/controls/
+  - ../../panels/visualizations/geomap/daynight/
+  - ../../panels/visualizations/geomap/geojson/
+  - ../../panels/visualizations/geomap/heatmap/
+  - ../../panels/visualizations/geomap/markers/
+  - ../../panels/visualizations/geomap/osm/
+  - ../../panels/visualizations/geomap/zyx/
+  - ../../visualizations/geomap/
 description: Geomap visualization documentation
 keywords:
   - grafana
@@ -83,10 +82,10 @@ There are three map layer types to choose from in the Geomap visualization.
 
 There are also five alpha layer types.
 
-- [Night / Day (alpha)]({{< relref "#night--day-layer-alpha" >}}) renders a night / day region.
+- [Night / Day layer]({{< relref "#night--day-layer" >}}) renders a night / day region.
 - **Icon at last point (alpha)** renders an icon at the last data point.
 - **Dynamic GeoJSON (alpha)** styles a GeoJSON file based on query results.
-- **Route (alpha)** render data points as a route.
+- [Route layer (Alpha)]({{< relref "#route-layer-alpha" >}}) render data points as a route.
 - [Photos layer (Alpha)]({{< relref "#photos-layer-alpha" >}}) renders a photo at each data point.
 
 > **Note:** [Basemap layer types]({{< relref "#types-1" >}}) can also be added as layers. You can specify an opacity.
@@ -333,7 +332,7 @@ An ArcGIS layer is a layer from an ESRI ArcGIS MapServer.
 - [**ArcGIS Services**](https://services.arcgisonline.com/arcgis/rest/services)
 - [**About ESRI**](https://www.esri.com/en-us/about/about-esri/overview)
 
-## Night / Day layer (Alpha)
+## Night / Day layer
 
 The Night / Day layer displays night and day regions based on the current time range.
 
@@ -351,6 +350,27 @@ The Night / Day layer displays night and day regions based on the current time r
 ### More information
 
 - [**Extensions for OpenLayers - DayNight**](https://viglino.github.io/ol-ext/examples/layer/map.daynight.html)
+
+## Route layer (Alpha)
+
+The Route layer renders data points as a route.
+
+{{< figure src="/media/docs/grafana/geomap-route-layer-basic-9-4-0.png" max-width="1200px" caption="Geomap panel Route" >}}
+
+### Options
+
+- **Size** sets the route thickness. Fixed by default, or Min and Max range of selected field.
+- **Color** sets the route color. Fixed by default or Standard Options color scheme on selected field.
+- **Arrow** sets the arrow styling to display along route, in order of data.
+  - **None**
+  - **Forward**
+  - **Reverse**
+
+{{< figure src="/media/docs/grafana/geomap-route-layer-arrow-size-9-4-0.png" max-width="1200px" caption="Geomap panel Route arrows with size" >}}
+
+### More information
+
+- [**Extensions for OpenLayers - Flow Line Style**](http://viglino.github.io/ol-ext/examples/style/map.style.gpxline.html)
 
 ## Photos layer (Alpha)
 

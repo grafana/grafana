@@ -159,7 +159,7 @@ export const SearchView = ({ showManage, folderDTO, hidePseudoFolders, keyboardE
     );
   };
 
-  if (folderDTO && !state.loading && !state.result?.totalRows && !state.query.length) {
+  if (folderDTO && !state.loading && !state.result?.totalRows && !stateManager.hasSearchFilters()) {
     return (
       <EmptyListCTA
         title="This folder doesn't have any dashboards yet"

@@ -11,6 +11,8 @@ import (
 	"github.com/google/go-github/github"
 	"github.com/urfave/cli/v2"
 	"golang.org/x/oauth2"
+
+	"github.com/grafana/grafana/pkg/build/config"
 )
 
 type githubRepositoryService interface {
@@ -100,7 +102,7 @@ func githubRepositoryClient(ctx context.Context, token string) githubRepositoryS
 }
 
 func getPublishGithubFlags(ctx *cli.Context) (*publishGithubFlags, error) {
-	metadata, err := GenerateMetadata(ctx)
+	metadata, err := config.GenerateMetadata(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -114,6 +116,10 @@ func getPublishGithubFlags(ctx *cli.Context) (*publishGithubFlags, error) {
 	name := strings.Split(fullRepo, "/")[1]
 	create := ctx.Value("create").(bool)
 	artifactPath := ctx.Value("path").(string)
+	if artifactPath == "" {
+		artifactPath = fmt.Sprintf("grafana-enterprise2-%s-amd64.img", metadata.GrafanaVersion)
+		fmt.Printf("path argument is not provided, resolving to default %s...\n", artifactPath)
+	}
 	return &publishGithubFlags{
 		artifactPath: artifactPath,
 		create:       create,

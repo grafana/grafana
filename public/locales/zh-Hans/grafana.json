@@ -5,6 +5,25 @@
       "success": ""
     }
   },
+  "command-palette": {
+    "action": {
+      "change-theme": "",
+      "dark-theme": "",
+      "light-theme": "",
+      "search": ""
+    },
+    "search-box": {
+      "placeholder": ""
+    },
+    "section": {
+      "actions": "",
+      "dashboard-search-results": "",
+      "folder-search-results": "",
+      "pages": "",
+      "preferences": "",
+      "recent-dashboards": ""
+    }
+  },
   "common": {
     "locale": {
       "default": "默认"
@@ -80,8 +99,24 @@
       "unmark-favorite": "取消标记为收藏"
     }
   },
+  "datasource-onboarding": {
+    "contact-admin": "",
+    "explanation": "",
+    "new-dashboard": "",
+    "preferred": "",
+    "sampleData": "",
+    "viewAll": "",
+    "welcome": ""
+  },
   "folder-picker": {
     "loading": "正在加载文件夹..."
+  },
+  "grafana-ui": {
+    "segment-async": {
+      "error": "",
+      "loading": "",
+      "no-options": ""
+    }
   },
   "library-panel": {
     "add-modal": {
@@ -104,15 +139,6 @@
       "subtitle": "管理整个服务器范围的设置，以及对组织、用户和许可证等资源的访问权限",
       "title": "服务器管理员"
     },
-    "admin-access": {
-      "title": ""
-    },
-    "admin-general": {
-      "title": ""
-    },
-    "admin-plugins": {
-      "title": ""
-    },
     "alerting": {
       "subtitle": "在系统发生问题后立即获悉",
       "title": "警报"
@@ -130,6 +156,9 @@
     "alerting-groups": {
       "subtitle": "查看来自 Alertmanager（警报管理器）实例的分组警报",
       "title": "组"
+    },
+    "alerting-home": {
+      "title": ""
     },
     "alerting-legacy": {
       "title": "警报（遗留）"
@@ -197,8 +226,8 @@
       "title": "组织"
     },
     "global-users": {
-      "subtitle": "在整个 Grafana 服务器上管理和创建用户",
-      "title": "",
+      "subtitle": "",
+      "title": "用户",
       "titleBeforeTopnav": "用户"
     },
     "help": {
@@ -230,9 +259,15 @@
     "manage-dashboards": {
       "title": "浏览"
     },
+    "manage-folder": {
+      "subtitle": ""
+    },
     "monitoring": {
       "subtitle": "监控和基础设施应用",
       "title": "正在监控"
+    },
+    "new": {
+      "title": ""
     },
     "new-dashboard": {
       "title": "新建仪表板"
@@ -263,11 +298,15 @@
       "title": "首选项"
     },
     "profile/switch-org": "切换组织",
+    "public": {
+      "title": ""
+    },
     "scenes": {
       "title": "场景"
     },
     "search": {
-      "placeholder": "搜索 Grafana"
+      "placeholder": "搜索 Grafana",
+      "placeholderCommandPalette": ""
     },
     "search-dashboards": {
       "title": ""
@@ -298,6 +337,10 @@
       "subtitle": "管理文件存储",
       "title": "存储"
     },
+    "support-bundles": {
+      "subtitle": "",
+      "title": ""
+    },
     "teams": {
       "subtitle": "具有共同仪表板和权限需求的用户组",
       "title": "团队"
@@ -313,6 +356,11 @@
   "navigation": {
     "kiosk": {
       "tv-alert": "按 ESC 退出 kiosk 模式"
+    },
+    "toolbar": {
+      "enable-kiosk": "",
+      "toggle-menu": "",
+      "toggle-search-bar": ""
     }
   },
   "news": {
@@ -324,13 +372,22 @@
   },
   "panel": {
     "header-menu": {
+      "copy": "",
+      "create-library-panel": "",
+      "duplicate": "",
+      "edit": "",
+      "explore": "",
+      "get-help": "",
       "hide-legend": "",
       "inspect": "检查",
       "inspect-data": "数据",
       "inspect-json": "面板 JSON",
       "more": "更多...",
+      "query": "",
+      "remove": "",
       "share": "分享",
       "show-legend": "",
+      "unlink-library-panel": "",
       "view": "查看"
     }
   },
@@ -349,6 +406,40 @@
     },
     "select-button": {
       "auto-refresh": ""
+    }
+  },
+  "search": {
+    "actions": {
+      "include-panels": "",
+      "remove-datasource-filter": "",
+      "sort-placeholder": "",
+      "starred": "",
+      "view-as-folders": "",
+      "view-as-grid": "",
+      "view-as-list": ""
+    },
+    "dashboard-actions": {
+      "import": "",
+      "new": "",
+      "new-dashboard": "",
+      "new-folder": ""
+    },
+    "folder-view": {
+      "go-to-folder": "",
+      "select-folder": ""
+    },
+    "results-table": {
+      "datasource-header": "",
+      "location-header": "",
+      "name-header": "",
+      "tags-header": "",
+      "type-dashboard": "",
+      "type-folder": "",
+      "type-header": ""
+    },
+    "search-input": {
+      "include-panels-placeholder": "",
+      "placeholder": ""
     }
   },
   "share-modal": {
@@ -443,9 +534,15 @@
     "theme": {
       "dark-label": "深色",
       "default-label": "默认",
-      "light-label": "浅色"
+      "light-label": "浅色",
+      "system-label": ""
     },
     "title": "首选项"
+  },
+  "tag-filter": {
+    "loading": "",
+    "no-tags": "",
+    "placeholder": ""
   },
   "time-picker": {
     "absolute": {
@@ -509,8 +606,7 @@
       "name-error": "姓名是必填项",
       "name-label": "姓名",
       "username-label": "用户名"
-    },
-    "title": "编辑简介"
+    }
   },
   "user-session": {
     "browser-column": "浏览器和操作系统",
@@ -523,12 +619,20 @@
     "loading": "正在加载会话..."
   },
   "variable": {
+    "adhoc": {
+      "placeholder": ""
+    },
+    "dropdown": {
+      "placeholder": ""
+    },
     "picker": {
-      "input": "",
       "link-all": "",
       "option-all": "",
       "option-selected-values": "",
       "option-tooltip": ""
+    },
+    "textbox": {
+      "placeholder": ""
     }
   }
 }

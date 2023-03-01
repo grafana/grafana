@@ -137,6 +137,7 @@ export function SelectRow({ sql, format, columns, onSqlChange, functions }: Sele
             <EditorField label="Alias" optional width={15}>
               <Select
                 value={item.alias ? toOption(item.alias) : null}
+                inputId={`select-alias-${index}-${uniqueId()}`}
                 options={timeSeriesAliasOpts}
                 onChange={onAliasChange(item, index)}
                 isClearable

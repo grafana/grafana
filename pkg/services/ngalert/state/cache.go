@@ -2,7 +2,6 @@ package state
 
 import (
 	"context"
-	"fmt"
 	"math"
 	"net/url"
 	"strings"
@@ -14,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/state/template"
 )
 
 type ruleStates struct {
@@ -142,7 +142,7 @@ func (rs *ruleStates) expandRuleLabelsAndAnnotations(ctx context.Context, log lo
 	expand := func(original map[string]string) map[string]string {
 		expanded := make(map[string]string, len(original))
 		for k, v := range original {
-			ev, err := expandTemplate(ctx, alertRule.Title, v, templateLabels, alertInstance, externalURL)
+			ev, err := template.Expand(ctx, alertRule.Title, v, template.NewData(templateLabels, alertInstance), externalURL, alertInstance.EvaluatedAt)
 			expanded[k] = ev
 			if err != nil {
 				log.Error("Error in expanding template", "name", k, "value", v, "error", err)
@@ -209,20 +209,22 @@ func (c *cache) get(orgID int64, alertRuleUID, stateId string) *State {
 	return nil
 }
 
-func (c *cache) getAll(orgID int64) []*State {
+func (c *cache) getAll(orgID int64, skipNormalState bool) []*State {
 	var states []*State
 	c.mtxStates.RLock()
 	defer c.mtxStates.RUnlock()
 	for _, v1 := range c.states[orgID] {
 		for _, v2 := range v1.states {
+			if skipNormalState && IsNormalStateWithNoReason(v2) {
+				continue
+			}
 			states = append(states, v2)
 		}
 	}
 	return states
 }
 
-func (c *cache) getStatesForRuleUID(orgID int64, alertRuleUID string) []*State {
-	var result []*State
+func (c *cache) getStatesForRuleUID(orgID int64, alertRuleUID string, skipNormalState bool) []*State {
 	c.mtxStates.RLock()
 	defer c.mtxStates.RUnlock()
 	orgRules, ok := c.states[orgID]
@@ -233,7 +235,11 @@ func (c *cache) getStatesForRuleUID(orgID int64, alertRuleUID string) []*State {
 	if !ok {
 		return nil
 	}
+	result := make([]*State, 0, len(rs.states))
 	for _, state := range rs.states {
+		if skipNormalState && IsNormalStateWithNoReason(state) {
+			continue
+		}
 		result = append(result, state)
 	}
 	return result
@@ -276,8 +282,7 @@ func (c *cache) recordMetrics(metrics *metrics.State) {
 		eval.Error:    0,
 	}
 
-	for org, orgMap := range c.states {
-		metrics.GroupRules.WithLabelValues(fmt.Sprint(org)).Set(float64(len(orgMap)))
+	for _, orgMap := range c.states {
 		for _, rule := range orgMap {
 			for _, state := range rule.states {
 				n := ct[state.State]

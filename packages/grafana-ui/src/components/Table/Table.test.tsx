@@ -4,7 +4,8 @@ import React from 'react';
 
 import { applyFieldOverrides, createTheme, DataFrame, FieldType, toDataFrame } from '@grafana/data';
 
-import { Props, Table } from './Table';
+import { Table } from './Table';
+import { Props } from './types';
 
 function getDefaultDataFrame(): DataFrame {
   const dataFrame = toDataFrame({
@@ -148,6 +149,38 @@ describe('Table', () => {
         { time: '2021-01-01 01:00:00', temperature: '11', link: '11' },
         { time: '2021-01-01 02:00:00', temperature: '12', link: '12' },
       ]);
+    });
+  });
+
+  describe('when `showRowNums` is toggled', () => {
+    const showRowNumsTestContext = {
+      data: toDataFrame({
+        name: 'A',
+        fields: [
+          {
+            name: 'number',
+            type: FieldType.number,
+            values: [1, 1, 1, 2, 2, 3, 4, 5],
+            config: {
+              custom: {
+                filterable: true,
+              },
+            },
+          },
+        ],
+      }),
+    };
+
+    it('should render the (fields.length) rows when `showRowNums` is untoggled', () => {
+      getTestContext({ ...showRowNumsTestContext, showRowNums: false });
+
+      expect(screen.getAllByRole('columnheader')).toHaveLength(1);
+    });
+
+    it('should render (fields.length + 1) rows row when `showRowNums` is toggled', () => {
+      getTestContext({ ...showRowNumsTestContext, showRowNums: true });
+
+      expect(screen.getAllByRole('columnheader')).toHaveLength(2);
     });
   });
 
@@ -444,7 +477,7 @@ describe('Table', () => {
       });
 
       expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual(
-        'Count:'
+        'Count'
       );
       expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[1].textContent).toEqual('5');
     });
@@ -470,7 +503,7 @@ describe('Table', () => {
       });
 
       expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual(
-        'Count:'
+        'Count'
       );
       expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[1].textContent).toEqual('5');
 
@@ -555,7 +588,7 @@ describe('Table', () => {
         { time: '2021-01-01 02:00:00', temperature: '12', link: '12' },
       ]);
 
-      within(rows[1]).getByLabelText('Open trace').click();
+      within(rows[1]).getByLabelText('Expand row').click();
       const rowsAfterClick = within(getTable()).getAllByRole('row');
       expect(within(rowsAfterClick[1]).getByRole('table')).toBeInTheDocument();
       expect(within(rowsAfterClick[1]).getByText(/number0/)).toBeInTheDocument();

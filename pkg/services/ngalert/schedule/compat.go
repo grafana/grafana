@@ -10,6 +10,7 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/go-openapi/strfmt"
+	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/common/model"
@@ -40,28 +41,28 @@ func stateToPostableAlert(alertState *state.State, appURL *url.URL) *models.Post
 	// encode the values as JSON where it will be expanded later
 	if len(alertState.Values) > 0 {
 		if b, err := json.Marshal(alertState.Values); err == nil {
-			nA[ngModels.ValuesAnnotation] = string(b)
+			nA[alertingModels.ValuesAnnotation] = string(b)
 		}
 	}
 
 	if alertState.LastEvaluationString != "" {
-		nA[ngModels.ValueStringAnnotation] = alertState.LastEvaluationString
+		nA[alertingModels.ValueStringAnnotation] = alertState.LastEvaluationString
 	}
 
 	if alertState.Image != nil {
-		nA[ngModels.ImageTokenAnnotation] = alertState.Image.Token
+		nA[alertingModels.ImageTokenAnnotation] = alertState.Image.Token
 	}
 
 	if alertState.StateReason != "" {
-		nA[ngModels.StateReasonAnnotation] = alertState.StateReason
+		nA[alertingModels.StateReasonAnnotation] = alertState.StateReason
 	}
 
 	if alertState.OrgID != 0 {
-		nA[ngModels.OrgIDAnnotation] = strconv.FormatInt(alertState.OrgID, 10)
+		nA[alertingModels.OrgIDAnnotation] = strconv.FormatInt(alertState.OrgID, 10)
 	}
 
 	var urlStr string
-	if uid := nL[ngModels.RuleUIDLabel]; len(uid) > 0 && appURL != nil {
+	if uid := nL[alertingModels.RuleUIDLabel]; len(uid) > 0 && appURL != nil {
 		u := *appURL
 		u.Path = path.Join(u.Path, fmt.Sprintf("/alerting/grafana/%s/view", uid))
 		urlStr = u.String()
@@ -130,7 +131,7 @@ func errorAlert(labels, annotations data.Labels, alertState *state.State, urlStr
 	}
 }
 
-func FromAlertStateToPostableAlerts(firingStates []*state.State, stateManager *state.Manager, appURL *url.URL) apimodels.PostableAlerts {
+func FromStateTransitionToPostableAlerts(firingStates []state.StateTransition, stateManager *state.Manager, appURL *url.URL) apimodels.PostableAlerts {
 	alerts := apimodels.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(firingStates))}
 	var sentAlerts []*state.State
 	ts := time.Now()
@@ -139,28 +140,28 @@ func FromAlertStateToPostableAlerts(firingStates []*state.State, stateManager *s
 		if !alertState.NeedsSending(stateManager.ResendDelay) {
 			continue
 		}
-		alert := stateToPostableAlert(alertState, appURL)
+		alert := stateToPostableAlert(alertState.State, appURL)
 		alerts.PostableAlerts = append(alerts.PostableAlerts, *alert)
 		if alertState.StateReason == ngModels.StateReasonMissingSeries { // do not put stale state back to state manager
 			continue
 		}
 		alertState.LastSentAt = ts
-		sentAlerts = append(sentAlerts, alertState)
+		sentAlerts = append(sentAlerts, alertState.State)
 	}
 	stateManager.Put(sentAlerts)
 	return alerts
 }
 
-// FromAlertsStateToStoppedAlert converts firingStates that have evaluation state either eval.Alerting or eval.NoData or eval.Error to models.PostableAlert that are accepted by notifiers.
-// Returns a list of alert instances that have expiration time.Now
-func FromAlertsStateToStoppedAlert(firingStates []*state.State, appURL *url.URL, clock clock.Clock) apimodels.PostableAlerts {
+// FromAlertsStateToStoppedAlert selects only transitions from firing states (states eval.Alerting, eval.NoData, eval.Error)
+// and converts them to models.PostableAlert with EndsAt set to time.Now
+func FromAlertsStateToStoppedAlert(firingStates []state.StateTransition, appURL *url.URL, clock clock.Clock) apimodels.PostableAlerts {
 	alerts := apimodels.PostableAlerts{PostableAlerts: make([]models.PostableAlert, 0, len(firingStates))}
 	ts := clock.Now()
-	for _, alertState := range firingStates {
-		if alertState.State == eval.Normal || alertState.State == eval.Pending {
+	for _, transition := range firingStates {
+		if transition.PreviousState == eval.Normal || transition.PreviousState == eval.Pending {
 			continue
 		}
-		postableAlert := stateToPostableAlert(alertState, appURL)
+		postableAlert := stateToPostableAlert(transition.State, appURL)
 		postableAlert.EndsAt = strfmt.DateTime(ts)
 		alerts.PostableAlerts = append(alerts.PostableAlerts, *postableAlert)
 	}

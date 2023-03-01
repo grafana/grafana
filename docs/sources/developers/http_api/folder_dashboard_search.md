@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/http_api/folder_dashboard_search/
-  - /docs/grafana/latest/http_api/folder_dashboard_search/
+  - ../../http_api/folder_dashboard_search/
+canonical: /docs/grafana/latest/developers/http_api/folder_dashboard_search/
 description: Grafana Folder/Dashboard Search HTTP API
 keywords:
   - grafana
@@ -11,7 +11,7 @@ keywords:
   - search
   - folder
   - dashboard
-title: 'Folder/Dashboard Search HTTP API'
+title: Folder/Dashboard Search HTTP API
 ---
 
 # Folder/Dashboard Search API

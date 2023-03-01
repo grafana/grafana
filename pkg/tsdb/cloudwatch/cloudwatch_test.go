@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"testing"
 	"time"
 
@@ -20,6 +19,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/mocks"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
@@ -212,7 +212,7 @@ func Test_executeLogAlertQuery(t *testing.T) {
 		executor := newExecutor(im, newTestConfig(), &sess, featuremgmt.WithFeatures())
 
 		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
-			Headers:       map[string]string{"FromAlert": "some value"},
+			Headers:       map[string]string{ngalertmodels.FromAlertHeaderName: "some value"},
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
 			Queries: []backend.DataQuery{
 				{
@@ -238,7 +238,7 @@ func Test_executeLogAlertQuery(t *testing.T) {
 
 		executor := newExecutor(im, newTestConfig(), &sess, featuremgmt.WithFeatures())
 		_, err := executor.QueryData(context.Background(), &backend.QueryDataRequest{
-			Headers:       map[string]string{"FromAlert": "some value"},
+			Headers:       map[string]string{ngalertmodels.FromAlertHeaderName: "some value"},
 			PluginContext: backend.PluginContext{DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{}},
 			Queries: []backend.DataQuery{
 				{
@@ -253,288 +253,6 @@ func Test_executeLogAlertQuery(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Equal(t, []string{"instance manager's region"}, sess.calledRegions)
-	})
-}
-
-func TestQuery_ResourceRequest_DescribeAllLogGroups(t *testing.T) {
-	origNewCWLogsClient := NewCWLogsClient
-	t.Cleanup(func() {
-		NewCWLogsClient = origNewCWLogsClient
-	})
-
-	var cli fakeCWLogsClient
-
-	NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
-		return &cli
-	}
-
-	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return DataSource{Settings: models.CloudWatchSettings{}}, nil
-	})
-
-	executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
-	sender := &mockedCallResourceResponseSenderForOauth{}
-
-	t.Run("multiple batches", func(t *testing.T) {
-		token := "foo"
-		cli = fakeCWLogsClient{
-			logGroups: []cloudwatchlogs.DescribeLogGroupsOutput{
-				{
-					LogGroups: []*cloudwatchlogs.LogGroup{
-						{
-							LogGroupName: aws.String("group_a"),
-						},
-						{
-							LogGroupName: aws.String("group_b"),
-						},
-						{
-							LogGroupName: aws.String("group_c"),
-						},
-					},
-					NextToken: &token,
-				},
-				{
-					LogGroups: []*cloudwatchlogs.LogGroup{
-						{
-							LogGroupName: aws.String("group_x"),
-						},
-						{
-							LogGroupName: aws.String("group_y"),
-						},
-						{
-							LogGroupName: aws.String("group_z"),
-						},
-					},
-				},
-			},
-		}
-
-		req := &backend.CallResourceRequest{
-			Method: "GET",
-			Path:   "/all-log-groups?limit=50",
-			PluginContext: backend.PluginContext{
-				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-					ID: 0,
-				},
-				PluginID: "cloudwatch",
-			},
-		}
-		err := executor.CallResource(context.Background(), req, sender)
-		require.NoError(t, err)
-		sent := sender.Response
-		require.NotNil(t, sent)
-		require.Equal(t, http.StatusOK, sent.Status)
-
-		suggestDataResponse := []suggestData{}
-		err = json.Unmarshal(sent.Body, &suggestDataResponse)
-		require.Nil(t, err)
-
-		assert.Equal(t, stringsToSuggestData([]string{
-			"group_a", "group_b", "group_c", "group_x", "group_y", "group_z",
-		}), suggestDataResponse)
-	})
-
-	t.Run("Should call api with LogGroupNamePrefix if passed in resource call", func(t *testing.T) {
-		cli = fakeCWLogsClient{
-			logGroups: []cloudwatchlogs.DescribeLogGroupsOutput{
-				{LogGroups: []*cloudwatchlogs.LogGroup{}},
-			},
-		}
-
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
-
-		req := &backend.CallResourceRequest{
-			Method: "GET",
-			Path:   "/all-log-groups?logGroupNamePrefix=test",
-			PluginContext: backend.PluginContext{
-				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-					ID: 0,
-				},
-				PluginID: "cloudwatch",
-			},
-		}
-		err := executor.CallResource(context.Background(), req, sender)
-
-		require.NoError(t, err)
-		sent := sender.Response
-		require.NotNil(t, sent)
-		require.Equal(t, http.StatusOK, sent.Status)
-
-		assert.Equal(t, []*cloudwatchlogs.DescribeLogGroupsInput{
-			{
-				Limit:              aws.Int64(defaultLogGroupLimit),
-				LogGroupNamePrefix: aws.String("test"),
-			},
-		}, cli.calls.describeLogGroups)
-	})
-
-	t.Run("Should call api without LogGroupNamePrefix when an empty string is passed in resource call", func(t *testing.T) {
-		cli = fakeCWLogsClient{
-			logGroups: []cloudwatchlogs.DescribeLogGroupsOutput{
-				{LogGroups: []*cloudwatchlogs.LogGroup{}},
-			},
-		}
-
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
-
-		req := &backend.CallResourceRequest{
-			Method: "GET",
-			Path:   "/all-log-groups?logGroupNamePrefix=",
-			PluginContext: backend.PluginContext{
-				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-					ID: 0,
-				},
-				PluginID: "cloudwatch",
-			},
-		}
-		err := executor.CallResource(context.Background(), req, sender)
-
-		require.NoError(t, err)
-		sent := sender.Response
-		require.NotNil(t, sent)
-		require.Equal(t, http.StatusOK, sent.Status)
-
-		assert.Equal(t, []*cloudwatchlogs.DescribeLogGroupsInput{
-			{
-				Limit: aws.Int64(50),
-			},
-		}, cli.calls.describeLogGroups)
-	})
-}
-
-func TestQuery_ResourceRequest_DescribeLogGroups(t *testing.T) {
-	origNewCWLogsClient := NewCWLogsClient
-	t.Cleanup(func() {
-		NewCWLogsClient = origNewCWLogsClient
-	})
-
-	var cli fakeCWLogsClient
-
-	NewCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
-		return &cli
-	}
-
-	im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-		return DataSource{Settings: models.CloudWatchSettings{}}, nil
-	})
-
-	executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
-	sender := &mockedCallResourceResponseSenderForOauth{}
-
-	t.Run("Should map log groups to SuggestData response", func(t *testing.T) {
-		cli = fakeCWLogsClient{
-			logGroups: []cloudwatchlogs.DescribeLogGroupsOutput{
-				{LogGroups: []*cloudwatchlogs.LogGroup{
-					{
-						LogGroupName: aws.String("group_a"),
-					},
-					{
-						LogGroupName: aws.String("group_b"),
-					},
-					{
-						LogGroupName: aws.String("group_c"),
-					},
-				}},
-			},
-		}
-
-		req := &backend.CallResourceRequest{
-			Method: "GET",
-			Path:   "/log-groups",
-			PluginContext: backend.PluginContext{
-				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-					ID: 0,
-				},
-				PluginID: "cloudwatch",
-			},
-		}
-		err := executor.CallResource(context.Background(), req, sender)
-
-		require.NoError(t, err)
-		sent := sender.Response
-		require.NotNil(t, sent)
-		require.Equal(t, http.StatusOK, sent.Status)
-
-		suggestDataResponse := []suggestData{}
-		err = json.Unmarshal(sent.Body, &suggestDataResponse)
-		require.Nil(t, err)
-
-		assert.Equal(t, stringsToSuggestData([]string{"group_a", "group_b", "group_c"}), suggestDataResponse)
-	})
-
-	t.Run("Should call api with LogGroupNamePrefix if passed in resource call", func(t *testing.T) {
-		cli = fakeCWLogsClient{
-			logGroups: []cloudwatchlogs.DescribeLogGroupsOutput{
-				{LogGroups: []*cloudwatchlogs.LogGroup{}},
-			},
-		}
-
-		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{}}, nil
-		})
-
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
-
-		req := &backend.CallResourceRequest{
-			Method: "GET",
-			Path:   "/log-groups?logGroupNamePrefix=test",
-			PluginContext: backend.PluginContext{
-				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-					ID: 0,
-				},
-				PluginID: "cloudwatch",
-			},
-		}
-		err := executor.CallResource(context.Background(), req, sender)
-
-		require.NoError(t, err)
-		sent := sender.Response
-		require.NotNil(t, sent)
-		require.Equal(t, http.StatusOK, sent.Status)
-
-		assert.Equal(t, []*cloudwatchlogs.DescribeLogGroupsInput{
-			{
-				Limit:              aws.Int64(defaultLogGroupLimit),
-				LogGroupNamePrefix: aws.String("test"),
-			},
-		}, cli.calls.describeLogGroups)
-	})
-
-	t.Run("Should call api without LogGroupNamePrefix if not passed in resource call", func(t *testing.T) {
-		cli = fakeCWLogsClient{
-			logGroups: []cloudwatchlogs.DescribeLogGroupsOutput{
-				{LogGroups: []*cloudwatchlogs.LogGroup{}},
-			},
-		}
-
-		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: models.CloudWatchSettings{}}, nil
-		})
-
-		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
-
-		req := &backend.CallResourceRequest{
-			Method: "GET",
-			Path:   "/log-groups?limit=100",
-			PluginContext: backend.PluginContext{
-				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
-					ID: 0,
-				},
-				PluginID: "cloudwatch",
-			},
-		}
-		err := executor.CallResource(context.Background(), req, sender)
-
-		require.NoError(t, err)
-		sent := sender.Response
-		require.NotNil(t, sent)
-		require.Equal(t, http.StatusOK, sent.Status)
-
-		assert.Equal(t, []*cloudwatchlogs.DescribeLogGroupsInput{
-			{
-				Limit: aws.Int64(100),
-			},
-		}, cli.calls.describeLogGroups)
 	})
 }
 
@@ -560,7 +278,7 @@ func TestQuery_ResourceRequest_DescribeLogGroups_with_CrossAccountQuerying(t *te
 		return DataSource{Settings: models.CloudWatchSettings{}}, nil
 	})
 
-	t.Run("maps log group api response to resource response of describe-log-groups", func(t *testing.T) {
+	t.Run("maps log group api response to resource response of log-groups", func(t *testing.T) {
 		logsApi = mocks.LogsAPI{}
 		logsApi.On("DescribeLogGroups", mock.Anything).Return(&cloudwatchlogs.DescribeLogGroupsOutput{
 			LogGroups: []*cloudwatchlogs.LogGroup{
@@ -569,7 +287,7 @@ func TestQuery_ResourceRequest_DescribeLogGroups_with_CrossAccountQuerying(t *te
 		}, nil)
 		req := &backend.CallResourceRequest{
 			Method: "GET",
-			Path:   `/describe-log-groups?logGroupPattern=some-pattern&accountId=some-account-id`,
+			Path:   `/log-groups?logGroupPattern=some-pattern&accountId=some-account-id`,
 			PluginContext: backend.PluginContext{
 				DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{ID: 0},
 				PluginID:                   "cloudwatch",
@@ -598,12 +316,4 @@ func TestQuery_ResourceRequest_DescribeLogGroups_with_CrossAccountQuerying(t *te
 				LogGroupNamePrefix:    utils.Pointer("some-pattern"),
 			})
 	})
-}
-
-func stringsToSuggestData(values []string) []suggestData {
-	suggestDataArray := make([]suggestData, 0)
-	for _, v := range values {
-		suggestDataArray = append(suggestDataArray, suggestData{Text: v, Value: v, Label: v})
-	}
-	return suggestDataArray
 }

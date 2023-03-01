@@ -11,6 +11,7 @@ import {
   getDisplayProcessor,
   createTheme,
 } from '@grafana/data';
+import { BarGaugeDisplayMode } from '@grafana/schema';
 
 import {
   BarGauge,
@@ -21,7 +22,6 @@ import {
   getBarGradient,
   getTitleStyles,
   getValuePercent,
-  BarGaugeDisplayMode,
   calculateBarAndValueDimensions,
 } from './BarGauge';
 

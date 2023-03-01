@@ -4,10 +4,11 @@ import { rest } from 'msw';
 import { setupServer } from 'msw/node';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { Provider } from 'react-redux';
+import { TestProvider } from 'test/helpers/TestProvider';
 import { byRole, byTestId } from 'testing-library-selector';
 
 import { setBackendSrv } from '@grafana/runtime';
+import { defaultDashboard } from '@grafana/schema';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { DashboardDTO } from '../../../../../types';
@@ -62,11 +63,11 @@ function FormWrapper({ formValues }: { formValues?: Partial<RuleFormValues> }) {
   const formApi = useForm<RuleFormValues>({ defaultValues: { ...getDefaultFormValues(), ...formValues } });
 
   return (
-    <Provider store={store}>
+    <TestProvider store={store}>
       <FormProvider {...formApi}>
         <AnnotationsField />
       </FormProvider>
-    </Provider>
+    </TestProvider>
   );
 }
 
@@ -259,15 +260,12 @@ function mockDashboardSearchItem(searchItem: Partial<DashboardSearchItem>) {
   };
 }
 
-function mockDashboardDto(dashboard: Partial<DashboardDTO['dashboard']>) {
+function mockDashboardDto(dashboard: Partial<DashboardDTO['dashboard']>): DashboardDTO {
   return {
     dashboard: {
-      title: '',
-      uid: '',
-      templating: { list: [] },
-      panels: [],
+      ...defaultDashboard,
       ...dashboard,
-    },
+    } as DashboardDTO['dashboard'],
     meta: {},
   };
 }

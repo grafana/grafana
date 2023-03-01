@@ -6,21 +6,21 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	acmig "github.com/grafana/grafana/pkg/services/sqlstore/migrations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
+	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 type rawPermission struct {
@@ -273,38 +273,38 @@ func setupTeams(t *testing.T, x *xorm.Engine) {
 	require.NoError(t, errInsertUsers)
 	require.Equal(t, int64(5), usersCount, "needed 5 users for this test to run")
 
-	orgUsers := []models.OrgUser{
+	orgUsers := []org.OrgUser{
 		{
-			OrgId:   1,
-			UserId:  1,
+			OrgID:   1,
+			UserID:  1,
 			Role:    org.RoleViewer,
 			Created: now,
 			Updated: now,
 		},
 		{
-			OrgId:   1,
-			UserId:  2,
+			OrgID:   1,
+			UserID:  2,
 			Role:    org.RoleViewer,
 			Created: now,
 			Updated: now,
 		},
 		{
-			OrgId:   1,
-			UserId:  3,
+			OrgID:   1,
+			UserID:  3,
 			Role:    org.RoleEditor,
 			Created: now,
 			Updated: now,
 		},
 		{
-			OrgId:   1,
-			UserId:  4,
+			OrgID:   1,
+			UserID:  4,
 			Role:    org.RoleAdmin,
 			Created: now,
 			Updated: now,
 		},
 		{
-			OrgId:   2,
-			UserId:  5,
+			OrgID:   2,
+			UserID:  5,
 			Role:    org.RoleEditor,
 			Created: now,
 			Updated: now,
@@ -315,16 +315,16 @@ func setupTeams(t *testing.T, x *xorm.Engine) {
 	require.Equal(t, int64(5), orgUsersCount, "needed 5 users for this test to run")
 
 	// Setup teams (and members)
-	teams := []models.Team{
+	teams := []team.Team{
 		{
-			OrgId:   1,
+			OrgID:   1,
 			Name:    "teamOrg1",
 			Email:   "teamorg1@example.org",
 			Created: now,
 			Updated: now,
 		},
 		{
-			OrgId:   2,
+			OrgID:   2,
 			Name:    "teamOrg2",
 			Email:   "teamorg2@example.org",
 			Created: now,
@@ -335,12 +335,12 @@ func setupTeams(t *testing.T, x *xorm.Engine) {
 	require.NoError(t, errInsertTeams)
 	require.Equal(t, int64(2), teamCount, "needed 2 teams for this test to run")
 
-	members := []models.TeamMember{
+	members := []team.TeamMember{
 		{
 			// Can have viewer permissions
-			OrgId:      1,
-			TeamId:     1,
-			UserId:     1,
+			OrgID:      1,
+			TeamID:     1,
+			UserID:     1,
 			External:   false,
 			Permission: 0,
 			Created:    now,
@@ -348,39 +348,39 @@ func setupTeams(t *testing.T, x *xorm.Engine) {
 		},
 		{
 			// Cannot have admin permissions
-			OrgId:      1,
-			TeamId:     1,
-			UserId:     2,
+			OrgID:      1,
+			TeamID:     1,
+			UserID:     2,
 			External:   false,
-			Permission: models.PERMISSION_ADMIN,
+			Permission: dashboards.PERMISSION_ADMIN,
 			Created:    now,
 			Updated:    now,
 		},
 		{
 			// Can have admin permissions
-			OrgId:      1,
-			TeamId:     1,
-			UserId:     3,
+			OrgID:      1,
+			TeamID:     1,
+			UserID:     3,
 			External:   false,
-			Permission: models.PERMISSION_ADMIN,
+			Permission: dashboards.PERMISSION_ADMIN,
 			Created:    now,
 			Updated:    now,
 		},
 		{
 			// Can have admin permissions
-			OrgId:      1,
-			TeamId:     1,
-			UserId:     4,
+			OrgID:      1,
+			TeamID:     1,
+			UserID:     4,
 			External:   false,
-			Permission: models.PERMISSION_ADMIN,
+			Permission: dashboards.PERMISSION_ADMIN,
 			Created:    now,
 			Updated:    now,
 		},
 		{
 			// Can have viewer permissions
-			OrgId:      2,
-			TeamId:     2,
-			UserId:     5,
+			OrgID:      2,
+			TeamID:     2,
+			UserID:     5,
 			External:   false,
 			Permission: 0,
 			Created:    now,

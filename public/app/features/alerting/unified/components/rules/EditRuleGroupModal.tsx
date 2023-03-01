@@ -1,36 +1,43 @@
 import { css } from '@emotion/css';
+import { compact } from 'lodash';
 import React, { useEffect, useMemo } from 'react';
 import { FormProvider, RegisterOptions, useForm, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Modal, Button, Field, Input, useStyles2, Label, Badge } from '@grafana/ui';
+import { Badge, Button, Field, Input, Label, LinkButton, Modal, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { useDispatch } from 'app/types';
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
-import { RulerRulesConfigDTO, RulerRuleGroupDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { RulerRuleDTO, RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { rulesInSameGroupHaveInvalidFor, updateLotexNamespaceAndGroupAction } from '../../state/actions';
 import { checkEvaluationIntervalGlobalLimit } from '../../utils/config';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
+import { getRulesSourceName, GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { initialAsyncRequestState } from '../../utils/redux';
-import { isAlertingRulerRule, isGrafanaRulerRule } from '../../utils/rules';
+import { isAlertingRulerRule, isGrafanaRulerRule, isRecordingRulerRule } from '../../utils/rules';
 import { parsePrometheusDuration } from '../../utils/time';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { InfoIcon } from '../InfoIcon';
 import { EvaluationIntervalLimitExceeded } from '../InvalidIntervalWarning';
 import { MIN_TIME_RANGE_STEP_S } from '../rule-editor/GrafanaEvaluationBehavior';
 
-const MINUTE = '1m';
+const ITEMS_PER_PAGE = 10;
+
 interface AlertInfo {
   alertName: string;
   forDuration: string;
   evaluationsToFire: number;
 }
-function ForError({ message }: { message: string }) {
-  return <Badge color="orange" icon="exclamation-triangle" text={'Error'} tooltip={message} />;
+
+function ForBadge({ message, error }: { message: string; error?: boolean }) {
+  if (error) {
+    return <Badge color="red" icon="exclamation-circle" text={'Error'} tooltip={message} />;
+  } else {
+    return <Badge color="orange" icon="exclamation-triangle" text={'Unknown'} tooltip={message} />;
+  }
 }
 
 export const getNumberEvaluationsToStartAlerting = (forDuration: string, currentEvaluation: string) => {
@@ -95,17 +102,6 @@ export const getGroupFromRuler = (
   const folderObj: Array<RulerRuleGroupDTO<RulerRuleDTO>> = rulerRules ? rulerRules[folderName] : [];
   return folderObj?.find((rulerRuleGroup) => rulerRuleGroup.name === groupName);
 };
-
-export const getIntervalForGroup = (
-  rulerRules: RulerRulesConfigDTO | null | undefined,
-  groupName: string,
-  folderName: string
-) => {
-  const group = getGroupFromRuler(rulerRules, groupName, folderName);
-  const interval = group?.interval ?? MINUTE;
-  return interval;
-};
-
 export const safeParseDurationstr = (duration: string): number => {
   try {
     return parsePrometheusDuration(duration);
@@ -117,23 +113,14 @@ export const safeParseDurationstr = (duration: string): number => {
 type AlertsWithForTableColumnProps = DynamicTableColumnProps<AlertInfo>;
 type AlertsWithForTableProps = DynamicTableItemProps<AlertInfo>;
 
-export const RulesForGroupTable = ({
-  rulerRules,
-  groupName,
-  folderName,
-}: {
-  rulerRules: RulerRulesConfigDTO | null | undefined;
-  groupName: string;
-  folderName: string;
-}) => {
+export const RulesForGroupTable = ({ rulesWithoutRecordingRules }: { rulesWithoutRecordingRules: RulerRuleDTO[] }) => {
   const styles = useStyles2(getStyles);
-  const group = getGroupFromRuler(rulerRules, groupName, folderName);
-  const rules: RulerRuleDTO[] = group?.rules ?? [];
 
   const { watch } = useFormContext<FormValues>();
   const currentInterval = watch('groupInterval');
+  const unknownCurrentInterval = !Boolean(currentInterval);
 
-  const rows: AlertsWithForTableProps[] = rules
+  const rows: AlertsWithForTableProps[] = rulesWithoutRecordingRules
     .slice()
     .map((rule: RulerRuleDTO, index) => ({
       id: index,
@@ -151,7 +138,7 @@ export const RulesForGroupTable = ({
         renderCell: ({ data: { alertName } }) => {
           return <>{alertName}</>;
         },
-        size: 0.6,
+        size: '330px',
       },
       {
         id: 'for',
@@ -159,48 +146,38 @@ export const RulesForGroupTable = ({
         renderCell: ({ data: { forDuration } }) => {
           return <>{forDuration}</>;
         },
-        size: 0.2,
+        size: 0.5,
       },
       {
         id: 'numberEvaluations',
-        label: '#Evaluations',
+        label: '#Eval',
         renderCell: ({ data: { evaluationsToFire: numberEvaluations } }) => {
-          if (!isValidEvaluation(currentInterval)) {
-            return <ForError message={'Invalid evaluation interval format'} />;
-          }
-          if (numberEvaluations === 0) {
-            return <ForError message="Invalid 'For' value: it should be greater or equal to evaluation interval." />;
+          if (unknownCurrentInterval) {
+            return <ForBadge message="#Evaluations not available." />;
           } else {
-            return <>{numberEvaluations}</>;
+            if (!isValidEvaluation(currentInterval)) {
+              return <ForBadge message={'Invalid evaluation interval format'} error />;
+            }
+            if (numberEvaluations === 0) {
+              return (
+                <ForBadge message="Invalid 'For' value: it should be greater or equal to evaluation interval." error />
+              );
+            } else {
+              return <>{numberEvaluations}</>;
+            }
           }
         },
-        size: 0.2,
+        size: 0.4,
       },
     ];
-  }, [currentInterval]);
+  }, [currentInterval, unknownCurrentInterval]);
 
   return (
     <div className={styles.tableWrapper}>
-      <DynamicTable items={rows} cols={columns} />
+      <DynamicTable items={rows} cols={columns} pagination={{ itemsPerPage: ITEMS_PER_PAGE }} />
     </div>
   );
 };
-
-interface CombinedGroupAndNameSpace {
-  namespace: CombinedRuleNamespace;
-  group: CombinedRuleGroup;
-}
-interface GroupAndNameSpaceNames {
-  namespace: string;
-  group: string;
-}
-interface ModalProps {
-  nameSpaceAndGroup: CombinedGroupAndNameSpace | GroupAndNameSpaceNames;
-  sourceName: string;
-  groupInterval: string;
-  onClose: (saved?: boolean) => void;
-  folderAndGroupReadOnly?: boolean;
-}
 
 interface FormValues {
   namespaceName: string;
@@ -208,43 +185,64 @@ interface FormValues {
   groupInterval: string;
 }
 
+export const evaluateEveryValidationOptions = (rules: RulerRuleDTO[]): RegisterOptions => ({
+  required: {
+    value: true,
+    message: 'Required.',
+  },
+  validate: (evaluateEvery: string) => {
+    try {
+      const duration = parsePrometheusDuration(evaluateEvery);
+
+      if (duration < MIN_TIME_RANGE_STEP_S * 1000) {
+        return `Cannot be less than ${MIN_TIME_RANGE_STEP_S} seconds.`;
+      }
+
+      if (duration % (MIN_TIME_RANGE_STEP_S * 1000) !== 0) {
+        return `Must be a multiple of ${MIN_TIME_RANGE_STEP_S} seconds.`;
+      }
+      if (rulesInSameGroupHaveInvalidFor(rules, evaluateEvery).length === 0) {
+        return true;
+      } else {
+        return `Invalid evaluation interval. Evaluation interval should be smaller or equal to 'For' values for existing rules in this group.`;
+      }
+    } catch (error) {
+      return error instanceof Error ? error.message : 'Failed to parse duration';
+    }
+  },
+});
+
+export interface ModalProps {
+  namespace: CombinedRuleNamespace;
+  group: CombinedRuleGroup;
+  onClose: (saved?: boolean) => void;
+  intervalEditOnly?: boolean;
+  folderUrl?: string;
+}
+
 export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
-  const {
-    nameSpaceAndGroup: { namespace, group },
-    onClose,
-    groupInterval,
-    sourceName,
-    folderAndGroupReadOnly,
-  } = props;
+  const { namespace, group, onClose, intervalEditOnly } = props;
 
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
   const { loading, error, dispatched } =
     useUnifiedAlertingSelector((state) => state.updateLotexNamespaceAndGroup) ?? initialAsyncRequestState;
   const notifyApp = useAppNotification();
-  const nameSpaceName = typeof namespace === 'string' ? namespace : namespace.name;
-  const groupName = typeof group === 'string' ? group : group.name;
+
   const defaultValues = useMemo(
     (): FormValues => ({
-      namespaceName: nameSpaceName,
-      groupName: groupName,
-      groupInterval: groupInterval ?? '',
+      namespaceName: namespace.name,
+      groupName: group.name,
+      groupInterval: group.interval ?? '',
     }),
-    [nameSpaceName, groupName, groupInterval]
+    [namespace, group]
   );
 
-  const isGrafanaManagedGroup = sourceName === GRAFANA_RULES_SOURCE_NAME;
-  const nameSpaceLabel = isGrafanaManagedGroup ? 'Folder' : 'Namespace';
-  const nameSpaceInfoIconLabelEditable = isGrafanaManagedGroup
-    ? 'Folder name can be updated to a non-existing folder name'
-    : 'Name space can be updated to a non-existing name space';
-  const nameSpaceInfoIconLabelNonEditable = isGrafanaManagedGroup
-    ? 'Folder name can be updated in folder view'
-    : 'Name space can be updated folder view';
+  const rulesSourceName = getRulesSourceName(namespace.rulesSource);
+  const isGrafanaManagedGroup = rulesSourceName === GRAFANA_RULES_SOURCE_NAME;
 
-  const spaceNameInfoIconLabel = folderAndGroupReadOnly
-    ? nameSpaceInfoIconLabelNonEditable
-    : nameSpaceInfoIconLabelEditable;
+  const nameSpaceLabel = isGrafanaManagedGroup ? 'Folder' : 'Namespace';
+
   // close modal if successfully saved
   useEffect(() => {
     if (dispatched && !loading && !error) {
@@ -256,10 +254,10 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
   const onSubmit = (values: FormValues) => {
     dispatch(
       updateLotexNamespaceAndGroupAction({
-        rulesSourceName: sourceName,
-        groupName: groupName,
+        rulesSourceName: rulesSourceName,
+        groupName: group.name,
         newGroupName: values.groupName,
-        namespaceName: nameSpaceName,
+        namespaceName: namespace.name,
         newNamespaceName: values.namespaceName,
         groupInterval: values.groupInterval || undefined,
       })
@@ -282,80 +280,60 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
     notifyApp.error('There are errors in the form. Correct the errors and retry.');
   };
 
-  const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
-  const groupfoldersForSource = rulerRuleRequests[sourceName];
-
-  const evaluateEveryValidationOptions: RegisterOptions = {
-    required: {
-      value: true,
-      message: 'Required.',
-    },
-    validate: (value: string) => {
-      try {
-        const duration = parsePrometheusDuration(value);
-
-        if (duration < MIN_TIME_RANGE_STEP_S * 1000) {
-          return `Cannot be less than ${MIN_TIME_RANGE_STEP_S} seconds.`;
-        }
-
-        if (duration % (MIN_TIME_RANGE_STEP_S * 1000) !== 0) {
-          return `Must be a multiple of ${MIN_TIME_RANGE_STEP_S} seconds.`;
-        }
-        if (
-          rulesInSameGroupHaveInvalidFor(groupfoldersForSource.result, groupName, nameSpaceName, value).length === 0
-        ) {
-          return true;
-        } else {
-          return `Invalid evaluation interval. Evaluation interval should be smaller or equal to 'For' values for existing rules in this group.`;
-        }
-      } catch (error) {
-        return error instanceof Error ? error.message : 'Failed to parse duration';
-      }
-    },
-  };
+  const rulesWithoutRecordingRules = compact(
+    group.rules.map((r) => r.rulerRule).filter((rule) => !isRecordingRulerRule(rule))
+  );
+  const hasSomeNoRecordingRules = rulesWithoutRecordingRules.length > 0;
+  const modalTitle =
+    intervalEditOnly || isGrafanaManagedGroup ? 'Edit evaluation group' : 'Edit namespace or evaluation group';
 
   return (
-    <Modal
-      className={styles.modal}
-      isOpen={true}
-      title={folderAndGroupReadOnly ? 'Edit evaluation group' : `Edit ${nameSpaceLabel} or evaluation group`}
-      onDismiss={onClose}
-      onClickBackdrop={onClose}
-    >
+    <Modal className={styles.modal} isOpen={true} title={modalTitle} onDismiss={onClose} onClickBackdrop={onClose}>
       <FormProvider {...formAPI}>
         <form onSubmit={(e) => e.preventDefault()} key={JSON.stringify(defaultValues)}>
           <>
             <Field
               label={
-                <Label htmlFor="namespaceName">
-                  <Stack gap={0.5}>
-                    {nameSpaceLabel}
-                    <InfoIcon text={spaceNameInfoIconLabel} />
-                  </Stack>
+                <Label
+                  htmlFor="namespaceName"
+                  description={
+                    !isGrafanaManagedGroup &&
+                    'Change the current namespace name. Moving groups between namespaces is not supported'
+                  }
+                >
+                  {nameSpaceLabel}
                 </Label>
               }
               invalid={!!errors.namespaceName}
               error={errors.namespaceName?.message}
             >
-              <Input
-                id="namespaceName"
-                readOnly={folderAndGroupReadOnly}
-                {...register('namespaceName', {
-                  required: 'Namespace name is required.',
-                })}
-              />
+              <Stack gap={1} direction="row">
+                <Input
+                  id="namespaceName"
+                  readOnly={intervalEditOnly || isGrafanaManagedGroup}
+                  {...register('namespaceName', {
+                    required: 'Namespace name is required.',
+                  })}
+                  className={styles.formInput}
+                />
+                {isGrafanaManagedGroup && props.folderUrl && (
+                  <LinkButton
+                    href={props.folderUrl}
+                    title="Go to folder"
+                    variant="secondary"
+                    icon="folder-open"
+                    target="_blank"
+                  />
+                )}
+              </Stack>
             </Field>
             <Field
               label={
-                <Label htmlFor="groupName">
-                  <Stack gap={0.5}>
-                    Evaluation group
-                    {isGrafanaManagedGroup ? (
-                      <InfoIcon text={'Group name can be updated on Group view.'} />
-                    ) : (
-                      <InfoIcon text={'Group name can be updated to a non existing group name.'} />
-                    )}
-                  </Stack>
+                <Label
+                  htmlFor="groupName"
+                  description={`Evaluation group name needs to be unique within a ${nameSpaceLabel.toLocaleLowerCase()}`}
+                >
+                  Evaluation group name
                 </Label>
               }
               invalid={!!errors.groupName}
@@ -363,7 +341,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
             >
               <Input
                 id="groupName"
-                readOnly={folderAndGroupReadOnly}
+                readOnly={intervalEditOnly}
                 {...register('groupName', {
                   required: 'Evaluation group name is required.',
                 })}
@@ -387,7 +365,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
               <Input
                 id="groupInterval"
                 placeholder="1m"
-                {...register('groupInterval', evaluateEveryValidationOptions)}
+                {...register('groupInterval', evaluateEveryValidationOptions(rulesWithoutRecordingRules))}
               />
             </Field>
 
@@ -414,17 +392,14 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
                 </Button>
               </Modal.ButtonRow>
             </div>
-            {rulerRuleRequests && (
+            {!hasSomeNoRecordingRules && <div>This group does not contain alert rules.</div>}
+            {hasSomeNoRecordingRules && (
               <>
                 <div>List of rules that belong to this group</div>
                 <div className={styles.evalRequiredLabel}>
-                  #Evaluations column represents the number of evaluations needed before alert starts firing.
+                  #Eval column represents the number of evaluations needed before alert starts firing.
                 </div>
-                <RulesForGroupTable
-                  rulerRules={groupfoldersForSource?.result}
-                  groupName={groupName}
-                  folderName={nameSpaceName}
-                />
+                <RulesForGroupTable rulesWithoutRecordingRules={rulesWithoutRecordingRules} />
               </>
             )}
           </>
@@ -443,16 +418,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: relative;
   `,
   formInput: css`
-    width: 275px;
-    & + & {
-      margin-left: ${theme.spacing(3)};
-    }
+    flex: 1;
   `,
   tableWrapper: css`
     margin-top: ${theme.spacing(2)};
     margin-bottom: ${theme.spacing(2)};
-    height: 225px;
-    overflow: auto;
+    height: 100%;
   `,
   evalRequiredLabel: css`
     font-size: ${theme.typography.bodySmall.fontSize};

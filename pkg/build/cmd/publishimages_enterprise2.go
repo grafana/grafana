@@ -6,25 +6,26 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/urfave/cli/v2"
+
 	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/grafana/grafana/pkg/build/docker"
 	"github.com/grafana/grafana/pkg/build/gcloud"
-	"github.com/urfave/cli/v2"
 )
 
 func Enterprise2(c *cli.Context) error {
 	if c.NArg() > 0 {
 		if err := cli.ShowSubcommandHelp(c); err != nil {
-			return cli.NewExitError(err.Error(), 1)
+			return cli.Exit(err.Error(), 1)
 		}
-		return cli.NewExitError("", 1)
+		return cli.Exit("", 1)
 	}
 
 	if err := gcloud.ActivateServiceAccount(); err != nil {
 		return fmt.Errorf("couldn't activate service account, err: %w", err)
 	}
 
-	metadata, err := GenerateMetadata(c)
+	metadata, err := config.GenerateMetadata(c)
 	if err != nil {
 		return err
 	}

@@ -1,22 +1,23 @@
 import { AdHocVariableFilter, InternalTimeZones } from '@grafana/data';
 
 import {
-  Filters,
-  Histogram,
-  DateHistogram,
-  Terms,
-} from './components/QueryEditor/BucketAggregationsEditor/aggregations';
-import {
   isMetricAggregationWithField,
   isMetricAggregationWithSettings,
   isMovingAverageWithModelSettings,
   isPipelineAggregation,
   isPipelineAggregationWithMultipleBucketPaths,
-  MetricAggregation,
-  MetricAggregationWithInlineScript,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { defaultBucketAgg, defaultMetricAgg, findMetricById, highlightTags } from './queryDef';
-import { ElasticsearchQuery, TermsQuery } from './types';
+import {
+  ElasticsearchQuery,
+  TermsQuery,
+  Filters,
+  Terms,
+  MetricAggregation,
+  MetricAggregationWithInlineScript,
+  Histogram,
+  DateHistogram,
+} from './types';
 import { convertOrderByToMetricId, getScriptValue } from './utils';
 
 export class ElasticQueryBuilder {
@@ -281,6 +282,10 @@ export class ElasticQueryBuilder {
             field: aggDef.field,
             precision: aggDef.settings?.precision,
           };
+          break;
+        }
+        case 'nested': {
+          esAgg['nested'] = { path: aggDef.field };
           break;
         }
       }

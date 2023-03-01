@@ -1,5 +1,6 @@
 import { lastValueFrom } from 'rxjs';
 
+import { defaultDashboard } from '@grafana/schema';
 import { DashboardModel } from 'app/features/dashboard/state';
 
 import { getBackendSrv } from '../../../core/services/backend_srv';
@@ -59,6 +60,7 @@ export async function getLibraryPanel(uid: string, isHandled = false): Promise<L
   // kinda heavy weight migration process!!!
   const { result } = response.data;
   const dash = new DashboardModel({
+    ...defaultDashboard,
     schemaVersion: 35, // should be saved in the library panel
     panels: [result.model],
   });

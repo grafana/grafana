@@ -49,4 +49,14 @@ describe('getQueryWithDefaults(', () => {
       QueryEditorMode.Code
     );
   });
+
+  it('should return default editor mode when it is provided', () => {
+    expect(getQueryWithDefaults({ refId: 'A' } as PromQuery, CoreApp.Dashboard, QueryEditorMode.Code)).toEqual({
+      editorMode: 'code',
+      expr: '',
+      legendFormat: '__auto',
+      range: true,
+      refId: 'A',
+    });
+  });
 });

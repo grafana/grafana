@@ -4,27 +4,32 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/stretchr/testify/require"
 )
 
 func TestAddAppLinks(t *testing.T) {
 	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
-	reqCtx := &models.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}
+	reqCtx := &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}
 	permissions := []ac.Permission{
 		{Action: plugins.ActionAppAccess, Scope: "*"},
+		{Action: plugins.ActionInstall, Scope: "*"},
+		{Action: datasources.ActionCreate, Scope: "*"},
+		{Action: datasources.ActionRead, Scope: "*"},
 	}
 
 	testApp1 := plugins.PluginDTO{
@@ -286,22 +291,27 @@ func TestAddAppLinks(t *testing.T) {
 			"/connections/connect-data": {SectionID: "connections"},
 		}
 
+		// Build nav-tree and check if the "Connections" page is there
 		treeRoot := navtree.NavTreeRoot{}
 		treeRoot.AddSection(service.buildDataConnectionsNavLink(reqCtx))
 		connectionsNode := treeRoot.FindById("connections")
+		require.NotNil(t, connectionsNode)
 		require.Equal(t, "Connections", connectionsNode.Text)
-		require.Equal(t, "Connect data", connectionsNode.Children[1].Text)
-		require.Equal(t, "connections-connect-data", connectionsNode.Children[1].Id) // Original "Connect data" page
-		require.Equal(t, "", connectionsNode.Children[1].PluginID)
 
+		// Check if the original "Connect data" page (served by core) is there until we add the standalone plugin page
+		connectDataNode := connectionsNode.Children[0]
+		require.Equal(t, "Connect data", connectDataNode.Text)
+		require.Equal(t, "connections-connect-data", connectDataNode.Id)
+		require.Equal(t, "", connectDataNode.PluginID)
+
+		// Check if the standalone plugin page appears under the section where we registered it and if it overrides the original page
 		err := service.addAppLinks(&treeRoot, reqCtx)
 
-		// Check if the standalone plugin page appears under the section where we registered it
 		require.NoError(t, err)
 		require.Equal(t, "Connections", connectionsNode.Text)
-		require.Equal(t, "Connect data", connectionsNode.Children[1].Text)
-		require.Equal(t, "standalone-plugin-page-/connections/connect-data", connectionsNode.Children[1].Id) // Overridden "Connect data" page
-		require.Equal(t, "test-app3", connectionsNode.Children[1].PluginID)
+		require.Equal(t, "Connect data", connectDataNode.Text)
+		require.Equal(t, "standalone-plugin-page-/connections/connect-data", connectDataNode.Id) // Overridden "Connect data" page
+		require.Equal(t, "test-app3", connectDataNode.PluginID)
 
 		// Check if the standalone plugin page does not appear under the app section anymore
 		// (Also checking if the Default Page got removed)
@@ -379,7 +389,7 @@ func TestReadingNavigationSettings(t *testing.T) {
 func TestAddAppLinksAccessControl(t *testing.T) {
 	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
 	user := &user.SignedInUser{OrgID: 1}
-	reqCtx := &models.ReqContext{SignedInUser: user, Context: &web.Context{Req: httpReq}}
+	reqCtx := &contextmodel.ReqContext{SignedInUser: user, Context: &web.Context{Req: httpReq}}
 	catalogReadAction := "test-app1.catalog:read"
 
 	testApp1 := plugins.PluginDTO{

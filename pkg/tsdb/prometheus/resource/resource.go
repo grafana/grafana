@@ -19,37 +19,6 @@ type Resource struct {
 	log        log.Logger
 }
 
-// Hop-by-hop headers. These are removed when sent to the backend.
-// http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html
-var hopHeaders = []string{
-	"Connection",
-	"Keep-Alive",
-	"Proxy-Authenticate",
-	"Proxy-Authorization",
-	"Te", // canonicalized version of "TE"
-	"Trailers",
-	"Transfer-Encoding",
-	"Upgrade",
-}
-
-// The following headers will be removed from the request
-var stopHeaders = []string{
-	"cookie",
-	"Cookie",
-}
-
-func delHopHeaders(header http.Header) {
-	for _, h := range hopHeaders {
-		header.Del(h)
-	}
-}
-
-func delStopHeaders(header http.Header) {
-	for _, h := range stopHeaders {
-		header.Del(h)
-	}
-}
-
 func New(
 	httpClient *http.Client,
 	settings backend.DataSourceInstanceSettings,
@@ -68,9 +37,6 @@ func New(
 }
 
 func (r *Resource) Execute(ctx context.Context, req *backend.CallResourceRequest) (*backend.CallResourceResponse, error) {
-	delHopHeaders(req.Headers)
-	delStopHeaders(req.Headers)
-
 	r.log.FromContext(ctx).Debug("Sending resource query", "URL", req.URL)
 	resp, err := r.promClient.QueryResource(ctx, req)
 	if err != nil {

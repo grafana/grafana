@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/configure-alertmanager
-  - /docs/grafana/latest/alerting/configure-alertmanager
+  - ../configure-alertmanager/
 description: Configure Alertmanager
 keywords:
   - grafana
@@ -29,6 +28,8 @@ To add an external Alertmanager, complete the following steps.
 1. Click Configuration and then Data sources.
 2. Search for Alertmanager.
 3. Choose your Implementation and fill out the fields on the page, as required.
+
+If you are provisioning your data source, set the flag `handleGrafanaManagedAlerts` in the `jsonData` field to `true` to send Grafana-managed alerts to this Alertmanager.
 
 **Note:**
 Prometheus, Grafana Mimir, and Cortex implementations of Alertmanager are supported. For Prometheus, contact points and notification policies are read-only in the Grafana Alerting UI.

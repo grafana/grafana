@@ -6,10 +6,11 @@ import (
 	"path/filepath"
 
 	"github.com/grafana/codejen"
+	"github.com/grafana/grafana/pkg/kindsys"
 )
 
 // BaseCoreRegistryJenny generates a static registry for core kinds that
-// only initializes their [kindsys.Interface]. No slot kinds are composed.
+// only initializes their [kindsys.Kind]. No slot kinds are composed.
 //
 // Path should be the relative path to the directory that will contain the
 // generated registry. kindrelroot should be the repo-root-relative path to the
@@ -31,21 +32,22 @@ func (gen *genBaseRegistry) JennyName() string {
 	return "BaseCoreRegistryJenny"
 }
 
-func (gen *genBaseRegistry) Generate(decls ...*DeclForGen) (*codejen.File, error) {
-	var numRaw int
-	for _, k := range decls {
-		if k.IsRaw() {
-			numRaw++
+func (gen *genBaseRegistry) Generate(kinds ...kindsys.Kind) (*codejen.File, error) {
+	cores := make([]kindsys.Core, 0, len(kinds))
+	for _, d := range kinds {
+		if corekind, is := d.(kindsys.Core); is {
+			cores = append(cores, corekind)
 		}
+	}
+	if len(cores) == 0 {
+		return nil, nil
 	}
 
 	buf := new(bytes.Buffer)
 	if err := tmpls.Lookup("kind_registry.tmpl").Execute(buf, tvars_kind_registry{
-		NumRaw:            numRaw,
-		NumStructured:     len(decls) - numRaw,
 		PackageName:       filepath.Base(gen.path),
 		KindPackagePrefix: filepath.ToSlash(filepath.Join("github.com/grafana/grafana", gen.kindrelroot)),
-		Kinds:             decls,
+		Kinds:             cores,
 	}); err != nil {
 		return nil, fmt.Errorf("failed executing kind registry template: %w", err)
 	}

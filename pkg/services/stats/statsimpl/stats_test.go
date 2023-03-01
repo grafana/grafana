@@ -5,14 +5,17 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/stats"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
 )
 
 func TestIntegrationStatsDataAccess(t *testing.T) {
@@ -24,7 +27,7 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 	populateDB(t, db)
 
 	t.Run("Get system stats should not results in error", func(t *testing.T) {
-		query := models.GetSystemStatsQuery{}
+		query := stats.GetSystemStatsQuery{}
 		err := statsService.GetSystemStats(context.Background(), &query)
 		require.NoError(t, err)
 		assert.Equal(t, int64(3), query.Result.Users)
@@ -37,31 +40,31 @@ func TestIntegrationStatsDataAccess(t *testing.T) {
 	})
 
 	t.Run("Get system user count stats should not results in error", func(t *testing.T) {
-		query := models.GetSystemUserCountStatsQuery{}
+		query := stats.GetSystemUserCountStatsQuery{}
 		err := statsService.GetSystemUserCountStats(context.Background(), &query)
 		assert.NoError(t, err)
 	})
 
 	t.Run("Get datasource stats should not results in error", func(t *testing.T) {
-		query := models.GetDataSourceStatsQuery{}
+		query := stats.GetDataSourceStatsQuery{}
 		err := statsService.GetDataSourceStats(context.Background(), &query)
 		assert.NoError(t, err)
 	})
 
 	t.Run("Get datasource access stats should not results in error", func(t *testing.T) {
-		query := models.GetDataSourceAccessStatsQuery{}
+		query := stats.GetDataSourceAccessStatsQuery{}
 		err := statsService.GetDataSourceAccessStats(context.Background(), &query)
 		assert.NoError(t, err)
 	})
 
 	t.Run("Get alert notifier stats should not results in error", func(t *testing.T) {
-		query := models.GetAlertNotifierUsageStatsQuery{}
+		query := stats.GetAlertNotifierUsageStatsQuery{}
 		err := statsService.GetAlertNotifiersUsageStats(context.Background(), &query)
 		assert.NoError(t, err)
 	})
 
 	t.Run("Get admin stats should not result in error", func(t *testing.T) {
-		query := models.GetAdminStatsQuery{}
+		query := stats.GetAdminStatsQuery{}
 		err := statsService.GetAdminStats(context.Background(), &query)
 		assert.NoError(t, err)
 	})
@@ -71,6 +74,7 @@ func populateDB(t *testing.T, sqlStore *sqlstore.SQLStore) {
 	t.Helper()
 
 	orgService, _ := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotatest.New(false, nil))
+	userSvc, _ := userimpl.ProvideService(sqlStore, orgService, sqlStore.Cfg, nil, nil, &quotatest.FakeQuotaService{}, supportbundlestest.NewFakeBundleService())
 
 	users := make([]user.User, 3)
 	for i := range users {
@@ -80,7 +84,7 @@ func populateDB(t *testing.T, sqlStore *sqlstore.SQLStore) {
 			Login:   fmt.Sprintf("user_test_%v_login", i),
 			OrgName: fmt.Sprintf("Org #%v", i),
 		}
-		user, err := sqlStore.CreateUser(context.Background(), cmd)
+		user, err := userSvc.CreateUserForTests(context.Background(), &cmd)
 		require.NoError(t, err)
 		users[i] = *user
 	}
@@ -120,7 +124,7 @@ func TestIntegration_GetAdminStats(t *testing.T) {
 	db := sqlstore.InitTestDB(t)
 	statsService := ProvideService(db)
 
-	query := models.GetAdminStatsQuery{}
+	query := stats.GetAdminStatsQuery{}
 	err := statsService.GetAdminStats(context.Background(), &query)
 	require.NoError(t, err)
 }

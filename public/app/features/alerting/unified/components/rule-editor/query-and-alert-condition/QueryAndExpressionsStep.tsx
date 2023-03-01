@@ -1,7 +1,7 @@
 import React, { FC, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { LoadingState, PanelData } from '@grafana/data';
+import { DataQuery, DataSourceApi, DataSourceJsonData, LoadingState, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Stack } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
@@ -16,34 +16,44 @@ import { ExpressionEditor } from '../ExpressionEditor';
 import { ExpressionsEditor } from '../ExpressionsEditor';
 import { QueryEditor } from '../QueryEditor';
 import { RuleEditorSection } from '../RuleEditorSection';
-import { refIdExists } from '../util';
+import { errorFromSeries, refIdExists } from '../util';
 
 import { AlertType } from './AlertType';
 import {
-  duplicateQuery,
   addNewDataQuery,
   addNewExpression,
+  duplicateQuery,
   queriesAndExpressionsReducer,
   removeExpression,
   rewireExpressions,
   setDataQueries,
   updateExpression,
   updateExpressionRefId,
-  updateExpressionType,
   updateExpressionTimeRange,
+  updateExpressionType,
 } from './reducer';
 
 interface Props {
   editingExistingRule: boolean;
+  prefill: boolean;
+  onDataChange: (error: string) => void;
+  asyncDefaultQueries?: AlertQuery[];
+  asyncDataSource?: DataSourceApi<DataQuery, DataSourceJsonData, {}>;
 }
 
-export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
+export const QueryAndExpressionsStep: FC<Props> = ({
+  editingExistingRule,
+  onDataChange,
+  asyncDefaultQueries,
+  asyncDataSource,
+  prefill,
+}) => {
   const runner = useRef(new AlertingQueryRunner());
   const {
     setValue,
     getValues,
     watch,
-    formState: { errors },
+    formState: { errors, isDirty },
     control,
   } = useFormContext<RuleFormValues>();
   const [panelData, setPanelData] = useState<Record<string, PanelData>>({});
@@ -53,7 +63,6 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
     panelData: {},
   };
   const [{ queries }, dispatch] = useReducer(queriesAndExpressionsReducer, initialState);
-
   const [type, condition, dataSourceName] = watch(['type', 'condition', 'dataSourceName']);
 
   const isGrafanaManagedType = type === RuleFormType.grafana;
@@ -67,8 +76,17 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
   }, []);
 
   const runQueries = useCallback(() => {
-    runner.current.run(queries);
-  }, [queries]);
+    runner.current.run(getValues('queries'));
+  }, [getValues]);
+
+  const updateWithDefault = !editingExistingRule && !prefill;
+  //once default queries is updated
+  useEffect(() => {
+    const shouldSetDataQuery = updateWithDefault && !isDirty && asyncDefaultQueries;
+    if (shouldSetDataQuery) {
+      dispatch(setDataQueries(asyncDefaultQueries));
+    }
+  }, [asyncDefaultQueries, updateWithDefault, isDirty]);
 
   // whenever we update the queries we have to update the form too
   useEffect(() => {
@@ -97,7 +115,36 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
     return queries.filter((query) => !isExpressionQuery(query.model));
   }, [queries]);
 
+  // expression queries only
+  const expressionQueries = useMemo(() => {
+    return queries.filter((query) => isExpressionQuery(query.model));
+  }, [queries]);
+
   const emptyQueries = queries.length === 0;
+
+  useEffect(() => {
+    const currentCondition = getValues('condition');
+
+    if (!currentCondition) {
+      return;
+    }
+
+    const error = errorFromSeries(panelData[currentCondition]?.series || []);
+    onDataChange(error?.message || '');
+  }, [panelData, getValues, onDataChange]);
+
+  const handleSetCondition = useCallback(
+    (refId: string | null) => {
+      if (!refId) {
+        return;
+      }
+
+      runQueries(); //we need to run the queries to know if the condition is valid
+
+      setValue('condition', refId);
+    },
+    [runQueries, setValue]
+  );
 
   const onUpdateRefId = useCallback(
     (oldRefId: string, newRefId: string) => {
@@ -111,10 +158,10 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
 
       // update condition too if refId was updated
       if (condition === oldRefId) {
-        setValue('condition', newRefId);
+        handleSetCondition(newRefId);
       }
     },
-    [condition, queries, setValue]
+    [condition, queries, handleSetCondition]
   );
 
   const onChangeQueries = useCallback(
@@ -142,9 +189,16 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
   useEffect(() => {
     if (!refIdExists(queries, condition)) {
       const lastRefId = queries.at(-1)?.refId ?? null;
-      setValue('condition', lastRefId);
+      handleSetCondition(lastRefId);
     }
-  }, [condition, queries, setValue]);
+  }, [condition, queries, handleSetCondition]);
+
+  const defaultQueryAvailable = asyncDataSource && asyncDefaultQueries;
+  const onAddNewQuery = () => {
+    if (defaultQueryAvailable) {
+      dispatch(addNewDataQuery({ ds: asyncDataSource, defaultQuery: asyncDefaultQueries[0]?.model }));
+    }
+  };
 
   return (
     <RuleEditorSection stepNo={2} title="Set a query and alert condition">
@@ -156,7 +210,15 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
           <InputControl
             name="expression"
             render={({ field: { ref, ...field } }) => {
-              return <ExpressionEditor {...field} dataSourceName={dataSourceName} />;
+              return (
+                <ExpressionEditor
+                  {...field}
+                  dataSourceName={dataSourceName}
+                  showPreviewAlertsButton={!isRecordingRuleType}
+                  asyncDefaultQuery={asyncDefaultQueries?.[0]}
+                  preservePreviousValue={!updateWithDefault}
+                />
+              );
             }}
             control={control}
             rules={{
@@ -172,23 +234,20 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
           {/* Data Queries */}
           <QueryEditor
             queries={dataQueries}
+            expressions={expressionQueries}
             onRunQueries={runQueries}
             onChangeQueries={onChangeQueries}
             onDuplicateQuery={onDuplicateQuery}
             panelData={panelData}
             condition={condition}
-            onSetCondition={(refId) => {
-              setValue('condition', refId);
-            }}
+            onSetCondition={handleSetCondition}
           />
           {/* Expression Queries */}
           <ExpressionsEditor
             queries={queries}
             panelData={panelData}
             condition={condition}
-            onSetCondition={(refId) => {
-              setValue('condition', refId);
-            }}
+            onSetCondition={handleSetCondition}
             onRemoveExpression={(refId) => {
               dispatch(removeExpression(refId));
             }}
@@ -206,9 +265,7 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
               <Button
                 type="button"
                 icon="plus"
-                onClick={() => {
-                  dispatch(addNewDataQuery());
-                }}
+                onClick={onAddNewQuery}
                 variant="secondary"
                 aria-label={selectors.components.QueryTab.addQuery}
                 disabled={noCompatibleDataSources}

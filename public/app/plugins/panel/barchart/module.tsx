@@ -16,7 +16,7 @@ import { ThresholdsStyleEditor } from '../timeseries/ThresholdsStyleEditor';
 
 import { BarChartPanel } from './BarChartPanel';
 import { TickSpacingEditor } from './TickSpacingEditor';
-import { PanelFieldConfig, PanelOptions, defaultPanelFieldConfig, defaultPanelOptions } from './models.gen';
+import { PanelFieldConfig, PanelOptions, defaultPanelFieldConfig, defaultPanelOptions } from './panelcfg.gen';
 import { BarChartSuggestionsSupplier } from './suggestions';
 import { prepareBarChartDisplayValues } from './utils';
 
@@ -108,7 +108,7 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(BarChartPa
     },
   })
   .setPanelOptions((builder, context) => {
-    const disp = prepareBarChartDisplayValues(context.data, config.theme2, context.options ?? ({} as any));
+    const disp = prepareBarChartDisplayValues(context.data, config.theme2, context.options ?? ({} as PanelOptions));
     let xaxisPlaceholder = 'First string or time field';
     const viz = 'viz' in disp ? disp.viz[0] : undefined;
     if (viz?.fields?.length) {
@@ -138,7 +138,7 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(BarChartPa
       })
       .addSliderInput({
         path: 'xTickLabelRotation',
-        name: 'Rotate X tick labels',
+        name: 'Rotate x-axis tick labels',
         defaultValue: defaultPanelOptions.xTickLabelRotation,
         settings: {
           min: -90,
@@ -150,8 +150,8 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(BarChartPa
       })
       .addNumberInput({
         path: 'xTickLabelMaxLength',
-        name: 'X tick label max length',
-        description: 'X labels will be truncated to the length provided',
+        name: 'X-axis tick label max length',
+        description: 'X-axis labels will be truncated to the length provided',
         settings: {
           placeholder: 'None',
           min: 0,
@@ -161,7 +161,7 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(BarChartPa
       .addCustomEditor({
         id: 'xTickLabelSpacing',
         path: 'xTickLabelSpacing',
-        name: 'Bar labels minimum spacing',
+        name: 'X-axis labels minimum spacing',
         defaultValue: defaultPanelOptions.xTickLabelSpacing,
         editor: TickSpacingEditor,
       })
@@ -220,6 +220,11 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(BarChartPa
           max: 0.5,
           step: 0.05,
         },
+      })
+      .addBooleanSwitch({
+        path: 'fullHighlight',
+        name: 'Highlight full area on hover',
+        defaultValue: defaultPanelOptions.fullHighlight,
       });
 
     builder.addFieldNamePicker({
@@ -228,7 +233,10 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(BarChartPa
       description: 'Use the color value for a sibling field to color each bar value.',
     });
 
-    commonOptionsBuilder.addTooltipOptions(builder);
+    if (!context.options?.fullHighlight || context.options?.stacking === StackingMode.None) {
+      commonOptionsBuilder.addTooltipOptions(builder);
+    }
+
     commonOptionsBuilder.addLegendOptions(builder);
     commonOptionsBuilder.addTextSizeOptions(builder, false);
   })

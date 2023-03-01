@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -29,20 +28,22 @@ func NewPermissionChecker(sqlStore db.DB, features featuremgmt.FeatureToggles,
 	return &PermissionChecker{sqlStore: sqlStore, features: features, accessControl: accessControl, annotationsRepo: annotationsRepo}
 }
 
-func (c *PermissionChecker) getDashboardByUid(ctx context.Context, orgID int64, uid string) (*models.Dashboard, error) {
-	query := models.GetDashboardQuery{Uid: uid, OrgId: orgID}
-	if err := c.dashboardService.GetDashboard(ctx, &query); err != nil {
+func (c *PermissionChecker) getDashboardByUid(ctx context.Context, orgID int64, uid string) (*dashboards.Dashboard, error) {
+	query := dashboards.GetDashboardQuery{UID: uid, OrgID: orgID}
+	queryResult, err := c.dashboardService.GetDashboard(ctx, &query)
+	if err != nil {
 		return nil, err
 	}
-	return query.Result, nil
+	return queryResult, nil
 }
 
-func (c *PermissionChecker) getDashboardById(ctx context.Context, orgID int64, id int64) (*models.Dashboard, error) {
-	query := models.GetDashboardQuery{Id: id, OrgId: orgID}
-	if err := c.dashboardService.GetDashboard(ctx, &query); err != nil {
+func (c *PermissionChecker) getDashboardById(ctx context.Context, orgID int64, id int64) (*dashboards.Dashboard, error) {
+	query := dashboards.GetDashboardQuery{ID: id, OrgID: orgID}
+	queryResult, err := c.dashboardService.GetDashboard(ctx, &query)
+	if err != nil {
 		return nil, err
 	}
-	return query.Result, nil
+	return queryResult, nil
 }
 
 func (c *PermissionChecker) CheckReadPermissions(ctx context.Context, orgId int64, signedInUser *user.SignedInUser, objectType string, objectID string) (bool, error) {
@@ -57,7 +58,10 @@ func (c *PermissionChecker) CheckReadPermissions(ctx context.Context, orgId int6
 		if err != nil {
 			return false, err
 		}
-		guard := guardian.New(ctx, dash.Id, orgId, signedInUser)
+		guard, err := guardian.NewByDashboard(ctx, dash, orgId, signedInUser)
+		if err != nil {
+			return false, err
+		}
 		if ok, err := guard.CanView(); err != nil || !ok {
 			return false, nil
 		}
@@ -69,11 +73,11 @@ func (c *PermissionChecker) CheckReadPermissions(ctx context.Context, orgId int6
 		if err != nil {
 			return false, nil
 		}
-		items, err := c.annotationsRepo.Find(ctx, &annotations.ItemQuery{AnnotationId: annotationID, OrgId: orgId, SignedInUser: signedInUser})
+		items, err := c.annotationsRepo.Find(ctx, &annotations.ItemQuery{AnnotationID: annotationID, OrgID: orgId, SignedInUser: signedInUser})
 		if err != nil || len(items) != 1 {
 			return false, nil
 		}
-		dashboardID := items[0].DashboardId
+		dashboardID := items[0].DashboardID
 		if dashboardID == 0 {
 			return false, nil
 		}
@@ -81,7 +85,10 @@ func (c *PermissionChecker) CheckReadPermissions(ctx context.Context, orgId int6
 		if err != nil {
 			return false, err
 		}
-		guard := guardian.New(ctx, dash.Id, orgId, signedInUser)
+		guard, err := guardian.NewByDashboard(ctx, dash, orgId, signedInUser)
+		if err != nil {
+			return false, err
+		}
 		if ok, err := guard.CanView(); err != nil || !ok {
 			return false, nil
 		}
@@ -103,7 +110,10 @@ func (c *PermissionChecker) CheckWritePermissions(ctx context.Context, orgId int
 		if err != nil {
 			return false, err
 		}
-		guard := guardian.New(ctx, dash.Id, orgId, signedInUser)
+		guard, err := guardian.NewByDashboard(ctx, dash, orgId, signedInUser)
+		if err != nil {
+			return false, err
+		}
 		if ok, err := guard.CanEdit(); err != nil || !ok {
 			return false, nil
 		}
@@ -121,11 +131,11 @@ func (c *PermissionChecker) CheckWritePermissions(ctx context.Context, orgId int
 		if err != nil {
 			return false, nil
 		}
-		items, err := c.annotationsRepo.Find(ctx, &annotations.ItemQuery{AnnotationId: annotationID, OrgId: orgId, SignedInUser: signedInUser})
+		items, err := c.annotationsRepo.Find(ctx, &annotations.ItemQuery{AnnotationID: annotationID, OrgID: orgId, SignedInUser: signedInUser})
 		if err != nil || len(items) != 1 {
 			return false, nil
 		}
-		dashboardID := items[0].DashboardId
+		dashboardID := items[0].DashboardID
 		if dashboardID == 0 {
 			return false, nil
 		}
@@ -133,7 +143,10 @@ func (c *PermissionChecker) CheckWritePermissions(ctx context.Context, orgId int
 		if err != nil {
 			return false, nil
 		}
-		guard := guardian.New(ctx, dash.Id, orgId, signedInUser)
+		guard, err := guardian.NewByDashboard(ctx, dash, orgId, signedInUser)
+		if err != nil {
+			return false, err
+		}
 		if ok, err := guard.CanEdit(); err != nil || !ok {
 			return false, nil
 		}

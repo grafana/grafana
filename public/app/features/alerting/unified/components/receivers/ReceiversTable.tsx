@@ -1,12 +1,11 @@
-import { css } from '@emotion/css';
 import pluralize from 'pluralize';
 import React, { FC, useMemo, useState } from 'react';
 
-import { GrafanaTheme2, dateTime, dateTimeFormat } from '@grafana/data';
+import { dateTime, dateTimeFormat } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Button, ConfirmModal, Modal, useStyles2, Badge, Icon } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AlertManagerCortexConfig, Receiver } from 'app/plugins/datasource/alertmanager/types';
+import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch, AccessControlAction, ContactPointsState, NotifiersState, ReceiversState } from 'app/types';
 
 import { useGetContactPointsState } from '../../api/receiversApi';
@@ -14,6 +13,7 @@ import { Authorize } from '../../components/Authorize';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { deleteReceiverAction } from '../../state/actions';
 import { getAlertTableStyles } from '../../styles/table';
+import { SupportedPlugin } from '../../types/pluginBridges';
 import { getNotificationsPermissions } from '../../utils/access-control';
 import { isReceiverUsed } from '../../utils/alertmanager';
 import { isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
@@ -24,6 +24,9 @@ import { ProvisioningBadge } from '../Provisioning';
 import { ActionIcon } from '../rules/ActionIcon';
 
 import { ReceiversSection } from './ReceiversSection';
+import { GrafanaAppBadge } from './grafanaAppReceivers/GrafanaAppBadge';
+import { useGetReceiversWithGrafanaAppTypes } from './grafanaAppReceivers/grafanaApp';
+import { ReceiverWithTypes } from './grafanaAppReceivers/types';
 
 interface UpdateActionProps extends ActionProps {
   onClickDeleteReceiver: (receiverName: string) => void;
@@ -128,6 +131,7 @@ interface ReceiverItem {
   name: string;
   types: string[];
   provisioned?: boolean;
+  grafanaAppReceiverType?: SupportedPlugin;
 }
 
 interface NotifierStatus {
@@ -236,7 +240,6 @@ interface Props {
 
 export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
   const dispatch = useDispatch();
-  const styles = useStyles2(getStyles);
   const isVanillaAM = isVanillaPrometheusAlertManagerDataSource(alertManagerName);
   const permissions = getNotificationsPermissions(alertManagerName);
   const grafanaNotifiers = useUnifiedAlertingSelector((state) => state.grafanaNotifiers);
@@ -261,10 +264,10 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
     }
     setReceiverToDelete(undefined);
   };
-
-  const rows: RowItemTableProps[] = useMemo(
-    () =>
-      config.alertmanager_config.receivers?.map((receiver: Receiver) => ({
+  const receivers = useGetReceiversWithGrafanaAppTypes(config.alertmanager_config.receivers ?? []);
+  const rows: RowItemTableProps[] = useMemo(() => {
+    return (
+      receivers?.map((receiver: ReceiverWithTypes) => ({
         id: receiver.name,
         data: {
           name: receiver.name,
@@ -276,11 +279,13 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
               return type;
             }
           ),
+          grafanaAppReceiverType: receiver.grafanaAppReceiverType,
           provisioned: receiver.grafana_managed_receiver_configs?.some((receiver) => receiver.provenance),
         },
-      })) ?? [],
-    [config, grafanaNotifiers.result]
-  );
+      })) ?? []
+    );
+  }, [grafanaNotifiers.result, receivers]);
+
   const columns = useGetColumns(
     alertManagerName,
     errorStateAvailable,
@@ -292,11 +297,10 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
 
   return (
     <ReceiversSection
-      className={styles.section}
       title="Contact points"
-      description="Define where the notifications will be sent to, for example email or Slack."
+      description="Define where notifications are sent, for example, email or Slack."
       showButton={!isVanillaAM && contextSrv.hasPermission(permissions.create)}
-      addButtonLabel="New contact point"
+      addButtonLabel={'Add contact point'}
       addButtonTo={makeAMLink('/alerting/notifications/receivers/new', alertManagerName)}
     >
       <DynamicTable
@@ -370,16 +374,19 @@ function useGetColumns(
       id: 'name',
       label: 'Contact point name',
       renderCell: ({ data: { name, provisioned } }) => (
-        <>
-          {name} {provisioned && <ProvisioningBadge />}
-        </>
+        <Stack alignItems="center">
+          <div>{name}</div>
+          {provisioned && <ProvisioningBadge />}
+        </Stack>
       ),
       size: 1,
     },
     {
       id: 'type',
       label: 'Type',
-      renderCell: ({ data: { types } }) => <>{types.join(', ')}</>,
+      renderCell: ({ data: { types, grafanaAppReceiverType } }) => (
+        <>{grafanaAppReceiverType ? <GrafanaAppBadge grafanaAppType={grafanaAppReceiverType} /> : types.join(', ')}</>
+      ),
       size: 1,
     },
   ];
@@ -426,13 +433,3 @@ function useGetColumns(
     },
   ];
 }
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  section: css`
-    margin-top: ${theme.spacing(4)};
-  `,
-  warning: css`
-    color: ${theme.colors.warning.text};
-  `,
-  countMessage: css``,
-});

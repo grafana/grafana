@@ -1,7 +1,6 @@
 import { render, RenderResult, screen } from '@testing-library/react';
 import React from 'react';
-import { Provider } from 'react-redux';
-import { Router } from 'react-router-dom';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { locationService } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -25,11 +24,9 @@ const renderPage = (
   locationService.push(path);
 
   return render(
-    <Provider store={store}>
-      <Router history={locationService.getHistory()}>
-        <Connections />
-      </Router>
-    </Provider>
+    <TestProvider store={store}>
+      <Connections />
+    </TestProvider>
   );
 };
 
@@ -41,14 +38,22 @@ describe('Connections', () => {
     (contextSrv.hasPermission as jest.Mock) = jest.fn().mockReturnValue(true);
   });
 
-  test('shows the "Data sources" page by default', async () => {
+  test('shows the "Connect data" page by default', async () => {
     renderPage();
 
-    expect(await screen.findByText('Datasources')).toBeVisible();
+    // Data sources group
+    expect(await screen.findByText('Data sources')).toBeVisible();
+
+    // Heading
+    expect(await screen.findByText('Connect data')).toBeVisible();
+    expect(await screen.findByText('Browse and create new connections')).toBeVisible();
+  });
+
+  test('shows a landing page for Your connections', async () => {
+    renderPage(ROUTES.YourConnections);
+
+    expect(await screen.findByRole('link', { name: 'Datasources' })).toBeVisible();
     expect(await screen.findByText('Manage your existing datasource connections')).toBeVisible();
-    expect(await screen.findByText('Sort by A–Z')).toBeVisible();
-    expect(await screen.findByRole('link', { name: /add new data source/i })).toBeVisible();
-    expect(await screen.findByText(mockDatasources[0].name)).toBeVisible();
   });
 
   test('renders the correct tab even if accessing it with a "sub-url"', async () => {
@@ -78,6 +83,7 @@ describe('Connections', () => {
       url: '/connections/connect-data',
       pluginId: 'grafana-easystart-app',
     };
+
     const connections = {
       ...navIndex.connections,
       children: navIndex.connections.children?.map((child) => {
@@ -88,6 +94,7 @@ describe('Connections', () => {
         return child;
       }),
     };
+
     const store = configureStore({
       navIndex: { ...navIndex, connections, [standalonePluginPage.id]: standalonePluginPage },
       plugins: getPluginsStateMock([]),
@@ -96,9 +103,37 @@ describe('Connections', () => {
     renderPage(ROUTES.ConnectData, store);
 
     // We expect not to see the text that would be rendered by the core "Connect data" page
-    // (Instead we expect to see the default route "Datasources")
-    expect(await screen.findByText('Datasources')).toBeVisible();
-    expect(await screen.findByText('Manage your existing datasource connections')).toBeVisible();
+    expect(screen.queryByText('Data sources')).not.toBeInTheDocument();
     expect(screen.queryByText('No results matching your query were found.')).not.toBeInTheDocument();
+  });
+
+  test('Your connections redirects to Data sources if it has one child', async () => {
+    const navIndexCopy = {
+      ...navIndex,
+      'connections-your-connections': {
+        id: 'connections-your-connections',
+        text: 'Your connections',
+        subTitle: 'Manage your existing connections',
+        url: '/connections/your-connections',
+        children: [
+          {
+            id: 'connections-your-connections-datasources',
+            text: 'Datasources',
+            subTitle: 'Manage your existing datasource connections',
+            url: '/connections/your-connections/datasources',
+          },
+        ],
+      },
+    };
+
+    const store = configureStore({
+      navIndex: navIndexCopy,
+      plugins: getPluginsStateMock([]),
+    });
+
+    renderPage(ROUTES.YourConnections, store);
+
+    expect(await screen.findByPlaceholderText('Search by name or type')).toBeInTheDocument();
+    expect(await screen.queryByRole('link', { name: 'Datasources' })).toBeNull();
   });
 });

@@ -16,22 +16,33 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/alerting/receivers"
+	alertingLine "github.com/grafana/alerting/receivers/line"
+	alertingPagerduty "github.com/grafana/alerting/receivers/pagerduty"
+	alertingPushover "github.com/grafana/alerting/receivers/pushover"
+	alertingSlack "github.com/grafana/alerting/receivers/slack"
+	alertingTelegram "github.com/grafana/alerting/receivers/telegram"
+	alertingThreema "github.com/grafana/alerting/receivers/threema"
+	alertingTemplates "github.com/grafana/alerting/templates"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/expr"
+
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
-func TestTestReceivers(t *testing.T) {
+func TestIntegrationTestReceivers(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
 	t.Run("assert no receivers returns 400 Bad Request", func(t *testing.T) {
 		// Setup Grafana and its Database
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -96,7 +107,8 @@ func TestTestReceivers(t *testing.T) {
 					"type": "email",
 					"disableResolveMessage": false,
 					"settings": {
-						"addresses":"example@email.com"
+						"addresses":"example@email.com",
+						"singleEmail": true
 					},
 					"secureFields": {}
 				}
@@ -423,7 +435,9 @@ func TestTestReceivers(t *testing.T) {
 	})
 }
 
-func TestTestReceiversAlertCustomization(t *testing.T) {
+func TestIntegrationTestReceiversAlertCustomization(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
 	t.Run("assert custom annotations and labels are sent", func(t *testing.T) {
 		// Setup Grafana and its Database
 		dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -693,7 +707,9 @@ func TestTestReceiversAlertCustomization(t *testing.T) {
 	})
 }
 
-func TestNotificationChannels(t *testing.T) {
+func TestIntegrationNotificationChannels(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -712,29 +728,29 @@ func TestNotificationChannels(t *testing.T) {
 	mockChannel.responses["slack_recvX"] = `{"ok": true}`
 
 	// Overriding some URLs to send to the mock channel.
-	os, opa, ot, opu, ogb, ol, oth := channels.SlackAPIEndpoint, channels.PagerdutyEventAPIURL,
-		channels.TelegramAPIURL, channels.PushoverEndpoint, channels.GetBoundary,
-		channels.LineNotifyURL, channels.ThreemaGwBaseURL
-	originalTemplate := channels.DefaultTemplateString
+	os, opa, ot, opu, ogb, ol, oth := alertingSlack.APIURL, alertingPagerduty.APIURL,
+		alertingTelegram.APIURL, alertingPushover.APIURL, receivers.GetBoundary,
+		alertingLine.APIURL, alertingThreema.APIURL
+	originalTemplate := alertingTemplates.DefaultTemplateString
 	t.Cleanup(func() {
-		channels.SlackAPIEndpoint, channels.PagerdutyEventAPIURL,
-			channels.TelegramAPIURL, channels.PushoverEndpoint, channels.GetBoundary,
-			channels.LineNotifyURL, channels.ThreemaGwBaseURL = os, opa, ot, opu, ogb, ol, oth
-		channels.DefaultTemplateString = originalTemplate
+		alertingSlack.APIURL, alertingPagerduty.APIURL,
+			alertingTelegram.APIURL, alertingPushover.APIURL, receivers.GetBoundary,
+			alertingLine.APIURL, alertingThreema.APIURL = os, opa, ot, opu, ogb, ol, oth
+		alertingTemplates.DefaultTemplateString = originalTemplate
 	})
-	channels.DefaultTemplateString = channels.TemplateForTestsString
-	channels.SlackAPIEndpoint = fmt.Sprintf("http://%s/slack_recvX/slack_testX", mockChannel.server.Addr)
-	channels.PagerdutyEventAPIURL = fmt.Sprintf("http://%s/pagerduty_recvX/pagerduty_testX", mockChannel.server.Addr)
-	channels.TelegramAPIURL = fmt.Sprintf("http://%s/telegram_recv/bot%%s/%%s", mockChannel.server.Addr)
-	channels.PushoverEndpoint = fmt.Sprintf("http://%s/pushover_recv/pushover_test", mockChannel.server.Addr)
-	channels.LineNotifyURL = fmt.Sprintf("http://%s/line_recv/line_test", mockChannel.server.Addr)
-	channels.ThreemaGwBaseURL = fmt.Sprintf("http://%s/threema_recv/threema_test", mockChannel.server.Addr)
-	channels.GetBoundary = func() string { return "abcd" }
+	alertingTemplates.DefaultTemplateString = alertingTemplates.TemplateForTestsString
+	alertingSlack.APIURL = fmt.Sprintf("http://%s/slack_recvX/slack_testX", mockChannel.server.Addr)
+	alertingPagerduty.APIURL = fmt.Sprintf("http://%s/pagerduty_recvX/pagerduty_testX", mockChannel.server.Addr)
+	alertingTelegram.APIURL = fmt.Sprintf("http://%s/telegram_recv/bot%%s/%%s", mockChannel.server.Addr)
+	alertingPushover.APIURL = fmt.Sprintf("http://%s/pushover_recv/pushover_test", mockChannel.server.Addr)
+	alertingLine.APIURL = fmt.Sprintf("http://%s/line_recv/line_test", mockChannel.server.Addr)
+	alertingThreema.APIURL = fmt.Sprintf("http://%s/threema_recv/threema_test", mockChannel.server.Addr)
+	receivers.GetBoundary = func() string { return "abcd" }
 
 	env.NotificationService.EmailHandlerSync = mockEmail.sendEmailCommandHandlerSync
 	// As we are using a NotificationService mock here, but the test expects real NotificationService -
 	// we try to issue a real POST request here
-	env.NotificationService.WebhookHandler = func(_ context.Context, cmd *models.SendWebhookSync) error {
+	env.NotificationService.WebhookHandler = func(_ context.Context, cmd *notifications.SendWebhookSync) error {
 		if res, err := http.Post(cmd.Url, "", strings.NewReader(cmd.Body)); err == nil {
 			_ = res.Body.Close()
 		}
@@ -972,7 +988,7 @@ func getRulesConfig(t *testing.T) string {
 							From: ngmodels.Duration(time.Duration(5) * time.Hour),
 							To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 						},
-						DatasourceUID: "-100",
+						DatasourceUID: expr.DatasourceUID,
 						Model: json.RawMessage(`{
 							"type": "math",
 							"expression": "2 + 3 > 1"
@@ -1145,8 +1161,8 @@ func multipartEqual(t *testing.T, exp, act string) {
 		}
 	}
 
-	expReader := multipart.NewReader(strings.NewReader(exp), channels.GetBoundary())
-	actReader := multipart.NewReader(strings.NewReader(act), channels.GetBoundary())
+	expReader := multipart.NewReader(strings.NewReader(exp), receivers.GetBoundary())
+	actReader := multipart.NewReader(strings.NewReader(act), receivers.GetBoundary())
 	expMap, actMap := make(map[string]string), make(map[string]string)
 	fillMap(expReader, expMap)
 	fillMap(actReader, actMap)
@@ -1159,12 +1175,12 @@ func (nc *mockNotificationChannel) Close() error {
 }
 
 type mockEmailHandler struct {
-	emails []*models.SendEmailCommandSync
+	emails []*notifications.SendEmailCommandSync
 }
 
-func (e *mockEmailHandler) sendEmailCommandHandlerSync(_ context.Context, cmd *models.SendEmailCommandSync) error {
+func (e *mockEmailHandler) sendEmailCommandHandlerSync(_ context.Context, cmd *notifications.SendEmailCommandSync) error {
 	// We 0 out the start time since that is a variable that we cannot predict.
-	alerts := cmd.Data["Alerts"].(channels.ExtendedAlerts)
+	alerts := cmd.Data["Alerts"].(alertingTemplates.ExtendedAlerts)
 	for i := range alerts {
 		alerts[i].StartsAt = time.Time{}
 	}
@@ -1179,7 +1195,7 @@ type mockEmailHandlerWithTimeout struct {
 	timeout time.Duration
 }
 
-func (e *mockEmailHandlerWithTimeout) sendEmailCommandHandlerSync(ctx context.Context, cmd *models.SendEmailCommandSync) error {
+func (e *mockEmailHandlerWithTimeout) sendEmailCommandHandlerSync(ctx context.Context, cmd *notifications.SendEmailCommandSync) error {
 	select {
 	case <-time.After(e.timeout):
 		return e.mockEmailHandler.sendEmailCommandHandlerSync(ctx, cmd)
@@ -2274,9 +2290,9 @@ var expAlertmanagerConfigFromAPI = `
 }
 `
 
-var expEmailNotifications = []*models.SendEmailCommandSync{
+var expEmailNotifications = []*notifications.SendEmailCommandSync{
 	{
-		SendEmailCommand: models.SendEmailCommand{
+		SendEmailCommand: notifications.SendEmailCommand{
 			To:          []string{"test@email.com"},
 			SingleEmail: true,
 			Template:    "ng_alert_notification",
@@ -2285,8 +2301,8 @@ var expEmailNotifications = []*models.SendEmailCommandSync{
 				"Title":   "[FIRING:1] EmailAlert (default)",
 				"Message": "",
 				"Status":  "firing",
-				"Alerts": channels.ExtendedAlerts{
-					channels.ExtendedAlert{
+				"Alerts": alertingTemplates.ExtendedAlerts{
+					alertingTemplates.ExtendedAlert{
 						Status:       "firing",
 						Labels:       template.KV{"alertname": "EmailAlert", "grafana_folder": "default"},
 						Annotations:  template.KV{},
@@ -2523,10 +2539,10 @@ var expNonEmailNotifications = map[string][]string{
 		}`,
 	},
 	"pushover_recv/pushover_test": {
-		"--abcd\r\nContent-Disposition: form-data; name=\"user\"\r\n\r\nmysecretkey\r\n--abcd\r\nContent-Disposition: form-data; name=\"token\"\r\n\r\nmysecrettoken\r\n--abcd\r\nContent-Disposition: form-data; name=\"priority\"\r\n\r\n0\r\n--abcd\r\nContent-Disposition: form-data; name=\"sound\"\r\n\r\n\r\n--abcd\r\nContent-Disposition: form-data; name=\"title\"\r\n\r\n[FIRING:1] PushoverAlert (default)\r\n--abcd\r\nContent-Disposition: form-data; name=\"url\"\r\n\r\nhttp://localhost:3000/alerting/list\r\n--abcd\r\nContent-Disposition: form-data; name=\"url_title\"\r\n\r\nShow alert rule\r\n--abcd\r\nContent-Disposition: form-data; name=\"message\"\r\n\r\n**Firing**\n\nValue: A=1\nLabels:\n - alertname = PushoverAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_PushoverAlert/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%3DPushoverAlert&matcher=grafana_folder%3Ddefault\n\r\n--abcd\r\nContent-Disposition: form-data; name=\"html\"\r\n\r\n1\r\n--abcd--\r\n",
+		"--abcd\r\nContent-Disposition: form-data; name=\"user\"\r\n\r\nmysecretkey\r\n--abcd\r\nContent-Disposition: form-data; name=\"token\"\r\n\r\nmysecrettoken\r\n--abcd\r\nContent-Disposition: form-data; name=\"priority\"\r\n\r\n0\r\n--abcd\r\nContent-Disposition: form-data; name=\"sound\"\r\n\r\n\r\n--abcd\r\nContent-Disposition: form-data; name=\"title\"\r\n\r\n[FIRING:1] PushoverAlert (default)\r\n--abcd\r\nContent-Disposition: form-data; name=\"url\"\r\n\r\nhttp://localhost:3000/alerting/list\r\n--abcd\r\nContent-Disposition: form-data; name=\"url_title\"\r\n\r\nShow alert rule\r\n--abcd\r\nContent-Disposition: form-data; name=\"message\"\r\n\r\n**Firing**\n\nValue: A=1\nLabels:\n - alertname = PushoverAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_PushoverAlert/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%3DPushoverAlert&matcher=grafana_folder%3Ddefault\r\n--abcd\r\nContent-Disposition: form-data; name=\"html\"\r\n\r\n1\r\n--abcd--\r\n",
 	},
 	"telegram_recv/bot6sh027hs034h": {
-		"--abcd\r\nContent-Disposition: form-data; name=\"chat_id\"\r\n\r\ntelegram_chat_id\r\n--abcd\r\nContent-Disposition: form-data; name=\"parse_mode\"\r\n\r\nhtml\r\n--abcd\r\nContent-Disposition: form-data; name=\"text\"\r\n\r\n**Firing**\n\nValue: A=1\nLabels:\n - alertname = TelegramAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_TelegramAlert/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%3DTelegramAlert&matcher=grafana_folder%3Ddefault\n\r\n--abcd--\r\n",
+		"--abcd\r\nContent-Disposition: form-data; name=\"chat_id\"\r\n\r\ntelegram_chat_id\r\n--abcd\r\nContent-Disposition: form-data; name=\"parse_mode\"\r\n\r\nHTML\r\n--abcd\r\nContent-Disposition: form-data; name=\"text\"\r\n\r\n**Firing**\n\nValue: A=1\nLabels:\n - alertname = TelegramAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_TelegramAlert/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%3DTelegramAlert&matcher=grafana_folder%3Ddefault\n\r\n--abcd--\r\n",
 	},
 	"googlechat_recv/googlechat_test": {
 		`{

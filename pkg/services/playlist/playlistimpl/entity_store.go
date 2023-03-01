@@ -5,10 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
-	objectstore "github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -44,7 +43,7 @@ func (s *entityStoreImpl) sync() {
 		UserID:         0, // Admin user
 		IsGrafanaAdmin: true,
 	}
-	ctx := objectstore.ContextWithUser(context.Background(), rowUser)
+	ctx := appcontext.WithUser(context.Background(), rowUser)
 	for _, info := range results {
 		dto, err := s.sqlimpl.Get(ctx, &playlist.GetPlaylistByUidQuery{
 			OrgId: info.OrgID,
@@ -59,7 +58,7 @@ func (s *entityStoreImpl) sync() {
 			GRN: &entity.GRN{
 				TenantId: info.OrgID,
 				UID:      info.UID,
-				Kind:     models.StandardKindPlaylist,
+				Kind:     entity.StandardKindPlaylist,
 			},
 			Body: body,
 		})
@@ -75,7 +74,7 @@ func (s *entityStoreImpl) Create(ctx context.Context, cmd *playlist.CreatePlayli
 		}
 		_, err = s.store.Write(ctx, &entity.WriteEntityRequest{
 			GRN: &entity.GRN{
-				Kind: models.StandardKindPlaylist,
+				Kind: entity.StandardKindPlaylist,
 				UID:  rsp.UID,
 			},
 			Body: body,
@@ -97,7 +96,7 @@ func (s *entityStoreImpl) Update(ctx context.Context, cmd *playlist.UpdatePlayli
 		_, err = s.store.Write(ctx, &entity.WriteEntityRequest{
 			GRN: &entity.GRN{
 				UID:  rsp.Uid,
-				Kind: models.StandardKindPlaylist,
+				Kind: entity.StandardKindPlaylist,
 			},
 			Body: body,
 		})
@@ -114,7 +113,7 @@ func (s *entityStoreImpl) Delete(ctx context.Context, cmd *playlist.DeletePlayli
 		_, err = s.store.Delete(ctx, &entity.DeleteEntityRequest{
 			GRN: &entity.GRN{
 				UID:  cmd.UID,
-				Kind: models.StandardKindPlaylist,
+				Kind: entity.StandardKindPlaylist,
 			},
 		})
 		if err != nil {
@@ -145,7 +144,7 @@ func (s *entityStoreImpl) Get(ctx context.Context, q *playlist.GetPlaylistByUidQ
 	rsp, err := s.store.Read(ctx, &entity.ReadEntityRequest{
 		GRN: &entity.GRN{
 			UID:  q.UID,
-			Kind: models.StandardKindPlaylist,
+			Kind: entity.StandardKindPlaylist,
 		},
 		WithBody: true,
 	})
@@ -166,7 +165,7 @@ func (s *entityStoreImpl) Search(ctx context.Context, q *playlist.GetPlaylistsQu
 	playlists := make(playlist.Playlists, 0)
 
 	rsp, err := s.store.Search(ctx, &entity.EntitySearchRequest{
-		Kind:     []string{models.StandardKindPlaylist},
+		Kind:     []string{entity.StandardKindPlaylist},
 		WithBody: true,
 		Limit:    1000,
 	})

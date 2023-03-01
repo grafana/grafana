@@ -1,13 +1,17 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
+import { match } from 'react-router-dom';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
+import { Dashboard } from '@grafana/schema';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
+import { RouteDescriptor } from 'app/core/navigation/types';
 import { DashboardMeta, DashboardRoutes } from 'app/types';
 
 import { getRouteComponentProps } from '../../../core/navigation/__mocks__/routeProps';
 import { Props as DashboardPanelProps } from '../dashgrid/DashboardPanel';
 import { DashboardModel } from '../state';
+import { createDashboardModelFixture } from '../state/__fixtures__/dashboardFixtures';
 
 import { Props, SoloPanelPage } from './SoloPanelPage';
 
@@ -26,14 +30,14 @@ jest.mock('app/features/dashboard/dashgrid/DashboardPanel', () => {
 interface ScenarioContext {
   dashboard?: DashboardModel | null;
   secondaryDashboard?: DashboardModel | null;
-  setDashboard: (overrides?: any, metaOverrides?: Partial<DashboardMeta>) => void;
-  setSecondaryDashboard: (overrides?: any, metaOverrides?: Partial<DashboardMeta>) => void;
+  setDashboard: (overrides?: Partial<Dashboard>, metaOverrides?: Partial<DashboardMeta>) => void;
+  setSecondaryDashboard: (overrides?: Partial<Dashboard>, metaOverrides?: Partial<DashboardMeta>) => void;
   mount: (propOverrides?: Partial<Props>) => void;
   rerender: (propOverrides?: Partial<Props>) => void;
   setup: (fn: () => void) => void;
 }
 
-function getTestDashboard(overrides?: any, metaOverrides?: Partial<DashboardMeta>): DashboardModel {
+function getTestDashboard(overrides?: Partial<Dashboard>, metaOverrides?: Partial<DashboardMeta>): DashboardModel {
   const data = Object.assign(
     {
       title: 'My dashboard',
@@ -49,8 +53,7 @@ function getTestDashboard(overrides?: any, metaOverrides?: Partial<DashboardMeta
     overrides
   );
 
-  const meta = Object.assign({ canSave: true, canEdit: true }, metaOverrides);
-  return new DashboardModel(data, meta);
+  return createDashboardModelFixture(data, metaOverrides);
 }
 
 function soloPanelPageScenario(description: string, scenarioFn: (ctx: ScenarioContext) => void) {
@@ -61,10 +64,10 @@ function soloPanelPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
       setup: (fn) => {
         setupFn = fn;
       },
-      setDashboard: (overrides?: any, metaOverrides?: Partial<DashboardMeta>) => {
+      setDashboard: (overrides, metaOverrides) => {
         ctx.dashboard = getTestDashboard(overrides, metaOverrides);
       },
-      setSecondaryDashboard: (overrides?: any, metaOverrides?: Partial<DashboardMeta>) => {
+      setSecondaryDashboard: (overrides, metaOverrides) => {
         ctx.secondaryDashboard = getTestDashboard(overrides, metaOverrides);
       },
       mount: (propOverrides?: Partial<Props>) => {
@@ -72,11 +75,11 @@ function soloPanelPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
           ...getRouteComponentProps({
             match: {
               params: { slug: 'my-dash', uid: '11' },
-            } as any,
+            } as unknown as match,
             queryParams: {
               panelId: '1',
             },
-            route: { routeName: DashboardRoutes.Normal } as any,
+            route: { routeName: DashboardRoutes.Normal } as RouteDescriptor,
           }),
           initDashboard: jest.fn(),
           dashboard: null,
@@ -148,8 +151,8 @@ describe('SoloPanelPage', () => {
   soloPanelPageScenario('When user navigates to other SoloPanelPage', (ctx) => {
     ctx.setup(() => {
       ctx.mount();
-      ctx.setDashboard({ uid: 1, panels: [{ id: 1, type: 'graph', title: 'Panel 1' }] });
-      ctx.setSecondaryDashboard({ uid: 2, panels: [{ id: 1, type: 'graph', title: 'Panel 2' }] });
+      ctx.setDashboard({ uid: '1', panels: [{ id: 1, type: 'graph', title: 'Panel 1' }] });
+      ctx.setSecondaryDashboard({ uid: '2', panels: [{ id: 1, type: 'graph', title: 'Panel 2' }] });
     });
 
     it('Should show other graph', () => {

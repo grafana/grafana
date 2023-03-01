@@ -4,14 +4,13 @@ import { merge } from 'lodash';
 import React, { CSSProperties, useState, ReactNode } from 'react';
 import { useInterval } from 'react-use';
 
+import { LoadingState } from '@grafana/data';
 import { PanelChrome, PanelChromeProps } from '@grafana/ui';
 
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
+import { HorizontalGroup } from '../Layout/Layout';
 import { Menu } from '../Menu/Menu';
-
-import { PanelChromeInfoState } from './PanelChrome';
 
 const meta: ComponentMeta<typeof PanelChrome> = {
   title: 'Visualizations/PanelChrome',
@@ -34,11 +33,10 @@ function getContentStyle(): CSSProperties {
   };
 }
 
-function renderPanel(name: string, overrides: Partial<PanelChromeProps>) {
+function renderPanel(name: string, overrides?: Partial<PanelChromeProps>) {
   const props: PanelChromeProps = {
     width: 400,
     height: 130,
-    title: 'Default title',
     children: () => undefined,
   };
 
@@ -54,120 +52,6 @@ function renderPanel(name: string, overrides: Partial<PanelChromeProps>) {
     </PanelChrome>
   );
 }
-
-export const Examples = () => {
-  const [loading, setLoading] = useState(true);
-
-  useInterval(() => setLoading(true), 5000);
-
-  return (
-    <DashboardStoryCanvas>
-      <HorizontalGroup spacing="md" align="flex-start">
-        <VerticalGroup spacing="md">
-          {renderPanel('Default panel with error state indicator', {
-            title: 'Default title',
-            leftItems: [
-              <PanelChrome.ErrorIndicator
-                key="errorIndicator"
-                error="Error text"
-                onClick={action('ErrorIndicator: onClick fired')}
-              />,
-            ],
-          })}
-          {renderPanel('No padding with error state indicator', {
-            padding: 'none',
-            title: 'Default title',
-            leftItems: [
-              <PanelChrome.ErrorIndicator
-                key="errorIndicator"
-                error="Error text"
-                onClick={action('ErrorIndicator: onClick fired')}
-              />,
-            ],
-          })}
-        </VerticalGroup>
-        <VerticalGroup spacing="md">
-          {renderPanel('No title', { title: '' })}
-          {renderPanel('Very long title', {
-            title: 'Very long title that should get ellipsis when there is no more space',
-          })}
-        </VerticalGroup>
-      </HorizontalGroup>
-      <HorizontalGroup spacing="md">
-        <VerticalGroup spacing="md">
-          {renderPanel('No title and loading indicator', {
-            title: '',
-            leftItems: [
-              <PanelChrome.LoadingIndicator
-                loading={loading}
-                onCancel={() => setLoading(false)}
-                key="loading-indicator"
-              />,
-            ],
-          })}
-        </VerticalGroup>
-        <VerticalGroup spacing="md">
-          {renderPanel('Very long title', {
-            title: 'Very long title that should get ellipsis when there is no more space',
-            leftItems: [
-              <PanelChrome.LoadingIndicator
-                loading={loading}
-                onCancel={() => setLoading(false)}
-                key="loading-indicator"
-              />,
-            ],
-          })}
-        </VerticalGroup>
-      </HorizontalGroup>
-    </DashboardStoryCanvas>
-  );
-};
-
-export const Basic: ComponentStory<typeof PanelChrome> = (args: PanelChromeProps) => {
-  const contentStyle = getContentStyle();
-
-  return (
-    <PanelChrome {...args}>
-      {(width: number, height: number) => <div style={{ height, width, ...contentStyle }}>Description text</div>}
-    </PanelChrome>
-  );
-};
-
-const Default: ReactNode = [];
-const LoadingIcon = [
-  <PanelChrome.LoadingIndicator key="loadingIndicator" loading onCancel={action('LoadingIndicator: onCancel fired')} />,
-];
-const ErrorIcon = [
-  <PanelChrome.ErrorIndicator
-    key="errorIndicator"
-    error="Error text"
-    onClick={action('ErrorIndicator: onClick fired')}
-  />,
-];
-
-const leftItems = { LoadingIcon, ErrorIcon, Default };
-
-const titleItems: PanelChromeInfoState[] = [
-  {
-    icon: 'info',
-    tooltip:
-      'Description text with very long descriptive words that describe what is going on in the panel and not beyond. Or maybe beyond, not up to us.',
-  },
-  {
-    icon: 'external-link-alt',
-    tooltip: 'wearegoingonanadventure.openanewtab.maybe',
-    onClick: () => {},
-  },
-  {
-    icon: 'clock-nine',
-    tooltip: 'Time range: 2021-09-01 00:00:00 to 2021-09-01 00:00:00',
-    onClick: () => {},
-  },
-  {
-    icon: 'heart',
-    tooltip: 'Health of the panel',
-  },
-];
 
 const menu = (
   <Menu>
@@ -200,7 +84,155 @@ const menu = (
   </Menu>
 );
 
+export const Examples = () => {
+  const [loading, setLoading] = useState(true);
+
+  useInterval(() => setLoading(true), 5000);
+
+  return (
+    <DashboardStoryCanvas>
+      <div>
+        <HorizontalGroup spacing="md" align="flex-start" wrap>
+          {renderPanel('Has statusMessage', {
+            title: 'Default title',
+            statusMessage: 'Error text',
+            statusMessageOnClick: action('ErrorIndicator: onClick fired'),
+          })}
+          {renderPanel('No padding, has statusMessage', {
+            padding: 'none',
+            title: 'Default title',
+            statusMessage: 'Error text',
+            statusMessageOnClick: action('ErrorIndicator: onClick fired'),
+          })}
+          {renderPanel('No title, loadingState is Error, no statusMessage', {
+            loadingState: LoadingState.Error,
+          })}
+          {renderPanel('loadingState is Streaming', {
+            title: 'Default title',
+            loadingState: LoadingState.Streaming,
+          })}
+
+          {renderPanel('loadingState is Loading', {
+            title: 'Default title',
+            loadingState: LoadingState.Loading,
+          })}
+
+          {renderPanel('Default panel: no non-required props')}
+          {renderPanel('No padding', {
+            padding: 'none',
+          })}
+          {renderPanel('Very long title', {
+            title: 'Very long title that should get ellipsis when there is no more space',
+          })}
+          {renderPanel('No title, streaming loadingState', {
+            loadingState: LoadingState.Streaming,
+          })}
+          {renderPanel('No title, loading loadingState', {
+            loadingState: LoadingState.Loading,
+          })}
+
+          {renderPanel('Error status, menu', {
+            title: 'Default title',
+            menu,
+            statusMessage: 'Error text',
+            statusMessageOnClick: action('ErrorIndicator: onClick fired'),
+          })}
+          {renderPanel('No padding; has statusMessage, menu', {
+            padding: 'none',
+            title: 'Default title',
+            menu,
+            statusMessage: 'Error text',
+            statusMessageOnClick: action('ErrorIndicator: onClick fired'),
+          })}
+          {renderPanel('No title, loadingState is Error, no statusMessage, menu', {
+            menu,
+            loadingState: LoadingState.Error,
+          })}
+          {renderPanel('loadingState is Streaming, menu', {
+            title: 'Default title',
+            menu,
+            loadingState: LoadingState.Streaming,
+          })}
+          {renderPanel('loadingState is Loading, menu', {
+            title: 'Default title',
+            menu,
+            loadingState: LoadingState.Loading,
+          })}
+          {renderPanel('Deprecated error indicator', {
+            title: 'Default title',
+            leftItems: [
+              <PanelChrome.ErrorIndicator
+                key="errorIndicator"
+                error="Error text"
+                onClick={action('ErrorIndicator: onClick fired')}
+              />,
+            ],
+          })}
+          {renderPanel('No padding, deprecated loading indicator', {
+            padding: 'none',
+            title: 'Default title',
+            leftItems: [
+              <PanelChrome.LoadingIndicator
+                loading={loading}
+                onCancel={() => setLoading(false)}
+                key="loading-indicator"
+              />,
+            ],
+          })}
+          {renderPanel('Deprecated error indicator, menu', {
+            title: 'Default title',
+            menu,
+            leftItems: [
+              <PanelChrome.ErrorIndicator
+                key="errorIndicator"
+                error="Error text"
+                onClick={action('ErrorIndicator: onClick fired')}
+              />,
+            ],
+          })}
+          {renderPanel('Display mode = transparent', {
+            title: 'Default title',
+            displayMode: 'transparent',
+            menu,
+            leftItems: [],
+          })}
+        </HorizontalGroup>
+      </div>
+    </DashboardStoryCanvas>
+  );
+};
+
+export const Basic: ComponentStory<typeof PanelChrome> = (args: PanelChromeProps) => {
+  const contentStyle = getContentStyle();
+
+  return (
+    <PanelChrome {...args}>
+      {(width: number, height: number) => (
+        <div style={{ height, width, ...contentStyle }}>Panel in a loading state</div>
+      )}
+    </PanelChrome>
+  );
+};
+
+const Default: ReactNode = [];
+const LoadingIcon = [
+  <PanelChrome.LoadingIndicator key="loadingIndicator" loading onCancel={action('LoadingIndicator: onCancel fired')} />,
+];
+const ErrorIcon = [
+  <PanelChrome.ErrorIndicator
+    key="errorIndicator"
+    error="Error text"
+    onClick={action('ErrorIndicator: onClick fired')}
+  />,
+];
+
+const leftItems = { LoadingIcon, ErrorIcon, Default };
+
+const description =
+  'Description text with very long descriptive words that describe what is going on in the panel and not beyond. Or maybe beyond, not up to us.';
+
 Basic.argTypes = {
+  description: { control: { type: 'text' } },
   leftItems: {
     options: Object.keys(leftItems),
     mapping: leftItems,
@@ -219,7 +251,7 @@ Basic.args = {
   width: 400,
   height: 200,
   title: 'Very long title that should get ellipsis when there is no more space',
-  titleItems,
+  description,
   menu,
 };
 

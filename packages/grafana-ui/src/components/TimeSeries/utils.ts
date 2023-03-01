@@ -31,6 +31,36 @@ import {
   GraphGradientMode,
 } from '@grafana/schema';
 
+// unit lookup needed to determine if we want power-of-2 or power-of-10 axis ticks
+// see categories.ts is @grafana/data
+const IEC_UNITS = new Set([
+  'bytes',
+  'bits',
+  'kbytes',
+  'mbytes',
+  'gbytes',
+  'tbytes',
+  'pbytes',
+  'binBps',
+  'binbps',
+  'KiBs',
+  'Kibits',
+  'MiBs',
+  'Mibits',
+  'GiBs',
+  'Gibits',
+  'TiBs',
+  'Tibits',
+  'PiBs',
+  'Pibits',
+]);
+
+const BIN_INCRS = Array(53);
+
+for (let i = 0; i < BIN_INCRS.length; i++) {
+  BIN_INCRS[i] = 2 ** i;
+}
+
 import { buildScaleKey } from '../GraphNG/utils';
 import { UPlotConfigBuilder, UPlotConfigPrepFn } from '../uPlot/config/UPlotConfigBuilder';
 import { getScaleGradientFn } from '../uPlot/config/gradientFills';
@@ -74,8 +104,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   if (!xField) {
     return builder; // empty frame with no options
   }
-
-  let seriesIndex = 0;
 
   const xScaleKey = 'x';
   let xScaleUnit = '_x';
@@ -187,9 +215,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       continue;
     }
 
-    // TODO: skip this for fields with custom renderers?
-    field.state!.seriesIndex = seriesIndex++;
-
     let fmt = field.display ?? defaultFormatter;
     if (field.config.custom?.stacking?.mode === StackingMode.Percent) {
       fmt = getDisplayProcessor({
@@ -272,6 +297,12 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
         };
       }
 
+      let incrs: uPlot.Axis.Incrs | undefined;
+
+      if (IEC_UNITS.has(config.unit!)) {
+        incrs = BIN_INCRS;
+      }
+
       builder.addAxis(
         tweakAxis(
           {
@@ -284,6 +315,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
             grid: { show: customConfig.axisGridShow },
             decimals: field.config.decimals,
             distr: customConfig.scaleDistribution?.type,
+            incrs,
             ...axisColorOpts,
           },
           field

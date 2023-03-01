@@ -5,8 +5,9 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/kinds/playlist"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/kinds/playlist"
 )
 
 func TestPlaylistSummary(t *testing.T) {
@@ -19,10 +20,10 @@ func TestPlaylistSummary(t *testing.T) {
 	playlist := playlist.Playlist{
 		Interval: "30s",
 		Name:     "test",
-		Items: &[]playlist.PlaylistItem{
-			{Type: playlist.PlaylistItemTypeDashboardByUid, Value: "D1"},
-			{Type: playlist.PlaylistItemTypeDashboardByTag, Value: "tagA"},
-			{Type: playlist.PlaylistItemTypeDashboardByUid, Value: "D3"},
+		Items: []playlist.Item{
+			{Type: playlist.ItemTypeDashboardByUid, Value: "D1"},
+			{Type: playlist.ItemTypeDashboardByTag, Value: "tagA"},
+			{Type: playlist.ItemTypeDashboardByUid, Value: "D3"},
 		},
 	}
 	out, err := json.Marshal(playlist)

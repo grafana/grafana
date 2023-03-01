@@ -56,7 +56,7 @@ export const PlotLegend: React.FC<PlotLegendProps> = React.memo(
           fieldIndex,
           color: seriesColor,
           label,
-          yAxis: axisPlacement === AxisPlacement.Left ? 1 : 2,
+          yAxis: axisPlacement === AxisPlacement.Left || axisPlacement === AxisPlacement.Bottom ? 1 : 2,
           getDisplayValues: () => {
             if (!calcs?.length) {
               return [];

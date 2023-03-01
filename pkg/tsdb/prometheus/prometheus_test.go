@@ -10,10 +10,11 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	sdkHttpClient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/require"
 )
 
 type fakeSender struct{}
@@ -85,11 +86,7 @@ func TestService(t *testing.T) {
 					Path:   "/api/v1/series",
 					Method: http.MethodPost,
 					URL:    "/api/v1/series",
-					// This header should be passed on to the resource request
-					Headers: map[string][]string{
-						"foo": {"bar"},
-					},
-					Body: []byte("match%5B%5D: ALERTS\nstart: 1655271408\nend: 1655293008"),
+					Body:   []byte("match%5B%5D: ALERTS\nstart: 1655271408\nend: 1655293008"),
 				}
 
 				sender := &fakeSender{}
@@ -100,7 +97,6 @@ func TestService(t *testing.T) {
 					http.Header{
 						"Content-Type":    {"application/x-www-form-urlencoded"},
 						"Idempotency-Key": []string(nil),
-						"foo":             {"bar"},
 					},
 					httpProvider.Roundtripper.Req.Header)
 				require.Equal(t, http.MethodPost, httpProvider.Roundtripper.Req.Method)

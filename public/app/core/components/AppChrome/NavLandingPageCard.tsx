@@ -15,7 +15,7 @@ export function NavLandingPageCard({ description, text, url }: Props) {
   return (
     <Card className={styles.card} href={url}>
       <Card.Heading>{text}</Card.Heading>
-      <Card.Description>{description}</Card.Description>
+      <Card.Description className={styles.description}>{description}</Card.Description>
     </Card>
   );
 }
@@ -24,5 +24,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
   card: css({
     marginBottom: 0,
     gridTemplateRows: '1fr 0 2fr',
+  }),
+  // Limit descriptions to 3 lines max before ellipsing
+  // Some plugin descriptions can be very long
+  description: css({
+    WebkitLineClamp: 3,
+    WebkitBoxOrient: 'vertical',
+    display: '-webkit-box',
+    overflow: 'hidden',
   }),
 });

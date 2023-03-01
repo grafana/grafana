@@ -1,34 +1,26 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import React, { useCallback } from 'react';
 import { useAsync, useLocalStorage } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, toIconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Card, Checkbox, CollapsableSection, Icon, IconName, Spinner, useStyles2 } from '@grafana/ui';
+import { Card, Checkbox, CollapsableSection, Icon, Spinner, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { getSectionStorageKey } from 'app/features/search/utils';
 import { useUniqueId } from 'app/plugins/datasource/influxdb/components/useUniqueId';
 
 import { SearchItem } from '../..';
 import { getGrafanaSearcher, SearchQuery } from '../../service';
-import { DashboardSearchItemType, DashboardSectionItem } from '../../types';
+import { queryResultToViewItem } from '../../service/utils';
+import { DashboardViewItem } from '../../types';
 import { SelectionChecker, SelectionToggle } from '../selection';
-
-export interface DashboardSection {
-  kind: string; // folder | query!
-  uid: string;
-  title: string;
-  selected?: boolean; // not used ?  keyboard
-  url?: string;
-  icon?: IconName;
-  itemsUIDs?: string[]; // for pseudo folders
-}
 
 interface SectionHeaderProps {
   selection?: SelectionChecker;
   selectionToggle?: SelectionToggle;
   onClickItem?: (e: React.MouseEvent<HTMLElement>) => void;
   onTagSelected: (tag: string) => void;
-  section: DashboardSection;
+  section: DashboardViewItem;
   renderStandaloneBody?: boolean; // render the body on its own
   tags?: string[];
 }
@@ -43,20 +35,13 @@ export const FolderSection = ({
   tags,
 }: SectionHeaderProps) => {
   const editable = selectionToggle != null;
-  const styles = useStyles2(
-    useCallback(
-      (theme: GrafanaTheme2) => getSectionHeaderStyles(theme, section.selected, editable),
-      [section.selected, editable]
-    )
-  );
+  const styles = useStyles2(useCallback((theme: GrafanaTheme2) => getSectionHeaderStyles(theme, editable), [editable]));
   const [sectionExpanded, setSectionExpanded] = useLocalStorage(getSectionStorageKey(section.title), false);
 
   const results = useAsync(async () => {
     if (!sectionExpanded && !renderStandaloneBody) {
       return Promise.resolve([]);
     }
-    let folderUid: string | undefined = section.uid;
-    let folderTitle: string | undefined = section.title;
     let query: SearchQuery = {
       query: '*',
       kind: ['dashboard'],
@@ -68,24 +53,11 @@ export const FolderSection = ({
       query = {
         uid: section.itemsUIDs, // array of UIDs
       };
-      folderUid = undefined;
-      folderTitle = undefined;
     }
 
     const raw = await getGrafanaSearcher().search({ ...query, tags });
-    const v = raw.view.map<DashboardSectionItem>((item) => ({
-      uid: item.uid,
-      title: item.name,
-      url: item.url,
-      uri: item.url,
-      type: item.kind === 'folder' ? DashboardSearchItemType.DashFolder : DashboardSearchItemType.DashDB,
-      id: 666, // do not use me!
-      isStarred: false,
-      tags: item.tags ?? [],
-      folderUid: folderUid || item.location,
-      folderTitle: folderTitle || raw.view.dataFrame.meta?.custom?.locationInfo[item.location].name,
-    }));
-    return v;
+    const items = raw.view.map((v) => queryResultToViewItem(v, raw.view));
+    return items;
   }, [sectionExpanded, tags]);
 
   const onSectionExpand = () => {
@@ -110,7 +82,7 @@ export const FolderSection = ({
   const id = useUniqueId();
   const labelId = `section-header-label-${id}`;
 
-  let icon = section.icon;
+  let icon = toIconName(section.icon ?? '');
   if (!icon) {
     icon = sectionExpanded ? 'folder-open' : 'folder';
   }
@@ -126,18 +98,11 @@ export const FolderSection = ({
       );
     }
 
-    return results.value.map((v) => {
-      if (selection && selectionToggle) {
-        const type = v.type === DashboardSearchItemType.DashFolder ? 'folder' : 'dashboard';
-        v = {
-          ...v,
-          checked: selection(type, v.uid!),
-        };
-      }
+    return results.value.map((item) => {
       return (
         <SearchItem
-          key={v.uid}
-          item={v}
+          key={item.uid}
+          item={item}
           onTagSelected={onTagSelected}
           onToggleChecked={(item) => {
             if (selectionToggle) {
@@ -146,6 +111,7 @@ export const FolderSection = ({
           }}
           editable={Boolean(selection != null)}
           onClickItem={onClickItem}
+          isSelected={selectionToggle && selection?.(item.kind, item.uid)}
         />
       );
     });
@@ -173,8 +139,11 @@ export const FolderSection = ({
       label={
         <>
           {selectionToggle && selection && (
-            <div className={styles.checkbox} onClick={onToggleFolder}>
-              <Checkbox value={selection(section.kind, section.uid)} aria-label="Select folder" />
+            <div onClick={onToggleFolder}>
+              <Checkbox
+                value={selection(section.kind, section.uid)}
+                aria-label={t('search.folder-view.select-folder', 'Select folder')}
+              />
             </div>
           )}
 
@@ -186,7 +155,8 @@ export const FolderSection = ({
             <span id={labelId}>{section.title}</span>
             {section.url && section.uid !== 'general' && (
               <a href={section.url} className={styles.link}>
-                <span className={styles.separator}>|</span> <Icon name="folder-upload" /> Go to folder
+                <span className={styles.separator}>|</span> <Icon name="folder-upload" />{' '}
+                {t('search.folder-view.go-to-folder', 'Go to folder')}
               </a>
             )}
           </div>
@@ -198,39 +168,32 @@ export const FolderSection = ({
   );
 };
 
-const getSectionHeaderStyles = (theme: GrafanaTheme2, selected = false, editable: boolean) => {
+const getSectionHeaderStyles = (theme: GrafanaTheme2, editable: boolean) => {
   const sm = theme.spacing(1);
   return {
-    wrapper: cx(
-      css`
-        align-items: center;
-        font-size: ${theme.typography.size.base};
-        padding: 12px;
-        border-bottom: none;
-        color: ${theme.colors.text.secondary};
-        z-index: 1;
+    wrapper: css`
+      align-items: center;
+      font-size: ${theme.typography.size.base};
+      padding: 12px;
+      border-bottom: none;
+      color: ${theme.colors.text.secondary};
+      z-index: 1;
 
-        &:hover,
-        &.selected {
-          color: ${theme.colors.text};
-        }
+      &:hover,
+      &.selected {
+        color: ${theme.colors.text};
+      }
 
-        &:hover,
-        &:focus-visible,
-        &:focus-within {
-          a {
-            opacity: 1;
-          }
+      &:hover,
+      &:focus-visible,
+      &:focus-within {
+        a {
+          opacity: 1;
         }
-      `,
-      'pointer',
-      { selected }
-    ),
+      }
+    `,
     sectionItems: css`
       margin: 0 24px 0 32px;
-    `,
-    checkbox: css`
-      padding: 0 ${sm} 0 0;
     `,
     icon: css`
       padding: 0 ${sm} 0 ${editable ? 0 : sm};

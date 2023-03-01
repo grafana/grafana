@@ -4,17 +4,20 @@ import { DataQueryRequest, DataQueryResponse } from './datasource';
 import { DataQuery } from './query';
 
 /**
- * TODO: This should be added to ./logs.ts but because of cross reference between ./datasource.ts and ./logs.ts it can
- * be done only after decoupling "logs" from "datasource" (https://github.com/grafana/grafana/pull/39536)
+ * Support for DataSourceWithLogsVolumeSupport is deprecated and will be removed in the next major version.
+ * Use DataSourceWithSupplementaryQueriesSupport instead.
  *
- * @internal
+ * @deprecated
  */
 export interface DataSourceWithLogsVolumeSupport<TQuery extends DataQuery> {
   getLogsVolumeDataProvider(request: DataQueryRequest<TQuery>): Observable<DataQueryResponse> | undefined;
 }
 
 /**
- * @internal
+ * Support for hasLogsVolumeSupport is deprecated and will be removed in the next major version.
+ * Use DataSourceWithSupplementaryQueriesSupport and hasSupplementaryQuerySupport instead.
+ *
+ * @deprecated
  */
 export const hasLogsVolumeSupport = <TQuery extends DataQuery>(
   datasource: unknown

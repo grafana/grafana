@@ -4,8 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 )
@@ -25,19 +23,19 @@ type ClearAuthHeadersMiddleware struct {
 	next plugins.Client
 }
 
-func (m *ClearAuthHeadersMiddleware) clearHeaders(ctx context.Context, pCtx backend.PluginContext, req interface{}) context.Context {
+func (m *ClearAuthHeadersMiddleware) clearHeaders(ctx context.Context, h backend.ForwardHTTPHeaders) {
 	reqCtx := contexthandler.FromContext(ctx)
 	// if no HTTP request context skip middleware
-	if req == nil || reqCtx == nil || reqCtx.Req == nil || reqCtx.SignedInUser == nil {
-		return ctx
+	if h == nil || reqCtx == nil || reqCtx.Req == nil || reqCtx.SignedInUser == nil {
+		return
 	}
 
 	list := contexthandler.AuthHTTPHeaderListFromContext(ctx)
 	if list != nil {
-		ctx = sdkhttpclient.WithContextualMiddleware(ctx, httpclientprovider.DeleteHeadersMiddleware(list.Items...))
+		for _, k := range list.Items {
+			h.DeleteHTTPHeader(k)
+		}
 	}
-
-	return ctx
 }
 
 func (m *ClearAuthHeadersMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -45,7 +43,7 @@ func (m *ClearAuthHeadersMiddleware) QueryData(ctx context.Context, req *backend
 		return m.next.QueryData(ctx, req)
 	}
 
-	ctx = m.clearHeaders(ctx, req.PluginContext, req)
+	m.clearHeaders(ctx, req)
 
 	return m.next.QueryData(ctx, req)
 }
@@ -55,7 +53,7 @@ func (m *ClearAuthHeadersMiddleware) CallResource(ctx context.Context, req *back
 		return m.next.CallResource(ctx, req, sender)
 	}
 
-	ctx = m.clearHeaders(ctx, req.PluginContext, req)
+	m.clearHeaders(ctx, req)
 
 	return m.next.CallResource(ctx, req, sender)
 }
@@ -65,7 +63,7 @@ func (m *ClearAuthHeadersMiddleware) CheckHealth(ctx context.Context, req *backe
 		return m.next.CheckHealth(ctx, req)
 	}
 
-	ctx = m.clearHeaders(ctx, req.PluginContext, req)
+	m.clearHeaders(ctx, req)
 
 	return m.next.CheckHealth(ctx, req)
 }

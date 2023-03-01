@@ -1,4 +1,4 @@
-import { set } from 'lodash';
+import { set, uniq } from 'lodash';
 import {
   catchError,
   concatMap,
@@ -8,7 +8,6 @@ import {
   map,
   mergeMap,
   Observable,
-  of,
   repeat,
   scan,
   share,
@@ -27,7 +26,6 @@ import {
   LoadingState,
   LogRowModel,
   rangeUtil,
-  ScopedVars,
 } from '@grafana/data';
 import { BackendDataSourceResponse, config, FetchError, FetchResponse, toDataQueryResponse } from '@grafana/runtime';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -40,16 +38,15 @@ import {
   CloudWatchLogsQueryStatus,
   CloudWatchLogsRequest,
   CloudWatchQuery,
-  DescribeLogGroupsRequest,
   GetLogEventsRequest,
-  GetLogGroupFieldsRequest,
-  GetLogGroupFieldsResponse,
   LogAction,
+  QueryParam,
   StartQueryRequest,
 } from '../types';
 import { addDataLinksToLogsResponse } from '../utils/datalinks';
 import { runWithRetry } from '../utils/logsRetry';
 import { increasingInterval } from '../utils/rxjs/increasingInterval';
+import { interpolateStringArrayUsingSingleOrMultiValuedVariable } from '../utils/templateVariableUtils';
 
 import { CloudWatchRequest } from './CloudWatchRequest';
 
@@ -59,7 +56,6 @@ export const LOGSTREAM_IDENTIFIER_INTERNAL = '__logstream__grafana_internal__';
 // This class handles execution of CloudWatch logs query data queries
 export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
   logsTimeout: string;
-  defaultLogGroups: string[];
   logQueries: Record<string, { id: string; region: string; statsQuery: boolean }> = {};
   tracingDataSourceUid?: string;
 
@@ -71,8 +67,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     super(instanceSettings, templateSrv);
 
     this.tracingDataSourceUid = instanceSettings.jsonData.tracingDatasourceUid;
-    this.logsTimeout = instanceSettings.jsonData.logsTimeout || '15m';
-    this.defaultLogGroups = instanceSettings.jsonData.defaultLogGroups || [];
+    this.logsTimeout = instanceSettings.jsonData.logsTimeout || '30m';
   }
 
   /**
@@ -85,36 +80,34 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     logQueries: CloudWatchLogsQuery[],
     options: DataQueryRequest<CloudWatchQuery>
   ): Observable<DataQueryResponse> => {
-    const queryParams = logQueries.map((target: CloudWatchLogsQuery) => ({
-      queryString: target.expression || '',
-      refId: target.refId,
-      logGroupNames: target.logGroupNames || this.defaultLogGroups,
-      logGroups: target.logGroups || [], //todo handle defaults
-      region: super.replaceVariableAndDisplayWarningIfMulti(
-        this.getActualRegion(target.region),
-        options.scopedVars,
-        true,
-        'region'
-      ),
-    }));
+    const validLogQueries = logQueries.filter(this.filterQuery);
 
-    const hasQueryWithMissingLogGroupSelection = queryParams.some((qp) => {
-      const missingLogGroupNames = qp.logGroupNames.length === 0;
-      const missingLogGroups = qp.logGroups.length === 0;
-      return missingLogGroupNames && missingLogGroups;
+    const startQueryRequests: StartQueryRequest[] = validLogQueries.map((target: CloudWatchLogsQuery) => {
+      const interpolatedLogGroupArns = interpolateStringArrayUsingSingleOrMultiValuedVariable(
+        this.templateSrv,
+        (target.logGroups || this.instanceSettings.jsonData.logGroups || []).map((lg) => lg.arn)
+      );
+
+      // need to support legacy format variables too
+      const interpolatedLogGroupNames = interpolateStringArrayUsingSingleOrMultiValuedVariable(
+        this.templateSrv,
+        target.logGroupNames || this.instanceSettings.jsonData.defaultLogGroups || [],
+        'text'
+      );
+
+      // if a log group template variable expands to log group that has already been selected in the log group picker, we need to remove duplicates.
+      // Otherwise the StartLogQuery API will return a permission error
+      const logGroups = uniq(interpolatedLogGroupArns).map((arn) => ({ arn, name: arn }));
+      const logGroupNames = uniq(interpolatedLogGroupNames);
+
+      return {
+        refId: target.refId,
+        region: this.templateSrv.replace(this.getActualRegion(target.region)),
+        queryString: this.templateSrv.replace(target.expression || ''),
+        logGroups,
+        logGroupNames,
+      };
     });
-
-    if (hasQueryWithMissingLogGroupSelection) {
-      return of({ data: [], error: { message: 'Log group is required' } });
-    }
-
-    const hasQueryWithMissingQueryString = queryParams.some((qp) => {
-      return qp.queryString.length === 0;
-    });
-
-    if (hasQueryWithMissingQueryString) {
-      return of({ data: [], error: { message: 'Query is required' } });
-    }
 
     const startTime = new Date();
     const timeoutFunc = () => {
@@ -123,13 +116,9 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
 
     return runWithRetry(
       (targets: StartQueryRequest[]) => {
-        return this.makeLogActionRequest('StartQuery', targets, {
-          makeReplacements: true,
-          scopedVars: options.scopedVars,
-          skipCache: true,
-        });
+        return this.makeLogActionRequest('StartQuery', targets);
       },
-      queryParams,
+      startQueryRequests,
       timeoutFunc
     ).pipe(
       mergeMap(({ frames, error }: { frames: DataFrame[]; error?: DataQueryError }) =>
@@ -175,16 +164,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
    * Checks progress and polls data of a started logs query with some retry logic.
    * @param queryParams
    */
-  logsQuery(
-    queryParams: Array<{
-      queryId: string;
-      refId: string;
-      limit?: number;
-      region: string;
-      statsGroups?: string[];
-    }>,
-    timeoutFunc: () => boolean
-  ): Observable<DataQueryResponse> {
+  logsQuery(queryParams: QueryParam[], timeoutFunc: () => boolean): Observable<DataQueryResponse> {
     this.logQueries = {};
     queryParams.forEach((param) => {
       this.logQueries[param.refId] = {
@@ -195,7 +175,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     });
 
     const dataFrames = increasingInterval({ startPeriod: 100, endPeriod: 1000, step: 300 }).pipe(
-      concatMap((_) => this.makeLogActionRequest('GetQueryResults', queryParams, { skipCache: true })),
+      concatMap((_) => this.makeLogActionRequest('GetQueryResults', queryParams)),
       repeat(),
       share()
     );
@@ -273,11 +253,12 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     if (Object.keys(this.logQueries).length > 0) {
       this.makeLogActionRequest(
         'StopQuery',
-        Object.values(this.logQueries).map((logQuery) => ({ queryId: logQuery.id, region: logQuery.region })),
-        {
-          makeReplacements: false,
-          skipCache: true,
-        }
+        Object.values(this.logQueries).map((logQuery) => ({
+          queryId: logQuery.id,
+          region: logQuery.region,
+          queryString: '',
+          refId: '',
+        }))
       ).pipe(
         finalize(() => {
           this.logQueries = {};
@@ -286,18 +267,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     }
   }
 
-  makeLogActionRequest(
-    subtype: LogAction,
-    queryParams: CloudWatchLogsRequest[],
-    options: {
-      scopedVars?: ScopedVars;
-      makeReplacements?: boolean;
-      skipCache?: boolean;
-    } = {
-      makeReplacements: true,
-      skipCache: false,
-    }
-  ): Observable<DataFrame[]> {
+  makeLogActionRequest(subtype: LogAction, queryParams: CloudWatchLogsRequest[]): Observable<DataFrame[]> {
     const range = this.timeSrv.timeRange();
 
     const requestParams = {
@@ -315,60 +285,16 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
       })),
     };
 
-    if (options.makeReplacements) {
-      requestParams.queries.forEach((query: CloudWatchLogsRequest) => {
-        const fieldsToReplace: Array<
-          keyof (GetLogEventsRequest & StartQueryRequest & DescribeLogGroupsRequest & GetLogGroupFieldsRequest)
-        > = ['queryString', 'logGroupNames', 'logGroupName', 'logGroupNamePrefix'];
-
-        // eslint-ignore-next-line
-        const anyQuery: any = query;
-        for (const fieldName of fieldsToReplace) {
-          if (query.hasOwnProperty(fieldName)) {
-            if (Array.isArray(anyQuery[fieldName])) {
-              anyQuery[fieldName] = anyQuery[fieldName].flatMap((val: string) => {
-                if (fieldName === 'logGroupNames') {
-                  return this.expandVariableToArray(val, options.scopedVars || {});
-                }
-                return this.replaceVariableAndDisplayWarningIfMulti(val, options.scopedVars, true, fieldName);
-              });
-            } else {
-              anyQuery[fieldName] = this.replaceVariableAndDisplayWarningIfMulti(
-                anyQuery[fieldName],
-                options.scopedVars,
-                true,
-                fieldName
-              );
-            }
-          }
-        }
-
-        if (anyQuery.region) {
-          anyQuery.region = this.replaceVariableAndDisplayWarningIfMulti(
-            anyQuery.region,
-            options.scopedVars,
-            true,
-            'region'
-          );
-          anyQuery.region = this.getActualRegion(anyQuery.region);
-        }
-      });
-    }
-
     const resultsToDataFrames = (
       val:
         | { data: BackendDataSourceResponse | undefined }
         | FetchResponse<BackendDataSourceResponse | undefined>
         | DataQueryError
     ): DataFrame[] => toDataQueryResponse(val).data || [];
-    let headers = {};
-    if (options.skipCache) {
-      headers = {
-        'X-Cache-Skip': true,
-      };
-    }
 
-    return this.awsRequest(this.dsQueryEndpoint, requestParams, headers).pipe(
+    return this.awsRequest(this.dsQueryEndpoint, requestParams, {
+      'X-Cache-Skip': 'true',
+    }).pipe(
       map((response) => resultsToDataFrames({ data: response })),
       catchError((err: FetchError) => {
         if (config.featureToggles.datasourceQueryMultiStatus && err.status === 207) {
@@ -434,16 +360,16 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     };
   };
 
-  async getLogGroupFields(params: GetLogGroupFieldsRequest): Promise<GetLogGroupFieldsResponse> {
-    const dataFrames = await lastValueFrom(this.makeLogActionRequest('GetLogGroupFields', [params]));
+  private filterQuery(query: CloudWatchLogsQuery) {
+    const hasMissingLegacyLogGroupNames = !query.logGroupNames?.length;
+    const hasMissingLogGroups = !query.logGroups?.length;
+    const hasMissingQueryString = !query.expression?.length;
 
-    const fieldNames = dataFrames[0].fields[0].values.toArray();
-    const fieldPercentages = dataFrames[0].fields[1].values.toArray();
-    const getLogGroupFieldsResponse = {
-      logGroupFields: fieldNames.map((val, i) => ({ name: val, percent: fieldPercentages[i] })) ?? [],
-    };
+    if ((hasMissingLogGroups && hasMissingLegacyLogGroupNames) || hasMissingQueryString) {
+      return false;
+    }
 
-    return getLogGroupFieldsResponse;
+    return true;
   }
 }
 

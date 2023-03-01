@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/datasources/elasticsearch/
-  - /docs/grafana/latest/features/datasources/elasticsearch/
-  - /docs/grafana/latest/data-sources/elasticsearch/
+  - ../data-sources/elasticsearch/
+  - ../features/datasources/elasticsearch/
 description: Guide for using Elasticsearch in Grafana
 keywords:
   - grafana
@@ -32,7 +31,7 @@ Once you've added the Elasticsearch data source, you can [configure it]({{< relr
 This data source supports these versions of Elasticsearch:
 
 - v7.10+
-- v8.0+ (experimental)
+- v8.x
 
 ## Configure the data source
 

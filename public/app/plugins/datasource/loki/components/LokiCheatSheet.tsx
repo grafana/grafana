@@ -81,9 +81,14 @@ export default class LokiCheatSheet extends PureComponent<QueryEditorHelpProps<L
     };
 
     return (
-      <div className="cheat-sheet-item__example" key={expr} onClick={(e) => onClick({ refId: 'A', expr })}>
+      <button
+        type="button"
+        className="cheat-sheet-item__example"
+        key={expr}
+        onClick={(e) => onClick({ refId: 'A', expr })}
+      >
         <code>{expr}</code>
-      </div>
+      </button>
     );
   }
 

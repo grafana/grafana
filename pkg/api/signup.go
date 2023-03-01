@@ -10,7 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -18,15 +19,15 @@ import (
 )
 
 // GET /api/user/signup/options
-func GetSignUpOptions(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetSignUpOptions(c *contextmodel.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, util.DynMap{
 		"verifyEmailEnabled": setting.VerifyEmailEnabled,
-		"autoAssignOrg":      setting.AutoAssignOrg,
+		"autoAssignOrg":      hs.Cfg.AutoAssignOrg,
 	})
 }
 
 // POST /api/user/signup
-func (hs *HTTPServer) SignUp(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) SignUp(c *contextmodel.ReqContext) response.Response {
 	form := dtos.SignUpForm{}
 	var err error
 	if err = web.Bind(c.Req, &form); err != nil {
@@ -47,18 +48,18 @@ func (hs *HTTPServer) SignUp(c *models.ReqContext) response.Response {
 		return response.Error(422, "User with same email address already exists", nil)
 	}
 
-	cmd := models.CreateTempUserCommand{}
-	cmd.OrgId = -1
+	cmd := tempuser.CreateTempUserCommand{}
+	cmd.OrgID = -1
 	cmd.Email = form.Email
-	cmd.Status = models.TmpUserSignUpStarted
-	cmd.InvitedByUserId = c.UserID
+	cmd.Status = tempuser.TmpUserSignUpStarted
+	cmd.InvitedByUserID = c.UserID
 	cmd.Code, err = util.GetRandomString(20)
 	if err != nil {
 		return response.Error(500, "Failed to generate random string", err)
 	}
-	cmd.RemoteAddr = c.Req.RemoteAddr
+	cmd.RemoteAddr = c.RemoteAddr()
 
-	if err := hs.tempUserService.CreateTempUser(c.Req.Context(), &cmd); err != nil {
+	if _, err := hs.tempUserService.CreateTempUser(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to create signup", err)
 	}
 
@@ -74,7 +75,7 @@ func (hs *HTTPServer) SignUp(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, util.DynMap{"status": "SignUpCreated"})
 }
 
-func (hs *HTTPServer) SignUpStep2(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) SignUpStep2(c *contextmodel.ReqContext) response.Response {
 	form := dtos.SignUpStep2Form{}
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -120,18 +121,19 @@ func (hs *HTTPServer) SignUpStep2(c *models.ReqContext) response.Response {
 	}
 
 	// mark temp user as completed
-	if ok, rsp := hs.updateTempUserStatus(c.Req.Context(), form.Code, models.TmpUserCompleted); !ok {
+	if ok, rsp := hs.updateTempUserStatus(c.Req.Context(), form.Code, tempuser.TmpUserCompleted); !ok {
 		return rsp
 	}
 
 	// check for pending invites
-	invitesQuery := models.GetTempUsersQuery{Email: form.Email, Status: models.TmpUserInvitePending}
-	if err := hs.tempUserService.GetTempUsersQuery(c.Req.Context(), &invitesQuery); err != nil {
+	invitesQuery := tempuser.GetTempUsersQuery{Email: form.Email, Status: tempuser.TmpUserInvitePending}
+	invitesQueryResult, err := hs.tempUserService.GetTempUsersQuery(c.Req.Context(), &invitesQuery)
+	if err != nil {
 		return response.Error(500, "Failed to query database for invites", err)
 	}
 
 	apiResponse := util.DynMap{"message": "User sign up completed successfully", "code": "redirect-to-landing-page"}
-	for _, invite := range invitesQuery.Result {
+	for _, invite := range invitesQueryResult {
 		if ok, rsp := hs.applyUserInvite(c.Req.Context(), usr, invite, false); !ok {
 			return rsp
 		}
@@ -149,16 +151,17 @@ func (hs *HTTPServer) SignUpStep2(c *models.ReqContext) response.Response {
 }
 
 func (hs *HTTPServer) verifyUserSignUpEmail(ctx context.Context, email string, code string) (bool, response.Response) {
-	query := models.GetTempUserByCodeQuery{Code: code}
+	query := tempuser.GetTempUserByCodeQuery{Code: code}
 
-	if err := hs.tempUserService.GetTempUserByCode(ctx, &query); err != nil {
-		if errors.Is(err, models.ErrTempUserNotFound) {
+	queryResult, err := hs.tempUserService.GetTempUserByCode(ctx, &query)
+	if err != nil {
+		if errors.Is(err, tempuser.ErrTempUserNotFound) {
 			return false, response.Error(404, "Invalid email verification code", nil)
 		}
 		return false, response.Error(500, "Failed to read temp user", err)
 	}
 
-	tempUser := query.Result
+	tempUser := queryResult
 	if tempUser.Email != email {
 		return false, response.Error(404, "Email verification code does not match email", nil)
 	}

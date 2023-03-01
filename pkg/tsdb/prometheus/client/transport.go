@@ -2,19 +2,17 @@ package client
 
 import (
 	"fmt"
-	"net/http"
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/azureauth"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/middleware"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/utils"
 	"github.com/grafana/grafana/pkg/util/maputil"
-	"github.com/prometheus/client_golang/api"
-	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 )
 
 // CreateTransportOptions creates options for the http client. Probably should be shared and should not live in the
@@ -22,7 +20,7 @@ import (
 func CreateTransportOptions(settings backend.DataSourceInstanceSettings, cfg *setting.Cfg, logger log.Logger) (*sdkhttpclient.Options, error) {
 	opts, err := settings.HTTPClientOptions()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error getting HTTP options: %w", err)
 	}
 
 	jsonData, err := utils.GetJsonData(settings)
@@ -47,20 +45,6 @@ func CreateTransportOptions(settings backend.DataSourceInstanceSettings, cfg *se
 	}
 
 	return &opts, nil
-}
-
-func CreateAPIClient(roundTripper http.RoundTripper, url string) (apiv1.API, error) {
-	cfg := api.Config{
-		Address:      url,
-		RoundTripper: roundTripper,
-	}
-
-	client, err := api.NewClient(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	return apiv1.NewAPI(client), nil
 }
 
 func middlewares(logger log.Logger, httpMethod string) []sdkhttpclient.Middleware {

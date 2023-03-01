@@ -15,14 +15,12 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
 var eslog = log.New("tsdb.elasticsearch")
 
 type Service struct {
 	httpClientProvider httpclient.Provider
-	intervalCalculator intervalv2.Calculator
 	im                 instancemgmt.InstanceManager
 }
 
@@ -32,7 +30,6 @@ func ProvideService(httpClientProvider httpclient.Provider) *Service {
 	return &Service{
 		im:                 datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 		httpClientProvider: httpClientProvider,
-		intervalCalculator: intervalv2.NewCalculator(),
 	}
 }
 
@@ -42,11 +39,11 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return &backend.QueryDataResponse{}, err
 	}
 
-	return queryData(ctx, req.Queries, dsInfo, s.intervalCalculator)
+	return queryData(ctx, req.Queries, dsInfo)
 }
 
 // separate function to allow testing the whole transformation and query flow
-func queryData(ctx context.Context, queries []backend.DataQuery, dsInfo *es.DatasourceInfo, intervalCalculator intervalv2.Calculator) (*backend.QueryDataResponse, error) {
+func queryData(ctx context.Context, queries []backend.DataQuery, dsInfo *es.DatasourceInfo) (*backend.QueryDataResponse, error) {
 	// Support for version after their end-of-life (currently <7.10.0) was removed
 	lastSupportedVersion, _ := semver.NewVersion("7.10.0")
 	if dsInfo.ESVersion.LessThan(lastSupportedVersion) {
@@ -61,8 +58,7 @@ func queryData(ctx context.Context, queries []backend.DataQuery, dsInfo *es.Data
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
-
-	query := newTimeSeriesQuery(client, queries, intervalCalculator)
+	query := newTimeSeriesQuery(client, queries)
 	return query.execute()
 }
 
@@ -78,14 +74,14 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			return nil, fmt.Errorf("error getting http options: %w", err)
 		}
 
-		httpCli, err := httpClientProvider.New(httpCliOpts)
-		if err != nil {
-			return nil, err
-		}
-
 		// Set SigV4 service namespace
 		if httpCliOpts.SigV4 != nil {
 			httpCliOpts.SigV4.Service = "es"
+		}
+
+		httpCli, err := httpClientProvider.New(httpCliOpts)
+		if err != nil {
+			return nil, err
 		}
 
 		version, err := coerceVersion(jsonData["esVersion"])
@@ -100,6 +96,16 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 
 		if timeField == "" {
 			return nil, errors.New("elasticsearch time field name is required")
+		}
+
+		logLevelField, ok := jsonData["logLevelField"].(string)
+		if !ok {
+			logLevelField = ""
+		}
+
+		logMessageField, ok := jsonData["logMessageField"].(string)
+		if !ok {
+			logMessageField = ""
 		}
 
 		interval, ok := jsonData["interval"].(string)
@@ -136,6 +142,12 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			xpack = false
 		}
 
+		configuredFields := es.ConfiguredFields{
+			TimeField:       timeField,
+			LogLevelField:   logLevelField,
+			LogMessageField: logMessageField,
+		}
+
 		model := es.DatasourceInfo{
 			ID:                         settings.ID,
 			URL:                        settings.URL,
@@ -143,7 +155,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			Database:                   settings.Database,
 			MaxConcurrentShardRequests: int64(maxConcurrentShardRequests),
 			ESVersion:                  version,
-			TimeField:                  timeField,
+			ConfiguredFields:           configuredFields,
 			Interval:                   interval,
 			TimeInterval:               timeInterval,
 			IncludeFrozen:              includeFrozen,

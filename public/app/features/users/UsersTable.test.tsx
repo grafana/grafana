@@ -4,7 +4,7 @@ import React from 'react';
 
 import { OrgUser } from 'app/types';
 
-import UsersTable, { Props } from './UsersTable';
+import { UsersTable, Props } from './UsersTable';
 import { getMockUsers } from './__mocks__/userMocks';
 
 jest.mock('app/core/core', () => ({

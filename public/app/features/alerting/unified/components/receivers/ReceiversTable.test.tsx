@@ -1,9 +1,7 @@
 import { screen, render, within } from '@testing-library/react';
 import React from 'react';
-import { Provider } from 'react-redux';
-import { Router } from 'react-router-dom';
+import { TestProvider } from 'test/helpers/TestProvider';
 
-import { locationService } from '@grafana/runtime';
 import {
   AlertManagerCortexConfig,
   GrafanaManagedReceiverConfig,
@@ -12,10 +10,12 @@ import {
 import { configureStore } from 'app/store/configureStore';
 import { ContactPointsState, NotifierDTO, NotifierType } from 'app/types';
 
+import * as onCallApi from '../../api/onCallApi';
 import * as receiversApi from '../../api/receiversApi';
 import { fetchGrafanaNotifiersAction } from '../../state/actions';
 
 import { ReceiversTable } from './ReceiversTable';
+import * as grafanaApp from './grafanaAppReceivers/grafanaApp';
 
 const renderReceieversTable = async (receivers: Receiver[], notifiers: NotifierDTO[]) => {
   const config: AlertManagerCortexConfig = {
@@ -29,11 +29,9 @@ const renderReceieversTable = async (receivers: Receiver[], notifiers: NotifierD
   await store.dispatch(fetchGrafanaNotifiersAction.fulfilled(notifiers, 'initial'));
 
   return render(
-    <Provider store={store}>
-      <Router history={locationService.getHistory()}>
-        <ReceiversTable config={config} alertManagerName="alertmanager-1" />
-      </Router>
-    </Provider>
+    <TestProvider store={store}>
+      <ReceiversTable config={config} alertManagerName="alertmanager-1" />
+    </TestProvider>
   );
 };
 
@@ -53,6 +51,8 @@ const mockNotifier = (type: NotifierType, name: string): NotifierDTO => ({
   options: [],
 });
 
+jest.spyOn(onCallApi, 'useGetOnCallIntegrationsQuery');
+const useGetGrafanaReceiverTypeCheckerMock = jest.spyOn(grafanaApp, 'useGetGrafanaReceiverTypeChecker');
 const useGetContactPointsStateMock = jest.spyOn(receiversApi, 'useGetContactPointsState');
 
 describe('ReceiversTable', () => {
@@ -60,6 +60,7 @@ describe('ReceiversTable', () => {
     jest.resetAllMocks();
     const emptyContactPointsState: ContactPointsState = { receivers: {}, errorCount: 0 };
     useGetContactPointsStateMock.mockReturnValue(emptyContactPointsState);
+    useGetGrafanaReceiverTypeCheckerMock.mockReturnValue(() => undefined);
   });
 
   it('render receivers with grafana notifiers', async () => {

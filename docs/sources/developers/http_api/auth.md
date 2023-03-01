@@ -1,8 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/http_api/auth/
-  - /docs/grafana/latest/http_api/auth/
-  - /docs/grafana/latest/http_api/authentication/
+  - ../../http_api/auth/
+  - ../../http_api/authentication/
+canonical: /docs/grafana/latest/developers/http_api/auth/
 description: Grafana Authentication HTTP API
 keywords:
   - grafana

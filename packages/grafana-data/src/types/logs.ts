@@ -1,8 +1,11 @@
+import { Observable } from 'rxjs';
+
 import { Labels } from './data';
 import { DataFrame } from './dataFrame';
-import { DataQueryResponse } from './datasource';
+import { DataQueryRequest, DataQueryResponse } from './datasource';
 import { DataQuery } from './query';
 import { AbsoluteTimeRange } from './time';
+export { LogsDedupStrategy, LogsSortOrder } from '@grafana/schema';
 
 /**
  * Mapping of log level abbreviation to canonical log level.
@@ -35,11 +38,6 @@ export enum LogsMetaKind {
   String,
   LabelsMap,
   Error,
-}
-
-export enum LogsSortOrder {
-  Descending = 'Descending',
-  Ascending = 'Ascending',
 }
 
 export interface LogsMetaItem {
@@ -104,13 +102,6 @@ export interface LogLabelStatsModel {
   value: string;
 }
 
-export enum LogsDedupStrategy {
-  none = 'none',
-  exact = 'exact',
-  numbers = 'numbers',
-  signature = 'signature',
-}
-
 /** @deprecated will be removed in the next major version */
 export interface LogsParser {
   /**
@@ -165,6 +156,13 @@ export interface DataSourceWithLogsContextSupport<TQuery extends DataQuery = Dat
    * This method can be used to show "context" button based on runtime conditions (for example row model data or plugin settings, etc.)
    */
   showContextToggle(row?: LogRowModel): boolean;
+
+  /**
+   * This method can be used to display a custom UI in the context view.
+   * @alpha
+   * @internal
+   */
+  getLogRowContextUi?(row: LogRowModel, runContextQuery?: () => void): React.ReactNode;
 }
 
 export const hasLogsContextSupport = (datasource: unknown): datasource is DataSourceWithLogsContextSupport => {
@@ -175,4 +173,76 @@ export const hasLogsContextSupport = (datasource: unknown): datasource is DataSo
   const withLogsSupport = datasource as DataSourceWithLogsContextSupport;
 
   return withLogsSupport.getLogRowContext !== undefined && withLogsSupport.showContextToggle !== undefined;
+};
+
+/**
+ * Types of supplementary queries that can be run in Explore.
+ * @internal
+ */
+export enum SupplementaryQueryType {
+  LogsVolume = 'LogsVolume',
+  LogsSample = 'LogsSample',
+}
+
+/**
+ * Types of logs volume responses. A data source may return full range histogram (based on selected range)
+ * or limited (based on returned results). This information is attached to DataFrame.meta.custom object.
+ * @internal
+ */
+export enum LogsVolumeType {
+  FullRange = 'FullRange',
+  Limited = 'Limited',
+}
+
+/**
+ * Data sources that support supplementary queries in Explore.
+ * This will enable users to see additional data when running original queries.
+ * Supported supplementary queries are defined in SupplementaryQueryType enum.
+ * @internal
+ */
+export interface DataSourceWithSupplementaryQueriesSupport<TQuery extends DataQuery> {
+  /**
+   * Returns an observable that will be used to fetch supplementary data based on the provided
+   * supplementary query type and original request.
+   */
+  getDataProvider(
+    type: SupplementaryQueryType,
+    request: DataQueryRequest<TQuery>
+  ): Observable<DataQueryResponse> | undefined;
+  /**
+   * Returns supplementary query types that data source supports.
+   */
+  getSupportedSupplementaryQueryTypes(): SupplementaryQueryType[];
+  /**
+   * Returns a supplementary query to be used to fetch supplementary data based on the provided type and original query.
+   * If provided query is not suitable for provided supplementary query type, undefined should be returned.
+   */
+  getSupplementaryQuery(type: SupplementaryQueryType, query: TQuery): TQuery | undefined;
+}
+
+export const hasSupplementaryQuerySupport = <TQuery extends DataQuery>(
+  datasource: unknown,
+  type: SupplementaryQueryType
+): datasource is DataSourceWithSupplementaryQueriesSupport<TQuery> => {
+  if (!datasource) {
+    return false;
+  }
+
+  const withSupplementaryQueriesSupport = datasource as DataSourceWithSupplementaryQueriesSupport<TQuery>;
+
+  return (
+    withSupplementaryQueriesSupport.getDataProvider !== undefined &&
+    withSupplementaryQueriesSupport.getSupplementaryQuery !== undefined &&
+    withSupplementaryQueriesSupport.getSupportedSupplementaryQueryTypes().includes(type)
+  );
+};
+
+export const hasLogsContextUiSupport = (datasource: unknown): datasource is DataSourceWithLogsContextSupport => {
+  if (!datasource) {
+    return false;
+  }
+
+  const withLogsSupport = datasource as DataSourceWithLogsContextSupport;
+
+  return withLogsSupport.getLogRowContextUi !== undefined;
 };

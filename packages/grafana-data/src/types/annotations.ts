@@ -113,4 +113,9 @@ export interface AnnotationSupport<TQuery extends DataQuery = DataQuery, TAnno =
    * Specify a custom QueryEditor for the annotation page.  If not specified, the standard one will be used
    */
   QueryEditor?: ComponentType<AnnotationQueryEditorProps<TQuery>>;
+
+  /**
+   * Define this method if you want to pre-populate the editor with a default query
+   */
+  getDefaultQuery?(): Partial<TQuery>;
 }

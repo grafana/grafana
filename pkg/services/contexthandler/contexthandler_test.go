@@ -7,37 +7,35 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 func TestDontRotateTokensOnCancelledRequests(t *testing.T) {
 	ctxHdlr := getContextHandler(t)
+	tryRotateCallCount := 0
+	ctxHdlr.AuthTokenService = &authtest.FakeUserAuthTokenService{
+		TryRotateTokenProvider: func(ctx context.Context, token *auth.UserToken, clientIP net.IP,
+			userAgent string) (bool, *auth.UserToken, error) {
+			tryRotateCallCount++
+			return false, nil, nil
+		},
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	reqContext, _, err := initTokenRotationScenario(ctx, t, ctxHdlr)
 	require.NoError(t, err)
+	reqContext.UserToken = &auth.UserToken{AuthToken: "oldtoken"}
 
-	tryRotateCallCount := 0
-	uts := &authtest.FakeUserAuthTokenService{
-		TryRotateTokenProvider: func(ctx context.Context, token *auth.UserToken, clientIP net.IP,
-			userAgent string) (bool, error) {
-			tryRotateCallCount++
-			return false, nil
-		},
-	}
-
-	token := &auth.UserToken{AuthToken: "oldtoken"}
-
-	fn := ctxHdlr.rotateEndOfRequestFunc(reqContext, uts, token)
+	fn := ctxHdlr.rotateEndOfRequestFunc(reqContext)
 	cancel()
 	fn(reqContext.Resp)
 
@@ -46,24 +44,21 @@ func TestDontRotateTokensOnCancelledRequests(t *testing.T) {
 
 func TestTokenRotationAtEndOfRequest(t *testing.T) {
 	ctxHdlr := getContextHandler(t)
-
-	reqContext, rr, err := initTokenRotationScenario(context.Background(), t, ctxHdlr)
-	require.NoError(t, err)
-
-	uts := &authtest.FakeUserAuthTokenService{
+	ctxHdlr.AuthTokenService = &authtest.FakeUserAuthTokenService{
 		TryRotateTokenProvider: func(ctx context.Context, token *auth.UserToken, clientIP net.IP,
-			userAgent string) (bool, error) {
+			userAgent string) (bool, *auth.UserToken, error) {
 			newToken, err := util.RandomHex(16)
 			require.NoError(t, err)
 			token.AuthToken = newToken
-			return true, nil
+			return true, token, nil
 		},
 	}
 
-	token := &auth.UserToken{AuthToken: "oldtoken"}
+	reqContext, rr, err := initTokenRotationScenario(context.Background(), t, ctxHdlr)
+	require.NoError(t, err)
+	reqContext.UserToken = &auth.UserToken{AuthToken: "oldtoken"}
 
-	ctxHdlr.rotateEndOfRequestFunc(reqContext, uts, token)(reqContext.Resp)
-
+	ctxHdlr.rotateEndOfRequestFunc(reqContext)(reqContext.Resp)
 	foundLoginCookie := false
 	// nolint:bodyclose
 	resp := rr.Result()
@@ -74,7 +69,7 @@ func TestTokenRotationAtEndOfRequest(t *testing.T) {
 	for _, c := range resp.Cookies() {
 		if c.Name == "login_token" {
 			foundLoginCookie = true
-			require.NotEqual(t, token.AuthToken, c.Value, "Auth token is still the same")
+			require.NotEqual(t, reqContext.UserToken.AuthToken, c.Value, "Auth token is still the same")
 		}
 	}
 
@@ -82,7 +77,7 @@ func TestTokenRotationAtEndOfRequest(t *testing.T) {
 }
 
 func initTokenRotationScenario(ctx context.Context, t *testing.T, ctxHdlr *ContextHandler) (
-	*models.ReqContext, *httptest.ResponseRecorder, error) {
+	*contextmodel.ReqContext, *httptest.ResponseRecorder, error) {
 	t.Helper()
 
 	ctxHdlr.Cfg.LoginCookieName = "login_token"
@@ -97,7 +92,7 @@ func initTokenRotationScenario(ctx context.Context, t *testing.T, ctxHdlr *Conte
 	if err != nil {
 		return nil, nil, err
 	}
-	reqContext := &models.ReqContext{
+	reqContext := &contextmodel.ReqContext{
 		Context: &web.Context{Req: req},
 		Logger:  log.New("testlogger"),
 	}

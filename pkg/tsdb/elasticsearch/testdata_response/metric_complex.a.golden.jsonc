@@ -1,7 +1,11 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
 //  Frame[0] {
-//      "custom": null
+//      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ]
 //  }
 //  Name: 
 //  Dimensions: 2 Fields by 3 Rows
@@ -18,7 +22,11 @@
 //  
 //  
 //  Frame[1] {
-//      "custom": null
+//      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ]
 //  }
 //  Name: 
 //  Dimensions: 2 Fields by 3 Rows
@@ -35,7 +43,11 @@
 //  
 //  
 //  Frame[2] {
-//      "custom": null
+//      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ]
 //  }
 //  Name: 
 //  Dimensions: 2 Fields by 3 Rows
@@ -52,7 +64,11 @@
 //  
 //  
 //  Frame[3] {
-//      "custom": null
+//      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ]
 //  }
 //  Name: 
 //  Dimensions: 2 Fields by 3 Rows
@@ -69,7 +85,11 @@
 //  
 //  
 //  Frame[4] {
-//      "custom": null
+//      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ]
 //  }
 //  Name: 
 //  Dimensions: 2 Fields by 3 Rows
@@ -86,7 +106,11 @@
 //  
 //  
 //  Frame[5] {
-//      "custom": null
+//      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ]
 //  }
 //  Name: 
 //  Dimensions: 2 Fields by 3 Rows
@@ -108,7 +132,11 @@
     {
       "schema": {
         "meta": {
-          "custom": null
+          "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ]
         },
         "fields": [
           {
@@ -116,9 +144,6 @@
             "type": "time",
             "typeInfo": {
               "frame": "time.Time"
-            },
-            "config": {
-              "displayNameFromDS": "val3 Max float"
             }
           },
           {
@@ -155,7 +180,11 @@
     {
       "schema": {
         "meta": {
-          "custom": null
+          "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ]
         },
         "fields": [
           {
@@ -163,9 +192,6 @@
             "type": "time",
             "typeInfo": {
               "frame": "time.Time"
-            },
-            "config": {
-              "displayNameFromDS": "val3 Min float"
             }
           },
           {
@@ -202,7 +228,11 @@
     {
       "schema": {
         "meta": {
-          "custom": null
+          "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ]
         },
         "fields": [
           {
@@ -210,9 +240,6 @@
             "type": "time",
             "typeInfo": {
               "frame": "time.Time"
-            },
-            "config": {
-              "displayNameFromDS": "val2 Max float"
             }
           },
           {
@@ -249,7 +276,11 @@
     {
       "schema": {
         "meta": {
-          "custom": null
+          "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ]
         },
         "fields": [
           {
@@ -257,9 +288,6 @@
             "type": "time",
             "typeInfo": {
               "frame": "time.Time"
-            },
-            "config": {
-              "displayNameFromDS": "val2 Min float"
             }
           },
           {
@@ -296,7 +324,11 @@
     {
       "schema": {
         "meta": {
-          "custom": null
+          "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ]
         },
         "fields": [
           {
@@ -304,9 +336,6 @@
             "type": "time",
             "typeInfo": {
               "frame": "time.Time"
-            },
-            "config": {
-              "displayNameFromDS": "val1 Max float"
             }
           },
           {
@@ -343,7 +372,11 @@
     {
       "schema": {
         "meta": {
-          "custom": null
+          "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ]
         },
         "fields": [
           {
@@ -351,9 +384,6 @@
             "type": "time",
             "typeInfo": {
               "frame": "time.Time"
-            },
-            "config": {
-              "displayNameFromDS": "val1 Min float"
             }
           },
           {

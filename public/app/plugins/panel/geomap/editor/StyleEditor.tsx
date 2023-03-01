@@ -1,5 +1,5 @@
 import { capitalize } from 'lodash';
-import React, { FC } from 'react';
+import React from 'react';
 import { useObservable } from 'react-use';
 import { Observable, of } from 'rxjs';
 
@@ -42,12 +42,9 @@ export interface StyleEditorOptions {
   displayRotation?: boolean;
 }
 
-export const StyleEditor: FC<StandardEditorProps<StyleConfig, StyleEditorOptions>> = ({
-  value,
-  context,
-  onChange,
-  item,
-}) => {
+type Props = StandardEditorProps<StyleConfig, StyleEditorOptions>;
+
+export const StyleEditor = ({ value, context, onChange, item }: Props) => {
   const settings = item.settings;
 
   const onSizeChange = (sizeValue: ScaleDimensionConfig | undefined) => {

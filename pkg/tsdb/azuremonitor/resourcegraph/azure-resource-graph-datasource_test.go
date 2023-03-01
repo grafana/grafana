@@ -98,7 +98,6 @@ func TestAzureResourceGraphCreateRequest(t *testing.T) {
 			expectedURL: "http://ds/",
 			expectedHeaders: http.Header{
 				"Content-Type": []string{"application/json"},
-				"User-Agent":   []string{"Grafana/"},
 			},
 			Err: require.NoError,
 		},
@@ -141,12 +140,11 @@ func TestAddConfigData(t *testing.T) {
 }
 
 func TestGetAzurePortalUrl(t *testing.T) {
-	clouds := []string{azsettings.AzurePublic, azsettings.AzureChina, azsettings.AzureUSGovernment, azsettings.AzureGermany}
+	clouds := []string{azsettings.AzurePublic, azsettings.AzureChina, azsettings.AzureUSGovernment}
 	expectedAzurePortalUrl := map[string]interface{}{
 		azsettings.AzurePublic:       "https://portal.azure.com",
 		azsettings.AzureChina:        "https://portal.azure.cn",
 		azsettings.AzureUSGovernment: "https://portal.azure.us",
-		azsettings.AzureGermany:      "https://portal.microsoftazure.de",
 	}
 
 	for _, cloud := range clouds {

@@ -1,24 +1,25 @@
 import { css, cx } from '@emotion/css';
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
+import { useAsync } from 'react-use';
 
-import { DataSourceApi, DataQuery, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, DataSourceApi } from '@grafana/data';
 import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
-import { TextArea, Button, IconButton, useStyles2 } from '@grafana/ui';
+import { DataQuery } from '@grafana/schema';
+import { TextArea, Button, IconButton, useStyles2, LoadingPlaceholder } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import appEvents from 'app/core/app_events';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { copyStringToClipboard } from 'app/core/utils/explore';
 import { createUrlFromRichHistory, createQueryText } from 'app/core/utils/richHistory';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
+import { changeDatasource } from 'app/features/explore/state/datasource';
+import { starHistoryItem, commentHistoryItem, deleteHistoryItem } from 'app/features/explore/state/history';
+import { setQueries } from 'app/features/explore/state/query';
 import { dispatch } from 'app/store/store';
 import { StoreState } from 'app/types';
+import { ShowConfirmModalEvent } from 'app/types/events';
 import { RichHistoryQuery, ExploreId } from 'app/types/explore';
-
-import { ShowConfirmModalEvent } from '../../../types/events';
-import { changeDatasource } from '../state/datasource';
-import { starHistoryItem, commentHistoryItem, deleteHistoryItem } from '../state/history';
-import { setQueries } from '../state/query';
 
 function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
   const explore = state.explore;
@@ -41,8 +42,6 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 
 interface OwnProps<T extends DataQuery = DataQuery> {
   query: RichHistoryQuery<T>;
-  dsImg: string;
-  isRemoved: boolean;
 }
 
 export type Props<T extends DataQuery = DataQuery> = ConnectedProps<typeof connector> & OwnProps<T>;
@@ -57,6 +56,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 
   return {
     queryCard: css`
+      position: relative;
       display: flex;
       flex-direction: column;
       border: 1px solid ${theme.colors.border.weak};
@@ -83,12 +83,6 @@ const getStyles = (theme: GrafanaTheme2) => {
         margin-right: ${theme.spacing(1)};
       }
     `,
-    datasourceContainer: css`
-      display: flex;
-      align-items: center;
-      font-size: ${theme.typography.bodySmall.fontSize};
-      font-weight: ${theme.typography.fontWeightMedium};
-    `,
     queryActionButtons: css`
       max-width: ${rightColumnContentWidth};
       display: flex;
@@ -101,15 +95,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     queryContainer: css`
       font-weight: ${theme.typography.fontWeightMedium};
       width: calc(100% - ${rightColumnWidth});
-    `,
-    queryRow: css`
-      border-top: 1px solid ${theme.colors.border.weak};
-      word-break: break-all;
-      padding: 4px 2px;
-      :first-child {
-        border-top: none;
-        padding: 0 0 4px 0;
-      }
     `,
     updateCommentContainer: css`
       width: calc(100% + ${rightColumnWidth});
@@ -142,14 +127,21 @@ const getStyles = (theme: GrafanaTheme2) => {
         }
       }
     `,
+    loader: css`
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: ${theme.colors.background.secondary};
+    `,
   };
 };
 
 export function RichHistoryCard(props: Props) {
   const {
     query,
-    dsImg,
-    isRemoved,
     commentHistoryItem,
     starHistoryItem,
     deleteHistoryItem,
@@ -160,16 +152,33 @@ export function RichHistoryCard(props: Props) {
   } = props;
   const [activeUpdateComment, setActiveUpdateComment] = useState(false);
   const [comment, setComment] = useState<string | undefined>(query.comment);
-  const [queryDsInstance, setQueryDsInstance] = useState<DataSourceApi | undefined>(undefined);
+  const { value, loading } = useAsync(async () => {
+    let dsInstance: DataSourceApi | undefined;
+    try {
+      dsInstance = await getDataSourceSrv().get(query.datasourceUid);
+    } catch (e) {}
 
-  useEffect(() => {
-    const getQueryDsInstance = async () => {
-      const ds = await getDataSourceSrv().get(query.datasourceUid);
-      setQueryDsInstance(ds);
+    return {
+      dsInstance,
+      queries: await Promise.all(
+        query.queries.map(async (query) => {
+          let datasource;
+          if (dsInstance?.meta.mixed) {
+            try {
+              datasource = await getDataSourceSrv().get(query.datasource);
+            } catch (e) {}
+          } else {
+            datasource = dsInstance;
+          }
+
+          return {
+            query,
+            datasource,
+          };
+        })
+      ),
     };
-
-    getQueryDsInstance();
-  }, [query.datasourceUid]);
+  }, [query.datasourceUid, query.queries]);
 
   const styles = useStyles2(getStyles);
 
@@ -177,20 +186,34 @@ export function RichHistoryCard(props: Props) {
     const queriesToRun = query.queries;
     const differentDataSource = query.datasourceUid !== datasourceInstance?.uid;
     if (differentDataSource) {
-      await changeDatasource(exploreId, query.datasourceUid, { importQueries: true });
-      setQueries(exploreId, queriesToRun);
-    } else {
-      setQueries(exploreId, queriesToRun);
+      await changeDatasource(exploreId, query.datasourceUid);
     }
+    setQueries(exploreId, queriesToRun);
+
     reportInteraction('grafana_explore_query_history_run', {
       queryHistoryEnabled: config.queryHistoryEnabled,
       differentDataSource,
     });
   };
 
-  const onCopyQuery = () => {
-    const queriesToCopy = query.queries.map((q) => createQueryText(q, queryDsInstance)).join('\n');
-    copyStringToClipboard(queriesToCopy);
+  const onCopyQuery = async () => {
+    const datasources = [...query.queries.map((q) => q.datasource?.type || 'unknown')];
+    reportInteraction('grafana_explore_query_history_copy_query', {
+      datasources,
+      mixed: Boolean(value?.dsInstance?.meta.mixed),
+    });
+
+    if (loading || !value) {
+      return;
+    }
+
+    const queriesText = value.queries
+      .map((q) => {
+        return createQueryText(q.query, q.datasource);
+      })
+      .join('\n');
+
+    copyStringToClipboard(queriesText);
     dispatch(notifyApp(createSuccessNotification('Query copied to clipboard')));
   };
 
@@ -267,9 +290,7 @@ export function RichHistoryCard(props: Props) {
         className={styles.textArea}
       />
       <div className={styles.commentButtonRow}>
-        <Button onClick={onUpdateComment} aria-label="Submit button">
-          Save comment
-        </Button>
+        <Button onClick={onUpdateComment}>Save comment</Button>
         <Button variant="secondary" onClick={onCancelUpdateComment}>
           Cancel
         </Button>
@@ -285,7 +306,7 @@ export function RichHistoryCard(props: Props) {
         title={query.comment?.length > 0 ? 'Edit comment' : 'Add comment'}
       />
       <IconButton name="copy" onClick={onCopyQuery} title="Copy query to clipboard" />
-      {!isRemoved && (
+      {value?.dsInstance && (
         <IconButton name="share-alt" onClick={onCreateShortLink} title="Copy shortened link to clipboard" />
       )}
       <IconButton name="trash-alt" title={'Delete query'} onClick={onDeleteQuery} />
@@ -301,23 +322,14 @@ export function RichHistoryCard(props: Props) {
   return (
     <div className={styles.queryCard}>
       <div className={styles.cardRow}>
-        <div className={styles.datasourceContainer}>
-          <img src={dsImg} aria-label="Data source icon" />
-          <div aria-label="Data source name">
-            {isRemoved ? 'Data source does not exist anymore' : query.datasourceName}
-          </div>
-        </div>
+        <DatasourceInfo dsApi={value?.dsInstance} size="sm" />
+
         {queryActionButtons}
       </div>
       <div className={cx(styles.cardRow)}>
         <div className={styles.queryContainer}>
-          {query.queries.map((q, i) => {
-            const queryText = createQueryText(q, queryDsInstance);
-            return (
-              <div aria-label="Query text" key={`${q}-${i}`} className={styles.queryRow}>
-                {queryText}
-              </div>
-            );
+          {value?.queries.map((q, i) => {
+            return <Query query={q} key={`${q}-${i}`} showDsInfo={value?.dsInstance?.meta.mixed} />;
           })}
           {!activeUpdateComment && query.comment && (
             <div aria-label="Query comment" className={styles.comment}>
@@ -328,12 +340,89 @@ export function RichHistoryCard(props: Props) {
         </div>
         {!activeUpdateComment && (
           <div className={styles.runButton}>
-            <Button variant="secondary" onClick={onRunQuery} disabled={isRemoved}>
+            <Button
+              variant="secondary"
+              onClick={onRunQuery}
+              disabled={!value?.dsInstance || value.queries.some((query) => !query.datasource)}
+            >
               {datasourceInstance?.uid === query.datasourceUid ? 'Run query' : 'Switch data source and run query'}
             </Button>
           </div>
         )}
       </div>
+      {loading && <LoadingPlaceholder text="loading..." className={styles.loader} />}
+    </div>
+  );
+}
+
+const getQueryStyles = (theme: GrafanaTheme2) => ({
+  queryRow: css`
+    border-top: 1px solid ${theme.colors.border.weak};
+    display: flex;
+    flex-direction: row;
+    padding: 4px 0px;
+    gap: 4px;
+    :first-child {
+      border-top: none;
+    }
+  `,
+  dsInfoContainer: css`
+    display: flex;
+    align-items: center;
+  `,
+  queryText: css`
+    word-break: break-all;
+  `,
+});
+
+interface QueryProps {
+  query: {
+    query: DataQuery;
+    datasource?: DataSourceApi;
+  };
+  /** Show datasource info (icon+name) alongside the query text */
+  showDsInfo?: boolean;
+}
+
+const Query = ({ query, showDsInfo = false }: QueryProps) => {
+  const styles = useStyles2(getQueryStyles);
+
+  return (
+    <div className={styles.queryRow}>
+      {showDsInfo && (
+        <div className={styles.dsInfoContainer}>
+          <DatasourceInfo dsApi={query.datasource} size="md" />
+          {': '}
+        </div>
+      )}
+      <span aria-label="Query text" className={styles.queryText}>
+        {createQueryText(query.query, query.datasource)}
+      </span>
+    </div>
+  );
+};
+
+const getDsInfoStyles = (size: 'sm' | 'md') => (theme: GrafanaTheme2) =>
+  css`
+    display: flex;
+    align-items: center;
+    font-size: ${theme.typography[size === 'sm' ? 'bodySmall' : 'body'].fontSize};
+    font-weight: ${theme.typography.fontWeightMedium};
+    white-space: nowrap;
+  `;
+
+function DatasourceInfo({ dsApi, size }: { dsApi?: DataSourceApi; size: 'sm' | 'md' }) {
+  const getStyles = useCallback((theme: GrafanaTheme2) => getDsInfoStyles(size)(theme), [size]);
+  const styles = useStyles2(getStyles);
+
+  return (
+    <div className={styles}>
+      <img
+        src={dsApi?.meta.info.logos.small || 'public/img/icn-datasource.svg'}
+        alt={dsApi?.type || 'Data source does not exist anymore'}
+        aria-label="Data source icon"
+      />
+      <div aria-label="Data source name">{dsApi?.name || 'Data source does not exist anymore'}</div>
     </div>
   );
 }

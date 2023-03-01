@@ -18,6 +18,42 @@ import (
 )
 
 func TestTimeSeriesFilter(t *testing.T) {
+	t.Run("parses params", func(t *testing.T) {
+		query := &cloudMonitoringTimeSeriesList{parameters: &timeSeriesList{}}
+		query.setParams(time.Time{}, time.Time{}, 0, 0)
+
+		assert.Equal(t, "0001-01-01T00:00:00Z", query.params.Get("interval.startTime"))
+		assert.Equal(t, "0001-01-01T00:00:00Z", query.params.Get("interval.endTime"))
+		assert.Equal(t, "", query.params.Get("filter"))
+		assert.Equal(t, "", query.params.Get("view"))
+		assert.Equal(t, "+60s", query.params.Get("aggregation.alignmentPeriod"))
+		assert.Equal(t, "REDUCE_NONE", query.params.Get("aggregation.crossSeriesReducer"))
+		assert.Equal(t, "ALIGN_MEAN", query.params.Get("aggregation.perSeriesAligner"))
+		assert.Equal(t, "", query.params.Get("aggregation.groupByFields"))
+		assert.Equal(t, "", query.params.Get("secondaryAggregation.alignmentPeriod"))
+		assert.Equal(t, "", query.params.Get("secondaryAggregation.crossSeriesReducer"))
+		assert.Equal(t, "", query.params.Get("secondaryAggregation.perSeriesAligner"))
+		assert.Equal(t, "", query.params.Get("secondaryAggregation.groupByFields"))
+	})
+
+	t.Run("parses params with preprocessor", func(t *testing.T) {
+		query := &cloudMonitoringTimeSeriesList{parameters: &timeSeriesList{Preprocessor: "rate"}}
+		query.setParams(time.Time{}, time.Time{}, 0, 0)
+
+		assert.Equal(t, "0001-01-01T00:00:00Z", query.params.Get("interval.startTime"))
+		assert.Equal(t, "0001-01-01T00:00:00Z", query.params.Get("interval.endTime"))
+		assert.Equal(t, "", query.params.Get("filter"))
+		assert.Equal(t, "", query.params.Get("view"))
+		assert.Equal(t, "+60s", query.params.Get("aggregation.alignmentPeriod"))
+		assert.Equal(t, "REDUCE_NONE", query.params.Get("aggregation.crossSeriesReducer"))
+		assert.Equal(t, "ALIGN_RATE", query.params.Get("aggregation.perSeriesAligner"))
+		assert.Equal(t, "", query.params.Get("aggregation.groupByFields"))
+		assert.Equal(t, "", query.params.Get("secondaryAggregation.alignmentPeriod"))
+		assert.Equal(t, "REDUCE_NONE", query.params.Get("secondaryAggregation.crossSeriesReducer"))
+		assert.Equal(t, "ALIGN_MEAN", query.params.Get("secondaryAggregation.perSeriesAligner"))
+		assert.Equal(t, "", query.params.Get("secondaryAggregation.groupByFields"))
+	})
+
 	t.Run("when data from query aggregated to one time series", func(t *testing.T) {
 		data, err := loadTestFile("./test-data/1-series-response-agg-one-metric.json")
 		require.NoError(t, err)
@@ -358,6 +394,25 @@ func TestTimeSeriesFilter(t *testing.T) {
 			frames := res.Frames
 			assert.Equal(t, "test-proj - asia-northeast1-c - 6724404429462225363 - 200", frames[0].Fields[1].Name)
 		})
+	})
+
+	t.Run("field name is filled in for agg statement", func(t *testing.T) {
+		data, err := loadTestFile("./test-data/10-series-response-mql-no-labels.json")
+		require.NoError(t, err)
+		assert.Equal(t, 0, len(data.TimeSeries))
+		assert.Equal(t, 1, len(data.TimeSeriesData))
+
+		res := &backend.DataResponse{}
+		query := &cloudMonitoringTimeSeriesQuery{
+			parameters: &timeSeriesQuery{
+				Query:       "fetch gce_instance::compute.googleapis.com/instance/cpu/utilization | sum",
+				ProjectName: "test",
+				GraphPeriod: "60s",
+			},
+		}
+		err = query.parseResponse(res, data, "")
+		require.NoError(t, err)
+		assert.Equal(t, "value_utilization_sum", res.Frames[0].Fields[1].Name)
 	})
 
 	t.Run("Parse labels", func(t *testing.T) {

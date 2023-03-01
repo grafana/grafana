@@ -1,7 +1,7 @@
 // Libraries
 import { isNumber } from 'lodash';
 
-import { NullValueMode, Field, FieldState, FieldCalcs, FieldType } from '../types/index';
+import { NullValueMode, Field, FieldCalcs, FieldType } from '../types/index';
 import { Registry, RegistryItem } from '../utils/Registry';
 
 export enum ReducerID {
@@ -72,7 +72,7 @@ export function reduceField(options: ReduceFieldOptions): FieldCalcs {
     }
   }
   if (!field.state) {
-    field.state = {} as FieldState;
+    field.state = {};
   }
 
   const queue = fieldReducers.list(reducers);
@@ -81,7 +81,7 @@ export function reduceField(options: ReduceFieldOptions): FieldCalcs {
   // This lets the concrete implementations assume at least one row
   const data = field.values;
   if (data.length < 1) {
-    const calcs = { ...field.state.calcs } as FieldCalcs;
+    const calcs: FieldCalcs = { ...field.state.calcs };
     for (const reducer of queue) {
       calcs[reducer.id] = reducer.emptyInputResult !== null ? reducer.emptyInputResult : null;
     }
@@ -266,7 +266,7 @@ export const fieldReducers = new Registry<FieldReducerInfo>(() => [
 ]);
 
 export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
-  const calcs = {
+  const calcs: FieldCalcs = {
     sum: 0,
     max: -Number.MAX_VALUE,
     min: Number.MAX_VALUE,
@@ -288,7 +288,7 @@ export function doStandardCalcs(field: Field, ignoreNulls: boolean, nullAsZero: 
 
     // Just used for calculations -- not exposed as a stat
     previousDeltaUp: true,
-  } as FieldCalcs;
+  };
 
   const data = field.values;
   calcs.count = ignoreNulls ? data.length : data.toArray().filter((val) => val != null).length;
@@ -466,7 +466,7 @@ function calculateChangeCount(field: Field, ignoreNulls: boolean, nullAsZero: bo
   const data = field.values;
   let count = 0;
   let first = true;
-  let last: any = null;
+  let last = null;
   for (let i = 0; i < data.length; i++) {
     let currentValue = data.get(i);
     if (currentValue === null) {
@@ -489,7 +489,7 @@ function calculateChangeCount(field: Field, ignoreNulls: boolean, nullAsZero: bo
 
 function calculateDistinctCount(field: Field, ignoreNulls: boolean, nullAsZero: boolean): FieldCalcs {
   const data = field.values;
-  const distinct = new Set<any>();
+  const distinct = new Set();
   for (let i = 0; i < data.length; i++) {
     let currentValue = data.get(i);
     if (currentValue === null) {

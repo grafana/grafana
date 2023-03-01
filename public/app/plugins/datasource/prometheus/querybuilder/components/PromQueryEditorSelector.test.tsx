@@ -3,6 +3,9 @@ import userEvent from '@testing-library/user-event';
 import { cloneDeep, defaultsDeep } from 'lodash';
 import React from 'react';
 
+import { CoreApp, PluginMeta, PluginType } from '@grafana/data';
+
+import { PromQueryEditorProps } from '../../components/types';
 import { PrometheusDatasource } from '../../datasource';
 import PromQlLanguageProvider from '../../language_provider';
 import { EmptyLanguageProviderMock } from '../../language_provider.mock';
@@ -27,7 +30,7 @@ jest.mock('app/core/store', () => {
       return undefined;
     },
     set() {},
-    getObject(key: string, defaultValue: any) {
+    getObject(key: string, defaultValue: unknown) {
       return defaultValue;
     },
   };
@@ -45,8 +48,30 @@ const defaultQuery = {
   expr: 'metric{label1="foo", label2="bar"}',
 };
 
-const defaultProps = {
-  datasource: new PrometheusDatasource(
+const defaultMeta: PluginMeta = {
+  id: '',
+  name: '',
+  type: PluginType.datasource,
+  info: {
+    author: {
+      name: 'tester',
+    },
+    description: 'testing',
+    links: [],
+    logos: {
+      large: '',
+      small: '',
+    },
+    screenshots: [],
+    updated: '',
+    version: '',
+  },
+  module: '',
+  baseUrl: '',
+};
+
+const getDefaultDatasource = (jsonDataOverrides = {}) =>
+  new PrometheusDatasource(
     {
       id: 1,
       uid: '',
@@ -54,14 +79,17 @@ const defaultProps = {
       name: 'prom-test',
       access: 'proxy',
       url: '',
-      jsonData: {},
-      meta: {} as any,
+      jsonData: jsonDataOverrides,
+      meta: defaultMeta,
       readOnly: false,
     },
     undefined,
     undefined,
     new EmptyLanguageProviderMock() as unknown as PromQlLanguageProvider
-  ),
+  );
+
+const defaultProps = {
+  datasource: getDefaultDatasource(),
   query: defaultQuery,
   onRunQuery: () => {},
   onChange: () => {},
@@ -74,14 +102,39 @@ describe('PromQueryEditorSelector', () => {
     expectCodeEditor();
   });
 
+  it('shows code editor if no expr and nothing else since defaultEditor is code', async () => {
+    renderWithDatasourceDefaultEditorMode(QueryEditorMode.Code);
+    expectCodeEditor();
+  });
+
+  it('shows builder if no expr and nothing else since defaultEditor is builder', async () => {
+    renderWithDatasourceDefaultEditorMode(QueryEditorMode.Builder);
+    expectBuilder();
+  });
+
   it('shows code editor when code mode is set', async () => {
     renderWithMode(QueryEditorMode.Code);
     expectCodeEditor();
   });
 
-  it('shows builder when builder mode is set', async () => {
+  it('shows builder when builder mode is set', () => {
     renderWithMode(QueryEditorMode.Builder);
     expectBuilder();
+  });
+
+  it('shows Run Queries button in Dashboards', () => {
+    renderWithProps({}, { app: CoreApp.Dashboard });
+    expectRunQueriesButton();
+  });
+
+  it('hides Run Queries button in Explore', () => {
+    renderWithProps({}, { app: CoreApp.Explore });
+    expectNoRunQueriesButton();
+  });
+
+  it('hides Run Queries button in Correlations Page', () => {
+    renderWithProps({}, { app: CoreApp.Correlations });
+    expectNoRunQueriesButton();
   });
 
   it('changes to builder mode', async () => {
@@ -147,26 +200,49 @@ describe('PromQueryEditorSelector', () => {
 });
 
 function renderWithMode(mode: QueryEditorMode) {
-  return renderWithProps({ editorMode: mode } as any);
+  return renderWithProps({ editorMode: mode });
 }
 
-function renderWithProps(overrides?: Partial<PromQuery>) {
+function renderWithDatasourceDefaultEditorMode(mode: QueryEditorMode) {
+  const props = {
+    ...defaultProps,
+    datasource: getDefaultDatasource({
+      defaultEditor: mode,
+    }),
+    query: {
+      refId: 'B',
+      expr: '',
+    },
+    onRunQuery: () => {},
+    onChange: () => {},
+  };
+  render(<PromQueryEditorSelector {...props} />);
+}
+
+function renderWithProps(overrides?: Partial<PromQuery>, componentProps: Partial<PromQueryEditorProps> = {}) {
   const query = defaultsDeep(overrides ?? {}, cloneDeep(defaultQuery));
   const onChange = jest.fn();
 
-  const stuff = render(<PromQueryEditorSelector {...defaultProps} query={query} onChange={onChange} />);
+  const allProps = { ...defaultProps, ...componentProps };
+  const stuff = render(<PromQueryEditorSelector {...allProps} query={query} onChange={onChange} />);
   return { onChange, ...stuff };
 }
 
 function expectCodeEditor() {
-  // Metric browser shows this until metrics are loaded.
-  expect(screen.getByText('Loading metrics...')).toBeInTheDocument();
+  expect(screen.getByText('MonacoQueryFieldWrapper')).toBeInTheDocument();
 }
 
 function expectBuilder() {
   expect(screen.getByText('Metric')).toBeInTheDocument();
 }
 
+function expectRunQueriesButton() {
+  expect(screen.getByRole('button', { name: /run queries/i })).toBeInTheDocument();
+}
+
+function expectNoRunQueriesButton() {
+  expect(screen.queryByRole('button', { name: /run queries/i })).not.toBeInTheDocument();
+}
 async function switchToMode(mode: QueryEditorMode) {
   const label = {
     [QueryEditorMode.Code]: /Code/,

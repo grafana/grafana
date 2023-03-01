@@ -1,15 +1,11 @@
-import { WithAccessControlMetadata } from '@grafana/data';
+import { Team as TeamBase } from '@grafana/schema';
 
-import { TeamPermissionLevel } from './acl';
-
-export interface Team extends WithAccessControlMetadata {
-  id: number;
-  name: string;
-  avatarUrl: string;
-  email: string;
-  memberCount: number;
-  permission: TeamPermissionLevel;
+export interface Team extends TeamBase {
+  id: number; // TODO switch to UUID
 }
+
+// Represents the data sent via an API to create a team
+export interface TeamDTO extends Pick<TeamBase, 'name' | 'email'> {}
 
 export interface TeamMember {
   userId: number;

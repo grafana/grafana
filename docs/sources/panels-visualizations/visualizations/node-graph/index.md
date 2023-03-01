@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/visualizations/node-graph/
-  - /docs/grafana/latest/visualizations/node-graph/
-  - /docs/grafana/latest/panels-visualizations/visualizations/node-graph/
+  - ../../panels/visualizations/node-graph/
+  - ../../visualizations/node-graph/
 keywords:
   - grafana
   - dashboard
@@ -15,8 +14,6 @@ weight: 850
 ---
 
 # Node graph panel
-
-> **Note:** This panel is currently in beta. Expect changes in future releases.
 
 The _Node graph_ can visualize directed graphs or networks. It uses a directed force layout to effectively position the nodes, so it can display complex infrastructure maps, hierarchies, or execution diagrams.
 
@@ -115,11 +112,13 @@ Required fields:
 
 Optional fields:
 
-| Field name    | Type          | Description                                                                                                                                                                                    |
-| ------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| title         | string        | Name of the node visible in just under the node.                                                                                                                                               |
-| subtitle      | string        | Additional, name, type or other identifier shown under the title.                                                                                                                              |
-| mainstat      | string/number | First stat shown inside the node itself. It can either be a string showing the value as is or a number. If it is a number, any unit associated with that field is also shown.                  |
-| secondarystat | string/number | Same as mainStat, but shown under it inside the node.                                                                                                                                          |
-| arc\_\_\*     | number        | Any field prefixed with `arc__` will be used to create the color circle around the node. All values in these fields should add up to 1. You can specify color using `config.color.fixedColor`. |
-| detail\_\_\*  | string/number | Any field prefixed with `detail__` will be shown in the header of context menu when clicked on the node. Use `config.displayName` for more human readable label.                               |
+| Field name    | Type          | Description                                                                                                                                                                                                                                                                                                                                                               |
+| ------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| title         | string        | Name of the node visible in just under the node.                                                                                                                                                                                                                                                                                                                          |
+| subtitle      | string        | Additional, name, type or other identifier shown under the title.                                                                                                                                                                                                                                                                                                         |
+| mainstat      | string/number | First stat shown inside the node itself. It can either be a string showing the value as is or a number. If it is a number, any unit associated with that field is also shown.                                                                                                                                                                                             |
+| secondarystat | string/number | Same as mainStat, but shown under it inside the node.                                                                                                                                                                                                                                                                                                                     |
+| arc\_\_\*     | number        | Any field prefixed with `arc__` will be used to create the color circle around the node. All values in these fields should add up to 1. You can specify color using `config.color.fixedColor`.                                                                                                                                                                            |
+| detail\_\_\*  | string/number | Any field prefixed with `detail__` will be shown in the header of context menu when clicked on the node. Use `config.displayName` for more human readable label.                                                                                                                                                                                                          |
+| color         | string/number | Can be used to specify a single color instead of using the `arc__` fields to specify color sections. It can be either a string which should then be an acceptable HTML color string or it can be a number in which case the behaviour depends on `field.config.color.mode` setting. This can be for example used to create gradient colors controlled by the field value. |
+| icon          | string        | Name of the icon to show inside the node instead of the default stats. Only Grafana built in icons are allowed (see the available icons [here](https://developers.grafana.com/ui/latest/index.html?path=/story/docs-overview-icon--icons-overview)).                                                                                                                      |

@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 )
 
 const (
@@ -21,22 +22,22 @@ func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, req *back
 	resp := backend.NewQueryDataResponse()
 
 	for _, q := range req.Queries {
-		var model LogQueryJson
-		err := json.Unmarshal(q.JSON, &model)
+		var logsQuery models.LogsQuery
+		err := json.Unmarshal(q.JSON, &logsQuery)
 		if err != nil {
 			continue
 		}
 
-		model.Subtype = "StartQuery"
-		model.QueryString = model.Expression
+		logsQuery.Subtype = "StartQuery"
+		logsQuery.QueryString = logsQuery.Expression
 
-		region := model.Region
-		if model.Region == "" || region == defaultRegion {
+		region := logsQuery.Region
+		if logsQuery.Region == "" || region == defaultRegion {
 			instance, err := e.getInstance(req.PluginContext)
 			if err != nil {
 				return nil, err
 			}
-			model.Region = instance.Settings.Region
+			logsQuery.Region = instance.Settings.Region
 		}
 
 		logsClient, err := e.getCWLogsClient(req.PluginContext, region)
@@ -44,7 +45,7 @@ func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, req *back
 			return nil, err
 		}
 
-		getQueryResultsOutput, err := e.alertQuery(ctx, logsClient, q, model)
+		getQueryResultsOutput, err := e.alertQuery(ctx, logsClient, q, logsQuery)
 		if err != nil {
 			return nil, err
 		}
@@ -55,8 +56,8 @@ func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, req *back
 		}
 
 		var frames []*data.Frame
-		if len(model.StatsGroups) > 0 && len(dataframe.Fields) > 0 {
-			frames, err = groupResults(dataframe, model.StatsGroups)
+		if len(logsQuery.StatsGroups) > 0 && len(dataframe.Fields) > 0 {
+			frames, err = groupResults(dataframe, logsQuery.StatsGroups)
 			if err != nil {
 				return nil, err
 			}
@@ -73,14 +74,14 @@ func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, req *back
 }
 
 func (e *cloudWatchExecutor) alertQuery(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
-	queryContext backend.DataQuery, model LogQueryJson) (*cloudwatchlogs.GetQueryResultsOutput, error) {
-	startQueryOutput, err := e.executeStartQuery(ctx, logsClient, model, queryContext.TimeRange)
+	queryContext backend.DataQuery, logsQuery models.LogsQuery) (*cloudwatchlogs.GetQueryResultsOutput, error) {
+	startQueryOutput, err := e.executeStartQuery(ctx, logsClient, logsQuery, queryContext.TimeRange)
 	if err != nil {
 		return nil, err
 	}
 
-	requestParams := LogQueryJson{
-		Region:  model.Region,
+	requestParams := models.LogsQuery{
+		Region:  logsQuery.Region,
 		QueryId: *startQueryOutput.QueryId,
 	}
 

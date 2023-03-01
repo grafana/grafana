@@ -18,8 +18,9 @@ import {
 import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import alertDef from 'app/features/alerting/state/alertDef';
+import { useCombinedRuleNamespaces } from 'app/features/alerting/unified/hooks/useCombinedRuleNamespaces';
 import { useUnifiedAlertingSelector } from 'app/features/alerting/unified/hooks/useUnifiedAlertingSelector';
-import { fetchAllPromRulesAction } from 'app/features/alerting/unified/state/actions';
+import { fetchAllPromAndRulerRulesAction } from 'app/features/alerting/unified/state/actions';
 import { labelsMatchMatchers, parseMatchers } from 'app/features/alerting/unified/utils/alertmanager';
 import { Annotation } from 'app/features/alerting/unified/utils/constants';
 import {
@@ -27,12 +28,15 @@ import {
   GRAFANA_DATASOURCE_NAME,
   GRAFANA_RULES_SOURCE_NAME,
 } from 'app/features/alerting/unified/utils/datasource';
-import { flattenRules, getFirstActiveAt } from 'app/features/alerting/unified/utils/rules';
+import { initialAsyncRequestState } from 'app/features/alerting/unified/utils/redux';
+import { flattenCombinedRules, getFirstActiveAt } from 'app/features/alerting/unified/utils/rules';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
-import { useDispatch, AccessControlAction } from 'app/types';
-import { PromRuleWithLocation } from 'app/types/unified-alerting';
+import { AccessControlAction, useDispatch } from 'app/types';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
+
+import { getAlertingRule } from '../../../features/alerting/unified/utils/rules';
+import { AlertingRule, CombinedRuleWithLocation } from '../../../types/unified-alerting';
 
 import { GroupMode, SortOrder, UnifiedAlertListOptions, ViewMode } from './types';
 import GroupedModeView from './unified-alerting/GroupedView';
@@ -58,33 +62,38 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   });
 
   useEffect(() => {
-    dispatch(fetchAllPromRulesAction());
-    const sub = dashboard?.events.subscribe(TimeRangeUpdatedEvent, () => dispatch(fetchAllPromRulesAction()));
+    //we need promRules and rulerRules for getting the uid when creating the alert link in panel in case of being a rulerRule.
+    dispatch(fetchAllPromAndRulerRulesAction());
+    const sub = dashboard?.events.subscribe(TimeRangeUpdatedEvent, () => dispatch(fetchAllPromAndRulerRulesAction()));
     return () => {
       sub?.unsubscribe();
     };
   }, [dispatch, dashboard]);
 
-  const promRulesRequests = useUnifiedAlertingSelector((state) => state.promRules);
+  const { prom, ruler } = useUnifiedAlertingSelector((state) => ({
+    prom: state.promRules[GRAFANA_RULES_SOURCE_NAME] || initialAsyncRequestState,
+    ruler: state.rulerRules[GRAFANA_RULES_SOURCE_NAME] || initialAsyncRequestState,
+  }));
 
-  const dispatched = rulesDataSourceNames.some((name) => promRulesRequests[name]?.dispatched);
-  const loading = rulesDataSourceNames.some((name) => promRulesRequests[name]?.loading);
-  const haveResults = rulesDataSourceNames.some(
-    (name) => promRulesRequests[name]?.result?.length && !promRulesRequests[name]?.error
-  );
+  const loading = prom.loading || ruler.loading;
+  const haveResults = !!prom.result || !!ruler.result;
+
+  const promRulesRequests = useUnifiedAlertingSelector((state) => state.promRules);
+  const rulerRulesRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
+  const combinedRules = useCombinedRuleNamespaces();
+
+  const somePromRulesDispatched = rulesDataSourceNames.some((name) => promRulesRequests[name]?.dispatched);
+  const someRulerRulesDispatched = rulesDataSourceNames.some((name) => rulerRulesRequests[name]?.dispatched);
+  const dispatched = somePromRulesDispatched || someRulerRulesDispatched;
 
   const styles = useStyles2(getStyles);
 
+  const flattenedCombinedRules = flattenCombinedRules(combinedRules);
+  const order = props.options.sortOrder;
+
   const rules = useMemo(
-    () =>
-      filterRules(
-        props,
-        sortRules(
-          props.options.sortOrder,
-          Object.values(promRulesRequests).flatMap(({ result = [] }) => flattenRules(result))
-        )
-      ),
-    [props, promRulesRequests]
+    () => filterRules(props, sortRules(order, flattenedCombinedRules)),
+    [flattenedCombinedRules, order, props]
   );
 
   const noAlertsMessage = rules.length === 0 ? 'No alerts matching filters' : undefined;
@@ -127,16 +136,24 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   );
 }
 
-function sortRules(sortOrder: SortOrder, rules: PromRuleWithLocation[]) {
+function sortRules(sortOrder: SortOrder, rules: CombinedRuleWithLocation[]) {
   if (sortOrder === SortOrder.Importance) {
     // @ts-ignore
     return sortBy(rules, (rule) => alertDef.alertStateSortScore[rule.state]);
   } else if (sortOrder === SortOrder.TimeAsc) {
-    return sortBy(rules, (rule) => getFirstActiveAt(rule.rule) || new Date());
+    return sortBy(rules, (rule) => {
+      //at this point rules are all AlertingRule, this check is only needed for Typescript checks
+      const alertingRule: AlertingRule | undefined = getAlertingRule(rule) ?? undefined;
+      return getFirstActiveAt(alertingRule) || new Date();
+    });
   } else if (sortOrder === SortOrder.TimeDesc) {
-    return sortBy(rules, (rule) => getFirstActiveAt(rule.rule) || new Date()).reverse();
+    return sortBy(rules, (rule) => {
+      //at this point rules are all AlertingRule, this check is only needed for Typescript checks
+      const alertingRule: AlertingRule | undefined = getAlertingRule(rule) ?? undefined;
+      return getFirstActiveAt(alertingRule) || new Date();
+    }).reverse();
   }
-  const result = sortBy(rules, (rule) => rule.rule.name.toLowerCase());
+  const result = sortBy(rules, (rule) => rule.name.toLowerCase());
   if (sortOrder === SortOrder.AlphaDesc) {
     result.reverse();
   }
@@ -144,39 +161,46 @@ function sortRules(sortOrder: SortOrder, rules: PromRuleWithLocation[]) {
   return result;
 }
 
-function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: PromRuleWithLocation[]) {
+function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: CombinedRuleWithLocation[]) {
   const { options, replaceVariables } = props;
 
   let filteredRules = [...rules];
   if (options.dashboardAlerts) {
     const dashboardUid = getDashboardSrv().getCurrent()?.uid;
-    filteredRules = filteredRules.filter(({ rule: { annotations = {} } }) =>
+    filteredRules = filteredRules.filter(({ annotations = {} }) =>
       Object.entries(annotations).some(([key, value]) => key === Annotation.dashboardUID && value === dashboardUid)
     );
   }
   if (options.alertName) {
     const replacedName = replaceVariables(options.alertName);
-    filteredRules = filteredRules.filter(({ rule: { name } }) =>
+    filteredRules = filteredRules.filter(({ name }) =>
       name.toLocaleLowerCase().includes(replacedName.toLocaleLowerCase())
     );
   }
 
   filteredRules = filteredRules.filter((rule) => {
+    const alertingRule = getAlertingRule(rule);
+    if (!alertingRule) {
+      return false;
+    }
     return (
-      (options.stateFilter.firing && rule.rule.state === PromAlertingRuleState.Firing) ||
-      (options.stateFilter.pending && rule.rule.state === PromAlertingRuleState.Pending) ||
-      (options.stateFilter.normal && rule.rule.state === PromAlertingRuleState.Inactive)
+      (options.stateFilter.firing && alertingRule.state === PromAlertingRuleState.Firing) ||
+      (options.stateFilter.pending && alertingRule.state === PromAlertingRuleState.Pending) ||
+      (options.stateFilter.normal && alertingRule.state === PromAlertingRuleState.Inactive)
     );
   });
 
   if (options.alertInstanceLabelFilter) {
     const replacedLabelFilter = replaceVariables(options.alertInstanceLabelFilter);
     const matchers = parseMatchers(replacedLabelFilter);
+
     // Reduce rules and instances to only those that match
-    filteredRules = filteredRules.reduce<PromRuleWithLocation[]>((rules, rule) => {
-      const filteredAlerts = (rule.rule.alerts ?? []).filter(({ labels }) => labelsMatchMatchers(labels, matchers));
+    filteredRules = filteredRules.reduce<CombinedRuleWithLocation[]>((rules, rule) => {
+      const alertingRule = getAlertingRule(rule);
+      const filteredAlerts = (alertingRule?.alerts ?? []).filter(({ labels }) => labelsMatchMatchers(labels, matchers));
       if (filteredAlerts.length) {
-        rules.push({ ...rule, rule: { ...rule.rule, alerts: filteredAlerts } });
+        const alertRule: AlertingRule | null = getAlertingRule(rule);
+        alertRule && rules.push({ ...rule, promRule: { ...alertRule, alerts: filteredAlerts } });
       }
       return rules;
     }, []);
@@ -200,8 +224,9 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: PromRule
   // Remove rules having 0 instances
   // AlertInstances filters instances and we need to prevent situation
   // when we display a rule with 0 instances
-  filteredRules = filteredRules.reduce<PromRuleWithLocation[]>((rules, rule) => {
-    const filteredAlerts = filterAlerts(options, rule.rule.alerts ?? []);
+  filteredRules = filteredRules.reduce<CombinedRuleWithLocation[]>((rules, rule) => {
+    const alertingRule = getAlertingRule(rule);
+    const filteredAlerts = alertingRule ? filterAlerts(options, alertingRule.alerts ?? []) : [];
     if (filteredAlerts.length) {
       // We intentionally don't set alerts to filteredAlerts
       // because later we couldn't display that some alerts are hidden (ref AlertInstances filtering)
@@ -239,13 +264,23 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     border-radius: ${theme.shape.borderRadius(2)};
     margin-bottom: ${theme.spacing(0.5)};
 
-    & > * {
-      margin-right: ${theme.spacing(1)};
-    }
+    gap: ${theme.spacing(2)};
   `,
   alertName: css`
     font-size: ${theme.typography.h6.fontSize};
     font-weight: ${theme.typography.fontWeightBold};
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  `,
+  alertNameWrapper: css`
+    display: flex;
+    flex: 1;
+    flex-wrap: nowrap;
+    flex-direction: column;
+
+    min-width: 100px;
   `,
   alertLabels: css`
     > * {
@@ -289,5 +324,9 @@ export const getStyles = (theme: GrafanaTheme2) => ({
   `,
   customGroupDetails: css`
     margin-bottom: ${theme.spacing(0.5)};
+  `,
+  link: css`
+    word-break: break-all;
+    color: ${theme.colors.primary.text};
   `,
 });

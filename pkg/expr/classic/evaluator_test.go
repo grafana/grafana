@@ -3,9 +3,10 @@ package classic
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/stretchr/testify/require"
 	ptr "github.com/xorcare/pointer"
+
+	"github.com/grafana/grafana/pkg/expr/mathexp"
 )
 
 func TestThresholdEvaluator(t *testing.T) {

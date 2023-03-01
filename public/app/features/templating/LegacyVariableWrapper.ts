@@ -1,12 +1,13 @@
-import { FormatVariable } from '../scenes/variables/interpolation/formatRegistry';
-import { VariableValue } from '../scenes/variables/types';
+import { VariableValue, FormatVariable } from '@grafana/scenes';
+import { VariableModel, VariableType } from '@grafana/schema';
+
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../variables/constants';
 
 export class LegacyVariableWrapper implements FormatVariable {
-  state: { name: string; value: VariableValue; text: VariableValue };
+  state: { name: string; value: VariableValue; text: VariableValue; type: VariableType };
 
-  constructor(name: string, value: VariableValue, text: VariableValue) {
-    this.state = { name, value, text };
+  constructor(variable: VariableModel, value: VariableValue, text: VariableValue) {
+    this.state = { name: variable.name, value, text, type: variable.type };
   }
 
   getValue(_fieldPath: string): VariableValue {
@@ -40,11 +41,14 @@ let legacyVariableWrapper: LegacyVariableWrapper | undefined;
 /**
  * Reuses a single instance to avoid unnecessary memory allocations
  */
-export function getVariableWrapper(name: string, value: VariableValue, text: VariableValue) {
+export function getVariableWrapper(variable: VariableModel, value: VariableValue, text: VariableValue) {
+  // TODO: provide more legacy variable properties, i.e. multi, includeAll that are used in custom interpolators,
+  // see Prometheus data source for example
   if (!legacyVariableWrapper) {
-    legacyVariableWrapper = new LegacyVariableWrapper(name, value, text);
+    legacyVariableWrapper = new LegacyVariableWrapper(variable, value, text);
   } else {
-    legacyVariableWrapper.state.name = name;
+    legacyVariableWrapper.state.name = variable.name;
+    legacyVariableWrapper.state.type = variable.type;
     legacyVariableWrapper.state.value = value;
     legacyVariableWrapper.state.text = text;
   }

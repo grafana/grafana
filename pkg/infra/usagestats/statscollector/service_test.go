@@ -7,36 +7,34 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-
-	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/services/stats/statstest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestTotalStatsUpdate(t *testing.T) {
-	sqlStore := mockstore.NewSQLStoreMock()
+	sqlStore := dbtest.NewFakeDB()
 	statsService := statstest.NewFakeService()
 	s := createService(t, setting.NewCfg(), sqlStore, statsService)
 	s.cfg.MetricsEndpointEnabled = true
 	s.cfg.MetricsEndpointDisableTotalStats = false
 
-	statsService.ExpectedSystemStats = &models.SystemStats{}
+	statsService.ExpectedSystemStats = &stats.SystemStats{}
 
 	tests := []struct {
 		MetricsEndpointEnabled           bool
@@ -96,7 +94,7 @@ func TestUsageStatsProviders(t *testing.T) {
 	provider1 := &dummyUsageStatProvider{stats: map[string]interface{}{"my_stat_1": "val1", "my_stat_2": "val2"}}
 	provider2 := &dummyUsageStatProvider{stats: map[string]interface{}{"my_stat_x": "valx", "my_stat_z": "valz"}}
 
-	store := mockstore.NewSQLStoreMock()
+	store := dbtest.NewFakeDB()
 	statsService := statstest.NewFakeService()
 	mockSystemStats(statsService)
 	s := createService(t, setting.NewCfg(), store, statsService)
@@ -112,7 +110,7 @@ func TestUsageStatsProviders(t *testing.T) {
 }
 
 func TestFeatureUsageStats(t *testing.T) {
-	store := mockstore.NewSQLStoreMock()
+	store := dbtest.NewFakeDB()
 	statsService := statstest.NewFakeService()
 	mockSystemStats(statsService)
 	s := createService(t, setting.NewCfg(), store, statsService)
@@ -125,7 +123,7 @@ func TestFeatureUsageStats(t *testing.T) {
 }
 
 func TestCollectingUsageStats(t *testing.T) {
-	sqlStore := mockstore.NewSQLStoreMock()
+	sqlStore := dbtest.NewFakeDB()
 	statsService := statstest.NewFakeService()
 	expectedDataSources := []*datasources.DataSource{
 		{
@@ -163,17 +161,6 @@ func TestCollectingUsageStats(t *testing.T) {
 
 	createConcurrentTokens(t, sqlStore)
 
-	s.social = &mockSocial{
-		OAuthProviders: map[string]bool{
-			"github":        true,
-			"gitlab":        true,
-			"azuread":       true,
-			"google":        true,
-			"generic_oauth": true,
-			"grafana_com":   true,
-		},
-	}
-
 	metrics, err := s.collectSystemStats(context.Background())
 	require.NoError(t, err)
 
@@ -186,17 +173,6 @@ func TestCollectingUsageStats(t *testing.T) {
 	assert.EqualValues(t, 19, metrics["stats.library_panels.count"])
 	assert.EqualValues(t, 20, metrics["stats.library_variables.count"])
 
-	assert.EqualValues(t, 1, metrics["stats.auth_enabled.anonymous.count"])
-	assert.EqualValues(t, 1, metrics["stats.auth_enabled.basic_auth.count"])
-	assert.EqualValues(t, 1, metrics["stats.auth_enabled.ldap.count"])
-	assert.EqualValues(t, 1, metrics["stats.auth_enabled.auth_proxy.count"])
-	assert.EqualValues(t, 1, metrics["stats.auth_enabled.oauth_github.count"])
-	assert.EqualValues(t, 1, metrics["stats.auth_enabled.oauth_gitlab.count"])
-	assert.EqualValues(t, 1, metrics["stats.auth_enabled.oauth_google.count"])
-	assert.EqualValues(t, 1, metrics["stats.auth_enabled.oauth_azuread.count"])
-	assert.EqualValues(t, 1, metrics["stats.auth_enabled.oauth_generic_oauth.count"])
-	assert.EqualValues(t, 1, metrics["stats.auth_enabled.oauth_grafana_com.count"])
-
 	assert.EqualValues(t, 1, metrics["stats.packaging.deb.count"])
 	assert.EqualValues(t, 1, metrics["stats.distributor.hosted-grafana.count"])
 
@@ -208,7 +184,7 @@ func TestCollectingUsageStats(t *testing.T) {
 }
 
 func TestElasticStats(t *testing.T) {
-	sqlStore := mockstore.NewSQLStoreMock()
+	sqlStore := dbtest.NewFakeDB()
 	statsService := statstest.NewFakeService()
 
 	expectedDataSources := []*datasources.DataSource{
@@ -248,13 +224,13 @@ func TestElasticStats(t *testing.T) {
 	assert.EqualValues(t, 1, metrics["stats.ds."+datasources.DS_ES+".v70_1_1.count"])
 }
 func TestDatasourceStats(t *testing.T) {
-	sqlStore := mockstore.NewSQLStoreMock()
+	sqlStore := dbtest.NewFakeDB()
 	statsService := statstest.NewFakeService()
 	s := createService(t, &setting.Cfg{}, sqlStore, statsService)
 
 	setupSomeDataSourcePlugins(t, s)
 
-	statsService.ExpectedDataSourceStats = []*models.DataSourceStats{
+	statsService.ExpectedDataSourceStats = []*stats.DataSourceStats{
 		{
 			Type:  datasources.DS_ES,
 			Count: 9,
@@ -291,7 +267,7 @@ func TestDatasourceStats(t *testing.T) {
 		},
 	}
 
-	statsService.ExpectedDataSourcesAccessStats = []*models.DataSourceAccessStats{
+	statsService.ExpectedDataSourcesAccessStats = []*stats.DataSourceAccessStats{
 		{
 			Type:   datasources.DS_ES,
 			Access: "direct",
@@ -356,11 +332,11 @@ func TestDatasourceStats(t *testing.T) {
 }
 
 func TestAlertNotifiersStats(t *testing.T) {
-	sqlStore := mockstore.NewSQLStoreMock()
+	sqlStore := dbtest.NewFakeDB()
 	statsService := statstest.NewFakeService()
 	s := createService(t, &setting.Cfg{}, sqlStore, statsService)
 
-	statsService.ExpectedNotifierUsageStats = []*models.NotifierUsageStats{
+	statsService.ExpectedNotifierUsageStats = []*stats.NotifierUsageStats{
 		{
 			Type:  "slack",
 			Count: 1,
@@ -379,7 +355,7 @@ func TestAlertNotifiersStats(t *testing.T) {
 }
 
 func mockSystemStats(statsService *statstest.FakeService) {
-	statsService.ExpectedSystemStats = &models.SystemStats{
+	statsService.ExpectedSystemStats = &stats.SystemStats{
 		Dashboards:                1,
 		Datasources:               2,
 		Users:                     3,
@@ -446,7 +422,7 @@ func setupSomeDataSourcePlugins(t *testing.T, s *Service) {
 	}
 }
 
-func createService(t testing.TB, cfg *setting.Cfg, store sqlstore.Store, statsService stats.Service, opts ...func(*serviceOptions)) *Service {
+func createService(t testing.TB, cfg *setting.Cfg, store db.DB, statsService stats.Service, opts ...func(*serviceOptions)) *Service {
 	t.Helper()
 
 	o := &serviceOptions{datasources: mockDatasourceService{}}
@@ -484,9 +460,8 @@ type mockDatasourceService struct {
 	datasources []*datasources.DataSource
 }
 
-func (s mockDatasourceService) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) error {
-	query.Result = s.datasources
-	return nil
+func (s mockDatasourceService) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) ([]*datasources.DataSource, error) {
+	return s.datasources, nil
 }
 
 func (s mockDatasourceService) GetHTTPTransport(ctx context.Context, ds *datasources.DataSource, provider httpclient.Provider, customMiddlewares ...sdkhttpclient.Middleware) (http.RoundTripper, error) {

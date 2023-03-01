@@ -9,8 +9,8 @@ import {
   TypedVariableModel,
 } from '@grafana/data';
 import { getDataSourceSrv, setTemplateSrv, TemplateSrv as BaseTemplateSrv } from '@grafana/runtime';
+import { sceneGraph, FormatRegistryID, formatRegistry, CustomFormatterFn } from '@grafana/scenes';
 
-import { formatRegistry, FormatRegistryID } from '../scenes/variables/interpolation/formatRegistry';
 import { variableAdapters } from '../variables/adapters';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../variables/constants';
 import { isAdHoc } from '../variables/guard';
@@ -125,7 +125,7 @@ export class TemplateSrv implements BaseTemplateSrv {
     return filters;
   }
 
-  formatValue(value: any, format: any, variable: any, text?: string): string {
+  formatValue(value: any, format?: any, variable?: any, text?: string): string {
     // for some scopedVars there is no variable
     variable = variable || {};
 
@@ -166,7 +166,7 @@ export class TemplateSrv implements BaseTemplateSrv {
       formatItem = formatRegistry.get(FormatRegistryID.glob);
     }
 
-    const formatVariable = getVariableWrapper(variable.name, value, text ?? value);
+    const formatVariable = getVariableWrapper(variable, value, text ?? value);
     return formatItem.formatter(value, args, formatVariable);
   }
 
@@ -276,6 +276,15 @@ export class TemplateSrv implements BaseTemplateSrv {
   }
 
   replace(target?: string, scopedVars?: ScopedVars, format?: string | Function): string {
+    if (scopedVars && scopedVars.__sceneObject) {
+      return sceneGraph.interpolate(
+        scopedVars.__sceneObject.value,
+        target,
+        scopedVars,
+        format as string | CustomFormatterFn | undefined
+      );
+    }
+
     if (!target) {
       return target ?? '';
     }

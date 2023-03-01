@@ -1,12 +1,11 @@
 import { render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { Provider } from 'react-redux';
-import { Router } from 'react-router-dom';
+import { TestProvider } from 'test/helpers/TestProvider';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
 
-import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import { DataSourceSrv, locationService, setDataSourceSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import {
   AlertManagerCortexConfig,
@@ -15,12 +14,12 @@ import {
   MuteTimeInterval,
   Route,
 } from 'app/plugins/datasource/alertmanager/types';
-import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types';
 
 import AmRoutes from './AmRoutes';
 import { fetchAlertManagerConfig, fetchStatus, updateAlertManagerConfig } from './api/alertmanager';
 import { discoverAlertmanagerFeatures } from './api/buildInfo';
+import * as grafanaApp from './components/receivers/grafanaAppReceivers/grafanaApp';
 import { mockDataSource, MockDataSourceSrv, someCloudAlertManagerConfig, someCloudAlertManagerStatus } from './mocks';
 import { defaultGroupBy } from './utils/amroutes';
 import { getAllDataSources } from './utils/config';
@@ -43,21 +42,18 @@ const mocks = {
   },
   contextSrv: jest.mocked(contextSrv),
 };
+const useGetGrafanaReceiverTypeCheckerMock = jest.spyOn(grafanaApp, 'useGetGrafanaReceiverTypeChecker');
 
 const renderAmRoutes = (alertManagerSourceName?: string) => {
-  const store = configureStore();
   locationService.push(location);
-
   locationService.push(
     '/alerting/routes' + (alertManagerSourceName ? `?${ALERTMANAGER_NAME_QUERY_KEY}=${alertManagerSourceName}` : '')
   );
 
   return render(
-    <Provider store={store}>
-      <Router history={locationService.getHistory()}>
-        <AmRoutes />
-      </Router>
-    </Provider>
+    <TestProvider>
+      <AmRoutes />
+    </TestProvider>
   );
 };
 
@@ -90,8 +86,8 @@ const ui = {
 
   editRouteButton: byLabelText('Edit route'),
   deleteRouteButton: byLabelText('Delete route'),
-  newPolicyButton: byRole('button', { name: /New policy/ }),
-  newPolicyCTAButton: byRole('button', { name: /New specific policy/ }),
+  newPolicyButton: byRole('button', { name: /Add policy/ }),
+  newPolicyCTAButton: byRole('button', { name: /Add specific policy/ }),
   savePolicyButton: byRole('button', { name: /save policy/i }),
 
   receiverSelect: byTestId('am-receiver-select'),
@@ -199,12 +195,13 @@ describe('AmRoutes', () => {
     mocks.contextSrv.evaluatePermission.mockImplementation(() => []);
     mocks.api.discoverAlertmanagerFeatures.mockResolvedValue({ lazyConfigInit: false });
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
+    useGetGrafanaReceiverTypeCheckerMock.mockReturnValue(() => undefined);
   });
 
   afterEach(() => {
     jest.resetAllMocks();
 
-    setDataSourceSrv(undefined as any);
+    setDataSourceSrv(undefined as unknown as DataSourceSrv);
   });
 
   it('loads and shows routes', async () => {

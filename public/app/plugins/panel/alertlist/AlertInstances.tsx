@@ -1,10 +1,10 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { noop } from 'lodash';
 import pluralize from 'pluralize';
-import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, PanelProps } from '@grafana/data';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { clearButtonStyles, Icon, useStyles2 } from '@grafana/ui';
 import { AlertInstancesTable } from 'app/features/alerting/unified/components/rules/AlertInstancesTable';
 import { sortAlerts } from 'app/features/alerting/unified/utils/misc';
 import { Alert } from 'app/types/unified-alerting';
@@ -19,11 +19,12 @@ interface Props {
   options: PanelProps<UnifiedAlertListOptions>['options'];
 }
 
-export const AlertInstances: FC<Props> = ({ alerts, options }) => {
+export const AlertInstances = ({ alerts, options }: Props) => {
   // when custom grouping is enabled, we will always uncollapse the list of alert instances
   const defaultShowInstances = options.groupMode === GroupMode.Custom ? true : options.showInstances;
   const [displayInstances, setDisplayInstances] = useState<boolean>(defaultShowInstances);
   const styles = useStyles2(getStyles);
+  const clearButton = useStyles2(clearButtonStyles);
 
   const toggleDisplayInstances = useCallback(() => {
     setDisplayInstances((display) => !display);
@@ -50,11 +51,14 @@ export const AlertInstances: FC<Props> = ({ alerts, options }) => {
   return (
     <div>
       {options.groupMode === GroupMode.Default && (
-        <div className={uncollapsible ? styles.clickable : ''} onClick={() => toggleShowInstances()}>
+        <button
+          className={cx(clearButton, uncollapsible ? styles.clickable : '')}
+          onClick={() => toggleShowInstances()}
+        >
           {uncollapsible && <Icon name={displayInstances ? 'angle-down' : 'angle-right'} size={'md'} />}
           <span>{`${filteredAlerts.length} ${pluralize('instance', filteredAlerts.length)}`}</span>
           {hiddenInstances > 0 && <span>, {`${hiddenInstances} hidden by filters`}</span>}
-        </div>
+        </button>
       )}
       {displayInstances && (
         <AlertInstancesTable

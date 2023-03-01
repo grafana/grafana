@@ -7,8 +7,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 const baseIntervalSeconds = 10
@@ -17,7 +19,7 @@ func BenchmarkAlertInstanceOperations(b *testing.B) {
 	b.StopTimer()
 	ctx := context.Background()
 	_, dbstore := tests.SetupTestEnv(b, baseIntervalSeconds)
-	dbstore.FeatureToggles.(*tests.FakeFeatures).BigTransactions = false
+	dbstore.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertingBigTransactions)
 
 	const mainOrgID int64 = 1
 
@@ -59,9 +61,9 @@ func TestIntegrationAlertInstanceBulkWrite(t *testing.T) {
 	_, dbstore := tests.SetupTestEnv(t, baseIntervalSeconds)
 
 	orgIDs := []int64{1, 2, 3, 4, 5}
-	counts := []int{20_000, 200, 503, 0, 1256}
-	instances := []models.AlertInstance{}
-	keys := []models.AlertInstanceKey{}
+	counts := []int{10_000, 200, 503, 0, 1256}
+	instances := make([]models.AlertInstance, 0, 10_000+200+503+0+1256)
+	keys := make([]models.AlertInstanceKey, 0, 10_000+200+503+0+1256)
 
 	for i, id := range orgIDs {
 		alertRule := tests.CreateTestAlertRule(t, ctx, dbstore, 60, id)
@@ -86,7 +88,8 @@ func TestIntegrationAlertInstanceBulkWrite(t *testing.T) {
 	}
 
 	for _, bigStmts := range []bool{false, true} {
-		dbstore.FeatureToggles.(*tests.FakeFeatures).BigTransactions = bigStmts
+		dbstore.FeatureToggles = featuremgmt.WithFeatures([]interface{}{featuremgmt.FlagAlertingBigTransactions, bigStmts})
+		t.Log("Saving")
 		err := dbstore.SaveAlertInstances(ctx, instances...)
 		require.NoError(t, err)
 		t.Log("Finished database write")
@@ -125,6 +128,16 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 	_, dbstore := tests.SetupTestEnv(t, baseIntervalSeconds)
 
 	const mainOrgID int64 = 1
+
+	containsHash := func(t *testing.T, instances []*models.AlertInstance, hash string) {
+		t.Helper()
+		for _, i := range instances {
+			if i.LabelsHash == hash {
+				return
+			}
+		}
+		require.Fail(t, "%v does not contain an instance with hash %s", instances, hash)
+	}
 
 	alertRule1 := tests.CreateTestAlertRule(t, ctx, dbstore, 60, mainOrgID)
 	orgID := alertRule1.OrgID
@@ -249,16 +262,56 @@ func TestIntegrationAlertInstanceOperations(t *testing.T) {
 		require.Len(t, listQuery.Result, 4)
 	})
 
-	t.Run("can list all added instances in org filtered by current state", func(t *testing.T) {
-		listQuery := &models.ListAlertInstancesQuery{
-			RuleOrgID: orgID,
-			State:     models.InstanceStateNormal,
+	t.Run("should ignore Normal state with no reason if feature flag is enabled", func(t *testing.T) {
+		labels := models.InstanceLabels{"test": util.GenerateShortUID()}
+		instance1 := models.AlertInstance{
+			AlertInstanceKey: models.AlertInstanceKey{
+				RuleOrgID:  orgID,
+				RuleUID:    util.GenerateShortUID(),
+				LabelsHash: util.GenerateShortUID(),
+			},
+			CurrentState:  models.InstanceStateNormal,
+			CurrentReason: "",
+			Labels:        labels,
 		}
-
-		err := dbstore.ListAlertInstances(ctx, listQuery)
+		instance2 := models.AlertInstance{
+			AlertInstanceKey: models.AlertInstanceKey{
+				RuleOrgID:  orgID,
+				RuleUID:    util.GenerateShortUID(),
+				LabelsHash: util.GenerateShortUID(),
+			},
+			CurrentState:  models.InstanceStateNormal,
+			CurrentReason: models.StateReasonError,
+			Labels:        labels,
+		}
+		err := dbstore.SaveAlertInstances(ctx, instance1, instance2)
 		require.NoError(t, err)
 
-		require.Len(t, listQuery.Result, 1)
+		listQuery := &models.ListAlertInstancesQuery{
+			RuleOrgID: orgID,
+		}
+
+		err = dbstore.ListAlertInstances(ctx, listQuery)
+		require.NoError(t, err)
+
+		containsHash(t, listQuery.Result, instance1.LabelsHash)
+
+		f := dbstore.FeatureToggles
+		dbstore.FeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagAlertingNoNormalState)
+		t.Cleanup(func() {
+			dbstore.FeatureToggles = f
+		})
+
+		err = dbstore.ListAlertInstances(ctx, listQuery)
+		require.NoError(t, err)
+
+		containsHash(t, listQuery.Result, instance2.LabelsHash)
+
+		for _, instance := range listQuery.Result {
+			if instance.CurrentState == models.InstanceStateNormal && instance.CurrentReason == "" {
+				require.Fail(t, "List operation expected to return all states except Normal but the result contains Normal states")
+			}
+		}
 	})
 
 	t.Run("update instance with same org_id, uid and different state", func(t *testing.T) {

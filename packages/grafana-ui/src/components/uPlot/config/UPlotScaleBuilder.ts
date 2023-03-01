@@ -179,7 +179,7 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
           minMax = uPlot.rangeNum(hardMinOnly ? hardMin : dataMin, hardMaxOnly ? hardMax : dataMax, rangeConfig);
         }
       } else if (scale.distr === 3) {
-        minMax = uPlot.rangeLog(dataMin!, dataMax!, logBase, true);
+        minMax = uPlot.rangeLog(hardMin ?? dataMin!, hardMax ?? dataMax!, logBase, true);
       }
 
       if (decimals === 0) {
@@ -217,13 +217,15 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
         }
       }
 
-      // if all we got were hard limits, treat them as static min/max
-      if (hardMinOnly) {
-        minMax[0] = hardMin!;
-      }
+      if (scale.distr === 1) {
+        // if all we got were hard limits, treat them as static min/max
+        if (hardMinOnly) {
+          minMax[0] = hardMin!;
+        }
 
-      if (hardMaxOnly) {
-        minMax[1] = hardMax!;
+        if (hardMaxOnly) {
+          minMax[1] = hardMax!;
+        }
       }
 
       // guard against invalid y ranges

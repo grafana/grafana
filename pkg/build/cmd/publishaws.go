@@ -18,6 +18,8 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
 	"github.com/urfave/cli/v2"
+
+	"github.com/grafana/grafana/pkg/build/config"
 )
 
 const (
@@ -240,7 +242,7 @@ func (s *AwsMarketplacePublishingService) ReleaseToProduct(ctx context.Context, 
 }
 
 func getPublishAwsMarketplaceFlags(ctx *cli.Context) (*publishAwsMarketplaceFlags, error) {
-	metadata, err := GenerateMetadata(ctx)
+	metadata, err := config.GenerateMetadata(ctx)
 	if err != nil {
 		return nil, err
 	}

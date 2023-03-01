@@ -148,15 +148,39 @@ function operationWithRangeVectorRenderer(
 }
 
 export function labelFilterRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
-  if (model.params[0] === '') {
-    return innerExpr;
-  }
+  const integerOperators = ['<', '<=', '>', '>='];
 
-  if (model.params[1] === '<' || model.params[1] === '>') {
+  if (integerOperators.includes(String(model.params[1]))) {
     return `${innerExpr} | ${model.params[0]} ${model.params[1]} ${model.params[2]}`;
   }
 
   return `${innerExpr} | ${model.params[0]} ${model.params[1]} \`${model.params[2]}\``;
+}
+
+export function isConflictingFilter(
+  operation: QueryBuilderOperation,
+  queryOperations: QueryBuilderOperation[]
+): boolean {
+  const operationIsNegative = operation.params[1].toString().startsWith('!');
+
+  const candidates = queryOperations.filter(
+    (queryOperation) =>
+      queryOperation.id === LokiOperationId.LabelFilter &&
+      queryOperation.params[0] === operation.params[0] &&
+      queryOperation.params[2] === operation.params[2]
+  );
+
+  const conflict = candidates.some((candidate) => {
+    if (operationIsNegative && candidate.params[1].toString().startsWith('!') === false) {
+      return true;
+    }
+    if (operationIsNegative === false && candidate.params[1].toString().startsWith('!')) {
+      return true;
+    }
+    return false;
+  });
+
+  return conflict;
 }
 
 export function pipelineRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {

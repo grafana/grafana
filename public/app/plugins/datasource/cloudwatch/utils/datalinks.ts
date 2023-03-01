@@ -20,7 +20,7 @@ export async function addDataLinksToLogsResponse(
   getRegion: (region: string) => string,
   tracingDatasourceUid?: string
 ): Promise<void> {
-  const replace = (target: string, fieldName?: string) => replaceFn(target, request.scopedVars, true, fieldName);
+  const replace = (target: string, fieldName?: string) => replaceFn(target, request.scopedVars, false, fieldName);
   const getVariableValue = (target: string) => getVariableValueFn(target, request.scopedVars);
 
   for (const dataFrame of response.data as DataFrame[]) {
@@ -70,16 +70,13 @@ function createAwsConsoleLink(
   replace: (target: string, fieldName?: string) => string,
   getVariableValue: (value: string) => string[]
 ) {
-  const arns = target.logGroups?.flatMap((group) => {
-    if (group.value === undefined) {
-      return [];
-    }
-    return [group.value.replace(/:\*$/, '')]; // remove `:*` from end of arn
-  });
-  const logGroupNames = target.logGroupNames;
-  const sources = arns ?? logGroupNames;
+  const arns = (target.logGroups ?? [])
+    .filter((group) => group?.arn)
+    .map((group) => (group.arn ?? '').replace(/:\*$/, '')); // remove `:*` from end of arn
+  const logGroupNames = target.logGroupNames ?? [];
+  const sources = arns?.length ? arns : logGroupNames;
   const interpolatedExpression = target.expression ? replace(target.expression) : '';
-  const interpolatedGroups = sources?.flatMap(getVariableValue) ?? [];
+  const interpolatedGroups = sources?.flatMap(getVariableValue);
 
   const urlProps: AwsUrl = {
     end: range.to.toISOString(),

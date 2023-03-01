@@ -23,21 +23,22 @@ func (s CorrelationsService) createCorrelation(ctx context.Context, cmd CreateCo
 		var err error
 
 		query := &datasources.GetDataSourceQuery{
-			OrgId: cmd.OrgId,
-			Uid:   cmd.SourceUID,
+			OrgID: cmd.OrgId,
+			UID:   cmd.SourceUID,
 		}
-		if err = s.DataSourceService.GetDataSource(ctx, query); err != nil {
+		dataSource, err := s.DataSourceService.GetDataSource(ctx, query)
+		if err != nil {
 			return ErrSourceDataSourceDoesNotExists
 		}
 
-		if !cmd.SkipReadOnlyCheck && query.Result.ReadOnly {
+		if !cmd.SkipReadOnlyCheck && dataSource.ReadOnly {
 			return ErrSourceDataSourceReadOnly
 		}
 
 		if cmd.TargetUID != nil {
-			if err = s.DataSourceService.GetDataSource(ctx, &datasources.GetDataSourceQuery{
-				OrgId: cmd.OrgId,
-				Uid:   *cmd.TargetUID,
+			if _, err = s.DataSourceService.GetDataSource(ctx, &datasources.GetDataSourceQuery{
+				OrgID: cmd.OrgId,
+				UID:   *cmd.TargetUID,
 			}); err != nil {
 				return ErrTargetDataSourceDoesNotExists
 			}
@@ -61,14 +62,15 @@ func (s CorrelationsService) createCorrelation(ctx context.Context, cmd CreateCo
 func (s CorrelationsService) deleteCorrelation(ctx context.Context, cmd DeleteCorrelationCommand) error {
 	return s.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
 		query := &datasources.GetDataSourceQuery{
-			OrgId: cmd.OrgId,
-			Uid:   cmd.SourceUID,
+			OrgID: cmd.OrgId,
+			UID:   cmd.SourceUID,
 		}
-		if err := s.DataSourceService.GetDataSource(ctx, query); err != nil {
+		dataSource, err := s.DataSourceService.GetDataSource(ctx, query)
+		if err != nil {
 			return ErrSourceDataSourceDoesNotExists
 		}
 
-		if query.Result.ReadOnly {
+		if dataSource.ReadOnly {
 			return ErrSourceDataSourceReadOnly
 		}
 
@@ -88,14 +90,15 @@ func (s CorrelationsService) updateCorrelation(ctx context.Context, cmd UpdateCo
 
 	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *db.Session) error {
 		query := &datasources.GetDataSourceQuery{
-			OrgId: cmd.OrgId,
-			Uid:   cmd.SourceUID,
+			OrgID: cmd.OrgId,
+			UID:   cmd.SourceUID,
 		}
-		if err := s.DataSourceService.GetDataSource(ctx, query); err != nil {
+		dataSource, err := s.DataSourceService.GetDataSource(ctx, query)
+		if err != nil {
 			return ErrSourceDataSourceDoesNotExists
 		}
 
-		if query.Result.ReadOnly {
+		if dataSource.ReadOnly {
 			return ErrSourceDataSourceReadOnly
 		}
 
@@ -126,6 +129,9 @@ func (s CorrelationsService) updateCorrelation(ctx context.Context, cmd UpdateCo
 			if cmd.Config.Target != nil {
 				correlation.Config.Target = *cmd.Config.Target
 			}
+			if cmd.Config.Transformations != nil {
+				correlation.Config.Transformations = cmd.Config.Transformations
+			}
 		}
 
 		updateCount, err := session.Where("uid = ? AND source_uid = ?", correlation.UID, correlation.SourceUID).Limit(1).Update(correlation)
@@ -150,10 +156,10 @@ func (s CorrelationsService) getCorrelation(ctx context.Context, cmd GetCorrelat
 
 	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *db.Session) error {
 		query := &datasources.GetDataSourceQuery{
-			OrgId: cmd.OrgId,
-			Uid:   cmd.SourceUID,
+			OrgID: cmd.OrgId,
+			UID:   cmd.SourceUID,
 		}
-		if err := s.DataSourceService.GetDataSource(ctx, query); err != nil {
+		if _, err := s.DataSourceService.GetDataSource(ctx, query); err != nil {
 			return ErrSourceDataSourceDoesNotExists
 		}
 
@@ -176,10 +182,10 @@ func (s CorrelationsService) getCorrelationsBySourceUID(ctx context.Context, cmd
 
 	err := s.SQLStore.WithTransactionalDbSession(ctx, func(session *db.Session) error {
 		query := &datasources.GetDataSourceQuery{
-			OrgId: cmd.OrgId,
-			Uid:   cmd.SourceUID,
+			OrgID: cmd.OrgId,
+			UID:   cmd.SourceUID,
 		}
-		if err := s.DataSourceService.GetDataSource(ctx, query); err != nil {
+		if _, err := s.DataSourceService.GetDataSource(ctx, query); err != nil {
 			return ErrSourceDataSourceDoesNotExists
 		}
 

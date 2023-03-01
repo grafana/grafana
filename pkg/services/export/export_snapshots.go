@@ -10,7 +10,7 @@ import (
 
 func exportSnapshots(helper *commitHelper, job *gitExportJob) error {
 	cmd := &dashboardsnapshots.GetDashboardSnapshotsQuery{
-		OrgId:        helper.orgID,
+		OrgID:        helper.orgID,
 		Limit:        500000,
 		SignedInUser: nil,
 	}
@@ -18,12 +18,12 @@ func exportSnapshots(helper *commitHelper, job *gitExportJob) error {
 		return fmt.Errorf("snapshots requires an admin user")
 	}
 
-	err := job.dashboardsnapshotsService.SearchDashboardSnapshots(helper.ctx, cmd)
+	result, err := job.dashboardsnapshotsService.SearchDashboardSnapshots(helper.ctx, cmd)
 	if err != nil {
 		return err
 	}
 
-	if len(cmd.Result) < 1 {
+	if len(result) < 1 {
 		return nil // nothing
 	}
 
@@ -32,9 +32,9 @@ func exportSnapshots(helper *commitHelper, job *gitExportJob) error {
 		comment: "Export snapshots",
 	}
 
-	for _, snapshot := range cmd.Result {
+	for _, snapshot := range result {
 		gitcmd.body = append(gitcmd.body, commitBody{
-			fpath: filepath.Join(helper.orgDir, "snapshot", fmt.Sprintf("%d-snapshot.json", snapshot.Id)),
+			fpath: filepath.Join(helper.orgDir, "snapshot", fmt.Sprintf("%d-snapshot.json", snapshot.ID)),
 			body:  prettyJSON(snapshot),
 		})
 	}

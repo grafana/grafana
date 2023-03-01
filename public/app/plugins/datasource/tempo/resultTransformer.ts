@@ -32,7 +32,7 @@ export function createTableFrame(
         type: FieldType.time,
         config: {
           custom: {
-            width: 150,
+            width: 200,
           },
         },
       },
@@ -41,7 +41,7 @@ export function createTableFrame(
         type: FieldType.string,
         config: {
           displayNameFromDS: 'Trace ID',
-          custom: { width: 300 },
+          custom: { width: 180 },
           links: [
             {
               title: 'Click to open trace ${__value.raw}',
@@ -567,7 +567,7 @@ export function createTableFrameFromSearch(data: TraceSearchMetadata[], instance
                 datasourceName: instanceSettings.name,
                 query: {
                   query: '${__value.raw}',
-                  queryType: 'traceId',
+                  queryType: 'traceql',
                 },
               },
             },
@@ -630,6 +630,9 @@ export function createTableFrameFromTraceQlQuery(
         config: {
           unit: 'string',
           displayNameFromDS: 'Trace ID',
+          custom: {
+            width: 200,
+          },
           links: [
             {
               title: 'Trace: ${__value.raw}',
@@ -639,16 +642,35 @@ export function createTableFrameFromTraceQlQuery(
                 datasourceName: instanceSettings.name,
                 query: {
                   query: '${__value.raw}',
-                  queryType: 'traceId',
+                  queryType: 'traceql',
                 },
               },
             },
           ],
         },
       },
+      {
+        name: 'startTime',
+        type: FieldType.string,
+        config: {
+          displayNameFromDS: 'Start time',
+          custom: {
+            width: 200,
+          },
+        },
+      },
       { name: 'traceName', type: FieldType.string, config: { displayNameFromDS: 'Name' } },
-      { name: 'startTime', type: FieldType.string, config: { displayNameFromDS: 'Start time' } },
-      { name: 'traceDuration', type: FieldType.number, config: { displayNameFromDS: 'Duration', unit: 'ms' } },
+      {
+        name: 'traceDuration',
+        type: FieldType.number,
+        config: {
+          displayNameFromDS: 'Duration',
+          unit: 'ms',
+          custom: {
+            width: 120,
+          },
+        },
+      },
     ],
     meta: {
       preferredVisualisationType: 'table',
@@ -710,6 +732,9 @@ const traceSubFrame = (
         config: {
           unit: 'string',
           displayNameFromDS: 'Span ID',
+          custom: {
+            width: 200,
+          },
           links: [
             {
               title: 'Span: ${__value.raw}',
@@ -719,7 +744,7 @@ const traceSubFrame = (
                 datasourceName: instanceSettings.name,
                 query: {
                   query: '${__data.fields.traceIdHidden}',
-                  queryType: 'traceId',
+                  queryType: 'traceql',
                 },
                 panelsState: {
                   trace: {
@@ -732,20 +757,31 @@ const traceSubFrame = (
         },
       },
       {
+        name: 'spanStartTime',
+        type: FieldType.string,
+        config: {
+          displayNameFromDS: 'Start time',
+          custom: {
+            width: 200,
+          },
+        },
+      },
+      {
         name: 'name',
         type: FieldType.string,
         config: { displayNameFromDS: 'Name', custom: { hidden: !hasNameAttribute } },
-      },
-      {
-        name: 'spanStartTime',
-        type: FieldType.string,
-        config: { displayNameFromDS: 'Start time' },
       },
       ...Object.values(spanDynamicAttrs),
       {
         name: 'duration',
         type: FieldType.number,
-        config: { displayNameFromDS: 'Duration', unit: 'ns' },
+        config: {
+          displayNameFromDS: 'Duration',
+          unit: 'ns',
+          custom: {
+            width: 120,
+          },
+        },
       },
     ],
     meta: {

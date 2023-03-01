@@ -1,9 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/alerting-rules/create-mimir-loki-managed-rule/
-  - /docs/grafana/latest/alerting/unified-alerting/alerting-rules/create-cortex-loki-managed-recording-rule/
-  - /docs/grafana/latest/alerting/unified-alerting/alerting-rules/create-mimir-loki-managed-recording-rule/
-  - /docs/grafana/latest/alerting/unified-alerting/alerting-rules/create-mimir-loki-managed-rule/
+  - ../unified-alerting/alerting-rules/create-cortex-loki-managed-recording-rule/
+  - ../unified-alerting/alerting-rules/create-mimir-loki-managed-recording-rule/
+  - ../unified-alerting/alerting-rules/create-mimir-loki-managed-rule/
 description: Create Grafana Mimir or Loki managed alerting rule
 keywords:
   - grafana
@@ -36,7 +35,7 @@ Watch this video to learn more about how to create a Mimir managed alert rule: {
 ## Add a Grafana Mimir or Loki managed alerting rule
 
 1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page listing existing alerts.
-1. Click **New alert rule**. The new alerting rule page opens where the Grafana managed alerts option is selected by default.
+1. Click **Create alert rule**. The new alerting rule page opens where the Grafana managed alerts option is selected by default.
 1. In Step 1, add the rule name.
    - In **Rule name**, add a descriptive name. This name is displayed in the alert rule list. It is also the `alertname` label for every alert instance that is created from this rule.
 1. In Step 2, select **Mimir or Loki alert** option.

@@ -1,14 +1,13 @@
 ---
 aliases:
-  - /docs/grafana/latest/auth/saml/
-  - /docs/grafana/latest/enterprise/configure-saml/
-  - /docs/grafana/latest/enterprise/saml/
-  - /docs/grafana/latest/enterprise/saml/about-saml/
-  - /docs/grafana/latest/enterprise/saml/configure-saml/
-  - /docs/grafana/latest/enterprise/saml/enable-saml/
-  - /docs/grafana/latest/enterprise/saml/set-up-saml-with-okta/
-  - /docs/grafana/latest/enterprise/saml/troubleshoot-saml/
-  - /docs/grafana/latest/setup-grafana/configure-security/configure-authentication/saml/
+  - ../../../auth/saml/
+  - ../../../enterprise/configure-saml/
+  - ../../../enterprise/saml/
+  - ../../../enterprise/saml/about-saml/
+  - ../../../enterprise/saml/configure-saml/
+  - ../../../enterprise/saml/enable-saml/
+  - ../../../enterprise/saml/set-up-saml-with-okta/
+  - ../../../enterprise/saml/troubleshoot-saml/
 description: Learn how to configure SAML authentication in Grafana.
 menuTitle: Configure SAML authentication
 title: Configure SAML authentication in Grafana
@@ -21,7 +20,7 @@ SAML authentication integration allows your Grafana users to log in by using an 
 
 The SAML single sign-on (SSO) standard is varied and flexible. Our implementation contains a subset of features needed to provide a smooth authentication experience into Grafana.
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced]({{< ref "/docs/grafana-cloud" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud).
 
 ## Supported SAML
 
@@ -68,6 +67,7 @@ root_url = https://grafana.example.com
 
 [auth.saml]
 enabled = true
+auto_login = false
 private_key_path = "/path/to/private_key.pem"
 certificate_path = "/path/to/certificate.cert"
 idp_metadata_url = "https://my-org.okta.com/app/my-application/sso/saml/metadata"
@@ -170,6 +170,7 @@ The table below describes all SAML configuration options. Continue reading below
 | `enabled`                                                  | No       | Whether SAML authentication is allowed                                                                                                                                                                       | `false`       |
 | `single_logout`                                            | No       | Whether SAML Single Logout enabled                                                                                                                                                                           | `false`       |
 | `allow_sign_up`                                            | No       | Whether to allow new Grafana user creation through SAML login. If set to `false`, then only existing Grafana users can log in with SAML.                                                                     | `true`        |
+| `auto_login`                                               | No       | Whether SAML auto login is enabled                                                                                                                                                                           | `false`       |
 | `allow_idp_initiated`                                      | No       | Whether SAML IdP-initiated login is allowed                                                                                                                                                                  | `false`       |
 | `certificate` or `certificate_path`                        | Yes      | Base64-encoded string or Path for the SP X.509 certificate                                                                                                                                                   |               |
 | `private_key` or `private_key_path`                        | Yes      | Base64-encoded string or Path for the SP private key                                                                                                                                                         |               |
@@ -271,6 +272,15 @@ assertion_attribute_name = $__saml{firstName} $__saml{lastName}
 ### Allow new user signups
 
 By default, new Grafana users using SAML authentication will have an account created for them automatically. To decouple authentication and account creation and ensure only users with existing accounts can log in with SAML, set the `allow_sign_up` option to false.
+
+### Configure automatic login
+
+Set `auto_login` option to true to attempt login automatically, skipping the login screen.
+This setting is ignored if multiple auth providers are configured to use auto login.
+
+```
+auto_login = true
+```
 
 ### Configure team sync
 
@@ -391,11 +401,18 @@ You can use `*` as the Grafana organization in the mapping if you want all users
 
 With the [`allowed_organizations`]({{< relref "../../../configure-grafana/enterprise-configuration/#allowed-organizations" >}}) option you can specify a list of organizations where the user must be a member of at least one of them to be able to log in to Grafana.
 
+To put values containing spaces in the list, use the following JSON syntax:
+
+```ini
+allowed_organizations = ["org 1", "second org"]
+```
+
 ### Example SAML configuration
 
 ```bash
 [auth.saml]
 enabled = true
+auto_login = false
 certificate_path = "/path/to/certificate.cert"
 private_key_path = "/path/to/private_key.pem"
 idp_metadata_path = "/my/metadata.xml"

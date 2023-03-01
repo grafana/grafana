@@ -1,18 +1,21 @@
-load(
-    'scripts/drone/steps/lib.star',
-    'identify_runner_step',
-    'download_grabpl_step',
-    'lint_drone_step',
-    'compile_build_cmd',
-)
+"""
+This module returns the pipeline used for verifying Drone configuration.
+"""
 
 load(
-    'scripts/drone/utils/utils.star',
-    'pipeline',
+    "scripts/drone/steps/lib.star",
+    "compile_build_cmd",
+    "download_grabpl_step",
+    "identify_runner_step",
+    "lint_drone_step",
+)
+load(
+    "scripts/drone/utils/utils.star",
+    "pipeline",
 )
 
 def verify_drone(trigger, ver_mode):
-    environment = {'EDITION': 'oss'}
+    environment = {"EDITION": "oss"}
     steps = [
         identify_runner_step(),
         download_grabpl_step(),
@@ -20,5 +23,10 @@ def verify_drone(trigger, ver_mode):
         lint_drone_step(),
     ]
     return pipeline(
-        name='{}-verify-drone'.format(ver_mode), edition="oss", trigger=trigger, services=[], steps=steps, environment=environment,
+        name = "{}-verify-drone".format(ver_mode),
+        edition = "oss",
+        trigger = trigger,
+        services = [],
+        steps = steps,
+        environment = environment,
     )

@@ -30,4 +30,10 @@ export enum DataFrameType {
    * If the y value is actually ordinal, use `meta.custom` to specify the bucket lookup values
    */
   HeatmapCells = 'heatmap-cells',
+
+  /**
+   * Explicit fields for:
+   *  xMin, xMax, count
+   */
+  Histogram = 'histogram',
 }

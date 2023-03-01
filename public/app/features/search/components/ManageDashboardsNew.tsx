@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Input, useStyles2, Spinner } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { FolderDTO, AccessControlAction } from 'app/types';
 
@@ -46,9 +47,14 @@ export const ManageDashboardsNew = React.memo(({ folder }: Props) => {
             value={state.query ?? ''}
             onChange={(e) => stateManager.onQueryChange(e.currentTarget.value)}
             onKeyDown={onKeyDown}
+            // eslint-disable-next-line jsx-a11y/no-autofocus
             autoFocus
             spellCheck={false}
-            placeholder={state.includePanels ? 'Search for dashboards and panels' : 'Search for dashboards'}
+            placeholder={
+              state.includePanels
+                ? t('search.search-input.include-panels-placeholder', 'Search for dashboards and panels')
+                : t('search.search-input.placeholder', 'Search for dashboards')
+            }
             className={styles.searchInput}
             suffix={false ? <Spinner /> : null}
           />

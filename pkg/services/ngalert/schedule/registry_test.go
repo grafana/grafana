@@ -27,7 +27,7 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 			r := newAlertRuleInfo(context.Background())
 			resultCh := make(chan bool)
 			go func() {
-				resultCh <- r.update(ruleVersion(rand.Int63()))
+				resultCh <- r.update(ruleVersionAndPauseStatus{ruleVersion(rand.Int63()), false})
 			}()
 			select {
 			case <-r.updateCh:
@@ -45,19 +45,19 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 			wg.Add(1)
 			go func() {
 				wg.Done()
-				r.update(version1)
+				r.update(ruleVersionAndPauseStatus{version1, false})
 				wg.Done()
 			}()
 			wg.Wait()
 			wg.Add(2) // one when time1 is sent, another when go-routine for time2 has started
 			go func() {
 				wg.Done()
-				r.update(version2)
+				r.update(ruleVersionAndPauseStatus{version2, false})
 			}()
 			wg.Wait() // at this point tick 1 has already been dropped
 			select {
 			case version := <-r.updateCh:
-				require.Equal(t, version2, version)
+				require.Equal(t, ruleVersionAndPauseStatus{version2, false}, version)
 			case <-time.After(5 * time.Second):
 				t.Fatal("No message was received on eval channel")
 			}
@@ -71,19 +71,19 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 			wg.Add(1)
 			go func() {
 				wg.Done()
-				r.update(version2)
+				r.update(ruleVersionAndPauseStatus{version2, false})
 				wg.Done()
 			}()
 			wg.Wait()
 			wg.Add(2) // one when time1 is sent, another when go-routine for time2 has started
 			go func() {
 				wg.Done()
-				r.update(version1)
+				r.update(ruleVersionAndPauseStatus{version1, false})
 			}()
 			wg.Wait() // at this point tick 1 has already been dropped
 			select {
 			case version := <-r.updateCh:
-				require.Equal(t, version2, version)
+				require.Equal(t, ruleVersionAndPauseStatus{version2, false}, version)
 			case <-time.After(5 * time.Second):
 				t.Fatal("No message was received on eval channel")
 			}
@@ -185,7 +185,7 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 			r := newAlertRuleInfo(context.Background())
 			r.stop(errRuleDeleted)
 			require.ErrorIs(t, r.ctx.Err(), errRuleDeleted)
-			require.False(t, r.update(ruleVersion(rand.Int63())))
+			require.False(t, r.update(ruleVersionAndPauseStatus{ruleVersion(rand.Int63()), false}))
 		})
 		t.Run("eval should do nothing", func(t *testing.T) {
 			r := newAlertRuleInfo(context.Background())
@@ -237,7 +237,7 @@ func TestSchedule_alertRuleInfo(t *testing.T) {
 					}
 					switch rand.Intn(max) + 1 {
 					case 1:
-						r.update(ruleVersion(rand.Int63()))
+						r.update(ruleVersionAndPauseStatus{ruleVersion(rand.Int63()), false})
 					case 2:
 						r.eval(&evaluation{
 							scheduledAt: time.Now(),

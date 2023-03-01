@@ -1,11 +1,10 @@
 ---
 aliases:
-  - /docs/grafana/latest/features/panels/singlestat/
-  - /docs/grafana/latest/features/panels/stat/
-  - /docs/grafana/latest/panels/visualizations/stat-panel/
-  - /docs/grafana/latest/reference/singlestat/
-  - /docs/grafana/latest/visualizations/stat-panel/
-  - /docs/grafana/latest/panels-visualizations/visualizations/stat/
+  - ../../features/panels/singlestat/
+  - ../../features/panels/stat/
+  - ../../panels/visualizations/stat-panel/
+  - ../../reference/singlestat/
+  - ../../visualizations/stat-panel/
 description: Stat panel documentation
 keywords:
   - grafana

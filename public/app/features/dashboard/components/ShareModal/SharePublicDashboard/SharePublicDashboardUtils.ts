@@ -1,29 +1,28 @@
 import { getConfig } from 'app/core/config';
 import { VariableModel } from 'app/features/variables/types';
-import { DashboardDataDTO, DashboardMeta } from 'app/types/dashboard';
 
 import { PanelModel } from '../../../state';
 
 import { supportedDatasources } from './SupportedPubdashDatasources';
 
-export interface PublicDashboard {
-  accessToken?: string;
+export enum PublicDashboardShareType {
+  PUBLIC = 'public',
+  EMAIL = 'email',
+}
+
+export interface PublicDashboardSettings {
   annotationsEnabled: boolean;
   isEnabled: boolean;
+  timeSelectionEnabled: boolean;
+}
+
+export interface PublicDashboard extends PublicDashboardSettings {
+  accessToken?: string;
   uid: string;
   dashboardUid: string;
   timeSettings?: object;
-}
-
-export interface DashboardResponse {
-  dashboard: DashboardDataDTO;
-  meta: DashboardMeta;
-}
-
-export interface Acknowledgements {
-  public: boolean;
-  datasources: boolean;
-  usage: boolean;
+  share: PublicDashboardShareType;
+  recipients?: string[];
 }
 
 // Instance methods
@@ -64,3 +63,5 @@ export const getUnsupportedDashboardDatasources = (panels: PanelModel[]): string
 export const generatePublicDashboardUrl = (publicDashboard: PublicDashboard): string => {
   return `${getConfig().appUrl}public-dashboards/${publicDashboard.accessToken}`;
 };
+
+export const validEmailRegex = /^[A-Z\d._%+-]+@[A-Z\d.-]+\.[A-Z]{2,}$/i;

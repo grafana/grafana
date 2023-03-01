@@ -23,24 +23,29 @@ import {
 import { AppChromeService } from '../components/AppChrome/AppChromeService';
 import { HelpModal } from '../components/help/HelpModal';
 import { contextSrv } from '../core';
+import { RouteDescriptor } from '../navigation/types';
 
-import { toggleTheme } from './toggleTheme';
+import { toggleTheme } from './theme';
 import { withFocusedPanel } from './withFocusedPanelId';
 
 export class KeybindingSrv {
   constructor(private locationService: LocationService, private chromeService: AppChromeService) {}
 
-  clearAndInitGlobalBindings() {
+  clearAndInitGlobalBindings(route: RouteDescriptor) {
     Mousetrap.reset();
 
-    if (this.locationService.getLocation().pathname !== '/login') {
+    // Chromeless pages like login and signup page don't get any global bindings
+    if (!route.chromeless) {
       this.bind(['?', 'h'], this.showHelpModal);
       this.bind('g h', this.goToHome);
       this.bind('g a', this.openAlerting);
       this.bind('g p', this.goToProfile);
-      this.bind('s o', this.openSearch);
+      this.bind('g e', this.goToExplore);
+      if (!config.featureToggles.topnav) {
+        this.bind('s o', this.openSearch);
+        this.bind('f', this.openSearch);
+      }
       this.bind('t a', this.makeAbsoluteTime);
-      this.bind('f', this.openSearch);
       this.bind('esc', this.exit);
       this.bindGlobalEsc();
     }
@@ -109,6 +114,10 @@ export class KeybindingSrv {
 
   private goToProfile() {
     this.locationService.push('/profile');
+  }
+
+  private goToExplore() {
+    this.locationService.push('/explore');
   }
 
   private makeAbsoluteTime() {

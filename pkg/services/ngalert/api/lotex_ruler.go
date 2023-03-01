@@ -6,13 +6,13 @@ import (
 	"net/http"
 	"net/url"
 
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/web"
 	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 const (
@@ -55,7 +55,7 @@ func NewLotexRuler(proxy *AlertingProxy, log log.Logger) *LotexRuler {
 	}
 }
 
-func (r *LotexRuler) RouteDeleteNamespaceRulesConfig(ctx *models.ReqContext, namespace string) response.Response {
+func (r *LotexRuler) RouteDeleteNamespaceRulesConfig(ctx *contextmodel.ReqContext, namespace string) response.Response {
 	legacyRulerPrefix, err := r.validateAndGetPrefix(ctx)
 	if err != nil {
 		return ErrResp(500, err, "")
@@ -73,7 +73,7 @@ func (r *LotexRuler) RouteDeleteNamespaceRulesConfig(ctx *models.ReqContext, nam
 	)
 }
 
-func (r *LotexRuler) RouteDeleteRuleGroupConfig(ctx *models.ReqContext, namespace string, group string) response.Response {
+func (r *LotexRuler) RouteDeleteRuleGroupConfig(ctx *contextmodel.ReqContext, namespace string, group string) response.Response {
 	legacyRulerPrefix, err := r.validateAndGetPrefix(ctx)
 	if err != nil {
 		return ErrResp(500, err, "")
@@ -96,7 +96,7 @@ func (r *LotexRuler) RouteDeleteRuleGroupConfig(ctx *models.ReqContext, namespac
 	)
 }
 
-func (r *LotexRuler) RouteGetNamespaceRulesConfig(ctx *models.ReqContext, namespace string) response.Response {
+func (r *LotexRuler) RouteGetNamespaceRulesConfig(ctx *contextmodel.ReqContext, namespace string) response.Response {
 	legacyRulerPrefix, err := r.validateAndGetPrefix(ctx)
 	if err != nil {
 		return ErrResp(500, err, "")
@@ -118,7 +118,7 @@ func (r *LotexRuler) RouteGetNamespaceRulesConfig(ctx *models.ReqContext, namesp
 	)
 }
 
-func (r *LotexRuler) RouteGetRulegGroupConfig(ctx *models.ReqContext, namespace string, group string) response.Response {
+func (r *LotexRuler) RouteGetRulegGroupConfig(ctx *contextmodel.ReqContext, namespace string, group string) response.Response {
 	legacyRulerPrefix, err := r.validateAndGetPrefix(ctx)
 	if err != nil {
 		return ErrResp(500, err, "")
@@ -141,7 +141,7 @@ func (r *LotexRuler) RouteGetRulegGroupConfig(ctx *models.ReqContext, namespace 
 	)
 }
 
-func (r *LotexRuler) RouteGetRulesConfig(ctx *models.ReqContext) response.Response {
+func (r *LotexRuler) RouteGetRulesConfig(ctx *contextmodel.ReqContext) response.Response {
 	legacyRulerPrefix, err := r.validateAndGetPrefix(ctx)
 	if err != nil {
 		return ErrResp(500, err, "")
@@ -160,7 +160,7 @@ func (r *LotexRuler) RouteGetRulesConfig(ctx *models.ReqContext) response.Respon
 	)
 }
 
-func (r *LotexRuler) RoutePostNameRulesConfig(ctx *models.ReqContext, conf apimodels.PostableRuleGroupConfig, ns string) response.Response {
+func (r *LotexRuler) RoutePostNameRulesConfig(ctx *contextmodel.ReqContext, conf apimodels.PostableRuleGroupConfig, ns string) response.Response {
 	legacyRulerPrefix, err := r.validateAndGetPrefix(ctx)
 	if err != nil {
 		return ErrResp(500, err, "")
@@ -173,7 +173,7 @@ func (r *LotexRuler) RoutePostNameRulesConfig(ctx *models.ReqContext, conf apimo
 	return r.withReq(ctx, http.MethodPost, u, bytes.NewBuffer(yml), jsonExtractor(nil), nil)
 }
 
-func (r *LotexRuler) validateAndGetPrefix(ctx *models.ReqContext) (string, error) {
+func (r *LotexRuler) validateAndGetPrefix(ctx *contextmodel.ReqContext) (string, error) {
 	datasourceUID := web.Params(ctx.Req)[":DatasourceUID"]
 	if datasourceUID == "" {
 		return "", fmt.Errorf("datasource UID is invalid")
@@ -185,7 +185,7 @@ func (r *LotexRuler) validateAndGetPrefix(ctx *models.ReqContext) (string, error
 	}
 
 	// Validate URL
-	if ds.Url == "" {
+	if ds.URL == "" {
 		return "", fmt.Errorf("URL for this data source is empty")
 	}
 
@@ -206,12 +206,12 @@ func (r *LotexRuler) validateAndGetPrefix(ctx *models.ReqContext) (string, error
 	if !ok {
 		r.log.Debug(
 			"Unable to determine prometheus datasource subtype, using default prefix",
-			"datasource", ds.Uid, "datasourceType", ds.Type, "subtype", subtype, "prefix", prefix)
+			"datasource", ds.UID, "datasourceType", ds.Type, "subtype", subtype, "prefix", prefix)
 		return prefix, nil
 	}
 
 	r.log.Debug("Determined prometheus datasource subtype",
-		"datasource", ds.Uid, "datasourceType", ds.Type, "subtype", subtype)
+		"datasource", ds.UID, "datasourceType", ds.Type, "subtype", subtype)
 	return subTypePrefix, nil
 }
 

@@ -51,7 +51,7 @@ export function LogsNavigationPages({
             <button
               type="button"
               data-testid={`page${index + 1}`}
-              className={styles.page}
+              className={cx(clearButtonStyles(theme), styles.page)}
               key={page.queryRange.to}
               onClick={() => {
                 reportInteraction('grafana_explore_logs_pagination_clicked', {
@@ -102,7 +102,6 @@ const getStyles = (theme: GrafanaTheme2, loading: boolean) => {
       flex-direction: column;
     `,
     page: css`
-      ${clearButtonStyles(theme)}
       display: flex;
       margin: ${theme.spacing(2)} 0;
       cursor: ${loading ? 'auto' : 'pointer'};

@@ -12,7 +12,7 @@ exports[`Query and expressions reducer should add a new expression 1`] = `
       "refId": "A",
     },
     {
-      "datasourceUid": "-100",
+      "datasourceUid": "__expr__",
       "model": {
         "conditions": [
           {
@@ -66,14 +66,24 @@ exports[`Query and expressions reducer should add query 1`] = `
       "refId": "A",
     },
     {
-      "datasourceUid": "c8eceabb-0275-4108-8f03-8f74faf4bf6d",
+      "datasourceUid": "some uid",
       "model": {
         "datasource": {
-          "type": "prometheus",
-          "uid": "c8eceabb-0275-4108-8f03-8f74faf4bf6d",
+          "type": undefined,
+          "uid": "some uid",
         },
+        "datasourceUid": "",
         "hide": false,
+        "model": {
+          "expression": "THIS IS THE DEFAULT EXPRESSION",
+          "refId": "A",
+        },
+        "queryType": "",
         "refId": "B",
+        "relativeTimeRange": {
+          "from": 600,
+          "to": 0,
+        },
       },
       "queryType": "",
       "refId": "B",
@@ -141,7 +151,7 @@ exports[`Query and expressions reducer should rewire expressions 1`] = `
       "refId": "A",
     },
     {
-      "datasourceUid": "-100",
+      "datasourceUid": "__expr__",
       "model": {
         "conditions": [
           {
@@ -187,7 +197,7 @@ exports[`Query and expressions reducer should set data queries 1`] = `
 {
   "queries": [
     {
-      "datasourceUid": "-100",
+      "datasourceUid": "__expr__",
       "model": {
         "conditions": [
           {
@@ -233,7 +243,7 @@ exports[`Query and expressions reducer should update an expression 1`] = `
 {
   "queries": [
     {
-      "datasourceUid": "-100",
+      "datasourceUid": "__expr__",
       "model": {
         "conditions": [
           {
@@ -287,7 +297,7 @@ exports[`Query and expressions reducer should update an expression refId and rew
       "refId": "C",
     },
     {
-      "datasourceUid": "-100",
+      "datasourceUid": "__expr__",
       "model": {
         "conditions": [
           {
@@ -341,7 +351,7 @@ exports[`Query and expressions reducer should update expression type 1`] = `
       "refId": "A",
     },
     {
-      "datasourceUid": "-100",
+      "datasourceUid": "__expr__",
       "model": {
         "conditions": [
           {

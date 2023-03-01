@@ -4,9 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/prometheus/prometheus/prompb"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRemoteWriteFrameOutput_sample(t *testing.T) {

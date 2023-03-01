@@ -1,0 +1,306 @@
+{
+  "data": {
+    "from": "2022-10-19T18:44:00Z",
+    "to": "2022-10-19T19:44:00Z",
+    "interval": "1m",
+    "for": "0",
+    "labels": {
+      "templatable-label": "test"
+    },
+    "annotations": {
+      "anno-test": "test"
+    },
+    "condition": "A",
+    "no_data_state": "Alerting",
+    "data": [
+      {
+        "refId": "A",
+        "queryType": "",
+        "datasourceUid": "__data__",
+        "model": {
+          "data": {
+            "schema": {
+              "name": "A-series",
+              "refId": "A",
+              "fields": [
+                {
+                  "name": "Time",
+                  "type": "time",
+                  "typeInfo": {
+                    "frame": "time.Time",
+                    "nullable": true
+                  }
+                },
+                {
+                  "name": "A-series",
+                  "type": "number",
+                  "typeInfo": {
+                    "frame": "float64",
+                    "nullable": true
+                  },
+                  "labels": {
+                    "label": "2",
+                    "test": "1"
+                  }
+                }
+              ]
+            },
+            "data": {
+              "values": [
+                [
+                  1666205040000,
+                  1666205100000,
+                  1666205160000,
+                  1666205220000,
+                  1666205280000,
+                  1666205340000,
+                  1666205400000,
+                  1666205460000,
+                  1666205520000,
+                  1666205580000,
+                  1666205640000,
+                  1666205700000,
+                  1666205760000,
+                  1666205820000,
+                  1666205880000,
+                  1666205940000,
+                  1666206000000,
+                  1666206060000,
+                  1666206120000,
+                  1666206180000,
+                  1666206240000,
+                  1666206300000,
+                  1666206360000,
+                  1666206420000,
+                  1666206480000,
+                  1666206540000,
+                  1666206600000,
+                  1666206660000,
+                  1666206720000,
+                  1666206780000,
+                  1666206840000,
+                  1666206900000,
+                  1666206960000,
+                  1666207020000,
+                  1666207080000,
+                  1666207140000,
+                  1666207200000,
+                  1666207260000,
+                  1666207320000,
+                  1666207380000,
+                  1666207440000,
+                  1666207500000,
+                  1666207560000,
+                  1666207620000,
+                  1666207680000,
+                  1666207740000,
+                  1666207800000,
+                  1666207860000,
+                  1666207920000,
+                  1666207980000,
+                  1666208040000,
+                  1666208100000,
+                  1666208160000,
+                  1666208220000,
+                  1666208280000,
+                  1666208340000,
+                  1666208400000,
+                  1666208460000,
+                  1666208520000,
+                  1666208580000,
+                  1666208640000
+                ],
+                [
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  1,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  1,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  1,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  1,
+                  1,
+                  1,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0,
+                  0
+                ]
+              ]
+            }
+          }
+        }
+      }
+    ]
+  },
+  "query": {
+    "from": "2022-10-19T18:44:00Z",
+    "to": "2022-10-19T19:44:00Z",
+    "interval": "1m",
+    "for": "5m",
+    "labels": {
+      "templatable-label": "TMPL-{{.Labels.state}}"
+    },
+    "annotations": {
+      "anno-test": "TMPL-ANNO-{{.Labels.state}}"
+    },
+    "condition": "C",
+    "no_data_state": "Alerting",
+    "data": [
+      {
+        "refId": "A",
+        "datasourceUid": "testdata",
+        "queryType": "",
+        "relativeTimeRange": {
+          "from": 600,
+          "to": 0
+        },
+        "model": {
+          "refId": "A",
+          "hide": false,
+          "scenarioId": "usa",
+          "usa": {
+            "mode": "timeseries",
+            "period": "1m",
+            "states": [
+              "GA", "FL", "AL", "AZ"
+            ],
+            "fields": [
+              "baz"
+            ]
+          }
+        }
+      },
+      {
+        "refId": "B",
+        "datasourceUid": "__expr__",
+        "queryType": "",
+        "model": {
+          "refId": "B",
+          "hide": false,
+          "type": "reduce",
+          "datasource": {
+            "uid": "__expr__",
+            "type": "__expr__"
+          },
+          "conditions": [
+            {
+              "type": "query",
+              "evaluator": {
+                "params": [],
+                "type": "gt"
+              },
+              "operator": {
+                "type": "and"
+              },
+              "query": {
+                "params": [
+                  "B"
+                ]
+              },
+              "reducer": {
+                "params": [],
+                "type": "last"
+              }
+            }
+          ],
+          "reducer": "last",
+          "expression": "A"
+        },
+        "relativeTimeRange": {
+          "from": 600,
+          "to": 0
+        }
+      },
+      {
+        "refId": "C",
+        "datasourceUid": "__expr__",
+        "queryType": "",
+        "model": {
+          "refId": "C",
+          "hide": false,
+          "type": "threshold",
+          "datasource": {
+            "uid": "__expr__",
+            "type": "__expr__"
+          },
+          "conditions": [
+            {
+              "type": "query",
+              "evaluator": {
+                "params": [
+                  0
+                ],
+                "type": "gt"
+              },
+              "operator": {
+                "type": "and"
+              },
+              "query": {
+                "params": [
+                  "C"
+                ]
+              },
+              "reducer": {
+                "params": [],
+                "type": "last"
+              }
+            }
+          ],
+          "expression": "B"
+        },
+        "relativeTimeRange": {
+          "from": 600,
+          "to": 0
+        }
+      }
+    ]
+  }
+}

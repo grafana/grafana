@@ -1,12 +1,13 @@
-import { PreloadPlugin } from '@grafana/data';
+import { AppPluginConfig } from '@grafana/runtime';
 
 import { importPluginModule } from './plugin_loader';
 
-export async function preloadPlugins(pluginsToPreload: PreloadPlugin[] = []): Promise<void> {
+export async function preloadPlugins(apps: Record<string, AppPluginConfig> = {}): Promise<void> {
+  const pluginsToPreload = Object.values(apps).filter((app) => app.preload);
   await Promise.all(pluginsToPreload.map(preloadPlugin));
 }
 
-async function preloadPlugin(plugin: PreloadPlugin): Promise<void> {
+async function preloadPlugin(plugin: AppPluginConfig): Promise<void> {
   const { path, version } = plugin;
   try {
     await importPluginModule(path, version);

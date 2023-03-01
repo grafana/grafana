@@ -4,7 +4,7 @@ import React from 'react';
 
 import { dateMath, dateTime, EventBus, LoadingState, TimeRange, toDataFrame, VizOrientation } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { BarGaugeDisplayMode } from '@grafana/ui';
+import { BarGaugeDisplayMode } from '@grafana/schema';
 
 import { BarGaugePanel, BarGaugePanelProps } from './BarGaugePanel';
 

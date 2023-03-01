@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { OrgRole } from '@grafana/data';
 import { Button, ConfirmModal } from '@grafana/ui';
@@ -17,8 +17,7 @@ export interface Props {
   onRemoveUser: (user: OrgUser) => void;
 }
 
-const UsersTable: FC<Props> = (props) => {
-  const { users, orgId, onRoleChange, onRemoveUser } = props;
+export const UsersTable = ({ users, orgId, onRoleChange, onRemoveUser }: Props) => {
   const [userToRemove, setUserToRemove] = useState<OrgUser | null>(null);
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
 
@@ -148,5 +147,3 @@ const UsersTable: FC<Props> = (props) => {
     </>
   );
 };
-
-export default UsersTable;

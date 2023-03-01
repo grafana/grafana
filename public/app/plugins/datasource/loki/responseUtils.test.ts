@@ -8,6 +8,7 @@ import {
   extractLevelLikeLabelFromDataFrame,
   extractLogParserFromDataFrame,
   extractLabelKeysFromDataFrame,
+  extractUnwrapLabelKeysFromDataFrame,
 } from './responseUtils';
 
 const frame: DataFrame = {
@@ -103,5 +104,18 @@ describe('extractLabelKeysFromDataFrame', () => {
   it('extracts label keys', () => {
     const input = cloneDeep(frame);
     expect(extractLabelKeysFromDataFrame(input)).toEqual(['level']);
+  });
+});
+
+describe('extractUnwrapLabelKeysFromDataFrame', () => {
+  it('returns empty by default', () => {
+    const input = cloneDeep(frame);
+    input.fields[1].values = new ArrayVector([]);
+    expect(extractUnwrapLabelKeysFromDataFrame(input)).toEqual([]);
+  });
+  it('extracts possible unwrap label keys', () => {
+    const input = cloneDeep(frame);
+    input.fields[1].values = new ArrayVector([{ number: 13 }]);
+    expect(extractUnwrapLabelKeysFromDataFrame(input)).toEqual(['number']);
   });
 });

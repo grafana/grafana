@@ -1,8 +1,9 @@
 ---
 aliases:
-  - /docs/grafana/latest/datasources/parca/
-  - /docs/grafana/latest/features/datasources/parca/
-description: Continuous profiling for analysis of CPU and memory usage, down to the line number and throughout time. Saving infrastructure cost, improving performance, and increasing reliability.
+  - ../features/datasources/parca/
+description: Continuous profiling for analysis of CPU and memory usage, down to the
+  line number and throughout time. Saving infrastructure cost, improving performance,
+  and increasing reliability.
 keywords:
   - parca
   - guide
@@ -12,10 +13,6 @@ weight: 1110
 ---
 
 # Parca data source
-
-> **Note:** This feature is behind the `flameGraph` feature toggle.
-> You can enable feature toggles through configuration file or environment variables. See configuration [docs]({{< relref "../setup-grafana/configure-grafana/#feature_toggles" >}}) for details.
-> Grafana Cloud users can access this feature by [opening a support ticket in the Cloud Portal](https://grafana.com/profile/org#support).
 
 Grafana ships with built-in support for Parca, a continuous profiling OSS database for analysis of CPU and memory usage, down to the line number and throughout time. Add it as a data source, and you are ready to query your profiles in [Explore]({{< relref "../explore" >}}).
 

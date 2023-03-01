@@ -340,18 +340,6 @@ func createPackage(srcDir string, options linuxPackageOptions) error {
 		return err
 	}
 
-	// remove unneeded binaries, these are exposed via wrappers that provide the needed configuration
-	for _, fileName := range []string{
-		cliBinary,
-		cliBinary + ".md5",
-		serverBinary,
-		serverBinary + ".md5",
-	} {
-		if err := os.Remove(filepath.Join(packageRoot, options.homeBinDir, fileName)); err != nil {
-			return fmt.Errorf("failed to remove %q: %w", filepath.Join(options.homeBinDir, fileName), err)
-		}
-	}
-
 	if err := executeFPM(options, packageRoot, srcDir); err != nil {
 		return err
 	}
@@ -390,6 +378,9 @@ func executeFPM(options linuxPackageOptions, packageRoot, srcDir string) error {
 		"--name", name,
 		"--vendor", vendor,
 		"-a", string(options.packageArch),
+	}
+	if options.prermSrc != "" {
+		args = append(args, "--before-remove", options.prermSrc)
 	}
 	if options.edition == config.EditionEnterprise || options.edition == config.EditionEnterprise2 || options.goArch == config.ArchARMv6 {
 		args = append(args, "--conflicts", "grafana")
@@ -739,6 +730,7 @@ func realPackageVariant(ctx context.Context, v config.Variant, edition config.Ed
 			initdScriptFilePath:    "/etc/init.d/grafana-server",
 			systemdServiceFilePath: "/usr/lib/systemd/system/grafana-server.service",
 			postinstSrc:            filepath.Join(grafanaDir, "packaging", "deb", "control", "postinst"),
+			prermSrc:               filepath.Join(grafanaDir, "packaging", "deb", "control", "prerm"),
 			initdScriptSrc:         filepath.Join(grafanaDir, "packaging", "deb", "init.d", "grafana-server"),
 			defaultFileSrc:         filepath.Join(grafanaDir, "packaging", "deb", "default", "grafana-server"),
 			systemdFileSrc:         filepath.Join(grafanaDir, "packaging", "deb", "systemd", "grafana-server.service"),
@@ -855,6 +847,7 @@ type linuxPackageOptions struct {
 	initdScriptFilePath    string
 	systemdServiceFilePath string
 	postinstSrc            string
+	prermSrc               string
 	initdScriptSrc         string
 	defaultFileSrc         string
 	systemdFileSrc         string

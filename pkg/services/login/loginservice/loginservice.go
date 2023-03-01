@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -44,10 +43,15 @@ type Implementation struct {
 }
 
 // UpsertUser updates an existing user, or if it doesn't exist, inserts a new one.
-func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUserCommand) error {
+func (ls *Implementation) UpsertUser(ctx context.Context, cmd *login.UpsertUserCommand) error {
+	var logger log.Logger = logger
+	if cmd.ReqContext != nil && cmd.ReqContext.Logger != nil {
+		logger = cmd.ReqContext.Logger
+	}
+
 	extUser := cmd.ExternalUser
 
-	usr, errAuthLookup := ls.AuthInfoService.LookupAndUpdate(ctx, &models.GetUserByAuthInfoQuery{
+	usr, errAuthLookup := ls.AuthInfoService.LookupAndUpdate(ctx, &login.GetUserByAuthInfoQuery{
 		AuthModule:       extUser.AuthModule,
 		AuthId:           extUser.AuthId,
 		UserLookupParams: cmd.UserLookupParams,
@@ -58,16 +62,17 @@ func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUser
 		}
 
 		if !cmd.SignupAllowed {
-			cmd.ReqContext.Logger.Warn("Not allowing login, user not found in internal user database and allow signup = false", "authmode", extUser.AuthModule)
+			logger.Warn("Not allowing login, user not found in internal user database and allow signup = false", "authmode", extUser.AuthModule)
 			return login.ErrSignupNotAllowed
 		}
 
+		// quota check (FIXME: (jguer) this should be done in the user service)
 		// we may insert in both user and org_user tables
 		// therefore we need to query check quota for both user and org services
 		for _, srv := range []string{user.QuotaTargetSrv, org.QuotaTargetSrv} {
-			limitReached, errLimit := ls.QuotaService.QuotaReached(cmd.ReqContext, quota.TargetSrv(srv))
+			limitReached, errLimit := ls.QuotaService.CheckQuotaReached(ctx, quota.TargetSrv(srv), nil)
 			if errLimit != nil {
-				cmd.ReqContext.Logger.Warn("Error getting user quota.", "error", errLimit)
+				logger.Warn("Error getting user quota.", "error", errLimit)
 				return login.ErrGettingUserQuota
 			}
 			if limitReached {
@@ -108,7 +113,7 @@ func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUser
 		}
 
 		if extUser.AuthModule != "" {
-			cmd2 := &models.SetAuthInfoCommand{
+			cmd2 := &login.SetAuthInfoCommand{
 				UserId:     cmd.Result.ID,
 				AuthModule: extUser.AuthModule,
 				AuthId:     extUser.AuthId,
@@ -153,7 +158,8 @@ func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUser
 		}
 	}
 
-	if ls.TeamSync != nil {
+	// There are external providers where we want to completely skip team synchronization see - https://github.com/grafana/grafana/issues/62175
+	if ls.TeamSync != nil && !extUser.SkipTeamSync {
 		if errTeamSync := ls.TeamSync(cmd.Result, extUser); errTeamSync != nil {
 			return errTeamSync
 		}
@@ -164,7 +170,7 @@ func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUser
 
 func (ls *Implementation) DisableExternalUser(ctx context.Context, username string) error {
 	// Check if external user exist in Grafana
-	userQuery := &models.GetExternalUserInfoByLoginQuery{
+	userQuery := &login.GetExternalUserInfoByLoginQuery{
 		LoginOrEmail: username,
 	}
 
@@ -207,7 +213,7 @@ func (ls *Implementation) SetTeamSyncFunc(teamSyncFunc login.TeamSyncFunc) {
 	ls.TeamSync = teamSyncFunc
 }
 
-func (ls *Implementation) updateUser(ctx context.Context, usr *user.User, extUser *models.ExternalUserInfo) error {
+func (ls *Implementation) updateUser(ctx context.Context, usr *user.User, extUser *login.ExternalUserInfo) error {
 	// sync user info
 	updateCmd := &user.UpdateUserCommand{
 		UserID: usr.ID,
@@ -240,8 +246,8 @@ func (ls *Implementation) updateUser(ctx context.Context, usr *user.User, extUse
 	return ls.userService.Update(ctx, updateCmd)
 }
 
-func (ls *Implementation) updateUserAuth(ctx context.Context, user *user.User, extUser *models.ExternalUserInfo) error {
-	updateCmd := &models.UpdateAuthInfoCommand{
+func (ls *Implementation) updateUserAuth(ctx context.Context, user *user.User, extUser *login.ExternalUserInfo) error {
+	updateCmd := &login.UpdateAuthInfoCommand{
 		AuthModule: extUser.AuthModule,
 		AuthId:     extUser.AuthId,
 		UserId:     user.ID,
@@ -252,7 +258,7 @@ func (ls *Implementation) updateUserAuth(ctx context.Context, user *user.User, e
 	return ls.AuthInfoService.UpdateAuthInfo(ctx, updateCmd)
 }
 
-func (ls *Implementation) syncOrgRoles(ctx context.Context, usr *user.User, extUser *models.ExternalUserInfo) error {
+func (ls *Implementation) syncOrgRoles(ctx context.Context, usr *user.User, extUser *login.ExternalUserInfo) error {
 	logger.Debug("Syncing organization roles", "id", usr.ID, "extOrgRoles", extUser.OrgRoles)
 
 	// don't sync org roles if none is specified
@@ -295,7 +301,7 @@ func (ls *Implementation) syncOrgRoles(ctx context.Context, usr *user.User, extU
 		// add role
 		cmd := &org.AddOrgUserCommand{UserID: usr.ID, Role: orgRole, OrgID: orgId}
 		err := ls.orgService.AddOrgUser(ctx, cmd)
-		if err != nil && !errors.Is(err, models.ErrOrgNotFound) {
+		if err != nil && !errors.Is(err, org.ErrOrgNotFound) {
 			return err
 		}
 	}
@@ -306,15 +312,16 @@ func (ls *Implementation) syncOrgRoles(ctx context.Context, usr *user.User, extU
 			"userId", usr.ID, "orgId", orgId)
 		cmd := &org.RemoveOrgUserCommand{OrgID: orgId, UserID: usr.ID}
 		if err := ls.orgService.RemoveOrgUser(ctx, cmd); err != nil {
-			if errors.Is(err, models.ErrLastOrgAdmin) {
+			if errors.Is(err, org.ErrLastOrgAdmin) {
 				logger.Error(err.Error(), "userId", cmd.UserID, "orgId", cmd.OrgID)
 				continue
 			}
-			if err := ls.accessControl.DeleteUserPermissions(ctx, orgId, cmd.UserID); err != nil {
-				logger.Warn("failed to delete permissions for user", "userID", cmd.UserID, "orgID", orgId)
-			}
 
 			return err
+		}
+
+		if err := ls.accessControl.DeleteUserPermissions(ctx, orgId, cmd.UserID); err != nil {
+			logger.Warn("failed to delete permissions for user", "error", err, "userID", cmd.UserID, "orgID", orgId)
 		}
 	}
 

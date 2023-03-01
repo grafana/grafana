@@ -69,19 +69,21 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
   const sanitizeQuery = async (query: VariableQuery) => {
     let { metricName, dimensionKey, dimensionFilters, namespace, region } = query;
     if (metricName) {
-      await datasource.api.getMetrics({ namespace, region }).then((result: Array<SelectableValue<string>>) => {
+      await datasource.resources.getMetrics({ namespace, region }).then((result: Array<SelectableValue<string>>) => {
         if (!result.find((metric) => metric.value === metricName)) {
           metricName = '';
         }
       });
     }
     if (dimensionKey) {
-      await datasource.api.getDimensionKeys({ namespace, region }).then((result: Array<SelectableValue<string>>) => {
-        if (!result.find((key) => key.value === dimensionKey)) {
-          dimensionKey = '';
-          dimensionFilters = {};
-        }
-      });
+      await datasource.resources
+        .getDimensionKeys({ namespace, region })
+        .then((result: Array<SelectableValue<string>>) => {
+          if (!result.find((key) => key.value === dimensionKey)) {
+            dimensionKey = '';
+            dimensionFilters = {};
+          }
+        });
     }
     return { ...query, metricName, dimensionKey, dimensionFilters };
   };

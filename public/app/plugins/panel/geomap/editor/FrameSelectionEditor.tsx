@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import {
   FrameMatcherID,
@@ -31,7 +31,9 @@ const recoverRefIdMissing = (
   return;
 };
 
-export const FrameSelectionEditor: FC<StandardEditorProps<MatcherConfig>> = ({ value, context, onChange, item }) => {
+type Props = StandardEditorProps<MatcherConfig>;
+
+export const FrameSelectionEditor = ({ value, context, onChange, item }: Props) => {
   const listOfRefId = useMemo(() => {
     return context.data.map((f) => ({
       value: f.refId,

@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/auth/azuread/
-  - /docs/grafana/latest/setup-grafana/configure-security/configure-authentication/azuread/
+  - ../../../auth/azuread/
 description: Grafana Azure AD OAuth Guide
 keywords:
   - grafana
@@ -100,22 +99,6 @@ To enable the Azure AD OAuth2, register your application with Azure AD.
 
 1. Click on **Users and Groups** and add Users/Groups to the Grafana roles by using **Add User**.
 
-### Map roles
-
-By default, Azure AD authentication will map users to organization roles based on the most privileged application role assigned to the user in AzureAD.
-
-If no application role is found, the user is assigned the role specified by
-[the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
-You can disable this default role assignment by setting `role_attribute_strict = true`.
-It denies user access if no role or an invalid role is returned.
-
-**On every login** the user organization role will be reset to match AzureAD's application role and
-their organization membership will be reset to the default organization.
-
-If Azure AD authentication is not intended to sync user roles and organization membership,
-`oauth_skip_org_role_update_sync` should be enabled.
-See [configure-grafana]({{< relref "../../../configure-grafana#oauth_skip_org_role_update_sync" >}}) for more details.
-
 ### Assign server administrator privileges
 
 > Available in Grafana v9.2 and later versions.
@@ -149,6 +132,7 @@ If the setting is set to `false`, the user is assigned the role of `Admin` of th
 name = Azure AD
 enabled = true
 allow_sign_up = true
+auto_login = false
 client_id = APPLICATION_ID
 client_secret = CLIENT_SECRET
 scopes = openid email profile
@@ -158,6 +142,7 @@ allowed_domains =
 allowed_groups =
 role_attribute_strict = false
 allow_assign_grafana_admin = false
+skip_org_role_sync = false
 ```
 
 You can also use these environment variables to configure **client_id** and **client_secret**:
@@ -206,6 +191,15 @@ The `allowed_domains` option limits access to users who belong to specific domai
 allowed_domains = mycompany.com mycompany.org
 ```
 
+### Configure automatic login
+
+Set `auto_login` option to true to attempt login automatically, skipping the login screen.
+This setting is ignored if multiple auth providers are configured to use auto login.
+
+```
+auto_login = true
+```
+
 ### Team Sync (Enterprise only)
 
 With Team Sync you can map your Azure AD groups to teams in Grafana so that your users will automatically be added to
@@ -244,4 +238,28 @@ To force fetching groups from Microsoft Graph API instead of the `id_token`. You
 
 ```
 force_use_graph_api = true
+```
+
+### Map roles
+
+By default, Azure AD authentication will map users to organization roles based on the most privileged application role assigned to the user in AzureAD.
+
+If no application role is found, the user is assigned the role specified by
+[the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
+You can disable this default role assignment by setting `role_attribute_strict = true`.
+It denies user access if no role or an invalid role is returned.
+
+**On every login** the user organization role will be reset to match AzureAD's application role and
+their organization membership will be reset to the default organization.
+
+## Skip organization role sync
+
+If Azure AD authentication is not intended to sync user roles and organization membership and prevent the sync of org roles from AzureAD, set `skip_org_role_sync` to `true`. This is useful if you want to manage the organization roles for your users from within Grafana or that your organization roles are synced from another provider.
+See [configure-grafana]({{< relref "../../../configure-grafana#authazuread-skip-org-role-sync" >}}) for more details.
+
+```ini
+[auth.azuread]
+# ..
+# prevents the sync of org roles from AzureAD
+skip_org_role_sync = true
 ```

@@ -1,10 +1,12 @@
 import { css } from '@emotion/css';
 import { isEqual } from 'lodash';
-import React, { memo, useState, useEffect, useRef } from 'react';
+import React, { memo, useEffect, useRef, useState } from 'react';
 
-import { LogsSortOrder, AbsoluteTimeRange, TimeZone, DataQuery, GrafanaTheme2 } from '@grafana/data';
+import { AbsoluteTimeRange, GrafanaTheme2, LogsSortOrder, TimeZone } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import { Button, Icon, Spinner, useTheme2 } from '@grafana/ui';
+import { TOP_BAR_LEVEL_HEIGHT } from 'app/core/components/AppChrome/types';
 
 import { LogsNavigationPages } from './LogsNavigationPages';
 
@@ -188,9 +190,12 @@ function LogsNavigation({
 export default memo(LogsNavigation);
 
 const getStyles = (theme: GrafanaTheme2, oldestLogsFirst: boolean, loading: boolean) => {
+  const navContainerHeight = theme.flags.topnav
+    ? `calc(100vh - 2*${theme.spacing(2)} - 2*${TOP_BAR_LEVEL_HEIGHT}px)`
+    : '95vh';
   return {
     navContainer: css`
-      max-height: 95vh;
+      max-height: ${navContainerHeight};
       display: flex;
       flex-direction: column;
       justify-content: ${oldestLogsFirst ? 'flex-start' : 'space-between'};

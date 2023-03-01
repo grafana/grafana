@@ -16,6 +16,12 @@ func (l *LogsAPI) DescribeLogGroups(input *cloudwatchlogs.DescribeLogGroupsInput
 	return args.Get(0).(*cloudwatchlogs.DescribeLogGroupsOutput), args.Error(1)
 }
 
+func (l *LogsAPI) GetLogGroupFields(input *cloudwatchlogs.GetLogGroupFieldsInput) (*cloudwatchlogs.GetLogGroupFieldsOutput, error) {
+	args := l.Called(input)
+
+	return args.Get(0).(*cloudwatchlogs.GetLogGroupFieldsOutput), args.Error(1)
+}
+
 type LogsService struct {
 	mock.Mock
 }
@@ -24,6 +30,12 @@ func (l *LogsService) GetLogGroups(request resources.LogGroupsRequest) ([]resour
 	args := l.Called(request)
 
 	return args.Get(0).([]resources.ResourceResponse[resources.LogGroup]), args.Error(1)
+}
+
+func (l *LogsService) GetLogGroupFields(request resources.LogGroupFieldsRequest) ([]resources.ResourceResponse[resources.LogGroupField], error) {
+	args := l.Called(request)
+
+	return args.Get(0).([]resources.ResourceResponse[resources.LogGroupField]), args.Error(1)
 }
 
 type MockFeatures struct {

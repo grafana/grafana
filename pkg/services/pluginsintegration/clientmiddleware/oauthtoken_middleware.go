@@ -3,12 +3,9 @@ package clientmiddleware
 import (
 	"context"
 	"fmt"
-	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -16,8 +13,8 @@ import (
 )
 
 // NewOAuthTokenMiddleware creates a new plugins.ClientMiddleware that will
-// set OAuth token headers on outgoing plugins.Client and HTTP requests if
-// the datasource has enabled Forward OAuth Identity (oauthPassThru).
+// set OAuth token headers on outgoing plugins.Client requests if the
+// datasource has enabled Forward OAuth Identity (oauthPassThru).
 func NewOAuthTokenMiddleware(oAuthTokenService oauthtoken.OAuthTokenService) plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		return &OAuthTokenMiddleware{
@@ -37,22 +34,22 @@ type OAuthTokenMiddleware struct {
 	next              plugins.Client
 }
 
-func (m *OAuthTokenMiddleware) applyToken(ctx context.Context, pCtx backend.PluginContext, req interface{}) (context.Context, error) {
+func (m *OAuthTokenMiddleware) applyToken(ctx context.Context, pCtx backend.PluginContext, req interface{}) error {
 	reqCtx := contexthandler.FromContext(ctx)
 	// if request not for a datasource or no HTTP request context skip middleware
 	if req == nil || pCtx.DataSourceInstanceSettings == nil || reqCtx == nil || reqCtx.Req == nil {
-		return ctx, nil
+		return nil
 	}
 
 	settings := pCtx.DataSourceInstanceSettings
 	jsonDataBytes, err := simplejson.NewJson(settings.JSONData)
 	if err != nil {
-		return ctx, err
+		return err
 	}
 
 	ds := &datasources.DataSource{
-		Id:       settings.ID,
-		OrgId:    pCtx.OrgID,
+		ID:       settings.ID,
+		OrgID:    pCtx.OrgID,
 		JsonData: jsonDataBytes,
 		Updated:  settings.Updated,
 	}
@@ -84,19 +81,10 @@ func (m *OAuthTokenMiddleware) applyToken(ctx context.Context, pCtx backend.Plug
 					t.Headers[idTokenHeaderName] = []string{idTokenHeader}
 				}
 			}
-
-			httpHeaders := http.Header{}
-			httpHeaders.Set(tokenHeaderName, authorizationHeader)
-
-			if idTokenHeader != "" {
-				httpHeaders.Set(idTokenHeaderName, idTokenHeader)
-			}
-
-			ctx = httpclient.WithContextualMiddleware(ctx, httpclientprovider.SetHeadersMiddleware(httpHeaders))
 		}
 	}
 
-	return ctx, nil
+	return nil
 }
 
 func (m *OAuthTokenMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -104,12 +92,12 @@ func (m *OAuthTokenMiddleware) QueryData(ctx context.Context, req *backend.Query
 		return m.next.QueryData(ctx, req)
 	}
 
-	newCtx, err := m.applyToken(ctx, req.PluginContext, req)
+	err := m.applyToken(ctx, req.PluginContext, req)
 	if err != nil {
 		return nil, err
 	}
 
-	return m.next.QueryData(newCtx, req)
+	return m.next.QueryData(ctx, req)
 }
 
 func (m *OAuthTokenMiddleware) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
@@ -117,12 +105,12 @@ func (m *OAuthTokenMiddleware) CallResource(ctx context.Context, req *backend.Ca
 		return m.next.CallResource(ctx, req, sender)
 	}
 
-	newCtx, err := m.applyToken(ctx, req.PluginContext, req)
+	err := m.applyToken(ctx, req.PluginContext, req)
 	if err != nil {
 		return err
 	}
 
-	return m.next.CallResource(newCtx, req, sender)
+	return m.next.CallResource(ctx, req, sender)
 }
 
 func (m *OAuthTokenMiddleware) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
@@ -130,12 +118,12 @@ func (m *OAuthTokenMiddleware) CheckHealth(ctx context.Context, req *backend.Che
 		return m.next.CheckHealth(ctx, req)
 	}
 
-	newCtx, err := m.applyToken(ctx, req.PluginContext, req)
+	err := m.applyToken(ctx, req.PluginContext, req)
 	if err != nil {
 		return nil, err
 	}
 
-	return m.next.CheckHealth(newCtx, req)
+	return m.next.CheckHealth(ctx, req)
 }
 
 func (m *OAuthTokenMiddleware) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {

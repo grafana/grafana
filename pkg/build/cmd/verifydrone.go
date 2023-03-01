@@ -10,13 +10,12 @@ import (
 
 	"github.com/drone/drone-cli/drone/lint"
 	"github.com/drone/drone-cli/drone/starlark"
-
 	"github.com/google/go-cmp/cmp"
-
-	"github.com/grafana/grafana/pkg/build/fsutil"
 	cliv1 "github.com/urfave/cli"
 	"github.com/urfave/cli/v2"
 	"gopkg.in/yaml.v3"
+
+	"github.com/grafana/grafana/pkg/build/fsutil"
 )
 
 func VerifyDrone(c *cli.Context) error {
@@ -24,7 +23,7 @@ func VerifyDrone(c *cli.Context) error {
 	const backup = ".drone.yml.bak"
 
 	if err := fsutil.CopyFile(yml, backup); err != nil {
-		return cli.NewExitError(fmt.Sprintf("failed to copy %s to %s: %s", yml, backup, err), 1)
+		return cli.Exit(fmt.Sprintf("failed to copy %s to %s: %s", yml, backup, err), 1)
 	}
 	defer func() {
 		if err := os.Remove(yml); err != nil {
@@ -73,7 +72,7 @@ func readConfig(fpath string) ([]map[string]interface{}, error) {
 	//nolint:gosec
 	f, err := os.Open(fpath)
 	if err != nil {
-		return nil, cli.NewExitError(fmt.Sprintf("failed to read %s: %s", fpath, err), 1)
+		return nil, cli.Exit(fmt.Sprintf("failed to read %s: %s", fpath, err), 1)
 	}
 	defer func() {
 		if err := f.Close(); err != nil {
@@ -90,7 +89,7 @@ func readConfig(fpath string) ([]map[string]interface{}, error) {
 			if errors.Is(err, io.EOF) {
 				break
 			}
-			return nil, cli.NewExitError(fmt.Sprintf("Failed to decode %s: %s", fpath, err), 1)
+			return nil, cli.Exit(fmt.Sprintf("Failed to decode %s: %s", fpath, err), 1)
 		}
 
 		if m["kind"] == "signature" {
@@ -118,7 +117,7 @@ func verifyYAML(yml, backup string) error {
 	}
 
 	if !cmp.Equal(c1, c2) {
-		return cli.NewExitError(fmt.Sprintf("%s is out of sync with .drone.star - regenerate it with drone starlark convert",
+		return cli.Exit(fmt.Sprintf("%s is out of sync with .drone.star - regenerate it with drone starlark convert",
 			yml), 1)
 	}
 

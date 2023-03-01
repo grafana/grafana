@@ -6,34 +6,19 @@ import { CoreApp } from '@grafana/data';
 
 import { PrometheusDatasource } from '../datasource';
 
-import { testIds as regularTestIds } from './PromQueryEditor';
 import { PromQueryEditorByApp } from './PromQueryEditorByApp';
 import { testIds as alertingTestIds } from './PromQueryEditorForAlerting';
+import { Props } from './monaco-query-field/MonacoQueryFieldProps';
 
 // the monaco-based editor uses lazy-loading and that does not work
 // well with this test, and we do not need the monaco-related
 // functionality in this test anyway, so we mock it out.
 jest.mock('./monaco-query-field/MonacoQueryFieldLazy', () => {
-  const fakeQueryField = (props: any) => {
-    return <input onBlur={props.onBlur} data-testid={'dummy-code-input'} type={'text'} />;
+  const fakeQueryField = (props: Props) => {
+    return <input onBlur={(e) => props.onBlur(e.currentTarget.value)} data-testid={'dummy-code-input'} type={'text'} />;
   };
   return {
     MonacoQueryFieldLazy: fakeQueryField,
-  };
-});
-
-jest.mock('@grafana/runtime', () => {
-  const runtime = jest.requireActual('@grafana/runtime');
-  return {
-    __esModule: true,
-    ...runtime,
-    config: {
-      ...runtime.config,
-      featureToggles: {
-        ...runtime.config.featureToggles,
-        promQueryBuilder: true,
-      },
-    },
   };
 });
 
@@ -70,10 +55,9 @@ function setup(app: CoreApp): RenderResult & { onRunQuery: jest.Mock } {
 
 describe('PromQueryEditorByApp', () => {
   it('should render simplified query editor for cloud alerting', () => {
-    const { getByTestId, queryByTestId } = setup(CoreApp.CloudAlerting);
+    const { getByTestId } = setup(CoreApp.CloudAlerting);
 
     expect(getByTestId(alertingTestIds.editor)).toBeInTheDocument();
-    expect(queryByTestId(regularTestIds.editor)).toBeNull();
   });
 
   it('should render editor selector for unkown apps', () => {

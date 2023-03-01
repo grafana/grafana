@@ -5,7 +5,7 @@ import React, { FC, useCallback, useState } from 'react';
 import { DataFrame, dateTimeFormat, GrafanaTheme2, LoadingState, PanelData } from '@grafana/data';
 import { isTimeSeries } from '@grafana/data/src/dataframe/utils';
 import { Stack } from '@grafana/experimental';
-import { AutoSizeInput, Icon, IconButton, Select, useStyles2 } from '@grafana/ui';
+import { AutoSizeInput, clearButtonStyles, Icon, IconButton, Select, useStyles2 } from '@grafana/ui';
 import { ClassicConditions } from 'app/features/expressions/components/ClassicConditions';
 import { Math } from 'app/features/expressions/components/Math';
 import { Reduce } from 'app/features/expressions/components/Reduce';
@@ -56,10 +56,6 @@ export const Expression: FC<ExpressionProps> = ({
   const hasResults = Array.isArray(data?.series) && !isLoading;
   const series = data?.series ?? [];
 
-  // sometime we receive results where every value is just "null" when noData occurs
-  const emptyResults = hasResults && isEmptySeries(series);
-  const isTimeSeriesResults = !emptyResults && isTimeSeries(series);
-
   const alertCondition = isAlertCondition ?? false;
   const showSummary = isAlertCondition && hasResults;
 
@@ -109,24 +105,7 @@ export const Expression: FC<ExpressionProps> = ({
           onUpdateExpressionType={(type) => onUpdateExpressionType(query.refId, type)}
         />
         <div className={styles.expression.body}>{renderExpressionType(query)}</div>
-        {hasResults && (
-          <div className={styles.expression.results}>
-            {!emptyResults && isTimeSeriesResults && (
-              <div>
-                {series.map((frame, index) => (
-                  <TimeseriesRow key={uniqueId()} frame={frame} index={index} isAlertCondition={isAlertCondition} />
-                ))}
-              </div>
-            )}
-            {!emptyResults &&
-              !isTimeSeriesResults &&
-              series.map((frame, index) => (
-                // There's no way to uniquely identify a frame that doesn't cause render bugs :/ (Gilles)
-                <FrameRow key={uniqueId()} frame={frame} index={index} isAlertCondition={alertCondition} />
-              ))}
-            {emptyResults && <div className={cx(styles.expression.noData, styles.mutedText)}>No data</div>}
-          </div>
-        )}
+        {hasResults && <ExpressionResult series={series} isAlertCondition={isAlertCondition} />}
         <div className={styles.footer}>
           <Stack direction="row" alignItems="center">
             <AlertConditionIndicator
@@ -149,7 +128,39 @@ export const Expression: FC<ExpressionProps> = ({
   );
 };
 
-const PreviewSummary: FC<{ firing: number; normal: number }> = ({ firing, normal }) => {
+interface ExpressionResultProps {
+  series: DataFrame[];
+  isAlertCondition?: boolean;
+}
+
+export const ExpressionResult: FC<ExpressionResultProps> = ({ series, isAlertCondition }) => {
+  const styles = useStyles2(getStyles);
+
+  // sometimes we receive results where every value is just "null" when noData occurs
+  const emptyResults = isEmptySeries(series);
+  const isTimeSeriesResults = !emptyResults && isTimeSeries(series);
+
+  return (
+    <div className={styles.expression.results}>
+      {!emptyResults && isTimeSeriesResults && (
+        <div>
+          {series.map((frame, index) => (
+            <TimeseriesRow key={uniqueId()} frame={frame} index={index} isAlertCondition={isAlertCondition} />
+          ))}
+        </div>
+      )}
+      {!emptyResults &&
+        !isTimeSeriesResults &&
+        series.map((frame, index) => (
+          // There's no way to uniquely identify a frame that doesn't cause render bugs :/ (Gilles)
+          <FrameRow key={uniqueId()} frame={frame} index={index} isAlertCondition={isAlertCondition} />
+        ))}
+      {emptyResults && <div className={cx(styles.expression.noData, styles.mutedText)}>No data</div>}
+    </div>
+  );
+};
+
+export const PreviewSummary: FC<{ firing: number; normal: number }> = ({ firing, normal }) => {
   const { mutedText } = useStyles2(getStyles);
   return <span className={mutedText}>{`${firing} firing, ${normal} normal`}</span>;
 };
@@ -164,6 +175,7 @@ interface HeaderProps {
 
 const Header: FC<HeaderProps> = ({ refId, queryType, onUpdateRefId, onUpdateExpressionType, onRemoveExpression }) => {
   const styles = useStyles2(getStyles);
+  const clearButton = useStyles2(clearButtonStyles);
   /**
    * There are 3 edit modes:
    *
@@ -184,9 +196,9 @@ const Header: FC<HeaderProps> = ({ refId, queryType, onUpdateRefId, onUpdateExpr
       <Stack direction="row" gap={0.5} alignItems="center">
         <Stack direction="row" gap={1} alignItems="center" wrap={false}>
           {!editingRefId && (
-            <div className={styles.editable} onClick={() => setEditMode('refId')}>
+            <button type="button" className={cx(clearButton, styles.editable)} onClick={() => setEditMode('refId')}>
               <div className={styles.expression.refId}>{refId}</div>
-            </div>
+            </button>
           )}
           {editingRefId && (
             <AutoSizeInput
@@ -205,10 +217,14 @@ const Header: FC<HeaderProps> = ({ refId, queryType, onUpdateRefId, onUpdateExpr
             />
           )}
           {!editingType && (
-            <div className={styles.editable} onClick={() => setEditMode('expressionType')}>
+            <button
+              type="button"
+              className={cx(clearButton, styles.editable)}
+              onClick={() => setEditMode('expressionType')}
+            >
               <div className={styles.mutedText}>{capitalize(queryType)}</div>
               <Icon size="xs" name="pen" className={styles.mutedIcon} onClick={() => setEditMode('expressionType')} />
-            </div>
+            </button>
           )}
           {editingType && (
             <Select

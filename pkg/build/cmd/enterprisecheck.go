@@ -1,12 +1,15 @@
 package main
 
 import (
+	"fmt"
+	"log"
 	"os"
 	"strconv"
 
+	"github.com/urfave/cli/v2"
+
 	"github.com/grafana/grafana/pkg/build/env"
 	"github.com/grafana/grafana/pkg/build/git"
-	"github.com/urfave/cli/v2"
 )
 
 // checkOpts are options used to create a new GitHub check for the enterprise downstream test.
@@ -113,9 +116,11 @@ func completeEnterpriseCheck(c *cli.Context, success bool) error {
 	}
 
 	// Delete branch if needed
+	log.Printf("Checking branch '%s' against '%s'", git.PRCheckRegexp().String(), opts.Branch)
 	if git.PRCheckRegexp().MatchString(opts.Branch) {
+		log.Println("Deleting branch", opts.Branch)
 		if err := git.DeleteEnterpriseBranch(ctx, client.Git, opts.Branch); err != nil {
-			return nil
+			return fmt.Errorf("error deleting enterprise branch: %w", err)
 		}
 	}
 

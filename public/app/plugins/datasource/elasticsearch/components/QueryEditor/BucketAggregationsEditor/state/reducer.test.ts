@@ -3,9 +3,9 @@ import { reducerTester } from 'test/core/redux/reducerTester';
 import { defaultBucketAgg } from 'app/plugins/datasource/elasticsearch/queryDef';
 import { ElasticsearchQuery } from 'app/plugins/datasource/elasticsearch/types';
 
+import { BucketAggregation, DateHistogram } from '../../../../types';
 import { changeMetricType } from '../../MetricAggregationsEditor/state/actions';
 import { initQuery } from '../../state';
-import { BucketAggregation, DateHistogram } from '../aggregations';
 import { bucketAggregationConfig } from '../utils';
 
 import {

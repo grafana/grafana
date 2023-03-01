@@ -1,25 +1,24 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"io"
 	"net/http"
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/setting"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/preference/preftest"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
 var (
@@ -39,171 +38,236 @@ var (
 func TestAPIEndpoint_GetCurrentOrgPreferences_LegacyAccessControl(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.RBACEnabled = false
-	sc := setupHTTPServerWithCfg(t, true, cfg)
 	dashSvc := dashboards.NewFakeDashboardService(t)
-	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
-		q := args.Get(1).(*models.GetDashboardQuery)
-		q.Result = &models.Dashboard{Uid: "home", Id: 1}
-	}).Return(nil)
-
-	sc.hs.DashboardService = dashSvc
+	qResult := &dashboards.Dashboard{UID: "home", ID: 1}
+	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(qResult, nil)
 
 	prefService := preftest.NewPreferenceServiceFake()
 	prefService.ExpectedPreference = &pref.Preference{HomeDashboardID: 1, Theme: "dark"}
-	sc.hs.preferenceService = prefService
 
-	_, err := sc.hs.orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "TestOrg", UserID: testUserID})
-	require.NoError(t, err)
-
-	setInitCtxSignedInViewer(sc.initCtx)
-	t.Run("Viewer cannot get org preferences", func(t *testing.T) {
-		response := callAPI(sc.server, http.MethodGet, getOrgPreferencesURL, nil, t)
-		assert.Equal(t, http.StatusForbidden, response.Code)
+	server := SetupAPITestServer(t, func(hs *HTTPServer) {
+		hs.Cfg = cfg
+		hs.DashboardService = dashSvc
+		hs.preferenceService = prefService
 	})
 
-	setInitCtxSignedInOrgAdmin(sc.initCtx)
+	t.Run("Viewer cannot get org preferences", func(t *testing.T) {
+		req := webtest.RequestWithSignedInUser(server.NewGetRequest(getOrgPreferencesURL), &user.SignedInUser{OrgID: 1, OrgRole: org.RoleViewer})
+		res, err := server.Send(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, res.StatusCode)
+		require.NoError(t, res.Body.Close())
+	})
+
 	t.Run("Org Admin can get org preferences", func(t *testing.T) {
-		response := callAPI(sc.server, http.MethodGet, getOrgPreferencesURL, nil, t)
-		assert.Equal(t, http.StatusOK, response.Code)
+		req := webtest.RequestWithSignedInUser(server.NewGetRequest(getOrgPreferencesURL), &user.SignedInUser{OrgID: 1, OrgRole: org.RoleAdmin})
+		res, err := server.Send(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
 		var resp map[string]interface{}
-		b, err := io.ReadAll(response.Body)
+		b, err := io.ReadAll(res.Body)
 		assert.NoError(t, err)
 		assert.NoError(t, json.Unmarshal(b, &resp))
 		assert.Equal(t, "home", resp["homeDashboardUID"])
+		require.NoError(t, res.Body.Close())
 	})
 }
 
 func TestAPIEndpoint_GetCurrentOrgPreferences_AccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true)
-	setInitCtxSignedInViewer(sc.initCtx)
-
 	prefService := preftest.NewPreferenceServiceFake()
 	prefService.ExpectedPreference = &pref.Preference{HomeDashboardID: 1, Theme: "dark"}
-	sc.hs.preferenceService = prefService
 
-	_, err := sc.hs.orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "TestOrg", UserID: testUserID})
-	require.NoError(t, err)
+	dashSvc := dashboards.NewFakeDashboardService(t)
+	qResult := &dashboards.Dashboard{UID: "home", ID: 1}
+	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(qResult, nil)
+
+	server := SetupAPITestServer(t, func(hs *HTTPServer) {
+		hs.Cfg = setting.NewCfg()
+		hs.preferenceService = prefService
+		hs.DashboardService = dashSvc
+	})
 
 	t.Run("AccessControl allows getting org preferences with correct permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: accesscontrol.ActionOrgsPreferencesRead}}, sc.initCtx.OrgID)
-		response := callAPI(sc.server, http.MethodGet, getOrgPreferencesURL, nil, t)
-		assert.Equal(t, http.StatusOK, response.Code)
+		req := webtest.RequestWithSignedInUser(server.NewGetRequest(getOrgPreferencesURL), userWithPermissions(1, []accesscontrol.Permission{{Action: accesscontrol.ActionOrgsPreferencesRead}}))
+		res, err := server.Send(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 	t.Run("AccessControl prevents getting org preferences with correct permissions in another org", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: accesscontrol.ActionOrgsPreferencesRead}}, 2)
-		response := callAPI(sc.server, http.MethodGet, getOrgPreferencesURL, nil, t)
-		assert.Equal(t, http.StatusForbidden, response.Code)
+		// Set permissions in org 2, but set current org to org 1
+		user := userWithPermissions(2, []accesscontrol.Permission{{Action: accesscontrol.ActionOrgsPreferencesRead}})
+		user.OrgID = 1
+
+		req := webtest.RequestWithSignedInUser(server.NewGetRequest(getOrgPreferencesURL), user)
+		res, err := server.Send(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 	t.Run("AccessControl prevents getting org preferences with incorrect permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: "orgs:invalid"}}, sc.initCtx.OrgID)
-		response := callAPI(sc.server, http.MethodGet, getOrgPreferencesURL, nil, t)
-		assert.Equal(t, http.StatusForbidden, response.Code)
+		req := webtest.RequestWithSignedInUser(server.NewGetRequest(getOrgPreferencesURL), userWithPermissions(1, []accesscontrol.Permission{{Action: "orgs:invalid"}}))
+		res, err := server.Send(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, res.StatusCode)
+		require.NoError(t, res.Body.Close())
 	})
 }
 
 func TestAPIEndpoint_PutCurrentOrgPreferences_LegacyAccessControl(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.RBACEnabled = false
-	sc := setupHTTPServerWithCfg(t, true, cfg)
 
-	_, err := sc.hs.orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "TestOrg", UserID: testUserID})
-	require.NoError(t, err)
-
-	setInitCtxSignedInViewer(sc.initCtx)
-	input := strings.NewReader(testUpdateOrgPreferencesCmd)
-	t.Run("Viewer cannot update org preferences", func(t *testing.T) {
-		response := callAPI(sc.server, http.MethodPut, putOrgPreferencesURL, input, t)
-		assert.Equal(t, http.StatusForbidden, response.Code)
+	server := SetupAPITestServer(t, func(hs *HTTPServer) {
+		hs.Cfg = cfg
+		hs.preferenceService = preftest.NewPreferenceServiceFake()
 	})
 
-	setInitCtxSignedInOrgAdmin(sc.initCtx)
+	input := strings.NewReader(testUpdateOrgPreferencesCmd)
+	t.Run("Viewer cannot update org preferences", func(t *testing.T) {
+		req := webtest.RequestWithSignedInUser(server.NewRequest(http.MethodPut, putOrgPreferencesURL, input), &user.SignedInUser{
+			OrgID:   1,
+			OrgRole: org.RoleViewer,
+		})
+		response, err := server.SendJSON(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, response.StatusCode)
+		require.NoError(t, response.Body.Close())
+	})
+
 	input = strings.NewReader(testUpdateOrgPreferencesCmd)
 	t.Run("Org Admin can update org preferences", func(t *testing.T) {
-		response := callAPI(sc.server, http.MethodPut, putOrgPreferencesURL, input, t)
-		assert.Equal(t, http.StatusOK, response.Code)
+		req := webtest.RequestWithSignedInUser(server.NewRequest(http.MethodPut, putOrgPreferencesURL, input), &user.SignedInUser{
+			OrgID:   1,
+			OrgRole: org.RoleAdmin,
+		})
+		response, err := server.SendJSON(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, response.StatusCode)
+		require.NoError(t, response.Body.Close())
 	})
 }
 
 func TestAPIEndpoint_PutCurrentOrgPreferences_AccessControl(t *testing.T) {
-	sc := setupHTTPServer(t, true)
-	setInitCtxSignedInViewer(sc.initCtx)
+	prefService := preftest.NewPreferenceServiceFake()
+	prefService.ExpectedPreference = &pref.Preference{HomeDashboardID: 1, Theme: "dark"}
 
-	_, err := sc.hs.orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "TestOrg", UserID: testUserID})
-	require.NoError(t, err)
+	server := SetupAPITestServer(t, func(hs *HTTPServer) {
+		hs.Cfg = setting.NewCfg()
+		hs.preferenceService = prefService
+	})
 
 	input := strings.NewReader(testUpdateOrgPreferencesCmd)
 	t.Run("AccessControl allows updating org preferences with correct permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: accesscontrol.ActionOrgsPreferencesWrite}}, sc.initCtx.OrgID)
-		response := callAPI(sc.server, http.MethodPut, putOrgPreferencesURL, input, t)
-		assert.Equal(t, http.StatusOK, response.Code)
+		req := webtest.RequestWithSignedInUser(server.NewRequest(http.MethodPut, putOrgPreferencesURL, input), userWithPermissions(1, []accesscontrol.Permission{{Action: accesscontrol.ActionOrgsPreferencesWrite}}))
+		response, err := server.SendJSON(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, response.StatusCode)
+		require.NoError(t, response.Body.Close())
 	})
 
 	input = strings.NewReader(testUpdateOrgPreferencesCmd)
 	t.Run("AccessControl prevents updating org preferences with correct permissions in another org", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: accesscontrol.ActionOrgsPreferencesWrite}}, 2)
-		response := callAPI(sc.server, http.MethodPut, putOrgPreferencesURL, input, t)
-		assert.Equal(t, http.StatusForbidden, response.Code)
+		user := userWithPermissions(2, []accesscontrol.Permission{{Action: accesscontrol.ActionOrgsPreferencesWrite}})
+		user.OrgID = 1
+		req := webtest.RequestWithSignedInUser(server.NewRequest(http.MethodPut, putOrgPreferencesURL, input), user)
+		response, err := server.SendJSON(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, response.StatusCode)
+		require.NoError(t, response.Body.Close())
 	})
 
 	input = strings.NewReader(testUpdateOrgPreferencesCmd)
 	t.Run("AccessControl prevents updating org preferences with incorrect permissions", func(t *testing.T) {
-		setAccessControlPermissions(sc.acmock, []accesscontrol.Permission{{Action: "orgs:invalid"}}, sc.initCtx.OrgID)
-		response := callAPI(sc.server, http.MethodPut, putOrgPreferencesURL, input, t)
-		assert.Equal(t, http.StatusForbidden, response.Code)
+		req := webtest.RequestWithSignedInUser(server.NewRequest(http.MethodPut, putOrgPreferencesURL, input), userWithPermissions(1, []accesscontrol.Permission{{Action: "orgs:invalid"}}))
+		response, err := server.SendJSON(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusForbidden, response.StatusCode)
+		require.NoError(t, response.Body.Close())
 	})
 }
 
 func TestAPIEndpoint_PatchUserPreferences(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.RBACEnabled = false
-	sc := setupHTTPServerWithCfg(t, true, cfg)
 
-	_, err := sc.hs.orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "TestOrg", UserID: testUserID})
-	require.NoError(t, err)
+	dashSvc := dashboards.NewFakeDashboardService(t)
+	qResult := &dashboards.Dashboard{UID: "home", ID: 1}
+	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(qResult, nil)
 
-	setInitCtxSignedInOrgAdmin(sc.initCtx)
+	server := SetupAPITestServer(t, func(hs *HTTPServer) {
+		hs.Cfg = cfg
+		hs.preferenceService = preftest.NewPreferenceServiceFake()
+		hs.DashboardService = dashSvc
+	})
+
 	input := strings.NewReader(testPatchUserPreferencesCmd)
 	t.Run("Returns 200 on success", func(t *testing.T) {
-		response := callAPI(sc.server, http.MethodPatch, patchUserPreferencesUrl, input, t)
-		assert.Equal(t, http.StatusOK, response.Code)
+		req := webtest.RequestWithSignedInUser(server.NewRequest(http.MethodPatch, patchUserPreferencesUrl, input), &user.SignedInUser{
+			OrgID:   1,
+			OrgRole: org.RoleAdmin,
+		})
+		response, err := server.SendJSON(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, response.StatusCode)
+		require.NoError(t, response.Body.Close())
 	})
 
 	input = strings.NewReader(testPatchUserPreferencesCmdBad)
 	t.Run("Returns 400 with bad data", func(t *testing.T) {
-		response := callAPI(sc.server, http.MethodPut, patchUserPreferencesUrl, input, t)
-		assert.Equal(t, http.StatusBadRequest, response.Code)
+		req := webtest.RequestWithSignedInUser(server.NewRequest(http.MethodPatch, patchUserPreferencesUrl, input), &user.SignedInUser{
+			OrgID:   1,
+			OrgRole: org.RoleAdmin,
+		})
+		response, err := server.SendJSON(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+		require.NoError(t, response.Body.Close())
 	})
+
 	input = strings.NewReader(testUpdateOrgPreferencesWithHomeDashboardUIDCmd)
-	dashSvc := dashboards.NewFakeDashboardService(t)
-	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
-		q := args.Get(1).(*models.GetDashboardQuery)
-		q.Result = &models.Dashboard{Uid: "home", Id: 1}
-	}).Return(nil)
-	sc.hs.DashboardService = dashSvc
 	t.Run("Returns 200 on success", func(t *testing.T) {
-		response := callAPI(sc.server, http.MethodPatch, patchUserPreferencesUrl, input, t)
-		assert.Equal(t, http.StatusOK, response.Code)
+		req := webtest.RequestWithSignedInUser(server.NewRequest(http.MethodPatch, patchUserPreferencesUrl, input), &user.SignedInUser{
+			OrgID:   1,
+			OrgRole: org.RoleAdmin,
+		})
+		response, err := server.SendJSON(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, response.StatusCode)
+		require.NoError(t, response.Body.Close())
 	})
 }
 
 func TestAPIEndpoint_PatchOrgPreferences(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.RBACEnabled = false
-	sc := setupHTTPServerWithCfg(t, true, cfg)
 
-	_, err := sc.hs.orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "TestOrg", UserID: testUserID})
-	require.NoError(t, err)
+	server := SetupAPITestServer(t, func(hs *HTTPServer) {
+		hs.Cfg = cfg
+		hs.preferenceService = preftest.NewPreferenceServiceFake()
+	})
 
-	setInitCtxSignedInOrgAdmin(sc.initCtx)
 	input := strings.NewReader(testPatchOrgPreferencesCmd)
 	t.Run("Returns 200 on success", func(t *testing.T) {
-		response := callAPI(sc.server, http.MethodPatch, patchOrgPreferencesUrl, input, t)
-		assert.Equal(t, http.StatusOK, response.Code)
+		req := webtest.RequestWithSignedInUser(server.NewRequest(http.MethodPatch, patchOrgPreferencesUrl, input), &user.SignedInUser{
+			OrgID:   1,
+			OrgRole: org.RoleAdmin,
+		})
+		response, err := server.SendJSON(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusOK, response.StatusCode)
+		require.NoError(t, response.Body.Close())
 	})
 
 	input = strings.NewReader(testPatchOrgPreferencesCmdBad)
 	t.Run("Returns 400 with bad data", func(t *testing.T) {
-		response := callAPI(sc.server, http.MethodPut, patchOrgPreferencesUrl, input, t)
-		assert.Equal(t, http.StatusBadRequest, response.Code)
+		req := webtest.RequestWithSignedInUser(server.NewRequest(http.MethodPatch, patchOrgPreferencesUrl, input), &user.SignedInUser{
+			OrgID:   1,
+			OrgRole: org.RoleAdmin,
+		})
+		response, err := server.SendJSON(req)
+		require.NoError(t, err)
+		assert.Equal(t, http.StatusBadRequest, response.StatusCode)
+		require.NoError(t, response.Body.Close())
 	})
 }

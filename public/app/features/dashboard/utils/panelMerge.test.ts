@@ -1,6 +1,8 @@
 import { PanelModel } from '@grafana/data';
+import { FieldColorModeId, ThresholdsMode } from '@grafana/schema/src';
 
 import { DashboardModel } from '../state/DashboardModel';
+import { createDashboardModelFixture, createPanelJSONFixture } from '../state/__fixtures__/dashboardFixtures';
 
 describe('Merge dashbaord panels', () => {
   describe('simple changes', () => {
@@ -8,35 +10,35 @@ describe('Merge dashbaord panels', () => {
     let rawPanels: PanelModel[];
 
     beforeEach(() => {
-      dashboard = new DashboardModel({
+      dashboard = createDashboardModelFixture({
         title: 'simple title',
         panels: [
-          {
+          createPanelJSONFixture({
             id: 1,
             type: 'timeseries',
-          },
-          {
+          }),
+          createPanelJSONFixture({
             id: 2,
             type: 'timeseries',
-          },
-          {
+          }),
+          createPanelJSONFixture({
             id: 3,
             type: 'table',
             fieldConfig: {
               defaults: {
                 thresholds: {
-                  mode: 'absolute',
+                  mode: ThresholdsMode.Absolute,
                   steps: [
                     { color: 'green', value: -Infinity }, // save model has this as null
                     { color: 'red', value: 80 },
                   ],
                 },
                 mappings: [],
-                color: { mode: 'thresholds' },
+                color: { mode: FieldColorModeId.Thresholds },
               },
               overrides: [],
             },
-          },
+          }),
         ],
       });
       rawPanels = dashboard.getSaveModelClone().panels;
@@ -67,7 +69,7 @@ describe('Merge dashbaord panels', () => {
       rawPanels.push({
         id: 7,
         type: 'canvas',
-      } as any);
+      } as PanelModel);
 
       const info = dashboard.updatePanels(rawPanels);
       expect(info.changed).toBeTruthy();
@@ -83,16 +85,16 @@ describe('Merge dashbaord panels', () => {
     });
 
     it('should allow change in key order for nested elements', () => {
-      (rawPanels[2] as any).fieldConfig = {
+      rawPanels[2].fieldConfig = {
         defaults: {
           color: { mode: 'thresholds' },
           mappings: [],
           thresholds: {
             steps: [
-              { color: 'green', value: null },
+              { color: 'green', value: -Infinity },
               { color: 'red', value: 80 },
             ],
-            mode: 'absolute',
+            mode: ThresholdsMode.Absolute,
           },
         },
         overrides: [],
@@ -110,7 +112,7 @@ describe('Merge dashbaord panels', () => {
     });
 
     it('should replace a type change', () => {
-      (rawPanels[1] as any).type = 'canvas';
+      rawPanels[1].type = 'canvas';
 
       const info = dashboard.updatePanels(rawPanels);
       expect(info.changed).toBeTruthy();

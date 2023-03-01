@@ -75,6 +75,14 @@ type PluginLoaderAuthorizer interface {
 	CanLoadPlugin(plugin *Plugin) bool
 }
 
+type Licensing interface {
+	Environment() []string
+
+	Edition() string
+
+	Path() string
+}
+
 // RoleRegistry handles the plugin RBAC roles and their assignments
 type RoleRegistry interface {
 	DeclarePluginRoles(ctx context.Context, ID, name string, registrations []RoleRegistration) error

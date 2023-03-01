@@ -2,18 +2,19 @@ package export
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
-	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/entity"
+	"github.com/grafana/grafana/pkg/services/store/kind/folder"
 	"github.com/grafana/grafana/pkg/services/store/kind/snapshot"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -101,9 +102,62 @@ func (e *entityStoreJob) start(ctx context.Context) {
 		OrgID:  0, // gets filled in from each row
 		UserID: 0,
 	}
-	ctx = store.ContextWithUser(ctx, rowUser)
+	ctx = appcontext.WithUser(ctx, rowUser)
 
-	what := models.StandardKindDashboard
+	what := entity.StandardKindFolder
+	e.status.Count[what] = 0
+
+	folders := make(map[int64]string)
+	folderInfo, err := e.getFolders(ctx)
+	if err != nil {
+		e.status.Status = "error: " + err.Error()
+		return
+	}
+	e.status.Last = fmt.Sprintf("export %d folders", len(folderInfo))
+	e.broadcaster(e.status)
+
+	for _, dash := range folderInfo {
+		folders[dash.ID] = dash.UID
+	}
+
+	for _, dash := range folderInfo {
+		rowUser.OrgID = dash.OrgID
+		rowUser.UserID = dash.UpdatedBy
+		if dash.UpdatedBy < 0 {
+			rowUser.UserID = 0 // avoid Uint64Val issue????
+		}
+		f := folder.Model{Name: dash.Title}
+		d, _ := json.Marshal(f)
+
+		_, err = e.store.AdminWrite(ctx, &entity.AdminWriteEntityRequest{
+			GRN: &entity.GRN{
+				UID:  dash.UID,
+				Kind: entity.StandardKindFolder,
+			},
+			ClearHistory: true,
+			CreatedAt:    dash.Created.UnixMilli(),
+			UpdatedAt:    dash.Updated.UnixMilli(),
+			UpdatedBy:    fmt.Sprintf("user:%d", dash.UpdatedBy),
+			CreatedBy:    fmt.Sprintf("user:%d", dash.CreatedBy),
+			Body:         d,
+			Folder:       folders[dash.FolderID],
+			Comment:      "(exported from SQL)",
+			Origin: &entity.EntityOriginInfo{
+				Source: "export-from-sql",
+			},
+		})
+		if err != nil {
+			e.status.Status = "error: " + err.Error()
+			return
+		}
+		e.status.Changed = time.Now().UnixMilli()
+		e.status.Index++
+		e.status.Count[what] += 1
+		e.status.Last = fmt.Sprintf("ITEM: %s", dash.UID)
+		e.broadcaster(e.status)
+	}
+
+	what = entity.StandardKindDashboard
 	e.status.Count[what] = 0
 
 	// TODO paging etc
@@ -126,7 +180,7 @@ func (e *entityStoreJob) start(ctx context.Context) {
 		_, err = e.store.AdminWrite(ctx, &entity.AdminWriteEntityRequest{
 			GRN: &entity.GRN{
 				UID:  dash.UID,
-				Kind: models.StandardKindDashboard,
+				Kind: entity.StandardKindDashboard,
 			},
 			ClearHistory: true,
 			Version:      fmt.Sprintf("%d", dash.Version),
@@ -135,6 +189,7 @@ func (e *entityStoreJob) start(ctx context.Context) {
 			UpdatedBy:    fmt.Sprintf("user:%d", dash.UpdatedBy),
 			CreatedBy:    fmt.Sprintf("user:%d", dash.CreatedBy),
 			Body:         dash.Data,
+			Folder:       folders[dash.FolderID],
 			Comment:      "(exported from SQL)",
 			Origin: &entity.EntityOriginInfo{
 				Source: "export-from-sql",
@@ -152,7 +207,7 @@ func (e *entityStoreJob) start(ctx context.Context) {
 	}
 
 	// Playlists
-	what = models.StandardKindPlaylist
+	what = entity.StandardKindPlaylist
 	e.status.Count[what] = 0
 	rowUser.OrgID = 1
 	rowUser.UserID = 1
@@ -177,7 +232,7 @@ func (e *entityStoreJob) start(ctx context.Context) {
 		_, err = e.store.Write(ctx, &entity.WriteEntityRequest{
 			GRN: &entity.GRN{
 				UID:  playlist.Uid,
-				Kind: models.StandardKindPlaylist,
+				Kind: entity.StandardKindPlaylist,
 			},
 			Body:    prettyJSON(playlist),
 			Comment: "export from playlists",
@@ -200,34 +255,34 @@ func (e *entityStoreJob) start(ctx context.Context) {
 		rowUser.OrgID = orgId
 		rowUser.UserID = 1
 		cmd := &dashboardsnapshots.GetDashboardSnapshotsQuery{
-			OrgId:        orgId,
+			OrgID:        orgId,
 			Limit:        500000,
 			SignedInUser: rowUser,
 		}
 
-		err := e.dashboardsnapshots.SearchDashboardSnapshots(ctx, cmd)
+		result, err := e.dashboardsnapshots.SearchDashboardSnapshots(ctx, cmd)
 		if err != nil {
 			e.status.Status = "error: " + err.Error()
 			return
 		}
 
-		for _, dto := range cmd.Result {
+		for _, dto := range result {
 			m := snapshot.Model{
 				Name:        dto.Name,
-				ExternalURL: dto.ExternalUrl,
+				ExternalURL: dto.ExternalURL,
 				Expires:     dto.Expires.UnixMilli(),
 			}
-			rowUser.OrgID = dto.OrgId
-			rowUser.UserID = dto.UserId
+			rowUser.OrgID = dto.OrgID
+			rowUser.UserID = dto.UserID
 
 			snapcmd := &dashboardsnapshots.GetDashboardSnapshotQuery{
 				Key: dto.Key,
 			}
-			err = e.dashboardsnapshots.GetDashboardSnapshot(ctx, snapcmd)
+			snapcmdResult, err := e.dashboardsnapshots.GetDashboardSnapshot(ctx, snapcmd)
 			if err == nil {
-				res := snapcmd.Result
+				res := snapcmdResult
 				m.DeleteKey = res.DeleteKey
-				m.ExternalURL = res.ExternalUrl
+				m.ExternalURL = res.ExternalURL
 
 				snap := res.Dashboard
 				m.DashboardUID = snap.Get("uid").MustString("")
@@ -241,7 +296,7 @@ func (e *entityStoreJob) start(ctx context.Context) {
 			_, err = e.store.Write(ctx, &entity.WriteEntityRequest{
 				GRN: &entity.GRN{
 					UID:  dto.Key,
-					Kind: models.StandardKindSnapshot,
+					Kind: entity.StandardKindSnapshot,
 				},
 				Body:    prettyJSON(m),
 				Comment: "export from snapshtts",
@@ -269,6 +324,19 @@ type dashInfo struct {
 	Updated   time.Time
 	CreatedBy int64 `db:"created_by"`
 	UpdatedBy int64 `db:"updated_by"`
+	FolderID  int64 `db:"folder_id"`
+}
+
+type folderInfo struct {
+	ID        int64 `db:"id"`
+	OrgID     int64 `db:"org_id"`
+	UID       string
+	Title     string
+	Created   time.Time
+	Updated   time.Time
+	CreatedBy int64 `db:"created_by"`
+	UpdatedBy int64 `db:"updated_by"`
+	FolderID  int64 `db:"folder_id"`
 }
 
 // TODO, paging etc
@@ -277,7 +345,17 @@ func (e *entityStoreJob) getDashboards(ctx context.Context) ([]dashInfo, error) 
 	e.broadcaster(e.status)
 
 	dash := make([]dashInfo, 0)
-	err := e.sess.Select(ctx, &dash, "SELECT org_id,uid,version,slug,data,created,updated,created_by,updated_by FROM dashboard WHERE is_folder=false")
+	err := e.sess.Select(ctx, &dash, "SELECT org_id,uid,version,slug,data,folder_id,created,updated,created_by,updated_by FROM dashboard WHERE is_folder=false")
+	return dash, err
+}
+
+// TODO, paging etc
+func (e *entityStoreJob) getFolders(ctx context.Context) ([]folderInfo, error) {
+	e.status.Last = "find dashbaords...."
+	e.broadcaster(e.status)
+
+	dash := make([]folderInfo, 0)
+	err := e.sess.Select(ctx, &dash, "SELECT id,org_id,uid,title,folder_id,created,updated,created_by,updated_by FROM dashboard WHERE is_folder=true")
 	return dash, err
 }
 
