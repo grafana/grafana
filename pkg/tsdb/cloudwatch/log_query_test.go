@@ -33,6 +33,10 @@ func TestLogsResultsToDataframes(t *testing.T) {
 					Value: aws.String("test message 1"),
 				},
 				&cloudwatchlogs.ResultField{
+					Field: aws.String("numberOrString"),
+					Value: aws.String("1"),
+				},
+				&cloudwatchlogs.ResultField{
 					Field: aws.String("@logStream"),
 					Value: aws.String("fakelogstream"),
 				},
@@ -61,6 +65,10 @@ func TestLogsResultsToDataframes(t *testing.T) {
 				&cloudwatchlogs.ResultField{
 					Field: aws.String("line"),
 					Value: aws.String("test message 2"),
+				},
+				&cloudwatchlogs.ResultField{
+					Field: aws.String("numberOrString"),
+					Value: aws.String("not a number"),
 				},
 				&cloudwatchlogs.ResultField{
 					Field: aws.String("@logStream"),
@@ -100,6 +108,10 @@ func TestLogsResultsToDataframes(t *testing.T) {
 				&cloudwatchlogs.ResultField{
 					Field: aws.String("line"),
 					Value: aws.String("test message 3"),
+				},
+				&cloudwatchlogs.ResultField{
+					Field: aws.String("numberOrString"),
+					Value: aws.String("2.000"),
 				},
 				&cloudwatchlogs.ResultField{
 					Field: aws.String("@logStream"),
@@ -147,6 +159,12 @@ func TestLogsResultsToDataframes(t *testing.T) {
 		aws.String("test message 3"),
 	})
 
+	numberOrStringField := data.NewField("numberOrString", nil, []*string{
+		aws.String("1"),
+		aws.String("not a number"),
+		aws.String("2.000"),
+	})
+
 	logStreamField := data.NewField("@logStream", nil, []*string{
 		aws.String("fakelogstream"),
 		aws.String("fakelogstream"),
@@ -186,6 +204,7 @@ func TestLogsResultsToDataframes(t *testing.T) {
 		Fields: []*data.Field{
 			timeField,
 			lineField,
+			numberOrStringField,
 			logStreamField,
 			logField,
 			hiddenLogStreamField,

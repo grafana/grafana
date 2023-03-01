@@ -73,9 +73,24 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 				timeField[i] = &parsedTime
 			} else if numericField, ok := fieldValues[*resultField.Field].([]*float64); ok {
 				parsedFloat, err := strconv.ParseFloat(*resultField.Value, 64)
+
+				// This can happen if a field has a mix of numeric and non-numeric values.
+				// In that case, we change the field from a numeric field to a string field.
 				if err != nil {
-					return nil, err
+					fieldValuesAsStrings := make([]*string, rowCount)
+					for j := 0; j <= i; j++ {
+						for _, rf := range nonEmptyRows[j] {
+							if *rf.Field == *resultField.Field {
+								fieldValuesAsStrings[j] = rf.Value
+							}
+						}
+					}
+
+					fieldValues[*resultField.Field] = fieldValuesAsStrings
+
+					continue
 				}
+
 				numericField[i] = &parsedFloat
 			} else {
 				fieldValues[*resultField.Field].([]*string)[i] = resultField.Value
