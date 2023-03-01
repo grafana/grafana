@@ -289,7 +289,7 @@ export const getAllStandardFieldConfigs = () => {
 
     settings: {
       placeholder: 'auto',
-      min: -15,
+      min: 0,
       max: 15,
       integer: true,
     },
