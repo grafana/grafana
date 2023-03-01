@@ -50,6 +50,7 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 
 	// Plugins CDN settings
 	cfg.PluginsCDNURLTemplate = strings.TrimRight(pluginsSection.Key("cdn_base_url").MustString(""), "/")
+	cfg.PluginLogBackendRequests = pluginsSection.Key("log_backend_requests").MustBool(false)
 
 	return nil
 }

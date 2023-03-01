@@ -8,7 +8,7 @@ title: ElasticsearchDataQuery kind
 
 ## ElasticsearchDataQuery
 
-#### Maturity: experimental
+#### Maturity: [experimental](../../../maturity/#experimental)
 #### Version: 0.0
 
 

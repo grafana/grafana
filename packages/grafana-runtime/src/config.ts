@@ -14,7 +14,6 @@ import {
   MapLayerOptions,
   OAuthSettings,
   PanelPluginMeta,
-  PreloadPlugin,
   systemDateFormats,
   SystemDateFormatSettings,
   NewThemeOptions,
@@ -25,11 +24,32 @@ export interface AzureSettings {
   managedIdentityEnabled: boolean;
 }
 
+export enum PluginExtensionTypes {
+  link = 'link',
+}
+
+export type PluginsExtensionLinkConfig = {
+  placement: string;
+  type: PluginExtensionTypes.link;
+  title: string;
+  description: string;
+  path: string;
+};
+
+export type AppPluginConfig = {
+  id: string;
+  path: string;
+  version: string;
+  preload: boolean;
+  extensions?: PluginsExtensionLinkConfig[];
+};
+
 export class GrafanaBootConfig implements GrafanaConfig {
   isPublicDashboardView: boolean;
   snapshotEnabled = true;
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
   panels: { [key: string]: PanelPluginMeta } = {};
+  apps: Record<string, AppPluginConfig> = {};
   auth: AuthSettings = {};
   minRefreshInterval = '';
   appUrl = '';
@@ -77,7 +97,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
   /** @deprecated Use `theme2` instead. */
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
-  pluginsToPreload: PreloadPlugin[] = [];
   featureToggles: FeatureToggles = {};
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;

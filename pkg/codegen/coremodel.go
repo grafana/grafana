@@ -183,13 +183,21 @@ func (cd *CoremodelDeclaration) GenerateGoCoremodel(path string) (WriteDiffer, e
 		return nil, fmt.Errorf("error executing imports template: %w", err)
 	}
 
-	gostr, err := codegen.Generate(oT, lin.Name(), codegen.Options{
-		GenerateTypes: true,
-		SkipPrune:     true,
-		SkipFmt:       true,
-		UserTemplates: map[string]string{
-			"imports.tmpl": importbuf.String(),
-			"typedef.tmpl": tmplTypedef,
+	gostr, err := codegen.Generate(oT, codegen.Configuration{
+		PackageName: lin.Name(),
+		Generate: codegen.GenerateOptions{
+			Models: true,
+		},
+		Compatibility: codegen.CompatibilityOptions{
+			AlwaysPrefixEnumValues: true,
+		},
+		OutputOptions: codegen.OutputOptions{
+			SkipFmt:   true,
+			SkipPrune: true,
+			UserTemplates: map[string]string{
+				"imports.tmpl": importbuf.String(),
+				"typedef.tmpl": tmplTypedef,
+			},
 		},
 	})
 	if err != nil {

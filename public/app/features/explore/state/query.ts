@@ -1,7 +1,7 @@
 import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
 import deepEqual from 'fast-deep-equal';
 import { flatten, groupBy, snakeCase } from 'lodash';
-import { identity, Observable, of, SubscriptionLike, Unsubscribable, combineLatest } from 'rxjs';
+import { combineLatest, identity, Observable, of, SubscriptionLike, Unsubscribable } from 'rxjs';
 import { mergeMap, throttleTime } from 'rxjs/operators';
 
 import {
@@ -9,16 +9,15 @@ import {
   DataQueryErrorType,
   DataQueryResponse,
   DataSourceApi,
-  hasSupplementaryQuerySupport,
-  SupplementaryQueryType,
+  hasLogsVolumeSupport,
   hasQueryExportSupport,
   hasQueryImportSupport,
   HistoryItem,
   LoadingState,
   PanelEvents,
   QueryFixAction,
+  SupplementaryQueryType,
   toLegacyResponseData,
-  hasLogsVolumeSupport,
 } from '@grafana/data';
 import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -48,6 +47,7 @@ import { storeSupplementaryQueryEnabled, supplementaryQueryTypes } from '../util
 
 import { addHistoryItem, historyUpdatedAction, loadRichHistory } from './history';
 import { stateSave } from './main';
+import { getSupplementaryQueryProvider } from './supplementaryQueries';
 import { updateTime } from './time';
 import { createCacheKey, getResultsFromCache } from './utils';
 
@@ -447,7 +447,8 @@ export const runQueries = (
       cache,
       supplementaryQueries,
     } = exploreItemState;
-    let newQuerySub;
+    let newQuerySource: Observable<ExplorePanelData>;
+    let newQuerySubscription: SubscriptionLike;
 
     const queries = exploreItemState.queries.map((query) => ({
       ...query,
@@ -464,29 +465,19 @@ export const runQueries = (
 
     // If we have results saved in cache, we are going to use those results instead of running queries
     if (cachedValue) {
-      newQuerySub = combineLatest([of(cachedValue), correlations$])
-        .pipe(
-          mergeMap(([data, correlations]) =>
-            decorateData(
-              data,
-              queryResponse,
-              absoluteRange,
-              refreshInterval,
-              queries,
-              correlations,
-              datasourceInstance != null &&
-                (hasSupplementaryQuerySupport(datasourceInstance, SupplementaryQueryType.LogsVolume) ||
-                  hasLogsVolumeSupport(datasourceInstance))
-            )
-          )
+      newQuerySource = combineLatest([of(cachedValue), correlations$]).pipe(
+        mergeMap(([data, correlations]) =>
+          decorateData(data, queryResponse, absoluteRange, refreshInterval, queries, correlations)
         )
-        .subscribe((data) => {
-          if (!data.error) {
-            dispatch(stateSave());
-          }
+      );
 
-          dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
-        });
+      newQuerySubscription = newQuerySource.subscribe((data) => {
+        if (!data.error) {
+          dispatch(stateSave());
+        }
+
+        dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
+      });
 
       // If we don't have results saved in cache, run new queries
     } else {
@@ -522,64 +513,54 @@ export const runQueries = (
 
       dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));
 
-      newQuerySub = combineLatest([
+      newQuerySource = combineLatest([
         runRequest(datasourceInstance, transaction.request)
           // Simple throttle for live tailing, in case of > 1000 rows per interval we spend about 200ms on processing and
           // rendering. In case this is optimized this can be tweaked, but also it should be only as fast as user
           // actually can see what is happening.
           .pipe(live ? throttleTime(500) : identity),
         correlations$,
-      ])
-        .pipe(
-          mergeMap(([data, correlations]) =>
-            decorateData(
-              data,
-              queryResponse,
-              absoluteRange,
-              refreshInterval,
-              queries,
-              correlations,
-              datasourceInstance != null &&
-                (hasSupplementaryQuerySupport(datasourceInstance, SupplementaryQueryType.LogsVolume) ||
-                  hasLogsVolumeSupport(datasourceInstance))
-            )
-          )
+      ]).pipe(
+        mergeMap(([data, correlations]) =>
+          decorateData(data, queryResponse, absoluteRange, refreshInterval, queries, correlations)
         )
-        .subscribe({
-          next(data) {
-            if (data.logsResult !== null) {
-              reportInteraction('grafana_explore_logs_result_displayed', {
-                datasourceType: datasourceInstance.type,
-              });
-            }
-            dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
+      );
 
-            // Keep scanning for results if this was the last scanning transaction
-            if (getState().explore[exploreId]!.scanning) {
-              if (data.state === LoadingState.Done && data.series.length === 0) {
-                const range = getShiftedTimeRange(-1, getState().explore[exploreId]!.range);
-                dispatch(updateTime({ exploreId, absoluteRange: range }));
-                dispatch(runQueries(exploreId));
-              } else {
-                // We can stop scanning if we have a result
-                dispatch(scanStopAction({ exploreId }));
-              }
+      newQuerySubscription = newQuerySource.subscribe({
+        next(data) {
+          if (data.logsResult !== null) {
+            reportInteraction('grafana_explore_logs_result_displayed', {
+              datasourceType: datasourceInstance.type,
+            });
+          }
+          dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
+
+          // Keep scanning for results if this was the last scanning transaction
+          if (getState().explore[exploreId]!.scanning) {
+            if (data.state === LoadingState.Done && data.series.length === 0) {
+              const range = getShiftedTimeRange(-1, getState().explore[exploreId]!.range);
+              dispatch(updateTime({ exploreId, absoluteRange: range }));
+              dispatch(runQueries(exploreId));
+            } else {
+              // We can stop scanning if we have a result
+              dispatch(scanStopAction({ exploreId }));
             }
-          },
-          error(error) {
-            dispatch(notifyApp(createErrorNotification('Query processing error', error)));
-            dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Error }));
-            console.error(error);
-          },
-          complete() {
-            // In case we don't get any response at all but the observable completed, make sure we stop loading state.
-            // This is for cases when some queries are noop like running first query after load but we don't have any
-            // actual query input.
-            if (getState().explore[exploreId]!.queryResponse.state === LoadingState.Loading) {
-              dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Done }));
-            }
-          },
-        });
+          }
+        },
+        error(error) {
+          dispatch(notifyApp(createErrorNotification('Query processing error', error)));
+          dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Error }));
+          console.error(error);
+        },
+        complete() {
+          // In case we don't get any response at all but the observable completed, make sure we stop loading state.
+          // This is for cases when some queries are noop like running first query after load but we don't have any
+          // actual query input.
+          if (getState().explore[exploreId]!.queryResponse.state === LoadingState.Loading) {
+            dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Done }));
+          }
+        },
+      });
 
       if (live) {
         for (const type of supplementaryQueryTypes) {
@@ -595,11 +576,17 @@ export const runQueries = (
         for (const type of supplementaryQueryTypes) {
           // We always prepare provider, even is supplementary query is disabled because when the user
           // enables the query, we need to load the data, so we need the provider
-          if (hasSupplementaryQuerySupport(datasourceInstance, type)) {
-            const dataProvider = datasourceInstance.getDataProvider(type, {
+          const dataProvider = getSupplementaryQueryProvider(
+            datasourceInstance,
+            type,
+            {
               ...transaction.request,
               requestId: `${transaction.request.requestId}_${snakeCase(type)}`,
-            });
+            },
+            newQuerySource
+          );
+
+          if (dataProvider) {
             dispatch(
               storeSupplementaryQueryDataProviderAction({
                 exploreId,
@@ -648,7 +635,7 @@ export const runQueries = (
       }
     }
 
-    dispatch(queryStoreSubscriptionAction({ exploreId, querySubscription: newQuerySub }));
+    dispatch(queryStoreSubscriptionAction({ exploreId, querySubscription: newQuerySubscription }));
   };
 };
 

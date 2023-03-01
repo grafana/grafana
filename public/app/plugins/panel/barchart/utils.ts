@@ -55,7 +55,7 @@ function getBarCharScaleOrientation(orientation: VizOrientation) {
 
 export interface BarChartOptionsEX extends PanelOptions {
   rawValue: (seriesIdx: number, valueIdx: number) => number | null;
-  getColor?: (seriesIdx: number, valueIdx: number, value: any) => string | null;
+  getColor?: (seriesIdx: number, valueIdx: number, value: unknown) => string | null;
   timeZone?: TimeZone;
   fillOpacity?: number;
 }
@@ -83,11 +83,11 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
 }) => {
   const builder = new UPlotConfigBuilder();
 
-  const formatValue = (seriesIdx: number, value: any) => {
+  const formatValue = (seriesIdx: number, value: unknown) => {
     return formattedValueToString(frame.fields[seriesIdx].display!(value));
   };
 
-  const formatShortValue = (seriesIdx: number, value: any) => {
+  const formatShortValue = (seriesIdx: number, value: unknown) => {
     return shortenValue(formatValue(seriesIdx, value), xTickLabelMaxLength);
   };
 

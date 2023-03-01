@@ -18,6 +18,7 @@
     "section": {
       "actions": "",
       "dashboard-search-results": "",
+      "folder-search-results": "",
       "pages": "",
       "preferences": "",
       "recent-dashboards": ""
@@ -109,6 +110,13 @@
   },
   "folder-picker": {
     "loading": "Chargement des dossiers..."
+  },
+  "grafana-ui": {
+    "segment-async": {
+      "error": "",
+      "loading": "",
+      "no-options": ""
+    }
   },
   "library-panel": {
     "add-modal": {
@@ -251,6 +259,9 @@
     "manage-dashboards": {
       "title": "Parcourir"
     },
+    "manage-folder": {
+      "subtitle": ""
+    },
     "monitoring": {
       "subtitle": "Applications de suivi et d'infrastructure",
       "title": "Suivi"
@@ -287,6 +298,9 @@
       "title": "Préférences"
     },
     "profile/switch-org": "Passer à une autre organisation",
+    "public": {
+      "title": ""
+    },
     "scenes": {
       "title": "Scènes"
     },
@@ -342,6 +356,11 @@
   "navigation": {
     "kiosk": {
       "tv-alert": "Appuyez sur ESC pour quitter le mode kiosque"
+    },
+    "toolbar": {
+      "enable-kiosk": "",
+      "toggle-menu": "",
+      "toggle-search-bar": ""
     }
   },
   "news": {
@@ -390,11 +409,37 @@
     }
   },
   "search": {
+    "actions": {
+      "include-panels": "",
+      "remove-datasource-filter": "",
+      "sort-placeholder": "",
+      "starred": "",
+      "view-as-folders": "",
+      "view-as-grid": "",
+      "view-as-list": ""
+    },
     "dashboard-actions": {
       "import": "",
       "new": "",
       "new-dashboard": "",
       "new-folder": ""
+    },
+    "folder-view": {
+      "go-to-folder": "",
+      "select-folder": ""
+    },
+    "results-table": {
+      "datasource-header": "",
+      "location-header": "",
+      "name-header": "",
+      "tags-header": "",
+      "type-dashboard": "",
+      "type-folder": "",
+      "type-header": ""
+    },
+    "search-input": {
+      "include-panels-placeholder": "",
+      "placeholder": ""
     }
   },
   "share-modal": {
@@ -494,6 +539,11 @@
     },
     "title": "Préférences"
   },
+  "tag-filter": {
+    "loading": "",
+    "no-tags": "",
+    "placeholder": ""
+  },
   "time-picker": {
     "absolute": {
       "recent-title": "Périodes absolues récemment utilisées",
@@ -569,12 +619,20 @@
     "loading": "Chargement des sessions..."
   },
   "variable": {
+    "adhoc": {
+      "placeholder": ""
+    },
+    "dropdown": {
+      "placeholder": ""
+    },
     "picker": {
-      "input": "Entrer la valeur de la variable",
       "link-all": "Tout",
       "option-all": "Tout",
       "option-selected-values": "Sélection",
       "option-tooltip": "Effacer les sélections"
+    },
+    "textbox": {
+      "placeholder": ""
     }
   }
 }

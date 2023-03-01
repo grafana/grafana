@@ -54,18 +54,18 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 
 	token, err := s.sessionService.LookupToken(ctx, rawSessionToken)
 	if err != nil {
-		s.log.Warn("failed to look up session from cookie", "error", err)
+		s.log.FromContext(ctx).Warn("Failed to look up session from cookie", "error", err)
 		return nil, err
 	}
 
-	signedInUser, err := s.userService.GetSignedInUserWithCacheCtx(ctx,
-		&user.GetSignedInUserQuery{UserID: token.UserId, OrgID: r.OrgID})
+	signedInUser, err := s.userService.GetSignedInUserWithCacheCtx(
+		ctx, &user.GetSignedInUserQuery{UserID: token.UserId, OrgID: r.OrgID},
+	)
 	if err != nil {
-		s.log.Error("failed to get user with id", "userId", token.UserId, "error", err)
+		s.log.FromContext(ctx).Error("Failed to get user with id", "userId", token.UserId, "error", err)
 		return nil, err
 	}
 
-	// FIXME (jguer): oauth token refresh not implemented
 	identity := authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, signedInUser.UserID), signedInUser, authn.ClientParams{})
 	identity.SessionToken = token
 

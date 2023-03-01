@@ -20,6 +20,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	loginservice "github.com/grafana/grafana/pkg/services/login"
+	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -150,9 +151,10 @@ func (hs *HTTPServer) tryAutoLogin(c *contextmodel.ReqContext) bool {
 		}
 	}
 	// If no auto_login option configured for specific OAuth, use legacy option
-	if setting.OAuthAutoLogin && autoLoginProvidersLen == 0 {
+	if hs.Cfg.OAuthAutoLogin && autoLoginProvidersLen == 0 {
 		autoLoginProvidersLen = len(oauthInfos)
 	}
+
 	if samlAutoLogin {
 		autoLoginProvidersLen++
 	}
@@ -161,13 +163,14 @@ func (hs *HTTPServer) tryAutoLogin(c *contextmodel.ReqContext) bool {
 		c.Logger.Warn("Skipping auto login because multiple auth providers are configured with auto_login option")
 		return false
 	}
-	if autoLoginProvidersLen == 0 && setting.OAuthAutoLogin {
+
+	if hs.Cfg.OAuthAutoLogin && autoLoginProvidersLen == 0 {
 		c.Logger.Warn("Skipping auto login because no auth providers are configured")
 		return false
 	}
 
 	for providerName, provider := range oauthInfos {
-		if provider.AutoLogin || setting.OAuthAutoLogin {
+		if provider.AutoLogin || hs.Cfg.OAuthAutoLogin {
 			redirectUrl := hs.Cfg.AppSubURL + "/login/" + providerName
 			c.Logger.Info("OAuth auto login enabled. Redirecting to " + redirectUrl)
 			c.Redirect(redirectUrl, 307)
@@ -244,7 +247,7 @@ func (hs *HTTPServer) LoginPost(c *contextmodel.ReqContext) response.Response {
 		}, c)
 	}()
 
-	if setting.DisableLoginForm {
+	if hs.Cfg.DisableLoginForm {
 		resp = response.Error(http.StatusUnauthorized, "Login is disabled", nil)
 		return resp
 	}
@@ -398,22 +401,35 @@ func (hs *HTTPServer) trySetEncryptedCookie(ctx *contextmodel.ReqContext, cookie
 	return nil
 }
 
-func (hs *HTTPServer) redirectWithError(ctx *contextmodel.ReqContext, err error, v ...interface{}) {
-	ctx.Logger.Warn(err.Error(), v...)
-	if err := hs.trySetEncryptedCookie(ctx, loginErrorCookieName, getLoginExternalError(err), 60); err != nil {
-		hs.log.Error("Failed to set encrypted cookie", "err", err)
-	}
-
-	ctx.Redirect(hs.Cfg.AppSubURL + "/login")
+func (hs *HTTPServer) redirectWithError(c *contextmodel.ReqContext, err error, v ...interface{}) {
+	c.Logger.Warn(err.Error(), v...)
+	c.Redirect(hs.redirectURLWithErrorCookie(c, err))
 }
 
-func (hs *HTTPServer) RedirectResponseWithError(ctx *contextmodel.ReqContext, err error, v ...interface{}) *response.RedirectResponse {
-	ctx.Logger.Error(err.Error(), v...)
-	if err := hs.trySetEncryptedCookie(ctx, loginErrorCookieName, getLoginExternalError(err), 60); err != nil {
-		hs.log.Error("Failed to set encrypted cookie", "err", err)
+func (hs *HTTPServer) RedirectResponseWithError(c *contextmodel.ReqContext, err error, v ...interface{}) *response.RedirectResponse {
+	c.Logger.Error(err.Error(), v...)
+	location := hs.redirectURLWithErrorCookie(c, err)
+	return response.Redirect(location)
+}
+
+func (hs *HTTPServer) redirectURLWithErrorCookie(c *contextmodel.ReqContext, err error) string {
+	setCookie := true
+	if hs.Features.IsEnabled(featuremgmt.FlagIndividualCookiePreferences) {
+		prefsQuery := pref.GetPreferenceWithDefaultsQuery{UserID: c.UserID, OrgID: c.OrgID, Teams: c.Teams}
+		prefs, err := hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
+		if err != nil {
+			c.Redirect(hs.Cfg.AppSubURL + "/login")
+		}
+		setCookie = prefs.Cookies("functional")
 	}
 
-	return response.Redirect(hs.Cfg.AppSubURL + "/login")
+	if setCookie {
+		if err := hs.trySetEncryptedCookie(c, loginErrorCookieName, getLoginExternalError(err), 60); err != nil {
+			hs.log.Error("Failed to set encrypted cookie", "err", err)
+		}
+	}
+
+	return hs.Cfg.AppSubURL + "/login"
 }
 
 func (hs *HTTPServer) samlEnabled() bool {

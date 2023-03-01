@@ -18,6 +18,7 @@
     "section": {
       "actions": "",
       "dashboard-search-results": "",
+      "folder-search-results": "",
       "pages": "",
       "preferences": "",
       "recent-dashboards": ""
@@ -109,6 +110,13 @@
   },
   "folder-picker": {
     "loading": "Ordner werden geladen …"
+  },
+  "grafana-ui": {
+    "segment-async": {
+      "error": "",
+      "loading": "",
+      "no-options": ""
+    }
   },
   "library-panel": {
     "add-modal": {
@@ -251,6 +259,9 @@
     "manage-dashboards": {
       "title": "Durchsuchen"
     },
+    "manage-folder": {
+      "subtitle": ""
+    },
     "monitoring": {
       "subtitle": "Überwachungs- und Infrastruktur-Apps",
       "title": "Überwachung"
@@ -287,6 +298,9 @@
       "title": "Einstellungen"
     },
     "profile/switch-org": "Organisation wechseln",
+    "public": {
+      "title": ""
+    },
     "scenes": {
       "title": "Szenen"
     },
@@ -342,6 +356,11 @@
   "navigation": {
     "kiosk": {
       "tv-alert": "Drücke ESC, um den Kiosk-Modus zu verlassen"
+    },
+    "toolbar": {
+      "enable-kiosk": "",
+      "toggle-menu": "",
+      "toggle-search-bar": ""
     }
   },
   "news": {
@@ -390,11 +409,37 @@
     }
   },
   "search": {
+    "actions": {
+      "include-panels": "",
+      "remove-datasource-filter": "",
+      "sort-placeholder": "",
+      "starred": "",
+      "view-as-folders": "",
+      "view-as-grid": "",
+      "view-as-list": ""
+    },
     "dashboard-actions": {
       "import": "",
       "new": "",
       "new-dashboard": "",
       "new-folder": ""
+    },
+    "folder-view": {
+      "go-to-folder": "",
+      "select-folder": ""
+    },
+    "results-table": {
+      "datasource-header": "",
+      "location-header": "",
+      "name-header": "",
+      "tags-header": "",
+      "type-dashboard": "",
+      "type-folder": "",
+      "type-header": ""
+    },
+    "search-input": {
+      "include-panels-placeholder": "",
+      "placeholder": ""
     }
   },
   "share-modal": {
@@ -494,6 +539,11 @@
     },
     "title": "Einstellungen"
   },
+  "tag-filter": {
+    "loading": "",
+    "no-tags": "",
+    "placeholder": ""
+  },
   "time-picker": {
     "absolute": {
       "recent-title": "Kürzlich verwendete absolute Bereiche",
@@ -569,12 +619,20 @@
     "loading": "Sitzungen werden geladen …"
   },
   "variable": {
+    "adhoc": {
+      "placeholder": ""
+    },
+    "dropdown": {
+      "placeholder": ""
+    },
     "picker": {
-      "input": "Variablenwert eingeben",
       "link-all": "Alle",
       "option-all": "Alle",
       "option-selected-values": "Ausgewählt",
       "option-tooltip": "Auswahl löschen"
+    },
+    "textbox": {
+      "placeholder": ""
     }
   }
 }

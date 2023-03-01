@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
@@ -414,6 +415,10 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 
 	t.Run("Given single org and 2 users inserted", func(t *testing.T) {
 		ss = db.InitTestDB(t)
+		ss.Cfg.AutoAssignOrg = true
+		ss.Cfg.AutoAssignOrgId = 1
+		ss.Cfg.AutoAssignOrgRole = "Viewer"
+
 		_, usrSvc := createOrgAndUserSvc(t, ss, ss.Cfg)
 
 		testUser := &user.SignedInUser{
@@ -421,17 +426,17 @@ func TestIntegrationOrgUserDataAccess(t *testing.T) {
 				1: {accesscontrol.ActionOrgUsersRead: []string{accesscontrol.ScopeUsersAll}},
 			},
 		}
-		ss.Cfg.AutoAssignOrg = true
-		ss.Cfg.AutoAssignOrgId = 1
-		ss.Cfg.AutoAssignOrgRole = "Viewer"
 
 		ac1cmd := &user.CreateUserCommand{Login: "ac1", Email: "ac1@test.com", Name: "ac1 name"}
 		ac2cmd := &user.CreateUserCommand{Login: "ac2", Email: "ac2@test.com", Name: "ac2 name"}
 
 		ac1, err := usrSvc.CreateUserForTests(context.Background(), ac1cmd)
 		testUser.OrgID = ac1.OrgID
+		require.Equal(t, int64(1), ac1.OrgID)
 		require.NoError(t, err)
-		_, err = usrSvc.Create(context.Background(), ac2cmd)
+
+		ac2, err := usrSvc.Create(context.Background(), ac2cmd)
+		require.Equal(t, int64(1), ac2.OrgID)
 		require.NoError(t, err)
 
 		t.Run("Can get organization users paginated with query", func(t *testing.T) {
@@ -820,7 +825,7 @@ func createOrgAndUserSvc(t *testing.T, store db.DB, cfg *setting.Cfg) (org.Servi
 	quotaService := quotaimpl.ProvideService(store, cfg)
 	orgService, err := ProvideService(store, cfg, quotaService)
 	require.NoError(t, err)
-	usrSvc, err := userimpl.ProvideService(store, orgService, cfg, nil, nil, quotaService)
+	usrSvc, err := userimpl.ProvideService(store, orgService, cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
 
 	return orgService, usrSvc

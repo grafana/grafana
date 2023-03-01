@@ -23,7 +23,6 @@ Some stable features are enabled by default. You can disable a stable feature by
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ------------------ |
 | `disableEnvelopeEncryption`         | Disable envelope encryption (emergency only)                                         |                    |
 | `database_metrics`                  | Add Prometheus metrics for database tables                                           |                    |
-| `lokiMonacoEditor`                  | Access to Monaco query editor for Loki                                               | Yes                |
 | `featureHighlights`                 | Highlight Grafana Enterprise features                                                |                    |
 | `cloudWatchDynamicLabels`           | Use dynamic labels instead of alias patterns in CloudWatch datasource                | Yes                |
 | `internationalization`              | Enables internationalization                                                         | Yes                |
@@ -39,16 +38,13 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `trimDefaults`                    | Use cue schema to remove values that will be applied automatically              |
 | `panelTitleSearch`                | Search for dashboards using panel title                                         |
 | `prometheusAzureOverrideAudience` | Experimental. Allow override default AAD audience for Azure Prometheus endpoint |
-| `swaggerUi`                       | Serves swagger UI                                                               |
 | `migrationLocking`                | Lock database during migrations                                                 |
 | `newDBLibrary`                    | Use jmoiron/sqlx rather than xorm for a few backend services                    |
 | `validateDashboardsOnSave`        | Validate dashboard JSON POSTed to api/dashboards/db                             |
 | `autoMigrateGraphPanels`          | Replace the angular graph panel with timeseries                                 |
 | `topnav`                          | Displays new top nav and page layouts                                           |
-| `datasourceLogger`                | Logs all datasource requests                                                    |
 | `accessControlOnCall`             | Access control primitives for OnCall                                            |
 | `alertingNoNormalState`           | Stop maintaining state of alerts that are not firing                            |
-| `topNavCommandPalette`            | Launch the Command Palette from the top navigation search box                   |
 
 ## Alpha feature toggles
 
@@ -57,7 +53,6 @@ Alpha features might be changed or removed without prior notice.
 
 | Feature toggle name                | Description                                                                                                                                                                  |
 | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `returnUnameHeader`                | Return user login as header for authenticated requests                                                                                                                       |
 | `alertingBigTransactions`          | Use big transactions for alerting database writes                                                                                                                            |
 | `dashboardPreviews`                | Create and show thumbnails for dashboard search results                                                                                                                      |
 | `live-pipeline`                    | Enable a generic live processing pipeline                                                                                                                                    |
@@ -69,9 +64,9 @@ Alpha features might be changed or removed without prior notice.
 | `dashboardComments`                | Enable dashboard-wide comments                                                                                                                                               |
 | `annotationComments`               | Enable annotation comments                                                                                                                                                   |
 | `storage`                          | Configurable storage for dashboards, datasources, and resources                                                                                                              |
-| `supportBundles`                   | Support bundles for troubleshooting                                                                                                                                          |
 | `exploreMixedDatasource`           | Enable mixed datasource in Explore                                                                                                                                           |
 | `tracing`                          | Adds trace ID to error notifications                                                                                                                                         |
+| `newTraceView`                     | Shows the new trace view design                                                                                                                                              |
 | `correlations`                     | Correlations page                                                                                                                                                            |
 | `datasourceQueryMultiStatus`       | Introduce HTTP 207 Multi Status for api/ds/query                                                                                                                             |
 | `traceToMetrics`                   | Enable trace to metrics links                                                                                                                                                |
@@ -81,10 +76,8 @@ Alpha features might be changed or removed without prior notice.
 | `disableSecretsCompatibility`      | Disable duplicated secret storage in legacy tables                                                                                                                           |
 | `logRequestsInstrumentedAsUnknown` | Logs the path for requests that are instrumented as unknown                                                                                                                  |
 | `dataConnectionsConsole`           | Enables a new top-level page called Connections. This page is an experiment that provides a better experience when you install and configure data sources and other plugins. |
-| `flameGraph`                       | Show the flame graph                                                                                                                                                         |
 | `redshiftAsyncQueryDataSupport`    | Enable async query data support for Redshift                                                                                                                                 |
 | `athenaAsyncQueryDataSupport`      | Enable async query data support for Athena                                                                                                                                   |
-| `increaseInMemDatabaseQueryCache`  | Enable more in memory caching for database queries                                                                                                                           |
 | `newPanelChromeUI`                 | Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu                                                                                          |
 | `showDashboardValidationWarnings`  | Show warnings when dashboards do not validate against the schema                                                                                                             |
 | `mysqlAnsiQuotes`                  | Use double quotes to escape keyword in a MySQL query                                                                                                                         |
@@ -92,10 +85,12 @@ Alpha features might be changed or removed without prior notice.
 | `datasourceOnboarding`             | Enable data source onboarding page                                                                                                                                           |
 | `secureSocksDatasourceProxy`       | Enable secure socks tunneling for supported core datasources                                                                                                                 |
 | `authnService`                     | Use new auth service to perform authentication                                                                                                                               |
-| `sessionRemoteCache`               | Enable using remote cache for user sessions                                                                                                                                  |
 | `alertingBacktesting`              | Rule backtesting API for alerting                                                                                                                                            |
 | `editPanelCSVDragAndDrop`          | Enables drag and drop for CSV and Excel files                                                                                                                                |
 | `logsContextDatasourceUi`          | Allow datasource to provide custom UI for context view                                                                                                                       |
+| `lokiQuerySplitting`               | Split large interval queries into subqueries with smaller time intervals                                                                                                     |
+| `individualCookiePreferences`      | Support overriding cookie preferences per user                                                                                                                               |
+| `drawerDataSourcePicker`           | Changes the user experience for data source selection to a drawer.                                                                                                           |
 
 ## Development feature toggles
 
@@ -103,13 +98,9 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 
 | Feature toggle name            | Description                                                             |
 | ------------------------------ | ----------------------------------------------------------------------- |
-| `showFeatureFlagsInUI`         | Show feature flags in the settings UI                                   |
 | `publicDashboardsEmailSharing` | Allows public dashboard sharing to be restricted to only allowed emails |
 | `k8s`                          | Explore native k8s integrations                                         |
-| `k8sDashboards`                | Save dashboards via k8s                                                 |
-| `apiserver`                    | Add a k8s API server proxy                                              |
 | `dashboardsFromStorage`        | Load dashboards from the generic storage interface                      |
-| `export`                       | Export grafana instance (to git, etc)                                   |
 | `grpcServer`                   | Run GRPC server                                                         |
 | `entityStore`                  | SQL-based entity store (requires storage flag also)                     |
 | `queryLibrary`                 | Reusable query library                                                  |

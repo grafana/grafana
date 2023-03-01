@@ -1,5 +1,7 @@
 import { render, screen } from '@testing-library/react';
+import { History, Location } from 'history';
 import React, { ComponentType } from 'react';
+import { match } from 'react-router-dom';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { setEchoSrv } from '@grafana/runtime';
@@ -10,9 +12,9 @@ import { GrafanaRoute, Props } from './GrafanaRoute';
 
 function setup(overrides: Partial<Props>) {
   const props: Props = {
-    location: { search: '?query=hello&test=asd' } as any,
-    history: {} as any,
-    match: {} as any,
+    location: { search: '?query=hello&test=asd' } as Location,
+    history: {} as History,
+    match: {} as match,
     route: {
       path: '/',
       component: () => <div />,

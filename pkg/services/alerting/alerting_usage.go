@@ -64,13 +64,13 @@ func (e *AlertEngine) mapRulesToUsageStats(ctx context.Context, rules []*models.
 	result := map[string]int{}
 	for k, v := range typeCount {
 		query := &datasources.GetDataSourceQuery{ID: k}
-		err := e.datasourceService.GetDataSource(ctx, query)
+		dataSource, err := e.datasourceService.GetDataSource(ctx, query)
 		if err != nil {
 			return map[string]int{}, nil
 		}
 
 		// aggregate datasource usages based on datasource type
-		result[query.Result.Type] += v
+		result[dataSource.Type] += v
 	}
 
 	return result, nil

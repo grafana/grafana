@@ -24,10 +24,11 @@ lineage: seqs: [
 				title?: string
 				// Description of dashboard.
 				description?: string
-
-				// Version of the current dashboard data
-				revision: int64 | *-1 @grafanamaturity(NeedsExpertReview)
-
+				// This property should only be used in dashboards defined by plugins.  It is a quick check
+				// to see if the version has changed since the last time.  Unclear why using the version property 
+				// is insufficient.  
+				revision?: int64 @grafanamaturity(NeedsExpertReview)
+				// For dashboards imported from the https://grafana.com/grafana/dashboards/ portal
 				gnetId?: string @grafanamaturity(NeedsExpertReview)
 				// Tags associated with dashboard.
 				tags?: [...string] @grafanamaturity(NeedsExpertReview)
@@ -61,7 +62,9 @@ lineage: seqs: [
 				} @grafanamaturity(NeedsExpertReview)
 				// The month that the fiscal year starts on.  0 = January, 11 = December
 				fiscalYearStartMonth?: uint8 & <12 | *0
-				// TODO docs
+				// When set to true, the dashboard will redraw panels at an interval matching the pixel width.
+				// This will keep data "moving left" regardless of the query refresh rate.  This setting helps
+				// avoid dashboards presenting stale live data
 				liveNow?: bool @grafanamaturity(NeedsExpertReview)
 				// TODO docs
 				weekStart?: string @grafanamaturity(NeedsExpertReview)

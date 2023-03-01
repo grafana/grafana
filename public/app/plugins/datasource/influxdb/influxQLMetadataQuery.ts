@@ -11,8 +11,7 @@ const runExploreQuery = (
 ): Promise<Array<{ text: string }>> => {
   const builder = new InfluxQueryBuilder(target, datasource.database);
   const q = builder.buildExploreQuery(type, withKey, withMeasurementFilter);
-  const options = { policy: target.policy };
-  return datasource.metricFindQuery(q, options);
+  return datasource.metricFindQuery(q);
 };
 
 export async function getAllPolicies(datasource: InfluxDatasource): Promise<string[]> {

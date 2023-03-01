@@ -72,5 +72,9 @@ export const trackExploreClicked = (props: DataSourceGeneralTrackingProps) => {
 };
 
 export const trackCreateDashboardClicked = (props: DataSourceGeneralTrackingProps) => {
-  reportInteraction('grafana_ds_explore_datasource_clicked', props);
+  reportInteraction('grafana_ds_create_dashboard_clicked', props);
+};
+
+export const trackDataSourcesListViewed = (props: { grafana_version?: string; path?: string }) => {
+  reportInteraction('grafana_ds_datasources_list_viewed', props);
 };

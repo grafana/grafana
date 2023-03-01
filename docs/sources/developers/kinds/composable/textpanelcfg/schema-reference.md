@@ -8,7 +8,7 @@ title: TextPanelCfg kind
 
 ## TextPanelCfg
 
-#### Maturity: experimental
+#### Maturity: [experimental](../../../maturity/#experimental)
 #### Version: 0.0
 
 
@@ -35,13 +35,5 @@ title: TextPanelCfg kind
 | `content` | string                      | **Yes**  | Default: `# Title<br/><br/>For markdown syntax help: [commonmark.org/help](https://commonmark.org/help/)`. |
 | `mode`    | string                      | **Yes**  | Possible values are: `html`, `markdown`, `code`.                                                           |
 | `code`    | [CodeOptions](#codeoptions) | No       |                                                                                                            |
-
-### CodeOptions
-
-| Property          | Type    | Required | Description                                                                                                                   |
-|-------------------|---------|----------|-------------------------------------------------------------------------------------------------------------------------------|
-| `language`        | string  | **Yes**  | Possible values are: `plaintext`, `yaml`, `xml`, `typescript`, `sql`, `go`, `markdown`, `html`, `json`. Default: `plaintext`. |
-| `showLineNumbers` | boolean | **Yes**  | Default: `false`.                                                                                                             |
-| `showMiniMap`     | boolean | **Yes**  | Default: `false`.                                                                                                             |
 
 
