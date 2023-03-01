@@ -1,0 +1,10 @@
+  caddy:
+    image: caddy
+    entrypoint: caddy run --config /conf/Caddyfile
+    ports:
+      - "3443:443"
+    volumes:
+      - $PWD/devenv/docker/blocks/apiserver:/conf
+
+
+

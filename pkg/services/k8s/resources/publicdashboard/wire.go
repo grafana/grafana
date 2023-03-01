@@ -6,6 +6,7 @@ import (
 )
 
 var WireSet = wire.NewSet(
+	ProvideWebhooks,
 	ProvideWatcher,
 	wire.Bind(new(Watcher), new(*watcher)),
 	ProvideService,

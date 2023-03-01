@@ -16,14 +16,16 @@ var _ Watcher = (*watcher)(nil)
 
 type watcher struct {
 	log                  log.Logger
+	webhooks             *WebhooksAPI
 	publicDashboardStore *publicdashboardStore.PublicDashboardStoreImpl
 	userService          user.Service
 	accessControlService accesscontrol.Service
 }
 
-func ProvideWatcher(userService user.Service, publicDashboardStore *publicdashboardStore.PublicDashboardStoreImpl, accessControlService accesscontrol.Service) *watcher {
+func ProvideWatcher(userService user.Service, webhooks *WebhooksAPI, publicDashboardStore *publicdashboardStore.PublicDashboardStoreImpl, accessControlService accesscontrol.Service) *watcher {
 	return &watcher{
 		log:                  log.New("k8s.publicdashboard.service-watcher"),
+		webhooks:             webhooks,
 		publicDashboardStore: publicDashboardStore,
 		userService:          userService,
 		accessControlService: accessControlService,
