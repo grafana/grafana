@@ -339,7 +339,7 @@ describe('createPluginExtensionRegistry()', () => {
       });
     });
 
-    it('should register command extensions from one plugin with multiple placements', () => {
+    it('should register command extensions from a SINGLE PLUGIN with MULTIPLE PLACEMENTS', () => {
       const registry = createPluginExtensionRegistry([
         {
           pluginId: 'belugacdn-app',
@@ -361,80 +361,35 @@ describe('createPluginExtensionRegistry()', () => {
       });
     });
 
-    it('should register command extensions from multiple plugins with multiple placements', () => {
+    it('should register command extensions from MULTIPLE PLUGINS with MULTIPLE PLACEMENTS', () => {
       const registry = createPluginExtensionRegistry([
         {
           pluginId: 'belugacdn-app',
           linkExtensions: [],
-          commandExtensions: [
-            {
-              placement: 'grafana/dashboard/panel/menu',
-              title: 'Open incident',
-              description: 'You can create an incident from this context',
-              handler: () => {},
-            },
-            {
-              placement: 'plugins/grafana-slo-app/slo-breached',
-              title: 'Open incident',
-              description: 'You can create an incident from this context',
-              handler: () => {},
-            },
-          ],
+          commandExtensions: [commandConfig1, commandConfig2],
         },
         {
           pluginId: 'grafana-monitoring-app',
           linkExtensions: [],
-          commandExtensions: [
-            {
-              placement: 'grafana/dashboard/panel/menu',
-              title: 'Open Incident',
-              description: 'You can create an incident from this context',
-              handler: () => {},
-            },
-          ],
+          commandExtensions: [commandConfig1],
         },
       ]);
 
-      const numberOfPlacements = Object.keys(registry).length;
-      const panelExtensions = registry['grafana/dashboard/panel/menu'];
-      const sloExtensions = registry['plugins/grafana-slo-app/slo-breached'];
+      shouldHaveNumberOfPlacements(registry, 2);
 
-      expect(numberOfPlacements).toBe(2);
-      expect(panelExtensions).toEqual([
-        {
-          configure: expect.any(Function),
-          extension: {
-            title: 'Open incident',
-            type: PluginExtensionTypes.command,
-            description: 'You can create an incident from this context',
-            key: -68154691,
-            callHandlerWithContext: expect.any(Function),
-          },
-        },
-        {
-          configure: expect.any(Function),
-          extension: {
-            title: 'Open Incident',
-            type: PluginExtensionTypes.command,
-            description: 'You can create an incident from this context',
-            key: -540306829,
-            callHandlerWithContext: expect.any(Function),
-          },
-        },
-      ]);
+      // Both plugins register commands to the same placement
+      shouldHaveExtensionsAtPlacement({
+        placement: commandConfig1.placement,
+        extensions: [commandConfig1, commandConfig1],
+        registry,
+      });
 
-      expect(sloExtensions).toEqual([
-        {
-          configure: expect.any(Function),
-          extension: {
-            title: 'Open incident',
-            type: PluginExtensionTypes.command,
-            description: 'You can create an incident from this context',
-            key: -1638987831,
-            callHandlerWithContext: expect.any(Function),
-          },
-        },
-      ]);
+      // The 'beluga-cdn-app' plugin registers a command to an other placement as well
+      shouldHaveExtensionsAtPlacement({
+        placement: commandConfig2.placement,
+        extensions: [commandConfig2],
+        registry,
+      });
     });
 
     it('should add default configure function when none provided via extension config', () => {
