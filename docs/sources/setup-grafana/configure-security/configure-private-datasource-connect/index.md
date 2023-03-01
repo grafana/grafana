@@ -117,7 +117,7 @@ To set up a private data source connection, follow these steps:
 
      - ${PDC_GATEWAY}: The URL of the private data source connect in Grafana Cloud. The Grafana team will give you this URL. The URL follows the format `grafana-private-datasource-connect-<cluster>.grafana.net`
      - ${SLUG}: The name of the stack you want to connect to your data source. For example, the stack `test.grafana.net` has the slug `test.`
-     - ${NAMESPACE}: The kubernetes namespace for the pdc-agent.
+     - ${NAMESPACE}: The Kubernetes namespace for the pdc-agent.
 
    - **Option 2:** Using SSH
 
