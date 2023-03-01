@@ -11,7 +11,6 @@ import {
   getDefaultTimeRange,
   toDataFrame,
 } from '@grafana/data';
-import { config } from '@grafana/runtime/src/config';
 import { GraphDrawStyle, StackingMode } from '@grafana/schema';
 import TableModel from 'app/core/TableModel';
 import { ExplorePanelData } from 'app/types';
@@ -114,8 +113,6 @@ describe('decorateWithGraphLogsTraceTableAndFlameGraph', () => {
       state: LoadingState.Done,
       timeRange,
     };
-    // Needed so flamegraph does not fallback to table, will be removed when feature flag no longer necessary
-    config.featureToggles.flameGraph = true;
 
     expect(decorateWithFrameTypeMetadata(panelData)).toEqual({
       series,

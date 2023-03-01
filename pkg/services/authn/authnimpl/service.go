@@ -106,8 +106,8 @@ func ProvideService(
 		if s.cfg.BasicAuthEnabled {
 			s.RegisterClient(clients.ProvideBasic(passwordClient))
 		}
-		// FIXME (kalleep): Remove the global variable and stick it into cfg
-		if !setting.DisableLoginForm {
+
+		if !s.cfg.DisableLoginForm {
 			s.RegisterClient(clients.ProvideForm(passwordClient))
 		}
 	}

@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var (
@@ -20,6 +21,14 @@ const (
 	ActionDelete           = "serviceaccounts:delete"
 	ActionPermissionsRead  = "serviceaccounts.permissions:read"
 	ActionPermissionsWrite = "serviceaccounts.permissions:write"
+)
+
+var (
+	ErrServiceAccountAlreadyExists    = errutil.NewBase(errutil.StatusBadRequest, "serviceaccounts.ErrAlreadyExists", errutil.WithPublicMessage("service account already exists"))
+	ErrServiceAccountTokenNotFound    = errutil.NewBase(errutil.StatusNotFound, "serviceaccounts.ErrTokenNotFound", errutil.WithPublicMessage("service account token not found"))
+	ErrInvalidTokenExpiration         = errutil.NewBase(errutil.StatusValidationFailed, "serviceaccounts.ErrInvalidInput", errutil.WithPublicMessage("invalid SecondsToLive value"))
+	ErrDuplicateToken                 = errutil.NewBase(errutil.StatusBadRequest, "serviceaccounts.ErrTokenAlreadyExists", errutil.WithPublicMessage("service account token with given name already exists in the organization"))
+	ErrServiceAccountAndTokenMismatch = errutil.NewBase(errutil.StatusBadRequest, "serviceaccounts.ErrToeknMismatch", errutil.WithPublicMessage("API token does not belong to the given service account"))
 )
 
 type ServiceAccount struct {
@@ -129,10 +138,6 @@ type ServiceAccountProfileDTO struct {
 }
 
 type ServiceAccountFilter string // used for filtering
-
-type APIKeysMigrationStatus struct {
-	Migrated bool `json:"migrated"`
-}
 
 const (
 	FilterOnlyExpiredTokens ServiceAccountFilter = "expiredTokens"

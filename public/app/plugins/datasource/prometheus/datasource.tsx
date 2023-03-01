@@ -289,7 +289,7 @@ export class PrometheusDatasource
         hideFromInspector: true,
         ...options,
       })
-    ); // toPromise until we change getTagValues, getTagKeys to Observable
+    ); // toPromise until we change getTagValues, getLabelNames to Observable
   }
 
   interpolateQueryExpr(value: string | string[] = [], variable: any) {
@@ -921,7 +921,10 @@ export class PrometheusDatasource
     );
   }
 
-  async getTagKeys(options?: any) {
+  // this is used to get label keys, a.k.a label names
+  // it is used in metric_find_query.ts
+  // and in Tempo here grafana/public/app/plugins/datasource/tempo/QueryEditor/ServiceGraphSection.tsx
+  async getLabelNames(options?: any) {
     if (options?.series) {
       // Get tags for the provided series only
       const seriesLabels: Array<Record<string, string[]>> = await Promise.all(

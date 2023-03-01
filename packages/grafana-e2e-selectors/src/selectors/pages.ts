@@ -200,6 +200,12 @@ export const Pages = {
       UnsupportedDataSourcesWarningAlert: 'data-testid public dashboard unsupported data sources alert',
       NoUpsertPermissionsWarningAlert: 'data-testid public dashboard no upsert permissions alert',
       EnableTimeRangeSwitch: 'data-testid public dashboard on off switch for time range',
+      EmailSharingConfiguration: {
+        ShareType: 'data-testid public dashboard share type',
+        EmailSharingInput: 'data-testid public dashboard email sharing input',
+        EmailSharingInviteButton: 'data-testid public dashboard email sharing invite button',
+        EmailSharingList: 'data-testid public dashboard email sharing list',
+      },
     },
   },
   Explore: {

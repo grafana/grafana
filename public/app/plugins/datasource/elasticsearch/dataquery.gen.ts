@@ -134,7 +134,7 @@ export interface Count extends BaseMetricAggregation {
 export interface Average extends MetricAggregationWithField, MetricAggregationWithMissingSupport, MetricAggregationWithInlineScript {
   field?: string;
   settings?: {
-    script?: (InlineScript | InlineScript);
+    script?: InlineScript;
     missing?: string;
   };
   type: 'avg';
@@ -143,7 +143,7 @@ export interface Average extends MetricAggregationWithField, MetricAggregationWi
 export interface Sum extends MetricAggregationWithField, MetricAggregationWithInlineScript {
   field?: string;
   settings?: {
-    script?: (InlineScript | InlineScript);
+    script?: InlineScript;
     missing?: string;
   };
   type: 'sum';
@@ -152,7 +152,7 @@ export interface Sum extends MetricAggregationWithField, MetricAggregationWithIn
 export interface Max extends MetricAggregationWithField, MetricAggregationWithInlineScript {
   field?: string;
   settings?: {
-    script?: (InlineScript | InlineScript);
+    script?: InlineScript;
     missing?: string;
   };
   type: 'max';
@@ -161,7 +161,7 @@ export interface Max extends MetricAggregationWithField, MetricAggregationWithIn
 export interface Min extends MetricAggregationWithField, MetricAggregationWithInlineScript {
   field?: string;
   settings?: {
-    script?: (InlineScript | InlineScript);
+    script?: InlineScript;
     missing?: string;
   };
   type: 'min';
@@ -178,7 +178,7 @@ export interface ExtendedStats extends MetricAggregationWithField, MetricAggrega
   field?: string;
   meta?: Record<string, unknown>;
   settings?: {
-    script?: (InlineScript | InlineScript);
+    script?: InlineScript;
     missing?: string;
     sigma?: string;
   };
@@ -188,7 +188,7 @@ export interface ExtendedStats extends MetricAggregationWithField, MetricAggrega
 export interface Percentiles extends MetricAggregationWithField, MetricAggregationWithInlineScript {
   field?: string;
   settings?: {
-    script?: (InlineScript | InlineScript);
+    script?: InlineScript;
     missing?: string;
     percents?: Array<string>;
   };
