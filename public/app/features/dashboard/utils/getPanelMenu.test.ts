@@ -194,7 +194,7 @@ describe('getPanelMenu()', () => {
     });
 
     it('should use extension for panel menu returned by configure function', () => {
-      const configure = () => ({
+      const configure: RegistryConfigureExtension<PluginExtensionLink> = () => ({
         title: 'Wohoo',
         type: PluginExtensionTypes.link,
         description: 'Declaring an incident in the app',
@@ -334,7 +334,7 @@ describe('getPanelMenu()', () => {
     });
 
     it('should pass context that can not be edited in configure function', () => {
-      const configure = (context: PluginExtensionPanelContext) => {
+      const configure: RegistryConfigureExtension<PluginExtensionLink> = (context) => {
         // trying to change values in the context
         // @ts-ignore
         context.pluginId = 'changed';
@@ -507,18 +507,14 @@ describe('getPanelMenu()', () => {
   });
 });
 
-function createRegistryItem<T extends PluginExtension>(
+function createRegistryItem<T extends PluginExtension, C extends object = object>(
   extension: T,
-  configure?: (context: PluginExtensionPanelContext) => T | undefined
-): PluginExtensionRegistryItem<T> {
-  if (!configure) {
-    return {
-      extension,
-    };
-  }
+  configure?: RegistryConfigureExtension<T, C>
+): PluginExtensionRegistryItem<T, C> {
+  const defaultConfigure = () => extension;
 
   return {
     extension,
-    configure: configure as RegistryConfigureExtension<T>,
+    configure: configure || defaultConfigure,
   };
 }
