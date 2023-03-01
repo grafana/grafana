@@ -33,6 +33,10 @@ composableKinds: PanelCfg: {
 							justifyMode: common.BigValueJustifyMode | *"auto"
 							textMode:    common.BigValueTextMode | *"auto"
 						} @cuetsy(kind="interface")
+						PanelFieldConfig: {
+							prefix?: string
+							suffix?: string
+						} @cuetsy(kind="interface")
 					},
 				]
 			},

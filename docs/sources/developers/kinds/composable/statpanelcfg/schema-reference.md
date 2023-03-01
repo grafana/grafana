@@ -13,9 +13,17 @@ title: StatPanelCfg kind
 
 
 
-| Property       | Type                    | Required | Description |
-|----------------|-------------------------|----------|-------------|
-| `PanelOptions` | [object](#paneloptions) | **Yes**  |             |
+| Property           | Type                        | Required | Description |
+|--------------------|-----------------------------|----------|-------------|
+| `PanelFieldConfig` | [object](#panelfieldconfig) | **Yes**  |             |
+| `PanelOptions`     | [object](#paneloptions)     | **Yes**  |             |
+
+### PanelFieldConfig
+
+| Property | Type   | Required | Description |
+|----------|--------|----------|-------------|
+| `prefix` | string | No       |             |
+| `suffix` | string | No       |             |
 
 ### PanelOptions
 

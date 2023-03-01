@@ -25,3 +25,8 @@ export const defaultPanelOptions: Partial<PanelOptions> = {
   justifyMode: common.BigValueJustifyMode.Auto,
   textMode: common.BigValueTextMode.Auto,
 };
+
+export interface PanelFieldConfig {
+  prefix?: string;
+  suffix?: string;
+}

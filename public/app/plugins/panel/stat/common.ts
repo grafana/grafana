@@ -10,9 +10,10 @@ import {
   FieldDisplay,
   FieldType,
   FieldConfigEditorBuilder,
-  FieldConfig,
 } from '@grafana/data';
 import { SingleStatBaseOptions, VizOrientation } from '@grafana/schema';
+
+import { PanelFieldConfig } from './panelcfg.gen';
 
 export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
   builder: PanelOptionsEditorBuilder<T>,
@@ -141,11 +142,11 @@ export function formatDisplayValuesWithCustomUnits(
   });
 }
 
-export function addCustomUnitTextInputs(builder: FieldConfigEditorBuilder<FieldConfig>) {
+export function addCustomUnitTextInputs(builder: FieldConfigEditorBuilder<PanelFieldConfig>) {
   const category = ['Custom units'];
   return builder
     .addTextInput({
-      path: 'customPrefix',
+      path: 'prefix',
       name: 'Prefix',
       defaultValue: '',
       settings: {
@@ -154,7 +155,7 @@ export function addCustomUnitTextInputs(builder: FieldConfigEditorBuilder<FieldC
       category,
     })
     .addTextInput({
-      path: 'customSuffix',
+      path: 'suffix',
       name: 'Suffix',
       defaultValue: '',
       settings: {
