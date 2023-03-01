@@ -33,6 +33,7 @@ export function trackQuery(
       utcOffsetSec: query.utcOffsetSec,
       legend: query.legendFormat,
       valueWithRefId: query.valueWithRefId,
+      requestId: request.requestId,
       showingGraph: query.showingGraph,
       showingTable: query.showingTable,
       editor_mode: query.editorMode,
