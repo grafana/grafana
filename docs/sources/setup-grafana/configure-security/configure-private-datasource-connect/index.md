@@ -97,7 +97,7 @@ To set up a private data source connection, follow these steps:
    
    - **Option 1:** Using Kubernetes
 
-     Create a kubernetes secret with the private key, and the certificate and known_hosts file Grafana Labs provided to you.
+     Create a Kubernetes secret with the private key and the certificate and known_hosts file Grafana Labs provided.
 
      ```
      $ kubectl create secret generic -n ${NAMESPACE} grafana-pdc-agent \
