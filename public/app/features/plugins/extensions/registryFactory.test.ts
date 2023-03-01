@@ -29,50 +29,6 @@ jest.mock('./validateLink', () => ({
   }),
 }));
 
-function shouldHaveNumberOfPlacements(registry: PluginExtensionRegistry, numberOfPlacements: number) {
-  expect(Object.keys(registry).length).toBe(numberOfPlacements);
-}
-
-function shouldHaveExtensionsAtPlacement({
-  extensions,
-  placement,
-  registry,
-}: {
-  extensions: Array<AppPluginExtensionLinkConfig | AppPluginExtensionCommandConfig>;
-  placement: string;
-  registry: PluginExtensionRegistry;
-}) {
-  expect(registry[placement]).toEqual(
-    extensions.map((extension) => {
-      // Command extension
-      if ('handler' in extension) {
-        return {
-          configure: expect.any(Function),
-          extension: {
-            key: expect.any(Number),
-            title: extension.title,
-            description: extension.description,
-            type: PluginExtensionTypes.command,
-            callHandlerWithContext: expect.any(Function),
-          },
-        };
-      }
-
-      // Link extension
-      return {
-        configure: expect.any(Function),
-        extension: {
-          key: expect.any(Number),
-          title: extension.title,
-          description: extension.description,
-          type: PluginExtensionTypes.link,
-          path: extension.path,
-        },
-      };
-    })
-  );
-}
-
 describe('createPluginExtensionRegistry()', () => {
   beforeEach(() => {
     validateLink.mockClear();
@@ -81,31 +37,46 @@ describe('createPluginExtensionRegistry()', () => {
 
   describe('when registering links', () => {
     const placement = 'grafana/dashboard/panel/menu';
+    const placement1 = 'grafana/dashboard/panel/menu';
+    const placement2 = 'plugins/grafana-slo-app/slo-breached';
     const samplePluginId = 'belugacdn-app';
-    const sampleLink = {
-      placement,
+    // Sample link configurations that can be used in tests
+    const linkConfig1 = {
+      placement: placement1,
       title: 'Open incident',
       description: 'You can create an incident from this context',
-      path: `/a/${samplePluginId}/incidents/declare`,
+      path: '/a/belugacdn-app/incidents/declare',
+    };
+    const linkConfig2 = {
+      placement: placement2,
+      title: 'Open incident',
+      description: 'You can create an incident from this context',
+      path: '/a/belugacdn-app/incidents/declare',
+    };
+    const linkConfig3 = {
+      placement: placement1,
+      title: 'Open Incident',
+      description: 'You can create an incident from this context',
+      path: '/a/grafana-monitoring-app/incidents/declare',
     };
 
     it('should register a link extension', () => {
       const registry = createPluginExtensionRegistry([
         {
           pluginId: samplePluginId,
-          linkExtensions: [sampleLink],
+          linkExtensions: [linkConfig1],
           commandExtensions: [],
         },
       ]);
 
-      shouldHaveExtensionsAtPlacement({ extensions: [sampleLink], placement, registry });
+      shouldHaveExtensionsAtPlacement({ extensions: [linkConfig1], placement, registry });
     });
 
     it('should only register a link extension to a single placement', () => {
       const registry = createPluginExtensionRegistry([
         {
           pluginId: samplePluginId,
-          linkExtensions: [sampleLink],
+          linkExtensions: [linkConfig1],
           commandExtensions: [],
         },
       ]);
@@ -115,92 +86,60 @@ describe('createPluginExtensionRegistry()', () => {
     });
 
     it('should register link extensions from one plugin with multiple placements', () => {
-      const link1 = {
-        placement: 'grafana/dashboard/panel/menu',
-        title: 'Open incident',
-        description: 'You can create an incident from this context',
-        path: '/a/belugacdn-app/incidents/declare',
-      };
-      const link2 = {
-        placement: 'plugins/grafana-slo-app/slo-breached',
-        title: 'Open incident',
-        description: 'You can create an incident from this context',
-        path: '/a/belugacdn-app/incidents/declare',
-      };
       const registry = createPluginExtensionRegistry([
         {
           pluginId: 'belugacdn-app',
-          linkExtensions: [link1, link2],
+          linkExtensions: [
+            { ...linkConfig1, placement: placement1 },
+            { ...linkConfig1, placement: placement2 },
+          ],
           commandExtensions: [],
         },
       ]);
 
       shouldHaveNumberOfPlacements(registry, 2);
-      shouldHaveExtensionsAtPlacement({ placement: link1.placement, extensions: [link1], registry });
-      shouldHaveExtensionsAtPlacement({ placement: link2.placement, extensions: [link2], registry });
+      shouldHaveExtensionsAtPlacement({ placement: placement1, extensions: [linkConfig1], registry });
+      shouldHaveExtensionsAtPlacement({ placement: placement2, extensions: [linkConfig1], registry });
     });
 
     it('should register link extensions from multiple plugins with multiple placements', () => {
-      const link1 = {
-        placement: 'grafana/dashboard/panel/menu',
-        title: 'Open incident',
-        description: 'You can create an incident from this context',
-        path: '/a/belugacdn-app/incidents/declare',
-      };
-      const link2 = {
-        placement: 'plugins/grafana-slo-app/slo-breached',
-        title: 'Open incident',
-        description: 'You can create an incident from this context',
-        path: '/a/belugacdn-app/incidents/declare',
-      };
-      const link3 = {
-        placement: 'grafana/dashboard/panel/menu',
-        title: 'Open Incident',
-        description: 'You can create an incident from this context',
-        path: '/a/grafana-monitoring-app/incidents/declare',
-      };
       const registry = createPluginExtensionRegistry([
         {
           pluginId: 'belugacdn-app',
-          linkExtensions: [link1, link2],
+          linkExtensions: [
+            { ...linkConfig1, placement: placement1 },
+            { ...linkConfig1, placement: placement2 },
+          ],
           commandExtensions: [],
         },
         {
           pluginId: 'grafana-monitoring-app',
-          linkExtensions: [link3],
+          linkExtensions: [
+            { ...linkConfig1, placement: placement1, path: '/a/grafana-monitoring-app/incidents/declare' },
+          ],
           commandExtensions: [],
         },
       ]);
 
       shouldHaveNumberOfPlacements(registry, 2);
-      shouldHaveExtensionsAtPlacement({ placement: link1.placement, extensions: [link1, link3], registry });
-      shouldHaveExtensionsAtPlacement({ placement: link2.placement, extensions: [link2], registry });
+      shouldHaveExtensionsAtPlacement({
+        placement: placement1,
+        extensions: [linkConfig1, { ...linkConfig1, path: '/a/grafana-monitoring-app/incidents/declare' }],
+        registry,
+      });
+      shouldHaveExtensionsAtPlacement({ placement: placement2, extensions: [linkConfig1], registry });
     });
 
     it('should register maximum 2 extensions per plugin and placement', () => {
       const pluginId = 'belugacdn-app';
-      const link1 = {
-        placement: 'grafana/dashboard/panel/menu',
-        title: 'Open incident',
-        description: 'You can create an incident from this context',
-        path: `/a/${pluginId}/incidents/declare`,
-      };
-      const link2 = {
-        placement: 'grafana/dashboard/panel/menu',
-        title: 'Open incident 2',
-        description: 'You can create an incident from this context',
-        path: `/a/${pluginId}/incidents/declare`,
-      };
-      const link3 = {
-        placement: 'grafana/dashboard/panel/menu',
-        title: 'Open incident 3',
-        description: 'You can create an incident from this context',
-        path: `/a/${pluginId}/incidents/declare`,
-      };
       const registry = createPluginExtensionRegistry([
         {
           pluginId,
-          linkExtensions: [link1, link2, link3],
+          linkExtensions: [
+            { ...linkConfig1, title: 'Link 1' },
+            { ...linkConfig1, title: 'Link 2' },
+            { ...linkConfig1, title: 'Link 3' },
+          ],
           commandExtensions: [],
         },
       ]);
@@ -208,7 +147,14 @@ describe('createPluginExtensionRegistry()', () => {
       shouldHaveNumberOfPlacements(registry, 1);
 
       // The 3rd link is being ignored
-      shouldHaveExtensionsAtPlacement({ placement: link1.placement, extensions: [link1, link2], registry });
+      shouldHaveExtensionsAtPlacement({
+        placement: linkConfig1.placement,
+        extensions: [
+          { ...linkConfig1, title: 'Link 1' },
+          { ...linkConfig1, title: 'Link 2' },
+        ],
+        registry,
+      });
     });
 
     it('should not register link extensions with invalid path configured', () => {
@@ -234,21 +180,21 @@ describe('createPluginExtensionRegistry()', () => {
       const registry = createPluginExtensionRegistry([
         {
           pluginId: 'belugacdn-app',
-          linkExtensions: [sampleLink],
+          linkExtensions: [linkConfig1],
           commandExtensions: [],
         },
       ]);
 
-      const [extension] = registry[sampleLink.placement];
+      const [extension] = registry[linkConfig1.placement];
       const configured = extension.configure();
 
       // The default configure() function returns the same extension config
       expect(configured).toEqual({
         key: expect.any(Number),
         type: PluginExtensionTypes.link,
-        title: sampleLink.title,
-        description: sampleLink.description,
-        path: sampleLink.path,
+        title: linkConfig1.title,
+        description: linkConfig1.description,
+        path: linkConfig1.path,
       });
     });
 
@@ -258,7 +204,7 @@ describe('createPluginExtensionRegistry()', () => {
           pluginId: 'belugacdn-app',
           linkExtensions: [
             {
-              ...sampleLink,
+              ...linkConfig1,
               configure: () => ({}),
             },
           ],
@@ -266,12 +212,12 @@ describe('createPluginExtensionRegistry()', () => {
         },
       ]);
 
-      const [{ configure }] = registry[sampleLink.placement];
+      const [{ configure }] = registry[linkConfig1.placement];
       const context = {};
       const configurable = {
-        title: sampleLink.title,
-        description: sampleLink.description,
-        path: sampleLink.path,
+        title: linkConfig1.title,
+        description: linkConfig1.description,
+        path: linkConfig1.path,
       };
 
       configure(context);
@@ -285,7 +231,7 @@ describe('createPluginExtensionRegistry()', () => {
           pluginId: 'belugacdn-app',
           linkExtensions: [
             {
-              ...sampleLink,
+              ...linkConfig1,
               configure: () => ({}),
             },
           ],
@@ -293,12 +239,12 @@ describe('createPluginExtensionRegistry()', () => {
         },
       ]);
 
-      const [{ configure }] = registry[sampleLink.placement];
+      const [{ configure }] = registry[linkConfig1.placement];
       const context = {};
       const configurable = {
-        title: sampleLink.title,
-        description: sampleLink.description,
-        path: sampleLink.path,
+        title: linkConfig1.title,
+        description: linkConfig1.description,
+        path: linkConfig1.path,
       };
 
       configure(context);
@@ -442,3 +388,49 @@ describe('createPluginExtensionRegistry()', () => {
     });
   });
 });
+
+// Checks the number of total placements in the registry
+function shouldHaveNumberOfPlacements(registry: PluginExtensionRegistry, numberOfPlacements: number) {
+  expect(Object.keys(registry).length).toBe(numberOfPlacements);
+}
+
+// Checks if the registry has exactly the same extensions at the expected placement
+function shouldHaveExtensionsAtPlacement({
+  extensions,
+  placement,
+  registry,
+}: {
+  extensions: Array<AppPluginExtensionLinkConfig | AppPluginExtensionCommandConfig>;
+  placement: string;
+  registry: PluginExtensionRegistry;
+}) {
+  expect(registry[placement]).toEqual(
+    extensions.map((extension) => {
+      // Command extension
+      if ('handler' in extension) {
+        return {
+          configure: expect.any(Function),
+          extension: {
+            key: expect.any(Number),
+            title: extension.title,
+            description: extension.description,
+            type: PluginExtensionTypes.command,
+            callHandlerWithContext: expect.any(Function),
+          },
+        };
+      }
+
+      // Link extension
+      return {
+        configure: expect.any(Function),
+        extension: {
+          key: expect.any(Number),
+          title: extension.title,
+          description: extension.description,
+          type: PluginExtensionTypes.link,
+          path: extension.path,
+        },
+      };
+    })
+  );
+}
