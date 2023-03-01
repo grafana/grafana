@@ -94,7 +94,7 @@ To set up a private data source connection, follow these steps:
 1. Connect to Grafana Cloud using the ssh or the pdc agent in the same directory as your private key, and the certificate and known_hosts file Grafana Labs provided to you.
 
    There are three connecting options: Kubernetes, SSH, or the PDC Agent Docker image.
-   
+
    - **Option 1:** Using Kubernetes
 
      Create a Kubernetes secret with the private key and the certificate and known_hosts file Grafana Labs provided.
