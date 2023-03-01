@@ -8,7 +8,7 @@ import {
   ReducerID,
   standardEditorsRegistry,
   FieldDisplay,
-  // FieldType,
+  FieldType,
 } from '@grafana/data';
 import { SingleStatBaseOptions, VizOrientation } from '@grafana/schema';
 
@@ -114,48 +114,22 @@ export function formatDisplayValuesWithCustomUnits(
   fieldValues: FieldDisplay[],
   customUnits: { customPrefix: string; customSuffix: string }
 ): FieldDisplay[] {
-  // test for custom values
-  // test for already existing units
-  // clean previous values
-  // prepend/append as necessary
+  const { customPrefix, customSuffix } = customUnits;
 
-  // console.log('🚀 ~ file: common.ts:151 ~ formatValueForCustomPrefix ~ prefix:', prefix);
-  // // Grab all custom stat panel prefix objects
-  // const customPrefixes = getStatPrefixes().prefixes;
-  // // Built list of only the prefix symbols; used for stripping previous symbols when new prefix is chosen
-  // const prefixList = Object.keys(customPrefixes).map((key) => customPrefixes[key].symbol);
-  // // The user-chosen stat prefix
-  // const chosenPrefix = customPrefixes[prefix]?.symbol ?? '';
-
-  // // Test all field values for FieldType.number
-  // return fieldValues.map((fieldValue) => {
-  //   const { fieldType, display } = fieldValue;
-  //   // `FieldType.number` is the only type on which unit formatting is enforced
-  //   if (fieldType === FieldType.number) {
-  //     const previousPrefix = display.prefix ?? '';
-  //     // Strip all previous custom stat formatting
-  //     const strippedPreviousPrefix = stripStringOfValues(previousPrefix, prefixList);
-  //     // Append the new prefix; if `remove` was chosen, `chosenPrefix` will resolve to an empty string
-  //     const updatedPrefix = chosenPrefix + strippedPreviousPrefix;
-  //     // Put everything back together
-  //     const updatedDisplay = { ...display, prefix: updatedPrefix };
-  //     return { ...fieldValue, display: updatedDisplay };
-  //   }
-  //   return fieldValue;
-  // });
-  return [];
+  return fieldValues.map((fieldValue) => {
+    const { fieldType, display } = fieldValue;
+    // `FieldType.number` is the only type on which unit formatting is enforced
+    if (fieldType === FieldType.number) {
+      // Update prefix
+      const previousPrefix = display.prefix ?? '';
+      const updatedPrefix = customPrefix + previousPrefix;
+      // Update suffix
+      const previousSuffix = display.suffix ?? '';
+      const updatedSuffix = customSuffix + previousSuffix;
+      // Put everything back together
+      const updatedDisplay = { ...display, prefix: updatedPrefix, suffix: updatedSuffix };
+      return { ...fieldValue, display: updatedDisplay };
+    }
+    return fieldValue;
+  });
 }
-
-// function stripStringOfValues(prefixToStrip: string, itemsToStrip: string[]): string {
-//   // Early return if no prefixes exist
-//   if (prefixToStrip === '') {
-//     return prefixToStrip;
-//   }
-
-//   // Test for any previous prefixes and remove them
-//   for (let i = 0; i < itemsToStrip.length; i++) {
-//     prefixToStrip = prefixToStrip.replace(new RegExp(itemsToStrip[i], 'g'), '');
-//   }
-
-//   return prefixToStrip;
-// }
