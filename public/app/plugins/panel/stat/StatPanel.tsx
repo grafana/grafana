@@ -119,7 +119,7 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
     });
 
     // If there are custom prefixes or suffixes to format values, format the values
-    if (customConfig?.prefix || customConfig?.suffix) {
+    if (customConfig.prefix || customConfig.suffix) {
       return formatDisplayValuesWithCustomUnits(fieldDisplayValues, customConfig);
     }
 
