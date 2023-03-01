@@ -141,79 +141,40 @@ describe('createPluginExtensionRegistry()', () => {
     });
 
     it('should register link extensions from multiple plugins with multiple placements', () => {
+      const link1 = {
+        placement: 'grafana/dashboard/panel/menu',
+        title: 'Open incident',
+        description: 'You can create an incident from this context',
+        path: '/a/belugacdn-app/incidents/declare',
+      };
+      const link2 = {
+        placement: 'plugins/grafana-slo-app/slo-breached',
+        title: 'Open incident',
+        description: 'You can create an incident from this context',
+        path: '/a/belugacdn-app/incidents/declare',
+      };
+      const link3 = {
+        placement: 'grafana/dashboard/panel/menu',
+        title: 'Open Incident',
+        description: 'You can create an incident from this context',
+        path: '/a/grafana-monitoring-app/incidents/declare',
+      };
       const registry = createPluginExtensionRegistry([
         {
           pluginId: 'belugacdn-app',
-          linkExtensions: [
-            {
-              placement: 'grafana/dashboard/panel/menu',
-              title: 'Open incident',
-              description: 'You can create an incident from this context',
-              path: '/a/belugacdn-app/incidents/declare',
-            },
-            {
-              placement: 'plugins/grafana-slo-app/slo-breached',
-              title: 'Open incident',
-              description: 'You can create an incident from this context',
-              path: '/a/belugacdn-app/incidents/declare',
-            },
-          ],
+          linkExtensions: [link1, link2],
           commandExtensions: [],
         },
         {
           pluginId: 'grafana-monitoring-app',
-          linkExtensions: [
-            {
-              placement: 'grafana/dashboard/panel/menu',
-              title: 'Open Incident',
-              description: 'You can create an incident from this context',
-              path: '/a/grafana-monitoring-app/incidents/declare',
-            },
-          ],
+          linkExtensions: [link3],
           commandExtensions: [],
         },
       ]);
 
-      const numberOfPlacements = Object.keys(registry).length;
-      const panelExtensions = registry['grafana/dashboard/panel/menu'];
-      const sloExtensions = registry['plugins/grafana-slo-app/slo-breached'];
-
-      expect(numberOfPlacements).toBe(2);
-      expect(panelExtensions).toEqual([
-        {
-          configure: expect.any(Function),
-          extension: {
-            title: 'Open incident',
-            type: PluginExtensionTypes.link,
-            description: 'You can create an incident from this context',
-            path: '/a/belugacdn-app/incidents/declare',
-            key: -68154691,
-          },
-        },
-        {
-          configure: expect.any(Function),
-          extension: {
-            title: 'Open Incident',
-            type: PluginExtensionTypes.link,
-            description: 'You can create an incident from this context',
-            path: '/a/grafana-monitoring-app/incidents/declare',
-            key: -540306829,
-          },
-        },
-      ]);
-
-      expect(sloExtensions).toEqual([
-        {
-          configure: expect.any(Function),
-          extension: {
-            title: 'Open incident',
-            type: PluginExtensionTypes.link,
-            description: 'You can create an incident from this context',
-            path: '/a/belugacdn-app/incidents/declare',
-            key: -1638987831,
-          },
-        },
-      ]);
+      shouldHaveNumberOfPlacements(registry, 2);
+      shouldHaveExtensionsAtPlacement({ placement: link1.placement, extensions: [link1, link3], registry });
+      shouldHaveExtensionsAtPlacement({ placement: link2.placement, extensions: [link2], registry });
     });
 
     it('should register maximum 2 extensions per plugin and placement', () => {
