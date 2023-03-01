@@ -115,12 +115,12 @@ var DashboardAdminActions = append(DashboardEditActions, []string{dashboards.Act
 
 func ProvideDashboardPermissions(
 	cfg *setting.Cfg, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
-	license licensing.Licensing, dashboardStore dashboards.Store, folderService folder.Service, service accesscontrol.Service,
+	license licensing.Licensing, dashboardGetter dashboards.GetterService, folderService folder.Service, service accesscontrol.Service,
 	teamService team.Service, userService user.Service,
 ) (*DashboardPermissionsService, error) {
 	getDashboard := func(ctx context.Context, orgID int64, resourceID string) (*dashboards.Dashboard, error) {
 		query := &dashboards.GetDashboardQuery{UID: resourceID, OrgID: orgID}
-		queryResult, err := dashboardStore.GetDashboard(ctx, query)
+		queryResult, err := dashboardGetter.GetDashboard(ctx, query)
 		if err != nil {
 			return nil, err
 		}
@@ -149,7 +149,7 @@ func ProvideDashboardPermissions(
 			}
 			if dashboard.FolderID > 0 {
 				query := &dashboards.GetDashboardQuery{ID: dashboard.FolderID, OrgID: orgID}
-				queryResult, err := dashboardStore.GetDashboard(ctx, query)
+				queryResult, err := dashboardGetter.GetDashboard(ctx, query)
 				if err != nil {
 					return nil, err
 				}

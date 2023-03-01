@@ -84,3 +84,8 @@ type Store interface {
 	// the given parent folder ID.
 	CountDashboardsInFolder(ctx context.Context, request *CountDashboardsInFolderRequest) (int64, error)
 }
+
+type GetterService interface {
+	GetDashboard(ctx context.Context, query *GetDashboardQuery) (*Dashboard, error)
+	GetDashboards(ctx context.Context, query *GetDashboardsQuery) ([]*Dashboard, error)
+}

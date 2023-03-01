@@ -122,6 +122,8 @@ var (
 		Status:     "not-found",
 	}
 
+	ErrCommandValidationFailed = errors.New("command missing required fields")
+
 	ErrFolderNotFound           = errors.New("folder not found")
 	ErrFolderVersionMismatch    = errors.New("the folder has been changed by someone else")
 	ErrFolderTitleEmpty         = errors.New("folder title cannot be empty")
