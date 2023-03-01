@@ -74,6 +74,7 @@ func corePlugins(rt *thema.Runtime) []pfs.ParsedPlugin {
 		parsePluginOrPanic("public/app/plugins/panel/stat", "stat", rt),
 		parsePluginOrPanic("public/app/plugins/panel/state-timeline", "state_timeline", rt),
 		parsePluginOrPanic("public/app/plugins/panel/status-history", "status_history", rt),
+		parsePluginOrPanic("public/app/plugins/panel/table", "table", rt),
 		parsePluginOrPanic("public/app/plugins/panel/table-old", "table_old", rt),
 		parsePluginOrPanic("public/app/plugins/panel/text", "text", rt),
 		parsePluginOrPanic("public/app/plugins/panel/traces", "traces", rt),
