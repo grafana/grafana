@@ -10,19 +10,19 @@ weight: 500
 
 # Angular support deprecation
 
-Angular plugin support is deprecated, and it will be removed in a future release. There are still many community plugins that depend on Grafana’s angular plugin support for them to work. The same is true for many internal (private) plugins developed over the years by Grafana users. Grafana version 9 will have a server configuration option, global for the whole instance, that will control if angular plugin support is available or not. By default angular support is still enabled but this will soon change as we complete the migration of all angular code in the core product.
+Angular plugin support is deprecated and will be removed in a future release. There are still many community plugins that rely on Grafana's Angular plugin support to work. The same is true for many internal (private) plugins that have been developed by Grafana users over the years. Grafana version 9 has a server configuration option that is global to the entire instance and controls whether Angular plugin support is available or not. By default, Angular support is still enabled, but that will change soon once we complete the migration of all Angular code in the core product.
 
 ## Why are we deprecating angular support?
 
-AngularJS is an old frontend framework that stopped active development many years ago. As a result, it is a security risk. AngularJS also requires unsafe-eval in the CSP (Content Security Policy) settings which also reduces the security level of how javascript is executed in the browser.
+AngularJS is an old front-end framework whose active development stopped many years ago. Therefore, it poses a security risk. AngularJS also requires unsafe-eval in the CSP (Content Security Policy) settings, which also reduces the security of running JavaScript in the browser.
 
 ## When will angular plugins stop working?
 
-We hope to migrate the last remaining angular code in core Grafana later this year. Then the setting enable_angular_support can be disable by default. This will make all angular plugins stop working. If you still depend on community or internally developed plugins that require AngularJS then you will have to enable this option.
+Our goal is to transfer all the remaining Angular code to the core of Grafana before Grafana 10 is released in Summer 2023. Once this is done, the option "[angular_support_enabled](https://github.com/grafana/grafana/blob/main/conf/defaults.ini#L359)" will be disabled by default, resulting in the deactivation of all Angular plugins. In case you still rely on AngularJS-based plugins developed internally or by the community, you will need to enable this option to continue using them.
 
-This is a good time to start working on migrating plugins to React.
+## When will we remove angular support completely?
 
-Our plan is to fully remove angular plugin support in version 10 released in 2023. Meaning all plugins that do depend on angular will stop working and this temporary option to enable it introduced in v9 will be removed.
+Our plan is to completely remove support for Angular plugins in version 11, which will be released in 2024. This means that all plugins that depend on Angular will stop working and the temporary option introduced in version 10 to enable Angular will be removed.
 
 ## How do I migrate an angular plugin to React?
 
