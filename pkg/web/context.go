@@ -16,6 +16,7 @@ package web
 
 import (
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"net"
 	"net/http"
@@ -102,6 +103,7 @@ const (
 func (ctx *Context) HTML(status int, name string, data interface{}) {
 	ctx.Resp.Header().Set(headerContentType, contentTypeHTML)
 	ctx.Resp.WriteHeader(status)
+	fmt.Printf("%v %v %v\n", ctx.Resp, name, data)
 	if err := ctx.template.ExecuteTemplate(ctx.Resp, name, data); err != nil {
 		panic("Context.HTML:" + err.Error())
 	}
