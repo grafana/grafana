@@ -83,7 +83,7 @@ const promTypes: PromFilterOption[] = [
 ];
 
 const tooltips = {
-  search: 'Filter metric names by text',
+  browse: 'Filter metric names by text',
   metadataSearchSwicth: 'Include all metadata in search by text',
   type: 'Prometheus supports four types of metrics, they are - Counter - Gauge - Histogram - Summary',
   functions: 'These are suggested functions for metrics based on type and name',
@@ -318,7 +318,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
       aria-label="Metric Encyclopedia"
     >
       <div className={styles.spacing}>
-        Search {metrics.length} metric{metrics.length > 1 ? 's' : ''} by type, function, labels, alphabetically or
+        Browse {metrics.length} metric{metrics.length > 1 ? 's' : ''} by type, function, labels, alphabetically or
         select a variable.
       </div>
       {query.labels.length > 0 && (
@@ -327,12 +327,12 @@ export const MetricEncyclopediaModal = (props: Props) => {
         </div>
       )}
       <div className="gf-form">
-        <InlineLabel width={15} className="query-keyword" tooltip={<div>{tooltips.search}</div>}>
-          Search
+        <InlineLabel width={15} className="query-keyword" tooltip={<div>{tooltips.browse}</div>}>
+          Browse
         </InlineLabel>
         <Input
           data-testid={testIds.searchMetric}
-          placeholder="Search metric text"
+          placeholder="Browse by metric text"
           value={fuzzySearchQuery}
           onInput={(e) => {
             const value = e.currentTarget.value ?? '';
@@ -343,7 +343,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
         />
         {hasMetadata && (
           <InlineField
-            label="Search all metadata"
+            label="Browse all metadata"
             className={styles.labelColor}
             tooltip={<div>{tooltips.metadataSearchSwicth}</div>}
           >
