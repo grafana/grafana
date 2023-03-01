@@ -1189,11 +1189,11 @@ func TestResponseParser(t *testing.T) {
 										"line": [
 					  					"@HIGHLIGHT@hello@/HIGHLIGHT@, i am a @HIGHLIGHT@message@/HIGHLIGHT@"
 										],
-										"duplicated": ["@HIGHLIGHT@hello@/HIGHLIGHT@]
+										"duplicated": ["@HIGHLIGHT@hello@/HIGHLIGHT@"]
 				  				},
   			          "_source":{
   			            "@timestamp":"2023-02-08T15:10:55.830Z",
-  			            "line":"log text  [479231733]
+  			            "line":"log text  [479231733]"
 									}
   			        },
   			        {
@@ -1204,11 +1204,11 @@ func TestResponseParser(t *testing.T) {
 										"line": [
 					  					"@HIGHLIGHT@hello@/HIGHLIGHT@, i am a @HIGHLIGHT@message@/HIGHLIGHT@"
 										],
-										"duplicated": ["@HIGHLIGHT@hello@/HIGHLIGHT@]
+										"duplicated": ["@HIGHLIGHT@hello@/HIGHLIGHT@"]
 				  				},
   			          "_source":{
   			            "@timestamp":"2023-02-08T15:10:55.830Z",
-  			            "line":"log text  [479231733]
+  			            "line":"log text  [479231733]"
 									}
   			        }
   			      ]
