@@ -32,6 +32,14 @@ const renderWithProvider = ({ initialState }: { initialState?: Partial<appTypes.
 };
 
 describe('OrganisationSwitcher', () => {
+  beforeEach(() => {
+    (window.matchMedia as jest.Mock).mockImplementation(() => ({
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      matches: true,
+    }));
+  });
+
   it('should only render if more than one organisations', () => {
     renderWithProvider({
       initialState: {
@@ -78,7 +86,7 @@ describe('OrganisationSwitcher', () => {
     (window.matchMedia as jest.Mock).mockImplementation(() => ({
       addEventListener: jest.fn(),
       removeEventListener: jest.fn(),
-      matches: () => true,
+      matches: false,
     }));
     renderWithProvider({
       initialState: {
