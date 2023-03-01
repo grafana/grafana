@@ -41,24 +41,12 @@ type MetricData = {
   value: string;
   type?: string;
   description?: string;
-  functions?: string[];
 };
 
 type PromFilterOption = {
   value: string;
   description: string;
 };
-
-const promFunctions: PromFilterOption[] = [
-  {
-    value: 'rate()',
-    description: 'Calculates the per-second average rate of increase of the time series in the range vector.',
-  },
-  {
-    value: 'histogram_quantile()',
-    description: 'Calculates the φ-quantile (0 ≤ φ ≤ 1) from a conventional histogram or from a native histogram.',
-  },
-];
 
 const promTypes: PromFilterOption[] = [
   {
@@ -86,7 +74,6 @@ const tooltips = {
   browse: 'Filter metric names by text',
   metadataSearchSwicth: 'Include all metadata in search by text',
   type: 'Prometheus supports four types of metrics, they are - Counter - Gauge - Histogram - Summary',
-  functions: 'These are suggested functions for metrics based on type and name',
   variables: 'Select a predefined Grafana template variable for your metric',
   excludeNoMetadata: 'Exclude all metrics with no metadata when filtering',
 };
@@ -118,7 +105,6 @@ export const MetricEncyclopediaModal = (props: Props) => {
   const [fullMetaSearch, setFullMetaSearch] = useState<boolean>(false);
   const [excludeNullMetadata, setExcludeNullMetadata] = useState<boolean>(false);
   const [selectedTypes, setSelectedTypes] = useState<Array<SelectableValue<string>>>([]);
-  const [selectedFunctions, setSelectedFunctions] = useState<Array<SelectableValue<string>>>([]);
   const [letterSearch, setLetterSearch] = useState<string | null>(null);
 
   const updateMetricsMetadata = useCallback(async () => {
@@ -131,7 +117,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
 
     // Error handling for when metrics metadata returns as undefined
     // *** Will have to handle metadata filtering if this happens
-    // *** only display metrics fuzzy search, function filter and pagination
+    // *** only display metrics fuzzy search, filter and pagination
     if (!datasource.languageProvider.metricsMetadata) {
       setHasMetadata(false);
       datasource.languageProvider.metricsMetadata = {};
@@ -152,19 +138,14 @@ export const MetricEncyclopediaModal = (props: Props) => {
     let metricsData: MetricsData = metrics.map((m) => {
       const type = getMetadataType(m, datasource.languageProvider.metricsMetadata!);
       const description = getMetadataHelp(m, datasource.languageProvider.metricsMetadata!);
-      const functions = suggestFunctionHints({
-        value: m,
-        type: type,
-      });
 
-      // string[] = name + type + description + functions
-      haystackData.push(`${m} ${type} ${description} ${functions.reduce((acc, f) => acc + ' ' + f, '')}`.toLowerCase());
+      // string[] = name + type + description
+      haystackData.push(`${m} ${type} ${description}`);
       haystackNameData.push(m);
       return {
         value: m,
         type: type,
         description: description,
-        functions: functions,
       };
     });
 
@@ -187,14 +168,6 @@ export const MetricEncyclopediaModal = (props: Props) => {
   }, [updateMetricsMetadata]);
 
   const styles = useStyles2(getStyles);
-
-  const functionOptions: SelectableValue[] = promFunctions.map((f: PromFilterOption) => {
-    return {
-      value: f.value,
-      label: f.value,
-      description: f.description,
-    };
-  });
 
   const typeOptions: SelectableValue[] = promTypes.map((t: PromFilterOption) => {
     return {
@@ -267,25 +240,6 @@ export const MetricEncyclopediaModal = (props: Props) => {
       });
     }
 
-    if (selectedFunctions.length > 0) {
-      filteredMetrics = filteredMetrics.filter((m: MetricData) => {
-        let matchesSelectedFunctions = false;
-
-        if (m.functions && m.functions.length > 0) {
-          matchesSelectedFunctions = selectedFunctions.some((f) => {
-            if (f.value) {
-              return m.functions?.includes(f.value);
-            }
-            return false;
-          });
-        }
-
-        const missingTypeMetadata = !m.type;
-
-        return matchesSelectedFunctions || missingTypeMetadata;
-      });
-    }
-
     // filter by type
     if (selectedTypes.length > 0) {
       // *** INCLUDE UN-TYPED METRICS
@@ -318,12 +272,12 @@ export const MetricEncyclopediaModal = (props: Props) => {
       aria-label="Metric Encyclopedia"
     >
       <div className={styles.spacing}>
-        Browse {metrics.length} metric{metrics.length > 1 ? 's' : ''} by type, function, labels, alphabetically or
-        select a variable.
+        Browse {metrics.length} metric{metrics.length > 1 ? 's' : ''} by text, by type, alphabetically or select a
+        variable.
       </div>
       {query.labels.length > 0 && (
         <div className={styles.spacing}>
-          <i>These metrics have been pre-filtered by labels chosen in the label filter</i>
+          <i>These metrics have been pre-filtered by labels chosen in the label filters.</i>
         </div>
       )}
       <div className="gf-form">
@@ -381,22 +335,6 @@ export const MetricEncyclopediaModal = (props: Props) => {
             />
           </>
         )}
-
-        <InlineLabel width={15} className="query-keyword" tooltip={<div>{tooltips.functions}</div>}>
-          Functions
-        </InlineLabel>
-        <MultiSelect
-          data-testid={testIds.searchFunction}
-          options={functionOptions}
-          value={selectedFunctions}
-          placeholder="Select functions"
-          onChange={(v) => {
-            // *** Filter by functions(query_hints) available for certain types
-            // Consider tabs select instead of actual select
-            setSelectedFunctions(v);
-            setPageNum(1);
-          }}
-        />
       </div>
       <div className="gf-form">
         <InlineLabel width={15} className="query-keyword">
@@ -552,13 +490,6 @@ export const MetricEncyclopediaModal = (props: Props) => {
                       <>
                         Type: <span className={styles.metadata}>{metric.type}</span>
                         <br />
-                        {metric.functions && metric.functions.length > 0 && (
-                          <>
-                            Suggested functions:{' '}
-                            <span className={styles.metadata}>{metric.functions.map((f: string) => f + ' ')}</span>
-                            <br />
-                          </>
-                        )}
                         Description: <span className={styles.metadata}>{metric.description}</span>
                       </>
                     ) : (
@@ -581,7 +512,6 @@ export const MetricEncyclopediaModal = (props: Props) => {
                           fuzzySearchQuery: fuzzySearchQuery,
                           fullMetaSearch: fullMetaSearch,
                           selectedTypes: selectedTypes,
-                          selectedFunctions: selectedFunctions,
                           letterSearch: letterSearch,
                         });
                         onClose();
@@ -629,52 +559,6 @@ function alphabetically(ascending: boolean, metadataFilters: boolean) {
     // if descending, highest sorts first
     return a.value < b.value ? 1 : -1;
   };
-}
-
-// a more simple implementation of query_hints
-function suggestFunctionHints(metric: MetricData) {
-  const suggestions: string[] = [];
-  // ..._bucket metric needs a histogram_quantile()
-  const histogramMetric = metric.value.match(/^\w+_bucket$|^\w+_bucket{.*}$/);
-  if (histogramMetric) {
-    // const label = 'Selected metric has buckets.';
-    suggestions.push('histogram_quantile()');
-  }
-
-  // Use metric metadata for exact types
-  const nameMatch = metric.value.match(/\b(\w+_(total|sum|count))\b/);
-  let counterNameMetric = nameMatch ? nameMatch[1] : '';
-  const metricsMetadata = metric.type;
-
-  if (metricsMetadata) {
-    // Tokenize the query into its identifiers (see https://prometheus.io/docs/concepts/data_model/#metric-names-and-labels)
-    const queryTokens = Array.from(metric.value.matchAll(/\$?[a-zA-Z_:][a-zA-Z0-9_:]*/g))
-      .map(([match]) => match)
-      // Exclude variable identifiers
-      .filter((token) => !token.startsWith('$'))
-      // Split composite keys to match the tokens returned by the language provider
-      .flatMap((token) => token.split(':'));
-    // Determine whether any of the query identifier tokens refers to a counter metric
-    counterNameMetric =
-      queryTokens.find((metricName) => {
-        // Only considering first type information, could be non-deterministic
-        const metadataType = metric.type;
-        if (metadataType && metadataType.toLowerCase() === 'counter') {
-          return true;
-        } else {
-          return false;
-        }
-      }) ?? '';
-
-    if (counterNameMetric) {
-      suggestions.push('rate()');
-    }
-  }
-
-  return suggestions;
-  // OTHER QUERY HINTS NOT FOR FUNCTIONS, LEAVING THESE OUT
-  // 1. Check for recording rules expansion
-  // 2. For multiple series suggest operator sum() relies on returned query
 }
 
 function UseUfuzzy(): uFuzzy {
@@ -738,7 +622,6 @@ export const testIds = {
   searchMetric: 'search-metric',
   searchWithMetadata: 'search-with-metadata',
   selectType: 'select-type',
-  searchFunction: 'search-function',
   metricCard: 'metric-card',
   useMetric: 'use-metric',
   searchPage: 'search-page',

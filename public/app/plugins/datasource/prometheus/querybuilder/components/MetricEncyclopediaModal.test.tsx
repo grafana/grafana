@@ -78,19 +78,6 @@ describe('MetricEncyclopediaModal', () => {
     expect(screen.getByText('all-metrics-help')).toBeInTheDocument();
   });
 
-  it('displays suggested functions for a metric', async () => {
-    setup(defaultQuery, listOfMetrics);
-    await waitFor(() => {
-      expect(screen.getByText('a_bucket')).toBeInTheDocument();
-    });
-
-    const interactiveMetric = screen.getByText('a_bucket');
-
-    await userEvent.click(interactiveMetric);
-
-    expect(screen.getByText('histogram_quantile() rate()')).toBeInTheDocument();
-  });
-
   it('displays no metadata for a metric missing metadata when the metric is clicked', async () => {
     setup(defaultQuery, listOfMetrics);
     await waitFor(() => {
@@ -110,15 +97,6 @@ describe('MetricEncyclopediaModal', () => {
 
     await waitFor(() => {
       const selectType = screen.getByText('Select type');
-      expect(selectType).toBeInTheDocument();
-    });
-  });
-
-  it('has a filter for selected functions', async () => {
-    setup(defaultQuery, listOfMetrics);
-
-    await waitFor(() => {
-      const selectType = screen.getByText('Select functions');
       expect(selectType).toBeInTheDocument();
     });
   });
