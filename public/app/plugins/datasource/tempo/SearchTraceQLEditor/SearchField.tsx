@@ -10,7 +10,7 @@ import { dispatch } from '../../../../store/store';
 import { TraceqlFilter } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
-import { operators } from '../traceql/traceql';
+import { operators as allOperators } from '../traceql/traceql';
 
 interface Props {
   filter: TraceqlFilter;
@@ -20,8 +20,18 @@ interface Props {
   setError: (error: FetchError) => void;
   isTagsLoading?: boolean;
   tags: string[];
+  operators?: string[];
 }
-const SearchField = ({ filter, datasource, updateFilter, deleteFilter, isTagsLoading, tags, setError }: Props) => {
+const SearchField = ({
+  filter,
+  datasource,
+  updateFilter,
+  deleteFilter,
+  isTagsLoading,
+  tags,
+  setError,
+  operators,
+}: Props) => {
   const languageProvider = useMemo(() => new TempoLanguageProvider(datasource), [datasource]);
   const [isLoadingValues, setIsLoadingValues] = useState(false);
   const [options, setOptions] = useState<Array<SelectableValue<string>>>([]);
@@ -104,7 +114,7 @@ const SearchField = ({ filter, datasource, updateFilter, deleteFilter, isTagsLoa
       )}
       <Select
         inputId={`${filter.id}-operator`}
-        options={operators.map((op) => ({ label: op, value: op }))}
+        options={(operators || allOperators).map((op) => ({ label: op, value: op }))}
         value={filter.operator}
         onChange={(v) => {
           updateFilter({ ...filter, operator: v?.value });

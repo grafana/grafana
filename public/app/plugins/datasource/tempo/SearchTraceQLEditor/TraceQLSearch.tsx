@@ -102,15 +102,17 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
               setError={setError}
               updateFilter={updateFilter}
               tags={[]}
+              operators={['=', '!=', '=~']}
             />
           </InlineSearchField>
           <InlineSearchField label={'Span Name'}>
             <SearchField
-              filter={findFilter('tag-name') || { id: 'tag-name', type: 'static', tag: 'name', operator: '=' }}
+              filter={findFilter('span-name') || { id: 'span-name', type: 'static', tag: 'name', operator: '=' }}
               datasource={datasource}
               setError={setError}
               updateFilter={updateFilter}
               tags={[]}
+              operators={['=', '!=', '=~']}
             />
           </InlineSearchField>
           <InlineSearchField label={'Duration'} tooltip="The span duration, i.e.	end - start time of the span">

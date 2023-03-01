@@ -29,7 +29,7 @@ import { getDS } from './utils';
 
 interface Props extends QueryEditorProps<TempoDatasource, TempoQuery>, Themeable2 {}
 
-const DEFAULT_QUERY_TYPE: TempoQueryType = 'traceql';
+const DEFAULT_QUERY_TYPE: TempoQueryType = config.featureToggles.traceqlSearch ? 'traceqlSearch' : 'traceql';
 
 class TempoQueryFieldComponent extends React.PureComponent<Props> {
   constructor(props: Props) {
@@ -85,10 +85,10 @@ class TempoQueryFieldComponent extends React.PureComponent<Props> {
     ];
 
     if (config.featureToggles.traceqlSearch) {
-      queryTypeOptions.unshift({ value: 'traceqlSearch', label: 'TraceQL Search' });
+      queryTypeOptions.unshift({ value: 'traceqlSearch', label: 'Search' });
     }
 
-    if (!datasource?.search?.hide) {
+    if (!config.featureToggles.traceqlSearch && !datasource?.search?.hide) {
       queryTypeOptions.unshift({ value: 'nativeSearch', label: 'Search' });
     }
 
