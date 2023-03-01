@@ -308,38 +308,35 @@ describe('createPluginExtensionRegistry()', () => {
   });
 
   describe('when registering commands', () => {
+    // Sample command configurations to be used in tests
+    const commandConfig1 = {
+      placement: 'grafana/dashboard/panel/menu',
+      title: 'Open incident',
+      description: 'You can create an incident from this context',
+      handler: () => {},
+    };
+    const commandConfig2 = {
+      placement: 'plugins/grafana-slo-app/slo-breached',
+      title: 'Open incident',
+      description: 'You can create an incident from this context',
+      handler: () => {},
+    };
+
     it('should register a command extension', () => {
       const registry = createPluginExtensionRegistry([
         {
           pluginId: 'belugacdn-app',
           linkExtensions: [],
-          commandExtensions: [
-            {
-              placement: 'grafana/dashboard/panel/menu',
-              title: 'Open incident',
-              description: 'You can create an incident from this context',
-              handler: () => {},
-            },
-          ],
+          commandExtensions: [commandConfig1],
         },
       ]);
 
-      const numberOfPlacements = Object.keys(registry).length;
-      const extensions = registry['grafana/dashboard/panel/menu'];
-
-      expect(numberOfPlacements).toBe(1);
-      expect(extensions).toEqual([
-        {
-          configure: expect.any(Function),
-          extension: {
-            title: 'Open incident',
-            type: PluginExtensionTypes.command,
-            description: 'You can create an incident from this context',
-            key: -68154691,
-            callHandlerWithContext: expect.any(Function),
-          },
-        },
-      ]);
+      shouldHaveNumberOfPlacements(registry, 1);
+      shouldHaveExtensionsAtPlacement({
+        placement: commandConfig1.placement,
+        extensions: [commandConfig1],
+        registry,
+      });
     });
 
     it('should register command extensions from one plugin with multiple placements', () => {
@@ -347,52 +344,21 @@ describe('createPluginExtensionRegistry()', () => {
         {
           pluginId: 'belugacdn-app',
           linkExtensions: [],
-          commandExtensions: [
-            {
-              placement: 'grafana/dashboard/panel/menu',
-              title: 'Open incident',
-              description: 'You can create an incident from this context',
-              handler: () => {},
-            },
-            {
-              placement: 'plugins/grafana-slo-app/slo-breached',
-              title: 'Open incident',
-              description: 'You can create an incident from this context',
-              handler: () => {},
-            },
-          ],
+          commandExtensions: [commandConfig1, commandConfig2],
         },
       ]);
 
-      const numberOfPlacements = Object.keys(registry).length;
-      const panelExtensions = registry['grafana/dashboard/panel/menu'];
-      const sloExtensions = registry['plugins/grafana-slo-app/slo-breached'];
-
-      expect(numberOfPlacements).toBe(2);
-      expect(panelExtensions).toEqual([
-        {
-          configure: expect.any(Function),
-          extension: {
-            title: 'Open incident',
-            type: PluginExtensionTypes.command,
-            description: 'You can create an incident from this context',
-            key: -68154691,
-            callHandlerWithContext: expect.any(Function),
-          },
-        },
-      ]);
-      expect(sloExtensions).toEqual([
-        {
-          configure: expect.any(Function),
-          extension: {
-            title: 'Open incident',
-            type: PluginExtensionTypes.command,
-            description: 'You can create an incident from this context',
-            key: -1638987831,
-            callHandlerWithContext: expect.any(Function),
-          },
-        },
-      ]);
+      shouldHaveNumberOfPlacements(registry, 2);
+      shouldHaveExtensionsAtPlacement({
+        placement: commandConfig1.placement,
+        extensions: [commandConfig1],
+        registry,
+      });
+      shouldHaveExtensionsAtPlacement({
+        placement: commandConfig2.placement,
+        extensions: [commandConfig2],
+        registry,
+      });
     });
 
     it('should register command extensions from multiple plugins with multiple placements', () => {
