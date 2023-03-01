@@ -22,7 +22,6 @@ export interface PromQuery extends DataQuery {
   showingTable?: boolean;
   /** Code, Builder or Explain */
   editorMode?: QueryEditorMode;
-  query?: string;
 }
 
 export interface PromOptions extends DataSourceJsonData {

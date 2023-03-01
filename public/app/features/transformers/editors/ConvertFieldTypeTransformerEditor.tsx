@@ -19,7 +19,7 @@ import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldName
 import { findField } from 'app/features/dimensions';
 
 const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
-  settings: { width: 24 },
+  settings: { width: 24, isClearable: false },
 } as any;
 
 export const ConvertFieldTypeTransformerEditor = ({
