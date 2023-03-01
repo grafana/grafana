@@ -24,56 +24,91 @@ composableKinds: PanelCfg: {
 			{
 				schemas: [
 					{
-						HeatmapColorMode:  "opacity" | "scheme"     @cuetsy(kind="enum")
+						// Controls the color mode of the heatmap
+						HeatmapColorMode: "opacity" | "scheme" @cuetsy(kind="enum")
+						// Controls the color scale of the heatmap
 						HeatmapColorScale: "linear" | "exponential" @cuetsy(kind="enum")
+						// Controls various color options
 						HeatmapColorOptions: {
-							mode?:    HeatmapColorMode // TODO: remove optional when https://github.com/grafana/cuetsy/issues/74 is fixed
-							scheme:   string
-							fill:     string
-							scale?:   HeatmapColorScale // TODO: remove optional when https://github.com/grafana/cuetsy/issues/74 is fixed
+							// Sets the color mode
+							mode?: HeatmapColorMode // TODO: remove optional when https://github.com/grafana/cuetsy/issues/74 is fixed
+							// Controls the color scheme used
+							scheme: string
+							// Controls the color fill when in opacity mode
+							fill: string
+							// Controls the color scale
+							scale?: HeatmapColorScale // TODO: remove optional when https://github.com/grafana/cuetsy/issues/74 is fixed
+							// Controls the exponent when scale is set to exponential
 							exponent: float32
-							steps:    uint8 & >=2 & <=128
-							reverse:  bool
-							min?:     float32
-							max?:     float32
+							// Controls the number of color steps
+							steps: uint8 & >=2 & <=128
+							// Reverses the color scheme
+							reverse: bool
+							// Sets the minimum value for the color scale
+							min?: float32
+							// Sets the maximum value for the color scale
+							max?: float32
 						} @cuetsy(kind="interface")
+						// Configuration options for the yAxis
 						YAxisConfig: {
 							ui.AxisConfig
 
-							unit?:     string
-							reverse?:  bool
+							// Sets the yAxis unit
+							unit?: string
+							// Reverses the yAxis
+							reverse?: bool
+							// Controls the number of decimals for yAxis values
 							decimals?: float32
-							min?:      float32
-							max?:      float32
+							// Sets the minimum value for the yAxis
+							min?: float32
+							// Sets the maximum value for the yAxis
+							max?: float32
 						} @cuetsy(kind="interface")
+						// Controls cell value options
 						CellValues: {
-							unit?:     string
+							// Controls the cell value unit
+							unit?: string
+							// Controls the number of decimals for cell values
 							decimals?: float32
 						} @cuetsy(kind="interface")
+						// Controls the value filter range
 						FilterValueRange: {
+							// Sets the filter range to values less than or equal to the given value
 							le?: float32
+							// Sets the filter range to values greater than or equal to the given value
 							ge?: float32
 						} @cuetsy(kind="interface")
+						// Controls tooltip options
 						HeatmapTooltip: {
-							show:        bool
+							// Controls if the tooltip is shown
+							show: bool
+							// Controls if the tooltip shows a histogram of the y-axis values
 							yHistogram?: bool
 						} @cuetsy(kind="interface")
+						// Controls legend options
 						HeatmapLegend: {
+							// Controls if the legend is shown
 							show: bool
 						} @cuetsy(kind="interface")
+						// Controls exemplar options
 						ExemplarConfig: {
+							// Sets the color of the exemplar markers
 							color: string
 						} @cuetsy(kind="interface")
+						// Controls frame rows options
 						RowsHeatmapOptions: {
-							value?:  string
+							// Sets the name of the cell when not calculating from data
+							value?: string
+							// Controls tick alignment when not calculating from data
 							layout?: ui.HeatmapCellLayout
 						} @cuetsy(kind="interface")
 						PanelOptions: {
-							// Controls if the data is already a calculated heatmap (from the data source/transformer), or one that should be calculated in the panel
+							// Controls if the heatmap should be calculated from data
 							calculate?: bool | *false
 							// Calculation options for the heatmap
 							calculation?: ui.HeatmapCalculationOptions
-							color:        HeatmapColorOptions | *{
+							// Controls the color options
+							color: HeatmapColorOptions | *{
 								// mode:     HeatmapColorMode // TODO: fix after remove when https://github.com/grafana/cuetsy/issues/74 is fixed
 								scheme: "Oranges"
 								fill:   "dark-orange"
@@ -86,14 +121,16 @@ composableKinds: PanelCfg: {
 							filterValues?: FilterValueRange | *{
 								le: 1e-9
 							}
-							// Controls tick alignment
+							// Controls tick alignment and value name when not calculating from data
 							rowsFrame?: RowsHeatmapOptions
 							// | *{
 							// 	layout: ui.HeatmapCellLayout & "auto" // TODO: fix after remove when https://github.com/grafana/cuetsy/issues/74 is fixed
 							// }
+							// Controls the display of the value in the cell
 							showValue: ui.VisibilityMode | *"auto"
 							// Controls gap between cells
-							cellGap?:    uint8 & >=0 & <=25 | *1
+							cellGap?: uint8 & >=0 & <=25 | *1
+							// Controls cell radius
 							cellRadius?: float32
 							// Controls cell value unit
 							cellValues?: CellValues | *{}

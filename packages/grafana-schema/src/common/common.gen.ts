@@ -122,8 +122,17 @@ export enum HeatmapCellLayout {
 }
 
 export interface HeatmapCalculationBucketConfig {
+  /**
+   * Sets the bucket calculation mode
+   */
   mode?: HeatmapCalculationMode;
+  /**
+   * Controls the scale of the buckets
+   */
   scale?: ScaleDistributionConfig;
+  /**
+   * The number of buckets to use for the axis in the heatmap
+   */
   value?: string;
 }
 
@@ -721,7 +730,13 @@ export interface FrameGeometrySource {
 }
 
 export interface HeatmapCalculationOptions {
+  /**
+   * The number of buckets to use for the xAxis in the heatmap
+   */
   xBuckets?: HeatmapCalculationBucketConfig;
+  /**
+   * The number of buckets to use for the yAxis in the heatmap
+   */
   yBuckets?: HeatmapCalculationBucketConfig;
 }
 

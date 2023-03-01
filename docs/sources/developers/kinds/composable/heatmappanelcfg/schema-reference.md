@@ -13,67 +13,79 @@ title: HeatmapPanelCfg kind
 
 
 
-| Property              | Type                           | Required | Description                                   |
-|-----------------------|--------------------------------|----------|-----------------------------------------------|
-| `CellValues`          | [object](#cellvalues)          | **Yes**  |                                               |
-| `ExemplarConfig`      | [object](#exemplarconfig)      | **Yes**  |                                               |
-| `FilterValueRange`    | [object](#filtervaluerange)    | **Yes**  |                                               |
-| `HeatmapColorMode`    | string                         | **Yes**  | Possible values are: `opacity`, `scheme`.     |
-| `HeatmapColorOptions` | [object](#heatmapcoloroptions) | **Yes**  |                                               |
-| `HeatmapColorScale`   | string                         | **Yes**  | Possible values are: `linear`, `exponential`. |
-| `HeatmapLegend`       | [object](#heatmaplegend)       | **Yes**  |                                               |
-| `HeatmapTooltip`      | [object](#heatmaptooltip)      | **Yes**  |                                               |
-| `PanelFieldConfig`    | [object](#panelfieldconfig)    | **Yes**  |                                               |
-| `PanelOptions`        | [object](#paneloptions)        | **Yes**  |                                               |
-| `RowsHeatmapOptions`  | [object](#rowsheatmapoptions)  | **Yes**  |                                               |
-| `YAxisConfig`         | [object](#yaxisconfig)         | **Yes**  |                                               |
+| Property              | Type                           | Required | Description                                                                               |
+|-----------------------|--------------------------------|----------|-------------------------------------------------------------------------------------------|
+| `CellValues`          | [object](#cellvalues)          | **Yes**  | Controls cell value options                                                               |
+| `ExemplarConfig`      | [object](#exemplarconfig)      | **Yes**  | Controls exemplar options                                                                 |
+| `FilterValueRange`    | [object](#filtervaluerange)    | **Yes**  | Controls the value filter range                                                           |
+| `HeatmapColorMode`    | string                         | **Yes**  | Controls the color mode of the heatmap<br/>Possible values are: `opacity`, `scheme`.      |
+| `HeatmapColorOptions` | [object](#heatmapcoloroptions) | **Yes**  | Controls various color options                                                            |
+| `HeatmapColorScale`   | string                         | **Yes**  | Controls the color scale of the heatmap<br/>Possible values are: `linear`, `exponential`. |
+| `HeatmapLegend`       | [object](#heatmaplegend)       | **Yes**  | Controls legend options                                                                   |
+| `HeatmapTooltip`      | [object](#heatmaptooltip)      | **Yes**  | Controls tooltip options                                                                  |
+| `PanelFieldConfig`    | [object](#panelfieldconfig)    | **Yes**  |                                                                                           |
+| `PanelOptions`        | [object](#paneloptions)        | **Yes**  |                                                                                           |
+| `RowsHeatmapOptions`  | [object](#rowsheatmapoptions)  | **Yes**  | Controls frame rows options                                                               |
+| `YAxisConfig`         | [object](#yaxisconfig)         | **Yes**  | Configuration options for the yAxis                                                       |
 
 ### CellValues
 
-| Property   | Type   | Required | Description |
-|------------|--------|----------|-------------|
-| `decimals` | number | No       |             |
-| `unit`     | string | No       |             |
+Controls cell value options
+
+| Property   | Type   | Required | Description                                     |
+|------------|--------|----------|-------------------------------------------------|
+| `decimals` | number | No       | Controls the number of decimals for cell values |
+| `unit`     | string | No       | Controls the cell value unit                    |
 
 ### ExemplarConfig
 
-| Property | Type   | Required | Description |
-|----------|--------|----------|-------------|
-| `color`  | string | **Yes**  |             |
+Controls exemplar options
+
+| Property | Type   | Required | Description                            |
+|----------|--------|----------|----------------------------------------|
+| `color`  | string | **Yes**  | Sets the color of the exemplar markers |
 
 ### FilterValueRange
 
-| Property | Type   | Required | Description |
-|----------|--------|----------|-------------|
-| `ge`     | number | No       |             |
-| `le`     | number | No       |             |
+Controls the value filter range
+
+| Property | Type   | Required | Description                                                              |
+|----------|--------|----------|--------------------------------------------------------------------------|
+| `ge`     | number | No       | Sets the filter range to values greater than or equal to the given value |
+| `le`     | number | No       | Sets the filter range to values less than or equal to the given value    |
 
 ### HeatmapColorOptions
 
-| Property   | Type    | Required | Description                                   |
-|------------|---------|----------|-----------------------------------------------|
-| `exponent` | number  | **Yes**  |                                               |
-| `fill`     | string  | **Yes**  |                                               |
-| `reverse`  | boolean | **Yes**  |                                               |
-| `scheme`   | string  | **Yes**  |                                               |
-| `steps`    | integer | **Yes**  | Constraint: `>=2 & <=128`.                    |
-| `max`      | number  | No       |                                               |
-| `min`      | number  | No       |                                               |
-| `mode`     | string  | No       | Possible values are: `opacity`, `scheme`.     |
-| `scale`    | string  | No       | Possible values are: `linear`, `exponential`. |
+Controls various color options
+
+| Property   | Type    | Required | Description                                                                               |
+|------------|---------|----------|-------------------------------------------------------------------------------------------|
+| `exponent` | number  | **Yes**  | Controls the exponent when scale is set to exponential                                    |
+| `fill`     | string  | **Yes**  | Controls the color fill when in opacity mode                                              |
+| `reverse`  | boolean | **Yes**  | Reverses the color scheme                                                                 |
+| `scheme`   | string  | **Yes**  | Controls the color scheme used                                                            |
+| `steps`    | integer | **Yes**  | Controls the number of color steps<br/>Constraint: `>=2 & <=128`.                         |
+| `max`      | number  | No       | Sets the maximum value for the color scale                                                |
+| `min`      | number  | No       | Sets the minimum value for the color scale                                                |
+| `mode`     | string  | No       | Controls the color mode of the heatmap<br/>Possible values are: `opacity`, `scheme`.      |
+| `scale`    | string  | No       | Controls the color scale of the heatmap<br/>Possible values are: `linear`, `exponential`. |
 
 ### HeatmapLegend
 
-| Property | Type    | Required | Description |
-|----------|---------|----------|-------------|
-| `show`   | boolean | **Yes**  |             |
+Controls legend options
+
+| Property | Type    | Required | Description                     |
+|----------|---------|----------|---------------------------------|
+| `show`   | boolean | **Yes**  | Controls if the legend is shown |
 
 ### HeatmapTooltip
 
-| Property     | Type    | Required | Description |
-|--------------|---------|----------|-------------|
-| `show`       | boolean | **Yes**  |             |
-| `yHistogram` | boolean | No       |             |
+Controls tooltip options
+
+| Property     | Type    | Required | Description                                                    |
+|--------------|---------|----------|----------------------------------------------------------------|
+| `show`       | boolean | **Yes**  | Controls if the tooltip is shown                               |
+| `yHistogram` | boolean | No       | Controls if the tooltip shows a histogram of the y-axis values |
 
 ### PanelFieldConfig
 
@@ -114,21 +126,21 @@ TODO docs
 
 ### PanelOptions
 
-| Property       | Type                                                    | Required | Description                                                                                                                                              |
-|----------------|---------------------------------------------------------|----------|----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `color`        | [object](#color)                                        | **Yes**  | Default: `map[exponent:0.5 fill:dark-orange reverse:false scheme:Oranges steps:64]`.                                                                     |
-| `exemplars`    | [ExemplarConfig](#exemplarconfig)                       | **Yes**  |                                                                                                                                                          |
-| `legend`       | [HeatmapLegend](#heatmaplegend)                         | **Yes**  |                                                                                                                                                          |
-| `showValue`    | string                                                  | **Yes**  | TODO docs<br/>Possible values are: `auto`, `never`, `always`.                                                                                            |
-| `tooltip`      | [HeatmapTooltip](#heatmaptooltip)                       | **Yes**  |                                                                                                                                                          |
-| `yAxis`        | [YAxisConfig](#yaxisconfig)                             | **Yes**  |                                                                                                                                                          |
-| `calculate`    | boolean                                                 | No       | Controls if the data is already a calculated heatmap (from the data source/transformer), or one that should be calculated in the panel Default: `false`. |
-| `calculation`  | [HeatmapCalculationOptions](#heatmapcalculationoptions) | No       |                                                                                                                                                          |
-| `cellGap`      | integer                                                 | No       | Controls gap between cells Default: `1`.<br/>Constraint: `>=0 & <=25`.                                                                                   |
-| `cellRadius`   | number                                                  | No       |                                                                                                                                                          |
-| `cellValues`   | [object](#cellvalues)                                   | No       | Controls cell value unit Default: `map[]`.                                                                                                               |
-| `filterValues` | [object](#filtervalues)                                 | No       | Filters values between a given range Default: `map[le:1e-09]`.                                                                                           |
-| `rowsFrame`    | [RowsHeatmapOptions](#rowsheatmapoptions)               | No       |                                                                                                                                                          |
+| Property       | Type                                                    | Required | Description                                                                                                     |
+|----------------|---------------------------------------------------------|----------|-----------------------------------------------------------------------------------------------------------------|
+| `color`        | [object](#color)                                        | **Yes**  | Controls the color options Default: `map[exponent:0.5 fill:dark-orange reverse:false scheme:Oranges steps:64]`. |
+| `exemplars`    | [ExemplarConfig](#exemplarconfig)                       | **Yes**  | Controls exemplar options                                                                                       |
+| `legend`       | [HeatmapLegend](#heatmaplegend)                         | **Yes**  | Controls legend options                                                                                         |
+| `showValue`    | string                                                  | **Yes**  | TODO docs<br/>Possible values are: `auto`, `never`, `always`.                                                   |
+| `tooltip`      | [HeatmapTooltip](#heatmaptooltip)                       | **Yes**  | Controls tooltip options                                                                                        |
+| `yAxis`        | [YAxisConfig](#yaxisconfig)                             | **Yes**  | Configuration options for the yAxis                                                                             |
+| `calculate`    | boolean                                                 | No       | Controls if the heatmap should be calculated from data Default: `false`.                                        |
+| `calculation`  | [HeatmapCalculationOptions](#heatmapcalculationoptions) | No       |                                                                                                                 |
+| `cellGap`      | integer                                                 | No       | Controls gap between cells Default: `1`.<br/>Constraint: `>=0 & <=25`.                                          |
+| `cellRadius`   | number                                                  | No       | Controls cell radius                                                                                            |
+| `cellValues`   | [object](#cellvalues)                                   | No       | Controls cell value unit Default: `map[]`.                                                                      |
+| `filterValues` | [object](#filtervalues)                                 | No       | Filters values between a given range Default: `map[le:1e-09]`.                                                  |
+| `rowsFrame`    | [RowsHeatmapOptions](#rowsheatmapoptions)               | No       | Controls frame rows options                                                                                     |
 
 ### HeatmapCalculationOptions
 
@@ -139,20 +151,24 @@ TODO docs
 
 ### HeatmapCalculationBucketConfig
 
-| Property | Type                                                | Required | Description                           |
-|----------|-----------------------------------------------------|----------|---------------------------------------|
-| `mode`   | string                                              | No       | Possible values are: `size`, `count`. |
-| `scale`  | [ScaleDistributionConfig](#scaledistributionconfig) | No       | TODO docs                             |
-| `value`  | string                                              | No       |                                       |
+| Property | Type                                                | Required | Description                                              |
+|----------|-----------------------------------------------------|----------|----------------------------------------------------------|
+| `mode`   | string                                              | No       | Possible values are: `size`, `count`.                    |
+| `scale`  | [ScaleDistributionConfig](#scaledistributionconfig) | No       | TODO docs                                                |
+| `value`  | string                                              | No       | The number of buckets to use for the axis in the heatmap |
 
 ### RowsHeatmapOptions
 
-| Property | Type   | Required | Description                                         |
-|----------|--------|----------|-----------------------------------------------------|
-| `layout` | string | No       | Possible values are: `le`, `ge`, `unknown`, `auto`. |
-| `value`  | string | No       |                                                     |
+Controls frame rows options
+
+| Property | Type   | Required | Description                                              |
+|----------|--------|----------|----------------------------------------------------------|
+| `layout` | string | No       | Possible values are: `le`, `ge`, `unknown`, `auto`.      |
+| `value`  | string | No       | Sets the name of the cell when not calculating from data |
 
 ### YAxisConfig
+
+Configuration options for the yAxis
 
 It extends [AxisConfig](#axisconfig).
 
@@ -166,12 +182,12 @@ It extends [AxisConfig](#axisconfig).
 | `axisSoftMax`       | number                                              | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
 | `axisSoftMin`       | number                                              | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
 | `axisWidth`         | number                                              | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
-| `decimals`          | number                                              | No       |                                                                                                                                         |
-| `max`               | number                                              | No       |                                                                                                                                         |
-| `min`               | number                                              | No       |                                                                                                                                         |
-| `reverse`           | boolean                                             | No       |                                                                                                                                         |
+| `decimals`          | number                                              | No       | Controls the number of decimals for yAxis values                                                                                        |
+| `max`               | number                                              | No       | Sets the maximum value for the yAxis                                                                                                    |
+| `min`               | number                                              | No       | Sets the minimum value for the yAxis                                                                                                    |
+| `reverse`           | boolean                                             | No       | Reverses the yAxis                                                                                                                      |
 | `scaleDistribution` | [ScaleDistributionConfig](#scaledistributionconfig) | No       | *(Inherited from [AxisConfig](#axisconfig))*<br/>TODO docs                                                                              |
-| `unit`              | string                                              | No       |                                                                                                                                         |
+| `unit`              | string                                              | No       | Sets the yAxis unit                                                                                                                     |
 
 ### AxisConfig
 
@@ -197,6 +213,8 @@ Controls cell value unit
 |----------|------|----------|-------------|
 
 ### Color
+
+Controls the color options
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
