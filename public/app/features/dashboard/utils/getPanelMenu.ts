@@ -297,7 +297,6 @@ export function getPanelMenu(
         text: truncateTitle(extension.title, 25),
         href: extension.path,
       });
-      continue;
     }
   }
 
