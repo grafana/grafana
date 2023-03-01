@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { usePrevious } from 'react-use';
 
 import { GrafanaTheme2, PageLayoutType, TimeZone } from '@grafana/data';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { PageToolbar, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -31,6 +32,8 @@ interface PublicDashboardPageRouteSearchParams {
 }
 
 export type Props = GrafanaRouteComponentProps<PublicDashboardPageRouteParams, PublicDashboardPageRouteSearchParams>;
+
+const selectors = e2eSelectors.pages.PublicDashboard;
 
 const Toolbar = ({ dashboard }: { dashboard: DashboardModel }) => {
   const dispatch = useDispatch();
@@ -105,6 +108,7 @@ const PublicDashboardPage = (props: Props) => {
       pageNav={{ text: dashboard.title }}
       layout={PageLayoutType.Custom}
       toolbar={<Toolbar dashboard={dashboard} />}
+      data-testid={selectors.page}
     >
       {dashboardState.initError && <DashboardFailed initError={dashboardState.initError} />}
       <div className={styles.gridContainer}>
