@@ -256,6 +256,18 @@ export class PanelModel implements DataConfigSource, IPanelModel {
         this.autoMigrateFrom = this.type;
         this.type = 'heatmap';
         break;
+      case 'grafana-piechart-panel':
+        if (!config.panels[this.type] || !config.angularSupportEnabled) {
+          this.autoMigrateFrom = this.type;
+          this.type = 'piechart';
+        }
+        break;
+      case 'grafana-worldmap-panel':
+        if (!config.panels[this.type] || !config.angularSupportEnabled) {
+          this.autoMigrateFrom = this.type;
+          this.type = 'geomap';
+        }
+        break;
     }
 
     // defaults
@@ -431,7 +443,12 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     const version = getPluginVersion(plugin);
 
     if (this.autoMigrateFrom) {
-      const wasAngular = this.autoMigrateFrom === 'graph' || this.autoMigrateFrom === 'table-old';
+      const wasAngular = [
+        'graph', // timeseries
+        'table-old', // now table
+        'grafana-piechart-panel', // now pie
+        'grafana-worldmap-panel', // now geomap
+      ].includes(this.autoMigrateFrom);
       this.callPanelTypeChangeHandler(
         plugin,
         this.autoMigrateFrom,
