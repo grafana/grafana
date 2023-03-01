@@ -123,9 +123,9 @@ type ProvisionedAlertRule struct {
 	// readonly: true
 	Updated time.Time `json:"updated,omitempty"`
 	// required: true
-	NoDataState models.NoDataState `json:"noDataState"`
+	NoDataState NoDataState `json:"noDataState"`
 	// required: true
-	ExecErrState models.ExecutionErrorState `json:"execErrState"`
+	ExecErrState ExecutionErrorState `json:"execErrState"`
 	// required: true
 	For model.Duration `json:"for"`
 	// example: {"runbook_url": "https://supercoolrunbook.com/page/13"}
@@ -133,58 +133,9 @@ type ProvisionedAlertRule struct {
 	// example: {"team": "sre-team-1"}
 	Labels map[string]string `json:"labels,omitempty"`
 	// readonly: true
-	Provenance models.Provenance `json:"provenance,omitempty"`
+	Provenance Provenance `json:"provenance,omitempty"`
 	// example: false
 	IsPaused bool `json:"isPaused"`
-}
-
-func (a *ProvisionedAlertRule) UpstreamModel() (models.AlertRule, error) {
-	return models.AlertRule{
-		ID:           a.ID,
-		UID:          a.UID,
-		OrgID:        a.OrgID,
-		NamespaceUID: a.FolderUID,
-		RuleGroup:    a.RuleGroup,
-		Title:        a.Title,
-		Condition:    a.Condition,
-		Data:         a.Data,
-		Updated:      a.Updated,
-		NoDataState:  a.NoDataState,
-		ExecErrState: a.ExecErrState,
-		For:          time.Duration(a.For),
-		Annotations:  a.Annotations,
-		Labels:       a.Labels,
-		IsPaused:     a.IsPaused,
-	}, nil
-}
-
-func NewAlertRule(rule models.AlertRule, provenance models.Provenance) ProvisionedAlertRule {
-	return ProvisionedAlertRule{
-		ID:           rule.ID,
-		UID:          rule.UID,
-		OrgID:        rule.OrgID,
-		FolderUID:    rule.NamespaceUID,
-		RuleGroup:    rule.RuleGroup,
-		Title:        rule.Title,
-		For:          model.Duration(rule.For),
-		Condition:    rule.Condition,
-		Data:         rule.Data,
-		Updated:      rule.Updated,
-		NoDataState:  rule.NoDataState,
-		ExecErrState: rule.ExecErrState,
-		Annotations:  rule.Annotations,
-		Labels:       rule.Labels,
-		Provenance:   provenance,
-		IsPaused:     rule.IsPaused,
-	}
-}
-
-func NewAlertRules(rules []*models.AlertRule) ProvisionedAlertRules {
-	result := make([]ProvisionedAlertRule, 0, len(rules))
-	for _, r := range rules {
-		result = append(result, NewAlertRule(*r, models.ProvenanceNone))
-	}
-	return result
 }
 
 // swagger:route GET /api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group} provisioning stable RouteGetAlertRuleGroup
@@ -268,32 +219,3 @@ type AlertRuleGroup struct {
 // AlertingFileExport is the full provisioned file export.
 // swagger:model
 type AlertingFileExport = file.AlertingFileExport
-
-func (a *AlertRuleGroup) ToModel() (models.AlertRuleGroup, error) {
-	ruleGroup := models.AlertRuleGroup{
-		Title:     a.Title,
-		FolderUID: a.FolderUID,
-		Interval:  a.Interval,
-	}
-	for i := range a.Rules {
-		converted, err := a.Rules[i].UpstreamModel()
-		if err != nil {
-			return models.AlertRuleGroup{}, err
-		}
-		ruleGroup.Rules = append(ruleGroup.Rules, converted)
-	}
-	return ruleGroup, nil
-}
-
-func NewAlertRuleGroupFromModel(d models.AlertRuleGroup) AlertRuleGroup {
-	rules := make([]ProvisionedAlertRule, 0, len(d.Rules))
-	for i := range d.Rules {
-		rules = append(rules, NewAlertRule(d.Rules[i], d.Provenance))
-	}
-	return AlertRuleGroup{
-		Title:     d.Title,
-		FolderUID: d.FolderUID,
-		Interval:  d.Interval,
-		Rules:     rules,
-	}
-}

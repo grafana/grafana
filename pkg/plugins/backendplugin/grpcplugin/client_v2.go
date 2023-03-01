@@ -9,13 +9,14 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/hashicorp/go-plugin"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
+	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
 type ClientV2 struct {
