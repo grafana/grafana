@@ -6,10 +6,11 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/hashicorp/go-plugin"
+
 	"github.com/grafana/grafana/pkg/infra/process"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/hashicorp/go-plugin"
+	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
 type pluginClient interface {
