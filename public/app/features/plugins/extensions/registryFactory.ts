@@ -1,5 +1,4 @@
 import {
-  AppConfigureExtension,
   AppPluginExtensionCommand,
   AppPluginExtensionCommandConfig,
   AppPluginExtensionLink,
@@ -16,7 +15,8 @@ import type {
 
 import { PluginPreloadResult } from '../pluginPreloader';
 
-import { createErrorHandling } from './errorHandling';
+import { commandErrorHandling, createErrorHandling } from './errorHandling';
+import { ConfigureFunc, CommandHandlerFunc } from './types';
 import { createLinkValidator, isValidLinkPath } from './validateLink';
 
 export function createPluginExtensionRegistry(preloadResults: PluginPreloadResult[]): PluginExtensionRegistry {
@@ -156,19 +156,22 @@ function createCommandConfigure(
     return () => extension;
   }
 
-  const mapper = mapCommandToRegistryType(extension, config);
-  const errorHandler = createErrorHandling<AppPluginExtensionCommand>({
+  const options = {
     pluginId: pluginId,
     title: config.title,
     logger: console.warn,
-  });
+  };
+
+  const handlerWithErrorHandler = commandErrorHandling(options);
+  const mapper = mapCommandToRegistryType(extension, config, handlerWithErrorHandler);
+  const errorHandler = createErrorHandling<AppPluginExtensionCommand>(options);
 
   return mapper(errorHandler(config.configure));
 }
 
 function mapLinkToRegistryType(
   extension: PluginExtensionLink
-): (configure: AppConfigureExtension<AppPluginExtensionLink>) => RegistryConfigureExtension<PluginExtensionLink> {
+): (configure: ConfigureFunc<AppPluginExtensionLink>) => RegistryConfigureExtension<PluginExtensionLink> {
   const configurable: AppPluginExtensionLink = {
     title: extension.title,
     description: extension.description,
@@ -195,8 +198,9 @@ function mapLinkToRegistryType(
 
 function mapCommandToRegistryType(
   extension: PluginExtensionCommand,
-  config: AppPluginExtensionCommandConfig
-): (configure: AppConfigureExtension<AppPluginExtensionCommand>) => RegistryConfigureExtension<PluginExtensionCommand> {
+  config: AppPluginExtensionCommandConfig,
+  createHandlerFunc: (handler: CommandHandlerFunc) => CommandHandlerFunc
+): (configure: ConfigureFunc<AppPluginExtensionCommand>) => RegistryConfigureExtension<PluginExtensionCommand> {
   const configurable: AppPluginExtensionCommand = {
     title: extension.title,
     description: extension.description,
@@ -210,11 +214,13 @@ function mapCommandToRegistryType(
         return undefined;
       }
 
+      const handler = createHandlerFunc(config.handler);
+
       return {
         ...extension,
         title: configured.title ?? extension.title,
         description: configured.description ?? extension.description,
-        callHandlerWithContext: () => config.handler(context),
+        callHandlerWithContext: () => handler(context),
       };
     };
   };

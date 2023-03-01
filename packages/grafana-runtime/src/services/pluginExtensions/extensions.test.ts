@@ -1,4 +1,4 @@
-import { isPluginExtensionLink, PluginExtension, PluginExtensionLink, PluginExtensionTypes } from '@grafana/data';
+import { assertPluginExtensionLink, PluginExtensionLink, PluginExtensionTypes } from '@grafana/data';
 
 import { getPluginExtensions } from './extensions';
 import { PluginExtensionRegistryItem, setPluginsExtensionRegistry } from './registry';
@@ -33,7 +33,7 @@ describe('getPluginExtensions', () => {
       const { extensions } = getPluginExtensions({ placement });
       const [extension] = extensions;
 
-      assertLinkExtension(extension);
+      assertPluginExtensionLink(extension);
 
       expect(extension.path).toBe(`/a/${pluginId}/declare-incident`);
       expect(extensions.length).toBe(1);
@@ -43,7 +43,7 @@ describe('getPluginExtensions', () => {
       const { extensions } = getPluginExtensions({ placement });
       const [extension] = extensions;
 
-      assertLinkExtension(extension);
+      assertPluginExtensionLink(extension);
 
       expect(extension.description).toBe('Declaring an incident in the app');
       expect(extensions.length).toBe(1);
@@ -53,7 +53,7 @@ describe('getPluginExtensions', () => {
       const { extensions } = getPluginExtensions({ placement });
       const [extension] = extensions;
 
-      assertLinkExtension(extension);
+      assertPluginExtensionLink(extension);
 
       expect(extension.title).toBe('Declare incident');
       expect(extensions.length).toBe(1);
@@ -79,10 +79,4 @@ function createRegistryLinkItem(
       type: PluginExtensionTypes.link,
     },
   };
-}
-
-function assertLinkExtension(extension: PluginExtension): asserts extension is PluginExtensionLink {
-  if (!isPluginExtensionLink(extension)) {
-    throw new Error(`extension is not a link extension`);
-  }
 }

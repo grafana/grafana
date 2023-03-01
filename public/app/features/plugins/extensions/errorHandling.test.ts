@@ -1,6 +1,7 @@
-import { AppConfigureExtension, AppPluginExtensionLink } from '@grafana/data';
+import { AppPluginExtensionLink } from '@grafana/data';
 
 import { createErrorHandling } from './errorHandling';
+import type { ConfigureFunc } from './types';
 
 describe('extension error handling', () => {
   const pluginId = 'grafana-basic-app';
@@ -42,7 +43,7 @@ describe('extension error handling', () => {
   });
 
   it('should return undefined if configure is promise/async-based', () => {
-    const promisebased = (async () => {}) as AppConfigureExtension<AppPluginExtensionLink>;
+    const promisebased = (async () => {}) as ConfigureFunc<AppPluginExtensionLink>;
     const configureWithErrorHandling = errorHandler(promisebased);
 
     const configured = configureWithErrorHandling(extension, context);
@@ -51,7 +52,7 @@ describe('extension error handling', () => {
   });
 
   it('should return undefined if configure is not a function', () => {
-    const objectbased = {} as AppConfigureExtension<AppPluginExtensionLink>;
+    const objectbased = {} as ConfigureFunc<AppPluginExtensionLink>;
     const configureWithErrorHandling = errorHandler(objectbased);
 
     const configured = configureWithErrorHandling(extension, context);
@@ -60,7 +61,7 @@ describe('extension error handling', () => {
   });
 
   it('should return undefined if configure returns other than an object', () => {
-    const returnString = (() => '') as AppConfigureExtension<AppPluginExtensionLink>;
+    const returnString = (() => '') as ConfigureFunc<AppPluginExtensionLink>;
     const configureWithErrorHandling = errorHandler(returnString);
 
     const configured = configureWithErrorHandling(extension, context);

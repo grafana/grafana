@@ -1,21 +1,27 @@
 import {
   AppPluginExtensionCommandConfig,
   AppPluginExtensionLinkConfig,
-  PluginExtensionCommand,
+  assertPluginExtensionCommand,
   PluginExtensionTypes,
 } from '@grafana/data';
-import { PluginExtensionRegistry, PluginExtensionRegistryItem } from '@grafana/runtime';
+import { PluginExtensionRegistry } from '@grafana/runtime';
 
 import { createPluginExtensionRegistry } from './registryFactory';
 
 const validateLink = jest.fn((configure, extension, context) => configure?.(extension, context));
 const errorHandler = jest.fn((configure, extension, context) => configure?.(extension, context));
+const commandErrorHandler = jest.fn((configure, context) => configure?.(context));
 
 jest.mock('./errorHandling', () => ({
   ...jest.requireActual('./errorHandling'),
   createErrorHandling: jest.fn(() => {
     return jest.fn((configure) => {
       return jest.fn((extension, context) => errorHandler(configure, extension, context));
+    });
+  }),
+  commandErrorHandling: jest.fn(() => {
+    return jest.fn((configure) => {
+      return jest.fn((context) => commandErrorHandler(configure, context));
     });
   }),
 }));
@@ -77,6 +83,7 @@ describe('createPluginExtensionRegistry()', () => {
   beforeEach(() => {
     validateLink.mockClear();
     errorHandler.mockClear();
+    commandErrorHandler.mockClear();
   });
 
   describe('when registering links', () => {
@@ -567,6 +574,35 @@ describe('createPluginExtensionRegistry()', () => {
       extension?.configure?.(context);
 
       expect(errorHandler).toBeCalledWith(expect.any(Function), configurable, context);
+    });
+
+    it('should wrap handler function with extension error handling', () => {
+      const registry = createPluginExtensionRegistry([
+        {
+          pluginId: 'belugacdn-app',
+          linkExtensions: [],
+          commandExtensions: [
+            {
+              placement: 'grafana/dashboard/panel/menu',
+              title: 'Open incident',
+              description: 'You can create an incident from this context',
+              handler: () => {},
+              configure: () => ({}),
+            },
+          ],
+        },
+      ]);
+
+      const extensions = registry['grafana/dashboard/panel/menu'];
+      const [item] = extensions;
+      const context = {};
+      const extension = item?.configure?.(context);
+
+      assertPluginExtensionCommand(extension);
+
+      extension.callHandlerWithContext();
+
+      expect(commandErrorHandler).toBeCalledWith(expect.any(Function), context);
     });
   });
 });

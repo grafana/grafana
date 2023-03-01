@@ -24,12 +24,34 @@ export type PluginExtensionCommand = PluginExtension & {
   callHandlerWithContext: () => void;
 };
 
-export function isPluginExtensionLink(extension: PluginExtension): extension is PluginExtensionLink {
+export function isPluginExtensionLink(extension: PluginExtension | undefined): extension is PluginExtensionLink {
+  if (!extension) {
+    return false;
+  }
   return extension.type === PluginExtensionTypes.link && 'path' in extension;
 }
 
-export function isPluginExtensionCommand(extension: PluginExtension): extension is PluginExtensionCommand {
+export function assertPluginExtensionLink(
+  extension: PluginExtension | undefined
+): asserts extension is PluginExtensionCommand {
+  if (!isPluginExtensionLink(extension)) {
+    throw new Error(`extension is not a link extension`);
+  }
+}
+
+export function isPluginExtensionCommand(extension: PluginExtension | undefined): extension is PluginExtensionCommand {
+  if (!extension) {
+    return false;
+  }
   return extension.type === PluginExtensionTypes.command;
+}
+
+export function assertPluginExtensionCommand(
+  extension: PluginExtension | undefined
+): asserts extension is PluginExtensionCommand {
+  if (!isPluginExtensionCommand(extension)) {
+    throw new Error(`extension is not a command extension`);
+  }
 }
 
 export function extensionLinkConfigIsValid(props: {
