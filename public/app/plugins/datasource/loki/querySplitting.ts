@@ -1,3 +1,4 @@
+import { partition } from 'lodash';
 import { Subscriber, Observable, Subscription } from 'rxjs';
 
 import { DataQueryRequest, DataQueryResponse, dateTime, TimeRange } from '@grafana/data';
@@ -175,8 +176,7 @@ function getNextRequestPointers(requests: LokiGroupedRequest, requestIndex: numb
 
 export function runPartitionedQueries(datasource: LokiDatasource, request: DataQueryRequest<LokiQuery>) {
   const queries = request.targets.filter((query) => !query.hide);
-  const logQueries = queries.filter((query) => isLogsQuery(query.expr));
-  const metricQueries = queries.filter((query) => !logQueries.includes(query));
+  const [logQueries, metricQueries] = partition(queries, (query) => isLogsQuery(query.expr));
 
   const requests = [];
   if (logQueries.length) {
