@@ -15,7 +15,7 @@ import {
 import React, { useEffect, useMemo, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { Icon, Spinner, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
@@ -135,13 +135,11 @@ const RenderResults = ({ searchResults }: RenderResultsProps) => {
 };
 
 const getSearchStyles = (theme: GrafanaTheme2) => {
-  const topNavCommandPalette = Boolean(config.featureToggles.topNavCommandPalette);
-
   return {
     positioner: css({
       zIndex: theme.zIndex.portal,
       marginTop: '0px',
-      paddingTop: topNavCommandPalette ? '4px !important' : undefined,
+      paddingTop: '4px !important',
       '&::before': {
         content: '""',
         position: 'fixed',

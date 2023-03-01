@@ -149,11 +149,11 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 			Updated: time.Now(),
 		}
 
-		if setting.AutoAssignOrg && !usr.IsAdmin {
+		if s.cfg.AutoAssignOrg && !usr.IsAdmin {
 			if len(cmd.DefaultOrgRole) > 0 {
 				orgUser.Role = org.RoleType(cmd.DefaultOrgRole)
 			} else {
-				orgUser.Role = org.RoleType(setting.AutoAssignOrgRole)
+				orgUser.Role = org.RoleType(s.cfg.AutoAssignOrgRole)
 			}
 		}
 		_, err = s.orgService.InsertOrgUser(ctx, &orgUser)
