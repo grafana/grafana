@@ -259,7 +259,6 @@
 /pkg/services/searchV2/ @grafana/multitenancy-squad
 /pkg/services/store/ @grafana/multitenancy-squad
 /pkg/services/querylibrary/ @grafana/multitenancy-squad
-/pkg/services/export/ @grafana/multitenancy-squad
 /pkg/infra/filestorage/ @grafana/multitenancy-squad
 /pkg/util/converter/ @grafana/multitenancy-squad
 

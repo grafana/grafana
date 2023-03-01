@@ -630,13 +630,6 @@ func (hs *HTTPServer) registerRoutes() {
 		adminRoute.Get("/stats", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionServerStatsRead)), routing.Wrap(hs.AdminGetStats))
 		adminRoute.Post("/pause-all-alerts", reqGrafanaAdmin, routing.Wrap(hs.PauseAllAlerts(setting.AlertingEnabled)))
 
-		if hs.Features.IsEnabled(featuremgmt.FlagExport) {
-			adminRoute.Get("/export", reqGrafanaAdmin, routing.Wrap(hs.ExportService.HandleGetStatus))
-			adminRoute.Post("/export", reqGrafanaAdmin, routing.Wrap(hs.ExportService.HandleRequestExport))
-			adminRoute.Post("/export/stop", reqGrafanaAdmin, routing.Wrap(hs.ExportService.HandleRequestStop))
-			adminRoute.Get("/export/options", reqGrafanaAdmin, routing.Wrap(hs.ExportService.HandleGetOptions))
-		}
-
 		adminRoute.Post("/encryption/rotate-data-keys", reqGrafanaAdmin, routing.Wrap(hs.AdminRotateDataEncryptionKeys))
 		adminRoute.Post("/encryption/reencrypt-data-keys", reqGrafanaAdmin, routing.Wrap(hs.AdminReEncryptEncryptionKeys))
 		adminRoute.Post("/encryption/reencrypt-secrets", reqGrafanaAdmin, routing.Wrap(hs.AdminReEncryptSecrets))
