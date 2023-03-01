@@ -113,7 +113,7 @@ To set up a private data source connection, follow these steps:
      kubectl apply -f deployment.yaml
      ```
 
-     The environment variables used in the previous commands are as follows:
+     The following list contains the environment variables used in the previous commands:
 
      - ${PDC_GATEWAY}: The URL of the private data source connect in Grafana Cloud. The Grafana team will give you this URL. The URL follows the format `grafana-private-datasource-connect-<cluster>.grafana.net`
      - ${SLUG}: The name of the stack you want to connect to your data source. For example, the stack `test.grafana.net` has the slug `test.`
