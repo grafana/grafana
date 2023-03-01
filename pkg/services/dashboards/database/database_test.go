@@ -37,7 +37,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 	var sqlStore *sqlstore.SQLStore
 	var cfg *setting.Cfg
 	var savedFolder, savedDash, savedDash2 *dashboards.Dashboard
-	var dashboardStore *DashboardStore
+	var dashboardStore dashboards.Store
 	var starService star.Service
 	var publicDashboardStore *database.PublicDashboardStoreImpl
 
@@ -783,7 +783,7 @@ func insertTestRule(t *testing.T, sqlStore db.DB, foderOrgID int64, folderUID st
 	require.NoError(t, err)
 }
 
-func insertTestDashboard(t *testing.T, dashboardStore *DashboardStore, title string, orgId int64,
+func insertTestDashboard(t *testing.T, dashboardStore dashboards.Store, title string, orgId int64,
 	folderId int64, isFolder bool, tags ...interface{}) *dashboards.Dashboard {
 	t.Helper()
 	cmd := dashboards.SaveDashboardCommand{
@@ -804,7 +804,7 @@ func insertTestDashboard(t *testing.T, dashboardStore *DashboardStore, title str
 	return dash
 }
 
-func insertTestDashboardForPlugin(t *testing.T, dashboardStore *DashboardStore, title string, orgId int64,
+func insertTestDashboardForPlugin(t *testing.T, dashboardStore dashboards.Store, title string, orgId int64,
 	folderId int64, isFolder bool, pluginId string) *dashboards.Dashboard {
 	t.Helper()
 	cmd := dashboards.SaveDashboardCommand{
@@ -824,7 +824,7 @@ func insertTestDashboardForPlugin(t *testing.T, dashboardStore *DashboardStore, 
 	return dash
 }
 
-func updateDashboardACL(t *testing.T, dashboardStore *DashboardStore, dashboardID int64,
+func updateDashboardACL(t *testing.T, dashboardStore dashboards.Store, dashboardID int64,
 	items ...dashboards.DashboardACL) error {
 	t.Helper()
 
@@ -841,7 +841,7 @@ func updateDashboardACL(t *testing.T, dashboardStore *DashboardStore, dashboardI
 
 // testSearchDashboards is a (near) copy of the dashboard service
 // SearchDashboards, which is a wrapper around FindDashboards.
-func testSearchDashboards(d *DashboardStore, query *dashboards.FindPersistedDashboardsQuery) error {
+func testSearchDashboards(d dashboards.Store, query *dashboards.FindPersistedDashboardsQuery) error {
 	res, err := d.FindDashboards(context.Background(), query)
 	if err != nil {
 		return err
