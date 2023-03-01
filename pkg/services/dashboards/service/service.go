@@ -7,13 +7,9 @@ import (
 
 func ProvideDashboardService(
 	features featuremgmt.FeatureToggles,
-	svc *DashboardServiceImpl,
-	k8sDashboards dashboards.DashboardServiceWrapper,
+	orig *DashboardServiceImpl,
 ) dashboards.DashboardService {
-	if features.IsEnabled(featuremgmt.FlagK8s) {
-		return k8sDashboards
-	}
-	return svc
+	return orig
 }
 
 func ProvideDashboardProvisioningService(

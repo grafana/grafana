@@ -6,7 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/dashboards/service"
+	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -16,21 +16,21 @@ var _ Watcher = (*watcher)(nil)
 type watcher struct {
 	enabled              bool
 	log                  log.Logger
-	dashboardService     dashboards.DashboardService
+	dashboardStore       database.DashboardSQLStore
 	userService          user.Service
 	accessControlService accesscontrol.Service
 }
 
 func ProvideWatcher(
 	features featuremgmt.FeatureToggles,
-	dashboardService *service.DashboardServiceImpl,
+	dashboardStore database.DashboardSQLStore,
 	userService user.Service,
 	accessControlService accesscontrol.Service,
 ) (*watcher, error) {
 	c := watcher{
 		enabled:              features.IsEnabled(featuremgmt.FlagK8s),
 		log:                  log.New("k8s.dashboards.controller"),
-		dashboardService:     dashboardService,
+		dashboardStore:       dashboardStore,
 		userService:          userService,
 		accessControlService: accessControlService,
 	}
@@ -39,39 +39,39 @@ func ProvideWatcher(
 
 func (c *watcher) Add(ctx context.Context, obj *Dashboard) error {
 	c.log.Debug("adding dashboard", "obj", obj)
-	dto, err := k8sDashboardToDashboardDTO(obj)
+	cmd, err := k8sDashboardToDashboardCommand(obj)
 	if err != nil {
 		return err
 	}
 
-	if existing, err := c.dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{UID: dto.Dashboard.UID, OrgID: dto.OrgID}); err == nil && existing.Version >= dto.Dashboard.Version {
+	if _, err := c.dashboardStore.GetDashboard(ctx, &dashboards.GetDashboardQuery{
+		UID:   cmd.Dashboard.MustString("uid"),
+		OrgID: cmd.OrgID,
+	}); err == nil { //&& existing.Version >= dto.Dashboard.Version {
 		c.log.Debug("dashboard already exists, skipping")
 		return nil
 	}
 
-	signedInUser, err := c.getSignedInUser(ctx, dto.OrgID, dto.Dashboard.UpdatedBy)
-	if err != nil {
-		return err
-	}
+	// signedInUser, err := c.getSignedInUser(ctx, dto.OrgID, dto.Dashboard.UpdatedBy)
+	// if err != nil {
+	// 	return err
+	// }
 
-	dto.User = signedInUser
+	// dto.User = signedInUser
 
-	_, err = c.dashboardService.SaveDashboard(ctx, dto, true)
-	if err != nil {
-		return err
-	}
-	return nil
+	_, err = c.dashboardStore.SaveDashboard(ctx, cmd)
+	return err
 }
 
 func (c *watcher) Update(ctx context.Context, oldObj, newObj *Dashboard) error {
-	dto, err := k8sDashboardToDashboardDTO(newObj)
+	cmd, err := k8sDashboardToDashboardCommand(newObj)
 	if err != nil {
 		return err
 	}
 
-	existing, err := c.dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{
-		UID:   dto.Dashboard.UID,
-		OrgID: dto.OrgID,
+	existing, err := c.dashboardStore.GetDashboard(ctx, &dashboards.GetDashboardQuery{
+		UID:   cmd.Dashboard.MustString("uid"),
+		OrgID: cmd.OrgID,
 	})
 	if err != nil {
 		return err
@@ -83,16 +83,16 @@ func (c *watcher) Update(ctx context.Context, oldObj, newObj *Dashboard) error {
 	}
 
 	// Always overwrite
-	dto.Overwrite = true
+	cmd.Overwrite = true
 
-	signedInUser, err := c.getSignedInUser(ctx, dto.OrgID, dto.Dashboard.UpdatedBy)
-	if err != nil {
-		return err
-	}
+	// signedInUser, err := c.getSignedInUser(ctx, dto.OrgID, dto.Dashboard.UpdatedBy)
+	// if err != nil {
+	// 	return err
+	// }
 
-	dto.User = signedInUser
+	// cmd.User = signedInUser
 
-	_, err = c.dashboardService.SaveDashboard(ctx, dto, true)
+	_, err = c.dashboardStore.SaveDashboard(ctx, cmd)
 	if err != nil {
 		return err
 	}
@@ -100,18 +100,23 @@ func (c *watcher) Update(ctx context.Context, oldObj, newObj *Dashboard) error {
 }
 
 func (c *watcher) Delete(ctx context.Context, obj *Dashboard) error {
-	dto, err := k8sDashboardToDashboardDTO(obj)
+	cmd, err := k8sDashboardToDashboardCommand(obj)
 	if err != nil {
 		return err
 	}
-	existing, err := c.dashboardService.GetDashboard(ctx, &dashboards.GetDashboardQuery{UID: dto.Dashboard.UID, OrgID: dto.OrgID})
+	existing, err := c.dashboardStore.GetDashboard(ctx, &dashboards.GetDashboardQuery{
+		UID:   cmd.Dashboard.MustString("uid"),
+		OrgID: cmd.OrgID,
+	})
 	// no dashboard found, nothing to delete
 	if err != nil {
 		return nil
 	}
 
-	return c.dashboardService.DeleteDashboard(ctx, existing.ID, existing.OrgID)
-
+	return c.dashboardStore.DeleteDashboard(ctx, &dashboards.DeleteDashboardCommand{
+		ID:    existing.ID,
+		OrgID: existing.OrgID,
+	})
 }
 
 // only run service if feature toggle is enabled
@@ -121,7 +126,7 @@ func (c *watcher) IsDisabled() bool {
 
 // TODO: get the admin user using userID 1 and orgID 1
 // is this safe? probably not.
-func (c *watcher) getSignedInUser(ctx context.Context, orgID int64, userID int64) (*user.SignedInUser, error) {
+func (c *watcher) GGGetSignedInUser(ctx context.Context, orgID int64, userID int64) (*user.SignedInUser, error) {
 	querySignedInUser := user.GetSignedInUserQuery{UserID: 1, OrgID: 1}
 	signedInUser, err := c.userService.GetSignedInUserWithCacheCtx(ctx, &querySignedInUser)
 	if err != nil {
