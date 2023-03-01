@@ -61,7 +61,7 @@ func ProvideService(
 	authInfoService login.AuthInfoService, renderService rendering.Service,
 	features *featuremgmt.FeatureManager, oauthTokenService oauthtoken.OAuthTokenService,
 	socialService social.Service, cache *remotecache.RemoteCache,
-	ldapService service.LDAP,
+	ldapService service.LDAP, registerer prometheus.Registerer,
 ) *Service {
 	s := &Service{
 		log:            log.New("authn.service"),
@@ -69,7 +69,7 @@ func ProvideService(
 		clients:        make(map[string]authn.Client),
 		clientQueue:    newQueue[authn.ContextAwareClient](),
 		tracer:         tracer,
-		metrics:        newMetrics(prometheus.DefaultRegisterer),
+		metrics:        newMetrics(registerer),
 		sessionService: sessionService,
 		postAuthHooks:  newQueue[authn.PostAuthHookFn](),
 		postLoginHooks: newQueue[authn.PostLoginHookFn](),
