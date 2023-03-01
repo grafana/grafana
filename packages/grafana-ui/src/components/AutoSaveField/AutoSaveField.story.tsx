@@ -30,7 +30,10 @@ const meta: Meta = {
         'addonAfter',
         'onFinishChange',
         'invalid',
-        'weekPickerValue',
+        'description',
+        'horizontal',
+        'validationMessageHorizontalOverflow',
+        'htmlFor',
       ],
     },
   },
@@ -44,6 +47,7 @@ const meta: Meta = {
   args: {
     saveErrorMessage: 'This is a custom error message',
     required: false,
+    description: 'This input has an auto-save behaviour',
   },
 };
 
