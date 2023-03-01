@@ -107,6 +107,10 @@ const (
 	// Adds trace ID to error notifications
 	FlagTracing = "tracing"
 
+	// FlagNewTraceView
+	// Shows the new trace view design
+	FlagNewTraceView = "newTraceView"
+
 	// FlagCorrelations
 	// Correlations page
 	FlagCorrelations = "correlations"
@@ -266,4 +270,8 @@ const (
 	// FlagIndividualCookiePreferences
 	// Support overriding cookie preferences per user
 	FlagIndividualCookiePreferences = "individualCookiePreferences"
+
+	// FlagDrawerDataSourcePicker
+	// Changes the user experience for data source selection to a drawer.
+	FlagDrawerDataSourcePicker = "drawerDataSourcePicker"
 )

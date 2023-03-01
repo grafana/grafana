@@ -144,6 +144,12 @@ var (
 			FrontendOnly: true,
 		},
 		{
+			Name:         "newTraceView",
+			Description:  "Shows the new trace view design",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
 			Name:        "correlations",
 			Description: "Correlations page",
 			State:       FeatureStateAlpha,
@@ -365,6 +371,12 @@ var (
 			Name:        "individualCookiePreferences",
 			Description: "Support overriding cookie preferences per user",
 			State:       FeatureStateAlpha,
+		},
+		{
+			Name:         "drawerDataSourcePicker",
+			Description:  "Changes the user experience for data source selection to a drawer.",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
 		},
 	}
 )

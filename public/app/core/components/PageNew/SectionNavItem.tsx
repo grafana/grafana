@@ -102,7 +102,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin-left: ${theme.spacing(1)};
     `,
     sectionImg: css({
-      height: 18,
+      width: 18,
     }),
     isSectionRoot: css({
       fontSize: theme.typography.h4.fontSize,

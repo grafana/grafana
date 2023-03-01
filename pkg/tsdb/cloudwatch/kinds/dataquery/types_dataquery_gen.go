@@ -307,7 +307,7 @@ type CloudWatchMetricsQuery struct {
 	QueryMode        *CloudWatchMetricsQueryQueryMode        `json:"queryMode,omitempty"`
 	Region           string                                  `json:"region"`
 	Sql              *struct {
-		From    *CloudWatchMetricsQuery_Sql_From `json:"from,omitempty"`
+		From    *CloudWatchMetricsQuerySqlFrom `json:"from,omitempty"`
 		GroupBy *struct {
 			// TODO should be QueryEditorExpression[] | QueryEditorArrayExpression[], extend in veneer
 			Expressions interface{} `json:"expressions"`
@@ -363,8 +363,8 @@ type CloudWatchMetricsQuerySqlFromParametersType string
 // CloudWatchMetricsQuerySqlFromPropertyType defines model for CloudWatchMetricsQuery.Sql.From.Property.Type.
 type CloudWatchMetricsQuerySqlFromPropertyType string
 
-// CloudWatchMetricsQuery_Sql_From defines model for CloudWatchMetricsQuery.Sql.From.
-type CloudWatchMetricsQuery_Sql_From struct {
+// CloudWatchMetricsQuerySqlFrom defines model for CloudWatchMetricsQuery.Sql.From.
+type CloudWatchMetricsQuerySqlFrom struct {
 	Name       *string `json:"name,omitempty"`
 	Parameters []struct {
 		Name *string                                     `json:"name,omitempty"`
@@ -538,7 +538,7 @@ type QueryEditorPropertyExpressionType string
 
 // SQLExpression defines model for SQLExpression.
 type SQLExpression struct {
-	From    *SQLExpression_From `json:"from,omitempty"`
+	From    *SQLExpressionFrom `json:"from,omitempty"`
 	GroupBy *struct {
 		// TODO should be QueryEditorExpression[] | QueryEditorArrayExpression[], extend in veneer
 		Expressions interface{} `json:"expressions"`
@@ -579,8 +579,8 @@ type SQLExpressionFromParametersType string
 // SQLExpressionFromPropertyType defines model for SQLExpression.From.Property.Type.
 type SQLExpressionFromPropertyType string
 
-// SQLExpression_From defines model for SQLExpression.From.
-type SQLExpression_From struct {
+// SQLExpressionFrom defines model for SQLExpression.From.
+type SQLExpressionFrom struct {
 	Name       *string `json:"name,omitempty"`
 	Parameters []struct {
 		Name *string                         `json:"name,omitempty"`
