@@ -1,11 +1,12 @@
-import { FieldType, FieldDisplay } from '@grafana/data';
+import { FieldType, FieldDisplay, ArrayVector } from '@grafana/data';
 
 import { formatDisplayValuesWithCustomUnits } from './common';
 
 describe('formatting functions', () => {
   describe('formatDisplayValuesWithCustomUnits', () => {
-    const customPrefix = '&';
-    const customSuffix = '*';
+    const prefix = '&';
+    const suffix = '*';
+    const emptyArryVector = new ArrayVector([]);
     const mockSharedFieldValueProps = {
       hasLinks: false,
       display: {
@@ -22,19 +23,19 @@ describe('formatting functions', () => {
       {
         name: 'test1',
         field: {},
-        fieldType: FieldType.number,
+        sourceField: { type: FieldType.number, name: 'test1', config: {}, values: emptyArryVector },
         ...mockSharedFieldValueProps,
       },
       {
         name: 'test2',
         field: {},
-        fieldType: FieldType.time,
+        sourceField: { type: FieldType.time, name: 'test2', config: {}, values: emptyArryVector },
         ...mockSharedFieldValueProps,
       },
       {
         name: 'test3',
         field: {},
-        fieldType: FieldType.boolean,
+        sourceField: { type: FieldType.boolean, name: 'test13', config: {}, values: emptyArryVector },
         ...mockSharedFieldValueProps,
       },
     ];
@@ -42,8 +43,8 @@ describe('formatting functions', () => {
     it('passes the untouched field values through if no custom prefixes are present', () => {
       const unchangedFieldValues = formatDisplayValuesWithCustomUnits(mockFieldValues, {
         // Empty custom values
-        customPrefix: '',
-        customSuffix: '',
+        prefix: '',
+        suffix: '',
       });
 
       // toEqual() recursively checks every field of an object or array for equality
@@ -52,8 +53,8 @@ describe('formatting functions', () => {
     it('sucessfully prepends the `display.prefix` value with the custom prefix, and leave the suffix unchanged', () => {
       const updatedFieldValues = formatDisplayValuesWithCustomUnits(mockFieldValues, {
         // Empty custom suffix
-        customPrefix,
-        customSuffix: '',
+        prefix,
+        suffix: '',
       });
 
       expect(updatedFieldValues[0].display.prefix).toBe('&$');
@@ -62,8 +63,8 @@ describe('formatting functions', () => {
     it('sucessfully appends the `display.suffix` value with the custom suffix, and leaves the prefix unchanged', () => {
       const updatedFieldValues = formatDisplayValuesWithCustomUnits(mockFieldValues, {
         // Empty custom prefix
-        customPrefix: '',
-        customSuffix,
+        prefix: '',
+        suffix,
       });
 
       expect(updatedFieldValues[0].display.prefix).toBe(mockFieldValues[0].display.prefix);
@@ -71,8 +72,8 @@ describe('formatting functions', () => {
     });
     it('sucessfully formats both the prefix and the suffix', () => {
       const updatedFieldValues = formatDisplayValuesWithCustomUnits(mockFieldValues, {
-        customPrefix,
-        customSuffix,
+        prefix,
+        suffix,
       });
 
       expect(updatedFieldValues[0].display.prefix).toBe('&$');
@@ -80,8 +81,8 @@ describe('formatting functions', () => {
     });
     it('ignores any `fieldValues` that are non-numeric', () => {
       const updatedFieldValues = formatDisplayValuesWithCustomUnits(mockFieldValues, {
-        customPrefix,
-        customSuffix,
+        prefix,
+        suffix,
       });
 
       // Since the 1 and 2 index are NOT numeric FieldTypes, they should remain unchanged
