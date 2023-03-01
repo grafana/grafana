@@ -17,7 +17,6 @@ export interface PromQuery extends DataQuery {
   utcOffsetSec?: number;
   legendFormat?: string;
   valueWithRefId?: boolean;
-  requestId?: string;
   showingGraph?: boolean;
   showingTable?: boolean;
   /** Code, Builder or Explain */

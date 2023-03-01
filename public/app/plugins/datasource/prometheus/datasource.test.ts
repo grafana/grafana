@@ -1975,7 +1975,6 @@ describe('prepareTargets', () => {
       const target: PromQuery = {
         refId: 'A',
         expr: 'up',
-        requestId: '2A',
       };
 
       const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext({ targets: [target] });
@@ -2134,7 +2133,6 @@ describe('prepareTargets', () => {
           expr: 'up',
           range: true,
           instant: true,
-          requestId: '2A',
         };
 
         const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext({
@@ -2197,7 +2195,6 @@ describe('prepareTargets', () => {
           expr: 'up',
           instant: true,
           range: false,
-          requestId: '2A',
         };
 
         const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext({
@@ -2234,7 +2231,6 @@ describe('prepareTargets', () => {
         expr: 'up',
         range: true,
         instant: false,
-        requestId: '2A',
       };
 
       const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext({
