@@ -160,16 +160,6 @@ func (s *ServiceImpl) getServerAdminNode(c *contextmodel.ReqContext) *navtree.Na
 			Url:      s.cfg.AppSubURL + "/admin/storage",
 		}
 		adminNavLinks = append(adminNavLinks, storage)
-
-		if s.features.IsEnabled(featuremgmt.FlagExport) {
-			storage.Children = append(storage.Children, &navtree.NavLink{
-				Text:     "Export",
-				Id:       "export",
-				SubTitle: "Export grafana settings",
-				Icon:     "cube",
-				Url:      s.cfg.AppSubURL + "/admin/storage/export",
-			})
-		}
 	}
 
 	if s.cfg.LDAPEnabled && hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionLDAPStatusRead)) {
