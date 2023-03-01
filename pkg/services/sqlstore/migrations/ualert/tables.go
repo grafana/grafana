@@ -287,7 +287,7 @@ func addAlertRuleMigrations(mg *migrator.Migrator, defaultIntervalSeconds int64)
 			Name:     "is_paused",
 			Type:     migrator.DB_Bool,
 			Nullable: false,
-			Default:  "false",
+			Default:  "0",
 		},
 	))
 }
@@ -351,7 +351,7 @@ func addAlertRuleVersionMigrations(mg *migrator.Migrator) {
 			Name:     "is_paused",
 			Type:     migrator.DB_Bool,
 			Nullable: false,
-			Default:  "false",
+			Default:  "0",
 		},
 	))
 }
