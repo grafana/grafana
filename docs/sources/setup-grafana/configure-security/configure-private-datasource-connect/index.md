@@ -106,7 +106,7 @@ To set up a private data source connection, follow these steps:
      --from-file=cert.pub=./${SLUG}-cert.pub
      ```
 
-     Generate a kubernetes deployment to deploy the agent.
+     Generate a Kubernetes deployment to deploy the agent.
 
      ```
      SLUG=${SLUG} PDC_GATEWAY=${PDC_GATEWAY}  NAMESPACE=${NAMESPACE} /bin/sh -c "$(curl -fsSL https://raw.githubusercontent.com/grafana/pdc-agent/main/production/kubernetes/install-agent.sh)"
