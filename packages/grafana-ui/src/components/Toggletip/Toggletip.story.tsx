@@ -25,9 +25,6 @@ const meta: ComponentMeta<typeof Toggletip> = {
     controls: {
       exclude: ['onClose', 'children'],
     },
-    knobs: {
-      disabled: true,
-    },
   },
   argTypes: {
     title: {
@@ -48,35 +45,16 @@ const meta: ComponentMeta<typeof Toggletip> = {
     theme: {
       control: {
         type: 'select',
-        options: ['info', 'error'],
       },
     },
     closeButton: {
       control: {
-        type: 'radio',
-        options: [true, false],
+        type: 'boolean',
       },
     },
     placement: {
       control: {
         type: 'select',
-        options: [
-          'auto',
-          'bottom',
-          'top',
-          'auto-start',
-          'auto-end',
-          'right',
-          'left',
-          'top-start',
-          'top-end',
-          'bottom-start',
-          'bottom-end',
-          'right-start',
-          'right-end',
-          'left-start',
-          'left-end',
-        ],
       },
     },
   },

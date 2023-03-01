@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { Placement } from '@popperjs/core';
 import React, { useEffect, useRef } from 'react';
 import { usePopperTooltip } from 'react-popper-tooltip';
 
@@ -8,7 +9,7 @@ import { useStyles2 } from '../../themes/ThemeContext';
 import { IconButton } from '../IconButton/IconButton';
 import { Portal } from '../Portal/Portal';
 
-import { ToggletipContent, ToggletipPlacement } from './types';
+import { ToggletipContent } from './types';
 
 export interface ToggletipProps {
   /** The theme used to display the toggletip */
@@ -19,8 +20,8 @@ export interface ToggletipProps {
   closeButton?: boolean;
   /** Callback function to be called when the toggletip is closed */
   onClose?: Function;
-  /** The preferred placement of the tooltip */
-  placement?: ToggletipPlacement;
+  /** The preferred placement of the toggletip */
+  placement?: Placement;
   /** The text or component that houses the content of the toggleltip */
   content: ToggletipContent;
   /** The text or component to be displayed on the toggletip's bottom */
@@ -45,25 +46,25 @@ export const Toggletip = React.memo(
     const contentRef = useRef(null);
     const [controlledVisible, setControlledVisible] = React.useState(false);
 
+    const closeToggletip = () => {
+      setControlledVisible(false);
+      onClose?.();
+    };
+
     useEffect(() => {
       if (controlledVisible) {
         const handleKeyDown = (enterKey: KeyboardEvent) => {
           if (enterKey.key === 'Escape') {
-            setControlledVisible(false);
-            if (!!onClose) {
-              onClose();
-            }
+            closeToggletip();
           }
         };
         document.addEventListener('keydown', handleKeyDown);
         return () => {
           document.removeEventListener('keydown', handleKeyDown);
         };
-      } else if (controlledVisible === false && !!onClose) {
-        onClose();
       }
       return;
-    }, [controlledVisible, onClose]);
+    }, [controlledVisible]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const { getArrowProps, getTooltipProps, setTooltipRef, setTriggerRef, visible, update } = usePopperTooltip({
       visible: controlledVisible,
@@ -71,7 +72,12 @@ export const Toggletip = React.memo(
       interactive: true,
       offset: [0, 8],
       trigger: 'click',
-      onVisibleChange: setControlledVisible,
+      onVisibleChange: (value: boolean) => {
+        setControlledVisible(value);
+        if (!value) {
+          onClose?.();
+        }
+      },
     });
 
     return (
@@ -90,12 +96,7 @@ export const Toggletip = React.memo(
               {Boolean(title) && <div className={style.header}>{title}</div>}
               {closeButton && (
                 <div data-testid="toggletip-header-close" className={style.headerClose}>
-                  <IconButton
-                    aria-label="Close Toggletip"
-                    name="times"
-                    size="md"
-                    onClick={() => setControlledVisible(false)}
-                  />
+                  <IconButton aria-label="Close Toggletip" name="times" size="md" onClick={closeToggletip} />
                 </div>
               )}
               <div ref={contentRef} {...getArrowProps({ className: style.arrow })} />
