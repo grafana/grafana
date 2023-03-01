@@ -36,6 +36,7 @@ type dashboardStore struct {
 	tagService tag.Service
 }
 
+// SQL bean helper to save tags
 type dashboardTag struct {
 	Id          int64
 	DashboardId int64
