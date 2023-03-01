@@ -21,8 +21,8 @@ func AlertRuleFromProvisionedAlertRule(a definitions.ProvisionedAlertRule) (mode
 		Condition:    a.Condition,
 		Data:         a.Data,
 		Updated:      a.Updated,
-		NoDataState:  a.NoDataState,
-		ExecErrState: a.ExecErrState,
+		NoDataState:  models.NoDataState(a.NoDataState),          // TODO there must be a validation
+		ExecErrState: models.ExecutionErrorState(a.ExecErrState), // TODO there must be a validation
 		For:          time.Duration(a.For),
 		Annotations:  a.Annotations,
 		Labels:       a.Labels,
@@ -43,8 +43,8 @@ func ProvisionedAlertRuleFromAlertRule(rule models.AlertRule, provenance models.
 		Condition:    rule.Condition,
 		Data:         rule.Data,
 		Updated:      rule.Updated,
-		NoDataState:  rule.NoDataState,
-		ExecErrState: rule.ExecErrState,
+		NoDataState:  definitions.NoDataState(rule.NoDataState),          // TODO there may be a validation
+		ExecErrState: definitions.ExecutionErrorState(rule.ExecErrState), // TODO there may be a validation
 		Annotations:  rule.Annotations,
 		Labels:       rule.Labels,
 		Provenance:   definitions.Provenance(provenance), // TODO validate enum conversion?
