@@ -788,7 +788,7 @@ func TestIntegrationNestedFolderDelete(t *testing.T) {
 				err = service.Delete(context.Background(), &deleteCmd)
 				require.NoError(t, err)
 
-				for _, uid := range ancestorUIDs {
+				for i, uid := range ancestorUIDs {
 					// double check that we need both get calls to cover both tables
 					_, err := service.getFolderByUID(context.Background(), orgID, uid)
 					require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
