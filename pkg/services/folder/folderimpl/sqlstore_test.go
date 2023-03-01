@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -680,6 +681,48 @@ func CreateSubTree(t *testing.T, store *sqlStore, orgID int64, parentUID string,
 	return ancestorUIDs
 }
 
+// pass in function as an argument and reuse CreateSubTree?
+func CreateSubTreeLegacy(t *testing.T, store *sqlStore, orgID int64, parentUID string, depth int, prefix string, service *Service) []string {
+	t.Helper()
+
+	ancestorUIDs := []string{}
+	if parentUID != "" {
+		ancestorUIDs = append(ancestorUIDs, parentUID)
+	}
+	for i := 0; i < depth; i++ {
+		title := fmt.Sprintf("%sfolder-%d", prefix, i)
+		cmd := folder.CreateFolderCommand{
+			Title:        title,
+			OrgID:        orgID,
+			ParentUID:    parentUID,
+			UID:          util.GenerateShortUID(),
+			SignedInUser: &user.SignedInUser{UserID: 1, OrgID: orgID},
+		}
+		f, err := service.Create(context.Background(), &cmd)
+		require.NoError(t, err)
+		require.Equal(t, title, f.Title)
+		require.NotEmpty(t, f.ID)
+		require.NotEmpty(t, f.UID)
+
+		parents, err := store.GetParents(context.Background(), folder.GetParentsQuery{
+			UID:   f.UID,
+			OrgID: orgID,
+		})
+		require.NoError(t, err)
+		parentUIDs := []string{}
+		for _, p := range parents {
+			parentUIDs = append(parentUIDs, p.UID)
+		}
+		require.Equal(t, ancestorUIDs, parentUIDs)
+
+		ancestorUIDs = append(ancestorUIDs, f.UID)
+
+		parentUID = f.UID
+	}
+
+	return ancestorUIDs
+}
+
 func CreateLeaves(t *testing.T, store *sqlStore, parent *folder.Folder, num int) []string {
 	t.Helper()
 
@@ -727,21 +770,21 @@ func assertChildrenUIDs(t *testing.T, store *sqlStore, f *folder.Folder, expecte
 	assert.Equal(t, expected, actualChildrenUIDs)
 }
 
-func TestIntegrationNestedDelete(t *testing.T) { //have to mock the result of nested folder
+func TestIntegrationNestedFolderDelete(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
 	t.Run("Nested folder deletion", func(t *testing.T) {
 		db := sqlstore.InitTestDB(t)
 		quotaService := quotatest.New(false, nil)
-		dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(db, db.Cfg), quotaService)
+		dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuremgmt.WithFeatures("nestedFolders"), tagimpl.ProvideService(db, db.Cfg), quotaService)
 		require.NoError(t, err)
-		nestedFolderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures([]interface{}{"nestedFolders"}))
+		nestedFolderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures("nestedFolders"))
 		folderStore := ProvideDashboardFolderStore(db)
 
 		cfg := setting.NewCfg()
 		cfg.RBACEnabled = false
-		features := featuremgmt.WithFeatures()
+		features := featuremgmt.WithFeatures("nestedFolders")
 
 		service := &Service{
 			cfg:                  cfg,
@@ -756,23 +799,21 @@ func TestIntegrationNestedDelete(t *testing.T) { //have to mock the result of ne
 
 		t.Run("Given user has permission to save", func(t *testing.T) {
 			origNewGuardian := guardian.New
-			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
 
 			t.Run("When deleting folder by uid should not return access denied error", func(t *testing.T) {
-				// fix the test by creating subfolders in the dashboard table as well (CreateSubTree only adds them to folder table)
-				ancestorUIDs := CreateSubTree(t, nestedFolderStore, orgID, "", 3, "")
-				fmt.Println("ancestorUIDs", ancestorUIDs)
+				ancestorUIDs := CreateSubTreeLegacy(t, nestedFolderStore, orgID, "", 3, "", service)
+
 				cmd := folder.DeleteFolderCommand{UID: ancestorUIDs[0], OrgID: orgID, SignedInUser: &user.SignedInUser{UserID: 1, OrgID: orgID}}
 				err = service.Delete(context.Background(), &cmd)
 				require.NoError(t, err)
 
 				for _, uid := range ancestorUIDs {
+					// double check that we need both get calls to cover both tables
 					_, err := service.getFolderByUID(context.Background(), orgID, uid)
 					require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
-					f, err := service.store.Get(context.Background(), folder.GetFolderQuery{UID: &uid, OrgID: orgID})
-					assert.Error(t, err) // change this and next one to "require"
-					fmt.Println("uid:", f.UID, f.ParentUID, f.ID)
-					assert.ErrorAs(t, err, folder.ErrFolderNotFound)
+					_, err = service.store.Get(context.Background(), folder.GetFolderQuery{UID: &uid, OrgID: orgID})
+					require.ErrorIs(t, err, folder.ErrFolderNotFound)
 				}
 			})
 			t.Cleanup(func() {

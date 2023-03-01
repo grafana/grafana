@@ -426,7 +426,40 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 	}
 	result := []string{cmd.UID}
 	err := s.db.InTransaction(ctx, func(ctx context.Context) error {
-		return deleteFn(ctx, cmd, logger, result, s)
+		if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+			subfolders, err := s.nestedFolderDelete(ctx, cmd)
+			fmt.Println("subfolders:", subfolders)
+
+			if err != nil {
+				logger.Error("the delete folder on folder table failed with err: ", "error", err)
+				return err
+			}
+			result = append(result, subfolders...)
+		}
+
+		for _, folder := range result {
+			dashFolder, err := s.dashboardFolderStore.GetFolderByUID(ctx, cmd.OrgID, folder)
+			if err != nil {
+				return err
+			}
+
+			guard, err := guardian.NewByUID(ctx, dashFolder.UID, cmd.OrgID, cmd.SignedInUser)
+			if err != nil {
+				return err
+			}
+
+			if canSave, err := guard.CanDelete(); err != nil || !canSave {
+				if err != nil {
+					return toFolderError(err)
+				}
+				return dashboards.ErrFolderAccessDenied
+			}
+			err = s.legacyDelete(ctx, cmd, dashFolder)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
 	})
 
 	return err
@@ -545,7 +578,7 @@ func (s *Service) nestedFolderDelete(ctx context.Context, cmd *folder.DeleteFold
 		return result, err
 	}
 	for _, f := range folders {
-		// 		result = append(result, f.UID)
+		result = append(result, f.UID)
 		logger.Info("deleting subfolder", "org_id", f.OrgID, "uid", f.UID)
 		subfolders, err := s.nestedFolderDelete(ctx, &folder.DeleteFolderCommand{UID: f.UID, OrgID: f.OrgID, ForceDeleteRules: cmd.ForceDeleteRules, SignedInUser: cmd.SignedInUser})
 		if err != nil {
