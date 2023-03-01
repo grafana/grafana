@@ -54,7 +54,7 @@ describe('InfluxDB InfluxQL Visual Editor', () => {
     };
     assertEditor(
       query,
-      'FROM[default][select measurement]WHERE[+]' +
+      'FROM[autogen][select measurement]WHERE[+]' +
         'SELECT[field]([value])[mean]()[+]' +
         'GROUP BY[time]([$__interval])[fill]([null])[+]' +
         'TIMEZONE[(optional)]ORDER BY TIME[ASC]' +
@@ -70,7 +70,7 @@ describe('InfluxDB InfluxQL Visual Editor', () => {
     };
     assertEditor(
       query,
-      'FROM[default][select measurement]WHERE[+]' +
+      'FROM[autogen][select measurement]WHERE[+]' +
         'SELECT[field]([value])[mean]()[+]' +
         'GROUP BY[time]([$__interval])[fill]([null])[+]' +
         'TIMEZONE[(optional)]ORDER BY TIME[ASC]' +
