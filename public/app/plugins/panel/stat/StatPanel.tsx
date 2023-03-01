@@ -85,6 +85,7 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
     const { data, options, replaceVariables, fieldConfig, timeZone } = this.props;
     // Test if there are custom units to prepend/append
     const customConfig = fieldConfig.defaults?.custom ?? {};
+    console.log(customConfig, 'cust');
 
     let globalRange: NumericRange | undefined = undefined;
 
@@ -119,8 +120,8 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
     });
 
     // If there are custom prefixes or suffixes to format values, format the values
-    if (customConfig.prefix || customConfig.suffix) {
-      formatDisplayValuesWithCustomUnits(fieldDisplayValues, customConfig);
+    if (customConfig?.prefix || customConfig?.suffix) {
+      return formatDisplayValuesWithCustomUnits(fieldDisplayValues, customConfig);
     }
 
     return fieldDisplayValues;

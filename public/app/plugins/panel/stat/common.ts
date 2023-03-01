@@ -117,7 +117,8 @@ export function formatDisplayValuesWithCustomUnits(
   fieldValues: FieldDisplay[],
   config: PanelFieldConfig
 ): FieldDisplay[] {
-  const { prefix, suffix } = config;
+  // Set default values as empty strings if custom units are undefined, otherwise JS will concat "undefined" as a string value
+  const { prefix = '', suffix = '' } = config;
 
   // If there are no custom units, do nothing and return the `fieldValues`
   if (!prefix && !suffix) {
