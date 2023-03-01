@@ -284,7 +284,7 @@ describe('PublicDashboardPage', () => {
       });
     });
 
-    it('Should render public dashboard paused screen', () => {
+    it('Should render public dashboard deleted screen', () => {
       expect(screen.queryByTestId(publicDashboardSelector.page)).not.toBeInTheDocument();
 
       expect(screen.getByTestId(publicDashboardSelector.NotAvailable.title)).toBeInTheDocument();
