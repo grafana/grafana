@@ -9,6 +9,8 @@ import {
   standardEditorsRegistry,
   FieldDisplay,
   FieldType,
+  FieldConfigEditorBuilder,
+  FieldConfig,
 } from '@grafana/data';
 import { SingleStatBaseOptions, VizOrientation } from '@grafana/schema';
 
@@ -132,4 +134,27 @@ export function formatDisplayValuesWithCustomUnits(
     }
     return fieldValue;
   });
+}
+
+export function addCustomUnitTextInputs(builder: FieldConfigEditorBuilder<FieldConfig>) {
+  const category = ['Custom units'];
+  return builder
+    .addTextInput({
+      path: 'customPrefix',
+      name: 'Prefix',
+      defaultValue: '',
+      settings: {
+        placeholder: 'Enter custom prefix',
+      },
+      category,
+    })
+    .addTextInput({
+      path: 'customSuffix',
+      name: 'Suffix',
+      defaultValue: '',
+      settings: {
+        placeholder: 'Enter custom suffix',
+      },
+      category,
+    });
 }

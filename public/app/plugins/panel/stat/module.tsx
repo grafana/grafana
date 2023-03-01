@@ -4,35 +4,14 @@ import { commonOptionsBuilder, sharedSingleStatMigrationHandler } from '@grafana
 
 import { statPanelChangedHandler } from './StatMigrations';
 import { StatPanel } from './StatPanel';
-import { addStandardDataReduceOptions, addOrientationOption } from './common';
+import { addStandardDataReduceOptions, addOrientationOption, addCustomUnitTextInputs } from './common';
 import { defaultPanelOptions, PanelOptions } from './panelcfg.gen';
 import { StatSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<PanelOptions>(StatPanel)
   .useFieldConfig({
     // Add a custom text fields for custom stat units
-    useCustomConfig: (builder) => {
-      const category = ['Custom units'];
-      return builder
-        .addTextInput({
-          path: 'customPrefix',
-          name: 'Prefix',
-          defaultValue: '',
-          settings: {
-            placeholder: 'Enter custom prefix',
-          },
-          category,
-        })
-        .addTextInput({
-          path: 'customSuffix',
-          name: 'Suffix',
-          defaultValue: '',
-          settings: {
-            placeholder: 'Enter custom suffix',
-          },
-          category,
-        });
-    },
+    useCustomConfig: (builder) => addCustomUnitTextInputs(builder),
   })
   .setPanelOptions((builder) => {
     const mainCategory = ['Stat styles'];
