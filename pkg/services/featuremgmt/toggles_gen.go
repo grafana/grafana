@@ -107,6 +107,10 @@ const (
 	// Adds trace ID to error notifications
 	FlagTracing = "tracing"
 
+	// FlagNewTraceView
+	// Shows the new trace view design
+	FlagNewTraceView = "newTraceView"
+
 	// FlagCorrelations
 	// Correlations page
 	FlagCorrelations = "correlations"
@@ -174,10 +178,6 @@ const (
 	// FlagEntityStore
 	// SQL-based entity store (requires storage flag also)
 	FlagEntityStore = "entityStore"
-
-	// FlagFlameGraph
-	// Show the flame graph
-	FlagFlameGraph = "flameGraph"
 
 	// FlagCloudWatchCrossAccountQuerying
 	// Enables cross-account querying in CloudWatch datasources
@@ -266,6 +266,10 @@ const (
 	// FlagIndividualCookiePreferences
 	// Support overriding cookie preferences per user
 	FlagIndividualCookiePreferences = "individualCookiePreferences"
+
+	// FlagDrawerDataSourcePicker
+	// Changes the user experience for data source selection to a drawer.
+	FlagDrawerDataSourcePicker = "drawerDataSourcePicker"
 
 	// FlagTraceqlSearch
 	// Enables the &#39;TraceQL Search&#39; tab for the Tempo datasource which provides a UI to generate TraceQL queries

@@ -274,7 +274,7 @@ func TestProvisioningApi(t *testing.T) {
 				require.Equal(t, 201, response.Status())
 				created := deserializeRule(t, response.Body())
 				require.Equal(t, int64(3), created.OrgID)
-				require.Equal(t, models.ProvenanceNone, created.Provenance)
+				require.Equal(t, definitions.Provenance(models.ProvenanceNone), created.Provenance)
 			})
 
 			t.Run("PUT sets expected fields with no provenance", func(t *testing.T) {
@@ -293,7 +293,7 @@ func TestProvisioningApi(t *testing.T) {
 				require.Equal(t, 200, response.Status())
 				created := deserializeRule(t, response.Body())
 				require.Equal(t, int64(3), created.OrgID)
-				require.Equal(t, models.ProvenanceNone, created.Provenance)
+				require.Equal(t, definitions.Provenance(models.ProvenanceNone), created.Provenance)
 			})
 		})
 
@@ -921,7 +921,7 @@ func (f *fakeNotificationPolicyService) GetPolicyTree(ctx context.Context, orgID
 		return definitions.Route{}, store.ErrNoAlertmanagerConfiguration
 	}
 	result := f.tree
-	result.Provenance = f.prov
+	result.Provenance = definitions.Provenance(f.prov)
 	return result, nil
 }
 
@@ -1034,8 +1034,8 @@ func createTestAlertRule(title string, orgID int64) definitions.ProvisionedAlert
 		RuleGroup:    "my-cool-group",
 		FolderUID:    "folder-uid",
 		For:          model.Duration(60),
-		NoDataState:  models.OK,
-		ExecErrState: models.OkErrState,
+		NoDataState:  definitions.OK,
+		ExecErrState: definitions.OkErrState,
 	}
 }
 

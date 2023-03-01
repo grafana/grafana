@@ -10,7 +10,7 @@ function idForNavItem(navItem: NavModelItem) {
   return 'navModel.' + navItem.id ?? navItem.url ?? navItem.text ?? navItem.subTitle;
 }
 
-function navTreeToActions(navTree: NavModelItem[], parent?: NavModelItem): CommandPaletteAction[] {
+function navTreeToActions(navTree: NavModelItem[], parents: NavModelItem[] = []): CommandPaletteAction[] {
   const navActions: CommandPaletteAction[] = [];
 
   for (const navItem of navTree) {
@@ -27,19 +27,21 @@ function navTreeToActions(navTree: NavModelItem[], parent?: NavModelItem): Comma
 
     const priority = isCreateAction ? ACTIONS_PRIORITY : DEFAULT_PRIORITY;
 
+    const subtitle = parents.map((parent) => parent.text).join(' > ');
     const action = {
       id: idForNavItem(navItem),
-      name: text, // TODO: translate
+      name: text,
       section: section,
       url: url && locationUtil.stripBaseFromUrl(url),
-      parent: parent && !isCreateAction && idForNavItem(parent),
+      parent: parents.length > 0 && !isCreateAction ? idForNavItem(parents[parents.length - 1]) : undefined,
       priority: priority,
+      subtitle: isCreateAction ? undefined : subtitle,
     };
 
     navActions.push(action);
 
     if (children?.length) {
-      const childActions = navTreeToActions(children, navItem);
+      const childActions = navTreeToActions(children, [...parents, navItem]);
       navActions.push(...childActions);
     }
   }

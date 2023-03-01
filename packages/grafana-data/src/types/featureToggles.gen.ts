@@ -41,6 +41,7 @@ export interface FeatureToggles {
   export?: boolean;
   exploreMixedDatasource?: boolean;
   tracing?: boolean;
+  newTraceView?: boolean;
   correlations?: boolean;
   cloudWatchDynamicLabels?: boolean;
   datasourceQueryMultiStatus?: boolean;
@@ -58,7 +59,6 @@ export interface FeatureToggles {
   topnav?: boolean;
   grpcServer?: boolean;
   entityStore?: boolean;
-  flameGraph?: boolean;
   cloudWatchCrossAccountQuerying?: boolean;
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
@@ -81,5 +81,6 @@ export interface FeatureToggles {
   logsContextDatasourceUi?: boolean;
   lokiQuerySplitting?: boolean;
   individualCookiePreferences?: boolean;
+  drawerDataSourcePicker?: boolean;
   traceqlSearch?: boolean;
 }
