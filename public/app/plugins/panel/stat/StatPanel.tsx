@@ -119,14 +119,15 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
       timeZone,
     });
 
-    const customFormattedDisplayValues = formatDisplayValuesWithCustomUnits(fieldDisplayValues, {
+    // If there are no custom prefixes or suffixes to format values, return fieldDisplayValues
+    if (!customPrefix && !customSuffix) {
+      return fieldDisplayValues;
+    }
+
+    return formatDisplayValuesWithCustomUnits(fieldDisplayValues, {
       customPrefix,
       customSuffix,
     });
-
-    console.log(customFormattedDisplayValues);
-
-    return customFormattedDisplayValues;
   };
 
   render() {
