@@ -61,4 +61,18 @@ InlineBanner.parameters = {
   controls: { expanded: true },
 };
 
+export const Toast: ComponentStory<typeof Alert> = ({ severity }) => {
+  return (
+    <Alert title="Toast" severity={severity} onRemove={action('Remove button clicked')} elevated>
+      <VerticalGroup>
+        <div>Child content that includes some alert details, like maybe what actually happened.</div>
+      </VerticalGroup>
+    </Alert>
+  );
+};
+
+Toast.args = {
+  severity: 'error',
+};
+
 export default meta;
