@@ -56,6 +56,8 @@ export class DashboardLoaderSrv {
         })
         .catch((e) => {
           const isPublicDashboardPaused = e.data.statusCode === 403 && e.data.messageId === 'publicdashboards.paused';
+          const isPublicDashboardNotFound =
+            e.data.statusCode === 404 && e.data.messageId === 'publicdashboards.notFound';
 
           const dashboardModel = this._dashboardLoadFailed(
             isPublicDashboardPaused ? 'Public Dashboard paused' : 'Public Dashboard Not found',
@@ -63,7 +65,11 @@ export class DashboardLoaderSrv {
           );
           return {
             ...dashboardModel,
-            meta: { ...dashboardModel.meta, publicDashboardEnabled: !isPublicDashboardPaused },
+            meta: {
+              ...dashboardModel.meta,
+              publicDashboardEnabled: isPublicDashboardNotFound ? undefined : !isPublicDashboardPaused,
+              dashboardNotFound: isPublicDashboardNotFound,
+            },
           };
         });
     } else {

@@ -57,9 +57,6 @@ const PublicDashboardPage = (props: Props) => {
   const dashboardState = useSelector((store) => store.dashboard);
   const dashboard = dashboardState.getModel();
 
-  console.log('no encontrado', dashboard?.meta.dashboardNotFound);
-  console.log('está enabled', dashboard?.meta.publicDashboardEnabled);
-
   useEffect(() => {
     dispatch(
       initDashboard({
@@ -95,7 +92,7 @@ const PublicDashboardPage = (props: Props) => {
     return <DashboardLoading initPhase={dashboardState.initPhase} />;
   }
 
-  if (!dashboard.meta.publicDashboardEnabled) {
+  if (dashboard.meta.publicDashboardEnabled === false) {
     return <PublicDashboardNotAvailable paused />;
   }
 
