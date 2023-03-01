@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"math"
 	"net/http"
@@ -382,6 +383,11 @@ func executeWithHeaders(tctx *testContext, query backend.DataQuery, qr interface
 	}
 
 	promRes, err := toAPIResponse(qr)
+	defer func() {
+		if err := promRes.Body.Close(); err != nil {
+			fmt.Println(fmt.Errorf("response body close error: %v", err))
+		}
+	}()
 	if err != nil {
 		return nil, err
 	}
