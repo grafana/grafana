@@ -137,6 +137,7 @@ export class CanvasPanel extends Component<Props, State> {
           next: (v) => {
             this.panelContext.onInstanceStateChange!({
               scene: this.scene,
+              selected: this.context.instanceState.selected,
               selectedConnection: v,
               layer: this.scene.root,
             });
