@@ -34,23 +34,54 @@ func newCache() *cache {
 }
 
 func (c *cache) getOrCreate(ctx context.Context, log log.Logger, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, externalURL *url.URL) *State {
+	// Calculation of state ID involves label and annotation expansion, which may be resource intensive operations, and doing it in the context guarded by mtxStates may create a lot of contention.
+	// Instead of just calculating ID we create an entire state - a candidate. If rule states already hold a state with this ID, this candidate will be discarded and the existing one will be returned.
+	// Otherwise, this candidate will be added to the rule states and returned.
+	stateCandidate := calculateState(ctx, log, alertRule, result, extraLabels, externalURL)
+
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
+
 	var orgStates map[string]*ruleStates
 	var ok bool
-	if orgStates, ok = c.states[alertRule.OrgID]; !ok {
+	if orgStates, ok = c.states[stateCandidate.OrgID]; !ok {
 		orgStates = make(map[string]*ruleStates)
-		c.states[alertRule.OrgID] = orgStates
+		c.states[stateCandidate.OrgID] = orgStates
 	}
 	var states *ruleStates
-	if states, ok = orgStates[alertRule.UID]; !ok {
+	if states, ok = orgStates[stateCandidate.AlertRuleUID]; !ok {
 		states = &ruleStates{states: make(map[string]*State)}
-		c.states[alertRule.OrgID][alertRule.UID] = states
+		c.states[stateCandidate.OrgID][stateCandidate.AlertRuleUID] = states
 	}
-	return states.getOrCreate(ctx, log, alertRule, result, extraLabels, externalURL)
+	return states.getOrAdd(stateCandidate)
 }
 
-func (rs *ruleStates) getOrCreate(ctx context.Context, log log.Logger, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, externalURL *url.URL) *State {
+func (rs *ruleStates) getOrAdd(stateCandidate *State) *State {
+	state, ok := rs.states[stateCandidate.CacheID]
+	// Check if the state with this ID already exists.
+	if !ok {
+		rs.states[stateCandidate.CacheID] = stateCandidate
+		return stateCandidate
+	}
+
+	// Annotations can change over time, however we also want to maintain
+	// certain annotations across evaluations
+	for k, v := range state.Annotations {
+		if _, ok := ngModels.InternalAnnotationNameSet[k]; ok {
+			// If the annotation is not present then it should be copied from the
+			// previous state to the next state
+			if _, ok := stateCandidate.Annotations[k]; !ok {
+				stateCandidate.Annotations[k] = v
+			}
+		}
+	}
+	state.Annotations = stateCandidate.Annotations
+	state.Values = stateCandidate.Values
+	rs.states[stateCandidate.CacheID] = state
+	return state
+}
+
+func calculateState(ctx context.Context, log log.Logger, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, externalURL *url.URL) *State {
 	// Merge both the extra labels and the labels from the evaluation into a common set
 	// of labels that can be expanded in custom labels and annotations.
 	templateData := template.NewData(mergeLabels(extraLabels, result.Instance), result)
@@ -108,24 +139,6 @@ func (rs *ruleStates) getOrCreate(ctx context.Context, log log.Logger, alertRule
 		log.Error("Error getting cacheId for entry", "error", err)
 	}
 
-	if state, ok := rs.states[id]; ok {
-		// Annotations can change over time, however we also want to maintain
-		// certain annotations across evaluations
-		for k, v := range state.Annotations {
-			if _, ok := ngModels.InternalAnnotationNameSet[k]; ok {
-				// If the annotation is not present then it should be copied from the
-				// previous state to the next state
-				if _, ok := annotations[k]; !ok {
-					annotations[k] = v
-				}
-			}
-		}
-		state.Annotations = annotations
-		state.Values = values
-		rs.states[id] = state
-		return state
-	}
-
 	// For new states, we set StartsAt & EndsAt to EvaluatedAt as this is the
 	// expected value for a Normal state during state transition.
 	newState := &State{
@@ -139,7 +152,6 @@ func (rs *ruleStates) getOrCreate(ctx context.Context, log log.Logger, alertRule
 		StartsAt:           result.EvaluatedAt,
 		EndsAt:             result.EvaluatedAt,
 	}
-	rs.states[id] = newState
 	return newState
 }
 

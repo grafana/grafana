@@ -8,7 +8,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	ptr "github.com/xorcare/pointer"
 
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -34,11 +33,10 @@ func BenchmarkGetOrCreateTest(b *testing.B) {
 			"A": {
 				Var:    "A",
 				Labels: data.Labels{"instance": uuid.New().String()},
-				Value:  ptr.Float64(rand.Float64()),
+				Value:  func(f float64) *float64 { return &f }(rand.Float64()),
 			},
 		}
 	})()
-
 	ctx := context.Background()
 	log := &logtest.Fake{}
 	u, _ := url.Parse("http://localhost")
@@ -56,6 +54,6 @@ goarch: amd64
 pkg: github.com/grafana/grafana/pkg/services/ngalert/state
 cpu: 11th Gen Intel(R) Core(TM) i9-11900H @ 2.50GHz
 BenchmarkGetOrCreateTest
-BenchmarkGetOrCreateTest-16         7894            150920 ns/op
+BenchmarkGetOrCreateTest-16        47805             23895 ns/op
 PASS
 */
