@@ -13,7 +13,6 @@ import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler
 import { AlertingQueryRunner } from '../../../state/AlertingQueryRunner';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
-import { ExpressionEditor } from '../ExpressionEditor';
 import { ExpressionsEditor } from '../ExpressionsEditor';
 import { QueryEditor } from '../QueryEditor';
 import { RecordingRuleEditor } from '../RecordingRuleEditor';
@@ -183,9 +182,13 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule, onData
         throw new Error('The Data source has not been defined.');
       }
 
+      //@ts-ignore
+      const expression = updatedQueries[0].model.expr || '';
+
       setValue('dataSourceName', dataSourceSettings.name);
-      setValue('expression', updatedQueries[0].model.expr || '');
-      dispatch(setRecordingRulesQueries(updatedQueries));
+      setValue('expression', expression);
+
+      dispatch(setRecordingRulesQueries({ recordingRuleQueries: updatedQueries, expression }));
       runRecordingQueries();
     },
     [runRecordingQueries, setValue]
@@ -206,9 +209,9 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule, onData
           hide: false,
         },
       };
-      dispatch(setRecordingRulesQueries([defaultQuery]));
+      dispatch(setRecordingRulesQueries({ recordingRuleQueries: [defaultQuery], expression: getValues('expression') }));
     }
-  }, [type, recordingRuleDefaultDatasource]);
+  }, [type, recordingRuleDefaultDatasource, editingExistingRule, getValues]);
 
   const onDuplicateQuery = useCallback((query: AlertQuery) => {
     dispatch(duplicateQuery(query));
