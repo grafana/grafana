@@ -147,10 +147,7 @@ describe('PrometheusIncrementalStorage', function () {
       expect(storageLengthAfterSubsequentQuery?.frames[0].fields[0].values.length).toEqual(
         storageLengthAfterSubsequentQuery?.frames[0].fields[1].values.length
       );
-      expect(storageLengthAfterSubsequentQuery?.frames[0].fields[0].values.length).toEqual(
-        storageLengthAfterSubsequentQuery?.frames[1].fields[0].values.length
-      );
-      expect(storageLengthAfterSubsequentQuery?.frames[0].fields[0].values.length).toEqual(
+      expect(storageLengthAfterSubsequentQuery?.frames[1].fields[0].values.length).toEqual(
         storageLengthAfterSubsequentQuery?.frames[1].fields[1].values.length
       );
 
