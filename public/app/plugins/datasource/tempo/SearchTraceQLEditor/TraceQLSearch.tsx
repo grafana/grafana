@@ -116,7 +116,7 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
             />
           </InlineSearchField>
           <InlineSearchField label={'Duration'} tooltip="The span duration, i.e.	end - start time of the span">
-            <HorizontalGroup>
+            <HorizontalGroup spacing={'sm'}>
               <DurationInput
                 filter={
                   findFilter('min-duration') || {

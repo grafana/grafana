@@ -110,7 +110,7 @@ describe('TraceQLSearch', () => {
 
     const dynamicFilters = query.filters.filter((f) => f.type === 'dynamic');
     expect(dynamicFilters.length).toBe(1);
-    const addButton = await screen.findByText('+');
+    const addButton = await screen.findByTitle('Add tag');
     await user.click(addButton);
     jest.advanceTimersByTime(1000);
 

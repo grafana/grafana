@@ -1,3 +1,5 @@
+import { SelectableValue } from '@grafana/data';
+
 import { TraceqlFilter } from '../dataquery.gen';
 
 export const generateQueryFromFilters = (filters: TraceqlFilter[]) => {
@@ -22,3 +24,34 @@ export function replaceAt<T>(array: T[], index: number, value: T) {
   ret[index] = value;
   return ret;
 }
+
+export const operatorSelectableValue = (op: string) => {
+  const result: SelectableValue = { label: op, value: op };
+  switch (op) {
+    case '=':
+      result.description = 'Equals';
+      break;
+    case '!=':
+      result.description = 'Not equals';
+      break;
+    case '>':
+      result.description = 'Greater';
+      break;
+    case '>=':
+      result.description = 'Greater or Equal';
+      break;
+    case '<':
+      result.description = 'Less';
+      break;
+    case '<=':
+      result.description = 'Less or Equal';
+      break;
+    case '=~':
+      result.description = 'Matches regex';
+      break;
+    case '!~':
+      result.description = 'Does not match regex';
+      break;
+  }
+  return result;
+};

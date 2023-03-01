@@ -4,6 +4,8 @@ import { Select, HorizontalGroup, Input } from '@grafana/ui';
 
 import { TraceqlFilter } from '../dataquery.gen';
 
+import { operatorSelectableValue } from './utils';
+
 interface Props {
   filter: TraceqlFilter;
   updateFilter: (f: TraceqlFilter) => void;
@@ -12,10 +14,10 @@ interface Props {
 }
 const DurationInput = ({ filter, operators, updateFilter }: Props) => {
   return (
-    <HorizontalGroup spacing={'xs'}>
+    <HorizontalGroup spacing={'none'}>
       <Select
         inputId={`${filter.id}-operator`}
-        options={operators.map((op) => ({ label: op, value: op }))}
+        options={operators.map(operatorSelectableValue)}
         value={filter.operator}
         onChange={(v) => {
           updateFilter({ ...filter, operator: v?.value });

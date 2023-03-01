@@ -1,8 +1,9 @@
 import React, { useEffect, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
+import { AccessoryButton } from '@grafana/experimental';
 import { FetchError } from '@grafana/runtime';
-import { HorizontalGroup, VerticalGroup, Button } from '@grafana/ui';
+import { HorizontalGroup, VerticalGroup } from '@grafana/ui';
 
 import { TraceqlFilter } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
@@ -32,7 +33,7 @@ const TagsInput = ({ updateFilter, deleteFilter, filters, datasource, setError, 
   }, [filters, handleOnAdd]);
 
   return (
-    <HorizontalGroup spacing={'xs'} align={'flex-start'}>
+    <HorizontalGroup spacing={'md'} align={'flex-start'}>
       <VerticalGroup spacing={'xs'}>
         {filters
           ?.filter((f) => f.type === 'dynamic')
@@ -49,7 +50,7 @@ const TagsInput = ({ updateFilter, deleteFilter, filters, datasource, setError, 
             />
           ))}
       </VerticalGroup>
-      <Button onClick={handleOnAdd}>+</Button>
+      <AccessoryButton variant={'secondary'} icon={'plus'} onClick={handleOnAdd} title={'Add tag'} />
     </HorizontalGroup>
   );
 };

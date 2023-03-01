@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { AccessoryButton } from '@grafana/experimental';
 import { FetchError, isFetchError } from '@grafana/runtime';
-import { Select, HorizontalGroup, Button } from '@grafana/ui';
+import { Select, HorizontalGroup } from '@grafana/ui';
 
 import { createErrorNotification } from '../../../../core/copy/appNotification';
 import { notifyApp } from '../../../../core/reducers/appNotification';
@@ -11,6 +12,8 @@ import { TraceqlFilter } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
 import { operators as allOperators } from '../traceql/traceql';
+
+import { operatorSelectableValue } from './utils';
 
 interface Props {
   filter: TraceqlFilter;
@@ -95,7 +98,7 @@ const SearchField = ({
   }, [languageProvider, loadOptions, setError, filter.tag]);
 
   return (
-    <HorizontalGroup spacing={'xs'}>
+    <HorizontalGroup spacing={'none'}>
       {filter.type === 'dynamic' && (
         <Select
           inputId={`${filter.id}-tag`}
@@ -106,7 +109,7 @@ const SearchField = ({
           onChange={(v) => {
             updateFilter({ ...filter, tag: v?.value });
           }}
-          placeholder="Select a tag"
+          placeholder="Select tag"
           isClearable
           aria-label={`select ${filter.id} tag`}
           allowCustomValue={true}
@@ -114,7 +117,7 @@ const SearchField = ({
       )}
       <Select
         inputId={`${filter.id}-operator`}
-        options={(operators || allOperators).map((op) => ({ label: op, value: op }))}
+        options={(operators || allOperators).map(operatorSelectableValue)}
         value={filter.operator}
         onChange={(v) => {
           updateFilter({ ...filter, operator: v?.value });
@@ -141,21 +144,20 @@ const SearchField = ({
             updateFilter({ ...filter, value: val?.value, valueType: val?.type });
           }
         }}
-        placeholder="Select a value"
+        placeholder="Select value"
         isClearable={false}
         aria-label={`select ${filter.id} value`}
         allowCustomValue={true}
         isMulti
       />
       {filter.type === 'dynamic' && (
-        <Button
+        <AccessoryButton
           variant={'secondary'}
+          icon={'times'}
           onClick={() => deleteFilter?.(filter)}
           tooltip={'Remove tag'}
           aria-label={`remove tag with ID ${filter.id}`}
-        >
-          x
-        </Button>
+        />
       )}
     </HorizontalGroup>
   );
