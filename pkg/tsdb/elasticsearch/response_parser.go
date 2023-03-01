@@ -1008,11 +1008,9 @@ func createFieldOfType[T int | float64 | bool | string](docs []map[string]interf
 }
 
 func setPreferredVisType(frame *data.Frame, visType data.VisType) {
-	if frame.Meta != nil {
-		frame.Meta.PreferredVisualization = visType
-	} else {
-		frame.Meta = &data.FrameMeta{
-			PreferredVisualization: visType,
-		}
+	if frame.Meta == nil {
+		frame.Meta = &data.FrameMeta{}
 	}
+
+	frame.Meta.PreferredVisualization = visType
 }
