@@ -162,7 +162,11 @@ func TestIntegrationDelete(t *testing.T) {
 		})
 	*/
 
-	ancestorUIDs := CreateSubTree(t, folderStore, orgID, "", folder.MaxNestedFolderDepth, "")
+	cmd := folder.CreateFolderCommand{
+		OrgID:     orgID,
+		ParentUID: "",
+	}
+	ancestorUIDs := CreateSubTree(t, folderStore, nil, folder.MaxNestedFolderDepth, "", cmd)
 	require.Len(t, ancestorUIDs, folder.MaxNestedFolderDepth)
 
 	t.Cleanup(func() {
@@ -612,7 +616,11 @@ func TestIntegrationGetHeight(t *testing.T) {
 		UID:         uid1,
 	})
 	require.NoError(t, err)
-	subTree := CreateSubTree(t, folderStore, orgID, parent.UID, 4, "sub")
+	cmd := folder.CreateFolderCommand{
+		OrgID:     orgID,
+		ParentUID: parent.UID,
+	}
+	subTree := CreateSubTree(t, folderStore, nil, 4, "sub", cmd)
 
 	t.Run("should successfully get height", func(t *testing.T) {
 		height, err := folderStore.GetHeight(context.Background(), parent.UID, orgID, nil)
@@ -641,22 +649,27 @@ func CreateOrg(t *testing.T, db *sqlstore.SQLStore) int64 {
 	return orgID
 }
 
-func CreateSubTree(t *testing.T, store *sqlStore, orgID int64, parentUID string, depth int, prefix string) []string {
+func CreateSubTree(t *testing.T, store *sqlStore, service *Service, depth int, prefix string, cmd folder.CreateFolderCommand) []string {
 	t.Helper()
 
 	ancestorUIDs := []string{}
-	if parentUID != "" {
-		ancestorUIDs = append(ancestorUIDs, parentUID)
+	if cmd.ParentUID != "" {
+		ancestorUIDs = append(ancestorUIDs, cmd.ParentUID)
 	}
 	for i := 0; i < depth; i++ {
 		title := fmt.Sprintf("%sfolder-%d", prefix, i)
-		cmd := folder.CreateFolderCommand{
-			Title:     title,
-			OrgID:     orgID,
-			ParentUID: parentUID,
-			UID:       util.GenerateShortUID(),
+		cmd.Title = title
+		cmd.UID = util.GenerateShortUID()
+
+		var (
+			f   *folder.Folder
+			err error
+		)
+		if service != nil {
+			f, err = service.Create(context.Background(), &cmd)
+		} else {
+			f, err = store.Create(context.Background(), cmd)
 		}
-		f, err := store.Create(context.Background(), cmd)
 		require.NoError(t, err)
 		require.Equal(t, title, f.Title)
 		require.NotEmpty(t, f.ID)
@@ -664,7 +677,7 @@ func CreateSubTree(t *testing.T, store *sqlStore, orgID int64, parentUID string,
 
 		parents, err := store.GetParents(context.Background(), folder.GetParentsQuery{
 			UID:   f.UID,
-			OrgID: orgID,
+			OrgID: cmd.OrgID,
 		})
 		require.NoError(t, err)
 		parentUIDs := []string{}
@@ -675,49 +688,7 @@ func CreateSubTree(t *testing.T, store *sqlStore, orgID int64, parentUID string,
 
 		ancestorUIDs = append(ancestorUIDs, f.UID)
 
-		parentUID = f.UID
-	}
-
-	return ancestorUIDs
-}
-
-// pass in function as an argument and reuse CreateSubTree?
-func CreateSubTreeLegacy(t *testing.T, store *sqlStore, orgID int64, parentUID string, depth int, prefix string, service *Service) []string {
-	t.Helper()
-
-	ancestorUIDs := []string{}
-	if parentUID != "" {
-		ancestorUIDs = append(ancestorUIDs, parentUID)
-	}
-	for i := 0; i < depth; i++ {
-		title := fmt.Sprintf("%sfolder-%d", prefix, i)
-		cmd := folder.CreateFolderCommand{
-			Title:        title,
-			OrgID:        orgID,
-			ParentUID:    parentUID,
-			UID:          util.GenerateShortUID(),
-			SignedInUser: &user.SignedInUser{UserID: 1, OrgID: orgID},
-		}
-		f, err := service.Create(context.Background(), &cmd)
-		require.NoError(t, err)
-		require.Equal(t, title, f.Title)
-		require.NotEmpty(t, f.ID)
-		require.NotEmpty(t, f.UID)
-
-		parents, err := store.GetParents(context.Background(), folder.GetParentsQuery{
-			UID:   f.UID,
-			OrgID: orgID,
-		})
-		require.NoError(t, err)
-		parentUIDs := []string{}
-		for _, p := range parents {
-			parentUIDs = append(parentUIDs, p.UID)
-		}
-		require.Equal(t, ancestorUIDs, parentUIDs)
-
-		ancestorUIDs = append(ancestorUIDs, f.UID)
-
-		parentUID = f.UID
+		cmd.ParentUID = f.UID
 	}
 
 	return ancestorUIDs
@@ -802,17 +773,26 @@ func TestIntegrationNestedFolderDelete(t *testing.T) {
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
 
 			t.Run("When deleting folder by uid should not return access denied error", func(t *testing.T) {
-				ancestorUIDs := CreateSubTreeLegacy(t, nestedFolderStore, orgID, "", 3, "", service)
+				createCmd := folder.CreateFolderCommand{
+					OrgID:        orgID,
+					ParentUID:    "",
+					SignedInUser: &user.SignedInUser{UserID: 1, OrgID: orgID},
+				}
+				ancestorUIDs := CreateSubTree(t, nestedFolderStore, service, 3, "", createCmd)
 
-				cmd := folder.DeleteFolderCommand{UID: ancestorUIDs[0], OrgID: orgID, SignedInUser: &user.SignedInUser{UserID: 1, OrgID: orgID}}
-				err = service.Delete(context.Background(), &cmd)
+				deleteCmd := folder.DeleteFolderCommand{
+					UID:          ancestorUIDs[0],
+					OrgID:        orgID,
+					SignedInUser: &user.SignedInUser{UserID: 1, OrgID: orgID},
+				}
+				err = service.Delete(context.Background(), &deleteCmd)
 				require.NoError(t, err)
 
 				for _, uid := range ancestorUIDs {
 					// double check that we need both get calls to cover both tables
 					_, err := service.getFolderByUID(context.Background(), orgID, uid)
 					require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
-					_, err = service.store.Get(context.Background(), folder.GetFolderQuery{UID: &uid, OrgID: orgID})
+					_, err = service.store.Get(context.Background(), folder.GetFolderQuery{UID: &ancestorUIDs[i], OrgID: orgID})
 					require.ErrorIs(t, err, folder.ErrFolderNotFound)
 				}
 			})
