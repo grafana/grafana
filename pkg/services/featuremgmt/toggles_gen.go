@@ -95,10 +95,6 @@ const (
 	// Load dashboards from the generic storage interface
 	FlagDashboardsFromStorage = "dashboardsFromStorage"
 
-	// FlagExport
-	// Export grafana instance (to git, etc)
-	FlagExport = "export"
-
 	// FlagExploreMixedDatasource
 	// Enable mixed datasource in Explore
 	FlagExploreMixedDatasource = "exploreMixedDatasource"

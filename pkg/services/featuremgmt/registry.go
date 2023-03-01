@@ -126,12 +126,6 @@ var (
 			RequiresDevMode: true, // Also a gate on automatic git storage (for now)
 		},
 		{
-			Name:            "export",
-			Description:     "Export grafana instance (to git, etc)",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-		},
-		{
 			Name:         "exploreMixedDatasource",
 			Description:  "Enable mixed datasource in Explore",
 			State:        FeatureStateAlpha,

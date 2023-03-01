@@ -38,7 +38,6 @@ export interface FeatureToggles {
   storage?: boolean;
   k8s?: boolean;
   dashboardsFromStorage?: boolean;
-  export?: boolean;
   exploreMixedDatasource?: boolean;
   tracing?: boolean;
   newTraceView?: boolean;
