@@ -84,11 +84,6 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:        "swaggerUi",
-			Description: "Serves swagger UI",
-			State:       FeatureStateBeta,
-		},
-		{
 			Name:        "featureHighlights",
 			Description: "Highlight Grafana Enterprise features",
 			State:       FeatureStateStable,

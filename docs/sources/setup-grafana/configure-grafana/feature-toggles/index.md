@@ -38,7 +38,6 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `trimDefaults`                    | Use cue schema to remove values that will be applied automatically              |
 | `panelTitleSearch`                | Search for dashboards using panel title                                         |
 | `prometheusAzureOverrideAudience` | Experimental. Allow override default AAD audience for Azure Prometheus endpoint |
-| `swaggerUi`                       | Serves swagger UI                                                               |
 | `migrationLocking`                | Lock database during migrations                                                 |
 | `newDBLibrary`                    | Use jmoiron/sqlx rather than xorm for a few backend services                    |
 | `validateDashboardsOnSave`        | Validate dashboard JSON POSTed to api/dashboards/db                             |

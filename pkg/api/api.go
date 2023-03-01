@@ -218,10 +218,8 @@ func (hs *HTTPServer) registerRoutes() {
 	// expose plugin file system assets
 	r.Get("/public/plugins/:pluginId/*", hs.getPluginAssets)
 
-	if hs.Features.IsEnabled(featuremgmt.FlagSwaggerUi) {
-		r.Get("/swagger-ui", swaggerUI)
-		r.Get("/openapi3", openapi3)
-	}
+	r.Get("/swagger-ui", swaggerUI)
+	r.Get("/openapi3", openapi3)
 
 	// authed api
 	r.Group("/api", func(apiRoute routing.RouteRegister) {
