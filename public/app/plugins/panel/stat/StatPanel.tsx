@@ -124,7 +124,7 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
       customSuffix,
     });
 
-    // console.log(customFormattedDisplayValues);
+    console.log(customFormattedDisplayValues);
 
     return customFormattedDisplayValues;
   };

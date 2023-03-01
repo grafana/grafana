@@ -118,6 +118,11 @@ export function formatDisplayValuesWithCustomUnits(
 ): FieldDisplay[] {
   const { customPrefix, customSuffix } = customUnits;
 
+  // If there are no custom units, do nothing and return the `fieldValues`
+  if (!customPrefix && !customSuffix) {
+    return fieldValues;
+  }
+
   return fieldValues.map((fieldValue) => {
     const { fieldType, display } = fieldValue;
     // `FieldType.number` is the only type on which unit formatting is enforced
