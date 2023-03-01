@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
-import { debounce } from 'lodash';
-import React, { FormEvent, KeyboardEvent, useMemo, useState } from 'react';
+import React, { KeyboardEvent, useState } from 'react';
 
 import { DataSourceInstanceSettings, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
