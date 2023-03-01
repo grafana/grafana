@@ -451,7 +451,7 @@ export interface DataQueryResponse {
 
   /**
    * Optionally include error info along with the response data
-   * @deprecated use errors instead
+   * @deprecated use errors instead -- will be removed in Grafana 10+
    */
   error?: DataQueryError;
 

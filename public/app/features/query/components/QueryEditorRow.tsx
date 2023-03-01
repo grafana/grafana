@@ -558,7 +558,7 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
   const series = data.series.filter((series) => series.refId === refId);
 
   // If there was an error with no data and the panel is not in a loading state, pass it to the QueryEditors
-  if (data.state !== LoadingState.Loading && data.error && !data.series.length) {
+  if (data.state !== LoadingState.Loading && (data.error || data.errors?.length) && !data.series.length) {
     return {
       ...data,
       state: LoadingState.Error,
@@ -587,6 +587,7 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
     state,
     series,
     error,
+    errors: error ? [error] : undefined,
     timeRange,
   };
 }

@@ -59,7 +59,7 @@ export interface PanelData {
   errors?: DataQueryError[];
   /**
    * Single error for legacy reasons
-   * @deprecated use errors instead
+   * @deprecated use errors instead -- will be removed in Grafana 10+
    */
   error?: DataQueryError;
 
