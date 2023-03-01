@@ -109,6 +109,33 @@ export enum FrameGeometrySourceMode {
   Lookup = 'lookup',
 }
 
+export enum HeatmapCalculationMode {
+  Count = 'count',
+  Size = 'size',
+}
+
+export enum HeatmapCellLayout {
+  auto = 'auto',
+  ge = 'ge',
+  le = 'le',
+  unknown = 'unknown',
+}
+
+export interface HeatmapCalculationBucketConfig {
+  /**
+   * Sets the bucket calculation mode
+   */
+  mode?: HeatmapCalculationMode;
+  /**
+   * Controls the scale of the buckets
+   */
+  scale?: ScaleDistributionConfig;
+  /**
+   * The number of buckets to use for the axis in the heatmap
+   */
+  value?: string;
+}
+
 export enum LogsSortOrder {
   Ascending = 'Ascending',
   Descending = 'Descending',
@@ -700,6 +727,17 @@ export interface FrameGeometrySource {
   lookup?: string;
   mode: FrameGeometrySourceMode;
   wkt?: string;
+}
+
+export interface HeatmapCalculationOptions {
+  /**
+   * The number of buckets to use for the xAxis in the heatmap
+   */
+  xBuckets?: HeatmapCalculationBucketConfig;
+  /**
+   * The number of buckets to use for the yAxis in the heatmap
+   */
+  yBuckets?: HeatmapCalculationBucketConfig;
 }
 
 export enum LogsDedupStrategy {

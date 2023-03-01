@@ -23,7 +23,6 @@ import (
 
 var skipPlugins = map[string]bool{
 	"canvas":      true,
-	"heatmap":     true,
 	"candlestick": true,
 	"table":       true,
 	"timeseries":  true,
