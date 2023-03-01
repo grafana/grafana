@@ -1,2 +1,2 @@
 export { Toggletip, type ToggletipProps } from './Toggletip';
-export type { ToggletipPlacement, ToggletipContent, ToggletipContentProps } from './types';
+export type { ToggletipContent, ToggletipContentProps } from './types';
