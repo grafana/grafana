@@ -488,6 +488,18 @@ func (s *Service) CreateServiceAccount(ctx context.Context, cmd *user.CreateUser
 		LastSeenAt:       time.Now().AddDate(-10, 0, 0),
 		IsServiceAccount: true,
 	}
+
+	salt, err := util.GetRandomString(10)
+	if err != nil {
+		return nil, err
+	}
+	usr.Salt = salt
+	rands, err := util.GetRandomString(10)
+	if err != nil {
+		return nil, err
+	}
+	usr.Rands = rands
+
 	_, err = s.store.Insert(ctx, usr)
 	if err != nil {
 		return nil, err

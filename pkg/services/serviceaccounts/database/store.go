@@ -55,7 +55,6 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, org
 		role = *saForm.Role
 	}
 
-	var newSA *user.User
 	newSA, err := s.userService.CreateServiceAccount(ctx, &user.CreateUserCommand{
 		Login:            generatedLogin,
 		OrgID:            orgId,
