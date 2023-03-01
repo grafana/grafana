@@ -77,7 +77,6 @@ Alpha features might be changed or removed without prior notice.
 | `disableSecretsCompatibility`      | Disable duplicated secret storage in legacy tables                                                                                                                           |
 | `logRequestsInstrumentedAsUnknown` | Logs the path for requests that are instrumented as unknown                                                                                                                  |
 | `dataConnectionsConsole`           | Enables a new top-level page called Connections. This page is an experiment that provides a better experience when you install and configure data sources and other plugins. |
-| `flameGraph`                       | Show the flame graph                                                                                                                                                         |
 | `redshiftAsyncQueryDataSupport`    | Enable async query data support for Redshift                                                                                                                                 |
 | `athenaAsyncQueryDataSupport`      | Enable async query data support for Athena                                                                                                                                   |
 | `newPanelChromeUI`                 | Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu                                                                                          |

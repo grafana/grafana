@@ -179,10 +179,6 @@ const (
 	// SQL-based entity store (requires storage flag also)
 	FlagEntityStore = "entityStore"
 
-	// FlagFlameGraph
-	// Show the flame graph
-	FlagFlameGraph = "flameGraph"
-
 	// FlagCloudWatchCrossAccountQuerying
 	// Enables cross-account querying in CloudWatch datasources
 	FlagCloudWatchCrossAccountQuerying = "cloudWatchCrossAccountQuerying"
