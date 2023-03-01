@@ -13,10 +13,6 @@ describe('generateQueryFromFilters generates the correct query for', () => {
     expect(generateQueryFromFilters([{ id: 'foo', type: 'static', value: 'foovalue', operator: '=' }])).toBe('{}');
   });
 
-  it('a field with value but without tag', () => {
-    expect(generateQueryFromFilters([{ id: 'foo', type: 'static', value: 'foovalue', operator: '=' }])).toBe('{}');
-  });
-
   it('a field with value and tag but without operator', () => {
     expect(generateQueryFromFilters([{ id: 'foo', type: 'static', tag: 'footag', value: 'foovalue' }])).toBe('{}');
   });
