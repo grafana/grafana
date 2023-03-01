@@ -388,22 +388,6 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 	return searchResult, nil
 }
 
-func (s *ServiceAccountsStoreImpl) GetAPIKeysMigrationStatus(ctx context.Context, orgId int64) (status *serviceaccounts.APIKeysMigrationStatus, err error) {
-	migrationStatus, exists, err := s.kvStore.Get(ctx, orgId, "serviceaccounts", "migrationStatus")
-	if err != nil {
-		return nil, err
-	}
-	if exists && migrationStatus == "1" {
-		return &serviceaccounts.APIKeysMigrationStatus{
-			Migrated: true,
-		}, nil
-	} else {
-		return &serviceaccounts.APIKeysMigrationStatus{
-			Migrated: false,
-		}, nil
-	}
-}
-
 func (s *ServiceAccountsStoreImpl) HideApiKeysTab(ctx context.Context, orgId int64) error {
 	if err := s.kvStore.Set(ctx, orgId, "serviceaccounts", "hideApiKeys", "1"); err != nil {
 		s.log.Error("Failed to hide API keys tab", err)
