@@ -20,6 +20,7 @@ import {
 import {
   BackendSrv,
   BackendSrvRequest,
+  config,
   FetchResponse,
   getBackendSrv,
   reportInteraction,
@@ -32,8 +33,9 @@ import { CustomVariableModel } from '../../../features/variables/types';
 
 import { LokiDatasource, REF_ID_DATA_SAMPLES } from './datasource';
 import { createLokiDatasource, createMetadataRequest } from './mocks';
+import { runPartitionedQuery } from './querySplitting';
 import { parseToNodeNamesArray } from './queryUtils';
-import { LokiOptions, LokiQuery, LokiQueryType, LokiVariableQueryType } from './types';
+import { LokiOptions, LokiQuery, LokiQueryType, LokiVariableQueryType, SupportingQueryType } from './types';
 import { LokiVariableSupport } from './variables';
 
 jest.mock('@grafana/runtime', () => {
@@ -42,6 +44,8 @@ jest.mock('@grafana/runtime', () => {
     reportInteraction: jest.fn(),
   };
 });
+
+jest.mock('./querySplitting');
 
 const templateSrvStub = {
   getAdhocFilters: jest.fn(() => [] as unknown[]),
@@ -981,7 +985,7 @@ describe('LokiDatasource', () => {
           instant: false,
           queryType: 'range',
           refId: 'log-volume-A',
-          volumeQuery: true,
+          supportingQueryType: SupportingQueryType.LogsVolume,
         });
       });
 
@@ -1097,6 +1101,40 @@ describe('LokiDatasource', () => {
       );
     });
   });
+
+  describe('Query splitting', () => {
+    beforeAll(() => {
+      config.featureToggles.lokiQuerySplitting = true;
+      jest.mocked(runPartitionedQuery).mockReturnValue(
+        of({
+          data: [],
+        })
+      );
+    });
+    afterAll(() => {
+      config.featureToggles.lokiQuerySplitting = false;
+    });
+    it.each([
+      [[{ expr: 'count_over_time({a="b"}[1m])', refId: 'A' }]],
+      [[{ expr: '{a="b"}', refId: 'A' }]],
+      [
+        [
+          { expr: 'count_over_time({a="b"}[1m])', refId: 'A', hide: true },
+          { expr: '{a="b"}', refId: 'B' },
+        ],
+      ],
+    ])('supports query splitting when the requirements are met', async (targets: LokiQuery[]) => {
+      const ds = createLokiDatasource(templateSrvStub);
+      const query = getQueryOptions<LokiQuery>({
+        targets,
+        app: CoreApp.Dashboard,
+      });
+
+      await expect(ds.query(query)).toEmitValuesWith(() => {
+        expect(runPartitionedQuery).toHaveBeenCalled();
+      });
+    });
+  });
 });
 
 describe('applyTemplateVariables', () => {
@@ -1168,3 +1206,57 @@ function makeAnnotationQueryRequest(options = {}): AnnotationQueryRequest<LokiQu
     rangeRaw: timeRange,
   };
 }
+
+describe('new context ui', () => {
+  it('returns expression with 1 label', async () => {
+    const ds = createLokiDatasource(templateSrvStub);
+
+    const row: LogRowModel = {
+      rowIndex: 0,
+      dataFrame: new MutableDataFrame({
+        fields: [
+          {
+            name: 'ts',
+            type: FieldType.time,
+            values: [0],
+          },
+        ],
+      }),
+      labels: { bar: 'baz', foo: 'uniqueParsedLabel' },
+      uid: '1',
+    } as unknown as LogRowModel;
+
+    jest.spyOn(ds.languageProvider, 'start').mockImplementation(() => Promise.resolve([]));
+    jest.spyOn(ds.languageProvider, 'getLabelKeys').mockImplementation(() => ['foo']);
+
+    const result = await ds.prepareContextExpr(row);
+
+    expect(result).toEqual('{foo="uniqueParsedLabel"}');
+  });
+
+  it('returns empty expression for parsed labels', async () => {
+    const ds = createLokiDatasource(templateSrvStub);
+
+    const row: LogRowModel = {
+      rowIndex: 0,
+      dataFrame: new MutableDataFrame({
+        fields: [
+          {
+            name: 'ts',
+            type: FieldType.time,
+            values: [0],
+          },
+        ],
+      }),
+      labels: { bar: 'baz', foo: 'uniqueParsedLabel' },
+      uid: '1',
+    } as unknown as LogRowModel;
+
+    jest.spyOn(ds.languageProvider, 'start').mockImplementation(() => Promise.resolve([]));
+    jest.spyOn(ds.languageProvider, 'getLabelKeys').mockImplementation(() => []);
+
+    const result = await ds.prepareContextExpr(row);
+
+    expect(result).toEqual('{}');
+  });
+});

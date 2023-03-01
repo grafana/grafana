@@ -3,9 +3,8 @@ import React from 'react';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { reportInteraction } from '@grafana/runtime';
 import { useStyles2, Icon } from '@grafana/ui';
-
-import { getNavTitle } from '../NavBar/navBarItem-translations';
 
 export interface Props {
   item: NavModelItem;
@@ -36,9 +35,17 @@ export function SectionNavItem({ item, isSectionRoot = false }: Props) {
     icon = <Icon data-testid="section-icon" name={item.icon} />;
   }
 
+  const onItemClicked = () => {
+    reportInteraction('grafana_navigation_item_clicked', {
+      path: item.url ?? item.id,
+      sectionNav: true,
+    });
+  };
+
   return (
     <>
       <a
+        onClick={onItemClicked}
         href={item.url}
         className={linkClass}
         aria-label={selectors.components.Tab.title(item.text)}
@@ -46,7 +53,7 @@ export function SectionNavItem({ item, isSectionRoot = false }: Props) {
         aria-selected={item.active}
       >
         {isSectionRoot && icon}
-        {getNavTitle(item.id) ?? item.text}
+        {item.text}
         {item.tabSuffix && <item.tabSuffix className={styles.suffix} />}
       </a>
       {children?.map((child, index) => (
@@ -95,7 +102,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin-left: ${theme.spacing(1)};
     `,
     sectionImg: css({
-      height: 18,
+      width: 18,
     }),
     isSectionRoot: css({
       fontSize: theme.typography.h4.fontSize,

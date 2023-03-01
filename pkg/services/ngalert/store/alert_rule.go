@@ -7,11 +7,11 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -275,8 +275,24 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 		q = q.Asc("namespace_uid", "rule_group", "rule_group_idx", "id")
 
 		alertRules := make([]*ngmodels.AlertRule, 0)
-		if err := q.Find(&alertRules); err != nil {
+		rule := new(ngmodels.AlertRule)
+		rows, err := q.Rows(rule)
+		if err != nil {
 			return err
+		}
+		defer func() {
+			_ = rows.Close()
+		}()
+
+		// Deserialize each rule separately in case any of them contain invalid JSON.
+		for rows.Next() {
+			rule := new(ngmodels.AlertRule)
+			err = rows.Scan(rule)
+			if err != nil {
+				st.Logger.Error("Invalid rule found in DB store, ignoring it", "func", "ListAlertRules", "error", err)
+				continue
+			}
+			alertRules = append(alertRules, rule)
 		}
 
 		query.Result = alertRules
@@ -333,7 +349,7 @@ func (st DBstore) GetUserVisibleNamespaces(ctx context.Context, orgID int64, use
 		Type:         searchstore.TypeAlertFolder,
 		Limit:        -1,
 		Permission:   dashboards.PERMISSION_VIEW,
-		Sort:         models.SortOption{},
+		Sort:         model.SortOption{},
 		Filters: []interface{}{
 			searchstore.FolderWithAlertsFilter{},
 		},
@@ -455,9 +471,26 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 			alertRulesSql += " WHERE " + filter
 		}
 
-		if err := sess.SQL(alertRulesSql, args...).Find(&rules); err != nil {
+		rule := new(ngmodels.AlertRule)
+		rows, err := sess.SQL(alertRulesSql, args...).Rows(rule)
+		if err != nil {
 			return fmt.Errorf("failed to fetch alert rules: %w", err)
 		}
+		defer func() {
+			_ = rows.Close()
+		}()
+
+		// Deserialize each rule separately in case any of them contain invalid JSON.
+		for rows.Next() {
+			rule := new(ngmodels.AlertRule)
+			err = rows.Scan(rule)
+			if err != nil {
+				st.Logger.Error("Invalid rule found in DB store, ignoring it", "func", "GetAlertRulesForScheduling", "error", err)
+				continue
+			}
+			rules = append(rules, rule)
+		}
+
 		query.ResultRules = rules
 		if query.PopulateFolders {
 			if err := sess.SQL(foldersSql, args...).Find(&folders); err != nil {

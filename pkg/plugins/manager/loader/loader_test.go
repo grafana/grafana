@@ -7,13 +7,17 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
+	"github.com/grafana/grafana/pkg/plugins/plugindef"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
@@ -404,7 +408,127 @@ func TestLoader_Load(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:  "Load CDN plugin",
+			class: plugins.External,
+			cfg: &config.Cfg{
+				PluginsCDNURLTemplate: "https://cdn.example.com",
+				PluginSettings: setting.PluginSettings{
+					"grafana-worldmap-panel": {"cdn": "true"},
+				},
+			},
+			pluginPaths: []string{"../testdata/cdn"},
+			want: []*plugins.Plugin{
+				{
+					JSONData: plugins.JSONData{
+						ID:   "grafana-worldmap-panel",
+						Type: "panel",
+						Name: "Worldmap Panel",
+						Info: plugins.Info{
+							Version: "0.3.3",
+							Links: []plugins.InfoLink{
+								{Name: "Project site", URL: "https://github.com/grafana/worldmap-panel"},
+								{Name: "MIT License", URL: "https://github.com/grafana/worldmap-panel/blob/master/LICENSE"},
+							},
+							Logos: plugins.Logos{
+								// Path substitution
+								Small: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap_logo.svg",
+								Large: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap_logo.svg",
+							},
+							Screenshots: []plugins.Screenshots{
+								{
+									Name: "World",
+									Path: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap-world.png",
+								},
+								{
+									Name: "USA",
+									Path: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap-usa.png",
+								},
+								{
+									Name: "Light Theme",
+									Path: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap-light-theme.png",
+								},
+							},
+						},
+						Dependencies: plugins.Dependencies{
+							GrafanaVersion: "3.x.x",
+							Plugins:        []plugins.Dependency{},
+						},
+					},
+					PluginDir: filepath.Join(parentDir, "testdata/cdn/plugin"),
+					Class:     plugins.External,
+					Signature: plugins.SignatureValid,
+					BaseURL:   "plugin-cdn/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel",
+					Module:    "plugin-cdn/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/module",
+				},
+			},
+		},
+		{
+			name:  "Load an app with link extensions",
+			class: plugins.External,
+			cfg: &config.Cfg{
+				PluginsAllowUnsigned: []string{"test-app"},
+			},
+			pluginPaths: []string{"../testdata/test-app-with-link-extensions"},
+			want: []*plugins.Plugin{
+				{JSONData: plugins.JSONData{
+					ID:   "test-app",
+					Type: "app",
+					Name: "Test App",
+					Info: plugins.Info{
+						Author: plugins.InfoLink{
+							Name: "Test Inc.",
+							URL:  "http://test.com",
+						},
+						Description: "Official Grafana Test App & Dashboard bundle",
+						Version:     "1.0.0",
+						Links: []plugins.InfoLink{
+							{Name: "Project site", URL: "http://project.com"},
+							{Name: "License & Terms", URL: "http://license.com"},
+						},
+						Logos: plugins.Logos{
+							Small: "public/img/icn-app.svg",
+							Large: "public/img/icn-app.svg",
+						},
+						Updated: "2015-02-10",
+					},
+					Dependencies: plugins.Dependencies{
+						GrafanaDependency: ">=8.0.0",
+						GrafanaVersion:    "*",
+						Plugins:           []plugins.Dependency{},
+					},
+					Includes: []*plugins.Includes{
+						{Name: "Root Page (react)", Type: "page", Role: "Viewer", Path: "/a/my-simple-app", DefaultNav: true, AddToNav: true, Slug: "root-page-react"},
+					},
+					Extensions: []*plugindef.ExtensionsLink{
+						{
+							Placement:   "plugins/grafana-slo-app/slo-breach",
+							Title:       "Declare incident",
+							Type:        plugindef.ExtensionsLinkTypeLink,
+							Description: "Declares a new incident",
+							Path:        "/incidents/declare",
+						},
+						{
+							Placement:   "plugins/grafana-slo-app/slo-breach",
+							Title:       "Declare incident",
+							Type:        plugindef.ExtensionsLinkTypeLink,
+							Description: "Declares a new incident (path without backslash)",
+							Path:        "/incidents/declare",
+						},
+					},
+					Backend: false,
+				},
+					DefaultNavURL: "/plugins/test-app/page/root-page-react",
+					PluginDir:     filepath.Join(parentDir, "testdata/test-app-with-link-extensions"),
+					Class:         plugins.External,
+					Signature:     plugins.SignatureUnsigned,
+					Module:        "plugins/test-app/module",
+					BaseURL:       "public/plugins/test-app",
+				},
+			},
+		},
 	}
+
 	for _, tt := range tests {
 		reg := fakes.NewFakePluginRegistry()
 		storage := fakes.NewFakePluginStorage()
@@ -446,7 +570,7 @@ func TestLoader_setDefaultNavURL(t *testing.T) {
 				},
 			}},
 		}
-		logger := &logtest.Fake{}
+		logger := log.NewTestLogger()
 		pluginWithDashboard.SetLogger(logger)
 
 		t.Run("Default nav URL is not set if dashboard UID field not is set", func(t *testing.T) {
@@ -1320,9 +1444,10 @@ func Test_setPathsBasedOnApp(t *testing.T) {
 }
 
 func newLoader(cfg *config.Cfg, cbs ...func(loader *Loader)) *Loader {
+	cdn := pluginscdn.ProvideService(cfg)
 	l := New(cfg, &fakes.FakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), fakes.NewFakePluginRegistry(),
 		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakePluginStorage(),
-		fakes.NewFakeRoleRegistry())
+		fakes.NewFakeRoleRegistry(), cdn, assetpath.ProvideService(cdn))
 
 	for _, cb := range cbs {
 		cb(l)

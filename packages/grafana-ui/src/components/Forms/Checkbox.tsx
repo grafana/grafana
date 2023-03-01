@@ -30,7 +30,7 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
 
     return (
       <label className={cx(styles.wrapper, className)}>
-        <div>
+        <div className={styles.checkboxWrapper}>
           <input
             type="checkbox"
             className={styles.input}
@@ -43,10 +43,8 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
           />
           <span className={styles.checkmark} />
         </div>
-        <div>
-          {label && <span className={styles.label}>{label}</span>}
-          {description && <span className={styles.description}>{description}</span>}
-        </div>
+        {label && <span className={styles.label}>{label}</span>}
+        {description && <span className={styles.description}>{description}</span>}
       </label>
     );
   }
@@ -59,12 +57,12 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
 
   return {
     wrapper: css`
-      display: flex;
-      gap: ${theme.spacing(labelPadding)};
-      align-items: baseline;
+      display: grid;
+      align-items: center;
+      column-gap: ${theme.spacing(labelPadding)};
+      grid-template-columns: auto 1fr;
+      grid-template-rows: auto auto;
       position: relative;
-      vertical-align: middle;
-      font-size: 0;
     `,
     input: css`
       position: absolute;
@@ -125,6 +123,12 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
         }
       }
     `,
+    checkboxWrapper: css`
+      display: flex;
+      align-items: center;
+      grid-column-start: 1;
+      grid-row-start: 1;
+    `,
     checkmark: css`
       position: relative; /* Checkbox should be layered on top of the invisible input so it recieves :hover */
       z-index: 2;
@@ -143,10 +147,11 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
     label: cx(
       labelStyles.label,
       css`
+        grid-column-start: 2;
+        grid-row-start: 1;
         position: relative;
         z-index: 2;
         cursor: pointer;
-        top: -3px;
         max-width: fit-content;
         line-height: ${theme.typography.bodySmall.lineHeight};
         margin-bottom: 0;
@@ -155,6 +160,8 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
     description: cx(
       labelStyles.description,
       css`
+        grid-column-start: 2;
+        grid-row-start: 2;
         line-height: ${theme.typography.bodySmall.lineHeight};
         margin-top: 0; /* The margin effectively comes from the top: -2px on the label above it */
       `

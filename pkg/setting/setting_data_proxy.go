@@ -1,6 +1,10 @@
 package setting
 
-import "gopkg.in/ini.v1"
+import (
+	"fmt"
+
+	"gopkg.in/ini.v1"
+)
 
 const defaultDataProxyRowLimit = int64(1000000)
 
@@ -18,6 +22,11 @@ func readDataProxySettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.DataProxyIdleConnTimeout = dataproxy.Key("idle_conn_timeout_seconds").MustInt(90)
 	cfg.ResponseLimit = dataproxy.Key("response_limit").MustInt64(0)
 	cfg.DataProxyRowLimit = dataproxy.Key("row_limit").MustInt64(defaultDataProxyRowLimit)
+	cfg.DataProxyUserAgent = dataproxy.Key("user_agent").String()
+
+	if cfg.DataProxyUserAgent == "" {
+		cfg.DataProxyUserAgent = fmt.Sprintf("Grafana/%s", BuildVersion)
+	}
 
 	if cfg.DataProxyRowLimit <= 0 {
 		cfg.DataProxyRowLimit = defaultDataProxyRowLimit

@@ -3,15 +3,16 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
-	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/tokens"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
 	"github.com/grafana/grafana/pkg/services/query"
@@ -32,6 +33,7 @@ type PublicDashboardServiceImpl struct {
 	QueryDataService   *query.Service
 	AnnotationsRepo    annotations.Repository
 	ac                 accesscontrol.AccessControl
+	serviceWrapper     publicdashboards.ServiceWrapper
 }
 
 var LogPrefix = "publicdashboards.service"
@@ -48,6 +50,7 @@ func ProvideService(
 	qds *query.Service,
 	anno annotations.Repository,
 	ac accesscontrol.AccessControl,
+	serviceWrapper publicdashboards.ServiceWrapper,
 ) *PublicDashboardServiceImpl {
 	return &PublicDashboardServiceImpl{
 		log:                log.New(LogPrefix),
@@ -57,7 +60,21 @@ func ProvideService(
 		QueryDataService:   qds,
 		AnnotationsRepo:    anno,
 		ac:                 ac,
+		serviceWrapper:     serviceWrapper,
 	}
+}
+
+// FindByDashboardUid this method would be replaced by another implementation for Enterprise version
+func (pd *PublicDashboardServiceImpl) FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error) {
+	return pd.serviceWrapper.FindByDashboardUid(ctx, orgId, dashboardUid)
+}
+
+func (pd *PublicDashboardServiceImpl) Find(ctx context.Context, uid string) (*PublicDashboard, error) {
+	pubdash, err := pd.store.Find(ctx, uid)
+	if err != nil {
+		return nil, ErrInternalServerError.Errorf("Find: failed to find public dashboard%w", err)
+	}
+	return pubdash, nil
 }
 
 // FindDashboard Gets a dashboard by Uid
@@ -111,31 +128,12 @@ func (pd *PublicDashboardServiceImpl) FindPublicDashboardAndDashboardByAccessTok
 	return pubdash, dash, nil
 }
 
-// FindByDashboardUid is a helper method to retrieve the public dashboard configuration for a given dashboard from the database
-func (pd *PublicDashboardServiceImpl) FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error) {
-	pubdash, err := pd.store.FindByDashboardUid(ctx, orgId, dashboardUid)
-	if err != nil {
-		return nil, ErrInternalServerError.Errorf("FindByDashboardUid: failed to find a public dashboard by orgId: %d and dashboardUid: %s: %w", orgId, dashboardUid, err)
-	}
-
-	if pubdash == nil {
-		return nil, ErrPublicDashboardNotFound.Errorf("FindByDashboardUid: Public dashboard not found by orgId: %d and dashboardUid: %s", orgId, dashboardUid)
-	}
-
-	return pubdash, nil
-}
-
 // Creates and validates the public dashboard and saves it to the database
 func (pd *PublicDashboardServiceImpl) Create(ctx context.Context, u *user.SignedInUser, dto *SavePublicDashboardDTO) (*PublicDashboard, error) {
 	// ensure dashboard exists
 	dashboard, err := pd.FindDashboard(ctx, u.OrgID, dto.DashboardUid)
 	if err != nil {
 		return nil, err
-	}
-
-	// set default value for time settings
-	if dto.PublicDashboard.TimeSettings == nil {
-		dto.PublicDashboard.TimeSettings = &TimeSettings{}
 	}
 
 	// validate fields
@@ -151,6 +149,15 @@ func (pd *PublicDashboardServiceImpl) Create(ctx context.Context, u *user.Signed
 		return nil, ErrInternalServerError.Errorf("Create: failed to find the public dashboard: %w", err)
 	} else if existingPubdash != nil {
 		return nil, ErrBadRequest.Errorf("Create: public dashboard already exists: %s", dto.PublicDashboard.Uid)
+	}
+
+	// set default value for time settings
+	if dto.PublicDashboard.TimeSettings == nil {
+		dto.PublicDashboard.TimeSettings = &TimeSettings{}
+	}
+
+	if dto.PublicDashboard.Share == "" {
+		dto.PublicDashboard.Share = PublicShareType
 	}
 
 	uid, err := pd.NewPublicDashboardUid(ctx)
@@ -172,6 +179,7 @@ func (pd *PublicDashboardServiceImpl) Create(ctx context.Context, u *user.Signed
 			AnnotationsEnabled:   dto.PublicDashboard.AnnotationsEnabled,
 			TimeSelectionEnabled: dto.PublicDashboard.TimeSelectionEnabled,
 			TimeSettings:         dto.PublicDashboard.TimeSettings,
+			Share:                dto.PublicDashboard.Share,
 			CreatedBy:            dto.UserId,
 			CreatedAt:            time.Now(),
 			AccessToken:          accessToken,
@@ -208,11 +216,6 @@ func (pd *PublicDashboardServiceImpl) Update(ctx context.Context, u *user.Signed
 		return nil, ErrDashboardNotFound.Errorf("Update: dashboard not found by orgId: %d and dashboardUid: %s", u.OrgID, dto.DashboardUid)
 	}
 
-	// set default value for time settings
-	if dto.PublicDashboard.TimeSettings == nil {
-		dto.PublicDashboard.TimeSettings = &TimeSettings{}
-	}
-
 	// get existing public dashboard if exists
 	existingPubdash, err := pd.store.Find(ctx, dto.PublicDashboard.Uid)
 	if err != nil {
@@ -227,6 +230,15 @@ func (pd *PublicDashboardServiceImpl) Update(ctx context.Context, u *user.Signed
 		return nil, err
 	}
 
+	// set default value for time settings
+	if dto.PublicDashboard.TimeSettings == nil {
+		dto.PublicDashboard.TimeSettings = &TimeSettings{}
+	}
+
+	if dto.PublicDashboard.Share == "" {
+		dto.PublicDashboard.Share = existingPubdash.Share
+	}
+
 	// set values to update
 	cmd := SavePublicDashboardCommand{
 		PublicDashboard: PublicDashboard{
@@ -235,6 +247,7 @@ func (pd *PublicDashboardServiceImpl) Update(ctx context.Context, u *user.Signed
 			AnnotationsEnabled:   dto.PublicDashboard.AnnotationsEnabled,
 			TimeSelectionEnabled: dto.PublicDashboard.TimeSelectionEnabled,
 			TimeSettings:         dto.PublicDashboard.TimeSettings,
+			Share:                dto.PublicDashboard.Share,
 			UpdatedBy:            dto.UserId,
 			UpdatedAt:            time.Now(),
 		},
@@ -281,7 +294,7 @@ func (pd *PublicDashboardServiceImpl) NewPublicDashboardAccessToken(ctx context.
 	var accessToken string
 	for i := 0; i < 3; i++ {
 		var err error
-		accessToken, err = tokens.GenerateAccessToken()
+		accessToken, err = GenerateAccessToken()
 		if err != nil {
 			continue
 		}
@@ -395,4 +408,13 @@ func publicDashboardIsEnabledChanged(existingPubdash *PublicDashboard, newPubdas
 	// updating dashboard, enabled changed
 	isEnabledChanged := existingPubdash != nil && newPubdash.IsEnabled != existingPubdash.IsEnabled
 	return newDashCreated || isEnabledChanged
+}
+
+// GenerateAccessToken generates an uuid formatted without dashes to use as access token
+func GenerateAccessToken() (string, error) {
+	token, err := uuid.NewRandom()
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%x", token[:]), nil
 }

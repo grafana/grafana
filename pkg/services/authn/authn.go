@@ -10,8 +10,8 @@ import (
 
 	"golang.org/x/oauth2"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
@@ -26,6 +26,7 @@ const (
 	ClientSession   = "auth.client.session"
 	ClientForm      = "auth.client.form"
 	ClientProxy     = "auth.client.proxy"
+	ClientSAML      = "auth.client.saml"
 )
 
 const (
@@ -33,19 +34,25 @@ const (
 	MetaKeyAuthModule = "authModule"
 )
 
-// ClientParams are hints to the auth serviAuthN: Post login hooksce about how to handle the identity management
+// ClientParams are hints to the auth service about how to handle the identity management
 // from the authenticating client.
 type ClientParams struct {
-	// Update the internal representation of the entity from the identity provided
+	// SyncUser updates the internal representation of the identity from the identity provided
 	SyncUser bool
-	// Add entity to teams
-	SyncTeamMembers bool
-	// Create entity in the DB if it doesn't exist
+	// AllowSignUp Adds identity to DB if it doesn't exist when, only work if SyncUser is enabled
 	AllowSignUp bool
-	// EnableDisabledUsers is a hint to the auth service that it should reenable disabled users
+	// EnableDisabledUsers will enable disabled user, only work if SyncUser is enabled
 	EnableDisabledUsers bool
+	// FetchSyncedUser ensure that all required information is added to the identity
+	FetchSyncedUser bool
+	// SyncTeams will sync the groups from identity to teams in grafana, enterprise only feature
+	SyncTeams bool
+	// SyncOrgRoles will sync the roles from the identity to orgs in grafana
+	SyncOrgRoles bool
+	// CacheAuthProxyKey  if this key is set we will try to cache the user id for proxy client
+	CacheAuthProxyKey string
 	// LookUpParams are the arguments used to look up the entity in the DB.
-	LookUpParams models.UserLookupParams
+	LookUpParams login.UserLookupParams
 }
 
 type PostAuthHookFn func(ctx context.Context, identity *Identity, r *Request) error
@@ -54,14 +61,18 @@ type PostLoginHookFn func(ctx context.Context, identity *Identity, r *Request, e
 type Service interface {
 	// Authenticate authenticates a request
 	Authenticate(ctx context.Context, r *Request) (*Identity, error)
-	// RegisterPostAuthHook registers a hook that is called after a successful authentication.
-	RegisterPostAuthHook(hook PostAuthHookFn)
+	// RegisterPostAuthHook registers a hook with a priority that is called after a successful authentication.
+	// A lower number means higher priority.
+	RegisterPostAuthHook(hook PostAuthHookFn, priority uint)
 	// Login authenticates a request and creates a session on successful authentication.
 	Login(ctx context.Context, client string, r *Request) (*Identity, error)
 	// RegisterPostLoginHook registers a hook that that is called after a login request.
-	RegisterPostLoginHook(hook PostLoginHookFn)
+	// A lower number means higher priority.
+	RegisterPostLoginHook(hook PostLoginHookFn, priority uint)
 	// RedirectURL will generate url that we can use to initiate auth flow for supported clients.
-	RedirectURL(ctx context.Context, client string, r *Request) (string, error)
+	RedirectURL(ctx context.Context, client string, r *Request) (*Redirect, error)
+	// RegisterClient will register a new authn.Client that can be used for authentication
+	RegisterClient(c Client)
 }
 
 type Client interface {
@@ -71,6 +82,8 @@ type Client interface {
 	Authenticate(ctx context.Context, r *Request) (*Identity, error)
 }
 
+// ContextAwareClient is an optional interface that auth client can implement.
+// Clients that implements this interface will be tried during request authentication
 type ContextAwareClient interface {
 	Client
 	// Test should return true if client can be used to authenticate request
@@ -79,9 +92,20 @@ type ContextAwareClient interface {
 	Priority() uint
 }
 
+// HookClient is an optional interface that auth clients can implement.
+// Clients that implements this interface can specify an auth hook that will
+// be called only for that client.
+type HookClient interface {
+	Client
+	Hook(ctx context.Context, identity *Identity, r *Request) error
+}
+
+// RedirectClient is an optional interface that auth clients can implement.
+// Clients that implements this interface can be used to generate redirect urls
+// for authentication flows, e.g. oauth clients
 type RedirectClient interface {
 	Client
-	RedirectURL(ctx context.Context, r *Request) (string, error)
+	RedirectURL(ctx context.Context, r *Request) (*Redirect, error)
 }
 
 type PasswordClient interface {
@@ -90,6 +114,13 @@ type PasswordClient interface {
 
 type ProxyClient interface {
 	AuthenticateProxy(ctx context.Context, r *Request, username string, additional map[string]string) (*Identity, error)
+}
+
+// UsageStatClient is an optional interface that auth clients can implement.
+// Clients that implements this interface can specify a usage stat collection hook
+type UsageStatClient interface {
+	Client
+	UsageStatFn(ctx context.Context) (map[string]interface{}, error)
 }
 
 type Request struct {
@@ -121,6 +152,18 @@ func (r *Request) GetMeta(k string) string {
 }
 
 const (
+	KeyOAuthPKCE  = "pkce"
+	KeyOAuthState = "state"
+)
+
+type Redirect struct {
+	// Url used for redirect
+	URL string
+	// Extra contains data used for redirect, e.g. for oauth this would be state and pkce
+	Extra map[string]string
+}
+
+const (
 	NamespaceUser           = "user"
 	NamespaceAPIKey         = "api-key"
 	NamespaceServiceAccount = "service-account"
@@ -142,7 +185,7 @@ type Identity struct {
 	ID string
 	// IsAnonymous
 	IsAnonymous bool
-	// Login is the short hand identifier of the entity. Should be unique.
+	// Login is the shorthand identifier of the entity. Should be unique.
 	Login string
 	// Name is the display name of the entity. It is not guaranteed to be unique.
 	Name string
@@ -181,26 +224,20 @@ func (i *Identity) Role() org.RoleType {
 	return i.OrgRoles[i.OrgID]
 }
 
-// TODO: improve error handling
+// NamespacedID returns the namespace, e.g. "user" and the id for that namespace
 func (i *Identity) NamespacedID() (string, int64) {
-	var (
-		id        int64
-		namespace string
-	)
-
 	split := strings.Split(i.ID, ":")
 	if len(split) != 2 {
 		return "", -1
 	}
 
-	id, errI := strconv.ParseInt(split[1], 10, 64)
-	if errI != nil {
+	id, err := strconv.ParseInt(split[1], 10, 64)
+	if err != nil {
+		// FIXME (kalleep): Improve error handling
 		return "", -1
 	}
 
-	namespace = split[0]
-
-	return namespace, id
+	return split[0], id
 }
 
 // NamespacedID builds a namespaced ID from a namespace and an ID.
@@ -245,9 +282,9 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 	return u
 }
 
-func (i *Identity) ExternalUserInfo() models.ExternalUserInfo {
+func (i *Identity) ExternalUserInfo() login.ExternalUserInfo {
 	_, id := i.NamespacedID()
-	return models.ExternalUserInfo{
+	return login.ExternalUserInfo{
 		OAuthToken:     i.OAuthToken,
 		AuthModule:     i.AuthModule,
 		AuthId:         i.AuthID,
@@ -280,4 +317,9 @@ func IdentityFromSignedInUser(id string, usr *user.SignedInUser, params ClientPa
 		Teams:          usr.Teams,
 		ClientParams:   params,
 	}
+}
+
+// ClientWithPrefix returns a client name prefixed with "auth.client."
+func ClientWithPrefix(name string) string {
+	return fmt.Sprintf("auth.client.%s", name)
 }

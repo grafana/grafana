@@ -24,15 +24,15 @@ In the Contact points tab, you can see a list of your notification templates.
 
 To create a template, complete the following steps.
 
-1. Click New template.
+1. Click **Add template**.
 
 2. Choose a name for the notification template.
 
 3. Write the content of the template in the content field.
 
-{{< figure max-width="940px" src="/static/img/docs/alerting/unified/new-notification-template-email-subject-9-4.png" caption="New notification template email.subject" >}}
+   {{< figure max-width="940px" src="/static/img/docs/alerting/unified/new-notification-template-email-subject-9-4.png" caption="New notification template email.subject" >}}
 
-5. Click Save.
+4. Click Save.
 
 `{{ define "email.subject" }}` and `{{ end }}` is automatically added to the start and end of the content:
 
@@ -40,15 +40,15 @@ To create a template, complete the following steps.
 
 To create a notification template that contains more than one template:
 
-1. Click New Template.
+1. Click **Add Template**.
 
 2. Enter a name for the notification template.
 
 3. Write each template in the Content field, including `{{ define "name-of-template" }}` and `{{ end }}` at the start and end of each template.
 
-{{< figure max-width="940px" src="/static/img/docs/alerting/unified/new-notification-template-email-9-4.png" caption="New notification template" >}}
+   {{< figure max-width="940px" src="/static/img/docs/alerting/unified/new-notification-template-email-9-4.png" caption="New notification template" >}}
 
-5. Click Save.
+4. Click Save.
 
 ## Template the subject of an email
 
@@ -60,17 +60,17 @@ Template the subject of an email to contain the number of firing and resolved al
 
 1. Create a template called `email.subject` with the following content:
 
-```
-{{ define "email.subject" }}
-{{ len .Alerts.Firing }} firing alert(s), {{ len .Alerts.Resolved }} resolved alert(s)
-{{ end }}
-```
+   ```
+   {{ define "email.subject" }}
+   {{ len .Alerts.Firing }} firing alert(s), {{ len .Alerts.Resolved }} resolved alert(s)
+   {{ end }}
+   ```
 
 2. Execute the template from the subject field in your contact point integration:
 
-```
-{{ template "email.subject" . }}
-```
+   ```
+   {{ template "email.subject" . }}
+   ```
 
 ## Template the message of an email
 
@@ -93,37 +93,37 @@ Resolved alerts:
 
    The `email.message_alert` template is used to print the labels and values for each firing and resolved alert while the `email.message` template contains the structure of the email.
 
-```
-{{- define "email.message_alert" -}}
-{{- range .Labels.SortedPairs }}{{ .Name }}={{ .Value }} {{ end }} has value(s)
-{{- range $k, $v := .Values }} {{ $k }}={{ $v }}{{ end }}
-{{- end -}}
+   ```
+   {{- define "email.message_alert" -}}
+   {{- range .Labels.SortedPairs }}{{ .Name }}={{ .Value }} {{ end }} has value(s)
+   {{- range $k, $v := .Values }} {{ $k }}={{ $v }}{{ end }}
+   {{- end -}}
 
-{{ define "email.message" }}
-There are {{ len .Alerts.Firing }} firing alert(s), and {{ len .Alerts.Resolved }} resolved alert(s)
+   {{ define "email.message" }}
+   There are {{ len .Alerts.Firing }} firing alert(s), and {{ len .Alerts.Resolved }} resolved alert(s)
 
-{{ if .Alerts.Firing -}}
-Firing alerts:
-{{- range .Alerts.Firing }}
-- {{ template "email.message_alert" . }}
-{{- end }}
-{{- end }}
+   {{ if .Alerts.Firing -}}
+   Firing alerts:
+   {{- range .Alerts.Firing }}
+   - {{ template "email.message_alert" . }}
+   {{- end }}
+   {{- end }}
 
-{{ if .Alerts.Resolved -}}
-Resolved alerts:
-{{- range .Alerts.Resolved }}
-- {{ template "email.message_alert" . }}
-{{- end }}
-{{- end }}
+   {{ if .Alerts.Resolved -}}
+   Resolved alerts:
+   {{- range .Alerts.Resolved }}
+   - {{ template "email.message_alert" . }}
+   {{- end }}
+   {{- end }}
 
-{{ end }}
-```
+   {{ end }}
+   ```
 
 2. Execute the template from the message field in your contact point integration:
 
-```
-{{ template "email.message" . }}
-```
+   ```
+   {{ template "email.message" . }}
+   ```
 
 ## Template the title of a Slack message
 
@@ -135,17 +135,17 @@ Template the title of a Slack message to contain the number of firing and resolv
 
 1. Create a template called `slack.title` with the following content:
 
-```
-{{ define "slack.title" }}
-{{ len .Alerts.Firing }} firing alert(s), {{ len .Alerts.Resolved }} resolved alert(s)
-{{ end }}
-```
+   ```
+   {{ define "slack.title" }}
+   {{ len .Alerts.Firing }} firing alert(s), {{ len .Alerts.Resolved }} resolved alert(s)
+   {{ end }}
+   ```
 
 2. Execute the template from the title field in your contact point integration:
 
-```
-{{ template "slack.title" . }}
-```
+   ```
+   {{ template "slack.title" . }}
+   ```
 
 ## Template the content of a Slack message
 
@@ -179,48 +179,48 @@ Go to dashboard: https://example.com/d/dlhdLqF4z?orgId=1
 
    The `slack.print_alert` template is used to print the labels, annotations, SilenceURL and DashboardURL while the `slack.message` template contains the structure of the notification.
 
-```
-{{ define "slack.print_alert" -}}
-[{{.Status}}] {{ .Labels.alertname }}
-Labels:
-{{ range .Labels.SortedPairs -}}
-- {{ .Name }}: {{ .Value }}
-{{ end -}}
-{{ if .Annotations -}}
-Annotations:
-{{ range .Annotations.SortedPairs -}}
-- {{ .Name }}: {{ .Value }}
-{{ end -}}
-{{ end -}}
-{{ if .SilenceURL -}}
-  Silence: {{ .SilenceURL }}
-{{ end -}}
-{{ if .DashboardURL -}}
-  Go to dashboard: {{ .DashboardURL }}
-{{- end }}
-{{- end }}
+   ```
+   {{ define "slack.print_alert" -}}
+   [{{.Status}}] {{ .Labels.alertname }}
+   Labels:
+   {{ range .Labels.SortedPairs -}}
+   - {{ .Name }}: {{ .Value }}
+   {{ end -}}
+   {{ if .Annotations -}}
+   Annotations:
+   {{ range .Annotations.SortedPairs -}}
+   - {{ .Name }}: {{ .Value }}
+   {{ end -}}
+   {{ end -}}
+   {{ if .SilenceURL -}}
+     Silence: {{ .SilenceURL }}
+   {{ end -}}
+   {{ if .DashboardURL -}}
+     Go to dashboard: {{ .DashboardURL }}
+   {{- end }}
+   {{- end }}
 
-{{ define "slack.message" -}}
-{{ if .Alerts.Firing -}}
-{{ len .Alerts.Firing }} firing alert(s):
-{{ range .Alerts.Firing }}
-{{ template "slack.print_alert" . }}
-{{ end -}}
-{{ end }}
-{{ if .Alerts.Resolved -}}
-{{ len .Alerts.Resolved }} resolved alert(s):
-{{ range .Alerts.Resolved }}
-{{ template "slack.print_alert" .}}
-{{ end -}}
-{{ end }}
-{{- end }}
-```
+   {{ define "slack.message" -}}
+   {{ if .Alerts.Firing -}}
+   {{ len .Alerts.Firing }} firing alert(s):
+   {{ range .Alerts.Firing }}
+   {{ template "slack.print_alert" . }}
+   {{ end -}}
+   {{ end }}
+   {{ if .Alerts.Resolved -}}
+   {{ len .Alerts.Resolved }} resolved alert(s):
+   {{ range .Alerts.Resolved }}
+   {{ template "slack.print_alert" .}}
+   {{ end -}}
+   {{ end }}
+   {{- end }}
+   ```
 
 2. Execute the template from the text body field in your contact point integration:
 
-```
-{{ template "slack.message" . }}
-```
+   ```
+   {{ template "slack.message" . }}
+   ```
 
 ## Template both email and Slack with shared templates
 
@@ -234,20 +234,20 @@ For example, if you want to send an email with this subject and Slack message wi
 
 1. Create a template called `common.subject_title` with the following content:
 
-```
-{{ define "common.subject_title" }}
-{{ len .Alerts.Firing }} firing alert(s), {{ len .Alerts.Resolved }} resolved alert(s)
-{{ end }}
-```
+   ```
+   {{ define "common.subject_title" }}
+   {{ len .Alerts.Firing }} firing alert(s), {{ len .Alerts.Resolved }} resolved alert(s)
+   {{ end }}
+   ```
 
 2. For email, execute the template from the subject field in your email contact point integration:
 
-```
-{{ template "common.subject_title" . }}
-```
+   ```
+   {{ template "common.subject_title" . }}
+   ```
 
 3. For Slack, execute the template from the title field in your Slack contact point integration:
 
-```
-{{ template "common.subject_title" . }}
-```
+   ```
+   {{ template "common.subject_title" . }}
+   ```
