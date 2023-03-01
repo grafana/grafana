@@ -90,16 +90,24 @@ export const filterRules = (
   filterState: RulesFilter = { labels: [], freeFormWords: [] }
 ): CombinedRuleNamespace[] => {
   let filteredNamespaces = namespaces;
-  const namespaceFilter = filterState.namespace?.toLowerCase();
-  const dataSourceFilter = filterState.dataSourceName;
 
-  if (namespaceFilter) {
-    filteredNamespaces = filteredNamespaces.filter((ns) => ufuzzy.filter([ns.name], namespaceFilter).length > 0);
-  }
+  const dataSourceFilter = filterState.dataSourceName;
   if (dataSourceFilter) {
     filteredNamespaces = filteredNamespaces.filter(({ rulesSource }) =>
       isCloudRulesSource(rulesSource) ? rulesSource.name === dataSourceFilter : true
     );
+  }
+
+  const namespaceFilter = filterState.namespace?.toLowerCase();
+  if (namespaceFilter) {
+    const namespaceHaystack = filteredNamespaces.map((ns) => ns.name);
+
+    const [idxs, info, order] = ufuzzy.search(namespaceHaystack, namespaceFilter);
+    if (info && order) {
+      filteredNamespaces = order.map((idx) => filteredNamespaces[info.idx[idx]]);
+    } else {
+      filteredNamespaces = idxs.map((idx) => filteredNamespaces[idx]);
+    }
   }
 
   // If a namespace and group have rules that match the rules filters then keep them.
@@ -112,7 +120,13 @@ const reduceNamespaces = (filterState: RulesFilter) => {
     let filteredGroups = namespace.groups;
 
     if (groupNameFilter) {
-      filteredGroups = filteredGroups.filter((g) => ufuzzy.filter([g.name], groupNameFilter).length > 0);
+      const groupsHaystack = filteredGroups.map((g) => g.name);
+      const [idxs, info, order] = ufuzzy.search(groupsHaystack, groupNameFilter);
+      if (info && order) {
+        filteredGroups = order.map((idx) => filteredGroups[info.idx[idx]]);
+      } else {
+        filteredGroups = idxs.map((idx) => filteredGroups[idx]);
+      }
     }
 
     filteredGroups = filteredGroups.reduce(reduceGroups(filterState), [] as CombinedRuleGroup[]);
@@ -133,17 +147,25 @@ const reduceGroups = (filterState: RulesFilter) => {
   const ruleNameQuery = filterState.ruleName ?? filterState.freeFormWords.join(' ');
 
   return (groupAcc: CombinedRuleGroup[], group: CombinedRuleGroup) => {
-    const rules = group.rules.filter((rule, ruleIdx) => {
+    let filteredRules = group.rules;
+
+    if (ruleNameQuery) {
+      const rulesHaystack = filteredRules.map((r) => r.name);
+      const [idxs, info, order] = ufuzzy.search(rulesHaystack, ruleNameQuery);
+      if (info && order) {
+        filteredRules = order.map((idx) => filteredRules[info.idx[idx]]);
+      } else {
+        filteredRules = idxs.map((idx) => filteredRules[idx]);
+      }
+    }
+
+    filteredRules = filteredRules.filter((rule) => {
       if (filterState.ruleType && filterState.ruleType !== rule.promRule?.type) {
         return false;
       }
 
       const doesNotQueryDs = isGrafanaRulerRule(rule.rulerRule) && !isQueryingDataSource(rule.rulerRule, filterState);
       if (filterState.dataSourceName && doesNotQueryDs) {
-        return false;
-      }
-
-      if (ruleNameQuery && ufuzzy.filter([rule.name], ruleNameQuery).length === 0) {
         return false;
       }
 
@@ -178,10 +200,10 @@ const reduceGroups = (filterState: RulesFilter) => {
       return true;
     });
     // Add rules to the group that match the rule list filters
-    if (rules.length) {
+    if (filteredRules.length) {
       groupAcc.push({
         ...group,
-        rules,
+        rules: filteredRules,
       });
     }
     return groupAcc;
