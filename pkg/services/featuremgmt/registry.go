@@ -84,11 +84,6 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:        "swaggerUi",
-			Description: "Serves swagger UI",
-			State:       FeatureStateBeta,
-		},
-		{
 			Name:        "featureHighlights",
 			Description: "Highlight Grafana Enterprise features",
 			State:       FeatureStateStable,
@@ -140,6 +135,12 @@ var (
 		{
 			Name:         "tracing",
 			Description:  "Adds trace ID to error notifications",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:         "newTraceView",
+			Description:  "Shows the new trace view design",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 		},
@@ -237,11 +238,6 @@ var (
 			Description:     "SQL-based entity store (requires storage flag also)",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
-		},
-		{
-			Name:        "flameGraph",
-			Description: "Show the flame graph",
-			State:       FeatureStateAlpha,
 		},
 		{
 			Name:        "cloudWatchCrossAccountQuerying",
@@ -342,12 +338,6 @@ var (
 			RequiresRestart: false,
 		},
 		{
-			Name:         "topNavCommandPalette",
-			Description:  "Launch the Command Palette from the top navigation search box",
-			State:        FeatureStateBeta,
-			FrontendOnly: true,
-		},
-		{
 
 			Name:         "logsSampleInExplore",
 			Description:  "Enables access to the logs sample feature in Explore",
@@ -371,6 +361,12 @@ var (
 			Name:        "individualCookiePreferences",
 			Description: "Support overriding cookie preferences per user",
 			State:       FeatureStateAlpha,
+		},
+		{
+			Name:         "drawerDataSourcePicker",
+			Description:  "Changes the user experience for data source selection to a drawer.",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
 		},
 	}
 )

@@ -193,7 +193,7 @@ func (hs *HTTPServer) registerRoutes() {
 	// sign up
 	r.Get("/verify", hs.Index)
 	r.Get("/signup", hs.Index)
-	r.Get("/api/user/signup/options", routing.Wrap(GetSignUpOptions))
+	r.Get("/api/user/signup/options", routing.Wrap(hs.GetSignUpOptions))
 	r.Post("/api/user/signup", quota(user.QuotaTargetSrv), quota(org.QuotaTargetSrv), routing.Wrap(hs.SignUp))
 	r.Post("/api/user/signup/step2", routing.Wrap(hs.SignUpStep2))
 
@@ -218,10 +218,8 @@ func (hs *HTTPServer) registerRoutes() {
 	// expose plugin file system assets
 	r.Get("/public/plugins/:pluginId/*", hs.getPluginAssets)
 
-	if hs.Features.IsEnabled(featuremgmt.FlagSwaggerUi) {
-		r.Get("/swagger-ui", swaggerUI)
-		r.Get("/openapi3", openapi3)
-	}
+	r.Get("/swagger-ui", swaggerUI)
+	r.Get("/openapi3", openapi3)
 
 	// authed api
 	r.Group("/api", func(apiRoute routing.RouteRegister) {

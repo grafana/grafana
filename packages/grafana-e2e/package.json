@@ -57,7 +57,7 @@
     "rollup-plugin-dts": "^5.0.0",
     "rollup-plugin-esbuild": "5.0.0",
     "rollup-plugin-node-externals": "^5.0.0",
-    "webpack": "5.74.0"
+    "webpack": "5.75.0"
   },
   "dependencies": {
     "@babel/core": "7.20.5",

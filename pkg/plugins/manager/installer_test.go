@@ -6,12 +6,13 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
-	"github.com/stretchr/testify/require"
 )
 
 const testPluginID = "test-plugin"
@@ -207,7 +208,7 @@ func createPlugin(t *testing.T, pluginID string, class plugins.Class, managed, b
 			Backend: backend,
 		},
 	}
-	p.SetLogger(log.NewNopLogger())
+	p.SetLogger(log.NewTestLogger())
 	p.RegisterClient(&fakes.FakePluginClient{
 		ID:      pluginID,
 		Managed: managed,
