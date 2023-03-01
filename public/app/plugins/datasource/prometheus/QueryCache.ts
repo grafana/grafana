@@ -91,6 +91,12 @@ export class QueryCache {
 
       // console.log(`query previous ${(newTo - newFromPartial) / 1000 / 60} mins`);
 
+      // align the query to the interval to increase the chance of hitting the backend cache
+      // ASK: how to test if this actually has desired effect?
+      // ASK: does the backend already do this anyways? do we need to do it here?
+      // newFromPartial = incrRoundDn(newFromPartial, request.intervalMs);
+      // newToPartial = incrRoundDn(newTo, request.intervalMs);
+
       // modify to partial query
       request = {
         ...request,
