@@ -120,9 +120,10 @@ export function runGroupedQueries(datasource: LokiDatasource, requests: LokiGrou
       done(mergedResponse);
     };
 
-    const requestId = `${requests[requestGroup].request.requestId}_${requestN}`;
-    const range = requests[requestGroup].partition[requestN - 1];
-    const targets = adjustTargetsFromResponseState(requests[requestGroup].request.targets, mergedResponse);
+    const group = requests[requestGroup];
+    const requestId = `${group.request.requestId}_${requestN}`;
+    const range = group.partition[requestN - 1];
+    const targets = adjustTargetsFromResponseState(group.request.targets, mergedResponse);
 
     if (!targets.length && mergedResponse) {
       nextRequest();
@@ -161,10 +162,10 @@ export function runGroupedQueries(datasource: LokiDatasource, requests: LokiGrou
 }
 
 function getNextRequestPointers(requests: LokiGroupedRequest, requestGroup: number, requestN: number) {
-  // There's a pending metric request:
-  if (requestGroup === 0 && requests[1]?.partition[requestN - 1]) {
+  // There's a pending request from the next group:
+  if (requests[requestGroup + 1]?.partition[requestN - 1]) {
     return {
-      nextRequestGroup: 1,
+      nextRequestGroup: requestGroup + 1,
       nextRequestN: requestN,
     };
   }
