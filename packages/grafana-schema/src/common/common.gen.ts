@@ -631,12 +631,34 @@ export enum TableCellBackgroundDisplayMode {
 }
 
 /**
- * TODO docs
+ * Sort by field state
  */
 export interface TableSortByFieldState {
+  /**
+   * Flag used to indicate descending sort order
+   */
   desc?: boolean;
+  /**
+   * Sets the display name of the field to sort by
+   */
   displayName: string;
 }
+
+/**
+ * Footer options
+ */
+export interface TableFooterOptions {
+  countRows?: boolean;
+  enablePagination?: boolean;
+  fields?: Array<string>;
+  reducer: Array<string>;
+  show: boolean;
+}
+
+export const defaultTableFooterOptions: Partial<TableFooterOptions> = {
+  fields: [],
+  reducer: [],
+};
 
 /**
  * Auto mode table cell options
