@@ -2795,9 +2795,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "5"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "6"]
     ],
-    "public/app/features/api-keys/ApiKeysForm.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
     "public/app/features/canvas/element.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
