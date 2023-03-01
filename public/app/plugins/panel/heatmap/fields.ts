@@ -6,9 +6,11 @@ import {
   formattedValueToString,
   getDisplayProcessor,
   GrafanaTheme2,
+  LinkModel,
   outerJoinDataFrames,
   PanelData,
   ValueFormatter,
+  ValueLinkConfig,
 } from '@grafana/data';
 import {
   calculateHeatmapFromData,
@@ -35,6 +37,12 @@ export interface HeatmapData {
   xLayout?: HeatmapCellLayout;
   yLayout?: HeatmapCellLayout;
 
+  xLog?: number;
+  yLog?: number;
+
+  xLogSplit?: number;
+  yLogSplit?: number;
+
   // color scale range
   minValue?: number;
   maxValue?: number;
@@ -46,13 +54,24 @@ export interface HeatmapData {
   warning?: string;
 }
 
-export function prepareHeatmapData(data: PanelData, options: PanelOptions, theme: GrafanaTheme2): HeatmapData {
+export function prepareHeatmapData(
+  data: PanelData,
+  options: PanelOptions,
+  theme: GrafanaTheme2,
+  getFieldLinks?: (exemplars: DataFrame, field: Field) => (config: ValueLinkConfig) => Array<LinkModel<Field>>
+): HeatmapData {
   let frames = data.series;
   if (!frames?.length) {
     return {};
   }
 
   const exemplars = data.annotations?.find((f) => f.name === 'exemplar');
+
+  if (getFieldLinks) {
+    exemplars?.fields.forEach((field, index) => {
+      exemplars.fields[index].getLinks = getFieldLinks(exemplars, field);
+    });
+  }
 
   if (options.calculate) {
     return getDenseHeatmapData(calculateHeatmapFromData(frames, options.calculation ?? {}), exemplars, options, theme);
@@ -224,6 +243,9 @@ const getDenseHeatmapData = (
     options.filterValues?.ge
   );
 
+  let calcX = options.calculation?.xBuckets;
+  let calcY = options.calculation?.yBuckets;
+
   const data: HeatmapData = {
     heatmap: frame,
     exemplars: exemplars?.length ? exemplars : undefined,
@@ -231,6 +253,12 @@ const getDenseHeatmapData = (
     yBucketSize: yBinIncr,
     xBucketCount: xBinQty,
     yBucketCount: yBinQty,
+
+    yLog: calcY?.scale?.log ?? 0,
+    xLog: calcX?.scale?.log ?? 0,
+
+    xLogSplit: calcX?.scale?.log ? +(calcX?.value ?? '1') : 1,
+    yLogSplit: calcY?.scale?.log ? +(calcY?.value ?? '1') : 1,
 
     minValue,
     maxValue,

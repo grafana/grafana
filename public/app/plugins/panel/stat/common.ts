@@ -50,7 +50,7 @@ export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
     name: 'Calculation',
     description: 'Choose a reducer function / calculation',
     category: valueOptionsCategory,
-    editor: standardEditorsRegistry.get('stats-picker').editor as any,
+    editor: standardEditorsRegistry.get('stats-picker').editor,
     // TODO: Get ReducerID from generated schema one day?
     defaultValue: [ReducerID.lastNotNull],
     // Hides it when all values mode is on

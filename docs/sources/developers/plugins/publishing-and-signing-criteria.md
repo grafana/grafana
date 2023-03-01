@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/developers/plugins/publishing-and-signing-criteria/
 title: Plugin publishing and signing criteria
 ---
 
@@ -21,6 +19,9 @@ Grafana plugins must adhere to the following criteria when being reviewed for pu
 - Abuse: plugins should not perform actions beyond the scope of the intended use.
   - Do not include hidden files
   - Do not manipulate the underlying environment, privileges, or related processes
+- Security:
+  - Should not access the filesystem
+  - Should not access environment variables
 
 ## Commercial
 

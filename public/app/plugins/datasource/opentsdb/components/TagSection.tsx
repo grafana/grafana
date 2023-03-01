@@ -136,11 +136,9 @@ export function TagSection({
             );
           })}
         {!addTagMode && (
-          <label className="gf-form-label query-keyword">
-            <button type="button" className={buttonStyles} onClick={changeAddTagMode} data-testid={testIds.open}>
-              <Icon name={'plus'} />
-            </button>
-          </label>
+          <button className="gf-form-label" type="button" onClick={changeAddTagMode} aria-label="Add tag">
+            <Icon name={'plus'} />
+          </button>
         )}
       </div>
       {addTagMode && (
@@ -196,19 +194,19 @@ export function TagSection({
 
           <div className="gf-form">
             {errors && (
-              <label className="gf-form-label" title={errors} data-testid={testIds.error}>
+              <div className="gf-form-label" title={errors} data-testid={testIds.error}>
                 <Icon name={'exclamation-triangle'} color={'rgb(229, 189, 28)'} />
-              </label>
+              </div>
             )}
 
-            <label className="gf-form-label">
+            <div className="gf-form-label">
               <button type="button" className={buttonStyles} onClick={addTag}>
                 add tag
               </button>
               <button type="button" className={buttonStyles} onClick={changeAddTagMode}>
                 <Icon name={'times'} />
               </button>
-            </label>
+            </div>
           </div>
         </div>
       )}
@@ -221,7 +219,6 @@ export function TagSection({
 
 export const testIds = {
   section: 'opentsdb-tag',
-  open: 'opentsdb-tag-editor',
   list: 'opentsdb-tag-list',
   error: 'opentsdb-tag-error',
   remove: 'opentsdb-tag-remove',

@@ -21,7 +21,6 @@ const mapStateToProps = (state: StoreState, props: OwnProps) => {
   return {
     pageNav: getNavModel(state.navIndex, `folder-library-panels-${uid}`, getLoadingNav(1)),
     folderUid: uid,
-    folder: state.folder,
   };
 };
 
@@ -33,7 +32,7 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 
 export type Props = OwnProps & ConnectedProps<typeof connector>;
 
-export function FolderLibraryPanelsPage({ pageNav, getFolderByUid, folderUid, folder }: Props): JSX.Element {
+export function FolderLibraryPanelsPage({ pageNav, getFolderByUid, folderUid }: Props): JSX.Element {
   const { loading } = useAsync(async () => await getFolderByUid(folderUid), [getFolderByUid, folderUid]);
   const [selected, setSelected] = useState<LibraryElementDTO | undefined>(undefined);
 
@@ -42,7 +41,7 @@ export function FolderLibraryPanelsPage({ pageNav, getFolderByUid, folderUid, fo
       <Page.Contents isLoading={loading}>
         <LibraryPanelsSearch
           onClick={setSelected}
-          currentFolderId={folder.id}
+          currentFolderUID={folderUid}
           showSecondaryActions
           showSort
           showPanelFilter

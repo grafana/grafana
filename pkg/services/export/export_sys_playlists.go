@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/playlist"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 )
 
 func exportSystemPlaylists(helper *commitHelper, job *gitExportJob) error {
@@ -37,8 +38,12 @@ func exportSystemPlaylists(helper *commitHelper, job *gitExportJob) error {
 		}
 
 		gitcmd.body = append(gitcmd.body, commitBody{
-			fpath: filepath.Join(helper.orgDir, "system", "playlists", fmt.Sprintf("%s-playlist.json", playlist.Uid)),
-			body:  prettyJSON(playlist),
+			fpath: filepath.Join(
+				helper.orgDir,
+				"entity",
+				entity.StandardKindPlaylist,
+				fmt.Sprintf("%s.json", playlist.Uid)),
+			body: prettyJSON(playlist),
 		})
 	}
 

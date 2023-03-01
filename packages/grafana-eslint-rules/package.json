@@ -1,0 +1,18 @@
+{
+  "name": "@grafana/eslint-plugin",
+  "description": "ESLint rules for use within the Grafana repo. Not suitable (or supported) for external use.",
+  "version": "9.5.0-pre",
+  "main": "./index.cjs",
+  "author": "Grafana Labs",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/grafana/grafana.git",
+    "directory": "packages/grafana-eslint-rules"
+  },
+  "devDependencies": {
+    "@typescript-eslint/types": "^5.46.1",
+    "@typescript-eslint/utils": "^5.46.1"
+  },
+  "private": true
+}

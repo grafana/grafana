@@ -110,15 +110,13 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
         }
 
         if (scale.distr === 4) {
-          // TODO: switch to `, true)` after updating uPlot to 1.6.23+
-          // see https://github.com/leeoniya/uPlot/issues/749
-          minMax = uPlot.rangeAsinh(dataMin!, dataMax!, logBase, false);
+          minMax = uPlot.rangeAsinh(dataMin!, dataMax!, logBase, true);
         } else {
           // @ts-ignore here we may use hardMin / hardMax to make sure any extra padding is computed from a more accurate delta
           minMax = uPlot.rangeNum(hardMinOnly ? hardMin : dataMin, hardMaxOnly ? hardMax : dataMax, rangeConfig);
         }
       } else if (scale.distr === 3) {
-        minMax = uPlot.rangeLog(dataMin!, dataMax!, logBase, true);
+        minMax = uPlot.rangeLog(hardMin ?? dataMin!, hardMax ?? dataMax!, logBase, true);
       }
 
       if (decimals === 0) {
@@ -156,13 +154,15 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
         }
       }
 
-      // if all we got were hard limits, treat them as static min/max
-      if (hardMinOnly) {
-        minMax[0] = hardMin!;
-      }
+      if (scale.distr === 1) {
+        // if all we got were hard limits, treat them as static min/max
+        if (hardMinOnly) {
+          minMax[0] = hardMin!;
+        }
 
-      if (hardMaxOnly) {
-        minMax[1] = hardMax!;
+        if (hardMaxOnly) {
+          minMax[1] = hardMax!;
+        }
       }
 
       // guard against invalid y ranges

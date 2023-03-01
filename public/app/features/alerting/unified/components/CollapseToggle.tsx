@@ -29,6 +29,7 @@ export const CollapseToggle: FC<Props> = ({
     <Button
       type="button"
       fill="text"
+      variant="secondary"
       aria-expanded={!isCollapsed}
       aria-controls={idControlled}
       className={cx(styles.expandButton, className)}
@@ -43,7 +44,6 @@ export const CollapseToggle: FC<Props> = ({
 
 export const getStyles = (theme: GrafanaTheme2) => ({
   expandButton: css`
-    color: ${theme.colors.text.secondary};
     margin-right: ${theme.spacing(1)};
   `,
 });

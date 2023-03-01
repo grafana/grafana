@@ -9,7 +9,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	alertmodels "github.com/grafana/grafana/pkg/services/alerting/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/setting"
@@ -18,18 +19,18 @@ import (
 // AlertStore is a subset of SQLStore API to satisfy the needs of the alerting service.
 // A subset is needed to make it easier to mock during the tests.
 type AlertStore interface {
-	GetAlertById(context.Context, *models.GetAlertByIdQuery) error
-	GetAllAlertQueryHandler(context.Context, *models.GetAllAlertsQuery) error
-	GetAlertStatesForDashboard(context.Context, *models.GetAlertStatesForDashboardQuery) error
-	HandleAlertsQuery(context.Context, *models.GetAlertsQuery) error
-	SetAlertNotificationStateToCompleteCommand(context.Context, *models.SetAlertNotificationStateToCompleteCommand) error
-	SetAlertNotificationStateToPendingCommand(context.Context, *models.SetAlertNotificationStateToPendingCommand) error
-	GetAlertNotificationUidWithId(context.Context, *models.GetAlertNotificationUidQuery) error
-	GetAlertNotificationsWithUidToSend(context.Context, *models.GetAlertNotificationsWithUidToSendQuery) error
-	GetOrCreateAlertNotificationState(context.Context, *models.GetOrCreateNotificationStateQuery) error
-	SetAlertState(context.Context, *models.SetAlertStateCommand) error
-	PauseAlert(context.Context, *models.PauseAlertCommand) error
-	PauseAllAlerts(context.Context, *models.PauseAllAlertCommand) error
+	GetAlertById(context.Context, *alertmodels.GetAlertByIdQuery) (*alertmodels.Alert, error)
+	GetAllAlertQueryHandler(context.Context, *alertmodels.GetAllAlertsQuery) ([]*alertmodels.Alert, error)
+	GetAlertStatesForDashboard(context.Context, *alertmodels.GetAlertStatesForDashboardQuery) ([]*alertmodels.AlertStateInfoDTO, error)
+	HandleAlertsQuery(context.Context, *alertmodels.GetAlertsQuery) ([]*alertmodels.AlertListItemDTO, error)
+	SetAlertNotificationStateToCompleteCommand(context.Context, *alertmodels.SetAlertNotificationStateToCompleteCommand) error
+	SetAlertNotificationStateToPendingCommand(context.Context, *alertmodels.SetAlertNotificationStateToPendingCommand) error
+	GetAlertNotificationUidWithId(context.Context, *alertmodels.GetAlertNotificationUidQuery) (string, error)
+	GetAlertNotificationsWithUidToSend(context.Context, *alertmodels.GetAlertNotificationsWithUidToSendQuery) ([]*alertmodels.AlertNotification, error)
+	GetOrCreateAlertNotificationState(context.Context, *alertmodels.GetOrCreateNotificationStateQuery) (*alertmodels.AlertNotificationState, error)
+	SetAlertState(context.Context, *alertmodels.SetAlertStateCommand) (alertmodels.Alert, error)
+	PauseAlert(context.Context, *alertmodels.PauseAlertCommand) error
+	PauseAllAlerts(context.Context, *alertmodels.PauseAllAlertCommand) error
 }
 
 type sqlStore struct {
@@ -52,10 +53,10 @@ func ProvideAlertStore(
 	}
 }
 
-func (ss *sqlStore) GetAlertById(ctx context.Context, query *models.GetAlertByIdQuery) error {
-	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		alert := models.Alert{}
-		has, err := sess.ID(query.Id).Get(&alert)
+func (ss *sqlStore) GetAlertById(ctx context.Context, query *alertmodels.GetAlertByIdQuery) (res *alertmodels.Alert, err error) {
+	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		alert := alertmodels.Alert{}
+		has, err := sess.ID(query.ID).Get(&alert)
 		if !has {
 			return fmt.Errorf("could not find alert")
 		}
@@ -63,22 +64,24 @@ func (ss *sqlStore) GetAlertById(ctx context.Context, query *models.GetAlertById
 			return err
 		}
 
-		query.Result = &alert
+		res = &alert
 		return nil
 	})
+	return res, err
 }
 
-func (ss *sqlStore) GetAllAlertQueryHandler(ctx context.Context, query *models.GetAllAlertsQuery) error {
-	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		var alerts []*models.Alert
+func (ss *sqlStore) GetAllAlertQueryHandler(ctx context.Context, query *alertmodels.GetAllAlertsQuery) (res []*alertmodels.Alert, err error) {
+	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		var alerts []*alertmodels.Alert
 		err := sess.SQL("select * from alert").Find(&alerts)
 		if err != nil {
 			return err
 		}
 
-		query.Result = alerts
+		res = alerts
 		return nil
 	})
+	return res, err
 }
 
 func deleteAlertByIdInternal(alertId int64, reason string, sess *db.Session, log *log.ConcreteLogger) error {
@@ -103,9 +106,9 @@ func deleteAlertByIdInternal(alertId int64, reason string, sess *db.Session, log
 	return nil
 }
 
-func (ss *sqlStore) HandleAlertsQuery(ctx context.Context, query *models.GetAlertsQuery) error {
-	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		builder := db.NewSqlBuilder(ss.cfg)
+func (ss *sqlStore) HandleAlertsQuery(ctx context.Context, query *alertmodels.GetAlertsQuery) (res []*alertmodels.AlertListItemDTO, err error) {
+	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		builder := db.NewSqlBuilder(ss.cfg, ss.db.GetDialect())
 
 		builder.Write(`SELECT
 		alert.id,
@@ -122,7 +125,7 @@ func (ss *sqlStore) HandleAlertsQuery(ctx context.Context, query *models.GetAler
 		FROM alert
 		INNER JOIN dashboard on dashboard.id = alert.dashboard_id `)
 
-		builder.Write(`WHERE alert.org_id = ?`, query.OrgId)
+		builder.Write(`WHERE alert.org_id = ?`, query.OrgID)
 
 		if len(strings.TrimSpace(query.Query)) > 0 {
 			builder.Write(" AND alert.name "+ss.db.GetDialect().LikeStr()+" ?", "%"+query.Query+"%")
@@ -136,8 +139,8 @@ func (ss *sqlStore) HandleAlertsQuery(ctx context.Context, query *models.GetAler
 			}
 		}
 
-		if query.PanelId != 0 {
-			builder.Write(` AND alert.panel_id = ?`, query.PanelId)
+		if query.PanelID != 0 {
+			builder.Write(` AND alert.panel_id = ?`, query.PanelID)
 		}
 
 		if len(query.State) > 0 && query.State[0] != "all" {
@@ -158,7 +161,7 @@ func (ss *sqlStore) HandleAlertsQuery(ctx context.Context, query *models.GetAler
 		}
 
 		if query.User.OrgRole != org.RoleAdmin {
-			builder.WriteDashboardPermissionFilter(query.User, models.PERMISSION_VIEW)
+			builder.WriteDashboardPermissionFilter(query.User, dashboards.PERMISSION_VIEW)
 		}
 
 		builder.Write(" ORDER BY name ASC")
@@ -167,7 +170,7 @@ func (ss *sqlStore) HandleAlertsQuery(ctx context.Context, query *models.GetAler
 			builder.Write(ss.db.GetDialect().Limit(query.Limit))
 		}
 
-		alerts := make([]*models.AlertListItemDTO, 0)
+		alerts := make([]*alertmodels.AlertListItemDTO, 0)
 		if err := sess.SQL(builder.GetSQLString(), builder.GetParams()...).Find(&alerts); err != nil {
 			return err
 		}
@@ -178,12 +181,13 @@ func (ss *sqlStore) HandleAlertsQuery(ctx context.Context, query *models.GetAler
 			}
 		}
 
-		query.Result = alerts
+		res = alerts
 		return nil
 	})
+	return res, err
 }
 
-func (ss *sqlStore) SaveAlerts(ctx context.Context, dashID int64, alerts []*models.Alert) error {
+func (ss *sqlStore) SaveAlerts(ctx context.Context, dashID int64, alerts []*alertmodels.Alert) error {
 	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		existingAlerts, err := GetAlertsByDashboardId2(dashID, sess)
 		if err != nil {
@@ -202,15 +206,15 @@ func (ss *sqlStore) SaveAlerts(ctx context.Context, dashID int64, alerts []*mode
 	})
 }
 
-func (ss *sqlStore) UpdateAlerts(ctx context.Context, existingAlerts []*models.Alert, alerts []*models.Alert, sess *db.Session, log *log.ConcreteLogger) error {
+func (ss *sqlStore) UpdateAlerts(ctx context.Context, existingAlerts []*alertmodels.Alert, alerts []*alertmodels.Alert, sess *db.Session, log *log.ConcreteLogger) error {
 	for _, alert := range alerts {
 		update := false
-		var alertToUpdate *models.Alert
+		var alertToUpdate *alertmodels.Alert
 
 		for _, k := range existingAlerts {
-			if alert.PanelId == k.PanelId {
+			if alert.PanelID == k.PanelID {
 				update = true
-				alert.Id = k.Id
+				alert.ID = k.ID
 				alertToUpdate = k
 				break
 			}
@@ -222,17 +226,17 @@ func (ss *sqlStore) UpdateAlerts(ctx context.Context, existingAlerts []*models.A
 				alert.State = alertToUpdate.State
 				sess.MustCols("message", "for")
 
-				_, err := sess.ID(alert.Id).Update(alert)
+				_, err := sess.ID(alert.ID).Update(alert)
 				if err != nil {
 					return err
 				}
 
-				log.Debug("Alert updated", "name", alert.Name, "id", alert.Id)
+				log.Debug("Alert updated", "name", alert.Name, "id", alert.ID)
 			}
 		} else {
 			alert.Updated = timeNow()
 			alert.Created = timeNow()
-			alert.State = models.AlertStateUnknown
+			alert.State = alertmodels.AlertStateUnknown
 			alert.NewStateDate = timeNow()
 
 			_, err := sess.Insert(alert)
@@ -240,10 +244,10 @@ func (ss *sqlStore) UpdateAlerts(ctx context.Context, existingAlerts []*models.A
 				return err
 			}
 
-			log.Debug("Alert inserted", "name", alert.Name, "id", alert.Id)
+			log.Debug("Alert inserted", "name", alert.Name, "id", alert.ID)
 		}
 		tags := alert.GetTagsFromSettings()
-		if _, err := sess.Exec("DELETE FROM alert_rule_tag WHERE alert_id = ?", alert.Id); err != nil {
+		if _, err := sess.Exec("DELETE FROM alert_rule_tag WHERE alert_id = ?", alert.ID); err != nil {
 			return err
 		}
 		if tags != nil {
@@ -252,7 +256,7 @@ func (ss *sqlStore) UpdateAlerts(ctx context.Context, existingAlerts []*models.A
 				return err
 			}
 			for _, tag := range tags {
-				if _, err := sess.Exec("INSERT INTO alert_rule_tag (alert_id, tag_id) VALUES(?,?)", alert.Id, tag.Id); err != nil {
+				if _, err := sess.Exec("INSERT INTO alert_rule_tag (alert_id, tag_id) VALUES(?,?)", alert.ID, tag.Id); err != nil {
 					return err
 				}
 			}
@@ -262,19 +266,19 @@ func (ss *sqlStore) UpdateAlerts(ctx context.Context, existingAlerts []*models.A
 	return nil
 }
 
-func deleteMissingAlerts(alerts []*models.Alert, existingAlerts []*models.Alert, sess *db.Session, log *log.ConcreteLogger) error {
+func deleteMissingAlerts(alerts []*alertmodels.Alert, existingAlerts []*alertmodels.Alert, sess *db.Session, log *log.ConcreteLogger) error {
 	for _, missingAlert := range alerts {
 		missing := true
 
 		for _, k := range existingAlerts {
-			if missingAlert.PanelId == k.PanelId {
+			if missingAlert.PanelID == k.PanelID {
 				missing = false
 				break
 			}
 		}
 
 		if missing {
-			if err := deleteAlertByIdInternal(missingAlert.Id, "Removed from dashboard", sess, log); err != nil {
+			if err := deleteAlertByIdInternal(missingAlert.ID, "Removed from dashboard", sess, log); err != nil {
 				// No use trying to delete more, since we're in a transaction and it will be
 				// rolled back on error.
 				return err
@@ -285,33 +289,33 @@ func deleteMissingAlerts(alerts []*models.Alert, existingAlerts []*models.Alert,
 	return nil
 }
 
-func GetAlertsByDashboardId2(dashboardId int64, sess *db.Session) ([]*models.Alert, error) {
-	alerts := make([]*models.Alert, 0)
+func GetAlertsByDashboardId2(dashboardId int64, sess *db.Session) ([]*alertmodels.Alert, error) {
+	alerts := make([]*alertmodels.Alert, 0)
 	err := sess.Where("dashboard_id = ?", dashboardId).Find(&alerts)
 
 	if err != nil {
-		return []*models.Alert{}, err
+		return []*alertmodels.Alert{}, err
 	}
 
 	return alerts, nil
 }
 
-func (ss *sqlStore) SetAlertState(ctx context.Context, cmd *models.SetAlertStateCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		alert := models.Alert{}
+func (ss *sqlStore) SetAlertState(ctx context.Context, cmd *alertmodels.SetAlertStateCommand) (res alertmodels.Alert, err error) {
+	err = ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		alert := alertmodels.Alert{}
 
-		if has, err := sess.ID(cmd.AlertId).Get(&alert); err != nil {
+		if has, err := sess.ID(cmd.AlertID).Get(&alert); err != nil {
 			return err
 		} else if !has {
 			return fmt.Errorf("could not find alert")
 		}
 
-		if alert.State == models.AlertStatePaused {
-			return models.ErrCannotChangeStateOnPausedAlert
+		if alert.State == alertmodels.AlertStatePaused {
+			return alertmodels.ErrCannotChangeStateOnPausedAlert
 		}
 
 		if alert.State == cmd.State {
-			return models.ErrRequiresNewState
+			return alertmodels.ErrRequiresNewState
 		}
 
 		alert.State = cmd.State
@@ -325,19 +329,20 @@ func (ss *sqlStore) SetAlertState(ctx context.Context, cmd *models.SetAlertState
 			alert.ExecutionError = cmd.Error
 		}
 
-		_, err := sess.ID(alert.Id).Update(&alert)
+		_, err := sess.ID(alert.ID).Update(&alert)
 		if err != nil {
 			return err
 		}
 
-		cmd.Result = alert
+		res = alert
 		return nil
 	})
+	return res, err
 }
 
-func (ss *sqlStore) PauseAlert(ctx context.Context, cmd *models.PauseAlertCommand) error {
+func (ss *sqlStore) PauseAlert(ctx context.Context, cmd *alertmodels.PauseAlertCommand) error {
 	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		if len(cmd.AlertIds) == 0 {
+		if len(cmd.AlertIDs) == 0 {
 			return fmt.Errorf("command contains no alertids")
 		}
 
@@ -346,15 +351,15 @@ func (ss *sqlStore) PauseAlert(ctx context.Context, cmd *models.PauseAlertComman
 
 		buffer.WriteString(`UPDATE alert SET state = ?, new_state_date = ?`)
 		if cmd.Paused {
-			params = append(params, string(models.AlertStatePaused))
+			params = append(params, string(alertmodels.AlertStatePaused))
 			params = append(params, timeNow().UTC())
 		} else {
-			params = append(params, string(models.AlertStateUnknown))
+			params = append(params, string(alertmodels.AlertStateUnknown))
 			params = append(params, timeNow().UTC())
 		}
 
-		buffer.WriteString(` WHERE id IN (?` + strings.Repeat(",?", len(cmd.AlertIds)-1) + `)`)
-		for _, v := range cmd.AlertIds {
+		buffer.WriteString(` WHERE id IN (?` + strings.Repeat(",?", len(cmd.AlertIDs)-1) + `)`)
+		for _, v := range cmd.AlertIDs {
 			params = append(params, v)
 		}
 
@@ -369,13 +374,13 @@ func (ss *sqlStore) PauseAlert(ctx context.Context, cmd *models.PauseAlertComman
 	})
 }
 
-func (ss *sqlStore) PauseAllAlerts(ctx context.Context, cmd *models.PauseAllAlertCommand) error {
+func (ss *sqlStore) PauseAllAlerts(ctx context.Context, cmd *alertmodels.PauseAllAlertCommand) error {
 	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		var newState string
 		if cmd.Paused {
-			newState = string(models.AlertStatePaused)
+			newState = string(alertmodels.AlertStatePaused)
 		} else {
-			newState = string(models.AlertStateUnknown)
+			newState = string(alertmodels.AlertStateUnknown)
 		}
 
 		res, err := sess.Exec(`UPDATE alert SET state = ?, new_state_date = ?`, newState, timeNow().UTC())
@@ -387,8 +392,8 @@ func (ss *sqlStore) PauseAllAlerts(ctx context.Context, cmd *models.PauseAllAler
 	})
 }
 
-func (ss *sqlStore) GetAlertStatesForDashboard(ctx context.Context, query *models.GetAlertStatesForDashboardQuery) error {
-	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+func (ss *sqlStore) GetAlertStatesForDashboard(ctx context.Context, query *alertmodels.GetAlertStatesForDashboardQuery) (res []*alertmodels.AlertStateInfoDTO, err error) {
+	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		var rawSQL = `SELECT
 	                id,
 	                dashboard_id,
@@ -398,9 +403,8 @@ func (ss *sqlStore) GetAlertStatesForDashboard(ctx context.Context, query *model
 	                FROM alert
 	                WHERE org_id = ? AND dashboard_id = ?`
 
-		query.Result = make([]*models.AlertStateInfoDTO, 0)
-		err := sess.SQL(rawSQL, query.OrgId, query.DashboardId).Find(&query.Result)
-
-		return err
+		res = make([]*alertmodels.AlertStateInfoDTO, 0)
+		return sess.SQL(rawSQL, query.OrgID, query.DashboardID).Find(&res)
 	})
+	return res, err
 }

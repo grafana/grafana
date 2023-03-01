@@ -5,7 +5,7 @@ import { transform } from 'ol/proj';
 import React, { PureComponent } from 'react';
 import tinycolor from 'tinycolor2';
 
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors/src';
 import { stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
@@ -20,7 +20,7 @@ interface State {
 }
 
 export class DebugOverlay extends PureComponent<Props, State> {
-  style = getStyles(config.theme);
+  style = getStyles(config.theme2);
 
   constructor(props: Props) {
     super(props);
@@ -64,10 +64,10 @@ export class DebugOverlay extends PureComponent<Props, State> {
   }
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   infoWrap: css`
-    color: ${theme.colors.text};
-    background: ${tinycolor(theme.colors.panelBg).setAlpha(0.7).toString()};
+    color: ${theme.colors.text.primary};
+    background: ${tinycolor(theme.components.panel.background).setAlpha(0.7).toString()};
     border-radius: 2px;
     padding: 8px;
   `,

@@ -4,17 +4,19 @@ import { Subject } from 'rxjs';
 
 // Importing this way to be able to spy on grafana/data
 import * as grafanaData from '@grafana/data';
-import { setDataSourceSrv, setEchoSrv } from '@grafana/runtime';
+import { DataSourceApi } from '@grafana/data';
+import { DataSourceSrv, setDataSourceSrv, setEchoSrv } from '@grafana/runtime';
 
 import { Echo } from '../../../core/services/echo/Echo';
-import { DashboardModel } from '../../dashboard/state/index';
+import { createDashboardModelFixture } from '../../dashboard/state/__fixtures__/dashboardFixtures';
 
 import {
   createDashboardQueryRunner,
+  DashboardQueryRunnerFactoryArgs,
   setDashboardQueryRunnerFactory,
 } from './DashboardQueryRunner/DashboardQueryRunner';
 import { emptyResult } from './DashboardQueryRunner/utils';
-import { PanelQueryRunner } from './PanelQueryRunner';
+import { PanelQueryRunner, QueryRunnerOptions } from './PanelQueryRunner';
 
 jest.mock('@grafana/data', () => ({
   __esModule: true,
@@ -30,7 +32,7 @@ jest.mock('app/core/config', () => ({
   }),
 }));
 
-const dashboardModel = new DashboardModel({
+const dashboardModel = createDashboardModelFixture({
   panels: [{ id: 1, type: 'graph' }],
 });
 
@@ -83,7 +85,7 @@ function describeQueryRunnerScenario(
       },
     };
 
-    const response: any = {
+    const response = {
       data: [
         {
           target: 'hello',
@@ -95,21 +97,21 @@ function describeQueryRunnerScenario(
       ],
     };
 
-    setDataSourceSrv({} as any);
+    setDataSourceSrv({} as DataSourceSrv);
     setDashboardQueryRunnerFactory(() => ({
       getResult: emptyResult,
       run: () => undefined,
       cancel: () => undefined,
-      cancellations: () => new Subject<any>(),
+      cancellations: () => new Subject(),
       destroy: () => undefined,
     }));
-    createDashboardQueryRunner({} as any);
+    createDashboardQueryRunner({} as DashboardQueryRunnerFactoryArgs);
 
     beforeEach(async () => {
       setEchoSrv(new Echo());
       setupFn();
 
-      const datasource: any = {
+      const datasource = {
         name: 'TestDB',
         uid: 'TestDB-uid',
         interval: ctx.dsInterval,
@@ -119,21 +121,21 @@ function describeQueryRunnerScenario(
         },
         getRef: () => ({ type: 'test', uid: 'TestDB-uid' }),
         testDatasource: jest.fn(),
-      };
+      } as unknown as DataSourceApi;
 
-      const args: any = {
+      const args = {
         datasource,
         scopedVars: ctx.scopedVars,
         minInterval: ctx.minInterval,
-        maxDataPoints: ctx.maxDataPoints,
+        maxDataPoints: ctx.maxDataPoints ?? Infinity,
         timeRange: {
           from: grafanaData.dateTime().subtract(1, 'days'),
           to: grafanaData.dateTime(),
           raw: { from: '1d', to: 'now' },
         },
         panelId: 1,
-        queries: [{ refId: 'A', test: 1 }],
-      };
+        queries: [{ refId: 'A' }],
+      } as QueryRunnerOptions;
 
       ctx.runner = new PanelQueryRunner(panelConfig || defaultPanelConfig);
       ctx.runner.getData({ withTransforms: true, withFieldConfig: true }).subscribe({

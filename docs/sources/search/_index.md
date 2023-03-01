@@ -1,13 +1,13 @@
 ---
 aliases:
-  - docs/grafana/latest/search/
-title: Search
-menutitle: Search
+  - ./
 description: Learn how to search for Grafana dashboards
-weight: 80
 keywords:
   - search
   - dashboard
+menutitle: Search
+title: Search
+weight: 80
 ---
 
 # Search dashboards
@@ -83,3 +83,18 @@ To filter dashboard search result by a tag, complete one of the following steps:
   All tags will be shown, and when you select a tag, the dashboard search will be instantly filtered.
 
 > **Note:** When using only a keyboard, press the `tab` key and navigate to the **Filter by tag** drop-down menu, press the down arrow key `▼` to activate the menu and locate a tag, and press `Enter` to select the tag.
+
+## Command palette
+
+The command palette enables you to:
+
+- Search for and open dashboards and folders
+- Create dashboards and alert rules
+- Locate pages within Grafana
+- Change the theme to dark or light
+
+![Command Palette screenshot](/media/docs/grafana/CommandPalette_doc_1.png)
+
+To open the command palette, press `cmd+K` in macOS or `ctrl+k` in Linux/Windows. You can also click on the input located in the navigation bar.
+
+> **Note:** To go to the previous step, press `backspace` with the command palette input empty.

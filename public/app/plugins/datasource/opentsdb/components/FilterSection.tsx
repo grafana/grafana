@@ -138,11 +138,9 @@ export function FilterSection({
             );
           })}
         {!addFilterMode && (
-          <label className="gf-form-label query-keyword">
-            <button type="button" className={buttonStyles} onClick={changeAddFilterMode} data-testid={testIds.open}>
-              <Icon name={'plus'} />
-            </button>
-          </label>
+          <button className="gf-form-label" type="button" onClick={changeAddFilterMode} aria-label="Add filter">
+            <Icon name={'plus'} />
+          </button>
         )}
       </div>
       {addFilterMode && (
@@ -225,19 +223,18 @@ export function FilterSection({
           />
           <div className="gf-form">
             {errors && (
-              <label className="gf-form-label" title={errors} data-testid={testIds.error}>
+              <div className="gf-form-label" title={errors} data-testid={testIds.error}>
                 <Icon name={'exclamation-triangle'} color={'rgb(229, 189, 28)'} />
-              </label>
+              </div>
             )}
-
-            <label className="gf-form-label">
+            <div className="gf-form-label">
               <button type="button" className={buttonStyles} onClick={addFilter}>
                 add filter
               </button>
               <button type="button" className={buttonStyles} onClick={changeAddFilterMode}>
                 <Icon name={'times'} />
               </button>
-            </label>
+            </div>
           </div>
         </div>
       )}
@@ -250,7 +247,6 @@ export function FilterSection({
 
 export const testIds = {
   section: 'opentsdb-filter',
-  open: 'opentsdb-filter-editor',
   list: 'opentsdb-filter-list',
   error: 'opentsdb-filter-error',
   remove: 'opentsdb-filter-remove',

@@ -1,8 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/http_api/
-  - /docs/grafana/latest/http_api/
-  - /docs/grafana/latest/overview/
+  - ../http_api/
+  - ../overview/
+canonical: /docs/grafana/latest/developers/http_api/
 description: Grafana HTTP API
 keywords:
   - grafana

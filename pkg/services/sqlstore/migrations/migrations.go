@@ -54,9 +54,6 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	ualert.AddDashAlertMigration(mg)
 	addLibraryElementsMigrations(mg)
 	if mg.Cfg != nil && mg.Cfg.IsFeatureToggleEnabled != nil {
-		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagLiveConfig) {
-			addLiveChannelMigrations(mg)
-		}
 		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagDashboardPreviews) {
 			addDashboardThumbsMigrations(mg)
 		}
@@ -82,6 +79,10 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 			addCommentGroupMigrations(mg)
 			addCommentMigrations(mg)
 		}
+
+		if mg.Cfg.IsFeatureToggleEnabled(featuremgmt.FlagEntityStore) {
+			addEntityStoreMigrations(mg)
+		}
 	}
 
 	addEntityEventsTableMigration(mg)
@@ -99,6 +100,11 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	accesscontrol.AddManagedFolderAlertActionsRepeatMigration(mg)
 	accesscontrol.AddAdminOnlyMigration(mg)
 	accesscontrol.AddSeedAssignmentMigrations(mg)
+	accesscontrol.AddManagedFolderAlertActionsRepeatFixedMigration(mg)
+
+	AddExternalAlertmanagerToDatasourceMigration(mg)
+
+	addFolderMigrations(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {

@@ -10,6 +10,7 @@ import {
   DataQuery,
   DataSourceApi,
   DataSourceInstanceSettings,
+  DataSourcePluginContextProvider,
   EventBusExtended,
   EventBusSrv,
   HistoryItem,
@@ -21,7 +22,7 @@ import {
   toLegacyResponseData,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { AngularComponent, getAngularLoader } from '@grafana/runtime';
+import { AngularComponent, getAngularLoader, getDataSourceSrv } from '@grafana/runtime';
 import { Badge, ErrorBoundaryAlert, HorizontalGroup } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
 import { QueryOperationAction } from 'app/core/components/QueryOperationRow/QueryOperationAction';
@@ -32,7 +33,6 @@ import {
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { RowActionComponents } from './QueryActionComponent';
 import { QueryEditorRowHeader } from './QueryEditorRowHeader';
@@ -63,8 +63,10 @@ interface Props<TQuery extends DataQuery> {
 }
 
 interface State<TQuery extends DataQuery> {
+  /** DatasourceUid or ds variable expression used to resolve current datasource */
   loadedDataSourceIdentifier?: string | null;
   datasource: DataSourceApi<TQuery> | null;
+  datasourceUid?: string | null;
   hasTextEditMode: boolean;
   data?: PanelData;
   isOpen?: boolean;
@@ -140,7 +142,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   }
 
   async loadDatasource() {
-    const dataSourceSrv = getDatasourceSrv();
+    const dataSourceSrv = getDataSourceSrv();
     let datasource: DataSourceApi;
     const dataSourceIdentifier = this.getQueryDataSourceIdentifier();
 
@@ -238,9 +240,19 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     }
   }
 
+  isWaitingForDatasourceToLoad(): boolean {
+    // if we not yet have loaded the datasource in state the
+    // ds in props and the ds in state will have different values.
+    return this.props.dataSource.uid !== this.state.loadedDataSourceIdentifier;
+  }
+
   renderPluginEditor = () => {
     const { query, onChange, queries, onRunQuery, onAddQuery, app = CoreApp.PanelEditor, history } = this.props;
     const { datasource, data } = this.state;
+
+    if (this.isWaitingForDatasourceToLoad()) {
+      return null;
+    }
 
     if (datasource?.components?.QueryCtrl) {
       return <div ref={(element) => (this.element = element)} />;
@@ -251,19 +263,21 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
       if (QueryEditor) {
         return (
-          <QueryEditor
-            key={datasource?.name}
-            query={query}
-            datasource={datasource}
-            onChange={onChange}
-            onRunQuery={onRunQuery}
-            onAddQuery={onAddQuery}
-            data={data}
-            range={getTimeSrv().timeRange()}
-            queries={queries}
-            app={app}
-            history={history}
-          />
+          <DataSourcePluginContextProvider instanceSettings={this.props.dataSource}>
+            <QueryEditor
+              key={datasource?.name}
+              query={query}
+              datasource={datasource}
+              onChange={onChange}
+              onRunQuery={onRunQuery}
+              onAddQuery={onAddQuery}
+              data={data}
+              range={getTimeSrv().timeRange()}
+              queries={queries}
+              app={app}
+              history={history}
+            />
+          </DataSourcePluginContextProvider>
         );
       }
     }
@@ -318,6 +332,10 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   };
 
   onClickExample = (query: TQuery) => {
+    if (query.datasource === undefined) {
+      query.datasource = { type: this.props.dataSource.type, uid: this.props.dataSource.uid };
+    }
+
     this.props.onChange({
       ...query,
       refId: this.props.query.refId,
@@ -472,7 +490,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const DatasourceCheatsheet = datasource.components?.QueryEditorHelp;
 
     return (
-      <div aria-label={selectors.components.QueryEditorRows.rows}>
+      <div data-testid="query-editor-row" aria-label={selectors.components.QueryEditorRows.rows}>
         <QueryOperationRow
           id={this.id}
           draggable={true}
@@ -550,10 +568,12 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
   // Only say this is an error if the error links to the query
   let state = data.state;
   const error = data.error && data.error.refId === refId ? data.error : undefined;
-  if (error) {
-    state = LoadingState.Error;
-  } else if (!error && data.state === LoadingState.Error) {
-    state = LoadingState.Done;
+  if (state !== LoadingState.Loading) {
+    if (error) {
+      state = LoadingState.Error;
+    } else if (data.state === LoadingState.Error) {
+      state = LoadingState.Done;
+    }
   }
 
   const timeRange = data.timeRange;

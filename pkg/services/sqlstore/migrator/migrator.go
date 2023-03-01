@@ -251,7 +251,7 @@ func (mg *Migrator) InTransaction(callback dbTransactionFunc) error {
 }
 
 func casRestoreOnErr(lock *atomic.Bool, o, n bool, casErr error, f func(LockCfg) error, lockCfg LockCfg) error {
-	if !lock.CAS(o, n) {
+	if !lock.CompareAndSwap(o, n) {
 		return casErr
 	}
 	if err := f(lockCfg); err != nil {

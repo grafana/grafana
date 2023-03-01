@@ -6,11 +6,12 @@ import (
 	"os"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestValues(t *testing.T) {
@@ -39,21 +40,23 @@ func TestValues(t *testing.T) {
 			type Data struct {
 				Val IntValue `yaml:"val"`
 			}
-			d := &Data{}
-
 			t.Run("Should unmarshal simple number", func(t *testing.T) {
+				d := &Data{}
+
 				unmarshalingTest(t, `val: 1`, d)
 				require.Equal(t, d.Val.Value(), 1)
 				require.Equal(t, d.Val.Raw, "1")
 			})
 
 			t.Run("Should unmarshal env var", func(t *testing.T) {
+				d := &Data{}
 				unmarshalingTest(t, `val: $INT`, d)
 				require.Equal(t, d.Val.Value(), 1)
 				require.Equal(t, d.Val.Raw, "$INT")
 			})
 
 			t.Run("Should ignore empty value", func(t *testing.T) {
+				d := &Data{}
 				unmarshalingTest(t, `val: `, d)
 				require.Equal(t, d.Val.Value(), 0)
 				require.Equal(t, d.Val.Raw, "")
@@ -64,39 +67,43 @@ func TestValues(t *testing.T) {
 			type Data struct {
 				Val StringValue `yaml:"val"`
 			}
-			d := &Data{}
-
 			t.Run("Should unmarshal simple string", func(t *testing.T) {
+				d := &Data{}
 				unmarshalingTest(t, `val: test`, d)
 				require.Equal(t, d.Val.Value(), "test")
 				require.Equal(t, d.Val.Raw, "test")
 			})
 
 			t.Run("Should unmarshal env var", func(t *testing.T) {
+				d := &Data{}
 				unmarshalingTest(t, `val: $STRING`, d)
 				require.Equal(t, d.Val.Value(), "test")
 				require.Equal(t, d.Val.Raw, "$STRING")
 			})
 
 			t.Run("Should ignore empty value", func(t *testing.T) {
+				d := &Data{}
 				unmarshalingTest(t, `val: `, d)
 				require.Equal(t, d.Val.Value(), "")
 				require.Equal(t, d.Val.Raw, "")
 			})
 
 			t.Run("empty var should have empty value", func(t *testing.T) {
+				d := &Data{}
 				unmarshalingTest(t, `val: $EMPTYSTRING`, d)
 				require.Equal(t, d.Val.Value(), "")
 				require.Equal(t, d.Val.Raw, "$EMPTYSTRING")
 			})
 
 			t.Run("$$ should be a literal $", func(t *testing.T) {
+				d := &Data{}
 				unmarshalingTest(t, `val: $$`, d)
 				require.Equal(t, d.Val.Value(), "$")
 				require.Equal(t, d.Val.Raw, "$$")
 			})
 
 			t.Run("$$ should be a literal $ and not expanded within a string", func(t *testing.T) {
+				d := &Data{}
 				unmarshalingTest(t, `val: mY,Passwo$$rd`, d)
 				require.Equal(t, d.Val.Value(), "mY,Passwo$rd")
 				require.Equal(t, d.Val.Raw, "mY,Passwo$$rd")
@@ -107,27 +114,29 @@ func TestValues(t *testing.T) {
 			type Data struct {
 				Val BoolValue `yaml:"val"`
 			}
-			d := &Data{}
-
 			t.Run("Should unmarshal bool value", func(t *testing.T) {
+				d := &Data{}
 				unmarshalingTest(t, `val: true`, d)
 				require.True(t, d.Val.Value())
 				require.Equal(t, d.Val.Raw, "true")
 			})
 
 			t.Run("Should unmarshal explicit string", func(t *testing.T) {
+				d := &Data{}
 				unmarshalingTest(t, `val: "true"`, d)
 				require.True(t, d.Val.Value())
 				require.Equal(t, d.Val.Raw, "true")
 			})
 
 			t.Run("Should unmarshal env var", func(t *testing.T) {
+				d := &Data{}
 				unmarshalingTest(t, `val: $BOOL`, d)
 				require.True(t, d.Val.Value())
 				require.Equal(t, d.Val.Raw, "$BOOL")
 			})
 
 			t.Run("Should ignore empty value", func(t *testing.T) {
+				d := &Data{}
 				unmarshalingTest(t, `val: `, d)
 				require.False(t, d.Val.Value())
 				require.Equal(t, d.Val.Raw, "")
@@ -159,6 +168,7 @@ func TestValues(t *testing.T) {
                      Some text with $STRING
                    anchor: &label $INT
                    anchored: *label
+                   boolval: $BOOL
                `
 				unmarshalingTest(t, doc, d)
 
@@ -182,12 +192,13 @@ func TestValues(t *testing.T) {
 					},
 					"four": stringMap{
 						"nested": stringMap{
-							"onemore": "1",
+							"onemore": int64(1),
 						},
 					},
 					"multiline": "Some text with test\n",
-					"anchor":    "1",
-					"anchored":  "1",
+					"anchor":    int64(1),
+					"anchored":  int64(1),
+					"boolval":   true,
 				})
 
 				require.Equal(t, d.Val.Raw, stringMap{
@@ -215,6 +226,7 @@ func TestValues(t *testing.T) {
 					"multiline": "Some text with $STRING\n",
 					"anchor":    "$INT",
 					"anchored":  "$INT",
+					"boolval":   "$BOOL",
 				})
 			})
 		})
@@ -242,12 +254,12 @@ func TestValues(t *testing.T) {
 				require.Equal(t, []stringMap{
 					{
 						"interpolatedString": "test",
-						"interpolatedInt":    "1",
+						"interpolatedInt":    int64(1),
 						"string":             "just a string",
 					},
 					{
 						"interpolatedString": "test",
-						"interpolatedInt":    "1",
+						"interpolatedInt":    int64(1),
 						"string":             "just a string",
 					},
 				}, d.Val.Value())

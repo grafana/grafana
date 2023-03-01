@@ -1,6 +1,6 @@
 import { Action } from 'redux';
 
-import { Filter } from '../../../aggregations';
+import { Filter } from '../../../../../../types';
 import { defaultFilter } from '../utils';
 
 import { addFilter, changeFilter, removeFilter } from './actions';

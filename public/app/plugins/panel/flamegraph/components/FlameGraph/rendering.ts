@@ -1,3 +1,4 @@
+import { DisplayProcessor } from '@grafana/data';
 import { colors } from '@grafana/ui';
 
 import {
@@ -19,6 +20,7 @@ type RectData = {
   collapsed: boolean;
   ticks: number;
   label: string;
+  unitLabel: string;
 };
 
 /**
@@ -35,7 +37,8 @@ export function getRectDimensionsForLevel(
   levelIndex: number,
   totalTicks: number,
   rangeMin: number,
-  pixelsPerTick: number
+  pixelsPerTick: number,
+  processor: DisplayProcessor
 ): RectData[] {
   const coordinatesLevel = [];
   for (let barIndex = 0; barIndex < level.length; barIndex += 1) {
@@ -56,6 +59,9 @@ export function getRectDimensionsForLevel(
       }
     }
 
+    const displayValue = processor(item.value);
+    let unit = displayValue.suffix ? displayValue.text + displayValue.suffix : displayValue.text;
+
     const width = curBarTicks * pixelsPerTick - (collapsed ? 0 : BAR_BORDER_WIDTH * 2);
     coordinatesLevel.push({
       width,
@@ -65,6 +71,7 @@ export function getRectDimensionsForLevel(
       collapsed,
       ticks: curBarTicks,
       label: item.label,
+      unitLabel: unit,
     });
   }
   return coordinatesLevel;
@@ -78,7 +85,8 @@ export function renderRect(
   rangeMax: number,
   query: string,
   levelIndex: number,
-  topLevelIndex: number
+  topLevelIndex: number,
+  foundNames: Set<string>
 ) {
   if (rect.width < HIDE_THRESHOLD) {
     return;
@@ -93,18 +101,17 @@ export function renderRect(
   const l = 65 + 7 * intensity;
 
   const name = rect.label;
-  const queryResult = query && name.toLowerCase().includes(query.toLowerCase());
 
   if (!rect.collapsed) {
     ctx.stroke();
 
     if (query) {
-      ctx.fillStyle = queryResult ? getBarColor(h, l) : colors[55];
+      ctx.fillStyle = foundNames.has(name) ? getBarColor(h, l) : colors[55];
     } else {
       ctx.fillStyle = levelIndex > topLevelIndex - 1 ? getBarColor(h, l) : getBarColor(h, l + 15);
     }
   } else {
-    ctx.fillStyle = queryResult ? getBarColor(h, l) : colors[55];
+    ctx.fillStyle = foundNames.has(name) ? getBarColor(h, l) : colors[55];
   }
   ctx.fill();
 
@@ -112,7 +119,11 @@ export function renderRect(
     ctx.save();
     ctx.clip(); // so text does not overflow
     ctx.fillStyle = '#222';
-    ctx.fillText(`${name}`, Math.max(rect.x, 0) + BAR_TEXT_PADDING_LEFT, rect.y + PIXELS_PER_LEVEL / 2);
+    ctx.fillText(
+      `${name} (${rect.unitLabel})`,
+      Math.max(rect.x, 0) + BAR_TEXT_PADDING_LEFT,
+      rect.y + PIXELS_PER_LEVEL / 2
+    );
     ctx.restore();
   }
 }

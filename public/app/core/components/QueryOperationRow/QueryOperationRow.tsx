@@ -3,9 +3,9 @@ import React, { useCallback, useState } from 'react';
 import { Draggable } from 'react-beautiful-dnd';
 import { useUpdateEffect } from 'react-use';
 
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { ReactUtils, stylesFactory, useTheme } from '@grafana/ui';
+import { ReactUtils, useStyles2 } from '@grafana/ui';
 
 import { QueryOperationRowHeader } from './QueryOperationRowHeader';
 
@@ -45,8 +45,7 @@ export function QueryOperationRow({
   id,
 }: QueryOperationRowProps) {
   const [isContentVisible, setIsContentVisible] = useState(isOpen !== undefined ? isOpen : true);
-  const theme = useTheme();
-  const styles = getQueryOperationRowStyles(theme);
+  const styles = useStyles2(getQueryOperationRowStyles);
   const onRowToggle = useCallback(() => {
     setIsContentVisible(!isContentVisible);
   }, [isContentVisible, setIsContentVisible]);
@@ -91,7 +90,6 @@ export function QueryOperationRow({
     },
   };
 
-  const titleElement = title && ReactUtils.renderOrCallToRender(title, renderPropArgs);
   const actionsElement = actions && ReactUtils.renderOrCallToRender(actions, renderPropArgs);
   const headerElementRendered = headerElement && ReactUtils.renderOrCallToRender(headerElement, renderPropArgs);
 
@@ -113,7 +111,7 @@ export function QueryOperationRow({
                     isContentVisible={isContentVisible}
                     onRowToggle={onRowToggle}
                     reportDragMousePosition={reportDragMousePosition}
-                    titleElement={titleElement}
+                    title={title}
                   />
                 </div>
                 {isContentVisible && <div className={styles.content}>{children}</div>}
@@ -136,23 +134,23 @@ export function QueryOperationRow({
         isContentVisible={isContentVisible}
         onRowToggle={onRowToggle}
         reportDragMousePosition={reportDragMousePosition}
-        titleElement={titleElement}
+        title={title}
       />
       {isContentVisible && <div className={styles.content}>{children}</div>}
     </div>
   );
 }
 
-const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
+const getQueryOperationRowStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css`
-      margin-bottom: ${theme.spacing.md};
+      margin-bottom: ${theme.spacing(2)};
     `,
     content: css`
-      margin-top: ${theme.spacing.inlineFormMargin};
-      margin-left: ${theme.spacing.lg};
+      margin-top: ${theme.spacing(0.5)};
+      margin-left: ${theme.spacing(3)};
     `,
   };
-});
+};
 
 QueryOperationRow.displayName = 'QueryOperationRow';

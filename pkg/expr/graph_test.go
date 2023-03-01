@@ -32,8 +32,9 @@ func TestServicebuildPipeLine(t *testing.T) {
 					{
 						RefID: "B",
 						DataSource: &datasources.DataSource{
-							Uid: "Fake",
+							UID: "Fake",
 						},
+						TimeRange: AbsoluteTimeRange{},
 					},
 				},
 			},
@@ -142,8 +143,9 @@ func TestServicebuildPipeLine(t *testing.T) {
 					{
 						RefID: "C",
 						DataSource: &datasources.DataSource{
-							Uid: "Fake",
+							UID: "Fake",
 						},
+						TimeRange: AbsoluteTimeRange{},
 					},
 				},
 			},
@@ -196,8 +198,9 @@ func TestServicebuildPipeLine(t *testing.T) {
 					{
 						RefID: "C",
 						DataSource: &datasources.DataSource{
-							Uid: "Fake",
+							UID: "Fake",
 						},
+						TimeRange: AbsoluteTimeRange{},
 					},
 				},
 			},
@@ -219,8 +222,9 @@ func TestServicebuildPipeLine(t *testing.T) {
 					{
 						RefID: "B",
 						DataSource: &datasources.DataSource{
-							Uid: "Fake",
+							UID: "Fake",
 						},
+						TimeRange: AbsoluteTimeRange{},
 					},
 				},
 			},

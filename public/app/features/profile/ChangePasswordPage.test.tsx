@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import config from 'app/core/config';
 
@@ -38,7 +39,11 @@ async function getTestContext(overrides: Partial<Props> = {}) {
   });
 
   const props = { ...defaultProps, ...overrides };
-  const { rerender } = render(<ChangePasswordPage {...props} />);
+  const { rerender } = render(
+    <TestProvider>
+      <ChangePasswordPage {...props} />
+    </TestProvider>
+  );
 
   await waitFor(() => expect(props.loadUser).toHaveBeenCalledTimes(1));
 

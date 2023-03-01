@@ -5,7 +5,7 @@ import { CollapsableSection, TagsInput, Select, Field, Input, Checkbox, Button, 
 
 import { DashboardLink, DashboardModel } from '../../state/DashboardModel';
 
-export const newLink = {
+export const newLink: DashboardLink = {
   icon: 'external link',
   title: 'New link',
   tooltip: '',
@@ -16,7 +16,7 @@ export const newLink = {
   targetBlank: false,
   keepTime: false,
   includeVars: false,
-} as DashboardLink;
+};
 
 const linkTypeOptions = [
   { value: 'dashboards', label: 'Dashboards' },

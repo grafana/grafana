@@ -2,14 +2,12 @@ import React from 'react';
 
 import { Page } from 'app/core/components/Page/Page';
 
-import { ListPublicDashboardTable } from './components/PublicDashboardListTable';
+import { PublicDashboardListTable } from './components/PublicDashboardListTable/PublicDashboardListTable';
 
 export const ListPublicDashboardPage = ({}) => {
   return (
     <Page navId="dashboards/public">
-      <Page.Contents>
-        <ListPublicDashboardTable />
-      </Page.Contents>
+      <PublicDashboardListTable />
     </Page>
   );
 };

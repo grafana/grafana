@@ -36,7 +36,7 @@ export default function resetSelectStyles(theme: GrafanaTheme2) {
     option: () => ({}),
     placeholder: (originalStyles: CSSObjectWithLabel): CSSObjectWithLabel => ({
       ...originalStyles,
-      color: theme.colors.text.disabled,
+      color: theme.colors.text.secondary,
     }),
     singleValue: () => ({}),
     valueContainer: () => ({}),

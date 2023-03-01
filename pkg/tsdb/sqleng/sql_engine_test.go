@@ -9,10 +9,11 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/xorcare/pointer"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 func TestSQLEngine(t *testing.T) {
@@ -406,7 +407,7 @@ func TestSQLEngine(t *testing.T) {
 				log:                    log.New("test"),
 				queryResultTransformer: transformer,
 			}
-			resultErr := dp.transformQueryError(tc.err)
+			resultErr := dp.TransformQueryError(dp.log, tc.err)
 			assert.ErrorIs(t, resultErr, tc.expectedErr)
 			assert.Equal(t, tc.expectQueryResultTransformerWasCalled, transformer.transformQueryErrorWasCalled)
 		}
@@ -417,7 +418,7 @@ type testQueryResultTransformer struct {
 	transformQueryErrorWasCalled bool
 }
 
-func (t *testQueryResultTransformer) TransformQueryError(err error) error {
+func (t *testQueryResultTransformer) TransformQueryError(_ log.Logger, err error) error {
 	t.transformQueryErrorWasCalled = true
 	return err
 }

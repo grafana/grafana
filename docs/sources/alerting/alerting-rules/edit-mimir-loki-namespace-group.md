@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/alerting-rules/edit-mimir-loki-namespace-group/
-  - /docs/grafana/latest/alerting/unified-alerting/alerting-rules/edit-cortex-loki-namespace-group/
-  - /docs/grafana/latest/alerting/unified-alerting/alerting-rules/edit-mimir-loki-namespace-group/
+  - ../unified-alerting/alerting-rules/edit-cortex-loki-namespace-group/
+  - ../unified-alerting/alerting-rules/edit-mimir-loki-namespace-group/
 description: Edit Grafana Mimir or Loki rule groups and namespaces
 keywords:
   - grafana
@@ -39,7 +38,7 @@ A new namespace is created and all groups are copied into this namespace from th
 
 The rules within a group are run sequentially at a regular interval, the default interval is one (1) minute. You can modify this interval using the following instructions.
 
-1. n the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page listing existing alerts.
+1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page listing existing alerts.
 1. Find a Grafana Mimir or Loki managed rule with the group you want to edit.
 1. Click **Edit** (pen) icon.
 1. Modify the **Rule group** and **Rule group evaluation interval** information as necessary.

@@ -1,8 +1,8 @@
 import { e2e } from '@grafana/e2e';
 
 e2e.scenario({
-  describeName: 'Create a public dashboard with template variables is disabled',
-  itName: 'Create a public dashboard with template variables is disabled',
+  describeName: 'Create a public dashboard with template variables shows a template variable warning',
+  itName: 'Create a public dashboard with template variables shows a template variable warning',
   addScenarioDataSource: false,
   addScenarioDashBoard: false,
   skipScenario: false,
@@ -14,18 +14,17 @@ e2e.scenario({
     e2e.pages.ShareDashboardModal.shareButton().click();
 
     // Select public dashboards tab
-    e2e().intercept('GET', '/api/dashboards/uid/HYaGDGIMk/public-config').as('query-public-config');
     e2e.pages.ShareDashboardModal.PublicDashboard.Tab().click();
-    e2e().wait('@query-public-config');
 
     // Warning Alert dashboard cannot be made public because it has template variables
     e2e.pages.ShareDashboardModal.PublicDashboard.TemplateVariablesWarningAlert().should('be.visible');
 
     // Configuration elements for public dashboards should not exist
-    e2e.pages.ShareDashboardModal.PublicDashboard.WillBePublicCheckbox().should('not.exist');
-    e2e.pages.ShareDashboardModal.PublicDashboard.LimitedDSCheckbox().should('not.exist');
-    e2e.pages.ShareDashboardModal.PublicDashboard.CostIncreaseCheckbox().should('not.exist');
-    e2e.pages.ShareDashboardModal.PublicDashboard.EnableSwitch().should('not.exist');
-    e2e.pages.ShareDashboardModal.PublicDashboard.SaveConfigButton().should('not.exist');
+    e2e.pages.ShareDashboardModal.PublicDashboard.WillBePublicCheckbox().should('exist');
+    e2e.pages.ShareDashboardModal.PublicDashboard.LimitedDSCheckbox().should('exist');
+    e2e.pages.ShareDashboardModal.PublicDashboard.CostIncreaseCheckbox().should('exist');
+    e2e.pages.ShareDashboardModal.PublicDashboard.CreateButton().should('exist');
+
+    e2e.pages.ShareDashboardModal.PublicDashboard.PauseSwitch().should('not.exist');
   },
 });

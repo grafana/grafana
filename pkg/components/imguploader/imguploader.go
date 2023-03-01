@@ -110,8 +110,10 @@ func NewImageUploader() (ImageUploader, error) {
 		account_name := azureBlobSec.Key("account_name").MustString("")
 		account_key := azureBlobSec.Key("account_key").MustString("")
 		container_name := azureBlobSec.Key("container_name").MustString("")
+		sas_token_expiration_days := azureBlobSec.Key("sas_token_expiration_days").MustInt(-1)
 
-		return NewAzureBlobUploader(account_name, account_key, container_name), nil
+		return NewAzureBlobUploader(account_name, account_key, container_name, sas_token_expiration_days), nil
+
 	case "local":
 		return NewLocalImageUploader()
 	}

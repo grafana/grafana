@@ -15,8 +15,6 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
   alignment?: 'left' | 'right';
 }
 
-const OVERFLOW_BUTTON_ID = 'overflow-button';
-
 export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(
   ({ alignment = 'left', className, children, ...rest }, ref) => {
     // null is a valid react child so we need to filter it out to prevent unnecessary padding
@@ -24,9 +22,15 @@ export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(
     const [childVisibility, setChildVisibility] = useState<boolean[]>(Array(childrenWithoutNull.length).fill(true));
     const containerRef = useRef<HTMLDivElement>(null);
     const [showOverflowItems, setShowOverflowItems] = useState(false);
+    const overflowRef = useRef<HTMLDivElement>(null);
     const overflowItemsRef = createRef<HTMLDivElement>();
     const { overlayProps } = useOverlay(
-      { onClose: () => setShowOverflowItems(false), isDismissable: true, isOpen: showOverflowItems },
+      {
+        onClose: () => setShowOverflowItems(false),
+        isDismissable: true,
+        isOpen: showOverflowItems,
+        shouldCloseOnInteractOutside: (element: Element) => !overflowRef.current?.contains(element),
+      },
       overflowItemsRef
     );
     const { dialogProps } = useDialog({}, overflowItemsRef);
@@ -56,7 +60,7 @@ export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(
       if (containerRef.current) {
         Array.from(containerRef.current.children).forEach((item) => {
           // don't observe the overflow button
-          if (item instanceof HTMLElement && item.dataset.testid !== OVERFLOW_BUTTON_ID) {
+          if (item instanceof HTMLElement && item !== overflowRef.current) {
             intersectionObserver.observe(item);
           }
         });
@@ -76,7 +80,7 @@ export const ToolbarButtonRow = forwardRef<HTMLDivElement, Props>(
           </div>
         ))}
         {childVisibility.includes(false) && (
-          <div data-testid={OVERFLOW_BUTTON_ID} className={styles.overflowButton}>
+          <div ref={overflowRef} className={styles.overflowButton}>
             <ToolbarButton
               variant={showOverflowItems ? 'active' : 'default'}
               tooltip="Show more items"

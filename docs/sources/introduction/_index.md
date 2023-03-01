@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/guides/what-is-grafana/
-  - /docs/grafana/latest/introduction/
-  - /docs/grafana/latest/introduction/oss-details/
+  - guides/what-is-grafana/
+  - oss-details/
 title: Introduction to Grafana
 weight: 5
 ---
@@ -21,7 +20,7 @@ Explore your data through ad-hoc queries and dynamic drilldown. Split view and c
 
 ## Alerts
 
-If you're using Grafana Alerting, then you can have alerts sent through a number of different [alert notifiers]({{< relref "../alerting/contact-points/_index.md#list-of-notifiers-supported-by-grafana" >}}), including PagerDuty, SMS, email, VictorOps, OpsGenie, or Slack.
+If you're using Grafana Alerting, then you can have alerts sent through a number of different alert notifiers, including PagerDuty, SMS, email, VictorOps, OpsGenie, or Slack.
 
 Alert hooks allow you to create different notifiers with a bit of code if you prefer some other channels of communication. Visually define [alert rules]({{< relref "../alerting/alerting-rules/" >}}) for your most important metrics.
 
@@ -51,7 +50,7 @@ Discover hundreds of [dashboards](https://grafana.com/grafana/dashboards) and [p
 
 Grafana supports different authentication methods, such as LDAP and OAuth, and allows you to map users to organizations. Refer to the [User authentication overview]({{< relref "../setup-grafana/configure-security/configure-authentication/" >}}) for more information.
 
-In Grafana Enterprise, you can also map users to teams: If your company has its own authentication system, Grafana allows you to map the teams in your internal systems to teams in Grafana. That way, you can automatically give people access to the dashboards designated for their teams. Refer to [Grafana Enterprise]({{< relref "../enterprise/_index.md" >}}) for more information.
+In Grafana Enterprise, you can also map users to teams: If your company has its own authentication system, Grafana allows you to map the teams in your internal systems to teams in Grafana. That way, you can automatically give people access to the dashboards designated for their teams. Refer to [Grafana Enterprise]({{< relref "./grafana-enterprise" >}}) for more information.
 
 ## Provisioning
 
@@ -61,7 +60,7 @@ For example, if you're spinning up a new Kubernetes cluster, you can also spin u
 
 ## Permissions
 
-When organizations have one Grafana and multiple teams, they often want the ability to both keep things separate and share dashboards. You can create a team of users and then set permissions on [folders and dashboards]({{< relref "../administration/user-management/manage-dashboard-permissions/" >}}), and down to the [data source level]({{< relref "../administration/data-source-management#data-source-permissions" >}}) if you're using [Grafana Enterprise]({{< relref "../enterprise/" >}}).
+When organizations have one Grafana and multiple teams, they often want the ability to both keep things separate and share dashboards. You can create a team of users and then set permissions on [folders and dashboards]({{< relref "../administration/user-management/manage-dashboard-permissions/" >}}), and down to the [data source level]({{< relref "../administration/data-source-management#data-source-permissions" >}}) if you're using [Grafana Enterprise]({{< relref "./grafana-enterprise" >}}).
 
 ## Other Grafana Labs OSS Projects
 

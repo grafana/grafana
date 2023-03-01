@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { noop } from 'lodash';
 import React from 'react';
 
-import { GrafanaTheme } from '@grafana/data';
-import { Icon, IconButton, useStyles } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Icon, IconButton, useStyles2 } from '@grafana/ui';
 
 type VersionHistoryHeaderProps = {
   onClick?: () => void;
@@ -18,7 +18,7 @@ export const VersionHistoryHeader: React.FC<VersionHistoryHeaderProps> = ({
   newVersion = 0,
   isNewLatest = false,
 }) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   return (
     <h3 className={styles.header}>
@@ -31,11 +31,11 @@ export const VersionHistoryHeader: React.FC<VersionHistoryHeaderProps> = ({
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   header: css`
-    font-size: ${theme.typography.heading.h3};
+    font-size: ${theme.typography.h3.fontSize};
     display: flex;
-    gap: ${theme.spacing.md};
-    margin-bottom: ${theme.spacing.lg};
+    gap: ${theme.spacing(2)};
+    margin-bottom: ${theme.spacing(3)};
   `,
 });

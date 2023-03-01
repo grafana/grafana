@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/benbjohnson/clock"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,12 +21,18 @@ func TestImage_ExtendDuration(t *testing.T) {
 }
 
 func TestImage_HasExpired(t *testing.T) {
+	oldTimeNow := timeNow
+	timeNow = clock.NewMock().Now
+	t.Cleanup(func() {
+		timeNow = oldTimeNow
+	})
+
 	var i Image
-	i.ExpiresAt = time.Now().Add(time.Minute)
+	i.ExpiresAt = timeNow().Add(time.Minute)
 	assert.False(t, i.HasExpired())
-	i.ExpiresAt = time.Now()
-	assert.True(t, i.HasExpired())
-	i.ExpiresAt = time.Now().Add(-time.Minute)
+	i.ExpiresAt = timeNow()
+	assert.False(t, i.HasExpired())
+	i.ExpiresAt = timeNow().Add(-time.Minute)
 	assert.True(t, i.HasExpired())
 }
 

@@ -144,7 +144,8 @@ export class GraphCtrl extends MetricsPanelCtrl {
     },
   };
 
-  /** @ngInject */
+  static $inject = ['$scope', '$injector'];
+
   constructor($scope: any, $injector: auto.IInjectorService) {
     super($scope, $injector);
 
@@ -297,7 +298,7 @@ export class GraphCtrl extends MetricsPanelCtrl {
   }
 
   onColorChange = (series: any, color: string) => {
-    series.setColor(config.theme.visualization.getColorByName(color));
+    series.setColor(config.theme2.visualization.getColorByName(color));
     this.panel.aliasColors[series.alias] = color;
     this.render();
   };

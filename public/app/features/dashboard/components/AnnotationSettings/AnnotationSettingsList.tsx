@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 import { arrayUtils, AnnotationQuery } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-import { DeleteButton, Icon, IconButton, VerticalGroup } from '@grafana/ui';
+import { Button, DeleteButton, IconButton, VerticalGroup } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
 
 import { DashboardModel } from '../../state/DashboardModel';
@@ -33,7 +33,7 @@ export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
     if (anno.enable === false) {
       return (
         <>
-          <Icon name="times" /> &nbsp;<em className="muted">(Disabled) &nbsp; {anno.name}</em>
+          <em className="muted">(Disabled) &nbsp; {anno.name}</em>
         </>
       );
     }
@@ -41,23 +41,19 @@ export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
     if (anno.builtIn) {
       return (
         <>
-          <Icon name="comment-alt" /> &nbsp;<em className="muted">{anno.name} (Built-in)</em>
+          <em className="muted">{anno.name} &nbsp; (Built-in)</em>
         </>
       );
     }
 
-    return (
-      <>
-        <Icon name="comment-alt" /> &nbsp;{anno.name}
-      </>
-    );
+    return <>{anno.name}</>;
   };
 
   const dataSourceSrv = getDataSourceSrv();
   return (
     <VerticalGroup>
       {annotations.length > 0 && (
-        <table className="filter-table filter-table--hover">
+        <table role="grid" className="filter-table filter-table--hover">
           <thead>
             <tr>
               <th>Query name</th>
@@ -69,26 +65,30 @@ export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
             {dashboard.annotations.list.map((annotation, idx) => (
               <tr key={`${annotation.name}-${idx}`}>
                 {annotation.builtIn ? (
-                  <td style={{ width: '90%' }} className="pointer" onClick={() => onEdit(idx)}>
-                    {getAnnotationName(annotation)}
+                  <td role="gridcell" style={{ width: '90%' }} className="pointer" onClick={() => onEdit(idx)}>
+                    <Button size="sm" fill="text" variant="secondary">
+                      {getAnnotationName(annotation)}
+                    </Button>
                   </td>
                 ) : (
-                  <td className="pointer" onClick={() => onEdit(idx)}>
-                    {getAnnotationName(annotation)}
+                  <td role="gridcell" className="pointer" onClick={() => onEdit(idx)}>
+                    <Button size="sm" fill="text" variant="secondary">
+                      {getAnnotationName(annotation)}
+                    </Button>
                   </td>
                 )}
-                <td className="pointer" onClick={() => onEdit(idx)}>
+                <td role="gridcell" className="pointer" onClick={() => onEdit(idx)}>
                   {dataSourceSrv.getInstanceSettings(annotation.datasource)?.name || annotation.datasource?.uid}
                 </td>
-                <td style={{ width: '1%' }}>
+                <td role="gridcell" style={{ width: '1%' }}>
                   {idx !== 0 && <IconButton name="arrow-up" aria-label="arrow-up" onClick={() => onMove(idx, -1)} />}
                 </td>
-                <td style={{ width: '1%' }}>
+                <td role="gridcell" style={{ width: '1%' }}>
                   {dashboard.annotations.list.length > 1 && idx !== dashboard.annotations.list.length - 1 ? (
                     <IconButton name="arrow-down" aria-label="arrow-down" onClick={() => onMove(idx, 1)} />
                   ) : null}
                 </td>
-                <td style={{ width: '1%' }}>
+                <td role="gridcell" style={{ width: '1%' }}>
                   {!annotation.builtIn && (
                     <DeleteButton
                       size="sm"

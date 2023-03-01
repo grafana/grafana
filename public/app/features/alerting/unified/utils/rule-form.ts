@@ -1,5 +1,8 @@
 import {
+  CoreApp,
   DataQuery,
+  DataSourceApi,
+  DataSourceJsonData,
   DataSourceRef,
   getDefaultRelativeTimeRange,
   IntervalValues,
@@ -14,8 +17,10 @@ import { getNextRefIdChar } from 'app/core/utils/query';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { ExpressionDatasourceUID } from 'app/features/expressions/ExpressionDatasource';
 import { ExpressionQuery, ExpressionQueryType } from 'app/features/expressions/types';
+import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
+  AlertDataQuery,
   AlertQuery,
   Annotations,
   GrafanaAlertStateDecision,
@@ -27,6 +32,7 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { EvalFunction } from '../../state/alertDef';
+import { MINUTE } from '../components/rule-editor/AlertRuleForm';
 import { RuleFormType, RuleFormValues } from '../types/rule-form';
 
 import { getRulesAccess } from './access-control';
@@ -57,8 +63,8 @@ export const getDefaultFormValues = (): RuleFormValues => {
     condition: '',
     noDataState: GrafanaAlertStateDecision.NoData,
     execErrState: GrafanaAlertStateDecision.Error,
-    evaluateEvery: '1m',
     evaluateFor: '5m',
+    evaluateEvery: MINUTE,
 
     // cortex / loki
     namespace: '',
@@ -93,7 +99,7 @@ function listifyLabelsOrAnnotations(item: Labels | Annotations | undefined): Arr
 }
 
 export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): PostableRuleGrafanaRuleDTO {
-  const { name, condition, noDataState, execErrState, evaluateFor, queries } = values;
+  const { name, condition, noDataState, execErrState, evaluateFor, queries, isPaused } = values;
   if (condition) {
     return {
       grafana_alert: {
@@ -101,7 +107,8 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
         condition,
         no_data_state: noDataState,
         exec_err_state: execErrState,
-        data: queries,
+        data: queries.map(fixBothInstantAndRangeQuery),
+        is_paused: Boolean(isPaused),
       },
       for: evaluateFor,
       annotations: arrayToRecord(values.annotations || []),
@@ -123,8 +130,8 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         name: ga.title,
         type: RuleFormType.grafana,
         group: group.name,
-        evaluateFor: rule.for || '0',
         evaluateEvery: group.interval || defaultFormValues.evaluateEvery,
+        evaluateFor: rule.for || '0',
         noDataState: ga.no_data_state,
         execErrState: ga.exec_err_state,
         queries: ga.data,
@@ -132,6 +139,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         annotations: listifyLabelsOrAnnotations(rule.annotations),
         labels: listifyLabelsOrAnnotations(rule.labels),
         folder: { title: namespace, id: ga.namespace_id },
+        isPaused: ga.is_paused,
       };
     } else {
       throw new Error('Unexpected type of rule for grafana rules source');
@@ -194,9 +202,46 @@ export function recordingRulerRuleToRuleForm(
   };
 }
 
-export const getDefaultQueries = (): AlertQuery[] => {
+export const getDefaultQueriesAsync = async (): Promise<{
+  queries: AlertQuery[] | null;
+  ds?: DataSourceApi<DataQuery, DataSourceJsonData, {}>;
+}> => {
   const dataSource = getDefaultOrFirstCompatibleDataSource();
 
+  if (!dataSource) {
+    return { queries: [...getDefaultExpressions('A', 'B')] };
+  }
+  const relativeTimeRange = getDefaultRelativeTimeRange();
+
+  let ds;
+  try {
+    ds = await getDataSourceSrv().get(dataSource.uid);
+  } catch (error) {
+    return { queries: [...getDefaultExpressions('A', 'B')] };
+  }
+
+  return {
+    queries: [
+      {
+        refId: 'A',
+        datasourceUid: dataSource.uid,
+        queryType: '',
+        relativeTimeRange,
+        model: {
+          refId: 'A',
+          hide: false,
+          ...ds?.getDefaultQuery?.(CoreApp.UnifiedAlerting),
+        },
+      },
+      ...getDefaultExpressions('B', 'C'),
+    ],
+    ds: ds,
+  };
+};
+
+// Needed to init default queries before the async call
+export const getInitialDefaultQueries = (): AlertQuery[] => {
+  const dataSource = getDefaultOrFirstCompatibleDataSource();
   if (!dataSource) {
     return [...getDefaultExpressions('A', 'B')];
   }
@@ -213,7 +258,6 @@ export const getDefaultQueries = (): AlertQuery[] => {
         hide: false,
       },
     },
-    ...getDefaultExpressions('B', 'C'),
   ];
 };
 
@@ -430,4 +474,23 @@ export function getIntervals(range: TimeRange, lowLimit?: string, resolution?: n
   }
 
   return rangeUtil.calculateInterval(range, resolution, lowLimit);
+}
+
+export function fixBothInstantAndRangeQuery(query: AlertQuery) {
+  const model = query.model;
+
+  if (!isPromQuery(model)) {
+    return query;
+  }
+
+  const isBothInstantAndRange = model.instant && model.range;
+  if (isBothInstantAndRange) {
+    return { ...query, model: { ...model, range: true, instant: false } };
+  }
+
+  return query;
+}
+
+function isPromQuery(model: AlertDataQuery): model is PromQuery {
+  return 'expr' in model && 'instant' in model && 'range' in model;
 }

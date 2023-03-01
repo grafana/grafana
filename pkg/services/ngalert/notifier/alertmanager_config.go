@@ -129,7 +129,7 @@ func (moa *MultiOrgAlertmanager) mergeProvenance(ctx context.Context, config def
 		if err != nil {
 			return definitions.GettableUserConfig{}, err
 		}
-		config.AlertmanagerConfig.Route.Provenance = provenance
+		config.AlertmanagerConfig.Route.Provenance = definitions.Provenance(provenance)
 	}
 
 	cp := definitions.EmbeddedContactPoint{}
@@ -140,24 +140,30 @@ func (moa *MultiOrgAlertmanager) mergeProvenance(ctx context.Context, config def
 	for _, receiver := range config.AlertmanagerConfig.Receivers {
 		for _, contactPoint := range receiver.GrafanaManagedReceivers {
 			if provenance, exists := cpProvs[contactPoint.UID]; exists {
-				contactPoint.Provenance = provenance
+				contactPoint.Provenance = definitions.Provenance(provenance)
 			}
 		}
 	}
 
-	tmpl := definitions.MessageTemplate{}
+	tmpl := definitions.NotificationTemplate{}
 	tmplProvs, err := moa.ProvStore.GetProvenances(ctx, org, tmpl.ResourceType())
 	if err != nil {
 		return definitions.GettableUserConfig{}, nil
 	}
-	config.TemplateFileProvenances = tmplProvs
+	config.TemplateFileProvenances = make(map[string]definitions.Provenance, len(tmplProvs))
+	for key, provenance := range tmplProvs {
+		config.TemplateFileProvenances[key] = definitions.Provenance(provenance)
+	}
 
 	mt := definitions.MuteTimeInterval{}
 	mtProvs, err := moa.ProvStore.GetProvenances(ctx, org, mt.ResourceType())
 	if err != nil {
 		return definitions.GettableUserConfig{}, nil
 	}
-	config.AlertmanagerConfig.MuteTimeProvenances = mtProvs
+	config.AlertmanagerConfig.MuteTimeProvenances = make(map[string]definitions.Provenance, len(mtProvs))
+	for key, provenance := range mtProvs {
+		config.AlertmanagerConfig.MuteTimeProvenances[key] = definitions.Provenance(provenance)
+	}
 
 	return config, nil
 }

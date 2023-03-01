@@ -4,7 +4,7 @@ Grafana uses the [i18next](https://www.i18next.com/) framework for managing tran
 
 ## tl;dr
 
-**Please note:** We do not currently accept contributions for translations. Please do not submit pull requests for grafana.json files - they will be rejected.
+**Please note:** We do not currently accept contributions for translations. Please do not submit pull requests translating grafana.json files - they will be rejected. We do accept contributions to mark up phrases for translation.
 
 - Use `<Trans i18nKey="search-results.panel-link">Go to {{ pageTitle }}</Trans>` in code to add a translatable phrase
 - Translations are stored in JSON files in `public/locales/{locale}/grafana.json`
@@ -30,7 +30,7 @@ const SearchTitle = ({ term }) => (
 
 Prefer using `<Trans />` for JSX children, and `t()` for props and other javascript usage.
 
-When translating in grafana-ui, import `<Trans />` and `t()` from `src/utils/i18n`.
+When translating in grafana-ui, use a relative path to import `<Trans />` and `t()` from `src/utils/i18n`.
 
 Note that our tooling must be able to statically analyse the code to extract the phrase, so the `i18nKey` can not be dynamic. e.g. the following will not work:
 

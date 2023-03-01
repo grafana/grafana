@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -25,12 +24,14 @@ func ProvideAuthInfoService(userProtectionService login.UserProtectionService, a
 		authInfoStore:         authInfoStore,
 		logger:                log.New("login.authinfo"),
 	}
-	usageStats.RegisterMetricsFunc(authInfoStore.CollectLoginStats)
+	// FIXME: disabled metrics until further notice
+	// query performance is slow for more than 20000 users
+	// usageStats.RegisterMetricsFunc(authInfoStore.CollectLoginStats)
 	return s
 }
 
-func (s *Implementation) LookupAndFix(ctx context.Context, query *models.GetUserByAuthInfoQuery) (bool, *user.User, *models.UserAuth, error) {
-	authQuery := &models.GetAuthInfoQuery{}
+func (s *Implementation) LookupAndFix(ctx context.Context, query *login.GetUserByAuthInfoQuery) (bool, *user.User, *login.UserAuth, error) {
+	authQuery := &login.GetAuthInfoQuery{}
 
 	// Try to find the user by auth module and id first
 	if query.AuthModule != "" && query.AuthId != "" {
@@ -47,7 +48,7 @@ func (s *Implementation) LookupAndFix(ctx context.Context, query *models.GetUser
 			if query.UserLookupParams.UserID != nil &&
 				*query.UserLookupParams.UserID != 0 &&
 				*query.UserLookupParams.UserID != authQuery.Result.UserId {
-				if err := s.authInfoStore.DeleteAuthInfo(ctx, &models.DeleteAuthInfoCommand{
+				if err := s.authInfoStore.DeleteAuthInfo(ctx, &login.DeleteAuthInfoCommand{
 					UserAuth: authQuery.Result,
 				}); err != nil {
 					s.logger.Error("Error removing user_auth entry", "error", err)
@@ -59,7 +60,7 @@ func (s *Implementation) LookupAndFix(ctx context.Context, query *models.GetUser
 				if err != nil {
 					if errors.Is(err, user.ErrUserNotFound) {
 						// if the user has been deleted then remove the entry
-						if errDel := s.authInfoStore.DeleteAuthInfo(ctx, &models.DeleteAuthInfoCommand{
+						if errDel := s.authInfoStore.DeleteAuthInfo(ctx, &login.DeleteAuthInfoCommand{
 							UserAuth: authQuery.Result,
 						}); errDel != nil {
 							s.logger.Error("Error removing user_auth entry", "error", errDel)
@@ -79,7 +80,7 @@ func (s *Implementation) LookupAndFix(ctx context.Context, query *models.GetUser
 	return false, nil, nil, user.ErrUserNotFound
 }
 
-func (s *Implementation) LookupByOneOf(ctx context.Context, params *models.UserLookupParams) (*user.User, error) {
+func (s *Implementation) LookupByOneOf(ctx context.Context, params *login.UserLookupParams) (*user.User, error) {
 	var usr *user.User
 	var err error
 
@@ -114,9 +115,9 @@ func (s *Implementation) LookupByOneOf(ctx context.Context, params *models.UserL
 	return usr, nil
 }
 
-func (s *Implementation) GenericOAuthLookup(ctx context.Context, authModule string, authId string, userID int64) (*models.UserAuth, error) {
+func (s *Implementation) GenericOAuthLookup(ctx context.Context, authModule string, authId string, userID int64) (*login.UserAuth, error) {
 	if authModule == genericOAuthModule && userID != 0 {
-		authQuery := &models.GetAuthInfoQuery{}
+		authQuery := &login.GetAuthInfoQuery{}
 		authQuery.AuthModule = authModule
 		authQuery.AuthId = authId
 		authQuery.UserId = userID
@@ -130,7 +131,7 @@ func (s *Implementation) GenericOAuthLookup(ctx context.Context, authModule stri
 	return nil, nil
 }
 
-func (s *Implementation) LookupAndUpdate(ctx context.Context, query *models.GetUserByAuthInfoQuery) (*user.User, error) {
+func (s *Implementation) LookupAndUpdate(ctx context.Context, query *login.GetUserByAuthInfoQuery) (*user.User, error) {
 	// 1. LookupAndFix = auth info, user, error
 	// TODO: Not a big fan of the fact that we are deleting auth info here, might want to move that
 	foundUser, usr, authInfo, err := s.LookupAndFix(ctx, query)
@@ -163,7 +164,7 @@ func (s *Implementation) LookupAndUpdate(ctx context.Context, query *models.GetU
 
 	if query.AuthModule != "" {
 		if authInfo == nil {
-			cmd := &models.SetAuthInfoCommand{
+			cmd := &login.SetAuthInfoCommand{
 				UserId:     usr.ID,
 				AuthModule: query.AuthModule,
 				AuthId:     query.AuthId,
@@ -181,20 +182,31 @@ func (s *Implementation) LookupAndUpdate(ctx context.Context, query *models.GetU
 	return usr, nil
 }
 
-func (s *Implementation) GetAuthInfo(ctx context.Context, query *models.GetAuthInfoQuery) error {
+func (s *Implementation) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQuery) error {
 	return s.authInfoStore.GetAuthInfo(ctx, query)
 }
 
-func (s *Implementation) UpdateAuthInfo(ctx context.Context, cmd *models.UpdateAuthInfoCommand) error {
+func (s *Implementation) GetUserLabels(ctx context.Context, query login.GetUserLabelsQuery) (map[int64]string, error) {
+	if len(query.UserIDs) == 0 {
+		return map[int64]string{}, nil
+	}
+	return s.authInfoStore.GetUserLabels(ctx, query)
+}
+
+func (s *Implementation) UpdateAuthInfo(ctx context.Context, cmd *login.UpdateAuthInfoCommand) error {
 	return s.authInfoStore.UpdateAuthInfo(ctx, cmd)
 }
 
-func (s *Implementation) SetAuthInfo(ctx context.Context, cmd *models.SetAuthInfoCommand) error {
+func (s *Implementation) SetAuthInfo(ctx context.Context, cmd *login.SetAuthInfoCommand) error {
 	return s.authInfoStore.SetAuthInfo(ctx, cmd)
 }
 
-func (s *Implementation) GetExternalUserInfoByLogin(ctx context.Context, query *models.GetExternalUserInfoByLoginQuery) error {
+func (s *Implementation) GetExternalUserInfoByLogin(ctx context.Context, query *login.GetExternalUserInfoByLoginQuery) error {
 	return s.authInfoStore.GetExternalUserInfoByLogin(ctx, query)
+}
+
+func (s *Implementation) DeleteUserAuthInfo(ctx context.Context, userID int64) error {
+	return nil
 }
 
 func (s *Implementation) Run(ctx context.Context) error {

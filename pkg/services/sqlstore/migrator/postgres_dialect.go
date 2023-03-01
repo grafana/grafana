@@ -9,7 +9,6 @@ import (
 
 	"github.com/golang-migrate/migrate/v4/database"
 	"github.com/lib/pq"
-
 	"xorm.io/xorm"
 )
 
@@ -43,6 +42,10 @@ func (db *PostgresDialect) AutoIncrStr() string {
 
 func (db *PostgresDialect) BooleanStr(value bool) string {
 	return strconv.FormatBool(value)
+}
+
+func (db *PostgresDialect) BatchSize() int {
+	return 1000
 }
 
 func (db *PostgresDialect) Default(col *Column) string {

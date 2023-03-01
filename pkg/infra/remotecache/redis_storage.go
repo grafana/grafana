@@ -9,13 +9,15 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
+
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 const redisCacheType = "redis"
 
 type redisStorage struct {
-	c *redis.Client
+	c     *redis.Client
+	codec codec
 }
 
 // parseRedisConnStr parses k=v pairs in csv and builds a redis Options object
@@ -76,43 +78,68 @@ func parseRedisConnStr(connStr string) (*redis.Options, error) {
 	return options, nil
 }
 
-func newRedisStorage(opts *setting.RemoteCacheOptions) (*redisStorage, error) {
+func newRedisStorage(opts *setting.RemoteCacheOptions, codec codec) (*redisStorage, error) {
 	opt, err := parseRedisConnStr(opts.ConnStr)
 	if err != nil {
 		return nil, err
 	}
-	return &redisStorage{c: redis.NewClient(opt)}, nil
+	return &redisStorage{c: redis.NewClient(opt), codec: codec}, nil
 }
 
 // Set sets value to given key in session.
 func (s *redisStorage) Set(ctx context.Context, key string, val interface{}, expires time.Duration) error {
 	item := &cachedItem{Val: val}
-	value, err := encodeGob(item)
+	value, err := s.codec.Encode(ctx, item)
 	if err != nil {
 		return err
 	}
-	status := s.c.Set(ctx, key, string(value), expires)
+
+	return s.SetByteArray(ctx, key, value, expires)
+}
+
+// Set sets value to a given key
+func (s *redisStorage) SetByteArray(ctx context.Context, key string, data []byte, expires time.Duration) error {
+	status := s.c.Set(ctx, key, data, expires)
 	return status.Err()
 }
 
 // Get gets value by given key in session.
 func (s *redisStorage) Get(ctx context.Context, key string) (interface{}, error) {
-	v := s.c.Get(ctx, key)
+	v, err := s.GetByteArray(ctx, key)
+
+	if err != nil {
+		if err.Error() == "EOF" {
+			return nil, ErrCacheItemNotFound
+		}
+		return nil, err
+	}
 
 	item := &cachedItem{}
-	err := decodeGob([]byte(v.Val()), item)
+	err = s.codec.Decode(ctx, v, item)
 
 	if err == nil {
 		return item.Val, nil
 	}
-	if err.Error() == "EOF" {
-		return nil, ErrCacheItemNotFound
-	}
+
 	return nil, err
+}
+
+// GetByteArray returns the value as byte array
+func (s *redisStorage) GetByteArray(ctx context.Context, key string) ([]byte, error) {
+	return s.c.Get(ctx, key).Bytes()
 }
 
 // Delete delete a key from session.
 func (s *redisStorage) Delete(ctx context.Context, key string) error {
 	cmd := s.c.Del(ctx, key)
 	return cmd.Err()
+}
+
+func (s *redisStorage) Count(ctx context.Context, prefix string) (int64, error) {
+	cmd := s.c.Keys(ctx, prefix+"*")
+	if cmd.Err() != nil {
+		return 0, cmd.Err()
+	}
+
+	return int64(len(cmd.Val())), nil
 }

@@ -9,15 +9,16 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
+	alertingNotify "github.com/grafana/alerting/notify"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acMock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -127,7 +128,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 				Name:   "test1",
 				UID:    "uid1",
 				Status: "failed",
-				Error:  notifier.ReceiverTimeoutError{},
+				Error:  alertingNotify.ReceiverTimeoutError{},
 			}},
 		}, {
 			Name: "test2",
@@ -135,7 +136,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 				Name:   "test2",
 				UID:    "uid2",
 				Status: "failed",
-				Error:  notifier.ReceiverTimeoutError{},
+				Error:  alertingNotify.ReceiverTimeoutError{},
 			}},
 		}}))
 	})
@@ -165,7 +166,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 	sut := createSut(t, nil)
 
 	t.Run("assert 404 Not Found when applying config to nonexistent org", func(t *testing.T) {
-		rc := models.ReqContext{
+		rc := contextmodel.ReqContext{
 			Context: &web.Context{
 				Req: &http.Request{},
 			},
@@ -182,7 +183,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 	})
 
 	t.Run("assert 202 when config successfully applied", func(t *testing.T) {
-		rc := models.ReqContext{
+		rc := contextmodel.ReqContext{
 			Context: &web.Context{
 				Req: &http.Request{},
 			},
@@ -199,7 +200,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 
 	t.Run("assert 202 when alertmanager to configure is not ready", func(t *testing.T) {
 		sut := createSut(t, nil)
-		rc := models.ReqContext{
+		rc := contextmodel.ReqContext{
 			Context: &web.Context{
 				Req: &http.Request{},
 			},
@@ -222,7 +223,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 			response := sut.RouteGetAlertingConfig(rc)
 
 			body := asGettableUserConfig(t, response)
-			require.Equal(t, ngmodels.ProvenanceNone, body.AlertmanagerConfig.Route.Provenance)
+			require.Equal(t, apimodels.Provenance(ngmodels.ProvenanceNone), body.AlertmanagerConfig.Route.Provenance)
 		})
 		t.Run("contact point from GET config has no provenance", func(t *testing.T) {
 			sut := createSut(t, nil)
@@ -231,7 +232,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 			response := sut.RouteGetAlertingConfig(rc)
 
 			body := asGettableUserConfig(t, response)
-			require.Equal(t, ngmodels.ProvenanceNone, body.AlertmanagerConfig.Receivers[0].GrafanaManagedReceivers[0].Provenance)
+			require.Equal(t, apimodels.Provenance(ngmodels.ProvenanceNone), body.AlertmanagerConfig.Receivers[0].GrafanaManagedReceivers[0].Provenance)
 		})
 		t.Run("templates from GET config have no provenance", func(t *testing.T) {
 			sut := createSut(t, nil)
@@ -253,7 +254,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 			response := sut.RouteGetAlertingConfig(rc)
 
 			body := asGettableUserConfig(t, response)
-			require.Equal(t, ngmodels.ProvenanceAPI, body.AlertmanagerConfig.Route.Provenance)
+			require.Equal(t, apimodels.Provenance(ngmodels.ProvenanceAPI), body.AlertmanagerConfig.Route.Provenance)
 		})
 		t.Run("contact point from GET config has expected provenance", func(t *testing.T) {
 			sut := createSut(t, nil)
@@ -273,7 +274,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 			response = sut.RouteGetAlertingConfig(rc)
 			body = asGettableUserConfig(t, response)
 
-			require.Equal(t, ngmodels.ProvenanceAPI, body.AlertmanagerConfig.Receivers[0].GrafanaManagedReceivers[0].Provenance)
+			require.Equal(t, apimodels.Provenance(ngmodels.ProvenanceAPI), body.AlertmanagerConfig.Receivers[0].GrafanaManagedReceivers[0].Provenance)
 		})
 		t.Run("templates from GET config have expected provenance", func(t *testing.T) {
 			sut := createSut(t, nil)
@@ -285,7 +286,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 			body := asGettableUserConfig(t, response)
 			require.NotNil(t, body.TemplateFileProvenances)
 			require.Len(t, body.TemplateFileProvenances, 1)
-			require.Equal(t, ngmodels.ProvenanceAPI, body.TemplateFileProvenances["a"])
+			require.Equal(t, apimodels.Provenance(ngmodels.ProvenanceAPI), body.TemplateFileProvenances["a"])
 		})
 	})
 }
@@ -329,7 +330,7 @@ func TestSilenceCreate(t *testing.T) {
 
 	for _, cas := range cases {
 		t.Run(cas.name, func(t *testing.T) {
-			rc := models.ReqContext{
+			rc := contextmodel.ReqContext{
 				Context: &web.Context{
 					Req: &http.Request{},
 				},
@@ -455,7 +456,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			ac := tesCase.accessControl()
 			sut := createSut(t, ac)
 
-			rc := models.ReqContext{
+			rc := contextmodel.ReqContext{
 				Context: &web.Context{
 					Req: &http.Request{},
 				},
@@ -534,7 +535,7 @@ func createMultiOrgAlertmanager(t *testing.T) *notifier.MultiOrgAlertmanager {
 		}, // do not poll in tests.
 	}
 
-	mam, err := notifier.NewMultiOrgAlertmanager(cfg, &configStore, &orgStore, kvStore, provStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService)
+	mam, err := notifier.NewMultiOrgAlertmanager(cfg, configStore, &orgStore, kvStore, provStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService)
 	require.NoError(t, err)
 	err = mam.LoadAndSyncAlertmanagersForOrgs(context.Background())
 	require.NoError(t, err)
@@ -621,8 +622,8 @@ func withEmptyID(silence *apimodels.PostableSilence) {
 	silence.ID = ""
 }
 
-func createRequestCtxInOrg(org int64) *models.ReqContext {
-	return &models.ReqContext{
+func createRequestCtxInOrg(org int64) *contextmodel.ReqContext {
+	return &contextmodel.ReqContext{
 		Context: &web.Context{
 			Req: &http.Request{},
 		},
@@ -649,7 +650,7 @@ func setContactPointProvenance(t *testing.T, orgID int64, UID string, ps provisi
 // setTemplateProvenance marks a template as provisioned.
 func setTemplateProvenance(t *testing.T, orgID int64, name string, ps provisioning.ProvisioningStore) {
 	t.Helper()
-	err := ps.SetProvenance(context.Background(), &apimodels.MessageTemplate{Name: name}, orgID, ngmodels.ProvenanceAPI)
+	err := ps.SetProvenance(context.Background(), &apimodels.NotificationTemplate{Name: name}, orgID, ngmodels.ProvenanceAPI)
 	require.NoError(t, err)
 }
 

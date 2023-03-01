@@ -5,8 +5,9 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Button, useStyles2 } from '@grafana/ui';
 
 import { Authorize } from '../../components/Authorize';
-import { AmRouteReceiver, FormAmRoute } from '../../types/amroutes';
+import { FormAmRoute } from '../../types/amroutes';
 import { getNotificationsPermissions } from '../../utils/access-control';
+import { AmRouteReceiver } from '../receivers/grafanaAppReceivers/types';
 
 import { AmRootRouteForm } from './AmRootRouteForm';
 import { AmRootRouteRead } from './AmRootRouteRead';

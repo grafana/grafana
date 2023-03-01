@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/enterprise/enterprise-configuration/
-  - /docs/grafana/latest/setup-grafana/configure-grafana/enterprise-configuration/
+  - ../../enterprise/enterprise-configuration/
 description: Learn about Grafana Enterprise configuration options that you can specify.
 title: Configure Grafana Enterprise
 weight: 100
@@ -179,11 +178,15 @@ Keep dashboard content in the logs (request or response fields). This can signif
 
 ### verbose
 
-Log all GET requests and always include request body for generic POST/PUT/PATCH requests.
+Log all requests and keep requests and responses body. This can significantly increase the size of your logs.
 
 ### log_all_status_codes
 
 Set to false to only log requests with 2xx, 3xx, 401, 403, 500 responses.
+
+### max_response_size_bytes
+
+Maximum response body (in bytes) to be recorded. May help reducing the memory footprint caused by auditing.
 
 ## [auditing.logs.file]
 
@@ -375,7 +378,7 @@ Setting 'enabled' to `true` allows users to configure query caching for data sou
 
 This value is `true` by default.
 
-> **Note:** This setting enables the caching feature, but it does not turn on query caching for any data source. To turn on query caching for a data source, update the setting on the data source configuration page. For more information, refer to the [query caching docs]({{< relref "../../../enterprise/query-caching/#enable-and-configure-query-caching" >}}).
+> **Note:** This setting enables the caching feature, but it does not turn on query caching for any data source. To turn on query caching for a data source, update the setting on the data source configuration page. For more information, refer to the [query caching docs]({{< relref "../../../administration/data-source-management/#enable-and-configure-query-caching" >}}).
 
 ### ttl
 
@@ -453,7 +456,7 @@ The default is `25`.
 
 ### url
 
-The full Redis URL of your Redis server. For example: `redis://username:password@localhost:6739/0`. To enable TLS, use the `rediss` scheme.
+The full Redis URL of your Redis server. For example: `redis://username:password@localhost:6739/0`. To enable TLS, use the `redis` scheme.
 
 The default is `"redis://localhost:6379"`.
 
@@ -464,7 +467,7 @@ If you use the full Redis URLs, then you can specify the scheme, username, and p
 
 > **Note:** If you have specify `cluster`, the value for `url` is ignored.
 
-> **Note:** You can enable TLS for cluster mode using the `rediss` scheme in Grafana Enterprise v8.5 and later versions.
+> **Note:** You can enable TLS for cluster mode using the `redis` scheme in Grafana Enterprise v8.5 and later versions.
 
 ### prefix
 

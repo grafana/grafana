@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/next/dashboards/build-dashboards/
 title: Build dashboards
 menuTitle: Build dashboards
 weight: 2

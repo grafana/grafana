@@ -1,10 +1,10 @@
 import { css, cx } from '@emotion/css';
 import React, { FC, useCallback, useMemo, useState } from 'react';
 
-import { Field, GrafanaTheme, SelectableValue } from '@grafana/data';
+import { Field, GrafanaTheme2, SelectableValue } from '@grafana/data';
 
 import { Button, ClickOutsideWrapper, HorizontalGroup, IconButton, Label, VerticalGroup } from '..';
-import { stylesFactory, useStyles, useTheme2 } from '../../themes';
+import { useStyles2, useTheme2 } from '../../themes';
 
 import { FilterList } from './FilterList';
 import { TableStyles } from './styles';
@@ -46,10 +46,12 @@ export const FilterPopup: FC<Props> = ({ column: { preFilteredRows, filterValue,
   );
 
   const clearFilterVisible = useMemo(() => filterValue !== undefined, [filterValue]);
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   return (
     <ClickOutsideWrapper onClick={onCancel} useCapture={true}>
+      {/* This is just blocking click events from bubbeling and should not have a keyboard interaction. */}
+      {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
       <div className={cx(styles.filterContainer)} onClick={stopPropagation}>
         <VerticalGroup spacing="lg">
           <VerticalGroup spacing="xs">
@@ -90,30 +92,30 @@ export const FilterPopup: FC<Props> = ({ column: { preFilteredRows, filterValue,
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   filterContainer: css`
     label: filterContainer;
     width: 100%;
     min-width: 250px;
     height: 100%;
     max-height: 400px;
-    background-color: ${theme.colors.bg1};
-    border: ${theme.border.width.sm} solid ${theme.colors.border2};
-    padding: ${theme.spacing.md};
-    margin: ${theme.spacing.sm} 0;
-    box-shadow: 0px 0px 20px ${theme.colors.dropdownShadow};
-    border-radius: ${theme.spacing.xs};
+    background-color: ${theme.colors.background.primary};
+    border: 1px solid ${theme.colors.border.medium};
+    padding: ${theme.spacing(2)};
+    margin: ${theme.spacing(1)} 0;
+    box-shadow: 0px 0px 20px ${theme.v1.palette.black};
+    border-radius: ${theme.spacing(0.5)};
   `,
   listDivider: css`
     label: listDivider;
     width: 100%;
-    border-top: ${theme.border.width.sm} solid ${theme.colors.border2};
-    padding: ${theme.spacing.xs} ${theme.spacing.md};
+    border-top: 1px solid ${theme.colors.border.medium};
+    padding: ${theme.spacing(0.5, 2)};
   `,
   label: css`
     margin-bottom: 0;
   `,
-}));
+});
 
 const stopPropagation = (event: React.MouseEvent) => {
   event.stopPropagation();

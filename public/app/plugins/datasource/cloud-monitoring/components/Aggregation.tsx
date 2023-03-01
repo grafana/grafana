@@ -39,6 +39,7 @@ export const Aggregation: FC<Props> = (props) => {
         ]}
         placeholder="Select Reducer"
         inputId={`${props.refId}-group-by-function`}
+        menuPlacement="top"
       />
     </EditorField>
   );

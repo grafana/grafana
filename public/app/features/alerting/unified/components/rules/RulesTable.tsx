@@ -15,6 +15,7 @@ import { ProvisioningBadge } from '../Provisioning';
 import { RuleLocation } from '../RuleLocation';
 import { Tokenize } from '../Tokenize';
 
+import { RuleActionsButtons } from './RuleActionsButtons';
 import { RuleConfigStatus } from './RuleConfigStatus';
 import { RuleDetails } from './RuleDetails';
 import { RuleHealth } from './RuleHealth';
@@ -113,9 +114,13 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean) {
           const { namespace } = rule;
           const { rulesSource } = namespace;
           const { promRule, rulerRule } = rule;
+
           const isDeleting = !!(hasRuler(rulesSource) && rulerRulesLoaded(rulesSource) && promRule && !rulerRule);
           const isCreating = !!(hasRuler(rulesSource) && rulerRulesLoaded(rulesSource) && rulerRule && !promRule);
-          return <RuleState rule={rule} isDeleting={isDeleting} isCreating={isCreating} />;
+          const isGrafanaManagedRule = isGrafanaRulerRule(rulerRule);
+          const isPaused = isGrafanaManagedRule && Boolean(rulerRule.grafana_alert.is_paused);
+
+          return <RuleState rule={rule} isDeleting={isDeleting} isCreating={isCreating} isPaused={isPaused} />;
         },
         size: '165px',
       },
@@ -188,6 +193,16 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean) {
         size: 5,
       });
     }
+    columns.push({
+      id: 'actions',
+      label: 'Actions',
+      // eslint-disable-next-line react/display-name
+      renderCell: ({ data: rule }) => {
+        return <RuleActionsButtons rule={rule} rulesSource={rule.namespace.rulesSource} />;
+      },
+      size: '200px',
+    });
+
     return columns;
-  }, [hasRuler, rulerRulesLoaded, showSummaryColumn, showGroupColumn]);
+  }, [showSummaryColumn, showGroupColumn, hasRuler, rulerRulesLoaded]);
 }

@@ -16,8 +16,8 @@ import organizationReducers from 'app/features/org/state/reducers';
 import panelsReducers from 'app/features/panel/state/reducers';
 import { reducer as pluginsReducer } from 'app/features/plugins/admin/state/reducer';
 import userReducers from 'app/features/profile/state/reducers';
-import searchQueryReducer from 'app/features/search/reducers/searchQueryReducer';
 import serviceAccountsReducer from 'app/features/serviceaccounts/state/reducers';
+import supportBundlesReducer from 'app/features/support-bundles/state/reducers';
 import teamsReducers from 'app/features/teams/state/reducers';
 import usersReducers from 'app/features/users/state/reducers';
 import templatingReducers from 'app/features/variables/state/keyedVariablesReducer';
@@ -44,7 +44,7 @@ const rootReducers = {
   ...panelEditorReducers,
   ...panelsReducers,
   ...templatingReducers,
-  ...searchQueryReducer,
+  ...supportBundlesReducer,
   plugins: pluginsReducer,
   [alertingApi.reducerPath]: alertingApi.reducer,
   [publicDashboardApi.reducerPath]: publicDashboardApi.reducer,

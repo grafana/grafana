@@ -3,15 +3,19 @@ on:
   pull_request:
     paths:
       - 'pkg/services/queryhistory/**'
+      - 'pkg/tsdb/loki/**'
+      - 'pkg/tsdb/elasticsearch/**'
       - 'public/app/features/explore/**'
       - 'public/app/features/correlations/**'
+      - 'public/app/plugins/datasource/loki/**'
+      - 'public/app/plugins/datasource/elasticsearch/**'
     branches-ignore:
       - dependabot/**
       - backport-*
 
 jobs:
   workflow-call:
-    uses: grafana/code-coverage/.github/workflows/code-coverage.yml@v0.1.12
+    uses: grafana/code-coverage/.github/workflows/code-coverage.yml@v0.1.18
     with:
-      frontend-path-regexp: public\/app\/features\/(explore|correlations)
-      backend-path-regexp: pkg\/services\/(queryhistory)
+      frontend-path-regexp: public\/app\/features\/(explore|correlations)|public\/app\/plugins\/datasource\/(loki|elasticsearch)
+      backend-path-regexp: pkg\/services\/(queryhistory)|pkg\/tsdb\/(loki|elasticsearch)

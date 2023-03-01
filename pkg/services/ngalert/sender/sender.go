@@ -12,10 +12,6 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/client_golang/prometheus"
 	common_config "github.com/prometheus/common/config"
@@ -24,6 +20,9 @@ import (
 	"github.com/prometheus/prometheus/discovery"
 	"github.com/prometheus/prometheus/notifier"
 	"github.com/prometheus/prometheus/pkg/labels"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
 
 const (
@@ -63,13 +62,13 @@ func NewExternalAlertmanagerSender() *ExternalAlertmanager {
 }
 
 // ApplyConfig syncs a configuration with the sender.
-func (s *ExternalAlertmanager) ApplyConfig(cfg *ngmodels.AdminConfiguration) error {
-	notifierCfg, err := buildNotifierConfig(cfg)
+func (s *ExternalAlertmanager) ApplyConfig(orgId, id int64, alertmanagers []string) error {
+	notifierCfg, err := buildNotifierConfig(alertmanagers)
 	if err != nil {
 		return err
 	}
 
-	s.logger = s.logger.New("org", cfg.OrgID, "cfg", cfg.ID)
+	s.logger = s.logger.New("org", orgId, "cfg", id)
 
 	s.logger.Info("Synchronizing config with external Alertmanager group")
 	if err := s.manager.ApplyConfig(notifierCfg); err != nil {
@@ -134,9 +133,9 @@ func (s *ExternalAlertmanager) DroppedAlertmanagers() []*url.URL {
 	return s.manager.DroppedAlertmanagers()
 }
 
-func buildNotifierConfig(cfg *ngmodels.AdminConfiguration) (*config.Config, error) {
-	amConfigs := make([]*config.AlertmanagerConfig, 0, len(cfg.Alertmanagers))
-	for _, amURL := range cfg.Alertmanagers {
+func buildNotifierConfig(alertmanagers []string) (*config.Config, error) {
+	amConfigs := make([]*config.AlertmanagerConfig, 0, len(alertmanagers))
+	for _, amURL := range alertmanagers {
 		u, err := url.Parse(amURL)
 		if err != nil {
 			return nil, err

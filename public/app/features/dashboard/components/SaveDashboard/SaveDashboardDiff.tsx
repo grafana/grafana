@@ -10,8 +10,8 @@ import { DiffViewer } from '../VersionHistory/DiffViewer';
 import { Diffs } from '../VersionHistory/utils';
 
 interface SaveDashboardDiffProps {
-  oldValue?: any;
-  newValue?: any;
+  oldValue?: unknown;
+  newValue?: unknown;
 
   // calculated by parent so we can see summary in tabs
   diff?: Diffs;

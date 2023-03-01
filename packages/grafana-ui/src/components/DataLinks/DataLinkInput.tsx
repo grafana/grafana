@@ -121,6 +121,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
         default:
           return next();
       }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
@@ -137,11 +138,12 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
     }, []);
 
     const onVariableSelect = (item: VariableSuggestion, editor = editorRef.current!) => {
-      const includeDollarSign = Plain.serialize(editor.value).slice(-1) !== '$';
+      const precedingChar: string = getCharactersAroundCaret();
+      const precedingDollar = precedingChar === '$';
       if (item.origin !== VariableOrigin.Template || item.value === DataLinkBuiltInVars.includeVars) {
-        editor.insertText(`${includeDollarSign ? '$' : ''}\{${item.value}}`);
+        editor.insertText(`${precedingDollar ? '' : '$'}\{${item.value}}`);
       } else {
-        editor.insertText(`\${${item.value}:queryparam}`);
+        editor.insertText(`${precedingDollar ? '' : '$'}\{${item.value}:queryparam}`);
       }
 
       setLinkUrl(editor.value);
@@ -151,10 +153,28 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
       stateRef.current.onChange(Plain.serialize(editor.value));
     };
 
+    const getCharactersAroundCaret = () => {
+      const input: HTMLSpanElement | null = document.getElementById('data-link-input')!;
+      let precedingChar = '',
+        sel: Selection | null,
+        range: Range;
+      if (window.getSelection) {
+        sel = window.getSelection();
+        if (sel && sel.rangeCount > 0) {
+          range = sel.getRangeAt(0).cloneRange();
+          // Collapse to the start of the range
+          range.collapse(true);
+          range.setStart(input, 0);
+          precedingChar = range.toString().slice(-1);
+        }
+      }
+      return precedingChar;
+    };
+
     return (
       <div className={styles.wrapperOverrides}>
         <div className="slate-query-field__wrapper">
-          <div className="slate-query-field">
+          <div id="data-link-input" className="slate-query-field">
             {showingSuggestions && (
               <Portal>
                 <ReactPopper

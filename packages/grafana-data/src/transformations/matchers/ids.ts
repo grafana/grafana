@@ -36,7 +36,6 @@ export enum FrameMatcherID {
   byName = 'byName',
   byRefId = 'byRefId',
   byIndex = 'byIndex',
-  byLabel = 'byLabel',
 }
 
 /**

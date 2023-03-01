@@ -2,8 +2,7 @@
 _build:
   list: false
 aliases:
-  - /docs/grafana/latest/guides/whats-new-in-v8-0/
-  - /docs/grafana/latest/whatsnew/whats-new-in-v8-0/
+  - ../guides/whats-new-in-v8-0/
 description: Feature and improvement highlights for Grafana v8.0
 keywords:
   - grafana
@@ -187,9 +186,9 @@ The Azure Monitor data source now supports Managed Identity for users hosting Gr
 
 Also, in addition to querying Log Analytics Workspaces, you can now query the logs for any individual [supported resource](https://docs.microsoft.com/en-us/azure/azure-monitor/essentials/metrics-supported), or for all resources in a subscription or resource group.
 
-> **Note:** In Grafana 7.5 we started the deprecation for separate Application Insights queries, in favor of querying Application Insights resources through Metrics and Logs. In Grafana 8.0 new Application Insights and Insights Analytics queries cannot be made, and existing queries have been made read-only. For more details, refer to the [Deprecating Application Insights]({{< relref "../datasources/azuremonitor/#deprecating-application-insights" >}}).
+> **Note:** In Grafana 7.5 we started the deprecation for separate Application Insights queries, in favor of querying Application Insights resources through Metrics and Logs. In Grafana 8.0 new Application Insights and Insights Analytics queries cannot be made, and existing queries have been made read-only. For more details, refer to the [Deprecating Application Insights]({{< relref "../datasources/azure-monitor#application-insights-and-insights-analytics--removed-" >}}).
 
-[Azure Monitor data source]({{< relref "../datasources/azuremonitor/" >}}) was updated as a result of these changes.
+[Azure Monitor data source]({{< relref "../datasources/azure-monitor" >}}) was updated as a result of these changes.
 
 #### Elasticsearch data source
 
@@ -304,7 +303,7 @@ This results in faster average load times for dashboards and fewer duplicate que
 
 You can enable caching per data source, and time-to-live (TTL) can be configured globally and per data source. Query caching can be set up with Redis, Memcached, or a simple in-memory cache.
 
-For more information, refer to the [Data source query caching docs]({{< relref "../enterprise/query-caching/" >}}).
+For more information, refer to the [Data source query caching docs]({{< relref "../administration/data-source-management/#query-caching" >}}).
 
 ### Reporting updates
 

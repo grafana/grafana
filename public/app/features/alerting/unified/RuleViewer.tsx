@@ -1,14 +1,17 @@
 import { css } from '@emotion/css';
+import produce from 'immer';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useObservable } from 'react-use';
+import { useObservable, useToggle } from 'react-use';
 
-import { GrafanaTheme2, LoadingState, PanelData } from '@grafana/data';
+import { GrafanaTheme2, LoadingState, PanelData, RelativeTimeRange } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import {
   Alert,
   Button,
+  Collapse,
   Icon,
+  IconButton,
   LoadingPlaceholder,
-  PanelChromeLoadingIndicator,
   useStyles2,
   VerticalGroup,
   withErrorBoundary,
@@ -16,13 +19,13 @@ import {
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../core/constants';
-import { AlertQuery } from '../../../types/unified-alerting-dto';
+import { AlertQuery, GrafanaRuleDefinition } from '../../../types/unified-alerting-dto';
 
+import { GrafanaRuleQueryViewer, QueryPreview } from './GrafanaRuleQueryViewer';
 import { AlertLabels } from './components/AlertLabels';
 import { DetailsField } from './components/DetailsField';
 import { ProvisionedResource, ProvisioningAlert } from './components/Provisioning';
 import { RuleViewerLayout, RuleViewerLayoutContent } from './components/rule-viewer/RuleViewerLayout';
-import { RuleViewerVisualization } from './components/rule-viewer/RuleViewerVisualization';
 import { RuleDetailsActionButtons } from './components/rules/RuleDetailsActionButtons';
 import { RuleDetailsAnnotations } from './components/rules/RuleDetailsAnnotations';
 import { RuleDetailsDataSources } from './components/rules/RuleDetailsDataSources';
@@ -34,6 +37,7 @@ import { RuleState } from './components/rules/RuleState';
 import { useAlertQueriesStatus } from './hooks/useAlertQueriesStatus';
 import { useCombinedRule } from './hooks/useCombinedRule';
 import { AlertingQueryRunner } from './state/AlertingQueryRunner';
+import { useCleanAnnotations } from './utils/annotations';
 import { getRulesSourceByName } from './utils/datasource';
 import { alertRuleToQueries } from './utils/query';
 import * as ruleId from './utils/rule-id';
@@ -47,47 +51,60 @@ const pageTitle = 'View rule';
 
 export function RuleViewer({ match }: RuleViewerProps) {
   const styles = useStyles2(getStyles);
+  const [expandQuery, setExpandQuery] = useToggle(false);
+
   const { id } = match.params;
   const identifier = ruleId.tryParse(id, true);
 
   const { loading, error, result: rule } = useCombinedRule(identifier, identifier?.ruleSourceName);
   const runner = useMemo(() => new AlertingQueryRunner(), []);
   const data = useObservable(runner.get());
-  const queries2 = useMemo(() => alertRuleToQueries(rule), [rule]);
-  const [queries, setQueries] = useState<AlertQuery[]>([]);
+  const queries = useMemo(() => alertRuleToQueries(rule), [rule]);
+  const annotations = useCleanAnnotations(rule?.annotations || {});
 
-  const { allDataSourcesAvailable } = useAlertQueriesStatus(queries2);
+  const [evaluationTimeRanges, setEvaluationTimeRanges] = useState<Record<string, RelativeTimeRange>>({});
+
+  const { allDataSourcesAvailable } = useAlertQueriesStatus(queries);
 
   const onRunQueries = useCallback(() => {
     if (queries.length > 0 && allDataSourcesAvailable) {
-      runner.run(queries);
+      const evalCustomizedQueries = queries.map<AlertQuery>((q) => ({
+        ...q,
+        relativeTimeRange: evaluationTimeRanges[q.refId] ?? q.relativeTimeRange,
+      }));
+
+      runner.run(evalCustomizedQueries);
     }
-  }, [queries, runner, allDataSourcesAvailable]);
+  }, [queries, evaluationTimeRanges, runner, allDataSourcesAvailable]);
 
   useEffect(() => {
-    setQueries(queries2);
-  }, [queries2]);
+    const alertQueries = alertRuleToQueries(rule);
+    const defaultEvalTimeRanges = Object.fromEntries(
+      alertQueries.map((q) => [q.refId, q.relativeTimeRange ?? { from: 0, to: 0 }])
+    );
+
+    setEvaluationTimeRanges(defaultEvalTimeRanges);
+  }, [rule]);
 
   useEffect(() => {
-    if (allDataSourcesAvailable) {
+    if (allDataSourcesAvailable && expandQuery) {
       onRunQueries();
     }
-  }, [onRunQueries, allDataSourcesAvailable]);
+  }, [onRunQueries, allDataSourcesAvailable, expandQuery]);
 
   useEffect(() => {
     return () => runner.destroy();
   }, [runner]);
 
-  const onChangeQuery = useCallback((query: AlertQuery) => {
-    setQueries((queries) =>
-      queries.map((q) => {
-        if (q.refId === query.refId) {
-          return query;
-        }
-        return q;
-      })
-    );
-  }, []);
+  const onQueryTimeRangeChange = useCallback(
+    (refId: string, timeRange: RelativeTimeRange) => {
+      const newEvalTimeRanges = produce(evaluationTimeRanges, (draft) => {
+        draft[refId] = timeRange;
+      });
+      setEvaluationTimeRanges(newEvalTimeRanges);
+    },
+    [evaluationTimeRanges, setEvaluationTimeRanges]
+  );
 
   if (!identifier?.ruleSourceName) {
     return (
@@ -131,7 +148,6 @@ export function RuleViewer({ match }: RuleViewerProps) {
     );
   }
 
-  const annotations = Object.entries(rule.annotations).filter(([_, value]) => !!value.trim());
   const isFederatedRule = isFederatedRuleGroup(rule.group);
   const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
 
@@ -156,7 +172,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
             <Icon name="bell" size="lg" /> {rule.name}
           </h4>
           <RuleState rule={rule} isCreating={false} isDeleting={false} />
-          <RuleDetailsActionButtons rule={rule} rulesSource={rulesSource} />
+          <RuleDetailsActionButtons rule={rule} rulesSource={rulesSource} isViewMode={true} />
         </div>
         <div className={styles.details}>
           <div className={styles.leftSide}>
@@ -167,7 +183,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
             )}
             {!!rule.labels && !!Object.keys(rule.labels).length && (
               <DetailsField label="Labels" horizontal={true}>
-                <AlertLabels labels={rule.labels} />
+                <AlertLabels labels={rule.labels} className={styles.labels} />
               </DetailsField>
             )}
             <RuleDetailsExpression rulesSource={rulesSource} rule={rule} annotations={annotations} />
@@ -176,41 +192,71 @@ export function RuleViewer({ match }: RuleViewerProps) {
           <div className={styles.rightSide}>
             <RuleDetailsDataSources rule={rule} rulesSource={rulesSource} />
             {isFederatedRule && <RuleDetailsFederatedSources group={rule.group} />}
-            <DetailsField label="Namespace / Group">{`${rule.namespace.name} / ${rule.group.name}`}</DetailsField>
+            <DetailsField label="Namespace / Group" className={styles.rightSideDetails}>
+              {rule.namespace.name} / {rule.group.name}
+            </DetailsField>
+            {isGrafanaRulerRule(rule.rulerRule) && <GrafanaRuleUID rule={rule.rulerRule.grafana_alert} />}
           </div>
         </div>
         <div>
           <RuleDetailsMatchingInstances rule={rule} pagination={{ itemsPerPage: DEFAULT_PER_PAGE_PAGINATION }} />
         </div>
       </RuleViewerLayoutContent>
-      {!isFederatedRule && data && Object.keys(data).length > 0 && (
-        <>
-          <div className={styles.queriesTitle}>
-            Query results <PanelChromeLoadingIndicator loading={isLoading(data)} onCancel={() => runner.cancel()} />
+      <Collapse
+        label="Query & Results"
+        isOpen={expandQuery}
+        onToggle={setExpandQuery}
+        loading={data && isLoading(data)}
+        collapsible={true}
+        className={styles.collapse}
+      >
+        {isGrafanaRulerRule(rule.rulerRule) && !isFederatedRule && (
+          <GrafanaRuleQueryViewer
+            condition={rule.rulerRule.grafana_alert.condition}
+            queries={queries}
+            evalDataByQuery={data}
+            evalTimeRanges={evaluationTimeRanges}
+            onTimeRangeChange={onQueryTimeRangeChange}
+          />
+        )}
+
+        {!isGrafanaRulerRule(rule.rulerRule) && !isFederatedRule && data && Object.keys(data).length > 0 && (
+          <div className={styles.queries}>
+            {queries.map((query) => {
+              return (
+                <QueryPreview
+                  key={query.refId}
+                  refId={query.refId}
+                  model={query.model}
+                  dataSource={Object.values(config.datasources).find((ds) => ds.uid === query.datasourceUid)}
+                  queryData={data[query.refId]}
+                  relativeTimeRange={query.relativeTimeRange}
+                  evalTimeRange={evaluationTimeRanges[query.refId]}
+                  onEvalTimeRangeChange={(timeRange) => onQueryTimeRangeChange(query.refId, timeRange)}
+                  isAlertCondition={false}
+                />
+              );
+            })}
           </div>
-          <RuleViewerLayoutContent padding={0}>
-            <div className={styles.queries}>
-              {queries.map((query) => {
-                return (
-                  <div key={query.refId} className={styles.query}>
-                    <RuleViewerVisualization
-                      query={query}
-                      data={data && data[query.refId]}
-                      onChangeQuery={onChangeQuery}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          </RuleViewerLayoutContent>
-        </>
-      )}
-      {!isFederatedRule && !allDataSourcesAvailable && (
-        <Alert title="Query not available" severity="warning" className={styles.queryWarning}>
-          Cannot display the query preview. Some of the data sources used in the queries are not available.
-        </Alert>
-      )}
+        )}
+        {!isFederatedRule && !allDataSourcesAvailable && (
+          <Alert title="Query not available" severity="warning" className={styles.queryWarning}>
+            Cannot display the query preview. Some of the data sources used in the queries are not available.
+          </Alert>
+        )}
+      </Collapse>
     </RuleViewerLayout>
+  );
+}
+
+function GrafanaRuleUID({ rule }: { rule: GrafanaRuleDefinition }) {
+  const styles = useStyles2(getStyles);
+  const copyUID = () => navigator.clipboard && navigator.clipboard.writeText(rule.uid);
+
+  return (
+    <DetailsField label="Rule UID" childrenWrapperClassName={styles.ruleUid}>
+      {rule.uid} <IconButton name="copy" onClick={copyUID} />
+    </DetailsField>
   );
 }
 
@@ -226,6 +272,11 @@ const getStyles = (theme: GrafanaTheme2) => {
     queries: css`
       height: 100%;
       width: 100%;
+    `,
+    collapse: css`
+      margin-top: ${theme.spacing(2)};
+      border-color: ${theme.colors.border.weak};
+      border-radius: ${theme.shape.borderRadius()};
     `,
     queriesTitle: css`
       padding: ${theme.spacing(2, 0.5)};
@@ -243,13 +294,26 @@ const getStyles = (theme: GrafanaTheme2) => {
     details: css`
       display: flex;
       flex-direction: row;
+      gap: ${theme.spacing(4)};
     `,
     leftSide: css`
       flex: 1;
     `,
     rightSide: css`
-      padding-left: 90px;
-      width: 300px;
+      padding-right: ${theme.spacing(3)};
+    `,
+    rightSideDetails: css`
+      & > div:first-child {
+        width: auto;
+      }
+    `,
+    labels: css`
+      justify-content: flex-start;
+    `,
+    ruleUid: css`
+      display: flex;
+      align-items: center;
+      gap: ${theme.spacing(1)};
     `,
   };
 };

@@ -146,7 +146,7 @@ func canUpdate(v1, v2 string) bool {
 }
 
 func (s *PluginsService) pluginIDsCSV(m map[string]plugins.PluginDTO) string {
-	var ids []string
+	ids := make([]string, 0, len(m))
 	for pluginID := range m {
 		ids = append(ids, pluginID)
 	}

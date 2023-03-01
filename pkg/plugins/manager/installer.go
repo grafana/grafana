@@ -4,10 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
-	"github.com/grafana/grafana/pkg/plugins/logger"
+	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/repo"
@@ -26,7 +25,7 @@ type PluginInstaller struct {
 
 func ProvideInstaller(cfg *config.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service,
 	pluginRepo repo.Service) *PluginInstaller {
-	return New(pluginRegistry, pluginLoader, pluginRepo, storage.FileSystem(logger.NewLogger("installer.fs"), cfg.PluginsPath))
+	return New(pluginRegistry, pluginLoader, pluginRepo, storage.FileSystem(log.NewPrettyLogger("installer.fs"), cfg.PluginsPath))
 }
 
 func New(pluginRegistry registry.Service, pluginLoader loader.Service, pluginRepo repo.Service,
@@ -51,8 +50,7 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 
 		if plugin.Info.Version == version {
 			return plugins.DuplicateError{
-				PluginID:          plugin.ID,
-				ExistingPluginDir: plugin.PluginDir,
+				PluginID: plugin.ID,
 			}
 		}
 
@@ -65,8 +63,7 @@ func (m *PluginInstaller) Add(ctx context.Context, pluginID, version string, opt
 		// if existing plugin version is the same as the target update version
 		if dlOpts.Version == plugin.Info.Version {
 			return plugins.DuplicateError{
-				PluginID:          plugin.ID,
-				ExistingPluginDir: plugin.PluginDir,
+				PluginID: plugin.ID,
 			}
 		}
 

@@ -41,7 +41,7 @@ func TestQuery_Regions(t *testing.T) {
 		}
 
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: &models.CloudWatchSettings{}}, nil
+			return DataSource{Settings: models.CloudWatchSettings{}}, nil
 		})
 
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
@@ -108,7 +108,7 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 		}
 
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: &models.CloudWatchSettings{}}, nil
+			return DataSource{Settings: models.CloudWatchSettings{}}, nil
 		})
 
 		filterMap := map[string][]string{
@@ -191,7 +191,7 @@ func TestQuery_EBSVolumeIDs(t *testing.T) {
 		}
 
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: &models.CloudWatchSettings{}}, nil
+			return DataSource{Settings: models.CloudWatchSettings{}}, nil
 		})
 
 		executor := newExecutor(im, newTestConfig(), &fakeSessionCache{}, featuremgmt.WithFeatures())
@@ -251,7 +251,7 @@ func TestQuery_ResourceARNs(t *testing.T) {
 		}
 
 		im := datasource.NewInstanceManager(func(s backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-			return DataSource{Settings: &models.CloudWatchSettings{}}, nil
+			return DataSource{Settings: models.CloudWatchSettings{}}, nil
 		})
 
 		tagMap := map[string][]string{

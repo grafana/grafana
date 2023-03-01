@@ -8,7 +8,8 @@ const baseUser: CurrentUserDTO = {
   login: 'myUsername',
   email: 'email@example.com',
   name: 'My Name',
-  lightTheme: false,
+  theme: 'dark',
+  lightTheme: false, // deprecated
   orgCount: 1,
   orgId: 1,
   orgName: 'Main Org.',
@@ -18,6 +19,7 @@ const baseUser: CurrentUserDTO = {
   timezone: 'browser',
   weekStart: 'browser',
   locale: 'en-AU',
+  language: 'en-US',
   externalUserId: '',
 };
 

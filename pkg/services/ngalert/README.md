@@ -77,7 +77,7 @@ normalized, then the alerts are put in an in-memory structure. The dispatcher it
 it to a route in the configuration as explained [here](https://prometheus.io/docs/alerting/latest/configuration/#route).
 
 The alert is then matched to an alert group depending on the configuration in the route. The alert is then sent through
-a number of stages including silencing and inhibition and at last the receiver which can include wait, de-duplication,
+a number of stages including silencing and inhibition (which is currently not supported) and at last the receiver which can include wait, de-duplication,
 retry.
 
 ### What are notification channels?

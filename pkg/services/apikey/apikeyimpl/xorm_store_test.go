@@ -8,6 +8,9 @@ import (
 )
 
 func TestIntegrationXORMApiKeyDataAccess(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	testIntegrationApiKeyDataAccess(t, func(ss db.DB, cfg *setting.Cfg) store {
 		return &sqlStore{db: ss, cfg: cfg}
 	})

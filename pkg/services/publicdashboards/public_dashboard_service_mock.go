@@ -7,13 +7,13 @@ import (
 
 	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
 
+	dashboards "github.com/grafana/grafana/pkg/services/dashboards"
+
 	dtos "github.com/grafana/grafana/pkg/api/dtos"
 
 	mock "github.com/stretchr/testify/mock"
 
 	models "github.com/grafana/grafana/pkg/services/publicdashboards/models"
-
-	pkgmodels "github.com/grafana/grafana/pkg/models"
 
 	user "github.com/grafana/grafana/pkg/services/user"
 )
@@ -23,20 +23,22 @@ type FakePublicDashboardService struct {
 	mock.Mock
 }
 
-// NewPublicDashboardAccessToken provides a mock function with given fields: ctx
-func (_m *FakePublicDashboardService) NewPublicDashboardAccessToken(ctx context.Context) (string, error) {
-	ret := _m.Called(ctx)
+// Create provides a mock function with given fields: ctx, u, dto
+func (_m *FakePublicDashboardService) Create(ctx context.Context, u *user.SignedInUser, dto *models.SavePublicDashboardDTO) (*models.PublicDashboard, error) {
+	ret := _m.Called(ctx, u, dto)
 
-	var r0 string
-	if rf, ok := ret.Get(0).(func(context.Context) string); ok {
-		r0 = rf(ctx)
+	var r0 *models.PublicDashboard
+	if rf, ok := ret.Get(0).(func(context.Context, *user.SignedInUser, *models.SavePublicDashboardDTO) *models.PublicDashboard); ok {
+		r0 = rf(ctx, u, dto)
 	} else {
-		r0 = ret.Get(0).(string)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*models.PublicDashboard)
+		}
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = rf(ctx)
+	if rf, ok := ret.Get(1).(func(context.Context, *user.SignedInUser, *models.SavePublicDashboardDTO) error); ok {
+		r1 = rf(ctx, u, dto)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -44,20 +46,34 @@ func (_m *FakePublicDashboardService) NewPublicDashboardAccessToken(ctx context.
 	return r0, r1
 }
 
-// GenerateNewPublicDashboardUid provides a mock function with given fields: ctx
-func (_m *FakePublicDashboardService) NewPublicDashboardUid(ctx context.Context) (string, error) {
-	ret := _m.Called(ctx)
+// Delete provides a mock function with given fields: ctx, orgId, uid
+func (_m *FakePublicDashboardService) Delete(ctx context.Context, orgId int64, uid string) error {
+	ret := _m.Called(ctx, orgId, uid)
 
-	var r0 string
-	if rf, ok := ret.Get(0).(func(context.Context) string); ok {
-		r0 = rf(ctx)
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string) error); ok {
+		r0 = rf(ctx, orgId, uid)
 	} else {
-		r0 = ret.Get(0).(string)
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// ExistsEnabledByAccessToken provides a mock function with given fields: ctx, accessToken
+func (_m *FakePublicDashboardService) ExistsEnabledByAccessToken(ctx context.Context, accessToken string) (bool, error) {
+	ret := _m.Called(ctx, accessToken)
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func(context.Context, string) bool); ok {
+		r0 = rf(ctx, accessToken)
+	} else {
+		r0 = ret.Get(0).(bool)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = rf(ctx)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, accessToken)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -65,7 +81,74 @@ func (_m *FakePublicDashboardService) NewPublicDashboardUid(ctx context.Context)
 	return r0, r1
 }
 
-// GetAnnotations provides a mock function with given fields: ctx, reqDTO, accessToken
+// ExistsEnabledByDashboardUid provides a mock function with given fields: ctx, dashboardUid
+func (_m *FakePublicDashboardService) ExistsEnabledByDashboardUid(ctx context.Context, dashboardUid string) (bool, error) {
+	ret := _m.Called(ctx, dashboardUid)
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func(context.Context, string) bool); ok {
+		r0 = rf(ctx, dashboardUid)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, dashboardUid)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Find provides a mock function with given fields: ctx, uid
+func (_m *FakePublicDashboardService) Find(ctx context.Context, uid string) (*models.PublicDashboard, error) {
+	ret := _m.Called(ctx, uid)
+
+	var r0 *models.PublicDashboard
+	if rf, ok := ret.Get(0).(func(context.Context, string) *models.PublicDashboard); ok {
+		r0 = rf(ctx, uid)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*models.PublicDashboard)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, uid)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// FindAll provides a mock function with given fields: ctx, u, orgId
+func (_m *FakePublicDashboardService) FindAll(ctx context.Context, u *user.SignedInUser, orgId int64) ([]models.PublicDashboardListResponse, error) {
+	ret := _m.Called(ctx, u, orgId)
+
+	var r0 []models.PublicDashboardListResponse
+	if rf, ok := ret.Get(0).(func(context.Context, *user.SignedInUser, int64) []models.PublicDashboardListResponse); ok {
+		r0 = rf(ctx, u, orgId)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]models.PublicDashboardListResponse)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *user.SignedInUser, int64) error); ok {
+		r1 = rf(ctx, u, orgId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// FindAnnotations provides a mock function with given fields: ctx, reqDTO, accessToken
 func (_m *FakePublicDashboardService) FindAnnotations(ctx context.Context, reqDTO models.AnnotationsQueryDTO, accessToken string) ([]models.AnnotationEvent, error) {
 	ret := _m.Called(ctx, reqDTO, accessToken)
 
@@ -88,43 +171,22 @@ func (_m *FakePublicDashboardService) FindAnnotations(ctx context.Context, reqDT
 	return r0, r1
 }
 
-// FindDashboard provides a mock function with given fields: ctx, dashboardUid
-func (_m *FakePublicDashboardService) FindDashboard(ctx context.Context, dashboardUid string) (*pkgmodels.Dashboard, error) {
-	ret := _m.Called(ctx, dashboardUid)
+// FindByAccessToken provides a mock function with given fields: ctx, accessToken
+func (_m *FakePublicDashboardService) FindByAccessToken(ctx context.Context, accessToken string) (*models.PublicDashboard, error) {
+	ret := _m.Called(ctx, accessToken)
 
-	var r0 *pkgmodels.Dashboard
-	if rf, ok := ret.Get(0).(func(context.Context, string) *pkgmodels.Dashboard); ok {
-		r0 = rf(ctx, dashboardUid)
+	var r0 *models.PublicDashboard
+	if rf, ok := ret.Get(0).(func(context.Context, string) *models.PublicDashboard); ok {
+		r0 = rf(ctx, accessToken)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pkgmodels.Dashboard)
+			r0 = ret.Get(0).(*models.PublicDashboard)
 		}
 	}
 
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, dashboardUid)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetMetricRequest provides a mock function with given fields: ctx, dashboard, publicDashboard, panelId, reqDTO
-func (_m *FakePublicDashboardService) GetMetricRequest(ctx context.Context, dashboard *pkgmodels.Dashboard, publicDashboard *models.PublicDashboard, panelId int64, reqDTO models.PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
-	ret := _m.Called(ctx, dashboard, publicDashboard, panelId, reqDTO)
-
-	var r0 dtos.MetricRequest
-	if rf, ok := ret.Get(0).(func(context.Context, *pkgmodels.Dashboard, *models.PublicDashboard, int64, models.PublicDashboardQueryDTO) dtos.MetricRequest); ok {
-		r0 = rf(ctx, dashboard, publicDashboard, panelId, reqDTO)
-	} else {
-		r0 = ret.Get(0).(dtos.MetricRequest)
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *pkgmodels.Dashboard, *models.PublicDashboard, int64, models.PublicDashboardQueryDTO) error); ok {
-		r1 = rf(ctx, dashboard, publicDashboard, panelId, reqDTO)
+		r1 = rf(ctx, accessToken)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -155,8 +217,31 @@ func (_m *FakePublicDashboardService) FindByDashboardUid(ctx context.Context, or
 	return r0, r1
 }
 
+// FindDashboard provides a mock function with given fields: ctx, orgId, dashboardUid
+func (_m *FakePublicDashboardService) FindDashboard(ctx context.Context, orgId int64, dashboardUid string) (*dashboards.Dashboard, error) {
+	ret := _m.Called(ctx, orgId, dashboardUid)
+
+	var r0 *dashboards.Dashboard
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string) *dashboards.Dashboard); ok {
+		r0 = rf(ctx, orgId, dashboardUid)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*dashboards.Dashboard)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, int64, string) error); ok {
+		r1 = rf(ctx, orgId, dashboardUid)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // FindPublicDashboardAndDashboardByAccessToken provides a mock function with given fields: ctx, accessToken
-func (_m *FakePublicDashboardService) FindPublicDashboardAndDashboardByAccessToken(ctx context.Context, accessToken string) (*models.PublicDashboard, *pkgmodels.Dashboard, error) {
+func (_m *FakePublicDashboardService) FindPublicDashboardAndDashboardByAccessToken(ctx context.Context, accessToken string) (*models.PublicDashboard, *dashboards.Dashboard, error) {
 	ret := _m.Called(ctx, accessToken)
 
 	var r0 *models.PublicDashboard
@@ -168,12 +253,12 @@ func (_m *FakePublicDashboardService) FindPublicDashboardAndDashboardByAccessTok
 		}
 	}
 
-	var r1 *pkgmodels.Dashboard
-	if rf, ok := ret.Get(1).(func(context.Context, string) *pkgmodels.Dashboard); ok {
+	var r1 *dashboards.Dashboard
+	if rf, ok := ret.Get(1).(func(context.Context, string) *dashboards.Dashboard); ok {
 		r1 = rf(ctx, accessToken)
 	} else {
 		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(*pkgmodels.Dashboard)
+			r1 = ret.Get(1).(*dashboards.Dashboard)
 		}
 	}
 
@@ -185,6 +270,27 @@ func (_m *FakePublicDashboardService) FindPublicDashboardAndDashboardByAccessTok
 	}
 
 	return r0, r1, r2
+}
+
+// GetMetricRequest provides a mock function with given fields: ctx, dashboard, publicDashboard, panelId, reqDTO
+func (_m *FakePublicDashboardService) GetMetricRequest(ctx context.Context, dashboard *dashboards.Dashboard, publicDashboard *models.PublicDashboard, panelId int64, reqDTO models.PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
+	ret := _m.Called(ctx, dashboard, publicDashboard, panelId, reqDTO)
+
+	var r0 dtos.MetricRequest
+	if rf, ok := ret.Get(0).(func(context.Context, *dashboards.Dashboard, *models.PublicDashboard, int64, models.PublicDashboardQueryDTO) dtos.MetricRequest); ok {
+		r0 = rf(ctx, dashboard, publicDashboard, panelId, reqDTO)
+	} else {
+		r0 = ret.Get(0).(dtos.MetricRequest)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *dashboards.Dashboard, *models.PublicDashboard, int64, models.PublicDashboardQueryDTO) error); ok {
+		r1 = rf(ctx, dashboard, publicDashboard, panelId, reqDTO)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // GetOrgIdByAccessToken provides a mock function with given fields: ctx, accessToken
@@ -231,22 +337,20 @@ func (_m *FakePublicDashboardService) GetQueryDataResponse(ctx context.Context, 
 	return r0, r1
 }
 
-// FindAll provides a mock function with given fields: ctx, u, orgId
-func (_m *FakePublicDashboardService) FindAll(ctx context.Context, u *user.SignedInUser, orgId int64) ([]models.PublicDashboardListResponse, error) {
-	ret := _m.Called(ctx, u, orgId)
+// NewPublicDashboardAccessToken provides a mock function with given fields: ctx
+func (_m *FakePublicDashboardService) NewPublicDashboardAccessToken(ctx context.Context) (string, error) {
+	ret := _m.Called(ctx)
 
-	var r0 []models.PublicDashboardListResponse
-	if rf, ok := ret.Get(0).(func(context.Context, *user.SignedInUser, int64) []models.PublicDashboardListResponse); ok {
-		r0 = rf(ctx, u, orgId)
+	var r0 string
+	if rf, ok := ret.Get(0).(func(context.Context) string); ok {
+		r0 = rf(ctx)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]models.PublicDashboardListResponse)
-		}
+		r0 = ret.Get(0).(string)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *user.SignedInUser, int64) error); ok {
-		r1 = rf(ctx, u, orgId)
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -254,20 +358,20 @@ func (_m *FakePublicDashboardService) FindAll(ctx context.Context, u *user.Signe
 	return r0, r1
 }
 
-// ExistsEnabledByAccessToken provides a mock function with given fields: ctx, accessToken
-func (_m *FakePublicDashboardService) ExistsEnabledByAccessToken(ctx context.Context, accessToken string) (bool, error) {
-	ret := _m.Called(ctx, accessToken)
+// NewPublicDashboardUid provides a mock function with given fields: ctx
+func (_m *FakePublicDashboardService) NewPublicDashboardUid(ctx context.Context) (string, error) {
+	ret := _m.Called(ctx)
 
-	var r0 bool
-	if rf, ok := ret.Get(0).(func(context.Context, string) bool); ok {
-		r0 = rf(ctx, accessToken)
+	var r0 string
+	if rf, ok := ret.Get(0).(func(context.Context) string); ok {
+		r0 = rf(ctx)
 	} else {
-		r0 = ret.Get(0).(bool)
+		r0 = ret.Get(0).(string)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, accessToken)
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -275,33 +379,12 @@ func (_m *FakePublicDashboardService) ExistsEnabledByAccessToken(ctx context.Con
 	return r0, r1
 }
 
-// PublicDashboardIsEnabled provides a mock function with given fields: ctx, dashboardUid
-func (_m *FakePublicDashboardService) ExistsEnabledByDashboardUid(ctx context.Context, dashboardUid string) (bool, error) {
-	ret := _m.Called(ctx, dashboardUid)
-
-	var r0 bool
-	if rf, ok := ret.Get(0).(func(context.Context, string) bool); ok {
-		r0 = rf(ctx, dashboardUid)
-	} else {
-		r0 = ret.Get(0).(bool)
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, dashboardUid)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// Save provides a mock function with given fields: ctx, u, dto
-func (_m *FakePublicDashboardService) Save(ctx context.Context, u *user.SignedInUser, dto *models.SavePublicDashboardConfigDTO) (*models.PublicDashboard, error) {
+// Update provides a mock function with given fields: ctx, u, dto
+func (_m *FakePublicDashboardService) Update(ctx context.Context, u *user.SignedInUser, dto *models.SavePublicDashboardDTO) (*models.PublicDashboard, error) {
 	ret := _m.Called(ctx, u, dto)
 
 	var r0 *models.PublicDashboard
-	if rf, ok := ret.Get(0).(func(context.Context, *user.SignedInUser, *models.SavePublicDashboardConfigDTO) *models.PublicDashboard); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *user.SignedInUser, *models.SavePublicDashboardDTO) *models.PublicDashboard); ok {
 		r0 = rf(ctx, u, dto)
 	} else {
 		if ret.Get(0) != nil {
@@ -310,7 +393,7 @@ func (_m *FakePublicDashboardService) Save(ctx context.Context, u *user.SignedIn
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *user.SignedInUser, *models.SavePublicDashboardConfigDTO) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *user.SignedInUser, *models.SavePublicDashboardDTO) error); ok {
 		r1 = rf(ctx, u, dto)
 	} else {
 		r1 = ret.Error(1)

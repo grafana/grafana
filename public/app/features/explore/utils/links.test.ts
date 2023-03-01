@@ -1,34 +1,32 @@
 import {
   ArrayVector,
+  DataFrame,
   DataLink,
   dateTime,
   Field,
   FieldType,
   InterpolateFunction,
-  LinkModel,
+  SupportedTransformationTypes,
   TimeRange,
+  toDataFrame,
 } from '@grafana/data';
 import { setTemplateSrv } from '@grafana/runtime';
 
-import { setContextSrv } from '../../../core/services/context_srv';
+import { initTemplateSrv } from '../../../../test/helpers/initTemplateSrv';
+import { ContextSrv, setContextSrv } from '../../../core/services/context_srv';
 import { setLinkSrv } from '../../panel/panellinks/link_srv';
 
 import { getFieldLinksForExplore } from './links';
 
 describe('getFieldLinksForExplore', () => {
   beforeEach(() => {
-    setTemplateSrv({
-      replace(target, scopedVars, format) {
-        return target ?? '';
-      },
-      getVariables() {
-        return [];
-      },
-      containsTemplate() {
-        return false;
-      },
-      updateTimeRange(timeRange: TimeRange) {},
-    });
+    setTemplateSrv(
+      initTemplateSrv('key', [
+        { type: 'custom', name: 'emptyVar', current: { value: null } },
+        { type: 'custom', name: 'num', current: { value: 1 } },
+        { type: 'custom', name: 'test', current: { value: 'foo' } },
+      ])
+    );
   });
 
   it('returns correct link model for external link', () => {
@@ -36,7 +34,12 @@ describe('getFieldLinksForExplore', () => {
       title: 'external',
       url: 'http://regionalhost',
     });
-    const links = getFieldLinksForExplore({ field, rowIndex: 0, splitOpenFn: jest.fn(), range });
+    const links = getFieldLinksForExplore({
+      field,
+      rowIndex: ROW_WITH_TEXT_VALUE.index,
+      splitOpenFn: jest.fn(),
+      range,
+    });
 
     expect(links[0].href).toBe('http://regionalhost');
     expect(links[0].title).toBe('external');
@@ -47,7 +50,12 @@ describe('getFieldLinksForExplore', () => {
       title: '',
       url: 'http://regionalhost',
     });
-    const links = getFieldLinksForExplore({ field, rowIndex: 0, splitOpenFn: jest.fn(), range });
+    const links = getFieldLinksForExplore({
+      field,
+      rowIndex: ROW_WITH_TEXT_VALUE.index,
+      splitOpenFn: jest.fn(),
+      range,
+    });
 
     expect(links[0].href).toBe('http://regionalhost');
     expect(links[0].title).toBe('regionalhost');
@@ -69,7 +77,7 @@ describe('getFieldLinksForExplore', () => {
       },
     });
     const splitfn = jest.fn();
-    const links = getFieldLinksForExplore({ field, rowIndex: 0, splitOpenFn: splitfn, range });
+    const links = getFieldLinksForExplore({ field, rowIndex: ROW_WITH_TEXT_VALUE.index, splitOpenFn: splitfn, range });
 
     expect(links[0].href).toBe(
       `/explore?left=${encodeURIComponent(
@@ -102,7 +110,7 @@ describe('getFieldLinksForExplore', () => {
       },
       false
     );
-    const links = getFieldLinksForExplore({ field, rowIndex: 0, range });
+    const links = getFieldLinksForExplore({ field, rowIndex: ROW_WITH_TEXT_VALUE.index, range });
 
     expect(links[0].href).toBe('http://regionalhost');
     expect(links[0].title).toBe('external');
@@ -121,14 +129,371 @@ describe('getFieldLinksForExplore', () => {
       },
       false
     );
-    const links = getFieldLinksForExplore({ field, rowIndex: 0, range });
+    const links = getFieldLinksForExplore({ field, rowIndex: ROW_WITH_TEXT_VALUE.index, range });
+    expect(links).toHaveLength(0);
+  });
+
+  it('returns internal links when target contains __data template variables', () => {
+    const { field, range, dataFrame } = setup({
+      title: '',
+      url: '',
+      internal: {
+        query: { query: 'query_1-${__data.fields.flux-dimensions}' },
+        datasourceUid: 'uid_1',
+        datasourceName: 'test_ds',
+      },
+    });
+    const links = getFieldLinksForExplore({ field, rowIndex: ROW_WITH_TEXT_VALUE.index, range, dataFrame });
+    expect(links).toHaveLength(1);
+    expect(links[0].href).toBe(
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"query_1-foo"}]}'
+      )}`
+    );
+  });
+
+  it('returns internal links when target contains targetField template variable', () => {
+    const { field, range, dataFrame } = setup({
+      title: '',
+      url: '',
+      internal: {
+        query: { query: 'query_1-${__targetField}' },
+        datasourceUid: 'uid_1',
+        datasourceName: 'test_ds',
+      },
+    });
+    const links = getFieldLinksForExplore({ field, rowIndex: ROW_WITH_TEXT_VALUE.index, range, dataFrame });
+    expect(links).toHaveLength(1);
+    expect(links[0].href).toBe(
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"query_1-foo"}]}'
+      )}`
+    );
+  });
+
+  it('returns internal links when target contains field name template variable', () => {
+    // field cannot be hyphenated, change field name to non-hyphenated
+    const noHyphenLink = {
+      title: '',
+      url: '',
+      internal: {
+        query: { query: 'query_1-${fluxDimensions}' },
+        datasourceUid: 'uid_1',
+        datasourceName: 'test_ds',
+      },
+    };
+    const { field, range, dataFrame } = setup(noHyphenLink, true, {
+      name: 'fluxDimensions',
+      type: FieldType.string,
+      values: new ArrayVector([ROW_WITH_TEXT_VALUE.value, ROW_WITH_NULL_VALUE.value]),
+      config: {
+        links: [noHyphenLink],
+      },
+    });
+    const links = getFieldLinksForExplore({ field, rowIndex: ROW_WITH_TEXT_VALUE.index, range, dataFrame });
+    expect(links).toHaveLength(1);
+    expect(links[0].href).toBe(
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"query_1-foo"}]}'
+      )}`
+    );
+  });
+
+  it('returns internal links when target contains other field name template variables', () => {
+    // field cannot be hyphenated, change field name to non-hyphenated
+    const noHyphenLink = {
+      title: '',
+      url: '',
+      internal: {
+        query: { query: 'query_1-${fluxDimensions}-${fluxDimension2}' },
+        datasourceUid: 'uid_1',
+        datasourceName: 'test_ds',
+      },
+    };
+    const { field, range, dataFrame } = setup(
+      noHyphenLink,
+      true,
+      {
+        name: 'fluxDimensions',
+        type: FieldType.string,
+        values: new ArrayVector([ROW_WITH_TEXT_VALUE.value, ROW_WITH_NULL_VALUE.value]),
+        config: {
+          links: [noHyphenLink],
+        },
+      },
+      [
+        {
+          name: 'fluxDimension2',
+          type: FieldType.string,
+          values: new ArrayVector(['foo2', ROW_WITH_NULL_VALUE.value]),
+          config: {
+            links: [noHyphenLink],
+          },
+        },
+      ]
+    );
+    const links = getFieldLinksForExplore({ field, rowIndex: ROW_WITH_TEXT_VALUE.index, range, dataFrame });
+    expect(links).toHaveLength(1);
+    expect(links[0].href).toBe(
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"query_1-foo-foo2"}]}'
+      )}`
+    );
+  });
+
+  it('returns internal links with logfmt and regex transformation', () => {
+    const transformationLink: DataLink = {
+      title: '',
+      url: '',
+      internal: {
+        query: { query: 'http_requests{app=${application} env=${environment}}' },
+        datasourceUid: 'uid_1',
+        datasourceName: 'test_ds',
+        transformations: [
+          { type: SupportedTransformationTypes.Logfmt },
+          { type: SupportedTransformationTypes.Regex, expression: 'host=(dev|prod)', mapValue: 'environment' },
+        ],
+      },
+    };
+
+    const { field, range, dataFrame } = setup(transformationLink, true, {
+      name: 'msg',
+      type: FieldType.string,
+      values: new ArrayVector(['application=foo host=dev-001', 'application=bar host=prod-003']),
+      config: {
+        links: [transformationLink],
+      },
+    });
+
+    const links = [
+      getFieldLinksForExplore({ field, rowIndex: 0, range, dataFrame }),
+      getFieldLinksForExplore({ field, rowIndex: 1, range, dataFrame }),
+    ];
+    expect(links[0]).toHaveLength(1);
+    expect(links[0][0].href).toBe(
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=foo env=dev}"}]}'
+      )}`
+    );
+    expect(links[1]).toHaveLength(1);
+    expect(links[1][0].href).toBe(
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=bar env=prod}"}]}'
+      )}`
+    );
+  });
+
+  it('returns internal links with 2 unnamed regex transformations and use the last transformation', () => {
+    const transformationLink: DataLink = {
+      title: '',
+      url: '',
+      internal: {
+        query: { query: 'http_requests{env=${msg}}' },
+        datasourceUid: 'uid_1',
+        datasourceName: 'test_ds',
+        transformations: [
+          { type: SupportedTransformationTypes.Regex, expression: 'fieldA=(asparagus|broccoli)' },
+          { type: SupportedTransformationTypes.Regex, expression: 'fieldB=(apple|banana)' },
+        ],
+      },
+    };
+
+    const { field, range, dataFrame } = setup(transformationLink, true, {
+      name: 'msg',
+      type: FieldType.string,
+      values: new ArrayVector(['fieldA=asparagus fieldB=banana', 'fieldA=broccoli fieldB=apple']),
+      config: {
+        links: [transformationLink],
+      },
+    });
+
+    const links = [
+      getFieldLinksForExplore({ field, rowIndex: 0, range, dataFrame }),
+      getFieldLinksForExplore({ field, rowIndex: 1, range, dataFrame }),
+    ];
+    expect(links[0]).toHaveLength(1);
+    expect(links[0][0].href).toBe(
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{env=banana}"}]}'
+      )}`
+    );
+    expect(links[1]).toHaveLength(1);
+    expect(links[1][0].href).toBe(
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{env=apple}"}]}'
+      )}`
+    );
+  });
+
+  it('returns internal links with logfmt with stringified booleans', () => {
+    const transformationLink: DataLink = {
+      title: '',
+      url: '',
+      internal: {
+        query: { query: 'http_requests{app=${application} isOnline=${online}}' },
+        datasourceUid: 'uid_1',
+        datasourceName: 'test_ds',
+        transformations: [{ type: SupportedTransformationTypes.Logfmt }],
+      },
+    };
+
+    const { field, range, dataFrame } = setup(transformationLink, true, {
+      name: 'msg',
+      type: FieldType.string,
+      values: new ArrayVector(['application=foo online=true', 'application=bar online=false']),
+      config: {
+        links: [transformationLink],
+      },
+    });
+
+    const links = [
+      getFieldLinksForExplore({ field, rowIndex: 0, range, dataFrame }),
+      getFieldLinksForExplore({ field, rowIndex: 1, range, dataFrame }),
+    ];
+    expect(links[0]).toHaveLength(1);
+    expect(links[0][0].href).toBe(
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=foo isOnline=true}"}]}'
+      )}`
+    );
+    expect(links[1]).toHaveLength(1);
+    expect(links[1][0].href).toBe(
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=bar isOnline=false}"}]}'
+      )}`
+    );
+  });
+
+  it('returns internal links with logfmt with correct data on transformation-defined field', () => {
+    const transformationLink: DataLink = {
+      title: '',
+      url: '',
+      internal: {
+        query: { query: 'http_requests{app=${application}}' },
+        datasourceUid: 'uid_1',
+        datasourceName: 'test_ds',
+        transformations: [{ type: SupportedTransformationTypes.Logfmt, field: 'fieldNamedInTransformation' }],
+      },
+    };
+
+    // fieldWithLink has the transformation, but the transformation has defined fieldNamedInTransformation as its field to transform
+    const { field, range, dataFrame } = setup(
+      transformationLink,
+      true,
+      {
+        name: 'fieldWithLink',
+        type: FieldType.string,
+        values: new ArrayVector(['application=link', 'application=link2']),
+        config: {
+          links: [transformationLink],
+        },
+      },
+      [
+        {
+          name: 'fieldNamedInTransformation',
+          type: FieldType.string,
+          values: new ArrayVector(['application=transform', 'application=transform2']),
+          config: {},
+        },
+      ]
+    );
+
+    const links = [
+      getFieldLinksForExplore({ field, rowIndex: 0, range, dataFrame }),
+      getFieldLinksForExplore({ field, rowIndex: 1, range, dataFrame }),
+    ];
+    expect(links[0]).toHaveLength(1);
+    expect(links[0][0].href).toBe(
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=transform}"}]}'
+      )}`
+    );
+    expect(links[1]).toHaveLength(1);
+    expect(links[1][0].href).toBe(
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=transform2}"}]}'
+      )}`
+    );
+  });
+
+  it('returns internal links with regex named capture groups', () => {
+    const transformationLink: DataLink = {
+      title: '',
+      url: '',
+      internal: {
+        query: { query: 'http_requests{app=${application} env=${environment}}' },
+        datasourceUid: 'uid_1',
+        datasourceName: 'test_ds',
+        transformations: [
+          {
+            type: SupportedTransformationTypes.Regex,
+            expression: '(?=.*(?<application>(grafana|loki)))(?=.*(?<environment>(dev|prod)))',
+          },
+        ],
+      },
+    };
+
+    const { field, range, dataFrame } = setup(transformationLink, true, {
+      name: 'msg',
+      type: FieldType.string,
+      values: new ArrayVector(['foo loki prod', 'dev bar grafana', 'prod grafana foo']),
+      config: {
+        links: [transformationLink],
+      },
+    });
+
+    const links = [
+      getFieldLinksForExplore({ field, rowIndex: 0, range, dataFrame }),
+      getFieldLinksForExplore({ field, rowIndex: 1, range, dataFrame }),
+      getFieldLinksForExplore({ field, rowIndex: 2, range, dataFrame }),
+    ];
+    expect(links[0]).toHaveLength(1);
+    expect(links[0][0].href).toBe(
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=loki env=prod}"}]}'
+      )}`
+    );
+    expect(links[1]).toHaveLength(1);
+    expect(links[1][0].href).toBe(
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=grafana env=dev}"}]}'
+      )}`
+    );
+
+    expect(links[2]).toHaveLength(1);
+    expect(links[2][0].href).toBe(
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=grafana env=prod}"}]}'
+      )}`
+    );
+  });
+
+  it('returns no internal links when target contains empty template variables', () => {
+    const { field, range, dataFrame } = setup({
+      title: '',
+      url: '',
+      internal: {
+        query: { query: 'query_1-${__data.fields.flux-dimensions}' },
+        datasourceUid: 'uid_1',
+        datasourceName: 'test_ds',
+      },
+    });
+    const links = getFieldLinksForExplore({ field, rowIndex: ROW_WITH_NULL_VALUE.index, range, dataFrame });
     expect(links).toHaveLength(0);
   });
 });
 
-function setup(link: DataLink, hasAccess = true) {
+const ROW_WITH_TEXT_VALUE = { value: 'foo', index: 0 };
+const ROW_WITH_NULL_VALUE = { value: null, index: 1 };
+
+function setup(
+  link: DataLink,
+  hasAccess = true,
+  fieldOverride?: Field<string | null>,
+  dataFrameOtherFieldOverride?: Field[]
+) {
   setLinkSrv({
-    getDataLinkUIModel(link: DataLink, replaceVariables: InterpolateFunction | undefined, origin: any): LinkModel<any> {
+    getDataLinkUIModel(link: DataLink, replaceVariables: InterpolateFunction | undefined, origin) {
       return {
         href: link.url,
         title: link.title,
@@ -136,26 +501,36 @@ function setup(link: DataLink, hasAccess = true) {
         origin: origin,
       };
     },
-    getAnchorInfo(link: any) {
+    getAnchorInfo(link) {
       return { ...link };
     },
-    getLinkUrl(link: any) {
+    getLinkUrl(link) {
       return link.url;
     },
   });
 
   setContextSrv({
     hasAccessToExplore: () => hasAccess,
-  } as any);
+  } as ContextSrv);
 
-  const field: Field<string> = {
+  const field: Field<string | null> = {
     name: 'flux-dimensions',
     type: FieldType.string,
-    values: new ArrayVector([]),
+    values: new ArrayVector([ROW_WITH_TEXT_VALUE.value, ROW_WITH_NULL_VALUE.value]),
     config: {
       links: [link],
     },
   };
+
+  let fieldsArr = [fieldOverride || field];
+
+  if (dataFrameOtherFieldOverride) {
+    fieldsArr = [...fieldsArr, ...dataFrameOtherFieldOverride];
+  }
+
+  const dataFrame: DataFrame = toDataFrame({
+    fields: fieldsArr,
+  });
 
   const range: TimeRange = {
     from: dateTime('2020-10-14T00:00:00'),
@@ -166,5 +541,5 @@ function setup(link: DataLink, hasAccess = true) {
     },
   };
 
-  return { range, field };
+  return { range, field: fieldOverride || field, dataFrame };
 }

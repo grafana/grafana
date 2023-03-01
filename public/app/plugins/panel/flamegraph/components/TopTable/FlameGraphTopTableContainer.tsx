@@ -18,6 +18,7 @@ type Props = {
   search: string;
   setSearch: (search: string) => void;
   setTopLevelIndex: (level: number) => void;
+  setSelectedBarIndex: (bar: number) => void;
   setRangeMin: (range: number) => void;
   setRangeMax: (range: number) => void;
 };
@@ -30,6 +31,7 @@ const FlameGraphTopTableContainer = ({
   search,
   setSearch,
   setTopLevelIndex,
+  setSelectedBarIndex,
   setRangeMin,
   setRangeMax,
 }: Props) => {
@@ -43,7 +45,7 @@ const FlameGraphTopTableContainer = ({
     let label, self, value;
     let table: { [key: string]: TableData } = {};
 
-    if (data.fields.length === 4) {
+    if (data.fields.length === 6) {
       const valueValues = data.fields[1].values;
       const selfValues = data.fields[2].values;
       const labelValues = data.fields[3].values;
@@ -113,6 +115,7 @@ const FlameGraphTopTableContainer = ({
                 search={search}
                 setSearch={setSearch}
                 setTopLevelIndex={setTopLevelIndex}
+                setSelectedBarIndex={setSelectedBarIndex}
                 setRangeMin={setRangeMin}
                 setRangeMax={setRangeMax}
               />
@@ -133,7 +136,9 @@ const getStyles = (selectedView: SelectedView, app: CoreApp) => {
       float: left;
       margin-right: ${marginRight};
       width: ${selectedView === SelectedView.TopTable ? '100%' : `calc(50% - ${marginRight})`};
-      ${app !== CoreApp.Explore ? 'height: calc(100% - 44px)' : ''}; // 44px to adjust for header pushing content down
+      ${app !== CoreApp.Explore
+        ? 'height: calc(100% - 50px)'
+        : 'height: calc(100% + 50px)'}; // 50px to adjust for header pushing content down
     `,
   };
 };

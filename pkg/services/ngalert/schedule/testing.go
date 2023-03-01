@@ -71,6 +71,12 @@ func (f *fakeRulesStore) PutRule(_ context.Context, rules ...*models.AlertRule) 
 	}
 }
 
+func (f *fakeRulesStore) DeleteRule(rules ...*models.AlertRule) {
+	for _, r := range rules {
+		delete(f.rules, r.UID)
+	}
+}
+
 func (f *fakeRulesStore) getNamespaceTitle(uid string) string {
 	return "TEST-FOLDER-" + uid
 }

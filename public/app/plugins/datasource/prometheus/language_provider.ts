@@ -1,4 +1,4 @@
-import { once, chain, difference } from 'lodash';
+import { chain, difference, once } from 'lodash';
 import LRU from 'lru-cache';
 import Prism from 'prismjs';
 import { Value } from 'slate';
@@ -14,6 +14,7 @@ import {
 import { BackendSrvRequest } from '@grafana/runtime';
 import { CompletionItem, CompletionItemGroup, SearchFunctionType, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
 
+import { Label } from './components/monaco-query-field/monaco-completion-provider/situation';
 import { PrometheusDatasource } from './datasource';
 import {
   addLimitInfo,
@@ -98,6 +99,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    *  10 as a max size is totally arbitrary right now.
    */
   private labelsCache = new LRU<string, Record<string, string[]>>({ max: 10 });
+  private labelValuesCache = new LRU<string, string[]>({ max: 10 });
 
   constructor(datasource: PrometheusDatasource, initialValues?: Partial<PromQlLanguageProvider>) {
     super();
@@ -471,6 +473,10 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     }
   }
 
+  /**
+   * @todo cache
+   * @param key
+   */
   fetchLabelValues = async (key: string): Promise<string[]> => {
     const params = this.datasource.getTimeRangeParams();
     const url = `/api/v1/label/${this.datasource.interpolateString(key)}/values`;
@@ -498,7 +504,79 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   }
 
   /**
-   * Fetch labels for a series. This is cached by its args but also by the global timeRange currently selected as
+   * Gets series values
+   * Function to replace old getSeries calls in a way that will provide faster endpoints for new prometheus instances,
+   * while maintaining backward compatability
+   * @param labelName
+   * @param selector
+   */
+  getSeriesValues = async (labelName: string, selector: string): Promise<string[]> => {
+    if (!this.datasource.hasLabelsMatchAPISupport()) {
+      const data = await this.getSeries(selector);
+      return data[labelName] ?? [];
+    }
+    return await this.fetchSeriesValuesWithMatch(labelName, selector);
+  };
+
+  /**
+   * Fetches all values for a label, with optional match[]
+   * @param name
+   * @param match
+   */
+  fetchSeriesValuesWithMatch = async (name: string, match?: string): Promise<string[]> => {
+    const interpolatedName = name ? this.datasource.interpolateString(name) : null;
+    const range = this.datasource.getTimeRangeParams();
+    const urlParams = {
+      ...range,
+      ...(match && { 'match[]': match }),
+    };
+
+    const cacheParams = new URLSearchParams({
+      'match[]': interpolatedName ?? '',
+      start: roundSecToMin(parseInt(range.start, 10)).toString(),
+      end: roundSecToMin(parseInt(range.end, 10)).toString(),
+      name: name,
+    });
+
+    const cacheKey = `/api/v1/label/?${cacheParams.toString()}/values`;
+    let value: string[] | undefined = this.labelValuesCache.get(cacheKey);
+    if (!value) {
+      value = await this.request(`/api/v1/label/${interpolatedName}/values`, [], urlParams);
+      if (value) {
+        this.labelValuesCache.set(cacheKey, value);
+      }
+    }
+    return value ?? [];
+  };
+
+  /**
+   * Gets series labels
+   * Function to replace old getSeries calls in a way that will provide faster endpoints for new prometheus instances,
+   * while maintaining backward compatability. The old API call got the labels and the values in a single query,
+   * but with the new query we need two calls, one to get the labels, and another to get the values.
+   *
+   * @param selector
+   * @param otherLabels
+   */
+  getSeriesLabels = async (selector: string, otherLabels: Label[]): Promise<string[]> => {
+    let possibleLabelNames, data: Record<string, string[]>;
+
+    if (!this.datasource.hasLabelsMatchAPISupport()) {
+      data = await this.getSeries(selector);
+      possibleLabelNames = Object.keys(data); // all names from prometheus
+    } else {
+      // Exclude __name__ from output
+      otherLabels.push({ name: '__name__', value: '', op: '!=' });
+      data = await this.fetchSeriesLabelsMatch(selector);
+      possibleLabelNames = Object.keys(data);
+    }
+
+    const usedLabelNames = new Set(otherLabels.map((l) => l.name)); // names used in the query
+    return possibleLabelNames.filter((l) => !usedLabelNames.has(l));
+  };
+
+  /**
+   * Fetch labels for a series using /series endpoint. This is cached by its args but also by the global timeRange currently selected as
    * they can change over requested time.
    * @param name
    * @param withName
@@ -528,6 +606,42 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       const data = await this.request(url, [], urlParams);
       const { values } = processLabels(data, withName);
       value = values;
+      this.labelsCache.set(cacheKey, value);
+    }
+    return value;
+  };
+
+  /**
+   * Fetch labels for a series using /labels endpoint.  This is cached by its args but also by the global timeRange currently selected as
+   * they can change over requested time.
+   * @param name
+   * @param withName
+   */
+  fetchSeriesLabelsMatch = async (name: string, withName?: boolean): Promise<Record<string, string[]>> => {
+    const interpolatedName = this.datasource.interpolateString(name);
+    const range = this.datasource.getTimeRangeParams();
+    const urlParams = {
+      ...range,
+      'match[]': interpolatedName,
+    };
+    const url = `/api/v1/labels`;
+    // Cache key is a bit different here. We add the `withName` param and also round up to a minute the intervals.
+    // The rounding may seem strange but makes relative intervals like now-1h less prone to need separate request every
+    // millisecond while still actually getting all the keys for the correct interval. This still can create problems
+    // when user does not the newest values for a minute if already cached.
+    const cacheParams = new URLSearchParams({
+      'match[]': interpolatedName,
+      start: roundSecToMin(parseInt(range.start, 10)).toString(),
+      end: roundSecToMin(parseInt(range.end, 10)).toString(),
+      withName: withName ? 'true' : 'false',
+    });
+
+    const cacheKey = `${url}?${cacheParams.toString()}`;
+    let value = this.labelsCache.get(cacheKey);
+    if (!value) {
+      const data: string[] = await this.request(url, [], urlParams);
+      // Convert string array to Record<string , []>
+      value = data.reduce((ac, a) => ({ ...ac, [a]: '' }), {});
       this.labelsCache.set(cacheKey, value);
     }
     return value;

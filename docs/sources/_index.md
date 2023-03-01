@@ -1,10 +1,9 @@
 ---
 aliases:
-  - /docs/grafana/latest/
-  - /docs/grafana/latest/guides/reference/admin/
   - /docs/grafana/v1.1/
   - /docs/grafana/v3.1/
-description: Guides, Installation and Feature Documentation
+  - guides/reference/admin/
+description: Guides, installation, and feature documentation
 keywords:
   - grafana
   - installation
@@ -105,7 +104,7 @@ title: Grafana documentation
       <img src="/static/img/docs/logos/icon_cloudwatch.svg">
       <h5>AWS CloudWatch</h5>
     </a>
-    <a href="{{< relref "datasources/azuremonitor/" >}}" class="nav-cards__item nav-cards__item--ds">
+    <a href="{{< relref "datasources/azure-monitor/" >}}" class="nav-cards__item nav-cards__item--ds">
       <img src="/static/img/docs/logos/icon_azure_monitor.jpg">
       <h5>Azure Monitor</h5>
     </a>

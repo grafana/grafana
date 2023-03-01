@@ -6,7 +6,11 @@ import { TypeaheadInput } from '@grafana/ui';
 import LanguageProvider, { LokiHistoryItem } from './LanguageProvider';
 import { LokiDatasource } from './datasource';
 import { createLokiDatasource, createMetadataRequest } from './mocks';
-import { extractLogParserFromDataFrame } from './responseUtils';
+import {
+  extractLogParserFromDataFrame,
+  extractLabelKeysFromDataFrame,
+  extractUnwrapLabelKeysFromDataFrame,
+} from './responseUtils';
 import { LokiQueryType } from './types';
 
 jest.mock('./responseUtils');
@@ -302,10 +306,15 @@ describe('Query imports', () => {
 
   describe('getParserAndLabelKeys()', () => {
     let datasource: LokiDatasource, languageProvider: LanguageProvider;
-    const extractLogParserFromDataFrameMock = extractLogParserFromDataFrame as jest.Mock;
+    const extractLogParserFromDataFrameMock = jest.mocked(extractLogParserFromDataFrame);
+    const extractedLabelKeys = ['extracted', 'label'];
+    const unwrapLabelKeys = ['unwrap', 'labels'];
+
     beforeEach(() => {
       datasource = createLokiDatasource();
       languageProvider = new LanguageProvider(datasource);
+      jest.mocked(extractLabelKeysFromDataFrame).mockReturnValue(extractedLabelKeys);
+      jest.mocked(extractUnwrapLabelKeysFromDataFrame).mockReturnValue(unwrapLabelKeys);
     });
 
     it('identifies selectors with JSON parser data', async () => {
@@ -313,7 +322,8 @@ describe('Query imports', () => {
       extractLogParserFromDataFrameMock.mockReturnValueOnce({ hasLogfmt: false, hasJSON: true });
 
       expect(await languageProvider.getParserAndLabelKeys('{place="luna"}')).toEqual({
-        extractedLabelKeys: [],
+        extractedLabelKeys,
+        unwrapLabelKeys,
         hasJSON: true,
         hasLogfmt: false,
       });
@@ -324,7 +334,8 @@ describe('Query imports', () => {
       extractLogParserFromDataFrameMock.mockReturnValueOnce({ hasLogfmt: true, hasJSON: false });
 
       expect(await languageProvider.getParserAndLabelKeys('{place="luna"}')).toEqual({
-        extractedLabelKeys: [],
+        extractedLabelKeys,
+        unwrapLabelKeys,
         hasJSON: false,
         hasLogfmt: true,
       });
@@ -336,6 +347,7 @@ describe('Query imports', () => {
 
       expect(await languageProvider.getParserAndLabelKeys('{place="luna"}')).toEqual({
         extractedLabelKeys: [],
+        unwrapLabelKeys: [],
         hasJSON: false,
         hasLogfmt: false,
       });

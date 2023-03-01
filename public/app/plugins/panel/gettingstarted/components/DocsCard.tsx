@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React, { useCallback } from 'react';
 
-import { GrafanaTheme } from '@grafana/data';
-import { Icon, stylesFactory, useTheme } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Icon, useStyles2 } from '@grafana/ui';
 
 import { Card } from '../types';
 
@@ -12,9 +12,9 @@ interface Props {
   card: Card;
 }
 
-export const DocsCard: FC<Props> = ({ card }) => {
-  const theme = useTheme();
-  const styles = getStyles(theme, card.done);
+export const DocsCard = ({ card }: Props) => {
+  const styles = useStyles2(useCallback((theme: GrafanaTheme2) => getStyles(theme, card.done), [card.done]));
+  const iconStyles = useStyles2(useCallback((theme: GrafanaTheme2) => iconStyle(theme, card.done), [card.done]));
 
   return (
     <div className={styles.card}>
@@ -23,7 +23,7 @@ export const DocsCard: FC<Props> = ({ card }) => {
           <div className={styles.heading}>{card.done ? 'complete' : card.heading}</div>
           <h4 className={styles.title}>{card.title}</h4>
           <div>
-            <Icon className={iconStyle(theme, card.done)} name={card.icon} size="xxl" />
+            <Icon className={iconStyles} name={card.icon} size="xxl" />
           </div>
         </a>
       </div>
@@ -39,34 +39,34 @@ export const DocsCard: FC<Props> = ({ card }) => {
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme, complete: boolean) => {
+const getStyles = (theme: GrafanaTheme2, complete: boolean) => {
   return {
     card: css`
       ${cardStyle(theme, complete)}
 
       min-width: 230px;
 
-      @media only screen and (max-width: ${theme.breakpoints.md}) {
+      ${theme.breakpoints.down('md')} {
         min-width: 192px;
       }
     `,
     heading: css`
       text-transform: uppercase;
-      color: ${complete ? theme.palette.blue95 : '#FFB357'};
-      margin-bottom: ${theme.spacing.md};
+      color: ${complete ? theme.v1.palette.blue95 : '#FFB357'};
+      margin-bottom: ${theme.spacing(2)};
     `,
     title: css`
-      margin-bottom: ${theme.spacing.md};
+      margin-bottom: ${theme.spacing(2)};
     `,
     url: css`
       display: inline-block;
     `,
     learnUrl: css`
-      border-top: 1px solid ${theme.colors.border1};
+      border-top: 1px solid ${theme.colors.border.weak};
       position: absolute;
       bottom: 0;
       padding: 8px 16px;
       width: 100%;
     `,
   };
-});
+};

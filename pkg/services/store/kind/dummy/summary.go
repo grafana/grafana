@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 )
 
-func GetObjectKindInfo(kind string) models.ObjectKindInfo {
-	return models.ObjectKindInfo{
+func GetEntityKindInfo(kind string) entity.EntityKindInfo {
+	return entity.EntityKindInfo{
 		ID:          kind,
 		Name:        kind,
 		Description: "Dummy kind used for testing.",
@@ -17,9 +17,9 @@ func GetObjectKindInfo(kind string) models.ObjectKindInfo {
 	}
 }
 
-func GetObjectSummaryBuilder(kind string) models.ObjectSummaryBuilder {
-	return func(ctx context.Context, uid string, body []byte) (*models.ObjectSummary, []byte, error) {
-		summary := &models.ObjectSummary{
+func GetEntitySummaryBuilder(kind string) entity.EntitySummaryBuilder {
+	return func(ctx context.Context, uid string, body []byte) (*entity.EntitySummary, []byte, error) {
+		summary := &entity.EntitySummary{
 			Name:        fmt.Sprintf("Dummy: %s", kind),
 			Kind:        kind,
 			Description: fmt.Sprintf("Wrote at %s", time.Now().Local().String()),
@@ -35,19 +35,19 @@ func GetObjectSummaryBuilder(kind string) models.ObjectSummaryBuilder {
 			},
 			Error:  nil, // ignore for now
 			Nested: nil, // ignore for now
-			References: []*models.ObjectExternalReference{
+			References: []*entity.EntityExternalReference{
 				{
-					Kind: "ds",
-					Type: "influx",
-					UID:  "xyz",
+					Family:     "ds",
+					Type:       "influx",
+					Identifier: "xyz",
 				},
 				{
-					Kind: "panel",
-					Type: "heatmap",
+					Family: entity.StandardKindPanel,
+					Type:   "heatmap",
 				},
 				{
-					Kind: "panel",
-					Type: "timeseries",
+					Family: entity.StandardKindPanel,
+					Type:   "timeseries",
 				},
 			},
 		}

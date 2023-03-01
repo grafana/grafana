@@ -1,7 +1,8 @@
 import React from 'react';
 
 import { DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana/data';
-import { AlertingSettings, DataSourceHttpSettings } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { AlertingSettings, DataSourceHttpSettings, SecureSocksProxySettings } from '@grafana/ui';
 
 import { LokiOptions } from '../types';
 
@@ -36,6 +37,10 @@ export const ConfigEditor = (props: Props) => {
         showAccessOptions={false}
         onChange={onOptionsChange}
       />
+
+      {config.featureToggles.secureSocksDatasourceProxy && (
+        <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+      )}
 
       <AlertingSettings<LokiOptions> options={options} onOptionsChange={onOptionsChange} />
 
