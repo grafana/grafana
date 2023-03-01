@@ -81,7 +81,7 @@ Meta monitoring in Grafana Mimir requires having a Prometheus/Mimir server, or o
 
 #### alertmanager_alerts
 
-This metric is a counter that shows you the number of active, supressed and unprocessed alerts from the Grafana Alertmanager.
+This metric is a counter that shows you the number of active, suppressed and unprocessed alerts from the Grafana Alertmanager.
 
 #### alertmanager_notifications_total
 
