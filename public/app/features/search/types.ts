@@ -86,7 +86,6 @@ export interface SearchState {
   starred: boolean;
   explain?: boolean; // adds debug info
   datasource?: string;
-  panel_type?: string;
   sort?: string;
   prevSort?: string; // Save sorting data between layouts
   layout: SearchLayout;
