@@ -245,11 +245,6 @@ var (
 			RequiresDevMode: true,
 		},
 		{
-			Name:        "flameGraph",
-			Description: "Show the flame graph",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:        "cloudWatchCrossAccountQuerying",
 			Description: "Enables cross-account querying in CloudWatch datasources",
 			State:       FeatureStateStable,
