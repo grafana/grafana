@@ -1,6 +1,6 @@
 import { cloneDeep } from 'lodash';
 
-import { buildRawQuery, normalizeQuery, changeSelectPart, changeGroupByPart } from './queryUtils';
+import { buildRawQuery, changeGroupByPart, changeSelectPart, normalizeQuery } from './queryUtils';
 import { InfluxQuery } from './types';
 
 describe('InfluxDB query utils', () => {
@@ -53,7 +53,7 @@ describe('InfluxDB query utils', () => {
           ],
           groupBy: [],
         })
-      ).toBe('SELECT "value" FROM "measurement" WHERE $timeFilter');
+      ).toBe('SELECT "value" FROM "autogen"."measurement" WHERE $timeFilter');
     });
     it('should handle string limit/slimit', () => {
       expect(
@@ -71,7 +71,7 @@ describe('InfluxDB query utils', () => {
           limit: '12',
           slimit: '23',
         })
-      ).toBe('SELECT "value" FROM "measurement" WHERE $timeFilter LIMIT 12 SLIMIT 23');
+      ).toBe('SELECT "value" FROM "autogen"."measurement" WHERE $timeFilter LIMIT 12 SLIMIT 23');
     });
     it('should handle number limit/slimit', () => {
       expect(
@@ -89,7 +89,7 @@ describe('InfluxDB query utils', () => {
           limit: 12,
           slimit: 23,
         })
-      ).toBe('SELECT "value" FROM "measurement" WHERE $timeFilter LIMIT 12 SLIMIT 23');
+      ).toBe('SELECT "value" FROM "autogen"."measurement" WHERE $timeFilter LIMIT 12 SLIMIT 23');
     });
     it('should handle all the tag-operators', () => {
       expect(
@@ -147,7 +147,7 @@ describe('InfluxDB query utils', () => {
           groupBy: [],
         })
       ).toBe(
-        `SELECT "value" FROM "measurement" WHERE ("cpu" = 'cpu0' AND "cpu" != 'cpu0' AND "cpu" <> 'cpu0' AND "cpu" < cpu0 AND "cpu" > cpu0 AND "cpu" =~ /cpu0/ AND "cpu" !~ /cpu0/) AND $timeFilter`
+        `SELECT "value" FROM "autogen"."measurement" WHERE ("cpu" = 'cpu0' AND "cpu" != 'cpu0' AND "cpu" <> 'cpu0' AND "cpu" < cpu0 AND "cpu" > cpu0 AND "cpu" =~ /cpu0/ AND "cpu" !~ /cpu0/) AND $timeFilter`
       );
     });
     it('should handle a complex query', () => {
@@ -244,7 +244,7 @@ describe('InfluxDB query utils', () => {
 
       expect(normalizeQuery(query)).toStrictEqual({
         refId: 'A',
-        policy: 'default',
+        policy: 'autogen',
         resultFormat: 'time_series',
         orderByTime: 'ASC',
         tags: [],
