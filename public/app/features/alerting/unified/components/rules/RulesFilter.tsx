@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
-import React, { FormEvent, useState } from 'react';
+import React, { FormEvent, KeyboardEvent, useMemo, useState } from 'react';
 
 import { DataSourceInstanceSettings, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
@@ -54,21 +54,27 @@ interface RulesFilerProps {
   onFilterCleared?: () => void;
 }
 
+const RuleStateOptions = Object.entries(PromAlertingRuleState).map(([key, value]) => ({
+  label: alertStateToReadable(value),
+  value,
+}));
+
 const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => {
+  const styles = useStyles2(getStyles);
   const [queryParams, setQueryParams] = useQueryParams();
+  const { filterState, hasActiveFilters, searchQuery, setSearchQuery, updateFilters } = useRulesFilter();
 
   // This key is used to force a rerender on the inputs when the filters are cleared
   const [filterKey, setFilterKey] = useState<number>(Math.floor(Math.random() * 100));
   const dataSourceKey = `dataSource-${filterKey}`;
   const queryStringKey = `queryString-${filterKey}`;
 
-  const { filterState, hasActiveFilters, searchQuery, setSearchQuery, updateFilters } = useRulesFilter();
-
-  const styles = useStyles2(getStyles);
-  const stateOptions = Object.entries(PromAlertingRuleState).map(([key, value]) => ({
-    label: alertStateToReadable(value),
-    value,
-  }));
+  const handleQueryStringChange = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && e.target instanceof HTMLInputElement) {
+      setSearchQuery(e.target.value);
+      e.target.blur();
+    }
+  };
 
   const handleDataSourceChange = (dataSourceValue: DataSourceInstanceSettings) => {
     updateFilters({ ...filterState, dataSourceName: dataSourceValue.name });
@@ -79,11 +85,6 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
     updateFilters({ ...filterState, dataSourceName: undefined });
     setFilterKey((key) => key + 1);
   };
-
-  const handleQueryStringChange = debounce((e: FormEvent<HTMLInputElement>) => {
-    const target = e.target as HTMLInputElement;
-    setSearchQuery(target.value);
-  }, 600);
 
   const handleAlertStateChange = (value: PromAlertingRuleState) => {
     logInfo(LogMessages.clickingAlertStateFilters);
@@ -130,7 +131,11 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
           </Field>
           <div>
             <Label>State</Label>
-            <RadioButtonGroup options={stateOptions} value={filterState.ruleState} onChange={handleAlertStateChange} />
+            <RadioButtonGroup
+              options={RuleStateOptions}
+              value={filterState.ruleState}
+              onChange={handleAlertStateChange}
+            />
           </div>
           <div>
             <Label>Rule type</Label>
@@ -163,7 +168,8 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
               <Input
                 key={queryStringKey}
                 prefix={searchIcon}
-                onChange={handleQueryStringChange}
+                // onChange={handleQueryStringChange}
+                onKeyPress={handleQueryStringChange}
                 defaultValue={searchQuery}
                 placeholder="Search"
                 data-testid="search-query-input"
