@@ -85,6 +85,15 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     });
   };
 
+  onClearSearchAndFilters = () => {
+    this.setStateAndDoSearch({
+      query: '',
+      datasource: undefined,
+      tag: [],
+      panel_type: undefined,
+    });
+  };
+
   onQueryChange = (query: string) => {
     this.setStateAndDoSearch({ query });
   };
