@@ -607,7 +607,13 @@ export enum TableCellBackgroundDisplayMode {
  * Sort by field state
  */
 export interface TableSortByFieldState {
+  /**
+   * Flag used to indicate descending sort order
+   */
   desc?: boolean;
+  /**
+   * Sets the display name of the field to sort by
+   */
   displayName: string;
 }
 

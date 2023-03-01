@@ -13,7 +13,9 @@ TableCellBackgroundDisplayMode: "basic" | "gradient" @cuetsy(kind="enum",memberN
 
 // Sort by field state
 TableSortByFieldState: {
+	// Sets the display name of the field to sort by
 	displayName: string
+	// Flag used to indicate descending sort order
 	desc?:       bool
 } @cuetsy(kind="interface")
 

@@ -26,17 +26,23 @@ composableKinds: PanelCfg: {
 				schemas: [
 					{
 						PanelOptions: {
+							// Represents the index of the selected frame
 							frameIndex: number | *0
 							// Controls whether the panel should show the header
 							showHeader: bool | *true
 							// Controls whether the columns should be numbered
-							showRowNums?:   bool | *false
+							showRowNums?: bool | *false
+							// Controls whether the header should show icons for the column types
 							showTypeIcons?: bool | *false
+							// Used to control row sorting
 							sortBy?: [...ui.TableSortByFieldState]
 							// Controls footer options
 							footer?: ui.TableFooterOptions | *{
-								show:      false
+								// Controls whether the footer should be shown
+								show: false
+								// Controls whether the footer should show the total number of rows on Count calculation
 								countRows: false
+								// Represents the selected calculations
 								reducer: []
 							}
 						} @cuetsy(kind="interface")

@@ -17,6 +17,9 @@ export interface PanelOptions {
    * Controls footer options
    */
   footer?: ui.TableFooterOptions;
+  /**
+   * Represents the index of the selected frame
+   */
   frameIndex: number;
   /**
    * Controls whether the panel should show the header
@@ -26,14 +29,29 @@ export interface PanelOptions {
    * Controls whether the columns should be numbered
    */
   showRowNums?: boolean;
+  /**
+   * Controls whether the header should show icons for the column types
+   */
   showTypeIcons?: boolean;
+  /**
+   * Used to control row sorting
+   */
   sortBy?: Array<ui.TableSortByFieldState>;
 }
 
 export const defaultPanelOptions: Partial<PanelOptions> = {
   footer: {
+    /**
+     * Controls whether the footer should be shown
+     */
     show: false,
+    /**
+     * Controls whether the footer should show the total number of rows on Count calculation
+     */
     countRows: false,
+    /**
+     * Represents the selected calculations
+     */
     reducer: [],
   },
   frameIndex: 0,
