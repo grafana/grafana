@@ -65,6 +65,7 @@ export interface FieldDisplay {
   getLinks?: () => LinkModel[];
   hasLinks: boolean;
   fieldType?: FieldType;
+  sourceField?: Field;
 }
 
 export interface GetFieldDisplayValuesOptions {
@@ -179,6 +180,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
               : () => [],
             hasLinks: hasLinks(field),
             fieldType,
+            sourceField: field,
           });
 
           if (values.length >= limit) {
@@ -233,6 +235,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
               : () => [],
             hasLinks: hasLinks(field),
             fieldType,
+            sourceField: field,
           });
         }
       }
