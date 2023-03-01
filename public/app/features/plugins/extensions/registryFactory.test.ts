@@ -392,30 +392,24 @@ describe('createPluginExtensionRegistry()', () => {
       });
     });
 
-    it('should add default configure function when none provided via extension config', () => {
+    it('should add default configure function when none is provided via the extension config', () => {
       const registry = createPluginExtensionRegistry([
         {
           pluginId: 'belugacdn-app',
           linkExtensions: [],
-          commandExtensions: [
-            {
-              placement: 'grafana/dashboard/panel/menu',
-              title: 'Open incident',
-              description: 'You can create an incident from this context',
-              handler: () => {},
-            },
-          ],
+          commandExtensions: [commandConfig1],
         },
       ]);
 
-      const [extension] = registry['grafana/dashboard/panel/menu'];
-      const configured = extension.configure();
+      const [{ configure }] = registry[commandConfig1.placement];
+      const configured = configure();
 
+      // The default configure() function returns the extension config as is
       expect(configured).toEqual({
-        title: 'Open incident',
         type: PluginExtensionTypes.command,
-        description: 'You can create an incident from this context',
-        key: -68154691,
+        key: expect.any(Number),
+        title: commandConfig1.title,
+        description: commandConfig1.description,
         callHandlerWithContext: expect.any(Function),
       });
     });
