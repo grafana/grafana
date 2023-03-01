@@ -22,13 +22,13 @@ func NewHistorianMetrics(r prometheus.Registerer) *Historian {
 			Namespace: Namespace,
 			Subsystem: Subsystem,
 			Name:      "state_history_info",
-			Help:      "Information about the state history backend.",
+			Help:      "Information about the state history store.",
 		}, []string{"backend"}),
 		TransitionsTotal: promauto.With(r).NewCounterVec(prometheus.CounterOpts{
 			Namespace: Namespace,
 			Subsystem: Subsystem,
 			Name:      "state_history_transitions_total",
-			Help:      "The total number of state transitions processed by the state historian.",
+			Help:      "The total number of state transitions processed.",
 		}, []string{"org"}),
 		TransitionsFailed: promauto.With(r).NewCounterVec(prometheus.CounterOpts{
 			Namespace: Namespace,
@@ -52,14 +52,14 @@ func NewHistorianMetrics(r prometheus.Registerer) *Historian {
 			Namespace: Namespace,
 			Subsystem: Subsystem,
 			Name:      "state_history_request_duration_seconds",
-			Help:      "Histogram of request durations to the state history store.",
+			Help:      "Histogram of request durations to the state history store. Only valid when using external stores.",
 			Buckets:   instrument.DefBuckets,
 		}, instrument.HistogramCollectorBuckets)),
 		BytesWritten: promauto.With(r).NewCounter(prometheus.CounterOpts{
 			Namespace: Namespace,
 			Subsystem: Subsystem,
 			Name:      "state_history_writes_bytes_total",
-			Help:      "The total number of bytes sent within a batch to the state history store.",
+			Help:      "The total number of bytes sent within a batch to the state history store. Only valid when using the Loki store.",
 		}),
 	}
 }
