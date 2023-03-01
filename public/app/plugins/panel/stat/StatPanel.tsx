@@ -118,12 +118,12 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
       timeZone,
     });
 
-    // If there are no custom prefixes or suffixes to format values, return fieldDisplayValues
+    // If there are custom prefixes or suffixes to format values, format the values
     if (customConfig.prefix || customConfig.suffix) {
-      return fieldDisplayValues;
+      formatDisplayValuesWithCustomUnits(fieldDisplayValues, customConfig);
     }
 
-    return formatDisplayValuesWithCustomUnits(fieldDisplayValues, customConfig);
+    return fieldDisplayValues;
   };
 
   render() {
