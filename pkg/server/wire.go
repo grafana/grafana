@@ -6,6 +6,7 @@ package server
 import (
 	"github.com/google/wire"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+
 	"github.com/grafana/grafana/pkg/services/folder"
 
 	"github.com/grafana/grafana/pkg/api"
@@ -49,7 +50,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	dashboardimportservice "github.com/grafana/grafana/pkg/services/dashboardimport/service"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardstore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
@@ -61,7 +61,6 @@ import (
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
-	"github.com/grafana/grafana/pkg/services/export"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
@@ -234,7 +233,6 @@ var wireBasicSet = wire.NewSet(
 	searchV2.ProvideSearchHTTPService,
 	store.ProvideService,
 	store.ProvideSystemUsersService,
-	export.ProvideService,
 	live.ProvideService,
 	pushhttp.ProvideService,
 	contexthandler.ProvideService,
@@ -305,7 +303,6 @@ var wireBasicSet = wire.NewSet(
 	dashboardservice.ProvideDashboardService,
 	dashboardservice.ProvideDashboardProvisioningService,
 	dashboardservice.ProvideDashboardPluginService,
-	wire.Bind(new(dashboards.Store), new(*dashboardstore.DashboardStore)),
 	wire.Bind(new(folder.FolderStore), new(*folderimpl.DashboardFolderStoreImpl)),
 	dashboardimportservice.ProvideService,
 	wire.Bind(new(dashboardimport.Service), new(*dashboardimportservice.ImportDashboardService)),

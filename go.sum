@@ -1254,8 +1254,8 @@ github.com/grafana/alerting v0.0.0-20230203015918-0e4e2675d7aa h1:ue2fctL9LHJWYw
 github.com/grafana/alerting v0.0.0-20230203015918-0e4e2675d7aa/go.mod h1:NoSLbfmUwE+omWFReFrLtbtOItmvTbuQERJ6XFYp9ME=
 github.com/grafana/codejen v0.0.3 h1:tAWxoTUuhgmEqxJPOLtJoxlPBbMULFwKFOcRsPRPXDw=
 github.com/grafana/codejen v0.0.3/go.mod h1:zmwwM/DRyQB7pfuBjTWII3CWtxcXh8LTwAYGfDfpR6s=
-github.com/grafana/cuetsy v0.1.5 h1:mnFwAXdbqCsyL8r7kkdUMJ4kOAR26cxIPmrZj7JzTeY=
-github.com/grafana/cuetsy v0.1.5/go.mod h1:4KWkUOslwvRTpEv7wdQG0jDFTuJmU+0L9x0h4kWxa2A=
+github.com/grafana/cuetsy v0.1.6 h1:61QGIDy1rVABU3OkoarOn0+qPdGopIJr34PyWVmGDfs=
+github.com/grafana/cuetsy v0.1.6/go.mod h1:4KWkUOslwvRTpEv7wdQG0jDFTuJmU+0L9x0h4kWxa2A=
 github.com/grafana/dskit v0.0.0-20230202092222-880a7f8141cc h1:lQFgXpsZNDdi0whUROW15r/akzLIdXAn6xr5vqlZucI=
 github.com/grafana/dskit v0.0.0-20230202092222-880a7f8141cc/go.mod h1:ulYLLoSd71AWIjxgifLO86Lndx82Yj+IcV+fFnh8tkI=
 github.com/grafana/go-mssqldb v0.0.0-20210326084033-d0ce3c521036 h1:GplhUk6Xes5JIhUUrggPcPBhOn+eT8+WsHiebvq7GgA=
@@ -1278,8 +1278,10 @@ github.com/grafana/saml v0.4.13-0.20230203140620-5f476db5c00a h1:aWSTt/pTOI4uGY9
 github.com/grafana/saml v0.4.13-0.20230203140620-5f476db5c00a/go.mod h1:igEejV+fihTIlHXYP8zOec3V5A8y3lws5bQBFsTm4gA=
 github.com/grafana/sqlds/v2 v2.3.10 h1:HWKhE0vR6LoEiE+Is8CSZOgaB//D1yqb2ntkass9Fd4=
 github.com/grafana/sqlds/v2 v2.3.10/go.mod h1:c6ibxnxRVGxV/0YkEgvy7QpQH/lyifFyV7K/14xvdIs=
-github.com/grafana/thema v0.0.0-20230221105543-a6a177d234d7 h1:qTb0okVkF2FIpFd9WWjiKkH3+tnQBsee5fSt3d6Q6Ak=
-github.com/grafana/thema v0.0.0-20230221105543-a6a177d234d7/go.mod h1:PnyQW9mxG+0JLU+sVuyWoVustAY0WtMJEM0fl/ms8IA=
+github.com/grafana/thema v0.0.0-20230223160728-4226e958935a h1:5DSEQFi/pr7pYokTEvhVe94n5s6p771+PKD/GjaoP+s=
+github.com/grafana/thema v0.0.0-20230223160728-4226e958935a/go.mod h1:T6q1RVzq5fzVbm+QBeIsTmVzuXlMaArp4wxfLvcaMV0=
+github.com/grafana/thema v0.0.0-20230224141623-cb20887cb028 h1:6DXb3CmghXpjtd0VjK1FDEjvHhNcXfYSxUcEfxyMx9w=
+github.com/grafana/thema v0.0.0-20230224141623-cb20887cb028/go.mod h1:T6q1RVzq5fzVbm+QBeIsTmVzuXlMaArp4wxfLvcaMV0=
 github.com/grafana/xorm v0.8.3-0.20220614223926-2fcda7565af6 h1:I9dh1MXGX0wGyxdV/Sl7+ugnki4Dfsy8lv2s5Yf887o=
 github.com/grafana/xorm v0.8.3-0.20220614223926-2fcda7565af6/go.mod h1:ZkJLEYLoVyg7amJK/5r779bHyzs2AU8f8VMiP6BM7uY=
 github.com/gregjones/httpcache v0.0.0-20180305231024-9cad4c3443a7/go.mod h1:FecbI9+v66THATjSRHfNgh1IVFe/9kFxbXtjV0ctIMA=
