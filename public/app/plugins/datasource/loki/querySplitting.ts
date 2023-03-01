@@ -95,7 +95,7 @@ export function runGroupedQueries(datasource: LokiDatasource, requests: LokiGrou
 
   let shouldStop = false;
   let subquerySubsciption: Subscription | null = null;
-  const runNextRequest = (subscriber: Subscriber<DataQueryResponse>, requestN: number, requestIndex: number) => {
+  const runNextRequest = (subscriber: Subscriber<DataQueryResponse>, requestN: number, requestGroup: number) => {
     if (shouldStop) {
       subscriber.complete();
       return;
@@ -109,20 +109,20 @@ export function runGroupedQueries(datasource: LokiDatasource, requests: LokiGrou
 
     const nextRequest = () => {
       mergedResponse = mergedResponse || { data: [] };
-      const { nextRequestN, nextRequestIndex } = getNextRequestPointers(requests, requestIndex, requestN);
+      const { nextRequestN, nextRequestGroup } = getNextRequestPointers(requests, requestGroup, requestN);
       if (nextRequestN > 0) {
         mergedResponse.state = LoadingState.Streaming;
         subscriber.next(mergedResponse);
 
-        runNextRequest(subscriber, nextRequestN, nextRequestIndex);
+        runNextRequest(subscriber, nextRequestN, nextRequestGroup);
         return;
       }
       done(mergedResponse);
     };
 
-    const requestId = `${requests[requestIndex].request.requestId}_${requestN}`;
-    const range = requests[requestIndex].partition[requestN - 1];
-    const targets = adjustTargetsFromResponseState(requests[requestIndex].request.targets, mergedResponse);
+    const requestId = `${requests[requestGroup].request.requestId}_${requestN}`;
+    const range = requests[requestGroup].partition[requestN - 1];
+    const targets = adjustTargetsFromResponseState(requests[requestGroup].request.targets, mergedResponse);
 
     if (!targets.length && mergedResponse) {
       nextRequest();
@@ -130,7 +130,7 @@ export function runGroupedQueries(datasource: LokiDatasource, requests: LokiGrou
     }
 
     subquerySubsciption = datasource
-      .runQuery({ ...requests[requestIndex].request, range, requestId, targets })
+      .runQuery({ ...requests[requestGroup].request, range, requestId, targets })
       .subscribe({
         next: (partialResponse) => {
           if (partialResponse.error) {
@@ -160,16 +160,16 @@ export function runGroupedQueries(datasource: LokiDatasource, requests: LokiGrou
   return response;
 }
 
-function getNextRequestPointers(requests: LokiGroupedRequest, requestIndex: number, requestN: number) {
+function getNextRequestPointers(requests: LokiGroupedRequest, requestGroup: number, requestN: number) {
   // There's a pending metric request:
-  if (requestIndex === 0 && requests[1]?.partition[requestN - 1]) {
+  if (requestGroup === 0 && requests[1]?.partition[requestN - 1]) {
     return {
-      nextRequestIndex: 1,
+      nextRequestGroup: 1,
       nextRequestN: requestN,
     };
   }
   return {
-    nextRequestIndex: 0,
+    nextRequestGroup: 0,
     nextRequestN: requestN - 1,
   };
 }
