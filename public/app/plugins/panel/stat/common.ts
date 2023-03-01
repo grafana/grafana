@@ -125,9 +125,9 @@ export function formatDisplayValuesWithCustomUnits(
   }
 
   return fieldValues.map((fieldValue) => {
-    const { fieldType, display } = fieldValue;
+    const { sourceField, display } = fieldValue;
     // `FieldType.number` is the only type on which unit formatting is enforced
-    if (fieldType === FieldType.number) {
+    if (sourceField?.type === FieldType.number) {
       // Update prefix; prepend custom prefix
       const previousPrefix = display.prefix ?? '';
       const updatedPrefix = customPrefix + previousPrefix;

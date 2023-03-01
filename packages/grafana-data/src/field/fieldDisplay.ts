@@ -64,7 +64,6 @@ export interface FieldDisplay {
   rowIndex?: number; // only filled in when the value is from a row (ie, not a reduction)
   getLinks?: () => LinkModel[];
   hasLinks: boolean;
-  fieldType?: FieldType;
   sourceField?: Field;
 }
 
@@ -110,7 +109,6 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
 
     for (let i = 0; i < dataFrame.fields.length && !hitLimit; i++) {
       const field = dataFrame.fields[i];
-      const { type: fieldType } = field;
       const fieldLinksSupplier = field.getLinks;
 
       // To filter out time field, need an option for this
@@ -179,7 +177,6 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
                   })
               : () => [],
             hasLinks: hasLinks(field),
-            fieldType,
             sourceField: field,
           });
 
@@ -234,7 +231,6 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
                   })
               : () => [],
             hasLinks: hasLinks(field),
-            fieldType,
             sourceField: field,
           });
         }
