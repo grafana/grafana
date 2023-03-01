@@ -252,16 +252,13 @@ describe('createPluginExtensionRegistry()', () => {
       });
     });
 
-    it('should wrap configure function with link extension validator', () => {
+    it('should wrap the configure function with link extension validator', () => {
       const registry = createPluginExtensionRegistry([
         {
           pluginId: 'belugacdn-app',
           linkExtensions: [
             {
-              placement: 'grafana/dashboard/panel/menu',
-              title: 'Open incident',
-              description: 'You can create an incident from this context',
-              path: '/a/belugacdn-app/incidents/declare',
+              ...sampleLink,
               configure: () => ({}),
             },
           ],
@@ -269,17 +266,15 @@ describe('createPluginExtensionRegistry()', () => {
         },
       ]);
 
-      const extensions = registry['grafana/dashboard/panel/menu'];
-      const [extension] = extensions;
-
+      const [{ configure }] = registry[sampleLink.placement];
       const context = {};
       const configurable = {
-        title: 'Open incident',
-        description: 'You can create an incident from this context',
-        path: '/a/belugacdn-app/incidents/declare',
+        title: sampleLink.title,
+        description: sampleLink.description,
+        path: sampleLink.path,
       };
 
-      extension?.configure?.(context);
+      configure(context);
 
       expect(validateLink).toBeCalledWith(expect.any(Function), configurable, context);
     });
@@ -290,10 +285,7 @@ describe('createPluginExtensionRegistry()', () => {
           pluginId: 'belugacdn-app',
           linkExtensions: [
             {
-              placement: 'grafana/dashboard/panel/menu',
-              title: 'Open incident',
-              description: 'You can create an incident from this context',
-              path: '/a/belugacdn-app/incidents/declare',
+              ...sampleLink,
               configure: () => ({}),
             },
           ],
@@ -301,17 +293,15 @@ describe('createPluginExtensionRegistry()', () => {
         },
       ]);
 
-      const extensions = registry['grafana/dashboard/panel/menu'];
-      const [extension] = extensions;
-
+      const [{ configure }] = registry[sampleLink.placement];
       const context = {};
       const configurable = {
-        title: 'Open incident',
-        description: 'You can create an incident from this context',
-        path: '/a/belugacdn-app/incidents/declare',
+        title: sampleLink.title,
+        description: sampleLink.description,
+        path: sampleLink.path,
       };
 
-      extension?.configure?.(context);
+      configure(context);
 
       expect(errorHandler).toBeCalledWith(expect.any(Function), configurable, context);
     });
