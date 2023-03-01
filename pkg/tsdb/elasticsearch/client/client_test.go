@@ -46,12 +46,18 @@ func TestClient_ExecuteMultisearch(t *testing.T) {
 		version, err := semver.NewVersion("8.0.0")
 		require.NoError(t, err)
 
+		configuredFields := ConfiguredFields{
+			TimeField:       "testtime",
+			LogMessageField: "line",
+			LogLevelField:   "lvl",
+		}
+
 		ds := DatasourceInfo{
 			URL:                        ts.URL,
 			HTTPClient:                 ts.Client(),
 			Database:                   "[metrics-]YYYY.MM.DD",
 			ESVersion:                  version,
-			TimeField:                  "@timestamp",
+			ConfiguredFields:           configuredFields,
 			Interval:                   "Daily",
 			MaxConcurrentShardRequests: 6,
 			IncludeFrozen:              true,
