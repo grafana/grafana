@@ -42,6 +42,7 @@ export const MigrateToServiceAccountsCard = ({ onMigrate, disabled }: Props): JS
           confirmText={'Yes, migrate now'}
           onConfirm={onMigrate}
           onDismiss={() => setIsModalOpen(false)}
+          confirmVariant="primary"
           confirmButtonVariant="primary"
         />
       </div>
