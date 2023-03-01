@@ -217,7 +217,7 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
         }
       }
 
-      if (scale.distr === 1) {
+      if (scale.distr === 1 || scale.distr === 4) {
         // if all we got were hard limits, treat them as static min/max
         if (hardMinOnly) {
           minMax[0] = hardMin!;
