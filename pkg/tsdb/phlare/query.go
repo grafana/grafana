@@ -217,22 +217,23 @@ func (pt *ProfileTree) addSample(profile *googlev1.Profile, sample *googlev1.Sam
 			}
 
 			if foundNode != nil {
-				// We found node with the same location so just extend it
+				// We found node with the same locationID so just add the value it
 				foundNode.Value = foundNode.Value + sample.Value[0]
 				current = foundNode
+				// Continue to next locationID in the sample
 				continue
 			}
 		}
 		// Either current has no children we can compare to or we have location that does not exist yet in the tree.
 
-		// Sample with only the locations we did not already attributed to the tree
+		// Create sample with only the locations we did not already attributed to the tree.
 		subSample := &googlev1.Sample{
 			LocationId: sample.LocationId[index:],
 			Value:      sample.Value,
 			Label:      sample.Label,
 		}
 		newTree := treeFromSample(profile, subSample)
-		// Append the new subtree
+		// Append the new subtree in the correct place in the tree
 		current.Nodes = append(current.Nodes, newTree.Nodes[0])
 		newTree.Nodes[0].Parent = current
 		break
@@ -307,11 +308,14 @@ func profileAsTree(profile *googlev1.Profile) *ProfileTree {
 	return n
 }
 
-// getLocations returns all locations from a sample. Location is a one level in the stack trace so single row in
-// flamegraph. Returned locations are reversed (so root is 0, leaf is len - 1).
+// getReversedLocations returns all locations from a sample. Location is a one level in the stack trace so single row in
+// flamegraph. Returned locations are reversed (so root is 0, leaf is len - 1) which makes it easier to the use with
+// tree structure starting from root.
 func getReversedLocations(profile *googlev1.Profile, sample *googlev1.Sample) []*googlev1.Location {
 	locations := make([]*googlev1.Location, len(sample.LocationId))
 	for index, locationId := range sample.LocationId {
+		// profile.Location[locationId-1] is because locationId (and other IDs) is 1 based, so
+		// locationId == array index + 1
 		locations[len(sample.LocationId)-1-index] = profile.Location[locationId-1]
 	}
 	return locations
