@@ -19,7 +19,7 @@ export function createPluginExtensionRegistry(preloadResults: PluginPreloadResul
   const registry: PluginExtensionRegistry = {};
 
   for (const result of preloadResults) {
-    const limiter: Record<string, number> = {};
+    const pluginPlacementCount: Record<string, number> = {};
     const { pluginId, linkExtensions, commandExtensions, error } = result;
 
     if (!Array.isArray(linkExtensions) || error) {
@@ -29,12 +29,12 @@ export function createPluginExtensionRegistry(preloadResults: PluginPreloadResul
     for (const extension of linkExtensions) {
       const placement = extension.placement;
 
-      limiter[placement] = (limiter[placement] ?? 0) + 1;
+      pluginPlacementCount[placement] = (pluginPlacementCount[placement] ?? 0) + 1;
       const item = createRegistryLink(pluginId, extension);
 
       // If there was an issue initialising the plugin, skip adding its extensions to the registry
       // or if the plugin already have placed 2 items at the extension point.
-      if (!item || limiter[placement] > 2) {
+      if (!item || pluginPlacementCount[placement] > 2) {
         continue;
       }
 
@@ -49,12 +49,12 @@ export function createPluginExtensionRegistry(preloadResults: PluginPreloadResul
     for (const extension of commandExtensions) {
       const placement = extension.placement;
 
-      limiter[placement] = (limiter[placement] ?? 0) + 1;
+      pluginPlacementCount[placement] = (pluginPlacementCount[placement] ?? 0) + 1;
       const item = createRegistryCommand(pluginId, extension);
 
       // If there was an issue initialising the plugin, skip adding its extensions to the registry
       // or if the plugin already have placed 2 items at the extension point.
-      if (!item || limiter[placement] > 2) {
+      if (!item || pluginPlacementCount[placement] > 2) {
         continue;
       }
 

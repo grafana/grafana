@@ -237,6 +237,8 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 		label := "a label"
 		fieldName := "fieldName"
 		configType := correlations.ConfigTypeQuery
+		transformation := correlations.Transformation{Type: "logfmt"}
+		transformation2 := correlations.Transformation{Type: "regex", Expression: "testExpression", MapValue: "testVar"}
 		res := ctx.Post(PostParams{
 			url: fmt.Sprintf("/api/datasources/uid/%s/correlations", writableDs),
 			body: fmt.Sprintf(`{
@@ -246,7 +248,11 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 					"config": {
 						"type": "%s",
 						"field": "%s",
-						"target": { "expr": "foo" }
+						"target": { "expr": "foo" },
+						"transformations": [
+							{"type": "logfmt"},
+							{"type": "regex", "expression": "testExpression", "mapValue": "testVar"}
+						]
 					}
 				}`, writableDs, description, label, configType, fieldName),
 			user: adminUser,
@@ -268,6 +274,8 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 		require.Equal(t, configType, response.Result.Config.Type)
 		require.Equal(t, fieldName, response.Result.Config.Field)
 		require.Equal(t, map[string]interface{}{"expr": "foo"}, response.Result.Config.Target)
+		require.Equal(t, transformation, response.Result.Config.Transformations[0])
+		require.Equal(t, transformation2, response.Result.Config.Transformations[1])
 
 		require.NoError(t, res.Body.Close())
 	})

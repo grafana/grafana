@@ -130,7 +130,7 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
     const { path, description, title, placement } = config;
 
     if (!extensionLinkConfigIsValid({ path, description, title, placement })) {
-      console.warn('[Plugins] Disabled extension because configureExtensionLink returned an invalid object.');
+      console.warn('[Plugins] Disabled extension because configureExtensionLink was called with an invalid object.');
       return this;
     }
 

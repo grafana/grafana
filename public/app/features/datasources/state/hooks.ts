@@ -51,10 +51,14 @@ export const useTestDataSource = (uid: string) => {
 
 export const useLoadDataSources = () => {
   const dispatch = useDispatch();
+  const isLoading = useSelector((state) => state.dataSources.isLoadingDataSources);
+  const dataSources = useSelector((state) => state.dataSources.dataSources);
 
   useEffect(() => {
     dispatch(loadDataSources());
   }, [dispatch]);
+
+  return { isLoading, dataSources };
 };
 
 export const useLoadDataSource = (uid: string) => {
