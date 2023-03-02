@@ -299,6 +299,10 @@ func TestIntegrationDeleteNestedFolders(t *testing.T) {
 		}
 		t.Cleanup(func() {
 			guardian.New = origNewGuardian
+			for _, uid := range ancestorUIDs {
+				err := serviceWithFlagOff.store.Delete(context.Background(), uid, orgID)
+				require.NoError(t, err)
+			}
 		})
 	})
 }
