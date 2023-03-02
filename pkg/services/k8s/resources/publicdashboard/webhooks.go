@@ -12,21 +12,24 @@ import (
 )
 
 type WebhooksAPI struct {
-	RouteRegister routing.RouteRegister
-	AccessControl accesscontrol.AccessControl
-	Features      *featuremgmt.FeatureManager
-	Log           log.Logger
+	RouteRegister        routing.RouteRegister
+	AccessControl        accesscontrol.AccessControl
+	Features             *featuremgmt.FeatureManager
+	Log                  log.Logger
+	ValidationController *ValidatingAdmissionController
 }
 
 func ProvideWebhooks(
 	rr routing.RouteRegister,
 	ac accesscontrol.AccessControl,
 	features *featuremgmt.FeatureManager,
+	vc *ValidatingAdmissionController,
 ) *WebhooksAPI {
 	webhooksAPI := &WebhooksAPI{
-		RouteRegister: rr,
-		AccessControl: ac,
-		Log:           log.New("k8s.publicdashboard.webhooks.admission.create"),
+		RouteRegister:        rr,
+		AccessControl:        ac,
+		Log:                  log.New("k8s.publicdashboard.webhooks.admission.create"),
+		ValidationController: vc,
 	}
 
 	webhooksAPI.RegisterAPIEndpoints()
@@ -39,6 +42,10 @@ func (api *WebhooksAPI) RegisterAPIEndpoints() {
 }
 
 func (api *WebhooksAPI) Create(c *contextmodel.ReqContext) response.Response {
+	err := api.ValidationController(
+
+
+
 	api.Log.Debug("admission controller create fired")
 	body, err := io.ReadAll(c.Req.Body)
 	if err != nil {
