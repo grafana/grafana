@@ -45,11 +45,6 @@ func ServerCommand(version, commit, buildBranch, buildstamp string) *cli.Command
 				Name:  "config",
 				Usage: "Path to config file",
 			},
-			&cli.StringSliceFlag{
-				Name:  "target",
-				Value: cli.NewStringSlice("all"),
-				Usage: "Module to run",
-			},
 			&cli.StringFlag{
 				Name:  "homepath",
 				Usage: "Path to Grafana install/home path, defaults to working directory",
@@ -126,7 +121,6 @@ func RunServer(opt ServerOptions) error {
 		profilePort = opt.Context.Uint64("profile-port")
 		tracing     = opt.Context.Bool("tracing")
 		tracingFile = opt.Context.String("tracing-file")
-		target      = opt.Context.StringSlice("target")
 	)
 
 	if v || vv {
@@ -236,8 +230,7 @@ func RunServer(opt ServerOptions) error {
 			Config:   configFile,
 			HomePath: homePath,
 			// tailing arguments have precedence over the options string
-			Args:   append(configOptions, opt.Context.Args().Slice()...),
-			Target: target,
+			Args: append(configOptions, opt.Context.Args().Slice()...),
 		},
 		server.Options{
 			PidFile:     pidFile,

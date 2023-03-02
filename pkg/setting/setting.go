@@ -515,7 +515,6 @@ type CommandLineArgs struct {
 	Config   string
 	HomePath string
 	Args     []string
-	Target   []string
 }
 
 func (cfg Cfg) parseAppUrlAndSubUrl(section *ini.Section) (string, string, error) {
@@ -720,19 +719,11 @@ func applyCommandLineDefaultProperties(props map[string]string, file *ini.File) 
 	}
 }
 
-func applyCommandLineProperties(target string, props map[string]string, file *ini.File) {
+func applyCommandLineProperties(props map[string]string, file *ini.File) {
 	for _, section := range file.Sections() {
 		sectionName := section.Name() + "."
 		if section.Name() == ini.DefaultSection {
 			sectionName = ""
-
-			// set target field
-			key, err := section.GetKey("target")
-			if err == nil {
-				key.SetValue(target)
-			} else {
-				_, _ = section.NewKey("target", target)
-			}
 		}
 		for _, key := range section.Keys() {
 			keyString := sectionName + key.Name()
@@ -854,7 +845,7 @@ func (cfg *Cfg) loadConfiguration(args CommandLineArgs) (*ini.File, error) {
 	}
 
 	// apply command line overrides
-	applyCommandLineProperties(strings.Join(args.Target, " "), commandLineProps, parsedFile)
+	applyCommandLineProperties(commandLineProps, parsedFile)
 
 	// evaluate config values containing environment variables
 	err = expandConfig(parsedFile)

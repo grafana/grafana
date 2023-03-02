@@ -28,15 +28,17 @@ type Service struct {
 func ProvideService(cfg *setting.Cfg) *Service {
 	logger := log.New("modules")
 	return &Service{
-		cfg:           cfg,
-		log:           logger,
-		targets:       cfg.Target,
+		cfg:     cfg,
+		log:     logger,
+		targets: cfg.Target,
+
 		ModuleManager: modules.NewManager(logger),
 		ServiceMap:    map[string]services.Service{},
 	}
 }
 
-func (m *Service) Init(_ context.Context) error {
+// Init initializes all registered modules.
+func (m *Service) Init() error {
 	var err error
 
 	m.ModuleManager.RegisterModule(All, nil)
@@ -71,14 +73,11 @@ func (m *Service) Init(_ context.Context) error {
 	return err
 }
 
+// Run starts all registered modules.
 func (m *Service) Run(ctx context.Context) error {
-	// Init is called here is to make sure that the modules are initialized
-	// while this is being registered as a backaground service.
-	if err := m.Init(ctx); err != nil {
-		return err
-	}
-
 	// we don't need to continue if no modules are registered.
+	// this behavior may need to change if dskit services replace the
+	// current background service registry.
 	if len(m.ServiceMap) == 0 {
 		m.log.Warn("No modules registered...")
 		<-ctx.Done()
@@ -88,7 +87,7 @@ func (m *Service) Run(ctx context.Context) error {
 	serviceListener := newServiceListener(m.log, m)
 	m.ServiceManager.AddListener(serviceListener)
 
-	// wait until a service fails or stop signal received
+	// wait until a service fails or stop signal was received
 	err := m.ServiceManager.StartAsync(ctx)
 	if err != nil {
 		return err
@@ -111,8 +110,10 @@ func (m *Service) Run(ctx context.Context) error {
 	return nil
 }
 
+// Shutdown stops all modules and waits for them to stop.
 func (m *Service) Shutdown(ctx context.Context) error {
 	if m.ServiceManager == nil {
+		m.log.Debug("No modules registered, nothing to stop...")
 		return nil
 	}
 	m.ServiceManager.StopAsync()
@@ -120,16 +121,20 @@ func (m *Service) Shutdown(ctx context.Context) error {
 	return m.ServiceManager.AwaitStopped(ctx)
 }
 
+// RegisterModule registers a module with the dskit module manager.
 func (m *Service) RegisterModule(name string, initFn func() (services.Service, error), deps ...string) error {
 	m.ModuleManager.RegisterModule(name, initFn)
 	return m.ModuleManager.AddDependency(name, deps...)
 }
 
+// RegisterInvisibleModule registers an invisible module with the dskit module manager.
+// Invisible modules are not visible to the user, and are intendent to be used as dependencies.
 func (m *Service) RegisterInvisibleModule(name string, initFn func() (services.Service, error), deps ...string) error {
 	m.ModuleManager.RegisterModule(name, initFn, modules.UserInvisibleModule)
 	return m.ModuleManager.AddDependency(name, deps...)
 }
 
-func (m *Service) isModuleEnabled(name string) bool {
+// IsModuleEnabled returns true if the module is enabled.
+func (m *Service) IsModuleEnabled(name string) bool {
 	return stringsContain(m.targets, name)
 }

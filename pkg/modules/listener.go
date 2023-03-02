@@ -30,7 +30,9 @@ func (l *serviceListener) Stopped() {
 
 func (l *serviceListener) Failure(service services.Service) {
 	// if any service fails, stop all services
-	l.service.Shutdown(context.Background())
+	if err := l.service.Shutdown(context.Background()); err != nil {
+		l.log.Error("Failed to stop all modules", "err", err)
+	}
 
 	// log which module failed
 	for module, s := range l.service.ServiceMap {
