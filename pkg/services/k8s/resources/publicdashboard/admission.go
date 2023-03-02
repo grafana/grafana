@@ -28,7 +28,9 @@ func ProvideValidation(
 	}
 }
 
-// TODO: This doesn't do RBAC checks. It should.
+// TODO:
+// 1. This doesn't do RBAC checks. It should.
+// 2. convert runtime.Objects in request to PublicDashboard and *user.SignedInUser
 func (v *pdValidation) Validate(ctx context.Context, request *admission.AdmissionRequest) error {
 	var u *user.SignedInUser
 	var dto *publicdashboardModels.SavePublicDashboardDTO
