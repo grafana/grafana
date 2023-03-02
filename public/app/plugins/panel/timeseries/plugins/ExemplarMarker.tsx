@@ -43,7 +43,6 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
         name: 'preventOverflow',
         options: {
           altAxis: true,
-          boundary: 'clippingParents',
         },
       },
       {
