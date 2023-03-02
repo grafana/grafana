@@ -285,6 +285,11 @@ func TestFinder_Find(t *testing.T) {
 				return
 			}
 
+			// to ensure we can compare with expected
+			sort.SliceStable(pluginBundles, func(i, j int) bool {
+				return pluginBundles[i].Primary.JSONData.ID < pluginBundles[j].Primary.JSONData.ID
+			})
+
 			if !cmp.Equal(pluginBundles, tc.expectedBundles, localFSComparer) {
 				t.Fatalf("Result mismatch (-want +got):\n%s", cmp.Diff(pluginBundles, tc.expectedBundles, localFSComparer))
 			}

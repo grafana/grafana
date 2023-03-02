@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -218,12 +217,6 @@ func (f *FS) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error) {
 	for _, include := range plugin.Includes {
 		if include.Role == "" {
 			include.Role = org.RoleViewer
-		}
-	}
-
-	for i, extension := range plugin.Extensions {
-		if !filepath.IsAbs(extension.Path) {
-			plugin.Extensions[i].Path = path.Join("/", extension.Path)
 		}
 	}
 
