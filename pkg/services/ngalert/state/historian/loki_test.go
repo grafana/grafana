@@ -293,7 +293,7 @@ func TestRecordStates(t *testing.T) {
 # HELP grafana_alerting_state_history_transitions_failed_total The total number of state transitions that failed to be written - they are not retried.
 # TYPE grafana_alerting_state_history_transitions_failed_total counter
 grafana_alerting_state_history_transitions_failed_total{org="1"} 1
-# HELP grafana_alerting_state_history_transitions_total The total number of state transitions processed by the state historian.
+# HELP grafana_alerting_state_history_transitions_total The total number of state transitions processed.
 # TYPE grafana_alerting_state_history_transitions_total counter
 grafana_alerting_state_history_transitions_total{org="1"} 2
 # HELP grafana_alerting_state_history_writes_failed_total The total number of failed writes of state history batches.
