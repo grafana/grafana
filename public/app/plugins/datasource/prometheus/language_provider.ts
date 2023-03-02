@@ -41,6 +41,15 @@ const setFunctionKind = (suggestion: CompletionItem): CompletionItem => {
   return suggestion;
 };
 
+const buildCacheHeaders = (durationInSeconds: number) => {
+  return {
+    headers: {
+      'Cache-Control': `private, max-age=${durationInSeconds}`,
+      'X-Grafana-Cache': 'y',
+    },
+  };
+};
+
 export function addHistoryMetadata(item: CompletionItem, history: any[]): CompletionItem {
   const cutoffTs = Date.now() - HISTORY_COUNT_CUTOFF;
   const historyForItem = history.filter((h) => h.ts > cutoffTs && h.query === item.label);
@@ -103,12 +112,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   }
 
   getDefaultCacheHeaders() {
-    return {
-      headers: {
-        'Cache-Control': `private, max-age=${this.datasource.getCacheDurationInMinutes() * 60}`,
-        'X-Grafana-Cache': 'y',
-      }
-    }
+    return buildCacheHeaders(this.datasource.getCacheDurationInMinutes() * 60);
   }
 
   // Strip syntax chars so that typeahead suggestions can work on clean inputs
@@ -144,6 +148,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   };
 
   async loadMetricsMetadata() {
+    const headers = buildCacheHeaders(this.datasource.getDaysToCacheMetadata() * 86400);
     this.metricsMetadata = fixSummariesMetadata(
       await this.request(
         '/api/v1/metadata',
@@ -151,10 +156,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
         {},
         {
           showErrorAlert: false,
-          headers: {
-            'Cache-Control': `private, max-age=${this.datasource.getDaysToCacheMetadata() * 86400}`,
-            'X-Grafana-Cache': 'y',
-          },
+          ...headers,
         }
       )
     );
