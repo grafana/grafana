@@ -63,7 +63,7 @@ describe('createPluginExtensionRegistry()', () => {
         },
       ]);
 
-      shouldHaveExtensionsAtPlacement({ extensions: [linkConfig], placement: placement1, registry });
+      shouldHaveExtensionsAtPlacement({ configs: [linkConfig], placement: placement1, registry });
     });
 
     it('should only register a link extension to a single placement', () => {
@@ -92,8 +92,8 @@ describe('createPluginExtensionRegistry()', () => {
       ]);
 
       shouldHaveNumberOfPlacements(registry, 2);
-      shouldHaveExtensionsAtPlacement({ placement: placement1, extensions: [linkConfig], registry });
-      shouldHaveExtensionsAtPlacement({ placement: placement2, extensions: [linkConfig], registry });
+      shouldHaveExtensionsAtPlacement({ placement: placement1, configs: [linkConfig], registry });
+      shouldHaveExtensionsAtPlacement({ placement: placement2, configs: [linkConfig], registry });
     });
 
     it('should register link extensions from multiple plugins with multiple placements', () => {
@@ -118,10 +118,10 @@ describe('createPluginExtensionRegistry()', () => {
       shouldHaveNumberOfPlacements(registry, 2);
       shouldHaveExtensionsAtPlacement({
         placement: placement1,
-        extensions: [linkConfig, { ...linkConfig, path: '/a/grafana-monitoring-app/incidents/declare' }],
+        configs: [linkConfig, { ...linkConfig, path: '/a/grafana-monitoring-app/incidents/declare' }],
         registry,
       });
-      shouldHaveExtensionsAtPlacement({ placement: placement2, extensions: [linkConfig], registry });
+      shouldHaveExtensionsAtPlacement({ placement: placement2, configs: [linkConfig], registry });
     });
 
     it('should register maximum 2 extensions per plugin and placement', () => {
@@ -142,7 +142,7 @@ describe('createPluginExtensionRegistry()', () => {
       // The 3rd link is being ignored
       shouldHaveExtensionsAtPlacement({
         placement: linkConfig.placement,
-        extensions: [
+        configs: [
           { ...linkConfig, title: 'Link 1' },
           { ...linkConfig, title: 'Link 2' },
         ],
@@ -176,7 +176,7 @@ describe('createPluginExtensionRegistry()', () => {
         },
       ]);
 
-      const [{ configure }] = registry[linkConfig.placement];
+      const [configure] = registry[linkConfig.placement];
       const configured = configure();
 
       // The default configure() function returns the same extension config
@@ -203,7 +203,7 @@ describe('createPluginExtensionRegistry()', () => {
         },
       ]);
 
-      const [{ configure }] = registry[linkConfig.placement];
+      const [configure] = registry[linkConfig.placement];
       const context = {};
       const configurable = {
         title: linkConfig.title,
@@ -230,7 +230,7 @@ describe('createPluginExtensionRegistry()', () => {
         },
       ]);
 
-      const [{ configure }] = registry[linkConfig.placement];
+      const [configure] = registry[linkConfig.placement];
       const context = {};
       const configurable = {
         title: linkConfig.title,
@@ -274,7 +274,7 @@ describe('createPluginExtensionRegistry()', () => {
       shouldHaveNumberOfPlacements(registry, 1);
       shouldHaveExtensionsAtPlacement({
         placement: commandConfig1.placement,
-        extensions: [commandConfig1],
+        configs: [commandConfig1],
         registry,
       });
     });
@@ -291,12 +291,12 @@ describe('createPluginExtensionRegistry()', () => {
       shouldHaveNumberOfPlacements(registry, 2);
       shouldHaveExtensionsAtPlacement({
         placement: commandConfig1.placement,
-        extensions: [commandConfig1],
+        configs: [commandConfig1],
         registry,
       });
       shouldHaveExtensionsAtPlacement({
         placement: commandConfig2.placement,
-        extensions: [commandConfig2],
+        configs: [commandConfig2],
         registry,
       });
     });
@@ -320,14 +320,14 @@ describe('createPluginExtensionRegistry()', () => {
       // Both plugins register commands to the same placement
       shouldHaveExtensionsAtPlacement({
         placement: commandConfig1.placement,
-        extensions: [commandConfig1, commandConfig1],
+        configs: [commandConfig1, commandConfig1],
         registry,
       });
 
       // The 'beluga-cdn-app' plugin registers a command to an other placement as well
       shouldHaveExtensionsAtPlacement({
         placement: commandConfig2.placement,
-        extensions: [commandConfig2],
+        configs: [commandConfig2],
         registry,
       });
     });
@@ -341,7 +341,7 @@ describe('createPluginExtensionRegistry()', () => {
         },
       ]);
 
-      const [{ configure }] = registry[commandConfig1.placement];
+      const [configure] = registry[commandConfig1.placement];
       const configured = configure();
 
       // The default configure() function returns the extension config as is
@@ -368,7 +368,7 @@ describe('createPluginExtensionRegistry()', () => {
         },
       ]);
 
-      const [{ configure }] = registry[commandConfig1.placement];
+      const [configure] = registry[commandConfig1.placement];
       const context = {};
       const configurable = {
         title: commandConfig1.title,
@@ -399,9 +399,9 @@ describe('createPluginExtensionRegistry()', () => {
       ]);
 
       const extensions = registry['grafana/dashboard/panel/menu'];
-      const [item] = extensions;
+      const [configure] = extensions;
       const context = {};
-      const extension = item?.configure?.(context);
+      const extension = configure?.(context);
 
       assertPluginExtensionCommand(extension);
 
@@ -427,9 +427,9 @@ describe('createPluginExtensionRegistry()', () => {
       ]);
 
       const extensions = registry['grafana/dashboard/panel/menu'];
-      const [item] = extensions;
+      const [configure] = extensions;
       const context = {};
-      const extension = item?.configure?.(context);
+      const extension = configure?.(context);
 
       assertPluginExtensionCommand(extension);
 
@@ -447,40 +447,36 @@ function shouldHaveNumberOfPlacements(registry: PluginExtensionRegistry, numberO
 
 // Checks if the registry has exactly the same extensions at the expected placement
 function shouldHaveExtensionsAtPlacement({
-  extensions,
+  configs,
   placement,
   registry,
 }: {
-  extensions: Array<AppPluginExtensionLinkConfig | AppPluginExtensionCommandConfig>;
+  configs: Array<AppPluginExtensionLinkConfig | AppPluginExtensionCommandConfig>;
   placement: string;
   registry: PluginExtensionRegistry;
 }) {
-  expect(registry[placement]).toEqual(
-    extensions.map((extension) => {
+  const extensions = registry[placement].map((configure) => configure());
+
+  expect(extensions).toEqual(
+    configs.map((extension) => {
       // Command extension
       if ('handler' in extension) {
         return {
-          configure: expect.any(Function),
-          extension: {
-            key: expect.any(Number),
-            title: extension.title,
-            description: extension.description,
-            type: PluginExtensionTypes.command,
-            callHandlerWithContext: expect.any(Function),
-          },
+          key: expect.any(Number),
+          title: extension.title,
+          description: extension.description,
+          type: PluginExtensionTypes.command,
+          callHandlerWithContext: expect.any(Function),
         };
       }
 
       // Link extension
       return {
-        configure: expect.any(Function),
-        extension: {
-          key: expect.any(Number),
-          title: extension.title,
-          description: extension.description,
-          type: PluginExtensionTypes.link,
-          path: extension.path,
-        },
+        key: expect.any(Number),
+        title: extension.title,
+        description: extension.description,
+        type: PluginExtensionTypes.link,
+        path: extension.path,
       };
     })
   );

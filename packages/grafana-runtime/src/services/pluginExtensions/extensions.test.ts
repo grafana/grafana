@@ -72,11 +72,8 @@ describe('getPluginExtensions', () => {
 function createRegistryLinkItem(
   link: Omit<PluginExtensionLink, 'type'>
 ): PluginExtensionRegistryItem<PluginExtensionLink> {
-  return {
-    configure: undefined,
-    extension: {
-      ...link,
-      type: PluginExtensionTypes.link,
-    },
-  };
+  return (context?: object) => ({
+    ...link,
+    type: PluginExtensionTypes.link,
+  });
 }

@@ -7,11 +7,7 @@ import {
   PluginExtensionLink,
   PluginExtensionTypes,
 } from '@grafana/data';
-import type {
-  PluginExtensionRegistry,
-  PluginExtensionRegistryItem,
-  RegistryConfigureExtension,
-} from '@grafana/runtime';
+import type { PluginExtensionRegistry, RegistryConfigureExtension } from '@grafana/runtime';
 
 import { PluginPreloadResult } from '../pluginPreloader';
 
@@ -81,7 +77,7 @@ export function createPluginExtensionRegistry(preloadResults: PluginPreloadResul
 function createRegistryCommand(
   pluginId: string,
   config: AppPluginExtensionCommandConfig
-): PluginExtensionRegistryItem<PluginExtensionCommand> | undefined {
+): RegistryConfigureExtension<PluginExtensionCommand> | undefined {
   const id = `${pluginId}${config.placement}${config.title}`;
 
   const extension = Object.freeze({
@@ -92,16 +88,13 @@ function createRegistryCommand(
     callHandlerWithContext: () => config.handler(),
   });
 
-  return Object.freeze({
-    extension: extension,
-    configure: createCommandConfigure(pluginId, config, extension),
-  });
+  return createCommandConfigure(pluginId, config, extension);
 }
 
 function createRegistryLink(
   pluginId: string,
   config: AppPluginExtensionLinkConfig
-): PluginExtensionRegistryItem<PluginExtensionLink> | undefined {
+): RegistryConfigureExtension<PluginExtensionLink> | undefined {
   if (!isValidLinkPath(pluginId, config.path)) {
     return undefined;
   }
@@ -115,10 +108,7 @@ function createRegistryLink(
     path: config.path,
   });
 
-  return Object.freeze({
-    extension: extension,
-    configure: createLinkConfigure(pluginId, config, extension),
-  });
+  return createLinkConfigure(pluginId, config, extension);
 }
 
 function hashKey(key: string): number {
