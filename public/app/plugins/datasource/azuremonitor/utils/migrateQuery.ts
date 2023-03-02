@@ -1,3 +1,5 @@
+import { cloneDeep } from 'lodash';
+
 import { setKustoQuery } from '../components/LogsQueryEditor/setQueryValue';
 import {
   appendDimensionFilter,
@@ -10,7 +12,7 @@ import { AzureMetricDimension, AzureMonitorQuery, AzureQueryType } from '../type
 const OLD_DEFAULT_DROPDOWN_VALUE = 'select';
 
 export default function migrateQuery(query: AzureMonitorQuery): AzureMonitorQuery {
-  let workingQuery = query;
+  let workingQuery = cloneDeep(query);
 
   if (!workingQuery.queryType) {
     workingQuery = {

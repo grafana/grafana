@@ -73,8 +73,8 @@ describe('AzureMonitor: migrateQuery', () => {
   it('modern queries should not change', () => {
     const result = migrateQuery(modernMetricsQuery);
 
-    // MUST use .toBe because we want to assert that the identity of unmigrated queries remains the same
-    expect(modernMetricsQuery).toBe(result);
+    // toEqual here since we deepClone the object at the beginning of the migration
+    expect(modernMetricsQuery).toEqual(result);
   });
 
   describe('migrating from a v8 query to the latest query version', () => {
