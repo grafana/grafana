@@ -127,7 +127,7 @@ func NewAlertmanagerAggregatedMetrics(registries *metrics.TenantRegistries) *Ale
 			[]string{"org", "state"}, nil),
 		configuredIntegrations: prometheus.NewDesc(
 			fmt.Sprintf("%s_%s_alertmanager_integrations", Namespace, Subsystem),
-			"Number of configured integrations within receivers by type.",
+			"Number of configured receivers.",
 			[]string{"org", "type"}, nil),
 
 		numNotifications: prometheus.NewDesc(
