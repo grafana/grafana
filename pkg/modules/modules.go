@@ -16,23 +16,40 @@ const (
 	All string = "all"
 )
 
-// Service manages the registration and lifecycle of modules.
-type Service struct {
-	cfg     *setting.Cfg
-	log     log.Logger
-	targets []string
+type Engine interface {
+	Init(context.Context) error
+	Run(context.Context) error
+	Shutdown(context.Context) error
+}
+
+type Manager interface {
+	RegisterModule(name string, initFn func() (services.Service, error), deps ...string)
+	RegisterInvisibleModule(name string, initFn func() (services.Service, error), deps ...string)
+}
+
+var _ Engine = (*service)(nil)
+var _ Manager = (*service)(nil)
+
+// service manages the registration and lifecycle of modules.
+type service struct {
+	cfg           *setting.Cfg
+	log           log.Logger
+	targets       []string
+	dependencyMap map[string][]string
 
 	ModuleManager  *modules.Manager
 	ServiceManager *services.Manager
 	ServiceMap     map[string]services.Service
 }
 
-func ProvideService(cfg *setting.Cfg) *Service {
+func ProvideService(cfg *setting.Cfg) *service {
 	logger := log.New("modules")
-	return &Service{
-		cfg:     cfg,
-		log:     logger,
-		targets: cfg.Target,
+
+	return &service{
+		cfg:           cfg,
+		log:           logger,
+		targets:       cfg.Target,
+		dependencyMap: map[string][]string{},
 
 		ModuleManager: modules.NewManager(logger),
 		ServiceMap:    map[string]services.Service{},
@@ -40,18 +57,13 @@ func ProvideService(cfg *setting.Cfg) *Service {
 }
 
 // Init initializes all registered modules.
-func (m *Service) Init() error {
+func (m *service) Init(_ context.Context) error {
 	var err error
 
 	// module registration
-	m.ModuleManager.RegisterModule(All, nil)
+	m.RegisterModule(All, nil)
 
-	// map modules to their dependencies
-	deps := map[string][]string{
-		All: {},
-	}
-
-	for mod, targets := range deps {
+	for mod, targets := range m.dependencyMap {
 		if err := m.ModuleManager.AddDependency(mod, targets...); err != nil {
 			return err
 		}
@@ -77,7 +89,7 @@ func (m *Service) Init() error {
 }
 
 // Run starts all registered modules.
-func (m *Service) Run(ctx context.Context) error {
+func (m *service) Run(ctx context.Context) error {
 	// we don't need to continue if no modules are registered.
 	// this behavior may need to change if dskit services replace the
 	// current background service registry.
@@ -114,7 +126,7 @@ func (m *Service) Run(ctx context.Context) error {
 }
 
 // Shutdown stops all modules and waits for them to stop.
-func (m *Service) Shutdown(ctx context.Context) error {
+func (m *service) Shutdown(ctx context.Context) error {
 	if m.ServiceManager == nil {
 		m.log.Debug("No modules registered, nothing to stop...")
 		return nil
@@ -125,19 +137,19 @@ func (m *Service) Shutdown(ctx context.Context) error {
 }
 
 // RegisterModule registers a module with the dskit module manager.
-func (m *Service) RegisterModule(name string, initFn func() (services.Service, error), deps ...string) error {
+func (m *service) RegisterModule(name string, initFn func() (services.Service, error), deps ...string) {
 	m.ModuleManager.RegisterModule(name, initFn)
-	return m.ModuleManager.AddDependency(name, deps...)
+	m.dependencyMap[name] = deps
 }
 
 // RegisterInvisibleModule registers an invisible module with the dskit module manager.
 // Invisible modules are not visible to the user, and are intendent to be used as dependencies.
-func (m *Service) RegisterInvisibleModule(name string, initFn func() (services.Service, error), deps ...string) error {
+func (m *service) RegisterInvisibleModule(name string, initFn func() (services.Service, error), deps ...string) {
 	m.ModuleManager.RegisterModule(name, initFn, modules.UserInvisibleModule)
-	return m.ModuleManager.AddDependency(name, deps...)
+	m.dependencyMap[name] = deps
 }
 
 // IsModuleEnabled returns true if the module is enabled.
-func (m *Service) IsModuleEnabled(name string) bool {
+func (m *service) IsModuleEnabled(name string) bool {
 	return stringsContain(m.targets, name)
 }

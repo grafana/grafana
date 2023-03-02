@@ -39,7 +39,7 @@ type Options struct {
 func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistry accesscontrol.RoleRegistry,
 	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry,
 	usageStatsProvidersRegistry registry.UsageStatsProvidersRegistry, statsCollectorService *statscollector.Service,
-	moduleService *modules.Service,
+	moduleService modules.Engine,
 ) (*Server, error) {
 	statsCollectorService.RegisterProviders(usageStatsProvidersRegistry.GetServices())
 	s, err := newServer(opts, cfg, httpServer, roleRegistry, provisioningService, backgroundServiceProvider, moduleService)
@@ -56,7 +56,7 @@ func New(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistr
 
 func newServer(opts Options, cfg *setting.Cfg, httpServer *api.HTTPServer, roleRegistry accesscontrol.RoleRegistry,
 	provisioningService provisioning.ProvisioningService, backgroundServiceProvider registry.BackgroundServiceRegistry,
-	moduleService *modules.Service,
+	moduleService modules.Engine,
 ) (*Server, error) {
 	rootCtx, shutdownFn := context.WithCancel(context.Background())
 	childRoutines, childCtx := errgroup.WithContext(rootCtx)
@@ -103,7 +103,7 @@ type Server struct {
 	HTTPServer          *api.HTTPServer
 	roleRegistry        accesscontrol.RoleRegistry
 	provisioningService provisioning.ProvisioningService
-	moduleService       *modules.Service
+	moduleService       modules.Engine
 }
 
 // init initializes the server and its services.
@@ -121,7 +121,7 @@ func (s *Server) init() error {
 	}
 
 	// Initialize dskit modules.
-	if err := s.moduleService.Init(); err != nil {
+	if err := s.moduleService.Init(s.context); err != nil {
 		return err
 	}
 

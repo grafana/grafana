@@ -13,10 +13,10 @@ var _ services.ManagerListener = (*serviceListener)(nil)
 
 type serviceListener struct {
 	log     log.Logger
-	service *Service
+	service *service
 }
 
-func newServiceListener(logger log.Logger, s *Service) *serviceListener {
+func newServiceListener(logger log.Logger, s *service) *serviceListener {
 	return &serviceListener{log: logger.New("service-listener"), service: s}
 }
 
