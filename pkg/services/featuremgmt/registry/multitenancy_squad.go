@@ -1,7 +1,7 @@
 package registry
 
 var (
-	MultitenancySquadToggles = []FeatureToggle{
+	multitenancySquadToggles = []FeatureToggle{
 		{
 			Name:        "dashboardPreviews",
 			Description: "Create and show thumbnails for dashboard search results",

@@ -29,7 +29,7 @@ func TestFeatureToggleFiles(t *testing.T) {
 	}
 
 	t.Run("check registry constraints", func(t *testing.T) {
-		for _, flag := range toggles {
+		for _, flag := range registry.Toggles {
 			if flag.Expression == "true" && flag.State != registry.FeatureStateStable {
 				t.Errorf("only stable features can be enabled by default.  See: %s", flag.Name)
 			}
@@ -64,7 +64,7 @@ func TestFeatureToggleFiles(t *testing.T) {
 
 	t.Run("check feature naming convention", func(t *testing.T) {
 		invalidNames := make([]string, 0)
-		for _, f := range toggles {
+		for _, f := range registry.Toggles {
 			if legacyNames[f.Name] {
 				continue
 			}
@@ -121,7 +121,7 @@ export interface FeatureToggles {
   [name: string]: boolean | undefined; // support any string value
 
 `
-	for _, flag := range toggles {
+	for _, flag := range registry.Toggles {
 		buf += "  " + getTypeScriptKey(flag.Name) + "?: boolean;\n"
 	}
 
@@ -178,7 +178,7 @@ package featuremgmt
 
 const (`)
 
-	for _, flag := range toggles {
+	for _, flag := range registry.Toggles {
 		data.CamelCase = asCamelCase(flag.Name)
 		data.Flag = flag
 		data.Ext = ""
@@ -264,7 +264,7 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 func writeToggleDocsTable(include func(registry.FeatureToggle) bool, showEnableByDefault bool) string {
 	data := [][]string{}
 
-	for _, flag := range toggles {
+	for _, flag := range registry.Toggles {
 		if include(flag) {
 			row := []string{"`" + flag.Name + "`", flag.Description}
 			if showEnableByDefault {

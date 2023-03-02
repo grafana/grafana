@@ -33,7 +33,7 @@ func ProvideManagerService(cfg *setting.Cfg, licensing licensing.Licensing) (*Fe
 	}
 
 	// Register the standard flags
-	mgmt.registerFlags(toggles...)
+	mgmt.registerFlags(registry.Toggles...)
 
 	// Load the flags from `custom.ini` files
 	flags, err := setting.ReadFeatureTogglesFromInitFile(cfg.Raw.Section("feature_toggles"))
