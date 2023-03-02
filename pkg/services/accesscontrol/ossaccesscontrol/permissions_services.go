@@ -202,7 +202,7 @@ var FolderAdminActions = append(FolderEditActions, []string{dashboards.ActionFol
 
 func ProvideFolderPermissions(
 	cfg *setting.Cfg, router routing.RouteRegister, sql db.DB, accesscontrol accesscontrol.AccessControl,
-	license licensing.Licensing, dashboardStore dashboards.Store, folderService folder.Service, service accesscontrol.Service,
+	license licensing.Licensing, dashboardService dashboards.GetterService, folderService folder.Service, service accesscontrol.Service,
 	teamService team.Service, userService user.Service,
 ) (*FolderPermissionsService, error) {
 	options := resourcepermissions.Options{
@@ -210,7 +210,7 @@ func ProvideFolderPermissions(
 		ResourceAttribute: "uid",
 		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
 			query := &dashboards.GetDashboardQuery{UID: resourceID, OrgID: orgID}
-			queryResult, err := dashboardStore.GetDashboard(ctx, query)
+			queryResult, err := dashboardService.GetDashboard(ctx, query)
 			if err != nil {
 				return err
 			}

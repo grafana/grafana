@@ -25,7 +25,7 @@ type Service struct {
 
 func ProvideService(cfg *setting.Cfg, store db.DB, live *live.GrafanaLive,
 	features featuremgmt.FeatureToggles, accessControl accesscontrol.AccessControl,
-	dashboardService dashboards.DashboardService, userService user.Service, annotationsRepo annotations.Repository) *Service {
+	dashboardService dashboards.GetterService, userService user.Service, annotationsRepo annotations.Repository) *Service {
 	s := &Service{
 		cfg:      cfg,
 		live:     live,

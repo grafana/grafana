@@ -33,7 +33,7 @@ type RuleStore interface {
 	GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAlertRuleByUIDQuery) error
 }
 
-func NewAnnotationBackend(annotations annotations.Repository, dashboards dashboards.DashboardService, rules RuleStore) *AnnotationBackend {
+func NewAnnotationBackend(annotations annotations.Repository, dashboards dashboards.GetterService, rules RuleStore) *AnnotationBackend {
 	return &AnnotationBackend{
 		annotations: annotations,
 		dashboards:  newDashboardResolver(dashboards, defaultDashboardCacheExpiry),

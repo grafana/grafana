@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
-	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/setting"
@@ -869,28 +868,7 @@ func (d *dashboardStore) GetDashboardUIDByID(ctx context.Context, query *dashboa
 }
 
 func (d *dashboardStore) GetDashboards(ctx context.Context, query *dashboards.GetDashboardsQuery) ([]*dashboards.Dashboard, error) {
-	var dashboards = make([]*dashboards.Dashboard, 0)
-	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
-		if len(query.DashboardIDs) == 0 && len(query.DashboardUIDs) == 0 {
-			return star.ErrCommandValidationFailed
-		}
-		var session *xorm.Session
-		if len(query.DashboardIDs) > 0 {
-			session = sess.In("id", query.DashboardIDs)
-		} else {
-			session = sess.In("uid", query.DashboardUIDs)
-		}
-		if query.OrgID > 0 {
-			session = sess.Where("org_id = ?", query.OrgID)
-		}
-
-		err := session.Find(&dashboards)
-		return err
-	})
-	if err != nil {
-		return nil, err
-	}
-	return dashboards, nil
+	return GetDashboards(ctx, d.store, query)
 }
 
 func (d *dashboardStore) FindDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
@@ -1059,4 +1037,29 @@ func GetDashboard(ctx context.Context, store db.DB, query *dashboards.GetDashboa
 	})
 
 	return queryResult, err
+}
+
+func GetDashboards(ctx context.Context, store db.DB, query *dashboards.GetDashboardsQuery) ([]*dashboards.Dashboard, error) {
+	var ret = make([]*dashboards.Dashboard, 0)
+	err := store.WithDbSession(ctx, func(sess *db.Session) error {
+		if len(query.DashboardIDs) == 0 && len(query.DashboardUIDs) == 0 {
+			return dashboards.ErrDashboardIdentifierNotSet
+		}
+		var session *xorm.Session
+		if len(query.DashboardIDs) > 0 {
+			session = sess.In("id", query.DashboardIDs)
+		} else {
+			session = sess.In("uid", query.DashboardUIDs)
+		}
+		if query.OrgID > 0 {
+			session = sess.Where("org_id = ?", query.OrgID)
+		}
+
+		err := session.Find(&ret)
+		return err
+	})
+	if err != nil {
+		return nil, err
+	}
+	return ret, nil
 }

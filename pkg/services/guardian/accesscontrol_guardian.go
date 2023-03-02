@@ -27,7 +27,7 @@ func NewAccessControlDashboardGuardian(
 	store db.DB, ac accesscontrol.AccessControl,
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService,
-	dashboardService dashboards.DashboardService,
+	dashboardService dashboards.GetterService,
 ) (*AccessControlDashboardGuardian, error) {
 	var dashboard *dashboards.Dashboard
 	if dashboardId != 0 {
@@ -105,7 +105,7 @@ func NewAccessControlDashboardGuardianByDashboard(
 	store db.DB, ac accesscontrol.AccessControl,
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService,
-	dashboardService dashboards.DashboardService,
+	dashboardService dashboards.GetterService,
 ) (*AccessControlDashboardGuardian, error) {
 	return &AccessControlDashboardGuardian{
 		ctx:                         ctx,
@@ -129,7 +129,7 @@ type AccessControlDashboardGuardian struct {
 	ac                          accesscontrol.AccessControl
 	folderPermissionsService    accesscontrol.FolderPermissionsService
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService
-	dashboardService            dashboards.DashboardService
+	dashboardService            dashboards.GetterService
 }
 
 func (a *AccessControlDashboardGuardian) CanSave() (bool, error) {

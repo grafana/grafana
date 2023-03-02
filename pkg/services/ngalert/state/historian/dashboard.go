@@ -21,13 +21,13 @@ const (
 
 // dashboardResolver resolves dashboard UIDs to IDs with caching.
 type dashboardResolver struct {
-	dashboards   dashboards.DashboardService
+	dashboards   dashboards.GetterService
 	cache        *cache.Cache
 	singleflight singleflight.Group
 	log          log.Logger
 }
 
-func newDashboardResolver(dbs dashboards.DashboardService, expiry time.Duration) *dashboardResolver {
+func newDashboardResolver(dbs dashboards.GetterService, expiry time.Duration) *dashboardResolver {
 	return &dashboardResolver{
 		dashboards:   dbs,
 		cache:        cache.New(expiry, maxDuration(2*expiry, minCleanupInterval)),

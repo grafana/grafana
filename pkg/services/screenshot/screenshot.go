@@ -43,7 +43,7 @@ type ScreenshotService interface {
 
 // HeadlessScreenshotService takes screenshots using a headless browser.
 type HeadlessScreenshotService struct {
-	ds dashboards.DashboardService
+	ds dashboards.GetterService
 	rs rendering.Service
 
 	duration  prometheus.Histogram
@@ -51,7 +51,7 @@ type HeadlessScreenshotService struct {
 	successes prometheus.Counter
 }
 
-func NewHeadlessScreenshotService(ds dashboards.DashboardService, rs rendering.Service, r prometheus.Registerer) ScreenshotService {
+func NewHeadlessScreenshotService(ds dashboards.GetterService, rs rendering.Service, r prometheus.Registerer) ScreenshotService {
 	return &HeadlessScreenshotService{
 		ds: ds,
 		rs: rs,

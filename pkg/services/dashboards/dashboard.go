@@ -55,10 +55,11 @@ type DashboardProvisioningService interface {
 //
 //go:generate mockery --name Store --structname FakeDashboardStore --inpackage --filename store_mock.go
 type Store interface {
-	GetterStore
 	DeleteDashboard(ctx context.Context, cmd *DeleteDashboardCommand) error
 	DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *DeleteOrphanedProvisionedDashboardsCommand) error
 	FindDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error)
+	GetDashboard(ctx context.Context, query *GetDashboardQuery) (*Dashboard, error)
+	GetDashboards(ctx context.Context, query *GetDashboardsQuery) ([]*Dashboard, error)
 	GetDashboardACLInfoList(ctx context.Context, query *GetDashboardACLInfoListQuery) ([]*DashboardACLInfoDTO, error)
 	GetDashboardUIDByID(ctx context.Context, query *GetDashboardRefByIDQuery) (*DashboardRef, error)
 	// GetDashboardsByPluginID retrieves dashboards identified by plugin.
@@ -85,12 +86,15 @@ type Store interface {
 	CountDashboardsInFolder(ctx context.Context, request *CountDashboardsInFolderRequest) (int64, error)
 }
 
+// GetterService is a subset of the DashboardService interface designed for
+// services that need Get methods only. Using this service simplifies
+// inter-service dependencies; the ProvideGetterService method only takes a db.DB
+// argument.
+//
+// This interface is a stepping store towards an EntityAPI-type paradigm, and may
+// be extended (refactored) to include other similar CRUD methods that don't have
+// tightly coupled business logic.
 type GetterService interface {
-	GetDashboard(ctx context.Context, query *GetDashboardQuery) (*Dashboard, error)
-	GetDashboards(ctx context.Context, query *GetDashboardsQuery) ([]*Dashboard, error)
-}
-
-type GetterStore interface {
 	GetDashboard(ctx context.Context, query *GetDashboardQuery) (*Dashboard, error)
 	GetDashboards(ctx context.Context, query *GetDashboardsQuery) ([]*Dashboard, error)
 }

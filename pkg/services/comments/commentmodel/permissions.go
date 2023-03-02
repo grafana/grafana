@@ -17,12 +17,12 @@ type PermissionChecker struct {
 	sqlStore         db.DB
 	features         featuremgmt.FeatureToggles
 	accessControl    accesscontrol.AccessControl
-	dashboardService dashboards.DashboardService
+	dashboardService dashboards.GetterService
 	annotationsRepo  annotations.Repository
 }
 
 func NewPermissionChecker(sqlStore db.DB, features featuremgmt.FeatureToggles,
-	accessControl accesscontrol.AccessControl, dashboardService dashboards.DashboardService,
+	accessControl accesscontrol.AccessControl, dashboardService dashboards.GetterService,
 	annotationsRepo annotations.Repository,
 ) *PermissionChecker {
 	return &PermissionChecker{sqlStore: sqlStore, features: features, accessControl: accessControl, annotationsRepo: annotationsRepo}
