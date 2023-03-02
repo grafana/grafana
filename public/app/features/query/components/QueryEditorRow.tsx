@@ -10,13 +10,13 @@ import {
   DataQuery,
   DataSourceApi,
   DataSourceInstanceSettings,
-  DataSourcePluginContextProvider,
   EventBusExtended,
   EventBusSrv,
   HistoryItem,
   LoadingState,
   PanelData,
   PanelEvents,
+  DataSourcePluginContextProvider,
   QueryResultMetaNotice,
   TimeRange,
   toLegacyResponseData,
@@ -64,9 +64,8 @@ interface Props<TQuery extends DataQuery> {
 
 interface State<TQuery extends DataQuery> {
   /** DatasourceUid or ds variable expression used to resolve current datasource */
-  loadedDataSourceIdentifier?: string | null;
+  isLoadingDataSource?: boolean;
   datasource: DataSourceApi<TQuery> | null;
-  datasourceUid?: string | null;
   hasTextEditMode: boolean;
   data?: PanelData;
   isOpen?: boolean;
@@ -136,31 +135,35 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     };
   }
 
-  getQueryDataSourceIdentifier(): string | null | undefined {
-    const { query, dataSource: dsSettings } = this.props;
-    return query.datasource?.uid ?? dsSettings.uid;
+  getDataSourceIdentifier(props: Props<TQuery>): string | null | undefined {
+    const { query, dataSource } = props;
+
+    return query.datasource?.uid ?? dataSource.uid;
   }
 
   async loadDatasource() {
     const dataSourceSrv = getDataSourceSrv();
     let datasource: DataSourceApi;
-    const dataSourceIdentifier = this.getQueryDataSourceIdentifier();
+    const dataSourceIdentifier = this.getDataSourceIdentifier(this.props);
+
+    this.setState({ isLoadingDataSource: true });
 
     try {
       datasource = await dataSourceSrv.get(dataSourceIdentifier);
     } catch (error) {
+      // If the datasource doesn't exit, fallback to default datasource
       datasource = await dataSourceSrv.get();
     }
 
     this.setState({
       datasource: datasource as unknown as DataSourceApi<TQuery>,
-      loadedDataSourceIdentifier: dataSourceIdentifier,
+      isLoadingDataSource: false,
       hasTextEditMode: has(datasource, 'components.QueryCtrl.prototype.toggleEditorMode'),
     });
   }
 
   componentDidUpdate(prevProps: Props<TQuery>) {
-    const { datasource, loadedDataSourceIdentifier } = this.state;
+    const { datasource } = this.state;
     const { data, query } = this.props;
 
     if (prevProps.id !== this.props.id) {
@@ -182,7 +185,10 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     }
 
     // check if we need to load another datasource
-    if (datasource && loadedDataSourceIdentifier !== this.getQueryDataSourceIdentifier()) {
+    const newDataSourceIdentifier = this.getDataSourceIdentifier(this.props);
+    const prevDataSourceIdentifier = this.getDataSourceIdentifier(prevProps);
+
+    if (datasource && newDataSourceIdentifier !== prevDataSourceIdentifier) {
       if (this.angularQueryEditor) {
         this.angularQueryEditor.destroy();
         this.angularQueryEditor = null;
@@ -240,17 +246,11 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     }
   }
 
-  isWaitingForDatasourceToLoad(): boolean {
-    // if we not yet have loaded the datasource in state the
-    // ds in props and the ds in state will have different values.
-    return this.props.dataSource.uid !== this.state.loadedDataSourceIdentifier;
-  }
-
   renderPluginEditor = () => {
     const { query, onChange, queries, onRunQuery, onAddQuery, app = CoreApp.PanelEditor, history } = this.props;
     const { datasource, data } = this.state;
 
-    if (this.isWaitingForDatasourceToLoad()) {
+    if (this.state.isLoadingDataSource) {
       return null;
     }
 
@@ -490,7 +490,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const DatasourceCheatsheet = datasource.components?.QueryEditorHelp;
 
     return (
-      <div data-testid="query-editor-row" aria-label={selectors.components.QueryEditorRows.rows}>
+      <div aria-label={selectors.components.QueryEditorRows.rows}>
         <QueryOperationRow
           id={this.id}
           draggable={true}
@@ -568,12 +568,10 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
   // Only say this is an error if the error links to the query
   let state = data.state;
   const error = data.error && data.error.refId === refId ? data.error : undefined;
-  if (state !== LoadingState.Loading) {
-    if (error) {
-      state = LoadingState.Error;
-    } else if (data.state === LoadingState.Error) {
-      state = LoadingState.Done;
-    }
+  if (error) {
+    state = LoadingState.Error;
+  } else if (!error && data.state === LoadingState.Error) {
+    state = LoadingState.Done;
   }
 
   const timeRange = data.timeRange;
