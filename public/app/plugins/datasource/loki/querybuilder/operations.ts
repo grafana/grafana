@@ -352,7 +352,15 @@ Example: \`\`error_level=\`level\` \`\`
       id: LokiOperationId.LineFilterIpMatches,
       name: 'IP line filter expression',
       params: [
-        { name: 'Operator', type: 'string', options: ['|=', '!='] },
+        {
+          name: 'Operator',
+          type: 'string',
+          minWidth: 16,
+          options: [
+            { label: '|=', value: '|=', description: 'Contains' },
+            { label: '!=', value: '!=', description: 'Does not contain' },
+          ],
+        },
         {
           name: 'Pattern',
           type: 'string',
@@ -373,9 +381,23 @@ Example: \`\`error_level=\`level\` \`\`
       id: LokiOperationId.LabelFilter,
       name: 'Label filter expression',
       params: [
-        { name: 'Label', type: 'string' },
-        { name: 'Operator', type: 'string', options: ['=', '!=', ' =~', '!~', '>', '<', '>=', '<='] },
-        { name: 'Value', type: 'string' },
+        { name: 'Label', type: 'string', minWidth: 14 },
+        {
+          name: 'Operator',
+          type: 'string',
+          minWidth: 14,
+          options: [
+            { label: '=', value: '=', description: 'Equals' },
+            { label: '!=', value: '!=', description: 'Does not equal' },
+            { label: '=~', value: '=~', description: 'Matches regex' },
+            { label: '!~', value: '!~', description: 'Does not match regex' },
+            { label: '>', value: '>', description: 'Greater than' },
+            { label: '<', value: '<', description: 'Less than' },
+            { label: '>=', value: '>=', description: 'Greater than or equal to' },
+            { label: '<=', value: '<=', description: 'Less than or equal to' },
+          ],
+        },
+        { name: 'Value', type: 'string', minWidth: 14 },
       ],
       defaultParams: ['', '=', ''],
       alternativesKey: 'label filter',
@@ -389,9 +411,17 @@ Example: \`\`error_level=\`level\` \`\`
       id: LokiOperationId.LabelFilterIpMatches,
       name: 'IP label filter expression',
       params: [
-        { name: 'Label', type: 'string' },
-        { name: 'Operator', type: 'string', options: ['=', '!='] },
-        { name: 'Value', type: 'string' },
+        { name: 'Label', type: 'string', minWidth: 14 },
+        {
+          name: 'Operator',
+          type: 'string',
+          minWidth: 14,
+          options: [
+            { label: '=', value: '=', description: 'Equals' },
+            { label: '!=', value: '!=', description: 'Does not equal' },
+          ],
+        },
+        { name: 'Value', type: 'string', minWidth: 14 },
       ],
       defaultParams: ['', '=', ''],
       alternativesKey: 'label filter',

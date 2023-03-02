@@ -98,7 +98,7 @@ export function LabelFilterItem({
             aria-label={selectors.components.QueryBuilder.matchOperatorSelect}
             value={toOption(item.op ?? defaultOp)}
             options={operators}
-            width="auto"
+            width={14}
             onChange={(change) => {
               if (change.value != null) {
                 onChange({
@@ -160,8 +160,8 @@ export function LabelFilterItem({
 }
 
 const operators = [
-  { label: '=~', value: '=~', isMultiValue: true },
-  { label: '=', value: '=', isMultiValue: false },
-  { label: '!=', value: '!=', isMultiValue: false },
-  { label: '!~', value: '!~', isMultiValue: true },
+  { label: '=', value: '=', description: 'Equals', isMultiValue: false },
+  { label: '=~', value: '=~', description: 'Matches regex', isMultiValue: true },
+  { label: '!=', value: '!=', description: 'Does not equal', isMultiValue: false },
+  { label: '!~', value: '!~', description: 'Does not match regex', isMultiValue: true },
 ];
