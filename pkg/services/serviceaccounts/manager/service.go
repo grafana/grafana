@@ -226,13 +226,6 @@ func (sa *ServiceAccountsService) DeleteServiceAccountToken(ctx context.Context,
 	return sa.store.DeleteServiceAccountToken(ctx, orgID, serviceAccountID, tokenID)
 }
 
-func (sa *ServiceAccountsService) HideApiKeysTab(ctx context.Context, orgID int64) error {
-	if err := validOrgID(orgID); err != nil {
-		return err
-	}
-	return sa.store.HideApiKeysTab(ctx, orgID)
-}
-
 func (sa *ServiceAccountsService) MigrateApiKey(ctx context.Context, orgID, keyID int64) error {
 	if err := validOrgID(orgID); err != nil {
 		return err

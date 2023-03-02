@@ -364,13 +364,6 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 	return searchResult, nil
 }
 
-func (s *ServiceAccountsStoreImpl) HideApiKeysTab(ctx context.Context, orgId int64) error {
-	if err := s.kvStore.Set(ctx, orgId, "serviceaccounts", "hideApiKeys", "1"); err != nil {
-		s.log.Error("Failed to hide API keys tab", err)
-	}
-	return nil
-}
-
 func (s *ServiceAccountsStoreImpl) MigrateApiKeysToServiceAccounts(ctx context.Context, orgId int64) error {
 	basicKeys, err := s.apiKeyService.GetAllAPIKeys(ctx, orgId)
 	if err != nil {
