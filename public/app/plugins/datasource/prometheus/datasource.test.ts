@@ -62,15 +62,6 @@ const timeSrvStub = {
   },
 };
 
-const timeSrvStubOld = {
-  timeRange(): any {
-    return {
-      from: dateTime(1531468681),
-      to: dateTime(1531489712),
-    };
-  },
-} as unknown as TimeSrv;
-
 beforeEach(() => {
   jest.clearAllMocks();
 });
@@ -91,7 +82,7 @@ describe('PrometheusDatasource', () => {
   } as unknown as DataSourceInstanceSettings<PromOptions>;
 
   beforeEach(() => {
-    ds = new PrometheusDatasource(instanceSettings, templateSrvStub, timeSrvStub);
+    ds = new PrometheusDatasource(instanceSettings, templateSrvStub, timeSrvStub as TimeSrv);
   });
 
   describe('Query', () => {

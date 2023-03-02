@@ -1206,6 +1206,7 @@ export class PrometheusDatasource
     const endTime = this.getPrometheusTime(range.to, true);
     const endTimeQuantizedSeconds = roundSecToNextMin(endTime, this.getCacheDurationInMinutes()) * 60;
 
+    // If the interval was too short, we could have rounded both start and end to the same time, if so let's
     if (startTimeQuantizedSeconds === endTimeQuantizedSeconds) {
       const endTimePlusOneStep = endTimeQuantizedSeconds + this.getCacheDurationInMinutes() * 60;
       return { start: startTimeQuantizedSeconds.toString(), end: endTimePlusOneStep.toString() };
