@@ -33,7 +33,11 @@ func (s *ServiceAccountsStoreImpl) ListTokens(
 		sess = sess.Join("inner", quotedUser, quotedUser+".id = api_key.service_account_id").
 			Asc("api_key.name")
 
-		return fmt.Errorf("%s: %w", "list token error", sess.Find(&result))
+		err := sess.Find(&result)
+		if err != nil {
+			return fmt.Errorf("%s: %w", "list token error", err)
+		}
+		return nil
 	})
 	return result, err
 }
