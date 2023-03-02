@@ -65,9 +65,13 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
       return of({ error: { message: 'You must select a service.' }, data: [] });
     }
 
+    let { start, end } = this.getTimeRange();
+
     if (target.queryType !== 'search' && target.query) {
       return this._request(
-        `/api/traces/${encodeURIComponent(this.templateSrv.replace(target.query, options.scopedVars))}`
+        `/api/traces/${encodeURIComponent(
+          this.templateSrv.replace(target.query, options.scopedVars)
+        )}?start=${start}&end=${end}`
       ).pipe(
         map((response) => {
           const traceData = response?.data?.data?.[0];
