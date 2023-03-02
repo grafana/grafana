@@ -3,6 +3,7 @@ package featuremgmt
 import (
 	"os"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt/registry"
 	"gopkg.in/yaml.v3"
 )
 
@@ -11,7 +12,7 @@ type configBody struct {
 	Vars map[string]interface{} `yaml:"vars"`
 
 	// Define and override feature flag properties
-	Flags []FeatureFlag `yaml:"flags"`
+	Flags []featuremgmt_registry.FeatureToggle `yaml:"flags"`
 
 	// keep track of where the fie was loaded from
 	filename string

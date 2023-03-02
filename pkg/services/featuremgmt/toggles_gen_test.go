@@ -11,6 +11,7 @@ import (
 	"unicode"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/grafana/grafana/pkg/services/featuremgmt/registry"
 	"github.com/olekukonko/tablewriter"
 	"github.com/stretchr/testify/require"
 
@@ -28,14 +29,14 @@ func TestFeatureToggleFiles(t *testing.T) {
 	}
 
 	t.Run("check registry constraints", func(t *testing.T) {
-		for _, flag := range standardFeatureFlags {
-			if flag.Expression == "true" && flag.State != FeatureStateStable {
+		for _, flag := range toggles {
+			if flag.Expression == "true" && flag.State != featuremgmt_registry.FeatureStateStable {
 				t.Errorf("only stable features can be enabled by default.  See: %s", flag.Name)
 			}
-			if flag.RequiresDevMode && flag.State != FeatureStateAlpha {
+			if flag.RequiresDevMode && flag.State != featuremgmt_registry.FeatureStateAlpha {
 				t.Errorf("only alpha features can require dev mode.  See: %s", flag.Name)
 			}
-			if flag.State == FeatureStateUnknown {
+			if flag.State == featuremgmt_registry.FeatureStateUnknown {
 				t.Errorf("standard toggles should not have an unknown state.  See: %s", flag.Name)
 			}
 		}
@@ -63,7 +64,7 @@ func TestFeatureToggleFiles(t *testing.T) {
 
 	t.Run("check feature naming convention", func(t *testing.T) {
 		invalidNames := make([]string, 0)
-		for _, f := range standardFeatureFlags {
+		for _, f := range toggles {
 			if legacyNames[f.Name] {
 				continue
 			}
@@ -120,7 +121,7 @@ export interface FeatureToggles {
   [name: string]: boolean | undefined; // support any string value
 
 `
-	for _, flag := range standardFeatureFlags {
+	for _, flag := range toggles {
 		buf += "  " + getTypeScriptKey(flag.Name) + "?: boolean;\n"
 	}
 
@@ -159,7 +160,7 @@ func generateRegistry(t *testing.T) string {
 
 	data := struct {
 		CamelCase string
-		Flag      FeatureFlag
+		Flag      featuremgmt_registry.FeatureToggle
 		Ext       string
 	}{
 		CamelCase: "?",
@@ -177,7 +178,7 @@ package featuremgmt
 
 const (`)
 
-	for _, flag := range standardFeatureFlags {
+	for _, flag := range toggles {
 		data.CamelCase = asCamelCase(flag.Name)
 		data.Flag = flag
 		data.Ext = ""
@@ -217,15 +218,15 @@ This page contains a list of available feature toggles. To learn how to turn on 
 
 Some stable features are enabled by default. You can disable a stable feature by setting the feature flag to "false" in the configuration.
 
-` + writeToggleDocsTable(func(flag FeatureFlag) bool {
-		return flag.State == FeatureStateStable
+` + writeToggleDocsTable(func(flag featuremgmt_registry.FeatureToggle) bool {
+		return flag.State == featuremgmt_registry.FeatureStateStable
 	}, true)
 
 	buf += `
 ## Beta feature toggles
 
-` + writeToggleDocsTable(func(flag FeatureFlag) bool {
-		return flag.State == FeatureStateBeta
+` + writeToggleDocsTable(func(flag featuremgmt_registry.FeatureToggle) bool {
+		return flag.State == featuremgmt_registry.FeatureStateBeta
 	}, false)
 
 	if hasDeprecatedFlags {
@@ -234,8 +235,8 @@ Some stable features are enabled by default. You can disable a stable feature by
 
 When stable or beta features are slated for removal, they will be marked as Deprecated first.
 
-	` + writeToggleDocsTable(func(flag FeatureFlag) bool {
-			return flag.State == FeatureStateDeprecated
+	` + writeToggleDocsTable(func(flag featuremgmt_registry.FeatureToggle) bool {
+			return flag.State == featuremgmt_registry.FeatureStateDeprecated
 		}, false)
 	}
 
@@ -245,8 +246,8 @@ When stable or beta features are slated for removal, they will be marked as Depr
 These features are early in their development lifecycle and so are not yet supported in Grafana Cloud.
 Alpha features might be changed or removed without prior notice.
 
-` + writeToggleDocsTable(func(flag FeatureFlag) bool {
-		return flag.State == FeatureStateAlpha && !flag.RequiresDevMode
+` + writeToggleDocsTable(func(flag featuremgmt_registry.FeatureToggle) bool {
+		return flag.State == featuremgmt_registry.FeatureStateAlpha && !flag.RequiresDevMode
 	}, false)
 
 	buf += `
@@ -254,16 +255,16 @@ Alpha features might be changed or removed without prior notice.
 
 The following toggles require explicitly setting Grafana's [app mode]({{< relref "../_index.md/#app_mode" >}}) to 'development' before you can enable this feature toggle. These features tend to be experimental.
 
-` + writeToggleDocsTable(func(flag FeatureFlag) bool {
+` + writeToggleDocsTable(func(flag featuremgmt_registry.FeatureToggle) bool {
 		return flag.RequiresDevMode
 	}, false)
 	return buf
 }
 
-func writeToggleDocsTable(include func(FeatureFlag) bool, showEnableByDefault bool) string {
+func writeToggleDocsTable(include func(featuremgmt_registry.FeatureToggle) bool, showEnableByDefault bool) string {
 	data := [][]string{}
 
-	for _, flag := range standardFeatureFlags {
+	for _, flag := range toggles {
 		if include(flag) {
 			row := []string{"`" + flag.Name + "`", flag.Description}
 			if showEnableByDefault {

@@ -148,6 +148,8 @@
 /pkg/infra/fs/ @grafana/backend-platform
 /pkg/infra/x/ @grafana/backend-platform
 
+# Features toggles
+/pkg/services/featuremgmt/registry/multitenancy_squad.go @grafana/multitenancy-squad
 
 # devenv
 # Backend code, developers environment

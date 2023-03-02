@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/featuremgmt/registry"
 	"github.com/stretchr/testify/require"
 )
 
@@ -26,14 +27,14 @@ func TestFeatureManager(t *testing.T) {
 
 	t.Run("check license validation", func(t *testing.T) {
 		ft := FeatureManager{
-			flags: map[string]*FeatureFlag{},
+			flags: map[string]*featuremgmt_registry.FeatureToggle{},
 		}
-		ft.registerFlags(FeatureFlag{
+		ft.registerFlags(featuremgmt_registry.FeatureToggle{
 			Name:            "a",
 			RequiresLicense: true,
 			RequiresDevMode: true,
 			Expression:      "true",
-		}, FeatureFlag{
+		}, featuremgmt_registry.FeatureToggle{
 			Name:       "b",
 			Expression: "true",
 		})
@@ -42,10 +43,10 @@ func TestFeatureManager(t *testing.T) {
 		require.False(t, ft.IsEnabled("c")) // uknown flag
 
 		// Try changing "requires license"
-		ft.registerFlags(FeatureFlag{
+		ft.registerFlags(featuremgmt_registry.FeatureToggle{
 			Name:            "a",
 			RequiresLicense: false, // shuld still require license!
-		}, FeatureFlag{
+		}, featuremgmt_registry.FeatureToggle{
 			Name:            "b",
 			RequiresLicense: true, // expression is still "true"
 		})
@@ -56,18 +57,18 @@ func TestFeatureManager(t *testing.T) {
 
 	t.Run("check description and docs configs", func(t *testing.T) {
 		ft := FeatureManager{
-			flags: map[string]*FeatureFlag{},
+			flags: map[string]*featuremgmt_registry.FeatureToggle{},
 		}
-		ft.registerFlags(FeatureFlag{
+		ft.registerFlags(featuremgmt_registry.FeatureToggle{
 			Name:        "a",
 			Description: "first",
-		}, FeatureFlag{
+		}, featuremgmt_registry.FeatureToggle{
 			Name:        "a",
 			Description: "second",
-		}, FeatureFlag{
+		}, featuremgmt_registry.FeatureToggle{
 			Name:    "a",
 			DocsURL: "http://something",
-		}, FeatureFlag{
+		}, featuremgmt_registry.FeatureToggle{
 			Name: "a",
 		})
 		flag := ft.flags["a"]
