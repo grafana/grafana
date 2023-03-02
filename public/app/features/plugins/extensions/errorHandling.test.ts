@@ -1,11 +1,11 @@
 import { AppPluginExtensionLink } from '@grafana/data';
 
-import { createErrorHandling } from './errorHandling';
+import { handleErrorsInConfigure } from './errorHandling';
 import type { ConfigureFunc } from './types';
 
-describe('extension error handling', () => {
+describe('error handling for configure', () => {
   const pluginId = 'grafana-basic-app';
-  const errorHandler = createErrorHandling<AppPluginExtensionLink>({
+  const errorHandler = handleErrorsInConfigure<AppPluginExtensionLink>({
     pluginId: pluginId,
     title: 'Go to page one',
     logger: jest.fn(),

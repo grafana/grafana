@@ -8,7 +8,7 @@ type Options = {
   logger: (msg: string, error?: unknown) => void;
 };
 
-export function createErrorHandling<T>(options: Options) {
+export function handleErrorsInConfigure<T>(options: Options) {
   const { pluginId, title, logger } = options;
 
   return (configure: ConfigureFunc<T>): ConfigureFunc<T> => {
@@ -42,7 +42,7 @@ export function createErrorHandling<T>(options: Options) {
   };
 }
 
-export function commandErrorHandling(options: Options) {
+export function handleErrorsInHandler(options: Options) {
   const { pluginId, title, logger } = options;
 
   return (handler: CommandHandlerFunc): CommandHandlerFunc => {

@@ -1,60 +1,40 @@
 import {
-  AppPluginExtensionCommand,
-  AppPluginExtensionCommandConfig,
-  AppPluginExtensionLink,
-  AppPluginExtensionLinkConfig,
-  PluginExtensionCommand,
-  PluginExtensionLink,
+  type AppPluginExtensionCommand,
+  type AppPluginExtensionCommandConfig,
+  type AppPluginExtensionLink,
+  type AppPluginExtensionLinkConfig,
+  type PluginExtension,
+  type PluginExtensionCommand,
+  type PluginExtensionLink,
   PluginExtensionTypes,
 } from '@grafana/data';
 import type { PluginExtensionRegistry, PluginExtensionRegistryItem } from '@grafana/runtime';
 
-import { PluginPreloadResult } from '../pluginPreloader';
+import type { PluginPreloadResult } from '../pluginPreloader';
 
-import { commandErrorHandling, createErrorHandling } from './errorHandling';
-import { ConfigureFunc, CommandHandlerFunc } from './types';
+import { handleErrorsInHandler, handleErrorsInConfigure } from './errorHandling';
+import { PlacementsPerPlugin } from './placementsPerPlugin';
+import { ConfigureFunc } from './types';
 import { createLinkValidator, isValidLinkPath } from './validateLink';
 
 export function createPluginExtensionRegistry(preloadResults: PluginPreloadResult[]): PluginExtensionRegistry {
   const registry: PluginExtensionRegistry = {};
 
   for (const result of preloadResults) {
-    const pluginPlacementCount: Record<string, number> = {};
     const { pluginId, linkExtensions, commandExtensions, error } = result;
 
-    if (!Array.isArray(linkExtensions) || error) {
+    if (error) {
       continue;
     }
 
-    for (const extension of linkExtensions) {
-      const placement = extension.placement;
+    const placementsPerPlugin = new PlacementsPerPlugin();
+    const configs = [...linkExtensions, ...commandExtensions];
 
-      pluginPlacementCount[placement] = (pluginPlacementCount[placement] ?? 0) + 1;
-      const item = createRegistryLink(pluginId, extension);
+    for (const config of configs) {
+      const placement = config.placement;
+      const item = createRegistryItem(pluginId, config);
 
-      // If there was an issue initialising the plugin, skip adding its extensions to the registry
-      // or if the plugin already have placed 2 items at the extension point.
-      if (!item || pluginPlacementCount[placement] > 2) {
-        continue;
-      }
-
-      if (!Array.isArray(registry[placement])) {
-        registry[placement] = [item];
-        continue;
-      }
-
-      registry[placement].push(item);
-    }
-
-    for (const extension of commandExtensions) {
-      const placement = extension.placement;
-
-      pluginPlacementCount[placement] = (pluginPlacementCount[placement] ?? 0) + 1;
-      const item = createRegistryCommand(pluginId, extension);
-
-      // If there was an issue initialising the plugin, skip adding its extensions to the registry
-      // or if the plugin already have placed 2 items at the extension point.
-      if (!item || pluginPlacementCount[placement] > 2) {
+      if (!item || !placementsPerPlugin.allowedToAdd(placement)) {
         continue;
       }
 
@@ -74,24 +54,45 @@ export function createPluginExtensionRegistry(preloadResults: PluginPreloadResul
   return Object.freeze(registry);
 }
 
-function createRegistryCommand(
+function createRegistryItem(
+  pluginId: string,
+  config: AppPluginExtensionCommandConfig | AppPluginExtensionLinkConfig
+): PluginExtensionRegistryItem | undefined {
+  if ('handler' in config) {
+    return createCommandRegistryItem(pluginId, config);
+  }
+  return createLinkRegistryItem(pluginId, config);
+}
+
+function createCommandRegistryItem(
   pluginId: string,
   config: AppPluginExtensionCommandConfig
 ): PluginExtensionRegistryItem<PluginExtensionCommand> | undefined {
-  const id = `${pluginId}${config.placement}${config.title}`;
+  const configure = config.configure ?? defaultConfigure;
 
-  const extension = Object.freeze({
-    type: PluginExtensionTypes.command,
+  const options = {
+    pluginId: pluginId,
+    title: config.title,
+    logger: console.warn,
+  };
+
+  const catchErrorsInHandler = handleErrorsInHandler(options);
+  const handler = catchErrorsInHandler(config.handler);
+
+  const extensionFactory = createCommandFactory(pluginId, config, handler);
+
+  const configurable: AppPluginExtensionCommand = {
     title: config.title,
     description: config.description,
-    key: hashKey(id),
-    callHandlerWithContext: () => config.handler(),
-  });
+  };
 
-  return createCommandConfigure(pluginId, config, extension);
+  const mapper = mapToConfigure<PluginExtensionCommand, AppPluginExtensionCommand>(extensionFactory, configurable);
+  const catchErrorsInConfigure = handleErrorsInConfigure<AppPluginExtensionCommand>(options);
+
+  return mapper(catchErrorsInConfigure(configure));
 }
 
-function createRegistryLink(
+function createLinkRegistryItem(
   pluginId: string,
   config: AppPluginExtensionLinkConfig
 ): PluginExtensionRegistryItem<PluginExtensionLink> | undefined {
@@ -99,124 +100,75 @@ function createRegistryLink(
     return undefined;
   }
 
-  const id = `${pluginId}${config.placement}${config.title}`;
-  const extension = Object.freeze({
-    type: PluginExtensionTypes.link,
+  const configure = config.configure ?? defaultConfigure;
+  const options = { pluginId: pluginId, title: config.title, logger: console.warn };
+
+  const extensionFactory = createLinkFactory(pluginId, config);
+
+  const configurable: AppPluginExtensionLink = {
     title: config.title,
     description: config.description,
-    key: hashKey(id),
     path: config.path,
-  });
+  };
 
-  return createLinkConfigure(pluginId, config, extension);
+  const mapper = mapToConfigure<PluginExtensionLink, AppPluginExtensionLink>(extensionFactory, configurable);
+  const withConfigureErrorHandling = handleErrorsInConfigure<AppPluginExtensionLink>(options);
+  const validateLink = createLinkValidator(options);
+
+  return mapper(validateLink(withConfigureErrorHandling(configure)));
+}
+
+function createLinkFactory(pluginId: string, config: AppPluginExtensionLinkConfig) {
+  return (override: Partial<AppPluginExtensionLink> | undefined, context?: object): PluginExtensionLink => {
+    const title = override?.title ?? config.title;
+    const description = override?.description ?? config.description;
+    const path = override?.path ?? config.path;
+
+    return Object.freeze({
+      type: PluginExtensionTypes.link,
+      title: title,
+      description: description,
+      path: path,
+      key: hashKey(`${pluginId}${config.placement}${title}`),
+    });
+  };
+}
+
+function createCommandFactory(
+  pluginId: string,
+  config: AppPluginExtensionCommandConfig,
+  handler: (context?: object) => void
+) {
+  return (override: Partial<AppPluginExtensionCommand> | undefined, context?: object): PluginExtensionCommand => {
+    const title = override?.title ?? config.title;
+    const description = override?.description ?? config.description;
+
+    return Object.freeze({
+      type: PluginExtensionTypes.command,
+      title: title,
+      description: description,
+      key: hashKey(`${pluginId}${config.placement}${title}`),
+      callHandlerWithContext: () => handler(context),
+    });
+  };
+}
+
+function mapToConfigure<T extends PluginExtension, C>(
+  commandFactory: (override: Partial<C> | undefined, context?: object) => T | undefined,
+  configurable: C
+): (configure: ConfigureFunc<C>) => PluginExtensionRegistryItem<T> {
+  return (configure) => {
+    return function mapToExtension(context?: object): T | undefined {
+      const override = configure(configurable, context);
+      return commandFactory(override, context);
+    };
+  };
 }
 
 function hashKey(key: string): number {
   return Array.from(key).reduce((s, c) => (Math.imul(31, s) + c.charCodeAt(0)) | 0, 0);
 }
 
-function createLinkConfigure(
-  pluginId: string,
-  config: AppPluginExtensionLinkConfig,
-  extension: PluginExtensionLink
-): PluginExtensionRegistryItem<PluginExtensionLink> {
-  if (!config.configure) {
-    return () => extension;
-  }
-
-  const options = {
-    pluginId: pluginId,
-    title: config.title,
-    logger: console.warn,
-  };
-
-  const mapper = mapLinkToRegistryType(extension);
-  const validator = createLinkValidator(options);
-  const errorHandler = createErrorHandling<AppPluginExtensionLink>(options);
-
-  return mapper(validator(errorHandler(config.configure)));
-}
-
-function createCommandConfigure(
-  pluginId: string,
-  config: AppPluginExtensionCommandConfig,
-  extension: PluginExtensionCommand
-): PluginExtensionRegistryItem<PluginExtensionCommand> {
-  const options = {
-    pluginId: pluginId,
-    title: config.title,
-    logger: console.warn,
-  };
-
-  const handlerWithErrorHandler = commandErrorHandling(options);
-  const handler = handlerWithErrorHandler(config.handler);
-
-  if (!config.configure) {
-    return (context) => ({
-      ...extension,
-      callHandlerWithContext: () => handler(context),
-    });
-  }
-
-  const mapper = mapCommandToRegistryType(extension, config, handlerWithErrorHandler);
-  const errorHandler = createErrorHandling<AppPluginExtensionCommand>(options);
-
-  return mapper(errorHandler(config.configure));
-}
-
-function mapLinkToRegistryType(
-  extension: PluginExtensionLink
-): (configure: ConfigureFunc<AppPluginExtensionLink>) => PluginExtensionRegistryItem<PluginExtensionLink> {
-  const configurable: AppPluginExtensionLink = {
-    title: extension.title,
-    description: extension.description,
-    path: extension.path,
-  };
-
-  return (configure) => {
-    return function mapper(context?: object): PluginExtensionLink | undefined {
-      const configured = configure(configurable, context);
-
-      if (!configured) {
-        return undefined;
-      }
-
-      return {
-        ...extension,
-        title: configured.title ?? extension.title,
-        description: configured.description ?? extension.description,
-        path: configured.path ?? extension.path,
-      };
-    };
-  };
-}
-
-function mapCommandToRegistryType(
-  extension: PluginExtensionCommand,
-  config: AppPluginExtensionCommandConfig,
-  createHandlerFunc: (handler: CommandHandlerFunc) => CommandHandlerFunc
-): (configure: ConfigureFunc<AppPluginExtensionCommand>) => PluginExtensionRegistryItem<PluginExtensionCommand> {
-  const configurable: AppPluginExtensionCommand = {
-    title: extension.title,
-    description: extension.description,
-  };
-
-  return (configure) => {
-    return function mapper(context?: object): PluginExtensionCommand | undefined {
-      const configured = configure(configurable, context);
-
-      if (!configured) {
-        return undefined;
-      }
-
-      const handler = createHandlerFunc(config.handler);
-
-      return {
-        ...extension,
-        title: configured.title ?? extension.title,
-        description: configured.description ?? extension.description,
-        callHandlerWithContext: () => handler(context),
-      };
-    };
-  };
+function defaultConfigure() {
+  return {};
 }

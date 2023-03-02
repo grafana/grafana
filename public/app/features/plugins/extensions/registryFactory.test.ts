@@ -9,17 +9,17 @@ import { PluginExtensionRegistry } from '@grafana/runtime';
 import { createPluginExtensionRegistry } from './registryFactory';
 
 const validateLink = jest.fn((configure, extension, context) => configure?.(extension, context));
-const errorHandler = jest.fn((configure, extension, context) => configure?.(extension, context));
+const configureErrorHandler = jest.fn((configure, extension, context) => configure?.(extension, context));
 const commandErrorHandler = jest.fn((configure, context) => configure?.(context));
 
 jest.mock('./errorHandling', () => ({
   ...jest.requireActual('./errorHandling'),
-  createErrorHandling: jest.fn(() => {
+  handleErrorsInConfigure: jest.fn(() => {
     return jest.fn((configure) => {
-      return jest.fn((extension, context) => errorHandler(configure, extension, context));
+      return jest.fn((extension, context) => configureErrorHandler(configure, extension, context));
     });
   }),
-  commandErrorHandling: jest.fn(() => {
+  handleErrorsInHandler: jest.fn(() => {
     return jest.fn((configure) => {
       return jest.fn((context) => commandErrorHandler(configure, context));
     });
@@ -38,7 +38,7 @@ jest.mock('./validateLink', () => ({
 describe('createPluginExtensionRegistry()', () => {
   beforeEach(() => {
     validateLink.mockClear();
-    errorHandler.mockClear();
+    configureErrorHandler.mockClear();
     commandErrorHandler.mockClear();
   });
 
@@ -240,7 +240,7 @@ describe('createPluginExtensionRegistry()', () => {
 
       configure(context);
 
-      expect(errorHandler).toBeCalledWith(expect.any(Function), configurable, context);
+      expect(configureErrorHandler).toBeCalledWith(expect.any(Function), configurable, context);
     });
   });
 
@@ -378,7 +378,7 @@ describe('createPluginExtensionRegistry()', () => {
       configure(context);
 
       // The error handler is wrapping (decorating) the configure function, so it can provide standard error messages
-      expect(errorHandler).toBeCalledWith(expect.any(Function), configurable, context);
+      expect(configureErrorHandler).toBeCalledWith(expect.any(Function), configurable, context);
     });
 
     it('should wrap handler function with extension error handling', () => {
