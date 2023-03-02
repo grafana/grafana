@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/dskit/modules"
 	"github.com/grafana/dskit/services"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
@@ -18,7 +17,7 @@ type serviceListener struct {
 }
 
 func newServiceListener(logger log.Logger, s *service) *serviceListener {
-	return &serviceListener{log: logger, service: s}
+	return &serviceListener{log: logger service: s}
 }
 
 func (l *serviceListener) Healthy() {
