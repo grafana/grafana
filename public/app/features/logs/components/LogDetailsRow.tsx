@@ -159,7 +159,8 @@ const getStyles = memoizeOne((theme: GrafanaTheme2, activeButton: boolean) => {
       }
     `,
     multiRowLink: css`
-      vertical-align: initial;
+      vertical-align: middle;
+      width: fit-content !important;
     `,
   };
 });
@@ -297,21 +298,23 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
               />
             )}
             {displayedFields && toggleFieldButton}
-            <ToolbarButton
-              iconOnly
-              variant={showFieldsStats ? 'active' : 'default'}
-              narrow
-              icon="signal"
-              tooltip="Ad-hoc statistics"
-              className="stats-button"
-              onClick={this.showStats}
-            />
+            {!multiRow && (
+              <ToolbarButton
+                iconOnly
+                variant={showFieldsStats ? 'active' : 'default'}
+                narrow
+                icon="signal"
+                tooltip="Ad-hoc statistics"
+                className="stats-button"
+                onClick={this.showStats}
+              />
+            )}
           </ToolbarButtonRow>
         </td>
 
         {/* Key - value columns */}
         <td className={style.logDetailsLabel}>{key}</td>
-        <td className={cx(styles.wordBreakAll, wrapLogMessage && styles.wrapLine)}>
+        <td className={cx(styles.wordBreakAll, wrapLogMessage && styles.wrapLine, multiRow && styles.multiRowLink)}>
           <div className={styles.logDetailsValue}>
             {value}
             {value && (
@@ -337,7 +340,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
           </div>
         </td>
         {multiRow && firstLinkRow && (
-          <td rowSpan={totalRows}>
+          <td rowSpan={totalRows} className={styles.multiRowLink}>
             {links?.map((link) => (
               <span key={link.title}>
                 &nbsp;
