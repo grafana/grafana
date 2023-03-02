@@ -1235,6 +1235,92 @@ func TestResponseParser(t *testing.T) {
 			}, customMeta)
 		})
 
+		t.Run("Raw document query", func(t *testing.T) {
+			targets := map[string]string{
+				"A": `{
+					"metrics": [{ "type": "raw_document" }]
+				}`,
+			}
+
+			response := `{
+  			"responses":[
+  			  {
+  			    "hits":{
+  			      "total":{
+  			        "value":109,
+  			        "relation":"eq"
+  			      },
+  			      "max_score":null,
+  			      "hits":[
+  			        {
+  			          "_index":"logs-2023.02.08",
+  			          "_id":"GB2UMYYBfCQ-FCMjayJa",
+  			          "_score":null,
+									"fields": {
+										"test_field":"A"
+									},
+  			          "_source":{
+  			            "@timestamp":"2023-02-08T15:10:55.830Z",
+  			            "line":"log text  [479231733]",
+  			            "counter":"109",
+  			            "float":58.253758485091,
+  			            "label":"val1",
+  			            "level":"info",
+  			            "location":"17.089705232090438, 41.62861966340297",
+										"nested": {
+											"field": {
+												"double_nested": "value"
+											}
+										}
+									}
+  			        },
+  			        {
+  			          "_index":"logs-2023.02.08",
+  			          "_id":"Fx2UMYYBfCQ-FCMjZyJ_",
+  			          "_score":null,
+									"fields": {
+										"test_field":"A"
+									},
+  			          "_source":{
+  			            "@timestamp":"2023-02-08T15:10:54.835Z",
+  			            "line":"log text with ANSI \u001b[31mpart of the text\u001b[0m [493139080]",
+  			            "counter":"108",
+  			            "float":54.5977098233944,
+  			            "label":"val1",
+  			            "level":"info",
+  			            "location":"19.766305918490463, 40.42639175509792",
+										"nested": {
+											"field": {
+												"double_nested": "value1"
+											}
+										}
+									}
+  			        }
+  			      ]
+  			    },
+  			    "status":200
+  			  }
+  			]
+			}`
+
+			result, err := parseTestResponse(targets, response)
+			require.NoError(t, err)
+			require.Len(t, result.Responses, 1)
+
+			queryRes := result.Responses["A"]
+			require.NotNil(t, queryRes)
+			dataframes := queryRes.Frames
+			require.Len(t, dataframes, 1)
+			frame := dataframes[0]
+
+			require.Equal(t, 1, len(frame.Fields))
+			//Fields have the correct length
+			require.Equal(t, 2, frame.Fields[0].Len())
+			// The only field is the raw document
+			require.Equal(t, data.FieldTypeNullableJSON, frame.Fields[0].Type())
+			require.Equal(t, "A", frame.Fields[0].Name)
+		})
+
 		t.Run("Raw data query", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{

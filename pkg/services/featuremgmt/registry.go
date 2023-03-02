@@ -84,11 +84,6 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:        "swaggerUi",
-			Description: "Serves swagger UI",
-			State:       FeatureStateBeta,
-		},
-		{
 			Name:        "featureHighlights",
 			Description: "Highlight Grafana Enterprise features",
 			State:       FeatureStateStable,
@@ -124,12 +119,6 @@ var (
 			Description:     "Load dashboards from the generic storage interface",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true, // Also a gate on automatic git storage (for now)
-		},
-		{
-			Name:            "export",
-			Description:     "Export grafana instance (to git, etc)",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
 		},
 		{
 			Name:         "exploreMixedDatasource",
@@ -243,11 +232,6 @@ var (
 			Description:     "SQL-based entity store (requires storage flag also)",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
-		},
-		{
-			Name:        "flameGraph",
-			Description: "Show the flame graph",
-			State:       FeatureStateAlpha,
 		},
 		{
 			Name:        "cloudWatchCrossAccountQuerying",
