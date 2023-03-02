@@ -146,7 +146,7 @@ func TestNotificationPolicyService(t *testing.T) {
 		tree, err := sut.GetPolicyTree(context.Background(), 1)
 		require.NoError(t, err)
 
-		require.Equal(t, models.ProvenanceNone, tree.Provenance)
+		require.Equal(t, models.ProvenanceNone, models.Provenance(tree.Provenance))
 	})
 
 	t.Run("service returns upgraded provenance value", func(t *testing.T) {
@@ -158,7 +158,7 @@ func TestNotificationPolicyService(t *testing.T) {
 
 		updated, err := sut.GetPolicyTree(context.Background(), 1)
 		require.NoError(t, err)
-		require.Equal(t, models.ProvenanceAPI, updated.Provenance)
+		require.Equal(t, models.ProvenanceAPI, models.Provenance(updated.Provenance))
 	})
 
 	t.Run("service respects concurrency token when updating", func(t *testing.T) {

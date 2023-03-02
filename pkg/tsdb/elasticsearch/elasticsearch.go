@@ -98,6 +98,16 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			return nil, errors.New("elasticsearch time field name is required")
 		}
 
+		logLevelField, ok := jsonData["logLevelField"].(string)
+		if !ok {
+			logLevelField = ""
+		}
+
+		logMessageField, ok := jsonData["logMessageField"].(string)
+		if !ok {
+			logMessageField = ""
+		}
+
 		interval, ok := jsonData["interval"].(string)
 		if !ok {
 			interval = ""
@@ -132,6 +142,12 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			xpack = false
 		}
 
+		configuredFields := es.ConfiguredFields{
+			TimeField:       timeField,
+			LogLevelField:   logLevelField,
+			LogMessageField: logMessageField,
+		}
+
 		model := es.DatasourceInfo{
 			ID:                         settings.ID,
 			URL:                        settings.URL,
@@ -139,7 +155,7 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			Database:                   settings.Database,
 			MaxConcurrentShardRequests: int64(maxConcurrentShardRequests),
 			ESVersion:                  version,
-			TimeField:                  timeField,
+			ConfiguredFields:           configuredFields,
 			Interval:                   interval,
 			TimeInterval:               timeInterval,
 			IncludeFrozen:              includeFrozen,

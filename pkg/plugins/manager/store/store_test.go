@@ -8,9 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestStore_ProvideService(t *testing.T) {
@@ -22,22 +20,24 @@ func TestStore_ProvideService(t *testing.T) {
 				return nil, nil
 			},
 		}
-		cfg := &setting.Cfg{
-			BundledPluginsPath: "path1",
-		}
-		pCfg := &config.Cfg{
-			PluginsPath: "path2",
-			PluginSettings: setting.PluginSettings{
-				"blah": map[string]string{
-					"path": "path3",
-				},
-			},
-		}
 
-		s := ProvideService(cfg, pCfg, fakes.NewFakePluginRegistry(), l)
+		srcs := &fakes.FakeSources{ListFunc: func(_ context.Context) []plugins.PluginSource {
+			return []plugins.PluginSource{
+				{
+					Class: plugins.Bundled,
+					Paths: []string{"path1"},
+				},
+				{
+					Class: plugins.External,
+					Paths: []string{"path2", "path3"},
+				},
+			}
+		}}
+
+		s := ProvideService(fakes.NewFakePluginRegistry(), srcs, l)
 		err := s.Run(context.Background())
 		require.NoError(t, err)
-		require.Equal(t, []string{"app/plugins/datasource", "app/plugins/panel", "path1", "path2", "path3"}, addedPaths)
+		require.Equal(t, []string{"path1", "path2", "path3"}, addedPaths)
 	})
 }
 
@@ -50,7 +50,7 @@ func TestStore_Plugin(t *testing.T) {
 		ps := New(newFakePluginRegistry(map[string]*plugins.Plugin{
 			p1.ID: p1,
 			p2.ID: p2,
-		}))
+		}), &fakes.FakeSources{}, &fakes.FakeLoader{})
 
 		p, exists := ps.Plugin(context.Background(), p1.ID)
 		require.False(t, exists)
@@ -77,7 +77,7 @@ func TestStore_Plugins(t *testing.T) {
 			p3.ID: p3,
 			p4.ID: p4,
 			p5.ID: p5,
-		}))
+		}), &fakes.FakeSources{}, &fakes.FakeLoader{})
 
 		pss := ps.Plugins(context.Background())
 		require.Equal(t, pss, []plugins.PluginDTO{p1.ToDTO(), p2.ToDTO(), p3.ToDTO(), p4.ToDTO()})
@@ -113,7 +113,7 @@ func TestStore_Routes(t *testing.T) {
 			p4.ID: p4,
 			p5.ID: p5,
 			p6.ID: p6,
-		}))
+		}), &fakes.FakeSources{}, &fakes.FakeLoader{})
 
 		sr := func(p *plugins.Plugin) *plugins.StaticRoute {
 			return &plugins.StaticRoute{PluginID: p.ID, Directory: p.PluginDir}
@@ -134,7 +134,7 @@ func TestStore_Renderer(t *testing.T) {
 			p1.ID: p1,
 			p2.ID: p2,
 			p3.ID: p3,
-		}))
+		}), &fakes.FakeSources{}, &fakes.FakeLoader{})
 
 		r := ps.Renderer(context.Background())
 		require.Equal(t, p1, r)
@@ -153,7 +153,7 @@ func TestStore_SecretsManager(t *testing.T) {
 			p2.ID: p2,
 			p3.ID: p3,
 			p4.ID: p4,
-		}))
+		}), &fakes.FakeSources{}, &fakes.FakeLoader{})
 
 		r := ps.SecretsManager(context.Background())
 		require.Equal(t, p3, r)
@@ -170,7 +170,7 @@ func TestStore_availablePlugins(t *testing.T) {
 			newFakePluginRegistry(map[string]*plugins.Plugin{
 				p1.ID: p1,
 				p2.ID: p2,
-			}),
+			}), &fakes.FakeSources{}, &fakes.FakeLoader{},
 		)
 
 		aps := ps.availablePlugins(context.Background())

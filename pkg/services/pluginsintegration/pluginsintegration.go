@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
+	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/plugins/pluginmod"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
@@ -40,6 +41,8 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(plugins.Store), new(*pluginmod.PluginsModule)),
 	wire.Bind(new(plugins.Installer), new(*pluginmod.PluginsModule)),
 	pluginmod.ProvidePluginsModule,
+	wire.Bind(new(sources.Resolver), new(*sources.Service)),
+	sources.ProvideService,
 )
 
 // WireExtensionSet provides a wire.ProviderSet of plugin providers that can be

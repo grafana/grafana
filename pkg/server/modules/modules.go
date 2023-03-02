@@ -188,24 +188,6 @@ func stringsContain(values []string, search string) bool {
 	return false
 }
 
-func (m *Modules) RegisterModule(name string, initFn func() (services.Service, error), deps ...string) error {
-	m.moduleManager.RegisterModule(name, initFn)
-	err := m.moduleManager.AddDependency(name, deps...)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (m *Modules) RegisterInvisibleModule(name string, initFn func() (services.Service, error), deps ...string) error {
-	m.moduleManager.RegisterModule(name, initFn, modules.UserInvisibleModule)
-	err := m.moduleManager.AddDependency(name, deps...)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 func (m *Modules) initHTTPServer() (services.Service, error) {
 	return m.httpServer, nil
 }

@@ -22,11 +22,12 @@ import (
 	"time"
 
 	"github.com/gobwas/glob"
+	"github.com/prometheus/common/model"
+	"gopkg.in/ini.v1"
+
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
-	"github.com/prometheus/common/model"
-	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util"
@@ -93,33 +94,19 @@ var (
 	// User settings
 	AllowUserSignUp         bool
 	AllowUserOrgCreate      bool
-	AutoAssignOrg           bool
-	AutoAssignOrgId         int
-	AutoAssignOrgRole       string
 	VerifyEmailEnabled      bool
 	LoginHint               string
 	PasswordHint            string
-	DisableLoginForm        bool
 	DisableSignoutMenu      bool
 	SignoutRedirectUrl      string
 	ExternalUserMngLinkUrl  string
 	ExternalUserMngLinkName string
 	ExternalUserMngInfo     string
-	OAuthAutoLogin          bool
 	ViewersCanEdit          bool
 
 	// HTTP auth
 	SigV4AuthEnabled bool
 	AzureAuthEnabled bool
-
-	AnonymousEnabled bool
-
-	// Auth proxy settings
-	AuthProxyEnabled        bool
-	AuthProxyHeaderProperty string
-
-	// Basic Auth
-	BasicAuthEnabled bool
 
 	// Global setting objects.
 	Raw *ini.File
@@ -155,12 +142,6 @@ var (
 
 	ImageUploadProvider string
 )
-
-// AddChangePasswordLink returns if login form is disabled or not since
-// the same intention can be used to hide both features.
-func AddChangePasswordLink() bool {
-	return !DisableLoginForm
-}
 
 // TODO move all global vars to this struct
 type Cfg struct {
@@ -289,6 +270,7 @@ type Cfg struct {
 	DisableLogin                 bool
 	AdminEmail                   string
 	DisableSyncLock              bool
+	DisableLoginForm             bool
 
 	// AWS Plugin Auth
 	AWSAllowedAuthProviders []string
@@ -310,6 +292,7 @@ type Cfg struct {
 	AuthProxySyncTTL          int
 
 	// OAuth
+	OAuthAutoLogin    bool
 	OAuthCookieMaxAge int
 
 	// JWT Auth
@@ -342,6 +325,7 @@ type Cfg struct {
 	DataProxyIdleConnTimeout       int
 	ResponseLimit                  int64
 	DataProxyRowLimit              int64
+	DataProxyUserAgent             string
 
 	// DistributedCache
 	RemoteCacheOptions *RemoteCacheOptions
@@ -519,6 +503,12 @@ type Cfg struct {
 	GRPCServerTLSConfig *tls.Config
 
 	CustomResponseHeaders map[string]string
+}
+
+// AddChangePasswordLink returns if login form is disabled or not since
+// the same intention can be used to hide both features.
+func (cfg *Cfg) AddChangePasswordLink() bool {
+	return !cfg.DisableLoginForm
 }
 
 type CommandLineArgs struct {
@@ -1455,12 +1445,12 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	// Debug setting unlocking frontend auth sync lock. Users will still be reset on their next login.
 	cfg.DisableSyncLock = auth.Key("disable_sync_lock").MustBool(false)
 
-	DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
+	cfg.DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 	DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
 
 	// Deprecated
-	OAuthAutoLogin = auth.Key("oauth_auto_login").MustBool(false)
-	if OAuthAutoLogin {
+	cfg.OAuthAutoLogin = auth.Key("oauth_auto_login").MustBool(false)
+	if cfg.OAuthAutoLogin {
 		cfg.Logger.Warn("[Deprecated] The oauth_auto_login configuration setting is deprecated. Please use auto_login inside auth provider section instead.")
 	}
 
@@ -1497,16 +1487,14 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	readAuthOktaSettings(iniFile, cfg)
 
 	// anonymous access
-	AnonymousEnabled = iniFile.Section("auth.anonymous").Key("enabled").MustBool(false)
-	cfg.AnonymousEnabled = AnonymousEnabled
+	cfg.AnonymousEnabled = iniFile.Section("auth.anonymous").Key("enabled").MustBool(false)
 	cfg.AnonymousOrgName = valueAsString(iniFile.Section("auth.anonymous"), "org_name", "")
 	cfg.AnonymousOrgRole = valueAsString(iniFile.Section("auth.anonymous"), "org_role", "")
 	cfg.AnonymousHideVersion = iniFile.Section("auth.anonymous").Key("hide_version").MustBool(false)
 
 	// basic auth
 	authBasic := iniFile.Section("auth.basic")
-	BasicAuthEnabled = authBasic.Key("enabled").MustBool(true)
-	cfg.BasicAuthEnabled = BasicAuthEnabled
+	cfg.BasicAuthEnabled = authBasic.Key("enabled").MustBool(true)
 
 	// JWT auth
 	authJWT := iniFile.Section("auth.jwt")
@@ -1527,12 +1515,10 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	cfg.JWTAuthSkipOrgRoleSync = authJWT.Key("skip_org_role_sync").MustBool(false)
 
 	authProxy := iniFile.Section("auth.proxy")
-	AuthProxyEnabled = authProxy.Key("enabled").MustBool(false)
-	cfg.AuthProxyEnabled = AuthProxyEnabled
+	cfg.AuthProxyEnabled = authProxy.Key("enabled").MustBool(false)
 
 	cfg.AuthProxyHeaderName = valueAsString(authProxy, "header_name", "")
-	AuthProxyHeaderProperty = valueAsString(authProxy, "header_property", "")
-	cfg.AuthProxyHeaderProperty = AuthProxyHeaderProperty
+	cfg.AuthProxyHeaderProperty = valueAsString(authProxy, "header_property", "")
 	cfg.AuthProxyAutoSignUp = authProxy.Key("auto_sign_up").MustBool(true)
 	cfg.AuthProxyEnableLoginToken = authProxy.Key("enable_login_token").MustBool(false)
 
@@ -1573,11 +1559,8 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	AllowUserSignUp = users.Key("allow_sign_up").MustBool(true)
 	AllowUserOrgCreate = users.Key("allow_org_create").MustBool(true)
 	cfg.AutoAssignOrg = users.Key("auto_assign_org").MustBool(true)
-	AutoAssignOrg = cfg.AutoAssignOrg
 	cfg.AutoAssignOrgId = users.Key("auto_assign_org_id").MustInt(1)
-	AutoAssignOrgId = cfg.AutoAssignOrgId
 	cfg.AutoAssignOrgRole = users.Key("auto_assign_org_role").In("Editor", []string{"Editor", "Admin", "Viewer"})
-	AutoAssignOrgRole = cfg.AutoAssignOrgRole
 	VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
 
 	cfg.CaseInsensitiveLogin = users.Key("case_insensitive_login").MustBool(false)

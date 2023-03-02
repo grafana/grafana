@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
+	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/manager/store"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/plugins/repo"
@@ -49,10 +50,11 @@ func NewCore(cfg *setting.Cfg, coreRegistry *coreplugin.Registry, reg *registry.
 		reg, provider.ProvideService(coreRegistry), proc, fakes.NewFakeRoleRegistry(),
 		cdn, assetpath.ProvideService(cdn))
 	r := repo.ProvideService()
+	srcs := sources.ProvideService(cfg, pCfg)
 
 	c := &core{
 		i: manager.ProvideInstaller(pCfg, reg, l, r),
-		s: store.ProvideService(cfg, pCfg, reg, l),
+		s: store.ProvideService(reg, srcs, l),
 		c: cl,
 		l: l,
 		p: proc,
