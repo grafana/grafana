@@ -113,7 +113,7 @@ func TestLoginErrorCookieAPIEndpoint(t *testing.T) {
 	cfg.LoginCookieName = "grafana_session"
 	setting.SecretKey = "login_testing"
 
-	setting.OAuthAutoLogin = true
+	cfg.OAuthAutoLogin = true
 
 	oauthError := errors.New("User not a member of one of the required organizations")
 	encryptedError, err := hs.SecretsService.Encrypt(context.Background(), []byte(oauthError.Error()), secrets.WithoutScope())
@@ -498,7 +498,7 @@ func TestLoginOAuthRedirect(t *testing.T) {
 		return response.Empty(http.StatusOK)
 	})
 
-	setting.OAuthAutoLogin = true
+	hs.Cfg.OAuthAutoLogin = true
 	sc.m.Get(sc.url, sc.defaultHandler)
 	sc.fakeReqNoAssertions("GET", sc.url).exec()
 
@@ -525,7 +525,7 @@ func TestLoginInternal(t *testing.T) {
 		return response.Empty(http.StatusOK)
 	})
 
-	setting.OAuthAutoLogin = true
+	hs.Cfg.OAuthAutoLogin = true
 	sc.m.Get(sc.url, sc.defaultHandler)
 	sc.fakeReqNoAssertions("GET", sc.url).exec()
 

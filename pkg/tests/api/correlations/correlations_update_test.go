@@ -287,7 +287,8 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 				"config": {
 					"field": "field",
 					"type": "query",
-					"target": { "expr": "bar" }
+					"target": { "expr": "bar" },
+					"transformations": [ {"type": "logfmt"} ]
 				}
 			}`,
 		})
@@ -305,6 +306,7 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 		require.Equal(t, "1", response.Result.Description)
 		require.Equal(t, "field", response.Result.Config.Field)
 		require.Equal(t, map[string]interface{}{"expr": "bar"}, response.Result.Config.Target)
+		require.Equal(t, correlations.Transformation{Type: "logfmt"}, response.Result.Config.Transformations[0])
 		require.NoError(t, res.Body.Close())
 
 		// partially updating only label

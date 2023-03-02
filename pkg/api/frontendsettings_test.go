@@ -166,7 +166,7 @@ func TestHTTPServer_GetFrontendSettings_pluginsCDNBaseURL(t *testing.T) {
 		{
 			desc: "With CDN",
 			mutateCfg: func(cfg *setting.Cfg) {
-				cfg.PluginsCDNURLTemplate = "https://cdn.example.com/{id}/{version}/public/plugins/{id}/{assetPath}"
+				cfg.PluginsCDNURLTemplate = "https://cdn.example.com"
 			},
 			expected: settings{PluginsCDNBaseURL: "https://cdn.example.com"},
 		},

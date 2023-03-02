@@ -490,7 +490,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     const DatasourceCheatsheet = datasource.components?.QueryEditorHelp;
 
     return (
-      <div aria-label={selectors.components.QueryEditorRows.rows}>
+      <div data-testid="query-editor-row" aria-label={selectors.components.QueryEditorRows.rows}>
         <QueryOperationRow
           id={this.id}
           draggable={true}
@@ -558,7 +558,7 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
   const series = data.series.filter((series) => series.refId === refId);
 
   // If there was an error with no data and the panel is not in a loading state, pass it to the QueryEditors
-  if (data.state !== LoadingState.Loading && data.error && !data.series.length) {
+  if (data.state !== LoadingState.Loading && (data.error || data.errors?.length) && !data.series.length) {
     return {
       ...data,
       state: LoadingState.Error,
@@ -567,7 +567,11 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
 
   // Only say this is an error if the error links to the query
   let state = data.state;
-  const error = data.error && data.error.refId === refId ? data.error : undefined;
+  let error = data.errors?.find((e) => e.refId === refId);
+  if (!error && data.error) {
+    error = data.error.refId === refId ? data.error : undefined;
+  }
+
   if (state !== LoadingState.Loading) {
     if (error) {
       state = LoadingState.Error;
@@ -583,6 +587,7 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
     state,
     series,
     error,
+    errors: error ? [error] : undefined,
     timeRange,
   };
 }
