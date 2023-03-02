@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
+	"github.com/grafana/grafana/pkg/util/errutil/errors"
 )
 
 const timeout = 4 * time.Second

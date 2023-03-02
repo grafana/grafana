@@ -11,8 +11,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
+
+	"github.com/grafana/grafana/pkg/util/errutil/errors"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"

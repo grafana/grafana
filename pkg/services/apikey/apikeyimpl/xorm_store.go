@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/pkg/errors"
 	"xorm.io/xorm"
+
+	"github.com/grafana/grafana/pkg/util/errutil/errors"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"

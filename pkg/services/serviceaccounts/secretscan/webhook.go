@@ -12,7 +12,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/pkg/errors"
+
+	"github.com/grafana/grafana/pkg/util/errutil/errors"
 )
 
 var errWebHookURL = errors.New("webhook url must be https")
