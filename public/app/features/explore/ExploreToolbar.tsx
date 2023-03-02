@@ -14,6 +14,7 @@ import { StoreState } from 'app/types/store';
 
 import { DashNavButton } from '../dashboard/components/DashNav/DashNavButton';
 import { getTimeSrv } from '../dashboard/services/TimeSrv';
+import { DataSourcePickerWithHistory } from '../datasource-drawer/DataSourcePickerWithHistory';
 import { updateFiscalYearStartMonthForSession, updateTimeZoneForSession } from '../profile/state/reducers';
 import { getFiscalYearStartMonth, getTimeZone } from '../profile/state/selectors';
 
@@ -256,7 +257,18 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
     );
 
     const getDataSourcePicker = () =>
-      !datasourceMissing && (
+      !datasourceMissing &&
+      (config.featureToggles.drawerDataSourcePicker ? (
+        <DataSourcePickerWithHistory
+          key={`${exploreId}-ds-picker`}
+          onChange={this.onChangeDatasource}
+          current={this.props.datasourceRef}
+          mixed={config.featureToggles.exploreMixedDatasource === true}
+          metrics
+          logs
+          tracing
+        />
+      ) : (
         <DataSourcePicker
           key={`${exploreId}-ds-picker`}
           mixed={config.featureToggles.exploreMixedDatasource === true}
@@ -265,7 +277,7 @@ class UnConnectedExploreToolbar extends PureComponent<Props> {
           hideTextValue={showSmallDataSourcePicker}
           width={showSmallDataSourcePicker ? 8 : undefined}
         />
-      );
+      ));
 
     const toolbarLeftItems = [
       // We only want to show the shortened link button in the left Toolbar if topnav is not enabled as with topnav enabled it sits next to the brecrumbs
@@ -304,7 +316,7 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps) => {
 
   return {
     datasourceMissing,
-    datasourceRef: datasourceInstance?.getRef(),
+    datasourceRef: datasourceInstance?.getRef() || null,
     datasourceType: datasourceInstance?.type,
     loading,
     range,
