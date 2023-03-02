@@ -214,6 +214,7 @@ func ErrResp(status int, err error, msg string, args ...interface{}) *response.N
 
 // accessForbiddenResp creates a response of forbidden access.
 func accessForbiddenResp() response.Response {
+	//nolint:stylecheck // Grandfathered capitalization of error.
 	return ErrResp(http.StatusForbidden, errors.New("Permission denied"), "")
 }
 
