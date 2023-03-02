@@ -246,7 +246,7 @@ function getPhantomPlugin(options: GetPhantomPluginOptions): DataSourcePluginMet
         {
           url: '/plugins/' + options.id,
           name: 'Install now',
-          href: '_self',
+          target: '_self',
         },
       ],
       screenshots: [],
