@@ -15,9 +15,9 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
@@ -412,7 +412,7 @@ func TestLoader_Load(t *testing.T) {
 			name:  "Load CDN plugin",
 			class: plugins.External,
 			cfg: &config.Cfg{
-				PluginsCDNURLTemplate: "https://cdn.example.com/{id}/{version}/public/plugins/{id}/{assetPath}",
+				PluginsCDNURLTemplate: "https://cdn.example.com",
 				PluginSettings: setting.PluginSettings{
 					"grafana-worldmap-panel": {"cdn": "true"},
 				},
@@ -570,7 +570,7 @@ func TestLoader_setDefaultNavURL(t *testing.T) {
 				},
 			}},
 		}
-		logger := &logtest.Fake{}
+		logger := log.NewTestLogger()
 		pluginWithDashboard.SetLogger(logger)
 
 		t.Run("Default nav URL is not set if dashboard UID field not is set", func(t *testing.T) {
