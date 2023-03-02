@@ -4943,7 +4943,7 @@ __metadata:
     "@types/chrome-remote-interface": 0.31.4
     "@types/lodash": 4.14.187
     "@types/node": 18.14.0
-    "@types/uuid": 8.3.4
+    "@types/uuid": 9.0.1
     babel-loader: 9.1.0
     blink-diff: 1.0.13
     chrome-remote-interface: 0.32.0
@@ -5337,7 +5337,7 @@ __metadata:
     "@types/slate-react": 0.22.9
     "@types/testing-library__jest-dom": 5.14.5
     "@types/tinycolor2": 1.4.3
-    "@types/uuid": 8.3.4
+    "@types/uuid": 9.0.1
     ansicolor: 1.1.100
     calculate-size: 1.1.1
     classnames: 2.3.2
@@ -12252,7 +12252,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/uuid@npm:8.3.4, @types/uuid@npm:^8.3.3":
+"@types/uuid@npm:9.0.1":
+  version: 9.0.1
+  resolution: "@types/uuid@npm:9.0.1"
+  checksum: c472b8a77cbeded4bc529220b8611afa39bd64677f507838f8083d8aac8033b1f88cb9ddaa2f8589e0dcd2317291d0f6e1379f82d5ceebd6f74f3b4825288e00
+  languageName: node
+  linkType: hard
+
+"@types/uuid@npm:^8.3.3":
   version: 8.3.4
   resolution: "@types/uuid@npm:8.3.4"
   checksum: 6f11f3ff70f30210edaa8071422d405e9c1d4e53abbe50fdce365150d3c698fe7bbff65c1e71ae080cbfb8fded860dbb5e174da96fdbbdfcaa3fb3daa474d20f
@@ -22075,7 +22082,7 @@ __metadata:
     "@types/slate-react": 0.22.9
     "@types/testing-library__jest-dom": 5.14.5
     "@types/tinycolor2": 1.4.3
-    "@types/uuid": 8.3.4
+    "@types/uuid": 9.0.1
     "@types/webpack-env": 1.18.0
     "@types/yargs": 17.0.12
     "@typescript-eslint/eslint-plugin": 5.42.0
