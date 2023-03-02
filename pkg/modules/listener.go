@@ -17,7 +17,7 @@ type serviceListener struct {
 }
 
 func newServiceListener(logger log.Logger, s *service) *serviceListener {
-	return &serviceListener{log: logger service: s}
+	return &serviceListener{log: logger, service: s}
 }
 
 func (l *serviceListener) Healthy() {
