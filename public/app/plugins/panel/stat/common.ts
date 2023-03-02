@@ -122,8 +122,8 @@ export function formatDisplayValuesWithCustomUnits(
     return fieldValues;
   }
 
-  function safeAppend(prepend = '', append = '') {
-    return `${prepend}${append}`;
+  function safeAppend(toPrepend = '', toAppend = '') {
+    return `${toPrepend}${toAppend}`;
   }
 
   return fieldValues.map((fieldValue) => {
