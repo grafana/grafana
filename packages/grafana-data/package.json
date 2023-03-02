@@ -40,7 +40,7 @@
     "@types/d3-interpolate": "^3.0.0",
     "d3-interpolate": "3.0.1",
     "date-fns": "2.29.3",
-    "eventemitter3": "4.0.7",
+    "eventemitter3": "5.0.0",
     "fast_array_intersect": "1.1.0",
     "history": "4.10.1",
     "lodash": "4.17.21",
