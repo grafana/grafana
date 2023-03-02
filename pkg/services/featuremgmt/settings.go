@@ -12,7 +12,7 @@ type configBody struct {
 	Vars map[string]interface{} `yaml:"vars"`
 
 	// Define and override feature flag properties
-	Flags []featuremgmt_registry.FeatureToggle `yaml:"flags"`
+	Flags []registry.FeatureToggle `yaml:"flags"`
 
 	// keep track of where the fie was loaded from
 	filename string

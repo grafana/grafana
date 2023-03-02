@@ -27,14 +27,14 @@ func TestFeatureManager(t *testing.T) {
 
 	t.Run("check license validation", func(t *testing.T) {
 		ft := FeatureManager{
-			flags: map[string]*featuremgmt_registry.FeatureToggle{},
+			flags: map[string]*registry.FeatureToggle{},
 		}
-		ft.registerFlags(featuremgmt_registry.FeatureToggle{
+		ft.registerFlags(registry.FeatureToggle{
 			Name:            "a",
 			RequiresLicense: true,
 			RequiresDevMode: true,
 			Expression:      "true",
-		}, featuremgmt_registry.FeatureToggle{
+		}, registry.FeatureToggle{
 			Name:       "b",
 			Expression: "true",
 		})
@@ -43,10 +43,10 @@ func TestFeatureManager(t *testing.T) {
 		require.False(t, ft.IsEnabled("c")) // uknown flag
 
 		// Try changing "requires license"
-		ft.registerFlags(featuremgmt_registry.FeatureToggle{
+		ft.registerFlags(registry.FeatureToggle{
 			Name:            "a",
 			RequiresLicense: false, // shuld still require license!
-		}, featuremgmt_registry.FeatureToggle{
+		}, registry.FeatureToggle{
 			Name:            "b",
 			RequiresLicense: true, // expression is still "true"
 		})
@@ -57,18 +57,18 @@ func TestFeatureManager(t *testing.T) {
 
 	t.Run("check description and docs configs", func(t *testing.T) {
 		ft := FeatureManager{
-			flags: map[string]*featuremgmt_registry.FeatureToggle{},
+			flags: map[string]*registry.FeatureToggle{},
 		}
-		ft.registerFlags(featuremgmt_registry.FeatureToggle{
+		ft.registerFlags(registry.FeatureToggle{
 			Name:        "a",
 			Description: "first",
-		}, featuremgmt_registry.FeatureToggle{
+		}, registry.FeatureToggle{
 			Name:        "a",
 			Description: "second",
-		}, featuremgmt_registry.FeatureToggle{
+		}, registry.FeatureToggle{
 			Name:    "a",
 			DocsURL: "http://something",
-		}, featuremgmt_registry.FeatureToggle{
+		}, registry.FeatureToggle{
 			Name: "a",
 		})
 		flag := ft.flags["a"]

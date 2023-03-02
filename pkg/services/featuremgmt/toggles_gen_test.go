@@ -30,13 +30,13 @@ func TestFeatureToggleFiles(t *testing.T) {
 
 	t.Run("check registry constraints", func(t *testing.T) {
 		for _, flag := range toggles {
-			if flag.Expression == "true" && flag.State != featuremgmt_registry.FeatureStateStable {
+			if flag.Expression == "true" && flag.State != registry.FeatureStateStable {
 				t.Errorf("only stable features can be enabled by default.  See: %s", flag.Name)
 			}
-			if flag.RequiresDevMode && flag.State != featuremgmt_registry.FeatureStateAlpha {
+			if flag.RequiresDevMode && flag.State != registry.FeatureStateAlpha {
 				t.Errorf("only alpha features can require dev mode.  See: %s", flag.Name)
 			}
-			if flag.State == featuremgmt_registry.FeatureStateUnknown {
+			if flag.State == registry.FeatureStateUnknown {
 				t.Errorf("standard toggles should not have an unknown state.  See: %s", flag.Name)
 			}
 		}
@@ -160,7 +160,7 @@ func generateRegistry(t *testing.T) string {
 
 	data := struct {
 		CamelCase string
-		Flag      featuremgmt_registry.FeatureToggle
+		Flag      registry.FeatureToggle
 		Ext       string
 	}{
 		CamelCase: "?",
@@ -218,15 +218,15 @@ This page contains a list of available feature toggles. To learn how to turn on 
 
 Some stable features are enabled by default. You can disable a stable feature by setting the feature flag to "false" in the configuration.
 
-` + writeToggleDocsTable(func(flag featuremgmt_registry.FeatureToggle) bool {
-		return flag.State == featuremgmt_registry.FeatureStateStable
+` + writeToggleDocsTable(func(flag registry.FeatureToggle) bool {
+		return flag.State == registry.FeatureStateStable
 	}, true)
 
 	buf += `
 ## Beta feature toggles
 
-` + writeToggleDocsTable(func(flag featuremgmt_registry.FeatureToggle) bool {
-		return flag.State == featuremgmt_registry.FeatureStateBeta
+` + writeToggleDocsTable(func(flag registry.FeatureToggle) bool {
+		return flag.State == registry.FeatureStateBeta
 	}, false)
 
 	if hasDeprecatedFlags {
@@ -235,8 +235,8 @@ Some stable features are enabled by default. You can disable a stable feature by
 
 When stable or beta features are slated for removal, they will be marked as Deprecated first.
 
-	` + writeToggleDocsTable(func(flag featuremgmt_registry.FeatureToggle) bool {
-			return flag.State == featuremgmt_registry.FeatureStateDeprecated
+	` + writeToggleDocsTable(func(flag registry.FeatureToggle) bool {
+			return flag.State == registry.FeatureStateDeprecated
 		}, false)
 	}
 
@@ -246,8 +246,8 @@ When stable or beta features are slated for removal, they will be marked as Depr
 These features are early in their development lifecycle and so are not yet supported in Grafana Cloud.
 Alpha features might be changed or removed without prior notice.
 
-` + writeToggleDocsTable(func(flag featuremgmt_registry.FeatureToggle) bool {
-		return flag.State == featuremgmt_registry.FeatureStateAlpha && !flag.RequiresDevMode
+` + writeToggleDocsTable(func(flag registry.FeatureToggle) bool {
+		return flag.State == registry.FeatureStateAlpha && !flag.RequiresDevMode
 	}, false)
 
 	buf += `
@@ -255,13 +255,13 @@ Alpha features might be changed or removed without prior notice.
 
 The following toggles require explicitly setting Grafana's [app mode]({{< relref "../_index.md/#app_mode" >}}) to 'development' before you can enable this feature toggle. These features tend to be experimental.
 
-` + writeToggleDocsTable(func(flag featuremgmt_registry.FeatureToggle) bool {
+` + writeToggleDocsTable(func(flag registry.FeatureToggle) bool {
 		return flag.RequiresDevMode
 	}, false)
 	return buf
 }
 
-func writeToggleDocsTable(include func(featuremgmt_registry.FeatureToggle) bool, showEnableByDefault bool) string {
+func writeToggleDocsTable(include func(registry.FeatureToggle) bool, showEnableByDefault bool) string {
 	data := [][]string{}
 
 	for _, flag := range toggles {

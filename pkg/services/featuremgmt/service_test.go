@@ -12,7 +12,7 @@ import (
 
 func TestFeatureService(t *testing.T) {
 	license := stubLicenseServier{
-		flags: []featuremgmt_registry.FeatureToggle{
+		flags: []registry.FeatureToggle{
 			{
 				Name:            "a.yes.default",
 				RequiresLicense: true,
@@ -53,7 +53,7 @@ var (
 )
 
 type stubLicenseServier struct {
-	flags   []featuremgmt_registry.FeatureToggle
+	flags   []registry.FeatureToggle
 	enabled map[string]bool
 }
 

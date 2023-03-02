@@ -1,4 +1,4 @@
-package featuremgmt_registry
+package registry
 
 import (
 	"bytes"

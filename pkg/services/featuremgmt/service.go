@@ -27,7 +27,7 @@ func ProvideManagerService(cfg *setting.Cfg, licensing licensing.Licensing) (*Fe
 	mgmt := &FeatureManager{
 		isDevMod:  setting.Env != setting.Prod,
 		licensing: licensing,
-		flags:     make(map[string]*featuremgmt_registry.FeatureToggle, 30),
+		flags:     make(map[string]*registry.FeatureToggle, 30),
 		enabled:   make(map[string]bool),
 		log:       log.New("featuremgmt"),
 	}
@@ -43,9 +43,9 @@ func ProvideManagerService(cfg *setting.Cfg, licensing licensing.Licensing) (*Fe
 	for key, val := range flags {
 		flag, ok := mgmt.flags[key]
 		if !ok {
-			flag = &featuremgmt_registry.FeatureToggle{
+			flag = &registry.FeatureToggle{
 				Name:  key,
-				State: featuremgmt_registry.FeatureStateUnknown,
+				State: registry.FeatureStateUnknown,
 			}
 			mgmt.flags[key] = flag
 		}
