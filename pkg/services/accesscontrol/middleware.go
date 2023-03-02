@@ -216,7 +216,7 @@ func UseOrgFromContextParams(c *contextmodel.ReqContext) (int64, error) {
 
 	// Special case of macaron handling invalid params
 	if orgID == 0 || err != nil {
-		return 0, org.ErrOrgNotFound
+		return 0, org.ErrOrgNotFound.Errorf("empty org ID")
 	}
 
 	return orgID, nil
