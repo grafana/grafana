@@ -193,6 +193,7 @@ func generateOpenAPI(sch thema.Schema, props kindsys.CoreProperties) (string, er
 	defsch := v.FillPath(defpath, sch.Underlying())
 
 	cfg := &openapi.Config{
+		ExpandReferences: true,
 		NameFunc: func(v cue.Value, path cue.Path) string {
 			if path.String() == defpath.String() {
 				return props.Name
