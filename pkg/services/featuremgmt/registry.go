@@ -116,27 +116,9 @@ var (
 			RequiresRestart: true,
 		},
 		{
-			Name:         "autoMigrateGraphPanels",
-			Description:  "Replace the angular graph panel with timeseries",
-			State:        FeatureStateBeta,
-			FrontendOnly: true,
-		},
-		{
 			Name:        "prometheusWideSeries",
 			Description: "Enable wide series responses in the Prometheus datasource",
 			State:       FeatureStateAlpha,
-		},
-		{
-			Name:         "canvasPanelNesting",
-			Description:  "Allow elements nesting",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-		},
-		{
-			Name:         "scenes",
-			Description:  "Experimental framework to build interactive dashboards",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
 		},
 		{
 			Name:            "disableSecretsCompatibility",
@@ -153,17 +135,6 @@ var (
 			Name:        "dataConnectionsConsole",
 			Description: "Enables a new top-level page called Connections. This page is an experiment that provides a better experience when you install and configure data sources and other plugins.",
 			State:       FeatureStateAlpha,
-		},
-		{
-			Name:        "internationalization",
-			Description: "Enables internationalization",
-			State:       FeatureStateStable,
-			Expression:  "true", // enabled by default
-		},
-		{
-			Name:        "topnav",
-			Description: "Displays new top nav and page layouts",
-			State:       FeatureStateBeta,
 		},
 		{
 			Name:        "cloudWatchCrossAccountQuerying",
@@ -246,12 +217,6 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:         "editPanelCSVDragAndDrop",
-			Description:  "Enables drag and drop for CSV and Excel files",
-			FrontendOnly: true,
-			State:        FeatureStateAlpha,
-		},
-		{
 			Name:            "alertingNoNormalState",
 			Description:     "Stop maintaining state of alerts that are not firing",
 			State:           FeatureStateBeta,
@@ -282,21 +247,27 @@ var (
 			Description: "Support overriding cookie preferences per user",
 			State:       FeatureStateAlpha,
 		},
-		{
-			Name:         "drawerDataSourcePicker",
-			Description:  "Changes the user experience for data source selection to a drawer.",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-		},
 	}
 )
 
 var (
-	standardFeatureToggles = sortByName(append(
+	standardFeatureToggles = sortByName(combindSquads(
 		unknownSquadToggles,
-		multitenancySquadToggles...,
+		multitenancySquadToggles,
+		dashboardsSquadToggles,
+		datavizSquadToggles,
+		biSquadToggles,
+		userEssentialsSquadToggles,
 	))
 )
+
+func combindSquads(squads ...[]FeatureToggle) []FeatureToggle {
+	var allToggles []FeatureToggle
+	for _, r := range squads {
+		allToggles = append(allToggles, r...)
+	}
+	return allToggles
+}
 
 func sortByName(toggles []FeatureToggle) []FeatureToggle {
 	sort.Slice(toggles, func(i, j int) bool {
