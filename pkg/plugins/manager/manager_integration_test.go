@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
+	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/manager/store"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -123,7 +124,8 @@ func TestIntegrationPluginManager(t *testing.T) {
 	l := loader.ProvideService(pCfg, lic, signature.NewUnsignedAuthorizer(pCfg),
 		reg, provider.ProvideService(coreRegistry), fakes.NewFakeRoleRegistry(),
 		cdn, assetpath.ProvideService(cdn))
-	ps, err := store.ProvideService(cfg, pCfg, reg, l)
+	srcs := sources.ProvideService(cfg, pCfg)
+	ps, err := store.ProvideService(reg, srcs, l)
 	require.NoError(t, err)
 
 	ctx := context.Background()

@@ -20,7 +20,7 @@ We've made the following changes to search and navigation.
 
 ### Command palette enhancements
 
-_Generally available on Grafana Cloud, and available to preview using the `topNavCommandPalette` [feature toggle]({{< relref "../setup-grafana/configure-grafana/#feature_toggles" >}}) in all editions of Grafana._
+_Generally available in all editions of Grafana._
 
 The command palette has been updated to provide a more efficient way to navigate Grafana. You can now search and access all pages and recent dashboards, making it easier to perform tasks without taking your hands off the keyboard.
 

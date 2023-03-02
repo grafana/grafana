@@ -3,7 +3,7 @@ package plugindef
 import (
 	"regexp"
 	"strings"
-	
+
 	"github.com/grafana/thema"
 )
 
@@ -121,23 +121,6 @@ seqs: [
 					icon?: string
 					...
 				}
-
-				#ExtensionsLink: {
-					// Target where the link will be rendered
-					placement: =~"^(plugins|grafana)\/[a-z-/0-9]*$"
-					// Type of extension
-					type: "link"
-					// Title that will be displayed for the rendered link
-					title: string & strings.MinRunes(3) & strings.MaxRunes(22)
-					// Description for the rendered link
-					description: string & strings.MaxRunes(200)
-					// Path relative to the extending plugin e.g. /incidents/declare
-					path: =~"^\/.*"
-					...
-				}
-
-				// Extensions made by the current plugin.
-				extensions?: [...#ExtensionsLink]
 
 				// For data source plugins, if the plugin supports logs.
 				logs?: bool

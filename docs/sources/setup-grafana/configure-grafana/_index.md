@@ -484,6 +484,10 @@ Limits the amount of bytes that will be read/accepted from responses of outgoing
 
 Limits the number of rows that Grafana will process from SQL (relational) data sources. Default is `1000000`.
 
+### user_agent
+
+Sets a custom value for the `User-Agent` header for outgoing data proxy requests. If empty, the default value is `Grafana/<BuildVersion>` (for example `Grafana/9.0.0`).
+
 <hr />
 
 ## [analytics]
@@ -621,15 +625,15 @@ Set to `true` to enable HSTS `preloading` option. Only applied if strict_transpo
 
 ### strict_transport_security_subdomains
 
-Set to `true` if to enable the HSTS includeSubDomains option. Only applied if strict_transport_security is enabled. The default value is `false`.
+Set to `true` to enable the HSTS includeSubDomains option. Only applied if strict_transport_security is enabled. The default value is `false`.
 
 ### x_content_type_options
 
-Set to `true` to enable the X-Content-Type-Options response header. The X-Content-Type-Options response HTTP header is a marker used by the server to indicate that the MIME types advertised in the Content-Type headers should not be changed and be followed. The default value is `false`.
+Set to `false` to disable the X-Content-Type-Options response header. The X-Content-Type-Options response HTTP header is a marker used by the server to indicate that the MIME types advertised in the Content-Type headers should not be changed and be followed. The default value is `true`.
 
 ### x_xss_protection
 
-Set to `false` to disable the X-XSS-Protection header, which tells browsers to stop pages from loading when they detect reflected cross-site scripting (XSS) attacks. The default value is `false` until the next minor release, `6.3`.
+Set to `false` to disable the X-XSS-Protection header, which tells browsers to stop pages from loading when they detect reflected cross-site scripting (XSS) attacks. The default value is `true`.
 
 ### content_security_policy
 
@@ -753,7 +757,7 @@ that this organization already exists. Default is 1.
 ### auto_assign_org_role
 
 The role new users will be assigned for the main organization (if the
-above setting is set to true). Defaults to `Viewer`, other valid
+`auto_assign_org` setting is set to true). Defaults to `Viewer`, other valid
 options are `Admin` and `Editor`. e.g.:
 
 `auto_assign_org_role = Viewer`
@@ -2183,7 +2187,7 @@ default_baselayer_config = `{
 
 ### enable_custom_baselayers
 
-Set this to `true` to disable loading other custom base maps and hide them in the Grafana UI. Default is `false`.
+Set this to `false` to disable loading other custom base maps and hide them in the Grafana UI. Default is `true`.
 
 ## [dashboard_previews]
 

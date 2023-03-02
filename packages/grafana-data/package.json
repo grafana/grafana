@@ -28,7 +28,7 @@
     "LICENSE_APACHE2"
   ],
   "scripts": {
-    "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.mjs",
+    "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts",
     "clean": "rimraf ./dist ./compiled ./package.tgz",
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "prepack": "cp package.json package.json.bak && node ../../scripts/prepare-packagejson.js",
@@ -40,7 +40,7 @@
     "@types/d3-interpolate": "^3.0.0",
     "d3-interpolate": "3.0.1",
     "date-fns": "2.29.3",
-    "eventemitter3": "4.0.7",
+    "eventemitter3": "5.0.0",
     "fast_array_intersect": "1.1.0",
     "history": "4.10.1",
     "lodash": "4.17.21",
@@ -59,6 +59,8 @@
   },
   "devDependencies": {
     "@grafana/tsconfig": "^1.2.0-rc1",
+    "@rollup/plugin-commonjs": "23.0.2",
+    "@rollup/plugin-json": "5.0.1",
     "@rollup/plugin-node-resolve": "15.0.1",
     "@testing-library/dom": "8.20.0",
     "@testing-library/jest-dom": "5.16.5",
@@ -82,10 +84,10 @@
     "react-dom": "17.0.2",
     "react-test-renderer": "17.0.2",
     "rimraf": "3.0.2",
-    "rollup": "3.3.0",
+    "rollup": "2.79.1",
     "rollup-plugin-dts": "^5.0.0",
     "rollup-plugin-esbuild": "5.0.0",
-    "rollup-plugin-node-externals": "^5.0.2",
+    "rollup-plugin-node-externals": "^5.0.0",
     "sinon": "14.0.1",
     "typescript": "4.8.4"
   },
