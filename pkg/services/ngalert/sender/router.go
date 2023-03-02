@@ -274,7 +274,7 @@ func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]externalAMcf
 			// We need to extract the number to create the right key that will enable us the
 			// extract the coresponding value in the secure json value, as it uses the same index
 			// but a different name i.e. "httpHeaderValue1".
-			index := strings.TrimLeft(k, headerName)
+			index := strings.TrimPrefix(k, headerName)
 			val, ok := ds.SecureJsonData["httpHeaderValue"+index]
 			if !ok {
 				return nil, fmt.Errorf("failed to find the value for the declared header field %s", k)
