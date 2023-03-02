@@ -57,6 +57,11 @@ export const Table = memo((props: Props) => {
     footerValues,
     enablePagination,
   } = props;
+  // console.log('🚀 ~ file: Table.tsx:60 ~ Table ~ data:', data);
+  // console.log('🚀 ~ file: Table.tsx:61 ~ Table ~ data.fields:', data.fields);
+  // console.log('🚀 ~ file: Table.tsx:60 ~ Table ~ footerOptions:', footerOptions);
+  // console.log('🚀 ~ file: Table.tsx:60 ~ Table ~ footerValues:', footerValues);
+  // console.log("🚀 ~ file: Table.tsx:60 ~ Table ~ props:", props)
 
   const listRef = useRef<VariableSizeList>(null);
   const tableDivRef = useRef<HTMLDivElement>(null);
@@ -199,6 +204,7 @@ export const Table = memo((props: Props) => {
       footerOptions,
       theme
     );
+    console.log('🚀 ~ file: Table.tsx:207 ~ useEffect ~ footerItems:', footerItems);
 
     setFooterItems(footerItems);
     // eslint-disable-next-line react-hooks/exhaustive-deps
