@@ -64,16 +64,12 @@ export const LogsVolumePanelList = ({
     );
   }
 
-  let extraInfo = <>{zoomedInfo}</>;
-
   if (logsVolumeData?.state === LoadingState.Loading) {
     return <span>Loading...</span>;
   }
-
   if (logsVolumeData?.error !== undefined) {
     return <SupplementaryResultError error={logsVolumeData.error} title="Failed to load log volume for this query" />;
   }
-
   return (
     <div className={styles.listContainer}>
       {Object.keys(logVolumes).map((name, index) => {
@@ -94,7 +90,7 @@ export const LogsVolumePanelList = ({
           />
         );
       })}
-      <div className={styles.extraInfoContainer}>{extraInfo}</div>
+      <div className={styles.extraInfoContainer}>{zoomedInfo}</div>
     </div>
   );
 };
