@@ -17,7 +17,7 @@ type LocalFS struct {
 }
 
 func NewLocalFS(m map[string]struct{}, basePath string) LocalFS {
-	pfs := map[string]*LocalFile{}
+	pfs := make(map[string]*LocalFile, len(m))
 	for k := range m {
 		pfs[k] = &LocalFile{
 			path: k,
