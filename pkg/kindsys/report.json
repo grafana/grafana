@@ -746,6 +746,30 @@
       "pluralName": "GraphOldPanelCfgs",
       "schemaInterface": "PanelCfg"
     },
+    "heatmappanelcfg": {
+      "category": "composable",
+      "codeowners": [
+        "grafana/dataviz-squad"
+      ],
+      "currentVersion": [
+        0,
+        0
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": true,
+      "links": {
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/heatmappanelcfg/schema-reference",
+        "go": "n/a",
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/heatmap/panelcfg.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/heatmap/panelcfg.gen.ts"
+      },
+      "machineName": "heatmappanelcfg",
+      "maturity": "merged",
+      "name": "HeatmapPanelCfg",
+      "pluralMachineName": "heatmappanelcfgs",
+      "pluralName": "HeatmapPanelCfgs",
+      "schemaInterface": "PanelCfg"
+    },
     "histogrampanelcfg": {
       "category": "composable",
       "codeowners": [
@@ -1576,6 +1600,30 @@
       "pluralName": "TableOldPanelCfgs",
       "schemaInterface": "PanelCfg"
     },
+    "tablepanelcfg": {
+      "category": "composable",
+      "codeowners": [
+        "grafana/grafana-bi-squad"
+      ],
+      "currentVersion": [
+        0,
+        0
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": true,
+      "links": {
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/tablepanelcfg/schema-reference",
+        "go": "n/a",
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/table/panelcfg.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/table/panelcfg.gen.ts"
+      },
+      "machineName": "tablepanelcfg",
+      "maturity": "experimental",
+      "name": "TablePanelCfg",
+      "pluralMachineName": "tablepanelcfgs",
+      "pluralName": "TablePanelCfgs",
+      "schemaInterface": "PanelCfg"
+    },
     "team": {
       "category": "core",
       "codeowners": [
@@ -1922,6 +1970,7 @@
           "graphitedataquery",
           "graphitedatasourcecfg",
           "grapholdpanelcfg",
+          "heatmappanelcfg",
           "histogrampanelcfg",
           "iconpanelcfg",
           "jaegerdataquery",
@@ -1949,6 +1998,7 @@
           "statpanelcfg",
           "statushistorypanelcfg",
           "tableoldpanelcfg",
+          "tablepanelcfg",
           "tempodataquery",
           "tempodatasourcecfg",
           "testdatadataquery",
@@ -1960,7 +2010,7 @@
           "zipkindataquery",
           "zipkindatasourcecfg"
         ],
-        "count": 65
+        "count": 67
       },
       "core": {
         "name": "core",
@@ -2008,12 +2058,13 @@
           "statetimelinepanelcfg",
           "statpanelcfg",
           "statushistorypanelcfg",
+          "tablepanelcfg",
           "tempodataquery",
           "testdatadataquery",
           "textpanelcfg",
           "xychartpanelcfg"
         ],
-        "count": 25
+        "count": 26
       },
       "mature": {
         "name": "mature",
@@ -2026,6 +2077,7 @@
           "alertgroupspanelcfg",
           "azuremonitordataquery",
           "cloudwatchdataquery",
+          "heatmappanelcfg",
           "playlist",
           "preferences",
           "prometheusdataquery",

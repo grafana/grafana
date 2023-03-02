@@ -3,7 +3,6 @@ package database
 //nolint:goimports
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -55,40 +54,17 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, org
 	if saForm.Role != nil {
 		role = *saForm.Role
 	}
-	var newSA *user.User
-	createErr := s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) (err error) {
-		var errUser error
-		newSA, errUser = s.userService.CreateServiceAccount(ctx, &user.CreateUserCommand{
-			Login:            generatedLogin,
-			OrgID:            orgId,
-			Name:             saForm.Name,
-			IsDisabled:       isDisabled,
-			IsServiceAccount: true,
-			SkipOrgSetup:     true,
-		})
-		if errUser != nil {
-			return errUser
-		}
 
-		errAddOrgUser := s.orgService.AddOrgUser(ctx, &org.AddOrgUserCommand{
-			Role:                      role,
-			OrgID:                     orgId,
-			UserID:                    newSA.ID,
-			AllowAddingServiceAccount: true,
-		})
-		if errAddOrgUser != nil {
-			return errAddOrgUser
-		}
-
-		return nil
+	newSA, err := s.userService.CreateServiceAccount(ctx, &user.CreateUserCommand{
+		Login:            generatedLogin,
+		OrgID:            orgId,
+		Name:             saForm.Name,
+		IsDisabled:       isDisabled,
+		IsServiceAccount: true,
+		DefaultOrgRole:   string(role),
 	})
-
-	if createErr != nil {
-		if errors.Is(createErr, user.ErrUserAlreadyExists) {
-			return nil, ErrServiceAccountAlreadyExists
-		}
-
-		return nil, fmt.Errorf("failed to create service account: %w", createErr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create service account: %w", err)
 	}
 
 	return &serviceaccounts.ServiceAccountDTO{
@@ -388,22 +364,6 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 	return searchResult, nil
 }
 
-func (s *ServiceAccountsStoreImpl) GetAPIKeysMigrationStatus(ctx context.Context, orgId int64) (status *serviceaccounts.APIKeysMigrationStatus, err error) {
-	migrationStatus, exists, err := s.kvStore.Get(ctx, orgId, "serviceaccounts", "migrationStatus")
-	if err != nil {
-		return nil, err
-	}
-	if exists && migrationStatus == "1" {
-		return &serviceaccounts.APIKeysMigrationStatus{
-			Migrated: true,
-		}, nil
-	} else {
-		return &serviceaccounts.APIKeysMigrationStatus{
-			Migrated: false,
-		}, nil
-	}
-}
-
 func (s *ServiceAccountsStoreImpl) HideApiKeysTab(ctx context.Context, orgId int64) error {
 	if err := s.kvStore.Set(ctx, orgId, "serviceaccounts", "hideApiKeys", "1"); err != nil {
 		s.log.Error("Failed to hide API keys tab", err)
@@ -489,7 +449,7 @@ func (s *ServiceAccountsStoreImpl) RevertApiKey(ctx context.Context, saId int64,
 	}
 
 	if *key.ServiceAccountId != saId {
-		return ErrServiceAccountAndTokenMismatch
+		return serviceaccounts.ErrServiceAccountAndTokenMismatch
 	}
 
 	tokens, err := s.ListTokens(ctx, &serviceaccounts.GetSATokensQuery{

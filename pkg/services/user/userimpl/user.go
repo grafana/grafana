@@ -14,6 +14,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -467,26 +468,12 @@ func (s *Service) getOrgIDForNewUser(ctx context.Context, cmd *user.CreateUserCo
 	return orgID, err
 }
 
-// CreateServiceAccount is a copy of Create with a single difference; it will create the OrgUser service account.
+// CreateServiceAccount creates a service account in the user table and adds service account to an organisation in the org_user table
 func (s *Service) CreateServiceAccount(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
-	cmdOrg := org.GetOrgIDForNewUserCommand{
-		Email:        cmd.Email,
-		Login:        cmd.Login,
-		OrgID:        cmd.OrgID,
-		OrgName:      cmd.OrgName,
-		SkipOrgSetup: cmd.SkipOrgSetup,
-	}
-	orgID, err := s.orgService.GetIDForNewUser(ctx, cmdOrg)
+	cmd.Email = cmd.Login
+	err := s.store.LoginConflict(ctx, cmd.Login, cmd.Email, s.cfg.CaseInsensitiveLogin)
 	if err != nil {
-		return nil, err
-	}
-	if cmd.Email == "" {
-		cmd.Email = cmd.Login
-	}
-
-	err = s.store.LoginConflict(ctx, cmd.Login, cmd.Email, s.cfg.CaseInsensitiveLogin)
-	if err != nil {
-		return nil, err
+		return nil, serviceaccounts.ErrServiceAccountAlreadyExists
 	}
 
 	// create user
@@ -494,15 +481,12 @@ func (s *Service) CreateServiceAccount(ctx context.Context, cmd *user.CreateUser
 		Email:            cmd.Email,
 		Name:             cmd.Name,
 		Login:            cmd.Login,
-		Company:          cmd.Company,
-		IsAdmin:          cmd.IsAdmin,
 		IsDisabled:       cmd.IsDisabled,
 		OrgID:            cmd.OrgID,
-		EmailVerified:    cmd.EmailVerified,
 		Created:          time.Now(),
 		Updated:          time.Now(),
 		LastSeenAt:       time.Now().AddDate(-10, 0, 0),
-		IsServiceAccount: cmd.IsServiceAccount,
+		IsServiceAccount: true,
 	}
 
 	salt, err := util.GetRandomString(10)
@@ -516,40 +500,22 @@ func (s *Service) CreateServiceAccount(ctx context.Context, cmd *user.CreateUser
 	}
 	usr.Rands = rands
 
-	if len(cmd.Password) > 0 {
-		encodedPassword, err := util.EncodePassword(cmd.Password, usr.Salt)
-		if err != nil {
-			return nil, err
-		}
-		usr.Password = encodedPassword
-	}
-
 	_, err = s.store.Insert(ctx, usr)
 	if err != nil {
 		return nil, err
 	}
 
 	// create org user link
-	if !cmd.SkipOrgSetup {
-		orgCmd := &org.AddOrgUserCommand{
-			OrgID:                     orgID,
-			UserID:                    usr.ID,
-			Role:                      org.RoleAdmin,
-			AllowAddingServiceAccount: true,
-		}
-
-		if s.cfg.AutoAssignOrg && !usr.IsAdmin {
-			if len(cmd.DefaultOrgRole) > 0 {
-				orgCmd.Role = org.RoleType(cmd.DefaultOrgRole)
-			} else {
-				orgCmd.Role = org.RoleType(s.cfg.AutoAssignOrgRole)
-			}
-		}
-
-		if err = s.orgService.AddOrgUser(ctx, orgCmd); err != nil {
-			return nil, err
-		}
+	orgCmd := &org.AddOrgUserCommand{
+		OrgID:                     cmd.OrgID,
+		UserID:                    usr.ID,
+		Role:                      org.RoleType(cmd.DefaultOrgRole),
+		AllowAddingServiceAccount: true,
 	}
+	if err = s.orgService.AddOrgUser(ctx, orgCmd); err != nil {
+		return nil, err
+	}
+
 	return usr, nil
 }
 
