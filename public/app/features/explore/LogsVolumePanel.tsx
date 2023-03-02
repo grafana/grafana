@@ -109,7 +109,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: absolute;
       right: 5px;
       top: -10px;
-      font-size: ${theme.typography.size.sm};
+      font-size: ${theme.typography.bodySmall.fontSize};
       color: ${theme.colors.text.secondary};
     `,
     contentContainer: css`
