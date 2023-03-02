@@ -44,6 +44,6 @@ func (api *WebhooksAPI) Create(c *contextmodel.ReqContext) response.Response {
 	if err != nil {
 		api.Log.Error("error reading request body")
 	}
-	api.Log.Debug("create", "body", body)
+	api.Log.Debug("create", "body", string(body))
 	return response.Success("worked!")
 }
