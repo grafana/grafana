@@ -294,9 +294,8 @@ func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash 
 	ac := acmock.New()
 	folderPermissions := acmock.NewMockedPermissionsService()
 	dashboardPermissions := acmock.NewMockedPermissionsService()
-	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	service := dashboardservice.ProvideDashboardService(
-		cfg, dashboardStore, folderStore, dashAlertExtractor,
+		cfg, dashboardStore, dashAlertExtractor,
 		features, folderPermissions, dashboardPermissions, ac,
 		foldertest.NewFakeService(),
 	)
@@ -442,7 +441,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		dashboardPermissions := acmock.NewMockedPermissionsService()
 		folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 		dashboardService := dashboardservice.ProvideDashboardService(
-			sqlStore.Cfg, dashboardStore, folderStore, nil,
+			sqlStore.Cfg, dashboardStore, nil,
 			features, folderPermissions, dashboardPermissions, ac,
 			foldertest.NewFakeService(),
 		)
