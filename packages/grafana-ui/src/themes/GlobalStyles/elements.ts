@@ -21,6 +21,7 @@ export function getElementStyles(theme: GrafanaTheme2) {
     }
 
     body {
+      overflow: overlay;
       height: 100%;
       width: 100%;
       position: absolute;
