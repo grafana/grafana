@@ -21,5 +21,5 @@ var (
 	ErrInvalidTimeRange                    = errutil.NewBase(errutil.StatusBadRequest, "publicdashboards.invalidTimeRange", errutil.WithPublicMessage("Invalid time range"))
 	ErrInvalidShareType                    = errutil.NewBase(errutil.StatusBadRequest, "publicdashboards.invalidShareType", errutil.WithPublicMessage("Invalid share type"))
 
-	ErrPublicDashboardPaused = errutil.NewBase(errutil.StatusForbidden, "publicdashboards.paused", errutil.WithPublicMessage("Public dashboard paused"))
+	ErrPublicDashboardNotEnabled = errutil.NewBase(errutil.StatusForbidden, "publicdashboards.notEnabled", errutil.WithPublicMessage("Public dashboard paused"))
 )

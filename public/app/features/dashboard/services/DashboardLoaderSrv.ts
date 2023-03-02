@@ -55,7 +55,8 @@ export class DashboardLoaderSrv {
           return result;
         })
         .catch((e) => {
-          const isPublicDashboardPaused = e.data.statusCode === 403 && e.data.messageId === 'publicdashboards.paused';
+          const isPublicDashboardPaused =
+            e.data.statusCode === 403 && e.data.messageId === 'publicdashboards.notEnabled';
           const isPublicDashboardNotFound =
             e.data.statusCode === 404 && e.data.messageId === 'publicdashboards.notFound';
 
