@@ -3,11 +3,13 @@ package initializer
 import (
 	"context"
 	"path/filepath"
+	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/config"
@@ -137,6 +139,53 @@ func TestInitializer_Initialize(t *testing.T) {
 }
 
 func TestInitializer_envVars(t *testing.T) {
+	t.Run("version", func(t *testing.T) {
+		for _, tc := range []struct {
+			name  string
+			setup func(p *plugins.Plugin)
+			exp   func(t *testing.T, i *Initializer, p *plugins.Plugin)
+		}{
+			{
+				name: "not provided",
+				setup: func(p *plugins.Plugin) {
+					p.Info = plugins.Info{}
+				},
+				exp: func(t *testing.T, i *Initializer, p *plugins.Plugin) {
+					for _, k := range i.envVars(p) {
+						if strings.HasPrefix("GF_PLUGIN_VERSION=", k) {
+							require.Fail(t, "found unexpected env var GF_PLUGIN_VERSION")
+						}
+					}
+				},
+			},
+			{
+				name: "provided",
+				setup: func(p *plugins.Plugin) {
+					p.Info = plugins.Info{Version: "0.1"}
+				},
+				exp: func(t *testing.T, i *Initializer, p *plugins.Plugin) {
+					require.Contains(t, i.envVars(p), "GF_PLUGIN_VERSION=0.1")
+				},
+			},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				p := &plugins.Plugin{
+					JSONData: plugins.JSONData{
+						ID:   "test",
+						Info: plugins.Info{Version: "0.1"},
+					},
+				}
+				tc.setup(p)
+				i := &Initializer{
+					cfg:             &config.Cfg{},
+					log:             log.NewTestLogger(),
+					backendProvider: &fakeBackendProvider{plugin: p},
+				}
+				tc.exp(t, i, p)
+			})
+		}
+	})
+
 	t.Run("backend datasource with license", func(t *testing.T) {
 		p := &plugins.Plugin{
 			JSONData: plugins.JSONData{
@@ -223,7 +272,7 @@ func TestInitializer_tracingEnvironmentVariables(t *testing.T) {
 				cfg: &config.Cfg{
 					Opentelemetry: tc.otelCfg,
 				},
-				log: log.NewNopLogger(),
+				log: log.NewTestLogger(),
 			}
 			envVars := i.envVars(p)
 			tc.exp(t, envVars)
