@@ -11,10 +11,12 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+// List of available targets.
 const (
 	All string = "all"
 )
 
+// Service manages the registration and lifecycle of modules.
 type Service struct {
 	cfg     *setting.Cfg
 	log     log.Logger
@@ -41,8 +43,10 @@ func ProvideService(cfg *setting.Cfg) *Service {
 func (m *Service) Init() error {
 	var err error
 
+	// module registration
 	m.ModuleManager.RegisterModule(All, nil)
 
+	// map modules to their dependencies
 	deps := map[string][]string{
 		All: {},
 	}
@@ -67,7 +71,6 @@ func (m *Service) Init() error {
 	for _, s := range m.ServiceMap {
 		svcs = append(svcs, s)
 	}
-
 	m.ServiceManager, err = services.NewManager(svcs...)
 
 	return err
