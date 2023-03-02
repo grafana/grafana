@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"sort"
 	"strings"
 	"time"
 
@@ -228,13 +229,16 @@ func (pt *ProfileTree) addSample(profile *googlev1.Profile, sample *googlev1.Sam
 
 		// Create sample with only the locations we did not already attributed to the tree.
 		subSample := &googlev1.Sample{
-			LocationId: sample.LocationId[index:],
+			LocationId: sample.LocationId[:len(sample.LocationId)-index],
 			Value:      sample.Value,
 			Label:      sample.Label,
 		}
-		newTree := treeFromSample(profile, subSample)
+		newTree := treeFromSample(profile, subSample, index)
 		// Append the new subtree in the correct place in the tree
 		current.Nodes = append(current.Nodes, newTree.Nodes[0])
+		sort.SliceStable(current.Nodes, func(i, j int) bool {
+			return current.Nodes[i].Function.String() < current.Nodes[j].Function.String()
+		})
 		newTree.Nodes[0].Parent = current
 		break
 	}
@@ -250,10 +254,10 @@ func (pt *ProfileTree) addSample(profile *googlev1.Profile, sample *googlev1.Sam
 
 // treeFromSample creates a linked tree form a single pprof sample. As a single sample is just a single stack the tree
 // will also be just a simple linked list at this point.
-func treeFromSample(profile *googlev1.Profile, sample *googlev1.Sample) *ProfileTree {
+func treeFromSample(profile *googlev1.Profile, sample *googlev1.Sample, startLevel int) *ProfileTree {
 	root := &ProfileTree{
 		Value:      sample.Value[0],
-		Level:      0,
+		Level:      startLevel,
 		locationID: 0,
 		Function: &Function{
 			FunctionName: "root",
@@ -273,7 +277,7 @@ func treeFromSample(profile *googlev1.Profile, sample *googlev1.Sample) *Profile
 		node := &ProfileTree{
 			Self:       0,
 			Value:      sample.Value[0],
-			Level:      index + 1,
+			Level:      index + startLevel + 1,
 			locationID: location.Id,
 			Parent:     parent,
 		}
@@ -301,7 +305,7 @@ func profileAsTree(profile *googlev1.Profile) *ProfileTree {
 	if len(profile.Sample) == 0 {
 		return nil
 	}
-	n := treeFromSample(profile, profile.Sample[0])
+	n := treeFromSample(profile, profile.Sample[0], 0)
 	for _, sample := range profile.Sample[1:] {
 		n.addSample(profile, sample)
 	}
