@@ -188,7 +188,7 @@ export const BUILT_IN_FUNCTIONS = [
     detail: 'vector(scalar)',
     documentation: 'Returns the scalar as a vector with no labels.',
   },
-]
+];
 
 export const FUNCTIONS = [...AGGREGATION_OPERATORS, ...RANGE_VEC_FUNCTIONS, ...BUILT_IN_FUNCTIONS];
 export const LOKI_KEYWORDS = [...FUNCTIONS, ...PIPE_OPERATORS, ...PIPE_PARSERS].map((keyword) => keyword.label);

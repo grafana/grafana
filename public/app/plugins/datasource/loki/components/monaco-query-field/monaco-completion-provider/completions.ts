@@ -303,7 +303,13 @@ export async function getCompletions(
     case 'EMPTY':
     case 'AT_ROOT':
       const historyCompletions = await getAllHistoryCompletions(dataProvider);
-      return [...historyCompletions, ...LOG_COMPLETIONS, ...AGGREGATION_COMPLETIONS, ...BUILT_IN_FUNCTIONS_COMPLETIONS, ...FUNCTION_COMPLETIONS];
+      return [
+        ...historyCompletions,
+        ...LOG_COMPLETIONS,
+        ...AGGREGATION_COMPLETIONS,
+        ...BUILT_IN_FUNCTIONS_COMPLETIONS,
+        ...FUNCTION_COMPLETIONS,
+      ];
     case 'IN_RANGE':
       return DURATION_COMPLETIONS;
     case 'IN_GROUPING':
