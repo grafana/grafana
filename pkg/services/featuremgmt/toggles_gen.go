@@ -266,8 +266,4 @@ const (
 	// FlagIndividualCookiePreferences
 	// Support overriding cookie preferences per user
 	FlagIndividualCookiePreferences = "individualCookiePreferences"
-
-	// FlagExemplarTimeSeriesModalLocking
-	// Changes default exemplar modal behavior in time series and candlestick panel to allow modal position locking on click
-	FlagExemplarTimeSeriesModalLocking = "exemplarTimeSeriesModalLocking"
 )

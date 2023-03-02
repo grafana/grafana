@@ -14,7 +14,6 @@ import {
   TimeZone,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config as grafanaConfig } from '@grafana/runtime';
 import { FieldLinkList, Portal, UPlotConfigBuilder, useStyles2 } from '@grafana/ui';
 
 import { CloseButton } from '../../../../core/components/CloseButton/CloseButton';
@@ -116,9 +115,7 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
   }, [setIsOpen, clickedExemplarFieldIndex]);
 
   const lockExemplarModal = () => {
-    if (grafanaConfig.featureToggles.exemplarTimeSeriesModalLocking) {
-      setIsLocked(true);
-    }
+    setIsLocked(true);
   };
 
   const onMouseLeave = useCallback(() => {
@@ -225,10 +222,8 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
       <div
         ref={setMarkerElement}
         onClick={() => {
-          if (grafanaConfig.featureToggles.exemplarTimeSeriesModalLocking) {
-            setClickedExemplarFieldIndex(dataFrameFieldIndex);
-            lockExemplarModal();
-          }
+          setClickedExemplarFieldIndex(dataFrameFieldIndex);
+          lockExemplarModal();
         }}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}

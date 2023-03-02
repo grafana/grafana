@@ -91,7 +91,6 @@ Alpha features might be changed or removed without prior notice.
 | `logsContextDatasourceUi`          | Allow datasource to provide custom UI for context view                                                                                                                       |
 | `lokiQuerySplitting`               | Split large interval queries into subqueries with smaller time intervals                                                                                                     |
 | `individualCookiePreferences`      | Support overriding cookie preferences per user                                                                                                                               |
-| `exemplarTimeSeriesModalLocking`   | Changes default exemplar modal behavior in time series and candlestick panel to allow modal position locking on click                                                        |
 
 ## Development feature toggles
 
