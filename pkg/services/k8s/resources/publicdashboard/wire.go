@@ -2,10 +2,13 @@ package publicdashboard
 
 import (
 	"github.com/google/wire"
+	"github.com/grafana/grafana/pkg/services/k8s/admission"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 )
 
 var WireSet = wire.NewSet(
+	ProvideValidation,
+	wire.Bind(new(admission.ValidatingAdmissionController), new(*pdValidation)),
 	ProvideWebhooks,
 	ProvideWatcher,
 	wire.Bind(new(Watcher), new(*watcher)),

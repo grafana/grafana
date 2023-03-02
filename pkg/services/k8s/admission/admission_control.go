@@ -2,6 +2,8 @@
 package admission
 
 import (
+	"context"
+
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -69,7 +71,7 @@ type ValidatingAdmissionController interface {
 	// Validate consumes an AdmissionRequest, then returns an error if the request should be denied.
 	// The returned error SHOULD satisfy the AdmissionError interface, but callers will fallback
 	// to using only the information in a simple error if not.
-	Validate(request *AdmissionRequest) error
+	Validate(context.Context, *AdmissionRequest) error
 }
 
 // MutatingAdmissionController is an interface that describes any object which should mutate a request to
@@ -79,5 +81,5 @@ type MutatingAdmissionController interface {
 	// to apply. If the request should not be admitted, ths function should return an error.
 	// The returned error SHOULD satisfy the AdmissionError interface, but callers will fallback
 	// to using only the information in a simple error if not.
-	Mutate(request *AdmissionRequest) (*MutatingResponse, error)
+	Mutate(context.Context, *AdmissionRequest) (*MutatingResponse, error)
 }

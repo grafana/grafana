@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/k8s/admission"
 )
 
 type WebhooksAPI struct {
@@ -16,14 +17,14 @@ type WebhooksAPI struct {
 	AccessControl        accesscontrol.AccessControl
 	Features             *featuremgmt.FeatureManager
 	Log                  log.Logger
-	ValidationController *ValidatingAdmissionController
+	ValidationController admission.ValidatingAdmissionController
 }
 
 func ProvideWebhooks(
 	rr routing.RouteRegister,
 	ac accesscontrol.AccessControl,
 	features *featuremgmt.FeatureManager,
-	vc *ValidatingAdmissionController,
+	vc admission.ValidatingAdmissionController,
 ) *WebhooksAPI {
 	webhooksAPI := &WebhooksAPI{
 		RouteRegister:        rr,
@@ -42,15 +43,10 @@ func (api *WebhooksAPI) RegisterAPIEndpoints() {
 }
 
 func (api *WebhooksAPI) Create(c *contextmodel.ReqContext) response.Response {
-	err := api.ValidationController(
-
-
-
 	api.Log.Debug("admission controller create fired")
 	body, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		api.Log.Error("error reading request body")
 	}
 	api.Log.Debug("create", "body", string(body))
-	return response.Success("worked!")
 }
