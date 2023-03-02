@@ -141,7 +141,7 @@ export const VariableQueryEditor = ({ query, datasource, onChange }: Props) => {
             label="Account"
             value={query.accountId ?? null}
             onChange={(accountId?: string) => onQueryChange({ ...parsedQuery, accountId })}
-            options={accountState?.value.length ? [ALL_ACCOUNTS_OPTION, ...accountState?.value] : []}
+            options={[ALL_ACCOUNTS_OPTION, ...accountState?.value]}
             allowCustomValue={false}
           />
         )}
