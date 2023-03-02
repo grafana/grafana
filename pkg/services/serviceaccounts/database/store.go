@@ -3,7 +3,6 @@ package database
 //nolint:goimports
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -55,40 +54,17 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccount(ctx context.Context, org
 	if saForm.Role != nil {
 		role = *saForm.Role
 	}
-	var newSA *user.User
-	createErr := s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) (err error) {
-		var errUser error
-		newSA, errUser = s.userService.CreateServiceAccount(ctx, &user.CreateUserCommand{
-			Login:            generatedLogin,
-			OrgID:            orgId,
-			Name:             saForm.Name,
-			IsDisabled:       isDisabled,
-			IsServiceAccount: true,
-			SkipOrgSetup:     true,
-		})
-		if errUser != nil {
-			return errUser
-		}
 
-		errAddOrgUser := s.orgService.AddOrgUser(ctx, &org.AddOrgUserCommand{
-			Role:                      role,
-			OrgID:                     orgId,
-			UserID:                    newSA.ID,
-			AllowAddingServiceAccount: true,
-		})
-		if errAddOrgUser != nil {
-			return errAddOrgUser
-		}
-
-		return nil
+	newSA, err := s.userService.CreateServiceAccount(ctx, &user.CreateUserCommand{
+		Login:            generatedLogin,
+		OrgID:            orgId,
+		Name:             saForm.Name,
+		IsDisabled:       isDisabled,
+		IsServiceAccount: true,
+		DefaultOrgRole:   string(role),
 	})
-
-	if createErr != nil {
-		if errors.Is(createErr, user.ErrUserAlreadyExists) {
-			return nil, ErrServiceAccountAlreadyExists
-		}
-
-		return nil, fmt.Errorf("failed to create service account: %w", createErr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create service account: %w", err)
 	}
 
 	return &serviceaccounts.ServiceAccountDTO{
@@ -473,7 +449,7 @@ func (s *ServiceAccountsStoreImpl) RevertApiKey(ctx context.Context, saId int64,
 	}
 
 	if *key.ServiceAccountId != saId {
-		return ErrServiceAccountAndTokenMismatch
+		return serviceaccounts.ErrServiceAccountAndTokenMismatch
 	}
 
 	tokens, err := s.ListTokens(ctx, &serviceaccounts.GetSATokensQuery{

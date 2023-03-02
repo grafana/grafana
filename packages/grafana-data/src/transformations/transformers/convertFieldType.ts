@@ -98,7 +98,7 @@ export function convertFieldType(field: Field, opts: ConvertFieldTypeOptions): F
     case FieldType.number:
       return fieldToNumberField(field);
     case FieldType.string:
-      return fieldToStringField(field);
+      return fieldToStringField(field, opts.dateFormat);
     case FieldType.boolean:
       return fieldToBooleanField(field);
     case FieldType.other:
@@ -179,17 +179,26 @@ function fieldToBooleanField(field: Field): Field {
   };
 }
 
-function fieldToStringField(field: Field): Field {
-  const stringValues = field.values.toArray().slice();
+function fieldToStringField(field: Field, dateFormat?: string): Field {
+  let values = field.values.toArray();
 
-  for (let s = 0; s < stringValues.length; s++) {
-    stringValues[s] = `${stringValues[s]}`;
+  switch (field.type) {
+    case FieldType.time:
+      values = values.map((v) => dateTimeParse(v).format(dateFormat));
+      break;
+
+    case FieldType.other:
+      values = values.map((v) => JSON.stringify(v));
+      break;
+
+    default:
+      values = values.map((v) => `${v}`);
   }
 
   return {
     ...field,
     type: FieldType.string,
-    values: new ArrayVector(stringValues),
+    values: new ArrayVector(values),
   };
 }
 
