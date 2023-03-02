@@ -38,10 +38,11 @@ export type LinkToExploreOptions = {
   internalLink: InternalDataLink;
   onClickFn?: SplitOpen;
   replaceVariables: InterpolateFunction;
+  variableMap?: Record<string, string | number | boolean | undefined>;
 };
 
 export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkModel<Field> {
-  const { onClickFn, replaceVariables, link, scopedVars, range, field, internalLink } = options;
+  const { onClickFn, replaceVariables, link, scopedVars, range, field, internalLink, variableMap } = options;
 
   const interpolatedQuery = interpolateObject(link.internal?.query, scopedVars, replaceVariables);
   const interpolatedPanelsState = interpolateObject(link.internal?.panelsState, scopedVars, replaceVariables);
@@ -64,6 +65,7 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
       : undefined,
     target: link?.targetBlank ? '_blank' : '_self',
     origin: field,
+    variableMap,
   };
 }
 
@@ -134,9 +136,12 @@ export function dataLinkHasAllVariablesDefined<T extends DataLink>(
   query: T,
   scopedVars: ScopedVars,
   getVarMap: Function
-): boolean {
+): { variableMap: Record<string, string | number | boolean | undefined>; allVariablesDefined: boolean } {
   const vars = getVarMap(getStringsFromObject(query), scopedVars);
-  return Object.values(vars).every((val) => val !== undefined && val !== null);
+  return {
+    variableMap: vars,
+    allVariablesDefined: Object.values(vars).every((val) => val !== undefined && val !== null),
+  };
 }
 
 function getStringsFromObject<T extends Object>(obj: T): string {

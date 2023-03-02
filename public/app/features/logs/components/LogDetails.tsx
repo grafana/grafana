@@ -8,7 +8,7 @@ import { calculateLogsLabelStats, calculateStats } from '../utils';
 
 import { LogDetailsRow } from './LogDetailsRow';
 import { getLogLevelStyles, getLogRowStyles } from './getLogRowStyles';
-import { getAllFields } from './logParser';
+import { getAllFields, FieldDef } from './logParser';
 
 export interface Props extends Themeable2 {
   row: LogRowModel;
@@ -46,7 +46,16 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
+interface FieldDefArr extends FieldDef {
+  keyArr: string[];
+  valArr: string[];
+}
+
 class UnThemedLogDetails extends PureComponent<Props> {
+  constructLogLineLink(logLineLink: FieldDef) {
+    return;
+  }
+
   render() {
     const {
       app,
@@ -70,8 +79,28 @@ class UnThemedLogDetails extends PureComponent<Props> {
     const labels = row.labels ? row.labels : {};
     const labelsAvailable = Object.keys(labels).length > 0;
     const fieldsAndLinks = getAllFields(row, getFieldLinks);
-    const links = fieldsAndLinks.filter((f) => f.links?.length).sort();
+    let links = fieldsAndLinks.filter((f) => f.links?.length);
+    const showLinks = links.filter((f) => f.fieldIndex !== row.entryFieldIndex).sort();
+    const hiddenLinks = links.filter((f) => f.fieldIndex === row.entryFieldIndex).sort();
+    const varMapLinks: FieldDefArr[] = [];
+
+    // create route for log line links to be displayed
+    hiddenLinks.forEach((linkField) => {
+      linkField.links?.forEach((link) => {
+        if (link.variableMap) {
+          varMapLinks.push({
+            key: linkField.key,
+            value: linkField.value,
+            keyArr: Object.keys(link.variableMap),
+            valArr: Object.keys(link.variableMap).map((key) => link.variableMap?.[key]?.toString() || ''),
+            links: [link],
+            fieldIndex: linkField.fieldIndex,
+          });
+        }
+      });
+    });
     // do not show the log message unless there is a link attached
+    //TODO FIX
     const fields = fieldsAndLinks.filter((f) => f.links?.length === 0 && f.fieldIndex !== row.entryFieldIndex).sort();
     const fieldsAvailable = fields && fields.length > 0;
     const linksAvailable = links && links.length > 0;
@@ -145,7 +174,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
                     </td>
                   </tr>
                 )}
-                {links.map((field) => {
+                {showLinks.map((field) => {
                   const { key, value, links, fieldIndex } = field;
                   return (
                     <LogDetailsRow
@@ -163,6 +192,27 @@ class UnThemedLogDetails extends PureComponent<Props> {
                     />
                   );
                 })}
+                {varMapLinks?.map((field) => {
+                  const { key, value, keyArr, valArr, links, fieldIndex } = field;
+                  return (
+                    <LogDetailsRow
+                      key={`${key}=${value}`}
+                      parsedKey={key}
+                      parsedValue={value}
+                      parsedKeyArray={keyArr}
+                      parsedValueArray={valArr}
+                      links={links}
+                      onClickShowField={onClickShowField}
+                      onClickHideField={onClickHideField}
+                      getStats={() => calculateStats(row.dataFrame.fields[fieldIndex].values.toArray())}
+                      displayedFields={displayedFields}
+                      wrapLogMessage={wrapLogMessage}
+                      row={row}
+                      app={app}
+                    />
+                  );
+                })}
+
                 {!fieldsAvailable && !labelsAvailable && !linksAvailable && (
                   <tr>
                     <td colSpan={100} aria-label="No details">

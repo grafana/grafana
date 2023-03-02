@@ -23,7 +23,8 @@ export interface TemplateSrv {
   */
   getVariablesMapInTemplate(
     target: string,
-    scopedVars: ScopedVars
+    scopedVars: ScopedVars,
+    format?: string | Function
   ): Record<string, string | number | boolean | undefined>;
 
   /**

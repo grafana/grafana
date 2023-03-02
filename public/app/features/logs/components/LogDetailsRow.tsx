@@ -5,15 +5,7 @@ import React, { PureComponent } from 'react';
 
 import { CoreApp, Field, GrafanaTheme2, LinkModel, LogLabelStatsModel, LogRowModel } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import {
-  ClipboardButton,
-  DataLinkButton,
-  measureText,
-  Themeable2,
-  ToolbarButton,
-  ToolbarButtonRow,
-  withTheme2,
-} from '@grafana/ui';
+import { ClipboardButton, DataLinkButton, Themeable2, ToolbarButton, ToolbarButtonRow, withTheme2 } from '@grafana/ui';
 
 import { LogLabelStats } from './LogLabelStats';
 import { getLogRowStyles } from './getLogRowStyles';
@@ -23,6 +15,8 @@ import { getLogRowStyles } from './getLogRowStyles';
 export interface Props extends Themeable2 {
   parsedValue: string;
   parsedKey: string;
+  parsedValueArray?: Array<string | number | boolean | undefined>;
+  parsedKeyArray?: string[];
   wrapLogMessage?: boolean;
   isLabel?: boolean;
   onClickFilterLabel?: (key: string, value: string) => void;
@@ -123,13 +117,6 @@ const getStyles = memoizeOne((theme: GrafanaTheme2, activeButton: boolean) => {
     parsedValue: css`
       display: inline;
     `,
-    longLineScroll: css`
-      height: ${theme.spacing(theme.components.height.sm * 2.4)};
-      overflow-y: scroll;
-      border: 1px solid ${theme.colors.border.medium};
-      padding: ${theme.spacing(0.5)};
-      margin-bottom: ${theme.spacing(0.5)};
-    `,
     toolbarButtonRow: css`
       label: toolbarButtonRow;
       gap: ${theme.spacing(0.5)};
@@ -171,6 +158,9 @@ const getStyles = memoizeOne((theme: GrafanaTheme2, activeButton: boolean) => {
         }
       }
     `,
+    multiRowLink: css`
+      vertical-align: initial;
+    `,
   };
 });
 
@@ -182,26 +172,9 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     showLineScroll: false,
   };
 
-  logRowRef: React.RefObject<HTMLTableCellElement> = React.createRef();
-
   componentDidUpdate() {
     if (this.state.showFieldsStats) {
       this.updateStats();
-    }
-  }
-
-  componentDidMount(): void {
-    // convert rem to px
-    const fontSizePx =
-      parseFloat(this.props.theme.typography.bodySmall.fontSize) *
-      parseFloat(getComputedStyle(document.documentElement).fontSize);
-    const parsedValWidth = measureText(this.props.parsedValue, fontSizePx).width;
-    const refWidth = this.logRowRef.current?.clientWidth;
-    const linesBeforeScroll = 3;
-    if (refWidth && refWidth * linesBeforeScroll < parsedValWidth) {
-      this.setState({ showLineScroll: true });
-    } else {
-      this.setState({ showLineScroll: false });
     }
   }
 
@@ -291,23 +264,109 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     });
   }
 
+  generateTableRow(
+    key: string,
+    activeButton: boolean,
+    value?: string,
+    toggleFieldButton?: JSX.Element,
+    links?: Array<LinkModel<Field>>,
+    hasFilteringFunctionality?: boolean,
+    multiRow?: boolean,
+    firstLinkRow?: boolean,
+    totalRows?: number
+  ) {
+    const { theme, displayedFields, wrapLogMessage } = this.props;
+    const { showFieldsStats } = this.state;
+    const styles = getStyles(theme, activeButton);
+    const style = getLogRowStyles(theme);
+
+    return (
+      <tr className={cx(style.logDetailsValue)}>
+        <td className={style.logsDetailsIcon}>
+          <ToolbarButtonRow alignment="left" className={styles.toolbarButtonRow}>
+            {hasFilteringFunctionality && (
+              <ToolbarButton iconOnly narrow icon="search-plus" tooltip="Filter for value" onClick={this.filterLabel} />
+            )}
+            {hasFilteringFunctionality && (
+              <ToolbarButton
+                iconOnly
+                narrow
+                icon="search-minus"
+                tooltip="Filter out value"
+                onClick={this.filterOutLabel}
+              />
+            )}
+            {displayedFields && toggleFieldButton}
+            <ToolbarButton
+              iconOnly
+              variant={showFieldsStats ? 'active' : 'default'}
+              narrow
+              icon="signal"
+              tooltip="Ad-hoc statistics"
+              className="stats-button"
+              onClick={this.showStats}
+            />
+          </ToolbarButtonRow>
+        </td>
+
+        {/* Key - value columns */}
+        <td className={style.logDetailsLabel}>{key}</td>
+        <td className={cx(styles.wordBreakAll, wrapLogMessage && styles.wrapLine)}>
+          <div className={styles.logDetailsValue}>
+            {value}
+            {value && (
+              <div className={cx('show-on-hover', styles.copyButton)}>
+                <ClipboardButton
+                  getText={() => value}
+                  title="Copy value to clipboard"
+                  fill="text"
+                  variant="secondary"
+                  icon="copy"
+                  size="md"
+                />
+              </div>
+            )}
+
+            {!multiRow &&
+              links?.map((link) => (
+                <span key={link.title}>
+                  &nbsp;
+                  <DataLinkButton link={link} />
+                </span>
+              ))}
+          </div>
+        </td>
+        {multiRow && firstLinkRow && (
+          <td rowSpan={totalRows}>
+            {links?.map((link) => (
+              <span key={link.title}>
+                &nbsp;
+                <DataLinkButton link={link} />
+              </span>
+            ))}
+          </td>
+        )}
+      </tr>
+    );
+  }
+
   render() {
     const {
       theme,
       parsedKey,
       parsedValue,
+      parsedKeyArray,
+      parsedValueArray,
       isLabel,
       links,
       displayedFields,
-      wrapLogMessage,
       onClickFilterLabel,
       onClickFilterOutLabel,
     } = this.props;
     const { showFieldsStats, fieldStats, fieldCount } = this.state;
     const activeButton = displayedFields?.includes(parsedKey) || showFieldsStats;
     const styles = getStyles(theme, activeButton);
-    const style = getLogRowStyles(theme);
-    const hasFilteringFunctionality = onClickFilterLabel && onClickFilterOutLabel;
+    const hasFilteringFunctionality = onClickFilterLabel !== undefined && onClickFilterOutLabel !== undefined;
 
     const toggleFieldButton =
       displayedFields && displayedFields.includes(parsedKey) ? (
@@ -324,67 +383,40 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
 
     return (
       <>
-        <tr className={cx(style.logDetailsValue)}>
-          <td className={style.logsDetailsIcon}>
-            <ToolbarButtonRow alignment="left" className={styles.toolbarButtonRow}>
-              {hasFilteringFunctionality && (
-                <ToolbarButton
-                  iconOnly
-                  narrow
-                  icon="search-plus"
-                  tooltip="Filter for value"
-                  onClick={this.filterLabel}
-                />
-              )}
-              {hasFilteringFunctionality && (
-                <ToolbarButton
-                  iconOnly
-                  narrow
-                  icon="search-minus"
-                  tooltip="Filter out value"
-                  onClick={this.filterOutLabel}
-                />
-              )}
-              {displayedFields && toggleFieldButton}
-              <ToolbarButton
-                iconOnly
-                variant={showFieldsStats ? 'active' : 'default'}
-                narrow
-                icon="signal"
-                tooltip="Ad-hoc statistics"
-                className="stats-button"
-                onClick={this.showStats}
-              />
-            </ToolbarButtonRow>
-          </td>
+        {(parsedKeyArray === undefined || parsedKeyArray?.length === 0) &&
+          this.generateTableRow(
+            parsedKey,
+            activeButton,
+            parsedValue,
+            toggleFieldButton,
+            links,
+            hasFilteringFunctionality,
+            false
+          )}
+        {parsedKeyArray && (
+          <tr>
+            <td colSpan={3}>
+              <table>
+                <tbody>
+                  {parsedKeyArray.map((parsedKey, i) =>
+                    this.generateTableRow(
+                      parsedKey,
+                      false,
+                      parsedValueArray ? parsedValueArray[i]?.toString() : undefined,
+                      undefined,
+                      links,
+                      false,
+                      true,
+                      i === 0,
+                      parsedKeyArray.length
+                    )
+                  )}
+                </tbody>
+              </table>
+            </td>
+          </tr>
+        )}
 
-          {/* Key - value columns */}
-          <td className={style.logDetailsLabel}>{parsedKey}</td>
-          <td ref={this.logRowRef} className={cx(styles.wordBreakAll, wrapLogMessage && styles.wrapLine)}>
-            <div className={styles.logDetailsValue}>
-              <div className={cx(this.state.showLineScroll ? styles.longLineScroll : styles.parsedValue)}>
-                {parsedValue}
-              </div>
-              <div className={cx('show-on-hover', styles.copyButton)}>
-                <ClipboardButton
-                  getText={() => parsedValue}
-                  title="Copy value to clipboard"
-                  fill="text"
-                  variant="secondary"
-                  icon="copy"
-                  size="md"
-                />
-              </div>
-
-              {links?.map((link, i) => (
-                <span key={`${link.title}-${i}`}>
-                  &nbsp;
-                  <DataLinkButton link={link} />
-                </span>
-              ))}
-            </div>
-          </td>
-        </tr>
         {showFieldsStats && (
           <tr>
             <td>

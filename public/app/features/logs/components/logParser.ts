@@ -2,7 +2,7 @@ import memoizeOne from 'memoize-one';
 
 import { DataFrame, Field, FieldType, LinkModel, LogRowModel } from '@grafana/data';
 
-type FieldDef = {
+export type FieldDef = {
   key: string;
   value: string;
   links?: Array<LinkModel<Field>>;

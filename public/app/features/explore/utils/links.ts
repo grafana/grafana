@@ -147,12 +147,9 @@ export const getFieldLinksForExplore = (options: {
         }
 
         const allVars = { ...scopedVars, ...internalLinkSpecificVars };
-        const hasAllDefined = dataLinkHasAllVariablesDefined(
-          link,
-          allVars,
-          getTemplateSrv().getVariablesMapInTemplate.bind(getTemplateSrv())
-        );
-        if (hasAllDefined) {
+        const varMapFn = getTemplateSrv().getVariablesMapInTemplate.bind(getTemplateSrv());
+        const variableMapData = dataLinkHasAllVariablesDefined(link, allVars, varMapFn);
+        if (variableMapData.allVariablesDefined) {
           return mapInternalLinkToExplore({
             link,
             internalLink: link.internal,
@@ -161,16 +158,21 @@ export const getFieldLinksForExplore = (options: {
             field,
             onClickFn: splitOpenFn,
             replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
+            variableMap: variableMapData.variableMap,
           });
         } else {
           return undefined;
         }
       }
     });
-
+    console.log(
+      'links return',
+      fieldLinks,
+      fieldLinks.filter((link): link is LinkModel<Field> => !!link)
+    );
     return fieldLinks.filter((link): link is LinkModel<Field> => !!link);
   }
-
+  console.log('links return nada');
   return [];
 };
 

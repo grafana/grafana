@@ -23,7 +23,7 @@ interface FieldAccessorCache {
   [key: string]: (obj: any) => any;
 }
 
-type VarValue = string | number | boolean | undefined;
+export type VarValue = string | number | boolean | undefined;
 
 export interface TemplateSrvDependencies {
   getFilteredVariables: typeof getFilteredVariables;
@@ -349,13 +349,23 @@ export class TemplateSrv implements BaseTemplateSrv {
     });
   }
 
-  getVariablesMapInTemplate(target: string, scopedVars: ScopedVars): Record<string, VarValue> {
+  getVariablesMapInTemplate(
+    target: string,
+    scopedVars: ScopedVars,
+    format?: string | Function
+  ): Record<string, VarValue> {
     const regexp = new RegExp(this.regex);
     const values: Record<string, VarValue> = {};
 
-    target.replace(regexp, (match, var1, var2, fmt2, var3, fieldPath) => {
+    target.replace(regexp, (match, var1, var2, fmt2, var3, fieldPath, fmt3) => {
       const variableName = var1 || var2 || var3;
-      values[variableName] = this.getVariableValue(variableName, fieldPath, scopedVars);
+      const fmt = fmt2 || fmt3 || format;
+      const value = this.getVariableValue(variableName, fieldPath, scopedVars);
+      if (value !== null && value !== undefined) {
+        const variable = this.getVariableAtIndex(variableName);
+        const text = this.getVariableText(variableName, value, scopedVars);
+        values[variableName] = this.formatValue(value, fmt, variable, text);
+      }
 
       // Don't care about the result anyway
       return '';

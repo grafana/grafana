@@ -150,7 +150,7 @@ describe('dataLinks utils', () => {
         testVal: { text: '', value: 'val1' },
       };
       const varMapMock = jest.fn().mockReturnValue({ testVal: scopedVars.testVal.value });
-      const dataLinkRtnVal = dataLinkHasAllVariablesDefined(dataLink, scopedVars, varMapMock);
+      const dataLinkRtnVal = dataLinkHasAllVariablesDefined(dataLink, scopedVars, varMapMock).allVariablesDefined;
 
       expect(dataLinkRtnVal).toBe(true);
     });
@@ -169,7 +169,7 @@ describe('dataLinks utils', () => {
         testVal: { text: '', value: 'val1' },
       };
       const varMapMock = jest.fn().mockReturnValue({ diffVar: null });
-      const dataLinkRtnVal = dataLinkHasAllVariablesDefined(dataLink, scopedVars, varMapMock);
+      const dataLinkRtnVal = dataLinkHasAllVariablesDefined(dataLink, scopedVars, varMapMock).allVariablesDefined;
 
       expect(dataLinkRtnVal).toBe(false);
     });
@@ -187,7 +187,7 @@ describe('dataLinks utils', () => {
         testVal: { text: '', value: 'val1' },
       };
       const varMapMock = jest.fn().mockReturnValue({ testVal: 'val1', diffVar: null });
-      const dataLinkRtnVal = dataLinkHasAllVariablesDefined(dataLink, scopedVars, varMapMock);
+      const dataLinkRtnVal = dataLinkHasAllVariablesDefined(dataLink, scopedVars, varMapMock).allVariablesDefined;
       expect(dataLinkRtnVal).toBe(false);
     });
   });
