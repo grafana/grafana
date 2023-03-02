@@ -6,13 +6,7 @@ import { Badge } from '@grafana/ui';
 import { CombinedRule, CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
-import {
-  isAlertingRule,
-  isRecordingRule,
-  isRecordingRulerRule,
-  isGrafanaRulerRule,
-  isGrafanaRulerRulePaused,
-} from '../../utils/rules';
+import { isAlertingRule, isRecordingRule, isRecordingRulerRule, isGrafanaRulerRulePaused } from '../../utils/rules';
 
 interface Props {
   includeTotal?: boolean;
