@@ -138,20 +138,21 @@ type UpdateOrgUserCommand struct {
 }
 
 type OrgUserDTO struct {
-	OrgID         int64           `json:"orgId" xorm:"org_id"`
-	UserID        int64           `json:"userId" xorm:"user_id"`
-	Email         string          `json:"email"`
-	Name          string          `json:"name"`
-	AvatarURL     string          `json:"avatarUrl" xorm:"avatar_url"`
-	Login         string          `json:"login"`
-	Role          string          `json:"role"`
-	LastSeenAt    time.Time       `json:"lastSeenAt"`
-	Updated       time.Time       `json:"-"`
-	Created       time.Time       `json:"-"`
-	LastSeenAtAge string          `json:"lastSeenAtAge"`
-	AccessControl map[string]bool `json:"accessControl,omitempty"`
-	IsDisabled    bool            `json:"isDisabled"`
-	AuthLabels    []string        `json:"authLabels" xorm:"-"`
+	OrgID              int64           `json:"orgId" xorm:"org_id"`
+	UserID             int64           `json:"userId" xorm:"user_id"`
+	Email              string          `json:"email"`
+	Name               string          `json:"name"`
+	AvatarURL          string          `json:"avatarUrl" xorm:"avatar_url"`
+	Login              string          `json:"login"`
+	Role               string          `json:"role"`
+	LastSeenAt         time.Time       `json:"lastSeenAt"`
+	Updated            time.Time       `json:"-"`
+	Created            time.Time       `json:"-"`
+	LastSeenAtAge      string          `json:"lastSeenAtAge"`
+	AccessControl      map[string]bool `json:"accessControl,omitempty"`
+	IsDisabled         bool            `json:"isDisabled"`
+	AuthLabels         []string        `json:"authLabels" xorm:"-"`
+	IsExternallySynced bool            `json:"isExternallySynced"`
 }
 
 type RemoveOrgUserCommand struct {

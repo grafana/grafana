@@ -463,7 +463,7 @@ export function ChangeOrgButton({
   );
 }
 
-const ExternalUserTooltip = () => {
+export const ExternalUserTooltip = () => {
   const styles = useStyles2(getTooltipStyles);
 
   return (
