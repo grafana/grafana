@@ -21204,17 +21204,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fs-extra@npm:11.1.0":
-  version: 11.1.0
-  resolution: "fs-extra@npm:11.1.0"
-  dependencies:
-    graceful-fs: ^4.2.0
-    jsonfile: ^6.0.1
-    universalify: ^2.0.0
-  checksum: 5ca476103fa1f5ff4a9b3c4f331548f8a3c1881edaae323a4415d3153b5dc11dc6a981c8d1dd93eec8367ceee27b53f8bd27eecbbf66ffcdd04927510c171e7f
-  languageName: node
-  linkType: hard
-
 "fs-extra@npm:^10.0.0":
   version: 10.0.0
   resolution: "fs-extra@npm:10.0.0"
@@ -22161,7 +22150,6 @@ __metadata:
     file-saver: 2.0.5
     fork-ts-checker-webpack-plugin: 7.3.0
     framework-utils: ^1.1.0
-    fs-extra: 11.1.0
     glob: 8.1.0
     history: 4.10.1
     hoist-non-react-statics: 3.3.2
