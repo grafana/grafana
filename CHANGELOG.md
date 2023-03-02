@@ -40,6 +40,7 @@
 - **SQLStore:** Fix folder migration for MySQL < 5.7. [#62521](https://github.com/grafana/grafana/pull/62521), [@papagian](https://github.com/papagian)
 - **Search:** Fix not being able to clear sort value. [#62557](https://github.com/grafana/grafana/pull/62557), [@joshhunt](https://github.com/joshhunt)
 - **Tempo:** Fix span name being dropped from the query. [#62257](https://github.com/grafana/grafana/pull/62257), [@CrypticSignal](https://github.com/CrypticSignal)
+- **Loki:** Fix vector(5) syntax error in loki log explore : . [#63994](https://github.com/grafana/grafana/pull/63994), [@liguozhong](https://github.com/liguozhong)
 
 ### Plugin development fixes & changes
 
