@@ -20,8 +20,8 @@ import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/tra
 
 import { HeatmapHoverView } from './HeatmapHoverView';
 import { prepareHeatmapData } from './fields';
-import { PanelOptions } from './models.gen';
 import { quantizeScheme } from './palettes';
+import { PanelOptions } from './types';
 import { HeatmapHoverEvent, prepConfig } from './utils';
 
 interface HeatmapPanelProps extends PanelProps<PanelOptions> {}

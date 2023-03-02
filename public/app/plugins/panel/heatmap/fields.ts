@@ -12,15 +12,15 @@ import {
   ValueFormatter,
   ValueLinkConfig,
 } from '@grafana/data';
+import { HeatmapCellLayout } from '@grafana/schema';
 import {
   calculateHeatmapFromData,
   isHeatmapCellsDense,
   readHeatmapRowsCustomMeta,
   rowsToCellsHeatmap,
 } from 'app/features/transformers/calculateHeatmap/heatmap';
-import { HeatmapCellLayout } from 'app/features/transformers/calculateHeatmap/models.gen';
 
-import { CellValues, PanelOptions } from './models.gen';
+import { CellValues, PanelOptions } from './types';
 import { boundedMinMax } from './utils';
 
 export interface HeatmapData {

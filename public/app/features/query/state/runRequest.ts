@@ -53,6 +53,7 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
 
   let loadingState = packet.state || LoadingState.Done;
   let error: DataQueryError | undefined = undefined;
+  let errors: DataQueryError[] | undefined = undefined;
 
   const series: DataQueryResponseData[] = [];
   const annotations: DataQueryResponseData[] = [];
@@ -60,9 +61,10 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
   for (const key in packets) {
     const packet = packets[key];
 
-    if (packet.error) {
+    if (packet.error || packet.errors?.length) {
       loadingState = LoadingState.Error;
       error = packet.error;
+      errors = packet.errors;
     }
 
     if (packet.data && packet.data.length) {
@@ -79,11 +81,12 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
 
   const timeRange = getRequestTimeRange(request, loadingState);
 
-  const panelData = {
+  const panelData: PanelData = {
     state: loadingState,
     series,
     annotations,
     error,
+    errors,
     request,
     timeRange,
   };

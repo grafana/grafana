@@ -415,6 +415,10 @@ export class StackedWithNoChartLayout extends BigValueLayout {
     return styles;
   }
 
+  renderChart(): JSX.Element | null {
+    return null;
+  }
+
   getPanelStyles() {
     const styles = super.getPanelStyles();
     styles.alignItems = 'center';

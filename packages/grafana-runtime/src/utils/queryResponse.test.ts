@@ -356,6 +356,12 @@ describe('Query Response parser', () => {
         "refId": "A",
       }
     `);
+    expect(res.errors).toEqual([
+      {
+        message: 'Hello Error',
+        refId: 'A',
+      },
+    ]);
 
     const norm = res.data.map((f) => toDataFrameDTO(f));
     expect(norm).toMatchInlineSnapshot(`

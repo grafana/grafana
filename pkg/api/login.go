@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -190,7 +191,7 @@ func (hs *HTTPServer) tryAutoLogin(c *contextmodel.ReqContext) bool {
 
 func (hs *HTTPServer) LoginAPIPing(c *contextmodel.ReqContext) response.Response {
 	if c.IsSignedIn || c.IsAnonymous {
-		return response.JSON(http.StatusOK, "Logged in")
+		return response.JSON(http.StatusOK, util.DynMap{"message": "Logged in"})
 	}
 
 	return response.Error(401, "Unauthorized", nil)

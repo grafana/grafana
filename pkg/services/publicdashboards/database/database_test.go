@@ -74,7 +74,7 @@ func TestIntegrationFindDashboard(t *testing.T) {
 	}
 	var sqlStore db.DB
 	var cfg *setting.Cfg
-	var dashboardStore *dashboardsDB.DashboardStore
+	var dashboardStore dashboards.Store
 	var publicdashboardStore *PublicDashboardStoreImpl
 	var savedDashboard *dashboards.Dashboard
 
@@ -104,7 +104,7 @@ func TestIntegrationExistsEnabledByAccessToken(t *testing.T) {
 	}
 	var sqlStore db.DB
 	var cfg *setting.Cfg
-	var dashboardStore *dashboardsDB.DashboardStore
+	var dashboardStore dashboards.Store
 	var publicdashboardStore *PublicDashboardStoreImpl
 	var savedDashboard *dashboards.Dashboard
 
@@ -177,7 +177,7 @@ func TestIntegrationExistsEnabledByDashboardUid(t *testing.T) {
 	}
 	var sqlStore db.DB
 	var cfg *setting.Cfg
-	var dashboardStore *dashboardsDB.DashboardStore
+	var dashboardStore dashboards.Store
 	var publicdashboardStore *PublicDashboardStoreImpl
 	var savedDashboard *dashboards.Dashboard
 
@@ -242,7 +242,7 @@ func TestIntegrationFindByDashboardUid(t *testing.T) {
 	}
 	var sqlStore db.DB
 	var cfg *setting.Cfg
-	var dashboardStore *dashboardsDB.DashboardStore
+	var dashboardStore dashboards.Store
 	var publicdashboardStore *PublicDashboardStoreImpl
 	var savedDashboard *dashboards.Dashboard
 
@@ -310,7 +310,7 @@ func TestIntegrationFindByAccessToken(t *testing.T) {
 	}
 	var sqlStore db.DB
 	var cfg *setting.Cfg
-	var dashboardStore *dashboardsDB.DashboardStore
+	var dashboardStore dashboards.Store
 	var publicdashboardStore *PublicDashboardStoreImpl
 	var savedDashboard *dashboards.Dashboard
 	var err error
@@ -378,7 +378,7 @@ func TestIntegrationCreatePublicDashboard(t *testing.T) {
 	}
 	var sqlStore db.DB
 	var cfg *setting.Cfg
-	var dashboardStore *dashboardsDB.DashboardStore
+	var dashboardStore dashboards.Store
 	var publicdashboardStore *PublicDashboardStoreImpl
 	var savedDashboard *dashboards.Dashboard
 	var savedDashboard2 *dashboards.Dashboard
@@ -457,7 +457,7 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 	}
 	var sqlStore db.DB
 	var cfg *setting.Cfg
-	var dashboardStore *dashboardsDB.DashboardStore
+	var dashboardStore dashboards.Store
 	var publicdashboardStore *PublicDashboardStoreImpl
 	var savedDashboard *dashboards.Dashboard
 	var anotherSavedDashboard *dashboards.Dashboard
@@ -562,7 +562,7 @@ func TestIntegrationGetOrgIdByAccessToken(t *testing.T) {
 	}
 	var sqlStore db.DB
 	var cfg *setting.Cfg
-	var dashboardStore *dashboardsDB.DashboardStore
+	var dashboardStore dashboards.Store
 	var publicdashboardStore *PublicDashboardStoreImpl
 	var savedDashboard *dashboards.Dashboard
 	var err error
@@ -634,7 +634,7 @@ func TestIntegrationDelete(t *testing.T) {
 	}
 	var sqlStore db.DB
 	var cfg *setting.Cfg
-	var dashboardStore *dashboardsDB.DashboardStore
+	var dashboardStore dashboards.Store
 	var publicdashboardStore *PublicDashboardStoreImpl
 	var savedDashboard *dashboards.Dashboard
 	var savedPublicDashboard *PublicDashboard
@@ -672,7 +672,7 @@ func TestIntegrationDelete(t *testing.T) {
 }
 
 // helper function to insert a dashboard
-func insertTestDashboard(t *testing.T, dashboardStore *dashboardsDB.DashboardStore, title string, orgId int64,
+func insertTestDashboard(t *testing.T, dashboardStore dashboards.Store, title string, orgId int64,
 	folderId int64, isFolder bool, tags ...interface{}) *dashboards.Dashboard {
 	t.Helper()
 	cmd := dashboards.SaveDashboardCommand{
