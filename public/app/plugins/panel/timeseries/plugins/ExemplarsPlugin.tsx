@@ -1,4 +1,4 @@
-import React, { useCallback, useLayoutEffect, useRef } from 'react';
+import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import uPlot from 'uplot';
 
 import {
@@ -21,8 +21,6 @@ interface ExemplarsPluginProps {
   timeZone: TimeZone;
   getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
   visibleSeries?: VisibleExemplarLabels;
-  clickOutsideExemplar: DataFrameFieldIndex | undefined;
-  setClickOutsideExemplar: React.Dispatch<DataFrameFieldIndex | undefined>;
 }
 
 export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
@@ -31,10 +29,10 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
   getFieldLinks,
   config,
   visibleSeries,
-  clickOutsideExemplar,
-  setClickOutsideExemplar,
 }) => {
   const plotInstance = useRef<uPlot>();
+
+  const [lockedExemplarFieldIndex, setLockedExemplarFieldIndex] = useState<DataFrameFieldIndex | undefined>();
 
   useLayoutEffect(() => {
     config.addHook('init', (u) => {
@@ -87,8 +85,8 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
 
       return (
         <ExemplarMarker
-          setClickedExemplarFieldIndex={setClickOutsideExemplar}
-          clickedExemplarFieldIndex={clickOutsideExemplar}
+          setClickedExemplarFieldIndex={setLockedExemplarFieldIndex}
+          clickedExemplarFieldIndex={lockedExemplarFieldIndex}
           timeZone={timeZone}
           getFieldLinks={getFieldLinks}
           dataFrame={dataFrame}
@@ -98,7 +96,7 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({
         />
       );
     },
-    [config, timeZone, getFieldLinks, visibleSeries, setClickOutsideExemplar, clickOutsideExemplar]
+    [config, timeZone, getFieldLinks, visibleSeries, setLockedExemplarFieldIndex, lockedExemplarFieldIndex]
   );
 
   return (

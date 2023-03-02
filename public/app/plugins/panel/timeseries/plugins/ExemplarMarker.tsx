@@ -26,7 +26,7 @@ interface ExemplarMarkerProps {
   getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
   exemplarColor?: string;
   clickedExemplarFieldIndex: DataFrameFieldIndex | undefined;
-  setClickedExemplarFieldIndex: React.Dispatch<DataFrameFieldIndex>;
+  setClickedExemplarFieldIndex: React.Dispatch<DataFrameFieldIndex | undefined>;
 }
 
 export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
@@ -136,6 +136,12 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
       });
     };
 
+    const onClose = () => {
+      setIsLocked(false);
+      setIsOpen(false);
+      setClickedExemplarFieldIndex(undefined);
+    };
+
     return (
       <div
         onMouseEnter={onMouseEnter}
@@ -156,10 +162,7 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
               }}
             >
               <CloseButton
-                onClick={() => {
-                  setIsLocked(false);
-                  setIsOpen(false);
-                }}
+                onClick={onClose}
                 style={{
                   position: 'relative',
                   top: 'auto',
@@ -211,6 +214,7 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
     styles,
     timeZone,
     isLocked,
+    setClickedExemplarFieldIndex,
   ]);
 
   const seriesColor = config
