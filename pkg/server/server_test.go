@@ -6,10 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/modules"
-
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/server/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/setting"
