@@ -184,14 +184,18 @@ func (f *FS) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error) {
 	if err != nil {
 		return plugins.JSONData{}, err
 	}
+	defer func() {
+		if reader == nil {
+			return
+		}
+		if err = reader.Close(); err != nil {
+			f.log.Warn("Failed to close JSON file", "path", pluginJSONPath, "err", err)
+		}
+	}()
 
 	plugin := plugins.JSONData{}
 	if err = json.NewDecoder(reader).Decode(&plugin); err != nil {
 		return plugins.JSONData{}, err
-	}
-
-	if err = reader.Close(); err != nil {
-		f.log.Warn("Failed to close JSON file", "path", pluginJSONPath, "err", err)
 	}
 
 	if err = validatePluginJSON(plugin); err != nil {

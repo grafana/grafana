@@ -129,6 +129,14 @@ func Calculate(mlog log.Logger, class plugins.Class, plugin plugins.FoundPlugin)
 			Status: plugins.SignatureInvalid,
 		}, nil
 	}
+	defer func() {
+		if f == nil {
+			return
+		}
+		if err = f.Close(); err != nil {
+			mlog.Warn("Failed to close plugin MANIFEST file", "err", err)
+		}
+	}()
 
 	byteValue, err := io.ReadAll(f)
 	if err != nil || len(byteValue) < 10 {
