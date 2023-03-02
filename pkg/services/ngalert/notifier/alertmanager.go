@@ -103,7 +103,8 @@ func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		retention:            retentionNotificationsAndSilences,
 		maintenanceFrequency: silenceMaintenanceInterval,
 		maintenanceFunc: func(state alertingNotify.State) (int64, error) {
-			return fileStore.Persist(ctx, silencesFilename, state)
+			// Detached context here is to make sure that when the service is shut down the persist operation is executed.
+			return fileStore.Persist(context.Background(), silencesFilename, state)
 		},
 	}
 
@@ -112,7 +113,8 @@ func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		retention:            retentionNotificationsAndSilences,
 		maintenanceFrequency: notificationLogMaintenanceInterval,
 		maintenanceFunc: func(state alertingNotify.State) (int64, error) {
-			return fileStore.Persist(ctx, notificationLogFilename, state)
+			// Detached context here is to make sure that when the service is shut down the persist operation is executed.
+			return fileStore.Persist(context.Background(), notificationLogFilename, state)
 		},
 	}
 
