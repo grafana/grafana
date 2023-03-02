@@ -144,7 +144,9 @@ e2e.scenario({
           .clearCookies()
           .request({ url: getPublicDashboardAPIUrl(String(url)), failOnStatusCode: false })
           .then((resp) => {
-            expect(resp.status).to.eq(404);
+            expect(resp.status).to.eq(403);
+            e2e.pages.PublicDashboard.page().should('not.be.visible');
+            e2e.pages.PublicDashboard.NotAvailable.container().should('be.visible');
           });
       });
   },
