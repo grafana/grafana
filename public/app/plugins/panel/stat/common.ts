@@ -122,18 +122,14 @@ export function formatDisplayValuesWithCustomUnits(
     return fieldValues;
   }
 
-  function safeAppend(toPrepend = '', toAppend = '') {
-    return `${toPrepend}${toAppend}`;
-  }
-
   return fieldValues.map((fieldValue) => {
     const { display } = fieldValue;
     return {
       ...fieldValue,
       display: {
         ...display,
-        prefix: safeAppend(prefix, display.prefix ?? ''),
-        suffix: safeAppend(display.suffix ?? '', suffix),
+        prefix: `${prefix}${display.prefix ?? ''}`,
+        suffix: `${display.suffix ?? ''}${suffix}`,
       },
     };
   });
