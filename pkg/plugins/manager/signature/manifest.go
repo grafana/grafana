@@ -112,9 +112,6 @@ func Calculate(mlog log.Logger, class plugins.Class, plugin plugins.FoundPlugin)
 		}, nil
 	}
 
-	// nolint:gosec
-	// We can ignore the gosec G304 warning on this one because `manifestPath` is based
-	// on plugin the folder structure on disk and not user input.
 	f, err := plugin.FS.Open("MANIFEST.txt")
 	if err != nil {
 		if errors.Is(err, plugins.ErrFileNotExist) {
