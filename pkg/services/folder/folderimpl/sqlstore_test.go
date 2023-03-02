@@ -196,6 +196,113 @@ func TestIntegrationDelete(t *testing.T) {
 	})
 }
 
+func TestIntegrationDeleteNestedFolders(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	db := sqlstore.InitTestDB(t)
+	quotaService := quotatest.New(false, nil)
+	folderStore := ProvideDashboardFolderStore(db)
+
+	cfg := setting.NewCfg()
+	cfg.RBACEnabled = false
+
+	featuresFlagOn := featuremgmt.WithFeatures("nestedFolders")
+	dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuresFlagOn, tagimpl.ProvideService(db, db.Cfg), quotaService)
+	require.NoError(t, err)
+	nestedFolderStore := ProvideStore(db, db.Cfg, featuresFlagOn)
+
+	serviceWithFlagOn := &Service{
+		cfg:                  cfg,
+		log:                  log.New("test-folder-service"),
+		dashboardStore:       dashStore,
+		dashboardFolderStore: folderStore,
+		store:                nestedFolderStore,
+		features:             featuresFlagOn,
+		bus:                  bus.ProvideBus(tracing.InitializeTracerForTest()),
+		db:                   db,
+	}
+
+	t.Run("With nested folder feature flag on", func(t *testing.T) {
+		origNewGuardian := guardian.New
+		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
+
+		createCmd := folder.CreateFolderCommand{
+			OrgID:        orgID,
+			ParentUID:    "",
+			SignedInUser: &user.SignedInUser{UserID: 1, OrgID: orgID},
+		}
+		ancestorUIDs := CreateSubTree(t, nestedFolderStore, serviceWithFlagOn, 3, "", createCmd)
+
+		deleteCmd := folder.DeleteFolderCommand{
+			UID:          ancestorUIDs[0],
+			OrgID:        orgID,
+			SignedInUser: &user.SignedInUser{UserID: 1, OrgID: orgID},
+		}
+		err = serviceWithFlagOn.Delete(context.Background(), &deleteCmd)
+		require.NoError(t, err)
+
+		for i, uid := range ancestorUIDs {
+			// dashboard table
+			_, err := serviceWithFlagOn.getFolderByUID(context.Background(), orgID, uid)
+			require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
+			// folder table
+			_, err = serviceWithFlagOn.store.Get(context.Background(), folder.GetFolderQuery{UID: &ancestorUIDs[i], OrgID: orgID})
+			require.ErrorIs(t, err, folder.ErrFolderNotFound)
+		}
+		t.Cleanup(func() {
+			guardian.New = origNewGuardian
+		})
+	})
+	t.Run("With feature flag unset", func(t *testing.T) {
+		featuresFlagOff := featuremgmt.WithFeatures()
+		dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuresFlagOff, tagimpl.ProvideService(db, db.Cfg), quotaService)
+		require.NoError(t, err)
+		nestedFolderStore := ProvideStore(db, db.Cfg, featuresFlagOff)
+
+		serviceWithFlagOff := &Service{
+			cfg:                  cfg,
+			log:                  log.New("test-folder-service"),
+			dashboardStore:       dashStore,
+			dashboardFolderStore: folderStore,
+			store:                nestedFolderStore,
+			features:             featuresFlagOff,
+			bus:                  bus.ProvideBus(tracing.InitializeTracerForTest()),
+			db:                   db,
+		}
+
+		origNewGuardian := guardian.New
+		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
+
+		createCmd := folder.CreateFolderCommand{
+			OrgID:        orgID,
+			ParentUID:    "",
+			SignedInUser: &user.SignedInUser{UserID: 1, OrgID: orgID},
+		}
+		ancestorUIDs := CreateSubTree(t, nestedFolderStore, serviceWithFlagOn, 1, "", createCmd)
+
+		deleteCmd := folder.DeleteFolderCommand{
+			UID:          ancestorUIDs[0],
+			OrgID:        orgID,
+			SignedInUser: &user.SignedInUser{UserID: 1, OrgID: orgID},
+		}
+		err = serviceWithFlagOff.Delete(context.Background(), &deleteCmd)
+		require.NoError(t, err)
+
+		for i, uid := range ancestorUIDs {
+			// dashboard table
+			_, err := serviceWithFlagOff.getFolderByUID(context.Background(), orgID, uid)
+			require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
+			// folder table
+			_, err = serviceWithFlagOff.store.Get(context.Background(), folder.GetFolderQuery{UID: &ancestorUIDs[i], OrgID: orgID})
+			require.NoError(t, err)
+		}
+		t.Cleanup(func() {
+			guardian.New = origNewGuardian
+		})
+	})
+}
+
 func TestIntegrationUpdate(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
@@ -739,66 +846,4 @@ func assertChildrenUIDs(t *testing.T, store *sqlStore, f *folder.Folder, expecte
 		actualChildrenUIDs = append(actualChildrenUIDs, f.UID)
 	}
 	assert.Equal(t, expected, actualChildrenUIDs)
-}
-
-func TestIntegrationNestedFolderDelete(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-	t.Run("Nested folder deletion", func(t *testing.T) {
-		db := sqlstore.InitTestDB(t)
-		quotaService := quotatest.New(false, nil)
-		dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuremgmt.WithFeatures("nestedFolders"), tagimpl.ProvideService(db, db.Cfg), quotaService)
-		require.NoError(t, err)
-		nestedFolderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures("nestedFolders"))
-		folderStore := ProvideDashboardFolderStore(db)
-
-		cfg := setting.NewCfg()
-		cfg.RBACEnabled = false
-		features := featuremgmt.WithFeatures("nestedFolders")
-
-		service := &Service{
-			cfg:                  cfg,
-			log:                  log.New("test-folder-service"),
-			dashboardStore:       dashStore,
-			dashboardFolderStore: folderStore,
-			store:                nestedFolderStore,
-			features:             features,
-			bus:                  bus.ProvideBus(tracing.InitializeTracerForTest()),
-			db:                   db,
-		}
-
-		t.Run("Given user has permission to save", func(t *testing.T) {
-			origNewGuardian := guardian.New
-			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
-
-			t.Run("When deleting folder by uid should not return access denied error", func(t *testing.T) {
-				createCmd := folder.CreateFolderCommand{
-					OrgID:        orgID,
-					ParentUID:    "",
-					SignedInUser: &user.SignedInUser{UserID: 1, OrgID: orgID},
-				}
-				ancestorUIDs := CreateSubTree(t, nestedFolderStore, service, 3, "", createCmd)
-
-				deleteCmd := folder.DeleteFolderCommand{
-					UID:          ancestorUIDs[0],
-					OrgID:        orgID,
-					SignedInUser: &user.SignedInUser{UserID: 1, OrgID: orgID},
-				}
-				err = service.Delete(context.Background(), &deleteCmd)
-				require.NoError(t, err)
-
-				for i, uid := range ancestorUIDs {
-					// double check that we need both get calls to cover both tables
-					_, err := service.getFolderByUID(context.Background(), orgID, uid)
-					require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
-					_, err = service.store.Get(context.Background(), folder.GetFolderQuery{UID: &ancestorUIDs[i], OrgID: orgID})
-					require.ErrorIs(t, err, folder.ErrFolderNotFound)
-				}
-			})
-			t.Cleanup(func() {
-				guardian.New = origNewGuardian
-			})
-		})
-	})
 }

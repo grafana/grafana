@@ -428,7 +428,6 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 	err := s.db.InTransaction(ctx, func(ctx context.Context) error {
 		if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
 			subfolders, err := s.nestedFolderDelete(ctx, cmd)
-			fmt.Println("subfolders:", subfolders)
 
 			if err != nil {
 				logger.Error("the delete folder on folder table failed with err: ", "error", err)
@@ -463,42 +462,6 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 	})
 
 	return err
-}
-
-// update so that we create result slice inside the function
-func deleteFn(ctx context.Context, cmd *folder.DeleteFolderCommand, logger log.Logger, result []string, s *Service) error {
-	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
-		subfolders, err := s.nestedFolderDelete(ctx, cmd)
-		if err != nil {
-			logger.Error("the delete folder on folder table failed with err: ", "error", err)
-			return err
-		}
-		result = append(result, subfolders...)
-	}
-
-	for _, folder := range result {
-		dashFolder, err := s.dashboardFolderStore.GetFolderByUID(ctx, cmd.OrgID, folder)
-		if err != nil {
-			return err
-		}
-
-		guard, err := guardian.NewByUID(ctx, dashFolder.UID, cmd.OrgID, cmd.SignedInUser)
-		if err != nil {
-			return err
-		}
-
-		if canSave, err := guard.CanDelete(); err != nil || !canSave {
-			if err != nil {
-				return toFolderError(err)
-			}
-			return dashboards.ErrFolderAccessDenied
-		}
-		err = s.legacyDelete(ctx, cmd, dashFolder)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func (s *Service) legacyDelete(ctx context.Context, cmd *folder.DeleteFolderCommand, dashFolder *folder.Folder) error {

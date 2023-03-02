@@ -380,32 +380,6 @@ func TestNestedFolderService(t *testing.T) {
 			// CreateFolder should not call the folder store create if the feature toggle is not enabled.
 			require.False(t, nestedFolderStore.CreateCalled)
 		})
-
-		t.Run("When delete folder, no delete in folder table done", func(t *testing.T) {
-			g := guardian.New
-			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
-			t.Cleanup(func() {
-				guardian.New = g
-			})
-
-			var actualCmd *dashboards.DeleteDashboardCommand
-			dashStore := &dashboards.FakeDashboardStore{}
-			dashStore.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-				actualCmd = args.Get(1).(*dashboards.DeleteDashboardCommand)
-			}).Return(nil).Once()
-
-			dashboardFolderStore := foldertest.NewFakeFolderStore(t)
-			dashboardFolderStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(&folder.Folder{}, nil)
-
-			nestedFolderStore := NewFakeStore()
-
-			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures(), nil, dbtest.NewFakeDB())
-			err := deleteFn(context.Background(), &folder.DeleteFolderCommand{UID: "myFolder", OrgID: orgID, SignedInUser: usr}, log.New("test-folder-service"), []string{"myFolder"}, folderSvc.(*Service))
-			require.NoError(t, err)
-			require.NotNil(t, actualCmd)
-
-			require.False(t, nestedFolderStore.DeleteCalled)
-		})
 	})
 
 	t.Run("with nested folder feature flag on", func(t *testing.T) {
@@ -699,36 +673,6 @@ func TestNestedFolderService(t *testing.T) {
 			f, err := folderSvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "newFolder2", OrgID: orgID, SignedInUser: usr})
 			require.Error(t, err, folder.ErrCircularReference)
 			require.Nil(t, f)
-		})
-
-		// FIX THIS TEST
-		t.Run("delete with success", func(t *testing.T) {
-			g := guardian.New
-			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
-			t.Cleanup(func() {
-				guardian.New = g
-			})
-
-			dashStore := &dashboards.FakeDashboardStore{}
-			var actualCmd *dashboards.DeleteDashboardCommand
-			dashStore.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-				actualCmd = args.Get(1).(*dashboards.DeleteDashboardCommand)
-			}).Return(nil).Once()
-
-			dashboardFolderStore := foldertest.NewFakeFolderStore(t)
-			dashboardFolderStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(&folder.Folder{}, nil)
-
-			nestedFolderStore := NewFakeStore()
-			nestedFolderStore.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
-
-			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
-				ExpectedEvaluate: true,
-			}, dbtest.NewFakeDB())
-			err := deleteFn(context.Background(), &folder.DeleteFolderCommand{UID: "myFolder", OrgID: orgID, SignedInUser: usr}, log.New("test-folder-service"), []string{"myFolder"}, folderSvc.(*Service))
-			require.NoError(t, err)
-			require.NotNil(t, actualCmd)
-
-			require.True(t, nestedFolderStore.DeleteCalled)
 		})
 
 		t.Run("create returns error if maximum depth reached", func(t *testing.T) {
