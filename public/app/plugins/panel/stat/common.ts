@@ -9,6 +9,7 @@ import {
   standardEditorsRegistry,
   FieldDisplay,
   FieldConfigEditorBuilder,
+  FieldType,
 } from '@grafana/data';
 import { SingleStatBaseOptions, VizOrientation } from '@grafana/schema';
 
@@ -123,15 +124,20 @@ export function formatDisplayValuesWithCustomUnits(
   }
 
   return fieldValues.map((fieldValue) => {
-    const { display } = fieldValue;
-    return {
-      ...fieldValue,
-      display: {
-        ...display,
-        prefix: `${prefix}${display.prefix ?? ''}`,
-        suffix: `${display.suffix ?? ''}${suffix}`,
-      },
-    };
+    const fieldType = fieldValue?.sourceField?.type;
+    // Test for FieldType.number, since that is the only type on which formatting is enforced
+    if (fieldType === FieldType.number) {
+      const { display } = fieldValue;
+      return {
+        ...fieldValue,
+        display: {
+          ...display,
+          prefix: `${prefix}${display.prefix ?? ''}`,
+          suffix: `${display.suffix ?? ''}${suffix}`,
+        },
+      };
+    }
+    return fieldValue;
   });
 }
 
