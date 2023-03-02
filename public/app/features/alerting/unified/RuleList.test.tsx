@@ -492,7 +492,6 @@ describe('RuleList', () => {
     });
 
     await renderRuleList();
-    // await waitFor(() => expect(ui.ruleGroup.queryAll()).toHaveLength(2), { timeout: 5000 });
 
     const groups = await ui.ruleGroup.findAll();
     expect(groups).toHaveLength(2);

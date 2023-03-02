@@ -77,6 +77,9 @@ export const useFilteredRules = (namespaces: CombinedRuleNamespace[], filterStat
   return useMemo(() => filterRules(namespaces, filterState), [namespaces, filterState]);
 };
 
+// Options details can be found here https://github.com/leeoniya/uFuzzy#options
+// The following configuration complies with Damerau-Levenshtein distance
+// https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance
 const ufuzzy = new uFuzzy({
   intraMode: 1,
   intraIns: 1,
@@ -98,7 +101,7 @@ export const filterRules = (
     );
   }
 
-  const namespaceFilter = filterState.namespace?.toLowerCase();
+  const namespaceFilter = filterState.namespace;
   if (namespaceFilter) {
     const namespaceHaystack = filteredNamespaces.map((ns) => ns.name);
 
@@ -116,7 +119,7 @@ export const filterRules = (
 
 const reduceNamespaces = (filterState: RulesFilter) => {
   return (namespaceAcc: CombinedRuleNamespace[], namespace: CombinedRuleNamespace) => {
-    const groupNameFilter = filterState.groupName?.toLowerCase();
+    const groupNameFilter = filterState.groupName;
     let filteredGroups = namespace.groups;
 
     if (groupNameFilter) {

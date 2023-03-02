@@ -167,7 +167,6 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
               <Input
                 key={queryStringKey}
                 prefix={searchIcon}
-                // onChange={handleQueryStringChange}
                 onKeyPress={handleQueryStringChange}
                 defaultValue={searchQuery}
                 placeholder="Search"
