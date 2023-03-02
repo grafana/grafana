@@ -409,6 +409,34 @@ describe('createPluginExtensionRegistry()', () => {
 
       expect(commandErrorHandler).toBeCalledWith(expect.any(Function), context);
     });
+
+    it('should wrap handler function with extension error handling when no configure function is added', () => {
+      const registry = createPluginExtensionRegistry([
+        {
+          pluginId,
+          linkExtensions: [],
+          commandExtensions: [
+            {
+              placement: 'grafana/dashboard/panel/menu',
+              title: 'Open incident',
+              description: 'You can create an incident from this context',
+              handler: () => {},
+            },
+          ],
+        },
+      ]);
+
+      const extensions = registry['grafana/dashboard/panel/menu'];
+      const [item] = extensions;
+      const context = {};
+      const extension = item?.configure?.(context);
+
+      assertPluginExtensionCommand(extension);
+
+      extension.callHandlerWithContext();
+
+      expect(commandErrorHandler).toBeCalledWith(expect.any(Function), context);
+    });
   });
 });
 
