@@ -7,7 +7,7 @@ import {
   PluginExtensionLink,
   PluginExtensionTypes,
 } from '@grafana/data';
-import type { PluginExtensionRegistry, RegistryConfigureExtension } from '@grafana/runtime';
+import type { PluginExtensionRegistry, PluginExtensionRegistryItem } from '@grafana/runtime';
 
 import { PluginPreloadResult } from '../pluginPreloader';
 
@@ -77,7 +77,7 @@ export function createPluginExtensionRegistry(preloadResults: PluginPreloadResul
 function createRegistryCommand(
   pluginId: string,
   config: AppPluginExtensionCommandConfig
-): RegistryConfigureExtension<PluginExtensionCommand> | undefined {
+): PluginExtensionRegistryItem<PluginExtensionCommand> | undefined {
   const id = `${pluginId}${config.placement}${config.title}`;
 
   const extension = Object.freeze({
@@ -94,7 +94,7 @@ function createRegistryCommand(
 function createRegistryLink(
   pluginId: string,
   config: AppPluginExtensionLinkConfig
-): RegistryConfigureExtension<PluginExtensionLink> | undefined {
+): PluginExtensionRegistryItem<PluginExtensionLink> | undefined {
   if (!isValidLinkPath(pluginId, config.path)) {
     return undefined;
   }
@@ -119,7 +119,7 @@ function createLinkConfigure(
   pluginId: string,
   config: AppPluginExtensionLinkConfig,
   extension: PluginExtensionLink
-): RegistryConfigureExtension<PluginExtensionLink> {
+): PluginExtensionRegistryItem<PluginExtensionLink> {
   if (!config.configure) {
     return () => extension;
   }
@@ -141,7 +141,7 @@ function createCommandConfigure(
   pluginId: string,
   config: AppPluginExtensionCommandConfig,
   extension: PluginExtensionCommand
-): RegistryConfigureExtension<PluginExtensionCommand> {
+): PluginExtensionRegistryItem<PluginExtensionCommand> {
   const options = {
     pluginId: pluginId,
     title: config.title,
@@ -166,7 +166,7 @@ function createCommandConfigure(
 
 function mapLinkToRegistryType(
   extension: PluginExtensionLink
-): (configure: ConfigureFunc<AppPluginExtensionLink>) => RegistryConfigureExtension<PluginExtensionLink> {
+): (configure: ConfigureFunc<AppPluginExtensionLink>) => PluginExtensionRegistryItem<PluginExtensionLink> {
   const configurable: AppPluginExtensionLink = {
     title: extension.title,
     description: extension.description,
@@ -195,7 +195,7 @@ function mapCommandToRegistryType(
   extension: PluginExtensionCommand,
   config: AppPluginExtensionCommandConfig,
   createHandlerFunc: (handler: CommandHandlerFunc) => CommandHandlerFunc
-): (configure: ConfigureFunc<AppPluginExtensionCommand>) => RegistryConfigureExtension<PluginExtensionCommand> {
+): (configure: ConfigureFunc<AppPluginExtensionCommand>) => PluginExtensionRegistryItem<PluginExtensionCommand> {
   const configurable: AppPluginExtensionCommand = {
     title: extension.title,
     description: extension.description,

@@ -10,7 +10,7 @@ export * from './LocationService';
 export * from './appEvents';
 export {
   type PluginExtensionRegistry,
-  type PluginExtensionRegistryItem as RegistryConfigureExtension,
+  type PluginExtensionRegistryItem,
   setPluginsExtensionRegistry,
 } from './pluginExtensions/registry';
 export {

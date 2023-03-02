@@ -2,7 +2,6 @@ import { PanelMenuItem, PluginExtension, PluginExtensionLink, PluginExtensionTyp
 import {
   PluginExtensionPanelContext,
   PluginExtensionRegistryItem,
-  RegistryConfigureExtension,
   setPluginsExtensionRegistry,
 } from '@grafana/runtime';
 import { LoadingState } from '@grafana/schema';
@@ -194,7 +193,7 @@ describe('getPanelMenu()', () => {
     });
 
     it('should use extension for panel menu returned by configure function', () => {
-      const configure: RegistryConfigureExtension<PluginExtensionLink> = () => ({
+      const configure: PluginExtensionRegistryItem<PluginExtensionLink> = () => ({
         title: 'Wohoo',
         type: PluginExtensionTypes.link,
         description: 'Declaring an incident in the app',
@@ -334,7 +333,7 @@ describe('getPanelMenu()', () => {
     });
 
     it('should pass context that can not be edited in configure function', () => {
-      const configure: RegistryConfigureExtension<PluginExtensionLink> = (context) => {
+      const configure: PluginExtensionRegistryItem<PluginExtensionLink> = (context) => {
         // trying to change values in the context
         // @ts-ignore
         context.pluginId = 'changed';
@@ -509,12 +508,8 @@ describe('getPanelMenu()', () => {
 
 function createRegistryItem<T extends PluginExtension, C extends object = object>(
   extension: T,
-  configure?: RegistryConfigureExtension<T, C>
+  configure?: PluginExtensionRegistryItem<T, C>
 ): PluginExtensionRegistryItem<T, C> {
   const defaultConfigure = () => extension;
-
-  return {
-    extension,
-    configure: configure || defaultConfigure,
-  };
+  return configure || defaultConfigure;
 }
