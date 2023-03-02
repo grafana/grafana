@@ -33,7 +33,7 @@ import { CustomVariableModel } from '../../../features/variables/types';
 
 import { LokiDatasource, REF_ID_DATA_SAMPLES } from './datasource';
 import { createLokiDatasource, createMetadataRequest } from './mocks';
-import { runPartitionedQuery } from './querySplitting';
+import { runPartitionedQueries } from './querySplitting';
 import { parseToNodeNamesArray } from './queryUtils';
 import { LokiOptions, LokiQuery, LokiQueryType, LokiVariableQueryType, SupportingQueryType } from './types';
 import { LokiVariableSupport } from './variables';
@@ -1105,7 +1105,7 @@ describe('LokiDatasource', () => {
   describe('Query splitting', () => {
     beforeAll(() => {
       config.featureToggles.lokiQuerySplitting = true;
-      jest.mocked(runPartitionedQuery).mockReturnValue(
+      jest.mocked(runPartitionedQueries).mockReturnValue(
         of({
           data: [],
         })
@@ -1131,7 +1131,7 @@ describe('LokiDatasource', () => {
       });
 
       await expect(ds.query(query)).toEmitValuesWith(() => {
-        expect(runPartitionedQuery).toHaveBeenCalled();
+        expect(runPartitionedQueries).toHaveBeenCalled();
       });
     });
   });
