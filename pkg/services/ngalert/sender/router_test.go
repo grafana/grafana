@@ -494,7 +494,7 @@ func TestBuildExternalURL(t *testing.T) {
 		{
 			name: "adds /alertmanager to path when implementation is mimir",
 			ds: &datasources.DataSource{
-				URL: "https://localhost:9000",
+				Url: "https://localhost:9000",
 				JsonData: func() *simplejson.Json {
 					r := simplejson.New()
 					r.Set("implementation", "mimir")
@@ -506,7 +506,7 @@ func TestBuildExternalURL(t *testing.T) {
 		{
 			name: "adds /alertmanager to path when implementation is cortex",
 			ds: &datasources.DataSource{
-				URL: "https://localhost:9000/path/to/am",
+				Url: "https://localhost:9000/path/to/am",
 				JsonData: func() *simplejson.Json {
 					r := simplejson.New()
 					r.Set("implementation", "cortex")
@@ -518,7 +518,7 @@ func TestBuildExternalURL(t *testing.T) {
 		{
 			name: "do nothing when implementation is prometheus",
 			ds: &datasources.DataSource{
-				URL: "https://localhost:9000/path/to/am",
+				Url: "https://localhost:9000/path/to/am",
 				JsonData: func() *simplejson.Json {
 					r := simplejson.New()
 					r.Set("implementation", "prometheus")
