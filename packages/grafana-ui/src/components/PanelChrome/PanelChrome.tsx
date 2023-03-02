@@ -7,7 +7,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { useStyles2, useTheme2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { LoadingBar } from '../LoadingBar/LoadingBar';
-import { Tooltip } from '../Tooltip';
+import { PopoverContent, Tooltip } from '../Tooltip';
 
 import { HoverWidget } from './HoverWidget';
 import { PanelDescription } from './PanelDescription';
@@ -39,7 +39,7 @@ export interface PanelChromeProps {
   /**
    * Used to display status message (used for panel errors currently)
    */
-  statusMessage?: string;
+  statusMessage?: PopoverContent;
   /**
    * Handle opening error details view (like inspect / error tab)
    */

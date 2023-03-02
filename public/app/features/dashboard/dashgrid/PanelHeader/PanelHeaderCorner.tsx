@@ -20,7 +20,7 @@ export interface Props {
   description?: string;
   scopedVars?: ScopedVars;
   links?: LinkModelSupplier<PanelModel>;
-  error?: string;
+  error?: PopoverContent;
 }
 
 export class PanelHeaderCorner extends Component<Props> {

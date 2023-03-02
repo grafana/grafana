@@ -34,6 +34,7 @@ import {
   PanelPadding,
   SeriesVisibilityChangeMode,
   AdHocFilterItem,
+  PopoverContent,
 } from '@grafana/ui';
 import { PANEL_BORDER } from 'app/core/constants';
 import { profiler } from 'app/core/profiler';
@@ -49,6 +50,7 @@ import { RenderEvent } from 'app/types/events';
 import { isSoloRoute } from '../../../routes/utils';
 import { deleteAnnotation, saveAnnotation, updateAnnotation } from '../../annotations/api';
 import { getDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
+import { panelError } from '../components/PanelEditor/PanelEditorTableView';
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { DashboardModel, PanelModel } from '../state';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
@@ -78,7 +80,7 @@ export interface Props {
 export interface State {
   isFirstLoad: boolean;
   renderCounter: number;
-  errorMessage?: string;
+  errorMessage?: PopoverContent;
   refreshWhenInView: boolean;
   context: PanelContext;
   data: PanelData;
@@ -289,7 +291,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     }
 
     let { isFirstLoad } = this.state;
-    let errorMessage: string | undefined;
+    let errorMessage: PopoverContent | undefined;
 
     switch (data.state) {
       case LoadingState.Loading:
@@ -300,13 +302,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         }
         break;
       case LoadingState.Error:
-        const { error } = data;
-        if (error) {
-          if (errorMessage !== error.message) {
-            errorMessage = error.message;
-          }
-        }
-        break;
+        errorMessage = panelError(data);
       case LoadingState.Done:
         // If we are doing a snapshot save data in panel model
         if (dashboard.snapshot) {

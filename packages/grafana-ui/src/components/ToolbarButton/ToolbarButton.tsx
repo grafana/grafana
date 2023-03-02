@@ -9,7 +9,7 @@ import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 import { IconSize } from '../../types/icon';
 import { getPropertiesForVariant } from '../Button';
 import { Icon } from '../Icon/Icon';
-import { Tooltip } from '../Tooltip';
+import { PopoverContent, Tooltip } from '../Tooltip';
 
 type CommonProps = {
   /** Icon name */
@@ -17,7 +17,7 @@ type CommonProps = {
   /** Icon size */
   iconSize?: IconSize;
   /** Tooltip */
-  tooltip?: string;
+  tooltip?: PopoverContent;
   /** For image icons */
   imgSrc?: string;
   /** Alt text for imgSrc */
@@ -108,8 +108,12 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
 
 ToolbarButton.displayName = 'ToolbarButton';
 
-function getButtonAriaLabel(ariaLabel: string | undefined, tooltip: string | undefined) {
-  return ariaLabel ? ariaLabel : tooltip ? selectors.components.PageToolbar.item(tooltip) : undefined;
+function getButtonAriaLabel(ariaLabel: string | undefined, tooltip?: PopoverContent) {
+  return ariaLabel
+    ? ariaLabel
+    : typeof tooltip === 'string'
+    ? selectors.components.PageToolbar.item(tooltip)
+    : undefined;
 }
 
 function renderIcon(icon: IconName | React.ReactNode, iconSize?: IconSize) {

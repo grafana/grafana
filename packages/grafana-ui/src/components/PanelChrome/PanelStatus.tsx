@@ -5,10 +5,11 @@ import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 import { ToolbarButton } from '../ToolbarButton/ToolbarButton';
+import { PopoverContent } from '../Tooltip';
 
 export interface Props {
   className?: string;
-  message?: string;
+  message?: PopoverContent;
   onClick?: (e: React.SyntheticEvent) => void;
   ariaLabel?: string;
 }

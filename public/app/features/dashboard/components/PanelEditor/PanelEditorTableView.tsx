@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 
+import { PanelData } from '@grafana/data';
 import { RefreshEvent } from '@grafana/runtime';
-import { PanelChrome } from '@grafana/ui';
+import { PanelChrome, PopoverContent } from '@grafana/ui';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { PanelRenderer } from 'app/features/panel/components/PanelRenderer';
 import { PanelOptions } from 'app/plugins/panel/table/panelcfg.gen';
@@ -17,6 +18,28 @@ export interface Props {
   height: number;
   panel: PanelModel;
   dashboard: DashboardModel;
+}
+
+export function panelError(data: PanelData) {
+  let errorMessage: PopoverContent | undefined = undefined;
+  const { error, errors } = data;
+  if (errors?.length) {
+    if (errors.length > 1) {
+      errorMessage = (
+        <>
+          <b>Multiple errors found:</b>
+          {errors.map((e, i) => (
+            <li key={`query-error-${i}`}>{e.message}</li>
+          ))}
+        </>
+      );
+    } else {
+      errorMessage = errors[0].message;
+    }
+  } else if (error) {
+    errorMessage = error.message;
+  }
+  return errorMessage;
 }
 
 export function PanelEditorTableView({ width, height, panel, dashboard }: Props) {
@@ -53,7 +76,7 @@ export function PanelEditorTableView({ width, height, panel, dashboard }: Props)
     <PanelChrome width={width} height={height} padding="none">
       {(innerWidth, innerHeight) => (
         <>
-          <PanelHeaderCorner panel={panel} error={data?.error?.message} />
+          <PanelHeaderCorner panel={panel} error={panelError(data)} />
           <PanelRenderer
             title="Raw data"
             pluginId="table"
