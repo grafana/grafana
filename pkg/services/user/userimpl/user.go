@@ -611,7 +611,7 @@ func buildUserAnalyticsSettings(signedInUser user.SignedInUser, intercomSecret s
 	if signedInUser.ExternalAuthID != "" {
 		settings.Identifier = signedInUser.ExternalAuthID
 	} else {
-		settings.Identifier = signedInUser.Email + "@" + setting.AppUrl
+		settings.Identifier = signedInUser.Email
 	}
 
 	if intercomSecret != "" {
