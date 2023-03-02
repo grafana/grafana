@@ -7,8 +7,6 @@ import (
 
 	"xorm.io/xorm"
 
-	"github.com/grafana/grafana/pkg/util/errutil/errors"
-
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
@@ -133,7 +131,7 @@ func (ss *sqlStore) AddAPIKey(ctx context.Context, cmd *apikey.AddCommand) error
 		}
 
 		if _, err := sess.Insert(&t); err != nil {
-			return errors.Wrap(err, "failed to insert token")
+			return fmt.Errorf("%s: %w", "failed to insert token", err)
 		}
 		cmd.Result = &t
 		return nil

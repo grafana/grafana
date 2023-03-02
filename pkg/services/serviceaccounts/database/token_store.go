@@ -2,8 +2,8 @@ package database
 
 import (
 	"context"
-
-	"github.com/grafana/grafana/pkg/util/errutil/errors"
+	"errors"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/apikey"
@@ -33,7 +33,7 @@ func (s *ServiceAccountsStoreImpl) ListTokens(
 		sess = sess.Join("inner", quotedUser, quotedUser+".id = api_key.service_account_id").
 			Asc("api_key.name")
 
-		return errors.Wrap(sess.Find(&result), "list token error")
+		return fmt.Errorf("%s: %w", "list token error", sess.Find(&result))
 	})
 	return result, err
 }
