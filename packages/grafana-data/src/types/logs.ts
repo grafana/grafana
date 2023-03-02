@@ -5,6 +5,7 @@ import { DataFrame } from './dataFrame';
 import { DataQueryRequest, DataQueryResponse } from './datasource';
 import { DataQuery } from './query';
 import { AbsoluteTimeRange } from './time';
+export { LogsDedupStrategy, LogsSortOrder } from '@grafana/schema';
 
 /**
  * Mapping of log level abbreviation to canonical log level.
@@ -37,11 +38,6 @@ export enum LogsMetaKind {
   String,
   LabelsMap,
   Error,
-}
-
-export enum LogsSortOrder {
-  Descending = 'Descending',
-  Ascending = 'Ascending',
 }
 
 export interface LogsMetaItem {
@@ -104,13 +100,6 @@ export interface LogLabelStatsModel {
   count: number;
   proportion: number;
   value: string;
-}
-
-export enum LogsDedupStrategy {
-  none = 'none',
-  exact = 'exact',
-  numbers = 'numbers',
-  signature = 'signature',
 }
 
 /** @deprecated will be removed in the next major version */

@@ -65,6 +65,25 @@ func (ss *sqlStore) GetAllAPIKeys(ctx context.Context, orgID int64) ([]*apikey.A
 	return result, err
 }
 
+func (ss *sqlStore) CountAPIKeys(ctx context.Context, orgID int64) (int64, error) {
+	type result struct {
+		Count int64
+	}
+
+	r := result{}
+	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		rawSQL := "SELECT COUNT(*) AS count FROM api_key WHERE org_id = ? and service_account_id IS NULL"
+		if _, err := sess.SQL(rawSQL, orgID).Get(&r); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return 0, err
+	}
+	return r.Count, err
+}
+
 func (ss *sqlStore) DeleteApiKey(ctx context.Context, cmd *apikey.DeleteCommand) error {
 	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		rawSQL := "DELETE FROM api_key WHERE id=? and org_id=? and service_account_id IS NULL"
