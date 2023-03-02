@@ -181,17 +181,19 @@ func (pt *ProfileTree) String() string {
 
 // addSample adds a sample to the tree. As sample is just a single stack we just have to traverse the tree until it
 // starts to differ from the sample and add a new branch if needed. For example if we have a tree:
-// root --> func1 -> func2 -> func3
 //
-//	\-> func4
+//	root --> func1 -> func2 -> func3
+//		 \-> func4
 //
 // And we add a sample:
-// func1 -> func2 -> func5
-// We will get:
-// root --> func1 --> func2 --> func3
 //
-//	\                   \-> func5
-//	 \-> func4
+//	func1 -> func2 -> func5
+//
+// We will get:
+//
+//	root --> func1 --> func2 --> func3
+//	     \                   \-> func5
+//	      \-> func4
 //
 // While we add the current sample value to root -> func1 -> func2.
 func (pt *ProfileTree) addSample(profile *googlev1.Profile, sample *googlev1.Sample) {
