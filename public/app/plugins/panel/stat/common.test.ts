@@ -93,5 +93,21 @@ describe('formatting functions', () => {
       expect(updatedFieldValues[0].display.prefix).toBe('&$');
       expect(updatedFieldValues[0].display.suffix).toBe('%*');
     });
+    it('should handle prefixes and suffixes that are nullish in nature', () => {
+      // Empty object
+      const updatedFieldValues1 = formatDisplayValuesWithCustomUnits(mockFieldValues, {});
+
+      expect(updatedFieldValues1[0].display.prefix).toBe('$');
+      expect(updatedFieldValues1[0].display.suffix).toBe('%');
+
+      // Object with props with undefined values
+      const updatedFieldValues2 = formatDisplayValuesWithCustomUnits(mockFieldValues, {
+        prefix: undefined,
+        suffix: undefined,
+      });
+
+      expect(updatedFieldValues2[0].display.prefix).toBe('$');
+      expect(updatedFieldValues2[0].display.suffix).toBe('%');
+    });
   });
 });
