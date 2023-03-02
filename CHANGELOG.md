@@ -1,3 +1,12 @@
+<!-- 9.4.2 START -->
+
+# 9.4.2 (2023-03-02)
+
+### Bug fixes
+
+- **Alerting:** Fix boolean default in migration from false to 0. [#63952](https://github.com/grafana/grafana/pull/63952), [@alexmobo](https://github.com/alexmobo)
+
+<!-- 9.4.2 END -->
 <!-- 9.4.1 START -->
 
 # 9.4.1 (2023-02-28)
