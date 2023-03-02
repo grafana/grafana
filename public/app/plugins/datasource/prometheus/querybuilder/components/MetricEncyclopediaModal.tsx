@@ -1,12 +1,9 @@
 import { css } from '@emotion/css';
 import uFuzzy from '@leeoniya/ufuzzy';
-// import debounce from 'lodash'
 import { debounce } from 'lodash';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-// *** Feature Tracking
-// import { reportInteraction } from '@grafana/runtime';
 import { reportInteraction } from '@grafana/runtime';
 import {
   Button,

@@ -1,9 +1,10 @@
+import { css } from '@emotion/css';
 import React, { useCallback, useState } from 'react';
 
-import { DataSourceApi, PanelData, SelectableValue } from '@grafana/data';
-import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/experimental';
+import { DataSourceApi, GrafanaTheme2, PanelData, SelectableValue } from '@grafana/data';
+import { EditorRow } from '@grafana/experimental';
 import { config } from '@grafana/runtime';
-import { Input } from '@grafana/ui';
+import { Button, Tag, useStyles2 } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../../datasource';
 import { getMetadataString } from '../../language_provider';
@@ -43,6 +44,7 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
     onChange({ ...query, labels });
   };
 
+  const styles = useStyles2(getStyles);
   /**
    * Map metric metadata to SelectableValue for Select component and also adds defined template variables to the list.
    */
@@ -213,15 +215,28 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
       <EditorRow>
         {MetricEncyclopedia ? (
           <>
-            <EditorFieldGroup>
-              <EditorField label="Metric">
-                <Input
-                  value={query.metric}
-                  placeholder="Select metric"
-                  onClick={() => setMetricEncyclopediaModalOpen((prevValue) => !prevValue)}
-                />
-              </EditorField>
-            </EditorFieldGroup>
+            <Button
+              className={styles.button}
+              variant="secondary"
+              size="sm"
+              onClick={() => setMetricEncyclopediaModalOpen((prevValue) => !prevValue)}
+            >
+              Metric Encyclopedia
+            </Button>
+            {query.metric && (
+              <Tag
+                name={query.metric}
+                color="#3D71D9"
+                onClick={() => {
+                  onChange({ ...query, metric: '' });
+                }}
+                title="Click to remove metric"
+                className={css({
+                  margin: '10px 0 10px 0',
+                  backgroundColor: '#3D71D9',
+                })}
+              />
+            )}
             <MetricEncyclopediaModal
               datasource={datasource}
               isOpen={metricEncyclopediaModalOpen}
@@ -334,3 +349,11 @@ async function getMetrics(
 }
 
 PromQueryBuilder.displayName = 'PromQueryBuilder';
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    button: css`
+      height: auto;
+    `,
+  };
+};
