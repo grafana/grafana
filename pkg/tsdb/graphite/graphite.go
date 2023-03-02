@@ -151,7 +151,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 	s.tracer.Inject(ctx, graphiteReq.Header, span)
 
-	res, err := dsInfo.HTTPClient.Do(graphiteReq)
+	res, err := dsInfo.HTTPClient.Do(graphiteReq) //nolint:bodyclose // fixed in main
 	if res != nil {
 		span.SetAttributes("graphite.response.code", res.StatusCode, attribute.Key("graphite.response.code").Int(res.StatusCode))
 	}

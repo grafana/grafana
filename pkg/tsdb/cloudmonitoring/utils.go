@@ -15,10 +15,11 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"go.opentelemetry.io/otel/attribute"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
-	"go.opentelemetry.io/otel/attribute"
 )
 
 func addInterval(period string, field *data.Field) error {
@@ -81,7 +82,7 @@ func doRequestPage(ctx context.Context, logger log.Logger, r *http.Request, dsIn
 		r.Body = io.NopCloser(bytes.NewBuffer(buf))
 		r.Method = http.MethodPost
 	}
-	res, err := dsInfo.services[cloudMonitor].client.Do(r)
+	res, err := dsInfo.services[cloudMonitor].client.Do(r) //nolint:bodyclose // fixed in main
 	if err != nil {
 		return cloudMonitoringResponse{}, err
 	}
