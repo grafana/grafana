@@ -42,7 +42,8 @@ func (f *FS) Find(_ context.Context, pluginPaths ...string) ([]*plugins.FoundBun
 	for _, path := range pluginPaths {
 		exists, err := fs.Exists(path)
 		if err != nil {
-			f.log.Warn("Error occurred when checking if plugin directory exists", "path", path, "err", err)
+			f.log.Warn("Skipping finding plugins as an error occurred", "path", path, "err", err)
+			continue
 		}
 		if !exists {
 			f.log.Warn("Skipping finding plugins as directory does not exist", "path", path)
