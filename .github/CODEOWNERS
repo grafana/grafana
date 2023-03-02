@@ -155,6 +155,7 @@
 /pkg/services/featuremgmt/registry_dataviz_squad.go @grafana/dataviz-squad
 /pkg/services/featuremgmt/registry_user_essentials_squad.go @grafana/user-essentials
 /pkg/services/featuremgmt/registry_backend_platform_squad.go @grafana/backend-platform
+/pkg/services/featuremgmt/registry_plugins_platform_backend_squad.go @grafana/plugins-platform-backend
 
 # devenv
 # Backend code, developers environment
