@@ -63,11 +63,13 @@ InlineBanner.parameters = {
 
 export const Toast: ComponentStory<typeof Alert> = ({ severity }) => {
   return (
-    <Alert title="Toast" severity={severity} onRemove={action('Remove button clicked')} elevated>
-      <VerticalGroup>
-        <div>Child content that includes some alert details, like maybe what actually happened.</div>
-      </VerticalGroup>
-    </Alert>
+    <div className="page-alert-list">
+      <Alert title="Toast" severity={severity} onRemove={action('Remove button clicked')} elevated>
+        <VerticalGroup>
+          <div>Child content that includes some alert details, like maybe what actually happened.</div>
+        </VerticalGroup>
+      </Alert>
+    </div>
   );
 };
 
