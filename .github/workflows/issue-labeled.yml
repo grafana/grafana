@@ -39,7 +39,7 @@ jobs:
 
       - name: "Add to GitHub board"
         if: ${{ env.BOARD != 'null' }}
-        uses: leonsteinhaeuser/project-beta-automations@v1.3.0
+        uses: leonsteinhaeuser/project-beta-automations@v2.1.0
         with:
           project_id: ${{ env.BOARD }}
           organization: grafana

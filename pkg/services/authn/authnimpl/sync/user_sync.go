@@ -3,7 +3,6 @@ package sync
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -65,19 +64,15 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 	}
 
 	// Does user exist in the database?
-	usr, errUserInDB := s.getUser(ctx, id.AuthModule, id.AuthID, id.ClientParams.LookUpParams)
+	usr, userAuth, errUserInDB := s.getUser(ctx, id)
 	if errUserInDB != nil && !errors.Is(errUserInDB, user.ErrUserNotFound) {
-		s.log.Error("error retrieving user", "error", errUserInDB,
-			"auth_module", id.AuthModule, "auth_id", id.AuthID,
-			"lookup_params", id.ClientParams.LookUpParams,
-		)
+		s.log.FromContext(ctx).Error("Failed to fetch user", "error", errUserInDB, "auth_module", id.AuthModule, "auth_id", id.AuthID)
 		return errSyncUserInternal.Errorf("unable to retrieve user")
 	}
 
 	if errors.Is(errUserInDB, user.ErrUserNotFound) {
 		if !id.ClientParams.AllowSignUp {
-			s.log.Warn("not allowing login, user not found in internal user database and allow signup = false",
-				"auth_module", id.AuthModule)
+			s.log.FromContext(ctx).Warn("Failed to create user, signup is not allowed for module", "auth_module", id.AuthModule, "auth_id", id.AuthID)
 			return errSyncUserForbidden.Errorf("%w", login.ErrSignupNotAllowed)
 		}
 
@@ -85,38 +80,18 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 		var errCreate error
 		usr, errCreate = s.createUser(ctx, id)
 		if errCreate != nil {
-			s.log.Error("error creating user", "error", errCreate,
-				"auth_module", id.AuthModule, "auth_id", id.AuthID,
-				"id_login", id.Login, "id_email", id.Email,
-			)
+			s.log.FromContext(ctx).Error("Failed to create user", "error", errCreate, "auth_module", id.AuthModule, "auth_id", id.AuthID)
 			return errSyncUserInternal.Errorf("unable to create user")
+		}
+	} else {
+		// update user
+		if errUpdate := s.updateUserAttributes(ctx, usr, id, userAuth); errUpdate != nil {
+			s.log.FromContext(ctx).Error("Failed to update user", "error", errUpdate, "auth_module", id.AuthModule, "auth_id", id.AuthID)
+			return errSyncUserInternal.Errorf("unable to update user")
 		}
 	}
 
-	if errProtection := s.userProtectionService.AllowUserMapping(usr, id.AuthModule); errProtection != nil {
-		return errUserProtection.Errorf("user mapping not allowed: %w", errProtection)
-	}
-
-	// update user
-	if errUpdate := s.updateUserAttributes(ctx, usr, id); errUpdate != nil {
-		s.log.Error("error creating user", "error", errUpdate,
-			"auth_module", id.AuthModule, "auth_id", id.AuthID,
-			"login", usr.Login, "email", usr.Email,
-			"id_login", id.Login, "id_email", id.Email,
-		)
-		return errSyncUserInternal.Errorf("unable to update user")
-	}
-
 	syncUserToIdentity(usr, id)
-
-	// persist the latest auth info token
-	if errAuthInfo := s.updateAuthInfo(ctx, id); errAuthInfo != nil {
-		s.log.Error("error creating user", "error", errAuthInfo,
-			"auth_module", id.AuthModule, "auth_id", id.AuthID,
-		)
-		return errSyncUserInternal.Errorf("unable to update auth info")
-	}
-
 	return nil
 }
 
@@ -156,40 +131,65 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, identity *authn.Identit
 	go func(userID int64) {
 		defer func() {
 			if err := recover(); err != nil {
-				s.log.Error("panic during user last seen sync", "err", err)
+				s.log.Error("Panic during user last seen sync", "err", err)
 			}
 		}()
 
 		if err := s.userService.UpdateLastSeenAt(context.Background(), &user.UpdateUserLastSeenAtCommand{UserID: userID}); err != nil {
-			s.log.Error("failed to update last_seen_at", "err", err, "userId", userID)
+			s.log.Error("Failed to update last_seen_at", "err", err, "userId", userID)
 		}
 	}(id)
 
 	return nil
 }
 
-func (s *UserSync) updateAuthInfo(ctx context.Context, id *authn.Identity) error {
-	if id.AuthModule != "" && id.OAuthToken != nil && id.AuthID != "" {
+func (s *UserSync) EnableDisabledUserHook(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
+	if !identity.ClientParams.EnableDisabledUsers {
 		return nil
 	}
 
-	namespace, userID := id.NamespacedID()
-	if namespace != authn.NamespaceUser && userID <= 0 {
-		return fmt.Errorf("invalid namespace %q for user ID %q", namespace, userID)
+	if !identity.IsDisabled {
+		return nil
 	}
 
-	updateCmd := &login.UpdateAuthInfoCommand{
-		AuthModule: id.AuthModule,
-		AuthId:     id.AuthID,
-		UserId:     userID,
-		OAuthToken: id.OAuthToken,
+	namespace, id := identity.NamespacedID()
+	if namespace != authn.NamespaceUser {
+		return nil
 	}
 
-	s.log.Debug("Updating user_auth info", "user_id", userID)
-	return s.authInfoService.UpdateAuthInfo(ctx, updateCmd)
+	return s.userService.Disable(ctx, &user.DisableUserCommand{UserID: id, IsDisabled: false})
 }
 
-func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id *authn.Identity) error {
+func (s *UserSync) upsertAuthConnection(ctx context.Context, userID int64, identity *authn.Identity, createConnection bool) error {
+	if identity.AuthModule == "" {
+		return nil
+	}
+
+	// If a user does not a connection to a specific auth module, create it.
+	// This can happen when: using multiple auth client where the same user exists in several or
+	// changing to new auth client
+	if createConnection {
+		return s.authInfoService.SetAuthInfo(ctx, &login.SetAuthInfoCommand{
+			UserId:     userID,
+			AuthModule: identity.AuthModule,
+			AuthId:     identity.AuthID,
+			OAuthToken: identity.OAuthToken,
+		})
+	}
+
+	s.log.FromContext(ctx).Debug("Updating auth connection for user", "id", identity.ID)
+	return s.authInfoService.UpdateAuthInfo(ctx, &login.UpdateAuthInfoCommand{
+		UserId:     userID,
+		AuthId:     identity.AuthID,
+		AuthModule: identity.AuthModule,
+		OAuthToken: identity.OAuthToken,
+	})
+}
+
+func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id *authn.Identity, userAuth *login.UserAuth) error {
+	if errProtection := s.userProtectionService.AllowUserMapping(usr, id.AuthModule); errProtection != nil {
+		return errUserProtection.Errorf("user mapping not allowed: %w", errProtection)
+	}
 	// sync user info
 	updateCmd := &user.UpdateUserCommand{
 		UserID: usr.ID,
@@ -215,18 +215,9 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 	}
 
 	if needsUpdate {
-		s.log.Debug("Syncing user info", "id", usr.ID, "update", updateCmd)
+		s.log.FromContext(ctx).Debug("Syncing user info", "id", id.ID, "update", updateCmd)
 		if err := s.userService.Update(ctx, updateCmd); err != nil {
 			return err
-		}
-	}
-
-	if usr.IsDisabled && id.ClientParams.EnableDisabledUsers {
-		usr.IsDisabled = false
-		if errDisableUser := s.userService.Disable(ctx,
-			&user.DisableUserCommand{
-				UserID: usr.ID, IsDisabled: false}); errDisableUser != nil {
-			return errDisableUser
 		}
 	}
 
@@ -238,17 +229,17 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 		}
 	}
 
-	return nil
+	return s.upsertAuthConnection(ctx, usr.ID, id, userAuth == nil)
 }
 
 func (s *UserSync) createUser(ctx context.Context, id *authn.Identity) (*user.User, error) {
-	// quota check (FIXME: (jguer) this should be done in the user service)
-	// we may insert in both user and org_user tables
+	// FIXME(jguer): this should be done in the user service
+	// quota check: we can have quotas on both global and org level
 	// therefore we need to query check quota for both user and org services
 	for _, srv := range []string{user.QuotaTargetSrv, org.QuotaTargetSrv} {
 		limitReached, errLimit := s.quotaService.CheckQuotaReached(ctx, quota.TargetSrv(srv), nil)
 		if errLimit != nil {
-			s.log.Error("error getting user quota", "error", errLimit)
+			s.log.FromContext(ctx).Error("Failed to check quota", "error", errLimit)
 			return nil, errSyncUserInternal.Errorf("%w", login.ErrGettingUserQuota)
 		}
 		if limitReached {
@@ -272,49 +263,57 @@ func (s *UserSync) createUser(ctx context.Context, id *authn.Identity) (*user.Us
 		return nil, errCreateUser
 	}
 
-	if id.AuthModule != "" && id.AuthID != "" {
-		if errSetAuth := s.authInfoService.SetAuthInfo(ctx, &login.SetAuthInfoCommand{
-			UserId:     usr.ID,
-			AuthModule: id.AuthModule,
-			AuthId:     id.AuthID,
-			OAuthToken: id.OAuthToken,
-		}); errSetAuth != nil {
-			return nil, errSetAuth
-		}
+	err := s.upsertAuthConnection(ctx, usr.ID, id, true)
+	if err != nil {
+		return nil, err
 	}
 
 	return usr, nil
 }
 
-func (s *UserSync) getUser(ctx context.Context, authModule, authID string, params login.UserLookupParams) (*user.User, error) {
+func (s *UserSync) getUser(ctx context.Context, identity *authn.Identity) (*user.User, *login.UserAuth, error) {
 	// Check auth info fist
-	if authID != "" && authModule != "" {
-		query := &login.GetAuthInfoQuery{
-			AuthModule: authModule,
-			AuthId:     authID,
-		}
+	if identity.AuthID != "" && identity.AuthModule != "" {
+		query := &login.GetAuthInfoQuery{AuthId: identity.AuthID, AuthModule: identity.AuthModule}
 		errGetAuthInfo := s.authInfoService.GetAuthInfo(ctx, query)
 		if errGetAuthInfo == nil {
 			usr, errGetByID := s.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: query.Result.UserId})
 			if errGetByID == nil {
-				return usr, nil
+				return usr, query.Result, nil
 			}
 
 			if !errors.Is(errGetByID, user.ErrUserNotFound) {
-				return nil, errGetByID
+				return nil, nil, errGetByID
 			}
 		}
 
 		if !errors.Is(errGetAuthInfo, user.ErrUserNotFound) {
-			return nil, errGetAuthInfo
+			return nil, nil, errGetAuthInfo
 		}
 	}
 
 	// Check user table to grab existing user
-	return s.lookupByOneOf(ctx, &params)
+	usr, err := s.lookupByOneOf(ctx, identity.ClientParams.LookUpParams)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var userAuth *login.UserAuth
+	// Special case for generic oauth: generic oauth does not store authID,
+	// so we need to find the user first then check for the userAuth connection by module and userID
+	if identity.AuthModule == login.GenericOAuthModule {
+		query := &login.GetAuthInfoQuery{AuthModule: identity.AuthModule, UserId: usr.ID}
+		err := s.authInfoService.GetAuthInfo(ctx, query)
+		if err != nil && !errors.Is(err, user.ErrUserNotFound) {
+			return nil, nil, err
+		}
+		userAuth = query.Result
+	}
+
+	return usr, userAuth, nil
 }
 
-func (s *UserSync) lookupByOneOf(ctx context.Context, params *login.UserLookupParams) (*user.User, error) {
+func (s *UserSync) lookupByOneOf(ctx context.Context, params login.UserLookupParams) (*user.User, error) {
 	var usr *user.User
 	var err error
 
@@ -352,7 +351,7 @@ func (s *UserSync) lookupByOneOf(ctx context.Context, params *login.UserLookupPa
 // syncUserToIdentity syncs a user to an identity.
 // This is used to update the identity with the latest user information.
 func syncUserToIdentity(usr *user.User, id *authn.Identity) {
-	id.ID = fmt.Sprintf("user:%d", usr.ID)
+	id.ID = authn.NamespacedID(authn.NamespaceUser, usr.ID)
 	id.Login = usr.Login
 	id.Email = usr.Email
 	id.Name = usr.Name

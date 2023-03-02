@@ -481,7 +481,11 @@ func calculateAlignmentPeriod(alignmentPeriod string, intervalMs int64, duration
 func formatLegendKeys(metricType string, defaultMetricName string, labels map[string]string,
 	additionalLabels map[string]string, query cloudMonitoringQueryExecutor) string {
 	if query.getAliasBy() == "" {
-		return defaultMetricName
+		if defaultMetricName != "" {
+			return defaultMetricName
+		}
+
+		return metricType
 	}
 
 	result := legendKeyFormat.ReplaceAllFunc([]byte(query.getAliasBy()), func(in []byte) []byte {

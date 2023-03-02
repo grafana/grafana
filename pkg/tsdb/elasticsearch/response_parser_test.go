@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -1041,6 +1042,329 @@ func TestResponseParser(t *testing.T) {
 			require.Equal(t, frame.Fields[4].Len(), 2)
 			require.Nil(t, frame.Fields[1].Config)
 		})
+
+		t.Run("Log query", func(t *testing.T) {
+			targets := map[string]string{
+				"A": `{
+					"metrics": [{ "type": "logs" }]
+				}`,
+			}
+
+			response := `{
+  			"responses":[
+  			  {
+  			    "hits":{
+  			      "total":{
+  			        "value":109,
+  			        "relation":"eq"
+  			      },
+  			      "max_score":null,
+  			      "hits":[
+  			        {
+  			          "_index":"logs-2023.02.08",
+  			          "_id":"GB2UMYYBfCQ-FCMjayJa",
+  			          "_score":null,
+  			          "_source":{
+  			            "@timestamp":"2023-02-08T15:10:55.830Z",
+  			            "line":"log text  [479231733]",
+  			            "counter":"109",
+  			            "float":58.253758485091,
+  			            "label":"val1",
+  			            "lvl":"info",
+  			            "location":"17.089705232090438, 41.62861966340297",
+										"nested": {
+											"field": {
+												"double_nested": "value"
+											}
+										},
+  			            "shapes":[
+  			              {
+  			                "type":"triangle"
+  			              },
+  			              {
+  			                "type":"square"
+  			              }
+  			            ],
+										"xyz": null
+  			          },
+  			          "sort":[
+  			            1675869055830,
+  			            4
+  			          ]
+  			        },
+  			        {
+  			          "_index":"logs-2023.02.08",
+  			          "_id":"Fx2UMYYBfCQ-FCMjZyJ_",
+  			          "_score":null,
+  			          "_source":{
+  			            "@timestamp":"2023-02-08T15:10:54.835Z",
+  			            "line":"log text with ANSI \u001b[31mpart of the text\u001b[0m [493139080]",
+  			            "counter":"108",
+  			            "float":54.5977098233944,
+  			            "label":"val1",
+  			            "lvl":"info",
+  			            "location":"19.766305918490463, 40.42639175509792",
+										"nested": {
+											"field": {
+												"double_nested": "value"
+											}
+										},
+  			            "shapes":[
+  			              {
+  			                "type":"triangle"
+  			              },
+  			              {
+  			                "type":"square"
+  			              }
+  			            ],
+										"xyz": "def"
+  			          },
+  			          "sort":[
+  			            1675869054835,
+  			            7
+  			          ]
+  			        }
+  			      ]
+  			    },
+  			    "status":200
+  			  }
+  			]
+			}`
+
+			result, err := parseTestResponse(targets, response)
+			require.NoError(t, err)
+			require.Len(t, result.Responses, 1)
+
+			queryRes := result.Responses["A"]
+			require.NotNil(t, queryRes)
+			dataframes := queryRes.Frames
+			require.Len(t, dataframes, 1)
+			frame := dataframes[0]
+
+			require.Equal(t, 16, len(frame.Fields))
+			// Fields have the correct length
+			require.Equal(t, 2, frame.Fields[0].Len())
+			// First field is timeField
+			require.Equal(t, data.FieldTypeNullableTime, frame.Fields[0].Type())
+			// Second is log line
+			require.Equal(t, data.FieldTypeNullableString, frame.Fields[1].Type())
+			require.Equal(t, "line", frame.Fields[1].Name)
+			// Correctly renames lvl field to level
+			require.Equal(t, "level", frame.Fields[10].Name)
+			// Correctly uses string types
+			require.Equal(t, data.FieldTypeNullableString, frame.Fields[1].Type())
+			// Correctly detects float64 types
+			require.Equal(t, data.FieldTypeNullableFloat64, frame.Fields[7].Type())
+			// Correctly detects json types
+			require.Equal(t, data.FieldTypeNullableJSON, frame.Fields[8].Type())
+			// Correctly flattens fields
+			require.Equal(t, "nested.field.double_nested", frame.Fields[12].Name)
+			require.Equal(t, data.FieldTypeNullableString, frame.Fields[12].Type())
+			// Correctly detects type even if first value is null
+			require.Equal(t, data.FieldTypeNullableString, frame.Fields[15].Type())
+		})
+
+		t.Run("Raw document query", func(t *testing.T) {
+			targets := map[string]string{
+				"A": `{
+					"metrics": [{ "type": "raw_document" }]
+				}`,
+			}
+
+			response := `{
+  			"responses":[
+  			  {
+  			    "hits":{
+  			      "total":{
+  			        "value":109,
+  			        "relation":"eq"
+  			      },
+  			      "max_score":null,
+  			      "hits":[
+  			        {
+  			          "_index":"logs-2023.02.08",
+  			          "_id":"GB2UMYYBfCQ-FCMjayJa",
+  			          "_score":null,
+									"fields": {
+										"test_field":"A"
+									},
+  			          "_source":{
+  			            "@timestamp":"2023-02-08T15:10:55.830Z",
+  			            "line":"log text  [479231733]",
+  			            "counter":"109",
+  			            "float":58.253758485091,
+  			            "label":"val1",
+  			            "level":"info",
+  			            "location":"17.089705232090438, 41.62861966340297",
+										"nested": {
+											"field": {
+												"double_nested": "value"
+											}
+										}
+									}
+  			        },
+  			        {
+  			          "_index":"logs-2023.02.08",
+  			          "_id":"Fx2UMYYBfCQ-FCMjZyJ_",
+  			          "_score":null,
+									"fields": {
+										"test_field":"A"
+									},
+  			          "_source":{
+  			            "@timestamp":"2023-02-08T15:10:54.835Z",
+  			            "line":"log text with ANSI \u001b[31mpart of the text\u001b[0m [493139080]",
+  			            "counter":"108",
+  			            "float":54.5977098233944,
+  			            "label":"val1",
+  			            "level":"info",
+  			            "location":"19.766305918490463, 40.42639175509792",
+										"nested": {
+											"field": {
+												"double_nested": "value1"
+											}
+										}
+									}
+  			        }
+  			      ]
+  			    },
+  			    "status":200
+  			  }
+  			]
+			}`
+
+			result, err := parseTestResponse(targets, response)
+			require.NoError(t, err)
+			require.Len(t, result.Responses, 1)
+
+			queryRes := result.Responses["A"]
+			require.NotNil(t, queryRes)
+			dataframes := queryRes.Frames
+			require.Len(t, dataframes, 1)
+			frame := dataframes[0]
+
+			require.Equal(t, 1, len(frame.Fields))
+			//Fields have the correct length
+			require.Equal(t, 2, frame.Fields[0].Len())
+			// The only field is the raw document
+			require.Equal(t, data.FieldTypeNullableJSON, frame.Fields[0].Type())
+			require.Equal(t, "A", frame.Fields[0].Name)
+		})
+
+		t.Run("Raw data query", func(t *testing.T) {
+			targets := map[string]string{
+				"A": `{
+					"metrics": [{ "type": "raw_data" }]
+				}`,
+			}
+
+			response := `{
+  			"responses":[
+  			  {
+  			    "hits":{
+  			      "total":{
+  			        "value":109,
+  			        "relation":"eq"
+  			      },
+  			      "max_score":null,
+  			      "hits":[
+  			        {
+  			          "_index":"logs-2023.02.08",
+  			          "_id":"GB2UMYYBfCQ-FCMjayJa",
+  			          "_score":null,
+  			          "_source":{
+  			            "@timestamp":"2023-02-08T15:10:55.830Z",
+  			            "line":"log text  [479231733]",
+  			            "counter":"109",
+  			            "float":58.253758485091,
+  			            "label":"val1",
+  			            "level":"info",
+  			            "location":"17.089705232090438, 41.62861966340297",
+										"nested": {
+											"field": {
+												"double_nested": "value"
+											}
+										},
+  			            "shapes":[
+  			              {
+  			                "type":"triangle"
+  			              },
+  			              {
+  			                "type":"square"
+  			              }
+  			            ],
+										"xyz": null
+  			          },
+  			          "sort":[
+  			            1675869055830,
+  			            4
+  			          ]
+  			        },
+  			        {
+  			          "_index":"logs-2023.02.08",
+  			          "_id":"Fx2UMYYBfCQ-FCMjZyJ_",
+  			          "_score":null,
+  			          "_source":{
+  			            "@timestamp":"2023-02-08T15:10:54.835Z",
+  			            "line":"log text with ANSI \u001b[31mpart of the text\u001b[0m [493139080]",
+  			            "counter":"108",
+  			            "float":54.5977098233944,
+  			            "label":"val1",
+  			            "level":"info",
+  			            "location":"19.766305918490463, 40.42639175509792",
+										"nested": {
+											"field": {
+												"double_nested": "value"
+											}
+										},
+  			            "shapes":[
+  			              {
+  			                "type":"triangle"
+  			              },
+  			              {
+  			                "type":"square"
+  			              }
+  			            ],
+										"xyz": "def"
+  			          },
+  			          "sort":[
+  			            1675869054835,
+  			            7
+  			          ]
+  			        }
+  			      ]
+  			    },
+  			    "status":200
+  			  }
+  			]
+			}`
+
+			result, err := parseTestResponse(targets, response)
+			require.NoError(t, err)
+			require.Len(t, result.Responses, 1)
+
+			queryRes := result.Responses["A"]
+			require.NotNil(t, queryRes)
+			dataframes := queryRes.Frames
+			require.Len(t, dataframes, 1)
+			frame := dataframes[0]
+
+			require.Equal(t, 16, len(frame.Fields))
+			// Fields have the correct length
+			require.Equal(t, 2, frame.Fields[0].Len())
+			// First field is timeField
+			require.Equal(t, data.FieldTypeNullableTime, frame.Fields[0].Type())
+			// Correctly uses string types
+			require.Equal(t, data.FieldTypeNullableString, frame.Fields[1].Type())
+			// Correctly detects float64 types
+			require.Equal(t, data.FieldTypeNullableFloat64, frame.Fields[6].Type())
+			// Correctly detects json types
+			require.Equal(t, data.FieldTypeNullableJSON, frame.Fields[7].Type())
+			// Correctly flattens fields
+			require.Equal(t, "nested.field.double_nested", frame.Fields[12].Name)
+			require.Equal(t, data.FieldTypeNullableString, frame.Fields[12].Type())
+			// Correctly detects type even if first value is null
+			require.Equal(t, data.FieldTypeNullableString, frame.Fields[15].Type())
+		})
 	})
 
 	t.Run("With top_metrics", func(t *testing.T) {
@@ -1135,6 +1459,11 @@ func TestResponseParser(t *testing.T) {
 func parseTestResponse(tsdbQueries map[string]string, responseBody string) (*backend.QueryDataResponse, error) {
 	from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
 	to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
+	configuredFields := es.ConfiguredFields{
+		TimeField:       "@timestamp",
+		LogMessageField: "line",
+		LogLevelField:   "lvl",
+	}
 	timeRange := backend.TimeRange{
 		From: from,
 		To:   to,
@@ -1162,7 +1491,7 @@ func parseTestResponse(tsdbQueries map[string]string, responseBody string) (*bac
 		return nil, err
 	}
 
-	return parseResponse(response.Responses, queries)
+	return parseResponse(response.Responses, queries, configuredFields)
 }
 
 func TestLabelOrderInFieldName(t *testing.T) {
@@ -1254,4 +1583,56 @@ func TestLabelOrderInFieldName(t *testing.T) {
 	requireTimeSeriesName(t, "val2 error", frames[3])
 	requireTimeSeriesName(t, "val1 info", frames[4])
 	requireTimeSeriesName(t, "val1 error", frames[5])
+}
+
+func TestFlatten(t *testing.T) {
+	t.Run("Flattens simple object", func(t *testing.T) {
+		obj := map[string]interface{}{
+			"foo": "bar",
+			"nested": map[string]interface{}{
+				"bax": map[string]interface{}{
+					"baz": "qux",
+				},
+			},
+		}
+
+		flattened := flatten(obj)
+		require.Len(t, flattened, 2)
+		require.Equal(t, "bar", flattened["foo"])
+		require.Equal(t, "qux", flattened["nested.bax.baz"])
+	})
+
+	t.Run("Flattens object to max 10 nested levels", func(t *testing.T) {
+		obj := map[string]interface{}{
+			"nested0": map[string]interface{}{
+				"nested1": map[string]interface{}{
+					"nested2": map[string]interface{}{
+						"nested3": map[string]interface{}{
+							"nested4": map[string]interface{}{
+								"nested5": map[string]interface{}{
+									"nested6": map[string]interface{}{
+										"nested7": map[string]interface{}{
+											"nested8": map[string]interface{}{
+												"nested9": map[string]interface{}{
+													"nested10": map[string]interface{}{
+														"nested11": map[string]interface{}{
+															"nested12": "abc",
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		flattened := flatten(obj)
+		require.Len(t, flattened, 1)
+		require.Equal(t, map[string]interface{}{"nested11": map[string]interface{}{"nested12": "abc"}}, flattened["nested0.nested1.nested2.nested3.nested4.nested5.nested6.nested7.nested8.nested9.nested10"])
+	})
 }
