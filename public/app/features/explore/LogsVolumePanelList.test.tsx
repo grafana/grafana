@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { DataQueryResponse, LoadingState, EventBusSrv } from '@grafana/data';
@@ -48,8 +48,7 @@ describe('LogsVolumePanelList', () => {
     renderPanel({ state: LoadingState.Error, error: { data: { message } }, data: [] });
     expect(screen.getByText('Failed to load log volume for this query')).toBeInTheDocument();
     expect(screen.queryByText(message)).not.toBeInTheDocument();
-    const button = screen.getByText('Show details');
-    button.click();
+    fireEvent.click(screen.getByRole('button', { name: 'Show details' }));
     expect(screen.getByText(message)).toBeInTheDocument();
   });
 });
