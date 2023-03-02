@@ -1283,8 +1283,6 @@ github.com/grafana/saml v0.4.13-0.20230203140620-5f476db5c00a h1:aWSTt/pTOI4uGY9
 github.com/grafana/saml v0.4.13-0.20230203140620-5f476db5c00a/go.mod h1:igEejV+fihTIlHXYP8zOec3V5A8y3lws5bQBFsTm4gA=
 github.com/grafana/sqlds/v2 v2.3.10 h1:HWKhE0vR6LoEiE+Is8CSZOgaB//D1yqb2ntkass9Fd4=
 github.com/grafana/sqlds/v2 v2.3.10/go.mod h1:c6ibxnxRVGxV/0YkEgvy7QpQH/lyifFyV7K/14xvdIs=
-github.com/grafana/thema v0.0.0-20230223160728-4226e958935a h1:5DSEQFi/pr7pYokTEvhVe94n5s6p771+PKD/GjaoP+s=
-github.com/grafana/thema v0.0.0-20230223160728-4226e958935a/go.mod h1:T6q1RVzq5fzVbm+QBeIsTmVzuXlMaArp4wxfLvcaMV0=
 github.com/grafana/thema v0.0.0-20230224141623-cb20887cb028 h1:6DXb3CmghXpjtd0VjK1FDEjvHhNcXfYSxUcEfxyMx9w=
 github.com/grafana/thema v0.0.0-20230224141623-cb20887cb028/go.mod h1:T6q1RVzq5fzVbm+QBeIsTmVzuXlMaArp4wxfLvcaMV0=
 github.com/grafana/xorm v0.8.3-0.20220614223926-2fcda7565af6 h1:I9dh1MXGX0wGyxdV/Sl7+ugnki4Dfsy8lv2s5Yf887o=
