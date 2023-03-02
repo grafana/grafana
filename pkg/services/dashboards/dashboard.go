@@ -12,6 +12,7 @@ import (
 //
 //go:generate mockery --name DashboardService --structname FakeDashboardService --inpackage --filename dashboard_service_mock.go
 type DashboardService interface {
+	GetterService
 	BuildSaveDashboardCommand(ctx context.Context, dto *SaveDashboardDTO, shouldValidateAlerts bool, validateProvisionedDashboard bool) (*SaveDashboardCommand, error)
 	DeleteDashboard(ctx context.Context, dashboardId int64, orgId int64) error
 	FindDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error)
@@ -54,13 +55,12 @@ type DashboardProvisioningService interface {
 //
 //go:generate mockery --name Store --structname FakeDashboardStore --inpackage --filename store_mock.go
 type Store interface {
+	GetterStore
 	DeleteDashboard(ctx context.Context, cmd *DeleteDashboardCommand) error
 	DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *DeleteOrphanedProvisionedDashboardsCommand) error
 	FindDashboards(ctx context.Context, query *FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error)
-	GetDashboard(ctx context.Context, query *GetDashboardQuery) (*Dashboard, error)
 	GetDashboardACLInfoList(ctx context.Context, query *GetDashboardACLInfoListQuery) ([]*DashboardACLInfoDTO, error)
 	GetDashboardUIDByID(ctx context.Context, query *GetDashboardRefByIDQuery) (*DashboardRef, error)
-	GetDashboards(ctx context.Context, query *GetDashboardsQuery) ([]*Dashboard, error)
 	// GetDashboardsByPluginID retrieves dashboards identified by plugin.
 	GetDashboardsByPluginID(ctx context.Context, query *GetDashboardsByPluginIDQuery) ([]*Dashboard, error)
 	GetDashboardTags(ctx context.Context, query *GetDashboardTagsQuery) ([]*DashboardTagCloudItem, error)
@@ -86,6 +86,11 @@ type Store interface {
 }
 
 type GetterService interface {
+	GetDashboard(ctx context.Context, query *GetDashboardQuery) (*Dashboard, error)
+	GetDashboards(ctx context.Context, query *GetDashboardsQuery) ([]*Dashboard, error)
+}
+
+type GetterStore interface {
 	GetDashboard(ctx context.Context, query *GetDashboardQuery) (*Dashboard, error)
 	GetDashboards(ctx context.Context, query *GetDashboardsQuery) ([]*Dashboard, error)
 }
