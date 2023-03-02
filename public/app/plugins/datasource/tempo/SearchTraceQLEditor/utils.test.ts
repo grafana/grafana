@@ -20,7 +20,7 @@ describe('generateQueryFromFilters generates the correct query for', () => {
   it('a field with tag, operator and tag', () => {
     expect(
       generateQueryFromFilters([{ id: 'foo', type: 'static', tag: 'footag', value: 'foovalue', operator: '=' }])
-    ).toBe('{footag = "foovalue"}');
+    ).toBe('{footag="foovalue"}');
   });
 
   it('a field with valueType as integer', () => {
@@ -28,7 +28,7 @@ describe('generateQueryFromFilters generates the correct query for', () => {
       generateQueryFromFilters([
         { id: 'foo', type: 'static', tag: 'footag', value: '1234', operator: '>', valueType: 'integer' },
       ])
-    ).toBe('{footag > 1234}');
+    ).toBe('{footag>1234}');
   });
   it('two fields with everything filled in', () => {
     expect(
@@ -36,7 +36,7 @@ describe('generateQueryFromFilters generates the correct query for', () => {
         { id: 'foo', type: 'static', tag: 'footag', value: '1234', operator: '>=', valueType: 'integer' },
         { id: 'bar', type: 'dynamic', tag: 'bartag', value: 'barvalue', operator: '=', valueType: 'string' },
       ])
-    ).toBe('{footag >= 1234 && bartag = "barvalue"}');
+    ).toBe('{footag>=1234 && bartag="barvalue"}');
   });
   it('two fields but one is missing a value', () => {
     expect(
@@ -44,7 +44,7 @@ describe('generateQueryFromFilters generates the correct query for', () => {
         { id: 'foo', type: 'static', tag: 'footag', value: '1234', operator: '>=', valueType: 'integer' },
         { id: 'bar', type: 'dynamic', tag: 'bartag', operator: '=', valueType: 'string' },
       ])
-    ).toBe('{footag >= 1234}');
+    ).toBe('{footag>=1234}');
   });
   it('two fields but one is missing a value and the other a tag', () => {
     expect(

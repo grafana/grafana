@@ -5,7 +5,7 @@ import { TraceqlFilter } from '../dataquery.gen';
 export const generateQueryFromFilters = (filters: TraceqlFilter[]) => {
   return `{${filters
     .filter((f) => f.tag && f.operator && f.value?.length)
-    .map((f) => `${f.tag} ${f.operator} ${valueHelper(f)}`)
+    .map((f) => `${f.tag}${f.operator}${valueHelper(f)}`)
     .join(' && ')}}`;
 };
 

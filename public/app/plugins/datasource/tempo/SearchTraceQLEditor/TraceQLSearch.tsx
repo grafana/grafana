@@ -2,17 +2,19 @@ import { css } from '@emotion/css';
 import React, { useState, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { EditorRow } from '@grafana/experimental';
 import { FetchError } from '@grafana/runtime';
-import { Alert, HorizontalGroup, useStyles2, VerticalGroup } from '@grafana/ui';
+import { Alert, HorizontalGroup, useStyles2 } from '@grafana/ui';
 
 import { createErrorNotification } from '../../../../core/copy/appNotification';
 import { notifyApp } from '../../../../core/reducers/appNotification';
 import { dispatch } from '../../../../store/store';
+import { RawQuery } from '../../prometheus/querybuilder/shared/RawQuery';
 import { TraceqlFilter } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import { TempoQueryBuilderOptions } from '../traceql/TempoQueryBuilderOptions';
-import { TraceQLEditor } from '../traceql/TraceQLEditor';
 import { CompletionProvider } from '../traceql/autocomplete';
+import { traceqlGrammar } from '../traceql/traceql';
 import { TempoQuery } from '../types';
 
 import DurationInput from './DurationInput';
@@ -86,7 +88,7 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
 
   return (
     <>
-      <VerticalGroup spacing={'sm'}>
+      <div className={styles.container}>
         <div>
           <InlineSearchField label={'Service Name'}>
             <SearchField
@@ -157,19 +159,11 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
             />
           </InlineSearchField>
         </div>
-        <VerticalGroup spacing={'xs'}>
-          <small>Generated Query</small>
-          <TraceQLEditor
-            placeholder=""
-            value={traceQlQuery}
-            onChange={() => {}}
-            onRunQuery={() => {}}
-            datasource={datasource}
-            readOnly={true}
-          />
-        </VerticalGroup>
+        <EditorRow>
+          <RawQuery query={traceQlQuery} lang={{ grammar: traceqlGrammar, name: 'traceql' }} />
+        </EditorRow>
         <TempoQueryBuilderOptions onChange={onChange} query={query} />
-      </VerticalGroup>
+      </div>
       {error ? (
         <Alert title="Unable to connect to Tempo search" severity="info" className={styles.alert}>
           Please ensure that Tempo is configured with search enabled. If you would like to hide this tab, you can
@@ -183,11 +177,14 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
 export default TraceQLSearch;
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  generatedQueryLabel: css`
-    width: auto;
-  `,
   alert: css`
     max-width: 75ch;
     margin-top: ${theme.spacing(2)};
+  `,
+  container: css`
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    flex-direction: column;
   `,
 });
