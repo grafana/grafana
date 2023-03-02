@@ -28,6 +28,10 @@ export const RuleStats: FC<Props> = ({ group, namespaces, includeTotal }) => {
   const evaluationInterval = group?.interval;
   const [calculated, setCalculated] = useState(emptyStats);
 
+  // Performance optimization allowing reducing number of stats calculation
+  // The problem occurs when we load many data sources.
+  // Then redux store gets updated multiple times in a pretty short period, triggering calculating stats many times.
+  // debounce allows to skip calculations which results would be abandoned in milliseconds
   useDebounce(
     () => {
       const stats = { ...emptyStats };

@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
-import React, { KeyboardEvent, useState } from 'react';
+import React, { useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
@@ -68,13 +69,6 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
   const dataSourceKey = `dataSource-${filterKey}`;
   const queryStringKey = `queryString-${filterKey}`;
 
-  const handleQueryStringChange = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && e.target instanceof HTMLInputElement) {
-      setSearchQuery(e.target.value);
-      e.target.blur();
-    }
-  };
-
   const handleDataSourceChange = (dataSourceValue: DataSourceInstanceSettings) => {
     updateFilters({ ...filterState, dataSourceName: dataSourceValue.name });
     setFilterKey((key) => key + 1);
@@ -111,6 +105,10 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
 
     setTimeout(() => setFilterKey(filterKey + 1), 100);
   };
+
+  const searchQueryRef = useRef<HTMLInputElement | null>(null);
+  const { handleSubmit, register } = useForm<{ searchQuery: string }>({ defaultValues: { searchQuery } });
+  const { ref, ...rest } = register('searchQuery');
 
   const searchIcon = <Icon name={'search'} />;
   return (
@@ -151,28 +149,39 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
         </Stack>
         <Stack direction="column" gap={1}>
           <Stack direction="row" gap={1}>
-            <Field
+            <form
               className={styles.searchInput}
-              label={
-                <Label>
-                  <Stack gap={0.5}>
-                    <span>Search</span>
-                    <HoverCard content={<SearchQueryHelp />}>
-                      <Icon name="info-circle" size="sm" />
-                    </HoverCard>
-                  </Stack>
-                </Label>
-              }
+              onSubmit={handleSubmit((data) => {
+                setSearchQuery(data.searchQuery);
+                searchQueryRef.current?.blur();
+              })}
             >
-              <Input
-                key={queryStringKey}
-                prefix={searchIcon}
-                onKeyPress={handleQueryStringChange}
-                defaultValue={searchQuery}
-                placeholder="Search"
-                data-testid="search-query-input"
-              />
-            </Field>
+              <Field
+                label={
+                  <Label>
+                    <Stack gap={0.5}>
+                      <span>Search</span>
+                      <HoverCard content={<SearchQueryHelp />}>
+                        <Icon name="info-circle" size="sm" />
+                      </HoverCard>
+                    </Stack>
+                  </Label>
+                }
+              >
+                <Input
+                  key={queryStringKey}
+                  prefix={searchIcon}
+                  ref={(e) => {
+                    ref(e);
+                    searchQueryRef.current = e;
+                  }}
+                  {...rest}
+                  placeholder="Search"
+                  data-testid="search-query-input"
+                />
+              </Field>
+              <input type="submit" hidden />
+            </form>
             <div>
               <Label>View as</Label>
               <RadioButtonGroup
