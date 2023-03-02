@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/dskit/modules"
 	"github.com/grafana/dskit/services"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
