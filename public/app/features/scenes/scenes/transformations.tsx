@@ -1,4 +1,14 @@
-import { SceneTimePicker, SceneFlexLayout, VizPanel, SceneDataTransformer, SceneTimeRange } from '@grafana/scenes';
+import { map } from 'rxjs';
+
+import { ArrayVector, DataFrame, Field, FieldType } from '@grafana/data';
+import {
+  SceneTimePicker,
+  SceneFlexLayout,
+  VizPanel,
+  SceneDataTransformer,
+  SceneTimeRange,
+  SceneDataCustomTransformer,
+} from '@grafana/scenes';
 
 import { DashboardScene } from '../dashboard/DashboardScene';
 
@@ -18,7 +28,7 @@ export function getTransformationsDemo(): DashboardScene {
               children: [
                 new VizPanel({
                   pluginId: 'timeseries',
-                  title: 'Source data (global query',
+                  title: 'Source data (global query)',
                 }),
                 new VizPanel({
                   pluginId: 'stat',
@@ -32,6 +42,45 @@ export function getTransformationsDemo(): DashboardScene {
                         },
                       },
                     ],
+                  }),
+                }),
+                new VizPanel({
+                  pluginId: 'timeseries',
+                  title: 'Data with a custom transformer (original value * 2)',
+                  $data: new SceneDataCustomTransformer({
+                    transformation: (ctx) => (source) =>
+                      source.pipe(
+                        map((data) => {
+                          const processed: DataFrame[] = [];
+
+                          for (const series of data) {
+                            const fields: Field[] = [];
+                            for (const field of series.fields) {
+                              if (field.type === FieldType.number) {
+                                fields.push({
+                                  ...field,
+                                  values: new ArrayVector(field.values.toArray().map((v) => v * 2)),
+                                  state: undefined,
+                                });
+                              } else {
+                                fields.push({
+                                  ...field,
+                                  values: new ArrayVector(field.values.toArray()),
+                                  state: undefined,
+                                });
+                              }
+                            }
+
+                            processed.push({
+                              ...series,
+                              fields,
+                              length: fields[0].values.length,
+                            });
+                          }
+
+                          return processed;
+                        })
+                      ),
                   }),
                 }),
               ],
