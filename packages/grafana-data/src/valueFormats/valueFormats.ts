@@ -136,7 +136,7 @@ const logb = (b: number, x: number) => Math.log10(x) / Math.log10(b);
 
 export function scaledUnits(factor: number, extArray: string[], offset = 0): ValueFormatter {
   return (size: number, decimals?: DecimalCount) => {
-    if (size === null) {
+    if (size === null || size === undefined) {
       return { text: '' };
     }
 

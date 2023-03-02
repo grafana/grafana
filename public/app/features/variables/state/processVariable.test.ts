@@ -1,5 +1,7 @@
 import { UrlQueryMap } from '@grafana/data';
 import { setDataSourceSrv } from '@grafana/runtime';
+import { DashboardModel } from 'app/features/dashboard/state';
+import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { variableAdapters } from '../adapters';
@@ -60,7 +62,7 @@ setDataSourceSrv({
       return Promise.resolve([]);
     }),
   }),
-} as any);
+} as unknown as DatasourceSrv);
 
 variableAdapters.setInit(() => [createCustomVariableAdapter(), createQueryVariableAdapter()]);
 
@@ -99,7 +101,7 @@ describe('processVariable', () => {
       .build();
 
     const list = [custom, queryDependsOnCustom, queryNoDepends];
-    const dashboard: any = { templating: { list } };
+    const dashboard = { templating: { list } } as DashboardModel;
     setVariableQueryRunner(new VariableQueryRunner());
 
     return {

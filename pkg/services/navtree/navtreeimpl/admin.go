@@ -80,12 +80,13 @@ func (s *ServiceImpl) getOrgAdminNode(c *contextmodel.ReqContext) (*navtree.NavL
 	}
 
 	hideApiKeys, _, _ := s.kvStore.Get(c.Req.Context(), c.OrgID, "serviceaccounts", "hideApiKeys")
-	apiKeys, err := s.apiKeyService.GetAllAPIKeys(c.Req.Context(), c.OrgID)
+	apiKeys, err := s.apiKeyService.CountAPIKeys(c.Req.Context(), c.OrgID)
 	if err != nil {
 		return nil, err
 	}
 
-	apiKeysHidden := hideApiKeys == "1" && len(apiKeys) == 0
+	// Hide API keys if the global setting is set or if the org setting is set and there are no API keys
+	apiKeysHidden := hideApiKeys == "1" && apiKeys == 0
 	if hasAccess(ac.ReqOrgAdmin, ac.ApiKeyAccessEvaluator) && !apiKeysHidden {
 		configNodes = append(configNodes, &navtree.NavLink{
 			Text:     "API keys",
@@ -160,26 +161,6 @@ func (s *ServiceImpl) getServerAdminNode(c *contextmodel.ReqContext) *navtree.Na
 			Url:      s.cfg.AppSubURL + "/admin/storage",
 		}
 		adminNavLinks = append(adminNavLinks, storage)
-
-		if s.features.IsEnabled(featuremgmt.FlagExport) {
-			storage.Children = append(storage.Children, &navtree.NavLink{
-				Text:     "Export",
-				Id:       "export",
-				SubTitle: "Export grafana settings",
-				Icon:     "cube",
-				Url:      s.cfg.AppSubURL + "/admin/storage/export",
-			})
-		}
-
-		if s.features.IsEnabled(featuremgmt.FlagK8s) {
-			storage.Children = append(storage.Children, &navtree.NavLink{
-				Text:     "Kubernetes",
-				Id:       "k8s",
-				SubTitle: "Manage k8s storage",
-				Icon:     "cube",
-				Url:      s.cfg.AppSubURL + "/admin/storage/k8s",
-			})
-		}
 	}
 
 	if s.cfg.LDAPEnabled && hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionLDAPStatusRead)) {

@@ -13,6 +13,11 @@ func ValidatePublicDashboard(dto *SavePublicDashboardDTO, dashboard *dashboards.
 		return ErrPublicDashboardHasTemplateVariables.Errorf("ValidateSavePublicDashboard: public dashboard has template variables")
 	}
 
+	// if it is empty we override it in the service with public for retro compatibility
+	if dto.PublicDashboard.Share != "" && !IsValidShareType(dto.PublicDashboard.Share) {
+		return ErrInvalidShareType.Errorf("ValidateSavePublicDashboard: invalid share type")
+	}
+
 	return nil
 }
 
@@ -57,4 +62,13 @@ func IsValidAccessToken(token string) bool {
 // characters. Wraps utils.IsValidShortUID
 func IsValidShortUID(uid string) bool {
 	return uid != "" && util.IsValidShortUID(uid)
+}
+
+func IsValidShareType(shareType ShareType) bool {
+	for _, t := range ValidShareTypes {
+		if t == shareType {
+			return true
+		}
+	}
+	return false
 }

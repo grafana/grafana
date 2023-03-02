@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/login"
+	"github.com/grafana/grafana/pkg/services/anonymous/anontest"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeytest"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -35,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/ldap/service"
 	loginsvc "github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
@@ -159,7 +161,7 @@ func TestMiddlewareContext(t *testing.T) {
 		sc.resp.Header().Add("Cache-Control", "private, max-age=86400")
 		sc.resp.Header().Add("X-Grafana-Cache", "true")
 		sc.exec()
-		assert.Equal(t, "private", sc.resp.Header().Get("Cache-Control"))
+		assert.Equal(t, "private, max-age=86400", sc.resp.Header().Get("Cache-Control"))
 	})
 
 	middlewareScenario(t, "middleware should not pass cache-control on resources with public cache control", func(t *testing.T, sc *scenarioContext) {
@@ -612,7 +614,8 @@ func TestMiddlewareContext(t *testing.T) {
 			h, err := authproxy.HashCacheKey(hdrName + "-" + group)
 			require.NoError(t, err)
 			key := fmt.Sprintf(authproxy.CachePrefix, h)
-			err = sc.remoteCacheService.Set(context.Background(), key, userID, 0)
+			userIdBytes := []byte(strconv.FormatInt(userID, 10))
+			err = sc.remoteCacheService.SetByteArray(context.Background(), key, userIdBytes, 0)
 			require.NoError(t, err)
 			sc.fakeReq("GET", "/")
 
@@ -949,9 +952,15 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg, mockSQLStore *dbtest.Fake
 	renderSvc := &fakeRenderService{}
 	authJWTSvc := jwt.NewFakeJWTService()
 	tracer := tracing.InitializeTracerForTest()
-	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginService, userService, mockSQLStore)
+	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginService,
+		userService, mockSQLStore, &service.LDAPFakeService{ExpectedError: service.ErrUnableToCreateLDAPClient})
 	authenticator := &logintest.AuthenticatorFake{ExpectedUser: &user.User{}}
-	return contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, mockSQLStore, tracer, authProxy, loginService, apiKeyService, authenticator, userService, orgService, oauthTokenService, featuremgmt.WithFeatures(featuremgmt.FlagAccessTokenExpirationCheck), &authntest.FakeService{})
+	return contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc,
+		remoteCacheSvc, renderSvc, mockSQLStore, tracer, authProxy,
+		loginService, apiKeyService, authenticator, userService, orgService,
+		oauthTokenService,
+		featuremgmt.WithFeatures(featuremgmt.FlagAccessTokenExpirationCheck),
+		&authntest.FakeService{}, &anontest.FakeAnonymousSessionService{})
 }
 
 type fakeRenderService struct {

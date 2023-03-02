@@ -8,6 +8,8 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/fatih/color"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
@@ -41,6 +43,10 @@ func validateInput(c utils.CommandLine, pluginFolder string) error {
 	return nil
 }
 
+func logRestartNotice() {
+	logger.Info(color.GreenString("Please restart Grafana after installing or removing plugins. Refer to Grafana documentation for instructions if necessary.\n\n"))
+}
+
 func (cmd Command) installCommand(c utils.CommandLine) error {
 	pluginFolder := c.PluginDirectory()
 	if err := validateInput(c, pluginFolder); err != nil {
@@ -49,7 +55,11 @@ func (cmd Command) installCommand(c utils.CommandLine) error {
 
 	pluginID := c.Args().First()
 	version := c.Args().Get(1)
-	return installPlugin(context.Background(), pluginID, version, c)
+	err := installPlugin(context.Background(), pluginID, version, c)
+	if err == nil {
+		logRestartNotice()
+	}
+	return err
 }
 
 // installPlugin downloads the plugin code as a zip file from the Grafana.com API

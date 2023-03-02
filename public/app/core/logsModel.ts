@@ -706,20 +706,10 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
 
     const subscription = queryObservable.subscribe({
       complete: () => {
-        const aggregatedLogsVolume = aggregateRawLogsVolume(rawLogsVolume, options.extractLevel);
-        if (aggregatedLogsVolume[0]) {
-          aggregatedLogsVolume[0].meta = {
-            custom: {
-              targets: options.targets,
-              logsVolumeType: LogsVolumeType.FullRange,
-              absoluteRange: { from: options.range.from.valueOf(), to: options.range.to.valueOf() },
-            },
-          };
-        }
         observer.next({
           state: LoadingState.Done,
           error: undefined,
-          data: aggregatedLogsVolume,
+          data: rawLogsVolume,
         });
         observer.complete();
       },
@@ -733,7 +723,25 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
           });
           observer.error(error);
         } else {
-          rawLogsVolume = rawLogsVolume.concat(dataQueryResponse.data.map(toDataFrame));
+          const aggregatedLogsVolume = aggregateRawLogsVolume(
+            dataQueryResponse.data.map(toDataFrame),
+            options.extractLevel
+          );
+          if (aggregatedLogsVolume[0]) {
+            aggregatedLogsVolume[0].meta = {
+              custom: {
+                targets: options.targets,
+                logsVolumeType: LogsVolumeType.FullRange,
+                absoluteRange: { from: options.range.from.valueOf(), to: options.range.to.valueOf() },
+              },
+            };
+          }
+          rawLogsVolume = aggregatedLogsVolume;
+          observer.next({
+            state: dataQueryResponse.state ?? LoadingState.Streaming,
+            error: undefined,
+            data: rawLogsVolume,
+          });
         }
       },
       error: (error) => {

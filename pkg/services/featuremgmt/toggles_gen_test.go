@@ -25,7 +25,6 @@ func TestFeatureToggleFiles(t *testing.T) {
 		"live-pipeline":                 true,
 		"live-service-web-worker":       true,
 		"k8s":                           true, // Camel case does not like this one
-		"k8sDashboards":                 true, // or this one
 	}
 
 	t.Run("check registry constraints", func(t *testing.T) {

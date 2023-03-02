@@ -7,8 +7,8 @@ import { useUnifiedAlertingSelector } from 'app/features/alerting/unified/hooks/
 import { fetchAllPromRulesAction } from 'app/features/alerting/unified/state/actions';
 import { getAllRulesSourceNames } from 'app/features/alerting/unified/utils/datasource';
 import {
-  isAsyncRequestMapSliceFulfilled,
   isAsyncRequestMapSlicePending,
+  isAsyncRequestMapSliceSettled,
 } from 'app/features/alerting/unified/utils/redux';
 import { useDispatch } from 'app/types';
 import { AlertingRule } from 'app/types/unified-alerting';
@@ -33,7 +33,7 @@ export const GroupBy: FC<Props> = (props) => {
   const promRulesByDatasource = useUnifiedAlertingSelector((state) => state.promRules);
   const rulesDataSourceNames = useMemo(getAllRulesSourceNames, []);
 
-  const allRequestsReady = isAsyncRequestMapSliceFulfilled(promRulesByDatasource);
+  const allRequestsReady = isAsyncRequestMapSliceSettled(promRulesByDatasource);
   const loading = isAsyncRequestMapSlicePending(promRulesByDatasource);
 
   const labels = useMemo(() => {

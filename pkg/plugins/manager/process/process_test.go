@@ -5,10 +5,11 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/stretchr/testify/require"
+	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
 func TestProcessManager_Start(t *testing.T) {
@@ -270,7 +271,7 @@ func createPlugin(t *testing.T, bp backendplugin.Plugin, cbs ...func(p *plugins.
 		},
 	}
 
-	p.SetLogger(log.NewNopLogger())
+	p.SetLogger(log.NewTestLogger())
 	p.RegisterClient(bp)
 
 	for _, cb := range cbs {

@@ -1,7 +1,7 @@
 import { getPluginsExtensionRegistry, PluginsExtension } from './registry';
 
 export type GetPluginExtensionsOptions = {
-  target: string;
+  placement: string;
 };
 
 export type PluginExtensionsResult = {
@@ -10,23 +10,23 @@ export type PluginExtensionsResult = {
 };
 
 export class PluginExtensionsMissingError extends Error {
-  readonly target: string;
+  readonly placement: string;
 
-  constructor(target: string) {
-    super(`Could not find extensions for '${target}'`);
-    this.target = target;
+  constructor(placement: string) {
+    super(`Could not find extensions for '${placement}'`);
+    this.placement = placement;
     this.name = PluginExtensionsMissingError.name;
   }
 }
 
-export function getPluginExtensions({ target }: GetPluginExtensionsOptions): PluginExtensionsResult {
+export function getPluginExtensions({ placement }: GetPluginExtensionsOptions): PluginExtensionsResult {
   const registry = getPluginsExtensionRegistry();
-  const extensions = registry[target];
+  const extensions = registry[placement];
 
   if (!Array.isArray(extensions)) {
     return {
       extensions: [],
-      error: new PluginExtensionsMissingError(target),
+      error: new PluginExtensionsMissingError(placement),
     };
   }
 

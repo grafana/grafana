@@ -123,8 +123,8 @@ describe('AzureMonitor: metrics dataHooks', () => {
   ];
 
   let datasource: Datasource;
-  let onChange: jest.Mock<any, any>;
-  let setError: jest.Mock<any, any>;
+  let onChange: jest.Mock;
+  let setError: jest.Mock;
 
   beforeEach(() => {
     onChange = jest.fn();

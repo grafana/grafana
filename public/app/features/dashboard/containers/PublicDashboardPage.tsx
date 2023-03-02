@@ -99,7 +99,7 @@ const PublicDashboardPage = (props: Props) => {
     >
       {dashboardState.initError && <DashboardFailed initError={dashboardState.initError} />}
       <div className={styles.gridContainer}>
-        <DashboardGrid dashboard={dashboard} isEditable={false} viewPanel={null} editPanel={null} />
+        <DashboardGrid dashboard={dashboard} isEditable={false} viewPanel={null} editPanel={null} hidePanelMenus />
       </div>
       <PublicDashboardFooter />
     </Page>

@@ -653,7 +653,7 @@ def artifacts_page_pipeline():
                 compile_build_cmd("enterprise"),
                 artifacts_page_step(),
             ],
-            edition = "all",
+            edition = "enterprise",
             environment = {"EDITION": "enterprise"},
         ),
     ]

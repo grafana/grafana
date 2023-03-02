@@ -1,5 +1,8 @@
 import {
+  CoreApp,
   DataQuery,
+  DataSourceApi,
+  DataSourceJsonData,
   DataSourceRef,
   getDefaultRelativeTimeRange,
   IntervalValues,
@@ -199,9 +202,46 @@ export function recordingRulerRuleToRuleForm(
   };
 }
 
-export const getDefaultQueries = (): AlertQuery[] => {
+export const getDefaultQueriesAsync = async (): Promise<{
+  queries: AlertQuery[] | null;
+  ds?: DataSourceApi<DataQuery, DataSourceJsonData, {}>;
+}> => {
   const dataSource = getDefaultOrFirstCompatibleDataSource();
 
+  if (!dataSource) {
+    return { queries: [...getDefaultExpressions('A', 'B')] };
+  }
+  const relativeTimeRange = getDefaultRelativeTimeRange();
+
+  let ds;
+  try {
+    ds = await getDataSourceSrv().get(dataSource.uid);
+  } catch (error) {
+    return { queries: [...getDefaultExpressions('A', 'B')] };
+  }
+
+  return {
+    queries: [
+      {
+        refId: 'A',
+        datasourceUid: dataSource.uid,
+        queryType: '',
+        relativeTimeRange,
+        model: {
+          refId: 'A',
+          hide: false,
+          ...ds?.getDefaultQuery?.(CoreApp.UnifiedAlerting),
+        },
+      },
+      ...getDefaultExpressions('B', 'C'),
+    ],
+    ds: ds,
+  };
+};
+
+// Needed to init default queries before the async call
+export const getInitialDefaultQueries = (): AlertQuery[] => {
+  const dataSource = getDefaultOrFirstCompatibleDataSource();
   if (!dataSource) {
     return [...getDefaultExpressions('A', 'B')];
   }
@@ -218,7 +258,6 @@ export const getDefaultQueries = (): AlertQuery[] => {
         hide: false,
       },
     },
-    ...getDefaultExpressions('B', 'C'),
   ];
 };
 

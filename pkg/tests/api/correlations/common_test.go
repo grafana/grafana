@@ -149,11 +149,12 @@ func (c TestContext) createUser(cmd user.CreateUserCommand) {
 	require.NoError(c.t, err)
 }
 
-func (c TestContext) createDs(cmd *datasources.AddDataSourceCommand) {
+func (c TestContext) createDs(cmd *datasources.AddDataSourceCommand) *datasources.DataSource {
 	c.t.Helper()
 
-	err := c.env.Server.HTTPServer.DataSourcesService.AddDataSource(context.Background(), cmd)
+	dataSource, err := c.env.Server.HTTPServer.DataSourcesService.AddDataSource(context.Background(), cmd)
 	require.NoError(c.t, err)
+	return dataSource
 }
 
 func (c TestContext) createCorrelation(cmd correlations.CreateCorrelationCommand) correlations.Correlation {

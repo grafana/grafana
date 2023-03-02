@@ -102,6 +102,15 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     Object.assign(this, initialValues);
   }
 
+  getDefaultCacheHeaders() {
+    return {
+      headers: {
+        'Cache-Control': `private, max-age=${this.datasource.getCacheDurationInMinutes() * 60}`,
+        'X-Grafana-Cache': 'y',
+      }
+    }
+  }
+
   // Strip syntax chars so that typeahead suggestions can work on clean inputs
   cleanText(s: string) {
     const parts = s.split(PREFIX_DELIMITER_REGEX);
@@ -478,7 +487,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const params = this.datasource.getQuantizedTimeRangeParams();
     const interpolatedName = this.datasource.interpolateString(key);
     const url = `/api/v1/label/${interpolatedName}/values`;
-    const value = await this.request(url, [], params);
+    const value = await this.request(url, [], params, this.getDefaultCacheHeaders());
     return value ?? [];
   };
 
@@ -494,7 +503,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const params = this.datasource.getQuantizedTimeRangeParams();
     this.labelFetchTs = Date.now().valueOf();
 
-    const res = await this.request(url, [], params);
+    const res = await this.request(url, [], params, this.getDefaultCacheHeaders());
     if (Array.isArray(res)) {
       this.labelKeys = res.slice().sort();
     }
@@ -529,7 +538,12 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       ...range,
       ...(match && { 'match[]': match }),
     };
-    const value = await this.request(`/api/v1/label/${interpolatedName}/values`, [], urlParams);
+    const value = await this.request(
+      `/api/v1/label/${interpolatedName}/values`,
+      [],
+      urlParams,
+      this.getDefaultCacheHeaders()
+    );
     return value ?? [];
   };
 
@@ -573,7 +587,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       'match[]': interpolatedName,
     };
     const url = `/api/v1/series`;
-    const data = await this.request(url, [], urlParams);
+    const data = await this.request(url, [], urlParams, this.getDefaultCacheHeaders());
     const { values } = processLabels(data, withName);
     return values;
   };
@@ -592,7 +606,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       'match[]': interpolatedName,
     };
     const url = `/api/v1/labels`;
-    const data: string[] = await this.request(url, [], urlParams);
+    const data: string[] = await this.request(url, [], urlParams, this.getDefaultCacheHeaders());
     // Convert string array to Record<string , []>
     return data.reduce((ac, a) => ({ ...ac, [a]: '' }), {});
   };
@@ -605,7 +619,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const url = '/api/v1/series';
     const range = this.datasource.getTimeRangeParams();
     const params = { ...range, 'match[]': match };
-    return await this.request(url, {}, params);
+    return await this.request(url, {}, params, this.getDefaultCacheHeaders());
   };
 
   /**

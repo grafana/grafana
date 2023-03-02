@@ -54,7 +54,7 @@ func (e *timeSeriesQuery) execute() (*backend.QueryDataResponse, error) {
 		return &backend.QueryDataResponse{}, err
 	}
 
-	return parseResponse(res.Responses, queries)
+	return parseResponse(res.Responses, queries, e.client.GetConfiguredFields())
 }
 
 func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilder, from, to int64) error {
@@ -63,7 +63,7 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 		return err
 	}
 
-	defaultTimeField := e.client.GetTimeField()
+	defaultTimeField := e.client.GetConfiguredFields().TimeField
 	b := ms.Search(q.Interval)
 	b.Size(0)
 	filters := b.Query().Bool().Filter()
@@ -312,7 +312,15 @@ func isLogsQuery(query *Query) bool {
 }
 
 func isDocumentQuery(query *Query) bool {
-	return query.Metrics[0].Type == rawDataType || query.Metrics[0].Type == rawDocumentType
+	return isRawDataQuery(query) || isRawDocumentQuery(query)
+}
+
+func isRawDataQuery(query *Query) bool {
+	return query.Metrics[0].Type == rawDataType
+}
+
+func isRawDocumentQuery(query *Query) bool {
+	return query.Metrics[0].Type == rawDocumentType
 }
 
 func processLogsQuery(q *Query, b *es.SearchRequestBuilder, from, to int64, defaultTimeField string) {

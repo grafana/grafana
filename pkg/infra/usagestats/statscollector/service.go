@@ -239,11 +239,12 @@ func (s *Service) collectDatasourceStats(ctx context.Context) (map[string]interf
 func (s *Service) collectElasticStats(ctx context.Context) (map[string]interface{}, error) {
 	m := map[string]interface{}{}
 	esDataSourcesQuery := datasources.GetDataSourcesByTypeQuery{Type: datasources.DS_ES}
-	if err := s.datasources.GetDataSourcesByType(ctx, &esDataSourcesQuery); err != nil {
+	dataSources, err := s.datasources.GetDataSourcesByType(ctx, &esDataSourcesQuery)
+	if err != nil {
 		s.log.Error("Failed to get elasticsearch json data", "error", err)
 		return nil, err
 	}
-	for _, data := range esDataSourcesQuery.Result {
+	for _, data := range dataSources {
 		esVersion, err := data.JsonData.Get("esVersion").String()
 		if err != nil {
 			continue
