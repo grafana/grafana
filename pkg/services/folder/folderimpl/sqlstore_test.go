@@ -205,7 +205,6 @@ func TestIntegrationDeleteNestedFolders(t *testing.T) {
 	folderStore := ProvideDashboardFolderStore(db)
 
 	cfg := setting.NewCfg()
-	cfg.RBACEnabled = false
 
 	featuresFlagOn := featuremgmt.WithFeatures("nestedFolders")
 	dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuresFlagOn, tagimpl.ProvideService(db, db.Cfg), quotaService)
@@ -223,21 +222,23 @@ func TestIntegrationDeleteNestedFolders(t *testing.T) {
 		db:                   db,
 	}
 
+	signedInUser := user.SignedInUser{UserID: 1, OrgID: orgID}
+	createCmd := folder.CreateFolderCommand{
+		OrgID:        orgID,
+		ParentUID:    "",
+		SignedInUser: &signedInUser,
+	}
+
 	t.Run("With nested folder feature flag on", func(t *testing.T) {
 		origNewGuardian := guardian.New
 		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
 
-		createCmd := folder.CreateFolderCommand{
-			OrgID:        orgID,
-			ParentUID:    "",
-			SignedInUser: &user.SignedInUser{UserID: 1, OrgID: orgID},
-		}
 		ancestorUIDs := CreateSubTree(t, nestedFolderStore, serviceWithFlagOn, 3, "", createCmd)
 
 		deleteCmd := folder.DeleteFolderCommand{
 			UID:          ancestorUIDs[0],
 			OrgID:        orgID,
-			SignedInUser: &user.SignedInUser{UserID: 1, OrgID: orgID},
+			SignedInUser: &signedInUser,
 		}
 		err = serviceWithFlagOn.Delete(context.Background(), &deleteCmd)
 		require.NoError(t, err)
@@ -274,17 +275,12 @@ func TestIntegrationDeleteNestedFolders(t *testing.T) {
 		origNewGuardian := guardian.New
 		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
 
-		createCmd := folder.CreateFolderCommand{
-			OrgID:        orgID,
-			ParentUID:    "",
-			SignedInUser: &user.SignedInUser{UserID: 1, OrgID: orgID},
-		}
 		ancestorUIDs := CreateSubTree(t, nestedFolderStore, serviceWithFlagOn, 1, "", createCmd)
 
 		deleteCmd := folder.DeleteFolderCommand{
 			UID:          ancestorUIDs[0],
 			OrgID:        orgID,
-			SignedInUser: &user.SignedInUser{UserID: 1, OrgID: orgID},
+			SignedInUser: &signedInUser,
 		}
 		err = serviceWithFlagOff.Delete(context.Background(), &deleteCmd)
 		require.NoError(t, err)
