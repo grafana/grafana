@@ -1,6 +1,6 @@
 // NOTE: This file was auto generated.  DO NOT EDIT DIRECTLY!
-// To change feature flags, edit:
-//  pkg/services/featuremgmt/registry.go
+// To change feature toggles, edit:
+//  pkg/services/featuremgmt/registry_{squad}.go
 // Then run tests in:
 //  pkg/services/featuremgmt/toggles_gen_test.go
 

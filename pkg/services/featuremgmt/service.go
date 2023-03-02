@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt/registry"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
@@ -27,13 +26,13 @@ func ProvideManagerService(cfg *setting.Cfg, licensing licensing.Licensing) (*Fe
 	mgmt := &FeatureManager{
 		isDevMod:  setting.Env != setting.Prod,
 		licensing: licensing,
-		flags:     make(map[string]*registry.FeatureToggle, 30),
+		flags:     make(map[string]*FeatureToggle, 30),
 		enabled:   make(map[string]bool),
 		log:       log.New("featuremgmt"),
 	}
 
 	// Register the standard flags
-	mgmt.registerFlags(registry.Toggles...)
+	mgmt.registerFlags(standardFeatureToggles...)
 
 	// Load the flags from `custom.ini` files
 	flags, err := setting.ReadFeatureTogglesFromInitFile(cfg.Raw.Section("feature_toggles"))
@@ -43,9 +42,9 @@ func ProvideManagerService(cfg *setting.Cfg, licensing licensing.Licensing) (*Fe
 	for key, val := range flags {
 		flag, ok := mgmt.flags[key]
 		if !ok {
-			flag = &registry.FeatureToggle{
+			flag = &FeatureToggle{
 				Name:  key,
-				State: registry.FeatureStateUnknown,
+				State: FeatureStateUnknown,
 			}
 			mgmt.flags[key] = flag
 		}

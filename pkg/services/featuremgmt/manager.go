@@ -6,7 +6,6 @@ import (
 	"reflect"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt/registry"
 	"github.com/grafana/grafana/pkg/services/licensing"
 )
 
@@ -17,7 +16,7 @@ var (
 type FeatureManager struct {
 	isDevMod  bool
 	licensing licensing.Licensing
-	flags     map[string]*registry.FeatureToggle
+	flags     map[string]*FeatureToggle
 	enabled   map[string]bool // only the "on" values
 	config    string          // path to config file
 	vars      map[string]interface{}
@@ -25,7 +24,7 @@ type FeatureManager struct {
 }
 
 // This will merge the flags with the current configuration
-func (fm *FeatureManager) registerFlags(flags ...registry.FeatureToggle) {
+func (fm *FeatureManager) registerFlags(flags ...FeatureToggle) {
 	for _, add := range flags {
 		if add.Name == "" {
 			continue // skip it with warning?
@@ -49,7 +48,7 @@ func (fm *FeatureManager) registerFlags(flags ...registry.FeatureToggle) {
 		}
 
 		// The most recently defined state
-		if add.State != registry.FeatureStateUnknown {
+		if add.State != FeatureStateUnknown {
 			flag.State = add.State
 		}
 
@@ -72,7 +71,7 @@ func (fm *FeatureManager) registerFlags(flags ...registry.FeatureToggle) {
 }
 
 // meetsRequirements checks if grafana is able to run the given feature due to dev mode or licensing requirements
-func (fm *FeatureManager) meetsRequirements(ff *registry.FeatureToggle) bool {
+func (fm *FeatureManager) meetsRequirements(ff *FeatureToggle) bool {
 	if ff.RequiresDevMode && !fm.isDevMod {
 		return false
 	}
@@ -141,8 +140,8 @@ func (fm *FeatureManager) GetEnabled(ctx context.Context) map[string]bool {
 }
 
 // GetFlags returns all flag definitions
-func (fm *FeatureManager) GetFlags() []registry.FeatureToggle {
-	v := make([]registry.FeatureToggle, 0, len(fm.flags))
+func (fm *FeatureManager) GetFlags() []FeatureToggle {
+	v := make([]FeatureToggle, 0, len(fm.flags))
 	for _, value := range fm.flags {
 		v = append(v, *value)
 	}

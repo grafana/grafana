@@ -11,7 +11,6 @@ import (
 	"unicode"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/grafana/grafana/pkg/services/featuremgmt/registry"
 	"github.com/olekukonko/tablewriter"
 	"github.com/stretchr/testify/require"
 
@@ -29,14 +28,14 @@ func TestFeatureToggleFiles(t *testing.T) {
 	}
 
 	t.Run("check registry constraints", func(t *testing.T) {
-		for _, flag := range registry.Toggles {
-			if flag.Expression == "true" && flag.State != registry.FeatureStateStable {
+		for _, flag := range standardFeatureToggles {
+			if flag.Expression == "true" && flag.State != FeatureStateStable {
 				t.Errorf("only stable features can be enabled by default.  See: %s", flag.Name)
 			}
-			if flag.RequiresDevMode && flag.State != registry.FeatureStateAlpha {
+			if flag.RequiresDevMode && flag.State != FeatureStateAlpha {
 				t.Errorf("only alpha features can require dev mode.  See: %s", flag.Name)
 			}
-			if flag.State == registry.FeatureStateUnknown {
+			if flag.State == FeatureStateUnknown {
 				t.Errorf("standard toggles should not have an unknown state.  See: %s", flag.Name)
 			}
 		}
@@ -64,7 +63,7 @@ func TestFeatureToggleFiles(t *testing.T) {
 
 	t.Run("check feature naming convention", func(t *testing.T) {
 		invalidNames := make([]string, 0)
-		for _, f := range registry.Toggles {
+		for _, f := range standardFeatureToggles {
 			if legacyNames[f.Name] {
 				continue
 			}
@@ -103,8 +102,8 @@ func verifyAndGenerateFile(t *testing.T, fpath string, gen string) {
 
 func generateTypeScript() string {
 	buf := `// NOTE: This file was auto generated.  DO NOT EDIT DIRECTLY!
-// To change feature flags, edit:
-//  pkg/services/featuremgmt/registry.go
+// To change feature toggles, edit:
+//  pkg/services/featuremgmt/registry_{squad}.go
 // Then run tests in:
 //  pkg/services/featuremgmt/toggles_gen_test.go
 
@@ -121,7 +120,7 @@ export interface FeatureToggles {
   [name: string]: boolean | undefined; // support any string value
 
 `
-	for _, flag := range registry.Toggles {
+	for _, flag := range standardFeatureToggles {
 		buf += "  " + getTypeScriptKey(flag.Name) + "?: boolean;\n"
 	}
 
@@ -160,7 +159,7 @@ func generateRegistry(t *testing.T) string {
 
 	data := struct {
 		CamelCase string
-		Flag      registry.FeatureToggle
+		Flag      FeatureToggle
 		Ext       string
 	}{
 		CamelCase: "?",
@@ -170,7 +169,7 @@ func generateRegistry(t *testing.T) string {
 
 	buff.WriteString(`// NOTE: This file was auto generated.  DO NOT EDIT DIRECTLY!
 // To change feature flags, edit:
-//  pkg/services/featuremgmt/registry.go
+//  pkg/services/featuremgmt/go
 // Then run tests in:
 //  pkg/services/featuremgmt/toggles_gen_test.go
 
@@ -178,7 +177,7 @@ package featuremgmt
 
 const (`)
 
-	for _, flag := range registry.Toggles {
+	for _, flag := range standardFeatureToggles {
 		data.CamelCase = asCamelCase(flag.Name)
 		data.Flag = flag
 		data.Ext = ""
@@ -218,15 +217,15 @@ This page contains a list of available feature toggles. To learn how to turn on 
 
 Some stable features are enabled by default. You can disable a stable feature by setting the feature flag to "false" in the configuration.
 
-` + writeToggleDocsTable(func(flag registry.FeatureToggle) bool {
-		return flag.State == registry.FeatureStateStable
+` + writeToggleDocsTable(func(flag FeatureToggle) bool {
+		return flag.State == FeatureStateStable
 	}, true)
 
 	buf += `
 ## Beta feature toggles
 
-` + writeToggleDocsTable(func(flag registry.FeatureToggle) bool {
-		return flag.State == registry.FeatureStateBeta
+` + writeToggleDocsTable(func(flag FeatureToggle) bool {
+		return flag.State == FeatureStateBeta
 	}, false)
 
 	if hasDeprecatedFlags {
@@ -235,8 +234,8 @@ Some stable features are enabled by default. You can disable a stable feature by
 
 When stable or beta features are slated for removal, they will be marked as Deprecated first.
 
-	` + writeToggleDocsTable(func(flag registry.FeatureToggle) bool {
-			return flag.State == registry.FeatureStateDeprecated
+	` + writeToggleDocsTable(func(flag FeatureToggle) bool {
+			return flag.State == FeatureStateDeprecated
 		}, false)
 	}
 
@@ -246,8 +245,8 @@ When stable or beta features are slated for removal, they will be marked as Depr
 These features are early in their development lifecycle and so are not yet supported in Grafana Cloud.
 Alpha features might be changed or removed without prior notice.
 
-` + writeToggleDocsTable(func(flag registry.FeatureToggle) bool {
-		return flag.State == registry.FeatureStateAlpha && !flag.RequiresDevMode
+` + writeToggleDocsTable(func(flag FeatureToggle) bool {
+		return flag.State == FeatureStateAlpha && !flag.RequiresDevMode
 	}, false)
 
 	buf += `
@@ -255,16 +254,16 @@ Alpha features might be changed or removed without prior notice.
 
 The following toggles require explicitly setting Grafana's [app mode]({{< relref "../_index.md/#app_mode" >}}) to 'development' before you can enable this feature toggle. These features tend to be experimental.
 
-` + writeToggleDocsTable(func(flag registry.FeatureToggle) bool {
+` + writeToggleDocsTable(func(flag FeatureToggle) bool {
 		return flag.RequiresDevMode
 	}, false)
 	return buf
 }
 
-func writeToggleDocsTable(include func(registry.FeatureToggle) bool, showEnableByDefault bool) string {
+func writeToggleDocsTable(include func(FeatureToggle) bool, showEnableByDefault bool) string {
 	data := [][]string{}
 
-	for _, flag := range registry.Toggles {
+	for _, flag := range standardFeatureToggles {
 		if include(flag) {
 			row := []string{"`" + flag.Name + "`", flag.Description}
 			if showEnableByDefault {

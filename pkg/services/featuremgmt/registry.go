@@ -1,4 +1,15 @@
-package registry
+// To change feature flags, edit:
+//  pkg/services/featuremgmt/registry.go
+// Then run tests in:
+//  pkg/services/featuremgmt/toggles_gen_test.go
+// twice to generate and validate the feature flag files
+
+package featuremgmt
+
+import (
+	"sort"
+	"strings"
+)
 
 var (
 	// Do not add new toggles to the legacy list.
@@ -285,3 +296,17 @@ var (
 		},
 	}
 )
+
+var (
+	standardFeatureToggles = sortByName(append(
+		unknownSquadToggles,
+		multitenancySquadToggles...,
+	))
+)
+
+func sortByName(toggles []FeatureToggle) []FeatureToggle {
+	sort.Slice(toggles, func(i, j int) bool {
+		return strings.Compare(toggles[i].Name, toggles[j].Name) < 0
+	})
+	return toggles //asgsd
+}

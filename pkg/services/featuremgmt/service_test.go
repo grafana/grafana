@@ -3,7 +3,6 @@ package featuremgmt
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt/registry"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -12,7 +11,7 @@ import (
 
 func TestFeatureService(t *testing.T) {
 	license := stubLicenseServier{
-		flags: []registry.FeatureToggle{
+		flags: []FeatureToggle{
 			{
 				Name:            "a.yes.default",
 				RequiresLicense: true,
@@ -53,7 +52,7 @@ var (
 )
 
 type stubLicenseServier struct {
-	flags   []registry.FeatureToggle
+	flags   []FeatureToggle
 	enabled map[string]bool
 }
 
