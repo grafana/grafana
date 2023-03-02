@@ -15,10 +15,11 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
@@ -35,7 +36,7 @@ var (
 type scenarioContext struct {
 	ctx           *web.Context
 	service       *QueryHistoryService
-	reqContext    *models.ReqContext
+	reqContext    *contextmodel.ReqContext
 	sqlStore      db.DB
 	initialResult QueryHistoryResponse
 }
@@ -58,7 +59,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		quotaService := quotatest.New(false, nil)
 		orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotaService)
 		require.NoError(t, err)
-		usrSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sqlStore.Cfg, nil, nil, quotaService)
+		usrSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sqlStore.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
 		require.NoError(t, err)
 
 		usr := user.SignedInUser{
@@ -82,7 +83,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			ctx:      &ctx,
 			service:  &service,
 			sqlStore: sqlStore,
-			reqContext: &models.ReqContext{
+			reqContext: &contextmodel.ReqContext{
 				Context:      &ctx,
 				SignedInUser: &usr,
 			},

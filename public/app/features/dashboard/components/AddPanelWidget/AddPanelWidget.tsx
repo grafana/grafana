@@ -113,7 +113,7 @@ export const AddPanelWidgetUnconnected = ({ panel, dashboard }: Props) => {
   const onAddLibraryPanel = (panelInfo: LibraryElementDTO) => {
     const { gridPos } = panel;
 
-    const newPanel: PanelModel = {
+    const newPanel = {
       ...panelInfo.model,
       gridPos,
       libraryPanel: panelInfo,

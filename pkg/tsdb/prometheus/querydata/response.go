@@ -17,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/converter"
 )
 
-func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *http.Response) (backend.DataResponse, error) {
+func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *http.Response) backend.DataResponse {
 	defer func() {
 		if err := res.Body.Close(); err != nil {
 			s.log.FromContext(ctx).Error("Failed to close response body", "err", err)
@@ -30,6 +30,12 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 		VectorWideSeries: s.enableWideSeries,
 	})
 
+	// Add frame to attach metadata
+	if len(r.Frames) == 0 && !q.ExemplarQuery {
+		r.Frames = append(r.Frames, data.NewFrame(""))
+	}
+
+	// The ExecutedQueryString can be viewed in QueryInspector in UI
 	for _, frame := range r.Frames {
 		if s.enableWideSeries {
 			addMetadataToWideFrame(q, frame)
@@ -38,12 +44,11 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 		}
 	}
 
-	if r.Error != nil {
-		return r, r.Error
+	if r.Error == nil {
+		r = s.processExemplars(q, r)
 	}
 
-	r = s.processExemplars(q, r)
-	return r, nil
+	return r
 }
 
 func (s *QueryData) processExemplars(q *models.Query, dr backend.DataResponse) backend.DataResponse {

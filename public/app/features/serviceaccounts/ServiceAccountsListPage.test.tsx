@@ -1,11 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { Provider } from 'react-redux';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { OrgRole, ServiceAccountDTO, ServiceAccountStateFilter } from 'app/types';
-
-import { configureStore } from '../../store/configureStore';
 
 import { Props, ServiceAccountsListPageUnconnected } from './ServiceAccountsListPage';
 
@@ -18,7 +16,6 @@ jest.mock('app/core/core', () => ({
 }));
 
 const setup = (propOverrides: Partial<Props>) => {
-  const store = configureStore();
   const changeQueryMock = jest.fn();
   const fetchACOptionsMock = jest.fn();
   const fetchServiceAccountsMock = jest.fn();
@@ -26,9 +23,6 @@ const setup = (propOverrides: Partial<Props>) => {
   const updateServiceAccountMock = jest.fn();
   const changeStateFilterMock = jest.fn();
   const createServiceAccountTokenMock = jest.fn();
-  const getApiKeysMigrationStatusMock = jest.fn();
-  const getApiKeysMigrationInfoMock = jest.fn();
-  const closeApiKeysMigrationInfoMock = jest.fn();
   const props: Props = {
     isLoading: false,
     page: 0,
@@ -39,8 +33,6 @@ const setup = (propOverrides: Partial<Props>) => {
     showPaging: false,
     totalPages: 1,
     serviceAccounts: [],
-    apiKeysMigrated: false,
-    showApiKeysMigrationInfo: false,
     changeQuery: changeQueryMock,
     fetchACOptions: fetchACOptionsMock,
     fetchServiceAccounts: fetchServiceAccountsMock,
@@ -48,20 +40,17 @@ const setup = (propOverrides: Partial<Props>) => {
     updateServiceAccount: updateServiceAccountMock,
     changeStateFilter: changeStateFilterMock,
     createServiceAccountToken: createServiceAccountTokenMock,
-    getApiKeysMigrationStatus: getApiKeysMigrationStatusMock,
-    getApiKeysMigrationInfo: getApiKeysMigrationInfoMock,
-    closeApiKeysMigrationInfo: closeApiKeysMigrationInfoMock,
   };
 
   Object.assign(props, propOverrides);
 
   const { rerender } = render(
-    <Provider store={store}>
+    <TestProvider>
       <ServiceAccountsListPageUnconnected {...props} />
-    </Provider>
+    </TestProvider>
   );
   return {
-    rerender: (element: JSX.Element) => rerender(<Provider store={store}>{element}</Provider>),
+    rerender: (element: JSX.Element) => rerender(<TestProvider>{element}</TestProvider>),
     props,
     changeQueryMock,
     fetchACOptionsMock,

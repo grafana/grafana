@@ -71,7 +71,7 @@ const SilencesTable: FC<Props> = ({ silences, alertManagerAlerts, alertManagerSo
             <div className={styles.topButtonContainer}>
               <Link href={makeAMLink('/alerting/silence/new', alertManagerSourceName)}>
                 <Button className={styles.addNewSilence} icon="plus">
-                  New Silence
+                  Add Silence
                 </Button>
               </Link>
             </div>

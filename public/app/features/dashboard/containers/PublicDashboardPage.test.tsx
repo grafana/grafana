@@ -93,6 +93,7 @@ const getTestDashboard = (overrides?: Partial<Dashboard>, metaOverrides?: Partia
       schemaVersion: 1,
       style: 'dark',
       timepicker: { hidden: true },
+      timezone: '',
       panels: [
         {
           id: 1,

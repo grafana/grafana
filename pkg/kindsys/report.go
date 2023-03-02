@@ -9,14 +9,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
-	"path"
+	"path/filepath"
 	"reflect"
 	"sort"
 	"strings"
 
+	"cuelang.org/go/cue"
+
 	"github.com/grafana/codejen"
 	"github.com/grafana/grafana/pkg/kindsys"
+	"github.com/grafana/grafana/pkg/kindsys/kindsysreport"
 	"github.com/grafana/grafana/pkg/plugins/pfs/corelist"
 	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/registry/corekind"
@@ -82,8 +86,10 @@ type KindLinks struct {
 
 type Kind struct {
 	kindsys.SomeKindProperties
-	Category string
-	Links    KindLinks
+	Category             string
+	Links                KindLinks
+	GrafanaMaturityCount int
+	CodeOwners           []string
 }
 
 // MarshalJSON is overwritten to marshal
@@ -100,6 +106,13 @@ func (k Kind) MarshalJSON() ([]byte, error) {
 	}
 
 	m["category"] = k.Category
+	m["grafanaMaturityCount"] = k.GrafanaMaturityCount
+
+	if len(k.CodeOwners) == 0 {
+		m["codeowners"] = []string{}
+	} else {
+		m["codeowners"] = k.CodeOwners
+	}
 
 	m["links"] = map[string]string{}
 	for _, ref := range []string{"Schema", "Go", "Ts", "Docs"} {
@@ -174,18 +187,21 @@ func buildKindStateReport() *KindStateReport {
 	r := emptyKindStateReport()
 	b := corekind.NewBase(nil)
 
+	groot := filepath.Join(elsedie(os.Getwd())("cannot get cwd"), "..", "..")
+	of := elsedie(kindsysreport.NewCodeOwnersFinder(groot))("cannot parse .github/codeowners")
+
 	seen := make(map[string]bool)
 	for _, k := range b.All() {
 		seen[k.Props().Common().Name] = true
-		k.Lineage()
-		switch k.Props().(type) {
-		case kindsys.CoreProperties:
-			r.add(Kind{
-				SomeKindProperties: k.Props(),
-				Category:           "core",
-				Links:              buildCoreLinks(k.Lineage(), k.Decl().Properties),
-			})
-		}
+		lin := k.Lineage()
+		links := buildCoreLinks(lin, k.Def().Properties)
+		r.add(Kind{
+			SomeKindProperties:   k.Props(),
+			Category:             "core",
+			Links:                links,
+			GrafanaMaturityCount: grafanaMaturityAttrCount(lin.Latest().Underlying()),
+			CodeOwners:           findCodeOwners(of, links),
+		})
 	}
 
 	for _, kn := range plannedCoreKinds {
@@ -211,10 +227,13 @@ func buildKindStateReport() *KindStateReport {
 	for _, pp := range corelist.New(nil) {
 		for _, si := range all {
 			if ck, has := pp.ComposableKinds[si.Name()]; has {
+				links := buildComposableLinks(pp.Properties, ck.Def().Properties)
 				r.add(Kind{
-					SomeKindProperties: ck.Props(),
-					Category:           "composable",
-					Links:              buildComposableLinks(pp.Properties, ck.Decl().Properties),
+					SomeKindProperties:   ck.Props(),
+					Category:             "composable",
+					Links:                links,
+					GrafanaMaturityCount: grafanaMaturityAttrCount(ck.Lineage().Latest().Underlying()),
+					CodeOwners:           findCodeOwners(of, links),
 				})
 			} else if may := si.Should(string(pp.Properties.Type)); may {
 				n := plugindef.DerivePascalName(pp.Properties) + si.Name()
@@ -246,10 +265,6 @@ func buildKindStateReport() *KindStateReport {
 	return r
 }
 
-func buildDocsRef(category string, props kindsys.CommonProperties) string {
-	return path.Join(docsBaseURL, category, props.MachineName, "schema-reference")
-}
-
 func buildCoreLinks(lin thema.Lineage, cp kindsys.CoreProperties) KindLinks {
 	const category = "core"
 	vpath := fmt.Sprintf("v%v", lin.Latest().Version()[0])
@@ -258,10 +273,10 @@ func buildCoreLinks(lin thema.Lineage, cp kindsys.CoreProperties) KindLinks {
 	}
 
 	return KindLinks{
-		Schema: path.Join(repoBaseURL, fmt.Sprintf(coreCUEPath, cp.MachineName, cp.MachineName)),
-		Go:     path.Join(repoBaseURL, fmt.Sprintf(coreGoPath, cp.MachineName)),
-		Ts:     path.Join(repoBaseURL, fmt.Sprintf(coreTSPath, cp.MachineName, vpath, cp.MachineName)),
-		Docs:   path.Join(docsBaseURL, category, cp.MachineName, "schema-reference"),
+		Schema: elsedie(url.JoinPath(repoBaseURL, fmt.Sprintf(coreCUEPath, cp.MachineName, cp.MachineName)))("cannot build schema link"),
+		Go:     elsedie(url.JoinPath(repoBaseURL, fmt.Sprintf(coreGoPath, cp.MachineName)))("cannot build go link"),
+		Ts:     elsedie(url.JoinPath(repoBaseURL, fmt.Sprintf(coreTSPath, cp.MachineName, vpath, cp.MachineName)))("cannot build ts link"),
+		Docs:   elsedie(url.JoinPath(docsBaseURL, category, cp.MachineName, "schema-reference"))("cannot build docs link"),
 	}
 }
 
@@ -281,7 +296,6 @@ var irregularPluginNames = map[string]string{
 	"azuremonitor":          "grafana-azure-monitor-datasource",
 	"microsoftsqlserver":    "mssql",
 	"postgresql":            "postgres",
-	"testdatadb":            "testdata",
 }
 
 func buildComposableLinks(pp plugindef.PluginDef, cp kindsys.ComposableProperties) KindLinks {
@@ -295,15 +309,32 @@ func buildComposableLinks(pp plugindef.PluginDef, cp kindsys.ComposablePropertie
 
 	var goLink string
 	if pp.Backend != nil && *pp.Backend {
-		goLink = path.Join(repoBaseURL, fmt.Sprintf(composableGoPath, pName, schemaInterface, schemaInterface))
+		goLink = elsedie(url.JoinPath(repoBaseURL, fmt.Sprintf(composableGoPath, pName, schemaInterface, schemaInterface)))("cannot build go link")
 	}
 
 	return KindLinks{
-		Schema: path.Join(repoBaseURL, fmt.Sprintf(composableCUEPath, string(pp.Type), pName, schemaInterface)),
+		Schema: elsedie(url.JoinPath(repoBaseURL, fmt.Sprintf(composableCUEPath, string(pp.Type), pName, schemaInterface)))("cannot build schema link"),
 		Go:     goLink,
-		Ts:     path.Join(repoBaseURL, fmt.Sprintf(composableTSPath, string(pp.Type), pName, schemaInterface)),
-		Docs:   path.Join(docsBaseURL, category, cp.MachineName, "schema-reference"),
+		Ts:     elsedie(url.JoinPath(repoBaseURL, fmt.Sprintf(composableTSPath, string(pp.Type), pName, schemaInterface)))("cannot build ts link"),
+		Docs:   elsedie(url.JoinPath(docsBaseURL, category, cp.MachineName, "schema-reference"))("cannot build docs link"),
 	}
+}
+
+func grafanaMaturityAttrCount(sch cue.Value) int {
+	const attr = "grafanamaturity"
+	aw := new(kindsysreport.AttributeWalker)
+	return aw.Count(sch, attr)[attr]
+}
+
+func findCodeOwners(of kindsysreport.CodeOwnersFinder, links KindLinks) []string {
+	owners := elsedie(of.FindFor([]string{
+		toLocalPath(links.Schema),
+		toLocalPath(links.Go),
+		toLocalPath(links.Ts),
+	}...))("cannot find code owners")
+
+	sort.Strings(owners)
+	return owners
 }
 
 func machinize(s string) string {
@@ -327,6 +358,10 @@ func machinize(s string) string {
 
 func toCamelCase(s string) string {
 	return strings.ToLower(string(s[0])) + s[1:]
+}
+
+func toLocalPath(s string) string {
+	return strings.Replace(s, repoBaseURL+"/", "", 1)
 }
 
 type reportJenny struct{}

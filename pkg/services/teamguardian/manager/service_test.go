@@ -4,13 +4,14 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/teamguardian/database"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 func TestUpdateTeam(t *testing.T) {
@@ -50,7 +51,7 @@ func TestUpdateTeam(t *testing.T) {
 					OrgID:      testTeam.OrgID,
 					TeamID:     testTeam.ID,
 					UserID:     editor.UserID,
-					Permission: models.PERMISSION_ADMIN,
+					Permission: dashboards.PERMISSION_ADMIN,
 				}}
 
 				store.On("GetTeamMembers", ctx, mock.Anything).Return(result, nil).Once()
@@ -72,7 +73,7 @@ func TestUpdateTeam(t *testing.T) {
 					OrgID:      testTeamOtherOrg.OrgID,
 					TeamID:     testTeamOtherOrg.ID,
 					UserID:     editor.UserID,
-					Permission: models.PERMISSION_ADMIN,
+					Permission: dashboards.PERMISSION_ADMIN,
 				}}
 
 				store.On("GetTeamMembers", ctx, mock.Anything).Return(result, nil).Once()

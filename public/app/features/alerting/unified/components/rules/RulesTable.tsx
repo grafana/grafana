@@ -114,9 +114,13 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean) {
           const { namespace } = rule;
           const { rulesSource } = namespace;
           const { promRule, rulerRule } = rule;
+
           const isDeleting = !!(hasRuler(rulesSource) && rulerRulesLoaded(rulesSource) && promRule && !rulerRule);
           const isCreating = !!(hasRuler(rulesSource) && rulerRulesLoaded(rulesSource) && rulerRule && !promRule);
-          return <RuleState rule={rule} isDeleting={isDeleting} isCreating={isCreating} />;
+          const isGrafanaManagedRule = isGrafanaRulerRule(rulerRule);
+          const isPaused = isGrafanaManagedRule && Boolean(rulerRule.grafana_alert.is_paused);
+
+          return <RuleState rule={rule} isDeleting={isDeleting} isCreating={isCreating} isPaused={isPaused} />;
         },
         size: '165px',
       },

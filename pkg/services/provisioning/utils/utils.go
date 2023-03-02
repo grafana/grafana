@@ -10,7 +10,7 @@ import (
 )
 
 type DashboardStore interface {
-	GetDashboard(context.Context, *dashboards.GetDashboardQuery) error
+	GetDashboard(context.Context, *dashboards.GetDashboardQuery) (*dashboards.Dashboard, error)
 }
 
 func CheckOrgExists(ctx context.Context, orgService org.Service, orgID int64) error {

@@ -88,30 +88,38 @@ function generateInternalHref<T extends DataQuery = any>(
   );
 }
 
-function interpolateObject<T extends object>(
-  object: T | undefined,
+function interpolateObject<T>(
+  obj: T | undefined,
+  scopedVars: ScopedVars,
+  replaceVariables: InterpolateFunction
+): T | undefined {
+  if (!obj) {
+    return obj;
+  }
+  if (typeof obj === 'string') {
+    // @ts-ignore this is complaining we are returning string, but we are checking if obj is a string so should be fine.
+    return replaceVariables(obj, scopedVars);
+  }
+  const copy = JSON.parse(JSON.stringify(obj));
+  return interpolateObjectRecursive(copy, scopedVars, replaceVariables);
+}
+
+function interpolateObjectRecursive<T extends Object>(
+  obj: T,
   scopedVars: ScopedVars,
   replaceVariables: InterpolateFunction
 ): T {
-  let stringifiedQuery = '';
-  try {
-    stringifiedQuery = JSON.stringify(object || {});
-  } catch (err) {
-    // should not happen and not much to do about this, possibly something non stringifiable in the query
-    console.error(err);
+  for (const k of Object.keys(obj)) {
+    // Honestly not sure how to type this to make TS happy.
+    // @ts-ignore
+    if (typeof obj[k] === 'string') {
+      // @ts-ignore
+      obj[k] = replaceVariables(obj[k], scopedVars);
+      // @ts-ignore
+    } else if (typeof obj[k] === 'object' && obj[k] !== null) {
+      // @ts-ignore
+      obj[k] = interpolateObjectRecursive(obj[k], scopedVars, replaceVariables);
+    }
   }
-
-  // Replace any variables inside the query. This may not be the safest as it can also replace keys etc so may not
-  // actually work with every datasource query right now.
-  stringifiedQuery = replaceVariables(stringifiedQuery, scopedVars);
-
-  let replacedQuery = {} as T;
-  try {
-    replacedQuery = JSON.parse(stringifiedQuery);
-  } catch (err) {
-    // again should not happen and not much to do about this, probably some issue with how we replaced the variables.
-    console.error(stringifiedQuery, err);
-  }
-
-  return replacedQuery;
+  return obj;
 }

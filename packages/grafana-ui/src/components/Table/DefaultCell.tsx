@@ -5,7 +5,9 @@ import tinycolor from 'tinycolor2';
 import { DisplayValue, formattedValueToString } from '@grafana/data';
 import { TableCellBackgroundDisplayMode, TableCellOptions } from '@grafana/schema';
 
+import { useStyles2 } from '../../themes';
 import { getCellLinks, getTextColorForAlphaBackground } from '../../utils';
+import { Button, clearLinkButtonStyles } from '../Button';
 import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
 
 import { CellActions } from './CellActions';
@@ -31,6 +33,7 @@ export const DefaultCell: FC<TableCellProps> = (props) => {
   const cellOptions = getCellOptions(field);
   const cellStyle = getCellStyle(tableStyles, cellOptions, displayValue, inspectEnabled);
   const hasLinks = Boolean(getCellLinks(field, row)?.length);
+  const clearButtonStyle = useStyles2(clearLinkButtonStyles);
 
   return (
     <div {...cellProps} className={cellStyle}>
@@ -39,11 +42,16 @@ export const DefaultCell: FC<TableCellProps> = (props) => {
       {hasLinks && (
         <DataLinksContextMenu links={() => getCellLinks(field, row) || []}>
           {(api) => {
-            return (
-              <div onClick={api.openMenu} className={getLinkStyle(tableStyles, cellOptions, api.targetClassName)}>
-                {value}
-              </div>
-            );
+            const content = <div className={getLinkStyle(tableStyles, cellOptions, api.targetClassName)}>{value}</div>;
+            if (api.openMenu) {
+              return (
+                <Button className={cx(clearButtonStyle)} onClick={api.openMenu}>
+                  {content}
+                </Button>
+              );
+            } else {
+              return content;
+            }
           }}
         </DataLinksContextMenu>
       )}

@@ -206,9 +206,9 @@ func (sa *ServiceAccountsService) ListTokens(ctx context.Context, query *service
 	return sa.store.ListTokens(ctx, query)
 }
 
-func (sa *ServiceAccountsService) AddServiceAccountToken(ctx context.Context, serviceAccountID int64, query *serviceaccounts.AddServiceAccountTokenCommand) error {
+func (sa *ServiceAccountsService) AddServiceAccountToken(ctx context.Context, serviceAccountID int64, query *serviceaccounts.AddServiceAccountTokenCommand) (*apikey.APIKey, error) {
 	if err := validServiceAccountID(serviceAccountID); err != nil {
-		return err
+		return nil, err
 	}
 	return sa.store.AddServiceAccountToken(ctx, serviceAccountID, query)
 }
@@ -224,13 +224,6 @@ func (sa *ServiceAccountsService) DeleteServiceAccountToken(ctx context.Context,
 		return err
 	}
 	return sa.store.DeleteServiceAccountToken(ctx, orgID, serviceAccountID, tokenID)
-}
-
-func (sa *ServiceAccountsService) GetAPIKeysMigrationStatus(ctx context.Context, orgID int64) (status *serviceaccounts.APIKeysMigrationStatus, err error) {
-	if err := validOrgID(orgID); err != nil {
-		return nil, err
-	}
-	return sa.store.GetAPIKeysMigrationStatus(ctx, orgID)
 }
 
 func (sa *ServiceAccountsService) HideApiKeysTab(ctx context.Context, orgID int64) error {

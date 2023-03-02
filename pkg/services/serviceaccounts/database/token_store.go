@@ -38,8 +38,10 @@ func (s *ServiceAccountsStoreImpl) ListTokens(
 	return result, err
 }
 
-func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, serviceAccountId int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) error {
-	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, serviceAccountId int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) (*apikey.APIKey, error) {
+	var apiKey *apikey.APIKey
+
+	return apiKey, s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		if _, err := s.RetrieveServiceAccount(ctx, cmd.OrgId, serviceAccountId); err != nil {
 			return err
 		}
@@ -47,7 +49,7 @@ func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, s
 		addKeyCmd := &apikey.AddCommand{
 			Name:             cmd.Name,
 			Role:             org.RoleViewer,
-			OrgId:            cmd.OrgId,
+			OrgID:            cmd.OrgId,
 			Key:              cmd.Key,
 			SecondsToLive:    cmd.SecondsToLive,
 			ServiceAccountID: &serviceAccountId,
@@ -56,15 +58,15 @@ func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, s
 		if err := s.apiKeyService.AddAPIKey(ctx, addKeyCmd); err != nil {
 			switch {
 			case errors.Is(err, apikey.ErrDuplicate):
-				return ErrDuplicateToken
+				return serviceaccounts.ErrDuplicateToken
 			case errors.Is(err, apikey.ErrInvalidExpiration):
-				return ErrInvalidTokenExpiration
+				return serviceaccounts.ErrInvalidTokenExpiration
 			}
 
 			return err
 		}
 
-		cmd.Result = addKeyCmd.Result
+		apiKey = addKeyCmd.Result
 		return nil
 	})
 }
@@ -79,7 +81,7 @@ func (s *ServiceAccountsStoreImpl) DeleteServiceAccountToken(ctx context.Context
 		}
 		affected, err := result.RowsAffected()
 		if affected == 0 {
-			return ErrServiceAccountTokenNotFound
+			return serviceaccounts.ErrServiceAccountTokenNotFound
 		}
 
 		return err
@@ -96,7 +98,7 @@ func (s *ServiceAccountsStoreImpl) RevokeServiceAccountToken(ctx context.Context
 		}
 		affected, err := result.RowsAffected()
 		if affected == 0 {
-			return ErrServiceAccountTokenNotFound
+			return serviceaccounts.ErrServiceAccountTokenNotFound
 		}
 
 		return err
@@ -105,7 +107,7 @@ func (s *ServiceAccountsStoreImpl) RevokeServiceAccountToken(ctx context.Context
 
 // assignApiKeyToServiceAccount sets the API key service account ID
 func (s *ServiceAccountsStoreImpl) assignApiKeyToServiceAccount(sess *db.Session, apiKeyId int64, serviceAccountId int64) error {
-	key := apikey.APIKey{Id: apiKeyId}
+	key := apikey.APIKey{ID: apiKeyId}
 	exists, err := sess.Get(&key)
 	if err != nil {
 		s.log.Warn("API key not loaded", "err", err)
@@ -117,7 +119,7 @@ func (s *ServiceAccountsStoreImpl) assignApiKeyToServiceAccount(sess *db.Session
 	}
 	key.ServiceAccountId = &serviceAccountId
 
-	if _, err := sess.ID(key.Id).Update(&key); err != nil {
+	if _, err := sess.ID(key.ID).Update(&key); err != nil {
 		s.log.Warn("Could not update api key", "err", err)
 		return err
 	}
@@ -127,7 +129,7 @@ func (s *ServiceAccountsStoreImpl) assignApiKeyToServiceAccount(sess *db.Session
 
 // detachApiKeyFromServiceAccount converts service account token to old API key
 func (s *ServiceAccountsStoreImpl) detachApiKeyFromServiceAccount(sess *db.Session, apiKeyId int64) error {
-	key := apikey.APIKey{Id: apiKeyId}
+	key := apikey.APIKey{ID: apiKeyId}
 	exists, err := sess.Get(&key)
 	if err != nil {
 		s.log.Warn("Cannot get API key", "err", err)
@@ -139,7 +141,7 @@ func (s *ServiceAccountsStoreImpl) detachApiKeyFromServiceAccount(sess *db.Sessi
 	}
 	key.ServiceAccountId = nil
 
-	if _, err := sess.ID(key.Id).AllCols().Update(&key); err != nil {
+	if _, err := sess.ID(key.ID).AllCols().Update(&key); err != nil {
 		s.log.Error("Could not update api key", "err", err)
 		return err
 	}

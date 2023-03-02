@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import { DataFrame, Field, getFieldDisplayName, SelectableValue } from '@grafana/data';
 
-import { getIconForFieldType } from '../../types';
+import { getFieldTypeIcon } from '../../types';
 
 /**
  * @internal
@@ -88,7 +88,7 @@ export function useSelectOptions(
         options.push({
           value: name,
           label: name,
-          icon: field ? getIconForFieldType(field?.type) : undefined,
+          icon: field ? getFieldTypeIcon(field) : undefined,
         });
       }
     }

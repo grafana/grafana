@@ -21,6 +21,10 @@ Use contact points to define how your contacts are notified when an alert rule f
 
 You can also use notification templating to customize notification messages for contact point types.
 
+**Note:**
+
+If you've created an OnCall contact point in the Grafana OnCall application, you can view it in the Alerting application.
+
 ## Supported contact point types
 
 The following table lists the contact point types supported by Grafana.

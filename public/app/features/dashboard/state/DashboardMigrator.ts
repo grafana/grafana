@@ -6,7 +6,6 @@ import {
   DataLinkBuiltInVars,
   DataQuery,
   DataSourceRef,
-  DataTransformerConfig,
   FieldConfigSource,
   FieldMatcherID,
   FieldType,
@@ -26,6 +25,7 @@ import {
 import { labelsToFieldsTransformer } from '@grafana/data/src/transformations/transformers/labelsToFields';
 import { mergeTransformer } from '@grafana/data/src/transformations/transformers/merge';
 import { getDataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
+import { DataTransformerConfig } from '@grafana/schema';
 import { AxisPlacement, GraphFieldConfig } from '@grafana/ui';
 import { migrateTableDisplayModeToCellOptions } from '@grafana/ui/src/components/Table/utils';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';

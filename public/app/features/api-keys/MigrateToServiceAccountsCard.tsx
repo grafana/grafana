@@ -16,26 +16,24 @@ export const MigrateToServiceAccountsCard = ({ onMigrate, disabled }: Props): JS
   const docsLink = (
     <a
       className="external-link"
-      href="https://grafana.com/docs/grafana/latest/administration/api-keys/#migrate-api-keys-to-grafana-service-accounts/"
+      href="https://grafana.com/docs/grafana/latest/administration/api-keys/#migrate-api-keys-to-grafana-service-accounts"
       target="_blank"
       rel="noopener noreferrer"
     >
-      here.
+      Find out more about the migration here.
     </a>
   );
-  const migrationBoxDesc = (
-    <span>Are you sure you want to migrate all API keys to service accounts? Find out more {docsLink}</span>
-  );
+  const migrationBoxDesc = <span>Are you sure you want to migrate all API keys to service accounts? {docsLink}</span>;
 
   return (
-    <Alert title="Switch from API keys to service accounts" severity="info">
+    <Alert title="Switch from API keys to service accounts" severity="warning">
       <div className={styles.text}>
-        Each API key will be automatically migrated into a service account with a token. The service account will be
-        created with the same permission as the API Key and current API Keys will continue to work as they were.
+        We will soon deprecate API keys. Each API key will be migrated into a service account with a token and will
+        continue to work as they were. We encourage you to migrate your API keys to service accounts now. {docsLink}
       </div>
       <div className={styles.actionRow}>
         <Button className={styles.actionButton} onClick={() => setIsModalOpen(true)}>
-          Migrate to service accounts now
+          Migrate all service accounts
         </Button>
         <ConfirmModal
           title={'Migrate API keys to service accounts'}
@@ -44,6 +42,8 @@ export const MigrateToServiceAccountsCard = ({ onMigrate, disabled }: Props): JS
           confirmText={'Yes, migrate now'}
           onConfirm={onMigrate}
           onDismiss={() => setIsModalOpen(false)}
+          confirmVariant="primary"
+          confirmButtonVariant="primary"
         />
       </div>
     </Alert>

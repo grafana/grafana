@@ -367,20 +367,6 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/admin/storage/k8s',
-      roles: () => ['Admin'],
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "K8SStoragePage" */ 'app/features/storage/k8s/K8SPage')
-      ),
-    },
-    {
-      path: '/admin/storage/export',
-      roles: () => ['Admin'],
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "ExportPage" */ 'app/features/storage/ExportPage')
-      ),
-    },
-    {
       path: '/admin/storage/:path*',
       roles: () => ['Admin'],
       component: SafeDynamicImport(
@@ -401,7 +387,7 @@ export function getAppRoutes(): RouteDescriptor[] {
     {
       path: '/login',
       component: LoginPage,
-      pageClass: 'login-page sidemenu-hidden',
+      pageClass: 'login-page',
       chromeless: true,
     },
     {
@@ -409,7 +395,6 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "SignupInvited" */ 'app/features/invites/SignupInvited')
       ),
-      pageClass: 'sidemenu-hidden',
       chromeless: true,
     },
     {
@@ -419,7 +404,7 @@ export function getAppRoutes(): RouteDescriptor[] {
         : SafeDynamicImport(
             () => import(/* webpackChunkName "VerifyEmailPage"*/ 'app/core/components/Signup/VerifyEmailPage')
           ),
-      pageClass: 'login-page sidemenu-hidden',
+      pageClass: 'login-page',
       chromeless: true,
     },
     {
@@ -427,12 +412,11 @@ export function getAppRoutes(): RouteDescriptor[] {
       component: config.disableUserSignUp
         ? () => <Redirect to="/login" />
         : SafeDynamicImport(() => import(/* webpackChunkName "SignupPage"*/ 'app/core/components/Signup/SignupPage')),
-      pageClass: 'sidemenu-hidden login-page',
+      pageClass: 'login-page',
       chromeless: true,
     },
     {
       path: '/user/password/send-reset-email',
-      pageClass: 'sidemenu-hidden',
       chromeless: true,
       component: SafeDynamicImport(
         () =>
@@ -447,7 +431,7 @@ export function getAppRoutes(): RouteDescriptor[] {
             /* webpackChunkName: "ChangePasswordPage" */ 'app/core/components/ForgottenPassword/ChangePasswordPage'
           )
       ),
-      pageClass: 'sidemenu-hidden login-page',
+      pageClass: 'login-page',
       chromeless: true,
     },
     {
@@ -561,7 +545,7 @@ export function getBrowseStorageRoutes(cfg = config): RouteDescriptor[] {
 }
 
 export function getSupportBundleRoutes(cfg = config): RouteDescriptor[] {
-  if (!cfg.featureToggles.supportBundles) {
+  if (!cfg.supportBundlesEnabled) {
     return [];
   }
 

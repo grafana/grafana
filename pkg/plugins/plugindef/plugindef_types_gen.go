@@ -11,93 +11,69 @@ package plugindef
 
 // Defines values for BasicRole.
 const (
-	BasicRoleAdmin BasicRole = "Admin"
-
-	BasicRoleEditor BasicRole = "Editor"
-
+	BasicRoleAdmin        BasicRole = "Admin"
+	BasicRoleEditor       BasicRole = "Editor"
 	BasicRoleGrafanaAdmin BasicRole = "Grafana Admin"
-
-	BasicRoleViewer BasicRole = "Viewer"
+	BasicRoleViewer       BasicRole = "Viewer"
 )
 
 // Defines values for DependencyType.
 const (
-	DependencyTypeApp DependencyType = "app"
-
+	DependencyTypeApp        DependencyType = "app"
 	DependencyTypeDatasource DependencyType = "datasource"
+	DependencyTypePanel      DependencyType = "panel"
+)
 
-	DependencyTypePanel DependencyType = "panel"
+// Defines values for ExtensionsLinkType.
+const (
+	ExtensionsLinkTypeLink ExtensionsLinkType = "link"
 )
 
 // Defines values for IncludeRole.
 const (
-	IncludeRoleAdmin IncludeRole = "Admin"
-
+	IncludeRoleAdmin  IncludeRole = "Admin"
 	IncludeRoleEditor IncludeRole = "Editor"
-
 	IncludeRoleViewer IncludeRole = "Viewer"
 )
 
 // Defines values for IncludeType.
 const (
-	IncludeTypeApp IncludeType = "app"
-
-	IncludeTypeDashboard IncludeType = "dashboard"
-
-	IncludeTypeDatasource IncludeType = "datasource"
-
-	IncludeTypePage IncludeType = "page"
-
-	IncludeTypePanel IncludeType = "panel"
-
-	IncludeTypeRenderer IncludeType = "renderer"
-
+	IncludeTypeApp            IncludeType = "app"
+	IncludeTypeDashboard      IncludeType = "dashboard"
+	IncludeTypeDatasource     IncludeType = "datasource"
+	IncludeTypePage           IncludeType = "page"
+	IncludeTypePanel          IncludeType = "panel"
+	IncludeTypeRenderer       IncludeType = "renderer"
 	IncludeTypeSecretsmanager IncludeType = "secretsmanager"
+)
+
+// Defines values for Category.
+const (
+	CategoryCloud      Category = "cloud"
+	CategoryEnterprise Category = "enterprise"
+	CategoryLogging    Category = "logging"
+	CategoryOther      Category = "other"
+	CategoryProfiling  Category = "profiling"
+	CategorySql        Category = "sql"
+	CategoryTracing    Category = "tracing"
+	CategoryTsdb       Category = "tsdb"
+)
+
+// Defines values for Type.
+const (
+	TypeApp            Type = "app"
+	TypeDatasource     Type = "datasource"
+	TypePanel          Type = "panel"
+	TypeRenderer       Type = "renderer"
+	TypeSecretsmanager Type = "secretsmanager"
 )
 
 // Defines values for ReleaseState.
 const (
-	ReleaseStateAlpha ReleaseState = "alpha"
-
-	ReleaseStateBeta ReleaseState = "beta"
-
+	ReleaseStateAlpha      ReleaseState = "alpha"
+	ReleaseStateBeta       ReleaseState = "beta"
 	ReleaseStateDeprecated ReleaseState = "deprecated"
-
-	ReleaseStateStable ReleaseState = "stable"
-)
-
-// Defines values for Category.
-// Defines values for PlugindefCategory.
-const (
-	CategoryCloud Category = "cloud"
-
-	CategoryEnterprise Category = "enterprise"
-
-	CategoryLogging Category = "logging"
-
-	CategoryOther Category = "other"
-
-	CategoryProfiling Category = "profiling"
-
-	CategorySql Category = "sql"
-
-	CategoryTracing Category = "tracing"
-
-	CategoryTsdb Category = "tsdb"
-)
-
-// Defines values for Type.
-// Defines values for PlugindefType.
-const (
-	TypeApp Type = "app"
-
-	TypeDatasource Type = "datasource"
-
-	TypePanel Type = "panel"
-
-	TypeRenderer Type = "renderer"
-
-	TypeSecretsmanager Type = "secretsmanager"
+	ReleaseStateStable     ReleaseState = "stable"
 )
 
 // BasicRole is a Grafana basic role, which can be 'Viewer', 'Editor', 'Admin' or 'Grafana Admin'.
@@ -134,7 +110,7 @@ type Dependencies struct {
 	GrafanaVersion *string `json:"grafanaVersion,omitempty"`
 
 	// An array of required plugins on which this plugin depends.
-	Plugins *[]Dependency `json:"plugins,omitempty"`
+	Plugins []Dependency `json:"plugins,omitempty"`
 }
 
 // Dependency describes another plugin on which a plugin depends.
@@ -150,6 +126,27 @@ type Dependency struct {
 // DependencyType defines model for Dependency.Type.
 type DependencyType string
 
+// ExtensionsLink defines model for ExtensionsLink.
+type ExtensionsLink struct {
+	// Description for the rendered link
+	Description string `json:"description"`
+
+	// Path relative to the extending plugin e.g. /incidents/declare
+	Path string `json:"path"`
+
+	// Target where the link will be rendered
+	Placement string `json:"placement"`
+
+	// Title that will be displayed for the rendered link
+	Title string `json:"title"`
+
+	// Type of extension
+	Type ExtensionsLinkType `json:"type"`
+}
+
+// Type of extension
+type ExtensionsLinkType string
+
 // Header describes an HTTP header that is forwarded with a proxied request for
 // a plugin route.
 type Header struct {
@@ -162,7 +159,7 @@ type Include struct {
 	// RBAC action the user must have to access the route
 	Action *string `json:"action,omitempty"`
 
-	// Add the include to the side menu.
+	// Add the include to the navigation menu.
 	AddToNav *bool `json:"addToNav,omitempty"`
 
 	// (Legacy) The Angular component to use for a page.
@@ -178,7 +175,9 @@ type Include struct {
 	Name *string `json:"name,omitempty"`
 
 	// Used for app plugins.
-	Path *string      `json:"path,omitempty"`
+	Path *string `json:"path,omitempty"`
+
+	// The minimum role a user must have to see this page in the navigation menu.
 	Role *IncludeRole `json:"role,omitempty"`
 
 	// IncludeType is a string identifier of a plugin include type, which is
@@ -189,7 +188,7 @@ type Include struct {
 	Uid *string `json:"uid,omitempty"`
 }
 
-// IncludeRole defines model for Include.Role.
+// The minimum role a user must have to see this page in the navigation menu.
 type IncludeRole string
 
 // IncludeType is a string identifier of a plugin include type, which is
@@ -222,7 +221,7 @@ type Info struct {
 	// An array of link objects to be displayed on this plugin's
 	// project page in the form `{name: 'foo', url:
 	// 'http://example.com'}`
-	Links *[]struct {
+	Links []struct {
 		Name *string `json:"name,omitempty"`
 		Url  *string `json:"url,omitempty"`
 	} `json:"links,omitempty"`
@@ -240,7 +239,7 @@ type Info struct {
 
 	// An array of screenshot objects in the form `{name: 'bar', path:
 	// 'img/screenshot.png'}`
-	Screenshots *[]struct {
+	Screenshots []struct {
 		Name *string `json:"name,omitempty"`
 		Path *string `json:"path,omitempty"`
 	} `json:"screenshots,omitempty"`
@@ -274,94 +273,7 @@ type Permission struct {
 	Scope  *string `json:"scope,omitempty"`
 }
 
-// ReleaseState indicates release maturity state of a plugin.
-type ReleaseState string
-
-// Role describes an RBAC role which allows grouping multiple related permissions on the plugin,
-// each of which has an action and an optional scope.
-// Example: the role 'Schedules Reader' bundles permissions to view all schedules of the plugin.
-type Role struct {
-	Description string       `json:"description"`
-	Name        string       `json:"name"`
-	Permissions []Permission `json:"permissions"`
-}
-
-// RoleRegistration describes an RBAC role and its assignments to basic roles.
-// It organizes related RBAC permissions on the plugin into a role and defines which basic roles
-// will get them by default.
-// Example: the role 'Schedules Reader' bundles permissions to view all schedules of the plugin
-// which will be granted to Admins by default.
-type RoleRegistration struct {
-	// Default assignment of the role to Grafana basic roles (Viewer, Editor, Admin, Grafana Admin)
-	// The Admin basic role inherits its default permissions from the Editor basic role which in turn
-	// inherits them from the Viewer basic role.
-	Grants []BasicRole `json:"grants"`
-
-	// Role describes an RBAC role which allows grouping multiple related permissions on the plugin,
-	// each of which has an action and an optional scope.
-	// Example: the role 'Schedules Reader' bundles permissions to view all schedules of the plugin.
-	Role Role `json:"role"`
-}
-
-// A proxy route used in datasource plugins for plugin authentication
-// and adding headers to HTTP requests made by the plugin.
-// For more information, refer to [Authentication for data source
-// plugins](https://grafana.com/docs/grafana/latest/developers/plugins/authentication/).
-type Route struct {
-	// For data source plugins. Route headers set the body content and
-	// length to the proxied request.
-	Body *map[string]interface{} `json:"body,omitempty"`
-
-	// For data source plugins. Route headers adds HTTP headers to the
-	// proxied request.
-	Headers *[]Header `json:"headers,omitempty"`
-
-	// TODO docs
-	// TODO should this really be separate from TokenAuth?
-	JwtTokenAuth *JWTTokenAuth `json:"jwtTokenAuth,omitempty"`
-
-	// For data source plugins. Route method matches the HTTP verb
-	// like GET or POST. Multiple methods can be provided as a
-	// comma-separated list.
-	Method *string `json:"method,omitempty"`
-
-	// For data source plugins. The route path that is replaced by the
-	// route URL field when proxying the call.
-	Path        *string `json:"path,omitempty"`
-	ReqRole     *string `json:"reqRole,omitempty"`
-	ReqSignedIn *bool   `json:"reqSignedIn,omitempty"`
-
-	// TODO docs
-	TokenAuth *TokenAuth `json:"tokenAuth,omitempty"`
-
-	// For data source plugins. Route URL is where the request is
-	// proxied to.
-	Url       *string     `json:"url,omitempty"`
-	UrlParams *[]URLParam `json:"urlParams,omitempty"`
-}
-
-// TODO docs
-type TokenAuth struct {
-	// Parameters for the token authentication request.
-	Params map[string]string `json:"params"`
-
-	// The list of scopes that your application should be granted
-	// access to.
-	Scopes *[]string `json:"scopes,omitempty"`
-
-	// URL to fetch the authentication token.
-	Url *string `json:"url,omitempty"`
-}
-
-// URLParam describes query string parameters for
-// a url in a plugin route
-type URLParam struct {
-	Content string `json:"content"`
-	Name    string `json:"name"`
-}
-
-// Plugindef defines model for plugindef.
-// PluginDef defines model for plugindef.
+// PluginDef defines model for PluginDef.
 type PluginDef struct {
 	// For data source plugins, if the plugin supports alerting.
 	Alerting *bool `json:"alerting,omitempty"`
@@ -401,6 +313,9 @@ type PluginDef struct {
 	// https://golang.org/doc/install/source#environment.
 	Executable *string `json:"executable,omitempty"`
 
+	// Extensions made by the current plugin.
+	Extensions []ExtensionsLink `json:"extensions,omitempty"`
+
 	// For data source plugins, include hidden queries in the data
 	// request.
 	HiddenQueries *bool `json:"hiddenQueries,omitempty"`
@@ -415,7 +330,7 @@ type PluginDef struct {
 	Id string `json:"id"`
 
 	// Resources to include in plugin.
-	Includes *[]Include `json:"includes,omitempty"`
+	Includes []Include `json:"includes,omitempty"`
 
 	// Metadata about a Grafana plugin. Some fields are used on the plugins
 	// page in Grafana and others on grafana.com, if the plugin is published.
@@ -465,10 +380,10 @@ type PluginDef struct {
 	// which characterizes what viewers, editors, admins, or grafana admins can do on the plugin.
 	// The Admin basic role inherits its default permissions from the Editor basic role which in turn
 	// inherits them from the Viewer basic role.
-	Roles *[]RoleRegistration `json:"roles,omitempty"`
+	Roles []RoleRegistration `json:"roles,omitempty"`
 
 	// Routes is a list of proxy routes, if any. For datasource plugins only.
-	Routes *[]Route `json:"routes,omitempty"`
+	Routes []Route `json:"routes,omitempty"`
 
 	// For panel plugins. Hides the query editor.
 	SkipDataQuery *bool `json:"skipDataQuery,omitempty"`
@@ -493,6 +408,92 @@ type PluginDef struct {
 // Plugin category used on the Add data source page.
 type Category string
 
-// type indicates which type of Grafana plugin this is, of the defined
+// Type type indicates which type of Grafana plugin this is, of the defined
 // set of Grafana plugin types.
 type Type string
+
+// ReleaseState indicates release maturity state of a plugin.
+type ReleaseState string
+
+// Role describes an RBAC role which allows grouping multiple related permissions on the plugin,
+// each of which has an action and an optional scope.
+// Example: the role 'Schedules Reader' bundles permissions to view all schedules of the plugin.
+type Role struct {
+	Description string       `json:"description"`
+	Name        string       `json:"name"`
+	Permissions []Permission `json:"permissions"`
+}
+
+// RoleRegistration describes an RBAC role and its assignments to basic roles.
+// It organizes related RBAC permissions on the plugin into a role and defines which basic roles
+// will get them by default.
+// Example: the role 'Schedules Reader' bundles permissions to view all schedules of the plugin
+// which will be granted to Admins by default.
+type RoleRegistration struct {
+	// Default assignment of the role to Grafana basic roles (Viewer, Editor, Admin, Grafana Admin)
+	// The Admin basic role inherits its default permissions from the Editor basic role which in turn
+	// inherits them from the Viewer basic role.
+	Grants []BasicRole `json:"grants"`
+
+	// Role describes an RBAC role which allows grouping multiple related permissions on the plugin,
+	// each of which has an action and an optional scope.
+	// Example: the role 'Schedules Reader' bundles permissions to view all schedules of the plugin.
+	Role Role `json:"role"`
+}
+
+// A proxy route used in datasource plugins for plugin authentication
+// and adding headers to HTTP requests made by the plugin.
+// For more information, refer to [Authentication for data source
+// plugins](https://grafana.com/docs/grafana/latest/developers/plugins/authentication/).
+type Route struct {
+	// For data source plugins. Route headers set the body content and
+	// length to the proxied request.
+	Body map[string]interface{} `json:"body,omitempty"`
+
+	// For data source plugins. Route headers adds HTTP headers to the
+	// proxied request.
+	Headers []Header `json:"headers,omitempty"`
+
+	// TODO docs
+	// TODO should this really be separate from TokenAuth?
+	JwtTokenAuth *JWTTokenAuth `json:"jwtTokenAuth,omitempty"`
+
+	// For data source plugins. Route method matches the HTTP verb
+	// like GET or POST. Multiple methods can be provided as a
+	// comma-separated list.
+	Method *string `json:"method,omitempty"`
+
+	// For data source plugins. The route path that is replaced by the
+	// route URL field when proxying the call.
+	Path        *string `json:"path,omitempty"`
+	ReqRole     *string `json:"reqRole,omitempty"`
+	ReqSignedIn *bool   `json:"reqSignedIn,omitempty"`
+
+	// TODO docs
+	TokenAuth *TokenAuth `json:"tokenAuth,omitempty"`
+
+	// For data source plugins. Route URL is where the request is
+	// proxied to.
+	Url       *string    `json:"url,omitempty"`
+	UrlParams []URLParam `json:"urlParams,omitempty"`
+}
+
+// TODO docs
+type TokenAuth struct {
+	// Parameters for the token authentication request.
+	Params map[string]string `json:"params"`
+
+	// The list of scopes that your application should be granted
+	// access to.
+	Scopes []string `json:"scopes,omitempty"`
+
+	// URL to fetch the authentication token.
+	Url *string `json:"url,omitempty"`
+}
+
+// URLParam describes query string parameters for
+// a url in a plugin route
+type URLParam struct {
+	Content string `json:"content"`
+	Name    string `json:"name"`
+}

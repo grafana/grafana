@@ -98,11 +98,11 @@ export function Examples() {
           </Menu.Group>
         </Menu>
       </StoryExample>
-      <StoryExample name="With submenu">
+      <StoryExample name="With submenu and shortcuts">
         <Menu>
-          <Menu.Item label="item1" icon="history" />
+          <Menu.Item label="item1" icon="history" shortcut="q p" />
           <Menu.Item
-            label="item2"
+            label="Item with a very long title"
             icon="apps"
             childItems={[
               <Menu.Item key="subitem1" label="subitem1" icon="history" />,
@@ -118,8 +118,17 @@ export function Examples() {
                 ]}
               />,
             ]}
+            shortcut="p s"
           />
-          <Menu.Item label="item3" icon="filter" />
+          <Menu.Item
+            label="item3"
+            icon="filter"
+            childItems={[
+              <Menu.Item key="subitem1" label="subitem1" icon="history" />,
+              <Menu.Item key="subitem2" label="subitem2" icon="apps" />,
+              <Menu.Item key="subitem3" label="subitem3" icon="search-plus" />,
+            ]}
+          />
         </Menu>
       </StoryExample>
     </VerticalGroup>

@@ -33,7 +33,8 @@ type CurrentUser struct {
 	Login                      string             `json:"login"`
 	Email                      string             `json:"email"`
 	Name                       string             `json:"name"`
-	LightTheme                 bool               `json:"lightTheme"`
+	Theme                      string             `json:"theme"`
+	LightTheme                 bool               `json:"lightTheme"` // deprecated, use theme instead
 	OrgCount                   int                `json:"orgCount"`
 	OrgId                      int64              `json:"orgId"`
 	OrgName                    string             `json:"orgName"`

@@ -204,6 +204,16 @@ const unifiedRoutes: RouteDescriptor[] = [
     ),
   },
   {
+    path: '/alerting/notifications/:type/:id/duplicate',
+    roles: evaluateAccess(
+      [AccessControlAction.AlertingNotificationsWrite, AccessControlAction.AlertingNotificationsExternalWrite],
+      ['Editor', 'Admin']
+    ),
+    component: SafeDynamicImport(
+      () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/unified/Receivers')
+    ),
+  },
+  {
     path: '/alerting/notifications/:type',
     roles: evaluateAccess(
       [AccessControlAction.AlertingNotificationsWrite, AccessControlAction.AlertingNotificationsExternalWrite],

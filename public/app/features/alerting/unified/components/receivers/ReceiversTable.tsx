@@ -298,9 +298,9 @@ export const ReceiversTable: FC<Props> = ({ config, alertManagerName }) => {
   return (
     <ReceiversSection
       title="Contact points"
-      description="Define where the notifications will be sent to, for example email or Slack."
+      description="Define where notifications are sent, for example, email or Slack."
       showButton={!isVanillaAM && contextSrv.hasPermission(permissions.create)}
-      addButtonLabel={'New contact point'}
+      addButtonLabel={'Add contact point'}
       addButtonTo={makeAMLink('/alerting/notifications/receivers/new', alertManagerName)}
     >
       <DynamicTable

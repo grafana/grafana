@@ -6,9 +6,10 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
 
 func TestExecuteTimeSeriesQuery(t *testing.T) {
@@ -27,7 +28,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
 			rangeFilter := sr.Query.Bool.Filters[0].(*es.RangeFilter)
-			require.Equal(t, rangeFilter.Key, c.timeField)
+			require.Equal(t, rangeFilter.Key, c.configuredFields.TimeField)
 			require.Equal(t, rangeFilter.Lte, toMs)
 			require.Equal(t, rangeFilter.Gte, fromMs)
 			require.Equal(t, rangeFilter.Format, es.DateFormatEpochMS)
@@ -417,7 +418,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 
 			sr := c.multisearchRequests[0].Requests[0]
 			rangeFilter := sr.Query.Bool.Filters[0].(*es.RangeFilter)
-			require.Equal(t, rangeFilter.Key, c.timeField)
+			require.Equal(t, rangeFilter.Key, c.configuredFields.TimeField)
 			require.Equal(t, rangeFilter.Lte, toMs)
 			require.Equal(t, rangeFilter.Gte, fromMs)
 			require.Equal(t, rangeFilter.Format, es.DateFormatEpochMS)
@@ -438,7 +439,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 
 			sr := c.multisearchRequests[0].Requests[0]
 			rangeFilter := sr.Query.Bool.Filters[0].(*es.RangeFilter)
-			require.Equal(t, rangeFilter.Key, c.timeField)
+			require.Equal(t, rangeFilter.Key, c.configuredFields.TimeField)
 			require.Equal(t, rangeFilter.Lte, toMs)
 			require.Equal(t, rangeFilter.Gte, fromMs)
 			require.Equal(t, rangeFilter.Format, es.DateFormatEpochMS)
@@ -1304,7 +1305,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			require.Equal(t, sr.Size, defaultSize)
 
 			rangeFilter := sr.Query.Bool.Filters[0].(*es.RangeFilter)
-			require.Equal(t, rangeFilter.Key, c.timeField)
+			require.Equal(t, rangeFilter.Key, c.configuredFields.TimeField)
 			require.Equal(t, rangeFilter.Lte, toMs)
 			require.Equal(t, rangeFilter.Gte, fromMs)
 			require.Equal(t, rangeFilter.Format, es.DateFormatEpochMS)
@@ -1686,7 +1687,7 @@ func TestSettingsCasting(t *testing.T) {
 }
 
 type fakeClient struct {
-	timeField           string
+	configuredFields    es.ConfiguredFields
 	multiSearchResponse *es.MultiSearchResponse
 	multiSearchError    error
 	builder             *es.MultiSearchRequestBuilder
@@ -1694,15 +1695,21 @@ type fakeClient struct {
 }
 
 func newFakeClient() *fakeClient {
+	configuredFields := es.ConfiguredFields{
+		TimeField:       "@timestamp",
+		LogMessageField: "line",
+		LogLevelField:   "lvl",
+	}
+
 	return &fakeClient{
-		timeField:           "@timestamp",
+		configuredFields:    configuredFields,
 		multisearchRequests: make([]*es.MultiSearchRequest, 0),
 		multiSearchResponse: &es.MultiSearchResponse{},
 	}
 }
 
-func (c *fakeClient) GetTimeField() string {
-	return c.timeField
+func (c *fakeClient) GetConfiguredFields() es.ConfiguredFields {
+	return c.configuredFields
 }
 
 func (c *fakeClient) GetMinInterval(queryInterval string) (time.Duration, error) {

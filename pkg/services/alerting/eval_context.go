@@ -123,11 +123,12 @@ func (c *EvalContext) GetDashboardUID() (*dashboards.DashboardRef, error) {
 	}
 
 	uidQuery := &dashboards.GetDashboardRefByIDQuery{ID: c.Rule.DashboardID}
-	if err := c.dashboardService.GetDashboardUIDByID(c.Ctx, uidQuery); err != nil {
+	uidQueryResult, err := c.dashboardService.GetDashboardUIDByID(c.Ctx, uidQuery)
+	if err != nil {
 		return nil, err
 	}
 
-	c.dashboardRef = uidQuery.Result
+	c.dashboardRef = uidQueryResult
 	return c.dashboardRef, nil
 }
 
@@ -227,7 +228,7 @@ func (c *EvalContext) evaluateNotificationTemplateFields() error {
 	return nil
 }
 
-func (c *EvalContext) GetDataSource(ctx context.Context, q *datasources.GetDataSourceQuery) error {
+func (c *EvalContext) GetDataSource(ctx context.Context, q *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
 	return c.DatasourceService.GetDataSource(ctx, q)
 }
 

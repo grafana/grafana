@@ -4,9 +4,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
-
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 )
 
 func TestSessionSettings(t *testing.T) {

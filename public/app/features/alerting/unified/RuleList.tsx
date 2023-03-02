@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 import { useAsyncFn, useInterval } from 'react-use';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
 import { logInfo } from '@grafana/runtime';
 import { Button, LinkButton, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
@@ -20,18 +21,19 @@ import { RuleListStateView } from './components/rules/RuleListStateView';
 import { RuleStats } from './components/rules/RuleStats';
 import RulesFilter from './components/rules/RulesFilter';
 import { useCombinedRuleNamespaces } from './hooks/useCombinedRuleNamespaces';
-import { useFilteredRules } from './hooks/useFilteredRules';
+import { useFilteredRules, useRulesFilter } from './hooks/useFilteredRules';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchAllPromAndRulerRulesAction } from './state/actions';
 import { useRulesAccess } from './utils/accessControlHooks';
 import { RULE_LIST_POLL_INTERVAL_MS } from './utils/constants';
 import { getAllRulesSourceNames } from './utils/datasource';
-import { getFiltersFromUrlParams } from './utils/misc';
 
 const VIEWS = {
   groups: RuleListGroupView,
   state: RuleListStateView,
 };
+
+const onExport = () => window.open('/api/v1/provisioning/alert-rules/export?download=true&format=yaml');
 
 const RuleList = withErrorBoundary(
   () => {
@@ -42,10 +44,9 @@ const RuleList = withErrorBoundary(
     const [expandAll, setExpandAll] = useState(false);
 
     const [queryParams] = useQueryParams();
-    const filters = getFiltersFromUrlParams(queryParams);
-    const filtersActive = Object.values(filters).some((filter) => filter !== undefined);
+    const { filterState, hasActiveFilters } = useRulesFilter();
 
-    const { canCreateGrafanaRules, canCreateCloudRules } = useRulesAccess();
+    const { canCreateGrafanaRules, canCreateCloudRules, canReadProvisioning } = useRulesAccess();
 
     const view = VIEWS[queryParams['view'] as keyof typeof VIEWS]
       ? (queryParams['view'] as keyof typeof VIEWS)
@@ -83,19 +84,20 @@ const RuleList = withErrorBoundary(
     const hasNoAlertRulesCreatedYet = allPromLoaded && allPromEmpty && promRequests.length > 0;
 
     const combinedNamespaces: CombinedRuleNamespace[] = useCombinedRuleNamespaces();
-    const filteredNamespaces = useFilteredRules(combinedNamespaces);
+    const filteredNamespaces = useFilteredRules(combinedNamespaces, filterState);
+
     return (
       // We don't want to show the Loading... indicator for the whole page.
       // We show separate indicators for Grafana-managed and Cloud rules
       <AlertingPageWrapper pageId="alert-list" isLoading={false}>
         <RuleListErrors />
-        <RulesFilter />
+        <RulesFilter onFilterCleared={() => setExpandAll(false)} />
         {!hasNoAlertRulesCreatedYet && (
           <>
             <div className={styles.break} />
             <div className={styles.buttonsContainer}>
               <div className={styles.statsContainer}>
-                {view === 'groups' && filtersActive && (
+                {view === 'groups' && hasActiveFilters && (
                   <Button
                     className={styles.expandAllButton}
                     icon={expandAll ? 'angle-double-up' : 'angle-double-down'}
@@ -107,15 +109,22 @@ const RuleList = withErrorBoundary(
                 )}
                 <RuleStats namespaces={filteredNamespaces} includeTotal />
               </div>
-              {(canCreateGrafanaRules || canCreateCloudRules) && (
-                <LinkButton
-                  href={urlUtil.renderUrl('alerting/new', { returnTo: location.pathname + location.search })}
-                  icon="plus"
-                  onClick={() => logInfo(LogMessages.alertRuleFromScratch)}
-                >
-                  New alert rule
-                </LinkButton>
-              )}
+              <Stack direction="row" gap={0.5}>
+                {canReadProvisioning && (
+                  <Button icon="download-alt" type="button" onClick={onExport}>
+                    Export
+                  </Button>
+                )}
+                {(canCreateGrafanaRules || canCreateCloudRules) && (
+                  <LinkButton
+                    href={urlUtil.renderUrl('alerting/new', { returnTo: location.pathname + location.search })}
+                    icon="plus"
+                    onClick={() => logInfo(LogMessages.alertRuleFromScratch)}
+                  >
+                    Create alert rule
+                  </LinkButton>
+                )}
+              </Stack>
             </div>
           </>
         )}

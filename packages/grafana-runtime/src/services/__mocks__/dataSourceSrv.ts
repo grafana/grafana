@@ -19,5 +19,12 @@ export function getDataSourceSrv() {
   return {
     getList: () => [ds1],
     getInstanceSettings: () => ds1,
+    get: () =>
+      Promise.resolve({
+        filterQuery: () => true,
+        getDefaultQuery: () => ({
+          expr: 'vector(1)',
+        }),
+      }),
   };
 }

@@ -15,33 +15,34 @@
 package grafanaplugin
 
 import (
-	"github.com/grafana/grafana/packages/grafana-schema/src/common"
+	ui "github.com/grafana/grafana/packages/grafana-schema/src/common"
 )
 
 composableKinds: PanelCfg: {
+	maturity: "experimental"
 	lineage: {
 		seqs: [
 			{
 				schemas: [
 					{
-						TimelineMode:           "changes" | "samples"       @cuetsy(kind="enum")
-						TimelineValueAlignment: "center" | "left" | "right" @cuetsy(kind="type")
 						PanelOptions: {
-							// FIXME ts comments indicate this shouldn't be in the saved model, but currently is emitted
-							mode?: TimelineMode
-							common.OptionsWithLegend
-							common.OptionsWithTooltip
-							common.OptionsWithTimezones
-							showValue:    common.VisibilityMode | *"auto"
-							rowHeight:    number | *0.9
-							colWidth?:    number
+							ui.OptionsWithLegend
+							ui.OptionsWithTooltip
+							ui.OptionsWithTimezones
+
+							//Show timeline values on chart
+							showValue: ui.VisibilityMode | *"auto"
+							//Controls the row height
+							rowHeight: float & <=1 | *0.9
+							//Merge equal consecutive values
 							mergeValues?: bool | *true
-							alignValue?:  TimelineValueAlignment | *"left"
+							//Controls value alignment on the timelines
+							alignValue?: ui.TimelineValueAlignment | *"left"
 						} @cuetsy(kind="interface")
 						PanelFieldConfig: {
-							common.HideableFieldConfig
-							lineWidth?:   number | *0
-							fillOpacity?: number | *70
+							ui.HideableFieldConfig
+							lineWidth?:   uint32 & <=10 | *0
+							fillOpacity?: uint32 & <=100 | *70
 						} @cuetsy(kind="interface")
 					},
 				]

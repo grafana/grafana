@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/thema/encoding/openapi"
 )
 
-// GoTypesJenny creates a [OneToOne] that produces Go types for the provided
+// GoTypesJenny is a [OneToOne] that produces Go types for the provided
 // [thema.Schema].
 type GoTypesJenny struct {
 	ApplyFuncs       []dstutil.ApplyFunc
@@ -24,7 +24,8 @@ func (j GoTypesJenny) Generate(sfg SchemaForGen) (*codejen.File, error) {
 	b, err := gocode.GenerateTypesOpenAPI(sfg.Schema, &gocode.TypeConfigOpenAPI{
 		// TODO will need to account for sanitizing e.g. dashes here at some point
 		Config: &openapi.Config{
-			Group: sfg.IsGroup,
+			Group:    sfg.IsGroup,
+			RootName: sfg.Name,
 			Config: &copenapi.Config{
 				ExpandReferences: j.ExpandReferences,
 			},

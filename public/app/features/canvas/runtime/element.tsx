@@ -10,6 +10,7 @@ import {
 } from 'app/features/canvas';
 import { notFoundItem } from 'app/features/canvas/elements/notFound';
 import { DimensionContext } from 'app/features/dimensions';
+import { getConnectionsByTarget, isConnectionTarget } from 'app/plugins/panel/canvas/utils';
 
 import { Constraint, HorizontalConstraint, Placement, VerticalConstraint } from '../types';
 
@@ -382,6 +383,12 @@ export class ElementState implements LayerElement {
 
     const scene = this.getScene();
     if (oldName !== newName && scene) {
+      if (isConnectionTarget(this, scene.byName)) {
+        getConnectionsByTarget(this, scene).forEach((connection) => {
+          connection.info.targetName = newName;
+        });
+      }
+
       scene.byName.delete(oldName);
       scene.byName.set(newName, this);
     }

@@ -8,10 +8,11 @@ import { StateTag } from '../StateTag';
 interface Props {
   state: PromAlertingRuleState | GrafanaAlertState | GrafanaAlertStateWithReason | AlertState;
   size?: 'md' | 'sm';
+  isPaused?: boolean;
 }
 
-export const AlertStateTag: FC<Props> = ({ state, size = 'md' }) => (
+export const AlertStateTag: FC<Props> = ({ state, isPaused = false, size = 'md' }) => (
   <StateTag state={alertStateToState(state)} size={size}>
-    {alertStateToReadable(state)}
+    {alertStateToReadable(state)} {isPaused ? ' (Paused)' : ''}
   </StateTag>
 );

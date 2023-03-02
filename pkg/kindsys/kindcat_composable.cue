@@ -7,7 +7,7 @@ package kindsys
 // and alerting rules.
 //
 // Each Composable is an implementation of exactly one Slot, a shared meta-schema
-// defined by Grafana itself that constrains the shape of schemas declared in
+// defined by Grafana itself that constrains the shape of schemas defined in
 // that ComposableKind.
 Composable: S={
 	_sharedKind

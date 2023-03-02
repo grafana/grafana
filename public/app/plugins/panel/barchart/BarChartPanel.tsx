@@ -33,9 +33,9 @@ import {
 import { PropDiffFn } from '@grafana/ui/src/components/GraphNG/GraphNG';
 import { HoverEvent, addTooltipSupport } from '@grafana/ui/src/components/uPlot/config/addTooltipSupport';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
+import { getFieldLegendItem } from 'app/core/components/TimelineChart/utils';
 
 import { DataHoverView } from '../geomap/components/DataHoverView';
-import { getFieldLegendItem } from '../state-timeline/utils';
 
 import { PanelOptions } from './panelcfg.gen';
 import { prepareBarChartDisplayValues, preparePlotConfigBuilder } from './utils';
@@ -221,7 +221,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
       }
     }
 
-    return <PlotLegend data={info.viz} config={config} maxHeight="35%" maxWidth="60%" {...options.legend} />;
+    return <PlotLegend data={[info.legend]} config={config} maxHeight="35%" maxWidth="60%" {...options.legend} />;
   };
 
   const rawValue = (seriesIdx: number, valueIdx: number) => {

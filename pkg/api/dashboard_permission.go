@@ -9,8 +9,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/web"
@@ -41,7 +41,7 @@ import (
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetDashboardPermissionList(c *contextmodel.ReqContext) response.Response {
 	var dashID int64
 	var err error
 	dashUID := web.Params(c.Req)[":uid"]
@@ -123,7 +123,7 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) response.
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) UpdateDashboardPermissions(c *contextmodel.ReqContext) response.Response {
 	var dashID int64
 	var err error
 	apiCmd := dtos.UpdateDashboardACLCommand{}
@@ -176,7 +176,7 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.
 	}
 	items = append(items, hiddenACL...)
 
-	if okToUpdate, err := g.CheckPermissionBeforeUpdate(models.PERMISSION_ADMIN, items); err != nil || !okToUpdate {
+	if okToUpdate, err := g.CheckPermissionBeforeUpdate(dashboards.PERMISSION_ADMIN, items); err != nil || !okToUpdate {
 		if err != nil {
 			if errors.Is(err, guardian.ErrGuardianPermissionExists) || errors.Is(err, guardian.ErrGuardianOverride) {
 				return response.Error(400, err.Error(), err)
@@ -200,8 +200,8 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.
 	}
 
 	if err := hs.DashboardService.UpdateDashboardACL(c.Req.Context(), dashID, items); err != nil {
-		if errors.Is(err, models.ErrDashboardACLInfoMissing) ||
-			errors.Is(err, models.ErrDashboardPermissionDashboardEmpty) {
+		if errors.Is(err, dashboards.ErrDashboardACLInfoMissing) ||
+			errors.Is(err, dashboards.ErrDashboardPermissionDashboardEmpty) {
 			return response.Error(409, err.Error(), err)
 		}
 		return response.Error(500, "Failed to create permission", err)
@@ -275,11 +275,11 @@ func (hs *HTTPServer) updateDashboardAccessControl(ctx context.Context, orgID in
 func validatePermissionsUpdate(apiCmd dtos.UpdateDashboardACLCommand) error {
 	for _, item := range apiCmd.Items {
 		if item.UserID > 0 && item.TeamID > 0 {
-			return models.ErrPermissionsWithUserAndTeamNotAllowed
+			return dashboards.ErrPermissionsWithUserAndTeamNotAllowed
 		}
 
 		if (item.UserID > 0 || item.TeamID > 0) && item.Role != nil {
-			return models.ErrPermissionsWithRoleNotAllowed
+			return dashboards.ErrPermissionsWithRoleNotAllowed
 		}
 	}
 	return nil

@@ -300,7 +300,7 @@ func (fr *FileReader) getOrCreateFolderID(ctx context.Context, cfg *config, serv
 	}
 
 	cmd := &dashboards.GetDashboardQuery{Slug: slugify.Slugify(folderName), OrgID: cfg.OrgID}
-	err := fr.dashboardStore.GetDashboard(ctx, cmd)
+	result, err := fr.dashboardStore.GetDashboard(ctx, cmd)
 
 	if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {
 		return 0, err
@@ -326,11 +326,11 @@ func (fr *FileReader) getOrCreateFolderID(ctx context.Context, cfg *config, serv
 		return dbDash.ID, nil
 	}
 
-	if !cmd.Result.IsFolder {
+	if !result.IsFolder {
 		return 0, fmt.Errorf("got invalid response. expected folder, found dashboard")
 	}
 
-	return cmd.Result.ID, nil
+	return result.ID, nil
 }
 
 func resolveSymlink(fileinfo os.FileInfo, path string) (os.FileInfo, error) {

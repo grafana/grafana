@@ -5,20 +5,21 @@ import (
 	"encoding/json"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/models"
+
 	"github.com/grafana/grafana/pkg/services/store"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 )
 
-func GetEntityKindInfo() models.EntityKindInfo {
-	return models.EntityKindInfo{
-		ID:          models.StandardKindDataFrame,
+func GetEntityKindInfo() entity.EntityKindInfo {
+	return entity.EntityKindInfo{
+		ID:          entity.StandardKindDataFrame,
 		Name:        "Data frame",
 		Description: "Data frame",
 	}
 }
 
-func GetEntitySummaryBuilder() models.EntitySummaryBuilder {
-	return func(ctx context.Context, uid string, body []byte) (*models.EntitySummary, []byte, error) {
+func GetEntitySummaryBuilder() entity.EntitySummaryBuilder {
+	return func(ctx context.Context, uid string, body []byte) (*entity.EntitySummary, []byte, error) {
 		df := &data.Frame{}
 		err := json.Unmarshal(body, df)
 		if err != nil {
@@ -33,8 +34,8 @@ func GetEntitySummaryBuilder() models.EntitySummaryBuilder {
 		if err != nil {
 			return nil, nil, err
 		}
-		summary := &models.EntitySummary{
-			Kind: models.StandardKindDataFrame,
+		summary := &entity.EntitySummary{
+			Kind: entity.StandardKindDataFrame,
 			Name: df.Name,
 			UID:  uid,
 			Fields: map[string]interface{}{

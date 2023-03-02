@@ -1,11 +1,10 @@
-import { ArrayVector, FieldType } from '@grafana/data';
+import { ArrayVector, EventBus, FieldType } from '@grafana/data';
 import { getTheme } from '@grafana/ui';
 
 import { preparePlotConfigBuilder } from './utils';
 
 describe('when fill below to option is used', () => {
-  // eslint-disable-next-line
-  let eventBus: any;
+  let eventBus: EventBus;
   // eslint-disable-next-line
   let renderers: any[];
   // eslint-disable-next-line

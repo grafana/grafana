@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -16,11 +17,11 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/plugins"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	dsSvc "github.com/grafana/grafana/pkg/services/datasources/service"
@@ -211,7 +212,7 @@ func TestParseMetricRequest(t *testing.T) {
 		httpreq, err := http.NewRequest(http.MethodPost, "http://localhost/", bytes.NewReader([]byte{}))
 		require.NoError(t, err)
 
-		reqCtx := &models.ReqContext{
+		reqCtx := &contextmodel.ReqContext{
 			Context: &web.Context{},
 		}
 		ctx := ctxkey.Set(context.Background(), reqCtx)
@@ -233,6 +234,25 @@ func TestParseMetricRequest(t *testing.T) {
 		httpreq.Header.Set("X-Datasource-Uid", "gIEkMvIVz, sEx6ZvSVk")
 		_, err = tc.queryService.parseMetricRequest(httpreq.Context(), tc.signedInUser, true, mr)
 		require.NoError(t, err)
+	})
+
+	t.Run("Test a duplicated refId", func(t *testing.T) {
+		tc := setup(t)
+		mr := metricRequestWithQueries(t, `{
+			"refId": "A",
+			"datasource": {
+				"uid": "gIEkMvIVz",
+				"type": "postgres"
+			}
+		}`, `{
+			"refId": "A",
+			"datasource": {
+				"uid": "gIEkMvIVz",
+				"type": "postgres"
+			}
+		}`)
+		_, err := tc.queryService.parseMetricRequest(context.Background(), tc.signedInUser, true, mr)
+		require.Error(t, err)
 	})
 }
 
@@ -325,7 +345,7 @@ func TestQueryDataMultipleSources(t *testing.T) {
 		httpreq, err := http.NewRequest(http.MethodPost, "http://localhost/ds/query?expression=true", bytes.NewReader([]byte{}))
 		require.NoError(t, err)
 
-		reqCtx := &models.ReqContext{
+		reqCtx := &contextmodel.ReqContext{
 			Context: &web.Context{},
 		}
 		ctx := ctxkey.Set(context.Background(), reqCtx)
@@ -379,6 +399,33 @@ func TestQueryDataMultipleSources(t *testing.T) {
 		require.Error(t, res.Responses["B"].Error)
 		// Responses aren't mocked, so a "healthy" query will just return an empty response
 		require.NotContains(t, res.Responses, "A")
+	})
+
+	t.Run("ignores a deprecated datasourceID", func(t *testing.T) {
+		tc := setup(t)
+		query1, err := simplejson.NewJson([]byte(`
+			{
+				"datasource": {
+					"type": "mysql",
+					"uid": "ds1"
+				},
+				"datasourceId": 1,
+				"refId": "A"
+			}
+		`))
+		require.NoError(t, err)
+		queries := []*simplejson.Json{query1}
+		reqDTO := dtos.MetricRequest{
+			From:                       "2022-01-01",
+			To:                         "2022-01-02",
+			Queries:                    queries,
+			Debug:                      false,
+			PublicDashboardAccessToken: "abc123",
+		}
+
+		_, err = tc.queryService.QueryData(context.Background(), tc.signedInUser, true, reqDTO)
+
+		require.NoError(t, err)
 	})
 }
 
@@ -449,12 +496,13 @@ type fakeDataSourceCache struct {
 }
 
 func (c *fakeDataSourceCache) GetDatasource(ctx context.Context, datasourceID int64, user *user.SignedInUser, skipCache bool) (*datasources.DataSource, error) {
-	return c.ds, nil
+	// deprecated: fake an error to ensure we are using GetDatasourceByUID
+	return nil, fmt.Errorf("not found")
 }
 
 func (c *fakeDataSourceCache) GetDatasourceByUID(ctx context.Context, datasourceUID string, user *user.SignedInUser, skipCache bool) (*datasources.DataSource, error) {
 	return &datasources.DataSource{
-		Uid: datasourceUID,
+		UID: datasourceUID,
 	}, nil
 }
 
@@ -467,7 +515,7 @@ func (c *fakePluginClient) QueryData(ctx context.Context, req *backend.QueryData
 	c.req = req
 
 	// If an expression query ends up getting directly queried, we want it to return an error in our test.
-	if req.PluginContext.PluginID == "__expr__" {
+	if req.PluginContext.PluginID == expr.DatasourceUID {
 		return nil, errors.New("cant query an expression datasource")
 	}
 

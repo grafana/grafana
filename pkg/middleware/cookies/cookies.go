@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -55,7 +55,7 @@ func WriteCookie(w http.ResponseWriter, name string, value string, maxAge int, g
 	http.SetCookie(w, &cookie)
 }
 
-func WriteSessionCookie(ctx *models.ReqContext, cfg *setting.Cfg, value string, maxLifetime time.Duration) {
+func WriteSessionCookie(ctx *contextmodel.ReqContext, cfg *setting.Cfg, value string, maxLifetime time.Duration) {
 	if cfg.Env == setting.Dev {
 		ctx.Logger.Info("New token", "unhashed token", value)
 	}

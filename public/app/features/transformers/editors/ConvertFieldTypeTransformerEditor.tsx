@@ -18,7 +18,7 @@ import { Button, InlineField, InlineFieldRow, Input, Select, getIconForFieldType
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
 
 const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
-  settings: { width: 24 },
+  settings: { width: 24, isClearable: false },
 } as any;
 
 export const ConvertFieldTypeTransformerEditor = ({

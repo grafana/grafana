@@ -16,7 +16,7 @@ import { liveTimer } from 'app/features/dashboard/dashgrid/liveTimer';
 import { StreamingDataFrame } from 'app/features/live/data/StreamingDataFrame';
 
 import { getRandomLine } from './LogIpsum';
-import { TestDataQuery, StreamingQuery } from './types';
+import { TestData, StreamingQuery } from './dataquery.gen';
 
 export const defaultStreamQuery: StreamingQuery = {
   type: 'signal',
@@ -26,7 +26,7 @@ export const defaultStreamQuery: StreamingQuery = {
   bands: 1,
 };
 
-export function runStream(target: TestDataQuery, req: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
+export function runStream(target: TestData, req: DataQueryRequest<TestData>): Observable<DataQueryResponse> {
   const query = defaults(target.stream, defaultStreamQuery);
   if ('signal' === query.type) {
     return runSignalStream(target, query, req);
@@ -41,9 +41,9 @@ export function runStream(target: TestDataQuery, req: DataQueryRequest<TestDataQ
 }
 
 export function runSignalStream(
-  target: TestDataQuery,
+  target: TestData,
   query: StreamingQuery,
-  req: DataQueryRequest<TestDataQuery>
+  req: DataQueryRequest<TestData>
 ): Observable<DataQueryResponse> {
   return new Observable<DataQueryResponse>((subscriber) => {
     const streamId = `signal-${req.panelId}-${target.refId}`;
@@ -67,7 +67,7 @@ export function runSignalStream(
     const frame = StreamingDataFrame.fromDataFrameJSON({ schema }, { maxLength: maxDataPoints });
 
     let value = Math.random() * 100;
-    let timeoutId: any = null;
+    let timeoutId: ReturnType<typeof setTimeout>;
     let lastSent = -1;
 
     const addNextRow = (time: number) => {
@@ -128,9 +128,9 @@ export function runSignalStream(
 }
 
 export function runLogsStream(
-  target: TestDataQuery,
+  target: TestData,
   query: StreamingQuery,
-  req: DataQueryRequest<TestDataQuery>
+  req: DataQueryRequest<TestData>
 ): Observable<DataQueryResponse> {
   return new Observable<DataQueryResponse>((subscriber) => {
     const streamId = `logs-${req.panelId}-${target.refId}`;
@@ -148,11 +148,11 @@ export function runLogsStream(
 
     const { speed } = query;
 
-    let timeoutId: any = null;
+    let timeoutId: ReturnType<typeof setTimeout>;
 
     const pushNextEvent = () => {
-      data.fields[0].values.add(Date.now());
-      data.fields[1].values.add(getRandomLine());
+      data.fields[0].values.add(getRandomLine());
+      data.fields[1].values.add(Date.now());
 
       subscriber.next({
         data: [data],
@@ -173,9 +173,9 @@ export function runLogsStream(
 }
 
 export function runFetchStream(
-  target: TestDataQuery,
+  target: TestData,
   query: StreamingQuery,
-  req: DataQueryRequest<TestDataQuery>
+  req: DataQueryRequest<TestData>
 ): Observable<DataQueryResponse> {
   return new Observable<DataQueryResponse>((subscriber) => {
     const streamId = `fetch-${req.panelId}-${target.refId}`;
@@ -205,7 +205,7 @@ export function runFetchStream(
             data.addField(field);
           }
         },
-        onRow: (row: any[]) => {
+        onRow: (row) => {
           data.add(row);
         },
       },

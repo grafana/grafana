@@ -54,7 +54,7 @@ import { DashboardModel, PanelModel } from '../state';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
 
 import { PanelHeader } from './PanelHeader/PanelHeader';
-import { PanelHeaderMenuWrapper } from './PanelHeader/PanelHeaderMenuWrapper';
+import { PanelHeaderMenuWrapperNew } from './PanelHeader/PanelHeaderMenuWrapper';
 import { PanelHeaderTitleItems } from './PanelHeader/PanelHeaderTitleItems';
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
 import { liveTimer } from './liveTimer';
@@ -72,6 +72,7 @@ export interface Props {
   height: number;
   onInstanceStateChange: (value: any) => void;
   timezone?: string;
+  hideMenu?: boolean;
 }
 
 export interface State {
@@ -636,9 +637,12 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     const title = panel.getDisplayTitle();
     const padding: PanelPadding = plugin.noPadding ? 'none' : 'md';
 
-    const dragClass = !(isViewing || isEditing) ? 'grid-drag-handle' : '';
-
-    const titleItems = [
+    const showTitleItems =
+      (panel.links && panel.links.length > 0 && this.onShowPanelLinks) ||
+      (data.series.length > 0 && data.series.some((v) => (v.meta?.notices?.length ?? 0) > 0)) ||
+      (data.request && data.request.timeInfo) ||
+      alertState;
+    const titleItems = showTitleItems && (
       <PanelHeaderTitleItems
         key="title-items"
         alertState={alertState}
@@ -646,25 +650,20 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         panelId={panel.id}
         panelLinks={panel.links}
         onShowPanelLinks={this.onShowPanelLinks}
-      />,
-    ];
+      />
+    );
 
-    let menu;
-    if (!dashboard.meta.publicDashboardAccessToken) {
-      menu = (
+    const dragClass = !(isViewing || isEditing) ? 'grid-drag-handle' : '';
+    if (config.featureToggles.newPanelChromeUI) {
+      // Shift the hover menu down if it's on the top row so it doesn't get clipped by topnav
+      const hoverHeaderOffset = (panel.gridPos?.y ?? 0) === 0 ? -16 : undefined;
+
+      const menu = (
         <div data-testid="panel-dropdown">
-          <PanelHeaderMenuWrapper
-            style={{ top: 0 }}
-            panel={panel}
-            dashboard={dashboard}
-            loadingState={data.state}
-            onClose={() => {}}
-          />
+          <PanelHeaderMenuWrapperNew panel={panel} dashboard={dashboard} loadingState={data.state} />
         </div>
       );
-    }
 
-    if (config.featureToggles.newPanelChromeUI) {
       return (
         <PanelChrome
           width={width}
@@ -675,10 +674,13 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
           statusMessageOnClick={this.onOpenErrorInspect}
           description={!!panel.description ? this.onShowPanelDescription : undefined}
           titleItems={titleItems}
-          menu={menu}
+          menu={this.props.hideMenu ? undefined : menu}
           dragClass={dragClass}
           dragClassCancel="grid-drag-cancel"
           padding={padding}
+          hoverHeaderOffset={hoverHeaderOffset}
+          hoverHeader={title ? false : true}
+          displayMode={transparent ? 'transparent' : 'default'}
         >
           {(innerWidth, innerHeight) => (
             <>

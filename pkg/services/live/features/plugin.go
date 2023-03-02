@@ -3,13 +3,13 @@ package features
 import (
 	"context"
 
+	"github.com/centrifugal/centrifuge"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/services/live/model"
 	"github.com/grafana/grafana/pkg/services/live/orgchannel"
 	"github.com/grafana/grafana/pkg/services/live/runstream"
 	"github.com/grafana/grafana/pkg/services/user"
-
-	"github.com/centrifugal/centrifuge"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
 //go:generate mockgen -destination=plugin_mock.go -package=features github.com/grafana/grafana/pkg/services/live/features PluginContextGetter

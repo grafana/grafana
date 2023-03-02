@@ -117,6 +117,10 @@ export enum AccessControlAction {
   AlertingNotificationsExternalWrite = 'alert.notifications.external:write',
   AlertingNotificationsExternalRead = 'alert.notifications.external:read',
 
+  // Alerting provisioning actions
+  AlertingProvisioningRead = 'alert.provisioning:read',
+  AlertingProvisioningWrite = 'alert.provisioning:write',
+
   ActionAPIKeysRead = 'apikeys:read',
   ActionAPIKeysCreate = 'apikeys:create',
   ActionAPIKeysDelete = 'apikeys:delete',

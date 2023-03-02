@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -24,7 +25,7 @@ func TestDashboardService(t *testing.T) {
 		fakeStore := dashboards.FakeDashboardStore{}
 		defer fakeStore.AssertExpectations(t)
 
-		folderStore := dashboards.NewFakeFolderStore(t)
+		folderStore := foldertest.NewFakeFolderStore(t)
 
 		service := &DashboardServiceImpl{
 			cfg:                setting.NewCfg(),
@@ -260,22 +261,22 @@ func TestDashboardService(t *testing.T) {
 
 	t.Run("When org user is deleted", func(t *testing.T) {
 		fakeStore := dashboards.FakeDashboardStore{}
-		fakeStore.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(nil)
+		fakeStore.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(nil, nil)
 		t.Run("Should remove dependent permissions for deleted org user", func(t *testing.T) {
-			permQuery := &dashboards.GetDashboardACLInfoListQuery{DashboardID: 1, OrgID: 1, Result: nil}
+			permQuery := &dashboards.GetDashboardACLInfoListQuery{DashboardID: 1, OrgID: 1}
 
-			err := fakeStore.GetDashboardACLInfoList(context.Background(), permQuery)
+			permQueryResult, err := fakeStore.GetDashboardACLInfoList(context.Background(), permQuery)
 			require.NoError(t, err)
 
-			require.Equal(t, len(permQuery.Result), 0)
+			require.Equal(t, len(permQueryResult), 0)
 		})
 
 		t.Run("Should not remove dashboard permissions for same user in another org", func(t *testing.T) {
 			fakeStore := dashboards.FakeDashboardStore{}
-			fakeStore.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(nil)
+			fakeStore.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(nil, nil)
 			permQuery := &dashboards.GetDashboardACLInfoListQuery{DashboardID: 2, OrgID: 3}
 
-			err := fakeStore.GetDashboardACLInfoList(context.Background(), permQuery)
+			_, err := fakeStore.GetDashboardACLInfoList(context.Background(), permQuery)
 			require.NoError(t, err)
 		})
 	})

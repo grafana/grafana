@@ -31,7 +31,12 @@ export class DatasourceSrvMock {
 export class MockDataSourceApi extends DataSourceApi {
   result: DataQueryResponse = { data: [] };
 
-  constructor(name?: string, result?: DataQueryResponse, meta?: any, public error: string | null = null) {
+  constructor(
+    name?: string,
+    result?: DataQueryResponse,
+    meta?: DataSourcePluginMeta,
+    public error: string | null = null
+  ) {
     super({ name: name ? name : 'MockDataSourceApi' } as DataSourceInstanceSettings);
     if (result) {
       this.result = result;
@@ -60,7 +65,12 @@ export class MockDataSourceApi extends DataSourceApi {
 export class MockObservableDataSourceApi extends DataSourceApi {
   results: DataQueryResponse[] = [{ data: [] }];
 
-  constructor(name?: string, results?: DataQueryResponse[], meta?: any, private error: string | null = null) {
+  constructor(
+    name?: string,
+    results?: DataQueryResponse[],
+    meta?: DataSourcePluginMeta,
+    private error: string | null = null
+  ) {
     super({ name: name ? name : 'MockDataSourceApi' } as DataSourceInstanceSettings);
 
     if (results) {

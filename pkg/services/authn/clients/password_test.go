@@ -4,11 +4,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/loginattempt/loginattempttest"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
+	"github.com/grafana/grafana/pkg/services/loginattempt/loginattempttest"
 )
 
 func TestPassword_AuthenticatePassword(t *testing.T) {

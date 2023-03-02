@@ -41,11 +41,26 @@ export interface DataLink<T extends DataQuery = any> {
 }
 
 /** @internal */
+export enum SupportedTransformationTypes {
+  Regex = 'regex',
+  Logfmt = 'logfmt',
+}
+
+/** @internal */
+export interface DataLinkTransformationConfig {
+  type: SupportedTransformationTypes;
+  field?: string;
+  expression?: string;
+  mapValue?: string;
+}
+
+/** @internal */
 export interface InternalDataLink<T extends DataQuery = any> {
   query: T;
   datasourceUid: string;
   datasourceName: string; // used as a title if `DataLink.title` is empty
   panelsState?: ExplorePanelsState;
+  transformations?: DataLinkTransformationConfig[];
 }
 
 export type LinkTarget = '_blank' | '_self' | undefined;

@@ -126,17 +126,17 @@ func (d prefixmod) applyfunc(c *dstutil.Cursor) bool {
 		// field value specifications that reference those types.
 		d.handleExpr(x.Type)
 	case *dst.File:
-		for _, decl := range x.Decls {
-			comments := decl.Decorations().Start.All()
-			decl.Decorations().Start.Clear()
+		for _, def := range x.Decls {
+			comments := def.Decorations().Start.All()
+			def.Decorations().Start.Clear()
 			// For any reason, sometimes it retrieves the comment duplicated 🤷
 			commentMap := make(map[string]bool)
 			for _, c := range comments {
 				if _, ok := commentMap[c]; !ok {
 					commentMap[c] = true
-					decl.Decorations().Start.Append(d.rxpsuff.ReplaceAllString(c, "$1"))
+					def.Decorations().Start.Append(d.rxpsuff.ReplaceAllString(c, "$1"))
 					if d.replace != "" {
-						decl.Decorations().Start.Append(d.rxp.ReplaceAllString(c, d.replace+"$1"))
+						def.Decorations().Start.Append(d.rxp.ReplaceAllString(c, d.replace+"$1"))
 					}
 				}
 			}

@@ -11,7 +11,7 @@ import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { initGrafanaLive } from 'app/features/live';
-import { CoreEvents, AppEventEmitter, AppEventConsumer } from 'app/types';
+import { AppEventEmitter, AppEventConsumer } from 'app/types';
 
 import { UtilSrv } from './services/UtilSrv';
 
@@ -88,10 +88,6 @@ export function grafanaAppDirective() {
       const body = $('body');
       // see https://github.com/zenorocha/clipboard.js/issues/155
       $.fn.modal.Constructor.prototype.enforceFocus = () => {};
-
-      appEvents.on(CoreEvents.toggleSidemenuHidden, () => {
-        body.toggleClass('sidemenu-hidden');
-      });
 
       // handle in active view state class
       let lastActivity = new Date().getTime();

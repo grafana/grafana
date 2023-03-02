@@ -9,10 +9,9 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/apikey"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
-	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -66,7 +65,7 @@ const sevenDaysAhead = 7 * 24 * time.Hour
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (api *ServiceAccountsAPI) ListTokens(ctx *models.ReqContext) response.Response {
+func (api *ServiceAccountsAPI) ListTokens(ctx *contextmodel.ReqContext) response.Response {
 	saID, err := strconv.ParseInt(web.Params(ctx.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Service Account ID is invalid", err)
@@ -98,7 +97,7 @@ func (api *ServiceAccountsAPI) ListTokens(ctx *models.ReqContext) response.Respo
 		}
 
 		result[i] = TokenDTO{
-			Id:                     token.Id,
+			Id:                     token.ID,
 			Name:                   token.Name,
 			Created:                &token.Created,
 			Expiration:             expiration,
@@ -127,7 +126,7 @@ func (api *ServiceAccountsAPI) ListTokens(ctx *models.ReqContext) response.Respo
 // 404: notFoundError
 // 409: conflictError
 // 500: internalServerError
-func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Response {
+func (api *ServiceAccountsAPI) CreateToken(c *contextmodel.ReqContext) response.Response {
 	saID, err := strconv.ParseInt(web.Params(c.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Service Account ID is invalid", err)
@@ -175,19 +174,20 @@ func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Respon
 
 	cmd.Key = newKeyInfo.HashedKey
 
-	if err := api.service.AddServiceAccountToken(c.Req.Context(), saID, &cmd); err != nil {
-		if errors.Is(err, database.ErrInvalidTokenExpiration) {
+	apiKey, err := api.service.AddServiceAccountToken(c.Req.Context(), saID, &cmd)
+	if err != nil {
+		if errors.Is(err, serviceaccounts.ErrInvalidTokenExpiration) {
 			return response.Error(http.StatusBadRequest, err.Error(), nil)
 		}
-		if errors.Is(err, database.ErrDuplicateToken) {
+		if errors.Is(err, serviceaccounts.ErrDuplicateToken) {
 			return response.Error(http.StatusConflict, err.Error(), nil)
 		}
 		return response.Error(http.StatusInternalServerError, "Failed to add service account token", err)
 	}
 
 	result := &dtos.NewApiKeyResult{
-		ID:   cmd.Result.Id,
-		Name: cmd.Result.Name,
+		ID:   apiKey.ID,
+		Name: apiKey.Name,
 		Key:  newKeyInfo.ClientSecret,
 	}
 
@@ -210,7 +210,7 @@ func (api *ServiceAccountsAPI) CreateToken(c *models.ReqContext) response.Respon
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (api *ServiceAccountsAPI) DeleteToken(c *models.ReqContext) response.Response {
+func (api *ServiceAccountsAPI) DeleteToken(c *contextmodel.ReqContext) response.Response {
 	saID, err := strconv.ParseInt(web.Params(c.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Service Account ID is invalid", err)

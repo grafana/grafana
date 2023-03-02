@@ -587,6 +587,23 @@ describe('ElasticQueryBuilder', () => {
     expect(firstLevel.histogram.min_doc_count).toBe('2');
   });
 
+  it('with nested', () => {
+    const query = builder.build({
+      refId: 'A',
+      metrics: [{ id: '1', type: 'count' }],
+      bucketAggs: [
+        {
+          type: 'nested',
+          field: 'nested_field',
+          id: '3',
+        },
+      ],
+    });
+
+    const firstLevel = query.aggs['3'];
+    expect(firstLevel.nested.path).toBe('nested_field');
+  });
+
   // This test wasn't migrated, as adhoc variables are going to be interpolated before
   // Or we need to add this to backend query builder (TBD)
   it('with adhoc filters', () => {

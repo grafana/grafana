@@ -4,8 +4,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/urfave/cli/v2"
+
+	"github.com/grafana/grafana/pkg/build/config"
 )
 
 func ExportVersion(c *cli.Context) error {

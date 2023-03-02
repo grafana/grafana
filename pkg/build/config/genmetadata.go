@@ -5,8 +5,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/build/droneutil"
 	"github.com/urfave/cli/v2"
+
+	"github.com/grafana/grafana/pkg/build/droneutil"
 )
 
 func GenerateMetadata(c *cli.Context) (Metadata, error) {

@@ -8,11 +8,11 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/models/roletype"
-	"github.com/grafana/grafana/pkg/services/org"
-
 	"golang.org/x/oauth2"
 	"gopkg.in/square/go-jose.v2/jwt"
+
+	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/services/org"
 )
 
 type SocialAzureAD struct {

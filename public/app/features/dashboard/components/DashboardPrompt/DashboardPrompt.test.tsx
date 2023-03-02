@@ -1,6 +1,6 @@
 import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
 
-import { setContextSrv } from '../../../../core/services/context_srv';
+import { ContextSrv, setContextSrv } from '../../../../core/services/context_srv';
 import { PanelModel } from '../../state/PanelModel';
 import { createDashboardModelFixture, createPanelJSONFixture } from '../../state/__fixtures__/dashboardFixtures';
 
@@ -8,7 +8,6 @@ import { hasChanges, ignoreChanges } from './DashboardPrompt';
 
 function getDefaultDashboardModel() {
   return createDashboardModelFixture({
-    refresh: false,
     panels: [
       createPanelJSONFixture({
         id: 1,
@@ -33,7 +32,7 @@ function getDefaultDashboardModel() {
 }
 
 function getTestContext() {
-  const contextSrv: any = { isSignedIn: true, isEditor: true };
+  const contextSrv = { isSignedIn: true, isEditor: true } as ContextSrv;
   setContextSrv(contextSrv);
   const dash = getDefaultDashboardModel();
   const original = dash.getSaveModelClone();
@@ -56,7 +55,7 @@ describe('DashboardPrompt', () => {
   it('Should ignore a lot of changes', () => {
     const { original, dash } = getTestContext();
     dash.time = { from: '1h' };
-    dash.refresh = true;
+    dash.refresh = '30s';
     dash.schemaVersion = 10;
     expect(hasChanges(dash, original)).toBe(false);
   });

@@ -7,12 +7,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/server/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/require"
 )
 
 type testService struct {
@@ -48,7 +48,7 @@ func (s *testService) IsDisabled() bool {
 
 func testServer(t *testing.T, services ...registry.BackgroundService) *Server {
 	t.Helper()
-	s, err := newServer(Options{}, setting.NewCfg(), nil, &acimpl.Service{}, nil, backgroundsvcs.NewBackgroundServiceRegistry(services...), usertest.NewUserServiceFake(), nil)
+	s, err := newServer(Options{}, setting.NewCfg(), nil, &acimpl.Service{}, nil, backgroundsvcs.NewBackgroundServiceRegistry(services...))
 	require.NoError(t, err)
 	// Required to skip configuration initialization that causes
 	// DI errors in this test.

@@ -10,7 +10,7 @@ import { commonOptionsBuilder } from '@grafana/ui';
 
 import { LineStyleEditor } from '../timeseries/LineStyleEditor';
 
-import { ScatterFieldConfig, ScatterShow } from './models.gen';
+import { ScatterFieldConfig, ScatterShow } from './types';
 
 export function getScatterFieldConfig(cfg: ScatterFieldConfig): SetFieldConfigOptionsArgs<ScatterFieldConfig> {
   return {

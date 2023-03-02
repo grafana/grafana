@@ -9,7 +9,7 @@ type DatasourceInfo struct {
 	Token      string
 	URL        string
 
-	Database      string `json:"database"`
+	DbName        string `json:"dbName"`
 	Version       string `json:"version"`
 	HTTPMode      string `json:"httpMode"`
 	TimeInterval  string `json:"timeInterval"`

@@ -380,7 +380,7 @@ func TestValidate(t *testing.T) {
 			condition: func(services services) models.Condition {
 				dsQuery := models.GenerateAlertQuery()
 				ds := &datasources.DataSource{
-					Uid:  dsQuery.DatasourceUID,
+					UID:  dsQuery.DatasourceUID,
 					Type: util.GenerateShortUID(),
 				}
 				services.cache.DataSources = append(services.cache.DataSources, ds)
@@ -406,7 +406,7 @@ func TestValidate(t *testing.T) {
 			condition: func(services services) models.Condition {
 				dsQuery := models.GenerateAlertQuery()
 				ds := &datasources.DataSource{
-					Uid:  dsQuery.DatasourceUID,
+					UID:  dsQuery.DatasourceUID,
 					Type: util.GenerateShortUID(),
 				}
 				services.cache.DataSources = append(services.cache.DataSources, ds)
@@ -445,7 +445,7 @@ func TestValidate(t *testing.T) {
 			condition: func(services services) models.Condition {
 				dsQuery := models.GenerateAlertQuery()
 				ds := &datasources.DataSource{
-					Uid:  dsQuery.DatasourceUID,
+					UID:  dsQuery.DatasourceUID,
 					Type: util.GenerateShortUID(),
 				}
 				services.cache.DataSources = append(services.cache.DataSources, ds)
@@ -465,11 +465,11 @@ func TestValidate(t *testing.T) {
 				dsQuery1 := models.GenerateAlertQuery()
 				dsQuery2 := models.GenerateAlertQuery()
 				ds1 := &datasources.DataSource{
-					Uid:  dsQuery1.DatasourceUID,
+					UID:  dsQuery1.DatasourceUID,
 					Type: util.GenerateShortUID(),
 				}
 				ds2 := &datasources.DataSource{
-					Uid:  dsQuery2.DatasourceUID,
+					UID:  dsQuery2.DatasourceUID,
 					Type: util.GenerateShortUID(),
 				}
 				services.cache.DataSources = append(services.cache.DataSources, ds1, ds2)
@@ -500,7 +500,7 @@ func TestValidate(t *testing.T) {
 			condition: func(services services) models.Condition {
 				dsQuery := models.GenerateAlertQuery()
 				ds := &datasources.DataSource{
-					Uid:  dsQuery.DatasourceUID,
+					UID:  dsQuery.DatasourceUID,
 					Type: util.GenerateShortUID(),
 				}
 				services.cache.DataSources = append(services.cache.DataSources, ds)

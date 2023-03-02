@@ -62,11 +62,11 @@ func TestBacktesting(t *testing.T) {
 			Name:   "Backtesting-TestDatasource",
 			Type:   "testdata",
 			Access: datasources.DS_ACCESS_PROXY,
-			Uid:    query.DatasourceUID,
-			UserId: userId,
-			OrgId:  1,
+			UID:    query.DatasourceUID,
+			UserID: userId,
+			OrgID:  1,
 		}
-		err := env.Server.HTTPServer.DataSourcesService.AddDataSource(context.Background(), dsCmd)
+		_, err := env.Server.HTTPServer.DataSourcesService.AddDataSource(context.Background(), dsCmd)
 		require.NoError(t, err)
 		break
 	}

@@ -7,11 +7,12 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/stretchr/testify/require"
 )
 
 func TestIntegrationCreateCorrelation(t *testing.T) {
@@ -44,18 +45,18 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 		Name:     "read-only",
 		Type:     "loki",
 		ReadOnly: true,
-		OrgId:    1,
+		OrgID:    1,
 	}
-	ctx.createDs(createDsCommand)
-	readOnlyDS := createDsCommand.Result.Uid
+	dataSource := ctx.createDs(createDsCommand)
+	readOnlyDS := dataSource.UID
 
 	createDsCommand = &datasources.AddDataSourceCommand{
 		Name:  "writable",
 		Type:  "loki",
-		OrgId: 1,
+		OrgID: 1,
 	}
-	ctx.createDs(createDsCommand)
-	writableDs := createDsCommand.Result.Uid
+	dataSource = ctx.createDs(createDsCommand)
+	writableDs := dataSource.UID
 
 	t.Run("Unauthenticated users shouldn't be able to create correlations", func(t *testing.T) {
 		res := ctx.Post(PostParams{
@@ -236,6 +237,8 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 		label := "a label"
 		fieldName := "fieldName"
 		configType := correlations.ConfigTypeQuery
+		transformation := correlations.Transformation{Type: "logfmt"}
+		transformation2 := correlations.Transformation{Type: "regex", Expression: "testExpression", MapValue: "testVar"}
 		res := ctx.Post(PostParams{
 			url: fmt.Sprintf("/api/datasources/uid/%s/correlations", writableDs),
 			body: fmt.Sprintf(`{
@@ -245,7 +248,11 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 					"config": {
 						"type": "%s",
 						"field": "%s",
-						"target": { "expr": "foo" }
+						"target": { "expr": "foo" },
+						"transformations": [
+							{"type": "logfmt"},
+							{"type": "regex", "expression": "testExpression", "mapValue": "testVar"}
+						]
 					}
 				}`, writableDs, description, label, configType, fieldName),
 			user: adminUser,
@@ -267,6 +274,8 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 		require.Equal(t, configType, response.Result.Config.Type)
 		require.Equal(t, fieldName, response.Result.Config.Field)
 		require.Equal(t, map[string]interface{}{"expr": "foo"}, response.Result.Config.Target)
+		require.Equal(t, transformation, response.Result.Config.Transformations[0])
+		require.Equal(t, transformation2, response.Result.Config.Transformations[1])
 
 		require.NoError(t, res.Body.Close())
 	})

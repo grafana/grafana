@@ -147,7 +147,7 @@ export const AmSpecificRouting: FC<AmSpecificRoutingProps> = ({
               <Authorize actions={[permissions.create]}>
                 <div className={styles.addMatcherBtnRow}>
                   <Button className={styles.addMatcherBtn} icon="plus" onClick={addNewRoute} type="button">
-                    New policy
+                    Add policy
                   </Button>
                 </div>
               </Authorize>

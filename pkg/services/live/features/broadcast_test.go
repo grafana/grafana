@@ -7,9 +7,10 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/services/live/model"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/stretchr/testify/require"
 )
 
 func TestNewBroadcastRunner(t *testing.T) {

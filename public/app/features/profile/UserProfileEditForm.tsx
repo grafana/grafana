@@ -31,7 +31,7 @@ export const UserProfileEditForm: FC<Props> = ({ user, isSavingUser, updateProfi
     <Form onSubmit={onSubmitProfileUpdate} validateOn="onBlur">
       {({ register, errors }) => {
         return (
-          <FieldSet label={<Trans i18nKey="user-profile.title">Profile</Trans>}>
+          <FieldSet>
             <Field
               label={t('user-profile.fields.name-label', 'Name') + lockMessage}
               invalid={!!errors.name}

@@ -1,13 +1,15 @@
 import { css } from '@emotion/css';
 import { noop } from 'lodash';
-import React, { FC, useCallback, useMemo } from 'react';
-import { useAsync } from 'react-use';
+import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import { useAsync, usePrevious } from 'react-use';
 
 import { CoreApp, DataQuery, DataSourcePluginContextProvider, GrafanaTheme2, LoadingState } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Alert, Button, useStyles2 } from '@grafana/ui';
 import { LokiQuery } from 'app/plugins/datasource/loki/types';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
+
+import { AlertQuery } from '../../../../../types/unified-alerting-dto';
 
 import { CloudAlertPreview } from './CloudAlertPreview';
 import { usePreview } from './PreviewRule';
@@ -16,13 +18,41 @@ export interface ExpressionEditorProps {
   value?: string;
   onChange: (value: string) => void;
   dataSourceName: string; // will be a prometheus or loki datasource
+  showPreviewAlertsButton: boolean;
+  asyncDefaultQuery?: AlertQuery;
+  preservePreviousValue: boolean;
 }
 
-export const ExpressionEditor: FC<ExpressionEditorProps> = ({ value, onChange, dataSourceName }) => {
+export const ExpressionEditor: FC<ExpressionEditorProps> = ({
+  value,
+  onChange,
+  dataSourceName,
+  showPreviewAlertsButton = true,
+  asyncDefaultQuery,
+  preservePreviousValue,
+}) => {
   const styles = useStyles2(getStyles);
 
   const { mapToValue, mapToQuery } = useQueryMappers(dataSourceName);
-  const dataQuery = mapToQuery({ refId: 'A', hide: false }, value);
+  const [dataQuery, setDataQuery] = useState(mapToQuery({ refId: 'A', hide: false }, value));
+  const defaultModel = asyncDefaultQuery?.model;
+  const previousDataSource = usePrevious(dataSourceName);
+
+  // New alert: update with default query once we have the async default value
+  useEffect(() => {
+    const shouldSetDefaultQuery = !preservePreviousValue && defaultModel;
+    if (shouldSetDefaultQuery) {
+      setDataQuery((dataQuery) => ({ ...dataQuery, ...{ ...defaultModel } }));
+    }
+  }, [defaultModel, preservePreviousValue]);
+  // when data source is changed
+  useEffect(() => {
+    const shouldSetDefaultQuery =
+      !!previousDataSource && previousDataSource !== dataSourceName && Boolean(dataSourceName) && defaultModel;
+    if (shouldSetDefaultQuery) {
+      setDataQuery((dataQuery) => ({ ...dataQuery, ...{ ...defaultModel } }));
+    }
+  }, [dataSourceName, defaultModel, previousDataSource]);
 
   const {
     error,
@@ -65,7 +95,7 @@ export const ExpressionEditor: FC<ExpressionEditorProps> = ({ value, onChange, d
   // The preview API returns arrays with empty elements when there are no firing alerts
   const previewHasAlerts = previewDataFrame && previewDataFrame.fields.some((field) => field.values.length > 0);
 
-  return (
+  return dataQuery ? (
     <>
       <DataSourcePluginContextProvider instanceSettings={dsi}>
         <QueryEditor
@@ -77,19 +107,25 @@ export const ExpressionEditor: FC<ExpressionEditorProps> = ({ value, onChange, d
           datasource={dataSource}
         />
       </DataSourcePluginContextProvider>
-      <div className={styles.preview}>
-        <Button type="button" onClick={onRunQueriesClick} disabled={alertPreview?.data.state === LoadingState.Loading}>
-          Preview alerts
-        </Button>
-        {previewLoaded && !previewHasAlerts && (
-          <Alert title="Alerts preview" severity="info" className={styles.previewAlert}>
-            There are no firing alerts for your query.
-          </Alert>
-        )}
-        {previewHasAlerts && <CloudAlertPreview preview={previewDataFrame} />}
-      </div>
+      {showPreviewAlertsButton && (
+        <div className={styles.preview}>
+          <Button
+            type="button"
+            onClick={onRunQueriesClick}
+            disabled={alertPreview?.data.state === LoadingState.Loading}
+          >
+            Preview alerts
+          </Button>
+          {previewLoaded && !previewHasAlerts && (
+            <Alert title="Alerts preview" severity="info" className={styles.previewAlert}>
+              There are no firing alerts for your query.
+            </Alert>
+          )}
+          {previewHasAlerts && <CloudAlertPreview preview={previewDataFrame} />}
+        </div>
+      )}
     </>
-  );
+  ) : null;
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({

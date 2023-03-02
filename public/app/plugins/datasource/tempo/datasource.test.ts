@@ -20,7 +20,6 @@ import {
   setDataSourceSrv,
   TemplateSrv,
 } from '@grafana/runtime';
-import config from 'app/core/config';
 
 import {
   DEFAULT_LIMIT,
@@ -442,7 +441,6 @@ describe('Tempo apm table', () => {
         },
       },
     });
-    config.featureToggles.tempoApmTable = true;
     setDataSourceSrv(backendSrvWithPrometheus as any);
     const response = await lastValueFrom(
       ds.query({ targets: [{ queryType: 'serviceMap' }], range: getDefaultTimeRange() } as any)

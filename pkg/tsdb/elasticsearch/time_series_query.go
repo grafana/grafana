@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
@@ -53,7 +54,7 @@ func (e *timeSeriesQuery) execute() (*backend.QueryDataResponse, error) {
 		return &backend.QueryDataResponse{}, err
 	}
 
-	return parseResponse(res.Responses, queries)
+	return parseResponse(res.Responses, queries, e.client.GetConfiguredFields())
 }
 
 func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilder, from, to int64) error {
@@ -62,7 +63,7 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 		return err
 	}
 
-	defaultTimeField := e.client.GetTimeField()
+	defaultTimeField := e.client.GetConfiguredFields().TimeField
 	b := ms.Search(q.Interval)
 	b.Size(0)
 	filters := b.Query().Bool().Filter()
@@ -244,6 +245,14 @@ func addTermsAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, metrics []*Metr
 	return aggBuilder
 }
 
+func addNestedAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg) es.AggBuilder {
+	aggBuilder.Nested(bucketAgg.ID, bucketAgg.Field, func(a *es.NestedAggregation, b es.AggBuilder) {
+		aggBuilder = b
+	})
+
+	return aggBuilder
+}
+
 func addFiltersAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg) es.AggBuilder {
 	filters := make(map[string]interface{})
 	for _, filter := range bucketAgg.Settings.Get("filters").MustArray() {
@@ -361,6 +370,8 @@ func processTimeSeriesQuery(q *Query, b *es.SearchRequestBuilder, from, to int64
 			aggBuilder = addTermsAgg(aggBuilder, bucketAgg, q.Metrics)
 		case geohashGridType:
 			aggBuilder = addGeoHashGridAgg(aggBuilder, bucketAgg)
+		case nestedType:
+			aggBuilder = addNestedAgg(aggBuilder, bucketAgg)
 		}
 	}
 

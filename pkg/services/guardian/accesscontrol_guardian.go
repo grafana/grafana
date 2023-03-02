@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -14,10 +13,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var permissionMap = map[string]models.PermissionType{
-	"View":  models.PERMISSION_VIEW,
-	"Edit":  models.PERMISSION_EDIT,
-	"Admin": models.PERMISSION_ADMIN,
+var permissionMap = map[string]dashboards.PermissionType{
+	"View":  dashboards.PERMISSION_VIEW,
+	"Edit":  dashboards.PERMISSION_EDIT,
+	"Admin": dashboards.PERMISSION_ADMIN,
 }
 
 var _ DashboardGuardian = new(AccessControlDashboardGuardian)
@@ -37,13 +36,14 @@ func NewAccessControlDashboardGuardian(
 			OrgID: user.OrgID,
 		}
 
-		if err := dashboardService.GetDashboard(ctx, q); err != nil {
+		qResult, err := dashboardService.GetDashboard(ctx, q)
+		if err != nil {
 			if errors.Is(err, dashboards.ErrDashboardNotFound) {
 				return nil, ErrGuardianDashboardNotFound.Errorf("failed to get dashboard by UID: %w", err)
 			}
 			return nil, ErrGuardianGetDashboardFailure.Errorf("failed to get dashboard by UID: %w", err)
 		}
-		dashboard = q.Result
+		dashboard = qResult
 	}
 
 	return &AccessControlDashboardGuardian{
@@ -74,13 +74,14 @@ func NewAccessControlDashboardGuardianByUID(
 			OrgID: user.OrgID,
 		}
 
-		if err := dashboardService.GetDashboard(ctx, q); err != nil {
+		qResult, err := dashboardService.GetDashboard(ctx, q)
+		if err != nil {
 			if errors.Is(err, dashboards.ErrDashboardNotFound) {
 				return nil, ErrGuardianDashboardNotFound.Errorf("failed to get dashboard by UID: %w", err)
 			}
 			return nil, ErrGuardianGetDashboardFailure.Errorf("failed to get dashboard by UID: %w", err)
 		}
-		dashboard = q.Result
+		dashboard = qResult
 	}
 
 	return &AccessControlDashboardGuardian{
@@ -233,7 +234,7 @@ func (a *AccessControlDashboardGuardian) evaluate(evaluator accesscontrol.Evalua
 	return ok, err
 }
 
-func (a *AccessControlDashboardGuardian) CheckPermissionBeforeUpdate(permission models.PermissionType, updatePermissions []*dashboards.DashboardACL) (bool, error) {
+func (a *AccessControlDashboardGuardian) CheckPermissionBeforeUpdate(permission dashboards.PermissionType, updatePermissions []*dashboards.DashboardACL) (bool, error) {
 	// always true for access control
 	return true, nil
 }
@@ -337,8 +338,9 @@ func (a *AccessControlDashboardGuardian) loadParentFolder(folderID int64) (*dash
 		return &dashboards.Dashboard{UID: accesscontrol.GeneralFolderUID}, nil
 	}
 	folderQuery := &dashboards.GetDashboardQuery{ID: folderID, OrgID: a.user.OrgID}
-	if err := a.dashboardService.GetDashboard(a.ctx, folderQuery); err != nil {
+	folderQueryResult, err := a.dashboardService.GetDashboard(a.ctx, folderQuery)
+	if err != nil {
 		return nil, err
 	}
-	return folderQuery.Result, nil
+	return folderQueryResult, nil
 }

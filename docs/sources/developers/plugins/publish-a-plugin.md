@@ -86,6 +86,7 @@ Before you submit your plugin, we ask that you read our guidelines and frequentl
 
 To speed up the time it takes to review your plugin:
 
+- Get familiar with our plugin [publishing and signing criteria](publishing-and-signing-criteria.md)
 - Check that your plugin is ready for review using the [plugin validator](https://github.com/grafana/plugin-validator).
 - Read our [6 tips for improving your Grafana plugin before you publish](https://grafana.com/blog/2021/01/21/6-tips-for-improving-your-grafana-plugin-before-you-publish/).
 - Refer to [plugin-examples](https://github.com/grafana/grafana-plugin-examples) to review best practices for building your plugin.
@@ -104,7 +105,27 @@ To speed up the time it takes to review your plugin:
 
 - No. We cannot guarantee specific publishing dates, as plugins are immediately published after a review based on our internal prioritization.
 
+**Can I see metrics of my plugin installs, downloads or usage?**
+
+- No. We don't offer this information at the moment to plugin authors.
+
+**How can I update my plugin's catalog page?**
+
+- The plugin's catalog page content is extracted from the plugin README file. To update the plugin's catalog page, it is necessary to submit an updated plugin with the new content included in the README file.
+
+**Can I unlist my plugin from the Grafana Plugin's Catalog in case of a bug?**
+
+- In the event of a bug, unlisting the plugin from the Grafana Plugin's Catalog may be possible in exceptional cases, such as security concerns. However, we do not have control over the specific instances where the plugin is installed.
+
+**Can I distribute my plugin somewhere else than the Grafana Catalog?**
+
+- The official method for distributing Grafana plugins is through the Grafana Catalog. Alternative methods, such as installing private or development plugins on local Grafana instances, are available as per the guidelines provided in [this guide](https://grafana.com/docs/grafana/latest/administration/plugin-management/#install-plugin-on-local-grafana).
+
 ## Publishing your plugin for the first time
+
+**Do plugin signatures expire?**
+
+- Plugin signatures do not currently expire.
 
 {{< figure src="/static/img/docs/plugins/plugins-submission-create2.png" class="docs-image--no-shadow" max-width="650px" >}}
 

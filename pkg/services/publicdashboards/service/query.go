@@ -43,16 +43,16 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 		annoQuery := &annotations.ItemQuery{
 			From:         reqDTO.From,
 			To:           reqDTO.To,
-			OrgId:        dash.OrgID,
-			DashboardId:  dash.ID,
-			DashboardUid: dash.UID,
+			OrgID:        dash.OrgID,
+			DashboardID:  dash.ID,
+			DashboardUID: dash.UID,
 			Limit:        anno.Target.Limit,
 			MatchAny:     anno.Target.MatchAny,
 			SignedInUser: anonymousUser,
 		}
 
 		if anno.Target.Type == "tags" {
-			annoQuery.DashboardId = 0
+			annoQuery.DashboardID = 0
 			annoQuery.Tags = anno.Target.Tags
 		}
 
@@ -63,8 +63,8 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 
 		for _, item := range annotationItems {
 			event := models.AnnotationEvent{
-				Id:          item.Id,
-				DashboardId: item.DashboardId,
+				Id:          item.ID,
+				DashboardId: item.DashboardID,
 				Tags:        item.Tags,
 				IsRegion:    item.TimeEnd > 0 && item.Time != item.TimeEnd,
 				Text:        item.Text,
@@ -77,7 +77,7 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 			// We want dashboard annotations to reference the panel they're for. If no panelId is provided, they'll show up on all panels
 			// which is only intended for tag and org annotations.
 			if anno.Type == "dashboard" {
-				event.PanelId = item.PanelId
+				event.PanelId = item.PanelID
 			}
 
 			// We want events from tag queries to overwrite existing events
@@ -164,6 +164,7 @@ func (pd *PublicDashboardServiceImpl) buildMetricRequest(ctx context.Context, da
 	for i := range queries {
 		queries[i].Set("intervalMs", safeInterval)
 		queries[i].Set("maxDataPoints", safeResolution)
+		queries[i].Set("queryCachingTTL", reqDTO.QueryCachingTTL)
 	}
 
 	return dtos.MetricRequest{

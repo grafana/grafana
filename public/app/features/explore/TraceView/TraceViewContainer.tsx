@@ -1,5 +1,3 @@
-import TracePageSearchBar from '@jaegertracing/jaeger-ui-components/src/TracePageHeader/TracePageSearchBar';
-import { TopOfViewRefType } from '@jaegertracing/jaeger-ui-components/src/TraceTimelineViewer/VirtualizedTraceView';
 import React, { RefObject, useMemo, useState } from 'react';
 
 import { DataFrame, SplitOpen, PanelData } from '@grafana/data';
@@ -8,6 +6,8 @@ import { StoreState, useSelector } from 'app/types';
 import { ExploreId } from 'app/types/explore';
 
 import { TraceView } from './TraceView';
+import TracePageSearchBar from './components/TracePageHeader/TracePageSearchBar';
+import { TopOfViewRefType } from './components/TraceTimelineViewer/VirtualizedTraceView';
 import { useSearch } from './useSearch';
 import { transformDataFrames } from './utils/transform';
 interface Props {

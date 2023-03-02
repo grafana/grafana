@@ -78,7 +78,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     if (this.cachedValues.hasOwnProperty(tagName)) {
       tagValues = this.cachedValues[tagName];
     } else {
-      tagValues = await this.languageProvider.getOptions(tagName);
+      tagValues = await this.languageProvider.getOptionsV1(tagName);
       this.cachedValues[tagName] = tagValues;
     }
     return tagValues;

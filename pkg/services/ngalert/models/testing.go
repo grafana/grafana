@@ -25,7 +25,7 @@ func AlertRuleGen(mutators ...AlertRuleMutator) func() *AlertRule {
 				NoData,
 				OK,
 			}
-			return s[rand.Intn(len(s)-1)]
+			return s[rand.Intn(len(s))]
 		}
 
 		randErrState := func() ExecutionErrorState {
@@ -34,7 +34,7 @@ func AlertRuleGen(mutators ...AlertRuleMutator) func() *AlertRule {
 				ErrorErrState,
 				OkErrState,
 			}
-			return s[rand.Intn(len(s)-1)]
+			return s[rand.Intn(len(s))]
 		}
 
 		interval := (rand.Int63n(6) + 1) * 10
@@ -300,7 +300,7 @@ func CreateClassicConditionExpression(refID string, inputRefID string, reducer s
 	return AlertQuery{
 		RefID:         refID,
 		QueryType:     expr.DatasourceType,
-		DatasourceUID: expr.OldDatasourceUID,
+		DatasourceUID: expr.DatasourceUID,
 		// the format corresponds to model `ClassicConditionJSON` in /pkg/expr/classic/classic.go
 		Model: json.RawMessage(fmt.Sprintf(`
 		{
@@ -334,6 +334,49 @@ func CreateClassicConditionExpression(refID string, inputRefID string, reducer s
                     }
                 }
             ]
-		}`, refID, inputRefID, operation, threshold, reducer, expr.OldDatasourceUID, expr.DatasourceType)),
+		}`, refID, inputRefID, operation, threshold, reducer, expr.DatasourceUID, expr.DatasourceType)),
 	}
+}
+
+type AlertInstanceMutator func(*AlertInstance)
+
+// AlertInstanceGen provides a factory function that generates a random AlertInstance.
+// The mutators arguments allows changing fields of the resulting structure.
+func AlertInstanceGen(mutators ...AlertInstanceMutator) *AlertInstance {
+	var labels map[string]string = nil
+	if rand.Int63()%2 == 0 {
+		labels = GenerateAlertLabels(rand.Intn(5), "lbl-")
+	}
+
+	randState := func() InstanceStateType {
+		s := [...]InstanceStateType{
+			InstanceStateFiring,
+			InstanceStateNormal,
+			InstanceStatePending,
+			InstanceStateNoData,
+			InstanceStateError,
+		}
+		return s[rand.Intn(len(s))]
+	}
+
+	currentStateSince := time.Now().Add(-time.Duration(rand.Intn(100) + 1))
+
+	instance := &AlertInstance{
+		AlertInstanceKey: AlertInstanceKey{
+			RuleOrgID:  rand.Int63n(1500),
+			RuleUID:    util.GenerateShortUID(),
+			LabelsHash: util.GenerateShortUID(),
+		},
+		Labels:            labels,
+		CurrentState:      randState(),
+		CurrentReason:     "TEST-REASON-" + util.GenerateShortUID(),
+		CurrentStateSince: currentStateSince,
+		CurrentStateEnd:   currentStateSince.Add(time.Duration(rand.Intn(100) + 200)),
+		LastEvalTime:      time.Now().Add(-time.Duration(rand.Intn(100) + 50)),
+	}
+
+	for _, mutator := range mutators {
+		mutator(instance)
+	}
+	return instance
 }

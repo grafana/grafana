@@ -102,7 +102,7 @@ const grafanaAlert = {
       refId: 'B',
       queryType: '',
       relativeTimeRange: { from: 0, to: 0 },
-      datasourceUid: '-100',
+      datasourceUid: '__expr__',
       model: {
         conditions: [
           {

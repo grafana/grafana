@@ -9,6 +9,17 @@
 
 
 /**
+ * TODO docs
+ */
+export interface DataSourceJsonData {
+  alertmanagerUid?: string;
+  authType?: string;
+  defaultRegion?: string;
+  manageAlerts?: boolean;
+  profile?: string;
+}
+
+/**
  * These are the common properties available to all queries in all datasources.
  * Specific implementations will *extend* this interface, adding the required
  * properties for the given context.
@@ -38,6 +49,27 @@ export interface DataQuery {
    * A - Z
    */
   refId: string;
+}
+
+export interface BaseDimensionConfig {
+  field?: string;
+  fixed: (string | number);
+}
+
+export interface ScaleDimensionConfig extends BaseDimensionConfig {
+  max: number;
+  min: number;
+}
+
+/**
+ * This is actually an empty interface used mainly for naming?
+ */
+export interface ColorDimensionConfig extends BaseDimensionConfig {}
+
+export enum TextDimensionMode {
+  Field = 'field',
+  Fixed = 'fixed',
+  Template = 'template',
 }
 
 export interface MapLayerOptions {
@@ -75,6 +107,38 @@ export enum FrameGeometrySourceMode {
   Coords = 'coords',
   Geohash = 'geohash',
   Lookup = 'lookup',
+}
+
+export enum HeatmapCalculationMode {
+  Count = 'count',
+  Size = 'size',
+}
+
+export enum HeatmapCellLayout {
+  auto = 'auto',
+  ge = 'ge',
+  le = 'le',
+  unknown = 'unknown',
+}
+
+export interface HeatmapCalculationBucketConfig {
+  /**
+   * Sets the bucket calculation mode
+   */
+  mode?: HeatmapCalculationMode;
+  /**
+   * Controls the scale of the buckets
+   */
+  scale?: ScaleDistributionConfig;
+  /**
+   * The number of buckets to use for the axis in the heatmap
+   */
+  value?: string;
+}
+
+export enum LogsSortOrder {
+  Ascending = 'Ascending',
+  Descending = 'Descending',
 }
 
 /**
@@ -454,6 +518,11 @@ export enum BigValueTextMode {
 export type FieldTextAlignment = ('auto' | 'left' | 'right' | 'center');
 
 /**
+ * Controls the value alignment in the TimelineChart component
+ */
+export type TimelineValueAlignment = ('center' | 'left' | 'right');
+
+/**
  * TODO docs
  */
 export interface VizTextDisplayOptions {
@@ -525,6 +594,14 @@ export enum BarGaugeDisplayMode {
 }
 
 /**
+ * TODO docs
+ */
+export interface VizTooltipOptions {
+  mode: TooltipDisplayMode;
+  sort: SortOrder;
+}
+
+/**
  * Internally, this is the "type" of cell that's being displayed
  * in the table such as colored text, JSON, gauge, etc.
  * The color-background-solid, gradient-gauge, and lcd-gauge
@@ -554,12 +631,34 @@ export enum TableCellBackgroundDisplayMode {
 }
 
 /**
- * TODO docs
+ * Sort by field state
  */
 export interface TableSortByFieldState {
+  /**
+   * Flag used to indicate descending sort order
+   */
   desc?: boolean;
+  /**
+   * Sets the display name of the field to sort by
+   */
   displayName: string;
 }
+
+/**
+ * Footer options
+ */
+export interface TableFooterOptions {
+  countRows?: boolean;
+  enablePagination?: boolean;
+  fields?: Array<string>;
+  reducer: Array<string>;
+  show: boolean;
+}
+
+export const defaultTableFooterOptions: Partial<TableFooterOptions> = {
+  fields: [],
+  reducer: [],
+};
 
 /**
  * Auto mode table cell options
@@ -632,6 +731,10 @@ export interface DataSourceRef {
   uid?: string;
 }
 
+export interface TextDimensionConfig extends BaseDimensionConfig {
+  mode: TextDimensionMode;
+}
+
 export interface FrameGeometrySource {
   /**
    * Path to Gazetteer
@@ -648,13 +751,25 @@ export interface FrameGeometrySource {
   wkt?: string;
 }
 
-/**
- * TODO docs
- */
-export interface VizTooltipOptions {
-  mode: TooltipDisplayMode;
-  sort: SortOrder;
+export interface HeatmapCalculationOptions {
+  /**
+   * The number of buckets to use for the xAxis in the heatmap
+   */
+  xBuckets?: HeatmapCalculationBucketConfig;
+  /**
+   * The number of buckets to use for the yAxis in the heatmap
+   */
+  yBuckets?: HeatmapCalculationBucketConfig;
 }
+
+export enum LogsDedupStrategy {
+  exact = 'exact',
+  none = 'none',
+  numbers = 'numbers',
+  signature = 'signature',
+}
+
+export interface Labels {}
 
 /**
  * Field options for each field within a table (e.g 10, "The String", 64.20, etc.)

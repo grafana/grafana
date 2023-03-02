@@ -734,7 +734,7 @@ func randomWalkTable(query backend.DataQuery, model *simplejson.Json) *data.Fram
 	)
 
 	var info strings.Builder
-	state := uint16(0)
+	state := data.EnumItemIndex(0)
 
 	for i := int64(0); i < query.MaxDataPoints && timeWalkerMs < to; i++ {
 		delta := rand.Float64() - 0.5

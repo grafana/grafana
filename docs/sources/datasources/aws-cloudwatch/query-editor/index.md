@@ -218,15 +218,6 @@ When making `stats` queries in [Explore]({{< relref "../../../explore/" >}}), ma
 
 {{< figure src="/static/img/docs/v70/explore-mode-switcher.png" max-width="500px" class="docs-image--right" caption="Explore mode switcher" >}}
 
-## Cross-account observability
-
-The CloudWatch plugin provides the ability to monitor and troubleshoot applications that span across multiple accounts within a region. Using cross-account observability, you can seamlessly search, visualize and analyze metrics and logs, without having to worry about account boundaries.
-
-> **Note:** This feature is currently behind the `cloudWatchCrossAccountQuerying` feature toggle.
-
-> You can enable feature toggles through configuration file or environment variables. See configuration [docs]({{< relref "../../../setup-grafana/configure-grafana/#feature_toggles" >}}) for details.
-> Grafana Cloud users can access this feature by [opening a support ticket in the Cloud Portal](https://grafana.com/profile/org#support).
-
 ### Getting started
 
 To enable cross-account observability, first enable it in CloudWatch using the official [CloudWatch docs](http://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Unified-Cross-Account.html), then add [two new API actions]({{< relref "../#cross-account-observability" >}}) to the IAM policy attached to the role/user running the plugin.

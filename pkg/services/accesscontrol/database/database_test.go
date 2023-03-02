@@ -10,12 +10,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	rs "github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -229,7 +230,7 @@ func createUserAndTeam(t *testing.T, userSrv user.Service, teamSvc team.Service,
 	team, err := teamSvc.CreateTeam("team", "", orgID)
 	require.NoError(t, err)
 
-	err = teamSvc.AddTeamMember(user.ID, orgID, team.ID, false, models.PERMISSION_VIEW)
+	err = teamSvc.AddTeamMember(user.ID, orgID, team.ID, false, dashboards.PERMISSION_VIEW)
 	require.NoError(t, err)
 
 	return user, team
@@ -262,6 +263,7 @@ func createUsersAndTeams(t *testing.T, svcs helperServices, orgID int64, users [
 			IsAdmin: users[i].isAdmin,
 		})
 		require.NoError(t, err)
+		require.Equal(t, orgID, user.OrgID)
 
 		// User is not member of the org
 		if users[i].orgRole == "" {
@@ -276,7 +278,7 @@ func createUsersAndTeams(t *testing.T, svcs helperServices, orgID int64, users [
 		team, err := svcs.teamSvc.CreateTeam(fmt.Sprintf("team%v", i+1), "", orgID)
 		require.NoError(t, err)
 
-		err = svcs.teamSvc.AddTeamMember(user.ID, orgID, team.ID, false, models.PERMISSION_VIEW)
+		err = svcs.teamSvc.AddTeamMember(user.ID, orgID, team.ID, false, dashboards.PERMISSION_VIEW)
 		require.NoError(t, err)
 
 		err = svcs.orgSvc.UpdateOrgUser(context.Background(),
@@ -291,12 +293,20 @@ func createUsersAndTeams(t *testing.T, svcs helperServices, orgID int64, users [
 
 func setupTestEnv(t testing.TB) (*AccessControlStore, rs.Store, user.Service, team.Service, org.Service) {
 	sql, cfg := db.InitTestDBwithCfg(t)
+	cfg.AutoAssignOrg = true
+	cfg.AutoAssignOrgRole = "Viewer"
+	cfg.AutoAssignOrgId = 1
 	acstore := ProvideService(sql)
 	permissionStore := rs.NewStore(sql)
 	teamService := teamimpl.ProvideService(sql, cfg)
 	orgService, err := orgimpl.ProvideService(sql, cfg, quotatest.New(false, nil))
 	require.NoError(t, err)
-	userService, err := userimpl.ProvideService(sql, orgService, cfg, teamService, localcache.ProvideService(), quotatest.New(false, nil))
+
+	orgID, err := orgService.GetOrCreate(context.Background(), "test")
+	require.Equal(t, int64(1), orgID)
+	require.NoError(t, err)
+
+	userService, err := userimpl.ProvideService(sql, orgService, cfg, teamService, localcache.ProvideService(), quotatest.New(false, nil), supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
 	return acstore, permissionStore, userService, teamService, orgService
 }

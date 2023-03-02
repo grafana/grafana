@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	"xorm.io/xorm"
+
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-
-	"xorm.io/xorm"
 )
 
 const ActionMigrationID = "RBAC action name migrator"

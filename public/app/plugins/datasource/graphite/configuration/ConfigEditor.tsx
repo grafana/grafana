@@ -6,7 +6,15 @@ import {
   onUpdateDatasourceJsonDataOptionSelect,
   onUpdateDatasourceJsonDataOptionChecked,
 } from '@grafana/data';
-import { Alert, DataSourceHttpSettings, InlineFormLabel, LegacyForms, Select } from '@grafana/ui';
+import {
+  Alert,
+  DataSourceHttpSettings,
+  InlineFormLabel,
+  LegacyForms,
+  Select,
+  SecureSocksProxySettings,
+} from '@grafana/ui';
+import { config } from 'app/core/config';
 import store from 'app/core/store';
 
 import { GraphiteOptions, GraphiteType } from '../types';
@@ -75,6 +83,9 @@ export class ConfigEditor extends PureComponent<Props, State> {
           dataSourceConfig={options}
           onChange={onOptionsChange}
         />
+        {config.featureToggles.secureSocksDatasourceProxy && (
+          <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+        )}
         <h3 className="page-heading">Graphite details</h3>
         <div className="gf-form-group">
           <div className="gf-form-inline">

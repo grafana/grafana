@@ -114,7 +114,7 @@ const MuteTimingForm = ({ muteTiming, showError, provenance }: Props) => {
       pageNav={{
         ...defaultPageNav,
         id: muteTiming ? 'alert-policy-edit' : 'alert-policy-new',
-        text: muteTiming ? 'Edit mute timing' : 'New mute timing',
+        text: muteTiming ? 'Edit mute timing' : 'Add mute timing',
       }}
     >
       <AlertManagerPicker

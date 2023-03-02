@@ -7,10 +7,9 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/mattn/go-sqlite3"
 	"go.opentelemetry.io/otel/attribute"
 	"xorm.io/xorm"
-
-	"github.com/mattn/go-sqlite3"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"

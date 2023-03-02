@@ -5,9 +5,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestBuildMail(t *testing.T) {

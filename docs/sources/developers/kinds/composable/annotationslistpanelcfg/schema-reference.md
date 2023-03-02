@@ -6,24 +6,22 @@ title: AnnotationsListPanelCfg kind
 ---
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
 
-# AnnotationsListPanelCfg kind
+## AnnotationsListPanelCfg
 
-### Maturity: experimental
-### Version: 0.0
+#### Maturity: [experimental](../../../maturity/#experimental)
+#### Version: 0.0
 
-## Properties
+
 
 | Property       | Type                    | Required | Description |
 |----------------|-------------------------|----------|-------------|
 | `PanelOptions` | [object](#paneloptions) | **Yes**  |             |
 
-## PanelOptions
-
-### Properties
+### PanelOptions
 
 | Property                | Type     | Required | Description       |
 |-------------------------|----------|----------|-------------------|
-| `limit`                 | integer  | **Yes**  | Default: `10`.    |
+| `limit`                 | uint32   | **Yes**  | Default: `10`.    |
 | `navigateAfter`         | string   | **Yes**  | Default: `10m`.   |
 | `navigateBefore`        | string   | **Yes**  | Default: `10m`.   |
 | `navigateToPanel`       | boolean  | **Yes**  | Default: `true`.  |

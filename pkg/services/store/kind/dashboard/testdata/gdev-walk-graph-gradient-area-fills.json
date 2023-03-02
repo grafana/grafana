@@ -18,12 +18,12 @@
       },
       "references": [
         {
-          "kind": "ds"
+          "family": "ds"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "graph"
+          "ID": "graph"
         }
       ]
     },
@@ -36,12 +36,12 @@
       },
       "references": [
         {
-          "kind": "ds"
+          "family": "ds"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "graph"
+          "ID": "graph"
         }
       ]
     },
@@ -54,12 +54,12 @@
       },
       "references": [
         {
-          "kind": "ds"
+          "family": "ds"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "graph"
+          "ID": "graph"
         }
       ]
     },
@@ -72,24 +72,24 @@
       },
       "references": [
         {
-          "kind": "ds"
+          "family": "ds"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "graph"
+          "ID": "graph"
         }
       ]
     }
   ],
   "references": [
     {
-      "kind": "ds"
+      "family": "ds"
     },
     {
-      "kind": "plugin",
+      "family": "plugin",
       "type": "panel",
-      "UID": "graph"
+      "ID": "graph"
     }
   ]
 }

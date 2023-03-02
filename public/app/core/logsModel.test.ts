@@ -13,6 +13,7 @@ import {
   LogRowModel,
   LogsDedupStrategy,
   LogsMetaKind,
+  LogsVolumeType,
   MutableDataFrame,
   toDataFrame,
 } from '@grafana/data';
@@ -30,6 +31,9 @@ import {
   queryLogsVolume,
   queryLogsSample,
 } from './logsModel';
+
+const FROM = dateTimeParse('2021-06-17 00:00:00', { timeZone: 'utc' });
+const TO = dateTimeParse('2021-06-17 00:00:00', { timeZone: 'utc' });
 
 describe('dedupLogRows()', () => {
   test('should return rows as is when dedup is set to none', () => {
@@ -1132,14 +1136,13 @@ describe('logs volume', () => {
     });
   }
 
-  function createExpectedFields(levelName: string, timestamps: number[], values: number[]) {
+  function createExpectedFields(levelName: string) {
     return [
-      { name: 'Time', values: { buffer: timestamps } },
-      {
+      expect.objectContaining({ name: 'Time' }),
+      expect.objectContaining({
         name: 'Value',
-        config: { displayNameFromDS: levelName },
-        values: { buffer: values },
-      },
+        config: expect.objectContaining({ displayNameFromDS: levelName }),
+      }),
     ];
   }
 
@@ -1154,8 +1157,8 @@ describe('logs volume', () => {
         return dataFrame.fields[1]!.labels!.level === 'error' ? LogLevel.error : LogLevel.unknown;
       },
       range: {
-        from: dateTimeParse('2021-06-17 00:00:00', { timeZone: 'utc' }),
-        to: dateTimeParse('2021-06-17 00:00:00', { timeZone: 'utc' }),
+        from: FROM,
+        to: TO,
         raw: { from: '0', to: '1' },
       },
       targets: request.targets,
@@ -1182,29 +1185,111 @@ describe('logs volume', () => {
     ]);
   }
 
+  function setupMultipleResultsStreaming() {
+    // level=unknown
+    const resultAFrame1 = createFrame({ app: 'app01' }, [100, 200, 300], [5, 5, 5]);
+    // level=error
+    const resultAFrame2 = createFrame({ app: 'app01', level: 'error' }, [100, 200, 300], [0, 1, 0]);
+
+    datasource = new MockObservableDataSourceApi('loki', [
+      {
+        state: LoadingState.Streaming,
+        data: [resultAFrame1],
+      },
+      {
+        state: LoadingState.Streaming,
+        data: [resultAFrame1, resultAFrame2],
+      },
+    ]);
+  }
+
   function setupErrorResponse() {
     datasource = new MockObservableDataSourceApi('loki', [], undefined, 'Error message');
   }
+
+  it('applies correct meta data', async () => {
+    setup(setupMultipleResults);
+
+    await expect(volumeProvider).toEmitValuesWith((received) => {
+      expect(received).toContainEqual({ state: LoadingState.Loading, error: undefined, data: [] });
+      expect(received).toContainEqual({
+        state: LoadingState.Done,
+        error: undefined,
+        data: [
+          expect.objectContaining({
+            fields: expect.anything(),
+            meta: {
+              custom: {
+                targets: [
+                  {
+                    target: 'volume query 1',
+                  },
+                  {
+                    target: 'volume query 2',
+                  },
+                ],
+                logsVolumeType: LogsVolumeType.FullRange,
+                absoluteRange: {
+                  from: FROM.valueOf(),
+                  to: TO.valueOf(),
+                },
+              },
+            },
+          }),
+          expect.anything(),
+        ],
+      });
+    });
+  });
+
+  it('applies correct meta datya when streaming', async () => {
+    setup(setupMultipleResultsStreaming);
+
+    await expect(volumeProvider).toEmitValuesWith((received) => {
+      expect(received).toContainEqual({ state: LoadingState.Loading, error: undefined, data: [] });
+      expect(received).toContainEqual({
+        state: LoadingState.Done,
+        error: undefined,
+        data: [
+          expect.objectContaining({
+            fields: expect.anything(),
+            meta: {
+              custom: {
+                targets: [
+                  {
+                    target: 'volume query 1',
+                  },
+                  {
+                    target: 'volume query 2',
+                  },
+                ],
+                logsVolumeType: LogsVolumeType.FullRange,
+                absoluteRange: {
+                  from: FROM.valueOf(),
+                  to: TO.valueOf(),
+                },
+              },
+            },
+          }),
+          expect.anything(),
+        ],
+      });
+    });
+  });
 
   it('aggregates data frames by level', async () => {
     setup(setupMultipleResults);
 
     await expect(volumeProvider).toEmitValuesWith((received) => {
-      expect(received).toMatchObject([
-        { state: LoadingState.Loading, error: undefined, data: [] },
-        {
-          state: LoadingState.Done,
-          error: undefined,
-          data: [
-            {
-              fields: createExpectedFields('unknown', [100, 200, 300], [6, 7, 8]),
-            },
-            {
-              fields: createExpectedFields('error', [100, 200, 300], [1, 2, 1]),
-            },
-          ],
-        },
-      ]);
+      expect(received).toContainEqual({
+        state: LoadingState.Done,
+        error: undefined,
+        data: expect.arrayContaining([
+          expect.objectContaining({
+            fields: expect.arrayContaining(createExpectedFields('error')),
+          }),
+        ]),
+      });
     });
   });
 

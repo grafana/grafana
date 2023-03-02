@@ -27,16 +27,14 @@ type loginForm struct {
 	Password string `json:"password" binding:"Required"`
 }
 
-func (f *Form) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
+func (c *Form) Name() string {
+	return authn.ClientForm
+}
+
+func (c *Form) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
 	form := loginForm{}
 	if err := web.Bind(r.HTTPRequest, &form); err != nil {
 		return nil, errBadForm.Errorf("failed to parse request: %w", err)
 	}
-	return f.client.AuthenticatePassword(ctx, r, form.Username, form.Password)
-}
-
-func (f *Form) Test(ctx context.Context, r *authn.Request) bool {
-	// FIXME: How should we detect this??
-	// Maybe create client test interface and not all clients has to implement this??
-	return true
+	return c.client.AuthenticatePassword(ctx, r, form.Username, form.Password)
 }

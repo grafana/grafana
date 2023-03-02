@@ -7,6 +7,8 @@ import (
 	"github.com/google/wire"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
+	"github.com/grafana/grafana/pkg/services/folder"
+
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -47,7 +49,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	dashboardimportservice "github.com/grafana/grafana/pkg/services/dashboardimport/service"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardstore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
@@ -59,7 +60,6 @@ import (
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
-	"github.com/grafana/grafana/pkg/services/export"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
@@ -67,6 +67,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/grpcserver/interceptors"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/hooks"
+	ldapapi "github.com/grafana/grafana/pkg/services/ldap/api"
+	ldapservice "github.com/grafana/grafana/pkg/services/ldap/service"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/live"
@@ -116,16 +118,17 @@ import (
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/shorturls/shorturlimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	starApi "github.com/grafana/grafana/pkg/services/star/api"
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
 	"github.com/grafana/grafana/pkg/services/stats/statsimpl"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/entity/httpentitystore"
 	"github.com/grafana/grafana/pkg/services/store/entity/sqlstash"
-	"github.com/grafana/grafana/pkg/services/store/k8saccess"
 	"github.com/grafana/grafana/pkg/services/store/kind"
 	"github.com/grafana/grafana/pkg/services/store/resolver"
 	"github.com/grafana/grafana/pkg/services/store/sanitizer"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
+	"github.com/grafana/grafana/pkg/services/supportbundles/bundleregistry"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
@@ -183,6 +186,8 @@ var wireBasicSet = wire.NewSet(
 	hooks.ProvideService,
 	kvstore.ProvideService,
 	localcache.ProvideService,
+	bundleregistry.ProvideService,
+	wire.Bind(new(supportbundles.Service), new(*bundleregistry.Service)),
 	dashboardthumbsimpl.ProvideService,
 	updatechecker.ProvideGrafanaService,
 	updatechecker.ProvidePluginsService,
@@ -212,6 +217,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(correlations.Service), new(*correlations.CorrelationsService)),
 	quotaimpl.ProvideService,
 	remotecache.ProvideService,
+	wire.Bind(new(remotecache.CacheStorage), new(*remotecache.RemoteCache)),
 	loginservice.ProvideService,
 	wire.Bind(new(login.Service), new(*loginservice.Implementation)),
 	authinfoservice.ProvideAuthInfoService,
@@ -225,10 +231,11 @@ var wireBasicSet = wire.NewSet(
 	searchV2.ProvideSearchHTTPService,
 	store.ProvideService,
 	store.ProvideSystemUsersService,
-	export.ProvideService,
 	live.ProvideService,
 	pushhttp.ProvideService,
 	contexthandler.ProvideService,
+	ldapservice.ProvideService,
+	wire.Bind(new(ldapservice.LDAP), new(*ldapservice.LDAPImpl)),
 	jwt.ProvideService,
 	wire.Bind(new(jwt.JWTService), new(*jwt.AuthService)),
 	ngstore.ProvideDBStore,
@@ -243,6 +250,7 @@ var wireBasicSet = wire.NewSet(
 	tracing.ProvideService,
 	metrics.ProvideService,
 	testdatasource.ProvideService,
+	ldapapi.ProvideService,
 	opentsdb.ProvideService,
 	social.ProvideService,
 	influxdb.ProvideService,
@@ -286,14 +294,14 @@ var wireBasicSet = wire.NewSet(
 	teamguardianManager.ProvideService,
 	featuremgmt.ProvideManagerService,
 	featuremgmt.ProvideToggles,
-	dashboardservice.ProvideDashboardService,
+	dashboardservice.ProvideDashboardService, // DashboardServiceImpl
 	dashboardstore.ProvideDashboardStore,
 	folderimpl.ProvideService,
-	wire.Bind(new(dashboards.DashboardService), new(*dashboardservice.DashboardServiceImpl)),
-	wire.Bind(new(dashboards.DashboardProvisioningService), new(*dashboardservice.DashboardServiceImpl)),
-	wire.Bind(new(dashboards.PluginService), new(*dashboardservice.DashboardServiceImpl)),
-	wire.Bind(new(dashboards.Store), new(*dashboardstore.DashboardStore)),
-	wire.Bind(new(dashboards.FolderStore), new(*dashboardstore.DashboardStore)),
+	folderimpl.ProvideDashboardFolderStore,
+	dashboardservice.ProvideSimpleDashboardService,
+	dashboardservice.ProvideDashboardProvisioningService,
+	dashboardservice.ProvideDashboardPluginService,
+	wire.Bind(new(folder.FolderStore), new(*folderimpl.DashboardFolderStoreImpl)),
 	dashboardimportservice.ProvideService,
 	wire.Bind(new(dashboardimport.Service), new(*dashboardimportservice.ImportDashboardService)),
 	plugindashboardsservice.ProvideService,
@@ -327,6 +335,7 @@ var wireBasicSet = wire.NewSet(
 	publicdashboardsStore.ProvideStore,
 	wire.Bind(new(publicdashboards.Store), new(*publicdashboardsStore.PublicDashboardStoreImpl)),
 	publicdashboardsApi.ProvideApi,
+	starApi.ProvideApi,
 	userimpl.ProvideService,
 	orgimpl.ProvideService,
 	statsimpl.ProvideService,
@@ -356,13 +365,12 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(tag.Service), new(*tagimpl.Service)),
 	authnimpl.ProvideService,
 	wire.Bind(new(authn.Service), new(*authnimpl.Service)),
-	k8saccess.ProvideK8SAccess,
 	supportbundlesimpl.ProvideService,
-	wire.Bind(new(supportbundles.Service), new(*supportbundlesimpl.Service)),
 )
 
 var wireSet = wire.NewSet(
 	wireBasicSet,
+	metrics.ProvideRegisterer,
 	sqlstore.ProvideService,
 	ngmetrics.ProvideService,
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationService)),
@@ -377,9 +385,9 @@ var wireSet = wire.NewSet(
 var wireTestSet = wire.NewSet(
 	wireBasicSet,
 	ProvideTestEnv,
+	metrics.ProvideRegistererForTest,
 	sqlstore.ProvideServiceForTests,
 	ngmetrics.ProvideServiceForTest,
-
 	notifications.MockNotificationService,
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationServiceMock)),
 	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationServiceMock)),

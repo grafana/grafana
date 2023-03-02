@@ -15,28 +15,32 @@
 package grafanaplugin
 
 import (
-	"github.com/grafana/grafana/packages/grafana-schema/src/common"
+	ui "github.com/grafana/grafana/packages/grafana-schema/src/common"
 )
 
 composableKinds: PanelCfg: {
+	maturity: "experimental"
 	lineage: {
 		seqs: [
 			{
 				schemas: [
 					{
 						PanelOptions: {
-							common.OptionsWithLegend
-							common.OptionsWithTooltip
-							common.OptionsWithTimezones
-							showValue:  common.VisibilityMode
-							rowHeight:  number
-							colWidth?:  number
-							alignValue: "center" | *"left" | "right"
+							ui.OptionsWithLegend
+							ui.OptionsWithTooltip
+							ui.OptionsWithTimezones
+
+							//Set the height of the rows
+							rowHeight: float32 & >=0 & <=1 | *0.9
+							//Show values on the columns
+							showValue: ui.VisibilityMode | *"auto"
+							//Controls the column width
+							colWidth?: float & <=1 | *0.9
 						} @cuetsy(kind="interface")
 						PanelFieldConfig: {
-							common.HideableFieldConfig
-							lineWidth?:   number | *1
-							fillOpacity?: number | *70
+							ui.HideableFieldConfig
+							lineWidth?:   uint32 & <=10 | *1
+							fillOpacity?: uint32 & <=100 | *70
 						} @cuetsy(kind="interface")
 					},
 				]

@@ -10,7 +10,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -18,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type simpleCrawler struct {
