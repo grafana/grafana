@@ -1,9 +1,3 @@
-// To change feature flags, edit:
-//  pkg/services/featuremgmt/registry.go
-// Then run tests in:
-//  pkg/services/featuremgmt/toggles_gen_test.go
-// twice to generate and validate the feature flag files
-
 package featuremgmt
 
 import (
@@ -13,10 +7,10 @@ import (
 
 var (
 	// Do not add new toggles to the legacy list.
-	// Instead, add it in your squad's file, i.e. pkg/services/featuremgmt/registry/*_squad.go.
+	// Instead, add it in your squad's file, i.e. pkg/services/featuremgmt/registry_{your_squad}.go.
 	//
 	// If your squad does not yet have a separate feature toggle file -
-	// create the file, and append the new list to the `toggles` variable defined above
+	// create the file, and append the new list to the `standardFeatureToggles` variable defined below
 	unknownSquadToggles = []FeatureToggle{
 		{
 			Name:        "alertingBigTransactions",
