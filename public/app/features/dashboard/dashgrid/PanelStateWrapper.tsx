@@ -303,6 +303,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         break;
       case LoadingState.Error:
         errorMessage = panelError(data);
+        break;
       case LoadingState.Done:
         // If we are doing a snapshot save data in panel model
         if (dashboard.snapshot) {
