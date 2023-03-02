@@ -154,12 +154,11 @@ func Test_treeFromSample(t *testing.T) {
 	}{
 		{
 			name: "empty lines",
-			s:    &googlev1.Sample{LocationId: []uint64{1, 2, 3}, Value: []int64{10}},
+			s:    &googlev1.Sample{LocationId: []uint64{1, 2}, Value: []int64{10}},
 			p: &googlev1.Profile{
 				Location: []*googlev1.Location{
 					{Id: 1, Line: []*googlev1.Line{}},
 					{Id: 2, Line: []*googlev1.Line{}},
-					{Id: 3, Line: []*googlev1.Line{}},
 				},
 				Function: []*googlev1.Function{},
 			},
@@ -167,6 +166,27 @@ func Test_treeFromSample(t *testing.T) {
 				Value: 10,
 				Function: &Function{
 					FunctionName: "root",
+				},
+				Nodes: []*ProfileTree{
+					{
+						Value: 10,
+						Function: &Function{
+							FunctionName: "<unknown>",
+						},
+						Level:      1,
+						locationID: 2,
+						Nodes: []*ProfileTree{
+							{
+								Value: 10,
+								Function: &Function{
+									FunctionName: "<unknown>",
+								},
+								Level:      2,
+								Self:       10,
+								locationID: 1,
+							},
+						},
+					},
 				},
 			},
 		},

@@ -151,13 +151,13 @@ func (f Function) String() string {
 	return fmt.Sprintf("%s:%s:%d", f.FileName, f.FunctionName, f.Line)
 }
 
-func (pt ProfileTree) String() string {
+func (pt *ProfileTree) String() string {
 	type branch struct {
 		nodes []*ProfileTree
 		treeprint.Tree
 	}
 	tree := treeprint.New()
-	for _, n := range []ProfileTree{pt} {
+	for _, n := range []*ProfileTree{pt} {
 		b := tree.AddBranch(fmt.Sprintf("%s: level %d self %d total %d", n.Function, n.Level, n.Self, n.Value))
 		remaining := append([]*branch{}, &branch{nodes: n.Nodes, Tree: b})
 		for len(remaining) > 0 {
@@ -179,111 +179,116 @@ func (pt ProfileTree) String() string {
 	return tree.String()
 }
 
-// merge merges the node into the tree.
-// it assumes src has only one leaf.
-func (pt *ProfileTree) merge(src *ProfileTree) {
-	// find the node path where n should be inserted.
-	var parent, found *ProfileTree
-	// visit depth first the dst tree following the src tree
-	remaining := []*ProfileTree{pt}
-	for len(remaining) > 0 {
-		n := remaining[0]
-		remaining = remaining[1:]
-		if src.locationID == n.locationID {
-			if len(src.Nodes) == 0 {
-				// we have found the leaf
-				found = n
-				break
-			}
-			// move src and last parent visited
-			parent = n
-			src = src.Nodes[0]
-			remaining = n.Nodes
-			continue
-		}
-	}
-	if found == nil {
-		if parent == nil {
-			// Nothing in common can't be merged.
-			return
-		}
-		src.Parent = parent
-		parent.Nodes = append(parent.Nodes, src)
-		for p := parent; p != nil; p = p.Parent {
-			p.Value = p.Value + src.Value
-		}
+// addSample adds a sample to the tree. As sample is just a single stack we just have to traverse the tree until it
+// starts to differ from the sample and add a new branch if needed. For example if we have a tree:
+// root --> func1 -> func2 -> func3
+//
+//	\-> func4
+//
+// And we add a sample:
+// func1 -> func2 -> func5
+// We will get:
+// root --> func1 --> func2 --> func3
+//
+//	\                   \-> func5
+//	 \-> func4
+//
+// While we add the current sample value to root -> func1 -> func2.
+func (pt *ProfileTree) addSample(profile *googlev1.Profile, sample *googlev1.Sample) {
+	if len(sample.LocationId) == 0 {
 		return
 	}
-	found.Value = found.Value + src.Self
-	for p := found.Parent; p != nil; p = p.Parent {
-		p.Value = p.Value + src.Self
+
+	locations := getReversedLocations(profile, sample)
+
+	// Extend root
+	pt.Value = pt.Value + sample.Value[0]
+	current := pt
+
+	for index, location := range locations {
+		if len(current.Nodes) > 0 {
+			var foundNode *ProfileTree
+			for _, node := range current.Nodes {
+				if node.locationID == location.Id {
+					foundNode = node
+				}
+			}
+
+			if foundNode != nil {
+				// We found node with the same location so just extend it
+				foundNode.Value = foundNode.Value + sample.Value[0]
+				current = foundNode
+				continue
+			}
+		}
+		// Either current has no children we can compare to or we have location that does not exist yet in the tree.
+
+		// Sample with only the locations we did not already attributed to the tree
+		subSample := &googlev1.Sample{
+			LocationId: sample.LocationId[index:],
+			Value:      sample.Value,
+			Label:      sample.Label,
+		}
+		newTree := treeFromSample(profile, subSample)
+		// Append the new subtree
+		current.Nodes = append(current.Nodes, newTree.Nodes[0])
+		newTree.Nodes[0].Parent = current
+		break
 	}
-	found.Self = found.Self + src.Self
+
+	// Adjust self of the current node as we may need to add value to its self if we just extended it and did not
+	// add children
+	var childrenVal int64 = 0
+	for _, node := range current.Nodes {
+		childrenVal += node.Value
+	}
+	current.Self = current.Value - childrenVal
 }
 
+// treeFromSample creates a linked tree form a single pprof sample. As a single sample is just a single stack the tree
+// will also be just a simple linked list at this point.
 func treeFromSample(profile *googlev1.Profile, sample *googlev1.Sample) *ProfileTree {
-	if len(sample.LocationId) == 0 {
-		return &ProfileTree{
-			Level: 0,
-			Value: sample.Value[0],
-			Function: &Function{
-				FunctionName: "root",
-			},
-		}
-	}
-
-	// The leaf is at locations[0].
-	locations := sample.LocationId
-
-	current := &ProfileTree{
-		Self:  sample.Value[0],
-		Level: 0,
-	}
-	for len(locations) > 0 {
-		current.locationID = locations[0]
-		current.Value = sample.Value[0]
-		current.Level = len(locations)
-
-		// Ids in pprof format are 1 based. So to get the index in array from the id we need to subtract one.
-		lines := profile.Location[locations[0]-1].Line
-		if len(lines) == 0 {
-			locations = locations[1:]
-			continue
-		}
-		// The leaf is at lines[len(lines)-1].
-		current.Function = &Function{
-			FunctionName: profile.StringTable[profile.Function[lines[len(lines)-1].FunctionId-1].Name],
-			FileName:     profile.StringTable[profile.Function[lines[len(lines)-1].FunctionId-1].Filename],
-			Line:         lines[len(lines)-1].Line,
-		}
-		lines = lines[:len(lines)-1]
-
-		// If there are more than one line, each line inlined into the next line.
-		for len(lines) > 0 {
-			current.Inlined = append(current.Inlined, &Function{
-				FunctionName: profile.StringTable[profile.Function[lines[0].FunctionId-1].Name],
-				FileName:     profile.StringTable[profile.Function[lines[0].FunctionId-1].Filename],
-				Line:         lines[0].Line,
-			})
-			lines = lines[1:]
-		}
-		parent := &ProfileTree{
-			Nodes: []*ProfileTree{current},
-		}
-		current.Parent = parent
-		current = parent
-		locations = locations[1:]
-	}
-	if current.Function == nil {
-		current.Function = &Function{
+	root := &ProfileTree{
+		Value:      sample.Value[0],
+		Level:      0,
+		locationID: 0,
+		Function: &Function{
 			FunctionName: "root",
-		}
-		current.Value = sample.Value[0]
-		current.locationID = 0
-		current.Self = 0
-		current.Level = 0
+		},
 	}
-	return current
+
+	if len(sample.LocationId) == 0 {
+		// Empty profile
+		return root
+	}
+
+	locations := getReversedLocations(profile, sample)
+	parent := root
+
+	// Loop over locations and add a node to the tree for each location
+	for index, location := range locations {
+		node := &ProfileTree{
+			Self:       0,
+			Value:      sample.Value[0],
+			Level:      index + 1,
+			locationID: location.Id,
+			Parent:     parent,
+		}
+
+		parent.Nodes = []*ProfileTree{node}
+		parent = node
+
+		functions := getFunctions(profile, location)
+		// Last in the list is the main function
+		node.Function = functions[len(functions)-1]
+		// If there are more, other are inlined functions
+		if len(functions) > 1 {
+			node.Inlined = functions[:len(functions)-1]
+		}
+	}
+	// Last parent is a leaf and as it does not have any children it's value is also self
+	parent.Self = sample.Value[0]
+	return root
 }
 
 func profileAsTree(profile *googlev1.Profile) *ProfileTree {
@@ -295,9 +300,43 @@ func profileAsTree(profile *googlev1.Profile) *ProfileTree {
 	}
 	n := treeFromSample(profile, profile.Sample[0])
 	for _, sample := range profile.Sample[1:] {
-		n.merge(treeFromSample(profile, sample))
+		n.addSample(profile, sample)
 	}
 	return n
+}
+
+// getLocations returns all locations from a sample. Location is a one level in the stack trace so single row in
+// flamegraph. Returned locations are reversed (so root is 0, leaf is len - 1).
+func getReversedLocations(profile *googlev1.Profile, sample *googlev1.Sample) []*googlev1.Location {
+	locations := make([]*googlev1.Location, len(sample.LocationId))
+	for index, locationId := range sample.LocationId {
+		locations[len(sample.LocationId)-1-index] = profile.Location[locationId-1]
+	}
+	return locations
+}
+
+// getFunctions returns all functions for a location. First one is the main function and the rest are inlined functions.
+// If there is no info it just returns single placeholder function.
+func getFunctions(profile *googlev1.Profile, location *googlev1.Location) []*Function {
+	if len(location.Line) == 0 {
+		return []*Function{{
+			FunctionName: "<unknown>",
+			FileName:     "",
+			Line:         0,
+		}}
+	}
+	functions := make([]*Function, len(location.Line))
+
+	for index, line := range location.Line {
+		function := profile.Function[line.FunctionId-1]
+
+		functions[index] = &Function{
+			FunctionName: profile.StringTable[function.Name],
+			FileName:     profile.StringTable[function.Filename],
+			Line:         line.Line,
+		}
+	}
+	return functions
 }
 
 type CustomMeta struct {
