@@ -100,13 +100,16 @@ func verifyAndGenerateFile(t *testing.T, fpath string, gen string) {
 	}
 }
 
-func generateTypeScript() string {
-	buf := `// NOTE: This file was auto generated.  DO NOT EDIT DIRECTLY!
+const headerNotice = `// NOTE: This file was auto generated.  DO NOT EDIT DIRECTLY!
 // To change feature toggles, edit:
 //  pkg/services/featuremgmt/registry_{squad}.go
 // Then run tests in:
 //  pkg/services/featuremgmt/toggles_gen_test.go
 
+`
+
+func generateTypeScript() string {
+	buf := headerNotice + `
 /**
  * Describes available feature toggles in Grafana. These can be configured via
  * conf/custom.ini to enable features under development or not yet available in
@@ -167,13 +170,8 @@ func generateRegistry(t *testing.T) string {
 
 	var buff bytes.Buffer
 
-	buff.WriteString(`// NOTE: This file was auto generated.  DO NOT EDIT DIRECTLY!
-// To change feature flags, edit:
-//  pkg/services/featuremgmt/go
-// Then run tests in:
-//  pkg/services/featuremgmt/toggles_gen_test.go
-
-package featuremgmt
+	buff.WriteString(headerNotice)
+	buff.WriteString(`package featuremgmt
 
 const (`)
 
