@@ -6,11 +6,11 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Icon, IconName, useStyles2 } from '@grafana/ui';
 
-interface MataTextProps extends HTMLAttributes<HTMLDivElement> {
+interface MetaTextProps extends HTMLAttributes<HTMLDivElement> {
   icon?: IconName;
 }
 
-const MetaText: FC<MataTextProps> = ({ children, icon, ...rest }) => {
+const MetaText: FC<MetaTextProps> = ({ children, icon, ...rest }) => {
   const styles = useStyles2(getStyles);
   const interactive = typeof rest.onClick === 'function';
 
