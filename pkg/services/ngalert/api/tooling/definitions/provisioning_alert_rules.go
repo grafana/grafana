@@ -123,9 +123,9 @@ type ProvisionedAlertRule struct {
 	// readonly: true
 	Updated time.Time `json:"updated,omitempty"`
 	// required: true
-	NoDataState models.NoDataState `json:"noDataState"`
+	NoDataState NoDataState `json:"noDataState"`
 	// required: true
-	ExecErrState models.ExecutionErrorState `json:"execErrState"`
+	ExecErrState ExecutionErrorState `json:"execErrState"`
 	// required: true
 	For model.Duration `json:"for"`
 	// example: {"runbook_url": "https://supercoolrunbook.com/page/13"}

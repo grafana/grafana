@@ -59,7 +59,6 @@ export interface FeatureToggles {
   topnav?: boolean;
   grpcServer?: boolean;
   entityStore?: boolean;
-  flameGraph?: boolean;
   cloudWatchCrossAccountQuerying?: boolean;
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
@@ -82,4 +81,5 @@ export interface FeatureToggles {
   logsContextDatasourceUi?: boolean;
   lokiQuerySplitting?: boolean;
   individualCookiePreferences?: boolean;
+  drawerDataSourcePicker?: boolean;
 }

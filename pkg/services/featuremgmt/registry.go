@@ -245,11 +245,6 @@ var (
 			RequiresDevMode: true,
 		},
 		{
-			Name:        "flameGraph",
-			Description: "Show the flame graph",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:        "cloudWatchCrossAccountQuerying",
 			Description: "Enables cross-account querying in CloudWatch datasources",
 			State:       FeatureStateStable,
@@ -371,6 +366,12 @@ var (
 			Name:        "individualCookiePreferences",
 			Description: "Support overriding cookie preferences per user",
 			State:       FeatureStateAlpha,
+		},
+		{
+			Name:         "drawerDataSourcePicker",
+			Description:  "Changes the user experience for data source selection to a drawer.",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
 		},
 	}
 )
