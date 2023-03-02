@@ -173,7 +173,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
     const tooltipMode =
       options.fullHighlight && options.stacking !== StackingMode.None ? TooltipDisplayMode.Multi : options.tooltip.mode;
 
-    const tooltipSort = options.tooltip.mode === TooltipDisplayMode.Single ? SortOrder.None : options.tooltip.sort;
+    const tooltipSort = options.tooltip.mode === TooltipDisplayMode.Multi ? options.tooltip.sort : SortOrder.None;
 
     return (
       <>
