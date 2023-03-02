@@ -42,24 +42,24 @@ If you are using Docker, use an environment variable to enable public dashboards
 
 ## Make a dashboard public
 
-1. Click on the sharing icon to the right of the dashboard title.
-1. Click on the **Public dashboard** tab.
+1. Click the sharing icon to the right of the dashboard title.
+1. Click the **Public dashboard** tab.
 1. Acknowledge the implications of making the dashboard public by checking all the checkboxes.
 1. Click **Generate public URL** to make the dashboard public and make your link live.
 1. Copy the public dashboard link if you'd like to share it. You can always come back later for it.
 
 ## Pause access
 
-1. Click on the sharing icon to the right of the dashboard title.
-1. Click on the **Public dashboard** tab.
+1. Click the sharing icon to the right of the dashboard title.
+1. Click the **Public dashboard** tab.
 1. Enable the **Pause sharing dashboard** toggle.
 
 The dashboard is no longer accessible, even with the link, until you make it shareable again.
 
 ## Revoke access
 
-1. Click on the sharing icon to the right of the dashboard title.
-1. Click on the **Public dashboard** tab.
+1. Click the sharing icon to the right of the dashboard title.
+1. Click the **Public dashboard** tab.
 1. Click **Revoke public URL** to delete the public dashboard.
 
 The link no longer works. You must create a new public URL as in [Make a dashboard public](#make-a-dashboard-public).
