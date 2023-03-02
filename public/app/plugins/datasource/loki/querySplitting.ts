@@ -8,7 +8,7 @@ import { LokiDatasource } from './datasource';
 import { getRangeChunks as getLogsRangeChunks } from './logsTimeSplit';
 import { getRangeChunks as getMetricRangeChunks } from './metricTimeSplit';
 import { combineResponses, isLogsQuery } from './queryUtils';
-import { LokiQuery } from './types';
+import { LokiQuery, LokiQueryType } from './types';
 
 /**
  * Purposely exposing it to support doing tests without needing to update the repo.
@@ -174,9 +174,10 @@ function getNextRequestPointers(requests: LokiGroupedRequest, requestGroup: numb
 
 export function runPartitionedQueries(datasource: LokiDatasource, request: DataQueryRequest<LokiQuery>) {
   const queries = request.targets.filter((query) => !query.hide);
-  const [logQueries, metricQueries] = partition(queries, (query) => isLogsQuery(query.expr));
+  const [instantQueries, normalQueries] = partition(queries, (query) => query.queryType === LokiQueryType.Instant);
+  const [logQueries, metricQueries] = partition(normalQueries, (query) => isLogsQuery(query.expr));
 
-  const requests = [];
+  const requests: LokiGroupedRequest = [];
   if (logQueries.length) {
     requests.push({
       request: { ...request, targets: logQueries },
@@ -187,6 +188,12 @@ export function runPartitionedQueries(datasource: LokiDatasource, request: DataQ
     requests.push({
       request: { ...request, targets: metricQueries },
       partition: partitionTimeRange(false, request.range, request.intervalMs, metricQueries[0].resolution ?? 1),
+    });
+  }
+  if (instantQueries.length) {
+    requests.push({
+      request: { ...request, targets: instantQueries },
+      partition: [request.range],
     });
   }
   return runGroupedQueries(datasource, requests);
