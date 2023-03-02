@@ -27,7 +27,7 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 	var sqlStore *sqlstore.SQLStore
 	var currentUser user.User
 	var savedFolder, childDash *dashboards.Dashboard
-	var dashboardStore *DashboardStore
+	var dashboardStore dashboards.Store
 
 	setup := func(t *testing.T) {
 		sqlStore = db.InitTestDB(t)

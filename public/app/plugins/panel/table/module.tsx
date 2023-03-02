@@ -7,13 +7,13 @@ import {
   standardEditorsRegistry,
   identityOverrideProcessor,
 } from '@grafana/data';
-import { TableFieldOptions, TableCellOptions, TableCellDisplayMode } from '@grafana/schema';
+import { TableFieldOptions, TableCellOptions, TableCellDisplayMode, defaultTableFieldOptions } from '@grafana/schema';
 
 import { PaginationEditor } from './PaginationEditor';
 import { TableCellOptionEditor } from './TableCellOptionEditor';
 import { TablePanel } from './TablePanel';
 import { tableMigrationHandler, tablePanelChangedHandler } from './migrations';
-import { PanelOptions, defaultPanelOptions, defaultPanelFieldConfig } from './models.gen';
+import { PanelOptions, defaultPanelOptions } from './panelcfg.gen';
 import { TableSuggestionsSupplier } from './suggestions';
 
 const footerCategory = 'Table footer';
@@ -35,7 +35,7 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
             max: 500,
           },
           shouldApply: () => true,
-          defaultValue: defaultPanelFieldConfig.minWidth,
+          defaultValue: defaultTableFieldOptions.minWidth,
         })
         .addNumberInput({
           path: 'width',
@@ -46,7 +46,7 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
             max: 300,
           },
           shouldApply: () => true,
-          defaultValue: defaultPanelFieldConfig.width,
+          defaultValue: defaultTableFieldOptions.width,
         })
         .addRadio({
           path: 'align',
@@ -59,7 +59,7 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
               { label: 'right', value: 'right' },
             ],
           },
-          defaultValue: defaultPanelFieldConfig.align,
+          defaultValue: defaultTableFieldOptions.align,
         })
         .addCustomEditor<void, TableCellOptions>({
           id: 'cellOptions',
@@ -67,7 +67,7 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
           name: 'Cell Type',
           editor: TableCellOptionEditor,
           override: TableCellOptionEditor,
-          defaultValue: defaultPanelFieldConfig.cellOptions,
+          defaultValue: defaultTableFieldOptions.cellOptions,
           process: identityOverrideProcessor,
           category: cellCategory,
           shouldApply: () => true,
@@ -91,7 +91,7 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
           path: 'filterable',
           name: 'Column filter',
           description: 'Enables/disables field filters in table',
-          defaultValue: defaultPanelFieldConfig.filterable,
+          defaultValue: defaultTableFieldOptions.filterable,
         })
         .addBooleanSwitch({
           path: 'hidden',

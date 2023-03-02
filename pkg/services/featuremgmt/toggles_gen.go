@@ -63,10 +63,6 @@ const (
 	// Use experimental loki api for WebSocket streaming (early prototype)
 	FlagLokiDataframeApi = "lokiDataframeApi"
 
-	// FlagSwaggerUi
-	// Serves swagger UI
-	FlagSwaggerUi = "swaggerUi"
-
 	// FlagFeatureHighlights
 	// Highlight Grafana Enterprise features
 	FlagFeatureHighlights = "featureHighlights"
@@ -94,10 +90,6 @@ const (
 	// FlagDashboardsFromStorage
 	// Load dashboards from the generic storage interface
 	FlagDashboardsFromStorage = "dashboardsFromStorage"
-
-	// FlagExport
-	// Export grafana instance (to git, etc)
-	FlagExport = "export"
 
 	// FlagExploreMixedDatasource
 	// Enable mixed datasource in Explore

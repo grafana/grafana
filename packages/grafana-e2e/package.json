@@ -51,7 +51,7 @@
     "@types/chrome-remote-interface": "0.31.4",
     "@types/lodash": "4.14.187",
     "@types/node": "18.14.0",
-    "@types/uuid": "8.3.4",
+    "@types/uuid": "9.0.1",
     "esbuild": "0.16.17",
     "rollup": "2.79.1",
     "rollup-plugin-dts": "^5.0.0",

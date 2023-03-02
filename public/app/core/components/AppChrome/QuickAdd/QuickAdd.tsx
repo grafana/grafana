@@ -19,13 +19,13 @@ export const QuickAdd = ({}: Props) => {
   const navBarTree = useSelector((state) => state.navBarTree);
   const breakpoint = theme.breakpoints.values.sm;
 
-  const [isSmallScreen, setIsSmallScreen] = useState(window.matchMedia(`(max-width: ${breakpoint}px)`).matches);
+  const [isSmallScreen, setIsSmallScreen] = useState(!window.matchMedia(`(min-width: ${breakpoint}px)`).matches);
   const createActions = useMemo(() => findCreateActions(navBarTree), [navBarTree]);
 
   useMediaQueryChange({
     breakpoint,
     onChange: (e) => {
-      setIsSmallScreen(e.matches);
+      setIsSmallScreen(!e.matches);
     },
   });
 
