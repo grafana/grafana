@@ -8,7 +8,7 @@ title: Preferences kind
 
 ## Preferences
 
-#### Maturity: merged
+#### Maturity: [merged](../../../maturity/#merged)
 #### Version: 0.0
 
 The user or team frontend preferences

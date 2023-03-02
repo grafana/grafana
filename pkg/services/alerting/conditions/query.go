@@ -146,16 +146,17 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange l
 		OrgID: context.Rule.OrgID,
 	}
 
-	if err := context.GetDataSource(context.Ctx, getDsInfo); err != nil {
+	dataSource, err := context.GetDataSource(context.Ctx, getDsInfo)
+	if err != nil {
 		return nil, fmt.Errorf("could not find datasource: %w", err)
 	}
 
-	err := context.RequestValidator.Validate(getDsInfo.Result.URL, nil)
+	err = context.RequestValidator.Validate(dataSource.URL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("access denied: %w", err)
 	}
 
-	req, err := c.getRequestForAlertRule(getDsInfo.Result, timeRange, context.IsDebug)
+	req, err := c.getRequestForAlertRule(dataSource, timeRange, context.IsDebug)
 	if err != nil {
 		return nil, fmt.Errorf("interval calculation failed: %w", err)
 	}
@@ -198,7 +199,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange l
 		})
 	}
 
-	resp, err := requestHandler.HandleRequest(context.Ctx, getDsInfo.Result, req)
+	resp, err := requestHandler.HandleRequest(context.Ctx, dataSource, req)
 	if err != nil {
 		return nil, toCustomError(err)
 	}

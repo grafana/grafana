@@ -8,7 +8,7 @@ title: PieChartPanelCfg kind
 
 ## PieChartPanelCfg
 
-#### Maturity: experimental
+#### Maturity: [experimental](../../../maturity/#experimental)
 #### Version: 0.0
 
 
@@ -143,76 +143,5 @@ TODO docs
 |-------------|--------|----------|--------------------------|
 | `titleSize` | number | No       | Explicit title text size |
 | `valueSize` | number | No       | Explicit value text size |
-
-### ReduceDataOptions
-
-TODO docs
-
-| Property | Type     | Required | Description                                                   |
-|----------|----------|----------|---------------------------------------------------------------|
-| `calcs`  | string[] | **Yes**  | When !values, pick one value for the whole field              |
-| `fields` | string   | No       | Which fields to show.  By default this is only numeric fields |
-| `limit`  | number   | No       | if showing all values limit                                   |
-| `values` | boolean  | No       | If true show each row value                                   |
-
-### VizTextDisplayOptions
-
-TODO docs
-
-| Property    | Type   | Required | Description              |
-|-------------|--------|----------|--------------------------|
-| `titleSize` | number | No       | Explicit title text size |
-| `valueSize` | number | No       | Explicit value text size |
-
-### VizTextDisplayOptions
-
-TODO docs
-
-| Property    | Type   | Required | Description              |
-|-------------|--------|----------|--------------------------|
-| `titleSize` | number | No       | Explicit title text size |
-| `valueSize` | number | No       | Explicit value text size |
-
-### VizTooltipOptions
-
-TODO docs
-
-| Property | Type   | Required | Description                                                   |
-|----------|--------|----------|---------------------------------------------------------------|
-| `mode`   | string | **Yes**  | TODO docs<br/>Possible values are: `single`, `multi`, `none`. |
-| `sort`   | string | **Yes**  | TODO docs<br/>Possible values are: `asc`, `desc`, `none`.     |
-
-### PieChartLegendOptions
-
-It extends [VizLegendOptions](#vizlegendoptions).
-
-| Property      | Type     | Required | Description                                                                                                                                                                                          |
-|---------------|----------|----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `calcs`       | string[] | **Yes**  | *(Inherited from [VizLegendOptions](#vizlegendoptions))*                                                                                                                                             |
-| `displayMode` | string   | **Yes**  | *(Inherited from [VizLegendOptions](#vizlegendoptions))*<br/>TODO docs<br/>Note: "hidden" needs to remain as an option for plugins compatibility<br/>Possible values are: `list`, `table`, `hidden`. |
-| `placement`   | string   | **Yes**  | *(Inherited from [VizLegendOptions](#vizlegendoptions))*<br/>TODO docs<br/>Possible values are: `bottom`, `right`.                                                                                   |
-| `showLegend`  | boolean  | **Yes**  | *(Inherited from [VizLegendOptions](#vizlegendoptions))*                                                                                                                                             |
-| `values`      | string[] | **Yes**  |                                                                                                                                                                                                      |
-| `asTable`     | boolean  | No       | *(Inherited from [VizLegendOptions](#vizlegendoptions))*                                                                                                                                             |
-| `isVisible`   | boolean  | No       | *(Inherited from [VizLegendOptions](#vizlegendoptions))*                                                                                                                                             |
-| `sortBy`      | string   | No       | *(Inherited from [VizLegendOptions](#vizlegendoptions))*                                                                                                                                             |
-| `sortDesc`    | boolean  | No       | *(Inherited from [VizLegendOptions](#vizlegendoptions))*                                                                                                                                             |
-| `width`       | number   | No       | *(Inherited from [VizLegendOptions](#vizlegendoptions))*                                                                                                                                             |
-
-### VizLegendOptions
-
-TODO docs
-
-| Property      | Type     | Required | Description                                                                                                                             |
-|---------------|----------|----------|-----------------------------------------------------------------------------------------------------------------------------------------|
-| `calcs`       | string[] | **Yes**  |                                                                                                                                         |
-| `displayMode` | string   | **Yes**  | TODO docs<br/>Note: "hidden" needs to remain as an option for plugins compatibility<br/>Possible values are: `list`, `table`, `hidden`. |
-| `placement`   | string   | **Yes**  | TODO docs<br/>Possible values are: `bottom`, `right`.                                                                                   |
-| `showLegend`  | boolean  | **Yes**  |                                                                                                                                         |
-| `asTable`     | boolean  | No       |                                                                                                                                         |
-| `isVisible`   | boolean  | No       |                                                                                                                                         |
-| `sortBy`      | string   | No       |                                                                                                                                         |
-| `sortDesc`    | boolean  | No       |                                                                                                                                         |
-| `width`       | number   | No       |                                                                                                                                         |
 
 

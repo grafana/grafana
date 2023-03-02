@@ -463,7 +463,7 @@
     },
     "enterpriseFeatures": {
       "type": "object",
-      "description": "Grafana Enerprise specific features.",
+      "description": "Grafana Enterprise specific features.",
       "additionalProperties": true,
       "properties": {
         "healthDiagnosticsErrors": {

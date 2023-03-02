@@ -15,7 +15,6 @@ import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
 import { NavBarMenuItem } from './NavBarMenuItem';
 import { NavBarToggle } from './NavBarToggle';
 import { NavFeatureHighlight } from './NavFeatureHighlight';
-import { getNavTitle } from './navBarItem-translations';
 import { isMatchOrChildMatch } from './utils';
 
 const MENU_WIDTH = '350px';
@@ -256,7 +255,7 @@ export function NavItem({
                   }}
                   styleOverrides={styles.item}
                   target={childLink.target}
-                  text={getNavTitle(childLink.id) ?? childLink.text}
+                  text={childLink.text}
                   url={childLink.url}
                   isMobile={true}
                 />
@@ -266,12 +265,11 @@ export function NavItem({
         </ul>
       </CollapsibleNavItem>
     );
-  } else if (link.emptyMessageId) {
-    const emptyMessageTranslated = getNavTitle(link.emptyMessageId);
+  } else if (link.emptyMessage) {
     return (
       <CollapsibleNavItem onClose={onClose} link={link} isActive={isMatchOrChildMatch(link, activeItem)}>
         <ul className={styles.children}>
-          <div className={styles.emptyMessage}>{emptyMessageTranslated}</div>
+          <div className={styles.emptyMessage}>{link.emptyMessage}</div>
         </ul>
       </CollapsibleNavItem>
     );
@@ -297,7 +295,7 @@ export function NavItem({
                 <NavBarItemIcon link={link} />
               </FeatureHighlightWrapper>
             </div>
-            <span className={styles.linkText}>{getNavTitle(link.id) ?? link.text}</span>
+            <span className={styles.linkText}>{link.text}</span>
           </div>
         </NavBarItemWithoutMenu>
       </li>
@@ -398,7 +396,7 @@ function CollapsibleNavItem({
           contentClassName={styles.collapseContent}
           label={
             <div className={cx(styles.labelWrapper, { [styles.primary]: isActive })}>
-              <span className={styles.linkText}>{getNavTitle(link.id) ?? link.text}</span>
+              <span className={styles.linkText}>{link.text}</span>
             </div>
           }
         >

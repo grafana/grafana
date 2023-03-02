@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -601,21 +602,6 @@ func setupAccessControlGuardianTest(t *testing.T, uid string, permissions []acce
 		OrgID:     1,
 	})
 	require.NoError(t, err)
-	ac := accesscontrolmock.New().WithPermissions(permissions)
-	// TODO replace with actual folder store implementation after resolving import cycles
-	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(dashStore, foldertest.NewFakeFolderStore(t), foldertest.NewFakeService()))
-	license := licensingtest.NewFakeLicensing()
-	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
-	teamSvc := teamimpl.ProvideService(store, store.Cfg)
-	userSvc, err := userimpl.ProvideService(store, nil, store.Cfg, nil, nil, quotatest.New(false, nil))
-	require.NoError(t, err)
-
-	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
-		setting.NewCfg(), routing.NewRouteRegister(), store, ac, license, &dashboards.FakeDashboardStore{}, foldertest.NewFakeService(), ac, teamSvc, userSvc)
-	require.NoError(t, err)
-	dashboardPermissions, err := ossaccesscontrol.ProvideDashboardPermissions(
-		setting.NewCfg(), routing.NewRouteRegister(), store, ac, license, &dashboards.FakeDashboardStore{}, foldertest.NewFakeService(), ac, teamSvc, userSvc)
-	require.NoError(t, err)
 	if dashboardSvc == nil {
 		fakeDashboardService := dashboards.NewFakeDashboardService(t)
 		qResult := &dashboards.Dashboard{}
@@ -630,6 +616,22 @@ func setupAccessControlGuardianTest(t *testing.T, uid string, permissions []acce
 		dashboardSvc = fakeDashboardService
 	}
 
+	ac := accesscontrolmock.New().WithPermissions(permissions)
+	// TODO replace with actual folder store implementation after resolving import cycles
+	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(dashboardSvc, foldertest.NewFakeService()))
+	license := licensingtest.NewFakeLicensing()
+	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
+	teamSvc := teamimpl.ProvideService(store, store.Cfg)
+	userSvc, err := userimpl.ProvideService(store, nil, store.Cfg, nil, nil, quotatest.New(false, nil), supportbundlestest.NewFakeBundleService())
+	require.NoError(t, err)
+
+	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
+		setting.NewCfg(), routing.NewRouteRegister(), store, ac, license, &dashboards.FakeDashboardStore{}, foldertest.NewFakeService(), ac, teamSvc, userSvc)
+	require.NoError(t, err)
+	dashboardPermissions, err := ossaccesscontrol.ProvideDashboardPermissions(
+		setting.NewCfg(), routing.NewRouteRegister(), store, ac, license, &dashboards.FakeDashboardStore{}, foldertest.NewFakeService(), ac, teamSvc, userSvc)
+	require.NoError(t, err)
+
 	g, err := NewAccessControlDashboardGuardian(context.Background(), dash.ID, &user.SignedInUser{OrgID: 1}, store, ac, folderPermissions, dashboardPermissions, dashboardSvc)
 	require.NoError(t, err)
 	g.dashboard = dash
@@ -638,7 +640,7 @@ func setupAccessControlGuardianTest(t *testing.T, uid string, permissions []acce
 
 func testDashSvc(t *testing.T) dashboards.DashboardService {
 	dashSvc := dashboards.NewFakeDashboardService(t)
-	var d *dashboards.Dashboard
+	d := &dashboards.Dashboard{}
 	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
 		d := dashboards.NewDashboard("mocked")
 		d.ID = 1

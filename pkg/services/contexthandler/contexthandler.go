@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	loginpkg "github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
+	"github.com/grafana/grafana/pkg/services/anonymous"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
@@ -53,48 +54,50 @@ func ProvideService(cfg *setting.Cfg, tokenService auth.UserTokenService, jwtSer
 	tracer tracing.Tracer, authProxy *authproxy.AuthProxy, loginService login.Service,
 	apiKeyService apikey.Service, authenticator loginpkg.Authenticator, userService user.Service,
 	orgService org.Service, oauthTokenService oauthtoken.OAuthTokenService, features *featuremgmt.FeatureManager,
-	authnService authn.Service,
+	authnService authn.Service, anonSessionService anonymous.Service,
 ) *ContextHandler {
 	return &ContextHandler{
-		Cfg:               cfg,
-		AuthTokenService:  tokenService,
-		JWTAuthService:    jwtService,
-		RemoteCache:       remoteCache,
-		RenderService:     renderService,
-		SQLStore:          sqlStore,
-		tracer:            tracer,
-		authProxy:         authProxy,
-		authenticator:     authenticator,
-		loginService:      loginService,
-		apiKeyService:     apiKeyService,
-		userService:       userService,
-		orgService:        orgService,
-		oauthTokenService: oauthTokenService,
-		features:          features,
-		authnService:      authnService,
-		singleflight:      new(singleflight.Group),
+		Cfg:                cfg,
+		AuthTokenService:   tokenService,
+		JWTAuthService:     jwtService,
+		RemoteCache:        remoteCache,
+		RenderService:      renderService,
+		SQLStore:           sqlStore,
+		tracer:             tracer,
+		authProxy:          authProxy,
+		authenticator:      authenticator,
+		loginService:       loginService,
+		apiKeyService:      apiKeyService,
+		userService:        userService,
+		orgService:         orgService,
+		oauthTokenService:  oauthTokenService,
+		features:           features,
+		authnService:       authnService,
+		anonSessionService: anonSessionService,
+		singleflight:       new(singleflight.Group),
 	}
 }
 
 // ContextHandler is a middleware.
 type ContextHandler struct {
-	Cfg               *setting.Cfg
-	AuthTokenService  auth.UserTokenService
-	JWTAuthService    auth.JWTVerifierService
-	RemoteCache       *remotecache.RemoteCache
-	RenderService     rendering.Service
-	SQLStore          db.DB
-	tracer            tracing.Tracer
-	authProxy         *authproxy.AuthProxy
-	authenticator     loginpkg.Authenticator
-	loginService      login.Service
-	apiKeyService     apikey.Service
-	userService       user.Service
-	orgService        org.Service
-	oauthTokenService oauthtoken.OAuthTokenService
-	features          *featuremgmt.FeatureManager
-	authnService      authn.Service
-	singleflight      *singleflight.Group
+	Cfg                *setting.Cfg
+	AuthTokenService   auth.UserTokenService
+	JWTAuthService     auth.JWTVerifierService
+	RemoteCache        *remotecache.RemoteCache
+	RenderService      rendering.Service
+	SQLStore           db.DB
+	tracer             tracing.Tracer
+	authProxy          *authproxy.AuthProxy
+	authenticator      loginpkg.Authenticator
+	loginService       login.Service
+	apiKeyService      apikey.Service
+	userService        user.Service
+	orgService         org.Service
+	oauthTokenService  oauthtoken.OAuthTokenService
+	features           *featuremgmt.FeatureManager
+	authnService       authn.Service
+	singleflight       *singleflight.Group
+	anonSessionService anonymous.Service
 	// GetTime returns the current time.
 	// Stubbable by tests.
 	GetTime func() time.Time
@@ -147,9 +150,9 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 				// Hack: set all errors on LookupTokenErr, so we can check it in auth middlewares
 				reqContext.LookupTokenErr = err
 			} else {
-				reqContext.IsSignedIn = true
 				reqContext.UserToken = identity.SessionToken
 				reqContext.SignedInUser = identity.SignedInUser()
+				reqContext.IsSignedIn = !identity.IsAnonymous
 				reqContext.AllowAnonymous = identity.IsAnonymous
 				reqContext.IsRenderCall = identity.AuthModule == login.RenderModule
 			}
@@ -214,11 +217,6 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 			}
 		}
 
-		// this can be used by proxies to identify certain users
-		if h.features.IsEnabled(featuremgmt.FlagReturnUnameHeader) {
-			w.Header().Add("grafana-uname", reqContext.Login)
-		}
-
 		next.ServeHTTP(w, r)
 	})
 }
@@ -238,6 +236,17 @@ func (h *ContextHandler) initContextWithAnonymousUser(reqContext *contextmodel.R
 		reqContext.Logger.Error("Anonymous access organization error.", "org_name", h.Cfg.AnonymousOrgName, "error", err)
 		return false
 	}
+
+	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				reqContext.Logger.Warn("tag anon session panic", "err", err)
+			}
+		}()
+		if err := h.anonSessionService.TagSession(context.Background(), reqContext.Req); err != nil {
+			reqContext.Logger.Warn("Failed to tag anonymous session", "error", err)
+		}
+	}()
 
 	reqContext.IsSignedIn = false
 	reqContext.AllowAnonymous = true

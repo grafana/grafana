@@ -45,7 +45,8 @@ When using Grafana as its own cloud storage service screenshots are copied from 
 
 Having installed either the image rendering plugin, or set up Grafana to use a remote rendering service, set `capture` in `[unified_alerting.screenshots]` to `true`:
 
-    # Enable screenshots in notifications. This option requires the Grafana Image Renderer plugin.
+    # Enable screenshots in notifications. You must have either installed the Grafana image rendering
+    # plugin, or set up Grafana to use a remote rendering service.
     # For more information on configuration options, refer to [rendering].
     capture = false
 
@@ -76,26 +77,25 @@ We recommended that `max_concurrent_screenshots` is less than or equal to `concu
 
 Grafana supports a wide range of contact points with varied support for images in notifications. The table below shows the list of all contact points supported in Grafana and their support for uploading images at the time of sending the notification and images uploaded to cloud storage, including when Grafana is acting as its own cloud storage service.
 
-| Name                    | Upload image at time of notification | Cloud storage |
-| ----------------------- | ------------------------------------ | ------------- |
-| DingDing                | No                                   | No            |
-| Discord                 | Yes                                  | Yes           |
-| Email                   | Yes                                  | Yes           |
-| Google Hangouts Chat    | No                                   | Yes           |
-| Kafka                   | No                                   | No            |
-| Line                    | No                                   | No            |
-| Microsoft Teams         | No                                   | Yes           |
-| Opsgenie                | No                                   | Yes           |
-| Pagerduty               | No                                   | Yes           |
-| Prometheus Alertmanager | No                                   | No            |
-| Pushover                | Yes                                  | No            |
-| Sensu Go                | No                                   | No            |
-| Slack                   | No (will be available in 9.4)        | Yes           |
-| Telegram                | Yes                                  | No            |
-| Threema                 | No                                   | No            |
-| VictorOps               | No                                   | No            |
-| Webhook                 | No                                   | Yes           |
-| Cisco Webex Teams       | No                                   | Yes           |
+| Name                    | Upload images from disk     | Include images from URL   |
+| ----------------------- | --------------------------- | ------------------------- |
+| DingDing                | No                          | No                        |
+| Discord                 | Yes                         | Yes                       |
+| Email                   | Yes                         | Yes                       |
+| Google Hangouts Chat    | No                          | Yes                       |
+| Kafka                   | No                          | No                        |
+| Line                    | No                          | No                        |
+| Microsoft Teams         | No                          | Yes                       |
+| Opsgenie                | No                          | Yes                       |
+| Pagerduty               | No                          | Yes                       |
+| Prometheus Alertmanager | No                          | No                        |
+| Pushover                | Yes                         | No                        |
+| Sensu Go                | No                          | No                        |
+| Slack                   | Yes (when using Bot tokens) | Yes (when using webhooks) |
+| Telegram                | Yes                         | No                        |
+| Threema                 | No                          | No                        |
+| VictorOps               | No                          | No                        |
+| Webhook                 | No                          | Yes                       |
 
 ## Limitations
 

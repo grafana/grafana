@@ -98,6 +98,13 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return &backend.QueryDataResponse{}, err
 	}
 
+	defer func() {
+		err := res.Body.Close()
+		if err != nil {
+			logger.Warn("failed to close response body", "error", err)
+		}
+	}()
+
 	result, err := s.parseResponse(logger, res)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err

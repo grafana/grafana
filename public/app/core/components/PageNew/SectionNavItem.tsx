@@ -6,8 +6,6 @@ import { selectors } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
 import { useStyles2, Icon } from '@grafana/ui';
 
-import { getNavTitle } from '../NavBar/navBarItem-translations';
-
 export interface Props {
   item: NavModelItem;
   isSectionRoot?: boolean;
@@ -55,7 +53,7 @@ export function SectionNavItem({ item, isSectionRoot = false }: Props) {
         aria-selected={item.active}
       >
         {isSectionRoot && icon}
-        {getNavTitle(item.id) ?? item.text}
+        {item.text}
         {item.tabSuffix && <item.tabSuffix className={styles.suffix} />}
       </a>
       {children?.map((child, index) => (
@@ -104,7 +102,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin-left: ${theme.spacing(1)};
     `,
     sectionImg: css({
-      height: 18,
+      width: 18,
     }),
     isSectionRoot: css({
       fontSize: theme.typography.h4.fontSize,

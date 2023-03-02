@@ -30,7 +30,7 @@ jest.mock('app/core/store', () => {
       return undefined;
     },
     set() {},
-    getObject(key: string, defaultValue: any) {
+    getObject(key: string, defaultValue: unknown) {
       return defaultValue;
     },
   };
@@ -200,7 +200,7 @@ describe('PromQueryEditorSelector', () => {
 });
 
 function renderWithMode(mode: QueryEditorMode) {
-  return renderWithProps({ editorMode: mode } as any);
+  return renderWithProps({ editorMode: mode });
 }
 
 function renderWithDatasourceDefaultEditorMode(mode: QueryEditorMode) {

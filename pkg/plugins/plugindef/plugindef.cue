@@ -1,8 +1,8 @@
 package plugindef
 
 import (
-	"strings"
 	"regexp"
+	"strings"
 
 	"github.com/grafana/thema"
 )
@@ -101,7 +101,7 @@ seqs: [
 					component?: string
 
 					// The minimum role a user must have to see this page in the navigation menu.
-					role?:      "Admin" | "Editor" | "Viewer"
+					role?: "Admin" | "Editor" | "Viewer"
 
 					// RBAC action the user must have to access the route
 					action?: string
@@ -175,9 +175,9 @@ seqs: [
 				// each of which has an action and an optional scope.
 				// Example: the role 'Schedules Reader' bundles permissions to view all schedules of the plugin.
 				#Role: {
-					name: string,
-					name: =~"^([A-Z][0-9A-Za-z ]+)$"
-					description: string,
+					name:        string
+					name:        =~"^([A-Z][0-9A-Za-z ]+)$"
+					description: string
 					permissions: [...#Permission]
 				}
 

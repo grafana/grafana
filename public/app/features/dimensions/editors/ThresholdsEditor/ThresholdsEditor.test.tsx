@@ -2,7 +2,7 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { createTheme, ThresholdsMode } from '@grafana/data';
+import { createTheme, Threshold, ThresholdsMode } from '@grafana/data';
 import { mockThemeContext } from '@grafana/ui';
 
 import { ThresholdsEditor, Props } from './ThresholdsEditor';
@@ -151,9 +151,9 @@ describe('ThresholdsEditor', () => {
     const thresholds = {
       mode: ThresholdsMode.Absolute,
       steps: [
-        { value: -Infinity, color: '#7EB26D', key: 1 },
-        { value: 50, color: '#EAB839', key: 2 },
-        { value: 75, color: '#6ED0E0', key: 3 },
+        { value: -Infinity, color: '#7EB26D' },
+        { value: 50, color: '#EAB839' },
+        { value: 75, color: '#6ED0E0' },
       ],
     };
     setup({ thresholds });
@@ -173,12 +173,12 @@ describe('ThresholdsEditor', () => {
       thresholds: {
         mode: ThresholdsMode.Absolute,
         steps: [
-          { value: -Infinity, color: '#7EB26D', key: 1 },
-          { value: 75, color: '#6ED0E0', key: 2 },
-          { color: '#7EB26D', key: 3 } as any,
-          { value: 78, color: '#EAB839', key: 4 },
-          { value: null, color: '#7EB26D', key: 5 } as any,
-          { value: null, color: '#7EB26D', key: 6 } as any,
+          { value: -Infinity, color: '#7EB26D' },
+          { value: 75, color: '#6ED0E0' },
+          { color: '#7EB26D' } as unknown as Threshold,
+          { value: 78, color: '#EAB839' },
+          { value: null, color: '#7EB26D' } as unknown as Threshold,
+          { value: null, color: '#7EB26D' } as unknown as Threshold,
         ],
       },
     });

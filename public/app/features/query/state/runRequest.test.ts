@@ -115,7 +115,7 @@ function runRequestScenario(desc: string, fn: (ctx: ScenarioCtx) => void) {
 function runRequestScenarioThatThrows(desc: string, fn: (ctx: ScenarioCtx) => void) {
   describe(desc, () => {
     const ctx = new ScenarioCtx();
-    let consoleSpy: jest.SpyInstance<any>;
+    let consoleSpy: jest.SpyInstance;
 
     beforeEach(() => {
       consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});

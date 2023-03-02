@@ -7,7 +7,7 @@ import { getGazetteer } from './gazetteer';
 let backendResults: any = { hello: 'world' };
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({
     get: jest.fn().mockResolvedValue(backendResults),
   }),

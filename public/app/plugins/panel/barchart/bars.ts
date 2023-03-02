@@ -48,10 +48,10 @@ export interface BarsOptions {
   showValue: VisibilityMode;
   stacking: StackingMode;
   rawValue: (seriesIdx: number, valueIdx: number) => number | null;
-  getColor?: (seriesIdx: number, valueIdx: number, value: any) => string | null;
+  getColor?: (seriesIdx: number, valueIdx: number, value: unknown) => string | null;
   fillOpacity?: number;
-  formatValue: (seriesIdx: number, value: any) => string;
-  formatShortValue: (seriesIdx: number, value: any) => string;
+  formatValue: (seriesIdx: number, value: unknown) => string;
+  formatShortValue: (seriesIdx: number, value: unknown) => string;
   timeZone?: TimeZone;
   text?: VizTextDisplayOptions;
   onHover?: (seriesIdx: number, valueIdx: number) => void;
@@ -286,7 +286,14 @@ export function getConfig(opts: BarsOptions, theme: GrafanaTheme2) {
     : {};
 
   let barsBuilder = uPlot.paths.bars!({
-    radius: barRadius,
+    radius: pctStacked
+      ? 0
+      : !isStacked
+      ? barRadius
+      : (u: uPlot, seriesIdx: number) => {
+          let isTopmostSeries = seriesIdx === u.data.length - 1;
+          return isTopmostSeries ? [barRadius, 0] : [0, 0];
+        },
     disp: {
       x0: {
         unit: 2,

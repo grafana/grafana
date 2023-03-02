@@ -1,8 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import { config } from '@grafana/runtime';
-
 import { createLokiDatasource } from '../../mocks';
 import { LokiQuery } from '../../types';
 
@@ -26,10 +24,6 @@ const createDefaultProps = () => {
 
   return props;
 };
-
-beforeAll(() => {
-  config.featureToggles.lokiMonacoEditor = true;
-});
 
 describe('LokiQueryCodeEditor', () => {
   it('shows explain section when showExplain is true', async () => {

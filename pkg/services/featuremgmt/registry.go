@@ -10,11 +10,6 @@ var (
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{
 		{
-			Name:        "returnUnameHeader",
-			Description: "Return user login as header for authenticated requests",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:        "alertingBigTransactions",
 			Description: "Use big transactions for alerting database writes",
 			State:       FeatureStateAlpha,
@@ -67,12 +62,6 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
-			Name:            "showFeatureFlagsInUI",
-			Description:     "Show feature flags in the settings UI",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-		},
-		{
 			Name:        "publicDashboards",
 			Description: "Enables public access to dashboards",
 			State:       FeatureStateAlpha,
@@ -93,18 +82,6 @@ var (
 			Name:        "lokiDataframeApi",
 			Description: "Use experimental loki api for WebSocket streaming (early prototype)",
 			State:       FeatureStateAlpha,
-		},
-		{
-			Name:         "lokiMonacoEditor",
-			Description:  "Access to Monaco query editor for Loki",
-			State:        FeatureStateStable,
-			Expression:   "true",
-			FrontendOnly: true,
-		},
-		{
-			Name:        "swaggerUi",
-			Description: "Serves swagger UI",
-			State:       FeatureStateBeta,
 		},
 		{
 			Name:        "featureHighlights",
@@ -138,33 +115,10 @@ var (
 			RequiresDevMode: true,
 		},
 		{
-			Name:            "k8sDashboards",
-			Description:     "Save dashboards via k8s",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-		},
-		{
-			Name:            "apiserver",
-			Description:     "Add a k8s API server proxy",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-		},
-		{
-			Name:        "supportBundles",
-			Description: "Support bundles for troubleshooting",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:            "dashboardsFromStorage",
 			Description:     "Load dashboards from the generic storage interface",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true, // Also a gate on automatic git storage (for now)
-		},
-		{
-			Name:            "export",
-			Description:     "Export grafana instance (to git, etc)",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
 		},
 		{
 			Name:         "exploreMixedDatasource",
@@ -175,6 +129,12 @@ var (
 		{
 			Name:         "tracing",
 			Description:  "Adds trace ID to error notifications",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:         "newTraceView",
+			Description:  "Shows the new trace view design",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 		},
@@ -274,11 +234,6 @@ var (
 			RequiresDevMode: true,
 		},
 		{
-			Name:        "flameGraph",
-			Description: "Show the flame graph",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:        "cloudWatchCrossAccountQuerying",
 			Description: "Enables cross-account querying in CloudWatch datasources",
 			State:       FeatureStateStable,
@@ -295,11 +250,6 @@ var (
 			Description:  "Enable async query data support for Athena",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
-		},
-		{
-			Name:        "increaseInMemDatabaseQueryCache",
-			Description: "Enable more in memory caching for database queries",
-			State:       FeatureStateAlpha,
 		},
 		{
 			Name:         "newPanelChromeUI",
@@ -322,11 +272,6 @@ var (
 			Name:        "mysqlAnsiQuotes",
 			Description: "Use double quotes to escape keyword in a MySQL query",
 			State:       FeatureStateAlpha,
-		},
-		{
-			Name:        "datasourceLogger",
-			Description: "Logs all datasource requests",
-			State:       FeatureStateBeta,
 		},
 		{
 			Name:        "accessControlOnCall",
@@ -365,11 +310,6 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:        "sessionRemoteCache",
-			Description: "Enable using remote cache for user sessions",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:        "disablePrometheusExemplarSampling",
 			Description: "Disable Prometheus examplar sampling",
 			State:       FeatureStateStable,
@@ -392,12 +332,6 @@ var (
 			RequiresRestart: false,
 		},
 		{
-			Name:         "topNavCommandPalette",
-			Description:  "Launch the Command Palette from the top navigation search box",
-			State:        FeatureStateBeta,
-			FrontendOnly: true,
-		},
-		{
 
 			Name:         "logsSampleInExplore",
 			Description:  "Enables access to the logs sample feature in Explore",
@@ -408,6 +342,23 @@ var (
 		{
 			Name:         "logsContextDatasourceUi",
 			Description:  "Allow datasource to provide custom UI for context view",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:         "lokiQuerySplitting",
+			Description:  "Split large interval queries into subqueries with smaller time intervals",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:        "individualCookiePreferences",
+			Description: "Support overriding cookie preferences per user",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:         "drawerDataSourcePicker",
+			Description:  "Changes the user experience for data source selection to a drawer.",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 		},

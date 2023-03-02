@@ -5,13 +5,12 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
 	"strings"
 	"time"
-
-	"github.com/pkg/errors"
 )
 
 const timeout = 4 * time.Second
@@ -100,7 +99,7 @@ func (c *client) checkTokens(ctx context.Context, keyHashes []string) ([]Token, 
 
 	jsonValue, err := json.Marshal(values)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to make http request")
+		return nil, fmt.Errorf("%s: %w", "failed to make http request", err)
 	}
 
 	// Build URL
@@ -109,7 +108,7 @@ func (c *client) checkTokens(ctx context.Context, keyHashes []string) ([]Token, 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
 		url, bytes.NewReader(jsonValue))
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to make http request")
+		return nil, fmt.Errorf("%s: %w", "failed to make http request", err)
 	}
 
 	// Set headers
@@ -120,7 +119,7 @@ func (c *client) checkTokens(ctx context.Context, keyHashes []string) ([]Token, 
 	// make http POST request to check for leaked tokens.
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to do http request")
+		return nil, fmt.Errorf("%s: %w", "failed to do http request", err)
 	}
 
 	defer func() { _ = resp.Body.Close() }()
@@ -132,7 +131,7 @@ func (c *client) checkTokens(ctx context.Context, keyHashes []string) ([]Token, 
 	// decode response body
 	var tokens []Token
 	if err := json.NewDecoder(resp.Body).Decode(&tokens); err != nil {
-		return nil, errors.Wrap(err, "failed to decode response body")
+		return nil, fmt.Errorf("%s: %w", "failed to decode response body", err)
 	}
 
 	return tokens, nil

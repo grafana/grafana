@@ -8,6 +8,7 @@ import (
 	"io"
 	"path"
 	"path/filepath"
+	"reflect"
 	"sort"
 	"strings"
 	"text/template"
@@ -59,7 +60,9 @@ func (j docsJenny) Generate(kind kindsys.Kind) (*codejen.File, error) {
 			Schemas json.RawMessage
 		}
 	}
-	err = json.Unmarshal(b, &obj)
+	dec := json.NewDecoder(bytes.NewReader(b))
+	dec.UseNumber()
+	err = dec.Decode(&obj)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal schema json: %v", err)
 	}
@@ -71,9 +74,9 @@ func (j docsJenny) Generate(kind kindsys.Kind) (*codejen.File, error) {
 	data := templateData{
 		KindName:        kindProps.Name,
 		KindVersion:     kind.Lineage().Latest().Version().String(),
-		KindMaturity:    string(kindProps.Maturity),
+		KindMaturity:    fmt.Sprintf("[%s](../../../maturity/#%[1]s)", kindProps.Maturity),
 		KindDescription: kindProps.Description,
-		Markdown:        "{{ .Markdown 1 }}",
+		Markdown:        "{{ .Markdown }}",
 	}
 
 	tmpl, err := makeTemplate(data, "docs.tmpl")
@@ -108,8 +111,18 @@ type templateData struct {
 
 // -------------------- JSON to Markdown conversion --------------------
 // Copied from https://github.com/marcusolsson/json-schema-docs and slightly changed to fit the DocsJenny
+type constraints struct {
+	Pattern          string      `json:"pattern"`
+	Maximum          json.Number `json:"maximum"`
+	ExclusiveMinimum bool        `json:"exclusiveMinimum"`
+	Minimum          json.Number `json:"minimum"`
+	ExclusiveMaximum bool        `json:"exclusiveMaximum"`
+	MinLength        uint        `json:"minLength"`
+	MaxLength        uint        `json:"maxLength"`
+}
 
 type schema struct {
+	constraints
 	ID                   string             `json:"$id,omitempty"`
 	Ref                  string             `json:"$ref,omitempty"`
 	Schema               string             `json:"$schema,omitempty"`
@@ -322,42 +335,87 @@ func resolveInSchemaReference(ref string, root *simplejson.Json) (*schema, error
 	return &sch, nil
 }
 
+type mdSection struct {
+	title       string
+	extends     string
+	description string
+	rows        [][]string
+}
+
+func (md mdSection) write(w io.Writer) {
+	if md.title != "" {
+		fmt.Fprintf(w, "### %s\n", strings.Title(md.title))
+		fmt.Fprintln(w)
+	}
+
+	if md.description != "" {
+		fmt.Fprintln(w, md.description)
+		fmt.Fprintln(w)
+	}
+
+	if md.extends != "" {
+		fmt.Fprintln(w, md.extends)
+		fmt.Fprintln(w)
+	}
+
+	table := tablewriter.NewWriter(w)
+	table.SetHeader([]string{"Property", "Type", "Required", "Description"})
+	table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
+	table.SetCenterSeparator("|")
+	table.SetAutoFormatHeaders(false)
+	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
+	table.SetAutoWrapText(false)
+	table.AppendBulk(md.rows)
+	table.Render()
+	fmt.Fprintln(w)
+}
+
 // Markdown returns the Markdown representation of the schema.
 //
 // The level argument can be used to offset the heading levels. This can be
 // useful if you want to add the schema under a subheading.
-func (s schema) Markdown(level int) string {
-	if level < 1 {
-		level = 1
-	}
-
+func (s *schema) Markdown() string {
 	buf := new(bytes.Buffer)
 
-	if s.Title != "" && s.AdditionalProperties == nil {
-		fmt.Fprintf(buf, "### %s\n", strings.Title(s.Title))
-		fmt.Fprintln(buf)
-	}
-
-	if s.Description != "" {
-		fmt.Fprintln(buf, s.Description)
-		fmt.Fprintln(buf)
-	}
-
-	if len(s.extends) > 0 {
-		fmt.Fprintln(buf, makeExtends(s.extends))
-		fmt.Fprintln(buf)
-	}
-
-	printProperties(buf, &s)
-
-	// Add padding.
-	fmt.Fprintln(buf)
-
-	for _, obj := range findDefinitions(&s) {
-		fmt.Fprint(buf, obj.Markdown(level+1))
+	for _, v := range s.sections() {
+		v.write(buf)
 	}
 
 	return buf.String()
+}
+
+func (s *schema) sections() []mdSection {
+	md := mdSection{}
+
+	if s.AdditionalProperties == nil {
+		md.title = s.Title
+	}
+	md.description = s.Description
+
+	if len(s.extends) > 0 {
+		md.extends = makeExtends(s.extends)
+	}
+	md.rows = makeRows(s)
+
+	sections := []mdSection{md}
+	for _, sch := range findDefinitions(s) {
+		for _, ss := range sch.sections() {
+			if !contains(sections, ss) {
+				sections = append(sections, ss)
+			}
+		}
+	}
+
+	return sections
+}
+
+func contains(sl []mdSection, elem mdSection) bool {
+	for _, s := range sl {
+		if reflect.DeepEqual(s, elem) {
+			return true
+		}
+	}
+	return false
 }
 
 func makeExtends(from []string) string {
@@ -429,20 +487,19 @@ func findDefinitions(s *schema) []*schema {
 	return objs
 }
 
-func printProperties(w io.Writer, s *schema) {
-	table := tablewriter.NewWriter(w)
-	table.SetHeader([]string{"Property", "Type", "Required", "Description"})
-	table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
-	table.SetCenterSeparator("|")
-	table.SetAutoFormatHeaders(false)
-	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-	table.SetAutoWrapText(false)
-
+func makeRows(s *schema) [][]string {
 	// Buffer all property rows so that we can sort them before printing them.
 	rows := make([][]string, 0, len(s.Properties))
 
 	for key, p := range s.Properties {
-		typeStr := propTypeStr(key, p)
+		alias := propTypeAlias(p)
+
+		var typeStr string
+		if alias != "" {
+			typeStr = alias
+		} else {
+			typeStr = propTypeStr(key, p)
+		}
 
 		// Emphasize required properties.
 		var required string
@@ -453,7 +510,6 @@ func printProperties(w io.Writer, s *schema) {
 		}
 
 		var desc string
-
 		if p.inheritedFrom != "" {
 			desc = fmt.Sprintf("*(Inherited from [%s](#%s))*", p.inheritedFrom, strings.ToLower(p.inheritedFrom))
 		}
@@ -474,6 +530,10 @@ func printProperties(w io.Writer, s *schema) {
 			desc += fmt.Sprintf(" Default: `%v`.", p.Default)
 		}
 
+		// Render a constraint only if it's not a type alias https://cuelang.org/docs/references/spec/#predeclared-identifiers
+		if alias == "" {
+			desc += constraintDescr(p)
+		}
 		rows = append(rows, []string{fmt.Sprintf("`%s`", key), typeStr, required, formatForTable(desc)})
 	}
 
@@ -487,9 +547,71 @@ func printProperties(w io.Writer, s *schema) {
 		}
 		return rows[i][0] < rows[j][0]
 	})
+	return rows
+}
 
-	table.AppendBulk(rows)
-	table.Render()
+func propTypeAlias(prop *schema) string {
+	if prop.Minimum == "" || prop.Maximum == "" {
+		return ""
+	}
+
+	min := prop.Minimum
+	max := prop.Maximum
+
+	switch {
+	case min == "0" && max == "255":
+		return "uint8"
+	case min == "0" && max == "65535":
+		return "uint16"
+	case min == "0" && max == "4294967295":
+		return "uint32"
+	case min == "0" && max == "18446744073709551615":
+		return "uint64"
+	case min == "-128" && max == "127":
+		return "int8"
+	case min == "-32768" && max == "32767":
+		return "int16"
+	case min == "-2147483648" && max == "2147483647":
+		return "int32"
+	case min == "-9223372036854775808" && max == "9223372036854775807":
+		return "int64"
+	default:
+		return ""
+	}
+}
+
+func constraintDescr(prop *schema) string {
+	if prop.Minimum != "" && prop.Maximum != "" {
+		var left, right string
+		if prop.ExclusiveMinimum {
+			left = ">" + prop.Minimum.String()
+		} else {
+			left = ">=" + prop.Minimum.String()
+		}
+
+		if prop.ExclusiveMaximum {
+			right = "<" + prop.Maximum.String()
+		} else {
+			right = "<=" + prop.Maximum.String()
+		}
+		return fmt.Sprintf("\nConstraint: `%s & %s`.", left, right)
+	}
+
+	if prop.MinLength > 0 {
+		left := fmt.Sprintf(">=%v", prop.MinLength)
+		right := ""
+
+		if prop.MaxLength > 0 {
+			right = fmt.Sprintf(" && <=%v", prop.MaxLength)
+		}
+		return fmt.Sprintf("\nConstraint: `length %s`.", left+right)
+	}
+
+	if prop.Pattern != "" {
+		return fmt.Sprintf("\nConstraint: must match `%s`.", prop.Pattern)
+	}
+
+	return ""
 }
 
 func propTypeStr(propName string, propValue *schema) string {

@@ -5,10 +5,11 @@ package dashboards
 import (
 	context "context"
 
+	folder "github.com/grafana/grafana/pkg/services/folder"
 	mock "github.com/stretchr/testify/mock"
 
 	models "github.com/grafana/grafana/pkg/services/alerting/models"
-	folder "github.com/grafana/grafana/pkg/services/folder"
+
 	quota "github.com/grafana/grafana/pkg/services/quota"
 )
 

@@ -45,10 +45,15 @@ export type {
   GrafanaConfig,
   BuildInfo,
   LicenseInfo,
-  PreloadPlugin,
 } from './config';
 export type { FeatureToggles } from './featureToggles.gen';
 export * from './alerts';
 export * from './slider';
 export * from './accesscontrol';
 export * from './icon';
+export {
+  type PluginExtension,
+  type PluginExtensionLink,
+  isPluginExtensionLink,
+  PluginExtensionTypes,
+} from './pluginExtensions';

@@ -59,7 +59,11 @@ export class RenderInfoViewer extends Component<Props> {
 
   render() {
     const { data, options } = this.props;
-    const showCounters = options.counters ?? ({} as UpdateConfig);
+    const showCounters = options.counters ?? {
+      render: false,
+      dataChanged: false,
+      schemaChanged: false,
+    };
     this.counters.render++;
     const now = Date.now();
     const elapsed = now - this.lastRender;

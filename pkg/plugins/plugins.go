@@ -3,6 +3,7 @@ package plugins
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -11,15 +12,16 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/infra/log"
+
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
+	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var ErrFileNotExist = fmt.Errorf("file does not exist")
+var ErrFileNotExist = errors.New("file does not exist")
 
 type Plugin struct {
 	JSONData
@@ -53,8 +55,9 @@ type Plugin struct {
 type PluginDTO struct {
 	JSONData
 
-	logger    log.Logger
-	pluginDir string
+	logger            log.Logger
+	pluginDir         string
+	supportsStreaming bool
 
 	Class Class
 
@@ -72,13 +75,10 @@ type PluginDTO struct {
 	// SystemJS fields
 	Module  string
 	BaseURL string
-
-	// temporary
-	backend.StreamHandler
 }
 
 func (p PluginDTO) SupportsStreaming() bool {
-	return p.StreamHandler != nil
+	return p.supportsStreaming
 }
 
 func (p PluginDTO) IsApp() bool {
@@ -87,14 +87,6 @@ func (p PluginDTO) IsApp() bool {
 
 func (p PluginDTO) IsCorePlugin() bool {
 	return p.Class == Core
-}
-
-func (p PluginDTO) IsExternalPlugin() bool {
-	return p.Class == External
-}
-
-func (p PluginDTO) IsSecretsManager() bool {
-	return p.JSONData.Type == SecretsManager
 }
 
 func (p PluginDTO) File(name string) (fs.File, error) {
@@ -372,23 +364,21 @@ type PluginClient interface {
 }
 
 func (p *Plugin) ToDTO() PluginDTO {
-	c, _ := p.Client()
-
 	return PluginDTO{
-		logger:          p.Logger(),
-		pluginDir:       p.PluginDir,
-		JSONData:        p.JSONData,
-		Class:           p.Class,
-		IncludedInAppID: p.IncludedInAppID,
-		DefaultNavURL:   p.DefaultNavURL,
-		Pinned:          p.Pinned,
-		Signature:       p.Signature,
-		SignatureType:   p.SignatureType,
-		SignatureOrg:    p.SignatureOrg,
-		SignatureError:  p.SignatureError,
-		Module:          p.Module,
-		BaseURL:         p.BaseURL,
-		StreamHandler:   c,
+		logger:            p.Logger(),
+		pluginDir:         p.PluginDir,
+		JSONData:          p.JSONData,
+		Class:             p.Class,
+		IncludedInAppID:   p.IncludedInAppID,
+		DefaultNavURL:     p.DefaultNavURL,
+		Pinned:            p.Pinned,
+		Signature:         p.Signature,
+		SignatureType:     p.SignatureType,
+		SignatureOrg:      p.SignatureOrg,
+		SignatureError:    p.SignatureError,
+		Module:            p.Module,
+		BaseURL:           p.BaseURL,
+		supportsStreaming: p.client != nil && p.client.(backend.StreamHandler) != nil,
 	}
 }
 
@@ -401,23 +391,15 @@ func (p *Plugin) StaticRoute() *StaticRoute {
 }
 
 func (p *Plugin) IsRenderer() bool {
-	return p.Type == "renderer"
+	return p.Type == Renderer
 }
 
 func (p *Plugin) IsSecretsManager() bool {
-	return p.Type == "secretsmanager"
-}
-
-func (p *Plugin) IsDataSource() bool {
-	return p.Type == "datasource"
-}
-
-func (p *Plugin) IsPanel() bool {
-	return p.Type == "panel"
+	return p.Type == SecretsManager
 }
 
 func (p *Plugin) IsApp() bool {
-	return p.Type == "app"
+	return p.Type == App
 }
 
 func (p *Plugin) IsCorePlugin() bool {

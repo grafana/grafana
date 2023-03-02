@@ -11,17 +11,12 @@ package dataquery
 
 // Defines values for TempoQueryType.
 const (
-	TempoQueryTypeClear TempoQueryType = "clear"
-
+	TempoQueryTypeClear        TempoQueryType = "clear"
 	TempoQueryTypeNativeSearch TempoQueryType = "nativeSearch"
-
-	TempoQueryTypeSearch TempoQueryType = "search"
-
-	TempoQueryTypeServiceMap TempoQueryType = "serviceMap"
-
-	TempoQueryTypeTraceql TempoQueryType = "traceql"
-
-	TempoQueryTypeUpload TempoQueryType = "upload"
+	TempoQueryTypeSearch       TempoQueryType = "search"
+	TempoQueryTypeServiceMap   TempoQueryType = "serviceMap"
+	TempoQueryTypeTraceql      TempoQueryType = "traceql"
+	TempoQueryTypeUpload       TempoQueryType = "upload"
 )
 
 // TempoDataQuery defines model for TempoDataQuery.
@@ -32,7 +27,7 @@ type TempoDataQuery struct {
 	// TODO this shouldn't be unknown but DataSourceRef | null
 	Datasource *interface{} `json:"datasource,omitempty"`
 
-	// true if query is disabled (ie should not be returned to the dashboard)
+	// Hide true if query is disabled (ie should not be returned to the dashboard)
 	Hide *bool `json:"hide,omitempty"`
 
 	// Unique, guid like, string used in explore mode
@@ -70,5 +65,5 @@ type TempoDataQuery struct {
 	SpanName *string `json:"spanName,omitempty"`
 }
 
-// search = Loki search, nativeSearch = Tempo search for backwards compatibility
+// TempoQueryType search = Loki search, nativeSearch = Tempo search for backwards compatibility
 type TempoQueryType string

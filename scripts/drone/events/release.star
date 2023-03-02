@@ -475,7 +475,6 @@ def enterprise2_pipelines(prefix = "", ver_mode = ver_mode, trigger = release_tr
             package_step(
                 edition = "enterprise2",
                 ver_mode = ver_mode,
-                variants = ["linux-amd64"],
             ),
             upload_cdn,
             copy_packages_for_docker_step(edition = "enterprise2"),
@@ -654,7 +653,7 @@ def artifacts_page_pipeline():
                 compile_build_cmd("enterprise"),
                 artifacts_page_step(),
             ],
-            edition = "all",
+            edition = "enterprise",
             environment = {"EDITION": "enterprise"},
         ),
     ]

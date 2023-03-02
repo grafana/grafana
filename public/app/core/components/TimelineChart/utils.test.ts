@@ -1,4 +1,13 @@
-import { ArrayVector, createTheme, FieldType, ThresholdsMode, TimeRange, toDataFrame, dateTime } from '@grafana/data';
+import {
+  ArrayVector,
+  createTheme,
+  FieldType,
+  ThresholdsMode,
+  TimeRange,
+  toDataFrame,
+  dateTime,
+  DataFrame,
+} from '@grafana/data';
 import { LegendDisplayMode, VizLegendOptions } from '@grafana/schema';
 
 import {
@@ -183,7 +192,7 @@ describe('getThresholdItems', () => {
 
 describe('prepareTimelineLegendItems', () => {
   it('should return legend items without crashing when single (base) threshold', () => {
-    const frame: any = [
+    const frames = [
       {
         refId: 'A',
         fields: [
@@ -238,10 +247,10 @@ describe('prepareTimelineLegendItems', () => {
           },
         ],
       },
-    ];
+    ] as unknown as DataFrame[];
 
     const result = prepareTimelineLegendItems(
-      frame,
+      frames,
       { displayMode: LegendDisplayMode.List } as VizLegendOptions,
       theme
     );
