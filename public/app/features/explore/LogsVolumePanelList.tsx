@@ -108,7 +108,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       top: 5px;
     `,
     oldInfoText: css`
-      font-size: ${theme.typography.size.sm};
+      font-size: ${theme.typography.bodySmall.fontSize};
       color: ${theme.colors.text.secondary};
     `,
   };
