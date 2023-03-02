@@ -13,7 +13,8 @@ import (
 
 // List of available targets.
 const (
-	All string = "all"
+	BackgroundServices string = "background"
+	All                string = "all"
 )
 
 type Engine interface {
@@ -62,6 +63,12 @@ func (m *service) Init(_ context.Context) error {
 
 	// module registration
 	m.RegisterModule(All, nil)
+
+	// module dependencies
+	m.dependencyMap = map[string][]string{
+		BackgroundServices: {},
+		All:                {BackgroundServices},
+	}
 
 	for mod, targets := range m.dependencyMap {
 		if err := m.ModuleManager.AddDependency(mod, targets...); err != nil {

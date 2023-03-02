@@ -55,7 +55,7 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 
 	go func() {
 		// When the server runs, it will also build and initialize the service graph
-		if err := env.Server.Run(); err != nil {
+		if err := env.Server.Run(ctx); err != nil {
 			t.Log("Server exited uncleanly", "error", err)
 		}
 	}()
