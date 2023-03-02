@@ -8,7 +8,6 @@ import {
   ReducerID,
   standardEditorsRegistry,
   FieldDisplay,
-  FieldType,
   FieldConfigEditorBuilder,
 } from '@grafana/data';
 import { SingleStatBaseOptions, VizOrientation } from '@grafana/schema';
@@ -117,29 +116,26 @@ export function formatDisplayValuesWithCustomUnits(
   fieldValues: FieldDisplay[],
   config: PanelFieldConfig
 ): FieldDisplay[] {
-  // Set default values as empty strings if custom units are undefined, otherwise JS will concat "undefined" as a string value
-  const { prefix = '', suffix = '' } = config;
+  const { prefix, suffix } = config;
 
-  // If there are no custom units, do nothing and return the `fieldValues`
   if (!prefix && !suffix) {
     return fieldValues;
   }
 
+  function safeAppend(prepend = '', append = '') {
+    return `${prepend}${append}`;
+  }
+
   return fieldValues.map((fieldValue) => {
-    const { sourceField, display } = fieldValue;
-    // `FieldType.number` is the only type on which unit formatting is enforced
-    if (sourceField?.type === FieldType.number) {
-      // Update prefix; prepend custom prefix
-      const previousPrefix = display.prefix ?? '';
-      const updatedPrefix = prefix + previousPrefix;
-      // Update suffix; append custom suffix
-      const previousSuffix = display.suffix ?? '';
-      const updatedSuffix = previousSuffix + suffix;
-      // Put everything back together
-      const updatedDisplay = { ...display, prefix: updatedPrefix, suffix: updatedSuffix };
-      return { ...fieldValue, display: updatedDisplay };
-    }
-    return fieldValue;
+    const { display } = fieldValue;
+    return {
+      ...fieldValue,
+      display: {
+        ...display,
+        prefix: safeAppend(prefix, display.prefix ?? ''),
+        suffix: safeAppend(display.suffix ?? '', suffix),
+      },
+    };
   });
 }
 
