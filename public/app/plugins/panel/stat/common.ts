@@ -132,7 +132,7 @@ export function formatDisplayValuesWithCustomUnits(
         ...fieldValue,
         display: {
           ...display,
-          // Test also for nullishness, otherwise "undefined" will be concatenated to the string
+          // Test also for nullishness, otherwise "undefined" will be concatenated into the string
           prefix: `${prefix ?? ''}${display.prefix ?? ''}`,
           suffix: `${display.suffix ?? ''}${suffix ?? ''}`,
         },
