@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React, { FC, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
 import { IconButton, LinkButton, Link, useStyles2, ConfirmModal } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AlertManagerCortexConfig, MuteTimeInterval, TimeInterval } from 'app/plugins/datasource/alertmanager/types';
@@ -23,6 +24,7 @@ import { AsyncRequestState, initialAsyncRequestState } from '../../utils/redux';
 import { DynamicTable, DynamicTableItemProps, DynamicTableColumnProps } from '../DynamicTable';
 import { EmptyAreaWithCTA } from '../EmptyAreaWithCTA';
 import { ProvisioningBadge } from '../Provisioning';
+import { Spacer } from '../Spacer';
 
 interface Props {
   alertManagerSourceName: string;
@@ -64,25 +66,25 @@ export const MuteTimingsTable: FC<Props> = ({ alertManagerSourceName, muteTiming
 
   return (
     <div className={styles.container}>
-      {!hideActions && <h5>Mute timings</h5>}
-      {!hideActions && (
-        <p>
-          Mute timings are a named interval of time that may be referenced in the notification policy tree to mute
-          particular notification policies for specific times of the day.
-        </p>
-      )}
-      {!hideActions && items.length > 0 && (
-        <Authorize actions={[permissions.create]}>
-          <LinkButton
-            className={styles.addMuteButton}
-            icon="plus"
-            variant="primary"
-            href={makeAMLink('alerting/routes/mute-timing/new', alertManagerSourceName)}
-          >
-            Add mute timing
-          </LinkButton>
-        </Authorize>
-      )}
+      <Stack direction="row" alignItems="center">
+        <span>
+          Enter specific time intervals when not to send notifications or freeze notifications for recurring periods of
+          time.
+        </span>
+        <Spacer />
+        {!hideActions && items.length > 0 && (
+          <Authorize actions={[permissions.create]}>
+            <LinkButton
+              className={styles.addMuteButton}
+              icon="plus"
+              variant="primary"
+              href={makeAMLink('alerting/routes/mute-timing/new', alertManagerSourceName)}
+            >
+              Add mute timing
+            </LinkButton>
+          </Authorize>
+        )}
+      </Stack>
       {items.length > 0 ? (
         <DynamicTable items={items} cols={columns} />
       ) : !hideActions ? (
