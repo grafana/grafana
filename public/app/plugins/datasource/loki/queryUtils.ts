@@ -305,21 +305,14 @@ export function getStreamSelectorsFromQuery(query: string): string[] {
 }
 
 export function requestSupportsPartitioning(allQueries: LokiQuery[]) {
-  const queries = allQueries.filter((query) => !query.hide);
-  /*
-   * For now, we only split if there is a single query.
-   * - we do not split for zero queries
-   * - we do not split for multiple queries
-   */
-  if (queries.length !== 1) {
+  const queries = allQueries.filter((query) => !query.hide).filter((query) => !query.refId.includes('do-not-chunk'));
+
+  const instantQueries = queries.some((query) => query.queryType === LokiQueryType.Instant);
+  if (instantQueries) {
     return false;
   }
 
-  if (queries[0].refId.includes('do-not-chunk')) {
-    return false;
-  }
-
-  return true;
+  return queries.length > 0;
 }
 
 export function combineResponses(currentResult: DataQueryResponse | null, newResult: DataQueryResponse) {

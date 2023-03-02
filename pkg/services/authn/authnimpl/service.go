@@ -106,8 +106,8 @@ func ProvideService(
 		if s.cfg.BasicAuthEnabled {
 			s.RegisterClient(clients.ProvideBasic(passwordClient))
 		}
-		// FIXME (kalleep): Remove the global variable and stick it into cfg
-		if !setting.DisableLoginForm {
+
+		if !s.cfg.DisableLoginForm {
 			s.RegisterClient(clients.ProvideForm(passwordClient))
 		}
 	}
@@ -115,7 +115,7 @@ func ProvideService(
 	if s.cfg.AuthProxyEnabled && len(proxyClients) > 0 {
 		proxy, err := clients.ProvideProxy(cfg, cache, userService, proxyClients...)
 		if err != nil {
-			s.log.Error("failed to configure auth proxy", "err", err)
+			s.log.Error("Failed to configure auth proxy", "err", err)
 		} else {
 			s.RegisterClient(proxy)
 		}
@@ -133,10 +133,10 @@ func ProvideService(
 			connector, errConnector := socialService.GetConnector(name)
 			httpClient, errHTTPClient := socialService.GetOAuthHttpClient(name)
 			if errConnector != nil || errHTTPClient != nil {
-				s.log.Error("failed to configure oauth client", "client", clientName, "err", multierror.Append(errConnector, errHTTPClient))
+				s.log.Error("Failed to configure oauth client", "client", clientName, "err", multierror.Append(errConnector, errHTTPClient))
+			} else {
+				s.RegisterClient(clients.ProvideOAuth(clientName, cfg, oauthCfg, connector, httpClient))
 			}
-
-			s.RegisterClient(clients.ProvideOAuth(clientName, cfg, oauthCfg, connector, httpClient))
 		}
 	}
 
@@ -204,13 +204,13 @@ func (s *Service) authenticate(ctx context.Context, c authn.Client, r *authn.Req
 	r.OrgID = orgIDFromRequest(r)
 	identity, err := c.Authenticate(ctx, r)
 	if err != nil {
-		s.log.FromContext(ctx).Warn("auth client could not authenticate request", "client", c.Name(), "error", err)
+		s.log.FromContext(ctx).Warn("Failed to authenticate request", "client", c.Name(), "error", err)
 		return nil, err
 	}
 
 	for _, hook := range s.postAuthHooks.items {
 		if err := hook.v(ctx, identity, r); err != nil {
-			s.log.FromContext(ctx).Warn("post auth hook failed", "error", err, "client", c.Name(), "id", identity.ID)
+			s.log.FromContext(ctx).Warn("Failed to run post auth hook", "client", c.Name(), "id", identity.ID, "error", err)
 			return nil, err
 		}
 	}
@@ -221,7 +221,7 @@ func (s *Service) authenticate(ctx context.Context, c authn.Client, r *authn.Req
 
 	if hc, ok := c.(authn.HookClient); ok {
 		if err := hc.Hook(ctx, identity, r); err != nil {
-			s.log.FromContext(ctx).Warn("post client auth hook failed", "error", err, "client", c.Name(), "id", identity.ID)
+			s.log.FromContext(ctx).Warn("Failed to run post client auth hook", "client", c.Name(), "id", identity.ID, "error", err)
 			return nil, err
 		}
 	}
@@ -260,12 +260,12 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (i
 	addr := web.RemoteAddr(r.HTTPRequest)
 	ip, err := network.GetIPFromAddress(addr)
 	if err != nil {
-		s.log.Debug("failed to parse ip from address", "addr", addr)
+		s.log.FromContext(ctx).Debug("Failed to parse ip from address", "client", c.Name(), "id", identity.ID, "addr", addr, "error", err)
 	}
 
 	sessionToken, err := s.sessionService.CreateToken(ctx, &user.User{ID: id}, ip, r.HTTPRequest.UserAgent())
 	if err != nil {
-		s.log.FromContext(ctx).Error("failed to create session", "client", client, "userId", id, "err", err)
+		s.log.FromContext(ctx).Error("Failed to create session", "client", client, "id", identity.ID, "err", err)
 		return nil, err
 	}
 

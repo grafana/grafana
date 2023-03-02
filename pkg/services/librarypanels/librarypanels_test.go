@@ -706,9 +706,8 @@ func createDashboard(t *testing.T, sqlStore db.DB, user *user.SignedInUser, dash
 	require.NoError(t, err)
 	dashAlertService := alerting.ProvideDashAlertExtractorService(nil, nil, nil)
 	ac := acmock.New()
-	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	service := dashboardservice.ProvideDashboardService(
-		cfg, dashboardStore, folderStore, dashAlertService,
+		cfg, dashboardStore, dashAlertService,
 		featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(), acmock.NewMockedPermissionsService(), ac,
 		foldertest.NewFakeService(),
 	)
@@ -743,7 +742,7 @@ func createFolderWithACL(t *testing.T, sqlStore db.DB, title string, user *user.
 	return folder
 }
 
-func updateFolderACL(t *testing.T, dashboardStore *database.DashboardStore, folderID int64, items []folderACLItem) {
+func updateFolderACL(t *testing.T, dashboardStore dashboards.Store, folderID int64, items []folderACLItem) {
 	t.Helper()
 
 	if len(items) == 0 {

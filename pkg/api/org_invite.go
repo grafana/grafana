@@ -90,7 +90,7 @@ func (hs *HTTPServer) AddOrgInvite(c *contextmodel.ReqContext) response.Response
 		return hs.inviteExistingUserToOrg(c, usr, &inviteDto)
 	}
 
-	if setting.DisableLoginForm {
+	if hs.Cfg.DisableLoginForm {
 		return response.Error(400, "Cannot invite when login is disabled.", nil)
 	}
 
