@@ -151,9 +151,10 @@
 # Features toggles
 /pkg/services/featuremgmt/registry_multitenancy_squad.go @grafana/multitenancy-squad
 /pkg/services/featuremgmt/registry_dashboards_squad.go @grafana/dashboards-squad
-/pkg/services/featuremgmt/registry_bi_squad.go @grafana/bi-squad
+/pkg/services/featuremgmt/registry_bi_squad.go @grafana/grafana-bi-squad
 /pkg/services/featuremgmt/registry_dataviz_squad.go @grafana/dataviz-squad
-/pkg/services/featuremgmt/registry_user_essentials_squad.go @grafana/user-essentials-squad
+/pkg/services/featuremgmt/registry_user_essentials_squad.go @grafana/user-essentials
+/pkg/services/featuremgmt/registry_backend_platform_squad.go @grafana/backend-platform
 
 # devenv
 # Backend code, developers environment

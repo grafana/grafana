@@ -105,11 +105,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "newDBLibrary",
-			Description: "Use jmoiron/sqlx rather than xorm for a few backend services",
-			State:       FeatureStateBeta,
-		},
-		{
 			Name:            "validateDashboardsOnSave",
 			Description:     "Validate dashboard JSON POSTed to api/dashboards/db",
 			State:           FeatureStateBeta,
@@ -258,6 +253,7 @@ var (
 		datavizSquadToggles,
 		biSquadToggles,
 		userEssentialsSquadToggles,
+		backendPlatformSquadToggles,
 	))
 )
 
