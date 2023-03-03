@@ -377,5 +377,5 @@ func WriteSessionCookie(w http.ResponseWriter, cfg *setting.Cfg, identity *Ident
 		maxAge = -1
 	}
 
-	cookies.WriteCookie(w, cfg.LoginCookieName, identity.SessionToken.UnhashedToken, maxAge, nil)
+	cookies.WriteCookie(w, cfg.LoginCookieName, url.QueryEscape(identity.SessionToken.UnhashedToken), maxAge, nil)
 }
