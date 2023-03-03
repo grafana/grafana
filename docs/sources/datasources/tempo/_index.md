@@ -144,7 +144,7 @@ Once enabled, Grafana displays the node graph after loading the trace view.
 
 The **Search** section configures [Tempo search](/docs/tempo/latest/configuration/#search).
 
-Optionally configure the **Hide search** setting to hide the search query option in Explore if search is not configured in the Tempo instance.
+You can configure the **Hide search** setting to hide the search query option in **Explore** if search is not configured in the Tempo instance.
 
 ### Loki search
 
