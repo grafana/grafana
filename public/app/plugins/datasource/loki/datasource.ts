@@ -68,7 +68,7 @@ import {
   getLabelFilterPositions,
 } from './modifyQuery';
 import { getQueryHints } from './queryHints';
-import { runPartitionedQuery } from './querySplitting';
+import { runPartitionedQueries } from './querySplitting';
 import {
   getLogQueryFromMetricsQuery,
   getNormalizedLokiQuery,
@@ -285,7 +285,7 @@ export class LokiDatasource
     }
 
     if (config.featureToggles.lokiQuerySplitting && requestSupportsPartitioning(fixedRequest.targets)) {
-      return runPartitionedQuery(this, fixedRequest);
+      return runPartitionedQueries(this, fixedRequest);
     }
 
     return this.runQuery(fixedRequest);
@@ -294,7 +294,6 @@ export class LokiDatasource
   runQuery(fixedRequest: DataQueryRequest<LokiQuery> & { targets: LokiQuery[] }) {
     const startTime = new Date();
     return super.query(fixedRequest).pipe(
-      // in case of an empty query, this is somehow run twice. `share()` is no workaround here as the observable is generated from `of()`.
       map((response) =>
         transformBackendResult(response, fixedRequest.targets, this.instanceSettings.jsonData.derivedFields ?? [])
       ),
@@ -982,7 +981,7 @@ export class LokiDatasource
   // Used when running queries through backend
   applyTemplateVariables(target: LokiQuery, scopedVars: ScopedVars): LokiQuery {
     // We want to interpolate these variables on backend
-    const { __interval, __interval_ms, ...rest } = scopedVars;
+    const { __interval, __interval_ms, ...rest } = scopedVars || {};
 
     const exprWithAdHoc = this.addAdHocFilters(target.expr);
 

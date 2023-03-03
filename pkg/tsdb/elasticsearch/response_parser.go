@@ -1,6 +1,7 @@
 package elasticsearch
 
 import (
+	"encoding/json"
 	"errors"
 	"regexp"
 	"sort"
@@ -35,7 +36,7 @@ const (
 	logsType = "logs"
 )
 
-func parseResponse(responses []*es.SearchResponse, targets []*Query) (*backend.QueryDataResponse, error) {
+func parseResponse(responses []*es.SearchResponse, targets []*Query, configuredFields es.ConfiguredFields) (*backend.QueryDataResponse, error) {
 	result := backend.QueryDataResponse{
 		Responses: backend.Responses{},
 	}
@@ -56,17 +57,242 @@ func parseResponse(responses []*es.SearchResponse, targets []*Query) (*backend.Q
 
 		queryRes := backend.DataResponse{}
 
-		props := make(map[string]string)
-		err := processBuckets(res.Aggregations, target, &queryRes, props, 0)
-		if err != nil {
-			return &backend.QueryDataResponse{}, err
-		}
-		nameFields(queryRes, target)
-		trimDatapoints(queryRes, target)
+		if isRawDataQuery(target) {
+			err := processRawDataResponse(res, target, configuredFields, &queryRes)
+			if err != nil {
+				return &backend.QueryDataResponse{}, err
+			}
+			result.Responses[target.RefID] = queryRes
+		} else if isRawDocumentQuery(target) {
+			err := processRawDocumentResponse(res, target, &queryRes)
+			if err != nil {
+				return &backend.QueryDataResponse{}, err
+			}
+			result.Responses[target.RefID] = queryRes
+		} else if isLogsQuery(target) {
+			err := processLogsResponse(res, target, configuredFields, &queryRes)
+			if err != nil {
+				return &backend.QueryDataResponse{}, err
+			}
+			result.Responses[target.RefID] = queryRes
+		} else {
+			// Process as metric query result
+			props := make(map[string]string)
+			err := processBuckets(res.Aggregations, target, &queryRes, props, 0)
+			if err != nil {
+				return &backend.QueryDataResponse{}, err
+			}
+			nameFields(queryRes, target)
+			trimDatapoints(queryRes, target)
 
-		result.Responses[target.RefID] = queryRes
+			result.Responses[target.RefID] = queryRes
+		}
 	}
 	return &result, nil
+}
+
+func processLogsResponse(res *es.SearchResponse, target *Query, configuredFields es.ConfiguredFields, queryRes *backend.DataResponse) error {
+	propNames := make(map[string]bool)
+	docs := make([]map[string]interface{}, len(res.Hits.Hits))
+
+	for hitIdx, hit := range res.Hits.Hits {
+		var flattened map[string]interface{}
+		if hit["_source"] != nil {
+			flattened = flatten(hit["_source"].(map[string]interface{}))
+		}
+
+		doc := map[string]interface{}{
+			"_id":       hit["_id"],
+			"_type":     hit["_type"],
+			"_index":    hit["_index"],
+			"sort":      hit["sort"],
+			"highlight": hit["highlight"],
+			"_source":   flattened,
+		}
+
+		for k, v := range flattened {
+			if configuredFields.LogLevelField != "" && k == configuredFields.LogLevelField {
+				doc["level"] = v
+			} else {
+				doc[k] = v
+			}
+		}
+
+		for key := range doc {
+			propNames[key] = true
+		}
+		// TODO: Implement highlighting
+
+		docs[hitIdx] = doc
+	}
+
+	sortedPropNames := sortPropNames(propNames, configuredFields, true)
+	fields := processDocsToDataFrameFields(docs, sortedPropNames, configuredFields)
+
+	frames := data.Frames{}
+	frame := data.NewFrame("", fields...)
+	setPreferredVisType(frame, "logs")
+	frames = append(frames, frame)
+
+	queryRes.Frames = frames
+	return nil
+}
+
+func processRawDataResponse(res *es.SearchResponse, target *Query, configuredFields es.ConfiguredFields, queryRes *backend.DataResponse) error {
+	propNames := make(map[string]bool)
+	docs := make([]map[string]interface{}, len(res.Hits.Hits))
+
+	for hitIdx, hit := range res.Hits.Hits {
+		var flattened map[string]interface{}
+		if hit["_source"] != nil {
+			flattened = flatten(hit["_source"].(map[string]interface{}))
+		}
+
+		doc := map[string]interface{}{
+			"_id":       hit["_id"],
+			"_type":     hit["_type"],
+			"_index":    hit["_index"],
+			"sort":      hit["sort"],
+			"highlight": hit["highlight"],
+			"_source":   flattened,
+		}
+
+		for k, v := range flattened {
+			doc[k] = v
+		}
+
+		for key := range doc {
+			propNames[key] = true
+		}
+
+		docs[hitIdx] = doc
+	}
+
+	sortedPropNames := sortPropNames(propNames, configuredFields, false)
+	fields := processDocsToDataFrameFields(docs, sortedPropNames, configuredFields)
+
+	frames := data.Frames{}
+	frame := data.NewFrame("", fields...)
+	frames = append(frames, frame)
+
+	queryRes.Frames = frames
+	return nil
+}
+
+func processRawDocumentResponse(res *es.SearchResponse, target *Query, queryRes *backend.DataResponse) error {
+	docs := make([]map[string]interface{}, len(res.Hits.Hits))
+	for hitIdx, hit := range res.Hits.Hits {
+		doc := map[string]interface{}{
+			"_id":       hit["_id"],
+			"_type":     hit["_type"],
+			"_index":    hit["_index"],
+			"sort":      hit["sort"],
+			"highlight": hit["highlight"],
+		}
+
+		if hit["_source"] != nil {
+			source, ok := hit["_source"].(map[string]interface{})
+			if ok {
+				for k, v := range source {
+					doc[k] = v
+				}
+			}
+		}
+
+		if hit["fields"] != nil {
+			source, ok := hit["fields"].(map[string]interface{})
+			if ok {
+				for k, v := range source {
+					doc[k] = v
+				}
+			}
+		}
+
+		docs[hitIdx] = doc
+	}
+
+	fieldVector := make([]*json.RawMessage, len(res.Hits.Hits))
+	for i, doc := range docs {
+		bytes, err := json.Marshal(doc)
+		if err != nil {
+			// We skip docs that can't be marshalled
+			// should not happen
+			continue
+		}
+		value := json.RawMessage(bytes)
+		fieldVector[i] = &value
+	}
+
+	isFilterable := true
+	field := data.NewField(target.RefID, nil, fieldVector)
+	field.Config = &data.FieldConfig{Filterable: &isFilterable}
+
+	frames := data.Frames{}
+	frame := data.NewFrame(target.RefID, field)
+	frames = append(frames, frame)
+
+	queryRes.Frames = frames
+	return nil
+}
+
+func processDocsToDataFrameFields(docs []map[string]interface{}, propNames []string, configuredFields es.ConfiguredFields) []*data.Field {
+	size := len(docs)
+	isFilterable := true
+	allFields := make([]*data.Field, len(propNames))
+
+	for propNameIdx, propName := range propNames {
+		// Special handling for time field
+		if propName == configuredFields.TimeField {
+			timeVector := make([]*time.Time, size)
+			for i, doc := range docs {
+				timeString, ok := doc[configuredFields.TimeField].(string)
+				if !ok {
+					continue
+				}
+				timeValue, err := time.Parse(time.RFC3339Nano, timeString)
+				if err != nil {
+					// We skip time values that cannot be parsed
+					continue
+				} else {
+					timeVector[i] = &timeValue
+				}
+			}
+			field := data.NewField(configuredFields.TimeField, nil, timeVector)
+			field.Config = &data.FieldConfig{Filterable: &isFilterable}
+			allFields[propNameIdx] = field
+			continue
+		}
+
+		propNameValue := findTheFirstNonNilDocValueForPropName(docs, propName)
+		switch propNameValue.(type) {
+		// We are checking for default data types values (float64, int, bool, string)
+		// and default to json.RawMessage if we cannot find any of them
+		case float64:
+			allFields[propNameIdx] = createFieldOfType[float64](docs, propName, size, isFilterable)
+		case int:
+			allFields[propNameIdx] = createFieldOfType[int](docs, propName, size, isFilterable)
+		case string:
+			allFields[propNameIdx] = createFieldOfType[string](docs, propName, size, isFilterable)
+		case bool:
+			allFields[propNameIdx] = createFieldOfType[bool](docs, propName, size, isFilterable)
+		default:
+			fieldVector := make([]*json.RawMessage, size)
+			for i, doc := range docs {
+				bytes, err := json.Marshal(doc[propName])
+				if err != nil {
+					// We skip values that cannot be marshalled
+					continue
+				}
+				value := json.RawMessage(bytes)
+				fieldVector[i] = &value
+			}
+			field := data.NewField(propName, nil, fieldVector)
+			field.Config = &data.FieldConfig{Filterable: &isFilterable}
+			allFields[propNameIdx] = field
+		}
+	}
+
+	return allFields
 }
 
 func processBuckets(aggs map[string]interface{}, target *Query,
@@ -752,4 +978,101 @@ func getErrorFromElasticResponse(response *es.SearchResponse) string {
 	}
 
 	return errorString
+}
+
+// flatten flattens multi-level objects to single level objects. It uses dot notation to join keys.
+func flatten(target map[string]interface{}) map[string]interface{} {
+	// On frontend maxDepth wasn't used but as we are processing on backend
+	// let's put a limit to avoid infinite loop. 10 was chosen arbitrary.
+	maxDepth := 10
+	currentDepth := 0
+	delimiter := ""
+	output := make(map[string]interface{})
+
+	var step func(object map[string]interface{}, prev string)
+
+	step = func(object map[string]interface{}, prev string) {
+		for key, value := range object {
+			if prev == "" {
+				delimiter = ""
+			} else {
+				delimiter = "."
+			}
+			newKey := prev + delimiter + key
+
+			v, ok := value.(map[string]interface{})
+			shouldStepInside := ok && len(v) > 0 && currentDepth < maxDepth
+			if shouldStepInside {
+				currentDepth++
+				step(v, newKey)
+			} else {
+				output[newKey] = value
+			}
+		}
+	}
+
+	step(target, "")
+	return output
+}
+
+// sortPropNames orders propNames so that timeField is first (if it exists), log message field is second
+// if shouldSortLogMessageField is true, and rest of propNames are ordered alphabetically
+func sortPropNames(propNames map[string]bool, configuredFields es.ConfiguredFields, shouldSortLogMessageField bool) []string {
+	hasTimeField := false
+	hasLogMessageField := false
+
+	var sortedPropNames []string
+	for k := range propNames {
+		if configuredFields.TimeField != "" && k == configuredFields.TimeField {
+			hasTimeField = true
+		} else if shouldSortLogMessageField && configuredFields.LogMessageField != "" && k == configuredFields.LogMessageField {
+			hasLogMessageField = true
+		} else {
+			sortedPropNames = append(sortedPropNames, k)
+		}
+	}
+
+	sort.Strings(sortedPropNames)
+
+	if hasLogMessageField {
+		sortedPropNames = append([]string{configuredFields.LogMessageField}, sortedPropNames...)
+	}
+
+	if hasTimeField {
+		sortedPropNames = append([]string{configuredFields.TimeField}, sortedPropNames...)
+	}
+
+	return sortedPropNames
+}
+
+// findTheFirstNonNilDocValueForPropName finds the first non-nil value for propName in docs. If none of the values are non-nil, it returns the value of propName in the first doc.
+func findTheFirstNonNilDocValueForPropName(docs []map[string]interface{}, propName string) interface{} {
+	for _, doc := range docs {
+		if doc[propName] != nil {
+			return doc[propName]
+		}
+	}
+	return docs[0][propName]
+}
+
+func createFieldOfType[T int | float64 | bool | string](docs []map[string]interface{}, propName string, size int, isFilterable bool) *data.Field {
+	fieldVector := make([]*T, size)
+	for i, doc := range docs {
+		value, ok := doc[propName].(T)
+		if !ok {
+			continue
+		}
+		fieldVector[i] = &value
+	}
+	field := data.NewField(propName, nil, fieldVector)
+	field.Config = &data.FieldConfig{Filterable: &isFilterable}
+	return field
+}
+
+func setPreferredVisType(frame *data.Frame, visType data.VisType) {
+	if frame.Meta == nil {
+		frame.Meta = &data.FrameMeta{}
+	}
+
+	frame.Meta.PreferredVisualization = visType
 }

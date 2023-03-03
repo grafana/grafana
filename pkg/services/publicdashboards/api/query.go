@@ -43,6 +43,7 @@ func (api *Api) ViewPublicDashboard(c *contextmodel.ReqContext) response.Respons
 		IsFolder:                   false,
 		FolderId:                   dash.FolderID,
 		PublicDashboardAccessToken: pubdash.AccessToken,
+		PublicDashboardEnabled:     pubdash.IsEnabled,
 	}
 	dash.Data.Get("timepicker").Set("hidden", !pubdash.TimeSelectionEnabled)
 

@@ -2,6 +2,7 @@ import classnames from 'classnames';
 import React, { PureComponent } from 'react';
 
 import { PanelMenuItem } from '@grafana/data';
+import { Menu } from '@grafana/ui';
 
 import { PanelHeaderMenuItem } from './PanelHeaderMenuItem';
 
@@ -29,6 +30,7 @@ export class PanelHeaderMenu extends PureComponent<Props> {
               iconClassName={menuItem.iconClassName}
               onClick={menuItem.onClick}
               shortcut={menuItem.shortcut}
+              href={menuItem.href}
             >
               {menuItem.subMenu && this.renderItems(menuItem.subMenu, true)}
             </PanelHeaderMenuItem>
@@ -45,4 +47,26 @@ export class PanelHeaderMenu extends PureComponent<Props> {
       </div>
     );
   }
+}
+
+export function PanelHeaderMenuNew({ items }: Props) {
+  const renderItems = (items: PanelMenuItem[]) => {
+    return items.map((item) =>
+      item.type === 'divider' ? (
+        <Menu.Divider key={item.text} />
+      ) : (
+        <Menu.Item
+          key={item.text}
+          label={item.text}
+          icon={item.iconClassName}
+          childItems={item.subMenu ? renderItems(item.subMenu) : undefined}
+          url={item.href}
+          onClick={item.onClick}
+          shortcut={item.shortcut}
+        />
+      )
+    );
+  };
+
+  return <Menu>{renderItems(items)}</Menu>;
 }

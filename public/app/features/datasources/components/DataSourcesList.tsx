@@ -17,11 +17,10 @@ import { constructDataSourceExploreUrl } from '../utils';
 import { DataSourcesListHeader } from './DataSourcesListHeader';
 
 export function DataSourcesList() {
-  useLoadDataSources();
+  const { isLoading } = useLoadDataSources();
 
   const dataSources = useSelector((state) => getDataSources(state.dataSources));
   const dataSourcesCount = useSelector(({ dataSources }: StoreState) => getDataSourcesCount(dataSources));
-  const hasFetched = useSelector(({ dataSources }: StoreState) => dataSources.hasFetched);
   const hasCreateRights = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
   const hasWriteRights = contextSrv.hasPermission(AccessControlAction.DataSourcesWrite);
   const hasExploreRights = contextSrv.hasPermission(AccessControlAction.DataSourcesExplore);
@@ -30,7 +29,7 @@ export function DataSourcesList() {
     <DataSourcesListView
       dataSources={dataSources}
       dataSourcesCount={dataSourcesCount}
-      isLoading={!hasFetched}
+      isLoading={isLoading}
       hasCreateRights={hasCreateRights}
       hasWriteRights={hasWriteRights}
       hasExploreRights={hasExploreRights}

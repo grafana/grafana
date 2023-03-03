@@ -5,8 +5,8 @@ import (
 	"sort"
 	"time"
 
+	"github.com/grafana/dataplane/sdata/timeseries"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental/sdata/timeseries"
 
 	"github.com/grafana/grafana/pkg/expr/mathexp/parse"
 )
