@@ -13,7 +13,6 @@ import (
 	publicdashboardStore "github.com/grafana/grafana/pkg/services/publicdashboards/database"
 	publicdashboardModels "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	publicdashboardService "github.com/grafana/grafana/pkg/services/publicdashboards/service"
-	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -48,39 +47,6 @@ func ProvideService(
 
 // SaveDashboard saves the dashboard to kubernetes
 func (s *ServiceWrapper) Create(ctx context.Context, u *user.SignedInUser, dto *publicdashboardModels.SavePublicDashboardDTO) (*publicdashboardModels.PublicDashboard, error) {
-	// CREATE VALIDATIONS (k8s)
-	if dto.PublicDashboard.Uid != "" {
-		return nil, fmt.Errorf("you cannot provide a uid when creating a public dashboard")
-	}
-
-	// API VALIDATIONS
-	if !validation.IsValidShortUID(dto.DashboardUid) {
-		return nil, fmt.Errorf("invalid dashboard ID: %v", dto.PublicDashboard.DashboardUid)
-	}
-
-	// SERVICE VALIDATIONS
-	// NOTE - review this later. maybe shouldn't be checking dependency
-	// ensure dashboard exists
-	dashboard, err := s.Service.FindDashboard(ctx, u.OrgID, dto.DashboardUid)
-	if err != nil {
-		return nil, err
-	}
-
-	// validate fields
-	err = validation.ValidatePublicDashboard(dto, dashboard)
-	if err != nil {
-		return nil, err
-	}
-
-	// verify public dashboard does not exist and that we didn't get one from the
-	// request
-	existingPubdash, err := s.store.Find(ctx, dto.PublicDashboard.Uid)
-	if err != nil {
-		return nil, fmt.Errorf("Create: failed to find the public dashboard: %w", err)
-	} else if existingPubdash != nil {
-		return nil, fmt.Errorf("Create: public dashboard already exists: %s", dto.PublicDashboard.Uid)
-	}
-
 	// SERVICE MUTATION LOGIC
 	// set default value for time settings
 	if dto.PublicDashboard.TimeSettings == nil {

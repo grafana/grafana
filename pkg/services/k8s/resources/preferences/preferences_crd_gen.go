@@ -11,6 +11,7 @@ package preferences
 
 import (
 	_ "embed"
+	"encoding/json"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/kinds/preferences"
@@ -39,6 +40,22 @@ var CRDYaml []byte
 // It implements [runtime.Object], and is used in k8s scheme construction.
 type Preferences struct {
 	crd.Base[preferences.Preferences]
+}
+
+func (preferencesCRD *Preferences) UnmarshalJSON(data []byte) error {
+	m := make(map[string]interface{})
+	json.Unmarshal(data, &m)
+
+	u := &unstructured.Unstructured{}
+	u.SetUnstructuredContent(m)
+
+	obj, err := fromUnstructured(u)
+	if err != nil {
+		return err
+	}
+
+	*preferencesCRD = *obj
+	return nil
 }
 
 // PreferencesList is the Go CRD representation of a list Preferences objects.

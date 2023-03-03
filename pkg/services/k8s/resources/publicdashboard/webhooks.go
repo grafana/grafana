@@ -59,6 +59,20 @@ func (api *WebhooksAPI) Create(c *contextmodel.ReqContext) response.Response {
 		return response.Error(500, "error unmarshalling request body", err)
 	}
 
+	obj := PublicDashboard{}
+	err = json.Unmarshal(rev.Request.Object.Raw, &obj)
+	if err != nil {
+		api.Log.Error("error unmarshalling request body")
+		return response.Error(500, "error unmarshalling request body", err)
+	}
+
+	oldObj := PublicDashboard{}
+	err = json.Unmarshal(rev.Request.OldObject.Raw, &oldObj)
+	if err != nil {
+		api.Log.Error("error unmarshalling request body")
+		return response.Error(500, "error unmarshalling request body", err)
+	}
+
 	// THIS IS BROKEN
 	// TODO: convert error to k8sAdmission.AdmissionResponse and then to response.Response
 	err = api.ValidationController.Validate(c.Req.Context(), &admission.AdmissionRequest{
@@ -71,7 +85,14 @@ func (api *WebhooksAPI) Create(c *contextmodel.ReqContext) response.Response {
 			UID:      rev.Request.UserInfo.UID,
 			Groups:   rev.Request.UserInfo.Groups,
 		},
-		Object:    rev.Request.Object.Object,
-		OldObject: rev.Request.OldObject.Object,
+		Object:    &obj,
+		OldObject: &oldObj,
 	})
+
+	if err != nil {
+		api.Log.Error("error validating request body")
+		return response.Error(500, "error validating request body", err)
+	}
+
+	return response.JSON(200, "ok")
 }

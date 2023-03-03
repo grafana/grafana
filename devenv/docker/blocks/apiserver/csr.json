@@ -1,6 +1,7 @@
 {
     "hosts": [
-        "host.docker.internal:3443"
+        "host.docker.internal:3443",
+        "172.17.0.1:3443"
     ],
     "key": {
         "algo": "rsa",

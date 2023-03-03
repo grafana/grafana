@@ -11,6 +11,7 @@ package serviceaccount
 
 import (
 	_ "embed"
+	"encoding/json"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/kinds/serviceaccount"
@@ -39,6 +40,22 @@ var CRDYaml []byte
 // It implements [runtime.Object], and is used in k8s scheme construction.
 type ServiceAccount struct {
 	crd.Base[serviceaccount.ServiceAccount]
+}
+
+func (serviceaccountCRD *ServiceAccount) UnmarshalJSON(data []byte) error {
+	m := make(map[string]interface{})
+	json.Unmarshal(data, &m)
+
+	u := &unstructured.Unstructured{}
+	u.SetUnstructuredContent(m)
+
+	obj, err := fromUnstructured(u)
+	if err != nil {
+		return err
+	}
+
+	*serviceaccountCRD = *obj
+	return nil
 }
 
 // ServiceAccountList is the Go CRD representation of a list ServiceAccount objects.

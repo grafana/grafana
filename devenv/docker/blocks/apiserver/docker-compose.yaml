@@ -5,6 +5,3 @@
       - "3443:443"
     volumes:
       - $PWD/devenv/docker/blocks/apiserver:/conf
-
-
-

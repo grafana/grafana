@@ -6,9 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/k8s/admission"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
-	publicdashboardModels "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 var _ admission.ValidatingAdmissionController = (*pdValidation)(nil)
@@ -32,8 +30,12 @@ func ProvideValidation(
 // 1. This doesn't do RBAC checks. It should.
 // 2. convert runtime.Objects in request to PublicDashboard and *user.SignedInUser
 func (v *pdValidation) Validate(ctx context.Context, request *admission.AdmissionRequest) error {
-	var u *user.SignedInUser
-	var dto *publicdashboardModels.SavePublicDashboardDTO
+	k8Dashboard := request.Object.(*PublicDashboard)
+	dto, err := k8sPublicDashboardToDTO(k8Dashboard)
+	if err != nil {
+		return err
+	}
+	//var u *user.SignedInUser
 	// CREATE VALIDATIONS (k8s)
 	if dto.PublicDashboard.Uid != "" {
 		return fmt.Errorf("you cannot provide a uid when creating a public dashboard")
@@ -47,7 +49,7 @@ func (v *pdValidation) Validate(ctx context.Context, request *admission.Admissio
 	// SERVICE VALIDATIONS
 	// NOTE - review this later. maybe shouldn't be checking dependency
 	// ensure dashboard exists
-	dashboard, err := v.publicdashboardsService.FindDashboard(ctx, u.OrgID, dto.DashboardUid)
+	dashboard, err := v.publicdashboardsService.FindDashboard(ctx, dto.OrgId, dto.DashboardUid)
 	if err != nil {
 		return err
 	}
