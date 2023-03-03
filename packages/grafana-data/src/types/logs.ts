@@ -212,12 +212,17 @@ export const getLogsVolumeAbsoluteRange = (
   return dataFrames[0].meta?.custom?.absoluteRange || defaultRange;
 };
 
-export const getLogsVolumeDataSourceInfo = (dataFrames: DataFrame[]): { uid: string; name: string; refId: string } => {
-  return {
-    uid: dataFrames[0]?.meta?.custom?.datasourceUid || '',
-    name: dataFrames[0]?.meta?.custom?.datasourceName || '',
-    refId: dataFrames[0]?.meta?.custom?.sourceQuery?.refId || '',
-  };
+export const getLogsVolumeDataSourceInfo = (dataFrames: DataFrame[]): { name: string; refId: string } | null => {
+  const customMeta = dataFrames[0]?.meta?.custom;
+
+  if (customMeta && customMeta.datasourceName && customMeta.sourceQuery?.refId) {
+    return {
+      name: customMeta.datasourceName,
+      refId: customMeta.sourceQuery.refId,
+    };
+  }
+
+  return null;
 };
 
 export const isLogsVolumeLimited = (dataFrames: DataFrame[]) => {
