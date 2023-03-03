@@ -27,6 +27,8 @@ This means that you should be able to configure LDAP integration using any compl
 In order to use LDAP integration you'll first need to enable LDAP in the [main config file]({{< relref "../../../configure-grafana/" >}}) as well as specify the path to the LDAP
 specific configuration file (default: `/etc/grafana/ldap.toml`).
 
+After enabling LDAP, the default behavior is for Grafana users to be created automatically upon successful LDAP authentication. If you prefer for only existing Grafana users to be able to sign in, you can change `allow_sign_up` to `false` in the `[auth.ldap]` section.
+
 ```ini
 [auth.ldap]
 # Set to `true` to enable LDAP integration (default: `false`)
