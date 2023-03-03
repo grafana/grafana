@@ -357,7 +357,7 @@ function getCombinedMetadataStats(
   const sourceStat = sourceStats.find((s) => s.displayName === TOTAL_BYTES_STAT);
 
   if (sourceStat != null && destStat != null) {
-    return [{ value: sourceStat.value + destStat.value, displayName: TOTAL_BYTES_STAT }];
+    return [{ value: sourceStat.value + destStat.value, displayName: TOTAL_BYTES_STAT, unit: destStat.unit }];
   }
 
   // maybe one of them exist
