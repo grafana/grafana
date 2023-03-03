@@ -2,35 +2,6 @@ import { NavModelItem, NavSection } from '@grafana/data';
 import config from 'app/core/config';
 import { ServiceType } from 'app/percona/shared/services/services/Services.types';
 
-export const PMM_STT_PAGE: NavModelItem = {
-  id: 'database-checks',
-  icon: 'percona-database-checks',
-  text: 'Advisor Checks',
-  subTitle: 'Percona Advisor Checks',
-  section: NavSection.Core,
-  url: `${config.appSubUrl}/pmm-database-checks`,
-  breadcrumbs: [
-    {
-      title: 'Advisor Checks',
-      url: `${config.appSubUrl}/pmm-database-checks`,
-    },
-  ],
-  children: [
-    {
-      id: 'failed-checks',
-      text: 'Failed Checks',
-      url: `${config.appSubUrl}/pmm-database-checks/failed-checks`,
-      hideFromMenu: true,
-    },
-    {
-      id: 'all-checks',
-      text: 'All Checks',
-      url: `${config.appSubUrl}/pmm-database-checks/all-checks`,
-      hideFromMenu: true,
-    },
-  ],
-};
-
 export const PMM_DBAAS_PAGE: NavModelItem = {
   id: 'dbaas',
   text: 'DBaaS',

@@ -1,14 +1,16 @@
 import { logger } from '@percona/platform-core';
-import { fireEvent, render, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 
+import { NavIndex } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import { CheckService } from 'app/percona/check/Check.service';
-import { Interval } from 'app/percona/check/types';
+import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { configureStore } from 'app/store/configureStore';
 import { StoreState } from 'app/types';
+
+import { CheckService } from '../../Check.service';
 
 import { AllChecksTab } from './AllChecksTab';
 import { Messages } from './AllChecksTab.messages';
@@ -23,111 +25,112 @@ jest.mock('@percona/platform-core', () => {
   };
 });
 jest.mock('app/percona/check/Check.service');
+jest.mock('app/percona/shared/services/advisors/Advisors.service.ts');
 
 describe('AllChecksTab::', () => {
   beforeEach(() => jest.clearAllMocks());
-  it('should fetch checks at startup', async () => {
-    const spy = jest.spyOn(CheckService, 'getAllChecks');
-    render(
-      <Provider
-        store={configureStore({
-          percona: {
-            user: { isAuthorized: true, isPlatformUser: false },
-            settings: { result: { sttEnabled: true, isConnectedToPortal: false } },
-          },
-        } as StoreState)}
-      >
-        <Router history={locationService.getHistory()}>
-          <AllChecksTab />
-        </Router>
-      </Provider>
-    );
 
-    await waitForElementToBeRemoved(() => screen.getByTestId('table-loading'));
+  it('should render a table in category', async () => {
+    render(<AllChecksTabTesting />);
 
-    expect(spy).toBeCalledTimes(1);
+    const text = screen.queryByText(/CVE security/i);
+
+    await waitFor(() => text);
+
+    expect(text).toHaveTextContent(/CVE security/i);
+
+    const collabseDiv = screen.getByTestId('collapse-clickable');
+
+    expect(collabseDiv).toBeInTheDocument();
+
+    await waitFor(() => fireEvent.click(collabseDiv));
+
+    expect(screen.getByText('MongoDB CVE Version')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'This check returns errors if MongoDB or Percona Server for MongoDB version is less than the latest one with CVE fixes.'
+      )
+    ).toBeInTheDocument();
   });
 
-  it('should render a spinner at startup, while loading', async () => {
+  it('should render a table in different category', async () => {
+    const navIndex: NavIndex = {
+      ['advisors-configuration']: {
+        id: 'advisors-configuration',
+        text: 'advisors-configuration',
+        icon: 'list-ul',
+        url: '/advisors/configuration',
+      },
+    };
+
     render(
       <Provider
         store={configureStore({
           percona: {
             user: { isAuthorized: true, isPlatformUser: false },
             settings: { result: { sttEnabled: true, isConnectedToPortal: false } },
+            advisors: {
+              loading: false,
+              result: advisorsArray,
+            },
           },
+          navIndex: navIndex,
         } as StoreState)}
       >
         <Router history={locationService.getHistory()}>
-          <AllChecksTab />
+          <AllChecksTab
+            {...getRouteComponentProps({
+              match: {
+                params: { category: 'configuration' },
+                isExact: true,
+                path: '/advisors/:category',
+                url: '/advisors/configuration',
+              },
+            })}
+          />
         </Router>
       </Provider>
     );
 
-    expect(screen.queryByTestId('table-loading')).toBeInTheDocument();
-    await waitForElementToBeRemoved(() => screen.getByTestId('table-loading'));
-    expect(screen.queryByTestId('spinner-wrapper')).not.toBeInTheDocument();
-  });
+    const text = screen.queryByText(/Version configuration/i);
 
-  it('should render a table', async () => {
-    render(
-      <Provider
-        store={configureStore({
-          percona: {
-            user: { isAuthorized: true, isPlatformUser: false },
-            settings: { result: { sttEnabled: true, isConnectedToPortal: false } },
-          },
-        } as StoreState)}
-      >
-        <Router history={locationService.getHistory()}>
-          <AllChecksTab />
-        </Router>
-      </Provider>
-    );
+    await waitFor(() => text);
 
-    await waitForElementToBeRemoved(() => screen.getByTestId('table-loading'));
-    const tbody = screen.getByTestId('table-tbody');
+    expect(text).toHaveTextContent(/Version configuration/i);
 
-    expect(tbody.querySelectorAll('tr > td')).toHaveLength(2 * 5);
-    expect(tbody.querySelectorAll('tr > td')[0]).toHaveTextContent('Test');
-    expect(tbody.querySelectorAll('tr > td')[1]).toHaveTextContent('test enabled description');
-    expect(tbody.querySelectorAll('tr > td')[2]).toHaveTextContent(Messages.enabled);
-    expect(tbody.querySelectorAll('tr > td')[3]).toHaveTextContent(Interval.STANDARD);
-    expect(tbody.querySelectorAll('tr > td')[4]).toHaveTextContent(Messages.disable);
-    expect(tbody.querySelectorAll('tr > td')[5]).toHaveTextContent('Test disabled');
-    expect(tbody.querySelectorAll('tr > td')[6]).toHaveTextContent('test disabled description');
-    expect(tbody.querySelectorAll('tr > td')[7]).toHaveTextContent(Messages.disabled);
-    expect(tbody.querySelectorAll('tr > td')[8]).toHaveTextContent(Interval.RARE);
-    expect(tbody.querySelectorAll('tr > td')[9]).toHaveTextContent(Messages.enable);
+    const collabseDiv = screen.getByTestId('collapse-clickable');
+
+    expect(collabseDiv).toBeInTheDocument();
+
+    await waitFor(() => fireEvent.click(collabseDiv));
+
+    expect(screen.getByText('PostgreSQL Version')).toBeInTheDocument();
+    expect(screen.getByText('MySQL Version')).toBeInTheDocument();
   });
 
   it('should call an API to change the check status when the action button gets clicked', async () => {
-    const spy = jest.spyOn(CheckService, 'changeCheck');
-    render(
-      <Provider
-        store={configureStore({
-          percona: {
-            user: { isAuthorized: true, isPlatformUser: false },
-            settings: { result: { sttEnabled: true, isConnectedToPortal: false } },
-          },
-        } as StoreState)}
-      >
-        <Router history={locationService.getHistory()}>
-          <AllChecksTab />
-        </Router>
-      </Provider>
-    );
+    let runChecksSpy = jest.spyOn(CheckService, 'changeCheck');
+    render(<AllChecksTabTesting />);
 
-    await waitForElementToBeRemoved(() => screen.getByTestId('table-loading'));
+    const text = screen.queryByText(/CVE security/i);
+
+    await waitFor(() => text);
+
+    expect(text).toHaveTextContent(/CVE security/i);
+
+    const collabseDiv = screen.getByTestId('collapse-clickable');
+
+    expect(collabseDiv).toBeInTheDocument();
+
+    await waitFor(() => fireEvent.click(collabseDiv));
 
     const button = screen.getAllByTestId('check-table-loader-button')[0];
-    fireEvent.click(button);
+    expect(button).toBeInTheDocument();
 
-    await waitFor(() => expect(button).toHaveTextContent('Enable'));
+    await waitFor(() => fireEvent.click(button));
 
-    expect(spy).toBeCalledTimes(1);
-    expect(spy).toBeCalledWith({ params: [{ name: 'test enabled', disable: true }] });
-    spy.mockClear();
+    expect(runChecksSpy).toBeCalledTimes(1);
+    expect(runChecksSpy).toBeCalledWith({ params: [{ name: 'mongodb_cve_version', disable: true }] });
   });
 
   it('should log an error if the run checks API call fails', async () => {
@@ -136,28 +139,17 @@ describe('AllChecksTab::', () => {
     });
     const loggerSpy = jest.spyOn(logger, 'error');
 
-    render(
-      <Provider
-        store={configureStore({
-          percona: {
-            user: { isAuthorized: true, isPlatformUser: false },
-            settings: { result: { sttEnabled: true, isConnectedToPortal: false } },
-          },
-        } as StoreState)}
-      >
-        <Router history={locationService.getHistory()}>
-          <AllChecksTab />
-        </Router>
-      </Provider>
-    );
+    render(<AllChecksTabTesting />);
 
-    await waitForElementToBeRemoved(() => screen.getByTestId('table-loading'));
+    const text = screen.queryByText(/CVE security/i);
+
+    await waitFor(() => text);
+
+    expect(text).toHaveTextContent(/CVE security/i);
 
     const runChecksButton = screen.getByRole('button', { name: Messages.runDbChecks });
 
     await waitFor(() => fireEvent.click(runChecksButton));
-    fireEvent.click(runChecksButton);
-    expect(screen.queryByText('Run Checks')).not.toBeInTheDocument();
 
     await waitFor(() => {
       expect(loggerSpy).toBeCalledTimes(1);
@@ -167,35 +159,117 @@ describe('AllChecksTab::', () => {
   });
 
   it('should call the API to run checks when the "run checks" button gets clicked', async () => {
-    const runChecksSpy = jest.spyOn(CheckService, 'runDbChecks');
-    render(
-      <Provider
-        store={configureStore({
-          percona: {
-            user: { isAuthorized: true, isPlatformUser: false },
-            settings: { result: { sttEnabled: true, isConnectedToPortal: false } },
-          },
-        } as StoreState)}
-      >
-        <Router history={locationService.getHistory()}>
-          <AllChecksTab />
-        </Router>
-      </Provider>
-    );
+    let runChecksSpy = jest.spyOn(CheckService, 'runDbChecks').mockImplementation(async () => ({}));
 
-    await waitForElementToBeRemoved(() => screen.getByTestId('table-loading'));
+    render(<AllChecksTabTesting />);
+
+    const text = screen.queryByText(/CVE security/i);
+
+    await waitFor(() => text);
+
+    expect(text).toHaveTextContent(/CVE security/i);
 
     const runChecksButton = screen.getByRole('button', { name: Messages.runDbChecks });
 
+    expect(runChecksButton).toBeInTheDocument();
     expect(runChecksSpy).toBeCalledTimes(0);
-    fireEvent.click(runChecksButton);
 
-    expect(screen.queryByText('Run Checks')).not.toBeInTheDocument();
+    await waitFor(() => {
+      fireEvent.click(runChecksButton);
+    });
 
     await waitFor(() => {
       expect(runChecksSpy).toBeCalledTimes(1);
     });
-
-    expect(await screen.findByText('Run Checks')).toBeInTheDocument();
   });
 });
+
+const AllChecksTabTesting = () => {
+  return (
+    <Provider
+      store={configureStore({
+        percona: {
+          user: { isAuthorized: true, isPlatformUser: false },
+          settings: { result: { sttEnabled: true, isConnectedToPortal: false } },
+          advisors: {
+            loading: false,
+            result: advisorsArray,
+          },
+        },
+        navIndex: navIndex,
+      } as StoreState)}
+    >
+      <Router history={locationService.getHistory()}>
+        <AllChecksTab
+          {...getRouteComponentProps({
+            match: {
+              params: { category: 'security' },
+              isExact: true,
+              path: '/advisors/:category',
+              url: '/advisors/security',
+            },
+          })}
+        />
+      </Router>
+    </Provider>
+  );
+};
+
+const navIndex: NavIndex = {
+  ['advisors-security']: {
+    id: 'advisors-security',
+    text: 'advisors-security',
+    icon: 'list-ul',
+    url: '/advisors/security',
+  },
+};
+
+const advisorsArray = [
+  {
+    name: 'cve_security',
+    description: 'Informing users about versions of DBs  affected by CVE.',
+    summary: 'CVE security',
+    category: 'security',
+    checks: [
+      {
+        name: 'mongodb_cve_version',
+        description:
+          'This check returns errors if MongoDB or Percona Server for MongoDB version is less than the latest one with CVE fixes.',
+        summary: 'MongoDB CVE Version',
+        interval: 'RARE',
+      },
+    ],
+  },
+  {
+    name: 'version_configuration',
+    description:
+      'Informs users about new versions of database released to simplify the process of keeping your DB up to date.',
+    summary: 'Version configuration',
+    category: 'configuration',
+    checks: [
+      {
+        name: 'mongodb_version',
+        disabled: true,
+        description:
+          'This check returns warnings if MongoDB or Percona Server for MongoDB version is not the latest one.',
+        summary: 'MongoDB Version',
+        interval: 'FREQUENT',
+      },
+      {
+        name: 'mysql_version',
+        disabled: true,
+        description:
+          'This check returns warnings if MySQL, Percona Server for MySQL, or MariaDB version is not the latest one.',
+        summary: 'MySQL Version',
+        interval: 'RARE',
+      },
+      {
+        name: 'postgresql_version',
+        description:
+          'This check returns warnings if PostgreSQL minor version is not the latest one.\nAdditionally notice is returned if PostgreSQL major version is not the latest one.\nError is returned if the major version of PostgreSQL is 9.4 or older.\n',
+        summary: 'PostgreSQL Version',
+        interval: 'STANDARD',
+      },
+    ],
+  },
+];

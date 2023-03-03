@@ -1,4 +1,4 @@
-import { CheckDetails, ServiceFailedCheck } from 'app/percona/check/types';
+import { ServiceFailedCheck } from 'app/percona/check/types';
 import { PaginatedFomattedResponse, Severity } from 'app/percona/shared/core';
 
 /**
@@ -7,26 +7,6 @@ import { PaginatedFomattedResponse, Severity } from 'app/percona/shared/core';
 export const CheckService = {
   async runDbChecks(): Promise<void | {}> {
     return {};
-  },
-  async getAllChecks(): Promise<CheckDetails[]> {
-    return [
-      {
-        summary: 'Test',
-        name: 'test enabled',
-        description: 'test enabled description',
-        interval: 'STANDARD',
-        disabled: false,
-        category: 'performance',
-      },
-      {
-        summary: 'Test disabled',
-        name: 'test disabled',
-        description: 'test disabled description',
-        interval: 'RARE',
-        disabled: true,
-        category: 'security',
-      },
-    ];
   },
   async changeCheck(): Promise<void | {}> {
     return {};

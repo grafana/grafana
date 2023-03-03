@@ -1,6 +1,7 @@
-import { NavModelItem } from '@grafana/data';
+import { NavModelItem, NavSection } from '@grafana/data';
 import { config } from 'app/core/config';
 import { Settings } from 'app/percona/settings/Settings.types';
+import { CategorizedAdvisor } from 'app/percona/shared/services/advisors/Advisors.types';
 import { ServiceType } from 'app/percona/shared/services/services/Services.types';
 import { FolderDTO } from 'app/types';
 
@@ -152,4 +153,33 @@ export const filterByServices = (navTree: NavModelItem[], activeServices: Servic
   };
 
   return navTree.filter(showNavLink);
+};
+
+export const buildAdvisorsNavItem = (categorizedAdvisors: CategorizedAdvisor) => {
+  const modelItem: NavModelItem = {
+    id: `advisors`,
+    icon: 'percona-database-checks',
+    text: 'Advisors',
+    subTitle: 'Run and analyze all checks',
+    url: `${config.appSubUrl}/advisors`,
+    section: NavSection.Core,
+    children: [],
+  };
+  const categories = Object.keys(categorizedAdvisors);
+
+  modelItem.children!.push({
+    id: 'advisors-insights',
+    text: 'Advisor Insights',
+    url: `${config.appSubUrl}/advisors/insights`,
+  });
+
+  categories.forEach((category) => {
+    modelItem.children!.push({
+      id: `advisors-${category}`,
+      text: `${category[0].toUpperCase()}${category.substring(1)} Advisors`,
+      url: `${config.appSubUrl}/advisors/${category}`,
+    });
+  });
+
+  return modelItem;
 };

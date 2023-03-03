@@ -21,7 +21,6 @@ export const CheckActions: FC<CheckActionsProps> = ({
   const handleChangeCheck = useCallback(async () => {
     setIntervalChangeLoading(true);
     await onChangeCheck(check);
-    setIntervalChangeLoading(false);
   }, [check, onChangeCheck]);
 
   const handleIntervalChangeClick = useCallback(() => onIntervalChangeClick(check), [check, onIntervalChangeClick]);

@@ -23,6 +23,9 @@ export interface Props extends HTMLAttributes<HTMLDivElement> {
   buttonContent?: React.ReactNode | string;
   bottomSpacing?: number;
   topSpacing?: number;
+  // @Percona
+  customButtonContent?: ReactNode;
+  onCustomButtonClick?: (event: React.MouseEvent) => void;
 }
 
 export function getIconFromSeverity(severity: AlertVariant): IconName {
@@ -48,6 +51,9 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
       bottomSpacing,
       topSpacing,
       className,
+      // @Percona
+      customButtonContent,
+      onCustomButtonClick,
       severity = 'error',
       ...restProps
     },
@@ -76,6 +82,15 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
           </div>
           {children && <div className={styles.content}>{children}</div>}
         </div>
+
+        {/* @Percona */}
+        {customButtonContent && (
+          <div className={styles.buttonWrapper}>
+            <Button aria-label="Custom button" variant="secondary" onClick={onCustomButtonClick} type="button">
+              {customButtonContent}
+            </Button>
+          </div>
+        )}
 
         {/* If onRemove is specified, giving preference to onRemove */}
         {onRemove && !buttonContent && (
@@ -171,6 +186,7 @@ const getStyles = (
       padding: ${theme.spacing(2, 1)};
       background: none;
       display: flex;
+      align-items: center;
     `,
   };
 };

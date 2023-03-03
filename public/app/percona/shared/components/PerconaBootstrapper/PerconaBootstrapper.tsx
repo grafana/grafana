@@ -1,17 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { Button, HorizontalGroup, Icon, Modal, useStyles2, useTheme2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import {
-  fetchSettingsAction,
   fetchServerInfoAction,
   fetchServerSaasHostAction,
+  fetchSettingsAction,
 } from 'app/percona/shared/core/reducers';
+import { fetchAdvisors } from 'app/percona/shared/core/reducers/advisors/advisors';
 import { TourType } from 'app/percona/shared/core/reducers/tour/tour.types';
 import {
-  setAuthorized,
   fetchUserDetailsAction,
   fetchUserStatusAction,
+  setAuthorized,
 } from 'app/percona/shared/core/reducers/user/user';
 import { useAppDispatch } from 'app/store/store';
 
@@ -19,11 +20,12 @@ import usePerconaTour from '../../core/hooks/tour';
 
 import { Messages } from './PerconaBootstrapper.messages';
 import { getStyles } from './PerconaBootstrapper.styles';
+import { PerconaBootstrapperProps } from './PerconaBootstrapper.types';
 import PerconaNavigation from './PerconaNavigation/PerconaNavigation';
 import PerconaTourBootstrapper from './PerconaTour';
 
 // This component is only responsible for populating the store with Percona's settings initially
-export const PerconaBootstrapper = () => {
+export const PerconaBootstrapper = ({ onReady }: PerconaBootstrapperProps) => {
   const dispatch = useAppDispatch();
   const { setSteps, startTour: startPerconaTour, endTour } = usePerconaTour();
   const [modalIsOpen, setModalIsOpen] = useState(true);
@@ -75,12 +77,16 @@ export const PerconaBootstrapper = () => {
       await dispatch(fetchUserStatusAction());
       await dispatch(fetchServerInfoAction());
       await dispatch(fetchServerSaasHostAction());
+      await dispatch(fetchAdvisors());
+      onReady();
     };
 
     if (isLoggedIn) {
       bootstrap();
+    } else {
+      onReady();
     }
-  }, [dispatch, isLoggedIn, setSteps]);
+  }, [dispatch, isLoggedIn, setSteps, onReady]);
 
   return (
     <>

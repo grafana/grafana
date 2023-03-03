@@ -1,42 +1,55 @@
 import { LoaderButton, logger } from '@percona/platform-core';
-import React, { FC, useEffect, useState, useCallback, useMemo } from 'react';
+import React, { FC, useCallback, useMemo, useState } from 'react';
 
 import { AppEvents } from '@grafana/data';
+import { locationService } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { OldPage } from 'app/core/components/Page/Page';
+import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { CheckService } from 'app/percona/check/Check.service';
 import { CheckDetails, Interval } from 'app/percona/check/types';
 import { ExtendedColumn, FilterFieldTypes, Table } from 'app/percona/integrated-alerting/components/Table';
+import { CustomCollapsableSection } from 'app/percona/shared/components/Elements/CustomCollapsableSection/CustomCollapsableSection';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
-import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
-import { getPerconaSettingFlag } from 'app/percona/shared/core/selectors';
-import { isApiCancelError } from 'app/percona/shared/helpers/api';
+import { fetchAdvisors } from 'app/percona/shared/core/reducers/advisors/advisors';
+import { getAdvisors, getCategorizedAdvisors, getPerconaSettingFlag } from 'app/percona/shared/core/selectors';
+import { dispatch } from 'app/store/store';
+import { useSelector } from 'app/types';
 
 import { Messages as mainChecksMessages } from '../../CheckPanel.messages';
 
-import { GET_ALL_CHECKS_CANCEL_TOKEN } from './AllChecksTab.constants';
 import { Messages } from './AllChecksTab.messages';
 import { getStyles } from './AllChecksTab.styles';
 import { ChangeCheckIntervalModal } from './ChangeCheckIntervalModal';
 import { CheckActions } from './CheckActions/CheckActions';
-import { FetchChecks } from './types';
 
-export const AllChecksTab: FC = () => {
-  const [fetchChecksPending, setFetchChecksPending] = useState(false);
-  const navModel = usePerconaNavModel('all-checks');
-  const [generateToken] = useCancelToken();
+export const AllChecksTab: FC<GrafanaRouteComponentProps<{ category: string }>> = ({ match }) => {
+  const category = match.params.category;
+  const navModel = usePerconaNavModel(`advisors-${category}`);
   const [runChecksPending, setRunChecksPending] = useState(false);
   const [checkIntervalModalVisible, setCheckIntervalModalVisible] = useState(false);
   const [selectedCheck, setSelectedCheck] = useState<CheckDetails>();
-  const [checks, setChecks] = useState<CheckDetails[]>([]);
   const styles = useStyles2(getStyles);
+  const { loading: advisorsPending } = useSelector(getAdvisors);
+  const categorizedAdvisors = useSelector(getCategorizedAdvisors);
+  const advisors = categorizedAdvisors[category];
+  if (navModel.main.id === 'not-found') {
+    locationService.push('/advisors');
+  }
+
+  const getCheckNamesListInCategory = () => {
+    return Object.values(advisors)
+      .map((advisor) => advisor.checks)
+      .flat()
+      .map((check) => check.name);
+  };
 
   const handleRunChecksClick = async () => {
     setRunChecksPending(true);
     try {
-      await CheckService.runDbChecks();
+      await CheckService.runDbChecks(getCheckNamesListInCategory());
       appEvents.emit(AppEvents.alertSuccess, [Messages.checksExecutionStarted]);
     } catch (e) {
       logger.error(e);
@@ -55,25 +68,11 @@ export const AllChecksTab: FC = () => {
     }
   };
 
-  const updateUI = (check: CheckDetails) => {
-    const { name, disabled, interval } = check;
-
-    setChecks((oldChecks) =>
-      oldChecks.map((oldCheck) => {
-        if (oldCheck.name !== name) {
-          return oldCheck;
-        }
-
-        return { ...oldCheck, disabled, interval };
-      })
-    );
-  };
-
   const changeCheck = useCallback(async (check: CheckDetails) => {
     const action = !!check.disabled ? 'enable' : 'disable';
     try {
       await CheckService.changeCheck({ params: [{ name: check.name, [action]: true }] });
-      updateUI({ ...check, disabled: !check.disabled });
+      await dispatch(fetchAdvisors());
     } catch (e) {
       logger.error(e);
     }
@@ -90,8 +89,8 @@ export const AllChecksTab: FC = () => {
   }, []);
 
   const handleIntervalChanged = useCallback(
-    (check: CheckDetails) => {
-      updateUI({ ...check });
+    async (check: CheckDetails) => {
+      await dispatch(fetchAdvisors());
       handleModalClose();
     },
     [handleModalClose]
@@ -163,25 +162,6 @@ export const AllChecksTab: FC = () => {
     [changeCheck, handleIntervalChangeClick]
   );
 
-  useEffect(() => {
-    const fetchChecks: FetchChecks = async () => {
-      setFetchChecksPending(true);
-      try {
-        const checks = await CheckService.getAllChecks(generateToken(GET_ALL_CHECKS_CANCEL_TOKEN));
-
-        setChecks(checks.map((check) => (!!check.disabled ? check : { ...check, disabled: false })));
-      } catch (e) {
-        if (isApiCancelError(e)) {
-          return;
-        }
-        logger.error(e);
-      }
-      setFetchChecksPending(false);
-    };
-    fetchChecks();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const featureSelector = useCallback(getPerconaSettingFlag('sttEnabled'), []);
 
@@ -193,32 +173,62 @@ export const AllChecksTab: FC = () => {
           featureName={mainChecksMessages.advisors}
           featureSelector={featureSelector}
         >
-          <div className={styles.actionButtons} data-testid="db-check-panel-actions">
-            <LoaderButton
-              type="button"
-              size="md"
-              loading={runChecksPending}
-              onClick={handleRunChecksClick}
-              className={styles.runChecksButton}
-            >
-              {Messages.runDbChecks}
-            </LoaderButton>
+          <div className={styles.wrapper}>
+            <div className={styles.header}>
+              <h1>{Messages.availableHeader}</h1>
+              <div className={styles.actionButtons} data-testid="db-check-panel-actions">
+                <LoaderButton
+                  type="button"
+                  variant="secondary"
+                  size="md"
+                  loading={runChecksPending}
+                  onClick={handleRunChecksClick}
+                  className={styles.runChecksButton}
+                >
+                  {Messages.runDbChecks}
+                </LoaderButton>
+              </div>
+            </div>
+            {advisors &&
+              Object.keys(advisors).map((summary) => (
+                <CustomCollapsableSection
+                  key={summary}
+                  mainLabel={summary}
+                  content={advisors[summary].description}
+                  sideLabel={advisors[summary].comment}
+                >
+                  <Table
+                    totalItems={advisors[summary].checks.length}
+                    data={advisors[summary].checks}
+                    columns={columns}
+                    pendingRequest={advisorsPending}
+                    emptyMessage={Messages.table.noData}
+                    showFilter
+                  />
+                  {!!selectedCheck && checkIntervalModalVisible && (
+                    <ChangeCheckIntervalModal
+                      check={selectedCheck}
+                      onClose={handleModalClose}
+                      onIntervalChanged={handleIntervalChanged}
+                    />
+                  )}
+                </CustomCollapsableSection>
+              ))}
+
+            {/* Uncomment and set when api for upgradable plans is ready */}
+            {/* <UpgradePlanWrapper label="Standart plan" buttonLabel="See plan details" buttonOnClick={() => {}}>
+              <CustomCollapsableSection
+                mainLabel="CVE security"
+                content="Imforming users about versions of DBs affected by CVE."
+                sideLabel="Partion support (Mongo)"
+              />
+              <CustomCollapsableSection
+                mainLabel="CVE security"
+                content="Imforming users about versions of DBs affected by CVE."
+                sideLabel="Partion support (Mongo)"
+              />
+            </UpgradePlanWrapper> */}
           </div>
-          <Table
-            totalItems={checks.length}
-            data={checks}
-            columns={columns}
-            pendingRequest={fetchChecksPending}
-            emptyMessage={Messages.table.noData}
-            showFilter
-          />
-          {!!selectedCheck && checkIntervalModalVisible && (
-            <ChangeCheckIntervalModal
-              check={selectedCheck}
-              onClose={handleModalClose}
-              onIntervalChanged={handleIntervalChanged}
-            />
-          )}
         </FeatureLoader>
       </OldPage.Contents>
     </OldPage>

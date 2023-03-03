@@ -1,7 +1,7 @@
 import { Action, KBarProvider } from 'kbar';
 import React, { ComponentType } from 'react';
 import { Provider } from 'react-redux';
-import { Router, Route, Redirect, Switch } from 'react-router-dom';
+import { Redirect, Route, Router, Switch } from 'react-router-dom';
 
 import { config, locationService, navigationLogger, reportInteraction } from '@grafana/runtime';
 import { ErrorBoundaryAlert, GlobalStyles, ModalRoot, ModalsProvider, PortalContainer } from '@grafana/ui';
@@ -32,6 +32,7 @@ interface AppWrapperProps {
 
 interface AppWrapperState {
   ready?: boolean;
+  perconaReady?: boolean;
 }
 
 /** Used by enterprise */
@@ -101,9 +102,11 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
     return !config.isPublicDashboardView;
   }
 
+  perconaReadyCallback = () => this.setState({ perconaReady: true });
+
   render() {
     const { app } = this.props;
-    const { ready } = this.state;
+    const { ready, perconaReady } = this.state;
 
     navigationLogger('AppWrapper', false, 'rendering');
 
@@ -132,7 +135,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                         <Router history={locationService.getHistory()}>
                           <PerconaTourProvider>
                             {this.renderNavBar()}
-                            {ready && <PerconaBootstrapper />}
+                            {ready && <PerconaBootstrapper onReady={this.perconaReadyCallback} />}
                             <AppChrome>
                               {pageBanners.map((Banner, index) => (
                                 <Banner key={index.toString()} />
@@ -141,7 +144,7 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                               <AngularRoot />
                               <AppNotificationList />
                               {this.searchBarEnabled() && <SearchWrapper />}
-                              {ready && this.renderRoutes()}
+                              {ready && perconaReady && this.renderRoutes()}
                               {bodyRenderHooks.map((Hook, index) => (
                                 <Hook key={index.toString()} />
                               ))}

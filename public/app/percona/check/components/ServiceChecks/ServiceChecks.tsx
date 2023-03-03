@@ -1,6 +1,6 @@
 /* eslint-disable react/display-name */
-import { logger, Chip } from '@percona/platform-core';
-import React, { FC, useEffect, useCallback, useState, useMemo } from 'react';
+import { Chip, logger } from '@percona/platform-core';
+import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { Cell, Column, Row } from 'react-table';
 
 import { useStyles2 } from '@grafana/ui';
@@ -34,7 +34,7 @@ export const ServiceChecks: FC<GrafanaRouteComponentProps<{ service: string }>> 
   const [serviceName, setServiceName] = useState('');
   const [generateToken] = useCancelToken();
   const styles = useStyles2(getStyles);
-  const navModel = usePerconaNavModel('failed-checks');
+  const navModel = usePerconaNavModel('advisors-insights');
 
   const fetchChecks = useCallback(async () => {
     try {

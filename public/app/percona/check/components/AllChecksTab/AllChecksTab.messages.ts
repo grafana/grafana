@@ -1,4 +1,5 @@
 export const Messages = {
+  availableHeader: 'Available to you',
   disable: 'Disable',
   disabled: 'Disabled',
   enable: 'Enable',

@@ -9,7 +9,7 @@ import { fetchActiveServiceTypesAction } from 'app/percona/shared/core/reducers/
 import { useAppDispatch } from 'app/store/store';
 import { FolderDTO, useSelector } from 'app/types';
 
-import { getPerconaSettings, getPerconaUser, getServices } from '../../../core/selectors';
+import { getCategorizedAdvisors, getPerconaSettings, getPerconaUser, getServices } from '../../../core/selectors';
 
 import {
   ACTIVE_SERVICE_TYPES_CHECK_INTERVAL_MS,
@@ -23,12 +23,12 @@ import {
   PMM_ENTITLEMENTS_PAGE,
   PMM_ENVIRONMENT_OVERVIEW_PAGE,
   PMM_INVENTORY_PAGE,
-  PMM_STT_PAGE,
   PMM_TICKETS_PAGE,
 } from './PerconaNavigation.constants';
 import {
   addAccessRolesLink,
   addFolderLinks,
+  buildAdvisorsNavItem,
   buildIntegratedAlertingMenuItem,
   buildInventoryAndSettings,
   filterByServices,
@@ -40,12 +40,13 @@ const PerconaNavigation: React.FC = () => {
   const { result } = useSelector(getPerconaSettings);
   const { alertingEnabled, sttEnabled, dbaasEnabled, backupEnabled } = result!;
   const { isPlatformUser, isAuthorized } = useSelector(getPerconaUser);
+  const categorizedAdvisors = useSelector(getCategorizedAdvisors);
   const isLoggedIn = !!contextSrv.user.isSignedIn;
   const dispatch = useAppDispatch();
   const { activeTypes } = useSelector(getServices);
+  const advisorsPage = buildAdvisorsNavItem(categorizedAdvisors);
 
   dispatch(updateNavIndex(getPmmSettingsPage(alertingEnabled)));
-  dispatch(updateNavIndex(PMM_STT_PAGE));
   dispatch(updateNavIndex(PMM_DBAAS_PAGE));
   dispatch(updateNavIndex(PMM_BACKUP_PAGE));
   dispatch(updateNavIndex(PMM_INVENTORY_PAGE));
@@ -55,6 +56,7 @@ const PerconaNavigation: React.FC = () => {
   dispatch(updateNavIndex(PMM_ENVIRONMENT_OVERVIEW_PAGE));
   dispatch(updateNavIndex(PMM_ACCESS_ROLE_CREATE_PAGE));
   dispatch(updateNavIndex(PMM_ACCESS_ROLE_EDIT_PAGE));
+  dispatch(updateNavIndex(advisorsPage));
 
   useEffect(() => {
     let interval: NodeJS.Timer;
@@ -102,7 +104,7 @@ const PerconaNavigation: React.FC = () => {
       }
 
       if (sttEnabled) {
-        updatedNavTree.push(PMM_STT_PAGE);
+        updatedNavTree.push(advisorsPage);
       }
 
       if (dbaasEnabled) {
@@ -120,7 +122,7 @@ const PerconaNavigation: React.FC = () => {
 
     dispatch(updateNavTree({ items: filterByServices(updatedNavTree, activeTypes) }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [result, folders, activeTypes, isAuthorized, isPlatformUser]);
+  }, [result, folders, activeTypes, isAuthorized, isPlatformUser, advisorsPage]);
 
   return null;
 };

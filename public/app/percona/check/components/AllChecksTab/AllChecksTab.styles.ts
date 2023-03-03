@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-export const getStyles = ({ v1: { spacing } }: GrafanaTheme2) => ({
+export const getStyles = ({ typography, colors, v1: { spacing } }: GrafanaTheme2) => ({
   descriptionFilter: css`
     flex: 1 0 calc(100% - 2 * ${spacing.md});
   `,
@@ -16,5 +16,13 @@ export const getStyles = ({ v1: { spacing } }: GrafanaTheme2) => ({
   runChecksButton: css`
     width: 140px;
     justify-content: center;
+  `,
+  header: css`
+    display: flex;
+    justify-content: space-between;
+  `,
+  wrapper: css`
+    padding-top: 10px;
+    padding-bottom: 10px;
   `,
 });
