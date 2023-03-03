@@ -95,8 +95,14 @@ export const Toggletip = React.memo(
             >
               {Boolean(title) && <div className={style.header}>{title}</div>}
               {closeButton && (
-                <div data-testid="toggletip-header-close" className={style.headerClose}>
-                  <IconButton aria-label="Close Toggletip" name="times" size="md" onClick={closeToggletip} />
+                <div className={style.headerClose}>
+                  <IconButton
+                    aria-label="Close Toggletip"
+                    name="times"
+                    size="md"
+                    data-testid="toggletip-header-close"
+                    onClick={closeToggletip}
+                  />
                 </div>
               )}
               <div ref={contentRef} {...getArrowProps({ className: style.arrow })} />
