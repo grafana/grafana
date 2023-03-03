@@ -43,7 +43,6 @@ type service interface {
 	HideApiKeysTab(ctx context.Context, orgID int64) error
 	MigrateApiKeysToServiceAccounts(ctx context.Context, orgID int64) error
 	MigrateApiKey(ctx context.Context, orgID int64, keyId int64) error
-	RevertApiKey(ctx context.Context, saId int64, keyId int64) error
 	// Service account tokens
 	AddServiceAccountToken(ctx context.Context, serviceAccountID int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) (*apikey.APIKey, error)
 	DeleteServiceAccountToken(ctx context.Context, orgID, serviceAccountID, tokenID int64) error
@@ -93,8 +92,6 @@ func (api *ServiceAccountsAPI) RegisterAPIEndpoints() {
 			accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.MigrateApiKeysToServiceAccounts))
 		serviceAccountsRoute.Post("/migrate/:keyId", auth(middleware.ReqOrgAdmin,
 			accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.ConvertToServiceAccount))
-		serviceAccountsRoute.Post("/:serviceAccountId/revert/:keyId", auth(middleware.ReqOrgAdmin,
-			accesscontrol.EvalPermission(serviceaccounts.ActionDelete, serviceaccounts.ScopeID)), routing.Wrap(api.RevertApiKey))
 	})
 }
 
@@ -389,23 +386,6 @@ func (api *ServiceAccountsAPI) ConvertToServiceAccount(ctx *contextmodel.ReqCont
 	}
 
 	return response.Success("Service accounts migrated")
-}
-
-// POST /api/serviceaccounts/revert/:keyId
-func (api *ServiceAccountsAPI) RevertApiKey(ctx *contextmodel.ReqContext) response.Response {
-	keyId, err := strconv.ParseInt(web.Params(ctx.Req)[":keyId"], 10, 64)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "key ID is invalid", err)
-	}
-	serviceAccountId, err := strconv.ParseInt(web.Params(ctx.Req)[":serviceAccountId"], 10, 64)
-	if err != nil {
-		return response.Error(http.StatusBadRequest, "service account ID is invalid", err)
-	}
-
-	if err := api.service.RevertApiKey(ctx.Req.Context(), serviceAccountId, keyId); err != nil {
-		return response.Error(http.StatusInternalServerError, "error reverting to API key", err)
-	}
-	return response.Success("reverted service account to API key")
 }
 
 func (api *ServiceAccountsAPI) getAccessControlMetadata(c *contextmodel.ReqContext, saIDs map[string]bool) map[string]accesscontrol.Metadata {
