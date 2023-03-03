@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//nolint
+// nolint
 package sender
 
 import (
@@ -42,6 +42,7 @@ import (
 	"github.com/prometheus/common/version"
 	"go.uber.org/atomic"
 
+	"github.com/prometheus/prometheus/config"
 	"github.com/prometheus/prometheus/discovery/targetgroup"
 	"github.com/prometheus/prometheus/pkg/labels"
 	"github.com/prometheus/prometheus/pkg/relabel"
@@ -253,30 +254,6 @@ func NewManager(o *Options, logger log.Logger) *Manager {
 	return n
 }
 
-// ApplyConfig updates the status state as the new config requires.
-func (n *Manager) ApplyConfig(conf *Config) error {
-	n.mtx.Lock()
-	defer n.mtx.Unlock()
-
-	n.opts.ExternalLabels = conf.GlobalConfig.ExternalLabels
-	n.opts.RelabelConfigs = conf.AlertingConfig.AlertRelabelConfigs
-
-	amSets := make(map[string]*alertmanagerSet)
-
-	for k, cfg := range conf.AlertingConfig.AlertmanagerConfigs.ToMap() {
-		ams, err := newAlertmanagerSet(cfg, n.logger, n.metrics)
-		if err != nil {
-			return err
-		}
-
-		amSets[k] = ams
-	}
-
-	n.alertmanagers = amSets
-
-	return nil
-}
-
 const maxBatchSize = 64
 
 func (n *Manager) queueLen() int {
@@ -479,7 +456,7 @@ func (n *Manager) sendAll(alerts ...*Alert) bool {
 		ams.mtx.RLock()
 
 		switch ams.cfg.APIVersion {
-		case AlertmanagerAPIVersionV1:
+		case config.AlertmanagerAPIVersionV1:
 			{
 				if v1Payload == nil {
 					v1Payload, err = json.Marshal(alerts)
@@ -492,7 +469,7 @@ func (n *Manager) sendAll(alerts ...*Alert) bool {
 
 				payload = v1Payload
 			}
-		case AlertmanagerAPIVersionV2:
+		case config.AlertmanagerAPIVersionV2:
 			{
 				if v2Payload == nil {
 					openAPIAlerts := alertsToOpenAPIAlerts(alerts)
@@ -510,7 +487,7 @@ func (n *Manager) sendAll(alerts ...*Alert) bool {
 		default:
 			{
 				level.Error(n.logger).Log(
-					"msg", fmt.Sprintf("Invalid Alertmanager API version '%v', expected one of '%v'", ams.cfg.APIVersion, SupportedAlertmanagerAPIVersions),
+					"msg", fmt.Sprintf("Invalid Alertmanager API version '%v', expected one of '%v'", ams.cfg.APIVersion, config.SupportedAlertmanagerAPIVersions),
 					"err", err,
 				)
 				ams.mtx.RUnlock()
@@ -535,7 +512,7 @@ func (n *Manager) sendAll(alerts ...*Alert) bool {
 				n.metrics.sent.WithLabelValues(url).Add(float64(len(alerts)))
 
 				wg.Done()
-			}(ams.client, am.url().String(), am.headers())
+			}(ams.client, am.url().String(), ams.headers)
 		}
 
 		ams.mtx.RUnlock()
@@ -610,12 +587,10 @@ func (n *Manager) Stop() {
 // alertmanager holds Alertmanager endpoint information.
 type alertmanager interface {
 	url() *url.URL
-	headers() map[string]string
 }
 
 type alertmanagerLabels struct {
 	labels.Labels
-	h map[string]string
 }
 
 const pathLabel = "__alerts_path__"
@@ -628,25 +603,7 @@ func (a alertmanagerLabels) url() *url.URL {
 	}
 }
 
-func (a alertmanagerLabels) headers() map[string]string {
-	return a.h
-}
-
-// alertmanagerSet contains a set of Alertmanagers discovered via a group of service
-// discovery definitions that have a common configuration on how alerts should be sent.
-type alertmanagerSet struct {
-	cfg    *AlertmanagerConfig
-	client *http.Client
-
-	metrics *alertMetrics
-
-	mtx        sync.RWMutex
-	ams        []alertmanager
-	droppedAms []alertmanager
-	logger     log.Logger
-}
-
-func newAlertmanagerSet(cfg *AlertmanagerConfig, logger log.Logger, metrics *alertMetrics) (*alertmanagerSet, error) {
+func newAlertmanagerSet(cfg *config.AlertmanagerConfig, logger log.Logger, metrics *alertMetrics) (*alertmanagerSet, error) {
 	client, err := config_util.NewClientFromConfig(cfg.HTTPClientConfig, "alertmanager")
 	if err != nil {
 		return nil, err
@@ -699,14 +656,14 @@ func (s *alertmanagerSet) sync(tgs []*targetgroup.Group) {
 	}
 }
 
-func postPath(pre string, v AlertmanagerAPIVersion) string {
+func postPath(pre string, v config.AlertmanagerAPIVersion) string {
 	alertPushEndpoint := fmt.Sprintf("/api/%v/alerts", string(v))
 	return path.Join("/", pre, alertPushEndpoint)
 }
 
 // alertmanagerFromGroup extracts a list of alertmanagers from a target group
 // and an associated AlertmanagerConfig.
-func alertmanagerFromGroup(tg *targetgroup.Group, cfg *AlertmanagerConfig) ([]alertmanager, []alertmanager, error) {
+func alertmanagerFromGroup(tg *targetgroup.Group, cfg *config.AlertmanagerConfig) ([]alertmanager, []alertmanager, error) {
 	var res []alertmanager
 	var droppedAlertManagers []alertmanager
 
@@ -729,7 +686,7 @@ func alertmanagerFromGroup(tg *targetgroup.Group, cfg *AlertmanagerConfig) ([]al
 
 		lset := relabel.Process(labels.New(lbls...), cfg.RelabelConfigs...)
 		if lset == nil {
-			droppedAlertManagers = append(droppedAlertManagers, alertmanagerLabels{lbls, cfg.Headers})
+			droppedAlertManagers = append(droppedAlertManagers, alertmanagerLabels{lbls})
 			continue
 		}
 
@@ -762,7 +719,7 @@ func alertmanagerFromGroup(tg *targetgroup.Group, cfg *AlertmanagerConfig) ([]al
 			lb.Set(model.AddressLabel, addr)
 		}
 
-		if err := CheckTargetAddress(model.LabelValue(addr)); err != nil {
+		if err := config.CheckTargetAddress(model.LabelValue(addr)); err != nil {
 			return nil, nil, err
 		}
 
@@ -774,7 +731,7 @@ func alertmanagerFromGroup(tg *targetgroup.Group, cfg *AlertmanagerConfig) ([]al
 			}
 		}
 
-		res = append(res, alertmanagerLabels{lset, cfg.Headers})
+		res = append(res, alertmanagerLabels{lset})
 	}
 	return res, droppedAlertManagers, nil
 }

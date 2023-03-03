@@ -16,6 +16,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	common_config "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
+	"github.com/prometheus/prometheus/config"
 	"github.com/prometheus/prometheus/discovery"
 	"github.com/prometheus/prometheus/model/labels"
 
@@ -66,7 +67,7 @@ func NewExternalAlertmanagerSender() *ExternalAlertmanager {
 
 // ApplyConfig syncs a configuration with the sender.
 func (s *ExternalAlertmanager) ApplyConfig(orgId, id int64, alertmanagers []externalAMcfg) error {
-	notifierCfg, err := buildNotifierConfig(alertmanagers)
+	notifierCfg, headers, err := buildNotifierConfig(alertmanagers)
 	if err != nil {
 		return err
 	}
@@ -74,7 +75,7 @@ func (s *ExternalAlertmanager) ApplyConfig(orgId, id int64, alertmanagers []exte
 	s.logger = s.logger.New("org", orgId, "cfg", id)
 
 	s.logger.Info("Synchronizing config with external Alertmanager group")
-	if err := s.manager.ApplyConfig(notifierCfg); err != nil {
+	if err := s.manager.ApplyConfig(notifierCfg, headers); err != nil {
 		return err
 	}
 
@@ -136,12 +137,13 @@ func (s *ExternalAlertmanager) DroppedAlertmanagers() []*url.URL {
 	return s.manager.DroppedAlertmanagers()
 }
 
-func buildNotifierConfig(alertmanagers []externalAMcfg) (*Config, error) {
-	amConfigs := make([]*AlertmanagerConfig, 0, len(alertmanagers))
-	for _, am := range alertmanagers {
+func buildNotifierConfig(alertmanagers []externalAMcfg) (*config.Config, map[string]map[string]string, error) {
+	amConfigs := make([]*config.AlertmanagerConfig, 0, len(alertmanagers))
+	headers := map[string]map[string]string{}
+	for i, am := range alertmanagers {
 		u, err := url.Parse(am.amURL)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		sdConfig := discovery.Configs{
@@ -152,13 +154,18 @@ func buildNotifierConfig(alertmanagers []externalAMcfg) (*Config, error) {
 			},
 		}
 
-		amConfig := &AlertmanagerConfig{
-			APIVersion:              AlertmanagerAPIVersionV2,
+		amConfig := &config.AlertmanagerConfig{
+			APIVersion:              config.AlertmanagerAPIVersionV2,
 			Scheme:                  u.Scheme,
 			PathPrefix:              u.Path,
 			Timeout:                 model.Duration(defaultTimeout),
 			ServiceDiscoveryConfigs: sdConfig,
-			Headers:                 am.headers,
+		}
+
+		if am.headers != nil {
+			// The key has the same format as the AlertmanagerConfigs.ToMap() would generate
+			// so we can use it later on when working with the alertmanager config map.
+			headers[fmt.Sprintf("config-%d", i)] = am.headers
 		}
 
 		// Check the URL for basic authentication information first
@@ -174,13 +181,13 @@ func buildNotifierConfig(alertmanagers []externalAMcfg) (*Config, error) {
 		amConfigs = append(amConfigs, amConfig)
 	}
 
-	notifierConfig := &Config{
-		AlertingConfig: AlertingConfig{
+	notifierConfig := &config.Config{
+		AlertingConfig: config.AlertingConfig{
 			AlertmanagerConfigs: amConfigs,
 		},
 	}
 
-	return notifierConfig, nil
+	return notifierConfig, headers, nil
 }
 
 func (s *ExternalAlertmanager) alertToNotifierAlert(alert models.PostableAlert) *Alert {
