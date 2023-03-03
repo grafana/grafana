@@ -90,7 +90,7 @@ function adjustTargetsFromResponseState(targets: LokiQuery[], response: DataQuer
 type LokiGroupedRequest = Array<{ request: DataQueryRequest<LokiQuery>; partition: TimeRange[] }>;
 
 export function runGroupedQueries(datasource: LokiDatasource, requests: LokiGroupedRequest) {
-  let mergedResponse: DataQueryResponse | null;
+  let mergedResponse: DataQueryResponse = { data: [], state: LoadingState.Streaming };
   const totalRequests = Math.max(...requests.map(({ partition }) => partition.length));
 
   let shouldStop = false;
@@ -101,23 +101,19 @@ export function runGroupedQueries(datasource: LokiDatasource, requests: LokiGrou
       return;
     }
 
-    const done = (response: DataQueryResponse) => {
-      response.state = LoadingState.Done;
-      subscriber.next(response);
+    const done = () => {
+      mergedResponse.state = LoadingState.Done;
+      subscriber.next(mergedResponse);
       subscriber.complete();
     };
 
     const nextRequest = () => {
-      mergedResponse = mergedResponse || { data: [] };
       const { nextRequestN, nextRequestGroup } = getNextRequestPointers(requests, requestGroup, requestN);
       if (nextRequestN > 0) {
-        mergedResponse.state = LoadingState.Streaming;
-        subscriber.next(mergedResponse);
-
         runNextRequest(subscriber, nextRequestN, nextRequestGroup);
         return;
       }
-      done(mergedResponse);
+      done();
     };
 
     const group = requests[requestGroup];
@@ -125,7 +121,7 @@ export function runGroupedQueries(datasource: LokiDatasource, requests: LokiGrou
     const range = group.partition[requestN - 1];
     const targets = adjustTargetsFromResponseState(group.request.targets, mergedResponse);
 
-    if (!targets.length && mergedResponse) {
+    if (!targets.length) {
       nextRequest();
       return;
     }
@@ -140,6 +136,7 @@ export function runGroupedQueries(datasource: LokiDatasource, requests: LokiGrou
           mergedResponse = combineResponses(mergedResponse, partialResponse);
         },
         complete: () => {
+          subscriber.next(mergedResponse);
           nextRequest();
         },
         error: (error) => {
