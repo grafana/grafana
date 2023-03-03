@@ -14,8 +14,9 @@ import {
   ConvertFieldTypeOptions,
   ConvertFieldTypeTransformerOptions,
 } from '@grafana/data/src/transformations/transformers/convertFieldType';
-import { Button, InlineField, InlineFieldRow, Input, Select, getIconForFieldType } from '@grafana/ui';
+import { Button, InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
+import { allFieldTypeIconOptions } from '@grafana/ui/src/components/MatchersUI/FieldTypeMatcherEditor';
 import { hasAlphaPanels } from 'app/core/config';
 import { findField } from 'app/features/dimensions';
 
@@ -28,14 +29,7 @@ export const ConvertFieldTypeTransformerEditor = ({
   options,
   onChange,
 }: TransformerUIProps<ConvertFieldTypeTransformerOptions>) => {
-  const allTypes: Array<SelectableValue<FieldType>> = [
-    { value: FieldType.number, label: 'Number', icon: getIconForFieldType(FieldType.number) },
-    { value: FieldType.string, label: 'String', icon: getIconForFieldType(FieldType.string) },
-    { value: FieldType.time, label: 'Time', icon: getIconForFieldType(FieldType.time) },
-    { value: FieldType.boolean, label: 'Boolean', icon: getIconForFieldType(FieldType.boolean) },
-    { value: FieldType.enum, label: 'Enum', icon: getIconForFieldType(FieldType.enum) },
-    { value: FieldType.other, label: 'JSON', icon: getIconForFieldType(FieldType.other) },
-  ];
+  const allTypes = allFieldTypeIconOptions.filter((v) => v.value !== FieldType.trace);
 
   const onSelectField = useCallback(
     (idx: number) => (value: string | undefined) => {

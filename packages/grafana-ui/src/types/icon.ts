@@ -13,15 +13,14 @@ export type IconSize = ComponentSize | 'xl' | 'xxl' | 'xxxl';
 export const getAvailableIcons = () => Object.keys(availableIconsIndex);
 
 /**
- * Get the icon for a given field type
- * @deprecated use `getIconForFieldType`
+ * Get the icon for a given field
  */
 export function getFieldTypeIcon(field?: Field): IconName {
-  return getIconForFieldType(field?.type);
+  return getFieldTypeIconName(field?.type);
 }
 
-/** Get an icon to represent a field type  */
-export function getIconForFieldType(type?: FieldType): IconName {
+/** Get an icon for a given field type  */
+export function getFieldTypeIconName(type?: FieldType): IconName {
   if (type) {
     switch (type) {
       case FieldType.time:
