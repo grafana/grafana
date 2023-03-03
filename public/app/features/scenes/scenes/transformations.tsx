@@ -1,14 +1,7 @@
-import { map } from 'rxjs';
+import { map, MonoTypeOperatorFunction } from 'rxjs';
 
-import { ArrayVector, DataFrame, Field, FieldType } from '@grafana/data';
-import {
-  SceneTimePicker,
-  SceneFlexLayout,
-  VizPanel,
-  SceneDataTransformer,
-  SceneTimeRange,
-  SceneDataCustomTransformer,
-} from '@grafana/scenes';
+import { ArrayVector, DataFrame, DataTransformContext, Field, FieldType } from '@grafana/data';
+import { SceneTimePicker, SceneFlexLayout, VizPanel, SceneDataTransformer, SceneTimeRange } from '@grafana/scenes';
 
 import { DashboardScene } from '../dashboard/DashboardScene';
 
@@ -30,6 +23,7 @@ export function getTransformationsDemo(): DashboardScene {
                   pluginId: 'timeseries',
                   title: 'Source data (global query)',
                 }),
+
                 new VizPanel({
                   pluginId: 'stat',
                   title: 'Transformed data',
@@ -44,43 +38,44 @@ export function getTransformationsDemo(): DashboardScene {
                     ],
                   }),
                 }),
+
                 new VizPanel({
                   pluginId: 'timeseries',
                   title: 'Data with a custom transformer (original value * 2)',
-                  $data: new SceneDataCustomTransformer({
-                    transformation: (ctx) => (source) =>
-                      source.pipe(
-                        map((data) => {
-                          const processed: DataFrame[] = [];
+                  $data: new SceneDataTransformer({
+                    transformations: [multiplyBy2],
+                  }),
+                }),
 
-                          for (const series of data) {
-                            const fields: Field[] = [];
-                            for (const field of series.fields) {
-                              if (field.type === FieldType.number) {
-                                fields.push({
-                                  ...field,
-                                  values: new ArrayVector(field.values.toArray().map((v) => v * 2)),
-                                  state: undefined,
-                                });
-                              } else {
-                                fields.push({
-                                  ...field,
-                                  values: new ArrayVector(field.values.toArray()),
-                                  state: undefined,
-                                });
-                              }
-                            }
-
-                            processed.push({
-                              ...series,
-                              fields,
-                              length: fields[0].values.length,
-                            });
-                          }
-
-                          return processed;
-                        })
-                      ),
+                new VizPanel({
+                  pluginId: 'stat',
+                  title: 'Mixed transformations (original value * 2 and reduced)',
+                  $data: new SceneDataTransformer({
+                    transformations: [
+                      multiplyBy2,
+                      {
+                        id: 'reduce',
+                        options: {
+                          reducers: ['last', 'mean'],
+                        },
+                      },
+                    ],
+                  }),
+                }),
+                new VizPanel({
+                  pluginId: 'stat',
+                  title: 'Mixed transformations (original value *2 and reduced and *2)',
+                  $data: new SceneDataTransformer({
+                    transformations: [
+                      multiplyBy2,
+                      {
+                        id: 'reduce',
+                        options: {
+                          reducers: ['last', 'mean'],
+                        },
+                      },
+                      multiplyBy2,
+                    ],
                   }),
                 }),
               ],
@@ -98,7 +93,23 @@ export function getTransformationsDemo(): DashboardScene {
                 ],
               }),
               pluginId: 'stat',
-              title: 'Query with predefined transformations',
+              title: 'Query with predefined std transformations',
+            }),
+
+            new VizPanel({
+              $data: getQueryRunnerWithRandomWalkQuery(undefined, {
+                transformations: [
+                  {
+                    id: 'reduce',
+                    options: {
+                      reducers: ['mean'],
+                    },
+                  },
+                  multiplyBy2,
+                ],
+              }),
+              pluginId: 'stat',
+              title: 'Query with predefined transformations (std + custom)',
             }),
           ],
         }),
@@ -109,3 +120,38 @@ export function getTransformationsDemo(): DashboardScene {
     actions: [new SceneTimePicker({})],
   });
 }
+
+const multiplyBy2: (ctx: DataTransformContext) => MonoTypeOperatorFunction<DataFrame[]> = (ctx) => (source) => {
+  return source.pipe(
+    map((data) => {
+      const processed: DataFrame[] = [];
+
+      for (const series of data) {
+        const fields: Field[] = [];
+        for (const field of series.fields) {
+          if (field.type === FieldType.number) {
+            fields.push({
+              ...field,
+              values: new ArrayVector(field.values.toArray().map((v) => v * 2)),
+              state: undefined,
+            });
+          } else {
+            fields.push({
+              ...field,
+              values: new ArrayVector(field.values.toArray()),
+              state: undefined,
+            });
+          }
+        }
+
+        processed.push({
+          ...series,
+          fields,
+          length: fields[0].values.length,
+        });
+      }
+
+      return processed;
+    })
+  );
+};
