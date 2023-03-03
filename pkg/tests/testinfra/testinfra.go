@@ -376,7 +376,7 @@ type GrafanaOpts struct {
 	QueryRetries                          int64
 }
 
-func CreateUser(t *testing.T, store *sqlstore.SQLStore, cmd user.CreateUserCommand) int64 {
+func CreateUser(t *testing.T, store *sqlstore.SQLStore, cmd user.CreateUserCommand) *user.User {
 	t.Helper()
 
 	store.Cfg.AutoAssignOrg = true
@@ -389,7 +389,12 @@ func CreateUser(t *testing.T, store *sqlstore.SQLStore, cmd user.CreateUserComma
 	usrSvc, err := userimpl.ProvideService(store, orgService, store.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
 
-	u, err := usrSvc.CreateUserForTests(context.Background(), &cmd)
+	o, err := orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: fmt.Sprintf("test org %d", time.Now().UnixNano())})
 	require.NoError(t, err)
-	return u.ID
+
+	cmd.OrgID = o.ID
+
+	u, err := usrSvc.Create(context.Background(), &cmd)
+	require.NoError(t, err)
+	return u
 }
