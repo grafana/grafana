@@ -1,7 +1,7 @@
 ---
 title: Planning IAM integration strategy
 menuTitle: IAM integration
-description: Considerations and .
+description: Considerations and planification before setting up Grafana for the first time.
 aliases:
   - /docs/mimir/latest/old-architecture/
   - docs/sources/auth/planning/
