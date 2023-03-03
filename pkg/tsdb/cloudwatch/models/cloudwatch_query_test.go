@@ -1316,5 +1316,4 @@ func TestGetEndpoint(t *testing.T) {
 			assert.Equal(t, ts.expectedEndpoint, actual)
 		})
 	}
-
 }
