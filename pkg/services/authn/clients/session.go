@@ -4,37 +4,33 @@ import (
 	"context"
 	"errors"
 	"net/url"
-	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/network"
-	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 var _ authn.HookClient = new(Session)
 var _ authn.ContextAwareClient = new(Session)
 
-func ProvideSession(sessionService auth.UserTokenService, userService user.Service,
-	cookieName string, maxLifetime time.Duration) *Session {
+func ProvideSession(sessionService auth.UserTokenService, userService user.Service, cfg *setting.Cfg) *Session {
 	return &Session{
-		loginCookieName:  cookieName,
-		loginMaxLifetime: maxLifetime,
-		sessionService:   sessionService,
-		userService:      userService,
-		log:              log.New(authn.ClientSession),
+		cfg:            cfg,
+		sessionService: sessionService,
+		userService:    userService,
+		log:            log.New(authn.ClientSession),
 	}
 }
 
 type Session struct {
-	loginCookieName  string
-	loginMaxLifetime time.Duration // jguer: should be returned by session Service on rotate
-	sessionService   auth.UserTokenService
-	userService      user.Service
-	log              log.Logger
+	cfg            *setting.Cfg
+	sessionService auth.UserTokenService
+	userService    user.Service
+	log            log.Logger
 }
 
 func (s *Session) Name() string {
@@ -42,7 +38,7 @@ func (s *Session) Name() string {
 }
 
 func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
-	unescapedCookie, err := r.HTTPRequest.Cookie(s.loginCookieName)
+	unescapedCookie, err := r.HTTPRequest.Cookie(s.cfg.LoginCookieName)
 	if err != nil {
 		return nil, err
 	}
@@ -73,11 +69,11 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 }
 
 func (s *Session) Test(ctx context.Context, r *authn.Request) bool {
-	if s.loginCookieName == "" {
+	if s.cfg.LoginCookieName == "" {
 		return false
 	}
 
-	if _, err := r.HTTPRequest.Cookie(s.loginCookieName); err != nil {
+	if _, err := r.HTTPRequest.Cookie(s.cfg.LoginCookieName); err != nil {
 		return false
 	}
 
@@ -118,11 +114,7 @@ func (s *Session) Hook(ctx context.Context, identity *authn.Identity, r *authn.R
 			identity.SessionToken = newToken
 			s.log.Debug("rotated session token", "user", identity.ID)
 
-			maxAge := int(s.loginMaxLifetime.Seconds())
-			if s.loginMaxLifetime <= 0 {
-				maxAge = -1
-			}
-			cookies.WriteCookie(r.Resp, s.loginCookieName, url.QueryEscape(identity.SessionToken.UnhashedToken), maxAge, nil)
+			authn.WriteSessionCookie(w, s.cfg, identity)
 		}
 	})
 
