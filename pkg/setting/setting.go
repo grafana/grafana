@@ -425,6 +425,8 @@ type Cfg struct {
 	ApplicationInsightsEndpointUrl      string
 	FeedbackLinksEnabled                bool
 
+	// Frontend analytics
+	IntercomSecret string
 	// AzureAD
 	AzureADSkipOrgRoleSync bool
 
@@ -1042,6 +1044,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	RudderstackDataPlaneUrl = analytics.Key("rudderstack_data_plane_url").String()
 	RudderstackSdkUrl = analytics.Key("rudderstack_sdk_url").String()
 	RudderstackConfigUrl = analytics.Key("rudderstack_config_url").String()
+	cfg.IntercomSecret = analytics.Key("intercom_secret").String()
 
 	cfg.ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
 	cfg.ReportingDistributor = analytics.Key("reporting_distributor").MustString("grafana-labs")

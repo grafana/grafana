@@ -192,6 +192,11 @@ type GetSignedInUserQuery struct {
 	OrgID  int64 `xorm:"org_id"`
 }
 
+type AnalyticsSettings struct {
+	Identifier         string
+	IntercomIdentifier string
+}
+
 type SignedInUser struct {
 	UserID             int64 `xorm:"user_id"`
 	OrgID              int64 `xorm:"org_id"`
@@ -211,6 +216,7 @@ type SignedInUser struct {
 	HelpFlags1         HelpFlags1
 	LastSeenAt         time.Time
 	Teams              []int64
+	Analytics          AnalyticsSettings
 	// Permissions grouped by orgID and actions
 	Permissions map[int64]map[string][]string `json:"-"`
 }
