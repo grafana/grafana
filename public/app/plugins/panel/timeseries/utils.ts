@@ -68,7 +68,9 @@ export function prepareGraphableFields(
     series = prepareTimeSeriesLong(series);
   }
 
-  series = unifyEnumFields(series);
+  if (series.some((frame) => frame.fields.some((field) => field.type === FieldType.enum))) {
+    series = unifyEnumFields(series);
+  }
 
   let copy: Field;
 
