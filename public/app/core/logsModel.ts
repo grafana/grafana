@@ -18,6 +18,7 @@ import {
   FieldWithIndex,
   findCommonLabels,
   findUniqueLabels,
+  getTimeField,
   Labels,
   LoadingState,
   LogLevel,
@@ -30,6 +31,7 @@ import {
   MutableDataFrame,
   rangeUtil,
   ScopedVars,
+  sortDataFrame,
   textUtil,
   TimeRange,
   toDataFrame,
@@ -39,7 +41,6 @@ import { SIPrefix } from '@grafana/data/src/valueFormats/symbolFormatters';
 import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
 import { ansicolor, colors } from '@grafana/ui';
 import { getThemeColor } from 'app/core/utils/colors';
-import { sortDataFrameByTime, SortDirection } from 'app/plugins/datasource/loki/sortDataFrame';
 
 import { getLogLevel, getLogLevelFromKey, sortInAscendingOrder } from '../features/logs/utils';
 
@@ -802,7 +803,8 @@ export function queryLogsSample<TQuery extends DataQuery, TOptions extends DataS
         } else {
           rawLogsSample = dataQueryResponse.data.map((dataFrame) => {
             const frame = toDataFrame(dataFrame);
-            return sortDataFrameByTime(frame, SortDirection.ASCENDING);
+            const { timeIndex } = getTimeField(frame);
+            return sortDataFrame(frame, timeIndex);
           });
         }
       },
