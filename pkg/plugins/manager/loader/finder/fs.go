@@ -268,11 +268,6 @@ func collectFilesWithin(dir string) (map[string]struct{}, error) {
 			return nil
 		}
 
-		// Ignoring unsigned Chromium debug.log so it doesn't invalidate the signature for Renderer plugin running on Windows
-		//if runningWindows && plugin.IsRenderer() && strings.HasSuffix(path, filepath.Join("chrome-win", "debug.log")) {
-		//	return nil
-		//}
-
 		// verify that file is within plugin directory
 		file, err := filepath.Rel(dir, path)
 		if err != nil {
