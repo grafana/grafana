@@ -450,3 +450,5 @@ replace google.golang.org/grpc => google.golang.org/grpc v1.45.0
 replace google.golang.org/genproto => google.golang.org/genproto v0.0.0-20220421151946-72621c1f0bd3
 
 exclude github.com/mattn/go-sqlite3 v2.0.3+incompatible
+
+replace github.com/ory/fosite => github.com/mgyongyosi/fosite v0.0.0-20230226104133-439351815964
