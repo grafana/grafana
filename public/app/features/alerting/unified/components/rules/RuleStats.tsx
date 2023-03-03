@@ -34,9 +34,8 @@ export const RuleStats: FC<Props> = ({ group, namespaces, includeTotal }) => {
       if (rule.promRule && isAlertingRule(rule.promRule)) {
         if (isGrafanaRulerRulePaused(rule)) {
           stats.paused += 1;
-        } else {
-          stats[rule.promRule.state] += 1;
         }
+        stats[rule.promRule.state] += 1;
       }
       if (ruleHasError(rule)) {
         stats.error += 1;
@@ -87,14 +86,20 @@ export const RuleStats: FC<Props> = ({ group, namespaces, includeTotal }) => {
     );
   }
 
-  if (calculated[PromAlertingRuleState.Inactive]) {
+  if (calculated[PromAlertingRuleState.Inactive] && calculated.paused) {
     statsComponents.push(
-      <Badge color="green" key="inactive" text={`${calculated[PromAlertingRuleState.Inactive]} normal`} />
+      <Badge
+        color="green"
+        key="paused"
+        text={`${calculated[PromAlertingRuleState.Inactive]} normal (${calculated.paused} paused)`}
+      />
     );
   }
 
-  if (calculated.paused) {
-    statsComponents.push(<Badge color="green" key="paused" text={`${calculated.paused} paused`} />);
+  if (calculated[PromAlertingRuleState.Inactive] && !calculated.paused) {
+    statsComponents.push(
+      <Badge color="green" key="inactive" text={`${calculated[PromAlertingRuleState.Inactive]} normal`} />
+    );
   }
 
   if (calculated.recording) {
