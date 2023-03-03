@@ -143,7 +143,7 @@ seqs: [
 					...
 				}
 
-				// Schema definition for the plugin.json file. Used to verify the validy it.
+				// Schema definition for the plugin.json file. Used primarily for schema validation.
 				$schema?: string 
 
 				// FIXME there appears to be a bug in thema that prevents this from working. Maybe it'd

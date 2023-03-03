@@ -67,7 +67,7 @@
     },
     "$schema": {
       "type": "string",
-      "description": "Schema definition for the plugin.json file. Used to verify the validy it."
+      "description": "Schema definition for the plugin.json file. Used primarily for schema validation."
     },
     "category": {
       "type": "string",
