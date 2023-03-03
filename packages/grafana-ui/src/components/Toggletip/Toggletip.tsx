@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { Placement } from '@popperjs/core';
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { usePopperTooltip } from 'react-popper-tooltip';
 
 import { colorManipulator, GrafanaTheme2 } from '@grafana/data';
@@ -46,10 +46,10 @@ export const Toggletip = React.memo(
     const contentRef = useRef(null);
     const [controlledVisible, setControlledVisible] = React.useState(false);
 
-    const closeToggletip = () => {
+    const closeToggletip = useCallback(() => {
       setControlledVisible(false);
       onClose?.();
-    };
+    }, [onClose]);
 
     useEffect(() => {
       if (controlledVisible) {
@@ -64,7 +64,7 @@ export const Toggletip = React.memo(
         };
       }
       return;
-    }, [controlledVisible]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [controlledVisible, closeToggletip]);
 
     const { getArrowProps, getTooltipProps, setTooltipRef, setTriggerRef, visible, update } = usePopperTooltip({
       visible: controlledVisible,
