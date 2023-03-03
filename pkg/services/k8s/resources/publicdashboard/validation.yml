@@ -8,7 +8,7 @@ webhooks:
   - apiGroups:   ["*"]
     apiVersions: ["*"]
     operations:  ["CREATE"]
-    resources:   ["*"]
+    resources:   ["publicdashboards"]
     scope:       "Namespaced"
   clientConfig:
     url: "https://host.docker.internal:3443/k8s/publicdashboards/admission/create"
