@@ -322,5 +322,13 @@
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/78"
     }
+  },
+  {
+    "type": "label",
+    "name": "area/backend",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/96"
+    }
   }
 ]
