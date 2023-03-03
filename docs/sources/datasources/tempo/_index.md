@@ -219,11 +219,11 @@ For details, refer to the [query editor documentation]({{< relref "./query-edito
 You can upload a JSON file that contains a single trace and visualize it.
 If the file has multiple traces, Grafana visualizes its first trace.
 
-**To download a trace or service graph through the inspector:**
+**To download a trace or Service Graph through the inspector:**
 
 1. Open the inspector.
 1. Navigate to the **Data** tab.
-1. Click **Download traces** or **Download service graph**.
+1. Click **Download traces** or **Download Service Graph**.
 
 ### Trace JSON example
 
@@ -269,18 +269,18 @@ If the file has multiple traces, Grafana visualizes its first trace.
 }
 ```
 
-## Use the service graph
+## Use the Service Graph
 
-A service graph is a visual representation of the relationships between services.
+The Service Graph is a visual representation of the relationships between services.
 Each node on the graph represents a service such as an API or database.
 
-You use a service graph to detect performance issues; track increases in error, fault, or throttle rates in services; and investigate root causes by viewing corresponding traces.
+You use the Service Graph to detect performance issues; track increases in error, fault, or throttle rates in services; and investigate root causes by viewing corresponding traces.
 
 {{< figure src="/static/img/docs/node-graph/node-graph-8-0.png" class="docs-image--no-shadow" max-width="500px" caption="Screenshot of a Node Graph" >}}
 
-**To display the service graph:**
+**To display the Service Graph:**
 
-1. [Configure Grafana Agent](/docs/tempo/latest/grafana-agent/service-graphs/#quickstart) or [Tempo or GET](/docs/tempo/latest/metrics-generator/service_graphs/#tempo) to generate service graph data.
+1. [Configure Grafana Agent](/docs/tempo/latest/grafana-agent/service-graphs/#quickstart) or [Tempo or GET](/docs/tempo/latest/metrics-generator/service_graphs/#tempo) to generate Service Graph data.
 1. Link a Prometheus data source in the Tempo data source's [Service Graph](#configure-service-graph) settings.
 1. Navigate to [Explore]({{< relref "../../explore/" >}}).
 1. Select the Tempo data source.
