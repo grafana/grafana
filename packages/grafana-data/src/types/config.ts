@@ -96,6 +96,11 @@ export type OAuth =
  */
 export type OAuthSettings = Partial<Record<OAuth, { name: string; icon?: IconName }>>;
 
+/**
+ * Information needed for analytics providers
+ *
+ * @internal
+ */
 export interface AnalyticsSettings {
   identifier: string;
   intercomIdentifier?: string;
