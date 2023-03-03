@@ -132,7 +132,7 @@ The **Service Graph** section configures the [Service Graph](/docs/tempo/latest/
 
 Configure the **Data source** setting to define in which Prometheus instance the Service Graph data is stored.
 
-To use the Service Graph, refer to the [service graph documentation]({{< relref "#use-the-service-graph" >}}).
+To use the Service Graph, refer to the [Service Graph documentation]({{< relref "#use-the-service-graph" >}}).
 
 ### Node Graph
 
