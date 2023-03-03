@@ -1,3 +1,4 @@
 :443
 tls /conf/final/out.pem /conf/final/out-key.pem
 reverse_proxy host.docker.internal:3000
+log
