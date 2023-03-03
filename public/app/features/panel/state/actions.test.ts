@@ -24,7 +24,7 @@ jest.mock('app/features/plugins/importPanelPlugin', () => {
 jest.mock('app/features/dashboard/services/DashboardSrv', () => ({
   getDashboardSrv: () => {
     return {
-      getCurrent: () => undefined, //
+      getCurrent: () => undefined,
     };
   },
 }));
