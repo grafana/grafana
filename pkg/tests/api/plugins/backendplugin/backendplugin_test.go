@@ -262,7 +262,7 @@ func newTestScenario(t *testing.T, name string, opts []testScenarioOption, callb
 	tsCtx.testEnv = testEnv
 	ctx := context.Background()
 
-	testinfra.CreateUser(t, testEnv.SQLStore, user.CreateUserCommand{
+	u := testinfra.CreateUser(t, testEnv.SQLStore, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin",
 		Login:          "admin",
@@ -284,7 +284,7 @@ func newTestScenario(t *testing.T, name string, opts []testScenarioOption, callb
 
 	tsCtx.uid = "test-plugin"
 	cmd := &datasources.AddDataSourceCommand{
-		OrgId:          1,
+		OrgId:          u.OrgID,
 		Access:         datasources.DS_ACCESS_PROXY,
 		Name:           "TestPlugin",
 		Type:           tsCtx.testPluginID,
@@ -306,7 +306,7 @@ func newTestScenario(t *testing.T, name string, opts []testScenarioOption, callb
 	require.NoError(t, err)
 
 	getDataSourceQuery := &datasources.GetDataSourceQuery{
-		OrgId: 1,
+		OrgId: u.OrgID,
 		Uid:   tsCtx.uid,
 	}
 	err = testEnv.Server.HTTPServer.DataSourcesService.GetDataSource(ctx, getDataSourceQuery)
