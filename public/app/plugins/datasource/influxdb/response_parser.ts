@@ -266,14 +266,26 @@ function addUnique(s: Set<string>, value: string | number) {
 function rawQuerySelectedFieldsInDataframe(query: string | undefined, dfs: DataFrame[]) {
   const names: Array<string | undefined> = dfs.map((df: DataFrame) => df.name);
 
-  return names.every((name: string | undefined) => {
+  const colsInRawQuery: boolean = names.every((name: string | undefined) => {
     if (name && query) {
       // table name and field, i.e. cpu.usage_guest_nice becomes ['cpu', 'usage_guest_nice']
       const nameParts: string[] = name.split('.');
 
-      return nameParts.every((np) => query.includes(np));
+      return nameParts.every((np) => query.toLowerCase().includes(np.toLowerCase()));
     }
 
     return false;
   });
+
+  const queryChecks: string[] = ['*', 'SHOW'];
+
+  const otherChecks: boolean = queryChecks.some((qc: string) => {
+    if (query) {
+      return query.toLowerCase().includes(qc.toLowerCase());
+    }
+
+    return false;
+  });
+
+  return colsInRawQuery || otherChecks;
 }
