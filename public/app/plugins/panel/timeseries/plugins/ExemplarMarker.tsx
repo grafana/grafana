@@ -16,7 +16,6 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { FieldLinkList, Portal, UPlotConfigBuilder, useStyles2 } from '@grafana/ui';
 
-import { CloseButton } from '../../../../core/components/CloseButton/CloseButton';
 import { ExemplarModalHeader } from '../../heatmap/ExemplarModalHeader';
 
 interface ExemplarMarkerProps {
