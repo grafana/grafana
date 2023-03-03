@@ -113,7 +113,7 @@ func (pd *PublicDashboardServiceImpl) FindPublicDashboardAndDashboardByAccessTok
 	}
 
 	if !pubdash.IsEnabled {
-		return nil, nil, ErrPublicDashboardNotFound.Errorf("FindPublicDashboardAndDashboardByAccessToken: Public dashboard is disabled accessToken: %s", accessToken)
+		return nil, nil, ErrPublicDashboardNotEnabled.Errorf("FindPublicDashboardAndDashboardByAccessToken: Public dashboard is paused accessToken: %s", accessToken)
 	}
 
 	dash, err := pd.store.FindDashboard(ctx, pubdash.OrgId, pubdash.DashboardUid)
