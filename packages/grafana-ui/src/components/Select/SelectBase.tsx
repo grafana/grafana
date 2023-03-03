@@ -4,7 +4,7 @@ import { default as ReactAsyncSelect } from 'react-select/async';
 import { default as AsyncCreatable } from 'react-select/async-creatable';
 import Creatable from 'react-select/creatable';
 
-import { SelectableValue } from '@grafana/data';
+import { SelectableValue, toOption } from '@grafana/data';
 
 import { useTheme2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
@@ -198,7 +198,7 @@ export function SelectBase<T>({
         if (!allowCustomValue || selectableValue) {
           return selectableValue;
         }
-        return typeof v === 'object' ? v : { label: v, value: v };
+        return typeof v === 'string' ? toOption(v) : v;
       });
     } else if (loadOptions) {
       const hasValue = defaultValue || value;
