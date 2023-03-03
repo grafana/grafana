@@ -364,13 +364,6 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 	return searchResult, nil
 }
 
-func (s *ServiceAccountsStoreImpl) HideApiKeysTab(ctx context.Context, orgId int64) error {
-	if err := s.kvStore.Set(ctx, orgId, "serviceaccounts", "hideApiKeys", "1"); err != nil {
-		s.log.Error("Failed to hide API keys tab", err)
-	}
-	return nil
-}
-
 func (s *ServiceAccountsStoreImpl) MigrateApiKeysToServiceAccounts(ctx context.Context, orgId int64) error {
 	basicKeys, err := s.apiKeyService.GetAllAPIKeys(ctx, orgId)
 	if err != nil {
@@ -434,60 +427,6 @@ func (s *ServiceAccountsStoreImpl) CreateServiceAccountFromApikey(ctx context.Co
 
 		return nil
 	})
-}
-
-// RevertApiKey converts service account token to old API key
-func (s *ServiceAccountsStoreImpl) RevertApiKey(ctx context.Context, saId int64, keyId int64) error {
-	query := apikey.GetByIDQuery{ApiKeyID: keyId}
-	if err := s.apiKeyService.GetApiKeyById(ctx, &query); err != nil {
-		return err
-	}
-	key := query.Result
-
-	if key.ServiceAccountId == nil {
-		return fmt.Errorf("API key is not service account token")
-	}
-
-	if *key.ServiceAccountId != saId {
-		return serviceaccounts.ErrServiceAccountAndTokenMismatch
-	}
-
-	tokens, err := s.ListTokens(ctx, &serviceaccounts.GetSATokensQuery{
-		OrgID:            &key.OrgID,
-		ServiceAccountID: key.ServiceAccountId,
-	})
-	if err != nil {
-		return fmt.Errorf("cannot revert token: %w", err)
-	}
-	if len(tokens) > 1 {
-		return fmt.Errorf("cannot revert token: service account contains more than one token")
-	}
-
-	err = s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		user := user.User{}
-		has, err := sess.Where(`org_id = ? and id = ? and is_service_account = ?`,
-			key.OrgID, *key.ServiceAccountId, s.sqlStore.GetDialect().BooleanStr(true)).Get(&user)
-		if err != nil {
-			return err
-		}
-		if !has {
-			return serviceaccounts.ErrServiceAccountNotFound
-		}
-		// Detach API key from service account
-		if err := s.detachApiKeyFromServiceAccount(sess, key.ID); err != nil {
-			return err
-		}
-		// Delete service account
-		if err := s.deleteServiceAccount(sess, key.OrgID, *key.ServiceAccountId); err != nil {
-			return err
-		}
-		return nil
-	})
-
-	if err != nil {
-		return fmt.Errorf("cannot revert token to API key: %w", err)
-	}
-	return nil
 }
 
 func serviceAccountDeletions(dialect migrator.Dialect) []string {

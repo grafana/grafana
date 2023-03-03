@@ -79,7 +79,7 @@ func ProvideService(
 	s.RegisterClient(clients.ProvideAPIKey(apikeyService, userService))
 
 	if cfg.LoginCookieName != "" {
-		s.RegisterClient(clients.ProvideSession(sessionService, userService, cfg.LoginCookieName, cfg.LoginMaxLifetime))
+		s.RegisterClient(clients.ProvideSession(sessionService, userService, cfg))
 	}
 
 	if s.cfg.AnonymousEnabled {

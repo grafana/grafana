@@ -129,25 +129,3 @@ func (s *ServiceAccountsStoreImpl) assignApiKeyToServiceAccount(sess *db.Session
 
 	return nil
 }
-
-// detachApiKeyFromServiceAccount converts service account token to old API key
-func (s *ServiceAccountsStoreImpl) detachApiKeyFromServiceAccount(sess *db.Session, apiKeyId int64) error {
-	key := apikey.APIKey{ID: apiKeyId}
-	exists, err := sess.Get(&key)
-	if err != nil {
-		s.log.Warn("Cannot get API key", "err", err)
-		return err
-	}
-	if !exists {
-		s.log.Warn("API key not found", "err", err)
-		return apikey.ErrNotFound
-	}
-	key.ServiceAccountId = nil
-
-	if _, err := sess.ID(key.ID).AllCols().Update(&key); err != nil {
-		s.log.Error("Could not update api key", "err", err)
-		return err
-	}
-
-	return nil
-}
