@@ -25,7 +25,7 @@ func Init() error {
 	if err != nil {
 		return fmt.Errorf("failed to enable execution of cross-platform Docker images: %w\n%s", err, output)
 	}
-	fmt.Println("Emulators have been installed successfully!", string(output))
+	log.Println("emulators have been installed successfully!", string(output))
 
 	return nil
 }
