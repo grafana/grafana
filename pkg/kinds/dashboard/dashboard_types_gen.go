@@ -285,8 +285,8 @@ type Dashboard struct {
 		TimeOptions []string `json:"time_options"`
 	} `json:"timepicker,omitempty"`
 
-	// Timezone of dashboard. Accepts IANA TZDB zone ID or "browser" or "utc".
-	Timezone *string `json:"timezone,omitempty"`
+	// A specific timezone from https://en.wikipedia.org/wiki/Tz_database
+	Timezone *TimeZone `json:"timezone,omitempty"`
 
 	// Title of dashboard.
 	Title *string `json:"title,omitempty"`
@@ -721,6 +721,9 @@ type ThresholdsConfig struct {
 
 // ThresholdsMode defines model for ThresholdsMode.
 type ThresholdsMode string
+
+// A specific timezone from https://en.wikipedia.org/wiki/Tz_database
+type TimeZone = string
 
 // TODO docs
 type ValueMap struct {

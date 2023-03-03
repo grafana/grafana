@@ -2,6 +2,8 @@ package kind
 
 import "strings"
 
+import "github.com/grafana/grafana/packages/grafana-schema/src/common"
+
 name:        "Dashboard"
 maturity:    "experimental"
 description: "A Grafana dashboard."
@@ -35,7 +37,7 @@ lineage: seqs: [
 				// Theme of dashboard.
 				style: "light" | *"dark" @grafanamaturity(NeedsExpertReview)
 				// Timezone of dashboard. Accepts IANA TZDB zone ID or "browser" or "utc".
-				timezone?: string | *"browser"
+				timezone?: common.TimeZone | *"browser"
 				// Whether a dashboard is editable or not.
 				editable: bool | *true
 				// Configuration of dashboard cursor sync behavior.
