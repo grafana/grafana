@@ -52,6 +52,7 @@ TableImageCellOptions: {
 TableBarGaugeCellOptions: {
 	type: TableCellDisplayMode & "gauge"
 	mode?: BarGaugeDisplayMode
+	local?: bool | *false
 } @cuetsy(kind="interface")
 
 // Colored background cell options

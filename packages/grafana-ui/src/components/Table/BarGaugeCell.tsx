@@ -27,22 +27,25 @@ const defaultScale: ThresholdsConfig = {
 export const BarGaugeCell: FC<TableCellProps> = (props) => {
   const { field, innerWidth, tableStyles, cell, cellProps, row } = props;
 
-  let config = getFieldConfigWithMinMax(field, false);
+  const displayValue = field.display!(cell.value);
+
+  // Set default display mode
+  let barGaugeMode: BarGaugeDisplayMode = BarGaugeDisplayMode.Gradient;
+  // Set using local range to false
+  let useLocalRange = false;
+
+  const cellOptions = getCellOptions(field);
+  if (cellOptions.type === TableCellDisplayMode.Gauge) {
+    barGaugeMode = cellOptions.mode ?? BarGaugeDisplayMode.Gradient;
+    useLocalRange = cellOptions.local ?? false;
+  }
+
+  let config = getFieldConfigWithMinMax(field, useLocalRange);
   if (!config.thresholds) {
     config = {
       ...config,
       thresholds: defaultScale,
     };
-  }
-
-  const displayValue = field.display!(cell.value);
-
-  // Set default display mode
-  let barGaugeMode: BarGaugeDisplayMode = BarGaugeDisplayMode.Gradient;
-
-  const cellOptions = getCellOptions(field);
-  if (cellOptions.type === TableCellDisplayMode.Gauge) {
-    barGaugeMode = cellOptions.mode ?? BarGaugeDisplayMode.Gradient;
   }
 
   const getLinks = () => {

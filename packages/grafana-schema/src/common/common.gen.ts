@@ -692,9 +692,14 @@ export interface TableImageCellOptions {
  * Gauge cell options
  */
 export interface TableBarGaugeCellOptions {
+  local?: boolean;
   mode?: BarGaugeDisplayMode;
   type: TableCellDisplayMode.Gauge;
 }
+
+export const defaultTableBarGaugeCellOptions: Partial<TableBarGaugeCellOptions> = {
+  local: false,
+};
 
 /**
  * Colored background cell options

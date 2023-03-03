@@ -2,7 +2,7 @@ import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { BarGaugeDisplayMode, TableBarGaugeCellOptions } from '@grafana/schema';
-import { Field, HorizontalGroup, Select } from '@grafana/ui';
+import { Field, HorizontalGroup, Select, Switch } from '@grafana/ui';
 
 import { TableCellEditorProps } from '../TableCellOptionEditor';
 
@@ -22,11 +22,25 @@ export const BarGaugeCellOptionsEditor = ({
     onChange(cellOptions);
   };
 
+  const onLocalRangeToggle = (e: React.FormEvent<HTMLInputElement>) => {
+    onChange({
+      ...cellOptions,
+      local: e.currentTarget.checked,
+    });
+  };
+
   return (
-    <HorizontalGroup>
-      <Field label="Gauge Display Mode">
-        <Select value={cellOptions?.mode} onChange={onCellOptionsChange} options={barGaugeOpts} />
-      </Field>
-    </HorizontalGroup>
+    <>
+      <HorizontalGroup>
+        <Field label="Gauge Display Mode">
+          <Select value={cellOptions?.mode} onChange={onCellOptionsChange} options={barGaugeOpts} />
+        </Field>
+      </HorizontalGroup>
+      <HorizontalGroup>
+        <Field label="Use local range" description="Use min/max range calculated from field values">
+          <Switch checked={cellOptions?.local} onChange={onLocalRangeToggle} />
+        </Field>
+      </HorizontalGroup>
+    </>
   );
 };
