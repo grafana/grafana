@@ -1,5 +1,5 @@
 // BETTERER RESULTS V2.
-//
+// 
 // If this file contains merge conflicts, use `betterer merge` to automatically resolve them:
 // https://phenomnomnominal.github.io/betterer/docs/results-file/#merge
 //
@@ -6769,6 +6769,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "15"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "16"]
     ],
+    "public/app/plugins/panel/timeseries/plugins/ExemplarDetails.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
+    ],
     "public/app/plugins/panel/timeseries/plugins/ExemplarMarker.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
@@ -6778,6 +6781,10 @@ exports[`better eslint`] = {
     "public/app/plugins/panel/timeseries/suggestions.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+    ],
+    "public/app/plugins/panel/timeseries/utils.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
     "public/app/plugins/panel/xychart/AutoEditor.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]

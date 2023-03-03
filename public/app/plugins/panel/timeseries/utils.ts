@@ -17,6 +17,41 @@ import { applyNullInsertThreshold } from '@grafana/ui/src/components/GraphNG/nul
 import { nullToValue } from '@grafana/ui/src/components/GraphNG/nullToValue';
 import { partitionByValuesTransformer } from 'app/features/transformers/partitionByValues/partitionByValues';
 
+// mutates fields!
+function unifyEnumFields(frames: DataFrame[]) {
+  let allTexts: string[] = [];
+
+  let frames2: DataFrame[] = frames.map((frame) => {
+    return {
+      ...frame,
+      fields: frame.fields.map((field) => {
+        if (field.type === FieldType.enum) {
+          let idxs = field.values.toArray() as unknown as number[];
+          let txts = field.config.type!.enum!.text!;
+
+          // by-reference incrementing
+          if (allTexts.length > 0) {
+            for (let i = 0; i < idxs.length; i++) {
+              idxs[i] += allTexts.length;
+            }
+          }
+
+          allTexts.push(...txts);
+
+          // shared among all enum fields
+          field.config.type!.enum!.text! = allTexts;
+
+          // TODO: update displayProcessor?
+        }
+
+        return field;
+      }),
+    };
+  });
+
+  return frames2;
+}
+
 /**
  * Returns null if there are no graphable fields
  */
@@ -32,6 +67,8 @@ export function prepareGraphableFields(
   if (series.every((df) => df.meta?.type === DataFrameType.TimeSeriesLong)) {
     series = prepareTimeSeriesLong(series);
   }
+
+  series = unifyEnumFields(series);
 
   let copy: Field;
 
@@ -72,6 +109,7 @@ export function prepareGraphableFields(
           fields.push(copy);
           break; // ok
         case FieldType.string:
+        case FieldType.enum:
           copy = {
             ...field,
             values: new ArrayVector(field.values.toArray()),
