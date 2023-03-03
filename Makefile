@@ -213,8 +213,8 @@ endif
 	./create_docker_compose.sh $(targets) || \
 	(rm -rf {docker-compose.yaml,conf.tmp,.env}; exit 1)
 
-	@cd devenv; \
-	docker-compose up -d --build
+	@cd devenv; cd ..; \
+	docker-compose -f ./devenv/docker-compose.yaml  up -d --build
 endif
 
 devenv-down: ## Stop optional services.
