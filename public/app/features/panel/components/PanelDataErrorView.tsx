@@ -51,14 +51,10 @@ export function PanelDataErrorView(props: PanelDataErrorViewProps) {
     if (!panel) {
       return;
     }
-    // const v = {...s, panel};
-    // console.log("LOAD", v);
-
     dispatch(
       changePanelPlugin({
+        ...s, // includes panelId, config, etc
         panel,
-        pluginId: s.pluginId,
-        transformations: s.transformations,
       })
     );
   };

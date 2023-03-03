@@ -1,12 +1,6 @@
 import React from 'react';
 
-import {
-  DataTransformerConfig,
-  FieldConfigSource,
-  PanelData,
-  PanelProps,
-  VisualizationSuggestion,
-} from '@grafana/data';
+import { FieldConfigSource, PanelData, VisualizationSuggestion } from '@grafana/data';
 
 /**
  * Describes the properties that can be passed to the PanelDataErrorView.
@@ -14,7 +8,6 @@ import {
  * @alpha
  */
 export interface PanelDataErrorViewProps {
-  panelProps?: PanelProps; // The raw panel props
   message?: string;
   panelId: number;
   data: PanelData;
@@ -22,7 +15,6 @@ export interface PanelDataErrorViewProps {
   needsTimeField?: boolean;
   needsNumberField?: boolean;
   needsStringField?: boolean;
-  transformSuggestion?: DataTransformerConfig; // array?
   suggestions?: VisualizationSuggestion[];
 }
 
