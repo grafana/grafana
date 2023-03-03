@@ -100,6 +100,16 @@ func AddCustomResponseHeaders(cfg *setting.Cfg) web.Handler {
 	}
 }
 
+// allowCacheControl checks if an HTTP Response is permitted to use its existing Cache-Control header values.
+// There are two cases where the existing Cache-Control header is permitted:
+// - `X-Grafana-Cache` header is not empty
+// - `Cache-Control` header includes `private`
+// - `Cache-Control` header does not include `public`
+// Or
+// - `X-Grafana-Cache` header is not empty
+// - `Cache-Control` header includes `public`
+// - `Cache-Control` header does not include `private`
+// - `X-Grafana-Public-Cache` header must be set to `true`
 func allowCacheControl(rw web.ResponseWriter) bool {
 	ccHeaderValues := rw.Header().Values("Cache-Control")
 
@@ -119,5 +129,11 @@ func allowCacheControl(rw web.ResponseWriter) bool {
 		}
 	}
 
-	return foundPrivate && !foundPublic && rw.Header().Get("X-Grafana-Cache") != ""
+	cacheAllowed := rw.Header().Get("X-Grafana-Cache") != ""
+	publicCacheAllowed := rw.Header().Get("X-Grafana-Public-Cache") == "true"
+	if foundPublic && !foundPrivate && publicCacheAllowed {
+		return cacheAllowed
+	}
+
+	return foundPrivate && !foundPublic && cacheAllowed
 }

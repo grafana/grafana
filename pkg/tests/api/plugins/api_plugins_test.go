@@ -144,7 +144,7 @@ func TestIntegrationPluginAssets(t *testing.T) {
 				env:             setting.Prod,
 				url:             "http://%s/public/plugins/testdata/img/testdata.svg",
 				expStatus:       http.StatusOK,
-				expCacheControl: "private, max-age=3600",
+				expCacheControl: "public, max-age=3600",
 			},
 		}
 
