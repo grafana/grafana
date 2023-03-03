@@ -23,7 +23,7 @@ Administrators can also [configure the data source via YAML]({{< relref "#provis
 
 Once you've added the data source, you can [configure it]({{< relref "#configure-the-data-source" >}}) so that your Grafana instance's users can create queries in its [query editor]({{< relref "./query-editor/" >}}) when they [build dashboards]({{< relref "../../dashboards/build-dashboards/" >}}) and use [Explore]({{< relref "../../explore/" >}}).
 
-You can also [use the service graph]({{< relref "#use-the-service-graph" >}}) to view service relationships, [track Application Performance Management metrics]({{< relref "#view-the-apm-table" >}}), [upload a JSON trace file]({{< relref "#upload-a-json-trace-file" >}}), and [link a trace ID from logs]({{< relref "#link-a-trace-id-from-logs" >}}) in Loki or Elasticsearch.
+You can also [use the service graph]({{< relref "#use-the-service-graph" >}}) to view service relationships, [track RED metrics]({{< relref "#open-the-service-graph-view" >}}), [upload a JSON trace file]({{< relref "#upload-a-json-trace-file" >}}), and [link a trace ID from logs]({{< relref "#link-a-trace-id-from-logs" >}}) in Loki or Elasticsearch.
 
 ## Configure the data source
 
@@ -303,16 +303,15 @@ Each circle's color represents the percentage of requests in each state:
 | **Yellow** | Errors              |
 | **Purple** | Throttled responses |
 
-## View the APM table
+## Open the Service Graph view
 
-The Application Performance Management (APM) table lets you view several APM metrics out of the box.
-The APM table is part of the APM dashboard.
+Service graph view displays a table of request rate, error rate, and duration metrics (RED) calculated from your incoming spans. It also includes a node graph view built from your spans.
 
-{{< figure src="/static/img/docs/tempo/apm-table.png" class="docs-image--no-shadow" max-width="500px" caption="Screenshot of the Tempo APM table" >}}
+{{< figure src="/static/img/docs/tempo/apm-table.png" class="docs-image--no-shadow" max-width="500px" caption="Screenshot of the Service Graph view table" >}}
 
-For details, refer to the [APM dashboard documentation](/docs/tempo/latest/metrics-generator/app-performance-mgmt/).
+For details, refer to the [Service Graph view documentation](/docs/tempo/latest/metrics-generator/service-graph-view/).
 
-**To display the APM table:**
+To open the Service Graph view:
 
 1. Link a Prometheus data source in the Tempo data source settings.
 1. Navigate to [Explore]({{< relref "../../explore/" >}}).

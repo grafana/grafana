@@ -151,9 +151,10 @@ func (hs *HTTPServer) tryAutoLogin(c *contextmodel.ReqContext) bool {
 		}
 	}
 	// If no auto_login option configured for specific OAuth, use legacy option
-	if setting.OAuthAutoLogin && autoLoginProvidersLen == 0 {
+	if hs.Cfg.OAuthAutoLogin && autoLoginProvidersLen == 0 {
 		autoLoginProvidersLen = len(oauthInfos)
 	}
+
 	if samlAutoLogin {
 		autoLoginProvidersLen++
 	}
@@ -162,13 +163,14 @@ func (hs *HTTPServer) tryAutoLogin(c *contextmodel.ReqContext) bool {
 		c.Logger.Warn("Skipping auto login because multiple auth providers are configured with auto_login option")
 		return false
 	}
-	if autoLoginProvidersLen == 0 && setting.OAuthAutoLogin {
+
+	if hs.Cfg.OAuthAutoLogin && autoLoginProvidersLen == 0 {
 		c.Logger.Warn("Skipping auto login because no auth providers are configured")
 		return false
 	}
 
 	for providerName, provider := range oauthInfos {
-		if provider.AutoLogin || setting.OAuthAutoLogin {
+		if provider.AutoLogin || hs.Cfg.OAuthAutoLogin {
 			redirectUrl := hs.Cfg.AppSubURL + "/login/" + providerName
 			c.Logger.Info("OAuth auto login enabled. Redirecting to " + redirectUrl)
 			c.Redirect(redirectUrl, 307)
@@ -245,7 +247,7 @@ func (hs *HTTPServer) LoginPost(c *contextmodel.ReqContext) response.Response {
 		}, c)
 	}()
 
-	if setting.DisableLoginForm {
+	if hs.Cfg.DisableLoginForm {
 		resp = response.Error(http.StatusUnauthorized, "Login is disabled", nil)
 		return resp
 	}

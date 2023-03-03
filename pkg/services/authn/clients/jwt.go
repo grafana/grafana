@@ -53,13 +53,13 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 
 	claims, err := s.jwtService.Verify(ctx, jwtToken)
 	if err != nil {
-		s.log.Debug("Failed to verify JWT", "error", err)
+		s.log.FromContext(ctx).Debug("Failed to verify JWT", "error", err)
 		return nil, errJWTInvalid.Errorf("failed to verify JWT: %w", err)
 	}
 
 	sub, _ := claims["sub"].(string)
 	if sub == "" {
-		s.log.Warn("Got a JWT without the mandatory 'sub' claim", "error", err)
+		s.log.FromContext(ctx).Warn("Got a JWT without the mandatory 'sub' claim", "error", err)
 		return nil, errJWTMissingClaim.Errorf("missing mandatory 'sub' claim in JWT")
 	}
 
@@ -112,7 +112,7 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 	id.IsGrafanaAdmin = isGrafanaAdmin
 
 	if id.Login == "" && id.Email == "" {
-		s.log.Debug("Failed to get an authentication claim from JWT",
+		s.log.FromContext(ctx).Debug("Failed to get an authentication claim from JWT",
 			"login", id.Login, "email", id.Email)
 		return nil, errJWTMissingClaim.Errorf("missing login and email claim in JWT")
 	}

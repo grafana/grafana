@@ -109,6 +109,38 @@ export enum FrameGeometrySourceMode {
   Lookup = 'lookup',
 }
 
+export enum HeatmapCalculationMode {
+  Count = 'count',
+  Size = 'size',
+}
+
+export enum HeatmapCellLayout {
+  auto = 'auto',
+  ge = 'ge',
+  le = 'le',
+  unknown = 'unknown',
+}
+
+export interface HeatmapCalculationBucketConfig {
+  /**
+   * Sets the bucket calculation mode
+   */
+  mode?: HeatmapCalculationMode;
+  /**
+   * Controls the scale of the buckets
+   */
+  scale?: ScaleDistributionConfig;
+  /**
+   * The number of buckets to use for the axis in the heatmap
+   */
+  value?: string;
+}
+
+export enum LogsSortOrder {
+  Ascending = 'Ascending',
+  Descending = 'Descending',
+}
+
 /**
  * TODO docs
  */
@@ -599,12 +631,34 @@ export enum TableCellBackgroundDisplayMode {
 }
 
 /**
- * TODO docs
+ * Sort by field state
  */
 export interface TableSortByFieldState {
+  /**
+   * Flag used to indicate descending sort order
+   */
   desc?: boolean;
+  /**
+   * Sets the display name of the field to sort by
+   */
   displayName: string;
 }
+
+/**
+ * Footer options
+ */
+export interface TableFooterOptions {
+  countRows?: boolean;
+  enablePagination?: boolean;
+  fields?: Array<string>;
+  reducer: Array<string>;
+  show: boolean;
+}
+
+export const defaultTableFooterOptions: Partial<TableFooterOptions> = {
+  fields: [],
+  reducer: [],
+};
 
 /**
  * Auto mode table cell options
@@ -695,6 +749,24 @@ export interface FrameGeometrySource {
   lookup?: string;
   mode: FrameGeometrySourceMode;
   wkt?: string;
+}
+
+export interface HeatmapCalculationOptions {
+  /**
+   * The number of buckets to use for the xAxis in the heatmap
+   */
+  xBuckets?: HeatmapCalculationBucketConfig;
+  /**
+   * The number of buckets to use for the yAxis in the heatmap
+   */
+  yBuckets?: HeatmapCalculationBucketConfig;
+}
+
+export enum LogsDedupStrategy {
+  exact = 'exact',
+  none = 'none',
+  numbers = 'numbers',
+  signature = 'signature',
 }
 
 export interface Labels {}

@@ -27,7 +27,6 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
@@ -114,10 +113,6 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 			if enabledFilter == "1" && !pluginSetting.Enabled {
 				continue
 			}
-		}
-
-		if (pluginDef.ID == "parca" || pluginDef.ID == "phlare") && !hs.Features.IsEnabled(featuremgmt.FlagFlameGraph) {
-			continue
 		}
 
 		filteredPluginDefinitions = append(filteredPluginDefinitions, pluginDef)
@@ -262,6 +257,8 @@ func (hs *HTTPServer) UpdatePluginSetting(c *contextmodel.ReqContext) response.R
 	}); err != nil {
 		return response.Error(500, "Failed to update plugin setting", err)
 	}
+
+	hs.PluginContextProvider.InvalidateSettingsCache(c.Req.Context(), pluginID)
 
 	return response.Success("Plugin settings updated")
 }

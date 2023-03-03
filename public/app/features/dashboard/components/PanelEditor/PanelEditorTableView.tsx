@@ -4,7 +4,7 @@ import { RefreshEvent } from '@grafana/runtime';
 import { PanelChrome } from '@grafana/ui';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { PanelRenderer } from 'app/features/panel/components/PanelRenderer';
-import { PanelOptions } from 'app/plugins/panel/table/models.gen';
+import { PanelOptions } from 'app/plugins/panel/table/panelcfg.gen';
 
 import PanelHeaderCorner from '../../dashgrid/PanelHeader/PanelHeaderCorner';
 import { getTimeSrv } from '../../services/TimeSrv';

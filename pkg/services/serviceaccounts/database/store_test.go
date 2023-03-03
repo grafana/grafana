@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 // Service Account should not create an org on its own
@@ -118,7 +117,7 @@ func setupTestDatabase(t *testing.T) (*sqlstore.SQLStore, *ServiceAccountsStoreI
 	apiKeyService, err := apikeyimpl.ProvideService(db, db.Cfg, quotaService)
 	require.NoError(t, err)
 	kvStore := kvstore.ProvideService(db)
-	orgService, err := orgimpl.ProvideService(db, setting.NewCfg(), quotaService)
+	orgService, err := orgimpl.ProvideService(db, db.Cfg, quotaService)
 	require.NoError(t, err)
 	userSvc, err := userimpl.ProvideService(db, orgService, db.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
@@ -329,7 +328,7 @@ func TestStore_RevertApiKey(t *testing.T) {
 			desc:                        "should fail reverting to api key when the token is assigned to a different service account",
 			key:                         tests.TestApiKey{Name: "Test1", Role: org.RoleEditor, OrgId: 1},
 			forceMismatchServiceAccount: true,
-			expectedErr:                 ErrServiceAccountAndTokenMismatch,
+			expectedErr:                 serviceaccounts.ErrServiceAccountAndTokenMismatch,
 		},
 	}
 

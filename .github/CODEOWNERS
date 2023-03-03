@@ -260,7 +260,6 @@
 /pkg/services/searchV2/ @grafana/multitenancy-squad
 /pkg/services/store/ @grafana/multitenancy-squad
 /pkg/services/querylibrary/ @grafana/multitenancy-squad
-/pkg/services/export/ @grafana/multitenancy-squad
 /pkg/infra/filestorage/ @grafana/multitenancy-squad
 /pkg/util/converter/ @grafana/multitenancy-squad
 
@@ -357,6 +356,7 @@ lerna.json @grafana/frontend-ops
 /public/app/features/datasources/ @grafana/user-essentials
 /public/app/features/dimensions/ @grafana/dataviz-squad
 /public/app/features/dataframe-import/ @grafana/grafana-bi-squad
+/public/app/features/datasource-drawer/ @grafana/grafana-bi-squad
 /public/app/features/explore/ @grafana/explore-squad
 /public/app/features/expressions/ @grafana/observability-metrics
 /public/app/features/folders/ @grafana/user-essentials
@@ -389,7 +389,7 @@ lerna.json @grafana/frontend-ops
 /public/app/plugins/panel/alertGroups/ @grafana/alerting-squad-frontend
 /public/app/plugins/panel/alertlist/ @grafana/alerting-squad-frontend
 /public/app/plugins/panel/annolist/ @grafana/user-essentials
-/public/app/plugins/panel/barchart/ @grafana/grafana-bi-squad @grafana/dataviz-squad
+/public/app/plugins/panel/barchart/ @grafana/dataviz-squad
 /public/app/plugins/panel/bargauge/ @grafana/dataviz-squad
 /public/app/plugins/panel/dashlist/ @grafana/user-essentials
 /public/app/plugins/panel/debug/ @ryantxu
