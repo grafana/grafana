@@ -320,7 +320,7 @@ func processLogsQuery(q *Query, b *es.SearchRequestBuilder, from, to int64, defa
 	b.SortDesc(defaultTimeField, "boolean")
 	b.SortDesc("_doc", "")
 	b.AddDocValueField(defaultTimeField)
-	b.Size(getSizeFromString(metric.Settings.Get("limit").MustString(), defaultSize)) 
+	b.Size(getSizeFromString(metric.Settings.Get("limit").MustString(), defaultSize))
 	b.AddHighlight()
 
 	// For log query, we add a date histogram aggregation
