@@ -59,15 +59,15 @@ func (api *WebhooksAPI) Create(c *contextmodel.ReqContext) response.Response {
 		return response.Error(500, "error unmarshalling request body", err)
 	}
 
-	obj := PublicDashboard{}
-	err = json.Unmarshal(rev.Request.Object.Raw, &obj)
+	obj := &PublicDashboard{}
+	err = obj.UnmarshalJSON(rev.Request.Object.Raw)
 	if err != nil {
 		api.Log.Error("error unmarshalling request body")
 		return response.Error(500, "error unmarshalling request body", err)
 	}
 
-	oldObj := PublicDashboard{}
-	err = json.Unmarshal(rev.Request.OldObject.Raw, &oldObj)
+	oldObj := &PublicDashboard{}
+	err = oldObj.UnmarshalJSON(rev.Request.OldObject.Raw)
 	if err != nil {
 		api.Log.Error("error unmarshalling request body")
 		return response.Error(500, "error unmarshalling request body", err)
@@ -85,8 +85,8 @@ func (api *WebhooksAPI) Create(c *contextmodel.ReqContext) response.Response {
 			UID:      rev.Request.UserInfo.UID,
 			Groups:   rev.Request.UserInfo.Groups,
 		},
-		Object:    &obj,
-		OldObject: &oldObj,
+		Object:    obj,
+		OldObject: oldObj,
 	})
 
 	if err != nil {
