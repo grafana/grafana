@@ -4,16 +4,20 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
 
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -322,4 +326,51 @@ func IdentityFromSignedInUser(id string, usr *user.SignedInUser, params ClientPa
 // ClientWithPrefix returns a client name prefixed with "auth.client."
 func ClientWithPrefix(name string) string {
 	return fmt.Sprintf("auth.client.%s", name)
+}
+
+type RedirectValidator func(url string) error
+
+// HandleLoginResponse is a utility function to perform common operations after a successful login that should return a response
+func HandleLoginResponse(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator) response.Response {
+	result := map[string]interface{}{"message": "Logged in"}
+	if redirectURL := getRedirectURL(r); len(redirectURL) > 0 && validator(redirectURL) == nil {
+		result["redirectUrl"] = redirectURL
+	}
+	cookies.DeleteCookie(w, "redirect_to", nil)
+
+	writeSessionCookie(w, cfg, identity)
+	return response.JSON(http.StatusOK, result)
+}
+
+// HandleLoginRedirect is a utility function to perform common operations after a successful login that should redirect
+func HandleLoginRedirect(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator) {
+	redirectURL := setting.AppSubUrl + "/"
+	if redirectTo := getRedirectURL(r); len(redirectTo) > 0 && validator(redirectTo) == nil {
+		cookies.DeleteCookie(w, "redirect_to", nil)
+		redirectURL = redirectTo
+	}
+
+	writeSessionCookie(w, cfg, identity)
+	http.Redirect(w, r, redirectURL, http.StatusFound)
+}
+
+func getRedirectURL(r *http.Request) string {
+	cookie, err := r.Cookie("redirect_to")
+	if err != nil {
+		return ""
+	}
+
+	v, _ := url.QueryUnescape(cookie.Value)
+	return v
+}
+
+func writeSessionCookie(w http.ResponseWriter, cfg *setting.Cfg, identity *Identity) {
+	var maxAge int
+	if cfg.LoginMaxLifetime <= 0 {
+		maxAge = -1
+	} else {
+		maxAge = int(cfg.LoginMaxLifetime.Seconds())
+	}
+
+	cookies.WriteCookie(w, cfg.LoginCookieName, identity.SessionToken.UnhashedToken, maxAge, nil)
 }
