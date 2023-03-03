@@ -180,8 +180,7 @@ const setClassicPaletteIdxs = (frames: DataFrame[], theme: GrafanaTheme2) => {
 
   frames.forEach((frame) => {
     frame.fields.forEach((field) => {
-      // TODO: also add FieldType.enum type here after https://github.com/grafana/grafana/pull/60491
-      if (field.type === FieldType.number || field.type === FieldType.boolean) {
+      if (field.type === FieldType.number || field.type === FieldType.boolean || field.type === FieldType.enum) {
         field.state = {
           ...field.state,
           seriesIndex: seriesIndex++, // TODO: skip this for fields with custom renderers (e.g. Candlestick)?

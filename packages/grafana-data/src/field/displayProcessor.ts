@@ -71,7 +71,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
   } else if (!unit && field.type === FieldType.string) {
     unit = 'string';
   } else if (field.type === FieldType.enum) {
-    return getEnumDisplayProcessor(options.theme, config.type?.enum);
+    return getEnumDisplayProcessor(options.theme, field.state?.seriesIndex!, config.type?.enum);
   }
 
   const hasCurrencyUnit = unit?.startsWith('currency');
@@ -192,10 +192,18 @@ function toStringProcessor(value: unknown): DisplayValue {
   return { text: toString(value), numeric: anyToNumber(value) };
 }
 
-export function getEnumDisplayProcessor(theme: GrafanaTheme2, cfg?: EnumFieldConfig): DisplayProcessor {
+export function getEnumDisplayProcessor(
+  theme: GrafanaTheme2,
+  seriesIndex: number,
+  cfg?: EnumFieldConfig
+): DisplayProcessor {
+  const { palette } = theme.visualization;
+
+  const seriesColor = palette[seriesIndex % palette.length];
+
   const config = {
     text: cfg?.text ?? [],
-    color: cfg?.color ?? [],
+    color: cfg?.color ?? Array(cfg?.text!.length).fill(seriesColor),
   };
   // use the theme specific color values
   config.color = config.color.map((v) => theme.visualization.getColorByName(v));
@@ -215,7 +223,6 @@ export function getEnumDisplayProcessor(theme: GrafanaTheme2, cfg?: EnumFieldCon
     let color = config.color[idx];
     if (color == null) {
       // constant color for index
-      const { palette } = theme.visualization;
       color = palette[idx % palette.length];
       config.color[idx] = color;
     }
