@@ -106,7 +106,7 @@ export const publicDashboardApi = createApi({
         url: '',
       }),
     }),
-    deleteEmailSharing: builder.mutation<void, { recipient: string; dashboardUid: string; uid: string }>({
+    deleteEmailSharing: builder.mutation<void, { recipientUid: string; dashboardUid: string; uid: string }>({
       query: () => ({
         url: '',
       }),
