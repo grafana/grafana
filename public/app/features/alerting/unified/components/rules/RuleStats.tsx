@@ -6,7 +6,7 @@ import { Badge } from '@grafana/ui';
 import { CombinedRule, CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
-import { isAlertingRule, isRecordingRule, isRecordingRulerRule } from '../../utils/rules';
+import { isAlertingRule, isRecordingRule, isRecordingRulerRule, isGrafanaRulerRulePaused } from '../../utils/rules';
 
 interface Props {
   includeTotal?: boolean;
@@ -20,6 +20,7 @@ const emptyStats = {
   [PromAlertingRuleState.Firing]: 0,
   [PromAlertingRuleState.Pending]: 0,
   [PromAlertingRuleState.Inactive]: 0,
+  paused: 0,
   error: 0,
 } as const;
 
@@ -31,6 +32,9 @@ export const RuleStats: FC<Props> = ({ group, namespaces, includeTotal }) => {
 
     const calcRule = (rule: CombinedRule) => {
       if (rule.promRule && isAlertingRule(rule.promRule)) {
+        if (isGrafanaRulerRulePaused(rule)) {
+          stats.paused += 1;
+        }
         stats[rule.promRule.state] += 1;
       }
       if (ruleHasError(rule)) {
@@ -82,7 +86,17 @@ export const RuleStats: FC<Props> = ({ group, namespaces, includeTotal }) => {
     );
   }
 
-  if (calculated[PromAlertingRuleState.Inactive]) {
+  if (calculated[PromAlertingRuleState.Inactive] && calculated.paused) {
+    statsComponents.push(
+      <Badge
+        color="green"
+        key="paused"
+        text={`${calculated[PromAlertingRuleState.Inactive]} normal (${calculated.paused} paused)`}
+      />
+    );
+  }
+
+  if (calculated[PromAlertingRuleState.Inactive] && !calculated.paused) {
     statsComponents.push(
       <Badge color="green" key="inactive" text={`${calculated[PromAlertingRuleState.Inactive]} normal`} />
     );

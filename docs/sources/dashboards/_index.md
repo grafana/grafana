@@ -7,6 +7,8 @@ weight: 70
 
 # Dashboards
 
+> **Note:** Looking for prebuilt Grafana dashboards? [Check out our full library of dashboards and more →](https://grafana.com/grafana/dashboards/?pg=docs-grafana-latest-dashboards)
+
 A dashboard is a set of one or more [panels]({{< relref "../panels-visualizations/" >}}) organized and arranged into one or more rows. Grafana ships with a variety of panels making it easy to construct the right queries, and customize the visualization so that you can create the perfect dashboard for your need. Each panel can interact with data from any configured Grafana [data source]({{< relref "../administration/data-source-management/" >}}).
 
 Dashboard snapshots are static. Queries and expressions cannot be re-executed from snapshots. As a result, if you update any variables in your query or expression, it will not change your dashboard data.

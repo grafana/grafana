@@ -248,15 +248,6 @@ func (sa *ServiceAccountsService) MigrateApiKeysToServiceAccounts(ctx context.Co
 	}
 	return sa.store.MigrateApiKeysToServiceAccounts(ctx, orgID)
 }
-func (sa *ServiceAccountsService) RevertApiKey(ctx context.Context, orgID, keyID int64) error {
-	if err := validOrgID(orgID); err != nil {
-		return err
-	}
-	if err := validAPIKeyID(keyID); err != nil {
-		return err
-	}
-	return sa.store.RevertApiKey(ctx, orgID, keyID)
-}
 
 func validOrgID(orgID int64) error {
 	if orgID == 0 {
