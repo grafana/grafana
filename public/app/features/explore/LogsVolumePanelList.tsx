@@ -55,15 +55,6 @@ export const LogsVolumePanelList = ({
     return !isLogsVolumeLimited(data) && zoomRatio && zoomRatio < 1;
   });
 
-  let zoomedInfo;
-  if (containsZoomed) {
-    zoomedInfo = (
-      <InlineField label="Reload log volume" transparent>
-        <Button size="xs" icon="sync" variant="secondary" onClick={onLoadLogsVolume} id="reload-volume" />
-      </InlineField>
-    );
-  }
-
   if (logsVolumeData?.state === LoadingState.Loading) {
     return <span>Loading...</span>;
   }
@@ -90,7 +81,13 @@ export const LogsVolumePanelList = ({
           />
         );
       })}
-      <div className={styles.extraInfoContainer}>{zoomedInfo}</div>
+      {containsZoomed && (
+        <div className={styles.extraInfoContainer}>
+          <InlineField label="Reload log volume" transparent>
+            <Button size="xs" icon="sync" variant="secondary" onClick={onLoadLogsVolume} id="reload-volume" />
+          </InlineField>
+        </div>
+      )}
     </div>
   );
 };
