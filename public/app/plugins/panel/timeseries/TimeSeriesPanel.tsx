@@ -13,6 +13,7 @@ import { ContextMenuPlugin } from './plugins/ContextMenuPlugin';
 import { ExemplarsPlugin, getVisibleLabels } from './plugins/ExemplarsPlugin';
 import { OutsideRangePlugin } from './plugins/OutsideRangePlugin';
 import { ThresholdControlsPlugin } from './plugins/ThresholdControlsPlugin';
+import { getLongToWideSuggestion } from './suggestions';
 import { TimeSeriesOptions } from './types';
 import { getTimezones, prepareGraphableFields, regenerateLinksSupplier } from './utils';
 
@@ -39,15 +40,27 @@ export const TimeSeriesPanel = ({
 
   const frames = useMemo(() => prepareGraphableFields(data.series, config.theme2, timeRange), [data, timeRange]);
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
+  const suggestions = useMemo(() => {
+    if (data.series.length) {
+      const s = getLongToWideSuggestion(id);
+      return {
+        message: 'Unable to show long data frame',
+        suggestions: s ? [s] : undefined,
+      };
+    }
+    return undefined;
+  }, [data.series, id]);
 
-  if (!frames) {
+  if (!frames || suggestions) {
     return (
       <PanelDataErrorView
         panelId={id}
+        message={suggestions?.message}
         fieldConfig={fieldConfig}
         data={data}
         needsTimeField={true}
         needsNumberField={true}
+        suggestions={suggestions?.suggestions}
       />
     );
   }

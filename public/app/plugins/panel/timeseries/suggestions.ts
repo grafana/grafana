@@ -1,5 +1,11 @@
-import { FieldColorModeId, VisualizationSuggestionsBuilder } from '@grafana/data';
+import {
+  FieldColorModeId,
+  VisualizationSuggestionsBuilder,
+  VisualizationSuggestion,
+  DataTransformerID,
+} from '@grafana/data';
 import { GraphDrawStyle, GraphFieldConfig, GraphGradientMode, LineInterpolation, StackingMode } from '@grafana/schema';
+import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { SuggestionName } from 'app/types/suggestions';
 
 import { TimeSeriesOptions } from './types';
@@ -199,4 +205,23 @@ export class TimeSeriesSuggestionsSupplier {
       });
     }
   }
+}
+
+// This will try to get a suggestion that will add a long to wide conversion
+export function getLongToWideSuggestion(panelId: number): VisualizationSuggestion | undefined {
+  const panel = getDashboardSrv().getCurrent()?.getPanelById(panelId);
+  if (panel) {
+    const transformations = panel.transformations ? [...panel.transformations] : [];
+    transformations.push({
+      id: DataTransformerID.calculateField,
+      options: {},
+    });
+
+    return {
+      name: 'Add Long to Wide transformation',
+      pluginId: 'timeseries',
+      transformations,
+    };
+  }
+  return undefined;
 }
