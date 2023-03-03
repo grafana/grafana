@@ -51,6 +51,7 @@ export const supportedDatasources = new Set<string>([
   'marcusolsson-ynab-datasource',
   'mssql',
   'mysql',
+  'nagasudhirpulla-api-datasource',
   'opentsdb',
   'postgres',
   'prometheus',

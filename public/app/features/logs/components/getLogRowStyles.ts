@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import memoizeOne from 'memoize-one';
 import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2, LogLevel } from '@grafana/data';
@@ -39,7 +40,7 @@ export const getLogLevelStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => 
   };
 };
 
-export const getLogRowStyles = (theme: GrafanaTheme2) => {
+export const getLogRowStyles = memoizeOne((theme: GrafanaTheme2) => {
   const hoverBgColor = styleMixins.hoverColor(theme.colors.background.secondary, theme);
   const contextOutlineColor = tinycolor(theme.components.dashboard.background).setAlpha(0.7).toRgbString();
   return {
@@ -263,7 +264,22 @@ export const getLogRowStyles = (theme: GrafanaTheme2) => {
       padding: 0;
       user-select: text;
     `,
+    // Log details
+    logsRowLevelDetails: css`
+      label: logs-row__level_details;
+      &::after {
+        top: -3px;
+      }
+    `,
+    logDetails: css`
+      label: logDetailsDefaultCursor;
+      cursor: default;
+
+      &:hover {
+        background-color: ${theme.colors.background.primary};
+      }
+    `,
   };
-};
+});
 
 export type LogRowStyles = ReturnType<typeof getLogRowStyles>;

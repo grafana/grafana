@@ -123,22 +123,31 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 		return nil, errOAuthEmailNotAllowed.Errorf("provided email is not allowed")
 	}
 
+	orgRoles, isGrafanaAdmin, _ := getRoles(c.cfg, func() (org.RoleType, *bool, error) {
+		if c.cfg.OAuthSkipOrgRoleUpdateSync {
+			return "", nil, nil
+		}
+		return userInfo.Role, userInfo.IsGrafanaAdmin, nil
+	})
+
 	return &authn.Identity{
 		Login:          userInfo.Login,
 		Name:           userInfo.Name,
 		Email:          userInfo.Email,
-		IsGrafanaAdmin: userInfo.IsGrafanaAdmin,
+		IsGrafanaAdmin: isGrafanaAdmin,
 		AuthModule:     c.moduleName,
 		AuthID:         userInfo.Id,
 		Groups:         userInfo.Groups,
 		OAuthToken:     token,
-		OrgRoles:       getOAuthOrgRole(userInfo, c.cfg),
+		OrgRoles:       orgRoles,
 		ClientParams: authn.ClientParams{
 			SyncUser:        true,
-			SyncTeamMembers: true,
+			SyncTeams:       true,
 			FetchSyncedUser: true,
 			AllowSignUp:     c.connector.IsSignupAllowed(),
-			LookUpParams:    login.UserLookupParams{Email: &userInfo.Email},
+			// skip org role flag is checked and handled in the connector. For now we can skip the hook if no roles are passed
+			SyncOrgRoles: len(orgRoles) > 0,
+			LookUpParams: login.UserLookupParams{Email: &userInfo.Email},
 		},
 	}, nil
 }
@@ -216,23 +225,4 @@ func genOAuthState(secret, seed string) (string, string, error) {
 func hashOAuthState(state, secret, seed string) string {
 	hashBytes := sha256.Sum256([]byte(state + secret + seed))
 	return hex.EncodeToString(hashBytes[:])
-}
-
-func getOAuthOrgRole(userInfo *social.BasicUserInfo, cfg *setting.Cfg) map[int64]org.RoleType {
-	orgRoles := make(map[int64]org.RoleType, 0)
-	if cfg.OAuthSkipOrgRoleUpdateSync {
-		return orgRoles
-	}
-
-	if userInfo.Role == "" || !userInfo.Role.IsValid() {
-		return orgRoles
-	}
-
-	orgID := int64(1)
-	if cfg.AutoAssignOrg && cfg.AutoAssignOrgId > 0 {
-		orgID = int64(cfg.AutoAssignOrgId)
-	}
-
-	orgRoles[orgID] = userInfo.Role
-	return orgRoles
 }

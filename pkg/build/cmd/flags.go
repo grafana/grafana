@@ -41,11 +41,6 @@ var (
 		Name:  "dry-run",
 		Usage: "Only simulate actions",
 	}
-	gcpKeyFlag = cli.StringFlag{
-		Name:     "gcp-key",
-		Usage:    "Google Cloud Platform key file",
-		Required: true,
-	}
 	gitHubTokenFlag = cli.StringFlag{
 		Name:    "github-token",
 		Value:   "",

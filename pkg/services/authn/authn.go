@@ -4,16 +4,20 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
 
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -37,16 +41,18 @@ const (
 // ClientParams are hints to the auth service about how to handle the identity management
 // from the authenticating client.
 type ClientParams struct {
-	// Update the internal representation of the entity from the identity provided
+	// SyncUser updates the internal representation of the identity from the identity provided
 	SyncUser bool
-	// Add entity to teams
-	SyncTeamMembers bool
-	// Create entity in the DB if it doesn't exist
+	// AllowSignUp Adds identity to DB if it doesn't exist when, only work if SyncUser is enabled
 	AllowSignUp bool
-	// EnableDisabledUsers is a hint to the auth service that it should re-enable disabled users
+	// EnableDisabledUsers will enable disabled user, only work if SyncUser is enabled
 	EnableDisabledUsers bool
 	// FetchSyncedUser ensure that all required information is added to the identity
 	FetchSyncedUser bool
+	// SyncTeams will sync the groups from identity to teams in grafana, enterprise only feature
+	SyncTeams bool
+	// SyncOrgRoles will sync the roles from the identity to orgs in grafana
+	SyncOrgRoles bool
 	// CacheAuthProxyKey  if this key is set we will try to cache the user id for proxy client
 	CacheAuthProxyKey string
 	// LookUpParams are the arguments used to look up the entity in the DB.
@@ -222,26 +228,20 @@ func (i *Identity) Role() org.RoleType {
 	return i.OrgRoles[i.OrgID]
 }
 
-// TODO: improve error handling
+// NamespacedID returns the namespace, e.g. "user" and the id for that namespace
 func (i *Identity) NamespacedID() (string, int64) {
-	var (
-		id        int64
-		namespace string
-	)
-
 	split := strings.Split(i.ID, ":")
 	if len(split) != 2 {
 		return "", -1
 	}
 
-	id, errI := strconv.ParseInt(split[1], 10, 64)
-	if errI != nil {
+	id, err := strconv.ParseInt(split[1], 10, 64)
+	if err != nil {
+		// FIXME (kalleep): Improve error handling
 		return "", -1
 	}
 
-	namespace = split[0]
-
-	return namespace, id
+	return split[0], id
 }
 
 // NamespacedID builds a namespaced ID from a namespace and an ID.
@@ -326,4 +326,56 @@ func IdentityFromSignedInUser(id string, usr *user.SignedInUser, params ClientPa
 // ClientWithPrefix returns a client name prefixed with "auth.client."
 func ClientWithPrefix(name string) string {
 	return fmt.Sprintf("auth.client.%s", name)
+}
+
+type RedirectValidator func(url string) error
+
+// HandleLoginResponse is a utility function to perform common operations after a successful login and returns response.NormalResponse
+func HandleLoginResponse(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator) *response.NormalResponse {
+	result := map[string]interface{}{"message": "Logged in"}
+	if redirectURL := handleLogin(r, w, cfg, identity, validator); redirectURL != cfg.AppSubURL+"/" {
+		result["redirectUrl"] = redirectURL
+	}
+	return response.JSON(http.StatusOK, result)
+}
+
+// HandleLoginRedirect is a utility function to perform common operations after a successful login and redirects
+func HandleLoginRedirect(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator) {
+	redirectURL := handleLogin(r, w, cfg, identity, validator)
+	http.Redirect(w, r, redirectURL, http.StatusFound)
+}
+
+// HandleLoginRedirectResponse is a utility function to perform common operations after a successful login and return a response.RedirectResponse
+func HandleLoginRedirectResponse(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator) *response.RedirectResponse {
+	return response.Redirect(handleLogin(r, w, cfg, identity, validator))
+}
+
+func handleLogin(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator) string {
+	redirectURL := cfg.AppSubURL + "/"
+	if redirectTo := getRedirectURL(r); len(redirectTo) > 0 && validator(redirectTo) == nil {
+		cookies.DeleteCookie(w, "redirect_to", nil)
+		redirectURL = redirectTo
+	}
+
+	WriteSessionCookie(w, cfg, identity)
+	return redirectURL
+}
+
+func getRedirectURL(r *http.Request) string {
+	cookie, err := r.Cookie("redirect_to")
+	if err != nil {
+		return ""
+	}
+
+	v, _ := url.QueryUnescape(cookie.Value)
+	return v
+}
+
+func WriteSessionCookie(w http.ResponseWriter, cfg *setting.Cfg, identity *Identity) {
+	maxAge := int(cfg.LoginMaxLifetime.Seconds())
+	if cfg.LoginMaxLifetime <= 0 {
+		maxAge = -1
+	}
+
+	cookies.WriteCookie(w, cfg.LoginCookieName, url.QueryEscape(identity.SessionToken.UnhashedToken), maxAge, nil)
 }

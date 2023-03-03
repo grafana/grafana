@@ -6,8 +6,6 @@ import { useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
 
-import { getNavTitle, getNavSubTitle } from '../NavBar/navBarItem-translations';
-
 import { NavLandingPageCard } from './NavLandingPageCard';
 
 interface Props {
@@ -28,8 +26,8 @@ export function NavLandingPage({ navId }: Props) {
               {children?.map((child) => (
                 <NavLandingPageCard
                   key={child.id}
-                  description={getNavSubTitle(child.id) ?? child.subTitle}
-                  text={getNavTitle(child.id) ?? child.text}
+                  description={child.subTitle}
+                  text={child.text}
                   url={child.url ?? ''}
                 />
               ))}

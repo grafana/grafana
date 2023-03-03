@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type AuthInfoService interface {
@@ -17,37 +18,102 @@ type AuthInfoService interface {
 }
 
 const (
+	// modules
 	SAMLAuthModule      = "auth.saml"
 	LDAPAuthModule      = "ldap"
 	AuthProxyAuthModule = "authproxy"
 	JWTModule           = "jwt"
 	RenderModule        = "render"
+	// OAuth provider modules
+	AzureADAuthModule    = "oauth_azuread"
+	GoogleAuthModule     = "oauth_google"
+	GitLabAuthModule     = "oauth_gitlab"
+	GithubAuthModule     = "oauth_github"
+	GenericOAuthModule   = "oauth_generic_oauth"
+	GrafanaComAuthModule = "oauth_grafana_com"
+	GrafanaNetAuthModule = "oauth_grafananet"
+	OktaAuthModule       = "oauth_okta"
+
+	// labels
+	SAMLLabel = "SAML"
+	LDAPLabel = "LDAP"
+	JWTLabel  = "JWT"
+	// OAuth provider labels
+	AuthProxtLabel    = "Auth Proxy"
+	AzureADLabel      = "AzureAD"
+	GoogleLabel       = "Google"
+	GenericOAuthLabel = "Generic OAuth"
+	GitLabLabel       = "GitLab"
+	GithubLabel       = "GitHub"
+	GrafanaComLabel   = "grafana.com"
+	OktaLabel         = "Okta"
 )
+
+// IsExternnalySynced is used to tell if the user roles are externally synced
+// true means that the org role sync is handled by Grafana
+// Note: currently the users authinfo is overridden each time the user logs in
+// https://github.com/grafana/grafana/blob/4181acec72f76df7ad02badce13769bae4a1f840/pkg/services/login/authinfoservice/database/database.go#L61
+// this means that if the user has multiple auth providers and one of them is set to sync org roles
+// then IsExternallySynced will be true for this one provider and false for the others
+func IsExternallySynced(cfg *setting.Cfg, autoProviderLabel string) bool {
+	// first check SAML, LDAP and JWT
+	switch autoProviderLabel {
+	case SAMLLabel:
+		return !cfg.SAMLSkipOrgRoleSync
+	case LDAPLabel:
+		return !cfg.LDAPSkipOrgRoleSync
+	case JWTLabel:
+		return !cfg.JWTAuthSkipOrgRoleSync
+	}
+	// then check the rest of the oauth providers
+	// FIXME: remove this once we remove the setting
+	// is a deprecated setting that is used to skip org role sync for all external oauth providers
+	if cfg.OAuthSkipOrgRoleUpdateSync {
+		return false
+	}
+	switch autoProviderLabel {
+	case GoogleLabel:
+		return !cfg.GoogleSkipOrgRoleSync
+	case OktaLabel:
+		return !cfg.OktaSkipOrgRoleSync
+	case AzureADLabel:
+		return !cfg.AzureADSkipOrgRoleSync
+	case GitLabLabel:
+		return !cfg.GitLabSkipOrgRoleSync
+	case GithubLabel:
+		return !cfg.GithubSkipOrgRoleSync
+	case GrafanaComLabel:
+		return !cfg.GrafanaComSkipOrgRoleSync
+	case GenericOAuthLabel:
+		return !cfg.GenericOAuthSkipOrgRoleSync
+	}
+	return true
+}
 
 func GetAuthProviderLabel(authModule string) string {
 	switch authModule {
-	case "oauth_github":
-		return "GitHub"
-	case "oauth_google":
-		return "Google"
-	case "oauth_azuread":
-		return "AzureAD"
-	case "oauth_gitlab":
-		return "GitLab"
-	case "oauth_okta":
-		return "Okta"
-	case "oauth_grafana_com", "oauth_grafananet":
-		return "grafana.com"
+	case GithubAuthModule:
+		return GithubLabel
+	case GoogleAuthModule:
+		return GoogleLabel
+	case AzureADAuthModule:
+		return AzureADLabel
+	case GitLabAuthModule:
+		return GitLabLabel
+	case OktaAuthModule:
+		return OktaLabel
+	case GrafanaComAuthModule, GrafanaNetAuthModule:
+		return GrafanaComLabel
 	case SAMLAuthModule:
-		return "SAML"
+		return SAMLLabel
 	case LDAPAuthModule, "": // FIXME: verify this situation doesn't exist anymore
-		return "LDAP"
+		return LDAPLabel
 	case JWTModule:
-		return "JWT"
+		return JWTLabel
 	case AuthProxyAuthModule:
-		return "Auth Proxy"
-	case "oauth_generic_oauth":
-		return "Generic OAuth"
+		return AuthProxtLabel
+	case GenericOAuthModule:
+		return GenericOAuthLabel
 	default:
 		return "Unknown"
 	}
