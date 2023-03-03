@@ -466,8 +466,8 @@ export class PrometheusDatasource
       );
       // Run queries trough browser/proxy
     } else {
-      const start = this.getPrometheusTime(request.range.from, false);
-      const end = this.getPrometheusTime(request.range.to, true);
+      const start = PrometheusDatasource.getPrometheusTime(request.range.from, false);
+      const end = PrometheusDatasource.getPrometheusTime(request.range.to, true);
       const { queries, activeTargets } = this.prepareTargets(request, start, end);
 
       // No valid targets, return the empty result to save a round trip.
@@ -810,8 +810,8 @@ export class PrometheusDatasource
           method: 'POST',
           headers: this.getRequestHeaders(),
           data: {
-            from: (this.getPrometheusTime(options.range.from, false) * 1000).toString(),
-            to: (this.getPrometheusTime(options.range.to, true) * 1000).toString(),
+            from: (PrometheusDatasource.getPrometheusTime(options.range.from, false) * 1000).toString(),
+            to: (PrometheusDatasource.getPrometheusTime(options.range.to, true) * 1000).toString(),
             queries: [this.applyTemplateVariables(queryModel, {})],
           },
           requestId: `prom-query-${annotation.name}`,
@@ -1180,7 +1180,7 @@ export class PrometheusDatasource
     return { ...query, expr: expression };
   }
 
-  getPrometheusTime(date: string | DateTime, roundUp: boolean) {
+  static getPrometheusTime(date: string | DateTime, roundUp: boolean) {
     if (typeof date === 'string') {
       date = dateMath.parse(date, roundUp)!;
     }
@@ -1190,25 +1190,39 @@ export class PrometheusDatasource
 
   getQuantizedTimeRangeParams(): { start: string; end: string } {
     const range = this.timeSrv.timeRange();
+    return PrometheusDatasource.calculateQuantizedTimeRange(this.cacheLevel, range);
+  }
 
+  /**
+   * @todo move to language_utils?
+   * @param cacheLevel
+   * @param range
+   */
+  static calculateQuantizedTimeRange(
+    cacheLevel: PrometheusCacheLevel,
+    range: TimeRange
+  ): { start: string; end: string } {
     // Don't round the range if we're not caching
-    if (this.cacheLevel === PrometheusCacheLevel.none) {
+    if (cacheLevel === PrometheusCacheLevel.none) {
       return {
-        start: this.getPrometheusTime(range.from, false).toString(),
-        end: this.getPrometheusTime(range.to, true).toString(),
+        start: PrometheusDatasource.getPrometheusTime(range.from, false).toString(),
+        end: PrometheusDatasource.getPrometheusTime(range.to, true).toString(),
       };
     }
     // Otherwise round down to the nearest nth minute for the start time
-    const startTime = this.getPrometheusTime(range.from, false);
-    const startTimeQuantizedSeconds = roundSecToLastMin(startTime, this.getCacheDurationInMinutes()) * 60;
+    const startTime = PrometheusDatasource.getPrometheusTime(range.from, false);
+    const startTimeQuantizedSeconds =
+      roundSecToLastMin(startTime, PrometheusDatasource.calculateCacheDurationInMinutes(cacheLevel)) * 60;
 
     // And round up to the nearest nth minute for the end time
-    const endTime = this.getPrometheusTime(range.to, true);
-    const endTimeQuantizedSeconds = roundSecToNextMin(endTime, this.getCacheDurationInMinutes()) * 60;
+    const endTime = PrometheusDatasource.getPrometheusTime(range.to, true);
+    const endTimeQuantizedSeconds =
+      roundSecToNextMin(endTime, PrometheusDatasource.calculateCacheDurationInMinutes(cacheLevel)) * 60;
 
     // If the interval was too short, we could have rounded both start and end to the same time, if so let's
     if (startTimeQuantizedSeconds === endTimeQuantizedSeconds) {
-      const endTimePlusOneStep = endTimeQuantizedSeconds + this.getCacheDurationInMinutes() * 60;
+      const endTimePlusOneStep =
+        endTimeQuantizedSeconds + PrometheusDatasource.calculateCacheDurationInMinutes(cacheLevel) * 60;
       return { start: startTimeQuantizedSeconds.toString(), end: endTimePlusOneStep.toString() };
     }
 
@@ -1231,8 +1245,8 @@ export class PrometheusDatasource
   getTimeRangeParams(): { start: string; end: string } {
     const range = this.timeSrv.timeRange();
     return {
-      start: this.getPrometheusTime(range.from, false).toString(),
-      end: this.getPrometheusTime(range.to, true).toString(),
+      start: PrometheusDatasource.getPrometheusTime(range.from, false).toString(),
+      end: PrometheusDatasource.getPrometheusTime(range.to, true).toString(),
     };
   }
 
@@ -1311,8 +1325,8 @@ export class PrometheusDatasource
     }
   }
 
-  getCacheDurationInMinutes(): number {
-    switch (this.cacheLevel) {
+  static calculateCacheDurationInMinutes(cacheLevel: PrometheusCacheLevel): number {
+    switch (cacheLevel) {
       case PrometheusCacheLevel.medium:
         return 10;
       case PrometheusCacheLevel.high:
@@ -1320,6 +1334,10 @@ export class PrometheusDatasource
       default:
         return 1;
     }
+  }
+
+  getCacheDurationInMinutes(): number {
+    return PrometheusDatasource.calculateCacheDurationInMinutes(this.cacheLevel);
   }
 }
 

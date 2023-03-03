@@ -14,7 +14,7 @@ import { BackendSrvRequest } from '@grafana/runtime';
 import { CompletionItem, CompletionItemGroup, SearchFunctionType, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
 
 import { Label } from './components/monaco-query-field/monaco-completion-provider/situation';
-import { PrometheusDatasource } from './datasource';
+import { PrometheusCacheLevel, PrometheusDatasource } from './datasource';
 import {
   addLimitInfo,
   extractLabelMatchers,
@@ -112,7 +112,10 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   }
 
   getDefaultCacheHeaders() {
-    return buildCacheHeaders(this.datasource.getCacheDurationInMinutes() * 60);
+    if (this.datasource.cacheLevel !== PrometheusCacheLevel.none) {
+      return buildCacheHeaders(this.datasource.getCacheDurationInMinutes() * 60);
+    }
+    return;
   }
 
   // Strip syntax chars so that typeahead suggestions can work on clean inputs

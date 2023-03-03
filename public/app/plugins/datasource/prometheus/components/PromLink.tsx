@@ -26,8 +26,8 @@ const PromLink: FC<Props> = ({ panelData, query, datasource }) => {
           request: { range, interval, scopedVars },
         } = panelData;
 
-        const start = datasource.getPrometheusTime(range.from, false);
-        const end = datasource.getPrometheusTime(range.to, true);
+        const start = PrometheusDatasource.getPrometheusTime(range.from, false);
+        const end = PrometheusDatasource.getPrometheusTime(range.to, true);
         const rangeDiff = Math.ceil(end - start);
         const endTime = range.to.utc().format('YYYY-MM-DD HH:mm');
 
