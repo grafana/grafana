@@ -147,6 +147,7 @@ export const availableIconsIndex = {
   link: true,
   'list-ui-alt': true,
   'list-ul': true,
+  'list-ol': true,
   lock: true,
   'map-marker': true,
   message: true,
