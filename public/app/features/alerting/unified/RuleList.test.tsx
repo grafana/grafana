@@ -122,7 +122,7 @@ const ui = {
   moreErrorsButton: byRole('button', { name: /more errors/ }),
   editCloudGroupIcon: byTestId('edit-group'),
   newRuleButton: byRole('link', { name: 'Create alert rule' }),
-  exportButton: byRole('button', { name: /export/i }),
+  exportButton: byRole('link', { name: /export/i }),
   editGroupModal: {
     namespaceInput: byRole('textbox', { hidden: true, name: /namespace/i }),
     ruleGroupInput: byRole('textbox', { name: 'Evaluation group', exact: true }),
