@@ -576,8 +576,7 @@ func TestIntegration_SQLStore_GetOrgUsers(t *testing.T) {
 					Permissions: map[int64]map[string][]string{1: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
 				},
 			},
-			// out of the 10 created users all but the 1st are added to the organization
-			expectedNumUsers: 9,
+			expectedNumUsers: 10,
 		},
 		{
 			desc: "should return no users",
@@ -603,9 +602,7 @@ func TestIntegration_SQLStore_GetOrgUsers(t *testing.T) {
 					}}},
 				},
 			},
-			// out of the 10 created users all but the 1st one are added to the organization
-			// and the user has permission to 2 of them
-			expectedNumUsers: 2,
+			expectedNumUsers: 3,
 		},
 	}
 
@@ -634,14 +631,17 @@ func seedOrgUsers(t *testing.T, orgUserStore store, store *sqlstore.SQLStore, nu
 		})
 		require.NoError(t, err)
 
-		if i != 1 {
-			err = orgUserStore.AddOrgUser(context.Background(), &org.AddOrgUserCommand{
-				Role:   "Viewer",
-				OrgID:  orgID,
-				UserID: user.ID,
-			})
-			require.NoError(t, err)
+		role := org.RoleViewer
+		if i == 1 {
+			role = org.RoleAdmin
 		}
+
+		err = orgUserStore.AddOrgUser(context.Background(), &org.AddOrgUserCommand{
+			Role:   role,
+			OrgID:  orgID,
+			UserID: user.ID,
+		})
+		require.NoError(t, err)
 	}
 }
 
@@ -753,8 +753,7 @@ func TestIntegration_SQLStore_SearchOrgUsers(t *testing.T) {
 					Permissions: map[int64]map[string][]string{1: {accesscontrol.ActionOrgUsersRead: {accesscontrol.ScopeUsersAll}}},
 				},
 			},
-			// out of the 10 created users all but the 1st are added to the organization
-			expectedNumUsers: 9,
+			expectedNumUsers: 10,
 		},
 		{
 			desc: "should return no users",
@@ -780,9 +779,7 @@ func TestIntegration_SQLStore_SearchOrgUsers(t *testing.T) {
 					}}},
 				},
 			},
-			// out of the 10 created users all but the 1st one are added to the organization
-			// and the user has permission to 2 of them
-			expectedNumUsers: 2,
+			expectedNumUsers: 3,
 		},
 	}
 
