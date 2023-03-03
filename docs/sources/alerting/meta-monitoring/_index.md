@@ -33,8 +33,6 @@ Here is an example of how this might look:
     - grafana:3000
 ```
 
-### Metrics
-
 The Grafana ruler, which is responsible for evaluating alert rules, and the Grafana Alertmanager, which is responsible for sending notifications of firing and resolved alerts, provide a number of metrics that let you observe them.
 
 #### grafana_alerting_alerts
@@ -65,34 +63,85 @@ This metric is a histogram that shows you the number of seconds taken to send no
 
 ## Grafana Mimir
 
-Meta monitoring in Grafana Mimir requires having a Prometheus/Mimir server, or other metrics database, collecting and storing metrics exported by the Mimir ruler and the Alertmanager.
+Meta monitoring in Grafana Mimir requires having a Prometheus/Mimir server, or other metrics database, collecting and storing metrics exported by the Mimir ruler.
 
-### Metrics
+#### cortex_prometheus_rule_evaluation_failures_total
 
-#### grafanacloud_instance_rule_evaluation_failures_total:rate5m
+This metric is a counter that shows you the total number of rule evaluation failures.
 
-#### grafanacloud_instance_rule_group_interval_seconds
+#### cortex_prometheus_rule_group_last_evaluation_timestamp_seconds
 
-#### grafanacloud_instance_rule_group_iterations_missed_total:rate5m
+This metric is a
 
-#### grafanacloud_instance_rule_group_last_evaluation_timestamp_seconds
+#### cortex_prometheus_rule_group_rules
 
-#### grafanacloud_instance_rule_group_rules
+This metric is a counter that shows
+
+> In Grafana Cloud these metrics are available via the Prometheus usage datasource that is provisioned for all Grafana Cloud customers.
+
+## Alertmanager
+
+Meta monitoring in Alertmanager also requires having a Prometheus/Mimir server, or other metrics database, collecting and storing metrics exported by Alertmanager. For example, if using Prometheus you should add a `scrape_config` to Prometheus to scrape metrics from your Alertmanager.
+
+Here is an example of how this might look:
+
+```
+- job_name: alertmanager
+  honor_timestamps: true
+  scrape_interval: 15s
+  scrape_timeout: 10s
+  metrics_path: /metrics
+  scheme: http
+  follow_redirects: true
+  static_configs:
+  - targets:
+    - alertmanager:9093
+```
 
 #### alertmanager_alerts
 
-This metric is a counter that shows you the number of active, suppressed and unprocessed alerts from the Grafana Alertmanager.
+This metric is a counter that shows you the number of active, suppressed and unprocessed alerts in Alertmanager. Suppressed alerts are silenced alerts, and unprocessed alerts are alerts that have been sent to the Alertmanager but have not been processed.
+
+#### alertmanager_alerts_invalid_total
+
+This metric is a counter that shows you the number of invalid alerts that were sent to Alertmanager. This counter should not exceed 0, and so in most cases you will want to create an alert that fires if whenever this metric increases.
 
 #### alertmanager_notifications_total
 
-This metric is a counter that shows you how many notifications have been sent since the Grafana server started.
+This metric is a counter that shows you how many notifications have been sent by Alertmanager. The metric uses a label "integration" to show the number of notifications sent by integration, such as email.
 
 #### alertmanager_notifications_failed_total
 
-This metric is a counter that shows you how many notifications have failed in total since the Grafana server started. In most cases you will want to use the `rate` function to understand how often notifications are failing to be sent.
+This metric is a counter that shows you how many notifications have failed in total. This metric also uses a label "integration" to show the number of failed notifications by integration, such as failed emails. In most cases you will want to use the `rate` function to understand how often notifications are failing to be sent.
 
-#### alertmanager_invalid_config
+#### alertmanager_notification_latency_seconds_bucket
 
-This metric is a counter that shows you the number of times the Alertmanager.
+This metric is a histogram that shows you the amount of time it takes Alertmanager to send notifications and for those notifications to be accepted by the receiving service. This metric uses a label "integration" to show the amount of time by integration. For example, you can use this metric to show the 95th percentile latency of sending emails.
 
-> In Grafana Cloud these metrics are available via the Prometheus usage datasource that is provisioned for all Grafana Cloud customers.
+> In Grafana Cloud some of these metrics are available via the Prometheus usage datasource that is provisioned for all Grafana Cloud customers.
+
+## Alertmanager in high availability mode
+
+If using Alertmanager in high availability mode there are a number of additional metrics that you might want to create alerts for.
+
+#### alertmanager_cluster_members
+
+This metric is a gauge that shows you the current number of members in the cluster. The value of this gauge should be the same across all Alertmanagers. If different Alertmanagers are showing different numbers of members then this is indicative of an issue with your Alertmanager cluster. You should look at the metrics and logs from your Alertmanagers to better understand what might be going wrong.
+
+#### alertmanager_cluster_failed_peers
+
+This metric is a gauge that shows you the current number of failed peers.
+
+#### alertmanager_cluster_health_score
+
+This metric is a gauge showing the health score of the Alertmanager. Lower values are better, and zero means the Alertmanager is healthy.
+
+#### alertmanager_cluster_peer_info
+
+This metric is a gauge. It has a constant value `1`, and contains a label called "peer" containing the Peer ID of each known peer.
+
+#### alertmanager_cluster_reconnections_failed_total
+
+This metric is a counter that shows you the number of failed peer connection attempts. In most cases you will want to use the `rate` function to understand how often reconnections fail as this may be indicative of an issue or instability in your network.
+
+> These metrics are not available in Grafana Cloud as it uses a different high availability strategy than on-premise Alertmanagers.
