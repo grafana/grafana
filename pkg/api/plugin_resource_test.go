@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	"github.com/grafana/grafana/pkg/plugins/config"
-	pluginClient "github.com/grafana/grafana/pkg/plugins/manager/client"
+	clientDecorator "github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
@@ -32,6 +32,7 @@ import (
 	datasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken/oauthtokentest"
+	pluginClient "github.com/grafana/grafana/pkg/services/plugins/client"
 	"github.com/grafana/grafana/pkg/services/plugins/plugincontext"
 	pluginSettings "github.com/grafana/grafana/pkg/services/plugins/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration"
@@ -97,7 +98,7 @@ func TestCallResource(t *testing.T) {
 		require.Equal(t, 200, resp.StatusCode)
 	})
 
-	pc, err := pluginClient.NewDecorator(&fakes.FakePluginClient{
+	pc, err := clientDecorator.NewDecorator(&fakes.FakePluginClient{
 		CallResourceHandlerFunc: backend.CallResourceHandlerFunc(func(ctx context.Context,
 			req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
 			return errors.New("something went wrong")

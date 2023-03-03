@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
+	"github.com/grafana/grafana/pkg/plugins"
 )
 
 func TestDecorator(t *testing.T) {
@@ -221,3 +223,9 @@ func (m *TestMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRe
 }
 
 var _ plugins.Client = &TestClient{}
+
+type callResourceResponseSenderFunc func(res *backend.CallResourceResponse) error
+
+func (fn callResourceResponseSenderFunc) Send(res *backend.CallResourceResponse) error {
+	return fn(res)
+}
