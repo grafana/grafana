@@ -30,7 +30,6 @@ export interface FeatureToggles {
   publicDashboardsEmailSharing?: boolean;
   lokiLive?: boolean;
   lokiDataframeApi?: boolean;
-  swaggerUi?: boolean;
   featureHighlights?: boolean;
   dashboardComments?: boolean;
   annotationComments?: boolean;
@@ -38,7 +37,6 @@ export interface FeatureToggles {
   storage?: boolean;
   k8s?: boolean;
   dashboardsFromStorage?: boolean;
-  export?: boolean;
   exploreMixedDatasource?: boolean;
   tracing?: boolean;
   newTraceView?: boolean;
@@ -59,7 +57,6 @@ export interface FeatureToggles {
   topnav?: boolean;
   grpcServer?: boolean;
   entityStore?: boolean;
-  flameGraph?: boolean;
   cloudWatchCrossAccountQuerying?: boolean;
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
@@ -82,4 +79,5 @@ export interface FeatureToggles {
   logsContextDatasourceUi?: boolean;
   lokiQuerySplitting?: boolean;
   individualCookiePreferences?: boolean;
+  drawerDataSourcePicker?: boolean;
 }

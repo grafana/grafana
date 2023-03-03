@@ -10,6 +10,8 @@ interface Props {
 }
 
 export const ApiKeysController: FC<Props> = ({ children }) => {
+  // FIXME(eleijonmarck): could not remove state from this component
+  // as component cannot render properly without it
   const [isAdding, setIsAdding] = useState<boolean>(false);
   const toggleIsAdding = useCallback(() => {
     setIsAdding(!isAdding);

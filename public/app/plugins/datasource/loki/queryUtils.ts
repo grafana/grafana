@@ -305,26 +305,22 @@ export function getStreamSelectorsFromQuery(query: string): string[] {
 }
 
 export function requestSupportsPartitioning(allQueries: LokiQuery[]) {
-  const queries = allQueries.filter((query) => !query.hide);
-  /*
-   * For now, we only split if there is a single query.
-   * - we do not split for zero queries
-   * - we do not split for multiple queries
-   */
-  if (queries.length !== 1) {
-    return false;
-  }
+  const queries = allQueries.filter((query) => !query.hide).filter((query) => !query.refId.includes('do-not-chunk'));
 
   const instantQueries = queries.some((query) => query.queryType === LokiQueryType.Instant);
   if (instantQueries) {
     return false;
   }
 
-  if (queries[0].refId.includes('do-not-chunk')) {
+  return queries.length > 0;
+}
+
+function shouldCombine(frame1: DataFrame, frame2: DataFrame): boolean {
+  if (frame1.refId !== frame2.refId) {
     return false;
   }
 
-  return true;
+  return frame1.name === frame2.name;
 }
 
 export function combineResponses(currentResult: DataQueryResponse | null, newResult: DataQueryResponse) {
@@ -333,7 +329,7 @@ export function combineResponses(currentResult: DataQueryResponse | null, newRes
   }
 
   newResult.data.forEach((newFrame) => {
-    const currentFrame = currentResult.data.find((frame) => frame.name === newFrame.name);
+    const currentFrame = currentResult.data.find((frame) => shouldCombine(frame, newFrame));
     if (!currentFrame) {
       currentResult.data.push(cloneDataFrame(newFrame));
       return;
