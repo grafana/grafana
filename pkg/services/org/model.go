@@ -11,11 +11,12 @@ import (
 
 // Typed errors
 var (
-	ErrOrgNotFound         = errors.New("organization not found")
-	ErrOrgNameTaken        = errors.New("organization name is taken")
-	ErrLastOrgAdmin        = errors.New("cannot remove last organization admin")
-	ErrOrgUserNotFound     = errors.New("cannot find the organization user")
-	ErrOrgUserAlreadyAdded = errors.New("user is already added to organization")
+	ErrOrgNotFound                             = errors.New("organization not found")
+	ErrOrgNameTaken                            = errors.New("organization name is taken")
+	ErrLastOrgAdmin                            = errors.New("cannot remove last organization admin")
+	ErrOrgUserNotFound                         = errors.New("cannot find the organization user")
+	ErrOrgUserAlreadyAdded                     = errors.New("user is already added to organization")
+	ErrCannotChangeRoleForExternallySyncedUser = errors.New("cannot change role for externally synced user")
 )
 
 type Org struct {
