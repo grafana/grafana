@@ -69,16 +69,6 @@ Meta monitoring in Grafana Mimir requires having a Prometheus/Mimir server, or o
 
 This metric is a counter that shows you the total number of rule evaluation failures.
 
-#### cortex_prometheus_rule_group_last_evaluation_timestamp_seconds
-
-This metric is a
-
-#### cortex_prometheus_rule_group_rules
-
-This metric is a counter that shows
-
-> In Grafana Cloud these metrics are available via the Prometheus usage datasource that is provisioned for all Grafana Cloud customers.
-
 ## Alertmanager
 
 Meta monitoring in Alertmanager also requires having a Prometheus/Mimir server, or other metrics database, collecting and storing metrics exported by Alertmanager. For example, if using Prometheus you should add a `scrape_config` to Prometheus to scrape metrics from your Alertmanager.
@@ -145,3 +135,13 @@ This metric is a gauge. It has a constant value `1`, and contains a label called
 This metric is a counter that shows you the number of failed peer connection attempts. In most cases you will want to use the `rate` function to understand how often reconnections fail as this may be indicative of an issue or instability in your network.
 
 > These metrics are not available in Grafana Cloud as it uses a different high availability strategy than on-premise Alertmanagers.
+
+<!---
+#### cortex_prometheus_rule_group_last_evaluation_timestamp_seconds
+
+#### cortex_prometheus_rule_group_rules
+
+This metric is a counter that shows
+
+> In Grafana Cloud these metrics are available via the Prometheus usage datasource that is provisioned for all Grafana Cloud customers.
+-->
