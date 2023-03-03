@@ -57,7 +57,7 @@ export const UsersTable = ({ users, orgId, onRoleChange, onRemoveUser }: Props) 
         <tbody>
           {users.map((user, index) => {
             const isUserSynced = !config.auth.DisableSyncLock && user?.isExternallySynced;
-            const orgRoleDisabled =
+            const basicRoleDisabled =
               isUserSynced || !contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersWrite, user);
             return (
               <tr key={`${user.userId}-${index}`}>
@@ -90,13 +90,13 @@ export const UsersTable = ({ users, orgId, onRoleChange, onRemoveUser }: Props) 
                       roleOptions={roleOptions}
                       basicRole={user.role}
                       onBasicRoleChange={(newRole) => onRoleChange(newRole, user)}
-                      basicRoleDisabled={!contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersWrite, user)}
+                      basicRoleDisabled={basicRoleDisabled}
                     />
                   ) : (
                     <OrgRolePicker
                       aria-label="Role"
                       value={user.role}
-                      disabled={orgRoleDisabled}
+                      disabled={basicRoleDisabled}
                       onChange={(newRole) => onRoleChange(newRole, user)}
                     />
                   )}
