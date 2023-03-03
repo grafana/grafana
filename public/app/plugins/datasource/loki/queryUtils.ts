@@ -315,13 +315,21 @@ export function requestSupportsPartitioning(allQueries: LokiQuery[]) {
   return queries.length > 0;
 }
 
+function shouldCombine(frame1: DataFrame, frame2: DataFrame): boolean {
+  if (frame1.refId !== frame2.refId) {
+    return false;
+  }
+
+  return frame1.name === frame2.name;
+}
+
 export function combineResponses(currentResult: DataQueryResponse | null, newResult: DataQueryResponse) {
   if (!currentResult) {
     return cloneQueryResponse(newResult);
   }
 
   newResult.data.forEach((newFrame) => {
-    const currentFrame = currentResult.data.find((frame) => frame.name === newFrame.name);
+    const currentFrame = currentResult.data.find((frame) => shouldCombine(frame, newFrame));
     if (!currentFrame) {
       currentResult.data.push(cloneDataFrame(newFrame));
       return;
