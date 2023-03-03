@@ -83,16 +83,12 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 			s.log.FromContext(ctx).Error("Failed to create user", "error", errCreate, "auth_module", id.AuthModule, "auth_id", id.AuthID)
 			return errSyncUserInternal.Errorf("unable to create user")
 		}
-	}
-
-	if errProtection := s.userProtectionService.AllowUserMapping(usr, id.AuthModule); errProtection != nil {
-		return errUserProtection.Errorf("user mapping not allowed: %w", errProtection)
-	}
-
-	// update user
-	if errUpdate := s.updateUserAttributes(ctx, usr, id, userAuth); errUpdate != nil {
-		s.log.FromContext(ctx).Error("Failed to update user", "error", errUpdate, "auth_module", id.AuthModule, "auth_id", id.AuthID)
-		return errSyncUserInternal.Errorf("unable to update user")
+	} else {
+		// update user
+		if errUpdate := s.updateUserAttributes(ctx, usr, id, userAuth); errUpdate != nil {
+			s.log.FromContext(ctx).Error("Failed to update user", "error", errUpdate, "auth_module", id.AuthModule, "auth_id", id.AuthID)
+			return errSyncUserInternal.Errorf("unable to update user")
+		}
 	}
 
 	syncUserToIdentity(usr, id)
@@ -191,6 +187,9 @@ func (s *UserSync) upsertAuthConnection(ctx context.Context, userID int64, ident
 }
 
 func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id *authn.Identity, userAuth *login.UserAuth) error {
+	if errProtection := s.userProtectionService.AllowUserMapping(usr, id.AuthModule); errProtection != nil {
+		return errUserProtection.Errorf("user mapping not allowed: %w", errProtection)
+	}
 	// sync user info
 	updateCmd := &user.UpdateUserCommand{
 		UserID: usr.ID,

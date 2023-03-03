@@ -14,6 +14,7 @@ export const LogMessages = {
   clickingAlertStateFilters: 'clicking alert state filters',
   cancelSavingAlertRule: 'user canceled alert rule creation',
   successSavingAlertRule: 'alert rule saved successfully',
+  unknownMessageFromError: 'unknown messageFromError',
 };
 
 // logInfo from '@grafana/runtime' should be used, but it doesn't handle Grafana JS Agent and Sentry correctly
