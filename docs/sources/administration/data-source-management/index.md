@@ -79,12 +79,12 @@ After you have enabled permissions for a data source you can assign query permis
 **Assign query permission to users and teams:**
 
 1. Navigate to **Configuration > Data Sources**.
-1. Select the data source you want to assign query permissions for.
-1. On the Permissions tab, click **Add Permission**.
-1. Select **Team**, **User**, or **Role**
-1. Select the entity you want to modify permissions for
-2. Select the permission you would like to grant the entity, either **Query** or **Edit**
-3. Click **Save**.
+1. Select the data source you want to assign query permissions to.
+1. On the **Permissions** tab, click **Add Permission**.
+1. Select **Team**, **User**, or **Role**.
+1. Select the entity you want to modify permissions for.
+1. Select the **Query** or **Edit** permission.
+1. Click **Save**.
 
 <div class="clearfix"></div>
 
