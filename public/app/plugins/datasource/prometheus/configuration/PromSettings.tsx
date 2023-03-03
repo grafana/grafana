@@ -41,10 +41,10 @@ const editorOptions = [
 ];
 
 const cacheValueOptions = [
-  { value: PrometheusCacheLevel.low, label: PrometheusCacheLevel.low },
-  { value: PrometheusCacheLevel.medium, label: PrometheusCacheLevel.medium },
-  { value: PrometheusCacheLevel.high, label: PrometheusCacheLevel.high },
-  { value: PrometheusCacheLevel.none, label: PrometheusCacheLevel.none },
+  { value: PrometheusCacheLevel.low, label: 'Low' },
+  { value: PrometheusCacheLevel.medium, label: 'Medium' },
+  { value: PrometheusCacheLevel.high, label: 'High' },
+  { value: PrometheusCacheLevel.none, label: 'None' },
 ];
 
 type PrometheusSelectItemsType = Array<{ value: PromApplication; label: PromApplication }>;
@@ -309,7 +309,7 @@ export const PromSettings = (props: Props) => {
         </div>
         <div className="gf-form">
           <FormField
-            label="Default Editor"
+            label="Default editor"
             labelWidth={14}
             inputEl={
               <Select
@@ -348,14 +348,13 @@ export const PromSettings = (props: Props) => {
             <FormField
               label="Cache level"
               labelWidth={14}
-              tooltip="Set caching settings"
+              tooltip="Sets the browser caching level. Setting a value higher then 'low' will result in editor values from a different range then the active query range."
               inputEl={
                 <Select
-                  className="width-25"
+                  className={`width-25`}
                   onChange={onChangeHandler('cacheLevel', options, onOptionsChange)}
                   options={cacheValueOptions}
                   value={cacheValueOptions.find((o) => o.value === options.jsonData.cacheLevel)}
-                  // value={httpOptions.find((o) => o.value === options.jsonData.httpMethod)}
                 />
               }
             />
