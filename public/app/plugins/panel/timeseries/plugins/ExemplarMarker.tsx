@@ -17,6 +17,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { FieldLinkList, Portal, UPlotConfigBuilder, useStyles2 } from '@grafana/ui';
 
 import { CloseButton } from '../../../../core/components/CloseButton/CloseButton';
+import { ExemplarModalHeader } from '../../heatmap/ExemplarModalHeader';
 
 interface ExemplarMarkerProps {
   timeZone: TimeZone;
@@ -152,30 +153,11 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
         {...attributes.popper}
       >
         <div className={styles.wrapper}>
-          {isLocked && (
-            <div
-              style={{
-                width: '100%',
-                display: 'flex',
-                justifyContent: 'flex-end',
-                paddingBottom: '6px',
-              }}
-            >
-              <CloseButton
-                onClick={onClose}
-                style={{
-                  position: 'relative',
-                  top: 'auto',
-                  right: 'auto',
-                  marginRight: 0,
-                }}
-              />
-            </div>
-          )}
-          <div className={styles.header}>
-            <span className={styles.title}>Exemplars</span>
-          </div>
+          {isLocked && <ExemplarModalHeader onClick={onClose} />}
           <div className={styles.body}>
+            <div className={styles.header}>
+              <span className={styles.title}>Exemplars</span>
+            </div>
             <div>
               <table className={styles.exemplarsTable}>
                 <tbody>
@@ -284,6 +266,7 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme2) => {
       border: 1px solid ${headerBg};
       border-radius: ${theme.shape.borderRadius(2)};
       box-shadow: 0 0 20px ${shadowColor};
+      padding: ${theme.spacing(1)};
     `,
     exemplarsTable: css`
       width: 100%;
@@ -336,8 +319,9 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme2) => {
       flex-grow: 1;
     `,
     body: css`
-      padding: ${theme.spacing(1)};
       font-weight: ${theme.typography.fontWeightMedium};
+      border-radius: ${theme.shape.borderRadius(2)};
+      overflow: hidden;
     `,
     marble: css`
       display: block;
