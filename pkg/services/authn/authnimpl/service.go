@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"go.opentelemetry.io/otel/attribute"
 
+	"github.com/grafana/grafana/pkg/extensions/oauthserver"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
@@ -59,6 +60,7 @@ func ProvideService(
 	loginAttempts loginattempt.Service, quotaService quota.Service,
 	authInfoService login.AuthInfoService, renderService rendering.Service,
 	features *featuremgmt.FeatureManager, oauthTokenService oauthtoken.OAuthTokenService,
+	oauthService oauthserver.OAuth2Service,
 	socialService social.Service, cache *remotecache.RemoteCache,
 	ldapService service.LDAP,
 ) *Service {
@@ -120,6 +122,8 @@ func ProvideService(
 			s.RegisterClient(proxy)
 		}
 	}
+
+	s.clients[authn.ClientExtendedJWT] = clients.ProvideExtendedJWT(userService, cfg, oauthService)
 
 	if s.cfg.JWTAuthEnabled {
 		s.RegisterClient(clients.ProvideJWT(jwtService, cfg))

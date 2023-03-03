@@ -408,6 +408,11 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *contextmodel.ReqConte
 }
 
 func (h *ContextHandler) initContextWithBasicAuth(reqContext *contextmodel.ReqContext, orgID int64) bool {
+	// TODO hack for the POC to allow basic auth for the introspection endpoint
+	if strings.HasPrefix(reqContext.Req.RequestURI, "/oauth2/introspect") {
+		return false
+	}
+
 	if !h.Cfg.BasicAuthEnabled {
 		return false
 	}
