@@ -24,7 +24,12 @@ export const MigrateToServiceAccountsCard = ({ onMigrate, apikeysCount, disabled
       Find out more about the migration here.
     </a>
   );
-  const migrationBoxDesc = <span>Are you sure you want to migrate all API keys to service accounts? {docsLink}</span>;
+  const migrationBoxDesc = (
+    <span>
+      Are you sure you want to migrate all API keys to service accounts? {docsLink}
+      <br>This hides the API keys tab.</br>
+    </span>
+  );
 
   return (
     <>
