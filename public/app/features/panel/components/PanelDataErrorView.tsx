@@ -8,7 +8,7 @@ import {
   VisualizationSuggestionsBuilder,
   VisualizationSuggestion,
 } from '@grafana/data';
-import { PanelDataErrorViewProps } from '@grafana/runtime';
+import { PanelDataErrorViewProps, locationService } from '@grafana/runtime';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { CardButton } from 'app/core/components/CardButton';
 import { LS_VISUALIZATION_SELECT_TAB_KEY } from 'app/core/constants';
@@ -57,6 +57,11 @@ export function PanelDataErrorView(props: PanelDataErrorViewProps) {
         panel,
       })
     );
+    if (s.transformations) {
+      setTimeout(() => {
+        locationService.partial({ tab: 'transform' });
+      }, 100);
+    }
   };
 
   return (

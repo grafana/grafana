@@ -91,8 +91,6 @@ export function changePanelPlugin({
 
     panel.generateNewKey();
 
-    console.log('PANEL', panel);
-
     dispatch(panelModelAndPluginReady({ key: panel.key, plugin }));
   };
 }

@@ -220,7 +220,7 @@ export function getPrepareTimeseriesSuggestion(panelId: number): VisualizationSu
     });
 
     return {
-      name: 'Convert to wide time series format',
+      name: 'Transform to wide time series format',
       pluginId: 'timeseries',
       transformations,
     };
