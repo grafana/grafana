@@ -8,7 +8,7 @@ import { CombinedRule } from 'app/types/unified-alerting';
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { Annotation } from '../../utils/constants';
-import { isGrafanaRulerRule } from '../../utils/rules';
+import { isGrafanaRulerRule, isGrafanaRulerRulePaused } from '../../utils/rules';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { DynamicTableWithGuidelines } from '../DynamicTableWithGuidelines';
 import { ProvisioningBadge } from '../Provisioning';
@@ -117,8 +117,7 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean) {
 
           const isDeleting = !!(hasRuler(rulesSource) && rulerRulesLoaded(rulesSource) && promRule && !rulerRule);
           const isCreating = !!(hasRuler(rulesSource) && rulerRulesLoaded(rulesSource) && rulerRule && !promRule);
-          const isGrafanaManagedRule = isGrafanaRulerRule(rulerRule);
-          const isPaused = isGrafanaManagedRule && Boolean(rulerRule.grafana_alert.is_paused);
+          const isPaused = isGrafanaRulerRulePaused(rule);
 
           return <RuleState rule={rule} isDeleting={isDeleting} isCreating={isCreating} isPaused={isPaused} />;
         },

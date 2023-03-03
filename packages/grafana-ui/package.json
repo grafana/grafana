@@ -164,7 +164,7 @@
     "@types/slate-react": "0.22.9",
     "@types/testing-library__jest-dom": "5.14.5",
     "@types/tinycolor2": "1.4.3",
-    "@types/uuid": "8.3.4",
+    "@types/uuid": "9.0.1",
     "common-tags": "1.8.2",
     "css-loader": "6.7.1",
     "csstype": "3.1.1",
