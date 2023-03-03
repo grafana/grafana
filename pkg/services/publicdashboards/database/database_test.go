@@ -597,7 +597,7 @@ func TestIntegrationGetOrgIdByAccessToken(t *testing.T) {
 		assert.Equal(t, savedDashboard.OrgID, orgId)
 	})
 
-	t.Run("GetOrgIdByAccessToken will return 0 when IsEnabled=false", func(t *testing.T) {
+	t.Run("GetOrgIdByAccessToken will return current OrgId when IsEnabled=false", func(t *testing.T) {
 		setup()
 		cmd := SavePublicDashboardCommand{
 			PublicDashboard: PublicDashboard{
@@ -616,7 +616,7 @@ func TestIntegrationGetOrgIdByAccessToken(t *testing.T) {
 
 		orgId, err := publicdashboardStore.GetOrgIdByAccessToken(context.Background(), "accessToken")
 		require.NoError(t, err)
-		assert.NotEqual(t, savedDashboard.OrgID, orgId)
+		assert.Equal(t, savedDashboard.OrgID, orgId)
 	})
 
 	t.Run("GetOrgIdByAccessToken will return 0 when no public dashboard has matching access token", func(t *testing.T) {
