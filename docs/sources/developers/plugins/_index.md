@@ -24,8 +24,8 @@ Follow the questions and you will have a starter plugin ready to develop.
 
 If you want a more guided introduction to plugin development, check out our tutorials:
 
-- [Build a panel plugin]({{< ref "build-a-panel-plugin.md" >}})
-- [Build a data source plugin]({{< ref "build-a-data-source-plugin.md" >}})
+- [Build a panel plugin](/tutorials/build-a-panel-plugin/)
+- [Build a data source plugin](/tutorials/build-a-data-source-plugin/)
 
 ## Go further
 
@@ -35,13 +35,13 @@ Learn more about specific areas of plugin development.
 
 If you're looking to build your first plugin, check out these introductory tutorials:
 
-- [Build a panel plugin]({{< ref "build-a-panel-plugin.md" >}})
-- [Build a data source plugin]({{< ref "build-a-data-source-plugin.md" >}})
-- [Build a data source backend plugin]({{< ref "build-a-data-source-backend-plugin.md" >}})
+- [Build a panel plugin](/tutorials/build-a-panel-plugin/)
+- [Build a data source plugin](/tutorials/build-a-data-source-plugin/)
+- [Build a data source backend plugin](/tutorials/build-a-data-source-backend-plugin/)
 
 Ready to learn more? Check out our other tutorials:
 
-- [Build a panel plugin with D3.js]({{< ref "build-a-panel-plugin-with-d3.md" >}})
+- [Build a panel plugin with D3.js](/tutorials/build-a-panel-plugin-with-d3/)
 
 ### Guides
 
@@ -66,7 +66,7 @@ Deepen your knowledge through a series of high-level overviews of plugin concept
 
 ### UI library
 
-Explore the many UI components in our [Grafana UI library](https://developers.grafana.com/ui).
+Explore the many UI components in our [Grafana UI library](/ui).
 
 ### Examples
 
