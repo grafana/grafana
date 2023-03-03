@@ -190,8 +190,16 @@ export function SelectBase<T>({
     // If option is passed as a plain value (value property from SelectableValue property)
     // we are selecting the corresponding value from the options
     if (isMulti && value && Array.isArray(value) && !loadOptions) {
-      // @ts-ignore
-      selectedValue = value.map((v) => findSelectedValue(v.value ?? v, options));
+      selectedValue = value.map((v) => {
+        // @ts-ignore
+        const selectableValue = findSelectedValue(v.value ?? v, options);
+        // If the select allows custom values there likely won't be a selectableValue in options
+        // so we must return a new selectableValue
+        if (!allowCustomValue || selectableValue) {
+          return selectableValue;
+        }
+        return typeof v === 'object' ? v : { label: v, value: v };
+      });
     } else if (loadOptions) {
       const hasValue = defaultValue || value;
       selectedValue = hasValue ? [hasValue] : [];
