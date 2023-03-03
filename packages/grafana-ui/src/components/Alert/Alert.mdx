@@ -7,26 +7,41 @@ import { Alert } from './Alert';
 
 An alert displays an important message in a way that attracts the user's attention without interrupting the user's task.
 
-## Behaviors
+---
+
+About Alert component:
+
+1. [Behaviors](#behaviors)
+2. [Types](#types)
+3. [Message type](#message-type)
+4. [Main elements](#main-elements)
+5. [Usage:](#usage)\
+   5.1. [Inline banner](#alert-inline)\
+   5.2. [Toast](#alert-toast)
+
+<br />
+<br />
+<br />
+## <a name="behaviors" />
+Behaviors
 
 1. **Persistent**: They are usually urgent and intrusive, require immediate attention and require action to be dismissed.
 2. **Passive**: Are informational, report a system issue that does not require any action by users.
+   <br />
 
-## Types
+## <a name="types"/>Types
 
 Within Grafana, we have three different types of alerts and they can be used depending on the context and content.
 
-1. **[Inline](#alertInline)**:
+1. **[Inline banner](#alert-inline)**:
    - To notify users of the status of an action. They appear at the top or bottom of the main content area
    - Passive or Persistent
-2. **[Toast](#alertToast)**:
+2. **[Toast](#alert-toast)**:
    - These temporary window elements are used to display short messages; they appear at the top-right corner of the screen and can be dismissed by clicking the [x] or it will disappear after a few seconds
    - Passive
-3. **[Banner](#alertBanner)**:(?)
-   - It will remain until the user rejects it or until the status that triggered the banner is resolved
-   - Persistent
+     <br />
 
-## Message Type
+## <a name="message-type"/>Message Type
 
 1. **Informational**
    - Usage: Provide information to users, and don’t interrupt any current actions
@@ -48,8 +63,9 @@ Within Grafana, we have three different types of alerts and they can be used dep
    - Action: Always persists until the user has taken steps to remedy the issue that triggered the notification
    - Color: Red background
    - Icon: Exclamation-triangle
+     <br />
 
-### Main elements
+## <a name="main-elements"/>Main elements
 
 - Icon Status: represent the importance of the message through the color and icon for each status.
 
@@ -60,10 +76,13 @@ Within Grafana, we have three different types of alerts and they can be used dep
 - Button and text links: only persistent notifications should contain text links or buttons.
 
 - Close Icon: appears when the notification can be dismissed by the user.
+  <br />
 
-## Usage
+## <a name="usage"/>Usage
 
-### <a name="alertInline"/>Inline Banner
+<br />
+### <a name="alert-inline" />
+Inline Banner
 
 Inline Banners are task-oriented alerts that notify users of the status of an action or system. These alerts are contextual — appearing above or below main content areas — allowing users to address issues or to read messages quickly.
 
@@ -97,7 +116,7 @@ Inline Banners are task-oriented alerts that notify users of the status of an ac
 </Alert>
 ```
 
-### <a name="alertToast"/>Toast
+### <a name="alert-toast"/>Toast
 
 Toast notifications are short messages that appear in the top-right corner of the page and are automatically hidden after a certain amount of time – they provide live notifications, without interrupting the user experience or requiring an action to be taken.
 
@@ -133,7 +152,6 @@ appEvents.publish({
 #### Placement
 
     - Slide in and out from the top right corner of the page.
-
 
 ```jsx
 <Alert title={title} severity={severity} onRemove={onRemove} elevated>
