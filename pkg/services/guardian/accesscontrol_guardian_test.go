@@ -618,7 +618,7 @@ func setupAccessControlGuardianTest(t *testing.T, uid string, permissions []acce
 
 	ac := accesscontrolmock.New().WithPermissions(permissions)
 	// TODO replace with actual folder store implementation after resolving import cycles
-	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(dashboardSvc, foldertest.NewFakeService()))
+	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(foldertest.NewFakeFolderStore(t), dashboardSvc, foldertest.NewFakeService()))
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
 	teamSvc := teamimpl.ProvideService(store, store.Cfg)
