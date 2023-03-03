@@ -69,11 +69,11 @@ export const addQueryRowAction = createAction<AddQueryRowPayload>('explore/addQu
  * Query change handler for the query row with the given index.
  * If `override` is reset the query modifications and run the queries. Use this to set queries via a link.
  */
-interface ChangeQueriesPayload {
+export interface ChangeQueriesPayload {
   exploreId: ExploreId;
   queries: DataQuery[];
 }
-const changeQueriesAction = createAction<ChangeQueriesPayload>('explore/changeQueries');
+export const changeQueriesAction = createAction<ChangeQueriesPayload>('explore/changeQueries');
 
 /**
  * Cancel running queries.
