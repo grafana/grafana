@@ -18,6 +18,7 @@ import {
   FieldWithIndex,
   findCommonLabels,
   findUniqueLabels,
+  getTimeField,
   Labels,
   LoadingState,
   LogLevel,
@@ -29,6 +30,7 @@ import {
   MutableDataFrame,
   rangeUtil,
   ScopedVars,
+  sortDataFrame,
   textUtil,
   TimeRange,
   toDataFrame,
@@ -40,6 +42,7 @@ import { ansicolor, colors } from '@grafana/ui';
 import { getThemeColor } from 'app/core/utils/colors';
 
 import { getLogLevel, getLogLevelFromKey, sortInAscendingOrder } from '../features/logs/utils';
+
 export const LIMIT_LABEL = 'Line limit';
 export const COMMON_LABELS = 'Common labels';
 
@@ -788,7 +791,11 @@ export function queryLogsSample<TQuery extends DataQuery, TOptions extends DataS
           });
           observer.error(error);
         } else {
-          rawLogsSample = rawLogsSample.concat(dataQueryResponse.data.map(toDataFrame));
+          rawLogsSample = dataQueryResponse.data.map((dataFrame) => {
+            const frame = toDataFrame(dataFrame);
+            const { timeIndex } = getTimeField(frame);
+            return sortDataFrame(frame, timeIndex);
+          });
         }
       },
       error: (error) => {
