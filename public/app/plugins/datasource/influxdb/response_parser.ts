@@ -282,7 +282,7 @@ function rawQuerySelectedFieldsInDataframe(query: string | undefined, dfs: DataF
     return false;
   });
 
-  const queryChecks: string[] = ['*', 'SHOW'];
+  const queryChecks = ['*', 'SHOW'];
 
   const otherChecks: boolean = queryChecks.some((qc: string) => {
     if (query) {
