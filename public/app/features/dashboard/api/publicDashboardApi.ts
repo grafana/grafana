@@ -113,9 +113,9 @@ export const publicDashboardApi = createApi({
       },
       invalidatesTags: (result, error, { dashboardUid }) => [{ type: 'PublicDashboard', id: dashboardUid }],
     }),
-    deleteEmailSharing: builder.mutation<void, { recipient: string; dashboardUid: string; uid: string }>({
-      query: ({ uid, recipient }) => ({
-        url: `/public-dashboards/${uid}/share/recipients/${recipient}`,
+    deleteEmailSharing: builder.mutation<void, { recipientUid: string; dashboardUid: string; uid: string }>({
+      query: ({ uid, recipientUid }) => ({
+        url: `/public-dashboards/${uid}/share/recipients/${recipientUid}`,
         method: 'DELETE',
       }),
       async onQueryStarted(_, { dispatch, queryFulfilled }) {
