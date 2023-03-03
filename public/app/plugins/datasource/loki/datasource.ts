@@ -686,7 +686,7 @@ export class LokiDatasource
     const processResults = (result: DataQueryResponse): DataQueryResponse => {
       const frames: DataFrame[] = result.data;
       const processedFrames = frames
-        .map((frame) => sortDataFrameByTime(frame, SortDirection.DESCENDING))
+        .map((frame) => sortDataFrameByTime(frame, SortDirection.descending))
         .map((frame) => processDataFrame(frame)); // rename fields if needed
 
       return {
