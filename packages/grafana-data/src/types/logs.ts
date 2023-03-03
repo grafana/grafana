@@ -226,7 +226,7 @@ export const getLogsVolumeDataSourceInfo = (dataFrames: DataFrame[]): { name: st
 };
 
 export const isLogsVolumeLimited = (dataFrames: DataFrame[]) => {
-  return dataFrames.length && dataFrames[0].meta?.custom?.logsVolumeType === LogsVolumeType.Limited;
+  return dataFrames[0]?.meta?.custom?.logsVolumeType === LogsVolumeType.Limited;
 };
 
 /**
