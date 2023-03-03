@@ -38,18 +38,18 @@ const getPanelData = (panelDataOverrides?: Partial<PanelData>) => {
 
 const getDataSource = (datasourceOverrides?: Partial<PrometheusDatasource>) => {
   const datasource = {
-    getPrometheusTime: () => 123,
     createQuery: () => ({ expr: 'up', step: 15 }),
     directUrl: 'prom1',
     getRateIntervalScopedVariable: jest.fn(() => ({ __rate_interval: { text: '60s', value: '60s' } })),
   };
+  PrometheusDatasource.getPrometheusTime = jest.fn().mockReturnValue(123);
 
   return Object.assign(datasource, datasourceOverrides) as unknown as PrometheusDatasource;
 };
 
 const getDataSourceWithCustomQueryParameters = (datasourceOverrides?: Partial<PrometheusDatasource>) => {
   const datasource = {
-    getPrometheusTime: () => 124,
+    getPrometheusTime: () => 1677870470,
     createQuery: () => ({ expr: 'up', step: 20 }),
     directUrl: 'prom3',
     getRateIntervalScopedVariable: jest.fn(() => ({ __rate_interval: { text: '60s', value: '60s' } })),
