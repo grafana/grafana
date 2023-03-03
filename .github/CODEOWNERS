@@ -278,6 +278,7 @@
 /pkg/api/pluginproxy/ @grafana/plugins-platform-backend
 /pkg/infra/httpclient/ @grafana/plugins-platform-backend
 /pkg/plugins/ @grafana/plugins-platform-backend
+/pkg/services/plugins/ @grafana/plugins-platform-backend
 /pkg/services/datasourceproxy/ @grafana/plugins-platform-backend
 /pkg/services/datasources/ @grafana/plugins-platform-backend
 /pkg/services/pluginsintegration/ @grafana/plugins-platform-backend
