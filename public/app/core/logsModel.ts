@@ -39,8 +39,10 @@ import { SIPrefix } from '@grafana/data/src/valueFormats/symbolFormatters';
 import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
 import { ansicolor, colors } from '@grafana/ui';
 import { getThemeColor } from 'app/core/utils/colors';
+import { sortDataFrameByTime, SortDirection } from 'app/plugins/datasource/loki/sortDataFrame';
 
 import { getLogLevel, getLogLevelFromKey, sortInAscendingOrder } from '../features/logs/utils';
+
 export const LIMIT_LABEL = 'Line limit';
 export const COMMON_LABELS = 'Common labels';
 
@@ -798,7 +800,9 @@ export function queryLogsSample<TQuery extends DataQuery, TOptions extends DataS
           });
           observer.error(error);
         } else {
-          rawLogsSample = rawLogsSample.concat(dataQueryResponse.data.map(toDataFrame));
+          rawLogsSample = dataQueryResponse.data.map(toDataFrame).map((dataFrame) => {
+            return sortDataFrameByTime(dataFrame, SortDirection.ASCENDING);
+          });
         }
       },
       error: (error) => {
