@@ -18,7 +18,7 @@ AngularJS is an old frontend framework whose active development stopped many yea
 
 ## When will Angular plugins stop working?
 
-Our goal is to transfer all the remaining Angular code to the core of Grafana before Grafana 10 is released in Summer 2023. Once this is done, the option "[angular_support_enabled](https://github.com/grafana/grafana/blob/main/conf/defaults.ini#L359)" will be disabled by default, resulting in the deactivation of all Angular plugins. In case you still rely on AngularJS-based plugins developed internally or by the community, you will need to enable this option to continue using them.
+Our goal is to transfer all the remaining Angular code to the core of Grafana before Grafana 10 is released in Summer 2023. Once this is done, the option "[angular_support_enabled](https://github.com/grafana/grafana/blob/d61bcdf4ca5e69489e0067c56fbe7f0bfdf84ee4/conf/defaults.ini#L362)" will be disabled by default, resulting in the deactivation of all Angular plugins. In case you still rely on AngularJS-based plugins developed internally or by the community, you will need to enable this option to continue using them.
 
 ## When will we remove Angular support completely?
 
