@@ -109,8 +109,8 @@ func TestBuildConflictBlock(t *testing.T) {
 			// Restore after destructive operation
 			sqlStore := db.InitTestDB(t)
 			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
+				userStore := userimpl.ProvideStore(sqlStore, sqlStore.Cfg)
 				for _, u := range tc.users {
-					userStore := userimpl.ProvideStore(sqlStore, sqlStore.Cfg)
 					u := user.User{
 						Email:   u.Email,
 						Name:    u.Name,
@@ -217,8 +217,8 @@ conflict: test2
 			// Restore after destructive operation
 			sqlStore := db.InitTestDB(t)
 			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
+				userStore := userimpl.ProvideStore(sqlStore, sqlStore.Cfg)
 				for _, u := range tc.users {
-					userStore := userimpl.ProvideStore(sqlStore, sqlStore.Cfg)
 					u := user.User{
 						Email:   u.Email,
 						Name:    u.Name,
@@ -398,8 +398,8 @@ func TestGetConflictingUsers(t *testing.T) {
 			// Restore after destructive operation
 			sqlStore := db.InitTestDB(t)
 			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
+				userStore := userimpl.ProvideStore(sqlStore, sqlStore.Cfg)
 				for _, u := range tc.users {
-					userStore := userimpl.ProvideStore(sqlStore, sqlStore.Cfg)
 					u := user.User{
 						Email:            u.Email,
 						Name:             u.Name,
@@ -510,8 +510,8 @@ func TestGenerateConflictingUsersFile(t *testing.T) {
 			// Restore after destructive operation
 			sqlStore := db.InitTestDB(t)
 			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
+				userStore := userimpl.ProvideStore(sqlStore, sqlStore.Cfg)
 				for _, u := range tc.users {
-					userStore := userimpl.ProvideStore(sqlStore, sqlStore.Cfg)
 					cmd := user.User{
 						Email:   u.Email,
 						Name:    u.Name,
@@ -770,8 +770,8 @@ conflict: test2
 			// Restore after destructive operation
 			sqlStore := db.InitTestDB(t)
 			if sqlStore.GetDialect().DriverName() != ignoredDatabase {
+				userStore := userimpl.ProvideStore(sqlStore, sqlStore.Cfg)
 				for _, u := range tc.users {
-					userStore := userimpl.ProvideStore(sqlStore, sqlStore.Cfg)
 					cmd := user.User{
 						Email:   u.Email,
 						Name:    u.Name,
