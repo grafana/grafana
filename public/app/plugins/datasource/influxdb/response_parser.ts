@@ -204,7 +204,12 @@ function getTableCols(dfs: DataFrame[], table: TableModel, target: InfluxQuery):
   // dfs field names are in the rawQuery but
   // the selected params object doesn't exist in the query then
   // add columns to the table
-  if (target.rawQuery && selectedParams.length === 0 && rawQuerySelectedFieldsInDataframe(target.query, dfs)) {
+  if (
+    target.rawQuery &&
+    selectedParams.length === 0 &&
+    rawQuerySelectedFieldsInDataframe(target.query, dfs) &&
+    dfs[0].refId !== 'metricFindQuery'
+  ) {
     dfs.map((df) => {
       if (df.name) {
         table.columns.push({ text: df.name });
