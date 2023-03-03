@@ -232,3 +232,7 @@ func (s *ExtendedJWT) validateClientIdClaim(ctx context.Context, claims map[stri
 func (s *ExtendedJWT) Name() string {
 	return "extended_jwt"
 }
+
+func (c *ExtendedJWT) Priority() uint {
+	return 15
+}

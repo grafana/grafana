@@ -123,7 +123,8 @@ func ProvideService(
 		}
 	}
 
-	s.clients[authn.ClientExtendedJWT] = clients.ProvideExtendedJWT(userService, cfg, oauthService)
+	// Register the extended auth client
+	s.RegisterClient(clients.ProvideExtendedJWT(userService, cfg, oauthService))
 
 	if s.cfg.JWTAuthEnabled {
 		s.RegisterClient(clients.ProvideJWT(jwtService, cfg))
