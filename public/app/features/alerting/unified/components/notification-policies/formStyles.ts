@@ -16,6 +16,9 @@ export const getFormStyles = (theme: GrafanaTheme2) => {
     input: css`
       flex: 1;
     `,
+    timingFormContainer: css`
+      padding: ${theme.spacing(1)};
+    `,
     timingContainer: css`
       max-width: ${theme.spacing(33)};
     `,

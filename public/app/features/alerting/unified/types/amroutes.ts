@@ -9,11 +9,11 @@ export interface FormAmRoute {
   groupBy: string[];
   overrideTimings: boolean;
   groupWaitValue: string;
-  groupWaitValueType: string;
+  // groupWaitValueType: string;
   groupIntervalValue: string;
-  groupIntervalValueType: string;
+  // groupIntervalValueType: string;
   repeatIntervalValue: string;
-  repeatIntervalValueType: string;
+  // repeatIntervalValueType: string;
   muteTimeIntervals: string[];
   routes: FormAmRoute[];
 }
