@@ -62,8 +62,8 @@ func ProvideService(
 		srv.DBMigration(db)
 	}
 
-	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(srv))
-	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(srv))
+	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(folderStore, srv))
+	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(folderStore, srv))
 	ac.RegisterScopeAttributeResolver(dashboards.NewFolderUIDScopeResolver(srv))
 	return srv
 }
