@@ -338,7 +338,7 @@ func HandleLoginResponse(r *http.Request, w http.ResponseWriter, cfg *setting.Cf
 	}
 	cookies.DeleteCookie(w, "redirect_to", nil)
 
-	writeSessionCookie(w, cfg, identity)
+	WriteSessionCookie(w, cfg, identity)
 	return response.JSON(http.StatusOK, result)
 }
 
@@ -350,7 +350,7 @@ func HandleLoginRedirect(r *http.Request, w http.ResponseWriter, cfg *setting.Cf
 		redirectURL = redirectTo
 	}
 
-	writeSessionCookie(w, cfg, identity)
+	WriteSessionCookie(w, cfg, identity)
 	http.Redirect(w, r, redirectURL, http.StatusFound)
 }
 
@@ -364,12 +364,10 @@ func getRedirectURL(r *http.Request) string {
 	return v
 }
 
-func writeSessionCookie(w http.ResponseWriter, cfg *setting.Cfg, identity *Identity) {
-	var maxAge int
+func WriteSessionCookie(w http.ResponseWriter, cfg *setting.Cfg, identity *Identity) {
+	maxAge := int(cfg.LoginMaxLifetime.Seconds())
 	if cfg.LoginMaxLifetime <= 0 {
 		maxAge = -1
-	} else {
-		maxAge = int(cfg.LoginMaxLifetime.Seconds())
 	}
 
 	cookies.WriteCookie(w, cfg.LoginCookieName, identity.SessionToken.UnhashedToken, maxAge, nil)
