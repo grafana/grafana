@@ -53,14 +53,14 @@ const templateSrvStub = {
 const fromSeconds = 1674500289215;
 const toSeconds = 1674500349215;
 
-const timeSrvStub = {
+const timeSrvStub: TimeSrv = {
   timeRange() {
     return {
       from: dateTime(fromSeconds),
       to: dateTime(toSeconds),
     };
   },
-};
+} as TimeSrv;
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -82,7 +82,7 @@ describe('PrometheusDatasource', () => {
   } as unknown as DataSourceInstanceSettings<PromOptions>;
 
   beforeEach(() => {
-    ds = new PrometheusDatasource(instanceSettings, templateSrvStub, timeSrvStub as TimeSrv);
+    ds = new PrometheusDatasource(instanceSettings, templateSrvStub, timeSrvStub);
   });
 
   describe('Query', () => {
