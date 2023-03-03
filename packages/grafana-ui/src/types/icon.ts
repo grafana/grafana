@@ -25,7 +25,7 @@ export function getIconForFieldType(type?: FieldType): IconName {
   if (type) {
     switch (type) {
       case FieldType.time:
-        return 'clock';
+        return 'clock-nine';
       case FieldType.string:
         return 'font';
       case FieldType.number:
@@ -38,8 +38,6 @@ export function getIconForFieldType(type?: FieldType): IconName {
         return 'list-ol';
       case FieldType.geo:
         return 'map-marker';
-      case FieldType.timeOffset:
-        return 'stopwatch';
       case FieldType.other:
         return 'brackets-curly';
     }

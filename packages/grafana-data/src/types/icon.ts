@@ -54,7 +54,6 @@ export const availableIconsIndex = {
   circle: true,
   'circle-mono': true,
   'clipboard-alt': true,
-  clock: true,
   'clock-nine': true,
   cloud: true,
   'cloud-download': true,
