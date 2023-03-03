@@ -18,11 +18,14 @@ func Init() error {
 	}
 
 	// Enable execution of Docker images for other architectures
+	//nolint:gosec
 	cmd := exec.Command("docker", "run", "--privileged", "--rm",
-		"docker/binfmt:a7996909642ee92942dcd6cff44b9b95f08dad64")
+		"tonistiigi/binfmt", "--install", "all")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to enable execution of cross-platform Docker images: %w\n%s", err, output)
 	}
+	fmt.Println("Emulators have been installed successfully!", string(output))
+
 	return nil
 }
