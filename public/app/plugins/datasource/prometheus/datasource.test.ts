@@ -53,6 +53,15 @@ const templateSrvStub = {
 const fromSeconds = 1674500289215;
 const toSeconds = 1674500349215;
 
+const timeSrvStubOld = {
+  timeRange() {
+    return {
+      from: dateTime(1531468681),
+      to: dateTime(1531489712),
+    };
+  },
+} as TimeSrv;
+
 const timeSrvStub: TimeSrv = {
   timeRange() {
     return {
@@ -778,8 +787,13 @@ describe('PrometheusDatasource', () => {
 
   describe('metricFindQuery', () => {
     beforeEach(() => {
+      const prometheusDatasource = new PrometheusDatasource(
+        { ...instanceSettings, jsonData: { ...instanceSettings.jsonData, cacheLevel: PrometheusCacheLevel.none } },
+        templateSrvStub,
+        timeSrvStubOld
+      );
       const query = 'query_result(topk(5,rate(http_request_duration_microseconds_count[$__interval])))';
-      ds.metricFindQuery(query);
+      prometheusDatasource.metricFindQuery(query);
     });
 
     it('should call templateSrv.replace with scopedVars', () => {
