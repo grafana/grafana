@@ -25,7 +25,6 @@ type TestUser struct {
 	Role             string
 	Login            string
 	IsServiceAccount bool
-	OrgID            int64
 }
 
 type TestApiKey struct {
@@ -49,12 +48,17 @@ func SetupUserServiceAccount(t *testing.T, sqlStore *sqlstore.SQLStore, testUser
 	usrSvc, err := userimpl.ProvideService(sqlStore, orgService, sqlStore.Cfg, nil, nil, quotaService)
 	require.NoError(t, err)
 
-	u1, err := usrSvc.CreateUserForTests(context.Background(), &user.CreateUserCommand{
+	org, err := orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{
+		Name: "test org",
+	})
+	require.NoError(t, err)
+
+	u1, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{
 		Login:            testUser.Login,
 		IsServiceAccount: testUser.IsServiceAccount,
 		DefaultOrgRole:   role,
 		Name:             testUser.Name,
-		OrgID:            testUser.OrgID,
+		OrgID:            org.ID,
 	})
 	require.NoError(t, err)
 	return u1
