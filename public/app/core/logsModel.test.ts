@@ -14,6 +14,7 @@ import {
   LogsDedupStrategy,
   LogsMetaKind,
   MutableDataFrame,
+  sortDataFrame,
   toDataFrame,
 } from '@grafana/data';
 
@@ -1260,14 +1261,14 @@ describe('logs sample', () => {
   const resultAFrame1 = createFrame([{ app: 'app01' }], [100, 200, 300], ['line 1', 'line 2', 'line 3']);
   const resultAFrame2 = createFrame(
     [{ app: 'app01', level: 'error' }],
-    [100, 200, 300],
+    [400, 500, 600],
     ['line 4', 'line 5', 'line 6']
   );
 
-  const resultBFrame1 = createFrame([{ app: 'app02' }], [100, 200, 300], ['line A', 'line B', 'line C']);
+  const resultBFrame1 = createFrame([{ app: 'app02' }], [700, 800, 900], ['line A', 'line B', 'line C']);
   const resultBFrame2 = createFrame(
     [{ app: 'app02', level: 'error' }],
-    [100, 200, 300],
+    [1000, 1100, 1200],
     ['line D', 'line E', 'line F']
   );
 
@@ -1277,7 +1278,7 @@ describe('logs sample', () => {
         data: [resultAFrame1, resultAFrame2],
       },
       {
-        data: [resultBFrame1, resultBFrame2],
+        data: [resultBFrame1, resultBFrame2, resultAFrame1, resultAFrame2],
       },
     ]);
   }
@@ -1289,14 +1290,17 @@ describe('logs sample', () => {
   it('returns data', async () => {
     setup(setupMultipleResults);
     await expect(logsSampleProvider).toEmitValuesWith((received) => {
-      expect(received).toMatchObject([
-        { state: LoadingState.Loading, error: undefined, data: [] },
-        {
-          state: LoadingState.Done,
-          error: undefined,
-          data: [resultAFrame1, resultAFrame2, resultBFrame1, resultBFrame2],
-        },
-      ]);
+      expect(received).toContainEqual({ state: LoadingState.Loading, error: undefined, data: [] });
+      expect(received).toContainEqual(
+        expect.objectContaining({
+          data: expect.arrayContaining([
+            sortDataFrame(resultAFrame1, 0),
+            sortDataFrame(resultAFrame2, 0),
+            sortDataFrame(resultBFrame1, 0),
+            sortDataFrame(resultBFrame2, 0),
+          ]),
+        })
+      );
     });
   });
 
