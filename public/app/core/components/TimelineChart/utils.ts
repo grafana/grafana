@@ -461,6 +461,7 @@ export function prepareTimelineFields(
             }
           }
 
+        case FieldType.enum:
         case FieldType.boolean:
         case FieldType.string:
           field = {
