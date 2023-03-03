@@ -271,7 +271,7 @@ function addUnique(s: Set<string>, value: string | number) {
 function rawQuerySelectedFieldsInDataframe(query: string | undefined, dfs: DataFrame[]) {
   const names: Array<string | undefined> = dfs.map((df: DataFrame) => df.name);
 
-  const colsInRawQuery: boolean = names.every((name: string | undefined) => {
+  const colsInRawQuery = names.every((name: string | undefined) => {
     if (name && query) {
       // table name and field, i.e. cpu.usage_guest_nice becomes ['cpu', 'usage_guest_nice']
       const nameParts = name.split('.');
