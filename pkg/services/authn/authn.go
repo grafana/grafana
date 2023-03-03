@@ -330,28 +330,35 @@ func ClientWithPrefix(name string) string {
 
 type RedirectValidator func(url string) error
 
-// HandleLoginResponse is a utility function to perform common operations after a successful login that should return a response
-func HandleLoginResponse(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator) response.Response {
+// HandleLoginResponse is a utility function to perform common operations after a successful login and returns response.NormalResponse
+func HandleLoginResponse(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator) *response.NormalResponse {
 	result := map[string]interface{}{"message": "Logged in"}
-	if redirectURL := getRedirectURL(r); len(redirectURL) > 0 && validator(redirectURL) == nil {
+	if redirectURL := handleLogin(r, w, cfg, identity, validator); redirectURL != cfg.AppSubURL+"/" {
 		result["redirectUrl"] = redirectURL
 	}
-	cookies.DeleteCookie(w, "redirect_to", nil)
-
-	WriteSessionCookie(w, cfg, identity)
 	return response.JSON(http.StatusOK, result)
 }
 
-// HandleLoginRedirect is a utility function to perform common operations after a successful login that should redirect
+// HandleLoginRedirect is a utility function to perform common operations after a successful login and redirects
 func HandleLoginRedirect(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator) {
-	redirectURL := setting.AppSubUrl + "/"
+	redirectURL := handleLogin(r, w, cfg, identity, validator)
+	http.Redirect(w, r, redirectURL, http.StatusFound)
+}
+
+// HandleLoginRedirectResponse is a utility function to perform common operations after a successful login and return a response.RedirectResponse
+func HandleLoginRedirectResponse(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator) *response.RedirectResponse {
+	return response.Redirect(handleLogin(r, w, cfg, identity, validator))
+}
+
+func handleLogin(r *http.Request, w http.ResponseWriter, cfg *setting.Cfg, identity *Identity, validator RedirectValidator) string {
+	redirectURL := cfg.AppSubURL + "/"
 	if redirectTo := getRedirectURL(r); len(redirectTo) > 0 && validator(redirectTo) == nil {
 		cookies.DeleteCookie(w, "redirect_to", nil)
 		redirectURL = redirectTo
 	}
 
 	WriteSessionCookie(w, cfg, identity)
-	http.Redirect(w, r, redirectURL, http.StatusFound)
+	return redirectURL
 }
 
 func getRedirectURL(r *http.Request) string {
