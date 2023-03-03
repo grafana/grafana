@@ -21,31 +21,24 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 	}
 	ctx := NewTestEnv(t)
 
-	adminUser := User{
-		username: "admin",
-		password: "admin",
-	}
-	editorUser := User{
-		username: "editor",
-		password: "editor",
-	}
-
-	ctx.createUser(user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleEditor),
-		Password:       editorUser.password,
-		Login:          editorUser.username,
-	})
-	ctx.createUser(user.CreateUserCommand{
+	adminUser := ctx.createUser(user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       adminUser.password,
-		Login:          adminUser.username,
+		Password:       "admin",
+		Login:          "admin",
+	})
+
+	editorUser := ctx.createUser(user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleEditor),
+		Password:       "editor",
+		Login:          "editor",
+		OrgID:          adminUser.User.OrgID,
 	})
 
 	createDsCommand := &datasources.AddDataSourceCommand{
 		Name:     "read-only",
 		Type:     "loki",
 		ReadOnly: true,
-		OrgId:    1,
+		OrgId:    adminUser.User.OrgID,
 	}
 	ctx.createDs(createDsCommand)
 	readOnlyDS := createDsCommand.Result.Uid
@@ -53,7 +46,7 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 	createDsCommand = &datasources.AddDataSourceCommand{
 		Name:  "writable",
 		Type:  "loki",
-		OrgId: 1,
+		OrgId: adminUser.User.OrgID,
 	}
 	ctx.createDs(createDsCommand)
 	writableDs := createDsCommand.Result.Uid
