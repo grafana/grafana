@@ -800,8 +800,9 @@ export function queryLogsSample<TQuery extends DataQuery, TOptions extends DataS
           });
           observer.error(error);
         } else {
-          rawLogsSample = dataQueryResponse.data.map(toDataFrame).map((dataFrame) => {
-            return sortDataFrameByTime(dataFrame, SortDirection.ASCENDING);
+          rawLogsSample = dataQueryResponse.data.map((dataFrame) => {
+            const frame = toDataFrame(dataFrame);
+            return sortDataFrameByTime(frame, SortDirection.ASCENDING);
           });
         }
       },

@@ -78,7 +78,7 @@ import {
   isValidQuery,
   requestSupportsPartitioning,
 } from './queryUtils';
-import { sortDataFrameByTime } from './sortDataFrame';
+import { sortDataFrameByTime, SortDirection } from './sortDataFrame';
 import { doLokiChannelStream } from './streaming';
 import { trackQuery } from './tracking';
 import {
@@ -686,7 +686,7 @@ export class LokiDatasource
     const processResults = (result: DataQueryResponse): DataQueryResponse => {
       const frames: DataFrame[] = result.data;
       const processedFrames = frames
-        .map((frame) => sortDataFrameByTime(frame, 'DESCENDING'))
+        .map((frame) => sortDataFrameByTime(frame, SortDirection.DESCENDING))
         .map((frame) => processDataFrame(frame)); // rename fields if needed
 
       return {
