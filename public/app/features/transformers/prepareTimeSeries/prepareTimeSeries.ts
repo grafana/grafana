@@ -15,6 +15,8 @@ import {
 } from '@grafana/data';
 import { Labels } from 'app/types/unified-alerting-dto';
 
+import { partitionByValuesTransformer } from '../partitionByValues/partitionByValues';
+
 /**
  * There is currently an effort to figure out consistent names
  * for the various formats/types we produce and use.
@@ -282,6 +284,23 @@ export function toTimeSeriesLong(data: DataFrame[]): DataFrame[] {
   return result;
 }
 
+export function longToWideTimeSeries(series: DataFrame[]): DataFrame[] {
+  // Transform each dataframe of the series
+  // to handle different field names in different frames
+  return series.reduce((acc: DataFrame[], dataFrame: DataFrame) => {
+    // these could be different in each frame
+    const stringFields = dataFrame.fields.filter((field) => field.type === FieldType.string).map((field) => field.name);
+
+    // transform one dataFrame at a time and concat into DataFrame[]
+    const transformedSeries = partitionByValuesTransformer.transformer(
+      { fields: stringFields },
+      { interpolate: (value: string) => value }
+    )([dataFrame]);
+
+    return acc.concat(transformedSeries);
+  }, []);
+}
+
 export const prepareTimeSeriesTransformer: SynchronousDataTransformerInfo<PrepareTimeSeriesOptions> = {
   id: DataTransformerID.prepareTimeSeries,
   name: 'Prepare time series',
@@ -300,6 +319,11 @@ export const prepareTimeSeriesTransformer: SynchronousDataTransformerInfo<Prepar
     }
 
     return (data: DataFrame[]) => {
+      // Convert long to wide first
+      if (data.every((df) => df.meta?.type === DataFrameType.TimeSeriesLong)) {
+        data = longToWideTimeSeries(data);
+      }
+
       // Join by the first frame
       const frame = outerJoinDataFrames({
         frames: data,

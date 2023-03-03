@@ -208,17 +208,19 @@ export class TimeSeriesSuggestionsSupplier {
 }
 
 // This will try to get a suggestion that will add a long to wide conversion
-export function getLongToWideSuggestion(panelId: number): VisualizationSuggestion | undefined {
+export function getPrepareTimeseriesSuggestion(panelId: number): VisualizationSuggestion | undefined {
   const panel = getDashboardSrv().getCurrent()?.getPanelById(panelId);
   if (panel) {
     const transformations = panel.transformations ? [...panel.transformations] : [];
     transformations.push({
-      id: DataTransformerID.calculateField,
-      options: {},
+      id: DataTransformerID.prepareTimeSeries,
+      options: {
+        format: 'wide',
+      },
     });
 
     return {
-      name: 'Add Long to Wide transformation',
+      name: 'Convert to wide time series format',
       pluginId: 'timeseries',
       transformations,
     };
