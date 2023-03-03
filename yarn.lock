@@ -6191,29 +6191,29 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@kusto/language-service-next@npm:0.0.59":
-  version: 0.0.59
-  resolution: "@kusto/language-service-next@npm:0.0.59"
-  checksum: 90f377a4c59e632a2fd904c202be3c823f41359b62b05a7bc66fd4a9e86d7bed34970822b720232dacd45f6ce3373abff53fb843b5228878c5f84f5b5ba68fba
+"@kusto/language-service-next@npm:0.0.63":
+  version: 0.0.63
+  resolution: "@kusto/language-service-next@npm:0.0.63"
+  checksum: f8d94fdc6f1604767ca0f4e57909f7c2358a4f91584a43a71a7080da7d4d791763b5cce4c67328e2617be9b2ed21dd9609f60c8b5434bbe88a2bac92e0c2ceae
   languageName: node
   linkType: hard
 
-"@kusto/language-service@npm:0.0.38":
-  version: 0.0.38
-  resolution: "@kusto/language-service@npm:0.0.38"
-  checksum: 9ad45b144409162298f1e61b87209e40315f3fe30b5766175b831ce9ab6b5cd4f046323956fa35ce971993aa67f84b175c5af1de9614dd57a12f4fd61bfa401c
+"@kusto/language-service@npm:0.0.40":
+  version: 0.0.40
+  resolution: "@kusto/language-service@npm:0.0.40"
+  checksum: 1aedb154e7ec0a39096e0fdcc90b124f3bba5e9e998739c94a79fff66db4a290ffa59c2c5235a51e8a095d8184d902e7202f5fee2f8807b597c410ce9895efca
   languageName: node
   linkType: hard
 
-"@kusto/monaco-kusto@npm:5.3.6":
-  version: 5.3.6
-  resolution: "@kusto/monaco-kusto@npm:5.3.6"
+"@kusto/monaco-kusto@npm:5.6.6":
+  version: 5.6.6
+  resolution: "@kusto/monaco-kusto@npm:5.6.6"
   dependencies:
-    "@kusto/language-service": 0.0.38
-    "@kusto/language-service-next": 0.0.59
+    "@kusto/language-service": 0.0.40
+    "@kusto/language-service-next": 0.0.63
   peerDependencies:
-    monaco-editor: 0.34.1
-  checksum: 55cef304cca6383ed4bccd60639d7429e2bee224e719eb33b294067ba47086df51752d5a51d9bb8cd73b7fe5a2fa3d6e5f625d392d013e281c451d967a529672
+    monaco-editor: 0.35.0
+  checksum: 3af0ae7fe97de9b9839ceafd9d809473a6df7e7a18f39e97ac0f683f463e80a068f12f26e92137bb351a96eac2f0151c76524b30ebf98b844955c9dcab688d16
   languageName: node
   linkType: hard
 
@@ -22003,7 +22003,7 @@ __metadata:
     "@grafana/toolkit": "workspace:*"
     "@grafana/tsconfig": ^1.2.0-rc1
     "@grafana/ui": "workspace:*"
-    "@kusto/monaco-kusto": 5.3.6
+    "@kusto/monaco-kusto": 5.6.6
     "@leeoniya/ufuzzy": 1.0.2
     "@lezer/common": 1.0.1
     "@lezer/highlight": 1.1.2
