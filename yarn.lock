@@ -4881,7 +4881,7 @@ __metadata:
     react-test-renderer: 17.0.2
     react-use: 17.4.0
     regenerator-runtime: 0.13.10
-    rimraf: 3.0.2
+    rimraf: 4.2.0
     rollup: 2.79.1
     rollup-plugin-dts: ^5.0.0
     rollup-plugin-esbuild: 5.0.0
@@ -4908,7 +4908,7 @@ __metadata:
     "@rollup/plugin-node-resolve": 15.0.1
     "@types/node": 18.14.0
     esbuild: 0.16.17
-    rimraf: 3.0.2
+    rimraf: 4.2.0
     rollup: 2.79.1
     rollup-plugin-dts: ^5.0.0
     rollup-plugin-esbuild: 5.0.0
@@ -4956,7 +4956,7 @@ __metadata:
     lodash: 4.17.21
     mocha: 10.2.0
     resolve-as-bin: 2.1.0
-    rimraf: 3.0.2
+    rimraf: 4.2.0
     rollup: 2.79.1
     rollup-plugin-dts: ^5.0.0
     rollup-plugin-esbuild: 5.0.0
@@ -5116,7 +5116,7 @@ __metadata:
     lodash: 4.17.21
     react: 17.0.2
     react-dom: 17.0.2
-    rimraf: 3.0.2
+    rimraf: 4.2.0
     rollup: 2.79.1
     rollup-plugin-dts: ^5.0.0
     rollup-plugin-esbuild: 5.0.0
@@ -5156,7 +5156,7 @@ __metadata:
     "@rollup/plugin-json": 5.0.1
     "@rollup/plugin-node-resolve": 15.0.1
     esbuild: 0.16.17
-    rimraf: 3.0.2
+    rimraf: 4.2.0
     rollup: 2.79.1
     rollup-plugin-dts: ^5.0.0
     rollup-plugin-esbuild: 5.0.0
@@ -5388,7 +5388,7 @@ __metadata:
     react-transition-group: 4.4.5
     react-use: 17.4.0
     react-window: 1.8.8
-    rimraf: 3.0.2
+    rimraf: 4.2.0
     rollup: 2.79.1
     rollup-plugin-dts: ^5.0.0
     rollup-plugin-esbuild: 5.0.0
@@ -21803,6 +21803,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"glob@npm:^9.2.0":
+  version: 9.2.1
+  resolution: "glob@npm:9.2.1"
+  dependencies:
+    fs.realpath: ^1.0.0
+    minimatch: ^7.4.1
+    minipass: ^4.2.4
+    path-scurry: ^1.6.1
+  checksum: ef9b1c32491e6b532bdd0d2abcc3c9f48e83446609e11285869156982fc5a756dfbaa6f59f797712343bd1e22500ac15708692806633653fde4ef67c85e2aab7
+  languageName: node
+  linkType: hard
+
 "global-dirs@npm:^3.0.0":
   version: 3.0.1
   resolution: "global-dirs@npm:3.0.1"
@@ -22265,7 +22277,7 @@ __metadata:
     redux-thunk: 2.4.1
     regenerator-runtime: 0.13.10
     reselect: 4.1.6
-    rimraf: 3.0.2
+    rimraf: 4.2.0
     rst2html: "github:thoward/rst2html#990cb89f2a300cdd9151790be377c4c0840df809"
     rudder-sdk-js: 2.25.0
     rxjs: 7.8.0
@@ -30189,7 +30201,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"path-scurry@npm:^1.5.0":
+"path-scurry@npm:^1.5.0, path-scurry@npm:^1.6.1":
   version: 1.6.1
   resolution: "path-scurry@npm:1.6.1"
   dependencies:
@@ -34388,6 +34400,17 @@ __metadata:
   bin:
     rimraf: bin.js
   checksum: 87f4164e396f0171b0a3386cc1877a817f572148ee13a7e113b238e48e8a9f2f31d009a92ec38a591ff1567d9662c6b67fd8818a2dbbaed74bc26a87a2a4a9a0
+  languageName: node
+  linkType: hard
+
+"rimraf@npm:4.2.0":
+  version: 4.2.0
+  resolution: "rimraf@npm:4.2.0"
+  dependencies:
+    glob: ^9.2.0
+  bin:
+    rimraf: dist/cjs/src/bin.js
+  checksum: 885baaec6d8e3a771bb3060f110c29070073a47fdcb26775ae165703173e79e845974dc8ed07e8eb4c3c85f126777968febdb385d0c274ad3b167db326e7f82e
   languageName: node
   linkType: hard
 
