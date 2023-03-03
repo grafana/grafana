@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/utils"
@@ -30,14 +29,7 @@ func New(
 		return nil, err
 	}
 	httpMethod, _ := maputil.GetStringOptional(jsonData, "httpMethod")
-	jsonDataBytes, simpleJsonErr := simplejson.NewJson(settings.JSONData)
-	if simpleJsonErr != nil {
-		return nil, err
-	}
-	cacheLevel, jsonGetErr := jsonDataBytes.Get("cacheLevel").String()
-	if jsonGetErr != nil {
-		return nil, err
-	}
+	cacheLevel, _ := maputil.GetStringOptional(jsonData, "cacheLevel")
 
 	return &Resource{
 		log:        plog,
