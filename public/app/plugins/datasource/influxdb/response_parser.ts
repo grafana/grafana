@@ -274,7 +274,7 @@ function rawQuerySelectedFieldsInDataframe(query: string | undefined, dfs: DataF
   const colsInRawQuery: boolean = names.every((name: string | undefined) => {
     if (name && query) {
       // table name and field, i.e. cpu.usage_guest_nice becomes ['cpu', 'usage_guest_nice']
-      const nameParts: string[] = name.split('.');
+      const nameParts = name.split('.');
 
       return nameParts.every((np) => query.toLowerCase().includes(np.toLowerCase()));
     }
