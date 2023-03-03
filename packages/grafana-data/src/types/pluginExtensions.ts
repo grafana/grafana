@@ -33,7 +33,7 @@ export function isPluginExtensionLink(extension: PluginExtension | undefined): e
 
 export function assertPluginExtensionLink(
   extension: PluginExtension | undefined
-): asserts extension is PluginExtensionCommand {
+): asserts extension is PluginExtensionLink {
   if (!isPluginExtensionLink(extension)) {
     throw new Error(`extension is not a link extension`);
   }
