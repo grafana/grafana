@@ -417,6 +417,9 @@ const getChangeOrgButtonTheme = (theme: GrafanaTheme2) => ({
   tooltipItemLink: css`
     color: ${theme.v1.palette.blue95};
   `,
+  icon: css`
+    line-height: 2;
+  `,
 });
 
 export function ChangeOrgButton({
@@ -440,6 +443,7 @@ export function ChangeOrgButton({
       {isExternalUser && (
         <Tooltip
           placement="right-end"
+          interactive={true}
           content={
             <div>
               This user&apos;s role is not editable because it is synchronized from your auth provider. Refer to
@@ -456,7 +460,9 @@ export function ChangeOrgButton({
             </div>
           }
         >
-          <Icon name="question-circle" />
+          <div className={styles.icon}>
+            <Icon name="question-circle" />
+          </div>
         </Tooltip>
       )}
     </div>
