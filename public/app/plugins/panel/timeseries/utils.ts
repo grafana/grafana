@@ -15,17 +15,30 @@ import {
 import { GraphFieldConfig, LineInterpolation } from '@grafana/schema';
 import { applyNullInsertThreshold } from '@grafana/ui/src/components/GraphNG/nullInsertThreshold';
 import { nullToValue } from '@grafana/ui/src/components/GraphNG/nullToValue';
+import { buildScaleKey } from '@grafana/ui/src/components/GraphNG/utils';
 import { partitionByValuesTransformer } from 'app/features/transformers/partitionByValues/partitionByValues';
 
+type ScaleKey = string;
+
+// this will re-enumerate all enum fields on the same scale to create one ordinal progression
+// e.g. ['a','b'][0,1,0] + ['c','d'][1,0,1] -> ['a','b'][0,1,0] + ['c','d'][3,2,3]
 // mutates fields!
-function unifyEnumFields(frames: DataFrame[]) {
-  let allTexts: string[] = [];
+function reEnumFields(frames: DataFrame[]) {
+  let allTextsByKey: Map<ScaleKey, string[]> = new Map();
 
   let frames2: DataFrame[] = frames.map((frame) => {
     return {
       ...frame,
       fields: frame.fields.map((field) => {
         if (field.type === FieldType.enum) {
+          let scaleKey = buildScaleKey(field.config, field.type);
+          let allTexts = allTextsByKey.get(scaleKey);
+
+          if (!allTexts) {
+            allTexts = [];
+            allTextsByKey.set(scaleKey, allTexts);
+          }
+
           let idxs = field.values.toArray() as unknown as number[];
           let txts = field.config.type!.enum!.text!;
 
@@ -38,7 +51,7 @@ function unifyEnumFields(frames: DataFrame[]) {
 
           allTexts.push(...txts);
 
-          // shared among all enum fields
+          // shared among all enum fields on same scale
           field.config.type!.enum!.text! = allTexts;
 
           // TODO: update displayProcessor?
@@ -68,8 +81,15 @@ export function prepareGraphableFields(
     series = prepareTimeSeriesLong(series);
   }
 
-  if (series.some((frame) => frame.fields.some((field) => field.type === FieldType.enum))) {
-    series = unifyEnumFields(series);
+  let enumFieldsCount = 0;
+
+  loopy: for (let frame of series) {
+    for (let field of frame.fields) {
+      if (field.type === FieldType.enum && ++enumFieldsCount > 1) {
+        series = reEnumFields(series);
+        break loopy;
+      }
+    }
   }
 
   let copy: Field;
@@ -110,8 +130,9 @@ export function prepareGraphableFields(
 
           fields.push(copy);
           break; // ok
-        case FieldType.string:
         case FieldType.enum:
+          hasValueField = true;
+        case FieldType.string:
           copy = {
             ...field,
             values: new ArrayVector(field.values.toArray()),
