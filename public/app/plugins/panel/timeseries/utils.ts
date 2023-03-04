@@ -22,7 +22,6 @@ type ScaleKey = string;
 
 // this will re-enumerate all enum fields on the same scale to create one ordinal progression
 // e.g. ['a','b'][0,1,0] + ['c','d'][1,0,1] -> ['a','b'][0,1,0] + ['c','d'][3,2,3]
-// mutates fields!
 function reEnumFields(frames: DataFrame[]) {
   let allTextsByKey: Map<ScaleKey, string[]> = new Map();
 
@@ -39,7 +38,7 @@ function reEnumFields(frames: DataFrame[]) {
             allTextsByKey.set(scaleKey, allTexts);
           }
 
-          let idxs = field.values.toArray() as unknown as number[];
+          let idxs = field.values.toArray().slice() as unknown as number[];
           let txts = field.config.type!.enum!.text!;
 
           // by-reference incrementing
@@ -53,6 +52,11 @@ function reEnumFields(frames: DataFrame[]) {
 
           // shared among all enum fields on same scale
           field.config.type!.enum!.text! = allTexts;
+
+          return {
+            ...field,
+            values: new ArrayVector(idxs),
+          };
 
           // TODO: update displayProcessor?
         }
