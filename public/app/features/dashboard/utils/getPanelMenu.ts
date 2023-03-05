@@ -1,5 +1,12 @@
-import { PanelMenuItem } from '@grafana/data';
-import { AngularComponent, getDataSourceSrv, locationService, reportInteraction } from '@grafana/runtime';
+import { isPluginExtensionLink, PanelMenuItem } from '@grafana/data';
+import {
+  AngularComponent,
+  getDataSourceSrv,
+  getPluginExtensions,
+  locationService,
+  reportInteraction,
+  PluginExtensionPanelContext,
+} from '@grafana/runtime';
 import { LoadingState } from '@grafana/schema';
 import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import config from 'app/core/config';
@@ -19,6 +26,7 @@ import {
 } from 'app/features/dashboard/utils/panel';
 import { InspectTab } from 'app/features/inspector/types';
 import { isPanelModelLibraryPanel } from 'app/features/library-panels/guard';
+import { GrafanaExtensions } from 'app/features/plugins/extensions/placements';
 import { store } from 'app/store/store';
 
 import { navigateToExplore } from '../../explore/state/main';
@@ -278,5 +286,50 @@ export function getPanelMenu(
     });
   }
 
+  const { extensions } = getPluginExtensions({
+    placement: GrafanaExtensions.DashboardPanelMenu,
+    context: createExtensionContext(panel, dashboard),
+  });
+
+  for (const extension of extensions) {
+    if (isPluginExtensionLink(extension)) {
+      subMenu.push({
+        text: truncateTitle(extension.title, 25),
+        href: extension.path,
+      });
+    }
+  }
+
   return menu;
+}
+
+function truncateTitle(title: string, length: number): string {
+  if (title.length < length) {
+    return title;
+  }
+  const part = title.slice(0, length - 3);
+  return `${part.trimEnd()}...`;
+}
+
+function createExtensionContext(panel: PanelModel, dashboard: DashboardModel): PluginExtensionPanelContext {
+  return Object.freeze({
+    id: panel.id,
+    pluginId: panel.type,
+    title: panel.title,
+    timeRange: Object.freeze(dashboard.time),
+    timeZone: dashboard.timezone,
+    dashboard: Object.freeze({
+      uid: dashboard.uid,
+      title: dashboard.title,
+      tags: Object.freeze(Array.from<string>(dashboard.tags)),
+    }),
+    targets: Object.freeze(
+      panel.targets.map((t) =>
+        Object.freeze({
+          refId: t.refId,
+          pluginId: t.datasource?.type ?? 'unknown',
+        })
+      )
+    ),
+  });
 }

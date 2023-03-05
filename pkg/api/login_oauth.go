@@ -114,15 +114,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *contextmodel.ReqContext) {
 		}
 
 		metrics.MApiLoginOAuth.Inc()
-		cookies.WriteSessionCookie(ctx, hs.Cfg, identity.SessionToken.UnhashedToken, hs.Cfg.LoginMaxLifetime)
-
-		redirectURL := setting.AppSubUrl + "/"
-		if redirectTo := ctx.GetCookie("redirect_to"); len(redirectTo) > 0 && hs.ValidateRedirectTo(redirectTo) == nil {
-			redirectURL = redirectTo
-			cookies.DeleteCookie(ctx.Resp, "redirect_to", hs.CookieOptionsFromCfg)
-		}
-
-		ctx.Redirect(redirectURL)
+		authn.HandleLoginRedirect(ctx.Req, ctx.Resp, hs.Cfg, identity, hs.ValidateRedirectTo)
 		return
 	}
 

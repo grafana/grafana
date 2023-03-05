@@ -132,6 +132,7 @@ func TestResponseSnapshots(t *testing.T) {
 		{name: "complex metric test", path: "metric_complex"},
 		{name: "multi metric test", path: "metric_multi"},
 		{name: "raw data test", path: "raw_data"},
+		{name: "logs test", path: "logs"},
 	}
 
 	snapshotCount := findResponseSnapshotCounts(t, "testdata_response")
