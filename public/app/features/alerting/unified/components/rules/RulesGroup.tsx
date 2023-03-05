@@ -14,8 +14,8 @@ import { useFolder } from '../../hooks/useFolder';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { deleteRulesGroupAction } from '../../state/actions';
 import { useRulesAccess } from '../../utils/accessControlHooks';
-import { getRulesSourceName, GRAFANA_RULES_SOURCE_NAME, isCloudRulesSource } from '../../utils/datasource';
-import { makeFolderLink } from '../../utils/misc';
+import { GRAFANA_RULES_SOURCE_NAME, isCloudRulesSource } from '../../utils/datasource';
+import { makeFolderLink, makeFolderSettingsLink } from '../../utils/misc';
 import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
 import { RuleLocation } from '../RuleLocation';
@@ -238,10 +238,10 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll, 
       )}
       {isEditingGroup && (
         <EditCloudGroupModal
-          groupInterval={group.interval ?? ''}
-          nameSpaceAndGroup={{ group: group, namespace: namespace }}
-          sourceName={getRulesSourceName(namespace.rulesSource)}
+          namespace={namespace}
+          group={group}
           onClose={() => closeEditModal()}
+          folderUrl={folder?.canEdit ? makeFolderSettingsLink(folder) : undefined}
         />
       )}
       {isReorderingGroup && (

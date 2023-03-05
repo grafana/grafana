@@ -43,7 +43,7 @@ export class VariableInput extends PureComponent<Props> {
         value={value ?? ''}
         onChange={this.onChange}
         onKeyDown={this.onKeyDown}
-        placeholder={t('variable.picker.input', 'Enter variable value')}
+        placeholder={t('variable.dropdown.placeholder', 'Enter variable value')}
       />
     );
   }

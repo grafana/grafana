@@ -148,6 +148,8 @@ export function getNavSubTitle(navId: string | undefined) {
       return config.featureToggles.topnav
         ? t('nav.dashboards.subtitle', 'Create and manage dashboards to visualize your data')
         : undefined;
+    case 'manage-folder':
+      return t('nav.manage-folder.subtitle', 'Manage folder dashboards and permissions');
     case 'dashboards/playlists':
       return t('nav.playlists.subtitle', 'Groups of dashboards that are displayed in a sequence');
     case 'dashboards/snapshots':

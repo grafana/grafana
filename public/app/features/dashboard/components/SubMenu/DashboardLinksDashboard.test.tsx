@@ -59,7 +59,6 @@ describe('resolveLinks', () => {
         title: 'DashLinks',
         url: '/d/6ieouugGk/DashLinks',
         isStarred: false,
-        items: [],
         tags: [],
         uri: 'db/DashLinks',
         type: DashboardSearchItemType.DashDB,

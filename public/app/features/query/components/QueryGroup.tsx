@@ -1,9 +1,12 @@
 import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
+import { DropEvent, FileRejection } from 'react-dropzone';
 import { Unsubscribable } from 'rxjs';
 
 import {
   CoreApp,
+  DataFrameJSON,
+  dataFrameToJSON,
   DataQuery,
   DataSourceApi,
   DataSourceInstanceSettings,
@@ -18,8 +21,11 @@ import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { addQuery, queryIsEmpty } from 'app/core/utils/query';
+import * as DFImport from 'app/features/dataframe-import';
+import { DataSourcePickerWithHistory } from 'app/features/datasource-drawer/DataSourcePickerWithHistory';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { DashboardQueryEditor, isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
+import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 import { QueryGroupDataSource, QueryGroupOptions } from 'app/types';
 
 import { isQueryWithMixedDatasource } from '../../query-library/api/SavedQueriesApi';
@@ -32,7 +38,7 @@ import { QueryEditorRows } from './QueryEditorRows';
 import { QueryGroupOptionsEditor } from './QueryGroupOptions';
 import { SavedQueryPicker } from './SavedQueryPicker';
 
-interface Props {
+export interface Props {
   queryRunner: PanelQueryRunner;
   options: QueryGroupOptions;
   onOpenQueryInspector?: () => void;
@@ -94,6 +100,7 @@ export class QueryGroup extends PureComponent<Props, State> {
     try {
       const ds = await this.dataSourceSrv.get(options.dataSource);
       const dsSettings = this.dataSourceSrv.getInstanceSettings(options.dataSource);
+
       const defaultDataSource = await this.dataSourceSrv.get();
       const datasource = ds.getRef();
       const queries = options.queries.map((q) => ({
@@ -273,14 +280,32 @@ export class QueryGroup extends PureComponent<Props, State> {
             Data source
           </InlineFormLabel>
           <div className={styles.dataSourceRowItem}>
-            <DataSourcePicker
-              onChange={this.onChangeDataSource}
-              current={options.dataSource}
-              metrics={true}
-              mixed={true}
-              dashboard={true}
-              variables={true}
-            />
+            {config.featureToggles.drawerDataSourcePicker ? (
+              <DataSourcePickerWithHistory
+                onChange={this.onChangeDataSource}
+                current={options.dataSource}
+                metrics={true}
+                mixed={true}
+                dashboard={true}
+                variables={true}
+                enableFileUpload={config.featureToggles.editPanelCSVDragAndDrop}
+                fileUploadOptions={{
+                  onDrop: this.onFileDrop,
+                  maxSize: DFImport.maxFileSize,
+                  multiple: false,
+                  accept: DFImport.acceptedFiles,
+                }}
+              ></DataSourcePickerWithHistory>
+            ) : (
+              <DataSourcePicker
+                onChange={this.onChangeDataSource}
+                current={options.dataSource}
+                metrics={true}
+                mixed={true}
+                dashboard={true}
+                variables={true}
+              ></DataSourcePicker>
+            )}
           </div>
           {dataSource && (
             <>
@@ -290,6 +315,7 @@ export class QueryGroup extends PureComponent<Props, State> {
                   icon="question-circle"
                   title="Open data source help"
                   onClick={this.onOpenHelp}
+                  data-testid="query-tab-help-button"
                 />
               </div>
               <div className={styles.dataSourceRowItemOptions}>
@@ -367,7 +393,32 @@ export class QueryGroup extends PureComponent<Props, State> {
     this.onScrollBottom();
   };
 
-  onQueriesChange = (queries: DataQuery[]) => {
+  onFileDrop = (acceptedFiles: File[], fileRejections: FileRejection[], event: DropEvent) => {
+    DFImport.filesToDataframes(acceptedFiles).subscribe(async (next) => {
+      const snapshot: DataFrameJSON[] = [];
+      next.dataFrames.forEach((df) => {
+        const dataframeJson = dataFrameToJSON(df);
+        snapshot.push(dataframeJson);
+      });
+      const ds = getDataSourceSrv().getInstanceSettings('-- Grafana --');
+      await this.onChangeDataSource(ds!);
+      this.onQueriesChange([
+        {
+          refId: 'A',
+          datasource: {
+            type: 'grafana',
+            uid: 'grafana',
+          },
+          queryType: GrafanaQueryType.Snapshot,
+          snapshot: snapshot,
+          file: next.file,
+        },
+      ]);
+      this.props.onRunQueries();
+    });
+  };
+
+  onQueriesChange = (queries: DataQuery[] | GrafanaQuery[]) => {
     this.onChange({ queries });
     this.setState({ queries });
   };
@@ -375,7 +426,6 @@ export class QueryGroup extends PureComponent<Props, State> {
   renderQueries(dsSettings: DataSourceInstanceSettings) {
     const { onRunQueries } = this.props;
     const { data, queries } = this.state;
-
     if (isSharedDashboardQuery(dsSettings.name)) {
       return (
         <DashboardQueryEditor
@@ -429,6 +479,7 @@ export class QueryGroup extends PureComponent<Props, State> {
             onClick={this.onAddQueryClick}
             variant="secondary"
             aria-label={selectors.components.QueryTab.addQuery}
+            data-testid="query-tab-add-query"
           >
             Query
           </Button>
@@ -439,6 +490,7 @@ export class QueryGroup extends PureComponent<Props, State> {
             onClick={this.onAddExpressionClick}
             variant="secondary"
             className={styles.expressionButton}
+            data-testid="query-tab-add-expression"
           >
             <span>Expression&nbsp;</span>
           </Button>
