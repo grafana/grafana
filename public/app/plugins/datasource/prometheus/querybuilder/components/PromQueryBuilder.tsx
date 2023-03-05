@@ -237,13 +237,15 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
                 })}
               />
             )}
-            <MetricEncyclopediaModal
-              datasource={datasource}
-              isOpen={metricEncyclopediaModalOpen}
-              onClose={() => setMetricEncyclopediaModalOpen(false)}
-              query={query}
-              onChange={onChange}
-            />
+            {metricEncyclopediaModalOpen && (
+              <MetricEncyclopediaModal
+                datasource={datasource}
+                isOpen={metricEncyclopediaModalOpen}
+                onClose={() => setMetricEncyclopediaModalOpen(false)}
+                query={query}
+                onChange={onChange}
+              />
+            )}
           </>
         ) : (
           <MetricSelect

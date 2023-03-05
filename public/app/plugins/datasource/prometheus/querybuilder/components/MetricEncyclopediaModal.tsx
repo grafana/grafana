@@ -68,11 +68,11 @@ const promTypes: PromFilterOption[] = [
 ];
 
 const tooltips = {
-  browse: 'Filter metric names by text',
-  metadataSearchSwicth: 'Include all metadata in search by text',
-  type: 'Prometheus supports four types of metrics, they are - Counter - Gauge - Histogram - Summary',
-  variables: 'Select a predefined Grafana template variable for your metric',
-  excludeNoMetadata: 'Exclude all metrics with no metadata when filtering',
+  browse: 'Browse metric names by text',
+  metadataSearchSwicth: 'Browse by metadata type and description in addition to metric name',
+  type: 'Counter, gauge, histogram, or summary',
+  variables: 'Select a template variable for your metric',
+  excludeNoMetadata: 'Exclude results with no metadata when filtering',
 };
 
 export const DEFAULT_RESULTS_PER_PAGE = 10;
@@ -264,7 +264,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
     <Modal
       data-testid={testIds.metricModal}
       isOpen={isOpen}
-      title="Metric Encyclopedia"
+      title="Browse Metrics"
       onDismiss={onClose}
       aria-label="Metric Encyclopedia"
     >
@@ -278,12 +278,9 @@ export const MetricEncyclopediaModal = (props: Props) => {
         </div>
       )}
       <div className="gf-form">
-        <InlineLabel width={15} className="query-keyword" tooltip={<div>{tooltips.browse}</div>}>
-          Browse
-        </InlineLabel>
         <Input
           data-testid={testIds.searchMetric}
-          placeholder="Browse by metric text"
+          placeholder={tooltips.browse}
           value={fuzzySearchQuery}
           onInput={(e) => {
             const value = e.currentTarget.value ?? '';
@@ -293,11 +290,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
           }}
         />
         {hasMetadata && (
-          <InlineField
-            label="Browse all metadata"
-            className={styles.labelColor}
-            tooltip={<div>{tooltips.metadataSearchSwicth}</div>}
-          >
+          <InlineField label="" className={styles.labelColor} tooltip={<div>{tooltips.metadataSearchSwicth}</div>}>
             <InlineSwitch
               data-testid={testIds.searchWithMetadata}
               showLabel={true}
@@ -310,18 +303,18 @@ export const MetricEncyclopediaModal = (props: Props) => {
           </InlineField>
         )}
       </div>
-      <div className="gf-form">
-        {hasMetadata && (
-          <>
-            <InlineLabel htmlFor="my-select" width={15} className="query-keyword" tooltip={<div>{tooltips.type}</div>}>
-              Type
-            </InlineLabel>
+      {hasMetadata && (
+        <>
+          <div className="gf-form">
+            <h6>Filter by Type</h6>
+          </div>
+          <div className="gf-form">
             <MultiSelect
               data-testid={testIds.selectType}
               inputId="my-select"
               options={typeOptions}
               value={selectedTypes}
-              placeholder="Select type"
+              placeholder={tooltips.type}
               onChange={(v) => {
                 // *** Filter by type
                 // *** always include metrics without metadata but label it as unknown type
@@ -330,78 +323,39 @@ export const MetricEncyclopediaModal = (props: Props) => {
                 setPageNum(1);
               }}
             />
-          </>
-        )}
+            {hasMetadata && (
+              <InlineField label="" className={styles.labelColor} tooltip={<div>{tooltips.excludeNoMetadata}</div>}>
+                <InlineSwitch
+                  showLabel={true}
+                  value={excludeNullMetadata}
+                  onChange={() => {
+                    setExcludeNullMetadata(!excludeNullMetadata);
+                    setPageNum(1);
+                  }}
+                />
+              </InlineField>
+            )}
+          </div>
+        </>
+      )}
+      <div className="gf-form">
+        <h6>Variables</h6>
       </div>
       <div className="gf-form">
-        <InlineLabel width={15} className="query-keyword">
-          Page
-        </InlineLabel>
         <Select
-          data-testid={testIds.searchPage}
-          options={calculatePageList(metrics, resultsPerPage).map((p) => {
-            return { value: p, label: '' + p };
-          })}
-          value={pageNum ?? 1}
-          placeholder="select page"
-          onChange={(e) => {
-            const value = e.value ?? 1;
-            setPageNum(value);
-          }}
-        />
-        <InlineLabel width={15} className="query-keyword">
-          # per page
-        </InlineLabel>
-        <Input
-          data-testid={testIds.resultsPerPage}
-          value={resultsPerPage ?? 10}
-          placeholder="results per page"
-          onInput={(e) => {
-            const value = +e.currentTarget.value;
-
-            if (isNaN(value)) {
-              return;
-            }
-
-            setResultsPerPage(value);
-          }}
-        />
-      </div>
-      <div className="gf-form">
-        <InlineLabel width={15} className="query-keyword" tooltip={<div>{tooltips.variables}</div>}>
-          Variables
-        </InlineLabel>
-        <Select
-          // data-testid={testIds.selectType}
           inputId="my-select"
           options={variables}
           value={''}
-          placeholder="Select a template variable"
+          placeholder={tooltips.variables}
           onChange={(v) => {
             const value: string = v.value ?? '';
             onChange({ ...query, metric: value });
             onClose();
           }}
         />
-        {hasMetadata && (
-          <InlineField
-            label="Exclude null metadata"
-            className={styles.labelColor}
-            tooltip={<div>{tooltips.excludeNoMetadata}</div>}
-          >
-            <InlineSwitch
-              showLabel={true}
-              value={excludeNullMetadata}
-              onChange={() => {
-                setExcludeNullMetadata(!excludeNullMetadata);
-                setPageNum(1);
-              }}
-            />
-          </InlineField>
-        )}
       </div>
-
-      <div className={styles.center}>
+      <h5 className={`${styles.center} ${styles.topPadding}`}>Results</h5>
+      <div className={`${styles.center} ${styles.bottomPadding}`}>
         {[
           'A',
           'B',
@@ -522,6 +476,42 @@ export const MetricEncyclopediaModal = (props: Props) => {
             </Collapse>
           );
         })}
+      <br />
+      <div className="gf-form">
+        <InlineLabel width={20} className="query-keyword">
+          Select Page
+        </InlineLabel>
+        <Select
+          data-testid={testIds.searchPage}
+          options={calculatePageList(metrics, resultsPerPage).map((p) => {
+            return { value: p, label: '' + p };
+          })}
+          value={pageNum ?? 1}
+          placeholder="select page"
+          onChange={(e) => {
+            const value = e.value ?? 1;
+            setPageNum(value);
+          }}
+        />
+        <InlineLabel width={20} className="query-keyword">
+          # results per page
+        </InlineLabel>
+        <Input
+          data-testid={testIds.resultsPerPage}
+          value={resultsPerPage ?? 10}
+          placeholder="results per page"
+          onInput={(e) => {
+            const value = +e.currentTarget.value;
+
+            if (isNaN(value)) {
+              return;
+            }
+
+            setResultsPerPage(value);
+          }}
+        />
+      </div>
+      <br />
       <Button aria-label="close metric encyclopedia modal" variant="secondary" onClick={onClose}>
         Close
       </Button>
@@ -587,7 +577,14 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     center: css`
       text-align: center;
-      padding: 10px;
+      padding: 4px;
+      width: 100%;
+    `,
+    topPadding: css`
+      padding: 10px 0 0 0;
+    `,
+    bottomPadding: css`
+      padding: 0 0 4px 0;
     `,
     card: css`
       width: 100%;
