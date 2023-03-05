@@ -142,7 +142,6 @@ func (f *AlertmanagerApiHandler) RoutePostAMAlerts(ctx *contextmodel.ReqContext)
 	conf := apimodels.PostableAlerts{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Err(ErrAlertingStatusBadRequest.Errorf("bad request data :%w", err))
-
 	}
 	return f.handleRoutePostAMAlerts(ctx, conf, datasourceUIDParam)
 }
