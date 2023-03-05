@@ -79,9 +79,6 @@ const getStyles = memoizeOne((theme: GrafanaTheme2) => {
       label: wrapLine;
       white-space: pre-wrap;
     `,
-    multiValTable: css`
-      display: inline;
-    `,
     toolbarButtonRow: css`
       label: toolbarButtonRow;
       gap: ${theme.spacing(0.5)};
@@ -131,9 +128,6 @@ const getStyles = memoizeOne((theme: GrafanaTheme2) => {
           visibility: visible;
         }
       }
-    `,
-    logDetailsLink: css`
-      vertical-align: sub;
     `,
   };
 });
@@ -242,7 +236,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     const styles = getStyles(theme);
 
     return (
-      <table className={styles.multiValTable}>
+      <table>
         <tbody>
           {value.map((val, i) => {
             return (
@@ -362,7 +356,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
               )}
               <div>
                 {links?.map((link, i) => (
-                  <span key={`${link.title}-${i}`} className={styles.logDetailsLink}>
+                  <span key={`${link.title}-${i}`}>
                     &nbsp;
                     <DataLinkButton link={link} />
                   </span>

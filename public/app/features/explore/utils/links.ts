@@ -165,14 +165,8 @@ export const getFieldLinksForExplore = (options: {
         }
       }
     });
-    console.log(
-      'links return',
-      fieldLinks,
-      fieldLinks.filter((link): link is LinkModel<Field> => !!link)
-    );
     return fieldLinks.filter((link): link is LinkModel<Field> => !!link);
   }
-  console.log('links return nada');
   return [];
 };
 

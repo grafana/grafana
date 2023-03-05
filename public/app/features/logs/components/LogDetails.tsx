@@ -34,10 +34,6 @@ interface FieldDefArr extends FieldDef {
 }
 
 class UnThemedLogDetails extends PureComponent<Props> {
-  constructLogLineLink(logLineLink: FieldDef) {
-    return;
-  }
-
   render() {
     const {
       app,
