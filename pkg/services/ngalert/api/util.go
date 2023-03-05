@@ -213,7 +213,7 @@ func ErrResp(status int, err error, msg string, args ...interface{}) *response.N
 
 // accessForbiddenResp creates a response of forbidden access.
 func accessForbiddenResp() response.Response {
-	return ErrResp(http.StatusForbidden, errors.New("Permission denied"), "")
+	return response.Err(ErrAlertingStatusForbidden.Errorf("Permission denied"))
 }
 
 func containsProvisionedAlerts(provenances map[string]ngmodels.Provenance, rules []*ngmodels.AlertRule) bool {
