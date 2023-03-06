@@ -258,6 +258,7 @@ describe('DashboardLoader', () => {
         title: 'test',
         type: 'test-plugin',
         gridPos: { x: 0, y: 0, w: 12, h: 8 },
+        maxDataPoints: 100,
         options: {
           fieldOptions: {
             defaults: {
@@ -301,6 +302,7 @@ describe('DashboardLoader', () => {
       expect(vizPanelSceneObject.state.fieldConfig).toEqual(panel.fieldConfig);
       expect(vizPanelSceneObject.state.pluginVersion).toBe('1.0.0');
       expect((vizPanelSceneObject.state.$data as SceneQueryRunner)?.state.queries).toEqual(panel.targets);
+      expect((vizPanelSceneObject.state.$data as SceneQueryRunner)?.state.maxDataPoints).toEqual(100);
       expect((vizPanelSceneObject.state.$data as SceneQueryRunner)?.state.transformations).toEqual(
         panel.transformations
       );

@@ -121,6 +121,10 @@ To speed up the time it takes to review your plugin:
 
 - The official method for distributing Grafana plugins is through the Grafana Catalog. Alternative methods, such as installing private or development plugins on local Grafana instances, are available as per the guidelines provided in [this guide](https://grafana.com/docs/grafana/latest/administration/plugin-management/#install-plugin-on-local-grafana).
 
+**Can I still use Angular for my plugin?**
+
+- No. We will not accept any new plugin submissions written in angular. Please take a look at our [angular support deprecation documentation](https://grafana.com/docs/grafana/latest/developers/angular_deprecation/).
+
 ## Publishing your plugin for the first time
 
 **Do plugin signatures expire?**

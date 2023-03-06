@@ -16,6 +16,7 @@ func (s *Service) getUsageStats(ctx context.Context) (map[string]interface{}, er
 	authTypes["ldap"] = s.cfg.LDAPEnabled
 	authTypes["auth_proxy"] = s.cfg.AuthProxyEnabled
 	authTypes["anonymous"] = s.cfg.AnonymousEnabled
+	authTypes["jwt"] = s.cfg.JWTAuthEnabled
 
 	for authType, enabled := range authTypes {
 		enabledValue := 0

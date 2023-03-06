@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
-	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 )
 
 type CrawlerAuthSetupService interface {
@@ -98,7 +97,7 @@ func (o *OSSCrawlerAuthSetupService) Setup(ctx context.Context) (CrawlerAuth, er
 		}
 
 		serviceAccount, err := o.serviceAccounts.CreateServiceAccount(ctx, orgId, &saForm)
-		accountAlreadyExists := errors.Is(err, database.ErrServiceAccountAlreadyExists)
+		accountAlreadyExists := errors.Is(err, serviceaccounts.ErrServiceAccountAlreadyExists)
 
 		if !accountAlreadyExists && err != nil {
 			o.log.Error("Failed to create the service account", "err", err, "accountName", serviceAccountNameOrg, "orgId", orgId)
