@@ -2,7 +2,7 @@ import Prism, { Grammar } from 'prismjs';
 import { Observable, of } from 'rxjs';
 
 import { AbstractQuery, DataQueryRequest, DataQueryResponse, DataSourceInstanceSettings } from '@grafana/data';
-import { DataSourceWithBackend } from '@grafana/runtime';
+import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 
 import { extractLabelMatchers, toPromLikeExpr } from '../prometheus/language_utils';
 
@@ -25,6 +25,7 @@ export class PhlareDataSource extends DataSourceWithBackend<Query, PhlareDataSou
             labelSelector: '{}',
           };
         }
+        t.labelSelector = getTemplateSrv().replace(t.labelSelector);
         return normalizeQuery(t, request.app);
       });
     if (!validTargets.length) {
