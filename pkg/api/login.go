@@ -444,11 +444,7 @@ func getLoginExternalError(err error) string {
 
 	gfErr := &errutil.Error{}
 	if errors.As(err, gfErr) {
-		if msg := gfErr.Public().Message; msg != "" {
-			return msg
-		} else {
-			return http.StatusText(gfErr.Public().StatusCode)
-		}
+		return gfErr.Public().Message
 	}
 
 	return err.Error()

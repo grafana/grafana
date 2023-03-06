@@ -90,7 +90,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *contextmodel.ReqContext) {
 		if code == "" {
 			redirect, err := hs.authnService.RedirectURL(ctx.Req.Context(), authn.ClientWithPrefix(name), req)
 			if err != nil {
-				hs.handleAuthnOAuthErr(ctx, "failed to generate oauth redirect url", err)
+				hs.redirectURLWithErrorCookie(ctx, err)
 				return
 			}
 
@@ -109,7 +109,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *contextmodel.ReqContext) {
 		cookies.DeleteCookie(ctx.Resp, OauthStateCookieName, hs.CookieOptionsFromCfg)
 
 		if err != nil {
-			hs.handleAuthnOAuthErr(ctx, "failed to perform login for oauth request", err)
+			hs.redirectURLWithErrorCookie(ctx, err)
 			return
 		}
 
@@ -378,6 +378,22 @@ func (hs *HTTPServer) SyncUser(
 func (hs *HTTPServer) hashStatecode(code, seed string) string {
 	hashBytes := sha256.Sum256([]byte(code + hs.Cfg.SecretKey + seed))
 	return hex.EncodeToString(hashBytes[:])
+}
+
+func (hs *HTTPServer) handleAuthnOAuthErr2(c *contextmodel.ReqContext, err error) {
+	publicErr := err
+
+	gfErr := &errutil.Error{}
+	if errors.As(err, gfErr) {
+		public := gfErr.Public()
+		if public.Message != "" {
+			publicErr = errors.New(public.Message)
+		} else {
+			publicErr = errors.New("an internal error occurred")
+		}
+	}
+
+	c.Redirect(hs.redirectURLWithErrorCookie(c, publicErr))
 }
 
 func (hs *HTTPServer) handleAuthnOAuthErr(c *contextmodel.ReqContext, msg string, err error) {
