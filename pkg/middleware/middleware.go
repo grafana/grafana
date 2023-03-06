@@ -106,6 +106,7 @@ func allowCacheControl(rw web.ResponseWriter) bool {
 	if len(ccHeaderValues) == 0 {
 		return false
 	}
+
 	foundPrivate := false
 	foundPublic := false
 	for _, val := range ccHeaderValues {

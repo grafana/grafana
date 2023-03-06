@@ -366,7 +366,7 @@ func (hs *HTTPServer) serveLocalPluginAsset(c *contextmodel.ReqContext, plugin p
 	}
 
 	if hs.Cfg.Env == setting.Dev {
-		c.Resp.Header().Set("Cache-Control", "private, max-age=0, must-revalidate, no-cache")
+		c.Resp.Header().Set("Cache-Control", "max-age=0, must-revalidate, no-cache")
 	} else {
 		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
 	}
