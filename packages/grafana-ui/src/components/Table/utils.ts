@@ -351,10 +351,15 @@ export function getFooterItems(
   addMissingColumnIndex(filterFields);
 
   return filterFields.map((data, i) => {
-    if (data === undefined) {
+    // Test for actual data in the filterField.
+    const fieldType = data?.field?.type;
+
+    // If it is a filler field (only an id prop -> {id: string}), the return undefined
+    if (fieldType === undefined) {
       return undefined;
     }
 
+    // Then test for numerical data
     if (data?.field?.type !== FieldType.number) {
       // Show the reducer type ("Total", "Range", "Count", "Delta", etc) in the first non "Row Number" column, only if it cannot be numerically reduced.
       if (i === 1 && options.reducer && options.reducer.length > 0) {
