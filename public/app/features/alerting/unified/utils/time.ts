@@ -58,6 +58,8 @@ const INVALID_FORMAT = new Error(
   ).join(', ')}`
 );
 
+export const PROM_DURATION_UNITS = Object.values(TimeOptions);
+
 /**
  * According to https://prometheus.io/docs/alerting/latest/configuration/#configuration-file
  * see <duration>

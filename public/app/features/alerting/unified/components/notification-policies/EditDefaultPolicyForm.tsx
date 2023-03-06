@@ -1,22 +1,23 @@
 import { cx } from '@emotion/css';
 import React, { FC, ReactNode, useState } from 'react';
 
-import { Collapse, Field, Form, Input, InputControl, Link, MultiSelect, Select, useStyles2 } from '@grafana/ui';
+import { Collapse, Field, Form, InputControl, Link, MultiSelect, Select, useStyles2 } from '@grafana/ui';
 import { RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { FormAmRoute } from '../../types/amroutes';
 import {
+  amRouteToFormAmRoute,
+  commonGroupByOptions,
   mapMultiSelectValueToStrings,
   mapSelectValueToString,
-  stringToSelectableValue,
-  stringsToSelectableValues,
-  commonGroupByOptions,
-  amRouteToFormAmRoute,
   promDurationValidator,
+  stringsToSelectableValues,
+  stringToSelectableValue,
 } from '../../utils/amroutes';
 import { makeAMLink } from '../../utils/misc';
 import { AmRouteReceiver } from '../receivers/grafanaAppReceivers/types';
 
+import { PromDurationInput } from './PromDurationInput';
 import { getFormStyles } from './formStyles';
 
 export interface AmRootRouteFormProps {
@@ -114,7 +115,10 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({
                 data-testid="am-group-wait"
               >
                 <div className={cx(styles.container, styles.timingContainer)}>
-                  <Input {...register('groupWaitValue', { validate: promDurationValidator })} placeholder="30s" />
+                  <PromDurationInput
+                    {...register('groupWaitValue', { validate: promDurationValidator })}
+                    placeholder="30s"
+                  />
                 </div>
               </Field>
               <Field
@@ -125,7 +129,10 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({
                 data-testid="am-group-interval"
               >
                 <div className={cx(styles.container, styles.timingContainer)}>
-                  <Input {...register('groupIntervalValue', { validate: promDurationValidator })} placeholder="5m" />
+                  <PromDurationInput
+                    {...register('groupIntervalValue', { validate: promDurationValidator })}
+                    placeholder="5m"
+                  />
                 </div>
               </Field>
               <Field
@@ -136,7 +143,10 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({
                 data-testid="am-repeat-interval"
               >
                 <div className={cx(styles.container, styles.timingContainer)}>
-                  <Input {...register('repeatIntervalValue', { validate: promDurationValidator })} placeholder="4h" />
+                  <PromDurationInput
+                    {...register('repeatIntervalValue', { validate: promDurationValidator })}
+                    placeholder="4h"
+                  />
                 </div>
               </Field>
             </div>
