@@ -389,6 +389,15 @@ func (hs *HTTPServer) updateOrgUserHelper(c *contextmodel.ReqContext, cmd org.Up
 	if !c.OrgRole.Includes(cmd.Role) && !c.IsGrafanaAdmin {
 		return response.Error(http.StatusForbidden, "Cannot assign a role higher than user's role", nil)
 	}
+	// we do not allow to change role for external synced users
+	qAuth := login.GetAuthInfoQuery{UserId: cmd.UserID}
+	err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &qAuth)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Failed to get user auth info", err)
+	}
+	if qAuth.Result.AuthModule != "" && login.IsExternallySynced(hs.Cfg, qAuth.Result.AuthModule) {
+		return response.Error(http.StatusForbidden, "Cannot change role for externally synced user", nil)
+	}
 	if err := hs.orgService.UpdateOrgUser(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, org.ErrLastOrgAdmin) {
 			return response.Error(http.StatusBadRequest, "Cannot change role so that there is no organization admin left", nil)
