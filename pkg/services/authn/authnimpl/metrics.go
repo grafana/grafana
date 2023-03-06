@@ -1,12 +1,8 @@
 package authnimpl
 
 import (
-	"sync"
-
 	"github.com/prometheus/client_golang/prometheus"
 )
-
-var registerOnce sync.Once
 
 const (
 	metricsSubSystem = "authn"
@@ -50,14 +46,12 @@ func newMetrics(reg prometheus.Registerer) *metrics {
 	}
 
 	if reg != nil {
-		registerOnce.Do(func() {
-			reg.MustRegister(
-				m.failedAuth,
-				m.successfulAuth,
-				m.failedLogin,
-				m.successfulLogin,
-			)
-		})
+		reg.MustRegister(
+			m.failedAuth,
+			m.successfulAuth,
+			m.failedLogin,
+			m.successfulLogin,
+		)
 	}
 
 	return m
