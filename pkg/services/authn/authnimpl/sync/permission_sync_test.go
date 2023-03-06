@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestPermissionsFromDBSync_SyncPermission(t *testing.T) {
+func TestPermissionsSync_SyncPermission(t *testing.T) {
 	type testCase struct {
 		name                string
 		identity            *authn.Identity
@@ -22,16 +22,16 @@ func TestPermissionsFromDBSync_SyncPermission(t *testing.T) {
 	}
 	testCases := []testCase{
 		{
-			name:         "enriches the identity successfully when SyncPermissionsFromDB is true",
-			identity:     &authn.Identity{ID: "user:2", OrgID: 1, ClientParams: authn.ClientParams{SyncPermissionsFromDB: true}},
+			name:         "enriches the identity successfully when SyncPermissions is true",
+			identity:     &authn.Identity{ID: "user:2", OrgID: 1, ClientParams: authn.ClientParams{SyncPermissions: true}},
 			rbacDisabled: false,
 			expectedPermissions: []accesscontrol.Permission{
 				{Action: accesscontrol.ActionUsersRead},
 			},
 		},
 		{
-			name:         "does not load the permissions when SyncPermissionsFromDB is false",
-			identity:     &authn.Identity{ID: "user:2", OrgID: 1, ClientParams: authn.ClientParams{SyncPermissionsFromDB: true}},
+			name:         "does not load the permissions when SyncPermissions is false",
+			identity:     &authn.Identity{ID: "user:2", OrgID: 1, ClientParams: authn.ClientParams{SyncPermissions: true}},
 			rbacDisabled: false,
 			expectedPermissions: []accesscontrol.Permission{
 				{Action: accesscontrol.ActionUsersRead},
@@ -40,7 +40,7 @@ func TestPermissionsFromDBSync_SyncPermission(t *testing.T) {
 		{
 			name:                "does not load the permissions when RBAC is disabled",
 			rbacDisabled:        true,
-			identity:            &authn.Identity{ID: "user:2", OrgID: 1, ClientParams: authn.ClientParams{SyncPermissionsFromDB: true}},
+			identity:            &authn.Identity{ID: "user:2", OrgID: 1, ClientParams: authn.ClientParams{SyncPermissions: true}},
 			expectedPermissions: []accesscontrol.Permission{},
 		},
 	}
@@ -62,7 +62,7 @@ func TestPermissionsFromDBSync_SyncPermission(t *testing.T) {
 	}
 }
 
-func setupTestEnv(rbacDisabled bool) *PermissionsFromDBSync {
+func setupTestEnv(rbacDisabled bool) *PermissionsSync {
 	acMock := &acmock.Mock{
 		IsDisabledFunc: func() bool {
 			return rbacDisabled
@@ -73,7 +73,7 @@ func setupTestEnv(rbacDisabled bool) *PermissionsFromDBSync {
 			}, nil
 		},
 	}
-	s := &PermissionsFromDBSync{
+	s := &PermissionsSync{
 		ac:  acMock,
 		log: log.NewNopLogger(),
 	}

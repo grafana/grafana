@@ -10,23 +10,23 @@ import (
 )
 
 var (
-	errSyncPermissionsFromDBForbidden = errutil.NewBase(errutil.StatusForbidden, "permissions_from_db.sync.forbidden")
+	errSyncPermissionsForbidden = errutil.NewBase(errutil.StatusForbidden, "permissions.sync.forbidden")
 )
 
-func ProvidePermissionsFromDBSync(acService accesscontrol.Service) *PermissionsFromDBSync {
-	return &PermissionsFromDBSync{
+func ProvidePermissionsSync(acService accesscontrol.Service) *PermissionsSync {
+	return &PermissionsSync{
 		ac:  acService,
-		log: log.New("permissions_from_db.sync"),
+		log: log.New("permissions.sync"),
 	}
 }
 
-type PermissionsFromDBSync struct {
+type PermissionsSync struct {
 	ac  accesscontrol.Service
 	log log.Logger
 }
 
-func (s *PermissionsFromDBSync) SyncPermission(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
-	if s.ac.IsDisabled() || !identity.ClientParams.SyncPermissionsFromDB {
+func (s *PermissionsSync) SyncPermission(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
+	if s.ac.IsDisabled() || !identity.ClientParams.SyncPermissions {
 		return nil
 	}
 
@@ -34,7 +34,7 @@ func (s *PermissionsFromDBSync) SyncPermission(ctx context.Context, identity *au
 		accesscontrol.Options{ReloadCache: false})
 	if err != nil {
 		s.log.FromContext(ctx).Error("failed to fetch permissions from db", "error", err, "user_id", identity.ID)
-		return errSyncPermissionsFromDBForbidden
+		return errSyncPermissionsForbidden
 	}
 
 	if identity.Permissions == nil {

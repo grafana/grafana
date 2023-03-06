@@ -68,11 +68,11 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 		AuthID:     sub,
 		OrgRoles:   map[int64]org.RoleType{},
 		ClientParams: authn.ClientParams{
-			SyncUser:              true,
-			FetchSyncedUser:       true,
-			SyncPermissionsFromDB: true,
-			SyncOrgRoles:          !s.cfg.JWTAuthSkipOrgRoleSync,
-			AllowSignUp:           s.cfg.JWTAuthAutoSignUp,
+			SyncUser:        true,
+			FetchSyncedUser: true,
+			SyncPermissions: true,
+			SyncOrgRoles:    !s.cfg.JWTAuthSkipOrgRoleSync,
+			AllowSignUp:     s.cfg.JWTAuthAutoSignUp,
 		}}
 
 	if key := s.cfg.JWTAuthUsernameClaim; key != "" {

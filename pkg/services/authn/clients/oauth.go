@@ -141,11 +141,11 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 		OAuthToken:     token,
 		OrgRoles:       orgRoles,
 		ClientParams: authn.ClientParams{
-			SyncUser:              true,
-			SyncTeams:             true,
-			FetchSyncedUser:       true,
-			SyncPermissionsFromDB: true,
-			AllowSignUp:           c.connector.IsSignupAllowed(),
+			SyncUser:        true,
+			SyncTeams:       true,
+			FetchSyncedUser: true,
+			SyncPermissions: true,
+			AllowSignUp:     c.connector.IsSignupAllowed(),
 			// skip org role flag is checked and handled in the connector. For now we can skip the hook if no roles are passed
 			SyncOrgRoles: len(orgRoles) > 0,
 			LookUpParams: login.UserLookupParams{Email: &userInfo.Email},

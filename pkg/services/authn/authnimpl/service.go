@@ -152,9 +152,7 @@ func ProvideService(
 		s.RegisterPostAuthHook(sync.ProvideOAuthTokenSync(oauthTokenService, sessionService).SyncOauthTokenHook, 60)
 	}
 
-	if features.IsEnabled(featuremgmt.FlagAuthnService) {
-		s.RegisterPostAuthHook(sync.ProvidePermissionsFromDBSync(accessControlService).SyncPermission, 70)
-	}
+	s.RegisterPostAuthHook(sync.ProvidePermissionsSync(accessControlService).SyncPermission, 70)
 
 	s.RegisterPostAuthHook(userSyncService.FetchSyncedUserHook, 100)
 

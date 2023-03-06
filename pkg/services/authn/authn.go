@@ -53,8 +53,8 @@ type ClientParams struct {
 	CacheAuthProxyKey string
 	// LookUpParams are the arguments used to look up the entity in the DB.
 	LookUpParams login.UserLookupParams
-	// SyncPermissionsFromDB ensure that permissions are loaded from DB and added to the identity
-	SyncPermissionsFromDB bool
+	// SyncPermissions ensure that permissions are loaded from DB and added to the identity
+	SyncPermissions bool
 }
 
 type PostAuthHookFn func(ctx context.Context, identity *Identity, r *Request) error
