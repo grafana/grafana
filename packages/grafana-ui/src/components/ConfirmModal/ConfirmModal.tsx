@@ -77,6 +77,12 @@ export const ConfirmModal = ({
     }
   }, [isOpen]);
 
+  useEffect(() => {
+    if (isOpen) {
+      setDisabled(Boolean(confirmationText));
+    }
+  }, [isOpen, confirmationText]);
+
   return (
     <Modal className={cx(styles.modal, modalClass)} title={title} icon={icon} isOpen={isOpen} onDismiss={onDismiss}>
       <div className={styles.modalText}>

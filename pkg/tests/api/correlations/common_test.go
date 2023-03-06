@@ -145,7 +145,7 @@ func (c TestContext) createUser(cmd user.CreateUserCommand) User {
 	usrSvc, err := userimpl.ProvideService(store, orgService, store.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
 	require.NoError(c.t, err)
 
-	user, err := usrSvc.CreateUserForTests(context.Background(), &cmd)
+	user, err := usrSvc.Create(context.Background(), &cmd)
 	require.NoError(c.t, err)
 
 	return User{
