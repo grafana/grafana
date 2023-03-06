@@ -149,7 +149,7 @@ export function PanelChrome({
       {hasHeader && (
         <div className={cx(styles.headerContainer, dragClass)} style={headerStyles} data-testid="header-container">
           {statusMessage && (
-            <div className={styles.errorContainerInHeader}>
+            <div className={cx(styles.errorContainerInHeader, dragClassCancel)}>
               <PanelStatus message={statusMessage} onClick={statusMessageOnClick} ariaLabel="Panel status" />
             </div>
           )}
