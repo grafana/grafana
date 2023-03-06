@@ -7,7 +7,7 @@
 //          0
 //      ]
 //  }
-//  Name: 
+//  Name: val3 Max float
 //  Dimensions: 2 Fields by 3 Rows
 //  +-------------------------------+--------------------+
 //  | Name: time                    | Name: value        |
@@ -28,7 +28,7 @@
 //          0
 //      ]
 //  }
-//  Name: 
+//  Name: val3 Min float
 //  Dimensions: 2 Fields by 3 Rows
 //  +-------------------------------+--------------------+
 //  | Name: time                    | Name: value        |
@@ -49,7 +49,7 @@
 //          0
 //      ]
 //  }
-//  Name: 
+//  Name: val2 Max float
 //  Dimensions: 2 Fields by 3 Rows
 //  +-------------------------------+--------------------+
 //  | Name: time                    | Name: value        |
@@ -70,7 +70,7 @@
 //          0
 //      ]
 //  }
-//  Name: 
+//  Name: val2 Min float
 //  Dimensions: 2 Fields by 3 Rows
 //  +-------------------------------+--------------------+
 //  | Name: time                    | Name: value        |
@@ -91,7 +91,7 @@
 //          0
 //      ]
 //  }
-//  Name: 
+//  Name: val1 Max float
 //  Dimensions: 2 Fields by 3 Rows
 //  +-------------------------------+--------------------+
 //  | Name: time                    | Name: value        |
@@ -112,7 +112,7 @@
 //          0
 //      ]
 //  }
-//  Name: 
+//  Name: val1 Min float
 //  Dimensions: 2 Fields by 3 Rows
 //  +-------------------------------+--------------------+
 //  | Name: time                    | Name: value        |
@@ -131,6 +131,7 @@
   "frames": [
     {
       "schema": {
+        "name": "val3 Max float",
         "meta": {
           "type": "timeseries-multi",
           "typeVersion": [
@@ -155,9 +156,6 @@
             },
             "labels": {
               "label": "val3"
-            },
-            "config": {
-              "displayName": "val3 Max float"
             }
           }
         ]
@@ -179,6 +177,7 @@
     },
     {
       "schema": {
+        "name": "val3 Min float",
         "meta": {
           "type": "timeseries-multi",
           "typeVersion": [
@@ -203,9 +202,6 @@
             },
             "labels": {
               "label": "val3"
-            },
-            "config": {
-              "displayName": "val3 Min float"
             }
           }
         ]
@@ -227,6 +223,7 @@
     },
     {
       "schema": {
+        "name": "val2 Max float",
         "meta": {
           "type": "timeseries-multi",
           "typeVersion": [
@@ -251,9 +248,6 @@
             },
             "labels": {
               "label": "val2"
-            },
-            "config": {
-              "displayName": "val2 Max float"
             }
           }
         ]
@@ -275,6 +269,7 @@
     },
     {
       "schema": {
+        "name": "val2 Min float",
         "meta": {
           "type": "timeseries-multi",
           "typeVersion": [
@@ -299,9 +294,6 @@
             },
             "labels": {
               "label": "val2"
-            },
-            "config": {
-              "displayName": "val2 Min float"
             }
           }
         ]
@@ -323,6 +315,7 @@
     },
     {
       "schema": {
+        "name": "val1 Max float",
         "meta": {
           "type": "timeseries-multi",
           "typeVersion": [
@@ -347,9 +340,6 @@
             },
             "labels": {
               "label": "val1"
-            },
-            "config": {
-              "displayName": "val1 Max float"
             }
           }
         ]
@@ -371,6 +361,7 @@
     },
     {
       "schema": {
+        "name": "val1 Min float",
         "meta": {
           "type": "timeseries-multi",
           "typeVersion": [
@@ -395,9 +386,6 @@
             },
             "labels": {
               "label": "val1"
-            },
-            "config": {
-              "displayName": "val1 Min float"
             }
           }
         ]
