@@ -451,6 +451,11 @@ export class LokiDatasource
     return statsForAll;
   }
 
+  async formatQuery(query: LokiQuery) {
+    const data = await this.metadataRequest('format_query', { query: query.expr });
+    console.log('formatQuery data:', data);
+  }
+
   async metricFindQuery(query: LokiVariableQuery | string) {
     if (!query) {
       return Promise.resolve([]);
