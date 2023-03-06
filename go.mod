@@ -125,7 +125,6 @@ require (
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/ini.v1 v1.67.0
 	gopkg.in/mail.v2 v2.3.1
-	gopkg.in/square/go-jose.v2 v2.5.1
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1
 	xorm.io/builder v0.3.6
@@ -268,6 +267,7 @@ require (
 	buf.build/gen/go/parca-dev/parca/protocolbuffers/go v1.28.1-20221222094228-8b1d3d0f62e6.4
 	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/dave/dst v0.27.2
+	github.com/go-jose/go-jose/v3 v3.0.0
 	github.com/grafana/thema v0.0.0-20230224141623-cb20887cb028
 	github.com/hmarr/codeowners v1.1.1
 	github.com/weaveworks/common v0.0.0-20230208133027-16871410fca4
