@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/k8s/admission"
 	k8sAdmission "k8s.io/api/admission/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type WebhooksAPI struct {
@@ -75,7 +76,7 @@ func (api *WebhooksAPI) Create(c *contextmodel.ReqContext) response.Response {
 
 	// THIS IS BROKEN
 	// TODO: convert error to k8sAdmission.AdmissionResponse and then to response.Response
-	err = api.ValidationController.Validate(c.Req.Context(), &admission.AdmissionRequest{
+	req := &admission.AdmissionRequest{
 		Action:  c.Req.Method,
 		Kind:    rev.Kind,
 		Group:   rev.GroupVersionKind().Group,
@@ -87,12 +88,28 @@ func (api *WebhooksAPI) Create(c *contextmodel.ReqContext) response.Response {
 		},
 		Object:    obj,
 		OldObject: oldObj,
-	})
-
-	if err != nil {
-		api.Log.Error("error validating request body")
-		return response.Error(500, "error validating request body", err)
 	}
 
-	return response.JSON(200, "ok")
+	resp := &k8sAdmission.AdmissionReview{
+		TypeMeta: rev.TypeMeta,
+		Response: &k8sAdmission.AdmissionResponse{
+			UID:     rev.Request.UID,
+			Allowed: true,
+			Result: &v1.Status{
+				Status: "Success",
+				Code:   200,
+			},
+		},
+	}
+
+	err = api.ValidationController.Validate(c.Req.Context(), req)
+	if err != nil {
+		resp.Response.Allowed = false
+		resp.Response.Result.Status = "Failure"
+		resp.Response.Result.Message = err.Error()
+		// auth status code to start, maybe change this to bad request
+		resp.Response.Result.Code = 403
+	}
+
+	return response.JSON(int(resp.Response.Result.Code), resp)
 }
