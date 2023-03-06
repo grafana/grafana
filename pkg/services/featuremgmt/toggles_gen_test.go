@@ -83,6 +83,7 @@ func TestFeatureToggleFiles(t *testing.T) {
 		"logsContextDatasourceUi":           true,
 		"lokiQuerySplitting":                true,
 		"individualCookiePreferences":       true,
+		"traceqlSearch":                     true,
 	}
 
 	t.Run("all new features should have an owner", func(t *testing.T) {
