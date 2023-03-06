@@ -51,10 +51,12 @@ export interface AppPluginMeta<T extends KeyValue = KeyValue> extends PluginMeta
 }
 
 /**
- * These types are towards the plugin developer when extending Grafana or other
- * plugins from the module.ts
+ * The `configure()` function can only update certain properties of the extension, and due to this
+ * it only receives a subset of the original extension object.
  */
 export type AppPluginExtensionLink = Pick<PluginExtensionLink, 'description' | 'path' | 'title'>;
+
+export type AppPluginExtensionCommand = Pick<PluginExtensionCommand, 'description' | 'title'>;
 
 export type AppPluginExtensionLinkConfig<C extends object = object> = {
   title: string;
@@ -63,8 +65,6 @@ export type AppPluginExtensionLinkConfig<C extends object = object> = {
   path: string;
   configure?: (extension: AppPluginExtensionLink, context?: C) => Partial<AppPluginExtensionLink> | undefined;
 };
-
-export type AppPluginExtensionCommand = Pick<PluginExtensionCommand, 'description' | 'title'>;
 
 export type AppPluginExtensionCommandConfig<C extends object = object> = {
   title: string;
