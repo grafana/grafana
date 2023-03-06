@@ -153,7 +153,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *contextmodel.ReqContext) {
 
 		state, err := GenStateString()
 		if err != nil {
-			ctx.Logger.Error("Generating state string failed", "err", err)
+			ctx.Logger.Error("Generating state stringit push --set-upstream origin kalleep/authn/login-error-handlingg failed", "err", err)
 			hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
 				HttpStatus:    http.StatusInternalServerError,
 				PublicMessage: "An internal error occurred",
@@ -378,22 +378,6 @@ func (hs *HTTPServer) SyncUser(
 func (hs *HTTPServer) hashStatecode(code, seed string) string {
 	hashBytes := sha256.Sum256([]byte(code + hs.Cfg.SecretKey + seed))
 	return hex.EncodeToString(hashBytes[:])
-}
-
-func (hs *HTTPServer) handleAuthnOAuthErr2(c *contextmodel.ReqContext, err error) {
-	publicErr := err
-
-	gfErr := &errutil.Error{}
-	if errors.As(err, gfErr) {
-		public := gfErr.Public()
-		if public.Message != "" {
-			publicErr = errors.New(public.Message)
-		} else {
-			publicErr = errors.New("an internal error occurred")
-		}
-	}
-
-	c.Redirect(hs.redirectURLWithErrorCookie(c, publicErr))
 }
 
 func (hs *HTTPServer) handleAuthnOAuthErr(c *contextmodel.ReqContext, msg string, err error) {
