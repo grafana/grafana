@@ -982,13 +982,13 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 	dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
 	features := featuremgmt.WithFeatures()
 
-	folderSvc := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashboardStore, folderStore, db.InitTestDB(t), featuremgmt.WithFeatures())
+	folderSvc := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()),
+		cfg, dashboardStore, folderStore, db.InitTestDB(t), featuremgmt.WithFeatures())
 
 	if dashboardService == nil {
-		dashboardService = service.ProvideDashboardServiceImpl(
-			cfg, dashboardStore, folderStore, nil, features,
-			folderPermissions, dashboardPermissions, ac,
-			folderSvc,
+		dashboardService = service.ProvideDashboardService(
+			cfg, dashboardStore, folderStore, nil, features, folderPermissions, dashboardPermissions,
+			ac, folderSvc,
 		)
 	}
 
@@ -999,10 +999,9 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 		SQLStore:              sc.sqlStore,
 		ProvisioningService:   provisioningService,
 		AccessControl:         accesscontrolmock.New(),
-		dashboardProvisioningService: service.ProvideDashboardServiceImpl(
-			cfg, dashboardStore, folderStore, nil, features,
-			folderPermissions, dashboardPermissions, ac,
-			folderSvc,
+		dashboardProvisioningService: service.ProvideDashboardService(
+			cfg, dashboardStore, folderStore, nil, features, folderPermissions, dashboardPermissions,
+			ac, folderSvc,
 		),
 		DashboardService: dashboardService,
 		Features:         featuremgmt.WithFeatures(),
