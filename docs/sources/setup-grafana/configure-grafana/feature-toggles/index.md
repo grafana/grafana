@@ -38,7 +38,6 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `trimDefaults`                    | Use cue schema to remove values that will be applied automatically              |
 | `panelTitleSearch`                | Search for dashboards using panel title                                         |
 | `prometheusAzureOverrideAudience` | Experimental. Allow override default AAD audience for Azure Prometheus endpoint |
-| `swaggerUi`                       | Serves swagger UI                                                               |
 | `migrationLocking`                | Lock database during migrations                                                 |
 | `newDBLibrary`                    | Use jmoiron/sqlx rather than xorm for a few backend services                    |
 | `validateDashboardsOnSave`        | Validate dashboard JSON POSTed to api/dashboards/db                             |
@@ -102,7 +101,6 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 | `publicDashboardsEmailSharing` | Allows public dashboard sharing to be restricted to only allowed emails |
 | `k8s`                          | Explore native k8s integrations                                         |
 | `dashboardsFromStorage`        | Load dashboards from the generic storage interface                      |
-| `export`                       | Export grafana instance (to git, etc)                                   |
 | `grpcServer`                   | Run GRPC server                                                         |
 | `entityStore`                  | SQL-based entity store (requires storage flag also)                     |
 | `queryLibrary`                 | Reusable query library                                                  |

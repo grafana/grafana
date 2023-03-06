@@ -25,13 +25,13 @@ func TestDashboardService(t *testing.T) {
 		fakeStore := dashboards.FakeDashboardStore{}
 		defer fakeStore.AssertExpectations(t)
 
-		folderStore := foldertest.NewFakeFolderStore(t)
+		folderSvc := foldertest.NewFakeService()
 
 		service := &DashboardServiceImpl{
 			cfg:                setting.NewCfg(),
 			log:                log.New("test.logger"),
 			dashboardStore:     &fakeStore,
-			folderStore:        folderStore,
+			folderService:      folderSvc,
 			dashAlertExtractor: &dummyDashAlertExtractor{},
 		}
 
@@ -230,13 +230,11 @@ func TestDashboardService(t *testing.T) {
 		})
 
 		t.Run("Count dashboards in folder", func(t *testing.T) {
-			folderStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(&folder.Folder{}, nil)
 			fakeStore.On("CountDashboardsInFolder", mock.Anything, mock.AnythingOfType("*dashboards.CountDashboardsInFolderRequest")).Return(int64(3), nil)
-
+			folderSvc.ExpectedFolder = &folder.Folder{ID: 1}
 			// set up a ctx with signed in user
-			ctx := context.Background()
 			usr := &user.SignedInUser{UserID: 1}
-			ctx = appcontext.WithUser(ctx, usr)
+			ctx := appcontext.WithUser(context.Background(), usr)
 
 			count, err := service.CountDashboardsInFolder(ctx, &dashboards.CountDashboardsInFolderQuery{FolderUID: "i am a folder"})
 			require.NoError(t, err)

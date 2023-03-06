@@ -69,6 +69,16 @@ func (s *Service) UpdateAPIKeyLastUsedDate(ctx context.Context, tokenID int64) e
 	return s.store.UpdateAPIKeyLastUsedDate(ctx, tokenID)
 }
 
+// IsDisabled returns true if the apikey service is disabled for the given org.
+// This is the case if the org has no apikeys.
+func (s *Service) IsDisabled(ctx context.Context, orgID int64) (bool, error) {
+	apikeys, err := s.store.CountAPIKeys(ctx, orgID)
+	if err != nil {
+		return false, err
+	}
+	return apikeys == 0, nil
+}
+
 func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 	limits := &quota.Map{}
 
