@@ -105,7 +105,7 @@ export const useGetDefaults = (queryParams: UrlQueryMap, existing: RuleWithLocat
     () => ({ ...(defaultsInQueryParams ? JSON.parse(defaultsInQueryParams) : {}) }),
     [defaultsInQueryParams]
   );
-  return { defaultDsAndQueries, defaultsInQueryParamsObject, defaultsInQueryParams };
+  return { defaultDsAndQueries, defaultsInQueryParamsObject };
 };
 
 export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
@@ -119,10 +119,7 @@ export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
   const returnTo: string = (queryParams['returnTo'] as string | undefined) ?? '/alerting/list';
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
 
-  const { defaultDsAndQueries, defaultsInQueryParamsObject, defaultsInQueryParams } = useGetDefaults(
-    queryParams,
-    existing
-  );
+  const { defaultDsAndQueries, defaultsInQueryParamsObject } = useGetDefaults(queryParams, existing);
 
   const defaultValues: RuleFormValues = useMemo(() => {
     if (existing) {
@@ -156,7 +153,7 @@ export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
 
   // only reset once we get some value in defaultDsAndQueries.queries, adding this value.
   useEffect(() => {
-    const shouldReset = !existing && !prefill && defaultDsAndQueries.queries && !Boolean(defaultsInQueryParams);
+    const shouldReset = !existing && !prefill && defaultDsAndQueries.queries;
     if (shouldReset) {
       reset({
         ...getDefaultFormValues(),
@@ -166,7 +163,7 @@ export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
         type: RuleFormType.grafana,
       });
     }
-  }, [defaultDsAndQueries.queries, reset, existing, prefill, defaultsInQueryParamsObject, defaultsInQueryParams]);
+  }, [defaultDsAndQueries.queries, reset, existing, prefill, defaultsInQueryParamsObject]);
 
   const type = watch('type');
   const dataSourceName = watch('dataSourceName');
@@ -303,7 +300,7 @@ export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
               <AlertRuleNameInput />
               <QueryAndExpressionsStep
                 editingExistingRule={!!existing}
-                prefill={Boolean(prefill) || Boolean(defaultsInQueryParams)}
+                prefill={!!prefill}
                 onDataChange={checkAlertCondition}
                 asyncDefaultQueries={defaultDsAndQueries.queries}
                 asyncDataSource={defaultDsAndQueries.ds}

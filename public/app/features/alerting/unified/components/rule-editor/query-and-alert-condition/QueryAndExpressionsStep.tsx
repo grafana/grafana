@@ -267,7 +267,7 @@ export const QueryAndExpressionsStep: FC<Props> = ({
                 icon="plus"
                 onClick={onAddNewQuery}
                 variant="secondary"
-                data-testid={selectors.components.QueryTab.addQuery}
+                aria-label={selectors.components.QueryTab.addQuery}
                 disabled={noCompatibleDataSources}
               >
                 Add query
