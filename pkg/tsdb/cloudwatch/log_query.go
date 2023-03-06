@@ -74,20 +74,10 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 			} else if numericField, ok := fieldValues[*resultField.Field].([]*float64); ok {
 				parsedFloat, err := strconv.ParseFloat(*resultField.Value, 64)
 
-				// This can happen if a field has a mix of numeric and non-numeric values.
-				// In that case, we change the field from a numeric field to a string field.
 				if err != nil {
-					fieldValuesAsStrings := make([]*string, rowCount)
-					for j := 0; j <= i; j++ {
-						for _, rf := range nonEmptyRows[j] {
-							if *rf.Field == *resultField.Field {
-								fieldValuesAsStrings[j] = rf.Value
-							}
-						}
-					}
-
-					fieldValues[*resultField.Field] = fieldValuesAsStrings
-
+					// This can happen if a field has a mix of numeric and non-numeric values.
+					// In that case, we change the field from a numeric field to a string field.
+					fieldValues[*resultField.Field] = changeToStringField(rowCount, nonEmptyRows[:i+1], *resultField.Field)
 					continue
 				}
 
@@ -158,6 +148,19 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 	// Results aren't guaranteed to come ordered by time (ascending), so we need to sort
 	sort.Sort(ByTime(*frame))
 	return frame, nil
+}
+
+func changeToStringField(lengthOfValues int, rows [][]*cloudwatchlogs.ResultField, logEventField string) []*string {
+	fieldValuesAsStrings := make([]*string, lengthOfValues)
+	for i, resultFields := range rows {
+		for _, field := range resultFields {
+			if *field.Field == logEventField {
+				fieldValuesAsStrings[i] = field.Value
+			}
+		}
+	}
+
+	return fieldValuesAsStrings
 }
 
 func groupResults(results *data.Frame, groupingFieldNames []string) ([]*data.Frame, error) {

@@ -33,10 +33,6 @@ func TestLogsResultsToDataframes(t *testing.T) {
 					Value: aws.String("test message 1"),
 				},
 				&cloudwatchlogs.ResultField{
-					Field: aws.String("numberOrString"),
-					Value: aws.String("1"),
-				},
-				&cloudwatchlogs.ResultField{
 					Field: aws.String("@logStream"),
 					Value: aws.String("fakelogstream"),
 				},
@@ -65,10 +61,6 @@ func TestLogsResultsToDataframes(t *testing.T) {
 				&cloudwatchlogs.ResultField{
 					Field: aws.String("line"),
 					Value: aws.String("test message 2"),
-				},
-				&cloudwatchlogs.ResultField{
-					Field: aws.String("numberOrString"),
-					Value: aws.String("not a number"),
 				},
 				&cloudwatchlogs.ResultField{
 					Field: aws.String("@logStream"),
@@ -108,10 +100,6 @@ func TestLogsResultsToDataframes(t *testing.T) {
 				&cloudwatchlogs.ResultField{
 					Field: aws.String("line"),
 					Value: aws.String("test message 3"),
-				},
-				&cloudwatchlogs.ResultField{
-					Field: aws.String("numberOrString"),
-					Value: aws.String("2.000"),
 				},
 				&cloudwatchlogs.ResultField{
 					Field: aws.String("@logStream"),
@@ -159,12 +147,6 @@ func TestLogsResultsToDataframes(t *testing.T) {
 		aws.String("test message 3"),
 	})
 
-	numberOrStringField := data.NewField("numberOrString", nil, []*string{
-		aws.String("1"),
-		aws.String("not a number"),
-		aws.String("2.000"),
-	})
-
 	logStreamField := data.NewField("@logStream", nil, []*string{
 		aws.String("fakelogstream"),
 		aws.String("fakelogstream"),
@@ -204,7 +186,6 @@ func TestLogsResultsToDataframes(t *testing.T) {
 		Fields: []*data.Field{
 			timeField,
 			lineField,
-			numberOrStringField,
 			logStreamField,
 			logField,
 			hiddenLogStreamField,
@@ -234,6 +215,62 @@ func TestLogsResultsToDataframes(t *testing.T) {
 
 	// Splitting these assertions up so it's clearer what's wrong should the test
 	// fail in the future
+	assert.Equal(t, expectedDataframe.Name, dataframes.Name)
+	assert.Equal(t, expectedDataframe.RefID, dataframes.RefID)
+	assert.Equal(t, expectedDataframe.Meta, dataframes.Meta)
+	assert.ElementsMatch(t, expectedDataframe.Fields, dataframes.Fields)
+}
+
+func TestLogsResultsToDataframes_MixedTypes_NumericValuesMixedWithStringFallBackToStringValues(t *testing.T) {
+	dataframes, err := logsResultsToDataframes(&cloudwatchlogs.GetQueryResultsOutput{
+		Results: [][]*cloudwatchlogs.ResultField{
+			{
+				&cloudwatchlogs.ResultField{
+					Field: aws.String("numberOrString"),
+					Value: aws.String("-1.234"),
+				},
+			},
+			{
+				&cloudwatchlogs.ResultField{
+					Field: aws.String("numberOrString"),
+					Value: aws.String("1"),
+				},
+			},
+			{
+				&cloudwatchlogs.ResultField{
+					Field: aws.String("numberOrString"),
+					Value: aws.String("not a number"),
+				},
+			},
+			{
+				&cloudwatchlogs.ResultField{
+					Field: aws.String("numberOrString"),
+					Value: aws.String("2.000"),
+				},
+			},
+		},
+		Status: aws.String("ok"),
+	})
+	require.NoError(t, err)
+
+	expectedDataframe := &data.Frame{
+		Name: "CloudWatchLogsResponse",
+		Fields: []*data.Field{
+			data.NewField("numberOrString", nil, []*string{
+				aws.String("-1.234"),
+				aws.String("1"),
+				aws.String("not a number"),
+				aws.String("2.000"),
+			}),
+		},
+		RefID: "",
+		Meta: &data.FrameMeta{
+			Custom: map[string]interface{}{
+				"Status": "ok",
+			},
+		},
+	}
+
 	assert.Equal(t, expectedDataframe.Name, dataframes.Name)
 	assert.Equal(t, expectedDataframe.RefID, dataframes.RefID)
 	assert.Equal(t, expectedDataframe.Meta, dataframes.Meta)
