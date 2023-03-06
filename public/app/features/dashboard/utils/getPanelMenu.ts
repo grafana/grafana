@@ -312,11 +312,13 @@ function truncateTitle(title: string, length: number): string {
 }
 
 function createExtensionContext(panel: PanelModel, dashboard: DashboardModel): PluginExtensionPanelContext {
+  const timeRange = Object.assign({}, dashboard.time);
+
   return Object.freeze({
     id: panel.id,
     pluginId: panel.type,
     title: panel.title,
-    timeRange: Object.freeze(dashboard.time),
+    timeRange: Object.freeze(timeRange),
     timeZone: dashboard.timezone,
     dashboard: Object.freeze({
       uid: dashboard.uid,
