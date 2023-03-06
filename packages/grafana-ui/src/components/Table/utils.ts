@@ -134,7 +134,6 @@ export function getColumns(
       minWidth: fieldTableOptions.minWidth ?? columnMinWidth,
       filter: memoizeOne(filterByValue(field)),
       justifyContent: getTextAlign(field),
-      // JEV: issue is here???
       Footer: getFooterValue(fieldIndex, footerValues, isCountRowsSet),
     });
   }
@@ -320,7 +319,6 @@ function toNumber(value: any): number {
 
 export function getFooterItems(
   filterFields: Array<{ id: string; field: Field } | undefined>,
-  // JEV, why are we passing values here?!?!? We have the values in the filterFields already???
   values: any[number],
   options: TableFooterCalc,
   theme2: GrafanaTheme2
@@ -386,7 +384,7 @@ function getFormattedValue(field: Field, reducer: string[], theme: GrafanaTheme2
 }
 
 // This strips the raw vales from the `rows` object.
-export function createFooterCalculationValues(rows: Row[], idsAsIndexs?: string[]): any[number] {
+export function createFooterCalculationValues(rows: Row[]): any[number] {
   const values: any[number] = [];
 
   for (const key in rows) {
