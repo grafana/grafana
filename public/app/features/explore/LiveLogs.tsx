@@ -77,21 +77,28 @@ class LiveLogs extends PureComponent<Props, State> {
   }
 
   static getDerivedStateFromProps(nextProps: Props, state: State) {
-    if (!nextProps.isPaused) {
-      if (state.clearedAt) {
-        return {
-          logRowsToRender: nextProps.logRows?.filter((row) => row.timeEpochMs > (state.clearedAt ?? 0)),
-        };
-      }
-      return {
-        // We update what we show only if not paused. We keep any background subscriptions running and keep updating
-        // our state, but we do not show the updates, this allows us start again showing correct result after resuming
-        // without creating a gap in the log results.
-        logRowsToRender: nextProps.logRows,
-      };
-    } else {
+    if (nextProps.isPaused && !state.clearedAt) {
       return null;
     }
+
+    if (nextProps.isPaused && state.clearedAt) {
+      return {
+        logRowsToRender: state.logRowsToRender?.filter((row) => row.timeEpochMs > (state.clearedAt ?? 0)),
+      };
+    }
+
+    if (state.clearedAt) {
+      return {
+        logRowsToRender: nextProps.logRows?.filter((row) => row.timeEpochMs > (state.clearedAt ?? 0)),
+      };
+    }
+
+    return {
+      // We update what we show only if not paused. We keep any background subscriptions running and keep updating
+      // our state, but we do not show the updates, this allows us start again showing correct result after resuming
+      // without creating a gap in the log results.
+      logRowsToRender: nextProps.logRows,
+    };
   }
 
   /**
