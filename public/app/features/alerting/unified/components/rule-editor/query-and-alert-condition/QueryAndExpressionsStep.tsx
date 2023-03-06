@@ -5,7 +5,7 @@ import { LoadingState, PanelData, getDefaultRelativeTimeRange } from '@grafana/d
 import { selectors } from '@grafana/e2e-selectors';
 import { Stack } from '@grafana/experimental';
 import { config, getDataSourceSrv } from '@grafana/runtime';
-import { Alert, Button, Field, Tooltip } from '@grafana/ui';
+import { Alert, Button, Field, Tooltip, InputControl } from '@grafana/ui';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
@@ -13,6 +13,7 @@ import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler
 import { AlertingQueryRunner } from '../../../state/AlertingQueryRunner';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { getDefaultOrFirstCompatibleDataSource } from '../../../utils/datasource';
+import { ExpressionEditor } from '../ExpressionEditor';
 import { ExpressionsEditor } from '../ExpressionsEditor';
 import { QueryEditor } from '../QueryEditor';
 import { RecordingRuleEditor } from '../RecordingRuleEditor';
@@ -63,6 +64,7 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule, onData
 
   const isGrafanaManagedType = type === RuleFormType.grafana;
   const isRecordingRuleType = type === RuleFormType.cloudRecording;
+  const isCloudAlertRuleType = type === RuleFormType.cloudAlerting;
 
   const rulesSourcesWithRuler = useRulesSourcesWithRuler();
 
@@ -229,7 +231,7 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule, onData
     <RuleEditorSection stepNo={2} title="Set a query and alert condition">
       <AlertType editingExistingRule={editingExistingRule} />
 
-      {/* This is the PromQL Editor for Cloud rules and recording rules */}
+      {/* This is the PromQL Editor for recording rules */}
       {isRecordingRuleType && (
         <Field error={errors.expression?.message} invalid={!!errors.expression?.message}>
           <RecordingRuleEditor
@@ -237,6 +239,30 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule, onData
             runQueries={runRecordingQueries}
             onChangeQuery={onChangeRecordingRulesQueries}
             panelData={panelData}
+          />
+        </Field>
+      )}
+
+      {/* This is the PromQL Editor for Cloud rules */}
+      {isCloudAlertRuleType && dataSourceName && (
+        <Field error={errors.expression?.message} invalid={!!errors.expression?.message}>
+          <InputControl
+            name="expression"
+            render={({ field: { ref, ...field } }) => {
+              return (
+                <ExpressionEditor
+                  {...field}
+                  dataSourceName={dataSourceName}
+                  showPreviewAlertsButton={!isRecordingRuleType}
+                  asyncDefaultQuery={asyncDefaultQueries?.[0]}
+                  preservePreviousValue={!updateWithDefault}
+                />
+              );
+            }}
+            control={control}
+            rules={{
+              required: { value: true, message: 'A valid expression is required' },
+            }}
           />
         </Field>
       )}
