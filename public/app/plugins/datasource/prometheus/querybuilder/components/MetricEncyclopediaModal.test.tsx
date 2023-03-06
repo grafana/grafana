@@ -10,7 +10,7 @@ import { EmptyLanguageProviderMock } from '../../language_provider.mock';
 import { PromOptions } from '../../types';
 import { PromVisualQuery } from '../types';
 
-import { MetricEncyclopediaModal, testIds } from './MetricEncyclopediaModal';
+import { MetricEncyclopediaModal, testIds, placeholders } from './MetricEncyclopediaModal';
 
 // don't care about interaction tracking in our unit tests
 jest.mock('@grafana/runtime', () => ({
@@ -22,7 +22,7 @@ describe('MetricEncyclopediaModal', () => {
   it('renders the modal', async () => {
     setup(defaultQuery, listOfMetrics);
     await waitFor(() => {
-      expect(screen.getByText('Metric Encyclopedia')).toBeInTheDocument();
+      expect(screen.getByText('Browse Metrics')).toBeInTheDocument();
     });
   });
 
@@ -96,7 +96,7 @@ describe('MetricEncyclopediaModal', () => {
     setup(defaultQuery, listOfMetrics);
 
     await waitFor(() => {
-      const selectType = screen.getByText('Select type');
+      const selectType = screen.getByText(placeholders.type);
       expect(selectType).toBeInTheDocument();
     });
   });
@@ -119,7 +119,7 @@ describe('MetricEncyclopediaModal', () => {
     setup(defaultQuery, listOfMetrics);
 
     await waitFor(() => {
-      const selectType = screen.getByText('Select a template variable');
+      const selectType = screen.getByText(placeholders.variables);
       expect(selectType).toBeInTheDocument();
     });
   });

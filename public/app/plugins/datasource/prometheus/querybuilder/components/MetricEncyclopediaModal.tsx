@@ -67,7 +67,7 @@ const promTypes: PromFilterOption[] = [
   },
 ];
 
-const tooltips = {
+export const placeholders = {
   browse: 'Browse metric names by text',
   metadataSearchSwicth: 'Browse by metadata type and description in addition to metric name',
   type: 'Counter, gauge, histogram, or summary',
@@ -288,7 +288,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
       <div className="gf-form">
         <Input
           data-testid={testIds.searchMetric}
-          placeholder={tooltips.browse}
+          placeholder={placeholders.browse}
           value={fuzzySearchQuery}
           onInput={(e) => {
             const value = e.currentTarget.value ?? '';
@@ -298,7 +298,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
           }}
         />
         {hasMetadata && (
-          <InlineField label="" className={styles.labelColor} tooltip={<div>{tooltips.metadataSearchSwicth}</div>}>
+          <InlineField label="" className={styles.labelColor} tooltip={<div>{placeholders.metadataSearchSwicth}</div>}>
             <InlineSwitch
               data-testid={testIds.searchWithMetadata}
               showLabel={true}
@@ -322,7 +322,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
               inputId="my-select"
               options={typeOptions}
               value={selectedTypes}
-              placeholder={tooltips.type}
+              placeholder={placeholders.type}
               onChange={(v) => {
                 // *** Filter by type
                 // *** always include metrics without metadata but label it as unknown type
@@ -332,7 +332,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
               }}
             />
             {hasMetadata && (
-              <InlineField label="" className={styles.labelColor} tooltip={<div>{tooltips.excludeNoMetadata}</div>}>
+              <InlineField label="" className={styles.labelColor} tooltip={<div>{placeholders.excludeNoMetadata}</div>}>
                 <InlineSwitch
                   showLabel={true}
                   value={excludeNullMetadata}
@@ -354,7 +354,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
           inputId="my-select"
           options={variables}
           value={''}
-          placeholder={tooltips.variables}
+          placeholder={placeholders.variables}
           onChange={(v) => {
             const value: string = v.value ?? '';
             onChange({ ...query, metric: value });
