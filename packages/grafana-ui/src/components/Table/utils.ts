@@ -339,14 +339,15 @@ export function getFooterItems(
 
   /* 
     The FooterItems[] are calculated using both the `headerGroups[0].headers` (filterFields) and `rows` (values) destructured from the useTable() hook.
-    This cacluation is based on using the data from each index in `filterFields` array to then calculate the `FooterItem` value from the corresponding
-    index in the `values` array. When the user hides a column through an override, the getColumns() hook is invoked, removes said column, sends the column
-    data to the useTable() hook, which then builds `headerGroups[0].headers` without the hidden column. However, it doesn't remove the hidden column from the `row`
-    data, instead it substututes the hidden column row data with an `undefined` value. The `row` length never changes, despite the `headerGroups[0].headers` length
-    changing at every column removal. This makes all footer reduce calculations AFTER the first hidden column in the `headerGroups[0].headers` brake.
+    This cacluation is based on the data from each index in `filterFields` array as well as the corresponding index in the `values` array. 
+    When the user hides a column through an override, the getColumns() hook is invoked, removes said hidden column, sends the updated column data to the useTable() hook, 
+    which then builds `headerGroups[0].headers` without the hidden column. However, it doesn't remove the hidden column from the `row` data, 
+    instead it substututes the hidden column row data with an `undefined` value. Therefore, the `row` array length never changes, despite the `headerGroups[0].headers` length
+    changing at every column removal. This makes all footer reduce calculations AFTER the first hidden column in the `headerGroups[0].headers` brake, since the 
+    indexing of both arrays is no longer in parity.
 
-    Here we simply recursively test for the "hidden" columns from `headerGroups[0].headers` (each column has an ID prop that corresponds to its own index),
-    the update the data as necessary.
+    So, here we simply recursively test for the "hidden" columns from `headerGroups[0].headers`. Each column has an ID property that corresponds to its own index, 
+    therefore if (`filterField.id` !== `String(index)`), we know there is one or more hidden columns; at which point we update the index with an ersatz placeholder with just an id property.
   */
   addMissingColumnIndex(filterFields);
 
