@@ -16,10 +16,12 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
+	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -199,6 +201,77 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 				assert.Equal(t, "user2", resp[1].Login)
 			}, mock)
 	})
+}
+
+func TestOrgUsersAPIEndpoint_updateOrgRole(t *testing.T) {
+	type testCase struct {
+		desc            string
+		SkipOrgRoleSync bool
+		Body            string `json:"body"`
+		userId          int
+		orgId           int
+		permissions     []accesscontrol.Permission
+		role            roletype.RoleType
+		expectedCode    int
+	}
+	tests := []testCase{
+		{
+			desc:            "should be able to change basicRole when skip_org_role_sync true",
+			SkipOrgRoleSync: true,
+			Body:            `{"userId": "1", "role": "Admin", "orgId": "1"}`,
+			userId:          2,
+			orgId:           1,
+			role:            roletype.RoleAdmin,
+			permissions: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionOrgUsersRead, Scope: "users:*"},
+				{Action: accesscontrol.ActionOrgUsersWrite, Scope: "users:*"},
+				{Action: accesscontrol.ActionOrgUsersAdd, Scope: "users:*"},
+				{Action: accesscontrol.ActionOrgUsersRemove, Scope: "users:*"},
+			},
+			expectedCode: http.StatusOK,
+		},
+		{
+			desc:            "should not be able to change basicRole when skip_org_role_sync false",
+			SkipOrgRoleSync: false,
+			Body:            `{"userId": "1", "role": "Admin", "orgId": "1"}`,
+			userId:          2,
+			orgId:           1,
+			permissions: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionOrgUsersRead, Scope: "users:*"},
+				{Action: accesscontrol.ActionOrgUsersWrite, Scope: "users:*"},
+				{Action: accesscontrol.ActionOrgUsersAdd, Scope: "users:*"},
+				{Action: accesscontrol.ActionOrgUsersRemove, Scope: "users:*"},
+			},
+			role:         roletype.RoleAdmin,
+			expectedCode: http.StatusForbidden,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			server := SetupAPITestServer(t, func(hs *HTTPServer) {
+				hs.Cfg = setting.NewCfg()
+				hs.Cfg.LDAPSkipOrgRoleSync = tt.SkipOrgRoleSync
+
+				hs.authInfoService = &logintest.AuthInfoServiceFake{
+					ExpectedUserAuth: &login.UserAuth{AuthModule: login.LDAPLabel},
+				}
+				hs.userService = &usertest.FakeUserService{ExpectedSignedInUser: userWithPermissions(1, tt.permissions)}
+				hs.orgService = &orgtest.FakeOrgService{}
+				hs.accesscontrolService = &actest.FakeService{
+					ExpectedPermissions: tt.permissions,
+				}
+			})
+			req := server.NewRequest(http.MethodPatch, fmt.Sprintf("/api/orgs/%d/users/%d", tt.orgId, tt.userId), strings.NewReader(tt.Body))
+			req.Header.Set("Content-Type", "application/json")
+			u := userWithPermissions(1, tt.permissions)
+			u.OrgRole = tt.role
+			res, err := server.Send(webtest.RequestWithSignedInUser(req, u))
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectedCode, res.StatusCode)
+			require.NoError(t, res.Body.Close())
+		})
+	}
 }
 
 func TestOrgUsersAPIEndpoint_LegacyAccessControl(t *testing.T) {
