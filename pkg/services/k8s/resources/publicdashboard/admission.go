@@ -35,11 +35,6 @@ func (v *pdValidation) Validate(ctx context.Context, request *admission.Admissio
 	if err != nil {
 		return err
 	}
-	//var u *user.SignedInUser
-	// CREATE VALIDATIONS (k8s)
-	if dto.PublicDashboard.Uid != "" {
-		return fmt.Errorf("you cannot provide a uid when creating a public dashboard")
-	}
 
 	// API VALIDATIONS
 	if !validation.IsValidShortUID(dto.DashboardUid) {
@@ -49,7 +44,7 @@ func (v *pdValidation) Validate(ctx context.Context, request *admission.Admissio
 	// SERVICE VALIDATIONS
 	// NOTE - review this later. maybe shouldn't be checking dependency
 	// ensure dashboard exists
-	dashboard, err := v.publicdashboardsService.FindDashboard(ctx, dto.OrgId, dto.DashboardUid)
+	dashboard, err := v.publicdashboardsService.FindDashboard(ctx, dto.OrgId, dto.DashboardUid) // TODO: should dto.OrgId be coming from the user?
 	if err != nil {
 		return err
 	}
