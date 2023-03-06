@@ -454,7 +454,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
 				"bucketAggs": [],
-				"metrics": [{ "id": "1", "type": "raw_document", "settings": { "size": 1337 }	}]
+				"metrics": [{ "id": "1", "type": "raw_document", "settings": { "size": "1337" }	}]
 			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
@@ -1330,7 +1330,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With log query with limit should return query with correct size", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"metrics": [{ "type": "logs", "id": "1", "settings": { "limit": 1000 }}]
+				"metrics": [{ "type": "logs", "id": "1", "settings": { "limit": "1000" }}]
 			}`, from, to)
 			require.NoError(t, err)
 			sr := c.multisearchRequests[0].Requests[0]
