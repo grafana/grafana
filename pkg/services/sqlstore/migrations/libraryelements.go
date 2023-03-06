@@ -60,5 +60,5 @@ func addLibraryElementsMigrations(mg *migrator.Migrator) {
 	}))
 
 	mg.AddMigration("alter library_element model to mediumtext", migrator.NewRawSQLMigration("").
-		Mysql("ALTER TABLE library_element MODIFY model MEDIUMTEXT;"))
+		Mysql("ALTER TABLE library_element MODIFY model MEDIUMTEXT NOT NULL;"))
 }
