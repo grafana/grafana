@@ -45,7 +45,7 @@ var (
 	errOAuthTokenExchange = errutil.NewBase(errutil.StatusInternal, "auth.oauth.token.exchange", errutil.WithPublicMessage("Failed to get token from provider"))
 	errOAuthUserInfo      = errutil.NewBase(errutil.StatusInternal, "auth.oauth.userinfo.error")
 
-	errOAuthMissingRequiredEmail = errutil.NewBase(errutil.StatusUnauthorized, "auth.oauth.email.missing")
+	errOAuthMissingRequiredEmail = errutil.NewBase(errutil.StatusUnauthorized, "auth.oauth.email.missing", errutil.WithPublicMessage("Provider didn't return an email address"))
 	errOAuthEmailNotAllowed      = errutil.NewBase(errutil.StatusUnauthorized, "auth.oauth.email.not-allowed", errutil.WithPublicMessage("Required email domain not fulfilled"))
 )
 
@@ -117,7 +117,7 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	token.TokenType = "Bearer"
 
 	userInfo, err := c.connector.UserInfo(c.connector.Client(clientCtx, token), token)
-	if true {
+	if err != nil {
 		var sErr *social.Error
 		if errors.As(err, &sErr) {
 			return nil, fromSocialErr(sErr)
