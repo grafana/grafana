@@ -97,7 +97,7 @@ describe('error handling for extensions', () => {
       expect(handler).toBeCalled();
     });
 
-    it('should be called successfully when handler throws error', () => {
+    it('should not error out even if the handler throws an error', () => {
       const handlerWithErrorHandling = errorHandler(() => {
         throw new Error();
       });
