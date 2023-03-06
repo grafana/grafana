@@ -95,6 +95,7 @@ export const Table = memo((props: Props) => {
   // React table data array. This data acts just like a dummy array to let react-table know how many rows exist.
   // The cells use the field to look up values, therefore this is simply a length/size placeholder.
   const memoizedData = useMemo(() => {
+    // JEV: this is where the issue is??
     if (!data.fields.length) {
       return [];
     }
@@ -118,6 +119,9 @@ export const Table = memo((props: Props) => {
       getColumns(addRowNumbersFieldToData(data), width, columnMinWidth, !!subData?.length, footerItems, isCountRowsSet),
     [data, width, columnMinWidth, footerItems, subData, isCountRowsSet]
   );
+  // JEV, memoized columns be broke
+  // If a column is override hidden, the column in not built
+  // console.log('🚀 ~ file: Table.tsx:121 ~ Table ~ memoizedColumns:', memoizedColumns);
 
   // Internal react table state reducer
   const stateReducer = useTableStateReducer(props);
@@ -151,6 +155,7 @@ export const Table = memo((props: Props) => {
     pageOptions,
     setHiddenColumns,
   } = useTable(options, useFilters, useSortBy, useAbsoluteLayout, useResizeColumns, useExpanded, usePagination);
+  console.log(headerGroups[0].headers, 'headerGroups');
 
   const extendedState = state as GrafanaTableState;
 
@@ -193,6 +198,10 @@ export const Table = memo((props: Props) => {
       return;
     }
 
+    // console.log(rows, 'rows');
+    // console.log(headerGroups[0].headers, 'headerGroups[0].headers');
+    // JEV: rebuild header groups id based on index
+    const newHeaderGroups = headerGroups[0].headers;
     const footerItems = getFooterItems(
       /*
         The `headerGroups` object is NOT based on the `data.fields`, but instead on the currently rendered headers in the Table,
@@ -204,7 +213,7 @@ export const Table = memo((props: Props) => {
       footerOptions,
       theme
     );
-    console.log('🚀 ~ file: Table.tsx:207 ~ useEffect ~ footerItems:', footerItems);
+    // console.log('🚀 ~ file: Table.tsx:207 ~ useEffect ~ footerItems:', footerItems);
 
     setFooterItems(footerItems);
     // eslint-disable-next-line react-hooks/exhaustive-deps

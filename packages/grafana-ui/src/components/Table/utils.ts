@@ -75,6 +75,8 @@ export function getColumns(
   footerValues?: FooterItem[],
   isCountRowsSet?: boolean
 ): GrafanaTableColumn[] {
+  // JEV: footer values length DOES change on override hidden
+  // console.log('🚀 ~ file: utils.ts:78 ~ footerValues:', footerValues);
   const columns: GrafanaTableColumn[] = [];
   let fieldCountWithoutWidth = 0;
 
@@ -98,8 +100,16 @@ export function getColumns(
   }
 
   for (const [fieldIndex, field] of data.fields.entries()) {
+    // console.log('🚀 ~ file: utils.ts:102 ~ field:', field);
+    // JEV: all fields still exist here, even if override hidden
+    // console.log('🚀 ~ file: utils.ts:102 ~ fieldIndex:', fieldIndex);
+    // JEV: same with all fieldIndexes
     const fieldTableOptions = (field.config.custom || {}) as TableFieldOptions;
+    // JEV: when an override column is hidden,
+    // console.log('🚀 ~ file: utils.ts:103 ~ fieldTableOptions:', fieldTableOptions);
 
+    // JEV: here's the issue!!!!???!?!?!?!?
+    // all the fields still exist, but if the column in hidden, building a column is skipped with the continue... so the getColumns function will return 1 fewer column to render
     if (fieldTableOptions.hidden) {
       continue;
     }
@@ -135,6 +145,7 @@ export function getColumns(
       minWidth: fieldTableOptions.minWidth ?? columnMinWidth,
       filter: memoizeOne(filterByValue(field)),
       justifyContent: getTextAlign(field),
+      // JEV: issue is here???
       Footer: getFooterValue(fieldIndex, footerValues, isCountRowsSet),
     });
   }
@@ -320,16 +331,19 @@ function toNumber(value: any): number {
 
 export function getFooterItems(
   filterFields: Array<{ id: string; field: Field }>,
+  // JEV, why are we passing values here?!?!? We have the values in the filterFields already???
   values: any[number],
   options: TableFooterCalc,
   theme2: GrafanaTheme2
 ): FooterItem[] {
+  // JEV: FilterField of currently hidden column is indeed missing; however, the next column over that is present has an empty buffer
+  // console.log(values, 'values');
   /*
-    Here, `filterFields` is passed as the `headerGroups[0].headers` array that was destrcutured from the `useTable` hook.
-    Unfortunately, since the `headerGroups` object is data based ONLY on the rendered "non-hidden" column headers,
-    it will NOT include the Row Number column if it has been toggled off. This will shift the rendering of the footer left 1 column,
-    creating an off-by-one issue. This is why we test for a `field.id` of "0". If the condition is truthy, the togglable Row Number column is being rendered,
-    and we can proceed normally. If not, we must add the field data in its place so that the footer data renders in the expected column.
+  Here, `filterFields` is passed as the `headerGroups[0].headers` array that was destrcutured from the `useTable` hook.
+  Unfortunately, since the `headerGroups` object is data based ONLY on the rendered "non-hidden" column headers,
+  it will NOT include the Row Number column if it has been toggled off. This will shift the rendering of the footer left 1 column,
+  creating an off-by-one issue. This is why we test for a `field.id` of "0". If the condition is truthy, the togglable Row Number column is being rendered,
+  and we can proceed normally. If not, we must add the field data in its place so that the footer data renders in the expected column.
   */
   if (!filterFields.some((field) => field.id === '0')) {
     const length = values.length;
@@ -337,6 +351,7 @@ export function getFooterItems(
     const fieldToAdd = { id: '0', field: buildFieldsForOptionalRowNums(length) };
     filterFields = [fieldToAdd, ...filterFields];
   }
+  // console.log(filterFields, 'filterFields');
 
   return filterFields.map((data, i) => {
     if (data.field.type !== FieldType.number) {
@@ -350,7 +365,10 @@ export function getFooterItems(
     }
 
     let newField = clone(data.field);
-    newField.values = new ArrayVector(values[i]);
+    // values at id instead???? JEV
+    newField.values = new ArrayVector(values[data.id]);
+    // JEV: this is the issue???
+    // console.log('🚀 ~ file: utils.ts:360 ~ returnfilterFields.map ~ newField.values:', newField.values);
     newField.state = undefined;
 
     data.field = newField;
@@ -367,17 +385,26 @@ export function getFooterItems(
 
 function getFormattedValue(field: Field, reducer: string[], theme: GrafanaTheme2) {
   // JEV: this is the issue???
+  // console.log(field, 'field');
+  // console.log(reducer, 'reducer');
   const fmt = field.display ?? getDisplayProcessor({ field, theme });
   const calc = reducer[0];
   const v = reduceField({ field, reducers: reducer })[calc];
+  // console.log(formattedValueToString(fmt(v)), 'formattedValueToString(fmt(v))');
   return formattedValueToString(fmt(v));
 }
 
 // This strips the raw vales from the `rows` object.
-export function createFooterCalculationValues(rows: Row[]): any[number] {
+export function createFooterCalculationValues(rows: Row[], idsAsIndexs?: string[]): any[number] {
+  // JEV: use idAsIndex to grab correct values
+  // JEV: or don't use rows at all??? Use field.values???
   const values: any[number] = [];
 
   for (const key in rows) {
+    // JEV: iterate through the idsAsIndexs here through Object.values
+    // const values = rows[row].values;
+    // for (const id of idsAsIndexs!) {
+    // }
     for (const [valKey, val] of Object.entries(rows[key].values)) {
       if (values[valKey] === undefined) {
         values[valKey] = [];
@@ -386,6 +413,7 @@ export function createFooterCalculationValues(rows: Row[]): any[number] {
     }
   }
 
+  // console.log(values, 'values');
   return values;
 }
 
