@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -489,25 +488,6 @@ func (ss *sqlStore) UpdateOrgUser(ctx context.Context, cmd *org.UpdateOrgUserCom
 
 		if !exists {
 			return org.ErrOrgUserNotFound
-		}
-
-		// check if the user is external synced
-		// if so, we do not want to change the basic role
-		if orgUser.Role != cmd.Role {
-			authtablesess := sess.Table("user_auth")
-			var userAuth login.UserAuth
-			_, err := authtablesess.Where("id=?", cmd.UserID).Get((&userAuth))
-			if err != nil {
-				return err
-			}
-			fmt.Printf("userAuth: %v", userAuth)
-			fmt.Printf("cmd: %v", cmd)
-			authLabel := login.GetAuthProviderLabel(userAuth.AuthModule)
-			fmt.Printf("authLabel: %s", authLabel)
-			isSynced := login.IsExternallySynced(ss.cfg, authLabel)
-			if isSynced {
-				return org.ErrCannotChangeRoleForExternallySyncedUser
-			}
 		}
 
 		orgUser.Role = cmd.Role
