@@ -155,7 +155,8 @@ export const Table = memo((props: Props) => {
     pageOptions,
     setHiddenColumns,
   } = useTable(options, useFilters, useSortBy, useAbsoluteLayout, useResizeColumns, useExpanded, usePagination);
-  console.log(headerGroups[0].headers, 'headerGroups');
+  // console.log('🚀 ~ file: Table.tsx:158 ~ Table ~ headerGroups:', headerGroups);
+  // console.log('🚀 ~ file: Table.tsx:158 ~ Table ~ rows:', rows);
 
   const extendedState = state as GrafanaTableState;
 
@@ -201,7 +202,8 @@ export const Table = memo((props: Props) => {
     // console.log(rows, 'rows');
     // console.log(headerGroups[0].headers, 'headerGroups[0].headers');
     // JEV: rebuild header groups id based on index
-    const newHeaderGroups = headerGroups[0].headers;
+    // const newHeaderGroups = headerGroups[0].headers.map((header, index) => ({ ...header, id: String(index + 1) }));
+    // console.log('🚀 ~ file: Table.tsx:205 ~ useEffect ~ newHeaderGroups:', newHeaderGroups);
     const footerItems = getFooterItems(
       /*
         The `headerGroups` object is NOT based on the `data.fields`, but instead on the currently rendered headers in the Table,
