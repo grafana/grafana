@@ -211,8 +211,8 @@ For general documentation on querying data sources in Grafana, see [Query and tr
 | **Service**      | Returns a list of services.                                                                                                       |
 | **Operation**    | Populated when you select a service with related operations. Select `All` to query all operations.                                |
 | **Tags**         | Sets tags with values in the [logfmt](https://brandur.org/logfmt) format, such as `error=true db.statement="select * from User"`. |
-| **Min Duration** | Filters all traces with a duration higher than the set value. Possible valid values are `1.2s, 100ms, 500us`.                     |
-| **Max Duration** | Filters all traces with a duration lower than the set value. Possible valid values are `1.2s, 100ms, 500us`.                      |
+| **Min Duration** | Filters all traces with a duration higher than the set value. Possible values are `1.2s, 100ms, 500us`.                           |
+| **Max Duration** | Filters all traces with a duration lower than the set value. Possible values are `1.2s, 100ms, 500us`.                            |
 | **Limit**        | Limits the number of traces returned.                                                                                             |
 
 {{< figure src="/static/img/docs/explore/jaeger-search-form.png" class="docs-image--no-shadow" caption="Screenshot of the Jaeger query editor" >}}

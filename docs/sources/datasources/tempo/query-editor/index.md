@@ -35,8 +35,8 @@ To configure Tempo and the Tempo data source for search, refer to [Configure the
 | **Service Name** | Returns a list of services.                                                                                                       |
 | **Span Name**    | Returns a list of span names.                                                                                                     |
 | **Tags**         | Sets tags with values in the [logfmt](https://brandur.org/logfmt) format, such as `error=true db.statement="select * from User"`. |
-| **Min Duration** | Filters all traces with a duration higher than the set value. Possible valid values are `1.2s, 100ms, 500us`.                     |
-| **Max Duration** | Filters all traces with a duration lower than the set value. Possible valid values are `1.2s, 100ms, 500us`.                      |
+| **Min Duration** | Filters all traces with a duration higher than the set value. Possible values are `1.2s, 100ms, 500us`.                           |
+| **Max Duration** | Filters all traces with a duration lower than the set value. Possible values are `1.2s, 100ms, 500us`.                            |
 | **Limit**        | Limits the number of traces returned.                                                                                             |
 
 {{< figure src="/static/img/docs/explore/tempo-search.png" class="docs-image--no-shadow" max-width="750px" caption="Screenshot of the Tempo search feature with a trace rendered in the right panel" >}}
