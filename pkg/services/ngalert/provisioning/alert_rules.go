@@ -276,10 +276,11 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 			if err != nil {
 				return err
 			}
-			isFileProvenance := storedProvenance == models.ProvenanceFile
-			isAPItoFileProvenance := storedProvenance == models.ProvenanceAPI && provenance == models.ProvenanceFile
-			if storedProvenance != provenance && (isFileProvenance || isAPItoFileProvenance) {
+			err = canUpdateWithProvenance(storedProvenance, provenance, func() error {
 				return fmt.Errorf("cannot update with provided provenance '%s', needs '%s'", provenance, storedProvenance)
+			})
+			if err != nil {
+				return err
 			}
 			updates = append(updates, models.UpdateRule{
 				Existing: update.Existing,
@@ -301,10 +302,11 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 			if err != nil {
 				return err
 			}
-			isFileProvenance := storedProvenance == models.ProvenanceFile
-			isAPItoFileProvenance := storedProvenance == models.ProvenanceAPI && provenance == models.ProvenanceFile
-			if storedProvenance != provenance && (isFileProvenance || isAPItoFileProvenance) {
+			err = canUpdateWithProvenance(storedProvenance, provenance, func() error {
 				return fmt.Errorf("cannot update with provided provenance '%s', needs '%s'", provenance, storedProvenance)
+			})
+			if err != nil {
+				return err
 			}
 		}
 		if err := service.deleteRules(ctx, orgID, delta.Delete...); err != nil {
@@ -325,10 +327,11 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, rule model
 	if err != nil {
 		return models.AlertRule{}, err
 	}
-	isFileProvenance := storedProvenance == models.ProvenanceFile
-	isAPItoFileProvenance := storedProvenance == models.ProvenanceAPI && provenance == models.ProvenanceFile
-	if storedProvenance != provenance && (isFileProvenance || isAPItoFileProvenance) {
-		return models.AlertRule{}, fmt.Errorf("cannot changed provenance from '%s' to '%s'", storedProvenance, provenance)
+	err = canUpdateWithProvenance(storedProvenance, provenance, func() error {
+		return fmt.Errorf("cannot change provenance from '%s' to '%s'", storedProvenance, provenance)
+	})
+	if err != nil {
+		return models.AlertRule{}, err
 	}
 	rule.Updated = time.Now()
 	rule.ID = storedRule.ID
@@ -365,10 +368,11 @@ func (service *AlertRuleService) DeleteAlertRule(ctx context.Context, orgID int6
 	if err != nil {
 		return err
 	}
-	isFileProvenance := storedProvenance == models.ProvenanceFile
-	isAPItoFileProvenance := storedProvenance == models.ProvenanceAPI && provenance == models.ProvenanceFile
-	if storedProvenance != provenance && (isFileProvenance || isAPItoFileProvenance) {
+	err = canUpdateWithProvenance(storedProvenance, provenance, func() error {
 		return fmt.Errorf("cannot delete with provided provenance '%s', needs '%s'", provenance, storedProvenance)
+	})
+	if err != nil {
+		return err
 	}
 	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
 		return service.deleteRules(ctx, orgID, rule)

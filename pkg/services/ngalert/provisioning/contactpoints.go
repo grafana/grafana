@@ -261,10 +261,11 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 	if err != nil {
 		return err
 	}
-	isFileProvenance := storedProvenance == models.ProvenanceFile
-	isAPItoFileProvenance := storedProvenance == models.ProvenanceAPI && provenance == models.ProvenanceFile
-	if storedProvenance != provenance && (isFileProvenance || isAPItoFileProvenance) {
-		return fmt.Errorf("cannot changed provenance from '%s' to '%s'", storedProvenance, provenance)
+	err = canUpdateWithProvenance(storedProvenance, provenance, func() error {
+		return fmt.Errorf("cannot change provenance from '%s' to '%s'", storedProvenance, provenance)
+	})
+	if err != nil {
+		return err
 	}
 	// transform to internal model
 	extractedSecrets, err := contactPoint.ExtractSecrets()
