@@ -22,7 +22,7 @@ export interface PublicDashboard extends PublicDashboardSettings {
   dashboardUid: string;
   timeSettings?: object;
   share: PublicDashboardShareType;
-  recipients?: string[];
+  recipients?: Array<{ uid: string; recipient: string }>;
 }
 
 // Instance methods

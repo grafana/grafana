@@ -141,7 +141,7 @@ describe('buildVisualQueryFromString', () => {
   });
 
   it('parses query with with unit label filter', () => {
-    expect(buildVisualQueryFromString('{app="frontend"} | bar < 8mb')).toEqual(
+    expect(buildVisualQueryFromString('{app="frontend"} | bar < 8m')).toEqual(
       noErrors({
         labels: [
           {
@@ -150,7 +150,7 @@ describe('buildVisualQueryFromString', () => {
             label: 'app',
           },
         ],
-        operations: [{ id: LokiOperationId.LabelFilter, params: ['bar', '<', '8mb'] }],
+        operations: [{ id: LokiOperationId.LabelFilter, params: ['bar', '<', '8m'] }],
       })
     );
   });

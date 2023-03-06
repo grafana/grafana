@@ -9,7 +9,7 @@ Grafana [create-plugin tool](https://www.npmjs.com/package/@grafana/create-plugi
 1. In the plugin directory, create a plugin from template using create-plugin. Select `datasource` when asked the kind of plugin:
 
    ```
-   npx @grafana/create-plugin
+   npx @grafana/create-plugin@latest
    ```
 
 1. Change directory to your newly created plugin:

@@ -5,7 +5,6 @@ import { SelectableValue } from '@grafana/data';
 import { Icon, MultiSelect } from '@grafana/ui';
 import { useUnifiedAlertingSelector } from 'app/features/alerting/unified/hooks/useUnifiedAlertingSelector';
 import { fetchAllPromRulesAction } from 'app/features/alerting/unified/state/actions';
-import { getAllRulesSourceNames } from 'app/features/alerting/unified/utils/datasource';
 import {
   isAsyncRequestMapSlicePending,
   isAsyncRequestMapSliceSettled,
@@ -31,7 +30,6 @@ export const GroupBy: FC<Props> = (props) => {
   }, [dispatch]);
 
   const promRulesByDatasource = useUnifiedAlertingSelector((state) => state.promRules);
-  const rulesDataSourceNames = useMemo(getAllRulesSourceNames, []);
 
   const allRequestsReady = isAsyncRequestMapSliceSettled(promRulesByDatasource);
   const loading = isAsyncRequestMapSlicePending(promRulesByDatasource);
@@ -45,7 +43,7 @@ export const GroupBy: FC<Props> = (props) => {
       return [];
     }
 
-    const allLabels = rulesDataSourceNames
+    const allLabels = Object.keys(promRulesByDatasource)
       .flatMap((datasource) => promRulesByDatasource[datasource].result ?? [])
       .flatMap((rules) => rules.groups)
       .flatMap((group) => group.rules.filter((rule): rule is AlertingRule => rule.type === PromRuleType.Alerting))
@@ -54,7 +52,7 @@ export const GroupBy: FC<Props> = (props) => {
       .flatMap((labels) => labels.filter(isPrivateLabel));
 
     return uniq(allLabels);
-  }, [allRequestsReady, promRulesByDatasource, rulesDataSourceNames]);
+  }, [allRequestsReady, promRulesByDatasource]);
 
   return (
     <MultiSelect<string>
