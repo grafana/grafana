@@ -1,7 +1,7 @@
 import { CurrentUserDTO } from '@grafana/data';
 import { EchoBackend, EchoEventType, PageviewEchoEvent } from '@grafana/runtime';
 
-import { getUserIdentifier, loadScript } from '../../utils';
+import { loadScript } from '../../utils';
 
 declare global {
   interface Window {
@@ -34,7 +34,7 @@ export class GA4EchoBackend implements EchoBackend<PageviewEchoEvent, GA4EchoBac
     };
 
     if (options.user) {
-      configOptions.user_id = getUserIdentifier(options.user);
+      configOptions.user_id = options.user.analytics.identifier;
     }
 
     this.googleAnalytics4SendManualPageViews = options.googleAnalytics4SendManualPageViews;
