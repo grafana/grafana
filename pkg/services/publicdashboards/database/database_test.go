@@ -671,6 +671,44 @@ func TestIntegrationDelete(t *testing.T) {
 	})
 }
 
+func TestGetDashboardByFolder(t *testing.T) {
+	t.Run("returns empty slice when dashboard is not a folder", func(t *testing.T) {
+		sqlStore, _ := db.InitTestDBwithCfg(t)
+		dashboard := &dashboards.Dashboard{IsFolder: false}
+		store := ProvideStore(sqlStore)
+		pubdashes, err := store.GetByDashboardFolder(context.Background(), dashboard)
+
+		require.NoError(t, err)
+		assert.Len(t, pubdashes, 0)
+		assert.Empty(t, pubdashes)
+	})
+
+	t.Run("returns empty slice when dashboard is nil", func(t *testing.T) {
+		sqlStore, _ := db.InitTestDBwithCfg(t)
+		store := ProvideStore(sqlStore)
+		pubdashes, err := store.GetByDashboardFolder(context.Background(), nil)
+
+		require.NoError(t, err)
+		assert.Len(t, pubdashes, 0)
+		assert.Empty(t, pubdashes)
+	})
+
+	t.Run("can get all pubdashes for dashboard folder", func(t *testing.T) {
+		sqlStore, cfg := db.InitTestDBwithCfg(t)
+		quotaService := quotatest.New(false, nil)
+		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
+		pubdashStore := ProvideStore(sqlStore)
+		dashboard := insertTestDashboard(t, dashboardStore, "title", 1, 1, true)
+		pubdash := insertPublicDashboard(t, pubdashStore, dashboard.UID, dashboard.OrgID, true)
+
+		pubdashes, err := pubdashStore.GetByDashboardFolder(context.Background(), dashboard)
+
+		require.NoError(t, err)
+		assert.Len(t, pubdashes, 1)
+		assert.Equal(t, pubdash, pubdashes[0])
+	})
+}
+
 // helper function to insert a dashboard
 func insertTestDashboard(t *testing.T, dashboardStore dashboards.Store, title string, orgId int64,
 	folderId int64, isFolder bool, tags ...interface{}) *dashboards.Dashboard {
