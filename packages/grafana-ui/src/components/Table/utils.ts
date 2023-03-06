@@ -75,8 +75,6 @@ export function getColumns(
   footerValues?: FooterItem[],
   isCountRowsSet?: boolean
 ): GrafanaTableColumn[] {
-  // JEV: footer values length DOES change on override hidden
-  // console.log('🚀 ~ file: utils.ts:78 ~ footerValues:', footerValues);
   const columns: GrafanaTableColumn[] = [];
   let fieldCountWithoutWidth = 0;
 
@@ -100,16 +98,7 @@ export function getColumns(
   }
 
   for (const [fieldIndex, field] of data.fields.entries()) {
-    // console.log('🚀 ~ file: utils.ts:102 ~ field:', field);
-    // JEV: all fields still exist here, even if override hidden
-    // console.log('🚀 ~ file: utils.ts:102 ~ fieldIndex:', fieldIndex);
-    // JEV: same with all fieldIndexes
     const fieldTableOptions = (field.config.custom || {}) as TableFieldOptions;
-    // JEV: when an override column is hidden,
-    // console.log('🚀 ~ file: utils.ts:103 ~ fieldTableOptions:', fieldTableOptions);
-
-    // JEV: here's the issue!!!!???!?!?!?!?
-    // all the fields still exist, but if the column in hidden, building a column is skipped with the continue... so the getColumns function will return 1 fewer column to render
     if (fieldTableOptions.hidden) {
       continue;
     }
@@ -336,17 +325,12 @@ export function getFooterItems(
   options: TableFooterCalc,
   theme2: GrafanaTheme2
 ): FooterItem[] {
-  // console.log('🚀 ~ file: utils.ts:339 ~ options:', options);
-  // console.log('🚀 ~ file: utils.ts:339 ~ filterFields:', filterFields);
-  // JEV: FilterField of currently hidden column is indeed missing; however, the next column over that is present has an empty buffer
-  // JEV: if field is hidden, we still need a value in the footerValues array for it. specifically undefined
-  // values.map((val: any) => console.log(Boolean(val), 'val'));
   /*
-  Here, `filterFields` is passed as the `headerGroups[0].headers` array that was destrcutured from the `useTable` hook.
-  Unfortunately, since the `headerGroups` object is data based ONLY on the rendered "non-hidden" column headers,
-  it will NOT include the Row Number column if it has been toggled off. This will shift the rendering of the footer left 1 column,
-  creating an off-by-one issue. This is why we test for a `field.id` of "0". If the condition is truthy, the togglable Row Number column is being rendered,
-  and we can proceed normally. If not, we must add the field data in its place so that the footer data renders in the expected column.
+    Here, `filterFields` is passed as the `headerGroups[0].headers` array that was destrcutured from the `useTable` hook.
+    Unfortunately, since the `headerGroups` object is data based ONLY on the rendered "non-hidden" column headers,
+    it will NOT include the Row Number column if it has been toggled off. This will shift the rendering of the footer left 1 column,
+    creating an off-by-one issue. This is why we test for a `field.id` of "0". If the condition is truthy, the togglable Row Number column is being rendered,
+    and we can proceed normally. If not, we must add the field data in its place so that the footer data renders in the expected column.
   */
   if (!filterFields.some((field) => field?.id === '0')) {
     const length = values.length;
@@ -354,77 +338,6 @@ export function getFooterItems(
     const fieldToAdd = { id: '0', field: buildFieldsForOptionalRowNums(length) };
     filterFields = [fieldToAdd, ...filterFields];
   }
-  console.log(filterFields, 'filterFields');
-  // console.log(values, 'values');
-
-  // const footerItems: FooterItem[] = [undefined];
-  // // for (const val of values) {
-  // //   console.log(val, 'val');
-  // // }
-
-  // for (let i = 1; i < values.length; i++) {
-  //   // console.log(values[i], 'value');
-  //   const currField = filterFields[i];
-  //   if (currField === undefined) {
-  //     footerItems.push(undefined);
-  //     continue;
-  //   }
-
-  //   // if (values[i] === undefined) {
-  //   //   footerItems.push(undefined);
-  //   //   continue;
-  //   // }
-
-  //   if (currField.field.type !== FieldType.number) {
-  //     // Show the reducer type ("Total", "Range", "Count", "Delta", etc) in the first non "Row Number" column, only if it cannot be numerically reduced.
-  //     if (i === 1 && options.reducer && options.reducer.length > 0) {
-  //       const reducer = fieldReducers.get(options.reducer[0]);
-  //       footerItems.push(reducer.name);
-  //     } else {
-  //       // Otherwise return `undefined`, which will render an <EmptyCell />.
-  //       footerItems.push(undefined);
-  //     }
-  //     continue;
-  //   }
-
-  //   let newField = clone(currField.field);
-  //   // values at id instead???? JEV
-  //   newField.values = new ArrayVector(values[i]);
-  //   // JEV: this is the issue???
-  //   // console.log('🚀 ~ file: utils.ts:360 ~ returnfilterFields.map ~ newField.values:', newField.values);
-  //   newField.state = undefined;
-
-  //   currField.field = newField;
-
-  //   if (options.fields && options.fields.length > 0) {
-  //     const f = options.fields.find((f) => f === currField.field.name);
-  //     if (f) {
-  //       footerItems.push(getFormattedValue(currField.field, options.reducer, theme2));
-  //     }
-  //     footerItems.push(undefined);
-  //   }
-  //   footerItems.push(getFormattedValue(currField.field, options.reducer || [], theme2));
-  // }
-
-  // console.log(footerItems, 'footerItems');
-  // return footerItems;
-
-  // const footerItems: FooterItem[] = Array(values.length);
-  // console.log('🚀 ~ file: utils.ts:413 ~ footerItems:', footerItems);
-  // const newFilterItems = filterItems
-  // for (let i = 1; i < values.length; i++) {
-
-  // }
-
-  // const newFilterFields = [];
-  // for (const [index, value] of filterFields.entries()) {
-  //   // console.log('🚀 ~ file: utils.ts:421 ~ value:', value);
-  //   // console.log('🚀 ~ file: utils.ts:421 ~ index:', index);
-  //   const id = value.id;
-  //   if (id === String(index)) {
-  //     newFilterFields.push(value);
-  //   }
-  // }
 
   // JEV: annotate this!!!
   const missingIndex = filterFields.findIndex((field, index) => field?.id !== String(index));
@@ -449,10 +362,7 @@ export function getFooterItems(
     }
 
     let newField = clone(data.field);
-    // values at id instead???? JEV
     newField.values = new ArrayVector(values[data.id]);
-    // JEV: this is the issue???
-    // console.log('🚀 ~ file: utils.ts:360 ~ returnfilterFields.map ~ newField.values:', newField.values);
     newField.state = undefined;
 
     data.field = newField;
@@ -469,27 +379,17 @@ export function getFooterItems(
 }
 
 function getFormattedValue(field: Field, reducer: string[], theme: GrafanaTheme2) {
-  // JEV: this is the issue???
-  // console.log(field, 'field');
-  // console.log(reducer, 'reducer');
   const fmt = field.display ?? getDisplayProcessor({ field, theme });
   const calc = reducer[0];
   const v = reduceField({ field, reducers: reducer })[calc];
-  // console.log(formattedValueToString(fmt(v)), 'formattedValueToString(fmt(v))');
   return formattedValueToString(fmt(v));
 }
 
 // This strips the raw vales from the `rows` object.
 export function createFooterCalculationValues(rows: Row[], idsAsIndexs?: string[]): any[number] {
-  // JEV: use idAsIndex to grab correct values
-  // JEV: or don't use rows at all??? Use field.values???
   const values: any[number] = [];
 
   for (const key in rows) {
-    // JEV: iterate through the idsAsIndexs here through Object.values
-    // const values = rows[row].values;
-    // for (const id of idsAsIndexs!) {
-    // }
     for (const [valKey, val] of Object.entries(rows[key].values)) {
       if (values[valKey] === undefined) {
         values[valKey] = [];
@@ -498,7 +398,6 @@ export function createFooterCalculationValues(rows: Row[], idsAsIndexs?: string[
     }
   }
 
-  // console.log(values, 'values');
   return values;
 }
 
