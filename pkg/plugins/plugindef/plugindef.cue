@@ -14,7 +14,7 @@ seqs: [
 		schemas: [
 			{
 				// Unique name of the plugin. If the plugin is published on
-				// grafana.com, then the plugin id has to follow the naming
+				// grafana.com, then the plugin `id` has to follow the naming
 				// conventions.
 				id: string & strings.MinRunes(1)
 				id: =~"^([0-9a-z]+\\-([0-9a-z]+\\-)?(\(strings.Join([ for t in _types {t}], "|"))))|(alertGroups|alertlist|annolist|barchart|bargauge|candlestick|canvas|dashlist|debug|gauge|geomap|gettingstarted|graph|heatmap|histogram|icon|live|logs|news|nodeGraph|piechart|pluginlist|stat|state-timeline|status-history|table|table-old|text|timeseries|traces|welcome|xychart|alertmanager|cloudwatch|dashboard|elasticsearch|grafana|grafana-azure-monitor-datasource|graphite|influxdb|jaeger|loki|mixed|mssql|mysql|opentsdb|postgres|prometheus|stackdriver|tempo|testdata|zipkin|phlare|parca)$"
@@ -35,21 +35,21 @@ seqs: [
 				// a superset of plugin types.
 				#IncludeType: type | "dashboard" | "page"
 
-				// Metadata about the plugin.
+				// Metadata about the plugin
 				info: #Info
 
 				// Metadata about a Grafana plugin. Some fields are used on the plugins
 				// page in Grafana and others on grafana.com, if the plugin is published.
 				#Info: {
-					// Information about the plugin author.
+					// Information about the plugin author
 					author?: {
-						// Author's name.
+						// Author's name
 						name?: string
 
-						// Author's name.
+						// Author's name
 						email?: string
 
-						// Link to author's website.
+						// Link to author's website
 						url?: string
 					}
 
@@ -74,7 +74,7 @@ seqs: [
 						url?:  string
 					}]
 
-					// SVG images that are used as plugin icons.
+					// SVG images that are used as plugin icons
 					logos?: {
 						// Link to the "small" version of the plugin logo, which must be
 						// an SVG image. "Large" and "small" logos can be the same image.
@@ -92,19 +92,19 @@ seqs: [
 						path?: string
 					}]
 
-					// Date when this plugin was built.
+					// Date when this plugin was built
 					updated?: =~"^(\\d{4}-\\d{2}-\\d{2}|\\%TODAY\\%)$"
 
-					// Project version of this commit, e.g. `6.7.x`.
+					// Project version of this commit, e.g. `6.7.x`
 					version?: =~"^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)|(\\%VERSION\\%)$"
 				}
 
 				#BuildInfo: {
-					// Time when the plugin was built, as a Unix timestamp.
+					// Time when the plugin was built, as a Unix timestamp
 					time?: int64
 					repo?: string
 
-					// Git branch the plugin was built from.
+					// Git branch the plugin was built from
 					branch?: string
 
 					// Git hash of the commit the plugin was built from
@@ -115,7 +115,7 @@ seqs: [
 					pr?: int32
 				}
 
-				// Dependency information related to Grafana and other plugins.
+				// Dependency information related to Grafana and other plugins
 				dependencies: #Dependencies
 
 				#Dependencies: {
@@ -128,7 +128,7 @@ seqs: [
 					// https://github.com/npm/node-semver.
 					grafanaDependency: =~"^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)(\\.[0-9x\\*]+)?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x]+)(\\.[0-9x]+))?$"
 
-					// An array of required plugins on which this plugin depends.
+					// An array of required plugins on which this plugin depends
 					plugins?: [...#Dependency]
 				}
 
