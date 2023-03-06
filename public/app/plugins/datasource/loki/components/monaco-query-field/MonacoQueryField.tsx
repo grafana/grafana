@@ -162,7 +162,7 @@ const MonacoQueryField = ({
     const update = shouldUpdateStats(query, previousQuery, timerange, previousTimerange);
     if (update) {
       const stats = await getStats(datasource, query);
-      setQueryStats(stats);
+      setQueryStats!(stats);
     }
   }, 1000);
 
