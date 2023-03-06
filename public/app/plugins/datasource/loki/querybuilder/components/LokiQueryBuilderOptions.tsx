@@ -1,5 +1,4 @@
-import React, { useEffect } from 'react';
-import { usePrevious } from 'react-use';
+import React from 'react';
 
 import { CoreApp, SelectableValue } from '@grafana/data';
 import { EditorField, EditorRow } from '@grafana/experimental';
@@ -8,7 +7,6 @@ import { RadioButtonGroup, Select, AutoSizeInput } from '@grafana/ui';
 import { QueryOptionGroup } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryOptionGroup';
 
 import { preprocessMaxLines, queryTypeOptions, RESOLUTION_OPTIONS } from '../../components/LokiOptionFields';
-import { getStats, shouldUpdateStats } from '../../components/stats';
 import { LokiDatasource } from '../../datasource';
 import { isLogsQuery } from '../../queryUtils';
 import { LokiQuery, LokiQueryType, QueryStats } from '../../types';
@@ -21,15 +19,10 @@ export interface Props {
   app?: CoreApp;
   datasource: LokiDatasource;
   queryStats: QueryStats | undefined;
-  setQueryStats: React.Dispatch<React.SetStateAction<QueryStats | undefined>>;
 }
 
 export const LokiQueryBuilderOptions = React.memo<Props>(
-  ({ app, query, onChange, onRunQuery, maxLines, datasource, queryStats, setQueryStats }) => {
-    const timerange = datasource.getTimeRange();
-    const previousTimerange = usePrevious(timerange);
-    const previousQuery = usePrevious(query.expr);
-
+  ({ app, query, onChange, onRunQuery, maxLines, datasource, queryStats }) => {
     const onQueryTypeChange = (value: LokiQueryType) => {
       onChange({ ...query, queryType: value });
       onRunQuery();
@@ -56,17 +49,6 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
         onRunQuery();
       }
     }
-
-    useEffect(() => {
-      const update = shouldUpdateStats(query.expr, previousQuery, timerange, previousTimerange);
-      if (update) {
-        const makeAsyncRequest = async () => {
-          const stats = await getStats(datasource, query.expr);
-          stats ? setQueryStats(stats) : setQueryStats(undefined);
-        };
-        makeAsyncRequest();
-      }
-    }, [datasource, timerange, previousTimerange, query, previousQuery, setQueryStats]);
 
     let queryType = query.queryType ?? (query.instant ? LokiQueryType.Instant : LokiQueryType.Range);
     let showMaxLines = isLogsQuery(query.expr);

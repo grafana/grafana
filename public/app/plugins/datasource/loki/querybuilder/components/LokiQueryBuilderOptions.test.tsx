@@ -50,7 +50,6 @@ function setup(queryOverrides: Partial<LokiQuery> = {}) {
     maxLines: 20,
     datasource: createLokiDatasource(),
     queryStats: { streams: 0, chunks: 0, bytes: 0, entries: 0 },
-    setQueryStats: jest.fn(),
   };
 
   const { container } = render(<LokiQueryBuilderOptions {...props} />);

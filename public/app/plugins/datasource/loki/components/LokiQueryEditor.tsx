@@ -1,4 +1,5 @@
 import React, { SyntheticEvent, useCallback, useEffect, useState } from 'react';
+import { usePrevious } from 'react-use';
 
 import { CoreApp, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -19,6 +20,7 @@ import { buildVisualQueryFromString } from '../querybuilder/parsing';
 import { changeEditorMode, getQueryWithDefaults } from '../querybuilder/state';
 import { LokiQuery, QueryStats } from '../types';
 
+import { getStats, shouldUpdateStats } from './stats';
 import { LokiQueryEditorProps } from './types';
 
 export const testIds = {
@@ -34,7 +36,12 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
   const [queryStats, setQueryStats] = useState<QueryStats>();
   const { flag: explain, setFlag: setExplain } = useFlag(lokiQueryEditorExplainKey);
 
+  const timerange = datasource.getTimeRange();
+  const previousTimerange = usePrevious(timerange);
+
   const query = getQueryWithDefaults(props.query);
+  const previousQuery = usePrevious(query.expr);
+
   // This should be filled in from the defaults by now.
   const editorMode = query.editorMode!;
 
@@ -80,6 +87,17 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
 
     setLabelBrowserVisible((visible) => !visible);
   };
+
+  useEffect(() => {
+    const update = shouldUpdateStats(query.expr, previousQuery, timerange, previousTimerange);
+    if (update) {
+      const makeAsyncRequest = async () => {
+        const stats = await getStats(datasource, query.expr);
+        setQueryStats(stats);
+      };
+      makeAsyncRequest();
+    }
+  }, [datasource, timerange, previousTimerange, query, previousQuery, setQueryStats]);
 
   return (
     <>
@@ -180,7 +198,6 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
           maxLines={datasource.maxLines}
           datasource={datasource}
           queryStats={queryStats}
-          setQueryStats={setQueryStats}
         />
       </EditorRows>
     </>
