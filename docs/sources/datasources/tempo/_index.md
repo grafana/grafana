@@ -44,7 +44,7 @@ Set the data source's basic configuration options carefully:
 | **User**       | Sets the user name for basic authentication.                             |
 | **Password**   | Sets the password for basic authentication.                              |
 
-You can also configure settings specific to the Tempo data source:
+You can also configure settings specific to the Tempo data source. These options are described in the sections below.   
 
 ### Trace to logs
 
@@ -55,16 +55,18 @@ You can also configure settings specific to the Tempo data source:
 
 The **Trace to logs** setting configures the [trace to logs feature]({{< relref "../../explore/trace-integration" >}}) that is available when you integrate Grafana with Tempo.
 
-There are two ways to configure the trace to logs feature. You can use simplified configuration with default query, or you can configure custom query where you can use a [template language]({{< relref "../../dashboards/variables/variable-syntax">}}) to interpolate variables from the trace or span.
+There are two ways to configure the trace to logs feature: 
+* Use a simplified configuration with default query, or 
+* Configure a custom query where you can use a [template language]({{< relref "../../dashboards/variables/variable-syntax">}}) to interpolate variables from the trace or span.
 
-#### To use a simple configuration:
+#### Use a simple configuration
 
 1. Select the target data source.
 1. Set start and end time shift. As the logs timestamps may not exactly match the timestamps of the spans in trace it may be necessary to search in larger or shifted time range to find the desired logs.
 1. Select which tags to use in the logs query. The tags you configure must be present in the spans attributes or resources for a trace to logs span link to appear. You can optionally configure a new name for the tag. This is useful for example if the tag has dots in the name and the target data source does not allow using dots in labels. In that case you can for example remap `http.status` to `http_status`.
 1. Optionally switch on the **Filter by trace ID** and/or **Filter by span ID** setting to further filter the logs if your logs consistently contain trace or span IDs.
 
-#### To use a custom query configuration:
+#### Configure a custom query
 
 1. Select the target data source.
 1. Set start and end time shift. As the logs timestamps may not exactly match the timestamps of the spans in the trace it may be necessary to widen or shift the time range to find the desired logs.
