@@ -19,6 +19,7 @@ import { dispatch } from 'app/store/store';
 import { useSelector } from 'app/types';
 
 import { Messages as mainChecksMessages } from '../../CheckPanel.messages';
+import { ChecksInfoAlert } from '../CheckInfoAlert/CheckInfoAlert';
 
 import { Messages } from './AllChecksTab.messages';
 import { getStyles } from './AllChecksTab.styles';
@@ -173,6 +174,7 @@ export const AllChecksTab: FC<GrafanaRouteComponentProps<{ category: string }>> 
           featureName={mainChecksMessages.advisors}
           featureSelector={featureSelector}
         >
+          <ChecksInfoAlert />
           <div className={styles.wrapper}>
             <div className={styles.header}>
               <h1>{Messages.availableHeader}</h1>

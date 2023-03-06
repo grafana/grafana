@@ -86,7 +86,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
         {/* @Percona */}
         {customButtonContent && (
           <div className={styles.buttonWrapper}>
-            <Button aria-label="Custom button" variant="secondary" onClick={onCustomButtonClick} type="button">
+            <Button aria-label="Custom button" variant="primary" onClick={onCustomButtonClick} type="button">
               {customButtonContent}
             </Button>
           </div>

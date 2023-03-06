@@ -16,6 +16,7 @@ import { getPerconaSettingFlag } from 'app/percona/shared/core/selectors';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
 
 import { Messages as mainChecksMessages } from '../../CheckPanel.messages';
+import { ChecksInfoAlert } from '../CheckInfoAlert/CheckInfoAlert';
 
 import { GET_ACTIVE_ALERTS_CANCEL_TOKEN } from './FailedChecksTab.constants';
 import { Messages } from './FailedChecksTab.messages';
@@ -89,6 +90,7 @@ export const FailedChecksTab: FC = () => {
           featureName={mainChecksMessages.advisors}
           featureSelector={featureSelector}
         >
+          <ChecksInfoAlert />
           <AlertsReloadContext.Provider value={{ fetchAlerts }}>
             <Table
               totalItems={data.length}
