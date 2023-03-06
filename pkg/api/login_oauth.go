@@ -153,7 +153,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *contextmodel.ReqContext) {
 
 		state, err := GenStateString()
 		if err != nil {
-			ctx.Logger.Error("Generating state stringit push --set-upstream origin kalleep/authn/login-error-handlingg failed", "err", err)
+			ctx.Logger.Error("Generating state string failed", "err", err)
 			hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
 				HttpStatus:    http.StatusInternalServerError,
 				PublicMessage: "An internal error occurred",
