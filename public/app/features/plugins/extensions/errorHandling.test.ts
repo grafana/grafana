@@ -105,7 +105,7 @@ describe('error handling for extensions', () => {
       expect(handlerWithErrorHandling).not.toThrowError();
     });
 
-    it('should be called successfully when handler throws error', () => {
+    it('should be called successfully when handler is an async function / promise', () => {
       const promisebased = (async () => {}) as CommandHandlerFunc;
       const configureWithErrorHandling = errorHandler(promisebased);
 
