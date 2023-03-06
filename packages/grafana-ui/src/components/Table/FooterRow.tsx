@@ -18,7 +18,6 @@ export interface FooterRowProps {
 
 export const FooterRow = (props: FooterRowProps) => {
   const { totalColumnsWidth, footerGroups, isPaginationVisible, tableStyles } = props;
-  // console.log('🚀 ~ file: FooterRow.tsx:21 ~ FooterRow ~ footerGroups:', footerGroups);
   const e2eSelectorsTable = selectors.components.Panels.Visualization.Table;
 
   return (
@@ -34,7 +33,6 @@ export const FooterRow = (props: FooterRowProps) => {
         return (
           <div className={tableStyles.tfoot} {...footerGroupProps} key={key} data-testid={e2eSelectorsTable.footer}>
             {footerGroup.headers.map((column: ColumnInstance) => {
-              // console.log('🚀 ~ file: FooterRow.tsx:37 ~ {footerGroup.headers.map ~ column:', column);
               return renderFooterCell(column, tableStyles);
             })}
           </div>
@@ -63,10 +61,6 @@ function renderFooterCell(column: ColumnInstance, tableStyles: TableStyles) {
 }
 
 export function getFooterValue(index: number, footerValues?: FooterItem[], isCountRowsSet?: boolean) {
-  // console.log('🚀 ~ file: FooterRow.tsx:62 ~ getFooterValue ~ footerValues:', footerValues);
-  // console.log('🚀 ~ file: FooterRow.tsx:62 ~ getFooterValue ~ index:', index);
-  // console.log('🚀 ~ file: FooterRow.tsx:62 ~ getFooterValue ~ isCountRowsSet:', isCountRowsSet);
-  // JEV: here, index will have contiguous values 0, 1, 2, 3, 4, 5, etc, however, the footer values length changes on override hidden column, so there are too few values to display
   if (footerValues === undefined) {
     return EmptyCell;
   }
