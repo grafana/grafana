@@ -966,6 +966,47 @@ func TestPublicDashboardServiceImpl_NewPublicDashboardAccessToken(t *testing.T) 
 	}
 }
 
+func TestHandleDashboardDeleted(t *testing.T) {
+	t.Run("will delete pubdash when dashboard deleted", func(t *testing.T) {
+		store := NewFakePublicDashboardStore(t)
+		pd := &PublicDashboardServiceImpl{store: store, serviceWrapper: ProvideServiceWrapper(store)}
+		dashboard := &dashboards.Dashboard{UID: "1", OrgID: 1, IsFolder: false}
+		pubdash := &PublicDashboard{Uid: "2", OrgId: 1, DashboardUid: dashboard.UID}
+		store.On("FindByDashboardUid", mock.Anything, mock.Anything, mock.Anything).Return(pubdash, nil)
+		store.On("Delete", mock.Anything, mock.Anything, mock.Anything).Return(int64(1), nil)
+
+		err := pd.HandleDashboardDeleted(context.Background(), dashboard)
+		require.NoError(t, err)
+	})
+
+	t.Run("will delete pubdashes when dashboard folder deleted", func(t *testing.T) {
+		store := NewFakePublicDashboardStore(t)
+		pd := &PublicDashboardServiceImpl{store: store, serviceWrapper: ProvideServiceWrapper(store)}
+		dashboard := &dashboards.Dashboard{UID: "1", OrgID: 1, IsFolder: true}
+		pubdash1 := &PublicDashboard{Uid: "2", OrgId: 1, DashboardUid: dashboard.UID}
+		pubdash2 := &PublicDashboard{Uid: "3", OrgId: 1, DashboardUid: dashboard.UID}
+		store.On("GetByDashboardFolder", mock.Anything, mock.Anything).Return([]*PublicDashboard{pubdash1, pubdash2}, nil)
+		store.On("Delete", mock.Anything, mock.Anything, mock.Anything).Return(int64(1), nil)
+		store.On("Delete", mock.Anything, mock.Anything, mock.Anything).Return(int64(1), nil)
+
+		err := pd.HandleDashboardDeleted(context.Background(), dashboard)
+		require.NoError(t, err)
+	})
+}
+
+func TestGenerateAccessToken(t *testing.T) {
+	accessToken, err := GenerateAccessToken()
+
+	t.Run("length", func(t *testing.T) {
+		require.NoError(t, err)
+		assert.Equal(t, 32, len(accessToken))
+	})
+
+	t.Run("no - ", func(t *testing.T) {
+		assert.False(t, strings.Contains("-", accessToken))
+	})
+}
+
 func CreateDatasource(dsType string, uid string) struct {
 	Type *string `json:"type,omitempty"`
 	Uid  *string `json:"uid,omitempty"`
@@ -1069,17 +1110,4 @@ func insertTestDashboard(t *testing.T, dashboardStore dashboards.Store, title st
 	dash.Data.Set("id", dash.ID)
 	dash.Data.Set("uid", dash.UID)
 	return dash
-}
-
-func TestGenerateAccessToken(t *testing.T) {
-	accessToken, err := GenerateAccessToken()
-
-	t.Run("length", func(t *testing.T) {
-		require.NoError(t, err)
-		assert.Equal(t, 32, len(accessToken))
-	})
-
-	t.Run("no - ", func(t *testing.T) {
-		assert.False(t, strings.Contains("-", accessToken))
-	})
 }
