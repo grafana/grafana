@@ -44,7 +44,7 @@ Set the data source's basic configuration options carefully:
 | **User**       | Sets the user name for basic authentication.                             |
 | **Password**   | Sets the password for basic authentication.                              |
 
-You can also configure settings specific to the Tempo data source. These options are described in the sections below.   
+You can also configure settings specific to the Tempo data source. These options are described in the sections below.
 
 ### Trace to logs
 
@@ -55,9 +55,10 @@ You can also configure settings specific to the Tempo data source. These options
 
 The **Trace to logs** setting configures the [trace to logs feature]({{< relref "../../explore/trace-integration" >}}) that is available when you integrate Grafana with Tempo.
 
-There are two ways to configure the trace to logs feature: 
-* Use a simplified configuration with default query, or 
-* Configure a custom query where you can use a [template language]({{< relref "../../dashboards/variables/variable-syntax">}}) to interpolate variables from the trace or span.
+There are two ways to configure the trace to logs feature:
+
+- Use a simplified configuration with default query, or
+- Configure a custom query where you can use a [template language]({{< relref "../../dashboards/variables/variable-syntax">}}) to interpolate variables from the trace or span.
 
 #### Use a simple configuration
 
