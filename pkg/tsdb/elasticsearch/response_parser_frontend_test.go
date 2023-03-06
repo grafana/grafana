@@ -1562,7 +1562,6 @@ func TestLogs(t *testing.T) {
 	})
 
 	t.Run("level field", func(t *testing.T) {
-		// message field = line, level field = lvl
 		result, err := queryDataTest(query, response)
 		require.NoError(t, err)
 
@@ -1576,7 +1575,7 @@ func TestLogs(t *testing.T) {
 			fieldMap[field.Name] = field
 		}
 
-		require.Contains(t, fieldMap, "level") // FIXME
+		require.Contains(t, fieldMap, "level")
 		field := fieldMap["level"]
 
 		requireStringAt(t, "debug", field, 0)
