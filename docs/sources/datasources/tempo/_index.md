@@ -59,7 +59,7 @@ There are two ways to configure the trace to logs feature:
 * Use a simplified configuration with default query, or 
 * Configure a custom query where you can use a [template language]({{< relref "../../dashboards/variables/variable-syntax">}}) to interpolate variables from the trace or span.
 
-#### To use a simple configuration:
+#### Use a simple configuration
 
 1. Select the target data source.
 1. Set start and end time shift. As the logs timestamps may not exactly match the timestamps of the spans in trace it may be necessary to search in larger or shifted time range to find the desired logs.
