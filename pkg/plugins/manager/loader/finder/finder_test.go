@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -75,7 +75,7 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 		})
 
 		finder := &Finder{
-			log: log.New(),
+			log: log.NewTestLogger(),
 		}
 
 		paths, err := finder.getAbsPluginJSONPaths("test")
@@ -93,7 +93,7 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 		})
 
 		finder := &Finder{
-			log: log.New(),
+			log: log.NewTestLogger(),
 		}
 
 		paths, err := finder.getAbsPluginJSONPaths("test")
@@ -111,7 +111,7 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 		})
 
 		finder := &Finder{
-			log: log.New(),
+			log: log.NewTestLogger(),
 		}
 
 		paths, err := finder.getAbsPluginJSONPaths("test")

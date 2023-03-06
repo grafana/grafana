@@ -1,7 +1,6 @@
 package httpclientprovider
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
@@ -21,13 +20,12 @@ var newProviderFunc = sdkhttpclient.NewProvider
 // New creates a new HTTP client provider with pre-configured middlewares.
 func New(cfg *setting.Cfg, validator validations.PluginRequestValidator, tracer tracing.Tracer) *sdkhttpclient.Provider {
 	logger := log.New("httpclient")
-	userAgent := fmt.Sprintf("Grafana/%s", cfg.BuildVersion)
 
 	middlewares := []sdkhttpclient.Middleware{
 		TracingMiddleware(logger, tracer),
 		DataSourceMetricsMiddleware(),
 		sdkhttpclient.ContextualMiddleware(),
-		SetUserAgentMiddleware(userAgent),
+		SetUserAgentMiddleware(cfg.DataProxyUserAgent),
 		sdkhttpclient.BasicAuthenticationMiddleware(),
 		sdkhttpclient.CustomHeadersMiddleware(),
 		ResponseLimitMiddleware(cfg.ResponseLimit),

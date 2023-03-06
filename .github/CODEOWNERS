@@ -135,6 +135,7 @@
 /pkg/services/validations/ @grafana/backend-platform
 /pkg/setting/ @grafana/backend-platform
 /pkg/tests/ @grafana/backend-platform
+/pkg/tests/api/correlations/ @grafana/explore-squad
 /pkg/tsdb/grafanads/ @grafana/backend-platform
 /pkg/tsdb/intervalv2/ @grafana/backend-platform
 /pkg/tsdb/legacydata/ @grafana/backend-platform
@@ -259,7 +260,6 @@
 /pkg/services/searchV2/ @grafana/multitenancy-squad
 /pkg/services/store/ @grafana/multitenancy-squad
 /pkg/services/querylibrary/ @grafana/multitenancy-squad
-/pkg/services/export/ @grafana/multitenancy-squad
 /pkg/infra/filestorage/ @grafana/multitenancy-squad
 /pkg/util/converter/ @grafana/multitenancy-squad
 
@@ -356,6 +356,7 @@ lerna.json @grafana/frontend-ops
 /public/app/features/datasources/ @grafana/user-essentials
 /public/app/features/dimensions/ @grafana/dataviz-squad
 /public/app/features/dataframe-import/ @grafana/grafana-bi-squad
+/public/app/features/datasource-drawer/ @grafana/grafana-bi-squad
 /public/app/features/explore/ @grafana/explore-squad
 /public/app/features/expressions/ @grafana/observability-metrics
 /public/app/features/folders/ @grafana/user-essentials
