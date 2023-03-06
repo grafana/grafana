@@ -262,6 +262,7 @@
 /pkg/services/querylibrary/ @grafana/multitenancy-squad
 /pkg/infra/filestorage/ @grafana/multitenancy-squad
 /pkg/util/converter/ @grafana/multitenancy-squad
+/pkg/modules/ @grafana/multitenancy-squad
 
 # Alerting
 /pkg/services/ngalert/ @grafana/alerting-squad-backend
