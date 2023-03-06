@@ -157,7 +157,7 @@
               "label": "val3"
             },
             "config": {
-              "displayNameFromDS": "val3 Max float"
+              "displayName": "val3 Max float"
             }
           }
         ]
@@ -205,7 +205,7 @@
               "label": "val3"
             },
             "config": {
-              "displayNameFromDS": "val3 Min float"
+              "displayName": "val3 Min float"
             }
           }
         ]
@@ -253,7 +253,7 @@
               "label": "val2"
             },
             "config": {
-              "displayNameFromDS": "val2 Max float"
+              "displayName": "val2 Max float"
             }
           }
         ]
@@ -301,7 +301,7 @@
               "label": "val2"
             },
             "config": {
-              "displayNameFromDS": "val2 Min float"
+              "displayName": "val2 Min float"
             }
           }
         ]
@@ -349,7 +349,7 @@
               "label": "val1"
             },
             "config": {
-              "displayNameFromDS": "val1 Max float"
+              "displayName": "val1 Max float"
             }
           }
         ]
@@ -397,7 +397,7 @@
               "label": "val1"
             },
             "config": {
-              "displayNameFromDS": "val1 Min float"
+              "displayName": "val1 Min float"
             }
           }
         ]

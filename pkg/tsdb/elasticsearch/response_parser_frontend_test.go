@@ -71,7 +71,7 @@ func requireTimeSeriesName(t *testing.T, expected string, frame *data.Frame) {
 
 	field := getField()
 	require.NotNil(t, expected, field.Config)
-	require.Equal(t, expected, field.Config.DisplayNameFromDS)
+	require.Equal(t, expected, field.Config.DisplayName)
 }
 
 func TestRefIdMatching(t *testing.T) {

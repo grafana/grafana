@@ -50,7 +50,7 @@
             },
             "labels": {},
             "config": {
-              "displayNameFromDS": "Min float"
+              "displayName": "Min float"
             }
           }
         ]

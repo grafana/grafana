@@ -97,7 +97,7 @@
               "label": "val3"
             },
             "config": {
-              "displayNameFromDS": "val3"
+              "displayName": "val3"
             }
           }
         ]
@@ -147,7 +147,7 @@
               "label": "val2"
             },
             "config": {
-              "displayNameFromDS": "val2"
+              "displayName": "val2"
             }
           }
         ]
@@ -197,7 +197,7 @@
               "label": "val1"
             },
             "config": {
-              "displayNameFromDS": "val1"
+              "displayName": "val1"
             }
           }
         ]

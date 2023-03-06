@@ -50,7 +50,7 @@
             },
             "labels": {},
             "config": {
-              "displayNameFromDS": "Max float"
+              "displayName": "Max float"
             }
           }
         ]
