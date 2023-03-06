@@ -472,6 +472,8 @@ func Benchmark_profileAsTree(b *testing.B) {
 	err = json.Unmarshal(profJson, &prof)
 	require.NoError(b, err)
 
+	b.ResetTimer()
+
 	for i := 0; i < b.N; i++ {
 		profileAsTree(prof)
 	}
