@@ -2,6 +2,7 @@ import { FieldConfigProperty, PanelOptionsEditorBuilder, PanelPlugin } from '@gr
 import { FrameState } from 'app/features/canvas/runtime/frame';
 
 import { CanvasPanel, InstanceState } from './CanvasPanel';
+import { getConnectionEditor } from './editor/connectionEditor';
 import { getElementEditor } from './editor/elementEditor';
 import { getLayerEditor } from './editor/layerEditor';
 import { canvasMigrationHandler } from './migrations';
@@ -57,6 +58,16 @@ export const plugin = new PanelPlugin<PanelOptions>(CanvasPanel)
             })
           );
         }
+      }
+
+      if (connectionSelection) {
+        builder.addNestedOptions(
+          getConnectionEditor({
+            category: ['Selected connection'],
+            connection: connectionSelection,
+            scene: state.scene,
+          })
+        );
       }
     }
   });

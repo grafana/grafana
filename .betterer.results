@@ -1,5 +1,5 @@
 // BETTERER RESULTS V2.
-//
+// 
 // If this file contains merge conflicts, use `betterer merge` to automatically resolve them:
 // https://phenomnomnominal.github.io/betterer/docs/results-file/#merge
 //
@@ -2798,7 +2798,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
     ],
     "public/app/features/canvas/elements/droneFront.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -6003,6 +6004,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/plugins/panel/canvas/editor/TreeNavigationEditor.tsx:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "public/app/plugins/panel/canvas/editor/connectionEditor.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/plugins/panel/canvas/editor/elementEditor.tsx:5381": [

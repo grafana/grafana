@@ -1,12 +1,15 @@
 import React from 'react';
 
-import { ConnectionPath } from 'app/features/canvas';
+import { config } from '@grafana/runtime';
+import { CanvasConnection, CanvasConnectionOptions, ConnectionPath } from 'app/features/canvas';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
 import { CONNECTION_ANCHOR_ALT, ConnectionAnchors, CONNECTION_ANCHOR_HIGHLIGHT_OFFSET } from './ConnectionAnchors';
 import { ConnectionSVG } from './ConnectionSVG';
 import { isConnectionSource, isConnectionTarget } from './utils';
+
+let idCounter = 0;
 
 export class Connections {
   scene: Scene;
@@ -165,6 +168,7 @@ export class Connections {
         }
 
         const connection = {
+          id: idCounter++,
           source: {
             x: sourceX,
             y: sourceY,
@@ -174,9 +178,14 @@ export class Connections {
             y: targetY,
           },
           targetName: targetName,
-          color: 'white',
-          size: 10,
+          sourceName: this.connectionSource.options.name,
           path: ConnectionPath.Straight,
+          options: {
+            color: {
+              fixed: config.theme2.colors.text.primary,
+            },
+            size: 10,
+          },
         };
 
         const { options } = this.connectionSource;
@@ -222,6 +231,26 @@ export class Connections {
     }
 
     this.scene.selecto?.rootContainer?.addEventListener('mousemove', this.connectionListener);
+  };
+
+  onChange = (options: CanvasConnectionOptions, connection: CanvasConnection) => {
+    console.log('onChange');
+    console.log(options);
+    connection = { ...connection, options };
+    const connectionId = connection.id;
+    const sourceElement = this.scene.byName.get(connection.sourceName);
+    if (sourceElement) {
+      // @TODO fix this
+      const filteredConnections = sourceElement.options.connections?.filter(
+        (connection) => connection.id !== connectionId
+      );
+      // @ts-ignore
+      sourceElement.options.connections = [...filteredConnections, connection];
+      if (this.scene.moveableActionCallback) {
+        this.scene.moveableActionCallback(true);
+      }
+      sourceElement.onChange(sourceElement.options);
+    }
   };
 
   // used for moveable actions

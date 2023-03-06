@@ -4,7 +4,7 @@ import { RegistryItem } from '@grafana/data';
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
 import { config } from 'app/core/config';
 
-import { DimensionContext } from '../dimensions/context';
+import { DimensionContext, ColorDimensionConfig } from '../dimensions';
 
 import { BackgroundConfig, Constraint, LineConfig, Placement } from './types';
 
@@ -30,6 +30,11 @@ export interface CanvasElementOptions<TConfig = any> {
   connections?: CanvasConnection[];
 }
 
+export interface CanvasConnectionOptions<TConfig = any> {
+  color?: ColorDimensionConfig;
+  size?: number;
+}
+
 // Unit is percentage from the middle of the element
 // 0, 0 middle; -1, -1 bottom left; 1, 1 top right
 export interface ConnectionCoordinates {
@@ -42,10 +47,13 @@ export enum ConnectionPath {
 }
 
 export interface CanvasConnection {
+  id: number;
   source: ConnectionCoordinates;
   target: ConnectionCoordinates;
   targetName?: string;
+  sourceName: string;
   path: ConnectionPath;
+  options: CanvasConnectionOptions;
   // See https://github.com/anseki/leader-line#options for more examples of more properties
 }
 
