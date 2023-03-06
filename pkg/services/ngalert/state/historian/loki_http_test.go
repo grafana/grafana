@@ -75,7 +75,7 @@ func TestLokiConfig(t *testing.T) {
 }
 
 // This function can be used for local testing, just remove the skip call.
-func TestLokiHTTPClient(t *testing.T) {
+func TestLokiHTTPClient_Manual(t *testing.T) {
 	t.Skip()
 
 	t.Run("smoke test pinging Loki", func(t *testing.T) {
