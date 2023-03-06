@@ -10,9 +10,9 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/xorcare/pointer"
 )
 
 func prepare(text string) io.ReadCloser {
@@ -70,7 +70,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		require.Nil(t, err)
 
 		floatField := data.NewField("value", labels, []*float64{
-			pointer.Float64(222), pointer.Float64(222), nil,
+			util.Pointer(222.0), util.Pointer(222.0), nil,
 		})
 		floatField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.mean { datacenter: America }"}
 		floatFrame := data.NewFrame("cpu.mean { datacenter: America }",
@@ -293,7 +293,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		query := &Query{}
 
 		newField := data.NewField("value", nil, []*float64{
-			pointer.Float64(50), nil, pointer.Float64(52),
+			util.Pointer(50.0), nil, util.Pointer(52.0),
 		})
 		newField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.mean"}
 		testFrame := data.NewFrame("cpu.mean",
@@ -342,7 +342,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		query := &Query{}
 
 		newField := data.NewField("value", nil, []*float64{
-			pointer.Float64(50), pointer.Float64(52),
+			util.Pointer(50.0), util.Pointer(52.0),
 		})
 		newField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.mean"}
 		testFrame := data.NewFrame("cpu.mean",
@@ -395,7 +395,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		labels, err := data.LabelsFromString("/cluster/name/=Cluster/, @cluster@name@=Cluster@, cluster-name=Cluster, datacenter=America, dc.region.name=Northeast")
 		require.Nil(t, err)
 		newField := data.NewField("value", labels, []*float64{
-			pointer.Float64(222),
+			util.Pointer(222.0),
 		})
 		newField.Config = &data.FieldConfig{DisplayNameFromDS: "series alias"}
 		testFrame := data.NewFrame("series alias",
@@ -436,7 +436,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			name = "alias sum"
 			testFrame.Name = name
 			newField = data.NewField("value", labels, []*float64{
-				pointer.Float64(333),
+				util.Pointer(333.0),
 			})
 			testFrame.Fields[1] = newField
 			testFrame.Fields[1].Config = &data.FieldConfig{DisplayNameFromDS: name}
@@ -450,7 +450,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			name = "alias America"
 			testFrame.Name = name
 			newField = data.NewField("value", labels, []*float64{
-				pointer.Float64(222),
+				util.Pointer(222.0),
 			})
 			testFrame.Fields[1] = newField
 			testFrame.Fields[1].Config = &data.FieldConfig{DisplayNameFromDS: name}
@@ -464,7 +464,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 			name = "alias America/America"
 			testFrame.Name = name
 			newField = data.NewField("value", labels, []*float64{
-				pointer.Float64(222),
+				util.Pointer(222.0),
 			})
 			testFrame.Fields[1] = newField
 			testFrame.Fields[1].Config = &data.FieldConfig{DisplayNameFromDS: name}
@@ -660,7 +660,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		labels, err := data.LabelsFromString("datacenter=America")
 		require.Nil(t, err)
 		newField := data.NewField("value", labels, []*float64{
-			pointer.Float64(222), pointer.Float64(222), nil,
+			util.Pointer(222.0), util.Pointer(222.0), nil,
 		})
 		newField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.mean { datacenter: America }"}
 		testFrame := data.NewFrame("cpu.mean { datacenter: America }",
@@ -748,7 +748,7 @@ func TestResponseParser_Parse(t *testing.T) {
 				]
 			}]}]}`,
 			f: func(t *testing.T, got *backend.QueryDataResponse) {
-				newField := data.NewField("value", nil, []*float64{nil, nil, pointer.Float64(52)})
+				newField := data.NewField("value", nil, []*float64{nil, nil, util.Pointer(52.0)})
 				newField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.mean"}
 				testFrame := data.NewFrame("cpu.mean",
 					data.NewField("time", nil,

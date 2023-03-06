@@ -6,10 +6,11 @@ import { Alert, Button, ConfirmModal, useStyles2 } from '@grafana/ui';
 
 interface Props {
   onMigrate: () => void;
+  apikeysCount: number;
   disabled?: boolean;
 }
 
-export const MigrateToServiceAccountsCard = ({ onMigrate, disabled }: Props): JSX.Element => {
+export const MigrateToServiceAccountsCard = ({ onMigrate, apikeysCount, disabled }: Props): JSX.Element => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const styles = useStyles2(getStyles);
 
@@ -23,30 +24,49 @@ export const MigrateToServiceAccountsCard = ({ onMigrate, disabled }: Props): JS
       Find out more about the migration here.
     </a>
   );
-  const migrationBoxDesc = <span>Are you sure you want to migrate all API keys to service accounts? {docsLink}</span>;
+  const migrationBoxDesc = (
+    <span>
+      Are you sure you want to migrate all API keys to service accounts? {docsLink}
+      <br>This hides the API keys tab.</br>
+    </span>
+  );
 
   return (
-    <Alert title="Switch from API keys to service accounts" severity="warning">
-      <div className={styles.text}>
-        We will soon deprecate API keys. Each API key will be migrated into a service account with a token and will
-        continue to work as they were. We encourage you to migrate your API keys to service accounts now. {docsLink}
-      </div>
-      <div className={styles.actionRow}>
-        <Button className={styles.actionButton} onClick={() => setIsModalOpen(true)}>
-          Migrate all service accounts
-        </Button>
-        <ConfirmModal
-          title={'Migrate API keys to service accounts'}
-          isOpen={isModalOpen}
-          body={migrationBoxDesc}
-          confirmText={'Yes, migrate now'}
-          onConfirm={onMigrate}
-          onDismiss={() => setIsModalOpen(false)}
-          confirmVariant="primary"
-          confirmButtonVariant="primary"
-        />
-      </div>
-    </Alert>
+    <>
+      {apikeysCount > 0 && (
+        <Alert title="Switch from API keys to service accounts" severity="warning">
+          <div className={styles.text}>
+            We will soon deprecate API keys. Each API key will be migrated into a service account with a token and will
+            continue to work as they were. We encourage you to migrate your API keys to service accounts now. {docsLink}
+          </div>
+          <div className={styles.actionRow}>
+            <Button className={styles.actionButton} onClick={() => setIsModalOpen(true)}>
+              Migrate all service accounts
+            </Button>
+            <ConfirmModal
+              title={'Migrate API keys to service accounts'}
+              isOpen={isModalOpen}
+              body={migrationBoxDesc}
+              confirmText={'Yes, migrate now'}
+              onConfirm={onMigrate}
+              onDismiss={() => setIsModalOpen(false)}
+              confirmVariant="primary"
+              confirmButtonVariant="primary"
+            />
+          </div>
+        </Alert>
+      )}
+      {apikeysCount === 0 && (
+        <>
+          <Alert title="No API keys found" severity="warning">
+            <div className={styles.text}>
+              No API keys were found. If you reload the browser, this tab will be not available. If any API keys are
+              created, this tab will appear again.
+            </div>
+          </Alert>
+        </>
+      )}
+    </>
   );
 };
 

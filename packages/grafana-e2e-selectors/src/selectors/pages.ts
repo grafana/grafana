@@ -208,6 +208,14 @@ export const Pages = {
       },
     },
   },
+  PublicDashboard: {
+    page: 'public-dashboard-page',
+    NotAvailable: {
+      container: 'public-dashboard-not-available',
+      title: 'public-dashboard-title',
+      pausedDescription: 'public-dashboard-paused-description',
+    },
+  },
   Explore: {
     url: '/explore',
     General: {
