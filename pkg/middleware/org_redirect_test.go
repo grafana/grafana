@@ -42,6 +42,12 @@ func TestOrgRedirectMiddleware(t *testing.T) {
 			expStatus:   302,
 			expLocation: "/?kiosk=tv&orgId=3",
 		},
+		{
+			desc:        "when setting a correct org for the user with '&kiosk=embedded'",
+			input:       "/?kiosk=embedded&orgId=3",
+			expStatus:   302,
+			expLocation: "/?kiosk=embedded&orgId=3",
+		},
 	}
 
 	for _, tc := range testCases {

@@ -41,6 +41,16 @@ describe('Render', () => {
     expect(sidemenu).not.toBeInTheDocument();
   });
 
+  it('should not render when in kiosk mode is embedded', async () => {
+    setup();
+
+    locationService.partial({ kiosk: 'embedded' });
+    const sidemenu = screen.queryByTestId('sidemenu');
+    expect(sidemenu).not.toBeInTheDocument();
+  });
+
+
+
   it('should not render when in kiosk mode is full', async () => {
     setup();
 
