@@ -62,6 +62,7 @@ export interface Props extends Themeable2 {
 
 interface State {
   logRowsToRender?: LogRowModel[];
+  clearedAt?: number;
 }
 
 class LiveLogs extends PureComponent<Props, State> {
@@ -77,6 +78,11 @@ class LiveLogs extends PureComponent<Props, State> {
 
   static getDerivedStateFromProps(nextProps: Props, state: State) {
     if (!nextProps.isPaused) {
+      if (state.clearedAt) {
+        return {
+          logRowsToRender: nextProps.logRows?.filter((row) => row.timeEpochMs > (state.clearedAt ?? 0)),
+        };
+      }
       return {
         // We update what we show only if not paused. We keep any background subscriptions running and keep updating
         // our state, but we do not show the updates, this allows us start again showing correct result after resuming
@@ -102,14 +108,26 @@ class LiveLogs extends PureComponent<Props, State> {
     }
   };
 
+  onClearLogs = () => {
+    const lastLogRow = this.state.logRowsToRender?.at(-1);
+    if (!lastLogRow) {
+      return;
+    }
+    this.setState({ clearedAt: lastLogRow.timeEpochMs + 1 });
+  };
+
   rowsToRender = () => {
     const { isPaused } = this.props;
     let { logRowsToRender: rowsToRender = [] } = this.state;
     if (!isPaused) {
       // A perf optimisation here. Show just 100 rows when streaming and full length when the streaming is paused.
-      rowsToRender = rowsToRender.slice(-100);
+      rowsToRender = this.orderRowsByTime(rowsToRender).slice(-100);
     }
     return rowsToRender;
+  };
+
+  orderRowsByTime = (rows: LogRowModel[]) => {
+    return rows.sort((a, b) => a.timeEpochMs - b.timeEpochMs);
   };
 
   render() {
@@ -147,6 +165,10 @@ class LiveLogs extends PureComponent<Props, State> {
           </tbody>
         </table>
         <div className={styles.logsRowsIndicator}>
+          <Button variant="secondary" onClick={this.onClearLogs} className={styles.button}>
+            <Icon name={'trash-alt'} />
+            &nbsp; Clear logs
+          </Button>
           <Button variant="secondary" onClick={isPaused ? onResume : onPause} className={styles.button}>
             <Icon name={isPaused ? 'play' : 'pause'} />
             &nbsp;
@@ -156,11 +178,12 @@ class LiveLogs extends PureComponent<Props, State> {
             <Icon name="square-shape" size="lg" type="mono" />
             &nbsp; Exit live mode
           </Button>
-          {isPaused || (
-            <span>
-              Last line received: <ElapsedTime resetKey={this.props.logRows} humanize={true} /> ago
-            </span>
-          )}
+          {isPaused ||
+            (this.rowsToRender().length > 0 && (
+              <span>
+                Last line received: <ElapsedTime resetKey={this.props.logRows} humanize={true} /> ago
+              </span>
+            ))}
         </div>
       </div>
     );
