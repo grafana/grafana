@@ -47,6 +47,7 @@ type OrgUser struct {
 type RoleType = roletype.RoleType
 
 const (
+	RoleNone   RoleType = "None"
 	RoleViewer RoleType = "Viewer"
 	RoleEditor RoleType = "Editor"
 	RoleAdmin  RoleType = "Admin"
