@@ -15,7 +15,7 @@ import {
   labelFilterRenderer,
   pipelineRenderer,
 } from './operationUtils';
-import { LokiOperationId, LokiOperationOrder, LokiVisualQueryOperationCategory } from './types';
+import { LokiOperationId, LokiOperationOrder, lokiOperators, LokiVisualQueryOperationCategory } from './types';
 
 export function getOperationDefinitions(): QueryBuilderOperationDef[] {
   const aggregations = [
@@ -356,10 +356,7 @@ Example: \`\`error_level=\`level\` \`\`
           name: 'Operator',
           type: 'string',
           minWidth: 16,
-          options: [
-            { label: '|=', value: '|=', description: 'Contains' },
-            { label: '!=', value: '!=', description: 'Does not contain' },
-          ],
+          options: [lokiOperators.contains, lokiOperators.doesNotContain],
         },
         {
           name: 'Pattern',
@@ -387,14 +384,14 @@ Example: \`\`error_level=\`level\` \`\`
           type: 'string',
           minWidth: 14,
           options: [
-            { label: '=', value: '=', description: 'Equals' },
-            { label: '!=', value: '!=', description: 'Does not equal' },
-            { label: '=~', value: '=~', description: 'Matches regex' },
-            { label: '!~', value: '!~', description: 'Does not match regex' },
-            { label: '>', value: '>', description: 'Greater than' },
-            { label: '<', value: '<', description: 'Less than' },
-            { label: '>=', value: '>=', description: 'Greater than or equal to' },
-            { label: '<=', value: '<=', description: 'Less than or equal to' },
+            lokiOperators.equals,
+            lokiOperators.doesNotEqual,
+            lokiOperators.matchesRegex,
+            lokiOperators.doesNotMatchRegex,
+            lokiOperators.greaterThan,
+            lokiOperators.lessThan,
+            lokiOperators.greaterThanOrEqual,
+            lokiOperators.lessThanOrEqual,
           ],
         },
         { name: 'Value', type: 'string', minWidth: 14 },
@@ -416,10 +413,7 @@ Example: \`\`error_level=\`level\` \`\`
           name: 'Operator',
           type: 'string',
           minWidth: 14,
-          options: [
-            { label: '=', value: '=', description: 'Equals' },
-            { label: '!=', value: '!=', description: 'Does not equal' },
-          ],
+          options: [lokiOperators.equals, lokiOperators.doesNotEqual],
         },
         { name: 'Value', type: 'string', minWidth: 14 },
       ],
