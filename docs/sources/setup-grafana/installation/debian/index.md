@@ -11,17 +11,24 @@ weight: 100
 
 This page explains how to install Grafana dependencies, download and install Grafana, get the service up and running on your Debian or Ubuntu system, and also describes the installation package details.
 
-## Repository migration (November 8th 2022)
-
-From that date, Grafana packages will be served from a new repository (<packages.grafana.com/deb/{product}> -> <apt.grafana.com>). The new repository serves, from a single APT configuration, all Grafana OSS products, as well as Grafana Enterprise.
-
-The old URLs will still work, serving the content from the new repository, but you may encounter warnings about some repository attributes changing (e.g. `Origin` and `Label`).
-
 ## Note on upgrading
 
 While the process for upgrading Grafana is very similar to installing Grafana, there are some key backup steps you should perform. Read [Upgrading Grafana]({{< relref "../../../upgrade-guide/" >}}) for tips and guidance on updating an existing installation.
 
-## 1. Download and install
+## Download and install Grafana
+
+Complete the following steps to download and install Grafana:
+
+1. On the [Grafana download page](https://grafana.com/grafana/download), select the Grafana version you want to install.
+   - The most recent Grafana version is selected by default.
+   - The **Version** field displays only finished releases. If you want to install a beta version, click **Nightly Builds** and then select a version.
+1. Select an **Edition**.
+   - **Enterprise:** This is the recommended version. It is functionally identical to the open source version, but includes features you can unlock with a license if you so choose.
+   - **Open Source:** This version is functionally identical to the Enterprise version, but you will need to download the Enterprise version if you want Enterprise features.
+1. Depending on which system you are running, click the **Linux** or **ARM** tab on the download page.
+1. Copy and paste the code from the installation page into your command line and run.
+
+---
 
 You can install Grafana using our official APT repository, by downloading a `.deb` package, or by downloading a binary `.tar.gz` file.
 
@@ -98,7 +105,9 @@ wget <tar.gz package url>
 sudo tar -zxvf <tar.gz package>
 ```
 
-## 2. Start the server
+---
+
+## Start the server
 
 This starts the `grafana-server` process as the `grafana` user, which was created during the package installation.
 
