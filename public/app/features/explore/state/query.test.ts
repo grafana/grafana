@@ -14,7 +14,7 @@ import {
   RawTimeRange,
   SupplementaryQueryType,
 } from '@grafana/data';
-import { DataQuery } from '@grafana/schema';
+import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { ExploreId, ExploreItemState, StoreState, ThunkDispatch } from 'app/types';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
@@ -38,7 +38,9 @@ import {
   scanStopAction,
   setSupplementaryQueryEnabled,
   cleanSupplementaryQueryDataProviderAction,
+  changeQueries,
 } from './query';
+import * as actions from './query';
 import { makeExplorePaneState } from './utils';
 
 const { testRange, defaultInitialState } = createDefaultInitialState();
@@ -54,10 +56,10 @@ const datasources: DataSourceApi[] = [
   } as DataSourceApi<DataQuery, DataSourceJsonData, {}>,
   {
     name: 'testDs2',
-    type: 'postgres',
+    type: 'mysql',
     uid: 'ds2',
     getRef: () => {
-      return { type: 'postgres', uid: 'ds2' };
+      return { type: 'mysql', uid: 'ds2' };
     },
   } as DataSourceApi<DataQuery, DataSourceJsonData, {}>,
 ];
@@ -77,7 +79,15 @@ jest.mock('@grafana/runtime', () => ({
   }),
   getDataSourceSrv: () => {
     return {
-      get: (uid?: string) => datasources.find((ds) => ds.uid === uid) || datasources[0],
+      get: (ref?: DataSourceRef | string) => {
+        if (!ref) {
+          return datasources[0];
+        }
+
+        return (
+          datasources.find((ds) => (typeof ref === 'string' ? ds.uid === ref : ds.uid === ref.uid)) || datasources[0]
+        );
+      },
     };
   },
 }));
@@ -194,6 +204,130 @@ describe('running queries', () => {
       cleanSupplementaryQueryDataProviderAction({ exploreId, type: SupplementaryQueryType.LogsSample }),
       cleanSupplementaryQueryAction({ exploreId, type: SupplementaryQueryType.LogsSample }),
     ]);
+  });
+});
+
+describe('changeQueries', () => {
+  // Due to how spyOn works (it removes `type`, `match` and `toString` from the spied function, on which we rely on in the reducer),
+  // we are repeating the following tests twice, once to chck the resulting state and once to check that the correct actions are dispatched.
+  describe('calls the correct actions', () => {
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+    it('should import queries when datasource is changed', async () => {
+      jest.spyOn(actions, 'importQueries');
+      jest.spyOn(actions, 'changeQueriesAction');
+
+      const originalQueries = [{ refId: 'A', datasource: datasources[0].getRef() }];
+
+      const { dispatch } = configureStore({
+        ...defaultInitialState,
+        explore: {
+          [ExploreId.left]: {
+            ...defaultInitialState.explore[ExploreId.left],
+            datasourceInstance: datasources[0],
+            queries: originalQueries,
+          },
+        },
+      } as unknown as Partial<StoreState>);
+
+      await dispatch(
+        changeQueries({
+          queries: [{ refId: 'A', datasource: datasources[1].getRef() }],
+          exploreId: ExploreId.left,
+        })
+      );
+
+      expect(actions.changeQueriesAction).not.toHaveBeenCalled();
+      expect(actions.importQueries).toHaveBeenCalledWith(
+        ExploreId.left,
+        originalQueries,
+        datasources[0],
+        datasources[1],
+        originalQueries[0].refId
+      );
+    });
+
+    it('should not import queries when datasource is not changed', async () => {
+      jest.spyOn(actions, 'importQueries');
+      jest.spyOn(actions, 'changeQueriesAction');
+
+      const { dispatch } = configureStore({
+        ...defaultInitialState,
+        explore: {
+          [ExploreId.left]: {
+            ...defaultInitialState.explore[ExploreId.left],
+            datasourceInstance: datasources[0],
+            queries: [{ refId: 'A', datasource: datasources[0].getRef() }],
+          },
+        },
+      } as unknown as Partial<StoreState>);
+
+      await dispatch(
+        changeQueries({
+          queries: [{ refId: 'A', datasource: datasources[0].getRef(), queryType: 'someValue' }],
+          exploreId: ExploreId.left,
+        })
+      );
+
+      expect(actions.changeQueriesAction).toHaveBeenCalled();
+      expect(actions.importQueries).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('correctly modifies the state', () => {
+    it('should import queries when datasource is changed', async () => {
+      const originalQueries = [{ refId: 'A', datasource: datasources[0].getRef() }];
+
+      const { dispatch, getState } = configureStore({
+        ...defaultInitialState,
+        explore: {
+          [ExploreId.left]: {
+            ...defaultInitialState.explore[ExploreId.left],
+            datasourceInstance: datasources[0],
+            queries: originalQueries,
+          },
+        },
+      } as unknown as Partial<StoreState>);
+
+      await dispatch(
+        changeQueries({
+          queries: [{ refId: 'A', datasource: datasources[1].getRef() }],
+          exploreId: ExploreId.left,
+        })
+      );
+
+      expect(getState().explore[ExploreId.left].queries[0]).toHaveProperty('refId', 'A');
+      expect(getState().explore[ExploreId.left].queries[0]).toHaveProperty('datasource', datasources[1].getRef());
+    });
+
+    it('should not import queries when datasource is not changed', async () => {
+      const { dispatch, getState } = configureStore({
+        ...defaultInitialState,
+        explore: {
+          [ExploreId.left]: {
+            ...defaultInitialState.explore[ExploreId.left],
+            datasourceInstance: datasources[0],
+            queries: [{ refId: 'A', datasource: datasources[0].getRef() }],
+          },
+        },
+      } as unknown as Partial<StoreState>);
+
+      await dispatch(
+        changeQueries({
+          queries: [{ refId: 'A', datasource: datasources[0].getRef(), queryType: 'someValue' }],
+          exploreId: ExploreId.left,
+        })
+      );
+
+      expect(getState().explore[ExploreId.left].queries[0]).toHaveProperty('refId', 'A');
+      expect(getState().explore[ExploreId.left].queries[0]).toHaveProperty('datasource', datasources[0].getRef());
+      expect(getState().explore[ExploreId.left].queries[0]).toEqual({
+        refId: 'A',
+        datasource: datasources[0].getRef(),
+        queryType: 'someValue',
+      });
+    });
   });
 });
 
