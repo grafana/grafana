@@ -41,7 +41,8 @@ Sort by field state
 
 Controls footer options
 
-| Property | Type | Required | Description |
-|----------|------|----------|-------------|
+| Property | Type                              | Required | Description |
+|----------|-----------------------------------|----------|-------------|
+| `object` | Possible types are: [](#), [](#). |          |             |
 
 

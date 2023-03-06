@@ -1,13 +1,13 @@
 import { css, cx } from '@emotion/css';
-import React, { FC, useState } from 'react';
+import React, { FC, ReactNode, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
 import {
   Button,
   Field,
   FieldArray,
   Form,
-  HorizontalGroup,
   IconButton,
   Input,
   InputControl,
@@ -16,8 +16,8 @@ import {
   Switch,
   useStyles2,
   Badge,
-  VerticalGroup,
 } from '@grafana/ui';
+import { MatcherOperator, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { useMuteTimingOptions } from '../../hooks/useMuteTimingOptions';
 import { FormAmRoute } from '../../types/amroutes';
@@ -31,6 +31,7 @@ import {
   stringToSelectableValue,
   stringsToSelectableValues,
   commonGroupByOptions,
+  amRouteToFormAmRoute,
 } from '../../utils/amroutes';
 import { timeOptions } from '../../utils/time';
 import { AmRouteReceiver } from '../receivers/grafanaAppReceivers/types';
@@ -38,28 +39,32 @@ import { AmRouteReceiver } from '../receivers/grafanaAppReceivers/types';
 import { getFormStyles } from './formStyles';
 
 export interface AmRoutesExpandedFormProps {
-  onCancel: () => void;
-  onSave: (data: FormAmRoute) => void;
   receivers: AmRouteReceiver[];
-  routes: FormAmRoute;
+  route?: RouteWithID;
+  onSubmit: (route: Partial<FormAmRoute>) => void;
+  actionButtons: ReactNode;
 }
 
-export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, onSave, receivers, routes }) => {
+export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ actionButtons, receivers, route, onSubmit }) => {
   const styles = useStyles2(getStyles);
   const formStyles = useStyles2(getFormStyles);
-  const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(routes.groupBy));
+  const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(route?.group_by));
   const muteTimingOptions = useMuteTimingOptions();
 
-  const receiversWithOnCallOnTop = receivers.sort((receiver1, receiver2) => {
-    if (receiver1.grafanaAppReceiverType === SupportedPlugin.OnCall) {
-      return -1;
-    } else {
-      return 0;
-    }
-  });
+  const receiversWithOnCallOnTop = receivers.sort(onCallFirst);
+
+  const formAmRoute = amRouteToFormAmRoute(route);
+
+  const emptyMatcher = [{ name: '', operator: MatcherOperator.equal, value: '' }];
+
+  const defaultValues: FormAmRoute = {
+    ...formAmRoute,
+    // if we're adding a new route, show at least one empty matcher
+    object_matchers: route ? formAmRoute.object_matchers : emptyMatcher,
+  };
 
   return (
-    <Form defaultValues={routes} onSubmit={onSave}>
+    <Form defaultValues={defaultValues} onSubmit={onSubmit} maxWidth="none">
       {({ control, register, errors, setValue, watch }) => (
         <>
           {/* @ts-ignore-check: react-hook-form made me do this */}
@@ -68,7 +73,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
           <FieldArray name="object_matchers" control={control}>
             {({ fields, append, remove }) => (
               <>
-                <VerticalGroup justify="flex-start" spacing="md">
+                <Stack direction="column" alignItems="flex-start">
                   <div>Matching labels</div>
                   {fields.length === 0 && (
                     <Badge
@@ -83,7 +88,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                       {fields.map((field, index) => {
                         const localPath = `object_matchers[${index}]`;
                         return (
-                          <HorizontalGroup key={field.id} align="flex-start" height="auto">
+                          <Stack direction="row" key={field.id} alignItems="center">
                             <Field
                               label="Label"
                               invalid={!!errors.object_matchers?.[index]?.name}
@@ -93,6 +98,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                                 {...register(`${localPath}.name`, { required: 'Field is required' })}
                                 defaultValue={field.name}
                                 placeholder="label"
+                                autoFocus
                               />
                             </Field>
                             <Field label={'Operator'}>
@@ -124,14 +130,14 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                               />
                             </Field>
                             <IconButton
-                              className={styles.removeButton}
+                              type="button"
                               tooltip="Remove matcher"
                               name={'trash-alt'}
                               onClick={() => remove(index)}
                             >
                               Remove
                             </IconButton>
-                          </HorizontalGroup>
+                          </Stack>
                         );
                       })}
                     </div>
@@ -145,12 +151,11 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                   >
                     Add matcher
                   </Button>
-                </VerticalGroup>
+                </Stack>
               </>
             )}
           </FieldArray>
           <Field label="Contact point">
-            {/* @ts-ignore-check: react-hook-form made me do this */}
             <InputControl
               render={({ field: { onChange, ref, ...field } }) => (
                 <Select
@@ -159,6 +164,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
                   className={formStyles.input}
                   onChange={(value) => onChange(mapSelectValueToString(value))}
                   options={receiversWithOnCallOnTop}
+                  isClearable
                 />
               )}
               control={control}
@@ -343,17 +349,20 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
               name="muteTimeIntervals"
             />
           </Field>
-          <div className={styles.buttonGroup}>
-            <Button type="submit">Save policy</Button>
-            <Button onClick={onCancel} fill="outline" type="button" variant="secondary">
-              Cancel
-            </Button>
-          </div>
+          {actionButtons}
         </>
       )}
     </Form>
   );
 };
+
+function onCallFirst(receiver: AmRouteReceiver) {
+  if (receiver.grafanaAppReceiverType === SupportedPlugin.OnCall) {
+    return -1;
+  } else {
+    return 0;
+  }
+}
 
 const getStyles = (theme: GrafanaTheme2) => {
   const commonSpacing = theme.spacing(3.5);
@@ -364,26 +373,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     matchersContainer: css`
       background-color: ${theme.colors.background.secondary};
-      margin: ${theme.spacing(1, 0)};
-      padding: ${theme.spacing(1, 4.6, 1, 1.5)};
+      padding: ${theme.spacing(1.5)} ${theme.spacing(2)};
+      padding-bottom: 0;
       width: fit-content;
     `,
     matchersOperator: css`
-      min-width: 140px;
-    `,
-    nestedPolicies: css`
-      margin-top: ${commonSpacing};
-    `,
-    removeButton: css`
-      margin-left: ${theme.spacing(1)};
-      margin-top: ${theme.spacing(2.5)};
-    `,
-    buttonGroup: css`
-      margin: ${theme.spacing(6)} 0 ${commonSpacing};
-
-      & > * + * {
-        margin-left: ${theme.spacing(1.5)};
-      }
+      min-width: 120px;
     `,
     noMatchersWarning: css`
       padding: ${theme.spacing(1)} ${theme.spacing(2)};

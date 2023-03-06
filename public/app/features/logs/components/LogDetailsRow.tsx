@@ -34,41 +34,7 @@ interface State {
   fieldStats: LogLabelStatsModel[] | null;
 }
 
-const getStyles = memoizeOne((theme: GrafanaTheme2, activeButton: boolean) => {
-  // those styles come from ToolbarButton. Unfortunately this is needed because we can not control the variant of the menu-button in a ToolbarButtonRow.
-  const defaultOld = css`
-    color: ${theme.colors.text.secondary};
-    background-color: ${theme.colors.background.primary};
-
-    &:hover {
-      color: ${theme.colors.text.primary};
-      background: ${theme.colors.background.secondary};
-    }
-  `;
-
-  const defaultTopNav = css`
-    color: ${theme.colors.text.secondary};
-    background-color: transparent;
-    border-color: transparent;
-
-    &:hover {
-      color: ${theme.colors.text.primary};
-      background: ${theme.colors.background.secondary};
-    }
-  `;
-
-  const active = css`
-    color: ${theme.v1.palette.orangeDark};
-    border-color: ${theme.v1.palette.orangeDark};
-    background-color: transparent;
-
-    &:hover {
-      color: ${theme.colors.text.primary};
-      background: ${theme.colors.emphasize(theme.colors.background.canvas, 0.03)};
-    }
-  `;
-
-  const defaultToolbarButtonStyle = theme.flags.topnav ? defaultTopNav : defaultOld;
+const getStyles = memoizeOne((theme: GrafanaTheme2) => {
   return {
     noHoverBackground: css`
       label: noHoverBackground;
@@ -130,8 +96,17 @@ const getStyles = memoizeOne((theme: GrafanaTheme2, activeButton: boolean) => {
           }
         }
       }
+    `,
+    toolbarButtonRowActive: css`
       & div:last-child > button:not(.stats-button) {
-        ${activeButton ? active : defaultToolbarButtonStyle};
+        color: ${theme.v1.palette.orangeDark};
+        border-color: ${theme.v1.palette.orangeDark};
+        background-color: transparent;
+
+        &:hover {
+          color: ${theme.colors.text.primary};
+          background: ${theme.colors.emphasize(theme.colors.background.canvas, 0.03)};
+        }
       }
     `,
     logDetailsStats: css`
@@ -268,7 +243,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     } = this.props;
     const { showFieldsStats, fieldStats, fieldCount } = this.state;
     const activeButton = displayedFields?.includes(parsedKey) || showFieldsStats;
-    const styles = getStyles(theme, activeButton);
+    const styles = getStyles(theme);
     const style = getLogRowStyles(theme);
     const hasFilteringFunctionality = onClickFilterLabel && onClickFilterOutLabel;
 
@@ -289,7 +264,10 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
       <>
         <tr className={cx(style.logDetailsValue)}>
           <td className={style.logsDetailsIcon}>
-            <ToolbarButtonRow alignment="left" className={styles.toolbarButtonRow}>
+            <ToolbarButtonRow
+              alignment="left"
+              className={cx(styles.toolbarButtonRow, activeButton && styles.toolbarButtonRowActive)}
+            >
               {hasFilteringFunctionality && (
                 <ToolbarButton
                   iconOnly

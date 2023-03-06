@@ -1,7 +1,8 @@
 import { cx } from '@emotion/css';
-import React, { FC, useState } from 'react';
+import React, { FC, ReactNode, useState } from 'react';
 
-import { Button, Collapse, Field, Form, Input, InputControl, Link, MultiSelect, Select, useStyles2 } from '@grafana/ui';
+import { Collapse, Field, Form, Input, InputControl, Link, MultiSelect, Select, useStyles2 } from '@grafana/ui';
+import { RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
 import { FormAmRoute } from '../../types/amroutes';
 import {
@@ -11,6 +12,7 @@ import {
   stringToSelectableValue,
   stringsToSelectableValues,
   commonGroupByOptions,
+  amRouteToFormAmRoute,
 } from '../../utils/amroutes';
 import { makeAMLink } from '../../utils/misc';
 import { timeOptions } from '../../utils/time';
@@ -20,25 +22,27 @@ import { getFormStyles } from './formStyles';
 
 export interface AmRootRouteFormProps {
   alertManagerSourceName: string;
-  onCancel: () => void;
-  onSave: (data: FormAmRoute) => void;
+  actionButtons: ReactNode;
+  onSubmit: (route: Partial<FormAmRoute>) => void;
   receivers: AmRouteReceiver[];
-  routes: FormAmRoute;
+  route: RouteWithID;
 }
 
 export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({
+  actionButtons,
   alertManagerSourceName,
-  onCancel,
-  onSave,
+  onSubmit,
   receivers,
-  routes,
+  route,
 }) => {
   const styles = useStyles2(getFormStyles);
   const [isTimingOptionsExpanded, setIsTimingOptionsExpanded] = useState(false);
-  const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(routes.groupBy));
+  const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(route.group_by));
+
+  const defaultValues = amRouteToFormAmRoute(route);
 
   return (
-    <Form defaultValues={{ ...routes, overrideTimings: true, overrideGrouping: true }} onSubmit={onSave}>
+    <Form defaultValues={{ ...defaultValues, overrideTimings: true, overrideGrouping: true }} onSubmit={onSubmit}>
       {({ control, errors, setValue }) => (
         <>
           <Field label="Default contact point" invalid={!!errors.receiver} error={errors.receiver?.message}>
@@ -209,12 +213,7 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({
               </>
             </Field>
           </Collapse>
-          <div className={styles.container}>
-            <Button type="submit">Save</Button>
-            <Button onClick={onCancel} type="reset" variant="secondary" fill="outline">
-              Cancel
-            </Button>
-          </div>
+          <div className={styles.container}>{actionButtons}</div>
         </>
       )}
     </Form>
