@@ -44,7 +44,7 @@ Set the data source's basic configuration options carefully:
 | **User**       | Sets the user name for basic authentication.                             |
 | **Password**   | Sets the password for basic authentication.                              |
 
-You can also configure settings specific to the Tempo data source:
+You can also configure settings specific to the Tempo data source. These options are described in the sections below.   
 
 ### Trace to logs
 
