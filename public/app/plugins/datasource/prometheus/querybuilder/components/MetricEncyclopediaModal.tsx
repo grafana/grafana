@@ -200,11 +200,18 @@ export const MetricEncyclopediaModal = (props: Props) => {
   function fuzzySearch(query: string) {
     // search either the names or all metadata
     // fuzzy search go!
-    const metaIdxs = uf.filter(haystack, query.toLowerCase());
-    setFuzzyMetaSearchResults(metaIdxs);
 
-    const nameIdxs = uf.filter(nameHaystack, query.toLowerCase());
-    setNameFuzzySearchResults(nameIdxs);
+    if (fullMetaSearch) {
+      // considered simply filtering indexes with reduce and includes
+      // Performance comparison with 13,000 metrics searching metadata
+      // Fuzzy 6326ms
+      // Reduce & Includes 5541ms
+      const metaIdxs = uf.filter(haystack, query.toLowerCase());
+      setFuzzyMetaSearchResults(metaIdxs);
+    } else {
+      const nameIdxs = uf.filter(nameHaystack, query.toLowerCase());
+      setNameFuzzySearchResults(nameIdxs);
+    }
   }
 
   const debouncedFuzzySearch = debounce((query: string) => {
@@ -215,36 +222,37 @@ export const MetricEncyclopediaModal = (props: Props) => {
   function filterMetrics(metrics: MetricsData, skipLetterSearch?: boolean): MetricsData {
     let filteredMetrics: MetricsData = metrics;
 
-    if (fuzzySearchQuery) {
+    if (fuzzySearchQuery || excludeNullMetadata || (letterSearch && !skipLetterSearch) || selectedTypes.length > 0) {
       filteredMetrics = filteredMetrics.filter((m: MetricData, idx) => {
-        if (fullMetaSearch) {
-          return fuzzyMetaSearchResults.includes(idx);
-        } else {
-          return fuzzyNameSearchResults.includes(idx);
+        let keepMetric = false;
+
+        if (fuzzySearchQuery) {
+          if (fullMetaSearch) {
+            keepMetric = fuzzyMetaSearchResults.includes(idx);
+          } else {
+            keepMetric = fuzzyNameSearchResults.includes(idx);
+          }
         }
-      });
-    }
 
-    if (excludeNullMetadata) {
-      filteredMetrics = filteredMetrics.filter((m: MetricData) => m.type);
-    }
+        if (letterSearch && !skipLetterSearch) {
+          const letters: string[] = [letterSearch, letterSearch.toLowerCase()];
+          keepMetric = letters.includes(m.value[0]);
+        }
 
-    // user searches metrics that start with *
-    if (letterSearch && !skipLetterSearch) {
-      filteredMetrics = filteredMetrics.filter((m: MetricData) => {
-        const letters: string[] = [letterSearch, letterSearch.toLowerCase()];
-        return letters.includes(m.value[0]);
-      });
-    }
+        if (selectedTypes.length > 0) {
+          // return the metric that matches the type
+          // return the metric if it has no type AND we are NOT excluding metrics without metadata
 
-    // filter by type
-    if (selectedTypes.length > 0) {
-      // *** INCLUDE UN-TYPED METRICS
-      filteredMetrics = filteredMetrics.filter((m: MetricData) => {
-        const matchesSelectedType = selectedTypes.some((t) => t.value === m.type);
-        const missingTypeMetadata = !m.type;
+          // Matches type
+          const matchesSelectedType = selectedTypes.some((t) => t.value === m.type);
 
-        return matchesSelectedType || missingTypeMetadata;
+          // missing type
+          const hasNoType = !m.type;
+
+          return matchesSelectedType || (hasNoType && !excludeNullMetadata);
+        }
+
+        return keepMetric;
       });
     }
 
