@@ -88,7 +88,7 @@ describe('error handling for extensions', () => {
       logger: jest.fn(),
     });
 
-    it('should be called successfully when handler is ok', () => {
+    it('should be called successfully when handler is a normal synchronous function', () => {
       const handler = jest.fn();
       const handlerWithErrorHandling = errorHandler(handler);
 
