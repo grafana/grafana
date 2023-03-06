@@ -30,6 +30,10 @@ Depending on if it’s a data source plugin, panel plugin, or app plugin the pro
 
 For panels, the rendering logic could in some cases be easily preserved but all options need to be redone to use the declarative options framework. For data source plugins the query editor and config options will likely need a total rewrite.
 
+## How do I encourage a community plugin to migrate?
+
+We encourage you to locate the repository of the corresponding plugin and create or upvote an Issue within it if you are using a plugin that is still based on Angular.
+
 ### Links
 
 - [Migrate Angular to React](https://grafana.com/docs/grafana/latest/developers/plugins/migration-guide/#migrate-a-plugin-from-angular-to-react)
