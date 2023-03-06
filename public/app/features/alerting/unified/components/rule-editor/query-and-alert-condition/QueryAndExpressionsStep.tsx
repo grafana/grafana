@@ -254,8 +254,6 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule, onData
                   {...field}
                   dataSourceName={dataSourceName}
                   showPreviewAlertsButton={!isRecordingRuleType}
-                  asyncDefaultQuery={asyncDefaultQueries?.[0]}
-                  preservePreviousValue={!updateWithDefault}
                 />
               );
             }}
