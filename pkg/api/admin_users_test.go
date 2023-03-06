@@ -209,7 +209,7 @@ func TestAdminAPIEndpoint(t *testing.T) {
 
 				respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
 				require.NoError(t, err)
-				assert.Equal(t, "organization not found", respJSON.Get("message").MustString())
+				assert.Equal(t, org.ErrOrgNotFound.Error(), respJSON.Get("message").MustString())
 			})
 		})
 	})
