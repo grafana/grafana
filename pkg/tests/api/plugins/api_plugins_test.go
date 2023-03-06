@@ -181,7 +181,7 @@ func createUser(t *testing.T, store *sqlstore.SQLStore, cmd user.CreateUserComma
 	usrSvc, err := userimpl.ProvideService(store, orgService, store.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
 
-	_, err = usrSvc.CreateUserForTests(context.Background(), &cmd)
+	_, err = usrSvc.Create(context.Background(), &cmd)
 	require.NoError(t, err)
 }
 
