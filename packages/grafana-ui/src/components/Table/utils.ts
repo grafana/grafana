@@ -345,7 +345,8 @@ export function getFooterItems(
     data, instead it substututes the hidden column row data with an `undefined` value. The `row` length never changes, despite the `headerGroups[0].headers` length
     changing at every column removal. This makes all footer reduce calculations AFTER the first hidden column in the `headerGroups[0].headers` brake.
 
-    Here we simply recursively test for a hidden column from `headerGroups[0].headers` (each column has an ID that corresponds to its own index)
+    Here we simply recursively test for the "hidden" columns from `headerGroups[0].headers` (each column has an ID prop that corresponds to its own index),
+    the update the data as necessary.
   */
   addMissingColumnIndex(filterFields);
 
