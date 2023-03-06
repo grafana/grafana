@@ -37,4 +37,20 @@ describe('DBClusterConnection::', () => {
     expect(screen.getByTestId('cluster-connection-username')).toBeInTheDocument();
     expect(screen.getByTestId('cluster-connection-password')).toBeInTheDocument();
   });
+  it('does not show loading when the DBcluster paused', async () => {
+    await waitFor(() => render(<DBClusterConnection dbCluster={dbClustersStub[5]} />));
+    expect(screen.queryByTestId('Spinner')).not.toBeInTheDocument();
+  });
+  it('show loading when the DBcluster status = upgrading', async () => {
+    await waitFor(() => render(<DBClusterConnection dbCluster={dbClustersStub[6]} />));
+    expect(screen.getByTestId('Spinner')).toBeInTheDocument();
+  });
+  it('show loading when the DBcluster status = changing', async () => {
+    await waitFor(() => render(<DBClusterConnection dbCluster={dbClustersStub[7]} />));
+    expect(screen.getByTestId('Spinner')).toBeInTheDocument();
+  });
+  it('show loading when the DBcluster status = deleting', async () => {
+    await waitFor(() => render(<DBClusterConnection dbCluster={dbClustersStub[8]} />));
+    expect(screen.getByTestId('Spinner')).toBeInTheDocument();
+  });
 });

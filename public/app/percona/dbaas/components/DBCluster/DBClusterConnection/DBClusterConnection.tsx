@@ -69,7 +69,7 @@ export const DBClusterConnection: FC<DBClusterConnectionProps> = ({ dbCluster })
             />
           </>
         )}
-        {loading && <Spinner />}
+        {loading && status !== DBClusterStatus.suspended && <Spinner />}
       </div>
     </>
   );
