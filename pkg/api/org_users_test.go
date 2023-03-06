@@ -703,7 +703,11 @@ func TestOrgUsersAPIEndpointWithSetPerms_AccessControl(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				hs.Cfg = setting.NewCfg()
 				hs.orgService = &orgtest.FakeOrgService{}
-				hs.authInfoService = &logintest.AuthInfoServiceFake{}
+				hs.authInfoService = &logintest.AuthInfoServiceFake{
+					ExpectedUserAuth: &login.UserAuth{
+						AuthModule: "",
+					},
+				}
 				hs.userService = &usertest.FakeUserService{
 					ExpectedUser:         &user.User{},
 					ExpectedSignedInUser: userWithPermissions(1, tt.permissions),
@@ -781,7 +785,11 @@ func TestPatchOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 				hs.Cfg = setting.NewCfg()
 				hs.Cfg.RBACEnabled = tt.enableAccessControl
 				hs.orgService = &orgtest.FakeOrgService{}
-				hs.authInfoService = &logintest.AuthInfoServiceFake{}
+				hs.authInfoService = &logintest.AuthInfoServiceFake{
+					ExpectedUserAuth: &login.UserAuth{
+						AuthModule: "",
+					},
+				}
 				hs.accesscontrolService = &actest.FakeService{}
 				hs.userService = &usertest.FakeUserService{
 					ExpectedUser:         &user.User{},

@@ -39,7 +39,7 @@ const (
 	LDAPLabel = "LDAP"
 	JWTLabel  = "JWT"
 	// OAuth provider labels
-	AuthProxtLabel    = "Auth Proxy"
+	AuthProxyLabel    = "Auth Proxy"
 	AzureADLabel      = "AzureAD"
 	GoogleLabel       = "Google"
 	GenericOAuthLabel = "Generic OAuth"
@@ -56,6 +56,7 @@ const (
 // this means that if the user has multiple auth providers and one of them is set to sync org roles
 // then IsExternallySynced will be true for this one provider and false for the others
 func IsExternallySynced(cfg *setting.Cfg, autoProviderLabel string) bool {
+	// provider enabled in config
 	// first check SAML, LDAP and JWT
 	switch autoProviderLabel {
 	case SAMLLabel:
@@ -111,7 +112,7 @@ func GetAuthProviderLabel(authModule string) string {
 	case JWTModule:
 		return JWTLabel
 	case AuthProxyAuthModule:
-		return AuthProxtLabel
+		return AuthProxyLabel
 	case GenericOAuthModule:
 		return GenericOAuthLabel
 	default:
