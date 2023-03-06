@@ -7,7 +7,7 @@
 //          0
 //      ]
 //  }
-//  Name: 
+//  Name: Count
 //  Dimensions: 2 Fields by 3 Rows
 //  +-------------------------------+------------------+
 //  | Name: time                    | Name: value      |
@@ -26,6 +26,7 @@
   "frames": [
     {
       "schema": {
+        "name": "Count",
         "meta": {
           "type": "timeseries-multi",
           "typeVersion": [
@@ -48,10 +49,7 @@
               "frame": "float64",
               "nullable": true
             },
-            "labels": {},
-            "config": {
-              "displayName": "Count"
-            }
+            "labels": {}
           }
         ]
       },
