@@ -1,6 +1,7 @@
 package elasticsearch
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
@@ -1176,24 +1177,23 @@ func TestRawDocumentQuery(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Len(t, result.response.Responses, 1)
-	// FIXME: the whole raw_document format is not implemented currently
-	// frames := result.response.Responses["A"].Frames
-	// require.Len(t, frames, 1)
-	// fields := frames[0].Fields
+	frames := result.response.Responses["A"].Frames
+	require.Len(t, frames, 1)
+	fields := frames[0].Fields
 
-	// require.Len(t, fields, 1)
-	// f := fields[0]
+	require.Len(t, fields, 1)
+	f := fields[0]
 
-	// require.Equal(t, data.FieldTypeJSON, f.Type())
-	// require.Equal(t, 2, f.Len())
+	require.Equal(t, data.FieldTypeNullableJSON, f.Type())
+	require.Equal(t, 2, f.Len())
 
-	// v := f.At(0).(json.RawMessage)
-	// var jsonData map[string]interface{}
-	// err = json.Unmarshal(v, &jsonData)
-	// require.NoError(t, err)
+	v := f.At(0).(*json.RawMessage)
+	var jsonData map[string]interface{}
+	err = json.Unmarshal(*v, &jsonData)
+	require.NoError(t, err)
 
-	// require.Equal(t, "asd", jsonData["sourceProp"])
-	// require.Equal(t, "field", jsonData["fieldProp"])
+	require.Equal(t, "asd", jsonData["sourceProp"])
+	require.Equal(t, "field", jsonData["fieldProp"])
 }
 
 func TestBucketScript(t *testing.T) {
@@ -1391,24 +1391,24 @@ func TestRawData(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Len(t, result.response.Responses, 1)
-	// frames := result.response.Responses["A"].Frames
-	// require.True(t, len(frames) > 0) // FIXME
+	frames := result.response.Responses["A"].Frames
+	require.True(t, len(frames) > 0)
 
-	// for _, field := range frames[0].Fields {
-	// 	trueValue := true
-	// 	filterableConfig := data.FieldConfig{Filterable: &trueValue}
+	for _, field := range frames[0].Fields {
+		trueValue := true
+		filterableConfig := data.FieldConfig{Filterable: &trueValue}
 
-	// 	// we need to test that the only changed setting is `filterable`
-	// 	require.Equal(t, filterableConfig, *field.Config) // FIXME
-	// }
+		// we need to test that the only changed setting is `filterable`
+		require.Equal(t, filterableConfig, *field.Config)
+	}
 }
 
-func TestLogsAndCount(t *testing.T) {
+func TestLogs(t *testing.T) {
 	query := []byte(`
 	[
 		{
 		  "refId": "A",
-		  "metrics": [{ "type": "count", "id": "1" }],
+		  "metrics": [{ "type": "logs", "id": "1" }],
 		  "bucketAggs": [
 			{
 			  "type": "date_histogram",
@@ -1426,14 +1426,7 @@ func TestLogsAndCount(t *testing.T) {
 	{
 		"responses": [
 		  {
-			"aggregations": {
-			  "2": {
-				"buckets": [
-				  { "doc_count": 10, "key": 1000 },
-				  { "doc_count": 15, "key": 2000 }
-				]
-			  }
-			},
+			"aggregations": {},
 			"hits": {
 			  "hits": [
 				{
@@ -1444,8 +1437,8 @@ func TestLogsAndCount(t *testing.T) {
 					"@timestamp": "2019-06-24T09:51:19.765Z",
 					"host": "djisaodjsoad",
 					"number": 1,
-					"message": "hello, i am a message",
-					"level": "debug",
+					"line": "hello, i am a message",
+					"lvl": "debug",
 					"fields": { "lvl": "debug" }
 				  },
 				  "highlight": {
@@ -1462,8 +1455,8 @@ func TestLogsAndCount(t *testing.T) {
 					"@timestamp": "2019-06-24T09:52:19.765Z",
 					"host": "dsalkdakdop",
 					"number": 2,
-					"message": "hello, i am also message",
-					"level": "error",
+					"line": "hello, i am also message",
+					"lvl": "error",
 					"fields": { "lvl": "info" }
 				  },
 				  "highlight": {
@@ -1568,30 +1561,8 @@ func TestLogsAndCount(t *testing.T) {
 		// require.Equal(t, 15.0, testData[2000])
 	})
 
-	t.Run("level field", func(t *testing.T) {
-		// FIXME: config datasource with messageField=<unset>, levelField="level"
-		result, err := queryDataTest(query, response)
-		require.NoError(t, err)
-
-		require.Len(t, result.response.Responses, 1)
-		frames := result.response.Responses["A"].Frames
-		require.True(t, len(frames) > 0)
-
-		requireFrameLength(t, frames[0], 2)
-		fieldMap := make(map[string]*data.Field)
-		for _, field := range frames[0].Fields {
-			fieldMap[field.Name] = field
-		}
-
-		// require.Contains(t, fieldMap, "level") // FIXME
-		// field := fieldMap["level"]
-
-		// requireStringAt(t, "debug", field, 0)
-		// requireStringAt(t, "error", field, 1)
-	})
-
 	t.Run("level field remap", func(t *testing.T) {
-		// FIXME: config datasource with messageField=<unset>, levelField="fields.lvl"
+		// message field = line, level field = lvl
 		result, err := queryDataTest(query, response)
 		require.NoError(t, err)
 
@@ -1605,11 +1576,11 @@ func TestLogsAndCount(t *testing.T) {
 			fieldMap[field.Name] = field
 		}
 
-		// require.Contains(t, fieldMap, "level") // FIXME
-		// field := fieldMap["level"]
+		require.Contains(t, fieldMap, "level")
+		field := fieldMap["level"]
 
-		// requireStringAt(t, "debug", field, 0)
-		// requireStringAt(t, "info", field, 1)
+		requireStringAt(t, "debug", field, 0)
+		requireStringAt(t, "error", field, 1)
 	})
 }
 
@@ -1619,13 +1590,7 @@ func TestLogsEmptyResponse(t *testing.T) {
 		{
 		  "refId": "A",
 		  "metrics": [{ "type": "logs", "id": "2" }],
-		  "bucketAggs": [
-			{
-			  "type": "date_histogram",
-			  "settings": { "interval": "auto" },
-			  "id": "1"
-			}
-		  ],
+		  "bucketAggs": [],
 		  "key": "Q-1561369883389-0.7611823271062786-0",
 		  "query": "hello AND message"
 		}
@@ -1637,38 +1602,17 @@ func TestLogsEmptyResponse(t *testing.T) {
 		"responses": [
 		  {
 			"hits": { "hits": [] },
-			"aggregations": {
-			  "1": {
-				"buckets": [
-				  {
-					"key_as_string": "1633676760000",
-					"key": 1633676760000,
-					"doc_count": 0
-				  },
-				  {
-					"key_as_string": "1633676770000",
-					"key": 1633676770000,
-					"doc_count": 0
-				  },
-				  {
-					"key_as_string": "1633676780000",
-					"key": 1633676780000,
-					"doc_count": 0
-				  }
-				]
-			  }
-			},
+			"aggregations": {},
 			"status": 200
 		  }
 		]
 	}
 	`)
 
-	// FIXME: config datasource with messageField="message", levelField="level"
 	result, err := queryDataTest(query, response)
 	require.NoError(t, err)
 
 	require.Len(t, result.response.Responses, 1)
-	// frames := result.response.Responses["A"].Frames
-	// require.Len(t, frames, 2) // FIXME
+	frames := result.response.Responses["A"].Frames
+	require.Len(t, frames, 1)
 }
