@@ -380,7 +380,7 @@ func treeToNestedSetDataFrame(tree *ProfileTree, profileTypeID string) *data.Fra
 		selfField.Append(tree.Self)
 		// todo: inline functions
 		// tree.Inlined
-		labelField.Append(tree.Function.String())
+		labelField.Append(tree.Function.FunctionName)
 		lineNumberField.Append(tree.Function.Line)
 		fileNameField.Append(tree.Function.FileName)
 	})
