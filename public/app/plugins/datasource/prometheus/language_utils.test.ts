@@ -1,10 +1,15 @@
-import { AbstractLabelOperator, AbstractQuery } from '@grafana/data';
+import { Moment } from 'moment';
 
+import { AbstractLabelOperator, AbstractQuery, DateTime, dateTime, TimeRange } from '@grafana/data';
+
+import { PrometheusCacheLevel } from './datasource';
 import {
   escapeLabelValueInExactSelector,
   escapeLabelValueInRegexSelector,
   expandRecordingRules,
   fixSummariesMetadata,
+  getPrometheusTime,
+  getRangeSnapInterval,
   parseSelector,
   toPromLikeQuery,
 } from './language_utils';
@@ -219,6 +224,157 @@ describe('escapeLabelValueInRegexSelector()', () => {
     expect(escapeLabelValueInRegexSelector('t\\e"s+t\nl\n$ab"e\\l')).toBe(
       't\\\\\\\\e\\"s\\\\+t\\nl\\n\\\\$ab\\"e\\\\\\\\l'
     );
+  });
+});
+
+describe('getRangeSnapInterval', () => {
+  it('will not change input if set to no cache', () => {
+    const intervalSeconds = 10 * 60; // 10 minutes
+    const now = new Date().valueOf();
+
+    const expectedFrom = dateTime(now - intervalSeconds * 1000);
+    const expectedTo = dateTime(now);
+
+    const range: TimeRange = {
+      from: expectedFrom,
+      to: expectedTo,
+    } as TimeRange;
+
+    expect(getRangeSnapInterval(PrometheusCacheLevel.none, range)).toEqual({
+      start: getPrometheusTime(expectedFrom, false).toString(),
+      end: getPrometheusTime(expectedTo, true).toString(),
+    });
+  });
+
+  it('will snap range to closest minute', () => {
+    const queryDurationMinutes = 10;
+    const intervalSeconds = queryDurationMinutes * 60; // 10 minutes
+    const now = new Date().valueOf();
+    const nowPlusOneMinute = now + 1000 * 60;
+    const nowPlusTwoMinute = now + 1000 * 60 * 2;
+
+    const nowTime = dateTime(now) as Moment;
+
+    const expectedFrom = nowTime.clone().startOf('minute').subtract(queryDurationMinutes, 'minute');
+    const expectedTo = nowTime.clone().startOf('minute').add(1, 'minute');
+
+    const range: TimeRange = {
+      from: dateTime(now - intervalSeconds * 1000),
+      to: dateTime(now),
+    } as TimeRange;
+
+    const range2: TimeRange = {
+      from: dateTime(nowPlusOneMinute - intervalSeconds * 1000),
+      to: dateTime(nowPlusOneMinute),
+      raw: {
+        from: dateTime(nowPlusOneMinute - intervalSeconds * 1000),
+        to: dateTime(nowPlusOneMinute),
+      },
+    };
+    const range3: TimeRange = {
+      from: dateTime(nowPlusTwoMinute - intervalSeconds * 1000),
+      to: dateTime(nowPlusTwoMinute),
+      raw: {
+        from: dateTime(nowPlusTwoMinute - intervalSeconds * 1000),
+        to: dateTime(nowPlusTwoMinute),
+      },
+    };
+
+    const first = getRangeSnapInterval(PrometheusCacheLevel.low, range);
+    const second = getRangeSnapInterval(PrometheusCacheLevel.low, range2);
+    const third = getRangeSnapInterval(PrometheusCacheLevel.low, range3);
+
+    expect(first).toEqual({
+      start: getPrometheusTime(expectedFrom as DateTime, false).toString(10),
+      end: getPrometheusTime(expectedTo as DateTime, false).toString(10),
+    });
+
+    expect(second).toEqual({
+      start: getPrometheusTime(expectedFrom.clone().add(1, 'minute') as DateTime, false).toString(10),
+      end: getPrometheusTime(expectedTo.clone().add(1, 'minute') as DateTime, false).toString(10),
+    });
+
+    expect(third).toEqual({
+      start: getPrometheusTime(expectedFrom.clone().add(2, 'minute') as DateTime, false).toString(10),
+      end: getPrometheusTime(expectedTo.clone().add(2, 'minute') as DateTime, false).toString(10),
+    });
+  });
+
+  it('will snap range to closest 10 minute', () => {
+    const queryDurationMinutes = 60;
+    const intervalSeconds = queryDurationMinutes * 60; // 10 minutes
+    const now = new Date().valueOf();
+    const nowPlusOneMinute = now + 1000 * 60;
+    const nowPlusTwoMinute = now + 1000 * 60 * 2;
+
+    const nowTime = dateTime(now) as Moment;
+    const nowTimePlusOne = dateTime(nowPlusOneMinute) as Moment;
+    const nowTimePlusTwo = dateTime(nowPlusTwoMinute) as Moment;
+
+    const calculateClosest10 = (date: Moment): Moment => {
+      const numberOfMinutes = Math.floor(date.minutes() / 10) * 10;
+      const numberOfHours = numberOfMinutes < 60 ? date.hours() : date.hours() + 1;
+      return date
+        .clone()
+        .minutes(numberOfMinutes % 60)
+        .hours(numberOfHours);
+    };
+
+    const expectedFromFirst = calculateClosest10(
+      nowTime.clone().startOf('minute').subtract(queryDurationMinutes, 'minute')
+    );
+    const expectedToFirst = calculateClosest10(nowTime.clone().startOf('minute').add(1, 'minute'));
+
+    const expectedFromSecond = calculateClosest10(
+      nowTimePlusOne.clone().startOf('minute').subtract(queryDurationMinutes, 'minute')
+    );
+    const expectedToSecond = calculateClosest10(nowTimePlusOne.clone().startOf('minute').add(1, 'minute'));
+
+    const expectedFromThird = calculateClosest10(
+      nowTimePlusTwo.clone().startOf('minute').subtract(queryDurationMinutes, 'minute')
+    );
+    const expectedToThird = calculateClosest10(nowTimePlusTwo.clone().startOf('minute').add(1, 'minute'));
+
+    const range: TimeRange = {
+      from: dateTime(now - intervalSeconds * 1000),
+      to: dateTime(now),
+    } as TimeRange;
+
+    const range2: TimeRange = {
+      from: dateTime(nowPlusOneMinute - intervalSeconds * 1000),
+      to: dateTime(nowPlusOneMinute),
+      raw: {
+        from: dateTime(nowPlusOneMinute - intervalSeconds * 1000),
+        to: dateTime(nowPlusOneMinute),
+      },
+    };
+    const range3: TimeRange = {
+      from: dateTime(nowPlusTwoMinute - intervalSeconds * 1000),
+      to: dateTime(nowPlusTwoMinute),
+      raw: {
+        from: dateTime(nowPlusTwoMinute - intervalSeconds * 1000),
+        to: dateTime(nowPlusTwoMinute),
+      },
+    };
+
+    const first = getRangeSnapInterval(PrometheusCacheLevel.medium, range);
+    const second = getRangeSnapInterval(PrometheusCacheLevel.medium, range2);
+    const third = getRangeSnapInterval(PrometheusCacheLevel.medium, range3);
+
+    expect(first).toEqual({
+      start: getPrometheusTime(expectedFromFirst as DateTime, false).toString(10),
+      end: getPrometheusTime(expectedToFirst as DateTime, false).toString(10),
+    });
+
+    expect(second).toEqual({
+      start: getPrometheusTime(expectedFromSecond.clone() as DateTime, false).toString(10),
+      end: getPrometheusTime(expectedToSecond.clone() as DateTime, false).toString(10),
+    });
+
+    expect(third).toEqual({
+      start: getPrometheusTime(expectedFromThird.clone() as DateTime, false).toString(10),
+      end: getPrometheusTime(expectedToThird.clone() as DateTime, false).toString(10),
+    });
   });
 });
 
