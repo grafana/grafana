@@ -42,6 +42,7 @@ describe('Language completion provider', () => {
     getQuantizedTimeRangeParams: () =>
       getRangeSnapInterval(PrometheusCacheLevel.none, getMockQuantizedTimeRangeParams()),
     getDaysToCacheMetadata: () => 1,
+    getAdjustedInterval: () => getRangeSnapInterval(PrometheusCacheLevel.none, getMockQuantizedTimeRangeParams()),
     cacheLevel: PrometheusCacheLevel.none,
   } as unknown as PrometheusDatasource;
 
@@ -187,7 +188,6 @@ describe('Language completion provider', () => {
     it('should call old series endpoint and should use match[] parameter', () => {
       const languageProvider = new LanguageProvider({
         ...defaultDatasource,
-        getAdjustedInterval: () => getRangeSnapInterval(PrometheusCacheLevel.none, getMockQuantizedTimeRangeParams()),
       } as PrometheusDatasource);
       const getSeriesValues = languageProvider.getSeriesValues;
       const requestSpy = jest.spyOn(languageProvider, 'request');
