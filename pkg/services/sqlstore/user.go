@@ -139,7 +139,7 @@ func verifyExistingOrg(sess *DBSession, orgId int64) error {
 		return err
 	}
 	if !has {
-		return org.ErrOrgNotFound
+		return org.ErrOrgNotFound.Errorf("failed to verify existing org")
 	}
 	return nil
 }
