@@ -34,7 +34,8 @@ export const Messages = {
     dbaasLink: `${HOW_TO_DOC_URL}#dbaas`,
     accessControl: 'Access control',
     accessControlTooltip: 'Option to enable/disable Access control.',
-    accessControlLink: 'https://docs.percona.com/percona-monitoring-and-management/get-started/access-control.html',
+    accessControlLink:
+      'https://docs.percona.com/percona-monitoring-and-management/get-started/roles-and-permissions/index.html',
     publicAddressLabel: 'Public Address',
     publicAddressTooltip: 'Public Address to this PMM server.',
     publicAddressButton: 'Get from browser',
