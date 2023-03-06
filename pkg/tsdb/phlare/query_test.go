@@ -2,6 +2,9 @@ package phlare
 
 import (
 	"context"
+	"encoding/json"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -457,6 +460,20 @@ func Test_profileAsTree(t *testing.T) {
 			actual := profileAsTree(tc.in)
 			require.Equal(t, tc.want, actual, "want\n%s\n got\n%s", tc.want, actual)
 		})
+	}
+}
+
+func Benchmark_profileAsTree(b *testing.B) {
+	wd, err := os.Getwd()
+	require.NoError(b, err)
+	profJson, err := os.ReadFile(filepath.Join(wd, "./testdata/profile_response.json"))
+	require.NoError(b, err)
+	var prof *googlev1.Profile
+	err = json.Unmarshal(profJson, &prof)
+	require.NoError(b, err)
+
+	for i := 0; i < b.N; i++ {
+		profileAsTree(prof)
 	}
 }
 
