@@ -1438,7 +1438,7 @@ func TestLogs(t *testing.T) {
 					"host": "djisaodjsoad",
 					"number": 1,
 					"line": "hello, i am a message",
-					"lvl": "debug",
+					"level": "debug",
 					"fields": { "lvl": "debug" }
 				  },
 				  "highlight": {
@@ -1456,7 +1456,7 @@ func TestLogs(t *testing.T) {
 					"host": "dsalkdakdop",
 					"number": 2,
 					"line": "hello, i am also message",
-					"lvl": "error",
+					"level": "error",
 					"fields": { "lvl": "info" }
 				  },
 				  "highlight": {
@@ -1582,6 +1582,7 @@ func TestLogs(t *testing.T) {
 		requireStringAt(t, "debug", field, 0)
 		requireStringAt(t, "error", field, 1)
 	})
+
 }
 
 func TestLogsEmptyResponse(t *testing.T) {
