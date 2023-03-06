@@ -354,7 +354,7 @@ export function getFooterItems(
     // Test for actual data in the filterField.
     const fieldType = data?.field?.type;
 
-    // If it is a filler field (only an id prop -> {id: string}), the return undefined
+    // If it is a filler field (only an id prop -> {id: string}), the return undefined, which will render an <EmptyCell />.
     if (fieldType === undefined) {
       return undefined;
     }
@@ -366,7 +366,7 @@ export function getFooterItems(
         const reducer = fieldReducers.get(options.reducer[0]);
         return reducer.name;
       }
-      // Otherwise return `undefined`, which will render an <EmptyCell />.
+      // Render an <EmptyCell />.
       return undefined;
     }
 
