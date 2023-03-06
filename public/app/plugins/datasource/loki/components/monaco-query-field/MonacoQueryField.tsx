@@ -10,7 +10,7 @@ import { languageConfiguration, monarchlanguage } from '@grafana/monaco-logql';
 import { useTheme2, ReactMonacoEditor, Monaco, monacoTypes, MonacoEditor } from '@grafana/ui';
 
 import { isValidQuery } from '../../queryUtils';
-import { makeStatsRequest, shouldUpdateStats } from '../stats';
+import { getStats, shouldUpdateStats } from '../stats';
 
 import { Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';
@@ -150,7 +150,7 @@ const MonacoQueryField = ({
     editor.onDidChangeModelContent(checkDecorators);
   };
 
-  const onType = debounce(async (query: string) => {
+  const onTypeDebounced = debounce(async (query: string) => {
     if (isValidQuery(query) === false) {
       return;
     }
@@ -161,7 +161,7 @@ const MonacoQueryField = ({
 
     const update = shouldUpdateStats(query, previousQuery, timerange, previousTimerange);
     if (update) {
-      const stats = await makeStatsRequest(datasource, query);
+      const stats = await getStats(datasource, query);
       stats ? setQueryStats!(stats) : setQueryStats!(undefined);
     }
   }, 1000);
@@ -210,7 +210,7 @@ const MonacoQueryField = ({
               ...boundary,
             }));
 
-            onType(query);
+            onTypeDebounced(query);
             monaco.editor.setModelMarkers(model, 'owner', markers);
           });
           const dataProvider = new CompletionDataProvider(langProviderRef.current, historyRef);

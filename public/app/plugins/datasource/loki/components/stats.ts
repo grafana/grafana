@@ -3,7 +3,7 @@ import { TimeRange } from '@grafana/data';
 import { LokiDatasource } from '../datasource';
 import { QueryStats } from '../types';
 
-export async function makeStatsRequest(datasource: LokiDatasource, query: string): Promise<QueryStats | undefined> {
+export async function getStats(datasource: LokiDatasource, query: string): Promise<QueryStats | undefined> {
   if (!query) {
     return undefined;
   }

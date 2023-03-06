@@ -2,7 +2,7 @@ import { TimeRange } from '@grafana/data';
 
 import { createLokiDatasource } from '../mocks';
 
-import { makeStatsRequest, shouldUpdateStats } from './stats';
+import { getStats, shouldUpdateStats } from './stats';
 
 describe('shouldUpdateStats', () => {
   it('should return true if the query has changed', () => {
@@ -34,13 +34,13 @@ describe('makeStatsRequest', () => {
 
   it('should return undefined if there is no query', () => {
     const query = '';
-    expect(makeStatsRequest(datasource, query)).resolves.toBe(undefined);
+    expect(getStats(datasource, query)).resolves.toBe(undefined); // change
   });
 
   it('should return undefined if the response has no data', () => {
     const query = '{job="grafana"}';
     datasource.getQueryStats = jest.fn().mockResolvedValue({ streams: 0, chunks: 0, bytes: 0, entries: 0 });
-    expect(makeStatsRequest(datasource, query)).resolves.toBe(undefined);
+    expect(getStats(datasource, query)).resolves.toBe(undefined);
   });
 
   it('should return the stats if the response has data', () => {
@@ -49,7 +49,7 @@ describe('makeStatsRequest', () => {
     datasource.getQueryStats = jest
       .fn()
       .mockResolvedValue({ streams: 1, chunks: 12611, bytes: 12913664, entries: 78344 });
-    expect(makeStatsRequest(datasource, query)).resolves.toEqual({
+    expect(getStats(datasource, query)).resolves.toEqual({
       streams: 1,
       chunks: 12611,
       bytes: 12913664,

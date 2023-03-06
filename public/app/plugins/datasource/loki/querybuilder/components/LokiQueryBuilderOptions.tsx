@@ -8,7 +8,7 @@ import { RadioButtonGroup, Select, AutoSizeInput } from '@grafana/ui';
 import { QueryOptionGroup } from 'app/plugins/datasource/prometheus/querybuilder/shared/QueryOptionGroup';
 
 import { preprocessMaxLines, queryTypeOptions, RESOLUTION_OPTIONS } from '../../components/LokiOptionFields';
-import { makeStatsRequest, shouldUpdateStats } from '../../components/stats';
+import { getStats, shouldUpdateStats } from '../../components/stats';
 import { LokiDatasource } from '../../datasource';
 import { isLogsQuery } from '../../queryUtils';
 import { LokiQuery, LokiQueryType, QueryStats } from '../../types';
@@ -61,7 +61,7 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
       const update = shouldUpdateStats(query.expr, previousQuery, timerange, previousTimerange);
       if (update) {
         const makeAsyncRequest = async () => {
-          const stats = await makeStatsRequest(datasource, query.expr);
+          const stats = await getStats(datasource, query.expr);
           stats ? setQueryStats(stats) : setQueryStats(undefined);
         };
         makeAsyncRequest();
