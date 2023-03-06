@@ -57,11 +57,6 @@ export const Table = memo((props: Props) => {
     footerValues,
     enablePagination,
   } = props;
-  // console.log('🚀 ~ file: Table.tsx:60 ~ Table ~ data:', data);
-  // console.log('🚀 ~ file: Table.tsx:61 ~ Table ~ data.fields:', data.fields);
-  // console.log('🚀 ~ file: Table.tsx:60 ~ Table ~ footerOptions:', footerOptions);
-  // console.log('🚀 ~ file: Table.tsx:60 ~ Table ~ footerValues:', footerValues);
-  // console.log("🚀 ~ file: Table.tsx:60 ~ Table ~ props:", props)
 
   const listRef = useRef<VariableSizeList>(null);
   const tableDivRef = useRef<HTMLDivElement>(null);
@@ -119,9 +114,6 @@ export const Table = memo((props: Props) => {
       getColumns(addRowNumbersFieldToData(data), width, columnMinWidth, !!subData?.length, footerItems, isCountRowsSet),
     [data, width, columnMinWidth, footerItems, subData, isCountRowsSet]
   );
-  // JEV, memoized columns be broke
-  // If a column is override hidden, the column in not built
-  // console.log('🚀 ~ file: Table.tsx:121 ~ Table ~ memoizedColumns:', memoizedColumns);
 
   // Internal react table state reducer
   const stateReducer = useTableStateReducer(props);
@@ -155,8 +147,6 @@ export const Table = memo((props: Props) => {
     pageOptions,
     setHiddenColumns,
   } = useTable(options, useFilters, useSortBy, useAbsoluteLayout, useResizeColumns, useExpanded, usePagination);
-  // console.log('🚀 ~ file: Table.tsx:158 ~ Table ~ headerGroups:', headerGroups);
-  // console.log('🚀 ~ file: Table.tsx:158 ~ Table ~ rows:', rows);
 
   const extendedState = state as GrafanaTableState;
 
@@ -199,11 +189,6 @@ export const Table = memo((props: Props) => {
       return;
     }
 
-    // console.log(rows, 'rows');
-    // console.log(headerGroups[0].headers, 'headerGroups[0].headers');
-    // JEV: rebuild header groups id based on index
-    // const newHeaderGroups = headerGroups[0].headers.map((header, index) => ({ ...header, id: String(index + 1) }));
-    // console.log('🚀 ~ file: Table.tsx:205 ~ useEffect ~ newHeaderGroups:', newHeaderGroups);
     const footerItems = getFooterItems(
       /*
         The `headerGroups` object is NOT based on the `data.fields`, but instead on the currently rendered headers in the Table,
@@ -215,7 +200,6 @@ export const Table = memo((props: Props) => {
       footerOptions,
       theme
     );
-    // console.log('🚀 ~ file: Table.tsx:207 ~ useEffect ~ footerItems:', footerItems);
 
     setFooterItems(footerItems);
     // eslint-disable-next-line react-hooks/exhaustive-deps
