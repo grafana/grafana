@@ -29,7 +29,6 @@ func AddDefaultResponseHeaders(cfg *setting.Cfg) web.Handler {
 	t := web.NewTree()
 	t.Add("/api/datasources/uid/:uid/resources/*", nil)
 	t.Add("/api/datasources/:id/resources/*", nil)
-	t.Add("/public/plugins/:pluginId/*", nil)
 	return func(c *web.Context) {
 		c.Resp.Before(func(w web.ResponseWriter) { // if response has already been written, skip.
 			if w.Written() {
@@ -38,7 +37,8 @@ func AddDefaultResponseHeaders(cfg *setting.Cfg) web.Handler {
 
 			_, _, resourceURLMatch := t.Match(c.Req.URL.Path)
 			resourceCachable := resourceURLMatch && allowCacheControl(c.Resp)
-			if !strings.HasPrefix(c.Req.URL.Path, "/api/datasources/proxy/") && !resourceCachable {
+			if !strings.HasPrefix(c.Req.URL.Path, "/public/plugins/") &&
+				!strings.HasPrefix(c.Req.URL.Path, "/api/datasources/proxy/") && !resourceCachable {
 				addNoCacheHeaders(c.Resp)
 			}
 
@@ -100,23 +100,12 @@ func AddCustomResponseHeaders(cfg *setting.Cfg) web.Handler {
 	}
 }
 
-// allowCacheControl checks if an HTTP Response is permitted to use its existing Cache-Control header values.
-// There are two cases where the existing Cache-Control header is permitted:
-// - `X-Grafana-Cache` header is not empty
-// - `Cache-Control` header includes `private`
-// - `Cache-Control` header does not include `public`
-// Or
-// - `X-Grafana-Cache` header is not empty
-// - `Cache-Control` header includes `public`
-// - `Cache-Control` header does not include `private`
-// - `X-Grafana-Public-Cache` header must be set to `true`
 func allowCacheControl(rw web.ResponseWriter) bool {
 	ccHeaderValues := rw.Header().Values("Cache-Control")
 
 	if len(ccHeaderValues) == 0 {
 		return false
 	}
-
 	foundPrivate := false
 	foundPublic := false
 	for _, val := range ccHeaderValues {
@@ -129,11 +118,5 @@ func allowCacheControl(rw web.ResponseWriter) bool {
 		}
 	}
 
-	cacheAllowed := rw.Header().Get("X-Grafana-Cache") != ""
-	publicCacheAllowed := rw.Header().Get("X-Grafana-Public-Cache") == "true"
-	if foundPublic && !foundPrivate && publicCacheAllowed {
-		return cacheAllowed
-	}
-
-	return foundPrivate && !foundPublic && cacheAllowed
+	return foundPrivate && !foundPublic && rw.Header().Get("X-Grafana-Cache") != ""
 }
