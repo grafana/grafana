@@ -33,7 +33,8 @@ func AddDefaultResponseHeaders(cfg *setting.Cfg) web.Handler {
 				return
 			}
 
-			if !strings.HasPrefix(c.Req.URL.Path, "/api/datasources/proxy/") {
+			if !strings.HasPrefix(c.Req.URL.Path, "/public/plugins/") &&
+				!strings.HasPrefix(c.Req.URL.Path, "/api/datasources/proxy/") {
 				addNoCacheHeaders(c.Resp)
 			}
 
