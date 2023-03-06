@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/xorcare/pointer"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -108,6 +109,7 @@ func Test_getOrCreate(t *testing.T) {
 			assert.Equal(t, expected, state.Labels["rule-"+key])
 		}
 	})
+
 	t.Run("rule annotations should be able to be expanded with result and extra labels", func(t *testing.T) {
 		result := eval.Result{
 			Instance: models.GenerateAlertLabels(5, "result-"),
@@ -133,6 +135,34 @@ func Test_getOrCreate(t *testing.T) {
 		for key, expected := range result.Instance {
 			assert.Equal(t, expected, state.Annotations["rule-"+key])
 		}
+	})
+
+	t.Run("expected Reduce and Math expression values", func(t *testing.T) {
+		result := eval.Result{
+			Instance: models.GenerateAlertLabels(5, "result-"),
+			Values: map[string]eval.NumberValueCapture{
+				"A": eval.NumberValueCapture{Var: "A", Value: pointer.Float64(1.0)},
+				"B": eval.NumberValueCapture{Var: "B", Value: pointer.Float64(2.0)},
+			},
+		}
+		rule := generateRule()
+
+		state := c.getOrCreate(context.Background(), l, rule, result, nil, url)
+		assert.Equal(t, map[string]float64{"A": 1, "B": 2}, state.Values)
+	})
+
+	t.Run("expected Classic Condition values", func(t *testing.T) {
+		result := eval.Result{
+			Instance: models.GenerateAlertLabels(5, "result-"),
+			Values: map[string]eval.NumberValueCapture{
+				"B0": eval.NumberValueCapture{Var: "B", Value: pointer.Float64(1.0)},
+				"B1": eval.NumberValueCapture{Var: "B", Value: pointer.Float64(2.0)},
+			},
+		}
+		rule := generateRule()
+
+		state := c.getOrCreate(context.Background(), l, rule, result, nil, url)
+		assert.Equal(t, map[string]float64{"B0": 1, "B1": 2}, state.Values)
 	})
 }
 
