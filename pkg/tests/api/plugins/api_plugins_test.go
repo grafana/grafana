@@ -137,7 +137,7 @@ func TestIntegrationPluginAssets(t *testing.T) {
 				env:             setting.Dev,
 				url:             "http://%s/public/plugins/testdata/img/testdata.svg",
 				expStatus:       http.StatusOK,
-				expCacheControl: "private, max-age=0, must-revalidate, no-cache",
+				expCacheControl: "max-age=0, must-revalidate, no-cache",
 			},
 			{
 				desc:            "should return cache settings for Prod env",
