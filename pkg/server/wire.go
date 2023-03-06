@@ -30,6 +30,7 @@ import (
 	loginpkg "github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
+	"github.com/grafana/grafana/pkg/modules"
 	pluginDashboards "github.com/grafana/grafana/pkg/plugins/manager/dashboards"
 	"github.com/grafana/grafana/pkg/registry/corecrd"
 	"github.com/grafana/grafana/pkg/registry/corekind"
@@ -370,6 +371,7 @@ var wireBasicSet = wire.NewSet(
 	supportbundlesimpl.ProvideService,
 	corecrd.New,
 	k8s.WireSet,
+	modules.WireSet,
 )
 
 var wireSet = wire.NewSet(
