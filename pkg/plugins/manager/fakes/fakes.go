@@ -322,6 +322,7 @@ type FakeLicensingService struct {
 	LicenseEdition string
 	TokenRaw       string
 	LicensePath    string
+	LicenseAppUrl  string
 }
 
 func NewFakeLicensingService() *FakeLicensingService {
@@ -334,6 +335,10 @@ func (s *FakeLicensingService) Edition() string {
 
 func (s *FakeLicensingService) Path() string {
 	return s.LicensePath
+}
+
+func (s *FakeLicensingService) AppUrl() string {
+	return s.LicenseAppUrl
 }
 
 func (s *FakeLicensingService) Environment() []string {

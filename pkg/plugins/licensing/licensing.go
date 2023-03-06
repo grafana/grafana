@@ -9,12 +9,14 @@ import (
 
 type Service struct {
 	licensePath string
+	appUrl      string
 	license     licensing.Licensing
 }
 
 func ProvideLicensing(cfg *setting.Cfg, l licensing.Licensing) *Service {
 	return &Service{
 		licensePath: cfg.EnterpriseLicensePath,
+		appUrl:      cfg.AppURL,
 		license:     l,
 	}
 }
@@ -35,4 +37,8 @@ func (l Service) Edition() string {
 
 func (l Service) Path() string {
 	return l.licensePath
+}
+
+func (l Service) AppUrl() string {
+	return l.appUrl
 }
