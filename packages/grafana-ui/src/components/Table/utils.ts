@@ -318,7 +318,7 @@ function toNumber(value: any): number {
 }
 
 export function getFooterItems(
-  filterFields: Array<{ id: string; field: Field } | undefined>,
+  filterFields: Array<{ id: string; field?: Field } | undefined>,
   values: any[number],
   options: TableFooterCalc,
   theme2: GrafanaTheme2
@@ -337,19 +337,24 @@ export function getFooterItems(
     filterFields = [fieldToAdd, ...filterFields];
   }
 
-  // JEV: annotate this!!!
-  const missingIndex = filterFields.findIndex((field, index) => field?.id !== String(index));
+  /* 
+    The FooterItems[] are calculated using both the `headerGroups[0].headers` (filterFields) and `rows` (values) destructured from the useTable() hook.
+    This cacluation is based on using the data from each index in `filterFields` array to then calculate the `FooterItem` value from the corresponding
+    index in the `values` array. When the user hides a column through an override, the getColumns() hook is invoked, removes said column, sends the column
+    data to the useTable() hook, which then builds `headerGroups[0].headers` without the hidden column. However, it doesn't remove the hidden column from the `row`
+    data, instead it substututes the hidden column row data with an `undefined` value. The `row` length never changes, despite the `headerGroups[0].headers` length
+    changing at every column removal. This makes all footer reduce calculations AFTER the first hidden column in the `headerGroups[0].headers` brake.
 
-  if (missingIndex !== -1) {
-    filterFields.splice(missingIndex, 0, undefined);
-  }
+    Here we simply recursively test for a hidden column from `headerGroups[0].headers` (each column has an ID that corresponds to its own index)
+  */
+  addMissingColumnIndex(filterFields);
 
   return filterFields.map((data, i) => {
     if (data === undefined) {
       return undefined;
     }
 
-    if (data.field.type !== FieldType.number) {
+    if (data?.field?.type !== FieldType.number) {
       // Show the reducer type ("Total", "Range", "Count", "Delta", etc) in the first non "Row Number" column, only if it cannot be numerically reduced.
       if (i === 1 && options.reducer && options.reducer.length > 0) {
         const reducer = fieldReducers.get(options.reducer[0]);
@@ -366,7 +371,7 @@ export function getFooterItems(
     data.field = newField;
 
     if (options.fields && options.fields.length > 0) {
-      const f = options.fields.find((f) => f === data.field.name);
+      const f = options.fields.find((f) => f === data?.field?.name);
       if (f) {
         return getFormattedValue(data.field, options.reducer, theme2);
       }
@@ -488,3 +493,18 @@ export const defaultRowNumberColumnFieldData: Omit<Field, 'values'> = {
     },
   },
 };
+
+function addMissingColumnIndex(columns: Array<{ id: string; field?: Field } | undefined>): void {
+  const missingIndex = columns.findIndex((field, index) => field?.id !== String(index));
+
+  // Base case
+  if (missingIndex === -1) {
+    return;
+  }
+
+  // Splice in missing "column"
+  columns.splice(missingIndex, 0, { id: String(missingIndex) });
+
+  // Recurse
+  addMissingColumnIndex(columns);
+}
