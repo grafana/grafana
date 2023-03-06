@@ -13,9 +13,6 @@ interface Props extends PanelProps<PanelOptions> {}
 
 export function TablePanel(props: Props) {
   const { data, height, width, options, fieldConfig, id } = props;
-  // console.log('🚀 ~ file: TablePanel.tsx:16 ~ TablePanel ~ props:', props.fieldConfig.overrides[0]);
-  // console.log('🚀 ~ file: TablePanel.tsx:16 ~ TablePanel ~ fieldConfig:', fieldConfig);
-  // console.log("🚀 ~ file: TablePanel.tsx:16 ~ TablePanel ~ options:", options)
 
   const theme = useTheme2();
   const panelContext = usePanelContext();
