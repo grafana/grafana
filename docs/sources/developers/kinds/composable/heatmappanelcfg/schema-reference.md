@@ -209,21 +209,24 @@ TODO docs
 
 Controls cell value unit
 
-| Property | Type | Required | Description |
-|----------|------|----------|-------------|
+| Property | Type                              | Required | Description |
+|----------|-----------------------------------|----------|-------------|
+| `object` | Possible types are: [](#), [](#). |          |             |
 
 ### Color
 
 Controls the color options
 
-| Property | Type | Required | Description |
-|----------|------|----------|-------------|
+| Property | Type                              | Required | Description |
+|----------|-----------------------------------|----------|-------------|
+| `object` | Possible types are: [](#), [](#). |          |             |
 
 ### FilterValues
 
 Filters values between a given range
 
-| Property | Type | Required | Description |
-|----------|------|----------|-------------|
+| Property | Type                              | Required | Description |
+|----------|-----------------------------------|----------|-------------|
+| `object` | Possible types are: [](#), [](#). |          |             |
 
 

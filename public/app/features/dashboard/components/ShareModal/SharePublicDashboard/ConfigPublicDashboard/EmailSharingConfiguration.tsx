@@ -22,7 +22,7 @@ import {
 } from 'app/features/dashboard/api/publicDashboardApi';
 import { useSelector } from 'app/types';
 
-import { PublicDashboardShareType, validEmailRegex } from '../SharePublicDashboardUtils';
+import { PublicDashboard, PublicDashboardShareType, validEmailRegex } from '../SharePublicDashboardUtils';
 
 interface EmailSharingConfigurationForm {
   shareType: PublicDashboardShareType;
@@ -41,23 +41,23 @@ const EmailList = ({
   dashboardUid,
   publicDashboardUid,
 }: {
-  recipients: string[];
+  recipients: PublicDashboard['recipients'];
   dashboardUid: string;
   publicDashboardUid: string;
 }) => {
   const styles = useStyles2(getStyles);
   const [deleteEmail, { isLoading: isDeleteLoading }] = useDeleteEmailSharingMutation();
 
-  const onDeleteEmail = (email: string) => {
-    deleteEmail({ recipient: email, dashboardUid: dashboardUid, uid: publicDashboardUid });
+  const onDeleteEmail = (recipientUid: string) => {
+    deleteEmail({ recipientUid, dashboardUid: dashboardUid, uid: publicDashboardUid });
   };
 
   return (
     <table className={styles.table} data-testid={selectors.EmailSharingList}>
       <tbody>
-        {recipients.map((recipient) => (
-          <tr key={recipient}>
-            <td>{recipient}</td>
+        {recipients!.map((recipient) => (
+          <tr key={recipient.uid}>
+            <td>{recipient.recipient}</td>
             <td>
               <ButtonGroup className={styles.tableButtonsContainer}>
                 <Button
@@ -68,7 +68,7 @@ const EmailList = ({
                   title="Revoke"
                   size="sm"
                   disabled={isDeleteLoading}
-                  onClick={() => onDeleteEmail(recipient)}
+                  onClick={() => onDeleteEmail(recipient.uid)}
                 >
                   Revoke
                 </Button>
