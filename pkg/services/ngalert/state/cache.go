@@ -52,11 +52,11 @@ func (rs *ruleStates) getOrCreate(ctx context.Context, log log.Logger, alertRule
 	ruleLabels, annotations := rs.expandRuleLabelsAndAnnotations(ctx, log, alertRule, result, extraLabels, externalURL)
 
 	values := make(map[string]float64)
-	for _, v := range result.Values {
+	for refID, v := range result.Values {
 		if v.Value != nil {
-			values[v.Var] = *v.Value
+			values[refID] = *v.Value
 		} else {
-			values[v.Var] = math.NaN()
+			values[refID] = math.NaN()
 		}
 	}
 
