@@ -16,6 +16,7 @@ export function LokiQueryEditorForAlerting(props: LokiQueryEditorProps) {
       data={data}
       placeholder="Enter a Loki query"
       data-testid={testIds.editor}
+      setQueryStats={() => {}}
     />
   );
 }

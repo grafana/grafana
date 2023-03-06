@@ -25,6 +25,7 @@ describe('LokiQueryField', () => {
       onRunQuery: () => {},
       onChange: () => {},
       history: [],
+      setQueryStats: jest.fn(),
     };
     jest.spyOn(props.datasource.languageProvider, 'start').mockResolvedValue([]);
     jest.spyOn(props.datasource.languageProvider, 'fetchLabels').mockResolvedValue(['label1']);

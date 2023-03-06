@@ -57,6 +57,7 @@ export const LokiAnnotationsQueryEditor = memo(function LokiAnnotationQueryEdito
           onChange={onChangeQuery}
           onRunQuery={() => {}}
           history={history}
+          setQueryStats={() => {}}
           ExtraFieldElement={
             <LokiOptionFields
               lineLimitValue={queryWithRefId?.maxLines?.toString() || ''}
