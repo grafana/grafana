@@ -58,7 +58,7 @@ type Store interface {
 	Delete(ctx context.Context, orgId int64, uid string) (int64, error)
 
 	GetOrgIdByAccessToken(ctx context.Context, accessToken string) (int64, error)
-	GetPublicDashboardsByDashboard(ctx context.Context, dashboard *dashboards.Dashboard) ([]*PublicDashboard, error)
+	GetByDashboardFolder(ctx context.Context, dashboard *dashboards.Dashboard) ([]*PublicDashboard, error)
 	ExistsEnabledByAccessToken(ctx context.Context, accessToken string) (bool, error)
 	ExistsEnabledByDashboardUid(ctx context.Context, dashboardUid string) (bool, error)
 }

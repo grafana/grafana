@@ -269,7 +269,11 @@ func (d *PublicDashboardStoreImpl) Delete(ctx context.Context, orgId int64, uid 
 	return affectedRows, err
 }
 
-func (d *PublicDashboardStoreImpl) GetPublicDashboardsByDashboard(ctx context.Context, dashboard *dashboards.Dashboard) ([]*PublicDashboard, error) {
+func (d *PublicDashboardStoreImpl) GetByDashboardFolder(ctx context.Context, dashboard *dashboards.Dashboard) ([]*PublicDashboard, error) {
+	if !dashboard.IsFolder {
+		return []*PublicDashboard{}, nil
+	}
+
 	var pubdashes []*PublicDashboard
 
 	err := d.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
