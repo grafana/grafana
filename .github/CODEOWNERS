@@ -255,7 +255,7 @@
 /pkg/services/sqlstore/migrations/ @grafana/backend-platform @grafana/hosted-grafana-team
 *_mig.go @grafana/backend-platform @grafana/hosted-grafana-team
 
-# Grafana multitenancy
+# Grafana app platform
 /pkg/services/live/ @grafana/grafana-app-platform-squad
 /pkg/services/searchV2/ @grafana/grafana-app-platform-squad
 /pkg/services/store/ @grafana/grafana-app-platform-squad
