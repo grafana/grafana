@@ -703,6 +703,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
         region: 'us-east-2',
         namespace: '',
         dimensions: { InstanceId: '$dimension' },
+        expression: '',
       };
       const { runner } = setupMockedMetricsQueryRunner({ variables: [dimensionVariable], mockGetVariableName: false });
       const result = runner.interpolateMetricsQueryVariables(testQuery, {
@@ -714,6 +715,32 @@ describe('CloudWatchMetricsQueryRunner', () => {
         namespace: '',
         period: '',
         sqlExpression: '',
+        dimensions: { InstanceId: ['foo'] },
+        expression: '',
+      });
+    });
+    it('interpolates values correctly', () => {
+      const testQuery = {
+        id: 'a',
+        refId: 'a',
+        region: 'us-east-2',
+        namespace: '',
+        expression: 'ABS($datasource)',
+        sqlExpression: 'select SUM(CPUUtilization) from $datasource',
+        dimensions: { InstanceId: '$dimension' },
+      };
+      const { runner } = setupMockedMetricsQueryRunner({ variables: [dimensionVariable], mockGetVariableName: false });
+      const result = runner.interpolateMetricsQueryVariables(testQuery, {
+        datasource: { text: 'foo', value: 'foo' },
+        dimension: { text: 'foo', value: 'foo' },
+      });
+      expect(result).toStrictEqual({
+        alias: '',
+        metricName: '',
+        namespace: '',
+        period: '',
+        sqlExpression: 'select SUM(CPUUtilization) from foo',
+        expression: 'ABS(foo)',
         dimensions: { InstanceId: ['foo'] },
       });
     });

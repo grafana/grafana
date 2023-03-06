@@ -99,13 +99,17 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
   interpolateMetricsQueryVariables(
     query: CloudWatchMetricsQuery,
     scopedVars: ScopedVars
-  ): Pick<CloudWatchMetricsQuery, 'alias' | 'metricName' | 'namespace' | 'period' | 'dimensions' | 'sqlExpression'> {
+  ): Pick<
+    CloudWatchMetricsQuery,
+    'alias' | 'metricName' | 'namespace' | 'period' | 'dimensions' | 'sqlExpression' | 'expression'
+  > {
     return {
       alias: this.replaceVariableAndDisplayWarningIfMulti(query.alias, scopedVars),
       metricName: this.replaceVariableAndDisplayWarningIfMulti(query.metricName, scopedVars),
       namespace: this.replaceVariableAndDisplayWarningIfMulti(query.namespace, scopedVars),
       period: this.replaceVariableAndDisplayWarningIfMulti(query.period, scopedVars),
-      sqlExpression: this.replaceVariableAndDisplayWarningIfMulti(query.sqlExpression, scopedVars),
+      expression: this.templateSrv.replace(query.expression, scopedVars),
+      sqlExpression: this.templateSrv.replace(query.sqlExpression, scopedVars, 'raw'),
       dimensions: this.convertDimensionFormat(query.dimensions ?? {}, scopedVars),
     };
   }
