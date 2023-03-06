@@ -122,7 +122,10 @@ describe('Language completion provider', () => {
     });
 
     it('should call series endpoint', () => {
-      const languageProvider = new LanguageProvider({ ...defaultDatasource } as PrometheusDatasource);
+      const languageProvider = new LanguageProvider({
+        ...defaultDatasource,
+        getAdjustedInterval: () => getRangeSnapInterval(PrometheusCacheLevel.none, getMockQuantizedTimeRangeParams()),
+      } as PrometheusDatasource);
       const getSeriesLabels = languageProvider.getSeriesLabels;
       const requestSpy = jest.spyOn(languageProvider, 'request');
 
@@ -182,7 +185,10 @@ describe('Language completion provider', () => {
 
   describe('getSeriesValues', () => {
     it('should call old series endpoint and should use match[] parameter', () => {
-      const languageProvider = new LanguageProvider(defaultDatasource);
+      const languageProvider = new LanguageProvider({
+        ...defaultDatasource,
+        getAdjustedInterval: () => getRangeSnapInterval(PrometheusCacheLevel.none, getMockQuantizedTimeRangeParams()),
+      } as PrometheusDatasource);
       const getSeriesValues = languageProvider.getSeriesValues;
       const requestSpy = jest.spyOn(languageProvider, 'request');
       getSeriesValues('job', '{job="grafana"}');
