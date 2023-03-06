@@ -79,14 +79,11 @@ func (s *ServiceImpl) getOrgAdminNode(c *contextmodel.ReqContext) (*navtree.NavL
 		})
 	}
 
-	hideApiKeys, _, _ := s.kvStore.Get(c.Req.Context(), c.OrgID, "serviceaccounts", "hideApiKeys")
-	apiKeys, err := s.apiKeyService.GetAllAPIKeys(c.Req.Context(), c.OrgID)
+	disabled, err := s.apiKeyService.IsDisabled(c.Req.Context(), c.OrgID)
 	if err != nil {
 		return nil, err
 	}
-
-	apiKeysHidden := hideApiKeys == "1" && len(apiKeys) == 0
-	if hasAccess(ac.ReqOrgAdmin, ac.ApiKeyAccessEvaluator) && !apiKeysHidden {
+	if hasAccess(ac.ReqOrgAdmin, ac.ApiKeyAccessEvaluator) && !disabled {
 		configNodes = append(configNodes, &navtree.NavLink{
 			Text:     "API keys",
 			Id:       "apikeys",
@@ -160,16 +157,6 @@ func (s *ServiceImpl) getServerAdminNode(c *contextmodel.ReqContext) *navtree.Na
 			Url:      s.cfg.AppSubURL + "/admin/storage",
 		}
 		adminNavLinks = append(adminNavLinks, storage)
-
-		if s.features.IsEnabled(featuremgmt.FlagExport) {
-			storage.Children = append(storage.Children, &navtree.NavLink{
-				Text:     "Export",
-				Id:       "export",
-				SubTitle: "Export grafana settings",
-				Icon:     "cube",
-				Url:      s.cfg.AppSubURL + "/admin/storage/export",
-			})
-		}
 	}
 
 	if s.cfg.LDAPEnabled && hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionLDAPStatusRead)) {

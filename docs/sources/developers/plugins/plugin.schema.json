@@ -472,39 +472,6 @@
           "default": false
         }
       }
-    },
-    "extensions": {
-      "type": "array",
-      "description": "Extends various parts of the Grafana UI with commands or links.",
-      "items": {
-        "type": "object",
-        "description": "Expose a page link that can be used by Grafana core or other plugins to navigate users to the plugin",
-        "additionalProperties": false,
-        "required": ["type", "title", "placement", "path"],
-        "properties": {
-          "type": {
-            "type": "string",
-            "enum": ["link"]
-          },
-          "title": {
-            "type": "string",
-            "minLength": 3,
-            "maxLength": 22
-          },
-          "placement": {
-            "type": "string",
-            "pattern": "^(plugins|grafana)/[a-z-/0-9]*$"
-          },
-          "description": {
-            "type": "string",
-            "maxLength": 200
-          },
-          "path": {
-            "type": "string",
-            "pattern": "^/.*"
-          }
-        }
-      }
     }
   }
 }

@@ -484,6 +484,10 @@ Limits the amount of bytes that will be read/accepted from responses of outgoing
 
 Limits the number of rows that Grafana will process from SQL (relational) data sources. Default is `1000000`.
 
+### user_agent
+
+Sets a custom value for the `User-Agent` header for outgoing data proxy requests. If empty, the default value is `Grafana/<BuildVersion>` (for example `Grafana/9.0.0`).
+
 <hr />
 
 ## [analytics]
