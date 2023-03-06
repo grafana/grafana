@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/k8s/crd"
+	admissionregistrationV1 "k8s.io/api/admissionregistration/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
@@ -17,6 +18,7 @@ import (
 	memory "k8s.io/client-go/discovery/cached"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
+	admissionregistrationClient "k8s.io/client-go/kubernetes/typed/admissionregistration/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
 )
@@ -35,10 +37,11 @@ type Resource interface {
 type Clientset struct {
 	config *rest.Config
 
-	clientset kubernetes.Interface
-	extset    apiextensionsclient.Interface
-	dynamic   dynamic.Interface
-	mapper    meta.RESTMapper
+	admissionRegistration admissionregistrationClient.AdmissionregistrationV1Interface
+	clientset             kubernetes.Interface
+	extset                apiextensionsclient.Interface
+	dynamic               dynamic.Interface
+	mapper                meta.RESTMapper
 
 	crds map[k8schema.GroupVersion]apiextensionsv1.CustomResourceDefinition
 	lock sync.RWMutex
@@ -62,6 +65,11 @@ func ProvideClientset(toggles featuremgmt.FeatureToggles, cfg *rest.Config) (*Cl
 		return nil, err
 	}
 
+	admissionregistrationClient, err := admissionregistrationClient.NewForConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+
 	dyn, err := dynamic.NewForConfig(cfg)
 	if err != nil {
 		return nil, err
@@ -69,7 +77,7 @@ func ProvideClientset(toggles featuremgmt.FeatureToggles, cfg *rest.Config) (*Cl
 
 	mapper := restmapper.NewDeferredDiscoveryRESTMapper(memory.NewMemCacheClient(k8sset))
 
-	return NewClientset(cfg, k8sset, extset, dyn, mapper)
+	return NewClientset(cfg, k8sset, extset, dyn, mapper, admissionregistrationClient)
 }
 
 // NewClientset returns a new Clientset.
@@ -79,14 +87,16 @@ func NewClientset(
 	extset apiextensionsclient.Interface,
 	dyn dynamic.Interface,
 	mapper meta.RESTMapper,
+	admissionRegistrationClient admissionregistrationClient.AdmissionregistrationV1Interface,
 ) (*Clientset, error) {
 	return &Clientset{
 		config: cfg,
 
-		clientset: k8sset,
-		extset:    extset,
-		dynamic:   dyn,
-		mapper:    mapper,
+		clientset:             k8sset,
+		admissionRegistration: admissionRegistrationClient,
+		extset:                extset,
+		dynamic:               dyn,
+		mapper:                mapper,
 
 		crds: make(map[k8schema.GroupVersion]apiextensionsv1.CustomResourceDefinition),
 		lock: sync.RWMutex{},
@@ -146,4 +156,13 @@ func (c *Clientset) GetResourceClient(gcrd crd.Kind, namespace ...string) (dynam
 	}
 
 	return resourceClient, nil
+}
+
+func (c *Clientset) RegisterValidation(ctx context.Context) (*admissionregistrationV1.ValidatingWebhookConfiguration, error) {
+	obj := admissionregistrationV1.ValidatingWebhookConfiguration{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "validation.core.grafana.com",
+		},
+	}
+	return c.admissionRegistration.ValidatingWebhookConfigurations().Create(ctx, &obj, metav1.CreateOptions{})
 }
