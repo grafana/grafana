@@ -105,6 +105,9 @@ func TestSession_Authenticate(t *testing.T) {
 				OrgID:          1,
 				OrgRoles:       map[int64]roletype.RoleType{1: roletype.RoleEditor},
 				IsGrafanaAdmin: boolPtr(false),
+				ClientParams: authn.ClientParams{
+					SyncPermissions: true,
+				},
 			},
 			wantErr: false,
 		},
