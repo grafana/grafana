@@ -7,15 +7,13 @@ import { SearchFunctionType } from '@grafana/ui';
 import { Label } from './components/monaco-query-field/monaco-completion-provider/situation';
 import { PrometheusCacheLevel, PrometheusDatasource } from './datasource';
 import LanguageProvider from './language_provider';
+import { getClientCacheDurationInMinutes, getPrometheusTime, getRangeSnapInterval } from './language_utils';
 import { PromQuery } from './types';
 
 const now = new Date().getTime();
 const timeRangeDurationSeconds = 1;
-const toPrometheusTime = PrometheusDatasource.getPrometheusTime(dateTime(now), false);
-const fromPrometheusTime = PrometheusDatasource.getPrometheusTime(
-  dateTime(now - timeRangeDurationSeconds * 1000),
-  false
-);
+const toPrometheusTime = getPrometheusTime(dateTime(now), false);
+const fromPrometheusTime = getPrometheusTime(dateTime(now - timeRangeDurationSeconds * 1000), false);
 const toPrometheusTimeString = toPrometheusTime.toString(10);
 const fromPrometheusTimeString = fromPrometheusTime.toString(10);
 
@@ -25,7 +23,7 @@ const getTimeRangeParams = (override?: Partial<{ start: string; end: string }>):
   ...override,
 });
 
-const getQuantizedTimeRangeParams = (override?: Partial<TimeRange>): TimeRange => ({
+const getMockQuantizedTimeRangeParams = (override?: Partial<TimeRange>): TimeRange => ({
   from: dateTime(fromPrometheusTime * 1000),
   to: dateTime(toPrometheusTime * 1000),
   raw: {
@@ -42,7 +40,7 @@ describe('Language completion provider', () => {
     interpolateString: (string: string) => string,
     hasLabelsMatchAPISupport: () => false,
     getQuantizedTimeRangeParams: () =>
-      PrometheusDatasource.calculateQuantizedTimeRange(PrometheusCacheLevel.none, getQuantizedTimeRangeParams()),
+      getRangeSnapInterval(PrometheusCacheLevel.none, getMockQuantizedTimeRangeParams()),
     getDaysToCacheMetadata: () => 1,
     cacheLevel: PrometheusCacheLevel.none,
   } as unknown as PrometheusDatasource;
@@ -145,13 +143,12 @@ describe('Language completion provider', () => {
     });
 
     it('should call labels endpoint with quantized start', () => {
-      const timeSnapMinutes = PrometheusDatasource.calculateCacheDurationInMinutes(PrometheusCacheLevel.low);
+      const timeSnapMinutes = getClientCacheDurationInMinutes(PrometheusCacheLevel.low);
       const languageProvider = new LanguageProvider({
         ...defaultDatasource,
         hasLabelsMatchAPISupport: () => true,
         cacheLevel: PrometheusCacheLevel.low,
-        getQuantizedTimeRangeParams: () =>
-          PrometheusDatasource.calculateQuantizedTimeRange(PrometheusCacheLevel.low, getQuantizedTimeRangeParams()),
+        getAdjustedInterval: () => getRangeSnapInterval(PrometheusCacheLevel.low, getMockQuantizedTimeRangeParams()),
         getCacheDurationInMinutes: () => timeSnapMinutes,
       } as PrometheusDatasource);
       const getSeriesLabels = languageProvider.getSeriesLabels;
@@ -747,7 +744,7 @@ describe('Language completion provider', () => {
         ...defaultDatasource,
         metadataRequest: jest.fn(() => ({ data: { data: [] } })),
         interpolateString: (string: string) => string,
-        getQuantizedTimeRangeParams: getQuantizedTimeRangeParams,
+        getQuantizedTimeRangeParams: getMockQuantizedTimeRangeParams,
       } as unknown as PrometheusDatasource;
 
       const mockedMetadataRequest = jest.mocked(testDatasource.metadataRequest);

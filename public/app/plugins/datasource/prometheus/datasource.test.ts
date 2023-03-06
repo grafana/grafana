@@ -445,7 +445,7 @@ describe('PrometheusDatasource', () => {
         templateSrvStub as unknown as TemplateSrv,
         timeSrvStub as unknown as TimeSrv
       );
-      const quantizedRange = dataSource.getQuantizedTimeRangeParams();
+      const quantizedRange = dataSource.getAdjustedInterval();
       // For "1 minute" the window contains all the minutes, so a query from 1:11:09 - 1:12:09 becomes 1:11 - 1:13
       expect(parseInt(quantizedRange.end, 10) - parseInt(quantizedRange.start, 10)).toBe(120);
     });
@@ -459,7 +459,7 @@ describe('PrometheusDatasource', () => {
         templateSrvStub as unknown as TemplateSrv,
         timeSrvStub as unknown as TimeSrv
       );
-      const quantizedRange = dataSource.getQuantizedTimeRangeParams();
+      const quantizedRange = dataSource.getAdjustedInterval();
       expect(parseInt(quantizedRange.end, 10) - parseInt(quantizedRange.start, 10)).toBe(600);
     });
 
@@ -472,7 +472,7 @@ describe('PrometheusDatasource', () => {
         templateSrvStub as unknown as TemplateSrv,
         timeSrvStub as unknown as TimeSrv
       );
-      const quantizedRange = dataSource.getQuantizedTimeRangeParams();
+      const quantizedRange = dataSource.getAdjustedInterval();
       expect(parseInt(quantizedRange.end, 10) - parseInt(quantizedRange.start, 10)).toBe(3600);
     });
 
@@ -485,7 +485,7 @@ describe('PrometheusDatasource', () => {
         templateSrvStub as unknown as TemplateSrv,
         timeSrvStub as unknown as TimeSrv
       );
-      const quantizedRange = dataSource.getQuantizedTimeRangeParams();
+      const quantizedRange = dataSource.getAdjustedInterval();
       expect(parseInt(quantizedRange.end, 10) - parseInt(quantizedRange.start, 10)).toBe(
         (toSeconds - fromSeconds) / 1000
       );

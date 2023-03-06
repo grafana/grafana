@@ -489,7 +489,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    * @param key
    */
   fetchLabelValues = async (key: string): Promise<string[]> => {
-    const params = this.datasource.getQuantizedTimeRangeParams();
+    const params = this.datasource.getAdjustedInterval();
     const interpolatedName = this.datasource.interpolateString(key);
     const url = `/api/v1/label/${interpolatedName}/values`;
     const value = await this.request(url, [], params, this.getDefaultCacheHeaders());
@@ -505,7 +505,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    */
   async fetchLabels(): Promise<string[]> {
     const url = '/api/v1/labels';
-    const params = this.datasource.getQuantizedTimeRangeParams();
+    const params = this.datasource.getAdjustedInterval();
     this.labelFetchTs = Date.now().valueOf();
 
     const res = await this.request(url, [], params, this.getDefaultCacheHeaders());
@@ -538,7 +538,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    */
   fetchSeriesValuesWithMatch = async (name: string, match?: string): Promise<string[]> => {
     const interpolatedName = name ? this.datasource.interpolateString(name) : null;
-    const range = this.datasource.getQuantizedTimeRangeParams();
+    const range = this.datasource.getAdjustedInterval();
     const urlParams = {
       ...range,
       ...(match && { 'match[]': match }),
@@ -586,7 +586,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    */
   fetchSeriesLabels = async (name: string, withName?: boolean): Promise<Record<string, string[]>> => {
     const interpolatedName = this.datasource.interpolateString(name);
-    const range = this.datasource.getQuantizedTimeRangeParams();
+    const range = this.datasource.getAdjustedInterval();
     const urlParams = {
       ...range,
       'match[]': interpolatedName,
@@ -605,7 +605,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    */
   fetchSeriesLabelsMatch = async (name: string, withName?: boolean): Promise<Record<string, string[]>> => {
     const interpolatedName = this.datasource.interpolateString(name);
-    const range = this.datasource.getQuantizedTimeRangeParams();
+    const range = this.datasource.getAdjustedInterval();
     const urlParams = {
       ...range,
       'match[]': interpolatedName,

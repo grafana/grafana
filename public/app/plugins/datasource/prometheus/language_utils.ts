@@ -1,9 +1,18 @@
 import { invert } from 'lodash';
 import { Token } from 'prismjs';
 
-import { AbstractLabelMatcher, AbstractLabelOperator, AbstractQuery, DataQuery } from '@grafana/data';
+import {
+  AbstractLabelMatcher,
+  AbstractLabelOperator,
+  AbstractQuery,
+  DataQuery,
+  dateMath,
+  DateTime,
+  TimeRange,
+} from '@grafana/data';
 
 import { addLabelToQuery } from './add_label_to_query';
+import { PrometheusCacheLevel } from './datasource';
 import { SUGGESTIONS_LIMIT } from './language_provider';
 import { PromMetricsMetadata, PromMetricsMetadataItem } from './types';
 
@@ -355,4 +364,59 @@ export function extractLabelMatchers(tokens: Array<string | Token>): AbstractLab
   }
 
   return labelMatchers;
+}
+
+/**
+ * Calculates new interval "snapped" to the closest Nth minute, depending on cache level datasource setting
+ * @param cacheLevel
+ * @param range
+ */
+export function getRangeSnapInterval(
+  cacheLevel: PrometheusCacheLevel,
+  range: TimeRange
+): { start: string; end: string } {
+  // Don't round the range if we're not caching
+  if (cacheLevel === PrometheusCacheLevel.none) {
+    return {
+      start: getPrometheusTime(range.from, false).toString(),
+      end: getPrometheusTime(range.to, true).toString(),
+    };
+  }
+  // Otherwise round down to the nearest nth minute for the start time
+  const startTime = getPrometheusTime(range.from, false);
+  const startTimeQuantizedSeconds = roundSecToLastMin(startTime, getClientCacheDurationInMinutes(cacheLevel)) * 60;
+
+  // And round up to the nearest nth minute for the end time
+  const endTime = getPrometheusTime(range.to, true);
+  const endTimeQuantizedSeconds = roundSecToNextMin(endTime, getClientCacheDurationInMinutes(cacheLevel)) * 60;
+
+  // If the interval was too short, we could have rounded both start and end to the same time, if so let's
+  if (startTimeQuantizedSeconds === endTimeQuantizedSeconds) {
+    const endTimePlusOneStep = endTimeQuantizedSeconds + getClientCacheDurationInMinutes(cacheLevel) * 60;
+    return { start: startTimeQuantizedSeconds.toString(), end: endTimePlusOneStep.toString() };
+  }
+
+  const start = startTimeQuantizedSeconds.toString();
+  const end = endTimeQuantizedSeconds.toString();
+
+  return { start, end };
+}
+
+export function getClientCacheDurationInMinutes(cacheLevel: PrometheusCacheLevel) {
+  switch (cacheLevel) {
+    case PrometheusCacheLevel.medium:
+      return 10;
+    case PrometheusCacheLevel.high:
+      return 60;
+    default:
+      return 1;
+  }
+}
+
+export function getPrometheusTime(date: string | DateTime, roundUp: boolean) {
+  if (typeof date === 'string') {
+    date = dateMath.parse(date, roundUp)!;
+  }
+
+  return Math.ceil(date.valueOf() / 1000);
 }
