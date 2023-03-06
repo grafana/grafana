@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/xorcare/pointer"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -140,8 +141,8 @@ func Test_getOrCreate(t *testing.T) {
 		result := eval.Result{
 			Instance: models.GenerateAlertLabels(5, "result-"),
 			Values: map[string]eval.NumberValueCapture{
-				"A": eval.NumberValueCapture{Var: "A", Value: util.Pointer(1.0)},
-				"B": eval.NumberValueCapture{Var: "B", Value: util.Pointer(2.0)},
+				"A": eval.NumberValueCapture{Var: "A", Value: pointer.Float64(1.0)},
+				"B": eval.NumberValueCapture{Var: "B", Value: pointer.Float64(2.0)},
 			},
 		}
 		rule := generateRule()
@@ -154,8 +155,8 @@ func Test_getOrCreate(t *testing.T) {
 		result := eval.Result{
 			Instance: models.GenerateAlertLabels(5, "result-"),
 			Values: map[string]eval.NumberValueCapture{
-				"B0": eval.NumberValueCapture{Var: "B", Value: util.Pointer(1.0)},
-				"B1": eval.NumberValueCapture{Var: "B", Value: util.Pointer(2.0)},
+				"B0": eval.NumberValueCapture{Var: "B", Value: pointer.Float64(1.0)},
+				"B1": eval.NumberValueCapture{Var: "B", Value: pointer.Float64(2.0)},
 			},
 		}
 		rule := generateRule()
