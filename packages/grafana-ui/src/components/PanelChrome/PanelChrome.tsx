@@ -111,8 +111,8 @@ export function PanelChrome({
       )}
 
       <div className={cx(styles.titleItems, dragClassCancel)} data-testid="title-items-container">
-        {titleItems}
         <PanelDescription description={description} className={dragClassCancel} />
+        {titleItems}
       </div>
 
       {loadingState === LoadingState.Streaming && (
