@@ -8,10 +8,13 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 )
 
-func (e *cloudWatchExecutor) buildMetricDataQuery(query *cloudWatchQuery) (*cloudwatch.MetricDataQuery, error) {
+func (e *cloudWatchExecutor) buildMetricDataQuery(logger log.Logger, query *models.CloudWatchQuery) (*cloudwatch.MetricDataQuery, error) {
 	mdq := &cloudwatch.MetricDataQuery{
 		Id:         aws.String(query.Id),
 		ReturnData: aws.Bool(query.ReturnData),
@@ -21,16 +24,16 @@ func (e *cloudWatchExecutor) buildMetricDataQuery(query *cloudWatchQuery) (*clou
 		mdq.Label = &query.Label
 	}
 
-	switch query.getGMDAPIMode() {
-	case GMDApiModeMathExpression:
+	switch query.GetGetMetricDataAPIMode() {
+	case models.GMDApiModeMathExpression:
 		mdq.Period = aws.Int64(int64(query.Period))
 		mdq.Expression = aws.String(query.Expression)
-	case GMDApiModeSQLExpression:
+	case models.GMDApiModeSQLExpression:
 		mdq.Period = aws.Int64(int64(query.Period))
 		mdq.Expression = aws.String(query.SqlExpression)
-	case GMDApiModeInferredSearchExpression:
+	case models.GMDApiModeInferredSearchExpression:
 		mdq.Expression = aws.String(buildSearchExpression(query, query.Statistic))
-	case GMDApiModeMetricStat:
+	case models.GMDApiModeMetricStat:
 		mdq.MetricStat = &cloudwatch.MetricStat{
 			Metric: &cloudwatch.Metric{
 				Namespace:  aws.String(query.Namespace),
@@ -47,6 +50,7 @@ func (e *cloudWatchExecutor) buildMetricDataQuery(query *cloudWatchQuery) (*clou
 				})
 		}
 		mdq.MetricStat.Stat = aws.String(query.Statistic)
+		mdq.AccountId = query.AccountId
 	}
 
 	if mdq.Expression != nil {
@@ -58,7 +62,7 @@ func (e *cloudWatchExecutor) buildMetricDataQuery(query *cloudWatchQuery) (*clou
 	return mdq, nil
 }
 
-func buildSearchExpression(query *cloudWatchQuery, stat string) string {
+func buildSearchExpression(query *models.CloudWatchQuery, stat string) string {
 	knownDimensions := make(map[string][]string)
 	dimensionNames := []string{}
 	dimensionNamesWithoutKnownValues := []string{}
@@ -95,18 +99,27 @@ func buildSearchExpression(query *cloudWatchQuery, stat string) string {
 		searchTerm = appendSearch(searchTerm, keyFilter)
 	}
 
+	var account string
+	if query.AccountId != nil && *query.AccountId != "all" {
+		account = fmt.Sprintf(":aws.AccountId=%q", *query.AccountId)
+	}
+
 	if query.MatchExact {
 		schema := fmt.Sprintf("%q", query.Namespace)
 		if len(dimensionNames) > 0 {
 			sort.Strings(dimensionNames)
 			schema += fmt.Sprintf(",%s", join(dimensionNames, ",", `"`, `"`))
 		}
-		return fmt.Sprintf("REMOVE_EMPTY(SEARCH('{%s} %s', '%s', %s))", schema, searchTerm, stat, strconv.Itoa(query.Period))
+		schema = fmt.Sprintf("{%s}", schema)
+		schemaSearchTermAndAccount := strings.TrimSpace(strings.Join([]string{schema, searchTerm, account}, " "))
+		return fmt.Sprintf("REMOVE_EMPTY(SEARCH('%s', '%s', %s))", schemaSearchTermAndAccount, stat, strconv.Itoa(query.Period))
 	}
 
 	sort.Strings(dimensionNamesWithoutKnownValues)
 	searchTerm = appendSearch(searchTerm, join(dimensionNamesWithoutKnownValues, " ", `"`, `"`))
-	return fmt.Sprintf(`REMOVE_EMPTY(SEARCH('Namespace="%s" %s', '%s', %s))`, query.Namespace, searchTerm, stat, strconv.Itoa(query.Period))
+	namespace := fmt.Sprintf("Namespace=%q", query.Namespace)
+	namespaceSearchTermAndAccount := strings.TrimSpace(strings.Join([]string{namespace, searchTerm, account}, " "))
+	return fmt.Sprintf(`REMOVE_EMPTY(SEARCH('%s', '%s', %s))`, namespaceSearchTermAndAccount, stat, strconv.Itoa(query.Period))
 }
 
 func escapeDoubleQuotes(arr []string) []string {

@@ -1,7 +1,11 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
 //  Frame[0] {
-//      "type": "timeseries-many",
+//      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
 //      "executedQueryString": "Expr: up(ALERTS)\nStep: 42s"
 //  }
 //  Name: {level="info", location="moon", protocol="http"}
@@ -24,12 +28,17 @@
 //  
 //  🌟 This was machine generated.  Do not edit. 🌟
 {
+  "status": 200,
   "frames": [
     {
       "schema": {
         "name": "{level=\"info\", location=\"moon\", protocol=\"http\"}",
         "meta": {
-          "type": "timeseries-many",
+          "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ],
           "executedQueryString": "Expr: up(ALERTS)\nStep: 42s"
         },
         "fields": [

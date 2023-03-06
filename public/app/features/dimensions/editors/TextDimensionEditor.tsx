@@ -1,4 +1,4 @@
-import React, { FC, useCallback, useState } from 'react';
+import React, { useCallback } from 'react';
 
 import {
   FieldNamePickerConfigSettings,
@@ -26,15 +26,13 @@ const dummyStringSettings: StandardEditorsRegistryItem<string, StringFieldConfig
   settings: {},
 } as any;
 
-export const TextDimensionEditor: FC<StandardEditorProps<TextDimensionConfig, TextDimensionOptions, any>> = (props) => {
-  const { value, context, onChange } = props;
+type Props = StandardEditorProps<TextDimensionConfig, TextDimensionOptions, any>;
+
+export const TextDimensionEditor = ({ value, context, onChange }: Props) => {
   const labelWidth = 9;
 
-  // force re-render on clear fixed text
-  const [refresh, setRefresh] = useState(0);
-
   const onModeChange = useCallback(
-    (mode) => {
+    (mode: TextDimensionMode) => {
       onChange({
         ...value,
         mode,
@@ -44,7 +42,7 @@ export const TextDimensionEditor: FC<StandardEditorProps<TextDimensionConfig, Te
   );
 
   const onFieldChange = useCallback(
-    (field) => {
+    (field?: string) => {
       onChange({
         ...value,
         field,
@@ -54,7 +52,7 @@ export const TextDimensionEditor: FC<StandardEditorProps<TextDimensionConfig, Te
   );
 
   const onFixedChange = useCallback(
-    (fixed) => {
+    (fixed = '') => {
       onChange({
         ...value,
         fixed,
@@ -65,11 +63,9 @@ export const TextDimensionEditor: FC<StandardEditorProps<TextDimensionConfig, Te
 
   const onClearFixed = () => {
     onFixedChange('');
-    setRefresh(refresh + 1);
   };
 
   const mode = value?.mode ?? TextDimensionMode.Fixed;
-
   return (
     <>
       <InlineFieldRow>
@@ -90,7 +86,7 @@ export const TextDimensionEditor: FC<StandardEditorProps<TextDimensionConfig, Te
         </InlineFieldRow>
       )}
       {mode === TextDimensionMode.Fixed && (
-        <InlineFieldRow key={refresh}>
+        <InlineFieldRow key={value?.fixed}>
           <InlineField label={'Value'} labelWidth={labelWidth} grow={true}>
             <StringValueEditor
               context={context}

@@ -1,9 +1,10 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { OrgRole } from '@grafana/data';
 import { Button, ConfirmModal } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
-import { fetchBuiltinRoles, fetchRoleOptions } from 'app/core/components/RolePicker/api';
+import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
+import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, OrgUser, Role } from 'app/types';
 
@@ -16,11 +17,9 @@ export interface Props {
   onRemoveUser: (user: OrgUser) => void;
 }
 
-const UsersTable: FC<Props> = (props) => {
-  const { users, orgId, onRoleChange, onRemoveUser } = props;
+export const UsersTable = ({ users, orgId, onRoleChange, onRemoveUser }: Props) => {
   const [userToRemove, setUserToRemove] = useState<OrgUser | null>(null);
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
-  const [builtinRoles, setBuiltinRoles] = useState<{ [key: string]: Role[] }>({});
 
   useEffect(() => {
     async function fetchOptions() {
@@ -28,14 +27,6 @@ const UsersTable: FC<Props> = (props) => {
         if (contextSrv.hasPermission(AccessControlAction.ActionRolesList)) {
           let options = await fetchRoleOptions(orgId);
           setRoleOptions(options);
-        }
-
-        if (
-          contextSrv.accessControlBuiltInRoleAssignmentEnabled() &&
-          contextSrv.hasPermission(AccessControlAction.ActionBuiltinRolesList)
-        ) {
-          const builtInRoles = await fetchBuiltinRoles(orgId);
-          setBuiltinRoles(builtInRoles);
         }
       } catch (e) {
         console.error('Error loading options');
@@ -58,6 +49,8 @@ const UsersTable: FC<Props> = (props) => {
             <th>Seen</th>
             <th>Role</th>
             <th style={{ width: '34px' }} />
+            <th></th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
@@ -90,11 +83,10 @@ const UsersTable: FC<Props> = (props) => {
                     <UserRolePicker
                       userId={user.userId}
                       orgId={orgId}
-                      builtInRole={user.role}
-                      onBuiltinRoleChange={(newRole) => onRoleChange(newRole, user)}
                       roleOptions={roleOptions}
-                      builtInRoles={builtinRoles}
-                      disabled={!contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersWrite, user)}
+                      basicRole={user.role}
+                      onBasicRoleChange={(newRole) => onRoleChange(newRole, user)}
+                      basicRoleDisabled={!contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersWrite, user)}
                     />
                   ) : (
                     <OrgRolePicker
@@ -106,8 +98,18 @@ const UsersTable: FC<Props> = (props) => {
                   )}
                 </td>
 
+                <td className="width-1 text-center">
+                  {user.isDisabled && <span className="label label-tag label-tag--gray">Disabled</span>}
+                </td>
+
+                <td className="width-1">
+                  {Array.isArray(user.authLabels) && user.authLabels.length > 0 && (
+                    <TagBadge label={user.authLabels[0]} removeIcon={false} count={0} />
+                  )}
+                </td>
+
                 {contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersRemove, user) && (
-                  <td>
+                  <td className="text-right">
                     <Button
                       size="sm"
                       variant="destructive"
@@ -145,5 +147,3 @@ const UsersTable: FC<Props> = (props) => {
     </>
   );
 };
-
-export default UsersTable;

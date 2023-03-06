@@ -10,7 +10,7 @@ export function AlertHowToModal({ onDismiss }: AlertHowToModalProps): JSX.Elemen
   return (
     <Modal title="Adding an Alert" isOpen onDismiss={onDismiss} onClickBackdrop={onDismiss}>
       <VerticalGroup spacing="sm">
-        <img src="public/img/alert_howto_new.png" alt="link to how to alert image" />
+        <img src="public/img/alert_howto_new.png" alt="" />
         <p>
           Alerts are added and configured in the Alert tab of any dashboard graph panel, letting you build and visualize
           an alert using existing queries.

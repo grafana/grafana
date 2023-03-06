@@ -1,9 +1,12 @@
   loki:
     image: grafana/loki:latest
+    command: -config.file=/etc/loki/loki-config.yaml
+    volumes:
+      - ./docker/blocks/loki/loki-config.yaml:/etc/loki/loki-config.yaml
     ports:
       - "3100:3100"
 
-  data:
+  loki-data:
     build: docker/blocks/loki/data
     command: node /home/node/data.js http://loki:3100
     depends_on:

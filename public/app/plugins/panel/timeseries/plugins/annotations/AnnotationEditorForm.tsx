@@ -8,6 +8,8 @@ import { Button, Field, Form, HorizontalGroup, InputControl, TextArea, usePanelC
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
 import { getAnnotationTags } from 'app/features/annotations/api';
 
+import { AnnotationsDataFrameViewDTO } from '../types';
+
 interface AnnotationEditFormDTO {
   description: string;
   tags: string[];

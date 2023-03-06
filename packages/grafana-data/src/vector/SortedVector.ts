@@ -23,4 +23,8 @@ export class SortedVector<T = any> implements Vector<T> {
   toJSON(): T[] {
     return vectorToArray(this);
   }
+
+  getOrderArray(): number[] {
+    return this.order;
+  }
 }

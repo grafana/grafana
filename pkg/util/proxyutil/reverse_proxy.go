@@ -10,6 +10,7 @@ import (
 	"time"
 
 	glog "github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 )
 
 // StatusClientClosedRequest A non-standard status code introduced by nginx
@@ -66,12 +67,15 @@ func NewReverseProxy(logger glog.Logger, director func(*http.Request), opts ...R
 // wrapDirector wraps a director and adds additional functionality.
 func wrapDirector(d func(*http.Request)) func(req *http.Request) {
 	return func(req *http.Request) {
+		list := contexthandler.AuthHTTPHeaderListFromContext(req.Context())
+		if list != nil {
+			for _, name := range list.Items {
+				req.Header.Del(name)
+			}
+		}
+
 		d(req)
 		PrepareProxyRequest(req)
-
-		// Clear Origin and Referer to avoid CORS issues
-		req.Header.Del("Origin")
-		req.Header.Del("Referer")
 	}
 }
 
@@ -96,20 +100,22 @@ type timeoutError interface {
 // If any other error we return http.StatusBadGateway.
 func errorHandler(logger glog.Logger) func(http.ResponseWriter, *http.Request, error) {
 	return func(w http.ResponseWriter, r *http.Request, err error) {
+		ctxLogger := logger.FromContext(r.Context())
+
 		if errors.Is(err, context.Canceled) {
-			logger.Debug("Proxy request cancelled by client")
+			ctxLogger.Debug("Proxy request cancelled by client")
 			w.WriteHeader(StatusClientClosedRequest)
 			return
 		}
 
 		// nolint:errorlint
 		if timeoutErr, ok := err.(timeoutError); ok && timeoutErr.Timeout() {
-			logger.Error("Proxy request timed out", "err", err)
+			ctxLogger.Error("Proxy request timed out", "err", err)
 			w.WriteHeader(http.StatusGatewayTimeout)
 			return
 		}
 
-		logger.Error("Proxy request failed", "err", err)
+		ctxLogger.Error("Proxy request failed", "err", err)
 		w.WriteHeader(http.StatusBadGateway)
 	}
 }

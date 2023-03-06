@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "dependencies": [
+    {
+      "source": {
+        "git": {
+          "remote": "https://github.com/grafana/jsonnet-libs.git",
+          "subdir": "grizzly"
+        }
+      },
+      "version": "49b026e4d0aa15b0fee70ae80cc1d2bb792ee14d",
+      "sum": "yY8w1JvVAuxB3Z62R3OxDVcSRPUKIvEWQZ2ShyD7uis="
+    }
+  ],
+  "legacyImports": false
+}

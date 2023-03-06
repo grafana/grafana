@@ -111,7 +111,7 @@ func resourceSpansToRows(rs pdata.ResourceSpans) ([][]interface{}, error) {
 func spanToSpanRow(span pdata.Span, libraryTags pdata.InstrumentationLibrary, resource pdata.Resource) ([]interface{}, error) {
 	// If the id representation changed from hexstring to something else we need to change the transformBase64IDToHexString in the frontend code
 	traceID := span.TraceID().HexString()
-	traceID = strings.TrimLeft(traceID, "0")
+	traceID = strings.TrimPrefix(traceID, strings.Repeat("0", 16))
 
 	spanID := span.SpanID().HexString()
 

@@ -15,10 +15,10 @@ import {
   ScopedVars,
 } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
-import { SpanBarOptions } from '@jaegertracing/jaeger-ui-components';
 import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
 import { serializeParams } from 'app/core/utils/fetch';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { SpanBarOptions } from 'app/features/explore/TraceView/components';
 
 import { ALL_OPERATIONS_KEY } from './components/SearchForm';
 import { createGraphFrames } from './graphTransform';
@@ -48,12 +48,21 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
     return res.data.data;
   }
 
+  isSearchFormValid(query: JaegerQuery): boolean {
+    return !!query.service;
+  }
+
   query(options: DataQueryRequest<JaegerQuery>): Observable<DataQueryResponse> {
     // At this moment we expect only one target. In case we somehow change the UI to be able to show multiple
     // traces at one we need to change this.
     const target: JaegerQuery = options.targets[0];
+
     if (!target) {
       return of({ data: [emptyTraceDataFrame] });
+    }
+
+    if (target.queryType === 'search' && !this.isSearchFormValid(target)) {
+      return of({ error: { message: 'You must select a service.' }, data: [] });
     }
 
     if (target.queryType !== 'search' && target.query) {

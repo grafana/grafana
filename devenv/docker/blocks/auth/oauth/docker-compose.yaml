@@ -1,0 +1,30 @@
+  oauthkeycloakdb:
+    image: postgres:12.2
+    container_name: oauthkeycloakdb
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: password
+    volumes:
+      - ./docker/blocks/auth/oauth/cloak.sql:/docker-entrypoint-initdb.d/cloak.sql
+    restart: unless-stopped
+
+  oauthkeycloak:
+    image: quay.io/keycloak/keycloak:20.0
+    container_name: oauthkeycloak
+    command: --spi-login-protocol-openid-connect-legacy-logout-redirect-uri=true start-dev
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://oauthkeycloakdb/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: password
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      PROXY_ADDRESS_FORWARDING: "true"
+    ports:
+      - 8087:8080
+    depends_on:
+      - oauthkeycloakdb
+    links:
+      - "oauthkeycloakdb:oauthkeycloakdb"
+    restart: unless-stopped

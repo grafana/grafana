@@ -1,15 +1,13 @@
 import { render, waitFor } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import React from 'react';
-import { Provider } from 'react-redux';
-import { Router } from 'react-router-dom';
+import { TestProvider } from 'test/helpers/TestProvider';
 import { byLabelText, byPlaceholderText, byRole, byTestId, byText } from 'testing-library-selector';
 
 import { dateTime } from '@grafana/data';
-import { locationService, setDataSourceSrv } from '@grafana/runtime';
+import { locationService, setDataSourceSrv, config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AlertState, MatcherOperator } from 'app/plugins/datasource/alertmanager/types';
-import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types';
 
 import Silences from './Silences';
@@ -33,15 +31,12 @@ const mocks = {
 };
 
 const renderSilences = (location = '/alerting/silences/') => {
-  const store = configureStore();
   locationService.push(location);
 
   return render(
-    <Provider store={store}>
-      <Router history={locationService.getHistory()}>
-        <Silences />
-      </Router>
-    </Provider>
+    <TestProvider>
+      <Silences />
+    </TestProvider>
   );
 };
 
@@ -56,7 +51,7 @@ const ui = {
   silencesTable: byTestId('dynamic-table'),
   silenceRow: byTestId('row'),
   silencedAlertCell: byTestId('alerts'),
-  addSilenceButton: byRole('button', { name: /new silence/i }),
+  addSilenceButton: byRole('button', { name: /add silence/i }),
   queryBar: byPlaceholderText('Search'),
   editor: {
     timeRange: byLabelText('Timepicker', { exact: false }),
@@ -70,6 +65,7 @@ const ui = {
     matcherOperator: (operator: MatcherOperator) => byText(operator, { exact: true }),
     addMatcherButton: byRole('button', { name: 'Add matcher' }),
     submit: byText('Submit'),
+    createdBy: byText(/created by \*/i),
   },
 };
 
@@ -110,6 +106,11 @@ const resetMocks = () => {
   });
 
   mocks.contextSrv.hasAccess.mockImplementation(() => true);
+};
+
+const setUserLogged = (isLogged: boolean) => {
+  config.bootData.user.isSignedIn = isLogged;
+  config.bootData.user.name = isLogged ? 'admin' : '';
 };
 
 describe('Silences', () => {
@@ -210,9 +211,19 @@ describe('Silence edit', () => {
   afterEach(resetMocks);
 
   beforeEach(() => {
+    setUserLogged(true);
     setDataSourceSrv(new MockDataSourceSrv(dataSources));
   });
 
+  it('Should not render createdBy if user is logged in and has a name', async () => {
+    renderSilences(baseUrlPath);
+    await waitFor(() => expect(ui.editor.createdBy.query()).not.toBeInTheDocument());
+  });
+  it('Should render createdBy if user is not logged or has no name', async () => {
+    setUserLogged(false);
+    renderSilences(baseUrlPath);
+    await waitFor(() => expect(ui.editor.createdBy.get()).toBeInTheDocument());
+  });
   it(
     'prefills the matchers field with matchers params',
     async () => {
@@ -252,7 +263,6 @@ describe('Silence edit', () => {
 
       const start = new Date();
       const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
-      const now = dateTime().format('YYYY-MM-DD HH:mm');
 
       const startDateString = dateTime(start).format('YYYY-MM-DD');
       const endDateString = dateTime(end).format('YYYY-MM-DD');
@@ -296,7 +306,7 @@ describe('Silence edit', () => {
         expect(mocks.api.createOrUpdateSilence).toHaveBeenCalledWith(
           'grafana',
           expect.objectContaining({
-            comment: `created ${now}`,
+            comment: expect.stringMatching(/created (\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/),
             matchers: [
               { isEqual: true, isRegex: false, name: 'foo', value: 'bar' },
               { isEqual: false, isRegex: false, name: 'bar', value: 'buzz' },

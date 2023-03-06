@@ -4,13 +4,16 @@ import (
 	"context"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/prometheus/client_golang/prometheus"
+
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/login"
 )
 
-func InitMetrics() {
+// Should be in use in ProvideAuthInfoStore
+// due to query performance for big user tables
+// we have disabled these metrics from Grafana for now
+func InitDuplicateUserMetrics() {
 	login.Once.Do(func() {
 		login.MStatDuplicateUserEntries = prometheus.NewGauge(prometheus.GaugeOpts{
 			Name:      "stat_users_total_duplicate_user_entries",
@@ -39,18 +42,18 @@ func InitMetrics() {
 }
 
 func (s *AuthInfoStore) RunMetricsCollection(ctx context.Context) error {
-	if _, err := s.GetLoginStats(ctx); err != nil {
-		s.logger.Warn("Failed to get authinfo metrics", "error", err.Error())
-	}
+	// 	if _, err := s.GetLoginStats(ctx); err != nil {
+	// 		s.logger.Warn("Failed to get authinfo metrics", "error", err.Error())
+	// 	}
 	updateStatsTicker := time.NewTicker(login.MetricsCollectionInterval)
 	defer updateStatsTicker.Stop()
 
 	for {
 		select {
 		case <-updateStatsTicker.C:
-			if _, err := s.GetLoginStats(ctx); err != nil {
-				s.logger.Warn("Failed to get authinfo metrics", "error", err.Error())
-			}
+			// if _, err := s.GetLoginStats(ctx); err != nil {
+			// s.logger.Warn("Failed to get authinfo metrics", "error", nil)
+			// }
 		case <-ctx.Done():
 			return ctx.Err()
 		}
@@ -59,7 +62,7 @@ func (s *AuthInfoStore) RunMetricsCollection(ctx context.Context) error {
 
 func (s *AuthInfoStore) GetLoginStats(ctx context.Context) (login.LoginStats, error) {
 	var stats login.LoginStats
-	outerErr := s.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	outerErr := s.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
 		rawSQL := `SELECT
 		(SELECT COUNT(*) FROM (` + s.duplicateUserEntriesSQL(ctx) + `) AS d WHERE (d.dup_login IS NOT NULL OR d.dup_email IS NOT NULL)) as duplicate_user_entries,
 		(SELECT COUNT(*) FROM (` + s.mixedCasedUsers(ctx) + `) AS mcu) AS mixed_cased_users

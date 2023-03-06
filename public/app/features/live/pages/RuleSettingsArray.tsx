@@ -13,7 +13,7 @@ interface Props {
   entitiesInfo: PipeLineEntitiesInfo;
 }
 
-export const RuleSettingsArray: React.FC<Props> = ({ onChange, value, ruleType, entitiesInfo }) => {
+export const RuleSettingsArray = ({ onChange, value, ruleType, entitiesInfo }: Props) => {
   const [index, setIndex] = useState<number>(0);
   const arr = value ?? [];
   const onRuleChange = (v: RuleSetting) => {

@@ -12,13 +12,14 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
+	"xorm.io/xorm"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
-	"xorm.io/xorm"
 )
 
 const ManagedPermissionsMigrationID = "managed permissions migration"
@@ -106,7 +107,7 @@ func (sp *managedPermissionMigrator) Exec(sess *xorm.Session, mg *migrator.Migra
 			}
 
 			if !ok {
-				uid, err := generateNewRoleUID(sess, orgID)
+				uid, err := GenerateManagedRoleUID(orgID, managedRole)
 				if err != nil {
 					return err
 				}

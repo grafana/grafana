@@ -5,6 +5,7 @@ import { Form, Field, Input, Button, HorizontalGroup, LinkButton, FormAPI } from
 import { getConfig } from 'app/core/config';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { w3cStandardEmailValidator } from 'app/features/admin/utils';
 
 import { InnerBox, LoginLayout } from '../Login/LoginLayout';
 import { PasswordField } from '../PasswordField/PasswordField';
@@ -74,7 +75,7 @@ export const SignupPage: FC<Props> = (props) => {
                   {...register('email', {
                     required: 'Email is required',
                     pattern: {
-                      value: /^\S+@\S+$/,
+                      value: w3cStandardEmailValidator,
                       message: 'Email is invalid',
                     },
                   })}

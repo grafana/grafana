@@ -33,6 +33,14 @@ describe('The FileDropzone component', () => {
     expect(screen.getByText('Accepted file type: .json')).toBeInTheDocument();
   });
 
+  it('should show an error message when the file size exceeds the max file size', async () => {
+    render(<FileDropzone options={{ maxSize: 1 }} />);
+
+    dispatchEvt(screen.getByTestId('dropzone'), 'drop', mockData(files));
+
+    expect(await screen.findByText('File is larger than 1 B')).toBeInTheDocument();
+  });
+
   it('should show the accepted file type(s) when passed in as a array of strings', () => {
     render(<FileDropzone options={{ accept: ['.json', '.txt'] }} />);
 
@@ -127,7 +135,7 @@ describe('The FileDropzone component', () => {
   });
 });
 
-function dispatchEvt(node: HTMLElement, type: string, data: any) {
+function dispatchEvt(node: HTMLElement, type: string, data: unknown) {
   const event = new Event(type, { bubbles: true });
   Object.assign(event, data);
   fireEvent(node, event);

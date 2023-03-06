@@ -2,7 +2,7 @@ version: "2.1"
 
 services:
   db:
-    image: mysql:5.6
+    image: mysql:5.7.39
     platform: linux/x86_64
     environment:
       MYSQL_ROOT_PASSWORD: rootpass

@@ -18,7 +18,6 @@ export class EventEditorCtrl {
   close: any;
   timeFormated?: string;
 
-  /** @ngInject */
   constructor() {}
 
   $onInit() {

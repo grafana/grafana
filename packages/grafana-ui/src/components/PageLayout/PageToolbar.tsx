@@ -4,7 +4,7 @@ import React, { FC, ReactNode } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { Link } from '..';
+import { Link, ToolbarButtonRow } from '..';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { getFocusStyles } from '../../themes/mixins';
 import { IconName } from '../../types';
@@ -24,6 +24,7 @@ export interface Props {
   className?: string;
   isFullscreen?: boolean;
   'aria-label'?: string;
+  buttonOverflowAlignment?: 'left' | 'right';
 }
 
 /** @alpha */
@@ -42,6 +43,7 @@ export const PageToolbar: FC<Props> = React.memo(
     className,
     /** main nav-container aria-label **/
     'aria-label': ariaLabel,
+    buttonOverflowAlignment = 'right',
   }) => {
     const styles = useStyles2(getStyles);
 
@@ -56,13 +58,14 @@ export const PageToolbar: FC<Props> = React.memo(
       styles.toolbar,
       {
         ['page-toolbar--fullscreen']: isFullscreen,
+        [styles.noPageIcon]: !pageIcon,
       },
       className
     );
 
     const titleEl = (
       <>
-        <span className={styles.noLinkTitle}>{title}</span>
+        <span className={styles.truncateText}>{title}</span>
         {section && <span className={styles.pre}> / {section}</span>}
       </>
     );
@@ -92,20 +95,20 @@ export const PageToolbar: FC<Props> = React.memo(
               <>
                 <Link
                   aria-label={`Search dashboard in the ${parent} folder`}
-                  className={cx(styles.titleText, styles.parentLink, styles.titleLink)}
+                  className={cx(styles.titleText, styles.parentLink, styles.titleLink, styles.truncateText)}
                   href={parentHref}
                 >
                   {parent} <span className={styles.parentIcon}></span>
                 </Link>
                 {titleHref && (
-                  <span className={cx(styles.titleText, styles.titleDivider, styles.parentLink)} aria-hidden>
+                  <span className={cx(styles.titleText, styles.titleDivider)} aria-hidden>
                     /
                   </span>
                 )}
               </>
             )}
 
-            {(title || leftItems?.length) && (
+            {(title || Boolean(leftItems?.length)) && (
               <div className={styles.titleWrapper}>
                 {title && (
                   <h1 className={styles.h1Styles}>
@@ -132,15 +135,9 @@ export const PageToolbar: FC<Props> = React.memo(
             )}
           </nav>
         </div>
-        {React.Children.toArray(children)
-          .filter(Boolean)
-          .map((child, index) => {
-            return (
-              <div className={styles.actionWrapper} key={index}>
-                {child}
-              </div>
-            );
-          })}
+        <ToolbarButtonRow alignment={buttonOverflowAlignment}>
+          {React.Children.toArray(children).filter(Boolean)}
+        </ToolbarButtonRow>
       </nav>
     );
   }
@@ -161,45 +158,52 @@ const getStyles = (theme: GrafanaTheme2) => {
       align-items: center;
       background: ${theme.colors.background.canvas};
       display: flex;
-      flex-wrap: wrap;
-      justify-content: flex-end;
+      gap: ${theme.spacing(2)};
+      justify-content: space-between;
       padding: ${theme.spacing(1.5, 2)};
+
+      ${theme.breakpoints.down('md')} {
+        padding-left: 53px;
+      }
+    `,
+    noPageIcon: css`
+      ${theme.breakpoints.down('md')} {
+        padding-left: ${theme.spacing(2)};
+      }
     `,
     leftWrapper: css`
       display: flex;
       flex-wrap: nowrap;
-      flex-grow: 1;
+      max-width: 70%;
     `,
     pageIcon: css`
       display: none;
-      ${theme.breakpoints.up('md')} {
+      ${theme.breakpoints.up('sm')} {
         display: flex;
         padding-right: ${theme.spacing(1)};
         align-items: center;
       }
     `,
-    noLinkTitle: css`
+    truncateText: css`
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     `,
     titleWrapper: css`
       display: flex;
-      flex-grow: 1;
       margin: 0;
+      min-width: 0;
     `,
     navElement: css`
       display: flex;
-      flex-grow: 1;
       align-items: center;
-      max-width: calc(100vw - 78px);
+      min-width: 0;
     `,
     h1Styles: css`
-      margin: 0;
+      margin: ${spacing(0, 1, 0, 0)};
       line-height: inherit;
-      width: 300px;
-      max-width: min-content;
       flex-grow: 1;
+      min-width: 0;
     `,
     parentIcon: css`
       margin-left: ${theme.spacing(0.5)};
@@ -208,6 +212,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: flex;
       font-size: ${typography.size.lg};
       margin: 0;
+      max-width: 300px;
       border-radius: 2px;
     `,
     titleLink: css`
@@ -217,22 +222,24 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     titleDivider: css`
       padding: ${spacing(0, 0.5, 0, 0.5)};
-    `,
-    parentLink: css`
       display: none;
       ${theme.breakpoints.up('md')} {
         display: unset;
       }
     `,
-    actionWrapper: css`
-      padding: ${spacing(0.5, 0, 0.5, 1)};
+    parentLink: css`
+      display: none;
+      ${theme.breakpoints.up('md')} {
+        display: unset;
+        flex: 1;
+      }
     `,
     leftActionItem: css`
       display: none;
       ${theme.breakpoints.up('md')} {
         align-items: center;
         display: flex;
-        padding-left: ${spacing(0.5)};
+        padding-right: ${spacing(0.5)};
       }
     `,
   };

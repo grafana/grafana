@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -11,11 +12,13 @@ import (
 	"strings"
 	"time"
 
+	alertingLogging "github.com/grafana/alerting/logging"
+	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/receivers"
 	pb "github.com/prometheus/alertmanager/silence/silencepb"
 	"xorm.io/xorm"
 
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -72,8 +75,9 @@ func AddDashAlertMigration(mg *migrator.Migrator) {
 			mg.Logger.Error("alert migration error: could not clear alert migration for removing data", "error", err)
 		}
 		mg.AddMigration(migTitle, &migration{
-			seenChannelUIDs: make(map[string]struct{}),
-			silences:        make(map[int64][]*pb.MeshSilence),
+			// We deduplicate for case-insensitive matching in MySQL-compatible backend flavours because they use case-insensitive collation.
+			seenUIDs: uidSet{set: make(map[string]struct{}), caseInsensitive: mg.Dialect.SupportEngine()},
+			silences: make(map[int64][]*pb.MeshSilence),
 		})
 	// If unified alerting is disabled and upgrade migration has been run
 	case !mg.Cfg.UnifiedAlerting.IsEnabled() && migrationRun:
@@ -224,15 +228,15 @@ type migration struct {
 	sess *xorm.Session
 	mg   *migrator.Migrator
 
-	seenChannelUIDs map[string]struct{}
-	silences        map[int64][]*pb.MeshSilence
+	seenUIDs uidSet
+	silences map[int64][]*pb.MeshSilence
 }
 
 func (m *migration) SQL(dialect migrator.Dialect) string {
 	return codeMigration
 }
 
-// nolint: gocyclo
+//nolint:gocyclo
 func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	m.sess = sess
 	m.mg = mg
@@ -257,9 +261,11 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 
 	// cache for folders created for dashboards that have custom permissions
 	folderCache := make(map[string]*dashboard)
+	// cache for the general folders
+	generalFolderCache := make(map[int64]*dashboard)
 
-	// Store of newly created rules to later create routes
-	rulesPerOrg := make(map[int64]map[string]dashAlert)
+	// Per org map of newly created rules to which notification channels it should send to.
+	rulesPerOrg := make(map[int64]map[*alertRule][]uidOrID)
 
 	for _, da := range dashAlerts {
 		newCond, err := transConditions(*da.ParsedSettings, da.OrgId, dsIDMap)
@@ -333,7 +339,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 			}
 			folder = &f
 		default:
-			f, ok := folderCache[GENERAL_FOLDER]
+			f, ok := generalFolderCache[dash.OrgId]
 			if !ok {
 				// get or create general folder
 				f, err = folderHelper.getOrCreateGeneralFolder(dash.OrgId)
@@ -343,7 +349,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 						AlertId: da.Id,
 					}
 				}
-				folderCache[GENERAL_FOLDER] = f
+				generalFolderCache[dash.OrgId] = f
 			}
 			// No need to assign default permissions to general folder
 			// because they are included to the query result if it's a folder with no permissions
@@ -363,40 +369,15 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 		}
 
 		if _, ok := rulesPerOrg[rule.OrgID]; !ok {
-			rulesPerOrg[rule.OrgID] = make(map[string]dashAlert)
+			rulesPerOrg[rule.OrgID] = make(map[*alertRule][]uidOrID)
 		}
-		if _, ok := rulesPerOrg[rule.OrgID][rule.UID]; !ok {
-			rulesPerOrg[rule.OrgID][rule.UID] = da
+		if _, ok := rulesPerOrg[rule.OrgID][rule]; !ok {
+			rulesPerOrg[rule.OrgID][rule] = extractChannelIDs(da)
 		} else {
 			return MigrationError{
 				Err:     fmt.Errorf("duplicate generated rule UID"),
 				AlertId: da.Id,
 			}
-		}
-
-		if strings.HasPrefix(mg.Dialect.DriverName(), migrator.Postgres) {
-			err = mg.InTransaction(func(sess *xorm.Session) error {
-				_, err = sess.Insert(rule)
-				return err
-			})
-		} else {
-			_, err = m.sess.Insert(rule)
-		}
-		if err != nil {
-			// TODO better error handling, if constraint
-			rule.Title += fmt.Sprintf(" %v", rule.UID)
-			rule.RuleGroup += fmt.Sprintf(" %v", rule.UID)
-
-			_, err = m.sess.Insert(rule)
-			if err != nil {
-				return err
-			}
-		}
-
-		// create entry in alert_rule_version
-		_, err = m.sess.Insert(rule.makeVersion())
-		if err != nil {
-			return err
 		}
 	}
 
@@ -410,12 +391,51 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	if err != nil {
 		return err
 	}
+
+	err = m.insertRules(mg, rulesPerOrg)
+	if err != nil {
+		return err
+	}
+
 	for orgID, amConfig := range amConfigPerOrg {
 		if err := m.writeAlertmanagerConfig(orgID, amConfig); err != nil {
 			return err
 		}
 	}
 
+	return nil
+}
+
+func (m *migration) insertRules(mg *migrator.Migrator, rulesPerOrg map[int64]map[*alertRule][]uidOrID) error {
+	for _, rules := range rulesPerOrg {
+		for rule := range rules {
+			var err error
+			if strings.HasPrefix(mg.Dialect.DriverName(), migrator.Postgres) {
+				err = mg.InTransaction(func(sess *xorm.Session) error {
+					_, err := sess.Insert(rule)
+					return err
+				})
+			} else {
+				_, err = m.sess.Insert(rule)
+			}
+			if err != nil {
+				// TODO better error handling, if constraint
+				rule.Title += fmt.Sprintf(" %v", rule.UID)
+				rule.RuleGroup += fmt.Sprintf(" %v", rule.UID)
+
+				_, err = m.sess.Insert(rule)
+				if err != nil {
+					return err
+				}
+			}
+
+			// create entry in alert_rule_version
+			_, err = m.sess.Insert(rule.makeVersion())
+			if err != nil {
+				return err
+			}
+		}
+	}
 	return nil
 }
 
@@ -454,17 +474,20 @@ func (m *migration) validateAlertmanagerConfig(orgID int64, config *PostableUser
 				secureSettings[k] = d
 			}
 
+			data, err := gr.Settings.MarshalJSON()
+			if err != nil {
+				return err
+			}
 			var (
-				cfg = &channels.NotificationChannelConfig{
+				cfg = &receivers.NotificationChannelConfig{
 					UID:                   gr.UID,
 					OrgID:                 orgID,
 					Name:                  gr.Name,
 					Type:                  gr.Type,
 					DisableResolveMessage: gr.DisableResolveMessage,
-					Settings:              gr.Settings,
+					Settings:              data,
 					SecureSettings:        secureSettings,
 				}
-				err error
 			)
 
 			// decryptFunc represents the legacy way of decrypting data. Before the migration, we don't need any new way,
@@ -480,11 +503,13 @@ func (m *migration) validateAlertmanagerConfig(orgID int64, config *PostableUser
 				}
 				return fallback
 			}
-			receiverFactory, exists := channels.Factory(gr.Type)
+			receiverFactory, exists := alertingNotify.Factory(gr.Type)
 			if !exists {
 				return fmt.Errorf("notifier %s is not supported", gr.Type)
 			}
-			factoryConfig, err := channels.NewFactoryConfig(cfg, nil, decryptFunc, nil, nil)
+			factoryConfig, err := receivers.NewFactoryConfig(cfg, nil, decryptFunc, nil, nil, func(ctx ...interface{}) alertingLogging.Logger {
+				return &alertingLogging.FakeLogger{}
+			}, setting.BuildVersion)
 			if err != nil {
 				return err
 			}
@@ -837,7 +862,7 @@ func (c updateRulesOrderInGroup) Exec(sess *xorm.Session, migrator *migrator.Mig
 	}
 
 	updated := time.Now()
-	versions := make([]*alertRuleVersion, 0, len(toUpdate))
+	versions := make([]interface{}, 0, len(toUpdate))
 
 	for _, rule := range toUpdate {
 		rule.Updated = updated
@@ -853,11 +878,52 @@ func (c updateRulesOrderInGroup) Exec(sess *xorm.Session, migrator *migrator.Mig
 		migrator.Logger.Debug("updated group index for alert rule", "rule_uid", rule.UID)
 		versions = append(versions, version)
 	}
-
-	_, err := sess.Insert(&versions)
+	_, err := sess.Insert(versions...)
 	if err != nil {
 		migrator.Logger.Error("failed to insert changes to alert_rule_version", "err", err)
 		return fmt.Errorf("unable to update alert rules with group index: %w", err)
 	}
 	return nil
+}
+
+// uidSet is a wrapper around map[string]struct{} and util.GenerateShortUID() which aims help generate uids in quick
+// succession while taking into consideration case sensitivity requirements. if caseInsensitive is true, all generated
+// uids must also be unique when compared in a case-insensitive manner.
+type uidSet struct {
+	set             map[string]struct{}
+	caseInsensitive bool
+}
+
+// contains checks whether the given uid has already been generated in this uidSet.
+func (s *uidSet) contains(uid string) bool {
+	dedup := uid
+	if s.caseInsensitive {
+		dedup = strings.ToLower(dedup)
+	}
+	_, seen := s.set[dedup]
+	return seen
+}
+
+// add adds the given uid to the uidSet.
+func (s *uidSet) add(uid string) {
+	dedup := uid
+	if s.caseInsensitive {
+		dedup = strings.ToLower(dedup)
+	}
+	s.set[dedup] = struct{}{}
+}
+
+// generateUid will generate a new unique uid that is not already contained in the uidSet.
+// If it fails to create one that has not already been generated it will make multiple, but not unlimited, attempts.
+// If all attempts are exhausted an error will be returned.
+func (s *uidSet) generateUid() (string, error) {
+	for i := 0; i < 5; i++ {
+		gen := util.GenerateShortUID()
+		if !s.contains(gen) {
+			s.add(gen)
+			return gen, nil
+		}
+	}
+
+	return "", errors.New("failed to generate UID")
 }

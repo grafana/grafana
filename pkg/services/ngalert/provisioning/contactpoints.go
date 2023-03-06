@@ -7,12 +7,14 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/prometheus/alertmanager/config"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/prometheus/alertmanager/config"
 )
 
 type ContactPointService struct {
@@ -55,12 +57,16 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactP
 			continue
 		}
 
+		simpleJson, err := simplejson.NewJson(contactPoint.Settings)
+		if err != nil {
+			return nil, err
+		}
 		embeddedContactPoint := apimodels.EmbeddedContactPoint{
 			UID:                   contactPoint.UID,
 			Type:                  contactPoint.Type,
 			Name:                  contactPoint.Name,
 			DisableResolveMessage: contactPoint.DisableResolveMessage,
-			Settings:              contactPoint.Settings,
+			Settings:              simpleJson,
 		}
 		if val, exists := provenances[embeddedContactPoint.UID]; exists && val != "" {
 			embeddedContactPoint.Provenance = string(val)
@@ -68,7 +74,7 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactP
 		for k, v := range contactPoint.SecureSettings {
 			decryptedValue, err := ecp.decryptValue(v)
 			if err != nil {
-				ecp.log.Warn("decrypting value failed", "err", err.Error())
+				ecp.log.Warn("decrypting value failed", "error", err.Error())
 				continue
 			}
 			if decryptedValue == "" {
@@ -96,17 +102,21 @@ func (ecp *ContactPointService) getContactPointDecrypted(ctx context.Context, or
 		if receiver.UID != uid {
 			continue
 		}
+		simpleJson, err := simplejson.NewJson(receiver.Settings)
+		if err != nil {
+			return apimodels.EmbeddedContactPoint{}, err
+		}
 		embeddedContactPoint := apimodels.EmbeddedContactPoint{
 			UID:                   receiver.UID,
 			Type:                  receiver.Type,
 			Name:                  receiver.Name,
 			DisableResolveMessage: receiver.DisableResolveMessage,
-			Settings:              receiver.Settings,
+			Settings:              simpleJson,
 		}
 		for k, v := range receiver.SecureSettings {
 			decryptedValue, err := ecp.decryptValue(v)
 			if err != nil {
-				ecp.log.Warn("decrypting value failed", "err", err.Error())
+				ecp.log.Warn("decrypting value failed", "error", err.Error())
 				continue
 			}
 			if decryptedValue == "" {
@@ -146,12 +156,18 @@ func (ecp *ContactPointService) CreateContactPoint(ctx context.Context, orgID in
 	if contactPoint.UID == "" {
 		contactPoint.UID = util.GenerateShortUID()
 	}
+
+	jsonData, err := contactPoint.Settings.MarshalJSON()
+	if err != nil {
+		return apimodels.EmbeddedContactPoint{}, err
+	}
+
 	grafanaReceiver := &apimodels.PostableGrafanaReceiver{
 		UID:                   contactPoint.UID,
 		Name:                  contactPoint.Name,
 		Type:                  contactPoint.Type,
 		DisableResolveMessage: contactPoint.DisableResolveMessage,
-		Settings:              contactPoint.Settings,
+		Settings:              jsonData,
 		SecureSettings:        extractedSecrets,
 	}
 
@@ -189,7 +205,7 @@ func (ecp *ContactPointService) CreateContactPoint(ctx context.Context, orgID in
 	}
 
 	err = ecp.xact.InTransaction(ctx, func(ctx context.Context) error {
-		err = ecp.amStore.UpdateAlertmanagerConfiguration(ctx, &models.SaveAlertmanagerConfigurationCmd{
+		err = PersistConfig(ctx, ecp.amStore, &models.SaveAlertmanagerConfigurationCmd{
 			AlertmanagerConfiguration: string(data),
 			FetchedConfigurationHash:  revision.concurrencyToken,
 			ConfigurationVersion:      revision.version,
@@ -260,12 +276,17 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 		}
 		extractedSecrets[k] = encryptedValue
 	}
+
+	jsonData, err := contactPoint.Settings.MarshalJSON()
+	if err != nil {
+		return err
+	}
 	mergedReceiver := &apimodels.PostableGrafanaReceiver{
 		UID:                   contactPoint.UID,
 		Name:                  contactPoint.Name,
 		Type:                  contactPoint.Type,
 		DisableResolveMessage: contactPoint.DisableResolveMessage,
-		Settings:              contactPoint.Settings,
+		Settings:              jsonData,
 		SecureSettings:        extractedSecrets,
 	}
 	// save to store
@@ -284,7 +305,7 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 		return err
 	}
 	return ecp.xact.InTransaction(ctx, func(ctx context.Context) error {
-		err = ecp.amStore.UpdateAlertmanagerConfiguration(ctx, &models.SaveAlertmanagerConfigurationCmd{
+		err = PersistConfig(ctx, ecp.amStore, &models.SaveAlertmanagerConfigurationCmd{
 			AlertmanagerConfiguration: string(data),
 			FetchedConfigurationHash:  revision.concurrencyToken,
 			ConfigurationVersion:      revision.version,
@@ -344,7 +365,7 @@ func (ecp *ContactPointService) DeleteContactPoint(ctx context.Context, orgID in
 		if err != nil {
 			return err
 		}
-		return ecp.amStore.UpdateAlertmanagerConfiguration(ctx, &models.SaveAlertmanagerConfigurationCmd{
+		return PersistConfig(ctx, ecp.amStore, &models.SaveAlertmanagerConfigurationCmd{
 			AlertmanagerConfiguration: string(data),
 			FetchedConfigurationHash:  revision.concurrencyToken,
 			ConfigurationVersion:      revision.version,
@@ -418,6 +439,7 @@ groupLoop:
 				// If we're renaming, we'll need to fix up the macro receiver group for consistency.
 				// Firstly, if we're the only receiver in the group, simply rename the group to match. Done!
 				if len(receiverGroup.GrafanaManagedReceivers) == 1 {
+					replaceReferences(receiverGroup.Name, target.Name, cfg.AlertmanagerConfig.Route)
 					receiverGroup.Name = target.Name
 					receiverGroup.GrafanaManagedReceivers[i] = target
 					configModified = true
@@ -459,4 +481,16 @@ groupLoop:
 	}
 
 	return configModified
+}
+
+func replaceReferences(oldName, newName string, routes ...*apimodels.Route) {
+	if len(routes) == 0 {
+		return
+	}
+	for _, route := range routes {
+		if route.Receiver == oldName {
+			route.Receiver = newName
+		}
+		replaceReferences(oldName, newName, route.Routes...)
+	}
 }

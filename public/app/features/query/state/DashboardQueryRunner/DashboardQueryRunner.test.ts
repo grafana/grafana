@@ -2,7 +2,8 @@ import { throwError } from 'rxjs';
 import { delay, first } from 'rxjs/operators';
 
 import { AlertState, AlertStateInfo } from '@grafana/data';
-import { setDataSourceSrv } from '@grafana/runtime';
+import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceConsoleOutput';
 import { backendSrv } from '../../../../core/services/backend_srv';
@@ -13,13 +14,13 @@ import { getDefaultOptions, LEGACY_DS_NAME, NEXT_GEN_DS_NAME, toAsyncOfResult } 
 import { DashboardQueryRunner, DashboardQueryRunnerResult } from './types';
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
 }));
 
 function getTestContext() {
   jest.clearAllMocks();
-  const timeSrvMock: any = { timeRange: jest.fn() };
+  const timeSrvMock = { timeRange: jest.fn() } as unknown as TimeSrv;
   const options = getDefaultOptions();
   // These tests are setup so all the workers and runners are invoked once, this wouldn't be the case in real life
   const runner = createDashboardQueryRunner({ dashboard: options.dashboard, timeSrv: timeSrvMock });
@@ -33,7 +34,7 @@ function getTestContext() {
     .spyOn(annotationsSrv, 'executeAnnotationQuery')
     .mockReturnValue(toAsyncOfResult({ events: [{ id: 'NextGen' }] }));
   const annotationQueryMock = jest.fn().mockResolvedValue([{ id: 'Legacy' }]);
-  const dataSourceSrvMock: any = {
+  const dataSourceSrvMock = {
     get: async (name: string) => {
       if (name === LEGACY_DS_NAME) {
         return {
@@ -49,7 +50,7 @@ function getTestContext() {
 
       return {};
     },
-  };
+  } as DataSourceSrv;
   setDataSourceSrv(dataSourceSrvMock);
 
   return { runner, options, annotationQueryMock, executeAnnotationQueryMock, getMock };

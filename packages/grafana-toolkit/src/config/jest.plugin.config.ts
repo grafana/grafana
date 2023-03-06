@@ -83,7 +83,10 @@ export const jestConfig = (baseDir: string = process.cwd()) => {
       '<rootDir>/spec/**/*.{spec,test,jest}.{js,jsx,ts,tsx}',
     ],
     transform: {
-      '^.+\\.jsx?$': require.resolve('babel-jest'),
+      '^.+\\.(js|jsx|mjs)$': [
+        require.resolve('babel-jest'),
+        { configFile: path.resolve(__dirname, './jest.babel.config.js') },
+      ],
       '^.+\\.tsx?$': require.resolve('ts-jest'),
     },
     transformIgnorePatterns: [

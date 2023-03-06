@@ -302,3 +302,27 @@ export function getPropertiesForVariant(theme: GrafanaTheme2, variant: ButtonVar
       return getButtonVariantStyles(theme, theme.colors.primary, fill);
   }
 }
+
+export const clearButtonStyles = (theme: GrafanaTheme2) => {
+  return css`
+    background: transparent;
+    color: ${theme.colors.text.primary};
+    border: none;
+    padding: 0;
+  `;
+};
+
+export const clearLinkButtonStyles = (theme: GrafanaTheme2) => {
+  return css`
+    background: transparent;
+    border: none;
+    padding: 0;
+    font-family: inherit;
+    color: inherit;
+    height: 100%;
+    &:hover {
+      background: transparent;
+      color: inherit;
+    }
+  `;
+};

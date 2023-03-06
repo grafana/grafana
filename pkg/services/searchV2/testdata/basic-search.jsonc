@@ -2,6 +2,10 @@
 //  
 //  Frame[0] {
 //      "type": "search-results",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
 //      "custom": {
 //          "count": 1
 //      }
@@ -13,18 +17,23 @@
 //  | Labels:        | Labels:        | Labels:        | Labels:          | Labels:        | Labels:                  | Labels:                 | Labels:        |
 //  | Type: []string | Type: []string | Type: []string | Type: []string   | Type: []string | Type: []*json.RawMessage | Type: []json.RawMessage | Type: []string |
 //  +----------------+----------------+----------------+------------------+----------------+--------------------------+-------------------------+----------------+
-//  | dashboard      | 2              | boom           |                  | /pfix/d/2/     | null                     | []                      |                |
+//  | dashboard      | 2              | boom           |                  | /pfix/d/2/     | null                     | []                      | general        |
 //  +----------------+----------------+----------------+------------------+----------------+--------------------------+-------------------------+----------------+
 //  
 //  
 //  🌟 This was machine generated.  Do not edit. 🌟
 {
+  "status": 200,
   "frames": [
     {
       "schema": {
         "name": "Query results",
         "meta": {
           "type": "search-results",
+          "typeVersion": [
+            0,
+            0
+          ],
           "custom": {
             "count": 1
           }
@@ -121,7 +130,7 @@
             []
           ],
           [
-            ""
+            "general"
           ]
         ]
       }

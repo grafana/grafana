@@ -112,6 +112,8 @@ $panel-header-no-title-zindex: 1;
 }
 
 .panel-info-corner {
+  background: none;
+  border: none;
   color: $text-muted;
   cursor: pointer;
   position: absolute;
@@ -123,8 +125,8 @@ $panel-header-no-title-zindex: 1;
   top: 0;
 
   .fa {
-    position: relative;
-    top: -2px;
+    position: absolute;
+    top: 6px;
     left: 6px;
     font-size: 75%;
     z-index: $panel-header-no-title-zindex + 2;
@@ -161,6 +163,8 @@ $panel-header-no-title-zindex: 1;
 }
 
 .panel-info-content {
+  overflow: auto;
+
   code {
     white-space: normal;
     word-wrap: break-word;

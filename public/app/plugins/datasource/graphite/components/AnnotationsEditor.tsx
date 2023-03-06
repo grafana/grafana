@@ -49,7 +49,7 @@ export const AnnotationEditor = (props: QueryEditorProps<GraphiteDatasource, Gra
 
       <div className="gf-form">
         <InlineFormLabel width={12}>Graphite events tags</InlineFormLabel>
-        <TagsInput id="tags-input" tags={tags} onChange={onTagsChange} placeholder="Example: event_tag" />
+        <TagsInput id="tags-input" width={50} tags={tags} onChange={onTagsChange} placeholder="Example: event_tag" />
       </div>
     </div>
   );

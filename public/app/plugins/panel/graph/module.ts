@@ -5,7 +5,6 @@ import './time_regions_form';
 import './annotation_tooltip';
 import './event_editor';
 
-import { t } from '@lingui/macro';
 import { auto } from 'angular';
 import { defaults, find, without } from 'lodash';
 
@@ -145,7 +144,8 @@ export class GraphCtrl extends MetricsPanelCtrl {
     },
   };
 
-  /** @ngInject */
+  static $inject = ['$scope', '$injector'];
+
   constructor($scope: any, $injector: auto.IInjectorService) {
     super($scope, $injector);
 
@@ -184,11 +184,7 @@ export class GraphCtrl extends MetricsPanelCtrl {
   }
 
   onInitPanelActions(actions: any[]) {
-    const toggleTextTranslation = t({
-      id: 'panel.header-menu.more-toggle',
-      message: `Toggle legend`,
-    });
-    actions.push({ text: toggleTextTranslation, click: 'ctrl.toggleLegend()', shortcut: 'p l' });
+    actions.push({ text: 'Toggle legend', click: 'ctrl.toggleLegend()', shortcut: 'p l' });
   }
 
   zoomOut(evt: any) {
@@ -302,7 +298,7 @@ export class GraphCtrl extends MetricsPanelCtrl {
   }
 
   onColorChange = (series: any, color: string) => {
-    series.setColor(config.theme.visualization.getColorByName(color));
+    series.setColor(config.theme2.visualization.getColorByName(color));
     this.panel.aliasColors[series.alias] = color;
     this.render();
   };

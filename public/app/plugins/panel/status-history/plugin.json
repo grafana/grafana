@@ -3,8 +3,6 @@
   "name": "Status history",
   "id": "status-history",
 
-  "state": "beta",
-
   "info": {
     "description": "Periodic status history",
     "author": {

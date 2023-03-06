@@ -9,6 +9,8 @@ interface Props {
   className?: string;
 }
 
-export const PageContents: FC<Props> = ({ isLoading, children }) => {
-  return <>{isLoading ? <PageLoader /> : children}</>;
+export const PageContents: FC<Props> = ({ isLoading, children, className }) => {
+  let content = className ? <div className={className}>{children}</div> : children;
+
+  return <>{isLoading ? <PageLoader /> : content}</>;
 };

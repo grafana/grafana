@@ -16,10 +16,6 @@
       opacity: 1;
     }
 
-    .dashboard-row__actions {
-      visibility: hidden;
-    }
-
     .dashboard-row__toggle-target {
       flex: 1;
       cursor: pointer;
@@ -27,9 +23,9 @@
     }
   }
 
-  &:hover {
+  &:hover,
+  &:focus-within {
     .dashboard-row__actions {
-      visibility: visible;
       opacity: 1;
     }
   }
@@ -40,6 +36,8 @@
   font-size: $font-size-h5;
   font-weight: $font-weight-semi-bold;
   color: $text-color;
+  background: transparent;
+  border: none;
 
   .fa {
     color: $text-muted;
@@ -50,13 +48,14 @@
 
 .dashboard-row__actions {
   color: $text-muted;
-  visibility: hidden;
   opacity: 0;
   transition: 200ms opacity ease-in 200ms;
 
-  a {
+  button {
     color: $text-color-weak;
     padding-left: $spacer;
+    background: transparent;
+    border: none;
 
     &:hover {
       color: $link-hover-color;

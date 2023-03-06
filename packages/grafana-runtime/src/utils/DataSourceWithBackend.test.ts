@@ -1,5 +1,5 @@
 import { of } from 'rxjs';
-import { BackendSrv, BackendSrvRequest } from 'src/services';
+import { BackendSrv, BackendSrvRequest, FetchResponse } from 'src/services';
 
 import {
   DataSourceJsonData,
@@ -19,7 +19,7 @@ class MyDataSource extends DataSourceWithBackend<DataQuery, DataSourceJsonData> 
   }
 }
 
-const mockDatasourceRequest = jest.fn();
+const mockDatasourceRequest = jest.fn<Promise<FetchResponse>, BackendSrvRequest[]>();
 
 const backendSrv = {
   fetch: (options: BackendSrvRequest) => {
@@ -32,61 +32,132 @@ jest.mock('../services', () => ({
   getBackendSrv: () => backendSrv,
   getDataSourceSrv: () => {
     return {
-      getInstanceSettings: (ref?: DataSourceRef) => ({ type: ref?.type ?? '?', uid: ref?.uid ?? '?' }),
+      getInstanceSettings: (ref?: DataSourceRef) => ({
+        type: ref?.type ?? '<mocktype>',
+        uid: ref?.uid ?? '<mockuid>',
+      }),
     };
   },
 }));
 
 describe('DataSourceWithBackend', () => {
   test('check the executed queries', () => {
-    const settings = {
-      name: 'test',
-      id: 1234,
-      uid: 'abc',
-      type: 'dummy',
-      jsonData: {},
-    } as DataSourceInstanceSettings<DataSourceJsonData>;
-
-    mockDatasourceRequest.mockReset();
-    mockDatasourceRequest.mockReturnValue(Promise.resolve({}));
-    const ds = new MyDataSource(settings);
-
+    const { mock, ds } = createMockDatasource();
     ds.query({
       maxDataPoints: 10,
       intervalMs: 5000,
       targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
+      dashboardUID: 'dashA',
+      panelId: 123,
     } as DataQueryRequest);
 
-    const mock = mockDatasourceRequest.mock;
-    expect(mock.calls.length).toBe(1);
-
     const args = mock.calls[0][0];
+
+    expect(mock.calls.length).toBe(1);
     expect(args).toMatchInlineSnapshot(`
-      Object {
-        "data": Object {
-          "queries": Array [
-            Object {
-              "datasource": Object {
+      {
+        "data": {
+          "queries": [
+            {
+              "datasource": {
                 "type": "dummy",
                 "uid": "abc",
               },
               "datasourceId": 1234,
               "intervalMs": 5000,
               "maxDataPoints": 10,
+              "queryCachingTTL": undefined,
               "refId": "A",
             },
-            Object {
-              "datasource": Object {
+            {
+              "datasource": {
                 "type": "sample",
-                "uid": "?",
+                "uid": "<mockuid>",
               },
               "datasourceId": undefined,
               "intervalMs": 5000,
               "maxDataPoints": 10,
+              "queryCachingTTL": undefined,
               "refId": "B",
             },
           ],
         },
+        "headers": {
+          "X-Dashboard-Uid": "dashA",
+          "X-Datasource-Uid": "abc, <mockuid>",
+          "X-Panel-Id": "123",
+          "X-Plugin-Id": "dummy, sample",
+        },
+        "hideFromInspector": false,
+        "method": "POST",
+        "requestId": undefined,
+        "url": "/api/ds/query",
+      }
+    `);
+  });
+
+  test('should apply template variables only for the current data source', () => {
+    const { mock, ds } = createMockDatasource();
+    ds.applyTemplateVariables = jest.fn();
+    ds.query({
+      maxDataPoints: 10,
+      intervalMs: 5000,
+      targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
+    } as DataQueryRequest);
+
+    expect(mock.calls.length).toBe(1);
+    expect(ds.applyTemplateVariables).toHaveBeenCalledTimes(1);
+  });
+
+  test('check that the executed queries is hidden from inspector', () => {
+    const { mock, ds } = createMockDatasource();
+    ds.query({
+      maxDataPoints: 10,
+      intervalMs: 5000,
+      targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
+      hideFromInspector: true,
+      dashboardUID: 'dashA',
+      panelId: 123,
+    } as DataQueryRequest);
+
+    const args = mock.calls[0][0];
+
+    expect(mock.calls.length).toBe(1);
+    expect(args).toMatchInlineSnapshot(`
+      {
+        "data": {
+          "queries": [
+            {
+              "datasource": {
+                "type": "dummy",
+                "uid": "abc",
+              },
+              "datasourceId": 1234,
+              "intervalMs": 5000,
+              "maxDataPoints": 10,
+              "queryCachingTTL": undefined,
+              "refId": "A",
+            },
+            {
+              "datasource": {
+                "type": "sample",
+                "uid": "<mockuid>",
+              },
+              "datasourceId": undefined,
+              "intervalMs": 5000,
+              "maxDataPoints": 10,
+              "queryCachingTTL": undefined,
+              "refId": "B",
+            },
+          ],
+        },
+        "headers": {
+          "X-Dashboard-Uid": "dashA",
+          "X-Datasource-Uid": "abc, <mockuid>",
+          "X-Panel-Id": "123",
+          "X-Plugin-Id": "dummy, sample",
+        },
+        "hideFromInspector": true,
         "method": "POST",
         "requestId": undefined,
         "url": "/api/ds/query",
@@ -115,4 +186,71 @@ describe('DataSourceWithBackend', () => {
     obs = toStreamingDataResponse(rsp, request, standardStreamOptionsProvider);
     expect(obs).toBeDefined();
   });
+
+  test('check that getResource uses the data source UID', () => {
+    const { mock, ds } = createMockDatasource();
+    ds.getResource('foo');
+
+    const args = mock.calls[0][0];
+
+    expect(mock.calls.length).toBe(1);
+    expect(args).toMatchObject({
+      headers: {
+        'X-Datasource-Uid': 'abc',
+        'X-Plugin-Id': 'dummy',
+      },
+      method: 'GET',
+      url: '/api/datasources/uid/abc/resources/foo',
+    });
+  });
+
+  test('check that postResource uses the data source UID', () => {
+    const { mock, ds } = createMockDatasource();
+    ds.postResource('foo');
+
+    const args = mock.calls[0][0];
+
+    expect(mock.calls.length).toBe(1);
+    expect(args).toMatchObject({
+      headers: {
+        'X-Datasource-Uid': 'abc',
+        'X-Plugin-Id': 'dummy',
+      },
+      method: 'POST',
+      url: '/api/datasources/uid/abc/resources/foo',
+    });
+  });
+
+  test('check that callHealthCheck uses the data source UID', () => {
+    const { mock, ds } = createMockDatasource();
+    ds.callHealthCheck();
+
+    const args = mock.calls[0][0];
+
+    expect(mock.calls.length).toBe(1);
+    expect(args).toMatchObject({
+      headers: {
+        'X-Datasource-Uid': 'abc',
+        'X-Plugin-Id': 'dummy',
+      },
+      method: 'GET',
+      url: '/api/datasources/uid/abc/health',
+    });
+  });
 });
+
+function createMockDatasource() {
+  const settings = {
+    name: 'test',
+    id: 1234,
+    uid: 'abc',
+    type: 'dummy',
+    jsonData: {},
+  } as DataSourceInstanceSettings<DataSourceJsonData>;
+
+  mockDatasourceRequest.mockReset();
+  mockDatasourceRequest.mockReturnValue(Promise.resolve({} as FetchResponse));
+
+  const ds = new MyDataSource(settings);
+  return { ds, mock: mockDatasourceRequest.mock };
+}

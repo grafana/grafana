@@ -1,24 +1,25 @@
 import React, { useCallback, useState } from 'react';
 
 import { DataSourceApi, PanelData, SelectableValue } from '@grafana/data';
-import { EditorRow } from '@grafana/ui';
+import { EditorRow } from '@grafana/experimental';
 
 import { PrometheusDatasource } from '../../datasource';
 import { getMetadataString } from '../../language_provider';
 import promqlGrammar from '../../promql';
 import { promQueryModeller } from '../PromQueryModeller';
 import { buildVisualQueryFromString } from '../parsing';
-import { LabelFilters } from '../shared/LabelFilters';
 import { OperationExplainedBox } from '../shared/OperationExplainedBox';
 import { OperationList } from '../shared/OperationList';
 import { OperationListExplained } from '../shared/OperationListExplained';
 import { OperationsEditorRow } from '../shared/OperationsEditorRow';
 import { QueryBuilderHints } from '../shared/QueryBuilderHints';
 import { RawQuery } from '../shared/RawQuery';
+import { regexifyLabelValuesQueryString } from '../shared/parsingUtils';
 import { QueryBuilderLabelFilter, QueryBuilderOperation } from '../shared/types';
 import { PromVisualQuery } from '../types';
 
-import { MetricSelect } from './MetricSelect';
+import { LabelFilters } from './LabelFilters';
+import { MetricSelect, PROMETHEUS_QUERY_BUILDER_MAX_RESULTS } from './MetricSelect';
 import { NestedQueryList } from './NestedQueryList';
 import { EXPLAIN_LABEL_FILTER_CONTENT } from './PromQueryBuilderExplained';
 
@@ -42,7 +43,7 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
    * Map metric metadata to SelectableValue for Select component and also adds defined template variables to the list.
    */
   const withTemplateVariableOptions = useCallback(
-    async (optionsPromise: Promise<Array<{ value: string; description?: string }>>): Promise<SelectableValue[]> => {
+    async (optionsPromise: Promise<SelectableValue[]>): Promise<SelectableValue[]> => {
       const variables = datasource.getVariables();
       const options = await optionsPromise;
       return [
@@ -53,7 +54,12 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
     [datasource]
   );
 
-  const onGetLabelNames = async (forLabel: Partial<QueryBuilderLabelFilter>): Promise<Array<{ value: string }>> => {
+  /**
+   * Function kicked off when user interacts with label in label filters.
+   * Formats a promQL expression and passes that off to helper functions depending on API support
+   * @param forLabel
+   */
+  const onGetLabelNames = async (forLabel: Partial<QueryBuilderLabelFilter>): Promise<SelectableValue[]> => {
     // If no metric we need to use a different method
     if (!query.metric) {
       // Todo add caching but inside language provider!
@@ -64,7 +70,13 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
     const labelsToConsider = query.labels.filter((x) => x !== forLabel);
     labelsToConsider.push({ label: '__name__', op: '=', value: query.metric });
     const expr = promQueryModeller.renderLabels(labelsToConsider);
-    const labelsIndex = await datasource.languageProvider.fetchSeriesLabels(expr);
+
+    let labelsIndex;
+    if (datasource.hasLabelsMatchAPISupport()) {
+      labelsIndex = await datasource.languageProvider.fetchSeriesLabelsMatch(expr);
+    } else {
+      labelsIndex = await datasource.languageProvider.fetchSeriesLabels(expr);
+    }
 
     // filter out already used labels
     return Object.keys(labelsIndex)
@@ -72,22 +84,117 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
       .map((k) => ({ value: k }));
   };
 
-  const onGetLabelValues = async (forLabel: Partial<QueryBuilderLabelFilter>) => {
+  const getLabelValuesAutocompleteSuggestions = (
+    queryString?: string,
+    labelName?: string
+  ): Promise<SelectableValue[]> => {
+    const forLabel = {
+      label: labelName ?? '__name__',
+      op: '=~',
+      value: regexifyLabelValuesQueryString(`.*${queryString}`),
+    };
+    const labelsToConsider = query.labels.filter((x) => x.label !== forLabel.label);
+    labelsToConsider.push(forLabel);
+    if (query.metric) {
+      labelsToConsider.push({ label: '__name__', op: '=', value: query.metric });
+    }
+    const interpolatedLabelsToConsider = labelsToConsider.map((labelObject) => ({
+      ...labelObject,
+      label: datasource.interpolateString(labelObject.label),
+      value: datasource.interpolateString(labelObject.value),
+    }));
+    const expr = promQueryModeller.renderLabels(interpolatedLabelsToConsider);
+    let response;
+    if (datasource.hasLabelsMatchAPISupport()) {
+      response = getLabelValuesFromLabelValuesAPI(forLabel, expr);
+    } else {
+      response = getLabelValuesFromSeriesAPI(forLabel, expr);
+    }
+
+    return response.then((response: SelectableValue[]) => {
+      if (response.length > PROMETHEUS_QUERY_BUILDER_MAX_RESULTS) {
+        response.splice(0, response.length - PROMETHEUS_QUERY_BUILDER_MAX_RESULTS);
+      }
+      return response;
+    });
+  };
+
+  /**
+   * Helper function to fetch and format label value results from legacy API
+   * @param forLabel
+   * @param promQLExpression
+   */
+  const getLabelValuesFromSeriesAPI = (
+    forLabel: Partial<QueryBuilderLabelFilter>,
+    promQLExpression: string
+  ): Promise<SelectableValue[]> => {
+    if (!forLabel.label) {
+      return Promise.resolve([]);
+    }
+    const result = datasource.languageProvider.fetchSeries(promQLExpression);
+    const forLabelInterpolated = datasource.interpolateString(forLabel.label);
+    return result.then((result) => {
+      // This query returns duplicate values, scrub them out
+      const set = new Set<string>();
+      result.forEach((labelValue) => {
+        const labelNameString = labelValue[forLabelInterpolated];
+        set.add(labelNameString);
+      });
+
+      return Array.from(set).map((labelValues: string) => ({ label: labelValues, value: labelValues }));
+    });
+  };
+
+  /**
+   * Helper function to fetch label values from a promql string expression and a label
+   * @param forLabel
+   * @param promQLExpression
+   */
+  const getLabelValuesFromLabelValuesAPI = (
+    forLabel: Partial<QueryBuilderLabelFilter>,
+    promQLExpression: string
+  ): Promise<SelectableValue[]> => {
+    if (!forLabel.label) {
+      return Promise.resolve([]);
+    }
+    return datasource.languageProvider.fetchSeriesValuesWithMatch(forLabel.label, promQLExpression).then((response) => {
+      return response.map((v) => ({
+        value: v,
+        label: v,
+      }));
+    });
+  };
+
+  /**
+   * Function kicked off when users interact with the value of the label filters
+   * Formats a promQL expression and passes that into helper functions depending on API support
+   * @param forLabel
+   */
+  const onGetLabelValues = async (forLabel: Partial<QueryBuilderLabelFilter>): Promise<SelectableValue[]> => {
     if (!forLabel.label) {
       return [];
     }
-
-    // If no metric we need to use a different method
+    // If no metric is selected, we can get the raw list of labels
     if (!query.metric) {
       return (await datasource.languageProvider.getLabelValues(forLabel.label)).map((v) => ({ value: v }));
     }
 
     const labelsToConsider = query.labels.filter((x) => x !== forLabel);
     labelsToConsider.push({ label: '__name__', op: '=', value: query.metric });
-    const expr = promQueryModeller.renderLabels(labelsToConsider);
-    const result = await datasource.languageProvider.fetchSeriesLabels(expr);
-    const forLabelInterpolated = datasource.interpolateString(forLabel.label);
-    return result[forLabelInterpolated].map((v) => ({ value: v })) ?? [];
+
+    const interpolatedLabelsToConsider = labelsToConsider.map((labelObject) => ({
+      ...labelObject,
+      label: datasource.interpolateString(labelObject.label),
+      value: datasource.interpolateString(labelObject.value),
+    }));
+
+    const expr = promQueryModeller.renderLabels(interpolatedLabelsToConsider);
+
+    if (datasource.hasLabelsMatchAPISupport()) {
+      return getLabelValuesFromLabelValuesAPI(forLabel, expr);
+    } else {
+      return getLabelValuesFromSeriesAPI(forLabel, expr);
+    }
   };
 
   const onGetMetrics = useCallback(() => {
@@ -99,16 +206,20 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
   return (
     <>
       <EditorRow>
-        <MetricSelect query={query} onChange={onChange} onGetMetrics={onGetMetrics} />
-        <LabelFilters
+        <MetricSelect
+          query={query}
+          onChange={onChange}
+          onGetMetrics={onGetMetrics}
+          datasource={datasource}
           labelsFilters={query.labels}
-          onChange={onChangeLabels}
-          onGetLabelNames={(forLabel: Partial<QueryBuilderLabelFilter>) =>
-            withTemplateVariableOptions(onGetLabelNames(forLabel))
-          }
-          onGetLabelValues={(forLabel: Partial<QueryBuilderLabelFilter>) =>
-            withTemplateVariableOptions(onGetLabelValues(forLabel))
-          }
+        />
+        <LabelFilters
+          getLabelValuesAutofillSuggestions={getLabelValuesAutocompleteSuggestions}
+          labelsFilters={query.labels}
+          // eslint-ignore
+          onChange={onChangeLabels as (labelFilters: Array<Partial<QueryBuilderLabelFilter>>) => void}
+          onGetLabelNames={(forLabel) => withTemplateVariableOptions(onGetLabelNames(forLabel))}
+          onGetLabelValues={(forLabel) => withTemplateVariableOptions(onGetLabelValues(forLabel))}
         />
       </EditorRow>
       {showExplain && (
@@ -122,6 +233,7 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
       <OperationsEditorRow>
         <OperationList<PromVisualQuery>
           queryModeller={promQueryModeller}
+          // eslint-ignore
           datasource={datasource as DataSourceApi}
           query={query}
           onChange={onChange}

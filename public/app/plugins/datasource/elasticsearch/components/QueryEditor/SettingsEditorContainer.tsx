@@ -47,6 +47,7 @@ export const SettingsEditorContainer = ({ label, children, hidden = false }: Pro
           className={cx('gf-form-label query-part', styles.button, segmentStyles)}
           onClick={() => setOpen(!open)}
           aria-expanded={open}
+          type="button"
         >
           <Icon name={open ? 'angle-down' : 'angle-right'} aria-hidden="true" className={styles.icon} />
           {label}

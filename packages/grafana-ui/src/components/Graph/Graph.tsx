@@ -117,8 +117,9 @@ export class Graph extends PureComponent<GraphProps, GraphState> {
     return uniqBy(
       series.map((s) => {
         const index = s.yAxis ? s.yAxis.index : 1;
-        const min = s.yAxis && !isNaN(s.yAxis.min as number) ? s.yAxis.min : null;
-        const tickDecimals = s.yAxis && !isNaN(s.yAxis.tickDecimals as number) ? s.yAxis.tickDecimals : null;
+        const min = s.yAxis && s.yAxis.min && !isNaN(s.yAxis.min) ? s.yAxis.min : null;
+        const tickDecimals =
+          s.yAxis && s.yAxis.tickDecimals && !isNaN(s.yAxis.tickDecimals) ? s.yAxis.tickDecimals : null;
         return {
           show: true,
           index,

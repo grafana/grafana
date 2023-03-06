@@ -14,13 +14,13 @@ import { setEchoSrv } from '@grafana/runtime';
 
 import { deepFreeze } from '../../../../test/core/redux/reducerTester';
 import { Echo } from '../../../core/services/echo/Echo';
-import { DashboardModel } from '../../dashboard/state/DashboardModel';
+import { createDashboardModelFixture } from '../../dashboard/state/__fixtures__/dashboardFixtures';
 
 import { runRequest } from './runRequest';
 
 jest.mock('app/core/services/backend_srv');
 
-const dashboardModel = new DashboardModel({
+const dashboardModel = createDashboardModelFixture({
   panels: [{ id: 1, type: 'graph' }],
 });
 
@@ -115,7 +115,7 @@ function runRequestScenario(desc: string, fn: (ctx: ScenarioCtx) => void) {
 function runRequestScenarioThatThrows(desc: string, fn: (ctx: ScenarioCtx) => void) {
   describe(desc, () => {
     const ctx = new ScenarioCtx();
-    let consoleSpy: jest.SpyInstance<any>;
+    let consoleSpy: jest.SpyInstance;
 
     beforeEach(() => {
       consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
@@ -209,12 +209,12 @@ describe('runRequest', () => {
 
     it('should keep data for X and Y', () => {
       expect(ctx.results[2].series).toMatchInlineSnapshot(`
-        Array [
-          Object {
+        [
+          {
             "name": "DataX-1",
             "refId": "X",
           },
-          Object {
+          {
             "name": "DataY-2",
             "refId": "Y",
           },

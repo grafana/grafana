@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import React from 'react';
 import SVG from 'react-inlinesvg';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, isIconName } from '@grafana/data';
 
 import { useStyles2 } from '../../themes/ThemeContext';
 import { IconName, IconType, IconSize } from '../../types/icon';
@@ -53,9 +53,17 @@ export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
       initIconCache();
     }
 
+    if (!isIconName(name)) {
+      console.warn('Icon component passed an invalid icon name', name);
+    }
+
+    if (!name || name.includes('..')) {
+      return <div ref={ref}>invalid icon name</div>;
+    }
+
     const svgSize = getSvgSize(size);
     const svgHgt = svgSize;
-    const svgWid = name?.startsWith('gf-bar-align') ? 16 : name?.startsWith('gf-interp') ? 30 : svgSize;
+    const svgWid = name.startsWith('gf-bar-align') ? 16 : name.startsWith('gf-interp') ? 30 : svgSize;
     const subDir = getIconSubDir(name, type);
     const svgPath = `${iconRoot}${subDir}/${name}.svg`;
 

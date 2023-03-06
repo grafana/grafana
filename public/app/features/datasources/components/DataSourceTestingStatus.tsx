@@ -1,8 +1,8 @@
 import React from 'react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { TestingStatus } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
-import { TestingStatus } from 'app/types';
 
 export type Props = {
   testingStatus?: TestingStatus;

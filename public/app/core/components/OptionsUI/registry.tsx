@@ -25,6 +25,7 @@ import {
   StatsPickerConfigSettings,
   displayNameOverrideProcessor,
   FieldNamePickerConfigSettings,
+  booleanOverrideProcessor,
 } from '@grafana/data';
 import { RadioButtonGroup, TimeZonePicker, Switch } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
@@ -81,7 +82,8 @@ export const getAllOptionEditors = () => {
     name: 'Boolean',
     description: 'Allows boolean values input',
     editor(props) {
-      return <Switch {...props} onChange={(e) => props.onChange(e.currentTarget.checked)} />;
+      const { id, ...rest } = props; // Remove id from properties passed into switch
+      return <Switch {...rest} onChange={(e) => props.onChange(e.currentTarget.checked)} />;
     },
   };
 
@@ -380,5 +382,18 @@ export const getAllStandardFieldConfigs = () => {
     getItemsCount: (value) => (value ? value.steps.length : 0),
   };
 
-  return [unit, min, max, decimals, displayName, color, noValue, links, mappings, thresholds];
+  const filterable: FieldConfigPropertyItem<{}, boolean | undefined, {}> = {
+    id: 'filterable',
+    path: 'filterable',
+    name: 'Ad-hoc filterable',
+    hideFromDefaults: true,
+    editor: standardEditorsRegistry.get('boolean').editor as any,
+    override: standardEditorsRegistry.get('boolean').editor as any,
+    process: booleanOverrideProcessor,
+    shouldApply: () => true,
+    settings: {},
+    category,
+  };
+
+  return [unit, min, max, decimals, displayName, color, noValue, links, mappings, thresholds, filterable];
 };

@@ -5,22 +5,23 @@ import {
   PanelPlugin,
   ReducerID,
   standardEditorsRegistry,
+  identityOverrideProcessor,
 } from '@grafana/data';
-import { TableFieldOptions } from '@grafana/schema';
-import { TableCellDisplayMode } from '@grafana/ui';
+import { TableFieldOptions, TableCellOptions, TableCellDisplayMode, defaultTableFieldOptions } from '@grafana/schema';
 
 import { PaginationEditor } from './PaginationEditor';
+import { TableCellOptionEditor } from './TableCellOptionEditor';
 import { TablePanel } from './TablePanel';
 import { tableMigrationHandler, tablePanelChangedHandler } from './migrations';
-import { PanelOptions, defaultPanelOptions, defaultPanelFieldConfig } from './models.gen';
+import { PanelOptions, defaultPanelOptions } from './panelcfg.gen';
 import { TableSuggestionsSupplier } from './suggestions';
 
 const footerCategory = 'Table footer';
+const cellCategory = ['Cell Options'];
 
 export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePanel)
   .setPanelChangeHandler(tablePanelChangedHandler)
   .setMigrationHandler(tableMigrationHandler)
-  .setNoPadding()
   .useFieldConfig({
     useCustomConfig: (builder) => {
       builder
@@ -34,7 +35,7 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
             max: 500,
           },
           shouldApply: () => true,
-          defaultValue: defaultPanelFieldConfig.minWidth,
+          defaultValue: defaultTableFieldOptions.minWidth,
         })
         .addNumberInput({
           path: 'width',
@@ -45,7 +46,7 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
             max: 300,
           },
           shouldApply: () => true,
-          defaultValue: defaultPanelFieldConfig.width,
+          defaultValue: defaultTableFieldOptions.width,
         })
         .addRadio({
           path: 'align',
@@ -58,39 +59,31 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
               { label: 'right', value: 'right' },
             ],
           },
-          defaultValue: defaultPanelFieldConfig.align,
+          defaultValue: defaultTableFieldOptions.align,
         })
-        .addSelect({
-          path: 'displayMode',
-          name: 'Cell display mode',
-          description: 'Color text, background, show as gauge, etc',
-          settings: {
-            options: [
-              { value: TableCellDisplayMode.Auto, label: 'Auto' },
-              { value: TableCellDisplayMode.ColorText, label: 'Color text' },
-              { value: TableCellDisplayMode.ColorBackground, label: 'Color background (gradient)' },
-              { value: TableCellDisplayMode.ColorBackgroundSolid, label: 'Color background (solid)' },
-              { value: TableCellDisplayMode.GradientGauge, label: 'Gradient gauge' },
-              { value: TableCellDisplayMode.LcdGauge, label: 'LCD gauge' },
-              { value: TableCellDisplayMode.BasicGauge, label: 'Basic gauge' },
-              { value: TableCellDisplayMode.JSONView, label: 'JSON View' },
-              { value: TableCellDisplayMode.Image, label: 'Image' },
-            ],
-          },
-          defaultValue: defaultPanelFieldConfig.displayMode,
+        .addCustomEditor<void, TableCellOptions>({
+          id: 'cellOptions',
+          path: 'cellOptions',
+          name: 'Cell Type',
+          editor: TableCellOptionEditor,
+          override: TableCellOptionEditor,
+          defaultValue: defaultTableFieldOptions.cellOptions,
+          process: identityOverrideProcessor,
+          category: cellCategory,
+          shouldApply: () => true,
         })
         .addBooleanSwitch({
           path: 'inspect',
           name: 'Cell value inspect',
           description: 'Enable cell value inspection in a modal window',
           defaultValue: false,
+          category: cellCategory,
           showIf: (cfg) => {
             return (
-              cfg.displayMode === TableCellDisplayMode.Auto ||
-              cfg.displayMode === TableCellDisplayMode.JSONView ||
-              cfg.displayMode === TableCellDisplayMode.ColorText ||
-              cfg.displayMode === TableCellDisplayMode.ColorBackground ||
-              cfg.displayMode === TableCellDisplayMode.ColorBackgroundSolid
+              cfg.cellOptions.type === TableCellDisplayMode.Auto ||
+              cfg.cellOptions.type === TableCellDisplayMode.JSONView ||
+              cfg.cellOptions.type === TableCellDisplayMode.ColorText ||
+              cfg.cellOptions.type === TableCellDisplayMode.ColorBackground
             );
           },
         })
@@ -98,7 +91,7 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
           path: 'filterable',
           name: 'Column filter',
           description: 'Enables/disables field filters in table',
-          defaultValue: defaultPanelFieldConfig.filterable,
+          defaultValue: defaultTableFieldOptions.filterable,
         })
         .addBooleanSwitch({
           path: 'hidden',
@@ -116,6 +109,11 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
         defaultValue: defaultPanelOptions.showHeader,
       })
       .addBooleanSwitch({
+        path: 'showRowNums',
+        name: 'Show row numbers',
+        defaultValue: defaultPanelOptions.showRowNums,
+      })
+      .addBooleanSwitch({
         path: 'footer.show',
         category: [footerCategory],
         name: 'Show table footer',
@@ -130,6 +128,14 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
         editor: standardEditorsRegistry.get('stats-picker').editor as any,
         defaultValue: [ReducerID.sum],
         showIf: (cfg) => cfg.footer?.show,
+      })
+      .addBooleanSwitch({
+        path: 'footer.countRows',
+        category: [footerCategory],
+        name: 'Count rows',
+        description: 'Display a single count for all data rows',
+        defaultValue: defaultPanelOptions.footer?.countRows,
+        showIf: (cfg) => cfg.footer?.reducer?.length === 1 && cfg.footer?.reducer[0] === ReducerID.count,
       })
       .addMultiSelect({
         path: 'footer.fields',
@@ -156,7 +162,9 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
           },
         },
         defaultValue: '',
-        showIf: (cfg) => cfg.footer?.show,
+        showIf: (cfg) =>
+          (cfg.footer?.show && !cfg.footer?.countRows) ||
+          (cfg.footer?.reducer?.length === 1 && cfg.footer?.reducer[0] !== ReducerID.count),
       })
       .addCustomEditor({
         id: 'footer.enablePagination',

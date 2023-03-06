@@ -6,13 +6,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
+	pluginDashboardsManager "github.com/grafana/grafana/pkg/plugins/manager/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 )
 
-func ProvideService(pluginDashboardStore plugins.DashboardFileStore, dashboardPluginService dashboards.PluginService) *Service {
+func ProvideService(pluginDashboardStore pluginDashboardsManager.FileStore, dashboardPluginService dashboards.PluginService) *Service {
 	return &Service{
 		pluginDashboardStore:   pluginDashboardStore,
 		dashboardPluginService: dashboardPluginService,
@@ -21,7 +20,7 @@ func ProvideService(pluginDashboardStore plugins.DashboardFileStore, dashboardPl
 }
 
 type Service struct {
-	pluginDashboardStore   plugins.DashboardFileStore
+	pluginDashboardStore   pluginDashboardsManager.FileStore
 	dashboardPluginService dashboards.PluginService
 	logger                 log.Logger
 }
@@ -31,7 +30,7 @@ func (s Service) ListPluginDashboards(ctx context.Context, req *plugindashboards
 		return nil, fmt.Errorf("req cannot be nil")
 	}
 
-	listArgs := &plugins.ListPluginDashboardFilesArgs{
+	listArgs := &pluginDashboardsManager.ListPluginDashboardFilesArgs{
 		PluginID: req.PluginID,
 	}
 	listResp, err := s.pluginDashboardStore.ListPluginDashboardFiles(ctx, listArgs)
@@ -42,8 +41,9 @@ func (s Service) ListPluginDashboards(ctx context.Context, req *plugindashboards
 	result := make([]*plugindashboards.PluginDashboard, 0)
 
 	// load current dashboards
-	query := models.GetDashboardsByPluginIdQuery{OrgId: req.OrgID, PluginId: req.PluginID}
-	if err := s.dashboardPluginService.GetDashboardsByPluginID(ctx, &query); err != nil {
+	query := dashboards.GetDashboardsByPluginIDQuery{OrgID: req.OrgID, PluginID: req.PluginID}
+	queryResult, err := s.dashboardPluginService.GetDashboardsByPluginID(ctx, &query)
+	if err != nil {
 		return nil, err
 	}
 
@@ -61,22 +61,22 @@ func (s Service) ListPluginDashboards(ctx context.Context, req *plugindashboards
 		dashboard := loadResp.Dashboard
 
 		res := &plugindashboards.PluginDashboard{}
-		res.UID = dashboard.Uid
+		res.UID = dashboard.UID
 		res.Reference = reference
 		res.PluginId = req.PluginID
 		res.Title = dashboard.Title
 		res.Revision = dashboard.Data.Get("revision").MustInt64(1)
 
 		// find existing dashboard
-		for _, existingDash := range query.Result {
+		for _, existingDash := range queryResult {
 			if existingDash.Slug == dashboard.Slug {
-				res.UID = existingDash.Uid
-				res.DashboardId = existingDash.Id
+				res.UID = existingDash.UID
+				res.DashboardId = existingDash.ID
 				res.Imported = true
 				res.ImportedUri = "db/" + existingDash.Slug
-				res.ImportedUrl = existingDash.GetUrl()
+				res.ImportedUrl = existingDash.GetURL()
 				res.ImportedRevision = existingDash.Data.Get("revision").MustInt64(1)
-				existingMatches[existingDash.Id] = true
+				existingMatches[existingDash.ID] = true
 				break
 			}
 		}
@@ -85,12 +85,12 @@ func (s Service) ListPluginDashboards(ctx context.Context, req *plugindashboards
 	}
 
 	// find deleted dashboards
-	for _, dash := range query.Result {
-		if _, exists := existingMatches[dash.Id]; !exists {
+	for _, dash := range queryResult {
+		if _, exists := existingMatches[dash.ID]; !exists {
 			result = append(result, &plugindashboards.PluginDashboard{
-				UID:         dash.Uid,
+				UID:         dash.UID,
 				Slug:        dash.Slug,
-				DashboardId: dash.Id,
+				DashboardId: dash.ID,
 				Removed:     true,
 			})
 		}
@@ -106,7 +106,7 @@ func (s Service) LoadPluginDashboard(ctx context.Context, req *plugindashboards.
 		return nil, fmt.Errorf("req cannot be nil")
 	}
 
-	args := &plugins.GetPluginDashboardFileContentsArgs{
+	args := &pluginDashboardsManager.GetPluginDashboardFileContentsArgs{
 		PluginID:      req.PluginID,
 		FileReference: req.Reference,
 	}
@@ -116,7 +116,7 @@ func (s Service) LoadPluginDashboard(ctx context.Context, req *plugindashboards.
 	}
 
 	defer func() {
-		if err := resp.Content.Close(); err != nil {
+		if err = resp.Content.Close(); err != nil {
 			s.logger.Warn("Failed to close plugin dashboard file", "reference", req.Reference, "err", err)
 		}
 	}()
@@ -127,7 +127,7 @@ func (s Service) LoadPluginDashboard(ctx context.Context, req *plugindashboards.
 	}
 
 	return &plugindashboards.LoadPluginDashboardResponse{
-		Dashboard: models.NewDashboardFromJson(data),
+		Dashboard: dashboards.NewDashboardFromJson(data),
 	}, nil
 }
 

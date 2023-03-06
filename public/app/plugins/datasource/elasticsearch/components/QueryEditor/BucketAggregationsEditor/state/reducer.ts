@@ -1,12 +1,11 @@
 import { Action } from '@reduxjs/toolkit';
 
-import { defaultBucketAgg } from '../../../../query_def';
-import { ElasticsearchQuery } from '../../../../types';
+import { defaultBucketAgg } from '../../../../queryDef';
+import { ElasticsearchQuery, Terms, BucketAggregation } from '../../../../types';
 import { removeEmpty } from '../../../../utils';
 import { changeMetricType } from '../../MetricAggregationsEditor/state/actions';
 import { metricAggregationConfig } from '../../MetricAggregationsEditor/utils';
 import { initQuery } from '../../state';
-import { BucketAggregation, Terms } from '../aggregations';
 import { bucketAggregationConfig } from '../utils';
 
 import {

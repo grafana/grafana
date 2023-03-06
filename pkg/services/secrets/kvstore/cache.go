@@ -2,6 +2,7 @@ package kvstore
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -9,13 +10,15 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 )
 
+var errSecretStoreIsNotCached = errors.New("SecretsKVStore is not a CachedKVStore")
+
 type CachedKVStore struct {
 	log   log.Logger
 	cache *localcache.CacheService
 	store SecretsKVStore
 }
 
-func NewCachedKVStore(store SecretsKVStore, defaultExpiration time.Duration, cleanupInterval time.Duration) *CachedKVStore {
+func WithCache(store SecretsKVStore, defaultExpiration time.Duration, cleanupInterval time.Duration) *CachedKVStore {
 	return &CachedKVStore{
 		log:   log.New("secrets.kvstore"),
 		cache: localcache.New(defaultExpiration, cleanupInterval),
@@ -77,6 +80,13 @@ func (kv *CachedKVStore) Rename(ctx context.Context, orgId int64, namespace stri
 	return nil
 }
 
-func (kv *CachedKVStore) GetUnwrappedStore() SecretsKVStore {
-	return kv.store
+func (kv *CachedKVStore) GetAll(ctx context.Context) ([]Item, error) {
+	return kv.store.GetAll(ctx)
+}
+
+func GetUnwrappedStoreFromCache(kv SecretsKVStore) (SecretsKVStore, error) {
+	if cache, ok := kv.(*CachedKVStore); ok {
+		return cache.store, nil
+	}
+	return nil, errSecretStoreIsNotCached
 }

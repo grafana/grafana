@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/rand"
 
-	models2 "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -69,8 +69,8 @@ func validRule() apimodels.PostableExtendedRuleNode {
 				},
 			},
 			UID:          util.GenerateShortUID(),
-			NoDataState:  allNoData[rand.Intn(len(allNoData)-1)],
-			ExecErrState: allExecError[rand.Intn(len(allExecError)-1)],
+			NoDataState:  allNoData[rand.Intn(len(allNoData))],
+			ExecErrState: allExecError[rand.Intn(len(allExecError))],
 		},
 	}
 }
@@ -83,18 +83,18 @@ func validGroup(cfg *setting.UnifiedAlertingSettings, rules ...apimodels.Postabl
 	}
 }
 
-func randFolder() *models2.Folder {
-	return &models2.Folder{
-		Id:        rand.Int63(),
-		Uid:       util.GenerateShortUID(),
-		Title:     "TEST-FOLDER-" + util.GenerateShortUID(),
-		Url:       "",
-		Version:   0,
-		Created:   time.Time{},
-		Updated:   time.Time{},
-		UpdatedBy: 0,
-		CreatedBy: 0,
-		HasACL:    false,
+func randFolder() *folder.Folder {
+	return &folder.Folder{
+		ID:    rand.Int63(),
+		UID:   util.GenerateShortUID(),
+		Title: "TEST-FOLDER-" + util.GenerateShortUID(),
+		// URL:       "",
+		// Version:   0,
+		Created: time.Time{},
+		Updated: time.Time{},
+		// UpdatedBy: 0,
+		// CreatedBy: 0,
+		// HasACL:    false,
 	}
 }
 
@@ -119,6 +119,7 @@ func TestValidateRuleGroup(t *testing.T) {
 		require.Len(t, alerts, len(rules))
 		require.Equal(t, len(rules), conditionValidations)
 	})
+
 	t.Run("should default to default interval from config if group interval is 0", func(t *testing.T) {
 		g := validGroup(cfg, rules...)
 		g.Interval = 0
@@ -128,6 +129,23 @@ func TestValidateRuleGroup(t *testing.T) {
 		require.NoError(t, err)
 		for _, alert := range alerts {
 			require.Equal(t, int64(cfg.DefaultRuleEvaluationInterval.Seconds()), alert.IntervalSeconds)
+			require.False(t, alert.HasPause)
+		}
+	})
+
+	t.Run("should show the payload has isPaused field", func(t *testing.T) {
+		for _, rule := range rules {
+			isPaused := true
+			rule.GrafanaManagedAlert.IsPaused = &isPaused
+			isPaused = !(isPaused)
+		}
+		g := validGroup(cfg, rules...)
+		alerts, err := validateRuleGroup(&g, orgId, folder, func(condition models.Condition) error {
+			return nil
+		}, cfg)
+		require.NoError(t, err)
+		for _, alert := range alerts {
+			require.True(t, alert.HasPause)
 		}
 	})
 }
@@ -235,7 +253,7 @@ func TestValidateRuleNode_NoUID(t *testing.T) {
 				require.Equal(t, int64(interval.Seconds()), alert.IntervalSeconds)
 				require.Equal(t, int64(0), alert.Version)
 				require.Equal(t, api.GrafanaManagedAlert.UID, alert.UID)
-				require.Equal(t, folder.Uid, alert.NamespaceUID)
+				require.Equal(t, folder.UID, alert.NamespaceUID)
 				require.Nil(t, alert.DashboardUID)
 				require.Nil(t, alert.PanelID)
 				require.Equal(t, name, alert.RuleGroup)

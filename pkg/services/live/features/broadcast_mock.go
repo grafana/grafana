@@ -8,7 +8,8 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
-	models "github.com/grafana/grafana/pkg/models"
+
+	model "github.com/grafana/grafana/pkg/services/live/model"
 )
 
 // MockLiveMessageStore is a mock of LiveMessageStore interface.
@@ -35,10 +36,10 @@ func (m *MockLiveMessageStore) EXPECT() *MockLiveMessageStoreMockRecorder {
 }
 
 // GetLiveMessage mocks base method.
-func (m *MockLiveMessageStore) GetLiveMessage(arg0 *models.GetLiveMessageQuery) (models.LiveMessage, bool, error) {
+func (m *MockLiveMessageStore) GetLiveMessage(arg0 *model.GetLiveMessageQuery) (model.LiveMessage, bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetLiveMessage", arg0)
-	ret0, _ := ret[0].(models.LiveMessage)
+	ret0, _ := ret[0].(model.LiveMessage)
 	ret1, _ := ret[1].(bool)
 	ret2, _ := ret[2].(error)
 	return ret0, ret1, ret2
@@ -51,7 +52,7 @@ func (mr *MockLiveMessageStoreMockRecorder) GetLiveMessage(arg0 interface{}) *go
 }
 
 // SaveLiveMessage mocks base method.
-func (m *MockLiveMessageStore) SaveLiveMessage(arg0 *models.SaveLiveMessageQuery) error {
+func (m *MockLiveMessageStore) SaveLiveMessage(arg0 *model.SaveLiveMessageQuery) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SaveLiveMessage", arg0)
 	ret0, _ := ret[0].(error)

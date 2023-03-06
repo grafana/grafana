@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,7 +11,9 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	alertingModels "github.com/grafana/alerting/models"
 
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/util/cmputil"
 )
 
@@ -25,6 +28,13 @@ var (
 	ErrAlertRuleFailedValidation          = errors.New("invalid alert rule")
 	ErrAlertRuleUniqueConstraintViolation = errors.New("a conflicting alert rule is found: rule title under the same organisation and folder should be unique")
 	ErrQuotaReached                       = errors.New("quota has been exceeded")
+	// ErrNoDashboard is returned when the alert rule does not have a Dashboard UID
+	// in its annotations or the dashboard does not exist.
+	ErrNoDashboard = errors.New("no dashboard")
+
+	// ErrNoPanel is returned when the alert rule does not have a PanelID in its
+	// annotations.
+	ErrNoPanel = errors.New("no panel")
 )
 
 // swagger:enum NoDataState
@@ -80,16 +90,9 @@ const (
 )
 
 const (
-	RuleUIDLabel      = "__alert_rule_uid__"
-	NamespaceUIDLabel = "__alert_rule_namespace_uid__"
-
 	// Annotations are actually a set of labels, so technically this is the label name of an annotation.
 	DashboardUIDAnnotation = "__dashboardUid__"
 	PanelIDAnnotation      = "__panelId__"
-
-	// This isn't a hard-coded secret token, hence the nolint.
-	//nolint:gosec
-	ImageTokenAnnotation = "__alertImageToken__"
 
 	// GrafanaReservedLabelPrefix contains the prefix for Grafana reserved labels. These differ from "__<label>__" labels
 	// in that they are not meant for internal-use only and will be passed-through to AMs and available to users in the same
@@ -98,20 +101,40 @@ const (
 
 	// FolderTitleLabel is the label that will contain the title of an alert's folder/namespace.
 	FolderTitleLabel = GrafanaReservedLabelPrefix + "folder"
+
+	// StateReasonAnnotation is the name of the annotation that explains the difference between evaluation state and alert state (i.e. changing state when NoData or Error).
+	StateReasonAnnotation = GrafanaReservedLabelPrefix + "state_reason"
+)
+
+const (
+	StateReasonMissingSeries = "MissingSeries"
+	StateReasonError         = "Error"
+	StateReasonPaused        = "Paused"
+	StateReasonUpdated       = "Updated"
+	StateReasonRuleDeleted   = "RuleDeleted"
 )
 
 var (
 	// InternalLabelNameSet are labels that grafana automatically include as part of the labelset.
 	InternalLabelNameSet = map[string]struct{}{
-		RuleUIDLabel:      {},
-		NamespaceUIDLabel: {},
+		alertingModels.RuleUIDLabel:      {},
+		alertingModels.NamespaceUIDLabel: {},
 	}
 	InternalAnnotationNameSet = map[string]struct{}{
-		DashboardUIDAnnotation: {},
-		PanelIDAnnotation:      {},
-		ImageTokenAnnotation:   {},
+		DashboardUIDAnnotation:              {},
+		PanelIDAnnotation:                   {},
+		alertingModels.ImageTokenAnnotation: {},
 	}
 )
+
+// AlertRuleGroup is the base model for a rule group in unified alerting.
+type AlertRuleGroup struct {
+	Title      string
+	FolderUID  string
+	Interval   int64
+	Provenance Provenance
+	Rules      []AlertRule
+}
 
 // AlertRule is the model for alert rules in unified alerting.
 type AlertRule struct {
@@ -136,6 +159,34 @@ type AlertRule struct {
 	For         time.Duration
 	Annotations map[string]string
 	Labels      map[string]string
+	IsPaused    bool
+}
+
+// AlertRuleWithOptionals This is to avoid having to pass in additional arguments deep in the call stack. Alert rule
+// object is created in an early validation step without knowledge about current alert rule fields or if they need to be
+// overridden. This is done in a later step and, in that step, we did not have knowledge about if a field was optional
+// nor its possible value.
+type AlertRuleWithOptionals struct {
+	AlertRule
+	// This parameter is to know if an optional API field was sent and, therefore, patch it with the current field from
+	// DB in case it was not sent.
+	HasPause bool
+}
+
+// GetDashboardUID returns the DashboardUID or "".
+func (alertRule *AlertRule) GetDashboardUID() string {
+	if alertRule.DashboardUID != nil {
+		return *alertRule.DashboardUID
+	}
+	return ""
+}
+
+// GetPanelID returns the Panel ID or -1.
+func (alertRule *AlertRule) GetPanelID() int64 {
+	if alertRule.PanelID != nil {
+		return *alertRule.PanelID
+	}
+	return -1
 }
 
 type LabelOption func(map[string]string)
@@ -164,7 +215,6 @@ func (alertRule *AlertRule) GetLabels(opts ...LabelOption) map[string]string {
 func (alertRule *AlertRule) GetEvalCondition() Condition {
 	return Condition{
 		Condition: alertRule.Condition,
-		OrgID:     alertRule.OrgID,
 		Data:      alertRule.Data,
 	}
 }
@@ -187,10 +237,9 @@ func (alertRule *AlertRule) Diff(rule *AlertRule, ignore ...string) cmputil.Diff
 	return reporter.Diffs
 }
 
-// SetDashboardAndPanel will set the DashboardUID and PanlID
-// field be doing a lookup in the annotations. Errors when
-// the found annotations are not valid.
-func (alertRule *AlertRule) SetDashboardAndPanel() error {
+// SetDashboardAndPanelFromAnnotations will set the DashboardUID and PanelID field by doing a lookup in the annotations.
+// Errors when the found annotations are not valid.
+func (alertRule *AlertRule) SetDashboardAndPanelFromAnnotations() error {
 	if alertRule.Annotations == nil {
 		return nil
 	}
@@ -218,9 +267,18 @@ type AlertRuleKey struct {
 	UID   string `xorm:"uid"`
 }
 
+func (k AlertRuleKey) LogContext() []interface{} {
+	return []interface{}{"rule_uid", k.UID, "org_id", k.OrgID}
+}
+
 type AlertRuleKeyWithVersion struct {
 	Version      int64
 	AlertRuleKey `xorm:"extends"`
+}
+
+type AlertRuleKeyWithVersionAndPauseStatus struct {
+	IsPaused                bool
+	AlertRuleKeyWithVersion `xorm:"extends"`
 }
 
 // AlertRuleGroupKey is the identifier of a group of alerts
@@ -297,6 +355,7 @@ type AlertRuleVersion struct {
 	For         time.Duration
 	Annotations map[string]string
 	Labels      map[string]string
+	IsPaused    bool
 }
 
 // GetAlertRuleByUIDQuery is the query for retrieving/deleting an alert rule by UID and organisation ID.
@@ -330,8 +389,17 @@ type ListAlertRulesQuery struct {
 	Result RulesGroup
 }
 
+// CountAlertRulesQuery is the query for counting alert rules
+type CountAlertRulesQuery struct {
+	OrgID        int64
+	NamespaceUID string
+}
+
 type GetAlertRulesForSchedulingQuery struct {
-	Result []*AlertRule
+	PopulateFolders bool
+
+	ResultRules         []*AlertRule
+	ResultFoldersTitles map[string]string
 }
 
 // ListNamespaceAlertRulesQuery is the query for listing namespace alert rules
@@ -341,12 +409,6 @@ type ListNamespaceAlertRulesQuery struct {
 	NamespaceUID string
 
 	Result []*AlertRule
-}
-
-// ListRuleGroupsQuery is the query for listing unique rule groups
-// across all organizations
-type ListRuleGroupsQuery struct {
-	Result []string
 }
 
 // ListOrgRuleGroupsQuery is the query for listing unique rule groups
@@ -363,13 +425,17 @@ type ListOrgRuleGroupsQuery struct {
 	Result [][]string
 }
 
+type UpdateRule struct {
+	Existing *AlertRule
+	New      AlertRule
+}
+
 // Condition contains backend expressions and queries and the RefID
 // of the query or expression that will be evaluated.
 type Condition struct {
 	// Condition is the RefID of the query or expression from
 	// the Data property to get the results for.
 	Condition string `json:"condition"`
-	OrgID     int64  `json:"-"`
 
 	// Data is an array of data source queries and/or server side expressions.
 	Data []AlertQuery `json:"data"`
@@ -385,9 +451,10 @@ func (c Condition) IsValid() bool {
 // There are several exceptions:
 // 1. Following fields are not patched and therefore will be ignored: AlertRule.ID, AlertRule.OrgID, AlertRule.Updated, AlertRule.Version, AlertRule.UID, AlertRule.DashboardUID, AlertRule.PanelID, AlertRule.Annotations and AlertRule.Labels
 // 2. There are fields that are patched together:
-//    - AlertRule.Condition and AlertRule.Data
+//   - AlertRule.Condition and AlertRule.Data
+//
 // If either of the pair is specified, neither is patched.
-func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRule) {
+func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRuleWithOptionals) {
 	if ruleToPatch.Title == "" {
 		ruleToPatch.Title = existingRule.Title
 	}
@@ -413,6 +480,9 @@ func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRule) {
 	if ruleToPatch.For == -1 {
 		ruleToPatch.For = existingRule.For
 	}
+	if !ruleToPatch.HasPause {
+		ruleToPatch.IsPaused = existingRule.IsPaused
+	}
 }
 
 func ValidateRuleGroupInterval(intervalSeconds, baseIntervalSeconds int64) error {
@@ -432,4 +502,20 @@ func (g RulesGroup) SortByGroupIndex() {
 		}
 		return g[i].RuleGroupIndex < g[j].RuleGroupIndex
 	})
+}
+
+const (
+	QuotaTargetSrv quota.TargetSrv = "ngalert"
+	QuotaTarget    quota.Target    = "alert_rule"
+)
+
+type ruleKeyContextKey struct{}
+
+func WithRuleKey(ctx context.Context, ruleKey AlertRuleKey) context.Context {
+	return context.WithValue(ctx, ruleKeyContextKey{}, ruleKey)
+}
+
+func RuleKeyFromContext(ctx context.Context) (AlertRuleKey, bool) {
+	key, ok := ctx.Value(ruleKeyContextKey{}).(AlertRuleKey)
+	return key, ok
 }

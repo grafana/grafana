@@ -1,5 +1,6 @@
 import React, { FC, useMemo } from 'react';
 
+import { dateTime } from '@grafana/data';
 import { Alert, PaginationProps } from 'app/types/unified-alerting';
 
 import { alertInstanceKey } from '../../utils/rules';
@@ -59,7 +60,7 @@ const columns: AlertTableColumnProps[] = [
     label: 'Created',
     // eslint-disable-next-line react/display-name
     renderCell: ({ data: { activeAt } }) => (
-      <>{activeAt.startsWith('0001') ? '-' : activeAt.slice(0, 19).replace('T', ' ')}</>
+      <>{activeAt.startsWith('0001') ? '-' : dateTime(activeAt).format('YYYY-MM-DD HH:mm:ss')}</>
     ),
     size: '150px',
   },

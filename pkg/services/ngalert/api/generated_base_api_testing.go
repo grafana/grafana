@@ -12,19 +12,28 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 type TestingApi interface {
-	RouteEvalQueries(*models.ReqContext) response.Response
-	RouteTestRuleConfig(*models.ReqContext) response.Response
-	RouteTestRuleGrafanaConfig(*models.ReqContext) response.Response
+	BacktestConfig(*contextmodel.ReqContext) response.Response
+	RouteEvalQueries(*contextmodel.ReqContext) response.Response
+	RouteTestRuleConfig(*contextmodel.ReqContext) response.Response
+	RouteTestRuleGrafanaConfig(*contextmodel.ReqContext) response.Response
 }
 
-func (f *TestingApiHandler) RouteEvalQueries(ctx *models.ReqContext) response.Response {
+func (f *TestingApiHandler) BacktestConfig(ctx *contextmodel.ReqContext) response.Response {
+	// Parse Request Body
+	conf := apimodels.BacktestConfig{}
+	if err := web.Bind(ctx.Req, &conf); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+	return f.handleBacktestConfig(ctx, conf)
+}
+func (f *TestingApiHandler) RouteEvalQueries(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Request Body
 	conf := apimodels.EvalQueriesPayload{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
@@ -32,7 +41,7 @@ func (f *TestingApiHandler) RouteEvalQueries(ctx *models.ReqContext) response.Re
 	}
 	return f.handleRouteEvalQueries(ctx, conf)
 }
-func (f *TestingApiHandler) RouteTestRuleConfig(ctx *models.ReqContext) response.Response {
+func (f *TestingApiHandler) RouteTestRuleConfig(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Path Parameters
 	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
 	// Parse Request Body
@@ -42,7 +51,7 @@ func (f *TestingApiHandler) RouteTestRuleConfig(ctx *models.ReqContext) response
 	}
 	return f.handleRouteTestRuleConfig(ctx, conf, datasourceUIDParam)
 }
-func (f *TestingApiHandler) RouteTestRuleGrafanaConfig(ctx *models.ReqContext) response.Response {
+func (f *TestingApiHandler) RouteTestRuleGrafanaConfig(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Request Body
 	conf := apimodels.TestRulePayload{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
@@ -53,6 +62,16 @@ func (f *TestingApiHandler) RouteTestRuleGrafanaConfig(ctx *models.ReqContext) r
 
 func (api *API) RegisterTestingApiEndpoints(srv TestingApi, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
+		group.Post(
+			toMacaronPath("/api/v1/rule/backtest"),
+			api.authorize(http.MethodPost, "/api/v1/rule/backtest"),
+			metrics.Instrument(
+				http.MethodPost,
+				"/api/v1/rule/backtest",
+				srv.BacktestConfig,
+				m,
+			),
+		)
 		group.Post(
 			toMacaronPath("/api/v1/eval"),
 			api.authorize(http.MethodPost, "/api/v1/eval"),

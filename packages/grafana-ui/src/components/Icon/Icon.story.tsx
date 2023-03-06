@@ -2,10 +2,11 @@ import { css } from '@emotion/css';
 import { ComponentMeta } from '@storybook/react';
 import React, { ChangeEvent, useState } from 'react';
 
+import { toIconName, IconName } from '@grafana/data';
 import { Input, Field, Icon } from '@grafana/ui';
 
 import { useTheme2 } from '../../themes';
-import { getAvailableIcons, IconName } from '../../types';
+import { getAvailableIcons } from '../../types';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
 import mdx from './Icon.mdx';
@@ -71,6 +72,8 @@ export const IconsOverview = () => {
       className={css`
         display: flex;
         flex-direction: column;
+        height: 100%;
+        overflow: auto;
         width: 100%;
       `}
     >
@@ -90,7 +93,7 @@ export const IconsOverview = () => {
         {icons
           .filter((val) => val.includes(filter))
           .map((i) => {
-            return <IconWrapper name={i} key={i} />;
+            return <IconWrapper name={toIconName(i)!} key={i} />;
           })}
       </div>
     </div>

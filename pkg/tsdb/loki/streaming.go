@@ -13,6 +13,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
@@ -74,6 +75,7 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 		return fmt.Errorf("missing expr in cuannel")
 	}
 
+	logger := logger.FromContext(ctx)
 	count := int64(0)
 
 	interrupt := make(chan os.Signal, 1)
@@ -99,10 +101,10 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 	}
 	wsurl.RawQuery = params.Encode()
 
-	s.plog.Info("connecting to websocket", "url", wsurl)
+	logger.Info("connecting to websocket", "url", wsurl)
 	c, r, err := websocket.DefaultDialer.Dial(wsurl.String(), nil)
 	if err != nil {
-		s.plog.Error("error connecting to websocket", "err", err)
+		logger.Error("error connecting to websocket", "err", err)
 		return fmt.Errorf("error connecting to websocket")
 	}
 
@@ -114,7 +116,7 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 			_ = r.Body.Close()
 		}
 		err = c.Close()
-		s.plog.Error("closing loki websocket", "err", err)
+		logger.Error("closing loki websocket", "err", err)
 	}()
 
 	prev := data.FrameJSONCache{}
@@ -126,7 +128,7 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 		for {
 			_, message, err := c.ReadMessage()
 			if err != nil {
-				s.plog.Error("websocket read:", "err", err)
+				logger.Error("websocket read:", "err", err)
 				return
 			}
 
@@ -153,7 +155,7 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 			}
 
 			if err != nil {
-				s.plog.Error("websocket write:", "err", err, "raw", message)
+				logger.Error("websocket write:", "err", err, "raw", message)
 				return
 			}
 		}
@@ -165,14 +167,14 @@ func (s *Service) RunStream(ctx context.Context, req *backend.RunStreamRequest, 
 	for {
 		select {
 		case <-done:
-			s.plog.Info("socket done")
+			logger.Info("socket done")
 			return nil
 		case <-ctx.Done():
-			s.plog.Info("stop streaming (context canceled)")
+			logger.Info("stop streaming (context canceled)")
 			return nil
 		case t := <-ticker.C:
 			count++
-			s.plog.Error("loki websocket ping?", "time", t, "count", count)
+			logger.Error("loki websocket ping?", "time", t, "count", count)
 		}
 	}
 }

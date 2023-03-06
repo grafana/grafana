@@ -7,13 +7,18 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
-// TestIndexView tests the Grafana index view.
-func TestIndexView(t *testing.T) {
+// TestIntegrationIndexView tests the Grafana index view.
+func TestIntegrationIndexView(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
 	t.Run("CSP enabled", func(t *testing.T) {
 		grafDir, cfgPath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 			EnableCSP: true,

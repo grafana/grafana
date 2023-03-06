@@ -6,6 +6,7 @@ import { catchError, map, mapTo, share, takeUntil, tap } from 'rxjs/operators';
 // Utils & Services
 // Types
 import {
+  CoreApp,
   DataFrame,
   DataQueryError,
   DataQueryRequest,
@@ -23,6 +24,7 @@ import {
 import { toDataQueryError } from '@grafana/runtime';
 import { isExpressionReference } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { queryIsEmpty } from 'app/core/utils/query';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { ExpressionQuery } from 'app/features/expressions/types';
 
@@ -51,6 +53,7 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
 
   let loadingState = packet.state || LoadingState.Done;
   let error: DataQueryError | undefined = undefined;
+  let errors: DataQueryError[] | undefined = undefined;
 
   const series: DataQueryResponseData[] = [];
   const annotations: DataQueryResponseData[] = [];
@@ -58,9 +61,10 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
   for (const key in packets) {
     const packet = packets[key];
 
-    if (packet.error) {
+    if (packet.error || packet.errors?.length) {
       loadingState = LoadingState.Error;
       error = packet.error;
+      errors = packet.errors;
     }
 
     if (packet.data && packet.data.length) {
@@ -77,11 +81,12 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
 
   const timeRange = getRequestTimeRange(request, loadingState);
 
-  const panelData = {
+  const panelData: PanelData = {
     state: loadingState,
     series,
     annotations,
     error,
+    errors,
     request,
     timeRange,
   };
@@ -174,7 +179,21 @@ export function callQueryMethod(
   request: DataQueryRequest,
   queryFunction?: typeof datasource.query
 ) {
-  // If any query has an expression, use the expression endpoint
+  // If the datasource has defined a default query, make sure it's applied
+  request.targets = request.targets.map((t) =>
+    queryIsEmpty(t)
+      ? {
+          ...datasource?.getDefaultQuery?.(CoreApp.PanelEditor),
+          ...t,
+        }
+      : t
+  );
+
+  // If its a public datasource, just return the result. Expressions will be handled on the backend.
+  if (datasource.type === 'public-ds') {
+    return from(datasource.query(request));
+  }
+
   for (const target of request.targets) {
     if (isExpressionReference(target.datasource)) {
       return expressionDatasource.query(request as DataQueryRequest<ExpressionQuery>);

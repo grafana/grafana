@@ -71,6 +71,10 @@ var (
 				Action: ActionOrgUsersRead,
 				Scope:  ScopeUsersAll,
 			},
+			{
+				Action: ActionUsersPermissionsRead,
+				Scope:  ScopeUsersAll,
+			},
 		},
 	}
 
@@ -170,7 +174,7 @@ var (
 )
 
 // Declare OSS roles to the accesscontrol service
-func DeclareFixedRoles(ac AccessControl) error {
+func DeclareFixedRoles(service Service) error {
 	ldapReader := RoleRegistration{
 		Role:   ldapReaderRole,
 		Grants: []string{RoleGrafanaAdmin},
@@ -204,7 +208,7 @@ func DeclareFixedRoles(ac AccessControl) error {
 		Grants: []string{RoleGrafanaAdmin},
 	}
 
-	return ac.DeclareFixedRoles(ldapReader, ldapWriter, orgUsersReader, orgUsersWriter,
+	return service.DeclareFixedRoles(ldapReader, ldapWriter, orgUsersReader, orgUsersWriter,
 		settingsReader, statsReader, usersReader, usersWriter)
 }
 

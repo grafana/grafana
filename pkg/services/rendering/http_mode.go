@@ -28,6 +28,8 @@ var netClient = &http.Client{
 	Transport: netTransport,
 }
 
+const authTokenHeader = "X-Auth-Token" //#nosec G101 -- This is a false positive
+
 var (
 	remoteVersionFetchInterval   time.Duration = time.Second * 15
 	remoteVersionFetchRetries    uint          = 4
@@ -135,23 +137,30 @@ func (rs *RenderingService) renderCSVViaHTTP(ctx context.Context, renderKey stri
 	return &RenderCSVResult{FilePath: filePath, FileName: downloadFileName}, nil
 }
 
-func (rs *RenderingService) doRequest(ctx context.Context, url *url.URL, headers map[string][]string) (*http.Response, error) {
-	req, err := http.NewRequestWithContext(ctx, "GET", url.String(), nil)
+func (rs *RenderingService) doRequest(ctx context.Context, u *url.URL, headers map[string][]string) (*http.Response, error) {
+	req, err := http.NewRequestWithContext(ctx, "GET", u.String(), nil)
 	if err != nil {
 		return nil, err
 	}
 
+	req.Header.Set(authTokenHeader, rs.Cfg.RendererAuthToken)
 	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", rs.Cfg.BuildVersion))
 	for k, v := range headers {
 		req.Header[k] = v
 	}
 
-	rs.log.Debug("calling remote rendering service", "url", url)
+	rs.log.Debug("calling remote rendering service", "url", u)
 
 	// make request to renderer server
 	resp, err := netClient.Do(req)
 	if err != nil {
 		rs.log.Error("Failed to send request to remote rendering service", "error", err)
+		var urlErr *url.Error
+		if errors.As(err, &urlErr) {
+			if urlErr.Timeout() {
+				return nil, ErrServerTimeout
+			}
+		}
 		return nil, fmt.Errorf("failed to send request to remote rendering service: %w", err)
 	}
 
@@ -172,6 +181,7 @@ func (rs *RenderingService) readFileResponse(ctx context.Context, resp *http.Res
 			resp.Status)
 	}
 
+	//nolint:gosec
 	out, err := os.Create(filePath)
 	if err != nil {
 		return err

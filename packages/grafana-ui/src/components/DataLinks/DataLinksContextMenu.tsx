@@ -9,7 +9,7 @@ import { WithContextMenu } from '../ContextMenu/WithContextMenu';
 import { MenuGroup, MenuItemsGroup } from '../Menu/MenuGroup';
 import { MenuItem } from '../Menu/MenuItem';
 
-interface DataLinksContextMenuProps {
+export interface DataLinksContextMenuProps {
   children: (props: DataLinksContextMenuApi) => JSX.Element;
   links: () => LinkModel[];
   style?: CSSProperties;
@@ -20,7 +20,7 @@ export interface DataLinksContextMenuApi {
   targetClassName?: string;
 }
 
-export const DataLinksContextMenu: React.FC<DataLinksContextMenuProps> = ({ children, links, style }) => {
+export const DataLinksContextMenu = ({ children, links, style }: DataLinksContextMenuProps) => {
   const itemsGroup: MenuItemsGroup[] = [{ items: linkModelToContextMenuItems(links), label: 'Data links' }];
   const linksCounter = itemsGroup[0].items.length;
   const renderMenuGroupItems = () => {
@@ -62,7 +62,7 @@ export const DataLinksContextMenu: React.FC<DataLinksContextMenuProps> = ({ chil
         onClick={linkModel.onClick}
         target={linkModel.target}
         title={linkModel.title}
-        style={{ ...style, overflow: 'hidden' }}
+        style={{ ...style, overflow: 'hidden', display: 'flex' }}
         aria-label={selectors.components.DataLinksContextMenu.singleLink}
       >
         {children({})}

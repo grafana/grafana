@@ -5,18 +5,19 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
-func saveEvent(ctx context.Context, sql *sqlstore.SQLStore, cmd SaveEventCmd) error {
+func saveEvent(ctx context.Context, sql db.DB, cmd SaveEventCmd) error {
 	entityEvent := &EntityEvent{
 		EventType: cmd.EventType,
 		EntityId:  cmd.EntityId,
 		Created:   time.Now().Unix(),
 	}
-	return sql.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	return sql.WithDbSession(ctx, func(sess *db.Session) error {
 		_, err := sess.Insert(entityEvent)
 		return err
 	})
@@ -30,7 +31,7 @@ func TestIntegrationEntityEventsService(t *testing.T) {
 
 	setup := func() *entityEventService {
 		return &entityEventService{
-			sql: sqlstore.InitTestDB(t),
+			sql: db.InitTestDB(t),
 			log: log.New("entity-event-test"),
 		}
 	}

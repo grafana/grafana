@@ -1,4 +1,5 @@
 import { Property } from 'csstype';
+import { clone } from 'lodash';
 import memoizeOne from 'memoize-one';
 import { Row } from 'react-table';
 
@@ -9,7 +10,18 @@ import {
   formattedValueToString,
   getFieldDisplayName,
   SelectableValue,
+  fieldReducers,
+  getDisplayProcessor,
+  reduceField,
+  GrafanaTheme2,
+  ArrayVector,
 } from '@grafana/data';
+import {
+  BarGaugeDisplayMode,
+  TableAutoCellOptions,
+  TableCellBackgroundDisplayMode,
+  TableCellOptions,
+} from '@grafana/schema';
 
 import { BarGaugeCell } from './BarGaugeCell';
 import { DefaultCell } from './DefaultCell';
@@ -17,7 +29,18 @@ import { getFooterValue } from './FooterRow';
 import { GeoCell } from './GeoCell';
 import { ImageCell } from './ImageCell';
 import { JSONViewCell } from './JSONViewCell';
-import { CellComponent, TableCellDisplayMode, TableFieldOptions, FooterItem, GrafanaTableColumn } from './types';
+import { RowExpander } from './RowExpander';
+import {
+  CellComponent,
+  TableCellDisplayMode,
+  TableFieldOptions,
+  FooterItem,
+  GrafanaTableColumn,
+  TableFooterCalc,
+} from './types';
+
+export const EXPANDER_WIDTH = 50;
+export const OPTIONAL_ROW_NUMBER_COLUMN_WIDTH = 50;
 
 export function getTextAlign(field?: Field): Property.JustifyContent {
   if (!field) {
@@ -48,10 +71,31 @@ export function getColumns(
   data: DataFrame,
   availableWidth: number,
   columnMinWidth: number,
-  footerValues?: FooterItem[]
+  expander: boolean,
+  footerValues?: FooterItem[],
+  isCountRowsSet?: boolean
 ): GrafanaTableColumn[] {
   const columns: GrafanaTableColumn[] = [];
   let fieldCountWithoutWidth = 0;
+
+  if (expander) {
+    columns.push({
+      // Make an expander cell
+      Header: () => null, // No header
+      id: 'expander', // It needs an ID
+      Cell: RowExpander,
+      width: EXPANDER_WIDTH,
+      minWidth: EXPANDER_WIDTH,
+      filter: (_rows: Row[], _id: string, _filterValues?: SelectableValue[]) => {
+        return [];
+      },
+      justifyContent: 'left',
+      field: data.fields[0],
+      sortType: 'basic',
+    });
+
+    availableWidth -= EXPANDER_WIDTH;
+  }
 
   for (const [fieldIndex, field] of data.fields.entries()) {
     const fieldTableOptions = (field.config.custom || {}) as TableFieldOptions;
@@ -77,13 +121,13 @@ export function getColumns(
       }
     };
 
-    const Cell = getCellComponent(fieldTableOptions.displayMode, field);
+    const Cell = getCellComponent(fieldTableOptions.cellOptions?.type, field);
     columns.push({
       Cell,
       id: fieldIndex.toString(),
       field: field,
       Header: getFieldDisplayName(field, data),
-      accessor: (row: any, i: number) => {
+      accessor: (_row: any, i: number) => {
         return field.values.get(i);
       },
       sortType: selectSortType(field.type),
@@ -91,7 +135,7 @@ export function getColumns(
       minWidth: fieldTableOptions.minWidth ?? columnMinWidth,
       filter: memoizeOne(filterByValue(field)),
       justifyContent: getTextAlign(field),
-      Footer: getFooterValue(fieldIndex, footerValues),
+      Footer: getFooterValue(fieldIndex, footerValues, isCountRowsSet),
     });
   }
 
@@ -119,6 +163,25 @@ export function getColumns(
   return columns;
 }
 
+/*
+  Build `Field` data for row numbers and prepend to the field array; 
+  this way, on other column's sort, the row numbers will persist in their proper place.
+*/
+export function buildFieldsForOptionalRowNums(totalRows: number): Field {
+  return {
+    ...defaultRowNumberColumnFieldData,
+    values: buildBufferedEmptyValues(totalRows),
+  };
+}
+
+/*
+  This gives us an empty buffered ArrayVector of the desired length to match the table data.
+  It is simply a data placeholder for the Row Number column data.
+*/
+export function buildBufferedEmptyValues(totalRows: number): ArrayVector<string> {
+  return new ArrayVector(new Array(totalRows));
+}
+
 export function getCellComponent(displayMode: TableCellDisplayMode, field: Field): CellComponent {
   switch (displayMode) {
     case TableCellDisplayMode.ColorText:
@@ -126,9 +189,7 @@ export function getCellComponent(displayMode: TableCellDisplayMode, field: Field
       return DefaultCell;
     case TableCellDisplayMode.Image:
       return ImageCell;
-    case TableCellDisplayMode.LcdGauge:
-    case TableCellDisplayMode.BasicGauge:
-    case TableCellDisplayMode.GradientGauge:
+    case TableCellDisplayMode.Gauge:
       return BarGaugeCell;
     case TableCellDisplayMode.JSONView:
       return JSONViewCell;
@@ -174,7 +235,7 @@ export function calculateUniqueFieldValues(rows: any[], field?: Field) {
     return {};
   }
 
-  const set: Record<string, any> = {};
+  const set: Record<string, string> = {};
 
   for (let index = 0; index < rows.length; index++) {
     const value = rowToFieldValue(rows[index], field);
@@ -256,3 +317,163 @@ function toNumber(value: any): number {
 
   return Number(value);
 }
+
+export function getFooterItems(
+  filterFields: Array<{ id: string; field: Field }>,
+  values: any[number],
+  options: TableFooterCalc,
+  theme2: GrafanaTheme2
+): FooterItem[] {
+  /*
+    Here, `filterFields` is passed to as the `headerGroups[0].headers` array that was destrcutured from the `useTable` hook.
+    Unfortunately, since the `headerGroups` object is data based ONLY on the rendered "non-hidden" column headers,
+    it will NOT include the Row Number column if it has been toggled off. This will shift the rendering of the footer left 1 column,
+    creating an off-by-one issue. This is why we test for a `field.id` of "0". If the condition is truthy, the togglable Row Number column is being rendered,
+    and we can proceed normally. If not, we must add the field data in its place so that the footer data renders in the expected column.
+  */
+  if (!filterFields.some((field) => field.id === '0')) {
+    const length = values.length;
+    // Build the additional field that will correct the off-by-one footer issue.
+    const fieldToAdd = { id: '0', field: buildFieldsForOptionalRowNums(length) };
+    filterFields = [fieldToAdd, ...filterFields];
+  }
+
+  return filterFields.map((data, i) => {
+    if (data.field.type !== FieldType.number) {
+      // Show the reducer type ("Total", "Range", "Count", "Delta", etc) in the first non "Row Number" column, only if it cannot be numerically reduced.
+      if (i === 1 && options.reducer && options.reducer.length > 0) {
+        const reducer = fieldReducers.get(options.reducer[0]);
+        return reducer.name;
+      }
+      // Otherwise return `undefined`, which will render an <EmptyCell />.
+      return undefined;
+    }
+
+    let newField = clone(data.field);
+    newField.values = new ArrayVector(values[i]);
+    newField.state = undefined;
+
+    data.field = newField;
+    if (options.fields && options.fields.length > 0) {
+      const f = options.fields.find((f) => f === data.field.name);
+      if (f) {
+        return getFormattedValue(data.field, options.reducer, theme2);
+      }
+      return undefined;
+    }
+    return getFormattedValue(data.field, options.reducer || [], theme2);
+  });
+}
+
+function getFormattedValue(field: Field, reducer: string[], theme: GrafanaTheme2) {
+  const fmt = field.display ?? getDisplayProcessor({ field, theme });
+  const calc = reducer[0];
+  const v = reduceField({ field, reducers: reducer })[calc];
+  return formattedValueToString(fmt(v));
+}
+
+// This strips the raw vales from the `rows` object.
+export function createFooterCalculationValues(rows: Row[]): any[number] {
+  const values: any[number] = [];
+
+  for (const key in rows) {
+    for (const [valKey, val] of Object.entries(rows[key].values)) {
+      if (values[valKey] === undefined) {
+        values[valKey] = [];
+      }
+      values[valKey].push(val);
+    }
+  }
+
+  return values;
+}
+
+const defaultCellOptions: TableAutoCellOptions = { type: TableCellDisplayMode.Auto };
+
+export function getCellOptions(field: Field): TableCellOptions {
+  if (field.config.custom?.displayMode) {
+    return migrateTableDisplayModeToCellOptions(field.config.custom?.displayMode);
+  }
+
+  if (!field.config.custom?.cellOptions) {
+    return defaultCellOptions;
+  }
+
+  return (field.config.custom as TableFieldOptions).cellOptions;
+}
+
+/**
+ * Migrates table cell display mode to new object format.
+ *
+ * @param displayMode The display mode of the cell
+ * @returns TableCellOptions object in the correct format
+ * relative to the old display mode.
+ */
+export function migrateTableDisplayModeToCellOptions(displayMode: TableCellDisplayMode): TableCellOptions {
+  switch (displayMode) {
+    // In the case of the gauge we move to a different option
+    case 'basic':
+    case 'gradient-gauge':
+    case 'lcd-gauge':
+      let gaugeMode = BarGaugeDisplayMode.Basic;
+
+      if (displayMode === 'gradient-gauge') {
+        gaugeMode = BarGaugeDisplayMode.Gradient;
+      } else if (displayMode === 'lcd-gauge') {
+        gaugeMode = BarGaugeDisplayMode.Lcd;
+      }
+
+      return {
+        type: TableCellDisplayMode.Gauge,
+        mode: gaugeMode,
+      };
+    // Also true in the case of the color background
+    case 'color-background':
+    case 'color-background-solid':
+      let mode = TableCellBackgroundDisplayMode.Basic;
+
+      // Set the new mode field, somewhat confusingly the
+      // color-background mode is for gradient display
+      if (displayMode === 'color-background') {
+        mode = TableCellBackgroundDisplayMode.Gradient;
+      }
+
+      return {
+        type: TableCellDisplayMode.ColorBackground,
+        mode: mode,
+      };
+    default:
+      return {
+        // @ts-ignore
+        type: displayMode,
+      };
+  }
+}
+
+/*
+  For building the column data for the togglable Row Number field.
+  `values` property is omitted, as it will be added at a later time.
+*/
+export const defaultRowNumberColumnFieldData: Omit<Field, 'values'> = {
+  /* 
+    Single whitespace as value for `name` property so as to render an empty/invisible column header;
+    without the single whitespace, falsey headers (empty strings) are given a default name of "Value".
+  */
+  name: ' ',
+  display: function (value: string) {
+    return {
+      numeric: Number(value),
+      text: value,
+    };
+  },
+  type: FieldType.string,
+  config: {
+    color: { mode: 'thresholds' },
+    custom: {
+      align: 'auto',
+      cellOptions: { type: 'auto' },
+      inspect: false,
+      width: OPTIONAL_ROW_NUMBER_COLUMN_WIDTH,
+    },
+  },
+};

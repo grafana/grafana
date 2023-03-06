@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	mock "github.com/stretchr/testify/mock"
+
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 const defaultAlertmanagerConfigJSON = `
@@ -157,6 +158,15 @@ func (m *MockAMConfigStore_Expecter) GetsConfig(ac models.AlertConfiguration) *M
 
 func (m *MockAMConfigStore_Expecter) SaveSucceeds() *MockAMConfigStore_Expecter {
 	m.UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).Return(nil)
+	return m
+}
+
+func (m *MockAMConfigStore_Expecter) SaveSucceedsIntercept(intercepted *models.SaveAlertmanagerConfigurationCmd) *MockAMConfigStore_Expecter {
+	m.UpdateAlertmanagerConfiguration(mock.Anything, mock.Anything).
+		Return(nil).
+		Run(func(ctx context.Context, cmd *models.SaveAlertmanagerConfigurationCmd) {
+			*intercepted = *cmd
+		})
 	return m
 }
 

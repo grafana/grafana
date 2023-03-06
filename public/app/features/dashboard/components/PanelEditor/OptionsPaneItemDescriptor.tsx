@@ -1,5 +1,4 @@
 import React, { ReactNode } from 'react';
-// @ts-ignore
 import Highlighter from 'react-highlight-words';
 
 import { selectors } from '@grafana/e2e-selectors';

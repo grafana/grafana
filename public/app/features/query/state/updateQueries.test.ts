@@ -5,6 +5,7 @@ import {
   DataSourceWithQueryImportSupport,
 } from '@grafana/data';
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import { TestQuery } from 'app/core/utils/query.test';
 
 import { updateQueries } from './updateQueries';
 
@@ -41,6 +42,9 @@ const newUidSameTypeDS = {
 } as DataSourceApi;
 
 describe('updateQueries', () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
   it('Should update all queries except expression query when changing data source with same type', async () => {
     const updated = await updateQueries(
       newUidSameTypeDS,
@@ -109,6 +113,53 @@ describe('updateQueries', () => {
 
     expect(updated.length).toEqual(1);
     expect(updated[0].datasource).toEqual({ type: 'new-type', uid: 'new-uid' });
+  });
+
+  it('Should clear queries and get default query from ds when changing type', async () => {
+    newUidDS.getDefaultQuery = jest.fn().mockReturnValue({ test: 'default-query1' } as Partial<TestQuery>);
+    const updated = await updateQueries(
+      newUidDS,
+      'new-uid',
+      [
+        {
+          refId: 'A',
+          datasource: {
+            uid: 'old-uid',
+            type: 'old-type',
+          },
+        },
+        {
+          refId: 'B',
+          datasource: {
+            uid: 'old-uid',
+            type: 'old-type',
+          },
+        },
+      ],
+      oldUidDS
+    );
+
+    expect(newUidDS.getDefaultQuery).toHaveBeenCalled();
+    expect(updated as TestQuery[]).toEqual([
+      {
+        datasource: { type: 'new-type', uid: 'new-uid' },
+        refId: 'A',
+        test: 'default-query1',
+      },
+    ]);
+  });
+
+  it('Should return default query from ds when changing type and no new queries exist', async () => {
+    newUidDS.getDefaultQuery = jest.fn().mockReturnValue({ test: 'default-query2' } as Partial<TestQuery>);
+    const updated = await updateQueries(newUidDS, 'new-uid', [], oldUidDS);
+    expect(newUidDS.getDefaultQuery).toHaveBeenCalled();
+    expect(updated as TestQuery[]).toEqual([
+      {
+        datasource: { type: 'new-type', uid: 'new-uid' },
+        refId: 'A',
+        test: 'default-query2',
+      },
+    ]);
   });
 
   it('Should preserve query data source when changing to mixed', async () => {
@@ -226,9 +277,9 @@ describe('updateQueries with import', () => {
       expect(importSpy).toBeCalledWith(queries.map((q) => ({ ...q, exported: true })));
 
       expect(updated).toMatchInlineSnapshot(`
-        Array [
-          Object {
-            "datasource": Object {
+        [
+          {
+            "datasource": {
               "type": "new-type",
               "uid": "new-uid",
             },
@@ -236,8 +287,8 @@ describe('updateQueries with import', () => {
             "imported": true,
             "refId": "A",
           },
-          Object {
-            "datasource": Object {
+          {
+            "datasource": {
               "type": "new-type",
               "uid": "new-uid",
             },
@@ -349,17 +400,17 @@ describe('updateQueries with import', () => {
       expect(importSpy).toBeCalledWith(queries, { uid: 'old-uid', type: 'old-type', meta: { id: 'old-type' } });
 
       expect(updated).toMatchInlineSnapshot(`
-        Array [
-          Object {
-            "datasource": Object {
+        [
+          {
+            "datasource": {
               "type": "new-type",
               "uid": "new-uid",
             },
             "imported": true,
             "refId": "A",
           },
-          Object {
-            "datasource": Object {
+          {
+            "datasource": {
               "type": "new-type",
               "uid": "new-uid",
             },

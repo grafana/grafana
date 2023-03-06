@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/prometheus/alertmanager/config"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/prometheus/alertmanager/config"
 )
 
 type MuteTimingService struct {
@@ -77,11 +78,11 @@ func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt definitio
 		OrgID:                     orgID,
 	}
 	err = svc.xact.InTransaction(ctx, func(ctx context.Context) error {
-		err = svc.config.UpdateAlertmanagerConfiguration(ctx, &cmd)
+		err = PersistConfig(ctx, svc.config, &cmd)
 		if err != nil {
 			return err
 		}
-		err = svc.prov.SetProvenance(ctx, &mt, orgID, mt.Provenance)
+		err = svc.prov.SetProvenance(ctx, &mt, orgID, models.Provenance(mt.Provenance))
 		if err != nil {
 			return err
 		}
@@ -132,11 +133,11 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt definitio
 		OrgID:                     orgID,
 	}
 	err = svc.xact.InTransaction(ctx, func(ctx context.Context) error {
-		err = svc.config.UpdateAlertmanagerConfiguration(ctx, &cmd)
+		err = PersistConfig(ctx, svc.config, &cmd)
 		if err != nil {
 			return err
 		}
-		err = svc.prov.SetProvenance(ctx, &mt, orgID, mt.Provenance)
+		err = svc.prov.SetProvenance(ctx, &mt, orgID, models.Provenance(mt.Provenance))
 		if err != nil {
 			return err
 		}
@@ -181,7 +182,7 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, name string,
 		OrgID:                     orgID,
 	}
 	return svc.xact.InTransaction(ctx, func(ctx context.Context) error {
-		err = svc.config.UpdateAlertmanagerConfiguration(ctx, &cmd)
+		err = PersistConfig(ctx, svc.config, &cmd)
 		if err != nil {
 			return err
 		}

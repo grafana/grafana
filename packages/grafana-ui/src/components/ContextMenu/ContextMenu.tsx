@@ -33,7 +33,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = React.memo(
         const OFFSET = 5;
         const collisions = {
           right: window.innerWidth < x + rect.width,
-          bottom: window.innerHeight < rect.bottom + rect.height + OFFSET,
+          bottom: window.innerHeight < y + rect.height + OFFSET,
         };
 
         setPositionStyles({

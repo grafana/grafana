@@ -9,14 +9,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	datasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	encryptionprovider "github.com/grafana/grafana/pkg/services/encryption/provider"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/require"
 )
 
 func TestIntegrationEngineTimeouts(t *testing.T) {
@@ -35,7 +37,8 @@ func TestIntegrationEngineTimeouts(t *testing.T) {
 
 	tracer := tracing.InitializeTracerForTest()
 	dsMock := &datasources.FakeDataSourceService{}
-	engine := ProvideAlertEngine(nil, nil, nil, usMock, encService, nil, tracer, nil, setting.NewCfg(), nil, nil, localcache.New(time.Minute, time.Minute), dsMock)
+	annotationsRepo := annotationstest.NewFakeAnnotationsRepo()
+	engine := ProvideAlertEngine(nil, nil, nil, usMock, encService, nil, tracer, nil, setting.NewCfg(), nil, nil, localcache.New(time.Minute, time.Minute), dsMock, annotationsRepo)
 	setting.AlertingNotificationTimeout = 30 * time.Second
 	setting.AlertingMaxAttempts = 3
 	engine.resultHandler = &FakeResultHandler{}

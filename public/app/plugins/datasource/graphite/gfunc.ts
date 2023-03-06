@@ -1028,7 +1028,13 @@ export class FuncInstance {
       }
 
       // param types that should never be quoted
-      if (includes(['value_or_series', 'boolean', 'int', 'float', 'node', 'int_or_infinity'], paramType)) {
+      const neverQuotedParams = ['value_or_series', 'boolean', 'int', 'float', 'node', 'int_or_infinity'];
+
+      // functions that should not have param types quoted
+      // https://github.com/grafana/grafana/issues/54924
+      const neverQuotedFunctions = ['asPercent'];
+      // params or functions that should never be quoted
+      if (includes(neverQuotedParams, paramType) || includes(neverQuotedFunctions, this.def.name)) {
         return value;
       }
 

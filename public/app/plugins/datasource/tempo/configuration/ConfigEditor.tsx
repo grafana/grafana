@@ -2,19 +2,20 @@ import React from 'react';
 
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { DataSourceHttpSettings } from '@grafana/ui';
-import { SpanBarSettings } from '@jaegertracing/jaeger-ui-components';
+import { DataSourceHttpSettings, SecureSocksProxySettings } from '@grafana/ui';
 import { NodeGraphSettings } from 'app/core/components/NodeGraphSettings';
 import { TraceToLogsSettings } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { TraceToMetricsSettings } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
+import { SpanBarSettings } from 'app/features/explore/TraceView/components';
 
 import { LokiSearchSettings } from './LokiSearchSettings';
+import { QuerySettings } from './QuerySettings';
 import { SearchSettings } from './SearchSettings';
 import { ServiceGraphSettings } from './ServiceGraphSettings';
 
 export type Props = DataSourcePluginOptionsEditorProps;
 
-export const ConfigEditor: React.FC<Props> = ({ options, onOptionsChange }) => {
+export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
   return (
     <>
       <DataSourceHttpSettings
@@ -23,6 +24,10 @@ export const ConfigEditor: React.FC<Props> = ({ options, onOptionsChange }) => {
         showAccessOptions={false}
         onChange={onOptionsChange}
       />
+
+      {config.featureToggles.secureSocksDatasourceProxy && (
+        <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+      )}
 
       <div className="gf-form-group">
         <TraceToLogsSettings options={options} onOptionsChange={onOptionsChange} />
@@ -48,6 +53,10 @@ export const ConfigEditor: React.FC<Props> = ({ options, onOptionsChange }) => {
 
       <div className="gf-form-group">
         <LokiSearchSettings options={options} onOptionsChange={onOptionsChange} />
+      </div>
+
+      <div className="gf-form-group">
+        <QuerySettings options={options} onOptionsChange={onOptionsChange} />
       </div>
 
       <div className="gf-form-group">

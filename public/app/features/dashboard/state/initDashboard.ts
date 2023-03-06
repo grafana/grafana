@@ -4,14 +4,23 @@ import { notifyApp } from 'app/core/actions';
 import appEvents from 'app/core/app_events';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { keybindingSrv } from 'app/core/services/keybindingSrv';
+import { KeybindingSrv } from 'app/core/services/keybindingSrv';
 import store from 'app/core/store';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardSrv, getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
+import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { toStateKey } from 'app/features/variables/utils';
-import { DashboardDTO, DashboardInitPhase, DashboardRoutes, StoreState, ThunkDispatch, ThunkResult } from 'app/types';
+import {
+  DashboardDTO,
+  DashboardInitPhase,
+  DashboardMeta,
+  DashboardRoutes,
+  StoreState,
+  ThunkDispatch,
+  ThunkResult,
+} from 'app/types';
 
 import { createDashboardQueryRunner } from '../../query/state/DashboardQueryRunner/DashboardQueryRunner';
 import { initVariablesTransaction } from '../../variables/state/actions';
@@ -26,11 +35,12 @@ export interface InitDashboardArgs {
   urlUid?: string;
   urlSlug?: string;
   urlType?: string;
-  urlFolderId?: string;
+  urlFolderUid?: string;
   panelType?: string;
   accessToken?: string;
   routeName?: string;
   fixUrl: boolean;
+  keybindingSrv: KeybindingSrv;
 }
 
 async function fetchDashboard(
@@ -70,7 +80,7 @@ async function fetchDashboard(
       case DashboardRoutes.Normal: {
         const dashDTO: DashboardDTO = await dashboardLoaderSrv.loadDashboard(args.urlType, args.urlSlug, args.urlUid);
 
-        if (args.fixUrl && dashDTO.meta.url) {
+        if (args.fixUrl && dashDTO.meta.url && !playlistSrv.isPlaying) {
           // check if the current url is correct (might be old slug)
           const dashboardUrl = locationUtil.stripBaseFromUrl(dashDTO.meta.url);
           const currentPath = locationService.getLocation().pathname;
@@ -87,7 +97,7 @@ async function fetchDashboard(
         return dashDTO;
       }
       case DashboardRoutes.New: {
-        return getNewDashboardModelData(args.urlFolderId, args.panelType);
+        return getNewDashboardModelData(args.urlFolderUid, args.panelType);
       }
       case DashboardRoutes.Path: {
         const path = args.urlSlug ?? '';
@@ -115,7 +125,7 @@ const getQueriesByDatasource = (
   panels.forEach((panel) => {
     if (panel.panels) {
       getQueriesByDatasource(panel.panels, queries);
-    } else {
+    } else if (panel.targets) {
       panel.targets.forEach((target) => {
         if (target.datasource?.type) {
           if (queries[target.datasource.type]) {
@@ -212,7 +222,7 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
         dashboard.autoFitPanels(window.innerHeight, queryParams.kiosk);
       }
 
-      keybindingSrv.setupDashboardBindings(dashboard);
+      args.keybindingSrv.setupDashboardBindings(dashboard);
     } catch (err) {
       if (err instanceof Error) {
         dispatch(notifyApp(createErrorNotification('Dashboard init failed', err)));
@@ -253,14 +263,17 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
   };
 }
 
-export function getNewDashboardModelData(urlFolderId?: string, panelType?: string): any {
+export function getNewDashboardModelData(
+  urlFolderUid?: string,
+  panelType?: string
+): { dashboard: any; meta: DashboardMeta } {
   const data = {
     meta: {
       canStar: false,
       canShare: false,
       canDelete: false,
       isNew: true,
-      folderId: 0,
+      folderUid: '',
     },
     dashboard: {
       title: 'New dashboard',
@@ -274,8 +287,8 @@ export function getNewDashboardModelData(urlFolderId?: string, panelType?: strin
     },
   };
 
-  if (urlFolderId) {
-    data.meta.folderId = parseInt(urlFolderId, 10);
+  if (urlFolderUid) {
+    data.meta.folderUid = urlFolderUid;
   }
 
   return data;

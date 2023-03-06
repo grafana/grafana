@@ -1,7 +1,7 @@
 import 'vendor/flot/jquery.flot';
 import { map } from 'lodash';
 
-import { dateTime, GrafanaTheme, TimeRange } from '@grafana/data';
+import { dateTime, GrafanaTheme2, TimeRange } from '@grafana/data';
 import { config } from 'app/core/config';
 import { calculateTimesWithin, TimeRegionConfig } from 'app/core/utils/timeRegions';
 
@@ -45,7 +45,7 @@ export function getColorModes() {
   });
 }
 
-function getColor(timeRegion: any, theme: GrafanaTheme): TimeRegionColorDefinition {
+function getColor(timeRegion: any, theme: GrafanaTheme2): TimeRegionColorDefinition {
   if (Object.keys(colorModes).indexOf(timeRegion.colorMode) === -1) {
     timeRegion.colorMode = 'red';
   }
@@ -109,7 +109,7 @@ export class TimeRegionManager {
       const timeRegion: GraphTimeRegionConfig = tr;
       const regions = calculateTimesWithin(tr, tRange);
       if (regions.length) {
-        const timeRegionColor = getColor(timeRegion, config.theme);
+        const timeRegionColor = getColor(timeRegion, config.theme2);
 
         for (let j = 0; j < regions.length; j++) {
           const r = regions[j];

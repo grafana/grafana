@@ -1,12 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { Provider } from 'react-redux';
-import { Router } from 'react-router-dom';
 
 import { locationService } from '@grafana/runtime';
-import { configureStore } from 'app/store/configureStore';
 
-import TestProvider from '../../../../test/helpers/TestProvider';
+import { TestProvider } from '../../../../test/helpers/TestProvider';
 
 import { NavBar } from './NavBar';
 
@@ -22,31 +19,14 @@ jest.mock('app/core/services/context_srv', () => ({
 }));
 
 const setup = () => {
-  const store = configureStore();
-
   return render(
-    <Provider store={store}>
-      <TestProvider>
-        <Router history={locationService.getHistory()}>
-          <NavBar />
-        </Router>
-      </TestProvider>
-    </Provider>
+    <TestProvider>
+      <NavBar />
+    </TestProvider>
   );
 };
 
 describe('Render', () => {
-  beforeEach(() => {
-    // IntersectionObserver isn't available in test environment
-    const mockIntersectionObserver = jest.fn();
-    mockIntersectionObserver.mockReturnValue({
-      observe: () => null,
-      unobserve: () => null,
-      disconnect: () => null,
-    });
-    window.IntersectionObserver = mockIntersectionObserver;
-  });
-
   it('should render component', async () => {
     setup();
     const sidemenu = await screen.findByTestId('sidemenu');

@@ -1,5 +1,5 @@
 import { cx, css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -11,7 +11,7 @@ export interface Props {
 }
 
 /** @beta */
-export const InlineSegmentGroup: FC<Props> = ({ children, className, grow, ...htmlProps }) => {
+export const InlineSegmentGroup = ({ children, className, grow, ...htmlProps }: React.PropsWithChildren<Props>) => {
   const styles = useStyles2((theme) => getStyles(theme, grow));
 
   return (

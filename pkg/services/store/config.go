@@ -99,11 +99,12 @@ func (c *GlobalStorageConfig) save() error {
 }
 
 type RootStorageConfig struct {
-	Type        string `json:"type"`
-	Prefix      string `json:"prefix"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Disabled    bool   `json:"disabled,omitempty"`
+	Type             string `json:"type"`
+	Prefix           string `json:"prefix"`
+	UnderContentRoot bool   `json:"underContentRoot"`
+	Name             string `json:"name"`
+	Description      string `json:"description"`
+	Disabled         bool   `json:"disabled,omitempty"`
 
 	// Depending on type, these will be configured
 	Disk *StorageLocalDiskConfig `json:"disk,omitempty"`

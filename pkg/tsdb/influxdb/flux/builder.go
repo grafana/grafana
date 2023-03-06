@@ -29,18 +29,18 @@ const (
 //
 // we also try to detect some often used patterns in the data,
 // and make the data easier to graph in the browser for such cases:
-// - if there is only one timestamp-column and it's named "_time",
-//   we will not add the labels to this data-column, because timestamp
-//   columns usually do not have labels in grafana.
-//   we use the `columnInfo.shouldGetLabels` attribute to handle this.
-// - if there is only one timestamp-column and it's named "_time",
-//   and there is only one non-timestamp-column and it's named "_value",
-//   we rename "_time" to "Time" (using `columnInfo.isTheSimpleTime`),
-//   and we rename "_value" too (using `columnInfo.isTheSimpleValue`):
-//   if there is a tag called "_field" we use it's value as the name
-//   (because that's the usual approach in influxdb), and if there is not,
-//   we name it "Value". with these new names, they are more compatible
-//   with the visualizations in grafana.
+//   - if there is only one timestamp-column and it's named "_time",
+//     we will not add the labels to this data-column, because timestamp
+//     columns usually do not have labels in grafana.
+//     we use the `columnInfo.shouldGetLabels` attribute to handle this.
+//   - if there is only one timestamp-column and it's named "_time",
+//     and there is only one non-timestamp-column and it's named "_value",
+//     we rename "_time" to "Time" (using `columnInfo.isTheSimpleTime`),
+//     and we rename "_value" too (using `columnInfo.isTheSimpleValue`):
+//     if there is a tag called "_field" we use it's value as the name
+//     (because that's the usual approach in influxdb), and if there is not,
+//     we name it "Value". with these new names, they are more compatible
+//     with the visualizations in grafana.
 type columnInfo struct {
 	name             string
 	converter        *data.FieldConverter

@@ -21,16 +21,16 @@ export const RowOptionsButton: FC<RowOptionsButtonProps> = ({ repeat, title, onU
     <ModalsController>
       {({ showModal, hideModal }) => {
         return (
-          <a
+          <button
+            type="button"
             className="pointer"
-            role="button"
             aria-label="Row options"
             onClick={() => {
               showModal(RowOptionsModal, { title, repeat, onDismiss: hideModal, onUpdate: onUpdateChange(hideModal) });
             }}
           >
             <Icon name="cog" />
-          </a>
+          </button>
         );
       }}
     </ModalsController>

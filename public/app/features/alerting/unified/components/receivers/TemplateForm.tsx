@@ -1,21 +1,27 @@
 import { css } from '@emotion/css';
+import { Location } from 'history';
 import React, { FC } from 'react';
 import { useForm, Validate } from 'react-hook-form';
-import { useDispatch } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
 import { Alert, Button, Field, FieldSet, Input, LinkButton, useStyles2 } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
+import { useDispatch } from 'app/types';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { updateAlertManagerConfigAction } from '../../state/actions';
 import { makeAMLink } from '../../utils/misc';
+import { initialAsyncRequestState } from '../../utils/redux';
 import { ensureDefine } from '../../utils/templates';
 import { ProvisionedResource, ProvisioningAlert } from '../Provisioning';
 
+import { TemplateDataDocs } from './TemplateDataDocs';
 import { TemplateEditor } from './TemplateEditor';
+import { snippets } from './editor/templateDataSuggestions';
 
 interface Values {
   name: string;
@@ -33,14 +39,18 @@ interface Props {
   alertManagerSourceName: string;
   provenance?: string;
 }
+export const isDuplicating = (location: Location) => location.pathname.endsWith('/duplicate');
 
 export const TemplateForm: FC<Props> = ({ existing, alertManagerSourceName, config, provenance }) => {
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
 
-  useCleanup((state) => state.unifiedAlerting.saveAMConfig);
+  useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
 
   const { loading, error } = useUnifiedAlertingSelector((state) => state.saveAMConfig);
+
+  const location = useLocation();
+  const isduplicating = isDuplicating(location);
 
   const submit = (values: Values) => {
     // wrap content in "define" if it's not already wrapped, in case user did not do it/
@@ -98,10 +108,9 @@ export const TemplateForm: FC<Props> = ({ existing, alertManagerSourceName, conf
       ? true
       : 'Another template with this name already exists.';
   };
-
   return (
     <form onSubmit={handleSubmit(submit)}>
-      <h4>{existing ? 'Edit message template' : 'Create message template'}</h4>
+      <h4>{existing && !isduplicating ? 'Edit notification template' : 'Create notification template'}</h4>
       {error && (
         <Alert severity="error" title="Error saving template">
           {error.message || (error as any)?.data?.message || String(error)}
@@ -120,77 +129,104 @@ export const TemplateForm: FC<Props> = ({ existing, alertManagerSourceName, conf
             autoFocus={true}
           />
         </Field>
-        <Field
-          description={
-            <>
-              You can use the{' '}
-              <a
-                href="https://pkg.go.dev/text/template?utm_source=godoc"
-                target="__blank"
-                rel="noreferrer"
-                className={styles.externalLink}
-              >
-                Go templating language
-              </a>
-              .{' '}
-              <a
-                href="https://prometheus.io/blog/2016/03/03/custom-alertmanager-templates/"
-                target="__blank"
-                rel="noreferrer"
-                className={styles.externalLink}
-              >
-                More info about alertmanager templates
-              </a>
-            </>
-          }
-          label="Content"
-          error={errors?.content?.message}
-          invalid={!!errors.content?.message}
-          required
-        >
-          <div className={styles.editWrapper}>
-            <AutoSizer>
-              {({ width, height }) => (
-                <TemplateEditor
-                  value={getValues('content')}
-                  width={width}
-                  height={height}
-                  onBlur={(value) => setValue('content', value)}
-                />
+        <TemplatingGuideline />
+        <div className={styles.contentContainer}>
+          <div>
+            <Field label="Content" error={errors?.content?.message} invalid={!!errors.content?.message} required>
+              <div className={styles.editWrapper}>
+                <AutoSizer>
+                  {({ width, height }) => (
+                    <TemplateEditor
+                      value={getValues('content')}
+                      width={width}
+                      height={height}
+                      onBlur={(value) => setValue('content', value)}
+                    />
+                  )}
+                </AutoSizer>
+              </div>
+            </Field>
+            <div className={styles.buttons}>
+              {loading && (
+                <Button disabled={true} icon="fa fa-spinner" variant="primary">
+                  Saving...
+                </Button>
               )}
-            </AutoSizer>
+              {!loading && (
+                <Button type="submit" variant="primary">
+                  Save template
+                </Button>
+              )}
+              <LinkButton
+                disabled={loading}
+                href={makeAMLink('alerting/notifications', alertManagerSourceName)}
+                variant="secondary"
+                type="button"
+                fill="outline"
+              >
+                Cancel
+              </LinkButton>
+            </div>
           </div>
-        </Field>
-        <div className={styles.buttons}>
-          {loading && (
-            <Button disabled={true} icon="fa fa-spinner" variant="primary">
-              Saving...
-            </Button>
-          )}
-          {!loading && (
-            <Button type="submit" variant="primary">
-              Save template
-            </Button>
-          )}
-          <LinkButton
-            disabled={loading}
-            href={makeAMLink('alerting/notifications', alertManagerSourceName)}
-            variant="secondary"
-            type="button"
-            fill="outline"
-          >
-            Cancel
-          </LinkButton>
+          <TemplateDataDocs />
         </div>
       </FieldSet>
     </form>
   );
 };
 
+function TemplatingGuideline() {
+  const styles = useStyles2(getStyles);
+
+  return (
+    <Alert title="Templating guideline" severity="info">
+      <Stack direction="row">
+        <div>
+          Grafana uses Go templating language to create notification messages.
+          <br />
+          To find out more about templating please visit our documentation.
+        </div>
+        <div>
+          <LinkButton
+            href="https://grafana.com/docs/grafana/latest/alerting/manage-notifications/template-notifications/"
+            target="_blank"
+            icon="external-link-alt"
+          >
+            Templating documentation
+          </LinkButton>
+        </div>
+      </Stack>
+
+      <div className={styles.snippets}>
+        To make templating easier, we provide a few snippets in the content editor to help you speed up your workflow.
+        <div className={styles.code}>
+          {Object.values(snippets)
+            .map((s) => s.label)
+            .join(', ')}
+        </div>
+      </div>
+    </Alert>
+  );
+}
+
 const getStyles = (theme: GrafanaTheme2) => ({
-  externalLink: css`
+  contentContainer: css`
+    display: flex;
+    gap: ${theme.spacing(2)};
+    flex-direction: row;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    ${theme.breakpoints.up('xxl')} {
+      flex-wrap: nowrap;
+    }
+  `,
+  snippets: css`
+    margin-top: ${theme.spacing(2)};
+    font-size: ${theme.typography.bodySmall.fontSize};
+  `,
+  code: css`
     color: ${theme.colors.text.secondary};
-    text-decoration: underline;
+    font-weight: ${theme.typography.fontWeightBold};
   `,
   buttons: css`
     & > * + * {

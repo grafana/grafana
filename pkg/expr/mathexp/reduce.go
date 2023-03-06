@@ -123,7 +123,7 @@ func (s Series) Reduce(refID, rFunc string, mapper ReduceMapper) (Number, error)
 	floatField := Float64Field(*fVec)
 	reduceFunc, err := GetReduceFunc(rFunc)
 	if err != nil {
-		return number, err
+		return number, fmt.Errorf("invalid expression '%s': %w", refID, err)
 	}
 	f = reduceFunc(&floatField)
 	if f != nil && mapper != nil {

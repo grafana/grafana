@@ -1,6 +1,4 @@
-import { Editor as CoreEditor } from 'slate';
-
-import { Plugin } from '@grafana/slate-react';
+import { Plugin } from 'slate-react';
 
 const getCopiedText = (textBlocks: string[], startOffset: number, endOffset: number) => {
   if (!textBlocks.length) {
@@ -18,9 +16,8 @@ const removeBom = (str: string | undefined): string | undefined => {
 
 export function ClipboardPlugin(): Plugin {
   const clipboardPlugin: Plugin = {
-    onCopy(event: Event, editor: CoreEditor, next: () => any) {
-      const clipEvent = event as ClipboardEvent;
-      clipEvent.preventDefault();
+    onCopy(event, editor, next) {
+      event.preventDefault();
 
       const { document, selection } = editor.value;
       const {
@@ -33,18 +30,17 @@ export function ClipboardPlugin(): Plugin {
         .map((block) => block.text);
 
       const copiedText = removeBom(getCopiedText(selectedBlocks, startOffset, endOffset));
-      if (copiedText && clipEvent.clipboardData) {
-        clipEvent.clipboardData.setData('Text', copiedText);
+      if (copiedText && event.clipboardData) {
+        event.clipboardData.setData('Text', copiedText);
       }
 
       return true;
     },
 
-    onPaste(event: Event, editor: CoreEditor, next: () => any) {
-      const clipEvent = event as ClipboardEvent;
-      clipEvent.preventDefault();
-      if (clipEvent.clipboardData) {
-        const pastedValue = removeBom(clipEvent.clipboardData.getData('Text'));
+    onPaste(event, editor, next) {
+      event.preventDefault();
+      if (event.clipboardData) {
+        const pastedValue = removeBom(event.clipboardData.getData('Text'));
         const lines = pastedValue?.split('\n');
 
         if (lines && lines.length) {
@@ -61,9 +57,8 @@ export function ClipboardPlugin(): Plugin {
 
   return {
     ...clipboardPlugin,
-    onCut(event: Event, editor: CoreEditor, next: () => any) {
-      const clipEvent = event as ClipboardEvent;
-      clipboardPlugin.onCopy!(clipEvent, editor, next);
+    onCut(event, editor, next) {
+      clipboardPlugin.onCopy!(event, editor, next);
       editor.deleteAtRange(editor.value.selection);
 
       return true;

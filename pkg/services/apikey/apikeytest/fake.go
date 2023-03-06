@@ -8,6 +8,7 @@ import (
 
 type Service struct {
 	ExpectedError   error
+	ExpectedBool    bool
 	ExpectedAPIKeys []*apikey.APIKey
 	ExpectedAPIKey  *apikey.APIKey
 }
@@ -16,8 +17,8 @@ func (s *Service) GetAPIKeys(ctx context.Context, query *apikey.GetApiKeysQuery)
 	query.Result = s.ExpectedAPIKeys
 	return s.ExpectedError
 }
-func (s *Service) GetAllAPIKeys(ctx context.Context, orgID int64) []*apikey.APIKey {
-	return s.ExpectedAPIKeys
+func (s *Service) GetAllAPIKeys(ctx context.Context, orgID int64) ([]*apikey.APIKey, error) {
+	return s.ExpectedAPIKeys, s.ExpectedError
 }
 func (s *Service) GetApiKeyById(ctx context.Context, query *apikey.GetByIDQuery) error {
 	query.Result = s.ExpectedAPIKey
@@ -39,4 +40,7 @@ func (s *Service) AddAPIKey(ctx context.Context, cmd *apikey.AddCommand) error {
 }
 func (s *Service) UpdateAPIKeyLastUsedDate(ctx context.Context, tokenID int64) error {
 	return s.ExpectedError
+}
+func (s *Service) IsDisabled(ctx context.Context, orgID int64) (bool, error) {
+	return s.ExpectedBool, s.ExpectedError
 }

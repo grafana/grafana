@@ -1,20 +1,43 @@
-import { isBytesString } from './language_utils';
+import { escapeLabelValueInExactSelector, escapeLabelValueInRegexSelector } from './languageUtils';
 
-describe('isBytesString', () => {
-  it('correctly matches bytes string with integers', () => {
-    expect(isBytesString('500b')).toBe(true);
-    expect(isBytesString('2TB')).toBe(true);
+describe('escapeLabelValueInExactSelector()', () => {
+  it('handles newline characters', () => {
+    expect(escapeLabelValueInExactSelector('t\nes\nt')).toBe('t\\nes\\nt');
   });
-  it('correctly matches bytes string with float', () => {
-    expect(isBytesString('500.4kib')).toBe(true);
-    expect(isBytesString('10.4654Mib')).toBe(true);
+
+  it('handles backslash characters', () => {
+    expect(escapeLabelValueInExactSelector('t\\es\\t')).toBe('t\\\\es\\\\t');
   });
-  it('does not match integer without unit', () => {
-    expect(isBytesString('500')).toBe(false);
-    expect(isBytesString('10')).toBe(false);
+
+  it('handles double-quote characters', () => {
+    expect(escapeLabelValueInExactSelector('t"es"t')).toBe('t\\"es\\"t');
   });
-  it('does not match float without unit', () => {
-    expect(isBytesString('50.047')).toBe(false);
-    expect(isBytesString('1.234')).toBe(false);
+
+  it('handles all together', () => {
+    expect(escapeLabelValueInExactSelector('t\\e"st\nl\nab"e\\l')).toBe('t\\\\e\\"st\\nl\\nab\\"e\\\\l');
+  });
+});
+
+describe('escapeLabelValueInRegexSelector()', () => {
+  it('handles newline characters', () => {
+    expect(escapeLabelValueInRegexSelector('t\nes\nt')).toBe('t\\nes\\nt');
+  });
+
+  it('handles backslash characters', () => {
+    expect(escapeLabelValueInRegexSelector('t\\es\\t')).toBe('t\\\\\\\\es\\\\\\\\t');
+  });
+
+  it('handles double-quote characters', () => {
+    expect(escapeLabelValueInRegexSelector('t"es"t')).toBe('t\\"es\\"t');
+  });
+
+  it('handles regex-meaningful characters', () => {
+    expect(escapeLabelValueInRegexSelector('t+es$t')).toBe('t\\\\+es\\\\$t');
+  });
+
+  it('handles all together', () => {
+    expect(escapeLabelValueInRegexSelector('t\\e"s+t\nl\n$ab"e\\l')).toBe(
+      't\\\\\\\\e\\"s\\\\+t\\nl\\n\\\\$ab\\"e\\\\\\\\l'
+    );
   });
 });

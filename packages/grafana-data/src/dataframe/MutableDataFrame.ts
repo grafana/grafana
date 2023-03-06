@@ -13,7 +13,7 @@ export type MutableField<T = any> = Field<T, MutableVector<T>>;
 
 type MutableVectorCreator = (buffer?: any[]) => MutableVector;
 
-export const MISSING_VALUE: any = undefined; // Treated as connected in new graph panel
+export const MISSING_VALUE = undefined; // Treated as connected in new graph panel
 
 export class MutableDataFrame<T = any> extends FunctionalVector<T> implements DataFrame, MutableVector<T> {
   name?: string;
@@ -67,7 +67,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
     return this.first.length;
   }
 
-  addFieldFor(value: any, name?: string): MutableField {
+  addFieldFor(value: unknown, name?: string): MutableField {
     return this.addField({
       name: name || '', // Will be filled in
       type: guessFieldTypeFromValue(value),
@@ -79,7 +79,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
 
     if (f.values) {
       if (Array.isArray(f.values)) {
-        buffer = f.values as any[];
+        buffer = f.values;
       } else {
         buffer = (f.values as Vector).toArray();
       }
@@ -181,7 +181,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
   /**
    * This will add each value to the corresponding column
    */
-  appendRow(row: any[]) {
+  appendRow(row: unknown[]) {
     // Add any extra columns
     for (let i = this.fields.length; i < row.length; i++) {
       this.addField({
@@ -233,7 +233,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
 
   set(index: number, value: T) {
     if (index > this.length) {
-      throw new Error('Unable ot set value beyond current length');
+      throw new Error('Unable to set value beyond current length');
     }
 
     const obj = (value as any) || {};

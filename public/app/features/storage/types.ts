@@ -4,7 +4,6 @@ export enum StorageView {
   Data = 'data',
   Config = 'config',
   Perms = 'perms',
-  Export = 'export',
   History = 'history',
   AddRoot = 'add',
 }
@@ -31,6 +30,7 @@ export interface StorageConfig {
   prefix: string;
   name: string;
   description: string;
+  underContentRoot: string;
   disk?: {
     path: string;
   };

@@ -16,11 +16,18 @@ import {
   urlUtil,
   PanelModel as IPanelModel,
   DataSourceRef,
+  CoreApp,
+  filterFieldConfigOverrides,
+  getPanelOptionsWithDefaults,
+  isStandardFieldProp,
+  restoreCustomOverrideRules,
 } from '@grafana/data';
 import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
+import { LibraryPanel, LibraryPanelRef } from '@grafana/schema';
 import config from 'app/core/config';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { getNextRefIdChar } from 'app/core/utils/query';
+import { SavedQueryLink } from 'app/features/query-library/types';
 import { QueryGroupOptions } from 'app/types';
 import {
   PanelOptionsChangedEvent,
@@ -29,18 +36,10 @@ import {
   RenderEvent,
 } from 'app/types/events';
 
-import { PanelModelLibraryPanel } from '../../library-panels/types';
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import { getVariablesUrlParams } from '../../variables/getAllVariableValuesForUrl';
 import { getTimeSrv } from '../services/TimeSrv';
 import { TimeOverrideResult } from '../utils/panel';
-
-import {
-  filterFieldConfigOverrides,
-  getPanelOptionsWithDefaults,
-  isStandardFieldProp,
-  restoreCustomOverrideRules,
-} from './getPanelOptionsWithDefaults';
 
 export interface GridPos {
   x: number;
@@ -70,6 +69,7 @@ const notPersistedProperties: { [str: string]: boolean } = {
   queryRunner: true,
   replaceVariables: true,
   configRev: true,
+  hasSavedPanelEditChange: true,
   getDisplayTitle: true,
   dataSupport: true,
   key: true,
@@ -104,6 +104,7 @@ const mustKeepProps: { [str: string]: boolean } = {
   hasRefreshed: true,
   events: true,
   cacheTimeout: true,
+  queryCachingTTL: true,
   cachedPluginOptions: true,
   transparent: true,
   pluginVersion: true,
@@ -130,6 +131,7 @@ const defaults: any = {
     overrides: [],
   },
   title: '',
+  savedQueryLink: null,
 };
 
 export class PanelModel implements DataConfigSource, IPanelModel {
@@ -154,6 +156,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   datasource: DataSourceRef | null = null;
   thresholds?: any;
   pluginVersion?: string;
+  savedQueryLink: SavedQueryLink | null = null; // Used by the experimental feature queryLibrary
 
   snapshotData?: DataFrameDTO[];
   timeFrom?: any;
@@ -170,7 +173,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   links?: DataLink[];
   declare transparent: boolean;
 
-  libraryPanel?: { uid: undefined; name: string } | PanelModelLibraryPanel;
+  libraryPanel?: LibraryPanelRef | LibraryPanel;
 
   autoMigrateFrom?: string;
 
@@ -179,8 +182,11 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   isEditing = false;
   isInView = false;
   configRev = 0; // increments when configs change
+  hasSavedPanelEditChange?: boolean;
   hasRefreshed?: boolean;
   cacheTimeout?: string | null;
+  queryCachingTTL?: number | null;
+
   cachedPluginOptions: Record<string, PanelOptionsCache> = {};
   legend?: { show: boolean; sort?: string; sortDesc?: boolean };
   plugin?: PanelPlugin;
@@ -235,9 +241,15 @@ export class PanelModel implements DataConfigSource, IPanelModel {
 
     switch (this.type) {
       case 'graph':
-        if (config?.featureToggles?.autoMigrateGraphPanels) {
+        if (config.featureToggles?.autoMigrateGraphPanels || !config.angularSupportEnabled) {
           this.autoMigrateFrom = this.type;
           this.type = 'timeseries';
+        }
+        break;
+      case 'table-old':
+        if (!config.angularSupportEnabled) {
+          this.autoMigrateFrom = this.type;
+          this.type = 'table';
         }
         break;
       case 'heatmap-new':
@@ -330,6 +342,9 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     if (manuallyUpdated) {
       this.configRev++;
     }
+
+    // Maybe a bit heavy. Could add a "GridPosChanged" event instead?
+    this.render();
   }
 
   runAllPanelQueries({
@@ -354,7 +369,9 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       minInterval: this.interval,
       scopedVars: this.scopedVars,
       cacheTimeout: this.cacheTimeout,
+      queryCachingTTL: this.queryCachingTTL,
       transformations: this.transformations,
+      app: this.isEditing ? CoreApp.PanelEditor : this.isViewing ? CoreApp.PanelViewer : CoreApp.Dashboard,
     });
   }
 
@@ -414,7 +431,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     const version = getPluginVersion(plugin);
 
     if (this.autoMigrateFrom) {
-      const wasAngular = this.autoMigrateFrom === 'graph';
+      const wasAngular = this.autoMigrateFrom === 'graph' || this.autoMigrateFrom === 'table-old';
       this.callPanelTypeChangeHandler(
         plugin,
         this.autoMigrateFrom,
@@ -506,7 +523,20 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       uid: dataSource.uid,
       type: dataSource.type,
     };
+
+    if (options.savedQueryUid) {
+      this.savedQueryLink = {
+        ref: {
+          uid: options.savedQueryUid,
+        },
+        variables: [],
+      };
+    } else {
+      this.savedQueryLink = null;
+    }
+
     this.cacheTimeout = options.cacheTimeout;
+    this.queryCachingTTL = options.queryCachingTTL;
     this.timeFrom = options.timeRange?.from;
     this.timeShift = options.timeRange?.shift;
     this.hideTimeOverride = options.timeRange?.hide;
@@ -544,6 +574,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
 
     const clone = new PanelModel(sourceModel);
     clone.isEditing = true;
+    clone.plugin = this.plugin;
 
     const sourceQueryRunner = this.getQueryRunner();
 
@@ -655,6 +686,25 @@ export class PanelModel implements DataConfigSource, IPanelModel {
    * */
   getDisplayTitle(): string {
     return this.replaceVariables(this.title, undefined, 'text');
+  }
+
+  initLibraryPanel(libPanel: LibraryPanel) {
+    for (const [key, val] of Object.entries(libPanel.model)) {
+      switch (key) {
+        case 'id':
+        case 'gridPos':
+        case 'libraryPanel': // recursive?
+          continue;
+      }
+      (this as any)[key] = val; // :grimmice:
+    }
+    this.libraryPanel = libPanel;
+  }
+
+  unlinkLibraryPanel() {
+    delete this.libraryPanel;
+    this.configRev++;
+    this.render();
   }
 }
 

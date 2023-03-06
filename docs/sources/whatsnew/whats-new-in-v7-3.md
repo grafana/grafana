@@ -2,8 +2,7 @@
 _build:
   list: false
 aliases:
-  - /docs/grafana/latest/guides/whats-new-in-v7-3/
-  - /docs/grafana/latest/whatsnew/whats-new-in-v7-3/
+  - ../guides/whats-new-in-v7-3/
 description: Feature and improvement highlights for Grafana v7.3
 keywords:
   - grafana
@@ -41,7 +40,7 @@ Another new feature that can be seen in the image above is the new image cell di
 
 {{< figure src="/static/img/docs/v73/color_scheme_dropdown.png" max-width="450px" caption="Color scheme" class="pull-right" >}}
 
-A new standard field color scheme option has been added. This new option will provide a unified way for all new panels to specify how colors should be assigned. For more information, refer to [Apply color to series and fields](../panels/working-with-panels/apply-color-to-series.md)
+A new standard field color scheme option has been added. This new option will provide a unified way for all new panels to specify how colors should be assigned. For more information, refer to [Apply color to series and fields]({{< relref "../panels-visualizations/configure-standard-options/#color-scheme" >}}).
 
 - **Single color**: Specifies a single color. Useful in an override rule.
 - **From thresholds**: Informs Grafana to take color from the matching threshold.
@@ -60,7 +59,7 @@ Another thing to highlight is that all these new color schemes are theme aware a
 
 {{< figure src="/static/img/docs/v73/table_color_scheme_mono_light.png" max-width="900px" caption="table color monochrome scheme" >}}
 
-As this new option is a standard field option it works in every panel. Here is another example from the [Bar Gauge]({{< relref "../visualizations/bar-gauge-panel/" >}}) panel.
+As this new option is a standard field option it works in every panel. Here is another example from the [Bar Gauge]({{< relref "../panels-visualizations/visualizations/bar-gauge/" >}}) panel.
 
 {{< figure src="/static/img/docs/v73/bar_gauge_gradient_color_scheme.png" max-width="900px" caption="bar gauge color scheme" >}}
 
@@ -68,7 +67,7 @@ As this new option is a standard field option it works in every panel. Here is a
 
 In v7.0, we introduced a new table panel and inspect mode with Download CSV enabled. However, CSV export to Excel was removed. Due to a large number of inquiries and requests, this [community contribution from tomdaly](https://github.com/grafana/grafana/pull/27284) brought the feature back.
 
-For more information, refer to [Download raw query results]({{< relref "../panels/query-a-data-source/download-raw-query-results/" >}}).
+For more information, refer to [Download raw query results]({{< relref "../panels-visualizations/panel-inspector/#download-raw-query-results" >}}).
 
 ## Google Cloud monitoring out-of-the-box dashboards
 
@@ -147,10 +146,6 @@ SAML’s single logout (SLO) capability allows users to log out from all applica
 ### SAML IdP-initiated single sign on
 
 IdP-initiated single sign on (SSO) allows the user to log in directly from the SAML identity provider (IdP). It is disabled by default for security reasons. For more information, refer to the [docs]({{< relref "../setup-grafana/configure-security/configure-authentication/saml/#idp-initiated-single-sign-on-sso" >}}).
-
-## Upgrading
-
-See [upgrade notes]({{< relref "../setup-grafana/upgrade-grafana/" >}}).
 
 ## Changelog
 

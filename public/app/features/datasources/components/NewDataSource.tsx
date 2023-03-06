@@ -1,12 +1,11 @@
 import React from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import { AnyAction } from 'redux';
 
 import { DataSourcePluginMeta } from '@grafana/data';
 import { LinkButton, FilterInput } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { PluginsErrorsInfo } from 'app/features/plugins/components/PluginsErrorsInfo';
-import { DataSourcePluginCategory, StoreState } from 'app/types';
+import { DataSourcePluginCategory, StoreState, useDispatch, useSelector } from 'app/types';
 
 import { DataSourceCategories } from '../components/DataSourceCategories';
 import { DataSourceTypeCardList } from '../components/DataSourceTypeCardList';
@@ -24,7 +23,7 @@ export function NewDataSource() {
   const dispatch = useDispatch();
   const filteredDataSources = useSelector((s: StoreState) => getFilteredDataSourcePlugins(s.dataSources));
   const searchQuery = useSelector((s: StoreState) => s.dataSources.dataSourceTypeSearchQuery);
-  const isLoading = useSelector((s: StoreState) => s.dataSources.isLoadingDataSources);
+  const isLoadingDatasourcePlugins = useSelector((s: StoreState) => s.dataSources.isLoadingDataSourcePlugins);
   const dataSourceCategories = useSelector((s: StoreState) => s.dataSources.categories);
   const onAddDataSource = useAddDatasource();
   const onSetSearchQuery = (q: string) => dispatch(setDataSourceTypeSearchQuery(q));
@@ -34,7 +33,7 @@ export function NewDataSource() {
       dataSources={filteredDataSources}
       dataSourceCategories={dataSourceCategories}
       searchQuery={searchQuery}
-      isLoading={isLoading}
+      isLoading={isLoadingDatasourcePlugins}
       onAddDataSource={onAddDataSource}
       onSetSearchQuery={onSetSearchQuery}
     />

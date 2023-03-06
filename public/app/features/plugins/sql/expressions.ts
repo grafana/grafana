@@ -57,6 +57,7 @@ export interface QueryEditorGroupByExpression {
 export interface QueryEditorFunctionExpression {
   type: QueryEditorExpressionType.Function;
   name?: string;
+  alias?: string;
   parameters?: QueryEditorFunctionParameterExpression[];
 }
 

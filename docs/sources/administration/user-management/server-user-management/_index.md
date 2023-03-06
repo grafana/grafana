@@ -1,13 +1,13 @@
 ---
 aliases:
-  - /docs/grafana/latest/administration/manage-users-and-permissions/manage-server-users/
-  - /docs/grafana/latest/manage-users/server-admin/
-  - /docs/grafana/latest/manage-users/server-admin/server-admin-manage-users/
-  - /docs/grafana/latest/administration/manage-users-and-permissions/manage-server-users/view-list-users/
-  - /docs/grafana/latest/administration/manage-users-and-permissions/manage-server-users/view-edit-user-account/
-  - /docs/grafana/latest/administration/manage-users-and-permissions/manage-server-users/view-user-account-details/
-  - /docs/grafana/latest/administration/manage-users-and-permissions/manage-server-users/add-user/
-  - /docs/grafana/latest/administration/manage-users-and-permissions/manage-server-users/force-user-logout/
+  - ../../manage-users/server-admin/
+  - ../../manage-users/server-admin/server-admin-manage-users/
+  - ../manage-users-and-permissions/manage-server-users/
+  - ../manage-users-and-permissions/manage-server-users/add-user/
+  - ../manage-users-and-permissions/manage-server-users/force-user-logout/
+  - ../manage-users-and-permissions/manage-server-users/view-edit-user-account/
+  - ../manage-users-and-permissions/manage-server-users/view-list-users/
+  - ../manage-users-and-permissions/manage-server-users/view-user-account-details/
 title: Server user management
 weight: 100
 ---
@@ -37,8 +37,6 @@ You can see a list of users with accounts on your Grafana server. This action mi
 1. Sign in to Grafana as a server administrator.
 1. Hover your cursor over the **Server Admin** (shield) icon until a menu appears, and click **Users**.
 
-![Server Admin user list](/static/img/docs/manage-users/server-user-list-7-3.png)
-
 > **Note:** If you have [organization administrator]({{< relref "../../roles-and-permissions/#organization-roles" >}}) permissions and _not_ [server administrator]({{< relref "../../roles-and-permissions/#grafana-server-administrators" >}}) permissions, you can still [view of list of users in a given organization]({{< relref "../manage-org-users/#view-a-list-of-organization-users" >}}).
 
 ## View user details
@@ -61,25 +59,17 @@ A user account contains the following sections.
 
 This section contains basic user information, which users can update.
 
-![Server Admin user information section](/static/img/docs/manage-users/server-admin-user-information-7-3.png)
-
 #### Permissions
 
 This indicates whether the user account has the Grafana administrator flag applied. If the flag is set to **Yes**, then the user is a Grafana server administrator.
-
-![Server Admin Permissions section](/static/img/docs/manage-users/server-admin-permissions-7-3.png)
 
 #### Organizations
 
 This section lists the organizations the user belongs to and their assigned role.
 
-![Server Admin Organizations section](/static/img/docs/manage-users/server-admin-organisations-7-3.png)
-
 #### Sessions
 
 This section includes recent user sessions and information about the time the user logged in and they system they used. You can force logouts, if necessary.
-
-![Server Admin Sessions section](/static/img/docs/manage-users/server-admin-sessions-7-3.png)
 
 ## Edit a user account
 

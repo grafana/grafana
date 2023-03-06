@@ -31,6 +31,36 @@ import {
   GraphGradientMode,
 } from '@grafana/schema';
 
+// unit lookup needed to determine if we want power-of-2 or power-of-10 axis ticks
+// see categories.ts is @grafana/data
+const IEC_UNITS = new Set([
+  'bytes',
+  'bits',
+  'kbytes',
+  'mbytes',
+  'gbytes',
+  'tbytes',
+  'pbytes',
+  'binBps',
+  'binbps',
+  'KiBs',
+  'Kibits',
+  'MiBs',
+  'Mibits',
+  'GiBs',
+  'Gibits',
+  'TiBs',
+  'Tibits',
+  'PiBs',
+  'Pibits',
+]);
+
+const BIN_INCRS = Array(53);
+
+for (let i = 0; i < BIN_INCRS.length; i++) {
+  BIN_INCRS[i] = 2 ** i;
+}
+
 import { buildScaleKey } from '../GraphNG/utils';
 import { UPlotConfigBuilder, UPlotConfigPrepFn } from '../uPlot/config/UPlotConfigBuilder';
 import { getScaleGradientFn } from '../uPlot/config/gradientFills';
@@ -74,8 +104,6 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   if (!xField) {
     return builder; // empty frame with no options
   }
-
-  let seriesIndex = 0;
 
   const xScaleKey = 'x';
   let xScaleUnit = '_x';
@@ -173,22 +201,19 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
   for (let i = 1; i < frame.fields.length; i++) {
     const field = frame.fields[i];
 
-    const config = {
+    const config: FieldConfig<GraphFieldConfig> = {
       ...field.config,
       custom: {
         ...defaultConfig,
         ...field.config.custom,
       },
-    } as FieldConfig<GraphFieldConfig>;
+    };
 
     const customConfig: GraphFieldConfig = config.custom!;
 
     if (field === xField || field.type !== FieldType.number) {
       continue;
     }
-
-    // TODO: skip this for fields with custom renderers?
-    field.state!.seriesIndex = seriesIndex++;
 
     let fmt = field.display ?? defaultFormatter;
     if (field.config.custom?.stacking?.mode === StackingMode.Percent) {
@@ -217,11 +242,21 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
           direction: ScaleDirection.Up,
           distribution: customConfig.scaleDistribution?.type,
           log: customConfig.scaleDistribution?.log,
+          linearThreshold: customConfig.scaleDistribution?.linearThreshold,
           min: field.config.min,
           max: field.config.max,
           softMin: customConfig.axisSoftMin,
           softMax: customConfig.axisSoftMax,
           centeredZero: customConfig.axisCenteredZero,
+          range:
+            customConfig.stacking?.mode === StackingMode.Percent
+              ? (u: uPlot, dataMin: number, dataMax: number) => {
+                  dataMin = dataMin < 0 ? -1 : 0;
+                  dataMax = dataMax > 0 ? 1 : 0;
+                  return [dataMin, dataMax];
+                }
+              : undefined,
+          decimals: field.config.decimals,
         },
         field
       )
@@ -262,6 +297,12 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
         };
       }
 
+      let incrs: uPlot.Axis.Incrs | undefined;
+
+      if (IEC_UNITS.has(config.unit!)) {
+        incrs = BIN_INCRS;
+      }
+
       builder.addAxis(
         tweakAxis(
           {
@@ -269,10 +310,12 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
             label: customConfig.axisLabel,
             size: customConfig.axisWidth,
             placement: customConfig.axisPlacement ?? AxisPlacement.Auto,
-            formatValue: (v, decimals) => formattedValueToString(fmt(v, config.decimals ?? decimals)),
+            formatValue: (v, decimals) => formattedValueToString(fmt(v, decimals)),
             theme,
             grid: { show: customConfig.axisGridShow },
-            show: customConfig.hideFrom?.viz === false,
+            decimals: field.config.decimals,
+            distr: customConfig.scaleDistribution?.type,
+            incrs,
             ...axisColorOpts,
           },
           field
@@ -389,8 +432,19 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<{
       }
 
       if (customConfig.fillBelowTo) {
+        const fillBelowToField = frame.fields.find(
+          (f) =>
+            customConfig.fillBelowTo === f.name ||
+            customConfig.fillBelowTo === f.config?.displayNameFromDS ||
+            customConfig.fillBelowTo === getFieldDisplayName(f, frame, allFrames)
+        );
+
+        const fillBelowDispName = fillBelowToField
+          ? getFieldDisplayName(fillBelowToField, frame, allFrames)
+          : customConfig.fillBelowTo;
+
         const t = indexByName.get(dispName);
-        const b = indexByName.get(customConfig.fillBelowTo);
+        const b = indexByName.get(fillBelowDispName);
         if (isNumber(b) && isNumber(t)) {
           builder.addBand({
             series: [t, b],

@@ -4,7 +4,7 @@ import React from 'react';
 
 import { createTheme } from '@grafana/data';
 
-import LokiLanguageProvider from '../language_provider';
+import LokiLanguageProvider from '../LanguageProvider';
 
 import {
   buildSelector,

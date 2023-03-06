@@ -6,8 +6,8 @@ import (
 	"os"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
 )
 
@@ -23,7 +23,7 @@ type DashboardProvisioner interface {
 }
 
 // DashboardProvisionerFactory creates DashboardProvisioners based on input
-type DashboardProvisionerFactory func(context.Context, string, dashboards.DashboardProvisioningService, utils.OrgStore, utils.DashboardStore) (DashboardProvisioner, error)
+type DashboardProvisionerFactory func(context.Context, string, dashboards.DashboardProvisioningService, org.Service, utils.DashboardStore) (DashboardProvisioner, error)
 
 // Provisioner is responsible for syncing dashboard from disk to Grafana's database.
 type Provisioner struct {
@@ -39,9 +39,9 @@ func (provider *Provisioner) HasDashboardSources() bool {
 }
 
 // New returns a new DashboardProvisioner
-func New(ctx context.Context, configDirectory string, provisioner dashboards.DashboardProvisioningService, orgStore utils.OrgStore, dashboardStore utils.DashboardStore) (DashboardProvisioner, error) {
+func New(ctx context.Context, configDirectory string, provisioner dashboards.DashboardProvisioningService, orgService org.Service, dashboardStore utils.DashboardStore) (DashboardProvisioner, error) {
 	logger := log.New("provisioning.dashboard")
-	cfgReader := &configReader{path: configDirectory, log: logger, orgStore: orgStore}
+	cfgReader := &configReader{path: configDirectory, log: logger, orgService: orgService}
 	configs, err := cfgReader.readConfig(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("%v: %w", "Failed to read dashboards config", err)
@@ -90,7 +90,7 @@ func (provider *Provisioner) CleanUpOrphanedDashboards(ctx context.Context) {
 		currentReaders[index] = reader.Cfg.Name
 	}
 
-	if err := provider.provisioner.DeleteOrphanedProvisionedDashboards(ctx, &models.DeleteOrphanedProvisionedDashboardsCommand{ReaderNames: currentReaders}); err != nil {
+	if err := provider.provisioner.DeleteOrphanedProvisionedDashboards(ctx, &dashboards.DeleteOrphanedProvisionedDashboardsCommand{ReaderNames: currentReaders}); err != nil {
 		provider.log.Warn("Failed to delete orphaned provisioned dashboards", "err", err)
 	}
 }

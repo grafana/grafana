@@ -49,7 +49,7 @@ func main() {
 	// a URL. Adding this will ensure that all the api calls start with "/api".
 	doc3.AddServer(&openapi3.Server{URL: "/api"})
 
-	j3, err := doc3.MarshalJSON()
+	j3, err := json.MarshalIndent(doc3, "", "  ")
 	if err != nil {
 		panic(err)
 	}

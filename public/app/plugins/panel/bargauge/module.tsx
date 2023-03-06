@@ -6,7 +6,7 @@ import { addOrientationOption, addStandardDataReduceOptions } from '../stat/comm
 
 import { barGaugePanelMigrationHandler } from './BarGaugeMigrations';
 import { BarGaugePanel } from './BarGaugePanel';
-import { PanelOptions, defaultPanelOptions } from './models.gen';
+import { PanelOptions, defaultPanelOptions } from './panelcfg.gen';
 import { BarGaugeSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<PanelOptions>(BarGaugePanel)

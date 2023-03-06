@@ -1,0 +1,433 @@
+syntax = "proto3";
+package entity;
+
+option go_package = "./;entity";
+
+message GRN {
+  // the tenant/org id
+  int64 tenant_id = 1;
+
+  // Identify the entity kind.  This kind will be used to apply a schema to the body and
+  // will trigger additional indexing behavior.
+  string kind = 3;
+
+  // Unique ID
+  // 40 characters or less, no slashes or other special characters
+  string UID = 4;
+}
+
+// The canonical entity/document data -- this represents the raw bytes and storage level metadata
+message Entity {
+  // Entity identifier
+  GRN GRN = 1;
+
+  // The version will change when the entity is saved. It is not necessarily sortable
+  string version = 2;
+
+  // Time in epoch milliseconds that the entity was created
+  int64 created_at = 3;
+
+  // Time in epoch milliseconds that the entity was updated
+  int64 updated_at = 4;
+
+  // Who created the entity
+  string created_by = 5;
+
+  // Who updated the entity
+  string updated_by = 6;
+
+  // The folder UID (not stored in the body)
+  string folder = 7;
+
+  // MD5 digest of the body
+  string ETag = 8;
+
+  // Content Length
+  int64 size = 9;
+
+  // Raw bytes of the storage entity.  The kind will determine what is a valid payload
+  bytes body = 10;
+
+  // Entity summary as JSON
+  bytes summary_json = 11;
+
+  // External location info
+  EntityOriginInfo origin = 12;
+}
+
+// This stores additional metadata for items entities that were synced from external systmes
+message EntityOriginInfo {
+  // identify the external source (plugin, git instance, etc)
+  string source = 1;
+
+  // Key in the upstream system (git hash, file path, etc)
+  string key = 2;
+
+  // Time in epoch milliseconds that the entity was last synced with an external system (provisioning/git)
+  int64 time = 3;
+}
+
+// Report error while working with entitys
+// NOTE: real systems at scale will contain errors.
+message EntityErrorInfo {
+  // Match an error code registry?
+  int64 code = 1;
+
+  // Simple error display
+  string message = 2;
+
+  // Details encoded in JSON
+  bytes details_json = 3;
+}
+
+// This is a subset of Entity that does not include body or sync info
+message EntityVersionInfo {
+  // The version will change when the entity is saved. It is not necessarily sortable
+  string version = 1;
+
+  // Time in epoch milliseconds that the entity was updated
+  int64 updated_at = 2;
+
+  // Who updated the entity
+  string updated_by = 3;
+
+  // Content Length
+  int64 size = 4;
+
+  // MD5 digest of the body
+  string ETag = 5;
+
+  // optional "save" or "commit" message
+  //
+  // NOTE: currently managed by the dashboard_version table, and will be returned from a "history" command
+  string comment = 6;
+}
+
+//-----------------------------------------------
+// Get request/response
+//-----------------------------------------------
+
+message ReadEntityRequest {
+  // Entity identifier
+  GRN GRN = 1;
+
+  // Fetch an explicit version
+  string version = 2;
+
+  // Include the full body bytes
+  bool with_body = 3;
+
+  // Include derived summary metadata
+  bool with_summary = 4;
+}
+
+//------------------------------------------------------
+// Make many read requests at once (by Kind+ID+version)
+//------------------------------------------------------
+
+message BatchReadEntityRequest {
+  repeated ReadEntityRequest batch = 1;
+}
+
+message BatchReadEntityResponse {
+  repeated Entity results = 1;
+}
+
+//-----------------------------------------------
+// Write request/response
+//-----------------------------------------------
+
+message WriteEntityRequest {
+  // Entity identifier
+  GRN GRN = 1;
+
+  // Where to save the entity (empty will leave it unchanged)
+  string folder = 2;
+
+  // The raw entity body
+  bytes body = 3;
+
+  // Message that can be seen when exploring entity history
+  string comment = 4;
+
+  // Used for optimistic locking.  If missing, the previous version will be replaced regardless
+  string previous_version = 5;
+}
+
+// This operation is useful when syncing a resource from external sources
+// that have more accurate metadata information (git, or an archive).
+// This process can bypass the forced checks that 
+message AdminWriteEntityRequest {
+  // Entity identifier
+  GRN GRN = 1;
+
+  // Where to save the entity (empty will leave it unchanged)
+  string folder = 2;
+
+  // The raw entity body
+  bytes body = 3;
+
+  // Message that can be seen when exploring entity history
+  string comment = 4;
+
+  // Time in epoch milliseconds that the entity was created
+  // Optional, if 0 it will use the current time
+  int64 created_at = 5;
+
+  // Time in epoch milliseconds that the entity was updated
+  // Optional, if empty it will use the current user
+  int64 updated_at = 6;
+
+  // Who created the entity
+  // Optional, if 0 it will use the current time
+  string created_by = 7;
+
+  // Who updated the entity
+  // Optional, if empty it will use the current user
+  string updated_by = 8;
+
+  // An explicit version identifier
+  // Optional, if set, this will overwrite/define an explicit version
+  string version = 9;
+
+  // Used for optimistic locking.  If missing, the previous version will be replaced regardless
+  // This may not be used along with an explicit version in the request
+  string previous_version = 10;
+
+  // Request that all previous versions are removed from the history
+  // This will make sense for systems that manage history explicitly externallay
+  bool clear_history = 11;
+
+  // Optionally define where the entity came from
+  EntityOriginInfo origin = 12;
+}
+
+message WriteEntityResponse {
+  // Error info -- if exists, the save did not happen
+  EntityErrorInfo error = 1;
+
+  // Entity identifier
+  GRN GRN = 2;
+
+  // Entity details with the body removed
+  EntityVersionInfo entity = 3; 
+
+  // Entity summary as JSON
+  bytes summary_json = 4;
+
+  // Status code
+  Status status = 5;
+
+  // Status enumeration
+  enum Status {
+    ERROR = 0;
+    CREATED = 1;
+    UPDATED = 2;
+    UNCHANGED = 3;
+  }
+}
+
+//-----------------------------------------------
+// Delete request/response
+//-----------------------------------------------
+
+message DeleteEntityRequest {
+  // Entity identifier
+  GRN GRN = 1;
+
+  // Used for optimistic locking.  If missing, the previous version will be replaced regardless
+  string previous_version = 3;
+}
+
+message DeleteEntityResponse {
+  bool OK = 1;
+}
+
+//-----------------------------------------------
+// History request/response
+//-----------------------------------------------
+
+message EntityHistoryRequest {
+  // Entity identifier
+  GRN GRN = 1;
+
+  // Maximum number of items to return
+  int64 limit = 3; 
+
+  // Starting from the requested page
+  string next_page_token = 5;
+}
+
+message EntityHistoryResponse {
+  // Entity identifier
+  GRN GRN = 1;
+
+  // Entity metadata without the raw bytes
+  repeated EntityVersionInfo versions = 2;
+
+  // More results exist... pass this in the next request
+  string next_page_token = 3;
+}
+
+
+//-----------------------------------------------
+// List request/response
+//-----------------------------------------------
+
+message EntitySearchRequest {
+  // Starting from the requested page (other query parameters must match!)
+  string next_page_token = 1;
+
+  // Maximum number of items to return
+  int64 limit = 2; 
+
+  // Free text query string -- mileage may vary :)
+  string query = 3;
+
+  // limit to a specific kind (empty is all)
+  repeated string kind = 4;
+
+  // Limit results to items in a specific folder
+  string folder = 5;
+
+  // Must match all labels
+  map<string,string> labels = 6;
+
+  // Sorting instructions `field ASC/DESC`
+  repeated string sort = 7;
+
+  // Return the full body in each payload
+  bool with_body = 8;
+
+  // Return the full body in each payload
+  bool with_labels = 9;
+
+  // Return the full body in each payload
+  bool with_fields = 10;
+}
+
+// Search result metadata for each entity
+message EntitySearchResult {
+  // Entity identifier
+  GRN GRN = 1;
+
+  // The current veresion of this entity
+  string version = 2;
+
+  // Content Length
+  int64 size = 3;
+
+  // Time in epoch milliseconds that the entity was updated
+  int64 updated_at = 4;
+
+  // Who updated the entity
+  string updated_by = 5;
+
+  // Optionally include the full entity body
+  bytes body = 6;
+
+  //----------------------------------------
+  // Derived from body in the summary
+  //----------------------------------------
+
+  // Always included
+  string name = 7;
+
+  // Always included
+  string description = 8;
+
+  // The structured labels
+  map<string,string> labels = 9;
+
+  // Folder UID
+  string folder = 10;
+
+  // Slugified name
+  string slug = 11;
+
+  // Optionally include extracted JSON
+  bytes fields_json = 12;
+
+  // EntityErrorInfo in json
+  bytes error_json = 13;
+}
+
+message EntitySearchResponse {
+  repeated EntitySearchResult results = 1;
+
+  // More results exist... pass this in the next request
+  string next_page_token = 2;
+}
+
+//-----------------------------------------------
+// Watch request/response
+//-----------------------------------------------
+
+message EntityWatchRequest {
+  // Timestamp of last changes. Empty will default to  
+  int64 since = 1; 
+  
+  // Watch sppecific entities
+  repeated GRN GRN = 2;
+
+  // limit to a specific kind (empty is all)
+  repeated string kind = 3;
+
+  // Limit results to items in a specific folder
+  string folder = 4;
+
+  // Must match all labels
+  map<string,string> labels = 5;
+
+  // Return the full body in each payload
+  bool with_body = 6;
+
+  // Return the full body in each payload
+  bool with_labels = 7;
+
+  // Return the full body in each payload
+  bool with_fields = 8;
+}
+
+message EntityWatchResponse {
+  // Timestamp the event was sent
+  int64 timestamp = 1; 
+
+  // List of entities with the same action
+  repeated Entity entity = 2;
+
+  // Action code
+  Action action = 3;
+
+  // Status enumeration
+  enum Action {
+    UNKNOWN = 0;
+    UPDATED = 1;
+    DELETED = 2;
+  }
+}
+
+
+//-----------------------------------------------
+// Storage interface
+//-----------------------------------------------
+
+// The entity store provides a basic CRUD (+watch eventually) interface for generic entitys
+service EntityStore {
+  rpc Read(ReadEntityRequest) returns (Entity);
+  rpc BatchRead(BatchReadEntityRequest) returns (BatchReadEntityResponse);
+  rpc Write(WriteEntityRequest) returns (WriteEntityResponse);
+  rpc Delete(DeleteEntityRequest) returns (DeleteEntityResponse);
+  rpc History(EntityHistoryRequest) returns (EntityHistoryResponse);
+  rpc Search(EntitySearchRequest) returns (EntitySearchResponse);
+  rpc Watch(EntityWatchRequest) returns (stream EntityWatchResponse);
+  
+  // TEMPORARY... while we split this into a new service (see below)
+  rpc AdminWrite(AdminWriteEntityRequest) returns (WriteEntityResponse);
+}
+
+// The admin service extends the basic entity store interface, but provides
+// more explicit control that can support bulk operations like efficient git sync
+service EntityStoreAdmin {
+  rpc AdminWrite(AdminWriteEntityRequest) returns (WriteEntityResponse);
+}

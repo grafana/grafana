@@ -1,7 +1,11 @@
 import { isNumber, set, unset, get, cloneDeep } from 'lodash';
+import { useMemo, useRef } from 'react';
+import usePrevious from 'react-use/lib/usePrevious';
 
-import { guessFieldTypeForField } from '../dataframe';
+import { compareArrayValues, compareDataFrameStructures, guessFieldTypeForField } from '../dataframe';
 import { getTimeField } from '../dataframe/processDataFrame';
+import { PanelPlugin } from '../panel/PanelPlugin';
+import { GrafanaTheme2 } from '../themes';
 import { asHexString } from '../themes/colorManipulator';
 import { fieldMatchers, reduceField, ReducerID } from '../transformations';
 import {
@@ -16,11 +20,13 @@ import {
   FieldColorModeId,
   FieldConfig,
   FieldConfigPropertyItem,
+  FieldConfigSource,
   FieldOverrideContext,
   FieldType,
   InterpolateFunction,
   LinkModel,
   NumericRange,
+  PanelData,
   ScopedVars,
   TimeZone,
   ValueLinkConfig,
@@ -450,9 +456,18 @@ export const getLinksSupplier =
         });
       }
 
-      let href = locationUtil.assureBaseUrl(link.url.replace(/\n/g, ''));
-      href = replaceVariables(href, variables);
-      href = locationUtil.processUrl(href);
+      let href = link.onBuildUrl
+        ? link.onBuildUrl({
+            origin: field,
+            replaceVariables,
+          })
+        : link.url;
+
+      if (href) {
+        locationUtil.assureBaseUrl(href.replace(/\n/g, ''));
+        href = replaceVariables(href, variables);
+        href = locationUtil.processUrl(href);
+      }
 
       const info: LinkModel<Field> = {
         href,
@@ -493,4 +508,50 @@ export function applyRawFieldOverrides(data: DataFrame[]): DataFrame[] {
   }
 
   return newData;
+}
+
+/**
+ * @internal
+ */
+export function useFieldOverrides(
+  plugin: PanelPlugin | undefined,
+  fieldConfig: FieldConfigSource | undefined,
+  data: PanelData | undefined,
+  timeZone: string,
+  theme: GrafanaTheme2,
+  replace: InterpolateFunction
+): PanelData | undefined {
+  const fieldConfigRegistry = plugin?.fieldConfigRegistry;
+  const structureRev = useRef(0);
+  const prevSeries = usePrevious(data?.series);
+
+  return useMemo(() => {
+    if (!fieldConfigRegistry || !fieldConfig || !data) {
+      return;
+    }
+
+    const series = data?.series;
+
+    if (
+      data.structureRev == null &&
+      series &&
+      prevSeries &&
+      !compareArrayValues(series, prevSeries, compareDataFrameStructures)
+    ) {
+      structureRev.current++;
+    }
+
+    return {
+      structureRev: structureRev.current,
+      ...data,
+      series: applyFieldOverrides({
+        data: series,
+        fieldConfig,
+        fieldConfigRegistry,
+        replaceVariables: replace,
+        theme,
+        timeZone,
+      }),
+    };
+  }, [fieldConfigRegistry, fieldConfig, data, prevSeries, timeZone, theme, replace]);
 }

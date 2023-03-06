@@ -51,16 +51,25 @@ export const ColorPickerInput = forwardRef<HTMLInputElement, ColorPickerInputPro
     return (
       <ClickOutsideWrapper onClick={() => setIsOpen(false)}>
         <div className={styles.wrapper}>
-          {isOpen && (
+          {isOpen && !inputProps.disabled && (
             <RgbaStringColorPicker
+              data-testid={'color-popover'}
               color={currentColor}
               onChange={setColor}
               className={cx(paletteStyles.root, styles.picker)}
             />
           )}
-          <div onClick={() => setIsOpen(true)}>
-            <ColorInput {...inputProps} theme={theme} color={currentColor} onChange={setColor} ref={ref} />
-          </div>
+          <ColorInput
+            {...inputProps}
+            theme={theme}
+            color={currentColor}
+            onChange={setColor}
+            buttonAriaLabel="Open color picker"
+            onClick={() => setIsOpen(true)}
+            onBlur={() => setIsOpen(false)}
+            ref={ref}
+            isClearable
+          />
         </div>
       </ClickOutsideWrapper>
     );

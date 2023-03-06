@@ -8,32 +8,34 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/star/startest"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 )
 
 func TestSearch_SortedResults(t *testing.T) {
 	ss := startest.NewStarServiceFake()
-	ms := mockstore.NewSQLStoreMock()
+	db := dbtest.NewFakeDB()
+	us := usertest.NewUserServiceFake()
 	ds := dashboards.NewFakeDashboardService(t)
-	ds.On("SearchDashboards", mock.Anything, mock.AnythingOfType("*models.FindPersistedDashboardsQuery")).Run(func(args mock.Arguments) {
-		q := args.Get(1).(*models.FindPersistedDashboardsQuery)
-		q.Result = models.HitList{
-			&models.Hit{ID: 16, Title: "CCAA", Type: "dash-db", Tags: []string{"BB", "AA"}},
-			&models.Hit{ID: 10, Title: "AABB", Type: "dash-db", Tags: []string{"CC", "AA"}},
-			&models.Hit{ID: 15, Title: "BBAA", Type: "dash-db", Tags: []string{"EE", "AA", "BB"}},
-			&models.Hit{ID: 25, Title: "bbAAa", Type: "dash-db", Tags: []string{"EE", "AA", "BB"}},
-			&models.Hit{ID: 17, Title: "FOLDER", Type: "dash-folder"},
+	ds.On("SearchDashboards", mock.Anything, mock.AnythingOfType("*dashboards.FindPersistedDashboardsQuery")).Run(func(args mock.Arguments) {
+		q := args.Get(1).(*dashboards.FindPersistedDashboardsQuery)
+		q.Result = model.HitList{
+			&model.Hit{ID: 16, Title: "CCAA", Type: "dash-db", Tags: []string{"BB", "AA"}},
+			&model.Hit{ID: 10, Title: "AABB", Type: "dash-db", Tags: []string{"CC", "AA"}},
+			&model.Hit{ID: 15, Title: "BBAA", Type: "dash-db", Tags: []string{"EE", "AA", "BB"}},
+			&model.Hit{ID: 25, Title: "bbAAa", Type: "dash-db", Tags: []string{"EE", "AA", "BB"}},
+			&model.Hit{ID: 17, Title: "FOLDER", Type: "dash-folder"},
 		}
 	}).Return(nil)
-	ms.ExpectedSignedInUser = &user.SignedInUser{IsGrafanaAdmin: true}
+	us.ExpectedSignedInUser = &user.SignedInUser{IsGrafanaAdmin: true}
 	ss.ExpectedUserStars = &star.GetUserStarsResult{UserStars: map[int64]bool{10: true, 12: true}}
 	svc := &SearchService{
-		sqlstore:         ms,
+		sqlstore:         db,
 		starService:      ss,
 		dashboardService: ds,
 	}

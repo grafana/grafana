@@ -10,7 +10,7 @@ import {
   systemDateFormats,
   TimeZone,
 } from '@grafana/data';
-import { AxisPlacement } from '@grafana/schema';
+import { AxisPlacement, ScaleDistribution } from '@grafana/schema';
 
 import { measureText } from '../../../utils/measureText';
 import { PlotConfigBuilder } from '../types';
@@ -38,6 +38,8 @@ export interface AxisProps {
   timeZone?: TimeZone;
   color?: uPlot.Axis.Stroke;
   border?: uPlot.Axis.Border;
+  decimals?: DecimalCount;
+  distr?: ScaleDistribution;
 }
 
 export const UPLOT_AXIS_FONT_SIZE = 12;
@@ -112,6 +114,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       formatValue,
       splits,
       values,
+      incrs,
       isTime,
       timeZone,
       theme,
@@ -119,14 +122,21 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       size,
       color,
       border,
+      decimals,
+      distr = ScaleDistribution.Linear,
     } = this.props;
 
     const font = `${UPLOT_AXIS_FONT_SIZE}px ${theme.typography.fontFamily}`;
 
     const gridColor = theme.isDark ? 'rgba(240, 250, 255, 0.09)' : 'rgba(0, 10, 23, 0.09)';
 
+    // TODO: this is pretty flimsy now that scaleKey is composed from multiple parts :/
     if (isBooleanUnit(scaleKey)) {
       splits = [0, 1];
+    }
+
+    if (decimals === 0 && distr === ScaleDistribution.Linear) {
+      filter = (u, splits) => splits.map((v) => (Number.isInteger(v) ? v : null));
     }
 
     let config: Axis = {
@@ -167,6 +177,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
           return this.calculateSpace(self, axisIdx, scaleMin, scaleMax, plotDim);
         }),
       filter,
+      incrs,
     };
 
     if (border != null) {

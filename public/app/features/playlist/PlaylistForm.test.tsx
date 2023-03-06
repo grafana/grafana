@@ -6,7 +6,7 @@ import React from 'react';
 import { PlaylistForm } from './PlaylistForm';
 import { Playlist } from './types';
 
-jest.mock('../../core/components/TagFilter/TagFilter', () => ({
+jest.mock('app/core/components/TagFilter/TagFilter', () => ({
   TagFilter: () => {
     return <>mocked-tag-filter</>;
   },
@@ -24,25 +24,29 @@ const playlist: Playlist = {
   name: 'A test playlist',
   interval: '10m',
   items: [
-    { title: 'First item', type: 'dashboard_by_id', order: 1, value: '1' },
-    { title: 'Middle item', type: 'dashboard_by_id', order: 2, value: '2' },
-    { title: 'Last item', type: 'dashboard_by_tag', order: 2, value: 'Last item' },
+    { type: 'dashboard_by_uid', value: 'uid_1' },
+    { type: 'dashboard_by_uid', value: 'uid_2' },
+    { type: 'dashboard_by_tag', value: 'tag_A' },
   ],
   uid: 'foo',
 };
 
 function rows() {
-  return screen.getAllByRole('row', { name: /playlist item row/i });
+  return screen.getAllByRole('row');
 }
 
 describe('PlaylistForm', () => {
+  beforeEach(() => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
   describe('when mounted without playlist', () => {
     it('then it should contain name and interval fields', () => {
       getTestContext();
 
       expect(screen.getByRole('textbox', { name: /playlist name/i })).toBeInTheDocument();
       expect(screen.getByRole('textbox', { name: /playlist interval/i })).toBeInTheDocument();
-      expect(screen.queryByRole('row', { name: /playlist item row/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole('row')).not.toBeInTheDocument();
     });
 
     it('then name field should have empty string as default value', () => {
@@ -74,25 +78,15 @@ describe('PlaylistForm', () => {
     it('then items row count should be correct', () => {
       getTestContext(playlist);
 
-      expect(screen.getAllByRole('row', { name: /playlist item row/i })).toHaveLength(3);
+      expect(screen.getAllByRole('row')).toHaveLength(3);
     });
 
     it('then the first item row should be correct', () => {
       getTestContext(playlist);
 
-      expectCorrectRow({ index: 0, type: 'id', title: 'first item', first: true });
-    });
-
-    it('then the middle item row should be correct', () => {
-      getTestContext(playlist);
-
-      expectCorrectRow({ index: 1, type: 'id', title: 'middle item' });
-    });
-
-    it('then the last item row should be correct', () => {
-      getTestContext(playlist);
-
-      expectCorrectRow({ index: 2, type: 'tag', title: 'last item', last: true });
+      expectCorrectRow({ index: 0, type: 'dashboard_by_uid', value: 'uid_1' });
+      expectCorrectRow({ index: 1, type: 'dashboard_by_uid', value: 'uid_2' });
+      expectCorrectRow({ index: 2, type: 'dashboard_by_tag', value: 'tag_A' });
     });
   });
 
@@ -103,30 +97,8 @@ describe('PlaylistForm', () => {
       expect(rows()).toHaveLength(3);
       await userEvent.click(within(rows()[2]).getByRole('button', { name: /delete playlist item/i }));
       expect(rows()).toHaveLength(2);
-      expectCorrectRow({ index: 0, type: 'id', title: 'first item', first: true });
-      expectCorrectRow({ index: 1, type: 'id', title: 'middle item', last: true });
-    });
-  });
-
-  describe('when moving a playlist item up', () => {
-    it('then the item should be removed and other items should be correct', async () => {
-      getTestContext(playlist);
-
-      await userEvent.click(within(rows()[2]).getByRole('button', { name: /move playlist item order up/i }));
-      expectCorrectRow({ index: 0, type: 'id', title: 'first item', first: true });
-      expectCorrectRow({ index: 1, type: 'tag', title: 'last item' });
-      expectCorrectRow({ index: 2, type: 'id', title: 'middle item', last: true });
-    });
-  });
-
-  describe('when moving a playlist item down', () => {
-    it('then the item should be removed and other items should be correct', async () => {
-      getTestContext(playlist);
-
-      await userEvent.click(within(rows()[0]).getByRole('button', { name: /move playlist item order down/i }));
-      expectCorrectRow({ index: 0, type: 'id', title: 'middle item', first: true });
-      expectCorrectRow({ index: 1, type: 'id', title: 'first item' });
-      expectCorrectRow({ index: 2, type: 'tag', title: 'last item', last: true });
+      expectCorrectRow({ index: 0, type: 'dashboard_by_uid', value: 'uid_1' });
+      expectCorrectRow({ index: 1, type: 'dashboard_by_uid', value: 'uid_2' });
     });
   });
 
@@ -140,9 +112,9 @@ describe('PlaylistForm', () => {
         name: 'A test playlist',
         interval: '10m',
         items: [
-          { title: 'First item', type: 'dashboard_by_id', order: 1, value: '1' },
-          { title: 'Middle item', type: 'dashboard_by_id', order: 2, value: '2' },
-          { title: 'Last item', type: 'dashboard_by_tag', order: 2, value: 'Last item' },
+          { type: 'dashboard_by_uid', value: 'uid_1' },
+          { type: 'dashboard_by_uid', value: 'uid_2' },
+          { type: 'dashboard_by_tag', value: 'tag_A' },
         ],
       });
     });
@@ -180,28 +152,13 @@ describe('PlaylistForm', () => {
 
 interface ExpectCorrectRowArgs {
   index: number;
-  type: 'id' | 'tag';
-  title: string;
-  first?: boolean;
-  last?: boolean;
+  type: 'dashboard_by_tag' | 'dashboard_by_uid';
+  value: string;
 }
 
-function expectCorrectRow({ index, type, title, first = false, last = false }: ExpectCorrectRowArgs) {
+function expectCorrectRow({ index, type, value }: ExpectCorrectRowArgs) {
   const row = within(rows()[index]);
-  const cell = `playlist item dashboard by ${type} type ${title}`;
+  const cell = `Playlist item, ${type}, ${value}`;
   const regex = new RegExp(cell, 'i');
   expect(row.getByRole('cell', { name: regex })).toBeInTheDocument();
-  if (first) {
-    expect(row.queryByRole('button', { name: /move playlist item order up/i })).not.toBeInTheDocument();
-  } else {
-    expect(row.getByRole('button', { name: /move playlist item order up/i })).toBeInTheDocument();
-  }
-
-  if (last) {
-    expect(row.queryByRole('button', { name: /move playlist item order down/i })).not.toBeInTheDocument();
-  } else {
-    expect(row.getByRole('button', { name: /move playlist item order down/i })).toBeInTheDocument();
-  }
-
-  expect(row.getByRole('button', { name: /delete playlist item/i })).toBeInTheDocument();
 }

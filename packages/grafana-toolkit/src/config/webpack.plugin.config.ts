@@ -162,7 +162,6 @@ const getBaseWebpackConfig: WebpackConfigurationGetter = async (options) => {
       libraryTarget: 'amd',
       publicPath: '/',
     },
-
     performance: { hints: false },
     externals: [
       'lodash',
@@ -174,12 +173,13 @@ const getBaseWebpackConfig: WebpackConfigurationGetter = async (options) => {
       '@emotion/css',
       'prismjs',
       'slate-plain-serializer',
-      '@grafana/slate-react',
+      'slate-react',
       'react',
       'react-dom',
       'react-redux',
       'redux',
       'rxjs',
+      'react-router',
       'react-router-dom',
       'd3',
       'angular',

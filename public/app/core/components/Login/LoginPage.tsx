@@ -1,6 +1,6 @@
 // Libraries
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 // Components
 import { HorizontalGroup, LinkButton } from '@grafana/ui';
@@ -20,7 +20,7 @@ const forgottenPasswordStyles = css`
   margin-top: 4px;
 `;
 
-export const LoginPage: FC = () => {
+export const LoginPage = () => {
   document.title = Branding.AppTitle;
   return (
     <LoginLayout>

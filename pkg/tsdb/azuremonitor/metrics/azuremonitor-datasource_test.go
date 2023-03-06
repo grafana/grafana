@@ -15,11 +15,14 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	azTime "github.com/grafana/grafana/pkg/tsdb/azuremonitor/time"
-	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	ptr "github.com/xorcare/pointer"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
+	azTime "github.com/grafana/grafana/pkg/tsdb/azuremonitor/time"
+	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
 func TestAzureMonitorBuildQueries(t *testing.T) {
@@ -39,8 +42,11 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 		azureMonitorVariedProperties map[string]interface{}
 		azureMonitorQueryTarget      string
 		expectedInterval             string
-		resourceURI                  string
 		queryInterval                time.Duration
+		expectedURL                  string
+		expectedBodyFilter           string
+		expectedParamFilter          string
+		expectedPortalURL            *string
 	}{
 		{
 			name: "Parse queries from frontend and build AzureMonitor API queries",
@@ -49,9 +55,8 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 				"timeGrain":   "PT1M",
 				"top":         "10",
 			},
-			resourceURI:             "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana",
 			expectedInterval:        "PT1M",
-			azureMonitorQueryTarget: "aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z",
+			azureMonitorQueryTarget: "aggregation=Average&api-version=2021-05-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z",
 		},
 		{
 			name: "legacy query without resourceURI and time grain set to auto",
@@ -61,7 +66,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			},
 			queryInterval:           duration,
 			expectedInterval:        "PT15M",
-			azureMonitorQueryTarget: "aggregation=Average&api-version=2018-01-01&interval=PT15M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z",
+			azureMonitorQueryTarget: "aggregation=Average&api-version=2021-05-01&interval=PT15M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z",
 		},
 		{
 			name: "legacy query without resourceURI and time grain set to auto",
@@ -72,7 +77,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			},
 			queryInterval:           duration,
 			expectedInterval:        "PT5M",
-			azureMonitorQueryTarget: "aggregation=Average&api-version=2018-01-01&interval=PT5M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z",
+			azureMonitorQueryTarget: "aggregation=Average&api-version=2021-05-01&interval=PT5M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z",
 		},
 		{
 			name: "legacy query without resourceURI and has a dimension filter",
@@ -84,7 +89,8 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			},
 			queryInterval:           duration,
 			expectedInterval:        "PT1M",
-			azureMonitorQueryTarget: "%24filter=blob+eq+%27%2A%27&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=30",
+			azureMonitorQueryTarget: "aggregation=Average&api-version=2021-05-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=30",
+			expectedParamFilter:     "blob eq '*'",
 		},
 		{
 			name: "legacy query without resourceURI and has a dimension filter and none Dimension",
@@ -96,7 +102,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			},
 			queryInterval:           duration,
 			expectedInterval:        "PT1M",
-			azureMonitorQueryTarget: "aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z",
+			azureMonitorQueryTarget: "aggregation=Average&api-version=2021-05-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z",
 		},
 		{
 			name: "legacy query without resourceURI and has dimensionFilter*s* property with one dimension",
@@ -107,7 +113,9 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			},
 			queryInterval:           duration,
 			expectedInterval:        "PT1M",
-			azureMonitorQueryTarget: "%24filter=blob+eq+%27%2A%27&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=30",
+			azureMonitorQueryTarget: "aggregation=Average&api-version=2021-05-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=30",
+			expectedParamFilter:     "blob eq '*'",
+			expectedPortalURL:       ptr.String("http://ds/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/%7B%22absolute%22%3A%7B%22startTime%22%3A%222018-03-15T13%3A00%3A00Z%22%2C%22endTime%22%3A%222018-03-15T13%3A34%3A00Z%22%7D%7D/ChartDefinition/%7B%22v2charts%22%3A%5B%7B%22grouping%22%3A%7B%22dimension%22%3A%22blob%22%2C%22sort%22%3A2%2C%22top%22%3A10%7D%2C%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F12345678-aaaa-bbbb-cccc-123456789abc%2FresourceGroups%2Fgrafanastaging%2Fproviders%2FMicrosoft.Compute%2FvirtualMachines%2Fgrafana%22%7D%2C%22name%22%3A%22Percentage%20CPU%22%2C%22aggregationType%22%3A4%2C%22namespace%22%3A%22Microsoft.Compute%2FvirtualMachines%22%2C%22metricVisualization%22%3A%7B%22displayName%22%3A%22Percentage%20CPU%22%2C%22resourceDisplayName%22%3A%22grafana%22%7D%7D%5D%7D%5D%7D"),
 		},
 		{
 			name: "legacy query without resourceURI and has dimensionFilter*s* property with two dimensions",
@@ -118,7 +126,9 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			},
 			queryInterval:           duration,
 			expectedInterval:        "PT1M",
-			azureMonitorQueryTarget: "%24filter=blob+eq+%27%2A%27+and+tier+eq+%27%2A%27&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=30",
+			azureMonitorQueryTarget: "aggregation=Average&api-version=2021-05-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=30",
+			expectedParamFilter:     "blob eq '*' and tier eq '*'",
+			expectedPortalURL:       ptr.String("http://ds/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/%7B%22absolute%22%3A%7B%22startTime%22%3A%222018-03-15T13%3A00%3A00Z%22%2C%22endTime%22%3A%222018-03-15T13%3A34%3A00Z%22%7D%7D/ChartDefinition/%7B%22v2charts%22%3A%5B%7B%22grouping%22%3A%7B%22dimension%22%3A%22blob%22%2C%22sort%22%3A2%2C%22top%22%3A10%7D%2C%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F12345678-aaaa-bbbb-cccc-123456789abc%2FresourceGroups%2Fgrafanastaging%2Fproviders%2FMicrosoft.Compute%2FvirtualMachines%2Fgrafana%22%7D%2C%22name%22%3A%22Percentage%20CPU%22%2C%22aggregationType%22%3A4%2C%22namespace%22%3A%22Microsoft.Compute%2FvirtualMachines%22%2C%22metricVisualization%22%3A%7B%22displayName%22%3A%22Percentage%20CPU%22%2C%22resourceDisplayName%22%3A%22grafana%22%7D%7D%5D%7D%5D%7D"),
 		},
 		{
 			name: "legacy query without resourceURI and has a dimension filter without specifying a top",
@@ -129,7 +139,8 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			},
 			queryInterval:           duration,
 			expectedInterval:        "PT1M",
-			azureMonitorQueryTarget: "%24filter=blob+eq+%27%2A%27&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z",
+			azureMonitorQueryTarget: "aggregation=Average&api-version=2021-05-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z",
+			expectedParamFilter:     "blob eq '*'",
 		},
 		{
 			name: "has dimensionFilter*s* property with not equals operator",
@@ -140,7 +151,9 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			},
 			queryInterval:           duration,
 			expectedInterval:        "PT1M",
-			azureMonitorQueryTarget: "%24filter=blob+ne+%27test%27&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=30",
+			azureMonitorQueryTarget: "aggregation=Average&api-version=2021-05-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=30",
+			expectedParamFilter:     "blob ne 'test'",
+			expectedPortalURL:       ptr.String("http://ds/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/%7B%22absolute%22%3A%7B%22startTime%22%3A%222018-03-15T13%3A00%3A00Z%22%2C%22endTime%22%3A%222018-03-15T13%3A34%3A00Z%22%7D%7D/ChartDefinition/%7B%22v2charts%22%3A%5B%7B%22filterCollection%22%3A%7B%22filters%22%3A%5B%7B%22key%22%3A%22blob%22%2C%22operator%22%3A1%2C%22values%22%3A%5B%22test%22%5D%7D%5D%7D%2C%22grouping%22%3A%7B%22dimension%22%3A%22blob%22%2C%22sort%22%3A2%2C%22top%22%3A10%7D%2C%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F12345678-aaaa-bbbb-cccc-123456789abc%2FresourceGroups%2Fgrafanastaging%2Fproviders%2FMicrosoft.Compute%2FvirtualMachines%2Fgrafana%22%7D%2C%22name%22%3A%22Percentage%20CPU%22%2C%22aggregationType%22%3A4%2C%22namespace%22%3A%22Microsoft.Compute%2FvirtualMachines%22%2C%22metricVisualization%22%3A%7B%22displayName%22%3A%22Percentage%20CPU%22%2C%22resourceDisplayName%22%3A%22grafana%22%7D%7D%5D%7D%5D%7D"),
 		},
 		{
 			name: "has dimensionFilter*s* property with startsWith operator",
@@ -151,7 +164,9 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			},
 			queryInterval:           duration,
 			expectedInterval:        "PT1M",
-			azureMonitorQueryTarget: "%24filter=blob+sw+%27test%27&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=30",
+			azureMonitorQueryTarget: "aggregation=Average&api-version=2021-05-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=30",
+			expectedParamFilter:     "blob sw 'test'",
+			expectedPortalURL:       ptr.String("http://ds/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/%7B%22absolute%22%3A%7B%22startTime%22%3A%222018-03-15T13%3A00%3A00Z%22%2C%22endTime%22%3A%222018-03-15T13%3A34%3A00Z%22%7D%7D/ChartDefinition/%7B%22v2charts%22%3A%5B%7B%22filterCollection%22%3A%7B%22filters%22%3A%5B%7B%22key%22%3A%22blob%22%2C%22operator%22%3A3%2C%22values%22%3A%5B%22test%22%5D%7D%5D%7D%2C%22grouping%22%3A%7B%22dimension%22%3A%22blob%22%2C%22sort%22%3A2%2C%22top%22%3A10%7D%2C%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F12345678-aaaa-bbbb-cccc-123456789abc%2FresourceGroups%2Fgrafanastaging%2Fproviders%2FMicrosoft.Compute%2FvirtualMachines%2Fgrafana%22%7D%2C%22name%22%3A%22Percentage%20CPU%22%2C%22aggregationType%22%3A4%2C%22namespace%22%3A%22Microsoft.Compute%2FvirtualMachines%22%2C%22metricVisualization%22%3A%7B%22displayName%22%3A%22Percentage%20CPU%22%2C%22resourceDisplayName%22%3A%22grafana%22%7D%7D%5D%7D%5D%7D"),
 		},
 		{
 			name: "correctly sets dimension operator to eq (irrespective of operator) when filter value is '*'",
@@ -162,7 +177,9 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			},
 			queryInterval:           duration,
 			expectedInterval:        "PT1M",
-			azureMonitorQueryTarget: "%24filter=blob+eq+%27%2A%27+and+tier+eq+%27%2A%27&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=30",
+			azureMonitorQueryTarget: "aggregation=Average&api-version=2021-05-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=30",
+			expectedParamFilter:     "blob eq '*' and tier eq '*'",
+			expectedPortalURL:       ptr.String("http://ds/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/%7B%22absolute%22%3A%7B%22startTime%22%3A%222018-03-15T13%3A00%3A00Z%22%2C%22endTime%22%3A%222018-03-15T13%3A34%3A00Z%22%7D%7D/ChartDefinition/%7B%22v2charts%22%3A%5B%7B%22grouping%22%3A%7B%22dimension%22%3A%22blob%22%2C%22sort%22%3A2%2C%22top%22%3A10%7D%2C%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F12345678-aaaa-bbbb-cccc-123456789abc%2FresourceGroups%2Fgrafanastaging%2Fproviders%2FMicrosoft.Compute%2FvirtualMachines%2Fgrafana%22%7D%2C%22name%22%3A%22Percentage%20CPU%22%2C%22aggregationType%22%3A4%2C%22namespace%22%3A%22Microsoft.Compute%2FvirtualMachines%22%2C%22metricVisualization%22%3A%7B%22displayName%22%3A%22Percentage%20CPU%22%2C%22resourceDisplayName%22%3A%22grafana%22%7D%7D%5D%7D%5D%7D"),
 		},
 		{
 			name: "correctly constructs target when multiple filter values are provided for the 'eq' operator",
@@ -173,7 +190,9 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			},
 			queryInterval:           duration,
 			expectedInterval:        "PT1M",
-			azureMonitorQueryTarget: "%24filter=blob+eq+%27test%27+or+blob+eq+%27test2%27&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=30",
+			azureMonitorQueryTarget: "aggregation=Average&api-version=2021-05-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=30",
+			expectedParamFilter:     "blob eq 'test' or blob eq 'test2'",
+			expectedPortalURL:       ptr.String("http://ds/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/%7B%22absolute%22%3A%7B%22startTime%22%3A%222018-03-15T13%3A00%3A00Z%22%2C%22endTime%22%3A%222018-03-15T13%3A34%3A00Z%22%7D%7D/ChartDefinition/%7B%22v2charts%22%3A%5B%7B%22filterCollection%22%3A%7B%22filters%22%3A%5B%7B%22key%22%3A%22blob%22%2C%22operator%22%3A0%2C%22values%22%3A%5B%22test%22%2C%22test2%22%5D%7D%5D%7D%2C%22grouping%22%3A%7B%22dimension%22%3A%22blob%22%2C%22sort%22%3A2%2C%22top%22%3A10%7D%2C%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F12345678-aaaa-bbbb-cccc-123456789abc%2FresourceGroups%2Fgrafanastaging%2Fproviders%2FMicrosoft.Compute%2FvirtualMachines%2Fgrafana%22%7D%2C%22name%22%3A%22Percentage%20CPU%22%2C%22aggregationType%22%3A4%2C%22namespace%22%3A%22Microsoft.Compute%2FvirtualMachines%22%2C%22metricVisualization%22%3A%7B%22displayName%22%3A%22Percentage%20CPU%22%2C%22resourceDisplayName%22%3A%22grafana%22%7D%7D%5D%7D%5D%7D"),
 		},
 		{
 			name: "correctly constructs target when multiple filter values are provided for ne 'eq' operator",
@@ -184,7 +203,59 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			},
 			queryInterval:           duration,
 			expectedInterval:        "PT1M",
-			azureMonitorQueryTarget: "%24filter=blob+ne+%27test%27+and+blob+ne+%27test2%27&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=30",
+			azureMonitorQueryTarget: "aggregation=Average&api-version=2021-05-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=30",
+			expectedParamFilter:     "blob ne 'test' and blob ne 'test2'",
+			expectedPortalURL:       ptr.String("http://ds/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/%7B%22absolute%22%3A%7B%22startTime%22%3A%222018-03-15T13%3A00%3A00Z%22%2C%22endTime%22%3A%222018-03-15T13%3A34%3A00Z%22%7D%7D/ChartDefinition/%7B%22v2charts%22%3A%5B%7B%22filterCollection%22%3A%7B%22filters%22%3A%5B%7B%22key%22%3A%22blob%22%2C%22operator%22%3A1%2C%22values%22%3A%5B%22test%22%2C%22test2%22%5D%7D%5D%7D%2C%22grouping%22%3A%7B%22dimension%22%3A%22blob%22%2C%22sort%22%3A2%2C%22top%22%3A10%7D%2C%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F12345678-aaaa-bbbb-cccc-123456789abc%2FresourceGroups%2Fgrafanastaging%2Fproviders%2FMicrosoft.Compute%2FvirtualMachines%2Fgrafana%22%7D%2C%22name%22%3A%22Percentage%20CPU%22%2C%22aggregationType%22%3A4%2C%22namespace%22%3A%22Microsoft.Compute%2FvirtualMachines%22%2C%22metricVisualization%22%3A%7B%22displayName%22%3A%22Percentage%20CPU%22%2C%22resourceDisplayName%22%3A%22grafana%22%7D%7D%5D%7D%5D%7D"),
+		},
+		{
+			name: "Includes a region",
+			azureMonitorVariedProperties: map[string]interface{}{
+				"timeGrain": "PT1M",
+				"top":       "10",
+				"region":    "westus",
+			},
+			expectedInterval:        "PT1M",
+			azureMonitorQueryTarget: "aggregation=Average&api-version=2021-05-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&region=westus&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z",
+			expectedURL:             "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana/providers/microsoft.insights/metrics",
+		},
+		{
+			name: "Includes a region and a filter in the body with multiple resources",
+			azureMonitorVariedProperties: map[string]interface{}{
+				"timeGrain": "PT1M",
+				"top":       "10",
+				"region":    "westus",
+				"resources": []types.AzureMonitorResource{{ResourceGroup: "rg", ResourceName: "vm"}, {ResourceGroup: "rg2", ResourceName: "vm2"}},
+			},
+			expectedInterval:        "PT1M",
+			azureMonitorQueryTarget: "aggregation=Average&api-version=2021-05-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&region=westus&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z",
+			expectedURL:             "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/providers/microsoft.insights/metrics",
+			expectedBodyFilter:      "Microsoft.ResourceId eq '/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/rg/providers/Microsoft.Compute/virtualMachines/vm' or Microsoft.ResourceId eq '/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/rg2/providers/Microsoft.Compute/virtualMachines/vm2'",
+		},
+		{
+			name: "includes a single resource as a parameter filter",
+			azureMonitorVariedProperties: map[string]interface{}{
+				"timeGrain": "PT1M",
+				"resources": []types.AzureMonitorResource{{ResourceGroup: "rg", ResourceName: "vm"}},
+			},
+			queryInterval:           duration,
+			expectedInterval:        "PT1M",
+			azureMonitorQueryTarget: "aggregation=Average&api-version=2021-05-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z",
+			expectedURL:             "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/rg/providers/Microsoft.Compute/virtualMachines/vm/providers/microsoft.insights/metrics",
+		},
+		{
+			name: "includes a resource and a dimesion as filters",
+			azureMonitorVariedProperties: map[string]interface{}{
+				"timeGrain":        "PT1M",
+				"resources":        []types.AzureMonitorResource{{ResourceGroup: "rg", ResourceName: "vm"}, {ResourceGroup: "rg2", ResourceName: "vm2"}},
+				"dimensionFilters": []types.AzureMonitorDimensionFilter{{Dimension: "blob", Operator: "ne", Filter: &wildcardFilter, Filters: []string{"test", "test2"}}},
+				"top":              "30",
+			},
+			queryInterval:           duration,
+			expectedInterval:        "PT1M",
+			expectedURL:             "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/providers/microsoft.insights/metrics",
+			azureMonitorQueryTarget: "aggregation=Average&api-version=2021-05-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute%2FvirtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=30",
+			expectedBodyFilter:      "(Microsoft.ResourceId eq '/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/rg/providers/Microsoft.Compute/virtualMachines/vm' or Microsoft.ResourceId eq '/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/rg2/providers/Microsoft.Compute/virtualMachines/vm2') and (blob ne 'test' and blob ne 'test2')",
+			expectedPortalURL:       ptr.String("http://ds/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/TimeContext/%7B%22absolute%22%3A%7B%22startTime%22%3A%222018-03-15T13%3A00%3A00Z%22%2C%22endTime%22%3A%222018-03-15T13%3A34%3A00Z%22%7D%7D/ChartDefinition/%7B%22v2charts%22%3A%5B%7B%22filterCollection%22%3A%7B%22filters%22%3A%5B%7B%22key%22%3A%22blob%22%2C%22operator%22%3A1%2C%22values%22%3A%5B%22test%22%2C%22test2%22%5D%7D%5D%7D%2C%22grouping%22%3A%7B%22dimension%22%3A%22blob%22%2C%22sort%22%3A2%2C%22top%22%3A10%7D%2C%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F12345678-aaaa-bbbb-cccc-123456789abc%2FresourceGroups%2Fgrafanastaging%2Fproviders%2FMicrosoft.Compute%2FvirtualMachines%2Fgrafana%22%7D%2C%22name%22%3A%22Percentage%20CPU%22%2C%22aggregationType%22%3A4%2C%22namespace%22%3A%22Microsoft.Compute%2FvirtualMachines%22%2C%22metricVisualization%22%3A%7B%22displayName%22%3A%22Percentage%20CPU%22%2C%22resourceDisplayName%22%3A%22grafana%22%7D%7D%5D%7D%5D%7D"),
 		},
 	}
 
@@ -220,34 +291,64 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 				},
 			}
 
+			queries, err := datasource.buildQueries(log.New("test"), tsdbQuery, dsInfo)
+			require.NoError(t, err)
+
 			azureMonitorQuery := &types.AzureMonitorQuery{
-				ResourceName: "grafana",
-				ResourceURI:  "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana",
-				URL:          "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana/providers/microsoft.insights/metrics",
-				Target:       tt.azureMonitorQueryTarget,
-				RefID:        "A",
-				Alias:        "testalias",
+				URL:    tt.expectedURL,
+				Target: tt.azureMonitorQueryTarget,
+				RefID:  "A",
+				Alias:  "testalias",
 				TimeRange: backend.TimeRange{
 					From: fromStart,
 					To:   fromStart.Add(34 * time.Minute),
 				},
+				BodyFilter: tt.expectedBodyFilter,
 			}
 
-			queries, err := datasource.buildQueries(tsdbQuery, dsInfo)
-			require.NoError(t, err)
-			if diff := cmp.Diff(azureMonitorQuery, queries[0], cmpopts.IgnoreUnexported(simplejson.Json{}), cmpopts.IgnoreFields(types.AzureMonitorQuery{}, "Params")); diff != "" {
+			assert.Equal(t, tt.expectedParamFilter, queries[0].Params.Get("$filter"))
+			if azureMonitorQuery.URL == "" {
+				azureMonitorQuery.URL = "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana/providers/microsoft.insights/metrics"
+			}
+
+			if diff := cmp.Diff(azureMonitorQuery, queries[0], cmpopts.IgnoreUnexported(simplejson.Json{}), cmpopts.IgnoreFields(types.AzureMonitorQuery{}, "Params", "Dimensions")); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
 
-			expected := `http://ds/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/` +
+			expectedPortalURL := `http://ds/#blade/Microsoft_Azure_MonitoringMetrics/Metrics.ReactView/Referer/MetricsExplorer/` +
 				`TimeContext/%7B%22absolute%22%3A%7B%22startTime%22%3A%222018-03-15T13%3A00%3A00Z%22%2C%22endTime%22%3A%222018-03-15T13%3A34%3A00Z%22%7D%7D/` +
 				`ChartDefinition/%7B%22v2charts%22%3A%5B%7B%22metrics%22%3A%5B%7B%22resourceMetadata%22%3A%7B%22id%22%3A%22%2Fsubscriptions%2F12345678-aaaa-bbbb-cccc-123456789abc%2FresourceGroups%2Fgrafanastaging%2Fproviders%2FMicrosoft.Compute%2FvirtualMachines%2Fgrafana%22%7D%2C` +
 				`%22name%22%3A%22Percentage%20CPU%22%2C%22aggregationType%22%3A4%2C%22namespace%22%3A%22Microsoft.Compute%2FvirtualMachines%22%2C%22metricVisualization%22%3A%7B%22displayName%22%3A%22Percentage%20CPU%22%2C%22resourceDisplayName%22%3A%22grafana%22%7D%7D%5D%7D%5D%7D`
-			actual, err := getQueryUrl(queries[0], "http://ds")
+			if tt.expectedPortalURL != nil {
+				expectedPortalURL = *tt.expectedPortalURL
+			}
+
+			actual, err := getQueryUrl(queries[0], "http://ds", "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana", "grafana")
 			require.NoError(t, err)
-			require.Equal(t, expected, actual)
+			require.Equal(t, expectedPortalURL, actual)
 		})
 	}
+}
+
+func TestCustomNamespace(t *testing.T) {
+	datasource := &AzureMonitorDatasource{}
+
+	t.Run("it should set the metricNamespace to a customNamespace value if customNamespace is present as a parameter", func(t *testing.T) {
+		q := []backend.DataQuery{
+			{
+				JSON: []byte(`{
+							"azureMonitor": {
+								"customNamespace": "custom/namespace"						
+							}
+						}`),
+			},
+		}
+
+		result, err := datasource.buildQueries(log.New("test"), q, types.DatasourceInfo{})
+		require.NoError(t, err)
+		expected := "custom/namespace"
+		require.Equal(t, expected, result[0].Params.Get("metricnamespace"))
+	})
 }
 
 func makeDates(startDate time.Time, count int, interval time.Duration) (times []time.Time) {
@@ -294,8 +395,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 			name:         "average aggregate time series response",
 			responseFile: "1-azure-monitor-response-avg.json",
 			mockQuery: &types.AzureMonitorQuery{
-				ResourceName: "grafana",
-				ResourceURI:  "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana",
+				URL: "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana/providers/microsoft.insights/metrics",
 				Params: url.Values{
 					"aggregation": {"Average"},
 				},
@@ -314,8 +414,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 			name:         "total aggregate time series response",
 			responseFile: "2-azure-monitor-response-total.json",
 			mockQuery: &types.AzureMonitorQuery{
-				ResourceName: "grafana",
-				ResourceURI:  "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana",
+				URL: "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana/providers/microsoft.insights/metrics",
 				Params: url.Values{
 					"aggregation": {"Total"},
 				},
@@ -334,8 +433,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 			name:         "maximum aggregate time series response",
 			responseFile: "3-azure-monitor-response-maximum.json",
 			mockQuery: &types.AzureMonitorQuery{
-				ResourceName: "grafana",
-				ResourceURI:  "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana",
+				URL: "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana/providers/microsoft.insights/metrics",
 				Params: url.Values{
 					"aggregation": {"Maximum"},
 				},
@@ -354,8 +452,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 			name:         "minimum aggregate time series response",
 			responseFile: "4-azure-monitor-response-minimum.json",
 			mockQuery: &types.AzureMonitorQuery{
-				ResourceName: "grafana",
-				ResourceURI:  "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana",
+				URL: "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana/providers/microsoft.insights/metrics",
 				Params: url.Values{
 					"aggregation": {"Minimum"},
 				},
@@ -374,8 +471,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 			name:         "count aggregate time series response",
 			responseFile: "5-azure-monitor-response-count.json",
 			mockQuery: &types.AzureMonitorQuery{
-				ResourceName: "grafana",
-				ResourceURI:  "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana",
+				URL: "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana/providers/microsoft.insights/metrics",
 				Params: url.Values{
 					"aggregation": {"Count"},
 				},
@@ -394,8 +490,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 			name:         "single dimension time series response",
 			responseFile: "6-azure-monitor-response-single-dimension.json",
 			mockQuery: &types.AzureMonitorQuery{
-				ResourceName: "grafana",
-				ResourceURI:  "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana",
+				URL: "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana/providers/microsoft.insights/metrics",
 				Params: url.Values{
 					"aggregation": {"Average"},
 				},
@@ -406,30 +501,32 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour),
 					).SetConfig(&data.FieldConfig{Links: []data.DataLink{averageLink}}),
 					data.NewField("Blob Count", data.Labels{"blobtype": "PageBlob"},
-						[]*float64{ptr.Float64(3), ptr.Float64(3), ptr.Float64(3), ptr.Float64(3), ptr.Float64(3), nil}).SetConfig(&data.FieldConfig{Unit: "short", Links: []data.DataLink{averageLink}})),
+						[]*float64{ptr.Float64(3), ptr.Float64(3), ptr.Float64(3), ptr.Float64(3), ptr.Float64(3), nil}).
+						SetConfig(&data.FieldConfig{Unit: "short", Links: []data.DataLink{averageLink}, DisplayName: "Blob Count grafana"})),
 
 				data.NewFrame("",
 					data.NewField("Time", nil,
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour),
 					).SetConfig(&data.FieldConfig{Links: []data.DataLink{averageLink}}),
 					data.NewField("Blob Count", data.Labels{"blobtype": "BlockBlob"},
-						[]*float64{ptr.Float64(1), ptr.Float64(1), ptr.Float64(1), ptr.Float64(1), ptr.Float64(1), nil}).SetConfig(&data.FieldConfig{Unit: "short", Links: []data.DataLink{averageLink}})),
+						[]*float64{ptr.Float64(1), ptr.Float64(1), ptr.Float64(1), ptr.Float64(1), ptr.Float64(1), nil}).
+						SetConfig(&data.FieldConfig{Unit: "short", Links: []data.DataLink{averageLink}, DisplayName: "Blob Count grafana"})),
 
 				data.NewFrame("",
 					data.NewField("Time", nil,
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour),
 					).SetConfig(&data.FieldConfig{Links: []data.DataLink{averageLink}}),
 					data.NewField("Blob Count", data.Labels{"blobtype": "Azure Data Lake Storage"},
-						[]*float64{ptr.Float64(0), ptr.Float64(0), ptr.Float64(0), ptr.Float64(0), ptr.Float64(0), nil}).SetConfig(&data.FieldConfig{Unit: "short", Links: []data.DataLink{averageLink}})),
+						[]*float64{ptr.Float64(0), ptr.Float64(0), ptr.Float64(0), ptr.Float64(0), ptr.Float64(0), nil}).
+						SetConfig(&data.FieldConfig{Unit: "short", Links: []data.DataLink{averageLink}, DisplayName: "Blob Count grafana"})),
 			},
 		},
 		{
 			name:         "with alias patterns in the query",
 			responseFile: "2-azure-monitor-response-total.json",
 			mockQuery: &types.AzureMonitorQuery{
-				ResourceName: "grafana",
-				ResourceURI:  "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana",
-				Alias:        "custom {{resourcegroup}} {{namespace}} {{resourceName}} {{metric}}",
+				URL:   "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana/providers/microsoft.insights/metrics",
+				Alias: "custom {{resourcegroup}} {{namespace}} {{resourceName}} {{metric}}",
 				Params: url.Values{
 					"aggregation": {"Total"},
 				},
@@ -448,9 +545,8 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 			name:         "single dimension with alias",
 			responseFile: "6-azure-monitor-response-single-dimension.json",
 			mockQuery: &types.AzureMonitorQuery{
-				ResourceName: "grafana",
-				ResourceURI:  "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana",
-				Alias:        "{{dimensionname}}={{DimensionValue}}",
+				URL:   "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana/providers/microsoft.insights/metrics",
+				Alias: "{{dimensionname}}={{DimensionValue}}",
 				Params: url.Values{
 					"aggregation": {"Average"},
 				},
@@ -484,9 +580,8 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 			name:         "multiple dimension time series response with label alias",
 			responseFile: "7-azure-monitor-response-multi-dimension.json",
 			mockQuery: &types.AzureMonitorQuery{
-				ResourceName: "grafana",
-				ResourceURI:  "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana",
-				Alias:        "{{resourcegroup}} {Blob Type={{blobtype}}, Tier={{Tier}}}",
+				URL:   "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana/providers/microsoft.insights/metrics",
+				Alias: "{{resourcegroup}} {Blob Type={{blobtype}}, Tier={{Tier}}}",
 				Params: url.Values{
 					"aggregation": {"Average"},
 				},
@@ -521,9 +616,8 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 			name:         "unspecified unit with alias should not panic",
 			responseFile: "8-azure-monitor-response-unspecified-unit.json",
 			mockQuery: &types.AzureMonitorQuery{
-				ResourceName: "grafana",
-				ResourceURI:  "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana",
-				Alias:        "custom",
+				URL:   "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana/providers/microsoft.insights/metrics",
+				Alias: "custom",
 				Params: url.Values{
 					"aggregation": {"Average"},
 				},
@@ -542,9 +636,8 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 			name:         "with legacy azure monitor query properties and without a resource uri",
 			responseFile: "2-azure-monitor-response-total.json",
 			mockQuery: &types.AzureMonitorQuery{
-				ResourceName: "grafana",
-				ResourceURI:  "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana",
-				Alias:        "custom {{resourcegroup}} {{namespace}} {{resourceName}} {{metric}}",
+				URL:   "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana/providers/microsoft.insights/metrics",
+				Alias: "custom {{resourcegroup}} {{namespace}} {{resourceName}} {{metric}}",
 				Params: url.Values{
 					"aggregation": {"Total"},
 				},
@@ -563,9 +656,8 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 			name:         "with legacy azure monitor query properties and with a resource uri it should use the resource uri",
 			responseFile: "2-azure-monitor-response-total.json",
 			mockQuery: &types.AzureMonitorQuery{
-				ResourceName: "grafana",
-				ResourceURI:  "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana",
-				Alias:        "custom {{resourcegroup}} {{namespace}} {{resourceName}} {{metric}}",
+				URL:   "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana/providers/microsoft.insights/metrics",
+				Alias: "custom {{resourcegroup}} {{namespace}} {{resourceName}} {{metric}}",
 				Params: url.Values{
 					"aggregation": {"Total"},
 				},
@@ -578,6 +670,26 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 					data.NewField("Percentage CPU", nil, []*float64{
 						ptr.Float64(8.26), ptr.Float64(8.7), ptr.Float64(14.82), ptr.Float64(10.07), ptr.Float64(8.52),
 					}).SetConfig(&data.FieldConfig{Unit: "percent", DisplayName: "custom grafanastaging Microsoft.Compute/virtualMachines grafana Percentage CPU", Links: []data.DataLink{totalLink}})),
+			},
+		},
+		{
+			name:         "multiple time series response",
+			responseFile: "9-azure-monitor-response-multi.json",
+			mockQuery: &types.AzureMonitorQuery{
+				URL: "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/providers/microsoft.insights/metrics",
+				Params: url.Values{
+					"aggregation": {"Average"},
+				},
+			},
+			expectedFrames: data.Frames{
+				data.NewFrame("",
+					data.NewField("Time", nil,
+						makeDates(time.Date(2019, 2, 8, 10, 13, 0, 0, time.UTC), 5, time.Minute),
+					).SetConfig(&data.FieldConfig{Links: []data.DataLink{averageLink}}),
+					data.NewField("Percentage CPU", data.Labels{"microsoft.resourceid": "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana"}, []*float64{
+						ptr.Float64(2.0875), ptr.Float64(2.1525), ptr.Float64(2.155), ptr.Float64(3.6925), ptr.Float64(2.44),
+					}).SetConfig(&data.FieldConfig{Unit: "percent", Links: []data.DataLink{averageLink}, DisplayName: "Percentage CPU grafana"}),
+				),
 			},
 		},
 	}
@@ -662,7 +774,6 @@ func loadTestFile(t *testing.T, name string) types.AzureMonitorResponse {
 
 func TestAzureMonitorCreateRequest(t *testing.T) {
 	ctx := context.Background()
-	dsInfo := types.DatasourceInfo{}
 	url := "http://ds/"
 
 	tests := []struct {
@@ -684,7 +795,7 @@ func TestAzureMonitorCreateRequest(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ds := AzureMonitorDatasource{}
-			req, err := ds.createRequest(ctx, dsInfo, url)
+			req, err := ds.createRequest(ctx, log.New("test"), url)
 			tt.Err(t, err)
 			if req.URL.String() != tt.expectedURL {
 				t.Errorf("Expecting %s, got %s", tt.expectedURL, req.URL.String())

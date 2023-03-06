@@ -4,7 +4,7 @@ import React from 'react';
 import { dateTime, LoadingState, EventBusSrv } from '@grafana/data';
 
 import { Props, TextPanel } from './TextPanel';
-import { TextMode } from './models.gen';
+import { TextMode } from './panelcfg.gen';
 
 const replaceVariablesMock = jest.fn();
 const defaultProps: Props = {

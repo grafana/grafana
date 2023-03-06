@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC, useCallback } from 'react';
+import React, { useCallback } from 'react';
 
 import { FieldType, GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
 import { InlineField, InlineFieldRow, RadioButtonGroup, Select, useStyles2 } from '@grafana/ui';
@@ -18,10 +18,9 @@ const scalarOptions = [
   { label: 'Clamped', value: ScalarDimensionMode.Clamped, description: 'Use field values, clamped to max and min' },
 ];
 
-export const ScalarDimensionEditor: FC<StandardEditorProps<ScalarDimensionConfig, ScalarDimensionOptions, any>> = (
-  props
-) => {
-  const { value, context, onChange, item } = props;
+type Props = StandardEditorProps<ScalarDimensionConfig, ScalarDimensionOptions, any>;
+
+export const ScalarDimensionEditor = ({ value, context, onChange, item }: Props) => {
   const { settings } = item;
 
   const DEFAULT_VALUE = 0;
@@ -54,7 +53,7 @@ export const ScalarDimensionEditor: FC<StandardEditorProps<ScalarDimensionConfig
   );
 
   const onModeChange = useCallback(
-    (mode) => {
+    (mode: ScalarDimensionMode) => {
       onChange({
         ...value,
         mode,

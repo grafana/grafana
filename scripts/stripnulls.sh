@@ -7,7 +7,7 @@
 SED=$(command -v gsed)
 SED=${SED:-"sed"}
 
-FILES=$(grep -rl '"schemaVersion": 3[3456]' devenv)
+FILES=$(grep -rl '"schemaVersion": 3[3456789]' devenv)
 set -e
 set -x
 for DASH in ${FILES}; do echo "${DASH}"; grep -v 'null,$' "${DASH}" > "${DASH}-nulless"; mv "${DASH}-nulless" "${DASH}"; done

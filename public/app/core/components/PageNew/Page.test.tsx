@@ -1,12 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { Provider } from 'react-redux';
+import { TestProvider } from 'test/helpers/TestProvider';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { GrafanaContext } from 'app/core/context/GrafanaContext';
-import { configureStore } from 'app/store/configureStore';
+import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 
 import { PageProps } from '../Page/types';
 
@@ -19,9 +18,12 @@ const pageNav: NavModelItem = {
     { text: 'pageNav child2', url: '2' },
   ],
 };
-
 const setup = (props: Partial<PageProps>) => {
   config.bootData.navTree = [
+    {
+      id: HOME_NAV_ID,
+      text: 'Home',
+    },
     {
       text: 'Section name',
       id: 'section',
@@ -34,16 +36,13 @@ const setup = (props: Partial<PageProps>) => {
   ];
 
   const context = getGrafanaContextMock();
-  const store = configureStore();
 
   const renderResult = render(
-    <Provider store={store}>
-      <GrafanaContext.Provider value={context}>
-        <Page {...props}>
-          <div data-testid="page-children">Children</div>
-        </Page>
-      </GrafanaContext.Provider>
-    </Provider>
+    <TestProvider grafanaContext={context}>
+      <Page {...props}>
+        <div data-testid="page-children">Children</div>
+      </Page>
+    </TestProvider>
   );
 
   return { renderResult, context };
@@ -69,10 +68,10 @@ describe('Render', () => {
   it('should render section nav model based on navId', async () => {
     setup({ navId: 'child1' });
 
-    expect(screen.getByRole('heading', { name: 'Section name' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Child1' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Tab Section name' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Tab Child1' })).toBeInTheDocument();
-    expect(screen.getAllByRole('tab').length).toBe(2);
+    expect(screen.getByRole('tab', { name: 'Tab Child1' })).toBeInTheDocument();
+    expect(screen.getAllByRole('tab').length).toBe(3);
   });
 
   it('should update chrome with section and pageNav', async () => {
@@ -84,9 +83,20 @@ describe('Render', () => {
   it('should render section nav model based on navId and item page nav', async () => {
     setup({ navId: 'child1', pageNav });
 
-    expect(screen.getByRole('heading', { name: 'Section name' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Tab Section name' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'pageNav title' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Tab Child1' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Tab pageNav child1' })).toBeInTheDocument();
+  });
+
+  it('should update document title', async () => {
+    setup({ navId: 'child1', pageNav });
+    expect(document.title).toBe('pageNav title - Child1 - Section name - Grafana');
+  });
+
+  it('should not include hideFromBreadcrumb nodes in title', async () => {
+    pageNav.children![0].hideFromBreadcrumbs = true;
+    setup({ navId: 'child1', pageNav });
+    expect(document.title).toBe('pageNav title - Child1 - Section name - Grafana');
   });
 });

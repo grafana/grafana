@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
 import { connect, MapStateToProps } from 'react-redux';
 
-import { AnnotationQuery } from '@grafana/data';
+import { AnnotationQuery, DataQuery } from '@grafana/data';
 
 import { StoreState } from '../../../../types';
 import { getSubMenuVariables, getVariablesState } from '../../../variables/state/selectors';
@@ -29,7 +29,7 @@ interface DispatchProps {}
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
 class SubMenuUnConnected extends PureComponent<Props> {
-  onAnnotationStateChanged = (updatedAnnotation: any) => {
+  onAnnotationStateChanged = (updatedAnnotation: AnnotationQuery<DataQuery>) => {
     // we're mutating dashboard state directly here until annotations are in Redux.
     for (let index = 0; index < this.props.dashboard.annotations.list.length; index++) {
       const annotation = this.props.dashboard.annotations.list[index];

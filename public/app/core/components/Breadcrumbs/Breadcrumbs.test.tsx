@@ -5,7 +5,7 @@ import { Breadcrumbs } from './Breadcrumbs';
 import { Breadcrumb } from './types';
 
 const mockBreadcrumbs: Breadcrumb[] = [
-  { text: 'Home', href: '/home', icon: 'home-alt' },
+  { text: 'Home', href: '/home' },
   { text: 'First', href: '/first' },
   { text: 'Second', href: '/second' },
 ];

@@ -1,7 +1,8 @@
 import React from 'react';
 
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
-import { DataSourceHttpSettings } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { DataSourceHttpSettings, SecureSocksProxySettings } from '@grafana/ui';
 
 import { OpenTsdbOptions } from '../types';
 
@@ -17,6 +18,9 @@ export const ConfigEditor = (props: DataSourcePluginOptionsEditorProps<OpenTsdbO
         dataSourceConfig={options}
         onChange={onOptionsChange}
       />
+      {config.featureToggles.secureSocksDatasourceProxy && (
+        <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+      )}
       <OpenTsdbDetails value={options} onChange={onOptionsChange} />
     </>
   );

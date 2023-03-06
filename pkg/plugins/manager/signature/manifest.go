@@ -12,6 +12,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/gobwas/glob"
@@ -22,8 +23,8 @@ import (
 	// nolint:staticcheck
 	"golang.org/x/crypto/openpgp/clearsign"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -53,6 +54,8 @@ N1c5v9v/4h6qeA==
 =DNbR
 -----END PGP PUBLIC KEY BLOCK-----
 `
+
+var runningWindows = runtime.GOOS == "windows"
 
 // pluginManifest holds details for the file manifest
 type pluginManifest struct {
@@ -111,12 +114,7 @@ func Calculate(mlog log.Logger, plugin *plugins.Plugin) (plugins.Signature, erro
 		}, err
 	}
 
-	manifestPath := filepath.Join(plugin.PluginDir, "MANIFEST.txt")
-
-	// nolint:gosec
-	// We can ignore the gosec G304 warning on this one because `manifestPath` is based
-	// on plugin the folder structure on disk and not user input.
-	byteValue, err := os.ReadFile(manifestPath)
+	byteValue := plugin.Manifest()
 	if err != nil || len(byteValue) < 10 {
 		mlog.Debug("Plugin is unsigned", "id", plugin.ID)
 		return plugins.Signature{
@@ -127,6 +125,12 @@ func Calculate(mlog log.Logger, plugin *plugins.Plugin) (plugins.Signature, erro
 	manifest, err := readPluginManifest(byteValue)
 	if err != nil {
 		mlog.Debug("Plugin signature invalid", "id", plugin.ID, "err", err)
+		return plugins.Signature{
+			Status: plugins.SignatureInvalid,
+		}, nil
+	}
+
+	if !manifest.isV2() {
 		return plugins.Signature{
 			Status: plugins.SignatureInvalid,
 		}, nil
@@ -167,21 +171,19 @@ func Calculate(mlog log.Logger, plugin *plugins.Plugin) (plugins.Signature, erro
 		manifestFiles[p] = struct{}{}
 	}
 
-	if manifest.isV2() {
-		// Track files missing from the manifest
-		var unsignedFiles []string
-		for _, f := range pluginFiles {
-			if _, exists := manifestFiles[f]; !exists {
-				unsignedFiles = append(unsignedFiles, f)
-			}
+	// Track files missing from the manifest
+	var unsignedFiles []string
+	for _, f := range pluginFiles {
+		if _, exists := manifestFiles[f]; !exists {
+			unsignedFiles = append(unsignedFiles, f)
 		}
+	}
 
-		if len(unsignedFiles) > 0 {
-			mlog.Warn("The following files were not included in the signature", "plugin", plugin.ID, "files", unsignedFiles)
-			return plugins.Signature{
-				Status: plugins.SignatureModified,
-			}, nil
-		}
+	if len(unsignedFiles) > 0 {
+		mlog.Warn("The following files were not included in the signature", "plugin", plugin.ID, "files", unsignedFiles)
+		return plugins.Signature{
+			Status: plugins.SignatureModified,
+		}, nil
 	}
 
 	mlog.Debug("Plugin signature valid", "id", plugin.ID)
@@ -198,8 +200,12 @@ func verifyHash(mlog log.Logger, pluginID string, path string, hash string) erro
 	// on the path provided in a manifest file for a plugin and not user input.
 	f, err := os.Open(path)
 	if err != nil {
+		if os.IsPermission(err) {
+			mlog.Warn("Could not open plugin file due to lack of permissions", "plugin", pluginID, "path", path)
+			return errors.New("permission denied when attempting to read plugin file")
+		}
 		mlog.Warn("Plugin file listed in the manifest was not found", "plugin", pluginID, "path", path)
-		return fmt.Errorf("plugin file listed in the manifest was not found")
+		return errors.New("plugin file listed in the manifest was not found")
 	}
 	defer func() {
 		if err := f.Close(); err != nil {
@@ -209,12 +215,12 @@ func verifyHash(mlog log.Logger, pluginID string, path string, hash string) erro
 
 	h := sha256.New()
 	if _, err := io.Copy(h, f); err != nil {
-		return fmt.Errorf("could not calculate plugin file checksum")
+		return errors.New("could not calculate plugin file checksum")
 	}
 	sum := hex.EncodeToString(h.Sum(nil))
 	if sum != hash {
 		mlog.Warn("Plugin file checksum does not match signature checksum", "plugin", pluginID, "path", path)
-		return fmt.Errorf("plugin file checksum does not match signature checksum")
+		return errors.New("plugin file checksum does not match signature checksum")
 	}
 
 	return nil
@@ -257,6 +263,11 @@ func pluginFilesRequiringVerification(plugin *plugins.Plugin) ([]string, error) 
 
 		// skip directories and MANIFEST.txt
 		if info.IsDir() || info.Name() == "MANIFEST.txt" {
+			return nil
+		}
+
+		// Ignoring unsigned Chromium debug.log so it doesn't invalidate the signature for Renderer plugin running on Windows
+		if runningWindows && plugin.IsRenderer() && strings.HasSuffix(path, filepath.Join("chrome-win", "debug.log")) {
 			return nil
 		}
 

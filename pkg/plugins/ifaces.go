@@ -2,14 +2,13 @@ package plugins
 
 import (
 	"context"
-	"io"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 )
 
-// Store is the storage for plugins.
+// Store is the publicly accessible storage for plugins.
 type Store interface {
 	// Plugin finds a plugin by its ID.
 	Plugin(ctx context.Context, pluginID string) (PluginDTO, bool)
@@ -17,11 +16,22 @@ type Store interface {
 	Plugins(ctx context.Context, pluginTypes ...Type) []PluginDTO
 }
 
-type Manager interface {
-	// Add adds a plugin to the store.
-	Add(ctx context.Context, pluginID, version string) error
-	// Remove removes a plugin from the store.
+type Installer interface {
+	// Add adds a new plugin.
+	Add(ctx context.Context, pluginID, version string, opts CompatOpts) error
+	// Remove removes an existing plugin.
 	Remove(ctx context.Context, pluginID string) error
+}
+
+type PluginSource struct {
+	Class Class
+	Paths []string
+}
+
+type CompatOpts struct {
+	GrafanaVersion string
+	OS             string
+	Arch           string
 }
 
 type UpdateInfo struct {
@@ -44,12 +54,12 @@ type BackendFactoryProvider interface {
 
 type RendererManager interface {
 	// Renderer returns a renderer plugin.
-	Renderer() *Plugin
+	Renderer(ctx context.Context) *Plugin
 }
 
 type SecretsPluginManager interface {
 	// SecretsManager returns a secretsmanager plugin
-	SecretsManager() *Plugin
+	SecretsManager(ctx context.Context) *Plugin
 }
 
 type StaticRouteResolver interface {
@@ -65,32 +75,32 @@ type PluginLoaderAuthorizer interface {
 	CanLoadPlugin(plugin *Plugin) bool
 }
 
-// ListPluginDashboardFilesArgs list plugin dashboard files argument model.
-type ListPluginDashboardFilesArgs struct {
-	PluginID string
+type Licensing interface {
+	Environment() []string
+
+	Edition() string
+
+	Path() string
 }
 
-// GetPluginDashboardFilesArgs list plugin dashboard files result model.
-type ListPluginDashboardFilesResult struct {
-	FileReferences []string
+// RoleRegistry handles the plugin RBAC roles and their assignments
+type RoleRegistry interface {
+	DeclarePluginRoles(ctx context.Context, ID, name string, registrations []RoleRegistration) error
 }
 
-// GetPluginDashboardFileContentsArgs get plugin dashboard file content argument model.
-type GetPluginDashboardFileContentsArgs struct {
-	PluginID      string
-	FileReference string
+// ClientMiddleware is an interface representing the ability to create a middleware
+// that implements the Client interface.
+type ClientMiddleware interface {
+	// CreateClientMiddleware creates a new client middleware.
+	CreateClientMiddleware(next Client) Client
 }
 
-// GetPluginDashboardFileContentsResult get plugin dashboard file content result model.
-type GetPluginDashboardFileContentsResult struct {
-	Content io.ReadCloser
-}
+// The ClientMiddlewareFunc type is an adapter to allow the use of ordinary
+// functions as ClientMiddleware's. If f is a function with the appropriate
+// signature, ClientMiddlewareFunc(f) is a ClientMiddleware that calls f.
+type ClientMiddlewareFunc func(next Client) Client
 
-// DashboardFileStore is the interface for plugin dashboard file storage.
-type DashboardFileStore interface {
-	// ListPluginDashboardFiles lists plugin dashboard files.
-	ListPluginDashboardFiles(ctx context.Context, args *ListPluginDashboardFilesArgs) (*ListPluginDashboardFilesResult, error)
-
-	// GetPluginDashboardFileContents gets the referenced plugin dashboard file content.
-	GetPluginDashboardFileContents(ctx context.Context, args *GetPluginDashboardFileContentsArgs) (*GetPluginDashboardFileContentsResult, error)
+// CreateClientMiddleware implements the ClientMiddleware interface.
+func (fn ClientMiddlewareFunc) CreateClientMiddleware(next Client) Client {
+	return fn(next)
 }

@@ -25,18 +25,20 @@ export const ServiceAccountTokensTable = ({ tokens, timeZone, tokenActionsDisabl
           <th>Created</th>
           <th>Last used at</th>
           <th />
+          <th />
         </tr>
       </thead>
       <tbody>
         {tokens.map((key) => {
           return (
-            <tr key={key.id} className={styles.tableRow(key.hasExpired)}>
+            <tr key={key.id} className={styles.tableRow(key.hasExpired || key.isRevoked)}>
               <td>{key.name}</td>
               <td>
                 <TokenExpiration timeZone={timeZone} token={key} />
               </td>
               <td>{formatDate(timeZone, key.created)}</td>
               <td>{formatLastUsedAtDate(timeZone, key.lastUsedAt)}</td>
+              <td className="width-1 text-center">{key.isRevoked && <TokenRevoked />}</td>
               <td>
                 <DeleteButton
                   aria-label={`Delete service account token ${key.name}`}
@@ -72,6 +74,20 @@ function formatSecondsLeftUntilExpiration(secondsUntilExpiration: number): strin
   const daysFormat = days > 1 ? `${days} days` : `${days} day`;
   return `Expires in ${daysFormat}`;
 }
+
+const TokenRevoked = () => {
+  const styles = useStyles2(getStyles);
+  return (
+    <span className={styles.hasExpired}>
+      Revoked
+      <span className={styles.tooltipContainer}>
+        <Tooltip content="This token has been publicly exposed. Please rotate this token">
+          <Icon name="exclamation-triangle" className={styles.toolTipIcon} />
+        </Tooltip>
+      </span>
+    </span>
+  );
+};
 
 interface TokenExpirationProps {
   timeZone: TimeZone;

@@ -96,7 +96,7 @@ export class MetricTankMetaInspector extends PureComponent<Props, State> {
     const seriesMetas: Record<string, MetricTankSeriesMeta> = {};
 
     for (const series of data) {
-      if (series.meta && series.meta.custom) {
+      if (series?.meta?.custom?.seriesMetaList) {
         for (const metaItem of series.meta.custom.seriesMetaList as MetricTankSeriesMeta[]) {
           // key is to dedupe as many series will have identitical meta
           const key = `${JSON.stringify(metaItem)}`;

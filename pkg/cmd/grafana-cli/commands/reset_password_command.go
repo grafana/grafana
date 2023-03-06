@@ -7,18 +7,19 @@ import (
 	"os"
 
 	"github.com/fatih/color"
+
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/runner"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-const AdminUserId = 1
+const DefaultAdminUserId = 1
 
 func resetPasswordCommand(c utils.CommandLine, runner runner.Runner) error {
 	newPassword := ""
+	adminId := int64(c.Int("user-id"))
 
 	if c.Bool("password-from-stdin") {
 		logger.Infof("New Password: ")
@@ -35,16 +36,27 @@ func resetPasswordCommand(c utils.CommandLine, runner runner.Runner) error {
 		newPassword = c.Args().First()
 	}
 
-	password := models.Password(newPassword)
+	err := resetPassword(adminId, newPassword, runner.UserService)
+	if err == nil {
+		logger.Infof("\n")
+		logger.Infof("Admin password changed successfully %s", color.GreenString("✔"))
+	}
+	return err
+}
+
+func resetPassword(adminId int64, newPassword string, userSvc user.Service) error {
+	password := user.Password(newPassword)
 	if password.IsWeak() {
 		return fmt.Errorf("new password is too short")
 	}
 
-	userQuery := user.GetUserByIDQuery{ID: AdminUserId}
-
-	usr, err := runner.UserService.GetByID(context.Background(), &userQuery)
+	userQuery := user.GetUserByIDQuery{ID: adminId}
+	usr, err := userSvc.GetByID(context.Background(), &userQuery)
 	if err != nil {
 		return fmt.Errorf("could not read user from database. Error: %v", err)
+	}
+	if !usr.IsAdmin {
+		return ErrMustBeAdmin
 	}
 
 	passwordHashed, err := util.EncodePassword(newPassword, usr.Salt)
@@ -53,16 +65,15 @@ func resetPasswordCommand(c utils.CommandLine, runner runner.Runner) error {
 	}
 
 	cmd := user.ChangeUserPasswordCommand{
-		UserID:      AdminUserId,
+		UserID:      adminId,
 		NewPassword: passwordHashed,
 	}
 
-	if err := runner.UserService.ChangePassword(context.Background(), &cmd); err != nil {
+	if err := userSvc.ChangePassword(context.Background(), &cmd); err != nil {
 		return fmt.Errorf("failed to update user password: %w", err)
 	}
 
-	logger.Infof("\n")
-	logger.Infof("Admin password changed successfully %s", color.GreenString("✔"))
-
 	return nil
 }
+
+var ErrMustBeAdmin = fmt.Errorf("reset-admin-password can only be used to reset an admin user account")

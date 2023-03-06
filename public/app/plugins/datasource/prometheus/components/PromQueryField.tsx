@@ -1,16 +1,22 @@
+import { cx } from '@emotion/css';
 import { LanguageMap, languages as prismLanguages } from 'prismjs';
 import React, { ReactNode } from 'react';
 import { Plugin } from 'slate';
+import { Editor } from 'slate-react';
 
-import { QueryEditorProps, QueryHint, isDataFrame, toLegacyResponseData, TimeRange, CoreApp } from '@grafana/data';
+import { CoreApp, isDataFrame, QueryEditorProps, QueryHint, TimeRange, toLegacyResponseData } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime/src';
 import {
-  SlatePrism,
-  TypeaheadInput,
-  TypeaheadOutput,
   BracesPlugin,
   DOMUtil,
-  SuggestionsState,
   Icon,
+  SlatePrism,
+  SuggestionsState,
+  TypeaheadInput,
+  TypeaheadOutput,
+  Themeable2,
+  withTheme2,
+  clearButtonStyles,
 } from '@grafana/ui';
 import { LocalStorageValueProvider } from 'app/core/components/LocalStorageValueProvider';
 import {
@@ -21,7 +27,7 @@ import {
 
 import { PrometheusDatasource } from '../datasource';
 import { roundMsToMin } from '../language_utils';
-import { PromQuery, PromOptions } from '../types';
+import { PromOptions, PromQuery } from '../types';
 
 import { PrometheusMetricsBrowser } from './PrometheusMetricsBrowser';
 import { MonacoQueryFieldWrapper } from './monaco-query-field/MonacoQueryFieldWrapper';
@@ -72,7 +78,7 @@ export function willApplySuggestion(suggestion: string, { typeaheadContext, type
   return suggestion;
 }
 
-interface PromQueryFieldProps extends QueryEditorProps<PrometheusDatasource, PromQuery, PromOptions> {
+interface PromQueryFieldProps extends QueryEditorProps<PrometheusDatasource, PromQuery, PromOptions>, Themeable2 {
   ExtraFieldElement?: ReactNode;
   'data-testid'?: string;
 }
@@ -84,7 +90,7 @@ interface PromQueryFieldState {
 }
 
 class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryFieldState> {
-  plugins: Plugin[];
+  plugins: Array<Plugin<Editor>>;
   declare languageProviderInitializationPromise: CancelablePromise<any>;
 
   constructor(props: PromQueryFieldProps, context: React.Context<any>) {
@@ -219,6 +225,11 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
   onClickChooserButton = () => {
     this.setState((state) => ({ labelBrowserVisible: !state.labelBrowserVisible }));
+
+    reportInteraction('user_grafana_prometheus_metrics_browser_clicked', {
+      editorMode: this.state.labelBrowserVisible ? 'metricViewClosed' : 'metricViewOpen',
+      app: this.props?.app ?? '',
+    });
   };
 
   onClickHintFix = () => {
@@ -270,6 +281,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
       query,
       ExtraFieldElement,
       history = [],
+      theme,
     } = this.props;
 
     const { labelBrowserVisible, syntaxLoaded, hint } = this.state;
@@ -290,6 +302,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
                   className="gf-form-label query-keyword pointer"
                   onClick={this.onClickChooserButton}
                   disabled={buttonDisabled}
+                  type="button"
                 >
                   {chooserText}
                   <Icon name={labelBrowserVisible ? 'angle-down' : 'angle-right'} />
@@ -325,9 +338,13 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
                   <div className="prom-query-field-info text-warning">
                     {hint.label}{' '}
                     {hint.fix ? (
-                      <a className="text-link muted" onClick={this.onClickHintFix}>
+                      <button
+                        type="button"
+                        className={cx(clearButtonStyles(theme), 'text-link', 'muted')}
+                        onClick={this.onClickHintFix}
+                      >
                         {hint.fix.label}
-                      </a>
+                      </button>
                     ) : null}
                   </div>
                 </div>
@@ -340,4 +357,4 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
   }
 }
 
-export default PromQueryField;
+export default withTheme2(PromQueryField);

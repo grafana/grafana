@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useMemo, useState } from 'react';
-import { useFormContext, FieldErrors } from 'react-hook-form';
+import { useFormContext, FieldErrors, FieldValues } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Alert, Button, Field, InputControl, Select, useStyles2 } from '@grafana/ui';
@@ -12,7 +12,7 @@ import { ChannelValues, CommonSettingsComponentType } from '../../../types/recei
 import { ChannelOptions } from './ChannelOptions';
 import { CollapsibleSection } from './CollapsibleSection';
 
-interface Props<R> {
+interface Props<R extends FieldValues> {
   defaultValues: R;
   pathPrefix: string;
   notifiers: NotifierDTO[];
@@ -96,7 +96,7 @@ export function ChannelSubForm<R extends ChannelValues>({
     <div className={styles.wrapper} data-testid="item-container">
       <div className={styles.topRow}>
         <div>
-          <Field label="Contact point type" htmlFor={contactPointTypeInputId} data-testid={`${pathPrefix}type`}>
+          <Field label="Integration" htmlFor={contactPointTypeInputId} data-testid={`${pathPrefix}type`}>
             <InputControl
               name={name('type')}
               defaultValue={defaultValues.type}

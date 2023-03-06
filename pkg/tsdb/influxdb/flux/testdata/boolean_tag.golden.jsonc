@@ -1,6 +1,11 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
-//  Frame[0] {}
+//  Frame[0] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ]
+//  }
 //  Name: ingress
 //  Dimensions: 2 Fields by 1 Rows
 //  +-------------------------------+---------------------------------+
@@ -53,11 +58,17 @@
 //  
 //  🌟 This was machine generated.  Do not edit. 🌟
 {
+  "status": 200,
   "frames": [
     {
       "schema": {
         "name": "ingress",
-        "meta": {},
+        "meta": {
+          "typeVersion": [
+            0,
+            0
+          ]
+        },
         "fields": [
           {
             "name": "Time",

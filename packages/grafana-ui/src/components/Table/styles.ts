@@ -2,24 +2,21 @@ import { css, CSSObject } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { getScrollbarWidth } from '../../utils';
-
 export const getTableStyles = (theme: GrafanaTheme2) => {
-  const { colors } = theme;
-  const headerBg = theme.colors.background.secondary;
   const borderColor = theme.colors.border.weak;
   const resizerColor = theme.colors.primary.border;
   const cellPadding = 6;
   const lineHeight = theme.typography.body.lineHeight;
   const bodyFontSize = 14;
   const cellHeight = cellPadding * 2 + bodyFontSize * lineHeight;
+  const rowHeight = cellHeight + 2;
   const rowHoverBg = theme.colors.emphasize(theme.colors.background.primary, 0.03);
-  const lastChildExtraPadding = Math.max(getScrollbarWidth(), cellPadding);
 
   const buildCellContainerStyle = (color?: string, background?: string, overflowOnHover?: boolean) => {
     const cellActionsOverflow: CSSObject = {
       margin: theme.spacing(0, -0.5, 0, 0.5),
     };
+
     const cellActionsNoOverflow: CSSObject = {
       position: 'absolute',
       top: 0,
@@ -39,7 +36,8 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       label: ${overflowOnHover ? 'cellContainerOverflow' : 'cellContainerNoOverflow'};
       padding: ${cellPadding}px;
       width: 100%;
-      height: 100%;
+      // Cell height need to account for row border
+      height: ${rowHeight - 1}px;
       display: flex;
       align-items: center;
       border-right: 1px solid ${borderColor};
@@ -50,7 +48,6 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
 
       &:last-child:not(:only-child) {
         border-right: none;
-        padding-right: ${lastChildExtraPadding}px;
       }
 
       &:hover {
@@ -98,9 +95,8 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
     cellHeight,
     buildCellContainerStyle,
     cellPadding,
-    lastChildExtraPadding,
     cellHeightInner: bodyFontSize * lineHeight,
-    rowHeight: cellHeight + 2,
+    rowHeight,
     table: css`
       height: 100%;
       width: 100%;
@@ -110,27 +106,29 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
     `,
     thead: css`
       label: thead;
-      height: ${cellHeight}px;
+      height: ${rowHeight}px;
       overflow-y: auto;
       overflow-x: hidden;
-      background: ${headerBg};
       position: relative;
     `,
     tfoot: css`
       label: tfoot;
-      height: ${cellHeight}px;
+      height: ${rowHeight}px;
+      border-top: 1px solid ${borderColor};
       overflow-y: auto;
       overflow-x: hidden;
-      background: ${headerBg};
       position: relative;
+    `,
+    headerRow: css`
+      label: row;
+      border-bottom: 1px solid ${borderColor};
     `,
     headerCell: css`
       padding: ${cellPadding}px;
       overflow: hidden;
       white-space: nowrap;
-      color: ${colors.primary.text};
-      border-right: 1px solid ${theme.colors.border.weak};
       display: flex;
+      font-weight: ${theme.typography.fontWeightMedium};
 
       &:last-child {
         border-right: none;
@@ -144,8 +142,15 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      font-weight: ${theme.typography.fontWeightMedium};
       display: flex;
+      align-items: center;
       margin-right: ${theme.spacing(0.5)};
+
+      &:hover {
+        text-decoration: underline;
+        color: ${theme.colors.text.link};
+      }
     `,
     cellContainer: buildCellContainerStyle(undefined, undefined, true),
     cellContainerNoOverflow: buildCellContainerStyle(undefined, undefined, false),
@@ -155,12 +160,28 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       user-select: text;
       white-space: nowrap;
     `,
+    sortIcon: css`
+      margin-left: ${theme.spacing(0.5)};
+    `,
     cellLink: css`
       cursor: pointer;
       overflow: hidden;
       text-overflow: ellipsis;
       user-select: text;
       white-space: nowrap;
+      color: ${theme.colors.text.link};
+      font-weight: ${theme.typography.fontWeightMedium};
+      &:hover {
+        text-decoration: underline;
+      }
+    `,
+    cellLinkForColoredCell: css`
+      cursor: pointer;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      user-select: text;
+      white-space: nowrap;
+      font-weight: ${theme.typography.fontWeightMedium};
       text-decoration: underline;
     `,
     imageCellLink: css`
@@ -169,17 +190,17 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       height: 100%;
     `,
     headerFilter: css`
+      background: transparent;
+      border: none;
       label: headerFilter;
-      cursor: pointer;
+      padding: 0;
     `,
     paginationWrapper: css`
       display: flex;
-      background: ${headerBg};
       height: ${cellHeight}px;
       justify-content: center;
       align-items: center;
       width: 100%;
-      border-top: 1px solid ${theme.colors.border.weak};
       li {
         margin-bottom: 0;
       }
@@ -255,6 +276,13 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       height: 100%;
       justify-content: center;
       width: 100%;
+    `,
+    expanderCell: css`
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      height: ${rowHeight}px;
+      cursor: pointer;
     `,
   };
 };

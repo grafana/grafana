@@ -292,7 +292,7 @@
         "type": "interval"
       },
       {
-        "datasource": "InfluxDB",
+        "datasource": "gdev-influxdb1-influxql",
         "filters": [],
         "hide": 0,
         "label": null,

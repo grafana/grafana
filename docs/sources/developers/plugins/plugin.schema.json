@@ -79,6 +79,7 @@
           },
           "role": {
             "type": "string",
+            "description": "The minimum role a user must have to see this page in the navigation menu.",
             "enum": ["Admin", "Editor", "Viewer"]
           },
           "path": {
@@ -87,7 +88,7 @@
           },
           "addToNav": {
             "type": "boolean",
-            "description": "Add the include to the side menu."
+            "description": "Add the include to the navigation menu."
           },
           "defaultNav": {
             "type": "boolean",
@@ -146,7 +147,7 @@
         "grafanaDependency": {
           "type": "string",
           "description": "Required Grafana version for this plugin. Validated using https://github.com/npm/node-semver.",
-          "pattern": "^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)(\\.[0-9x\\*])?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x]+)(\\.[0-9x]))?$"
+          "pattern": "^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)(\\.[0-9x\\*]+)?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x]+)(\\.[0-9x]+))?$"
         },
         "plugins": {
           "type": "array",
@@ -303,7 +304,7 @@
         "version": {
           "type": "string",
           "description": "Project version of this commit, e.g. `6.7.x`.",
-          "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*$|\\%VERSION\\%)"
+          "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)|(\\%VERSION\\%)$"
         }
       }
     },
@@ -379,7 +380,7 @@
               "params": {
                 "type": "object",
                 "description": "Parameters for the token authentication request.",
-                "additionalProperties": false,
+                "additionalProperties": true,
                 "properties": {
                   "grant_type": {
                     "type": "string",
@@ -404,7 +405,7 @@
           "jwtTokenAuth": {
             "type": "object",
             "description": "For data source plugins. Token authentication section used with an JWT OAuth API.",
-            "additionalProperties": false,
+            "additionalProperties": true,
             "properties": {
               "url": {
                 "type": "string",
@@ -438,13 +439,31 @@
                 }
               }
             }
+          },
+          "urlParams": {
+            "type": "array",
+            "description": "Add URL parameters to a proxy route",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Name of the URL parameter"
+                },
+                "content": {
+                  "type": "string",
+                  "description": "Value of the URL parameter"
+                }
+              }
+            }
           }
         }
       }
     },
     "enterpriseFeatures": {
       "type": "object",
-      "description": "Grafana Enerprise specific features.",
+      "description": "Grafana Enterprise specific features.",
       "additionalProperties": true,
       "properties": {
         "healthDiagnosticsErrors": {

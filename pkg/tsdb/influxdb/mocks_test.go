@@ -11,8 +11,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+
 	"github.com/grafana/grafana/pkg/infra/httpclient"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
 
@@ -68,7 +68,7 @@ func (f *fakeInstance) Get(pluginContext backend.PluginContext) (instancemgmt.In
 		HTTPClient:    client,
 		Token:         "sometoken",
 		URL:           "https://awesome-influx.com",
-		Database:      "testdb",
+		DbName:        "testdb",
 		Version:       f.version,
 		HTTPMode:      "GET",
 		TimeInterval:  "10s",
@@ -114,7 +114,6 @@ func GetMockService(version string, rt RoundTripper) *Service {
 	return &Service{
 		queryParser:    &InfluxdbQueryParser{},
 		responseParser: &ResponseParser{},
-		glog:           log.New("tsdb.influxdb"),
 		im: &fakeInstance{
 			version:          version,
 			fakeRoundTripper: rt,

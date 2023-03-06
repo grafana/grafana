@@ -7,11 +7,12 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/stretchr/testify/require"
 )
 
 func TestIntegrationDeleteCorrelation(t *testing.T) {
@@ -20,43 +21,36 @@ func TestIntegrationDeleteCorrelation(t *testing.T) {
 	}
 	ctx := NewTestEnv(t)
 
-	adminUser := User{
-		username: "admin",
-		password: "admin",
-	}
-	editorUser := User{
-		username: "editor",
-		password: "editor",
-	}
-
-	ctx.createUser(user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleEditor),
-		Password:       editorUser.password,
-		Login:          editorUser.username,
-	})
-	ctx.createUser(user.CreateUserCommand{
+	adminUser := ctx.createUser(user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       adminUser.password,
-		Login:          adminUser.username,
+		Password:       "admin",
+		Login:          "admin",
+	})
+
+	editorUser := ctx.createUser(user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleEditor),
+		Password:       "editor",
+		Login:          "editor",
+		OrgID:          adminUser.User.OrgID,
 	})
 
 	createDsCommand := &datasources.AddDataSourceCommand{
 		Name:     "read-only",
 		Type:     "loki",
 		ReadOnly: true,
-		OrgId:    1,
+		OrgID:    adminUser.User.OrgID,
 	}
-	ctx.createDs(createDsCommand)
-	readOnlyDS := createDsCommand.Result.Uid
+	dataSource := ctx.createDs(createDsCommand)
+	readOnlyDS := dataSource.UID
 
 	createDsCommand = &datasources.AddDataSourceCommand{
 		Name:  "writable",
 		Type:  "loki",
-		OrgId: 1,
+		OrgID: adminUser.User.OrgID,
 	}
-	ctx.createDs(createDsCommand)
-	writableDs := createDsCommand.Result.Uid
-	writableDsOrgId := createDsCommand.Result.OrgId
+	dataSource = ctx.createDs(createDsCommand)
+	writableDs := dataSource.UID
+	writableDsOrgId := dataSource.OrgID
 
 	t.Run("Unauthenticated users shouldn't be able to delete correlations", func(t *testing.T) {
 		res := ctx.Delete(DeleteParams{
@@ -159,7 +153,7 @@ func TestIntegrationDeleteCorrelation(t *testing.T) {
 	t.Run("deleting a correlation pointing to a read-only data source should work", func(t *testing.T) {
 		correlation := ctx.createCorrelation(correlations.CreateCorrelationCommand{
 			SourceUID: writableDs,
-			TargetUID: writableDs,
+			TargetUID: &writableDs,
 			OrgId:     writableDsOrgId,
 		})
 
@@ -191,7 +185,7 @@ func TestIntegrationDeleteCorrelation(t *testing.T) {
 	t.Run("should correctly delete a correlation", func(t *testing.T) {
 		correlation := ctx.createCorrelation(correlations.CreateCorrelationCommand{
 			SourceUID: writableDs,
-			TargetUID: readOnlyDS,
+			TargetUID: &readOnlyDS,
 			OrgId:     writableDsOrgId,
 		})
 

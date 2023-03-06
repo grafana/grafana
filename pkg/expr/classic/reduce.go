@@ -7,11 +7,9 @@ import (
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 )
 
-func nilOrNaN(f *float64) bool {
-	return f == nil || math.IsNaN(*f)
-}
+type reducer string
 
-func (cr classicReducer) ValidReduceFunc() bool {
+func (cr reducer) ValidReduceFunc() bool {
 	switch cr {
 	case "avg", "sum", "min", "max", "count", "last", "median":
 		return true
@@ -21,8 +19,8 @@ func (cr classicReducer) ValidReduceFunc() bool {
 	return false
 }
 
-//nolint: gocyclo
-func (cr classicReducer) Reduce(series mathexp.Series) mathexp.Number {
+//nolint:gocyclo
+func (cr reducer) Reduce(series mathexp.Series) mathexp.Number {
 	num := mathexp.NewNumber("", nil)
 
 	if series.GetLabels() != nil {
@@ -182,6 +180,10 @@ func calculateDiff(ff mathexp.Float64Field, allNull bool, value float64, fn func
 		}
 	}
 	return allNull, value
+}
+
+func nilOrNaN(f *float64) bool {
+	return f == nil || math.IsNaN(*f)
 }
 
 var diff = func(newest, oldest float64) float64 {

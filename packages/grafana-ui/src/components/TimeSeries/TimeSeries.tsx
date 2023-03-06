@@ -10,7 +10,7 @@ import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 
 import { preparePlotConfigBuilder } from './utils';
 
-const propsToDiff: Array<string | PropDiffFn> = ['legend', 'options'];
+const propsToDiff: Array<string | PropDiffFn> = ['legend', 'options', 'theme'];
 
 type TimeSeriesProps = Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend'>;
 
@@ -20,12 +20,12 @@ export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
 
   prepConfig = (alignedFrame: DataFrame, allFrames: DataFrame[], getTimeRange: () => TimeRange) => {
     const { eventBus, sync } = this.context as PanelContext;
-    const { theme, timeZones, renderers, tweakAxis, tweakScale } = this.props;
+    const { theme, timeZone, renderers, tweakAxis, tweakScale } = this.props;
 
     return preparePlotConfigBuilder({
       frame: alignedFrame,
       theme,
-      timeZones: Array.isArray(timeZones) ? timeZones : [timeZones],
+      timeZones: Array.isArray(timeZone) ? timeZone : [timeZone],
       getTimeRange,
       eventBus,
       sync,
@@ -53,7 +53,7 @@ export class UnthemedTimeSeries extends Component<TimeSeriesProps> {
         {...this.props}
         prepConfig={this.prepConfig}
         propsToDiff={propsToDiff}
-        renderLegend={this.renderLegend as any}
+        renderLegend={this.renderLegend}
       />
     );
   }

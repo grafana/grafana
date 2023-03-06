@@ -1,4 +1,4 @@
-import { debounce, isNil } from 'lodash';
+import { debounce, DebouncedFuncLeading, isNil } from 'lodash';
 import React, { Component } from 'react';
 
 import { SelectableValue } from '@grafana/data';
@@ -16,7 +16,7 @@ export interface State {
 }
 
 export class TeamPicker extends Component<Props, State> {
-  debouncedSearch: any;
+  debouncedSearch: DebouncedFuncLeading<typeof this.search>;
 
   constructor(props: Props) {
     super(props);

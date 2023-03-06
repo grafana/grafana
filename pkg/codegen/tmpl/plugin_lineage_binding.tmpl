@@ -1,0 +1,12 @@
+// The current version of the coremodel schema, as declared in coremodel.cue.
+// This version determines what schema version is returned from [Coremodel.CurrentSchema],
+// and which schema version is used for code generation within the grafana/grafana repository.
+//
+// The code generator ensures that this is always the latest Thema schema version.
+var currentVersion{{ .SlotName }} = thema.SV({{ .LatestSeqv }}, {{ .LatestSchv }})
+
+// {{ .SlotName }}Lineage returns the Thema lineage for the {{ .PluginID }} {{ .PluginType }} plugin's
+// {{ .SlotName }} ["github.com/grafana/grafana/pkg/framework/coremodel".Slot] implementation.
+func {{ .SlotName }}Lineage(rt *thema.Runtime, opts ...thema.BindOption) (thema.Lineage, error) {
+	return cuectx.LoadGrafanaInstancesWithThema(filepath.Join("public", "app", "{{ .Name }}"), cueFS, rt, opts...)
+}

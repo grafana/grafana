@@ -25,15 +25,15 @@ func ProvideService(store dashboardsnapshots.Store, secretsService secrets.Servi
 	return s
 }
 
-func (s *ServiceImpl) CreateDashboardSnapshot(ctx context.Context, cmd *dashboardsnapshots.CreateDashboardSnapshotCommand) error {
+func (s *ServiceImpl) CreateDashboardSnapshot(ctx context.Context, cmd *dashboardsnapshots.CreateDashboardSnapshotCommand) (*dashboardsnapshots.DashboardSnapshot, error) {
 	marshalledData, err := cmd.Dashboard.Encode()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	encryptedDashboard, err := s.secretsService.Encrypt(ctx, marshalledData, secrets.WithoutScope())
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	cmd.DashboardEncrypted = encryptedDashboard
@@ -41,34 +41,34 @@ func (s *ServiceImpl) CreateDashboardSnapshot(ctx context.Context, cmd *dashboar
 	return s.store.CreateDashboardSnapshot(ctx, cmd)
 }
 
-func (s *ServiceImpl) GetDashboardSnapshot(ctx context.Context, query *dashboardsnapshots.GetDashboardSnapshotQuery) error {
-	err := s.store.GetDashboardSnapshot(ctx, query)
+func (s *ServiceImpl) GetDashboardSnapshot(ctx context.Context, query *dashboardsnapshots.GetDashboardSnapshotQuery) (*dashboardsnapshots.DashboardSnapshot, error) {
+	queryResult, err := s.store.GetDashboardSnapshot(ctx, query)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	if query.Result.DashboardEncrypted != nil {
-		decryptedDashboard, err := s.secretsService.Decrypt(ctx, query.Result.DashboardEncrypted)
+	if queryResult.DashboardEncrypted != nil {
+		decryptedDashboard, err := s.secretsService.Decrypt(ctx, queryResult.DashboardEncrypted)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		dashboard, err := simplejson.NewJson(decryptedDashboard)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		query.Result.Dashboard = dashboard
+		queryResult.Dashboard = dashboard
 	}
 
-	return err
+	return queryResult, err
 }
 
 func (s *ServiceImpl) DeleteDashboardSnapshot(ctx context.Context, cmd *dashboardsnapshots.DeleteDashboardSnapshotCommand) error {
 	return s.store.DeleteDashboardSnapshot(ctx, cmd)
 }
 
-func (s *ServiceImpl) SearchDashboardSnapshots(ctx context.Context, query *dashboardsnapshots.GetDashboardSnapshotsQuery) error {
+func (s *ServiceImpl) SearchDashboardSnapshots(ctx context.Context, query *dashboardsnapshots.GetDashboardSnapshotsQuery) (dashboardsnapshots.DashboardSnapshotsList, error) {
 	return s.store.SearchDashboardSnapshots(ctx, query)
 }
 

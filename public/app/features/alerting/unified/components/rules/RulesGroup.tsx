@@ -1,24 +1,28 @@
 import { css } from '@emotion/css';
 import pluralize from 'pluralize';
 import React, { FC, useEffect, useState } from 'react';
-import { useDispatch } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
+import { logInfo } from '@grafana/runtime';
 import { Badge, ConfirmModal, HorizontalGroup, Icon, Spinner, Tooltip, useStyles2 } from '@grafana/ui';
+import { useDispatch } from 'app/types';
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 
+import { LogMessages } from '../../Analytics';
 import { useFolder } from '../../hooks/useFolder';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { deleteRulesGroupAction } from '../../state/actions';
 import { useRulesAccess } from '../../utils/accessControlHooks';
 import { GRAFANA_RULES_SOURCE_NAME, isCloudRulesSource } from '../../utils/datasource';
-import { makeFolderLink } from '../../utils/misc';
+import { makeFolderLink, makeFolderSettingsLink } from '../../utils/misc';
 import { isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
 import { CollapseToggle } from '../CollapseToggle';
 import { RuleLocation } from '../RuleLocation';
 
 import { ActionIcon } from './ActionIcon';
 import { EditCloudGroupModal } from './EditRuleGroupModal';
+import { ReorderCloudGroupModal } from './ReorderRuleGroupModal';
 import { RuleStats } from './RuleStats';
 import { RulesTable } from './RulesTable';
 
@@ -38,6 +42,7 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll, 
 
   const [isEditingGroup, setIsEditingGroup] = useState(false);
   const [isDeletingGroup, setIsDeletingGroup] = useState(false);
+  const [isReorderingGroup, setIsReorderingGroup] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(!expandAll);
 
   const { canEditRules } = useRulesAccess();
@@ -95,6 +100,17 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll, 
               onClick={() => setIsEditingGroup(true)}
             />
           );
+          actionIcons.push(
+            <ActionIcon
+              aria-label="re-order rules"
+              data-testid="reorder-group"
+              key="reorder"
+              icon="exchange-alt"
+              tooltip="reorder rules"
+              className={styles.rotate90}
+              onClick={() => setIsReorderingGroup(true)}
+            />
+          );
         }
         if (isListView) {
           actionIcons.push(
@@ -134,6 +150,17 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll, 
           onClick={() => setIsEditingGroup(true)}
         />
       );
+      actionIcons.push(
+        <ActionIcon
+          aria-label="re-order rules"
+          data-testid="reorder-group"
+          key="reorder"
+          icon="exchange-alt"
+          tooltip="re-order rules"
+          className={styles.rotate90}
+          onClick={() => setIsReorderingGroup(true)}
+        />
+      );
     }
 
     actionIcons.push(
@@ -155,10 +182,18 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll, 
     <RuleLocation namespace={namespace.name} group={group.name} />
   );
 
+  const closeEditModal = (saved = false) => {
+    if (!saved) {
+      logInfo(LogMessages.leavingRuleGroupEdit);
+    }
+    setIsEditingGroup(false);
+  };
+
   return (
     <div className={styles.wrapper} data-testid="rule-group">
       <div className={styles.header} data-testid="rule-group-header">
         <CollapseToggle
+          size="sm"
           className={styles.collapseToggle}
           isCollapsed={isCollapsed}
           onToggle={setIsCollapsed}
@@ -179,12 +214,22 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll, 
         </h6>
         <div className={styles.spacer} />
         <div className={styles.headerStats}>
-          <RuleStats showInactive={false} group={group} />
+          <RuleStats group={group} />
         </div>
+        {isProvisioned && (
+          <>
+            <div className={styles.actionsSeparator}>|</div>
+            <div className={styles.actionIcons}>
+              <Badge color="purple" text="Provisioned" />
+            </div>
+          </>
+        )}
         {!!actionIcons.length && (
           <>
             <div className={styles.actionsSeparator}>|</div>
-            <div className={styles.actionIcons}>{actionIcons}</div>
+            <div className={styles.actionIcons}>
+              <Stack gap={0.5}>{actionIcons}</Stack>
+            </div>
           </>
         )}
       </div>
@@ -192,7 +237,15 @@ export const RulesGroup: FC<Props> = React.memo(({ group, namespace, expandAll, 
         <RulesTable showSummaryColumn={true} className={styles.rulesTable} showGuidelines={true} rules={group.rules} />
       )}
       {isEditingGroup && (
-        <EditCloudGroupModal group={group} namespace={namespace} onClose={() => setIsEditingGroup(false)} />
+        <EditCloudGroupModal
+          namespace={namespace}
+          group={group}
+          onClose={() => closeEditModal()}
+          folderUrl={folder?.canEdit ? makeFolderSettingsLink(folder) : undefined}
+        />
+      )}
+      {isReorderingGroup && (
+        <ReorderCloudGroupModal group={group} namespace={namespace} onClose={() => setIsReorderingGroup(false)} />
       )}
       <ConfirmModal
         isOpen={isDeletingGroup}
@@ -271,11 +324,13 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     margin: 0 ${theme.spacing(2)};
   `,
   actionIcons: css`
-    & > * + * {
-      margin-left: ${theme.spacing(0.5)};
-    }
+    width: 80px;
+    align-items: center;
   `,
   rulesTable: css`
     margin-top: ${theme.spacing(3)};
+  `,
+  rotate90: css`
+    transform: rotate(90deg);
   `,
 });

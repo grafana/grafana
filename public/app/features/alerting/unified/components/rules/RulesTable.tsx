@@ -8,13 +8,14 @@ import { CombinedRule } from 'app/types/unified-alerting';
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { Annotation } from '../../utils/constants';
-import { isGrafanaRulerRule } from '../../utils/rules';
+import { isGrafanaRulerRule, isGrafanaRulerRulePaused } from '../../utils/rules';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { DynamicTableWithGuidelines } from '../DynamicTableWithGuidelines';
 import { ProvisioningBadge } from '../Provisioning';
 import { RuleLocation } from '../RuleLocation';
 import { Tokenize } from '../Tokenize';
 
+import { RuleActionsButtons } from './RuleActionsButtons';
 import { RuleConfigStatus } from './RuleConfigStatus';
 import { RuleDetails } from './RuleDetails';
 import { RuleHealth } from './RuleHealth';
@@ -45,15 +46,9 @@ export const RulesTable: FC<Props> = ({
   const wrapperClass = cx(styles.wrapper, className, { [styles.wrapperMargin]: showGuidelines });
 
   const items = useMemo((): RuleTableItemProps[] => {
-    const seenKeys: string[] = [];
     return rules.map((rule, ruleIdx) => {
-      let key = JSON.stringify([rule.promRule?.type, rule.labels, rule.query, rule.name, rule.annotations]);
-      if (seenKeys.includes(key)) {
-        key += `-${ruleIdx}`;
-      }
-      seenKeys.push(key);
       return {
-        id: key,
+        id: `${rule.namespace.name}-${rule.group.name}-${rule.name}-${ruleIdx}`,
         data: rule,
       };
     });
@@ -119,9 +114,12 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean) {
           const { namespace } = rule;
           const { rulesSource } = namespace;
           const { promRule, rulerRule } = rule;
+
           const isDeleting = !!(hasRuler(rulesSource) && rulerRulesLoaded(rulesSource) && promRule && !rulerRule);
           const isCreating = !!(hasRuler(rulesSource) && rulerRulesLoaded(rulesSource) && rulerRule && !promRule);
-          return <RuleState rule={rule} isDeleting={isDeleting} isCreating={isCreating} />;
+          const isPaused = isGrafanaRulerRulePaused(rule);
+
+          return <RuleState rule={rule} isDeleting={isDeleting} isCreating={isCreating} isPaused={isPaused} />;
         },
         size: '165px',
       },
@@ -194,6 +192,16 @@ function useColumns(showSummaryColumn: boolean, showGroupColumn: boolean) {
         size: 5,
       });
     }
+    columns.push({
+      id: 'actions',
+      label: 'Actions',
+      // eslint-disable-next-line react/display-name
+      renderCell: ({ data: rule }) => {
+        return <RuleActionsButtons rule={rule} rulesSource={rule.namespace.rulesSource} />;
+      },
+      size: '200px',
+    });
+
     return columns;
-  }, [hasRuler, rulerRulesLoaded, showSummaryColumn, showGroupColumn]);
+  }, [showSummaryColumn, showGroupColumn, hasRuler, rulerRulesLoaded]);
 }

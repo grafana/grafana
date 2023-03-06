@@ -16,6 +16,7 @@ export interface DatePickerProps {
   onChange: (value: Date) => void;
   value?: Date;
   minDate?: Date;
+  maxDate?: Date;
 }
 
 /** @public */
@@ -38,7 +39,7 @@ export const DatePicker = memo<DatePickerProps>((props) => {
 
 DatePicker.displayName = 'DatePicker';
 
-const Body = memo<DatePickerProps>(({ value, minDate, onChange }) => {
+const Body = memo<DatePickerProps>(({ value, minDate, maxDate, onChange }) => {
   const styles = useStyles2(getBodyStyles);
 
   return (
@@ -47,6 +48,7 @@ const Body = memo<DatePickerProps>(({ value, minDate, onChange }) => {
       tileClassName={styles.title}
       value={value || new Date()}
       minDate={minDate}
+      maxDate={maxDate}
       nextLabel={<Icon name="angle-right" />}
       prevLabel={<Icon name="angle-left" />}
       onChange={(ev: Date | Date[]) => {

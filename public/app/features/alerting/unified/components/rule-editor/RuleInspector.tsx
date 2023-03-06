@@ -5,9 +5,16 @@ import { useFormContext } from 'react-hook-form';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, CodeEditor, Drawer, Tab, TabsBar, useStyles2 } from '@grafana/ui';
+import { Button, CodeEditor, Drawer, Icon, Tab, TabsBar, useStyles2, Tooltip } from '@grafana/ui';
 
+import { RulerRuleDTO } from '../../../../../types/unified-alerting-dto';
 import { RuleFormValues } from '../../types/rule-form';
+import {
+  alertingRulerRuleToRuleForm,
+  formValuesToRulerRuleDTO,
+  recordingRulerRuleToRuleForm,
+} from '../../utils/rule-form';
+import { isAlertingRulerRule, isRecordingRulerRule } from '../../utils/rules';
 
 interface Props {
   onClose: () => void;
@@ -75,10 +82,16 @@ interface YamlTabProps {
 const InspectorYamlTab: FC<YamlTabProps> = ({ onSubmit }) => {
   const styles = useStyles2(yamlTabStyle);
   const { getValues } = useFormContext<RuleFormValues>();
-  const [alertRuleAsYaml, setAlertRuleAsYaml] = useState(dump(getValues()));
+
+  const yamlValues = formValuesToRulerRuleDTO(getValues());
+  const [alertRuleAsYaml, setAlertRuleAsYaml] = useState(dump(yamlValues));
 
   const onApply = () => {
-    onSubmit(load(alertRuleAsYaml) as RuleFormValues);
+    const rulerRule = load(alertRuleAsYaml) as RulerRuleDTO;
+    const currentFormValues = getValues();
+
+    const yamlFormValues = rulerRuleToRuleFormValues(rulerRule);
+    onSubmit({ ...currentFormValues, ...yamlFormValues });
   };
 
   return (
@@ -87,6 +100,9 @@ const InspectorYamlTab: FC<YamlTabProps> = ({ onSubmit }) => {
         <Button type="button" onClick={onApply}>
           Apply
         </Button>
+        <Tooltip content={<YamlContentInfo />} theme="info" placement="left-start" interactive={true}>
+          <Icon name="exclamation-triangle" size="xl" />
+        </Tooltip>
       </div>
 
       <div className={styles.content}>
@@ -111,6 +127,32 @@ const InspectorYamlTab: FC<YamlTabProps> = ({ onSubmit }) => {
   );
 };
 
+function YamlContentInfo() {
+  return (
+    <div>
+      The YAML content in the editor only contains alert rule configuration <br />
+      To configure Prometheus, you need to provide the rest of the{' '}
+      <a
+        href="https://prometheus.io/docs/prometheus/latest/configuration/alerting_rules/"
+        target="_blank"
+        rel="noreferrer"
+      >
+        configuration file content.
+      </a>
+    </div>
+  );
+}
+
+function rulerRuleToRuleFormValues(rulerRule: RulerRuleDTO): Partial<RuleFormValues> {
+  if (isAlertingRulerRule(rulerRule)) {
+    return alertingRulerRuleToRuleForm(rulerRule);
+  } else if (isRecordingRulerRule(rulerRule)) {
+    return recordingRulerRuleToRuleForm(rulerRule);
+  }
+
+  return {};
+}
+
 const yamlTabStyle = (theme: GrafanaTheme2) => ({
   content: css`
     flex-grow: 1;
@@ -120,7 +162,11 @@ const yamlTabStyle = (theme: GrafanaTheme2) => ({
   `,
   applyButton: css`
     display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
     flex-grow: 0;
+    margin-bottom: ${theme.spacing(2)};
   `,
 });
 

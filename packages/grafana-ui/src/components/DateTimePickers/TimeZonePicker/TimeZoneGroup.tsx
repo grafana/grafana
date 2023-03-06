@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { PropsWithChildren } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -7,20 +7,19 @@ import { useStyles2 } from '../../../themes';
 
 interface Props {
   label: string | undefined;
+  children?: React.ReactNode;
 }
 
-const stopPropagation = (event: React.MouseEvent) => event.stopPropagation();
-
-export const TimeZoneGroup: React.FC<PropsWithChildren<Props>> = (props) => {
+export const TimeZoneGroup = (props: Props) => {
   const { children, label } = props;
   const styles = useStyles2(getStyles);
 
   if (!label) {
-    return <div onClick={stopPropagation}>{children}</div>;
+    return <div>{children}</div>;
   }
 
   return (
-    <div onClick={stopPropagation}>
+    <div>
       <div className={styles.header}>
         <span className={styles.label}>{label}</span>
       </div>

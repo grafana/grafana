@@ -1,14 +1,18 @@
 'use strict';
 
+const browserslist = require('browserslist');
 const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
+const { ESBuildMinifyPlugin } = require('esbuild-loader');
+const { resolveToEsbuildTarget } = require('esbuild-plugin-browserslist');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const path = require('path');
-const TerserPlugin = require('terser-webpack-plugin');
+const { WebpackManifestPlugin } = require('webpack-manifest-plugin');
 const { merge } = require('webpack-merge');
 
 const HTMLWebpackCSSChunks = require('./plugins/HTMLWebpackCSSChunks');
 const common = require('./webpack.common.js');
+const esbuildTargets = resolveToEsbuildTarget(browserslist(), { printUnknownTargets: false });
 
 module.exports = (env = {}) =>
   merge(common, {
@@ -26,15 +30,13 @@ module.exports = (env = {}) =>
         {
           test: /\.tsx?$/,
           exclude: /node_modules/,
-          use: [
-            {
-              loader: 'babel-loader',
-              options: {
-                cacheDirectory: true,
-                cacheCompression: false,
-              },
+          use: {
+            loader: 'esbuild-loader',
+            options: {
+              loader: 'tsx',
+              target: esbuildTargets,
             },
-          ],
+          },
         },
         require('./sass.rule.js')({
           sourceMap: false,
@@ -46,8 +48,8 @@ module.exports = (env = {}) =>
       nodeEnv: 'production',
       minimize: parseInt(env.noMinify, 10) !== 1,
       minimizer: [
-        new TerserPlugin({
-          parallel: false,
+        new ESBuildMinifyPlugin({
+          target: esbuildTargets,
         }),
         new CssMinimizerPlugin(),
       ],
@@ -81,6 +83,10 @@ module.exports = (env = {}) =>
         chunksSortMode: 'none',
       }),
       new HTMLWebpackCSSChunks(),
+      new WebpackManifestPlugin({
+        fileName: path.join(process.cwd(), 'manifest.json'),
+        filter: (file) => !file.name.endsWith('.map'),
+      }),
       function () {
         this.hooks.done.tap('Done', function (stats) {
           if (stats.compilation.errors && stats.compilation.errors.length) {

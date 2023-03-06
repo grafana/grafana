@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FC, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2, StandardEditorProps } from '@grafana/data';
@@ -10,9 +10,9 @@ import {
   variableSuggestionToCodeEditorSuggestion,
 } from '@grafana/ui';
 
-import { PanelOptions, TextMode } from './models.gen';
+import { PanelOptions, TextMode } from './panelcfg.gen';
 
-export const TextPanelEditor: FC<StandardEditorProps<string, any, PanelOptions>> = ({ value, onChange, context }) => {
+export const TextPanelEditor = ({ value, onChange, context }: StandardEditorProps<string, any, PanelOptions>) => {
   const language = useMemo(() => context.options?.mode ?? TextMode.Markdown, [context]);
   const styles = useStyles2(getStyles);
 

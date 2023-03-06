@@ -17,8 +17,3 @@ export interface FormAmRoute {
   muteTimeIntervals: string[];
   routes: FormAmRoute[];
 }
-
-export interface AmRouteReceiver {
-  label: string;
-  value: string;
-}

@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import React from 'react';
-import { useDispatch } from 'react-redux';
 
 import { CoreApp, GrafanaTheme2, PanelDataSummary, VisualizationSuggestionsBuilder } from '@grafana/data';
 import { PanelDataErrorViewProps } from '@grafana/runtime';
@@ -11,6 +10,7 @@ import store from 'app/core/store';
 import { toggleVizPicker } from 'app/features/dashboard/components/PanelEditor/state/reducers';
 import { VisualizationSelectPaneTab } from 'app/features/dashboard/components/PanelEditor/types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
+import { useDispatch } from 'app/types';
 
 import { changePanelPlugin } from '../state/actions';
 

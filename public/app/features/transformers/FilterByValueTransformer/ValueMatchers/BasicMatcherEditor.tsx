@@ -99,7 +99,7 @@ export const getBasicValueMatchersUI = (): Array<ValueMatcherUIRegistryItem<Basi
       id: ValueMatcherID.regex,
       component: basicMatcherEditor<string>({
         validator: () => true,
-        converter: (value: any) => String(value),
+        converter: (value) => String(value),
       }),
     },
   ];

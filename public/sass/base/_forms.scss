@@ -8,42 +8,6 @@
 // Reset height since textareas have rows
 // Set font for forms
 
-input,
-button,
-select,
-textarea {
-  @include font-shorthand($font-size-base, normal, $line-height-base);
-}
-input,
-button,
-select,
-textarea {
-  font-family: $font-family-sans-serif; // And only set font-family here for those that need it (note the missing label element)
-}
-
-input,
-select {
-  background-color: $input-bg;
-  color: $input-color;
-  border: none;
-  box-shadow: none;
-}
-
-textarea {
-  height: auto;
-}
-
-// Reset width of input images, buttons, radios, checkboxes
-input[type='file'],
-input[type='image'],
-input[type='submit'],
-input[type='reset'],
-input[type='button'],
-input[type='radio'],
-input[type='checkbox'] {
-  width: auto; // Override of generic input selector
-}
-
 // Set the height of select and file controls to match text inputs
 select,
 input[type='file'] {

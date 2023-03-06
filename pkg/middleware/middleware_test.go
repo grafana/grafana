@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -12,31 +13,42 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/login"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/anonymous/anontest"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeytest"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/authtest"
+	"github.com/grafana/grafana/pkg/services/auth/jwt"
+	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/ldap/service"
+	loginsvc "github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
+	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func fakeGetTime() func() time.Time {
@@ -78,8 +90,54 @@ func TestMiddleWareSecurityHeaders(t *testing.T) {
 	})
 }
 
+func TestMiddleWareContentSecurityPolicyHeaders(t *testing.T) {
+	policy := `script-src 'self' 'strict-dynamic' 'nonce-[^']+';connect-src 'self' ws://localhost:3000/ wss://localhost:3000/;`
+
+	middlewareScenario(t, "middleware should add Content-Security-Policy", func(t *testing.T, sc *scenarioContext) {
+		sc.fakeReq("GET", "/api/").exec()
+		assert.Regexp(t, policy, sc.resp.Header().Get("Content-Security-Policy"))
+	}, func(cfg *setting.Cfg) {
+		cfg.CSPEnabled = true
+		cfg.CSPTemplate = "script-src 'self' 'strict-dynamic' $NONCE;connect-src 'self' ws://$ROOT_PATH wss://$ROOT_PATH;"
+		cfg.AppURL = "http://localhost:3000/"
+	})
+
+	middlewareScenario(t, "middleware should add Content-Security-Policy-Report-Only", func(t *testing.T, sc *scenarioContext) {
+		sc.fakeReq("GET", "/api/").exec()
+		assert.Regexp(t, policy, sc.resp.Header().Get("Content-Security-Policy-Report-Only"))
+	}, func(cfg *setting.Cfg) {
+		cfg.CSPReportOnlyEnabled = true
+		cfg.CSPReportOnlyTemplate = "script-src 'self' 'strict-dynamic' $NONCE;connect-src 'self' ws://$ROOT_PATH wss://$ROOT_PATH;"
+		cfg.AppURL = "http://localhost:3000/"
+	})
+
+	middlewareScenario(t, "middleware can add both CSP and CSP-Report-Only", func(t *testing.T, sc *scenarioContext) {
+		sc.fakeReq("GET", "/api/").exec()
+
+		cspHeader := sc.resp.Header().Get("Content-Security-Policy")
+		cspReportOnlyHeader := sc.resp.Header().Get("Content-Security-Policy-Report-Only")
+
+		assert.Regexp(t, policy, cspHeader)
+		assert.Regexp(t, policy, cspReportOnlyHeader)
+
+		// assert CSP-Report-Only reuses the same nonce as CSP
+		assert.Equal(t, cspHeader, cspReportOnlyHeader)
+	}, func(cfg *setting.Cfg) {
+		cfg.CSPEnabled = true
+		cfg.CSPTemplate = "script-src 'self' 'strict-dynamic' $NONCE;connect-src 'self' ws://$ROOT_PATH wss://$ROOT_PATH;"
+		cfg.CSPReportOnlyEnabled = true
+		cfg.CSPReportOnlyTemplate = "script-src 'self' 'strict-dynamic' $NONCE;connect-src 'self' ws://$ROOT_PATH wss://$ROOT_PATH;"
+		cfg.AppURL = "http://localhost:3000/"
+	})
+}
+
 func TestMiddlewareContext(t *testing.T) {
-	const noCache = "no-cache"
+	const noStore = "no-store"
+
+	configureJWTAuthHeader := func(cfg *setting.Cfg) {
+		cfg.JWTAuthEnabled = true
+		cfg.JWTAuthHeaderName = "Authorization"
+	}
 
 	middlewareScenario(t, "middleware should add context to injector", func(t *testing.T, sc *scenarioContext) {
 		sc.fakeReq("GET", "/").exec()
@@ -93,9 +151,25 @@ func TestMiddlewareContext(t *testing.T) {
 
 	middlewareScenario(t, "middleware should add Cache-Control header for requests to API", func(t *testing.T, sc *scenarioContext) {
 		sc.fakeReq("GET", "/api/search").exec()
-		assert.Equal(t, noCache, sc.resp.Header().Get("Cache-Control"))
-		assert.Equal(t, noCache, sc.resp.Header().Get("Pragma"))
-		assert.Equal(t, "-1", sc.resp.Header().Get("Expires"))
+		assert.Equal(t, noStore, sc.resp.Header().Get("Cache-Control"))
+		assert.Empty(t, sc.resp.Header().Get("Pragma"))
+		assert.Empty(t, sc.resp.Header().Get("Expires"))
+	})
+
+	middlewareScenario(t, "middleware should pass cache-control on resources with private cache control", func(t *testing.T, sc *scenarioContext) {
+		sc = sc.fakeReq("GET", "/api/datasources/1/resources/foo")
+		sc.resp.Header().Add("Cache-Control", "private, max-age=86400")
+		sc.resp.Header().Add("X-Grafana-Cache", "true")
+		sc.exec()
+		assert.Equal(t, "private, max-age=86400", sc.resp.Header().Get("Cache-Control"))
+	})
+
+	middlewareScenario(t, "middleware should not pass cache-control on resources with public cache control", func(t *testing.T, sc *scenarioContext) {
+		sc = sc.fakeReq("GET", "/api/datasources/1/resources/foo")
+		sc.resp.Header().Add("Cache-Control", "public, max-age=86400, private")
+		sc.resp.Header().Add("X-Grafana-Cache", "true")
+		sc.exec()
+		assert.Equal(t, noStore, sc.resp.Header().Get("Cache-Control"))
 	})
 
 	middlewareScenario(t, "middleware should not add Cache-Control header for requests to datasource proxy API", func(
@@ -108,12 +182,12 @@ func TestMiddlewareContext(t *testing.T) {
 
 	middlewareScenario(t, "middleware should add Cache-Control header for requests with HTML response", func(
 		t *testing.T, sc *scenarioContext) {
-		sc.handlerFunc = func(c *models.ReqContext) {
+		sc.handlerFunc = func(c *contextmodel.ReqContext) {
 			t.Log("Handler called")
 			data := &dtos.IndexViewData{
 				User:     &dtos.CurrentUser{},
-				Settings: map[string]interface{}{},
-				NavTree:  []*dtos.NavLink{},
+				Settings: &dtos.FrontendSettingsDTO{},
+				NavTree:  &navtree.NavTreeRoot{},
 			}
 			t.Log("Calling HTML", "data", data)
 			c.HTML(http.StatusOK, "index-template", data)
@@ -121,9 +195,9 @@ func TestMiddlewareContext(t *testing.T) {
 		}
 		sc.fakeReq("GET", "/").exec()
 		require.Equal(t, 200, sc.resp.Code)
-		assert.Equal(t, noCache, sc.resp.Header().Get("Cache-Control"))
-		assert.Equal(t, noCache, sc.resp.Header().Get("Pragma"))
-		assert.Equal(t, "-1", sc.resp.Header().Get("Expires"))
+		assert.Equal(t, noStore, sc.resp.Header().Get("Cache-Control"))
+		assert.Empty(t, sc.resp.Header().Get("Pragma"))
+		assert.Empty(t, sc.resp.Header().Get("Expires"))
 	})
 
 	middlewareScenario(t, "middleware should add X-Frame-Options header with deny for request when not allowing embedding", func(
@@ -154,7 +228,7 @@ func TestMiddlewareContext(t *testing.T) {
 		keyhash, err := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
 		require.NoError(t, err)
 
-		sc.apiKeyService.ExpectedAPIKey = &apikey.APIKey{OrgId: orgID, Role: org.RoleEditor, Key: keyhash}
+		sc.apiKeyService.ExpectedAPIKey = &apikey.APIKey{OrgID: orgID, Role: org.RoleEditor, Key: keyhash}
 
 		sc.fakeReq("GET", "/").withValidApiKey().exec()
 
@@ -165,9 +239,69 @@ func TestMiddlewareContext(t *testing.T) {
 		assert.Equal(t, org.RoleEditor, sc.context.OrgRole)
 	})
 
+	middlewareScenario(t, "Valid API key with JWT enabled", func(t *testing.T, sc *scenarioContext) {
+		const orgID int64 = 12
+		keyhash, err := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
+		require.NoError(t, err)
+
+		sc.apiKeyService.ExpectedAPIKey = &apikey.APIKey{OrgID: orgID, Role: org.RoleEditor, Key: keyhash}
+
+		sc.fakeReq("GET", "/").withValidApiKey().exec()
+
+		require.Equal(t, 200, sc.resp.Code)
+
+		assert.True(t, sc.context.IsSignedIn)
+		assert.Equal(t, orgID, sc.context.OrgID)
+		assert.Equal(t, org.RoleEditor, sc.context.OrgRole)
+	}, configureJWTAuthHeader)
+
+	middlewareScenario(t, "Valid Basic Auth header with JWT enabled and empty 'sub' claim", func(t *testing.T, sc *scenarioContext) {
+		const password = "MyPass"
+		const orgID int64 = 2
+		const userID int64 = 12
+		// #nosec G101 -- This is dummy/test token
+		const emptySubToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiSm9obiBEb2UiLCJzdWIiOiIiLCJpYXQiOjE1MTYyMzkwMjJ9.tnwtOHK58d47dO4DHW4b9MzeToxa1kGiko5Oo887Rqc"
+
+		sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: orgID, UserID: userID}
+		authHeader := util.GetBasicAuthHeader("myuser", password)
+		sc.fakeReq("GET", "/").withAuthorizationHeader(authHeader).withJWTAuthHeader(emptySubToken).exec()
+
+		require.Equal(t, 200, sc.resp.Code)
+
+		assert.True(t, sc.context.IsSignedIn)
+		assert.Equal(t, orgID, sc.context.OrgID)
+		assert.Equal(t, userID, sc.context.UserID)
+	}, func(cfg *setting.Cfg) {
+		cfg.JWTAuthEnabled = true
+		cfg.JWTAuthHeaderName = "X-JWT-Token"
+		cfg.BasicAuthEnabled = true
+	})
+
+	middlewareScenario(t, "Valid Basic Auth header with JWT enabled and missing 'sub' claim", func(t *testing.T, sc *scenarioContext) {
+		const password = "MyPass"
+		const orgID int64 = 2
+		const userID int64 = 12
+		// #nosec G101 -- This is dummy/test token
+		const missingSubToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiSm9obiBEb2UiLCJpYXQiOjE1MTYyMzkwMjJ9.8nYFUX869Y1mnDDDU4yL11aANgVRuifoxrE8BHZY1iE"
+
+		sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: orgID, UserID: userID}
+		authHeader := util.GetBasicAuthHeader("myuser", password)
+		sc.fakeReq("GET", "/").withAuthorizationHeader(authHeader).withJWTAuthHeader(missingSubToken).exec()
+
+		require.Equal(t, 200, sc.resp.Code)
+
+		assert.True(t, sc.context.IsSignedIn)
+		assert.Equal(t, orgID, sc.context.OrgID)
+		assert.Equal(t, userID, sc.context.UserID)
+	}, func(cfg *setting.Cfg) {
+		cfg.JWTAuthEnabled = true
+		cfg.JWTAuthHeaderName = "X-JWT-Token"
+		cfg.BasicAuthEnabled = true
+	})
+
 	middlewareScenario(t, "Valid API key, but does not match DB hash", func(t *testing.T, sc *scenarioContext) {
 		const keyhash = "Something_not_matching"
-		sc.apiKeyService.ExpectedAPIKey = &apikey.APIKey{OrgId: 12, Role: org.RoleEditor, Key: keyhash}
+		sc.apiKeyService.ExpectedAPIKey = &apikey.APIKey{OrgID: 12, Role: org.RoleEditor, Key: keyhash}
 
 		sc.fakeReq("GET", "/").withValidApiKey().exec()
 
@@ -182,7 +316,7 @@ func TestMiddlewareContext(t *testing.T) {
 		require.NoError(t, err)
 
 		expires := sc.contextHandler.GetTime().Add(-1 * time.Second).Unix()
-		sc.apiKeyService.ExpectedAPIKey = &apikey.APIKey{OrgId: 12, Role: org.RoleEditor, Key: keyhash, Expires: &expires}
+		sc.apiKeyService.ExpectedAPIKey = &apikey.APIKey{OrgID: 12, Role: org.RoleEditor, Key: keyhash, Expires: &expires}
 
 		sc.fakeReq("GET", "/").withValidApiKey().exec()
 
@@ -195,10 +329,10 @@ func TestMiddlewareContext(t *testing.T) {
 		const userID int64 = 12
 
 		sc.withTokenSessionCookie("token")
-		sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{OrgID: 2, UserID: userID}
+		sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: 2, UserID: userID}
 
-		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
-			return &models.UserToken{
+		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
+			return &auth.UserToken{
 				UserId:        userID,
 				UnhashedToken: unhashedToken,
 			}, nil
@@ -219,19 +353,19 @@ func TestMiddlewareContext(t *testing.T) {
 		const userID int64 = 12
 
 		sc.withTokenSessionCookie("token")
-		sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{OrgID: 2, UserID: userID}
+		sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: 2, UserID: userID}
 
-		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
-			return &models.UserToken{
+		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
+			return &auth.UserToken{
 				UserId:        userID,
 				UnhashedToken: "",
 			}, nil
 		}
 
-		sc.userAuthTokenService.TryRotateTokenProvider = func(ctx context.Context, userToken *models.UserToken,
-			clientIP net.IP, userAgent string) (bool, error) {
+		sc.userAuthTokenService.TryRotateTokenProvider = func(ctx context.Context, userToken *auth.UserToken,
+			clientIP net.IP, userAgent string) (bool, *auth.UserToken, error) {
 			userToken.UnhashedToken = "rotated"
-			return true, nil
+			return true, userToken, nil
 		}
 
 		maxAge := int(sc.cfg.LoginMaxLifetime.Seconds())
@@ -304,8 +438,8 @@ func TestMiddlewareContext(t *testing.T) {
 	middlewareScenario(t, "Invalid/expired auth token in cookie", func(t *testing.T, sc *scenarioContext) {
 		sc.withTokenSessionCookie("token")
 
-		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
-			return nil, models.ErrUserTokenNotFound
+		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
+			return nil, auth.ErrUserTokenNotFound
 		}
 
 		sc.fakeReq("GET", "/").exec()
@@ -315,20 +449,146 @@ func TestMiddlewareContext(t *testing.T) {
 		assert.Nil(t, sc.context.UserToken)
 	})
 
+	middlewareScenario(t, "Non-expired auth token in cookie and non-expired OAuth access token", func(
+		t *testing.T, sc *scenarioContext) {
+		const userID int64 = 12
+		sc.contextHandler.GetTime = fakeGetTime()
+
+		sc.withTokenSessionCookie("token")
+		sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: 2, UserID: userID}
+		sc.oauthTokenService.ExpectedAuthUser = &loginsvc.UserAuth{UserId: userID, OAuthExpiry: fakeGetTime()().Add(11 * time.Second)}
+
+		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
+			return &auth.UserToken{
+				UserId:        userID,
+				UnhashedToken: unhashedToken,
+			}, nil
+		}
+
+		sc.fakeReq("GET", "/").exec()
+
+		require.NotNil(t, sc.context)
+		require.NotNil(t, sc.context.UserToken)
+		assert.True(t, sc.context.IsSignedIn)
+		assert.Equal(t, userID, sc.context.UserID)
+		assert.Equal(t, userID, sc.context.UserToken.UserId)
+		assert.Equal(t, "token", sc.context.UserToken.UnhashedToken)
+		assert.Empty(t, sc.resp.Header().Get("Set-Cookie"))
+	})
+
+	middlewareScenario(t, "Non-expired auth token in cookie and expired OAuth access token and refreshing the token fails", func(
+		t *testing.T, sc *scenarioContext) {
+		const userID int64 = 12
+		sc.contextHandler.GetTime = fakeGetTime()
+
+		sc.withTokenSessionCookie("token")
+		signedInUser := &user.SignedInUser{OrgID: 2, UserID: userID}
+		sc.userService.ExpectedSignedInUser = signedInUser
+		sc.oauthTokenService.ExpectedAuthUser = &loginsvc.UserAuth{
+			UserId:            userID,
+			OAuthExpiry:       fakeGetTime()().Add(-1 * time.Second),
+			OAuthAccessToken:  "access_token",
+			OAuthRefreshToken: "refresh_token"}
+		sc.oauthTokenService.ExpectedErrors = map[string]error{"TryTokenRefresh": errors.New("error")}
+
+		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
+			return &auth.UserToken{
+				UserId:        userID,
+				UnhashedToken: unhashedToken,
+			}, nil
+		}
+
+		sc.fakeReq("GET", "/").exec()
+
+		token := sc.oauthTokenService.GetCurrentOAuthToken(sc.context.Req.Context(), signedInUser)
+		assert.Equal(t, token.AccessToken, "")
+		assert.Equal(t, token.RefreshToken, "")
+		assert.True(t, token.Expiry.IsZero())
+
+		require.NotNil(t, sc.context)
+		require.Nil(t, sc.context.UserToken)
+		assert.False(t, sc.context.IsSignedIn)
+		assert.Equal(t, int64(0), sc.context.UserID)
+		assert.Equal(t, "grafana_session=; Path=/; Max-Age=0; HttpOnly", sc.resp.Header().Get("Set-Cookie"))
+	})
+
+	middlewareScenario(t, "Non-expired auth token in cookie and expired OAuth access token and refreshing the token succeeds", func(
+		t *testing.T, sc *scenarioContext) {
+		const userID int64 = 12
+		sc.contextHandler.GetTime = fakeGetTime()
+
+		sc.withTokenSessionCookie("token")
+		sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: 2, UserID: userID}
+		sc.oauthTokenService.ExpectedAuthUser = &loginsvc.UserAuth{UserId: userID, OAuthExpiry: fakeGetTime()().Add(-5 * time.Second), OAuthRefreshToken: "refreshtoken"}
+
+		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
+			return &auth.UserToken{
+				UserId:        userID,
+				UnhashedToken: unhashedToken,
+			}, nil
+		}
+
+		sc.fakeReq("GET", "/").exec()
+
+		require.NotNil(t, sc.context)
+		require.NotNil(t, sc.context.UserToken)
+		assert.True(t, sc.context.IsSignedIn)
+		assert.Equal(t, userID, sc.context.UserID)
+		assert.Equal(t, userID, sc.context.UserToken.UserId)
+		assert.Equal(t, "token", sc.context.UserToken.UnhashedToken)
+		assert.Empty(t, sc.resp.Header().Get("Set-Cookie"))
+	})
+
+	middlewareScenario(t, "Non-expired auth token in cookie and OAuth Access Token's Expiry is not set", func(
+		t *testing.T, sc *scenarioContext) {
+		const userID int64 = 12
+		sc.contextHandler.GetTime = fakeGetTime()
+
+		sc.withTokenSessionCookie("token")
+		sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: 2, UserID: userID}
+		sc.oauthTokenService.ExpectedAuthUser = &loginsvc.UserAuth{UserId: userID}
+
+		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
+			return &auth.UserToken{
+				UserId:        userID,
+				UnhashedToken: unhashedToken,
+			}, nil
+		}
+
+		sc.fakeReq("GET", "/").exec()
+
+		require.NotNil(t, sc.context)
+		require.NotNil(t, sc.context.UserToken)
+		assert.True(t, sc.context.IsSignedIn)
+		assert.Equal(t, userID, sc.context.UserID)
+		assert.Equal(t, userID, sc.context.UserToken.UserId)
+		assert.Equal(t, "token", sc.context.UserToken.UnhashedToken)
+		assert.Empty(t, sc.resp.Header().Get("Set-Cookie"))
+	})
+
 	middlewareScenario(t, "When anonymous access is enabled", func(t *testing.T, sc *scenarioContext) {
-		sc.mockSQLStore.ExpectedOrg = &models.Org{Id: 1, Name: sc.cfg.AnonymousOrgName}
-		orga, err := sc.mockSQLStore.CreateOrgWithMember(sc.cfg.AnonymousOrgName, 1)
-		require.NoError(t, err)
+		sc.orgService.ExpectedOrg = &org.Org{ID: 1, Name: sc.cfg.AnonymousOrgName}
 		sc.fakeReq("GET", "/").exec()
 
 		assert.Equal(t, int64(0), sc.context.UserID)
-		assert.Equal(t, orga.Id, sc.context.OrgID)
+		assert.Equal(t, int64(1), sc.context.OrgID)
 		assert.Equal(t, org.RoleEditor, sc.context.OrgRole)
 		assert.False(t, sc.context.IsSignedIn)
 	}, func(cfg *setting.Cfg) {
 		cfg.AnonymousEnabled = true
 		cfg.AnonymousOrgName = "test"
 		cfg.AnonymousOrgRole = string(org.RoleEditor)
+	})
+
+	middlewareScenario(t, "middleware should add custom response headers", func(t *testing.T, sc *scenarioContext) {
+		sc.fakeReq("GET", "/api/").exec()
+		assert.Regexp(t, "test", sc.resp.Header().Get("X-Custom-Header"))
+		assert.Regexp(t, "other-test", sc.resp.Header().Get("X-Other-Header"))
+	}, func(cfg *setting.Cfg) {
+		cfg.CustomResponseHeaders = map[string]string{
+			"X-Custom-Header": "test",
+			"X-Other-Header":  "other-test",
+		}
 	})
 
 	t.Run("auth_proxy", func(t *testing.T) {
@@ -350,12 +610,12 @@ func TestMiddlewareContext(t *testing.T) {
 		const group = "grafana-core-team"
 
 		middlewareScenario(t, "Should not sync the user if it's in the cache", func(t *testing.T, sc *scenarioContext) {
-			sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{OrgID: orgID, UserID: userID}
-
+			sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: orgID, UserID: userID}
 			h, err := authproxy.HashCacheKey(hdrName + "-" + group)
 			require.NoError(t, err)
 			key := fmt.Sprintf(authproxy.CachePrefix, h)
-			err = sc.remoteCacheService.Set(context.Background(), key, userID, 0)
+			userIdBytes := []byte(strconv.FormatInt(userID, 10))
+			err = sc.remoteCacheService.SetByteArray(context.Background(), key, userIdBytes, 0)
 			require.NoError(t, err)
 			sc.fakeReq("GET", "/")
 
@@ -370,7 +630,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 		middlewareScenario(t, "Should respect auto signup option", func(t *testing.T, sc *scenarioContext) {
 			var actualAuthProxyAutoSignUp *bool = nil
-			sc.loginService.ExpectedUserFunc = func(cmd *models.UpsertUserCommand) *user.User {
+			sc.loginService.ExpectedUserFunc = func(cmd *loginsvc.UpsertUserCommand) *user.User {
 				actualAuthProxyAutoSignUp = &cmd.SignupAllowed
 				return nil
 			}
@@ -390,9 +650,8 @@ func TestMiddlewareContext(t *testing.T) {
 		})
 
 		middlewareScenario(t, "Should create an user from a header", func(t *testing.T, sc *scenarioContext) {
-			sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{OrgID: orgID, UserID: userID}
 			sc.loginService.ExpectedUser = &user.User{ID: userID}
-
+			sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: orgID, UserID: userID}
 			sc.fakeReq("GET", "/")
 			sc.req.Header.Set(sc.cfg.AuthProxyHeaderName, hdrName)
 			sc.exec()
@@ -400,6 +659,11 @@ func TestMiddlewareContext(t *testing.T) {
 			assert.True(t, sc.context.IsSignedIn)
 			assert.Equal(t, userID, sc.context.UserID)
 			assert.Equal(t, orgID, sc.context.OrgID)
+			list := contexthandler.AuthHTTPHeaderListFromContext(sc.context.Req.Context())
+			require.NotNil(t, list)
+			require.Contains(t, list.Items, sc.cfg.AuthProxyHeaderName)
+			require.Contains(t, list.Items, "X-WEBAUTH-GROUPS")
+			require.Contains(t, list.Items, "X-WEBAUTH-ROLE")
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
 			cfg.LDAPEnabled = false
@@ -408,9 +672,9 @@ func TestMiddlewareContext(t *testing.T) {
 
 		middlewareScenario(t, "Should assign role from header to default org", func(t *testing.T, sc *scenarioContext) {
 			var storedRoleInfo map[int64]org.RoleType = nil
-			sc.loginService.ExpectedUserFunc = func(cmd *models.UpsertUserCommand) *user.User {
+			sc.loginService.ExpectedUserFunc = func(cmd *loginsvc.UpsertUserCommand) *user.User {
 				storedRoleInfo = cmd.ExternalUser.OrgRoles
-				sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{OrgID: defaultOrgId, UserID: userID, OrgRole: storedRoleInfo[defaultOrgId]}
+				sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: defaultOrgId, UserID: userID, OrgRole: storedRoleInfo[defaultOrgId]}
 				return &user.User{ID: userID}
 			}
 
@@ -431,9 +695,9 @@ func TestMiddlewareContext(t *testing.T) {
 
 		middlewareScenario(t, "Should NOT assign role from header to non-default org", func(t *testing.T, sc *scenarioContext) {
 			var storedRoleInfo map[int64]org.RoleType = nil
-			sc.loginService.ExpectedUserFunc = func(cmd *models.UpsertUserCommand) *user.User {
+			sc.loginService.ExpectedUserFunc = func(cmd *loginsvc.UpsertUserCommand) *user.User {
 				storedRoleInfo = cmd.ExternalUser.OrgRoles
-				sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{OrgID: orgID, UserID: userID, OrgRole: storedRoleInfo[orgID]}
+				sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: orgID, UserID: userID, OrgRole: storedRoleInfo[orgID]}
 				return &user.User{ID: userID}
 			}
 
@@ -457,7 +721,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 		middlewareScenario(t, "Should use organisation specified by targetOrgId parameter", func(t *testing.T, sc *scenarioContext) {
 			var targetOrgID int64 = 123
-			sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{OrgID: targetOrgID, UserID: userID}
+			sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: targetOrgID, UserID: userID}
 			sc.loginService.ExpectedUser = &user.User{ID: userID}
 
 			sc.fakeReq("GET", fmt.Sprintf("/?targetOrgId=%d", targetOrgID))
@@ -478,7 +742,7 @@ func TestMiddlewareContext(t *testing.T) {
 			body := "key=value"
 			sc.req.Body = io.NopCloser(strings.NewReader(body))
 
-			sc.handlerFunc = func(c *models.ReqContext) {
+			sc.handlerFunc = func(c *contextmodel.ReqContext) {
 				t.Log("Handler called")
 				defer func() {
 					err := c.Req.Body.Close()
@@ -498,11 +762,11 @@ func TestMiddlewareContext(t *testing.T) {
 		})
 
 		middlewareScenario(t, "Request body should not be read in default context handler, but query should be altered - jwt", func(t *testing.T, sc *scenarioContext) {
-			sc.fakeReq("POST", "/?targetOrgId=123&auth_token=token")
+			sc.fakeReq("POST", "/?targetOrgId=123&auth_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NSIsImlhdCI6MTUxNjIzOTAyMn0.1E9qmtctlHAeJzNLPgGFfxdA8WfbEl_vwYO91ffQGxs")
 			body := "key=value"
 			sc.req.Body = io.NopCloser(strings.NewReader(body))
 
-			sc.handlerFunc = func(c *models.ReqContext) {
+			sc.handlerFunc = func(c *contextmodel.ReqContext) {
 				t.Log("Handler called")
 				defer func() {
 					err := c.Req.Body.Close()
@@ -531,7 +795,7 @@ func TestMiddlewareContext(t *testing.T) {
 			const userID int64 = 12
 			const orgID int64 = 2
 
-			sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{OrgID: orgID, UserID: userID}
+			sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: orgID, UserID: userID}
 			sc.loginService.ExpectedUser = &user.User{ID: userID}
 
 			sc.fakeReq("GET", "/")
@@ -547,7 +811,7 @@ func TestMiddlewareContext(t *testing.T) {
 		})
 
 		middlewareScenario(t, "Should allow the request from whitelist IP", func(t *testing.T, sc *scenarioContext) {
-			sc.mockSQLStore.ExpectedSignedInUser = &user.SignedInUser{OrgID: orgID, UserID: userID}
+			sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: orgID, UserID: userID}
 			sc.loginService.ExpectedUser = &user.User{ID: userID}
 
 			sc.fakeReq("GET", "/")
@@ -625,25 +889,28 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 		require.Truef(t, exists, "Views directory should exist at %q", viewsPath)
 
 		sc.m = web.New()
+		sc.m.Use(AddCustomResponseHeaders(cfg))
 		sc.m.Use(AddDefaultResponseHeaders(cfg))
-		sc.m.UseMiddleware(AddCSPHeader(cfg, logger))
+		sc.m.UseMiddleware(ContentSecurityPolicy(cfg, logger))
 		sc.m.UseMiddleware(web.Renderer(viewsPath, "[[", "]]"))
 
-		sc.mockSQLStore = mockstore.NewSQLStoreMock()
+		sc.mockSQLStore = dbtest.NewFakeDB()
 		sc.loginService = &loginservice.LoginServiceMock{}
+		sc.userService = usertest.NewUserServiceFake()
+		sc.orgService = orgtest.NewOrgServiceFake()
 		sc.apiKeyService = &apikeytest.Service{}
-		ctxHdlr := getContextHandler(t, cfg, sc.mockSQLStore, sc.loginService, sc.apiKeyService)
+		sc.oauthTokenService = &authtest.FakeOAuthTokenService{}
+		ctxHdlr := getContextHandler(t, cfg, sc.mockSQLStore, sc.loginService, sc.apiKeyService, sc.userService, sc.orgService, sc.oauthTokenService)
 		sc.sqlStore = ctxHdlr.SQLStore
 		sc.contextHandler = ctxHdlr
 		sc.m.Use(ctxHdlr.Middleware)
-		sc.userService = usertest.NewUserServiceFake()
-		sc.m.Use(OrgRedirect(sc.cfg, sc.mockSQLStore))
+		sc.m.Use(OrgRedirect(sc.cfg, sc.userService))
 
-		sc.userAuthTokenService = ctxHdlr.AuthTokenService.(*auth.FakeUserAuthTokenService)
-		sc.jwtAuthService = ctxHdlr.JWTAuthService.(*models.FakeJWTService)
+		sc.userAuthTokenService = ctxHdlr.AuthTokenService.(*authtest.FakeUserAuthTokenService)
+		sc.jwtAuthService = ctxHdlr.JWTAuthService.(*jwt.FakeJWTService)
 		sc.remoteCacheService = ctxHdlr.RemoteCache
 
-		sc.defaultHandler = func(c *models.ReqContext) {
+		sc.defaultHandler = func(c *contextmodel.ReqContext) {
 			require.NotNil(t, c)
 			t.Log("Default HTTP handler called")
 			sc.context = c
@@ -666,7 +933,11 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 	})
 }
 
-func getContextHandler(t *testing.T, cfg *setting.Cfg, mockSQLStore *mockstore.SQLStoreMock, loginService *loginservice.LoginServiceMock, apiKeyService *apikeytest.Service) *contexthandler.ContextHandler {
+func getContextHandler(t *testing.T, cfg *setting.Cfg, mockSQLStore *dbtest.FakeDB,
+	loginService *loginservice.LoginServiceMock, apiKeyService *apikeytest.Service,
+	userService *usertest.FakeUserService, orgService *orgtest.FakeOrgService,
+	oauthTokenService *authtest.FakeOAuthTokenService,
+) *contexthandler.ContextHandler {
 	t.Helper()
 
 	if cfg == nil {
@@ -677,13 +948,19 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg, mockSQLStore *mockstore.S
 	}
 
 	remoteCacheSvc := remotecache.NewFakeStore(t)
-	userAuthTokenSvc := auth.NewFakeUserAuthTokenService()
+	userAuthTokenSvc := authtest.NewFakeUserAuthTokenService()
 	renderSvc := &fakeRenderService{}
-	authJWTSvc := models.NewFakeJWTService()
+	authJWTSvc := jwt.NewFakeJWTService()
 	tracer := tracing.InitializeTracerForTest()
-	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginService, mockSQLStore)
+	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginService,
+		userService, mockSQLStore, &service.LDAPFakeService{ExpectedError: service.ErrUnableToCreateLDAPClient})
 	authenticator := &logintest.AuthenticatorFake{ExpectedUser: &user.User{}}
-	return contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, mockSQLStore, tracer, authProxy, loginService, apiKeyService, authenticator, usertest.NewUserServiceFake())
+	return contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc,
+		remoteCacheSvc, renderSvc, mockSQLStore, tracer, authProxy,
+		loginService, apiKeyService, authenticator, userService, orgService,
+		oauthTokenService,
+		featuremgmt.WithFeatures(featuremgmt.FlagAccessTokenExpirationCheck),
+		&authntest.FakeService{}, &anontest.FakeAnonymousSessionService{})
 }
 
 type fakeRenderService struct {

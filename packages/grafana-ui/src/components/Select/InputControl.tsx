@@ -14,7 +14,7 @@ interface InputControlProps {
   focused: boolean;
   invalid: boolean;
   disabled: boolean;
-  innerProps: any;
+  innerProps: JSX.IntrinsicElements['div'];
 }
 
 const getInputControlStyles = stylesFactory((theme: GrafanaTheme2, invalid: boolean, withPrefix: boolean) => {

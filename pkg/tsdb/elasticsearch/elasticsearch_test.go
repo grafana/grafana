@@ -6,6 +6,8 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 )
 
 type datasourceInfo struct {
@@ -63,7 +65,7 @@ func TestNewInstanceSettings(t *testing.T) {
 			JSONData: json.RawMessage(settingsJSON),
 		}
 
-		_, err = newInstanceSettings()(dsSettings)
+		_, err = newInstanceSettings(httpclient.NewProvider())(dsSettings)
 		require.NoError(t, err)
 	})
 
@@ -84,7 +86,7 @@ func TestNewInstanceSettings(t *testing.T) {
 				JSONData: json.RawMessage(settingsJSON),
 			}
 
-			_, err = newInstanceSettings()(dsSettings)
+			_, err = newInstanceSettings(httpclient.NewProvider())(dsSettings)
 			require.NoError(t, err)
 		})
 
@@ -104,7 +106,7 @@ func TestNewInstanceSettings(t *testing.T) {
 				JSONData: json.RawMessage(settingsJSON),
 			}
 
-			_, err = newInstanceSettings()(dsSettings)
+			_, err = newInstanceSettings(httpclient.NewProvider())(dsSettings)
 			require.EqualError(t, err, "elasticsearch version is required, err=elasticsearch version=1234 is not supported")
 		})
 
@@ -124,7 +126,7 @@ func TestNewInstanceSettings(t *testing.T) {
 				JSONData: json.RawMessage(settingsJSON),
 			}
 
-			_, err = newInstanceSettings()(dsSettings)
+			_, err = newInstanceSettings(httpclient.NewProvider())(dsSettings)
 			require.EqualError(t, err, "elasticsearch version is required, err=Invalid Semantic Version")
 		})
 
@@ -143,7 +145,7 @@ func TestNewInstanceSettings(t *testing.T) {
 				JSONData: json.RawMessage(settingsJSON),
 			}
 
-			_, err = newInstanceSettings()(dsSettings)
+			_, err = newInstanceSettings(httpclient.NewProvider())(dsSettings)
 			require.EqualError(t, err, "elasticsearch version is required, err=elasticsearch version <nil>, cannot be cast to int")
 		})
 	})
@@ -164,7 +166,7 @@ func TestNewInstanceSettings(t *testing.T) {
 				JSONData: json.RawMessage(settingsJSON),
 			}
 
-			_, err = newInstanceSettings()(dsSettings)
+			_, err = newInstanceSettings(httpclient.NewProvider())(dsSettings)
 			require.EqualError(t, err, "timeField cannot be cast to string")
 		})
 
@@ -184,7 +186,7 @@ func TestNewInstanceSettings(t *testing.T) {
 				JSONData: json.RawMessage(settingsJSON),
 			}
 
-			_, err = newInstanceSettings()(dsSettings)
+			_, err = newInstanceSettings(httpclient.NewProvider())(dsSettings)
 			require.EqualError(t, err, "elasticsearch time field name is required")
 		})
 	})

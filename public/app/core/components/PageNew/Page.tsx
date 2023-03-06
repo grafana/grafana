@@ -2,12 +2,11 @@
 import { css, cx } from '@emotion/css';
 import React, { useEffect } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { CustomScrollbar, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
-import { Footer } from '../Footer/Footer';
-import { PageLayoutType, PageType } from '../Page/types';
+import { PageType } from '../Page/types';
 import { usePageNav } from '../Page/usePageNav';
 import { usePageTitle } from '../Page/usePageTitle';
 
@@ -20,13 +19,17 @@ export const Page: PageType = ({
   navId,
   navModel: oldNavProp,
   pageNav,
+  renderTitle,
+  actions,
   subTitle,
   children,
   className,
-  layout = PageLayoutType.Default,
+  info,
+  layout = PageLayoutType.Standard,
   toolbar,
   scrollTop,
   scrollRef,
+  ...otherProps
 }) => {
   const styles = useStyles2(getStyles);
   const navModel = usePageNav(navId, oldNavProp);
@@ -40,58 +43,71 @@ export const Page: PageType = ({
     if (navModel) {
       chrome.update({
         sectionNav: navModel.node,
-        ...(pageNav && { pageNav }),
+        pageNav: pageNav,
       });
     }
   }, [navModel, pageNav, chrome]);
 
   return (
-    <div className={cx(styles.wrapper, className)}>
-      {layout === PageLayoutType.Default && (
+    <div className={cx(styles.wrapper, className)} {...otherProps}>
+      {layout === PageLayoutType.Standard && (
         <div className={styles.panes}>
-          {navModel && navModel.main.children && <SectionNav model={navModel} />}
-          <div className={styles.pageContent}>
+          {navModel && <SectionNav model={navModel} />}
+          <div className={styles.pageContainer}>
             <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
               <div className={styles.pageInner}>
-                {pageHeaderNav && <PageHeader navItem={pageHeaderNav} subTitle={subTitle} />}
+                {pageHeaderNav && (
+                  <PageHeader
+                    actions={actions}
+                    navItem={pageHeaderNav}
+                    renderTitle={renderTitle}
+                    info={info}
+                    subTitle={subTitle}
+                  />
+                )}
                 {pageNav && pageNav.children && <PageTabs navItem={pageNav} />}
-                {children}
+                <div className={styles.pageContent}>{children}</div>
               </div>
-              <Footer />
             </CustomScrollbar>
           </div>
         </div>
       )}
-      {layout === PageLayoutType.Dashboard && (
+      {layout === PageLayoutType.Canvas && (
         <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
-          <div className={styles.dashboardContent}>
+          <div className={styles.canvasContent}>
             {toolbar}
             {children}
           </div>
         </CustomScrollbar>
       )}
+      {layout === PageLayoutType.Custom && (
+        <>
+          {toolbar}
+          {children}
+        </>
+      )}
     </div>
   );
 };
 
-Page.Header = PageHeader;
 Page.Contents = PageContents;
-Page.OldNavOnly = () => null;
+
+Page.OldNavOnly = function OldNavOnly() {
+  return null;
+};
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const shadow = theme.isDark
-    ? `0 0.6px 1.5px -1px rgb(0 0 0),0 2px 4px -1px rgb(0 0 0 / 40%),0 5px 10px -1px rgb(0 0 0 / 23%)`
-    : '0 0.6px 1.5px -1px rgb(0 0 0 / 8%),0 2px 4px rgb(0 0 0 / 6%),0 5px 10px -1px rgb(0 0 0 / 5%)';
-
   return {
-    wrapper: css`
-      height: 100%;
-      display: flex;
-      flex: 1 1 0;
-      flex-direction: column;
-      min-height: 0;
-    `,
+    wrapper: css({
+      label: 'page-wrapper',
+      height: '100%',
+      display: 'flex',
+      flex: '1 1 0',
+      flexDirection: 'column',
+      minHeight: 0,
+    }),
     panes: css({
+      label: 'page-panes',
       display: 'flex',
       height: '100%',
       width: '100%',
@@ -102,19 +118,35 @@ const getStyles = (theme: GrafanaTheme2) => {
         flexDirection: 'row',
       },
     }),
+    pageContainer: css({
+      label: 'page-container',
+      flexGrow: 1,
+    }),
     pageContent: css({
+      label: 'page-content',
       flexGrow: 1,
     }),
     pageInner: css({
-      padding: theme.spacing(3),
-      boxShadow: shadow,
+      label: 'page-inner',
+      padding: theme.spacing(2),
+      borderRadius: theme.shape.borderRadius(1),
+      border: `1px solid ${theme.colors.border.weak}`,
       background: theme.colors.background.primary,
-      margin: theme.spacing(2, 2, 2, 1),
       display: 'flex',
       flexDirection: 'column',
       flexGrow: 1,
+      margin: theme.spacing(0, 0, 0, 0),
+
+      [theme.breakpoints.up('sm')]: {
+        margin: theme.spacing(0, 1, 1, 1),
+      },
+      [theme.breakpoints.up('md')]: {
+        margin: theme.spacing(2, 2, 2, 1),
+        padding: theme.spacing(3),
+      },
     }),
-    dashboardContent: css({
+    canvasContent: css({
+      label: 'canvas-content',
       display: 'flex',
       flexDirection: 'column',
       padding: theme.spacing(2),

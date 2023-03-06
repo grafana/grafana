@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/alerting/fundamentals/annotation-label/labels-and-label-matchers/
 description: Learn about labels and label matchers in alerting
 keywords:
   - grafana
@@ -13,7 +11,7 @@ weight: 117
 
 # How label matching works
 
-Use labels and label matchers to link alert rules to [notification policies]({{< relref "../../notifications/" >}}) and [silences]({{< relref "../../silences/" >}}). This allows for a very flexible way to manage your alert instances, specify which policy should handle them, and which alerts to silence.
+Use labels and label matchers to link alert rules to notification policies and silences. This allows for a very flexible way to manage your alert instances, specify which policy should handle them, and which alerts to silence.
 
 A label matchers consists of 3 distinct parts, the **label**, the **value** and the **operator**.
 
@@ -30,15 +28,18 @@ A label matchers consists of 3 distinct parts, the **label**, the **value** and 
 | `=~`     | Select labels that regex-match the value.          |
 | `!~`     | Select labels that do not regex-match the value.   |
 
-## Example of a label matcher
+If you are using multiple label matchers, they are combined using the AND logical operator. This means that all matchers must match in order to link a rule to a policy.
 
-Imagine we've defined the following set of labels for our alert.
+## Example scenario
+
+If you define the following set of labels for your alert:
 
 `{ foo=bar, baz=qux, id=12 }`
 
-In this situation,
+then:
 
-- A label matcher defined as `foo=bar` will match this alert rule.
-- A label matcher defined as `foo!=bar` will _not_ match this alert rule.
-- A label matcher defined as `id=~[0-9]+` will match this alert rule.
-- A label matcher defined as `baz!~[0-9]+` will match this alert rule.
+- A label matcher defined as `foo=bar` matches this alert rule.
+- A label matcher defined as `foo!=bar` does _not_ match this alert rule.
+- A label matcher defined as `id=~[0-9]+` matches this alert rule.
+- A label matcher defined as `baz!~[0-9]+` matches this alert rule.
+- Two label matchers defined as `foo=bar` and `id=~[0-9]+` match this alert rule.

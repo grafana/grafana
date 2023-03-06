@@ -1,12 +1,14 @@
 import { isFunction } from 'lodash';
 import React, { FC } from 'react';
 
-import { ThresholdsConfig, ThresholdsMode, VizOrientation, getFieldConfigWithMinMax, LinkModel } from '@grafana/data';
+import { ThresholdsConfig, ThresholdsMode, VizOrientation, getFieldConfigWithMinMax } from '@grafana/data';
+import { BarGaugeDisplayMode } from '@grafana/schema';
 
-import { BarGauge, BarGaugeDisplayMode } from '../BarGauge/BarGauge';
+import { BarGauge } from '../BarGauge/BarGauge';
 import { DataLinksContextMenu, DataLinksContextMenuApi } from '../DataLinks/DataLinksContextMenu';
 
 import { TableCellProps, TableCellDisplayMode } from './types';
+import { getCellOptions } from './utils';
 
 const defaultScale: ThresholdsConfig = {
   mode: ThresholdsMode.Absolute,
@@ -34,17 +36,18 @@ export const BarGaugeCell: FC<TableCellProps> = (props) => {
   }
 
   const displayValue = field.display!(cell.value);
-  let barGaugeMode = BarGaugeDisplayMode.Gradient;
 
-  if (field.config.custom && field.config.custom.displayMode === TableCellDisplayMode.LcdGauge) {
-    barGaugeMode = BarGaugeDisplayMode.Lcd;
-  } else if (field.config.custom && field.config.custom.displayMode === TableCellDisplayMode.BasicGauge) {
-    barGaugeMode = BarGaugeDisplayMode.Basic;
+  // Set default display mode
+  let barGaugeMode: BarGaugeDisplayMode = BarGaugeDisplayMode.Gradient;
+
+  const cellOptions = getCellOptions(field);
+  if (cellOptions.type === TableCellDisplayMode.Gauge) {
+    barGaugeMode = cellOptions.mode ?? BarGaugeDisplayMode.Gradient;
   }
 
   const getLinks = () => {
     if (!isFunction(field.getLinks)) {
-      return [] as LinkModel[];
+      return [];
     }
 
     return field.getLinks({ valueRowIndex: row.index });

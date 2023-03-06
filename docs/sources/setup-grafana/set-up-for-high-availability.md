@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/administration/set-up-for-high-availability/
-  - /docs/grafana/latest/setup-grafana/set-up-for-high-availability/
-  - /docs/grafana/latest/tutorials/ha_setup/
+  - ../administration/set-up-for-high-availability/
+  - ../tutorials/ha_setup/
 keywords:
   - grafana
   - tutorials
@@ -29,9 +28,9 @@ Grafana will now persist all long term data in the database. How to configure th
 
 ## Alerting high availability
 
-Grafana Alerting provides a new [highly-available model]({{< relref "../alerting/high-availability/" >}}). It also preserves the semantics of legacy dashboard alerting by executing all alerts on every server and by sending notifications only once per alert. Load distribution between servers is not supported at this time.
+Grafana Alerting provides a [high availability mode](https://grafana.com/docs/grafana/latest/alerting/fundamentals/high-availability). It preserves the semantics of legacy dashboard alerting by executing all alerts on every server and by sending notifications only once per alert. Load distribution between servers is not supported at this time.
 
-For instructions on setting up alerting high availability, see [Enable alerting high availability]({{< relref "../alerting/high-availability/enable-alerting-ha/" >}}).
+For instructions on setting up alerting high availability, refer to [Enable alerting high availability](https://grafana.com/docs/grafana/next/alerting/set-up/configure-high-availability/).
 
 **Legacy dashboard alerts**
 

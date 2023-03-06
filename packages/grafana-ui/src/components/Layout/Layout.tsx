@@ -30,7 +30,7 @@ export interface ContainerProps {
   shrink?: number;
 }
 
-export const Layout: React.FC<LayoutProps> = ({
+export const Layout = ({
   children,
   orientation = Orientation.Horizontal,
   spacing = 'sm',
@@ -40,7 +40,7 @@ export const Layout: React.FC<LayoutProps> = ({
   width = '100%',
   height = '100%',
   ...rest
-}) => {
+}: LayoutProps) => {
   const styles = useStyles2(
     useCallback(
       (theme) => getStyles(theme, orientation, spacing, justify, align, wrap),
@@ -63,7 +63,7 @@ export const Layout: React.FC<LayoutProps> = ({
   );
 };
 
-export const HorizontalGroup: React.FC<Omit<LayoutProps, 'orientation'>> = ({
+export const HorizontalGroup = ({
   children,
   spacing,
   justify,
@@ -71,7 +71,7 @@ export const HorizontalGroup: React.FC<Omit<LayoutProps, 'orientation'>> = ({
   wrap,
   width,
   height,
-}) => (
+}: Omit<LayoutProps, 'orientation'>) => (
   <Layout
     spacing={spacing}
     justify={justify}
@@ -84,14 +84,14 @@ export const HorizontalGroup: React.FC<Omit<LayoutProps, 'orientation'>> = ({
     {children}
   </Layout>
 );
-export const VerticalGroup: React.FC<Omit<LayoutProps, 'orientation' | 'wrap'>> = ({
+export const VerticalGroup = ({
   children,
   spacing,
   justify,
   align,
   width,
   height,
-}) => (
+}: Omit<LayoutProps, 'orientation' | 'wrap'>) => (
   <Layout
     spacing={spacing}
     justify={justify}
@@ -104,7 +104,7 @@ export const VerticalGroup: React.FC<Omit<LayoutProps, 'orientation' | 'wrap'>> 
   </Layout>
 );
 
-export const Container: React.FC<ContainerProps> = ({ children, padding, margin, grow, shrink }) => {
+export const Container = ({ children, padding, margin, grow, shrink }: React.PropsWithChildren<ContainerProps>) => {
   const styles = useStyles2(useCallback((theme) => getContainerStyles(theme, padding, margin), [padding, margin]));
 
   return (

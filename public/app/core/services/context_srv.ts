@@ -1,20 +1,20 @@
 import { extend } from 'lodash';
 
-import { OrgRole, rangeUtil, WithAccessControlMetadata } from '@grafana/data';
+import { AnalyticsSettings, OrgRole, rangeUtil, WithAccessControlMetadata } from '@grafana/data';
 import { featureEnabled, getBackendSrv } from '@grafana/runtime';
 import { AccessControlAction, UserPermission } from 'app/types';
 import { CurrentUserInternal } from 'app/types/config';
 
 import config from '../../core/config';
 
-export class User implements CurrentUserInternal {
+export class User implements Omit<CurrentUserInternal, 'lightTheme'> {
   isSignedIn: boolean;
   id: number;
   login: string;
   email: string;
   name: string;
   externalUserId: string;
-  lightTheme: boolean;
+  theme: string;
   orgCount: number;
   orgId: number;
   orgName: string;
@@ -24,9 +24,11 @@ export class User implements CurrentUserInternal {
   timezone: string;
   weekStart: string;
   locale: string;
+  language: string;
   helpFlags1: number;
   hasEditPermissionInFolders: boolean;
   permissions?: UserPermission;
+  analytics: AnalyticsSettings;
   fiscalYearStartMonth: number;
 
   constructor() {
@@ -42,13 +44,17 @@ export class User implements CurrentUserInternal {
     this.timezone = '';
     this.fiscalYearStartMonth = 0;
     this.helpFlags1 = 0;
-    this.lightTheme = false;
+    this.theme = 'dark';
     this.hasEditPermissionInFolders = false;
     this.email = '';
     this.name = '';
     this.locale = '';
+    this.language = '';
     this.weekStart = '';
     this.gravatarUrl = '';
+    this.analytics = {
+      identifier: '',
+    };
 
     if (config.bootData.user) {
       extend(this, config.bootData.user);
@@ -60,16 +66,16 @@ export class ContextSrv {
   pinned: any;
   version: any;
   user: User;
-  isSignedIn: any;
-  isGrafanaAdmin: any;
-  isEditor: any;
+  isSignedIn: boolean;
+  isGrafanaAdmin: boolean;
+  isEditor: boolean;
   sidemenuSmallBreakpoint = false;
   hasEditPermissionInFolders: boolean;
   minRefreshInterval: string;
 
   constructor() {
     if (!config.bootData) {
-      config.bootData = { user: {}, settings: {} } as any;
+      config.bootData = { user: {}, settings: {}, navTree: [] } as any;
     }
 
     this.user = new User();
@@ -83,7 +89,7 @@ export class ContextSrv {
   async fetchUserPermissions() {
     try {
       if (this.accessControlEnabled()) {
-        this.user.permissions = await getBackendSrv().get('/api/access-control/user/permissions', {
+        this.user.permissions = await getBackendSrv().get('/api/access-control/user/actions', {
           reloadcache: true,
         });
       }
@@ -110,10 +116,6 @@ export class ContextSrv {
 
   accessControlEnabled(): boolean {
     return config.rbacEnabled;
-  }
-
-  accessControlBuiltInRoleAssignmentEnabled(): boolean {
-    return config.rbacBuiltInRoleAssignmentEnabled;
   }
 
   licensedAccessControlEnabled(): boolean {
@@ -161,7 +163,7 @@ export class ContextSrv {
 
   hasAccessToExplore() {
     if (this.accessControlEnabled()) {
-      return this.hasPermission(AccessControlAction.DataSourcesExplore);
+      return this.hasPermission(AccessControlAction.DataSourcesExplore) && config.exploreEnabled;
     }
     return (this.isEditor || config.viewersCanEdit) && config.exploreEnabled;
   }
@@ -173,7 +175,7 @@ export class ContextSrv {
     return this.hasPermission(action);
   }
 
-  hasAccessInMetadata(action: string, object: WithAccessControlMetadata, fallBack: boolean) {
+  hasAccessInMetadata(action: string, object: WithAccessControlMetadata, fallBack: boolean): boolean {
     if (!this.accessControlEnabled()) {
       return fallBack;
     }

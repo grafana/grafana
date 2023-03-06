@@ -7,10 +7,9 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
-
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -18,18 +17,18 @@ func (s *CorrelationsService) registerAPIEndpoints() {
 	uidScope := datasources.ScopeProvider.GetResourceScopeUID(ac.Parameter(":uid"))
 	authorize := ac.Middleware(s.AccessControl)
 
-	s.RouteRegister.Get("/api/datasources/correlations", middleware.ReqSignedIn, authorize(ac.ReqViewer, ac.EvalPermission(datasources.ActionRead)), routing.Wrap(s.getCorrelationsHandler))
+	s.RouteRegister.Get("/api/datasources/correlations", middleware.ReqSignedIn, authorize(middleware.ReqSignedIn, ac.EvalPermission(datasources.ActionRead)), routing.Wrap(s.getCorrelationsHandler))
 
 	s.RouteRegister.Group("/api/datasources/uid/:uid/correlations", func(entities routing.RouteRegister) {
-		entities.Get("/", middleware.ReqSignedIn, authorize(ac.ReqViewer, ac.EvalPermission(datasources.ActionRead)), routing.Wrap(s.getCorrelationsBySourceUIDHandler))
-		entities.Post("/", middleware.ReqSignedIn, authorize(ac.ReqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.createHandler))
+		entities.Get("/", authorize(middleware.ReqSignedIn, ac.EvalPermission(datasources.ActionRead)), routing.Wrap(s.getCorrelationsBySourceUIDHandler))
+		entities.Post("/", authorize(middleware.ReqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.createHandler))
 
 		entities.Group("/:correlationUID", func(entities routing.RouteRegister) {
-			entities.Get("/", middleware.ReqSignedIn, authorize(ac.ReqViewer, ac.EvalPermission(datasources.ActionRead)), routing.Wrap(s.getCorrelationHandler))
-			entities.Delete("/", middleware.ReqSignedIn, authorize(ac.ReqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.deleteHandler))
-			entities.Patch("/", middleware.ReqSignedIn, authorize(ac.ReqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.updateHandler))
+			entities.Get("/", authorize(middleware.ReqSignedIn, ac.EvalPermission(datasources.ActionRead)), routing.Wrap(s.getCorrelationHandler))
+			entities.Delete("/", authorize(middleware.ReqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.deleteHandler))
+			entities.Patch("/", authorize(middleware.ReqOrgAdmin, ac.EvalPermission(datasources.ActionWrite, uidScope)), routing.Wrap(s.updateHandler))
 		})
-	})
+	}, middleware.ReqSignedIn)
 }
 
 // swagger:route POST /datasources/uid/{sourceUID}/correlations correlations createCorrelation
@@ -43,7 +42,7 @@ func (s *CorrelationsService) registerAPIEndpoints() {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (s *CorrelationsService) createHandler(c *models.ReqContext) response.Response {
+func (s *CorrelationsService) createHandler(c *contextmodel.ReqContext) response.Response {
 	cmd := CreateCorrelationCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -93,7 +92,7 @@ type CreateCorrelationResponse struct {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (s *CorrelationsService) deleteHandler(c *models.ReqContext) response.Response {
+func (s *CorrelationsService) deleteHandler(c *contextmodel.ReqContext) response.Response {
 	cmd := DeleteCorrelationCommand{
 		UID:       web.Params(c.Req)[":correlationUID"],
 		SourceUID: web.Params(c.Req)[":uid"],
@@ -147,9 +146,13 @@ type DeleteCorrelationResponse struct {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (s *CorrelationsService) updateHandler(c *models.ReqContext) response.Response {
+func (s *CorrelationsService) updateHandler(c *contextmodel.ReqContext) response.Response {
 	cmd := UpdateCorrelationCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
+		if errors.Is(err, ErrUpdateCorrelationEmptyParams) {
+			return response.Error(http.StatusBadRequest, "At least one of label, description or config is required", err)
+		}
+
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 
@@ -159,10 +162,6 @@ func (s *CorrelationsService) updateHandler(c *models.ReqContext) response.Respo
 
 	correlation, err := s.UpdateCorrelation(c.Req.Context(), cmd)
 	if err != nil {
-		if errors.Is(err, ErrUpdateCorrelationEmptyParams) {
-			return response.Error(http.StatusBadRequest, "At least one of label, description is required", err)
-		}
-
 		if errors.Is(err, ErrSourceDataSourceDoesNotExists) {
 			return response.Error(http.StatusNotFound, "Data source not found", err)
 		}
@@ -208,7 +207,7 @@ type UpdateCorrelationResponse struct {
 // 401: unauthorisedError
 // 404: notFoundError
 // 500: internalServerError
-func (s *CorrelationsService) getCorrelationHandler(c *models.ReqContext) response.Response {
+func (s *CorrelationsService) getCorrelationHandler(c *contextmodel.ReqContext) response.Response {
 	query := GetCorrelationQuery{
 		UID:       web.Params(c.Req)[":correlationUID"],
 		SourceUID: web.Params(c.Req)[":uid"],
@@ -224,7 +223,7 @@ func (s *CorrelationsService) getCorrelationHandler(c *models.ReqContext) respon
 			return response.Error(http.StatusNotFound, "Source data source not found", err)
 		}
 
-		return response.Error(http.StatusInternalServerError, "Failed to update correlation", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get correlation", err)
 	}
 
 	return response.JSON(http.StatusOK, correlation)
@@ -255,7 +254,7 @@ type GetCorrelationResponse struct {
 // 401: unauthorisedError
 // 404: notFoundError
 // 500: internalServerError
-func (s *CorrelationsService) getCorrelationsBySourceUIDHandler(c *models.ReqContext) response.Response {
+func (s *CorrelationsService) getCorrelationsBySourceUIDHandler(c *contextmodel.ReqContext) response.Response {
 	query := GetCorrelationsBySourceUIDQuery{
 		SourceUID: web.Params(c.Req)[":uid"],
 		OrgId:     c.OrgID,
@@ -270,7 +269,7 @@ func (s *CorrelationsService) getCorrelationsBySourceUIDHandler(c *models.ReqCon
 			return response.Error(http.StatusNotFound, "Source data source not found", err)
 		}
 
-		return response.Error(http.StatusInternalServerError, "Failed to update correlation", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get correlations", err)
 	}
 
 	return response.JSON(http.StatusOK, correlations)
@@ -298,7 +297,7 @@ type GetCorrelationsBySourceUIDResponse struct {
 // 401: unauthorisedError
 // 404: notFoundError
 // 500: internalServerError
-func (s *CorrelationsService) getCorrelationsHandler(c *models.ReqContext) response.Response {
+func (s *CorrelationsService) getCorrelationsHandler(c *contextmodel.ReqContext) response.Response {
 	query := GetCorrelationsQuery{
 		OrgId: c.OrgID,
 	}
@@ -309,7 +308,7 @@ func (s *CorrelationsService) getCorrelationsHandler(c *models.ReqContext) respo
 			return response.Error(http.StatusNotFound, "No correlation found", err)
 		}
 
-		return response.Error(http.StatusInternalServerError, "Failed to update correlation", err)
+		return response.Error(http.StatusInternalServerError, "Failed to get correlations", err)
 	}
 
 	return response.JSON(http.StatusOK, correlations)

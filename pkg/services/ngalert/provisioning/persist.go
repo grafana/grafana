@@ -2,13 +2,16 @@ package provisioning
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/quota"
 )
 
 // AMStore is a store of Alertmanager configurations.
+//
 //go:generate mockery --name AMConfigStore --structname MockAMConfigStore --inpackage --filename persist_mock.go --with-expecter
 type AMConfigStore interface {
 	GetLatestAlertmanagerConfiguration(ctx context.Context, query *models.GetLatestAlertmanagerConfigurationQuery) error
@@ -16,6 +19,7 @@ type AMConfigStore interface {
 }
 
 // ProvisioningStore is a store of provisioning data for arbitrary objects.
+//
 //go:generate mockery --name ProvisioningStore --structname MockProvisioningStore --inpackage --filename provisioning_store_mock.go --with-expecter
 type ProvisioningStore interface {
 	GetProvenance(ctx context.Context, o models.Provisionable, org int64) (models.Provenance, error)
@@ -35,13 +39,23 @@ type RuleStore interface {
 	ListAlertRules(ctx context.Context, query *models.ListAlertRulesQuery) error
 	GetRuleGroupInterval(ctx context.Context, orgID int64, namespaceUID string, ruleGroup string) (int64, error)
 	InsertAlertRules(ctx context.Context, rule []models.AlertRule) (map[string]int64, error)
-	UpdateAlertRules(ctx context.Context, rule []store.UpdateRule) error
+	UpdateAlertRules(ctx context.Context, rule []models.UpdateRule) error
 	DeleteAlertRulesByUID(ctx context.Context, orgID int64, ruleUID ...string) error
 	GetAlertRulesGroupByRuleUID(ctx context.Context, query *models.GetAlertRulesGroupByRuleUIDQuery) error
 }
 
 // QuotaChecker represents the ability to evaluate whether quotas are met.
+//
 //go:generate mockery --name QuotaChecker --structname MockQuotaChecker --inpackage --filename quota_checker_mock.go --with-expecter
 type QuotaChecker interface {
-	CheckQuotaReached(ctx context.Context, target string, scopeParams *quota.ScopeParameters) (bool, error)
+	CheckQuotaReached(ctx context.Context, target quota.TargetSrv, scopeParams *quota.ScopeParameters) (bool, error)
+}
+
+// PersistConfig validates to config before eventually persisting it if no error occurs
+func PersistConfig(ctx context.Context, store AMConfigStore, cmd *models.SaveAlertmanagerConfigurationCmd) error {
+	cfg := &definitions.PostableUserConfig{}
+	if err := json.Unmarshal([]byte(cmd.AlertmanagerConfiguration), cfg); err != nil {
+		return fmt.Errorf("change would result in an invalid configuration state: %w", err)
+	}
+	return store.UpdateAlertmanagerConfiguration(ctx, cmd)
 }

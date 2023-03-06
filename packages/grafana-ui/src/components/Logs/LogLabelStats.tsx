@@ -96,5 +96,6 @@ class UnThemedLogLabelStats extends PureComponent<Props> {
   }
 }
 
+/** @deprecated will be removed in the next major version */
 export const LogLabelStats = withTheme2(UnThemedLogLabelStats);
 LogLabelStats.displayName = 'LogLabelStats';

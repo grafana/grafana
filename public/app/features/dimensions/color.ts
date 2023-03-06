@@ -1,4 +1,11 @@
-import { DataFrame, Field, getDisplayProcessor, getFieldColorModeForField, GrafanaTheme2 } from '@grafana/data';
+import {
+  DataFrame,
+  Field,
+  getDisplayProcessor,
+  getFieldColorModeForField,
+  GrafanaTheme2,
+  getFieldConfigWithMinMax,
+} from '@grafana/data';
 
 import { ColorDimensionConfig, DimensionSupplier } from './types';
 import { findField, getLastNotNullFieldValue } from './utils';
@@ -33,6 +40,13 @@ export function getColorDimensionForField(
   // Use the expensive color calculation by value
   const mode = getFieldColorModeForField(field);
   if (mode.isByValue || field.config.mappings?.length) {
+    // Force this to use local min/max for range
+    const config = getFieldConfigWithMinMax(field, true);
+    if (config !== field.config) {
+      field = { ...field, config };
+      field.state = undefined;
+    }
+
     const disp = getDisplayProcessor({ field, theme });
     const getColor = (value: any): string => {
       return disp(value).color ?? '#ccc';
@@ -40,8 +54,8 @@ export function getColorDimensionForField(
 
     return {
       field,
-      get: (index: number): string => getColor(field.values.get(index)),
-      value: () => getColor(getLastNotNullFieldValue(field)),
+      get: (index: number): string => getColor(field!.values.get(index)),
+      value: () => getColor(getLastNotNullFieldValue(field!)),
     };
   }
 

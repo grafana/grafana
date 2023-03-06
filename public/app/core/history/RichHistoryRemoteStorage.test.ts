@@ -1,7 +1,9 @@
 import { of } from 'rxjs';
 
+import { Preferences as UserPreferencesDTO } from '@grafana/schema/src/raw/preferences/x/preferences_types.gen';
+
 import { DatasourceSrv } from '../../features/plugins/datasource_srv';
-import { RichHistoryQuery, UserPreferencesDTO } from '../../types';
+import { RichHistoryQuery } from '../../types';
 import { SortOrder } from '../utils/richHistoryTypes';
 
 import RichHistoryRemoteStorage, { RichHistoryRemoteStorageDTO } from './RichHistoryRemoteStorage';
@@ -54,14 +56,14 @@ describe('RichHistoryRemoteStorage', () => {
   });
 
   const setup = (): { richHistoryQuery: RichHistoryQuery; dto: RichHistoryRemoteStorageDTO } => {
-    const richHistoryQuery: RichHistoryQuery<any> = {
+    const richHistoryQuery: RichHistoryQuery = {
       id: '123',
       createdAt: 200 * 1000,
       datasourceUid: 'ds1',
       datasourceName: 'name-of-ds1',
       starred: true,
       comment: 'comment',
-      queries: [{ foo: 'bar ' }],
+      queries: [{ refId: 'foo' }],
     };
 
     const dto = {

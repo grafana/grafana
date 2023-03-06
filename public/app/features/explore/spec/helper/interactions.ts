@@ -48,7 +48,7 @@ export const switchToQueryHistoryTab = async (
 
 export const selectStarredTabFirst = async (exploreId: ExploreId = ExploreId.left) => {
   const checkbox = withinExplore(exploreId).getByRole('checkbox', {
-    name: 'Change the default active tab from “Query history” to “Starred”',
+    name: /Change the default active tab from “Query history” to “Starred”/,
   });
   await userEvent.click(checkbox);
 };
@@ -58,8 +58,8 @@ export const selectOnlyActiveDataSource = async (exploreId: ExploreId = ExploreI
   await userEvent.click(checkbox);
 };
 
-export const starQueryHistory = (queryIndex: number, exploreId: ExploreId = ExploreId.left) => {
-  invokeAction(queryIndex, 'Star query', exploreId);
+export const starQueryHistory = async (queryIndex: number, exploreId: ExploreId = ExploreId.left) => {
+  await invokeAction(queryIndex, 'Star query', exploreId);
 };
 
 export const commentQueryHistory = async (
@@ -71,11 +71,11 @@ export const commentQueryHistory = async (
   const input = withinExplore(exploreId).getByPlaceholderText('An optional description of what the query does.');
   await userEvent.clear(input);
   await userEvent.type(input, comment);
-  await invokeAction(queryIndex, 'Submit button', exploreId);
+  await invokeAction(queryIndex, 'Save comment', exploreId);
 };
 
-export const deleteQueryHistory = (queryIndex: number, exploreId: ExploreId = ExploreId.left) => {
-  invokeAction(queryIndex, 'Delete query', exploreId);
+export const deleteQueryHistory = async (queryIndex: number, exploreId: ExploreId = ExploreId.left) => {
+  await invokeAction(queryIndex, 'Delete query', exploreId);
 };
 
 export const loadMoreQueryHistory = async (exploreId: ExploreId = ExploreId.left) => {

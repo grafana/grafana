@@ -2,12 +2,13 @@ import React, { useMemo, useState } from 'react';
 import { useAsyncFn } from 'react-use';
 
 import { SelectableValue, toOption } from '@grafana/data';
-import { AccessoryButton, EditorList, InputGroup, Select } from '@grafana/ui';
+import { AccessoryButton, EditorList, InputGroup } from '@grafana/experimental';
+import { Select } from '@grafana/ui';
 
-import { COMPARISON_OPERATORS, EQUALS } from '../../cloudwatch-sql/language';
 import { CloudWatchDatasource } from '../../datasource';
 import { QueryEditorExpressionType, QueryEditorOperatorExpression, QueryEditorPropertyType } from '../../expressions';
 import { useDimensionKeys } from '../../hooks';
+import { COMPARISON_OPERATORS, EQUALS } from '../../language/cloudwatch-sql/language';
 import { CloudWatchMetricsQuery } from '../../types';
 import { appendTemplateVariables } from '../../utils/utils';
 
@@ -101,15 +102,15 @@ const FilterItem: React.FC<FilterItemProps> = (props) => {
   const namespace = getNamespaceFromExpression(sql.from);
   const metricName = getMetricNameFromExpression(sql.select);
 
-  const dimensionKeys = useDimensionKeys(datasource, query.region, namespace, metricName);
+  const dimensionKeys = useDimensionKeys(datasource, { region: query.region, namespace, metricName });
 
   const loadDimensionValues = async () => {
-    if (!filter.property?.name) {
+    if (!filter.property?.name || !namespace) {
       return [];
     }
 
-    return datasource
-      .getDimensionValues(query.region, namespace, metricName, filter.property.name, {})
+    return datasource.resources
+      .getDimensionValues({ region: query.region, namespace, metricName, dimensionKey: filter.property.name })
       .then((result: Array<SelectableValue<string>>) => {
         return appendTemplateVariables(datasource, result);
       });

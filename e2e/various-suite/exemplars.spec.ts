@@ -10,7 +10,7 @@ const addDataSource = () => {
       e2e.components.DataSource.Prometheus.configPage.exemplarsAddButton().click();
       e2e.components.DataSource.Prometheus.configPage.internalLinkSwitch().check({ force: true });
       e2e.components.DataSource.DataSourceHttpSettings.urlInput().type('http://prom-url:9090');
-      e2e.components.DataSourcePicker.inputV2().should('be.visible').click({ force: true });
+      e2e.components.DataSourcePicker.inputV2().click({ force: true }).should('have.focus');
 
       e2e().contains('gdev-tempo').scrollIntoView().should('be.visible').click();
     },

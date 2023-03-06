@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/alerting/fundamentals/alert-rules/alert-instances/
 description: Learn about Grafana alert instances
 keywords:
   - grafana

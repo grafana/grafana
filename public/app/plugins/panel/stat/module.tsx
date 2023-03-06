@@ -5,7 +5,7 @@ import { commonOptionsBuilder, sharedSingleStatMigrationHandler } from '@grafana
 import { statPanelChangedHandler } from './StatMigrations';
 import { StatPanel } from './StatPanel';
 import { addStandardDataReduceOptions, addOrientationOption } from './common';
-import { defaultPanelOptions, PanelOptions } from './models.gen';
+import { defaultPanelOptions, PanelOptions } from './panelcfg.gen';
 import { StatSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<PanelOptions>(StatPanel)

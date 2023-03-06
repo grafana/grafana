@@ -66,7 +66,7 @@ export const ZipkinQueryField = ({ query, onChange, onRunQuery, datasource }: Pr
           <RadioButtonGroup<ZipkinQueryType>
             options={[
               { value: 'traceID', label: 'TraceID' },
-              { value: 'upload', label: 'JSON file' },
+              { value: 'upload', label: 'JSON File' },
             ]}
             value={query.queryType || 'traceID'}
             onChange={(v) =>

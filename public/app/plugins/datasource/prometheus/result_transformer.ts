@@ -1,5 +1,5 @@
 import { descending, deviation } from 'd3';
-import { groupBy, partition } from 'lodash';
+import { flatten, forOwn, groupBy, partition } from 'lodash';
 
 import {
   ArrayDataFrame,
@@ -65,7 +65,7 @@ const isHeatmapResult = (dataFrame: DataFrame, options: DataQueryRequest<PromQue
   return target?.format === 'heatmap';
 };
 
-// V2 result trasnformer used to transform query results from queries that were run trough prometheus backend
+// V2 result transformer used to transform query results from queries that were run through prometheus backend
 export function transformV2(
   response: DataQueryResponse,
   request: DataQueryRequest<PromQuery>,
@@ -102,27 +102,79 @@ export function transformV2(
     (df) => isHeatmapResult(df, request)
   );
 
-  const processedHeatmapFrames = mergeHeatmapFrames(
-    transformToHistogramOverTime(heatmapResults.sort(sortSeriesByLabel))
-  );
+  // this works around the fact that we only get back frame.name with le buckets when legendFormat == {{le}}...which is not the default
+  heatmapResults.forEach((df) => {
+    if (df.name == null) {
+      let f = df.fields.find((f) => f.name === 'Value');
+
+      if (f) {
+        let le = f.labels?.le;
+
+        if (le) {
+          // this is used for sorting the frames by numeric ascending le labels for de-accum
+          df.name = le;
+          // this is used for renaming the Value fields to le label
+          f.config.displayNameFromDS = le;
+        }
+      }
+    }
+  });
+
+  // Group heatmaps by query
+  const heatmapResultsGroupedByQuery = groupBy<DataFrame>(heatmapResults, (h) => h.refId);
+
+  // Initialize empty array to push grouped histogram frames to
+  let processedHeatmapResultsGroupedByQuery: DataFrame[][] = [];
+
+  // Iterate through every query in this heatmap
+  for (const query in heatmapResultsGroupedByQuery) {
+    // Get reference to dataFrames for heatmap
+    const heatmapResultsGroup = heatmapResultsGroupedByQuery[query];
+
+    // Create a new grouping by iterating through the data frames...
+    const heatmapResultsGroupedByValues = groupBy<DataFrame>(heatmapResultsGroup, (dataFrame) => {
+      // Each data frame has `Time` and `Value` properties, we want to get the values
+      const values = dataFrame.fields.find((field) => field.name === TIME_SERIES_VALUE_FIELD_NAME);
+      // Specific functionality for special "le" quantile heatmap value, we know if this value exists, that we do not want to calculate the heatmap density across data frames from the same quartile
+      if (values?.labels && HISTOGRAM_QUANTILE_LABEL_NAME in values.labels) {
+        const { le, ...notLE } = values?.labels;
+        return Object.values(notLE).join();
+      }
+
+      // Return a string made from the concatenation of this frame's values to represent a grouping in the query
+      return Object.values(values?.labels ?? []).join();
+    });
+
+    // Then iterate through the resultant object
+    forOwn(heatmapResultsGroupedByValues, (dataFrames, key) => {
+      // Sort frames within each grouping
+      const sortedHeatmap = dataFrames.sort(sortSeriesByLabel);
+      // And push the sorted grouping with the rest
+      processedHeatmapResultsGroupedByQuery.push(mergeHeatmapFrames(transformToHistogramOverTime(sortedHeatmap)));
+    });
+  }
 
   // Everything else is processed as time_series result and graph preferredVisualisationType
   const otherFrames = framesWithoutTableHeatmapsAndExemplars.map((dataFrame) => {
-    const df = {
+    const df: DataFrame = {
       ...dataFrame,
       meta: {
         ...dataFrame.meta,
         preferredVisualisationType: 'graph',
       },
-    } as DataFrame;
+    };
     return df;
   });
 
+  const flattenedProcessedHeatmapFrames = flatten(processedHeatmapResultsGroupedByQuery);
+
   return {
     ...response,
-    data: [...otherFrames, ...processedTableFrames, ...processedHeatmapFrames, ...processedExemplarFrames],
+    data: [...otherFrames, ...processedTableFrames, ...flattenedProcessedHeatmapFrames, ...processedExemplarFrames],
   };
 }
+
+const HISTOGRAM_QUANTILE_LABEL_NAME = 'le';
 
 export function transformDFToTable(dfs: DataFrame[]): DataFrame[] {
   // If no dataFrames or if 1 dataFrames with no values, return original dataFrame
@@ -144,14 +196,14 @@ export function transformDFToTable(dfs: DataFrame[]): DataFrame[] {
     // Fill labelsFields with labels from dataFrames
     dataFramesByRefId[refId].forEach((df) => {
       const frameValueField = df.fields[1];
-      const promLabels = frameValueField.labels ?? {};
+      const promLabels = frameValueField?.labels ?? {};
 
       Object.keys(promLabels)
         .sort()
         .forEach((label) => {
           // If we don't have label in labelFields, add it
           if (!labelFields.some((l) => l.name === label)) {
-            const numberField = label === 'le';
+            const numberField = label === HISTOGRAM_QUANTILE_LABEL_NAME;
             labelFields.push({
               name: label,
               config: { filterable: true },
@@ -164,8 +216,10 @@ export function transformDFToTable(dfs: DataFrame[]): DataFrame[] {
 
     // Fill valueField, timeField and labelFields with values
     dataFramesByRefId[refId].forEach((df) => {
-      df.fields[0].values.toArray().forEach((value) => timeField.values.add(value));
-      df.fields[1].values.toArray().forEach((value) => {
+      const timeFields = df.fields[0]?.values ?? new ArrayVector();
+      const dataFields = df.fields[1]?.values ?? new ArrayVector();
+      timeFields.toArray().forEach((value) => timeField.values.add(value));
+      dataFields.toArray().forEach((value) => {
         valueField.values.add(parseSampleValue(value));
         const labelsForField = df.fields[1].labels ?? {};
         labelFields.forEach((field) => field.values.add(getLabelValue(labelsForField, field.name)));
@@ -176,7 +230,8 @@ export function transformDFToTable(dfs: DataFrame[]): DataFrame[] {
     return {
       refId,
       fields,
-      meta: { ...dfs[0].meta, preferredVisualisationType: 'table' as PreferredVisualisationType },
+      // Prometheus specific UI for instant queries
+      meta: { ...dfs[0].meta, preferredVisualisationType: 'rawPrometheus' as PreferredVisualisationType },
       length: timeField.values.length,
     };
   });
@@ -211,7 +266,7 @@ export function transform(
     valueWithRefId: transformOptions.target.valueWithRefId,
     meta: {
       // Fix for showing of Prometheus results in Explore table
-      preferredVisualisationType: transformOptions.query.instant ? 'table' : 'graph',
+      preferredVisualisationType: transformOptions.query.instant ? 'rawPrometheus' : 'graph',
     },
   };
   const prometheusResult = response.data.data;
@@ -302,7 +357,7 @@ function getDataLinks(options: ExemplarTraceIdDestination): DataLink[] {
         title: options.urlDisplayLabel || `Query with ${dsSettings?.name}`,
         url: '',
         internal: {
-          query: { query: '${__value.raw}', queryType: 'traceId' },
+          query: { query: '${__value.raw}', queryType: 'traceql' },
           datasourceUid: options.datasourceUid,
           datasourceName: dsSettings?.name ?? 'Data source not found',
         },
@@ -441,7 +496,7 @@ function transformMetricDataToTable(md: MatrixOrVectorResult[], options: Transfo
     .map((label) => {
       // Labels have string field type, otherwise table tries to figure out the type which can result in unexpected results
       // Only "le" label has a number field type
-      const numberField = label === 'le';
+      const numberField = label === HISTOGRAM_QUANTILE_LABEL_NAME;
       return {
         name: label,
         config: { filterable: true },
@@ -475,7 +530,7 @@ function transformMetricDataToTable(md: MatrixOrVectorResult[], options: Transfo
 
 function getLabelValue(metric: PromMetric, label: string): string | number {
   if (metric.hasOwnProperty(label)) {
-    if (label === 'le') {
+    if (label === HISTOGRAM_QUANTILE_LABEL_NAME) {
       return parseSampleValue(metric[label]);
     }
     return metric[label];

@@ -1,3 +1,5 @@
+import { Subscription } from 'rxjs';
+
 import { toDataFrame, toDataFrameDTO } from '../../dataframe';
 import { DataFrame, DataTransformerConfig, FieldDTO, FieldType } from '../../types';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
@@ -6,9 +8,71 @@ import { transformDataFrame } from '../transformDataFrame';
 import { DataTransformerID } from './ids';
 import { LabelsToFieldsMode, LabelsToFieldsOptions, labelsToFieldsTransformer } from './labelsToFields';
 
+function labelsToFieldTransform(source: DataFrame[]): Promise<DataFrame[]> {
+  const cfg: DataTransformerConfig<LabelsToFieldsOptions> = {
+    id: DataTransformerID.labelsToFields,
+    options: {
+      mode: LabelsToFieldsMode.Rows,
+    },
+  };
+
+  const observable = transformDataFrame([cfg], source);
+
+  return new Promise((resolve, reject) => {
+    const subscription = new Subscription();
+
+    subscription.add(
+      observable.subscribe({
+        next: (value) => {
+          subscription.unsubscribe();
+          resolve(JSON.parse(JSON.stringify(value)));
+        },
+        error: (err) => {
+          subscription.unsubscribe();
+          reject(err);
+        },
+      })
+    );
+  });
+}
+
 describe('Labels as Columns', () => {
   beforeAll(() => {
     mockTransformationsRegistry([labelsToFieldsTransformer]);
+  });
+
+  it('transform keep the refId of dataFrames', async () => {
+    const input = [
+      toDataFrame({
+        refId: 'the-ref-id-A',
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, 2000] },
+          { name: 'Value', type: FieldType.number, values: [1, 2], labels: { labelA: 'valueA', labelB: 'valueB' } },
+        ],
+      }),
+      toDataFrame({
+        refId: 'the-ref-id-B',
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, 2000] },
+          { name: 'Value', type: FieldType.number, values: [1, 2], labels: { labelA: 'valueA', labelB: 'valueB' } },
+        ],
+      }),
+    ];
+
+    const output = await labelsToFieldTransform(input);
+
+    const expectedOutput = [
+      {
+        refId: 'the-ref-id-A',
+      },
+      {
+        refId: 'the-ref-id-B',
+      },
+    ];
+
+    for (let i = 0; i < output.length; i++) {
+      expect(output[i]).toMatchObject(expectedOutput[i]);
+    }
   });
 
   it('data frame with two labels', async () => {
@@ -28,20 +92,20 @@ describe('Labels as Columns', () => {
     await expect(transformDataFrame([cfg], [source])).toEmitValuesWith((received) => {
       const data = received[0];
       expect(toSimpleObject(data[0])).toMatchInlineSnapshot(`
-        Object {
-          "Value": Array [
+        {
+          "Value": [
             1,
             2,
           ],
-          "feelsLike": Array [
+          "feelsLike": [
             "ok",
             "ok",
           ],
-          "location": Array [
+          "location": [
             "inside",
             "inside",
           ],
-          "time": Array [
+          "time": [
             1000,
             2000,
           ],
@@ -119,27 +183,27 @@ describe('Labels as Columns', () => {
       expect(data.length).toEqual(2);
 
       expect(toSimpleObject(data[0])).toMatchInlineSnapshot(`
-        Object {
-          "location": Array [
+        {
+          "location": [
             "inside",
           ],
-          "temp": Array [
+          "temp": [
             1,
           ],
-          "time": Array [
+          "time": [
             1000,
           ],
         }
       `);
       expect(toSimpleObject(data[1])).toMatchInlineSnapshot(`
-        Object {
-          "location": Array [
+        {
+          "location": [
             "outside",
           ],
-          "temp": Array [
+          "temp": [
             -1,
           ],
-          "time": Array [
+          "time": [
             2000,
           ],
         }
@@ -196,33 +260,33 @@ describe('Labels as Columns', () => {
 
     await expect(transformDataFrame([cfg], [source])).toEmitValuesWith((received) => {
       expect(received[0][0].fields.map((f) => ({ [f.name]: f.values.toArray() }))).toMatchInlineSnapshot(`
-        Array [
-          Object {
-            "time": Array [
+        [
+          {
+            "time": [
               1000,
               2000,
             ],
           },
-          Object {
-            "a": Array [
+          {
+            "a": [
               1,
               3,
             ],
           },
-          Object {
-            "b": Array [
+          {
+            "b": [
               2,
               4,
             ],
           },
-          Object {
-            "foo": Array [
+          {
+            "foo": [
               "thing",
               "thing",
             ],
           },
-          Object {
-            "bar": Array [
+          {
+            "bar": [
               "thing",
               "thing",
             ],
@@ -285,42 +349,42 @@ describe('Labels as Columns', () => {
       expect(
         received[0].map((f) => ({ name: f.name, fields: f.fields.map((v) => ({ [v.name]: v.values.toArray() })) }))
       ).toMatchInlineSnapshot(`
-        Array [
-          Object {
-            "fields": Array [
-              Object {
-                "label": Array [
+        [
+          {
+            "fields": [
+              {
+                "label": [
                   "foo",
                   "bar",
                   "zaz",
                 ],
               },
-              Object {
-                "value": Array [
+              {
+                "value": [
                   "thing",
                   "a",
                   "xyz",
                 ],
               },
             ],
-            "name": "a {bar=\\"a\\", foo=\\"thing\\", zaz=\\"xyz\\"}",
+            "name": "a {bar="a", foo="thing", zaz="xyz"}",
           },
-          Object {
-            "fields": Array [
-              Object {
-                "label": Array [
+          {
+            "fields": [
+              {
+                "label": [
                   "foo",
                   "bar",
                 ],
               },
-              Object {
-                "value": Array [
+              {
+                "value": [
                   "thing",
                   "b",
                 ],
               },
             ],
-            "name": "b {bar=\\"b\\", foo=\\"thing\\"}",
+            "name": "b {bar="b", foo="thing"}",
           },
         ]
       `);
@@ -349,40 +413,40 @@ describe('Labels as Columns', () => {
       expect(
         received[0].map((f) => ({ name: f.name, fields: f.fields.map((v) => ({ [v.name]: v.values.toArray() })) }))
       ).toMatchInlineSnapshot(`
-        Array [
-          Object {
-            "fields": Array [
-              Object {
-                "label": Array [
+        [
+          {
+            "fields": [
+              {
+                "label": [
                   "zaz",
                   "bar",
                 ],
               },
-              Object {
-                "value": Array [
+              {
+                "value": [
                   "xyz",
                   "a",
                 ],
               },
             ],
-            "name": "a {bar=\\"a\\", foo=\\"thing\\", zaz=\\"xyz\\"}",
+            "name": "a {bar="a", foo="thing", zaz="xyz"}",
           },
-          Object {
-            "fields": Array [
-              Object {
-                "label": Array [
+          {
+            "fields": [
+              {
+                "label": [
                   "zaz",
                   "bar",
                 ],
               },
-              Object {
-                "value": Array [
+              {
+                "value": [
                   undefined,
                   "b",
                 ],
               },
             ],
-            "name": "b {bar=\\"b\\", foo=\\"thing\\"}",
+            "name": "b {bar="b", foo="thing"}",
           },
         ]
       `);
@@ -391,7 +455,7 @@ describe('Labels as Columns', () => {
 });
 
 function toSimpleObject(frame: DataFrame) {
-  const obj: any = {};
+  const obj: Record<string, unknown> = {};
   for (const field of frame.fields) {
     obj[field.name] = field.values.toArray();
   }

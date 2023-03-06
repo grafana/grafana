@@ -1,4 +1,4 @@
-import Map from 'ol/Map';
+import { Map as OpenLayersMap } from 'ol';
 
 import {
   MapLayerRegistryItem,
@@ -27,7 +27,7 @@ export const defaultBaseLayer: MapLayerRegistryItem = {
   name: 'Default base layer',
   isBaseMap: true,
 
-  create: (map: Map, options: MapLayerOptions, eventBus: EventBus, theme: GrafanaTheme2) => {
+  create: (map: OpenLayersMap, options: MapLayerOptions, eventBus: EventBus, theme: GrafanaTheme2) => {
     const serverLayerType = config?.geomapDefaultBaseLayerConfig?.type;
     if (serverLayerType) {
       const layer = geomapLayerRegistry.getIfExists(serverLayerType);

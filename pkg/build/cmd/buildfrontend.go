@@ -2,19 +2,21 @@ package main
 
 import (
 	"log"
-	"strings"
 
+	"github.com/urfave/cli/v2"
+
+	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/grafana/grafana/pkg/build/errutil"
 	"github.com/grafana/grafana/pkg/build/frontend"
 	"github.com/grafana/grafana/pkg/build/syncutil"
-	"github.com/urfave/cli/v2"
 )
 
 func BuildFrontend(c *cli.Context) error {
-	version := ""
-	if c.NArg() == 1 {
-		version = strings.TrimPrefix(c.Args().Get(0), "v")
+	metadata, err := config.GenerateMetadata(c)
+	if err != nil {
+		return err
 	}
+	version := metadata.GrafanaVersion
 
 	cfg, mode, err := frontend.GetConfig(c, version)
 	if err != nil {

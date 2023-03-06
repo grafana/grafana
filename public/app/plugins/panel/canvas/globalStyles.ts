@@ -58,7 +58,7 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
             content: '';
           }
           & ~ .rc-tree-treenode {
-            border-left: 2px solid ${theme.v1.colors.formInputBorder};
+            border-left: 2px solid ${theme.components.input.borderColor};
           }
         }
         &.drop-target {
@@ -88,17 +88,17 @@ export function getGlobalStyles(theme: GrafanaTheme2) {
           flex-grow: 1;
           display: flex;
 
-          border: 1px solid ${theme.v1.colors.formInputBorder};
-          border-radius: ${theme.v1.border.radius.sm};
-          background: ${theme.v1.colors.bg2};
-          min-height: ${theme.v1.spacing.formInputHeight}px;
+          border: 1px solid ${theme.components.input.borderColor};
+          border-radius: ${theme.shape.borderRadius(1)};
+          background: ${theme.colors.background.secondary};
+          min-height: ${theme.spacing.gridSize * 4}px;
 
           &:hover {
-            border: 1px solid ${theme.v1.colors.formInputBorderHover};
+            border: 1px solid ${theme.components.input.borderHover};
           }
 
           &.rc-tree-node-selected {
-            border: 1px solid ${theme.v1.colors.formInputBorderActive};
+            border: 1px solid ${theme.colors.primary.border};
             opacity: 1;
           }
         }

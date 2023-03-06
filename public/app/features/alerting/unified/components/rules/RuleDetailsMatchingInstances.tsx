@@ -2,8 +2,8 @@ import { css, cx } from '@emotion/css';
 import { countBy } from 'lodash';
 import React, { useMemo, useState } from 'react';
 
-import { GrafanaTheme } from '@grafana/data';
-import { LinkButton, useStyles } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { LinkButton, useStyles2 } from '@grafana/ui';
 import { MatcherFilter } from 'app/features/alerting/unified/components/alert-groups/MatcherFilter';
 import {
   AlertInstanceStateFilter,
@@ -33,7 +33,7 @@ interface ShowMoreStats {
 }
 
 function ShowMoreInstances(props: { ruleViewPageLink: string; stats: ShowMoreStats }) {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
   const { ruleViewPageLink, stats } = props;
 
   return (
@@ -64,7 +64,7 @@ export function RuleDetailsMatchingInstances(props: Props): JSX.Element | null {
   const [filterKey] = useState<number>(Math.floor(Math.random() * 100));
   const queryStringKey = `queryString-${filterKey}`;
 
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   const stateFilterType = isGrafanaRulesSource(namespace.rulesSource) ? GRAFANA_RULES_SOURCE_NAME : 'prometheus';
 
@@ -140,7 +140,7 @@ function filterAlerts(
   return filteredAlerts;
 }
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     flexRow: css`
       display: flex;
@@ -148,18 +148,18 @@ const getStyles = (theme: GrafanaTheme) => {
       align-items: flex-end;
       width: 100%;
       flex-wrap: wrap;
-      margin-bottom: ${theme.spacing.sm};
+      margin-bottom: ${theme.spacing(1)};
     `,
     spaceBetween: css`
       justify-content: space-between;
     `,
     rowChild: css`
-      margin-right: ${theme.spacing.sm};
+      margin-right: ${theme.spacing(1)};
     `,
     footerRow: css`
       display: flex;
       flex-direction: column;
-      gap: ${theme.spacing.sm};
+      gap: ${theme.spacing(1)};
       justify-content: space-between;
       align-items: center;
       width: 100%;

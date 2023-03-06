@@ -11,13 +11,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	acdb "github.com/grafana/grafana/pkg/services/accesscontrol/database"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions/types"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -25,7 +25,9 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 )
 
-func TestPrometheusRules(t *testing.T) {
+func TestIntegrationPrometheusRules(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -103,7 +105,7 @@ func TestPrometheusRules(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "-100",
+								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
 									"type": "math",
 									"expression": "2 + 3 > 1"
@@ -123,7 +125,7 @@ func TestPrometheusRules(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "-100",
+								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
 									"type": "math",
 									"expression": "2 + 3 > 1"
@@ -179,7 +181,7 @@ func TestPrometheusRules(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "-100",
+								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
 									"type": "math",
 									"expression": "2 + 3 > 1"
@@ -236,7 +238,7 @@ func TestPrometheusRules(t *testing.T) {
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
-				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"-100\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
+				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
 				"duration": 10,
 				"annotations": {
 					"annotation1": "val1"
@@ -251,7 +253,7 @@ func TestPrometheusRules(t *testing.T) {
 			}, {
 				"state": "inactive",
 				"name": "AlwaysFiringButSilenced",
-				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"-100\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
+				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
 				"health": "ok",
 				"type": "alerting",
 				"lastEvaluation": "0001-01-01T00:00:00Z",
@@ -288,7 +290,7 @@ func TestPrometheusRules(t *testing.T) {
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
-				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"-100\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
+				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
 				"duration": 10,
 				"annotations": {
 					"annotation1": "val1"
@@ -303,7 +305,7 @@ func TestPrometheusRules(t *testing.T) {
 			}, {
 				"state": "inactive",
 				"name": "AlwaysFiringButSilenced",
-				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"-100\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
+				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
 				"health": "ok",
 				"type": "alerting",
 				"lastEvaluation": "0001-01-01T00:00:00Z",
@@ -320,7 +322,9 @@ func TestPrometheusRules(t *testing.T) {
 	}
 }
 
-func TestPrometheusRulesFilterByDashboard(t *testing.T) {
+func TestIntegrationPrometheusRulesFilterByDashboard(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		EnableFeatureToggles: []string{"ngalert"},
 		DisableAnonymous:     true,
@@ -368,7 +372,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "-100",
+								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
 									"type": "math",
 									"expression": "2 + 3 > 1"
@@ -388,7 +392,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "-100",
+								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
 									"type": "math",
 									"expression": "2 + 3 > 1"
@@ -431,7 +435,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
-				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"-100\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
+				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
 				"duration": 10,
 				"annotations": {
 					"__dashboardUid__": "%s",
@@ -444,7 +448,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 			}, {
 				"state": "inactive",
 				"name": "AlwaysFiringButSilenced",
-				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"-100\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
+				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
 				"health": "ok",
 				"type": "alerting",
 				"lastEvaluation": "0001-01-01T00:00:00Z",
@@ -466,7 +470,7 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 			"rules": [{
 				"state": "inactive",
 				"name": "AlwaysFiring",
-				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"-100\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
+				"query": "[{\"refId\":\"A\",\"queryType\":\"\",\"relativeTimeRange\":{\"from\":18000,\"to\":10800},\"datasourceUid\":\"__expr__\",\"model\":{\"expression\":\"2 + 3 \\u003e 1\",\"intervalMs\":1000,\"maxDataPoints\":43200,\"type\":\"math\"}}]",
 				"duration": 10,
 				"annotations": {
 					"__dashboardUid__": "%s",
@@ -613,7 +617,9 @@ func TestPrometheusRulesFilterByDashboard(t *testing.T) {
 	}
 }
 
-func TestPrometheusRulesPermissions(t *testing.T) {
+func TestIntegrationPrometheusRulesPermissions(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -633,7 +639,7 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 	apiClient := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
 
 	// access control permissions store
-	permissionsStore := acdb.ProvideService(store)
+	permissionsStore := resourcepermissions.NewStore(store)
 
 	// Create the namespace we'll save our alerts to.
 	apiClient.CreateFolder(t, "folder1", "folder1")
@@ -726,17 +732,17 @@ func TestPrometheusRulesPermissions(t *testing.T) {
 	}
 }
 
-func removeFolderPermission(t *testing.T, store *acdb.AccessControlStore, orgID, userID int64, role org.RoleType, uid string) {
+func removeFolderPermission(t *testing.T, store resourcepermissions.Store, orgID, userID int64, role org.RoleType, uid string) {
 	t.Helper()
 	// remove user permissions on folder
-	_, _ = store.SetUserResourcePermission(context.Background(), orgID, accesscontrol.User{ID: userID}, types.SetResourcePermissionCommand{
+	_, _ = store.SetUserResourcePermission(context.Background(), orgID, accesscontrol.User{ID: userID}, resourcepermissions.SetResourcePermissionCommand{
 		Resource:          "folders",
 		ResourceID:        uid,
 		ResourceAttribute: "uid",
 	}, nil)
 
 	// remove org role permissions from folder
-	_, _ = store.SetBuiltInResourcePermission(context.Background(), orgID, string(role), types.SetResourcePermissionCommand{
+	_, _ = store.SetBuiltInResourcePermission(context.Background(), orgID, string(role), resourcepermissions.SetResourcePermissionCommand{
 		Resource:          "folders",
 		ResourceID:        uid,
 		ResourceAttribute: "uid",
@@ -744,7 +750,7 @@ func removeFolderPermission(t *testing.T, store *acdb.AccessControlStore, orgID,
 
 	// remove org role children permissions from folder
 	for _, c := range role.Children() {
-		_, _ = store.SetBuiltInResourcePermission(context.Background(), orgID, string(c), types.SetResourcePermissionCommand{
+		_, _ = store.SetBuiltInResourcePermission(context.Background(), orgID, string(c), resourcepermissions.SetResourcePermissionCommand{
 			Resource:          "folders",
 			ResourceID:        uid,
 			ResourceAttribute: "uid",

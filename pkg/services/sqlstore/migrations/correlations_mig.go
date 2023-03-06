@@ -25,4 +25,8 @@ func addCorrelationsMigrations(mg *Migrator) {
 
 	mg.AddMigration("add index correlations.uid", NewAddIndexMigration(correlationsV1, correlationsV1.Indices[0]))
 	mg.AddMigration("add index correlations.source_uid", NewAddIndexMigration(correlationsV1, correlationsV1.Indices[1]))
+
+	mg.AddMigration("add correlation config column", NewAddColumnMigration(correlationsV1, &Column{
+		Name: "config", Type: DB_Text, Nullable: true,
+	}))
 }

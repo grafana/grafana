@@ -1,22 +1,35 @@
 import { ComponentType } from 'react';
 
+import { LinkTarget } from './dataLink';
+import { IconName } from './icon';
+
 export interface NavLinkDTO {
   id?: string;
   text: string;
   description?: string;
   section?: NavSection;
   subTitle?: string;
-  icon?: string;
+  icon?: IconName;
   img?: string;
   url?: string;
-  target?: string;
+  target?: LinkTarget;
   sortWeight?: number;
   divider?: boolean;
   hideFromMenu?: boolean;
   hideFromTabs?: boolean;
+  showIconInNavbar?: boolean;
+  roundIcon?: boolean;
+  /**
+   * This is true for some sections that have no children (but is still a section)
+   **/
+  isSection?: boolean;
   children?: NavLinkDTO[];
   highlightText?: string;
   emptyMessageId?: string;
+  // The ID of the plugin that registered the page (in case it was registered by a plugin, otherwise left empty)
+  pluginId?: string;
+  // Whether the page is used to create a new resource. We may place these in a different position in the UI.
+  isCreateAction?: boolean;
 }
 
 export interface NavModelItem extends NavLinkDTO {
@@ -30,7 +43,8 @@ export interface NavModelItem extends NavLinkDTO {
   highlightText?: string;
   highlightId?: string;
   tabSuffix?: ComponentType<{ className?: string }>;
-  showIconInNavbar?: boolean;
+  hideFromBreadcrumbs?: boolean;
+  emptyMessage?: string;
 }
 
 export enum NavSection {
@@ -64,3 +78,9 @@ export interface NavModelBreadcrumb {
 }
 
 export type NavIndex = { [s: string]: NavModelItem };
+
+export enum PageLayoutType {
+  Standard,
+  Canvas,
+  Custom,
+}

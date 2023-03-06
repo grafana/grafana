@@ -16,7 +16,10 @@ import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSuppo
 
 import { DataSourceRef, WithAccessControlMetadata } from '.';
 
-export interface DataSourcePluginOptionsEditorProps<JSONData = DataSourceJsonData, SecureJSONData = {}> {
+export interface DataSourcePluginOptionsEditorProps<
+  JSONData extends DataSourceJsonData = DataSourceJsonData,
+  SecureJSONData = {}
+> {
   options: DataSourceSettings<JSONData, SecureJSONData>;
   onOptionsChange: (options: DataSourceSettings<JSONData, SecureJSONData>) => void;
 }
@@ -142,6 +145,10 @@ interface PluginMetaQueryOptions {
   maxDataPoints?: boolean;
   minInterval?: boolean;
 }
+interface PluginQueryCachingConfig {
+  enabled?: boolean;
+  TTLMs?: number;
+}
 
 export interface DataSourcePluginComponents<
   DSType extends DataSourceApi<TQuery, TOptions>,
@@ -172,6 +179,13 @@ export interface DataSourceConstructor<
 > {
   new (instanceSettings: DataSourceInstanceSettings<TOptions>, ...args: any[]): DSType;
 }
+
+// VariableSupport is hoisted up to its own type to fix the wonky intermittent
+// 'variables is references directly or indirectly' error
+type VariableSupport<TQuery extends DataQuery, TOptions extends DataSourceJsonData> =
+  | StandardVariableSupport<DataSourceApi<TQuery, TOptions>>
+  | CustomVariableSupport<DataSourceApi<TQuery, TOptions>>
+  | DataSourceVariableSupport<DataSourceApi<TQuery, TOptions>>;
 
 /**
  * The main data source abstraction interface, represents an instance of a data source
@@ -214,6 +228,7 @@ abstract class DataSourceApi<
     this.id = instanceSettings.id;
     this.type = instanceSettings.type;
     this.meta = instanceSettings.meta;
+    this.cachingConfig = instanceSettings.cachingConfig;
     this.uid = instanceSettings.uid;
   }
 
@@ -292,6 +307,12 @@ abstract class DataSourceApi<
   meta: DataSourcePluginMeta;
 
   /**
+   * Information about the datasource's query caching configuration
+   * When the caching feature is disabled, this config will always be falsy
+   */
+  cachingConfig?: PluginQueryCachingConfig;
+
+  /**
    * Used by alerting to check if query contains template variables
    */
   targetContainsTemplate?(query: TQuery): boolean;
@@ -341,10 +362,7 @@ abstract class DataSourceApi<
    * Defines new variable support
    * @alpha -- experimental
    */
-  variables?:
-    | StandardVariableSupport<DataSourceApi<TQuery, TOptions>>
-    | CustomVariableSupport<DataSourceApi<TQuery, TOptions>>
-    | DataSourceVariableSupport<DataSourceApi<TQuery, TOptions>>;
+  variables?: VariableSupport<TQuery, TOptions>;
 
   /*
    * Optionally, use this method to set default values for a query
@@ -375,6 +393,7 @@ export interface QueryEditorProps<
   onRunQuery: () => void;
   onChange: (value: TVQuery) => void;
   onBlur?: () => void;
+  onAddQuery?: (query: TQuery) => void;
   /**
    * Contains query response filtered by refId of QueryResultBase and possible query error
    */
@@ -432,8 +451,14 @@ export interface DataQueryResponse {
 
   /**
    * Optionally include error info along with the response data
+   * @deprecated use errors instead -- will be removed in Grafana 10+
    */
   error?: DataQueryError;
+
+  /**
+   * Optionally include multiple errors for different targets
+   */
+  errors?: DataQueryError[];
 
   /**
    * Use this to control which state the response should have
@@ -479,6 +504,7 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   app: CoreApp | string;
 
   cacheTimeout?: string | null;
+  queryCachingTTL?: number | null;
   rangeRaw?: RawTimeRange;
   timeInfo?: string; // The query time description (blue text in the upper right)
   panelId?: number;
@@ -493,6 +519,9 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
 
   // Explore state used by various datasources
   liveStreaming?: boolean;
+
+  // Make it possible to hide support queries from the inspector
+  hideFromInspector?: boolean;
 }
 
 export interface DataQueryTimings {
@@ -500,6 +529,7 @@ export interface DataQueryTimings {
 }
 
 export interface QueryFix {
+  title?: string;
   label: string;
   action?: QueryFixAction;
 }
@@ -547,6 +577,10 @@ export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJso
   access: string;
   url: string;
   user: string;
+  /**
+   *  @deprecated -- use jsonData to store information related to database.
+   *  This field should only be used by Elasticsearch and Influxdb.
+   */
   database: string;
   basicAuth: boolean;
   basicAuthUser: string;
@@ -570,10 +604,16 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
   type: string;
   name: string;
   meta: DataSourcePluginMeta;
+  cachingConfig?: PluginQueryCachingConfig;
+  readOnly: boolean;
   url?: string;
   jsonData: T;
   username?: string;
   password?: string; // when access is direct, for some legacy datasources
+  /**
+   *  @deprecated -- use jsonData to store information related to database.
+   *  This field should only be used by Elasticsearch and Influxdb.
+   */
   database?: string;
   isDefault?: boolean;
   access: 'direct' | 'proxy'; // Currently we support 2 options - direct (browser) and proxy (server)

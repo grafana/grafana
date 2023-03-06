@@ -8,15 +8,16 @@ import {
   ThresholdsMode,
   GAUGE_DEFAULT_MAXIMUM,
   GAUGE_DEFAULT_MINIMUM,
+  GrafanaTheme2,
 } from '@grafana/data';
 import { VizTextDisplayOptions } from '@grafana/schema';
 
-import { Themeable } from '../../types';
 import { calculateFontSize } from '../../utils/measureText';
+import { clearButtonStyles } from '../Button';
 
 import { calculateGaugeAutoProps, DEFAULT_THRESHOLDS, getFormattedThresholds } from './utils';
 
-export interface Props extends Themeable {
+export interface Props {
   height: number;
   field: FieldConfig;
   showThresholdMarkers: boolean;
@@ -26,10 +27,11 @@ export interface Props extends Themeable {
   text?: VizTextDisplayOptions;
   onClick?: React.MouseEventHandler<HTMLElement>;
   className?: string;
+  theme: GrafanaTheme2;
 }
 
 export class Gauge extends PureComponent<Props> {
-  canvasElement: any;
+  canvasElement: HTMLDivElement | null = null;
 
   static defaultProps: Partial<Props> = {
     showThresholdMarkers: true,
@@ -54,7 +56,7 @@ export class Gauge extends PureComponent<Props> {
 
     const autoProps = calculateGaugeAutoProps(width, height, value.title);
     const dimension = Math.min(width, autoProps.gaugeHeight);
-    const backgroundColor = theme.colors.bg2;
+    const backgroundColor = theme.colors.background.secondary;
     const gaugeWidthReduceRatio = showThresholdLabels ? 1.5 : 1;
     const gaugeWidth = Math.min(dimension / 5.5, 40) / gaugeWidthReduceRatio;
     const thresholdMarkersWidth = gaugeWidth / 5;
@@ -90,12 +92,13 @@ export class Gauge extends PureComponent<Props> {
       max = +max.toFixed(decimals);
     }
 
-    const options: any = {
+    const options = {
       series: {
         gauges: {
           gauge: {
             min,
             max,
+            neutralValue: field.custom?.neutral,
             background: { color: backgroundColor },
             border: { color: null },
             shadow: { show: false },
@@ -120,7 +123,7 @@ export class Gauge extends PureComponent<Props> {
             formatter: () => {
               return text;
             },
-            font: { size: fontSize, family: theme.typography.fontFamily.sansSerif },
+            font: { size: fontSize, family: theme.typography.fontFamily },
           },
           show: true,
         },
@@ -133,23 +136,33 @@ export class Gauge extends PureComponent<Props> {
     };
 
     try {
-      $.plot(this.canvasElement, [plotSeries], options);
+      if (this.canvasElement) {
+        $.plot(this.canvasElement, [plotSeries], options);
+      }
     } catch (err) {
       console.error('Gauge rendering error', err, options, value);
     }
   }
 
   renderVisualization = () => {
-    const { width, value, height, onClick, text } = this.props;
+    const { width, value, height, onClick, text, theme } = this.props;
     const autoProps = calculateGaugeAutoProps(width, height, value.title);
+    const gaugeElement = (
+      <div
+        style={{ height: `${autoProps.gaugeHeight}px`, width: '100%' }}
+        ref={(element) => (this.canvasElement = element)}
+      />
+    );
 
     return (
       <>
-        <div
-          style={{ height: `${autoProps.gaugeHeight}px`, width: '100%' }}
-          ref={(element) => (this.canvasElement = element)}
-          onClick={onClick}
-        />
+        {onClick ? (
+          <button className={clearButtonStyles(theme)} type="button" onClick={onClick}>
+            {gaugeElement}
+          </button>
+        ) : (
+          gaugeElement
+        )}
         {autoProps.showLabel && (
           <div
             style={{

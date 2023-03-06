@@ -1,3 +1,7 @@
+import { Location } from 'history';
+
+import { GrafanaConfig } from '../types';
+
 import { locationUtil } from './location';
 
 describe('locationUtil', () => {
@@ -29,9 +33,9 @@ describe('locationUtil', () => {
     describe('when appSubUrl configured', () => {
       beforeEach(() => {
         locationUtil.initialize({
-          config: { appSubUrl: '/subUrl' } as any,
-          getVariablesUrlParams: (() => {}) as any,
-          getTimeRangeForUrl: (() => {}) as any,
+          config: { appSubUrl: '/subUrl' } as GrafanaConfig,
+          getVariablesUrlParams: jest.fn(),
+          getTimeRangeForUrl: jest.fn(),
         });
       });
       test('relative url', () => {
@@ -65,9 +69,9 @@ describe('locationUtil', () => {
     describe('when appSubUrl not configured', () => {
       beforeEach(() => {
         locationUtil.initialize({
-          config: {} as any,
-          getVariablesUrlParams: (() => {}) as any,
-          getTimeRangeForUrl: (() => {}) as any,
+          config: {} as GrafanaConfig,
+          getVariablesUrlParams: jest.fn(),
+          getTimeRangeForUrl: jest.fn(),
         });
       });
 
@@ -115,12 +119,102 @@ describe('locationUtil', () => {
     });
   });
 
+  describe('getUrlForPartial', () => {
+    const mockLocation: Location = {
+      hash: '',
+      pathname: '/',
+      search: '',
+      state: {},
+    };
+    describe('when appSubUrl is not configured', () => {
+      beforeEach(() => {
+        locationUtil.initialize({
+          config: {
+            appSubUrl: '',
+          } as GrafanaConfig,
+          getVariablesUrlParams: jest.fn(),
+          getTimeRangeForUrl: jest.fn(),
+        });
+      });
+
+      it('can add params', () => {
+        expect(locationUtil.getUrlForPartial(mockLocation, { forceLogin: 'true' })).toEqual('/?forceLogin=true');
+      });
+
+      it('can remove params using undefined', () => {
+        expect(
+          locationUtil.getUrlForPartial(
+            {
+              ...mockLocation,
+              search: '?a=1',
+            },
+            { a: undefined }
+          )
+        ).toEqual('/');
+      });
+
+      it('can remove params using null', () => {
+        expect(
+          locationUtil.getUrlForPartial(
+            {
+              ...mockLocation,
+              search: '?a=1',
+            },
+            { a: null }
+          )
+        ).toEqual('/');
+      });
+    });
+
+    describe('when appSubUrl is configured', () => {
+      beforeEach(() => {
+        locationUtil.initialize({
+          config: {
+            appSubUrl: '/subpath',
+          } as GrafanaConfig,
+          getVariablesUrlParams: jest.fn(),
+          getTimeRangeForUrl: jest.fn(),
+        });
+      });
+
+      it('can add params', () => {
+        expect(locationUtil.getUrlForPartial(mockLocation, { forceLogin: 'true' })).toEqual(
+          '/subpath/?forceLogin=true'
+        );
+      });
+
+      it('can remove params using undefined', () => {
+        expect(
+          locationUtil.getUrlForPartial(
+            {
+              ...mockLocation,
+              search: '?a=1',
+            },
+            { a: undefined }
+          )
+        ).toEqual('/subpath/');
+      });
+
+      it('can remove params using null', () => {
+        expect(
+          locationUtil.getUrlForPartial(
+            {
+              ...mockLocation,
+              search: '?a=1',
+            },
+            { a: null }
+          )
+        ).toEqual('/subpath/');
+      });
+    });
+  });
+
   describe('updateSearchParams', () => {
     beforeEach(() => {
       locationUtil.initialize({
-        config: {} as any,
-        getVariablesUrlParams: (() => {}) as any,
-        getTimeRangeForUrl: (() => {}) as any,
+        config: {} as GrafanaConfig,
+        getVariablesUrlParams: jest.fn(),
+        getTimeRangeForUrl: jest.fn(),
       });
     });
 

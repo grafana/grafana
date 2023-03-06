@@ -9,13 +9,12 @@ import '../../../public/vendor/flot/jquery.flot.crosshair';
 import '../../../public/vendor/flot/jquery.flot.dashes';
 import '../../../public/vendor/flot/jquery.flot.gauge';
 import { withTheme } from '../src/utils/storybook/withTheme';
-// @ts-ignore
-import lightTheme from '../../../public/sass/grafana.light.scss';
-// @ts-ignore
-import darkTheme from '../../../public/sass/grafana.dark.scss';
-import { GrafanaLight, GrafanaDark } from './storybookTheme';
-import addons from '@storybook/addons';
 import { ThemedDocsContainer } from '../src/utils/storybook/ThemedDocsContainer';
+// @ts-ignore
+import lightTheme from './grafana.light.scss';
+// @ts-ignore
+import darkTheme from './grafana.dark.scss';
+import { GrafanaLight, GrafanaDark } from './storybookTheme';
 
 const handleThemeChange = (theme: any) => {
   if (theme !== 'light') {
@@ -27,23 +26,21 @@ const handleThemeChange = (theme: any) => {
   }
 };
 
-addons.setConfig({
-  showRoots: false,
-  theme: GrafanaDark,
-});
-
 export const decorators = [withTheme(handleThemeChange)];
 
 export const parameters = {
-  docs: {
-    container: ThemedDocsContainer,
-  },
+  actions: { argTypesRegex: '^on[A-Z].*' },
   darkMode: {
     dark: GrafanaDark,
     light: GrafanaLight,
   },
+  docs: {
+    container: ThemedDocsContainer,
+  },
+  knobs: {
+    disable: true,
+  },
   layout: 'fullscreen',
-  actions: { argTypesRegex: '^on[A-Z].*' },
   options: {
     showPanel: true,
     panelPosition: 'right',
@@ -55,8 +52,5 @@ export const parameters = {
       // Order Docs Overview and Docs Overview/Intro story first
       order: ['Docs Overview', ['Intro']],
     },
-  },
-  knobs: {
-    disable: true,
   },
 };

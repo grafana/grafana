@@ -1,3 +1,4 @@
+import * as DOMPurify from 'dompurify';
 import { Fill, RegularShape, Stroke, Circle, Style, Icon, Text } from 'ol/style';
 import tinycolor from 'tinycolor2';
 
@@ -247,6 +248,8 @@ async function prepareSVG(url: string, size?: number): Promise<string> {
       return res.text();
     })
     .then((text) => {
+      text = DOMPurify.sanitize(text, { USE_PROFILES: { svg: true, svgFilters: true } });
+
       const parser = new DOMParser();
       const doc = parser.parseFromString(text, 'image/svg+xml');
       const svg = doc.getElementsByTagName('svg')[0];
@@ -267,7 +270,7 @@ async function prepareSVG(url: string, size?: number): Promise<string> {
       return `data:image/svg+xml,${svgURI}`;
     })
     .catch((error) => {
-      console.error(error);
+      console.error(error); // eslint-disable-line no-console
       return '';
     });
 }

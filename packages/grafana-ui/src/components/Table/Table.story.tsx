@@ -36,7 +36,7 @@ const meta: ComponentMeta<typeof Table> = {
   args: {
     width: 700,
     height: 500,
-    columnMinWidth: 150,
+    columnMinWidth: 130,
   },
 };
 
@@ -96,6 +96,61 @@ function buildData(theme: GrafanaTheme2, config: Record<string, FieldConfig>): D
   }
 
   return prepDataForStorybook([data], theme)[0];
+}
+
+function buildSubTablesData(theme: GrafanaTheme2, config: Record<string, FieldConfig>): DataFrame[] {
+  const frames: DataFrame[] = [];
+
+  for (let i = 0; i < 1000; i++) {
+    const data = new MutableDataFrame({
+      meta: {
+        custom: {
+          parentRowIndex: i,
+        },
+      },
+      fields: [
+        { name: 'Time', type: FieldType.time, values: [] }, // The time field
+        {
+          name: 'Quantity',
+          type: FieldType.number,
+          values: [],
+          config: {
+            decimals: 0,
+            custom: {
+              align: 'center',
+            },
+          },
+        },
+        { name: 'Quality', type: FieldType.string, values: [] }, // The time field
+        {
+          name: 'Progress',
+          type: FieldType.number,
+          values: [],
+          config: {
+            unit: 'percent',
+            min: 0,
+            max: 100,
+          },
+        },
+      ],
+    });
+
+    for (const field of data.fields) {
+      field.config = merge(field.config, config[field.name]);
+    }
+
+    for (let i = 0; i < Math.random() * 4 + 1; i++) {
+      data.appendRow([
+        new Date().getTime(),
+        Math.random() * 2,
+        Math.random() > 0.7 ? 'Good' : 'Bad',
+        Math.random() * 100,
+      ]);
+    }
+
+    frames.push(data);
+  }
+  return prepDataForStorybook(frames, theme);
 }
 
 function buildFooterData(data: DataFrame): FooterItem[] {
@@ -193,6 +248,25 @@ export const Footer: ComponentStory<typeof Table> = (args) => {
 export const Pagination: ComponentStory<typeof Table> = (args) => <Basic {...args} />;
 Pagination.args = {
   enablePagination: true,
+};
+
+export const SubTables: ComponentStory<typeof Table> = (args) => {
+  const theme = useTheme2();
+  const data = buildData(theme, {});
+  const subData = buildSubTablesData(theme, {
+    Progress: {
+      custom: {
+        displayMode: 'gradient-gauge',
+      },
+      thresholds: defaultThresholds,
+    },
+  });
+
+  return (
+    <div className="panel-container" style={{ width: 'auto', height: 'unset' }}>
+      <Table {...args} data={data} subData={subData} />
+    </div>
+  );
 };
 
 export default meta;

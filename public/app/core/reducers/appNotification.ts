@@ -75,13 +75,8 @@ function isAtLeastWarning(notif: AppNotification) {
   return notif.severity === AppNotificationSeverity.Warning || notif.severity === AppNotificationSeverity.Error;
 }
 
-function isStoredNotification(obj: any): obj is StoredNotification {
-  return (
-    typeof obj.id === 'string' &&
-    typeof obj.icon === 'string' &&
-    typeof obj.title === 'string' &&
-    typeof obj.text === 'string'
-  );
+function isStoredNotification(obj: unknown): obj is StoredNotification {
+  return typeof obj === 'object' && obj !== null && 'id' in obj && 'icon' in obj && 'title' in obj && 'text' in obj;
 }
 
 // (De)serialization

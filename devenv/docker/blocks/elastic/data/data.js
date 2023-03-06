@@ -80,6 +80,9 @@ async function elasticSetupIndexTemplate() {
           location: {
             type: 'geo_point',
           },
+          shapes: {
+            type: 'nested',
+          }
         },
       },
     },
@@ -108,6 +111,15 @@ function getRandomLogItem(counter, timestamp) {
     level: chooseRandomElement(['info', 'info', 'error']),
     // location: chooseRandomElement(LOCATIONS),
     location: makeRandomPoint(),
+    shapes: Math.random() < 0.5 ? [
+      {"type": "triangle"},
+      {"type": "square"},
+    ] : [
+      {"type": "triangle"},
+      {"type": "triangle"},
+      {"type": "triangle"},
+      {"type": "square"},
+    ],
   };
 }
 

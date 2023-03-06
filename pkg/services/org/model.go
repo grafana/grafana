@@ -2,15 +2,20 @@ package org
 
 import (
 	"errors"
-	"fmt"
 	"strings"
 	"time"
+
+	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 // Typed errors
 var (
-	ErrOrgNotFound  = errors.New("organization not found")
-	ErrOrgNameTaken = errors.New("organization name is taken")
+	ErrOrgNotFound         = errors.New("organization not found")
+	ErrOrgNameTaken        = errors.New("organization name is taken")
+	ErrLastOrgAdmin        = errors.New("cannot remove last organization admin")
+	ErrOrgUserNotFound     = errors.New("cannot find the organization user")
+	ErrOrgUserAlreadyAdded = errors.New("user is already added to organization")
 )
 
 type Org struct {
@@ -37,8 +42,7 @@ type OrgUser struct {
 	Updated time.Time
 }
 
-// swagger:enum RoleType
-type RoleType string
+type RoleType = roletype.RoleType
 
 const (
 	RoleViewer RoleType = "Viewer"
@@ -50,7 +54,7 @@ type CreateOrgCommand struct {
 	Name string `json:"name" binding:"Required"`
 
 	// initial admin user for account
-	UserID int64 `json:"-"`
+	UserID int64 `json:"-" xorm:"user_id"`
 }
 
 type GetOrgIDForNewUserCommand struct {
@@ -61,56 +65,162 @@ type GetOrgIDForNewUserCommand struct {
 	SkipOrgSetup bool
 }
 
-func (r RoleType) IsValid() bool {
-	return r == RoleViewer || r == RoleAdmin || r == RoleEditor
+type GetUserOrgListQuery struct {
+	UserID int64 `xorm:"user_id"`
 }
 
-func (r RoleType) Includes(other RoleType) bool {
-	if r == RoleAdmin {
+type UserOrgDTO struct {
+	OrgID int64    `json:"orgId" xorm:"org_id"`
+	Name  string   `json:"name"`
+	Role  RoleType `json:"role"`
+}
+
+type UpdateOrgCommand struct {
+	Name  string
+	OrgId int64
+}
+
+type SearchOrgsQuery struct {
+	Query string
+	Name  string
+	Limit int
+	Page  int
+	IDs   []int64 `xorm:"ids"`
+}
+
+type OrgDTO struct {
+	ID   int64  `json:"id" xorm:"id"`
+	Name string `json:"name"`
+}
+
+type GetOrgByIDQuery struct {
+	ID int64
+}
+
+type GetOrgByNameQuery struct {
+	Name string
+}
+
+type UpdateOrgAddressCommand struct {
+	OrgID int64 `xorm:"org_id"`
+	Address
+}
+
+type Address struct {
+	Address1 string `json:"address1"`
+	Address2 string `json:"address2"`
+	City     string `json:"city"`
+	ZipCode  string `json:"zipCode"`
+	State    string `json:"state"`
+	Country  string `json:"country"`
+}
+
+type DeleteOrgCommand struct {
+	ID int64 `xorm:"id"`
+}
+
+type AddOrgUserCommand struct {
+	LoginOrEmail string   `json:"loginOrEmail" binding:"Required"`
+	Role         RoleType `json:"role" binding:"Required"`
+
+	OrgID  int64 `json:"-" xorm:"org_id"`
+	UserID int64 `json:"-" xorm:"user_id"`
+
+	// internal use: avoid adding service accounts to orgs via user routes
+	AllowAddingServiceAccount bool `json:"-"`
+}
+
+type UpdateOrgUserCommand struct {
+	Role RoleType `json:"role" binding:"Required"`
+
+	OrgID  int64 `json:"-"`
+	UserID int64 `json:"-"`
+}
+
+type OrgUserDTO struct {
+	OrgID         int64           `json:"orgId" xorm:"org_id"`
+	UserID        int64           `json:"userId" xorm:"user_id"`
+	Email         string          `json:"email"`
+	Name          string          `json:"name"`
+	AvatarURL     string          `json:"avatarUrl" xorm:"avatar_url"`
+	Login         string          `json:"login"`
+	Role          string          `json:"role"`
+	LastSeenAt    time.Time       `json:"lastSeenAt"`
+	Updated       time.Time       `json:"-"`
+	Created       time.Time       `json:"-"`
+	LastSeenAtAge string          `json:"lastSeenAtAge"`
+	AccessControl map[string]bool `json:"accessControl,omitempty"`
+	IsDisabled    bool            `json:"isDisabled"`
+	AuthLabels    []string        `json:"authLabels" xorm:"-"`
+}
+
+type RemoveOrgUserCommand struct {
+	UserID                   int64 `xorm:"user_id"`
+	OrgID                    int64 `xorm:"org_id"`
+	ShouldDeleteOrphanedUser bool
+	UserWasDeleted           bool
+}
+
+type GetOrgUsersQuery struct {
+	UserID int64 `xorm:"user_id"`
+	OrgID  int64 `xorm:"org_id"`
+	Query  string
+	Page   int
+	Limit  int
+	// Flag used to allow oss edition to query users without access control
+	DontEnforceAccessControl bool
+
+	User *user.SignedInUser
+}
+
+type SearchOrgUsersQuery struct {
+	UserID int64 `xorm:"user_id"`
+	OrgID  int64 `xorm:"org_id"`
+	Query  string
+	Page   int
+	Limit  int
+	// Flag used to allow oss edition to query users without access control
+	DontEnforceAccessControl bool
+
+	User *user.SignedInUser
+}
+
+type SearchOrgUsersQueryResult struct {
+	TotalCount int64         `json:"totalCount"`
+	OrgUsers   []*OrgUserDTO `json:"orgUsers"`
+	Page       int           `json:"page"`
+	PerPage    int           `json:"perPage"`
+}
+
+type ByOrgName []*UserOrgDTO
+
+type OrgDetailsDTO struct {
+	ID      int64   `json:"id"`
+	Name    string  `json:"name"`
+	Address Address `json:"address"`
+}
+
+// Len returns the length of an array of organisations.
+func (o ByOrgName) Len() int {
+	return len(o)
+}
+
+// Swap swaps two indices of an array of organizations.
+func (o ByOrgName) Swap(i, j int) {
+	o[i], o[j] = o[j], o[i]
+}
+
+// Less returns whether element i of an array of organizations is less than element j.
+func (o ByOrgName) Less(i, j int) bool {
+	if strings.ToLower(o[i].Name) < strings.ToLower(o[j].Name) {
 		return true
 	}
 
-	if r == RoleEditor {
-		return other != RoleAdmin
-	}
-
-	return r == other
+	return o[i].Name < o[j].Name
 }
 
-func (r RoleType) Children() []RoleType {
-	switch r {
-	case RoleAdmin:
-		return []RoleType{RoleEditor, RoleViewer}
-	case RoleEditor:
-		return []RoleType{RoleViewer}
-	default:
-		return nil
-	}
-}
-
-func (r RoleType) Parents() []RoleType {
-	switch r {
-	case RoleEditor:
-		return []RoleType{RoleAdmin}
-	case RoleViewer:
-		return []RoleType{RoleEditor, RoleAdmin}
-	default:
-		return nil
-	}
-}
-
-func (r *RoleType) UnmarshalText(data []byte) error {
-	// make sure "viewer" and "Viewer" are both correct
-	str := strings.Title(string(data))
-
-	*r = RoleType(str)
-	if !r.IsValid() {
-		if (*r) != "" {
-			return fmt.Errorf("invalid role value: %s", *r)
-		}
-
-		*r = RoleViewer
-	}
-
-	return nil
-}
+const (
+	QuotaTargetSrv     string = "org"
+	OrgQuotaTarget     string = "org"
+	OrgUserQuotaTarget string = "org_user"
+)

@@ -2,104 +2,101 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Dropdown, FilterInput, Icon, Menu, MenuItem, Tooltip, useStyles2 } from '@grafana/ui';
+import { Dropdown, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
+import { useSelector } from 'app/types';
 
+import { Branding } from '../Branding/Branding';
+
+import { NewsContainer } from './News/NewsContainer';
+import { OrganizationSwitcher } from './Organization/OrganizationSwitcher';
+import { QuickAdd } from './QuickAdd/QuickAdd';
+import { SignInLink } from './TopBar/SignInLink';
+import { TopNavBarMenu } from './TopBar/TopNavBarMenu';
+import { TopSearchBarSection } from './TopBar/TopSearchBarSection';
+import { TopSearchBarCommandPaletteTrigger } from './TopSearchBarCommandPaletteTrigger';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
 
 export function TopSearchBar() {
   const styles = useStyles2(getStyles);
+  const navIndex = useSelector((state) => state.navIndex);
+
+  const helpNode = navIndex['help'];
+  const profileNode = navIndex['profile'];
 
   return (
-    <div className={styles.searchBar}>
-      <a className={styles.logo} href="/" title="Go to home">
-        <Icon name="grafana" size="xl" />
-      </a>
-      <div className={styles.searchWrapper}>
-        <FilterInput
-          width={50}
-          placeholder="Search grafana"
-          value={''}
-          onChange={() => {}}
-          className={styles.searchInput}
-        />
-      </div>
-      <div className={styles.actions}>
-        <Tooltip placement="bottom" content="Help menu (todo)">
-          <button className={styles.actionItem}>
-            <Icon name="question-circle" size="lg" />
-          </button>
-        </Tooltip>
-        <Tooltip placement="bottom" content="Grafana news (todo)">
-          <button className={styles.actionItem}>
-            <Icon name="rss" size="lg" />
-          </button>
-        </Tooltip>
-        <Tooltip placement="bottom" content="User profile (todo)">
-          <Dropdown overlay={ProfileMenu}>
-            <button className={styles.actionItem}>
-              <img src={contextSrv.user.gravatarUrl} />
-            </button>
+    <div className={styles.layout}>
+      <TopSearchBarSection>
+        <a className={styles.logo} href="/" title="Go to home">
+          <Branding.MenuLogo className={styles.img} />
+        </a>
+        <OrganizationSwitcher />
+      </TopSearchBarSection>
+
+      <TopSearchBarSection>
+        <TopSearchBarCommandPaletteTrigger />
+      </TopSearchBarSection>
+
+      <TopSearchBarSection align="right">
+        <QuickAdd />
+        {helpNode && (
+          <Dropdown overlay={() => <TopNavBarMenu node={helpNode} />} placement="bottom-end">
+            <ToolbarButton iconOnly icon="question-circle" aria-label="Help" />
           </Dropdown>
-        </Tooltip>
-      </div>
+        )}
+        <NewsContainer className={styles.newsButton} />
+        {!contextSrv.user.isSignedIn && <SignInLink />}
+        {profileNode && (
+          <Dropdown overlay={() => <TopNavBarMenu node={profileNode} />} placement="bottom-end">
+            <ToolbarButton
+              className={styles.profileButton}
+              imgSrc={contextSrv.user.gravatarUrl}
+              imgAlt="User avatar"
+              aria-label="Profile"
+            />
+          </Dropdown>
+        )}
+      </TopSearchBarSection>
     </div>
   );
 }
 
-/**
- * This is just temporary, needs syncing with the backend option like DisableSignoutMenu
- */
-export function ProfileMenu() {
-  return (
-    <Menu>
-      <MenuItem url="profile" label="Your profile" />
-      <MenuItem url="profile/notifications" label="Your notifications" />
-      <MenuItem url="logout" label="Sign out" />
-    </Menu>
-  );
-}
+const getStyles = (theme: GrafanaTheme2) => ({
+  layout: css({
+    height: TOP_BAR_LEVEL_HEIGHT,
+    display: 'flex',
+    gap: theme.spacing(1),
+    alignItems: 'center',
+    padding: theme.spacing(0, 1, 0, 2),
+    borderBottom: `1px solid ${theme.colors.border.weak}`,
+    justifyContent: 'space-between',
 
-const getStyles = (theme: GrafanaTheme2) => {
-  return {
-    searchBar: css({
-      height: TOP_BAR_LEVEL_HEIGHT,
-      display: 'flex',
-      padding: theme.spacing(0, 2),
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      border: `1px solid ${theme.colors.border.weak}`,
-    }),
-    logo: css({
-      display: 'flex',
-    }),
-    searchWrapper: css({}),
-    searchInput: css({}),
-    actions: css({
-      display: 'flex',
-      flexGrow: 0,
-      gap: theme.spacing(1),
-      position: 'relative',
-      width: 25, // this and the left pos is to make search input perfectly centered
-      left: -83,
-    }),
-    actionItem: css({
-      display: 'flex',
-      flexGrow: 0,
-      border: 'none',
-      boxShadow: 'none',
-      background: 'none',
-      alignItems: 'center',
+    [theme.breakpoints.up('sm')]: {
+      gridTemplateColumns: '1.5fr minmax(240px, 1fr) 1.5fr', // search should not be smaller than 240px
+      display: 'grid',
 
-      color: theme.colors.text.secondary,
-      '&:hover': {
-        background: theme.colors.background.secondary,
-      },
-      img: {
-        borderRadius: '50%',
-        width: '24px',
-        height: '24px',
-      },
-    }),
-  };
-};
+      justifyContent: 'flex-start',
+    },
+  }),
+  img: css({
+    height: theme.spacing(3),
+    width: theme.spacing(3),
+  }),
+  logo: css({
+    display: 'flex',
+  }),
+  profileButton: css({
+    padding: theme.spacing(0, 0.25),
+    img: {
+      borderRadius: '50%',
+      height: '24px',
+      marginRight: 0,
+      width: '24px',
+    },
+  }),
+  newsButton: css({
+    [theme.breakpoints.down('sm')]: {
+      display: 'none',
+    },
+  }),
+});

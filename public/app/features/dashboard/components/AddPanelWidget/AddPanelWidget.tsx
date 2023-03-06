@@ -19,7 +19,6 @@ import {
   LibraryPanelsSearchVariant,
 } from '../../../library-panels/components/LibraryPanelsSearch/LibraryPanelsSearch';
 import { LibraryElementDTO } from '../../../library-panels/types';
-import { toPanelModelLibraryPanel } from '../../../library-panels/utils';
 import { DashboardModel, PanelModel } from '../../state';
 
 export type PanelPluginInfo = { id: any; defaults: { gridPos: { w: any; h: any }; title: any } };
@@ -58,7 +57,7 @@ const getCopiedPanelPlugins = () => {
   return sortBy(copiedPanels, 'sort');
 };
 
-export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard }) => {
+export const AddPanelWidgetUnconnected = ({ panel, dashboard }: Props) => {
   const [addPanelView, setAddPanelView] = useState(false);
 
   const onCancelAddPanel = (evt: React.MouseEvent<HTMLButtonElement>) => {
@@ -76,6 +75,7 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard })
     const newPanel: Partial<PanelModel> = {
       type: 'timeseries',
       title: 'Panel Title',
+      datasource: panel.datasource,
       gridPos: { x: gridPos.x, y: gridPos.y, w: gridPos.w, h: gridPos.h },
     };
 
@@ -113,10 +113,10 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard })
   const onAddLibraryPanel = (panelInfo: LibraryElementDTO) => {
     const { gridPos } = panel;
 
-    const newPanel: PanelModel = {
+    const newPanel = {
       ...panelInfo.model,
       gridPos,
-      libraryPanel: toPanelModelLibraryPanel(panelInfo),
+      libraryPanel: panelInfo,
     };
 
     dashboard.addPanel(newPanel);

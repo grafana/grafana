@@ -1,20 +1,28 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { byTestId, byText } from 'testing-library-selector';
 
+import { logInfo } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 
+import { LogMessages } from '../../Analytics';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { disableRBAC, mockCombinedRule, mockDataSource } from '../../mocks';
 
 import { RulesGroup } from './RulesGroup';
 
 jest.mock('../../hooks/useHasRuler');
-
+jest.mock('@grafana/runtime', () => {
+  const original = jest.requireActual('@grafana/runtime');
+  return {
+    ...original,
+    logInfo: jest.fn(),
+  };
+});
 const mocks = {
   useHasRuler: jest.mocked(useHasRuler),
 };
@@ -128,6 +136,39 @@ describe('Rules group tests', () => {
       // Assert
       expect(ui.confirmDeleteModal.header.get()).toBeInTheDocument();
       expect(ui.confirmDeleteModal.confirmButton.get()).toBeInTheDocument();
+    });
+  });
+
+  describe('Analytics', () => {
+    beforeEach(() => {
+      contextSrv.isEditor = true;
+    });
+
+    const group: CombinedRuleGroup = {
+      name: 'TestGroup',
+      rules: [mockCombinedRule()],
+    };
+
+    const namespace: CombinedRuleNamespace = {
+      name: 'TestNamespace',
+      rulesSource: mockDataSource(),
+      groups: [group],
+    };
+
+    disableRBAC();
+
+    it('Should log info when closing the edit group rule modal without saving', async () => {
+      mockUseHasRuler(true, true);
+      renderRulesGroup(namespace, group);
+
+      await userEvent.click(ui.editGroupButton.get());
+
+      expect(screen.getByText('Close')).toBeInTheDocument();
+
+      await userEvent.click(screen.getByText('Close'));
+
+      expect(screen.queryByText('Close')).not.toBeInTheDocument();
+      expect(logInfo).toHaveBeenCalledWith(LogMessages.leavingRuleGroupEdit);
     });
   });
 });

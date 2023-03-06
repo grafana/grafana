@@ -1,27 +1,8 @@
 import { SimulationNodeDatum, SimulationLinkDatum } from 'd3-force';
 
-import { Field } from '@grafana/data';
+import { Field, IconName } from '@grafana/data';
 
-export interface NodeGraphOptions {
-  nodes?: NodeOptions;
-  edges?: EdgeOptions;
-}
-
-interface NodeOptions {
-  mainStatUnit?: string;
-  secondaryStatUnit?: string;
-  arcs?: ArcOption[];
-}
-
-export interface ArcOption {
-  field?: string;
-  color?: string;
-}
-
-interface EdgeOptions {
-  mainStatUnit?: string;
-  secondaryStatUnit?: string;
-}
+export { PanelOptions as NodeGraphOptions, ArcOption } from './panelcfg.gen';
 
 export type NodeDatum = SimulationNodeDatum & {
   id: string;
@@ -33,7 +14,10 @@ export type NodeDatum = SimulationNodeDatum & {
   secondaryStat?: Field;
   arcSections: Field[];
   color?: Field;
+  icon?: IconName;
 };
+
+export type NodeDatumFromEdge = NodeDatum & { mainStatNumeric?: number; secondaryStatNumeric?: number };
 
 // This is the data we have before the graph is laid out with source and target being string IDs.
 type LinkDatum = SimulationLinkDatum<NodeDatum> & {

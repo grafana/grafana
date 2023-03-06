@@ -13,6 +13,7 @@ import { useControlledFieldArray } from '../../../hooks/useControlledFieldArray'
 import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
 import { ChannelValues, CommonSettingsComponentType, ReceiverFormValues } from '../../../types/receiver-form';
 import { makeAMLink } from '../../../utils/misc';
+import { initialAsyncRequestState } from '../../../utils/redux';
 
 import { ChannelSubForm } from './ChannelSubForm';
 import { DeletedSubForm } from './fields/DeletedSubform';
@@ -62,7 +63,7 @@ export function ReceiverForm<R extends ChannelValues>({
     defaultValues: JSON.parse(JSON.stringify(defaultValues)),
   });
 
-  useCleanup((state) => state.unifiedAlerting.saveAMConfig);
+  useCleanup((state) => (state.unifiedAlerting.saveAMConfig = initialAsyncRequestState));
 
   const { loading } = useUnifiedAlertingSelector((state) => state.saveAMConfig);
 
@@ -158,7 +159,7 @@ export function ReceiverForm<R extends ChannelValues>({
               variant="secondary"
               onClick={() => append({ ...defaultItem, __id: String(Math.random()) } as R)}
             >
-              New contact point type
+              Add contact point integration
             </Button>
           )}
           <div className={styles.buttons}>

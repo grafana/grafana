@@ -2,7 +2,6 @@ import { ScopedVars } from '@grafana/data';
 import { TemplateSrv } from '@grafana/runtime';
 import { applyQueryDefaults } from 'app/features/plugins/sql/defaults';
 import { SQLQuery, SqlQueryModel } from 'app/features/plugins/sql/types';
-import { FormatRegistryID } from 'app/features/templating/formatRegistry';
 
 export class MSSqlQueryModel implements SqlQueryModel {
   target: SQLQuery;
@@ -13,10 +12,6 @@ export class MSSqlQueryModel implements SqlQueryModel {
     this.target = applyQueryDefaults(target || { refId: 'A' });
     this.templateSrv = templateSrv;
     this.scopedVars = scopedVars;
-  }
-
-  interpolate() {
-    return this.templateSrv?.replace(this.target.rawSql, this.scopedVars, FormatRegistryID.sqlString) || '';
   }
 
   quoteLiteral(value: string) {

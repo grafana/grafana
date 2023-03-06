@@ -5,6 +5,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { AsyncMultiSelect, Icon, Button, useStyles2 } from '@grafana/ui';
 import { getBackendSrv } from 'app/core/services/backend_srv';
+import { DashboardSearchItemType } from 'app/features/search/types';
 import { FolderInfo, PermissionLevelString } from 'app/types';
 
 export interface FolderFilterProps {
@@ -12,34 +13,21 @@ export interface FolderFilterProps {
   maxMenuHeight?: number;
 }
 
-export function FolderFilter({ onChange: propsOnChange, maxMenuHeight }: FolderFilterProps): JSX.Element {
+export function FolderFilter({ onChange, maxMenuHeight }: FolderFilterProps): JSX.Element {
   const styles = useStyles2(getStyles);
   const [loading, setLoading] = useState(false);
   const getOptions = useCallback((searchString: string) => getFoldersAsOptions(searchString, setLoading), []);
   const debouncedLoadOptions = useMemo(() => debounce(getOptions, 300), [getOptions]);
+
   const [value, setValue] = useState<Array<SelectableValue<FolderInfo>>>([]);
-  const onChange = useCallback(
+  const onSelectOptionChange = useCallback(
     (folders: Array<SelectableValue<FolderInfo>>) => {
-      const changedFolders = [];
-      for (const folder of folders) {
-        if (folder.value) {
-          changedFolders.push(folder.value);
-        }
-      }
-      propsOnChange(changedFolders);
+      const changedFolderIds = folders.filter((f) => Boolean(f.value)).map((f) => f.value!);
+      onChange(changedFolderIds);
       setValue(folders);
     },
-    [propsOnChange]
+    [onChange]
   );
-  const selectOptions = {
-    defaultOptions: true,
-    isMulti: true,
-    noOptionsMessage: 'No folders found',
-    placeholder: 'Filter by folder',
-    maxMenuHeight,
-    value,
-    onChange,
-  };
 
   return (
     <div className={styles.container}>
@@ -56,29 +44,38 @@ export function FolderFilter({ onChange: propsOnChange, maxMenuHeight }: FolderF
         </Button>
       )}
       <AsyncMultiSelect
-        {...selectOptions}
+        value={value}
+        onChange={onSelectOptionChange}
         isLoading={loading}
         loadOptions={debouncedLoadOptions}
+        maxMenuHeight={maxMenuHeight}
+        placeholder="Filter by folder"
+        noOptionsMessage="No folders found"
         prefix={<Icon name="filter" />}
         aria-label="Folder filter"
+        defaultOptions
       />
     </div>
   );
 }
 
-async function getFoldersAsOptions(searchString: string, setLoading: (loading: boolean) => void) {
+async function getFoldersAsOptions(
+  searchString: string,
+  setLoading: (loading: boolean) => void
+): Promise<Array<SelectableValue<FolderInfo>>> {
   setLoading(true);
 
   const params = {
     query: searchString,
-    type: 'dash-folder',
+    type: DashboardSearchItemType.DashFolder,
     permission: PermissionLevelString.View,
   };
 
+  // FIXME: stop using id from search and use UID instead
   const searchHits = await getBackendSrv().search(params);
-  const options = searchHits.map((d) => ({ label: d.title, value: { id: d.id, title: d.title } }));
+  const options = searchHits.map((d) => ({ label: d.title, value: { uid: d.uid, title: d.title } }));
   if (!searchString || 'general'.includes(searchString.toLowerCase())) {
-    options.unshift({ label: 'General', value: { id: 0, title: 'General' } });
+    options.unshift({ label: 'General', value: { uid: 'general', title: 'General' } });
   }
 
   setLoading(false);

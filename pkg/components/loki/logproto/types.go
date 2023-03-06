@@ -108,7 +108,7 @@ func (m *Entry) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-//nolint: gocyclo
+//nolint:gocyclo
 func (m *Stream) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -248,7 +248,7 @@ func (m *Stream) Unmarshal(dAtA []byte) error {
 	return nil
 }
 
-//nolint: gocyclo
+//nolint:gocyclo
 func (m *Entry) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0

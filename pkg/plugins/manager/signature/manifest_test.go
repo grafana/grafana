@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -151,9 +151,9 @@ func TestCalculate(t *testing.T) {
 			})
 			setting.AppUrl = tc.appURL
 
-			sig, err := Calculate(log.NewNopLogger(), &plugins.Plugin{
+			sig, err := Calculate(log.NewTestLogger(), &plugins.Plugin{
 				JSONData: plugins.JSONData{
-					ID: "test",
+					ID: "test-datasource",
 					Info: plugins.Info{
 						Version: "1.0.0",
 					},
@@ -164,6 +164,31 @@ func TestCalculate(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedSignature, sig)
 		}
+	})
+
+	t.Run("Unsigned Chromium file should not invalidate signature for Renderer plugin running on Windows", func(t *testing.T) {
+		backup := runningWindows
+		t.Cleanup(func() {
+			runningWindows = backup
+		})
+
+		runningWindows = true
+		sig, err := Calculate(log.NewTestLogger(), &plugins.Plugin{
+			JSONData: plugins.JSONData{
+				ID:   "test-renderer",
+				Type: plugins.Renderer,
+				Info: plugins.Info{
+					Version: "1.0.0",
+				},
+			},
+			PluginDir: "../testdata/renderer-added-file/plugin",
+		})
+		require.NoError(t, err)
+		require.Equal(t, plugins.Signature{
+			Status:     plugins.SignatureValid,
+			Type:       plugins.GrafanaSignature,
+			SigningOrg: "Grafana Labs",
+		}, sig)
 	})
 }
 

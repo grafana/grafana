@@ -17,7 +17,7 @@ export interface ErrorBoundaryApi {
 interface Props {
   children: (r: ErrorBoundaryApi) => ReactNode;
   /** Will re-render children after error if recover values changes */
-  dependencies?: any[];
+  dependencies?: unknown[];
   /** Callback called on error */
   onError?: (error: Error) => void;
   /** Callback error state is cleared due to recover props change */
@@ -89,7 +89,7 @@ export interface ErrorBoundaryAlertProps {
   style?: 'page' | 'alertbox';
 
   /** Will re-render children after error if recover values changes */
-  dependencies?: any[];
+  dependencies?: unknown[];
 }
 
 export class ErrorBoundaryAlert extends PureComponent<ErrorBoundaryAlertProps> {
@@ -135,7 +135,7 @@ export class ErrorBoundaryAlert extends PureComponent<ErrorBoundaryAlertProps> {
  *
  * @public
  */
-export function withErrorBoundary<P = {}>(
+export function withErrorBoundary<P extends {} = {}>(
   Component: ComponentType<P>,
   errorBoundaryProps: Omit<ErrorBoundaryAlertProps, 'children'> = {}
 ): ComponentType<P> {

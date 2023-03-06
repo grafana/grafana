@@ -45,7 +45,7 @@ export function APIEditor({ value, context, onChange }: Props) {
   const labelWidth = 9;
 
   const onEndpointChange = useCallback(
-    (endpoint) => {
+    (endpoint = '') => {
       onChange({
         ...value,
         endpoint,
@@ -55,7 +55,7 @@ export function APIEditor({ value, context, onChange }: Props) {
   );
 
   const onDataChange = useCallback(
-    (data) => {
+    (data?: string) => {
       onChange({
         ...value,
         data,

@@ -6,22 +6,22 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/datasources"
-	fd "github.com/grafana/grafana/pkg/services/datasources/fakes"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
-	"github.com/grafana/grafana/pkg/services/validations"
-	"github.com/grafana/grafana/pkg/tsdb/legacydata"
-
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/stretchr/testify/require"
+	"github.com/xorcare/pointer"
 
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/services/alerting"
-
-	"github.com/stretchr/testify/require"
-	"github.com/xorcare/pointer"
+	"github.com/grafana/grafana/pkg/services/datasources"
+	fd "github.com/grafana/grafana/pkg/services/datasources/fakes"
+	"github.com/grafana/grafana/pkg/services/validations"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
 func newTimeSeriesPointsFromArgs(values ...float64) legacydata.DataTimeSeriesPoints {
@@ -37,8 +37,8 @@ func newTimeSeriesPointsFromArgs(values ...float64) legacydata.DataTimeSeriesPoi
 func TestQueryCondition(t *testing.T) {
 	setup := func() *queryConditionTestContext {
 		ctx := &queryConditionTestContext{}
-		store := mockstore.NewSQLStoreMock()
-
+		db := dbtest.NewFakeDB()
+		store := alerting.ProvideAlertStore(db, localcache.ProvideService(), &setting.Cfg{}, nil)
 		ctx.reducer = `{"type":"avg"}`
 		ctx.evaluator = `{"type":"gt","params":[100]}`
 		ctx.result = &alerting.EvalContext{
@@ -48,7 +48,7 @@ func TestQueryCondition(t *testing.T) {
 			Store:            store,
 			DatasourceService: &fd.FakeDataSourceService{
 				DataSources: []*datasources.DataSource{
-					{Id: 1, Type: datasources.DS_GRAPHITE},
+					{ID: 1, Type: datasources.DS_GRAPHITE},
 				},
 			},
 		}
@@ -210,7 +210,7 @@ type queryConditionTestContext struct {
 	condition *QueryCondition
 }
 
-//nolint: staticcheck // legacydata.DataPlugin deprecated
+//nolint:staticcheck // legacydata.DataPlugin deprecated
 func (ctx *queryConditionTestContext) exec(t *testing.T) (*alerting.ConditionResult, error) {
 	jsonModel, err := simplejson.NewJson([]byte(`{
             "type": "query",
@@ -254,7 +254,7 @@ type fakeReqHandler struct {
 	response legacydata.DataResponse
 }
 
-//nolint: staticcheck // legacydata.DataPlugin deprecated
+//nolint:staticcheck // legacydata.DataPlugin deprecated
 func (rh fakeReqHandler) HandleRequest(context.Context, *datasources.DataSource, legacydata.DataQuery) (
 	legacydata.DataResponse, error) {
 	return rh.response, nil

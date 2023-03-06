@@ -1,4 +1,4 @@
-import React, { FC, HTMLAttributes, MouseEvent, ReactElement, useCallback, useState } from 'react';
+import React, { HTMLAttributes, MouseEvent, ReactElement, useCallback, useState } from 'react';
 
 import { CartesianCoords2D } from '@grafana/data';
 
@@ -7,11 +7,11 @@ interface PanelHeaderMenuTriggerApi {
   closeMenu: () => void;
 }
 
-interface Props extends HTMLAttributes<HTMLDivElement> {
+interface Props extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
   children: (props: PanelHeaderMenuTriggerApi) => ReactElement;
 }
 
-export const PanelHeaderMenuTrigger: FC<Props> = ({ children, ...divProps }) => {
+export function PanelHeaderMenuTrigger({ children, ...divProps }: Props) {
   const [clickCoordinates, setClickCoordinates] = useState<CartesianCoords2D>({ x: 0, y: 0 });
   const [panelMenuOpen, setPanelMenuOpen] = useState<boolean>(false);
 
@@ -38,15 +38,18 @@ export const PanelHeaderMenuTrigger: FC<Props> = ({ children, ...divProps }) => 
       {children({ panelMenuOpen, closeMenu: () => setPanelMenuOpen(false) })}
     </header>
   );
-};
+}
 
-function isClick(current: CartesianCoords2D, clicked: CartesianCoords2D): boolean {
-  return clicked.x === current.x && clicked.y === current.y;
+function isClick(current: CartesianCoords2D, clicked: CartesianCoords2D, deadZone = 3.5): boolean {
+  // A "deadzone" radius is added so that if the cursor is moved within this radius
+  // between mousedown and mouseup, it's still considered a click and not a drag.
+  const clickDistance = Math.sqrt((current.x - clicked.x) ** 2 + (current.y - clicked.y) ** 2);
+  return clickDistance <= deadZone;
 }
 
 function eventToClickCoordinates(event: MouseEvent<HTMLDivElement>): CartesianCoords2D {
   return {
-    x: Math.floor(event.clientX),
-    y: Math.floor(event.clientY),
+    x: event.clientX,
+    y: event.clientY,
   };
 }

@@ -7,6 +7,7 @@ import { Portal, useStyles2, usePanelContext } from '@grafana/ui';
 import { getTooltipContainerStyles } from '@grafana/ui/src/themes/mixins';
 
 import { getCommonAnnotationStyles } from '../styles';
+import { AnnotationsDataFrameViewDTO } from '../types';
 
 import { AnnotationEditorForm } from './AnnotationEditorForm';
 import { AnnotationTooltip } from './AnnotationTooltip';

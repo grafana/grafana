@@ -1,6 +1,8 @@
 import { e2e } from '@grafana/e2e';
+import { GrafanaBootConfig } from '@grafana/runtime';
 
 const PAGE_UNDER_TEST = '-Y-tnEDWk/templating-nested-template-variables';
+const DASHBOARD_NAME = 'Templating - Nested Template Variables';
 
 describe('Variables - Query - Add variable', () => {
   it('query variable should be default and default fields should be correct', () => {
@@ -12,7 +14,7 @@ describe('Variables - Query - Add variable', () => {
     e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInputV2()
       .should('be.visible')
       .within((input) => {
-        expect(input.attr('placeholder')).equals('name');
+        expect(input.attr('placeholder')).equals('Variable name');
         expect(input.val()).equals('query0');
       });
     e2e.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelectV2()
@@ -23,21 +25,17 @@ describe('Variables - Query - Add variable', () => {
     e2e.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2()
       .should('be.visible')
       .within((input) => {
-        expect(input.attr('placeholder')).equals('optional display name');
+        expect(input.attr('placeholder')).equals('Label name');
         expect(input.val()).equals('');
       });
     e2e()
-      .get('#Description')
+      .get('[placeholder="Descriptive text"]')
       .should('be.visible')
       .within((input) => {
-        expect(input.attr('placeholder')).equals('descriptive text');
+        expect(input.attr('placeholder')).equals('Descriptive text');
         expect(input.val()).equals('');
       });
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.generalHideSelectV2()
-      .should('be.visible')
-      .within((select) => {
-        e2e.components.Select.singleValue().should('have.text', '');
-      });
+    e2e().get('label').contains('Show on dashboard').should('be.visible');
 
     e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect()
       .should('be.visible')
@@ -45,11 +43,9 @@ describe('Variables - Query - Add variable', () => {
         e2e.components.Select.singleValue().should('have.text', 'gdev-testdata');
       });
 
-    e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRefreshSelectV2()
-      .should('be.visible')
-      .within((select) => {
-        e2e.components.Select.singleValue().should('have.text', 'On dashboard load');
-      });
+    e2e().get('label').contains('Refresh').scrollIntoView().should('be.visible');
+    e2e().get('label').contains('On dashboard load').scrollIntoView().should('be.visible');
+
     e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInputV2()
       .should('be.visible')
       .within((input) => {
@@ -62,8 +58,18 @@ describe('Variables - Query - Add variable', () => {
       .within((select) => {
         e2e.components.Select.singleValue().should('have.text', 'Disabled');
       });
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsMultiSwitch().should('not.be.checked');
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsIncludeAllSwitch().should('not.be.checked');
+
+    e2e()
+      .contains('label', 'Multi-value')
+      .within(() => {
+        e2e().get('input[type="checkbox"]').should('not.be.checked');
+      });
+
+    e2e()
+      .contains('label', 'Include All option')
+      .within(() => {
+        e2e().get('input[type="checkbox"]').should('not.be.checked');
+      });
 
     e2e.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption().should('not.exist');
     e2e.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInputV2().should('not.exist');
@@ -80,9 +86,9 @@ describe('Variables - Query - Add variable', () => {
       .clear()
       .type('a label');
 
-    e2e().get('#Description').should('be.visible').clear().type('a description');
+    e2e().get('[placeholder="Descriptive text"]').should('be.visible').clear().type('a description');
 
-    e2e.components.DataSourcePicker.container().should('be.visible').type('gdev-testdata{enter}');
+    e2e.components.DataSourcePicker.inputV2().should('be.visible').type('gdev-testdata{enter}');
 
     e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput()
       .should('be.visible')
@@ -96,11 +102,17 @@ describe('Variables - Query - Add variable', () => {
 
     e2e.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption().should('exist');
 
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.submitButton().should('be.visible').click();
+    e2e.pages.Dashboard.Settings.Variables.Edit.General.submitButton().scrollIntoView().should('be.visible').click();
 
-    e2e().wait(1500);
-
-    e2e.components.BackButton.backArrow().should('be.visible').click({ force: true });
+    e2e()
+      .window()
+      .then((win: Cypress.AUTWindow & { grafanaBootData: GrafanaBootConfig['bootData'] }) => {
+        if (win.grafanaBootData.settings.featureToggles.topnav) {
+          e2e.components.Breadcrumbs.breadcrumb(DASHBOARD_NAME).click();
+        } else {
+          e2e.components.BackButton.backArrow().click({ force: true });
+        }
+      });
 
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('a label').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItem()
@@ -108,7 +120,6 @@ describe('Variables - Query - Add variable', () => {
       .eq(3)
       .within(() => {
         e2e().get('.variable-link-wrapper').should('be.visible').click();
-        e2e().wait(500);
         e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
           .should('be.visible')
           .within(() => {
@@ -130,9 +141,9 @@ describe('Variables - Query - Add variable', () => {
       .clear()
       .type('a label');
 
-    e2e().get('#Description').should('be.visible').clear().type('a description');
+    e2e().get('[placeholder="Descriptive text"]').should('be.visible').clear().type('a description');
 
-    e2e.components.DataSourcePicker.container().type('gdev-testdata{enter}');
+    e2e.components.DataSourcePicker.inputV2().type('gdev-testdata{enter}');
 
     e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput()
       .should('be.visible')
@@ -144,13 +155,17 @@ describe('Variables - Query - Add variable', () => {
       .type('/.*C.*/')
       .blur();
 
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsMultiSwitch()
-      .click({ force: true })
-      .should('be.checked');
+    e2e()
+      .contains('label', 'Multi-value')
+      .within(() => {
+        e2e().get('input[type="checkbox"]').click({ force: true }).should('be.checked');
+      });
 
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsIncludeAllSwitch()
-      .click({ force: true })
-      .should('be.checked');
+    e2e()
+      .contains('label', 'Include All option')
+      .within(() => {
+        e2e().get('input[type="checkbox"]').click({ force: true }).should('be.checked');
+      });
 
     e2e.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInputV2().within((input) => {
       expect(input.attr('placeholder')).equals('blank = auto');
@@ -159,11 +174,17 @@ describe('Variables - Query - Add variable', () => {
 
     e2e.pages.Dashboard.Settings.Variables.Edit.General.previewOfValuesOption().should('exist');
 
-    e2e.pages.Dashboard.Settings.Variables.Edit.General.submitButton().should('be.visible').click();
+    e2e.pages.Dashboard.Settings.Variables.Edit.General.submitButton().scrollIntoView().should('be.visible').click();
 
-    e2e().wait(500);
-
-    e2e.components.BackButton.backArrow().should('be.visible').click({ force: true });
+    e2e()
+      .window()
+      .then((win: Cypress.AUTWindow & { grafanaBootData: GrafanaBootConfig['bootData'] }) => {
+        if (win.grafanaBootData.settings.featureToggles.topnav) {
+          e2e.components.Breadcrumbs.breadcrumb(DASHBOARD_NAME).click();
+        } else {
+          e2e.components.BackButton.backArrow().click({ force: true });
+        }
+      });
 
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('a label').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItem()
@@ -171,7 +192,6 @@ describe('Variables - Query - Add variable', () => {
       .eq(3)
       .within(() => {
         e2e().get('.variable-link-wrapper').should('be.visible').click();
-        e2e().wait(500);
         e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
           .should('be.visible')
           .within(() => {

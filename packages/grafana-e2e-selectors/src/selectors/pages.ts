@@ -27,11 +27,15 @@ export const Pages = {
     url: '/datasources',
     dataSources: (dataSourceName: string) => `Data source list item ${dataSourceName}`,
   },
+  EditDataSource: {
+    url: (dataSourceUid: string) => `/datasources/edit/${dataSourceUid}`,
+    settings: 'Datasource settings page basic settings',
+  },
   AddDataSource: {
     url: '/datasources/new',
     /** @deprecated Use dataSourcePluginsV2 */
     dataSourcePlugins: (pluginName: string) => `Data source plugin item ${pluginName}`,
-    dataSourcePluginsV2: (pluginName: string) => `Add data source ${pluginName}`,
+    dataSourcePluginsV2: (pluginName: string) => `Add new data source ${pluginName}`,
   },
   ConfirmModal: {
     delete: 'Confirm Modal Danger Button',
@@ -72,7 +76,7 @@ export const Pages = {
          * @deprecated use components.TimeZonePicker.containerV2 from Grafana 8.3 instead
          */
         timezone: 'Time zone picker select container',
-        title: 'Dashboard settings page title',
+        title: 'Tab General',
       },
       Annotations: {
         List: {
@@ -124,6 +128,7 @@ export const Pages = {
             selectionOptionsCustomAllInputV2: 'data-testid Variable editor Form IncludeAll field',
             previewOfValuesOption: 'Variable editor Preview of Values option',
             submitButton: 'Variable editor Submit button',
+            applyButton: 'data-testid Variable editor Apply button',
           },
           QueryVariable: {
             queryOptionsDataSourceSelect: Components.DataSourcePicker.container,
@@ -181,15 +186,34 @@ export const Pages = {
   ShareDashboardModal: {
     shareButton: 'Share dashboard or panel',
     PublicDashboard: {
-      Tab: 'Tab Public Dashboard',
+      Tab: 'Tab Public dashboard',
       WillBePublicCheckbox: 'data-testid public dashboard will be public checkbox',
       LimitedDSCheckbox: 'data-testid public dashboard limited datasources checkbox',
       CostIncreaseCheckbox: 'data-testid public dashboard cost may increase checkbox',
-      EnableSwitch: 'data-testid public dashboard on off switch',
-      SaveConfigButton: 'data-testid public dashboard save config button',
+      PauseSwitch: 'data-testid public dashboard pause switch',
+      EnableAnnotationsSwitch: 'data-testid public dashboard on off switch for annotations',
+      CreateButton: 'data-testid public dashboard create button',
+      DeleteButton: 'data-testid public dashboard delete button',
       CopyUrlInput: 'data-testid public dashboard copy url input',
       CopyUrlButton: 'data-testid public dashboard copy url button',
       TemplateVariablesWarningAlert: 'data-testid public dashboard disabled template variables alert',
+      UnsupportedDataSourcesWarningAlert: 'data-testid public dashboard unsupported data sources alert',
+      NoUpsertPermissionsWarningAlert: 'data-testid public dashboard no upsert permissions alert',
+      EnableTimeRangeSwitch: 'data-testid public dashboard on off switch for time range',
+      EmailSharingConfiguration: {
+        ShareType: 'data-testid public dashboard share type',
+        EmailSharingInput: 'data-testid public dashboard email sharing input',
+        EmailSharingInviteButton: 'data-testid public dashboard email sharing invite button',
+        EmailSharingList: 'data-testid public dashboard email sharing list',
+      },
+    },
+  },
+  PublicDashboard: {
+    page: 'public-dashboard-page',
+    NotAvailable: {
+      container: 'public-dashboard-not-available',
+      title: 'public-dashboard-title',
+      pausedDescription: 'public-dashboard-paused-description',
     },
   },
   Explore: {
@@ -218,11 +242,27 @@ export const Pages = {
   PlaylistForm: {
     name: 'Playlist name',
     interval: 'Playlist interval',
-    itemRow: 'Playlist item row',
-    itemIdType: 'Playlist item dashboard by ID type',
-    itemTagType: 'Playlist item dashboard by Tag type',
-    itemMoveUp: 'Move playlist item order up',
-    itemMoveDown: 'Move playlist item order down',
     itemDelete: 'Delete playlist item',
+  },
+  Search: {
+    url: '/?search=openn',
+    FolderView: {
+      url: '/?search=open&layout=folders',
+    },
+  },
+  PublicDashboards: {
+    ListItem: {
+      linkButton: 'public-dashboard-link-button',
+      configButton: 'public-dashboard-configuration-button',
+      trashcanButton: 'public-dashboard-remove-button',
+    },
+  },
+  UserListPage: {
+    org: {
+      url: '/org/users',
+    },
+    admin: {
+      url: '/admin/users',
+    },
   },
 };

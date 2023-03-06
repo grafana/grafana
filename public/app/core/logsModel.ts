@@ -1,5 +1,5 @@
 import { size } from 'lodash';
-import { Observable, from, isObservable } from 'rxjs';
+import { from, isObservable, Observable } from 'rxjs';
 
 import {
   AbsoluteTimeRange,
@@ -18,8 +18,7 @@ import {
   FieldWithIndex,
   findCommonLabels,
   findUniqueLabels,
-  getLogLevel,
-  getLogLevelFromKey,
+  getTimeField,
   Labels,
   LoadingState,
   LogLevel,
@@ -28,10 +27,11 @@ import {
   LogsMetaItem,
   LogsMetaKind,
   LogsModel,
+  LogsVolumeType,
   MutableDataFrame,
   rangeUtil,
   ScopedVars,
-  sortInAscendingOrder,
+  sortDataFrame,
   textUtil,
   TimeRange,
   toDataFrame,
@@ -41,6 +41,8 @@ import { SIPrefix } from '@grafana/data/src/valueFormats/symbolFormatters';
 import { BarAlignment, GraphDrawStyle, StackingMode } from '@grafana/schema';
 import { ansicolor, colors } from '@grafana/ui';
 import { getThemeColor } from 'app/core/utils/colors';
+
+import { getLogLevel, getLogLevelFromKey, sortInAscendingOrder } from '../features/logs/utils';
 
 export const LIMIT_LABEL = 'Line limit';
 export const COMMON_LABELS = 'Common labels';
@@ -200,16 +202,18 @@ function isLogsData(series: DataFrame) {
  * Convert dataFrame into LogsModel which consists of creating separate array of log rows and metrics series. Metrics
  * series can be either already included in the dataFrame or will be computed from the log rows.
  * @param dataFrame
- * @param intervalMs In case there are no metrics series, we use this for computing it from log rows.
+ * @param intervalMs Optional. In case there are no metrics series, we use this for computing it from log rows.
+ * @param absoluteRange Optional. Used to store absolute range of executed queries in logs model. This is used for pagination.
+ * @param queries Optional. Used to store executed queries in logs model. This is used for pagination.
  */
 export function dataFrameToLogsModel(
   dataFrame: DataFrame[],
-  intervalMs: number | undefined,
+  intervalMs?: number,
   absoluteRange?: AbsoluteTimeRange,
   queries?: DataQuery[]
 ): LogsModel {
   const { logSeries } = separateLogsAndMetrics(dataFrame);
-  const logsModel = logSeriesToLogsModel(logSeries);
+  const logsModel = logSeriesToLogsModel(logSeries, queries);
 
   if (logsModel) {
     // Create histogram metrics from logs using the interval as bucket size for the line count
@@ -348,7 +352,7 @@ function getLabelsForFrameRow(fields: LogFields, index: number): Labels {
  * Converts dataFrames into LogsModel. This involves merging them into one list, sorting them and computing metadata
  * like common labels.
  */
-export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefined {
+export function logSeriesToLogsModel(logSeries: DataFrame[], queries: DataQuery[] = []): LogsModel | undefined {
   if (logSeries.length === 0) {
     return undefined;
   }
@@ -434,6 +438,8 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
         logLevel = getLogLevel(entry);
       }
 
+      const datasourceType = queries.find((query) => query.refId === series.refId)?.datasource?.type;
+
       rows.push({
         entryFieldIndex: stringField.index,
         rowIndex: j,
@@ -452,6 +458,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
         raw: message,
         labels: labels || {},
         uid: idField ? idField.values.get(j) : j.toString(),
+        datasourceType,
       });
     }
   }
@@ -678,12 +685,16 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
 ): Observable<DataQueryResponse> {
   const timespan = options.range.to.valueOf() - options.range.from.valueOf();
   const intervalInfo = getIntervalInfo(logsVolumeRequest.scopedVars, timespan);
+
   logsVolumeRequest.interval = intervalInfo.interval;
   logsVolumeRequest.scopedVars.__interval = { value: intervalInfo.interval, text: intervalInfo.interval };
+
   if (intervalInfo.intervalMs !== undefined) {
     logsVolumeRequest.intervalMs = intervalInfo.intervalMs;
     logsVolumeRequest.scopedVars.__interval_ms = { value: intervalInfo.intervalMs, text: intervalInfo.intervalMs };
   }
+
+  logsVolumeRequest.hideFromInspector = true;
 
   return new Observable((observer) => {
     let rawLogsVolume: DataFrame[] = [];
@@ -698,19 +709,10 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
 
     const subscription = queryObservable.subscribe({
       complete: () => {
-        const aggregatedLogsVolume = aggregateRawLogsVolume(rawLogsVolume, options.extractLevel);
-        if (aggregatedLogsVolume[0]) {
-          aggregatedLogsVolume[0].meta = {
-            custom: {
-              targets: options.targets,
-              absoluteRange: { from: options.range.from.valueOf(), to: options.range.to.valueOf() },
-            },
-          };
-        }
         observer.next({
           state: LoadingState.Done,
           error: undefined,
-          data: aggregatedLogsVolume,
+          data: rawLogsVolume,
         });
         observer.complete();
       },
@@ -724,7 +726,86 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
           });
           observer.error(error);
         } else {
-          rawLogsVolume = rawLogsVolume.concat(dataQueryResponse.data.map(toDataFrame));
+          const aggregatedLogsVolume = aggregateRawLogsVolume(
+            dataQueryResponse.data.map(toDataFrame),
+            options.extractLevel
+          );
+          if (aggregatedLogsVolume[0]) {
+            aggregatedLogsVolume[0].meta = {
+              custom: {
+                targets: options.targets,
+                logsVolumeType: LogsVolumeType.FullRange,
+                absoluteRange: { from: options.range.from.valueOf(), to: options.range.to.valueOf() },
+              },
+            };
+          }
+          rawLogsVolume = aggregatedLogsVolume;
+          observer.next({
+            state: dataQueryResponse.state ?? LoadingState.Streaming,
+            error: undefined,
+            data: rawLogsVolume,
+          });
+        }
+      },
+      error: (error) => {
+        observer.next({
+          state: LoadingState.Error,
+          error: error,
+          data: [],
+        });
+        observer.error(error);
+      },
+    });
+    return () => {
+      subscription?.unsubscribe();
+    };
+  });
+}
+
+/**
+ * Creates an observable, which makes requests to get logs sample.
+ */
+export function queryLogsSample<TQuery extends DataQuery, TOptions extends DataSourceJsonData>(
+  datasource: DataSourceApi<TQuery, TOptions>,
+  logsSampleRequest: DataQueryRequest<TQuery>
+): Observable<DataQueryResponse> {
+  logsSampleRequest.hideFromInspector = true;
+
+  return new Observable((observer) => {
+    let rawLogsSample: DataFrame[] = [];
+    observer.next({
+      state: LoadingState.Loading,
+      error: undefined,
+      data: [],
+    });
+
+    const queryResponse = datasource.query(logsSampleRequest);
+    const queryObservable = isObservable(queryResponse) ? queryResponse : from(queryResponse);
+
+    const subscription = queryObservable.subscribe({
+      complete: () => {
+        observer.next({
+          state: LoadingState.Done,
+          error: undefined,
+          data: rawLogsSample,
+        });
+        observer.complete();
+      },
+      next: (dataQueryResponse: DataQueryResponse) => {
+        const { error } = dataQueryResponse;
+        if (error !== undefined) {
+          observer.next({
+            state: LoadingState.Error,
+            error,
+            data: [],
+          });
+          observer.error(error);
+        } else {
+          rawLogsSample = dataQueryResponse.data.map((dataFrame) => {
+            const frame = toDataFrame(dataFrame);
+            const { timeIndex } = getTimeField(frame);
+            return sortDataFrame(frame, timeIndex);
+          });
         }
       },
       error: (error) => {

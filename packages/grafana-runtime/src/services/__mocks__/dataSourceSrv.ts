@@ -4,6 +4,7 @@ const ds1 = {
   type: 'prometheus',
   name: 'gdev-prometheus',
   meta: {
+    alerting: true,
     info: {
       logos: {
         small: 'http://example.com/logo.png',
@@ -18,5 +19,12 @@ export function getDataSourceSrv() {
   return {
     getList: () => [ds1],
     getInstanceSettings: () => ds1,
+    get: () =>
+      Promise.resolve({
+        filterQuery: () => true,
+        getDefaultQuery: () => ({
+          expr: 'vector(1)',
+        }),
+      }),
   };
 }

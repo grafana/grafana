@@ -77,7 +77,7 @@ export class TeamMemberRow extends PureComponent<Props> {
     return (
       <td>
         {labels.map((label) => (
-          <TagBadge key={label} label={label} removeIcon={false} count={0} onClick={() => {}} />
+          <TagBadge key={label} label={label} removeIcon={false} count={0} />
         ))}
       </td>
     );

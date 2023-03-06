@@ -106,13 +106,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     align-items: center;
     flex-grow: 1;
     overflow: hidden;
-    margin-right: ${theme.v1.spacing.sm};
+    margin-right: ${theme.spacing(1)};
   `,
   layerName: css`
-    font-weight: ${theme.v1.typography.weight.semibold};
-    color: ${theme.v1.colors.textBlue};
+    font-weight: ${theme.typography.fontWeightMedium};
+    color: ${theme.colors.primary.text};
     cursor: pointer;
     overflow: hidden;
-    margin-left: ${theme.v1.spacing.xs};
+    margin-left: ${theme.spacing(0.5)};
   `,
 });

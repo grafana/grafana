@@ -4,7 +4,7 @@ import { useAsync } from 'react-use';
 
 import { DataFrame, GrafanaTheme2, isDataFrame, ValueLinkConfig } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { useStyles2, IconName, Spinner, TabsBar, Tab, Button, HorizontalGroup, LinkButton, Alert } from '@grafana/ui';
+import { useStyles2, Spinner, TabsBar, Tab, Button, HorizontalGroup, LinkButton, Alert, toIconName } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
 import { useNavModel } from 'app/core/hooks/useNavModel';
@@ -14,7 +14,6 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 import { AddRootView } from './AddRootView';
 import { Breadcrumb } from './Breadcrumb';
 import { CreateNewFolderModal } from './CreateNewFolderModal';
-import { ExportView } from './ExportView';
 import { FileView } from './FileView';
 import { FolderView } from './FolderView';
 import { RootView } from './RootView';
@@ -116,13 +115,6 @@ export default function StoragePage(props: Props) {
   const renderView = () => {
     const isRoot = !path?.length || path === '/';
     switch (view) {
-      case StorageView.Export:
-        if (!isRoot) {
-          setPath('');
-          return <Spinner />;
-        }
-        return <ExportView onPathChange={setPath} />;
-
       case StorageView.AddRoot:
         if (!isRoot) {
           setPath('');
@@ -149,15 +141,15 @@ export default function StoragePage(props: Props) {
 
     // Lets only apply permissions to folders (for now)
     if (isFolder) {
-      opts.push({ what: StorageView.Perms, text: 'Permissions' });
+      // opts.push({ what: StorageView.Perms, text: 'Permissions' });
     } else {
       // TODO: only if the file exists in a storage engine with
       opts.push({ what: StorageView.History, text: 'History' });
     }
 
-    const canAddFolder = isFolder && path.startsWith('resources');
-    const canDelete = path.startsWith('resources/');
-    const canViewDashboard = config.featureToggles.dashboardsFromStorage && (isFolder || path.endsWith('.json'));
+    const canAddFolder = isFolder && (path.startsWith('resources') || path.startsWith('content'));
+    const canDelete = path.startsWith('resources/') || path.startsWith('content/');
+    const canViewDashboard = config.featureToggles.dashboardsFromStorage && path.startsWith('content/');
 
     const getErrorMessages = () => {
       return (
@@ -178,10 +170,10 @@ export default function StoragePage(props: Props) {
     return (
       <div className={styles.wrapper}>
         <HorizontalGroup width="100%" justify="space-between" spacing={'md'} height={25}>
-          <Breadcrumb pathName={path} onPathChange={setPath} rootIcon={navModel.node.icon as IconName} />
+          <Breadcrumb pathName={path} onPathChange={setPath} rootIcon={toIconName(navModel.node.icon ?? '')} />
           <HorizontalGroup>
             {canViewDashboard && (
-              <LinkButton icon="dashboard" href={`g/${path}`}>
+              <LinkButton icon="dashboard" href={`g/${path.substring(path.indexOf('/') + 1)}`}>
                 Dashboard
               </LinkButton>
             )}

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/centrifugal/centrifuge"
+
 	"github.com/grafana/grafana/pkg/services/live/managedstream"
 )
 
@@ -89,7 +90,7 @@ func (c *Caller) CallManagedStreams(orgID int64) ([]*managedstream.ManagedChanne
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	resp, err := c.node.Survey(ctx, managedStreamsCall, jsonData)
+	resp, err := c.node.Survey(ctx, managedStreamsCall, jsonData, "")
 	if err != nil {
 		return nil, err
 	}

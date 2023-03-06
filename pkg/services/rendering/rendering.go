@@ -2,12 +2,12 @@ package rendering
 
 import (
 	"context"
+	"encoding/gob"
 	"errors"
 	"fmt"
 	"math"
 	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -22,10 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
-
-func init() {
-	remotecache.Register(&RenderUser{})
-}
 
 var _ Service = (*RenderingService)(nil)
 
@@ -91,7 +87,7 @@ func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, rm p
 		perRequestRenderKeyProvider: &perRequestRenderKeyProvider{
 			cache:     remoteCache,
 			log:       logger,
-			keyExpiry: 5 * time.Minute,
+			keyExpiry: cfg.RendererRenderKeyLifeTime,
 		},
 		capabilities: []Capability{
 			{
@@ -114,6 +110,9 @@ func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, rm p
 		domain:                domain,
 		sanitizeURL:           sanitizeURL,
 	}
+
+	gob.Register(&RenderUser{})
+
 	return s, nil
 }
 
@@ -156,9 +155,9 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 		}
 	}
 
-	if rs.pluginAvailable() {
+	if rs.pluginAvailable(ctx) {
 		rs.log = rs.log.New("renderer", "plugin")
-		rs.pluginInfo = rs.RendererPluginManager.Renderer()
+		rs.pluginInfo = rs.RendererPluginManager.Renderer(ctx)
 
 		if err := rs.startPlugin(ctx); err != nil {
 			return err
@@ -169,16 +168,6 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 		rs.renderCSVAction = rs.renderCSVViaPlugin
 		rs.sanitizeSVGAction = rs.sanitizeSVGViaPlugin
 		<-ctx.Done()
-
-		// On Windows, Chromium is generating a debug.log file that breaks signature check on next restart
-		debugFilePath := path.Join(rs.pluginInfo.PluginDir, "chrome-win/debug.log")
-		if _, err := os.Stat(debugFilePath); err == nil {
-			err = os.Remove(debugFilePath)
-			if err != nil {
-				rs.log.Warn("Couldn't remove debug.log file, the renderer plugin will not be able to pass the signature check until this file is deleted",
-					"err", err)
-			}
-		}
 
 		return nil
 	}
@@ -191,16 +180,16 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 	return nil
 }
 
-func (rs *RenderingService) pluginAvailable() bool {
-	return rs.RendererPluginManager.Renderer() != nil
+func (rs *RenderingService) pluginAvailable(ctx context.Context) bool {
+	return rs.RendererPluginManager.Renderer(ctx) != nil
 }
 
 func (rs *RenderingService) remoteAvailable() bool {
 	return rs.Cfg.RendererUrl != ""
 }
 
-func (rs *RenderingService) IsAvailable() bool {
-	return rs.remoteAvailable() || rs.pluginAvailable()
+func (rs *RenderingService) IsAvailable(ctx context.Context) bool {
+	return rs.remoteAvailable() || rs.pluginAvailable(ctx)
 }
 
 func (rs *RenderingService) Version() string {
@@ -271,7 +260,7 @@ func (rs *RenderingService) render(ctx context.Context, opts Opts, renderKeyProv
 		}, nil
 	}
 
-	if !rs.IsAvailable() {
+	if !rs.IsAvailable(ctx) {
 		rs.log.Warn("Could not render image, no image renderer found/installed. " +
 			"For image rendering support please install the grafana-image-renderer plugin. " +
 			"Read more at https://grafana.com/docs/grafana/latest/administration/image_rendering/")
@@ -316,7 +305,7 @@ func (rs *RenderingService) RenderCSV(ctx context.Context, opts CSVOpts, session
 }
 
 func (rs *RenderingService) SanitizeSVG(ctx context.Context, req *SanitizeSVGRequest) (*SanitizeSVGResponse, error) {
-	capability, err := rs.HasCapability(SvgSanitization)
+	capability, err := rs.HasCapability(ctx, SvgSanitization)
 	if err != nil {
 		return nil, err
 	}
@@ -338,7 +327,7 @@ func (rs *RenderingService) renderCSV(ctx context.Context, opts CSVOpts, renderK
 		return nil, ErrConcurrentLimitReached
 	}
 
-	if !rs.IsAvailable() {
+	if !rs.IsAvailable(ctx) {
 		return nil, ErrRenderUnavailable
 	}
 

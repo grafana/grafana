@@ -3,9 +3,9 @@ import React, { useCallback, useState } from 'react';
 import { Draggable } from 'react-beautiful-dnd';
 import { useUpdateEffect } from 'react-use';
 
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { ReactUtils, stylesFactory, useTheme } from '@grafana/ui';
+import { ReactUtils, useStyles2 } from '@grafana/ui';
 
 import { QueryOperationRowHeader } from './QueryOperationRowHeader';
 
@@ -31,7 +31,7 @@ export interface QueryOperationRowRenderProps {
   onClose: () => void;
 }
 
-export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
+export function QueryOperationRow({
   children,
   actions,
   title,
@@ -43,15 +43,14 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
   draggable,
   index,
   id,
-}: QueryOperationRowProps) => {
+}: QueryOperationRowProps) {
   const [isContentVisible, setIsContentVisible] = useState(isOpen !== undefined ? isOpen : true);
-  const theme = useTheme();
-  const styles = getQueryOperationRowStyles(theme);
+  const styles = useStyles2(getQueryOperationRowStyles);
   const onRowToggle = useCallback(() => {
     setIsContentVisible(!isContentVisible);
   }, [isContentVisible, setIsContentVisible]);
 
-  const reportDragMousePosition = useCallback((e) => {
+  const reportDragMousePosition = useCallback((e: React.MouseEvent) => {
     // When drag detected react-beautiful-dnd will preventDefault the event
     // Ref: https://github.com/atlassian/react-beautiful-dnd/blob/master/docs/guides/how-we-use-dom-events.md#a-mouse-drag-has-started-and-the-user-is-now-dragging
     if (e.defaultPrevented) {
@@ -91,7 +90,6 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
     },
   };
 
-  const titleElement = title && ReactUtils.renderOrCallToRender(title, renderPropArgs);
   const actionsElement = actions && ReactUtils.renderOrCallToRender(actions, renderPropArgs);
   const headerElementRendered = headerElement && ReactUtils.renderOrCallToRender(headerElement, renderPropArgs);
 
@@ -104,6 +102,7 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
               <div ref={provided.innerRef} className={styles.wrapper} {...provided.draggableProps}>
                 <div>
                   <QueryOperationRowHeader
+                    id={id}
                     actionsElement={actionsElement}
                     disabled={disabled}
                     draggable
@@ -112,7 +111,7 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
                     isContentVisible={isContentVisible}
                     onRowToggle={onRowToggle}
                     reportDragMousePosition={reportDragMousePosition}
-                    titleElement={titleElement}
+                    title={title}
                   />
                 </div>
                 {isContentVisible && <div className={styles.content}>{children}</div>}
@@ -127,6 +126,7 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
   return (
     <div className={styles.wrapper}>
       <QueryOperationRowHeader
+        id={id}
         actionsElement={actionsElement}
         disabled={disabled}
         draggable={false}
@@ -134,23 +134,23 @@ export const QueryOperationRow: React.FC<QueryOperationRowProps> = ({
         isContentVisible={isContentVisible}
         onRowToggle={onRowToggle}
         reportDragMousePosition={reportDragMousePosition}
-        titleElement={titleElement}
+        title={title}
       />
       {isContentVisible && <div className={styles.content}>{children}</div>}
     </div>
   );
-};
+}
 
-const getQueryOperationRowStyles = stylesFactory((theme: GrafanaTheme) => {
+const getQueryOperationRowStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css`
-      margin-bottom: ${theme.spacing.md};
+      margin-bottom: ${theme.spacing(2)};
     `,
     content: css`
-      margin-top: ${theme.spacing.inlineFormMargin};
-      margin-left: ${theme.spacing.lg};
+      margin-top: ${theme.spacing(0.5)};
+      margin-left: ${theme.spacing(3)};
     `,
   };
-});
+};
 
 QueryOperationRow.displayName = 'QueryOperationRow';

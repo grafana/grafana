@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Stack } from '@grafana/ui';
+import { Stack } from '@grafana/experimental';
 
 import { LokiDatasource } from '../../datasource';
 import { LokiVisualQuery, LokiVisualQueryBinary } from '../types';

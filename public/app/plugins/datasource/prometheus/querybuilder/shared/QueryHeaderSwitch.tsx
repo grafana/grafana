@@ -3,7 +3,8 @@ import { uniqueId } from 'lodash';
 import React, { HTMLProps, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Switch, Stack, useStyles2 } from '@grafana/ui';
+import { Stack } from '@grafana/experimental';
+import { Switch, useStyles2 } from '@grafana/ui';
 
 export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'value' | 'ref'> {
   value?: boolean;

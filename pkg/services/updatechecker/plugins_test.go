@@ -19,10 +19,11 @@ func TestPluginUpdateChecker_HasUpdate(t *testing.T) {
 			availableUpdates: map[string]string{
 				"test-ds": "1.0.0",
 			},
-			pluginStore: fakePluginStore{
-				plugins: map[string]plugins.PluginDTO{
-					"test-ds": {
+			pluginStore: plugins.FakePluginStore{
+				PluginList: []plugins.PluginDTO{
+					{
 						JSONData: plugins.JSONData{
+							ID:   "test-ds",
 							Info: plugins.Info{Version: "0.9.0"},
 						},
 					},
@@ -41,20 +42,23 @@ func TestPluginUpdateChecker_HasUpdate(t *testing.T) {
 				"test-panel": "0.9.0",
 				"test-app":   "0.0.1",
 			},
-			pluginStore: fakePluginStore{
-				plugins: map[string]plugins.PluginDTO{
-					"test-ds": {
+			pluginStore: plugins.FakePluginStore{
+				PluginList: []plugins.PluginDTO{
+					{
 						JSONData: plugins.JSONData{
+							ID:   "test-ds",
 							Info: plugins.Info{Version: "0.9.0"},
 						},
 					},
-					"test-panel": {
+					{
 						JSONData: plugins.JSONData{
+							ID:   "test-panel",
 							Info: plugins.Info{Version: "0.9.0"},
 						},
 					},
-					"test-app": {
+					{
 						JSONData: plugins.JSONData{
+							ID:   "test-app",
 							Info: plugins.Info{Version: "0.9.0"},
 						},
 					},
@@ -80,10 +84,11 @@ func TestPluginUpdateChecker_HasUpdate(t *testing.T) {
 			availableUpdates: map[string]string{
 				"test-panel": "0.9.0",
 			},
-			pluginStore: fakePluginStore{
-				plugins: map[string]plugins.PluginDTO{
-					"test-ds": {
+			pluginStore: plugins.FakePluginStore{
+				PluginList: []plugins.PluginDTO{
+					{
 						JSONData: plugins.JSONData{
+							ID:   "test-ds",
 							Info: plugins.Info{Version: "1.0.0"},
 						},
 					},
@@ -122,31 +127,35 @@ func TestPluginUpdateChecker_checkForUpdates(t *testing.T) {
 			availableUpdates: map[string]string{
 				"test-app": "1.0.0",
 			},
-			pluginStore: fakePluginStore{
-				plugins: map[string]plugins.PluginDTO{
-					"test-ds": {
+			pluginStore: plugins.FakePluginStore{
+				PluginList: []plugins.PluginDTO{
+					{
 						JSONData: plugins.JSONData{
 							ID:   "test-ds",
 							Info: plugins.Info{Version: "0.9.0"},
+							Type: plugins.DataSource,
 						},
 					},
-					"test-app": {
+					{
 						JSONData: plugins.JSONData{
 							ID:   "test-app",
 							Info: plugins.Info{Version: "0.5.0"},
+							Type: plugins.App,
 						},
 					},
-					"test-panel": {
+					{
 						JSONData: plugins.JSONData{
 							ID:   "test-panel",
 							Info: plugins.Info{Version: "2.5.7"},
+							Type: plugins.Panel,
 						},
 					},
-					"test-core-panel": {
+					{
 						Class: plugins.Core,
 						JSONData: plugins.JSONData{
 							ID:   "test-core-panel",
 							Info: plugins.Info{Version: "0.0.1"},
+							Type: plugins.Panel,
 						},
 					},
 				},
@@ -194,24 +203,4 @@ func (c *fakeHTTPClient) Get(url string) (*http.Response, error) {
 	}
 
 	return resp, nil
-}
-
-type fakePluginStore struct {
-	plugins.Store
-
-	plugins map[string]plugins.PluginDTO
-}
-
-func (pr fakePluginStore) Plugin(_ context.Context, pluginID string) (plugins.PluginDTO, bool) {
-	p, exists := pr.plugins[pluginID]
-
-	return p, exists
-}
-
-func (pr fakePluginStore) Plugins(_ context.Context, _ ...plugins.Type) []plugins.PluginDTO {
-	var result []plugins.PluginDTO
-	for _, p := range pr.plugins {
-		result = append(result, p)
-	}
-	return result
 }

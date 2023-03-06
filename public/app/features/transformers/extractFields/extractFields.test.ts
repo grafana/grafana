@@ -1,6 +1,8 @@
+import { ArrayVector, DataFrame, Field, FieldType } from '@grafana/data';
 import { toDataFrame } from '@grafana/data/src/dataframe/processDataFrame';
 
-import { ExtractFieldsOptions, extractFieldsTransformer } from './extractFields';
+import { extractFieldsTransformer } from './extractFields';
+import { ExtractFieldsOptions, FieldExtractorID } from './types';
 
 describe('Fields from JSON', () => {
   it('adds fields from JSON in string', async () => {
@@ -8,20 +10,21 @@ describe('Fields from JSON', () => {
       source: 'line',
       replace: true,
     };
+    const ctx = { interpolate: (v: string) => v };
     const data = toDataFrame({
       columns: ['ts', 'line'],
       rows: appl,
     });
 
-    const frames = extractFieldsTransformer.transformer(cfg)([data]);
+    const frames = extractFieldsTransformer.transformer(cfg, ctx)([data]);
     expect(frames.length).toEqual(1);
     expect(
-      frames[0].fields.reduce((acc, v) => {
+      frames[0].fields.reduce<Record<string, FieldType>>((acc, v) => {
         acc[v.name] = v.type;
         return acc;
-      }, {} as any)
+      }, {})
     ).toMatchInlineSnapshot(`
-      Object {
+      {
         "a": "string",
         "av": "number",
         "c": "string",
@@ -39,7 +42,185 @@ describe('Fields from JSON', () => {
       }
     `);
   });
+
+  it('Get nested path values', () => {
+    const cfg: ExtractFieldsOptions = {
+      replace: true,
+      source: 'JSON',
+      format: FieldExtractorID.JSON,
+      jsonPaths: [
+        { path: 'object.nestedArray[0]' },
+        { path: 'object.nestedArray[1]' },
+        { path: 'object.nestedString' },
+      ],
+    };
+    const ctx = { interpolate: (v: string) => v };
+
+    const frames = extractFieldsTransformer.transformer(cfg, ctx)([testDataFrame]);
+    expect(frames.length).toEqual(1);
+    expect(frames[0]).toMatchInlineSnapshot(`
+      {
+        "fields": [
+          {
+            "config": {},
+            "name": "object.nestedArray[0]",
+            "type": "number",
+            "values": [
+              1,
+            ],
+          },
+          {
+            "config": {},
+            "name": "object.nestedArray[1]",
+            "type": "number",
+            "values": [
+              2,
+            ],
+          },
+          {
+            "config": {},
+            "name": "object.nestedString",
+            "type": "string",
+            "values": [
+              "Hallo World",
+            ],
+          },
+        ],
+        "length": 1,
+      }
+    `);
+  });
+
+  it('Keep time field on replace', () => {
+    const cfg: ExtractFieldsOptions = {
+      replace: true,
+      keepTime: true,
+      source: 'JSON',
+      format: FieldExtractorID.JSON,
+      jsonPaths: [
+        { path: 'object.nestedArray[2]' },
+        { path: 'object.nestedArray[3]' },
+        { path: 'object.nestedString' },
+      ],
+    };
+    const ctx = { interpolate: (v: string) => v };
+
+    const frames = extractFieldsTransformer.transformer(cfg, ctx)([testDataFrame]);
+    expect(frames.length).toEqual(1);
+    expect(frames[0]).toMatchInlineSnapshot(`
+      {
+        "fields": [
+          {
+            "config": {},
+            "name": "Time",
+            "state": {
+              "displayName": "Time",
+              "multipleFrames": false,
+            },
+            "type": "time",
+            "values": [
+              1669638911691,
+            ],
+          },
+          {
+            "config": {},
+            "name": "object.nestedArray[2]",
+            "type": "number",
+            "values": [
+              3,
+            ],
+          },
+          {
+            "config": {},
+            "name": "object.nestedArray[3]",
+            "type": "number",
+            "values": [
+              4,
+            ],
+          },
+          {
+            "config": {},
+            "name": "object.nestedString",
+            "type": "string",
+            "values": [
+              "Hallo World",
+            ],
+          },
+        ],
+        "length": 1,
+      }
+    `);
+  });
+
+  it('Path is invalid', () => {
+    const cfg: ExtractFieldsOptions = {
+      replace: true,
+      source: 'JSON',
+      format: FieldExtractorID.JSON,
+      jsonPaths: [{ path: 'object.nestedString' }, { path: 'invalid.path' }],
+    };
+    const ctx = { interpolate: (v: string) => v };
+
+    const frames = extractFieldsTransformer.transformer(cfg, ctx)([testDataFrame]);
+    expect(frames.length).toEqual(1);
+    expect(frames[0]).toMatchInlineSnapshot(`
+      {
+        "fields": [
+          {
+            "config": {},
+            "name": "object.nestedString",
+            "type": "string",
+            "values": [
+              "Hallo World",
+            ],
+          },
+          {
+            "config": {},
+            "name": "invalid.path",
+            "type": "string",
+            "values": [
+              "Not Found",
+            ],
+          },
+        ],
+        "length": 1,
+      }
+    `);
+  });
 });
+
+const testFieldTime: Field = {
+  config: {},
+  name: 'Time',
+  type: FieldType.time,
+  values: new ArrayVector([1669638911691]),
+};
+
+const testFieldString: Field = {
+  config: {},
+  name: 'String',
+  type: FieldType.string,
+  values: new ArrayVector(['Hallo World']),
+};
+
+const testFieldJSON: Field = {
+  config: {},
+  name: 'JSON',
+  type: FieldType.string,
+  values: new ArrayVector([
+    JSON.stringify({
+      object: {
+        nestedArray: [1, 2, 3, 4],
+        nestedString: 'Hallo World',
+      },
+    }),
+  ]),
+};
+
+const testDataFrame: DataFrame = {
+  fields: [testFieldTime, testFieldString, testFieldJSON],
+  length: 1,
+};
 
 const appl = [
   [

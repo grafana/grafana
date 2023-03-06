@@ -1,8 +1,9 @@
 package migrations
 
 import (
-	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"xorm.io/xorm"
+
+	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
 func addAnnotationMig(mg *Migrator) {
@@ -178,6 +179,10 @@ func addAnnotationMig(mg *Migrator) {
 	mg.AddMigration("Add index for alert_id on annotation table", NewAddIndexMigration(table, &Index{
 		Cols: []string{"alert_id"}, Type: IndexType,
 	}))
+
+	mg.AddMigration("Increase tags column to length 4096", NewRawSQLMigration("").
+		Postgres("ALTER TABLE annotation ALTER COLUMN tags TYPE VARCHAR(4096);").
+		Mysql("ALTER TABLE annotation MODIFY tags VARCHAR(4096);"))
 }
 
 type AddMakeRegionSingleRowMigration struct {

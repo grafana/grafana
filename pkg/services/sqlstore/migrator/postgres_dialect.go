@@ -9,7 +9,6 @@ import (
 
 	"github.com/golang-migrate/migrate/v4/database"
 	"github.com/lib/pq"
-
 	"xorm.io/xorm"
 )
 
@@ -43,6 +42,10 @@ func (db *PostgresDialect) AutoIncrStr() string {
 
 func (db *PostgresDialect) BooleanStr(value bool) string {
 	return strconv.FormatBool(value)
+}
+
+func (db *PostgresDialect) BatchSize() int {
+	return 1000
 }
 
 func (db *PostgresDialect) Default(col *Column) string {
@@ -235,7 +238,6 @@ func (db *PostgresDialect) UpsertMultipleSQL(tableName string, keyCols, updateCo
 	}
 	columnsStr := strings.Builder{}
 	onConflictStr := strings.Builder{}
-	colPlaceHoldersStr := strings.Builder{}
 	setStr := strings.Builder{}
 
 	const separator = ", "
@@ -246,8 +248,7 @@ func (db *PostgresDialect) UpsertMultipleSQL(tableName string, keyCols, updateCo
 		}
 
 		columnsStr.WriteString(fmt.Sprintf("%s%s", db.Quote(c), separatorVar))
-		colPlaceHoldersStr.WriteString(fmt.Sprintf("?%s", separatorVar))
-		setStr.WriteString(fmt.Sprintf("%s=excluded.%s%s", db.Quote(c), db.Quote(c), separatorVar))
+		setStr.WriteString(fmt.Sprintf("%s=EXCLUDED.%s%s", db.Quote(c), db.Quote(c), separatorVar))
 	}
 
 	separatorVar = separator
@@ -260,21 +261,36 @@ func (db *PostgresDialect) UpsertMultipleSQL(tableName string, keyCols, updateCo
 
 	valuesStr := strings.Builder{}
 	separatorVar = separator
-	colPlaceHolders := colPlaceHoldersStr.String()
+	nextPlaceHolder := 1
+
 	for i := 0; i < count; i++ {
 		if i == count-1 {
 			separatorVar = ""
 		}
+
+		colPlaceHoldersStr := strings.Builder{}
+		placeHolderSep := separator
+		for j := 1; j <= len(updateCols); j++ {
+			if j == len(updateCols) {
+				placeHolderSep = ""
+			}
+			placeHolder := fmt.Sprintf("$%v%s", nextPlaceHolder, placeHolderSep)
+			nextPlaceHolder++
+			colPlaceHoldersStr.WriteString(placeHolder)
+		}
+		colPlaceHolders := colPlaceHoldersStr.String()
+
 		valuesStr.WriteString(fmt.Sprintf("(%s)%s", colPlaceHolders, separatorVar))
 	}
 
-	s := fmt.Sprintf(`INSERT INTO %s (%s) VALUES %s ON CONFLICT(%s) DO UPDATE SET %s`,
+	s := fmt.Sprintf(`INSERT INTO %s (%s) VALUES %s ON CONFLICT (%s) DO UPDATE SET %s;`,
 		tableName,
 		columnsStr.String(),
 		valuesStr.String(),
 		onConflictStr.String(),
 		setStr.String(),
 	)
+
 	return s, nil
 }
 

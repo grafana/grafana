@@ -1,21 +1,21 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
-import { GrafanaTheme } from '@grafana/data';
-import { useStyles } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 
-export const EmptyArea: FC = ({ children }) => {
-  const styles = useStyles(getStyles);
+export const EmptyArea = ({ children }: React.PropsWithChildren<{}>) => {
+  const styles = useStyles2(getStyles);
 
   return <div className={styles.container}>{children}</div>;
 };
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css`
-      background-color: ${theme.colors.bg2};
-      color: ${theme.colors.textSemiWeak};
-      padding: ${theme.spacing.xl};
+      background-color: ${theme.colors.background.secondary};
+      color: ${theme.colors.text.secondary};
+      padding: ${theme.spacing(4)};
       text-align: center;
     `,
   };

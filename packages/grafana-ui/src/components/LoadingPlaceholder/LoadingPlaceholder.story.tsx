@@ -3,7 +3,7 @@ import React from 'react';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 
-import { LoadingPlaceholder } from './LoadingPlaceholder';
+import { LoadingPlaceholder, LoadingPlaceholderProps } from './LoadingPlaceholder';
 import mdx from './LoadingPlaceholder.mdx';
 
 const meta: ComponentMeta<typeof LoadingPlaceholder> = {
@@ -15,10 +15,19 @@ const meta: ComponentMeta<typeof LoadingPlaceholder> = {
       page: mdx,
     },
   },
+  argTypes: {
+    text: {
+      control: { type: 'text' },
+    },
+  },
 };
 
-export const basic: ComponentStory<typeof LoadingPlaceholder> = () => {
-  return <LoadingPlaceholder text="Loading..." />;
+export const Basic: ComponentStory<typeof LoadingPlaceholder> = (args: LoadingPlaceholderProps) => {
+  return <LoadingPlaceholder {...args} />;
+};
+
+Basic.args = {
+  text: 'Loading...',
 };
 
 export default meta;

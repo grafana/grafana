@@ -10,7 +10,7 @@ e2e.scenario({
     // Open dashboard global variables and interpolation
     e2e.flows.openDashboard({ uid: 'HYaGDGIMk' });
 
-    const items: any = [];
+    const items: string[] = [];
     const expectedItems: string[] = [
       '__dashboard = Templating - Global variables and interpolation',
       '__dashboard.name = Templating - Global variables and interpolation',
@@ -33,7 +33,7 @@ e2e.scenario({
       `Server:singlequote = 'A\\'A"A','BB\\B','CCC'`,
       `Server:doublequote = "A'A\\"A","BB\\B","CCC"`,
       `Server:sqlstring = 'A''A"A','BB\\\B','CCC'`,
-      `Server:date = null`,
+      `Server:date = NaN`,
       `Server:text = All`,
       `Server:queryparam = var-Server=All`,
       `1 < 2`,

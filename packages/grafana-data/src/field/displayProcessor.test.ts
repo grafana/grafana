@@ -3,6 +3,7 @@ import { createTheme } from '../themes';
 import { FieldConfig, FieldType, ThresholdsMode } from '../types';
 import { DisplayProcessor, DisplayValue } from '../types/displayValue';
 import { MappingType, ValueMapping } from '../types/valueMapping';
+import { ArrayVector } from '../vector';
 
 import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
 
@@ -16,11 +17,14 @@ function getDisplayProcessorFromConfig(config: FieldConfig, fieldType: FieldType
   });
 }
 
-function assertSame(input: any, processors: DisplayProcessor[], match: DisplayValue) {
+function assertSame(input: unknown, processors: DisplayProcessor[], match: DisplayValue) {
   processors.forEach((processor) => {
     const value = processor(input);
     for (const key of Object.keys(match)) {
-      expect((value as any)[key]).toEqual((match as any)[key]);
+      // need to type assert on the object keys here
+      // see e.g. https://github.com/Microsoft/TypeScript/issues/12870
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      expect(value[key as keyof typeof match]).toEqual(match[key as keyof typeof match]);
     }
   });
 }
@@ -332,12 +336,95 @@ describe('Format value', () => {
     expect(disp.suffix).toEqual(' Mil');
   });
 
+  it('with value 15000000 and unit locale', () => {
+    const value = 1500000;
+    const instance = getDisplayProcessorFromConfig({ decimals: null, unit: 'locale' });
+    const disp = instance(value);
+    expect(disp.text).toEqual('1,500,000');
+  });
+
   it('with value 128000000 and unit bytes', () => {
     const value = 1280000125;
     const instance = getDisplayProcessorFromConfig({ decimals: null, unit: 'bytes' });
     const disp = instance(value);
     expect(disp.text).toEqual('1.19');
     expect(disp.suffix).toEqual(' GiB');
+  });
+
+  describe('number formatting for string values', () => {
+    it('should preserve string unchanged if unit is string', () => {
+      const processor = getDisplayProcessorFromConfig({ unit: 'string' }, FieldType.string);
+      expect(processor('22.1122334455').text).toEqual('22.1122334455');
+    });
+
+    it('should preserve string unchanged if no unit is specified', () => {
+      const processor = getDisplayProcessorFromConfig({}, FieldType.string);
+      expect(processor('22.1122334455').text).toEqual('22.1122334455');
+
+      // Support empty/missing strings
+      expect(processor(undefined).text).toEqual('');
+      expect(processor(null).text).toEqual('');
+      expect(processor('').text).toEqual('');
+    });
+
+    it('should format string as number if unit is `none`', () => {
+      const processor = getDisplayProcessorFromConfig({ unit: 'none' }, FieldType.string);
+      expect(processor('0x10').text).toEqual('16');
+    });
+
+    it('should not parse a 64 bit number when the data type is string', () => {
+      const value = '2882377905688543293';
+      const instance = getDisplayProcessorFromConfig({}, FieldType.string);
+      const disp = instance(value);
+      expect(disp.text).toEqual(value);
+    });
+  });
+
+  describe('number formatting for y axis ticks (dynamic decimals with trailing 0s trimming)', () => {
+    // all these tests have non-null adjacentDecimals != null, which we only do durink axis tick formatting
+
+    it('should trim trailing zeros after decimal from fractional seconds when formatted as millis with adjacentDecimals=2', () => {
+      const processor = getDisplayProcessorFromConfig({ unit: 's' }, FieldType.number);
+      expect(processor(0.06, 2).text).toEqual('60');
+    });
+
+    it('should trim trailing zeros after decimal from number', () => {
+      const processor = getDisplayProcessorFromConfig({}, FieldType.number);
+      expect(processor(1.2, 2).text).toEqual('1.2');
+
+      // dynamic!
+      expect(processor(13.50008, 3).text).toEqual('13.5');
+    });
+
+    it('should not attempt to trim zeros from currency*', () => {
+      const processor = getDisplayProcessorFromConfig({ unit: 'currencyUSD' }, FieldType.number);
+      expect(processor(1.2, 2).text).toEqual('1.20');
+    });
+
+    it('should not attempt to trim zeros from bool', () => {
+      const processor = getDisplayProcessorFromConfig({ unit: 'bool' }, FieldType.number);
+      expect(processor(1, 2).text).toEqual('True');
+    });
+
+    it('should not attempt to trim zeros from time', () => {
+      const processor = getDisplayProcessorFromConfig({}, FieldType.time);
+      expect(processor(1666402869517, 2).text).toEqual('2022-10-21 20:41:09');
+    });
+
+    it('should not attempt to trim zeros from dateTimeAsUS', () => {
+      const processor = getDisplayProcessorFromConfig({ unit: 'dateTimeAsUS' }, FieldType.number);
+      expect(processor(1666402869517, 2).text).toEqual('10/21/2022 8:41:09 pm');
+    });
+
+    it('should not attempt to trim zeros from locale', () => {
+      const processor = getDisplayProcessorFromConfig({ unit: 'locale' }, FieldType.number);
+      expect(processor(3500000, 2).text).toEqual('3,500,000');
+    });
+
+    it('should not attempt to trim zeros when explicit decimals: 5', () => {
+      const processor = getDisplayProcessorFromConfig({ decimals: 5 }, FieldType.number);
+      expect(processor(35, 2).text).toEqual('35.00000');
+    });
   });
 });
 
@@ -455,33 +542,48 @@ describe('Date display options', () => {
     expect(processor('2020-12-01T08:48:43.783337').text).toEqual('2020-12-01 09:48:43');
   });
 
-  describe('number formatting for string values', () => {
-    it('should preserve string unchanged if unit is string', () => {
-      const processor = getDisplayProcessorFromConfig({ unit: 'string' }, FieldType.string);
-      expect(processor('22.1122334455').text).toEqual('22.1122334455');
+  it('should include milliseconds when value range is < 60s', () => {
+    const processor = getDisplayProcessor({
+      timeZone: 'utc',
+      field: {
+        type: FieldType.time,
+        config: {},
+        values: new ArrayVector([Date.parse('2020-08-01T08:48:43.783337Z'), Date.parse('2020-08-01T08:49:15.123456Z')]),
+      },
+      theme: createTheme(),
     });
 
-    it('should preserve string unchanged if no unit is specified', () => {
-      const processor = getDisplayProcessorFromConfig({}, FieldType.string);
-      expect(processor('22.1122334455').text).toEqual('22.1122334455');
+    expect(processor('2020-08-01T08:48:43.783337Z').text).toEqual('2020-08-01 08:48:43.783');
+  });
 
-      // Support empty/missing strings
-      expect(processor(undefined).text).toEqual('');
-      expect(processor(null).text).toEqual('');
-      expect(processor('').text).toEqual('');
+  it('should not include milliseconds when value range is >= 60s (reversed)', () => {
+    const processor = getDisplayProcessor({
+      timeZone: 'utc',
+      field: {
+        type: FieldType.time,
+        config: {},
+        values: new ArrayVector([Date.parse('2020-08-01T08:49:15.123456Z'), Date.parse('2020-08-01T08:43:43.783337Z')]),
+      },
+      theme: createTheme(),
     });
 
-    it('should format string as number if unit is `none`', () => {
-      const processor = getDisplayProcessorFromConfig({ unit: 'none' }, FieldType.string);
-      expect(processor('0x10').text).toEqual('16');
+    expect(processor('2020-08-01T08:48:43Z').text).toEqual('2020-08-01 08:48:43');
+  });
+
+  it('should not include milliseconds when value range is < 60s with explicit unit time:', () => {
+    const processor = getDisplayProcessor({
+      timeZone: 'utc',
+      field: {
+        type: FieldType.time,
+        config: {
+          unit: 'time:YYYY-MM-DD HH:mm',
+        },
+        values: new ArrayVector([Date.parse('2020-08-01T08:48:43.783337Z'), Date.parse('2020-08-01T08:49:15.123456Z')]),
+      },
+      theme: createTheme(),
     });
 
-    it('should not parse a 64 bit number when the data type is string', () => {
-      const value = '2882377905688543293';
-      const instance = getDisplayProcessorFromConfig({}, FieldType.string);
-      const disp = instance(value);
-      expect(disp.text).toEqual(value);
-    });
+    expect(processor('2020-08-01T08:48:43.783337Z').text).toEqual('2020-08-01 08:48');
   });
 });
 

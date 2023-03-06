@@ -1,9 +1,8 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
-import { PageToolbar, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 type Props = {
@@ -12,14 +11,21 @@ type Props = {
   wrapInContent?: boolean;
 };
 
+const defaultPageNav: Partial<NavModelItem> = {
+  icon: 'bell',
+  id: 'alert-rule-view',
+  breadcrumbs: [{ title: 'Alert rules', url: 'alerting/list' }],
+};
+
 export function RuleViewerLayout(props: Props): JSX.Element | null {
   const { wrapInContent = true, children, title } = props;
   const styles = useStyles2(getPageStyles);
 
   return (
-    <Page>
-      <PageToolbar title={title} pageIcon="bell" onGoBack={() => locationService.push('/alerting/list')} />
-      <div className={styles.content}>{wrapInContent ? <RuleViewerLayoutContent {...props} /> : children}</div>
+    <Page pageNav={{ ...defaultPageNav, text: title }} navId="alert-list">
+      <Page.Contents>
+        <div className={styles.content}>{wrapInContent ? <RuleViewerLayoutContent {...props} /> : children}</div>
+      </Page.Contents>
     </Page>
   );
 }
@@ -37,7 +43,6 @@ export function RuleViewerLayoutContent({ children, padding = 2 }: ContentProps)
 const getPageStyles = (theme: GrafanaTheme2) => {
   return {
     content: css`
-      margin: ${theme.spacing(0, 2, 2)};
       max-width: ${theme.breakpoints.values.xxl}px;
     `,
   };

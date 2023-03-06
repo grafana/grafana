@@ -1,16 +1,7 @@
-import { AlignmentTypes, CloudMonitoringQuery, EditorMode, MetricQuery, QueryType, SLOQuery } from '../types';
+import { AlignmentTypes, CloudMonitoringQuery, QueryType, SLOQuery, TimeSeriesList, TimeSeriesQuery } from '../types';
 
-export const createMockMetricQuery: (overrides?: Partial<MetricQuery>) => MetricQuery = (
-  overrides?: Partial<MetricQuery>
-) => {
-  return {
-    editorMode: EditorMode.Visual,
-    metricType: '',
-    crossSeriesReducer: 'REDUCE_NONE',
-    query: '',
-    projectName: 'cloud-monitoring-default-project',
-    ...overrides,
-  };
+type Subset<K> = {
+  [attr in keyof K]?: K[attr] extends object ? Subset<K[attr]> : K[attr];
 };
 
 export const createMockSLOQuery: (overrides?: Partial<SLOQuery>) => SLOQuery = (overrides) => {
@@ -24,18 +15,47 @@ export const createMockSLOQuery: (overrides?: Partial<SLOQuery>) => SLOQuery = (
     serviceName: '',
     sloId: '',
     sloName: '',
+    lookbackPeriod: '',
     ...overrides,
   };
 };
 
-export const createMockQuery: (overrides?: Partial<CloudMonitoringQuery>) => CloudMonitoringQuery = (overrides) => {
+export const createMockTimeSeriesList: (overrides?: Partial<TimeSeriesList>) => TimeSeriesList = (
+  overrides?: Partial<TimeSeriesList>
+) => {
   return {
-    refId: 'cloudMonitoringRefId',
-    queryType: QueryType.METRICS,
-    intervalMs: 0,
-    type: 'timeSeriesQuery',
+    crossSeriesReducer: 'REDUCE_NONE',
+    projectName: 'cloud-monitoring-default-project',
+    filters: [],
+    groupBys: [],
+    view: 'FULL',
     ...overrides,
-    metricQuery: createMockMetricQuery(overrides?.metricQuery),
+  };
+};
+
+export const createMockTimeSeriesQuery: (overrides?: Partial<TimeSeriesQuery>) => TimeSeriesQuery = (
+  overrides?: Partial<TimeSeriesQuery>
+) => {
+  return {
+    query: '',
+    projectName: 'cloud-monitoring-default-project',
+    ...overrides,
+  };
+};
+
+export const createMockQuery: (overrides?: Subset<CloudMonitoringQuery>) => CloudMonitoringQuery = (overrides) => {
+  return {
+    datasource: {
+      type: 'stackdriver',
+      uid: 'abc',
+    },
+    refId: 'cloudMonitoringRefId',
+    queryType: QueryType.TIME_SERIES_LIST,
+    intervalMs: 0,
+    hide: false,
+    ...overrides,
     sloQuery: createMockSLOQuery(overrides?.sloQuery),
+    timeSeriesList: createMockTimeSeriesList(overrides?.timeSeriesList),
+    timeSeriesQuery: createMockTimeSeriesQuery(overrides?.timeSeriesQuery),
   };
 };

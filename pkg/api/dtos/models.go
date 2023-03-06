@@ -3,7 +3,6 @@ package dtos
 import (
 	"crypto/md5"
 	"fmt"
-	"net/http"
 	"regexp"
 	"strings"
 
@@ -34,7 +33,8 @@ type CurrentUser struct {
 	Login                      string             `json:"login"`
 	Email                      string             `json:"email"`
 	Name                       string             `json:"name"`
-	LightTheme                 bool               `json:"lightTheme"`
+	Theme                      string             `json:"theme"`
+	LightTheme                 bool               `json:"lightTheme"` // deprecated, use theme instead
 	OrgCount                   int                `json:"orgCount"`
 	OrgId                      int64              `json:"orgId"`
 	OrgName                    string             `json:"orgName"`
@@ -44,9 +44,16 @@ type CurrentUser struct {
 	Timezone                   string             `json:"timezone"`
 	WeekStart                  string             `json:"weekStart"`
 	Locale                     string             `json:"locale"`
+	Language                   string             `json:"language"`
 	HelpFlags1                 user.HelpFlags1    `json:"helpFlags1"`
 	HasEditPermissionInFolders bool               `json:"hasEditPermissionInFolders"`
 	Permissions                UserPermissionsMap `json:"permissions,omitempty"`
+	Analytics                  AnalyticsSettings  `json:"analytics"`
+}
+
+type AnalyticsSettings struct {
+	Identifier         string `json:"identifier"`
+	IntercomIdentifier string `json:"intercomIdentifier,omitempty"`
 }
 
 type UserPermissionsMap map[string]bool
@@ -72,17 +79,33 @@ type MetricRequest struct {
 	Debug bool `json:"debug"`
 
 	PublicDashboardAccessToken string `json:"publicDashboardAccessToken"`
+}
 
-	HTTPRequest *http.Request `json:"-"`
+func (mr *MetricRequest) GetUniqueDatasourceTypes() []string {
+	dsTypes := make(map[string]bool)
+	for _, query := range mr.Queries {
+		if dsType, ok := query.Get("datasource").CheckGet("type"); ok {
+			name := dsType.MustString()
+			if _, ok := dsTypes[name]; !ok {
+				dsTypes[name] = true
+			}
+		}
+	}
+
+	res := make([]string, 0, len(dsTypes))
+	for dsType := range dsTypes {
+		res = append(res, dsType)
+	}
+
+	return res
 }
 
 func (mr *MetricRequest) CloneWithQueries(queries []*simplejson.Json) MetricRequest {
 	return MetricRequest{
-		From:        mr.From,
-		To:          mr.To,
-		Queries:     queries,
-		Debug:       mr.Debug,
-		HTTPRequest: mr.HTTPRequest,
+		From:    mr.From,
+		To:      mr.To,
+		Queries: queries,
+		Debug:   mr.Debug,
 	}
 }
 

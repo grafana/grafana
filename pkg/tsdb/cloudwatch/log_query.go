@@ -11,6 +11,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
+const cloudWatchTSFormat = "2006-01-02 15:04:05.000"
+
 func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*data.Frame, error) {
 	if response == nil {
 		return nil, fmt.Errorf("response is nil, cannot convert log results to data frames")

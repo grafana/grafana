@@ -11,15 +11,16 @@ export interface Props {
     grammar: Grammar;
     name: string;
   };
+  className?: string;
 }
-export function RawQuery({ query, lang }: Props) {
+export function RawQuery({ query, lang, className }: Props) {
   const theme = useTheme2();
   const styles = getStyles(theme);
   const highlighted = Prism.highlight(query, lang.grammar, lang.name);
 
   return (
     <div
-      className={cx(styles.editorField, 'prism-syntax-highlight')}
+      className={cx(styles.editorField, 'prism-syntax-highlight', className)}
       aria-label="selector"
       dangerouslySetInnerHTML={{ __html: highlighted }}
     />

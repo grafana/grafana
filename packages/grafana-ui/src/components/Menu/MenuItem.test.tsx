@@ -51,6 +51,20 @@ describe('MenuItem', () => {
     expect(subMenuContainer.firstChild?.childNodes.length).toBe(2);
   });
 
+  it('renders disabled subMenu correctly', async () => {
+    const childItems = [
+      <MenuItem key="subitem1" label="subitem1" icon="history" />,
+      <MenuItem key="subitem2" label="subitem2" icon="apps" />,
+    ];
+
+    render(getMenuItem({ childItems, disabled: true }));
+
+    fireEvent.mouseOver(screen.getByLabelText(selectors.components.Menu.MenuItem('Test')));
+
+    const subMenuContainer = screen.queryByLabelText(selectors.components.Menu.SubMenu.container);
+    expect(subMenuContainer).toBe(null);
+  });
+
   it('opens subMenu on ArrowRight', async () => {
     const childItems = [
       <MenuItem key="subitem1" label="subitem1" icon="history" />,

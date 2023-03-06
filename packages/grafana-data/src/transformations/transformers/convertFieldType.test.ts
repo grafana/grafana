@@ -101,6 +101,46 @@ describe('field convert type', () => {
   });
 });
 
+it('can convert strings with commas to numbers', () => {
+  const options = { targetField: 'stringy nums', destinationType: FieldType.number };
+
+  const stringyNumbers = {
+    name: 'stringy nums',
+    type: FieldType.string,
+    values: new ArrayVector(['1,000', '1,000,000']),
+    config: {},
+  };
+
+  const numbers = convertFieldType(stringyNumbers, options);
+
+  expect(numbers).toEqual({
+    name: 'stringy nums',
+    type: FieldType.number,
+    values: new ArrayVector([1000, 1000000]),
+    config: {},
+  });
+});
+
+it('converts booleans to numbers', () => {
+  const options = { targetField: 'booleans', destinationType: FieldType.number };
+
+  const stringyNumbers = {
+    name: 'booleans',
+    type: FieldType.boolean,
+    values: new ArrayVector([true, false]),
+    config: {},
+  };
+
+  const numbers = convertFieldType(stringyNumbers, options);
+
+  expect(numbers).toEqual({
+    name: 'booleans',
+    type: FieldType.number,
+    values: new ArrayVector([1, 0]),
+    config: {},
+  });
+});
+
 describe('field convert types transformer', () => {
   beforeAll(() => {
     mockTransformationsRegistry([convertFieldTypeTransformer]);
@@ -296,6 +336,31 @@ describe('field convert types transformer', () => {
         type: FieldType.string,
         values: ['true', 'false', '0', '99', '2021-08-02 00:00:00.000'],
       },
+    ]);
+  });
+
+  it('will convert time fields to strings', () => {
+    const options = {
+      conversions: [{ targetField: 'time', destinationType: FieldType.string, dateFormat: 'YYYY-MM' }],
+    };
+
+    const stringified = convertFieldTypes(options, [
+      toDataFrame({
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: [1626674400000, 1627020000000, 1627192800000, 1627797600000, 1627884000000],
+          },
+        ],
+      }),
+    ])[0].fields[0];
+    expect(stringified.values.toArray()).toEqual([
+      '2021-07',
+      '2021-07',
+      '2021-07', // can group by month
+      '2021-08',
+      '2021-08',
     ]);
   });
 });

@@ -62,7 +62,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
               options={[
                 { value: 'search', label: 'Search' },
                 { value: undefined, label: 'TraceID' },
-                { value: 'upload', label: 'JSON file' },
+                { value: 'upload', label: 'JSON File' },
               ]}
               value={query.queryType}
               onChange={(v) =>

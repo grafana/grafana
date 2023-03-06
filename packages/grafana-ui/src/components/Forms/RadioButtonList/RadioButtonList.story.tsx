@@ -115,7 +115,7 @@ DisabledList.args = {
 };
 
 export const Dots: Story = () => {
-  const Wrapper: React.FC<{ title: string }> = ({ title, children }) => (
+  const Wrapper: React.FC<React.PropsWithChildren<{ title: string }>> = ({ title, children }) => (
     <div style={{ marginBottom: 20 }}>
       <h5>{title}</h5>
       {children}

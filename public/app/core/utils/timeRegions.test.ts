@@ -19,20 +19,20 @@ describe('timeRegions', () => {
       };
       const regions = calculateTimesWithin(cfg, tr);
       expect(regions).toMatchInlineSnapshot(`
-        Array [
-          Object {
+        [
+          {
             "from": 1609779600000,
             "to": 1609779600000,
           },
-          Object {
+          {
             "from": 1610384400000,
             "to": 1610384400000,
           },
-          Object {
+          {
             "from": 1610989200000,
             "to": 1610989200000,
           },
-          Object {
+          {
             "from": 1611594000000,
             "to": 1611594000000,
           },

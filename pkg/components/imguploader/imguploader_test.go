@@ -154,6 +154,8 @@ func TestImageUploaderFactory(t *testing.T) {
 				require.NoError(t, err)
 				_, err = azureBlobSec.NewKey("container_name", "container_name")
 				require.NoError(t, err)
+				_, err = azureBlobSec.NewKey("sas_token_expiration_days", "sas_token_expiration_days")
+				require.NoError(t, err)
 
 				uploader, err := NewImageUploader()
 				require.NoError(t, err)
@@ -163,6 +165,7 @@ func TestImageUploaderFactory(t *testing.T) {
 				require.Equal(t, "account_name", original.account_name)
 				require.Equal(t, "account_key", original.account_key)
 				require.Equal(t, "container_name", original.container_name)
+				require.Equal(t, -1, original.sas_token_expiration_days)
 			})
 		})
 

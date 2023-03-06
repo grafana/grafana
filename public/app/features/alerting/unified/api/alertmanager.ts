@@ -7,6 +7,7 @@ import {
   AlertManagerCortexConfig,
   AlertmanagerGroup,
   AlertmanagerStatus,
+  ExternalAlertmanagerConfig,
   ExternalAlertmanagersResponse,
   Matcher,
   Receiver,
@@ -15,7 +16,6 @@ import {
   TestReceiversAlert,
   TestReceiversPayload,
   TestReceiversResult,
-  ExternalAlertmanagerConfig,
 } from 'app/plugins/datasource/alertmanager/types';
 
 import { getDatasourceAPIUid, GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
