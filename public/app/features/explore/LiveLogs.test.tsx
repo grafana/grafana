@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { LogLevel, LogRowModel, MutableDataFrame } from '@grafana/data';
@@ -101,5 +101,46 @@ describe('LiveLogs', () => {
     expect(logList).toHaveLength(2);
     expect(logList[0]).toHaveAttribute('style', 'color: rgb(204, 0, 0);');
     expect(logList[1]).toHaveAttribute('style', 'color: rgb(204, 102, 0);');
+  });
+
+  it('clears logs', () => {
+    setup([makeLog({ uid: '1' }), makeLog({ uid: '2' }), makeLog({ uid: '3' })]);
+
+    expect(screen.getByRole('cell', { name: 'log message 1' })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: 'log message 2' })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: 'log message 3' })).toBeInTheDocument();
+
+    const clearButton = screen.getByRole('button', { name: 'Clear logs' });
+    clearButton.click();
+
+    expect(screen.queryByRole('cell', { name: 'log message 1' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('cell', { name: 'log message 2' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('cell', { name: 'log message 3' })).not.toBeInTheDocument();
+  });
+
+  it('renders new logs after cleared', () => {
+    const oldLogs = [makeLog({ uid: '1' }), makeLog({ uid: '2' }), makeLog({ uid: '3' })];
+    const { rerender } = setup(oldLogs);
+
+    const clearButton = screen.getByRole('button', { name: 'Clear logs' });
+    clearButton.click();
+
+    const newLogs = [...oldLogs, makeLog({ uid: '4', timeEpochMs: 5 }), makeLog({ uid: '5', timeEpochMs: 10 })];
+    rerender(
+      <LiveLogsWithTheme
+        logRows={newLogs}
+        timeZone={'utc'}
+        stopLive={() => {}}
+        onPause={() => {}}
+        onResume={() => {}}
+        isPaused={false}
+      />
+    );
+
+    expect(screen.queryByRole('cell', { name: 'log message 1' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('cell', { name: 'log message 2' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('cell', { name: 'log message 3' })).not.toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: 'log message 4' })).toBeInTheDocument();
+    expect(screen.getByRole('cell', { name: 'log message 5' })).toBeInTheDocument();
   });
 });
