@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -439,6 +440,15 @@ func getLoginExternalError(err error) string {
 	var createTokenErr *auth.CreateTokenErr
 	if errors.As(err, &createTokenErr) {
 		return createTokenErr.ExternalErr
+	}
+
+	gfErr := &errutil.Error{}
+	if errors.As(err, gfErr) {
+		if msg := gfErr.Public().Message; msg != "" {
+			return msg
+		} else {
+			return http.StatusText(gfErr.Public().StatusCode)
+		}
 	}
 
 	return err.Error()
