@@ -12,7 +12,7 @@ export interface LokiQueryFieldProps extends QueryEditorProps<LokiDatasource, Lo
   ExtraFieldElement?: ReactNode;
   placeholder?: string;
   'data-testid'?: string;
-  setQueryStats?: React.Dispatch<React.SetStateAction<QueryStats | undefined>>;
+  setQueryStats: React.Dispatch<React.SetStateAction<QueryStats | undefined>>;
 }
 
 interface LokiQueryFieldState {

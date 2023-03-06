@@ -14,5 +14,5 @@ export type Props = {
   onBlur: (value: string) => void;
   placeholder: string;
   datasource: LokiDatasource;
-  setQueryStats?: React.Dispatch<React.SetStateAction<QueryStats | undefined>>;
+  setQueryStats: React.Dispatch<React.SetStateAction<QueryStats | undefined>>;
 };
