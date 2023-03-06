@@ -90,7 +90,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *contextmodel.ReqContext) {
 		if code == "" {
 			redirect, err := hs.authnService.RedirectURL(ctx.Req.Context(), authn.ClientWithPrefix(name), req)
 			if err != nil {
-				hs.redirectURLWithErrorCookie(ctx, err)
+				ctx.Redirect(hs.redirectURLWithErrorCookie(ctx, err))
 				return
 			}
 
@@ -109,7 +109,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *contextmodel.ReqContext) {
 		cookies.DeleteCookie(ctx.Resp, OauthStateCookieName, hs.CookieOptionsFromCfg)
 
 		if err != nil {
-			hs.redirectURLWithErrorCookie(ctx, err)
+			ctx.Redirect(hs.redirectURLWithErrorCookie(ctx, err))
 			return
 		}
 
