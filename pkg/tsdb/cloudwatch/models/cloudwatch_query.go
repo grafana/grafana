@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
@@ -492,11 +493,12 @@ func sortDimensions(dimensions map[string][]string) map[string][]string {
 }
 
 func getEndpoint(region string) string {
+	partition, _ := endpoints.PartitionForRegion(endpoints.DefaultPartitions(), region)
 	url := defaultConsoleURL
-	if strings.HasPrefix(region, "us-gov-") {
+	if partition.ID() == endpoints.AwsUsGovPartitionID {
 		url = usGovConsoleURL
 	}
-	if strings.HasPrefix(region, "cn-") {
+	if partition.ID() == endpoints.AwsCnPartitionID {
 		url = chinaConsoleURL
 	}
 	return fmt.Sprintf("%s.%s", region, url)
