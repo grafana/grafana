@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, waitFor, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
@@ -26,7 +26,7 @@ import { disableRBAC, mockDataSource, MockDataSourceSrv, mockFolder } from './mo
 import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
 import * as config from './utils/config';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
-import * as ruleForm from './utils/rule-form';
+import { getDefaultQueries } from './utils/rule-form';
 
 jest.mock('./components/rule-editor/ExpressionEditor', () => ({
   // eslint-disable-next-line react/display-name
@@ -47,14 +47,12 @@ jest.mock('app/features/query/components/QueryEditorRow', () => ({
 }));
 
 jest.spyOn(config, 'getAllDataSources');
-jest.spyOn(ruleForm, 'getDefaultQueriesAsync');
 
 jest.setTimeout(60 * 1000);
 
 const mocks = {
   getAllDataSources: jest.mocked(config.getAllDataSources),
   searchFolders: jest.mocked(searchFolders),
-  getDefaultQueriesAsync: jest.mocked(ruleForm.getDefaultQueriesAsync),
   api: {
     discoverFeatures: jest.mocked(discoverFeatures),
     fetchRulerRulesGroup: jest.mocked(fetchRulerRulesGroup),
@@ -126,17 +124,6 @@ describe('RuleEditor grafana managed rules', () => {
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     mocks.api.setRulerRuleGroup.mockResolvedValue();
     mocks.api.fetchRulerRulesNamespace.mockResolvedValue([]);
-    mocks.getDefaultQueriesAsync.mockResolvedValue({
-      queries: [
-        {
-          refId: 'A',
-          relativeTimeRange: { from: 900, to: 1000 },
-          datasourceUid: 'dsuid',
-          model: { refId: 'A' },
-          queryType: 'query',
-        },
-      ],
-    });
     mocks.api.fetchRulerRules.mockResolvedValue({
       [folder.title]: [
         {
@@ -151,16 +138,8 @@ describe('RuleEditor grafana managed rules', () => {
                 uid,
                 namespace_uid: 'abcd',
                 namespace_id: 1,
-                condition: 'A',
-                data: [
-                  {
-                    refId: 'A',
-                    relativeTimeRange: { from: 900, to: 1000 },
-                    datasourceUid: 'dsuid',
-                    model: { refId: 'A' },
-                    queryType: 'query',
-                  },
-                ],
+                condition: 'B',
+                data: getDefaultQueries(),
                 exec_err_state: GrafanaAlertStateDecision.Error,
                 no_data_state: GrafanaAlertStateDecision.NoData,
                 title: 'my great new rule',
@@ -228,16 +207,8 @@ describe('RuleEditor grafana managed rules', () => {
             for: '5m',
             grafana_alert: {
               uid,
-              condition: 'A',
-              data: [
-                {
-                  refId: 'A',
-                  relativeTimeRange: { from: 900, to: 1000 },
-                  datasourceUid: 'dsuid',
-                  model: { refId: 'A' },
-                  queryType: 'query',
-                },
-              ],
+              condition: 'B',
+              data: getDefaultQueries(),
               exec_err_state: GrafanaAlertStateDecision.Error,
               is_paused: false,
               no_data_state: 'NoData',
