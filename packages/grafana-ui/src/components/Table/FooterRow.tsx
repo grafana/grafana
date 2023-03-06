@@ -32,9 +32,7 @@ export const FooterRow = (props: FooterRowProps) => {
         const { key, ...footerGroupProps } = footerGroup.getFooterGroupProps();
         return (
           <div className={tableStyles.tfoot} {...footerGroupProps} key={key} data-testid={e2eSelectorsTable.footer}>
-            {footerGroup.headers.map((column: ColumnInstance) => {
-              return renderFooterCell(column, tableStyles);
-            })}
+            {footerGroup.headers.map((column: ColumnInstance) => renderFooterCell(column, tableStyles))}
           </div>
         );
       })}
