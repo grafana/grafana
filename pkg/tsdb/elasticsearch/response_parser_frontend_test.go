@@ -1581,7 +1581,6 @@ func TestLogs(t *testing.T) {
 		requireStringAt(t, "debug", field, 0)
 		requireStringAt(t, "error", field, 1)
 	})
-
 }
 
 func TestLogsEmptyResponse(t *testing.T) {
