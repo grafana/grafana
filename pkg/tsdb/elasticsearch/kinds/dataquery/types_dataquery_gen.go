@@ -444,7 +444,7 @@ type AverageType string
 // BaseBucketAggregation defines model for BaseBucketAggregation.
 type BaseBucketAggregation struct {
 	Id       string                    `json:"id"`
-	Settings map[string]interface{}    `json:"settings,omitempty"`
+	Settings *interface{}              `json:"settings,omitempty"`
 	Type     BaseBucketAggregationType `json:"type"`
 }
 
@@ -485,34 +485,30 @@ type BasePipelineMetricAggregationType string
 
 // BucketAggregation defines model for BucketAggregation.
 type BucketAggregation struct {
-	Field    *string                    `json:"field,omitempty"`
-	Id       *string                    `json:"id,omitempty"`
-	Settings *BucketAggregationSettings `json:"settings,omitempty"`
-	Type     *interface{}               `json:"type,omitempty"`
-	union    json.RawMessage
+	Field    *string `json:"field,omitempty"`
+	Id       *string `json:"id,omitempty"`
+	Settings *struct {
+		Filters []struct {
+			Label string `json:"label"`
+			Query string `json:"query"`
+		} `json:"filters,omitempty"`
+		Interval    *string                         `json:"interval,omitempty"`
+		MinDocCount *string                         `json:"min_doc_count,omitempty"`
+		Missing     *string                         `json:"missing,omitempty"`
+		Offset      *string                         `json:"offset,omitempty"`
+		Order       *BucketAggregationSettingsOrder `json:"order,omitempty"`
+		OrderBy     *string                         `json:"orderBy,omitempty"`
+		Precision   *string                         `json:"precision,omitempty"`
+		Size        *string                         `json:"size,omitempty"`
+		TimeZone    *string                         `json:"timeZone,omitempty"`
+		TrimEdges   *string                         `json:"trimEdges,omitempty"`
+	} `json:"settings,omitempty"`
+	Type  *interface{} `json:"type,omitempty"`
+	union json.RawMessage
 }
 
 // BucketAggregationSettingsOrder defines model for BucketAggregation.Settings.Order.
 type BucketAggregationSettingsOrder string
-
-// BucketAggregationSettings defines model for BucketAggregation.Settings.
-type BucketAggregationSettings struct {
-	Filters []struct {
-		Label string `json:"label"`
-		Query string `json:"query"`
-	} `json:"filters,omitempty"`
-	Interval             *string                         `json:"interval,omitempty"`
-	MinDocCount          *string                         `json:"min_doc_count,omitempty"`
-	Missing              *string                         `json:"missing,omitempty"`
-	Offset               *string                         `json:"offset,omitempty"`
-	Order                *BucketAggregationSettingsOrder `json:"order,omitempty"`
-	OrderBy              *string                         `json:"orderBy,omitempty"`
-	Precision            *string                         `json:"precision,omitempty"`
-	Size                 *string                         `json:"size,omitempty"`
-	TimeZone             *string                         `json:"timeZone,omitempty"`
-	TrimEdges            *string                         `json:"trimEdges,omitempty"`
-	AdditionalProperties map[string]interface{}          `json:"-"`
-}
 
 // BucketAggregationType defines model for BucketAggregationType.
 type BucketAggregationType string
@@ -521,7 +517,7 @@ type BucketAggregationType string
 type BucketAggregationWithField struct {
 	Field    *string                        `json:"field,omitempty"`
 	Id       string                         `json:"id"`
-	Settings map[string]interface{}         `json:"settings,omitempty"`
+	Settings *interface{}                   `json:"settings,omitempty"`
 	Type     BucketAggregationWithFieldType `json:"type"`
 }
 
@@ -651,32 +647,28 @@ type ElasticsearchDataQuery struct {
 // BucketAggsSettingsOrder defines model for ElasticsearchDataQuery.BucketAggs.Settings.Order.
 type BucketAggsSettingsOrder string
 
-// BucketAggsSettings defines model for ElasticsearchDataQuery.BucketAggs.Settings.
-type BucketAggsSettings struct {
-	Filters []struct {
-		Label string `json:"label"`
-		Query string `json:"query"`
-	} `json:"filters,omitempty"`
-	Interval             *string                  `json:"interval,omitempty"`
-	MinDocCount          *string                  `json:"min_doc_count,omitempty"`
-	Missing              *string                  `json:"missing,omitempty"`
-	Offset               *string                  `json:"offset,omitempty"`
-	Order                *BucketAggsSettingsOrder `json:"order,omitempty"`
-	OrderBy              *string                  `json:"orderBy,omitempty"`
-	Precision            *string                  `json:"precision,omitempty"`
-	Size                 *string                  `json:"size,omitempty"`
-	TimeZone             *string                  `json:"timeZone,omitempty"`
-	TrimEdges            *string                  `json:"trimEdges,omitempty"`
-	AdditionalProperties map[string]interface{}   `json:"-"`
-}
-
 // BucketAggsItem defines model for ElasticsearchDataQuery.bucketAggs.Item.
 type BucketAggsItem struct {
-	Field    *string             `json:"field,omitempty"`
-	Id       *string             `json:"id,omitempty"`
-	Settings *BucketAggsSettings `json:"settings,omitempty"`
-	Type     *interface{}        `json:"type,omitempty"`
-	union    json.RawMessage
+	Field    *string `json:"field,omitempty"`
+	Id       *string `json:"id,omitempty"`
+	Settings *struct {
+		Filters []struct {
+			Label string `json:"label"`
+			Query string `json:"query"`
+		} `json:"filters,omitempty"`
+		Interval    *string                  `json:"interval,omitempty"`
+		MinDocCount *string                  `json:"min_doc_count,omitempty"`
+		Missing     *string                  `json:"missing,omitempty"`
+		Offset      *string                  `json:"offset,omitempty"`
+		Order       *BucketAggsSettingsOrder `json:"order,omitempty"`
+		OrderBy     *string                  `json:"orderBy,omitempty"`
+		Precision   *string                  `json:"precision,omitempty"`
+		Size        *string                  `json:"size,omitempty"`
+		TimeZone    *string                  `json:"timeZone,omitempty"`
+		TrimEdges   *string                  `json:"trimEdges,omitempty"`
+	} `json:"settings,omitempty"`
+	Type  *interface{} `json:"type,omitempty"`
+	union json.RawMessage
 }
 
 // MetricsSettings defines model for ElasticsearchDataQuery.Metrics.Settings.

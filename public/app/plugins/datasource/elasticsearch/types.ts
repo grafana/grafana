@@ -2,7 +2,6 @@ import { DataSourceJsonData } from '@grafana/data';
 
 import {
   BucketAggregationType,
-  Filter,
   MetricAggregation,
   MetricAggregationType,
   MovingAverageEWMAModelSettings,
@@ -11,15 +10,9 @@ import {
   MovingAverageLinearModelSettings,
   MovingAverageModel,
   MovingAverageSimpleModelSettings,
-  TermsOrder,
   ExtendedStats,
   MovingAverage as SchemaMovingAverage,
-  Filters as SchemaFilters,
-  Terms as SchemaTerms,
-  DateHistogram as SchemaDateHistogram,
-  Histogram as SchemaHistogram,
-  GeoHashGrid as SchemaGeoHashGrid,
-  Nested as SchemaNested,
+  BucketAggregation,
 } from './dataquery.gen';
 
 export * from './dataquery.gen';
@@ -43,52 +36,6 @@ export type MovingAverageModelSettings<T extends MovingAverageModel = MovingAver
 export interface MovingAverage<T extends MovingAverageModel = MovingAverageModel> extends SchemaMovingAverage {
   settings?: MovingAverageModelSettings<T>;
 }
-
-export interface Filters extends SchemaFilters {
-  settings?: {
-    filters?: Filter[];
-  };
-}
-
-export interface Terms extends SchemaTerms {
-  settings?: {
-    min_doc_count?: string;
-    missing?: string;
-    order?: TermsOrder;
-    orderBy?: string;
-    size?: string;
-  };
-}
-
-export interface DateHistogram extends SchemaDateHistogram {
-  settings?: {
-    interval?: string;
-    min_doc_count?: string;
-    offset?: string;
-    timeZone?: string;
-    trimEdges?: string;
-  };
-}
-
-export interface Histogram extends SchemaHistogram {
-  settings?: {
-    interval?: string;
-    min_doc_count?: string;
-  };
-}
-
-interface GeoHashGrid extends SchemaGeoHashGrid {
-  settings?: {
-    precision?: string;
-  };
-}
-
-interface Nested extends SchemaNested {
-  settings?: {};
-}
-
-export type BucketAggregation = DateHistogram | Histogram | Terms | Filters | GeoHashGrid | Nested;
-// End of temporary overrides
 
 export type Interval = 'Hourly' | 'Daily' | 'Weekly' | 'Monthly' | 'Yearly';
 
