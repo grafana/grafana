@@ -21,9 +21,7 @@ Grafana can emit Jaeger or OpenTelemetry Protocol (OTLP) traces for its HTTP API
 All HTTP endpoints are logged evenly (annotations, dashboard, tags, and so on).
 When a trace ID is propagated, it is reported with operation 'HTTP /datasources/proxy/:id/\*'.
 
-Refer to [Configuration]({{< relref "configure-grafana/#tracingopentelemetryjaeger" >}}) for information about enabling Jaeger tracing.
-
-Refer to [Configuration]({{< relref "configure-grafana/#tracingopentelemetryotlp" >}}) for information about enabling OTLP tracing.
+Refer to [Configuration's OpenTelemetry section]({{< relref "configure-grafana/#tracingopentelemetry" >}}) for a reference of tracing options available in Grafana.
 
 ## View Grafana internal metrics
 
