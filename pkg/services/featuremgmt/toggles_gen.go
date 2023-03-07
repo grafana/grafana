@@ -52,7 +52,7 @@ const (
 	FlagPublicDashboards = "publicDashboards"
 
 	// FlagPublicDashboardsEmailSharing
-	// Allows public dashboard sharing to be restricted to only allowed emails
+	// Enables public dashboard sharing to be restricted to only allowed emails
 	FlagPublicDashboardsEmailSharing = "publicDashboardsEmailSharing"
 
 	// FlagLokiLive

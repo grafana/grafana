@@ -74,10 +74,9 @@ var (
 		},
 		{
 			Name:            "publicDashboardsEmailSharing",
-			Description:     "Allows public dashboard sharing to be restricted to only allowed emails",
+			Description:     "Enables public dashboard sharing to be restricted to only allowed emails",
 			State:           FeatureStateAlpha,
 			RequiresLicense: true,
-			RequiresDevMode: true,
 			Owner:           grafanaDashboardsSquad,
 		},
 		{
