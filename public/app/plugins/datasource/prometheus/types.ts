@@ -1,11 +1,12 @@
-import { DataQuery, DataSourceJsonData, QueryResultMeta, ScopedVars } from '@grafana/data';
+import { DataSourceJsonData, QueryResultMeta, ScopedVars } from '@grafana/data';
+import { DataQuery } from '@grafana/schema';
 
 import { PromApplication } from '../../../types/unified-alerting-dto';
 
 import { Prometheus as GenPromQuery } from './dataquery.gen';
 import { QueryEditorMode } from './querybuilder/shared/types';
 
-export interface PromQuery extends GenPromQuery {
+export interface PromQuery extends GenPromQuery, DataQuery {
   /**
    * Timezone offset to align start & end time on backend
    */

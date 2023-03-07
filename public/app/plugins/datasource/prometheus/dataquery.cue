@@ -32,7 +32,6 @@ composableKinds: DataQuery: {
 					{
 						common.DataQuery
 						expr:            string
-						format?:         string
 						instant?:        bool
 						range?:          bool
 						exemplar?:       bool
@@ -42,10 +41,11 @@ composableKinds: DataQuery: {
 						intervalFactor?: int64
 						showingGraph?:   bool
 						showingTable?:   bool
-						// Code or Builder mode
-						editorMode?: #QueryEditorMode
+						editorMode?:     #QueryEditorMode
+						format?:         #QueryFormatType
 
-						#QueryEditorMode: "code" | "builder" @cuetsy(kind="enum")
+						#QueryEditorMode: "code" | "builder"                  @cuetsy(kind="enum")
+						#QueryFormatType: "time_series" | "table" | "heatmap" @cuetsy(kind="type")
 					},
 				]
 			},

@@ -15,10 +15,24 @@ const (
 	EditorModeCode    EditorMode = "code"
 )
 
+// Defines values for Format.
+const (
+	FormatHeatmap    Format = "heatmap"
+	FormatTable      Format = "table"
+	FormatTimeSeries Format = "time_series"
+)
+
 // Defines values for QueryEditorMode.
 const (
 	QueryEditorModeBuilder QueryEditorMode = "builder"
 	QueryEditorModeCode    QueryEditorMode = "code"
+)
+
+// Defines values for QueryFormatType.
+const (
+	QueryFormatTypeHeatmap    QueryFormatType = "heatmap"
+	QueryFormatTypeTable      QueryFormatType = "table"
+	QueryFormatTypeTimeSeries QueryFormatType = "time_series"
 )
 
 // PrometheusDataQuery defines model for PrometheusDataQuery.
@@ -28,12 +42,10 @@ type PrometheusDataQuery struct {
 	// TODO find a better way to do this ^ that's friendly to schema
 	// TODO this shouldn't be unknown but DataSourceRef | null
 	Datasource *interface{} `json:"datasource,omitempty"`
-
-	// Code or Builder mode
-	EditorMode *EditorMode `json:"editorMode,omitempty"`
-	Exemplar   *bool       `json:"exemplar,omitempty"`
-	Expr       string      `json:"expr"`
-	Format     *string     `json:"format,omitempty"`
+	EditorMode *EditorMode  `json:"editorMode,omitempty"`
+	Exemplar   *bool        `json:"exemplar,omitempty"`
+	Expr       string       `json:"expr"`
+	Format     *Format      `json:"format,omitempty"`
 
 	// Hide true if query is disabled (ie should not be returned to the dashboard)
 	Hide           *bool   `json:"hide,omitempty"`
@@ -57,8 +69,14 @@ type PrometheusDataQuery struct {
 	ShowingTable *bool  `json:"showingTable,omitempty"`
 }
 
-// Code or Builder mode
+// EditorMode defines model for PrometheusDataQuery.EditorMode.
 type EditorMode string
+
+// Format defines model for PrometheusDataQuery.Format.
+type Format string
 
 // QueryEditorMode defines model for QueryEditorMode.
 type QueryEditorMode string
+
+// QueryFormatType defines model for QueryFormatType.
+type QueryFormatType string
