@@ -53,7 +53,7 @@ export function PanelEditorTableView({ width, height, panel, dashboard }: Props)
     <PanelChrome width={width} height={height} padding="none">
       {(innerWidth, innerHeight) => (
         <>
-          <PanelHeaderCorner panel={panel} error={data?.error?.message} />
+          <PanelHeaderCorner panel={panel} error={data?.error?.message} multipleErrors={!!data?.errors?.length} />
           <PanelRenderer
             title="Raw data"
             pluginId="table"

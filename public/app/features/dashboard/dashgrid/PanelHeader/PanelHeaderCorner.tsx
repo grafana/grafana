@@ -21,6 +21,7 @@ export interface Props {
   scopedVars?: ScopedVars;
   links?: LinkModelSupplier<PanelModel>;
   error?: string;
+  multipleErrors?: boolean;
 }
 
 export class PanelHeaderCorner extends Component<Props> {
@@ -95,15 +96,16 @@ export class PanelHeaderCorner extends Component<Props> {
   }
 
   render() {
-    const { error } = this.props;
+    const { error, multipleErrors } = this.props;
     const infoMode: InfoMode | undefined = this.getInfoMode();
 
     if (!infoMode) {
       return null;
     }
 
-    if (infoMode === InfoMode.Error && error) {
-      return this.renderCornerType(infoMode, error, this.onClickError);
+    if (infoMode === InfoMode.Error && (error || multipleErrors)) {
+      const errorMsg = multipleErrors ? 'Multiple errors found. Click for more details' : error || '';
+      return this.renderCornerType(infoMode, errorMsg, this.onClickError);
     }
 
     if (infoMode === InfoMode.Info || infoMode === InfoMode.Links) {

@@ -21,13 +21,23 @@ export interface Props {
   description?: string;
   links?: DataLink[];
   error?: string;
+  multipleErrors?: boolean;
   alertState?: string;
   isViewing: boolean;
   isEditing: boolean;
   data: PanelData;
 }
 
-export function PanelHeader({ panel, error, isViewing, isEditing, data, alertState, dashboard }: Props) {
+export function PanelHeader({
+  panel,
+  error,
+  multipleErrors,
+  isViewing,
+  isEditing,
+  data,
+  alertState,
+  dashboard,
+}: Props) {
   const onCancelQuery = () => panel.getQueryRunner().cancelQuery();
   const title = panel.getDisplayTitle();
   const className = cx('panel-header', !(isViewing || isEditing) ? 'grid-drag-handle' : '');
@@ -43,6 +53,7 @@ export function PanelHeader({ panel, error, isViewing, isEditing, data, alertSta
         scopedVars={panel.scopedVars}
         links={getPanelLinksSupplier(panel)}
         error={error}
+        multipleErrors={multipleErrors}
       />
       <div className={className}>
         <PanelHeaderMenuTrigger data-testid={selectors.components.Panels.Panel.title(title)}>
