@@ -231,10 +231,7 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
                   onChange({ ...query, metric: '' });
                 }}
                 title="Click to remove metric"
-                className={css({
-                  margin: '10px 0 10px 0',
-                  backgroundColor: '#3D71D9',
-                })}
+                className={styles.metricTag}
               />
             )}
             {metricEncyclopediaModalOpen && (
@@ -356,6 +353,10 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     button: css`
       height: auto;
+    `,
+    metricTag: css`
+      margin: '10px 0 10px 0',
+      backgroundColor: '#3D71D9',
     `,
   };
 };

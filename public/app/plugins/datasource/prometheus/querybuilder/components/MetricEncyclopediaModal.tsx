@@ -17,6 +17,7 @@ import {
   Modal,
   MultiSelect,
   Select,
+  Spinner,
   useStyles2,
 } from '@grafana/ui';
 
@@ -87,6 +88,8 @@ export const MetricEncyclopediaModal = (props: Props) => {
 
   const [variables, setVariables] = useState<Array<SelectableValue<string>>>([]);
 
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
   // metric list
   const [metrics, setMetrics] = useState<MetricsData>([]);
   const [hasMetadata, setHasMetadata] = useState<boolean>(true);
@@ -111,7 +114,8 @@ export const MetricEncyclopediaModal = (props: Props) => {
   const [useBackend, setUseBackend] = useState<boolean>(false);
 
   const updateMetricsMetadata = useCallback(async () => {
-    // *** Loading Gif?
+    // *** Loading Gif
+    setIsLoading(true);
     // Makes sure we loaded the metadata for metrics. Usually this is done in the start() method of the provider but we
     // don't use it with the visual builder and there is no need to run all the start() setup anyway.
     if (!datasource.languageProvider.metricsMetadata) {
@@ -165,6 +169,8 @@ export const MetricEncyclopediaModal = (props: Props) => {
         };
       })
     );
+
+    setIsLoading(false);
   }, [query, datasource]);
 
   useEffect(() => {
@@ -317,6 +323,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
         });
 
         setMetrics(metrics);
+        setIsLoading(false);
       }, 300),
     [datasource, query.labels]
   );
@@ -332,6 +339,11 @@ export const MetricEncyclopediaModal = (props: Props) => {
       <div className={styles.spacing}>
         Browse {metrics.length} metric{metrics.length > 1 ? 's' : ''} by text, by type, alphabetically or select a
         variable.
+        {isLoading && (
+          <div className={styles.inlineSpinner}>
+            <Spinner></Spinner>
+          </div>
+        )}
       </div>
       {query.labels.length > 0 && (
         <div className={styles.spacing}>
@@ -351,6 +363,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
               // get all metrics data if a user erases everything in the input
               updateMetricsMetadata();
             } else if (useBackend) {
+              setIsLoading(true);
               debouncedBackendSearch(value);
             } else {
               // do the search on the frontend
@@ -701,6 +714,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     labelColor: css`
       color: #6e9fff;
+    `,
+    inlineSpinner: css`
+      display: inline-block;
     `,
   };
 };
