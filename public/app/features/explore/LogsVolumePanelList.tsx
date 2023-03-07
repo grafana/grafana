@@ -7,6 +7,7 @@ import {
   DataFrame,
   DataQueryResponse,
   EventBus,
+  getLogsVolumeDimensions,
   GrafanaTheme2,
   isLogsVolumeLimited,
   LoadingState,
@@ -41,10 +42,18 @@ export const LogsVolumePanelList = ({
   splitOpen,
   timeZone,
 }: Props) => {
-  const logVolumes = useMemo(
-    () => groupBy(logsVolumeData?.data || [], 'meta.custom.sourceQuery.refId'),
-    [logsVolumeData]
-  );
+  const {
+    logVolumes,
+    maximum: allLogsVolumeMaximum,
+    range: alignedAbsoluteRange,
+  } = useMemo(() => {
+    const data = logsVolumeData?.data || [];
+    const logVolumes = groupBy(data, 'meta.custom.sourceQuery.refId');
+    return {
+      ...getLogsVolumeDimensions(data, absoluteRange),
+      logVolumes,
+    };
+  }, [logsVolumeData, absoluteRange]);
 
   const styles = useStyles2(getStyles);
 
@@ -68,7 +77,8 @@ export const LogsVolumePanelList = ({
         return (
           <LogsVolumePanel
             key={index}
-            absoluteRange={absoluteRange}
+            absoluteRange={alignedAbsoluteRange}
+            allLogsVolumeMaximum={allLogsVolumeMaximum}
             width={width}
             logsVolumeData={logsVolumeData}
             onUpdateTimeRange={onUpdateTimeRange}

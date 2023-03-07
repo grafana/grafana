@@ -1,7 +1,10 @@
+import { max } from 'lodash';
 import { Observable } from 'rxjs';
 
+import { FieldCache } from '../dataframe';
+
 import { Labels } from './data';
-import { DataFrame } from './dataFrame';
+import { DataFrame, FieldType } from './dataFrame';
 import { DataQueryRequest, DataQueryResponse } from './datasource';
 import { DataQuery } from './query';
 import { AbsoluteTimeRange } from './time';
@@ -205,11 +208,35 @@ export type LogsVolumeCustomMetaData = {
   sourceQuery: DataQuery;
 };
 
-export const getLogsVolumeAbsoluteRange = (
+export const getLogsVolumeDimensions = (
   dataFrames: DataFrame[],
   defaultRange: AbsoluteTimeRange
-): AbsoluteTimeRange => {
-  return dataFrames[0].meta?.custom?.absoluteRange || defaultRange;
+): { maximum: number; range: AbsoluteTimeRange } => {
+  let widestRange: AbsoluteTimeRange | undefined;
+  let maximumValue = -Infinity;
+
+  dataFrames.forEach((dataFrame: DataFrame) => {
+    const dataFrameRange = dataFrame.meta?.custom?.absoluteRange || defaultRange;
+    if (dataFrameRange) {
+      if (!widestRange) {
+        widestRange = dataFrameRange;
+      } else {
+        widestRange.to = Math.min(dataFrameRange.to, widestRange.to);
+        widestRange.from = Math.min(dataFrameRange.from, widestRange.from);
+      }
+    }
+
+    const fieldCache = new FieldCache(dataFrame);
+    const valueField = fieldCache.getFirstFieldOfType(FieldType.number);
+    if (valueField) {
+      maximumValue = Math.max(maximumValue, max(valueField.values.toArray()));
+    }
+  });
+
+  return {
+    maximum: maximumValue,
+    range: widestRange || defaultRange,
+  };
 };
 
 export const getLogsVolumeDataSourceInfo = (dataFrames: DataFrame[]): { name: string; refId: string } | null => {
