@@ -64,16 +64,13 @@ func (f *Framer) Frames() (data.Frames, error) {
 		timeField.Append(b.Timestamp)
 		valueField.Append(b.Value)
 		for i, labelName := range labelNames {
-			var labelValue string
+			// Use the series label by default
+			labelValue := b.SeriesLabels[labelName]
 			for _, f := range b.Fields {
 				if f.Name == labelName {
 					labelValue = f.CopyAt(b.RowIdx).(string)
 					break
 				}
-			}
-			if labelValue == "" {
-				// if the label is not present in the exemplar labels, then use the series label
-				labelValue = b.SeriesLabels[labelName]
 			}
 			colIdx := i + 2 // +2 to skip time and value fields
 			exemplarFrame.Fields[colIdx].Append(labelValue)
