@@ -8,7 +8,7 @@ import { LokiDatasource } from './datasource';
 import { getRangeChunks as getLogsRangeChunks } from './logsTimeSplit';
 import { getRangeChunks as getMetricRangeChunks } from './metricTimeSplit';
 import { combineResponses, isLogsQuery } from './queryUtils';
-import { LokiQuery } from './types';
+import { LokiQuery, LokiQueryType } from './types';
 
 /**
  * Purposely exposing it to support doing tests without needing to update the repo.
@@ -90,7 +90,7 @@ function adjustTargetsFromResponseState(targets: LokiQuery[], response: DataQuer
 type LokiGroupedRequest = Array<{ request: DataQueryRequest<LokiQuery>; partition: TimeRange[] }>;
 
 export function runGroupedQueries(datasource: LokiDatasource, requests: LokiGroupedRequest) {
-  let mergedResponse: DataQueryResponse | null;
+  let mergedResponse: DataQueryResponse = { data: [], state: LoadingState.Streaming };
   const totalRequests = Math.max(...requests.map(({ partition }) => partition.length));
 
   let shouldStop = false;
@@ -101,23 +101,19 @@ export function runGroupedQueries(datasource: LokiDatasource, requests: LokiGrou
       return;
     }
 
-    const done = (response: DataQueryResponse) => {
-      response.state = LoadingState.Done;
-      subscriber.next(response);
+    const done = () => {
+      mergedResponse.state = LoadingState.Done;
+      subscriber.next(mergedResponse);
       subscriber.complete();
     };
 
     const nextRequest = () => {
-      mergedResponse = mergedResponse || { data: [] };
       const { nextRequestN, nextRequestGroup } = getNextRequestPointers(requests, requestGroup, requestN);
-      if (nextRequestN > 0) {
-        mergedResponse.state = LoadingState.Streaming;
-        subscriber.next(mergedResponse);
-
+      if (nextRequestN > 0 && nextRequestGroup >= 0) {
         runNextRequest(subscriber, nextRequestN, nextRequestGroup);
         return;
       }
-      done(mergedResponse);
+      done();
     };
 
     const group = requests[requestGroup];
@@ -125,7 +121,7 @@ export function runGroupedQueries(datasource: LokiDatasource, requests: LokiGrou
     const range = group.partition[requestN - 1];
     const targets = adjustTargetsFromResponseState(group.request.targets, mergedResponse);
 
-    if (!targets.length && mergedResponse) {
+    if (!targets.length) {
       nextRequest();
       return;
     }
@@ -140,6 +136,7 @@ export function runGroupedQueries(datasource: LokiDatasource, requests: LokiGrou
           mergedResponse = combineResponses(mergedResponse, partialResponse);
         },
         complete: () => {
+          subscriber.next(mergedResponse);
           nextRequest();
         },
         error: (error) => {
@@ -170,16 +167,18 @@ function getNextRequestPointers(requests: LokiGroupedRequest, requestGroup: numb
     };
   }
   return {
-    nextRequestGroup: 0,
+    // Find the first group where `[requestN - 1]` is defined
+    nextRequestGroup: requests.findIndex((group) => group?.partition[requestN - 1] !== undefined),
     nextRequestN: requestN - 1,
   };
 }
 
 export function runPartitionedQueries(datasource: LokiDatasource, request: DataQueryRequest<LokiQuery>) {
   const queries = request.targets.filter((query) => !query.hide);
-  const [logQueries, metricQueries] = partition(queries, (query) => isLogsQuery(query.expr));
+  const [instantQueries, normalQueries] = partition(queries, (query) => query.queryType === LokiQueryType.Instant);
+  const [logQueries, metricQueries] = partition(normalQueries, (query) => isLogsQuery(query.expr));
 
-  const requests = [];
+  const requests: LokiGroupedRequest = [];
   if (logQueries.length) {
     requests.push({
       request: { ...request, targets: logQueries },
@@ -190,6 +189,12 @@ export function runPartitionedQueries(datasource: LokiDatasource, request: DataQ
     requests.push({
       request: { ...request, targets: metricQueries },
       partition: partitionTimeRange(false, request.range, request.intervalMs, metricQueries[0].resolution ?? 1),
+    });
+  }
+  if (instantQueries.length) {
+    requests.push({
+      request: { ...request, targets: instantQueries },
+      partition: [request.range],
     });
   }
   return runGroupedQueries(datasource, requests);
