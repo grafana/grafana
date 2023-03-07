@@ -12,7 +12,7 @@ import {
   SupplementaryQueryType,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { TimeZone, DataQuery } from '@grafana/schema';
+import { DataQuery, TimeZone } from '@grafana/schema';
 import { Button, Collapse, useStyles2 } from '@grafana/ui';
 import { dataFrameToLogsModel } from 'app/core/logsModel';
 import store from 'app/core/store';
@@ -111,11 +111,11 @@ export function LogsSamplePanel(props: Props) {
     );
   }
 
-  return (
+  return queryResponse?.state !== LoadingState.NotStarted ? (
     <Collapse label="Logs sample" isOpen={enabled} collapsible={true} onToggle={onToggleLogsSampleCollapse}>
       {LogsSamplePanelContent}
     </Collapse>
-  );
+  ) : null;
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
