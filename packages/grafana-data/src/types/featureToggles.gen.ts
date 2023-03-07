@@ -79,7 +79,7 @@ export interface FeatureToggles {
   logsContextDatasourceUi?: boolean;
   lokiQuerySplitting?: boolean;
   individualCookiePreferences?: boolean;
-  prometheusMetricEncyclopedia?: boolean;
   drawerDataSourcePicker?: boolean;
   traceqlSearch?: boolean;
+  prometheusMetricEncyclopedia?: boolean;
 }
