@@ -1,7 +1,6 @@
 import React, { ReactNode } from 'react';
 
 import { CoreApp, QueryEditorProps } from '@grafana/data';
-import { Button } from '@grafana/ui';
 
 import { LokiDatasource } from '../datasource';
 import { shouldRefreshLabels } from '../languageUtils';
@@ -65,11 +64,6 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
     }
   };
 
-  onFormatQuery = async () => {
-    console.log('formatQuery has been clicked');
-    await this.props.datasource.formatQuery(this.props.query);
-  };
-
   render() {
     const { ExtraFieldElement, query, app, datasource, history, onRunQuery } = this.props;
     const placeholder = this.props.placeholder ?? 'Enter a Loki query (run with Shift+Enter)';
@@ -90,9 +84,6 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
               initialValue={query.expr ?? ''}
               placeholder={placeholder}
             />
-            <Button variant="secondary" size="md" onClick={this.onFormatQuery}>
-              Format query
-            </Button>
           </div>
         </div>
         {ExtraFieldElement}
