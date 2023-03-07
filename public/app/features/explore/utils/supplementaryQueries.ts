@@ -139,83 +139,78 @@ export const getSupplementaryQueryProvider = (
   request: DataQueryRequest,
   explorePanelData: Observable<ExplorePanelData>
 ): Observable<DataQueryResponse> | undefined => {
-  if (hasSupplementaryQuerySupport(datasourceInstance, type)) {
-    return datasourceInstance.getDataProvider(type, request);
-  } else if (datasourceInstance.meta?.mixed === true) {
-    const queries = request.targets.filter((t) => {
-      return t.datasource?.uid !== MIXED_DATASOURCE_NAME;
+  const queries = request.targets.filter((t) => {
+    return t.datasource?.uid !== MIXED_DATASOURCE_NAME;
+  });
+  // Build groups of queries to run in parallel
+  const sets: { [key: string]: DataQuery[] } = groupBy(queries, 'datasource.uid');
+  const mixed: Array<{ datasource: Promise<DataSourceApi>; targets: DataQuery[] }> = [];
+
+  for (const key in sets) {
+    const targets = sets[key];
+    mixed.push({
+      datasource: !targets[0].datasource
+        ? Promise.resolve(datasourceInstance)
+        : getDataSourceSrv().get(targets[0].datasource, request.scopedVars),
+      targets,
     });
-    // Build groups of queries to run in parallel
-    const sets: { [key: string]: DataQuery[] } = groupBy(queries, 'datasource.uid');
-    const mixed: Array<{ datasource: Promise<DataSourceApi>; targets: DataQuery[] }> = [];
+  }
 
-    for (const key in sets) {
-      const targets = sets[key];
-      mixed.push({
-        datasource: getDataSourceSrv().get(targets[0].datasource, request.scopedVars),
-        targets,
-      });
-    }
+  return from(mixed).pipe(
+    mergeMap((query, i) => {
+      return from(query.datasource).pipe(
+        mergeMap((ds) => {
+          const dsRequest = cloneDeep(request);
+          dsRequest.requestId = `mixed-${type}-${i}-${dsRequest.requestId || ''}`;
+          dsRequest.targets = query.targets;
 
-    return from(mixed).pipe(
-      mergeMap((query, i) => {
-        return from(query.datasource).pipe(
-          mergeMap((ds) => {
-            const dsRequest = cloneDeep(request);
-            dsRequest.requestId = `mixed-${type}-${i}-${dsRequest.requestId || ''}`;
-            dsRequest.targets = query.targets;
-
-            if (hasSupplementaryQuerySupport(ds, type)) {
-              const dsProvider = ds.getDataProvider(type, dsRequest);
-              if (dsProvider) {
-                // 1) It provides data for current request - use the provider
-                return dsProvider;
-              } else {
-                // 2) It doesn't provide data for current request -> return nothing
-                return of({
-                  data: [],
-                  state: LoadingState.NotStarted,
-                });
-              }
+          if (hasSupplementaryQuerySupport(ds, type)) {
+            const dsProvider = ds.getDataProvider(type, dsRequest);
+            if (dsProvider) {
+              // 1) It provides data for current request - use the provider
+              return dsProvider;
             } else {
-              // 3) Data source doesn't support the supplementary query -> use fallback
-              // the fallback cannot determine data availability based on request, it
-              // works on the results once they are available so it never uses the cache
-              return getSupplementaryQueryFallback(type, explorePanelData, query.targets, ds.name);
+              // 2) It doesn't provide data for current request -> return nothing
+              return of({
+                data: [],
+                state: LoadingState.NotStarted,
+              });
             }
-          })
-        );
-      }),
-      scan<DataQueryResponse, DataQueryResponse>(
-        (acc, next) => {
-          if (acc.error || next.state === LoadingState.NotStarted) {
-            return acc;
+          } else {
+            // 3) Data source doesn't support the supplementary query -> use fallback
+            // the fallback cannot determine data availability based on request, it
+            // works on the results once they are available so it never uses the cache
+            return getSupplementaryQueryFallback(type, explorePanelData, query.targets, ds.name);
           }
+        })
+      );
+    }),
+    scan<DataQueryResponse, DataQueryResponse>(
+      (acc, next) => {
+        if (acc.error || next.state === LoadingState.NotStarted) {
+          return acc;
+        }
 
-          if (next.state === LoadingState.Loading && acc.state === LoadingState.NotStarted) {
-            return {
-              ...acc,
-              state: LoadingState.Loading,
-            };
-          }
-
-          if (next.state && next.state !== LoadingState.Done) {
-            return acc;
-          }
-
+        if (next.state === LoadingState.Loading && acc.state === LoadingState.NotStarted) {
           return {
             ...acc,
-            data: [...acc.data, ...next.data],
-            state: LoadingState.Done,
+            state: LoadingState.Loading,
           };
-        },
-        { data: [], state: LoadingState.NotStarted }
-      ),
-      distinct()
-    );
-  } else {
-    // Create a fallback to results based logs volume
-    return getSupplementaryQueryFallback(type, explorePanelData, request.targets, datasourceInstance.name);
-  }
+        }
+
+        if (next.state && next.state !== LoadingState.Done) {
+          return acc;
+        }
+
+        return {
+          ...acc,
+          data: [...acc.data, ...next.data],
+          state: LoadingState.Done,
+        };
+      },
+      { data: [], state: LoadingState.NotStarted }
+    ),
+    distinct()
+  );
   return undefined;
 };
