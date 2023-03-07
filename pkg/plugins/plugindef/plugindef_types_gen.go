@@ -24,6 +24,11 @@ const (
 	DependencyTypePanel      DependencyType = "panel"
 )
 
+// Defines values for ExtensionType.
+const (
+	ExtensionTypeLink ExtensionType = "link"
+)
+
 // Defines values for IncludeRole.
 const (
 	IncludeRoleAdmin  IncludeRole = "Admin"
@@ -46,6 +51,7 @@ const (
 const (
 	CategoryCloud      Category = "cloud"
 	CategoryEnterprise Category = "enterprise"
+	CategoryIot        Category = "iot"
 	CategoryLogging    Category = "logging"
 	CategoryOther      Category = "other"
 	CategoryProfiling  Category = "profiling"
@@ -120,6 +126,27 @@ type Dependency struct {
 
 // DependencyType defines model for Dependency.Type.
 type DependencyType string
+
+// A resource to be included in a plugin.
+type Extension struct {
+	// Description for the rendered link
+	Description *string `json:"description,omitempty"`
+
+	// Path relative to the extending plugin e.g. /incidents/declare
+	Path string `json:"path"`
+
+	// Target where the link will be rendered
+	Placement string `json:"placement"`
+
+	// Title that will be displayed for the rendered link
+	Title string `json:"title"`
+
+	// Type of extension
+	Type ExtensionType `json:"type"`
+}
+
+// Type of extension
+type ExtensionType string
 
 // Header describes an HTTP header that is forwarded with a proxied request for
 // a plugin route.
@@ -252,22 +279,21 @@ type PluginDef struct {
 	// Schema definition for the plugin.json file. Used primarily for schema validation.
 	Schema *string `json:"$schema,omitempty"`
 
-	// For data source plugins, if the plugin supports alerting.
+	// For data source plugins, if the plugin supports alerting. Requires `backend` to be enabled as well.
 	Alerting *bool `json:"alerting,omitempty"`
 
 	// For data source plugins, if the plugin supports annotation
 	// queries.
 	Annotations *bool `json:"annotations,omitempty"`
 
-	// Set to true for app plugins that should be enabled by default
-	// in all orgs
+	// Set to true for app plugins that should be enabled and pinned to the navigation bar in all orgs.
 	AutoEnabled *bool `json:"autoEnabled,omitempty"`
 
 	// If the plugin has a backend component.
 	Backend *bool `json:"backend,omitempty"`
 
-	// builtin indicates whether the plugin is developed and shipped as part
-	// of Grafana. Also known as a "core plugin."
+	// Indicates whether the plugin is developed and shipped as part
+	// of Grafana. Also known as a 'core plugin'.
 	BuiltIn bool `json:"builtIn"`
 
 	// Plugin category used on the Add data source page.
@@ -290,12 +316,11 @@ type PluginDef struct {
 	// https://golang.org/doc/install/source#environment.
 	Executable *string `json:"executable,omitempty"`
 
-	// For data source plugins, include hidden queries in the data
-	// request.
-	HiddenQueries *bool `json:"hiddenQueries,omitempty"`
+	// Extends various parts of the Grafana UI with commands or links.
+	Extensions []Extension `json:"extensions,omitempty"`
 
-	// hideFromList excludes the plugin from listings in Grafana's UI. Only
-	// allowed for builtin plugins.
+	// Excludes the plugin from listings in Grafana's UI. Only
+	// allowed for `builtIn` plugins.
 	HideFromList bool `json:"hideFromList"`
 
 	// Unique name of the plugin. If the plugin is published on
@@ -310,11 +335,11 @@ type PluginDef struct {
 	// page in Grafana and others on grafana.com, if the plugin is published.
 	Info Info `json:"info"`
 
-	// For data source plugins, if the plugin supports logs.
+	// For data source plugins, if the plugin supports logs. Not used in Grafana core but may be used by external plugins.
 	Logs *bool `json:"logs,omitempty"`
 
-	// For data source plugins, if the plugin supports metric queries.
-	// Used in Explore.
+	// For data source plugins, if the plugin supports metric queries. Needs to be enabled for data source plugins.
+	// Used to enable the plugin in the panel editor.
 	Metrics *bool `json:"metrics,omitempty"`
 
 	// Human-readable name of the plugin that is shown to the user in
@@ -367,9 +392,6 @@ type PluginDef struct {
 
 	// For data source plugins, if the plugin supports streaming.
 	Streaming *bool `json:"streaming,omitempty"`
-
-	// This is an undocumented feature.
-	Tables *bool `json:"tables,omitempty"`
 
 	// For data source plugins, if the plugin supports tracing.
 	Tracing *bool `json:"tracing,omitempty"`
