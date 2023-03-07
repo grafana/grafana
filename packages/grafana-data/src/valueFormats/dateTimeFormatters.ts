@@ -205,17 +205,27 @@ export function toDays(size: number, decimals?: DecimalCount): FormattedValue {
   }
 }
 
-export function toDuration(size: number, decimals: DecimalCount, timeScale: Interval): FormattedValue {
-  if (size === null) {
+/**
+ * Convert a floating point number into a time duration label.
+ *
+ * @param duration The duration provided as a floating point number.
+ * @param decimals
+ * @param timeScale
+ *  The unit of the provivded floating point number.
+ *  e.g. if _duration_ is seconds this should be Interval.Second
+ * @returns
+ */
+export function toDuration(duration: number, decimals: DecimalCount, timeScale: Interval): FormattedValue {
+  if (duration === null) {
     return { text: '' };
   }
 
-  if (size === 0) {
+  if (duration === 0) {
     return { text: '0', suffix: ' ' + timeScale + 's' };
   }
 
-  if (size < 0) {
-    const v = toDuration(-size, decimals, timeScale);
+  if (duration < 0) {
+    const v = toDuration(-duration, decimals, timeScale);
     if (!v.suffix) {
       v.suffix = '';
     }
@@ -225,9 +235,10 @@ export function toDuration(size: number, decimals: DecimalCount, timeScale: Inte
 
   // convert $size to milliseconds
   // intervals_in_seconds uses seconds (duh), convert them to milliseconds here to minimize floating point errors
-  size *= INTERVALS_IN_SECONDS[timeScale] * 1000;
-
-  const strings = [];
+  // Convert the given duration into seconds
+  // TODO: Convert to integer so we don't get floating point errors
+  duration *= INTERVALS_IN_SECONDS[timeScale];
+  const durationParts = [];
 
   // after first value >= 1 print only $decimals more
   let decrementDecimals = false;
@@ -237,20 +248,36 @@ export function toDuration(size: number, decimals: DecimalCount, timeScale: Inte
     decimalsCount = decimals as number;
   }
 
-  for (let i = 0; i < UNITS.length && decimalsCount >= 0; i++) {
-    const interval = INTERVALS_IN_SECONDS[UNITS[i]] * 1000;
-    const value = size / interval;
+  // console.log(decimalsCount);
+
+  // Retrieve the index of the timescale which we'll show
+  // i.e. units less than timeScale will not be shown
+  //const maxPrecision = UNITS.findIndex((value: Interval) => (value === timeScale));
+  for (let i = 0; i <= UNITS.length && decimalsCount >= 0; i++) {
+    const interval = INTERVALS_IN_SECONDS[UNITS[i]]; // * 1000
+    // console.log(interval);
+    const value = duration / interval;
+    //
+
+    // if (interval === (INTERVALS_IN_SECONDS[Interval.Nanosecond])) {
+    //   console.log({value, interval});
+    // }
+
     if (value >= 1 || decrementDecimals) {
       decrementDecimals = true;
-      const floor = Math.floor(value);
+      const floor = Math.round(value);
       const unit = UNITS[i] + (floor !== 1 ? 's' : '');
-      strings.push(floor + ' ' + unit);
-      size = size % interval;
+
+      // console.log({value, floor})
+
+      durationParts.push(floor + ' ' + unit);
+      duration = duration % interval;
+      // console.log({duration});
       decimalsCount--;
     }
   }
 
-  return { text: strings.join(', ') };
+  return { text: durationParts.join(', ') };
 }
 
 export function toClock(size: number, decimals?: DecimalCount): FormattedValue {
@@ -299,6 +326,15 @@ export function toClock(size: number, decimals?: DecimalCount): FormattedValue {
 
   const text = format ? `${hours}:${toUtc(size).format(format)}` : hours;
   return { text };
+}
+
+export function toDurationInNanoseconds(size: number, decimals: DecimalCount): FormattedValue {
+  console.log({ decimals });
+  return toDuration(size, decimals, Interval.Nanosecond);
+}
+
+export function toDurationInMicroseconds(size: number, decimals: DecimalCount): FormattedValue {
+  return toDuration(size, decimals, Interval.Microsecond);
 }
 
 export function toDurationInMilliseconds(size: number, decimals: DecimalCount): FormattedValue {
