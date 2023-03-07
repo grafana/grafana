@@ -31,11 +31,12 @@ export const Messages = {
   },
   delete: {
     title: (role: string) => `Delete "${role}" role`,
-    description:
+    descriptionNonAssigned:
       'Are you sure you want to delete this role? You won’t be able to recover it. Please confirm your action below.',
-    assigned: (role: string) =>
-      `There are users associated to this role. Please assign a different role to users with the ”${role}” role.`,
+    description: (role: string) =>
+      `There are users associated to this role. By deleting the role “${role}“ all its users will be transferred to a new role. Please select the new role below.`,
     submit: 'Confirm and delete role',
+    replacementAriaLabel: 'Replacement role',
     cancel: 'Cancel',
     success: {
       title: (role: string) => `Role “${role}“ deleted`,

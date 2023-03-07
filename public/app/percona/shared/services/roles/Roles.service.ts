@@ -36,6 +36,7 @@ const RolesService = {
   async delete(role: DeleteAccessRole): Promise<void> {
     await api.post<void, DeleteAccessRolePayload>(`${BASE_URL}/Delete`, {
       role_id: role.toDeleteId,
+      replacement_role_id: role.replacementRoleId,
     });
   },
   async assign(roleIds: number[], userId: number): Promise<void> {

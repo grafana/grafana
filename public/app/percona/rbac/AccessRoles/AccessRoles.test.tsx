@@ -10,9 +10,20 @@ import { stubRoles, stubUsers, stubUsersMap } from '../__mocks__/stubs';
 
 import AccessRolesPage from './AccessRoles';
 
+jest.mock('app/features/users/state/actions', () => ({
+  loadUsers: () => () => ({}),
+}));
+
 const wrapWithProvider = (children: ReactElement) => (
   <Provider
     store={configureStore({
+      users: {
+        users: [
+          {
+            userId: 1,
+          },
+        ],
+      },
       percona: {
         users: {
           isLoading: false,

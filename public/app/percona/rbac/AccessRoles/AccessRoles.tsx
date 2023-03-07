@@ -2,6 +2,7 @@ import React, { FC, useCallback, useEffect, useMemo } from 'react';
 
 import { LinkButton, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { loadUsers } from 'app/features/users/state/actions';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
 import { fetchRolesAction } from 'app/percona/shared/core/reducers/roles/roles';
 import { fetchUsersListAction } from 'app/percona/shared/core/reducers/users/users';
@@ -31,6 +32,7 @@ const AccessRolesPage: FC = () => {
   useEffect(() => {
     dispatch(fetchRolesAction());
     dispatch(fetchUsersListAction());
+    dispatch(loadUsers());
   }, [dispatch]);
 
   return (

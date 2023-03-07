@@ -31,6 +31,7 @@ export type UpdateAccessRolePayload = Omit<UpdateAccessRole, 'roleId'> & {
 
 export interface DeleteAccessRolePayload {
   role_id: number;
+  replacement_role_id: number;
 }
 
 export interface AssignRolePayload {
@@ -44,4 +45,5 @@ export interface SetDefaultRolePayload {
 
 export interface DeleteAccessRole {
   toDeleteId: number;
+  replacementRoleId: number;
 }
