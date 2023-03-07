@@ -118,7 +118,6 @@ func callResource(ctx context.Context, req *backend.CallResourceRequest, sender 
 	encodedBytes, err := api.RawQuery(ctx, lokiURL)
 
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 
