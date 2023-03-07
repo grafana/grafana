@@ -507,6 +507,18 @@ export const defaultRowNumberColumnFieldData: Omit<Field, 'values'> = {
   },
 };
 
+/**
+ * This recurses through an array of `filterFields` (Array<{ id: string; field?: Field } | undefined>)
+ * and adds back the missing indecies that are removed due to hiding a column through an panel override.
+ * This is necessary to create Array.length parity between the `filterFields` array and the `values` array (any[number]),
+ * since the footer value calculations are based on the corresponding index values of both arrays.
+ *
+ * @remarks
+ * This function uses the splice() method, and therefore mutates the array.
+ *
+ * @param columns - An array of `filterFields` (Array<{ id: string; field?: Field } | undefined>).
+ * @returns void; this function returns nothing; it only mutates values as a side effect.
+ */
 function addMissingColumnIndex(columns: Array<{ id: string; field?: Field } | undefined>): void {
   const missingIndex = columns.findIndex((field, index) => field?.id !== String(index));
 
@@ -515,7 +527,7 @@ function addMissingColumnIndex(columns: Array<{ id: string; field?: Field } | un
     return;
   }
 
-  // Splice in missing "column"
+  // Splice in missing "column
   columns.splice(missingIndex, 0, { id: String(missingIndex) });
 
   // Recurse
