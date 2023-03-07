@@ -382,8 +382,8 @@ func processBuckets(aggs map[string]interface{}, target *Query,
 
 func newTimeSeriesFrame(timeData []time.Time, tags map[string]string, values []*float64) *data.Frame {
 	frame := data.NewFrame("",
-		data.NewField("time", nil, timeData),
-		data.NewField("value", tags, values))
+		data.NewField("Time", nil, timeData),
+		data.NewField("Value", tags, values))
 	frame.Meta = &data.FrameMeta{
 		Type: data.FrameTypeTimeSeriesMulti,
 	}

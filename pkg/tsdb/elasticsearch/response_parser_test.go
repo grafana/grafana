@@ -59,9 +59,9 @@ func TestResponseParser(t *testing.T) {
 			frame := dataframes[0]
 			require.Len(t, frame.Fields, 2)
 
-			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Name, "Time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
-			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Name, "Value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
 			assert.Equal(t, frame.Name, "Count")
 		})
@@ -108,18 +108,18 @@ func TestResponseParser(t *testing.T) {
 			frame := dataframes[0]
 			require.Len(t, frame.Fields, 2)
 
-			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Name, "Time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
-			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Name, "Value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
 			assert.Equal(t, frame.Name, "Count")
 
 			frame = dataframes[1]
 			require.Len(t, frame.Fields, 2)
 
-			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Name, "Time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
-			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Name, "Value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
 			assert.Equal(t, frame.Name, "Average value")
 		})
@@ -171,17 +171,17 @@ func TestResponseParser(t *testing.T) {
 
 			frame := dataframes[0]
 			require.Len(t, frame.Fields, 2)
-			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Name, "Time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
-			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Name, "Value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
 			assert.Equal(t, frame.Name, "server1")
 
 			frame = dataframes[1]
 			require.Len(t, frame.Fields, 2)
-			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Name, "Time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
-			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Name, "Value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
 			assert.Equal(t, frame.Name, "server2")
 		})
@@ -240,33 +240,33 @@ func TestResponseParser(t *testing.T) {
 
 			frame := dataframes[0]
 			require.Len(t, frame.Fields, 2)
-			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Name, "Time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
-			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Name, "Value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
 			assert.Equal(t, frame.Name, "server1 Count")
 
 			frame = dataframes[1]
 			require.Len(t, frame.Fields, 2)
-			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Name, "Time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
-			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Name, "Value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
 			assert.Equal(t, frame.Name, "server1 Average @value")
 
 			frame = dataframes[2]
 			require.Len(t, frame.Fields, 2)
-			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Name, "Time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
-			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Name, "Value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
 			assert.Equal(t, frame.Name, "server2 Count")
 
 			frame = dataframes[3]
 			require.Len(t, frame.Fields, 2)
-			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Name, "Time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
-			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Name, "Value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
 			assert.Equal(t, frame.Name, "server2 Average @value")
 		})
@@ -312,17 +312,17 @@ func TestResponseParser(t *testing.T) {
 
 			frame := dataframes[0]
 			require.Len(t, frame.Fields, 2)
-			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Name, "Time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
-			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Name, "Value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
 			assert.Equal(t, frame.Name, "p75")
 
 			frame = dataframes[1]
 			require.Len(t, frame.Fields, 2)
-			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Name, "Time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
-			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Name, "Value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
 			assert.Equal(t, frame.Name, "p90")
 		})
@@ -393,49 +393,49 @@ func TestResponseParser(t *testing.T) {
 
 			frame := dataframes[0]
 			require.Len(t, frame.Fields, 2)
-			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Name, "Time")
 			require.Equal(t, frame.Fields[0].Len(), 1)
-			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Name, "Value")
 			require.Equal(t, frame.Fields[1].Len(), 1)
 			assert.Equal(t, frame.Name, "server1 Max")
 
 			frame = dataframes[1]
 			require.Len(t, frame.Fields, 2)
-			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Name, "Time")
 			require.Equal(t, frame.Fields[0].Len(), 1)
-			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Name, "Value")
 			require.Equal(t, frame.Fields[1].Len(), 1)
 			assert.Equal(t, frame.Name, "server1 Std Dev Lower")
 
 			frame = dataframes[2]
 			require.Len(t, frame.Fields, 2)
-			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Name, "Time")
 			require.Equal(t, frame.Fields[0].Len(), 1)
-			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Name, "Value")
 			require.Equal(t, frame.Fields[1].Len(), 1)
 			assert.Equal(t, frame.Name, "server1 Std Dev Upper")
 
 			frame = dataframes[3]
 			require.Len(t, frame.Fields, 2)
-			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Name, "Time")
 			require.Equal(t, frame.Fields[0].Len(), 1)
-			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Name, "Value")
 			require.Equal(t, frame.Fields[1].Len(), 1)
 			assert.Equal(t, frame.Name, "server2 Max")
 
 			frame = dataframes[4]
 			require.Len(t, frame.Fields, 2)
-			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Name, "Time")
 			require.Equal(t, frame.Fields[0].Len(), 1)
-			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Name, "Value")
 			require.Equal(t, frame.Fields[1].Len(), 1)
 			assert.Equal(t, frame.Name, "server2 Std Dev Lower")
 
 			frame = dataframes[5]
 			require.Len(t, frame.Fields, 2)
-			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Name, "Time")
 			require.Equal(t, frame.Fields[0].Len(), 1)
-			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Name, "Value")
 			require.Equal(t, frame.Fields[1].Len(), 1)
 			assert.Equal(t, frame.Name, "server2 Std Dev Upper")
 		})
@@ -496,25 +496,25 @@ func TestResponseParser(t *testing.T) {
 
 			frame := dataframes[0]
 			require.Len(t, frame.Fields, 2)
-			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Name, "Time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
-			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Name, "Value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
 			assert.Equal(t, frame.Name, "server1 Count and {{not_exist}} server1")
 
 			frame = dataframes[1]
 			require.Len(t, frame.Fields, 2)
-			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Name, "Time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
-			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Name, "Value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
 			assert.Equal(t, frame.Name, "server2 Count and {{not_exist}} server2")
 
 			frame = dataframes[2]
 			require.Len(t, frame.Fields, 2)
-			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Name, "Time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
-			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Name, "Value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
 			assert.Equal(t, frame.Name, "0 Count and {{not_exist}} 0")
 		})
@@ -598,17 +598,17 @@ func TestResponseParser(t *testing.T) {
 
 			frame := dataframes[0]
 			require.Len(t, frame.Fields, 2)
-			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Name, "Time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
-			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Name, "Value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
 			assert.Equal(t, frame.Name, "@metric:cpu")
 
 			frame = dataframes[1]
 			require.Len(t, frame.Fields, 2)
-			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Name, "Time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
-			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Name, "Value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
 			assert.Equal(t, frame.Name, "@metric:logins.count")
 		})
@@ -666,17 +666,17 @@ func TestResponseParser(t *testing.T) {
 
 			frame := dataframes[0]
 			require.Len(t, frame.Fields, 2)
-			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Name, "Time")
 			require.Equal(t, frame.Fields[0].Len(), 1)
-			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Name, "Value")
 			require.Equal(t, frame.Fields[1].Len(), 1)
 			assert.Equal(t, frame.Name, "Average")
 
 			frame = dataframes[1]
 			require.Len(t, frame.Fields, 2)
-			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Name, "Time")
 			require.Equal(t, frame.Fields[0].Len(), 1)
-			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Name, "Value")
 			require.Equal(t, frame.Fields[1].Len(), 1)
 			assert.Equal(t, frame.Name, "Count")
 		})
@@ -734,17 +734,17 @@ func TestResponseParser(t *testing.T) {
 
 			frame := dataframes[0]
 			require.Len(t, frame.Fields, 2)
-			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Name, "Time")
 			require.Equal(t, frame.Fields[0].Len(), 1)
-			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Name, "Value")
 			require.Equal(t, frame.Fields[1].Len(), 1)
 			assert.Equal(t, frame.Name, "Average")
 
 			frame = dataframes[1]
 			require.Len(t, frame.Fields, 2)
-			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Name, "Time")
 			require.Equal(t, frame.Fields[0].Len(), 1)
-			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Name, "Value")
 			require.Equal(t, frame.Fields[1].Len(), 1)
 			assert.Equal(t, frame.Name, "Count")
 		})
@@ -945,25 +945,25 @@ func TestResponseParser(t *testing.T) {
 
 			frame := dataframes[0]
 			require.Len(t, frame.Fields, 2)
-			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Name, "Time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
-			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Name, "Value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
 			assert.Equal(t, frame.Name, "Sum @value")
 
 			frame = dataframes[1]
 			require.Len(t, frame.Fields, 2)
-			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Name, "Time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
-			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Name, "Value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
 			assert.Equal(t, frame.Name, "Max @value")
 
 			frame = dataframes[2]
 			require.Len(t, frame.Fields, 2)
-			require.Equal(t, frame.Fields[0].Name, "time")
+			require.Equal(t, frame.Fields[0].Name, "Time")
 			require.Equal(t, frame.Fields[0].Len(), 2)
-			require.Equal(t, frame.Fields[1].Name, "value")
+			require.Equal(t, frame.Fields[1].Name, "Value")
 			require.Equal(t, frame.Fields[1].Len(), 2)
 			assert.Equal(t, frame.Name, "Sum @value * Max @value")
 		})
