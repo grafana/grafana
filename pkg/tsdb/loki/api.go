@@ -25,8 +25,9 @@ type LokiAPI struct {
 }
 
 type RawLokiResponse struct {
-	Body     []byte
-	Encoding string
+	Body        []byte
+	Encoding    string
+	ContentType string
 }
 
 func newLokiAPI(client *http.Client, url string, log log.Logger) *LokiAPI {
@@ -221,8 +222,9 @@ func (api *LokiAPI) RawQuery(ctx context.Context, resourcePath string) (RawLokiR
 	}
 
 	encodedBytes := RawLokiResponse{
-		Body:     body,
-		Encoding: resp.Header.Get("Content-Encoding"),
+		Body:        body,
+		Encoding:    resp.Header.Get("Content-Encoding"),
+		ContentType: resp.Header.Get("Content-Type"),
 	}
 
 	return encodedBytes, nil

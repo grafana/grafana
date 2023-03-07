@@ -122,8 +122,14 @@ func callResource(ctx context.Context, req *backend.CallResourceRequest, sender 
 		return err
 	}
 
+	contentType := encodedBytes.ContentType
+
+	if contentType == "" {
+		contentType = "application/json"
+	}
+
 	respHeaders := map[string][]string{
-		"content-type": {"application/json"},
+		"content-type": {contentType},
 	}
 	if encodedBytes.Encoding != "" {
 		respHeaders["content-encoding"] = []string{encodedBytes.Encoding}
