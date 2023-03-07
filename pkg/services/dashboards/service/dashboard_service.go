@@ -640,3 +640,8 @@ func (dr DashboardServiceImpl) CountDashboardsInFolder(ctx context.Context, quer
 
 	return dr.dashboardStore.CountDashboardsInFolder(ctx, &dashboards.CountDashboardsInFolderRequest{FolderID: folder.ID, OrgID: u.OrgID})
 }
+
+// TODO rethink naming, also does it make sense to unify it (for DashboardServiceImpl and DeleteDashboardsInFolder)?
+func (dr *DashboardServiceImpl) DeleteForRegistry(ctx context.Context, orgID int64, UID string) error {
+	return dr.dashboardStore.DeleteDashboardsInFolder(ctx, &dashboards.DeleteDashboardsInFolderRequest{FolderUID: UID, OrgID: orgID})
+}

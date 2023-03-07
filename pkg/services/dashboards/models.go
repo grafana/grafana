@@ -310,6 +310,11 @@ type CountDashboardsInFolderRequest struct {
 	OrgID    int64
 }
 
+type DeleteDashboardsInFolderRequest struct {
+	FolderUID string
+	OrgID     int64
+}
+
 func FromDashboard(dash *Dashboard) *folder.Folder {
 	return &folder.Folder{
 		ID:        dash.ID,

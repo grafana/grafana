@@ -83,4 +83,6 @@ type Store interface {
 	// CountDashboardsInFolder returns the number of dashboards associated with
 	// the given parent folder ID.
 	CountDashboardsInFolder(ctx context.Context, request *CountDashboardsInFolderRequest) (int64, error)
+	// TODO update testing to take into account this addition
+	DeleteDashboardsInFolder(ctx context.Context, request *DeleteDashboardsInFolderRequest) error
 }
