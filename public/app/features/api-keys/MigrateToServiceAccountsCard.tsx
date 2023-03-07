@@ -27,10 +27,10 @@ export const MigrateToServiceAccountsCard = ({ onMigrate, apikeysCount, disabled
   const migrationBoxDesc = (
     <span>
       Migrating all API keys will hide the API keys tab.
-      <br>
-        The API keys API will remain available for you to create new API keys, but we strongly encourage you to use
-        Service accounts instead.
-      </br>
+      <br></br>
+      <br></br>
+      The API keys API will remain available for you to create new API keys, but we strongly encourage you to use
+      Service accounts instead.
     </span>
   );
 
