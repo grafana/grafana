@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/runner"
 	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -338,6 +337,7 @@ var wireBasicSet = wire.NewSet(
 	grpcserver.ProvideHealthService,
 	grpcserver.ProvideReflectionService,
 	interceptors.ProvideAuthenticator,
+	setting.NewCfgFromArgs,
 	kind.ProvideService, // The registry of known kinds
 	sqlstash.ProvideSQLEntityServer,
 	resolver.ProvideEntityReferenceResolver,
@@ -365,7 +365,6 @@ var wireBasicSet = wire.NewSet(
 var wireSet = wire.NewSet(
 	wireBasicSet,
 	metrics.ProvideRegisterer,
-	setting.NewCfgFromArgs,
 	sqlstore.ProvideService,
 	ngmetrics.ProvideService,
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationService)),
@@ -378,8 +377,8 @@ var wireSet = wire.NewSet(
 )
 
 var wireCLISet = wire.NewSet(
+	NewRunner,
 	wireBasicSet,
-	runner.New,
 	sqlstore.ProvideService,
 	ngmetrics.ProvideService,
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationService)),
@@ -393,7 +392,6 @@ var wireCLISet = wire.NewSet(
 
 var wireTestSet = wire.NewSet(
 	wireBasicSet,
-	setting.NewCfgFromArgs,
 	ProvideTestEnv,
 	metrics.ProvideRegistererForTest,
 	sqlstore.ProvideServiceForTests,
@@ -419,7 +417,7 @@ func InitializeForTest(cla setting.CommandLineArgs, opts Options, apiOpts api.Se
 	return &TestEnv{Server: &Server{}, SQLStore: &sqlstore.SQLStore{}}, nil
 }
 
-func InitializeForCLI(cfg *setting.Cfg) (runner.Runner, error) {
+func InitializeForCLI(cla setting.CommandLineArgs) (Runner, error) {
 	wire.Build(wireExtsCLISet)
-	return runner.Runner{}, nil
+	return Runner{}, nil
 }
