@@ -52,7 +52,7 @@ export class StatSuggestionsSupplier {
             calcs: [],
             fields: '/.*/',
           },
-          colorMode: BigValueColorMode.Background,
+          colorMode: { background: BigValueColorMode.Background },
         },
       });
     }
@@ -67,7 +67,7 @@ export class StatSuggestionsSupplier {
             calcs: [],
             fields: '/.*/',
           },
-          colorMode: BigValueColorMode.None,
+          colorMode: { background: BigValueColorMode.None },
         },
       });
     }
@@ -90,7 +90,7 @@ export class StatSuggestionsSupplier {
             calcs: ['lastNotNull'],
           },
           graphMode: BigValueGraphMode.None,
-          colorMode: BigValueColorMode.Background,
+          colorMode: { background: BigValueColorMode.Background },
         },
       });
     }

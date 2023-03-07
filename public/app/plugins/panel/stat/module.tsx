@@ -5,7 +5,7 @@ import { commonOptionsBuilder, sharedSingleStatMigrationHandler } from '@grafana
 import { statPanelChangedHandler } from './StatMigrations';
 import { StatPanel } from './StatPanel';
 import { addStandardDataReduceOptions, addOrientationOption } from './common';
-import { defaultPanelOptions, PanelOptions } from './panelcfg.gen';
+import { defaultPanelOptions, defaultColorMode, PanelOptions } from './panelcfg.gen';
 import { StatSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<PanelOptions>(StatPanel)
@@ -35,10 +35,11 @@ export const plugin = new PanelPlugin<PanelOptions>(StatPanel)
     });
 
     builder
+      // JEV: stat styles
       .addRadio({
         path: 'colorMode',
         name: 'Color mode',
-        defaultValue: BigValueColorMode.Value,
+        defaultValue: defaultColorMode.background,
         category: mainCategory,
         settings: {
           options: [
@@ -47,6 +48,11 @@ export const plugin = new PanelPlugin<PanelOptions>(StatPanel)
             { value: BigValueColorMode.Background, label: 'Background' },
           ],
         },
+      })
+      .addBooleanSwitch({
+        path: 'hasGradient',
+        name: 'Add or remove background gradient',
+        defaultValue: defaultColorMode.hasGradient,
       })
       .addRadio({
         path: 'graphMode',

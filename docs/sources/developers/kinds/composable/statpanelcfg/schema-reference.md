@@ -15,7 +15,15 @@ title: StatPanelCfg kind
 
 | Property       | Type                    | Required | Description |
 |----------------|-------------------------|----------|-------------|
+| `ColorMode`    | [object](#colormode)    | **Yes**  |             |
 | `PanelOptions` | [object](#paneloptions) | **Yes**  |             |
+
+### ColorMode
+
+| Property      | Type    | Required | Description                                                       |
+|---------------|---------|----------|-------------------------------------------------------------------|
+| `background`  | string  | **Yes**  | TODO docs<br/>Possible values are: `value`, `background`, `none`. |
+| `hasGradient` | boolean | No       | Default: `true`.                                                  |
 
 ### PanelOptions
 
@@ -23,7 +31,7 @@ It extends [SingleStatBaseOptions](#singlestatbaseoptions).
 
 | Property        | Type                                            | Required | Description                                                                                                                                 |
 |-----------------|-------------------------------------------------|----------|---------------------------------------------------------------------------------------------------------------------------------------------|
-| `colorMode`     | string                                          | **Yes**  | TODO docs<br/>Possible values are: `value`, `background`, `none`.                                                                           |
+| `colorMode`     | [ColorMode](#colormode)                         | **Yes**  |                                                                                                                                             |
 | `graphMode`     | string                                          | **Yes**  | TODO docs<br/>Possible values are: `none`, `line`, `area`.                                                                                  |
 | `justifyMode`   | string                                          | **Yes**  | TODO docs<br/>Possible values are: `auto`, `center`.                                                                                        |
 | `textMode`      | string                                          | **Yes**  | TODO docs<br/>Possible values are: `auto`, `value`, `value_and_name`, `name`, `none`.                                                       |

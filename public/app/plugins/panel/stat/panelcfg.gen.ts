@@ -12,15 +12,24 @@ import * as common from '@grafana/schema';
 
 export const PanelCfgModelVersion = Object.freeze([0, 0]);
 
+export interface ColorMode {
+  background: common.BigValueColorMode;
+  hasGradient?: boolean;
+}
+
+export const defaultColorMode: Partial<ColorMode> = {
+  background: common.BigValueColorMode.Value,
+  hasGradient: true,
+};
+
 export interface PanelOptions extends common.SingleStatBaseOptions {
-  colorMode: common.BigValueColorMode;
+  colorMode: ColorMode;
   graphMode: common.BigValueGraphMode;
   justifyMode: common.BigValueJustifyMode;
   textMode: common.BigValueTextMode;
 }
 
 export const defaultPanelOptions: Partial<PanelOptions> = {
-  colorMode: common.BigValueColorMode.Value,
   graphMode: common.BigValueGraphMode.Area,
   justifyMode: common.BigValueJustifyMode.Auto,
   textMode: common.BigValueTextMode.Auto,
