@@ -53,8 +53,7 @@ func (c *cache) getOrCreate(ctx context.Context, log log.Logger, alertRule *ngMo
 func (rs *ruleStates) getOrCreate(ctx context.Context, log log.Logger, alertRule *ngModels.AlertRule, result eval.Result, extraLabels data.Labels, externalURL *url.URL) *State {
 	// Merge both the extra labels and the labels from the evaluation into a common set
 	// of labels that can be expanded in custom labels and annotations.
-	templateLabels := mergeLabels(extraLabels, result.Instance)
-	templateData := template.NewData(templateLabels, result)
+	templateData := template.NewData(mergeLabels(extraLabels, result.Instance), result)
 
 	// For now, do nothing with these errors as they are already logged in expand.
 	// In the future, we want to show these errors to the user somehow.
