@@ -5395,7 +5395,7 @@ __metadata:
     rc-tooltip: 5.3.1
     react: 17.0.2
     react-beautiful-dnd: 13.1.1
-    react-calendar: 3.9.0
+    react-calendar: 4.0.0
     react-colorful: 5.6.1
     react-custom-scrollbars-2: 4.5.0
     react-dom: 17.0.2
@@ -16055,6 +16055,13 @@ __metadata:
   version: 1.1.1
   resolution: "clsx@npm:1.1.1"
   checksum: ff052650329773b9b245177305fc4c4dc3129f7b2be84af4f58dc5defa99538c61d4207be7419405a5f8f3d92007c954f4daba5a7b74e563d5de71c28c830063
+  languageName: node
+  linkType: hard
+
+"clsx@npm:^1.2.1":
+  version: 1.2.1
+  resolution: "clsx@npm:1.2.1"
+  checksum: 30befca8019b2eb7dbad38cff6266cf543091dae2825c856a62a8ccf2c3ab9c2907c4d12b288b73101196767f66812365400a227581484a05f968b0307cfaf12
   languageName: node
   linkType: hard
 
@@ -27663,13 +27670,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"merge-class-names@npm:^1.1.1":
-  version: 1.4.2
-  resolution: "merge-class-names@npm:1.4.2"
-  checksum: 569c333ab0d7fa1e06ae6e637d58e0d4623d7b165ea78d085c1bbd042568d8793bb7ce54ec55580679416046b11fc6eaf4956d68d19964cb320edc034e182c1d
-  languageName: node
-  linkType: hard
-
 "merge-descriptors@npm:1.0.1":
   version: 1.0.1
   resolution: "merge-descriptors@npm:1.0.1"
@@ -32699,18 +32699,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-calendar@npm:3.9.0":
-  version: 3.9.0
-  resolution: "react-calendar@npm:3.9.0"
+"react-calendar@npm:4.0.0":
+  version: 4.0.0
+  resolution: "react-calendar@npm:4.0.0"
   dependencies:
     "@wojtekmaj/date-utils": ^1.0.2
+    clsx: ^1.2.1
     get-user-locale: ^1.2.0
-    merge-class-names: ^1.1.1
     prop-types: ^15.6.0
   peerDependencies:
-    react: ^16.3.0 || ^17.0.0 || ^18.0.0
-    react-dom: ^16.3.0 || ^17.0.0 || ^18.0.0
-  checksum: f178e8afef9e427689472c3792a2e4d60ca959657f12e06ab07a7cc27f64cc5e9531e495d087bfd5c9bc5826f7cec5088fb0e7f15fa4f28482180cc344c8c60f
+    react: ^16.8.0 || ^17.0.0 || ^18.0.0
+    react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+  checksum: a470ea1eab914cda9f76245060e15129a220c30f2942a28c20b3cb999fd994d0c0fadae849184ba123b3b78541fbb3301c5ac0c44e0bd2ab156bfba8cc587593
   languageName: node
   linkType: hard
 
