@@ -21,7 +21,14 @@ import uFuzzy from '@leeoniya/ufuzzy';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { CoreApp, createTheme, DataFrame, FieldType, getDisplayProcessor } from '@grafana/data';
+import {
+  CoreApp,
+  createTheme,
+  DataFrame,
+  FieldType,
+  getDisplayProcessor,
+  getEnumDisplayProcessor,
+} from '@grafana/data';
 
 import { PIXELS_PER_LEVEL } from '../../constants';
 import { TooltipData, SelectedView, ContextMenuData } from '../types';
@@ -123,18 +130,31 @@ const FlameGraph = ({
         theme: createTheme() /* theme does not matter for us here */,
       });
 
+      const labelProcessor = getEnumDisplayProcessor(
+        createTheme(),
+        data.fields.find((f) => f.name === 'label')!.config!.type!.enum
+      );
+
       for (let levelIndex = 0; levelIndex < levels.length; levelIndex++) {
         const level = levels[levelIndex];
         // Get all the dimensions of the rectangles for the level. We do this by level instead of per rectangle, because
         // sometimes we collapse multiple bars into single rect.
-        const dimensions = getRectDimensionsForLevel(level, levelIndex, totalTicks, rangeMin, pixelsPerTick, processor);
+        const dimensions = getRectDimensionsForLevel(
+          level,
+          levelIndex,
+          totalTicks,
+          rangeMin,
+          pixelsPerTick,
+          processor,
+          labelProcessor
+        );
         for (const rect of dimensions) {
           // Render each rectangle based on the computed dimensions
           renderRect(ctx, rect, totalTicks, rangeMin, rangeMax, search, levelIndex, topLevelIndex, foundLabels);
         }
       }
     },
-    [levels, wrapperWidth, valueField, totalTicks, rangeMin, rangeMax, search, topLevelIndex, foundLabels]
+    [levels, wrapperWidth, valueField, totalTicks, rangeMin, rangeMax, search, topLevelIndex, foundLabels, data.fields]
   );
 
   useEffect(() => {

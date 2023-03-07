@@ -369,21 +369,69 @@ func treeToNestedSetDataFrame(tree *ProfileTree, profileTypeID string) *data.Fra
 	parts := strings.Split(profileTypeID, ":")
 	valueField.Config = &data.FieldConfig{Unit: normalizeUnit(parts[2])}
 	selfField.Config = &data.FieldConfig{Unit: normalizeUnit(parts[2])}
-	labelField := data.NewField("label", nil, []string{})
+	labelField := data.NewField("label", nil, []int64{})
 	lineNumberField := data.NewField("line", nil, []int64{})
-	fileNameField := data.NewField("fileName", nil, []string{})
+	fileNameField := data.NewField("fileName", nil, []int64{})
 	frame.Fields = data.Fields{levelField, valueField, selfField, labelField, lineNumberField, fileNameField}
 
+	filenameMap := make(map[string]int64)
+	filenameCounter := int64(0)
+
+	funcNameMap := make(map[string]int64)
+	funcCounter := int64(0)
+
 	walkTree(tree, func(tree *ProfileTree) {
+
 		levelField.Append(int64(tree.Level))
 		valueField.Append(tree.Value)
 		selfField.Append(tree.Self)
 		// todo: inline functions
 		// tree.Inlined
-		labelField.Append(tree.Function.FunctionName)
 		lineNumberField.Append(tree.Function.Line)
-		fileNameField.Append(tree.Function.FileName)
+
+		if val, ok := funcNameMap[tree.Function.FunctionName]; ok {
+			labelField.Append(val)
+		} else {
+			funcNameMap[tree.Function.FunctionName] = funcCounter
+			labelField.Append(funcCounter)
+			funcCounter++
+		}
+
+		if val, ok := filenameMap[tree.Function.FileName]; ok {
+			fileNameField.Append(val)
+		} else {
+			filenameMap[tree.Function.FileName] = filenameCounter
+			fileNameField.Append(filenameCounter)
+			filenameCounter++
+		}
 	})
+
+	funcNameSlice := make([]string, len(funcNameMap))
+	for k, v := range funcNameMap {
+		funcNameSlice[v] = k
+	}
+
+	labelField.SetConfig(&data.FieldConfig{
+		TypeConfig: &data.FieldTypeConfig{
+			Enum: &data.EnumFieldConfig{
+				Text: funcNameSlice,
+			},
+		},
+	})
+
+	fileNameSlice := make([]string, len(filenameMap))
+	for k, v := range filenameMap {
+		fileNameSlice[v] = k
+	}
+
+	fileNameField.SetConfig(&data.FieldConfig{
+		TypeConfig: &data.FieldTypeConfig{
+			Enum: &data.EnumFieldConfig{
+				Text: fileNameSlice,
+			},
+		},
+	})
+
 	return frame
 }
 
