@@ -116,6 +116,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
   const updateMetricsMetadata = useCallback(async () => {
     // *** Loading Gif
     setIsLoading(true);
+
     // Makes sure we loaded the metadata for metrics. Usually this is done in the start() method of the provider but we
     // don't use it with the visual builder and there is no need to run all the start() setup anyway.
     if (!datasource.languageProvider.metricsMetadata) {
@@ -355,6 +356,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
           data-testid={testIds.searchMetric}
           placeholder={placeholders.browse}
           value={fuzzySearchQuery}
+          autoFocus
           onInput={(e) => {
             const value = e.currentTarget.value ?? '';
             setFuzzySearchQuery(value);
