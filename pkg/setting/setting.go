@@ -402,6 +402,7 @@ type Cfg struct {
 	RudderstackWriteKey                 string
 	RudderstackSDKURL                   string
 	RudderstackConfigURL                string
+	IntercomSecret                      string
 
 	// AzureAD
 	AzureADSkipOrgRoleSync bool
@@ -1038,6 +1039,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	cfg.RudderstackDataPlaneURL = analytics.Key("rudderstack_data_plane_url").String()
 	cfg.RudderstackSDKURL = analytics.Key("rudderstack_sdk_url").String()
 	cfg.RudderstackConfigURL = analytics.Key("rudderstack_config_url").String()
+	cfg.IntercomSecret = analytics.Key("intercom_secret").String()
 
 	cfg.ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
 	cfg.ReportingDistributor = analytics.Key("reporting_distributor").MustString("grafana-labs")

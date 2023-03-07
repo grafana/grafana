@@ -106,8 +106,8 @@ func (m *service) Run(ctx context.Context) error {
 		return nil
 	}
 
-	serviceListener := newServiceListener(m.log, m)
-	m.ServiceManager.AddListener(serviceListener)
+	listener := newServiceListener(m.log, m)
+	m.ServiceManager.AddListener(listener)
 
 	// wait until a service fails or stop signal was received
 	err := m.ServiceManager.StartAsync(ctx)
