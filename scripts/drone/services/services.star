@@ -36,21 +36,20 @@ def integration_test_services(edition):
         },
     ]
 
-    if edition in ("enterprise", "enterprise2"):
-        services.extend(
-            [
-                {
-                    "name": "redis",
-                    "image": "redis:6.2.1-alpine",
-                    "environment": {},
-                },
-                {
-                    "name": "memcached",
-                    "image": "memcached:1.6.9-alpine",
-                    "environment": {},
-                },
-            ],
-        )
+    services.extend(
+        [
+            {
+                "name": "redis",
+                "image": "redis:6.2.1-alpine",
+                "environment": {},
+            },
+            {
+                "name": "memcached",
+                "image": "memcached:1.6.9-alpine",
+                "environment": {},
+            },
+        ],
+    )
 
     return services
 

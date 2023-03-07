@@ -811,6 +811,12 @@ services:
   volumes:
   - name: mysql
     path: /var/lib/mysql
+- environment: {}
+  image: redis:6.2.1-alpine
+  name: redis
+- environment: {}
+  image: memcached:1.6.9-alpine
+  name: memcached
 steps:
 - commands:
   - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
@@ -1843,6 +1849,12 @@ services:
   volumes:
   - name: mysql
     path: /var/lib/mysql
+- environment: {}
+  image: redis:6.2.1-alpine
+  name: redis
+- environment: {}
+  image: memcached:1.6.9-alpine
+  name: memcached
 steps:
 - commands:
   - mkdir -p bin
@@ -2611,6 +2623,12 @@ services:
   volumes:
   - name: mysql
     path: /var/lib/mysql
+- environment: {}
+  image: redis:6.2.1-alpine
+  name: redis
+- environment: {}
+  image: memcached:1.6.9-alpine
+  name: memcached
 steps:
 - commands:
   - mkdir -p bin
@@ -5324,6 +5342,12 @@ services:
   volumes:
   - name: mysql
     path: /var/lib/mysql
+- environment: {}
+  image: redis:6.2.1-alpine
+  name: redis
+- environment: {}
+  image: memcached:1.6.9-alpine
+  name: memcached
 steps:
 - commands:
   - mkdir -p bin
@@ -6696,6 +6720,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: 990a4f66127efdaa578ded91df29b920dadc4bef3c20ff99f5c10972c5b50d7b
+hmac: 9e3a392c268bde96c5f9313204c88827c26ffe5f32f8f6eca0a634c48dd71657
 
 ...
