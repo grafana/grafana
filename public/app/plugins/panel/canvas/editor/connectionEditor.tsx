@@ -1,39 +1,38 @@
 import { get as lodashGet } from 'lodash';
 
 import { NestedPanelOptions, NestedValueAccess } from '@grafana/data/src/utils/OptionsUIBuilders';
-import { CanvasConnection, CanvasConnectionOptions } from 'app/features/canvas';
+import { CanvasConnection } from 'app/features/canvas';
 import { Scene } from 'app/features/canvas/runtime/scene';
 import { setOptionImmutably } from 'app/features/dashboard/components/PanelEditor/utils';
+
+import { ConnectionState } from '../types';
 
 import { optionBuilder } from './options';
 
 export interface CanvasConnectionEditorOptions {
-  connection: CanvasConnection;
+  connection: ConnectionState;
   scene: Scene;
   category?: string[];
 }
 
-export function getConnectionEditor(opts: CanvasConnectionEditorOptions): NestedPanelOptions<CanvasConnectionOptions> {
+export function getConnectionEditor(opts: CanvasConnectionEditorOptions): NestedPanelOptions<CanvasConnection> {
   return {
     category: opts.category,
     path: '--', // not used!
 
     values: (parent: NestedValueAccess) => ({
       getValue: (path: string) => {
-        return lodashGet(opts.connection.options, path);
+        return lodashGet(opts.connection.info, path);
       },
       onChange: (path: string, value: any) => {
-        let options = opts.connection.options;
+        let options = opts.connection.info;
         options = setOptionImmutably(options, path, value);
-
-        opts.scene.connections.onChange(options, opts.connection);
+        opts.scene.connections.onChange(opts.connection, options);
       },
     }),
 
-    // Dynamically fill the selected element
     build: (builder, context) => {
-      const { options } = opts.connection;
-      const ctx = { ...context, options: options };
+      const ctx = { ...context, options: opts.connection.info };
       optionBuilder.addColor(builder, ctx);
     },
   };

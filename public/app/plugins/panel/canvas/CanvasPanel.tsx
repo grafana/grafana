@@ -4,7 +4,7 @@ import { ReplaySubject, Subscription } from 'rxjs';
 import { PanelProps } from '@grafana/data';
 import { locationService } from '@grafana/runtime/src';
 import { PanelContext, PanelContextRoot } from '@grafana/ui';
-import { CanvasConnection, CanvasFrameOptions } from 'app/features/canvas';
+import { CanvasFrameOptions } from 'app/features/canvas';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
 import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
@@ -12,7 +12,7 @@ import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 import { InlineEdit } from './InlineEdit';
 import { SetBackground } from './SetBackground';
 import { PanelOptions } from './models.gen';
-import { AnchorPoint, CanvasTooltipPayload } from './types';
+import { AnchorPoint, CanvasTooltipPayload, ConnectionState } from './types';
 
 interface Props extends PanelProps<PanelOptions> {}
 
@@ -27,7 +27,7 @@ interface State {
 export interface InstanceState {
   scene: Scene;
   selected: ElementState[];
-  selectedConnection?: CanvasConnection | undefined;
+  selectedConnection?: ConnectionState;
 }
 
 export interface SelectionAction {
@@ -133,8 +133,11 @@ export class CanvasPanel extends Component<Props, State> {
       );
 
       this.subs.add(
-        this.scene.connectionSelection.subscribe({
+        this.scene.connections.selection.subscribe({
           next: (v) => {
+            if (!this.context.instanceState) {
+              return;
+            }
             this.panelContext.onInstanceStateChange!({
               scene: this.scene,
               selected: this.context.instanceState.selected,

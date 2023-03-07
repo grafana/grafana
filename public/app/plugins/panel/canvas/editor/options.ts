@@ -1,12 +1,12 @@
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
-import { CanvasConnectionOptions, CanvasElementOptions } from 'app/features/canvas';
+import { CanvasConnection, CanvasElementOptions } from 'app/features/canvas';
 import { ColorDimensionEditor, ResourceDimensionEditor } from 'app/features/dimensions/editors';
 import { BackgroundSizeEditor } from 'app/features/dimensions/editors/BackgroundSizeEditor';
 
 interface OptionSuppliers {
   addBackground: PanelOptionsSupplier<CanvasElementOptions>;
   addBorder: PanelOptionsSupplier<CanvasElementOptions>;
-  addColor: PanelOptionsSupplier<CanvasConnectionOptions>;
+  addColor: PanelOptionsSupplier<CanvasConnection>;
 }
 
 const getCategoryName = (str: string, type: string | undefined) => {

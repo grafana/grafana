@@ -16,7 +16,7 @@ import { FrameState } from '../../../features/canvas/runtime/frame';
 import { Scene, SelectionParams } from '../../../features/canvas/runtime/scene';
 import { DimensionContext } from '../../../features/dimensions';
 
-import { AnchorPoint, ConnectionInfo } from './types';
+import { AnchorPoint, ConnectionState } from './types';
 
 export function doSelect(scene: Scene, element: ElementState | FrameState) {
   try {
@@ -139,19 +139,20 @@ export function isConnectionTarget(element: ElementState, sceneByName: Map<strin
 }
 
 export function getConnections(sceneByName: Map<string, ElementState>) {
-  const connections: ConnectionInfo[] = [];
+  const connections: ConnectionState[] = [];
   for (let v of sceneByName.values()) {
     if (v.options.connections) {
-      for (let c of v.options.connections) {
+      v.options.connections.forEach((c, index) => {
         const target = c.targetName ? sceneByName.get(c.targetName) : v.parent;
         if (target) {
           connections.push({
+            index,
             source: v,
             target,
             info: c,
           });
         }
-      }
+      });
     }
   }
 

@@ -1,15 +1,15 @@
 import React from 'react';
+import { BehaviorSubject } from 'rxjs';
 
 import { config } from '@grafana/runtime';
-import { CanvasConnection, CanvasConnectionOptions, ConnectionPath } from 'app/features/canvas';
+import { CanvasConnection, ConnectionPath } from 'app/features/canvas';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
 import { CONNECTION_ANCHOR_ALT, ConnectionAnchors, CONNECTION_ANCHOR_HIGHLIGHT_OFFSET } from './ConnectionAnchors';
 import { ConnectionSVG } from './ConnectionSVG';
-import { isConnectionSource, isConnectionTarget } from './utils';
-
-let idCounter = 0;
+import { ConnectionState } from './types';
+import { getConnections, isConnectionSource, isConnectionTarget } from './utils';
 
 export class Connections {
   scene: Scene;
@@ -20,10 +20,31 @@ export class Connections {
   connectionTarget?: ElementState;
   isDrawingConnection?: boolean;
   didConnectionLeaveHighlight?: boolean;
+  state: ConnectionState[] = [];
+  readonly selection = new BehaviorSubject<ConnectionState | undefined>(undefined);
 
   constructor(scene: Scene) {
     this.scene = scene;
+    this.updateState();
   }
+
+  select = (connection: ConnectionState | undefined) => {
+    this.selection.next(connection);
+  };
+
+  updateState = () => {
+    const s = this.selection.value;
+    this.state = getConnections(this.scene.byName);
+
+    if (s) {
+      for (let c of this.state) {
+        if (c.source === s.source && c.index === s.index) {
+          this.selection.next(c);
+          break;
+        }
+      }
+    }
+  };
 
   setConnectionAnchorRef = (anchorElement: HTMLDivElement) => {
     this.connectionAnchorDiv = anchorElement;
@@ -168,7 +189,6 @@ export class Connections {
         }
 
         const connection = {
-          id: idCounter++,
           source: {
             x: sourceX,
             y: sourceY,
@@ -178,14 +198,11 @@ export class Connections {
             y: targetY,
           },
           targetName: targetName,
-          sourceName: this.connectionSource.options.name,
-          path: ConnectionPath.Straight,
-          options: {
-            color: {
-              fixed: config.theme2.colors.text.primary,
-            },
-            size: 10,
+          color: {
+            fixed: config.theme2.colors.text.primary,
           },
+          size: 10,
+          path: ConnectionPath.Straight,
         };
 
         const { options } = this.connectionSource;
@@ -208,6 +225,7 @@ export class Connections {
       }
 
       this.isDrawingConnection = false;
+      this.updateState();
     }
   };
 
@@ -233,24 +251,11 @@ export class Connections {
     this.scene.selecto?.rootContainer?.addEventListener('mousemove', this.connectionListener);
   };
 
-  onChange = (options: CanvasConnectionOptions, connection: CanvasConnection) => {
-    console.log('onChange');
-    console.log(options);
-    connection = { ...connection, options };
-    const connectionId = connection.id;
-    const sourceElement = this.scene.byName.get(connection.sourceName);
-    if (sourceElement) {
-      // @TODO fix this
-      const filteredConnections = sourceElement.options.connections?.filter(
-        (connection) => connection.id !== connectionId
-      );
-      // @ts-ignore
-      sourceElement.options.connections = [...filteredConnections, connection];
-      if (this.scene.moveableActionCallback) {
-        this.scene.moveableActionCallback(true);
-      }
-      sourceElement.onChange(sourceElement.options);
-    }
+  onChange = (current: ConnectionState, update: CanvasConnection) => {
+    const connections = current.source.options.connections?.splice(0) ?? [];
+    connections[current.index] = update;
+    current.source.onChange({ ...current.source.options, connections });
+    this.updateState();
   };
 
   // used for moveable actions

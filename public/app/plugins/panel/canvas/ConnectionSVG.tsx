@@ -1,14 +1,12 @@
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
-import { CanvasConnection } from 'app/features/canvas/element';
-import { ElementState } from 'app/features/canvas/runtime/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
-import { getConnections } from './utils';
+import { ConnectionState } from './types';
 
 type Props = {
   setSVGRef: (anchorElement: SVGSVGElement) => void;
@@ -26,7 +24,7 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
   const EDITOR_HEAD_ID = useMemo(() => `editorHead-${headId}`, [headId]);
   const defaultArrowColor = config.theme2.colors.text.primary;
 
-  const [selectedConnection, setSelectedConnection] = useState<CanvasConnection | undefined>(undefined);
+  const [selectedConnection, setSelectedConnection] = useState<ConnectionState | undefined>(undefined);
 
   // Need to use ref to ensure state is not stale in event handler
   const selectedConnectionRef = useRef(selectedConnection);
@@ -34,10 +32,9 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
     selectedConnectionRef.current = selectedConnection;
   });
 
-  const [selectedConnectionSource, setSelectedConnectionSource] = useState<ElementState | undefined>(undefined);
-  const selectedConnectionSourceRef = useRef(selectedConnectionSource);
+  const selectedConnectionSourceRef = useRef(selectedConnection?.source);
   useEffect(() => {
-    selectedConnectionSourceRef.current = selectedConnectionSource;
+    selectedConnectionSourceRef.current = selectedConnection?.source;
   });
 
   const onKeyUp = (e: KeyboardEvent) => {
@@ -46,13 +43,13 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
       if (selectedConnectionRef.current && selectedConnectionSourceRef.current) {
         selectedConnectionSourceRef.current.options.connections =
           selectedConnectionSourceRef.current.options.connections?.filter(
-            (connection) => connection !== selectedConnectionRef.current
+            (connection) => false // connection !== selectedConnectionRef.current // @TODO fix this
           );
         selectedConnectionSourceRef.current.onChange(selectedConnectionSourceRef.current.options);
 
         setSelectedConnection(undefined);
-        setSelectedConnectionSource(undefined);
-        scene.connectionSelection.next(undefined);
+        scene.connections.select(undefined);
+        scene.connections.updateState();
       }
     } else {
       // Prevent removing event listener if key is not delete
@@ -72,30 +69,23 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
 
     if (shouldResetSelectedConnection) {
       setSelectedConnection(undefined);
-      setSelectedConnectionSource(undefined);
-      scene.connectionSelection.next(undefined);
+      scene.connections.select(undefined);
     }
   };
 
-  const selectConnection = (connection: CanvasConnection, source: ElementState) => {
+  const selectConnection = (connection: ConnectionState) => {
     if (scene.isEditingEnabled) {
       setSelectedConnection(connection);
-      setSelectedConnectionSource(source);
-      scene.connectionSelection.next(connection);
+      scene.connections.select(connection);
 
       document.addEventListener('keyup', onKeyUp);
       scene.selecto!.rootContainer!.addEventListener('click', clearSelectedConnection);
     }
   };
 
-  // Flat list of all connections
-  const findConnections = useCallback(() => {
-    return getConnections(scene.byName);
-  }, [scene.byName]);
-
   // Figure out target and then target's relative coordinates drawing (if no target do parent)
   const renderConnections = () => {
-    return findConnections().map((v, idx) => {
+    return scene.connections.state.map((v, idx) => {
       const { source, target, info } = v;
       const sourceRect = source.div?.getBoundingClientRect();
       const parent = source.div?.parentElement;
@@ -132,13 +122,14 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
         y2 = parentVerticalCenter - (info.target.y * parentRect.height) / 2;
       }
 
-      const isSelected = selectedConnection === info && scene.panel.context.instanceState.selectedConnection;
+      //  @TODO update selection style
+      const isSelected = selectedConnection === v && scene.panel.context.instanceState.selectedConnection;
       const selectedStyles = { stroke: '#44aaff', strokeWidth: 3 };
       const connectionCursorStyle = scene.isEditingEnabled ? 'grab' : '';
 
       return (
         <svg className={styles.connection} key={idx}>
-          <g onClick={() => selectConnection(info, source)}>
+          <g onClick={() => selectConnection(v)}>
             <defs>
               <marker
                 id={CONNECTION_HEAD_ID}
