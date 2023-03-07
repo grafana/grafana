@@ -14,6 +14,20 @@ type FakePublicDashboardServiceWrapper struct {
 	mock.Mock
 }
 
+// DeleteByPublicDashboard provides a mock function with given fields: ctx, pubdash
+func (_m *FakePublicDashboardServiceWrapper) DeleteByPublicDashboard(ctx context.Context, pubdash *models.PublicDashboard) error {
+	ret := _m.Called(ctx, pubdash)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *models.PublicDashboard) error); ok {
+		r0 = rf(ctx, pubdash)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // FindByDashboardUid provides a mock function with given fields: ctx, orgId, dashboardUid
 func (_m *FakePublicDashboardServiceWrapper) FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*models.PublicDashboard, error) {
 	ret := _m.Called(ctx, orgId, dashboardUid)
@@ -35,20 +49,6 @@ func (_m *FakePublicDashboardServiceWrapper) FindByDashboardUid(ctx context.Cont
 	}
 
 	return r0, r1
-}
-
-// HandlePublicDashboardDeleted provides a mock function with given fields: ctx, pubdash
-func (_m *FakePublicDashboardServiceWrapper) HandlePublicDashboardDeleted(ctx context.Context, pubdash *models.PublicDashboard) error {
-	ret := _m.Called(ctx, pubdash)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *models.PublicDashboard) error); ok {
-		r0 = rf(ctx, pubdash)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
 }
 
 type mockConstructorTestingTNewFakePublicDashboardServiceWrapper interface {
