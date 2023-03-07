@@ -2,6 +2,8 @@ package dashboard
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -39,6 +41,11 @@ func ProvideWatcher(
 
 func (c *watcher) Add(ctx context.Context, obj *Dashboard) error {
 	c.log.Debug("adding dashboard", "obj", obj)
+
+	js, _ := json.MarshalIndent(obj, "", "  ")
+	fmt.Printf("-------- WATCHER ---------")
+	fmt.Printf("%s", string(js))
+
 	cmd, err := k8sDashboardToDashboardCommand(obj)
 	if err != nil {
 		return err

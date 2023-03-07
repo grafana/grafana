@@ -2,6 +2,7 @@ package dashboard
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -124,6 +125,10 @@ func (s *StoreWrapper) SaveDashboard(ctx context.Context, cmd dashboards.SaveDas
 		return nil, err
 	}
 
+	js, _ := json.MarshalIndent(uObj, "", "  ")
+	fmt.Printf("-------- UNSTRUCTURED BEFORE---------")
+	fmt.Printf("%s", string(js))
+
 	if updateDashboard {
 		s.log.Debug("k8s action: update")
 		uObj, err = dashboardResource.Update(ctx, uObj, metav1.UpdateOptions{})
@@ -136,6 +141,10 @@ func (s *StoreWrapper) SaveDashboard(ctx context.Context, cmd dashboards.SaveDas
 	if err != nil {
 		return nil, err
 	}
+
+	js, _ = json.MarshalIndent(uObj, "", "  ")
+	fmt.Printf("-------- UNSTRUCTURED AFTER---------")
+	fmt.Printf("%s", string(js))
 
 	rv := uObj.GetResourceVersion()
 	s.log.Debug("wait for revision", "revision", rv)
