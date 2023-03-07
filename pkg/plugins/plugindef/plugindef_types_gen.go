@@ -78,7 +78,7 @@ type BasicRole string
 
 // BuildInfo defines model for BuildInfo.
 type BuildInfo struct {
-	// Git branch the plugin was built from
+	// Git branch the plugin was built from.
 	Branch *string `json:"branch,omitempty"`
 
 	// Git hash of the commit the plugin was built from
@@ -89,7 +89,7 @@ type BuildInfo struct {
 	Pr   *int32  `json:"pr,omitempty"`
 	Repo *string `json:"repo,omitempty"`
 
-	// Time when the plugin was built, as a Unix timestamp
+	// Time when the plugin was built, as a Unix timestamp.
 	Time *int64 `json:"time,omitempty"`
 }
 
@@ -104,7 +104,7 @@ type Dependencies struct {
 	// v7.x.x.
 	GrafanaVersion *string `json:"grafanaVersion,omitempty"`
 
-	// An array of required plugins on which this plugin depends
+	// An array of required plugins on which this plugin depends.
 	Plugins []Dependency `json:"plugins,omitempty"`
 }
 
@@ -172,15 +172,15 @@ type IncludeType string
 // Metadata about a Grafana plugin. Some fields are used on the plugins
 // page in Grafana and others on grafana.com, if the plugin is published.
 type Info struct {
-	// Information about the plugin author
+	// Information about the plugin author.
 	Author *struct {
-		// Author's name
+		// Author's name.
 		Email *string `json:"email,omitempty"`
 
-		// Author's name
+		// Author's name.
 		Name *string `json:"name,omitempty"`
 
-		// Link to author's website
+		// Link to author's website.
 		Url *string `json:"url,omitempty"`
 	} `json:"author,omitempty"`
 	Build *BuildInfo `json:"build,omitempty"`
@@ -200,7 +200,7 @@ type Info struct {
 		Url  *string `json:"url,omitempty"`
 	} `json:"links,omitempty"`
 
-	// SVG images that are used as plugin icons
+	// SVG images that are used as plugin icons.
 	Logos *struct {
 		// Link to the "large" version of the plugin logo, which must be
 		// an SVG image. "Large" and "small" logos can be the same image.
@@ -218,10 +218,10 @@ type Info struct {
 		Path *string `json:"path,omitempty"`
 	} `json:"screenshots,omitempty"`
 
-	// Date when this plugin was built
+	// Date when this plugin was built.
 	Updated *string `json:"updated,omitempty"`
 
-	// Project version of this commit, e.g. `6.7.x`
+	// Project version of this commit, e.g. `6.7.x`.
 	Version *string `json:"version,omitempty"`
 }
 
@@ -249,9 +249,6 @@ type Permission struct {
 
 // PluginDef defines model for PluginDef.
 type PluginDef struct {
-	// Schema definition for the plugin.json file. Used primarily for schema validation.
-	Schema *string `json:"$schema,omitempty"`
-
 	// For data source plugins, if the plugin supports alerting.
 	Alerting *bool `json:"alerting,omitempty"`
 
@@ -299,7 +296,7 @@ type PluginDef struct {
 	HideFromList bool `json:"hideFromList"`
 
 	// Unique name of the plugin. If the plugin is published on
-	// grafana.com, then the plugin `id` has to follow the naming
+	// grafana.com, then the plugin id has to follow the naming
 	// conventions.
 	Id string `json:"id"`
 

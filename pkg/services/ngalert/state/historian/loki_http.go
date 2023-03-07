@@ -62,10 +62,9 @@ func NewLokiConfig(cfg setting.UnifiedAlertingStateHistorySettings) (LokiConfig,
 }
 
 type httpLokiClient struct {
-	client  client.Requester
-	cfg     LokiConfig
-	metrics *metrics.Historian
-	log     log.Logger
+	client client.Requester
+	cfg    LokiConfig
+	log    log.Logger
 }
 
 // Kind of Operation (=, !=, =~, !~)
@@ -93,10 +92,9 @@ type Selector struct {
 func newLokiClient(cfg LokiConfig, req client.Requester, metrics *metrics.Historian, logger log.Logger) *httpLokiClient {
 	tc := client.NewTimedClient(req, metrics.WriteDuration)
 	return &httpLokiClient{
-		client:  tc,
-		cfg:     cfg,
-		metrics: metrics,
-		log:     logger.New("protocol", "http"),
+		client: tc,
+		cfg:    cfg,
+		log:    logger.New("protocol", "http"),
 	}
 }
 
@@ -179,7 +177,6 @@ func (c *httpLokiClient) push(ctx context.Context, s []stream) error {
 	c.setAuthAndTenantHeaders(req)
 	req.Header.Add("content-type", "application/json")
 
-	c.metrics.BytesWritten.Add(float64(len(enc)))
 	req = req.WithContext(ctx)
 	resp, err := c.client.Do(req)
 	if resp != nil {

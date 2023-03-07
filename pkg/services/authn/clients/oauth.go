@@ -6,7 +6,6 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -43,15 +42,10 @@ var (
 	errOAuthInvalidState = errutil.NewBase(errutil.StatusUnauthorized, "auth.oauth.state.invalid", errutil.WithPublicMessage("Provided state does not match stored state"))
 
 	errOAuthTokenExchange = errutil.NewBase(errutil.StatusInternal, "auth.oauth.token.exchange", errutil.WithPublicMessage("Failed to get token from provider"))
-	errOAuthUserInfo      = errutil.NewBase(errutil.StatusInternal, "auth.oauth.userinfo.error")
 
-	errOAuthMissingRequiredEmail = errutil.NewBase(errutil.StatusUnauthorized, "auth.oauth.email.missing", errutil.WithPublicMessage("Provider didn't return an email address"))
-	errOAuthEmailNotAllowed      = errutil.NewBase(errutil.StatusUnauthorized, "auth.oauth.email.not-allowed", errutil.WithPublicMessage("Required email domain not fulfilled"))
+	errOAuthMissingRequiredEmail = errutil.NewBase(errutil.StatusUnauthorized, "auth.oauth.email.missing")
+	errOAuthEmailNotAllowed      = errutil.NewBase(errutil.StatusUnauthorized, "auth.oauth.email.not-allowed")
 )
-
-func fromSocialErr(err *social.Error) error {
-	return errutil.NewBase(errutil.StatusUnauthorized, "auth.oauth.userinfo.failed", errutil.WithPublicMessage(err.Error())).Errorf("%w", err)
-}
 
 var _ authn.RedirectClient = new(OAuth)
 
@@ -112,17 +106,13 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	// exchange auth code to a valid token
 	token, err := c.connector.Exchange(clientCtx, r.HTTPRequest.URL.Query().Get("code"), opts...)
 	if err != nil {
-		return nil, errOAuthTokenExchange.Errorf("failed to exchange code to token: %w", err)
+		return nil, err
 	}
 	token.TokenType = "Bearer"
 
 	userInfo, err := c.connector.UserInfo(c.connector.Client(clientCtx, token), token)
 	if err != nil {
-		var sErr *social.Error
-		if errors.As(err, &sErr) {
-			return nil, fromSocialErr(sErr)
-		}
-		return nil, errOAuthUserInfo.Errorf("failed to get user info: %w", err)
+		return nil, errOAuthTokenExchange.Errorf("failed to exchange code to token: %w", err)
 	}
 
 	if userInfo.Email == "" {

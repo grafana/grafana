@@ -137,7 +137,6 @@ export class LokiDatasource
   private streams = new LiveStreams();
   languageProvider: LanguageProvider;
   maxLines: number;
-  onContextClose: (() => void) | undefined;
 
   constructor(
     private instanceSettings: DataSourceInstanceSettings<LokiOptions>,
@@ -790,60 +789,53 @@ export class LokiDatasource
   }
 
   getLogRowContextUi(row: LogRowModel, runContextQuery: () => void): React.ReactNode {
-    const updateFilter = (contextFilters: ContextFilter[]) => {
-      this.prepareContextExpr = async (row: LogRowModel, origQuery?: DataQuery) => {
-        await this.languageProvider.start();
-        const labels = this.languageProvider.getLabelKeys();
-
-        let expr = contextFilters
-          .map((filter) => {
-            const label = filter.value;
-            if (filter && !filter.fromParser && filter.enabled && labels.includes(label)) {
-              // escape backslashes in label as users can't escape them by themselves
-              return `${label}="${escapeLabelValueInExactSelector(row.labels[label])}"`;
-            }
-            return '';
-          })
-          // Filter empty strings
-          .filter((label) => !!label)
-          .join(',');
-
-        expr = `{${expr}}`;
-
-        const parserContextFilters = contextFilters.filter((filter) => filter.fromParser && filter.enabled);
-        if (parserContextFilters.length) {
-          // we should also filter for labels from parsers, let's find the right parser
-          if (origQuery) {
-            const parser = getParserFromQuery((origQuery as LokiQuery).expr);
-            if (parser) {
-              expr = addParserToQuery(expr, parser);
-            }
-          }
-          for (const filter of parserContextFilters) {
-            if (filter.enabled) {
-              expr = addLabelToQuery(expr, filter.label, '=', row.labels[filter.label]);
-            }
-          }
-        }
-        return expr;
-      };
-      if (runContextQuery) {
-        runContextQuery();
-      }
-    };
-
-    // we need to cache this function so that it doesn't get recreated on every render
-    this.onContextClose =
-      this.onContextClose ??
-      (() => {
-        this.prepareContextExpr = this.prepareContextExprWithoutParsedLabels;
-      });
-
     return LokiContextUi({
       row,
-      updateFilter,
       languageProvider: this.languageProvider,
-      onClose: this.onContextClose,
+      onClose: () => {
+        this.prepareContextExpr = this.prepareContextExprWithoutParsedLabels;
+      },
+      updateFilter: (contextFilters: ContextFilter[]) => {
+        this.prepareContextExpr = async (row: LogRowModel, origQuery?: DataQuery) => {
+          await this.languageProvider.start();
+          const labels = this.languageProvider.getLabelKeys();
+
+          let expr = contextFilters
+            .map((filter) => {
+              const label = filter.value;
+              if (filter && !filter.fromParser && filter.enabled && labels.includes(label)) {
+                // escape backslashes in label as users can't escape them by themselves
+                return `${label}="${escapeLabelValueInExactSelector(row.labels[label])}"`;
+              }
+              return '';
+            })
+            // Filter empty strings
+            .filter((label) => !!label)
+            .join(',');
+
+          expr = `{${expr}}`;
+
+          const parserContextFilters = contextFilters.filter((filter) => filter.fromParser && filter.enabled);
+          if (parserContextFilters.length) {
+            // we should also filter for labels from parsers, let's find the right parser
+            if (origQuery) {
+              const parser = getParserFromQuery((origQuery as LokiQuery).expr);
+              if (parser) {
+                expr = addParserToQuery(expr, parser);
+              }
+            }
+            for (const filter of parserContextFilters) {
+              if (filter.enabled) {
+                expr = addLabelToQuery(expr, filter.label, '=', row.labels[filter.label]);
+              }
+            }
+          }
+          return expr;
+        };
+        if (runContextQuery) {
+          runContextQuery();
+        }
+      },
     });
   }
 

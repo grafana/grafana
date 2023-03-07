@@ -46,17 +46,21 @@ composableKinds: DataQuery: {
 						#Dimensions: {[string]: string | [...string]} @cuetsy(kind="type")
 
 						#CloudWatchMetricsQuery: {
-							common.DataQuery
+							// TODO extend common.DataQuery when the issues with redundant fields is fixed
+							// common.DataQuery
 							#MetricStat
 							queryMode?:        #CloudWatchQueryMode
 							metricQueryType?:  #MetricQueryType
 							metricEditorMode?: #MetricEditorMode
 							// common props
-							id:     string
+							id: string
+
 							alias?: string
 							label?: string
+
 							// Math expression query
-							expression?:    string
+							expression?: string
+
 							sqlExpression?: string
 							sql?:           #SQLExpression
 						} @cuetsy(kind="interface")
@@ -100,15 +104,15 @@ composableKinds: DataQuery: {
 						#QueryEditorOperatorExpression: {
 							type:     #QueryEditorExpressionType & "operator"
 							property: #QueryEditorProperty
-							// TS type is operator: QueryEditorOperator<QueryEditorOperatorValueType>, extended in veneer
+							// TODO QueryEditorOperator<QueryEditorOperatorValueType>, extend in veneer
 							operator: #QueryEditorOperator
 						} @cuetsy(kind="interface")
 
-						// TS type is QueryEditorOperator<T extends QueryEditorOperatorValueType>, extended in veneer
+						// TODO <T extends QueryEditorOperatorValueType>, extend in veneer
 						#QueryEditorOperator: {
 							name?:  string
 							value?: #QueryEditorOperatorType | [...#QueryEditorOperatorType]
-						} @cuetsy(kind="interface")
+						}
 
 						#QueryEditorOperatorValueType: #QueryEditorOperatorType | [...#QueryEditorOperatorType] @cuetsy(kind="type")
 						#QueryEditorOperatorType:      string | bool | int64                                    @cuetsy(kind="type")
@@ -118,17 +122,14 @@ composableKinds: DataQuery: {
 							name?: string
 						} @cuetsy(kind="interface")
 
-						#QueryEditorPropertyType: "string" @cuetsy(kind="enum")
+						#QueryEditorPropertyType: "string" | "test" @cuetsy(kind="enum")
 
 						#QueryEditorArrayExpression: {
-							// TODO this doesn't work; temporarily extended in veneer
+							// TODO this doesn't work
 							type: (#QueryEditorExpressionType & "and") | (#QueryEditorExpressionType & "or")
-							// TS type expressions: QueryEditorExpression[] | QueryEditorArrayExpression[], extended in veneer
-							expressions: _
+							// TODO should be QueryEditorExpression[] | QueryEditorArrayExpression[], extend in veneer
+							expressions: _ // TODO modify this in veneer
 						} @cuetsy(kind="interface")
-
-						// QueryEditorArrayExpression is added in veneer
-						#QueryEditorExpression: #QueryEditorPropertyExpression | #QueryEditorGroupByExpression | #QueryEditorFunctionExpression | #QueryEditorFunctionParameterExpression | #QueryEditorOperatorExpression @cuetsy(kind="type")
 
 						#CloudWatchLogsQuery: {
 							common.DataQuery
@@ -152,7 +153,8 @@ composableKinds: DataQuery: {
 						#CloudWatchQueryMode: "Metrics" | "Logs" | "Annotations" @cuetsy(kind="type")
 
 						#CloudWatchAnnotationQuery: {
-							common.DataQuery
+							// TODO extend common.DataQuery when the issues with redundant fields is fixed
+							//common.DataQuery
 							#MetricStat
 							queryMode:        #CloudWatchQueryMode
 							prefixMatching?:  bool
@@ -160,7 +162,7 @@ composableKinds: DataQuery: {
 							alarmNamePrefix?: string
 						} @cuetsy(kind="interface")
 
-						// TS type is CloudWatchDefaultQuery = Omit<CloudWatchLogsQuery, 'queryMode'> & CloudWatchMetricsQuery, declared in veneer
+						// TODO this doesn't work. Also the type is CloudWatchDefaultQuery = Omit<CloudWatchLogsQuery, 'queryMode'> & CloudWatchMetricsQuery;
 						// #CloudWatchDefaultQuery: #CloudWatchLogsQuery & #CloudWatchMetricsQuery @cuetsy(kind="type")
 					},
 				]

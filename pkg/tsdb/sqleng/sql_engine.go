@@ -97,9 +97,7 @@ type DataSourceHandler struct {
 	log                    log.Logger
 	dsInfo                 DataSourceInfo
 	rowLimit               int64
-	session                *xorm.Session
 }
-
 type QueryJson struct {
 	RawSql       string  `json:"rawSql"`
 	Fill         bool    `json:"fill"`
@@ -147,7 +145,6 @@ func NewQueryDataHandler(config DataPluginConfiguration, queryResultTransformer 
 		queryDataHandler.metricColumnTypes = config.MetricColumnTypes
 	}
 
-	// Create the xorm engine
 	engine, err := NewXormEngine(config.DriverName, config.ConnectionString)
 	if err != nil {
 		return nil, err
@@ -158,11 +155,6 @@ func NewQueryDataHandler(config DataPluginConfiguration, queryResultTransformer 
 	engine.SetConnMaxLifetime(time.Duration(config.DSInfo.JsonData.ConnMaxLifetime) * time.Second)
 
 	queryDataHandler.engine = engine
-
-	// Create the xorm session
-	session := engine.NewSession()
-	queryDataHandler.session = session
-
 	return &queryDataHandler, nil
 }
 
@@ -273,7 +265,9 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 		return
 	}
 
-	db := e.session.DB()
+	session := e.engine.NewSession()
+	defer session.Close()
+	db := session.DB()
 
 	rows, err := db.QueryContext(queryContext, interpolatedQuery)
 	if err != nil {

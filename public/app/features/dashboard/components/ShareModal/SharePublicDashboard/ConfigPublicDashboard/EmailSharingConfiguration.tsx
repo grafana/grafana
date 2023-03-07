@@ -15,10 +15,9 @@ import {
   useStyles2,
 } from '@grafana/ui/src';
 import {
-  useAddRecipientMutation,
-  useDeleteRecipientMutation,
+  useAddEmailSharingMutation,
+  useDeleteEmailSharingMutation,
   useGetPublicDashboardQuery,
-  useReshareAccessToRecipientMutation,
   useUpdatePublicDashboardMutation,
 } from 'app/features/dashboard/api/publicDashboardApi';
 import { useSelector } from 'app/types';
@@ -47,17 +46,10 @@ const EmailList = ({
   publicDashboardUid: string;
 }) => {
   const styles = useStyles2(getStyles);
-  const [deleteEmail, { isLoading: isDeleteLoading }] = useDeleteRecipientMutation();
-  const [reshareAccess, { isLoading: isReshareLoading }] = useReshareAccessToRecipientMutation();
-
-  const isLoading = isDeleteLoading || isReshareLoading;
+  const [deleteEmail, { isLoading: isDeleteLoading }] = useDeleteEmailSharingMutation();
 
   const onDeleteEmail = (recipientUid: string) => {
     deleteEmail({ recipientUid, dashboardUid: dashboardUid, uid: publicDashboardUid });
-  };
-
-  const onReshare = (recipientUid: string) => {
-    reshareAccess({ recipientUid, uid: publicDashboardUid });
   };
 
   return (
@@ -75,22 +67,10 @@ const EmailList = ({
                   aria-label="Revoke"
                   title="Revoke"
                   size="sm"
-                  disabled={isLoading}
+                  disabled={isDeleteLoading}
                   onClick={() => onDeleteEmail(recipient.uid)}
                 >
                   Revoke
-                </Button>
-                <Button
-                  type="button"
-                  variant="primary"
-                  fill="text"
-                  aria-label="Resend"
-                  title="Resend"
-                  size="sm"
-                  disabled={isLoading}
-                  onClick={() => onReshare(recipient.uid)}
-                >
-                  Resend
                 </Button>
               </ButtonGroup>
             </td>
@@ -108,7 +88,7 @@ export const EmailSharingConfiguration = () => {
 
   const { data: publicDashboard } = useGetPublicDashboardQuery(dashboard.uid);
   const [updateShareType] = useUpdatePublicDashboardMutation();
-  const [addEmail, { isLoading: isAddEmailLoading }] = useAddRecipientMutation();
+  const [addEmail, { isLoading: isAddEmailLoading }] = useAddEmailSharingMutation();
 
   const {
     register,

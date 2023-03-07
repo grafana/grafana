@@ -80,5 +80,4 @@ export interface FeatureToggles {
   lokiQuerySplitting?: boolean;
   individualCookiePreferences?: boolean;
   drawerDataSourcePicker?: boolean;
-  traceqlSearch?: boolean;
 }

@@ -154,6 +154,7 @@ func processRawDataResponse(res *es.SearchResponse, target *Query, configuredFie
 			"_index":    hit["_index"],
 			"sort":      hit["sort"],
 			"highlight": hit["highlight"],
+			"_source":   flattened,
 		}
 
 		for k, v := range flattened {

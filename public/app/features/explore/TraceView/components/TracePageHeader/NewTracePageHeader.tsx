@@ -14,12 +14,11 @@
 
 import { css } from '@emotion/css';
 import cx from 'classnames';
+import { get as _get, maxBy as _maxBy, values as _values } from 'lodash';
 import * as React from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
 import { Badge, BadgeColor, Tooltip, useStyles2 } from '@grafana/ui';
 
-import { autoColor } from '../Theme';
 import ExternalLinks from '../common/ExternalLinks';
 import TraceName from '../common/TraceName';
 import { getTraceLinks } from '../model/link-patterns';
@@ -29,7 +28,7 @@ import { formatDuration } from '../utils/date';
 import SpanGraph from './SpanGraph';
 import { TracePageHeaderEmbedProps, timestamp, getStyles } from './TracePageHeader';
 
-const getNewStyles = (theme: GrafanaTheme2) => {
+const getNewStyles = () => {
   return {
     subtitle: css`
       flex: 1;
@@ -49,17 +48,6 @@ const getNewStyles = (theme: GrafanaTheme2) => {
     `,
     divider: css`
       margin: 0 0.75em;
-    `,
-    header: css`
-      label: TracePageHeader;
-      background-color: ${theme.colors.background.primary};
-      position: sticky;
-      top: 0;
-      z-index: 5;
-      padding: 10px 5px 0 5px;
-      & > :last-child {
-        border-bottom: 1px solid ${autoColor(theme, '#ccc')};
-      }
     `,
   };
 };
@@ -101,7 +89,7 @@ export function NewTracePageHeader(props: TracePageHeaderEmbedProps) {
   }
 
   return (
-    <header className={styles.header}>
+    <header className={styles.TracePageHeader}>
       <div className={styles.TracePageHeaderTitleRow}>
         {links && links.length > 0 && <ExternalLinks links={links} className={styles.TracePageHeaderBack} />}
         {title}

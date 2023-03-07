@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -17,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
-	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
@@ -25,11 +23,9 @@ import (
 
 // AnnotationBackend is an implementation of state.Historian that uses Grafana Annotations as the backing datastore.
 type AnnotationBackend struct {
-	annotations AnnotationStore
+	annotations annotations.Repository
 	dashboards  *dashboardResolver
 	rules       RuleStore
-	clock       clock.Clock
-	metrics     *metrics.Historian
 	log         log.Logger
 }
 
@@ -37,20 +33,12 @@ type RuleStore interface {
 	GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAlertRuleByUIDQuery) error
 }
 
-type AnnotationStore interface {
-	Find(ctx context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error)
-	SaveMany(ctx context.Context, items []annotations.Item) error
-}
-
-func NewAnnotationBackend(annotations AnnotationStore, dashboards dashboards.DashboardService, rules RuleStore, metrics *metrics.Historian) *AnnotationBackend {
-	logger := log.New("ngalert.state.historian", "backend", "annotations")
+func NewAnnotationBackend(annotations annotations.Repository, dashboards dashboards.DashboardService, rules RuleStore) *AnnotationBackend {
 	return &AnnotationBackend{
 		annotations: annotations,
 		dashboards:  newDashboardResolver(dashboards, defaultDashboardCacheExpiry),
 		rules:       rules,
-		clock:       clock.New(),
-		metrics:     metrics,
-		log:         logger,
+		log:         log.New("ngalert.state.historian"),
 	}
 }
 
@@ -60,11 +48,10 @@ func (h *AnnotationBackend) RecordStatesAsync(ctx context.Context, rule history_
 	// Build annotations before starting goroutine, to make sure all data is copied and won't mutate underneath us.
 	annotations := buildAnnotations(rule, states, logger)
 	panel := parsePanelKey(rule, logger)
-
 	errCh := make(chan error, 1)
 	go func() {
 		defer close(errCh)
-		errCh <- h.recordAnnotations(ctx, panel, annotations, rule.OrgID, logger)
+		errCh <- h.recordAnnotationsSync(ctx, panel, annotations, logger)
 	}()
 	return errCh
 }
@@ -178,11 +165,7 @@ func buildAnnotations(rule history_model.RuleMeta, states []state.StateTransitio
 	return items
 }
 
-func (h *AnnotationBackend) recordAnnotations(ctx context.Context, panel *panelKey, annotations []annotations.Item, orgID int64, logger log.Logger) error {
-	if len(annotations) == 0 {
-		return nil
-	}
-
+func (h *AnnotationBackend) recordAnnotationsSync(ctx context.Context, panel *panelKey, annotations []annotations.Item, logger log.Logger) error {
 	if panel != nil {
 		dashID, err := h.dashboards.getID(ctx, panel.orgID, panel.dashUID)
 		if err != nil {
@@ -196,13 +179,8 @@ func (h *AnnotationBackend) recordAnnotations(ctx context.Context, panel *panelK
 		}
 	}
 
-	org := fmt.Sprint(orgID)
-	h.metrics.WritesTotal.WithLabelValues(org).Inc()
-	h.metrics.TransitionsTotal.WithLabelValues(org).Add(float64(len(annotations)))
 	if err := h.annotations.SaveMany(ctx, annotations); err != nil {
 		logger.Error("Error saving alert annotation batch", "error", err)
-		h.metrics.WritesFailed.WithLabelValues(org).Inc()
-		h.metrics.TransitionsFailed.WithLabelValues(org).Add(float64(len(annotations)))
 		return fmt.Errorf("error saving alert annotation batch: %w", err)
 	}
 

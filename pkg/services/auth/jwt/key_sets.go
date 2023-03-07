@@ -14,7 +14,7 @@ import (
 	"os"
 	"time"
 
-	jose "github.com/go-jose/go-jose/v3"
+	jose "gopkg.in/square/go-jose.v2"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"

@@ -362,11 +362,5 @@ var (
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 		},
-		{
-			Name:         "traceqlSearch",
-			Description:  "Enables the 'TraceQL Search' tab for the Tempo datasource which provides a UI to generate TraceQL queries",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-		},
 	}
 )

@@ -16,19 +16,19 @@ const (
 	defaultSize = 500
 )
 
-type elasticsearchDataQuery struct {
+type timeSeriesQuery struct {
 	client      es.Client
 	dataQueries []backend.DataQuery
 }
 
-var newElasticsearchDataQuery = func(client es.Client, dataQuery []backend.DataQuery) *elasticsearchDataQuery {
-	return &elasticsearchDataQuery{
+var newTimeSeriesQuery = func(client es.Client, dataQuery []backend.DataQuery) *timeSeriesQuery {
+	return &timeSeriesQuery{
 		client:      client,
 		dataQueries: dataQuery,
 	}
 }
 
-func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
+func (e *timeSeriesQuery) execute() (*backend.QueryDataResponse, error) {
 	queries, err := parseQuery(e.dataQueries)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
@@ -57,7 +57,7 @@ func (e *elasticsearchDataQuery) execute() (*backend.QueryDataResponse, error) {
 	return parseResponse(res.Responses, queries, e.client.GetConfiguredFields())
 }
 
-func (e *elasticsearchDataQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilder, from, to int64) error {
+func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilder, from, to int64) error {
 	err := isQueryWithError(q)
 	if err != nil {
 		return err
