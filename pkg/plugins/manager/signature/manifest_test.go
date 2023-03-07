@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -151,7 +151,7 @@ func TestCalculate(t *testing.T) {
 			})
 			setting.AppUrl = tc.appURL
 
-			sig, err := Calculate(log.NewNopLogger(), &plugins.Plugin{
+			sig, err := Calculate(log.NewTestLogger(), &plugins.Plugin{
 				JSONData: plugins.JSONData{
 					ID: "test-datasource",
 					Info: plugins.Info{
@@ -173,7 +173,7 @@ func TestCalculate(t *testing.T) {
 		})
 
 		runningWindows = true
-		sig, err := Calculate(log.NewNopLogger(), &plugins.Plugin{
+		sig, err := Calculate(log.NewTestLogger(), &plugins.Plugin{
 			JSONData: plugins.JSONData{
 				ID:   "test-renderer",
 				Type: plugins.Renderer,

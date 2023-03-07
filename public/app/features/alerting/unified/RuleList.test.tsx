@@ -1,5 +1,5 @@
 import { SerializedError } from '@reduxjs/toolkit';
-import { render, screen, waitFor } from '@testing-library/react';
+import { prettyDOM, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { TestProvider } from 'test/helpers/TestProvider';
@@ -117,10 +117,11 @@ const ui = {
   moreErrorsButton: byRole('button', { name: /more errors/ }),
   editCloudGroupIcon: byTestId('edit-group'),
   newRuleButton: byRole('link', { name: 'Create alert rule' }),
-  exportButton: byRole('button', { name: /export/i }),
+  exportButton: byRole('link', { name: /export/i }),
   editGroupModal: {
-    namespaceInput: byRole('textbox', { hidden: true, name: /namespace/i }),
-    ruleGroupInput: byRole('textbox', { name: 'Evaluation group', exact: true }),
+    dialog: byRole('dialog'),
+    namespaceInput: byRole('textbox', { name: /^Namespace/ }),
+    ruleGroupInput: byRole('textbox', { name: /Evaluation group/ }),
     intervalInput: byRole('textbox', {
       name: /Rule group evaluation interval Evaluation interval should be smaller or equal to 'For' values for existing rules in this group./i,
     }),
@@ -556,17 +557,19 @@ describe('RuleList', () => {
 
         expect(await ui.rulesFilterInput.find()).toHaveValue('');
 
+        await waitFor(() => expect(ui.ruleGroup.queryAll()).toHaveLength(3));
+
         const groups = await ui.ruleGroup.findAll();
         expect(groups).toHaveLength(3);
 
         // open edit dialog
         await userEvent.click(ui.editCloudGroupIcon.get(groups[0]));
-        await expect(screen.getByRole('textbox', { hidden: true, name: /namespace/i })).toHaveDisplayValue(
-          'namespace1'
-        );
-        await expect(screen.getByRole('textbox', { name: 'Evaluation group', exact: true })).toHaveDisplayValue(
-          'group1'
-        );
+
+        await waitFor(() => expect(ui.editGroupModal.dialog.get()).toBeInTheDocument());
+        prettyDOM(ui.editGroupModal.dialog.get());
+
+        expect(ui.editGroupModal.namespaceInput.get()).toHaveDisplayValue('namespace1');
+        expect(ui.editGroupModal.ruleGroupInput.get()).toHaveDisplayValue('group1');
         await fn();
       });
     }
@@ -614,8 +617,8 @@ describe('RuleList', () => {
 
     testCase('rename just the lotex group', async () => {
       // make changes to form
-      await userEvent.clear(screen.getByRole('textbox', { name: 'Evaluation group', exact: true }));
-      await userEvent.type(screen.getByRole('textbox', { name: 'Evaluation group', exact: true }), 'super group');
+      await userEvent.clear(ui.editGroupModal.ruleGroupInput.get());
+      await userEvent.type(ui.editGroupModal.ruleGroupInput.get(), 'super group');
       await userEvent.type(
         screen.getByRole('textbox', {
           name: /rule group evaluation interval evaluation interval should be smaller or equal to 'for' values for existing rules in this group\./i,

@@ -92,4 +92,30 @@ describe('ArgQueryEditor', () => {
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ subscriptions: ['foo', 'bar'] }));
     expect(onChange).not.toHaveBeenCalledWith(expect.objectContaining({ subscriptions: ['foo', 'bar', 'foobar'] }));
   });
+
+  it('should keep a template variable if used in the subscription field', async () => {
+    const onChange = jest.fn();
+    const datasource = createMockDatasource({
+      getSubscriptions: jest.fn().mockResolvedValue([{ value: 'foo' }]),
+    });
+    const query = createMockQuery({
+      subscriptions: ['$test'],
+    });
+    render(
+      <ArgQueryEditor
+        {...defaultProps}
+        datasource={datasource}
+        onChange={onChange}
+        query={query}
+        variableOptionGroup={{ label: 'Template Variables', options: [{ label: '$test', value: '$test' }] }}
+      />
+    );
+    expect(
+      await screen.findByTestId(selectors.components.queryEditor.argsQueryEditor.container.input)
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByTestId(selectors.components.queryEditor.argsQueryEditor.subscriptions.input)
+    ).toHaveTextContent('$test');
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ subscriptions: ['$test'] }));
+  });
 });

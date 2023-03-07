@@ -45,7 +45,7 @@ const FlameGraphTopTableContainer = ({
     let label, self, value;
     let table: { [key: string]: TableData } = {};
 
-    if (data.fields.length === 4) {
+    if (data.fields.length === 6) {
       const valueValues = data.fields[1].values;
       const selfValues = data.fields[2].values;
       const labelValues = data.fields[3].values;

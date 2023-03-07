@@ -12,6 +12,8 @@ import (
 
 const memcachedCacheType = "memcached"
 
+var ErrNotImplemented = errors.New("count not implemented")
+
 type memcachedStorage struct {
 	c     *memcache.Client
 	codec codec
@@ -82,6 +84,10 @@ func (s *memcachedStorage) GetByteArray(ctx context.Context, key string) ([]byte
 	}
 
 	return memcachedItem.Value, nil
+}
+
+func (s *memcachedStorage) Count(ctx context.Context, prefix string) (int64, error) {
+	return 0, ErrNotImplemented
 }
 
 // Delete delete a key from the cache

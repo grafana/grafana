@@ -17,9 +17,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -262,7 +262,7 @@ func newTestScenario(t *testing.T, name string, opts []testScenarioOption, callb
 	tsCtx.testEnv = testEnv
 	ctx := context.Background()
 
-	testinfra.CreateUser(t, testEnv.SQLStore, user.CreateUserCommand{
+	u := testinfra.CreateUser(t, testEnv.SQLStore, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleAdmin),
 		Password:       "admin",
 		Login:          "admin",
@@ -284,7 +284,7 @@ func newTestScenario(t *testing.T, name string, opts []testScenarioOption, callb
 
 	tsCtx.uid = "test-plugin"
 	cmd := &datasources.AddDataSourceCommand{
-		OrgID:          1,
+		OrgID:          u.OrgID,
 		Access:         datasources.DS_ACCESS_PROXY,
 		Name:           "TestPlugin",
 		Type:           tsCtx.testPluginID,
@@ -306,7 +306,7 @@ func newTestScenario(t *testing.T, name string, opts []testScenarioOption, callb
 	require.NoError(t, err)
 
 	getDataSourceQuery := &datasources.GetDataSourceQuery{
-		OrgID: 1,
+		OrgID: u.OrgID,
 		UID:   tsCtx.uid,
 	}
 	dataSource, err := testEnv.Server.HTTPServer.DataSourcesService.GetDataSource(ctx, getDataSourceQuery)

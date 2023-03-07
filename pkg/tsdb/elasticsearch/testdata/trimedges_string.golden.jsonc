@@ -1,7 +1,11 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
 //  Frame[0] {
-//      "type": "timeseries-multi"
+//      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ]
 //  }
 //  Name: 
 //  Dimensions: 2 Fields by 3 Rows
@@ -23,7 +27,11 @@
     {
       "schema": {
         "meta": {
-          "type": "timeseries-multi"
+          "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ]
         },
         "fields": [
           {

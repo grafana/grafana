@@ -192,7 +192,7 @@ export const safeParseJson = (text?: string): any | undefined => {
 };
 
 export const safeStringifyValue = (value: any, space?: number) => {
-  if (!value) {
+  if (value === undefined || value === null) {
     return '';
   }
 

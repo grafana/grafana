@@ -32,7 +32,7 @@ const singleResourceGroupSelectionURI = '/subscriptions/def-456/resourceGroups/d
 const singleResourceSelectionURI =
   '/subscriptions/def-456/resourceGroups/dev-3/providers/Microsoft.Compute/virtualMachines/db-server';
 
-const noop: any = () => {};
+const noop = () => {};
 function createMockResourcePickerData(preserveImplementation?: string[]) {
   const mockDatasource = createMockDatasource();
   const mockResourcePicker = new ResourcePickerData(

@@ -1,4 +1,5 @@
-import { Subscriber, map, Observable, Subscription } from 'rxjs';
+import { partition } from 'lodash';
+import { Subscriber, Observable, Subscription } from 'rxjs';
 
 import { DataQueryRequest, DataQueryResponse, dateTime, TimeRange } from '@grafana/data';
 import { LoadingState } from '@grafana/schema';
@@ -7,7 +8,7 @@ import { LokiDatasource } from './datasource';
 import { getRangeChunks as getLogsRangeChunks } from './logsTimeSplit';
 import { getRangeChunks as getMetricRangeChunks } from './metricTimeSplit';
 import { combineResponses, isLogsQuery } from './queryUtils';
-import { LokiQuery } from './types';
+import { LokiQuery, LokiQueryType } from './types';
 
 /**
  * Purposely exposing it to support doing tests without needing to update the repo.
@@ -86,59 +87,57 @@ function adjustTargetsFromResponseState(targets: LokiQuery[], response: DataQuer
     .filter((target) => target.maxLines === undefined || target.maxLines > 0);
 }
 
-export function runPartitionedQuery(datasource: LokiDatasource, request: DataQueryRequest<LokiQuery>) {
-  let mergedResponse: DataQueryResponse | null;
-  const queries = request.targets.filter((query) => !query.hide);
-  // we assume there is just a single query in the request
-  const query = queries[0];
-  const partition = partitionTimeRange(
-    isLogsQuery(query.expr),
-    request.range,
-    request.intervalMs,
-    query.resolution ?? 1
-  );
-  const totalRequests = partition.length;
+type LokiGroupedRequest = Array<{ request: DataQueryRequest<LokiQuery>; partition: TimeRange[] }>;
+
+export function runGroupedQueries(datasource: LokiDatasource, requests: LokiGroupedRequest) {
+  let mergedResponse: DataQueryResponse = { data: [], state: LoadingState.Streaming };
+  const totalRequests = Math.max(...requests.map(({ partition }) => partition.length));
 
   let shouldStop = false;
-  let smallQuerySubsciption: Subscription | null = null;
-  const runNextRequest = (subscriber: Subscriber<DataQueryResponse>, requestN: number) => {
+  let subquerySubsciption: Subscription | null = null;
+  const runNextRequest = (subscriber: Subscriber<DataQueryResponse>, requestN: number, requestGroup: number) => {
     if (shouldStop) {
+      subscriber.complete();
       return;
     }
 
-    const requestId = `${request.requestId}_${requestN}`;
-    const range = partition[requestN - 1];
-    const targets = adjustTargetsFromResponseState(request.targets, mergedResponse);
-
-    const done = (response: DataQueryResponse) => {
-      response.state = LoadingState.Done;
-      subscriber.next(response);
+    const done = () => {
+      mergedResponse.state = LoadingState.Done;
+      subscriber.next(mergedResponse);
       subscriber.complete();
     };
 
-    if (!targets.length && mergedResponse) {
-      done(mergedResponse);
+    const nextRequest = () => {
+      const { nextRequestN, nextRequestGroup } = getNextRequestPointers(requests, requestGroup, requestN);
+      if (nextRequestN > 0 && nextRequestGroup >= 0) {
+        runNextRequest(subscriber, nextRequestN, nextRequestGroup);
+        return;
+      }
+      done();
+    };
+
+    const group = requests[requestGroup];
+    const requestId = `${group.request.requestId}_${requestN}`;
+    const range = group.partition[requestN - 1];
+    const targets = adjustTargetsFromResponseState(group.request.targets, mergedResponse);
+
+    if (!targets.length) {
+      nextRequest();
       return;
     }
 
-    smallQuerySubsciption = datasource
-      .runQuery({ ...request, range, requestId, targets })
-      .pipe(
-        // in case of an empty query, this is somehow run twice. `share()` is no workaround here as the observable is generated from `of()`.
-        map((partialResponse) => {
-          mergedResponse = combineResponses(mergedResponse, partialResponse);
-          return mergedResponse;
-        })
-      )
+    subquerySubsciption = datasource
+      .runQuery({ ...requests[requestGroup].request, range, requestId, targets })
       .subscribe({
-        next: (response) => {
-          if (requestN > 1) {
-            response.state = LoadingState.Streaming;
-            subscriber.next(response);
-            runNextRequest(subscriber, requestN - 1);
-            return;
+        next: (partialResponse) => {
+          if (partialResponse.error) {
+            subscriber.error(partialResponse.error);
           }
-          done(response);
+          mergedResponse = combineResponses(mergedResponse, partialResponse);
+        },
+        complete: () => {
+          subscriber.next(mergedResponse);
+          nextRequest();
         },
         error: (error) => {
           subscriber.error(error);
@@ -147,14 +146,56 @@ export function runPartitionedQuery(datasource: LokiDatasource, request: DataQue
   };
 
   const response = new Observable<DataQueryResponse>((subscriber) => {
-    runNextRequest(subscriber, totalRequests);
+    runNextRequest(subscriber, totalRequests, 0);
     return () => {
       shouldStop = true;
-      if (smallQuerySubsciption != null) {
-        smallQuerySubsciption.unsubscribe();
+      if (subquerySubsciption != null) {
+        subquerySubsciption.unsubscribe();
       }
     };
   });
 
   return response;
+}
+
+function getNextRequestPointers(requests: LokiGroupedRequest, requestGroup: number, requestN: number) {
+  // There's a pending request from the next group:
+  if (requests[requestGroup + 1]?.partition[requestN - 1]) {
+    return {
+      nextRequestGroup: requestGroup + 1,
+      nextRequestN: requestN,
+    };
+  }
+  return {
+    // Find the first group where `[requestN - 1]` is defined
+    nextRequestGroup: requests.findIndex((group) => group?.partition[requestN - 1] !== undefined),
+    nextRequestN: requestN - 1,
+  };
+}
+
+export function runPartitionedQueries(datasource: LokiDatasource, request: DataQueryRequest<LokiQuery>) {
+  const queries = request.targets.filter((query) => !query.hide);
+  const [instantQueries, normalQueries] = partition(queries, (query) => query.queryType === LokiQueryType.Instant);
+  const [logQueries, metricQueries] = partition(normalQueries, (query) => isLogsQuery(query.expr));
+
+  const requests: LokiGroupedRequest = [];
+  if (logQueries.length) {
+    requests.push({
+      request: { ...request, targets: logQueries },
+      partition: partitionTimeRange(true, request.range, request.intervalMs, logQueries[0].resolution ?? 1),
+    });
+  }
+  if (metricQueries.length) {
+    requests.push({
+      request: { ...request, targets: metricQueries },
+      partition: partitionTimeRange(false, request.range, request.intervalMs, metricQueries[0].resolution ?? 1),
+    });
+  }
+  if (instantQueries.length) {
+    requests.push({
+      request: { ...request, targets: instantQueries },
+      partition: [request.range],
+    });
+  }
+  return runGroupedQueries(datasource, requests);
 }
