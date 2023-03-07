@@ -1,18 +1,25 @@
-//go:build redis
-// +build redis
-
 package managedstream
 
 import (
+	"os"
 	"testing"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/stretchr/testify/require"
 )
 
-func TestRedisCacheStorage(t *testing.T) {
+func TestIntegrationRedisCacheStorage(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	u, ok := os.LookupEnv("REDIS_URL")
+	if !ok || u == "" {
+		t.Skip("No redis URL supplied")
+	}
+
 	redisClient := redis.NewClient(&redis.Options{
-		Addr: "localhost:6379",
+		Addr: u,
 	})
 	c := NewRedisFrameCache(redisClient)
 	require.NotNil(t, c)

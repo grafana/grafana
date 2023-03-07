@@ -13,6 +13,8 @@ load(
     "verify_gen_cue_step",
     "verify_gen_jsonnet_step",
     "wire_install_step",
+    "redis_integration_tests_step",
+    "memcached_integration_tests_step",
 )
 load(
     "scripts/drone/services/services.star",
@@ -66,6 +68,8 @@ def integration_tests(trigger, prefix, ver_mode = "pr"):
     test_steps = [
         postgres_integration_tests_step(),
         mysql_integration_tests_step(),
+        redis_integration_tests_step(),
+        memcached_integration_tests_step(),
     ]
 
     return pipeline(

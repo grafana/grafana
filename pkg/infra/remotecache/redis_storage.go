@@ -3,6 +3,7 @@ package remotecache
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -108,6 +109,10 @@ func (s *redisStorage) Get(ctx context.Context, key string) (interface{}, error)
 	v, err := s.GetByteArray(ctx, key)
 
 	if err != nil {
+		// Get() returns redis.Nil error when key does not exist
+		if errors.Is(err, redis.Nil) {
+			return nil, ErrCacheItemNotFound
+		}
 		if err.Error() == "EOF" {
 			return nil, ErrCacheItemNotFound
 		}
