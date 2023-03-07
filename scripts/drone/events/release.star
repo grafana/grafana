@@ -132,7 +132,7 @@ def oss_pipelines(ver_mode = ver_mode, trigger = release_trigger):
 
     environment = {"EDITION": "oss"}
 
-    services = integration_test_services(edition = "oss")
+    services = integration_test_services()
     volumes = integration_test_services_volumes()
 
     init_steps = [
@@ -266,7 +266,7 @@ def enterprise_pipelines(ver_mode = ver_mode, trigger = release_trigger):
 
     environment = {"EDITION": "enterprise"}
 
-    services = integration_test_services(edition = "enterprise")
+    services = integration_test_services()
     volumes = integration_test_services_volumes()
 
     init_steps = [

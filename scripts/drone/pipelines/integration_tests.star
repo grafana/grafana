@@ -39,7 +39,7 @@ def integration_tests(trigger, prefix, ver_mode = "pr"):
     """
     environment = {"EDITION": "oss"}
 
-    services = integration_test_services(edition = "oss")
+    services = integration_test_services()
     volumes = integration_test_services_volumes()
 
     init_steps = []
