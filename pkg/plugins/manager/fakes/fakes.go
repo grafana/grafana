@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"context"
 	"fmt"
+	"io/fs"
 	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -349,6 +350,30 @@ func NewFakeRoleRegistry() *FakeRoleRegistry {
 
 func (f *FakeRoleRegistry) DeclarePluginRoles(_ context.Context, _ string, _ string, _ []plugins.RoleRegistration) error {
 	return f.ExpectedErr
+}
+
+type FakePluginFiles struct {
+	FS fs.FS
+
+	base string
+}
+
+func NewFakePluginFiles(base string) *FakePluginFiles {
+	return &FakePluginFiles{
+		base: base,
+	}
+}
+
+func (f *FakePluginFiles) Open(name string) (fs.File, error) {
+	return f.FS.Open(name)
+}
+
+func (f *FakePluginFiles) Base() string {
+	return f.base
+}
+
+func (f *FakePluginFiles) Files() []string {
+	return []string{}
 }
 
 type FakeSources struct {
