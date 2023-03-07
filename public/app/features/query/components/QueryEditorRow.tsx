@@ -77,6 +77,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   element: HTMLElement | null = null;
   angularScope: AngularQueryComponentScope<TQuery> | null = null;
   angularQueryEditor: AngularComponent | null = null;
+  dataSourceSrv = getDataSourceSrv();
   id = '';
 
   state: State<TQuery> = {
@@ -136,25 +137,33 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     };
   }
 
-  getQueryDataSourceIdentifier(): string | null | undefined {
-    const { query, dataSource: dsSettings } = this.props;
-    return query.datasource?.uid ?? dsSettings.uid;
+  /**
+   * When datasource variables are used the query.datasource.uid property is a string variable expression
+   * DataSourceSettings.uid can also be this variable expression.
+   * This function always returns the current interpolated datasource uid.
+   */
+  getInterpolatedDataSourceUID(): string | undefined {
+    if (this.props.query.datasource) {
+      const instanceSettings = this.dataSourceSrv.getInstanceSettings(this.props.query.datasource);
+      return instanceSettings?.rawRef?.uid ?? instanceSettings?.uid;
+    }
+
+    return this.props.dataSource.rawRef?.uid ?? this.props.dataSource.uid;
   }
 
   async loadDatasource() {
-    const dataSourceSrv = getDataSourceSrv();
     let datasource: DataSourceApi;
-    const dataSourceIdentifier = this.getQueryDataSourceIdentifier();
+    const interpolatedUID = this.getInterpolatedDataSourceUID();
 
     try {
-      datasource = await dataSourceSrv.get(dataSourceIdentifier);
+      datasource = await this.dataSourceSrv.get(interpolatedUID);
     } catch (error) {
-      datasource = await dataSourceSrv.get();
+      datasource = await this.dataSourceSrv.get();
     }
 
     this.setState({
       datasource: datasource as unknown as DataSourceApi<TQuery>,
-      loadedDataSourceIdentifier: this.props.dataSource.rawRef?.uid ?? dataSourceIdentifier,
+      loadedDataSourceIdentifier: interpolatedUID,
       hasTextEditMode: has(datasource, 'components.QueryCtrl.prototype.toggleEditorMode'),
     });
   }
@@ -181,10 +190,8 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       }
     }
 
-    const newDataSourceIdentifier = this.props.dataSource.rawRef?.uid ?? this.getQueryDataSourceIdentifier();
-
     // check if we need to load another datasource
-    if (datasource && newDataSourceIdentifier !== loadedDataSourceIdentifier) {
+    if (datasource && loadedDataSourceIdentifier !== this.getInterpolatedDataSourceUID()) {
       if (this.angularQueryEditor) {
         this.angularQueryEditor.destroy();
         this.angularQueryEditor = null;
@@ -245,7 +252,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   isWaitingForDatasourceToLoad(): boolean {
     // if we not yet have loaded the datasource in state the
     // ds in props and the ds in state will have different values.
-    return (this.props.dataSource.rawRef?.uid ?? this.props.dataSource.uid) !== this.state.loadedDataSourceIdentifier;
+    return this.getInterpolatedDataSourceUID() !== this.state.loadedDataSourceIdentifier;
   }
 
   renderPluginEditor = () => {
