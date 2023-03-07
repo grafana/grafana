@@ -92,8 +92,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	plugindashboardsservice "github.com/grafana/grafana/pkg/services/plugindashboards/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
-	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/preference/prefimpl"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	publicdashboardsApi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
@@ -279,8 +277,6 @@ var wireBasicSet = wire.NewSet(
 	dashsnapsvc.ProvideService,
 	datasourceservice.ProvideService,
 	wire.Bind(new(datasources.DataSourceService), new(*datasourceservice.Service)),
-	pluginSettings.ProvideService,
-	wire.Bind(new(pluginsettings.Service), new(*pluginSettings.Service)),
 	alerting.ProvideService,
 	serviceaccountsretriever.ProvideService,
 	wire.Bind(new(serviceaccountsretriever.ServiceAccountRetriever), new(*serviceaccountsretriever.Service)),
