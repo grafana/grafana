@@ -17840,12 +17840,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dangerously-set-html-content@npm:1.0.13":
-  version: 1.0.13
-  resolution: "dangerously-set-html-content@npm:1.0.13"
+"dangerously-set-html-content@npm:1.0.9":
+  version: 1.0.9
+  resolution: "dangerously-set-html-content@npm:1.0.9"
   peerDependencies:
-    react: ^18.2.0
-  checksum: cc76dffab1f37fc1d65d3458c29dac2cd839f6e28730352e969b925e7a1fdf5438e0919f0081eb92b8be24202e618949b2999b5eed6a69b797687fe1a36815ce
+    prop-types: ^15.5.4
+    react: ^15.0.0 || ^16.0.0 || ^17.0.0
+    react-dom: ^15.0.0 || ^16.0.0 || ^17.0.0
+  checksum: a30c3f1f0f4f7ef3cc723017a57f3503a9b3bf2f813e0f9f1ada69883d54bb706fc42ad0edc714713e5ce862f58403c54d46beb6fd8512144c5264cc574c78d5
   languageName: node
   linkType: hard
 
@@ -22285,7 +22287,7 @@ __metadata:
     d3: 7.8.2
     d3-force: 3.0.0
     d3-scale-chromatic: 3.0.0
-    dangerously-set-html-content: 1.0.13
+    dangerously-set-html-content: 1.0.9
     date-fns: 2.29.3
     debounce-promise: 3.1.2
     dompurify: ^2.4.1
