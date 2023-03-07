@@ -140,8 +140,8 @@ func Test_getOrCreate(t *testing.T) {
 		result := eval.Result{
 			Instance: models.GenerateAlertLabels(5, "result-"),
 			Values: map[string]eval.NumberValueCapture{
-				"A": {Var: "A", Value: util.Pointer(1.0)},
-				"B": {Var: "B", Value: util.Pointer(2.0)},
+				"A": eval.NumberValueCapture{Var: "A", Value: util.Pointer(1.0)},
+				"B": eval.NumberValueCapture{Var: "B", Value: util.Pointer(2.0)},
 			},
 		}
 		rule := generateRule()
