@@ -160,8 +160,21 @@ func (c *Clientset) GetResourceClient(gcrd crd.Kind, namespace ...string) (dynam
 
 func (c *Clientset) RegisterValidation(ctx context.Context) (*admissionregistrationV1.ValidatingWebhookConfiguration, error) {
 	obj := admissionregistrationV1.ValidatingWebhookConfiguration{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "validation.core.grafana.com",
+		ObjectMeta: metav1.ObjectMeta{Annotations: map[string]string{}},
+		Webhooks: []admissionregistrationV1.ValidatingWebhook{
+			{
+				Name: "",
+				ClientConfig: admissionregistrationV1.WebhookClientConfig{
+					URL:      new(string),
+					Service:  &admissionregistrationV1.ServiceReference{},
+					CABundle: []byte{},
+				},
+				Rules:                   []admissionregistrationV1.RuleWithOperations{},
+				NamespaceSelector:       &metav1.LabelSelector{},
+				ObjectSelector:          &metav1.LabelSelector{},
+				TimeoutSeconds:          new(int32),
+				AdmissionReviewVersions: []string{},
+			},
 		},
 	}
 	return c.admissionRegistration.ValidatingWebhookConfigurations().Create(ctx, &obj, metav1.CreateOptions{})
