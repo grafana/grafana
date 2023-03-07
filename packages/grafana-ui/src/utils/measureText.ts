@@ -45,7 +45,14 @@ export function measureText(text: string, fontSize: number, fontWeight = 400): T
 /**
  * @beta
  */
-export function calculateFontSize(text: string, width: number, height: number, lineHeight: number, maxSize?: number, fontWeight?: number) {
+export function calculateFontSize(
+  text: string,
+  width: number,
+  height: number,
+  lineHeight: number,
+  maxSize?: number,
+  fontWeight?: number
+) {
   // calculate width in 14px
   const textSize = measureText(text, 14, fontWeight);
   // how much bigger than 14px can we make it while staying within our width constraints
