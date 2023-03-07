@@ -15,15 +15,7 @@ title: StatPanelCfg kind
 
 | Property       | Type                    | Required | Description |
 |----------------|-------------------------|----------|-------------|
-| `ColorMode`    | [object](#colormode)    | **Yes**  |             |
 | `PanelOptions` | [object](#paneloptions) | **Yes**  |             |
-
-### ColorMode
-
-| Property      | Type    | Required | Description                                                       |
-|---------------|---------|----------|-------------------------------------------------------------------|
-| `background`  | string  | **Yes**  | TODO docs<br/>Possible values are: `value`, `background`, `none`. |
-| `hasGradient` | boolean | No       | Default: `true`.                                                  |
 
 ### PanelOptions
 
@@ -31,8 +23,9 @@ It extends [SingleStatBaseOptions](#singlestatbaseoptions).
 
 | Property        | Type                                            | Required | Description                                                                                                                                 |
 |-----------------|-------------------------------------------------|----------|---------------------------------------------------------------------------------------------------------------------------------------------|
-| `colorMode`     | [ColorMode](#colormode)                         | **Yes**  |                                                                                                                                             |
+| `colorMode`     | string                                          | **Yes**  | TODO docs<br/>Possible values are: `value`, `background`, `none`.                                                                           |
 | `graphMode`     | string                                          | **Yes**  | TODO docs<br/>Possible values are: `none`, `line`, `area`.                                                                                  |
+| `hasGradient`   | boolean                                         | **Yes**  | Default: `true`.                                                                                                                            |
 | `justifyMode`   | string                                          | **Yes**  | TODO docs<br/>Possible values are: `auto`, `center`.                                                                                        |
 | `textMode`      | string                                          | **Yes**  | TODO docs<br/>Possible values are: `auto`, `value`, `value_and_name`, `name`, `none`.                                                       |
 | `orientation`   | string                                          | No       | *(Inherited from [SingleStatBaseOptions](#singlestatbaseoptions))*<br/>TODO docs<br/>Possible values are: `auto`, `vertical`, `horizontal`. |

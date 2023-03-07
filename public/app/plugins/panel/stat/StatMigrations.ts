@@ -23,11 +23,11 @@ export const statPanelChangedHandler = (
     }
 
     if (oldOptions.colorBackground) {
-      options.colorMode.background = BigValueColorMode.Background;
+      options.colorMode = BigValueColorMode.Background;
     } else if (oldOptions.colorValue) {
-      options.colorMode.background = BigValueColorMode.Value;
+      options.colorMode = BigValueColorMode.Value;
     } else {
-      options.colorMode.background = BigValueColorMode.None;
+      options.colorMode = BigValueColorMode.None;
       if (oldOptions.sparkline?.lineColor && options.graphMode === BigValueGraphMode.Area) {
         const cfg: FieldConfigSource = panel.fieldConfig ?? {};
         cfg.defaults.color = {

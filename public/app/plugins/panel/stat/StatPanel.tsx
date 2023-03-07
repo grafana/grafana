@@ -30,13 +30,15 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
     if (sparkline) {
       sparkline.timeRange = timeRange;
     }
+    // console.log(this.props, 'this.props');
+    // console.log('🚀 ~ file: StatPanel.tsx:18 ~ config:', config);
 
     return (
       <BigValue
         value={value.display}
         count={count}
         sparkline={sparkline}
-        colorMode={options.colorMode.background}
+        colorMode={options.colorMode}
         graphMode={options.graphMode}
         justifyMode={options.justifyMode}
         textMode={this.getTextMode()}

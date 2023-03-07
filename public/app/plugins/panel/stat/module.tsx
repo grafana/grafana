@@ -5,7 +5,7 @@ import { commonOptionsBuilder, sharedSingleStatMigrationHandler } from '@grafana
 import { statPanelChangedHandler } from './StatMigrations';
 import { StatPanel } from './StatPanel';
 import { addStandardDataReduceOptions, addOrientationOption } from './common';
-import { defaultPanelOptions, defaultColorMode, PanelOptions } from './panelcfg.gen';
+import { defaultPanelOptions, PanelOptions } from './panelcfg.gen';
 import { StatSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<PanelOptions>(StatPanel)
@@ -20,7 +20,7 @@ export const plugin = new PanelPlugin<PanelOptions>(StatPanel)
     builder.addSelect({
       path: 'textMode',
       name: 'Text mode',
-      description: 'Control if name and value is displayed or just name',
+      description: 'Control the display of the name and value',
       category: mainCategory,
       settings: {
         options: [
@@ -39,7 +39,7 @@ export const plugin = new PanelPlugin<PanelOptions>(StatPanel)
       .addRadio({
         path: 'colorMode',
         name: 'Color mode',
-        defaultValue: defaultColorMode.background,
+        defaultValue: defaultPanelOptions.colorMode,
         category: mainCategory,
         settings: {
           options: [
@@ -51,8 +51,9 @@ export const plugin = new PanelPlugin<PanelOptions>(StatPanel)
       })
       .addBooleanSwitch({
         path: 'hasGradient',
-        name: 'Add or remove background gradient',
-        defaultValue: defaultColorMode.hasGradient,
+        name: 'Background gradient',
+        defaultValue: defaultPanelOptions.hasGradient,
+        category: mainCategory,
       })
       .addRadio({
         path: 'graphMode',

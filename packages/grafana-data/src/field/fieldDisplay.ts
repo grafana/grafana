@@ -79,6 +79,7 @@ export interface GetFieldDisplayValuesOptions {
 export const DEFAULT_FIELD_DISPLAY_VALUES_LIMIT = 25;
 
 export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): FieldDisplay[] => {
+  console.log('🚀 ~ file: fieldDisplay.ts:82 ~ getFieldDisplayValues ~ options:', options);
   const { replaceVariables, reduceOptions, timeZone, theme } = options;
   const calcs = reduceOptions.calcs.length ? reduceOptions.calcs : [ReducerID.last];
 
