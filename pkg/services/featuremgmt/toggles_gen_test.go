@@ -44,7 +44,6 @@ func TestFeatureToggleFiles(t *testing.T) {
 	ownerlessFeatures := map[string]bool{
 		"alertingBigTransactions":           true,
 		"trimDefaults":                      true,
-		"disableEnvelopeEncryption":         true,
 		"database_metrics":                  true,
 		"prometheusAzureOverrideAudience":   true,
 		"lokiDataframeApi":                  true,

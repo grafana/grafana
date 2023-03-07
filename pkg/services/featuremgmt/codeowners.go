@@ -12,4 +12,5 @@ const (
 	grafanaUserEssentialsSquad  codeowner = "@grafana/user-essentials"
 	grafanaBackendPlatformSquad codeowner = "@grafana/backend-platform"
 	grafanaPluginsPlatformSquad codeowner = "@grafana/plugins-platform-backend"
+	grafanaAsCodeSquad          codeowner = "@grafana/grafana-as-code"
 )
