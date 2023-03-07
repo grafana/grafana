@@ -9,7 +9,7 @@ import * as logsTimeSplit from './logsTimeSplit';
 import * as metricTimeSplit from './metricTimeSplit';
 import { createLokiDatasource, getMockFrames } from './mocks';
 import { runPartitionedQueries } from './querySplitting';
-import { LokiQuery } from './types';
+import { LokiQuery, LokiQueryType } from './types';
 
 describe('runPartitionedQueries()', () => {
   let datasource: LokiDatasource;
@@ -145,6 +145,19 @@ describe('runPartitionedQueries()', () => {
         expect(datasource.runQuery).toHaveBeenCalledTimes(3);
       });
     });
+    test('Groups instant queries', async () => {
+      const request = getQueryOptions<LokiQuery>({
+        targets: [
+          { expr: 'count_over_time({a="b"}[1m])', refId: 'A', queryType: LokiQueryType.Instant },
+          { expr: 'count_over_time({c="d"}[1m])', refId: 'B', queryType: LokiQueryType.Instant },
+        ],
+        range,
+      });
+      await expect(runPartitionedQueries(datasource, request)).toEmitValuesWith(() => {
+        // Instant queries are omitted from splitting
+        expect(datasource.runQuery).toHaveBeenCalledTimes(1);
+      });
+    });
     test('Respects maxLines of logs queries', async () => {
       const { logFrameA } = getMockFrames();
       const request = getQueryOptions<LokiQuery>({
@@ -160,6 +173,20 @@ describe('runPartitionedQueries()', () => {
       await expect(runPartitionedQueries(datasource, request)).toEmitValuesWith(() => {
         // 3 days, 3 chunks, 1x Logs + 3x Metric, 3 requests.
         expect(datasource.runQuery).toHaveBeenCalledTimes(4);
+      });
+    });
+    test('Groups multiple queries into logs, queries, and instant', async () => {
+      const request = getQueryOptions<LokiQuery>({
+        targets: [
+          { expr: 'count_over_time({a="b"}[1m])', refId: 'A', queryType: LokiQueryType.Instant },
+          { expr: '{c="d"}', refId: 'B' },
+          { expr: 'count_over_time({c="d"}[1m])', refId: 'C' },
+        ],
+        range,
+      });
+      await expect(runPartitionedQueries(datasource, request)).toEmitValuesWith(() => {
+        // 3 days, 3 chunks, 3x Logs + 3x Metric + 1x Instant, 7 requests.
+        expect(datasource.runQuery).toHaveBeenCalledTimes(7);
       });
     });
   });
