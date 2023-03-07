@@ -46,21 +46,17 @@ composableKinds: DataQuery: {
 						#Dimensions: {[string]: string | [...string]} @cuetsy(kind="type")
 
 						#CloudWatchMetricsQuery: {
-							// TODO extend common.DataQuery when the issues with redundant fields is fixed
-							// common.DataQuery
+							common.DataQuery
 							#MetricStat
 							queryMode?:        #CloudWatchQueryMode
 							metricQueryType?:  #MetricQueryType
 							metricEditorMode?: #MetricEditorMode
 							// common props
-							id: string
-
+							id:     string
 							alias?: string
 							label?: string
-
 							// Math expression query
-							expression?: string
-
+							expression?:    string
 							sqlExpression?: string
 							sql?:           #SQLExpression
 						} @cuetsy(kind="interface")
@@ -122,8 +118,7 @@ composableKinds: DataQuery: {
 							name?: string
 						} @cuetsy(kind="interface")
 
-						// TODO remove "any" member when one-member enum generation is fixed
-						#QueryEditorPropertyType: "string" | "any" @cuetsy(kind="enum")
+						#QueryEditorPropertyType: "string" @cuetsy(kind="enum")
 
 						#QueryEditorArrayExpression: {
 							// TODO this doesn't work; temporarily extended in veneer
@@ -157,8 +152,7 @@ composableKinds: DataQuery: {
 						#CloudWatchQueryMode: "Metrics" | "Logs" | "Annotations" @cuetsy(kind="type")
 
 						#CloudWatchAnnotationQuery: {
-							// TODO extend common.DataQuery when the issues with redundant fields is fixed
-							//common.DataQuery
+							common.DataQuery
 							#MetricStat
 							queryMode:        #CloudWatchQueryMode
 							prefixMatching?:  bool

@@ -33,7 +33,7 @@ export const defaultMetricStat: Partial<MetricStat> = {
 
 export type Dimensions = Record<string, (string | Array<string>)>;
 
-export interface CloudWatchMetricsQuery extends MetricStat {
+export interface CloudWatchMetricsQuery extends common.DataQuery, MetricStat {
   alias?: string;
   /**
    * Math expression query
@@ -134,11 +134,7 @@ export interface QueryEditorProperty {
   type: QueryEditorPropertyType;
 }
 
-/**
- * TODO remove "any" member when one-member enum generation is fixed
- */
 export enum QueryEditorPropertyType {
-  Any = 'any',
   String = 'string',
 }
 
@@ -184,7 +180,7 @@ export interface LogGroup {
   name: string;
 }
 
-export interface CloudWatchAnnotationQuery extends MetricStat {
+export interface CloudWatchAnnotationQuery extends common.DataQuery, MetricStat {
   actionPrefix?: string;
   alarmNamePrefix?: string;
   prefixMatching?: boolean;

@@ -16,12 +16,10 @@ export interface SQLExpression extends raw.SQLExpression {
 export type CloudWatchQuery =
   | CloudWatchMetricsQuery
   | raw.CloudWatchLogsQuery
-  | CloudWatchAnnotationQuery
+  | raw.CloudWatchAnnotationQuery
   | CloudWatchDefaultQuery;
 
-export interface CloudWatchAnnotationQuery extends raw.CloudWatchAnnotationQuery, DataQuery {}
-
-export interface CloudWatchMetricsQuery extends raw.CloudWatchMetricsQuery, DataQuery {
+export interface CloudWatchMetricsQuery extends raw.CloudWatchMetricsQuery {
   sql?: SQLExpression;
 }
 
