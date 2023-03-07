@@ -1,6 +1,7 @@
 import {
   type AppPluginExtensionCommand,
   type AppPluginExtensionCommandConfig,
+  type AppPluginExtensionCommandHelpers,
   type AppPluginExtensionLink,
   type AppPluginExtensionLinkConfig,
   type PluginExtension,
@@ -9,12 +10,15 @@ import {
   PluginExtensionTypes,
 } from '@grafana/data';
 import type { PluginExtensionRegistry, PluginExtensionRegistryItem } from '@grafana/runtime';
+import appEvents from 'app/core/app_events';
+import { ShowModalReactEvent } from 'app/types/events';
 
 import type { PluginPreloadResult } from '../pluginPreloader';
 
 import { handleErrorsInHandler, handleErrorsInConfigure } from './errorHandling';
+import { getModalWrapper } from './getModalWrapper';
 import { PlacementsPerPlugin } from './placementsPerPlugin';
-import { ConfigureFunc } from './types';
+import { CommandHandlerFunc, ConfigureFunc } from './types';
 import { createLinkValidator, isValidLinkPath } from './validateLink';
 
 export function createPluginExtensionRegistry(preloadResults: PluginPreloadResult[]): PluginExtensionRegistry {
@@ -69,6 +73,7 @@ function createCommandRegistryItem(
   config: AppPluginExtensionCommandConfig
 ): PluginExtensionRegistryItem<PluginExtensionCommand> | undefined {
   const configure = config.configure ?? defaultConfigure;
+  const helpers = getCommandHelpers();
 
   const options = {
     pluginId: pluginId,
@@ -76,8 +81,9 @@ function createCommandRegistryItem(
     logger: console.warn,
   };
 
+  const handlerWithHelpers: CommandHandlerFunc = (context) => config.handler(context, helpers);
   const catchErrorsInHandler = handleErrorsInHandler(options);
-  const handler = catchErrorsInHandler(config.handler);
+  const handler = catchErrorsInHandler(handlerWithHelpers);
 
   const extensionFactory = createCommandFactory(pluginId, config, handler);
 
@@ -174,4 +180,12 @@ function hashKey(key: string): number {
 
 function defaultConfigure() {
   return {};
+}
+
+function getCommandHelpers() {
+  const openModal: AppPluginExtensionCommandHelpers['openModal'] = ({ title, body }) => {
+    appEvents.publish(new ShowModalReactEvent({ component: getModalWrapper({ title, body }) }));
+  };
+
+  return { openModal };
 }
