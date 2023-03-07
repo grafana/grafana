@@ -108,6 +108,7 @@ func Test_getOrCreate(t *testing.T) {
 			assert.Equal(t, expected, state.Labels["rule-"+key])
 		}
 	})
+
 	t.Run("rule annotations should be able to be expanded with result and extra labels", func(t *testing.T) {
 		result := eval.Result{
 			Instance: models.GenerateAlertLabels(5, "result-"),
@@ -133,6 +134,34 @@ func Test_getOrCreate(t *testing.T) {
 		for key, expected := range result.Instance {
 			assert.Equal(t, expected, state.Annotations["rule-"+key])
 		}
+	})
+
+	t.Run("expected Reduce and Math expression values", func(t *testing.T) {
+		result := eval.Result{
+			Instance: models.GenerateAlertLabels(5, "result-"),
+			Values: map[string]eval.NumberValueCapture{
+				"A": {Var: "A", Value: util.Pointer(1.0)},
+				"B": {Var: "B", Value: util.Pointer(2.0)},
+			},
+		}
+		rule := generateRule()
+
+		state := c.getOrCreate(context.Background(), l, rule, result, nil, url)
+		assert.Equal(t, map[string]float64{"A": 1, "B": 2}, state.Values)
+	})
+
+	t.Run("expected Classic Condition values", func(t *testing.T) {
+		result := eval.Result{
+			Instance: models.GenerateAlertLabels(5, "result-"),
+			Values: map[string]eval.NumberValueCapture{
+				"B0": {Var: "B", Value: util.Pointer(1.0)},
+				"B1": {Var: "B", Value: util.Pointer(2.0)},
+			},
+		}
+		rule := generateRule()
+
+		state := c.getOrCreate(context.Background(), l, rule, result, nil, url)
+		assert.Equal(t, map[string]float64{"B0": 1, "B1": 2}, state.Values)
 	})
 }
 

@@ -34,6 +34,7 @@ import { LokiOptions } from '../loki/types';
 import { PrometheusDatasource } from '../prometheus/datasource';
 import { PromQuery } from '../prometheus/types';
 
+import { generateQueryFromFilters } from './SearchTraceQLEditor/utils';
 import {
   failedMetric,
   histogramMetric,
@@ -219,6 +220,36 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             )
           );
         }
+      } catch (error) {
+        return of({ error: { message: error instanceof Error ? error.message : 'Unknown error occurred' }, data: [] });
+      }
+    }
+    if (targets.traceqlSearch?.length) {
+      try {
+        const queryValue = generateQueryFromFilters(targets.traceqlSearch[0].filters);
+        reportInteraction('grafana_traces_traceql_search_queried', {
+          datasourceType: 'tempo',
+          app: options.app ?? '',
+          grafana_version: config.buildInfo.version,
+          query: queryValue ?? '',
+        });
+        subQueries.push(
+          this._request('/api/search', {
+            q: queryValue,
+            limit: options.targets[0].limit,
+            start: options.range.from.unix(),
+            end: options.range.to.unix(),
+          }).pipe(
+            map((response) => {
+              return {
+                data: createTableFrameFromTraceQlQuery(response.data.traces, this.instanceSettings),
+              };
+            }),
+            catchError((error) => {
+              return of({ error: { message: error.data.message }, data: [] });
+            })
+          )
+        );
       } catch (error) {
         return of({ error: { message: error instanceof Error ? error.message : 'Unknown error occurred' }, data: [] });
       }
