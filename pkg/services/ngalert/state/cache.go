@@ -157,14 +157,14 @@ func expand(ctx context.Context, log log.Logger, name string, original map[strin
 		result, err := template.Expand(ctx, name, v, data, externalURL, evaluatedAt)
 		if err != nil {
 			log.Error("Error in expanding template", "error", err)
-			multierror.Append(errs, err)
+			errs = multierror.Append(errs, err)
 			// keep the original template on error
 			expanded[k] = v
 		} else {
 			expanded[k] = result
 		}
 	}
-	return expanded, errs
+	return expanded, errs.ErrorOrNil()
 }
 
 func (rs *ruleStates) deleteStates(predicate func(s *State) bool) []*State {
