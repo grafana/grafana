@@ -342,7 +342,7 @@ func (pd *PublicDashboardServiceImpl) Delete(ctx context.Context, orgId int64, u
 	return nil
 }
 
-func (pd *PublicDashboardServiceImpl) HandleDashboardDeleted(ctx context.Context, dashboard *dashboards.Dashboard) error {
+func (pd *PublicDashboardServiceImpl) DeleteByDashboard(ctx context.Context, dashboard *dashboards.Dashboard) error {
 	if dashboard.IsFolder {
 		// get all pubdashes for the folder
 		pubdashes, err := pd.store.GetByDashboardFolder(ctx, dashboard)

@@ -966,7 +966,7 @@ func TestPublicDashboardServiceImpl_NewPublicDashboardAccessToken(t *testing.T) 
 	}
 }
 
-func TestHandleDashboardDeleted(t *testing.T) {
+func TestDeleteByDashboard(t *testing.T) {
 	t.Run("will delete pubdash when dashboard deleted", func(t *testing.T) {
 		store := NewFakePublicDashboardStore(t)
 		pd := &PublicDashboardServiceImpl{store: store, serviceWrapper: ProvideServiceWrapper(store)}
@@ -975,7 +975,7 @@ func TestHandleDashboardDeleted(t *testing.T) {
 		store.On("FindByDashboardUid", mock.Anything, mock.Anything, mock.Anything).Return(pubdash, nil)
 		store.On("Delete", mock.Anything, mock.Anything, mock.Anything).Return(int64(1), nil)
 
-		err := pd.HandleDashboardDeleted(context.Background(), dashboard)
+		err := pd.DeleteByDashboard(context.Background(), dashboard)
 		require.NoError(t, err)
 	})
 
@@ -989,7 +989,7 @@ func TestHandleDashboardDeleted(t *testing.T) {
 		store.On("Delete", mock.Anything, mock.Anything, mock.Anything).Return(int64(1), nil)
 		store.On("Delete", mock.Anything, mock.Anything, mock.Anything).Return(int64(1), nil)
 
-		err := pd.HandleDashboardDeleted(context.Background(), dashboard)
+		err := pd.DeleteByDashboard(context.Background(), dashboard)
 		require.NoError(t, err)
 	})
 }

@@ -35,7 +35,7 @@ type Service interface {
 	ExistsEnabledByAccessToken(ctx context.Context, accessToken string) (bool, error)
 	ExistsEnabledByDashboardUid(ctx context.Context, dashboardUid string) (bool, error)
 
-	HandleDashboardDeleted(ctx context.Context, dashboard *dashboards.Dashboard) error
+	DeleteByDashboard(ctx context.Context, dashboard *dashboards.Dashboard) error
 }
 
 // ServiceWrapper these methods have different behavior between OSS and Enterprise. The latter would call the OSS service first

@@ -60,6 +60,20 @@ func (_m *FakePublicDashboardService) Delete(ctx context.Context, orgId int64, u
 	return r0
 }
 
+// DeleteByDashboard provides a mock function with given fields: ctx, dashboard
+func (_m *FakePublicDashboardService) DeleteByDashboard(ctx context.Context, dashboard *dashboards.Dashboard) error {
+	ret := _m.Called(ctx, dashboard)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *dashboards.Dashboard) error); ok {
+		r0 = rf(ctx, dashboard)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // ExistsEnabledByAccessToken provides a mock function with given fields: ctx, accessToken
 func (_m *FakePublicDashboardService) ExistsEnabledByAccessToken(ctx context.Context, accessToken string) (bool, error) {
 	ret := _m.Called(ctx, accessToken)
@@ -335,20 +349,6 @@ func (_m *FakePublicDashboardService) GetQueryDataResponse(ctx context.Context, 
 	}
 
 	return r0, r1
-}
-
-// HandleDashboardDeleted provides a mock function with given fields: ctx, dashboard
-func (_m *FakePublicDashboardService) HandleDashboardDeleted(ctx context.Context, dashboard *dashboards.Dashboard) error {
-	ret := _m.Called(ctx, dashboard)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *dashboards.Dashboard) error); ok {
-		r0 = rf(ctx, dashboard)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
 }
 
 // NewPublicDashboardAccessToken provides a mock function with given fields: ctx
