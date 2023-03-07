@@ -1,5 +1,7 @@
 // THIS FILE IS COPIED FROM UPSTREAM
 //
+// https://github.com/prometheus/prometheus/blob/d437f0bb6b53ec8594a43b871f92252980b13ddd/notifier/notifier.go
+//
 // Copyright 2013 The Prometheus Authors
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.

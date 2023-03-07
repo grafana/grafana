@@ -1,3 +1,8 @@
+// This extension file contains all changed function that would normally be
+// in notifier.go. This helps us to keep track with the changes compared
+// to upstream.
+
+// nolint
 package sender
 
 import (
