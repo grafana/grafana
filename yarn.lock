@@ -7148,17 +7148,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@lezer/common@npm:1.0.2":
+"@lezer/common@npm:1.0.2, @lezer/common@npm:^1.0.0":
   version: 1.0.2
   resolution: "@lezer/common@npm:1.0.2"
   checksum: bbcc58e07be02652bf0700d2856042ec089d5be0b95893d628b3e18192ade864fac83b61b19653e10b9f1472261a178b12318d934e9004edd5483a577c0db56b
-  languageName: node
-  linkType: hard
-
-"@lezer/common@npm:^1.0.0":
-  version: 1.0.1
-  resolution: "@lezer/common@npm:1.0.1"
-  checksum: 05bda2b0b90713a511502e1e0c67842996cb86415cd701c46eb49f8fa117552229a4bc7244f1e8e0025e3563294a52911eebd70d06a4bc987280fca5d148c34b
   languageName: node
   linkType: hard
 
