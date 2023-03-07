@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/services/supportbundles/bundleregistry"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -27,45 +27,48 @@ const (
 )
 
 type Service struct {
-	cfg            *setting.Cfg
-	store          bundleStore
-	pluginStore    plugins.Store
-	pluginSettings pluginsettings.Service
 	accessControl  ac.AccessControl
-	features       *featuremgmt.FeatureManager
 	bundleRegistry *bundleregistry.Service
+	cfg            *setting.Cfg
+	features       *featuremgmt.FeatureManager
+	pluginSettings pluginsettings.Service
+	pluginStore    plugins.Store
+	store          bundleStore
 
-	log log.Logger
+	log                  log.Logger
+	encryptionPublicKeys []string
 
 	enabled         bool
 	serverAdminOnly bool
 }
 
-func ProvideService(cfg *setting.Cfg,
-	bundleRegistry *bundleregistry.Service,
-	sql db.DB,
-	kvStore kvstore.KVStore,
+func ProvideService(
 	accessControl ac.AccessControl,
 	accesscontrolService ac.Service,
-	routeRegister routing.RouteRegister,
-	settings setting.Provider,
-	pluginStore plugins.Store,
-	pluginSettings pluginsettings.Service,
+	bundleRegistry *bundleregistry.Service,
+	cfg *setting.Cfg,
 	features *featuremgmt.FeatureManager,
 	httpServer *grafanaApi.HTTPServer,
+	kvStore kvstore.KVStore,
+	pluginSettings pluginsettings.Service,
+	pluginStore plugins.Store,
+	routeRegister routing.RouteRegister,
+	settings setting.Provider,
+	sql db.DB,
 	usageStats usagestats.Service) (*Service, error) {
 	section := cfg.SectionWithEnvOverrides("support_bundles")
 	s := &Service{
-		cfg:             cfg,
-		store:           newStore(kvStore),
-		pluginStore:     pluginStore,
-		pluginSettings:  pluginSettings,
-		accessControl:   accessControl,
-		features:        features,
-		bundleRegistry:  bundleRegistry,
-		log:             log.New("supportbundle.service"),
-		enabled:         section.Key("enabled").MustBool(true),
-		serverAdminOnly: section.Key("server_admin_only").MustBool(true),
+		accessControl:        accessControl,
+		bundleRegistry:       bundleRegistry,
+		cfg:                  cfg,
+		enabled:              section.Key("enabled").MustBool(true),
+		encryptionPublicKeys: section.Key("public_keys").Strings(" "),
+		features:             features,
+		log:                  log.New("supportbundle.service"),
+		pluginSettings:       pluginSettings,
+		pluginStore:          pluginStore,
+		serverAdminOnly:      section.Key("server_admin_only").MustBool(true),
+		store:                newStore(kvStore),
 	}
 
 	usageStats.RegisterMetricsFunc(s.getUsageStats)

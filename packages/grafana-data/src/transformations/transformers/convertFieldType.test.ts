@@ -338,6 +338,31 @@ describe('field convert types transformer', () => {
       },
     ]);
   });
+
+  it('will convert time fields to strings', () => {
+    const options = {
+      conversions: [{ targetField: 'time', destinationType: FieldType.string, dateFormat: 'YYYY-MM' }],
+    };
+
+    const stringified = convertFieldTypes(options, [
+      toDataFrame({
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: [1626674400000, 1627020000000, 1627192800000, 1627797600000, 1627884000000],
+          },
+        ],
+      }),
+    ])[0].fields[0];
+    expect(stringified.values.toArray()).toEqual([
+      '2021-07',
+      '2021-07',
+      '2021-07', // can group by month
+      '2021-08',
+      '2021-08',
+    ]);
+  });
 });
 
 describe('ensureTimeField', () => {

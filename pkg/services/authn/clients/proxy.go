@@ -89,13 +89,13 @@ func (c *Proxy) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 			})
 
 			if err != nil {
-				c.log.Warn("could not resolved cached user", "error", err, "userId", entry.(int64))
+				c.log.FromContext(ctx).Warn("Could not resolved cached user", "error", err, "userId", entry.(int64))
 			}
 
 			// if we for some reason cannot find the user we proceed with the normal flow, authenticate with ProxyClient
 			// and perform syncs
 			if usr != nil {
-				c.log.Debug("user was loaded from cache, skip syncs", "userId", usr.UserID)
+				c.log.FromContext(ctx).Debug("User was loaded from cache, skip syncs", "userId", usr.UserID)
 				return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, usr.UserID), usr, authn.ClientParams{}), nil
 			}
 		}
@@ -132,9 +132,9 @@ func (c *Proxy) Hook(ctx context.Context, identity *authn.Identity, r *authn.Req
 		return nil
 	}
 
-	c.log.Debug("cache proxy user", "userId", id)
+	c.log.FromContext(ctx).Debug("Cache proxy user", "userId", id)
 	if err := c.cache.Set(ctx, identity.ClientParams.CacheAuthProxyKey, id, time.Duration(c.cfg.AuthProxySyncTTL)*time.Minute); err != nil {
-		c.log.Warn("failed to cache proxy user", "error", err, "userId", id)
+		c.log.FromContext(ctx).Warn("Failed to cache proxy user", "error", err, "userId", id)
 	}
 
 	return nil

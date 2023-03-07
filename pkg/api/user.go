@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -129,11 +128,11 @@ func (hs *HTTPServer) UpdateSignedInUser(c *contextmodel.ReqContext) response.Re
 	cmd.Email = strings.TrimSpace(cmd.Email)
 	cmd.Login = strings.TrimSpace(cmd.Login)
 
-	if setting.AuthProxyEnabled {
-		if setting.AuthProxyHeaderProperty == "email" && cmd.Email != c.Email {
+	if hs.Cfg.AuthProxyEnabled {
+		if hs.Cfg.AuthProxyHeaderProperty == "email" && cmd.Email != c.Email {
 			return response.Error(400, "Not allowed to change email when auth proxy is using email property", nil)
 		}
-		if setting.AuthProxyHeaderProperty == "username" && cmd.Login != c.Login {
+		if hs.Cfg.AuthProxyHeaderProperty == "username" && cmd.Login != c.Login {
 			return response.Error(400, "Not allowed to change username when auth proxy is using username property", nil)
 		}
 	}

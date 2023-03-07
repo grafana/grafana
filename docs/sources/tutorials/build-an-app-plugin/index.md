@@ -162,7 +162,7 @@ In this step, you'll add a data source to your app plugin. You can add panel plu
    ```bash
    mkdir tmp
    cd tmp
-   npx @grafana/create-plugin
+   npx @grafana/create-plugin@latest
    ```
 
 1. Move the `src` directory in the data source plugin to `src/datasources`, and rename it to `my-datasource`.

@@ -1,13 +1,15 @@
 import { FieldConfigSource, PanelModel, PanelTypeChangedHandler } from '@grafana/data';
-import { AxisPlacement, ScaleDistribution, VisibilityMode } from '@grafana/schema';
 import {
+  AxisPlacement,
+  ScaleDistribution,
+  VisibilityMode,
   HeatmapCellLayout,
   HeatmapCalculationMode,
   HeatmapCalculationOptions,
-} from 'app/features/transformers/calculateHeatmap/models.gen';
+} from '@grafana/schema';
 
-import { PanelOptions, defaultPanelOptions, HeatmapColorMode } from './models.gen';
 import { colorSchemes } from './palettes';
+import { PanelOptions, defaultPanelOptions, HeatmapColorMode } from './types';
 
 /** Called when the version number changes */
 export const heatmapMigrationHandler = (panel: PanelModel): Partial<PanelOptions> => {

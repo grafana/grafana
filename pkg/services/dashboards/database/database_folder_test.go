@@ -29,7 +29,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 		var sqlStore *sqlstore.SQLStore
 		var flder, dashInRoot, childDash *dashboards.Dashboard
 		var currentUser user.User
-		var dashboardStore *DashboardStore
+		var dashboardStore dashboards.Store
 
 		setup := func() {
 			sqlStore = db.InitTestDB(t)
@@ -477,7 +477,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 	})
 }
 
-func moveDashboard(t *testing.T, dashboardStore *DashboardStore, orgId int64, dashboard *simplejson.Json,
+func moveDashboard(t *testing.T, dashboardStore dashboards.Store, orgId int64, dashboard *simplejson.Json,
 	newFolderId int64) *dashboards.Dashboard {
 	t.Helper()
 
