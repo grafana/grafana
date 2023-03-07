@@ -8,6 +8,7 @@ import {
   SceneCanvasText,
   SceneToolbarInput,
   SceneDataNode,
+  SceneRefreshPicker,
 } from '@grafana/scenes';
 import { TestDataQueryType } from 'app/plugins/datasource/testdata/dataquery.gen';
 
@@ -63,7 +64,7 @@ export function getFlexLayoutTest(): DashboardScene {
     $editor: new SceneEditManager({}),
     $timeRange: new SceneTimeRange(),
     $data: getQueryRunnerWithRandomWalkQuery(),
-    actions: [new SceneTimePicker({})],
+    actions: [new SceneTimePicker({}), new SceneRefreshPicker({})],
   });
 }
 
@@ -131,6 +132,7 @@ export function getScenePanelRepeaterTest(): DashboardScene {
         },
       }),
       new SceneTimePicker({}),
+      new SceneRefreshPicker({}),
     ],
   });
 }
@@ -185,6 +187,7 @@ export function getRepeaterSceneWithFlexWrap(): DashboardScene {
         },
       }),
       new SceneTimePicker({}),
+      new SceneRefreshPicker({}),
     ],
   });
 }

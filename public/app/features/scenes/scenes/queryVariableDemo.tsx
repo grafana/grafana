@@ -9,6 +9,7 @@ import {
   CustomVariable,
   DataSourceVariable,
   QueryVariable,
+  SceneRefreshPicker,
 } from '@grafana/scenes';
 
 import { DashboardScene } from '../dashboard/DashboardScene';
@@ -62,7 +63,7 @@ export function getQueryVariableDemo(): DashboardScene {
       ],
     }),
     $timeRange: new SceneTimeRange(),
-    actions: [new SceneTimePicker({})],
+    actions: [new SceneTimePicker({}), new SceneRefreshPicker({})],
     controls: [new VariableValueSelectors({})],
   });
 }

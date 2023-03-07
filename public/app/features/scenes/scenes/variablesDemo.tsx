@@ -10,6 +10,7 @@ import {
   DataSourceVariable,
   TestVariable,
   NestedScene,
+  SceneRefreshPicker,
 } from '@grafana/scenes';
 
 import { DashboardScene } from '../dashboard/DashboardScene';
@@ -101,7 +102,7 @@ export function getVariablesDemo(): DashboardScene {
       ],
     }),
     $timeRange: new SceneTimeRange(),
-    actions: [new SceneTimePicker({})],
+    actions: [new SceneTimePicker({}), new SceneRefreshPicker({})],
     controls: [new VariableValueSelectors({})],
   });
 }
@@ -168,7 +169,7 @@ export function getVariablesDemoWithAll(): DashboardScene {
       ],
     }),
     $timeRange: new SceneTimeRange(),
-    actions: [new SceneTimePicker({})],
+    actions: [new SceneTimePicker({}), new SceneRefreshPicker({})],
     controls: [new VariableValueSelectors({})],
   });
 }

@@ -1,4 +1,11 @@
-import { VizPanel, SceneGridLayout, SceneGridRow, SceneTimePicker, SceneTimeRange } from '@grafana/scenes';
+import {
+  VizPanel,
+  SceneGridLayout,
+  SceneGridRow,
+  SceneTimePicker,
+  SceneTimeRange,
+  SceneRefreshPicker,
+} from '@grafana/scenes';
 
 import { DashboardScene } from '../dashboard/DashboardScene';
 import { SceneEditManager } from '../editor/SceneEditManager';
@@ -68,6 +75,6 @@ export function getGridWithRowLayoutTest(): DashboardScene {
     $editor: new SceneEditManager({}),
     $timeRange: new SceneTimeRange(),
     $data: getQueryRunnerWithRandomWalkQuery(),
-    actions: [new SceneTimePicker({})],
+    actions: [new SceneTimePicker({}), new SceneRefreshPicker({})],
   });
 }

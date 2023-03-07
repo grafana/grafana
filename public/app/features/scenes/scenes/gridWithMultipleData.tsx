@@ -1,4 +1,11 @@
-import { VizPanel, SceneGridRow, SceneTimePicker, SceneGridLayout, SceneTimeRange } from '@grafana/scenes';
+import {
+  VizPanel,
+  SceneGridRow,
+  SceneTimePicker,
+  SceneGridLayout,
+  SceneTimeRange,
+  SceneRefreshPicker,
+} from '@grafana/scenes';
 import { TestDataQueryType } from 'app/plugins/datasource/testdata/dataquery.gen';
 
 import { DashboardScene } from '../dashboard/DashboardScene';
@@ -86,6 +93,6 @@ export function getGridWithMultipleData(): DashboardScene {
     $editor: new SceneEditManager({}),
     $timeRange: new SceneTimeRange(),
     $data: getQueryRunnerWithRandomWalkQuery(),
-    actions: [new SceneTimePicker({})],
+    actions: [new SceneTimePicker({}), new SceneRefreshPicker({})],
   });
 }

@@ -1,4 +1,11 @@
-import { SceneTimePicker, SceneFlexLayout, VizPanel, SceneDataTransformer, SceneTimeRange } from '@grafana/scenes';
+import {
+  SceneTimePicker,
+  SceneFlexLayout,
+  VizPanel,
+  SceneDataTransformer,
+  SceneTimeRange,
+  SceneRefreshPicker,
+} from '@grafana/scenes';
 
 import { DashboardScene } from '../dashboard/DashboardScene';
 
@@ -57,6 +64,6 @@ export function getTransformationsDemo(): DashboardScene {
     }),
     $timeRange: new SceneTimeRange(),
     $data: getQueryRunnerWithRandomWalkQuery(),
-    actions: [new SceneTimePicker({})],
+    actions: [new SceneTimePicker({}), new SceneRefreshPicker({})],
   });
 }

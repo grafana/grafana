@@ -5,6 +5,7 @@ import {
   SceneFlexLayout,
   SceneGridLayout,
   SceneTimeRange,
+  SceneRefreshPicker,
 } from '@grafana/scenes';
 
 import { DashboardScene } from '../dashboard/DashboardScene';
@@ -84,7 +85,7 @@ export function getGridWithRowsTest(): DashboardScene {
     }),
     $timeRange: new SceneTimeRange(),
     $data: getQueryRunnerWithRandomWalkQuery(),
-    actions: [new SceneTimePicker({})],
+    actions: [new SceneTimePicker({}), new SceneRefreshPicker({})],
   });
 
   return scene;
