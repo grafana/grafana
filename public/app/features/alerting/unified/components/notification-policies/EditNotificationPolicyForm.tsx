@@ -35,6 +35,7 @@ import {
 } from '../../utils/amroutes';
 import { AmRouteReceiver } from '../receivers/grafanaAppReceivers/types';
 
+import { PromDurationInput } from './PromDurationInput';
 import { getFormStyles } from './formStyles';
 
 export interface AmRoutesExpandedFormProps {
@@ -212,7 +213,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ actionButt
                 error={errors.groupWaitValue?.message}
               >
                 <div className={cx(formStyles.container, formStyles.timingContainer)}>
-                  <Input
+                  <PromDurationInput
                     {...register('groupWaitValue', { validate: promDurationValidator })}
                     aria-label="Group wait value"
                   />
@@ -225,7 +226,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ actionButt
                 error={errors.groupIntervalValue?.message}
               >
                 <div className={cx(formStyles.container, formStyles.timingContainer)}>
-                  <Input
+                  <PromDurationInput
                     {...register('groupIntervalValue', { validate: promDurationValidator })}
                     aria-label="Group interval value"
                   />
@@ -238,7 +239,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ actionButt
                 error={errors.repeatIntervalValue?.message}
               >
                 <div className={cx(formStyles.container, formStyles.timingContainer)}>
-                  <Input
+                  <PromDurationInput
                     {...register('repeatIntervalValue', { validate: promDurationValidator })}
                     aria-label="Repeat interval value"
                   />
