@@ -95,16 +95,18 @@ export function LogsSamplePanel(props: Props) {
     LogsSamplePanelContent = (
       <>
         <OpenInSplitViewButton />
-        <LogRows
-          logRows={logs.rows}
-          dedupStrategy={LogsDedupStrategy.none}
-          showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
-          showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
-          wrapLogMessage={store.getBool(SETTINGS_KEYS.wrapLogMessage, true)}
-          prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
-          timeZone={timeZone}
-          enableLogDetails={true}
-        />
+        <div className={styles.logContainer}>
+          <LogRows
+            logRows={logs.rows}
+            dedupStrategy={LogsDedupStrategy.none}
+            showLabels={store.getBool(SETTINGS_KEYS.showLabels, false)}
+            showTime={store.getBool(SETTINGS_KEYS.showTime, true)}
+            wrapLogMessage={store.getBool(SETTINGS_KEYS.wrapLogMessage, true)}
+            prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
+            timeZone={timeZone}
+            enableLogDetails={true}
+          />
+        </div>
       </>
     );
   }
@@ -121,5 +123,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     position: absolute;
     top: ${theme.spacing(1)};
     right: ${theme.spacing(1)}; ;
+  `,
+  logContainer: css`
+    overflow-x: scroll;
   `,
 });
