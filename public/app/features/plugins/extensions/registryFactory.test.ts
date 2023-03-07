@@ -242,6 +242,26 @@ describe('createPluginExtensionRegistry()', () => {
 
       expect(configureErrorHandler).toBeCalledWith(expect.any(Function), configurable, context);
     });
+
+    it('should return undefined if returned by the provided extension config', () => {
+      const registry = createPluginExtensionRegistry([
+        {
+          pluginId,
+          linkExtensions: [
+            {
+              ...linkConfig,
+              configure: () => undefined,
+            },
+          ],
+          commandExtensions: [],
+        },
+      ]);
+
+      const [configure] = registry[linkConfig.placement];
+      const context = {};
+
+      expect(configure(context)).toBeUndefined();
+    });
   });
 
   // Command extensions
@@ -379,6 +399,26 @@ describe('createPluginExtensionRegistry()', () => {
 
       // The error handler is wrapping (decorating) the configure function, so it can provide standard error messages
       expect(configureErrorHandler).toBeCalledWith(expect.any(Function), configurable, context);
+    });
+
+    it('should return undefined if returned by the provided extension config', () => {
+      const registry = createPluginExtensionRegistry([
+        {
+          pluginId,
+          linkExtensions: [],
+          commandExtensions: [
+            {
+              ...commandConfig1,
+              configure: () => undefined,
+            },
+          ],
+        },
+      ]);
+
+      const [configure] = registry[commandConfig1.placement];
+      const context = {};
+
+      expect(configure(context)).toBeUndefined();
     });
 
     it('should wrap handler function with extension error handling', () => {

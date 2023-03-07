@@ -119,7 +119,7 @@ function createLinkRegistryItem(
 }
 
 function createLinkFactory(pluginId: string, config: AppPluginExtensionLinkConfig) {
-  return (override: Partial<AppPluginExtensionLink> | undefined, context?: object): PluginExtensionLink => {
+  return (override: Partial<AppPluginExtensionLink>, context?: object): PluginExtensionLink => {
     const title = override?.title ?? config.title;
     const description = override?.description ?? config.description;
     const path = override?.path ?? config.path;
@@ -139,7 +139,7 @@ function createCommandFactory(
   config: AppPluginExtensionCommandConfig,
   handler: (context?: object) => void
 ) {
-  return (override: Partial<AppPluginExtensionCommand> | undefined, context?: object): PluginExtensionCommand => {
+  return (override: Partial<AppPluginExtensionCommand>, context?: object): PluginExtensionCommand => {
     const title = override?.title ?? config.title;
     const description = override?.description ?? config.description;
 
@@ -154,12 +154,15 @@ function createCommandFactory(
 }
 
 function mapToConfigure<T extends PluginExtension, C>(
-  commandFactory: (override: Partial<C> | undefined, context?: object) => T | undefined,
+  commandFactory: (override: Partial<C>, context?: object) => T | undefined,
   configurable: C
 ): (configure: ConfigureFunc<C>) => PluginExtensionRegistryItem<T> {
   return (configure) => {
     return function mapToExtension(context?: object): T | undefined {
       const override = configure(configurable, context);
+      if (!override) {
+        return undefined;
+      }
       return commandFactory(override, context);
     };
   };
