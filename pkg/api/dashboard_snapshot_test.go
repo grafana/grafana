@@ -155,6 +155,33 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 				assert.Equal(t, ts.URL, fmt.Sprintf("http://%s", externalRequest.Host))
 				assert.Equal(t, "/", externalRequest.URL.EscapedPath())
 			}, sqlmock)
+
+		loggedInUserScenarioWithRole(t, "Should be able to delete a snapshot from a deleted dashboard when calling DELETE on", "DELETE",
+			"/api/snapshots/12345", "/api/snapshots/:key", org.RoleEditor, func(sc *scenarioContext) {
+				var externalRequest *http.Request
+				ts := setupRemoteServer(func(rw http.ResponseWriter, req *http.Request) {
+					rw.WriteHeader(200)
+					externalRequest = req
+				})
+				dashSvc := dashboards.NewFakeDashboardService(t)
+				dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(nil, dashboards.ErrDashboardNotFound).Maybe()
+
+				guardian.InitLegacyGuardian(sc.sqlStore, dashSvc, teamSvc)
+				d := setUpSnapshotTest(t, 0, ts.URL)
+				hs := buildHttpServer(d, true)
+				hs.DashboardService = dashSvc
+				sc.handlerFunc = hs.DeleteDashboardSnapshot
+				sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
+
+				assert.Equal(t, 200, sc.resp.Code)
+				respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
+				require.NoError(t, err)
+
+				assert.True(t, strings.HasPrefix(respJSON.Get("message").MustString(), "Snapshot deleted"))
+				assert.Equal(t, 1, respJSON.Get("id").MustInt())
+				assert.Equal(t, ts.URL, fmt.Sprintf("http://%s", externalRequest.Host))
+				assert.Equal(t, "/", externalRequest.URL.EscapedPath())
+			}, sqlmock)
 	})
 
 	t.Run("When user is editor and creator of the snapshot", func(t *testing.T) {
