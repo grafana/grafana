@@ -376,6 +376,83 @@ describe('getRangeSnapInterval', () => {
       end: getPrometheusTime(expectedToThird.clone() as DateTime, false).toString(10),
     });
   });
+
+  it('will snap range to closest 60 minute', () => {
+    const queryDurationMinutes = 120;
+    const intervalSeconds = queryDurationMinutes * 60;
+    const now = new Date().valueOf();
+    const nowPlusOneMinute = now + 1000 * 60;
+    const nowPlusTwoMinute = now + 1000 * 60 * 2;
+
+    const nowTime = dateTime(now) as Moment;
+    const nowTimePlusOne = dateTime(nowPlusOneMinute) as Moment;
+    const nowTimePlusTwo = dateTime(nowPlusTwoMinute) as Moment;
+
+    const calculateClosest60 = (date: Moment): Moment => {
+      const numberOfMinutes = Math.floor(date.minutes() / 60) * 60;
+      const numberOfHours = numberOfMinutes < 60 ? date.hours() : date.hours() + 1;
+      return date
+        .clone()
+        .minutes(numberOfMinutes % 60)
+        .hours(numberOfHours);
+    };
+
+    const expectedFromFirst = calculateClosest60(
+      nowTime.clone().startOf('minute').subtract(queryDurationMinutes, 'minute')
+    );
+    const expectedToFirst = calculateClosest60(nowTime.clone().startOf('minute').add(1, 'minute'));
+
+    const expectedFromSecond = calculateClosest60(
+      nowTimePlusOne.clone().startOf('minute').subtract(queryDurationMinutes, 'minute')
+    );
+    const expectedToSecond = calculateClosest60(nowTimePlusOne.clone().startOf('minute').add(1, 'minute'));
+
+    const expectedFromThird = calculateClosest60(
+      nowTimePlusTwo.clone().startOf('minute').subtract(queryDurationMinutes, 'minute')
+    );
+    const expectedToThird = calculateClosest60(nowTimePlusTwo.clone().startOf('minute').add(1, 'minute'));
+
+    const range: TimeRange = {
+      from: dateTime(now - intervalSeconds * 1000),
+      to: dateTime(now),
+    } as TimeRange;
+
+    const range2: TimeRange = {
+      from: dateTime(nowPlusOneMinute - intervalSeconds * 1000),
+      to: dateTime(nowPlusOneMinute),
+      raw: {
+        from: dateTime(nowPlusOneMinute - intervalSeconds * 1000),
+        to: dateTime(nowPlusOneMinute),
+      },
+    };
+    const range3: TimeRange = {
+      from: dateTime(nowPlusTwoMinute - intervalSeconds * 1000),
+      to: dateTime(nowPlusTwoMinute),
+      raw: {
+        from: dateTime(nowPlusTwoMinute - intervalSeconds * 1000),
+        to: dateTime(nowPlusTwoMinute),
+      },
+    };
+
+    const first = getRangeSnapInterval(PrometheusCacheLevel.High, range);
+    const second = getRangeSnapInterval(PrometheusCacheLevel.High, range2);
+    const third = getRangeSnapInterval(PrometheusCacheLevel.High, range3);
+
+    expect(first).toEqual({
+      start: getPrometheusTime(expectedFromFirst as DateTime, false).toString(10),
+      end: getPrometheusTime(expectedToFirst as DateTime, false).toString(10),
+    });
+
+    expect(second).toEqual({
+      start: getPrometheusTime(expectedFromSecond.clone() as DateTime, false).toString(10),
+      end: getPrometheusTime(expectedToSecond.clone() as DateTime, false).toString(10),
+    });
+
+    expect(third).toEqual({
+      start: getPrometheusTime(expectedFromThird.clone() as DateTime, false).toString(10),
+      end: getPrometheusTime(expectedToThird.clone() as DateTime, false).toString(10),
+    });
+  });
 });
 
 describe('toPromLikeQuery', () => {

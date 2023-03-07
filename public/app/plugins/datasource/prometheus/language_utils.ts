@@ -8,6 +8,7 @@ import {
   DataQuery,
   dateMath,
   DateTime,
+  incrRoundDn,
   TimeRange,
 } from '@grafana/data';
 
@@ -240,17 +241,6 @@ export function roundSecToMin(seconds: number): number {
   return Math.floor(seconds / 60);
 }
 
-// Returns number of minutes rounded down to the nearest nth minute
-export function roundSecToLastMin(seconds: number, minutes = 1): number {
-  return roundSecToMin(seconds) - (roundSecToMin(seconds) % minutes);
-}
-
-// return Math.floor(seconds / 60);
-
-export function incrRoundDn(num: number, incr: number) {
-  return Math.floor(num / incr) * incr;
-}
-
 // Returns number of minutes rounded up to the nearest nth minute
 export function roundSecToNextMin(seconds: number, secondsToRound = 1): number {
   return Math.ceil(seconds / 60) - (Math.ceil(seconds / 60) % secondsToRound);
@@ -396,7 +386,7 @@ export function getRangeSnapInterval(
   const endTime = getPrometheusTime(range.to, true);
   const endTimeQuantizedSeconds = roundSecToNextMin(endTime, getClientCacheDurationInMinutes(cacheLevel)) * 60;
 
-  // If the interval was too short, we could have rounded both start and end to the same time, if so let's
+  // If the interval was too short, we could have rounded both start and end to the same time, if so let's add one step to the end
   if (startTimeQuantizedSeconds === endTimeQuantizedSeconds) {
     const endTimePlusOneStep = endTimeQuantizedSeconds + getClientCacheDurationInMinutes(cacheLevel) * 60;
     return { start: startTimeQuantizedSeconds.toString(), end: endTimePlusOneStep.toString() };
