@@ -210,7 +210,7 @@
     "jest-date-mock": "1.0.8",
     "jest-environment-jsdom": "29.3.1",
     "jest-fail-on-console": "3.0.2",
-    "jest-junit": "14.0.1",
+    "jest-junit": "15.0.0",
     "jest-matcher-utils": "29.3.1",
     "lerna": "5.5.4",
     "lint-staged": "13.1.0",

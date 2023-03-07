@@ -22194,7 +22194,7 @@ __metadata:
     jest-date-mock: 1.0.8
     jest-environment-jsdom: 29.3.1
     jest-fail-on-console: 3.0.2
-    jest-junit: 14.0.1
+    jest-junit: 15.0.0
     jest-matcher-utils: 29.3.1
     jquery: 3.6.1
     js-yaml: ^4.1.0
@@ -25213,15 +25213,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jest-junit@npm:14.0.1":
-  version: 14.0.1
-  resolution: "jest-junit@npm:14.0.1"
+"jest-junit@npm:15.0.0":
+  version: 15.0.0
+  resolution: "jest-junit@npm:15.0.0"
   dependencies:
     mkdirp: ^1.0.4
     strip-ansi: ^6.0.1
     uuid: ^8.3.2
     xml: ^1.0.1
-  checksum: 2a9ccfecbe4c0df1be24e64b3e12a260356db999b3d821578c325bd34367d2f54b27e9560a8d5abe6c19412400268bf55dd41473565903cb8f616d998f7eb9ac
+  checksum: e8fe4d2f2ab843383ac41820a6fe495739d154ec435cd44ba590b44ec7fd62095676f3eef13f98392f81d4a3727ea58b4f4fad231fe367ac31243952b9ad716f
   languageName: node
   linkType: hard
 
