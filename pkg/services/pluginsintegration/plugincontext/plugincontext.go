@@ -11,10 +11,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/adapters"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 

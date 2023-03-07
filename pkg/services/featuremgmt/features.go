@@ -85,6 +85,9 @@ type FeatureFlag struct {
 	State       FeatureFlagState `json:"state,omitempty"`
 	DocsURL     string           `json:"docsURL,omitempty"`
 
+	// Owner person or team that owns this feature flag
+	Owner codeowner `json:"-"`
+
 	// CEL-GO expression.  Using the value "true" will mean this is on by default
 	Expression string `json:"expression,omitempty"`
 
