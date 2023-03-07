@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -17,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/registryentity"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -36,6 +38,11 @@ type Service struct {
 
 	// bus is currently used to publish event in case of title change
 	bus bus.Bus
+
+	// TODO figure out if we need to keep the mutex, quota uses mutex
+	mutex sync.RWMutex
+	// TODO do we want a more specific type for the map key? Check what the map value should be also
+	registry map[string]registryentity.RegistryEntityService
 }
 
 func ProvideService(
@@ -57,6 +64,7 @@ func ProvideService(
 		features:             features,
 		accessControl:        ac,
 		bus:                  bus,
+		registry:             make(map[string]registryentity.RegistryEntityService),
 	}
 	if features.IsEnabled(featuremgmt.FlagNestedFolders) {
 		srv.DBMigration(db)
@@ -754,4 +762,20 @@ func toFolderError(err error) error {
 	}
 
 	return err
+}
+
+// TODO look into the use of mutex
+func (s *Service) RegisterEntityService(r registryentity.RegistryEntityService) error {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	_, ok := s.registry[r.Kind()]
+	if ok {
+		return registryentity.ErrTargetSrvConflict
+	}
+
+	// TODO figure out what the values of this map should be
+	s.registry[r.Kind()] = r
+
+	return nil
 }

@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/search/model"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -71,6 +72,8 @@ func ProvideDashboardServiceImpl(
 
 	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardIDScopeResolver(folderStore, dashSvc, folderSvc))
 	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(folderStore, dashSvc, folderSvc))
+
+	folderSvc.RegisterEntityService(dashSvc)
 
 	return dashSvc
 }
@@ -645,3 +648,6 @@ func (dr DashboardServiceImpl) CountDashboardsInFolder(ctx context.Context, quer
 func (dr *DashboardServiceImpl) DeleteForRegistry(ctx context.Context, orgID int64, UID string) error {
 	return dr.dashboardStore.DeleteDashboardsInFolder(ctx, &dashboards.DeleteDashboardsInFolderRequest{FolderUID: UID, OrgID: orgID})
 }
+
+// TODO is this the constant we want to use?
+func (dr *DashboardServiceImpl) Kind() string { return entity.StandardKindDashboard }
