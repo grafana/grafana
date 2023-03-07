@@ -90,7 +90,6 @@ Alpha features might be changed or removed without prior notice.
 | `logsContextDatasourceUi`          | Allow datasource to provide custom UI for context view                                                                                                                       |
 | `lokiQuerySplitting`               | Split large interval queries into subqueries with smaller time intervals                                                                                                     |
 | `individualCookiePreferences`      | Support overriding cookie preferences per user                                                                                                                               |
-| `prometheusMetricEncyclopedia`     | Replaces the Prometheus query builder metric select option with a paginated and filterable component                                                                         |
 | `drawerDataSourcePicker`           | Changes the user experience for data source selection to a drawer.                                                                                                           |
 | `traceqlSearch`                    | Enables the 'TraceQL Search' tab for the Tempo datasource which provides a UI to generate TraceQL queries                                                                    |
 | `prometheusMetricEncyclopedia`     | Replaces the Prometheus query builder metric select option with a paginated and filterable component                                                                         |
