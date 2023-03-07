@@ -171,7 +171,7 @@ describe('runQueries', () => {
       expect(datasource.getDataProvider).toHaveBeenCalledWith(
         type,
         expect.objectContaining({
-          requestId: `explore_left_${snakeCase(type)}`,
+          requestId: `explore_left_${snakeCase(type)}_0`,
         })
       );
     }

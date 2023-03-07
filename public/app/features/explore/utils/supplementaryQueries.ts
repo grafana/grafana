@@ -161,7 +161,7 @@ export const getSupplementaryQueryProvider = (
       return from(query.datasource).pipe(
         mergeMap((ds) => {
           const dsRequest = cloneDeep(request);
-          dsRequest.requestId = `mixed-${type}-${i}-${dsRequest.requestId || ''}`;
+          dsRequest.requestId = `${dsRequest.requestId || ''}_${i}`;
           dsRequest.targets = query.targets;
 
           if (hasSupplementaryQuerySupport(ds, type)) {
