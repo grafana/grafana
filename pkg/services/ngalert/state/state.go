@@ -101,12 +101,12 @@ func (a *State) SetPending(reason string, startsAt, endsAt time.Time, err error)
 
 // SetNoData sets the state to NoData. It changes both the start and end time.
 func (a *State) SetNoData(startsAt, endsAt time.Time, err error) {
-	a.setState(eval.NoData, "", startsAt, endsAt, err)
+	a.setState(eval.NoData, models.StateReasonEmpty, startsAt, endsAt, err)
 }
 
 // SetError sets the state to Error. It changes both the start and end time.
 func (a *State) SetError(startsAt, endsAt time.Time, err error) {
-	a.setState(eval.Error, "", startsAt, endsAt, err)
+	a.setState(eval.Error, models.StateReasonEmpty, startsAt, endsAt, err)
 }
 
 // SetNormal sets the state to Normal. It changes both the start and end time.

@@ -280,12 +280,12 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 		logger.Debug("Setting next state", "handler", "resultNormal")
 		// There is no reason for this state as this would be normal behaviour. Normal state will have reason when Error
 		// or NoData states are mapped to OK status by the user.
-		resultNormal(currentState, alertRule, result, logger, "")
+		resultNormal(currentState, alertRule, result, logger, ngModels.StateReasonEmpty)
 	case eval.Alerting:
 		logger.Debug("Setting next state", "handler", "resultAlerting")
 		// There is no reason for this state as this would be normal behaviour. Alerting state will have reason when
 		// Error or NoData states are mapped to OK status by the user.
-		resultAlerting(currentState, alertRule, result, logger, "")
+		resultAlerting(currentState, alertRule, result, logger, ngModels.StateReasonEmpty)
 	case eval.Error:
 		logger.Debug("Setting next state", "handler", "resultError")
 		resultError(currentState, alertRule, result, logger)
