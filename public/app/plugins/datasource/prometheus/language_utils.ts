@@ -12,9 +12,8 @@ import {
 } from '@grafana/data';
 
 import { addLabelToQuery } from './add_label_to_query';
-import { PrometheusCacheLevel } from './datasource';
 import { SUGGESTIONS_LIMIT } from './language_provider';
-import { PromMetricsMetadata, PromMetricsMetadataItem } from './types';
+import { PrometheusCacheLevel, PromMetricsMetadata, PromMetricsMetadataItem } from './types';
 
 export const processHistogramMetrics = (metrics: string[]) => {
   const resultSet: Set<string> = new Set();
@@ -246,6 +245,12 @@ export function roundSecToLastMin(seconds: number, minutes = 1): number {
   return roundSecToMin(seconds) - (roundSecToMin(seconds) % minutes);
 }
 
+// return Math.floor(seconds / 60);
+
+export function incrRoundDn(num: number, incr: number) {
+  return Math.floor(num / incr) * incr;
+}
+
 // Returns number of minutes rounded up to the nearest nth minute
 export function roundSecToNextMin(seconds: number, secondsToRound = 1): number {
   return Math.ceil(seconds / 60) - (Math.ceil(seconds / 60) % secondsToRound);
@@ -384,7 +389,8 @@ export function getRangeSnapInterval(
   }
   // Otherwise round down to the nearest nth minute for the start time
   const startTime = getPrometheusTime(range.from, false);
-  const startTimeQuantizedSeconds = roundSecToLastMin(startTime, getClientCacheDurationInMinutes(cacheLevel)) * 60;
+  // const startTimeQuantizedSeconds = roundSecToLastMin(startTime, getClientCacheDurationInMinutes(cacheLevel)) * 60;
+  const startTimeQuantizedSeconds = incrRoundDn(startTime, getClientCacheDurationInMinutes(cacheLevel) * 60);
 
   // And round up to the nearest nth minute for the end time
   const endTime = getPrometheusTime(range.to, true);

@@ -2,7 +2,6 @@ import { Moment } from 'moment';
 
 import { AbstractLabelOperator, AbstractQuery, DateTime, dateTime, TimeRange } from '@grafana/data';
 
-import { PrometheusCacheLevel } from './datasource';
 import {
   escapeLabelValueInExactSelector,
   escapeLabelValueInRegexSelector,
@@ -13,6 +12,7 @@ import {
   parseSelector,
   toPromLikeQuery,
 } from './language_utils';
+import { PrometheusCacheLevel } from './types';
 
 describe('parseSelector()', () => {
   let parsed;

@@ -60,6 +60,7 @@ import {
   ExemplarTraceIdDestination,
   PromDataErrorResponse,
   PromDataSuccessResponse,
+  PrometheusCacheLevel,
   PromExemplarData,
   PromMatrixData,
   PromOptions,
@@ -74,13 +75,6 @@ const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
 const GET_AND_POST_METADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', 'api/v1/series', 'api/v1/labels'];
 
 export const InstantQueryRefIdIndex = '-Instant';
-
-export enum PrometheusCacheLevel {
-  low = 'low',
-  medium = 'medium',
-  high = 'high',
-  none = 'none',
-}
 
 export class PrometheusDatasource
   extends DataSourceWithBackend<PromQuery, PromOptions>

@@ -2,7 +2,6 @@ import { DataQuery, DataSourceJsonData, QueryResultMeta, ScopedVars } from '@gra
 
 import { PromApplication } from '../../../types/unified-alerting-dto';
 
-import { PrometheusCacheLevel } from './datasource';
 import { QueryEditorMode } from './querybuilder/shared/types';
 
 export interface PromQuery extends DataQuery {
@@ -25,6 +24,12 @@ export interface PromQuery extends DataQuery {
   editorMode?: QueryEditorMode;
 }
 
+export enum PrometheusCacheLevel {
+  low = 'low',
+  medium = 'medium',
+  high = 'high',
+  none = 'none',
+}
 export interface PromOptions extends DataSourceJsonData {
   timeInterval?: string;
   queryTimeout?: string;

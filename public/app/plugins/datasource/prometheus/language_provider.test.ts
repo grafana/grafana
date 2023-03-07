@@ -5,10 +5,10 @@ import { AbstractLabelOperator, dateTime, HistoryItem, TimeRange } from '@grafan
 import { SearchFunctionType } from '@grafana/ui';
 
 import { Label } from './components/monaco-query-field/monaco-completion-provider/situation';
-import { PrometheusCacheLevel, PrometheusDatasource } from './datasource';
+import { PrometheusDatasource } from './datasource';
 import LanguageProvider from './language_provider';
 import { getClientCacheDurationInMinutes, getPrometheusTime, getRangeSnapInterval } from './language_utils';
-import { PromQuery } from './types';
+import { PrometheusCacheLevel, PromQuery } from './types';
 
 const now = new Date().getTime();
 const timeRangeDurationSeconds = 1;

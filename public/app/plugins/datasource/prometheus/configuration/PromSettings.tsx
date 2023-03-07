@@ -21,9 +21,8 @@ import {
 
 import { useUpdateDatasource } from '../../../../features/datasources/state';
 import { PromApplication, PromBuildInfoResponse } from '../../../../types/unified-alerting-dto';
-import { PrometheusCacheLevel } from '../datasource';
 import { QueryEditorMode } from '../querybuilder/shared/types';
-import { PromOptions } from '../types';
+import { PrometheusCacheLevel, PromOptions } from '../types';
 
 import { ExemplarsSettings } from './ExemplarsSettings';
 import { PromFlavorVersions } from './PromFlavorVersions';
