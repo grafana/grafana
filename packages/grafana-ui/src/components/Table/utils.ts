@@ -347,7 +347,7 @@ export function getFooterItems(
     indexing of both arrays is no longer in parity.
 
     So, here we simply recursively test for the "hidden" columns from `headerGroups[0].headers`. Each column has an ID property that corresponds to its own index, 
-    therefore if (`filterField.id` !== `String(index)`), we know there is one or more hidden columns; at which point we update the index with an ersatz placeholder with just an id property.
+    therefore if (`filterField.id` !== `String(index)`), we know there is one or more hidden columns; at which point we update the index with an ersatz placeholder with just an `id` property.
   */
   addMissingColumnIndex(filterFields);
 
