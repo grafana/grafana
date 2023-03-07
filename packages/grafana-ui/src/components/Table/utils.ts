@@ -527,7 +527,7 @@ function addMissingColumnIndex(columns: Array<{ id: string; field?: Field } | un
     return;
   }
 
-  // Splice in missing "column
+  // Splice in missing column
   columns.splice(missingIndex, 0, { id: String(missingIndex) });
 
   // Recurse
