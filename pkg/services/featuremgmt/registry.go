@@ -112,6 +112,7 @@ var (
 			Name:        "migrationLocking",
 			Description: "Lock database during migrations",
 			State:       FeatureStateBeta,
+			Owner:       grafanaBackendPlatformSquad,
 		},
 		{
 			Name:        "storage",
@@ -295,6 +296,7 @@ var (
 			Name:        "mysqlAnsiQuotes",
 			Description: "Use double quotes to escape keyword in a MySQL query",
 			State:       FeatureStateAlpha,
+			Owner:       grafanaBackendPlatformSquad,
 		},
 		{
 			Name:        "accessControlOnCall",
@@ -306,6 +308,7 @@ var (
 			Description:     "Enable folder nesting",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
+			Owner:           grafanaBackendPlatformSquad,
 		},
 		{
 			Name:        "accessTokenExpirationCheck",
