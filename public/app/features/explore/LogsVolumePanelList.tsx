@@ -7,14 +7,14 @@ import {
   DataFrame,
   DataQueryResponse,
   EventBus,
-  getLogsVolumeDimensions,
   GrafanaTheme2,
-  isLogsVolumeLimited,
   LoadingState,
   SplitOpen,
   TimeZone,
 } from '@grafana/data';
 import { Button, InlineField, useStyles2 } from '@grafana/ui';
+
+import { getLogsVolumeDimensions, isLogsVolumeLimited } from '../logs/utils';
 
 import { LogsVolumePanel } from './LogsVolumePanel';
 import { SupplementaryResultError } from './SupplementaryResultError';

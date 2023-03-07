@@ -1,10 +1,7 @@
-import { max } from 'lodash';
 import { Observable } from 'rxjs';
 
-import { FieldCache } from '../dataframe';
-
 import { Labels } from './data';
-import { DataFrame, FieldType } from './dataFrame';
+import { DataFrame } from './dataFrame';
 import { DataQueryRequest, DataQueryResponse } from './datasource';
 import { DataQuery } from './query';
 import { AbsoluteTimeRange } from './time';
@@ -206,54 +203,6 @@ export type LogsVolumeCustomMetaData = {
   logsVolumeType: LogsVolumeType;
   datasourceName: string;
   sourceQuery: DataQuery;
-};
-
-export const getLogsVolumeDimensions = (
-  dataFrames: DataFrame[],
-  defaultRange: AbsoluteTimeRange
-): { maximum: number; range: AbsoluteTimeRange } => {
-  let widestRange: AbsoluteTimeRange | undefined;
-  let maximumValue = -Infinity;
-
-  dataFrames.forEach((dataFrame: DataFrame) => {
-    const dataFrameRange = dataFrame.meta?.custom?.absoluteRange || defaultRange;
-    if (dataFrameRange) {
-      if (!widestRange) {
-        widestRange = dataFrameRange;
-      } else {
-        widestRange.to = Math.min(dataFrameRange.to, widestRange.to);
-        widestRange.from = Math.min(dataFrameRange.from, widestRange.from);
-      }
-    }
-
-    const fieldCache = new FieldCache(dataFrame);
-    const valueField = fieldCache.getFirstFieldOfType(FieldType.number);
-    if (valueField) {
-      maximumValue = Math.max(maximumValue, max(valueField.values.toArray()));
-    }
-  });
-
-  return {
-    maximum: maximumValue,
-    range: widestRange || defaultRange,
-  };
-};
-
-export const getLogsVolumeDataSourceInfo = (dataFrames: DataFrame[]): { name: string; refId: string } | null => {
-  const customMeta = dataFrames[0]?.meta?.custom;
-
-  if (customMeta && customMeta.datasourceName && customMeta.sourceQuery?.refId) {
-    return {
-      name: customMeta.datasourceName,
-      refId: customMeta.sourceQuery.refId,
-    };
-  }
-
-  return null;
-};
-
-export const isLogsVolumeLimited = (dataFrames: DataFrame[]) => {
-  return dataFrames[0]?.meta?.custom?.logsVolumeType === LogsVolumeType.Limited;
 };
 
 /**

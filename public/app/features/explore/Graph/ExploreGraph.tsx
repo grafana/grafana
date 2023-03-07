@@ -109,20 +109,10 @@ export function ExploreGraph({
     overrides: [],
   });
 
-  /**
-   * Config properties that may change after the graph is rendered
-   */
-  useEffect(() => {
-    setFieldConfig({
-      ...fieldConfig,
-      defaults: {
-        ...fieldConfig.defaults,
-        max: maximum,
-      },
-    });
-  }, [maximum, fieldConfig]);
-
-  const styledFieldConfig = useMemo(() => applyGraphStyle(fieldConfig, graphStyle), [fieldConfig, graphStyle]);
+  const styledFieldConfig = useMemo(
+    () => applyGraphStyle(fieldConfig, graphStyle, maximum),
+    [fieldConfig, graphStyle, maximum]
+  );
 
   const dataWithConfig = useMemo(() => {
     return applyFieldOverrides({

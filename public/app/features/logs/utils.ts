@@ -1,6 +1,17 @@
-import { countBy, chain } from 'lodash';
+import { countBy, chain, max } from 'lodash';
 
-import { LogLevel, LogRowModel, LogLabelStatsModel, LogsModel, LogsSortOrder } from '@grafana/data';
+import {
+  LogLevel,
+  LogRowModel,
+  LogLabelStatsModel,
+  LogsModel,
+  LogsSortOrder,
+  DataFrame,
+  AbsoluteTimeRange,
+  FieldCache,
+  FieldType,
+  LogsVolumeType,
+} from '@grafana/data';
 
 import { getDataframeFields } from './components/logParser';
 
@@ -149,3 +160,51 @@ export function logRowsToReadableJson(logs: LogRowModel[]) {
     };
   });
 }
+
+export const getLogsVolumeDimensions = (
+  dataFrames: DataFrame[],
+  defaultRange: AbsoluteTimeRange
+): { maximum: number; range: AbsoluteTimeRange } => {
+  let widestRange: AbsoluteTimeRange | undefined;
+  let maximumValue = -Infinity;
+
+  dataFrames.forEach((dataFrame: DataFrame) => {
+    const dataFrameRange = dataFrame.meta?.custom?.absoluteRange || defaultRange;
+    if (dataFrameRange) {
+      if (!widestRange) {
+        widestRange = dataFrameRange;
+      } else {
+        widestRange.to = Math.min(dataFrameRange.to, widestRange.to);
+        widestRange.from = Math.min(dataFrameRange.from, widestRange.from);
+      }
+    }
+
+    const fieldCache = new FieldCache(dataFrame);
+    const valueField = fieldCache.getFirstFieldOfType(FieldType.number);
+    if (valueField) {
+      maximumValue = Math.max(maximumValue, max(valueField.values.toArray()));
+    }
+  });
+
+  return {
+    maximum: maximumValue,
+    range: widestRange || defaultRange,
+  };
+};
+
+export const getLogsVolumeDataSourceInfo = (dataFrames: DataFrame[]): { name: string; refId: string } | null => {
+  const customMeta = dataFrames[0]?.meta?.custom;
+
+  if (customMeta && customMeta.datasourceName && customMeta.sourceQuery?.refId) {
+    return {
+      name: customMeta.datasourceName,
+      refId: customMeta.sourceQuery.refId,
+    };
+  }
+
+  return null;
+};
+
+export const isLogsVolumeLimited = (dataFrames: DataFrame[]) => {
+  return dataFrames[0]?.meta?.custom?.logsVolumeType === LogsVolumeType.Limited;
+};
