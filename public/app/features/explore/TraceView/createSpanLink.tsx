@@ -165,7 +165,7 @@ function legacyCreateSpanLinkFactory(
           query = getQueryForElasticsearchOrOpensearch(span, traceToLogsOptions, tags, customQuery);
           break;
         case 'grafana-falconlogscale-datasource':
-          tags = getFormattedTags(span, tagsToUse);
+          tags = getFormattedTags(span, tagsToUse, { joinBy: ' OR ' });
           query = getQueryForHumio(span, traceToLogsOptions, tags, customQuery);
       }
 
