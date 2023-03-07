@@ -174,7 +174,7 @@ export const getLogsVolumeDimensions = (
       if (!widestRange) {
         widestRange = dataFrameRange;
       } else {
-        widestRange.to = Math.min(dataFrameRange.to, widestRange.to);
+        widestRange.to = Math.max(dataFrameRange.to, widestRange.to);
         widestRange.from = Math.min(dataFrameRange.from, widestRange.from);
       }
     }

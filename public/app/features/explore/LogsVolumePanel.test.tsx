@@ -24,6 +24,7 @@ function renderPanel(logsVolumeData?: DataQueryResponse) {
       onLoadLogsVolume={() => {}}
       onHiddenSeriesChanged={() => null}
       eventBus={new EventBusSrv()}
+      allLogsVolumeMaximum={20}
     />
   );
 }

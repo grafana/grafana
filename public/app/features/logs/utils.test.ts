@@ -1,13 +1,24 @@
-import { Labels, LogLevel, LogsModel, LogRowModel, LogsSortOrder, MutableDataFrame } from '@grafana/data';
+import {
+  AbsoluteTimeRange,
+  ArrayVector,
+  FieldType,
+  Labels,
+  LogLevel,
+  LogRowModel,
+  LogsModel,
+  LogsSortOrder,
+  MutableDataFrame,
+} from '@grafana/data';
 
 import {
-  getLogLevel,
   calculateLogsLabelStats,
   calculateStats,
-  getLogLevelFromKey,
-  sortLogsResult,
   checkLogsError,
+  getLogLevel,
+  getLogLevelFromKey,
+  getLogsVolumeDimensions,
   logRowsToReadableJson,
+  sortLogsResult,
 } from './utils';
 
 describe('getLoglevel()', () => {
@@ -259,5 +270,44 @@ describe('logRowsToReadableJson', () => {
     const result = logRowsToReadableJson([testRow2]);
 
     expect(result).toEqual([{ line: 'test entry', timestamp: '123456789', fields: { foo: 'bar', foo2: 'bar2' } }]);
+  });
+});
+
+describe('getLogsVolumeDimensions', () => {
+  function mockLogVolumeDataFrame(values: number[], absoluteRange: AbsoluteTimeRange) {
+    return new MutableDataFrame({
+      meta: {
+        custom: {
+          absoluteRange,
+        },
+      },
+      fields: [
+        {
+          name: 'time',
+          type: FieldType.time,
+          values: new ArrayVector([]),
+        },
+        {
+          name: 'value',
+          type: FieldType.number,
+          values: new ArrayVector(values),
+        },
+      ],
+    });
+  }
+
+  it('calculates the widest range covering all log volumes', () => {
+    const dimensions = getLogsVolumeDimensions(
+      [
+        mockLogVolumeDataFrame([0, 20, 10, 5, 30, 10, 5], { from: 5, to: 20 }),
+        mockLogVolumeDataFrame([0, 10, 20, 5, 10, 0, 20], { from: 10, to: 25 }),
+      ],
+      { from: 10, to: 20 }
+    );
+
+    expect(dimensions).toEqual({
+      maximum: 30,
+      range: { from: 5, to: 25 },
+    });
   });
 });
