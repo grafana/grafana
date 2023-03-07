@@ -2,44 +2,35 @@ package oauthserver
 
 import (
 	"context"
-	"crypto/rsa"
+	"net/http"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
+// TmpOrgID is the orgID we use while global service accounts are not supported.
+const TmpOrgID int64 = 1
+
+var (
+	allOrgsOAuthScope = "org.*"
+)
+
 type OAuth2Service interface {
-	RegisterApp(ctx context.Context, app *AppRegistration) (*Client, error)
-	GetClient(ctx context.Context, id string) (*Client, error)
+	RegisterApp(ctx context.Context, app *AppRegistration) (*ClientDTO, error)
+	GetApp(ctx context.Context, id string) (*Client, error)
+	HandleTokenRequest(rw http.ResponseWriter, req *http.Request)
+	HandleIntrospectionRequest(rw http.ResponseWriter, req *http.Request)
 }
 
 type KeyOption struct {
-	URL      string `json:"url,omitempty"`
-	Value    string `json:"value,omitempty"`
-	Generate bool   `json:"generate,omitempty"`
-}
-
-type KeyResult struct {
-	URL       string          `json:"url,omitempty"`
-	Private   string          `json:"private,omitempty"`
-	Public    string          `json:"public,omitempty"`
-	Generated bool            `json:"generated,omitempty"`
-	Key       *rsa.PrivateKey `json:"-"`
+	// URL       string `json:"url,omitempty"` // TODO allow specifying a URL to fetch the key from
+	PublicPEM string `json:"publicPEM,omitempty"`
+	Generate  bool   `json:"generate,omitempty"`
 }
 
 type AppRegistration struct {
-	AppName     string                     `json:"name"`
-	Permissions []accesscontrol.Permission `json:"permissions,omitempty"`
-	RedirectURI *string                    `json:"redirectUri,omitempty"`
-	Key         *KeyOption                 `json:"key,omitempty"`
-}
-
-type Client struct {
-	ID               string     `json:"clientId" xorm:"client_id"`
-	Secret           string     `json:"clientSecret" xorm:"secret"`
-	Domain           string     `json:"domain,omitempty" xorm:"domain"`  // TODO: what it is used for?
-	UserID           string     `json:"userID,omitempty" xorm:"user_id"` // TODO: what it is used for?
-	AppName          string     `json:"name" xorm:"app_name"`
-	RedirectURI      string     `json:"redirectUri,omitempty" xorm:"redirect_uri"`
-	ServiceAccountID int64      `json:"serviceAccountId,omitempty" xorm:"service_account_id"`
-	Key              *KeyResult `json:"key,omitempty" xorm:"key"`
+	AppName                string                     `json:"name"`
+	Permissions            []accesscontrol.Permission `json:"permissions,omitempty"`
+	ImpersonatePermissions []accesscontrol.Permission `json:"impersonatePermissions,omitempty"`
+	RedirectURI            *string                    `json:"redirectUri,omitempty"`
+	Key                    *KeyOption                 `json:"key,omitempty"`
 }

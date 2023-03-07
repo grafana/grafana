@@ -3,4 +3,3 @@ Issue:
     Clients not stored in the DB.
     Clients scopes and permissions should be tied together.
     Impersonation scopes are not supported.
-
