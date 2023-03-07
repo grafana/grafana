@@ -40,10 +40,10 @@ describe('Language completion provider', () => {
     interpolateString: (string: string) => string,
     hasLabelsMatchAPISupport: () => false,
     getQuantizedTimeRangeParams: () =>
-      getRangeSnapInterval(PrometheusCacheLevel.none, getMockQuantizedTimeRangeParams()),
+      getRangeSnapInterval(PrometheusCacheLevel.None, getMockQuantizedTimeRangeParams()),
     getDaysToCacheMetadata: () => 1,
-    getAdjustedInterval: () => getRangeSnapInterval(PrometheusCacheLevel.none, getMockQuantizedTimeRangeParams()),
-    cacheLevel: PrometheusCacheLevel.none,
+    getAdjustedInterval: () => getRangeSnapInterval(PrometheusCacheLevel.None, getMockQuantizedTimeRangeParams()),
+    cacheLevel: PrometheusCacheLevel.None,
   } as unknown as PrometheusDatasource;
 
   describe('cleanText', () => {
@@ -125,7 +125,7 @@ describe('Language completion provider', () => {
     it('should call series endpoint', () => {
       const languageProvider = new LanguageProvider({
         ...defaultDatasource,
-        getAdjustedInterval: () => getRangeSnapInterval(PrometheusCacheLevel.none, getMockQuantizedTimeRangeParams()),
+        getAdjustedInterval: () => getRangeSnapInterval(PrometheusCacheLevel.None, getMockQuantizedTimeRangeParams()),
       } as PrometheusDatasource);
       const getSeriesLabels = languageProvider.getSeriesLabels;
       const requestSpy = jest.spyOn(languageProvider, 'request');
@@ -147,12 +147,12 @@ describe('Language completion provider', () => {
     });
 
     it('should call labels endpoint with quantized start', () => {
-      const timeSnapMinutes = getClientCacheDurationInMinutes(PrometheusCacheLevel.low);
+      const timeSnapMinutes = getClientCacheDurationInMinutes(PrometheusCacheLevel.Low);
       const languageProvider = new LanguageProvider({
         ...defaultDatasource,
         hasLabelsMatchAPISupport: () => true,
-        cacheLevel: PrometheusCacheLevel.low,
-        getAdjustedInterval: () => getRangeSnapInterval(PrometheusCacheLevel.low, getMockQuantizedTimeRangeParams()),
+        cacheLevel: PrometheusCacheLevel.Low,
+        getAdjustedInterval: () => getRangeSnapInterval(PrometheusCacheLevel.Low, getMockQuantizedTimeRangeParams()),
         getCacheDurationInMinutes: () => timeSnapMinutes,
       } as PrometheusDatasource);
       const getSeriesLabels = languageProvider.getSeriesLabels;

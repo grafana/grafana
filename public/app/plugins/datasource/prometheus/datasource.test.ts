@@ -24,13 +24,12 @@ import { VariableHide } from '../../../features/variables/types';
 import {
   alignRange,
   extractRuleMappingFromGroups,
-  PrometheusCacheLevel,
   PrometheusDatasource,
   prometheusRegularEscape,
   prometheusSpecialRegexEscape,
 } from './datasource';
 import PromQlLanguageProvider from './language_provider';
-import { PromOptions, PromQuery, PromQueryRequest } from './types';
+import { PrometheusCacheLevel, PromOptions, PromQuery, PromQueryRequest } from './types';
 
 const fetchMock = jest.fn().mockReturnValue(of(createDefaultPromResponse()));
 
@@ -86,7 +85,7 @@ describe('PrometheusDatasource', () => {
     password: 'mupp',
     jsonData: {
       customQueryParameters: '',
-      cacheLevel: PrometheusCacheLevel.low,
+      cacheLevel: PrometheusCacheLevel.Low,
     } as Partial<PromOptions>,
   } as unknown as DataSourceInstanceSettings<PromOptions>;
 
@@ -440,7 +439,7 @@ describe('PrometheusDatasource', () => {
       const dataSource = new PrometheusDatasource(
         {
           ...instanceSettings,
-          jsonData: { ...instanceSettings.jsonData, cacheLevel: PrometheusCacheLevel.low },
+          jsonData: { ...instanceSettings.jsonData, cacheLevel: PrometheusCacheLevel.Low },
         },
         templateSrvStub as unknown as TemplateSrv,
         timeSrvStub as unknown as TimeSrv
@@ -454,7 +453,7 @@ describe('PrometheusDatasource', () => {
       const dataSource = new PrometheusDatasource(
         {
           ...instanceSettings,
-          jsonData: { ...instanceSettings.jsonData, cacheLevel: PrometheusCacheLevel.medium },
+          jsonData: { ...instanceSettings.jsonData, cacheLevel: PrometheusCacheLevel.Medium },
         },
         templateSrvStub as unknown as TemplateSrv,
         timeSrvStub as unknown as TimeSrv
@@ -467,7 +466,7 @@ describe('PrometheusDatasource', () => {
       const dataSource = new PrometheusDatasource(
         {
           ...instanceSettings,
-          jsonData: { ...instanceSettings.jsonData, cacheLevel: PrometheusCacheLevel.high },
+          jsonData: { ...instanceSettings.jsonData, cacheLevel: PrometheusCacheLevel.High },
         },
         templateSrvStub as unknown as TemplateSrv,
         timeSrvStub as unknown as TimeSrv
@@ -480,7 +479,7 @@ describe('PrometheusDatasource', () => {
       const dataSource = new PrometheusDatasource(
         {
           ...instanceSettings,
-          jsonData: { ...instanceSettings.jsonData, cacheLevel: PrometheusCacheLevel.none },
+          jsonData: { ...instanceSettings.jsonData, cacheLevel: PrometheusCacheLevel.None },
         },
         templateSrvStub as unknown as TemplateSrv,
         timeSrvStub as unknown as TimeSrv
@@ -788,7 +787,7 @@ describe('PrometheusDatasource', () => {
   describe('metricFindQuery', () => {
     beforeEach(() => {
       const prometheusDatasource = new PrometheusDatasource(
-        { ...instanceSettings, jsonData: { ...instanceSettings.jsonData, cacheLevel: PrometheusCacheLevel.none } },
+        { ...instanceSettings, jsonData: { ...instanceSettings.jsonData, cacheLevel: PrometheusCacheLevel.None } },
         templateSrvStub,
         timeSrvStubOld
       );
@@ -832,7 +831,7 @@ describe('PrometheusDatasource2', () => {
     directUrl: 'direct',
     user: 'test',
     password: 'mupp',
-    jsonData: { httpMethod: 'GET', cacheLevel: PrometheusCacheLevel.none },
+    jsonData: { httpMethod: 'GET', cacheLevel: PrometheusCacheLevel.None },
   } as unknown as DataSourceInstanceSettings<PromOptions>;
 
   let ds: PrometheusDatasource;

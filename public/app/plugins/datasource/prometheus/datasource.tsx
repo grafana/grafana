@@ -138,7 +138,7 @@ export class PrometheusDatasource
     this.defaultEditor = instanceSettings.jsonData.defaultEditor;
     this.variables = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
     this.exemplarsAvailable = true;
-    this.cacheLevel = instanceSettings.jsonData.cacheLevel ?? PrometheusCacheLevel.low;
+    this.cacheLevel = instanceSettings.jsonData.cacheLevel ?? PrometheusCacheLevel.Low;
 
     // This needs to be here and cannot be static because of how annotations typing affects casting of data source
     // objects to DataSourceApi types.
@@ -1258,9 +1258,9 @@ export class PrometheusDatasource
 
   getDebounceTimeInMilliseconds(): number {
     switch (this.cacheLevel) {
-      case PrometheusCacheLevel.medium:
+      case PrometheusCacheLevel.Medium:
         return 600;
-      case PrometheusCacheLevel.high:
+      case PrometheusCacheLevel.High:
         return 1200;
       default:
         return 350;
@@ -1269,9 +1269,9 @@ export class PrometheusDatasource
 
   getDaysToCacheMetadata(): number {
     switch (this.cacheLevel) {
-      case PrometheusCacheLevel.medium:
+      case PrometheusCacheLevel.Medium:
         return 7;
-      case PrometheusCacheLevel.high:
+      case PrometheusCacheLevel.High:
         return 30;
       default:
         return 1;

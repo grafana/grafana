@@ -14,7 +14,7 @@ import { BackendSrvRequest } from '@grafana/runtime';
 import { CompletionItem, CompletionItemGroup, SearchFunctionType, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
 
 import { Label } from './components/monaco-query-field/monaco-completion-provider/situation';
-import { PrometheusCacheLevel, PrometheusDatasource } from './datasource';
+import { PrometheusDatasource } from './datasource';
 import {
   addLimitInfo,
   extractLabelMatchers,
@@ -25,7 +25,7 @@ import {
   toPromLikeQuery,
 } from './language_utils';
 import PromqlSyntax, { FUNCTIONS, RATE_RANGES } from './promql';
-import { PromMetricsMetadata, PromQuery } from './types';
+import { PrometheusCacheLevel, PromMetricsMetadata, PromQuery } from './types';
 
 const DEFAULT_KEYS = ['job', 'instance'];
 const EMPTY_SELECTOR = '{}';
@@ -112,7 +112,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   }
 
   getDefaultCacheHeaders() {
-    if (this.datasource.cacheLevel !== PrometheusCacheLevel.none) {
+    if (this.datasource.cacheLevel !== PrometheusCacheLevel.None) {
       return buildCacheHeaders(this.datasource.getCacheDurationInMinutes() * 60);
     }
     return;

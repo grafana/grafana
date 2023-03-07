@@ -25,10 +25,10 @@ export interface PromQuery extends DataQuery {
 }
 
 export enum PrometheusCacheLevel {
-  low = 'low',
-  medium = 'medium',
-  high = 'high',
-  none = 'none',
+  Low = 'Low',
+  Medium = 'Medium',
+  High = 'High',
+  None = 'None',
 }
 export interface PromOptions extends DataSourceJsonData {
   timeInterval?: string;

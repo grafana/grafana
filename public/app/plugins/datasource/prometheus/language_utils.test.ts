@@ -240,7 +240,7 @@ describe('getRangeSnapInterval', () => {
       to: expectedTo,
     } as TimeRange;
 
-    expect(getRangeSnapInterval(PrometheusCacheLevel.none, range)).toEqual({
+    expect(getRangeSnapInterval(PrometheusCacheLevel.None, range)).toEqual({
       start: getPrometheusTime(expectedFrom, false).toString(),
       end: getPrometheusTime(expectedTo, true).toString(),
     });
@@ -280,9 +280,9 @@ describe('getRangeSnapInterval', () => {
       },
     };
 
-    const first = getRangeSnapInterval(PrometheusCacheLevel.low, range);
-    const second = getRangeSnapInterval(PrometheusCacheLevel.low, range2);
-    const third = getRangeSnapInterval(PrometheusCacheLevel.low, range3);
+    const first = getRangeSnapInterval(PrometheusCacheLevel.Low, range);
+    const second = getRangeSnapInterval(PrometheusCacheLevel.Low, range2);
+    const third = getRangeSnapInterval(PrometheusCacheLevel.Low, range3);
 
     expect(first).toEqual({
       start: getPrometheusTime(expectedFrom as DateTime, false).toString(10),
@@ -357,9 +357,9 @@ describe('getRangeSnapInterval', () => {
       },
     };
 
-    const first = getRangeSnapInterval(PrometheusCacheLevel.medium, range);
-    const second = getRangeSnapInterval(PrometheusCacheLevel.medium, range2);
-    const third = getRangeSnapInterval(PrometheusCacheLevel.medium, range3);
+    const first = getRangeSnapInterval(PrometheusCacheLevel.Medium, range);
+    const second = getRangeSnapInterval(PrometheusCacheLevel.Medium, range2);
+    const third = getRangeSnapInterval(PrometheusCacheLevel.Medium, range3);
 
     expect(first).toEqual({
       start: getPrometheusTime(expectedFromFirst as DateTime, false).toString(10),

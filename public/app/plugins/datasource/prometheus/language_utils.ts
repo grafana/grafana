@@ -381,7 +381,7 @@ export function getRangeSnapInterval(
   range: TimeRange
 ): { start: string; end: string } {
   // Don't round the range if we're not caching
-  if (cacheLevel === PrometheusCacheLevel.none) {
+  if (cacheLevel === PrometheusCacheLevel.None) {
     return {
       start: getPrometheusTime(range.from, false).toString(),
       end: getPrometheusTime(range.to, true).toString(),
@@ -410,9 +410,9 @@ export function getRangeSnapInterval(
 
 export function getClientCacheDurationInMinutes(cacheLevel: PrometheusCacheLevel) {
   switch (cacheLevel) {
-    case PrometheusCacheLevel.medium:
+    case PrometheusCacheLevel.Medium:
       return 10;
-    case PrometheusCacheLevel.high:
+    case PrometheusCacheLevel.High:
       return 60;
     default:
       return 1;

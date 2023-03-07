@@ -40,10 +40,10 @@ const editorOptions = [
 ];
 
 const cacheValueOptions = [
-  { value: PrometheusCacheLevel.low, label: 'Low' },
-  { value: PrometheusCacheLevel.medium, label: 'Medium' },
-  { value: PrometheusCacheLevel.high, label: 'High' },
-  { value: PrometheusCacheLevel.none, label: 'None' },
+  { value: PrometheusCacheLevel.Low, label: 'Low' },
+  { value: PrometheusCacheLevel.Medium, label: 'Medium' },
+  { value: PrometheusCacheLevel.High, label: 'High' },
+  { value: PrometheusCacheLevel.None, label: 'None' },
 ];
 
 type PrometheusSelectItemsType = Array<{ value: PromApplication; label: PromApplication }>;
