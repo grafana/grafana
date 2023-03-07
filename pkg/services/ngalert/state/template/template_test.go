@@ -9,9 +9,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	ptr "github.com/xorcare/pointer"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestLabelsString(t *testing.T) {
@@ -96,7 +96,7 @@ func TestExpandTemplate(t *testing.T) {
 				"A": {
 					Var:    "A",
 					Labels: data.Labels{"instance": "foo"},
-					Value:  ptr.Float64(1),
+					Value:  util.Pointer(1.0),
 				},
 			},
 		},
@@ -109,7 +109,7 @@ func TestExpandTemplate(t *testing.T) {
 				"A": {
 					Var:    "A",
 					Labels: data.Labels{"instance": "foo"},
-					Value:  ptr.Float64(1.1),
+					Value:  util.Pointer(1.1),
 				},
 			},
 		},
@@ -122,7 +122,7 @@ func TestExpandTemplate(t *testing.T) {
 				"A": {
 					Var:    "A",
 					Labels: data.Labels{},
-					Value:  ptr.Float64(1),
+					Value:  util.Pointer(1.0),
 				},
 			},
 		},
@@ -176,22 +176,22 @@ func TestExpandTemplate(t *testing.T) {
 				"A": {
 					Var:    "A",
 					Labels: data.Labels{},
-					Value:  ptr.Float64(0.0),
+					Value:  util.Pointer(0.0),
 				},
 				"B": {
 					Var:    "B",
 					Labels: data.Labels{},
-					Value:  ptr.Float64(1.0),
+					Value:  util.Pointer(1.0),
 				},
 				"C": {
 					Var:    "C",
 					Labels: data.Labels{},
-					Value:  ptr.Float64(1048576.0),
+					Value:  util.Pointer(1048576.0),
 				},
 				"D": {
 					Var:    "D",
 					Labels: data.Labels{},
-					Value:  ptr.Float64(.12),
+					Value:  util.Pointer(.12),
 				},
 			},
 		},
@@ -211,42 +211,42 @@ func TestExpandTemplate(t *testing.T) {
 				"A": {
 					Var:    "A",
 					Labels: data.Labels{},
-					Value:  ptr.Float64(0),
+					Value:  util.Pointer(0.0),
 				},
 				"B": {
 					Var:    "B",
 					Labels: data.Labels{},
-					Value:  ptr.Float64(1),
+					Value:  util.Pointer(1.0),
 				},
 				"C": {
 					Var:    "C",
 					Labels: data.Labels{},
-					Value:  ptr.Float64(60),
+					Value:  util.Pointer(60.0),
 				},
 				"D": {
 					Var:    "D",
 					Labels: data.Labels{},
-					Value:  ptr.Float64(3600),
+					Value:  util.Pointer(3600.0),
 				},
 				"E": {
 					Var:    "E",
 					Labels: data.Labels{},
-					Value:  ptr.Float64(86400),
+					Value:  util.Pointer(86400.0),
 				},
 				"F": {
 					Var:    "F",
 					Labels: data.Labels{},
-					Value:  ptr.Float64(86400 + 3600),
+					Value:  util.Pointer(86400.0 + 3600.0),
 				},
 				"G": {
 					Var:    "G",
 					Labels: data.Labels{},
-					Value:  ptr.Float64(-(86400*2 + 3600*3 + 60*4 + 5)),
+					Value:  util.Pointer(-(86400*2 + 3600*3 + 60*4 + 5.0)),
 				},
 				"H": {
 					Var:    "H",
 					Labels: data.Labels{},
-					Value:  ptr.Float64(899.99),
+					Value:  util.Pointer(899.99),
 				},
 			},
 		},
@@ -266,37 +266,37 @@ func TestExpandTemplate(t *testing.T) {
 				"A": {
 					Var:    "A",
 					Labels: data.Labels{},
-					Value:  ptr.Float64(.1),
+					Value:  util.Pointer(.1),
 				},
 				"B": {
 					Var:    "B",
 					Labels: data.Labels{},
-					Value:  ptr.Float64(.0001),
+					Value:  util.Pointer(.0001),
 				},
 				"C": {
 					Var:    "C",
 					Labels: data.Labels{},
-					Value:  ptr.Float64(.12345),
+					Value:  util.Pointer(.12345),
 				},
 				"D": {
 					Var:    "D",
 					Labels: data.Labels{},
-					Value:  ptr.Float64(60.1),
+					Value:  util.Pointer(60.1),
 				},
 				"E": {
 					Var:    "E",
 					Labels: data.Labels{},
-					Value:  ptr.Float64(60.5),
+					Value:  util.Pointer(60.5),
 				},
 				"F": {
 					Var:    "F",
 					Labels: data.Labels{},
-					Value:  ptr.Float64(1.2345),
+					Value:  util.Pointer(1.2345),
 				},
 				"G": {
 					Var:    "G",
 					Labels: data.Labels{},
-					Value:  ptr.Float64(12.345),
+					Value:  util.Pointer(12.345),
 				},
 			},
 		},

@@ -305,12 +305,10 @@ export function getStreamSelectorsFromQuery(query: string): string[] {
 }
 
 export function requestSupportsPartitioning(allQueries: LokiQuery[]) {
-  const queries = allQueries.filter((query) => !query.hide).filter((query) => !query.refId.includes('do-not-chunk'));
-
-  const instantQueries = queries.some((query) => query.queryType === LokiQueryType.Instant);
-  if (instantQueries) {
-    return false;
-  }
+  const queries = allQueries
+    .filter((query) => !query.hide)
+    .filter((query) => !query.refId.includes('do-not-chunk'))
+    .filter((query) => query.expr);
 
   return queries.length > 0;
 }
