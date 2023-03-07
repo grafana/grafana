@@ -27,34 +27,10 @@ const dataLinkHasRequiredPermissionsFilter = (link: DataLink) => {
 };
 
 /**
- * Check if every variable in the link has a value. If not this returns false. If there are no variables in the link
- * this will return true.
- * @param link
- * @param scopedVars
- */
-const dataLinkVariablesDefinedFilter = (link: DataLink, scopedVars: ScopedVars) => {
-  let hasAllRequiredVarDefined = true;
-
-  if (link.internal) {
-    let stringifiedQuery = '';
-    try {
-      stringifiedQuery = JSON.stringify(link.internal.query || {});
-      // Hook into format function to verify if all values are non-empty
-      // Format function is run on all existing field values allowing us to check it's value is non-empty
-      getTemplateSrv().replace(stringifiedQuery, scopedVars, (f: string) => {
-        hasAllRequiredVarDefined = hasAllRequiredVarDefined && !!f;
-        return '';
-      });
-    } catch (err) {}
-  }
-  return hasAllRequiredVarDefined;
-};
-
-/**
  * Fixed list of filters used in Explore. DataLinks that do not pass all the filters will not
  * be passed back to the visualization.
  */
-const DATA_LINK_FILTERS: DataLinkFilter[] = [dataLinkVariablesDefinedFilter, dataLinkHasRequiredPermissionsFilter];
+const DATA_LINK_FILTERS: DataLinkFilter[] = [dataLinkHasRequiredPermissionsFilter];
 
 /**
  * Get links from the field of a dataframe and in addition check if there is associated

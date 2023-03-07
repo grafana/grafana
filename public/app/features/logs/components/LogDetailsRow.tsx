@@ -241,19 +241,21 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
           {value.map((val, i) => {
             return (
               <tr key={`${val}-${i}`}>
-                <td>{val}</td>
-                {showCopy && (
-                  <div className={cx('show-on-hover', styles.copyButton)}>
-                    <ClipboardButton
-                      getText={() => val}
-                      title="Copy value to clipboard"
-                      fill="text"
-                      variant="secondary"
-                      icon="copy"
-                      size="md"
-                    />
-                  </div>
-                )}
+                <td>
+                  {val}
+                  {showCopy && (
+                    <div className={cx('show-on-hover', styles.copyButton)}>
+                      <ClipboardButton
+                        getText={() => val}
+                        title="Copy value to clipboard"
+                        fill="text"
+                        variant="secondary"
+                        icon="copy"
+                        size="md"
+                      />
+                    </div>
+                  )}
+                </td>
               </tr>
             );
           })}

@@ -104,11 +104,11 @@ class UnThemedLogDetails extends PureComponent<Props> {
                 )}
                 {Object.keys(labels)
                   .sort()
-                  .map((key) => {
+                  .map((key, i) => {
                     const value = labels[key];
                     return (
                       <LogDetailsRow
-                        key={`${key}=${value}`}
+                        key={`${key}=${value}-${i}`}
                         parsedKey={key}
                         parsedValue={value}
                         isLabel={true}
@@ -124,11 +124,11 @@ class UnThemedLogDetails extends PureComponent<Props> {
                       />
                     );
                   })}
-                {fields.map((field) => {
+                {fields.map((field, i) => {
                   const { key, value, fieldIndex } = field;
                   return (
                     <LogDetailsRow
-                      key={`${key}=${value}`}
+                      key={`${key}=${value}-${i}`}
                       parsedKey={key}
                       parsedValue={value}
                       onClickShowField={onClickShowField}
@@ -151,11 +151,11 @@ class UnThemedLogDetails extends PureComponent<Props> {
                     </td>
                   </tr>
                 )}
-                {showLinks.map((field) => {
+                {showLinks.map((field, i) => {
                   const { key, value, links, fieldIndex } = field;
                   return (
                     <LogDetailsRow
-                      key={`${key}=${value}`}
+                      key={`${key}=${value}-${i}`}
                       parsedKey={key}
                       parsedValue={value}
                       links={links}
@@ -169,11 +169,11 @@ class UnThemedLogDetails extends PureComponent<Props> {
                     />
                   );
                 })}
-                {varMapLinks?.map((field) => {
+                {varMapLinks?.map((field, i) => {
                   const { key, value, keyArr, valArr, links, fieldIndex } = field;
                   return (
                     <LogDetailsRow
-                      key={`${key}=${value}`}
+                      key={`${key}=${value}-${i}`}
                       parsedKey={key}
                       parsedValue={value}
                       parsedKeyArray={keyArr}

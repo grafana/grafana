@@ -357,7 +357,8 @@ export class TemplateSrv implements BaseTemplateSrv {
     const regexp = new RegExp(this.regex);
     const values: Record<string, VarValue> = {};
 
-    target.replace(regexp, (match, var1, var2, fmt2, var3, fieldPath, fmt3) => {
+    // see comments around regex variable for what the following parameters capture
+    target.replace(regexp, (match, var1, var2, fmt2, var3, fieldPath, fmt3, offset, inputString, groups) => {
       const variableName = var1 || var2 || var3;
       const fmt = fmt2 || fmt3 || format;
       const value = this.getVariableValue(variableName, fieldPath, scopedVars);
@@ -365,6 +366,8 @@ export class TemplateSrv implements BaseTemplateSrv {
         const variable = this.getVariableAtIndex(variableName);
         const text = this.getVariableText(variableName, value, scopedVars);
         values[variableName] = this.formatValue(value, fmt, variable, text);
+      } else {
+        values[variableName] = undefined;
       }
 
       // Don't care about the result anyway

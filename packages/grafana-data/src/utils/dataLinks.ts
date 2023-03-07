@@ -144,17 +144,14 @@ export function dataLinkHasAllVariablesDefined<T extends DataLink>(
   };
 }
 
-function getStringsFromObject<T extends Object>(obj: T): string {
+function getStringsFromObject(obj: Object): string {
   let acc = '';
-  for (const k of Object.keys(obj)) {
-    // Honestly not sure how to type this to make TS happy.
-    // @ts-ignore
+  let k: keyof typeof obj;
+
+  for (k in obj) {
     if (typeof obj[k] === 'string') {
-      // @ts-ignore
       acc += ' ' + obj[k];
-      // @ts-ignore
-    } else if (typeof obj[k] === 'object' && obj[k] !== null) {
-      // @ts-ignore
+    } else if (typeof obj[k] === 'object') {
       acc += ' ' + getStringsFromObject(obj[k]);
     }
   }
