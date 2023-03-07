@@ -330,16 +330,12 @@ func (pd *PublicDashboardServiceImpl) GetOrgIdByAccessToken(ctx context.Context,
 }
 
 func (pd *PublicDashboardServiceImpl) Delete(ctx context.Context, orgId int64, uid string) error {
-	affectedRows, err := pd.store.Delete(ctx, orgId, uid)
+	pubdash, err := pd.Find(ctx, uid)
 	if err != nil {
-		return ErrInternalServerError.Errorf("Delete: failed to delete a public dashboard by orgId: %d and Uid: %s %w", orgId, uid, err)
+		return err
 	}
 
-	if affectedRows == 0 {
-		return ErrPublicDashboardNotFound.Errorf("Delete: Public dashboard not found by orgId: %d and Uid: %s", orgId, uid)
-	}
-
-	return nil
+	return pd.serviceWrapper.DeleteByPublicDashboard(ctx, pubdash)
 }
 
 func (pd *PublicDashboardServiceImpl) DeleteByDashboard(ctx context.Context, dashboard *dashboards.Dashboard) error {
@@ -351,7 +347,7 @@ func (pd *PublicDashboardServiceImpl) DeleteByDashboard(ctx context.Context, das
 		}
 		// delete each pubdash
 		for _, pubdash := range pubdashes {
-			err = pd.serviceWrapper.HandlePublicDashboardDeleted(ctx, pubdash)
+			err = pd.serviceWrapper.DeleteByPublicDashboard(ctx, pubdash)
 			if err != nil {
 				return err
 			}
@@ -365,7 +361,7 @@ func (pd *PublicDashboardServiceImpl) DeleteByDashboard(ctx context.Context, das
 		return err
 	}
 
-	return pd.serviceWrapper.HandlePublicDashboardDeleted(ctx, pubdash)
+	return pd.serviceWrapper.DeleteByPublicDashboard(ctx, pubdash)
 }
 
 // intervalMS and maxQueryData values are being calculated on the frontend for regular dashboards
