@@ -62,25 +62,12 @@ const (
 
 // Defines values for BasePipelineMetricAggregationType.
 const (
-	BasePipelineMetricAggregationTypeAvg           BasePipelineMetricAggregationType = "avg"
 	BasePipelineMetricAggregationTypeBucketScript  BasePipelineMetricAggregationType = "bucket_script"
-	BasePipelineMetricAggregationTypeCardinality   BasePipelineMetricAggregationType = "cardinality"
-	BasePipelineMetricAggregationTypeCount         BasePipelineMetricAggregationType = "count"
 	BasePipelineMetricAggregationTypeCumulativeSum BasePipelineMetricAggregationType = "cumulative_sum"
 	BasePipelineMetricAggregationTypeDerivative    BasePipelineMetricAggregationType = "derivative"
-	BasePipelineMetricAggregationTypeExtendedStats BasePipelineMetricAggregationType = "extended_stats"
-	BasePipelineMetricAggregationTypeLogs          BasePipelineMetricAggregationType = "logs"
-	BasePipelineMetricAggregationTypeMax           BasePipelineMetricAggregationType = "max"
-	BasePipelineMetricAggregationTypeMin           BasePipelineMetricAggregationType = "min"
 	BasePipelineMetricAggregationTypeMovingAvg     BasePipelineMetricAggregationType = "moving_avg"
 	BasePipelineMetricAggregationTypeMovingFn      BasePipelineMetricAggregationType = "moving_fn"
-	BasePipelineMetricAggregationTypePercentiles   BasePipelineMetricAggregationType = "percentiles"
-	BasePipelineMetricAggregationTypeRate          BasePipelineMetricAggregationType = "rate"
-	BasePipelineMetricAggregationTypeRawData       BasePipelineMetricAggregationType = "raw_data"
-	BasePipelineMetricAggregationTypeRawDocument   BasePipelineMetricAggregationType = "raw_document"
 	BasePipelineMetricAggregationTypeSerialDiff    BasePipelineMetricAggregationType = "serial_diff"
-	BasePipelineMetricAggregationTypeSum           BasePipelineMetricAggregationType = "sum"
-	BasePipelineMetricAggregationTypeTopMetrics    BasePipelineMetricAggregationType = "top_metrics"
 )
 
 // Defines values for BucketAggregationSettingsOrder.

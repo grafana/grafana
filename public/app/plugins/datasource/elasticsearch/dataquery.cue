@@ -287,6 +287,7 @@ composableKinds: DataQuery: {
 						#BasePipelineMetricAggregation: {
 							#MetricAggregationWithField
 							pipelineAgg?: string
+							type:         #PipelineMetricAggregationType
 						} @cuetsy(kind="interface")
 
 						#PipelineMetricAggregationWithMultipleBucketPaths: {

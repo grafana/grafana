@@ -234,6 +234,7 @@ export interface Rate extends MetricAggregationWithField {
 
 export interface BasePipelineMetricAggregation extends MetricAggregationWithField {
   pipelineAgg?: string;
+  type: PipelineMetricAggregationType;
 }
 
 export interface PipelineMetricAggregationWithMultipleBucketPaths extends BaseMetricAggregation {
