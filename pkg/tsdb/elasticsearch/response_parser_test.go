@@ -1348,7 +1348,7 @@ func TestResponseParser(t *testing.T) {
 			require.Len(t, dataframes, 1)
 			frame := dataframes[0]
 
-			require.Equal(t, 16, len(frame.Fields))
+			require.Equal(t, 15, len(frame.Fields))
 			// Fields have the correct length
 			require.Equal(t, 2, frame.Fields[0].Len())
 			// First field is timeField
@@ -1356,14 +1356,60 @@ func TestResponseParser(t *testing.T) {
 			// Correctly uses string types
 			require.Equal(t, data.FieldTypeNullableString, frame.Fields[1].Type())
 			// Correctly detects float64 types
-			require.Equal(t, data.FieldTypeNullableFloat64, frame.Fields[6].Type())
+			require.Equal(t, data.FieldTypeNullableFloat64, frame.Fields[5].Type())
 			// Correctly detects json types
-			require.Equal(t, data.FieldTypeNullableJSON, frame.Fields[7].Type())
+			require.Equal(t, data.FieldTypeNullableJSON, frame.Fields[6].Type())
 			// Correctly flattens fields
-			require.Equal(t, "nested.field.double_nested", frame.Fields[12].Name)
-			require.Equal(t, data.FieldTypeNullableString, frame.Fields[12].Type())
+			require.Equal(t, "nested.field.double_nested", frame.Fields[11].Name)
+			require.Equal(t, data.FieldTypeNullableString, frame.Fields[11].Type())
 			// Correctly detects type even if first value is null
-			require.Equal(t, data.FieldTypeNullableString, frame.Fields[15].Type())
+			require.Equal(t, data.FieldTypeNullableString, frame.Fields[14].Type())
+		})
+		t.Run("Raw data query filterable fields", func(t *testing.T) {
+			query := []byte(`
+				[
+					{
+						"refId": "A",
+						"metrics": [{ "type": "raw_data", "id": "1" }],
+						"bucketAggs": []
+					}
+				]
+			`)
+
+			response := []byte(`
+				{
+					"responses": [
+					  {
+						"hits": {
+						  "total": { "relation": "eq", "value": 1 },
+						  "hits": [
+							{
+							  "_id": "1",
+							  "_type": "_doc",
+							  "_index": "index",
+							  "_source": { "sourceProp": "asd" }
+							}
+						  ]
+						}
+					  }
+					]
+				}
+			`)
+
+			result, err := queryDataTest(query, response)
+			require.NoError(t, err)
+
+			require.Len(t, result.response.Responses, 1)
+			frames := result.response.Responses["A"].Frames
+			require.True(t, len(frames) > 0) // FIXME
+
+			for _, field := range frames[0].Fields {
+				trueValue := true
+				filterableConfig := data.FieldConfig{Filterable: &trueValue}
+
+				// we need to test that the only changed setting is `filterable`
+				require.Equal(t, filterableConfig, *field.Config) // FIXME
+			}
 		})
 	})
 

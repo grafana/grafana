@@ -403,4 +403,7 @@ export const Components = {
   AnalyticsToolbarButton: {
     button: 'Dashboard insights',
   },
+  Variables: {
+    variableOption: 'data-testid variable-option',
+  },
 };
