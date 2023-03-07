@@ -256,16 +256,13 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 		return fmt.Errorf("%w: %s", ErrValidation, err.Error())
 	}
 
-	// check that provenance is not changed in a invalid way
+	// check that provenance is not changed in an invalid way
 	storedProvenance, err := ecp.provenanceStore.GetProvenance(ctx, &contactPoint, orgID)
 	if err != nil {
 		return err
 	}
-	err = canUpdateWithProvenance(storedProvenance, provenance, func() error {
+	if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
 		return fmt.Errorf("cannot change provenance from '%s' to '%s'", storedProvenance, provenance)
-	})
-	if err != nil {
-		return err
 	}
 	// transform to internal model
 	extractedSecrets, err := contactPoint.ExtractSecrets()

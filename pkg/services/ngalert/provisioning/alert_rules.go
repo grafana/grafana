@@ -271,7 +271,7 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 
 		updates := make([]models.UpdateRule, 0, len(delta.Update))
 		for _, update := range delta.Update {
-			// check that provenance is not changed in a invalid way
+			// check that provenance is not changed in an invalid way
 			storedProvenance, err := service.provenanceStore.GetProvenance(ctx, update.New, orgID)
 			if err != nil {
 				return err
@@ -297,7 +297,7 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 		}
 
 		for _, delete := range delta.Delete {
-			// check that provenance is not changed in a invalid way
+			// check that provenance is not changed in an invalid way
 			storedProvenance, err := service.provenanceStore.GetProvenance(ctx, delete, orgID)
 			if err != nil {
 				return err
@@ -327,11 +327,8 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, rule model
 	if err != nil {
 		return models.AlertRule{}, err
 	}
-	err = canUpdateWithProvenance(storedProvenance, provenance, func() error {
-		return fmt.Errorf("cannot change provenance from '%s' to '%s'", storedProvenance, provenance)
-	})
-	if err != nil {
-		return models.AlertRule{}, err
+	if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
+		return models.AlertRule{}, fmt.Errorf("cannot change provenance from '%s' to '%s'", storedProvenance, provenance)
 	}
 	rule.Updated = time.Now()
 	rule.ID = storedRule.ID
@@ -363,16 +360,13 @@ func (service *AlertRuleService) DeleteAlertRule(ctx context.Context, orgID int6
 		OrgID: orgID,
 		UID:   ruleUID,
 	}
-	// check that provenance is not changed in a invalid way
+	// check that provenance is not changed in an invalid way
 	storedProvenance, err := service.provenanceStore.GetProvenance(ctx, rule, rule.OrgID)
 	if err != nil {
 		return err
 	}
-	err = canUpdateWithProvenance(storedProvenance, provenance, func() error {
+	if storedProvenance != provenance && storedProvenance != models.ProvenanceNone {
 		return fmt.Errorf("cannot delete with provided provenance '%s', needs '%s'", provenance, storedProvenance)
-	})
-	if err != nil {
-		return err
 	}
 	return service.xact.InTransaction(ctx, func(ctx context.Context) error {
 		return service.deleteRules(ctx, orgID, rule)
