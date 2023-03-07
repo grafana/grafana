@@ -47,8 +47,6 @@ func TestFeatureToggleFiles(t *testing.T) {
 		"disableEnvelopeEncryption":         true,
 		"database_metrics":                  true,
 		"prometheusAzureOverrideAudience":   true,
-		"publicDashboards":                  true,
-		"publicDashboardsEmailSharing":      true,
 		"lokiDataframeApi":                  true,
 		"featureHighlights":                 true,
 		"migrationLocking":                  true,
@@ -91,6 +89,16 @@ func TestFeatureToggleFiles(t *testing.T) {
 			if flag.Owner == "" {
 				if _, ok := ownerlessFeatures[flag.Name]; !ok {
 					t.Errorf("feature %s does not have an owner", flag.Name)
+				}
+			}
+		}
+	})
+
+	t.Run("features with assigned owner should not be on the ownerless list", func(t *testing.T) {
+		for _, flag := range standardFeatureFlags {
+			if flag.Owner != "" {
+				if _, ok := ownerlessFeatures[flag.Name]; ok {
+					t.Errorf("feature %s should be removed from the ownerless list", flag.Name)
 				}
 			}
 		}

@@ -70,6 +70,7 @@ var (
 			Name:        "publicDashboards",
 			Description: "Enables public access to dashboards",
 			State:       FeatureStateAlpha,
+			Owner:       grafanaDashboardsSquad,
 		},
 		{
 			Name:            "publicDashboardsEmailSharing",
@@ -77,6 +78,7 @@ var (
 			State:           FeatureStateAlpha,
 			RequiresLicense: true,
 			RequiresDevMode: true,
+			Owner:           grafanaDashboardsSquad,
 		},
 		{
 			Name:        "lokiLive",
