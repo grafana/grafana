@@ -159,7 +159,7 @@
 /devenv/docker/blocks/elastic* @grafana/observability-logs
 
 # Performance tests
-/devenv/docker/loadtest-ts/ @grafana/multitenancy-squad
+/devenv/docker/loadtest-ts/ @grafana/grafana-app-platform-squad
 
 /devenv/bulk-dashboards/ @grafana/dashboards-squad
 /devenv/bulk_alerting_dashboards/ @grafana/alerting-squad-backend
@@ -255,13 +255,14 @@
 /pkg/services/sqlstore/migrations/ @grafana/backend-platform @grafana/hosted-grafana-team
 *_mig.go @grafana/backend-platform @grafana/hosted-grafana-team
 
-# Grafana multitenancy
-/pkg/services/live/ @grafana/multitenancy-squad
-/pkg/services/searchV2/ @grafana/multitenancy-squad
-/pkg/services/store/ @grafana/multitenancy-squad
-/pkg/services/querylibrary/ @grafana/multitenancy-squad
-/pkg/infra/filestorage/ @grafana/multitenancy-squad
-/pkg/util/converter/ @grafana/multitenancy-squad
+# Grafana app platform
+/pkg/services/live/ @grafana/grafana-app-platform-squad
+/pkg/services/searchV2/ @grafana/grafana-app-platform-squad
+/pkg/services/store/ @grafana/grafana-app-platform-squad
+/pkg/services/querylibrary/ @grafana/grafana-app-platform-squad
+/pkg/infra/filestorage/ @grafana/grafana-app-platform-squad
+/pkg/util/converter/ @grafana/grafana-app-platform-squad
+/pkg/modules/ @grafana/grafana-app-platform-squad
 
 # Alerting
 /pkg/services/ngalert/ @grafana/alerting-squad-backend
@@ -286,7 +287,7 @@
 /pkg/tsdb/testdatasource/ @grafana/plugins-platform-backend
 
 # Dashboard previews / crawler (behind feature flag)
-/pkg/services/thumbs/ @grafana/multitenancy-squad
+/pkg/services/thumbs/ @grafana/grafana-app-platform-squad
 
 # Backend code docs
 /contribute/backend/ @grafana/backend-platform
@@ -366,7 +367,7 @@ lerna.json @grafana/frontend-ops
 /public/app/features/geo/ @grafana/dataviz-squad
 /public/app/features/library-panels/ @grafana/user-essentials
 /public/app/features/logs/ @grafana/observability-logs
-/public/app/features/live/ @grafana/multitenancy-squad
+/public/app/features/live/ @grafana/grafana-app-platform-squad
 /public/app/features/manage-dashboards/ @grafana/dashboards-squad
 /public/app/features/notifications/ @grafana/user-essentials
 /public/app/features/org/ @grafana/user-essentials
@@ -381,7 +382,7 @@ lerna.json @grafana/frontend-ops
 /public/app/features/scenes/ @grafana/dashboards-squad
 /public/app/features/search/ @grafana/user-essentials
 /public/app/features/serviceaccounts/ @grafana/grafana-authnz-team
-/public/app/features/storage/ @grafana/multitenancy-squad
+/public/app/features/storage/ @grafana/grafana-app-platform-squad
 /public/app/features/teams/ @grafana/grafana-authnz-team
 /public/app/features/templating/ @grafana/dashboards-squad
 /public/app/features/transformers/ @grafana/dataviz-squad
@@ -413,7 +414,7 @@ lerna.json @grafana/frontend-ops
 /public/app/plugins/panel/canvas/ @grafana/dataviz-squad
 /public/app/plugins/panel/candlestick/ @grafana/dataviz-squad
 /public/app/plugins/panel/icon/ @grafana/dataviz-squad
-/public/app/plugins/panel/live/ @grafana/multitenancy-squad
+/public/app/plugins/panel/live/ @grafana/grafana-app-platform-squad
 /public/app/plugins/panel/news/ @grafana/user-essentials
 /public/app/plugins/panel/stat/ @grafana/dataviz-squad
 /public/app/plugins/panel/text/ @grafana/user-essentials
