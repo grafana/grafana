@@ -12,6 +12,7 @@ import { BigValueColorMode, Props, BigValueJustifyMode, BigValueTextMode } from 
 
 const LINE_HEIGHT = 1.2;
 const MAX_TITLE_SIZE = 30;
+const VALUE_FONT_WEIGHT = 500;
 
 export abstract class BigValueLayout {
   titleFontSize: number;
@@ -76,7 +77,7 @@ export abstract class BigValueLayout {
   getValueStyles(): CSSProperties {
     const styles: CSSProperties = {
       fontSize: this.valueFontSize,
-      fontWeight: 500,
+      fontWeight: VALUE_FONT_WEIGHT,
       lineHeight: LINE_HEIGHT,
       position: 'relative',
       zIndex: 1,
@@ -220,7 +221,9 @@ export class WideNoChartLayout extends BigValueLayout {
         this.valueToAlignTo,
         this.maxTextWidth * valueWidthPercent,
         this.maxTextHeight,
-        LINE_HEIGHT
+        LINE_HEIGHT,
+        undefined,
+        VALUE_FONT_WEIGHT
       );
     }
 
@@ -292,7 +295,9 @@ export class WideWithChartLayout extends BigValueLayout {
         this.valueToAlignTo,
         this.maxTextWidth * valueWidthPercent,
         this.maxTextHeight * chartHeightPercent,
-        LINE_HEIGHT
+        LINE_HEIGHT,
+        undefined,
+        VALUE_FONT_WEIGHT
       );
     }
   }
@@ -346,7 +351,9 @@ export class StackedWithChartLayout extends BigValueLayout {
         this.valueToAlignTo,
         this.maxTextWidth,
         this.maxTextHeight - this.chartHeight - titleHeight,
-        LINE_HEIGHT
+        LINE_HEIGHT,
+        undefined,
+        VALUE_FONT_WEIGHT
       );
     }
 
@@ -398,7 +405,9 @@ export class StackedWithNoChartLayout extends BigValueLayout {
         this.valueToAlignTo,
         this.maxTextWidth,
         this.maxTextHeight - titleHeight,
-        LINE_HEIGHT
+        LINE_HEIGHT,
+        undefined,
+        VALUE_FONT_WEIGHT
       );
     }
 

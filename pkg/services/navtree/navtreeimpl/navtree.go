@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/querylibrary"
 	"github.com/grafana/grafana/pkg/services/star"

@@ -1356,53 +1356,6 @@ func TestTwoBucketScripts(t *testing.T) {
 	requireFloatAt(t, 48.0, fields[4], 1)
 }
 
-func TestRawData(t *testing.T) {
-	query := []byte(`
-	[
-		{
-			"refId": "A",
-			"metrics": [{ "type": "raw_data", "id": "1" }],
-			"bucketAggs": []
-		}
-	]
-	`)
-
-	response := []byte(`
-	{
-		"responses": [
-		  {
-			"hits": {
-			  "total": { "relation": "eq", "value": 1 },
-			  "hits": [
-				{
-				  "_id": "1",
-				  "_type": "_doc",
-				  "_index": "index",
-				  "_source": { "sourceProp": "asd" }
-				}
-			  ]
-			}
-		  }
-		]
-	}
-	`)
-
-	result, err := queryDataTest(query, response)
-	require.NoError(t, err)
-
-	require.Len(t, result.response.Responses, 1)
-	// frames := result.response.Responses["A"].Frames
-	// require.True(t, len(frames) > 0) // FIXME
-
-	// for _, field := range frames[0].Fields {
-	// 	trueValue := true
-	// 	filterableConfig := data.FieldConfig{Filterable: &trueValue}
-
-	// 	// we need to test that the only changed setting is `filterable`
-	// 	require.Equal(t, filterableConfig, *field.Config) // FIXME
-	// }
-}
-
 func TestLogsAndCount(t *testing.T) {
 	query := []byte(`
 	[
