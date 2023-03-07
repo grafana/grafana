@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import uFuzzy from '@leeoniya/ufuzzy';
-import { debounce } from 'lodash';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import debounce from 'debounce-promise';
+import { debounce as debounceLodash } from 'lodash';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
@@ -22,6 +23,7 @@ import {
 import { PrometheusDatasource } from '../../datasource';
 import { getMetadataHelp, getMetadataType } from '../../language_provider';
 import { promQueryModeller } from '../PromQueryModeller';
+import { regexifyLabelValuesQueryString } from '../shared/parsingUtils';
 import { PromVisualQuery } from '../types';
 
 type Props = {
@@ -73,6 +75,7 @@ export const placeholders = {
   type: 'Counter, gauge, histogram, or summary',
   variables: 'Select a template variable for your metric',
   excludeNoMetadata: 'Exclude results with no metadata when filtering',
+  setUseBackend: 'Use the backend to browse metrics and disable fuzzy search metadata browsing',
 };
 
 export const DEFAULT_RESULTS_PER_PAGE = 10;
@@ -103,6 +106,9 @@ export const MetricEncyclopediaModal = (props: Props) => {
   const [excludeNullMetadata, setExcludeNullMetadata] = useState<boolean>(false);
   const [selectedTypes, setSelectedTypes] = useState<Array<SelectableValue<string>>>([]);
   const [letterSearch, setLetterSearch] = useState<string | null>(null);
+
+  // backend search metric names by text
+  const [useBackend, setUseBackend] = useState<boolean>(false);
 
   const updateMetricsMetadata = useCallback(async () => {
     // *** Loading Gif?
@@ -146,6 +152,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
       };
     });
 
+    // setting this by the backend if useBackend is true
     setMetrics(metricsData);
     setHaystack(haystackData);
     setNameHaystack(haystackNameData);
@@ -214,11 +221,17 @@ export const MetricEncyclopediaModal = (props: Props) => {
     }
   }
 
-  const debouncedFuzzySearch = debounce((query: string) => {
+  const debouncedFuzzySearch = debounceLodash((query: string) => {
     fuzzySearch(query);
   }, 300);
 
-  // *** Filtering: some metrics have no metadata so cannot be filtered
+  /**
+   * Filter
+   *
+   * @param metrics
+   * @param skipLetterSearch
+   * @returns
+   */
   function filterMetrics(metrics: MetricsData, skipLetterSearch?: boolean): MetricsData {
     let filteredMetrics: MetricsData = metrics;
 
@@ -226,20 +239,28 @@ export const MetricEncyclopediaModal = (props: Props) => {
       filteredMetrics = filteredMetrics.filter((m: MetricData, idx) => {
         let keepMetric = false;
 
+        // search by text
         if (fuzzySearchQuery) {
-          if (fullMetaSearch) {
+          if (useBackend) {
+            // skip for backend!
+            keepMetric = true;
+          } else if (fullMetaSearch) {
             keepMetric = fuzzyMetaSearchResults.includes(idx);
           } else {
             keepMetric = fuzzyNameSearchResults.includes(idx);
           }
         }
 
+        // user clicks the alphabet search
+        // backend and frontend
         if (letterSearch && !skipLetterSearch) {
           const letters: string[] = [letterSearch, letterSearch.toLowerCase()];
           keepMetric = letters.includes(m.value[0]);
         }
 
-        if (selectedTypes.length > 0) {
+        // select by type, counter, gauge, etc
+        // skip for backend because no metadata is returned
+        if (selectedTypes.length > 0 && !useBackend) {
           // return the metric that matches the type
           // return the metric if it has no type AND we are NOT excluding metrics without metadata
 
@@ -259,14 +280,46 @@ export const MetricEncyclopediaModal = (props: Props) => {
     return filteredMetrics;
   }
 
-  // the metrics that go in the modal
-  function displayedMetrics() {
+  /**
+   * The filtered and paginated metrics displayed in the modal
+   * */
+  function displayedMetrics(metrics: MetricsData) {
     const filteredSorted: MetricsData = filterMetrics(metrics).sort(alphabetically(true, hasMetaDataFilters()));
 
     const displayedMetrics: MetricsData = sliceMetrics(filteredSorted, pageNum, resultsPerPage);
 
     return displayedMetrics;
   }
+  /**
+   * The backend debounced search
+   */
+  const debouncedBackendSearch = useMemo(
+    () =>
+      debounce(async (metricText: string) => {
+        const queryString = regexifyLabelValuesQueryString(metricText);
+
+        const labelsParams = query.labels.map((label) => {
+          return `,${label.label}="${label.value}"`;
+        });
+
+        const params = `label_values({__name__=~".*${queryString}"${
+          query.labels ? labelsParams.join() : ''
+        }},__name__)`;
+
+        const results = datasource.metricFindQuery(params);
+
+        const metrics = await results.then((results) => {
+          return results.map((result) => {
+            return {
+              value: result.text,
+            };
+          });
+        });
+
+        setMetrics(metrics);
+      }, 300),
+    [datasource, query.labels]
+  );
 
   return (
     <Modal
@@ -293,11 +346,21 @@ export const MetricEncyclopediaModal = (props: Props) => {
           onInput={(e) => {
             const value = e.currentTarget.value ?? '';
             setFuzzySearchQuery(value);
-            debouncedFuzzySearch(value);
+
+            if (useBackend && value === '') {
+              // get all metrics data if a user erases everything in the input
+              updateMetricsMetadata();
+            } else if (useBackend) {
+              debouncedBackendSearch(value);
+            } else {
+              // do the search on the frontend
+              debouncedFuzzySearch(value);
+            }
+
             setPageNum(1);
           }}
         />
-        {hasMetadata && (
+        {hasMetadata && !useBackend && (
           <InlineField label="" className={styles.labelColor} tooltip={<div>{placeholders.metadataSearchSwicth}</div>}>
             <InlineSwitch
               data-testid={testIds.searchWithMetadata}
@@ -310,8 +373,31 @@ export const MetricEncyclopediaModal = (props: Props) => {
             />
           </InlineField>
         )}
+        <InlineField label="" className={styles.labelColor} tooltip={<div>{placeholders.setUseBackend}</div>}>
+          <InlineSwitch
+            data-testid={testIds.setUseBackend}
+            showLabel={true}
+            value={useBackend}
+            onChange={() => {
+              const newVal = !useBackend;
+              setUseBackend(newVal);
+              if (newVal === false) {
+                // rebuild the metrics metadata if we turn off useBackend
+                updateMetricsMetadata();
+              } else {
+                // check if there is text in the browse search and update
+                if (fuzzySearchQuery !== '') {
+                  debouncedBackendSearch(fuzzySearchQuery);
+                }
+                // otherwise wait for user typing
+              }
+
+              setPageNum(1);
+            }}
+          />
+        </InlineField>
       </div>
-      {hasMetadata && (
+      {hasMetadata && !useBackend && (
         <>
           <div className="gf-form">
             <h6>Filter by Type</h6>
@@ -426,7 +512,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
         })}
       </div>
       {metrics &&
-        displayedMetrics().map((metric: MetricData, idx) => {
+        displayedMetrics(metrics).map((metric: MetricData, idx) => {
           return (
             <Collapse
               aria-label={`open and close ${metric.value} query starter card`}
@@ -628,4 +714,5 @@ export const testIds = {
   useMetric: 'use-metric',
   searchPage: 'search-page',
   resultsPerPage: 'results-per-page',
+  setUseBackend: 'set-use-backend',
 };
