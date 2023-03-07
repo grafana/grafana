@@ -360,7 +360,6 @@ export const MetricEncyclopediaModal = (props: Props) => {
           onInput={(e) => {
             const value = e.currentTarget.value ?? '';
             setFuzzySearchQuery(value);
-
             if (useBackend && value === '') {
               // get all metrics data if a user erases everything in the input
               updateMetricsMetadata();
