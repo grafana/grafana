@@ -9,7 +9,7 @@ keywords:
   - metrics
   - time series
 title: What is Prometheus?
-weight: 400
+weight: 300
 ---
 
 # What is Prometheus?
