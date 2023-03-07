@@ -12,11 +12,11 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	ptr "github.com/xorcare/pointer"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/screenshot"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestSetAlerting(t *testing.T) {
@@ -530,7 +530,7 @@ func TestGetLastEvaluationValuesForCondition(t *testing.T) {
 				EvaluationTime:  time.Time{},
 				EvaluationState: 0,
 				Values: map[string]*float64{
-					"A": ptr.Float64(rand.Float64()),
+					"A": util.Pointer(rand.Float64()),
 				},
 				Condition: "A",
 			},
@@ -538,8 +538,8 @@ func TestGetLastEvaluationValuesForCondition(t *testing.T) {
 				EvaluationTime:  time.Time{},
 				EvaluationState: 0,
 				Values: map[string]*float64{
-					"B": ptr.Float64(rand.Float64()),
-					"A": ptr.Float64(expected),
+					"B": util.Pointer(rand.Float64()),
+					"A": util.Pointer(expected),
 				},
 				Condition: "A",
 			},
@@ -555,7 +555,7 @@ func TestGetLastEvaluationValuesForCondition(t *testing.T) {
 				EvaluationTime:  time.Time{},
 				EvaluationState: 0,
 				Values: map[string]*float64{
-					"C": ptr.Float64(rand.Float64()),
+					"C": util.Pointer(rand.Float64()),
 				},
 				Condition: "A",
 			},
@@ -656,7 +656,7 @@ func TestTakeImage(t *testing.T) {
 		defer ctrl.Finish()
 
 		ctx := context.Background()
-		r := ngmodels.AlertRule{DashboardUID: ptr.String("foo")}
+		r := ngmodels.AlertRule{DashboardUID: util.Pointer("foo")}
 		s := NewMockImageCapturer(ctrl)
 
 		s.EXPECT().NewImage(ctx, &r).Return(nil, ngmodels.ErrNoPanel)
@@ -670,7 +670,7 @@ func TestTakeImage(t *testing.T) {
 		defer ctrl.Finish()
 
 		ctx := context.Background()
-		r := ngmodels.AlertRule{DashboardUID: ptr.String("foo"), PanelID: ptr.Int64(1)}
+		r := ngmodels.AlertRule{DashboardUID: util.Pointer("foo"), PanelID: util.Pointer(int64(1))}
 		s := NewMockImageCapturer(ctrl)
 
 		s.EXPECT().NewImage(ctx, &r).Return(nil, screenshot.ErrScreenshotsUnavailable)
@@ -684,7 +684,7 @@ func TestTakeImage(t *testing.T) {
 		defer ctrl.Finish()
 
 		ctx := context.Background()
-		r := ngmodels.AlertRule{DashboardUID: ptr.String("foo"), PanelID: ptr.Int64(1)}
+		r := ngmodels.AlertRule{DashboardUID: util.Pointer("foo"), PanelID: util.Pointer(int64(1))}
 		s := NewMockImageCapturer(ctrl)
 
 		s.EXPECT().NewImage(ctx, &r).Return(nil, errors.New("unknown error"))
@@ -698,7 +698,7 @@ func TestTakeImage(t *testing.T) {
 		defer ctrl.Finish()
 
 		ctx := context.Background()
-		r := ngmodels.AlertRule{DashboardUID: ptr.String("foo"), PanelID: ptr.Int64(1)}
+		r := ngmodels.AlertRule{DashboardUID: util.Pointer("foo"), PanelID: util.Pointer(int64(1))}
 		s := NewMockImageCapturer(ctrl)
 
 		s.EXPECT().NewImage(ctx, &r).Return(&ngmodels.Image{Path: "foo.png"}, nil)

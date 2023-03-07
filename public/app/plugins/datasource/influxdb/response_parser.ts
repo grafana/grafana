@@ -198,6 +198,25 @@ function getTableCols(dfs: DataFrame[], table: TableModel, target: InfluxQuery):
     table.columns.push({ text: selectedParams[i] });
   }
 
+  // ISSUE: https://github.com/grafana/grafana/issues/63842
+  // if rawQuery and
+  // has other selected fields in the query and
+  // dfs field names are in the rawQuery but
+  // the selected params object doesn't exist in the query then
+  // add columns to the table
+  if (
+    target.rawQuery &&
+    selectedParams.length === 0 &&
+    rawQuerySelectedFieldsInDataframe(target.query, dfs) &&
+    dfs[0].refId !== 'metricFindQuery'
+  ) {
+    dfs.map((df) => {
+      if (df.name) {
+        table.columns.push({ text: df.name });
+      }
+    });
+  }
+
   return table;
 }
 
@@ -247,4 +266,31 @@ function incrementName(name: string, nameIncremenet: string, params: string[], i
 
 function addUnique(s: Set<string>, value: string | number) {
   s.add(value.toString());
+}
+
+function rawQuerySelectedFieldsInDataframe(query: string | undefined, dfs: DataFrame[]) {
+  const names: Array<string | undefined> = dfs.map((df: DataFrame) => df.name);
+
+  const colsInRawQuery = names.every((name: string | undefined) => {
+    if (name && query) {
+      // table name and field, i.e. cpu.usage_guest_nice becomes ['cpu', 'usage_guest_nice']
+      const nameParts = name.split('.');
+
+      return nameParts.every((np) => query.toLowerCase().includes(np.toLowerCase()));
+    }
+
+    return false;
+  });
+
+  const queryChecks = ['*', 'SHOW'];
+
+  const otherChecks: boolean = queryChecks.some((qc: string) => {
+    if (query) {
+      return query.toLowerCase().includes(qc.toLowerCase());
+    }
+
+    return false;
+  });
+
+  return colsInRawQuery || otherChecks;
 }

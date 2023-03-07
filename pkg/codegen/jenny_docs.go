@@ -136,6 +136,7 @@ type schema struct {
 	Enum                 []Any              `json:"enum"`
 	Default              any                `json:"default"`
 	AllOf                []*schema          `json:"allOf"`
+	OneOf                []*schema          `json:"oneOf"`
 	AdditionalProperties *schema            `json:"additionalProperties"`
 	extends              []string           `json:"-"`
 	inheritedFrom        string             `json:"-"`
@@ -244,6 +245,16 @@ func resolveSchema(schem *schema, root *simplejson.Json) (*schema, error) {
 			if len(tmp.Title) > 0 {
 				schem.extends = append(schem.extends, tmp.Title)
 			}
+		}
+	}
+
+	if len(schem.OneOf) > 0 {
+		for idx, child := range schem.OneOf {
+			tmp, err := resolveSubSchema(schem, child, root)
+			if err != nil {
+				return nil, err
+			}
+			schem.OneOf[idx] = tmp
 		}
 	}
 
@@ -479,6 +490,20 @@ func findDefinitions(s *schema) []*schema {
 		}
 	}
 
+	for _, child := range s.OneOf {
+		if child.Type.HasType(PropertyTypeObject) {
+			objs = append(objs, child)
+		}
+
+		if child.Type.HasType(PropertyTypeArray) {
+			if child.Items != nil {
+				if child.Items.Type.HasType(PropertyTypeObject) {
+					objs = append(objs, child.Items)
+				}
+			}
+		}
+	}
+
 	// Sort the object schemas.
 	sort.Slice(objs, func(i, j int) bool {
 		return objs[i].Title < objs[j].Title
@@ -491,10 +516,16 @@ func makeRows(s *schema) [][]string {
 	// Buffer all property rows so that we can sort them before printing them.
 	rows := make([][]string, 0, len(s.Properties))
 
+	var typeStr string
+	if len(s.OneOf) > 0 {
+		typeStr = enumStr(s)
+		rows = append(rows, []string{"`object`", typeStr, "", ""})
+		return rows
+	}
+
 	for key, p := range s.Properties {
 		alias := propTypeAlias(p)
 
-		var typeStr string
 		if alias != "" {
 			typeStr = alias
 		} else {
@@ -612,6 +643,14 @@ func constraintDescr(prop *schema) string {
 	}
 
 	return ""
+}
+
+func enumStr(propValue *schema) string {
+	var vals []string
+	for _, v := range propValue.OneOf {
+		vals = append(vals, fmt.Sprintf("[%s](#%s)", v.Title, strings.ToLower(v.Title)))
+	}
+	return "Possible types are: " + strings.Join(vals, ", ") + "."
 }
 
 func propTypeStr(propName string, propValue *schema) string {

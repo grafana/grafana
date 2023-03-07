@@ -8,16 +8,15 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
-	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
@@ -412,7 +411,7 @@ func TestLoader_Load(t *testing.T) {
 			name:  "Load CDN plugin",
 			class: plugins.External,
 			cfg: &config.Cfg{
-				PluginsCDNURLTemplate: "https://cdn.example.com/{id}/{version}/public/plugins/{id}/{assetPath}",
+				PluginsCDNURLTemplate: "https://cdn.example.com",
 				PluginSettings: setting.PluginSettings{
 					"grafana-worldmap-panel": {"cdn": "true"},
 				},
@@ -463,72 +462,7 @@ func TestLoader_Load(t *testing.T) {
 				},
 			},
 		},
-		{
-			name:  "Load an app with link extensions",
-			class: plugins.External,
-			cfg: &config.Cfg{
-				PluginsAllowUnsigned: []string{"test-app"},
-			},
-			pluginPaths: []string{"../testdata/test-app-with-link-extensions"},
-			want: []*plugins.Plugin{
-				{JSONData: plugins.JSONData{
-					ID:   "test-app",
-					Type: "app",
-					Name: "Test App",
-					Info: plugins.Info{
-						Author: plugins.InfoLink{
-							Name: "Test Inc.",
-							URL:  "http://test.com",
-						},
-						Description: "Official Grafana Test App & Dashboard bundle",
-						Version:     "1.0.0",
-						Links: []plugins.InfoLink{
-							{Name: "Project site", URL: "http://project.com"},
-							{Name: "License & Terms", URL: "http://license.com"},
-						},
-						Logos: plugins.Logos{
-							Small: "public/img/icn-app.svg",
-							Large: "public/img/icn-app.svg",
-						},
-						Updated: "2015-02-10",
-					},
-					Dependencies: plugins.Dependencies{
-						GrafanaDependency: ">=8.0.0",
-						GrafanaVersion:    "*",
-						Plugins:           []plugins.Dependency{},
-					},
-					Includes: []*plugins.Includes{
-						{Name: "Root Page (react)", Type: "page", Role: "Viewer", Path: "/a/my-simple-app", DefaultNav: true, AddToNav: true, Slug: "root-page-react"},
-					},
-					Extensions: []*plugindef.ExtensionsLink{
-						{
-							Placement:   "plugins/grafana-slo-app/slo-breach",
-							Title:       "Declare incident",
-							Type:        plugindef.ExtensionsLinkTypeLink,
-							Description: "Declares a new incident",
-							Path:        "/incidents/declare",
-						},
-						{
-							Placement:   "plugins/grafana-slo-app/slo-breach",
-							Title:       "Declare incident",
-							Type:        plugindef.ExtensionsLinkTypeLink,
-							Description: "Declares a new incident (path without backslash)",
-							Path:        "/incidents/declare",
-						},
-					},
-					Backend: false,
-				},
-					DefaultNavURL: "/plugins/test-app/page/root-page-react",
-					PluginDir:     filepath.Join(parentDir, "testdata/test-app-with-link-extensions"),
-					Class:         plugins.External,
-					Signature:     plugins.SignatureUnsigned,
-					Module:        "plugins/test-app/module",
-					BaseURL:       "public/plugins/test-app",
-				},
-			},
-		},
 	}
-
 	for _, tt := range tests {
 		reg := fakes.NewFakePluginRegistry()
 		storage := fakes.NewFakePluginStorage()
@@ -570,7 +504,7 @@ func TestLoader_setDefaultNavURL(t *testing.T) {
 				},
 			}},
 		}
-		logger := &logtest.Fake{}
+		logger := log.NewTestLogger()
 		pluginWithDashboard.SetLogger(logger)
 
 		t.Run("Default nav URL is not set if dashboard UID field not is set", func(t *testing.T) {

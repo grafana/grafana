@@ -119,7 +119,7 @@ func TestRefIdMatching(t *testing.T) {
 					]
 				},
 				{
-					"refId": "D",
+					"refId": "RAWDATA",
 					"metrics": [{ "type": "raw_data", "id": "6" }],
 					"bucketAggs": []
 				}
@@ -251,10 +251,10 @@ func TestRefIdMatching(t *testing.T) {
 
 	verifyFrames("COUNT_GROUPBY_DATE_HISTOGRAM", 1)
 	verifyFrames("COUNT_GROUPBY_HISTOGRAM", 1)
-	// verifyFrames("RAW_DOC", 1) // FIXME
+	verifyFrames("RAW_DOC", 1)
 	verifyFrames("PERCENTILE", 2)
 	verifyFrames("EXTENDEDSTATS", 4)
-	// verifyFrames("D", 1) // FIXME
+	verifyFrames("RAWDATA", 1)
 }
 
 func TestSimpleQueryReturns1Frame(t *testing.T) {
