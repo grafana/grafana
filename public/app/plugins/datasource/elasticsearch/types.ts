@@ -20,8 +20,6 @@ export { Elasticsearch as ElasticsearchQuery } from './dataquery.gen';
 
 export type MetricAggregationWithMeta = ExtendedStats;
 
-// Start of temporary overrides because of incorrect type generation in dataquery.gen.ts
-
 export type MovingAverageModelSettings<T extends MovingAverageModel = MovingAverageModel> = Partial<
   Extract<
     | MovingAverageSimpleModelSettings
