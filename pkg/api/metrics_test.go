@@ -11,8 +11,6 @@ import (
 	"strings"
 	"testing"
 
-	pluginClient "github.com/grafana/grafana/pkg/services/pluginsintegration/client"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/stretchr/testify/require"
 
@@ -23,6 +21,7 @@ import (
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
+	pluginClient "github.com/grafana/grafana/pkg/services/pluginsintegration/client"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/user"
