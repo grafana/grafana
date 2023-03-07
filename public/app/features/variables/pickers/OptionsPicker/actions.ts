@@ -37,7 +37,7 @@ export const navigateOptions = (rootStateKey: string, key: NavigationKey, clearO
       const picker = getVariablesState(rootStateKey, getState()).optionsPicker;
 
       if (picker.multi) {
-        return dispatch(toggleOptionByHighlight(rootStateKey, clearOthers, true));
+        return dispatch(toggleOptionByHighlight(rootStateKey, clearOthers));
       }
       dispatch(toggleOptionByHighlight(rootStateKey, clearOthers, true));
       return dispatch(commitChangesToVariable(rootStateKey));

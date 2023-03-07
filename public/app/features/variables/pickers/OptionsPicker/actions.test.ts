@@ -214,7 +214,7 @@ describe('options picker actions', () => {
 
     // Check selecting the second option triggers variables to update
     tester.thenDispatchedActionsShouldEqual(
-      toKeyedAction('key', toggleOption({ option: options[1], forceSelect: true, clearOthers }))
+      toKeyedAction('key', toggleOption({ option: options[1], forceSelect: false, clearOthers }))
     );
   });
 
@@ -239,7 +239,7 @@ describe('options picker actions', () => {
         .whenAsyncActionIsDispatched(navigateOptions('key', key, clearOthers), true);
 
       tester.thenDispatchedActionsShouldEqual(
-        toKeyedAction('key', toggleOption({ option: options[1], forceSelect: true, clearOthers }))
+        toKeyedAction('key', toggleOption({ option: options[1], forceSelect: false, clearOthers }))
       );
     });
 
