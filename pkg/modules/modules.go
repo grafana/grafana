@@ -65,10 +65,7 @@ func (m *service) Init(_ context.Context) error {
 	m.RegisterModule(All, nil)
 
 	// module dependencies
-	m.dependencyMap = map[string][]string{
-		BackgroundServices: {},
-		All:                {BackgroundServices},
-	}
+	m.dependencyMap[All] = []string{BackgroundServices}
 
 	for mod, targets := range m.dependencyMap {
 		if err := m.ModuleManager.AddDependency(mod, targets...); err != nil {
