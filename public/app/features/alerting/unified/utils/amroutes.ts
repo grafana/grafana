@@ -276,5 +276,9 @@ export const mapMultiSelectValueToStrings = (
 };
 
 export function promDurationValidator(duration: string) {
+  if (duration.length === 0) {
+    return true;
+  }
+
   return isValidPrometheusDuration(duration) || 'Invalid duration format. Must be {number}{time_unit}';
 }
