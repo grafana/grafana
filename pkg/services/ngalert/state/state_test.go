@@ -233,7 +233,7 @@ func TestNoData(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			actual := test.state
-			actual.SetNoData(test.reason, test.startsAt, test.endsAt)
+			actual.SetNoData(test.startsAt, test.endsAt, nil)
 			assert.Equal(t, test.expected, actual)
 		})
 	}
@@ -255,7 +255,7 @@ func TestSetError(t *testing.T) {
 		error:    errors.New("this is an error"),
 		expected: State{
 			State:       eval.Error,
-			StateReason: ngmodels.StateReasonError,
+			StateReason: "",
 			Error:       errors.New("this is an error"),
 			StartsAt:    mock.Now(),
 			EndsAt:      mock.Now().Add(time.Minute),
@@ -272,7 +272,7 @@ func TestSetError(t *testing.T) {
 		error:    errors.New("this is another error"),
 		expected: State{
 			State:       eval.Error,
-			StateReason: ngmodels.StateReasonError,
+			StateReason: "",
 			Error:       errors.New("this is another error"),
 			StartsAt:    mock.Now(),
 			EndsAt:      mock.Now().Add(time.Minute),
