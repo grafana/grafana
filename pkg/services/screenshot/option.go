@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	DefaultFrom    = "now-1h"
+	DefaultFrom    = "now-6h"
 	DefaultTo      = "now"
 	DefaultHeight  = 500
 	DefaultWidth   = 1000

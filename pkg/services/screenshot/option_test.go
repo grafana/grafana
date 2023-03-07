@@ -20,10 +20,10 @@ func TestScreenshotOptions(t *testing.T) {
 		Timeout: DefaultTimeout,
 	}, o)
 
-	o.From = "now-6h"
+	o.From = "now-4h"
 	o = o.SetDefaults()
 	assert.Equal(t, ScreenshotOptions{
-		From:    "now-6h",
+		From:    "now-4h",
 		To:      DefaultTo,
 		Width:   DefaultWidth,
 		Height:  DefaultHeight,
@@ -34,7 +34,7 @@ func TestScreenshotOptions(t *testing.T) {
 	o.To = "now-2h"
 	o = o.SetDefaults()
 	assert.Equal(t, ScreenshotOptions{
-		From:    "now-6h",
+		From:    "now-4h",
 		To:      "now-2h",
 		Width:   DefaultWidth,
 		Height:  DefaultHeight,
@@ -45,7 +45,7 @@ func TestScreenshotOptions(t *testing.T) {
 	o.Width = 100
 	o = o.SetDefaults()
 	assert.Equal(t, ScreenshotOptions{
-		From:    "now-6h",
+		From:    "now-4h",
 		To:      "now-2h",
 		Width:   100,
 		Height:  DefaultHeight,
@@ -56,7 +56,7 @@ func TestScreenshotOptions(t *testing.T) {
 	o.Height = 100
 	o = o.SetDefaults()
 	assert.Equal(t, ScreenshotOptions{
-		From:    "now-6h",
+		From:    "now-4h",
 		To:      "now-2h",
 		Width:   100,
 		Height:  100,
@@ -67,7 +67,7 @@ func TestScreenshotOptions(t *testing.T) {
 	o.Theme = "Not a theme"
 	o = o.SetDefaults()
 	assert.Equal(t, ScreenshotOptions{
-		From:    "now-6h",
+		From:    "now-4h",
 		To:      "now-2h",
 		Width:   100,
 		Height:  100,
@@ -77,7 +77,7 @@ func TestScreenshotOptions(t *testing.T) {
 
 	o.Timeout = DefaultTimeout + 1
 	assert.Equal(t, ScreenshotOptions{
-		From:    "now-6h",
+		From:    "now-4h",
 		To:      "now-2h",
 		Width:   100,
 		Height:  100,
@@ -91,27 +91,27 @@ func TestScreenshotOptions_Hash(t *testing.T) {
 	assert.Equal(t, []byte{0xd7, 0xf3, 0x56, 0x7f, 0xec, 0x7b, 0xdf, 0x95}, o.Hash())
 
 	o = o.SetDefaults()
-	assert.Equal(t, []byte{0x13, 0x59, 0xa3, 0x88, 0x6a, 0xdd, 0x26, 0x3}, o.Hash())
+	assert.Equal(t, []byte{0x86, 0x2a, 0x5a, 0xd7, 0x1a, 0x79, 0xb2, 0x42}, o.Hash())
 
 	o.OrgID = 1
-	assert.Equal(t, []byte{0xd8, 0xfb, 0xf2, 0x7, 0x87, 0x92, 0x57, 0x28}, o.Hash())
-
-	o.From = "now-6h"
 	assert.Equal(t, []byte{0x52, 0x3f, 0x86, 0xe3, 0x59, 0x1a, 0x7f, 0xfd}, o.Hash())
 
+	o.From = "now-4h"
+	assert.Equal(t, []byte{0x5c, 0xbc, 0xb0, 0xe5, 0x85, 0x48, 0xd, 0xcb}, o.Hash())
+
 	o.To = "now-2h"
-	assert.Equal(t, []byte{0x8b, 0x78, 0xf4, 0xe7, 0xaa, 0x6, 0xba, 0xde}, o.Hash())
+	assert.Equal(t, []byte{0x5c, 0xd2, 0x37, 0xe5, 0x9a, 0x4f, 0x42, 0xcc}, o.Hash())
 
 	o.Width = 100
-	assert.Equal(t, []byte{0xa8, 0x75, 0x43, 0xc1, 0xb5, 0xd5, 0xd2, 0x3c}, o.Hash())
+	assert.Equal(t, []byte{0x47, 0x3f, 0xaa, 0x7a, 0xd5, 0xbd, 0xa1, 0x6}, o.Hash())
 
 	o.Height = 100
-	assert.Equal(t, []byte{0x3d, 0xf3, 0x37, 0x3d, 0x9a, 0xfd, 0x71, 0x88}, o.Hash())
+	assert.Equal(t, []byte{0x69, 0x8, 0x2d, 0xf7, 0xa, 0xd6, 0x89, 0xa2}, o.Hash())
 
 	o.Theme = "Not a theme"
-	assert.Equal(t, []byte{0x3b, 0xd1, 0xfb, 0x3f, 0x3, 0x64, 0xba, 0xad}, o.Hash())
+	assert.Equal(t, []byte{0xcc, 0x95, 0xd5, 0x50, 0xfb, 0x74, 0x87, 0xb}, o.Hash())
 
 	// the timeout should not change the sum
 	o.Timeout = DefaultTimeout + 1
-	assert.Equal(t, []byte{0x3b, 0xd1, 0xfb, 0x3f, 0x3, 0x64, 0xba, 0xad}, o.Hash())
+	assert.Equal(t, []byte{0xcc, 0x95, 0xd5, 0x50, 0xfb, 0x74, 0x87, 0xb}, o.Hash())
 }
