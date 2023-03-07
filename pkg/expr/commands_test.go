@@ -1,13 +1,18 @@
 package expr
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"testing"
-
-	"github.com/stretchr/testify/require"
+	"time"
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/grafana/grafana/pkg/expr/mathexp/parse"
+	"github.com/grafana/grafana/pkg/util"
+	"github.com/stretchr/testify/require"
+	"github.com/xorcare/pointer"
 )
 
 func Test_UnmarshalReduceCommand_Settings(t *testing.T) {
@@ -88,4 +93,63 @@ func Test_UnmarshalReduceCommand_Settings(t *testing.T) {
 			require.Equal(t, test.expectedMapper, cmd.seriesMapper)
 		})
 	}
+}
+
+func TestResampleCommand_Execute(t *testing.T) {
+	varToReduce := util.GenerateShortUID()
+	tr := TimeRange{
+		From: time.Now().Add(-10 * time.Second),
+		To:   time.Now(),
+	}
+	cmd, err := NewResampleCommand(util.GenerateShortUID(), "1s", varToReduce, "sum", "pad", tr)
+	require.NoError(t, err)
+
+	var tests = []struct {
+		name         string
+		vals         mathexp.Value
+		isError      bool
+		expectedType parse.ReturnType
+	}{
+		{
+			name:         "should resample when input Series",
+			vals:         mathexp.NewSeries(varToReduce, nil, 100),
+			expectedType: parse.TypeSeriesSet,
+		},
+		{
+			name:         "should return NoData when input NoData",
+			vals:         mathexp.NoData{},
+			expectedType: parse.TypeNoData,
+		}, {
+			name:    "should return error when input Number",
+			vals:    mathexp.NewNumber("test", nil),
+			isError: true,
+		}, {
+			name:    "should return error when input Scalar",
+			vals:    mathexp.NewScalar("test", pointer.Float64(rand.Float64())),
+			isError: true,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			result, err := cmd.Execute(context.Background(), mathexp.Vars{
+				varToReduce: mathexp.Results{Values: mathexp.Values{test.vals}},
+			})
+			if test.isError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.Len(t, result.Values, 1)
+				res := result.Values[0]
+				require.Equal(t, test.expectedType, res.Type())
+			}
+		})
+	}
+
+	t.Run("should return empty result if input is nil Value", func(t *testing.T) {
+		result, err := cmd.Execute(context.Background(), mathexp.Vars{
+			varToReduce: mathexp.Results{Values: mathexp.Values{nil}},
+		})
+		require.Empty(t, result.Values)
+		require.NoError(t, err)
+	})
 }
