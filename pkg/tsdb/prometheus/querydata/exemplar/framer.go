@@ -66,9 +66,9 @@ func (f *Framer) Frames() (data.Frames, error) {
 		for i, labelName := range labelNames {
 			// Use the series label by default
 			labelValue := b.SeriesLabels[labelName]
-			for _, f := range b.Fields {
-				if f.Name == labelName {
-					labelValue = f.CopyAt(b.RowIdx).(string)
+			for _, bf := range b.Fields {
+				if bf.Name == labelName {
+					labelValue = bf.CopyAt(b.RowIdx).(string)
 					break
 				}
 			}
