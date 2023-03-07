@@ -4,11 +4,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-func canUpdateWithProvenance(storedProvenance, provenance models.Provenance, errFun func() error) error {
-	isFileProvenance := storedProvenance == models.ProvenanceFile
-	isAPItoFileProvenance := storedProvenance == models.ProvenanceAPI && provenance == models.ProvenanceFile
-	if storedProvenance != provenance && (isFileProvenance || isAPItoFileProvenance) {
-		return errFun()
-	}
-	return nil
+// canUpdateProvenanceInRuleGroup checks if a provenance can be updated for a rule group and its alerts.
+// ReplaceRuleGroup function intends to replace an entire rule group: inserting, updating, and removing rules.
+func canUpdateProvenanceInRuleGroup(storedProvenance, provenance models.Provenance) bool {
+	return storedProvenance == provenance ||
+		storedProvenance == models.ProvenanceNone ||
+		(storedProvenance == models.ProvenanceAPI && provenance == models.ProvenanceNone)
 }

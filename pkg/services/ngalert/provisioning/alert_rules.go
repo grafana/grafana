@@ -276,11 +276,8 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 			if err != nil {
 				return err
 			}
-			err = canUpdateWithProvenance(storedProvenance, provenance, func() error {
+			if canUpdate := canUpdateProvenanceInRuleGroup(storedProvenance, provenance); !canUpdate {
 				return fmt.Errorf("cannot update with provided provenance '%s', needs '%s'", provenance, storedProvenance)
-			})
-			if err != nil {
-				return err
 			}
 			updates = append(updates, models.UpdateRule{
 				Existing: update.Existing,
@@ -302,11 +299,8 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 			if err != nil {
 				return err
 			}
-			err = canUpdateWithProvenance(storedProvenance, provenance, func() error {
+			if canUpdate := canUpdateProvenanceInRuleGroup(storedProvenance, provenance); !canUpdate {
 				return fmt.Errorf("cannot update with provided provenance '%s', needs '%s'", provenance, storedProvenance)
-			})
-			if err != nil {
-				return err
 			}
 		}
 		if err := service.deleteRules(ctx, orgID, delta.Delete...); err != nil {
