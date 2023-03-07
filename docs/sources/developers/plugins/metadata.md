@@ -87,11 +87,11 @@ Extends various parts of the Grafana UI with commands or links.
 
 | Property      | Type   | Required | Description                                                    |
 | ------------- | ------ | -------- | -------------------------------------------------------------- |
-| `type`        | string | No       | Type of extension. Possible values are: `link`.                |
-| `title`       | string | No       | Title that will be displayed for the rendered link             |
-| `placement`   | string | No       | Target where the link will be rendered                         |
+| `type`        | string | Yes      | Type of extension. Possible values are: `link`.                |
+| `title`       | string | Yes      | Title that will be displayed for the rendered link             |
+| `placement`   | string | Yes      | Target where the link will be rendered                         |
 | `description` | string | No       | Description for the rendered link                              |
-| `path`        | string | No       | Path relative to the extending plugin e.g. /incidents/declare" |
+| `path`        | string | Yes      | Path relative to the extending plugin e.g. /incidents/declare" |
 
 ## includes
 
