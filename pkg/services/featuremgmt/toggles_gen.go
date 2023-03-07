@@ -266,7 +266,7 @@ const (
 	// FlagTraceqlSearch
 	// Enables the &#39;TraceQL Search&#39; tab for the Tempo datasource which provides a UI to generate TraceQL queries
 	FlagTraceqlSearch = "traceqlSearch"
-	
+
 	// FlagPrometheusMetricEncyclopedia
 	// Replaces the Prometheus query builder metric select option with a paginated and filterable component
 	FlagPrometheusMetricEncyclopedia = "prometheusMetricEncyclopedia"
