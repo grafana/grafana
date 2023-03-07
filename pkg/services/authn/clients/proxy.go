@@ -95,7 +95,7 @@ func (c *Proxy) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 			})
 
 			if err != nil {
-				c.log.FromContext(ctx).Warn("Could not resolved cached user", "error", err, "userId", entry.(int64))
+				c.log.FromContext(ctx).Warn("Could not resolved cached user", "error", err, "userId", string(entry))
 			}
 
 			// if we for some reason cannot find the user we proceed with the normal flow, authenticate with ProxyClient

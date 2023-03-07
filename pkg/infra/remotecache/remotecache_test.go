@@ -65,15 +65,15 @@ func runCountTestsForClient(t *testing.T, opts *setting.RemoteCacheOptions, sqls
 	}
 
 	t.Run("can count items", func(t *testing.T) {
-		cacheableStruct := CacheableStruct{String: "hej", Int64: 2000}
+		cacheableValue := []byte("hej hej")
 
-		err := client.Set(context.Background(), "pref-key1", cacheableStruct, 0)
+		err := client.SetByteArray(context.Background(), "pref-key1", cacheableValue, 0)
 		require.NoError(t, err)
 
-		err = client.Set(context.Background(), "pref-key2", cacheableStruct, 0)
+		err = client.SetByteArray(context.Background(), "pref-key2", cacheableValue, 0)
 		require.NoError(t, err)
 
-		err = client.Set(context.Background(), "key3-not-pref", cacheableStruct, 0)
+		err = client.SetByteArray(context.Background(), "key3-not-pref", cacheableValue, 0)
 		require.NoError(t, err)
 
 		n, errC := client.Count(context.Background(), "pref-")

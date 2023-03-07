@@ -84,6 +84,10 @@ func (ds *RemoteCache) GetByteArray(ctx context.Context, key string) ([]byte, er
 
 // SetByteArray stored the byte array in the cache
 func (ds *RemoteCache) SetByteArray(ctx context.Context, key string, value []byte, expire time.Duration) error {
+	if expire == 0 {
+		expire = defaultMaxCacheExpiration
+	}
+
 	return ds.client.SetByteArray(ctx, key, value, expire)
 }
 
