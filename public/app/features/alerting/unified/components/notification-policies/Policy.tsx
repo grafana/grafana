@@ -184,7 +184,14 @@ const Policy: FC<PolicyComponentProps> = ({
                       </Menu>
                     }
                   >
-                    <Button variant="secondary" size="sm" icon="ellipsis-h" type="button" data-testid="more-actions" />
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      icon="ellipsis-h"
+                      type="button"
+                      aria-label="more-actions"
+                      data-testid="more-actions"
+                    />
                   </Dropdown>
                 </Stack>
               )}
