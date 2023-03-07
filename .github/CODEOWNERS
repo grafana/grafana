@@ -158,9 +158,6 @@
 /devenv/docker/blocks/loki* @grafana/observability-logs
 /devenv/docker/blocks/elastic* @grafana/observability-logs
 
-# Performance tests
-/devenv/docker/loadtest-ts/ @grafana/grafana-app-platform-squad
-
 /devenv/bulk-dashboards/ @grafana/dashboards-squad
 /devenv/bulk_alerting_dashboards/ @grafana/alerting-squad-backend
 /devenv/create_docker_compose.sh @grafana/backend-platform
