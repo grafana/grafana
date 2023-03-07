@@ -46,11 +46,11 @@ var safeResolution = 11000
 
 type QueryModel struct {
 	dataquery.PrometheusDataQuery
-	LegendFormat string `json:"legendFormat,omitempty"`
-	RequestId    string `json:"requestId,omitempty"`
 	// Timezone offset to align start & end time on backend
-	UtcOffsetSec   int64 `json:"utcOffsetSec,omitempty"`
-	ValueWithRefId bool  `json:"valueWithRefId,omitempty"`
+	UtcOffsetSec   int64  `json:"utcOffsetSec,omitempty"`
+	LegendFormat   string `json:"legendFormat,omitempty"`
+	RequestId      string `json:"requestId,omitempty"`
+	ValueWithRefId bool   `json:"valueWithRefId,omitempty"`
 }
 
 type TimeRange struct {
@@ -129,27 +129,17 @@ func Parse(query backend.DataQuery, timeInterval string, intervalCalculator inte
 		exemplarQuery = false
 	}
 
-	var utcOffsetSec int64 = 1
-	if model.UtcOffsetSec != nil {
-		utcOffsetSec = *model.UtcOffsetSec
-	}
-
-	legendFormat := ""
-	if model.LegendFormat != nil {
-		legendFormat = *model.LegendFormat
-	}
-
 	return &Query{
 		Expr:          expr,
 		Step:          interval,
-		LegendFormat:  legendFormat,
+		LegendFormat:  model.LegendFormat,
 		Start:         query.TimeRange.From,
 		End:           query.TimeRange.To,
 		RefId:         query.RefID,
 		InstantQuery:  instantQuery,
 		RangeQuery:    rangeQuery,
 		ExemplarQuery: exemplarQuery,
-		UtcOffsetSec:  utcOffsetSec,
+		UtcOffsetSec:  model.UtcOffsetSec,
 	}, nil
 }
 

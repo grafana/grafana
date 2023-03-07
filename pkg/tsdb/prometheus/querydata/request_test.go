@@ -68,8 +68,8 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		require.NoError(t, err)
 
 		qm := models.QueryModel{
-			LegendFormat: kindsys.Ptr("legend {{app}}"),
-			UtcOffsetSec: kindsys.Ptr(int64(0)),
+			LegendFormat: "legend {{app}}",
+			UtcOffsetSec: int64(0),
 			PrometheusDataQuery: dataquery.PrometheusDataQuery{
 				Exemplar: kindsys.Ptr(true),
 			},
@@ -115,8 +115,8 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		}
 
 		qm := models.QueryModel{
-			LegendFormat: kindsys.Ptr("legend {{app}}"),
-			UtcOffsetSec: kindsys.Ptr(int64(0)),
+			LegendFormat: "legend {{app}}",
+			UtcOffsetSec: int64(0),
 			PrometheusDataQuery: dataquery.PrometheusDataQuery{
 				Range:      kindsys.Ptr(true),
 				Interval:   kindsys.Ptr("1s"),
@@ -166,8 +166,8 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		}
 
 		qm := models.QueryModel{
-			LegendFormat: kindsys.Ptr(""),
-			UtcOffsetSec: kindsys.Ptr(int64(0)),
+			LegendFormat: "",
+			UtcOffsetSec: int64(0),
 			PrometheusDataQuery: dataquery.PrometheusDataQuery{
 				Range:      kindsys.Ptr(true),
 				Interval:   kindsys.Ptr("1s"),
@@ -213,8 +213,8 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		}
 
 		qm := models.QueryModel{
-			LegendFormat: kindsys.Ptr(""),
-			UtcOffsetSec: kindsys.Ptr(int64(0)),
+			LegendFormat: "",
+			UtcOffsetSec: int64(0),
 			PrometheusDataQuery: dataquery.PrometheusDataQuery{
 				Range:      kindsys.Ptr(true),
 				Interval:   kindsys.Ptr("1s"),
@@ -258,8 +258,8 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		}
 
 		qm := models.QueryModel{
-			LegendFormat: kindsys.Ptr(""),
-			UtcOffsetSec: kindsys.Ptr(int64(0)),
+			LegendFormat: "",
+			UtcOffsetSec: int64(0),
 			PrometheusDataQuery: dataquery.PrometheusDataQuery{
 				Range:      kindsys.Ptr(true),
 				Interval:   kindsys.Ptr("1s"),
@@ -297,8 +297,8 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			},
 		}
 		qm := models.QueryModel{
-			LegendFormat: kindsys.Ptr("legend {{app}}"),
-			UtcOffsetSec: kindsys.Ptr(int64(0)),
+			LegendFormat: "legend {{app}}",
+			UtcOffsetSec: int64(0),
 			PrometheusDataQuery: dataquery.PrometheusDataQuery{
 				Instant:    kindsys.Ptr(true),
 				Interval:   kindsys.Ptr("1s"),
@@ -340,8 +340,8 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 			},
 		}
 		qm := models.QueryModel{
-			LegendFormat: kindsys.Ptr(""),
-			UtcOffsetSec: kindsys.Ptr(int64(0)),
+			LegendFormat: "",
+			UtcOffsetSec: int64(0),
 			PrometheusDataQuery: dataquery.PrometheusDataQuery{
 				Instant:    kindsys.Ptr(true),
 				Interval:   kindsys.Ptr("1s"),
