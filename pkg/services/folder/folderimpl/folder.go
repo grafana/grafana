@@ -520,6 +520,9 @@ func (s *Service) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (*fol
 	})
 }
 
+// nestedFolderDelete inspects the folder referenced by the cmd argument, deletes all the entries for
+// its descendant folders (folders which are nested within it either directly or indirectly) from
+// the folder store and returns the UIDs for all its descendants.
 func (s *Service) nestedFolderDelete(ctx context.Context, cmd *folder.DeleteFolderCommand) ([]string, error) {
 	logger := s.log.FromContext(ctx)
 	result := []string{}

@@ -245,7 +245,7 @@ func TestIntegrationDeleteNestedFolders(t *testing.T) {
 
 		for i, uid := range ancestorUIDs {
 			// dashboard table
-			_, err := serviceWithFlagOn.getFolderByUID(context.Background(), orgID, uid)
+			_, err := serviceWithFlagOn.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, uid)
 			require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
 			// folder table
 			_, err = serviceWithFlagOn.store.Get(context.Background(), folder.GetFolderQuery{UID: &ancestorUIDs[i], OrgID: orgID})
@@ -287,7 +287,7 @@ func TestIntegrationDeleteNestedFolders(t *testing.T) {
 
 		for i, uid := range ancestorUIDs {
 			// dashboard table
-			_, err := serviceWithFlagOff.getFolderByUID(context.Background(), orgID, uid)
+			_, err := serviceWithFlagOff.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, uid)
 			require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
 			// folder table
 			_, err = serviceWithFlagOff.store.Get(context.Background(), folder.GetFolderQuery{UID: &ancestorUIDs[i], OrgID: orgID})
