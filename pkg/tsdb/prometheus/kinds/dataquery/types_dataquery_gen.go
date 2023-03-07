@@ -9,6 +9,13 @@
 
 package dataquery
 
+// Defines values for PromQueryFormat.
+const (
+	PromQueryFormatHeatmap    PromQueryFormat = "heatmap"
+	PromQueryFormatTable      PromQueryFormat = "table"
+	PromQueryFormatTimeSeries PromQueryFormat = "time_series"
+)
+
 // Defines values for EditorMode.
 const (
 	EditorModeBuilder EditorMode = "builder"
@@ -28,12 +35,8 @@ const (
 	QueryEditorModeCode    QueryEditorMode = "code"
 )
 
-// Defines values for QueryFormatType.
-const (
-	QueryFormatTypeHeatmap    QueryFormatType = "heatmap"
-	QueryFormatTypeTable      QueryFormatType = "table"
-	QueryFormatTypeTimeSeries QueryFormatType = "time_series"
-)
+// PromQueryFormat defines model for PromQueryFormat.
+type PromQueryFormat string
 
 // PrometheusDataQuery defines model for PrometheusDataQuery.
 type PrometheusDataQuery struct {
@@ -77,6 +80,3 @@ type Format string
 
 // QueryEditorMode defines model for QueryEditorMode.
 type QueryEditorMode string
-
-// QueryFormatType defines model for QueryFormatType.
-type QueryFormatType string

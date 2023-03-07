@@ -17,13 +17,13 @@ export enum QueryEditorMode {
   Code = 'code',
 }
 
-export type QueryFormatType = ('time_series' | 'table' | 'heatmap');
+export type PromQueryFormat = ('time_series' | 'table' | 'heatmap');
 
 export interface Prometheus extends common.DataQuery {
   editorMode?: QueryEditorMode;
   exemplar?: boolean;
   expr: string;
-  format?: QueryFormatType;
+  format?: PromQueryFormat;
   hinting?: boolean;
   instant?: boolean;
   interval?: string;

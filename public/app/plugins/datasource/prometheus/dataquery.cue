@@ -42,10 +42,10 @@ composableKinds: DataQuery: {
 						showingGraph?:   bool
 						showingTable?:   bool
 						editorMode?:     #QueryEditorMode
-						format?:         #QueryFormatType
+						format?:         #PromQueryFormat
 
 						#QueryEditorMode: "code" | "builder"                  @cuetsy(kind="enum")
-						#QueryFormatType: "time_series" | "table" | "heatmap" @cuetsy(kind="type")
+						#PromQueryFormat: "time_series" | "table" | "heatmap" @cuetsy(kind="type")
 					},
 				]
 			},
