@@ -398,6 +398,7 @@ var (
 			Description:  "Replaces the Prometheus query builder metric select option with a paginated and filterable component",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+			Owner:        "O11y-metrics",
 		},
 	}
 )
