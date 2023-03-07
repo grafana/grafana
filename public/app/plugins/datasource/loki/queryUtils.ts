@@ -310,11 +310,6 @@ export function requestSupportsPartitioning(allQueries: LokiQuery[]) {
     .filter((query) => !query.refId.includes('do-not-chunk'))
     .filter((query) => query.expr);
 
-  const instantQueries = queries.some((query) => query.queryType === LokiQueryType.Instant);
-  if (instantQueries) {
-    return false;
-  }
-
   return queries.length > 0;
 }
 
