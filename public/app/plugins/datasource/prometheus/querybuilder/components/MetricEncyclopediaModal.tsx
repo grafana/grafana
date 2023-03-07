@@ -359,6 +359,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
           autoFocus
           onInput={(e) => {
             const value = e.currentTarget.value ?? '';
+
             setFuzzySearchQuery(value);
 
             if (useBackend && value === '') {
