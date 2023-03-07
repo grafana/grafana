@@ -92,4 +92,8 @@ func addPublicDashboardMigration(mg *Migrator) {
 		Nullable: false,
 		Default:  "'public'",
 	}))
+
+	mg.AddMigration("backfill empty share column fields with default of public", NewRawSQLMigration(
+		"UPDATE dashboard_public SET share='public' WHERE share=''",
+	))
 }

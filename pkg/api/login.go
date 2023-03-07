@@ -24,6 +24,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -151,9 +153,10 @@ func (hs *HTTPServer) tryAutoLogin(c *contextmodel.ReqContext) bool {
 		}
 	}
 	// If no auto_login option configured for specific OAuth, use legacy option
-	if setting.OAuthAutoLogin && autoLoginProvidersLen == 0 {
+	if hs.Cfg.OAuthAutoLogin && autoLoginProvidersLen == 0 {
 		autoLoginProvidersLen = len(oauthInfos)
 	}
+
 	if samlAutoLogin {
 		autoLoginProvidersLen++
 	}
@@ -162,13 +165,14 @@ func (hs *HTTPServer) tryAutoLogin(c *contextmodel.ReqContext) bool {
 		c.Logger.Warn("Skipping auto login because multiple auth providers are configured with auto_login option")
 		return false
 	}
-	if autoLoginProvidersLen == 0 && setting.OAuthAutoLogin {
+
+	if hs.Cfg.OAuthAutoLogin && autoLoginProvidersLen == 0 {
 		c.Logger.Warn("Skipping auto login because no auth providers are configured")
 		return false
 	}
 
 	for providerName, provider := range oauthInfos {
-		if provider.AutoLogin || setting.OAuthAutoLogin {
+		if provider.AutoLogin || hs.Cfg.OAuthAutoLogin {
 			redirectUrl := hs.Cfg.AppSubURL + "/login/" + providerName
 			c.Logger.Info("OAuth auto login enabled. Redirecting to " + redirectUrl)
 			c.Redirect(redirectUrl, 307)
@@ -188,7 +192,7 @@ func (hs *HTTPServer) tryAutoLogin(c *contextmodel.ReqContext) bool {
 
 func (hs *HTTPServer) LoginAPIPing(c *contextmodel.ReqContext) response.Response {
 	if c.IsSignedIn || c.IsAnonymous {
-		return response.JSON(http.StatusOK, "Logged in")
+		return response.JSON(http.StatusOK, util.DynMap{"message": "Logged in"})
 	}
 
 	return response.Error(401, "Unauthorized", nil)
@@ -205,22 +209,8 @@ func (hs *HTTPServer) LoginPost(c *contextmodel.ReqContext) response.Response {
 			return response.Err(err)
 		}
 
-		cookies.WriteSessionCookie(c, hs.Cfg, identity.SessionToken.UnhashedToken, hs.Cfg.LoginMaxLifetime)
-		result := map[string]interface{}{
-			"message": "Logged in",
-		}
-
-		if redirectTo := c.GetCookie("redirect_to"); len(redirectTo) > 0 {
-			if err := hs.ValidateRedirectTo(redirectTo); err == nil {
-				result["redirectUrl"] = redirectTo
-			} else {
-				c.Logger.Info("Ignored invalid redirect_to cookie value.", "url", redirectTo)
-			}
-			cookies.DeleteCookie(c.Resp, "redirect_to", hs.CookieOptionsFromCfg)
-		}
-
 		metrics.MApiLoginPost.Inc()
-		return response.JSON(http.StatusOK, result)
+		return authn.HandleLoginResponse(c.Req, c.Resp, hs.Cfg, identity, hs.ValidateRedirectTo)
 	}
 
 	cmd := dtos.LoginCommand{}
@@ -245,7 +235,7 @@ func (hs *HTTPServer) LoginPost(c *contextmodel.ReqContext) response.Response {
 		}, c)
 	}()
 
-	if setting.DisableLoginForm {
+	if hs.Cfg.DisableLoginForm {
 		resp = response.Error(http.StatusUnauthorized, "Login is disabled", nil)
 		return resp
 	}
@@ -450,6 +440,11 @@ func getLoginExternalError(err error) string {
 	var createTokenErr *auth.CreateTokenErr
 	if errors.As(err, &createTokenErr) {
 		return createTokenErr.ExternalErr
+	}
+
+	gfErr := &errutil.Error{}
+	if errors.As(err, gfErr) {
+		return gfErr.Public().Message
 	}
 
 	return err.Error()

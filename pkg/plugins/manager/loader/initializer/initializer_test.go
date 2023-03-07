@@ -7,10 +7,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 )
 
@@ -37,7 +37,7 @@ func TestInitializer_Initialize(t *testing.T) {
 
 		i := &Initializer{
 			cfg: &config.Cfg{},
-			log: log.NewNopLogger(),
+			log: log.NewTestLogger(),
 			backendProvider: &fakeBackendProvider{
 				plugin: p,
 			},
@@ -67,7 +67,7 @@ func TestInitializer_Initialize(t *testing.T) {
 
 		i := &Initializer{
 			cfg: &config.Cfg{},
-			log: log.NewNopLogger(),
+			log: log.NewTestLogger(),
 			backendProvider: &fakeBackendProvider{
 				plugin: p,
 			},
@@ -97,7 +97,7 @@ func TestInitializer_Initialize(t *testing.T) {
 
 		i := &Initializer{
 			cfg: &config.Cfg{},
-			log: log.NewNopLogger(),
+			log: log.NewTestLogger(),
 			backendProvider: &fakeBackendProvider{
 				plugin: p,
 			},
@@ -120,7 +120,7 @@ func TestInitializer_Initialize(t *testing.T) {
 
 		i := &Initializer{
 			cfg: &config.Cfg{},
-			log: log.NewNopLogger(),
+			log: log.NewTestLogger(),
 			backendProvider: &fakeBackendProvider{
 				plugin: p,
 			},
@@ -158,7 +158,7 @@ func TestInitializer_envVars(t *testing.T) {
 				},
 			},
 			license: licensing,
-			log:     log.NewNopLogger(),
+			log:     log.NewTestLogger(),
 			backendProvider: &fakeBackendProvider{
 				plugin: p,
 			},

@@ -1,6 +1,10 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
 //  Frame[0] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
 //      "custom": {
 //          "frameType": "LabeledTimeValues"
 //      },
@@ -137,6 +141,10 @@
     {
       "schema": {
         "meta": {
+          "typeVersion": [
+            0,
+            0
+          ],
           "custom": {
             "frameType": "LabeledTimeValues"
           },

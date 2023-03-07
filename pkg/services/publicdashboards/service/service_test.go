@@ -996,7 +996,7 @@ func AddAnnotationsToDashboard(t *testing.T, dash *dashboards.Dashboard, annotat
 	return dash
 }
 
-func insertTestDashboard(t *testing.T, dashboardStore *dashboardsDB.DashboardStore, title string, orgId int64,
+func insertTestDashboard(t *testing.T, dashboardStore dashboards.Store, title string, orgId int64,
 	folderId int64, isFolder bool, templateVars []map[string]interface{}, customPanels []interface{}, tags ...interface{}) *dashboards.Dashboard {
 	t.Helper()
 

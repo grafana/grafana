@@ -6,6 +6,7 @@ import {
   Field,
   FieldType,
   InterpolateFunction,
+  SupportedTransformationTypes,
   TimeRange,
   toDataFrame,
 } from '@grafana/data';
@@ -236,6 +237,233 @@ describe('getFieldLinksForExplore', () => {
     expect(links[0].href).toBe(
       `/explore?left=${encodeURIComponent(
         '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"query_1-foo-foo2"}]}'
+      )}`
+    );
+  });
+
+  it('returns internal links with logfmt and regex transformation', () => {
+    const transformationLink: DataLink = {
+      title: '',
+      url: '',
+      internal: {
+        query: { query: 'http_requests{app=${application} env=${environment}}' },
+        datasourceUid: 'uid_1',
+        datasourceName: 'test_ds',
+        transformations: [
+          { type: SupportedTransformationTypes.Logfmt },
+          { type: SupportedTransformationTypes.Regex, expression: 'host=(dev|prod)', mapValue: 'environment' },
+        ],
+      },
+    };
+
+    const { field, range, dataFrame } = setup(transformationLink, true, {
+      name: 'msg',
+      type: FieldType.string,
+      values: new ArrayVector(['application=foo host=dev-001', 'application=bar host=prod-003']),
+      config: {
+        links: [transformationLink],
+      },
+    });
+
+    const links = [
+      getFieldLinksForExplore({ field, rowIndex: 0, range, dataFrame }),
+      getFieldLinksForExplore({ field, rowIndex: 1, range, dataFrame }),
+    ];
+    expect(links[0]).toHaveLength(1);
+    expect(links[0][0].href).toBe(
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=foo env=dev}"}]}'
+      )}`
+    );
+    expect(links[1]).toHaveLength(1);
+    expect(links[1][0].href).toBe(
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=bar env=prod}"}]}'
+      )}`
+    );
+  });
+
+  it('returns internal links with 2 unnamed regex transformations and use the last transformation', () => {
+    const transformationLink: DataLink = {
+      title: '',
+      url: '',
+      internal: {
+        query: { query: 'http_requests{env=${msg}}' },
+        datasourceUid: 'uid_1',
+        datasourceName: 'test_ds',
+        transformations: [
+          { type: SupportedTransformationTypes.Regex, expression: 'fieldA=(asparagus|broccoli)' },
+          { type: SupportedTransformationTypes.Regex, expression: 'fieldB=(apple|banana)' },
+        ],
+      },
+    };
+
+    const { field, range, dataFrame } = setup(transformationLink, true, {
+      name: 'msg',
+      type: FieldType.string,
+      values: new ArrayVector(['fieldA=asparagus fieldB=banana', 'fieldA=broccoli fieldB=apple']),
+      config: {
+        links: [transformationLink],
+      },
+    });
+
+    const links = [
+      getFieldLinksForExplore({ field, rowIndex: 0, range, dataFrame }),
+      getFieldLinksForExplore({ field, rowIndex: 1, range, dataFrame }),
+    ];
+    expect(links[0]).toHaveLength(1);
+    expect(links[0][0].href).toBe(
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{env=banana}"}]}'
+      )}`
+    );
+    expect(links[1]).toHaveLength(1);
+    expect(links[1][0].href).toBe(
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{env=apple}"}]}'
+      )}`
+    );
+  });
+
+  it('returns internal links with logfmt with stringified booleans', () => {
+    const transformationLink: DataLink = {
+      title: '',
+      url: '',
+      internal: {
+        query: { query: 'http_requests{app=${application} isOnline=${online}}' },
+        datasourceUid: 'uid_1',
+        datasourceName: 'test_ds',
+        transformations: [{ type: SupportedTransformationTypes.Logfmt }],
+      },
+    };
+
+    const { field, range, dataFrame } = setup(transformationLink, true, {
+      name: 'msg',
+      type: FieldType.string,
+      values: new ArrayVector(['application=foo online=true', 'application=bar online=false']),
+      config: {
+        links: [transformationLink],
+      },
+    });
+
+    const links = [
+      getFieldLinksForExplore({ field, rowIndex: 0, range, dataFrame }),
+      getFieldLinksForExplore({ field, rowIndex: 1, range, dataFrame }),
+    ];
+    expect(links[0]).toHaveLength(1);
+    expect(links[0][0].href).toBe(
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=foo isOnline=true}"}]}'
+      )}`
+    );
+    expect(links[1]).toHaveLength(1);
+    expect(links[1][0].href).toBe(
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=bar isOnline=false}"}]}'
+      )}`
+    );
+  });
+
+  it('returns internal links with logfmt with correct data on transformation-defined field', () => {
+    const transformationLink: DataLink = {
+      title: '',
+      url: '',
+      internal: {
+        query: { query: 'http_requests{app=${application}}' },
+        datasourceUid: 'uid_1',
+        datasourceName: 'test_ds',
+        transformations: [{ type: SupportedTransformationTypes.Logfmt, field: 'fieldNamedInTransformation' }],
+      },
+    };
+
+    // fieldWithLink has the transformation, but the transformation has defined fieldNamedInTransformation as its field to transform
+    const { field, range, dataFrame } = setup(
+      transformationLink,
+      true,
+      {
+        name: 'fieldWithLink',
+        type: FieldType.string,
+        values: new ArrayVector(['application=link', 'application=link2']),
+        config: {
+          links: [transformationLink],
+        },
+      },
+      [
+        {
+          name: 'fieldNamedInTransformation',
+          type: FieldType.string,
+          values: new ArrayVector(['application=transform', 'application=transform2']),
+          config: {},
+        },
+      ]
+    );
+
+    const links = [
+      getFieldLinksForExplore({ field, rowIndex: 0, range, dataFrame }),
+      getFieldLinksForExplore({ field, rowIndex: 1, range, dataFrame }),
+    ];
+    expect(links[0]).toHaveLength(1);
+    expect(links[0][0].href).toBe(
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=transform}"}]}'
+      )}`
+    );
+    expect(links[1]).toHaveLength(1);
+    expect(links[1][0].href).toBe(
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=transform2}"}]}'
+      )}`
+    );
+  });
+
+  it('returns internal links with regex named capture groups', () => {
+    const transformationLink: DataLink = {
+      title: '',
+      url: '',
+      internal: {
+        query: { query: 'http_requests{app=${application} env=${environment}}' },
+        datasourceUid: 'uid_1',
+        datasourceName: 'test_ds',
+        transformations: [
+          {
+            type: SupportedTransformationTypes.Regex,
+            expression: '(?=.*(?<application>(grafana|loki)))(?=.*(?<environment>(dev|prod)))',
+          },
+        ],
+      },
+    };
+
+    const { field, range, dataFrame } = setup(transformationLink, true, {
+      name: 'msg',
+      type: FieldType.string,
+      values: new ArrayVector(['foo loki prod', 'dev bar grafana', 'prod grafana foo']),
+      config: {
+        links: [transformationLink],
+      },
+    });
+
+    const links = [
+      getFieldLinksForExplore({ field, rowIndex: 0, range, dataFrame }),
+      getFieldLinksForExplore({ field, rowIndex: 1, range, dataFrame }),
+      getFieldLinksForExplore({ field, rowIndex: 2, range, dataFrame }),
+    ];
+    expect(links[0]).toHaveLength(1);
+    expect(links[0][0].href).toBe(
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=loki env=prod}"}]}'
+      )}`
+    );
+    expect(links[1]).toHaveLength(1);
+    expect(links[1][0].href).toBe(
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=grafana env=dev}"}]}'
+      )}`
+    );
+
+    expect(links[2]).toHaveLength(1);
+    expect(links[2][0].href).toBe(
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=grafana env=prod}"}]}'
       )}`
     );
   });

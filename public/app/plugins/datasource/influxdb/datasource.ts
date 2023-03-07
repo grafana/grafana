@@ -180,7 +180,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
   applyTemplateVariables(query: InfluxQuery, scopedVars: ScopedVars): Record<string, any> {
     // We want to interpolate these variables on backend
-    const { __interval, __interval_ms, ...rest } = scopedVars;
+    const { __interval, __interval_ms, ...rest } = scopedVars || {};
 
     if (this.isFlux) {
       return {
@@ -401,10 +401,6 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       params.db = options.database;
     } else if (this.database) {
       params.db = this.database;
-    }
-
-    if (options?.policy) {
-      params.rp = options.policy;
     }
 
     const { q } = data;

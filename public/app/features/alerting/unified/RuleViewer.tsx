@@ -37,6 +37,7 @@ import { RuleState } from './components/rules/RuleState';
 import { useAlertQueriesStatus } from './hooks/useAlertQueriesStatus';
 import { useCombinedRule } from './hooks/useCombinedRule';
 import { AlertingQueryRunner } from './state/AlertingQueryRunner';
+import { useCleanAnnotations } from './utils/annotations';
 import { getRulesSourceByName } from './utils/datasource';
 import { alertRuleToQueries } from './utils/query';
 import * as ruleId from './utils/rule-id';
@@ -59,6 +60,7 @@ export function RuleViewer({ match }: RuleViewerProps) {
   const runner = useMemo(() => new AlertingQueryRunner(), []);
   const data = useObservable(runner.get());
   const queries = useMemo(() => alertRuleToQueries(rule), [rule]);
+  const annotations = useCleanAnnotations(rule?.annotations || {});
 
   const [evaluationTimeRanges, setEvaluationTimeRanges] = useState<Record<string, RelativeTimeRange>>({});
 
@@ -146,7 +148,6 @@ export function RuleViewer({ match }: RuleViewerProps) {
     );
   }
 
-  const annotations = Object.entries(rule.annotations).filter(([_, value]) => !!value.trim());
   const isFederatedRule = isFederatedRuleGroup(rule.group);
   const isProvisioned = isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.provenance);
 
