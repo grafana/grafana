@@ -81,7 +81,6 @@ const getStyles = memoizeOne((theme: GrafanaTheme2) => {
       label: toolbarButtonRow;
       gap: ${theme.spacing(0.5)};
 
-      max-width: calc(3 * ${theme.spacing(theme.components.height.sm)});
       & > div {
         height: ${theme.spacing(theme.components.height.sm)};
         width: ${theme.spacing(theme.components.height.sm)};
