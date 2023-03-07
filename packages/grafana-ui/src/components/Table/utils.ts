@@ -324,7 +324,7 @@ export function getFooterItems(
   theme2: GrafanaTheme2
 ): FooterItem[] {
   /*
-    Here, `filterFields` is passed as the `headerGroups[0].headers` array that was destrcutured from the `useTable` hook.
+    Here, `filterFields` is passed as the `headerGroups[0].headers` array that was destructured from the `useTable` hook.
     Unfortunately, since the `headerGroups` object is data based ONLY on the rendered "non-hidden" column headers,
     it will NOT include the Row Number column if it has been toggled off. This will shift the rendering of the footer left 1 column,
     creating an off-by-one issue. This is why we test for a `field.id` of "0". If the condition is truthy, the togglable Row Number column is being rendered,
