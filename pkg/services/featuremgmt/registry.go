@@ -74,10 +74,9 @@ var (
 		},
 		{
 			Name:            "publicDashboardsEmailSharing",
-			Description:     "Allows public dashboard sharing to be restricted to only allowed emails",
+			Description:     "Enables public dashboard sharing to be restricted to only allowed emails",
 			State:           FeatureStateAlpha,
 			RequiresLicense: true,
-			RequiresDevMode: true,
 			Owner:           grafanaDashboardsSquad,
 		},
 		{
@@ -392,6 +391,13 @@ var (
 			Description:  "Enables the 'TraceQL Search' tab for the Tempo datasource which provides a UI to generate TraceQL queries",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+		},
+		{
+			Name:         "prometheusMetricEncyclopedia",
+			Description:  "Replaces the Prometheus query builder metric select option with a paginated and filterable component",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+			Owner:        "O11y-metrics",
 		},
 	}
 )
