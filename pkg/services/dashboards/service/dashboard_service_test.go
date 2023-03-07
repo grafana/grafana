@@ -7,7 +7,6 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/xorcare/pointer"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
@@ -18,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestDashboardService(t *testing.T) {
@@ -120,7 +120,7 @@ func TestDashboardService(t *testing.T) {
 				if origAlertingEnabledSet {
 					origAlertingEnabledVal = *setting.AlertingEnabled
 				}
-				setting.AlertingEnabled = pointer.Bool(true)
+				setting.AlertingEnabled = util.Pointer(true)
 				t.Cleanup(func() {
 					if !origAlertingEnabledSet {
 						setting.AlertingEnabled = nil
