@@ -40,7 +40,7 @@ The Alpine variant is highly recommended when security and final image size bein
 
 These images are based on [Ubuntu](https://ubuntu.com/), available in [the Ubuntu official image](https://hub.docker.com/_/ubuntu). It is an alternative image for those who prefer an [Ubuntu](https://ubuntu.com/) based image and/or are dependent on certain tooling not available for Alpine.
 
-## Run Grafana
+## Run Grafana via Docker CLI
 
 You can run the latest Grafana version, run a specific version, or run an unstable version based on the main branch of the [grafana/grafana GitHub repository](https://github.com/grafana/grafana).
 
