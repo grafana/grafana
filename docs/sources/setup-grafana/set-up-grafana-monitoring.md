@@ -17,7 +17,7 @@ weight: 800
 
 Grafana supports tracing.
 
-Grafana can emit Jaeger/OTLP traces for its HTTP API endpoints and propagate Jaeger/w3c trace information to data sources.
+Grafana can emit Jaeger or OpenTelemetry Protocol (OTLP) traces for its HTTP API endpoints and propagate Jaeger and [w3c Trace Context](https://www.w3.org/TR/trace-context/) trace information to compatible data sources.
 All HTTP endpoints are logged evenly (annotations, dashboard, tags, and so on).
 When a trace ID is propagated, it is reported with operation 'HTTP /datasources/proxy/:id/\*'.
 
