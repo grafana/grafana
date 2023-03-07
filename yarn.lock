@@ -12820,9 +12820,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@visx/bounds@npm:2.16.0":
-  version: 2.16.0
-  resolution: "@visx/bounds@npm:2.16.0"
+"@visx/bounds@npm:3.0.0":
+  version: 3.0.0
+  resolution: "@visx/bounds@npm:3.0.0"
   dependencies:
     "@types/react": "*"
     "@types/react-dom": "*"
@@ -12830,7 +12830,7 @@ __metadata:
   peerDependencies:
     react: ^16.0.0-0 || ^17.0.0-0 || ^18.0.0-0
     react-dom: ^16.0.0-0 || ^17.0.0-0 || ^18.0.0-0
-  checksum: dcc30f4f6b5ca5f69ea30e9dee01243a3c770fafc33c50b0666b0a2b76a2c989251e90a07e68640691d7d11de7cc6989c823c1d36b8c96552da8e0f74408059b
+  checksum: 3c50dad1c78b526bebe20a690360ae5ad3dd2a31c86150553071671e49309a9fcf3bca3303eab7f7ac2e28be8d7987ac9ce5daa28b8df32c647b0aa97f118fa9
   languageName: node
   linkType: hard
 
@@ -12844,38 +12844,25 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@visx/event@npm:2.17.0":
-  version: 2.17.0
-  resolution: "@visx/event@npm:2.17.0"
+"@visx/event@npm:3.0.1":
+  version: 3.0.1
+  resolution: "@visx/event@npm:3.0.1"
   dependencies:
     "@types/react": "*"
-    "@visx/point": 2.17.0
-  checksum: 360a9ee2a163c0e0200f98cadcd9f0c98f53725d4be62e49d326aeb8ca7cd837305f28f326f03d9ae49910ca67e1185a97827f0ef76efb0b901fb54c56c97bd3
+    "@visx/point": 3.0.1
+  checksum: 0cb4dd578bbe54bd428a0cfae9e64db141b039c2c6c1412d1cd1d04e1613d193212b031124948ca3b7eed877cdea87d161cc3a008b973c6f217e21a8a2dd27b0
   languageName: node
   linkType: hard
 
-"@visx/gradient@npm:2.10.0":
-  version: 2.10.0
-  resolution: "@visx/gradient@npm:2.10.0"
+"@visx/gradient@npm:3.0.0":
+  version: 3.0.0
+  resolution: "@visx/gradient@npm:3.0.0"
   dependencies:
     "@types/react": "*"
     prop-types: ^15.5.7
   peerDependencies:
     react: ^16.0.0-0 || ^17.0.0-0 || ^18.0.0-0
-  checksum: 30b1a0d0f30685c4c53795a6c4a4b0c88f290a6606205867c9b611f35ad122fa92bc4e5992674276972d698518aabecf7411ed2e71e0583c24f2ac8fdbb0f08f
-  languageName: node
-  linkType: hard
-
-"@visx/group@npm:2.10.0":
-  version: 2.10.0
-  resolution: "@visx/group@npm:2.10.0"
-  dependencies:
-    "@types/react": "*"
-    classnames: ^2.3.1
-    prop-types: ^15.6.2
-  peerDependencies:
-    react: ^16.0.0-0 || ^17.0.0-0 || ^18.0.0-0
-  checksum: 4774fb8d62f68948e45cb214acf025d4f0be1a4d80be11d7771dcd63f7e054710df2a05bc66c5b0d57bf33755c834f5d6033b11c0a360681ca166e32342292f2
+  checksum: 471b4a4e1ec329e26cedb5aeef627b7c6393b54d85f76fa2707ec4f2b75a67007c5d9e4c9ffbdf58d37853228c21e285780466ab958b22dbba41f209c5212182
   languageName: node
   linkType: hard
 
@@ -12892,10 +12879,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@visx/point@npm:2.17.0":
-  version: 2.17.0
-  resolution: "@visx/point@npm:2.17.0"
-  checksum: 9cb18e41f1f47e46b85bdbbdd1c930a654ed8b731b3a5da0920e2b3a261d887c066ec97079293d4f5195a1e04d842faa2f2bf0519876cb27ea6ee82fc5ff8855
+"@visx/point@npm:3.0.1":
+  version: 3.0.1
+  resolution: "@visx/point@npm:3.0.1"
+  checksum: 727f314826eb85a608b4088a9e2fedb7e6996a5f0fdddaeb40702a51aa04da07fdbc5fdcf2d595d914dfa083389c644f769fc69b3a247b4da274936dd58c7bb8
   languageName: node
   linkType: hard
 
@@ -12935,19 +12922,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@visx/tooltip@npm:2.16.0":
-  version: 2.16.0
-  resolution: "@visx/tooltip@npm:2.16.0"
+"@visx/tooltip@npm:3.0.0":
+  version: 3.0.0
+  resolution: "@visx/tooltip@npm:3.0.0"
   dependencies:
     "@types/react": "*"
-    "@visx/bounds": 2.16.0
+    "@visx/bounds": 3.0.0
     classnames: ^2.3.1
     prop-types: ^15.5.10
     react-use-measure: ^2.0.4
   peerDependencies:
     react: ^16.8.0-0 || ^17.0.0-0 || ^18.0.0-0
     react-dom: ^16.8.0-0 || ^17.0.0-0 || ^18.0.0-0
-  checksum: 1a6ed1877b0370e4c57ba9b678eace46221a04ab7f66cbfa8fad3ebb98405655e062a31524654e16cb8cd94db7c4c8f610fdea4ab22c5ec9617ce3165badeb26
+  checksum: f3d9b62905424c8c3bd10f2fcbf6947da9adc7fff9a22aa961ce1c4523db4f0297b066a2fe27eeae7f4e45f0a4f7049067b6da71c6566a3991cb6fc53f6f8eb4
   languageName: node
   linkType: hard
 
@@ -22196,12 +22183,12 @@ __metadata:
     "@types/yargs": 17.0.12
     "@typescript-eslint/eslint-plugin": 5.42.0
     "@typescript-eslint/parser": 5.42.0
-    "@visx/event": 2.17.0
-    "@visx/gradient": 2.10.0
-    "@visx/group": 2.10.0
+    "@visx/event": 3.0.1
+    "@visx/gradient": 3.0.0
+    "@visx/group": 3.0.0
     "@visx/scale": 3.0.0
     "@visx/shape": 3.0.0
-    "@visx/tooltip": 2.16.0
+    "@visx/tooltip": 3.0.0
     "@welldone-software/why-did-you-render": 7.0.1
     angular: 1.8.3
     angular-bindonce: 0.3.1
