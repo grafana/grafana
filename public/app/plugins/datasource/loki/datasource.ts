@@ -451,9 +451,8 @@ export class LokiDatasource
     return statsForAll;
   }
 
-  async formatQuery(query: LokiQuery) {
-    const data = await this.metadataRequest('format_query', { query: query.expr });
-    console.log('formatQuery data:', data);
+  async formatQuery(query: string) {
+    return await this.metadataRequest('format_query', { query: query });
   }
 
   async metricFindQuery(query: LokiVariableQuery | string) {
