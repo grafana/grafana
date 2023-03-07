@@ -239,10 +239,10 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *contextmodel.ReqContext, b
 		return ErrResp(http.StatusBadRequest, configRejectedError, "")
 	}
 	if errors.Is(err, notifier.ErrNoAlertmanagerForOrg) {
-		return response.Error(http.StatusNotFound, err.Error(), err)
+		return response.Err(ErrAlertingNonExistentOrg.Errorf("Alertmanager does not exist for this organization: %w", err))
 	}
 	if errors.Is(err, notifier.ErrAlertmanagerNotReady) {
-		return response.Error(http.StatusConflict, err.Error(), err)
+		return response.Err(ErrAlertingStatusConflict.Errorf("Alertmanager is not ready yet :%w", err))
 	}
 
 	return ErrResp(http.StatusInternalServerError, err, "")
@@ -289,9 +289,9 @@ func (srv AlertmanagerSrv) RoutePostTestReceivers(c *contextmodel.ReqContext, bo
 	result, err := am.TestReceivers(ctx, body)
 	if err != nil {
 		if errors.Is(err, alertingNotify.ErrNoReceivers) {
-			return response.Error(http.StatusBadRequest, "", err)
+			return response.Err(ErrAlertingStatusBadRequest.Errorf("no receivers :%w", err))
 		}
-		return response.Error(http.StatusInternalServerError, "", err)
+		return response.Err(ErrAlertingInternalError.Errorf("Internal Server error : %w", err))
 	}
 
 	return response.JSON(statusForTestReceivers(result.Receivers), newTestReceiversResult(result))
@@ -395,12 +395,12 @@ func (srv AlertmanagerSrv) AlertmanagerFor(orgID int64) (Alertmanager, *response
 	}
 
 	if errors.Is(err, notifier.ErrNoAlertmanagerForOrg) {
-		return nil, response.Error(http.StatusNotFound, err.Error(), err)
+		return nil, response.Err(ErrAlertingStatusNotFound.Errorf("Alertmanager does not exist for this organization: %w", err))
 	}
 	if errors.Is(err, notifier.ErrAlertmanagerNotReady) {
-		return am, response.Error(http.StatusConflict, err.Error(), err)
+		return am, response.Err(ErrAlertingStatusConflict.Errorf("Alertmanager is not ready yet: %w", err))
 	}
 
 	srv.log.Error("unable to obtain the org's Alertmanager", "error", err)
-	return nil, response.Error(http.StatusInternalServerError, "unable to obtain org's Alertmanager", err)
+	return nil, response.Err(ErrAlertingInternalError.Errorf("unable to obtain org's Alertmanager: %w", err))
 }

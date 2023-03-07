@@ -71,7 +71,7 @@ func (am *LotexAM) withAMReq(
 ) response.Response {
 	datasourceUID := web.Params(ctx.Req)[":DatasourceUID"]
 	if datasourceUID == "" {
-		return response.Error(http.StatusBadRequest, "DatasourceUID is invalid", nil)
+		return response.Err(ErrAlertingStatusBadRequest.Errorf("DatasourceUID is invalid: %w", nil))
 	}
 
 	ds, err := am.DataProxy.DataSourceCache.GetDatasourceByUID(ctx.Req.Context(), datasourceUID, ctx.SignedInUser, ctx.SkipCache)

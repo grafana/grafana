@@ -2,23 +2,31 @@ package api
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var (
-	errUnexpectedDatasourceType = errors.New("unexpected datasource type")
+	errUnexpectedDatasourceType     = errutil.NewBase(errutil.StatusBadRequest, "alerting.unexpected-datasource-type")
+	ErrAlertingStatusNotFound       = errutil.NewBase(errutil.StatusNotFound, "alerting.status-not-found")
+	ErrAlertingStatusBadRequest     = errutil.NewBase(errutil.StatusBadRequest, "alerting.bad-request")
+	ErrAlertingInternalError        = errutil.NewBase(errutil.StatusInternal, "alerting.internal")
+	ErrAlertingStatusConflict       = errutil.NewBase(errutil.StatusInternal, "alerting.status-conflict")
+	ErrAlertingExternalAlertManager = errutil.NewBase(errutil.StatusValidationFailed, "alerting.validation-failed", errutil.WithPublicMessage("At least one Alertmanager must be provided or configured as a datasource that handles alerts to choose this option"))
+	ErrAlertingInvalidAlertManager  = errutil.NewBase(errutil.StatusValidationFailed, "alerting.validation-failed", errutil.WithPublicMessage("Invalid alertmanager choice specified"))
+	ErrAlertingStatusForbidden      = errutil.NewBase(errutil.StatusForbidden, "alerting.forbidden,")
+	ErrAlertingNonExistentOrg       = errutil.NewBase(errutil.StatusNotFound, "alerting.status-not-found", errutil.WithPublicMessage("Alertmanager does not exist for this organization"))
 )
 
 func unexpectedDatasourceTypeError(actual string, expected string) error {
-	return fmt.Errorf("%w '%s', expected %s", errUnexpectedDatasourceType, actual, expected)
+	return errUnexpectedDatasourceType.Errorf("Unexpected data source type '%s', expected %s", actual, expected)
 }
 
 func backendTypeDoesNotMatchPayloadTypeError(backendType apimodels.Backend, payloadType string) error {
-	return fmt.Errorf("unexpected backend type (%s) for payload type (%s)",
+	return ErrAlertingInternalError.Errorf("unexpeected backend type (%s) for payload type (%s)",
 		backendType.String(),
 		payloadType,
 	)
