@@ -101,7 +101,7 @@ func ProvideService(router routing.RouteRegister, db db.DB, cfg *setting.Cfg, sk
 		acService:     acSvc,
 	}
 
-	api := api.NewAPI(router, token, s)
+	api := api.NewAPI(router, s)
 	api.RegisterAPIEndpoints()
 
 	s.oauthProvider = NewProvider(config, s, privateKey)
