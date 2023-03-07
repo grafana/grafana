@@ -26,9 +26,6 @@ func ProvideValidation(
 	}
 }
 
-// TODO:
-// 1. This doesn't do RBAC checks. It should.
-// 2. convert runtime.Objects in request to PublicDashboard and *user.SignedInUser
 func (v *pdValidation) Validate(ctx context.Context, request *admission.AdmissionRequest) error {
 	k8Dashboard := request.Object.(*PublicDashboard)
 	dto, err := k8sPublicDashboardToDTO(k8Dashboard)
