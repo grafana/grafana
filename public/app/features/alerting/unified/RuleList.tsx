@@ -27,13 +27,12 @@ import { fetchAllPromAndRulerRulesAction } from './state/actions';
 import { useRulesAccess } from './utils/accessControlHooks';
 import { RULE_LIST_POLL_INTERVAL_MS } from './utils/constants';
 import { getAllRulesSourceNames } from './utils/datasource';
+import { createUrl } from './utils/url';
 
 const VIEWS = {
   groups: RuleListGroupView,
   state: RuleListStateView,
 };
-
-const onExport = () => window.open('/api/v1/provisioning/alert-rules/export?download=true&format=yaml');
 
 const RuleList = withErrorBoundary(
   () => {
@@ -111,9 +110,17 @@ const RuleList = withErrorBoundary(
               </div>
               <Stack direction="row" gap={0.5}>
                 {canReadProvisioning && (
-                  <Button icon="download-alt" type="button" onClick={onExport}>
+                  <LinkButton
+                    href={createUrl('/api/v1/provisioning/alert-rules/export', {
+                      download: 'true',
+                      format: 'yaml',
+                    })}
+                    icon="download-alt"
+                    target="_blank"
+                    rel="noopener"
+                  >
                     Export
-                  </Button>
+                  </LinkButton>
                 )}
                 {(canCreateGrafanaRules || canCreateCloudRules) && (
                   <LinkButton
