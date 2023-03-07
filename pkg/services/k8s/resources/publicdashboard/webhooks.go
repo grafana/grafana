@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/k8s/admission"
 	k8sAdmission "k8s.io/api/admission/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type WebhooksAPI struct {
@@ -52,7 +52,7 @@ func makeSuccessfulAdmissionReview(uid k8sTypes.UID, typeMeta metaV1.TypeMeta, c
 		Response: &k8sAdmission.AdmissionResponse{
 			UID:     uid,
 			Allowed: true,
-			Result: &v1.Status{
+			Result: &metaV1.Status{
 				Status: "Success",
 				Code:   code,
 			},
@@ -66,7 +66,7 @@ func makeFailureAdmissionReview(uid k8sTypes.UID, typeMeta metaV1.TypeMeta, err 
 		Response: &k8sAdmission.AdmissionResponse{
 			UID:     uid,
 			Allowed: false,
-			Result: &v1.Status{
+			Result: &metaV1.Status{
 				Status:  "Failure",
 				Message: err.Error(),
 				Code:    code,
