@@ -40,7 +40,6 @@ type service interface {
 	SearchOrgServiceAccounts(ctx context.Context, query *serviceaccounts.SearchOrgServiceAccountsQuery) (*serviceaccounts.SearchOrgServiceAccountsResult, error)
 	ListTokens(ctx context.Context, query *serviceaccounts.GetSATokensQuery) ([]apikey.APIKey, error)
 	DeleteServiceAccount(ctx context.Context, orgID, serviceAccountID int64) error
-	HideApiKeysTab(ctx context.Context, orgID int64) error
 	MigrateApiKeysToServiceAccounts(ctx context.Context, orgID int64) error
 	MigrateApiKey(ctx context.Context, orgID int64, keyId int64) error
 	// Service account tokens
@@ -86,8 +85,6 @@ func (api *ServiceAccountsAPI) RegisterAPIEndpoints() {
 			accesscontrol.EvalPermission(serviceaccounts.ActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.CreateToken))
 		serviceAccountsRoute.Delete("/:serviceAccountId/tokens/:tokenId", auth(middleware.ReqOrgAdmin,
 			accesscontrol.EvalPermission(serviceaccounts.ActionWrite, serviceaccounts.ScopeID)), routing.Wrap(api.DeleteToken))
-		serviceAccountsRoute.Post("/hideApiKeys", auth(middleware.ReqOrgAdmin,
-			accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.HideApiKeysTab))
 		serviceAccountsRoute.Post("/migrate", auth(middleware.ReqOrgAdmin,
 			accesscontrol.EvalPermission(serviceaccounts.ActionCreate)), routing.Wrap(api.MigrateApiKeysToServiceAccounts))
 		serviceAccountsRoute.Post("/migrate/:keyId", auth(middleware.ReqOrgAdmin,
@@ -355,14 +352,6 @@ func (api *ServiceAccountsAPI) SearchOrgServiceAccountsWithPaging(c *contextmode
 	}
 
 	return response.JSON(http.StatusOK, serviceAccountSearch)
-}
-
-// POST /api/serviceaccounts/hideapikeys
-func (api *ServiceAccountsAPI) HideApiKeysTab(ctx *contextmodel.ReqContext) response.Response {
-	if err := api.service.HideApiKeysTab(ctx.Req.Context(), ctx.OrgID); err != nil {
-		return response.Error(http.StatusInternalServerError, "Internal server error", err)
-	}
-	return response.Success("API keys hidden")
 }
 
 // POST /api/serviceaccounts/migrate

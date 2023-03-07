@@ -2,6 +2,8 @@ package phlare
 
 import (
 	"context"
+	"encoding/json"
+	"os"
 	"testing"
 	"time"
 
@@ -154,12 +156,11 @@ func Test_treeFromSample(t *testing.T) {
 	}{
 		{
 			name: "empty lines",
-			s:    &googlev1.Sample{LocationId: []uint64{1, 2, 3}, Value: []int64{10}},
+			s:    &googlev1.Sample{LocationId: []uint64{1, 2}, Value: []int64{10}},
 			p: &googlev1.Profile{
 				Location: []*googlev1.Location{
 					{Id: 1, Line: []*googlev1.Line{}},
 					{Id: 2, Line: []*googlev1.Line{}},
-					{Id: 3, Line: []*googlev1.Line{}},
 				},
 				Function: []*googlev1.Function{},
 			},
@@ -167,6 +168,27 @@ func Test_treeFromSample(t *testing.T) {
 				Value: 10,
 				Function: &Function{
 					FunctionName: "root",
+				},
+				Nodes: []*ProfileTree{
+					{
+						Value: 10,
+						Function: &Function{
+							FunctionName: "<unknown>",
+						},
+						Level:      1,
+						locationID: 2,
+						Nodes: []*ProfileTree{
+							{
+								Value: 10,
+								Function: &Function{
+									FunctionName: "<unknown>",
+								},
+								Level:      2,
+								Self:       10,
+								locationID: 1,
+							},
+						},
+					},
 				},
 			},
 		},
@@ -238,14 +260,14 @@ func Test_treeFromSample(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			setParents(tc.want)
-			actual := treeFromSample(tc.p, tc.s)
+			actual := treeFromSample(tc.p, tc.s, 0)
 			require.Equal(t, tc.want, actual, "want\n%s\n got\n%s", tc.want, actual)
 		})
 	}
 }
 
 func Test_TreeString(t *testing.T) {
-	t.Log(treeFromSample(fooProfile, &googlev1.Sample{LocationId: []uint64{3, 2, 1}, Value: []int64{10}}))
+	t.Log(treeFromSample(fooProfile, &googlev1.Sample{LocationId: []uint64{3, 2, 1}, Value: []int64{10}}, 0))
 }
 
 func Test_profileAsTree(t *testing.T) {
@@ -324,8 +346,9 @@ func Test_profileAsTree(t *testing.T) {
 				Sample: []*googlev1.Sample{
 					{LocationId: []uint64{3, 2, 1}, Value: []int64{15}}, // foo -> bar -> baz
 					{LocationId: []uint64{3, 2, 1}, Value: []int64{30}}, // foo -> bar -> baz
-					{LocationId: []uint64{3, 2}, Value: []int64{20}},    //  bar -> baz
-					{LocationId: []uint64{2, 1}, Value: []int64{40}},    //  foo -> bar
+					{LocationId: []uint64{1, 2, 1}, Value: []int64{20}}, // foo -> bar -> foo
+					{LocationId: []uint64{3, 2}, Value: []int64{20}},    // bar -> baz
+					{LocationId: []uint64{2, 1}, Value: []int64{40}},    // foo -> bar
 					{LocationId: []uint64{1}, Value: []int64{5}},        // foo
 					{LocationId: []uint64{}, Value: []int64{5}},
 				},
@@ -334,55 +357,11 @@ func Test_profileAsTree(t *testing.T) {
 				StringTable: fooProfile.StringTable,
 			},
 			want: &ProfileTree{
-				Value: 110,
+				Value: 130,
 				Function: &Function{
 					FunctionName: "root",
 				},
 				Nodes: []*ProfileTree{
-					{
-						Value:      90,
-						Self:       5,
-						locationID: 1,
-						Level:      1,
-						Function: &Function{
-							FunctionName: "foo",
-							FileName:     "file1",
-							Line:         1,
-						},
-						Inlined: []*Function{
-							{
-								FunctionName: "inline",
-								FileName:     "file2",
-								Line:         5,
-							},
-						},
-						Nodes: []*ProfileTree{
-							{
-								Value:      85,
-								Self:       40,
-								locationID: 2,
-								Level:      2,
-								Function: &Function{
-									FunctionName: "bar",
-									FileName:     "file1",
-									Line:         2,
-								},
-								Nodes: []*ProfileTree{
-									{
-										Value:      45,
-										Self:       45,
-										locationID: 3,
-										Level:      3,
-										Function: &Function{
-											FunctionName: "baz",
-											FileName:     "file2",
-											Line:         3,
-										},
-									},
-								},
-							},
-						},
-					},
 					{
 						locationID: 2,
 						Value:      20,
@@ -407,6 +386,68 @@ func Test_profileAsTree(t *testing.T) {
 							},
 						},
 					},
+					{
+						Value:      110,
+						Self:       5,
+						locationID: 1,
+						Level:      1,
+						Function: &Function{
+							FunctionName: "foo",
+							FileName:     "file1",
+							Line:         1,
+						},
+						Inlined: []*Function{
+							{
+								FunctionName: "inline",
+								FileName:     "file2",
+								Line:         5,
+							},
+						},
+						Nodes: []*ProfileTree{
+							{
+								Value:      105,
+								Self:       40,
+								locationID: 2,
+								Level:      2,
+								Function: &Function{
+									FunctionName: "bar",
+									FileName:     "file1",
+									Line:         2,
+								},
+								Nodes: []*ProfileTree{
+									{
+										Value:      20,
+										Self:       20,
+										locationID: 1,
+										Level:      3,
+										Function: &Function{
+											FunctionName: "foo",
+											FileName:     "file1",
+											Line:         1,
+										},
+										Inlined: []*Function{
+											{
+												FunctionName: "inline",
+												FileName:     "file2",
+												Line:         5,
+											},
+										},
+									},
+									{
+										Value:      45,
+										Self:       45,
+										locationID: 3,
+										Level:      3,
+										Function: &Function{
+											FunctionName: "baz",
+											FileName:     "file2",
+											Line:         3,
+										},
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
@@ -418,6 +459,20 @@ func Test_profileAsTree(t *testing.T) {
 			actual := profileAsTree(tc.in)
 			require.Equal(t, tc.want, actual, "want\n%s\n got\n%s", tc.want, actual)
 		})
+	}
+}
+
+func Benchmark_profileAsTree(b *testing.B) {
+	profJson, err := os.ReadFile("./testdata/profile_response.json")
+	require.NoError(b, err)
+	var prof *googlev1.Profile
+	err = json.Unmarshal(profJson, &prof)
+	require.NoError(b, err)
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		profileAsTree(prof)
 	}
 }
 
