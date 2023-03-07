@@ -40,11 +40,12 @@ export const BarGaugeCell: FC<TableCellProps> = (props) => {
   // Set default display mode and update if defined
   // and update the valueMode if defined
   let barGaugeMode: BarGaugeDisplayMode = BarGaugeDisplayMode.Gradient;
-  let valueMode: BarGaugeValueMode | undefined = undefined;
+  let valueDisplayMode: BarGaugeValueMode | undefined = undefined;
 
   if (cellOptions.type === TableCellDisplayMode.Gauge) {
     barGaugeMode = cellOptions.mode ?? BarGaugeDisplayMode.Gradient;
-    valueMode = cellOptions.valueMode !== undefined ? cellOptions.valueMode : BarGaugeValueMode.Text;
+    valueDisplayMode =
+      cellOptions.valueDisplayMode !== undefined ? cellOptions.valueDisplayMode : BarGaugeValueMode.Text;
   }
 
   const getLinks = () => {
@@ -75,7 +76,7 @@ export const BarGaugeCell: FC<TableCellProps> = (props) => {
         itemSpacing={1}
         lcdCellWidth={8}
         displayMode={barGaugeMode}
-        valueMode={valueMode}
+        valueDisplayMode={valueDisplayMode}
       />
     );
   };

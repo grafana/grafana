@@ -17,7 +17,7 @@ export function BarGaugeCellOptionsEditor({ cellOptions, onChange }: Props) {
   };
 
   const onValueModeChange = (v: BarGaugeValueMode) => {
-    cellOptions.valueMode = v;
+    cellOptions.valueDisplayMode = v;
     onChange(cellOptions);
   };
 
@@ -27,7 +27,7 @@ export function BarGaugeCellOptionsEditor({ cellOptions, onChange }: Props) {
         <Select value={cellOptions?.mode} onChange={onCellOptionsChange} options={barGaugeOpts} />
       </Field>
       <Field label="Value display">
-        <RadioButtonGroup value={cellOptions?.valueMode} onChange={onValueModeChange} options={valueModes} />
+        <RadioButtonGroup value={cellOptions?.valueDisplayMode} onChange={onValueModeChange} options={valueModes} />
       </Field>
     </Stack>
   );

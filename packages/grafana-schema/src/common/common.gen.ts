@@ -649,7 +649,7 @@ export interface TableImageCellOptions {
 export interface TableBarGaugeCellOptions {
   mode?: BarGaugeDisplayMode;
   type: TableCellDisplayMode.Gauge;
-  valueMode?: BarGaugeValueMode;
+  valueDisplayMode?: BarGaugeValueMode;
 }
 
 /**
