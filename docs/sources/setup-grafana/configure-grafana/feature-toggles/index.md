@@ -93,6 +93,7 @@ Alpha features might be changed or removed without prior notice.
 | `drawerDataSourcePicker`           | Changes the user experience for data source selection to a drawer.                                                                                                           |
 | `traceqlSearch`                    | Enables the 'TraceQL Search' tab for the Tempo datasource which provides a UI to generate TraceQL queries                                                                    |
 | `prometheusMetricEncyclopedia`     | Replaces the Prometheus query builder metric select option with a paginated and filterable component                                                                         |
+| `prometheusMetricEncyclopedia`     | Replaces the Prometheus query builder metric select option with a paginated and filterable component                                                                         |
 
 ## Development feature toggles
 
