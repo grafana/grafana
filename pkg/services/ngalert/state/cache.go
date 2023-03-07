@@ -52,11 +52,11 @@ func (rs *ruleStates) getOrCreate(ctx context.Context, log log.Logger, alertRule
 	ruleLabels, annotations := rs.expandRuleLabelsAndAnnotations(ctx, log, alertRule, result, extraLabels, externalURL)
 
 	values := make(map[string]float64)
-	for _, v := range result.Values {
+	for refID, v := range result.Values {
 		if v.Value != nil {
-			values[v.Var] = *v.Value
+			values[refID] = *v.Value
 		} else {
-			values[v.Var] = math.NaN()
+			values[refID] = math.NaN()
 		}
 	}
 
@@ -142,7 +142,7 @@ func (rs *ruleStates) expandRuleLabelsAndAnnotations(ctx context.Context, log lo
 	expand := func(original map[string]string) map[string]string {
 		expanded := make(map[string]string, len(original))
 		for k, v := range original {
-			ev, err := template.Expand(ctx, alertRule.Title, v, templateLabels, alertInstance, externalURL)
+			ev, err := template.Expand(ctx, alertRule.Title, v, template.NewData(templateLabels, alertInstance), externalURL, alertInstance.EvaluatedAt)
 			expanded[k] = ev
 			if err != nil {
 				log.Error("Error in expanding template", "name", k, "value", v, "error", err)

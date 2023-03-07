@@ -54,7 +54,12 @@ function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) 
   const toolbarActions = (actions ?? []).map((action) => <action.Component key={action.state.key} model={action} />);
 
   toolbarActions.push(
-    <ToolbarButton icon="apps" onClick={() => locationService.push(`/d/${uid}`)} tooltip="View as Dashboard" />
+    <ToolbarButton
+      icon="apps"
+      onClick={() => locationService.push(`/d/${uid}`)}
+      tooltip="View as Dashboard"
+      key="scene-to-dashboard-switch"
+    />
   );
   const pageToolbar = config.featureToggles.topnav ? (
     <AppChromeUpdate actions={toolbarActions} />
@@ -87,8 +92,10 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     controls: css({
       display: 'flex',
-      gap: theme.spacing(1),
+      paddingBottom: theme.spacing(2),
+      flexWrap: 'wrap',
       alignItems: 'center',
+      gap: theme.spacing(1),
     }),
   };
 }

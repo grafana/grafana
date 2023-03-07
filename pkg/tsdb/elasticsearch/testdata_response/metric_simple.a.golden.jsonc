@@ -1,7 +1,11 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
 //  Frame[0] {
-//      "type": "timeseries-multi"
+//      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ]
 //  }
 //  Name: 
 //  Dimensions: 2 Fields by 4 Rows
@@ -19,7 +23,11 @@
 //  
 //  
 //  Frame[1] {
-//      "type": "timeseries-multi"
+//      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ]
 //  }
 //  Name: 
 //  Dimensions: 2 Fields by 4 Rows
@@ -37,7 +45,11 @@
 //  
 //  
 //  Frame[2] {
-//      "type": "timeseries-multi"
+//      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ]
 //  }
 //  Name: 
 //  Dimensions: 2 Fields by 4 Rows
@@ -60,7 +72,11 @@
     {
       "schema": {
         "meta": {
-          "type": "timeseries-multi"
+          "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ]
         },
         "fields": [
           {
@@ -106,7 +122,11 @@
     {
       "schema": {
         "meta": {
-          "type": "timeseries-multi"
+          "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ]
         },
         "fields": [
           {
@@ -152,7 +172,11 @@
     {
       "schema": {
         "meta": {
-          "type": "timeseries-multi"
+          "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ]
         },
         "fields": [
           {

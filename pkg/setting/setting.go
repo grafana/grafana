@@ -94,33 +94,19 @@ var (
 	// User settings
 	AllowUserSignUp         bool
 	AllowUserOrgCreate      bool
-	AutoAssignOrg           bool
-	AutoAssignOrgId         int
-	AutoAssignOrgRole       string
 	VerifyEmailEnabled      bool
 	LoginHint               string
 	PasswordHint            string
-	DisableLoginForm        bool
 	DisableSignoutMenu      bool
 	SignoutRedirectUrl      string
 	ExternalUserMngLinkUrl  string
 	ExternalUserMngLinkName string
 	ExternalUserMngInfo     string
-	OAuthAutoLogin          bool
 	ViewersCanEdit          bool
 
 	// HTTP auth
 	SigV4AuthEnabled bool
 	AzureAuthEnabled bool
-
-	AnonymousEnabled bool
-
-	// Auth proxy settings
-	AuthProxyEnabled        bool
-	AuthProxyHeaderProperty string
-
-	// Basic Auth
-	BasicAuthEnabled bool
 
 	// Global setting objects.
 	Raw *ini.File
@@ -129,16 +115,6 @@ var (
 	configFiles                  []string
 	appliedCommandLineProperties []string
 	appliedEnvOverrides          []string
-
-	// analytics
-	GoogleAnalyticsId                   string
-	GoogleAnalytics4Id                  string
-	GoogleAnalytics4SendManualPageViews bool
-	GoogleTagManagerId                  string
-	RudderstackDataPlaneUrl             string
-	RudderstackWriteKey                 string
-	RudderstackSdkUrl                   string
-	RudderstackConfigUrl                string
 
 	// Alerting
 	AlertingEnabled            *bool
@@ -167,14 +143,9 @@ var (
 	ImageUploadProvider string
 )
 
-// AddChangePasswordLink returns if login form is disabled or not since
-// the same intention can be used to hide both features.
-func AddChangePasswordLink() bool {
-	return !DisableLoginForm
-}
-
 // TODO move all global vars to this struct
 type Cfg struct {
+	Target []string
 	Raw    *ini.File
 	Logger log.Logger
 
@@ -299,6 +270,7 @@ type Cfg struct {
 	DisableLogin                 bool
 	AdminEmail                   string
 	DisableSyncLock              bool
+	DisableLoginForm             bool
 
 	// AWS Plugin Auth
 	AWSAllowedAuthProviders []string
@@ -320,6 +292,7 @@ type Cfg struct {
 	AuthProxySyncTTL          int
 
 	// OAuth
+	OAuthAutoLogin    bool
 	OAuthCookieMaxAge int
 
 	// JWT Auth
@@ -352,6 +325,7 @@ type Cfg struct {
 	DataProxyIdleConnTimeout       int
 	ResponseLimit                  int64
 	DataProxyRowLimit              int64
+	DataProxyUserAgent             string
 
 	// DistributedCache
 	RemoteCacheOptions *RemoteCacheOptions
@@ -418,6 +392,17 @@ type Cfg struct {
 	ApplicationInsightsConnectionString string
 	ApplicationInsightsEndpointUrl      string
 	FeedbackLinksEnabled                bool
+
+	// Frontend analytics
+	GoogleAnalyticsID                   string
+	GoogleAnalytics4ID                  string
+	GoogleAnalytics4SendManualPageViews bool
+	GoogleTagManagerID                  string
+	RudderstackDataPlaneURL             string
+	RudderstackWriteKey                 string
+	RudderstackSDKURL                   string
+	RudderstackConfigURL                string
+	IntercomSecret                      string
 
 	// AzureAD
 	AzureADSkipOrgRoleSync bool
@@ -519,6 +504,12 @@ type Cfg struct {
 	GRPCServerTLSConfig *tls.Config
 
 	CustomResponseHeaders map[string]string
+}
+
+// AddChangePasswordLink returns if login form is disabled or not since
+// the same intention can be used to hide both features.
+func (cfg *Cfg) AddChangePasswordLink() bool {
+	return !cfg.DisableLoginForm
 }
 
 type CommandLineArgs struct {
@@ -918,6 +909,7 @@ var skipStaticRootValidation = false
 
 func NewCfg() *Cfg {
 	return &Cfg{
+		Target:      []string{"all"},
 		Logger:      log.New("settings"),
 		Raw:         ini.Empty(),
 		Azure:       &azsettings.AzureSettings{},
@@ -976,6 +968,8 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 
 	cfg.ErrTemplateName = "error"
 
+	Target := valueAsString(iniFile.Section(""), "target", "all")
+	cfg.Target = strings.Split(Target, " ")
 	Env = valueAsString(iniFile.Section(""), "app_mode", "development")
 	cfg.Env = Env
 	cfg.ForceMigration = iniFile.Section("").Key("force_migration").MustBool(false)
@@ -1036,15 +1030,16 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 	analytics := iniFile.Section("analytics")
 	cfg.CheckForGrafanaUpdates = analytics.Key("check_for_updates").MustBool(true)
 	cfg.CheckForPluginUpdates = analytics.Key("check_for_plugin_updates").MustBool(true)
-	GoogleAnalyticsId = analytics.Key("google_analytics_ua_id").String()
-	GoogleAnalytics4Id = analytics.Key("google_analytics_4_id").String()
-	GoogleAnalytics4SendManualPageViews = analytics.Key("google_analytics_4_send_manual_page_views").MustBool(false)
 
-	GoogleTagManagerId = analytics.Key("google_tag_manager_id").String()
-	RudderstackWriteKey = analytics.Key("rudderstack_write_key").String()
-	RudderstackDataPlaneUrl = analytics.Key("rudderstack_data_plane_url").String()
-	RudderstackSdkUrl = analytics.Key("rudderstack_sdk_url").String()
-	RudderstackConfigUrl = analytics.Key("rudderstack_config_url").String()
+	cfg.GoogleAnalyticsID = analytics.Key("google_analytics_ua_id").String()
+	cfg.GoogleAnalytics4ID = analytics.Key("google_analytics_4_id").String()
+	cfg.GoogleAnalytics4SendManualPageViews = analytics.Key("google_analytics_4_send_manual_page_views").MustBool(false)
+	cfg.GoogleTagManagerID = analytics.Key("google_tag_manager_id").String()
+	cfg.RudderstackWriteKey = analytics.Key("rudderstack_write_key").String()
+	cfg.RudderstackDataPlaneURL = analytics.Key("rudderstack_data_plane_url").String()
+	cfg.RudderstackSDKURL = analytics.Key("rudderstack_sdk_url").String()
+	cfg.RudderstackConfigURL = analytics.Key("rudderstack_config_url").String()
+	cfg.IntercomSecret = analytics.Key("intercom_secret").String()
 
 	cfg.ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
 	cfg.ReportingDistributor = analytics.Key("reporting_distributor").MustString("grafana-labs")
@@ -1274,6 +1269,7 @@ func (cfg *Cfg) LogConfigSources() {
 		}
 	}
 
+	cfg.Logger.Info("Target", "target", cfg.Target)
 	cfg.Logger.Info("Path Home", "path", HomePath)
 	cfg.Logger.Info("Path Data", "path", cfg.DataPath)
 	cfg.Logger.Info("Path Logs", "path", cfg.LogsPath)
@@ -1442,12 +1438,12 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	// Debug setting unlocking frontend auth sync lock. Users will still be reset on their next login.
 	cfg.DisableSyncLock = auth.Key("disable_sync_lock").MustBool(false)
 
-	DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
+	cfg.DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 	DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
 
 	// Deprecated
-	OAuthAutoLogin = auth.Key("oauth_auto_login").MustBool(false)
-	if OAuthAutoLogin {
+	cfg.OAuthAutoLogin = auth.Key("oauth_auto_login").MustBool(false)
+	if cfg.OAuthAutoLogin {
 		cfg.Logger.Warn("[Deprecated] The oauth_auto_login configuration setting is deprecated. Please use auto_login inside auth provider section instead.")
 	}
 
@@ -1484,16 +1480,14 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	readAuthOktaSettings(iniFile, cfg)
 
 	// anonymous access
-	AnonymousEnabled = iniFile.Section("auth.anonymous").Key("enabled").MustBool(false)
-	cfg.AnonymousEnabled = AnonymousEnabled
+	cfg.AnonymousEnabled = iniFile.Section("auth.anonymous").Key("enabled").MustBool(false)
 	cfg.AnonymousOrgName = valueAsString(iniFile.Section("auth.anonymous"), "org_name", "")
 	cfg.AnonymousOrgRole = valueAsString(iniFile.Section("auth.anonymous"), "org_role", "")
 	cfg.AnonymousHideVersion = iniFile.Section("auth.anonymous").Key("hide_version").MustBool(false)
 
 	// basic auth
 	authBasic := iniFile.Section("auth.basic")
-	BasicAuthEnabled = authBasic.Key("enabled").MustBool(true)
-	cfg.BasicAuthEnabled = BasicAuthEnabled
+	cfg.BasicAuthEnabled = authBasic.Key("enabled").MustBool(true)
 
 	// JWT auth
 	authJWT := iniFile.Section("auth.jwt")
@@ -1514,12 +1508,10 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	cfg.JWTAuthSkipOrgRoleSync = authJWT.Key("skip_org_role_sync").MustBool(false)
 
 	authProxy := iniFile.Section("auth.proxy")
-	AuthProxyEnabled = authProxy.Key("enabled").MustBool(false)
-	cfg.AuthProxyEnabled = AuthProxyEnabled
+	cfg.AuthProxyEnabled = authProxy.Key("enabled").MustBool(false)
 
 	cfg.AuthProxyHeaderName = valueAsString(authProxy, "header_name", "")
-	AuthProxyHeaderProperty = valueAsString(authProxy, "header_property", "")
-	cfg.AuthProxyHeaderProperty = AuthProxyHeaderProperty
+	cfg.AuthProxyHeaderProperty = valueAsString(authProxy, "header_property", "")
 	cfg.AuthProxyAutoSignUp = authProxy.Key("auto_sign_up").MustBool(true)
 	cfg.AuthProxyEnableLoginToken = authProxy.Key("enable_login_token").MustBool(false)
 
@@ -1560,11 +1552,8 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	AllowUserSignUp = users.Key("allow_sign_up").MustBool(true)
 	AllowUserOrgCreate = users.Key("allow_org_create").MustBool(true)
 	cfg.AutoAssignOrg = users.Key("auto_assign_org").MustBool(true)
-	AutoAssignOrg = cfg.AutoAssignOrg
 	cfg.AutoAssignOrgId = users.Key("auto_assign_org_id").MustInt(1)
-	AutoAssignOrgId = cfg.AutoAssignOrgId
 	cfg.AutoAssignOrgRole = users.Key("auto_assign_org_role").In("Editor", []string{"Editor", "Admin", "Viewer"})
-	AutoAssignOrgRole = cfg.AutoAssignOrgRole
 	VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
 
 	cfg.CaseInsensitiveLogin = users.Key("case_insensitive_login").MustBool(false)

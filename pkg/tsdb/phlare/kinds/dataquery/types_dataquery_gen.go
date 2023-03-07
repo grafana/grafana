@@ -11,10 +11,8 @@ package dataquery
 
 // Defines values for PhlareQueryType.
 const (
-	PhlareQueryTypeBoth PhlareQueryType = "both"
-
+	PhlareQueryTypeBoth    PhlareQueryType = "both"
 	PhlareQueryTypeMetrics PhlareQueryType = "metrics"
-
 	PhlareQueryTypeProfile PhlareQueryType = "profile"
 )
 
@@ -29,7 +27,7 @@ type PhlareDataQuery struct {
 	// Allows to group the results.
 	GroupBy []string `json:"groupBy"`
 
-	// true if query is disabled (ie should not be returned to the dashboard)
+	// Hide true if query is disabled (ie should not be returned to the dashboard)
 	Hide *bool `json:"hide,omitempty"`
 
 	// Unique, guid like, string used in explore mode
