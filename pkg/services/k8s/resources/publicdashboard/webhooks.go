@@ -3,6 +3,7 @@ package publicdashboard
 import (
 	"encoding/json"
 	"io"
+	k8sTypes "k8s.io/apimachinery/pkg/types"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -43,6 +44,35 @@ func ProvideWebhooks(
 
 func (api *WebhooksAPI) RegisterAPIEndpoints() {
 	api.RouteRegister.Post("/k8s/publicdashboards/admission/create", api.Create)
+}
+
+func makeSuccessfulAdmissionReview(uid k8sTypes.UID, typeMeta metaV1.TypeMeta, code int32) *k8sAdmission.AdmissionReview {
+	return &k8sAdmission.AdmissionReview{
+		TypeMeta: typeMeta,
+		Response: &k8sAdmission.AdmissionResponse{
+			UID:     uid,
+			Allowed: true,
+			Result: &v1.Status{
+				Status: "Success",
+				Code:   code,
+			},
+		},
+	}
+}
+
+func makeFailureAdmissionReview(uid k8sTypes.UID, typeMeta metaV1.TypeMeta, err error, code int32) *k8sAdmission.AdmissionReview {
+	return &k8sAdmission.AdmissionReview{
+		TypeMeta: typeMeta,
+		Response: &k8sAdmission.AdmissionResponse{
+			UID:     uid,
+			Allowed: false,
+			Result: &v1.Status{
+				Status:  "Failure",
+				Message: err.Error(),
+				Code:    code,
+			},
+		},
+	}
 }
 
 func (api *WebhooksAPI) Create(c *contextmodel.ReqContext) response.Response {
@@ -90,25 +120,14 @@ func (api *WebhooksAPI) Create(c *contextmodel.ReqContext) response.Response {
 		OldObject: oldObj,
 	}
 
-	resp := &k8sAdmission.AdmissionReview{
-		TypeMeta: rev.TypeMeta,
-		Response: &k8sAdmission.AdmissionResponse{
-			UID:     rev.Request.UID,
-			Allowed: true,
-			Result: &v1.Status{
-				Status: "Success",
-				Code:   200,
-			},
-		},
-	}
+	var resp *k8sAdmission.AdmissionReview
 
 	err = api.ValidationController.Validate(c.Req.Context(), req)
 	if err != nil {
-		resp.Response.Allowed = false
-		resp.Response.Result.Status = "Failure"
-		resp.Response.Result.Message = err.Error()
 		// auth status code to start, maybe change this to bad request
-		resp.Response.Result.Code = 403
+		resp = makeFailureAdmissionReview(rev.Request.UID, rev.TypeMeta, err, 403)
+	} else {
+		resp = makeSuccessfulAdmissionReview(rev.Request.UID, rev.TypeMeta, 200)
 	}
 
 	return response.JSON(int(resp.Response.Result.Code), resp)
