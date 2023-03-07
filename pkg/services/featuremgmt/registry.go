@@ -71,7 +71,6 @@ var (
 			Description:     "Allows public dashboard sharing to be restricted to only allowed emails",
 			State:           FeatureStateAlpha,
 			RequiresLicense: true,
-			RequiresDevMode: true,
 		},
 		{
 			Name:        "lokiLive",
