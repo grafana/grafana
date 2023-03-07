@@ -64,9 +64,10 @@ func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 	// if the api key don't belong to a service account construct the identity and return it
 	if apiKey.ServiceAccountId == nil || *apiKey.ServiceAccountId < 1 {
 		return &authn.Identity{
-			ID:       authn.NamespacedID(authn.NamespaceAPIKey, apiKey.ID),
-			OrgID:    apiKey.OrgID,
-			OrgRoles: map[int64]org.RoleType{apiKey.OrgID: apiKey.Role},
+			ID:           authn.NamespacedID(authn.NamespaceAPIKey, apiKey.ID),
+			OrgID:        apiKey.OrgID,
+			OrgRoles:     map[int64]org.RoleType{apiKey.OrgID: apiKey.Role},
+			ClientParams: authn.ClientParams{SyncPermissions: true},
 		}, nil
 	}
 

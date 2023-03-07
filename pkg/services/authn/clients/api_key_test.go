@@ -53,7 +53,7 @@ func TestAPIKey_Authenticate(t *testing.T) {
 				OrgID:    1,
 				OrgRoles: map[int64]org.RoleType{1: org.RoleAdmin},
 				ClientParams: authn.ClientParams{
-					SyncPermissions: false,
+					SyncPermissions: true,
 				},
 			},
 		},

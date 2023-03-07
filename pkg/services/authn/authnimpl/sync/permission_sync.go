@@ -25,7 +25,7 @@ type PermissionsSync struct {
 	log log.Logger
 }
 
-func (s *PermissionsSync) SyncPermission(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
+func (s *PermissionsSync) SyncPermissionsHook(ctx context.Context, identity *authn.Identity, _ *authn.Request) error {
 	if s.ac.IsDisabled() || !identity.ClientParams.SyncPermissions {
 		return nil
 	}

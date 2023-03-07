@@ -49,7 +49,7 @@ func TestPermissionsSync_SyncPermission(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			s := setupTestEnv(tt.rbacDisabled)
 
-			err := s.SyncPermission(context.Background(), tt.identity, &authn.Request{})
+			err := s.SyncPermissionsHook(context.Background(), tt.identity, &authn.Request{})
 			require.NoError(t, err)
 
 			if !tt.rbacDisabled {

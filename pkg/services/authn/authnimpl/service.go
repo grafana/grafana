@@ -152,7 +152,7 @@ func ProvideService(
 		s.RegisterPostAuthHook(sync.ProvideOAuthTokenSync(oauthTokenService, sessionService).SyncOauthTokenHook, 60)
 	}
 
-	s.RegisterPostAuthHook(sync.ProvidePermissionsSync(accessControlService).SyncPermission, 70)
+	s.RegisterPostAuthHook(sync.ProvidePermissionsSync(accessControlService).SyncPermissionsHook, 70)
 
 	s.RegisterPostAuthHook(userSyncService.FetchSyncedUserHook, 100)
 
