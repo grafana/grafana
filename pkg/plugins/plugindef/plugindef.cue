@@ -183,28 +183,6 @@ seqs: [
 				// https://golang.org/doc/install/source#environment.
 				executable?: string
 
-				// Extends various parts of the Grafana UI with commands or links.
-				extensions?: [...#Extension]
-
-				// A resource to be included in a plugin.
-				#Extension: {
-					// Type of extension
-					type: "link"
-
-					// Title that will be displayed for the rendered link
-					title: strings.MinRunes(3) & strings.MaxRunes(22)
-
-					// Target where the link will be rendered
-					placement: =~"^(plugins|grafana)/[a-z-/0-9]*$"
-
-					// Description for the rendered link
-					description?: strings.MaxRunes(200)
-
-					// Path relative to the extending plugin e.g. /incidents/declare
-					path: =~"^/.*"
-					...
-				}
-
 				// Excludes the plugin from listings in Grafana's UI. Only
 				// allowed for `builtIn` plugins.
 				hideFromList: bool | *false

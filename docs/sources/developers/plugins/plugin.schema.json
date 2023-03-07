@@ -241,44 +241,6 @@
       "type": "string",
       "description": "The first part of the file name of the backend component executable. There can be multiple executables built for different operating system and architecture. Grafana will check for executables named `<executable>_<$GOOS>_<lower case $GOARCH><.exe for Windows>`, e.g. `plugin_linux_amd64`. Combination of $GOOS and $GOARCH can be found here: https://golang.org/doc/install/source#environment."
     },
-    "extensions": {
-      "type": "array",
-      "description": "Extends various parts of the Grafana UI with commands or links.",
-      "items": {
-        "type": "object",
-        "description": "Expose a page link that can be used by Grafana core or other plugins to navigate users to the plugin",
-        "additionalProperties": false,
-        "required": ["type", "title", "placement", "path"],
-        "properties": {
-          "type": {
-            "type": "string",
-            "description": "Type of extension",
-            "enum": ["link"]
-          },
-          "title": {
-            "type": "string",
-            "description": "Title that will be displayed for the rendered link",
-            "minLength": 3,
-            "maxLength": 22
-          },
-          "placement": {
-            "type": "string",
-            "description": "Target where the link will be rendered",
-            "pattern": "^(plugins|grafana)/[a-z-/0-9]*$"
-          },
-          "description": {
-            "type": "string",
-            "description": "Description for the rendered link",
-            "maxLength": 200
-          },
-          "path": {
-            "type": "string",
-            "description": "Path relative to the extending plugin e.g. /incidents/declare",
-            "pattern": "^/.*"
-          }
-        }
-      }
-    },
     "hideFromList": {
       "type": "boolean",
       "description": "Excludes the plugin from listings in Grafana's UI. Only allowed for `builtIn` plugins."

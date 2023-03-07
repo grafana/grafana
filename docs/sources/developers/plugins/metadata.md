@@ -30,7 +30,6 @@ The plugin.json file is required for all plugins. When Grafana starts, it scans 
 | `category`           | string                        | No       | Plugin category used on the "Add data source" page. Possible values are: `tsdb`, `logging`, `cloud`, `tracing`, `profiling`, `sql`, `enterprise`, `iot`, `other`.                                                                                                                                                                                                                                       |
 | `enterpriseFeatures` | [object](#enterprisefeatures) | No       | Grafana Enerprise specific features                                                                                                                                                                                                                                                                                                                                                                     |
 | `executable`         | string                        | No       | The first part of the file name of the backend component executable. There can be multiple executables built for different operating system and architecture. Grafana will check for executables named `<executable>_<$GOOS>_<lower case $GOARCH><.exe for Windows>`, e.g. `plugin_linux_amd64`. Combination of $GOOS and $GOARCH can be found here: https://golang.org/doc/install/source#environment. |
-| `extensions`         | [object](#extensions)         | No       | Extends various parts of the Grafana UI with commands or links.                                                                                                                                                                                                                                                                                                                                         |
 | `hideFromList`       | boolean                       | No       | Excludes the plugin from listings in Grafana's UI. Only allowed for `builtIn` plugins.                                                                                                                                                                                                                                                                                                                  |
 | `includes`           | [object](#includes)[]         | No       | Resources to include in plugin.                                                                                                                                                                                                                                                                                                                                                                         |
 | `logs`               | boolean                       | No       | For data source plugins, if the plugin supports logs. Not used in Grafana core but may be used by external plugins.                                                                                                                                                                                                                                                                                     |
@@ -78,20 +77,6 @@ Grafana Enerprise specific features.
 | Property                  | Type    | Required | Description                                                         |
 | ------------------------- | ------- | -------- | ------------------------------------------------------------------- |
 | `healthDiagnosticsErrors` | boolean | No       | Enable/Disable health diagnostics errors. Requires Grafana >=7.5.5. |
-
-## extensions
-
-Extends various parts of the Grafana UI with commands or links.
-
-### Properties
-
-| Property      | Type   | Required | Description                                                    |
-| ------------- | ------ | -------- | -------------------------------------------------------------- |
-| `type`        | string | Yes      | Type of extension. Possible values are: `link`.                |
-| `title`       | string | Yes      | Title that will be displayed for the rendered link             |
-| `placement`   | string | Yes      | Target where the link will be rendered                         |
-| `description` | string | No       | Description for the rendered link                              |
-| `path`        | string | Yes      | Path relative to the extending plugin e.g. /incidents/declare" |
 
 ## includes
 

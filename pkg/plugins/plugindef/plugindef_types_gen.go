@@ -24,11 +24,6 @@ const (
 	DependencyTypePanel      DependencyType = "panel"
 )
 
-// Defines values for ExtensionType.
-const (
-	ExtensionTypeLink ExtensionType = "link"
-)
-
 // Defines values for IncludeRole.
 const (
 	IncludeRoleAdmin  IncludeRole = "Admin"
@@ -126,27 +121,6 @@ type Dependency struct {
 
 // DependencyType defines model for Dependency.Type.
 type DependencyType string
-
-// A resource to be included in a plugin.
-type Extension struct {
-	// Description for the rendered link
-	Description *string `json:"description,omitempty"`
-
-	// Path relative to the extending plugin e.g. /incidents/declare
-	Path string `json:"path"`
-
-	// Target where the link will be rendered
-	Placement string `json:"placement"`
-
-	// Title that will be displayed for the rendered link
-	Title string `json:"title"`
-
-	// Type of extension
-	Type ExtensionType `json:"type"`
-}
-
-// Type of extension
-type ExtensionType string
 
 // Header describes an HTTP header that is forwarded with a proxied request for
 // a plugin route.
@@ -315,9 +289,6 @@ type PluginDef struct {
 	// Combination of $GOOS and $GOARCH can be found here:
 	// https://golang.org/doc/install/source#environment.
 	Executable *string `json:"executable,omitempty"`
-
-	// Extends various parts of the Grafana UI with commands or links.
-	Extensions []Extension `json:"extensions,omitempty"`
 
 	// Excludes the plugin from listings in Grafana's UI. Only
 	// allowed for `builtIn` plugins.
