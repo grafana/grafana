@@ -62,12 +62,6 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
-			Name:            "showFeatureFlagsInUI",
-			Description:     "Show feature flags in the settings UI",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-		},
-		{
 			Name:        "publicDashboards",
 			Description: "Enables public access to dashboards",
 			State:       FeatureStateAlpha,
@@ -88,11 +82,6 @@ var (
 			Name:        "lokiDataframeApi",
 			Description: "Use experimental loki api for WebSocket streaming (early prototype)",
 			State:       FeatureStateAlpha,
-		},
-		{
-			Name:        "swaggerUi",
-			Description: "Serves swagger UI",
-			State:       FeatureStateBeta,
 		},
 		{
 			Name:        "featureHighlights",
@@ -126,33 +115,10 @@ var (
 			RequiresDevMode: true,
 		},
 		{
-			Name:            "k8sDashboards",
-			Description:     "Save dashboards via k8s",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-		},
-		{
-			Name:            "apiserver",
-			Description:     "Add a k8s API server proxy",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-		},
-		{
-			Name:        "supportBundles",
-			Description: "Support bundles for troubleshooting",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:            "dashboardsFromStorage",
 			Description:     "Load dashboards from the generic storage interface",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true, // Also a gate on automatic git storage (for now)
-		},
-		{
-			Name:            "export",
-			Description:     "Export grafana instance (to git, etc)",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
 		},
 		{
 			Name:         "exploreMixedDatasource",
@@ -163,6 +129,12 @@ var (
 		{
 			Name:         "tracing",
 			Description:  "Adds trace ID to error notifications",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:         "newTraceView",
+			Description:  "Shows the new trace view design",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 		},
@@ -260,11 +232,6 @@ var (
 			Description:     "SQL-based entity store (requires storage flag also)",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
-		},
-		{
-			Name:        "flameGraph",
-			Description: "Show the flame graph",
-			State:       FeatureStateAlpha,
 		},
 		{
 			Name:        "cloudWatchCrossAccountQuerying",
@@ -365,12 +332,6 @@ var (
 			RequiresRestart: false,
 		},
 		{
-			Name:         "topNavCommandPalette",
-			Description:  "Launch the Command Palette from the top navigation search box",
-			State:        FeatureStateBeta,
-			FrontendOnly: true,
-		},
-		{
 
 			Name:         "logsSampleInExplore",
 			Description:  "Enables access to the logs sample feature in Explore",
@@ -381,6 +342,29 @@ var (
 		{
 			Name:         "logsContextDatasourceUi",
 			Description:  "Allow datasource to provide custom UI for context view",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:         "lokiQuerySplitting",
+			Description:  "Split large interval queries into subqueries with smaller time intervals",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:        "individualCookiePreferences",
+			Description: "Support overriding cookie preferences per user",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:         "drawerDataSourcePicker",
+			Description:  "Changes the user experience for data source selection to a drawer.",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:         "traceqlSearch",
+			Description:  "Enables the 'TraceQL Search' tab for the Tempo datasource which provides a UI to generate TraceQL queries",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 		},

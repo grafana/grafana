@@ -131,10 +131,12 @@ func TestCreatePublicDashboard(t *testing.T) {
 		require.NoError(t, err)
 		publicdashboardStore := database.ProvideStore(sqlStore)
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
+		serviceWrapper := ProvideServiceWrapper(publicdashboardStore)
 
 		service := &PublicDashboardServiceImpl{
-			log:   log.New("test.logger"),
-			store: publicdashboardStore,
+			log:            log.New("test.logger"),
+			store:          publicdashboardStore,
+			serviceWrapper: serviceWrapper,
 		}
 
 		dto := &SavePublicDashboardDTO{
@@ -145,6 +147,7 @@ func TestCreatePublicDashboard(t *testing.T) {
 				IsEnabled:            true,
 				AnnotationsEnabled:   false,
 				TimeSelectionEnabled: true,
+				Share:                EmailShareType,
 				DashboardUid:         "NOTTHESAME",
 				OrgId:                9999999,
 				TimeSettings:         timeSettings,
@@ -169,6 +172,7 @@ func TestCreatePublicDashboard(t *testing.T) {
 		assert.NotEqual(t, &time.Time{}, pubdash.CreatedAt)
 		// Time settings set by db
 		assert.Equal(t, timeSettings, pubdash.TimeSettings)
+		assert.Equal(t, dto.PublicDashboard.Share, pubdash.Share)
 		// accessToken is valid uuid
 		_, err = uuid.Parse(pubdash.AccessToken)
 		require.NoError(t, err, "expected a valid UUID, got %s", pubdash.AccessToken)
@@ -181,10 +185,12 @@ func TestCreatePublicDashboard(t *testing.T) {
 		require.NoError(t, err)
 		publicdashboardStore := database.ProvideStore(sqlStore)
 		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
+		serviceWrapper := ProvideServiceWrapper(publicdashboardStore)
 
 		service := &PublicDashboardServiceImpl{
-			log:   log.New("test.logger"),
-			store: publicdashboardStore,
+			log:            log.New("test.logger"),
+			store:          publicdashboardStore,
+			serviceWrapper: serviceWrapper,
 		}
 
 		dto := &SavePublicDashboardDTO{
@@ -320,6 +326,41 @@ func TestCreatePublicDashboard(t *testing.T) {
 		_, err = service.Create(context.Background(), SignedInUser, dto)
 		require.Error(t, err)
 		assert.True(t, ErrBadRequest.Is(err))
+	})
+
+	t.Run("Validate pubdash has default share value", func(t *testing.T) {
+		sqlStore := db.InitTestDB(t)
+		quotaService := quotatest.New(false, nil)
+		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, sqlStore.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
+		require.NoError(t, err)
+		publicdashboardStore := database.ProvideStore(sqlStore)
+		dashboard := insertTestDashboard(t, dashboardStore, "testDashie", 1, 0, true, []map[string]interface{}{}, nil)
+		serviceWrapper := ProvideServiceWrapper(publicdashboardStore)
+
+		service := &PublicDashboardServiceImpl{
+			log:            log.New("test.logger"),
+			store:          publicdashboardStore,
+			serviceWrapper: serviceWrapper,
+		}
+
+		dto := &SavePublicDashboardDTO{
+			DashboardUid: dashboard.UID,
+			OrgId:        dashboard.OrgID,
+			UserId:       7,
+			PublicDashboard: &PublicDashboard{
+				IsEnabled:    true,
+				DashboardUid: "NOTTHESAME",
+				OrgId:        9999999,
+			},
+		}
+
+		_, err = service.Create(context.Background(), SignedInUser, dto)
+		require.NoError(t, err)
+
+		pubdash, err := service.FindByDashboardUid(context.Background(), dashboard.OrgID, dashboard.UID)
+		require.NoError(t, err)
+		// if share type is empty should be populated with public by default
+		assert.Equal(t, PublicShareType, pubdash.Share)
 	})
 }
 
@@ -955,7 +996,7 @@ func AddAnnotationsToDashboard(t *testing.T, dash *dashboards.Dashboard, annotat
 	return dash
 }
 
-func insertTestDashboard(t *testing.T, dashboardStore *dashboardsDB.DashboardStore, title string, orgId int64,
+func insertTestDashboard(t *testing.T, dashboardStore dashboards.Store, title string, orgId int64,
 	folderId int64, isFolder bool, templateVars []map[string]interface{}, customPanels []interface{}, tags ...interface{}) *dashboards.Dashboard {
 	t.Helper()
 

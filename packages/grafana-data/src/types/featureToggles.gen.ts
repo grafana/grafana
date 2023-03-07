@@ -26,25 +26,20 @@ export interface FeatureToggles {
   queryOverLive?: boolean;
   panelTitleSearch?: boolean;
   prometheusAzureOverrideAudience?: boolean;
-  showFeatureFlagsInUI?: boolean;
   publicDashboards?: boolean;
   publicDashboardsEmailSharing?: boolean;
   lokiLive?: boolean;
   lokiDataframeApi?: boolean;
-  swaggerUi?: boolean;
   featureHighlights?: boolean;
   dashboardComments?: boolean;
   annotationComments?: boolean;
   migrationLocking?: boolean;
   storage?: boolean;
   k8s?: boolean;
-  k8sDashboards?: boolean;
-  apiserver?: boolean;
-  supportBundles?: boolean;
   dashboardsFromStorage?: boolean;
-  export?: boolean;
   exploreMixedDatasource?: boolean;
   tracing?: boolean;
+  newTraceView?: boolean;
   correlations?: boolean;
   cloudWatchDynamicLabels?: boolean;
   datasourceQueryMultiStatus?: boolean;
@@ -62,7 +57,6 @@ export interface FeatureToggles {
   topnav?: boolean;
   grpcServer?: boolean;
   entityStore?: boolean;
-  flameGraph?: boolean;
   cloudWatchCrossAccountQuerying?: boolean;
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
@@ -81,7 +75,10 @@ export interface FeatureToggles {
   alertingBacktesting?: boolean;
   editPanelCSVDragAndDrop?: boolean;
   alertingNoNormalState?: boolean;
-  topNavCommandPalette?: boolean;
   logsSampleInExplore?: boolean;
   logsContextDatasourceUi?: boolean;
+  lokiQuerySplitting?: boolean;
+  individualCookiePreferences?: boolean;
+  drawerDataSourcePicker?: boolean;
+  traceqlSearch?: boolean;
 }

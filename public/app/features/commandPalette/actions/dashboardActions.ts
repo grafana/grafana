@@ -12,7 +12,7 @@ import { RECENT_DASHBOARDS_PRORITY, SEARCH_RESULTS_PRORITY } from '../values';
 const MAX_SEARCH_RESULTS = 100;
 const MAX_RECENT_DASHBOARDS = 5;
 
-const debouncedDashboardSearch = debounce(getDashboardSearchResultActions, 200);
+const debouncedSearch = debounce(getSearchResultActions, 200);
 
 export async function getRecentDashboardActions(): Promise<CommandPaletteAction[]> {
   const recentUids = (await impressionSrv.getDashboardOpened()).slice(0, MAX_RECENT_DASHBOARDS);
@@ -44,51 +44,55 @@ export async function getRecentDashboardActions(): Promise<CommandPaletteAction[
   return recentDashboardActions;
 }
 
-export async function getDashboardSearchResultActions(searchQuery: string): Promise<CommandPaletteAction[]> {
+export async function getSearchResultActions(searchQuery: string): Promise<CommandPaletteAction[]> {
   // Empty strings should not come through to here
   if (searchQuery.length === 0) {
     return [];
   }
 
   const data = await getGrafanaSearcher().search({
-    kind: ['dashboard'],
+    kind: ['dashboard', 'folder'],
     query: searchQuery,
     limit: MAX_SEARCH_RESULTS,
   });
 
-  const goToDashboardActions: CommandPaletteAction[] = data.view.map((item) => {
-    const { url, name } = item; // items are backed by DataFrameView, so must hold the url in a closure
+  const goToSearchResultActions: CommandPaletteAction[] = data.view.map((item) => {
+    const { url, name, kind, location } = item; // items are backed by DataFrameView, so must hold the url in a closure
     return {
-      id: `go/dashboard${url}`,
+      id: `go/${kind}${url}`,
       name: `${name}`,
-      section: t('command-palette.section.dashboard-search-results', 'Dashboards'),
+      section:
+        kind === 'dashboard'
+          ? t('command-palette.section.dashboard-search-results', 'Dashboards')
+          : t('command-palette.section.folder-search-results', 'Folders'),
       priority: SEARCH_RESULTS_PRORITY,
       url: locationUtil.stripBaseFromUrl(url),
+      subtitle: data.view.dataFrame.meta?.custom?.locationInfo[location]?.name,
     };
   });
 
-  return goToDashboardActions;
+  return goToSearchResultActions;
 }
 
-export function useDashboardResults(searchQuery: string, isShowing: boolean) {
-  const [dashboardResults, setDashboardResults] = useState<CommandPaletteAction[]>([]);
-  const [isFetchingDashboardResults, setIsFetchingDashboardResults] = useState(false);
+export function useSearchResults(searchQuery: string, isShowing: boolean) {
+  const [searchResults, setSearchResults] = useState<CommandPaletteAction[]>([]);
+  const [isFetchingSearchResults, setIsFetchingSearchResults] = useState(false);
 
   // Hit dashboards API
   useEffect(() => {
     if (isShowing && searchQuery.length > 0) {
-      setIsFetchingDashboardResults(true);
-      debouncedDashboardSearch(searchQuery).then((resultActions) => {
-        setDashboardResults(resultActions);
-        setIsFetchingDashboardResults(false);
+      setIsFetchingSearchResults(true);
+      debouncedSearch(searchQuery).then((resultActions) => {
+        setSearchResults(resultActions);
+        setIsFetchingSearchResults(false);
       });
     } else {
-      setDashboardResults([]);
+      setSearchResults([]);
     }
   }, [isShowing, searchQuery]);
 
   return {
-    dashboardResults,
-    isFetchingDashboardResults,
+    searchResults,
+    isFetchingSearchResults,
   };
 }

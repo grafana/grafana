@@ -18,6 +18,7 @@ import {
   FieldWithIndex,
   findCommonLabels,
   findUniqueLabels,
+  getTimeField,
   Labels,
   LoadingState,
   LogLevel,
@@ -30,6 +31,7 @@ import {
   MutableDataFrame,
   rangeUtil,
   ScopedVars,
+  sortDataFrame,
   textUtil,
   TimeRange,
   toDataFrame,
@@ -41,6 +43,7 @@ import { ansicolor, colors } from '@grafana/ui';
 import { getThemeColor } from 'app/core/utils/colors';
 
 import { getLogLevel, getLogLevelFromKey, sortInAscendingOrder } from '../features/logs/utils';
+
 export const LIMIT_LABEL = 'Line limit';
 export const COMMON_LABELS = 'Common labels';
 
@@ -706,20 +709,10 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
 
     const subscription = queryObservable.subscribe({
       complete: () => {
-        const aggregatedLogsVolume = aggregateRawLogsVolume(rawLogsVolume, options.extractLevel);
-        if (aggregatedLogsVolume[0]) {
-          aggregatedLogsVolume[0].meta = {
-            custom: {
-              targets: options.targets,
-              logsVolumeType: LogsVolumeType.FullRange,
-              absoluteRange: { from: options.range.from.valueOf(), to: options.range.to.valueOf() },
-            },
-          };
-        }
         observer.next({
           state: LoadingState.Done,
           error: undefined,
-          data: aggregatedLogsVolume,
+          data: rawLogsVolume,
         });
         observer.complete();
       },
@@ -733,7 +726,25 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
           });
           observer.error(error);
         } else {
-          rawLogsVolume = rawLogsVolume.concat(dataQueryResponse.data.map(toDataFrame));
+          const aggregatedLogsVolume = aggregateRawLogsVolume(
+            dataQueryResponse.data.map(toDataFrame),
+            options.extractLevel
+          );
+          if (aggregatedLogsVolume[0]) {
+            aggregatedLogsVolume[0].meta = {
+              custom: {
+                targets: options.targets,
+                logsVolumeType: LogsVolumeType.FullRange,
+                absoluteRange: { from: options.range.from.valueOf(), to: options.range.to.valueOf() },
+              },
+            };
+          }
+          rawLogsVolume = aggregatedLogsVolume;
+          observer.next({
+            state: dataQueryResponse.state ?? LoadingState.Streaming,
+            error: undefined,
+            data: rawLogsVolume,
+          });
         }
       },
       error: (error) => {
@@ -790,7 +801,11 @@ export function queryLogsSample<TQuery extends DataQuery, TOptions extends DataS
           });
           observer.error(error);
         } else {
-          rawLogsSample = rawLogsSample.concat(dataQueryResponse.data.map(toDataFrame));
+          rawLogsSample = dataQueryResponse.data.map((dataFrame) => {
+            const frame = toDataFrame(dataFrame);
+            const { timeIndex } = getTimeField(frame);
+            return sortDataFrame(frame, timeIndex);
+          });
         }
       },
       error: (error) => {

@@ -5,7 +5,7 @@ import React, { FC, useCallback, useState } from 'react';
 import { DataFrame, dateTimeFormat, GrafanaTheme2, LoadingState, PanelData } from '@grafana/data';
 import { isTimeSeries } from '@grafana/data/src/dataframe/utils';
 import { Stack } from '@grafana/experimental';
-import { AutoSizeInput, Icon, IconButton, Select, useStyles2 } from '@grafana/ui';
+import { AutoSizeInput, clearButtonStyles, Icon, IconButton, Select, useStyles2 } from '@grafana/ui';
 import { ClassicConditions } from 'app/features/expressions/components/ClassicConditions';
 import { Math } from 'app/features/expressions/components/Math';
 import { Reduce } from 'app/features/expressions/components/Reduce';
@@ -175,6 +175,7 @@ interface HeaderProps {
 
 const Header: FC<HeaderProps> = ({ refId, queryType, onUpdateRefId, onUpdateExpressionType, onRemoveExpression }) => {
   const styles = useStyles2(getStyles);
+  const clearButton = useStyles2(clearButtonStyles);
   /**
    * There are 3 edit modes:
    *
@@ -195,9 +196,9 @@ const Header: FC<HeaderProps> = ({ refId, queryType, onUpdateRefId, onUpdateExpr
       <Stack direction="row" gap={0.5} alignItems="center">
         <Stack direction="row" gap={1} alignItems="center" wrap={false}>
           {!editingRefId && (
-            <div className={styles.editable} onClick={() => setEditMode('refId')}>
+            <button type="button" className={cx(clearButton, styles.editable)} onClick={() => setEditMode('refId')}>
               <div className={styles.expression.refId}>{refId}</div>
-            </div>
+            </button>
           )}
           {editingRefId && (
             <AutoSizeInput
@@ -216,10 +217,14 @@ const Header: FC<HeaderProps> = ({ refId, queryType, onUpdateRefId, onUpdateExpr
             />
           )}
           {!editingType && (
-            <div className={styles.editable} onClick={() => setEditMode('expressionType')}>
+            <button
+              type="button"
+              className={cx(clearButton, styles.editable)}
+              onClick={() => setEditMode('expressionType')}
+            >
               <div className={styles.mutedText}>{capitalize(queryType)}</div>
               <Icon size="xs" name="pen" className={styles.mutedIcon} onClick={() => setEditMode('expressionType')} />
-            </div>
+            </button>
           )}
           {editingType && (
             <Select

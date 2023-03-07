@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
-	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -166,7 +165,7 @@ func TestHTTPServer_GetFrontendSettings_pluginsCDNBaseURL(t *testing.T) {
 		{
 			desc: "With CDN",
 			mutateCfg: func(cfg *setting.Cfg) {
-				cfg.PluginsCDNURLTemplate = "https://cdn.example.com/{id}/{version}/public/plugins/{id}/{assetPath}"
+				cfg.PluginsCDNURLTemplate = "https://cdn.example.com"
 			},
 			expected: settings{PluginsCDNBaseURL: "https://cdn.example.com"},
 		},
@@ -215,42 +214,53 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 		expected       settings
 	}{
 		{
-			desc: "app without extensions",
+			desc: "disabled app with preload",
 			pluginStore: func() plugins.Store {
 				return &plugins.FakePluginStore{
-					PluginList: newPlugins("test-app", nil),
+					PluginList: []plugins.PluginDTO{
+						{
+							Module: fmt.Sprintf("/%s/module.js", "test-app"),
+							JSONData: plugins.JSONData{
+								ID:      "test-app",
+								Info:    plugins.Info{Version: "0.5.0"},
+								Type:    plugins.App,
+								Preload: true,
+							},
+						},
+					},
 				}
 			},
 			pluginSettings: func() pluginSettings.Service {
 				return &pluginSettings.FakePluginSettings{
-					Plugins: newAppSettings("test-app", true),
+					Plugins: newAppSettings("test-app", false),
 				}
 			},
 			expected: settings{
 				Apps: map[string]*plugins.AppDTO{
 					"test-app": {
-						ID:         "test-app",
-						Preload:    false,
-						Path:       "/test-app/module.js",
-						Version:    "0.5.0",
-						Extensions: nil,
+						ID:      "test-app",
+						Preload: false,
+						Path:    "/test-app/module.js",
+						Version: "0.5.0",
 					},
 				},
 			},
 		},
 		{
-			desc: "enabled app with link extensions",
+			desc: "enalbed app with preload",
 			pluginStore: func() plugins.Store {
 				return &plugins.FakePluginStore{
-					PluginList: newPlugins("test-app", []*plugindef.ExtensionsLink{
+					PluginList: []plugins.PluginDTO{
 						{
-							Target:      "core/home/menu",
-							Type:        plugindef.ExtensionsLinkTypeLink,
-							Title:       "Title",
-							Description: "Home route of app",
-							Path:        "/home",
+							Module: fmt.Sprintf("/%s/module.js", "test-app"),
+							JSONData: plugins.JSONData{
+								ID:      "test-app",
+								Info:    plugins.Info{Version: "0.5.0"},
+								Type:    plugins.App,
+								Preload: true,
+							},
 						},
-					}),
+					},
 				}
 			},
 			pluginSettings: func() pluginSettings.Service {
@@ -262,50 +272,9 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 				Apps: map[string]*plugins.AppDTO{
 					"test-app": {
 						ID:      "test-app",
-						Preload: false,
+						Preload: true,
 						Path:    "/test-app/module.js",
 						Version: "0.5.0",
-						Extensions: []*plugindef.ExtensionsLink{
-							{
-								Target:      "core/home/menu",
-								Type:        plugindef.ExtensionsLinkTypeLink,
-								Title:       "Title",
-								Description: "Home route of app",
-								Path:        "/home",
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			desc: "disabled app with link extensions",
-			pluginStore: func() plugins.Store {
-				return &plugins.FakePluginStore{
-					PluginList: newPlugins("test-app", []*plugindef.ExtensionsLink{
-						{
-							Target:      "core/home/menu",
-							Type:        plugindef.ExtensionsLinkTypeLink,
-							Title:       "Title",
-							Description: "Home route of app",
-							Path:        "/home",
-						},
-					}),
-				}
-			},
-			pluginSettings: func() pluginSettings.Service {
-				return &pluginSettings.FakePluginSettings{
-					Plugins: newAppSettings("test-app", false),
-				}
-			},
-			expected: settings{
-				Apps: map[string]*plugins.AppDTO{
-					"test-app": {
-						ID:         "test-app",
-						Preload:    false,
-						Path:       "/test-app/module.js",
-						Version:    "0.5.0",
-						Extensions: nil,
 					},
 				},
 			},
@@ -336,20 +305,6 @@ func newAppSettings(id string, enabled bool) map[string]*pluginSettings.DTO {
 			OrgID:    1,
 			PluginID: id,
 			Enabled:  enabled,
-		},
-	}
-}
-
-func newPlugins(id string, extensions []*plugindef.ExtensionsLink) []plugins.PluginDTO {
-	return []plugins.PluginDTO{
-		{
-			Module: fmt.Sprintf("/%s/module.js", id),
-			JSONData: plugins.JSONData{
-				ID:         id,
-				Info:       plugins.Info{Version: "0.5.0"},
-				Type:       plugins.App,
-				Extensions: extensions,
-			},
 		},
 	}
 }

@@ -4,7 +4,7 @@ import React, { MouseEvent, memo } from 'react';
 import tinycolor from 'tinycolor2';
 
 import { Field, getFieldColorModeForField, GrafanaTheme2 } from '@grafana/data';
-import { useTheme2 } from '@grafana/ui';
+import { Icon, useTheme2 } from '@grafana/ui';
 
 import { HoverState } from './NodeGraph';
 import { NodeDatum } from './types';
@@ -61,10 +61,10 @@ const getStyles = (theme: GrafanaTheme2, hovering: HoverState) => ({
 
 export const Node = memo(function Node(props: {
   node: NodeDatum;
+  hovering: HoverState;
   onMouseEnter: (id: string) => void;
   onMouseLeave: (id: string) => void;
   onClick: (event: MouseEvent<SVGElement>, node: NodeDatum) => void;
-  hovering: HoverState;
 }) {
   const { node, onMouseEnter, onMouseLeave, onClick, hovering } = props;
   const theme = useTheme2();
@@ -94,18 +94,7 @@ export const Node = memo(function Node(props: {
       {isHovered && <circle className={styles.hoverCircle} r={nodeR - 3} cx={node.x} cy={node.y} strokeWidth={2} />}
       <ColorCircle node={node} />
       <g className={styles.text}>
-        <foreignObject x={node.x - (isHovered ? 100 : 35)} y={node.y - 15} width={isHovered ? '200' : '70'} height="40">
-          <div className={cx(styles.statsText, isHovered && styles.textHovering)}>
-            <span>
-              {node.mainStat && statToString(node.mainStat.config, node.mainStat.values.get(node.dataFrameRowIndex))}
-            </span>
-            <br />
-            <span>
-              {node.secondaryStat &&
-                statToString(node.secondaryStat.config, node.secondaryStat.values.get(node.dataFrameRowIndex))}
-            </span>
-          </div>
-        </foreignObject>
+        <NodeContents node={node} hovering={hovering} />
         <foreignObject
           x={node.x - (isHovered ? 100 : 50)}
           y={node.y + nodeR + 5}
@@ -122,6 +111,40 @@ export const Node = memo(function Node(props: {
     </g>
   );
 });
+
+/**
+ * Shows contents of the node which can be either an Icon or a main and secondary stat values.
+ */
+function NodeContents({ node, hovering }: { node: NodeDatum; hovering: HoverState }) {
+  const theme = useTheme2();
+  const styles = getStyles(theme, hovering);
+  const isHovered = hovering === 'active';
+
+  if (!(node.x !== undefined && node.y !== undefined)) {
+    return null;
+  }
+
+  return node.icon ? (
+    <foreignObject x={node.x - 35} y={node.y - 20} width="70" height="40">
+      <div style={{ width: 70, overflow: 'hidden', display: 'flex', justifyContent: 'center', marginTop: -4 }}>
+        <Icon data-testid={`node-icon-${node.icon}`} name={node.icon} size={'xxxl'} />
+      </div>
+    </foreignObject>
+  ) : (
+    <foreignObject x={node.x - (isHovered ? 100 : 35)} y={node.y - 15} width={isHovered ? '200' : '70'} height="40">
+      <div className={cx(styles.statsText, isHovered && styles.textHovering)}>
+        <span>
+          {node.mainStat && statToString(node.mainStat.config, node.mainStat.values.get(node.dataFrameRowIndex))}
+        </span>
+        <br />
+        <span>
+          {node.secondaryStat &&
+            statToString(node.secondaryStat.config, node.secondaryStat.values.get(node.dataFrameRowIndex))}
+        </span>
+      </div>
+    </foreignObject>
+  );
+}
 
 /**
  * Shows the outer segmented circle with different colors based on the supplied data.
@@ -164,13 +187,13 @@ function ColorCircle(props: { node: NodeDatum }) {
     elements: React.ReactNode[];
     percent: number;
   }>(
-    (acc, section) => {
+    (acc, section, index) => {
       const color = section.config.color?.fixedColor || '';
       const value = section.values.get(node.dataFrameRowIndex);
 
       const el = (
         <ArcSection
-          key={color}
+          key={index}
           r={nodeR}
           x={node.x!}
           y={node.y!}

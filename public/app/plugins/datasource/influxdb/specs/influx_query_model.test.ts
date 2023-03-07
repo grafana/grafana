@@ -1,7 +1,9 @@
+import { TemplateSrv } from 'app/features/templating/template_srv';
+
 import InfluxQueryModel from '../influx_query_model';
 
 describe('InfluxQuery', () => {
-  const templateSrv: any = { replace: (val: any) => val };
+  const templateSrv = { replace: (val) => val } as TemplateSrv;
 
   describe('render series with measurement only', () => {
     it('should generate correct query', () => {

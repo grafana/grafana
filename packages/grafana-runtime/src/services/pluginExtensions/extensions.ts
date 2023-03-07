@@ -1,34 +1,37 @@
-import { getPluginsExtensionRegistry, PluginsExtension } from './registry';
+import { type PluginExtension } from '@grafana/data';
 
-export type GetPluginExtensionsOptions = {
-  target: string;
+import { getPluginsExtensionRegistry } from './registry';
+
+export type PluginExtensionsOptions<T extends object> = {
+  placement: string;
+  context?: T;
 };
 
 export type PluginExtensionsResult = {
-  extensions: PluginsExtension[];
-  error?: Error;
+  extensions: PluginExtension[];
 };
 
-export class PluginExtensionsMissingError extends Error {
-  readonly target: string;
-
-  constructor(target: string) {
-    super(`Could not find extensions for '${target}'`);
-    this.target = target;
-    this.name = PluginExtensionsMissingError.name;
-  }
-}
-
-export function getPluginExtensions({ target }: GetPluginExtensionsOptions): PluginExtensionsResult {
+export function getPluginExtensions<T extends object = {}>(
+  options: PluginExtensionsOptions<T>
+): PluginExtensionsResult {
+  const { placement, context } = options;
   const registry = getPluginsExtensionRegistry();
-  const extensions = registry[target];
+  const items = registry[placement] ?? [];
 
-  if (!Array.isArray(extensions)) {
-    return {
-      extensions: [],
-      error: new PluginExtensionsMissingError(target),
-    };
-  }
+  const extensions = items.reduce<PluginExtension[]>((result, item) => {
+    if (!context || !item.configure) {
+      result.push(item.extension);
+      return result;
+    }
 
-  return { extensions };
+    const extension = item.configure(context);
+    if (extension) {
+      result.push(extension);
+    }
+    return result;
+  }, []);
+
+  return {
+    extensions: extensions,
+  };
 }

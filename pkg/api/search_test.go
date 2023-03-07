@@ -1,9 +1,7 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
-	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,29 +10,16 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/search/model"
-	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
 func TestHTTPServer_Search(t *testing.T) {
-	sc := setupHTTPServer(t, true)
-	sc.initCtx.IsSignedIn = true
-	sc.initCtx.SignedInUser = &user.SignedInUser{}
-
-	sc.hs.SearchService = &mockSearchService{
-		ExpectedResult: model.HitList{
-			{ID: 1, UID: "folder1", Title: "folder1", Type: model.DashHitFolder},
-			{ID: 2, UID: "folder2", Title: "folder2", Type: model.DashHitFolder},
-			{ID: 3, UID: "dash3", Title: "dash3", FolderUID: "folder2", Type: model.DashHitDB},
-		},
-	}
-
-	sc.acmock.GetUserPermissionsFunc = func(ctx context.Context, user *user.SignedInUser, options accesscontrol.Options) ([]accesscontrol.Permission, error) {
-		return []accesscontrol.Permission{
-			{Action: "folders:read", Scope: "folders:*"},
-			{Action: "folders:write", Scope: "folders:uid:folder2"},
-			{Action: "dashboards:read", Scope: "dashboards:*"},
-			{Action: "dashboards:write", Scope: "folders:uid:folder2"},
-		}, nil
+	type testCase struct {
+		desc             string
+		includeMetadata  bool
+		permissions      []accesscontrol.Permission
+		expectedMetadata map[int64]map[string]struct{}
 	}
 
 	type withMeta struct {
@@ -42,37 +27,75 @@ func TestHTTPServer_Search(t *testing.T) {
 		AccessControl accesscontrol.Metadata `json:"accessControl,omitempty"`
 	}
 
-	t.Run("should attach access control metadata to response", func(t *testing.T) {
-		recorder := callAPI(sc.server, http.MethodGet, "/api/search?accesscontrol=true", nil, t)
-		assert.Equal(t, http.StatusOK, recorder.Code)
-		var result []withMeta
-		require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &result))
+	tests := []testCase{
+		{
+			desc:            "should attach metadata to response",
+			includeMetadata: true,
+			expectedMetadata: map[int64]map[string]struct{}{
+				1: {dashboards.ActionFoldersRead: {}},
+				2: {dashboards.ActionFoldersRead: {}, dashboards.ActionFoldersWrite: {}, dashboards.ActionDashboardsWrite: {}},
+				3: {dashboards.ActionDashboardsRead: {}, dashboards.ActionDashboardsWrite: {}},
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "folders:read", Scope: "folders:*"},
+				{Action: "folders:write", Scope: "folders:uid:folder2"},
+				{Action: "dashboards:read", Scope: "dashboards:*"},
+				{Action: "dashboards:write", Scope: "folders:uid:folder2"},
+			},
+		},
+		{
+			desc:             "not attach metadata",
+			includeMetadata:  false,
+			expectedMetadata: map[int64]map[string]struct{}{},
+			permissions: []accesscontrol.Permission{
+				{Action: "folders:read", Scope: "folders:*"},
+				{Action: "folders:write", Scope: "folders:uid:folder2"},
+				{Action: "dashboards:read", Scope: "dashboards:*"},
+				{Action: "dashboards:write", Scope: "folders:uid:folder2"},
+			},
+		},
+	}
 
-		for _, r := range result {
-			if r.ID == 1 {
-				assert.Len(t, r.AccessControl, 1)
-				assert.True(t, r.AccessControl[dashboards.ActionFoldersRead])
-			} else if r.ID == 2 {
-				assert.Len(t, r.AccessControl, 3)
-				assert.True(t, r.AccessControl[dashboards.ActionFoldersRead])
-				assert.True(t, r.AccessControl[dashboards.ActionFoldersWrite])
-				assert.True(t, r.AccessControl[dashboards.ActionDashboardsWrite])
-			} else if r.ID == 3 {
-				assert.Len(t, r.AccessControl, 2)
-				assert.True(t, r.AccessControl[dashboards.ActionDashboardsRead])
-				assert.True(t, r.AccessControl[dashboards.ActionDashboardsWrite])
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			server := SetupAPITestServer(t, func(hs *HTTPServer) {
+				hs.Cfg = setting.NewCfg()
+				hs.SearchService = &mockSearchService{ExpectedResult: model.HitList{
+					{ID: 1, UID: "folder1", Title: "folder1", Type: model.DashHitFolder},
+					{ID: 2, UID: "folder2", Title: "folder2", Type: model.DashHitFolder},
+					{ID: 3, UID: "dash3", Title: "dash3", FolderUID: "folder2", Type: model.DashHitDB},
+				}}
+			})
+
+			url := "/api/search"
+			if tt.includeMetadata {
+				url += "?accesscontrol=true"
 			}
-		}
-	})
 
-	t.Run("should not attach access control metadata to response", func(t *testing.T) {
-		recorder := callAPI(sc.server, http.MethodGet, "/api/search", nil, t)
-		assert.Equal(t, http.StatusOK, recorder.Code)
-		var result []withMeta
-		require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &result))
+			res, err := server.Send(
+				webtest.RequestWithSignedInUser(
+					server.NewGetRequest(url), userWithPermissions(1, tt.permissions),
+				),
+			)
+			require.NoError(t, err)
 
-		for _, r := range result {
-			assert.Len(t, r.AccessControl, 0)
-		}
-	})
+			var result []withMeta
+			require.NoError(t, json.NewDecoder(res.Body).Decode(&result))
+
+			for _, r := range result {
+				if !tt.includeMetadata {
+					assert.Nil(t, r.AccessControl)
+					continue
+				}
+
+				assert.Len(t, r.AccessControl, len(tt.expectedMetadata[r.ID]))
+				for action := range r.AccessControl {
+					_, ok := tt.expectedMetadata[r.ID][action]
+					assert.True(t, ok)
+				}
+			}
+
+			require.NoError(t, res.Body.Close())
+		})
+	}
 }

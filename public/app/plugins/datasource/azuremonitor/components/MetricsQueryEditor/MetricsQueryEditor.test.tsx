@@ -18,7 +18,7 @@ import ResourcePickerData from '../../resourcePicker/resourcePickerData';
 import MetricsQueryEditor from './MetricsQueryEditor';
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getTemplateSrv: () => ({
     replace: (val: string) => {
       return val;

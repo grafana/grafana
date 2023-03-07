@@ -258,7 +258,7 @@ func TestIntegrationFolderService(t *testing.T) {
 
 				folderStore.On("GetFolderByID", mock.Anything, orgID, expected.ID).Return(expected, nil)
 
-				actual, err := service.getFolderByID(context.Background(), usr, expected.ID, orgID)
+				actual, err := service.getFolderByID(context.Background(), expected.ID, orgID)
 				require.Equal(t, expected, actual)
 				require.NoError(t, err)
 			})
@@ -269,7 +269,7 @@ func TestIntegrationFolderService(t *testing.T) {
 
 				folderStore.On("GetFolderByUID", mock.Anything, orgID, expected.UID).Return(expected, nil)
 
-				actual, err := service.getFolderByUID(context.Background(), usr, orgID, expected.UID)
+				actual, err := service.getFolderByUID(context.Background(), orgID, expected.UID)
 				require.Equal(t, expected, actual)
 				require.NoError(t, err)
 			})
@@ -279,7 +279,7 @@ func TestIntegrationFolderService(t *testing.T) {
 
 				folderStore.On("GetFolderByTitle", mock.Anything, orgID, expected.Title).Return(expected, nil)
 
-				actual, err := service.getFolderByTitle(context.Background(), usr, orgID, expected.Title)
+				actual, err := service.getFolderByTitle(context.Background(), orgID, expected.Title)
 				require.Equal(t, expected, actual)
 				require.NoError(t, err)
 			})
@@ -762,6 +762,32 @@ func TestNestedFolderService(t *testing.T) {
 			})
 			assert.ErrorIs(t, err, folder.ErrMaximumDepthReached)
 			require.NotNil(t, actualCmd)
+		})
+
+		t.Run("get default folder, no error", func(t *testing.T) {
+			g := guardian.New
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
+			t.Cleanup(func() {
+				guardian.New = g
+			})
+
+			// dashboard store commands that should be called.
+			dashStore := &dashboards.FakeDashboardStore{}
+
+			dashboardFolderStore := foldertest.NewFakeFolderStore(t)
+
+			nestedFolderStore := NewFakeStore()
+			nestedFolderStore.ExpectedError = folder.ErrFolderNotFound
+
+			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
+				ExpectedEvaluate: true,
+			})
+			_, err := folderSvc.Get(context.Background(), &folder.GetFolderQuery{
+				OrgID:        orgID,
+				ID:           &folder.GeneralFolder.ID,
+				SignedInUser: usr,
+			})
+			require.NoError(t, err)
 		})
 	})
 }
