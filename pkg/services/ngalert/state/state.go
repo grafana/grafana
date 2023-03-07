@@ -81,49 +81,37 @@ func (a *State) GetAlertInstanceKey() (models.AlertInstanceKey, error) {
 	return models.AlertInstanceKey{RuleOrgID: a.OrgID, RuleUID: a.AlertRuleUID, LabelsHash: labelsHash}, nil
 }
 
-// SetAlerting sets the state to Alerting. It changes both the start and end time.
-func (a *State) SetAlerting(reason string, startsAt, endsAt time.Time, err error) {
-	a.State = eval.Alerting
+func (a *State) setState(state eval.State, reason string, startsAt, endsAt time.Time, err error) {
+	a.State = state
 	a.StateReason = reason
 	a.StartsAt = startsAt
 	a.EndsAt = endsAt
 	a.Error = err
+}
+
+// SetAlerting sets the state to Alerting. It changes both the start and end time.
+func (a *State) SetAlerting(reason string, startsAt, endsAt time.Time, err error) {
+	a.setState(eval.Alerting, reason, startsAt, endsAt, err)
 }
 
 // SetPending the state to Pending. It changes both the start and end time.
 func (a *State) SetPending(reason string, startsAt, endsAt time.Time, err error) {
-	a.State = eval.Pending
-	a.StateReason = reason
-	a.StartsAt = startsAt
-	a.EndsAt = endsAt
-	a.Error = err
+	a.setState(eval.Pending, reason, startsAt, endsAt, err)
 }
 
 // SetNoData sets the state to NoData. It changes both the start and end time.
-func (a *State) SetNoData(reason string, startsAt, endsAt time.Time) {
-	a.State = eval.NoData
-	a.StateReason = reason
-	a.StartsAt = startsAt
-	a.EndsAt = endsAt
-	a.Error = nil
+func (a *State) SetNoData(startsAt, endsAt time.Time, err error) {
+	a.setState(eval.NoData, "", startsAt, endsAt, err)
 }
 
 // SetError sets the state to Error. It changes both the start and end time.
 func (a *State) SetError(startsAt, endsAt time.Time, err error) {
-	a.State = eval.Error
-	a.StateReason = models.StateReasonError
-	a.StartsAt = startsAt
-	a.EndsAt = endsAt
-	a.Error = err
+	a.setState(eval.Error, "", startsAt, endsAt, err)
 }
 
 // SetNormal sets the state to Normal. It changes both the start and end time.
 func (a *State) SetNormal(reason string, startsAt, endsAt time.Time, err error) {
-	a.State = eval.Normal
-	a.StateReason = reason
-	a.StartsAt = startsAt
-	a.EndsAt = endsAt
-	a.Error = err
+	a.setState(eval.Normal, reason, startsAt, endsAt, err)
 }
 
 // Resolve sets the State to Normal. It updates the StateReason, the end time, and sets Resolved to true.
@@ -257,21 +245,20 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 }
 
 func resultNoData(state *State, rule *models.AlertRule, result eval.Result, _ log.Logger) {
-	state.Error = result.Error
-
-	if state.StartsAt.IsZero() {
-		state.StartsAt = result.EvaluatedAt
+	startsAt := state.StartsAt
+	if startsAt.IsZero() {
+		startsAt = result.EvaluatedAt
 	}
-	state.EndsAt = nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt)
-	state.StateReason = models.StateReasonNoData
+	endsAt := nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt)
+	err := result.Error
 
 	switch rule.NoDataState {
 	case models.Alerting:
-		state.State = eval.Alerting
+		state.SetAlerting(models.StateReasonNoData, startsAt, endsAt, err)
 	case models.NoData:
-		state.State = eval.NoData
+		state.SetNoData(startsAt, endsAt, err)
 	case models.OK:
-		state.State = eval.Normal
+		state.SetNormal(models.StateReasonNoData, startsAt, endsAt, err)
 	}
 }
 
