@@ -111,7 +111,6 @@
 /pkg/services/org/ @grafana/backend-platform
 /pkg/services/playlist/ @grafana/backend-platform
 /pkg/services/plugindashboards/ @grafana/backend-platform
-/pkg/services/pluginsettings/ @grafana/backend-platform
 /pkg/services/preference/ @grafana/backend-platform
 /pkg/services/provisioning/ @grafana/backend-platform
 /pkg/services/publicdashboards/ @grafana/dashboards-squad
@@ -284,6 +283,7 @@
 /pkg/services/pluginsintegration/ @grafana/plugins-platform-backend
 /pkg/plugins/pfs/ @grafana/plugins-platform-backend @grafana/grafana-as-code
 /pkg/tsdb/testdatasource/ @grafana/plugins-platform-backend
+/pkg/services/pluginsintegration/pluginsettings/ @grafana/plugins-platform-backend
 
 # Dashboard previews / crawler (behind feature flag)
 /pkg/services/thumbs/ @grafana/grafana-app-platform-squad
