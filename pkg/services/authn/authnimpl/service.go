@@ -74,6 +74,7 @@ func ProvideService(
 		sessionService: sessionService,
 		postAuthHooks:  newQueue[authn.PostAuthHookFn](),
 		postLoginHooks: newQueue[authn.PostLoginHookFn](),
+		keyService:     keyService,
 	}
 
 	usageStats.RegisterMetricsFunc(s.getUsageStats)
@@ -172,6 +173,7 @@ type Service struct {
 	metrics *metrics
 
 	sessionService auth.UserTokenService
+	keyService     auth.KeyService
 
 	// postAuthHooks are called after a successful authentication. They can modify the identity.
 	postAuthHooks *queue[authn.PostAuthHookFn]
