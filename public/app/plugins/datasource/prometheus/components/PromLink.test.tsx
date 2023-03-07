@@ -44,8 +44,6 @@ const getDataSource = (datasourceOverrides?: Partial<PrometheusDatasource>) => {
     directUrl: 'prom1',
     getRateIntervalScopedVariable: jest.fn(() => ({ __rate_interval: { text: '60s', value: '60s' } })),
   };
-  // Fix
-  // PrometheusDatasource.getPrometheusTime = jest.fn().mockReturnValue(123);
 
   return Object.assign(datasource, datasourceOverrides) as unknown as PrometheusDatasource;
 };
