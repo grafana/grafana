@@ -166,7 +166,7 @@ function legacyCreateSpanLinkFactory(
           break;
         case 'grafana-falconlogscale-datasource':
           tags = getFormattedTags(span, tagsToUse, { joinBy: ' OR ' });
-          query = getQueryForHumio(span, traceToLogsOptions, tags, customQuery);
+          query = getQueryForFalconLogScale(span, traceToLogsOptions, tags, customQuery);
       }
 
       // query can be false in case the simple UI tag mapping is used but none of them are present in the span.
@@ -408,7 +408,7 @@ function getQueryForSplunk(span: TraceSpan, options: TraceToLogsOptionsV2, tags:
   };
 }
 
-function getQueryForHumio(span: TraceSpan, options: TraceToLogsOptionsV2, tags: string, customQuery?: string) {
+function getQueryForFalconLogScale(span: TraceSpan, options: TraceToLogsOptionsV2, tags: string, customQuery?: string) {
   const { filterByTraceID, filterBySpanID } = options;
 
   if (customQuery) {

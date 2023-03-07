@@ -864,14 +864,14 @@ describe('createSpanLinkFactory', () => {
     });
   });
 
-  describe('should return humio link', () => {
-    const humioUID = 'humioUID';
+  describe('should return falconLogScale link', () => {
+    const falconLogScaleUID = 'falconLogScaleUID';
 
     beforeAll(() => {
       setDataSourceSrv({
         getInstanceSettings() {
           return {
-            uid: humioUID,
+            uid: falconLogScaleUID,
             name: 'FalconLogScale',
             type: 'grafana-falconlogscale-datasource',
           } as unknown as DataSourceInstanceSettings;
@@ -884,18 +884,18 @@ describe('createSpanLinkFactory', () => {
 
     it('the `lsql` keyword is used in the link', () => {
       const createLink = setupSpanLinkFactory({
-        datasourceUid: humioUID,
+        datasourceUid: falconLogScaleUID,
       });
       const links = createLink!(createTraceSpan());
 
       const linkDef = links?.logLinks?.[0];
       expect(linkDef).toBeDefined();
-      expect(linkDef!.href).toContain(`${encodeURIComponent('datasource":"humioUID","queries":[{"lsql"')}`);
+      expect(linkDef!.href).toContain(`${encodeURIComponent('datasource":"falconLogScaleUID","queries":[{"lsql"')}`);
     });
 
     it('formats query correctly if filterByTraceID and or filterBySpanID is true', () => {
       const createLink = setupSpanLinkFactory({
-        datasourceUid: humioUID,
+        datasourceUid: falconLogScaleUID,
         filterByTraceID: true,
         filterBySpanID: true,
       });
@@ -907,7 +907,7 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef).toBeDefined();
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"humioUID","queries":[{"lsql":"cluster=\\"cluster1\\" OR hostname=\\"hostname1\\" or \\"7946b05c2e2e4e5a\\" or \\"6605c7b08e715d6c\\"","refId":""}]}'
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"falconLogScaleUID","queries":[{"lsql":"cluster=\\"cluster1\\" OR hostname=\\"hostname1\\" or \\"7946b05c2e2e4e5a\\" or \\"6605c7b08e715d6c\\"","refId":""}]}'
         )}`
       );
     });
@@ -930,7 +930,7 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef).toBeDefined();
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"humioUID","queries":[{"lsql":"ip=\\"192.168.0.1\\"","refId":""}]}'
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"falconLogScaleUID","queries":[{"lsql":"ip=\\"192.168.0.1\\"","refId":""}]}'
         )}`
       );
     });
@@ -956,7 +956,7 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef).toBeDefined();
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"humioUID","queries":[{"lsql":"hostname=\\"hostname1\\" OR ip=\\"192.168.0.1\\"","refId":""}]}'
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"falconLogScaleUID","queries":[{"lsql":"hostname=\\"hostname1\\" OR ip=\\"192.168.0.1\\"","refId":""}]}'
         )}`
       );
     });
@@ -985,7 +985,7 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef).toBeDefined();
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"humioUID","queries":[{"lsql":"service=\\"serviceName\\" OR pod=\\"podName\\"","refId":""}]}'
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"falconLogScaleUID","queries":[{"lsql":"service=\\"serviceName\\" OR pod=\\"podName\\"","refId":""}]}'
         )}`
       );
     });
