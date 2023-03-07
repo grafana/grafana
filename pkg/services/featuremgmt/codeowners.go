@@ -5,7 +5,7 @@ package featuremgmt
 type codeowner string
 
 const (
-	grafanaMultitenancySquad    codeowner = "@grafana/multitenancy-squad"
+	grafanaAppPlatformSquad     codeowner = "@grafana/grafana-app-platform-squad"
 	grafanaDashboardsSquad      codeowner = "@grafana/dashboards-squad"
 	grafanaBiSquad              codeowner = "@grafana/grafana-bi-squad"
 	grafanaDatavizSquad         codeowner = "@grafana/dataviz-squad"
