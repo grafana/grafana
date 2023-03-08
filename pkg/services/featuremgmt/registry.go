@@ -301,6 +301,7 @@ var (
 			Name:        "accessControlOnCall",
 			Description: "Access control primitives for OnCall",
 			State:       FeatureStateBeta,
+			Owner:       grafanaAuthnzSquad,
 		},
 		{
 			Name:            "nestedFolders",
@@ -313,6 +314,7 @@ var (
 			Name:        "accessTokenExpirationCheck",
 			Description: "Enable OAuth access_token expiration check and token refresh using the refresh_token",
 			State:       FeatureStateStable,
+			Owner:       grafanaAuthnzSquad,
 		},
 		{
 			Name:        "elasticsearchBackendMigration",
@@ -333,6 +335,7 @@ var (
 			Name:        "authnService",
 			Description: "Use new auth service to perform authentication",
 			State:       FeatureStateAlpha,
+			Owner:       grafanaAuthnzSquad,
 		},
 		{
 			Name:        "disablePrometheusExemplarSampling",
