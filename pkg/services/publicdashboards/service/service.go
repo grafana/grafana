@@ -353,7 +353,7 @@ func (pd *PublicDashboardServiceImpl) DeleteByDashboard(ctx context.Context, das
 
 	pubdash, err := pd.store.FindByDashboardUid(ctx, dashboard.OrgID, dashboard.UID)
 	if err != nil {
-		return err
+		return ErrInternalServerError.Errorf("DeleteByDashboard: error finding a public dashboard by dashboard orgId: %s and Uid: %s %w", dashboard.OrgID, dashboard.UID, err)
 	}
 	if pubdash == nil {
 		return nil
