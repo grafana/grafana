@@ -42,24 +42,21 @@ func TestFeatureToggleFiles(t *testing.T) {
 	})
 
 	ownerlessFeatures := map[string]bool{
-		"alertingBigTransactions":           true,
-		"trimDefaults":                      true,
+		"database_metrics":                  true,
 		"prometheusAzureOverrideAudience":   true,
-		"featureHighlights":                 true,
 		"tracing":                           true,
 		"cloudWatchDynamicLabels":           true,
-		"validateDashboardsOnSave":          true,
 		"prometheusWideSeries":              true,
-		"dataConnectionsConsole":            true,
+		"disableSecretsCompatibility":       true,
+		"logRequestsInstrumentedAsUnknown":  true,
 		"cloudWatchCrossAccountQuerying":    true,
 		"redshiftAsyncQueryDataSupport":     true,
 		"athenaAsyncQueryDataSupport":       true,
 		"newPanelChromeUI":                  true,
 		"showDashboardValidationWarnings":   true,
 		"datasourceOnboarding":              true,
+		"secureSocksDatasourceProxy":        true,
 		"disablePrometheusExemplarSampling": true,
-		"alertingBacktesting":               true,
-		"alertingNoNormalState":             true,
 		"individualCookiePreferences":       true,
 	}
 
