@@ -199,10 +199,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin-bottom: ${theme.spacing(3)};
   `,
   deleteButton: css`
-    margin-left: ${theme.spacing(3)}; ;
+    margin-left: ${theme.spacing(3)};
   `,
   deleteButtonMobile: css`
-    margin-top: ${theme.spacing(2)}; ;
+    margin-top: ${theme.spacing(2)};
   `,
 });
 
