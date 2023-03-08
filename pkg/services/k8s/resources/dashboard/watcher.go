@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -16,11 +18,9 @@ import (
 var _ Watcher = (*watcher)(nil)
 
 type watcher struct {
-	enabled              bool
-	log                  log.Logger
-	dashboardStore       database.DashboardSQLStore
-	userService          user.Service
-	accessControlService accesscontrol.Service
+	enabled        bool
+	log            log.Logger
+	dashboardStore database.DashboardSQLStore
 }
 
 func ProvideWatcher(
@@ -30,91 +30,77 @@ func ProvideWatcher(
 	accessControlService accesscontrol.Service,
 ) (*watcher, error) {
 	c := watcher{
-		enabled:              features.IsEnabled(featuremgmt.FlagK8s),
-		log:                  log.New("k8s.dashboards.controller"),
-		dashboardStore:       dashboardStore,
-		userService:          userService,
-		accessControlService: accessControlService,
+		enabled:        features.IsEnabled(featuremgmt.FlagK8s),
+		log:            log.New("k8s.dashboards.controller"),
+		dashboardStore: dashboardStore,
 	}
 	return &c, nil
 }
 
-func (c *watcher) Add(ctx context.Context, obj *Dashboard) error {
-	c.log.Debug("adding dashboard", "obj", obj)
+func (c *watcher) Add(ctx context.Context, dash *Dashboard) error {
+	c.log.Debug("adding dashboard", "dash", dash)
 
-	js, _ := json.MarshalIndent(obj, "", "  ")
+	js, _ := json.MarshalIndent(dash, "", "  ")
 	fmt.Printf("-------- WATCHER ---------")
 	fmt.Printf("%s", string(js))
 
-	cmd, err := k8sDashboardToDashboardCommand(obj)
+	raw, err := json.Marshal(dash.Spec)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to marshal dashboard spec: %w", err)
 	}
-
-	if _, err := c.dashboardStore.GetDashboard(ctx, &dashboards.GetDashboardQuery{
-		UID:   cmd.Dashboard.MustString("uid"),
-		OrgID: cmd.OrgID,
-	}); err == nil { //&& existing.Version >= dto.Dashboard.Version {
-		c.log.Debug("dashboard already exists, skipping")
-		return nil
+	data, err := simplejson.NewJson(raw)
+	if err != nil {
+		return fmt.Errorf("failed to convert dashboard spec to simplejson %w", err)
 	}
+	data.Set("resourceVersion", dash.ResourceVersion)
 
-	// signedInUser, err := c.getSignedInUser(ctx, dto.OrgID, dto.Dashboard.UpdatedBy)
-	// if err != nil {
-	// 	return err
-	// }
+	cmd := dashboards.SaveDashboardCommand{
+		Dashboard: data,
+	}
+	anno := entityAnnotations{}
+	anno.Read(dash.Annotations)
 
-	// dto.User = signedInUser
+	cmd.UserID = anno.UpdatedBy    // UserID       int64            `json:"userId" xorm:"user_id"`
+	cmd.Overwrite = true           // Overwrite    bool             `json:"overwrite"`
+	cmd.Message = anno.Message     // Message      string           `json:"message"`
+	cmd.OrgID = anno.OrgID         // OrgID        int64            `json:"-" xorm:"org_id"`
+	cmd.RestoredFrom = 0           // RestoredFrom int              `json:"-"`
+	cmd.PluginID = anno.PluginID   // PluginID     string           `json:"-" xorm:"plugin_id"`
+	cmd.FolderID = anno.FolderID   // FolderID     int64            `json:"folderId" xorm:"folder_id"`
+	cmd.FolderUID = anno.FolderUID // FolderUID    string           `json:"folderUid" xorm:"folder_uid"`
+	cmd.IsFolder = false           // IsFolder     bool             `json:"isFolder"`
+	cmd.UpdatedAt = time.UnixMilli(anno.UpdatedAt)
 
-	_, err = c.dashboardStore.SaveDashboard(ctx, cmd)
+	js, _ = json.MarshalIndent(cmd, "", "  ")
+	fmt.Printf("-------- COMMAND BEFOER final save ---------")
+	fmt.Printf("%s", string(js))
+
+	if anno.OriginKey == "" {
+		_, err = c.dashboardStore.SaveDashboard(ctx, cmd)
+	} else {
+		_, err = c.dashboardStore.SaveProvisionedDashboard(ctx, cmd, &dashboards.DashboardProvisioning{
+			Name:       anno.OriginName,
+			ExternalID: anno.OriginPath,
+			CheckSum:   anno.OriginKey,
+			Updated:    anno.OriginTime,
+		})
+	}
 	return err
 }
 
 func (c *watcher) Update(ctx context.Context, oldObj, newObj *Dashboard) error {
-	cmd, err := k8sDashboardToDashboardCommand(newObj)
-	if err != nil {
-		return err
-	}
-
-	existing, err := c.dashboardStore.GetDashboard(ctx, &dashboards.GetDashboardQuery{
-		UID:   cmd.Dashboard.MustString("uid"),
-		OrgID: cmd.OrgID,
-	})
-	if err != nil {
-		return err
-	}
-	rv := existing.Data.Get("resourceVersion").MustString()
-	if rv == newObj.ResourceVersion {
-		c.log.Debug("dashboard already exists, skipping")
-		return nil
-	}
-
-	// Always overwrite
-	cmd.Overwrite = true
-
-	// signedInUser, err := c.getSignedInUser(ctx, dto.OrgID, dto.Dashboard.UpdatedBy)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// cmd.User = signedInUser
-
-	_, err = c.dashboardStore.SaveDashboard(ctx, cmd)
-	if err != nil {
-		return err
-	}
-	return nil
+	return c.Add(ctx, newObj) // no difference between add+update
 }
 
-func (c *watcher) Delete(ctx context.Context, obj *Dashboard) error {
-	cmd, err := k8sDashboardToDashboardCommand(obj)
-	if err != nil {
-		return err
-	}
+func (c *watcher) Delete(ctx context.Context, dash *Dashboard) error {
+	anno := entityAnnotations{}
+	anno.Read(dash.Annotations)
+
 	existing, err := c.dashboardStore.GetDashboard(ctx, &dashboards.GetDashboardQuery{
-		UID:   cmd.Dashboard.MustString("uid"),
-		OrgID: cmd.OrgID,
+		UID:   dash.Name, // Assumes same as UID!
+		OrgID: anno.OrgID,
 	})
+
 	// no dashboard found, nothing to delete
 	if err != nil {
 		return nil
@@ -129,28 +115,4 @@ func (c *watcher) Delete(ctx context.Context, obj *Dashboard) error {
 // only run service if feature toggle is enabled
 func (c *watcher) IsDisabled() bool {
 	return !c.enabled
-}
-
-// TODO: get the admin user using userID 1 and orgID 1
-// is this safe? probably not.
-func (c *watcher) GGGetSignedInUser(ctx context.Context, orgID int64, userID int64) (*user.SignedInUser, error) {
-	querySignedInUser := user.GetSignedInUserQuery{UserID: 1, OrgID: 1}
-	signedInUser, err := c.userService.GetSignedInUserWithCacheCtx(ctx, &querySignedInUser)
-	if err != nil {
-		return nil, err
-	}
-
-	if signedInUser.Permissions == nil {
-		signedInUser.Permissions = make(map[int64]map[string][]string)
-	}
-
-	if signedInUser.Permissions[signedInUser.OrgID] == nil {
-		permissions, err := c.accessControlService.GetUserPermissions(ctx, signedInUser, accesscontrol.Options{})
-		if err != nil {
-			return nil, err
-		}
-		signedInUser.Permissions[signedInUser.OrgID] = accesscontrol.GroupScopesByAction(permissions)
-	}
-
-	return signedInUser, nil
 }

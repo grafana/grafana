@@ -44,8 +44,14 @@ func ProvideStoreWrapper(
 	}, nil
 }
 
-// SaveDashboard will write the dashboard to k8s then wait for it to exist in the SQL store
+// SaveDashboard saves the dashboard to kubernetes
 func (s *StoreWrapper) SaveDashboard(ctx context.Context, cmd dashboards.SaveDashboardCommand) (*dashboards.Dashboard, error) {
+	// Same save path but with additional metadata
+	return s.SaveProvisionedDashboard(ctx, cmd, nil)
+}
+
+// SaveDashboard will write the dashboard to k8s then wait for it to exist in the SQL store
+func (s *StoreWrapper) SaveProvisionedDashboard(ctx context.Context, cmd dashboards.SaveDashboardCommand, provisioning *dashboards.DashboardProvisioning) (*dashboards.Dashboard, error) {
 	dashboardResource, err := s.clientset.GetResourceClient(CRD)
 	if err != nil {
 		return nil, fmt.Errorf("ProvideServiceWrapper failed to get dashboard resource client: %w", err)
@@ -58,35 +64,52 @@ func (s *StoreWrapper) SaveDashboard(ctx context.Context, cmd dashboards.SaveDas
 	updateDashboard := false
 	resourceVersion := ""
 
+	anno := entityAnnotations{
+		OrgID:     cmd.OrgID,
+		Message:   cmd.Message,
+		FolderID:  cmd.FolderID,
+		FolderUID: cmd.FolderUID,
+		PluginID:  cmd.PluginID,
+		UpdatedAt: cmd.UpdatedAt.UnixMilli(),
+		UpdatedBy: cmd.UserID,
+	}
+
+	// Save provisioning info
+	if provisioning != nil {
+		anno.OriginName = provisioning.Name
+		anno.OriginPath = provisioning.ExternalID
+		anno.OriginKey = provisioning.CheckSum
+		anno.OriginTime = provisioning.Updated
+	}
+
 	// FIXME this is not reliable and is spaghetti
 	dto := cmd.GetDashboardModel()
 	uid := dto.UID
 	if uid == "" {
 		uid = util.GenerateShortUID()
+		anno.CreatedAt = anno.UpdatedAt
+		anno.CreatedBy = anno.UpdatedBy
 	} else {
-		// check if dashboard exists in k8s. if it does, we're gonna do an update, if
-		rv, ok, err := getResourceVersion(ctx, dashboardResource, uid)
-		if !ok {
+		updateDashboard = true
+
+		// Get the previous version
+		r, err := dashboardResource.Get(ctx, uid, metav1.GetOptions{})
+		if err != nil {
 			return nil, err
 		}
-
-		fmt.Printf("VERSION: %s", rv)
-		// if rv != "" {
-		// 	if !dto.Overwrite {
-		// 		dtoRV := dto.Dashboard.Data.Get("resourceVersion").MustString()
-		// 		if dtoRV != "" && dtoRV != rv {
-		// 			return nil, dashboards.ErrDashboardVersionMismatch
-		// 		}
-		// 	}
-
-		// 	// exists in k8s
-		// 	updateDashboard = true
-		// 	resourceVersion = rv
-		// }
+		if r == nil || r.Object == nil {
+			return nil, fmt.Errorf("unable to find k8s dashboard: " + uid)
+		}
+		// Keep old metadata
+		anno.Merge(r.GetAnnotations())
+		resourceVersion = r.GetResourceVersion()
+		if anno.CreatedAt < 100 {
+			anno.CreatedAt = r.GetCreationTimestamp().UnixMilli()
+		}
 	}
 
 	// HACK, remove empty ID!!
-	dto.Data.Del("id")
+	// dto.Data.Del("id") <<<<< MUST KEEP UID since this is the real key
 	dto.Data.Set("uid", uid)
 	dto.UID = uid
 	// strip nulls...
@@ -110,10 +133,14 @@ func (s *StoreWrapper) SaveDashboard(ctx context.Context, cmd dashboards.SaveDas
 		d.Title = &dto.Title
 	}
 
+	if anno.CreatedAt < 100 {
+		anno.CreatedAt = time.Now().UnixMilli()
+	}
+
 	meta := metav1.ObjectMeta{
 		Name:        uid,
 		Namespace:   s.namespace,
-		Annotations: annotationsFromDashboardCMD(cmd, dto),
+		Annotations: anno.ToMap(),
 	}
 
 	if resourceVersion != "" {
@@ -126,7 +153,7 @@ func (s *StoreWrapper) SaveDashboard(ctx context.Context, cmd dashboards.SaveDas
 	}
 
 	js, _ := json.MarshalIndent(uObj, "", "  ")
-	fmt.Printf("-------- UNSTRUCTURED BEFORE---------")
+	fmt.Printf("-------- WRAPPER BEFORE SAVE ---------")
 	fmt.Printf("%s", string(js))
 
 	if updateDashboard {
@@ -143,7 +170,7 @@ func (s *StoreWrapper) SaveDashboard(ctx context.Context, cmd dashboards.SaveDas
 	}
 
 	js, _ = json.MarshalIndent(uObj, "", "  ")
-	fmt.Printf("-------- UNSTRUCTURED AFTER---------")
+	fmt.Printf("-------- WRAPPER AFTER SAVE ---------")
 	fmt.Printf("%s", string(js))
 
 	rv := uObj.GetResourceVersion()
@@ -151,8 +178,9 @@ func (s *StoreWrapper) SaveDashboard(ctx context.Context, cmd dashboards.SaveDas
 
 	// TODO: rather than polling the dashboard service,
 	// we could write a status field and listen for changes on that status from k8s directly
-	for i := 0; i < 5; i++ {
-		time.Sleep(150 * time.Millisecond)
+	// however, this is likely better since it is checking the SQL instance that needs to be valid
+	for i := 0; i < 9; i++ {
+		time.Sleep(175 * time.Millisecond)
 		out, err := s.DashboardSQLStore.GetDashboard(ctx, &dashboards.GetDashboardQuery{UID: uid, OrgID: dto.OrgID})
 		if err != nil {
 			fmt.Printf("ERROR: %v", err)
@@ -170,10 +198,4 @@ func (s *StoreWrapper) SaveDashboard(ctx context.Context, cmd dashboards.SaveDas
 
 	// too many loops?
 	return nil, fmt.Errorf("controller never ran?")
-}
-
-// SaveDashboard saves the dashboard to kubernetes
-func (s *StoreWrapper) SaveProvisionedDashboard(ctx context.Context, cmd dashboards.SaveDashboardCommand, provisioning *dashboards.DashboardProvisioning) (*dashboards.Dashboard, error) {
-	fmt.Printf("SaveProvisionedDashboard: %s // %s\n", cmd.Dashboard.MustString("uid"), provisioning.ExternalID)
-	return s.DashboardSQLStore.SaveProvisionedDashboard(ctx, cmd, provisioning)
 }
