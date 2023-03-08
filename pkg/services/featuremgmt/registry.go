@@ -23,6 +23,7 @@ var (
 			Name:        "disableEnvelopeEncryption",
 			Description: "Disable envelope encryption (emergency only)",
 			State:       FeatureStateStable,
+			Owner:       grafanaAsCodeSquad,
 		},
 		{
 			Name:        "database_metrics",
