@@ -360,6 +360,9 @@ func (pd *PublicDashboardServiceImpl) DeleteByDashboard(ctx context.Context, das
 	if err != nil {
 		return err
 	}
+	if pubdash == nil {
+		return nil
+	}
 
 	return pd.serviceWrapper.DeleteByPublicDashboard(ctx, pubdash)
 }

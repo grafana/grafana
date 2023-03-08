@@ -972,6 +972,15 @@ func TestPublicDashboardServiceImpl_NewPublicDashboardAccessToken(t *testing.T) 
 }
 
 func TestDeleteByDashboard(t *testing.T) {
+	t.Run("will return nil when pubdash not found", func(t *testing.T) {
+		store := NewFakePublicDashboardStore(t)
+		pd := &PublicDashboardServiceImpl{store: store, serviceWrapper: ProvideServiceWrapper(store)}
+		dashboard := &dashboards.Dashboard{UID: "1", OrgID: 1, IsFolder: false}
+		store.On("FindByDashboardUid", mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
+
+		err := pd.DeleteByDashboard(context.Background(), dashboard)
+		assert.Nil(t, err)
+	})
 	t.Run("will delete pubdash when dashboard deleted", func(t *testing.T) {
 		store := NewFakePublicDashboardStore(t)
 		pd := &PublicDashboardServiceImpl{store: store, serviceWrapper: ProvideServiceWrapper(store)}
