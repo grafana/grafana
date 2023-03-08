@@ -7,10 +7,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/go-kit/log"
-
 	"github.com/grafana/grafana/pkg/infra/db"
-	glog "github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
@@ -45,7 +43,6 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, usageStats usagestats.Serv
 	s := &RemoteCache{
 		SQLStore: sqlStore,
 		Cfg:      cfg,
-		log:      glog.New("cache.remote"),
 		client:   client,
 	}
 	return s, nil
@@ -79,7 +76,6 @@ type CacheStorage interface {
 
 // RemoteCache allows Grafana to cache data outside its own process
 type RemoteCache struct {
-	log      log.Logger
 	client   CacheStorage
 	SQLStore db.DB
 	Cfg      *setting.Cfg
