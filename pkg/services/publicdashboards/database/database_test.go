@@ -697,6 +697,7 @@ func TestGetDashboardByFolder(t *testing.T) {
 		sqlStore, cfg := db.InitTestDBwithCfg(t)
 		quotaService := quotatest.New(false, nil)
 		dashboardStore, err := dashboardsDB.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
+		require.NoError(t, err)
 		pubdashStore := ProvideStore(sqlStore)
 		dashboard := insertTestDashboard(t, dashboardStore, "title", 1, 1, true)
 		pubdash := insertPublicDashboard(t, pubdashStore, dashboard.UID, dashboard.OrgID, true)
