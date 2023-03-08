@@ -170,6 +170,7 @@ var (
 			Description: "Use dynamic labels instead of alias patterns in CloudWatch datasource",
 			State:       FeatureStateStable,
 			Expression:  "true", // enabled by default
+			Owner:       awsPluginsSquad,
 		},
 		{
 			Name:        "datasourceQueryMultiStatus",
@@ -208,7 +209,7 @@ var (
 			Name:        "prometheusWideSeries",
 			Description: "Enable wide series responses in the Prometheus datasource",
 			State:       FeatureStateAlpha,
-			Owner:       "O11y-metrics",
+			Owner:       grafanaObservabilityMetricsSquad,
 		},
 		{
 			Name:         "canvasPanelNesting",
@@ -275,18 +276,21 @@ var (
 			Description: "Enables cross-account querying in CloudWatch datasources",
 			State:       FeatureStateStable,
 			Expression:  "true", //enabled by default
+			Owner:       awsPluginsSquad,
 		},
 		{
 			Name:         "redshiftAsyncQueryDataSupport",
 			Description:  "Enable async query data support for Redshift",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+			Owner:        awsPluginsSquad,
 		},
 		{
 			Name:         "athenaAsyncQueryDataSupport",
 			Description:  "Enable async query data support for Athena",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+			Owner:        awsPluginsSquad,
 		},
 		{
 			Name:         "newPanelChromeUI",
@@ -358,7 +362,7 @@ var (
 			Name:        "disablePrometheusExemplarSampling",
 			Description: "Disable Prometheus examplar sampling",
 			State:       FeatureStateStable,
-			Owner:       "O11y-metrics",
+			Owner:       grafanaObservabilityMetricsSquad,
 		},
 		{
 			Name:        "alertingBacktesting",
@@ -407,6 +411,7 @@ var (
 			Name:        "individualCookiePreferences",
 			Description: "Support overriding cookie preferences per user",
 			State:       FeatureStateAlpha,
+			Owner:       grafanaBackendPlatformSquad,
 		},
 		{
 			Name:         "drawerDataSourcePicker",
@@ -427,7 +432,7 @@ var (
 			Description:  "Replaces the Prometheus query builder metric select option with a paginated and filterable component",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
-			Owner:        "O11y-metrics",
+			Owner:        grafanaObservabilityMetricsSquad,
 		},
 	}
 )
