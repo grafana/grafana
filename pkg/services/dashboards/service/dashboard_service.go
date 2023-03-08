@@ -73,7 +73,10 @@ func ProvideDashboardServiceImpl(
 	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardIDScopeResolver(folderStore, dashSvc, folderSvc))
 	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(folderStore, dashSvc, folderSvc))
 
-	folderSvc.RegisterEntityService(dashSvc)
+	// TODO handle error
+	// looks like there is precedent for returning an error from a ProvideService() type function.
+	// examples: pkg/plugins/manager/store/store.go, pkg/services/accesscontrol/acimpl/service.go
+	_ = folderSvc.RegisterEntityService(dashSvc)
 
 	return dashSvc
 }
