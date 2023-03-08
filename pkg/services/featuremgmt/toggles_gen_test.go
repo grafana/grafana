@@ -48,7 +48,6 @@ func TestFeatureToggleFiles(t *testing.T) {
 		"cloudWatchDynamicLabels":          true,
 		"disableSecretsCompatibility":      true,
 		"logRequestsInstrumentedAsUnknown": true,
-		"dataConnectionsConsole":           true,
 		"cloudWatchCrossAccountQuerying":   true,
 		"redshiftAsyncQueryDataSupport":    true,
 		"athenaAsyncQueryDataSupport":      true,

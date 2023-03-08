@@ -238,6 +238,7 @@ var (
 			Name:        "dataConnectionsConsole",
 			Description: "Enables a new top-level page called Connections. This page is an experiment that provides a better experience when you install and configure data sources and other plugins.",
 			State:       FeatureStateAlpha,
+			Owner:       grafanaPluginsPlatformSquad,
 		},
 		{
 			Name:        "internationalization",
