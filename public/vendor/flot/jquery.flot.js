@@ -2812,6 +2812,9 @@ Licensed under the MIT license.
       return c.toString();
     }
 
+    // Grafana comment:
+    // This function dynamically constructs HTML in a potentially unsafe way.
+    // It should should only be used with trusted inputs.
     function insertLegend() {
 
       if (options.legend.container != null) {
