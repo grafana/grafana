@@ -105,15 +105,22 @@ func (pd *PublicDashboardServiceImpl) FindByAccessToken(ctx context.Context, acc
 	return pubdash, nil
 }
 
+// FindEnabledPublicDashboardAndDashboardByAccessToken Gets public dashboard and a dashboard by access token if public dashboard is enabled
+func (pd *PublicDashboardServiceImpl) FindEnabledPublicDashboardAndDashboardByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, *dashboards.Dashboard, error) {
+	pubdash, dash, err := pd.FindPublicDashboardAndDashboardByAccessToken(ctx, accessToken)
+
+	if !pubdash.IsEnabled {
+		return nil, nil, ErrPublicDashboardNotEnabled.Errorf("FindEnabledPublicDashboardAndDashboardByAccessToken: Public dashboard is not enabled accessToken: %s", accessToken)
+	}
+
+	return pubdash, dash, err
+}
+
 // FindPublicDashboardAndDashboardByAccessToken Gets public dashboard and a dashboard by access token
 func (pd *PublicDashboardServiceImpl) FindPublicDashboardAndDashboardByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, *dashboards.Dashboard, error) {
 	pubdash, err := pd.FindByAccessToken(ctx, accessToken)
 	if err != nil {
 		return nil, nil, err
-	}
-
-	if !pubdash.IsEnabled {
-		return nil, nil, ErrPublicDashboardNotEnabled.Errorf("FindPublicDashboardAndDashboardByAccessToken: Public dashboard is paused accessToken: %s", accessToken)
 	}
 
 	dash, err := pd.store.FindDashboard(ctx, pubdash.OrgId, pubdash.DashboardUid)
