@@ -160,6 +160,6 @@ func TestCachePrefix(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "bar", string(v))
 	// Get a value directly from the underlying cache without a prefix, should not be there
-	_, err = cache.Get(context.Background(), "foo")
+	_, err = cache.GetByteArray(context.Background(), "foo")
 	require.Error(t, err)
 }

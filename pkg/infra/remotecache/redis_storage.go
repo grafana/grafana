@@ -86,42 +86,10 @@ func newRedisStorage(opts *setting.RemoteCacheOptions, codec codec) (*redisStora
 	return &redisStorage{c: redis.NewClient(opt), codec: codec}, nil
 }
 
-// Set sets value to given key in session.
-func (s *redisStorage) Set(ctx context.Context, key string, val interface{}, expires time.Duration) error {
-	item := &cachedItem{Val: val}
-	value, err := s.codec.Encode(ctx, item)
-	if err != nil {
-		return err
-	}
-
-	return s.SetByteArray(ctx, key, value, expires)
-}
-
 // Set sets value to a given key
 func (s *redisStorage) SetByteArray(ctx context.Context, key string, data []byte, expires time.Duration) error {
 	status := s.c.Set(ctx, key, data, expires)
 	return status.Err()
-}
-
-// Get gets value by given key in session.
-func (s *redisStorage) Get(ctx context.Context, key string) (interface{}, error) {
-	v, err := s.GetByteArray(ctx, key)
-
-	if err != nil {
-		if err.Error() == "EOF" {
-			return nil, ErrCacheItemNotFound
-		}
-		return nil, err
-	}
-
-	item := &cachedItem{}
-	err = s.codec.Decode(ctx, v, item)
-
-	if err == nil {
-		return item.Val, nil
-	}
-
-	return nil, err
 }
 
 // GetByteArray returns the value as byte array
