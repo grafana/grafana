@@ -1043,7 +1043,7 @@ func (d *dashboardStore) DeleteDashboardsInFolder(
 		dashboard := dashboards.Dashboard{OrgID: req.OrgID}
 		// TODO make sure folderUID == uid in the dashboard table
 		// TODO make sure dashboard.ID (of the folder) == folder_id (for the children of the folder)
-		has, err := sess.Where("uid = ?", req.FolderUID).Get(&dashboard)
+		has, err := sess.Where("uid = ? AND org_id = ?", req.FolderUID, req.OrgID).Get(&dashboard)
 		if err != nil {
 			return err
 		}

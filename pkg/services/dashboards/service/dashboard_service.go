@@ -648,7 +648,7 @@ func (dr DashboardServiceImpl) CountDashboardsInFolder(ctx context.Context, quer
 }
 
 // TODO rethink naming, also does it make sense to unify it (for DashboardServiceImpl and DeleteDashboardsInFolder)?
-func (dr *DashboardServiceImpl) DeleteForRegistry(ctx context.Context, orgID int64, UID string) error {
+func (dr *DashboardServiceImpl) DeleteInFolder(ctx context.Context, orgID int64, UID string) error {
 	return dr.dashboardStore.DeleteDashboardsInFolder(ctx, &dashboards.DeleteDashboardsInFolderRequest{FolderUID: UID, OrgID: orgID})
 }
 
