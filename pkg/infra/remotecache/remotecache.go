@@ -51,11 +51,11 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, usageStats usagestats.Serv
 	return s, nil
 }
 
-func (s *RemoteCache) getUsageStats(ctx context.Context) (map[string]interface{}, error) {
+func (ds *RemoteCache) getUsageStats(ctx context.Context) (map[string]interface{}, error) {
 	stats := map[string]interface{}{}
-	stats["stats.remote_cache."+s.Cfg.RemoteCacheOptions.Name+".count"] = 1
+	stats["stats.remote_cache."+ds.Cfg.RemoteCacheOptions.Name+".count"] = 1
 	encryptVal := 0
-	if s.Cfg.RemoteCacheOptions.Encryption {
+	if ds.Cfg.RemoteCacheOptions.Encryption {
 		encryptVal = 1
 	}
 
