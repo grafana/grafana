@@ -48,8 +48,8 @@ export function AutoSaveField<T = string>(props: GenericProps<T>) {
 
   React.useEffect(() => {
     let timeoutId: ReturnType<typeof setTimeout>;
-    const time = fieldState.showError ? 0 : SHOW_SUCCESS_DURATION;
     if (fieldState.showSuccess) {
+      const time = fieldState.showError ? 0 : SHOW_SUCCESS_DURATION;
       timeoutId = setTimeout(() => {
         setFieldState({ ...fieldState, showSuccess: false });
       }, time);
@@ -86,7 +86,8 @@ export function AutoSaveField<T = string>(props: GenericProps<T>) {
   );
 
   const lodashDebounce = useMemo(() => debounce(handleChange, 600, { leading: false }), [handleChange]);
-
+  const isInvalid = invalid || fieldState.showError;
+  const isLoading = loading || fieldState.isLoading;
   /**
    * use Field around input to pass the error message
    * use InlineToast.tsx to show the save message
@@ -95,8 +96,8 @@ export function AutoSaveField<T = string>(props: GenericProps<T>) {
     <>
       <Field
         {...restProps}
-        loading={loading || fieldState.isLoading}
-        invalid={invalid || fieldState.showError}
+        loading={isLoading}
+        invalid={isInvalid}
         error={error || (fieldState.showError && saveErrorMessage)}
       >
         <div ref={inputRef}>
@@ -105,8 +106,8 @@ export function AutoSaveField<T = string>(props: GenericProps<T>) {
               lodashDebounce(newValue);
             }),
             {
-              loading: loading || fieldState.isLoading,
-              invalid: invalid || fieldState.showError,
+              loading: isLoading,
+              invalid: isInvalid,
               disabled,
             }
           )}
