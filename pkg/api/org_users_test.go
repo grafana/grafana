@@ -256,6 +256,7 @@ func TestOrgUsersAPIEndpoint_updateOrgRole(t *testing.T) {
 				hs.authInfoService = &logintest.AuthInfoServiceFake{
 					ExpectedUserAuth: &login.UserAuth{AuthModule: login.LDAPLabel},
 				}
+				hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagOnlyExternalOrgRoleSync, true)
 				hs.userService = &usertest.FakeUserService{ExpectedSignedInUser: userWithPermissions(1, tt.permissions)}
 				hs.orgService = &orgtest.FakeOrgService{}
 				hs.accesscontrolService = &actest.FakeService{
@@ -790,6 +791,8 @@ func TestPatchOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 						AuthModule: "",
 					},
 				}
+				flags := hs.Features.GetFlags()
+				t.Logf("flags: %v", flags)
 				hs.accesscontrolService = &actest.FakeService{}
 				hs.userService = &usertest.FakeUserService{
 					ExpectedUser:         &user.User{},
