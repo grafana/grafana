@@ -35,7 +35,6 @@ export const plugin = new PanelPlugin<PanelOptions>(StatPanel)
     });
 
     builder
-      // JEV: stat styles
       .addRadio({
         path: 'colorMode',
         name: 'Color mode',
