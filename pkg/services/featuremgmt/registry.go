@@ -23,6 +23,7 @@ var (
 			Name:        "disableEnvelopeEncryption",
 			Description: "Disable envelope encryption (emergency only)",
 			State:       FeatureStateStable,
+			Owner:       grafanaAsCodeSquad,
 		},
 		{
 			Name:        "database_metrics",
@@ -83,12 +84,13 @@ var (
 			Name:        "lokiLive",
 			Description: "Support WebSocket streaming for loki (early prototype)",
 			State:       FeatureStateAlpha,
-			Owner:       grafanaAppPlatformSquad,
+			Owner:       grafanaObservabilityLogsSquad,
 		},
 		{
 			Name:        "lokiDataframeApi",
 			Description: "Use experimental loki api for WebSocket streaming (early prototype)",
 			State:       FeatureStateAlpha,
+			Owner:       grafanaObservabilityLogsSquad,
 		},
 		{
 			Name:        "featureHighlights",
@@ -111,6 +113,7 @@ var (
 			Name:        "migrationLocking",
 			Description: "Lock database during migrations",
 			State:       FeatureStateBeta,
+			Owner:       grafanaBackendPlatformSquad,
 		},
 		{
 			Name:        "storage",
@@ -137,6 +140,7 @@ var (
 			Description:  "Enable mixed datasource in Explore",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+			Owner:        grafanaExploreSquad,
 		},
 		{
 			Name:         "tracing",
@@ -154,6 +158,7 @@ var (
 			Name:        "correlations",
 			Description: "Correlations page",
 			State:       FeatureStateAlpha,
+			Owner:       grafanaExploreSquad,
 		},
 		{
 			Name:        "cloudWatchDynamicLabels",
@@ -294,27 +299,32 @@ var (
 			Name:        "mysqlAnsiQuotes",
 			Description: "Use double quotes to escape keyword in a MySQL query",
 			State:       FeatureStateAlpha,
+			Owner:       grafanaBackendPlatformSquad,
 		},
 		{
 			Name:        "accessControlOnCall",
 			Description: "Access control primitives for OnCall",
 			State:       FeatureStateBeta,
+			Owner:       grafanaAuthnzSquad,
 		},
 		{
 			Name:            "nestedFolders",
 			Description:     "Enable folder nesting",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
+			Owner:           grafanaBackendPlatformSquad,
 		},
 		{
 			Name:        "accessTokenExpirationCheck",
 			Description: "Enable OAuth access_token expiration check and token refresh using the refresh_token",
 			State:       FeatureStateStable,
+			Owner:       grafanaAuthnzSquad,
 		},
 		{
 			Name:        "elasticsearchBackendMigration",
 			Description: "Use Elasticsearch as backend data source",
 			State:       FeatureStateAlpha,
+			Owner:       grafanaObservabilityLogsSquad,
 		},
 		{
 			Name:        "datasourceOnboarding",
@@ -330,6 +340,7 @@ var (
 			Name:        "authnService",
 			Description: "Use new auth service to perform authentication",
 			State:       FeatureStateAlpha,
+			Owner:       grafanaAuthnzSquad,
 		},
 		{
 			Name:        "disablePrometheusExemplarSampling",
@@ -361,18 +372,21 @@ var (
 			State:        FeatureStateStable,
 			Expression:   "true", //turned on by default
 			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
 			Name:         "logsContextDatasourceUi",
 			Description:  "Allow datasource to provide custom UI for context view",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
 			Name:         "lokiQuerySplitting",
 			Description:  "Split large interval queries into subqueries with smaller time intervals",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
 			Name:        "individualCookiePreferences",
