@@ -611,6 +611,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 	t.Run("when evaluation fails", func(t *testing.T) {
 		rule := models.AlertRuleGen(withQueryForState(t, eval.Error))()
 		rule.ExecErrState = models.ErrorErrState
+		rule.ForError = 0
 
 		evalChan := make(chan *evaluation)
 		evalAppliedChan := make(chan time.Time)

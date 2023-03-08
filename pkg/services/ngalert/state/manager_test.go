@@ -111,6 +111,81 @@ func TestWarmStateCache(t *testing.T) {
 			LastEvaluationTime: evaluationTime,
 			Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
 		},
+		{
+			AlertRuleUID: rule.UID,
+			OrgID:        rule.OrgID,
+			CacheID:      `[["test6","testValue6"]]`,
+			Labels:       data.Labels{"test6": "testValue6"},
+			State:        eval.Alerting,
+			StateReason:  models.StateReasonError,
+			Results: []state.Evaluation{
+				{EvaluationTime: evaluationTime, EvaluationState: eval.Alerting},
+			},
+			StartsAt:           evaluationTime.Add(-1 * time.Minute),
+			EndsAt:             evaluationTime.Add(1 * time.Minute),
+			LastEvaluationTime: evaluationTime,
+			Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+		},
+		{
+			AlertRuleUID: rule.UID,
+			OrgID:        rule.OrgID,
+			CacheID:      `[["test7","testValue7"]]`,
+			Labels:       data.Labels{"test7": "testValue7"},
+			State:        eval.Pending,
+			StateReason:  models.StateReasonError,
+			Results: []state.Evaluation{
+				{EvaluationTime: evaluationTime, EvaluationState: eval.Pending},
+			},
+			StartsAt:           evaluationTime.Add(-1 * time.Minute),
+			EndsAt:             evaluationTime.Add(1 * time.Minute),
+			LastEvaluationTime: evaluationTime,
+			Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+		},
+		{
+			AlertRuleUID: rule.UID,
+			OrgID:        rule.OrgID,
+			CacheID:      `[["test8","testValue8"]]`,
+			Labels:       data.Labels{"test8": "testValue8"},
+			State:        eval.Normal,
+			StateReason:  models.StateReasonError,
+			Results: []state.Evaluation{
+				{EvaluationTime: evaluationTime, EvaluationState: eval.Normal},
+			},
+			StartsAt:           evaluationTime.Add(-1 * time.Minute),
+			EndsAt:             evaluationTime.Add(1 * time.Minute),
+			LastEvaluationTime: evaluationTime,
+			Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+		},
+		{
+			AlertRuleUID: rule.UID,
+			OrgID:        rule.OrgID,
+			CacheID:      `[["test9","testValue9"]]`,
+			Labels:       data.Labels{"test9": "testValue9"},
+			State:        eval.Alerting,
+			StateReason:  models.StateReasonNoData,
+			Results: []state.Evaluation{
+				{EvaluationTime: evaluationTime, EvaluationState: eval.Alerting},
+			},
+			StartsAt:           evaluationTime.Add(-1 * time.Minute),
+			EndsAt:             evaluationTime.Add(1 * time.Minute),
+			LastEvaluationTime: evaluationTime,
+			Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+		},
+		{
+			AlertRuleUID: rule.UID,
+			OrgID:        rule.OrgID,
+			CacheID:      `[["test10","testValue10"]]`,
+			Labels:       data.Labels{"test10": "testValue10"},
+			State:        eval.Normal,
+			StateReason:  models.StateReasonNoData,
+			Results: []state.Evaluation{
+				{EvaluationTime: evaluationTime, EvaluationState: eval.Normal},
+			},
+			StartsAt:           evaluationTime.Add(-1 * time.Minute),
+			EndsAt:             evaluationTime.Add(1 * time.Minute),
+			LastEvaluationTime: evaluationTime,
+			Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+		},
 	}
 
 	instances := make([]models.AlertInstance, 0)
@@ -184,6 +259,86 @@ func TestWarmStateCache(t *testing.T) {
 			LabelsHash: hash,
 		},
 		CurrentState:      models.InstanceStatePending,
+		LastEvalTime:      evaluationTime,
+		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
+		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
+		Labels:            labels,
+	})
+
+	labels = models.InstanceLabels{"test6": "testValue6"}
+	_, hash, _ = labels.StringAndHash()
+	instances = append(instances, models.AlertInstance{
+		AlertInstanceKey: models.AlertInstanceKey{
+			RuleOrgID:  rule.OrgID,
+			RuleUID:    rule.UID,
+			LabelsHash: hash,
+		},
+		CurrentState:      models.InstanceStateFiring,
+		CurrentReason:     models.StateReasonError,
+		LastEvalTime:      evaluationTime,
+		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
+		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
+		Labels:            labels,
+	})
+
+	labels = models.InstanceLabels{"test7": "testValue7"}
+	_, hash, _ = labels.StringAndHash()
+	instances = append(instances, models.AlertInstance{
+		AlertInstanceKey: models.AlertInstanceKey{
+			RuleOrgID:  rule.OrgID,
+			RuleUID:    rule.UID,
+			LabelsHash: hash,
+		},
+		CurrentState:      models.InstanceStatePending,
+		CurrentReason:     models.StateReasonError,
+		LastEvalTime:      evaluationTime,
+		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
+		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
+		Labels:            labels,
+	})
+
+	labels = models.InstanceLabels{"test8": "testValue8"}
+	_, hash, _ = labels.StringAndHash()
+	instances = append(instances, models.AlertInstance{
+		AlertInstanceKey: models.AlertInstanceKey{
+			RuleOrgID:  rule.OrgID,
+			RuleUID:    rule.UID,
+			LabelsHash: hash,
+		},
+		CurrentState:      models.InstanceStateNormal,
+		CurrentReason:     models.StateReasonError,
+		LastEvalTime:      evaluationTime,
+		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
+		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
+		Labels:            labels,
+	})
+
+	labels = models.InstanceLabels{"test9": "testValue9"}
+	_, hash, _ = labels.StringAndHash()
+	instances = append(instances, models.AlertInstance{
+		AlertInstanceKey: models.AlertInstanceKey{
+			RuleOrgID:  rule.OrgID,
+			RuleUID:    rule.UID,
+			LabelsHash: hash,
+		},
+		CurrentState:      models.InstanceStateFiring,
+		CurrentReason:     models.StateReasonNoData,
+		LastEvalTime:      evaluationTime,
+		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
+		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
+		Labels:            labels,
+	})
+
+	labels = models.InstanceLabels{"test10": "testValue10"}
+	_, hash, _ = labels.StringAndHash()
+	instances = append(instances, models.AlertInstance{
+		AlertInstanceKey: models.AlertInstanceKey{
+			RuleOrgID:  rule.OrgID,
+			RuleUID:    rule.UID,
+			LabelsHash: hash,
+		},
+		CurrentState:      models.InstanceStateNormal,
+		CurrentReason:     models.StateReasonNoData,
 		LastEvalTime:      evaluationTime,
 		CurrentStateSince: evaluationTime.Add(-1 * time.Minute),
 		CurrentStateEnd:   evaluationTime.Add(1 * time.Minute),
@@ -1697,7 +1852,7 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 		},
 		{
-			desc: "normal -> error when result is Error and ExecErrState is Error",
+			desc: "normal -> error when result is Error and ExecErrState is Error and ForError is the default value",
 			alertRule: &models.AlertRule{
 				OrgID:        1,
 				Title:        "test_title",
@@ -1711,6 +1866,7 @@ func TestProcessEvalResults(t *testing.T) {
 				Labels:          map[string]string{"label": "test"},
 				IntervalSeconds: 10,
 				For:             1 * time.Minute,
+				ForError:        0,
 				ExecErrState:    models.ErrorErrState,
 			},
 			evalResults: []eval.Results{
@@ -1752,6 +1908,88 @@ func TestProcessEvalResults(t *testing.T) {
 					},
 					Values:      make(map[string]float64),
 					State:       eval.Error,
+					StateReason: models.StateReasonError,
+					Error: expr.QueryError{
+						RefID: "A",
+						Err:   errors.New("this is an error"),
+					},
+					Results: []state.Evaluation{
+						{
+							EvaluationTime:  evaluationTime,
+							EvaluationState: eval.Normal,
+							Values:          make(map[string]*float64),
+						},
+						{
+							EvaluationTime:  evaluationTime.Add(10 * time.Second),
+							EvaluationState: eval.Error,
+							Values:          make(map[string]*float64),
+						},
+					},
+					StartsAt:           evaluationTime.Add(10 * time.Second),
+					EndsAt:             evaluationTime.Add(10 * time.Second).Add(state.ResendDelay * 3),
+					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
+					EvaluationDuration: evaluationDuration,
+					Annotations:        map[string]string{"annotation": "test", "Error": "failed to execute query A: this is an error"},
+				},
+			},
+		},
+		{
+			desc: "normal -> pending error when result is Error and ExecErrState is Error and ForError is set",
+			alertRule: &models.AlertRule{
+				OrgID:        1,
+				Title:        "test_title",
+				UID:          "test_alert_rule_uid_2",
+				NamespaceUID: "test_namespace_uid",
+				Data: []models.AlertQuery{{
+					RefID:         "A",
+					DatasourceUID: "datasource_uid_1",
+				}},
+				Annotations:     map[string]string{"annotation": "test"},
+				Labels:          map[string]string{"label": "test"},
+				IntervalSeconds: 10,
+				For:             1 * time.Minute,
+				ForError:        1 * time.Minute,
+				ExecErrState:    models.ErrorErrState,
+			},
+			evalResults: []eval.Results{
+				{
+					eval.Result{
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Normal,
+						EvaluatedAt:        evaluationTime,
+						EvaluationDuration: evaluationDuration,
+					},
+				},
+				{
+					eval.Result{
+						Instance: data.Labels{"instance_label": "test"},
+						Error: expr.QueryError{
+							RefID: "A",
+							Err:   errors.New("this is an error"),
+						},
+						State:              eval.Error,
+						EvaluatedAt:        evaluationTime.Add(10 * time.Second),
+						EvaluationDuration: evaluationDuration,
+					},
+				},
+			},
+			expectedAnnotations: 1,
+			expectedStates: map[string]*state.State{
+				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
+					AlertRuleUID: "test_alert_rule_uid_2",
+					OrgID:        1,
+					CacheID:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
+					Labels: data.Labels{
+						"__alert_rule_namespace_uid__": "test_namespace_uid",
+						"__alert_rule_uid__":           "test_alert_rule_uid_2",
+						"alertname":                    "test_title",
+						"label":                        "test",
+						"instance_label":               "test",
+						"datasource_uid":               "datasource_uid_1",
+						"ref_id":                       "A",
+					},
+					Values:      make(map[string]float64),
+					State:       eval.Pending,
 					StateReason: models.StateReasonError,
 					Error: expr.QueryError{
 						RefID: "A",
@@ -2029,6 +2267,311 @@ func TestProcessEvalResults(t *testing.T) {
 					StartsAt:           evaluationTime.Add(30 * time.Second),
 					EndsAt:             evaluationTime.Add(50 * time.Second).Add(state.ResendDelay * 3),
 					LastEvaluationTime: evaluationTime.Add(50 * time.Second),
+					EvaluationDuration: evaluationDuration,
+					Annotations:        map[string]string{"annotation": "test"},
+				},
+			},
+		},
+		{
+			desc: "pending alerting -> pending error when result is Error and ExecErrorState is Error with For and ForError set",
+			alertRule: &models.AlertRule{
+				OrgID:           1,
+				Title:           "test_title",
+				UID:             "test_alert_rule_uid_2",
+				NamespaceUID:    "test_namespace_uid",
+				Annotations:     map[string]string{"annotation": "test"},
+				Labels:          map[string]string{"label": "test"},
+				IntervalSeconds: 10,
+				For:             10 * time.Second,
+				ForError:        20 * time.Second,
+				ExecErrState:    models.ErrorErrState,
+			},
+			evalResults: []eval.Results{
+				{
+					eval.Result{
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Alerting,
+						EvaluatedAt:        evaluationTime,
+						EvaluationDuration: evaluationDuration,
+					},
+				},
+				{
+					eval.Result{
+						Instance: data.Labels{"instance_label": "test"},
+						State:    eval.Error,
+						Error: expr.QueryError{
+							RefID: "A",
+							Err:   errors.New("this is an error"),
+						},
+						EvaluatedAt:        evaluationTime.Add(20 * time.Second),
+						EvaluationDuration: evaluationDuration,
+					},
+				},
+				{
+					eval.Result{
+						Instance: data.Labels{"instance_label": "test"},
+						State:    eval.Error,
+						Error: expr.QueryError{
+							RefID: "A",
+							Err:   errors.New("this is an error"),
+						},
+						EvaluatedAt:        evaluationTime.Add(30 * time.Second),
+						EvaluationDuration: evaluationDuration,
+					},
+				},
+			},
+			expectedAnnotations: 2,
+			expectedStates: map[string]*state.State{
+				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
+					AlertRuleUID: "test_alert_rule_uid_2",
+					OrgID:        1,
+					CacheID:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
+					Labels: data.Labels{
+						"__alert_rule_namespace_uid__": "test_namespace_uid",
+						"__alert_rule_uid__":           "test_alert_rule_uid_2",
+						"alertname":                    "test_title",
+						"label":                        "test",
+						"instance_label":               "test",
+					},
+					Values:      make(map[string]float64),
+					State:       eval.Pending,
+					StateReason: models.StateReasonError,
+					Error: expr.QueryError{
+						RefID: "A",
+						Err:   errors.New("this is an error"),
+					},
+					Results: []state.Evaluation{
+						{
+							EvaluationTime:  evaluationTime.Add(30 * time.Second),
+							EvaluationState: eval.Error,
+							Values:          make(map[string]*float64),
+						},
+					},
+					StartsAt:           evaluationTime.Add(20 * time.Second),
+					EndsAt:             evaluationTime.Add(20 * time.Second).Add(state.ResendDelay * 3),
+					LastEvaluationTime: evaluationTime.Add(30 * time.Second),
+					EvaluationDuration: evaluationDuration,
+					Annotations:        map[string]string{"annotation": "test"},
+				},
+			},
+		},
+		{
+			desc: "pending error -> pending alerting when result is Error and ExecErrorState is Error with For and ForError set",
+			alertRule: &models.AlertRule{
+				OrgID:           1,
+				Title:           "test_title",
+				UID:             "test_alert_rule_uid_2",
+				NamespaceUID:    "test_namespace_uid",
+				Annotations:     map[string]string{"annotation": "test"},
+				Labels:          map[string]string{"label": "test"},
+				IntervalSeconds: 10,
+				For:             20 * time.Second,
+				ForError:        10 * time.Second,
+				ExecErrState:    models.ErrorErrState,
+			},
+			evalResults: []eval.Results{
+				{
+					eval.Result{
+						Instance: data.Labels{"instance_label": "test"},
+						State:    eval.Error,
+						Error: expr.QueryError{
+							RefID: "A",
+							Err:   errors.New("this is an error"),
+						},
+						EvaluatedAt:        evaluationTime,
+						EvaluationDuration: evaluationDuration,
+					},
+				},
+				{
+					eval.Result{
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Alerting,
+						EvaluatedAt:        evaluationTime.Add(20 * time.Second),
+						EvaluationDuration: evaluationDuration,
+					},
+				},
+				{
+					eval.Result{
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Alerting,
+						EvaluatedAt:        evaluationTime.Add(30 * time.Second),
+						EvaluationDuration: evaluationDuration,
+					},
+				},
+			},
+			expectedAnnotations: 2,
+			expectedStates: map[string]*state.State{
+				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
+					AlertRuleUID: "test_alert_rule_uid_2",
+					OrgID:        1,
+					CacheID:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
+					Labels: data.Labels{
+						"__alert_rule_namespace_uid__": "test_namespace_uid",
+						"__alert_rule_uid__":           "test_alert_rule_uid_2",
+						"alertname":                    "test_title",
+						"label":                        "test",
+						"instance_label":               "test",
+					},
+					Values: make(map[string]float64),
+					State:  eval.Pending,
+					Results: []state.Evaluation{
+						{
+							EvaluationTime:  evaluationTime.Add(20 * time.Second),
+							EvaluationState: eval.Alerting,
+							Values:          make(map[string]*float64),
+						},
+						{
+							EvaluationTime:  evaluationTime.Add(30 * time.Second),
+							EvaluationState: eval.Alerting,
+							Values:          make(map[string]*float64),
+						},
+					},
+					StartsAt:           evaluationTime.Add(20 * time.Second),
+					EndsAt:             evaluationTime.Add(20 * time.Second).Add(state.ResendDelay * 3),
+					LastEvaluationTime: evaluationTime.Add(30 * time.Second),
+					EvaluationDuration: evaluationDuration,
+					Annotations:        map[string]string{"annotation": "test"},
+				},
+			},
+		},
+		{
+			desc: "normal -> pending -> alerting -> pending error -> error -> pending -> alerting when result is Error and ExecErrorState is Error with For and ForError set",
+			alertRule: &models.AlertRule{
+				OrgID:           1,
+				Title:           "test_title",
+				UID:             "test_alert_rule_uid_2",
+				NamespaceUID:    "test_namespace_uid",
+				Annotations:     map[string]string{"annotation": "test"},
+				Labels:          map[string]string{"label": "test"},
+				IntervalSeconds: 10,
+				For:             20 * time.Second,
+				ForError:        20 * time.Second,
+				ExecErrState:    models.ErrorErrState,
+			},
+			evalResults: []eval.Results{
+				{
+					eval.Result{
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Normal,
+						EvaluatedAt:        evaluationTime,
+						EvaluationDuration: evaluationDuration,
+					},
+				},
+				{
+					eval.Result{
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Alerting,
+						EvaluatedAt:        evaluationTime.Add(10 * time.Second),
+						EvaluationDuration: evaluationDuration,
+					},
+				},
+				{
+					eval.Result{
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Alerting,
+						EvaluatedAt:        evaluationTime.Add(20 * time.Second),
+						EvaluationDuration: evaluationDuration,
+					},
+				},
+				{
+					eval.Result{
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Alerting,
+						EvaluatedAt:        evaluationTime.Add(30 * time.Second),
+						EvaluationDuration: evaluationDuration,
+					},
+				},
+				{
+					eval.Result{
+						Instance: data.Labels{"instance_label": "test"},
+						State:    eval.Error,
+						Error: expr.QueryError{
+							RefID: "A",
+							Err:   errors.New("this is an error"),
+						},
+						EvaluatedAt:        evaluationTime.Add(40 * time.Second),
+						EvaluationDuration: evaluationDuration,
+					},
+				},
+				{
+					eval.Result{
+						Instance: data.Labels{"instance_label": "test"},
+						State:    eval.Error,
+						Error: expr.QueryError{
+							RefID: "A",
+							Err:   errors.New("this is an error"),
+						},
+						EvaluatedAt:        evaluationTime.Add(50 * time.Second),
+						EvaluationDuration: evaluationDuration,
+					},
+				},
+				{
+					eval.Result{
+						Instance: data.Labels{"instance_label": "test"},
+						State:    eval.Error,
+						Error: expr.QueryError{
+							RefID: "A",
+							Err:   errors.New("this is an error"),
+						},
+						EvaluatedAt:        evaluationTime.Add(60 * time.Second),
+						EvaluationDuration: evaluationDuration,
+					},
+				},
+				{
+					eval.Result{
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Alerting,
+						EvaluatedAt:        evaluationTime.Add(70 * time.Second),
+						EvaluationDuration: evaluationDuration,
+					},
+				},
+				{
+					eval.Result{
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Alerting,
+						EvaluatedAt:        evaluationTime.Add(80 * time.Second),
+						EvaluationDuration: evaluationDuration,
+					},
+				},
+				{
+					eval.Result{
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Alerting,
+						EvaluatedAt:        evaluationTime.Add(90 * time.Second),
+						EvaluationDuration: evaluationDuration,
+					},
+				},
+			},
+			expectedAnnotations: 6,
+			expectedStates: map[string]*state.State{
+				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
+					AlertRuleUID: "test_alert_rule_uid_2",
+					OrgID:        1,
+					CacheID:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
+					Labels: data.Labels{
+						"__alert_rule_namespace_uid__": "test_namespace_uid",
+						"__alert_rule_uid__":           "test_alert_rule_uid_2",
+						"alertname":                    "test_title",
+						"label":                        "test",
+						"instance_label":               "test",
+					},
+					Values: make(map[string]float64),
+					State:  eval.Alerting,
+					Results: []state.Evaluation{
+						{
+							EvaluationTime:  evaluationTime.Add(80 * time.Second),
+							EvaluationState: eval.Alerting,
+							Values:          make(map[string]*float64),
+						},
+						{
+							EvaluationTime:  evaluationTime.Add(90 * time.Second),
+							EvaluationState: eval.Alerting,
+							Values:          make(map[string]*float64),
+						},
+					},
+					StartsAt:           evaluationTime.Add(90 * time.Second),
+					EndsAt:             evaluationTime.Add(90 * time.Second).Add(state.ResendDelay * 3),
+					LastEvaluationTime: evaluationTime.Add(90 * time.Second),
 					EvaluationDuration: evaluationDuration,
 					Annotations:        map[string]string{"annotation": "test"},
 				},

@@ -213,10 +213,22 @@ func resultError(state *State, rule *models.AlertRule, result eval.Result, logge
 		if state.State == eval.Error {
 			logger.Debug("Keeping state", "state", state.State)
 			state.Maintain(rule.IntervalSeconds, result.EvaluatedAt)
+		} else if state.State == eval.Pending && state.StateReason == models.StateReasonError {
+			// If the previous state is Pending then check if the ForError duration has been observed
+			if result.EvaluatedAt.Sub(state.StartsAt) >= rule.ForError {
+				logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Error)
+				state.SetError(result.EvaluatedAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt), result.Error)
+			}
 		} else {
 			// This is the first occurrence of an error
-			logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Error)
-			state.SetError(result.EvaluatedAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt), result.Error)
+			if rule.ForError > 0 {
+				// If the alert rule has a For duration that should be observed then the state should be set to Pending
+				logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Pending)
+				state.SetPending(models.StateReasonError, result.EvaluatedAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt), result.Error)
+			} else {
+				logger.Debug("Changing state", "previous_state", state.State, "next_state", eval.Error)
+				state.SetError(result.EvaluatedAt, nextEndsTime(rule.IntervalSeconds, result.EvaluatedAt), result.Error)
+			}
 
 			if result.Error != nil {
 				state.Annotations["Error"] = result.Error.Error()

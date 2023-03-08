@@ -39,6 +39,7 @@ func AlertRuleGen(mutators ...AlertRuleMutator) func() *AlertRule {
 
 		interval := (rand.Int63n(6) + 1) * 10
 		forInterval := time.Duration(interval*rand.Int63n(6)) * time.Second
+		forErrorInterval := time.Duration(interval*rand.Int63n(6)) * time.Second
 
 		var annotations map[string]string = nil
 		if rand.Int63()%2 == 0 {
@@ -76,6 +77,7 @@ func AlertRuleGen(mutators ...AlertRuleMutator) func() *AlertRule {
 			NoDataState:     randNoDataState(),
 			ExecErrState:    randErrState(),
 			For:             forInterval,
+			ForError:        forErrorInterval,
 			Annotations:     annotations,
 			Labels:          labels,
 		}
@@ -256,6 +258,7 @@ func CopyRule(r *AlertRule) *AlertRule {
 		NoDataState:     r.NoDataState,
 		ExecErrState:    r.ExecErrState,
 		For:             r.For,
+		ForError:        r.ForError,
 	}
 
 	if r.DashboardUID != nil {
