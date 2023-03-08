@@ -75,10 +75,9 @@ var (
 		},
 		{
 			Name:            "publicDashboardsEmailSharing",
-			Description:     "Allows public dashboard sharing to be restricted to only allowed emails",
+			Description:     "Enables public dashboard sharing to be restricted to only allowed emails",
 			State:           FeatureStateAlpha,
 			RequiresLicense: true,
-			RequiresDevMode: true,
 			Owner:           grafanaDashboardsSquad,
 		},
 		{
@@ -113,6 +112,7 @@ var (
 			Name:        "migrationLocking",
 			Description: "Lock database during migrations",
 			State:       FeatureStateBeta,
+			Owner:       grafanaBackendPlatformSquad,
 		},
 		{
 			Name:        "storage",
@@ -296,22 +296,26 @@ var (
 			Name:        "mysqlAnsiQuotes",
 			Description: "Use double quotes to escape keyword in a MySQL query",
 			State:       FeatureStateAlpha,
+			Owner:       grafanaBackendPlatformSquad,
 		},
 		{
 			Name:        "accessControlOnCall",
 			Description: "Access control primitives for OnCall",
 			State:       FeatureStateBeta,
+			Owner:       grafanaAuthnzSquad,
 		},
 		{
 			Name:            "nestedFolders",
 			Description:     "Enable folder nesting",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
+			Owner:           grafanaBackendPlatformSquad,
 		},
 		{
 			Name:        "accessTokenExpirationCheck",
 			Description: "Enable OAuth access_token expiration check and token refresh using the refresh_token",
 			State:       FeatureStateStable,
+			Owner:       grafanaAuthnzSquad,
 		},
 		{
 			Name:        "elasticsearchBackendMigration",
@@ -332,6 +336,7 @@ var (
 			Name:        "authnService",
 			Description: "Use new auth service to perform authentication",
 			State:       FeatureStateAlpha,
+			Owner:       grafanaAuthnzSquad,
 		},
 		{
 			Name:        "disablePrometheusExemplarSampling",
