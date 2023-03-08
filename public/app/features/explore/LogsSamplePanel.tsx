@@ -122,7 +122,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   logSamplesButton: css`
     position: absolute;
     top: ${theme.spacing(1)};
-    right: ${theme.spacing(1)}; ;
+    right: ${theme.spacing(1)};
   `,
   logContainer: css`
     overflow-x: scroll;

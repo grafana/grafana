@@ -82,7 +82,7 @@ func parseResponse(responses []*es.SearchResponse, targets []*Query, configuredF
 			if err != nil {
 				return &backend.QueryDataResponse{}, err
 			}
-			nameFields(queryRes, target)
+			nameFrames(queryRes, target)
 			trimDatapoints(queryRes, target)
 
 			result.Responses[target.RefID] = queryRes
@@ -381,8 +381,8 @@ func processBuckets(aggs map[string]interface{}, target *Query,
 
 func newTimeSeriesFrame(timeData []time.Time, tags map[string]string, values []*float64) *data.Frame {
 	frame := data.NewFrame("",
-		data.NewField("time", nil, timeData),
-		data.NewField("value", tags, values))
+		data.NewField(data.TimeSeriesTimeFieldName, nil, timeData),
+		data.NewField(data.TimeSeriesValueFieldName, tags, values))
 	frame.Meta = &data.FrameMeta{
 		Type: data.FrameTypeTimeSeriesMulti,
 	}
@@ -777,7 +777,7 @@ func getSortedLabelValues(labels data.Labels) []string {
 	return values
 }
 
-func nameFields(queryResult backend.DataResponse, target *Query) {
+func nameFrames(queryResult backend.DataResponse, target *Query) {
 	set := make(map[string]struct{})
 	frames := queryResult.Frames
 	for _, v := range frames {
@@ -796,9 +796,7 @@ func nameFields(queryResult backend.DataResponse, target *Query) {
 			// another is "number"
 			valueField := frame.Fields[1]
 			fieldName := getFieldName(*valueField, target, metricTypeCount)
-			if fieldName != "" {
-				valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: fieldName})
-			}
+			frame.Name = fieldName
 		}
 	}
 }
