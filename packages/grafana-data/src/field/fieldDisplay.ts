@@ -126,6 +126,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
       }
 
       const displayName = field.config.displayName ?? '';
+
       const display =
         field.display ??
         getDisplayProcessor({

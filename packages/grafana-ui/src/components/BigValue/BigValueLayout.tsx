@@ -87,16 +87,12 @@ export abstract class BigValueLayout {
       styles.textAlign = 'center';
     }
 
-    // JEV: update here?
     switch (this.props.colorMode) {
       case BigValueColorMode.Value:
         styles.color = this.valueColor;
         break;
       case BigValueColorMode.Background:
         styles.color = getTextColorForAlphaBackground(this.valueColor, this.props.theme.isDark);
-        // JEV: this only updates the value text...
-        // console.log(this.valueColor);
-        // styles.background = `none ${this.valueColor}`;
         break;
       case BigValueColorMode.None:
         styles.color = this.props.theme.colors.text.primary;
@@ -109,7 +105,6 @@ export abstract class BigValueLayout {
   getValueAndTitleContainerStyles() {
     const styles: CSSProperties = {
       display: 'flex',
-      // background: `none ${this.valueColor}`,
     };
 
     if (this.justifyCenter) {
