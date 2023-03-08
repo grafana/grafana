@@ -413,5 +413,11 @@ var (
 			FrontendOnly: true,
 			Owner:        "O11y-metrics",
 		},
+		{
+			Name:        "unifiedRequestLog",
+			Description: "Writes error logs to the request logger.",
+			State:       FeatureStateAlpha,
+			Owner:       grafanaBackendPlatformSquad,
+		},
 	}
 )

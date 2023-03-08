@@ -270,4 +270,8 @@ const (
 	// FlagPrometheusMetricEncyclopedia
 	// Replaces the Prometheus query builder metric select option with a paginated and filterable component
 	FlagPrometheusMetricEncyclopedia = "prometheusMetricEncyclopedia"
+
+	// FlagUnifiedRequestLog
+	// Writes error logs to the request logger.
+	FlagUnifiedRequestLog = "unifiedRequestLog"
 )

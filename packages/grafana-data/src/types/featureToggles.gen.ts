@@ -82,4 +82,5 @@ export interface FeatureToggles {
   drawerDataSourcePicker?: boolean;
   traceqlSearch?: boolean;
   prometheusMetricEncyclopedia?: boolean;
+  unifiedRequestLog?: boolean;
 }
