@@ -15,7 +15,7 @@ export const PanelCfgModelVersion = Object.freeze([0, 0]);
 export interface PanelOptions extends common.SingleStatBaseOptions {
   colorMode: common.BigValueColorMode;
   graphMode: common.BigValueGraphMode;
-  hasGradient: boolean;
+  hasGradient?: boolean;
   justifyMode: common.BigValueJustifyMode;
   textMode: common.BigValueTextMode;
 }
