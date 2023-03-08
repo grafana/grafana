@@ -11,13 +11,20 @@ import {
 } from '@grafana/data';
 import { getGrafanaLiveSrv, locationService } from '@grafana/runtime';
 import { appEvents, contextSrv } from 'app/core/core';
-import { sessionId } from 'app/features/live';
 
 import { ShowModalReactEvent } from '../../../types/events';
 import { getDashboardSrv } from '../../dashboard/services/DashboardSrv';
 
 import { DashboardChangedModal } from './DashboardChangedModal';
 import { DashboardEvent, DashboardEventAction } from './types';
+
+// sessionId is used for filtering out events from the same session
+const sessionId =
+  (window as any)?.grafanaBootData?.user?.id +
+  '/' +
+  Date.now().toString(16) +
+  '/' +
+  Math.random().toString(36).substring(2, 15);
 
 class DashboardWatcher {
   channel?: LiveChannelAddress; // path to the channel
