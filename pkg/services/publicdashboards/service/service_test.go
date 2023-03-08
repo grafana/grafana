@@ -498,7 +498,7 @@ func TestDeletePublicDashboard(t *testing.T) {
 		{
 			Name:             "Public dashboard not found",
 			AffectedRowsResp: 0,
-			ExpectedErrResp:  ErrPublicDashboardNotFound.Errorf("Delete: Public dashboard not found by Uid: uid"),
+			ExpectedErrResp:  nil,
 			StoreRespErr:     nil,
 		},
 		{
