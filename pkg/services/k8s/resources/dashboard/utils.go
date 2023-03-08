@@ -15,7 +15,7 @@ func GrafanaUIDToK8sName(uid string) string {
 		return uid // OK, so just use it directly
 	}
 
-	//  ¯\_(ツ)_/¯  really should do an alias or somethign
+	//  ¯\_(ツ)_/¯  really should do an alias or something
 	h := sha256.New()
 	_, _ = h.Write([]byte(uid))
 	bs := h.Sum(nil)
