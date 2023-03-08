@@ -127,7 +127,7 @@ func canNotFetchExpiredItems(t *testing.T, client CacheStorage) {
 func TestCollectUsageStats(t *testing.T) {
 	wantMap := map[string]interface{}{
 		"stats.remote_cache.redis.count":           1,
-		"stats.remote_cache_encrypt.enabled.count": 1,
+		"stats.remote_cache.encrypt_enabled.count": 1,
 	}
 	cfg := setting.NewCfg()
 	cfg.RemoteCacheOptions = &setting.RemoteCacheOptions{Name: redisCacheType, Encryption: true}
