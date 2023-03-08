@@ -8,4 +8,4 @@ providers:
    allowUiUpdates: false
    updateIntervalSeconds: 60
    options:
-     path: devenv/dev-dashboards/panel-timeseries
+     path: devenv/dev-dashboards/
