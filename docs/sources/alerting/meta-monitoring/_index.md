@@ -12,7 +12,7 @@ weight: 500
 
 # Meta monitoring
 
-Meta monitoring is the process of monitoring your monitoring, and alerting when your monitoring is not working as it should. Whether you use Grafana Managed Alerts or Mimir, meta monitoring is possible both on-premise and in Grafana Cloud.
+Meta monitoring is the process of monitoring your monitoring, and alerting when your monitoring is not working as it should. Whether you use Grafana Managed Alerts or Mimir, meta monitoring is possible both on-premises and in Grafana Cloud.
 
 ## Grafana Managed Alerts
 
@@ -134,7 +134,7 @@ This metric is a gauge. It has a constant value `1`, and contains a label called
 
 This metric is a counter that shows you the number of failed peer connection attempts. In most cases you will want to use the `rate` function to understand how often reconnections fail as this may be indicative of an issue or instability in your network.
 
-> These metrics are not available in Grafana Cloud as it uses a different high availability strategy than on-premise Alertmanagers.
+> These metrics are not available in Grafana Cloud as it uses a different high availability strategy than on-premises Alertmanagers.
 
 <!---
 #### cortex_prometheus_rule_group_last_evaluation_timestamp_seconds

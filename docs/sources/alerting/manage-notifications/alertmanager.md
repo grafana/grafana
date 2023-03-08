@@ -19,7 +19,7 @@ Cloud Alertmanager runs in Grafana Cloud and it can receive alerts from Grafana,
 
 **Grafana Alertmanager**
 
-Grafana Alertmanager is an internal Alertmanager that is pre-configured and available for selection by default if you run Grafana on-premise or open-source.
+Grafana Alertmanager is an internal Alertmanager that is pre-configured and available for selection by default if you run Grafana on-premises or open-source.
 
 The Grafana Alertmanager can receive alerts from Grafana, but it cannot receive alerts from outside Grafana, for example, from Mimir or Loki.
 
@@ -31,9 +31,9 @@ If you want to use a single alertmanager to receive all your Grafana, Loki, Mimi
 
 Here are two examples of when you may want to configure your own external alertmanager and send your alerts there instead of the Grafana Alertmanager:
 
-1. You may already have alertmanagers on-premise in your own Cloud infrastructure that you have set up and still want to use, because you have other alert generators, such as Prometheus.
+1. You may already have alertmanagers on-premises in your own Cloud infrastructure that you have set up and still want to use, because you have other alert generators, such as Prometheus.
 
-2. You want to use both Prometheus on-premise and hosted Grafana to send alerts to the same alertmanager that runs in your Cloud infrastructure.
+2. You want to use both Prometheus on-premises and hosted Grafana to send alerts to the same alertmanager that runs in your Cloud infrastructure.
 
 Alertmanagers are visible from the drop-down menu on the Alerting Contact Points, Notification Policies, and Silences pages.
 
