@@ -63,7 +63,6 @@ func (_m *FakeDashboardStore) CountDashboardsInFolder(ctx context.Context, reque
 }
 
 func (_m *FakeDashboardStore) DeleteDashboardsInFolder(ctx context.Context, request *DeleteDashboardsInFolderRequest) error {
-// TODO
 	return nil
 }
 

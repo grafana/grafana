@@ -1034,15 +1034,10 @@ func (d *dashboardStore) CountDashboardsInFolder(
 	return count, err
 }
 
-// TODO: add documentation comments here and everywhere else it's relevant (all methods, structs etc)
 func (d *dashboardStore) DeleteDashboardsInFolder(
 	ctx context.Context, req *dashboards.DeleteDashboardsInFolderRequest) error {
 	return d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		// TODO figure out which fields need to be set in dashboard and whether it's required to
-		// subsequently do something like SetID()
 		dashboard := dashboards.Dashboard{OrgID: req.OrgID}
-		// TODO make sure folderUID == uid in the dashboard table
-		// TODO make sure dashboard.ID (of the folder) == folder_id (for the children of the folder)
 		has, err := sess.Where("uid = ? AND org_id = ?", req.FolderUID, req.OrgID).Get(&dashboard)
 		if err != nil {
 			return err
@@ -1050,7 +1045,7 @@ func (d *dashboardStore) DeleteDashboardsInFolder(
 		if !has {
 			return dashboards.ErrFolderNotFound
 		}
-		// TODO does this delete all the table entries that match?
+
 		_, err = sess.Where("folder_id = ? AND org_id = ? AND is_folder = ", dashboard.ID, dashboard.OrgID, false).Delete(&dashboards.Dashboard{})
 		return err
 	})

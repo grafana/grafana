@@ -48,6 +48,5 @@ func (s *FakeService) Move(ctx context.Context, cmd *folder.MoveFolderCommand) (
 }
 
 func (s *FakeService) RegisterEntityService(service registryentity.RegistryEntityService) error {
-	// TODO
 	return nil
 }

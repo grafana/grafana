@@ -73,9 +73,6 @@ func ProvideDashboardServiceImpl(
 	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardIDScopeResolver(folderStore, dashSvc, folderSvc))
 	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(folderStore, dashSvc, folderSvc))
 
-	// TODO handle error
-	// looks like there is precedent for returning an error from a ProvideService() type function.
-	// examples: pkg/plugins/manager/store/store.go, pkg/services/accesscontrol/acimpl/service.go
 	_ = folderSvc.RegisterEntityService(dashSvc)
 
 	return dashSvc
@@ -647,10 +644,8 @@ func (dr DashboardServiceImpl) CountDashboardsInFolder(ctx context.Context, quer
 	return dr.dashboardStore.CountDashboardsInFolder(ctx, &dashboards.CountDashboardsInFolderRequest{FolderID: folder.ID, OrgID: u.OrgID})
 }
 
-// TODO rethink naming, also does it make sense to unify it (for DashboardServiceImpl and DeleteDashboardsInFolder)?
 func (dr *DashboardServiceImpl) DeleteInFolder(ctx context.Context, orgID int64, UID string) error {
 	return dr.dashboardStore.DeleteDashboardsInFolder(ctx, &dashboards.DeleteDashboardsInFolderRequest{FolderUID: UID, OrgID: orgID})
 }
 
-// TODO is this the constant we want to use?
 func (dr *DashboardServiceImpl) Kind() string { return entity.StandardKindDashboard }

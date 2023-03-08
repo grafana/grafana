@@ -39,9 +39,7 @@ type Service struct {
 	// bus is currently used to publish event in case of title change
 	bus bus.Bus
 
-	// TODO figure out if we need to keep the mutex, quota uses mutex
-	mutex sync.RWMutex
-	// TODO do we want a more specific type for the map key? Check what the map value should be also
+	mutex    sync.RWMutex
 	registry map[string]registryentity.RegistryEntityService
 }
 
@@ -457,7 +455,6 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 		return dashboards.ErrFolderAccessDenied
 	}
 
-	// TODO modify Delete() to take into account the deletion via registry
 	err = s.deleteChildrenInFolder(ctx, cmd.OrgID, cmd.UID)
 	if err != nil {
 		return err
@@ -468,7 +465,6 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 
 func (s *Service) deleteChildrenInFolder(ctx context.Context, orgID int64, UID string) error {
 	for _, v := range s.registry {
-		// TODO: add guard etc to the deletion of dashboards
 		err := v.DeleteInFolder(ctx, orgID, UID)
 		if err != nil {
 			return err
@@ -786,9 +782,7 @@ func toFolderError(err error) error {
 	return err
 }
 
-// TODO look into the use of mutex
 func (s *Service) RegisterEntityService(r registryentity.RegistryEntityService) error {
-	// TODO create a generic sync map and keep it in package utils (the one used for quota as well for example)
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
@@ -797,7 +791,6 @@ func (s *Service) RegisterEntityService(r registryentity.RegistryEntityService) 
 		return registryentity.ErrTargetSrvConflict
 	}
 
-	// TODO figure out what the values of this map should be
 	s.registry[r.Kind()] = r
 
 	return nil

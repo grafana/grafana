@@ -673,7 +673,6 @@ func TestIntegrationRulerAccess(t *testing.T) {
 	}
 }
 
-// // TODO address this failing test
 // func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 // 	testinfra.SQLiteIntegrationTest(t)
 
