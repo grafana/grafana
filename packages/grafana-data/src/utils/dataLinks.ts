@@ -138,9 +138,10 @@ export function dataLinkHasAllVariablesDefined<T extends DataLink>(
   getVarMap: Function
 ): { variableMap: Record<string, string | number | boolean | undefined>; allVariablesDefined: boolean } {
   const vars = getVarMap(getStringsFromObject(query), scopedVars);
+  // the string processor will convert null to '' but is not ran in all scenarios
   return {
     variableMap: vars,
-    allVariablesDefined: Object.values(vars).every((val) => val !== undefined && val !== null),
+    allVariablesDefined: Object.values(vars).every((val) => val !== undefined && val !== null && val !== ''),
   };
 }
 
