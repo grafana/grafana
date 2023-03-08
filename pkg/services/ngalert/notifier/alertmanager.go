@@ -357,7 +357,7 @@ func (am *Alertmanager) getTemplate() (*template.Template, error) {
 }
 
 func (am *Alertmanager) templateFromPaths(paths ...string) (*template.Template, error) {
-	tmpl, err := template.FromGlobs(paths...)
+	tmpl, err := template.FromGlobs(paths)
 	if err != nil {
 		return nil, err
 	}
