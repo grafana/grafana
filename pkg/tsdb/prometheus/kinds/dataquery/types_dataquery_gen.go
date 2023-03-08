@@ -45,15 +45,23 @@ type PrometheusDataQuery struct {
 	// TODO find a better way to do this ^ that's friendly to schema
 	// TODO this shouldn't be unknown but DataSourceRef | null
 	Datasource *interface{} `json:"datasource,omitempty"`
-	EditorMode *EditorMode  `json:"editorMode,omitempty"`
+
+	// Specifies which editor is being used to prepare the query. It can be "code" or "builder"
+	EditorMode *EditorMode `json:"editorMode,omitempty"`
 
 	// Execute an additional query to identify interesting raw samples relevant for the given expr
-	Exemplar *bool   `json:"exemplar,omitempty"`
-	Expr     string  `json:"expr"`
-	Format   *Format `json:"format,omitempty"`
+	Exemplar *bool `json:"exemplar,omitempty"`
+
+	// The actual expression/query that will be evaluated by Prometheus
+	Expr string `json:"expr"`
+
+	// Query format to determine how to display data points in panel. It can be "time_series", "table", "heatmap"
+	Format *Format `json:"format,omitempty"`
 
 	// Hide true if query is disabled (ie should not be returned to the dashboard)
-	Hide    *bool `json:"hide,omitempty"`
+	Hide *bool `json:"hide,omitempty"`
+
+	// Returns only the latest value that Prometheus has scraped for the requested time series
 	Instant *bool `json:"instant,omitempty"`
 
 	// Unique, guid like, string used in explore mode
@@ -62,16 +70,18 @@ type PrometheusDataQuery struct {
 	// Specify the query flavor
 	// TODO make this required and give it a default
 	QueryType *string `json:"queryType,omitempty"`
-	Range     *bool   `json:"range,omitempty"`
+
+	// Returns a Range vector, comprised of a set of time series containing a range of data points over time for each time series
+	Range *bool `json:"range,omitempty"`
 
 	// A - Z
 	RefId string `json:"refId"`
 }
 
-// EditorMode defines model for PrometheusDataQuery.EditorMode.
+// Specifies which editor is being used to prepare the query. It can be "code" or "builder"
 type EditorMode string
 
-// Format defines model for PrometheusDataQuery.Format.
+// Query format to determine how to display data points in panel. It can be "time_series", "table", "heatmap"
 type Format string
 
 // QueryEditorMode defines model for QueryEditorMode.
