@@ -91,7 +91,6 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
       .props as PropsWithDefaults<V, D>;
 
     const { values } = this.state;
-    // console.log('🚀 ~ file: VizRepeater.tsx:95 ~ VizRepeater<V, ~ renderGrid ~ values:', values);
     const grid = calculateGridDimensions(width, height, itemSpacing, values.length);
     const alignmentFactors = getAlignmentFactors ? getAlignmentFactors(values, grid.width, grid.height) : ({} as D);
 
@@ -167,7 +166,6 @@ export class VizRepeater<V, D = {}> extends PureComponent<Props<V, D>, State<V>>
       display: 'flex',
       overflow: `${minVizWidth ? 'auto' : 'hidden'} ${minVizHeight ? 'auto' : 'hidden'}`,
     };
-    // console.log('🚀 ~ file: VizRepeater.tsx:169 ~ VizRepeater<V, ~ render ~ repeaterStyle:', repeaterStyle);
 
     let vizHeight = height;
     let vizWidth = width;

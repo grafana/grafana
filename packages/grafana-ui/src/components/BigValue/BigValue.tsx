@@ -53,7 +53,7 @@ export interface Props extends Themeable2 {
   className?: string;
   /** Color mode for coloring the value or the background */
   colorMode: BigValueColorMode;
-  /** Whether or not a gradient is applied to the spark line */
+  /** Whether or not a gradient is applied to the spark line graph */
   hasGradient: boolean;
   /** Show a graph behind/under the value */
   graphMode: BigValueGraphMode;
