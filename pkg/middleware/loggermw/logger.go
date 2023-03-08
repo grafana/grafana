@@ -109,7 +109,14 @@ func (l *loggerImpl) prepareLogParams(c *contextmodel.ReqContext, duration time.
 		"time_ms", int64(duration / time.Millisecond),
 		"duration", duration.String(),
 		"size", rw.Size(),
-		"referer", SanitizeURL(c, r.Referer()),
+	}
+
+	referer, err := sanitizeURL(r.Referer())
+	// We add an empty referer when there's a parsing error, hence this is before the err check.
+	logParams = append(logParams, "referer", referer)
+	if err != nil {
+		logParams = append(logParams, "refererParsingErr", err)
+		lvl = lvl.HighestOf(errutil.LevelWarn)
 	}
 
 	if l.flags.IsEnabled(featuremgmt.FlagDatabaseMetrics) {
@@ -146,15 +153,14 @@ var sensitiveQueryStrings = [...]string{
 	"auth_token",
 }
 
-func SanitizeURL(ctx *contextmodel.ReqContext, s string) string {
+func sanitizeURL(s string) (string, error) {
 	if s == "" {
-		return s
+		return s, nil
 	}
 
 	u, err := url.ParseRequestURI(s)
 	if err != nil {
-		ctx.Logger.Warn("Received invalid referer in request headers, removed for log forgery prevention")
-		return ""
+		return "", fmt.Errorf("received invalid referer in request headers, removed for log forgery prevention")
 	}
 
 	// strip out sensitive query strings
@@ -164,5 +170,5 @@ func SanitizeURL(ctx *contextmodel.ReqContext, s string) string {
 	}
 	u.RawQuery = values.Encode()
 
-	return u.String()
+	return u.String(), nil
 }
