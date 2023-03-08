@@ -51,7 +51,6 @@ exports[`Query and expressions reducer should add a new expression 1`] = `
       "relativeTimeRange": undefined,
     },
   ],
-  "recordingRulesQueries": [],
 }
 `;
 
@@ -84,7 +83,6 @@ exports[`Query and expressions reducer should add query 1`] = `
       },
     },
   ],
-  "recordingRulesQueries": [],
 }
 `;
 
@@ -113,7 +111,6 @@ exports[`Query and expressions reducer should duplicate query 1`] = `
       },
     },
   ],
-  "recordingRulesQueries": [],
 }
 `;
 
@@ -129,7 +126,6 @@ exports[`Query and expressions reducer should remove an expression or alert quer
       "refId": "A",
     },
   ],
-  "recordingRulesQueries": [],
 }
 `;
 
@@ -184,7 +180,6 @@ exports[`Query and expressions reducer should rewire expressions 1`] = `
       "refId": "B",
     },
   ],
-  "recordingRulesQueries": [],
 }
 `;
 
@@ -231,7 +226,6 @@ exports[`Query and expressions reducer should set data queries 1`] = `
       "refId": "B",
     },
   ],
-  "recordingRulesQueries": [],
 }
 `;
 
@@ -278,7 +272,6 @@ exports[`Query and expressions reducer should update an expression 1`] = `
       "refId": "B",
     },
   ],
-  "recordingRulesQueries": [],
 }
 `;
 
@@ -333,7 +326,6 @@ exports[`Query and expressions reducer should update an expression refId and rew
       "refId": "B",
     },
   ],
-  "recordingRulesQueries": [],
 }
 `;
 
@@ -386,6 +378,5 @@ exports[`Query and expressions reducer should update expression type 1`] = `
       "refId": "B",
     },
   ],
-  "recordingRulesQueries": [],
 }
 `;

@@ -14,19 +14,11 @@ import { useDispatch } from 'app/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 
 import { LogMessages, trackNewAlerRuleFormCancelled, trackNewAlerRuleFormError } from '../../Analytics';
-import { useRulesSourcesWithRuler } from '../../hooks/useRuleSourcesWithRuler';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { deleteRuleAction, saveRuleFormAction } from '../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { initialAsyncRequestState } from '../../utils/redux';
-
-import {
-  getDefaultFormValues,
-  getDefaultQueries,
-  getDefaultRecordingRulesQueries,
-  rulerRuleToFormValues,
-} from '../../utils/rule-form';
-
+import { getDefaultFormValues, getDefaultQueries, rulerRuleToFormValues } from '../../utils/rule-form';
 import * as ruleId from '../../utils/rule-id';
 
 import { CloudEvaluationBehavior } from './CloudEvaluationBehavior';
@@ -92,8 +84,6 @@ export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
   const returnTo: string = (queryParams['returnTo'] as string | undefined) ?? '/alerting/list';
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
 
-  const rulesSourcesWithRuler = useRulesSourcesWithRuler();
-
   const defaultValues: RuleFormValues = useMemo(() => {
     if (existing) {
       return rulerRuleToFormValues(existing);
@@ -109,13 +99,12 @@ export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
     return {
       ...getDefaultFormValues(),
       queries: getDefaultQueries(),
-      recordingRuleQueries: getDefaultRecordingRulesQueries(rulesSourcesWithRuler),
       condition: 'C',
       ...(queryParams['defaults'] ? JSON.parse(queryParams['defaults'] as string) : {}),
       type: RuleFormType.grafana,
       evaluateEvery: evaluateEvery,
     };
-  }, [existing, prefill, queryParams, evaluateEvery, rulesSourcesWithRuler]);
+  }, [existing, prefill, queryParams, evaluateEvery]);
 
   const formAPI = useForm<RuleFormValues>({
     mode: 'onSubmit',

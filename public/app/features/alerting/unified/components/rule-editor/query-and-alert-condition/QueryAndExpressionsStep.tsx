@@ -55,11 +55,10 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule, onData
 
   const initialState = {
     queries: getValues('queries'),
-    recordingRulesQueries: getValues('recordingRulesQueries'),
     panelData: {},
   };
 
-  const [{ queries, recordingRulesQueries }, dispatch] = useReducer(queriesAndExpressionsReducer, initialState);
+  const [{ queries }, dispatch] = useReducer(queriesAndExpressionsReducer, initialState);
   const [type, condition, dataSourceName] = watch(['type', 'condition', 'dataSourceName']);
 
   const isGrafanaManagedType = type === RuleFormType.grafana;
@@ -76,18 +75,10 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule, onData
     runner.current.run(getValues('queries'));
   }, [getValues]);
 
-  const runRecordingQueries = useCallback(() => {
-    runner.current.run(getValues('recordingRulesQueries'));
-  }, [getValues]);
-
   // whenever we update the queries we have to update the form too
   useEffect(() => {
     setValue('queries', queries, { shouldValidate: false });
   }, [queries, runQueries, setValue]);
-
-  useEffect(() => {
-    setValue('recordingRulesQueries', recordingRulesQueries, { shouldValidate: false });
-  }, [recordingRulesQueries, runRecordingQueries, setValue]);
 
   // set up the AlertQueryRunner
   useEffect(() => {
@@ -190,9 +181,9 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule, onData
       setValue('expression', expression);
 
       dispatch(setRecordingRulesQueries({ recordingRuleQueries: updatedQueries, expression }));
-      runRecordingQueries();
+      runQueries();
     },
-    [runRecordingQueries, setValue]
+    [runQueries, setValue]
   );
 
   const recordingRuleDefaultDatasource = rulesSourcesWithRuler[0];
@@ -234,8 +225,8 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule, onData
       {isRecordingRuleType && (
         <Field error={errors.expression?.message} invalid={!!errors.expression?.message}>
           <RecordingRuleEditor
-            queries={recordingRulesQueries}
-            runQueries={runRecordingQueries}
+            queries={queries}
+            runQueries={runQueries}
             onChangeQuery={onChangeRecordingRulesQueries}
             panelData={panelData}
           />
