@@ -178,14 +178,13 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule, onData
   );
 
   const onChangeRecordingRulesQueries = useCallback(
-    (updatedQueries: AlertQuery[]) => {
+    (updatedQueries) => {
       const dataSourceSettings = getDataSourceSrv().getInstanceSettings(updatedQueries[0].datasourceUid);
       if (!dataSourceSettings) {
         throw new Error('The Data source has not been defined.');
       }
 
-      //@ts-ignore
-      const expression = updatedQueries[0].model.expr || '';
+      const expression = updatedQueries[0].model?.expr || '';
 
       setValue('dataSourceName', dataSourceSettings.name);
       setValue('expression', expression);
