@@ -124,6 +124,23 @@ func canNotFetchExpiredItems(t *testing.T, client CacheStorage) {
 	assert.Equal(t, err, ErrCacheItemNotFound)
 }
 
+func TestCollectUsageStats(t *testing.T) {
+	wantMap := map[string]interface{}{
+		"stats.remote_cache.redis.count": 1,
+	}
+	cfg := setting.NewCfg()
+	cfg.RemoteCacheOptions = &setting.RemoteCacheOptions{Name: redisCacheType}
+
+	remoteCache := &RemoteCache{
+		Cfg: cfg,
+	}
+
+	stats, err := remoteCache.getUsageStats(context.Background())
+	require.NoError(t, err)
+
+	assert.EqualValues(t, wantMap, stats)
+}
+
 func TestCachePrefix(t *testing.T) {
 	db := db.InitTestDB(t)
 	cache := &databaseCache{

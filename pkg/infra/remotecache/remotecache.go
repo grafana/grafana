@@ -45,7 +45,17 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, usageStats usagestats.Serv
 		Cfg:      cfg,
 		client:   client,
 	}
+
+	usageStats.RegisterMetricsFunc(s.getUsageStats)
+
 	return s, nil
+}
+
+func (s *RemoteCache) getUsageStats(ctx context.Context) (map[string]interface{}, error) {
+	stats := map[string]interface{}{}
+	stats["stats.remote_cache."+s.Cfg.RemoteCacheOptions.Name+".count"] = 1
+
+	return stats, nil
 }
 
 // CacheStorage allows the caller to set, get and delete items in the cache.
