@@ -88,14 +88,13 @@ Canvas supports [data links](https://grafana.com/docs/grafana/latest/panels-visu
 
 1. Set an element to be tied to a field value.
 1. Turn off the inline editing toggle.
-1  Create an override for **Fields with name** and select the element field name from the list.
+1. Create an override for **Fields with name** and select the element field name from the list.
 1. Click the **+ Add override property** button.
 1. Select `Datalinks > Datalinks` from the list.
 1. Click **+Add link** add a title and URL for the data link.
 1. Hover over the element to display the data link tooltip.
 1. Click on the element to be able to open the data link.
 
-If multiple elements use the same field, you can create a unique field name using the [add field from calculation transform](https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation). The alias you create in the transformation will appear as a field you can use with an element. 
-
+If multiple elements use the same field, you can create a unique field name using the [add field from calculation transform](https://grafana.com/docs/grafana/latest/panels-visualizations/query-transform-data/transform-data/#add-field-from-calculation). The alias you create in the transformation will appear as a field you can use with an element.
 
 {{< video-embed src="/media/docs/grafana/canvas-data-links-9-4-0.mp4" max-width="750px" caption="Data links demo" >}}
