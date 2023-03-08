@@ -69,22 +69,3 @@ You can choose to migrate a single API key or all API keys. Note that when you m
 1. Sign in to Grafana, hover your cursor over **Configuration** (the gear icon), and click **API Keys**.
 1. Find the API Key you want to migrate.
 1. Click **Migrate to service account**.
-
-### Migrating from API Keys to Service Accounts (API)
-
-We are deprecating the existing `/api/auth/keys` endpoint in favor of a new service account-based authentication system. This documentation will guide you through migrating your integration to use the new service account endpoints.
-
-**Existing /api/auth/keys behavior**
-The existing /api/auth/keys endpoint generates API keys that can be used to authenticate API requests. The process involves:
-
-1. Retrieving a token for a API key - POST /api/auth/keys
-2. Using the token to authenticate requests
-
-**New service account endpoints**
-The new service account endpoints generate a machine-user for authentication instead of simple API keys. The process involves:
-
-1. Creating a service account - POST /api/serviceaccounts
-2. Retrieving a token for a service account - POST /api/serviceaccounts/<id>/token
-3. Using the token to authenticate requests
-
-Service accounts can have limited scopes, offering more security than API keys.
