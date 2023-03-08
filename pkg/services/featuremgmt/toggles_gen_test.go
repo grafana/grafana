@@ -53,7 +53,6 @@ func TestFeatureToggleFiles(t *testing.T) {
 		"prometheusWideSeries":              true,
 		"disableSecretsCompatibility":       true,
 		"logRequestsInstrumentedAsUnknown":  true,
-		"dataConnectionsConsole":            true,
 		"cloudWatchCrossAccountQuerying":    true,
 		"redshiftAsyncQueryDataSupport":     true,
 		"athenaAsyncQueryDataSupport":       true,
