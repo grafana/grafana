@@ -788,6 +788,7 @@ func toFolderError(err error) error {
 
 // TODO look into the use of mutex
 func (s *Service) RegisterEntityService(r registryentity.RegistryEntityService) error {
+	// TODO create a generic sync map and keep it in package utils (the one used for quota as well for example)
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
