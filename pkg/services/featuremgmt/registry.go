@@ -31,6 +31,7 @@ var (
 			Name:        "database_metrics",
 			Description: "Add Prometheus metrics for database tables",
 			State:       FeatureStateStable,
+			Owner:       hostedGrafanaTeam,
 		},
 		{
 			Name:        "dashboardPreviews",
@@ -228,11 +229,13 @@ var (
 			Description:     "Disable duplicated secret storage in legacy tables",
 			State:           FeatureStateAlpha,
 			RequiresRestart: true,
+			Owner:           hostedGrafanaTeam,
 		},
 		{
 			Name:        "logRequestsInstrumentedAsUnknown",
 			Description: "Logs the path for requests that are instrumented as unknown",
 			State:       FeatureStateAlpha,
+			Owner:       hostedGrafanaTeam,
 		},
 		{
 			Name:        "dataConnectionsConsole",
@@ -343,6 +346,7 @@ var (
 			Name:        "secureSocksDatasourceProxy",
 			Description: "Enable secure socks tunneling for supported core datasources",
 			State:       FeatureStateAlpha,
+			Owner:       hostedGrafanaTeam,
 		},
 		{
 			Name:        "authnService",
