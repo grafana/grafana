@@ -72,18 +72,20 @@ func (c *watcher) Add(ctx context.Context, dash *Dashboard) error {
 	cmd.UpdatedAt = time.UnixMilli(anno.UpdatedAt)
 
 	js, _ = json.MarshalIndent(cmd, "", "  ")
-	fmt.Printf("-------- COMMAND BEFOER final save ---------")
+	fmt.Printf("-------- COMMAND BEFORE final save ---------")
 	fmt.Printf("%s", string(js))
 
 	if anno.OriginKey == "" {
 		_, err = c.dashboardStore.SaveDashboard(ctx, cmd)
 	} else {
-		_, err = c.dashboardStore.SaveProvisionedDashboard(ctx, cmd, &dashboards.DashboardProvisioning{
-			Name:       anno.OriginName,
-			ExternalID: anno.OriginPath,
-			CheckSum:   anno.OriginKey,
-			Updated:    anno.OriginTime,
-		})
+		p := &dashboards.DashboardProvisioning{
+			Name:        anno.OriginName,
+			ExternalID:  anno.OriginPath,
+			CheckSum:    anno.OriginKey,
+			Updated:     anno.OriginTime,
+			DashboardID: cmd.Dashboard.Get("id").MustInt64(0), // :()
+		}
+		_, err = c.dashboardStore.SaveProvisionedDashboard(ctx, cmd, p)
 	}
 	return err
 }

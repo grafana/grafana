@@ -52,6 +52,14 @@ func (s *StoreWrapper) SaveDashboard(ctx context.Context, cmd dashboards.SaveDas
 
 // SaveDashboard will write the dashboard to k8s then wait for it to exist in the SQL store
 func (s *StoreWrapper) SaveProvisionedDashboard(ctx context.Context, cmd dashboards.SaveDashboardCommand, provisioning *dashboards.DashboardProvisioning) (*dashboards.Dashboard, error) {
+	// TODO: dashboards and folders are managed together now... should be its own resource
+	if cmd.IsFolder {
+		if provisioning != nil {
+			return s.DashboardSQLStore.SaveProvisionedDashboard(ctx, cmd, provisioning)
+		}
+		return s.DashboardSQLStore.SaveDashboard(ctx, cmd)
+	}
+
 	dashboardResource, err := s.clientset.GetResourceClient(CRD)
 	if err != nil {
 		return nil, fmt.Errorf("ProvideServiceWrapper failed to get dashboard resource client: %w", err)
@@ -60,9 +68,6 @@ func (s *StoreWrapper) SaveProvisionedDashboard(ctx context.Context, cmd dashboa
 	if cmd.Dashboard == nil {
 		return nil, fmt.Errorf("dashboard data is nil")
 	}
-
-	updateDashboard := false
-	resourceVersion := ""
 
 	anno := entityAnnotations{
 		OrgID:     cmd.OrgID,
@@ -82,29 +87,34 @@ func (s *StoreWrapper) SaveProvisionedDashboard(ctx context.Context, cmd dashboa
 		anno.OriginTime = provisioning.Updated
 	}
 
+	meta := metav1.ObjectMeta{
+		Namespace: s.namespace,
+	}
+
 	// FIXME this is not reliable and is spaghetti
 	dto := cmd.GetDashboardModel()
 	uid := dto.UID
 	if uid == "" {
 		uid = util.GenerateShortUID()
-		anno.CreatedAt = anno.UpdatedAt
-		anno.CreatedBy = anno.UpdatedBy
+		meta.Name = GrafanaUIDToK8sName(uid)
 	} else {
-		updateDashboard = true
-
 		// Get the previous version
-		r, err := dashboardResource.Get(ctx, uid, metav1.GetOptions{})
-		if err != nil {
-			return nil, err
-		}
-		if r == nil || r.Object == nil {
-			return nil, fmt.Errorf("unable to find k8s dashboard: " + uid)
-		}
-		// Keep old metadata
-		anno.Merge(r.GetAnnotations())
-		resourceVersion = r.GetResourceVersion()
-		if anno.CreatedAt < 100 {
-			anno.CreatedAt = r.GetCreationTimestamp().UnixMilli()
+		meta.Name = GrafanaUIDToK8sName(uid)
+		r, err := dashboardResource.Get(ctx, meta.Name, metav1.GetOptions{})
+		if err != nil || r == nil {
+			//return nil, fmt.Errorf("unable to find k8s dashboard: " + uid)
+			fmt.Printf("UNABLE TO FIND: " + uid)
+		} else {
+			if !cmd.Overwrite {
+				fmt.Printf("TODO... verify SQL version: %s\n", r.GetResourceVersion())
+			}
+
+			// Keep old metadata
+			meta.ResourceVersion = r.GetResourceVersion()
+			anno.Merge(r.GetAnnotations())
+			if anno.CreatedAt < 100 {
+				anno.CreatedAt = r.GetCreationTimestamp().UnixMilli()
+			}
 		}
 	}
 
@@ -122,6 +132,8 @@ func (s *StoreWrapper) SaveProvisionedDashboard(ctx context.Context, cmd dashboa
 
 	d, _, err := coreReg.Dashboard().JSONValueMux(dashbytes)
 	if err != nil {
+		fmt.Printf("-------- FAILED TO PARSE ---------")
+		fmt.Printf("%s", string(dashbytes))
 		return nil, fmt.Errorf("dashboard JSONValueMux failed: %w", err)
 	}
 
@@ -136,17 +148,10 @@ func (s *StoreWrapper) SaveProvisionedDashboard(ctx context.Context, cmd dashboa
 	if anno.CreatedAt < 100 {
 		anno.CreatedAt = time.Now().UnixMilli()
 	}
-
-	meta := metav1.ObjectMeta{
-		Name:        uid,
-		Namespace:   s.namespace,
-		Annotations: anno.ToMap(),
+	if anno.CreatedBy < 1 {
+		anno.CreatedBy = anno.UpdatedBy
 	}
-
-	if resourceVersion != "" {
-		meta.ResourceVersion = resourceVersion
-	}
-
+	meta.Annotations = anno.ToMap()
 	uObj, err := toUnstructured(d, meta)
 	if err != nil {
 		return nil, err
@@ -156,12 +161,12 @@ func (s *StoreWrapper) SaveProvisionedDashboard(ctx context.Context, cmd dashboa
 	fmt.Printf("-------- WRAPPER BEFORE SAVE ---------")
 	fmt.Printf("%s", string(js))
 
-	if updateDashboard {
-		s.log.Debug("k8s action: update")
-		uObj, err = dashboardResource.Update(ctx, uObj, metav1.UpdateOptions{})
-	} else {
+	if meta.ResourceVersion == "" {
 		s.log.Debug("k8s action: create")
 		uObj, err = dashboardResource.Create(ctx, uObj, metav1.CreateOptions{})
+	} else {
+		s.log.Debug("k8s action: update")
+		uObj, err = dashboardResource.Update(ctx, uObj, metav1.UpdateOptions{})
 	}
 
 	// create or update error

@@ -1,8 +1,25 @@
 package dashboard
 
 import (
+	"crypto/sha256"
+	"fmt"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"k8s.io/apimachinery/pkg/util/validation"
 )
+
+// This makes an consistent mapping between Grafana UIDs and k8s compatible names
+func GrafanaUIDToK8sName(uid string) string {
+	if validation.IsQualifiedName(uid) == nil {
+		return uid // OK, so just use it directly
+	}
+
+	//  ¯\_(ツ)_/¯  really should do an alias or somethign
+	h := sha256.New()
+	_, _ = h.Write([]byte(uid))
+	bs := h.Sum(nil)
+	return fmt.Sprintf("g%x", bs[:12])
+}
 
 func stripNulls(j *simplejson.Json) {
 	m, err := j.Map()
