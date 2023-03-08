@@ -543,13 +543,10 @@ export class DashboardModel implements TimeModel {
   }
 
   processRepeats() {
-    if (this.isSnapshotTruthy() || !this.hasVariables()) {
+    if (this.isSnapshotTruthy() || !this.hasVariables() || this.panelInView) {
       return;
     }
 
-    // If we're viewing a panel contained in a repeated row, we need to set it
-    // as isViewing after it's re-created
-    const viewedPanelId = this.panels.findIndex((p) => p.isViewing);
     this.cleanUpRepeats();
 
     for (let i = 0; i < this.panels.length; i++) {
@@ -557,11 +554,6 @@ export class DashboardModel implements TimeModel {
       if (panel.repeat) {
         this.repeatPanel(panel, i);
       }
-    }
-
-    if (viewedPanelId >= 0) {
-      this.panels[viewedPanelId].setIsViewing(true);
-      this.panelInView = this.panels[viewedPanelId];
     }
 
     this.sortPanelsByGridPos();
