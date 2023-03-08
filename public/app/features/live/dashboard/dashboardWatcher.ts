@@ -18,7 +18,8 @@ import { getDashboardSrv } from '../../dashboard/services/DashboardSrv';
 import { DashboardChangedModal } from './DashboardChangedModal';
 import { DashboardEvent, DashboardEventAction } from './types';
 
-// sessionId is used for filtering out events from the same session
+// sessionId is not a security-sensitive value.
+// It is used for filtering out dashboard edit events from the same browsing session
 const sessionId =
   (window as any)?.grafanaBootData?.user?.id +
   '/' +
