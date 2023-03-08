@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/instrumentation"
 	"github.com/patrickmn/go-cache"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 
@@ -86,7 +87,17 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return nil, err
 	}
 
-	return i.queryData.Execute(ctx, req)
+	status := "ok"
+	var resp *backend.QueryDataResponse
+	timeStart := time.Now()
+	resp, err = i.queryData.Execute(ctx, req)
+	duration := time.Since(timeStart)
+	if err != nil {
+		status = "error"
+	}
+	instrumentation.InstrumentRequestDurationMilliseconds(req.PluginContext.PluginID, "querydata", status, duration.Milliseconds())
+
+	return resp, err
 }
 
 func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
@@ -109,11 +120,17 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 		return sender.Send(vResp)
 	}
 
+	timeStart := time.Now()
 	resp, err := i.resource.Execute(ctx, req)
+	duration := time.Since(timeStart)
+
 	if err != nil {
+		instrumentation.InstrumentRequestDurationMilliseconds(req.PluginContext.PluginID, "callResource", "error",
+			duration.Milliseconds())
 		return err
 	}
 
+	instrumentation.InstrumentRequestDurationMilliseconds(req.PluginContext.PluginID, "callResource", "ok", duration.Milliseconds())
 	return sender.Send(resp)
 }
 
