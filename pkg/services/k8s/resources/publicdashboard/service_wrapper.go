@@ -110,13 +110,13 @@ func (s *ServiceWrapper) Create(ctx context.Context, u *user.SignedInUser, dto *
 	// call k8s resource client
 	uObj, err = publicdashboardResource.Create(ctx, uObj, metav1.CreateOptions{})
 	if err != nil {
-		return nil, err
+		return nil, publicdashboardModels.ErrBadRequest.Errorf("validation failed: %s", err)
 	}
 
 	rv := uObj.GetResourceVersion()
 	s.log.Debug("wait for revision", "revision", rv)
 
-	return nil, nil
+	return dto.PublicDashboard, nil
 }
 
 func annotationsFromPublicDashboardDTO(dto *publicdashboardModels.SavePublicDashboardDTO) (map[string]string, error) {

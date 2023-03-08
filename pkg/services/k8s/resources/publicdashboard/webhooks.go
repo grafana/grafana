@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	k8sTypes "k8s.io/apimachinery/pkg/types"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -15,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/k8s/client"
 	k8sAdmission "k8s.io/api/admission/v1"
 	admissionregistrationV1 "k8s.io/api/admissionregistration/v1"
+	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type WebhooksAPI struct {
@@ -62,7 +64,35 @@ func GetWebhookConfigs() []client.ShortWebhookConfig {
 			Timeout:    int32(5),
 		},
 	}
+}
 
+func makeSuccessfulAdmissionReview(uid k8sTypes.UID, typeMeta metaV1.TypeMeta, code int32) *k8sAdmission.AdmissionReview {
+	return &k8sAdmission.AdmissionReview{
+		TypeMeta: typeMeta,
+		Response: &k8sAdmission.AdmissionResponse{
+			UID:     uid,
+			Allowed: true,
+			Result: &metaV1.Status{
+				Status: "Success",
+				Code:   code,
+			},
+		},
+	}
+}
+
+func makeFailureAdmissionReview(uid k8sTypes.UID, typeMeta metaV1.TypeMeta, err error, code int32) *k8sAdmission.AdmissionReview {
+	return &k8sAdmission.AdmissionReview{
+		TypeMeta: typeMeta,
+		Response: &k8sAdmission.AdmissionResponse{
+			UID:     uid,
+			Allowed: false,
+			Result: &metaV1.Status{
+				Status:  "Failure",
+				Message: err.Error(),
+				Code:    code,
+			},
+		},
+	}
 }
 
 func (api *WebhooksAPI) Create(c *contextmodel.ReqContext) response.Response {
@@ -96,7 +126,7 @@ func (api *WebhooksAPI) Create(c *contextmodel.ReqContext) response.Response {
 
 	// THIS IS BROKEN
 	// TODO: convert error to k8sAdmission.AdmissionResponse and then to response.Response
-	err = api.ValidationController.Validate(c.Req.Context(), &admission.AdmissionRequest{
+	req := &admission.AdmissionRequest{
 		Action:  c.Req.Method,
 		Kind:    rev.Kind,
 		Group:   rev.GroupVersionKind().Group,
@@ -108,12 +138,17 @@ func (api *WebhooksAPI) Create(c *contextmodel.ReqContext) response.Response {
 		},
 		Object:    obj,
 		OldObject: oldObj,
-	})
-
-	if err != nil {
-		api.Log.Error("error validating request body")
-		return response.Error(500, "error validating request body", err)
 	}
 
-	return response.JSON(200, "ok")
+	var resp *k8sAdmission.AdmissionReview
+
+	err = api.ValidationController.Validate(c.Req.Context(), req)
+	if err != nil {
+		// auth status code to start, maybe change this to bad request
+		resp = makeFailureAdmissionReview(rev.Request.UID, rev.TypeMeta, err, 403)
+	} else {
+		resp = makeSuccessfulAdmissionReview(rev.Request.UID, rev.TypeMeta, 200)
+	}
+
+	return response.JSON(int(resp.Response.Result.Code), resp)
 }

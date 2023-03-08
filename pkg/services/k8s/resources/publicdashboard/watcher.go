@@ -34,16 +34,14 @@ func ProvideWatcher(userService user.Service, webhooks *WebhooksAPI, publicDashb
 
 func (w *watcher) Add(ctx context.Context, obj *PublicDashboard) error {
 	//convert to dto
-	dto, err := k8sPublicDashboardToDTO(obj)
+	pdModel, err := k8sPublicDashboardToDTO(obj)
 	if err != nil {
 		return err
 	}
 
-	w.log.Debug("adding public dashboard", "obj", obj)
-
 	// convert to cmd
 	cmd := publicdashboardModels.SavePublicDashboardCommand{
-		PublicDashboard: *dto.PublicDashboard,
+		PublicDashboard: *pdModel,
 	}
 
 	// call service
@@ -65,79 +63,76 @@ func (w *watcher) Delete(ctx context.Context, obj *PublicDashboard) error {
 	return nil
 }
 
-func k8sPublicDashboardToDTO(pd *PublicDashboard) (*publicdashboardModels.SavePublicDashboardDTO, error) {
+func k8sPublicDashboardToDTO(pd *PublicDashboard) (*publicdashboardModels.PublicDashboard, error) {
 	// make sure we have an accessToken
 	if pd.Spec.AccessToken == nil {
 		at := ""
 		pd.Spec.AccessToken = &at
 	}
 
-	dto := &publicdashboardModels.SavePublicDashboardDTO{
-		DashboardUid: pd.Spec.DashboardUid,
-		PublicDashboard: &publicdashboardModels.PublicDashboard{
-			Uid:                  pd.Spec.Uid,
-			AccessToken:          *pd.Spec.AccessToken,
-			DashboardUid:         pd.Spec.DashboardUid,
-			AnnotationsEnabled:   pd.Spec.AnnotationsEnabled,
-			TimeSelectionEnabled: pd.Spec.TimeSelectionEnabled,
-			IsEnabled:            pd.Spec.IsEnabled,
-		},
+	pdModel := &publicdashboardModels.PublicDashboard{
+		Uid:                  pd.Spec.Uid,
+		AccessToken:          *pd.Spec.AccessToken,
+		DashboardUid:         pd.Spec.DashboardUid,
+		AnnotationsEnabled:   pd.Spec.AnnotationsEnabled,
+		TimeSelectionEnabled: pd.Spec.TimeSelectionEnabled,
+		IsEnabled:            pd.Spec.IsEnabled,
 	}
 
 	// parse fields from annotations
-	dto, err := parseAnnotations(pd, dto)
+	pdModel, err := parseAnnotations(pd, pdModel)
 	if err != nil {
 		return nil, err
 	}
 
-	return dto, nil
+	return pdModel, nil
 }
 
-func parseAnnotations(pd *PublicDashboard, dto *publicdashboardModels.SavePublicDashboardDTO) (*publicdashboardModels.SavePublicDashboardDTO, error) {
+func parseAnnotations(pd *PublicDashboard, pdModel *publicdashboardModels.PublicDashboard) (*publicdashboardModels.PublicDashboard, error) {
 	var err error
 
 	if pd.ObjectMeta.Annotations == nil {
-		return dto, nil
+		return pdModel, nil
 	}
 
 	a := pd.ObjectMeta.Annotations
 
 	if v, ok := a["orgID"]; ok {
-		dto.OrgId, err = strconv.ParseInt(v, 10, 64)
+		pdModel.OrgId, err = strconv.ParseInt(v, 10, 64)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	if v, ok := a["dashboardUid"]; ok {
-		dto.DashboardUid = v
+		pdModel.DashboardUid = v
 	}
 
 	if v, ok := a["updatedBy"]; ok {
 		updatedBy, err := strconv.ParseInt(v, 10, 64)
 		if err == nil {
-			dto.PublicDashboard.UpdatedBy = updatedBy
+			pdModel.UpdatedBy = updatedBy
 		}
 	}
 
 	if v, ok := a["updatedAt"]; ok {
 		updatedAt, err := strconv.ParseInt(v, 10, 64)
 		if err == nil {
-			dto.PublicDashboard.UpdatedAt = time.Unix(0, updatedAt)
+			pdModel.UpdatedAt = time.Unix(0, updatedAt)
 		}
 	}
 
 	if v, ok := a["createdBy"]; ok {
 		createdBy, err := strconv.ParseInt(v, 10, 64)
 		if err == nil {
-			dto.PublicDashboard.CreatedBy = createdBy
+			pdModel.CreatedBy = createdBy
 		}
 	}
 
 	if v, ok := a["createdAt"]; ok {
 		createdAt, err := strconv.ParseInt(v, 10, 64)
 		if err == nil {
-			dto.PublicDashboard.CreatedAt = time.Unix(0, createdAt)
+			pdModel.CreatedAt = time.Unix(0, createdAt)
 		}
 	}
 
@@ -147,8 +142,8 @@ func parseAnnotations(pd *PublicDashboard, dto *publicdashboardModels.SavePublic
 		if err != nil {
 			return nil, err
 		}
-		dto.PublicDashboard.TimeSettings = ts
+		pdModel.TimeSettings = ts
 	}
 
-	return dto, nil
+	return pdModel, nil
 }
