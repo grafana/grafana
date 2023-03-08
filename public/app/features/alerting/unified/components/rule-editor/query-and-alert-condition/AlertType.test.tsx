@@ -18,7 +18,7 @@ const ui = {
   },
 };
 
-const FormProviderWrapper = ({ children }: React.PropsWithChildren) => {
+const FormProviderWrapper = ({ children }: React.PropsWithChildren<{}>) => {
   const methods = useForm({});
   return <FormProvider {...methods}>{children}</FormProvider>;
 };
