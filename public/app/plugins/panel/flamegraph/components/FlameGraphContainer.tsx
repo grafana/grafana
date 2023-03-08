@@ -32,7 +32,10 @@ const FlameGraphContainer = (props: Props) => {
   const [sizeRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
 
   const labelField = props.data.fields.find((f) => f.name === 'label');
-  // Label can actually be an enum field so depending on that we have to access it through display processor
+
+  // Label can actually be an enum field so depending on that we have to access it through display processor. This is
+  // both a backward compatibility but also to allow using a simple dataFrame without enum config. This would allow
+  // users to use this panel with correct query from data sources that do not return profiles natively.
   const getLabelValue = useCallback(
     (label: string | number) => {
       const enumConfig = labelField?.config?.type?.enum;
