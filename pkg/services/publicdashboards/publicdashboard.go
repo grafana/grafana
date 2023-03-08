@@ -24,7 +24,7 @@ type Service interface {
 	Find(ctx context.Context, uid string) (*PublicDashboard, error)
 	Create(ctx context.Context, u *user.SignedInUser, dto *SavePublicDashboardDTO) (*PublicDashboard, error)
 	Update(ctx context.Context, u *user.SignedInUser, dto *SavePublicDashboardDTO) (*PublicDashboard, error)
-	Delete(ctx context.Context, orgId int64, uid string) error
+	Delete(ctx context.Context, uid string) error
 	DeleteByDashboard(ctx context.Context, dashboard *dashboards.Dashboard) error
 
 	GetMetricRequest(ctx context.Context, dashboard *dashboards.Dashboard, publicDashboard *PublicDashboard, panelId int64, reqDTO PublicDashboardQueryDTO) (dtos.MetricRequest, error)
@@ -42,7 +42,7 @@ type Service interface {
 //go:generate mockery --name ServiceWrapper --structname FakePublicDashboardServiceWrapper --inpackage --filename public_dashboard_service_wrapper_mock.go
 type ServiceWrapper interface {
 	FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error)
-	DeleteByPublicDashboard(ctx context.Context, pubdash *PublicDashboard) error
+	Delete(ctx context.Context, uid string) error
 }
 
 //go:generate mockery --name Store --structname FakePublicDashboardStore --inpackage --filename public_dashboard_store_mock.go
@@ -54,7 +54,7 @@ type Store interface {
 	FindAll(ctx context.Context, orgId int64) ([]PublicDashboardListResponse, error)
 	Create(ctx context.Context, cmd SavePublicDashboardCommand) (int64, error)
 	Update(ctx context.Context, cmd SavePublicDashboardCommand) (int64, error)
-	Delete(ctx context.Context, orgId int64, uid string) (int64, error)
+	Delete(ctx context.Context, uid string) (int64, error)
 
 	GetOrgIdByAccessToken(ctx context.Context, accessToken string) (int64, error)
 	FindByDashboardFolder(ctx context.Context, dashboard *dashboards.Dashboard) ([]*PublicDashboard, error)

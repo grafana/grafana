@@ -256,8 +256,8 @@ func (d *PublicDashboardStoreImpl) Update(ctx context.Context, cmd SavePublicDas
 }
 
 // Deletes a public dashboard
-func (d *PublicDashboardStoreImpl) Delete(ctx context.Context, orgId int64, uid string) (int64, error) {
-	dashboard := &PublicDashboard{OrgId: orgId, Uid: uid}
+func (d *PublicDashboardStoreImpl) Delete(ctx context.Context, uid string) (int64, error) {
+	dashboard := &PublicDashboard{Uid: uid}
 	var affectedRows int64
 	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		var err error

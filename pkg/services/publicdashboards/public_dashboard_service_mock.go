@@ -46,13 +46,13 @@ func (_m *FakePublicDashboardService) Create(ctx context.Context, u *user.Signed
 	return r0, r1
 }
 
-// Delete provides a mock function with given fields: ctx, orgId, uid
-func (_m *FakePublicDashboardService) Delete(ctx context.Context, orgId int64, uid string) error {
-	ret := _m.Called(ctx, orgId, uid)
+// Delete provides a mock function with given fields: ctx, uid
+func (_m *FakePublicDashboardService) Delete(ctx context.Context, uid string) error {
+	ret := _m.Called(ctx, uid)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64, string) error); ok {
-		r0 = rf(ctx, orgId, uid)
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = rf(ctx, uid)
 	} else {
 		r0 = ret.Error(0)
 	}

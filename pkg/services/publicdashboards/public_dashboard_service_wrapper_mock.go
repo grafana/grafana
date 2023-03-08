@@ -14,13 +14,13 @@ type FakePublicDashboardServiceWrapper struct {
 	mock.Mock
 }
 
-// DeleteByPublicDashboard provides a mock function with given fields: ctx, pubdash
-func (_m *FakePublicDashboardServiceWrapper) DeleteByPublicDashboard(ctx context.Context, pubdash *models.PublicDashboard) error {
-	ret := _m.Called(ctx, pubdash)
+// Delete provides a mock function with given fields: ctx, uid
+func (_m *FakePublicDashboardServiceWrapper) Delete(ctx context.Context, uid string) error {
+	ret := _m.Called(ctx, uid)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *models.PublicDashboard) error); ok {
-		r0 = rf(ctx, pubdash)
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = rf(ctx, uid)
 	} else {
 		r0 = ret.Error(0)
 	}

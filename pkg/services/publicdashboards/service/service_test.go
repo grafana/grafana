@@ -498,13 +498,13 @@ func TestDeletePublicDashboard(t *testing.T) {
 		{
 			Name:             "Public dashboard not found",
 			AffectedRowsResp: 0,
-			ExpectedErrResp:  ErrPublicDashboardNotFound.Errorf("Delete: Public dashboard not found by orgId: 1 and Uid: 1"),
+			ExpectedErrResp:  ErrPublicDashboardNotFound.Errorf("Delete: Public dashboard not found by Uid: uid"),
 			StoreRespErr:     nil,
 		},
 		{
 			Name:             "Database error",
 			AffectedRowsResp: 0,
-			ExpectedErrResp:  ErrInternalServerError.Errorf("Delete: failed to delete a public dashboard by orgId: 1 and Uid: 1 db error!"),
+			ExpectedErrResp:  ErrInternalServerError.Errorf("Delete: failed to delete a public dashboard by Uid: uid db error!"),
 			StoreRespErr:     errors.New("db error!"),
 		},
 	}
@@ -512,8 +512,7 @@ func TestDeletePublicDashboard(t *testing.T) {
 	for _, tt := range testCases {
 		t.Run(tt.Name, func(t *testing.T) {
 			store := NewFakePublicDashboardStore(t)
-			store.On("Find", mock.Anything, mock.Anything, mock.Anything).Return(&PublicDashboard{Uid: "1", OrgId: 1}, nil)
-			store.On("Delete", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tt.AffectedRowsResp, tt.StoreRespErr)
+			store.On("Delete", mock.Anything, mock.Anything).Return(tt.AffectedRowsResp, tt.StoreRespErr)
 			serviceWrapper := &PublicDashboardServiceWrapperImpl{
 				log:   log.New("test.logger"),
 				store: store,
@@ -524,7 +523,7 @@ func TestDeletePublicDashboard(t *testing.T) {
 				serviceWrapper: serviceWrapper,
 			}
 
-			err := service.Delete(context.Background(), 13, "uid")
+			err := service.Delete(context.Background(), "uid")
 			if tt.ExpectedErrResp != nil {
 				assert.Equal(t, tt.ExpectedErrResp.Error(), err.Error())
 				assert.Equal(t, tt.ExpectedErrResp.Error(), err.Error())

@@ -652,7 +652,7 @@ func TestIntegrationDelete(t *testing.T) {
 	t.Run("Delete success", func(t *testing.T) {
 		setup()
 		// Do the deletion
-		affectedRows, err := publicdashboardStore.Delete(context.Background(), savedPublicDashboard.OrgId, savedPublicDashboard.Uid)
+		affectedRows, err := publicdashboardStore.Delete(context.Background(), savedPublicDashboard.Uid)
 		require.NoError(t, err)
 		assert.EqualValues(t, affectedRows, 1)
 
@@ -665,7 +665,7 @@ func TestIntegrationDelete(t *testing.T) {
 	t.Run("Non-existent public dashboard deletion doesn't throw an error", func(t *testing.T) {
 		setup()
 
-		affectedRows, err := publicdashboardStore.Delete(context.Background(), 15, "non-existent-uid")
+		affectedRows, err := publicdashboardStore.Delete(context.Background(), "non-existent-uid")
 		require.NoError(t, err)
 		assert.EqualValues(t, affectedRows, 0)
 	})

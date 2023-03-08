@@ -37,20 +37,20 @@ func (_m *FakePublicDashboardStore) Create(ctx context.Context, cmd models.SaveP
 	return r0, r1
 }
 
-// Delete provides a mock function with given fields: ctx, orgId, uid
-func (_m *FakePublicDashboardStore) Delete(ctx context.Context, orgId int64, uid string) (int64, error) {
-	ret := _m.Called(ctx, orgId, uid)
+// Delete provides a mock function with given fields: ctx, uid
+func (_m *FakePublicDashboardStore) Delete(ctx context.Context, uid string) (int64, error) {
+	ret := _m.Called(ctx, uid)
 
 	var r0 int64
-	if rf, ok := ret.Get(0).(func(context.Context, int64, string) int64); ok {
-		r0 = rf(ctx, orgId, uid)
+	if rf, ok := ret.Get(0).(func(context.Context, string) int64); ok {
+		r0 = rf(ctx, uid)
 	} else {
 		r0 = ret.Get(0).(int64)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, int64, string) error); ok {
-		r1 = rf(ctx, orgId, uid)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, uid)
 	} else {
 		r1 = ret.Error(1)
 	}

@@ -329,13 +329,8 @@ func (pd *PublicDashboardServiceImpl) GetOrgIdByAccessToken(ctx context.Context,
 	return pd.store.GetOrgIdByAccessToken(ctx, accessToken)
 }
 
-func (pd *PublicDashboardServiceImpl) Delete(ctx context.Context, orgId int64, uid string) error {
-	pubdash, err := pd.Find(ctx, uid)
-	if err != nil {
-		return err
-	}
-
-	return pd.serviceWrapper.DeleteByPublicDashboard(ctx, pubdash)
+func (pd *PublicDashboardServiceImpl) Delete(ctx context.Context, uid string) error {
+	return pd.serviceWrapper.Delete(ctx, uid)
 }
 
 func (pd *PublicDashboardServiceImpl) DeleteByDashboard(ctx context.Context, dashboard *dashboards.Dashboard) error {
@@ -347,7 +342,7 @@ func (pd *PublicDashboardServiceImpl) DeleteByDashboard(ctx context.Context, das
 		}
 		// delete each pubdash
 		for _, pubdash := range pubdashes {
-			err = pd.serviceWrapper.DeleteByPublicDashboard(ctx, pubdash)
+			err = pd.serviceWrapper.Delete(ctx, pubdash.Uid)
 			if err != nil {
 				return err
 			}
@@ -364,7 +359,7 @@ func (pd *PublicDashboardServiceImpl) DeleteByDashboard(ctx context.Context, das
 		return nil
 	}
 
-	return pd.serviceWrapper.DeleteByPublicDashboard(ctx, pubdash)
+	return pd.serviceWrapper.Delete(ctx, pubdash.Uid)
 }
 
 // intervalMS and maxQueryData values are being calculated on the frontend for regular dashboards
