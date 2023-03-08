@@ -87,12 +87,16 @@ export abstract class BigValueLayout {
       styles.textAlign = 'center';
     }
 
+    // JEV: update here?
     switch (this.props.colorMode) {
       case BigValueColorMode.Value:
         styles.color = this.valueColor;
         break;
       case BigValueColorMode.Background:
         styles.color = getTextColorForAlphaBackground(this.valueColor, this.props.theme.isDark);
+        // JEV: this only updates the value text...
+        // console.log(this.valueColor);
+        // styles.background = `none ${this.valueColor}`;
         break;
       case BigValueColorMode.None:
         styles.color = this.props.theme.colors.text.primary;
@@ -105,6 +109,7 @@ export abstract class BigValueLayout {
   getValueAndTitleContainerStyles() {
     const styles: CSSProperties = {
       display: 'flex',
+      // background: `none ${this.valueColor}`,
     };
 
     if (this.justifyCenter) {
@@ -117,7 +122,7 @@ export abstract class BigValueLayout {
   }
 
   getPanelStyles(): CSSProperties {
-    const { width, height, theme, colorMode } = this.props;
+    const { width, height, theme, colorMode, hasGradient } = this.props;
 
     const panelStyles: CSSProperties = {
       width: `${width}px`,
@@ -130,17 +135,24 @@ export abstract class BigValueLayout {
 
     const themeFactor = theme.isDark ? 1 : -0.7;
 
+    function buildGradientBackground(valueColor: BigValueLayout['valueColor']) {
+      const bgColor2 = tinycolor(valueColor)
+        .darken(15 * themeFactor)
+        .spin(8)
+        .toRgbString();
+      const bgColor3 = tinycolor(valueColor)
+        .darken(5 * themeFactor)
+        .spin(-8)
+        .toRgbString();
+
+      return `linear-gradient(120deg, ${bgColor2}, ${bgColor3})`;
+    }
+
     switch (colorMode) {
       case BigValueColorMode.Background:
-        const bgColor2 = tinycolor(this.valueColor)
-          .darken(15 * themeFactor)
-          .spin(8)
-          .toRgbString();
-        const bgColor3 = tinycolor(this.valueColor)
-          .darken(5 * themeFactor)
-          .spin(-8)
-          .toRgbString();
-        panelStyles.background = `linear-gradient(120deg, ${bgColor2}, ${bgColor3})`;
+        hasGradient
+          ? (panelStyles.background = buildGradientBackground(this.valueColor))
+          : (panelStyles.background = `none ${this.valueColor}`);
         break;
       case BigValueColorMode.Value:
         panelStyles.background = `transparent`;

@@ -27,10 +27,11 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
     const { value, alignmentFactors, width, height, count, orientation } = valueProps;
     const { openMenu, targetClassName } = menuProps;
     let sparkline = value.sparkline;
+    // console.log('🚀 ~ file: StatPanel.tsx:30 ~ StatPanel ~ sparkline:', sparkline);
     if (sparkline) {
       sparkline.timeRange = timeRange;
     }
-    // console.log(this.props, 'this.props');
+    console.log(this.props, 'this.props');
     // console.log('🚀 ~ file: StatPanel.tsx:18 ~ config:', config);
 
     return (
@@ -39,6 +40,7 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
         count={count}
         sparkline={sparkline}
         colorMode={options.colorMode}
+        hasGradient={options.hasGradient}
         graphMode={options.graphMode}
         justifyMode={options.justifyMode}
         textMode={this.getTextMode()}
