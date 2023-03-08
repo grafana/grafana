@@ -89,7 +89,7 @@
       "matchPackageNames": [
         "@leeoniya/ufuzzy",
         "uplot"
-      ]
+      ],
       "reviewers": ["leeoniya"],
     },
   ],
