@@ -341,7 +341,7 @@ func (pd *PublicDashboardServiceImpl) Delete(ctx context.Context, orgId int64, u
 func (pd *PublicDashboardServiceImpl) DeleteByDashboard(ctx context.Context, dashboard *dashboards.Dashboard) error {
 	if dashboard.IsFolder {
 		// get all pubdashes for the folder
-		pubdashes, err := pd.store.GetByDashboardFolder(ctx, dashboard)
+		pubdashes, err := pd.store.FindByDashboardFolder(ctx, dashboard)
 		if err != nil {
 			return err
 		}
