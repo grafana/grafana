@@ -42,13 +42,13 @@ func Test_sanitizeURL(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			url, err := sanitizeURL(tt.input)
+			url, err := SanitizeURL(tt.input)
 			if tt.expectError {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
 			}
-			assert.Equalf(t, tt.want, url, "sanitizeURL(%v)", tt.input)
+			assert.Equalf(t, tt.want, url, "SanitizeURL(%v)", tt.input)
 		})
 	}
 }

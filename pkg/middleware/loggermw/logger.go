@@ -111,7 +111,7 @@ func (l *loggerImpl) prepareLogParams(c *contextmodel.ReqContext, duration time.
 		"size", rw.Size(),
 	}
 
-	referer, err := sanitizeURL(r.Referer())
+	referer, err := SanitizeURL(r.Referer())
 	// We add an empty referer when there's a parsing error, hence this is before the err check.
 	logParams = append(logParams, "referer", referer)
 	if err != nil {
@@ -153,7 +153,7 @@ var sensitiveQueryStrings = [...]string{
 	"auth_token",
 }
 
-func sanitizeURL(s string) (string, error) {
+func SanitizeURL(s string) (string, error) {
 	if s == "" {
 		return s, nil
 	}
