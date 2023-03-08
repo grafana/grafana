@@ -1,4 +1,5 @@
 import { Unsubscribable } from 'rxjs';
+import { v4 as uuidv4 } from 'uuid';
 
 import {
   AppEvents,
@@ -20,12 +21,7 @@ import { DashboardEvent, DashboardEventAction } from './types';
 
 // sessionId is not a security-sensitive value.
 // It is used for filtering out dashboard edit events from the same browsing session
-const sessionId =
-  (window as any)?.grafanaBootData?.user?.id +
-  '/' +
-  Date.now().toString(16) +
-  '/' +
-  Math.random().toString(36).substring(2, 15);
+const sessionId = uuidv4();
 
 class DashboardWatcher {
   channel?: LiveChannelAddress; // path to the channel
