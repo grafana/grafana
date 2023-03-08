@@ -30,7 +30,8 @@ const (
 	ServiceName = "RemoteCache"
 )
 
-func ProvideService(cfg *setting.Cfg, sqlStore db.DB, secretsService secrets.Service) (*RemoteCache, error) {
+func ProvideService(cfg *setting.Cfg, sqlStore db.DB, usageStats usagestats.Service,
+	secretsService secrets.Service) (*RemoteCache, error) {
 	var codec codec
 	if cfg.RemoteCacheOptions.Encryption {
 		codec = &encryptionCodec{secretsService}
