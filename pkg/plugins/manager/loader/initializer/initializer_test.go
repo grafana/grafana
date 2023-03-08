@@ -2,7 +2,6 @@ package initializer
 
 import (
 	"context"
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -15,9 +14,6 @@ import (
 )
 
 func TestInitializer_Initialize(t *testing.T) {
-	absCurPath, err := filepath.Abs(".")
-	assert.NoError(t, err)
-
 	t.Run("core backend datasource", func(t *testing.T) {
 		p := &plugins.Plugin{
 			JSONData: plugins.JSONData{
@@ -31,8 +27,7 @@ func TestInitializer_Initialize(t *testing.T) {
 				},
 				Backend: true,
 			},
-			PluginDir: absCurPath,
-			Class:     plugins.Core,
+			Class: plugins.Core,
 		}
 
 		i := &Initializer{
@@ -61,8 +56,7 @@ func TestInitializer_Initialize(t *testing.T) {
 				},
 				Backend: true,
 			},
-			PluginDir: absCurPath,
-			Class:     plugins.External,
+			Class: plugins.External,
 		}
 
 		i := &Initializer{
@@ -91,8 +85,7 @@ func TestInitializer_Initialize(t *testing.T) {
 				},
 				Backend: true,
 			},
-			PluginDir: absCurPath,
-			Class:     plugins.External,
+			Class: plugins.External,
 		}
 
 		i := &Initializer{

@@ -87,6 +87,7 @@ export interface LogsModel {
   // visibleRange is time range for histogram created from log results
   visibleRange?: AbsoluteTimeRange;
   queries?: DataQuery[];
+  bucketSize?: number;
 }
 
 export interface LogSearchMatch {
@@ -193,6 +194,40 @@ export enum LogsVolumeType {
   FullRange = 'FullRange',
   Limited = 'Limited',
 }
+
+/**
+ * Custom meta information required by Logs Volume responses
+ */
+export type LogsVolumeCustomMetaData = {
+  absoluteRange: AbsoluteTimeRange;
+  logsVolumeType: LogsVolumeType;
+  datasourceName: string;
+  sourceQuery: DataQuery;
+};
+
+export const getLogsVolumeAbsoluteRange = (
+  dataFrames: DataFrame[],
+  defaultRange: AbsoluteTimeRange
+): AbsoluteTimeRange => {
+  return dataFrames[0].meta?.custom?.absoluteRange || defaultRange;
+};
+
+export const getLogsVolumeDataSourceInfo = (dataFrames: DataFrame[]): { name: string; refId: string } | null => {
+  const customMeta = dataFrames[0]?.meta?.custom;
+
+  if (customMeta && customMeta.datasourceName && customMeta.sourceQuery?.refId) {
+    return {
+      name: customMeta.datasourceName,
+      refId: customMeta.sourceQuery.refId,
+    };
+  }
+
+  return null;
+};
+
+export const isLogsVolumeLimited = (dataFrames: DataFrame[]) => {
+  return dataFrames[0]?.meta?.custom?.logsVolumeType === LogsVolumeType.Limited;
+};
 
 /**
  * Data sources that support supplementary queries in Explore.

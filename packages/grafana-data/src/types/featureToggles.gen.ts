@@ -81,4 +81,5 @@ export interface FeatureToggles {
   individualCookiePreferences?: boolean;
   drawerDataSourcePicker?: boolean;
   traceqlSearch?: boolean;
+  prometheusMetricEncyclopedia?: boolean;
 }
