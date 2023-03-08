@@ -108,7 +108,7 @@ func (r *NormalResponse) writeLogLine(c *contextmodel.ReqContext) {
 	}
 
 	logger := c.Logger.Error
-	var gfErr *errutil.Error
+	var gfErr errutil.Error
 	if errors.As(r.err, &gfErr) {
 		logger = gfErr.LogLevel.LogFunc(c.Logger)
 	}
@@ -261,8 +261,8 @@ func Error(status int, message string, err error) *NormalResponse {
 
 // Err creates an error response based on an errutil.Error error.
 func Err(err error) *NormalResponse {
-	grafanaErr := &errutil.Error{}
-	if !errors.As(err, grafanaErr) {
+	grafanaErr := errutil.Error{}
+	if !errors.As(err, &grafanaErr) {
 		return Error(http.StatusInternalServerError, "", fmt.Errorf("unexpected error type [%s]: %w", reflect.TypeOf(err), err))
 	}
 
@@ -281,8 +281,8 @@ func Err(err error) *NormalResponse {
 // rename this to Error when we're confident that that would be safe to
 // do.
 func ErrOrFallback(status int, message string, err error) *NormalResponse {
-	grafanaErr := &errutil.Error{}
-	if errors.As(err, grafanaErr) {
+	grafanaErr := errutil.Error{}
+	if errors.As(err, &grafanaErr) {
 		return Err(err)
 	}
 
