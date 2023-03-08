@@ -41,6 +41,34 @@ func TestFeatureToggleFiles(t *testing.T) {
 		}
 	})
 
+	ownerlessFeatures := map[string]bool{
+		"prometheusAzureOverrideAudience": true,
+		"tracing":                         true,
+		"newPanelChromeUI":                true,
+		"showDashboardValidationWarnings": true,
+		"datasourceOnboarding":            true,
+	}
+
+	t.Run("all new features should have an owner", func(t *testing.T) {
+		for _, flag := range standardFeatureFlags {
+			if flag.Owner == "" {
+				if _, ok := ownerlessFeatures[flag.Name]; !ok {
+					t.Errorf("feature %s does not have an owner", flag.Name)
+				}
+			}
+		}
+	})
+
+	t.Run("features with assigned owner should not be on the ownerless list", func(t *testing.T) {
+		for _, flag := range standardFeatureFlags {
+			if flag.Owner != "" {
+				if _, ok := ownerlessFeatures[flag.Name]; ok {
+					t.Errorf("feature %s should be removed from the ownerless list", flag.Name)
+				}
+			}
+		}
+	})
+
 	t.Run("verify files", func(t *testing.T) {
 		// Typescript files
 		verifyAndGenerateFile(t,

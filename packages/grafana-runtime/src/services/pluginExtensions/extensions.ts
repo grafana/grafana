@@ -16,15 +16,10 @@ export function getPluginExtensions<T extends object = {}>(
 ): PluginExtensionsResult {
   const { placement, context } = options;
   const registry = getPluginsExtensionRegistry();
-  const items = registry[placement] ?? [];
+  const configureFuncs = registry[placement] ?? [];
 
-  const extensions = items.reduce<PluginExtension[]>((result, item) => {
-    if (!context || !item.configure) {
-      result.push(item.extension);
-      return result;
-    }
-
-    const extension = item.configure(context);
+  const extensions = configureFuncs.reduce<PluginExtension[]>((result, configure) => {
+    const extension = configure(context);
     if (extension) {
       result.push(extension);
     }

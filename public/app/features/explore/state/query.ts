@@ -1,11 +1,12 @@
 import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
 import deepEqual from 'fast-deep-equal';
-import { flatten, groupBy, snakeCase } from 'lodash';
+import { flatten, groupBy, head, map, mapValues, snakeCase, zipObject } from 'lodash';
 import { combineLatest, identity, Observable, of, SubscriptionLike, Unsubscribable } from 'rxjs';
 import { mergeMap, throttleTime } from 'rxjs/operators';
 
 import {
   AbsoluteTimeRange,
+  DataFrame,
   DataQueryErrorType,
   DataQueryResponse,
   DataSourceApi,
@@ -43,11 +44,14 @@ import { notifyApp } from '../../../core/actions';
 import { createErrorNotification } from '../../../core/copy/appNotification';
 import { runRequest } from '../../query/state/runRequest';
 import { decorateData } from '../utils/decorators';
-import { storeSupplementaryQueryEnabled, supplementaryQueryTypes } from '../utils/supplementaryQueries';
+import {
+  storeSupplementaryQueryEnabled,
+  supplementaryQueryTypes,
+  getSupplementaryQueryProvider,
+} from '../utils/supplementaryQueries';
 
 import { addHistoryItem, historyUpdatedAction, loadRichHistory } from './history';
 import { stateSave } from './main';
-import { getSupplementaryQueryProvider } from './supplementaryQueries';
 import { updateTime } from './time';
 import { createCacheKey, getResultsFromCache } from './utils';
 
@@ -674,21 +678,36 @@ export const runQueries = (
  */
 function canReuseSupplementaryQueryData(
   supplementaryQueryData: DataQueryResponse | undefined,
-  queries: DataQuery[],
+  newQueries: DataQuery[],
   selectedTimeRange: AbsoluteTimeRange
 ): boolean {
-  if (supplementaryQueryData && supplementaryQueryData.data[0]) {
-    // check if queries are the same
-    if (!deepEqual(supplementaryQueryData.data[0].meta?.custom?.targets, queries)) {
-      return false;
-    }
-    const dataRange = supplementaryQueryData.data[0].meta?.custom?.absoluteRange;
-    // if selected range is within loaded logs volume
-    if (dataRange && dataRange.from <= selectedTimeRange.from && selectedTimeRange.to <= dataRange.to) {
+  if (!supplementaryQueryData) {
+    return false;
+  }
+
+  const newQueriesByRefId = zipObject(map(newQueries, 'refId'), newQueries);
+
+  const existingDataByRefId = mapValues(
+    groupBy(
+      supplementaryQueryData.data.map((dataFrame: DataFrame) => dataFrame.meta?.custom?.sourceQuery),
+      'refId'
+    ),
+    head
+  );
+
+  const allQueriesAreTheSame = deepEqual(newQueriesByRefId, existingDataByRefId);
+
+  const allResultsHaveWiderRange = supplementaryQueryData.data.every((data: DataFrame) => {
+    const dataRange = data.meta?.custom?.absoluteRange;
+    // Only first data frame in the response may contain the absolute range
+    if (!dataRange) {
       return true;
     }
-  }
-  return false;
+    const hasWiderRange = dataRange && dataRange.from <= selectedTimeRange.from && selectedTimeRange.to <= dataRange.to;
+    return hasWiderRange;
+  });
+
+  return allQueriesAreTheSame && allResultsHaveWiderRange;
 }
 
 /**
