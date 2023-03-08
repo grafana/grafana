@@ -2016,6 +2016,88 @@ func TestProcessEvalResults(t *testing.T) {
 			},
 		},
 		{
+			desc: "normal -> pending error when result is Error and ExecErrState is Error and ForError is set",
+			alertRule: &models.AlertRule{
+				OrgID:        1,
+				Title:        "test_title",
+				UID:          "test_alert_rule_uid_2",
+				NamespaceUID: "test_namespace_uid",
+				Data: []models.AlertQuery{{
+					RefID:         "A",
+					DatasourceUID: "datasource_uid_1",
+				}},
+				Annotations:     map[string]string{"annotation": "test"},
+				Labels:          map[string]string{"label": "test"},
+				IntervalSeconds: 10,
+				For:             1 * time.Minute,
+				ForError:        1 * time.Minute,
+				ExecErrState:    models.ErrorErrState,
+			},
+			evalResults: []eval.Results{
+				{
+					eval.Result{
+						Instance:           data.Labels{"instance_label": "test"},
+						State:              eval.Normal,
+						EvaluatedAt:        evaluationTime,
+						EvaluationDuration: evaluationDuration,
+					},
+				},
+				{
+					eval.Result{
+						Instance: data.Labels{"instance_label": "test"},
+						Error: expr.QueryError{
+							RefID: "A",
+							Err:   errors.New("this is an error"),
+						},
+						State:              eval.Error,
+						EvaluatedAt:        evaluationTime.Add(10 * time.Second),
+						EvaluationDuration: evaluationDuration,
+					},
+				},
+			},
+			expectedAnnotations: 1,
+			expectedStates: map[string]*state.State{
+				`[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`: {
+					AlertRuleUID: "test_alert_rule_uid_2",
+					OrgID:        1,
+					CacheID:      `[["__alert_rule_namespace_uid__","test_namespace_uid"],["__alert_rule_uid__","test_alert_rule_uid_2"],["alertname","test_title"],["instance_label","test"],["label","test"]]`,
+					Labels: data.Labels{
+						"__alert_rule_namespace_uid__": "test_namespace_uid",
+						"__alert_rule_uid__":           "test_alert_rule_uid_2",
+						"alertname":                    "test_title",
+						"label":                        "test",
+						"instance_label":               "test",
+						"datasource_uid":               "datasource_uid_1",
+						"ref_id":                       "A",
+					},
+					Values:      make(map[string]float64),
+					State:       eval.Pending,
+					StateReason: models.StateReasonError,
+					Error: expr.QueryError{
+						RefID: "A",
+						Err:   errors.New("this is an error"),
+					},
+					Results: []state.Evaluation{
+						{
+							EvaluationTime:  evaluationTime,
+							EvaluationState: eval.Normal,
+							Values:          make(map[string]*float64),
+						},
+						{
+							EvaluationTime:  evaluationTime.Add(10 * time.Second),
+							EvaluationState: eval.Error,
+							Values:          make(map[string]*float64),
+						},
+					},
+					StartsAt:           evaluationTime.Add(10 * time.Second),
+					EndsAt:             evaluationTime.Add(10 * time.Second).Add(state.ResendDelay * 3),
+					LastEvaluationTime: evaluationTime.Add(10 * time.Second),
+					EvaluationDuration: evaluationDuration,
+					Annotations:        map[string]string{"annotation": "test", "Error": "failed to execute query A: this is an error"},
+				},
+			},
+		},
+		{
 			desc: "normal -> normal when result is Error and ExecErrState is OK",
 			alertRule: &models.AlertRule{
 				OrgID:        1,
