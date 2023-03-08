@@ -140,7 +140,7 @@ func TestInitializer_envVars(t *testing.T) {
 			LicenseEdition: "test",
 			TokenRaw:       "token",
 			LicensePath:    "/path/to/ent/license",
-			LicenseAppUrl:  "https://myorg.com/",
+			LicenseAppURL:  "https://myorg.com/",
 		}
 
 		i := &Initializer{
