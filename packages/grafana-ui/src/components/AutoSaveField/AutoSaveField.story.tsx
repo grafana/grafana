@@ -13,12 +13,17 @@ import { AutoSaveField } from './AutoSaveField';
 import mdx from './AutoSaveField.mdx';
 
 const meta: Meta = {
-  title: 'AutoSaveField',
+  title: 'Forms/AutoSaveField',
   component: AutoSaveField,
   decorators: [withCenteredStory],
   parameters: {
     docs: {
       page: mdx,
+    },
+    options: {
+      storySort: {
+        order: ['Basic', 'AllComponentsSuccess', 'AllComponentsError'],
+      },
     },
     controls: {
       exclude: [
@@ -34,6 +39,8 @@ const meta: Meta = {
         'horizontal',
         'validationMessageHorizontalOverflow',
         'htmlFor',
+        'error',
+        'className',
       ],
     },
   },
@@ -74,7 +81,40 @@ enum ThemeSwitchOption {
   Dark = 'dark',
 }
 
-export const AutoSaveFieldError: Story = (args) => {
+export const Basic: Story = (args) => {
+  const [inputSuccessValue, setInputSuccessValue] = useState('');
+  const [inputErrorValue, setInputErrorValue] = useState('');
+  return (
+    <div>
+      <AutoSaveField onFinishChange={getSuccess} label="Input saving value successfully" {...args}>
+        {(onChange) => (
+          <Input
+            value={inputSuccessValue}
+            onChange={(e) => {
+              const value = e.currentTarget.value;
+              onChange(value);
+              setInputSuccessValue(e.currentTarget.value);
+            }}
+          />
+        )}
+      </AutoSaveField>
+      <AutoSaveField onFinishChange={getError} label="Input with an error when saving" {...args}>
+        {(onChange) => (
+          <Input
+            value={inputErrorValue}
+            onChange={(e) => {
+              const value = e.currentTarget.value;
+              onChange(value);
+              setInputErrorValue(e.currentTarget.value);
+            }}
+          />
+        )}
+      </AutoSaveField>
+    </div>
+  );
+};
+
+export const AllComponentsError: Story = (args) => {
   const [selected, setSelected] = useState('');
   const [checkBoxTest, setCheckBoxTest] = useState(false);
   const [textAreaValue, setTextAreaValue] = useState('');
@@ -162,11 +202,11 @@ export const AutoSaveFieldError: Story = (args) => {
     </div>
   );
 };
-AutoSaveFieldError.args = {
+AllComponentsError.args = {
   required: false,
 };
 
-export const AutoSaveFieldSuccess: Story = (args) => {
+export const AllComponentsSuccess: Story = (args) => {
   const [selected, setSelected] = useState('');
   const [checkBoxTest, setCheckBoxTest] = useState(false);
   const [textAreaValue, setTextAreaValue] = useState('');
@@ -254,6 +294,6 @@ export const AutoSaveFieldSuccess: Story = (args) => {
     </div>
   );
 };
-AutoSaveFieldSuccess.args = {
+AllComponentsSuccess.args = {
   required: true,
 };
