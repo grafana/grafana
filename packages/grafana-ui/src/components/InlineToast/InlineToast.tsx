@@ -71,6 +71,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
+//To calculate if the InlineToast is displayed off-screen and should use the alternative placement
 const shouldUseAlt = (
   placement: BasePlacement,
   indicatorElement: HTMLElement | null,
