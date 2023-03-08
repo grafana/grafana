@@ -13,11 +13,13 @@ var (
 			Name:        "alertingBigTransactions",
 			Description: "Use big transactions for alerting database writes",
 			State:       FeatureStateAlpha,
+			Owner:       grafanaAlertingSquad,
 		},
 		{
 			Name:        "trimDefaults",
 			Description: "Use cue schema to remove values that will be applied automatically",
 			State:       FeatureStateBeta,
+			Owner:       grafanaAsCodeSquad,
 		},
 		{
 			Name:        "disableEnvelopeEncryption",
@@ -96,6 +98,7 @@ var (
 			Name:        "featureHighlights",
 			Description: "Highlight Grafana Enterprise features",
 			State:       FeatureStateStable,
+			Owner:       grafanaAsCodeSquad,
 		},
 		{
 			Name:        "dashboardComments",
@@ -153,6 +156,7 @@ var (
 			Description:  "Shows the new trace view design",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
 		{
 			Name:        "correlations",
@@ -177,6 +181,7 @@ var (
 			Description:  "Enable trace to metrics links",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
 		{
 			Name:        "newDBLibrary",
@@ -189,6 +194,7 @@ var (
 			Description:     "Validate dashboard JSON POSTed to api/dashboards/db",
 			State:           FeatureStateBeta,
 			RequiresRestart: true,
+			Owner:           grafanaAsCodeSquad,
 		},
 		{
 			Name:         "autoMigrateGraphPanels",
@@ -351,6 +357,7 @@ var (
 			Name:        "alertingBacktesting",
 			Description: "Rule backtesting API for alerting",
 			State:       FeatureStateAlpha,
+			Owner:       grafanaAlertingSquad,
 		},
 		{
 			Name:         "editPanelCSVDragAndDrop",
@@ -364,6 +371,7 @@ var (
 			Description:     "Stop maintaining state of alerts that are not firing",
 			State:           FeatureStateBeta,
 			RequiresRestart: false,
+			Owner:           grafanaAlertingSquad,
 		},
 		{
 
@@ -405,6 +413,7 @@ var (
 			Description:  "Enables the 'TraceQL Search' tab for the Tempo datasource which provides a UI to generate TraceQL queries",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
 		{
 			Name:         "prometheusMetricEncyclopedia",
