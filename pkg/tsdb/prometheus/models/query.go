@@ -46,7 +46,6 @@ var safeResolution = 11000
 
 type QueryModel struct {
 	dataquery.PrometheusDataQuery
-	
 	// The following properties may be part of the request payload, however they are not saved in panel JSON
 	// Timezone offset to align start & end time on backend
 	UtcOffsetSec   int64  `json:"utcOffsetSec,omitempty"`
