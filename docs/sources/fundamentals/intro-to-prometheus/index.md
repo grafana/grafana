@@ -89,7 +89,7 @@ The following image shows the two metrics associated with the endpoint. The HELP
 
 These metrics are available in an HTTP endpoint, but how do they get to Grafana, and subsequently, into a dashboard?
 
-That’s where you can use either the Prometheus software, or the [Grafana Agent](/docs/agent/latest/). The Grafana Agent collects and forwards telemetry data to open sourcevdeployments of the Grafana Stack, Grafana Cloud, or Grafana Enterprise, where your data can then be analyzed.
+To get these metrics into Grafana, you can use either the Prometheus software or [Grafana Agent](/docs/agent/latest/) to scrape metrics. Grafana Agent collects and forwards telemetry data to open-source deployments of the Grafana Stack, Grafana Cloud, or Grafana Enterprise, where your data can be analyzed.
 
 Telemetry refers to the process of recording and transmitting the readings of an application or piece of infrastructure. Telemetry is critical to observability because it helps you understand exactly what's going on in your infrastructure. Telemetry data is a source of truth.
 
