@@ -53,7 +53,7 @@ func (s *OAuth2ServiceImpl) HandleTokenRequest(rw http.ResponseWriter, req *http
 	currentOAuthSessionData.JWTClaims.Add("client_id", app.ClientID)
 
 	if accessRequest.GetGrantTypes().ExactOne("client_credentials") {
-		currentOAuthSessionData.SetSubject(accessRequest.GetClient().GetID())
+		currentOAuthSessionData.SetSubject(fmt.Sprintf("user:%d", app.ServiceAccountID))
 
 		sa, err := s.saService.RetrieveServiceAccount(ctx, 1, app.ServiceAccountID)
 		if err != nil {
@@ -213,7 +213,7 @@ func (s *OAuth2ServiceImpl) profileFromUser(siu *user.SignedInUser, up *user.Use
 func (s *OAuth2ServiceImpl) profileFromServiceAccount(siu *user.SignedInUser, sa *serviceaccounts.ServiceAccountProfileDTO) *Profile {
 	return &Profile{
 		Name:      sa.Name,
-		Email:     fmt.Sprintf("%s@grafans.serviceaccounts.local", sa.Login),
+		Email:     fmt.Sprintf("%s@grafana.serviceaccounts.local", sa.Login),
 		Login:     sa.Login,
 		UpdatedAt: sa.Updated,
 		PermissionsFunc: func(ctx context.Context) (map[string][]string, error) {

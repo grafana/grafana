@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models/roletype"
-	entac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	ossac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/oauthserver"
 	"github.com/grafana/grafana/pkg/services/oauthserver/api"
@@ -34,16 +33,16 @@ import (
 )
 
 type OAuth2ServiceImpl struct {
-	acSvc         entac.Service
 	memstore      *storage.MemoryStore
 	sqlstore      *oauthstore.Store
 	oauthProvider fosite.OAuth2Provider
 	logger        log.Logger
 	accessControl ossac.AccessControl
-	acService     entac.Service
+	acService     ossac.Service
 	saService     serviceaccounts.Service
 	userService   user.Service
 	teamService   team.Service
+	publicKey     *rsa.PublicKey
 }
 
 func NewProvider(config *fosite.Config, storage interface{}, key interface{}) fosite.OAuth2Provider {
@@ -66,9 +65,8 @@ func NewProvider(config *fosite.Config, storage interface{}, key interface{}) fo
 	)
 }
 
-func ProvideService(router routing.RouteRegister, db db.DB, cfg *setting.Cfg, skv kvstore.SecretsKVStore,
-	svcAccSvc serviceaccounts.Service, accessControl ossac.AccessControl, acSvc entac.Service, userSvc user.Service,
-	teamSvc team.Service) (*OAuth2ServiceImpl, error) {
+func ProvideService(router routing.RouteRegister, db db.DB, cfg *setting.Cfg, skv kvstore.SecretsKVStore, svcAccSvc serviceaccounts.Service,
+	accessControl ossac.AccessControl, acSvc ossac.Service, userSvc user.Service, teamSvc team.Service) (*OAuth2ServiceImpl, error) {
 
 	// TODO: Make this configurable
 	config := &fosite.Config{
@@ -91,14 +89,14 @@ func ProvideService(router routing.RouteRegister, db db.DB, cfg *setting.Cfg, sk
 
 	s := &OAuth2ServiceImpl{
 		accessControl: accessControl,
-		acSvc:         acSvc,
+		acService:     acSvc,
 		memstore:      storage.NewMemoryStore(),
 		sqlstore:      oauthstore.NewStore(db),
 		logger:        log.New("oauthserver"),
 		userService:   userSvc,
 		saService:     svcAccSvc,
 		teamService:   teamSvc,
-		acService:     acSvc,
+		publicKey:     &privateKey.PublicKey,
 	}
 
 	api := api.NewAPI(router, s)
@@ -137,6 +135,11 @@ func loadServerPrivateKey(skv kvstore.SecretsKVStore) (*rsa.PrivateKey, error) {
 		}
 	}
 	return privateKey, nil
+}
+
+// GetServerPublicKey returns the public key of the server
+func (s *OAuth2ServiceImpl) GetServerPublicKey() *rsa.PublicKey {
+	return s.publicKey
 }
 
 func (s *OAuth2ServiceImpl) RandString(n int) (string, error) {
@@ -321,7 +324,7 @@ func (s *OAuth2ServiceImpl) GetApp(ctx context.Context, id string) (*oauthserver
 		Name:        sa.Name,
 		Permissions: map[int64]map[string][]string{},
 	}
-	app.SelfPermissions, err = s.acSvc.GetUserPermissions(ctx, app.SignedInUser, ossac.Options{})
+	app.SelfPermissions, err = s.acService.GetUserPermissions(ctx, app.SignedInUser, ossac.Options{})
 	if err != nil {
 		return nil, err
 	}

@@ -1,5 +1,5 @@
 {
-  "name": "Test App3",
+  "name": "Test App1",
   "redirect_uri": "https://localhost:3000/a/test-app/",
   "permissions": [
     {"action": "users:read", "scope": "global.users:*"},

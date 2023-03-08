@@ -26,7 +26,7 @@ if [[ $1 == "jwtbearer" ]]; then
     pause
 elif [[ $1 == "client_credentials" ]]; then
     token_reponse=$current_dir/client_credentials_token.json
-    at=$( cat $token_reponse | jq -r '.id_token' )
+    at=$( cat $token_reponse | jq -r '.access_token' )
 else
     echo "Usage: $0 jwtbearer|client_credentials [--no-pause]"
     exit 1
