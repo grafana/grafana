@@ -13,6 +13,7 @@ var (
 			Name:        "alertingBigTransactions",
 			Description: "Use big transactions for alerting database writes",
 			State:       FeatureStateAlpha,
+			Owner:       grafanaAlertingSquad,
 		},
 		{
 			Name:        "trimDefaults",
@@ -353,6 +354,7 @@ var (
 			Name:        "alertingBacktesting",
 			Description: "Rule backtesting API for alerting",
 			State:       FeatureStateAlpha,
+			Owner:       grafanaAlertingSquad,
 		},
 		{
 			Name:         "editPanelCSVDragAndDrop",
@@ -366,6 +368,7 @@ var (
 			Description:     "Stop maintaining state of alerts that are not firing",
 			State:           FeatureStateBeta,
 			RequiresRestart: false,
+			Owner:           grafanaAlertingSquad,
 		},
 		{
 
