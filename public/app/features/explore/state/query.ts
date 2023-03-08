@@ -1,12 +1,12 @@
 import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
 import deepEqual from 'fast-deep-equal';
-import { flatten, groupBy } from 'lodash';
-import { identity, Observable, of, SubscriptionLike, Unsubscribable, combineLatest } from 'rxjs';
+import { flatten, groupBy, head, map, mapValues, snakeCase, zipObject } from 'lodash';
+import { combineLatest, identity, Observable, of, SubscriptionLike, Unsubscribable } from 'rxjs';
 import { mergeMap, throttleTime } from 'rxjs/operators';
 
 import {
   AbsoluteTimeRange,
-  DataQuery,
+  DataFrame,
   DataQueryErrorType,
   DataQueryResponse,
   DataSourceApi,
@@ -17,9 +17,11 @@ import {
   LoadingState,
   PanelEvents,
   QueryFixAction,
+  SupplementaryQueryType,
   toLegacyResponseData,
 } from '@grafana/data';
 import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import {
   buildQueryTransaction,
   ensureQueries,
@@ -35,18 +37,23 @@ import { CorrelationData } from 'app/features/correlations/useCorrelations';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { store } from 'app/store/store';
-import { ExploreItemState, ExplorePanelData, ThunkDispatch, ThunkResult } from 'app/types';
-import { ExploreId, ExploreState, QueryOptions } from 'app/types/explore';
+import { createAsyncThunk, ExploreItemState, ExplorePanelData, ThunkDispatch, ThunkResult } from 'app/types';
+import { ExploreId, ExploreState, QueryOptions, SupplementaryQueries } from 'app/types/explore';
 
 import { notifyApp } from '../../../core/actions';
 import { createErrorNotification } from '../../../core/copy/appNotification';
 import { runRequest } from '../../query/state/runRequest';
 import { decorateData } from '../utils/decorators';
+import {
+  storeSupplementaryQueryEnabled,
+  supplementaryQueryTypes,
+  getSupplementaryQueryProvider,
+} from '../utils/supplementaryQueries';
 
 import { addHistoryItem, historyUpdatedAction, loadRichHistory } from './history';
 import { stateSave } from './main';
 import { updateTime } from './time';
-import { createCacheKey, getResultsFromCache, storeLogsVolumeEnabled } from './utils';
+import { createCacheKey, getResultsFromCache } from './utils';
 
 //
 // Actions and Payloads
@@ -95,43 +102,59 @@ export const queryStoreSubscriptionAction = createAction<QueryStoreSubscriptionP
   'explore/queryStoreSubscription'
 );
 
-const setLogsVolumeEnabledAction = createAction<{ exploreId: ExploreId; enabled: boolean }>(
-  'explore/setLogsVolumeEnabledAction'
-);
-
-export interface StoreLogsVolumeDataProvider {
+const setSupplementaryQueryEnabledAction = createAction<{
   exploreId: ExploreId;
-  logsVolumeDataProvider?: Observable<DataQueryResponse>;
+  type: SupplementaryQueryType;
+  enabled: boolean;
+}>('explore/setSupplementaryQueryEnabledAction');
+
+export interface StoreSupplementaryQueryDataProvider {
+  exploreId: ExploreId;
+  dataProvider?: Observable<DataQueryResponse>;
+  type: SupplementaryQueryType;
+}
+
+export interface CleanSupplementaryQueryDataProvider {
+  exploreId: ExploreId;
+  type: SupplementaryQueryType;
 }
 
 /**
- * Stores available logs volume provider after running the query. Used internally by runQueries().
+ * Stores available supplementary query data provider after running the query. Used internally by runQueries().
  */
-export const storeLogsVolumeDataProviderAction = createAction<StoreLogsVolumeDataProvider>(
-  'explore/storeLogsVolumeDataProviderAction'
+export const storeSupplementaryQueryDataProviderAction = createAction<StoreSupplementaryQueryDataProvider>(
+  'explore/storeSupplementaryQueryDataProviderAction'
 );
 
-export const cleanLogsVolumeAction = createAction<{ exploreId: ExploreId }>('explore/cleanLogsVolumeAction');
+export const cleanSupplementaryQueryDataProviderAction = createAction<CleanSupplementaryQueryDataProvider>(
+  'explore/cleanSupplementaryQueryDataProviderAction'
+);
 
-export interface StoreLogsVolumeDataSubscriptionPayload {
+export const cleanSupplementaryQueryAction = createAction<{ exploreId: ExploreId; type: SupplementaryQueryType }>(
+  'explore/cleanSupplementaryQueryAction'
+);
+
+export interface StoreSupplementaryQueryDataSubscriptionPayload {
   exploreId: ExploreId;
-  logsVolumeDataSubscription?: SubscriptionLike;
+  dataSubscription?: SubscriptionLike;
+  type: SupplementaryQueryType;
 }
 
 /**
  * Stores current logs volume subscription for given explore pane.
  */
-const storeLogsVolumeDataSubscriptionAction = createAction<StoreLogsVolumeDataSubscriptionPayload>(
-  'explore/storeLogsVolumeDataSubscriptionAction'
+const storeSupplementaryQueryDataSubscriptionAction = createAction<StoreSupplementaryQueryDataSubscriptionPayload>(
+  'explore/storeSupplementaryQueryDataSubscriptionAction'
 );
 
 /**
- * Stores data returned by the provider. Used internally by loadLogsVolumeData().
+ * Stores data returned by the provider. Used internally by loadSupplementaryQueryData().
  */
-const updateLogsVolumeDataAction = createAction<{
+const updateSupplementaryQueryDataAction = createAction<{
   exploreId: ExploreId;
-  logsVolumeData: DataQueryResponse;
-}>('explore/updateLogsVolumeDataAction');
+  type: SupplementaryQueryType;
+  data: DataQueryResponse;
+}>('explore/updateSupplementaryQueryDataAction');
 
 export interface QueryEndedPayload {
   exploreId: ExploreId;
@@ -231,15 +254,16 @@ export function cancelQueries(exploreId: ExploreId): ThunkResult<void> {
   return (dispatch, getState) => {
     dispatch(scanStopAction({ exploreId }));
     dispatch(cancelQueriesAction({ exploreId }));
-    dispatch(
-      storeLogsVolumeDataProviderAction({
-        exploreId,
-        logsVolumeDataProvider: undefined,
-      })
-    );
-    // clear any incomplete data
-    if (getState().explore[exploreId]!.logsVolumeData?.state !== LoadingState.Done) {
-      dispatch(cleanLogsVolumeAction({ exploreId }));
+
+    const supplementaryQueries = getState().explore[exploreId]!.supplementaryQueries;
+    // Cancel all data providers
+    for (const type of supplementaryQueryTypes) {
+      dispatch(cleanSupplementaryQueryDataProviderAction({ exploreId, type }));
+
+      // And clear any incomplete data
+      if (supplementaryQueries[type]?.data?.state !== LoadingState.Done) {
+        dispatch(cleanSupplementaryQueryAction({ exploreId, type }));
+      }
     }
     dispatch(stateSave());
   };
@@ -271,6 +295,35 @@ const getImportableQueries = async (
   return addDatasourceToQueries(targetDataSource, queriesOut);
 };
 
+export const changeQueries = createAsyncThunk<void, ChangeQueriesPayload>(
+  'explore/changeQueries',
+  async ({ queries, exploreId }, { getState, dispatch }) => {
+    let queriesImported = false;
+    const oldQueries = getState().explore[exploreId]!.queries;
+
+    for (const newQuery of queries) {
+      for (const oldQuery of oldQueries) {
+        if (newQuery.refId === oldQuery.refId && newQuery.datasource?.type !== oldQuery.datasource?.type) {
+          const queryDatasource = await getDataSourceSrv().get(oldQuery.datasource);
+          const targetDS = await getDataSourceSrv().get({ uid: newQuery.datasource?.uid });
+          await dispatch(importQueries(exploreId, oldQueries, queryDatasource, targetDS, newQuery.refId));
+          queriesImported = true;
+        }
+      }
+    }
+
+    // Importing queries changes the same state, therefore if we are importing queries we don't want to change the state again
+    if (!queriesImported) {
+      dispatch(changeQueriesAction({ queries, exploreId }));
+    }
+
+    // if we are removing a query we want to run the remaining ones
+    if (queries.length < queries.length) {
+      dispatch(runQueries(exploreId));
+    }
+  }
+);
+
 /**
  * Import queries from previous datasource if possible eg Loki and Prometheus have similar query language so the
  * labels part can be reused to get similar data.
@@ -285,7 +338,7 @@ export const importQueries = (
   sourceDataSource: DataSourceApi | undefined | null,
   targetDataSource: DataSourceApi,
   singleQueryChangeRef?: string // when changing one query DS to another in a mixed environment, we do not want to change all queries, just the one being changed
-): ThunkResult<void> => {
+): ThunkResult<Promise<void>> => {
   return async (dispatch) => {
     if (!sourceDataSource) {
       // explore not initialized
@@ -425,9 +478,10 @@ export const runQueries = (
       refreshInterval,
       absoluteRange,
       cache,
-      logsVolumeEnabled,
+      supplementaryQueries,
     } = exploreItemState;
-    let newQuerySub;
+    let newQuerySource: Observable<ExplorePanelData>;
+    let newQuerySubscription: SubscriptionLike;
 
     const queries = exploreItemState.queries.map((query) => ({
       ...query,
@@ -444,27 +498,19 @@ export const runQueries = (
 
     // If we have results saved in cache, we are going to use those results instead of running queries
     if (cachedValue) {
-      newQuerySub = combineLatest([of(cachedValue), correlations$])
-        .pipe(
-          mergeMap(([data, correlations]) =>
-            decorateData(
-              data,
-              queryResponse,
-              absoluteRange,
-              refreshInterval,
-              queries,
-              correlations,
-              datasourceInstance != null && hasLogsVolumeSupport(datasourceInstance)
-            )
-          )
+      newQuerySource = combineLatest([of(cachedValue), correlations$]).pipe(
+        mergeMap(([data, correlations]) =>
+          decorateData(data, queryResponse, absoluteRange, refreshInterval, queries, correlations)
         )
-        .subscribe((data) => {
-          if (!data.error) {
-            dispatch(stateSave());
-          }
+      );
 
-          dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
-        });
+      newQuerySubscription = newQuerySource.subscribe((data) => {
+        if (!data.error) {
+          dispatch(stateSave());
+        }
+
+        dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
+      });
 
       // If we don't have results saved in cache, run new queries
     } else {
@@ -500,131 +546,168 @@ export const runQueries = (
 
       dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));
 
-      newQuerySub = combineLatest([
+      newQuerySource = combineLatest([
         runRequest(datasourceInstance, transaction.request)
           // Simple throttle for live tailing, in case of > 1000 rows per interval we spend about 200ms on processing and
           // rendering. In case this is optimized this can be tweaked, but also it should be only as fast as user
           // actually can see what is happening.
           .pipe(live ? throttleTime(500) : identity),
         correlations$,
-      ])
-        .pipe(
-          mergeMap(([data, correlations]) =>
-            decorateData(
-              data,
-              queryResponse,
-              absoluteRange,
-              refreshInterval,
-              queries,
-              correlations,
-              datasourceInstance != null && hasLogsVolumeSupport(datasourceInstance)
-            )
-          )
+      ]).pipe(
+        mergeMap(([data, correlations]) =>
+          decorateData(data, queryResponse, absoluteRange, refreshInterval, queries, correlations)
         )
-        .subscribe({
-          next(data) {
-            if (data.logsResult !== null) {
-              reportInteraction('grafana_explore_logs_result_displayed', {
-                datasourceType: datasourceInstance.type,
-              });
-            }
-            dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
+      );
 
-            // Keep scanning for results if this was the last scanning transaction
-            if (getState().explore[exploreId]!.scanning) {
-              if (data.state === LoadingState.Done && data.series.length === 0) {
-                const range = getShiftedTimeRange(-1, getState().explore[exploreId]!.range);
-                dispatch(updateTime({ exploreId, absoluteRange: range }));
-                dispatch(runQueries(exploreId));
-              } else {
-                // We can stop scanning if we have a result
-                dispatch(scanStopAction({ exploreId }));
-              }
+      newQuerySubscription = newQuerySource.subscribe({
+        next(data) {
+          if (data.logsResult !== null) {
+            reportInteraction('grafana_explore_logs_result_displayed', {
+              datasourceType: datasourceInstance.type,
+            });
+          }
+          dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
+
+          // Keep scanning for results if this was the last scanning transaction
+          if (getState().explore[exploreId]!.scanning) {
+            if (data.state === LoadingState.Done && data.series.length === 0) {
+              const range = getShiftedTimeRange(-1, getState().explore[exploreId]!.range);
+              dispatch(updateTime({ exploreId, absoluteRange: range }));
+              dispatch(runQueries(exploreId));
+            } else {
+              // We can stop scanning if we have a result
+              dispatch(scanStopAction({ exploreId }));
             }
-          },
-          error(error) {
-            dispatch(notifyApp(createErrorNotification('Query processing error', error)));
-            dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Error }));
-            console.error(error);
-          },
-          complete() {
-            // In case we don't get any response at all but the observable completed, make sure we stop loading state.
-            // This is for cases when some queries are noop like running first query after load but we don't have any
-            // actual query input.
-            if (getState().explore[exploreId]!.queryResponse.state === LoadingState.Loading) {
-              dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Done }));
-            }
-          },
-        });
+          }
+        },
+        error(error) {
+          dispatch(notifyApp(createErrorNotification('Query processing error', error)));
+          dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Error }));
+          console.error(error);
+        },
+        complete() {
+          // In case we don't get any response at all but the observable completed, make sure we stop loading state.
+          // This is for cases when some queries are noop like running first query after load but we don't have any
+          // actual query input.
+          if (getState().explore[exploreId]!.queryResponse.state === LoadingState.Loading) {
+            dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Done }));
+          }
+        },
+      });
 
       if (live) {
-        dispatch(
-          storeLogsVolumeDataProviderAction({
-            exploreId,
-            logsVolumeDataProvider: undefined,
-          })
-        );
-        dispatch(cleanLogsVolumeAction({ exploreId }));
-      } else if (hasLogsVolumeSupport(datasourceInstance)) {
-        // we always prepare the logsVolumeProvider,
-        // but we only load it, if the logs-volume-histogram is enabled.
-        // (we need to have the logsVolumeProvider always actual,
-        // even when the visuals are disabled, because when the user
-        // enables the visuals again, we need to load the histogram,
-        // so we need the provider)
-        const sourceRequest = {
-          ...transaction.request,
-          requestId: transaction.request.requestId + '_log_volume',
-        };
-        const logsVolumeDataProvider = datasourceInstance.getLogsVolumeDataProvider(sourceRequest);
-        dispatch(
-          storeLogsVolumeDataProviderAction({
-            exploreId,
-            logsVolumeDataProvider,
-          })
-        );
-        const { logsVolumeData, absoluteRange } = getState().explore[exploreId]!;
-        if (!canReuseLogsVolumeData(logsVolumeData, queries, absoluteRange)) {
-          dispatch(cleanLogsVolumeAction({ exploreId }));
-          if (logsVolumeEnabled) {
-            dispatch(loadLogsVolumeData(exploreId));
-          }
+        for (const type of supplementaryQueryTypes) {
+          dispatch(
+            cleanSupplementaryQueryDataProviderAction({
+              exploreId,
+              type,
+            })
+          );
+          dispatch(cleanSupplementaryQueryAction({ exploreId, type }));
         }
       } else {
-        dispatch(
-          storeLogsVolumeDataProviderAction({
-            exploreId,
-            logsVolumeDataProvider: undefined,
-          })
-        );
+        for (const type of supplementaryQueryTypes) {
+          // We always prepare provider, even is supplementary query is disabled because when the user
+          // enables the query, we need to load the data, so we need the provider
+          const dataProvider = getSupplementaryQueryProvider(
+            datasourceInstance,
+            type,
+            {
+              ...transaction.request,
+              requestId: `${transaction.request.requestId}_${snakeCase(type)}`,
+            },
+            newQuerySource
+          );
+
+          if (dataProvider) {
+            dispatch(
+              storeSupplementaryQueryDataProviderAction({
+                exploreId,
+                type,
+                dataProvider,
+              })
+            );
+
+            if (!canReuseSupplementaryQueryData(supplementaryQueries[type].data, queries, absoluteRange)) {
+              dispatch(cleanSupplementaryQueryAction({ exploreId, type }));
+              if (supplementaryQueries[type].enabled) {
+                dispatch(loadSupplementaryQueryData(exploreId, type));
+              }
+            }
+            // Code below (else if scenario) is for backward compatibility with data sources that don't support supplementary queries
+            // TODO: Remove in next major version - v10 (https://github.com/grafana/grafana/issues/61845)
+          } else if (hasLogsVolumeSupport(datasourceInstance) && type === SupplementaryQueryType.LogsVolume) {
+            const dataProvider = datasourceInstance.getLogsVolumeDataProvider({
+              ...transaction.request,
+              requestId: `${transaction.request.requestId}_${snakeCase(type)}`,
+            });
+            dispatch(
+              storeSupplementaryQueryDataProviderAction({
+                exploreId,
+                type,
+                dataProvider,
+              })
+            );
+
+            if (!canReuseSupplementaryQueryData(supplementaryQueries[type].data, queries, absoluteRange)) {
+              dispatch(cleanSupplementaryQueryAction({ exploreId, type }));
+              if (supplementaryQueries[type].enabled) {
+                dispatch(loadSupplementaryQueryData(exploreId, type));
+              }
+            }
+          } else {
+            // If data source instance doesn't support this supplementary query, we clean the data provider
+            dispatch(
+              cleanSupplementaryQueryDataProviderAction({
+                exploreId,
+                type,
+              })
+            );
+          }
+        }
       }
     }
 
-    dispatch(queryStoreSubscriptionAction({ exploreId, querySubscription: newQuerySub }));
+    dispatch(queryStoreSubscriptionAction({ exploreId, querySubscription: newQuerySubscription }));
   };
 };
 
 /**
- * Checks if after changing the time range the existing data can be used to show logs volume.
+ * Checks if after changing the time range the existing data can be used to show supplementary query.
  * It can happen if queries are the same and new time range is within existing data time range.
  */
-function canReuseLogsVolumeData(
-  logsVolumeData: DataQueryResponse | undefined,
-  queries: DataQuery[],
+function canReuseSupplementaryQueryData(
+  supplementaryQueryData: DataQueryResponse | undefined,
+  newQueries: DataQuery[],
   selectedTimeRange: AbsoluteTimeRange
 ): boolean {
-  if (logsVolumeData && logsVolumeData.data[0]) {
-    // check if queries are the same
-    if (!deepEqual(logsVolumeData.data[0].meta?.custom?.targets, queries)) {
-      return false;
-    }
-    const dataRange = logsVolumeData && logsVolumeData.data[0] && logsVolumeData.data[0].meta?.custom?.absoluteRange;
-    // if selected range is within loaded logs volume
-    if (dataRange && dataRange.from <= selectedTimeRange.from && selectedTimeRange.to <= dataRange.to) {
+  if (!supplementaryQueryData) {
+    return false;
+  }
+
+  const newQueriesByRefId = zipObject(map(newQueries, 'refId'), newQueries);
+
+  const existingDataByRefId = mapValues(
+    groupBy(
+      supplementaryQueryData.data.map((dataFrame: DataFrame) => dataFrame.meta?.custom?.sourceQuery),
+      'refId'
+    ),
+    head
+  );
+
+  const allQueriesAreTheSame = deepEqual(newQueriesByRefId, existingDataByRefId);
+
+  const allResultsHaveWiderRange = supplementaryQueryData.data.every((data: DataFrame) => {
+    const dataRange = data.meta?.custom?.absoluteRange;
+    // Only first data frame in the response may contain the absolute range
+    if (!dataRange) {
       return true;
     }
-  }
-  return false;
+    const hasWiderRange = dataRange && dataRange.from <= selectedTimeRange.from && selectedTimeRange.to <= dataRange.to;
+    return hasWiderRange;
+  });
+
+  return allQueriesAreTheSame && allResultsHaveWiderRange;
 }
 
 /**
@@ -664,7 +747,7 @@ export function addResultsToCache(exploreId: ExploreId): ThunkResult<void> {
     const absoluteRange = getState().explore[exploreId]!.absoluteRange;
     const cacheKey = createCacheKey(absoluteRange);
 
-    // Save results to cache only when all results recived and loading is done
+    // Save results to cache only when all results received and loading is done
     if (queryResponse.state === LoadingState.Done) {
       dispatch(addResultsToCacheAction({ exploreId, cacheKey, queryResponse }));
     }
@@ -680,26 +763,38 @@ export function clearCache(exploreId: ExploreId): ThunkResult<void> {
 /**
  * Initializes loading logs volume data and stores emitted value.
  */
-export function loadLogsVolumeData(exploreId: ExploreId): ThunkResult<void> {
+export function loadSupplementaryQueryData(exploreId: ExploreId, type: SupplementaryQueryType): ThunkResult<void> {
   return (dispatch, getState) => {
-    const { logsVolumeDataProvider } = getState().explore[exploreId]!;
-    if (logsVolumeDataProvider) {
-      const logsVolumeDataSubscription = logsVolumeDataProvider.subscribe({
-        next: (logsVolumeData: DataQueryResponse) => {
-          dispatch(updateLogsVolumeDataAction({ exploreId, logsVolumeData }));
+    const { supplementaryQueries } = getState().explore[exploreId]!;
+    const dataProvider = supplementaryQueries[type].dataProvider;
+
+    if (dataProvider) {
+      const dataSubscription = dataProvider.subscribe({
+        next: (supplementaryQueryData: DataQueryResponse) => {
+          dispatch(updateSupplementaryQueryDataAction({ exploreId, type, data: supplementaryQueryData }));
         },
       });
-      dispatch(storeLogsVolumeDataSubscriptionAction({ exploreId, logsVolumeDataSubscription }));
+      dispatch(
+        storeSupplementaryQueryDataSubscriptionAction({
+          exploreId,
+          type,
+          dataSubscription,
+        })
+      );
     }
   };
 }
 
-export function setLogsVolumeEnabled(exploreId: ExploreId, enabled: boolean): ThunkResult<void> {
+export function setSupplementaryQueryEnabled(
+  exploreId: ExploreId,
+  enabled: boolean,
+  type: SupplementaryQueryType
+): ThunkResult<void> {
   return (dispatch, getState) => {
-    dispatch(setLogsVolumeEnabledAction({ exploreId, enabled }));
-    storeLogsVolumeEnabled(enabled);
+    dispatch(setSupplementaryQueryEnabledAction({ exploreId, enabled, type }));
+    storeSupplementaryQueryEnabled(enabled, type);
     if (enabled) {
-      dispatch(loadLogsVolumeData(exploreId));
+      dispatch(loadSupplementaryQueryData(exploreId, type));
     }
   };
 }
@@ -763,53 +858,107 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     };
   }
 
-  if (setLogsVolumeEnabledAction.match(action)) {
-    const { enabled } = action.payload;
-    if (!enabled && state.logsVolumeDataSubscription) {
-      state.logsVolumeDataSubscription.unsubscribe();
+  if (setSupplementaryQueryEnabledAction.match(action)) {
+    const { enabled, type } = action.payload;
+    const { supplementaryQueries } = state;
+    const dataSubscription = supplementaryQueries[type].dataSubscription;
+    if (!enabled && dataSubscription) {
+      dataSubscription.unsubscribe();
     }
-    return {
-      ...state,
-      logsVolumeEnabled: enabled,
+
+    const nextSupplementaryQueries: SupplementaryQueries = {
+      ...supplementaryQueries,
       // NOTE: the dataProvider is not cleared, we may need it later,
-      // if the user re-enables the histogram-visualization
-      logsVolumeData: undefined,
+      // if the user re-enables the supplementary query
+      [type]: { ...supplementaryQueries[type], enabled, data: undefined },
+    };
+
+    return {
+      ...state,
+      supplementaryQueries: nextSupplementaryQueries,
     };
   }
 
-  if (storeLogsVolumeDataProviderAction.match(action)) {
-    let { logsVolumeDataProvider } = action.payload;
-    if (state.logsVolumeDataSubscription) {
-      state.logsVolumeDataSubscription.unsubscribe();
+  if (storeSupplementaryQueryDataProviderAction.match(action)) {
+    const { dataProvider, type } = action.payload;
+    const { supplementaryQueries } = state;
+    const supplementaryQuery = supplementaryQueries[type];
+
+    if (supplementaryQuery?.dataSubscription) {
+      supplementaryQuery.dataSubscription.unsubscribe();
     }
+
+    const nextSupplementaryQueries = {
+      ...supplementaryQueries,
+      [type]: { ...supplementaryQuery, dataProvider, dataSubscription: undefined },
+    };
+
     return {
       ...state,
-      logsVolumeDataProvider,
-      logsVolumeDataSubscription: undefined,
+      supplementaryQueries: nextSupplementaryQueries,
     };
   }
 
-  if (cleanLogsVolumeAction.match(action)) {
+  if (cleanSupplementaryQueryDataProviderAction.match(action)) {
+    const { type } = action.payload;
+    const { supplementaryQueries } = state;
+    const supplementaryQuery = supplementaryQueries[type];
+
+    if (supplementaryQuery?.dataSubscription) {
+      supplementaryQuery.dataSubscription.unsubscribe();
+    }
+
+    const nextSupplementaryQueries = {
+      ...supplementaryQueries,
+      [type]: { ...supplementaryQuery, dataProvider: undefined, dataSubscription: undefined },
+    };
+
     return {
       ...state,
-      logsVolumeData: undefined,
+      supplementaryQueries: nextSupplementaryQueries,
     };
   }
 
-  if (storeLogsVolumeDataSubscriptionAction.match(action)) {
-    const { logsVolumeDataSubscription } = action.payload;
+  if (cleanSupplementaryQueryAction.match(action)) {
+    const { type } = action.payload;
+    const { supplementaryQueries } = state;
+    const nextSupplementaryQueries = {
+      ...supplementaryQueries,
+      [type]: { ...supplementaryQueries[type], data: undefined },
+    };
     return {
       ...state,
-      logsVolumeDataSubscription,
+      supplementaryQueries: nextSupplementaryQueries,
     };
   }
 
-  if (updateLogsVolumeDataAction.match(action)) {
-    let { logsVolumeData } = action.payload;
+  if (storeSupplementaryQueryDataSubscriptionAction.match(action)) {
+    const { dataSubscription, type } = action.payload;
+
+    const { supplementaryQueries } = state;
+    const nextSupplementaryQueries = {
+      ...supplementaryQueries,
+      [type]: { ...supplementaryQueries[type], dataSubscription },
+    };
 
     return {
       ...state,
-      logsVolumeData,
+      supplementaryQueries: nextSupplementaryQueries,
+    };
+  }
+
+  if (updateSupplementaryQueryDataAction.match(action)) {
+    let { data, type } = action.payload;
+    const { supplementaryQueries } = state;
+
+    const nextSupplementaryQueries = {
+      ...supplementaryQueries,
+      [type]: { ...supplementaryQueries[type], data },
+    };
+
+    return {
+      ...state,
+      supplementaryQueries: nextSupplementaryQueries,
     };
   }
 
@@ -922,9 +1071,11 @@ export const processQueryResponse = (
     graphResult,
     logsResult,
     tableResult,
+    rawPrometheusResult,
     traceFrames,
     nodeGraphFrames,
     flameGraphFrames,
+    rawPrometheusFrames,
   } = response;
 
   if (error) {
@@ -961,13 +1112,15 @@ export const processQueryResponse = (
     queryResponse: response,
     graphResult,
     tableResult,
+    rawPrometheusResult,
     logsResult,
     loading: loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming,
     showLogs: !!logsResult,
     showMetrics: !!graphResult,
-    showTable: !!tableResult,
+    showTable: !!tableResult?.length,
     showTrace: !!traceFrames.length,
     showNodeGraph: !!nodeGraphFrames.length,
+    showRawPrometheus: !!rawPrometheusFrames.length,
     showFlameGraph: !!flameGraphFrames.length,
   };
 };

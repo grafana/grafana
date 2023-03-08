@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/store"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 )
 
 type Model struct {
@@ -13,15 +13,15 @@ type Model struct {
 	Description string `json:"description,omitempty"`
 }
 
-func GetObjectKindInfo() models.ObjectKindInfo {
-	return models.ObjectKindInfo{
-		ID:   models.StandardKindFolder,
+func GetEntityKindInfo() entity.EntityKindInfo {
+	return entity.EntityKindInfo{
+		ID:   entity.StandardKindFolder,
 		Name: "Folder",
 	}
 }
 
-func GetObjectSummaryBuilder() models.ObjectSummaryBuilder {
-	return func(ctx context.Context, uid string, body []byte) (*models.ObjectSummary, []byte, error) {
+func GetEntitySummaryBuilder() entity.EntitySummaryBuilder {
+	return func(ctx context.Context, uid string, body []byte) (*entity.EntitySummary, []byte, error) {
 		obj := &Model{}
 		err := json.Unmarshal(body, obj)
 		if err != nil {
@@ -32,8 +32,8 @@ func GetObjectSummaryBuilder() models.ObjectSummaryBuilder {
 			obj.Name = store.GuessNameFromUID(uid)
 		}
 
-		summary := &models.ObjectSummary{
-			Kind:        models.StandardKindFolder,
+		summary := &entity.EntitySummary{
+			Kind:        entity.StandardKindFolder,
 			Name:        obj.Name,
 			Description: obj.Description,
 			UID:         uid,

@@ -17,7 +17,7 @@ describe('getQueryWithDefaults(', () => {
   });
 
   it('should set both range and instant to true when in Explore', () => {
-    expect(getQueryWithDefaults({ refId: 'A' } as any, CoreApp.Explore)).toEqual({
+    expect(getQueryWithDefaults({ refId: 'A' } as PromQuery, CoreApp.Explore)).toEqual({
       editorMode: 'builder',
       expr: '',
       legendFormat: '__auto',
@@ -45,6 +45,18 @@ describe('getQueryWithDefaults(', () => {
       expect(query.editorMode).toBe(QueryEditorMode.Code);
     });
 
-    expect(getQueryWithDefaults({ refId: 'A' } as any, CoreApp.Dashboard).editorMode).toEqual(QueryEditorMode.Code);
+    expect(getQueryWithDefaults({ refId: 'A' } as PromQuery, CoreApp.Dashboard).editorMode).toEqual(
+      QueryEditorMode.Code
+    );
+  });
+
+  it('should return default editor mode when it is provided', () => {
+    expect(getQueryWithDefaults({ refId: 'A' } as PromQuery, CoreApp.Dashboard, QueryEditorMode.Code)).toEqual({
+      editorMode: 'code',
+      expr: '',
+      legendFormat: '__auto',
+      range: true,
+      refId: 'A',
+    });
   });
 });

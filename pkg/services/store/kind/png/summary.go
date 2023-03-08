@@ -5,13 +5,13 @@ import (
 	"context"
 	"image/png"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/store"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 )
 
-func GetObjectKindInfo() models.ObjectKindInfo {
-	return models.ObjectKindInfo{
-		ID:            models.StandardKindPNG,
+func GetEntityKindInfo() entity.EntityKindInfo {
+	return entity.EntityKindInfo{
+		ID:            entity.StandardKindPNG,
 		Name:          "PNG",
 		Description:   "PNG Image file",
 		IsRaw:         true,
@@ -21,16 +21,16 @@ func GetObjectKindInfo() models.ObjectKindInfo {
 }
 
 // SVG sanitizer based on the rendering service
-func GetObjectSummaryBuilder() models.ObjectSummaryBuilder {
-	return func(ctx context.Context, uid string, body []byte) (*models.ObjectSummary, []byte, error) {
+func GetEntitySummaryBuilder() entity.EntitySummaryBuilder {
+	return func(ctx context.Context, uid string, body []byte) (*entity.EntitySummary, []byte, error) {
 		img, err := png.Decode(bytes.NewReader(body))
 		if err != nil {
 			return nil, nil, err
 		}
 
 		size := img.Bounds().Size()
-		summary := &models.ObjectSummary{
-			Kind: models.StandardKindSVG,
+		summary := &entity.EntitySummary{
+			Kind: entity.StandardKindSVG,
 			Name: store.GuessNameFromUID(uid),
 			UID:  uid,
 			Fields: map[string]interface{}{

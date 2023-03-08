@@ -17,14 +17,17 @@
 // TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 // THIS SOFTWARE.
 import { css } from '@emotion/css';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import uFuzzy from '@leeoniya/ufuzzy';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { CoreApp, createTheme, DataFrame, FieldType, getDisplayProcessor } from '@grafana/data';
 
 import { PIXELS_PER_LEVEL } from '../../constants';
-import { TooltipData, SelectedView } from '../types';
+import { TooltipData, SelectedView, ContextMenuData } from '../types';
 
+import FlameGraphContextMenu from './FlameGraphContextMenu';
+import FlameGraphMetadata from './FlameGraphMetadata';
 import FlameGraphTooltip, { getTooltipData } from './FlameGraphTooltip';
 import { ItemWithStart } from './dataTransform';
 import { getBarX, getRectDimensionsForLevel, renderRect } from './rendering';
@@ -35,10 +38,12 @@ type Props = {
   flameGraphHeight?: number;
   levels: ItemWithStart[][];
   topLevelIndex: number;
+  selectedBarIndex: number;
   rangeMin: number;
   rangeMax: number;
   search: string;
   setTopLevelIndex: (level: number) => void;
+  setSelectedBarIndex: (bar: number) => void;
   setRangeMin: (range: number) => void;
   setRangeMax: (range: number) => void;
   selectedView: SelectedView;
@@ -51,10 +56,12 @@ const FlameGraph = ({
   flameGraphHeight,
   levels,
   topLevelIndex,
+  selectedBarIndex,
   rangeMin,
   rangeMax,
   search,
   setTopLevelIndex,
+  setSelectedBarIndex,
   setRangeMin,
   setRangeMax,
   selectedView,
@@ -71,18 +78,27 @@ const FlameGraph = ({
   const graphRef = useRef<HTMLCanvasElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [tooltipData, setTooltipData] = useState<TooltipData>();
-  const [showTooltip, setShowTooltip] = useState(false);
+  const [contextMenuData, setContextMenuData] = useState<ContextMenuData>();
 
-  // Convert pixel coordinates to bar coordinates in the levels array so that we can add mouse events like clicks to
-  // the canvas.
-  const convertPixelCoordinatesToBarCoordinates = useCallback(
-    (x: number, y: number, pixelsPerTick: number) => {
-      const levelIndex = Math.floor(y / (PIXELS_PER_LEVEL / window.devicePixelRatio));
-      const barIndex = getBarIndex(x, levels[levelIndex], pixelsPerTick, totalTicks, rangeMin);
-      return { levelIndex, barIndex };
-    },
-    [levels, totalTicks, rangeMin]
-  );
+  const [ufuzzy] = useState(() => {
+    return new uFuzzy();
+  });
+
+  const uniqueLabels = useMemo(() => {
+    return [...new Set<string>(data.fields.find((f) => f.name === 'label')?.values.toArray())];
+  }, [data]);
+
+  const foundLabels = useMemo(() => {
+    const foundLabels = new Set<string>();
+
+    if (search) {
+      for (let idx of ufuzzy.filter(uniqueLabels, search)) {
+        foundLabels.add(uniqueLabels[idx]);
+      }
+    }
+
+    return foundLabels;
+  }, [ufuzzy, search, uniqueLabels]);
 
   const render = useCallback(
     (pixelsPerTick: number) => {
@@ -114,11 +130,11 @@ const FlameGraph = ({
         const dimensions = getRectDimensionsForLevel(level, levelIndex, totalTicks, rangeMin, pixelsPerTick, processor);
         for (const rect of dimensions) {
           // Render each rectangle based on the computed dimensions
-          renderRect(ctx, rect, totalTicks, rangeMin, rangeMax, search, levelIndex, topLevelIndex);
+          renderRect(ctx, rect, totalTicks, rangeMin, rangeMax, search, levelIndex, topLevelIndex, foundLabels);
         }
       }
     },
-    [levels, wrapperWidth, valueField, totalTicks, rangeMin, rangeMax, search, topLevelIndex]
+    [levels, wrapperWidth, valueField, totalTicks, rangeMin, rangeMax, search, topLevelIndex, foundLabels]
   );
 
   useEffect(() => {
@@ -126,24 +142,37 @@ const FlameGraph = ({
       const pixelsPerTick = (wrapperWidth * window.devicePixelRatio) / totalTicks / (rangeMax - rangeMin);
       render(pixelsPerTick);
 
-      // Clicking allows user to "zoom" into the flamegraph. Zooming means the x axis gets smaller so that the clicked
-      // bar takes 100% of the x axis.
       graphRef.current.onclick = (e) => {
+        setTooltipData(undefined);
         const pixelsPerTick = graphRef.current!.clientWidth / totalTicks / (rangeMax - rangeMin);
-        const { levelIndex, barIndex } = convertPixelCoordinatesToBarCoordinates(e.offsetX, e.offsetY, pixelsPerTick);
+        const { levelIndex, barIndex } = convertPixelCoordinatesToBarCoordinates(
+          e,
+          pixelsPerTick,
+          levels,
+          totalTicks,
+          rangeMin
+        );
 
+        // if clicking on a block in the canvas
         if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
-          setTopLevelIndex(levelIndex);
-          setRangeMin(levels[levelIndex][barIndex].start / totalTicks);
-          setRangeMax((levels[levelIndex][barIndex].start + levels[levelIndex][barIndex].value) / totalTicks);
+          setContextMenuData({ e, levelIndex, barIndex });
+        } else {
+          // if clicking on the canvas but there is no block beneath the cursor
+          setContextMenuData(undefined);
         }
       };
 
       graphRef.current!.onmousemove = (e) => {
-        if (tooltipRef.current) {
-          setShowTooltip(false);
+        if (tooltipRef.current && contextMenuData === undefined) {
+          setTooltipData(undefined);
           const pixelsPerTick = graphRef.current!.clientWidth / totalTicks / (rangeMax - rangeMin);
-          const { levelIndex, barIndex } = convertPixelCoordinatesToBarCoordinates(e.offsetX, e.offsetY, pixelsPerTick);
+          const { levelIndex, barIndex } = convertPixelCoordinatesToBarCoordinates(
+            e,
+            pixelsPerTick,
+            levels,
+            totalTicks,
+            rangeMin
+          );
 
           if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
             tooltipRef.current.style.left = e.clientX + 10 + 'px';
@@ -152,18 +181,16 @@ const FlameGraph = ({
             const bar = levels[levelIndex][barIndex];
             const tooltipData = getTooltipData(valueField, bar.label, bar.value, bar.self, totalTicks);
             setTooltipData(tooltipData);
-            setShowTooltip(true);
           }
         }
       };
 
       graphRef.current!.onmouseleave = () => {
-        setShowTooltip(false);
+        setTooltipData(undefined);
       };
     }
   }, [
     render,
-    convertPixelCoordinatesToBarCoordinates,
     levels,
     rangeMin,
     rangeMax,
@@ -175,27 +202,80 @@ const FlameGraph = ({
     setRangeMax,
     selectedView,
     valueField,
+    setSelectedBarIndex,
+    setContextMenuData,
+    contextMenuData,
   ]);
+
+  // hide context menu if outside of the flame graph canvas is clicked
+  useEffect(() => {
+    const handleOnClick = (e: MouseEvent) => {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      if ((e.target as HTMLElement).parentElement?.id !== 'flameGraphCanvasContainer') {
+        setContextMenuData(undefined);
+      }
+    };
+    window.addEventListener('click', handleOnClick);
+    return () => window.removeEventListener('click', handleOnClick);
+  }, [setContextMenuData]);
 
   return (
     <div className={styles.graph} ref={sizeRef}>
-      <canvas ref={graphRef} data-testid="flameGraph" />
-      <FlameGraphTooltip tooltipRef={tooltipRef} tooltipData={tooltipData!} showTooltip={showTooltip} />
+      <FlameGraphMetadata
+        levels={levels}
+        topLevelIndex={topLevelIndex}
+        selectedBarIndex={selectedBarIndex}
+        valueField={valueField}
+        totalTicks={totalTicks}
+      />
+      <div className={styles.canvasContainer} id="flameGraphCanvasContainer">
+        <canvas ref={graphRef} data-testid="flameGraph" />
+      </div>
+      <FlameGraphTooltip tooltipRef={tooltipRef} tooltipData={tooltipData!} />
+      {contextMenuData && (
+        <FlameGraphContextMenu
+          contextMenuData={contextMenuData!}
+          levels={levels}
+          totalTicks={totalTicks}
+          graphRef={graphRef}
+          setContextMenuData={setContextMenuData}
+          setTopLevelIndex={setTopLevelIndex}
+          setSelectedBarIndex={setSelectedBarIndex}
+          setRangeMin={setRangeMin}
+          setRangeMax={setRangeMax}
+        />
+      )}
     </div>
   );
 };
 
 const getStyles = (selectedView: SelectedView, app: CoreApp, flameGraphHeight: number | undefined) => ({
   graph: css`
-    cursor: pointer;
     float: left;
     overflow: scroll;
     width: ${selectedView === SelectedView.FlameGraph ? '100%' : '50%'};
     ${app !== CoreApp.Explore
-      ? `height: calc(${flameGraphHeight}px - 44px)`
-      : ''}; // 44px to adjust for header pushing content down
+      ? `height: calc(${flameGraphHeight}px - 50px)`
+      : ''}; // 50px to adjust for header pushing content down
+  `,
+  canvasContainer: css`
+    cursor: pointer;
   `,
 });
+
+// Convert pixel coordinates to bar coordinates in the levels array so that we can add mouse events like clicks to
+// the canvas.
+const convertPixelCoordinatesToBarCoordinates = (
+  e: MouseEvent,
+  pixelsPerTick: number,
+  levels: ItemWithStart[][],
+  totalTicks: number,
+  rangeMin: number
+) => {
+  const levelIndex = Math.floor(e.offsetY / (PIXELS_PER_LEVEL / window.devicePixelRatio));
+  const barIndex = getBarIndex(e.offsetX, levels[levelIndex], pixelsPerTick, totalTicks, rangeMin);
+  return { levelIndex, barIndex };
+};
 
 /**
  * Binary search for a bar in a level, based on the X pixel coordinate. Useful for detecting which bar did user click

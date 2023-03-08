@@ -36,9 +36,6 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2, isHorizontal: bool
       .rc-slider-mark-text-active {
         color: ${theme.colors.text.primary};
       }
-      .rc-slider-vertical .rc-slider-handle {
-        margin-top: -10px;
-      }
       .rc-slider-handle {
         border: none;
         background-color: ${handleColor};

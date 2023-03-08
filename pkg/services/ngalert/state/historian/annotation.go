@@ -2,56 +2,170 @@ package historian
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"math"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
+	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 )
 
-// AnnotationStateHistorian is an implementation of state.Historian that uses Grafana Annotations as the backing datastore.
-type AnnotationStateHistorian struct {
-	annotations annotations.Repository
+// AnnotationBackend is an implementation of state.Historian that uses Grafana Annotations as the backing datastore.
+type AnnotationBackend struct {
+	annotations AnnotationStore
 	dashboards  *dashboardResolver
+	rules       RuleStore
+	clock       clock.Clock
+	metrics     *metrics.Historian
 	log         log.Logger
 }
 
-func NewAnnotationHistorian(annotations annotations.Repository, dashboards dashboards.DashboardService) *AnnotationStateHistorian {
-	return &AnnotationStateHistorian{
+type RuleStore interface {
+	GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAlertRuleByUIDQuery) error
+}
+
+type AnnotationStore interface {
+	Find(ctx context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error)
+	SaveMany(ctx context.Context, items []annotations.Item) error
+}
+
+func NewAnnotationBackend(annotations AnnotationStore, dashboards dashboards.DashboardService, rules RuleStore, metrics *metrics.Historian) *AnnotationBackend {
+	logger := log.New("ngalert.state.historian", "backend", "annotations")
+	return &AnnotationBackend{
 		annotations: annotations,
 		dashboards:  newDashboardResolver(dashboards, defaultDashboardCacheExpiry),
-		log:         log.New("ngalert.state.historian"),
+		rules:       rules,
+		clock:       clock.New(),
+		metrics:     metrics,
+		log:         logger,
 	}
 }
 
 // RecordStates writes a number of state transitions for a given rule to state history.
-func (h *AnnotationStateHistorian) RecordStates(ctx context.Context, rule *ngmodels.AlertRule, states []state.StateTransition) {
+func (h *AnnotationBackend) RecordStatesAsync(ctx context.Context, rule history_model.RuleMeta, states []state.StateTransition) <-chan error {
 	logger := h.log.FromContext(ctx)
 	// Build annotations before starting goroutine, to make sure all data is copied and won't mutate underneath us.
-	annotations := h.buildAnnotations(rule, states, logger)
+	annotations := buildAnnotations(rule, states, logger)
 	panel := parsePanelKey(rule, logger)
-	go h.recordAnnotationsSync(ctx, panel, annotations, logger)
+
+	errCh := make(chan error, 1)
+	go func() {
+		defer close(errCh)
+		errCh <- h.recordAnnotations(ctx, panel, annotations, rule.OrgID, logger)
+	}()
+	return errCh
 }
 
-func (h *AnnotationStateHistorian) buildAnnotations(rule *ngmodels.AlertRule, states []state.StateTransition, logger log.Logger) []annotations.Item {
+func (h *AnnotationBackend) QueryStates(ctx context.Context, query ngmodels.HistoryQuery) (*data.Frame, error) {
+	logger := h.log.FromContext(ctx)
+	if query.RuleUID == "" {
+		return nil, fmt.Errorf("ruleUID is required to query annotations")
+	}
+
+	if query.Labels != nil {
+		logger.Warn("Annotation state history backend does not support label queries, ignoring that filter")
+	}
+
+	rq := ngmodels.GetAlertRuleByUIDQuery{
+		UID:   query.RuleUID,
+		OrgID: query.OrgID,
+	}
+	err := h.rules.GetAlertRuleByUID(ctx, &rq)
+	if err != nil {
+		return nil, fmt.Errorf("failed to look up the requested rule")
+	}
+	if rq.Result == nil {
+		return nil, fmt.Errorf("no such rule exists")
+	}
+
+	q := annotations.ItemQuery{
+		AlertID:      rq.Result.ID,
+		OrgID:        query.OrgID,
+		From:         query.From.Unix(),
+		To:           query.To.Unix(),
+		SignedInUser: query.SignedInUser,
+	}
+	items, err := h.annotations.Find(ctx, &q)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query annotations for state history: %w", err)
+	}
+
+	frame := data.NewFrame("states")
+
+	// Annotations only support querying for a single rule's history.
+	// Since we are guaranteed to have a single rule, we can return it as a single series.
+	// Also, annotations don't store labels in a strongly defined format. They are formatted into the label's text.
+	// We are not guaranteed that a given annotation has parseable text, so we instead use the entire text as an opaque value.
+
+	lbls := data.Labels(map[string]string{
+		"from":    "state-history",
+		"ruleUID": fmt.Sprint(query.RuleUID),
+	})
+
+	// TODO: In the future, we probably want to have one series per unique text string, instead. For simplicity, let's just make it a new column.
+	//
+	// TODO: This is a really naive mapping that will evolve in the next couple changes.
+	// TODO: It will converge over time with the other implementations.
+	//
+	// We represent state history as five vectors:
+	//   1. `time` - when the transition happened
+	//   2. `text` - a text string containing metadata about the rule
+	//   3. `prev` - the previous state and reason
+	//   4. `next` - the next state and reason
+	//   5. `data` - a JSON string, containing the annotation's contents. analogous to item.Data
+	times := make([]time.Time, 0, len(items))
+	texts := make([]string, 0, len(items))
+	prevStates := make([]string, 0, len(items))
+	nextStates := make([]string, 0, len(items))
+	values := make([]string, 0, len(items))
+	for _, item := range items {
+		data, err := json.Marshal(item.Data)
+		if err != nil {
+			logger.Error("Annotation service gave an annotation with unparseable data, skipping", "id", item.ID, "err", err)
+			continue
+		}
+		times = append(times, time.Unix(item.Time, 0))
+		texts = append(texts, item.Text)
+		prevStates = append(prevStates, item.PrevState)
+		nextStates = append(nextStates, item.NewState)
+		values = append(values, string(data))
+	}
+
+	frame.Fields = append(frame.Fields, data.NewField("time", lbls, times))
+	frame.Fields = append(frame.Fields, data.NewField("text", lbls, texts))
+	frame.Fields = append(frame.Fields, data.NewField("prev", lbls, prevStates))
+	frame.Fields = append(frame.Fields, data.NewField("next", lbls, nextStates))
+	frame.Fields = append(frame.Fields, data.NewField("data", lbls, values))
+
+	return frame, nil
+}
+
+func buildAnnotations(rule history_model.RuleMeta, states []state.StateTransition, logger log.Logger) []annotations.Item {
 	items := make([]annotations.Item, 0, len(states))
 	for _, state := range states {
+		if !shouldRecord(state) {
+			continue
+		}
 		logger.Debug("Alert state changed creating annotation", "newState", state.Formatted(), "oldState", state.PreviousFormatted())
 
 		annotationText, annotationData := buildAnnotationTextAndData(rule, state.State)
 
 		item := annotations.Item{
-			AlertId:   rule.ID,
-			OrgId:     state.OrgID,
+			AlertID:   rule.ID,
+			OrgID:     state.OrgID,
 			PrevState: state.PreviousFormatted(),
 			NewState:  state.Formatted(),
 			Text:      annotationText,
@@ -64,54 +178,39 @@ func (h *AnnotationStateHistorian) buildAnnotations(rule *ngmodels.AlertRule, st
 	return items
 }
 
-// panelKey uniquely identifies a panel.
-type panelKey struct {
-	orgID   int64
-	dashUID string
-	panelID int64
-}
-
-// panelKey attempts to get the key of the panel attached to the given rule. Returns nil if the rule is not attached to a panel.
-func parsePanelKey(rule *ngmodels.AlertRule, logger log.Logger) *panelKey {
-	dashUID, ok := rule.Annotations[ngmodels.DashboardUIDAnnotation]
-	if ok {
-		panelAnno := rule.Annotations[ngmodels.PanelIDAnnotation]
-		panelID, err := strconv.ParseInt(panelAnno, 10, 64)
-		if err != nil {
-			logger.Error("Error parsing panelUID for alert annotation", "actual", panelAnno, "error", err)
-			return nil
-		}
-		return &panelKey{
-			orgID:   rule.OrgID,
-			dashUID: dashUID,
-			panelID: panelID,
-		}
+func (h *AnnotationBackend) recordAnnotations(ctx context.Context, panel *panelKey, annotations []annotations.Item, orgID int64, logger log.Logger) error {
+	if len(annotations) == 0 {
+		return nil
 	}
-	return nil
-}
 
-func (h *AnnotationStateHistorian) recordAnnotationsSync(ctx context.Context, panel *panelKey, annotations []annotations.Item, logger log.Logger) {
 	if panel != nil {
 		dashID, err := h.dashboards.getID(ctx, panel.orgID, panel.dashUID)
 		if err != nil {
 			logger.Error("Error getting dashboard for alert annotation", "dashboardUID", panel.dashUID, "error", err)
-			return
+			dashID = 0
 		}
 
-		for _, i := range annotations {
-			i.DashboardId = dashID
-			i.PanelId = panel.panelID
+		for i := range annotations {
+			annotations[i].DashboardID = dashID
+			annotations[i].PanelID = panel.panelID
 		}
 	}
 
+	org := fmt.Sprint(orgID)
+	h.metrics.WritesTotal.WithLabelValues(org).Inc()
+	h.metrics.TransitionsTotal.WithLabelValues(org).Add(float64(len(annotations)))
 	if err := h.annotations.SaveMany(ctx, annotations); err != nil {
 		logger.Error("Error saving alert annotation batch", "error", err)
+		h.metrics.WritesFailed.WithLabelValues(org).Inc()
+		h.metrics.TransitionsFailed.WithLabelValues(org).Add(float64(len(annotations)))
+		return fmt.Errorf("error saving alert annotation batch: %w", err)
 	}
 
 	logger.Debug("Done saving alert annotation batch")
+	return nil
 }
 
-func buildAnnotationTextAndData(rule *ngmodels.AlertRule, currentState *state.State) (string, *simplejson.Json) {
+func buildAnnotationTextAndData(rule history_model.RuleMeta, currentState *state.State) (string, *simplejson.Json) {
 	jsonData := simplejson.New()
 	var value string
 
@@ -137,7 +236,7 @@ func buildAnnotationTextAndData(rule *ngmodels.AlertRule, currentState *state.St
 		for _, k := range keys {
 			values = append(values, fmt.Sprintf("%s=%f", k, currentState.Values[k]))
 		}
-		jsonData.Set("values", simplejson.NewFromAny(currentState.Values))
+		jsonData.Set("values", jsonifyValues(currentState.Values))
 		value = strings.Join(values, ", ")
 	}
 
@@ -145,12 +244,19 @@ func buildAnnotationTextAndData(rule *ngmodels.AlertRule, currentState *state.St
 	return fmt.Sprintf("%s {%s} - %s", rule.Title, labels.String(), value), jsonData
 }
 
-func removePrivateLabels(labels data.Labels) data.Labels {
-	result := make(data.Labels)
-	for k, v := range labels {
-		if !strings.HasPrefix(k, "__") && !strings.HasSuffix(k, "__") {
-			result[k] = v
+func jsonifyValues(vs map[string]float64) *simplejson.Json {
+	if vs == nil {
+		return nil
+	}
+
+	j := simplejson.New()
+	for k, v := range vs {
+		switch {
+		case math.IsInf(v, 0), math.IsNaN(v):
+			j.Set(k, fmt.Sprintf("%f", v))
+		default:
+			j.Set(k, v)
 		}
 	}
-	return result
+	return j
 }

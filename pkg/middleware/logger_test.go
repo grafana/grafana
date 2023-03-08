@@ -3,14 +3,15 @@ package middleware
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 )
 
 func Test_sanitizeURL(t *testing.T) {
 	type args struct {
-		ctx *models.ReqContext
+		ctx *contextmodel.ReqContext
 		s   string
 	}
 	tests := []struct {
@@ -21,7 +22,7 @@ func Test_sanitizeURL(t *testing.T) {
 		{
 			name: "Receiving empty string should return it",
 			args: args{
-				ctx: &models.ReqContext{
+				ctx: &contextmodel.ReqContext{
 					Logger: log.New("test.logger"),
 				},
 				s: "",
@@ -31,7 +32,7 @@ func Test_sanitizeURL(t *testing.T) {
 		{
 			name: "Receiving valid URL string should return it parsed",
 			args: args{
-				ctx: &models.ReqContext{
+				ctx: &contextmodel.ReqContext{
 					Logger: log.New("test.logger"),
 				},
 				s: "https://grafana.com/",
@@ -41,7 +42,7 @@ func Test_sanitizeURL(t *testing.T) {
 		{
 			name: "Receiving invalid URL string should return empty string",
 			args: args{
-				ctx: &models.ReqContext{
+				ctx: &contextmodel.ReqContext{
 					Logger: log.New("test.logger"),
 				},
 				s: "this is not a valid URL",

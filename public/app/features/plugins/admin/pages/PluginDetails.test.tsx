@@ -1,8 +1,8 @@
 import { getDefaultNormalizer, render, RenderResult, SelectorMatcherOptions, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
+import { Route } from 'react-router-dom';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import {
   PluginErrorCode,
@@ -12,8 +12,7 @@ import {
   WithAccessControlMetadata,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
-import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
+import { config, locationService } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
 import { mockPluginApis, getCatalogPluginMock, getPluginsStateMock, mockUserPermissions } from '../__mocks__';
@@ -70,26 +69,16 @@ const renderPluginDetails = (
 ): RenderResult => {
   const plugin = getCatalogPluginMock(pluginOverride);
   const { id } = plugin;
-  const props = getRouteComponentProps({
-    match: { params: { pluginId: id }, isExact: true, url: '', path: '' },
-    queryParams: { page: pageId },
-    location: {
-      hash: '',
-      pathname: `/plugins/${id}`,
-      search: pageId ? `?page=${pageId}` : '',
-      state: undefined,
-    },
-  });
   const store = configureStore({
     plugins: pluginsStateOverride || getPluginsStateMock([plugin]),
   });
 
+  locationService.push({ pathname: `/plugins/${id}`, search: pageId ? `?page=${pageId}` : '' });
+
   return render(
-    <MemoryRouter>
-      <Provider store={store}>
-        <PluginDetailsPage {...props} />
-      </Provider>
-    </MemoryRouter>
+    <TestProvider store={store}>
+      <Route path="/plugins/:pluginId" component={PluginDetailsPage} />
+    </TestProvider>
   );
 };
 
@@ -137,24 +126,7 @@ describe('Plugin details page', () => {
         local: { id },
       });
 
-      const props = getRouteComponentProps({
-        match: { params: { pluginId: id }, isExact: true, url: '', path: '' },
-        queryParams: {},
-        location: {
-          hash: '',
-          pathname: `/plugins/${id}`,
-          search: '',
-          state: undefined,
-        },
-      });
-      const store = configureStore();
-      const { queryByText } = render(
-        <MemoryRouter>
-          <Provider store={store}>
-            <PluginDetailsPage {...props} />
-          </Provider>
-        </MemoryRouter>
-      );
+      const { queryByText } = renderPluginDetails({ id });
 
       await waitFor(() => expect(queryByText(/licensed under the apache 2.0 license/i)).toBeInTheDocument());
     });
@@ -214,7 +186,7 @@ describe('Plugin details page', () => {
       const installedVersion = '1.3.443';
       const { queryByText } = renderPluginDetails({ id, installedVersion });
 
-      expect(await queryByText(`Version: ${installedVersion}`)).toBeInTheDocument();
+      expect(await queryByText(`${installedVersion}`)).toBeInTheDocument();
     });
 
     it('should display the latest compatible version in the header if a plugin is not installed', async () => {
@@ -230,7 +202,7 @@ describe('Plugin details page', () => {
       };
 
       const { findByText, queryByText } = renderPluginDetails({ id, details });
-      expect(await findByText('Version: 1.1.1')).toBeInTheDocument();
+      expect(await findByText('1.1.1')).toBeInTheDocument();
       expect(queryByText(/>=8.0.0/i)).toBeInTheDocument();
     });
 
@@ -430,9 +402,7 @@ describe('Plugin details page', () => {
       });
 
       // Wait for the dependencies part to be loaded
-      expect(await queryByText(/dependencies:/i)).toBeInTheDocument();
-
-      expect(queryByText('Grafana >=8.0.0')).toBeInTheDocument();
+      expect(await queryByText('Grafana >=8.0.0')).toBeInTheDocument();
     });
 
     it('should show a confirm modal when trying to uninstall a plugin', async () => {

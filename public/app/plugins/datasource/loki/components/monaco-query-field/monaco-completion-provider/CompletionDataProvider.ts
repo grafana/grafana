@@ -1,3 +1,5 @@
+import { chain } from 'lodash';
+
 import { HistoryItem } from '@grafana/data';
 import { escapeLabelValueInExactSelector } from 'app/plugins/datasource/prometheus/language_utils';
 
@@ -6,8 +8,12 @@ import { LokiQuery } from '../../../types';
 
 import { Label } from './situation';
 
+interface HistoryRef {
+  current: Array<HistoryItem<LokiQuery>>;
+}
+
 export class CompletionDataProvider {
-  constructor(private languageProvider: LanguageProvider, private history: Array<HistoryItem<LokiQuery>> = []) {}
+  constructor(private languageProvider: LanguageProvider, private historyRef: HistoryRef = { current: [] }) {}
 
   private buildSelector(labels: Label[]): string {
     const allLabelTexts = labels.map(
@@ -18,7 +24,11 @@ export class CompletionDataProvider {
   }
 
   getHistory() {
-    return this.history.map((entry) => entry.query.expr).filter((expr) => expr !== undefined);
+    return chain(this.historyRef.current)
+      .map((history: HistoryItem<LokiQuery>) => history.query.expr)
+      .filter()
+      .uniq()
+      .value();
   }
 
   async getLabelNames(otherLabels: Label[] = []) {
@@ -42,8 +52,8 @@ export class CompletionDataProvider {
     return data[labelName] ?? [];
   }
 
-  async getParserAndLabelKeys(labels: Label[]) {
-    return await this.languageProvider.getParserAndLabelKeys(this.buildSelector(labels));
+  async getParserAndLabelKeys(logQuery: string) {
+    return await this.languageProvider.getParserAndLabelKeys(logQuery);
   }
 
   async getSeriesLabels(labels: Label[]) {

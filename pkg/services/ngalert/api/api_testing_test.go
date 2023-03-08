@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	models2 "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acMock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -24,7 +24,7 @@ import (
 
 func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 	t.Run("when fine-grained access is enabled", func(t *testing.T) {
-		rc := &models2.ReqContext{
+		rc := &contextmodel.ReqContext{
 			Context: &web.Context{
 				Req: &http.Request{},
 			},
@@ -67,8 +67,8 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 			})
 
 			ds := &fakes.FakeCacheService{DataSources: []*datasources.DataSource{
-				{Uid: data1.DatasourceUID},
-				{Uid: data2.DatasourceUID},
+				{UID: data1.DatasourceUID},
+				{UID: data2.DatasourceUID},
 			}}
 
 			var result []eval.Result
@@ -95,7 +95,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 	})
 
 	t.Run("when fine-grained access is disabled", func(t *testing.T) {
-		rc := &models2.ReqContext{
+		rc := &contextmodel.ReqContext{
 			Context: &web.Context{
 				Req: &http.Request{},
 			},
@@ -110,7 +110,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 			data1 := models.GenerateAlertQuery()
 
 			ds := &fakes.FakeCacheService{DataSources: []*datasources.DataSource{
-				{Uid: data1.DatasourceUID},
+				{UID: data1.DatasourceUID},
 			}}
 			currentTime := time.Now()
 
@@ -152,7 +152,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 
 func TestRouteEvalQueries(t *testing.T) {
 	t.Run("when fine-grained access is enabled", func(t *testing.T) {
-		rc := &models2.ReqContext{
+		rc := &contextmodel.ReqContext{
 			Context: &web.Context{
 				Req: &http.Request{},
 			},
@@ -193,8 +193,8 @@ func TestRouteEvalQueries(t *testing.T) {
 			})
 
 			ds := &fakes.FakeCacheService{DataSources: []*datasources.DataSource{
-				{Uid: data1.DatasourceUID},
-				{Uid: data2.DatasourceUID},
+				{UID: data1.DatasourceUID},
+				{UID: data2.DatasourceUID},
 			}}
 
 			evaluator := &eval_mocks.ConditionEvaluatorMock{}
@@ -222,7 +222,7 @@ func TestRouteEvalQueries(t *testing.T) {
 	})
 
 	t.Run("when fine-grained access is disabled", func(t *testing.T) {
-		rc := &models2.ReqContext{
+		rc := &contextmodel.ReqContext{
 			Context: &web.Context{
 				Req: &http.Request{},
 			},
@@ -237,7 +237,7 @@ func TestRouteEvalQueries(t *testing.T) {
 			data1 := models.GenerateAlertQuery()
 
 			ds := &fakes.FakeCacheService{DataSources: []*datasources.DataSource{
-				{Uid: data1.DatasourceUID},
+				{UID: data1.DatasourceUID},
 			}}
 
 			currentTime := time.Now()

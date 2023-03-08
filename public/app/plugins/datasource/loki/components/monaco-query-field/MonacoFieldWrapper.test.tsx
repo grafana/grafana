@@ -1,7 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
-import LokiLanguageProvider from '../../LanguageProvider';
 import { createLokiDatasource } from '../../mocks';
 
 import { MonacoQueryFieldWrapper, Props } from './MonacoQueryFieldWrapper';
@@ -13,16 +12,16 @@ function renderComponent({
   runQueryOnBlur = false,
 }: Partial<Props> = {}) {
   const datasource = createLokiDatasource();
-  const languageProvider = new LokiLanguageProvider(datasource);
 
   render(
     <MonacoQueryFieldWrapper
-      languageProvider={languageProvider}
+      datasource={datasource}
       history={[]}
       initialValue={initialValue}
       onChange={onChange}
       onRunQuery={onRunQuery}
       runQueryOnBlur={runQueryOnBlur}
+      placeholder="Enter a Loki query (run with Shift+Enter)"
     />
   );
 }

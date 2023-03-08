@@ -23,7 +23,7 @@ func TestDataFrameSummary(t *testing.T) {
 	in, err := data.FrameToJSON(df, data.IncludeAll)
 	require.NoError(t, err)
 
-	summary, out, err := GetObjectSummaryBuilder()(context.Background(), "somthing", in)
+	summary, out, err := GetEntitySummaryBuilder()(context.Background(), "somthing", in)
 	require.NoError(t, err)
 	require.Equal(t, in, out) // same json
 

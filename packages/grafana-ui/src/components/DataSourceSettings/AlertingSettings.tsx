@@ -19,7 +19,7 @@ export function AlertingSettings<T extends AlertingConfig>({ options, onOptionsC
       <div className="gf-form-group">
         <div className="gf-form-inline">
           <div className="gf-form">
-            <InlineField labelWidth={26} label="Manage alerts via Alerting UI">
+            <InlineField labelWidth={26} label="Manage alerts via Alerting UI" disabled={options.readOnly}>
               <InlineSwitch
                 value={options.jsonData.manageAlerts !== false}
                 onChange={(event) =>

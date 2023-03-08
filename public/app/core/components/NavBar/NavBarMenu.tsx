@@ -15,7 +15,6 @@ import { NavBarItemWithoutMenu } from './NavBarItemWithoutMenu';
 import { NavBarMenuItem } from './NavBarMenuItem';
 import { NavBarToggle } from './NavBarToggle';
 import { NavFeatureHighlight } from './NavFeatureHighlight';
-import { getNavTitle } from './navBarItem-translations';
 import { isMatchOrChildMatch } from './utils';
 
 const MENU_WIDTH = '350px';
@@ -266,12 +265,11 @@ export function NavItem({
         </ul>
       </CollapsibleNavItem>
     );
-  } else if (link.emptyMessageId) {
-    const emptyMessageTranslated = getNavTitle(link.emptyMessageId);
+  } else if (link.emptyMessage) {
     return (
       <CollapsibleNavItem onClose={onClose} link={link} isActive={isMatchOrChildMatch(link, activeItem)}>
         <ul className={styles.children}>
-          <div className={styles.emptyMessage}>{emptyMessageTranslated}</div>
+          <div className={styles.emptyMessage}>{link.emptyMessage}</div>
         </ul>
       </CollapsibleNavItem>
     );

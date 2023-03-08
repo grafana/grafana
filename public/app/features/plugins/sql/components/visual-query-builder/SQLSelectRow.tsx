@@ -1,8 +1,8 @@
 import React from 'react';
-import { useAsync } from 'react-use';
 
 import { SelectableValue, toOption } from '@grafana/data';
 
+import { COMMON_AGGREGATE_FNS } from '../../constants';
 import { QueryWithDefaults } from '../../defaults';
 import { DB, SQLQuery } from '../../types';
 import { useSqlChange } from '../../utils/useSqlChange';
@@ -18,18 +18,14 @@ interface SQLSelectRowProps {
 
 export function SQLSelectRow({ fields, query, onQueryChange, db }: SQLSelectRowProps) {
   const { onSqlChange } = useSqlChange({ query, onQueryChange, db });
-
-  const state = useAsync(async () => {
-    const functions = await db.functions();
-    return functions.map((f) => toOption(f.name));
-  }, [db]);
+  const functions = [...COMMON_AGGREGATE_FNS, ...(db.functions?.() || [])].map(toOption);
 
   return (
     <SelectRow
       columns={fields}
       sql={query.sql!}
       format={query.format}
-      functions={state.value}
+      functions={functions}
       onSqlChange={onSqlChange}
     />
   );

@@ -68,9 +68,10 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
   private initOptions() {
     const { options } = this.props;
     const configuredOptions = options?.reduce?.include || [];
+    const ctx = { interpolate: (v: string) => v };
     const subscription = of(this.props.input)
       .pipe(
-        standardTransformers.ensureColumnsTransformer.operator(null),
+        standardTransformers.ensureColumnsTransformer.operator(null, ctx),
         this.extractAllNames(),
         this.extractNamesAndSelected(configuredOptions)
       )

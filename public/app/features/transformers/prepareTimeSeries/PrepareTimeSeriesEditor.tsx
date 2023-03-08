@@ -20,9 +20,9 @@ const wideInfo = {
   ),
 };
 
-const manyInfo = {
+const multiInfo = {
   label: 'Multi-frame time series',
-  value: timeSeriesFormat.TimeSeriesMany,
+  value: timeSeriesFormat.TimeSeriesMulti,
   description: 'Creates a new frame for each time/number pair',
   info: (
     <ul>
@@ -50,7 +50,7 @@ const longInfo = {
   ),
 };
 
-const formats: Array<SelectableValue<timeSeriesFormat>> = [wideInfo, manyInfo, longInfo];
+const formats: Array<SelectableValue<timeSeriesFormat>> = [wideInfo, multiInfo, longInfo];
 
 export function PrepareTimeSeriesEditor(props: TransformerUIProps<PrepareTimeSeriesOptions>): React.ReactElement {
   const { options, onChange } = props;
@@ -73,7 +73,19 @@ export function PrepareTimeSeriesEditor(props: TransformerUIProps<PrepareTimeSer
           <Select
             width={35}
             options={formats}
-            value={formats.find((v) => v.value === options.format) || formats[0]}
+            value={
+              formats.find((v) => {
+                // migrate previously selected timeSeriesMany to multi
+                if (
+                  v.value === timeSeriesFormat.TimeSeriesMulti &&
+                  options.format === timeSeriesFormat.TimeSeriesMany
+                ) {
+                  return true;
+                } else {
+                  return v.value === options.format;
+                }
+              }) || formats[0]
+            }
             onChange={onSelectFormat}
             className="flex-grow-1"
           />

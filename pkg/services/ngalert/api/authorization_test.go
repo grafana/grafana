@@ -49,7 +49,7 @@ func TestAuthorize(t *testing.T) {
 		}
 		paths[p] = methods
 	}
-	require.Len(t, paths, 40)
+	require.Len(t, paths, 45)
 
 	ac := acmock.New()
 	api := &API{AccessControl: ac}
@@ -401,7 +401,7 @@ func TestCheckDatasourcePermissionsForRule(t *testing.T) {
 	expressionByType := models.GenerateAlertQuery()
 	expressionByType.QueryType = expr.DatasourceType
 	expressionByUID := models.GenerateAlertQuery()
-	expressionByUID.DatasourceUID = expr.OldDatasourceUID
+	expressionByUID.DatasourceUID = expr.DatasourceUID
 
 	var data []models.AlertQuery
 	var scopes []string

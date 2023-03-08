@@ -23,7 +23,7 @@ const setup = (activeDatasourceOnly = false) => {
     queries: [],
     loading: false,
     totalQueries: 0,
-    activeDatasourceInstance: {} as any,
+    activeDatasourceInstance: '',
     updateFilters: jest.fn(),
     loadMoreRichHistory: jest.fn(),
     clearRichHistoryResults: jest.fn(),

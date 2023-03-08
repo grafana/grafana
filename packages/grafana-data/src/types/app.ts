@@ -3,6 +3,7 @@ import { ComponentType } from 'react';
 import { KeyValue } from './data';
 import { NavModel } from './navModel';
 import { PluginMeta, GrafanaPlugin, PluginIncludeType } from './plugin';
+import { extensionLinkConfigIsValid, PluginExtensionLink } from './pluginExtensions';
 
 /**
  * @public
@@ -13,6 +14,7 @@ export enum CoreApp {
   UnifiedAlerting = 'unified-alerting',
   Dashboard = 'dashboard',
   Explore = 'explore',
+  Correlations = 'correlations',
   Unknown = 'unknown',
   PanelEditor = 'panel-editor',
   PanelViewer = 'panel-viewer',
@@ -48,29 +50,43 @@ export interface AppPluginMeta<T extends KeyValue = KeyValue> extends PluginMeta
   // TODO anything specific to apps?
 }
 
+/**
+ * These types are towards the plugin developer when extending Grafana or other
+ * plugins from the module.ts
+ */
+export type AppConfigureExtension<T, C = object> = (extension: T, context: C) => Partial<T> | undefined;
+
+export type AppPluginExtensionLink = Pick<PluginExtensionLink, 'description' | 'path' | 'title'>;
+
+export type AppPluginExtensionLinkConfig<C extends object = object> = {
+  title: string;
+  description: string;
+  placement: string;
+  path: string;
+  configure?: AppConfigureExtension<AppPluginExtensionLink, C>;
+};
+
 export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppPluginMeta<T>> {
+  private linkExtensions: AppPluginExtensionLinkConfig[] = [];
+
   // Content under: /a/${plugin-id}/*
   root?: ComponentType<AppRootProps<T>>;
-  rootNav?: NavModel; // Initial navigation model
 
   /**
    * Called after the module has loaded, and before the app is used.
    * This function may be called multiple times on the same instance.
    * The first time, `this.meta` will be undefined
    */
-  init(meta: AppPluginMeta) {}
+  init(meta: AppPluginMeta<T>) {}
 
   /**
    * Set the component displayed under:
    *   /a/${plugin-id}/*
    *
    * If the NavModel is configured, the page will have a managed frame, otheriwse it has full control.
-   *
-   * NOTE: this structure will change in 7.2+ so that it is managed with a normal react router
    */
-  setRootPage(root: ComponentType<AppRootProps<T>>, rootNav?: NavModel) {
+  setRootPage(root: ComponentType<AppRootProps<T>>) {
     this.root = root;
-    this.rootNav = rootNav;
     return this;
   }
 
@@ -91,6 +107,22 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
         }
       }
     }
+  }
+
+  get extensionLinks(): AppPluginExtensionLinkConfig[] {
+    return this.linkExtensions;
+  }
+
+  configureExtensionLink<C extends object>(config: AppPluginExtensionLinkConfig<C>) {
+    const { path, description, title, placement } = config;
+
+    if (!extensionLinkConfigIsValid({ path, description, title, placement })) {
+      console.warn('[Plugins] Disabled extension because configureExtensionLink was called with an invalid object.');
+      return this;
+    }
+
+    this.linkExtensions.push(config as AppPluginExtensionLinkConfig);
+    return this;
   }
 }
 

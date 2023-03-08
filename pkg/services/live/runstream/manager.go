@@ -8,10 +8,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/user"
-
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
 var (
@@ -75,7 +75,7 @@ func WithCheckConfig(interval time.Duration, maxChecks int) ManagerOption {
 
 const (
 	defaultCheckInterval           = 5 * time.Second
-	defaultDatasourceCheckInterval = 60 * time.Second
+	defaultDatasourceCheckInterval = time.Minute
 	defaultMaxChecks               = 3
 )
 

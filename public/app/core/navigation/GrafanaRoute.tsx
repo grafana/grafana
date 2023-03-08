@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect } from 'react';
+import React, { Suspense, useEffect, useLayoutEffect } from 'react';
 // @ts-ignore
 import Drop from 'tether-drop';
 
@@ -18,9 +18,11 @@ export function GrafanaRoute(props: Props) {
 
   chrome.setMatchedRoute(props.route);
 
-  useEffect(() => {
-    keybindings.clearAndInitGlobalBindings();
+  useLayoutEffect(() => {
+    keybindings.clearAndInitGlobalBindings(props.route);
+  }, [keybindings, props.route]);
 
+  useEffect(() => {
     updateBodyClassNames(props.route);
     cleanupDOM();
     navigationLogger('GrafanaRoute', false, 'Mounted', props.match);

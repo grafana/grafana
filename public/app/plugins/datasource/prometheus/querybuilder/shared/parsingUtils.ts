@@ -1,6 +1,6 @@
 import { SyntaxNode, TreeCursor } from '@lezer/common';
 
-import { QueryBuilderOperation } from './types';
+import { QueryBuilderOperation, QueryBuilderOperationParamValue } from './types';
 
 // Although 0 isn't explicitly provided in the lezer-promql & @grafana/lezer-logql library as the error node ID, it does appear to be the ID of error nodes within lezer.
 export const ErrorId = 0;
@@ -97,7 +97,7 @@ export function makeBinOp(
   numberNode: SyntaxNode,
   hasBool: boolean
 ): QueryBuilderOperation {
-  const params: any[] = [parseFloat(getString(expr, numberNode))];
+  const params: QueryBuilderOperationParamValue[] = [parseFloat(getString(expr, numberNode))];
   if (opDef.comparison) {
     params.push(hasBool);
   }
@@ -184,7 +184,7 @@ function jsonToText(
   let text = newIndent + name;
 
   const children = node.children;
-  children.forEach((child: any, index: number) => {
+  children.forEach((child, index) => {
     const isLastChild = index === children.length - 1;
     text +=
       '\n' +
@@ -200,3 +200,11 @@ function jsonToText(
 function nodeToString(expr: string, node: SyntaxNode) {
   return node.name + ': ' + getString(expr, node);
 }
+
+/**
+ * There aren't any spaces in the metric names, so let's introduce a wildcard into the regex for each space to better facilitate a fuzzy search
+ */
+export const regexifyLabelValuesQueryString = (query: string) => {
+  const queryArray = query.split(' ');
+  return queryArray.map((query) => `${query}.*`).join('');
+};

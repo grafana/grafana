@@ -70,3 +70,16 @@ func TestForwardedCookiesMiddleware(t *testing.T) {
 		})
 	}
 }
+
+type testContext struct {
+	callChain []string
+	req       *http.Request
+}
+
+func (c *testContext) createRoundTripper() http.RoundTripper {
+	return httpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
+		c.callChain = append(c.callChain, "final")
+		c.req = req
+		return &http.Response{StatusCode: http.StatusOK}, nil
+	})
+}

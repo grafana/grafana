@@ -1,18 +1,19 @@
 import { isEqual } from 'lodash';
-import React, { PureComponent } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
+import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { firstValueFrom } from 'rxjs';
 
 import { AppEvents, PanelData, SelectableValue, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
-import { Button, CodeEditor, Field, Select } from '@grafana/ui';
+import { Button, CodeEditor, Field, Select, useStyles2 } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
 import { t } from 'app/core/internationalization';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
 import { getPanelDataFrames } from '../dashboard/components/HelpWizard/utils';
-import { getPanelInspectorStyles } from '../inspector/styles';
+import { getPanelInspectorStyles2 } from '../inspector/styles';
 import { reportPanelInspectInteraction } from '../search/page/reporting';
 
 import { InspectTab } from './types';
@@ -54,80 +55,32 @@ interface Props {
   data?: PanelData;
 }
 
-interface State {
-  show: ShowContent;
-  text: string;
-}
-
-export class InspectJSONTab extends PureComponent<Props, State> {
-  hasPanelJSON: boolean;
-
-  constructor(props: Props) {
-    super(props);
-    this.hasPanelJSON = !!(props.panel && props.dashboard);
-    // If we are in panel, we want to show PanelJSON, otherwise show DataFrames
-    this.state = {
-      show: this.hasPanelJSON ? ShowContent.PanelJSON : ShowContent.DataFrames,
-      text: this.hasPanelJSON ? getPrettyJSON(props.panel!.getSaveModel()) : getPrettyJSON(props.data),
-    };
-  }
-
-  componentDidMount() {
-    // when opening the inspector we want to report the interaction
-    reportPanelInspectInteraction(InspectTab.JSON, 'panelJSON');
-  }
-
-  onSelectChanged = async (item: SelectableValue<ShowContent>) => {
-    const show = await this.getJSONObject(item.value!);
-    const text = getPrettyJSON(show);
-    this.setState({ text, show: item.value! });
-  };
-
-  // Called onBlur
-  onTextChanged = (text: string) => {
-    this.setState({ text });
-  };
-
-  async getJSONObject(show: ShowContent) {
-    const { data, panel } = this.props;
-    if (show === ShowContent.PanelData) {
-      reportPanelInspectInteraction(InspectTab.JSON, 'panelData');
-      return data;
-    }
-
-    if (show === ShowContent.DataFrames) {
-      reportPanelInspectInteraction(InspectTab.JSON, 'dataFrame');
-
-      let d = data;
-
-      // do not include transforms and
-      if (panel && data?.state === LoadingState.Done) {
-        d = await firstValueFrom(
-          panel.getQueryRunner().getData({
-            withFieldConfig: false,
-            withTransforms: false,
-          })
-        );
+export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
+  const styles = useStyles2(getPanelInspectorStyles2);
+  const jsonOptions = useMemo(() => {
+    if (panel) {
+      if (panel.plugin?.meta.skipDataQuery) {
+        return [options[0]];
       }
-      return getPanelDataFrames(d);
+      return options;
     }
+    return options.slice(1, options.length);
+  }, [panel]);
+  const [show, setShow] = useState(panel ? ShowContent.PanelJSON : ShowContent.DataFrames);
+  const [text, setText] = useState('');
 
-    if (this.hasPanelJSON && show === ShowContent.PanelJSON) {
-      reportPanelInspectInteraction(InspectTab.JSON, 'panelJSON');
-      return panel!.getSaveModel();
-    }
+  useAsync(async () => {
+    const v = await getJSONObject(show, panel, data);
+    setText(getPrettyJSON(v));
+  }, [show, panel, data]);
 
-    return { note: t('dashboard.inspect-json.unknown', 'Unknown Object: {{show}}', { show }) };
-  }
-
-  onApplyPanelModel = () => {
-    const { panel, dashboard, onClose } = this.props;
-    if (this.hasPanelJSON) {
+  const onApplyPanelModel = useCallback(() => {
+    if (panel && dashboard && text) {
       try {
         if (!dashboard!.meta.canEdit) {
           appEvents.emit(AppEvents.alertError, ['Unable to apply']);
         } else {
-          const updates = JSON.parse(this.state.text);
+          const updates = JSON.parse(text);
           dashboard!.shouldUpdateDashboardPanelFromJSON(updates, panel!);
 
           //Report relevant updates
@@ -149,65 +102,90 @@ export class InspectJSONTab extends PureComponent<Props, State> {
 
       onClose();
     }
-  };
+  }, [panel, dashboard, onClose, text]);
 
-  onShowHelpWizard = () => {
+  const onShowHelpWizard = useCallback(() => {
     reportPanelInspectInteraction(InspectTab.JSON, 'supportWizard');
     const queryParms = locationService.getSearch();
     queryParms.set('inspectTab', InspectTab.Help.toString());
     locationService.push('?' + queryParms.toString());
-  };
+  }, []);
 
-  render() {
-    const { dashboard } = this.props;
-    const { show, text } = this.state;
-    const jsonOptions = this.hasPanelJSON ? options : options.slice(1, options.length);
-    const selected = options.find((v) => v.value === show);
-    const isPanelJSON = show === ShowContent.PanelJSON;
-    const canEdit = dashboard && dashboard.meta.canEdit;
-    const styles = getPanelInspectorStyles();
+  const isPanelJSON = show === ShowContent.PanelJSON;
+  const canEdit = dashboard && dashboard.meta.canEdit;
 
-    return (
-      <div className={styles.wrap}>
-        <div className={styles.toolbar} aria-label={selectors.components.PanelInspector.Json.content}>
-          <Field label={t('dashboard.inspect-json.select-source', 'Select source')} className="flex-grow-1">
-            <Select
-              inputId="select-source-dropdown"
-              options={jsonOptions}
-              value={selected}
-              onChange={this.onSelectChanged}
-            />
-          </Field>
-          {this.hasPanelJSON && isPanelJSON && canEdit && (
-            <Button className={styles.toolbarItem} onClick={this.onApplyPanelModel}>
-              Apply
-            </Button>
-          )}
-          {show === ShowContent.DataFrames && (
-            <Button className={styles.toolbarItem} onClick={this.onShowHelpWizard}>
-              Support
-            </Button>
-          )}
-        </div>
-        <div className={styles.content}>
-          <AutoSizer disableWidth>
-            {({ height }) => (
-              <CodeEditor
-                width="100%"
-                height={height}
-                language="json"
-                showLineNumbers={true}
-                showMiniMap={(text && text.length) > 100}
-                value={text || ''}
-                readOnly={!isPanelJSON}
-                onBlur={this.onTextChanged}
-              />
-            )}
-          </AutoSizer>
-        </div>
+  return (
+    <div className={styles.wrap}>
+      <div className={styles.toolbar} aria-label={selectors.components.PanelInspector.Json.content}>
+        <Field label={t('dashboard.inspect-json.select-source', 'Select source')} className="flex-grow-1">
+          <Select
+            inputId="select-source-dropdown"
+            options={jsonOptions}
+            value={jsonOptions.find((v) => v.value === show) ?? jsonOptions[0].value}
+            onChange={(v) => setShow(v.value!)}
+          />
+        </Field>
+        {panel && isPanelJSON && canEdit && (
+          <Button className={styles.toolbarItem} onClick={onApplyPanelModel}>
+            Apply
+          </Button>
+        )}
+        {show === ShowContent.DataFrames && (
+          <Button className={styles.toolbarItem} onClick={onShowHelpWizard}>
+            Support
+          </Button>
+        )}
       </div>
-    );
+
+      <div className={styles.content}>
+        <AutoSizer disableWidth>
+          {({ height }) => (
+            <CodeEditor
+              width="100%"
+              height={height}
+              language="json"
+              showLineNumbers={true}
+              showMiniMap={(text && text.length) > 100}
+              value={text || ''}
+              readOnly={!isPanelJSON}
+              onBlur={setText}
+            />
+          )}
+        </AutoSizer>
+      </div>
+    </div>
+  );
+}
+
+async function getJSONObject(show: ShowContent, panel?: PanelModel, data?: PanelData) {
+  if (show === ShowContent.PanelData) {
+    reportPanelInspectInteraction(InspectTab.JSON, 'panelData');
+    return data;
   }
+
+  if (show === ShowContent.DataFrames) {
+    reportPanelInspectInteraction(InspectTab.JSON, 'dataFrame');
+
+    let d = data;
+
+    // do not include transforms and
+    if (panel && data?.state === LoadingState.Done) {
+      d = await firstValueFrom(
+        panel.getQueryRunner().getData({
+          withFieldConfig: false,
+          withTransforms: false,
+        })
+      );
+    }
+    return getPanelDataFrames(d);
+  }
+
+  if (show === ShowContent.PanelJSON && panel) {
+    reportPanelInspectInteraction(InspectTab.JSON, 'panelJSON');
+    return panel!.getSaveModel();
+  }
+
+  return { note: t('dashboard.inspect-json.unknown', 'Unknown Object: {{show}}', { show }) };
 }
 
 function getPrettyJSON(obj: any): string {

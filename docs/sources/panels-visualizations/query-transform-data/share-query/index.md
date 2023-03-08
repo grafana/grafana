@@ -1,9 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/query-a-data-source/share-query/
-  - /docs/grafana/latest/panels-visualizations/query-transform-data/share-query/
-title: Share query results with another panel
+  - ../../panels/query-a-data-source/share-query/
 menuTitle: Share query results
+title: Share query results with another panel
 weight: 60
 ---
 

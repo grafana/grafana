@@ -1,6 +1,6 @@
 import { createAction, createReducer } from '@reduxjs/toolkit';
 
-import { DataQuery, RelativeTimeRange, getDefaultRelativeTimeRange } from '@grafana/data';
+import { DataQuery, getDefaultRelativeTimeRange, RelativeTimeRange } from '@grafana/data';
 import { getNextRefIdChar } from 'app/core/utils/query';
 import { findDataSourceFromExpressionRecursive } from 'app/features/alerting/utils/dataSourceFromExpression';
 import {
@@ -43,6 +43,7 @@ export const updateExpressionRefId = createAction<{ oldRefId: string; newRefId: 
 export const rewireExpressions = createAction<{ oldRefId: string; newRefId: string }>('rewireExpressions');
 export const updateExpressionType = createAction<{ refId: string; type: ExpressionQueryType }>('updateExpressionType');
 export const updateExpressionTimeRange = createAction('updateExpressionTimeRange');
+export const updateMaxDataPoints = createAction<{ refId: string; maxDataPoints: number }>('updateMaxDataPoints');
 
 export const queriesAndExpressionsReducer = createReducer(initialState, (builder) => {
   // data queries actions
@@ -70,6 +71,19 @@ export const queriesAndExpressionsReducer = createReducer(initialState, (builder
     .addCase(setDataQueries, (state, { payload }) => {
       const expressionQueries = state.queries.filter((query) => isExpressionQuery(query.model));
       state.queries = [...payload, ...expressionQueries];
+    })
+    .addCase(updateMaxDataPoints, (state, action) => {
+      state.queries = state.queries.map((query) => {
+        return query.refId === action.payload.refId
+          ? {
+              ...query,
+              model: {
+                ...query.model,
+                maxDataPoints: action.payload.maxDataPoints,
+              },
+            }
+          : query;
+      });
     });
 
   // expressions actions

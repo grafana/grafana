@@ -2,8 +2,7 @@
 _build:
   list: false
 aliases:
-  - /docs/grafana/latest/guides/whats-new-in-v7-1/
-  - /docs/grafana/latest/whatsnew/whats-new-in-v7-1/
+  - ../guides/whats-new-in-v7-1/
 description: Feature and improvement highlights for Grafana v7.1
 keywords:
   - grafana
@@ -109,10 +108,6 @@ You can now use HashiCorp Vault to get secrets for configuration and provisionin
 ### Support for monthly schedules in reports
 
 With Grafana Enterprise 7.1, you can generate reports on a [monthly schedule]({{< relref "../dashboards/share-dashboards-panels/#scheduling" >}}).
-
-## Upgrading
-
-See [upgrade notes]({{< relref "../setup-grafana/upgrade-grafana/" >}}).
 
 ## Changelog
 

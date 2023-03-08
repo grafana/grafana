@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { OrgRole, ServiceAccountDTO, ServiceAccountStateFilter } from 'app/types';
 
@@ -22,9 +23,6 @@ const setup = (propOverrides: Partial<Props>) => {
   const updateServiceAccountMock = jest.fn();
   const changeStateFilterMock = jest.fn();
   const createServiceAccountTokenMock = jest.fn();
-  const getApiKeysMigrationStatusMock = jest.fn();
-  const getApiKeysMigrationInfoMock = jest.fn();
-  const closeApiKeysMigrationInfoMock = jest.fn();
   const props: Props = {
     isLoading: false,
     page: 0,
@@ -35,8 +33,6 @@ const setup = (propOverrides: Partial<Props>) => {
     showPaging: false,
     totalPages: 1,
     serviceAccounts: [],
-    apiKeysMigrated: false,
-    showApiKeysMigrationInfo: false,
     changeQuery: changeQueryMock,
     fetchACOptions: fetchACOptionsMock,
     fetchServiceAccounts: fetchServiceAccountsMock,
@@ -44,16 +40,17 @@ const setup = (propOverrides: Partial<Props>) => {
     updateServiceAccount: updateServiceAccountMock,
     changeStateFilter: changeStateFilterMock,
     createServiceAccountToken: createServiceAccountTokenMock,
-    getApiKeysMigrationStatus: getApiKeysMigrationStatusMock,
-    getApiKeysMigrationInfo: getApiKeysMigrationInfoMock,
-    closeApiKeysMigrationInfo: closeApiKeysMigrationInfoMock,
   };
 
   Object.assign(props, propOverrides);
 
-  const { rerender } = render(<ServiceAccountsListPageUnconnected {...props} />);
+  const { rerender } = render(
+    <TestProvider>
+      <ServiceAccountsListPageUnconnected {...props} />
+    </TestProvider>
+  );
   return {
-    rerender,
+    rerender: (element: JSX.Element) => rerender(<TestProvider>{element}</TestProvider>),
     props,
     changeQueryMock,
     fetchACOptionsMock,

@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/features/datasources/mysql/
-  - /docs/grafana/latest/datasources/mysql/
-  - /docs/grafana/latest/data-sources/mysql/
+  - ../data-sources/mysql/
+  - ../features/datasources/mysql/
 description: Guide for using MySQL in Grafana
 keywords:
   - grafana
@@ -92,9 +91,9 @@ datasources:
   - name: MySQL
     type: mysql
     url: localhost:3306
-    database: grafana
     user: grafana
     jsonData:
+      database: grafana
       maxOpenConns: 0 # Grafana v5.4+
       maxIdleConns: 2 # Grafana v5.4+
       connMaxLifetime: 14400 # Grafana v5.4+
@@ -118,6 +117,8 @@ You can run the built query by pressing the `Run query` button in the top right 
 The response from MySQL can be formatted as either a table or as a time series. To use the time series format one of the columns must be named `time`.
 
 ### Dataset and Table selection
+
+> **Note:** If your table or database name contains a reserved word or a [not permitted character](https://dev.mysql.com/doc/refman/8.0/en/identifiers.html) the editor will put quotes around them. For example a table name like `table-name` will be quoted with backticks `` `table-name` ``.
 
 In the dataset dropdown, choose the MySQL database to query. The dropdown is be populated with the databases that the user has access to.
 When the dataset is selected, the table dropdown is populated with the tables that are available.

@@ -26,12 +26,11 @@ func (e NotFoundError) Error() string {
 }
 
 type DuplicateError struct {
-	PluginID          string
-	ExistingPluginDir string
+	PluginID string
 }
 
 func (e DuplicateError) Error() string {
-	return fmt.Sprintf("plugin with ID '%s' already exists in '%s'", e.PluginID, e.ExistingPluginDir)
+	return fmt.Sprintf("plugin with ID '%s' already exists", e.PluginID)
 }
 
 func (e DuplicateError) Is(err error) bool {
@@ -87,6 +86,7 @@ type Includes struct {
 	Type       string       `json:"type"`
 	Component  string       `json:"component"`
 	Role       org.RoleType `json:"role"`
+	Action     string       `json:"action,omitempty"`
 	AddToNav   bool         `json:"addToNav"`
 	DefaultNav bool         `json:"defaultNav"`
 	Slug       string       `json:"slug"`
@@ -101,6 +101,10 @@ func (e Includes) DashboardURLPath() string {
 		return ""
 	}
 	return "/d/" + e.UID
+}
+
+func (e Includes) RequiresRBACAction() bool {
+	return e.Action != ""
 }
 
 type Dependency struct {
@@ -190,13 +194,10 @@ func (s SignatureType) IsValid() bool {
 	return false
 }
 
-type PluginFiles map[string]struct{}
-
 type Signature struct {
 	Status     SignatureStatus
 	Type       SignatureType
 	SigningOrg string
-	Files      PluginFiles
 }
 
 type PluginMetaDTO struct {
@@ -225,6 +226,9 @@ type DataSourceDTO struct {
 	BasicAuth       string `json:"basicAuth,omitempty"`
 	WithCredentials bool   `json:"withCredentials,omitempty"`
 
+	// This is populated by an Enterprise hook
+	CachingConfig QueryCachingConfig `json:"cachingConfig,omitempty"`
+
 	// InfluxDB
 	Username string `json:"username,omitempty"`
 	Password string `json:"password,omitempty"`
@@ -249,6 +253,13 @@ type PanelDTO struct {
 	Module        string `json:"module"`
 }
 
+type AppDTO struct {
+	ID      string `json:"id"`
+	Path    string `json:"path"`
+	Version string `json:"version"`
+	Preload bool   `json:"preload"`
+}
+
 const (
 	signatureMissing  ErrorCode = "signatureMissing"
 	signatureModified ErrorCode = "signatureModified"
@@ -260,11 +271,6 @@ type ErrorCode string
 type Error struct {
 	ErrorCode `json:"errorCode"`
 	PluginID  string `json:"pluginId,omitempty"`
-}
-
-type PreloadPlugin struct {
-	Path    string `json:"path"`
-	Version string `json:"version"`
 }
 
 // Access-Control related definitions
@@ -279,7 +285,6 @@ type RoleRegistration struct {
 // Role is the model for Role in RBAC.
 type Role struct {
 	Name        string       `json:"name"`
-	DisplayName string       `json:"displayName"`
 	Description string       `json:"description"`
 	Permissions []Permission `json:"permissions"`
 }
@@ -287,4 +292,9 @@ type Role struct {
 type Permission struct {
 	Action string `json:"action"`
 	Scope  string `json:"scope"`
+}
+
+type QueryCachingConfig struct {
+	Enabled bool  `json:"enabled"`
+	TTLMS   int64 `json:"TTLMs"`
 }

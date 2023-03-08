@@ -1,4 +1,5 @@
-import { DataQuery, MutableDataFrame } from '@grafana/data';
+import { MutableDataFrame } from '@grafana/data';
+import { DataQuery, defaultDashboard } from '@grafana/schema';
 import { backendSrv } from 'app/core/services/backend_srv';
 import * as api from 'app/features/dashboard/state/initDashboard';
 import { ExplorePanelData } from 'app/types';
@@ -53,6 +54,7 @@ describe('addPanelToDashboard', () => {
     const existingPanel = { prop: 'this should be kept' };
     jest.spyOn(backendSrv, 'getDashboardByUid').mockResolvedValue({
       dashboard: {
+        ...defaultDashboard,
         templating: { list: [] },
         title: 'Previous panels should not be removed',
         uid: 'someUid',

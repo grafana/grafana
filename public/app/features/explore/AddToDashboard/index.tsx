@@ -20,6 +20,7 @@ export const AddToDashboard = ({ exploreId }: Props) => {
     <>
       <ToolbarButton
         icon="apps"
+        variant="canvas"
         onClick={() => setIsOpen(true)}
         aria-label="Add to dashboard"
         disabled={!explorePaneHasQueries}

@@ -1,3 +1,3 @@
-import { Filter } from '../../aggregations';
+import { Filter } from '../../../../../types';
 
 export const defaultFilter = (): Filter => ({ label: '', query: '*' });

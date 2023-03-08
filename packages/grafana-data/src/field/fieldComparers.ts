@@ -1,6 +1,6 @@
 import { isNumber } from 'lodash';
 
-import { dateTime } from '../datetime';
+import { dateTime, isDateTime } from '../datetime';
 import { Field, FieldType } from '../types/dataFrame';
 import { Vector } from '../types/vector';
 
@@ -25,7 +25,7 @@ export const fieldIndexComparer = (field: Field, reverse = false): IndexComparer
 };
 
 /** @public */
-export const timeComparer = (a: any, b: any): number => {
+export const timeComparer = (a: unknown, b: unknown): number => {
   if (!a || !b) {
     return falsyComparer(a, b);
   }
@@ -34,12 +34,14 @@ export const timeComparer = (a: any, b: any): number => {
     return numericComparer(a, b);
   }
 
-  if (dateTime(a).isBefore(b)) {
-    return -1;
-  }
+  if (isDateTime(a) && isDateTime(b)) {
+    if (dateTime(a).isBefore(b)) {
+      return -1;
+    }
 
-  if (dateTime(b).isBefore(a)) {
-    return 1;
+    if (dateTime(b).isBefore(a)) {
+      return 1;
+    }
   }
 
   return 0;
@@ -62,7 +64,7 @@ export const booleanComparer = (a: boolean, b: boolean): number => {
   return falsyComparer(a, b);
 };
 
-const falsyComparer = (a: any, b: any): number => {
+const falsyComparer = (a: unknown, b: unknown): number => {
   if (!a && b) {
     return 1;
   }
@@ -74,7 +76,7 @@ const falsyComparer = (a: any, b: any): number => {
   return 0;
 };
 
-const timeIndexComparer = (values: Vector<any>, reverse: boolean): IndexComparer => {
+const timeIndexComparer = (values: Vector<unknown>, reverse: boolean): IndexComparer => {
   return (a: number, b: number): number => {
     const vA = values.get(a);
     const vB = values.get(b);
@@ -82,26 +84,26 @@ const timeIndexComparer = (values: Vector<any>, reverse: boolean): IndexComparer
   };
 };
 
-const booleanIndexComparer = (values: Vector<any>, reverse: boolean): IndexComparer => {
+const booleanIndexComparer = (values: Vector<boolean>, reverse: boolean): IndexComparer => {
   return (a: number, b: number): number => {
-    const vA: boolean = values.get(a);
-    const vB: boolean = values.get(b);
+    const vA = values.get(a);
+    const vB = values.get(b);
     return reverse ? booleanComparer(vB, vA) : booleanComparer(vA, vB);
   };
 };
 
-const numericIndexComparer = (values: Vector<any>, reverse: boolean): IndexComparer => {
+const numericIndexComparer = (values: Vector<number>, reverse: boolean): IndexComparer => {
   return (a: number, b: number): number => {
-    const vA: number = values.get(a);
-    const vB: number = values.get(b);
+    const vA = values.get(a);
+    const vB = values.get(b);
     return reverse ? numericComparer(vB, vA) : numericComparer(vA, vB);
   };
 };
 
-const stringIndexComparer = (values: Vector<any>, reverse: boolean): IndexComparer => {
+const stringIndexComparer = (values: Vector<string>, reverse: boolean): IndexComparer => {
   return (a: number, b: number): number => {
-    const vA: string = values.get(a);
-    const vB: string = values.get(b);
+    const vA = values.get(a);
+    const vB = values.get(b);
     return reverse ? stringComparer(vB, vA) : stringComparer(vA, vB);
   };
 };

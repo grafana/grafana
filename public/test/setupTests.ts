@@ -8,6 +8,7 @@ import { matchers } from './matchers';
 failOnConsole({
   shouldFailOnLog: true,
 });
+
 expect.extend(matchers);
 
 i18next.use(initReactI18next).init({

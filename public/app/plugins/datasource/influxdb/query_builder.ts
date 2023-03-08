@@ -1,6 +1,6 @@
 import { reduce } from 'lodash';
 
-import kbn from 'app/core/utils/kbn';
+import { escapeRegex } from '@grafana/data';
 
 function renderTagCondition(tag: { operator: any; value: string; condition: any; key: string }, index: number) {
   // FIXME: merge this function with influx_query_model/renderTagCondition
@@ -25,7 +25,17 @@ function renderTagCondition(tag: { operator: any; value: string; condition: any;
     value = "'" + value.replace(/\\/g, '\\\\').replace(/\'/g, "\\'") + "'";
   }
 
-  return str + '"' + tag.key + '" ' + operator + ' ' + value;
+  let escapedKey = `"${tag.key}"`;
+
+  if (tag.key.endsWith('::tag')) {
+    escapedKey = `"${tag.key.slice(0, -5)}"::tag`;
+  }
+
+  if (tag.key.endsWith('::field')) {
+    escapedKey = `"${tag.key.slice(0, -7)}"::field`;
+  }
+
+  return str + escapedKey + ' ' + operator + ' ' + value;
 }
 
 export class InfluxQueryBuilder {
@@ -48,7 +58,7 @@ export class InfluxQueryBuilder {
       query = 'SHOW MEASUREMENTS';
       if (withMeasurementFilter) {
         // we do a case-insensitive regex-based lookup
-        query += ' WITH MEASUREMENT =~ /(?i)' + kbn.regexEscape(withMeasurementFilter) + '/';
+        query += ' WITH MEASUREMENT =~ /(?i)' + escapeRegex(withMeasurementFilter) + '/';
       }
     } else if (type === 'FIELDS') {
       measurement = this.target.measurement;
@@ -83,7 +93,13 @@ export class InfluxQueryBuilder {
     }
 
     if (withKey) {
-      query += ' WITH KEY = "' + withKey + '"';
+      let keyIdentifier = withKey;
+
+      if (keyIdentifier.endsWith('::tag')) {
+        keyIdentifier = keyIdentifier.slice(0, -5);
+      }
+
+      query += ' WITH KEY = "' + keyIdentifier + '"';
     }
 
     if (this.target.tags && this.target.tags.length > 0) {

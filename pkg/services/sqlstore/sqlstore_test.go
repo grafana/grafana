@@ -5,8 +5,9 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type sqlStoreTest struct {

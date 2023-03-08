@@ -82,11 +82,14 @@ const dummyProps: Props = {
   showTrace: true,
   showNodeGraph: true,
   showFlameGraph: true,
-  splitOpen: (() => {}) as any,
+  splitOpen: () => {},
   splitted: false,
-  changeGraphStyle: () => {},
-  graphStyle: 'lines',
+  isFromCompactUrl: false,
   eventBus: new EventBusSrv(),
+  showRawPrometheus: false,
+  showLogsSample: false,
+  logsSample: { enabled: false },
+  setSupplementaryQueryEnabled: jest.fn(),
 };
 
 jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {

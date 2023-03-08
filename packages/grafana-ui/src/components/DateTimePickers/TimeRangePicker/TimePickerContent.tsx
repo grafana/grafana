@@ -86,7 +86,7 @@ export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = (p
                 autoFocus={true}
                 value={searchTerm}
                 onChange={setSearchQuery}
-                placeholder={'Search quick ranges'}
+                placeholder={t('time-picker.content.filter-placeholder', 'Search quick ranges')}
               />
             </div>
             <CustomScrollbar>
@@ -160,7 +160,6 @@ const NarrowScreenForm = (props: FormProps) => {
           <div className={styles.form}>
             <TimeRangeContent value={value} onApply={onChange} timeZone={timeZone} isFullscreen={false} />
           </div>
-          <p></p>
           {showHistory && (
             <TimeRangeList
               title={t('time-picker.absolute.recent-title', 'Recently used absolute ranges')}
@@ -220,22 +219,24 @@ const EmptyRecentList = memo(() => {
 
   return (
     <div className={styles.container}>
-      <div>
-        <span>
-          It looks like you haven&apos;t used this time picker before. As soon as you enter some time intervals,
-          recently used intervals will appear here.
-        </span>
-      </div>
-      <div>
-        <a
-          className={styles.link}
-          href="https://grafana.com/docs/grafana/latest/dashboards/time-range-controls"
-          target="_new"
-        >
-          Read the documentation
-        </a>
-        <span> to find out more about how to enter custom time ranges.</span>
-      </div>
+      <Trans i18nKey="time-picker.content.empty-recent-list">
+        <div>
+          <span>
+            It looks like you haven&apos;t used this time picker before. As soon as you enter some time intervals,
+            recently used intervals will appear here.
+          </span>
+        </div>
+        <div>
+          <a
+            className={styles.link}
+            href="https://grafana.com/docs/grafana/latest/dashboards/time-range-controls"
+            target="_new"
+          >
+            Read the documentation
+          </a>
+          <span> to find out more about how to enter custom time ranges.</span>
+        </div>
+      </Trans>
     </div>
   );
 });
@@ -244,7 +245,8 @@ function mapToHistoryOptions(ranges?: TimeRange[], timeZone?: TimeZone): TimeOpt
   if (!Array.isArray(ranges) || ranges.length === 0) {
     return [];
   }
-  return ranges.slice(ranges.length - 4).map((range) => mapRangeToTimeOption(range, timeZone));
+
+  return ranges.map((range) => mapRangeToTimeOption(range, timeZone));
 }
 
 EmptyRecentList.displayName = 'EmptyRecentList';
@@ -265,10 +267,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, isReversed, hideQuickRang
     container: css`
       background: ${theme.colors.background.primary};
       box-shadow: ${theme.shadows.z3};
-      position: absolute;
-      z-index: ${theme.zIndex.dropdown};
       width: ${isFullscreen ? '546px' : '262px'};
-      top: 116%;
       border-radius: 2px;
       border: 1px solid ${theme.colors.border.weak};
       ${isReversed ? 'left' : 'right'}: 0;

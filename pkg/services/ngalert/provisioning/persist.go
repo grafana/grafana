@@ -48,7 +48,7 @@ type RuleStore interface {
 //
 //go:generate mockery --name QuotaChecker --structname MockQuotaChecker --inpackage --filename quota_checker_mock.go --with-expecter
 type QuotaChecker interface {
-	CheckQuotaReached(ctx context.Context, target string, scopeParams *quota.ScopeParameters) (bool, error)
+	CheckQuotaReached(ctx context.Context, target quota.TargetSrv, scopeParams *quota.ScopeParameters) (bool, error)
 }
 
 // PersistConfig validates to config before eventually persisting it if no error occurs

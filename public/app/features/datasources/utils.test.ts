@@ -1,4 +1,4 @@
-import { getMockPlugin, getMockPlugins } from 'app/features/plugins/__mocks__/pluginMocks';
+import { getMockPlugin, getMockPlugins } from '@grafana/data/test/__mocks__/pluginMocks';
 
 import { nameExits, findNewName } from './utils';
 

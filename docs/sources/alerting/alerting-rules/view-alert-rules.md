@@ -1,9 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/alerting-rules/rule-list/
-  - /docs/grafana/latest/alerting/unified-alerting/alerting-rules/rule-list/
-  - /docs/grafana/latest/alerting/view-alert-rules/
-  - /docs/grafana/latest/alerting/alerting-rules/view-alert-rules
+  - ../unified-alerting/alerting-rules/rule-list/
+  - ../view-alert-rules/
+  - rule-list/
 description: Manage alerting rules
 keywords:
   - grafana
@@ -21,8 +20,12 @@ The Alerting page lists all existing alert rules. By default, rules are grouped 
 
 The Mimir/Cortex/Loki rules section lists all rules for Mimir, Cortex, or Loki data sources. Cloud alert rules are also listed in this section.
 
+When managing large volumes of alerts, you can use extended alert rule search capabilities to filter on folders, evaluation groups, and rules. Additionally, you can filter alert rules by their properties like labels, state, type, and health.
+
 - [View and filter alert rules](#view-and-filter-alert-rules)
   - [View alert rules](#view-alert-rules)
+  - [Export alert rules](#export-alert-rules)
+  - [View query definitions for provisioned alerts](#view-query-definitions-for-provisioned-alerts)
     - [Grouped view](#grouped-view)
     - [State view](#state-view)
   - [Filter alert rules](#filter-alert-rules)
@@ -36,6 +39,18 @@ To view alerting details:
 1. Expand the rule row to view the rule labels, annotations, data sources the rule queries, and a list of alert instances resulting from this rule.
 
 {{< figure src="/static/img/docs/alerting/unified/rule-details-8-0.png" max-width="650px" caption="Alerting rule details" >}}
+
+From the Alert list page, you can also make copies of alert rules to help you reuse existing alert rules.
+
+## Export alert rules
+
+Click **Export** to create and tune an alert rule in the UI, then export to YAML or JSON, and use in the provisioning API or files. You can also export an entire rule group to review or use.
+
+**Note:** This is supported in both the UI and provisioning API.
+
+## View query definitions for provisioned alerts
+
+View read-only query definitions for provisioned alerts. Check quickly if your alert rule queries are correct, without diving into your "as-code" repository for rule definitions.
 
 ### Grouped view
 

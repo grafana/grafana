@@ -1,9 +1,10 @@
 import { cloneDeep } from 'lodash';
 
-import { FrameGeometrySourceMode } from '@grafana/data/src';
+import { FrameGeometrySourceMode } from '@grafana/schema';
 
 import { GeomapPanel } from '../GeomapPanel';
 import { geomapLayerRegistry } from '../layers/registry';
+import { defaultStyleConfig } from '../style/types';
 import { GeomapLayerActions, MapLayerState } from '../types';
 
 import { initLayer } from './layers';
@@ -51,6 +52,7 @@ export const getActions = (panel: GeomapPanel) => {
           config: cloneDeep(item.defaultOptions),
           location: item.showLocation ? { mode: FrameGeometrySourceMode.Auto } : undefined,
           tooltip: true,
+          ...(!item.hideOpacity && { opacity: defaultStyleConfig.opacity }),
         },
         false
       ).then((lyr) => {

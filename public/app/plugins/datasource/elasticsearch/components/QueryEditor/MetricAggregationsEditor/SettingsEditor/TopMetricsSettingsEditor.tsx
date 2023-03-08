@@ -6,8 +6,8 @@ import { AsyncMultiSelect, InlineField, SegmentAsync, Select } from '@grafana/ui
 
 import { useFields } from '../../../../hooks/useFields';
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
+import { TopMetrics } from '../../../../types';
 import { orderOptions } from '../../BucketAggregationsEditor/utils';
-import { TopMetrics } from '../aggregations';
 import { changeMetricSetting } from '../state/actions';
 
 interface Props {

@@ -1,50 +1,25 @@
-import {
-  Field,
-  FieldType,
-  FrameGeometrySource,
-  FrameGeometrySourceMode,
-  PanelOptionsEditorBuilder,
-} from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors/src';
+import { Field, FieldType, PanelOptionsEditorBuilder, DataFrame } from '@grafana/data';
+import { FrameGeometrySource, FrameGeometrySourceMode } from '@grafana/schema';
 import { GazetteerPathEditor } from 'app/features/geo/editor/GazetteerPathEditor';
+
+import { LocationModeEditor } from './locationModeEditor';
 
 export function addLocationFields<TOptions>(
   title: string,
   prefix: string,
-  builder: PanelOptionsEditorBuilder<TOptions>,
-  source?: FrameGeometrySource
+  builder: PanelOptionsEditorBuilder<TOptions>, // ??? Perhaps pass in the filtered data?
+  source?: FrameGeometrySource,
+  data?: DataFrame[]
 ) {
-  builder.addRadio({
+  builder.addCustomEditor({
+    id: 'modeEditor',
     path: `${prefix}mode`,
-    name: title,
-    description: '',
-    defaultValue: FrameGeometrySourceMode.Auto,
-    settings: {
-      options: [
-        {
-          value: FrameGeometrySourceMode.Auto,
-          label: 'Auto',
-          ariaLabel: selectors.components.Transforms.SpatialOperations.location.autoOption,
-        },
-        {
-          value: FrameGeometrySourceMode.Coords,
-          label: 'Coords',
-          ariaLabel: selectors.components.Transforms.SpatialOperations.location.coords.option,
-        },
-        {
-          value: FrameGeometrySourceMode.Geohash,
-          label: 'Geohash',
-          ariaLabel: selectors.components.Transforms.SpatialOperations.location.geohash.option,
-        },
-        {
-          value: FrameGeometrySourceMode.Lookup,
-          label: 'Lookup',
-          ariaLabel: selectors.components.Transforms.SpatialOperations.location.lookup.option,
-        },
-      ],
-    },
+    name: 'Location Mode',
+    editor: LocationModeEditor,
+    settings: { data, source },
   });
 
+  // TODO apply data filter to field pickers
   switch (source?.mode) {
     case FrameGeometrySourceMode.Coords:
       builder

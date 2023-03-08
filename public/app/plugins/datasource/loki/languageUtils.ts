@@ -35,6 +35,10 @@ export function escapeLabelValueInExactSelector(labelValue: string): string {
   return labelValue.replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/"/g, '\\"');
 }
 
+export function unescapeLabelValue(labelValue: string): string {
+  return labelValue.replace(/\\n/g, '\n').replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+}
+
 export function escapeLabelValueInRegexSelector(labelValue: string): string {
   return escapeLabelValueInExactSelector(escapeLokiRegexp(labelValue));
 }

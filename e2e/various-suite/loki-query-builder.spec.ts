@@ -72,10 +72,6 @@ describe('Loki query builder', () => {
     e2e().contains(MISSING_LABEL_FILTER_ERROR_MESSAGE).should('not.exist');
     e2e().contains(finalQuery).should('be.visible');
 
-    // Toggle raw query
-    e2e().contains('label', 'Raw query').click();
-    e2e().contains('Raw query').should('have.length', 1);
-
     // Change to code editor
     e2e().contains('label', 'Code').click();
     // We need to test this manually because the final query is split into separate DOM elements using e2e().contains(finalQuery).should('be.visible'); does not detect the query.

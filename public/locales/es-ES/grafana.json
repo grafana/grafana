@@ -1,5 +1,29 @@
 {
-  "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
+  "_comment": "Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source",
+  "clipboard-button": {
+    "inline-toast": {
+      "success": "Copiado"
+    }
+  },
+  "command-palette": {
+    "action": {
+      "change-theme": "",
+      "dark-theme": "",
+      "light-theme": "",
+      "search": ""
+    },
+    "search-box": {
+      "placeholder": ""
+    },
+    "section": {
+      "actions": "",
+      "dashboard-search-results": "",
+      "folder-search-results": "",
+      "pages": "",
+      "preferences": "",
+      "recent-dashboards": ""
+    }
+  },
   "common": {
     "locale": {
       "default": "Por defecto"
@@ -39,9 +63,9 @@
       "transformations-label": "Aplicar transformaciones de panel"
     },
     "inspect-json": {
-      "dataframe-description": "Datos brutos sin transformaciones y configuración de campo aplicada. ",
+      "dataframe-description": "Datos brutos sin configuración de campo ni transformaciones aplicadas. ",
       "dataframe-label": "JSON del marco de datos (de la consulta)",
-      "panel-data-description": "El modelo RAW ha pasado a la visualización del panel",
+      "panel-data-description": "El modelo bruto (RAW) ha pasado a la visualización del panel",
       "panel-data-label": "Datos de panel",
       "panel-json-description": "El modelo guardado en el panel de control JSON que configura cómo funciona todo.",
       "panel-json-label": "JSON de panel",
@@ -59,12 +83,6 @@
       "rows": "Número total de filas",
       "table-title": "Estadísticas"
     },
-    "refresh-picker": {
-      "off-arialabel": "Desactivar actualización automática",
-      "off-description": "Actualización automática desactivada. Elija un intervalo de tiempo de actualización",
-      "off-label": "Apagado",
-      "on-description": ""
-    },
     "toolbar": {
       "add-panel": "Añadir panel",
       "comments-show": "Mostrar comentarios del panel de control",
@@ -81,23 +99,39 @@
       "unmark-favorite": "Deshacer marca como favorito"
     }
   },
+  "datasource-onboarding": {
+    "contact-admin": "Póngase en contacto con su administrador para configurar las fuentes de datos.",
+    "explanation": "Para visualizar sus datos, primero tendrá que conectar una fuente.",
+    "new-dashboard": "Nuevo panel de control",
+    "preferred": "Conecte su fuente de datos preferida:",
+    "sampleData": "O configure un nuevo panel de control con datos de muestra",
+    "viewAll": "Ver todo",
+    "welcome": "¡Te damos la bienvenida a los paneles de Grafana!"
+  },
   "folder-picker": {
     "loading": "Cargando carpetas..."
+  },
+  "grafana-ui": {
+    "segment-async": {
+      "error": "",
+      "loading": "",
+      "no-options": ""
+    }
   },
   "library-panel": {
     "add-modal": {
       "cancel": "Cancelar",
-      "create": "Crear panel de biblioteca",
-      "error": "Ya existe un panel de biblioteca con este nombre",
+      "create": "Crear panel de librería",
+      "error": "Ya existe un panel de librería con este nombre",
       "folder": "Guardar en carpeta",
-      "folder-description": "Los permisos del panel de biblioteca se derivan de los permisos de la carpeta",
-      "name": "Nombre del panel de biblioteca"
+      "folder-description": "Los permisos del panel de librería se derivan de los permisos de la carpeta",
+      "name": "Nombre del panel de librería"
     }
   },
   "library-panels": {
     "save": {
-      "error": "Error al guardar el panel de la biblioteca: «{{errorMsg}}»",
-      "success": "Panel de biblioteca guardado"
+      "error": "Error al guardar el panel de la librería: «{{errorMsg}}»",
+      "success": "Panel de librería guardado"
     }
   },
   "nav": {
@@ -122,6 +156,9 @@
     "alerting-groups": {
       "subtitle": "Ver alertas agrupadas de una instancia de Alertmanager",
       "title": "Grupos"
+    },
+    "alerting-home": {
+      "title": "Inicio"
     },
     "alerting-legacy": {
       "title": "Alertas (heredado)"
@@ -189,8 +226,9 @@
       "title": "Organizaciones"
     },
     "global-users": {
-      "subtitle": "Gestione y cree usuarios en todo el servidor Grafana",
-      "title": "Usuarios"
+      "subtitle": "Gestionar usuarios de Grafana",
+      "title": "Usuarios",
+      "titleBeforeTopnav": "Usuarios"
     },
     "help": {
       "title": "Ayuda"
@@ -204,7 +242,7 @@
     },
     "library-panels": {
       "subtitle": "Paneles reutilizables que se pueden añadir a varios paneles de control",
-      "title": "Paneles de la biblioteca"
+      "title": "Paneles de la librería"
     },
     "live": {
       "title": "Transmisión de eventos"
@@ -221,9 +259,15 @@
     "manage-dashboards": {
       "title": "Navegar"
     },
+    "manage-folder": {
+      "subtitle": ""
+    },
     "monitoring": {
       "subtitle": "Aplicaciones de supervisión e infraestructura",
       "title": "Seguimiento"
+    },
+    "new": {
+      "title": ""
     },
     "new-dashboard": {
       "title": "Nuevo panel de control"
@@ -233,7 +277,8 @@
     },
     "org-settings": {
       "subtitle": "Gestionar las preferencias en una organización",
-      "title": "Preferencias"
+      "title": "Preferencias por defecto",
+      "titleBeforeTopnav": "Preferencias"
     },
     "playlists": {
       "subtitle": "Grupos de paneles de control que se muestran en una secuencia",
@@ -253,11 +298,18 @@
       "title": "Preferencias"
     },
     "profile/switch-org": "Cambiar de organización",
+    "public": {
+      "title": ""
+    },
     "scenes": {
       "title": "Escenas"
     },
     "search": {
-      "placeholder": "Buscar Grafana"
+      "placeholder": "Buscar Grafana",
+      "placeholderCommandPalette": ""
+    },
+    "search-dashboards": {
+      "title": "Buscar paneles de control"
     },
     "server-settings": {
       "subtitle": "Vea la configuración definida en los ajustes de Grafana",
@@ -285,6 +337,10 @@
       "subtitle": "Gestionar el almacenamiento de archivos",
       "title": "Almacenamiento"
     },
+    "support-bundles": {
+      "subtitle": "Descargar paquetes de apoyo",
+      "title": "Paquetes de apoyo"
+    },
     "teams": {
       "subtitle": "Grupos de usuarios que tienen necesidades comunes de permisos y de panel de control",
       "title": "Equipos"
@@ -300,19 +356,90 @@
   "navigation": {
     "kiosk": {
       "tv-alert": "Pulse ESC para salir del modo de quiosco"
+    },
+    "toolbar": {
+      "enable-kiosk": "",
+      "toggle-menu": "",
+      "toggle-search-bar": ""
     }
   },
   "news": {
     "title": "Últimas entradas del blog"
   },
+  "notifications": {
+    "starred-dashboard": "Panel de control destacado",
+    "unstarred-dashboard": "Panel de control no destacado"
+  },
   "panel": {
     "header-menu": {
+      "copy": "",
+      "create-library-panel": "",
+      "duplicate": "",
+      "edit": "",
+      "explore": "",
+      "get-help": "",
+      "hide-legend": "Ocultar leyenda",
       "inspect": "Inspeccionar",
       "inspect-data": "Datos",
       "inspect-json": "JSON de panel",
       "more": "Más...",
+      "query": "",
+      "remove": "",
       "share": "Compartir",
+      "show-legend": "Mostrar leyenda",
+      "unlink-library-panel": "",
       "view": "Vista"
+    }
+  },
+  "refresh-picker": {
+    "aria-label": {
+      "choose-interval": "Actualización automática desactivada. Elija un intervalo de tiempo de actualización",
+      "duration-selected": "Elegir intervalo de tiempo de actualización con el intervalo actual {{durationAriaLabel}} seleccionado"
+    },
+    "live-option": {
+      "aria-label": "Activar transmisión en directo",
+      "label": "En directo"
+    },
+    "off-option": {
+      "aria-label": "Desactivar actualización automática",
+      "label": "Apagado"
+    },
+    "select-button": {
+      "auto-refresh": "Establecer intervalo de actualización automática"
+    }
+  },
+  "search": {
+    "actions": {
+      "include-panels": "",
+      "remove-datasource-filter": "",
+      "sort-placeholder": "",
+      "starred": "",
+      "view-as-folders": "",
+      "view-as-grid": "",
+      "view-as-list": ""
+    },
+    "dashboard-actions": {
+      "import": "",
+      "new": "",
+      "new-dashboard": "",
+      "new-folder": ""
+    },
+    "folder-view": {
+      "go-to-folder": "",
+      "select-folder": ""
+    },
+    "results-table": {
+      "datasource-header": "",
+      "location-header": "",
+      "name-header": "",
+      "tags-header": "",
+      "type-dashboard": "",
+      "type-folder": "",
+      "type-header": ""
+    },
+    "search-input": {
+      "include-panels-placeholder": "",
+      "placeholder": ""
     }
   },
   "share-modal": {
@@ -336,7 +463,7 @@
       "view-button": "Ver JSON"
     },
     "library": {
-      "info": "Cree un panel de biblioteca."
+      "info": "Cree un panel de librería."
     },
     "link": {
       "copy-link-button": "Copiar",
@@ -370,20 +497,24 @@
       "mistake-message": "¿Ha cometido un error? ",
       "name": "Nombre de la instantánea",
       "timeout": "Tiempo de espera (segundos)",
-      "timeout-description": "Es posible que deba configurar el valor del tiempo de espera si se tarda mucho tiempo en recopilar las métricas del panel."
+      "timeout-description": "Es posible que deba configurar el valor del tiempo de espera si se tarda mucho tiempo en recopilar las métricas del panel.",
+      "url-label": "URL de la instantánea"
     },
     "tab-title": {
       "embed": "Incrustar",
       "export": "Exportar",
-      "library-panel": "Panel de biblioteca",
+      "library-panel": "Panel de librería",
       "link": "Enlace",
-      "snapshot": "Vista rápida"
+      "snapshot": "Instantánea"
     },
     "theme-picker": {
       "current": "Actual",
       "dark": "Oscuro",
       "field-name": "Tema",
       "light": "Claro"
+    },
+    "view-json": {
+      "copy-button": "Copiar al portapapeles"
     }
   },
   "shared-dashboard": {
@@ -403,9 +534,15 @@
     "theme": {
       "dark-label": "Oscuro",
       "default-label": "Por defecto",
-      "light-label": "Claro"
+      "light-label": "Claro",
+      "system-label": ""
     },
     "title": "Preferencias"
+  },
+  "tag-filter": {
+    "loading": "",
+    "no-tags": "",
+    "placeholder": ""
   },
   "time-picker": {
     "absolute": {
@@ -413,15 +550,46 @@
       "title": "Intervalo de tiempo absoluto"
     },
     "calendar": {
-      "apply-button": "",
-      "cancel-button": "",
-      "select-time": ""
+      "apply-button": "Aplicar intervalo de tiempo",
+      "cancel-button": "Cancelar",
+      "select-time": "Seleccionar un intervalo de tiempo"
+    },
+    "content": {
+      "empty-recent-list": "<0><0>Parece que no ha utilizado antes este selector de tiempo. En cuanto introduzca algún intervalo de tiempo, los intervalos que haya usado recientemente aparecerán aquí./0></0><1><0>Lea la documentación</0><1> para saber más sobre cómo introducir intervalos de tiempo personalizados.</1></1>",
+      "filter-placeholder": "Buscar intervalos rápidos"
+    },
+    "footer": {
+      "change-settings-button": "Cambiar ajustes de tiempo",
+      "fiscal-year-option": "Ejercicio fiscal",
+      "fiscal-year-start": "Mes de inicio del ejercicio fiscal",
+      "time-zone-option": "Huso horario",
+      "time-zone-selection": "Selección del huso horario"
+    },
+    "range-content": {
+      "apply-button": "Aplicar intervalo de tiempo",
+      "default-error": "Introducir una fecha anterior o «ahora»",
+      "fiscal-year": "Ejercicio fiscal",
+      "from-input": "Desde",
+      "range-error": "«Desde» no puede ser posterior a «hasta»",
+      "to-input": "Hasta"
+    },
+    "range-picker": {
+      "backwards-time-aria-label": "Retrasar el intervalo de tiempo",
+      "current-time-selected": "Intervalo de tiempo seleccionado: {{currentTimeRange}}",
+      "forwards-time-aria-label": "Adelantar el intervalo de tiempo",
+      "to": "hasta",
+      "zoom-out-button": "Reducir el intervalo de tiempo",
+      "zoom-out-tooltip": "Reducir el intervalo de tiempo <1></1> CTRL+Z"
     },
     "time-range": {
-      "aria-role": "",
-      "default-title": "",
-      "example-title": "",
-      "specify": ""
+      "aria-role": "Selección de intervalo de tiempo",
+      "default-title": "Intervalos de tiempo",
+      "example-title": "Ejemplos de intervalos de tiempo",
+      "specify": "Especificar el intervalo de tiempo <1></1>"
+    },
+    "zone": {
+      "select-aria-label": "Selector de huso horario",
+      "select-search-input": "Escribir para buscar (país, ciudad, abreviatura)"
     }
   },
   "user-orgs": {
@@ -438,8 +606,7 @@
       "name-error": "El nombre es obligatorio",
       "name-label": "Nombre",
       "username-label": "Nombre de usuario"
-    },
-    "title": "Editar perfil"
+    }
   },
   "user-session": {
     "browser-column": "Navegador y sistema operativo",
@@ -450,5 +617,22 @@
   },
   "user-sessions": {
     "loading": "Cargando sesiones..."
+  },
+  "variable": {
+    "adhoc": {
+      "placeholder": ""
+    },
+    "dropdown": {
+      "placeholder": ""
+    },
+    "picker": {
+      "link-all": "Todo",
+      "option-all": "Todo",
+      "option-selected-values": "Seleccionados",
+      "option-tooltip": "Eliminar selecciones"
+    },
+    "textbox": {
+      "placeholder": ""
+    }
   }
 }

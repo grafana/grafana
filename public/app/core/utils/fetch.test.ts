@@ -10,7 +10,7 @@ import {
 } from './fetch';
 
 jest.mock('@grafana/data', () => ({
-  ...(jest.requireActual('@grafana/data') as unknown as object),
+  ...jest.requireActual('@grafana/data'),
   deprecationWarning: () => {},
 }));
 

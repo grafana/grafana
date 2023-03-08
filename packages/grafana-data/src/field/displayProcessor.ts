@@ -6,7 +6,7 @@ import { getFieldTypeFromValue } from '../dataframe/processDataFrame';
 import { toUtc, dateTimeParse } from '../datetime';
 import { GrafanaTheme2 } from '../themes/types';
 import { KeyValue, TimeZone } from '../types';
-import { Field, FieldType } from '../types/dataFrame';
+import { EnumFieldConfig, Field, FieldType } from '../types/dataFrame';
 import { DecimalCount, DisplayProcessor, DisplayValue } from '../types/displayValue';
 import { anyToNumber } from '../utils/anyToNumber';
 import { getValueMappingResult } from '../utils/valueMappings';
@@ -70,10 +70,12 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
     }
   } else if (!unit && field.type === FieldType.string) {
     unit = 'string';
+  } else if (field.type === FieldType.enum) {
+    return getEnumDisplayProcessor(options.theme, config.type?.enum);
   }
 
   const hasCurrencyUnit = unit?.startsWith('currency');
-  const hasBoolUnit = unit === 'bool';
+  const hasBoolUnit = isBooleanUnit(unit);
   const isNumType = field.type === FieldType.number;
   const isLocaleFormat = unit === 'locale';
   const canTrimTrailingDecimalZeros =
@@ -82,7 +84,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
   const formatFunc = getValueFormat(unit || 'none');
   const scaleFunc = getScaleCalculator(field, options.theme);
 
-  return (value: any, adjacentDecimals?: DecimalCount) => {
+  return (value: unknown, adjacentDecimals?: DecimalCount) => {
     const { mappings } = config;
     const isStringUnit = unit === 'string';
 
@@ -186,12 +188,47 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
   };
 }
 
-function toStringProcessor(value: any): DisplayValue {
+function toStringProcessor(value: unknown): DisplayValue {
   return { text: toString(value), numeric: anyToNumber(value) };
 }
 
+export function getEnumDisplayProcessor(theme: GrafanaTheme2, cfg?: EnumFieldConfig): DisplayProcessor {
+  const config = {
+    text: cfg?.text ?? [],
+    color: cfg?.color ?? [],
+  };
+  // use the theme specific color values
+  config.color = config.color.map((v) => theme.visualization.getColorByName(v));
+
+  return (value: unknown) => {
+    if (value == null) {
+      return {
+        text: '',
+        numeric: NaN,
+      };
+    }
+    const idx = +value;
+    let text = config.text[idx];
+    if (text == null) {
+      text = `${value}`; // the original value
+    }
+    let color = config.color[idx];
+    if (color == null) {
+      // constant color for index
+      const { palette } = theme.visualization;
+      color = palette[idx % palette.length];
+      config.color[idx] = color;
+    }
+    return {
+      text,
+      numeric: idx,
+      color,
+    };
+  };
+}
+
 export function getRawDisplayProcessor(): DisplayProcessor {
-  return (value: any) => ({
+  return (value: unknown) => ({
     text: getFieldTypeFromValue(value) === 'other' ? `${JSON.stringify(value, getCircularReplacer())}` : `${value}`,
     numeric: null as unknown as number,
   });

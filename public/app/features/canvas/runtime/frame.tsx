@@ -203,6 +203,9 @@ export class FrameState extends ElementState {
           opts.placement = placement;
         }
 
+        // Clear connections on duplicate
+        opts.connections = undefined;
+
         const copy = new ElementState(element.item, opts, this);
         copy.updateData(this.scene.context);
         if (updateName) {
@@ -210,8 +213,16 @@ export class FrameState extends ElementState {
         }
         this.elements.push(copy);
         this.scene.byName.set(copy.options.name, copy);
+
+        // Update scene byName map for original element (to avoid stale references (e.g. for connections))
+        this.scene.byName.set(element.options.name, element);
+
         this.scene.save();
         this.reinitializeMoveable();
+
+        setTimeout(() => {
+          this.scene.targetsToSelect.add(copy.div!);
+        });
         break;
       case LayerActionID.MoveTop:
       case LayerActionID.MoveBottom:

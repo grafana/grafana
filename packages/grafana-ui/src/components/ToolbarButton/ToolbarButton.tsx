@@ -6,13 +6,16 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { styleMixins, useStyles2 } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
+import { IconSize } from '../../types/icon';
 import { getPropertiesForVariant } from '../Button';
 import { Icon } from '../Icon/Icon';
-import { Tooltip } from '../Tooltip/Tooltip';
+import { Tooltip } from '../Tooltip';
 
 type CommonProps = {
   /** Icon name */
   icon?: IconName | React.ReactNode;
+  /** Icon size */
+  iconSize?: IconSize;
   /** Tooltip */
   tooltip?: string;
   /** For image icons */
@@ -42,6 +45,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
     {
       tooltip,
       icon,
+      iconSize,
       className,
       children,
       imgSrc,
@@ -83,7 +87,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
         aria-expanded={isOpen}
         {...rest}
       >
-        {renderIcon(icon)}
+        {renderIcon(icon, iconSize)}
         {imgSrc && <img className={styles.img} src={imgSrc} alt={imgAlt ?? ''} />}
         {children && !iconOnly && <div className={contentStyles}>{children}</div>}
         {isOpen === false && <Icon name="angle-down" />}
@@ -108,13 +112,13 @@ function getButtonAriaLabel(ariaLabel: string | undefined, tooltip: string | und
   return ariaLabel ? ariaLabel : tooltip ? selectors.components.PageToolbar.item(tooltip) : undefined;
 }
 
-function renderIcon(icon: IconName | React.ReactNode) {
+function renderIcon(icon: IconName | React.ReactNode, iconSize?: IconSize) {
   if (!icon) {
     return null;
   }
 
   if (isIconName(icon)) {
-    return <Icon name={icon} size="lg" />;
+    return <Icon name={icon} size={`${iconSize ? iconSize : 'lg'}`} />;
   }
 
   return icon;

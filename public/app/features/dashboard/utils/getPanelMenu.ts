@@ -1,5 +1,13 @@
-import { PanelMenuItem } from '@grafana/data';
-import { AngularComponent, getDataSourceSrv, locationService, reportInteraction } from '@grafana/runtime';
+import { isPluginExtensionLink, PanelMenuItem } from '@grafana/data';
+import {
+  AngularComponent,
+  getDataSourceSrv,
+  getPluginExtensions,
+  locationService,
+  reportInteraction,
+  PluginExtensionPanelContext,
+} from '@grafana/runtime';
+import { LoadingState } from '@grafana/schema';
 import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import config from 'app/core/config';
 import { t } from 'app/core/internationalization';
@@ -18,6 +26,7 @@ import {
 } from 'app/features/dashboard/utils/panel';
 import { InspectTab } from 'app/features/inspector/types';
 import { isPanelModelLibraryPanel } from 'app/features/library-panels/guard';
+import { GrafanaExtensions } from 'app/features/plugins/extensions/placements';
 import { store } from 'app/store/store';
 
 import { navigateToExplore } from '../../explore/state/main';
@@ -26,6 +35,7 @@ import { getTimeSrv } from '../services/TimeSrv';
 export function getPanelMenu(
   dashboard: DashboardModel,
   panel: PanelModel,
+  loadingState?: LoadingState,
   angularComponent?: AngularComponent | null
 ): PanelMenuItem[] {
   const onViewPanel = (event: React.MouseEvent<any>) => {
@@ -98,12 +108,17 @@ export function getPanelMenu(
     event.preventDefault();
     toggleLegend(panel);
   };
+
+  const onCancelStreaming = (event: React.MouseEvent) => {
+    event.preventDefault();
+    panel.getQueryRunner().cancelQuery();
+  };
+
   const menu: PanelMenuItem[] = [];
 
   if (!panel.isEditing) {
-    const viewTextTranslation = t('panel.header-menu.view', `View`);
     menu.push({
-      text: viewTextTranslation,
+      text: t('panel.header-menu.view', `View`),
       iconClassName: 'eye',
       onClick: onViewPanel,
       shortcut: 'v',
@@ -112,17 +127,26 @@ export function getPanelMenu(
 
   if (dashboard.canEditPanel(panel) && !panel.isEditing) {
     menu.push({
-      text: 'Edit',
+      text: t('panel.header-menu.edit', `Edit`),
       iconClassName: 'edit',
       onClick: onEditPanel,
       shortcut: 'e',
     });
   }
 
-  const shareTextTranslation = t('panel.header-menu.share', `Share`);
+  if (
+    dashboard.canEditPanel(panel) &&
+    (loadingState === LoadingState.Streaming || loadingState === LoadingState.Loading)
+  ) {
+    menu.push({
+      text: 'Stop query',
+      iconClassName: 'circle',
+      onClick: onCancelStreaming,
+    });
+  }
 
   menu.push({
-    text: shareTextTranslation,
+    text: t('panel.header-menu.share', `Share`),
     iconClassName: 'share-alt',
     onClick: onSharePanel,
     shortcut: 'p s',
@@ -130,7 +154,7 @@ export function getPanelMenu(
 
   if (contextSrv.hasAccessToExplore() && !(panel.plugin && panel.plugin.meta.skipDataQuery)) {
     menu.push({
-      text: 'Explore',
+      text: t('panel.header-menu.explore', `Explore`),
       iconClassName: 'compass',
       onClick: onNavigateToExplore,
       shortcut: 'x',
@@ -141,33 +165,27 @@ export function getPanelMenu(
 
   // Only show these inspect actions for data plugins
   if (panel.plugin && !panel.plugin.meta.skipDataQuery) {
-    const dataTextTranslation = t('panel.header-menu.inspect-data', `Data`);
-
     inspectMenu.push({
-      text: dataTextTranslation,
+      text: t('panel.header-menu.inspect-data', `Data`),
       onClick: (e: React.MouseEvent<any>) => onInspectPanel(InspectTab.Data),
     });
 
     if (dashboard.meta.canEdit) {
       inspectMenu.push({
-        text: 'Query',
+        text: t('panel.header-menu.query', `Query`),
         onClick: (e: React.MouseEvent<any>) => onInspectPanel(InspectTab.Query),
       });
     }
   }
 
-  const jsonTextTranslation = t('panel.header-menu.inspect-json', `Panel JSON`);
-
   inspectMenu.push({
-    text: jsonTextTranslation,
+    text: t('panel.header-menu.inspect-json', `Panel JSON`),
     onClick: (e: React.MouseEvent<any>) => onInspectPanel(InspectTab.JSON),
   });
 
-  const inspectTextTranslation = t('panel.header-menu.inspect', `Inspect`);
-
   menu.push({
     type: 'submenu',
-    text: inspectTextTranslation,
+    text: t('panel.header-menu.inspect', `Inspect`),
     iconClassName: 'info-circle',
     onClick: (e: React.MouseEvent<any>) => onInspectPanel(),
     shortcut: 'i',
@@ -179,24 +197,24 @@ export function getPanelMenu(
 
   if (canEdit && !(panel.isViewing || panel.isEditing)) {
     subMenu.push({
-      text: 'Duplicate',
+      text: t('panel.header-menu.duplicate', `Duplicate`),
       onClick: onDuplicatePanel,
       shortcut: 'p d',
     });
 
     subMenu.push({
-      text: 'Copy',
+      text: t('panel.header-menu.copy', `Copy`),
       onClick: onCopyPanel,
     });
 
     if (isPanelModelLibraryPanel(panel)) {
       subMenu.push({
-        text: 'Unlink library panel',
+        text: t('panel.header-menu.unlink-library-panel', `Unlink library panel`),
         onClick: onUnlinkLibraryPanel,
       });
     } else {
       subMenu.push({
-        text: 'Create library panel',
+        text: t('panel.header-menu.create-library-panel', `Create library panel`),
         onClick: onAddLibraryPanel,
       });
     }
@@ -227,7 +245,9 @@ export function getPanelMenu(
 
   if (panel.options.legend) {
     subMenu.push({
-      text: panel.options.legend.showLegend ? 'Hide legend' : 'Show legend',
+      text: panel.options.legend.showLegend
+        ? t('panel.header-menu.hide-legend', 'Hide legend')
+        : t('panel.header-menu.show-legend', 'Show legend'),
       onClick: onToggleLegend,
       shortcut: 'p l',
     });
@@ -240,16 +260,15 @@ export function getPanelMenu(
 
   if (canEdit && panel.plugin && !panel.plugin.meta.skipDataQuery) {
     subMenu.push({
-      text: 'Get help',
+      text: t('panel.header-menu.get-help', 'Get help'),
       onClick: (e: React.MouseEvent) => onInspectPanel(InspectTab.Help),
     });
   }
 
   if (subMenu.length) {
-    const moreTextTranslation = t('panel.header-menu.more', `More...`);
     menu.push({
       type: 'submenu',
-      text: moreTextTranslation,
+      text: t('panel.header-menu.more', `More...`),
       iconClassName: 'cube',
       subMenu,
       onClick: onMore,
@@ -260,12 +279,59 @@ export function getPanelMenu(
     menu.push({ type: 'divider', text: '' });
 
     menu.push({
-      text: 'Remove',
+      text: t('panel.header-menu.remove', `Remove`),
       iconClassName: 'trash-alt',
       onClick: onRemovePanel,
       shortcut: 'p r',
     });
   }
 
+  const { extensions } = getPluginExtensions({
+    placement: GrafanaExtensions.DashboardPanelMenu,
+    context: createExtensionContext(panel, dashboard),
+  });
+
+  for (const extension of extensions) {
+    if (isPluginExtensionLink(extension)) {
+      subMenu.push({
+        text: truncateTitle(extension.title, 25),
+        href: extension.path,
+      });
+    }
+  }
+
   return menu;
+}
+
+function truncateTitle(title: string, length: number): string {
+  if (title.length < length) {
+    return title;
+  }
+  const part = title.slice(0, length - 3);
+  return `${part.trimEnd()}...`;
+}
+
+function createExtensionContext(panel: PanelModel, dashboard: DashboardModel): PluginExtensionPanelContext {
+  const timeRange = Object.assign({}, dashboard.time);
+
+  return Object.freeze({
+    id: panel.id,
+    pluginId: panel.type,
+    title: panel.title,
+    timeRange: Object.freeze(timeRange),
+    timeZone: dashboard.timezone,
+    dashboard: Object.freeze({
+      uid: dashboard.uid,
+      title: dashboard.title,
+      tags: Object.freeze(Array.from<string>(dashboard.tags)),
+    }),
+    targets: Object.freeze(
+      panel.targets.map((t) =>
+        Object.freeze({
+          refId: t.refId,
+          pluginId: t.datasource?.type ?? 'unknown',
+        })
+      )
+    ),
+  });
 }

@@ -1,10 +1,10 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Table Migrations migrates styles to field config overrides and defaults 1`] = `
-Object {
-  "fieldConfig": Object {
-    "defaults": Object {
-      "custom": Object {
+{
+  "fieldConfig": {
+    "defaults": {
+      "custom": {
         "align": "right",
         "displayMode": undefined,
       },
@@ -12,63 +12,63 @@ Object {
       "displayName": "",
       "unit": "short",
     },
-    "overrides": Array [
-      Object {
-        "matcher": Object {
+    "overrides": [
+      {
+        "matcher": {
           "id": "byName",
           "options": "Time",
         },
-        "properties": Array [
-          Object {
+        "properties": [
+          {
             "id": "displayName",
             "value": "Time",
           },
-          Object {
+          {
             "id": "unit",
             "value": "time: YYYY-MM-DD HH:mm:ss",
           },
-          Object {
+          {
             "id": "custom.align",
             "value": null,
           },
         ],
       },
-      Object {
-        "matcher": Object {
+      {
+        "matcher": {
           "id": "byName",
           "options": "ColorCell",
         },
-        "properties": Array [
-          Object {
+        "properties": [
+          {
             "id": "unit",
             "value": "currencyUSD",
           },
-          Object {
+          {
             "id": "decimals",
             "value": 2,
           },
-          Object {
+          {
             "id": "custom.displayMode",
             "value": "color-background",
           },
-          Object {
+          {
             "id": "custom.align",
             "value": "left",
           },
-          Object {
+          {
             "id": "thresholds",
-            "value": Object {
+            "value": {
               "mode": "absolute",
-              "steps": Array [
-                Object {
+              "steps": [
+                {
                   "color": "rgba(245, 54, 54, 0.9)",
                   "value": -Infinity,
                 },
-                Object {
+                {
                   "color": "rgba(237, 129, 40, 0.89)",
                   "value": 5,
                 },
-                Object {
+                {
                   "color": "rgba(50, 172, 45, 0.97)",
                   "value": 10,
                 },
@@ -77,52 +77,52 @@ Object {
           },
         ],
       },
-      Object {
-        "matcher": Object {
+      {
+        "matcher": {
           "id": "byName",
           "options": "ColorValue",
         },
-        "properties": Array [
-          Object {
+        "properties": [
+          {
             "id": "unit",
             "value": "Bps",
           },
-          Object {
+          {
             "id": "decimals",
             "value": 2,
           },
-          Object {
+          {
             "id": "links",
-            "value": Array [
-              Object {
+            "value": [
+              {
                 "targetBlank": true,
                 "title": "",
                 "url": "http://www.grafana.com",
               },
             ],
           },
-          Object {
+          {
             "id": "custom.displayMode",
             "value": "color-text",
           },
-          Object {
+          {
             "id": "custom.align",
             "value": null,
           },
-          Object {
+          {
             "id": "thresholds",
-            "value": Object {
+            "value": {
               "mode": "absolute",
-              "steps": Array [
-                Object {
+              "steps": [
+                {
                   "color": "rgba(245, 54, 54, 0.9)",
                   "value": -Infinity,
                 },
-                Object {
+                {
                   "color": "rgba(237, 129, 40, 0.89)",
                   "value": 5,
                 },
-                Object {
+                {
                   "color": "rgba(50, 172, 45, 0.97)",
                   "value": 10,
                 },
@@ -133,23 +133,23 @@ Object {
       },
     ],
   },
-  "transformations": Array [],
+  "transformations": [],
 }
 `;
 
 exports[`Table Migrations migrates transform out to core transforms 1`] = `
-Object {
-  "fieldConfig": Object {
-    "defaults": Object {
-      "custom": Object {},
+{
+  "fieldConfig": {
+    "defaults": {
+      "custom": {},
     },
-    "overrides": Array [],
+    "overrides": [],
   },
-  "transformations": Array [
-    Object {
+  "transformations": [
+    {
       "id": "seriesToColumns",
-      "options": Object {
-        "reducers": Array [],
+      "options": {
+        "reducers": [],
       },
     },
   ],
@@ -157,18 +157,18 @@ Object {
 `;
 
 exports[`Table Migrations migrates transform out to core transforms 2`] = `
-Object {
-  "fieldConfig": Object {
-    "defaults": Object {
-      "custom": Object {},
+{
+  "fieldConfig": {
+    "defaults": {
+      "custom": {},
     },
-    "overrides": Array [],
+    "overrides": [],
   },
-  "transformations": Array [
-    Object {
+  "transformations": [
+    {
       "id": "seriesToRows",
-      "options": Object {
-        "reducers": Array [],
+      "options": {
+        "reducers": [],
       },
     },
   ],
@@ -176,19 +176,19 @@ Object {
 `;
 
 exports[`Table Migrations migrates transform out to core transforms 3`] = `
-Object {
-  "fieldConfig": Object {
-    "defaults": Object {
-      "custom": Object {},
+{
+  "fieldConfig": {
+    "defaults": {
+      "custom": {},
     },
-    "overrides": Array [],
+    "overrides": [],
   },
-  "transformations": Array [
-    Object {
+  "transformations": [
+    {
       "id": "reduce",
-      "options": Object {
+      "options": {
         "includeTimeField": false,
-        "reducers": Array [
+        "reducers": [
           "mean",
           "max",
           "lastNotNull",
@@ -200,18 +200,18 @@ Object {
 `;
 
 exports[`Table Migrations migrates transform out to core transforms 4`] = `
-Object {
-  "fieldConfig": Object {
-    "defaults": Object {
-      "custom": Object {},
+{
+  "fieldConfig": {
+    "defaults": {
+      "custom": {},
     },
-    "overrides": Array [],
+    "overrides": [],
   },
-  "transformations": Array [
-    Object {
+  "transformations": [
+    {
       "id": "merge",
-      "options": Object {
-        "reducers": Array [],
+      "options": {
+        "reducers": [],
       },
     },
   ],

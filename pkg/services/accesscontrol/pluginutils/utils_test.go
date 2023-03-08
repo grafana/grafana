@@ -3,9 +3,10 @@ package pluginutils
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/stretchr/testify/require"
 )
 
 func TestToRegistrations(t *testing.T) {
@@ -24,8 +25,7 @@ func TestToRegistrations(t *testing.T) {
 			regs: []plugins.RoleRegistration{
 				{
 					Role: plugins.Role{
-						Name:        "test:name",
-						DisplayName: "Test",
+						Name:        "Tester",
 						Description: "Test",
 						Permissions: []plugins.Permission{
 							{Action: "test:action"},
@@ -36,7 +36,7 @@ func TestToRegistrations(t *testing.T) {
 				},
 				{
 					Role: plugins.Role{
-						Name:        "test:name",
+						Name:        "Admin Validator",
 						Permissions: []plugins.Permission{},
 					},
 				},
@@ -45,10 +45,10 @@ func TestToRegistrations(t *testing.T) {
 				{
 					Role: ac.RoleDTO{
 						Version:     1,
-						Name:        "test:name",
-						DisplayName: "Test",
+						Name:        ac.PluginRolePrefix + "plugin-id:tester",
+						DisplayName: "Tester",
 						Description: "Test",
-						Group:       "PluginName",
+						Group:       "Plugin Name",
 						Permissions: []ac.Permission{
 							{Action: "test:action"},
 							{Action: "test:action", Scope: "test:scope"},
@@ -60,8 +60,9 @@ func TestToRegistrations(t *testing.T) {
 				{
 					Role: ac.RoleDTO{
 						Version:     1,
-						Name:        "test:name",
-						Group:       "PluginName",
+						Name:        ac.PluginRolePrefix + "plugin-id:admin-validator",
+						DisplayName: "Admin Validator",
+						Group:       "Plugin Name",
 						Permissions: []ac.Permission{},
 						OrgID:       ac.GlobalOrgID,
 					},
@@ -71,7 +72,7 @@ func TestToRegistrations(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := ToRegistrations("PluginName", tt.regs)
+			got := ToRegistrations("plugin-id", "Plugin Name", tt.regs)
 			require.Equal(t, tt.want, got)
 		})
 	}
@@ -122,11 +123,22 @@ func TestValidatePluginRole(t *testing.T) {
 			role: ac.RoleDTO{
 				Name: "plugins:test-app:reader",
 				Permissions: []ac.Permission{
-					{Action: "plugins.app:access"},
+					{Action: "plugins.app:access", Scope: "plugins:id:test-app"},
 					{Action: "test-app:read"},
 					{Action: "test-app.resources:read"},
 				},
 			},
+		},
+		{
+			name:     "invalid permission targets other plugin",
+			pluginID: "test-app",
+			role: ac.RoleDTO{
+				Name: "plugins:test-app:reader",
+				Permissions: []ac.Permission{
+					{Action: "plugins.app:access", Scope: "plugins:id:other-app"},
+				},
+			},
+			wantErr: &ac.ErrorInvalidRole{},
 		},
 	}
 	for _, tt := range tests {

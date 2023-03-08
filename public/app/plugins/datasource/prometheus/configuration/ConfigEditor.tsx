@@ -2,7 +2,7 @@ import React, { useRef } from 'react';
 
 import { SIGV4ConnectionConfig } from '@grafana/aws-sdk';
 import { DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana/data';
-import { AlertingSettings, DataSourceHttpSettings, Alert } from '@grafana/ui';
+import { AlertingSettings, DataSourceHttpSettings, Alert, SecureSocksProxySettings } from '@grafana/ui';
 import { config } from 'app/core/config';
 
 import { PromOptions } from '../types';
@@ -42,6 +42,10 @@ export const ConfigEditor = (props: Props) => {
         azureAuthSettings={azureAuthSettings}
         renderSigV4Editor={<SIGV4ConnectionConfig {...props}></SIGV4ConnectionConfig>}
       />
+
+      {config.featureToggles.secureSocksDatasourceProxy && (
+        <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
+      )}
 
       <AlertingSettings<PromOptions> options={options} onOptionsChange={onOptionsChange} />
 

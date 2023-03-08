@@ -17,7 +17,7 @@ jobs:
         id: regex-match
         with:
           text: ${{ github.event.inputs.version }}
-          regex: '^(\d+.\d+).\d+(?:-beta.\d+)?$'
+          regex: '^(\d+.\d+).\d+(?:-beta\d+)?$'
       - uses: actions-ecosystem/action-regex-match@v2.0.2
         if: ${{ inputs.version_call != '' }}
         id: regex-match-version-call
@@ -29,7 +29,7 @@ jobs:
         run: |
           echo "The input version format is not correct, please respect:\
           major.minor.patch or major.minor.patch-beta.number format. \
-          example: 7.4.3 or 7.4.3-beta.1"
+          example: 7.4.3 or 7.4.3-beta1"
           exit 1
       - name: Validate input version call
         if: ${{ inputs.version_call != '' && steps.regex-match-version-call.outputs.match == '' }}
@@ -44,10 +44,10 @@ jobs:
       - name: Set intermedia variables
         id: intermedia
         run: |
-          echo "::set-output name=short_ref::${GITHUB_REF#refs/*/}"
-          echo "::set-output name=check_passed::false"
-          echo "::set-output name=branch_name::v${{steps.regex-match.outputs.group1}}"
-          echo "::set-output name=branch_exist::$(git ls-remote --heads https://github.com/grafana/grafana.git v${{ steps.regex-match.outputs.group1 }}.x | wc -l)"
+          echo "short_ref=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
+          echo "check_passed=false" >> $GITHUB_OUTPUT
+          echo "branch_name=v${{steps.regex-match.outputs.group1}}" >> $GITHUB_OUTPUT
+          echo "branch_exist=$(git ls-remote --heads https://github.com/grafana/grafana.git v${{ steps.regex-match.outputs.group1 }}.x | wc -l)" >> $GITHUB_OUTPUT
 
       - name: Check input version is aligned with branch(main)
         if: ${{ github.event.inputs.version != '' && steps.intermedia.outputs.branch_exist == '0' && !contains(steps.intermedia.outputs.short_ref, 'main') }}

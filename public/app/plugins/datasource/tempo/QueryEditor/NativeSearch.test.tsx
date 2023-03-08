@@ -7,7 +7,7 @@ import { TempoQuery } from '../types';
 
 import NativeSearch from './NativeSearch';
 
-const getOptions = jest.fn().mockImplementation(() => {
+const getOptionsV1 = jest.fn().mockImplementation(() => {
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve([
@@ -26,7 +26,7 @@ const getOptions = jest.fn().mockImplementation(() => {
 
 jest.mock('../language_provider', () => {
   return jest.fn().mockImplementation(() => {
-    return { getOptions };
+    return { getOptionsV1 };
   });
 });
 

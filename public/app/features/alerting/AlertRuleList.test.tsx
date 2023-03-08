@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { openMenu } from 'react-select-event';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { locationService } from '@grafana/runtime';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
@@ -34,10 +35,14 @@ const setup = (propOverrides?: object) => {
     ...propOverrides,
   };
 
-  const { rerender } = render(<AlertRuleListUnconnected {...props} />);
+  const { rerender } = render(
+    <TestProvider>
+      <AlertRuleListUnconnected {...props} />
+    </TestProvider>
+  );
 
   return {
-    rerender,
+    rerender: (element: JSX.Element) => rerender(<TestProvider>{element}</TestProvider>),
   };
 };
 

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -17,35 +17,35 @@ func ProvideService(db db.DB, cfg *setting.Cfg) team.Service {
 	return &Service{store: &xormStore{db: db, cfg: cfg}}
 }
 
-func (s *Service) CreateTeam(name, email string, orgID int64) (models.Team, error) {
+func (s *Service) CreateTeam(name, email string, orgID int64) (team.Team, error) {
 	return s.store.Create(name, email, orgID)
 }
 
-func (s *Service) UpdateTeam(ctx context.Context, cmd *models.UpdateTeamCommand) error {
+func (s *Service) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamCommand) error {
 	return s.store.Update(ctx, cmd)
 }
 
-func (s *Service) DeleteTeam(ctx context.Context, cmd *models.DeleteTeamCommand) error {
+func (s *Service) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamCommand) error {
 	return s.store.Delete(ctx, cmd)
 }
 
-func (s *Service) SearchTeams(ctx context.Context, query *models.SearchTeamsQuery) error {
+func (s *Service) SearchTeams(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error) {
 	return s.store.Search(ctx, query)
 }
 
-func (s *Service) GetTeamById(ctx context.Context, query *models.GetTeamByIdQuery) error {
-	return s.store.GetById(ctx, query)
+func (s *Service) GetTeamByID(ctx context.Context, query *team.GetTeamByIDQuery) (*team.TeamDTO, error) {
+	return s.store.GetByID(ctx, query)
 }
 
-func (s *Service) GetTeamsByUser(ctx context.Context, query *models.GetTeamsByUserQuery) error {
+func (s *Service) GetTeamsByUser(ctx context.Context, query *team.GetTeamsByUserQuery) ([]*team.TeamDTO, error) {
 	return s.store.GetByUser(ctx, query)
 }
 
-func (s *Service) AddTeamMember(userID, orgID, teamID int64, isExternal bool, permission models.PermissionType) error {
+func (s *Service) AddTeamMember(userID, orgID, teamID int64, isExternal bool, permission dashboards.PermissionType) error {
 	return s.store.AddMember(userID, orgID, teamID, isExternal, permission)
 }
 
-func (s *Service) UpdateTeamMember(ctx context.Context, cmd *models.UpdateTeamMemberCommand) error {
+func (s *Service) UpdateTeamMember(ctx context.Context, cmd *team.UpdateTeamMemberCommand) error {
 	return s.store.UpdateMember(ctx, cmd)
 }
 
@@ -53,18 +53,18 @@ func (s *Service) IsTeamMember(orgId int64, teamId int64, userId int64) (bool, e
 	return s.store.IsMember(orgId, teamId, userId)
 }
 
-func (s *Service) RemoveTeamMember(ctx context.Context, cmd *models.RemoveTeamMemberCommand) error {
+func (s *Service) RemoveTeamMember(ctx context.Context, cmd *team.RemoveTeamMemberCommand) error {
 	return s.store.RemoveMember(ctx, cmd)
 }
 
-func (s *Service) GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool) ([]*models.TeamMemberDTO, error) {
+func (s *Service) GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool) ([]*team.TeamMemberDTO, error) {
 	return s.store.GetMemberships(ctx, orgID, userID, external)
 }
 
-func (s *Service) GetTeamMembers(ctx context.Context, query *models.GetTeamMembersQuery) error {
+func (s *Service) GetTeamMembers(ctx context.Context, query *team.GetTeamMembersQuery) ([]*team.TeamMemberDTO, error) {
 	return s.store.GetMembers(ctx, query)
 }
 
-func (s *Service) IsAdminOfTeams(ctx context.Context, query *models.IsAdminOfTeamsQuery) error {
+func (s *Service) IsAdminOfTeams(ctx context.Context, query *team.IsAdminOfTeamsQuery) (bool, error) {
 	return s.store.IsAdmin(ctx, query)
 }

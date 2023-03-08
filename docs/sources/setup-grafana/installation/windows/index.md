@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/installation/windows/
-  - /docs/grafana/latest/setup-grafana/installation/windows/
+  - ../../installation/windows/
 description: Install Grafana on Windows
 title: Install on Windows
 weight: 500
@@ -11,8 +10,7 @@ weight: 500
 
 You can either download the Windows installer package or a standalone Windows binary file.
 
-Read [Upgrading Grafana]({{< relref "../../upgrade-grafana/" >}}) for tips and guidance on updating an existing
-installation.
+Read [Upgrading Grafana]({{< relref "../../../upgrade-guide/" >}}) for tips and guidance on updating an existing installation.
 
 1. Navigate to [Download Grafana](https://grafana.com/grafana/download?platform=windows).
 1. Select a Grafana version you want to install.

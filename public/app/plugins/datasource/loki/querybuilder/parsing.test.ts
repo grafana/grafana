@@ -141,7 +141,7 @@ describe('buildVisualQueryFromString', () => {
   });
 
   it('parses query with with unit label filter', () => {
-    expect(buildVisualQueryFromString('{app="frontend"} | bar < 8mb')).toEqual(
+    expect(buildVisualQueryFromString('{app="frontend"} | bar < 8m')).toEqual(
       noErrors({
         labels: [
           {
@@ -150,7 +150,7 @@ describe('buildVisualQueryFromString', () => {
             label: 'app',
           },
         ],
-        operations: [{ id: LokiOperationId.LabelFilter, params: ['bar', '<', '8mb'] }],
+        operations: [{ id: LokiOperationId.LabelFilter, params: ['bar', '<', '8m'] }],
       })
     );
   });
@@ -570,6 +570,117 @@ describe('buildVisualQueryFromString', () => {
         ],
       })
     );
+  });
+
+  it('parses simple query with quotes in label value', () => {
+    expect(buildVisualQueryFromString('{app="\\"frontend\\""}')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: '\\"frontend\\"',
+            label: 'app',
+          },
+        ],
+        operations: [],
+      })
+    );
+  });
+
+  it('parses a regexp with empty string param', () => {
+    expect(buildVisualQueryFromString('{app="frontend"} | regexp "" ')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [{ id: LokiOperationId.Regexp, params: [''] }],
+      })
+    );
+  });
+
+  it('parses a regexp with no param', () => {
+    expect(buildVisualQueryFromString('{app="frontend"} | regexp ')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [{ id: LokiOperationId.Regexp, params: [''] }],
+      })
+    );
+  });
+
+  it('parses a pattern with empty string param', () => {
+    expect(buildVisualQueryFromString('{app="frontend"} | pattern "" ')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [{ id: LokiOperationId.Pattern, params: [''] }],
+      })
+    );
+  });
+
+  it('parses a pattern with no param', () => {
+    expect(buildVisualQueryFromString('{app="frontend"} | pattern ')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [{ id: LokiOperationId.Pattern, params: [''] }],
+      })
+    );
+  });
+
+  it('parses a json with no param', () => {
+    expect(buildVisualQueryFromString('{app="frontend"} | json ')).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [{ id: LokiOperationId.Json, params: [] }],
+      })
+    );
+  });
+
+  it.each(['$__interval', '5m'])('parses query range with unwrap and regex', (range) => {
+    expect(
+      buildVisualQueryFromString(
+        'avg_over_time({test="value"} |= `restart counter is at` | regexp `restart counter is at (?P<restart_counter>[0-9]+)s*.*.*?$` | unwrap restart_counter [' +
+          range +
+          '])'
+      )
+    ).toEqual({
+      errors: [],
+      query: {
+        labels: [{ label: 'test', op: '=', value: 'value' }],
+        operations: [
+          { id: '__line_contains', params: ['restart counter is at'] },
+          { id: 'regexp', params: ['restart counter is at (?P<restart_counter>[0-9]+)s*.*.*?$'] },
+          { id: 'unwrap', params: ['restart_counter', ''] },
+          { id: 'avg_over_time', params: [range] },
+        ],
+      },
+    });
   });
 });
 

@@ -4,8 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 type testQuery struct {

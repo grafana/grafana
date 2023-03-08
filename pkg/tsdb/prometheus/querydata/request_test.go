@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
 	apiv1 "github.com/prometheus/client_golang/api/prometheus/v1"
 	p "github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
@@ -22,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/querydata"
 )
@@ -347,24 +347,33 @@ type queryResult struct {
 	Result interface{} `json:"result"`
 }
 
-func execute(tctx *testContext, query backend.DataQuery, qr interface{}) (data.Frames, error) {
+func executeWithHeaders(tctx *testContext, query backend.DataQuery, qr interface{}, headers map[string]string) (data.Frames, error) {
 	req := backend.QueryDataRequest{
 		Queries: []backend.DataQuery{query},
-		Headers: map[string]string{},
+		Headers: headers,
 	}
 
 	promRes, err := toAPIResponse(qr)
 	if err != nil {
 		return nil, err
 	}
+
 	tctx.httpProvider.setResponse(promRes)
 
 	res, err := tctx.queryData.Execute(context.Background(), &req)
+	errClose := promRes.Body.Close()
 	if err != nil {
 		return nil, err
 	}
+	if errClose != nil {
+		return nil, errClose
+	}
 
 	return res.Responses[req.Queries[0].RefID].Frames, nil
+}
+
+func execute(tctx *testContext, query backend.DataQuery, qr interface{}) (data.Frames, error) {
+	return executeWithHeaders(tctx, query, qr, map[string]string{})
 }
 
 type apiResponse struct {
@@ -415,7 +424,8 @@ func setup(wideFrames bool) (*testContext, error) {
 		JSONData: json.RawMessage(`{"timeInterval": "15s"}`),
 	}
 
-	features := &fakeFeatureToggles{flags: map[string]bool{"prometheusStreamingJSONParser": true, "prometheusWideSeries": wideFrames}}
+	features := &fakeFeatureToggles{flags: map[string]bool{"prometheusBufferedClient": false,
+		"prometheusWideSeries": wideFrames}}
 
 	opts, err := client.CreateTransportOptions(settings, &setting.Cfg{}, &logtest.Fake{})
 	if err != nil {
@@ -446,6 +456,7 @@ func (f *fakeFeatureToggles) IsEnabled(feature string) bool {
 type fakeHttpClientProvider struct {
 	httpclient.Provider
 	opts sdkhttpclient.Options
+	req  *http.Request
 	res  *http.Response
 }
 
@@ -469,5 +480,6 @@ func (p *fakeHttpClientProvider) setResponse(res *http.Response) {
 }
 
 func (p *fakeHttpClientProvider) RoundTrip(req *http.Request) (*http.Response, error) {
+	p.req = req
 	return p.res, nil
 }

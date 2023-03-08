@@ -1,5 +1,4 @@
 export { Project } from './Project';
-export { Metrics } from './Metrics';
 export { GroupBy } from './GroupBy';
 export { Alignment } from './Alignment';
 export { LabelFilter } from './LabelFilter';

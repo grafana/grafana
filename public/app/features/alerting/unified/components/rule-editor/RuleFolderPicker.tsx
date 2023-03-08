@@ -11,12 +11,11 @@ import { FolderWarning, CustomAdd } from '../../../../../core/components/Select/
 
 export interface Folder {
   title: string;
-  id: number;
+  uid: string;
 }
 
 export interface RuleFolderPickerProps extends Omit<FolderPickerProps, 'initialTitle' | 'initialFolderId'> {
   value?: Folder;
-  dissalowSlashes: boolean;
 }
 
 const SlashesWarning = () => {
@@ -51,9 +50,10 @@ export function RuleFolderPicker(props: RuleFolderPickerProps) {
   return (
     <FolderPicker
       showRoot={false}
+      rootName=""
       allowEmpty={true}
       initialTitle={value?.title}
-      initialFolderId={value?.id}
+      initialFolderUid={value?.uid}
       accessControlMetadata
       {...props}
       permissionLevel={PermissionLevelString.View}

@@ -105,7 +105,7 @@
             "sort": "none"
           }
         },
-        "pluginVersion": "9.3.0-pre",
+        "pluginVersion": "9.4.0-pre",
         "targets": [
           {
             "csvContent": "Time,Value,Name\n2022-09-01T05:00:00Z,100,Before\n2022-09-01T06:00:00Z,100,Middle",
@@ -197,7 +197,7 @@
             "sort": "none"
           }
         },
-        "pluginVersion": "9.3.0-pre",
+        "pluginVersion": "9.4.0-pre",
         "targets": [
           {
             "csvContent": "Time,Value,Name\n2022-09-01T05:00:00Z,100,Before\n2022-09-01T07:00:00Z,100,After\n",
@@ -289,7 +289,7 @@
             "sort": "none"
           }
         },
-        "pluginVersion": "9.3.0-pre",
+        "pluginVersion": "9.4.0-pre",
         "targets": [
           {
             "csvContent": "Time,Value,Name\n2022-09-01T06:00:00Z,100,Middle\n2022-09-01T07:00:00Z,100,After\n",
@@ -381,7 +381,7 @@
             "sort": "none"
           }
         },
-        "pluginVersion": "9.3.0-pre",
+        "pluginVersion": "9.4.0-pre",
         "targets": [
           {
             "csvContent": "Time,Value,Name\n2022-09-01T04:00:00Z,100,Before1\n2022-09-01T05:00:00Z,100,Before2\n",
@@ -473,7 +473,7 @@
             "sort": "none"
           }
         },
-        "pluginVersion": "9.3.0-pre",
+        "pluginVersion": "9.4.0-pre",
         "targets": [
           {
             "csvContent": "Time,Value,Name\n2022-09-01T07:00:00Z,100,After1\n2022-09-01T08:00:00Z,100,After2\n",

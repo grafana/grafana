@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
@@ -43,6 +44,7 @@ const (
 	rawFrameQuery                     queryType = "raw_frame"
 	csvFileQueryType                  queryType = "csv_file"
 	csvContentQueryType               queryType = "csv_content"
+	traceType                         queryType = "trace"
 )
 
 type queryType string
@@ -216,6 +218,11 @@ Timestamps will line up evenly on timeStepSeconds (For example, 60 seconds means
 		ID:      string(csvContentQueryType),
 		Name:    "CSV Content",
 		handler: s.handleCsvContentScenario,
+	})
+
+	s.registerScenario(&Scenario{
+		ID:   string(traceType),
+		Name: "Trace",
 	})
 
 	s.queryMux.HandleFunc("", s.handleFallbackScenario)
@@ -645,6 +652,7 @@ func (s *Service) handleLogsScenario(ctx context.Context, req *backend.QueryData
 }
 
 func RandomWalk(query backend.DataQuery, model *simplejson.Json, index int) *data.Frame {
+	rand := rand.New(rand.NewSource(time.Now().UnixNano()))
 	timeWalkerMs := query.TimeRange.From.UnixNano() / int64(time.Millisecond)
 	to := query.TimeRange.To.UnixNano() / int64(time.Millisecond)
 	startValue := model.Get("startValue").MustFloat64(rand.Float64() * 100)
@@ -697,11 +705,24 @@ func RandomWalk(query backend.DataQuery, model *simplejson.Json, index int) *dat
 }
 
 func randomWalkTable(query backend.DataQuery, model *simplejson.Json) *data.Frame {
+	rand := rand.New(rand.NewSource(time.Now().UnixNano()))
 	timeWalkerMs := query.TimeRange.From.UnixNano() / int64(time.Millisecond)
 	to := query.TimeRange.To.UnixNano() / int64(time.Millisecond)
 	withNil := model.Get("withNil").MustBool(false)
 	walker := model.Get("startValue").MustFloat64(rand.Float64() * 100)
 	spread := 2.5
+
+	stateField := data.NewFieldFromFieldType(data.FieldTypeEnum, 0)
+	stateField.Name = "State"
+	stateField.Config = &data.FieldConfig{
+		TypeConfig: &data.FieldTypeConfig{
+			Enum: &data.EnumFieldConfig{
+				Text: []string{
+					"Unknown", "Up", "Down", // 0,1,2
+				},
+			},
+		},
+	}
 
 	frame := data.NewFrame(query.RefID,
 		data.NewField("Time", nil, []*time.Time{}),
@@ -709,9 +730,11 @@ func randomWalkTable(query backend.DataQuery, model *simplejson.Json) *data.Fram
 		data.NewField("Min", nil, []*float64{}),
 		data.NewField("Max", nil, []*float64{}),
 		data.NewField("Info", nil, []*string{}),
+		stateField,
 	)
 
 	var info strings.Builder
+	state := data.EnumItemIndex(0)
 
 	for i := int64(0); i < query.MaxDataPoints && timeWalkerMs < to; i++ {
 		delta := rand.Float64() - 0.5
@@ -720,8 +743,10 @@ func randomWalkTable(query backend.DataQuery, model *simplejson.Json) *data.Fram
 		info.Reset()
 		if delta > 0 {
 			info.WriteString("up")
+			state = 1
 		} else {
 			info.WriteString("down")
+			state = 2
 		}
 		if math.Abs(delta) > .4 {
 			info.WriteString(" fast")
@@ -739,11 +764,12 @@ func randomWalkTable(query backend.DataQuery, model *simplejson.Json) *data.Fram
 			for i := range vals {
 				if rand.Float64() > .2 {
 					vals[i] = nil
+					state = 0
 				}
 			}
 		}
 
-		frame.AppendRow(&t, vals[0], vals[1], vals[2], &infoString)
+		frame.AppendRow(&t, vals[0], vals[1], vals[2], &infoString, state)
 
 		timeWalkerMs += query.Interval.Milliseconds()
 	}
@@ -909,6 +935,7 @@ func predictablePulse(query backend.DataQuery, model *simplejson.Json) (*data.Fr
 }
 
 func randomHeatmapData(query backend.DataQuery, fnBucketGen func(index int) float64) *data.Frame {
+	rand := rand.New(rand.NewSource(time.Now().UnixNano()))
 	frame := data.NewFrame("data", data.NewField("time", nil, []*time.Time{}))
 	for i := 0; i < 10; i++ {
 		frame.Fields = append(frame.Fields, data.NewField(strconv.FormatInt(int64(fnBucketGen(i)), 10), nil, []*float64{}))

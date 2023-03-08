@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/installation/mac/
-  - /docs/grafana/latest/setup-grafana/installation/mac/
+  - ../../installation/mac/
 description: Installing Grafana on macOS
 title: Install on macOS
 weight: 600
@@ -11,7 +10,7 @@ weight: 600
 
 This page explains how to install Grafana and get the service running on your macOS.
 
-**Note on upgrading:** While the process for upgrading Grafana is very similar to installing Grafana, there are some key backup steps you should perform. Before you perform an upgrade, read [Upgrading Grafana]({{< relref "../../upgrade-grafana/" >}}) for tips and guidance on updating an existing installation.
+**Note on upgrading:** While the process for upgrading Grafana is very similar to installing Grafana, there are some key backup steps you should perform. Before you perform an upgrade, read [Upgrading Grafana]({{< relref "../../../upgrade-guide/" >}}) for tips and guidance on updating an existing installation.
 
 ## Install with Homebrew
 

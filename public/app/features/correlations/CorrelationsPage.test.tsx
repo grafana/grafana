@@ -1,15 +1,30 @@
-import { render, waitFor, screen, fireEvent, waitForElementToBeRemoved, within, Matcher } from '@testing-library/react';
+import {
+  render,
+  waitFor,
+  screen,
+  fireEvent,
+  waitForElementToBeRemoved,
+  within,
+  Matcher,
+  getByRole,
+} from '@testing-library/react';
 import { merge, uniqueId } from 'lodash';
 import React from 'react';
 import { DeepPartial } from 'react-hook-form';
-import { Provider } from 'react-redux';
 import { Observable } from 'rxjs';
+import { TestProvider } from 'test/helpers/TestProvider';
 import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { DataSourcePluginMeta } from '@grafana/data';
-import { BackendSrv, FetchError, FetchResponse, setDataSourceSrv, BackendSrvRequest } from '@grafana/runtime';
-import { GrafanaContext } from 'app/core/context/GrafanaContext';
+import {
+  BackendSrv,
+  FetchError,
+  FetchResponse,
+  setDataSourceSrv,
+  BackendSrvRequest,
+  reportInteraction,
+} from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
 
@@ -46,12 +61,6 @@ function createFetchError(overrides?: DeepPartial<FetchError>): FetchError {
     overrides
   );
 }
-
-jest.mock('app/core/services/context_srv');
-
-const mocks = {
-  contextSrv: jest.mocked(contextSrv),
-};
 
 const renderWithContext = async (
   datasources: ConstructorParameters<typeof MockDataSourceSrv>[0] = {},
@@ -140,11 +149,9 @@ const renderWithContext = async (
   setDataSourceSrv(dsServer);
 
   const renderResult = render(
-    <Provider store={configureStore({})}>
-      <GrafanaContext.Provider value={grafanaContext}>
-        <CorrelationsPage />
-      </GrafanaContext.Provider>
-    </Provider>,
+    <TestProvider store={configureStore({})} grafanaContext={grafanaContext}>
+      <CorrelationsPage />
+    </TestProvider>,
     {
       queries: {
         /**
@@ -217,6 +224,20 @@ const renderWithContext = async (
   return renderResult;
 };
 
+jest.mock('app/core/services/context_srv');
+
+const mocks = {
+  contextSrv: jest.mocked(contextSrv),
+  reportInteraction: jest.fn(),
+};
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  reportInteraction: (...args: Parameters<typeof reportInteraction>) => {
+    mocks.reportInteraction(...args);
+  },
+}));
+
 beforeAll(() => {
   mocks.contextSrv.hasPermission.mockImplementation(() => true);
 });
@@ -254,6 +275,10 @@ describe('CorrelationsPage', () => {
       });
     });
 
+    afterEach(() => {
+      mocks.reportInteraction.mockClear();
+    });
+
     it('shows CTA', async () => {
       // insert form should not be present
       expect(screen.queryByRole('button', { name: /add$/i })).not.toBeInTheDocument();
@@ -276,7 +301,7 @@ describe('CorrelationsPage', () => {
       expect(screen.getByRole('button', { name: /add$/i })).toBeInTheDocument();
     });
 
-    it('correctly adds correlations', async () => {
+    it('correctly adds first correlation', async () => {
       const CTAButton = screen.getByRole('button', { name: /add correlation/i });
       expect(CTAButton).toBeInTheDocument();
 
@@ -305,12 +330,18 @@ describe('CorrelationsPage', () => {
       // Waits for the form to be removed, meaning the correlation got successfully saved
       await waitForElementToBeRemoved(() => screen.queryByRole('button', { name: /add$/i }));
 
+      expect(mocks.reportInteraction).toHaveBeenLastCalledWith('grafana_correlations_added');
+
       // the table showing correlations should have appeared
       expect(screen.getByRole('table')).toBeInTheDocument();
     });
   });
 
   describe('With correlations', () => {
+    afterEach(() => {
+      mocks.reportInteraction.mockClear();
+    });
+
     let queryRowsByCellValue: (columnName: Matcher, textValue: Matcher) => HTMLTableRowElement[];
     let getHeaderByName: (columnName: Matcher) => HTMLTableCellElement;
     let queryCellsByColumnName: (columnName: Matcher) => HTMLTableCellElement[];
@@ -386,7 +417,7 @@ describe('CorrelationsPage', () => {
     });
 
     it('correctly sorts by source', async () => {
-      const sourceHeader = getHeaderByName('Source');
+      const sourceHeader = getByRole(getHeaderByName('Source'), 'button');
       fireEvent.click(sourceHeader);
       let cells = queryCellsByColumnName('Source');
       cells.forEach((cell, i, allCells) => {
@@ -406,7 +437,7 @@ describe('CorrelationsPage', () => {
       });
     });
 
-    it('correctly adds correlations', async () => {
+    it('correctly adds new correlation', async () => {
       const addNewButton = screen.getByRole('button', { name: /add new/i });
       expect(addNewButton).toBeInTheDocument();
       fireEvent.click(addNewButton);
@@ -430,6 +461,8 @@ describe('CorrelationsPage', () => {
 
       // the form should get removed after successful submissions
       await waitForElementToBeRemoved(() => screen.queryByRole('button', { name: /add$/i }));
+
+      expect(mocks.reportInteraction).toHaveBeenLastCalledWith('grafana_correlations_added');
     });
 
     it('correctly closes the form when clicking on the close icon', async () => {
@@ -460,6 +493,8 @@ describe('CorrelationsPage', () => {
       fireEvent.click(confirmButton);
 
       await waitForElementToBeRemoved(() => screen.queryByRole('cell', { name: /some label$/i }));
+
+      expect(mocks.reportInteraction).toHaveBeenLastCalledWith('grafana_correlations_deleted');
     });
 
     it('correctly edits correlations', async () => {
@@ -467,6 +502,8 @@ describe('CorrelationsPage', () => {
 
       const rowExpanderButton = within(tableRows[0]).getByRole('button', { name: /toggle row expanded/i });
       fireEvent.click(rowExpanderButton);
+
+      expect(mocks.reportInteraction).toHaveBeenLastCalledWith('grafana_correlations_details_expanded');
 
       await waitForElementToBeRemoved(() => screen.queryByText(/loading query editor/i));
 
@@ -482,6 +519,8 @@ describe('CorrelationsPage', () => {
       await waitFor(() => {
         expect(screen.queryByRole('cell', { name: /edited label$/i })).toBeInTheDocument();
       });
+
+      expect(mocks.reportInteraction).toHaveBeenLastCalledWith('grafana_correlations_edited');
     });
   });
 
@@ -525,6 +564,8 @@ describe('CorrelationsPage', () => {
       const rowExpanderButton = screen.getByRole('button', { name: /toggle row expanded/i });
 
       fireEvent.click(rowExpanderButton);
+
+      expect(mocks.reportInteraction).toHaveBeenLastCalledWith('grafana_correlations_details_expanded');
 
       // wait for the form to be rendered and query editor to be mounted
       await waitForElementToBeRemoved(() => screen.queryByText(/loading query editor/i));

@@ -58,6 +58,7 @@ export const Tooltip = React.memo(({ children, theme, interactive, show, placeme
     <>
       {React.cloneElement(children, {
         ref: setTriggerRef,
+        tabIndex: 0, // tooltip should be keyboard focusable
       })}
       {visible && (
         <Portal>

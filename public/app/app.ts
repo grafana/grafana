@@ -31,6 +31,9 @@ import {
   setEchoSrv,
   setLocationSrv,
   setQueryRunnerFactory,
+  setRunRequest,
+  setPluginImportUtils,
+  setPluginsExtensionRegistry,
 } from '@grafana/runtime';
 import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
 import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
@@ -67,8 +70,11 @@ import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
+import { createPluginExtensionRegistry } from './features/plugins/extensions/registryFactory';
+import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
 import { preloadPlugins } from './features/plugins/pluginPreloader';
 import { QueryRunner } from './features/query/state/QueryRunner';
+import { runRequest } from './features/query/state/runRequest';
 import { initWindowRuntime } from './features/runtime/init';
 import { variableAdapters } from './features/variables/adapters';
 import { createAdHocVariableAdapter } from './features/variables/adhoc/adapter';
@@ -105,7 +111,7 @@ export class GrafanaApp {
       // Let iframe container know grafana has started loading
       parent.postMessage('GrafanaAppInit', '*');
 
-      const loadLocalePromise = initializeI18n(config.bootData.user.locale);
+      const initI18nPromise = initializeI18n(config.bootData.user.language);
 
       setBackendSrv(backendSrv);
       initEchoSrv();
@@ -117,6 +123,10 @@ export class GrafanaApp {
       setPanelDataErrorView(PanelDataErrorView);
       setLocationSrv(locationService);
       setTimeZoneResolver(() => config.bootData.user.timezone);
+
+      // We must wait for translations to load because some preloaded store state requires translating
+      await initI18nPromise;
+
       // Important that extension reducers are initialized before store
       addExtensionReducers();
       configureStore();
@@ -140,6 +150,15 @@ export class GrafanaApp {
       setQueryRunnerFactory(() => new QueryRunner());
       setVariableQueryRunner(new VariableQueryRunner());
 
+      // Provide runRequest implementation to packages, @grafana/scenes in particular
+      setRunRequest(runRequest);
+
+      // Privide plugin import utils to packages, @grafana/scenes in particular
+      setPluginImportUtils({
+        importPanelPlugin,
+        getPanelPluginFromCache: syncGetPanelPlugin,
+      });
+
       locationUtil.initialize({
         config,
         getTimeRangeForUrl: getTimeSrv().timeRangeForUrl,
@@ -159,12 +178,12 @@ export class GrafanaApp {
       const modalManager = new ModalManager();
       modalManager.init();
 
-      await Promise.all([
-        loadLocalePromise,
+      // Preload selected app plugins
+      const preloadResults = await preloadPlugins(config.apps);
 
-        // Preload selected app plugins
-        await preloadPlugins(config.pluginsToPreload),
-      ]);
+      // Create extension registry out of the preloaded plugins
+      const extensionsRegistry = createPluginExtensionRegistry(preloadResults);
+      setPluginsExtensionRegistry(extensionsRegistry);
 
       // initialize chrome service
       const queryParams = locationService.getSearchObject();
@@ -268,6 +287,7 @@ function initEchoSrv() {
     registerEchoBackend(
       new GA4EchoBackend({
         googleAnalyticsId: config.googleAnalytics4Id,
+        googleAnalytics4SendManualPageViews: config.googleAnalytics4SendManualPageViews,
       })
     );
   }

@@ -1,7 +1,8 @@
 import { AnyAction, createAction } from '@reduxjs/toolkit';
 
-import { DataQuery, HistoryItem } from '@grafana/data';
+import { HistoryItem } from '@grafana/data';
 import { config, logError } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import { RICH_HISTORY_SETTING_KEYS } from 'app/core/history/richHistoryLocalStorageUtils';
 import store from 'app/core/store';
 import {

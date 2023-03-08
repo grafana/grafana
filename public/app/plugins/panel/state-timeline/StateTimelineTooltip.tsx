@@ -10,8 +10,7 @@ import {
   LinkModel,
 } from '@grafana/data';
 import { MenuItem, SeriesTableRow, useTheme2 } from '@grafana/ui';
-
-import { findNextStateIndex, fmtDuration } from './utils';
+import { findNextStateIndex, fmtDuration } from 'app/core/components/TimelineChart/utils';
 
 interface StateTimelineTooltipProps {
   data: DataFrame[];

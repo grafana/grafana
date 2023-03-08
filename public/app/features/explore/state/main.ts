@@ -1,8 +1,9 @@
 import { createAction } from '@reduxjs/toolkit';
 import { AnyAction } from 'redux';
 
-import { DataQuery, ExploreUrlState, serializeStateToUrlParam, SplitOpenOptions, UrlQueryMap } from '@grafana/data';
+import { ExploreUrlState, serializeStateToUrlParam, SplitOpenOptions, UrlQueryMap } from '@grafana/data';
 import { DataSourceSrv, locationService } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import { GetExploreUrlArguments, stopQueryState } from 'app/core/utils/explore';
 import { PanelModel } from 'app/features/dashboard/state';
 import { ExploreId, ExploreItemState, ExploreState } from 'app/types/explore';
@@ -39,6 +40,16 @@ export const richHistorySearchFiltersUpdatedAction = createAction<{
 }>('explore/richHistorySearchFiltersUpdatedAction');
 
 export const saveCorrelationsAction = createAction<CorrelationData[]>('explore/saveCorrelationsAction');
+
+export const splitSizeUpdateAction = createAction<{
+  largerExploreId?: ExploreId;
+}>('explore/splitSizeUpdateAction');
+
+export const maximizePaneAction = createAction<{
+  exploreId?: ExploreId;
+}>('explore/maximizePaneAction');
+
+export const evenPaneResizeAction = createAction('explore/evenPaneResizeAction');
 
 /**
  * Resets state for explore.
@@ -97,9 +108,11 @@ export const splitOpen = <T extends DataQuery = DataQuery>(options?: SplitOpenOp
     let rightUrlState: ExploreUrlState = leftUrlState;
 
     if (options) {
+      const { query, queries } = options;
+
       rightUrlState = {
         datasource: options.datasourceUid,
-        queries: [options.query],
+        queries: queries ?? (query ? [query] : []),
         range: options.range || leftState.range,
         panelsState: options.panelsState,
       };
@@ -163,6 +176,9 @@ export const initialExploreState: ExploreState = {
   richHistoryStorageFull: false,
   richHistoryLimitExceededWarningShown: false,
   richHistoryMigrationFailed: false,
+  largerExploreId: undefined,
+  maxedExploreId: undefined,
+  evenSplitPanes: true,
 };
 
 /**
@@ -171,7 +187,7 @@ export const initialExploreState: ExploreState = {
  */
 export const exploreReducer = (state = initialExploreState, action: AnyAction): ExploreState => {
   if (splitCloseAction.match(action)) {
-    const { itemId } = action.payload as SplitCloseActionPayload;
+    const { itemId } = action.payload;
     const targetSplit = {
       left: itemId === ExploreId.left ? state.right! : state.left,
       right: undefined,
@@ -179,6 +195,39 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     return {
       ...state,
       ...targetSplit,
+      largerExploreId: undefined,
+      maxedExploreId: undefined,
+      evenSplitPanes: true,
+      syncedTimes: false,
+    };
+  }
+
+  if (splitSizeUpdateAction.match(action)) {
+    const { largerExploreId } = action.payload;
+    return {
+      ...state,
+      largerExploreId,
+      maxedExploreId: undefined,
+      evenSplitPanes: largerExploreId === undefined,
+    };
+  }
+
+  if (maximizePaneAction.match(action)) {
+    const { exploreId } = action.payload;
+    return {
+      ...state,
+      largerExploreId: exploreId,
+      maxedExploreId: exploreId,
+      evenSplitPanes: false,
+    };
+  }
+
+  if (evenPaneResizeAction.match(action)) {
+    return {
+      ...state,
+      largerExploreId: undefined,
+      maxedExploreId: undefined,
+      evenSplitPanes: true,
     };
   }
 
@@ -244,7 +293,7 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     if (exploreId !== undefined) {
       // @ts-ignore
       const explorePaneState = state[exploreId];
-      return { ...state, [exploreId]: paneReducer(explorePaneState, action as any) };
+      return { ...state, [exploreId]: paneReducer(explorePaneState, action) };
     }
   }
 

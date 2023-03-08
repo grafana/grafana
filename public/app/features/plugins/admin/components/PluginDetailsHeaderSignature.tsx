@@ -39,6 +39,8 @@ export const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css`
       display: flex;
+      flex-wrap: wrap;
+      gap: ${theme.spacing(0.5)};
     `,
     link: css`
       display: inline-flex;

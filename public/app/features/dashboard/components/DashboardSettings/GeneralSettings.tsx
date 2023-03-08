@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { TimeZone } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { CollapsableSection, Field, Input, RadioButtonGroup, TagsInput } from '@grafana/ui';
 import { Page } from 'app/core/components/PageNew/Page';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
@@ -10,7 +9,6 @@ import { updateTimeZoneDashboard, updateWeekStartDashboard } from 'app/features/
 
 import { DeleteDashboardButton } from '../DeleteDashboard/DeleteDashboardButton';
 
-import { PreviewSettings } from './PreviewSettings';
 import { TimePickerSettings } from './TimePickerSettings';
 import { SettingsPageProps } from './types';
 
@@ -30,14 +28,16 @@ export function GeneralSettingsUnconnected({
 }: Props): JSX.Element {
   const [renderCounter, setRenderCounter] = useState(0);
 
-  const onFolderChange = (folder: { id: number; title: string }) => {
-    dashboard.meta.folderId = folder.id;
+  const onFolderChange = (folder: { uid: string; title: string }) => {
+    dashboard.meta.folderUid = folder.uid;
     dashboard.meta.folderTitle = folder.title;
     dashboard.meta.hasUnsavedFolderChange = true;
   };
 
   const onBlur = (event: React.FocusEvent<HTMLInputElement>) => {
-    dashboard[event.currentTarget.name as 'title' | 'description'] = event.currentTarget.value;
+    if (event.currentTarget.name === 'title' || event.currentTarget.name === 'description') {
+      dashboard[event.currentTarget.name] = event.currentTarget.value;
+    }
   };
 
   const onTooltipChange = (graphTooltip: number) => {
@@ -107,7 +107,7 @@ export function GeneralSettingsUnconnected({
             <FolderPicker
               inputId="dashboard-folder-input"
               initialTitle={dashboard.meta.folderTitle}
-              initialFolderId={dashboard.meta.folderId}
+              initialFolderUid={dashboard.meta.folderUid}
               onChange={onFolderChange}
               enableCreateNew={true}
               dashboardId={dashboard.id}
@@ -122,10 +122,6 @@ export function GeneralSettingsUnconnected({
             <RadioButtonGroup value={dashboard.editable} options={editableOptions} onChange={onEditableChange} />
           </Field>
         </div>
-
-        {config.featureToggles.dashboardPreviews && config.featureToggles.dashboardPreviewsAdmin && (
-          <PreviewSettings uid={dashboard.uid} />
-        )}
 
         <TimePickerSettings
           onTimeZoneChange={onTimeZoneChange}

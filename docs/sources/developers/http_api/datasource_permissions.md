@@ -1,8 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/http_api/datasource_permissions/
-  - /docs/grafana/latest/http_api/datasource_permissions/
-  - /docs/grafana/latest/http_api/datasourcepermissions/
+  - ../../http_api/datasource_permissions/
+  - ../../http_api/datasourcepermissions/
+canonical: /docs/grafana/latest/developers/http_api/datasource_permissions/
 description: Data Source Permissions API
 keywords:
   - grafana
@@ -14,7 +14,7 @@ keywords:
   - permissions
   - acl
   - enterprise
-title: 'Datasource Permissions HTTP API'
+title: Datasource Permissions HTTP API
 ---
 
 # Data Source Permissions API

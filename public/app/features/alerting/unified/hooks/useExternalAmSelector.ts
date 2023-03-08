@@ -7,54 +7,6 @@ import { useSelector } from 'app/types';
 import { alertmanagerApi } from '../api/alertmanagerApi';
 import { getAlertManagerDataSources } from '../utils/datasource';
 
-const SUFFIX_REGEX = /\/api\/v[1|2]\/alerts/i;
-type AlertmanagerConfig = { url: string; status: string; actualUrl: string };
-
-export function useExternalAmSelector(): AlertmanagerConfig[] | [] {
-  const { useGetExternalAlertmanagersQuery, useGetExternalAlertmanagerConfigQuery } = alertmanagerApi;
-
-  const { currentData: discoveredAlertmanagers } = useGetExternalAlertmanagersQuery();
-  const { currentData: alertmanagerConfig } = useGetExternalAlertmanagerConfigQuery();
-
-  if (!discoveredAlertmanagers || !alertmanagerConfig) {
-    return [];
-  }
-
-  const enabledAlertmanagers: AlertmanagerConfig[] = [];
-  const droppedAlertmanagers: AlertmanagerConfig[] = discoveredAlertmanagers.droppedAlertManagers.map((am) => ({
-    url: am.url.replace(SUFFIX_REGEX, ''),
-    status: 'dropped',
-    actualUrl: am.url,
-  }));
-
-  for (const url of alertmanagerConfig.alertmanagers) {
-    if (discoveredAlertmanagers.activeAlertManagers.length === 0) {
-      enabledAlertmanagers.push({
-        url: url,
-        status: 'pending',
-        actualUrl: '',
-      });
-    } else {
-      const matchingActiveAM = discoveredAlertmanagers.activeAlertManagers.find(
-        (am) => am.url === `${url}/api/v2/alerts`
-      );
-      matchingActiveAM
-        ? enabledAlertmanagers.push({
-            url: matchingActiveAM.url.replace(SUFFIX_REGEX, ''),
-            status: 'active',
-            actualUrl: matchingActiveAM.url,
-          })
-        : enabledAlertmanagers.push({
-            url: url,
-            status: 'pending',
-            actualUrl: '',
-          });
-    }
-  }
-
-  return [...enabledAlertmanagers, ...droppedAlertmanagers];
-}
-
 export interface ExternalDataSourceAM {
   dataSource: DataSourceInstanceSettings<AlertManagerDataSourceJsonData>;
   url?: string;

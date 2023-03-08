@@ -3,7 +3,7 @@ import { useArgs } from '@storybook/client-api';
 import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
 
-import { SeriesColorPicker, ColorPicker } from '@grafana/ui';
+import { SeriesColorPicker, ColorPicker, clearButtonStyles, useStyles2 } from '@grafana/ui';
 
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
@@ -44,6 +44,7 @@ export const Basic: ComponentStory<typeof ColorPicker> = ({ color, enableNamedCo
 
 export const SeriesPicker: ComponentStory<typeof SeriesColorPicker> = ({ color, enableNamedColors }) => {
   const [, updateArgs] = useArgs();
+  const clearButton = useStyles2(clearButtonStyles);
   return (
     <SeriesColorPicker
       enableNamedColors={enableNamedColors}
@@ -56,9 +57,16 @@ export const SeriesPicker: ComponentStory<typeof SeriesColorPicker> = ({ color, 
       }}
     >
       {({ ref, showColorPicker, hideColorPicker }) => (
-        <div ref={ref} onMouseLeave={hideColorPicker} onClick={showColorPicker} style={{ color, cursor: 'pointer' }}>
+        <button
+          type="button"
+          ref={ref}
+          onMouseLeave={hideColorPicker}
+          onClick={showColorPicker}
+          style={{ color }}
+          className={clearButton}
+        >
           Open color picker
-        </div>
+        </button>
       )}
     </SeriesColorPicker>
   );

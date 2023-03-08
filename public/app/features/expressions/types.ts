@@ -56,7 +56,7 @@ export enum ReducerMode {
   DropNonNumbers = 'dropNN',
 }
 
-export const reducerMode: Array<SelectableValue<ReducerMode>> = [
+export const reducerModes: Array<SelectableValue<ReducerMode>> = [
   {
     value: ReducerMode.Strict,
     label: 'Strict',

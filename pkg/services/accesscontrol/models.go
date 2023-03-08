@@ -8,7 +8,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
+
+var ErrInternal = errutil.NewBase(errutil.StatusInternal, "accesscontrol.internal")
 
 // RoleRegistration stores a role and its assignments to built-in roles
 // (Viewer, Editor, Admin, Grafana Admin)
@@ -24,7 +27,7 @@ type Role struct {
 	Version     int64  `json:"version"`
 	UID         string `xorm:"uid" json:"uid"`
 	Name        string `json:"name"`
-	DisplayName string `json:"displayName"`
+	DisplayName string `json:"displayName,omitempty"`
 	Group       string `xorm:"group_name" json:"group"`
 	Description string `json:"description"`
 	Hidden      bool   `json:"hidden"`
@@ -45,17 +48,9 @@ func (r *Role) IsBasic() bool {
 	return strings.HasPrefix(r.Name, BasicRolePrefix) || strings.HasPrefix(r.UID, BasicRoleUIDPrefix)
 }
 
-func (r *Role) GetDisplayName() string {
-	if r.IsFixed() && r.DisplayName == "" {
-		r.DisplayName = fallbackDisplayName(r.Name)
-	}
-	return r.DisplayName
-}
-
 func (r Role) MarshalJSON() ([]byte, error) {
 	type Alias Role
 
-	r.DisplayName = r.GetDisplayName()
 	return json.Marshal(&struct {
 		Alias
 		Global bool `json:"global" xorm:"-"`
@@ -69,7 +64,7 @@ type RoleDTO struct {
 	Version     int64        `json:"version"`
 	UID         string       `xorm:"uid" json:"uid"`
 	Name        string       `json:"name"`
-	DisplayName string       `json:"displayName"`
+	DisplayName string       `json:"displayName,omitempty"`
 	Description string       `json:"description"`
 	Group       string       `xorm:"group_name" json:"group"`
 	Permissions []Permission `json:"permissions,omitempty"`
@@ -134,20 +129,9 @@ func (r *RoleDTO) IsBasic() bool {
 	return strings.HasPrefix(r.Name, BasicRolePrefix) || strings.HasPrefix(r.UID, BasicRoleUIDPrefix)
 }
 
-func (r *RoleDTO) GetDisplayName() string {
-	if r.IsFixed() && r.DisplayName == "" {
-		r.DisplayName = fallbackDisplayName(r.Name)
-	}
-	if r.DisplayName == "" {
-		return r.Name
-	}
-	return r.DisplayName
-}
-
 func (r RoleDTO) MarshalJSON() ([]byte, error) {
 	type Alias RoleDTO
 
-	r.DisplayName = r.GetDisplayName()
 	return json.Marshal(&struct {
 		Alias
 		Global bool `json:"global" xorm:"-"`
@@ -155,17 +139,6 @@ func (r RoleDTO) MarshalJSON() ([]byte, error) {
 		Alias:  (Alias)(r),
 		Global: r.Global(),
 	})
-}
-
-// fallbackDisplayName provides a fallback name for role
-// that can be displayed in the ui for better readability
-// example: currently this would give:
-// fixed:datasources:name -> datasources name
-// datasources:admin      -> datasources admin
-func fallbackDisplayName(rName string) string {
-	// removing prefix for fixed roles
-	rNameWithoutPrefix := strings.Replace(rName, FixedRolePrefix, "", 1)
-	return strings.TrimSpace(strings.Replace(rNameWithoutPrefix, ":", " ", -1))
 }
 
 type TeamRole struct {
@@ -215,11 +188,11 @@ func (p Permission) OSSPermission() Permission {
 }
 
 type GetUserPermissionsQuery struct {
-	OrgID   int64 `json:"-"`
-	UserID  int64 `json:"userId"`
-	Roles   []string
-	Actions []string
-	TeamIDs []int64
+	OrgID      int64
+	UserID     int64
+	Roles      []string
+	TeamIDs    []int64
+	RolePrefix string
 }
 
 // ResourcePermission is structure that holds all actions that either a team / user / builtin-role
@@ -309,6 +282,7 @@ const (
 	ActionUsersLogout            = "users:logout"
 	ActionUsersQuotasList        = "users.quotas:read"
 	ActionUsersQuotasUpdate      = "users.quotas:write"
+	ActionUsersPermissionsRead   = "users.permissions:read"
 
 	// Org actions
 	ActionOrgsRead             = "orgs:read"

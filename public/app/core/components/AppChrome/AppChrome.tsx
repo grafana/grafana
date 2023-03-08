@@ -5,9 +5,12 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { CommandPalette } from 'app/features/commandPalette/CommandPalette';
+import { SearchWrapper } from 'app/features/search';
 import { KioskMode } from 'app/types';
 
 import { MegaMenu } from '../MegaMenu/MegaMenu';
+import { NavBar } from '../NavBar/NavBar';
 
 import { NavToolbar } from './NavToolbar';
 import { TopSearchBar } from './TopSearchBar';
@@ -20,8 +23,19 @@ export function AppChrome({ children }: Props) {
   const { chrome } = useGrafana();
   const state = chrome.useState();
 
-  if (!config.featureToggles.topnav || config.isPublicDashboardView) {
-    return <main className="main-view">{children}</main>;
+  if (!config.featureToggles.topnav) {
+    return (
+      <>
+        {!state.chromeless && (
+          <>
+            <NavBar />
+            <SearchWrapper />
+            <CommandPalette />
+          </>
+        )}
+        <main className="main-view">{children}</main>
+      </>
+    );
   }
 
   const searchBarHidden = state.searchBarHidden || state.kioskMode === KioskMode.TV;
@@ -32,24 +46,32 @@ export function AppChrome({ children }: Props) {
     [styles.contentChromeless]: state.chromeless,
   });
 
+  // Chromeless routes are without topNav, mega menu, search & command palette
+  if (state.chromeless) {
+    return (
+      <main className="main-view">
+        <div className={contentClass}>{children}</div>
+      </main>
+    );
+  }
+
   return (
     <main className="main-view">
-      {!state.chromeless && (
-        <div className={cx(styles.topNav)}>
-          {!searchBarHidden && <TopSearchBar />}
-          <NavToolbar
-            searchBarHidden={searchBarHidden}
-            sectionNav={state.sectionNav}
-            pageNav={state.pageNav}
-            actions={state.actions}
-            onToggleSearchBar={chrome.onToggleSearchBar}
-            onToggleMegaMenu={chrome.onToggleMegaMenu}
-            onToggleKioskMode={chrome.onToggleKioskMode}
-          />
-        </div>
-      )}
+      <div className={cx(styles.topNav)}>
+        {!searchBarHidden && <TopSearchBar />}
+        <NavToolbar
+          searchBarHidden={searchBarHidden}
+          sectionNav={state.sectionNav}
+          pageNav={state.pageNav}
+          actions={state.actions}
+          onToggleSearchBar={chrome.onToggleSearchBar}
+          onToggleMegaMenu={chrome.onToggleMegaMenu}
+          onToggleKioskMode={chrome.onToggleKioskMode}
+        />
+      </div>
       <div className={contentClass}>{children}</div>
-      {!state.chromeless && <MegaMenu searchBarHidden={searchBarHidden} onClose={() => chrome.setMegaMenu(false)} />}
+      <MegaMenu searchBarHidden={searchBarHidden} onClose={() => chrome.setMegaMenu(false)} />
+      <CommandPalette />
     </main>
   );
 }

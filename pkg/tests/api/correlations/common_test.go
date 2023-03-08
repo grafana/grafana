@@ -7,12 +7,17 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/stretchr/testify/require"
 )
 
 type errorResponseBody struct {
@@ -39,7 +44,7 @@ func NewTestEnv(t *testing.T) TestContext {
 }
 
 type User struct {
-	username string
+	User     user.User
 	password string
 }
 
@@ -117,8 +122,8 @@ func (c TestContext) getURL(url string, user User) string {
 	c.t.Helper()
 
 	baseUrl := fmt.Sprintf("http://%s", c.env.Server.HTTPServer.Listener.Addr())
-	if user.username != "" && user.password != "" {
-		baseUrl = fmt.Sprintf("http://%s:%s@%s", user.username, user.password, c.env.Server.HTTPServer.Listener.Addr())
+	if user.User.Login != "" && user.password != "" {
+		baseUrl = fmt.Sprintf("http://%s:%s@%s", user.User.Login, user.password, c.env.Server.HTTPServer.Listener.Addr())
 	}
 
 	return fmt.Sprintf(
@@ -128,21 +133,33 @@ func (c TestContext) getURL(url string, user User) string {
 	)
 }
 
-func (c TestContext) createUser(cmd user.CreateUserCommand) {
+func (c TestContext) createUser(cmd user.CreateUserCommand) User {
 	c.t.Helper()
+	store := c.env.SQLStore
+	store.Cfg.AutoAssignOrg = true
+	store.Cfg.AutoAssignOrgId = 1
 
-	c.env.SQLStore.Cfg.AutoAssignOrg = true
-	c.env.SQLStore.Cfg.AutoAssignOrgId = 1
-
-	_, err := c.env.SQLStore.CreateUser(context.Background(), cmd)
+	quotaService := quotaimpl.ProvideService(store, store.Cfg)
+	orgService, err := orgimpl.ProvideService(store, store.Cfg, quotaService)
 	require.NoError(c.t, err)
+	usrSvc, err := userimpl.ProvideService(store, orgService, store.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
+	require.NoError(c.t, err)
+
+	user, err := usrSvc.Create(context.Background(), &cmd)
+	require.NoError(c.t, err)
+
+	return User{
+		User:     *user,
+		password: cmd.Password,
+	}
 }
 
-func (c TestContext) createDs(cmd *datasources.AddDataSourceCommand) {
+func (c TestContext) createDs(cmd *datasources.AddDataSourceCommand) *datasources.DataSource {
 	c.t.Helper()
 
-	err := c.env.Server.HTTPServer.DataSourcesService.AddDataSource(context.Background(), cmd)
+	dataSource, err := c.env.Server.HTTPServer.DataSourcesService.AddDataSource(context.Background(), cmd)
 	require.NoError(c.t, err)
+	return dataSource
 }
 
 func (c TestContext) createCorrelation(cmd correlations.CreateCorrelationCommand) correlations.Correlation {

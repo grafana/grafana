@@ -5,16 +5,23 @@ import { Field, LogLevel, LogRowModel, MutableDataFrame, createTheme } from '@gr
 
 import { LogDetails, Props } from './LogDetails';
 import { createLogRow } from './__mocks__/logRow';
+import { getLogRowStyles } from './getLogRowStyles';
 
 const setup = (propOverrides?: Partial<Props>, rowOverrides?: Partial<LogRowModel>) => {
+  const theme = createTheme();
+  const styles = getLogRowStyles(theme);
   const props: Props = {
+    displayedFields: [],
     showDuplicates: false,
     wrapLogMessage: false,
     row: createLogRow({ logLevel: LogLevel.error, timeEpochMs: 1546297200000, ...rowOverrides }),
     getRows: () => [],
     onClickFilterLabel: () => {},
     onClickFilterOutLabel: () => {},
-    theme: createTheme(),
+    onClickShowField: () => {},
+    onClickHideField: () => {},
+    theme,
+    styles,
     ...(propOverrides || {}),
   };
 
@@ -31,7 +38,7 @@ describe('LogDetails', () => {
   describe('when labels are present', () => {
     it('should render heading', () => {
       setup(undefined, { labels: { key1: 'label1', key2: 'label2' } });
-      expect(screen.getAllByLabelText('Log labels')).toHaveLength(1);
+      expect(screen.getAllByLabelText('Fields')).toHaveLength(1);
     });
     it('should render labels', () => {
       setup(undefined, { labels: { key1: 'label1', key2: 'label2' } });
@@ -48,29 +55,15 @@ describe('LogDetails', () => {
       expect(screen.getByLabelText('Log level').classList.toString()).not.toContain('logs-row__level');
     });
   });
-  describe('when row entry has parsable fields', () => {
-    it('should render heading ', () => {
-      setup(undefined, { entry: 'test=successful' });
-      expect(screen.getAllByTitle('Ad-hoc statistics')).toHaveLength(1);
-    });
-    it('should render detected fields', () => {
-      setup(undefined, { entry: 'test=successful' });
-      expect(screen.getByRole('cell', { name: 'test' })).toBeInTheDocument();
-      expect(screen.getByRole('cell', { name: 'successful' })).toBeInTheDocument();
-    });
-  });
   describe('when row entry have parsable fields and labels are present', () => {
     it('should render all headings', () => {
       setup(undefined, { entry: 'test=successful', labels: { key: 'label' } });
-      expect(screen.getAllByLabelText('Log labels')).toHaveLength(1);
-      expect(screen.getAllByLabelText('Detected fields')).toHaveLength(1);
+      expect(screen.getAllByLabelText('Fields')).toHaveLength(1);
     });
     it('should render all labels and detected fields', () => {
       setup(undefined, { entry: 'test=successful', labels: { key: 'label' } });
       expect(screen.getByRole('cell', { name: 'key' })).toBeInTheDocument();
       expect(screen.getByRole('cell', { name: 'label' })).toBeInTheDocument();
-      expect(screen.getByRole('cell', { name: 'test' })).toBeInTheDocument();
-      expect(screen.getByRole('cell', { name: 'successful' })).toBeInTheDocument();
     });
   });
   describe('when row entry and labels are not present', () => {

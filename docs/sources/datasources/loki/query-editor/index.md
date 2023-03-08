@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/data-sources/loki/query-editor/
+  - ../../data-sources/loki/query-editor/
 description: Guide for using the Loki data source's query editor
 keywords:
   - grafana
@@ -43,7 +43,7 @@ You can also augment queries by using [template variables]({{< relref "./templat
 ## Code mode
 
 In **Code mode**, you can write complex queries using a text editor with autocompletion features and syntax highlighting.
-It also contains a [log browser]({{< relref "#log-browser" >}}) to further help you write queries.
+It also contains a [label browser]({{< relref "#label-browser" >}}) to further help you write queries.
 
 For more information about Loki's query language, refer to the [Loki documentation](/docs/loki/latest/logql/).
 
@@ -54,21 +54,21 @@ Code mode's autocompletion feature works automatically while typing.
 The query editor can autocomplete static functions, aggregations, and keywords, and also dynamic items like labels.
 The autocompletion dropdown includes documentation for the suggested items where available.
 
-### Log browser
+### Label browser
 
-You can use the Loki log browser to navigate through your labels and values, and build queries.
+You can use the Loki label browser to navigate through your labels and values, and build queries.
 
 **To navigate Loki and build a query:**
 
 1. Choose labels to locate.
 1. Search for the values of your selected labels.
 
-   The search field supports fuzzy search, and the log browser also supports faceting to list only possible label combinations.
+   The search field supports fuzzy search, and the label browser also supports faceting to list only possible label combinations.
 
 1. Choose a query type between [**logs query**]({{< relref "#create-a-log-query" >}}) and [**rate metrics query**]({{< relref "#create-a-metric-query" >}}).
    You can also validate the selector.
 
-{{< figure src="/static/img/docs/v75/loki_log_browser.png" class="docs-image--no-shadow" max-width="800px" caption="The Loki log browser" >}}
+{{< figure src="/static/img/docs/v75/loki_label_browser.png" class="docs-image--no-shadow" max-width="800px" caption="The Loki label browser" >}}
 
 ### Configure query settings
 
@@ -90,8 +90,8 @@ In addition to the **Run query** button and mode switcher, Builder mode provides
 | Name                      | Description                                                                               |
 | ------------------------- | ----------------------------------------------------------------------------------------- |
 | **Kick start your query** | A list of useful operation patterns you can use to add multiple operations to your query. |
-| **Explain**               | Displays a step-by-step explanation of all query components and operations.               |
-| **Raw query**             | Displays the raw LogQL query that the Builder would send to Loki.                         |
+| **Label browser**         | Used to navigate through your labels and values, and also build queries.                  |
+| **Explain query**         | Displays a step-by-step explanation of all query components and operations.               |
 
 ### Use the Labels selector
 
@@ -125,13 +125,13 @@ To re-order operations manually, drag the operation box by its name and drop it 
 
 In same cases the query editor can detect which operations would be most appropriate for a selected log stream. In such cases it will show a hint next to the `+ Operations` button. Click on the hint to add the operations to your query.
 
-### Explain mode
+### Explain query
 
-Explain mode helps with understanding the query. It shows a step by step explanation of all query parts and the operations.
+This section is only shown if the `Explain query` switch from the query editor top toolbar is set to `on`. It shows a step by step explanation of all query parts and the operations.
 
 ### Raw query
 
-This section is shown only if the `Raw query` switch from the query editor top toolbar is set to `on`. It shows the raw query that will be created and executed by the query editor.
+It shows the raw query that will be created and executed by the query editor.
 
 There are two types of LogQL queries:
 

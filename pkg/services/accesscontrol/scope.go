@@ -142,19 +142,26 @@ func (s scopeProviderImpl) GetResourceAllIDScope() string {
 	return GetResourceAllIDScope(s.root)
 }
 
-// WildcardsFromPrefix generates valid wildcards from prefix
-// datasource:uid: => "*", "datasource:*", "datasource:uid:*"
 func WildcardsFromPrefix(prefix string) Wildcards {
+	return WildcardsFromPrefixes([]string{prefix})
+}
+
+// WildcardsFromPrefixes generates valid wildcards from prefixes
+// datasource:uid: => "*", "datasource:*", "datasource:uid:*"
+func WildcardsFromPrefixes(prefixes []string) Wildcards {
 	var b strings.Builder
 	wildcards := Wildcards{"*"}
-	parts := strings.Split(prefix, ":")
-	for _, p := range parts {
-		if p == "" {
-			continue
+	for _, prefix := range prefixes {
+		parts := strings.Split(prefix, ":")
+		for _, p := range parts {
+			if p == "" {
+				continue
+			}
+			b.WriteString(p)
+			b.WriteRune(':')
+			wildcards = append(wildcards, b.String()+"*")
 		}
-		b.WriteString(p)
-		b.WriteRune(':')
-		wildcards = append(wildcards, b.String()+"*")
+		b.Reset()
 	}
 	return wildcards
 }
@@ -169,4 +176,8 @@ func (wildcards Wildcards) Contains(scope string) bool {
 		}
 	}
 	return false
+}
+
+func isWildcard(scope string) bool {
+	return scope == "*" || strings.HasSuffix(scope, ":*")
 }

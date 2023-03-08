@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
-import { DataFrameType, GrafanaTheme2, PanelProps, TimeRange } from '@grafana/data';
+import { DataFrame, DataFrameType, Field, getLinksSupplier, GrafanaTheme2, PanelProps, TimeRange } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { ScaleDistributionConfig } from '@grafana/schema';
 import {
@@ -20,8 +20,8 @@ import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/tra
 
 import { HeatmapHoverView } from './HeatmapHoverView';
 import { prepareHeatmapData } from './fields';
-import { PanelOptions } from './models.gen';
 import { quantizeScheme } from './palettes';
+import { PanelOptions } from './types';
 import { HeatmapHoverEvent, prepConfig } from './utils';
 
 interface HeatmapPanelProps extends PanelProps<PanelOptions> {}
@@ -47,13 +47,20 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
   let timeRangeRef = useRef<TimeRange>(timeRange);
   timeRangeRef.current = timeRange;
 
+  const getFieldLinksSupplier = useCallback(
+    (exemplars: DataFrame, field: Field) => {
+      return getLinksSupplier(exemplars, field, field.state?.scopedVars ?? {}, replaceVariables);
+    },
+    [replaceVariables]
+  );
+
   const info = useMemo(() => {
     try {
-      return prepareHeatmapData(data, options, theme);
+      return prepareHeatmapData(data, options, theme, getFieldLinksSupplier);
     } catch (ex) {
       return { warning: `${ex}` };
     }
-  }, [data, options, theme]);
+  }, [data, options, theme, getFieldLinksSupplier]);
 
   const facets = useMemo(() => {
     let exemplarsXFacet: number[] = []; // "Time" field
@@ -205,6 +212,7 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
                   width: '100%',
                   display: 'flex',
                   justifyContent: 'flex-end',
+                  paddingBottom: '6px',
                 }}
               >
                 <CloseButton
@@ -218,7 +226,12 @@ export const HeatmapPanel: React.FC<HeatmapPanelProps> = ({
                 />
               </div>
             )}
-            <HeatmapHoverView data={info} hover={hover} showHistogram={options.tooltip.yHistogram} />
+            <HeatmapHoverView
+              timeRange={timeRange}
+              data={info}
+              hover={hover}
+              showHistogram={options.tooltip.yHistogram}
+            />
           </VizTooltipContainer>
         )}
       </Portal>

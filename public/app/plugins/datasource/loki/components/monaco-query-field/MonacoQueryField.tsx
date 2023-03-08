@@ -1,16 +1,18 @@
 import { css } from '@emotion/css';
 import React, { useRef, useEffect } from 'react';
 import { useLatest } from 'react-use';
+import { v4 as uuidv4 } from 'uuid';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { languageConfiguration, monarchlanguage } from '@grafana/monaco-logql';
-import { useTheme2, ReactMonacoEditor, Monaco, monacoTypes } from '@grafana/ui';
+import { useTheme2, ReactMonacoEditor, Monaco, monacoTypes, MonacoEditor } from '@grafana/ui';
 
 import { Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';
 import { getCompletionProvider, getSuggestOptions } from './monaco-completion-provider';
 import { CompletionDataProvider } from './monaco-completion-provider/CompletionDataProvider';
+import { placeHolderScopedVars, validateQuery } from './monaco-completion-provider/validation';
 
 const options: monacoTypes.editor.IStandaloneEditorConstructionOptions = {
   codeLens: false,
@@ -68,21 +70,30 @@ function ensureLogQL(monaco: Monaco) {
   }
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, placeholder: string) => {
   return {
     container: css`
       border-radius: ${theme.shape.borderRadius()};
       border: 1px solid ${theme.components.input.borderColor};
+      width: 100%;
+    `,
+    placeholder: css`
+      ::after {
+        content: '${placeholder}';
+        font-family: ${theme.typography.fontFamilyMonospace};
+        opacity: 0.3;
+      }
     `,
   };
 };
 
-const MonacoQueryField = ({ languageProvider, history, onBlur, onRunQuery, initialValue }: Props) => {
+const MonacoQueryField = ({ history, onBlur, onRunQuery, initialValue, datasource, placeholder }: Props) => {
+  const id = uuidv4();
   // we need only one instance of `overrideServices` during the lifetime of the react component
   const overrideServicesRef = useRef(getOverrideServices());
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const langProviderRef = useLatest(languageProvider);
+  const langProviderRef = useLatest(datasource.languageProvider);
   const historyRef = useLatest(history);
   const onRunQueryRef = useLatest(onRunQuery);
   const onBlurRef = useLatest(onBlur);
@@ -90,7 +101,7 @@ const MonacoQueryField = ({ languageProvider, history, onBlur, onRunQuery, initi
   const autocompleteCleanupCallback = useRef<(() => void) | null>(null);
 
   const theme = useTheme2();
-  const styles = getStyles(theme);
+  const styles = getStyles(theme, placeholder);
 
   useEffect(() => {
     // when we unmount, we unregister the autocomplete-function, if it was registered
@@ -98,6 +109,34 @@ const MonacoQueryField = ({ languageProvider, history, onBlur, onRunQuery, initi
       autocompleteCleanupCallback.current?.();
     };
   }, []);
+
+  const setPlaceholder = (monaco: Monaco, editor: MonacoEditor) => {
+    const placeholderDecorators = [
+      {
+        range: new monaco.Range(1, 1, 1, 1),
+        options: {
+          className: styles.placeholder,
+          isWholeLine: true,
+        },
+      },
+    ];
+
+    let decorators: string[] = [];
+
+    const checkDecorators: () => void = () => {
+      const model = editor.getModel();
+
+      if (!model) {
+        return;
+      }
+
+      const newDecorators = model.getValueLength() === 0 ? placeholderDecorators : [];
+      decorators = model.deltaDecorations(decorators, newDecorators);
+    };
+
+    checkDecorators();
+    editor.onDidChangeModelContent(checkDecorators);
+  };
 
   return (
     <div
@@ -115,11 +154,36 @@ const MonacoQueryField = ({ languageProvider, history, onBlur, onRunQuery, initi
           ensureLogQL(monaco);
         }}
         onMount={(editor, monaco) => {
+          // Monaco has a bug where it runs actions on all instances (https://github.com/microsoft/monaco-editor/issues/2947), so we ensure actions are executed on instance-level with this ContextKey.
+          const isEditorFocused = editor.createContextKey<boolean>('isEditorFocused' + id, false);
           // we setup on-blur
           editor.onDidBlurEditorWidget(() => {
+            isEditorFocused.set(false);
             onBlurRef.current(editor.getValue());
           });
-          const dataProvider = new CompletionDataProvider(langProviderRef.current, historyRef.current);
+          editor.onDidChangeModelContent((e) => {
+            const model = editor.getModel();
+            if (!model) {
+              return;
+            }
+            const query = model.getValue();
+            const errors =
+              validateQuery(
+                query,
+                datasource.interpolateString(query, placeHolderScopedVars),
+                model.getLinesContent()
+              ) || [];
+
+            const markers = errors.map(({ error, ...boundary }) => ({
+              message: `${
+                error ? `Error parsing "${error}"` : 'Parse error'
+              }. The query appears to be incorrect and could fail to be executed.`,
+              severity: monaco.MarkerSeverity.Error,
+              ...boundary,
+            }));
+            monaco.editor.setModelMarkers(model, 'owner', markers);
+          });
+          const dataProvider = new CompletionDataProvider(langProviderRef.current, historyRef);
           const completionProvider = getCompletionProvider(monaco, dataProvider);
 
           // completion-providers in monaco are not registered directly to editor-instances,
@@ -149,31 +213,36 @@ const MonacoQueryField = ({ languageProvider, history, onBlur, onRunQuery, initi
           // (it will grow taller when necessary)
           // FIXME: maybe move this functionality into CodeEditor, like:
           // <CodeEditor resizingMode="single-line"/>
-          const updateElementHeight = () => {
+          const handleResize = () => {
             const containerDiv = containerRef.current;
             if (containerDiv !== null) {
               const pixelHeight = editor.getContentHeight();
               containerDiv.style.height = `${pixelHeight + EDITOR_HEIGHT_OFFSET}px`;
-              containerDiv.style.width = '100%';
               const pixelWidth = containerDiv.clientWidth;
               editor.layout({ width: pixelWidth, height: pixelHeight });
             }
           };
 
-          editor.onDidContentSizeChange(updateElementHeight);
-          updateElementHeight();
-
+          editor.onDidContentSizeChange(handleResize);
+          handleResize();
           // handle: shift + enter
           // FIXME: maybe move this functionality into CodeEditor?
-          editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.Enter, () => {
-            onRunQueryRef.current(editor.getValue());
-          });
+          editor.addCommand(
+            monaco.KeyMod.Shift | monaco.KeyCode.Enter,
+            () => {
+              onRunQueryRef.current(editor.getValue());
+            },
+            'isEditorFocused' + id
+          );
 
           editor.onDidFocusEditorText(() => {
+            isEditorFocused.set(true);
             if (editor.getValue().trim() === '') {
               editor.trigger('', 'editor.action.triggerSuggest', {});
             }
           });
+
+          setPlaceholder(monaco, editor);
         }}
       />
     </div>

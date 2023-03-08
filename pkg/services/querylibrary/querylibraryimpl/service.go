@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/x/persistentcollection"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/querylibrary"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
@@ -67,7 +67,7 @@ type queryLoader interface {
 	byUID(uid string) (*querylibrary.Query, error)
 }
 
-func (s *service) UpdateDashboardQueries(ctx context.Context, user *user.SignedInUser, dash *models.Dashboard) error {
+func (s *service) UpdateDashboardQueries(ctx context.Context, user *user.SignedInUser, dash *dashboards.Dashboard) error {
 	queryLoader := newPerRequestQueryLoader(ctx, user, s)
 	return s.updateQueriesRecursively(queryLoader, dash.Data)
 }
@@ -262,8 +262,16 @@ func (s *service) GetBatch(ctx context.Context, user *user.SignedInUser, uids []
 
 func (s *service) Update(ctx context.Context, user *user.SignedInUser, query *querylibrary.Query) error {
 	if query.UID == "" {
-		query.UID = util.GenerateShortUID()
+		queriesWithTheSameTitle, err := s.Search(ctx, user, querylibrary.QuerySearchOptions{Query: query.Title})
+		if err != nil {
+			return err
+		}
 
+		if len(queriesWithTheSameTitle) != 0 {
+			return fmt.Errorf("can't create query with title '%s'. existing query with similar name: '%s'", query.Title, queriesWithTheSameTitle[0].Title)
+		}
+
+		query.UID = util.GenerateShortUID()
 		return s.collection.Insert(ctx, namespaceFromUser(user), query)
 	}
 

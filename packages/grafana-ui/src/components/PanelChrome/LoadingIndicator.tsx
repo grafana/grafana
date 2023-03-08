@@ -40,8 +40,8 @@ export const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({ onCancel, lo
 
 const getStyles = () => {
   return {
-    clickable: css`
-      cursor: pointer;
-    `,
+    clickable: css({
+      cursor: 'pointer',
+    }),
   };
 };

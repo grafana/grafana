@@ -32,7 +32,7 @@ const setup = (propOverrides?: object) => {
         password: true,
       },
       secureJsonFields: {},
-      readOnly: true,
+      readOnly: false,
     },
     onChange,
     ...propOverrides,

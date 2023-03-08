@@ -9,15 +9,14 @@ import { TooltipData, SampleUnit } from '../types';
 type Props = {
   tooltipRef: LegacyRef<HTMLDivElement>;
   tooltipData: TooltipData;
-  showTooltip: boolean;
 };
 
-const FlameGraphTooltip = ({ tooltipRef, tooltipData, showTooltip }: Props) => {
+const FlameGraphTooltip = ({ tooltipRef, tooltipData }: Props) => {
   const styles = useStyles2(getStyles);
 
   return (
     <div ref={tooltipRef} className={styles.tooltip}>
-      {tooltipData && showTooltip && (
+      {tooltipData && (
         <Tooltip
           content={
             <div>
@@ -50,7 +49,6 @@ export const getTooltipData = (
   self: number,
   totalTicks: number
 ): TooltipData => {
-  let percentTitle;
   let unitTitle;
 
   const processor = getDisplayProcessor({ field, theme: createTheme() /* theme does not matter for us here */ });
@@ -64,15 +62,12 @@ export const getTooltipData = (
 
   switch (field.config.unit) {
     case SampleUnit.Bytes:
-      percentTitle = '% of total';
       unitTitle = 'RAM';
       break;
     case SampleUnit.Nanoseconds:
-      percentTitle = '% of total time';
       unitTitle = 'Time';
       break;
     default:
-      percentTitle = '% of total';
       unitTitle = 'Count';
       if (!displayValue.suffix) {
         // Makes sure we don't show 123undefined or something like that if suffix isn't defined
@@ -87,7 +82,6 @@ export const getTooltipData = (
 
   return {
     name: label,
-    percentTitle,
     percentValue,
     percentSelf,
     unitTitle,

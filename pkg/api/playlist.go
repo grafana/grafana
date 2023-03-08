@@ -5,12 +5,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func (hs *HTTPServer) ValidateOrgPlaylist(c *models.ReqContext) {
+func (hs *HTTPServer) ValidateOrgPlaylist(c *contextmodel.ReqContext) {
 	uid := web.Params(c.Req)[":uid"]
 	query := playlist.GetPlaylistByUidQuery{UID: uid, OrgId: c.OrgID}
 	p, err := hs.playlistService.GetWithoutItems(c.Req.Context(), &query)
@@ -38,7 +38,7 @@ func (hs *HTTPServer) ValidateOrgPlaylist(c *models.ReqContext) {
 // Responses:
 // 200: searchPlaylistsResponse
 // 500: internalServerError
-func (hs *HTTPServer) SearchPlaylists(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) SearchPlaylists(c *contextmodel.ReqContext) response.Response {
 	query := c.Query("query")
 	limit := c.QueryInt("limit")
 
@@ -70,7 +70,7 @@ func (hs *HTTPServer) SearchPlaylists(c *models.ReqContext) response.Response {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) GetPlaylist(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetPlaylist(c *contextmodel.ReqContext) response.Response {
 	uid := web.Params(c.Req)[":uid"]
 	cmd := playlist.GetPlaylistByUidQuery{UID: uid, OrgId: c.OrgID}
 
@@ -92,7 +92,7 @@ func (hs *HTTPServer) GetPlaylist(c *models.ReqContext) response.Response {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) GetPlaylistItems(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetPlaylistItems(c *contextmodel.ReqContext) response.Response {
 	uid := web.Params(c.Req)[":uid"]
 	cmd := playlist.GetPlaylistByUidQuery{UID: uid, OrgId: c.OrgID}
 
@@ -114,7 +114,7 @@ func (hs *HTTPServer) GetPlaylistItems(c *models.ReqContext) response.Response {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) GetPlaylistDashboards(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetPlaylistDashboards(c *contextmodel.ReqContext) response.Response {
 	playlistUID := web.Params(c.Req)[":uid"]
 
 	playlists, err := hs.LoadPlaylistDashboards(c.Req.Context(), c.OrgID, c.SignedInUser, playlistUID)
@@ -135,7 +135,7 @@ func (hs *HTTPServer) GetPlaylistDashboards(c *models.ReqContext) response.Respo
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) DeletePlaylist(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) DeletePlaylist(c *contextmodel.ReqContext) response.Response {
 	uid := web.Params(c.Req)[":uid"]
 
 	cmd := playlist.DeletePlaylistCommand{UID: uid, OrgId: c.OrgID}
@@ -156,7 +156,7 @@ func (hs *HTTPServer) DeletePlaylist(c *models.ReqContext) response.Response {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) CreatePlaylist(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) CreatePlaylist(c *contextmodel.ReqContext) response.Response {
 	cmd := playlist.CreatePlaylistCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -181,7 +181,7 @@ func (hs *HTTPServer) CreatePlaylist(c *models.ReqContext) response.Response {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) UpdatePlaylist(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) UpdatePlaylist(c *contextmodel.ReqContext) response.Response {
 	cmd := playlist.UpdatePlaylistCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)

@@ -20,6 +20,7 @@ function setup(app: CoreApp): RenderResult {
     },
     getQueryHints: () => [],
     getDataSamples: () => [],
+    maxLines: 20,
   } as unknown as LokiDatasource;
 
   return render(

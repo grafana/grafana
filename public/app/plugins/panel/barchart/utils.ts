@@ -20,6 +20,7 @@ import { maybeSortFrame } from '@grafana/data/src/transformations/transformers/j
 import {
   AxisPlacement,
   GraphTransform,
+  GraphTresholdsStyleMode,
   ScaleDirection,
   ScaleDistribution,
   ScaleOrientation,
@@ -31,7 +32,7 @@ import { getStackingGroups } from '@grafana/ui/src/components/uPlot/utils';
 import { findField } from 'app/features/dimensions';
 
 import { BarsOptions, getConfig } from './bars';
-import { PanelFieldConfig, PanelOptions, defaultPanelFieldConfig } from './models.gen';
+import { PanelFieldConfig, PanelOptions, defaultPanelFieldConfig } from './panelcfg.gen';
 import { BarChartDisplayValues, BarChartDisplayWarning } from './types';
 
 function getBarCharScaleOrientation(orientation: VizOrientation) {
@@ -54,7 +55,7 @@ function getBarCharScaleOrientation(orientation: VizOrientation) {
 
 export interface BarChartOptionsEX extends PanelOptions {
   rawValue: (seriesIdx: number, valueIdx: number) => number | null;
-  getColor?: (seriesIdx: number, valueIdx: number, value: any) => string | null;
+  getColor?: (seriesIdx: number, valueIdx: number, value: unknown) => string | null;
   timeZone?: TimeZone;
   fillOpacity?: number;
 }
@@ -78,16 +79,20 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
   xTickLabelSpacing = 0,
   legend,
   timeZone,
+  fullHighlight,
 }) => {
   const builder = new UPlotConfigBuilder();
-  const defaultValueFormatter = (seriesIdx: number, value: any) => {
-    return shortenValue(formattedValueToString(frame.fields[seriesIdx].display!(value)), xTickLabelMaxLength);
+
+  const formatValue = (seriesIdx: number, value: unknown) => {
+    return formattedValueToString(frame.fields[seriesIdx].display!(value));
+  };
+
+  const formatShortValue = (seriesIdx: number, value: unknown) => {
+    return shortenValue(formatValue(seriesIdx, value), xTickLabelMaxLength);
   };
 
   // bar orientation -> x scale orientation & direction
   const vizOrientation = getBarCharScaleOrientation(orientation);
-
-  const formatValue = defaultValueFormatter;
 
   // Use bar width when only one field
   if (frame.fields.length === 2) {
@@ -106,6 +111,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
     getColor,
     fillOpacity,
     formatValue,
+    formatShortValue,
     timeZone,
     text,
     showValue,
@@ -113,6 +119,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
     xSpacing: xTickLabelSpacing,
     xTimeAuto: frame.fields[0]?.type === FieldType.time && !frame.fields[0].config.unit?.startsWith('time:'),
     negY: frame.fields.map((f) => f.config.custom?.transform === GraphTransform.NegativeY),
+    fullHighlight,
   };
 
   const config = getConfig(opts, theme);
@@ -125,8 +132,13 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
 
   builder.setTooltipInterpolator(config.interpolateTooltip);
 
-  if (vizOrientation.xOri === ScaleOrientation.Horizontal && xTickLabelRotation !== 0) {
-    builder.setPadding(getRotationPadding(frame, xTickLabelRotation, xTickLabelMaxLength));
+  if (xTickLabelRotation !== 0) {
+    // these are the amount of space we already have available between plot edge and first label
+    // TODO: removing these hardcoded value requires reading back uplot instance props
+    let lftSpace = 50;
+    let btmSpace = vizOrientation.xOri === ScaleOrientation.Horizontal ? 14 : 5;
+
+    builder.setPadding(getRotationPadding(frame, xTickLabelRotation, xTickLabelMaxLength, lftSpace, btmSpace));
   }
 
   builder.setPrepData(config.prepData);
@@ -154,12 +166,13 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
     placement: xFieldAxisPlacement,
     label: frame.fields[0].config.custom?.axisLabel,
     splits: config.xSplits,
+    filter: vizOrientation.xOri === 0 ? config.hFilter : undefined,
     values: config.xValues,
     timeZone,
     grid: { show: false },
     ticks: { show: false },
     gap: 15,
-    tickLabelRotation: xTickLabelRotation * -1,
+    tickLabelRotation: vizOrientation.xOri === 0 ? xTickLabelRotation * -1 : 0,
     theme,
     show: xFieldAxisShow,
   });
@@ -190,6 +203,23 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
 
     if (softMax == null && field.config.max == null) {
       softMax = 0;
+    }
+
+    // Render thresholds in graph
+    if (customConfig.thresholdsStyle && field.config.thresholds) {
+      const thresholdDisplay = customConfig.thresholdsStyle.mode ?? GraphTresholdsStyleMode.Off;
+      if (thresholdDisplay !== GraphTresholdsStyleMode.Off) {
+        builder.addThresholds({
+          config: customConfig.thresholdsStyle,
+          thresholds: field.config.thresholds,
+          scaleKey,
+          theme,
+          hardMin: field.config.min,
+          hardMax: field.config.max,
+          softMin: customConfig.axisSoftMin,
+          softMax: customConfig.axisSoftMax,
+        });
+      }
     }
 
     builder.addSeries({
@@ -254,6 +284,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
         size: customConfig.axisWidth,
         placement,
         formatValue: (v, decimals) => formattedValueToString(field.display!(v, decimals)),
+        filter: vizOrientation.yOri === 0 ? config.hFilter : undefined,
+        tickLabelRotation: vizOrientation.xOri === 1 ? xTickLabelRotation * -1 : 0,
         theme,
         grid: { show: customConfig.axisGridShow },
       });
@@ -275,7 +307,13 @@ function shortenValue(value: string, length: number) {
   }
 }
 
-function getRotationPadding(frame: DataFrame, rotateLabel: number, valueMaxLength: number): Padding {
+function getRotationPadding(
+  frame: DataFrame,
+  rotateLabel: number,
+  valueMaxLength: number,
+  lftSpace = 0,
+  btmSpace = 0
+): Padding {
   const values = frame.fields[0].values;
   const fontSize = UPLOT_AXIS_FONT_SIZE;
   const displayProcessor = frame.fields[0].display ?? ((v) => v);
@@ -307,9 +345,15 @@ function getRotationPadding(frame: DataFrame, rotateLabel: number, valueMaxLengt
       : 0;
 
   // Add padding to the bottom to avoid clipping the rotated labels.
-  const paddingBottom = Math.sin(((rotateLabel >= 0 ? rotateLabel : rotateLabel * -1) * Math.PI) / 180) * maxLength;
+  const paddingBottom =
+    Math.sin(((rotateLabel >= 0 ? rotateLabel : rotateLabel * -1) * Math.PI) / 180) * maxLength - btmSpace;
 
-  return [Math.round(UPLOT_AXIS_FONT_SIZE * uPlot.pxRatio), paddingRight, paddingBottom, paddingLeft];
+  return [
+    Math.round(UPLOT_AXIS_FONT_SIZE * uPlot.pxRatio),
+    paddingRight,
+    paddingBottom,
+    Math.max(0, paddingLeft - lftSpace),
+  ];
 }
 
 /** @internal */
@@ -446,6 +490,27 @@ export function prepareBarChartDisplayValues(
     );
   }
 
+  let legendFields: Field[] = fields;
+  if (options.stacking === StackingMode.Percent) {
+    legendFields = fields.map((field) => {
+      const alignedFrameField = frame.fields.find((f) => f.name === field.name)!;
+
+      const copy = {
+        ...field,
+        config: {
+          ...alignedFrameField.config,
+        },
+        values: field.values,
+      };
+
+      copy.display = getDisplayProcessor({ field: copy, theme });
+
+      return copy;
+    });
+
+    legendFields.unshift(firstField);
+  }
+
   // String field is first
   fields.unshift(firstField);
 
@@ -458,6 +523,10 @@ export function prepareBarChartDisplayValues(
         fields: fields, // ideally: fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.viz)),
       },
     ],
+    legend: {
+      fields: legendFields,
+      length: firstField.values.length,
+    },
   };
 }
 

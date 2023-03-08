@@ -1,4 +1,4 @@
-import { PlaylistItem as PlaylistItemFromSchema } from '@grafana/schema/src/raw/playlist/x/playlist.gen';
+import { PlaylistItem as PlaylistItemFromSchema } from '@grafana/schema';
 
 import { DashboardQueryResult } from '../search/service';
 

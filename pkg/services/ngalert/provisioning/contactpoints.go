@@ -7,12 +7,14 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/prometheus/alertmanager/config"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/prometheus/alertmanager/config"
 )
 
 type ContactPointService struct {
@@ -55,12 +57,16 @@ func (ecp *ContactPointService) GetContactPoints(ctx context.Context, q ContactP
 			continue
 		}
 
+		simpleJson, err := simplejson.NewJson(contactPoint.Settings)
+		if err != nil {
+			return nil, err
+		}
 		embeddedContactPoint := apimodels.EmbeddedContactPoint{
 			UID:                   contactPoint.UID,
 			Type:                  contactPoint.Type,
 			Name:                  contactPoint.Name,
 			DisableResolveMessage: contactPoint.DisableResolveMessage,
-			Settings:              contactPoint.Settings,
+			Settings:              simpleJson,
 		}
 		if val, exists := provenances[embeddedContactPoint.UID]; exists && val != "" {
 			embeddedContactPoint.Provenance = string(val)
@@ -96,12 +102,16 @@ func (ecp *ContactPointService) getContactPointDecrypted(ctx context.Context, or
 		if receiver.UID != uid {
 			continue
 		}
+		simpleJson, err := simplejson.NewJson(receiver.Settings)
+		if err != nil {
+			return apimodels.EmbeddedContactPoint{}, err
+		}
 		embeddedContactPoint := apimodels.EmbeddedContactPoint{
 			UID:                   receiver.UID,
 			Type:                  receiver.Type,
 			Name:                  receiver.Name,
 			DisableResolveMessage: receiver.DisableResolveMessage,
-			Settings:              receiver.Settings,
+			Settings:              simpleJson,
 		}
 		for k, v := range receiver.SecureSettings {
 			decryptedValue, err := ecp.decryptValue(v)
@@ -146,12 +156,18 @@ func (ecp *ContactPointService) CreateContactPoint(ctx context.Context, orgID in
 	if contactPoint.UID == "" {
 		contactPoint.UID = util.GenerateShortUID()
 	}
+
+	jsonData, err := contactPoint.Settings.MarshalJSON()
+	if err != nil {
+		return apimodels.EmbeddedContactPoint{}, err
+	}
+
 	grafanaReceiver := &apimodels.PostableGrafanaReceiver{
 		UID:                   contactPoint.UID,
 		Name:                  contactPoint.Name,
 		Type:                  contactPoint.Type,
 		DisableResolveMessage: contactPoint.DisableResolveMessage,
-		Settings:              contactPoint.Settings,
+		Settings:              jsonData,
 		SecureSettings:        extractedSecrets,
 	}
 
@@ -260,12 +276,17 @@ func (ecp *ContactPointService) UpdateContactPoint(ctx context.Context, orgID in
 		}
 		extractedSecrets[k] = encryptedValue
 	}
+
+	jsonData, err := contactPoint.Settings.MarshalJSON()
+	if err != nil {
+		return err
+	}
 	mergedReceiver := &apimodels.PostableGrafanaReceiver{
 		UID:                   contactPoint.UID,
 		Name:                  contactPoint.Name,
 		Type:                  contactPoint.Type,
 		DisableResolveMessage: contactPoint.DisableResolveMessage,
-		Settings:              contactPoint.Settings,
+		Settings:              jsonData,
 		SecureSettings:        extractedSecrets,
 	}
 	// save to store

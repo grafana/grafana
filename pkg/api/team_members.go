@@ -9,9 +9,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -26,33 +28,34 @@ import (
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) GetTeamMembers(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetTeamMembers(c *contextmodel.ReqContext) response.Response {
 	teamId, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
-	query := models.GetTeamMembersQuery{OrgId: c.OrgID, TeamId: teamId, SignedInUser: c.SignedInUser}
+	query := team.GetTeamMembersQuery{OrgID: c.OrgID, TeamID: teamId, SignedInUser: c.SignedInUser}
 
 	// With accesscontrol the permission check has been done at middleware layer
 	// and the membership filtering will be done at DB layer based on user permissions
 	if hs.AccessControl.IsDisabled() {
-		if err := hs.teamGuardian.CanAdmin(c.Req.Context(), query.OrgId, query.TeamId, c.SignedInUser); err != nil {
+		if err := hs.teamGuardian.CanAdmin(c.Req.Context(), query.OrgID, query.TeamID, c.SignedInUser); err != nil {
 			return response.Error(403, "Not allowed to list team members", err)
 		}
 	}
 
-	if err := hs.teamService.GetTeamMembers(c.Req.Context(), &query); err != nil {
+	queryResult, err := hs.teamService.GetTeamMembers(c.Req.Context(), &query)
+	if err != nil {
 		return response.Error(500, "Failed to get Team Members", err)
 	}
 
-	filteredMembers := make([]*models.TeamMemberDTO, 0, len(query.Result))
-	for _, member := range query.Result {
+	filteredMembers := make([]*team.TeamMemberDTO, 0, len(queryResult))
+	for _, member := range queryResult {
 		if dtos.IsHiddenUser(member.Login, c.SignedInUser, hs.Cfg) {
 			continue
 		}
 
-		member.AvatarUrl = dtos.GetGravatarUrl(member.Email)
+		member.AvatarURL = dtos.GetGravatarUrl(member.Email)
 		member.Labels = []string{}
 
 		if hs.License.FeatureEnabled("teamgroupsync") && member.External {
@@ -76,25 +79,25 @@ func (hs *HTTPServer) GetTeamMembers(c *models.ReqContext) response.Response {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) AddTeamMember(c *models.ReqContext) response.Response {
-	cmd := models.AddTeamMemberCommand{}
+func (hs *HTTPServer) AddTeamMember(c *contextmodel.ReqContext) response.Response {
+	cmd := team.AddTeamMemberCommand{}
 	var err error
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	cmd.OrgId = c.OrgID
-	cmd.TeamId, err = strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
+	cmd.OrgID = c.OrgID
+	cmd.TeamID, err = strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
 	}
 
 	if hs.AccessControl.IsDisabled() {
-		if err := hs.teamGuardian.CanAdmin(c.Req.Context(), cmd.OrgId, cmd.TeamId, c.SignedInUser); err != nil {
+		if err := hs.teamGuardian.CanAdmin(c.Req.Context(), cmd.OrgID, cmd.TeamID, c.SignedInUser); err != nil {
 			return response.Error(403, "Not allowed to add team member", err)
 		}
 	}
 
-	isTeamMember, err := hs.teamService.IsTeamMember(c.OrgID, cmd.TeamId, cmd.UserId)
+	isTeamMember, err := hs.teamService.IsTeamMember(c.OrgID, cmd.TeamID, cmd.UserID)
 	if err != nil {
 		return response.Error(500, "Failed to add team member.", err)
 	}
@@ -102,7 +105,7 @@ func (hs *HTTPServer) AddTeamMember(c *models.ReqContext) response.Response {
 		return response.Error(400, "User is already added to this team", nil)
 	}
 
-	err = addOrUpdateTeamMember(c.Req.Context(), hs.teamPermissionsService, cmd.UserId, cmd.OrgId, cmd.TeamId, getPermissionName(cmd.Permission))
+	err = addOrUpdateTeamMember(c.Req.Context(), hs.teamPermissionsService, cmd.UserID, cmd.OrgID, cmd.TeamID, getPermissionName(cmd.Permission))
 	if err != nil {
 		return response.Error(500, "Failed to add Member to Team", err)
 	}
@@ -122,8 +125,8 @@ func (hs *HTTPServer) AddTeamMember(c *models.ReqContext) response.Response {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) UpdateTeamMember(c *models.ReqContext) response.Response {
-	cmd := models.UpdateTeamMemberCommand{}
+func (hs *HTTPServer) UpdateTeamMember(c *contextmodel.ReqContext) response.Response {
+	cmd := team.UpdateTeamMemberCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
@@ -158,7 +161,7 @@ func (hs *HTTPServer) UpdateTeamMember(c *models.ReqContext) response.Response {
 	return response.Success("Team member updated")
 }
 
-func getPermissionName(permission models.PermissionType) string {
+func getPermissionName(permission dashboards.PermissionType) string {
 	permissionName := permission.String()
 	// Team member permission is 0, which maps to an empty string.
 	// However, we want the team permission service to display "Member" for team members. This is a hack to make it work.
@@ -178,7 +181,7 @@ func getPermissionName(permission models.PermissionType) string {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) RemoveTeamMember(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) RemoveTeamMember(c *contextmodel.ReqContext) response.Response {
 	orgId := c.OrgID
 	teamId, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
 	if err != nil {
@@ -197,11 +200,11 @@ func (hs *HTTPServer) RemoveTeamMember(c *models.ReqContext) response.Response {
 
 	teamIDString := strconv.FormatInt(teamId, 10)
 	if _, err := hs.teamPermissionsService.SetUserPermission(c.Req.Context(), orgId, accesscontrol.User{ID: userId}, teamIDString, ""); err != nil {
-		if errors.Is(err, models.ErrTeamNotFound) {
+		if errors.Is(err, team.ErrTeamNotFound) {
 			return response.Error(404, "Team not found", nil)
 		}
 
-		if errors.Is(err, models.ErrTeamMemberNotFound) {
+		if errors.Is(err, team.ErrTeamMemberNotFound) {
 			return response.Error(404, "Team member not found", nil)
 		}
 
@@ -232,7 +235,7 @@ type GetTeamMembersParams struct {
 type AddTeamMemberParams struct {
 	// in:body
 	// required:true
-	Body models.AddTeamMemberCommand `json:"body"`
+	Body team.AddTeamMemberCommand `json:"body"`
 	// in:path
 	// required:true
 	TeamID string `json:"team_id"`
@@ -242,7 +245,7 @@ type AddTeamMemberParams struct {
 type UpdateTeamMemberParams struct {
 	// in:body
 	// required:true
-	Body models.UpdateTeamMemberCommand `json:"body"`
+	Body team.UpdateTeamMemberCommand `json:"body"`
 	// in:path
 	// required:true
 	TeamID string `json:"team_id"`
@@ -265,5 +268,5 @@ type RemoveTeamMemberParams struct {
 type GetTeamMembersResponse struct {
 	// The response message
 	// in: body
-	Body []*models.TeamMemberDTO `json:"body"`
+	Body []*team.TeamMemberDTO `json:"body"`
 }

@@ -71,7 +71,7 @@ func (s *Service) getDataSourceFromHTTPReq(req *http.Request) (types.DatasourceI
 	pluginContext := httpadapter.PluginConfigFromContext(ctx)
 	i, err := s.im.Get(pluginContext)
 	if err != nil {
-		return types.DatasourceInfo{}, nil
+		return types.DatasourceInfo{}, err
 	}
 	ds, ok := i.(types.DatasourceInfo)
 	if !ok {
@@ -119,7 +119,7 @@ func (s *Service) handleResourceReq(subDataSource string) func(rw http.ResponseW
 }
 
 // newResourceMux provides route definitions shared with the frontend.
-// Check: /public/app/plugins/datasource/grafana-azure-monitor-datasource/utils/common.ts <routeNames>
+// Check: /public/app/plugins/datasource/azuremonitor/utils/common.ts <routeNames>
 func (s *Service) newResourceMux() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/azuremonitor/", s.handleResourceReq(azureMonitor))

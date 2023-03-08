@@ -1,0 +1,122 @@
+<mjml>
+  <mj-head>
+    <!-- ⬇ Don't forget to specifify an email subject below! ⬇ -->
+    <mj-title>
+      {{ Subject .Subject .TemplateData "{{ .Title }}" }}
+    </mj-title>
+    <mj-include path="./partials/layout/head.mjml" />
+    <!-- Summary of the email contents, this will go in the email preview -->
+    <mj-include path="./partials/alerting/summary.mjml" />
+  </mj-head>
+  <mj-body>
+    <mj-section>
+      <mj-include path="./partials/layout/header.mjml" />
+    </mj-section>
+
+    <!-- This is our grouping header, it says what grouping labels have been applied to this email -->
+    <mj-include path="./partials/alerting/grouping_labels.mjml" />
+
+    <!-- custom email message -->
+    <mj-raw>
+      {{ if .Message }}
+    </mj-raw>
+    <mj-wrapper background-color="#22252b" border="1px solid #2f3037" padding="0">
+      <mj-section padding="0">
+        <mj-column>
+          <mj-text align="left">
+            <mj-raw>
+              {{ range $line := (splitList "\n" .Message) }}
+            </mj-raw>
+            {{ $line }}<br />
+            <mj-raw>
+              {{ end }}
+            </mj-raw>
+          </mj-text>
+        </mj-column>
+      </mj-section>
+    </mj-wrapper>
+
+    <!-- end custom email message -->
+    <mj-raw>
+      {{ else }}
+    </mj-raw>
+
+    <!-- default template -->
+
+    <!-- Firing instances -->
+    <mj-raw>
+      {{ if .Alerts.Firing  }}
+    </mj-raw>
+
+    <!-- Firing header -->
+    <mj-section padding="0">
+      <mj-column>
+        <mj-text padding="0">
+          <h3>🔥 {{ .Alerts.Firing | len }} firing instances</h3>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Firing instances loop -->
+    <mj-raw>
+      {{ range .Alerts.Firing }}
+    </mj-raw>
+    <mj-wrapper background-color="#22252b" border="1px solid #2f3037" padding="0">
+      <mj-include path="./partials/alerting/firing_instance.mjml" />
+      <mj-include path="./partials/alerting/instance_details.mjml" />
+    </mj-wrapper>
+    <mj-section padding="10px" />
+
+    <!-- end Firing instances loop -->
+    <mj-raw>
+      {{ end }}
+    </mj-raw>
+
+    <!-- end Firing instances section -->
+    <mj-raw>
+      {{ end }}
+    </mj-raw>
+
+    <!-- Resolved instances -->
+    <mj-raw>
+      {{ if .Alerts.Resolved }}
+    </mj-raw>
+
+    <mj-section padding="0">
+      <mj-column>
+        <mj-text padding="0">
+          <h3>✅ {{ .Alerts.Resolved | len }} resolved instances</h3>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Resolved instances loop -->
+    <mj-raw>
+      {{ range .Alerts.Resolved }}
+    </mj-raw>
+    <mj-wrapper background-color="#22252b" border="1px solid #2f3037" padding="0">
+      <mj-include path="./partials/alerting/resolved_instance.mjml" />
+      <mj-include path="./partials/alerting/instance_details.mjml" />
+    </mj-wrapper>
+    <mj-section padding="10px" />
+
+    <!-- end Resolved instances loop -->
+    <mj-raw>
+      {{ end }}
+    </mj-raw>
+
+    <!-- end Resolved instances -->
+    <mj-raw>
+      {{ end }}
+    </mj-raw>
+
+    <!-- end default template -->
+    <mj-raw>
+      {{ end }}
+    </mj-raw>
+
+    <mj-section padding-top="10px">
+      <mj-include path="./partials/layout/footer.mjml" />
+    </mj-section>
+  </mj-body>
+</mjml>

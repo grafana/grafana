@@ -6,7 +6,6 @@ import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { CustomScrollbar, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
-import { Footer } from '../Footer/Footer';
 import { PageType } from '../Page/types';
 import { usePageNav } from '../Page/usePageNav';
 import { usePageTitle } from '../Page/usePageTitle';
@@ -20,9 +19,12 @@ export const Page: PageType = ({
   navId,
   navModel: oldNavProp,
   pageNav,
+  renderTitle,
+  actions,
   subTitle,
   children,
   className,
+  info,
   layout = PageLayoutType.Standard,
   toolbar,
   scrollTop,
@@ -54,11 +56,18 @@ export const Page: PageType = ({
           <div className={styles.pageContainer}>
             <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
               <div className={styles.pageInner}>
-                {pageHeaderNav && <PageHeader navItem={pageHeaderNav} subTitle={subTitle} />}
+                {pageHeaderNav && (
+                  <PageHeader
+                    actions={actions}
+                    navItem={pageHeaderNav}
+                    renderTitle={renderTitle}
+                    info={info}
+                    subTitle={subTitle}
+                  />
+                )}
                 {pageNav && pageNav.children && <PageTabs navItem={pageNav} />}
                 <div className={styles.pageContent}>{children}</div>
               </div>
-              <Footer />
             </CustomScrollbar>
           </div>
         </div>
@@ -81,18 +90,13 @@ export const Page: PageType = ({
   );
 };
 
-const OldNavOnly = () => null;
-OldNavOnly.displayName = 'OldNavOnly';
-
-Page.Header = PageHeader;
 Page.Contents = PageContents;
-Page.OldNavOnly = OldNavOnly;
+
+Page.OldNavOnly = function OldNavOnly() {
+  return null;
+};
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const shadow = theme.isDark
-    ? `0 0.6px 1.5px -1px rgb(0 0 0),0 2px 4px -1px rgb(0 0 0 / 40%),0 5px 10px -1px rgb(0 0 0 / 23%)`
-    : '0 0.6px 1.5px -1px rgb(0 0 0 / 8%),0 2px 4px rgb(0 0 0 / 6%),0 5px 10px -1px rgb(0 0 0 / 5%)';
-
   return {
     wrapper: css({
       label: 'page-wrapper',
@@ -125,7 +129,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     pageInner: css({
       label: 'page-inner',
       padding: theme.spacing(2),
-      boxShadow: shadow,
+      borderRadius: theme.shape.borderRadius(1),
+      border: `1px solid ${theme.colors.border.weak}`,
       background: theme.colors.background.primary,
       display: 'flex',
       flexDirection: 'column',

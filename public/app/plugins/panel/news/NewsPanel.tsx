@@ -6,7 +6,7 @@ import { CustomScrollbar } from '@grafana/ui';
 
 import { News } from './component/News';
 import { DEFAULT_FEED_URL } from './constants';
-import { PanelOptions } from './models.gen';
+import { PanelOptions } from './panelcfg.gen';
 import { useNewsFeed } from './useNewsFeed';
 
 interface NewsPanelProps extends PanelProps<PanelOptions> {}

@@ -3,7 +3,7 @@ import { merge } from 'lodash';
 import { toDataFrame } from '../dataframe/processDataFrame';
 import { createTheme } from '../themes';
 import { ReducerID } from '../transformations/fieldReducer';
-import { MappingType, SpecialValueMatch, ValueMapping } from '../types';
+import { FieldConfigPropertyItem, MappingType, SpecialValueMatch, ValueMapping } from '../types';
 
 import { getDisplayProcessor } from './displayProcessor';
 import { getFieldDisplayValues, GetFieldDisplayValuesOptions } from './fieldDisplay';
@@ -14,11 +14,15 @@ describe('FieldDisplay', () => {
     // Since FieldConfigEditors belong to grafana-ui we need to mock those here
     // as grafana-ui code cannot be imported in grafana-data.
     // TODO: figure out a way to share standard editors between data/ui tests
-    const mappings = {
+    const mappings: FieldConfigPropertyItem = {
       id: 'mappings', // Match field properties
-      process: (value: any) => value,
+      process: (value) => value,
       shouldApply: () => true,
-    } as any;
+      override: jest.fn(),
+      editor: jest.fn(),
+      name: 'Value mappings',
+      path: 'mappings',
+    };
 
     standardFieldConfigEditorRegistry.setInit(() => {
       return [mappings];
@@ -321,7 +325,7 @@ describe('FieldDisplay', () => {
       });
 
       const cache = { numeric: 10, text: 'Value' };
-      options.data![0].fields[1].display = (v: any) => {
+      options.data![0].fields[1].display = () => {
         return cache;
       };
 
@@ -528,5 +532,5 @@ function createDisplayOptions(extend: Partial<GetFieldDisplayValuesOptions> = {}
     theme: createTheme(),
   };
 
-  return merge<GetFieldDisplayValuesOptions, any>(options, extend);
+  return merge(options, extend);
 }

@@ -29,7 +29,7 @@ describe('PluginSettings', () => {
     // assert
     expect(response).toEqual(testPluginResponse);
     expect(getRequestSpy).toHaveBeenCalledTimes(1);
-    expect(getRequestSpy).toHaveBeenCalledWith('/api/plugins/test/settings');
+    expect(getRequestSpy).toHaveBeenCalledWith('/api/plugins/test/settings', undefined, undefined, undefined);
   });
 
   it('should fetch settings from cache when it has a hit', async () => {

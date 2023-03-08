@@ -14,8 +14,9 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/middleware/cookies"
-
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models/usertoken"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -28,7 +29,7 @@ func Middleware(ac AccessControl) func(web.Handler, Evaluator) web.Handler {
 			return fallback
 		}
 
-		return func(c *models.ReqContext) {
+		return func(c *contextmodel.ReqContext) {
 			if c.AllowAnonymous {
 				forceLogin, _ := strconv.ParseBool(c.Req.URL.Query().Get("forceLogin")) // ignoring error, assuming false for non-true values is ok.
 				orgID, err := strconv.ParseInt(c.Req.URL.Query().Get("orgId"), 10, 64)
@@ -41,7 +42,7 @@ func Middleware(ac AccessControl) func(web.Handler, Evaluator) web.Handler {
 				}
 			}
 
-			var revokedErr *models.TokenRevokedError
+			var revokedErr *usertoken.TokenRevokedError
 			if errors.As(c.LookupTokenErr, &revokedErr) {
 				unauthorized(c, revokedErr)
 				return
@@ -52,7 +53,7 @@ func Middleware(ac AccessControl) func(web.Handler, Evaluator) web.Handler {
 	}
 }
 
-func authorize(c *models.ReqContext, ac AccessControl, user *user.SignedInUser, evaluator Evaluator) {
+func authorize(c *contextmodel.ReqContext, ac AccessControl, user *user.SignedInUser, evaluator Evaluator) {
 	injected, err := evaluator.MutateScopes(c.Req.Context(), scopeInjector(scopeParams{
 		OrgID:     c.OrgID,
 		URLParams: web.Params(c.Req),
@@ -69,7 +70,7 @@ func authorize(c *models.ReqContext, ac AccessControl, user *user.SignedInUser, 
 	}
 }
 
-func deny(c *models.ReqContext, evaluator Evaluator, err error) {
+func deny(c *contextmodel.ReqContext, evaluator Evaluator, err error) {
 	id := newID()
 	if err != nil {
 		c.Logger.Error("Error from access control system", "error", err, "accessErrorID", id)
@@ -105,13 +106,13 @@ func deny(c *models.ReqContext, evaluator Evaluator, err error) {
 	})
 }
 
-func unauthorized(c *models.ReqContext, err error) {
+func unauthorized(c *contextmodel.ReqContext, err error) {
 	if c.IsApiRequest() {
 		response := map[string]interface{}{
 			"message": "Unauthorized",
 		}
 
-		var revokedErr *models.TokenRevokedError
+		var revokedErr *usertoken.TokenRevokedError
 		if errors.As(err, &revokedErr) {
 			response["message"] = "Token revoked"
 			response["error"] = map[string]interface{}{
@@ -128,7 +129,7 @@ func unauthorized(c *models.ReqContext, err error) {
 	c.Redirect(setting.AppSubUrl + "/login")
 }
 
-func writeRedirectCookie(c *models.ReqContext) {
+func writeRedirectCookie(c *contextmodel.ReqContext) {
 	redirectTo := c.Req.RequestURI
 	if setting.AppSubUrl != "" && !strings.HasPrefix(redirectTo, setting.AppSubUrl) {
 		redirectTo = setting.AppSubUrl + c.Req.RequestURI
@@ -158,7 +159,7 @@ func newID() string {
 	return "ACE" + id
 }
 
-type OrgIDGetter func(c *models.ReqContext) (int64, error)
+type OrgIDGetter func(c *contextmodel.ReqContext) (int64, error)
 
 type userCache interface {
 	GetSignedInUserWithCacheCtx(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error)
@@ -170,7 +171,7 @@ func AuthorizeInOrgMiddleware(ac AccessControl, service Service, cache userCache
 			return fallback
 		}
 
-		return func(c *models.ReqContext) {
+		return func(c *contextmodel.ReqContext) {
 			// using a copy of the user not to modify the signedInUser, yet perform the permission evaluation in another org
 			userCopy := *(c.SignedInUser)
 			orgID, err := getTargetOrg(c)
@@ -210,23 +211,27 @@ func AuthorizeInOrgMiddleware(ac AccessControl, service Service, cache userCache
 	}
 }
 
-func UseOrgFromContextParams(c *models.ReqContext) (int64, error) {
+func UseOrgFromContextParams(c *contextmodel.ReqContext) (int64, error) {
 	orgID, err := strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
 
 	// Special case of macaron handling invalid params
-	if orgID == 0 || err != nil {
-		return 0, models.ErrOrgNotFound
+	if err != nil {
+		return 0, org.ErrOrgNotFound.Errorf("failed to get organization from context: %w", err)
+	}
+
+	if orgID == 0 {
+		return 0, org.ErrOrgNotFound.Errorf("empty org ID")
 	}
 
 	return orgID, nil
 }
 
-func UseGlobalOrg(c *models.ReqContext) (int64, error) {
+func UseGlobalOrg(c *contextmodel.ReqContext) (int64, error) {
 	return GlobalOrgID, nil
 }
 
 func LoadPermissionsMiddleware(service Service) web.Handler {
-	return func(c *models.ReqContext) {
+	return func(c *contextmodel.ReqContext) {
 		if service.IsDisabled() {
 			return
 		}

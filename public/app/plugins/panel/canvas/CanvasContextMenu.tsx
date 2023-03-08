@@ -2,9 +2,11 @@ import { css } from '@emotion/css';
 import React, { useCallback, useEffect, useState } from 'react';
 import { first } from 'rxjs/operators';
 
+import { SelectableValue } from '@grafana/data';
 import { ContextMenu, MenuItem, MenuItemProps } from '@grafana/ui';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
+import { ElementState } from '../../../features/canvas/runtime/element';
 import { FrameState } from '../../../features/canvas/runtime/frame';
 
 import { CanvasPanel } from './CanvasPanel';
@@ -36,8 +38,11 @@ export const CanvasContextMenu = ({ scene, panel }: Props) => {
       panel.setActivePanel();
 
       const shouldSelectElement = event.currentTarget !== scene.div;
-      if (shouldSelectElement) {
-        scene.select({ targets: [event.currentTarget as HTMLElement | SVGElement] });
+      if (
+        shouldSelectElement &&
+        (event.currentTarget instanceof HTMLElement || event.currentTarget instanceof SVGElement)
+      ) {
+        scene.select({ targets: [event.currentTarget] });
       }
       setAnchorPoint({ x: event.pageX, y: event.pageY });
       setIsMenuVisible(true);
@@ -105,13 +110,26 @@ export const CanvasContextMenu = ({ scene, panel }: Props) => {
       const submenuItems: Array<
         React.ReactElement<MenuItemProps<unknown>, string | React.JSXElementConstructor<unknown>>
       > = [];
+
+      const onClickItem = (option: SelectableValue<string>) => {
+        let offsetY = anchorPoint.y;
+        let offsetX = anchorPoint.x;
+        if (scene.div) {
+          const sceneContainerDimensions = scene.div.getBoundingClientRect();
+          offsetY = offsetY - sceneContainerDimensions.top;
+          offsetX = offsetX - sceneContainerDimensions.left;
+        }
+
+        onAddItem(option, rootLayer, {
+          ...anchorPoint,
+          y: offsetY,
+          x: offsetX,
+        });
+      };
+
       typeOptions.map((option) => {
         submenuItems.push(
-          <MenuItem
-            key={option.value}
-            label={option.label ?? 'Canvas item'}
-            onClick={() => onAddItem(option, rootLayer)}
-          />
+          <MenuItem key={option.value} label={option.label ?? 'Canvas item'} onClick={() => onClickItem(option)} />
         );
       });
 
@@ -190,25 +208,17 @@ export const CanvasContextMenu = ({ scene, panel }: Props) => {
     }
   };
 
-  const contextMenuAction = (actionType: string) => {
+  const contextMenuAction = (actionType: LayerActionID) => {
     scene.selection.pipe(first()).subscribe((currentSelectedElements) => {
-      const currentSelectedElement = currentSelectedElements[0];
-      const currentLayer = currentSelectedElement.parent!;
+      const currentLayer = currentSelectedElements[0].parent!;
+      currentSelectedElements.forEach((currentSelectedElement: ElementState) => {
+        currentLayer.doAction(actionType, currentSelectedElement);
+      });
+    });
 
-      switch (actionType) {
-        case LayerActionID.Delete:
-          currentLayer.doAction(LayerActionID.Delete, currentSelectedElement);
-          break;
-        case LayerActionID.Duplicate:
-          currentLayer.doAction(LayerActionID.Duplicate, currentSelectedElement);
-          break;
-        case LayerActionID.MoveTop:
-          currentLayer.doAction(LayerActionID.MoveTop, currentSelectedElement);
-          break;
-        case LayerActionID.MoveBottom:
-          currentLayer.doAction(LayerActionID.MoveBottom, currentSelectedElement);
-          break;
-      }
+    setTimeout(() => {
+      scene.addToSelection();
+      scene.targetsToSelect.clear();
     });
   };
 

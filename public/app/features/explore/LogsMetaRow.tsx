@@ -1,12 +1,15 @@
 import { css } from '@emotion/css';
+import saveAs from 'file-saver';
 import React from 'react';
 
-import { LogsDedupStrategy, LogsMetaItem, LogsMetaKind, LogRowModel } from '@grafana/data';
-import { Button, ToolbarButton, Tooltip, useStyles2 } from '@grafana/ui';
+import { LogsDedupStrategy, LogsMetaItem, LogsMetaKind, LogRowModel, CoreApp, dateTimeFormat } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
+import { Button, Dropdown, Menu, ToolbarButton, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { downloadLogsModelAsTxt } from '../inspector/utils/download';
 import { LogLabels } from '../logs/components/LogLabels';
 import { MAX_CHARACTERS } from '../logs/components/LogRowMessage';
+import { logRowsToReadableJson } from '../logs/utils';
 
 import { MetaInfoText, MetaItemProps } from './MetaInfoText';
 
@@ -22,7 +25,7 @@ export type Props = {
   meta: LogsMetaItem[];
   dedupStrategy: LogsDedupStrategy;
   dedupCount: number;
-  showDetectedFields: string[];
+  displayedFields: string[];
   hasUnescapedContent: boolean;
   forceEscape: boolean;
   logRows: LogRowModel[];
@@ -30,12 +33,17 @@ export type Props = {
   clearDetectedFields: () => void;
 };
 
+enum DownloadFormat {
+  Text = 'text',
+  Json = 'json',
+}
+
 export const LogsMetaRow = React.memo(
   ({
     meta,
     dedupStrategy,
     dedupCount,
-    showDetectedFields,
+    displayedFields,
     clearDetectedFields,
     hasUnescapedContent,
     forceEscape,
@@ -44,8 +52,27 @@ export const LogsMetaRow = React.memo(
   }: Props) => {
     const style = useStyles2(getStyles);
 
-    const downloadLogs = () => {
-      downloadLogsModelAsTxt({ meta, rows: logRows }, 'Explore');
+    const downloadLogs = (format: DownloadFormat) => {
+      reportInteraction('grafana_logs_download_logs_clicked', {
+        app: CoreApp.Explore,
+        format,
+        area: 'logs-meta-row',
+      });
+
+      switch (format) {
+        case DownloadFormat.Text:
+          downloadLogsModelAsTxt({ meta, rows: logRows }, 'Explore');
+          break;
+        case DownloadFormat.Json:
+          const jsonLogs = logRowsToReadableJson(logRows);
+          const blob = new Blob([JSON.stringify(jsonLogs)], {
+            type: 'application/json;charset=utf-8',
+          });
+
+          const fileName = `Explore-logs-${dateTimeFormat(new Date())}.json`;
+          saveAs(blob, fileName);
+          break;
+      }
     };
 
     const logsMetaItem: Array<LogsMetaItem | MetaItemProps> = [...meta];
@@ -53,7 +80,7 @@ export const LogsMetaRow = React.memo(
     // Add deduplication info
     if (dedupStrategy !== LogsDedupStrategy.none) {
       logsMetaItem.push({
-        label: 'Dedup count',
+        label: 'Deduplication count',
         value: dedupCount,
         kind: LogsMetaKind.Number,
       });
@@ -68,11 +95,11 @@ export const LogsMetaRow = React.memo(
     }
 
     // Add detected fields info
-    if (showDetectedFields?.length > 0) {
+    if (displayedFields?.length > 0) {
       logsMetaItem.push(
         {
-          label: 'Showing only detected fields',
-          value: renderMetaItem(showDetectedFields, LogsMetaKind.LabelsMap),
+          label: 'Showing only selected fields',
+          value: renderMetaItem(displayedFields, LogsMetaKind.LabelsMap),
         },
         {
           label: '',
@@ -101,6 +128,12 @@ export const LogsMetaRow = React.memo(
         ),
       });
     }
+    const downloadMenu = (
+      <Menu>
+        <Menu.Item label="txt" onClick={() => downloadLogs(DownloadFormat.Text)} />
+        <Menu.Item label="json" onClick={() => downloadLogs(DownloadFormat.Json)} />
+      </Menu>
+    );
     return (
       <>
         {logsMetaItem && (
@@ -113,9 +146,11 @@ export const LogsMetaRow = React.memo(
                 };
               })}
             />
-            <ToolbarButton onClick={downloadLogs} variant="default" icon="download-alt">
-              Download logs
-            </ToolbarButton>
+            <Dropdown overlay={downloadMenu}>
+              <ToolbarButton isOpen={false} variant="default" icon="download-alt">
+                Download
+              </ToolbarButton>
+            </Dropdown>
           </div>
         )}
       </>

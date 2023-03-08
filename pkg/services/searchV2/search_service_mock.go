@@ -6,7 +6,6 @@ import (
 	context "context"
 
 	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
-
 	mock "github.com/stretchr/testify/mock"
 
 	user "github.com/grafana/grafana/pkg/services/user"

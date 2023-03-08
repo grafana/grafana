@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 )
 
 func TestVersionComparison(t *testing.T) {

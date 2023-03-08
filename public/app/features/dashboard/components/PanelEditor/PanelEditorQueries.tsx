@@ -33,9 +33,11 @@ export class PanelEditorQueries extends PureComponent<Props> {
         type: datasourceSettings?.type,
         uid: datasourceSettings?.uid,
       },
+      queryCachingTTL: datasourceSettings?.cachingConfig?.enabled ? panel.queryCachingTTL : undefined,
       queries: panel.targets,
       maxDataPoints: panel.maxDataPoints,
       minInterval: panel.interval,
+      savedQueryUid: panel.savedQueryLink?.ref.uid ?? null, // Used by experimental feature queryLibrary
       timeRange: {
         from: panel.timeFrom,
         shift: panel.timeShift,

@@ -1,10 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/contact-points/message-templating/
-  - /docs/grafana/latest/alerting/contact-points/notifiers/webhook-notifier/
-  - /docs/grafana/latest/alerting/message-templating/
-  - /docs/grafana/latest/alerting/unified-alerting/message-templating/
-  - /docs/grafana/latest/alerting/fundamentals/contact-points/webhook-notifier/
+  - ../contact-points/notifiers/webhook-notifier/
+  - ../fundamentals/contact-points/webhook-notifier/
 keywords:
   - grafana
   - alerting
@@ -12,7 +9,7 @@ keywords:
   - contact point
   - templating
 title: Configure the webhook notifier
-weight: 115
+weight: 1000
 ---
 
 ### Configure the webhook notifier

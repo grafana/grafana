@@ -11,9 +11,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data/sqlutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/xorcare/pointer"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestSQLEngine(t *testing.T) {
@@ -67,19 +67,19 @@ func TestSQLEngine(t *testing.T) {
 				tSeconds,
 			}),
 			data.NewField("time2", nil, []*int64{
-				pointer.Int64(tSeconds),
+				util.Pointer(tSeconds),
 			}),
 			data.NewField("time3", nil, []int64{
 				tMilliseconds,
 			}),
 			data.NewField("time4", nil, []*int64{
-				pointer.Int64(tMilliseconds),
+				util.Pointer(tMilliseconds),
 			}),
 			data.NewField("time5", nil, []int64{
 				tNanoSeconds,
 			}),
 			data.NewField("time6", nil, []*int64{
-				pointer.Int64(tNanoSeconds),
+				util.Pointer(tNanoSeconds),
 			}),
 			data.NewField("time7", nil, []*int64{
 				nilPointer,
@@ -111,19 +111,19 @@ func TestSQLEngine(t *testing.T) {
 				tSeconds,
 			}),
 			data.NewField("time2", nil, []*uint64{
-				pointer.Uint64(tSeconds),
+				util.Pointer(tSeconds),
 			}),
 			data.NewField("time3", nil, []uint64{
 				tMilliseconds,
 			}),
 			data.NewField("time4", nil, []*uint64{
-				pointer.Uint64(tMilliseconds),
+				util.Pointer(tMilliseconds),
 			}),
 			data.NewField("time5", nil, []uint64{
 				tNanoSeconds,
 			}),
 			data.NewField("time6", nil, []*uint64{
-				pointer.Uint64(tNanoSeconds),
+				util.Pointer(tNanoSeconds),
 			}),
 			data.NewField("time7", nil, []*uint64{
 				nilPointer,
@@ -153,7 +153,7 @@ func TestSQLEngine(t *testing.T) {
 				tSeconds,
 			}),
 			data.NewField("time2", nil, []*int32{
-				pointer.Int32(tSeconds),
+				util.Pointer(tSeconds),
 			}),
 			data.NewField("time7", nil, []*int32{
 				nilInt,
@@ -178,7 +178,7 @@ func TestSQLEngine(t *testing.T) {
 				tSeconds,
 			}),
 			data.NewField("time2", nil, []*uint32{
-				pointer.Uint32(tSeconds),
+				util.Pointer(tSeconds),
 			}),
 			data.NewField("time7", nil, []*uint32{
 				nilInt,
@@ -204,19 +204,19 @@ func TestSQLEngine(t *testing.T) {
 				tSeconds,
 			}),
 			data.NewField("time2", nil, []*float64{
-				pointer.Float64(tSeconds),
+				util.Pointer(tSeconds),
 			}),
 			data.NewField("time3", nil, []float64{
 				tMilliseconds,
 			}),
 			data.NewField("time4", nil, []*float64{
-				pointer.Float64(tMilliseconds),
+				util.Pointer(tMilliseconds),
 			}),
 			data.NewField("time5", nil, []float64{
 				tNanoSeconds,
 			}),
 			data.NewField("time6", nil, []*float64{
-				pointer.Float64(tNanoSeconds),
+				util.Pointer(tNanoSeconds),
 			}),
 			data.NewField("time7", nil, []*float64{
 				nilPointer,
@@ -246,7 +246,7 @@ func TestSQLEngine(t *testing.T) {
 				tSeconds,
 			}),
 			data.NewField("time2", nil, []*float32{
-				pointer.Float32(tSeconds),
+				util.Pointer(tSeconds),
 			}),
 			data.NewField("time7", nil, []*float32{
 				nilInt,
@@ -267,61 +267,61 @@ func TestSQLEngine(t *testing.T) {
 				int64(1),
 			}),
 			data.NewField("value2", nil, []*int64{
-				pointer.Int64(1),
+				util.Pointer(int64(1)),
 			}),
 			data.NewField("value3", nil, []int32{
 				int32(1),
 			}),
 			data.NewField("value4", nil, []*int32{
-				pointer.Int32(1),
+				util.Pointer(int32(1)),
 			}),
 			data.NewField("value5", nil, []int16{
 				int16(1),
 			}),
 			data.NewField("value6", nil, []*int16{
-				pointer.Int16(1),
+				util.Pointer(int16(1)),
 			}),
 			data.NewField("value7", nil, []int8{
 				int8(1),
 			}),
 			data.NewField("value8", nil, []*int8{
-				pointer.Int8(1),
+				util.Pointer(int8(1)),
 			}),
 			data.NewField("value9", nil, []float64{
 				float64(1),
 			}),
 			data.NewField("value10", nil, []*float64{
-				pointer.Float64(1),
+				util.Pointer(1.0),
 			}),
 			data.NewField("value11", nil, []float32{
 				float32(1),
 			}),
 			data.NewField("value12", nil, []*float32{
-				pointer.Float32(1),
+				util.Pointer(float32(1)),
 			}),
 			data.NewField("value13", nil, []uint64{
 				uint64(1),
 			}),
 			data.NewField("value14", nil, []*uint64{
-				pointer.Uint64(1),
+				util.Pointer(uint64(1)),
 			}),
 			data.NewField("value15", nil, []uint32{
 				uint32(1),
 			}),
 			data.NewField("value16", nil, []*uint32{
-				pointer.Uint32(1),
+				util.Pointer(uint32(1)),
 			}),
 			data.NewField("value17", nil, []uint16{
 				uint16(1),
 			}),
 			data.NewField("value18", nil, []*uint16{
-				pointer.Uint16(1),
+				util.Pointer(uint16(1)),
 			}),
 			data.NewField("value19", nil, []uint8{
 				uint8(1),
 			}),
 			data.NewField("value20", nil, []*uint8{
-				pointer.Uint8(1),
+				util.Pointer(uint8(1)),
 			}),
 		)
 		for i := 0; i < len(originFrame.Fields); i++ {
@@ -407,7 +407,7 @@ func TestSQLEngine(t *testing.T) {
 				log:                    log.New("test"),
 				queryResultTransformer: transformer,
 			}
-			resultErr := dp.transformQueryError(dp.log, tc.err)
+			resultErr := dp.TransformQueryError(dp.log, tc.err)
 			assert.ErrorIs(t, resultErr, tc.expectedErr)
 			assert.Equal(t, tc.expectQueryResultTransformerWasCalled, transformer.transformQueryErrorWasCalled)
 		}

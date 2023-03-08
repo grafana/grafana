@@ -13,8 +13,10 @@ import {
   limitVariable,
   dimensionVariable,
   periodIntervalVariable,
+  accountIdVariable,
 } from '../__mocks__/CloudWatchDataSource';
 import { setupMockedMetricsQueryRunner } from '../__mocks__/MetricsQueryRunner';
+import { validMetricSearchBuilderQuery } from '../__mocks__/queries';
 import { MetricQueryType, MetricEditorMode, CloudWatchMetricsQuery, DataQueryError } from '../types';
 
 describe('CloudWatchMetricsQueryRunner', () => {
@@ -339,6 +341,24 @@ describe('CloudWatchMetricsQueryRunner', () => {
   });
 
   describe('template variable interpolation', () => {
+    it('replaceMetricQueryVars interpolates account id if its part of the query', async () => {
+      const { runner } = setupMockedMetricsQueryRunner({
+        variables: [accountIdVariable],
+      });
+
+      const result = runner.replaceMetricQueryVars({ ...validMetricSearchBuilderQuery, accountId: '$accountId' }, {});
+      expect(result.accountId).toBe(accountIdVariable.current.value);
+    });
+
+    it('replaceMetricQueryVars should not change account id if its not part of the query', async () => {
+      const { runner } = setupMockedMetricsQueryRunner({
+        variables: [accountIdVariable],
+      });
+
+      const result = runner.replaceMetricQueryVars({ ...validMetricSearchBuilderQuery, accountId: undefined }, {});
+      expect(result.accountId).toBeUndefined();
+    });
+
     it('interpolates variables correctly', async () => {
       const { runner, fetchMock, request } = setupMockedMetricsQueryRunner({
         variables: [namespaceVariable, metricVariable, labelsVariable, limitVariable],

@@ -30,11 +30,13 @@ export interface MenuItemProps<T = any> {
   /** Url of the menu item */
   url?: string;
   /** Handler for the click behaviour */
-  onClick?: (event?: React.MouseEvent<HTMLElement>, payload?: T) => void;
+  onClick?: (event: React.MouseEvent<HTMLElement>, payload?: T) => void;
   /** Custom MenuItem styles*/
   className?: string;
   /** Active */
   active?: boolean;
+  /** Disabled */
+  disabled?: boolean;
   /** Show in destructive style (error color) */
   destructive?: boolean;
   tabIndex?: number;
@@ -42,6 +44,8 @@ export interface MenuItemProps<T = any> {
   childItems?: Array<ReactElement<MenuItemProps>>;
   /** Custom style for SubMenu */
   customSubMenuContainerStyles?: CSSProperties;
+  /** Shortcut key combination */
+  shortcut?: string;
 }
 
 /** @internal */
@@ -57,24 +61,34 @@ export const MenuItem = React.memo(
       onClick,
       className,
       active,
+      disabled,
       destructive,
       childItems,
       role = 'menuitem',
       tabIndex = -1,
       customSubMenuContainerStyles,
+      shortcut,
     } = props;
     const styles = useStyles2(getStyles);
     const [isActive, setIsActive] = useState(active);
     const [isSubMenuOpen, setIsSubMenuOpen] = useState(false);
     const [openedWithArrow, setOpenedWithArrow] = useState(false);
     const onMouseEnter = useCallback(() => {
+      if (disabled) {
+        return;
+      }
+
       setIsSubMenuOpen(true);
       setIsActive(true);
-    }, []);
+    }, [disabled]);
     const onMouseLeave = useCallback(() => {
+      if (disabled) {
+        return;
+      }
+
       setIsSubMenuOpen(false);
       setIsActive(false);
-    }, []);
+    }, [disabled]);
 
     const hasSubMenu = childItems && childItems.length > 0;
     const ItemElement = hasSubMenu ? 'div' : url === undefined ? 'button' : 'a';
@@ -82,10 +96,19 @@ export const MenuItem = React.memo(
       {
         [styles.item]: true,
         [styles.active]: isActive,
-        [styles.destructive]: destructive,
+        [styles.disabled]: disabled,
+        [styles.destructive]: destructive && !disabled,
       },
       className
     );
+    const disabledProps = {
+      [ItemElement === 'button' ? 'disabled' : 'aria-disabled']: disabled,
+      ...(ItemElement === 'a' && disabled && { href: undefined, onClick: undefined }),
+      ...(disabled && {
+        tabIndex: -1,
+        ['data-disabled']: disabled, // used to identify disabled items in Menu.tsx
+      }),
+    };
 
     const localRef = useRef<MenuItemElement>(null);
     useImperativeHandle(ref, () => localRef.current!);
@@ -112,6 +135,8 @@ export const MenuItem = React.memo(
       localRef?.current?.focus();
     };
 
+    const hasShortcut = Boolean(shortcut && shortcut.length > 0);
+
     return (
       <ItemElement
         target={target}
@@ -128,22 +153,31 @@ export const MenuItem = React.memo(
         aria-label={ariaLabel}
         aria-checked={ariaChecked}
         tabIndex={tabIndex}
+        {...disabledProps}
       >
         <>
           {icon && <Icon name={icon} className={styles.icon} aria-hidden />}
           {label}
-        </>
 
-        {hasSubMenu && (
-          <SubMenu
-            items={childItems}
-            isOpen={isSubMenuOpen}
-            openedWithArrow={openedWithArrow}
-            setOpenedWithArrow={setOpenedWithArrow}
-            close={closeSubMenu}
-            customStyle={customSubMenuContainerStyles}
-          />
-        )}
+          <div className={cx(styles.rightWrapper, { [styles.withShortcut]: hasShortcut })}>
+            {hasShortcut && (
+              <div className={styles.shortcut}>
+                <Icon name="keyboard" aria-hidden />
+                {shortcut}
+              </div>
+            )}
+            {hasSubMenu && (
+              <SubMenu
+                items={childItems}
+                isOpen={isSubMenuOpen}
+                openedWithArrow={openedWithArrow}
+                setOpenedWithArrow={setOpenedWithArrow}
+                close={closeSubMenu}
+                customStyle={customSubMenuContainerStyles}
+              />
+            )}
+          </div>
+        </>
       </ItemElement>
     );
   })
@@ -200,11 +234,41 @@ const getStyles = (theme: GrafanaTheme2) => {
         }
       }
     `,
+    disabled: css`
+      color: ${theme.colors.action.disabledText};
+
+      &:hover,
+      &:focus,
+      &:focus-visible {
+        cursor: not-allowed;
+        background: none;
+        color: ${theme.colors.action.disabledText};
+      }
+    `,
     icon: css`
       opacity: 0.7;
       margin-right: 10px;
       margin-left: -4px;
       color: ${theme.colors.text.secondary};
+    `,
+    rightWrapper: css`
+      display: flex;
+      align-items: center;
+      margin-left: auto;
+    `,
+    shortcutIcon: css`
+      margin-right: ${theme.spacing(1)};
+    `,
+    withShortcut: css`
+      min-width: ${theme.spacing(10.5)};
+    `,
+    shortcut: css`
+      display: flex;
+      align-items: center;
+      gap: ${theme.spacing(1)};
+      margin-left: ${theme.spacing(2)};
+      color: ${theme.colors.text.secondary};
+      opacity: 0.7;
     `,
   };
 };

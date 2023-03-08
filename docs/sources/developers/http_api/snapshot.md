@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/http_api/snapshot/
-  - /docs/grafana/latest/http_api/snapshot/
+  - ../../http_api/snapshot/
+canonical: /docs/grafana/latest/developers/http_api/snapshot/
 description: Grafana HTTP API
 keywords:
   - grafana

@@ -20,7 +20,7 @@ export interface Props<TQuery extends DataQuery = DataQuery> {
 }
 
 export const QueryEditorRowHeader = <TQuery extends DataQuery>(props: Props<TQuery>) => {
-  const { query, queries, onClick, onChange, collapsedText, renderExtras, disabled } = props;
+  const { query, queries, onChange, collapsedText, renderExtras, disabled } = props;
 
   const styles = useStyles2(getStyles);
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -120,11 +120,7 @@ export const QueryEditorRowHeader = <TQuery extends DataQuery>(props: Props<TQue
         {disabled && <em className={styles.contextInfo}>Disabled</em>}
       </div>
 
-      {collapsedText && (
-        <div className={styles.collapsedText} onClick={onClick}>
-          {collapsedText}
-        </div>
-      )}
+      {collapsedText && <div className={styles.collapsedText}>{collapsedText}</div>}
     </>
   );
 };
@@ -153,6 +149,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: flex;
       align-items: center;
       margin-left: ${theme.spacing(0.5)};
+      overflow: hidden;
     `,
     queryNameWrapper: css`
       display: flex;
@@ -163,6 +160,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: 0 0 0 ${theme.spacing(0.5)};
       margin: 0;
       background: transparent;
+      overflow: hidden;
 
       &:hover {
         background: ${theme.colors.action.hover};
@@ -214,6 +212,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       font-style: italic;
       color: ${theme.colors.text.secondary};
       padding-left: 10px;
+      padding-right: 10px;
     `,
     itemWrapper: css`
       display: flex;

@@ -72,7 +72,7 @@ We make use of a tool called [**Betterer**](https://phenomnomnominal.github.io/b
 
 ## Backend-specific guidelines
 
-Please refer to the [backend style guidelines](/contribute/style-guides/backend.md).
+Please refer to the [backend style guidelines](/contribute/backend/style-guide.md).
 
 ## Code review
 

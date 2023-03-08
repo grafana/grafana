@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/grafana/grafana/pkg/coremodel/dashboard"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/kinds/dashboard"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
@@ -25,25 +25,40 @@ func (e PublicDashboardErr) Error() string {
 	return "Dashboard Error"
 }
 
-const QuerySuccess = "success"
-const QueryFailure = "failure"
+const (
+	QuerySuccess              = "success"
+	QueryFailure              = "failure"
+	EmailShareType  ShareType = "email"
+	PublicShareType ShareType = "public"
+)
 
-var QueryResultStatuses = []string{QuerySuccess, QueryFailure}
+var (
+	QueryResultStatuses = []string{QuerySuccess, QueryFailure}
+	ValidShareTypes     = []ShareType{EmailShareType, PublicShareType}
+)
+
+type ShareType string
 
 type PublicDashboard struct {
-	Uid                string        `json:"uid" xorm:"pk uid"`
-	DashboardUid       string        `json:"dashboardUid" xorm:"dashboard_uid"`
-	OrgId              int64         `json:"-" xorm:"org_id"` // Don't ever marshal orgId to Json
-	TimeSettings       *TimeSettings `json:"timeSettings" xorm:"time_settings"`
-	IsEnabled          bool          `json:"isEnabled" xorm:"is_enabled"`
-	AccessToken        string        `json:"accessToken" xorm:"access_token"`
-	AnnotationsEnabled bool          `json:"annotationsEnabled" xorm:"annotations_enabled"`
+	Uid                  string        `json:"uid" xorm:"pk uid"`
+	DashboardUid         string        `json:"dashboardUid" xorm:"dashboard_uid"`
+	OrgId                int64         `json:"-" xorm:"org_id"` // Don't ever marshal orgId to Json
+	TimeSettings         *TimeSettings `json:"timeSettings" xorm:"time_settings"`
+	IsEnabled            bool          `json:"isEnabled" xorm:"is_enabled"`
+	AccessToken          string        `json:"accessToken" xorm:"access_token"`
+	AnnotationsEnabled   bool          `json:"annotationsEnabled" xorm:"annotations_enabled"`
+	TimeSelectionEnabled bool          `json:"timeSelectionEnabled" xorm:"time_selection_enabled"`
+	Share                ShareType     `json:"share" xorm:"share"`
+	Recipients           []EmailDTO    `json:"recipients,omitempty" xorm:"-"`
+	CreatedBy            int64         `json:"createdBy" xorm:"created_by"`
+	UpdatedBy            int64         `json:"updatedBy" xorm:"updated_by"`
+	CreatedAt            time.Time     `json:"createdAt" xorm:"created_at"`
+	UpdatedAt            time.Time     `json:"updatedAt" xorm:"updated_at"`
+}
 
-	CreatedBy int64 `json:"createdBy" xorm:"created_by"`
-	UpdatedBy int64 `json:"updatedBy" xorm:"updated_by"`
-
-	CreatedAt time.Time `json:"createdAt" xorm:"created_at"`
-	UpdatedAt time.Time `json:"updatedAt" xorm:"updated_at"`
+type EmailDTO struct {
+	Uid       string `json:"uid"`
+	Recipient string `json:"recipient"`
 }
 
 // Alias the generated type
@@ -93,24 +108,23 @@ func (ts *TimeSettings) ToDB() ([]byte, error) {
 	return json.Marshal(ts)
 }
 
-// build time settings object from json on public dashboard. If empty, use
-// defaults on the dashboard
-func (pd PublicDashboard) BuildTimeSettings(dashboard *models.Dashboard) TimeSettings {
+// BuildTimeSettings build time settings object using selected values if enabled and are valid or dashboard default values
+func (pd PublicDashboard) BuildTimeSettings(dashboard *dashboards.Dashboard, reqDTO PublicDashboardQueryDTO) TimeSettings {
 	from := dashboard.Data.GetPath("time", "from").MustString()
 	to := dashboard.Data.GetPath("time", "to").MustString()
+
+	if pd.TimeSelectionEnabled {
+		from = reqDTO.TimeRange.From
+		to = reqDTO.TimeRange.To
+	}
+
 	timeRange := legacydata.NewDataTimeRange(from, to)
 
 	// Were using epoch ms because this is used to build a MetricRequest, which is used by query caching, which expected the time range in epoch milliseconds.
-	ts := TimeSettings{
+	return TimeSettings{
 		From: strconv.FormatInt(timeRange.GetFromAsMsEpoch(), 10),
 		To:   strconv.FormatInt(timeRange.GetToAsMsEpoch(), 10),
 	}
-
-	if pd.TimeSettings == nil {
-		return ts
-	}
-
-	return ts
 }
 
 // DTO for transforming user input in the api
@@ -122,8 +136,10 @@ type SavePublicDashboardDTO struct {
 }
 
 type PublicDashboardQueryDTO struct {
-	IntervalMs    int64
-	MaxDataPoints int64
+	IntervalMs      int64
+	MaxDataPoints   int64
+	QueryCachingTTL int64
+	TimeRange       TimeSettings
 }
 
 type AnnotationsQueryDTO struct {

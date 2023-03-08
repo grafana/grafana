@@ -10,6 +10,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -17,16 +21,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/setting"
-
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/testutil"
-	"github.com/stretchr/testify/require"
 )
 
 func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgs(t *testing.T) {
-	configStore := &FakeConfigStore{
-		configs: map[int64]*models.AlertConfiguration{},
-	}
+	configStore := NewFakeConfigStore(t, map[int64]*models.AlertConfiguration{})
 	orgStore := &FakeOrgStore{
 		orgs: []int64{1, 2, 3},
 	}
@@ -62,6 +60,13 @@ grafana_alerting_active_configurations 3
 # TYPE grafana_alerting_discovered_configurations gauge
 grafana_alerting_discovered_configurations 3
 `), "grafana_alerting_discovered_configurations", "grafana_alerting_active_configurations"))
+
+		// Configurations should be marked as successfully applied.
+		for _, org := range orgStore.orgs {
+			configs, ok := configStore.appliedConfigs[org]
+			require.True(t, ok)
+			require.Len(t, configs, 1)
+		}
 	}
 	// When an org is removed, it should detect it.
 	{
@@ -148,13 +153,14 @@ grafana_alerting_discovered_configurations 4
 
 func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T) {
 	// Include a broken configuration for organization 2.
-	configStore := &FakeConfigStore{
-		configs: map[int64]*models.AlertConfiguration{
-			2: {AlertmanagerConfiguration: brokenConfig, OrgID: 2},
-		},
-	}
+	var orgWithBadConfig int64 = 2
+	configStore := NewFakeConfigStore(t, map[int64]*models.AlertConfiguration{
+		2: {AlertmanagerConfiguration: brokenConfig, OrgID: orgWithBadConfig},
+	})
+
+	orgs := []int64{1, 2, 3}
 	orgStore := &FakeOrgStore{
-		orgs: []int64{1, 2, 3},
+		orgs: orgs,
 	}
 
 	tmpDir := t.TempDir()
@@ -175,22 +181,52 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 	require.NoError(t, err)
 	ctx := context.Background()
 
+	// No successfully applied configurations should be found at first.
+	{
+		for _, org := range orgs {
+			_, ok := configStore.appliedConfigs[org]
+			require.False(t, ok)
+		}
+	}
+
 	// When you sync the first time, the alertmanager is created but is doesn't become ready until you have a configuration applied.
 	{
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 		require.Len(t, mam.alertmanagers, 3)
-		require.True(t, mam.alertmanagers[1].ready())
-		require.False(t, mam.alertmanagers[2].ready())
-		require.True(t, mam.alertmanagers[3].ready())
+		require.True(t, mam.alertmanagers[1].Ready())
+		require.False(t, mam.alertmanagers[2].Ready())
+		require.True(t, mam.alertmanagers[3].Ready())
+
+		// Configurations should be marked as successfully applied for all orgs except for org 2.
+		for _, org := range orgs {
+			configs, ok := configStore.appliedConfigs[org]
+			if org == orgWithBadConfig {
+				require.False(t, ok)
+			} else {
+				require.True(t, ok)
+				require.Len(t, configs, 1)
+			}
+		}
 	}
 
 	// On the next sync, it never panics and alertmanager is still not ready.
 	{
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 		require.Len(t, mam.alertmanagers, 3)
-		require.True(t, mam.alertmanagers[1].ready())
-		require.False(t, mam.alertmanagers[2].ready())
-		require.True(t, mam.alertmanagers[3].ready())
+		require.True(t, mam.alertmanagers[1].Ready())
+		require.False(t, mam.alertmanagers[2].Ready())
+		require.True(t, mam.alertmanagers[3].Ready())
+
+		// The configuration should still be marked as successfully applied for all orgs except for org 2.
+		for _, org := range orgs {
+			configs, ok := configStore.appliedConfigs[org]
+			if org == orgWithBadConfig {
+				require.False(t, ok)
+			} else {
+				require.True(t, ok)
+				require.Len(t, configs, 1)
+			}
+		}
 	}
 
 	// If we fix the configuration, it becomes ready.
@@ -198,16 +234,21 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 		configStore.configs = map[int64]*models.AlertConfiguration{} // It'll apply the default config.
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 		require.Len(t, mam.alertmanagers, 3)
-		require.True(t, mam.alertmanagers[1].ready())
-		require.True(t, mam.alertmanagers[2].ready())
-		require.True(t, mam.alertmanagers[3].ready())
+		require.True(t, mam.alertmanagers[1].Ready())
+		require.True(t, mam.alertmanagers[2].Ready())
+		require.True(t, mam.alertmanagers[3].Ready())
+
+		// All configurations should be marked as successfully applied.
+		for _, org := range orgs {
+			configs, ok := configStore.appliedConfigs[org]
+			require.True(t, ok)
+			require.Len(t, configs, 1)
+		}
 	}
 }
 
 func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
-	configStore := &FakeConfigStore{
-		configs: map[int64]*models.AlertConfiguration{},
-	}
+	configStore := NewFakeConfigStore(t, map[int64]*models.AlertConfiguration{})
 	orgStore := &FakeOrgStore{
 		orgs: []int64{1, 2, 3},
 	}
@@ -238,23 +279,13 @@ func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 		require.EqualError(t, err, ErrNoAlertmanagerForOrg.Error())
 	}
 
-	// Now, let's try to request an Alertmanager that is not ready.
-	{
-		// let's delete its "running config" to make it non-ready
-		mam.alertmanagers[1].config = nil
-		am, err := mam.AlertmanagerFor(1)
-		require.NotNil(t, am)
-		require.False(t, am.Ready())
-		require.EqualError(t, err, ErrAlertmanagerNotReady.Error())
-	}
-
 	// With an Alertmanager that exists, it responds correctly.
 	{
 		am, err := mam.AlertmanagerFor(2)
 		require.NoError(t, err)
 		require.Equal(t, *am.GetStatus().VersionInfo.Version, "N/A")
 		require.Equal(t, am.orgID, int64(2))
-		require.NotNil(t, am.config)
+		require.NotNil(t, am.Base.ConfigHash())
 	}
 
 	// Let's now remove the previous queried organization.

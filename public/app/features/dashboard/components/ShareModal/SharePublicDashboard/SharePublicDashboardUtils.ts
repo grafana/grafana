@@ -1,25 +1,28 @@
 import { getConfig } from 'app/core/config';
 import { VariableModel } from 'app/features/variables/types';
-import { DashboardDataDTO, DashboardMeta } from 'app/types/dashboard';
 
-export interface PublicDashboard {
-  accessToken?: string;
+import { PanelModel } from '../../../state';
+
+import { supportedDatasources } from './SupportedPubdashDatasources';
+
+export enum PublicDashboardShareType {
+  PUBLIC = 'public',
+  EMAIL = 'email',
+}
+
+export interface PublicDashboardSettings {
   annotationsEnabled: boolean;
   isEnabled: boolean;
+  timeSelectionEnabled: boolean;
+}
+
+export interface PublicDashboard extends PublicDashboardSettings {
+  accessToken?: string;
   uid: string;
   dashboardUid: string;
   timeSettings?: object;
-}
-
-export interface DashboardResponse {
-  dashboard: DashboardDataDTO;
-  meta: DashboardMeta;
-}
-
-export interface Acknowledgements {
-  public: boolean;
-  datasources: boolean;
-  usage: boolean;
+  share: PublicDashboardShareType;
+  recipients?: Array<{ uid: string; recipient: string }>;
 }
 
 // Instance methods
@@ -29,6 +32,24 @@ export const dashboardHasTemplateVariables = (variables: VariableModel[]): boole
 
 export const publicDashboardPersisted = (publicDashboard?: PublicDashboard): boolean => {
   return publicDashboard?.uid !== '' && publicDashboard?.uid !== undefined;
+};
+
+/**
+ * Get unique datasource names from all panels that are not currently supported by public dashboards.
+ */
+export const getUnsupportedDashboardDatasources = (panels: PanelModel[]): string[] => {
+  let unsupportedDS = new Set<string>();
+
+  for (const panel of panels) {
+    for (const target of panel.targets) {
+      let ds = target?.datasource?.type;
+      if (ds && !supportedDatasources.has(ds)) {
+        unsupportedDS.add(ds);
+      }
+    }
+  }
+
+  return Array.from(unsupportedDS).sort();
 };
 
 /**
@@ -42,3 +63,5 @@ export const publicDashboardPersisted = (publicDashboard?: PublicDashboard): boo
 export const generatePublicDashboardUrl = (publicDashboard: PublicDashboard): string => {
   return `${getConfig().appUrl}public-dashboards/${publicDashboard.accessToken}`;
 };
+
+export const validEmailRegex = /^[A-Z\d._%+-]+@[A-Z\d.-]+\.[A-Z]{2,}$/i;

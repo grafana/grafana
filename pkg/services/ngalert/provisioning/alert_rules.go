@@ -4,11 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/provisioning/alerting/file"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -18,6 +21,7 @@ type AlertRuleService struct {
 	baseIntervalSeconds    int64
 	ruleStore              RuleStore
 	provenanceStore        ProvisioningStore
+	dashboardService       dashboards.DashboardService
 	quotas                 QuotaChecker
 	xact                   TransactionManager
 	log                    log.Logger
@@ -25,6 +29,7 @@ type AlertRuleService struct {
 
 func NewAlertRuleService(ruleStore RuleStore,
 	provenanceStore ProvisioningStore,
+	dashboardService dashboards.DashboardService,
 	quotas QuotaChecker,
 	xact TransactionManager,
 	defaultIntervalSeconds int64,
@@ -35,10 +40,23 @@ func NewAlertRuleService(ruleStore RuleStore,
 		baseIntervalSeconds:    baseIntervalSeconds,
 		ruleStore:              ruleStore,
 		provenanceStore:        provenanceStore,
+		dashboardService:       dashboardService,
 		quotas:                 quotas,
 		xact:                   xact,
 		log:                    log,
 	}
+}
+
+func (service *AlertRuleService) GetAlertRules(ctx context.Context, orgID int64) ([]*models.AlertRule, error) {
+	q := models.ListAlertRulesQuery{
+		OrgID: orgID,
+	}
+	err := service.ruleStore.ListAlertRules(ctx, &q)
+	if err != nil {
+		return nil, err
+	}
+	// TODO: GET provenance
+	return q.Result, nil
 }
 
 func (service *AlertRuleService) GetAlertRule(ctx context.Context, orgID int64, ruleUID string) (models.AlertRule, models.Provenance, error) {
@@ -57,6 +75,38 @@ func (service *AlertRuleService) GetAlertRule(ctx context.Context, orgID int64, 
 	return *query.Result, provenance, nil
 }
 
+type AlertRuleWithFolderTitle struct {
+	AlertRule   models.AlertRule
+	FolderTitle string
+}
+
+// GetAlertRuleWithFolderTitle returns a single alert rule with its folder title.
+func (service *AlertRuleService) GetAlertRuleWithFolderTitle(ctx context.Context, orgID int64, ruleUID string) (AlertRuleWithFolderTitle, error) {
+	query := &models.GetAlertRuleByUIDQuery{
+		OrgID: orgID,
+		UID:   ruleUID,
+	}
+	err := service.ruleStore.GetAlertRuleByUID(ctx, query)
+	if err != nil {
+		return AlertRuleWithFolderTitle{}, err
+	}
+
+	dq := dashboards.GetDashboardQuery{
+		OrgID: orgID,
+		UID:   query.Result.NamespaceUID,
+	}
+
+	dash, err := service.dashboardService.GetDashboard(ctx, &dq)
+	if err != nil {
+		return AlertRuleWithFolderTitle{}, err
+	}
+
+	return AlertRuleWithFolderTitle{
+		AlertRule:   *query.Result,
+		FolderTitle: dash.Title,
+	}, nil
+}
+
 // CreateAlertRule creates a new alert rule. This function will ignore any
 // interval that is set in the rule struct and use the already existing group
 // interval or the default one.
@@ -72,7 +122,7 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule model
 		return models.AlertRule{}, err
 	}
 	rule.IntervalSeconds = interval
-	err = rule.SetDashboardAndPanel()
+	err = rule.SetDashboardAndPanelFromAnnotations()
 	if err != nil {
 		return models.AlertRule{}, err
 	}
@@ -102,10 +152,10 @@ func (service *AlertRuleService) CreateAlertRule(ctx context.Context, rule model
 	return rule, nil
 }
 
-func (service *AlertRuleService) GetRuleGroup(ctx context.Context, orgID int64, folder, group string) (models.AlertRuleGroup, error) {
+func (service *AlertRuleService) GetRuleGroup(ctx context.Context, orgID int64, namespaceUID, group string) (models.AlertRuleGroup, error) {
 	q := models.ListAlertRulesQuery{
 		OrgID:         orgID,
-		NamespaceUIDs: []string{folder},
+		NamespaceUIDs: []string{namespaceUID},
 		RuleGroup:     group,
 	}
 	if err := service.ruleStore.ListAlertRules(ctx, &q); err != nil {
@@ -188,10 +238,13 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 		NamespaceUID: group.FolderUID,
 		RuleGroup:    group.Title,
 	}
-	rules := make([]*models.AlertRule, len(group.Rules))
+	rules := make([]*models.AlertRuleWithOptionals, len(group.Rules))
 	group = *syncGroupRuleFields(&group, orgID)
 	for i := range group.Rules {
-		rules = append(rules, &group.Rules[i])
+		if err := group.Rules[i].SetDashboardAndPanelFromAnnotations(); err != nil {
+			return err
+		}
+		rules = append(rules, &models.AlertRuleWithOptionals{AlertRule: group.Rules[i], HasPause: true})
 	}
 	delta, err := store.CalculateChanges(ctx, service.ruleStore, key, rules)
 	if err != nil {
@@ -276,7 +329,7 @@ func (service *AlertRuleService) UpdateAlertRule(ctx context.Context, rule model
 	rule.Updated = time.Now()
 	rule.ID = storedRule.ID
 	rule.IntervalSeconds = storedRule.IntervalSeconds
-	err = rule.SetDashboardAndPanel()
+	err = rule.SetDashboardAndPanelFromAnnotations()
 	if err != nil {
 		return models.AlertRule{}, err
 	}
@@ -318,7 +371,7 @@ func (service *AlertRuleService) DeleteAlertRule(ctx context.Context, orgID int6
 
 // checkLimitsTransactionCtx checks whether the current transaction (as identified by the ctx) breaches configured alert rule limits.
 func (service *AlertRuleService) checkLimitsTransactionCtx(ctx context.Context, orgID, userID int64) error {
-	limitReached, err := service.quotas.CheckQuotaReached(ctx, "alert_rule", &quota.ScopeParameters{
+	limitReached, err := service.quotas.CheckQuotaReached(ctx, models.QuotaTargetSrv, &quota.ScopeParameters{
 		OrgID:  orgID,
 		UserID: userID,
 	})
@@ -349,6 +402,114 @@ func (service *AlertRuleService) deleteRules(ctx context.Context, orgID int64, t
 		}
 	}
 	return nil
+}
+
+// GetAlertRuleGroupWithFolderTitle returns the alert rule group with folder title.
+func (service *AlertRuleService) GetAlertRuleGroupWithFolderTitle(ctx context.Context, orgID int64, namespaceUID, group string) (file.AlertRuleGroupWithFolderTitle, error) {
+	q := models.ListAlertRulesQuery{
+		OrgID:         orgID,
+		NamespaceUIDs: []string{namespaceUID},
+		RuleGroup:     group,
+	}
+	if err := service.ruleStore.ListAlertRules(ctx, &q); err != nil {
+		return file.AlertRuleGroupWithFolderTitle{}, err
+	}
+	if len(q.Result) == 0 {
+		return file.AlertRuleGroupWithFolderTitle{}, store.ErrAlertRuleGroupNotFound
+	}
+
+	dq := dashboards.GetDashboardQuery{
+		OrgID: orgID,
+		UID:   namespaceUID,
+	}
+	dash, err := service.dashboardService.GetDashboard(ctx, &dq)
+	if err != nil {
+		return file.AlertRuleGroupWithFolderTitle{}, err
+	}
+
+	res := file.AlertRuleGroupWithFolderTitle{
+		AlertRuleGroup: &models.AlertRuleGroup{
+			Title:     q.Result[0].RuleGroup,
+			FolderUID: q.Result[0].NamespaceUID,
+			Interval:  q.Result[0].IntervalSeconds,
+			Rules:     []models.AlertRule{},
+		},
+		OrgID:       orgID,
+		FolderTitle: dash.Title,
+	}
+	for _, r := range q.Result {
+		if r != nil {
+			res.AlertRuleGroup.Rules = append(res.AlertRuleGroup.Rules, *r)
+		}
+	}
+	return res, nil
+}
+
+// GetAlertGroupsWithFolderTitle returns all groups with folder title that have at least one alert.
+func (service *AlertRuleService) GetAlertGroupsWithFolderTitle(ctx context.Context, orgID int64) ([]file.AlertRuleGroupWithFolderTitle, error) {
+	q := models.ListAlertRulesQuery{
+		OrgID: orgID,
+	}
+
+	if err := service.ruleStore.ListAlertRules(ctx, &q); err != nil {
+		return nil, err
+	}
+
+	groups := make(map[models.AlertRuleGroupKey][]models.AlertRule)
+	namespaces := make(map[string][]*models.AlertRuleGroupKey)
+	for _, r := range q.Result {
+		groupKey := r.GetGroupKey()
+		group := groups[groupKey]
+		group = append(group, *r)
+		groups[groupKey] = group
+
+		namespaces[r.NamespaceUID] = append(namespaces[r.NamespaceUID], &groupKey)
+	}
+
+	dq := dashboards.GetDashboardsQuery{
+		DashboardUIDs: nil,
+	}
+	for uid := range namespaces {
+		dq.DashboardUIDs = append(dq.DashboardUIDs, uid)
+	}
+
+	// We need folder titles for the provisioning file format. We do it this way instead of using GetUserVisibleNamespaces to avoid folder:read permissions that should not apply to those with alert.provisioning:read.
+	dashes, err := service.dashboardService.GetDashboards(ctx, &dq)
+	if err != nil {
+		return nil, err
+	}
+	folderUidToTitle := make(map[string]string)
+	for _, dash := range dashes {
+		folderUidToTitle[dash.UID] = dash.Title
+	}
+
+	result := make([]file.AlertRuleGroupWithFolderTitle, 0)
+	for groupKey, rules := range groups {
+		title, ok := folderUidToTitle[groupKey.NamespaceUID]
+		if !ok {
+			return nil, fmt.Errorf("cannot find title for folder with uid '%s'", groupKey.NamespaceUID)
+		}
+		result = append(result, file.AlertRuleGroupWithFolderTitle{
+			AlertRuleGroup: &models.AlertRuleGroup{
+				Title:     rules[0].RuleGroup,
+				FolderUID: rules[0].NamespaceUID,
+				Interval:  rules[0].IntervalSeconds,
+				Rules:     rules,
+			},
+			OrgID:       orgID,
+			FolderTitle: title,
+		})
+	}
+
+	// Return results in a stable manner.
+	sort.SliceStable(result, func(i, j int) bool {
+		if result[i].AlertRuleGroup.FolderUID == result[j].AlertRuleGroup.FolderUID {
+			return result[i].AlertRuleGroup.Title < result[j].AlertRuleGroup.Title
+		}
+		return result[i].AlertRuleGroup.FolderUID < result[j].AlertRuleGroup.FolderUID
+	})
+
+	return result, nil
 }
 
 // syncRuleGroupFields synchronizes calculated fields across multiple rules in a group.

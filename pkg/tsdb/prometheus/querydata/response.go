@@ -13,10 +13,11 @@ import (
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/querydata/exemplar"
 	"github.com/grafana/grafana/pkg/util/converter"
 )
 
-func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *http.Response) (*backend.DataResponse, error) {
+func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *http.Response) backend.DataResponse {
 	defer func() {
 		if err := res.Body.Close(); err != nil {
 			s.log.FromContext(ctx).Error("Failed to close response body", "err", err)
@@ -28,8 +29,10 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 		MatrixWideSeries: s.enableWideSeries,
 		VectorWideSeries: s.enableWideSeries,
 	})
-	if r == nil {
-		return nil, fmt.Errorf("received empty response from prometheus")
+
+	// Add frame to attach metadata
+	if len(r.Frames) == 0 && !q.ExemplarQuery {
+		r.Frames = append(r.Frames, data.NewFrame(""))
 	}
 
 	// The ExecutedQueryString can be viewed in QueryInspector in UI
@@ -41,8 +44,60 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 		}
 	}
 
-	r = processExemplars(q, r)
-	return r, nil
+	if r.Error == nil {
+		r = s.processExemplars(q, r)
+	}
+
+	return r
+}
+
+func (s *QueryData) processExemplars(q *models.Query, dr backend.DataResponse) backend.DataResponse {
+	sampler := s.exemplarSampler()
+	labelTracker := exemplar.NewLabelTracker()
+
+	// we are moving from a multi-frame response returned
+	// by the converter to a single exemplar frame,
+	// so we need to build a new frame array with the
+	// old exemplar frames filtered out
+	framer := exemplar.NewFramer(sampler, labelTracker)
+
+	for _, frame := range dr.Frames {
+		// we don't need to process non-exemplar frames
+		// so they can be added to the response
+		if !isExemplarFrame(frame) {
+			framer.AddFrame(frame)
+			continue
+		}
+
+		// copy the current exemplar frame metadata
+		framer.SetMeta(frame.Meta)
+		framer.SetRefID(frame.RefID)
+
+		step := time.Duration(frame.Fields[0].Config.Interval) * time.Millisecond
+		sampler.SetStep(step)
+
+		seriesLabels := getSeriesLabels(frame)
+		labelTracker.Add(seriesLabels)
+		for rowIdx := 0; rowIdx < frame.Fields[0].Len(); rowIdx++ {
+			row := frame.RowCopy(rowIdx)
+			labels := getLabels(frame, row)
+			labelTracker.Add(labels)
+			ex := models.Exemplar{
+				Labels:       labels,
+				Value:        row[1].(float64),
+				Timestamp:    row[0].(time.Time),
+				SeriesLabels: seriesLabels,
+			}
+			sampler.Add(ex)
+		}
+	}
+
+	frames, err := framer.Frames()
+
+	return backend.DataResponse{
+		Frames: frames,
+		Error:  err,
+	}
 }
 
 func addMetadataToMultiFrame(q *models.Query, frame *data.Frame) {
@@ -134,79 +189,6 @@ func getName(q *models.Query, field *data.Field) string {
 	}
 
 	return legend
-}
-
-func processExemplars(q *models.Query, dr *backend.DataResponse) *backend.DataResponse {
-	sampler := newExemplarSampler()
-
-	// we are moving from a multi-frame response returned
-	// by the converter to a single exemplar frame,
-	// so we need to build a new frame array with the
-	// old exemplar frames filtered out
-	frames := []*data.Frame{}
-
-	// the new exemplar frame will be a single frame in long format
-	// with a timestamp, metric value, and one or more label fields
-	exemplarFrame := data.NewFrame("exemplar")
-
-	for _, frame := range dr.Frames {
-		// we don't need to process non-exemplar frames
-		// so they can be added to the response
-		if !isExemplarFrame(frame) {
-			frames = append(frames, frame)
-			continue
-		}
-
-		// copy the frame metadata to the new exemplar frame
-		exemplarFrame.Meta = frame.Meta
-		exemplarFrame.RefID = frame.RefID
-
-		step := time.Duration(frame.Fields[0].Config.Interval) * time.Millisecond
-		seriesLabels := getSeriesLabels(frame)
-		for rowIdx := 0; rowIdx < frame.Fields[0].Len(); rowIdx++ {
-			row := frame.RowCopy(rowIdx)
-			ts := row[0].(time.Time)
-			val := row[1].(float64)
-			labels := getLabels(frame, row)
-			sampler.update(step, ts, val, seriesLabels, labels)
-		}
-	}
-
-	exemplars := sampler.getSampledExemplars()
-	if len(exemplars) == 0 {
-		return dr
-	}
-
-	// init the fields for the new exemplar frame
-	timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, make([]time.Time, 0, len(exemplars)))
-	valueField := data.NewField(data.TimeSeriesValueFieldName, nil, make([]float64, 0, len(exemplars)))
-	exemplarFrame.Fields = append(exemplarFrame.Fields, timeField, valueField)
-	labelNames := sampler.getLabelNames()
-	for _, labelName := range labelNames {
-		exemplarFrame.Fields = append(exemplarFrame.Fields, data.NewField(labelName, nil, make([]string, 0, len(exemplars))))
-	}
-
-	// add the sampled exemplars to the new exemplar frame
-	for _, b := range exemplars {
-		timeField.Append(b.ts)
-		valueField.Append(b.val)
-		for i, labelName := range labelNames {
-			labelValue, ok := b.labels[labelName]
-			if !ok {
-				// if the label is not present in the exemplar labels, then use the series label
-				labelValue = b.seriesLabels[labelName]
-			}
-			colIdx := i + 2 // +2 to skip time and value fields
-			exemplarFrame.Fields[colIdx].Append(labelValue)
-		}
-	}
-
-	frames = append(frames, exemplarFrame)
-
-	return &backend.DataResponse{
-		Frames: frames,
-		Error:  dr.Error,
-	}
 }
 
 func isExemplarFrame(frame *data.Frame) bool {

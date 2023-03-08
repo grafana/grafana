@@ -6,7 +6,7 @@ import { SeriesColorPicker, SeriesIcon } from '@grafana/ui';
 import { TimeSeries } from 'app/core/core';
 
 export const LEGEND_STATS = ['min', 'max', 'avg', 'current', 'total'] as const;
-export type LegendStat = typeof LEGEND_STATS[number];
+export type LegendStat = (typeof LEGEND_STATS)[number];
 
 export interface LegendLabelProps {
   series: TimeSeries;
@@ -221,14 +221,10 @@ interface LegendValueProps {
 function LegendValue({ value, valueName, asTable, onValueClick }: LegendValueProps) {
   if (asTable) {
     return (
-      <td role="gridcell" className={`graph-legend-value ${valueName}`} onClick={onValueClick}>
+      <td role="gridcell" className={`graph-legend-value ${valueName}`}>
         {value}
       </td>
     );
   }
-  return (
-    <div className={`graph-legend-value ${valueName}`} onClick={onValueClick}>
-      {value}
-    </div>
-  );
+  return <div className={`graph-legend-value ${valueName}`}>{value}</div>;
 }

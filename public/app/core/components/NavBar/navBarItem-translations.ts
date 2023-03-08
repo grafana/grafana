@@ -1,18 +1,18 @@
+import { config } from '@grafana/runtime';
+import { t } from 'app/core/internationalization';
+
 // Maps the ID of the nav item to a translated phrase to later pass to <Trans />
 // Because the navigation content is dynamic (defined in the backend), we can not use
 // the normal inline message definition method.
 
-import { config } from '@grafana/runtime';
-import { t } from 'app/core/internationalization';
-
-// The keys of the TRANSLATED_MENU_ITEMS object (NOT the id inside the defineMessage function)
-// must match the ID of the navigation item, as defined in the backend nav model
-
 // see pkg/api/index.go
 export function getNavTitle(navId: string | undefined) {
+  // the switch cases must match the ID of the navigation item, as defined in the backend nav model
   switch (navId) {
     case 'home':
       return t('nav.home.title', 'Home');
+    case 'new':
+      return t('nav.new.title', 'New');
     case 'create':
       return t('nav.create.title', 'Create');
     case 'create-dashboard':
@@ -22,7 +22,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'import':
       return t('nav.create-import.title', 'Import');
     case 'alert':
-      return t('nav.create-alert.title', 'New alert rule');
+      return t('nav.create-alert.title', 'Create alert rule');
     case 'starred':
       return t('nav.starred.title', 'Starred');
     case 'starred-empty':
@@ -39,10 +39,14 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.snapshots.title', 'Snapshots');
     case 'dashboards/library-panels':
       return t('nav.library-panels.title', 'Library panels');
+    case 'dashboards/public':
+      return t('nav.public.title', 'Public dashboards');
     case 'dashboards/new':
       return t('nav.new-dashboard.title', 'New dashboard');
     case 'dashboards/folder/new':
       return t('nav.new-folder.title', 'New folder');
+    case 'dashboards/import':
+      return t('nav.create-import.title', 'Import');
     case 'scenes':
       return t('nav.scenes.title', 'Scenes');
     case 'explore':
@@ -51,6 +55,8 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.alerting.title', 'Alerting');
     case 'alerting-legacy':
       return t('nav.alerting-legacy.title', 'Alerting (legacy)');
+    case 'alert-home':
+      return t('nav.alerting-home.title', 'Home');
     case 'alert-list':
       return t('nav.alerting-list.title', 'Alert rules');
     case 'receivers':
@@ -80,15 +86,21 @@ export function getNavTitle(navId: string | undefined) {
     case 'plugins':
       return t('nav.plugins.title', 'Plugins');
     case 'org-settings':
-      return t('nav.org-settings.title', 'Preferences');
+      return config.featureToggles.topnav
+        ? t('nav.org-settings.title', 'Default preferences')
+        : t('nav.org-settings.titleBeforeTopnav', 'Preferences');
     case 'apikeys':
       return t('nav.api-keys.title', 'API keys');
     case 'serviceaccounts':
       return t('nav.service-accounts.title', 'Service accounts');
     case 'admin':
       return t('nav.admin.title', 'Server admin');
+    case 'support-bundles':
+      return t('nav.support-bundles.title', 'Support bundles');
     case 'global-users':
-      return t('nav.global-users.title', 'Users');
+      return config.featureToggles.topnav
+        ? t('nav.global-users.title', 'Users')
+        : t('nav.global-users.titleBeforeTopnav', 'Users');
     case 'global-orgs':
       return t('nav.global-orgs.title', 'Organizations');
     case 'server-settings':
@@ -114,13 +126,15 @@ export function getNavTitle(navId: string | undefined) {
     case 'help':
       return t('nav.help.title', 'Help');
     case 'profile/settings':
-      return t('nav.profile/settings.title', 'Preferences');
+      return t('nav.profile/settings.title', 'Profile');
     case 'profile/notifications':
       return t('nav.profile/notifications.title', 'Notification history');
     case 'profile/password':
       return t('nav.profile/password.title', 'Change password');
     case 'sign-out':
       return t('nav.sign-out.title', 'Sign out');
+    case 'search':
+      return t('nav.search-dashboards.title', 'Search dashboards');
     default:
       return undefined;
   }
@@ -134,6 +148,8 @@ export function getNavSubTitle(navId: string | undefined) {
       return config.featureToggles.topnav
         ? t('nav.dashboards.subtitle', 'Create and manage dashboards to visualize your data')
         : undefined;
+    case 'manage-folder':
+      return t('nav.manage-folder.subtitle', 'Manage folder dashboards and permissions');
     case 'dashboards/playlists':
       return t('nav.playlists.subtitle', 'Groups of dashboards that are displayed in a sequence');
     case 'dashboards/snapshots':
@@ -148,7 +164,10 @@ export function getNavSubTitle(navId: string | undefined) {
     case 'alert-list':
       return t('nav.alerting-list.subtitle', 'Rules that determine whether an alert will fire');
     case 'receivers':
-      return t('nav.alerting-receivers.subtitle', 'Decide how your contacts are notified when an alert fires');
+      return t(
+        'nav.alerting-receivers.subtitle',
+        'Choose how to notify your contact points when an alert instance fires'
+      );
     case 'am-routes':
       return t('nav.alerting-am-routes.subtitle', 'Determine how alerts are routed to contact points');
     case 'silences':
@@ -172,13 +191,15 @@ export function getNavSubTitle(navId: string | undefined) {
     case 'serviceaccounts':
       return t('nav.service-accounts.subtitle', 'Use service accounts to run automated workloads in Grafana');
     case 'global-users':
-      return t('nav.global-users.subtitle', 'Manage and create users across the whole Grafana server');
+      return t('nav.global-users.subtitle', 'Manage users in Grafana');
     case 'global-orgs':
       return t('nav.global-orgs.subtitle', 'Isolated instances of Grafana running on the same server');
     case 'server-settings':
       return t('nav.server-settings.subtitle', 'View the settings defined in your Grafana config');
     case 'storage':
       return t('nav.storage.subtitle', 'Manage file storage');
+    case 'support-bundles':
+      return t('nav.support-bundles.subtitle', 'Download support bundles');
     case 'admin':
       return config.featureToggles.topnav
         ? t(

@@ -12,6 +12,7 @@ export interface OrgUser extends WithAccessControlMetadata {
   role: OrgRole;
   userId: number;
   isDisabled: boolean;
+  authLabels?: string[];
 }
 
 export interface User {
@@ -45,6 +46,7 @@ export interface UserDTO extends WithAccessControlMetadata {
   permissions?: string[];
   teams?: Unit[];
   orgs?: Unit[];
+  isExternallySynced?: boolean;
 }
 
 export interface Invitee {
@@ -67,12 +69,14 @@ export interface Invitee {
 export interface UsersState {
   users: OrgUser[];
   searchQuery: string;
-  searchPage: number;
   canInvite: boolean;
   externalUserMngLinkUrl: string;
   externalUserMngLinkName: string;
   externalUserMngInfo: string;
-  hasFetched: boolean;
+  isLoading: boolean;
+  page: number;
+  perPage: number;
+  totalPages: number;
 }
 
 export interface UserSession {

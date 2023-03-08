@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { BackendSrv, setBackendSrv } from '@grafana/runtime';
 
@@ -32,7 +33,11 @@ setBackendSrv({
 } as unknown as BackendSrv);
 
 const setup = () => {
-  return render(<CreateTeam />);
+  return render(
+    <TestProvider>
+      <CreateTeam />
+    </TestProvider>
+  );
 };
 
 describe('Create team', () => {
