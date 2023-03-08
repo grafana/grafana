@@ -154,7 +154,19 @@ const FlameGraph = ({
         }
       }
     },
-    [levels, wrapperWidth, valueField, totalTicks, rangeMin, rangeMax, search, topLevelIndex, foundLabels, data.fields]
+    [
+      levels,
+      wrapperWidth,
+      valueField,
+      totalTicks,
+      rangeMin,
+      rangeMax,
+      search,
+      topLevelIndex,
+      foundLabels,
+      ,
+      data.fields,
+    ]
   );
 
   useEffect(() => {

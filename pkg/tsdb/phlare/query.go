@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"os"
 	"sort"
 	"strings"
 	"time"
@@ -16,6 +17,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"github.com/grafana/grafana/pkg/tsdb/phlare/kinds/dataquery"
 	"github.com/xlab/treeprint"
+	"google.golang.org/protobuf/proto"
 
 	googlev1 "github.com/grafana/phlare/api/gen/proto/go/google/v1"
 	querierv1 "github.com/grafana/phlare/api/gen/proto/go/querier/v1"
@@ -86,13 +88,24 @@ func (d *PhlareDatasource) query(ctx context.Context, pCtx backend.PluginContext
 	if query.QueryType == queryTypeProfile || query.QueryType == queryTypeBoth {
 		req := makeRequest(qm, query)
 		logger.Debug("Sending SelectMergeProfile", "request", req, "queryModel", qm)
-		resp, err := d.client.SelectMergeProfile(ctx, req)
+		//resp, err := d.client.SelectMergeProfile(ctx, req)
 		if err != nil {
 			logger.Error("Querying SelectMergeProfile()", "err", err)
 			response.Error = err
 			return response
 		}
-		frame := responseToDataFrames(resp, qm.ProfileTypeId)
+		file, err := os.ReadFile("./pkg/tsdb/phlare/testdata/merge.pprof")
+		if err != nil {
+			panic(err)
+		}
+		prof := &googlev1.Profile{}
+		err = proto.Unmarshal(file, prof)
+		if err != nil {
+			panic(err)
+		}
+
+		//frame := responseToDataFrames(resp.Msg, qm.ProfileTypeId)
+		frame := responseToDataFrames(prof, qm.ProfileTypeId)
 		response.Frames = append(response.Frames, frame)
 
 		// If query called with streaming on then return a channel
@@ -125,8 +138,8 @@ func makeRequest(qm queryModel, query backend.DataQuery) *connect.Request[querie
 // responseToDataFrames turns Phlare response to data.Frame. We encode the data into a nested set format where we have
 // [level, value, label] columns and by ordering the items in a depth first traversal order we can recreate the whole
 // tree back.
-func responseToDataFrames(resp *connect.Response[googlev1.Profile], profileTypeID string) *data.Frame {
-	tree := profileAsTree(resp.Msg)
+func responseToDataFrames(prof *googlev1.Profile, profileTypeID string) *data.Frame {
+	tree := profileAsTree(prof)
 	return treeToNestedSetDataFrame(tree, profileTypeID)
 }
 
@@ -354,8 +367,8 @@ type CustomMeta struct {
 }
 
 // treeToNestedSetDataFrame walks the tree depth first and adds items into the dataframe. This is a nested set format
-// where by ordering the items in depth first order and knowing the level/depth of each item we can recreate the
-// parent - child relationship without explicitly needing parent/child column and we can later just iterate over the
+// where ordering the items in depth first order and knowing the level/depth of each item we can recreate the
+// parent - child relationship without explicitly needing parent/child column, and we can later just iterate over the
 // dataFrame to again basically walking depth first over the tree/profile.
 func treeToNestedSetDataFrame(tree *ProfileTree, profileTypeID string) *data.Frame {
 	frame := data.NewFrame("response")

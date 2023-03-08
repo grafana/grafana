@@ -67,6 +67,7 @@ export function getRectDimensionsForLevel(
       collapsed,
       ticks: curBarTicks,
       label: labelProcessor(item.label).text,
+      // label: item.label,
       unitLabel: unit,
     });
   }
