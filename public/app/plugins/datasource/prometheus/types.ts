@@ -19,8 +19,6 @@ export interface PromQuery extends GenPromQuery, DataQuery {
   hinting?: boolean;
   interval?: string;
   intervalFactor?: number;
-  /** Code, Builder or Explain */
-  editorMode?: QueryEditorMode;
 }
 
 export interface PromOptions extends DataSourceJsonData {
