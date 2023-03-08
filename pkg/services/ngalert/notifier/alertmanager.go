@@ -172,7 +172,7 @@ func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 	}
 	nflogMaintenanceFrequency := notificationLogMaintenanceInterval
 	nflogMaintenanceFunc :=
-		func(state *silence.Silences) (int64, error) {
+		func(state State) (int64, error) {
 			return am.fileStore.Persist(ctx, notificationLogFilename, state)
 		}
 
@@ -207,7 +207,7 @@ func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 				am.logger.Error("notification log garbage collection", "err", err)
 			}
 
-			return nflogMaintenanceFunc(am.silences)
+			return nflogMaintenanceFunc(am.notificationLog)
 		})
 		am.wg.Done()
 	}()
