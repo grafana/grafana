@@ -40,6 +40,12 @@ export default function TracePageActions(props: TracePageActionsProps) {
         label={copyTraceIdClicked ? 'Copied!' : 'Trace ID'}
         icon={'copy'}
       />
+      <ActionButton
+        onClick={() => alert('not implemented')}
+        ariaLabel={'Export Trace'}
+        label={'Export'}
+        icon={'save'}
+      />
     </div>
   );
 }
