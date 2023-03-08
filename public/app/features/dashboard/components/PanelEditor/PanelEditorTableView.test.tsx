@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import React, { FC } from 'react';
 import { Provider } from 'react-redux';
 import configureMockStore from 'redux-mock-store';
@@ -15,6 +15,7 @@ import {
   PanelProps,
   TimeRange,
 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { getTimeSrv, TimeSrv, setTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { PanelQueryRunner } from '../../../query/state/PanelQueryRunner';
@@ -173,6 +174,64 @@ describe('PanelEditorTableView', () => {
       timeData: timeRangeUpdated2,
       width: 100,
     });
+  });
+
+  it('should render an error', async () => {
+    const { rerender, props, subject, store } = setupTestContext({});
+
+    // only render the panel when loading is done
+    act(() => {
+      subject.next({ state: LoadingState.Loading, series: [], timeRange: getDefaultTimeRange() });
+      subject.next({
+        state: LoadingState.Error,
+        series: [],
+        errors: [{ message: 'boom!' }],
+        timeRange: getDefaultTimeRange(),
+      });
+    });
+
+    const newProps = { ...props, isInView: true };
+    rerender(
+      <Provider store={store}>
+        <PanelEditorTableView {...newProps} />
+      </Provider>
+    );
+
+    const button = screen.getByRole('button', { name: selectors.components.Panels.Panel.headerCornerInfo('error') });
+    expect(button).toBeInTheDocument();
+    await act(async () => {
+      fireEvent.focus(button);
+    });
+    expect(await screen.findByText('boom!')).toBeInTheDocument();
+  });
+
+  it('should render a description for multiple errors', async () => {
+    const { rerender, props, subject, store } = setupTestContext({});
+
+    // only render the panel when loading is done
+    act(() => {
+      subject.next({ state: LoadingState.Loading, series: [], timeRange: getDefaultTimeRange() });
+      subject.next({
+        state: LoadingState.Error,
+        series: [],
+        errors: [{ message: 'boom 1!' }, { message: 'boom 2!' }],
+        timeRange: getDefaultTimeRange(),
+      });
+    });
+
+    const newProps = { ...props, isInView: true };
+    rerender(
+      <Provider store={store}>
+        <PanelEditorTableView {...newProps} />
+      </Provider>
+    );
+
+    const button = screen.getByRole('button', { name: selectors.components.Panels.Panel.headerCornerInfo('error') });
+    expect(button).toBeInTheDocument();
+    await act(async () => {
+      fireEvent.focus(button);
+    });
+    expect(await screen.findByText('Multiple errors found. Click for more details')).toBeInTheDocument();
   });
 });
 

@@ -38,90 +38,85 @@ It extends [DataQuery](#dataquery).
 
 It extends [BucketAggregationWithField](#bucketaggregationwithfield).
 
-| Property   | Type                | Required | Description                                                                                                                                                                        |
-|------------|---------------------|----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `type`     | string              | **Yes**  | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*<br/>Possible values are: `terms`, `filters`, `geohash_grid`, `date_histogram`, `histogram`, `nested`. |
-| `field`    | string              | No       | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
-| `id`       | string              | No       | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
-| `settings` | [object](#settings) | No       | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
+| Property   | Type   | Required | Description                                                                                                                                                                        |
+|------------|--------|----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `type`     | string | **Yes**  | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*<br/>Possible values are: `terms`, `filters`, `geohash_grid`, `date_histogram`, `histogram`, `nested`. |
+| `field`    | string | No       | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
+| `id`       | string | No       | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
+| `settings` |        | No       | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
 
 ### BucketAggregationWithField
 
 It extends [BaseBucketAggregation](#basebucketaggregation).
 
-| Property   | Type                | Required | Description                                                                                                                                                              |
-|------------|---------------------|----------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `id`       | string              | **Yes**  | *(Inherited from [BaseBucketAggregation](#basebucketaggregation))*                                                                                                       |
-| `type`     | string              | **Yes**  | *(Inherited from [BaseBucketAggregation](#basebucketaggregation))*<br/>Possible values are: `terms`, `filters`, `geohash_grid`, `date_histogram`, `histogram`, `nested`. |
-| `field`    | string              | No       |                                                                                                                                                                          |
-| `settings` | [object](#settings) | No       | *(Inherited from [BaseBucketAggregation](#basebucketaggregation))*                                                                                                       |
+| Property   | Type   | Required | Description                                                                                                                                                              |
+|------------|--------|----------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `id`       | string | **Yes**  | *(Inherited from [BaseBucketAggregation](#basebucketaggregation))*                                                                                                       |
+| `type`     | string | **Yes**  | *(Inherited from [BaseBucketAggregation](#basebucketaggregation))*<br/>Possible values are: `terms`, `filters`, `geohash_grid`, `date_histogram`, `histogram`, `nested`. |
+| `field`    | string | No       |                                                                                                                                                                          |
+| `settings` |        | No       | *(Inherited from [BaseBucketAggregation](#basebucketaggregation))*                                                                                                       |
 
 ### BaseBucketAggregation
 
-| Property   | Type                | Required | Description                                                                                       |
-|------------|---------------------|----------|---------------------------------------------------------------------------------------------------|
-| `id`       | string              | **Yes**  |                                                                                                   |
-| `type`     | string              | **Yes**  | Possible values are: `terms`, `filters`, `geohash_grid`, `date_histogram`, `histogram`, `nested`. |
-| `settings` | [object](#settings) | No       |                                                                                                   |
-
-### Settings
-
-| Property | Type | Required | Description |
-|----------|------|----------|-------------|
+| Property   | Type   | Required | Description                                                                                       |
+|------------|--------|----------|---------------------------------------------------------------------------------------------------|
+| `id`       | string | **Yes**  |                                                                                                   |
+| `type`     | string | **Yes**  | Possible values are: `terms`, `filters`, `geohash_grid`, `date_histogram`, `histogram`, `nested`. |
+| `settings` |        | No       |                                                                                                   |
 
 ### Filters
 
 It extends [BaseBucketAggregation](#basebucketaggregation).
 
-| Property   | Type                | Required | Description                                                                                                                                                              |
-|------------|---------------------|----------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `id`       | string              | **Yes**  | *(Inherited from [BaseBucketAggregation](#basebucketaggregation))*                                                                                                       |
-| `type`     | string              | **Yes**  | *(Inherited from [BaseBucketAggregation](#basebucketaggregation))*<br/>Possible values are: `terms`, `filters`, `geohash_grid`, `date_histogram`, `histogram`, `nested`. |
-| `settings` | [object](#settings) | No       | *(Inherited from [BaseBucketAggregation](#basebucketaggregation))*                                                                                                       |
+| Property   | Type   | Required | Description                                                                                                                                                              |
+|------------|--------|----------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `id`       | string | **Yes**  | *(Inherited from [BaseBucketAggregation](#basebucketaggregation))*                                                                                                       |
+| `type`     | string | **Yes**  | *(Inherited from [BaseBucketAggregation](#basebucketaggregation))*<br/>Possible values are: `terms`, `filters`, `geohash_grid`, `date_histogram`, `histogram`, `nested`. |
+| `settings` |        | No       | *(Inherited from [BaseBucketAggregation](#basebucketaggregation))*                                                                                                       |
 
 ### GeoHashGrid
 
 It extends [BucketAggregationWithField](#bucketaggregationwithfield).
 
-| Property   | Type                | Required | Description                                                                                                                                                                        |
-|------------|---------------------|----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `type`     | string              | **Yes**  | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*<br/>Possible values are: `terms`, `filters`, `geohash_grid`, `date_histogram`, `histogram`, `nested`. |
-| `field`    | string              | No       | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
-| `id`       | string              | No       | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
-| `settings` | [object](#settings) | No       | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
+| Property   | Type   | Required | Description                                                                                                                                                                        |
+|------------|--------|----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `type`     | string | **Yes**  | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*<br/>Possible values are: `terms`, `filters`, `geohash_grid`, `date_histogram`, `histogram`, `nested`. |
+| `field`    | string | No       | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
+| `id`       | string | No       | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
+| `settings` |        | No       | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
 
 ### Histogram
 
 It extends [BucketAggregationWithField](#bucketaggregationwithfield).
 
-| Property   | Type                | Required | Description                                                                                                                                                                        |
-|------------|---------------------|----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `type`     | string              | **Yes**  | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*<br/>Possible values are: `terms`, `filters`, `geohash_grid`, `date_histogram`, `histogram`, `nested`. |
-| `field`    | string              | No       | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
-| `id`       | string              | No       | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
-| `settings` | [object](#settings) | No       | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
+| Property   | Type   | Required | Description                                                                                                                                                                        |
+|------------|--------|----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `type`     | string | **Yes**  | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*<br/>Possible values are: `terms`, `filters`, `geohash_grid`, `date_histogram`, `histogram`, `nested`. |
+| `field`    | string | No       | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
+| `id`       | string | No       | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
+| `settings` |        | No       | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
 
 ### Nested
 
 It extends [BucketAggregationWithField](#bucketaggregationwithfield).
 
-| Property   | Type                | Required | Description                                                                                                                                                                        |
-|------------|---------------------|----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `type`     | string              | **Yes**  | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*<br/>Possible values are: `terms`, `filters`, `geohash_grid`, `date_histogram`, `histogram`, `nested`. |
-| `field`    | string              | No       | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
-| `id`       | string              | No       | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
-| `settings` | [object](#settings) | No       | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
+| Property   | Type   | Required | Description                                                                                                                                                                        |
+|------------|--------|----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `type`     | string | **Yes**  | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*<br/>Possible values are: `terms`, `filters`, `geohash_grid`, `date_histogram`, `histogram`, `nested`. |
+| `field`    | string | No       | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
+| `id`       | string | No       | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
+| `settings` |        | No       | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
 
 ### Terms
 
 It extends [BucketAggregationWithField](#bucketaggregationwithfield).
 
-| Property   | Type                | Required | Description                                                                                                                                                                        |
-|------------|---------------------|----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `type`     | string              | **Yes**  | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*<br/>Possible values are: `terms`, `filters`, `geohash_grid`, `date_histogram`, `histogram`, `nested`. |
-| `field`    | string              | No       | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
-| `id`       | string              | No       | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
-| `settings` | [object](#settings) | No       | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
+| Property   | Type   | Required | Description                                                                                                                                                                        |
+|------------|--------|----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `type`     | string | **Yes**  | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*<br/>Possible values are: `terms`, `filters`, `geohash_grid`, `date_histogram`, `histogram`, `nested`. |
+| `field`    | string | No       | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
+| `id`       | string | No       | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
+| `settings` |        | No       | *(Inherited from [BucketAggregationWithField](#bucketaggregationwithfield))*                                                                                                       |
 
 ### DataQuery
 
@@ -222,11 +217,11 @@ It extends [MetricAggregationWithField](#metricaggregationwithfield).
 
 | Property      | Type    | Required | Description                                                                                                                                                                                                                                                                                                                                      |
 |---------------|---------|----------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `type`        | string  | **Yes**  | *(Inherited from [MetricAggregationWithField](#metricaggregationwithfield))*<br/>Possible values are: `count`, `avg`, `sum`, `min`, `max`, `extended_stats`, `percentiles`, `cardinality`, `raw_document`, `raw_data`, `logs`, `rate`, `top_metrics`, `moving_avg`, `moving_fn`, `derivative`, `serial_diff`, `cumulative_sum`, `bucket_script`. |
 | `field`       | string  | No       | *(Inherited from [MetricAggregationWithField](#metricaggregationwithfield))*                                                                                                                                                                                                                                                                     |
 | `hide`        | boolean | No       | *(Inherited from [MetricAggregationWithField](#metricaggregationwithfield))*                                                                                                                                                                                                                                                                     |
 | `id`          | string  | No       | *(Inherited from [MetricAggregationWithField](#metricaggregationwithfield))*                                                                                                                                                                                                                                                                     |
 | `pipelineAgg` | string  | No       |                                                                                                                                                                                                                                                                                                                                                  |
-| `type`        | string  | No       | *(Inherited from [MetricAggregationWithField](#metricaggregationwithfield))*<br/>Possible values are: `count`, `avg`, `sum`, `min`, `max`, `extended_stats`, `percentiles`, `cardinality`, `raw_document`, `raw_data`, `logs`, `rate`, `top_metrics`, `moving_avg`, `moving_fn`, `derivative`, `serial_diff`, `cumulative_sum`, `bucket_script`. |
 
 ### MetricAggregationWithField
 
@@ -278,6 +273,11 @@ It extends [BasePipelineMetricAggregation](#basepipelinemetricaggregation).
 | `id`          | string              | No       | *(Inherited from [BasePipelineMetricAggregation](#basepipelinemetricaggregation))*                                                                                                                                                                                                                                                                     |
 | `pipelineAgg` | string              | No       | *(Inherited from [BasePipelineMetricAggregation](#basepipelinemetricaggregation))*                                                                                                                                                                                                                                                                     |
 | `settings`    | [object](#settings) | No       |                                                                                                                                                                                                                                                                                                                                                        |
+
+### Settings
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
 
 ### Meta
 

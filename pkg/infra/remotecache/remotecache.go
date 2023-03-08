@@ -55,12 +55,6 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, secretsService secrets.Ser
 // so any struct added to the cache needs to be registered with `remotecache.Register`
 // ex `remotecache.Register(CacheableStruct{})`
 type CacheStorage interface {
-	// Get reads object from Cache
-	Get(ctx context.Context, key string) (interface{}, error)
-
-	// Set sets an object into the cache. if `expire` is set to zero it will default to 24h
-	Set(ctx context.Context, key string, value interface{}, expire time.Duration) error
-
 	// GetByteArray gets the cache value as an byte array
 	GetByteArray(ctx context.Context, key string) ([]byte, error)
 
@@ -83,11 +77,6 @@ type RemoteCache struct {
 	Cfg      *setting.Cfg
 }
 
-// Get reads object from Cache
-func (ds *RemoteCache) Get(ctx context.Context, key string) (interface{}, error) {
-	return ds.client.Get(ctx, key)
-}
-
 // GetByteArray returns the cached value as an byte array
 func (ds *RemoteCache) GetByteArray(ctx context.Context, key string) ([]byte, error) {
 	return ds.client.GetByteArray(ctx, key)
@@ -95,16 +84,11 @@ func (ds *RemoteCache) GetByteArray(ctx context.Context, key string) ([]byte, er
 
 // SetByteArray stored the byte array in the cache
 func (ds *RemoteCache) SetByteArray(ctx context.Context, key string, value []byte, expire time.Duration) error {
-	return ds.client.SetByteArray(ctx, key, value, expire)
-}
-
-// Set sets an object into the cache. if `expire` is set to zero it will default to 24h
-func (ds *RemoteCache) Set(ctx context.Context, key string, value interface{}, expire time.Duration) error {
 	if expire == 0 {
 		expire = defaultMaxCacheExpiration
 	}
 
-	return ds.client.Set(ctx, key, value, expire)
+	return ds.client.SetByteArray(ctx, key, value, expire)
 }
 
 // Delete object from cache
@@ -208,14 +192,8 @@ type prefixCacheStorage struct {
 	prefix string
 }
 
-func (pcs *prefixCacheStorage) Get(ctx context.Context, key string) (interface{}, error) {
-	return pcs.cache.Get(ctx, pcs.prefix+key)
-}
 func (pcs *prefixCacheStorage) GetByteArray(ctx context.Context, key string) ([]byte, error) {
 	return pcs.cache.GetByteArray(ctx, pcs.prefix+key)
-}
-func (pcs *prefixCacheStorage) Set(ctx context.Context, key string, value interface{}, expire time.Duration) error {
-	return pcs.cache.Set(ctx, pcs.prefix+key, value, expire)
 }
 func (pcs *prefixCacheStorage) SetByteArray(ctx context.Context, key string, value []byte, expire time.Duration) error {
 	return pcs.cache.SetByteArray(ctx, pcs.prefix+key, value, expire)
