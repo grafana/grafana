@@ -215,9 +215,9 @@ type TestDataDataQuery struct {
 	QueryType       *string `json:"queryType,omitempty"`
 	RawFrameContent *string `json:"rawFrameContent,omitempty"`
 
-	// RefId a unique identifier for the query within the list of targets.
+	// A unique identifier for the query within the list of targets.
 	// In server side expressions, the refId is used as a variable name to identify results.
-	// By default, the UI will assign A-Z; however setting meaninful names may be useful
+	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
 	RefId       string      `json:"refId"`
 	ScenarioId  *ScenarioId `json:"scenarioId,omitempty"`
 	SeriesCount *int32      `json:"seriesCount,omitempty"`

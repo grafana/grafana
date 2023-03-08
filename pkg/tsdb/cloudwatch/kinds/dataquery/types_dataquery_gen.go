@@ -254,9 +254,9 @@ type CloudWatchAnnotationQuery struct {
 	// TODO make this required and give it a default
 	QueryType *string `json:"queryType,omitempty"`
 
-	// RefId a unique identifier for the query within the list of targets.
+	// A unique identifier for the query within the list of targets.
 	// In server side expressions, the refId is used as a variable name to identify results.
-	// By default, the UI will assign A-Z; however setting meaninful names may be useful
+	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
 	RefId     string  `json:"refId"`
 	Region    string  `json:"region"`
 	Statistic *string `json:"statistic,omitempty"`
@@ -300,9 +300,9 @@ type CloudWatchLogsQuery struct {
 	// TODO make this required and give it a default
 	QueryType *string `json:"queryType,omitempty"`
 
-	// RefId a unique identifier for the query within the list of targets.
+	// A unique identifier for the query within the list of targets.
 	// In server side expressions, the refId is used as a variable name to identify results.
-	// By default, the UI will assign A-Z; however setting meaninful names may be useful
+	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
 	RefId       string   `json:"refId"`
 	Region      string   `json:"region"`
 	StatsGroups []string `json:"statsGroups,omitempty"`
@@ -346,9 +346,9 @@ type CloudWatchMetricsQuery struct {
 	// TODO make this required and give it a default
 	QueryType *string `json:"queryType,omitempty"`
 
-	// RefId a unique identifier for the query within the list of targets.
+	// A unique identifier for the query within the list of targets.
 	// In server side expressions, the refId is used as a variable name to identify results.
-	// By default, the UI will assign A-Z; however setting meaninful names may be useful
+	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
 	RefId  string `json:"refId"`
 	Region string `json:"region"`
 	Sql    *struct {
