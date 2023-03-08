@@ -48,9 +48,7 @@ func TestFeatureToggleFiles(t *testing.T) {
 		"prometheusAzureOverrideAudience":   true,
 		"featureHighlights":                 true,
 		"tracing":                           true,
-		"newTraceView":                      true,
 		"cloudWatchDynamicLabels":           true,
-		"traceToMetrics":                    true,
 		"validateDashboardsOnSave":          true,
 		"prometheusWideSeries":              true,
 		"disableSecretsCompatibility":       true,
@@ -67,7 +65,6 @@ func TestFeatureToggleFiles(t *testing.T) {
 		"alertingBacktesting":               true,
 		"alertingNoNormalState":             true,
 		"individualCookiePreferences":       true,
-		"traceqlSearch":                     true,
 	}
 
 	t.Run("all new features should have an owner", func(t *testing.T) {
