@@ -51,12 +51,8 @@ type PrometheusDataQuery struct {
 	Format     *Format      `json:"format,omitempty"`
 
 	// Hide true if query is disabled (ie should not be returned to the dashboard)
-	Hide           *bool   `json:"hide,omitempty"`
-	Hinting        *bool   `json:"hinting,omitempty"`
-	Instant        *bool   `json:"instant,omitempty"`
-	Interval       *string `json:"interval,omitempty"`
-	IntervalFactor *int64  `json:"intervalFactor,omitempty"`
-	IntervalMs     *int64  `json:"intervalMs,omitempty"`
+	Hide    *bool `json:"hide,omitempty"`
+	Instant *bool `json:"instant,omitempty"`
 
 	// Unique, guid like, string used in explore mode
 	Key *string `json:"key,omitempty"`
@@ -67,9 +63,7 @@ type PrometheusDataQuery struct {
 	Range     *bool   `json:"range,omitempty"`
 
 	// A - Z
-	RefId        string `json:"refId"`
-	ShowingGraph *bool  `json:"showingGraph,omitempty"`
-	ShowingTable *bool  `json:"showingTable,omitempty"`
+	RefId string `json:"refId"`
 }
 
 // EditorMode defines model for PrometheusDataQuery.EditorMode.

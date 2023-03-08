@@ -47,8 +47,11 @@ var safeResolution = 11000
 type QueryModel struct {
 	dataquery.PrometheusDataQuery
 	// Timezone offset to align start & end time on backend
-	UtcOffsetSec int64  `json:"utcOffsetSec,omitempty"`
-	LegendFormat string `json:"legendFormat,omitempty"`
+	UtcOffsetSec   int64  `json:"utcOffsetSec,omitempty"`
+	LegendFormat   string `json:"legendFormat,omitempty"`
+	Interval       string `json:"interval,omitempty"`
+	IntervalMs     int64  `json:"intervalMs,omitempty"`
+	IntervalFactor int64  `json:"intervalFactor,omitempty"`
 }
 
 type TimeRange struct {
@@ -76,32 +79,15 @@ func Parse(query backend.DataQuery, timeInterval string, intervalCalculator inte
 		return nil, err
 	}
 
-	queryInterval := ""
-	if model.Interval != nil {
-		queryInterval = *model.Interval
-	}
-
-	queryIntervalMs := int64(0)
-	if model.IntervalMs != nil {
-		queryIntervalMs = *model.IntervalMs
-	}
-
-	queryIntervalFactor := int64(1)
-	if model.IntervalFactor != nil {
-		queryIntervalFactor = *model.IntervalFactor
-	}
-
 	// Final interval value
-	interval, err := calculatePrometheusInterval(queryInterval, timeInterval, queryIntervalMs,
-		queryIntervalFactor, query,
-		intervalCalculator)
+	interval, err := calculatePrometheusInterval(model.Interval, timeInterval, model.IntervalMs, model.IntervalFactor, query, intervalCalculator)
 	if err != nil {
 		return nil, err
 	}
 
 	// Interpolate variables in expr
 	timeRange := query.TimeRange.To.Sub(query.TimeRange.From)
-	expr := interpolateVariables(model.Expr, queryInterval, interval, timeRange, intervalCalculator, timeInterval)
+	expr := interpolateVariables(model.Expr, model.Interval, interval, timeRange, intervalCalculator, timeInterval)
 	var rangeQuery, instantQuery bool
 	if model.Instant == nil {
 		instantQuery = false
@@ -163,8 +149,12 @@ func (query *Query) TimeRange() TimeRange {
 	}
 }
 
-func calculatePrometheusInterval(queryInterval, timeInterval string, intervalMs, intervalFactor int64,
-	query backend.DataQuery, intervalCalculator intervalv2.Calculator) (time.Duration, error) {
+func calculatePrometheusInterval(
+	queryInterval, timeInterval string,
+	intervalMs, intervalFactor int64,
+	query backend.DataQuery,
+	intervalCalculator intervalv2.Calculator,
+) (time.Duration, error) {
 	// If we are using variable for interval/step, we will replace it with calculated interval
 	if isVariableInterval(queryInterval) {
 		queryInterval = ""
@@ -194,7 +184,11 @@ func calculatePrometheusInterval(queryInterval, timeInterval string, intervalMs,
 	}
 }
 
-func calculateRateInterval(interval time.Duration, scrapeInterval string, intervalCalculator intervalv2.Calculator) time.Duration {
+func calculateRateInterval(
+	interval time.Duration,
+	scrapeInterval string,
+	intervalCalculator intervalv2.Calculator,
+) time.Duration {
 	scrape := scrapeInterval
 	if scrape == "" {
 		scrape = "15s"

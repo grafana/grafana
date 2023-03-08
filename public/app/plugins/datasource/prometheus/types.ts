@@ -16,6 +16,9 @@ export interface PromQuery extends GenPromQuery, DataQuery {
   requestId?: string;
   showingGraph?: boolean;
   showingTable?: boolean;
+  hinting?: boolean;
+  interval?: string;
+  intervalFactor?: number;
   /** Code, Builder or Explain */
   editorMode?: QueryEditorMode;
 }

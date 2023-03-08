@@ -24,12 +24,6 @@ export interface Prometheus extends common.DataQuery {
   exemplar?: boolean;
   expr: string;
   format?: PromQueryFormat;
-  hinting?: boolean;
   instant?: boolean;
-  interval?: string;
-  intervalFactor?: number;
-  intervalMs?: number;
   range?: boolean;
-  showingGraph?: boolean;
-  showingTable?: boolean;
 }

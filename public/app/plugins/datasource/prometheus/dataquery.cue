@@ -31,18 +31,12 @@ composableKinds: DataQuery: {
 				schemas: [
 					{
 						common.DataQuery
-						expr:            string
-						instant?:        bool
-						range?:          bool
-						exemplar?:       bool
-						hinting?:        bool
-						interval?:       string
-						intervalMs?:     int64
-						intervalFactor?: int64
-						showingGraph?:   bool
-						showingTable?:   bool
-						editorMode?:     #QueryEditorMode
-						format?:         #PromQueryFormat
+						expr:        string
+						instant?:    bool
+						range?:      bool
+						exemplar?:   bool
+						editorMode?: #QueryEditorMode
+						format?:     #PromQueryFormat
 
 						#QueryEditorMode: "code" | "builder"                  @cuetsy(kind="enum")
 						#PromQueryFormat: "time_series" | "table" | "heatmap" @cuetsy(kind="type")
