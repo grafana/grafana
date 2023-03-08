@@ -81,7 +81,7 @@ describe('InspectErrorTab', () => {
     expect(screen.getByText(/Status: 400/)).toBeInTheDocument();
   });
 
-  it('should return a jsonFormatter along with a status', () => {
+  it('should return a JSON encoded object along with a status', () => {
     const error = {
       status: 400,
       message:

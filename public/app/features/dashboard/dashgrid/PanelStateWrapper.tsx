@@ -79,7 +79,6 @@ export interface State {
   isFirstLoad: boolean;
   renderCounter: number;
   errorMessage?: string;
-  multipleErrors?: boolean;
   refreshWhenInView: boolean;
   context: PanelContext;
   data: PanelData;
@@ -291,7 +290,6 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
 
     let { isFirstLoad } = this.state;
     let errorMessage: string | undefined;
-    const multipleErrors = !!data.errors?.length;
 
     switch (data.state) {
       case LoadingState.Loading:
@@ -302,8 +300,14 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         }
         break;
       case LoadingState.Error:
-        const { error } = data;
-        if (error) {
+        const { error, errors } = data;
+        if (errors?.length) {
+          if (errors.length === 1) {
+            errorMessage = errors[0].message;
+          } else {
+            errorMessage = 'Multiple errors found. Click for more details';
+          }
+        } else if (error) {
           if (errorMessage !== error.message) {
             errorMessage = error.message;
           }
@@ -320,7 +324,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         break;
     }
 
-    this.setState({ isFirstLoad, errorMessage, multipleErrors, data, liveTime: undefined });
+    this.setState({ isFirstLoad, errorMessage, data, liveTime: undefined });
   }
 
   onRefresh = () => {
@@ -719,7 +723,6 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
             isViewing={isViewing}
             alertState={alertState}
             data={data}
-            multipleErrors={this.state.multipleErrors}
           />
           <ErrorBoundary
             dependencies={[data, plugin, panel.getOptions()]}
