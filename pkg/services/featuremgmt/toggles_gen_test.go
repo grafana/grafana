@@ -42,7 +42,6 @@ func TestFeatureToggleFiles(t *testing.T) {
 	})
 
 	ownerlessFeatures := map[string]bool{
-		"alertingBigTransactions":           true,
 		"trimDefaults":                      true,
 		"database_metrics":                  true,
 		"prometheusAzureOverrideAudience":   true,
@@ -62,8 +61,6 @@ func TestFeatureToggleFiles(t *testing.T) {
 		"datasourceOnboarding":              true,
 		"secureSocksDatasourceProxy":        true,
 		"disablePrometheusExemplarSampling": true,
-		"alertingBacktesting":               true,
-		"alertingNoNormalState":             true,
 		"individualCookiePreferences":       true,
 	}
 
