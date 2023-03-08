@@ -32,24 +32,20 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
     selectedConnectionRef.current = selectedConnection;
   });
 
-  const selectedConnectionSourceRef = useRef(selectedConnection?.source);
-  useEffect(() => {
-    selectedConnectionSourceRef.current = selectedConnection?.source;
-  });
-
   const onKeyUp = (e: KeyboardEvent) => {
     // Backspace (8) or delete (46)
     if (e.keyCode === 8 || e.keyCode === 46) {
-      if (selectedConnectionRef.current && selectedConnectionSourceRef.current) {
-        selectedConnectionSourceRef.current.options.connections =
-          selectedConnectionSourceRef.current.options.connections?.filter(
-            (connection) => false // connection !== selectedConnectionRef.current // @TODO fix this
+      if (selectedConnectionRef.current && selectedConnectionRef.current.source) {
+        selectedConnectionRef.current.source.options.connections =
+          selectedConnectionRef.current.source.options.connections?.filter(
+            (connection) => connection !== selectedConnectionRef.current?.info
           );
-        selectedConnectionSourceRef.current.onChange(selectedConnectionSourceRef.current.options);
+        selectedConnectionRef.current.source.onChange(selectedConnectionRef.current.source.options);
 
         setSelectedConnection(undefined);
         scene.connections.select(undefined);
         scene.connections.updateState();
+        scene.save();
       }
     } else {
       // Prevent removing event listener if key is not delete

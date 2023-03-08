@@ -226,6 +226,7 @@ export class Connections {
 
       this.isDrawingConnection = false;
       this.updateState();
+      this.scene.save();
     }
   };
 
