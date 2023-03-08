@@ -123,7 +123,6 @@ func loadStoredQuery(fileName string) (*backend.QueryDataRequest, error) {
 		},
 		Interval:     fmt.Sprintf("%ds", sq.Step),
 		IntervalMs:   sq.Step * 1000,
-		UtcOffsetSec: int64(1),
 		LegendFormat: sq.LegendFormat,
 	}
 
