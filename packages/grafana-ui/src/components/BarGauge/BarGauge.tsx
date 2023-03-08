@@ -118,7 +118,7 @@ export class BarGauge extends PureComponent<Props> {
 
     return (
       <div style={styles.wrapper}>
-        {valueDisplayMode !== 'hidden' && (
+        {valueDisplayMode !== BarGaugeValueMode.Hidden && (
           <FormattedValueDisplay
             data-testid={selectors.components.Panels.Visualization.BarGauge.valueV2}
             value={value}
@@ -196,7 +196,7 @@ export class BarGauge extends PureComponent<Props> {
     return (
       <div style={containerStyles}>
         {cells}
-        {valueDisplayMode !== 'hidden' && (
+        {valueDisplayMode !== BarGaugeValueMode.Hidden && (
           <FormattedValueDisplay
             data-testid={selectors.components.Panels.Visualization.BarGauge.valueV2}
             value={value}
@@ -380,12 +380,13 @@ export function calculateBarAndValueDimensions(props: Props): BarAndValueDimensi
     wrapperWidth = width;
     wrapperHeight = height - titleDim.height;
   } else {
-    valueHeight = height - titleDim.height;
-    valueWidth = Math.max(Math.min(width * 0.2, MAX_VALUE_WIDTH), realValueWidth);
-
+    // Calculate the width and the height of the given values
     if (valueDisplayMode === BarGaugeValueMode.Hidden) {
       valueHeight = 0;
       valueWidth = 0;
+    } else {
+      valueHeight = height - titleDim.height;
+      valueWidth = Math.max(Math.min(width * 0.2, MAX_VALUE_WIDTH), realValueWidth);
     }
 
     maxBarHeight = height - titleDim.height;
