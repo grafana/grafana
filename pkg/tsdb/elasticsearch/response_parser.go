@@ -37,6 +37,8 @@ const (
 	logsType = "logs"
 )
 
+var searchWordsRegex = regexp.MustCompile(regexp.QuoteMeta(es.HighlightPreTagsString) + `(.*?)` + regexp.QuoteMeta(es.HighlightPostTagsString))
+
 func parseResponse(responses []*es.SearchResponse, targets []*Query, configuredFields es.ConfiguredFields) (*backend.QueryDataResponse, error) {
 	result := backend.QueryDataResponse{
 		Responses: backend.Responses{},
@@ -96,7 +98,6 @@ func processLogsResponse(res *es.SearchResponse, target *Query, configuredFields
 	propNames := make(map[string]bool)
 	docs := make([]map[string]interface{}, len(res.Hits.Hits))
 	searchWords := make(map[string]bool)
-	searchWordsRegex := regexp.MustCompile(regexp.QuoteMeta(es.HighlightPreTagsString) + `(.*?)` + regexp.QuoteMeta(es.HighlightPostTagsString))
 
 	for hitIdx, hit := range res.Hits.Hits {
 		var flattened map[string]interface{}
