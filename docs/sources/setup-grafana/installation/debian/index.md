@@ -21,7 +21,7 @@ Complete the following steps to download and install Grafana:
 
 1. On the [Grafana download page](https://grafana.com/grafana/download), select the Grafana version you want to install.
    - The most recent Grafana version is selected by default.
-   - The **Version** field displays only finished releases. If you want to install a beta version, click **Nightly Builds** and then select a version.
+   - The **Version** field displays only tagged releases. If you want to install a nightly build, click **Nightly Builds** and then select a version.
 1. Select an **Edition**.
    - **Enterprise:** This is the recommended version. It is functionally identical to the open source version, but includes features you can unlock with a license if you so choose.
    - **Open Source:** This version is functionally identical to the Enterprise version, but you will need to download the Enterprise version if you want Enterprise features.
