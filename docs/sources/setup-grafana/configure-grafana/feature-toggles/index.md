@@ -90,6 +90,7 @@ Alpha features might be changed or removed without prior notice.
 | `logsContextDatasourceUi`          | Allow datasource to provide custom UI for context view                                                                                                                       |
 | `lokiQuerySplitting`               | Split large interval queries into subqueries with smaller time intervals                                                                                                     |
 | `individualCookiePreferences`      | Support overriding cookie preferences per user                                                                                                                               |
+| `onlyExternalOrgRoleSync`          | Enables organization roles synced with external auth providers to not be changed at all                                                                                      |
 | `drawerDataSourcePicker`           | Changes the user experience for data source selection to a drawer.                                                                                                           |
 
 ## Development feature toggles

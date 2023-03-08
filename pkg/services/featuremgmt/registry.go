@@ -357,6 +357,11 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:        "onlyExternalOrgRoleSync",
+			Description: "Enables organization roles synced with external auth providers to not be changed at all",
+			State:       FeatureStateAlpha,
+		},
+		{
 			Name:         "drawerDataSourcePicker",
 			Description:  "Changes the user experience for data source selection to a drawer.",
 			State:        FeatureStateAlpha,

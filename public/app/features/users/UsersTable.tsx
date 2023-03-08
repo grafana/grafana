@@ -56,9 +56,11 @@ export const UsersTable = ({ users, orgId, onRoleChange, onRemoveUser }: Props) 
         </thead>
         <tbody>
           {users.map((user, index) => {
-            const isUserSynced = !config.auth.DisableSyncLock && user?.isExternallySynced;
-            const basicRoleDisabled =
-              isUserSynced || !contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersWrite, user);
+            let basicRoleDisabled = !contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersWrite, user);
+            if (config.featureToggles.onlyExternalOrgRoleSync) {
+              const isUserSynced = user?.isExternallySynced;
+              basicRoleDisabled = isUserSynced || basicRoleDisabled;
+            }
             return (
               <tr key={`${user.userId}-${index}`}>
                 <td className="width-2 text-center">
