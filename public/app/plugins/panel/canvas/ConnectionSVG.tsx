@@ -23,6 +23,7 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
   const CONNECTION_HEAD_ID = useMemo(() => `head-${headId}`, [headId]);
   const EDITOR_HEAD_ID = useMemo(() => `editorHead-${headId}`, [headId]);
   const defaultArrowColor = config.theme2.colors.text.primary;
+  const defaultArrowSize = 2;
 
   const [selectedConnection, setSelectedConnection] = useState<ConnectionState | undefined>(undefined);
 
@@ -31,6 +32,12 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
   useEffect(() => {
     selectedConnectionRef.current = selectedConnection;
   });
+
+  useEffect(() => {
+    if (scene.panel.context.instanceState?.selectedConnection) {
+      setSelectedConnection(scene.panel.context.instanceState?.selectedConnection);
+    }
+  }, [scene.panel.context.instanceState?.selectedConnection]);
 
   const onKeyUp = (e: KeyboardEvent) => {
     // Backspace (8) or delete (46)
@@ -118,10 +125,19 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
         y2 = parentVerticalCenter - (info.target.y * parentRect.height) / 2;
       }
 
-      //  @TODO update selection style
+      //  @TODO update selection style (arrow head included)
       const isSelected = selectedConnection === v && scene.panel.context.instanceState.selectedConnection;
-      const selectedStyles = { stroke: '#44aaff', strokeWidth: 3 };
+
+      const strokeColor = info.color ? scene.context.getColor(info.color).value() : defaultArrowColor;
+      const strokeWidth = info.size
+        ? !isNaN(scene.context.getScale(info.size).value())
+          ? scene.context.getScale(info.size).value()
+          : defaultArrowSize
+        : defaultArrowSize;
+      console.log('strokeWidth: ' + strokeWidth);
+
       const connectionCursorStyle = scene.isEditingEnabled ? 'grab' : '';
+      const selectedStyles = { stroke: strokeColor, strokeWidth: 3 };
 
       return (
         <svg className={styles.connection} key={idx}>
@@ -152,9 +168,9 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
             />
             <line
               id={CONNECTION_LINE_ID}
-              stroke={defaultArrowColor}
+              stroke={strokeColor}
               pointerEvents="auto"
-              strokeWidth={2}
+              strokeWidth={strokeWidth}
               markerEnd={`url(#${CONNECTION_HEAD_ID})`}
               x1={x1}
               y1={y1}

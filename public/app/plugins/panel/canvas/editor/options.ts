@@ -111,6 +111,7 @@ export const optionBuilder: OptionSuppliers = {
       settings: {
         min: 1,
         max: 10,
+        hideRange: true,
       },
       defaultValue: {
         // Configured values
