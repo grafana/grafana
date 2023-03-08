@@ -76,7 +76,7 @@
     "execa": "5.1.1",
     "lodash": "4.17.21",
     "mocha": "10.2.0",
-    "resolve-as-bin": "2.1.0",
+    "resolve-bin": "1.0.1",
     "rimraf": "4.2.0",
     "tracelib": "1.0.1",
     "ts-loader": "8.4.0",
