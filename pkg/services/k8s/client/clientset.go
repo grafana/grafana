@@ -245,5 +245,3 @@ func getCABundle() []byte {
 func pontificate[T any](s T) *T {
 	return &s
 }
-
-var fiveSeconds int32 = 5
