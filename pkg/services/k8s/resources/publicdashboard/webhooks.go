@@ -1,6 +1,7 @@
 package publicdashboard
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	k8sTypes "k8s.io/apimachinery/pkg/types"
@@ -12,7 +13,9 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/k8s/admission"
+	"github.com/grafana/grafana/pkg/services/k8s/client"
 	k8sAdmission "k8s.io/api/admission/v1"
+	admissionregistrationV1 "k8s.io/api/admissionregistration/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -26,6 +29,7 @@ type WebhooksAPI struct {
 
 func ProvideWebhooks(
 	rr routing.RouteRegister,
+	clientset *client.Clientset,
 	ac accesscontrol.AccessControl,
 	features *featuremgmt.FeatureManager,
 	vc admission.ValidatingAdmissionController,
@@ -38,12 +42,28 @@ func ProvideWebhooks(
 	}
 
 	webhooksAPI.RegisterAPIEndpoints()
+	err := clientset.RegisterValidation(context.Background(), []client.ShortWebhookConfig{})
 
+	// TODO do better
+	if err != nil {
+		panic(err)
+	}
 	return webhooksAPI
 }
 
 func (api *WebhooksAPI) RegisterAPIEndpoints() {
 	api.RouteRegister.Post("/k8s/publicdashboards/admission/create", api.Create)
+}
+
+func GetWebhookConfigs() []client.ShortWebhookConfig {
+	return []client.ShortWebhookConfig{
+		{
+			Resource:   "publicdashboard",
+			Operations: []admissionregistrationV1.OperationType{admissionregistrationV1.Create},
+			Url:        "https://host.docker.internal:3443/k8s/publicdashboards/admission/create",
+			Timeout:    int32(5),
+		},
+	}
 }
 
 func makeSuccessfulAdmissionReview(uid k8sTypes.UID, typeMeta metaV1.TypeMeta, code int32) *k8sAdmission.AdmissionReview {
