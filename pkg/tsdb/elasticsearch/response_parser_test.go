@@ -1231,7 +1231,7 @@ func TestResponseParser(t *testing.T) {
 			customMeta := frame.Meta.Custom
 
 			require.Equal(t, map[string]interface{}{
-				"searchWords": []string{"message", "hello"},
+				"searchWords": []string{"hello", "message"},
 			}, customMeta)
 		})
 

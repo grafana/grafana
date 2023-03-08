@@ -1104,6 +1104,7 @@ func setSearchWords(frame *data.Frame, searchWords map[string]bool) {
 		searchWordsList[i] = searchWord
 		i++
 	}
+	sort.Strings(searchWordsList)
 
 	if frame.Meta == nil {
 		frame.Meta = &data.FrameMeta{}
