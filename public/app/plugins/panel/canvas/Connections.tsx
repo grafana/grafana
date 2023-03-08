@@ -201,7 +201,11 @@ export class Connections {
           color: {
             fixed: config.theme2.colors.text.primary,
           },
-          size: 10,
+          size: {
+            fixed: 2,
+            min: 1,
+            max: 10,
+          },
           path: ConnectionPath.Straight,
         };
 

@@ -34,6 +34,7 @@ export function getConnectionEditor(opts: CanvasConnectionEditorOptions): Nested
     build: (builder, context) => {
       const ctx = { ...context, options: opts.connection.info };
       optionBuilder.addColor(builder, ctx);
+      optionBuilder.addSize(builder, ctx);
     },
   };
 }

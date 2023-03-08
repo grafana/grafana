@@ -4,7 +4,7 @@ import { RegistryItem } from '@grafana/data';
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
 import { config } from 'app/core/config';
 
-import { DimensionContext, ColorDimensionConfig } from '../dimensions';
+import { DimensionContext, ColorDimensionConfig, ScaleDimensionConfig } from '../dimensions';
 
 import { BackgroundConfig, Constraint, LineConfig, Placement } from './types';
 
@@ -47,7 +47,7 @@ export interface CanvasConnection {
   targetName?: string;
   path: ConnectionPath;
   color?: ColorDimensionConfig;
-  size?: number;
+  size?: ScaleDimensionConfig;
   // See https://github.com/anseki/leader-line#options for more examples of more properties
 }
 

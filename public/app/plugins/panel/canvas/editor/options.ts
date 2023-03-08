@@ -1,12 +1,13 @@
 import { PanelOptionsSupplier } from '@grafana/data/src/panel/PanelPlugin';
 import { CanvasConnection, CanvasElementOptions } from 'app/features/canvas';
-import { ColorDimensionEditor, ResourceDimensionEditor } from 'app/features/dimensions/editors';
+import { ColorDimensionEditor, ResourceDimensionEditor, ScaleDimensionEditor } from 'app/features/dimensions/editors';
 import { BackgroundSizeEditor } from 'app/features/dimensions/editors/BackgroundSizeEditor';
 
 interface OptionSuppliers {
   addBackground: PanelOptionsSupplier<CanvasElementOptions>;
   addBorder: PanelOptionsSupplier<CanvasElementOptions>;
   addColor: PanelOptionsSupplier<CanvasConnection>;
+  addSize: PanelOptionsSupplier<CanvasConnection>;
 }
 
 const getCategoryName = (str: string, type: string | undefined) => {
@@ -95,6 +96,27 @@ export const optionBuilder: OptionSuppliers = {
       defaultValue: {
         // Configured values
         fixed: '',
+      },
+    });
+  },
+
+  addSize: (builder, context) => {
+    const category = ['Size'];
+    builder.addCustomEditor({
+      category,
+      id: 'size',
+      path: 'size',
+      name: 'Size',
+      editor: ScaleDimensionEditor,
+      settings: {
+        min: 1,
+        max: 10,
+      },
+      defaultValue: {
+        // Configured values
+        fixed: 2,
+        min: 1,
+        max: 10,
       },
     });
   },
