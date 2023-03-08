@@ -56,6 +56,17 @@ export interface AppPluginMeta<T extends KeyValue = KeyValue> extends PluginMeta
  */
 export type AppPluginExtensionLink = Pick<PluginExtensionLink, 'description' | 'path' | 'title'>;
 
+// A list of helpers that can be used in the command handler
+export type AppPluginExtensionCommandHelpers = {
+  // Opens a modal dialog and renders the provided React component inside it
+  openModal: (options: {
+    // The title of the modal
+    title: string;
+    // A React element that will be rendered inside the modal
+    body: React.ElementType<{ onDismiss?: () => void }>;
+  }) => void;
+};
+
 export type AppPluginExtensionCommand = Pick<PluginExtensionCommand, 'description' | 'title'>;
 
 export type AppPluginExtensionLinkConfig<C extends object = object> = {
@@ -70,7 +81,7 @@ export type AppPluginExtensionCommandConfig<C extends object = object> = {
   title: string;
   description: string;
   placement: string;
-  handler: (context?: C) => void;
+  handler: (context?: C, helpers?: AppPluginExtensionCommandHelpers) => void;
   configure?: (extension: AppPluginExtensionCommand, context?: C) => Partial<AppPluginExtensionCommand> | undefined;
 };
 
