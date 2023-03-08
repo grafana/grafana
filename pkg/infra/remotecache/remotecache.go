@@ -59,7 +59,7 @@ func (ds *RemoteCache) getUsageStats(ctx context.Context) (map[string]interface{
 		encryptVal = 1
 	}
 
-	stats["stats.remote_cache_encrypt.enabled.count"] = encryptVal
+	stats["stats.remote_cache.encrypt_enabled.count"] = encryptVal
 
 	return stats, nil
 }
