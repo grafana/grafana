@@ -12,9 +12,10 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	jsoniter "github.com/json-iterator/go"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util/converter"
-	jsoniter "github.com/json-iterator/go"
 )
 
 type LokiAPI struct {
@@ -85,8 +86,11 @@ func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery) (*h
 		return nil, err
 	}
 
-	if query.VolumeQuery {
-		req.Header.Set("X-Query-Tags", "Source=logvolhist")
+	if query.SupportingQueryType != SupportingQueryNone {
+		value := getSupportingQueryHeaderValue(req, query.SupportingQueryType)
+		if value != "" {
+			req.Header.Set("X-Query-Tags", "Source="+value)
+		}
 	}
 
 	return req, nil
@@ -222,4 +226,19 @@ func (api *LokiAPI) RawQuery(ctx context.Context, resourcePath string) (RawLokiR
 	}
 
 	return encodedBytes, nil
+}
+
+func getSupportingQueryHeaderValue(req *http.Request, supportingQueryType SupportingQueryType) string {
+	value := ""
+	switch supportingQueryType {
+	case SupportingQueryLogsVolume:
+		value = "logvolhist"
+	case SupportingQueryLogsSample:
+		value = "logsample"
+	case SupportingQueryDataSample:
+		value = "datasample"
+	default: //ignore
+	}
+
+	return value
 }

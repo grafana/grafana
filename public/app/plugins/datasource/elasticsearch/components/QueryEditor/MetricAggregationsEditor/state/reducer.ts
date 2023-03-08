@@ -1,15 +1,10 @@
 import { Action } from '@reduxjs/toolkit';
 
 import { defaultMetricAgg } from '../../../../queryDef';
-import { ElasticsearchQuery } from '../../../../types';
+import { ElasticsearchQuery, MetricAggregation } from '../../../../types';
 import { removeEmpty } from '../../../../utils';
 import { initQuery } from '../../state';
-import {
-  isMetricAggregationWithMeta,
-  isMetricAggregationWithSettings,
-  isPipelineAggregation,
-  MetricAggregation,
-} from '../aggregations';
+import { isMetricAggregationWithMeta, isMetricAggregationWithSettings, isPipelineAggregation } from '../aggregations';
 import { getChildren, metricAggregationConfig } from '../utils';
 
 import {

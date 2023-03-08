@@ -4,11 +4,13 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/plugins/manager/client/clienttest"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/stretchr/testify/require"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestClearAuthHeadersMiddleware(t *testing.T) {
@@ -113,10 +115,8 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				clienttest.WithMiddlewares(NewClearAuthHeadersMiddleware()),
 			)
 
-			const customHeader = "X-Custom"
-			req.Header.Set(customHeader, "val")
-			ctx := contexthandler.WithAuthHTTPHeader(req.Context(), customHeader)
-			req = req.WithContext(ctx)
+			req := req.WithContext(contexthandler.WithAuthHTTPHeaders(req.Context(), setting.NewCfg()))
+			req.Header.Set("Authorization", "val")
 
 			const otherHeader = "X-Other"
 			req.Header.Set(otherHeader, "test")
@@ -165,10 +165,8 @@ func TestClearAuthHeadersMiddleware(t *testing.T) {
 				clienttest.WithMiddlewares(NewClearAuthHeadersMiddleware()),
 			)
 
-			const customHeader = "x-Custom"
-			req.Header.Set(customHeader, "val")
-			ctx := contexthandler.WithAuthHTTPHeader(req.Context(), customHeader)
-			req = req.WithContext(ctx)
+			req := req.WithContext(contexthandler.WithAuthHTTPHeaders(req.Context(), setting.NewCfg()))
+			req.Header.Set("Authorization", "val")
 
 			const otherHeader = "x-Other"
 			req.Header.Set(otherHeader, "test")

@@ -26,7 +26,7 @@ func TestHeadlessScreenshotService(t *testing.T) {
 	s := NewHeadlessScreenshotService(&d, r, prometheus.NewRegistry())
 
 	// a non-existent dashboard should return error
-	d.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(dashboards.ErrDashboardNotFound).Once()
+	d.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(nil, dashboards.ErrDashboardNotFound).Once()
 	ctx := context.Background()
 	opts := ScreenshotOptions{}
 	screenshot, err := s.Take(ctx, opts)
@@ -34,10 +34,8 @@ func TestHeadlessScreenshotService(t *testing.T) {
 	assert.Nil(t, screenshot)
 
 	// should take a screenshot
-	d.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
-		q := args.Get(1).(*dashboards.GetDashboardQuery)
-		q.Result = &dashboards.Dashboard{ID: 1, UID: "foo", Slug: "bar", OrgID: 2}
-	}).Return(nil)
+	qResult := &dashboards.Dashboard{ID: 1, UID: "foo", Slug: "bar", OrgID: 2}
+	d.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(qResult, nil)
 
 	renderOpts := rendering.Opts{
 		AuthOpts: rendering.AuthOpts{

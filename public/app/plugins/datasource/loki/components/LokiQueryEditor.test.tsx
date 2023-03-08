@@ -4,7 +4,6 @@ import { cloneDeep, defaultsDeep } from 'lodash';
 import React from 'react';
 
 import { CoreApp } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { QueryEditorMode } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
 
 import { createLokiDatasource } from '../mocks';
@@ -58,10 +57,6 @@ const defaultProps = {
   onRunQuery: () => {},
   onChange: () => {},
 };
-
-beforeAll(() => {
-  config.featureToggles.lokiMonacoEditor = true;
-});
 
 describe('LokiQueryEditorSelector', () => {
   it('shows code editor if expr and nothing else', async () => {

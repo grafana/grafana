@@ -3,10 +3,9 @@ package setting
 import (
 	"testing"
 
-	"gopkg.in/ini.v1"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/ini.v1"
 )
 
 func TestValueAsTimezone(t *testing.T) {

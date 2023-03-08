@@ -10,13 +10,13 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/go-openapi/strfmt"
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	models2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fake_ds "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -53,8 +53,8 @@ func TestIntegrationSendingToExternalAlertmanager(t *testing.T) {
 	}
 
 	ds1 := datasources.DataSource{
-		Url:   fakeAM.Server.URL,
-		OrgId: ruleKey.OrgID,
+		URL:   fakeAM.Server.URL,
+		OrgID: ruleKey.OrgID,
 		Type:  datasources.DS_ALERTMANAGER,
 		JsonData: simplejson.NewFromAny(map[string]interface{}{
 			"handleGrafanaManagedAlerts": true,
@@ -123,8 +123,8 @@ func TestIntegrationSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T)
 	}
 
 	ds1 := datasources.DataSource{
-		Url:   fakeAM.Server.URL,
-		OrgId: ruleKey1.OrgID,
+		URL:   fakeAM.Server.URL,
+		OrgID: ruleKey1.OrgID,
 		Type:  datasources.DS_ALERTMANAGER,
 		JsonData: simplejson.NewFromAny(map[string]interface{}{
 			"handleGrafanaManagedAlerts": true,
@@ -150,8 +150,8 @@ func TestIntegrationSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T)
 
 	// 1. Now, let's assume a new org comes along.
 	ds2 := datasources.DataSource{
-		Url:   fakeAM.Server.URL,
-		OrgId: ruleKey2.OrgID,
+		URL:   fakeAM.Server.URL,
+		OrgID: ruleKey2.OrgID,
 		Type:  datasources.DS_ALERTMANAGER,
 		JsonData: simplejson.NewFromAny(map[string]interface{}{
 			"handleGrafanaManagedAlerts": true,
@@ -196,8 +196,8 @@ func TestIntegrationSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T)
 	// 2. Next, let's modify the configuration of an organization by adding an extra alertmanager.
 	fakeAM2 := NewFakeExternalAlertmanager(t)
 	ds3 := datasources.DataSource{
-		Url:   fakeAM2.Server.URL,
-		OrgId: ruleKey2.OrgID,
+		URL:   fakeAM2.Server.URL,
+		OrgID: ruleKey2.OrgID,
 		Type:  datasources.DS_ALERTMANAGER,
 		JsonData: simplejson.NewFromAny(map[string]interface{}{
 			"handleGrafanaManagedAlerts": true,
@@ -225,7 +225,7 @@ func TestIntegrationSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T)
 	assertAlertmanagersStatusForOrg(t, alertsRouter, ruleKey2.OrgID, 2, 0)
 
 	// 3. Now, let's provide a configuration that fails for OrgID = 1.
-	fakeDs.DataSources[0].Url = "123://invalid.org"
+	fakeDs.DataSources[0].URL = "123://invalid.org"
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
 		{OrgID: ruleKey1.OrgID, SendAlertsTo: models.AllAlertmanagers},
 		{OrgID: ruleKey2.OrgID},
@@ -242,7 +242,7 @@ func TestIntegrationSendingToExternalAlertmanager_WithMultipleOrgs(t *testing.T)
 	require.Equal(t, 0, len(alertsRouter.AlertmanagersFor(ruleKey1.OrgID)))
 
 	// If we fix it - it should be applied.
-	fakeDs.DataSources[0].Url = "notarealalertmanager:3030"
+	fakeDs.DataSources[0].URL = "notarealalertmanager:3030"
 	mockedGetAdminConfigurations.Return([]*models.AdminConfiguration{
 		{OrgID: ruleKey1.OrgID, SendAlertsTo: models.AllAlertmanagers},
 		{OrgID: ruleKey2.OrgID},
@@ -283,8 +283,8 @@ func TestChangingAlertmanagersChoice(t *testing.T) {
 	}
 
 	ds := datasources.DataSource{
-		Url:   fakeAM.Server.URL,
-		OrgId: ruleKey.OrgID,
+		URL:   fakeAM.Server.URL,
+		OrgID: ruleKey.OrgID,
 		Type:  datasources.DS_ALERTMANAGER,
 		JsonData: simplejson.NewFromAny(map[string]interface{}{
 			"handleGrafanaManagedAlerts": true,
@@ -410,7 +410,7 @@ func createMultiOrgAlertmanager(t *testing.T, orgs []int64) *notifier.MultiOrgAl
 	m := metrics.NewNGAlert(registry)
 	secretsService := secretsManager.SetupTestService(t, fake_secrets.NewFakeSecretsStore())
 	decryptFn := secretsService.GetDecryptedValue
-	moa, err := notifier.NewMultiOrgAlertmanager(cfg, &cfgStore, &orgStore, kvStore, provisioning.NewFakeProvisioningStore(), decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService)
+	moa, err := notifier.NewMultiOrgAlertmanager(cfg, cfgStore, &orgStore, kvStore, provisioning.NewFakeProvisioningStore(), decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService)
 	require.NoError(t, err)
 	require.NoError(t, moa.LoadAndSyncAlertmanagersForOrgs(context.Background()))
 	require.Eventually(t, func() bool {
@@ -437,21 +437,21 @@ func TestBuildExternalURL(t *testing.T) {
 		{
 			name: "datasource without auth",
 			ds: &datasources.DataSource{
-				Url: "https://localhost:9000",
+				URL: "https://localhost:9000",
 			},
 			expectedURL: "https://localhost:9000",
 		},
 		{
 			name: "datasource without auth and with path",
 			ds: &datasources.DataSource{
-				Url: "https://localhost:9000/path/to/am",
+				URL: "https://localhost:9000/path/to/am",
 			},
 			expectedURL: "https://localhost:9000/path/to/am",
 		},
 		{
 			name: "datasource with auth",
 			ds: &datasources.DataSource{
-				Url:           "https://localhost:9000",
+				URL:           "https://localhost:9000",
 				BasicAuth:     true,
 				BasicAuthUser: "johndoe",
 				SecureJsonData: map[string][]byte{
@@ -463,7 +463,7 @@ func TestBuildExternalURL(t *testing.T) {
 		{
 			name: "datasource with auth and path",
 			ds: &datasources.DataSource{
-				Url:           "https://localhost:9000/path/to/am",
+				URL:           "https://localhost:9000/path/to/am",
 				BasicAuth:     true,
 				BasicAuthUser: "johndoe",
 				SecureJsonData: map[string][]byte{
@@ -475,7 +475,7 @@ func TestBuildExternalURL(t *testing.T) {
 		{
 			name: "with no scheme specified in the datasource",
 			ds: &datasources.DataSource{
-				Url:           "localhost:9000/path/to/am",
+				URL:           "localhost:9000/path/to/am",
 				BasicAuth:     true,
 				BasicAuthUser: "johndoe",
 				SecureJsonData: map[string][]byte{
@@ -487,9 +487,45 @@ func TestBuildExternalURL(t *testing.T) {
 		{
 			name: "with no scheme specified not auth in the datasource",
 			ds: &datasources.DataSource{
-				Url: "localhost:9000/path/to/am",
+				URL: "localhost:9000/path/to/am",
 			},
 			expectedURL: "http://localhost:9000/path/to/am",
+		},
+		{
+			name: "adds /alertmanager to path when implementation is mimir",
+			ds: &datasources.DataSource{
+				URL: "https://localhost:9000",
+				JsonData: func() *simplejson.Json {
+					r := simplejson.New()
+					r.Set("implementation", "mimir")
+					return r
+				}(),
+			},
+			expectedURL: "https://localhost:9000/alertmanager",
+		},
+		{
+			name: "adds /alertmanager to path when implementation is cortex",
+			ds: &datasources.DataSource{
+				URL: "https://localhost:9000/path/to/am",
+				JsonData: func() *simplejson.Json {
+					r := simplejson.New()
+					r.Set("implementation", "cortex")
+					return r
+				}(),
+			},
+			expectedURL: "https://localhost:9000/path/to/am/alertmanager",
+		},
+		{
+			name: "do nothing when implementation is prometheus",
+			ds: &datasources.DataSource{
+				URL: "https://localhost:9000/path/to/am",
+				JsonData: func() *simplejson.Json {
+					r := simplejson.New()
+					r.Set("implementation", "prometheus")
+					return r
+				}(),
+			},
+			expectedURL: "https://localhost:9000/path/to/am",
 		},
 	}
 	for _, test := range tests {

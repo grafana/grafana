@@ -1,6 +1,12 @@
 import { QueryBuilderOperationDef } from '../../prometheus/querybuilder/shared/types';
 
-import { createRangeOperation, createRangeOperationWithGrouping, getLineFilterRenderer } from './operationUtils';
+import {
+  createRangeOperation,
+  createRangeOperationWithGrouping,
+  getLineFilterRenderer,
+  isConflictingFilter,
+  labelFilterRenderer,
+} from './operationUtils';
 import { LokiVisualQueryOperationCategory } from './types';
 
 describe('createRangeOperation', () => {
@@ -154,5 +160,48 @@ describe('getLineFilterRenderer', () => {
     expect(lineFilterRenderer(MOCK_MODEL_INSENSITIVE, MOCK_DEF, MOCK_INNER_EXPR)).toBe(
       '{job="grafana"} !~ `(?i)ERrOR`'
     );
+  });
+});
+
+describe('labelFilterRenderer', () => {
+  const MOCK_MODEL = { id: '__label_filter', params: ['label', '', 'value'] };
+  const MOCK_DEF = undefined as unknown as QueryBuilderOperationDef;
+  const MOCK_INNER_EXPR = '{job="grafana"}';
+
+  it.each`
+    operator | type        | expected
+    ${'='}   | ${'string'} | ${'`value`'}
+    ${'!='}  | ${'string'} | ${'`value`'}
+    ${'=~'}  | ${'string'} | ${'`value`'}
+    ${'!~'}  | ${'string'} | ${'`value`'}
+    ${'>'}   | ${'number'} | ${'value'}
+    ${'>='}  | ${'number'} | ${'value'}
+    ${'<'}   | ${'number'} | ${'value'}
+    ${'<='}  | ${'number'} | ${'value'}
+  `("value should be of type '$type' when operator is: $operator", ({ operator, expected }) => {
+    MOCK_MODEL.params[1] = operator;
+    expect(labelFilterRenderer(MOCK_MODEL, MOCK_DEF, MOCK_INNER_EXPR)).toBe(
+      `{job="grafana"} | label ${operator} ${expected}`
+    );
+  });
+});
+
+describe('isConflictingFilter', () => {
+  it('should return true if the operation conflict with another label filter', () => {
+    const operation = { id: '__label_filter', params: ['abc', '!=', '123'] };
+    const queryOperations = [
+      { id: '__label_filter', params: ['abc', '=', '123'] },
+      { id: '__label_filter', params: ['abc', '!=', '123'] },
+    ];
+    expect(isConflictingFilter(operation, queryOperations)).toBe(true);
+  });
+
+  it("should return false if the operation doesn't conflict with another label filter", () => {
+    const operation = { id: '__label_filter', params: ['abc', '=', '123'] };
+    const queryOperations = [
+      { id: '__label_filter', params: ['abc', '=', '123'] },
+      { id: '__label_filter', params: ['abc', '=', '123'] },
+    ];
+    expect(isConflictingFilter(operation, queryOperations)).toBe(false);
   });
 });

@@ -190,11 +190,11 @@ func (d *PublicDashboardStoreImpl) ExistsEnabledByAccessToken(ctx context.Contex
 	return hasPublicDashboard, err
 }
 
-// GetOrgIdByAccessToken Returns the public dashboard OrgId if exists and is enabled.
+// GetOrgIdByAccessToken Returns the public dashboard OrgId if exists.
 func (d *PublicDashboardStoreImpl) GetOrgIdByAccessToken(ctx context.Context, accessToken string) (int64, error) {
 	var orgId int64
 	err := d.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
-		sql := "SELECT org_id FROM dashboard_public WHERE access_token=? AND is_enabled=true"
+		sql := "SELECT org_id FROM dashboard_public WHERE access_token=?"
 
 		_, err := dbSession.SQL(sql, accessToken).Get(&orgId)
 		if err != nil {
@@ -232,10 +232,11 @@ func (d *PublicDashboardStoreImpl) Update(ctx context.Context, cmd SavePublicDas
 			return err
 		}
 
-		sqlResult, err := sess.Exec("UPDATE dashboard_public SET is_enabled = ?, annotations_enabled = ?, time_selection_enabled = ?, time_settings = ?, updated_by = ?, updated_at = ? WHERE uid = ?",
+		sqlResult, err := sess.Exec("UPDATE dashboard_public SET is_enabled = ?, annotations_enabled = ?, time_selection_enabled = ?, share = ?, time_settings = ?, updated_by = ?, updated_at = ? WHERE uid = ?",
 			cmd.PublicDashboard.IsEnabled,
 			cmd.PublicDashboard.AnnotationsEnabled,
 			cmd.PublicDashboard.TimeSelectionEnabled,
+			cmd.PublicDashboard.Share,
 			string(timeSettingsJSON),
 			cmd.PublicDashboard.UpdatedBy,
 			cmd.PublicDashboard.UpdatedAt.UTC().Format("2006-01-02 15:04:05"),

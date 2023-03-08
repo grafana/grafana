@@ -14,7 +14,7 @@ import { SearchCard } from 'app/features/search/components/SearchCard';
 import { DashboardSearchItem } from 'app/features/search/types';
 import { useDispatch } from 'app/types';
 
-import { PanelLayout, PanelOptions } from './models.gen';
+import { PanelLayout, PanelOptions } from './panelcfg.gen';
 import { getStyles } from './styles';
 
 type Dashboard = DashboardSearchItem & { id?: number; isSearchResult?: boolean; isRecent?: boolean };
@@ -103,8 +103,7 @@ export function DashList(props: PanelProps<PanelOptions>) {
     e.preventDefault();
     e.stopPropagation();
 
-    // FIXME: Do not use dash ID. Use UID to star a dashboard once the backend allows it
-    const isStarred = await getDashboardSrv().starDashboard(dash.id!.toString(), dash.isStarred);
+    const isStarred = await getDashboardSrv().starDashboard(dash.uid, dash.isStarred);
     const updatedDashboards = new Map(dashboards);
     updatedDashboards.set(dash?.uid ?? '', { ...dash, isStarred });
     setDashboards(updatedDashboards);
@@ -171,7 +170,7 @@ export function DashList(props: PanelProps<PanelOptions>) {
     <ul className={css.gridContainer}>
       {dashboards.map((dash) => (
         <li key={dash.uid}>
-          <SearchCard item={dash} />
+          <SearchCard item={{ ...dash, kind: 'folder' }} />
         </li>
       ))}
     </ul>

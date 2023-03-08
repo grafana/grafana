@@ -24,16 +24,17 @@ import {
   TemplateSrv,
   getTemplateSrv,
 } from '@grafana/runtime';
-import { SpanBarOptions } from '@jaegertracing/jaeger-ui-components';
 import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { serializeParams } from 'app/core/utils/fetch';
+import { SpanBarOptions } from 'app/features/explore/TraceView/components';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { LokiOptions } from '../loki/types';
 import { PrometheusDatasource } from '../prometheus/datasource';
 import { PromQuery } from '../prometheus/types';
 
+import { generateQueryFromFilters } from './SearchTraceQLEditor/utils';
 import {
   failedMetric,
   histogramMetric,
@@ -108,7 +109,9 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       reportInteraction('grafana_traces_loki_search_queried', {
         datasourceType: 'tempo',
         app: options.app ?? '',
-        linkedQueryExpr: targets.search[0].linkedQuery?.expr ?? '',
+        grafana_version: config.buildInfo.version,
+        hasLinkedQueryExpr:
+          targets.search[0].linkedQuery?.expr && targets.search[0].linkedQuery?.expr !== '' ? true : false,
       });
 
       const dsSrv = getDatasourceSrv();
@@ -148,10 +151,13 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         reportInteraction('grafana_traces_search_queried', {
           datasourceType: 'tempo',
           app: options.app ?? '',
-          serviceName: targets.nativeSearch[0].serviceName ?? '',
-          spanName: targets.nativeSearch[0].spanName ?? '',
+          grafana_version: config.buildInfo.version,
+          hasServiceName: targets.nativeSearch[0].serviceName ? true : false,
+          hasSpanName: targets.nativeSearch[0].spanName ? true : false,
           resultLimit: targets.nativeSearch[0].limit ?? '',
-          search: targets.nativeSearch[0].search ?? '',
+          hasSearch: targets.nativeSearch[0].search ? true : false,
+          minDuration: targets.nativeSearch[0].minDuration ?? '',
+          maxDuration: targets.nativeSearch[0].maxDuration ?? '',
         });
 
         const timeRange = { startTime: options.range.from.unix(), endTime: options.range.to.unix() };
@@ -184,7 +190,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           reportInteraction('grafana_traces_traceID_queried', {
             datasourceType: 'tempo',
             app: options.app ?? '',
-            query: queryValue ?? '',
+            grafana_version: config.buildInfo.version,
+            hasQuery: queryValue !== '' ? true : false,
           });
 
           subQueries.push(this.handleTraceIdQuery(options, targets.traceql));
@@ -192,6 +199,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           reportInteraction('grafana_traces_traceql_queried', {
             datasourceType: 'tempo',
             app: options.app ?? '',
+            grafana_version: config.buildInfo.version,
             query: queryValue ?? '',
           });
           subQueries.push(
@@ -216,12 +224,43 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         return of({ error: { message: error instanceof Error ? error.message : 'Unknown error occurred' }, data: [] });
       }
     }
+    if (targets.traceqlSearch?.length) {
+      try {
+        const queryValue = generateQueryFromFilters(targets.traceqlSearch[0].filters);
+        reportInteraction('grafana_traces_traceql_search_queried', {
+          datasourceType: 'tempo',
+          app: options.app ?? '',
+          grafana_version: config.buildInfo.version,
+          query: queryValue ?? '',
+        });
+        subQueries.push(
+          this._request('/api/search', {
+            q: queryValue,
+            limit: options.targets[0].limit,
+            start: options.range.from.unix(),
+            end: options.range.to.unix(),
+          }).pipe(
+            map((response) => {
+              return {
+                data: createTableFrameFromTraceQlQuery(response.data.traces, this.instanceSettings),
+              };
+            }),
+            catchError((error) => {
+              return of({ error: { message: error.data.message }, data: [] });
+            })
+          )
+        );
+      } catch (error) {
+        return of({ error: { message: error instanceof Error ? error.message : 'Unknown error occurred' }, data: [] });
+      }
+    }
 
     if (targets.upload?.length) {
       if (this.uploadedJson) {
         reportInteraction('grafana_traces_json_file_uploaded', {
           datasourceType: 'tempo',
           app: options.app ?? '',
+          grafana_version: config.buildInfo.version,
         });
 
         const jsonData = JSON.parse(this.uploadedJson as string);
@@ -245,24 +284,21 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       reportInteraction('grafana_traces_service_graph_queried', {
         datasourceType: 'tempo',
         app: options.app ?? '',
-        serviceMapQuery: targets.serviceMap[0].serviceMapQuery ?? '',
+        grafana_version: config.buildInfo.version,
+        hasServiceMapQuery: targets.serviceMap[0].serviceMapQuery ? true : false,
       });
 
       const dsId = this.serviceMap.datasourceUid;
       const tempoDsUid = this.uid;
-      if (config.featureToggles.tempoApmTable) {
-        subQueries.push(
-          serviceMapQuery(options, dsId, tempoDsUid).pipe(
-            concatMap((result) =>
-              rateQuery(options, result, dsId).pipe(
-                concatMap((result) => errorAndDurationQuery(options, result, dsId, tempoDsUid))
-              )
+      subQueries.push(
+        serviceMapQuery(options, dsId, tempoDsUid).pipe(
+          concatMap((result) =>
+            rateQuery(options, result, dsId).pipe(
+              concatMap((result) => errorAndDurationQuery(options, result, dsId, tempoDsUid))
             )
           )
-        );
-      } else {
-        subQueries.push(serviceMapQuery(options, dsId, tempoDsUid));
-      }
+        )
+      );
     }
 
     return merge(...subQueries);
@@ -477,6 +513,7 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
 
         reportInteraction('grafana_traces_service_graph_size', {
           datasourceType: 'tempo',
+          grafana_version: config.buildInfo.version,
           nodeLength,
           edgeLength,
         });

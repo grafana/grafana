@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import React, { MouseEventHandler } from 'react';
-import { DraggableProvidedDragHandleProps } from 'react-beautiful-dnd';
+import { DraggableProvided } from 'react-beautiful-dnd';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, IconButton, useStyles2 } from '@grafana/ui';
@@ -9,12 +9,12 @@ interface QueryOperationRowHeaderProps {
   actionsElement?: React.ReactNode;
   disabled?: boolean;
   draggable: boolean;
-  dragHandleProps?: DraggableProvidedDragHandleProps;
+  dragHandleProps?: DraggableProvided['dragHandleProps'];
   headerElement?: React.ReactNode;
   isContentVisible: boolean;
   onRowToggle: () => void;
   reportDragMousePosition: MouseEventHandler<HTMLDivElement>;
-  titleElement?: React.ReactNode;
+  title?: string;
   id: string;
 }
 
@@ -27,7 +27,7 @@ export const QueryOperationRowHeader: React.FC<QueryOperationRowHeaderProps> = (
   isContentVisible,
   onRowToggle,
   reportDragMousePosition,
-  titleElement,
+  title,
   id,
 }: QueryOperationRowHeaderProps) => {
   const styles = useStyles2(getStyles);
@@ -45,9 +45,12 @@ export const QueryOperationRowHeader: React.FC<QueryOperationRowHeaderProps> = (
           aria-expanded={isContentVisible}
           aria-controls={id}
         />
-        {titleElement && (
+        {title && (
+          // disabling the a11y rules here as the IconButton above handles keyboard interactions
+          // this is just to provide a better experience for mouse users
+          // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
           <div className={styles.titleWrapper} onClick={onRowToggle} aria-label="Query operation row title">
-            <div className={cx(styles.title, disabled && styles.disabled)}>{titleElement}</div>
+            <div className={cx(styles.title, disabled && styles.disabled)}>{title}</div>
           </div>
         )}
         {headerElement}

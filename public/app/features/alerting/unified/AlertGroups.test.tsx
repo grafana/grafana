@@ -1,12 +1,10 @@
 import { render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { Provider } from 'react-redux';
-import { Router } from 'react-router-dom';
+import { TestProvider } from 'test/helpers/TestProvider';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
-import { locationService, setDataSourceSrv } from '@grafana/runtime';
-import { configureStore } from 'app/store/configureStore';
+import { setDataSourceSrv } from '@grafana/runtime';
 
 import AlertGroups from './AlertGroups';
 import { fetchAlertGroups } from './api/alertmanager';
@@ -28,14 +26,10 @@ const mocks = {
 };
 
 const renderAmNotifications = () => {
-  const store = configureStore();
-
   return render(
-    <Provider store={store}>
-      <Router history={locationService.getHistory()}>
-        <AlertGroups />
-      </Router>
-    </Provider>
+    <TestProvider>
+      <AlertGroups />
+    </TestProvider>
   );
 };
 

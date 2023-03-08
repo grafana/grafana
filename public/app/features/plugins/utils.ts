@@ -49,6 +49,8 @@ export function buildPluginSectionNav(
       return page;
     }
 
+    // Check if there is already an active page found with with a more specific url (possibly a child of the current page)
+    // (In this case we bail out early and don't mark the parent as active)
     if (activePage && (activePage.url?.length ?? 0) > (page.url?.length ?? 0)) {
       return page;
     }
@@ -58,15 +60,20 @@ export function buildPluginSectionNav(
     }
 
     activePage = { ...page, active: true };
+
     return activePage;
   }
 
   // Find and set active page
   copiedPluginNavSection.children = (copiedPluginNavSection?.children ?? []).map((child) => {
     if (child.children) {
+      // Doing this here to make sure that first we check if any of the children is active
+      // (In case yes, then the check for the parent will not mark it as active)
+      const children = child.children.map((pluginPage) => setPageToActive(pluginPage, currentUrl));
+
       return {
         ...setPageToActive(child, currentUrl),
-        children: child.children.map((pluginPage) => setPageToActive(pluginPage, currentUrl)),
+        children,
       };
     }
 

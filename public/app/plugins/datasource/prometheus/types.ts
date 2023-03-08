@@ -34,7 +34,6 @@ export interface PromOptions extends DataSourceJsonData {
   exemplarTraceIdDestinations?: ExemplarTraceIdDestination[];
   prometheusType?: PromApplication;
   prometheusVersion?: string;
-  enableSecureSocksProxy?: boolean;
   defaultEditor?: QueryEditorMode;
 }
 
@@ -166,3 +165,26 @@ export enum LegendFormatMode {
   Verbose = '__verbose',
   Custom = '__custom',
 }
+
+export enum PromVariableQueryType {
+  LabelNames,
+  LabelValues,
+  MetricNames,
+  VarQueryResult,
+  SeriesQuery,
+}
+
+export interface PromVariableQuery extends DataQuery {
+  query?: string;
+  expr?: string;
+  qryType?: PromVariableQueryType;
+  label?: string;
+  metric?: string;
+  varQuery?: string;
+  seriesQuery?: string;
+}
+
+export type StandardPromVariableQuery = {
+  query: string;
+  refId: string;
+};

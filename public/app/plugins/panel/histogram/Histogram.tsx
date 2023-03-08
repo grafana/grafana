@@ -23,7 +23,7 @@ import {
   UPLOT_AXIS_FONT_SIZE,
 } from '@grafana/ui';
 
-import { defaultPanelFieldConfig, PanelFieldConfig, PanelOptions } from './models.gen';
+import { defaultPanelFieldConfig, PanelFieldConfig, PanelOptions } from './panelcfg.gen';
 
 function incrRoundDn(num: number, incr: number) {
   return Math.floor(num / incr) * incr;

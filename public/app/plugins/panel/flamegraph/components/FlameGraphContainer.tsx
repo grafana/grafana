@@ -24,6 +24,7 @@ type Props = {
 
 const FlameGraphContainer = (props: Props) => {
   const [topLevelIndex, setTopLevelIndex] = useState(0);
+  const [selectedBarIndex, setSelectedBarIndex] = useState(0);
   const [rangeMin, setRangeMin] = useState(0);
   const [rangeMax, setRangeMax] = useState(1);
   const [search, setSearch] = useState('');
@@ -56,55 +57,64 @@ const FlameGraphContainer = (props: Props) => {
 
   useEffect(() => {
     setTopLevelIndex(0);
+    setSelectedBarIndex(0);
     setRangeMin(0);
     setRangeMax(1);
   }, [props.data]);
 
   return (
-    <div ref={sizeRef} className={styles.container}>
-      <FlameGraphHeader
-        app={props.app}
-        setTopLevelIndex={setTopLevelIndex}
-        setRangeMin={setRangeMin}
-        setRangeMax={setRangeMax}
-        search={search}
-        setSearch={setSearch}
-        selectedView={selectedView}
-        setSelectedView={setSelectedView}
-        containerWidth={containerWidth}
-      />
+    <>
+      {props.data && (
+        <div ref={sizeRef} className={styles.container}>
+          <FlameGraphHeader
+            app={props.app}
+            setTopLevelIndex={setTopLevelIndex}
+            setSelectedBarIndex={setSelectedBarIndex}
+            setRangeMin={setRangeMin}
+            setRangeMax={setRangeMax}
+            search={search}
+            setSearch={setSearch}
+            selectedView={selectedView}
+            setSelectedView={setSelectedView}
+            containerWidth={containerWidth}
+          />
 
-      {selectedView !== SelectedView.FlameGraph && (
-        <FlameGraphTopTableContainer
-          data={props.data}
-          app={props.app}
-          totalLevels={levels.length}
-          selectedView={selectedView}
-          search={search}
-          setSearch={setSearch}
-          setTopLevelIndex={setTopLevelIndex}
-          setRangeMin={setRangeMin}
-          setRangeMax={setRangeMax}
-        />
-      )}
+          {selectedView !== SelectedView.FlameGraph && (
+            <FlameGraphTopTableContainer
+              data={props.data}
+              app={props.app}
+              totalLevels={levels.length}
+              selectedView={selectedView}
+              search={search}
+              setSearch={setSearch}
+              setTopLevelIndex={setTopLevelIndex}
+              setSelectedBarIndex={setSelectedBarIndex}
+              setRangeMin={setRangeMin}
+              setRangeMax={setRangeMax}
+            />
+          )}
 
-      {selectedView !== SelectedView.TopTable && (
-        <FlameGraph
-          data={props.data}
-          app={props.app}
-          flameGraphHeight={props.flameGraphHeight}
-          levels={levels}
-          topLevelIndex={topLevelIndex}
-          rangeMin={rangeMin}
-          rangeMax={rangeMax}
-          search={search}
-          setTopLevelIndex={setTopLevelIndex}
-          setRangeMin={setRangeMin}
-          setRangeMax={setRangeMax}
-          selectedView={selectedView}
-        />
+          {selectedView !== SelectedView.TopTable && (
+            <FlameGraph
+              data={props.data}
+              app={props.app}
+              flameGraphHeight={props.flameGraphHeight}
+              levels={levels}
+              topLevelIndex={topLevelIndex}
+              selectedBarIndex={selectedBarIndex}
+              rangeMin={rangeMin}
+              rangeMax={rangeMax}
+              search={search}
+              setTopLevelIndex={setTopLevelIndex}
+              setSelectedBarIndex={setSelectedBarIndex}
+              setRangeMin={setRangeMin}
+              setRangeMax={setRangeMax}
+              selectedView={selectedView}
+            />
+          )}
+        </div>
       )}
-    </div>
+    </>
   );
 };
 

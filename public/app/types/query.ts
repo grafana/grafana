@@ -7,6 +7,7 @@ export interface QueryGroupOptions {
   maxDataPoints?: number | null;
   minInterval?: string | null;
   cacheTimeout?: string | null;
+  queryCachingTTL?: number | null;
   timeRange?: {
     from?: string | null;
     shift?: string | null;

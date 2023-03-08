@@ -1,13 +1,12 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { Provider } from 'react-redux';
 import { mockToolkitActionCreator } from 'test/core/redux/mocks';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { NavModel } from '@grafana/data';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { ModalManager } from 'app/core/services/ModalManager';
-import { configureStore } from 'app/store/configureStore';
 
 import { FolderSettingsPage, Props } from './FolderSettingsPage';
 import { setFolderTitle } from './state/reducers';
@@ -38,9 +37,9 @@ const setup = (propOverrides?: object) => {
   Object.assign(props, propOverrides);
 
   render(
-    <Provider store={configureStore()}>
+    <TestProvider>
       <FolderSettingsPage {...props} />
-    </Provider>
+    </TestProvider>
   );
 };
 

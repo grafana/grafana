@@ -82,26 +82,31 @@ func (ns *NotificationService) buildEmailMessage(cmd *SendEmailCommand) (*Messag
 
 	subject := cmd.Subject
 	if cmd.Subject == "" {
-		var subjectText interface{}
 		subjectData := data["Subject"].(map[string]interface{})
-		subjectText, hasSubject := subjectData["value"]
+		subjectText, hasSubject := subjectData["executed_template"].(string)
+		if hasSubject {
+			// first check to see if the template has already been executed in a template func
+			subject = subjectText
+		} else {
+			subjectTemplate, hasSubject := subjectData["value"]
 
-		if !hasSubject {
-			return nil, fmt.Errorf("missing subject in template %s", cmd.Template)
+			if !hasSubject {
+				return nil, fmt.Errorf("missing subject in template %s", cmd.Template)
+			}
+
+			subjectTmpl, err := template.New("subject").Parse(subjectTemplate.(string))
+			if err != nil {
+				return nil, err
+			}
+
+			var subjectBuffer bytes.Buffer
+			err = subjectTmpl.ExecuteTemplate(&subjectBuffer, "subject", data)
+			if err != nil {
+				return nil, err
+			}
+
+			subject = subjectBuffer.String()
 		}
-
-		subjectTmpl, err := template.New("subject").Parse(subjectText.(string))
-		if err != nil {
-			return nil, err
-		}
-
-		var subjectBuffer bytes.Buffer
-		err = subjectTmpl.ExecuteTemplate(&subjectBuffer, "subject", data)
-		if err != nil {
-			return nil, err
-		}
-
-		subject = subjectBuffer.String()
 	}
 
 	addr := mail.Address{Name: ns.Cfg.Smtp.FromName, Address: ns.Cfg.Smtp.FromAddress}

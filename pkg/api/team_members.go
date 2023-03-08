@@ -9,8 +9,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/util"
@@ -27,7 +28,7 @@ import (
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) GetTeamMembers(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetTeamMembers(c *contextmodel.ReqContext) response.Response {
 	teamId, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
@@ -78,7 +79,7 @@ func (hs *HTTPServer) GetTeamMembers(c *models.ReqContext) response.Response {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) AddTeamMember(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) AddTeamMember(c *contextmodel.ReqContext) response.Response {
 	cmd := team.AddTeamMemberCommand{}
 	var err error
 	if err := web.Bind(c.Req, &cmd); err != nil {
@@ -124,7 +125,7 @@ func (hs *HTTPServer) AddTeamMember(c *models.ReqContext) response.Response {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) UpdateTeamMember(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) UpdateTeamMember(c *contextmodel.ReqContext) response.Response {
 	cmd := team.UpdateTeamMemberCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -160,7 +161,7 @@ func (hs *HTTPServer) UpdateTeamMember(c *models.ReqContext) response.Response {
 	return response.Success("Team member updated")
 }
 
-func getPermissionName(permission models.PermissionType) string {
+func getPermissionName(permission dashboards.PermissionType) string {
 	permissionName := permission.String()
 	// Team member permission is 0, which maps to an empty string.
 	// However, we want the team permission service to display "Member" for team members. This is a hack to make it work.
@@ -180,7 +181,7 @@ func getPermissionName(permission models.PermissionType) string {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) RemoveTeamMember(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) RemoveTeamMember(c *contextmodel.ReqContext) response.Response {
 	orgId := c.OrgID
 	teamId, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
 	if err != nil {

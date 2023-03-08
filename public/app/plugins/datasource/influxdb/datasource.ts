@@ -62,11 +62,11 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     this.username = instanceSettings.username ?? '';
     this.password = instanceSettings.password ?? '';
     this.name = instanceSettings.name;
-    this.database = instanceSettings.database;
     this.basicAuth = instanceSettings.basicAuth;
     this.withCredentials = instanceSettings.withCredentials;
     this.access = instanceSettings.access;
     const settingsData = instanceSettings.jsonData || ({} as InfluxOptions);
+    this.database = settingsData.dbName ?? instanceSettings.database;
     this.interval = settingsData.timeInterval;
     this.httpMode = settingsData.httpMode || 'GET';
     this.responseParser = new ResponseParser();
@@ -180,7 +180,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
   applyTemplateVariables(query: InfluxQuery, scopedVars: ScopedVars): Record<string, any> {
     // We want to interpolate these variables on backend
-    const { __interval, __interval_ms, ...rest } = scopedVars;
+    const { __interval, __interval_ms, ...rest } = scopedVars || {};
 
     if (this.isFlux) {
       return {

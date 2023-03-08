@@ -32,9 +32,7 @@ const testDataDSPlugin = async () =>
 const cloudMonitoringPlugin = async () =>
   await import(/* webpackChunkName: "cloudMonitoringPlugin" */ 'app/plugins/datasource/cloud-monitoring/module');
 const azureMonitorPlugin = async () =>
-  await import(
-    /* webpackChunkName: "azureMonitorPlugin" */ 'app/plugins/datasource/grafana-azure-monitor-datasource/module'
-  );
+  await import(/* webpackChunkName: "azureMonitorPlugin" */ 'app/plugins/datasource/azuremonitor/module');
 const tempoPlugin = async () =>
   await import(/* webpackChunkName: "tempoPlugin" */ 'app/plugins/datasource/tempo/module');
 const alertmanagerPlugin = async () =>
@@ -100,7 +98,7 @@ const builtInPlugins: any = {
   'app/plugins/datasource/prometheus/module': prometheusPlugin,
   'app/plugins/datasource/testdata/module': testDataDSPlugin,
   'app/plugins/datasource/cloud-monitoring/module': cloudMonitoringPlugin,
-  'app/plugins/datasource/grafana-azure-monitor-datasource/module': azureMonitorPlugin,
+  'app/plugins/datasource/azuremonitor/module': azureMonitorPlugin,
   'app/plugins/datasource/tempo/module': tempoPlugin,
   'app/plugins/datasource/alertmanager/module': alertmanagerPlugin,
   'app/plugins/datasource/phlare/module': phlarePlugin,

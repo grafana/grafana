@@ -4,8 +4,9 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func TestPrepareProxyRequest(t *testing.T) {

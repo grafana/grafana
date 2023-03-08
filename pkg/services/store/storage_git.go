@@ -11,12 +11,12 @@ import (
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/object"
-
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"gocloud.dev/blob"
+
 	"github.com/grafana/grafana/pkg/infra/filestorage"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"gocloud.dev/blob"
 )
 
 const rootStorageTypeGit = "git"

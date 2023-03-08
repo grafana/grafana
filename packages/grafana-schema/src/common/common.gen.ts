@@ -11,6 +11,139 @@
 /**
  * TODO docs
  */
+export interface DataSourceJsonData {
+  alertmanagerUid?: string;
+  authType?: string;
+  defaultRegion?: string;
+  manageAlerts?: boolean;
+  profile?: string;
+}
+
+/**
+ * These are the common properties available to all queries in all datasources.
+ * Specific implementations will *extend* this interface, adding the required
+ * properties for the given context.
+ */
+export interface DataQuery {
+  /**
+   * For mixed data sources the selected datasource is on the query level.
+   * For non mixed scenarios this is undefined.
+   * TODO find a better way to do this ^ that's friendly to schema
+   * TODO this shouldn't be unknown but DataSourceRef | null
+   */
+  datasource?: unknown;
+  /**
+   * true if query is disabled (ie should not be returned to the dashboard)
+   */
+  hide?: boolean;
+  /**
+   * Unique, guid like, string used in explore mode
+   */
+  key?: string;
+  /**
+   * Specify the query flavor
+   * TODO make this required and give it a default
+   */
+  queryType?: string;
+  /**
+   * A - Z
+   */
+  refId: string;
+}
+
+export interface BaseDimensionConfig {
+  field?: string;
+  fixed: (string | number);
+}
+
+export interface ScaleDimensionConfig extends BaseDimensionConfig {
+  max: number;
+  min: number;
+}
+
+/**
+ * This is actually an empty interface used mainly for naming?
+ */
+export interface ColorDimensionConfig extends BaseDimensionConfig {}
+
+export enum TextDimensionMode {
+  Field = 'field',
+  Fixed = 'fixed',
+  Template = 'template',
+}
+
+export interface MapLayerOptions {
+  /**
+   * Custom options depending on the type
+   */
+  config?: unknown;
+  /**
+   * Defines a frame MatcherConfig that may filter data for the given layer
+   */
+  filterData?: unknown;
+  /**
+   * Common method to define geometry fields
+   */
+  location?: FrameGeometrySource;
+  /**
+   * configured unique display name
+   */
+  name: string;
+  /**
+   * Common properties:
+   * https://openlayers.org/en/latest/apidoc/module-ol_layer_Base-BaseLayer.html
+   * Layer opacity (0-1)
+   */
+  opacity?: number;
+  /**
+   * Check tooltip (defaults to true)
+   */
+  tooltip?: boolean;
+  type: string;
+}
+
+export enum FrameGeometrySourceMode {
+  Auto = 'auto',
+  Coords = 'coords',
+  Geohash = 'geohash',
+  Lookup = 'lookup',
+}
+
+export enum HeatmapCalculationMode {
+  Count = 'count',
+  Size = 'size',
+}
+
+export enum HeatmapCellLayout {
+  auto = 'auto',
+  ge = 'ge',
+  le = 'le',
+  unknown = 'unknown',
+}
+
+export interface HeatmapCalculationBucketConfig {
+  /**
+   * Sets the bucket calculation mode
+   */
+  mode?: HeatmapCalculationMode;
+  /**
+   * Controls the scale of the buckets
+   */
+  scale?: ScaleDistributionConfig;
+  /**
+   * The number of buckets to use for the axis in the heatmap
+   */
+  value?: string;
+}
+
+export enum LogsSortOrder {
+  Ascending = 'Ascending',
+  Descending = 'Descending',
+}
+
+/**
+ * TODO docs
+ */
 export enum AxisPlacement {
   Auto = 'auto',
   Bottom = 'bottom',
@@ -385,6 +518,11 @@ export enum BigValueTextMode {
 export type FieldTextAlignment = ('auto' | 'left' | 'right' | 'center');
 
 /**
+ * Controls the value alignment in the TimelineChart component
+ */
+export type TimelineValueAlignment = ('center' | 'left' | 'right');
+
+/**
  * TODO docs
  */
 export interface VizTextDisplayOptions {
@@ -456,6 +594,14 @@ export enum BarGaugeDisplayMode {
 }
 
 /**
+ * TODO docs
+ */
+export interface VizTooltipOptions {
+  mode: TooltipDisplayMode;
+  sort: SortOrder;
+}
+
+/**
  * Internally, this is the "type" of cell that's being displayed
  * in the table such as colored text, JSON, gauge, etc.
  * The color-background-solid, gradient-gauge, and lcd-gauge
@@ -485,12 +631,34 @@ export enum TableCellBackgroundDisplayMode {
 }
 
 /**
- * TODO docs
+ * Sort by field state
  */
 export interface TableSortByFieldState {
+  /**
+   * Flag used to indicate descending sort order
+   */
   desc?: boolean;
+  /**
+   * Sets the display name of the field to sort by
+   */
   displayName: string;
 }
+
+/**
+ * Footer options
+ */
+export interface TableFooterOptions {
+  countRows?: boolean;
+  enablePagination?: boolean;
+  fields?: Array<string>;
+  reducer: Array<string>;
+  show: boolean;
+}
+
+export const defaultTableFooterOptions: Partial<TableFooterOptions> = {
+  fields: [],
+  reducer: [],
+};
 
 /**
  * Auto mode table cell options
@@ -552,13 +720,56 @@ export type TimeZoneUtc = 'utc';
  */
 export type TimeZoneBrowser = 'browser';
 
-/**
- * TODO docs
- */
-export interface VizTooltipOptions {
-  mode: TooltipDisplayMode;
-  sort: SortOrder;
+export interface DataSourceRef {
+  /**
+   * The plugin type-id
+   */
+  type?: string;
+  /**
+   * Specific datasource instance
+   */
+  uid?: string;
 }
+
+export interface TextDimensionConfig extends BaseDimensionConfig {
+  mode: TextDimensionMode;
+}
+
+export interface FrameGeometrySource {
+  /**
+   * Path to Gazetteer
+   */
+  gazetteer?: string;
+  /**
+   * Field mappings
+   */
+  geohash?: string;
+  latitude?: string;
+  longitude?: string;
+  lookup?: string;
+  mode: FrameGeometrySourceMode;
+  wkt?: string;
+}
+
+export interface HeatmapCalculationOptions {
+  /**
+   * The number of buckets to use for the xAxis in the heatmap
+   */
+  xBuckets?: HeatmapCalculationBucketConfig;
+  /**
+   * The number of buckets to use for the yAxis in the heatmap
+   */
+  yBuckets?: HeatmapCalculationBucketConfig;
+}
+
+export enum LogsDedupStrategy {
+  exact = 'exact',
+  none = 'none',
+  numbers = 'numbers',
+  signature = 'signature',
+}
+
+export interface Labels {}
 
 /**
  * Field options for each field within a table (e.g 10, "The String", 64.20, etc.)

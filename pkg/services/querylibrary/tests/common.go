@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -12,7 +14,6 @@ import (
 	saTests "github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/stretchr/testify/require"
 )
 
 func createServiceAccountAdminToken(t *testing.T, name string, env *server.TestEnv) (string, *user.SignedInUser) {
@@ -23,7 +24,6 @@ func createServiceAccountAdminToken(t *testing.T, name string, env *server.TestE
 		Role:             string(org.RoleAdmin),
 		Login:            name,
 		IsServiceAccount: true,
-		OrgID:            1,
 	})
 
 	keyGen, err := apikeygenprefix.New(saAPI.ServiceID)

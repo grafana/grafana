@@ -7,9 +7,8 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/prometheus/common/model"
-
 	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/promql"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -174,6 +173,12 @@ type Failure ResponseDetails
 // swagger:model
 type ResponseDetails struct {
 	Msg string `json:"msg"`
+}
+
+// swagger:parameters BacktestConfig
+type BacktestConfigRequest struct {
+	// in:body
+	Body BacktestConfig
 }
 
 // swagger:model

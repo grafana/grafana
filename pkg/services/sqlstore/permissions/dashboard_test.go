@@ -6,9 +6,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -16,8 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestIntegration_DashboardPermissionFilter(t *testing.T) {
@@ -28,7 +28,7 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 	type testCase struct {
 		desc           string
 		queryType      string
-		permission     models.PermissionType
+		permission     dashboards.PermissionType
 		permissions    []accesscontrol.Permission
 		expectedResult int
 	}
@@ -36,7 +36,7 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 	tests := []testCase{
 		{
 			desc:       "Should be able to view all dashboards with wildcard scope",
-			permission: models.PERMISSION_VIEW,
+			permission: dashboards.PERMISSION_VIEW,
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeDashboardsAll},
 			},
@@ -44,7 +44,7 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 		},
 		{
 			desc:       "Should be able to view all dashboards with folder wildcard scope",
-			permission: models.PERMISSION_VIEW,
+			permission: dashboards.PERMISSION_VIEW,
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionDashboardsRead, Scope: dashboards.ScopeFoldersAll},
 			},
@@ -52,7 +52,7 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 		},
 		{
 			desc:       "Should be able to view a subset of dashboards with dashboard scopes",
-			permission: models.PERMISSION_VIEW,
+			permission: dashboards.PERMISSION_VIEW,
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:110"},
 				{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:40"},
@@ -65,7 +65,7 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 		},
 		{
 			desc:       "Should be able to view a subset of dashboards with dashboard action and folder scope",
-			permission: models.PERMISSION_VIEW,
+			permission: dashboards.PERMISSION_VIEW,
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:8"},
 				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:10"},
@@ -74,7 +74,7 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 		},
 		{
 			desc:       "Should be able to view all folders with folder wildcard",
-			permission: models.PERMISSION_VIEW,
+			permission: dashboards.PERMISSION_VIEW,
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:*"},
 			},
@@ -82,7 +82,7 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 		},
 		{
 			desc:       "Should be able to view a subset folders",
-			permission: models.PERMISSION_VIEW,
+			permission: dashboards.PERMISSION_VIEW,
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:3"},
 				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:6"},
@@ -92,7 +92,7 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 		},
 		{
 			desc:       "Should return folders and dashboard with 'edit' permission",
-			permission: models.PERMISSION_EDIT,
+			permission: dashboards.PERMISSION_EDIT,
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:3"},
 				{Action: dashboards.ActionDashboardsCreate, Scope: "folders:uid:3"},
@@ -103,7 +103,7 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 		},
 		{
 			desc:       "Should return folders that users can read alerts from",
-			permission: models.PERMISSION_VIEW,
+			permission: dashboards.PERMISSION_VIEW,
 			queryType:  searchstore.TypeAlertFolder,
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:3"},
@@ -115,7 +115,7 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 		},
 		{
 			desc:       "Should return folders that users can read alerts when user has read wildcard",
-			permission: models.PERMISSION_VIEW,
+			permission: dashboards.PERMISSION_VIEW,
 			queryType:  searchstore.TypeAlertFolder,
 			permissions: []accesscontrol.Permission{
 				{Action: dashboards.ActionFoldersRead, Scope: "*"},

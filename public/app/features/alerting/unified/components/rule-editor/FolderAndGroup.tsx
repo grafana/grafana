@@ -1,17 +1,17 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { AsyncSelect, Field, InputControl, Label, useStyles2, LoadingPlaceholder } from '@grafana/ui';
+import { AsyncSelect, Field, InputControl, Label, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { FolderPickerFilter } from 'app/core/components/Select/FolderPicker';
 import { contextSrv } from 'app/core/core';
 import { DashboardSearchHit } from 'app/features/search/types';
 import { AccessControlAction, useDispatch } from 'app/types';
-import { RulerRuleDTO, RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
+import { useCombinedRuleNamespaces } from '../../hooks/useCombinedRuleNamespaces';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { fetchRulerRulesIfNotFetchedYet } from '../../state/actions';
 import { RuleForm, RuleFormValues } from '../../types/rule-form';
@@ -19,56 +19,35 @@ import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { isGrafanaRulerRule } from '../../utils/rules';
 import { InfoIcon } from '../InfoIcon';
 
-import { getIntervalForGroup } from './GrafanaEvaluationBehavior';
+import { MINUTE } from './AlertRuleForm';
 import { containsSlashes, Folder, RuleFolderPicker } from './RuleFolderPicker';
 import { checkForPathSeparator } from './util';
 
 export const SLICE_GROUP_RESULTS_TO = 1000;
 
-const useGetGroups = (groupfoldersForGrafana: RulerRulesConfigDTO | null | undefined, folderName: string) => {
-  const groupOptions = useMemo(() => {
-    const groupsForFolderResult: Array<RulerRuleGroupDTO<RulerRuleDTO>> = groupfoldersForGrafana
-      ? groupfoldersForGrafana[folderName] ?? []
-      : [];
-
-    const folderGroups = groupsForFolderResult.map((group) => ({
-      name: group.name,
-      provisioned: group.rules.some((rule) => isGrafanaRulerRule(rule) && Boolean(rule.grafana_alert.provenance)),
-    }));
-
-    return folderGroups.filter((group) => !group.provisioned).map((group) => group.name);
-  }, [groupfoldersForGrafana, folderName]);
-
-  return groupOptions;
-};
-
-function mapGroupsToOptions(
-  groupsForFolder: RulerRulesConfigDTO | null | undefined,
-  groups: string[],
-  folderTitle: string
-): Array<SelectableValue<string>> {
-  return groups.map((group) => ({
-    label: group,
-    value: group,
-    description: `${getIntervalForGroup(groupsForFolder, group, folderTitle)}`,
-  }));
-}
 interface FolderAndGroupProps {
   initialFolder: RuleForm | null;
 }
 
 export const useGetGroupOptionsFromFolder = (folderTitle: string) => {
   const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
-
   const groupfoldersForGrafana = rulerRuleRequests[GRAFANA_RULES_SOURCE_NAME];
 
-  const groupsForFolder = groupfoldersForGrafana?.result;
+  const grafanaFolders = useCombinedRuleNamespaces(GRAFANA_RULES_SOURCE_NAME);
+  const folderGroups = grafanaFolders.find((f) => f.name === folderTitle)?.groups ?? [];
 
-  const groupOptions: Array<SelectableValue<string>> = mapGroupsToOptions(
-    groupsForFolder,
-    useGetGroups(groupfoldersForGrafana?.result, folderTitle),
-    folderTitle
-  );
+  const nonProvisionedGroups = folderGroups.filter((g) => {
+    return g.rules.every(
+      (r) => isGrafanaRulerRule(r.rulerRule) && Boolean(r.rulerRule.grafana_alert.provenance) === false
+    );
+  });
+
+  const groupOptions = nonProvisionedGroups.map<SelectableValue<string>>((group) => ({
+    label: group.name,
+    value: group.name,
+    description: group.interval ?? MINUTE,
+  }));
+
   return { groupOptions, loading: groupfoldersForGrafana?.loading };
 };
 
@@ -235,6 +214,7 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
                 value={selectedGroup}
                 allowCustomValue
                 formatCreateLabel={(_) => '+ Add new '}
+                noOptionsMessage="Start typing to create evaluation group"
               />
             )
           }

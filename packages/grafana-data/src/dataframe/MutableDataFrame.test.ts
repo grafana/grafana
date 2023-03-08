@@ -60,7 +60,7 @@ describe('Apending DataFrame', () => {
 
     // Make sure length survives a spread operator
     const keys = Object.keys(frame);
-    const copy = { ...frame } as any;
+    const copy = { ...frame } as MutableDataFrame;
     expect(keys).toContain('length');
     expect(copy.length).toEqual(frame.length);
   });

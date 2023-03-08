@@ -30,17 +30,19 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
 
     return (
       <label className={cx(styles.wrapper, className)}>
-        <input
-          type="checkbox"
-          className={styles.input}
-          checked={value}
-          disabled={disabled}
-          onChange={handleOnChange}
-          value={htmlValue}
-          {...inputProps}
-          ref={ref}
-        />
-        <span className={styles.checkmark} />
+        <div className={styles.checkboxWrapper}>
+          <input
+            type="checkbox"
+            className={styles.input}
+            checked={value}
+            disabled={disabled}
+            onChange={handleOnChange}
+            value={htmlValue}
+            {...inputProps}
+            ref={ref}
+          />
+          <span className={styles.checkmark} />
+        </div>
         {label && <span className={styles.label}>{label}</span>}
         {description && <span className={styles.description}>{description}</span>}
       </label>
@@ -55,9 +57,12 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
 
   return {
     wrapper: css`
+      display: grid;
+      align-items: center;
+      column-gap: ${theme.spacing(labelPadding)};
+      grid-template-columns: auto 1fr;
+      grid-template-rows: auto auto;
       position: relative;
-      vertical-align: middle;
-      font-size: 0;
     `,
     input: css`
       position: absolute;
@@ -118,6 +123,12 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
         }
       }
     `,
+    checkboxWrapper: css`
+      display: flex;
+      align-items: center;
+      grid-column-start: 1;
+      grid-row-start: 1;
+    `,
     checkmark: css`
       position: relative; /* Checkbox should be layered on top of the invisible input so it recieves :hover */
       z-index: 2;
@@ -136,20 +147,22 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
     label: cx(
       labelStyles.label,
       css`
+        grid-column-start: 2;
+        grid-row-start: 1;
         position: relative;
         z-index: 2;
-        padding-left: ${theme.spacing(labelPadding)};
-        white-space: nowrap;
         cursor: pointer;
-        position: relative;
-        top: -3px;
+        max-width: fit-content;
+        line-height: ${theme.typography.bodySmall.lineHeight};
+        margin-bottom: 0;
       `
     ),
     description: cx(
       labelStyles.description,
       css`
+        grid-column-start: 2;
+        grid-row-start: 2;
         line-height: ${theme.typography.bodySmall.lineHeight};
-        padding-left: ${theme.spacing(checkboxSize + labelPadding)};
         margin-top: 0; /* The margin effectively comes from the top: -2px on the label above it */
       `
     ),

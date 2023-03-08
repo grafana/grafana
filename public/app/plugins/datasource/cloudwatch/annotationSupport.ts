@@ -1,6 +1,7 @@
 import { AnnotationQuery } from '@grafana/data';
 
 import { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
+import { DEFAULT_ANNOTATIONS_QUERY } from './defaultQueries';
 import { isCloudWatchAnnotation } from './guards';
 import { CloudWatchAnnotationQuery, CloudWatchQuery, LegacyAnnotationQuery } from './types';
 
@@ -24,8 +25,8 @@ export const CloudWatchAnnotationSupport = {
       target: {
         ...query.target,
         ...query,
-        statistic: query.statistic || 'Average',
-        region: query.region || 'default',
+        statistic: query.statistic || DEFAULT_ANNOTATIONS_QUERY.statistic,
+        region: query.region || DEFAULT_ANNOTATIONS_QUERY.region,
         queryMode: 'Annotations',
         refId: query.refId || 'annotationQuery',
       },
@@ -55,6 +56,9 @@ export const CloudWatchAnnotationSupport = {
     }
 
     return undefined;
+  },
+  getDefaultQuery() {
+    return DEFAULT_ANNOTATIONS_QUERY;
   },
   QueryEditor: AnnotationQueryEditor,
 };

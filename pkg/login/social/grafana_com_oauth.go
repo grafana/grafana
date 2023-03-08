@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"net/http"
 
+	"golang.org/x/oauth2"
+
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/org"
-
-	"golang.org/x/oauth2"
 )
 
 type SocialGrafanaCom struct {

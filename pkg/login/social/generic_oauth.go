@@ -143,14 +143,19 @@ func (s *SocialGenericOAuth) UserInfo(client *http.Client, token *oauth2.Token) 
 		}
 
 		if userInfo.Role == "" {
-			role, grafanaAdmin := s.extractRoleAndAdmin(data.rawJSON, []string{}, true)
-			if role != "" {
-				s.log.Debug("Setting user info role from extracted role")
+			if !s.skipOrgRoleSync {
+				role, grafanaAdmin := s.extractRoleAndAdmin(data.rawJSON, []string{}, true)
+				if role != "" {
+					s.log.Debug("Setting user info role from extracted role")
 
-				userInfo.Role = role
-				if s.allowAssignGrafanaAdmin {
-					userInfo.IsGrafanaAdmin = &grafanaAdmin
+					userInfo.Role = role
+					if s.allowAssignGrafanaAdmin {
+						userInfo.IsGrafanaAdmin = &grafanaAdmin
+					}
 				}
+			}
+			if s.allowAssignGrafanaAdmin && s.skipOrgRoleSync {
+				s.log.Warn("allowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 			}
 		}
 

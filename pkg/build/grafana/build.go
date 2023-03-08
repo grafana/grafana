@@ -99,7 +99,7 @@ func BuildGrafanaBinary(ctx context.Context, name, version string, args BuildArg
 
 	descriptor := GrafanaDescriptor(opts)
 
-	log.Printf("Building %q for %s\nwith env: %v", binary, descriptor, opts.Env())
+	log.Printf("Building %q for %s", binary, descriptor)
 
 	opts.LdFlags = append(args.LdFlags, GrafanaLDFlags(version, revision)...)
 

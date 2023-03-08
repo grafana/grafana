@@ -1,18 +1,18 @@
 package notifier
 
 import (
-	"github.com/grafana/alerting/alerting"
+	alertingNotify "github.com/grafana/alerting/notify"
 )
 
-func (am *Alertmanager) ListSilences(filter []string) (alerting.GettableSilences, error) {
+func (am *Alertmanager) ListSilences(filter []string) (alertingNotify.GettableSilences, error) {
 	return am.Base.ListSilences(filter)
 }
 
-func (am *Alertmanager) GetSilence(silenceID string) (alerting.GettableSilence, error) {
+func (am *Alertmanager) GetSilence(silenceID string) (alertingNotify.GettableSilence, error) {
 	return am.Base.GetSilence(silenceID)
 }
 
-func (am *Alertmanager) CreateSilence(ps *alerting.PostableSilence) (string, error) {
+func (am *Alertmanager) CreateSilence(ps *alertingNotify.PostableSilence) (string, error) {
 	return am.Base.CreateSilence(ps)
 }
 

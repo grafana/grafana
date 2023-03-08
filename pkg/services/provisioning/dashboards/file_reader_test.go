@@ -512,6 +512,6 @@ func (ffi FakeFileInfo) Sys() interface{} {
 
 type fakeDashboardStore struct{}
 
-func (fds *fakeDashboardStore) GetDashboard(_ context.Context, _ *dashboards.GetDashboardQuery) error {
-	return dashboards.ErrDashboardNotFound
+func (fds *fakeDashboardStore) GetDashboard(_ context.Context, _ *dashboards.GetDashboardQuery) (*dashboards.Dashboard, error) {
+	return nil, dashboards.ErrDashboardNotFound
 }

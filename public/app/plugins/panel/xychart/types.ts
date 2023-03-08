@@ -1,7 +1,14 @@
 import { DataFrame, Field, FieldColorMode } from '@grafana/data';
-import { LineStyle, VisibilityMode } from '@grafana/schema';
+import { LineStyle, ScaleDimensionConfig, VisibilityMode } from '@grafana/schema';
 import { VizLegendItem } from '@grafana/ui';
-import { ScaleDimensionConfig } from 'app/features/dimensions';
+import { DimensionSupplier } from 'app/features/dimensions';
+
+import {
+  ScatterFieldConfig as GeneratedScatterFieldConfig,
+  ScatterSeriesConfig as GeneratedScatterSeriesConfig,
+  defaultScatterFieldConfig as generatedDefaultScatterFieldConfig,
+  PanelOptions as GeneratedPanelOptions,
+} from './panelcfg.gen';
 
 /**
  * @internal
@@ -17,11 +24,18 @@ export interface ScatterHoverEvent {
 
 export type ScatterHoverCallback = (evt?: ScatterHoverEvent) => void;
 
-export interface LegendInfo {
-  color: CanvasRenderingContext2D['strokeStyle'];
-  text: string;
-  symbol: string;
-  openEditor?: (evt: any) => void;
+export interface ScatterFieldConfig extends GeneratedScatterFieldConfig {
+  pointSymbol?: DimensionSupplier<string>;
+}
+
+export const defaultScatterFieldConfig: Partial<ScatterFieldConfig> = {
+  ...generatedDefaultScatterFieldConfig,
+};
+
+export interface ScatterSeriesConfig extends ScatterFieldConfig, GeneratedScatterSeriesConfig {}
+
+export interface PanelOptions extends Omit<GeneratedPanelOptions, 'series'> {
+  series: ScatterSeriesConfig[];
 }
 
 // Using field where we will need formatting/scale/axis info
@@ -58,3 +72,5 @@ export interface ScatterSeries {
     };
   };
 }
+
+export { ScatterShow, SeriesMapping, XYDimensionConfig } from './panelcfg.gen';

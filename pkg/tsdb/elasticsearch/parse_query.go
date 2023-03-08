@@ -2,6 +2,7 @@ package elasticsearch
 
 import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
@@ -46,8 +47,9 @@ func parseQuery(tsdbQuery []backend.DataQuery) ([]*Query, error) {
 
 func parseBucketAggs(model *simplejson.Json) ([]*BucketAgg, error) {
 	var err error
-	var result []*BucketAgg
-	for _, t := range model.Get("bucketAggs").MustArray() {
+	bucketAggs := model.Get("bucketAggs").MustArray()
+	result := make([]*BucketAgg, 0, len(bucketAggs))
+	for _, t := range bucketAggs {
 		aggJSON := simplejson.NewFromAny(t)
 		agg := &BucketAgg{}
 
@@ -71,8 +73,9 @@ func parseBucketAggs(model *simplejson.Json) ([]*BucketAgg, error) {
 
 func parseMetrics(model *simplejson.Json) ([]*MetricAgg, error) {
 	var err error
-	var result []*MetricAgg
-	for _, t := range model.Get("metrics").MustArray() {
+	metrics := model.Get("metrics").MustArray()
+	result := make([]*MetricAgg, 0, len(metrics))
+	for _, t := range metrics {
 		metricJSON := simplejson.NewFromAny(t)
 		metric := &MetricAgg{}
 

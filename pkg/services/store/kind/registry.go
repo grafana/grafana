@@ -5,8 +5,8 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/services/store/kind/dataframe"
 	"github.com/grafana/grafana/pkg/services/store/kind/folder"
@@ -14,52 +14,57 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/kind/jsonobj"
 	"github.com/grafana/grafana/pkg/services/store/kind/playlist"
 	"github.com/grafana/grafana/pkg/services/store/kind/png"
+	"github.com/grafana/grafana/pkg/services/store/kind/preferences"
 	"github.com/grafana/grafana/pkg/services/store/kind/snapshot"
 	"github.com/grafana/grafana/pkg/services/store/kind/svg"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type KindRegistry interface {
-	Register(info models.EntityKindInfo, builder models.EntitySummaryBuilder) error
-	GetSummaryBuilder(kind string) models.EntitySummaryBuilder
-	GetInfo(kind string) (models.EntityKindInfo, error)
-	GetFromExtension(suffix string) (models.EntityKindInfo, error)
-	GetKinds() []models.EntityKindInfo
+	Register(info entity.EntityKindInfo, builder entity.EntitySummaryBuilder) error
+	GetSummaryBuilder(kind string) entity.EntitySummaryBuilder
+	GetInfo(kind string) (entity.EntityKindInfo, error)
+	GetFromExtension(suffix string) (entity.EntityKindInfo, error)
+	GetKinds() []entity.EntityKindInfo
 }
 
 func NewKindRegistry() KindRegistry {
 	kinds := make(map[string]*kindValues)
-	kinds[models.StandardKindPlaylist] = &kindValues{
+	kinds[entity.StandardKindPlaylist] = &kindValues{
 		info:    playlist.GetEntityKindInfo(),
 		builder: playlist.GetEntitySummaryBuilder(),
 	}
-	kinds[models.StandardKindDashboard] = &kindValues{
+	kinds[entity.StandardKindDashboard] = &kindValues{
 		info:    dashboard.GetEntityKindInfo(),
 		builder: dashboard.GetEntitySummaryBuilder(),
 	}
-	kinds[models.StandardKindSnapshot] = &kindValues{
+	kinds[entity.StandardKindSnapshot] = &kindValues{
 		info:    snapshot.GetEntityKindInfo(),
 		builder: snapshot.GetEntitySummaryBuilder(),
 	}
-	kinds[models.StandardKindFolder] = &kindValues{
+	kinds[entity.StandardKindFolder] = &kindValues{
 		info:    folder.GetEntityKindInfo(),
 		builder: folder.GetEntitySummaryBuilder(),
 	}
-	kinds[models.StandardKindPNG] = &kindValues{
+	kinds[entity.StandardKindPNG] = &kindValues{
 		info:    png.GetEntityKindInfo(),
 		builder: png.GetEntitySummaryBuilder(),
 	}
-	kinds[models.StandardKindGeoJSON] = &kindValues{
+	kinds[entity.StandardKindGeoJSON] = &kindValues{
 		info:    geojson.GetEntityKindInfo(),
 		builder: geojson.GetEntitySummaryBuilder(),
 	}
-	kinds[models.StandardKindDataFrame] = &kindValues{
+	kinds[entity.StandardKindDataFrame] = &kindValues{
 		info:    dataframe.GetEntityKindInfo(),
 		builder: dataframe.GetEntitySummaryBuilder(),
 	}
-	kinds[models.StandardKindJSONObj] = &kindValues{
+	kinds[entity.StandardKindJSONObj] = &kindValues{
 		info:    jsonobj.GetEntityKindInfo(),
 		builder: jsonobj.GetEntitySummaryBuilder(),
+	}
+	kinds[entity.StandardKindPreferences] = &kindValues{
+		info:    preferences.GetEntityKindInfo(),
+		builder: preferences.GetEntitySummaryBuilder(),
 	}
 
 	// create a registry
@@ -86,20 +91,20 @@ func ProvideService(cfg *setting.Cfg, renderer rendering.Service) KindRegistry {
 }
 
 type kindValues struct {
-	info    models.EntityKindInfo
-	builder models.EntitySummaryBuilder
+	info    entity.EntityKindInfo
+	builder entity.EntitySummaryBuilder
 }
 
 type registry struct {
 	mutex  sync.RWMutex
 	kinds  map[string]*kindValues
-	info   []models.EntityKindInfo
-	suffix map[string]models.EntityKindInfo
+	info   []entity.EntityKindInfo
+	suffix map[string]entity.EntityKindInfo
 }
 
 func (r *registry) updateInfoArray() {
-	suffix := make(map[string]models.EntityKindInfo)
-	info := make([]models.EntityKindInfo, 0, len(r.kinds))
+	suffix := make(map[string]entity.EntityKindInfo)
+	info := make([]entity.EntityKindInfo, 0, len(r.kinds))
 	for _, v := range r.kinds {
 		info = append(info, v.info)
 		if v.info.FileExtension != "" {
@@ -113,7 +118,7 @@ func (r *registry) updateInfoArray() {
 	r.suffix = suffix
 }
 
-func (r *registry) Register(info models.EntityKindInfo, builder models.EntitySummaryBuilder) error {
+func (r *registry) Register(info entity.EntityKindInfo, builder entity.EntitySummaryBuilder) error {
 	if info.ID == "" || builder == nil {
 		return fmt.Errorf("invalid kind")
 	}
@@ -134,7 +139,7 @@ func (r *registry) Register(info models.EntityKindInfo, builder models.EntitySum
 }
 
 // GetSummaryBuilder returns a builder or nil if not found
-func (r *registry) GetSummaryBuilder(kind string) models.EntitySummaryBuilder {
+func (r *registry) GetSummaryBuilder(kind string) entity.EntitySummaryBuilder {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
 
@@ -146,7 +151,7 @@ func (r *registry) GetSummaryBuilder(kind string) models.EntitySummaryBuilder {
 }
 
 // GetInfo returns the registered info
-func (r *registry) GetInfo(kind string) (models.EntityKindInfo, error) {
+func (r *registry) GetInfo(kind string) (entity.EntityKindInfo, error) {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
 
@@ -154,11 +159,11 @@ func (r *registry) GetInfo(kind string) (models.EntityKindInfo, error) {
 	if ok {
 		return v.info, nil
 	}
-	return models.EntityKindInfo{}, fmt.Errorf("not found")
+	return entity.EntityKindInfo{}, fmt.Errorf("not found")
 }
 
 // GetInfo returns the registered info
-func (r *registry) GetFromExtension(suffix string) (models.EntityKindInfo, error) {
+func (r *registry) GetFromExtension(suffix string) (entity.EntityKindInfo, error) {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
 
@@ -166,11 +171,11 @@ func (r *registry) GetFromExtension(suffix string) (models.EntityKindInfo, error
 	if ok {
 		return v, nil
 	}
-	return models.EntityKindInfo{}, fmt.Errorf("not found")
+	return entity.EntityKindInfo{}, fmt.Errorf("not found")
 }
 
 // GetSummaryBuilder returns a builder or nil if not found
-func (r *registry) GetKinds() []models.EntityKindInfo {
+func (r *registry) GetKinds() []entity.EntityKindInfo {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
 

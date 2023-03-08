@@ -33,6 +33,7 @@ import {
   setQueryRunnerFactory,
   setRunRequest,
   setPluginImportUtils,
+  setPluginsExtensionRegistry,
 } from '@grafana/runtime';
 import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
 import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
@@ -69,6 +70,7 @@ import { getTimeSrv } from './features/dashboard/services/TimeSrv';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
+import { createPluginExtensionRegistry } from './features/plugins/extensions/registryFactory';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
 import { preloadPlugins } from './features/plugins/pluginPreloader';
 import { QueryRunner } from './features/query/state/QueryRunner';
@@ -121,6 +123,10 @@ export class GrafanaApp {
       setPanelDataErrorView(PanelDataErrorView);
       setLocationSrv(locationService);
       setTimeZoneResolver(() => config.bootData.user.timezone);
+
+      // We must wait for translations to load because some preloaded store state requires translating
+      await initI18nPromise;
+
       // Important that extension reducers are initialized before store
       addExtensionReducers();
       configureStore();
@@ -172,12 +178,12 @@ export class GrafanaApp {
       const modalManager = new ModalManager();
       modalManager.init();
 
-      await Promise.all([
-        initI18nPromise,
+      // Preload selected app plugins
+      const preloadResults = await preloadPlugins(config.apps);
 
-        // Preload selected app plugins
-        await preloadPlugins(config.pluginsToPreload),
-      ]);
+      // Create extension registry out of the preloaded plugins
+      const extensionsRegistry = createPluginExtensionRegistry(preloadResults);
+      setPluginsExtensionRegistry(extensionsRegistry);
 
       // initialize chrome service
       const queryParams = locationService.getSearchObject();

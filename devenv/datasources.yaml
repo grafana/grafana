@@ -76,11 +76,12 @@ datasources:
   - name: gdev-influxdb1-influxql
     type: influxdb
     access: proxy
-    database: site
     user: grafana
     url: http://localhost:8087
     secureJsonData:
       password: grafana
+    jsonData:
+      dbName: site
 
   - name: gdev-influxdb-flux
     type: influxdb
@@ -98,9 +99,9 @@ datasources:
   - name: gdev-influxdb-influxql
     type: influxdb
     access: proxy
-    database: mybucket
     url: http://localhost:8086
     jsonData:
+      dbName: mybucket
       httpHeaderName1: "Authorization"
     secureJsonData:
       httpHeaderValue1: "Token mytoken"

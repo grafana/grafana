@@ -9,9 +9,9 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
+	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -135,7 +135,7 @@ func importLibraryPanelsRecursively(c context.Context, service libraryelements.S
 			continue
 		}
 
-		if errors.Is(err, libraryelements.ErrLibraryElementNotFound) {
+		if errors.Is(err, model.ErrLibraryElementNotFound) {
 			name := libraryPanel.Get("name").MustString()
 			if len(name) == 0 {
 				return errLibraryPanelHeaderNameMissing
@@ -151,11 +151,11 @@ func importLibraryPanelsRecursively(c context.Context, service libraryelements.S
 				return err
 			}
 
-			var cmd = libraryelements.CreateLibraryElementCommand{
+			var cmd = model.CreateLibraryElementCommand{
 				FolderID: folderID,
 				Name:     name,
 				Model:    Model,
-				Kind:     int64(models.PanelElement),
+				Kind:     int64(model.PanelElement),
 				UID:      UID,
 			}
 			_, err = service.CreateElement(c, signedInUser, cmd)

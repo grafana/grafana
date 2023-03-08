@@ -1,3 +1,5 @@
+import { Subscription } from 'rxjs';
+
 import { toDataFrame, toDataFrameDTO } from '../../dataframe';
 import { DataFrame, DataTransformerConfig, FieldDTO, FieldType } from '../../types';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
@@ -6,9 +8,71 @@ import { transformDataFrame } from '../transformDataFrame';
 import { DataTransformerID } from './ids';
 import { LabelsToFieldsMode, LabelsToFieldsOptions, labelsToFieldsTransformer } from './labelsToFields';
 
+function labelsToFieldTransform(source: DataFrame[]): Promise<DataFrame[]> {
+  const cfg: DataTransformerConfig<LabelsToFieldsOptions> = {
+    id: DataTransformerID.labelsToFields,
+    options: {
+      mode: LabelsToFieldsMode.Rows,
+    },
+  };
+
+  const observable = transformDataFrame([cfg], source);
+
+  return new Promise((resolve, reject) => {
+    const subscription = new Subscription();
+
+    subscription.add(
+      observable.subscribe({
+        next: (value) => {
+          subscription.unsubscribe();
+          resolve(JSON.parse(JSON.stringify(value)));
+        },
+        error: (err) => {
+          subscription.unsubscribe();
+          reject(err);
+        },
+      })
+    );
+  });
+}
+
 describe('Labels as Columns', () => {
   beforeAll(() => {
     mockTransformationsRegistry([labelsToFieldsTransformer]);
+  });
+
+  it('transform keep the refId of dataFrames', async () => {
+    const input = [
+      toDataFrame({
+        refId: 'the-ref-id-A',
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, 2000] },
+          { name: 'Value', type: FieldType.number, values: [1, 2], labels: { labelA: 'valueA', labelB: 'valueB' } },
+        ],
+      }),
+      toDataFrame({
+        refId: 'the-ref-id-B',
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, 2000] },
+          { name: 'Value', type: FieldType.number, values: [1, 2], labels: { labelA: 'valueA', labelB: 'valueB' } },
+        ],
+      }),
+    ];
+
+    const output = await labelsToFieldTransform(input);
+
+    const expectedOutput = [
+      {
+        refId: 'the-ref-id-A',
+      },
+      {
+        refId: 'the-ref-id-B',
+      },
+    ];
+
+    for (let i = 0; i < output.length; i++) {
+      expect(output[i]).toMatchObject(expectedOutput[i]);
+    }
   });
 
   it('data frame with two labels', async () => {
@@ -391,7 +455,7 @@ describe('Labels as Columns', () => {
 });
 
 function toSimpleObject(frame: DataFrame) {
-  const obj: any = {};
+  const obj: Record<string, unknown> = {};
   for (const field of frame.fields) {
     obj[field.name] = field.values.toArray();
   }

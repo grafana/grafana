@@ -2,6 +2,7 @@ package rendering
 
 import (
 	"context"
+	"encoding/gob"
 	"errors"
 	"fmt"
 	"math"
@@ -22,10 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
-
-func init() {
-	remotecache.Register(&RenderUser{})
-}
 
 var _ Service = (*RenderingService)(nil)
 
@@ -125,6 +122,9 @@ func ProvideService(cfg *setting.Cfg, features *featuremgmt.FeatureManager, remo
 		domain:                domain,
 		sanitizeURL:           sanitizeURL,
 	}
+
+	gob.Register(&RenderUser{})
+
 	return s, nil
 }
 

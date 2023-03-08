@@ -4,10 +4,11 @@ import (
 	"os"
 	"runtime"
 
+	"github.com/urfave/cli/v2"
+
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
-	"github.com/urfave/cli/v2"
 )
 
 // RunCLI is the entrypoint for the grafana-cli command. It returns the exit code for the grafana-cli program.

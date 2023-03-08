@@ -9,7 +9,7 @@ import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOp
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { EmptyQueryWrapper, QueryWrapper } from './QueryWrapper';
+import { AlertQueryOptions, EmptyQueryWrapper, QueryWrapper } from './QueryWrapper';
 import { errorFromSeries, getThresholdsForQueries } from './util';
 
 interface Props {
@@ -46,6 +46,21 @@ export class QueryRows extends PureComponent<Props> {
         return {
           ...item,
           relativeTimeRange: timeRange,
+        };
+      })
+    );
+  };
+
+  onChangeQueryOptions = (options: AlertQueryOptions, index: number) => {
+    const { queries, onQueriesChange } = this.props;
+    onQueriesChange(
+      queries.map((item, itemIndex) => {
+        if (itemIndex !== index) {
+          return item;
+        }
+        return {
+          ...item,
+          model: { ...item.model, maxDataPoints: options.maxDataPoints },
         };
       })
     );
@@ -170,6 +185,7 @@ export class QueryRows extends PureComponent<Props> {
                       onChangeDataSource={this.onChangeDataSource}
                       onDuplicateQuery={this.props.onDuplicateQuery}
                       onChangeTimeRange={this.onChangeTimeRange}
+                      onChangeQueryOptions={this.onChangeQueryOptions}
                       thresholds={thresholdByRefId[query.refId]?.config}
                       thresholdsType={thresholdByRefId[query.refId]?.mode}
                       onRunQueries={this.props.onRunQueries}

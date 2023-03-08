@@ -12,10 +12,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 )

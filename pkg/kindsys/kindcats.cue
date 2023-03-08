@@ -45,7 +45,7 @@ _sharedKind: {
 	// In addition to lowercase normalization, dashes are transformed to underscores.
 	machineName: strings.ToLower(strings.Replace(name, "-", "_", -1))
 
-	// pluralName is the pluralized form of name.	Defaults to name + "s".
+	// pluralName is the pluralized form of name. Defaults to name + "s".
 	pluralName: =~"^([A-Z][a-zA-Z0-9-]{0,61}[a-zA-Z])$" | *(name + "s")
 
 	// pluralMachineName is the pluralized form of [machineName]. The same case
@@ -57,8 +57,8 @@ _sharedKind: {
 	// grouped lineage, each top-level field in the schema specifies a discrete
 	// object that is expected to exist in the wild
 	//
-	// This field is set at the framework level, and cannot be in the declaration of
-	// any individual kind.
+	// This value of this field is set by the kindsys framework. It cannot be changed
+	// in the definition of any individual kind.
 	//
 	// This is likely to eventually become a first-class property in Thema:
 	// https://github.com/grafana/thema/issues/62
@@ -71,7 +71,7 @@ _sharedKind: {
 	// schema in lineage.
 	currentVersion: thema.#SyntacticVersion & (thema.#LatestVersion & {lin: lineage}).out
 
-	maturity: #Maturity
+	maturity: Maturity
 
 	// The kind system itself is not mature enough yet for any single
 	// kind to advance beyond "experimental"
@@ -79,16 +79,49 @@ _sharedKind: {
 	maturity: *"merged" | "experimental"
 }
 
-// Maturity indicates the how far a given kind declaration is in its initial
+// properties shared by all kinds that represent a complete object from root (i.e., not composable)
+_rootKind: {
+	// description is a brief narrative description of the nature and purpose of the kind.
+	// The contents of this field is shown to end users. Prefer clear, concise wording
+	// with minimal jargon.
+	description: nonEmptyString
+}
+
+// Maturity indicates the how far a given kind definition is in its initial
 // journey. Mature kinds still evolve, but with guarantees about compatibility.
-#Maturity: "merged" | "experimental" | "stable" | "mature"
+Maturity: "merged" | "experimental" | "stable" | "mature"
 
 // Core specifies the kind category for core-defined arbitrary types.
 // Familiar types and functional resources in Grafana, such as dashboards and
 // and datasources, are represented as core kinds.
 Core: S=close({
 	_sharedKind
+	_rootKind
 
 	lineage: { name: S.machineName }
 	lineageIsGroup: false
+
+	// crd contains properties specific to converting this kind to a Kubernetes CRD.
+	crd: {
+		// group is used as the CRD group name in the GVK.
+		group: "\(S.machineName).core.grafana.com"
+
+		// scope determines whether resources of this kind exist globally ("Cluster") or
+		// within Kubernetes namespaces.
+		scope: "Cluster" | *"Namespaced"
+
+		// dummySchema determines whether a dummy OpenAPI schema - where the schema is
+		// simply an empty, open object - should be generated for the kind.
+		//
+		// It is a goal that this option eventually be force dto false. Only set to
+		// true when Grafana's code generators produce OpenAPI that is rejected by
+		// Kubernetes' CRD validation.
+		dummySchema: bool | *false
+
+		// deepCopy determines whether a generic implementation of copying should be
+		// generated, or a passthrough call to a Go function.
+		//   deepCopy: *"generic" | "passthrough"
+	}
 })
+
+nonEmptyString: string & strings.MinRunes(1)

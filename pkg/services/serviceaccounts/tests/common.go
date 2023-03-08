@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 )
@@ -25,7 +26,6 @@ type TestUser struct {
 	Role             string
 	Login            string
 	IsServiceAccount bool
-	OrgID            int64
 }
 
 type TestApiKey struct {
@@ -46,15 +46,20 @@ func SetupUserServiceAccount(t *testing.T, sqlStore *sqlstore.SQLStore, testUser
 	quotaService := quotaimpl.ProvideService(sqlStore, sqlStore.Cfg)
 	orgService, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotaService)
 	require.NoError(t, err)
-	usrSvc, err := userimpl.ProvideService(sqlStore, orgService, sqlStore.Cfg, nil, nil, quotaService)
+	usrSvc, err := userimpl.ProvideService(sqlStore, orgService, sqlStore.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
 
-	u1, err := usrSvc.CreateUserForTests(context.Background(), &user.CreateUserCommand{
+	org, err := orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{
+		Name: "test org",
+	})
+	require.NoError(t, err)
+
+	u1, err := usrSvc.Create(context.Background(), &user.CreateUserCommand{
 		Login:            testUser.Login,
 		IsServiceAccount: testUser.IsServiceAccount,
 		DefaultOrgRole:   role,
 		Name:             testUser.Name,
-		OrgID:            testUser.OrgID,
+		OrgID:            org.ID,
 	})
 	require.NoError(t, err)
 	return u1
@@ -69,7 +74,7 @@ func SetupApiKey(t *testing.T, sqlStore *sqlstore.SQLStore, testKey TestApiKey) 
 	addKeyCmd := &apikey.AddCommand{
 		Name:             testKey.Name,
 		Role:             role,
-		OrgId:            testKey.OrgId,
+		OrgID:            testKey.OrgId,
 		ServiceAccountID: testKey.ServiceAccountID,
 	}
 
@@ -90,7 +95,7 @@ func SetupApiKey(t *testing.T, sqlStore *sqlstore.SQLStore, testKey TestApiKey) 
 			// Force setting expires to time before now to make key expired
 			var expires int64 = 1
 			key := apikey.APIKey{Expires: &expires}
-			rowsAffected, err := sess.ID(addKeyCmd.Result.Id).Update(&key)
+			rowsAffected, err := sess.ID(addKeyCmd.Result.ID).Update(&key)
 			require.Equal(t, int64(1), rowsAffected)
 			return err
 		})

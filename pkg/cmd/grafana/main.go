@@ -5,9 +5,10 @@ import (
 	"os"
 
 	"github.com/fatih/color"
+	"github.com/urfave/cli/v2"
+
 	gcli "github.com/grafana/grafana/pkg/cmd/grafana-cli/commands"
 	gsrv "github.com/grafana/grafana/pkg/cmd/grafana-server/commands"
-	"github.com/urfave/cli/v2"
 )
 
 // The following variables cannot be constants, since they can be overridden through the -X link flag

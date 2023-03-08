@@ -23,17 +23,17 @@ For an introduction to templating and template variables, refer to the [Templati
 
 ## Use query variables
 
-You can use variables of the type _Query_ to query Prometheus for a list of metrics, labels, or label values.
+Use variables of the type _Query_ to query Prometheus for a list of metrics, labels, or label values.
 
-You can use these Prometheus data source functions in the **Query** input field:
+Select a Prometheus data source query type and enter the required inputs:
 
-| Name                          | Description                                                             | Used API endpoints                |
-| ----------------------------- | ----------------------------------------------------------------------- | --------------------------------- |
-| `label_names()`               | Returns a list of label names.                                          | /api/v1/labels                    |
-| `label_values(label)`         | Returns a list of label values for the `label` in every metric.         | /api/v1/label/`label`/values      |
-| `label_values(metric, label)` | Returns a list of label values for the `label` in the specified metric. | /api/v1/series                    |
-| `metrics(metric)`             | Returns a list of metrics matching the specified `metric` regex.        | /api/v1/label/\_\_name\_\_/values |
-| `query_result(query)`         | Returns a list of Prometheus query result for the `query`.              | /api/v1/query                     |
+| Query Type     | Input(\* required)        | Description                                                                           | Used API endpoints                             |
+| -------------- | ------------------------- | ------------------------------------------------------------------------------------- | ---------------------------------------------- |
+| `Label names`  | none                      | Returns a list of all label names.                                                    | /api/v1/labels                                 |
+| `Label values` | `label`\*, `metric`       | Returns a list of label values for the `label` in all metrics or the optional metric. | /api/v1/label/`label`/values or /api/v1/series |
+| `Metrics`      | `metric`                  | Returns a list of metrics matching the specified `metric` regex.                      | /api/v1/label/\_\_name\_\_/values              |
+| `Query result` | `query`                   | Returns a list of Prometheus query result for the `query`.                            | /api/v1/query                                  |
+| `Series query` | `metric`, `label` or both | Returns a list of time series associated with the entered data.                       | /api/v1/series                                 |
 
 For details on _metric names_, _label names_, and _label values_, refer to the [Prometheus documentation](http://prometheus.io/docs/concepts/data_model/#metric-names-and-labels).
 
@@ -99,7 +99,7 @@ For details, refer to the [Grafana blog](/blog/2020/09/28/new-in-grafana-7.2-__r
 
 The Prometheus data source supports two variable syntaxes for use in the **Query** field:
 
-- `$<varname>`, for example `rate(http_requests_total{job=~"\$job"}[$_rate_interval])`, which is easier to read and write but does not allow you to use a variable in the middle of a word.
+- `$<varname>`, for example `rate(http_requests_total{job=~"$job"}[$_rate_interval])`, which is easier to read and write but does not allow you to use a variable in the middle of a word.
 - `[[varname]]`, for example `rate(http_requests_total{job=~"[[job]]"}[$_rate_interval])`
 
 If you've enabled the _Multi-value_ or _Include all value_ options, Grafana converts the labels from plain text to a regex-compatible string, which requires you to use `=~` instead of `=`.

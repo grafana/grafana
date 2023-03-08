@@ -6,13 +6,14 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+	"xorm.io/xorm"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmig "github.com/grafana/grafana/pkg/services/sqlstore/migrations/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/require"
-	"xorm.io/xorm"
 )
 
 type inheritanceTestCase struct {

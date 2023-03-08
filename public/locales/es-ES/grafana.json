@@ -18,6 +18,7 @@
     "section": {
       "actions": "",
       "dashboard-search-results": "",
+      "folder-search-results": "",
       "pages": "",
       "preferences": "",
       "recent-dashboards": ""
@@ -109,6 +110,13 @@
   },
   "folder-picker": {
     "loading": "Cargando carpetas..."
+  },
+  "grafana-ui": {
+    "segment-async": {
+      "error": "",
+      "loading": "",
+      "no-options": ""
+    }
   },
   "library-panel": {
     "add-modal": {
@@ -229,7 +237,6 @@
     "help/documentation": "Documentación",
     "help/keyboard-shortcuts": "Atajos de teclado",
     "help/support": "Asistencia",
-    "help/support-bundle": "Paquetes de apoyo",
     "home": {
       "title": "Inicio"
     },
@@ -251,6 +258,9 @@
     },
     "manage-dashboards": {
       "title": "Navegar"
+    },
+    "manage-folder": {
+      "subtitle": ""
     },
     "monitoring": {
       "subtitle": "Aplicaciones de supervisión e infraestructura",
@@ -288,11 +298,15 @@
       "title": "Preferencias"
     },
     "profile/switch-org": "Cambiar de organización",
+    "public": {
+      "title": ""
+    },
     "scenes": {
       "title": "Escenas"
     },
     "search": {
-      "placeholder": "Buscar Grafana"
+      "placeholder": "Buscar Grafana",
+      "placeholderCommandPalette": ""
     },
     "search-dashboards": {
       "title": "Buscar paneles de control"
@@ -342,6 +356,11 @@
   "navigation": {
     "kiosk": {
       "tv-alert": "Pulse ESC para salir del modo de quiosco"
+    },
+    "toolbar": {
+      "enable-kiosk": "",
+      "toggle-menu": "",
+      "toggle-search-bar": ""
     }
   },
   "news": {
@@ -390,11 +409,37 @@
     }
   },
   "search": {
+    "actions": {
+      "include-panels": "",
+      "remove-datasource-filter": "",
+      "sort-placeholder": "",
+      "starred": "",
+      "view-as-folders": "",
+      "view-as-grid": "",
+      "view-as-list": ""
+    },
     "dashboard-actions": {
       "import": "",
       "new": "",
       "new-dashboard": "",
       "new-folder": ""
+    },
+    "folder-view": {
+      "go-to-folder": "",
+      "select-folder": ""
+    },
+    "results-table": {
+      "datasource-header": "",
+      "location-header": "",
+      "name-header": "",
+      "tags-header": "",
+      "type-dashboard": "",
+      "type-folder": "",
+      "type-header": ""
+    },
+    "search-input": {
+      "include-panels-placeholder": "",
+      "placeholder": ""
     }
   },
   "share-modal": {
@@ -489,9 +534,15 @@
     "theme": {
       "dark-label": "Oscuro",
       "default-label": "Por defecto",
-      "light-label": "Claro"
+      "light-label": "Claro",
+      "system-label": ""
     },
     "title": "Preferencias"
+  },
+  "tag-filter": {
+    "loading": "",
+    "no-tags": "",
+    "placeholder": ""
   },
   "time-picker": {
     "absolute": {
@@ -555,8 +606,7 @@
       "name-error": "El nombre es obligatorio",
       "name-label": "Nombre",
       "username-label": "Nombre de usuario"
-    },
-    "title": "Perfil"
+    }
   },
   "user-session": {
     "browser-column": "Navegador y sistema operativo",
@@ -569,12 +619,20 @@
     "loading": "Cargando sesiones..."
   },
   "variable": {
+    "adhoc": {
+      "placeholder": ""
+    },
+    "dropdown": {
+      "placeholder": ""
+    },
     "picker": {
-      "input": "Introducir el valor de la variable",
       "link-all": "Todo",
       "option-all": "Todo",
       "option-selected-values": "Seleccionados",
       "option-tooltip": "Eliminar selecciones"
+    },
+    "textbox": {
+      "placeholder": ""
     }
   }
 }

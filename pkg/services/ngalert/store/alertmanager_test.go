@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
-func TestIntegrationAlertManagerStore(t *testing.T) {
+func TestIntegrationAlertmanagerStore(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -123,7 +123,7 @@ func TestIntegrationAlertManagerStore(t *testing.T) {
 	})
 }
 
-func TestIntegrationAlertManagerHash(t *testing.T) {
+func TestIntegrationAlertmanagerHash(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -176,7 +176,7 @@ func TestIntegrationAlertManagerHash(t *testing.T) {
 	})
 }
 
-func TestIntegrationAlertManagerConfigCleanup(t *testing.T) {
+func TestIntegrationAlertmanagerConfigCleanup(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -185,7 +185,7 @@ func TestIntegrationAlertManagerConfigCleanup(t *testing.T) {
 		SQLStore: sqlStore,
 		Logger:   log.NewNopLogger(),
 	}
-	t.Run("when calling the cleanup with less records than the limit all recrods should stay", func(t *testing.T) {
+	t.Run("when calling the cleanup with fewer records than the limit all records should stay", func(t *testing.T) {
 		var orgID int64 = 3
 		oldestConfig, _ := setupConfig(t, "oldest-record", store)
 		err := store.SaveAlertmanagerConfiguration(context.Background(), &models.SaveAlertmanagerConfigurationCmd{
@@ -214,8 +214,8 @@ func TestIntegrationAlertManagerConfigCleanup(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		rowsAffacted, err := store.deleteOldConfigurations(context.Background(), orgID, 100)
-		require.Equal(t, int64(0), rowsAffacted)
+		rowsAffected, err := store.deleteOldConfigurations(context.Background(), orgID, 100)
+		require.Equal(t, int64(0), rowsAffected)
 		require.NoError(t, err)
 
 		req := &models.GetLatestAlertmanagerConfigurationQuery{
@@ -272,6 +272,69 @@ func TestIntegrationAlertManagerConfigCleanup(t *testing.T) {
 	t.Run("limit set to negative should fail", func(t *testing.T) {
 		_, err := store.deleteOldConfigurations(context.Background(), 1, -1)
 		require.Error(t, err)
+	})
+}
+
+func TestIntegrationMarkConfigurationAsApplied(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	sqlStore := db.InitTestDB(t)
+	store := &DBstore{
+		SQLStore: sqlStore,
+		Logger:   log.NewNopLogger(),
+	}
+
+	t.Run("attempting to mark a non existent config as applied shouldn't fail", func(tt *testing.T) {
+		cmd := models.MarkConfigurationAsAppliedCmd{
+			OrgID:             10,
+			ConfigurationHash: "test",
+		}
+		err := store.MarkConfigurationAsApplied(context.Background(), &cmd)
+		require.NoError(tt, err)
+	})
+
+	t.Run("marking an existent config should succeed", func(tt *testing.T) {
+		const orgID = 1
+		ctx := context.Background()
+
+		config, _ := setupConfig(t, "test", store)
+		err := store.SaveAlertmanagerConfiguration(ctx, &models.SaveAlertmanagerConfigurationCmd{
+			AlertmanagerConfiguration: config,
+			ConfigurationVersion:      "v1",
+			Default:                   false,
+			OrgID:                     orgID,
+		})
+		require.NoError(tt, err)
+
+		// Config should be saved but not marked as applied yet.
+		appliedCfgsQuery := models.GetAppliedConfigurationsQuery{
+			OrgID: orgID,
+		}
+		err = store.GetAppliedConfigurations(ctx, &appliedCfgsQuery)
+		require.NoError(tt, err)
+		require.Len(tt, appliedCfgsQuery.Result, 0)
+
+		query := models.GetLatestAlertmanagerConfigurationQuery{
+			OrgID: orgID,
+		}
+		err = store.GetLatestAlertmanagerConfiguration(ctx, &query)
+		require.NoError(tt, err)
+
+		cmd := models.MarkConfigurationAsAppliedCmd{
+			OrgID:             orgID,
+			ConfigurationHash: query.Result.ConfigurationHash,
+		}
+		err = store.MarkConfigurationAsApplied(ctx, &cmd)
+		require.NoError(tt, err)
+
+		// Config should now be saved and marked as successfully applied.
+		appliedCfgsQuery = models.GetAppliedConfigurationsQuery{
+			OrgID: orgID,
+		}
+		err = store.GetAppliedConfigurations(ctx, &appliedCfgsQuery)
+		require.NoError(tt, err)
+		require.Len(tt, appliedCfgsQuery.Result, 1)
 	})
 }
 

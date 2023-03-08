@@ -13,18 +13,15 @@ package team
 // Defines values for Permission.
 const (
 	PermissionN0 Permission = 0
-
 	PermissionN1 Permission = 1
-
 	PermissionN2 Permission = 2
-
 	PermissionN4 Permission = 4
 )
 
 // Permission defines model for Permission.
 type Permission int
 
-// Team defines model for team.
+// Team defines model for Team.
 type Team struct {
 	// AccessControl metadata associated with a given resource.
 	AccessControl map[string]bool `json:"accessControl,omitempty"`

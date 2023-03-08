@@ -181,7 +181,7 @@ You can send a report email with an image of the dashboard embedded in the email
 
 You can generate and save PDF files of any dashboard.
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 6.7 and later, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
 
 1. In the upper-right corner of the dashboard that you want to export as PDF, click the **Share dashboard** icon.
 1. On the PDF tab, select a layout option for the exported dashboard: **Portrait** or **Landscape**.

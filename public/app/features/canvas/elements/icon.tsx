@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import { isString } from 'lodash';
 import React, { CSSProperties } from 'react';
-import SVG from 'react-inlinesvg';
 
+import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
 import {
   ColorDimensionConfig,
   ResourceDimensionConfig,
@@ -59,7 +59,7 @@ export function IconDisplay(props: CanvasElementProps) {
   };
 
   return (
-    <SVG
+    <SanitizedSVG
       onClick={onClick}
       src={data.path}
       style={svgStyle}

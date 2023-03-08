@@ -5,7 +5,9 @@ import {
   Alert,
   AlertingRule,
   CloudRuleIdentifier,
+  CombinedRule,
   CombinedRuleGroup,
+  CombinedRuleWithLocation,
   GrafanaRuleIdentifier,
   PrometheusRuleIdentifier,
   PromRuleWithLocation,
@@ -26,9 +28,12 @@ import {
   RulerRuleDTO,
 } from 'app/types/unified-alerting-dto';
 
+import { CombinedRuleNamespace } from '../../../../types/unified-alerting';
 import { State } from '../components/StateTag';
+import { RuleHealth } from '../search/rulesSearchParser';
 
 import { RULER_NOT_SUPPORTED_MSG } from './constants';
+import { getRulesSourceName } from './datasource';
 import { AsyncRequestState } from './redux';
 
 export function isAlertingRule(rule: Rule | undefined): rule is AlertingRule {
@@ -51,6 +56,10 @@ export function isGrafanaRulerRule(rule?: RulerRuleDTO): rule is RulerGrafanaRul
   return typeof rule === 'object' && 'grafana_alert' in rule;
 }
 
+export function isGrafanaRulerRulePaused(rule: CombinedRule) {
+  return rule.rulerRule && isGrafanaRulerRule(rule.rulerRule) && Boolean(rule.rulerRule.grafana_alert.is_paused);
+}
+
 export function alertInstanceKey(alert: Alert): string {
   return JSON.stringify(alert.labels);
 }
@@ -67,8 +76,28 @@ export function isCloudRuleIdentifier(identifier: RuleIdentifier): identifier is
   return 'rulerRuleHash' in identifier;
 }
 
+export function isPromRuleType(ruleType: string): ruleType is PromRuleType {
+  return Object.values<string>(PromRuleType).includes(ruleType);
+}
+
 export function isPrometheusRuleIdentifier(identifier: RuleIdentifier): identifier is PrometheusRuleIdentifier {
   return 'ruleHash' in identifier;
+}
+
+export function getRuleHealth(health: string): RuleHealth | undefined {
+  switch (health) {
+    case 'ok':
+      return RuleHealth.Ok;
+    case 'nodata':
+      return RuleHealth.NoData;
+    case 'error':
+    case 'err': // Prometheus-compat data sources
+      return RuleHealth.Error;
+    case 'unknown':
+      return RuleHealth.Unknown;
+    default:
+      return undefined;
+  }
 }
 
 export function alertStateToReadable(state: PromAlertingRuleState | GrafanaAlertStateWithReason | AlertState): string {
@@ -84,6 +113,22 @@ export const flattenRules = (rules: RuleNamespace[]) => {
       rules.forEach((rule) => {
         if (isAlertingRule(rule)) {
           acc.push({ dataSourceName, namespaceName, groupName, rule });
+        }
+      });
+    });
+    return acc;
+  }, []);
+};
+
+export const getAlertingRule = (rule: CombinedRuleWithLocation) =>
+  isAlertingRule(rule.promRule) ? rule.promRule : null;
+
+export const flattenCombinedRules = (rules: CombinedRuleNamespace[]) => {
+  return rules.reduce<CombinedRuleWithLocation[]>((acc, { rulesSource, name: namespaceName, groups }) => {
+    groups.forEach(({ name: groupName, rules }) => {
+      rules.forEach((rule) => {
+        if (rule.promRule && isAlertingRule(rule.promRule)) {
+          acc.push({ dataSourceName: getRulesSourceName(rulesSource), namespaceName, groupName, ...rule });
         }
       });
     });
@@ -119,8 +164,8 @@ const alertStateToStateMap: Record<PromAlertingRuleState | GrafanaAlertState | A
   [AlertState.Unknown]: 'info',
 };
 
-export function getFirstActiveAt(promRule: AlertingRule) {
-  if (!promRule.alerts) {
+export function getFirstActiveAt(promRule?: AlertingRule) {
+  if (!promRule?.alerts) {
     return null;
   }
   return promRule.alerts.reduce((prev, alert) => {

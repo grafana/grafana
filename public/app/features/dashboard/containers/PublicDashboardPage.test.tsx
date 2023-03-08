@@ -82,6 +82,7 @@ const renderWithProvider = ({
 };
 
 const selectors = e2eSelectors.components;
+const publicDashboardSelector = e2eSelectors.pages.PublicDashboard;
 
 const getTestDashboard = (overrides?: Partial<Dashboard>, metaOverrides?: Partial<DashboardMeta>): DashboardModel => {
   const data: Dashboard = Object.assign(
@@ -93,6 +94,7 @@ const getTestDashboard = (overrides?: Partial<Dashboard>, metaOverrides?: Partia
       schemaVersion: 1,
       style: 'dark',
       timepicker: { hidden: true },
+      timezone: '',
       panels: [
         {
           id: 1,
@@ -213,6 +215,10 @@ describe('PublicDashboardPage', () => {
       expect(screen.queryByTestId(selectors.RefreshPicker.runButtonV2)).not.toBeInTheDocument();
       expect(screen.queryByTestId(selectors.RefreshPicker.intervalButtonV2)).not.toBeInTheDocument();
     });
+
+    it('Should not render paused or deleted screen', () => {
+      expect(screen.queryByTestId(publicDashboardSelector.NotAvailable.container)).not.toBeInTheDocument();
+    });
   });
 
   dashboardPageScenario('Given a public dashboard with time range enabled', (ctx) => {
@@ -237,6 +243,52 @@ describe('PublicDashboardPage', () => {
       expect(screen.getByTestId(selectors.TimePicker.openButton)).toBeInTheDocument();
       expect(screen.getByTestId(selectors.RefreshPicker.runButtonV2)).toBeInTheDocument();
       expect(screen.getByTestId(selectors.RefreshPicker.intervalButtonV2)).toBeInTheDocument();
+    });
+  });
+
+  dashboardPageScenario('Given paused public dashboard', (ctx) => {
+    ctx.setup(() => {
+      ctx.mount();
+      ctx.rerender({
+        newState: {
+          dashboard: {
+            getModel: () => getTestDashboard(undefined, { publicDashboardEnabled: false, dashboardNotFound: false }),
+            initError: null,
+            initPhase: DashboardInitPhase.Completed,
+            permissions: [],
+          },
+        },
+      });
+    });
+
+    it('Should render public dashboard paused screen', () => {
+      expect(screen.queryByTestId(publicDashboardSelector.page)).not.toBeInTheDocument();
+
+      expect(screen.getByTestId(publicDashboardSelector.NotAvailable.title)).toBeInTheDocument();
+      expect(screen.getByTestId(publicDashboardSelector.NotAvailable.pausedDescription)).toBeInTheDocument();
+    });
+  });
+
+  dashboardPageScenario('Given deleted public dashboard', (ctx) => {
+    ctx.setup(() => {
+      ctx.mount();
+      ctx.rerender({
+        newState: {
+          dashboard: {
+            getModel: () => getTestDashboard(undefined, { dashboardNotFound: true }),
+            initError: null,
+            initPhase: DashboardInitPhase.Completed,
+            permissions: [],
+          },
+        },
+      });
+    });
+
+    it('Should render public dashboard deleted screen', () => {
+      expect(screen.queryByTestId(publicDashboardSelector.page)).not.toBeInTheDocument();
+
+      expect(screen.getByTestId(publicDashboardSelector.NotAvailable.title)).toBeInTheDocument();
+      expect(screen.queryByTestId(publicDashboardSelector.NotAvailable.pausedDescription)).not.toBeInTheDocument();
     });
   });
 });

@@ -88,7 +88,7 @@ export interface SelectCommonProps<T> {
   isValidNewOption?: (
     inputValue: string,
     value: SelectableValue<T> | null,
-    options: OptionsOrGroups<unknown, GroupBase<unknown>>
+    options: OptionsOrGroups<SelectableValue<T>, GroupBase<SelectableValue<T>>>
   ) => boolean;
   /** Message to display isLoading=true*/
   loadingMessage?: string;
@@ -119,7 +119,7 @@ export interface VirtualizedSelectAsyncProps<T>
 
 export interface MultiSelectCommonProps<T> extends Omit<SelectCommonProps<T>, 'onChange' | 'isMulti' | 'value'> {
   value?: Array<SelectableValue<T>> | T[];
-  onChange: (item: Array<SelectableValue<T>>) => {} | void;
+  onChange: (item: Array<SelectableValue<T>>, actionMeta: ActionMeta) => {} | void;
 }
 
 // This is the type of *our* SelectBase component, not ReactSelect's prop, although

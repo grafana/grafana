@@ -1,0 +1,21 @@
+{
+  "results": {
+    "datasets": {
+      "status": 200,
+      "frames": [
+        {
+          "schema": {
+            "refId": "datasets",
+            "meta": {
+              "executedQueryString": "SELECT DISTINCT TABLE_SCHEMA from information_schema.TABLES where TABLE_TYPE != 'SYSTEM VIEW' ORDER BY TABLE_SCHEMA"
+            },
+            "fields": [
+              { "name": "TABLE_SCHEMA", "type": "string", "typeInfo": { "frame": "string", "nullable": true } }
+            ]
+          },
+          "data": { "values": [["DataMaker", "mysql", "performance_schema", "sys"]] }
+        }
+      ]
+    }
+  }
+}

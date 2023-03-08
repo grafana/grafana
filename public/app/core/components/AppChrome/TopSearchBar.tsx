@@ -14,7 +14,7 @@ import { QuickAdd } from './QuickAdd/QuickAdd';
 import { SignInLink } from './TopBar/SignInLink';
 import { TopNavBarMenu } from './TopBar/TopNavBarMenu';
 import { TopSearchBarSection } from './TopBar/TopSearchBarSection';
-import { TopSearchBarInput } from './TopSearchBarInput';
+import { TopSearchBarCommandPaletteTrigger } from './TopSearchBarCommandPaletteTrigger';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
 
 export function TopSearchBar() {
@@ -32,9 +32,11 @@ export function TopSearchBar() {
         </a>
         <OrganizationSwitcher />
       </TopSearchBarSection>
+
       <TopSearchBarSection>
-        <TopSearchBarInput />
+        <TopSearchBarCommandPaletteTrigger />
       </TopSearchBarSection>
+
       <TopSearchBarSection align="right">
         <QuickAdd />
         {helpNode && (
@@ -70,7 +72,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justifyContent: 'space-between',
 
     [theme.breakpoints.up('sm')]: {
-      gridTemplateColumns: '1fr 1fr 1fr',
+      gridTemplateColumns: '1.5fr minmax(240px, 1fr) 1.5fr', // search should not be smaller than 240px
       display: 'grid',
 
       justifyContent: 'flex-start',

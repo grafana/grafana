@@ -28,7 +28,31 @@ func TestApiLogVolume(t *testing.T) {
 			require.Equal(t, "Source=logvolhist", req.Header.Get("X-Query-Tags"))
 		})
 
-		_, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", VolumeQuery: true, QueryType: QueryTypeRange})
+		_, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryLogsVolume, QueryType: QueryTypeRange})
+		require.NoError(t, err)
+		require.True(t, called)
+	})
+
+	t.Run("logs sample queries should set logs sample http header", func(t *testing.T) {
+		called := false
+		api := makeMockedAPI(200, "application/json", response, func(req *http.Request) {
+			called = true
+			require.Equal(t, "Source=logsample", req.Header.Get("X-Query-Tags"))
+		})
+
+		_, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryLogsSample, QueryType: QueryTypeRange})
+		require.NoError(t, err)
+		require.True(t, called)
+	})
+
+	t.Run("data sample queries should set data sample http header", func(t *testing.T) {
+		called := false
+		api := makeMockedAPI(200, "application/json", response, func(req *http.Request) {
+			called = true
+			require.Equal(t, "Source=datasample", req.Header.Get("X-Query-Tags"))
+		})
+
+		_, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryDataSample, QueryType: QueryTypeRange})
 		require.NoError(t, err)
 		require.True(t, called)
 	})
@@ -40,7 +64,7 @@ func TestApiLogVolume(t *testing.T) {
 			require.Equal(t, "", req.Header.Get("X-Query-Tags"))
 		})
 
-		_, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", VolumeQuery: false, QueryType: QueryTypeRange})
+		_, err := api.DataQuery(context.Background(), lokiQuery{Expr: "", SupportingQueryType: SupportingQueryNone, QueryType: QueryTypeRange})
 		require.NoError(t, err)
 		require.True(t, called)
 	})

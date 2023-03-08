@@ -16,7 +16,6 @@ import {
   LogsSortOrder,
   LinkModel,
   Field,
-  DataQuery,
   DataFrame,
   GrafanaTheme2,
   LoadingState,
@@ -26,8 +25,10 @@ import {
   DataHoverEvent,
   DataHoverClearEvent,
   EventBus,
+  DataSourceWithLogsContextSupport,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import {
   RadioButtonGroup,
   Button,
@@ -47,7 +48,7 @@ import { LogRows } from '../logs/components/LogRows';
 
 import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
-import { LogsVolumePanel } from './LogsVolumePanel';
+import { LogsVolumePanelList } from './LogsVolumePanelList';
 import { SETTINGS_KEYS } from './utils/logs';
 
 interface Props extends Themeable2 {
@@ -79,6 +80,7 @@ interface Props extends Themeable2 {
   onStartScanning?: () => void;
   onStopScanning?: () => void;
   getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<any>;
+  getLogRowContextUi?: DataSourceWithLogsContextSupport['getLogRowContextUi'];
   getFieldLinks: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
   addResultsToCache: () => void;
   clearCache: () => void;
@@ -322,13 +324,10 @@ class UnthemedLogs extends PureComponent<Props, State> {
       splitOpen,
       logRows,
       logsMeta,
-      logsSeries,
-      visibleRange,
       logsVolumeEnabled,
       logsVolumeData,
       loadLogsVolumeData,
       loading = false,
-      loadingState,
       onClickFilterLabel,
       onClickFilterOutLabel,
       timeZone,
@@ -344,6 +343,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
       addResultsToCache,
       exploreId,
       scrollElement,
+      getRowContext,
+      getLogRowContextUi,
     } = this.props;
 
     const {
@@ -373,19 +374,10 @@ class UnthemedLogs extends PureComponent<Props, State> {
       <>
         <Collapse label="Logs volume" collapsible isOpen={logsVolumeEnabled} onToggle={this.onToggleLogsVolumeCollapse}>
           {logsVolumeEnabled && (
-            <LogsVolumePanel
+            <LogsVolumePanelList
               absoluteRange={absoluteRange}
               width={width}
               logsVolumeData={logsVolumeData}
-              logLinesBasedData={
-                logsSeries
-                  ? {
-                      data: logsSeries,
-                      state: loadingState,
-                    }
-                  : undefined
-              }
-              logLinesBasedDataVisibleRange={visibleRange}
               onUpdateTimeRange={onChangeTime}
               timeZone={timeZone}
               splitOpen={splitOpen}
@@ -434,7 +426,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
                   id={`prettify_${exploreId}`}
                 />
               </InlineField>
-              <InlineField label="Dedup" className={styles.horizontalInlineLabel} transparent>
+              <InlineField label="Deduplication" className={styles.horizontalInlineLabel} transparent>
                 <RadioButtonGroup
                   options={Object.values(LogsDedupStrategy).map((dedupType) => ({
                     label: capitalize(dedupType),
@@ -487,7 +479,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 logRows={logRows}
                 deduplicatedRows={dedupedRows}
                 dedupStrategy={dedupStrategy}
-                getRowContext={this.props.getRowContext}
+                getRowContext={getRowContext}
+                getLogRowContextUi={getLogRowContextUi}
                 onClickFilterLabel={onClickFilterLabel}
                 onClickFilterOutLabel={onClickFilterOutLabel}
                 showContextToggle={showContextToggle}

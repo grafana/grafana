@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/fatih/color"
+
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
@@ -30,7 +31,11 @@ func (cmd Command) upgradeCommand(c utils.CommandLine) error {
 			return fmt.Errorf("failed to remove plugin '%s': %w", pluginName, err)
 		}
 
-		return installPlugin(context.Background(), pluginName, "", c)
+		err := installPlugin(context.Background(), pluginName, "", c)
+		if err == nil {
+			logRestartNotice()
+		}
+		return err
 	}
 
 	logger.Infof("%s %s is up to date \n", color.GreenString("✔"), pluginName)

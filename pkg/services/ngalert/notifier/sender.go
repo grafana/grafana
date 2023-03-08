@@ -3,7 +3,7 @@ package notifier
 import (
 	"context"
 
-	"github.com/grafana/alerting/alerting/notifier/channels"
+	"github.com/grafana/alerting/receivers"
 
 	"github.com/grafana/grafana/pkg/services/notifications"
 )
@@ -12,7 +12,7 @@ type sender struct {
 	ns notifications.Service
 }
 
-func (s sender) SendWebhook(ctx context.Context, cmd *channels.SendWebhookSettings) error {
+func (s sender) SendWebhook(ctx context.Context, cmd *receivers.SendWebhookSettings) error {
 	return s.ns.SendWebhookSync(ctx, &notifications.SendWebhookSync{
 		Url:         cmd.URL,
 		User:        cmd.User,
@@ -25,7 +25,7 @@ func (s sender) SendWebhook(ctx context.Context, cmd *channels.SendWebhookSettin
 	})
 }
 
-func (s sender) SendEmail(ctx context.Context, cmd *channels.SendEmailSettings) error {
+func (s sender) SendEmail(ctx context.Context, cmd *receivers.SendEmailSettings) error {
 	var attached []*notifications.SendEmailAttachFile
 	if cmd.AttachedFiles != nil {
 		attached = make([]*notifications.SendEmailAttachFile, 0, len(cmd.AttachedFiles))
@@ -51,6 +51,6 @@ func (s sender) SendEmail(ctx context.Context, cmd *channels.SendEmailSettings) 
 	})
 }
 
-func NewNotificationSender(ns notifications.Service) channels.NotificationSender {
+func NewNotificationSender(ns notifications.Service) receivers.NotificationSender {
 	return &sender{ns: ns}
 }

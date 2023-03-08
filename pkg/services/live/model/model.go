@@ -68,20 +68,20 @@ type ChannelHandlerFactory interface {
 }
 
 type LiveMessage struct {
-	Id        int64
-	OrgId     int64
+	ID        int64 `xorm:"pk autoincr 'id'"`
+	OrgID     int64 `xorm:"org_id"`
 	Channel   string
 	Data      json.RawMessage
 	Published time.Time
 }
 
 type SaveLiveMessageQuery struct {
-	OrgId   int64
+	OrgID   int64 `xorm:"org_id"`
 	Channel string
 	Data    json.RawMessage
 }
 
 type GetLiveMessageQuery struct {
-	OrgId   int64
+	OrgID   int64 `xorm:"org_id"`
 	Channel string
 }

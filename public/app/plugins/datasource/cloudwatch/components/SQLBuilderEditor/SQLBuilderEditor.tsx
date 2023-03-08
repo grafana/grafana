@@ -3,8 +3,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { EditorField, EditorRow, EditorRows } from '@grafana/experimental';
 import { Input } from '@grafana/ui';
 
-import SQLGenerator from '../../cloudwatch-sql/SQLGenerator';
 import { CloudWatchDatasource } from '../../datasource';
+import SQLGenerator from '../../language/cloudwatch-sql/SQLGenerator';
 import { CloudWatchMetricsQuery } from '../../types';
 
 import SQLBuilderSelectRow from './SQLBuilderSelectRow';

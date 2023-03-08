@@ -8,6 +8,7 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
+
 	model "github.com/grafana/grafana/pkg/services/live/model"
 )
 

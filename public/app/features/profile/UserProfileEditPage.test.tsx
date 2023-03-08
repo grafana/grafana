@@ -2,14 +2,12 @@ import { within } from '@testing-library/dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import React from 'react';
-import { Provider } from 'react-redux';
 
 import { OrgRole } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import TestProvider from '../../../test/helpers/TestProvider';
+import { TestProvider } from '../../../test/helpers/TestProvider';
 import { backendSrv } from '../../core/services/backend_srv';
-import { configureStore } from '../../store/configureStore';
 import { TeamPermissionLevel } from '../../types';
 import { getMockTeam } from '../teams/__mocks__/teamMocks';
 
@@ -98,7 +96,6 @@ function getSelectors() {
 }
 
 async function getTestContext(overrides: Partial<Props> = {}) {
-  const store = configureStore();
   jest.clearAllMocks();
   const putSpy = jest.spyOn(backendSrv, 'put');
   const getSpy = jest
@@ -108,11 +105,9 @@ async function getTestContext(overrides: Partial<Props> = {}) {
 
   const props = { ...defaultProps, ...overrides };
   const { rerender } = render(
-    <Provider store={store}>
-      <TestProvider>
-        <UserProfileEditPage {...props} />
-      </TestProvider>
-    </Provider>
+    <TestProvider>
+      <UserProfileEditPage {...props} />
+    </TestProvider>
   );
 
   await waitFor(() => expect(props.initUserProfilePage).toHaveBeenCalledTimes(1));
@@ -134,7 +129,6 @@ describe('UserProfileEditPage', () => {
       await getTestContext();
 
       const { name, email, username, saveProfile } = getSelectors();
-      expect(screen.getByText(/profile/i)).toBeInTheDocument();
       expect(name()).toBeInTheDocument();
       expect(name()).toHaveValue('Test User');
       expect(email()).toBeInTheDocument();

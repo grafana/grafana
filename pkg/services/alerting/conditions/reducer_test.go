@@ -4,9 +4,10 @@ import (
 	"math"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
-	"github.com/stretchr/testify/require"
 )
 
 func TestSimpleReducer(t *testing.T) {

@@ -1,21 +1,23 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Modal, useStyles2 } from '@grafana/ui';
+import { getModKey } from 'app/core/utils/browser';
 
-const shortcuts = {
+const getShortcuts = (modKey: string) => ({
   Global: [
     { keys: ['g', 'h'], description: 'Go to Home Dashboard' },
+    { keys: ['g', 'e'], description: 'Go to Explore' },
     { keys: ['g', 'p'], description: 'Go to Profile' },
     { keys: ['s', 'o'], description: 'Open search' },
     { keys: ['esc'], description: 'Exit edit/setting views' },
     { keys: ['h'], description: 'Show all keyboard shortcuts' },
-    { keys: ['mod+k'], description: 'Open command palette' },
+    { keys: [`${modKey}+k`], description: 'Open command palette' },
     { keys: ['c', 't'], description: 'Change theme' },
   ],
   Dashboard: [
-    { keys: ['mod+s'], description: 'Save dashboard' },
+    { keys: [`${modKey}+s`], description: 'Save dashboard' },
     { keys: ['d', 'r'], description: 'Refresh all panels' },
     { keys: ['d', 's'], description: 'Dashboard settings' },
     { keys: ['d', 'v'], description: 'Toggle in-active / view mode' },
@@ -23,7 +25,7 @@ const shortcuts = {
     { keys: ['d', 'E'], description: 'Expand all rows' },
     { keys: ['d', 'C'], description: 'Collapse all rows' },
     { keys: ['d', 'a'], description: 'Toggle auto fit panels (experimental feature)' },
-    { keys: ['mod+o'], description: 'Toggle shared graph crosshair' },
+    { keys: [`${modKey}+o`], description: 'Toggle shared graph crosshair' },
     { keys: ['d', 'l'], description: 'Toggle all panel legends' },
   ],
   'Focused Panel': [
@@ -49,7 +51,7 @@ const shortcuts = {
       description: 'Make time range absolute/permanent',
     },
   ],
-};
+});
 
 export interface HelpModalProps {
   onDismiss: () => void;
@@ -57,11 +59,10 @@ export interface HelpModalProps {
 
 export const HelpModal = ({ onDismiss }: HelpModalProps): JSX.Element => {
   const styles = useStyles2(getStyles);
+  const modKey = useMemo(() => getModKey(), []);
+  const shortcuts = useMemo(() => getShortcuts(modKey), [modKey]);
   return (
     <Modal title="Shortcuts" isOpen onDismiss={onDismiss} onClickBackdrop={onDismiss}>
-      <div className={styles.titleDescription}>
-        <span className={styles.shortcutTableKey}>mod</span> =<span> CTRL on windows or linux and CMD key on Mac</span>
-      </div>
       <div className={styles.categories}>
         {Object.entries(shortcuts).map(([category, shortcuts], i) => (
           <div className={styles.shortcutCategory} key={i}>

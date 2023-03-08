@@ -7,10 +7,10 @@ jobs:
   doc-validator:
     runs-on: "ubuntu-latest"
     container:
-      image: "grafana/doc-validator:v1.5.0"
+      image: "grafana/doc-validator:v1.9.0"
     steps:
       - name: "Checkout code"
         uses: "actions/checkout@v3"
       - name: "Run doc-validator tool"
         # Ensure that the CI always passes until all errors are resolved.
-        run: "doc-validator ./docs/sources || true"
+        run: "doc-validator --skip-image-validation ./docs/sources /docs/grafana/latest || true"

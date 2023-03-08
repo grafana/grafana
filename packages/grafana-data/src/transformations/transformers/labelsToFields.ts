@@ -90,6 +90,7 @@ export const labelsToFieldsTransformer: SynchronousDataTransformerInfo<LabelsToF
       }
 
       result.push({
+        ...frame,
         fields: newFields,
         length: frame.length,
       });

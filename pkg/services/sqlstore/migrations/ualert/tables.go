@@ -3,6 +3,8 @@ package ualert
 import (
 	"fmt"
 
+	"xorm.io/xorm"
+
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
@@ -12,34 +14,49 @@ const DefaultFieldMaxLength = 190
 // UIDMaxLength is the standard size for fields that contain UIDs.
 const UIDMaxLength = 40
 
-// AddMigration defines database migrations.
+// AddTablesMigrations defines database migrations that affect Grafana Alerting tables.
 func AddTablesMigrations(mg *migrator.Migrator) {
-	AddAlertDefinitionMigrations(mg, 60)
-	AddAlertDefinitionVersionMigrations(mg)
-	// Create alert_instance table
-	AlertInstanceMigration(mg)
+	// Migrations are meant to be immutable, any modifications to table structure
+	// should come in the form of a new migration appended to the end of AddTablesMigrations
+	// instead of modifying an existing one. This ensure that tables are modified in a consistent and correct order.
+	historicalTableMigrations(mg)
 
-	// Create alert_rule
-	AddAlertRuleMigrations(mg, 60)
-	AddAlertRuleVersionMigrations(mg)
-
-	// Create Alertmanager configurations
-	AddAlertmanagerConfigMigrations(mg)
-
-	// Create Admin Configuration
-	AddAlertAdminConfigMigrations(mg)
-
-	// Create provisioning data table
-	AddProvisioningMigrations(mg)
-
-	AddAlertImageMigrations(mg)
-
-	AddAlertmanagerConfigHistoryMigrations(mg)
-	ExtractAlertmanagerConfigurationHistoryMigration(mg)
+	mg.AddMigration("add last_applied column to alert_configuration_history", migrator.NewAddColumnMigration(migrator.Table{Name: "alert_configuration_history"}, &migrator.Column{
+		Name: "last_applied", Type: migrator.DB_Int, Nullable: false, Default: "0",
+	}))
 }
 
-// AddAlertDefinitionMigrations should not be modified.
-func AddAlertDefinitionMigrations(mg *migrator.Migrator, defaultIntervalSeconds int64) {
+// historicalTableMigrations contains those migrations that existed prior to creating the improved messaging around migration immutability.
+func historicalTableMigrations(mg *migrator.Migrator) {
+	// DO NOT EDIT
+	addAlertDefinitionMigrations(mg, 60)
+	addAlertDefinitionVersionMigrations(mg)
+	// Create alert_instance table
+	alertInstanceMigration(mg)
+
+	// Create alert_rule
+	addAlertRuleMigrations(mg, 60)
+	addAlertRuleVersionMigrations(mg)
+
+	// Create Alertmanager configurations
+	addAlertmanagerConfigMigrations(mg)
+
+	// Create Admin Configuration
+	addAlertAdminConfigMigrations(mg)
+
+	// Create provisioning data table
+	addProvisioningMigrations(mg)
+
+	addAlertImageMigrations(mg)
+
+	addAlertmanagerConfigHistoryMigrations(mg)
+
+	extractAlertmanagerConfigurationHistoryMigration(mg)
+}
+
+// addAlertDefinitionMigrations should not be modified.
+func addAlertDefinitionMigrations(mg *migrator.Migrator, defaultIntervalSeconds int64) {
+	// DO NOT EDIT
 	mg.AddMigration("delete alert_definition table", migrator.NewDropTableMigration("alert_definition"))
 
 	alertDefinition := migrator.Table{
@@ -87,8 +104,9 @@ func AddAlertDefinitionMigrations(mg *migrator.Migrator, defaultIntervalSeconds 
 	mg.AddMigration("drop alert_definition table", migrator.NewDropTableMigration("alert_definition"))
 }
 
-// AddAlertDefinitionMigrations should not be modified.
-func AddAlertDefinitionVersionMigrations(mg *migrator.Migrator) {
+// addAlertDefinitionMigrations should not be modified.
+func addAlertDefinitionVersionMigrations(mg *migrator.Migrator) {
+	// DO NOT EDIT
 	mg.AddMigration("delete alert_definition_version table", migrator.NewDropTableMigration("alert_definition_version"))
 
 	alertDefinitionVersion := migrator.Table{
@@ -120,7 +138,8 @@ func AddAlertDefinitionVersionMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("drop alert_definition_version table", migrator.NewDropTableMigration("alert_definition_version"))
 }
 
-func AlertInstanceMigration(mg *migrator.Migrator) {
+func alertInstanceMigration(mg *migrator.Migrator) {
+	// DO NOT EDIT
 	alertInstance := migrator.Table{
 		Name: "alert_instance",
 		Columns: []*migrator.Column{
@@ -171,7 +190,8 @@ func AlertInstanceMigration(mg *migrator.Migrator) {
 		}))
 }
 
-func AddAlertRuleMigrations(mg *migrator.Migrator, defaultIntervalSeconds int64) {
+func addAlertRuleMigrations(mg *migrator.Migrator, defaultIntervalSeconds int64) {
+	// DO NOT EDIT
 	alertRule := migrator.Table{
 		Name: "alert_rule",
 		Columns: []*migrator.Column{
@@ -260,9 +280,25 @@ func AddAlertRuleMigrations(mg *migrator.Migrator, defaultIntervalSeconds int64)
 			Default:  "1",
 		},
 	))
+
+	mg.AddMigration("add is_paused column to alert_rule table", migrator.NewAddColumnMigration(
+		alertRule,
+		&migrator.Column{
+			Name:     "is_paused",
+			Type:     migrator.DB_Bool,
+			Nullable: false,
+			Default:  "0",
+		},
+	))
+
+	// This migration fixes a bug where "false" for the default value created a column with default "true" in PostgreSQL databases
+	mg.AddMigration("fix is_paused column for alert_rule table", migrator.NewRawSQLMigration("").
+		Postgres(`ALTER TABLE alert_rule ALTER COLUMN is_paused SET DEFAULT false;
+UPDATE alert_rule SET is_paused = false;`))
 }
 
-func AddAlertRuleVersionMigrations(mg *migrator.Migrator) {
+func addAlertRuleVersionMigrations(mg *migrator.Migrator) {
+	// DO NOT EDIT
 	alertRuleVersion := migrator.Table{
 		Name: "alert_rule_version",
 		Columns: []*migrator.Column{
@@ -313,9 +349,25 @@ func AddAlertRuleVersionMigrations(mg *migrator.Migrator) {
 			Default:  "1",
 		},
 	))
+
+	mg.AddMigration("add is_paused column to alert_rule_versions table", migrator.NewAddColumnMigration(
+		alertRuleVersion,
+		&migrator.Column{
+			Name:     "is_paused",
+			Type:     migrator.DB_Bool,
+			Nullable: false,
+			Default:  "0",
+		},
+	))
+
+	// This migration fixes a bug where "false" for the default value created a column with default "true" in PostgreSQL databases
+	mg.AddMigration("fix is_paused column for alert_rule_version table", migrator.NewRawSQLMigration("").
+		Postgres(`ALTER TABLE alert_rule_version ALTER COLUMN is_paused SET DEFAULT false;
+UPDATE alert_rule_version SET is_paused = false;`))
 }
 
-func AddAlertmanagerConfigMigrations(mg *migrator.Migrator) {
+func addAlertmanagerConfigMigrations(mg *migrator.Migrator) {
+	// DO NOT EDIT
 	alertConfiguration := migrator.Table{
 		Name: "alert_configuration",
 		Columns: []*migrator.Column{
@@ -348,7 +400,8 @@ func AddAlertmanagerConfigMigrations(mg *migrator.Migrator) {
 	}))
 }
 
-func AddAlertmanagerConfigHistoryMigrations(mg *migrator.Migrator) {
+func addAlertmanagerConfigHistoryMigrations(mg *migrator.Migrator) {
+	// DO NOT EDIT
 	alertConfigHistory := migrator.Table{
 		Name: "alert_configuration_history",
 		Columns: []*migrator.Column{
@@ -368,7 +421,8 @@ func AddAlertmanagerConfigHistoryMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("create_alert_configuration_history_table", migrator.NewAddTableMigration(alertConfigHistory))
 }
 
-func AddAlertAdminConfigMigrations(mg *migrator.Migrator) {
+func addAlertAdminConfigMigrations(mg *migrator.Migrator) {
+	// DO NOT EDIT
 	adminConfiguration := migrator.Table{
 		Name: "ngalert_configuration",
 		Columns: []*migrator.Column{
@@ -391,7 +445,8 @@ func AddAlertAdminConfigMigrations(mg *migrator.Migrator) {
 	}))
 }
 
-func AddProvisioningMigrations(mg *migrator.Migrator) {
+func addProvisioningMigrations(mg *migrator.Migrator) {
+	// DO NOT EDIT
 	provisioningTable := migrator.Table{
 		Name: "provenance_type",
 		Columns: []*migrator.Column{
@@ -410,7 +465,8 @@ func AddProvisioningMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("add index to uniquify (record_key, record_type, org_id) columns", migrator.NewAddIndexMigration(provisioningTable, provisioningTable.Indices[0]))
 }
 
-func AddAlertImageMigrations(mg *migrator.Migrator) {
+func addAlertImageMigrations(mg *migrator.Migrator) {
+	// DO NOT EDIT
 	imageTable := migrator.Table{
 		Name: "alert_image",
 		Columns: []*migrator.Column{
@@ -432,4 +488,82 @@ func AddAlertImageMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("support longer URLs in alert_image table", migrator.NewRawSQLMigration("").
 		Postgres("ALTER TABLE alert_image ALTER COLUMN url TYPE VARCHAR(2048);").
 		Mysql("ALTER TABLE alert_image MODIFY url VARCHAR(2048) NOT NULL;"))
+}
+
+func extractAlertmanagerConfigurationHistoryMigration(mg *migrator.Migrator) {
+	if !mg.Cfg.UnifiedAlerting.IsEnabled() {
+		return
+	}
+	// Since it's not always consistent as to what state the org ID indexes are in, just drop them all and rebuild from scratch.
+	// This is not expensive since this table is guaranteed to have a small number of rows.
+	mg.AddMigration("drop non-unique orgID index on alert_configuration", migrator.NewDropIndexMigration(migrator.Table{Name: "alert_configuration"}, &migrator.Index{Cols: []string{"org_id"}}))
+	mg.AddMigration("drop unique orgID index on alert_configuration if exists", migrator.NewDropIndexMigration(migrator.Table{Name: "alert_configuration"}, &migrator.Index{Type: migrator.UniqueIndex, Cols: []string{"org_id"}}))
+	mg.AddMigration("extract alertmanager configuration history to separate table", &extractAlertmanagerConfigurationHistory{})
+	mg.AddMigration("add unique index on orgID to alert_configuration", migrator.NewAddIndexMigration(migrator.Table{Name: "alert_configuration"}, &migrator.Index{Type: migrator.UniqueIndex, Cols: []string{"org_id"}}))
+}
+
+type extractAlertmanagerConfigurationHistory struct {
+	migrator.MigrationBase
+}
+
+// extractAMConfigHistoryConfigModel is the model of an alertmanager configuration row, at the time that the extractAlertmanagerConfigurationHistory migration was run.
+// This is not to be used outside of the extractAlertmanagerConfigurationHistory migration.
+type extractAMConfigHistoryConfigModel struct {
+	ID                        int64 `xorm:"pk autoincr 'id'"`
+	AlertmanagerConfiguration string
+	ConfigurationHash         string
+	ConfigurationVersion      string
+	CreatedAt                 int64 `xorm:"created"`
+	Default                   bool
+	OrgID                     int64 `xorm:"org_id"`
+}
+
+func (c extractAlertmanagerConfigurationHistory) SQL(migrator.Dialect) string {
+	return codeMigration
+}
+
+func (c extractAlertmanagerConfigurationHistory) Exec(sess *xorm.Session, migrator *migrator.Migrator) error {
+	// DO NOT EDIT
+	var orgs []int64
+	if err := sess.Table("alert_configuration").Distinct("org_id").Find(&orgs); err != nil {
+		return fmt.Errorf("failed to retrieve the organizations with alerting configurations: %w", err)
+	}
+
+	// Clear out the history table, just in case. It should already be empty.
+	if _, err := sess.Exec("DELETE FROM alert_configuration_history"); err != nil {
+		return fmt.Errorf("failed to clear the config history table: %w", err)
+	}
+
+	for _, orgID := range orgs {
+		var activeConfigID int64
+		has, err := sess.SQL(`SELECT MAX(id) FROM alert_configuration WHERE org_id = ?`, orgID).Get(&activeConfigID)
+		if err != nil {
+			return fmt.Errorf("failed to query active config ID for org %d: %w", orgID, err)
+		}
+		if !has {
+			return fmt.Errorf("we previously found a config for org, but later it was unexpectedly missing: %d", orgID)
+		}
+
+		history := make([]extractAMConfigHistoryConfigModel, 0)
+		err = sess.Table("alert_configuration").Where("org_id = ? AND id < ?", orgID, activeConfigID).Find(&history)
+		if err != nil {
+			return fmt.Errorf("failed to query for non-active configs for org %d: %w", orgID, err)
+		}
+
+		// Set the IDs back to the default, so XORM will ignore the field and auto-assign them.
+		for i := range history {
+			history[i].ID = 0
+		}
+
+		_, err = sess.Table("alert_configuration_history").InsertMulti(history)
+		if err != nil {
+			return fmt.Errorf("failed to insert historical configs for org: %d: %w", orgID, err)
+		}
+
+		_, err = sess.Exec("DELETE FROM alert_configuration WHERE org_id = ? AND id < ?", orgID, activeConfigID)
+		if err != nil {
+			return fmt.Errorf("failed to evict old configurations for org after moving to history table: %d: %w", orgID, err)
+		}
+	}
+	return nil
 }

@@ -1,12 +1,8 @@
 import React from 'react';
 
-import {
-  DataSourcePluginOptionsEditorProps,
-  DataSourceSettings,
-  onUpdateDatasourceJsonDataOptionChecked,
-} from '@grafana/data';
+import { DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { AlertingSettings, DataSourceHttpSettings, InlineField, InlineSwitch } from '@grafana/ui';
+import { AlertingSettings, DataSourceHttpSettings, SecureSocksProxySettings } from '@grafana/ui';
 
 import { LokiOptions } from '../types';
 
@@ -32,7 +28,6 @@ const setDerivedFields = makeJsonUpdater('derivedFields');
 
 export const ConfigEditor = (props: Props) => {
   const { options, onOptionsChange } = props;
-  const socksProxy = config.featureToggles.secureSocksDatasourceProxy;
 
   return (
     <>
@@ -43,23 +38,8 @@ export const ConfigEditor = (props: Props) => {
         onChange={onOptionsChange}
       />
 
-      {socksProxy && (
-        <>
-          <h3 className="page-heading">Secure Socks Proxy</h3>
-          <div className="gf-form-group">
-            <div className="gf-form-inline"></div>
-            <InlineField
-              labelWidth={28}
-              label="Enabled"
-              tooltip="Connect to this datasource via the secure socks proxy."
-            >
-              <InlineSwitch
-                value={options.jsonData.enableSecureSocksProxy ?? false}
-                onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'enableSecureSocksProxy')}
-              />
-            </InlineField>
-          </div>
-        </>
+      {config.featureToggles.secureSocksDatasourceProxy && (
+        <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
       )}
 
       <AlertingSettings<LokiOptions> options={options} onOptionsChange={onOptionsChange} />

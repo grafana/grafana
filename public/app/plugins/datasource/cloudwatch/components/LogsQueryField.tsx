@@ -18,8 +18,7 @@ import { ExploreId } from 'app/types';
 // Utils & Services
 // dom also includes Element polyfills
 import { CloudWatchDatasource } from '../datasource';
-import { CloudWatchLanguageProvider } from '../language_provider';
-import syntax from '../syntax';
+import syntax from '../language/cloudwatch-logs/syntax';
 import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery } from '../types';
 import { getStatsGroups } from '../utils/query/getStatsGroups';
 
@@ -68,11 +67,10 @@ export const CloudWatchLogsQueryField = (props: CloudWatchLogsQueryFieldProps) =
       return { suggestions: [] };
     }
 
-    const cloudwatchLanguageProvider = datasource.languageProvider as CloudWatchLanguageProvider;
     const { history, absoluteRange } = props;
     const { prefix, text, value, wrapperClasses, labelKey, editor } = typeahead;
 
-    return await cloudwatchLanguageProvider.provideCompletionItems(
+    return await datasource.languageProvider.provideCompletionItems(
       { text, value, prefix, wrapperClasses, labelKey, editor },
       {
         history,
@@ -104,6 +102,9 @@ export const CloudWatchLogsQueryField = (props: CloudWatchLogsQueryFieldProps) =
             cleanText={cleanText}
             placeholder="Enter a CloudWatch Logs Insights query (run with Shift+Enter)"
             portalOrigin="cloudwatch"
+            // By default QueryField calls onChange if onBlur is not defined, this will trigger a rerender
+            // And slate will claim the focus, making it impossible to leave the field.
+            onBlur={() => {}}
           />
         </div>
         {ExtraFieldElement}

@@ -3,8 +3,9 @@ package git_test
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/build/git"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/grafana/grafana/pkg/build/git"
 )
 
 func TestPRCheckRegexp(t *testing.T) {

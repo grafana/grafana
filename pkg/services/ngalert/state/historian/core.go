@@ -1,19 +1,29 @@
 package historian
 
 import (
-	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 )
 
 func shouldRecord(transition state.StateTransition) bool {
+	if !transition.Changed() {
+		return false
+	}
+
 	// Do not log not transitioned states normal states if it was marked as stale
-	if !transition.Changed() || transition.StateReason == models.StateReasonMissingSeries && transition.PreviousState == eval.Normal && transition.State.State == eval.Normal {
+	if transition.StateReason == models.StateReasonMissingSeries && transition.PreviousState == eval.Normal && transition.State.State == eval.Normal {
+		return false
+	}
+	// Do not log transition from Normal (Paused|Updated) to Normal
+	if transition.State.State == eval.Normal && transition.StateReason == "" &&
+		transition.PreviousState == eval.Normal && (transition.PreviousStateReason == models.StateReasonPaused || transition.PreviousStateReason == models.StateReasonUpdated) {
 		return false
 	}
 	return true
@@ -37,20 +47,20 @@ type panelKey struct {
 }
 
 // panelKey attempts to get the key of the panel attached to the given rule. Returns nil if the rule is not attached to a panel.
-func parsePanelKey(rule *models.AlertRule, logger log.Logger) *panelKey {
-	dashUID, ok := rule.Annotations[models.DashboardUIDAnnotation]
-	if ok {
-		panelAnno := rule.Annotations[models.PanelIDAnnotation]
-		panelID, err := strconv.ParseInt(panelAnno, 10, 64)
-		if err != nil {
-			logger.Error("Error parsing panelUID for alert annotation", "actual", panelAnno, "error", err)
-			return nil
-		}
+func parsePanelKey(rule history_model.RuleMeta, logger log.Logger) *panelKey {
+	if rule.DashboardUID != "" {
 		return &panelKey{
 			orgID:   rule.OrgID,
-			dashUID: dashUID,
-			panelID: panelID,
+			dashUID: rule.DashboardUID,
+			panelID: rule.PanelID,
 		}
 	}
 	return nil
+}
+
+func mergeLabels(base, into data.Labels) data.Labels {
+	for k, v := range into {
+		base[k] = v
+	}
+	return base
 }

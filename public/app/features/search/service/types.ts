@@ -40,6 +40,9 @@ export interface DashboardQueryResult {
   // debugging fields
   score: number;
   explain: {};
+
+  // enterprise sends extra properties through for sorting (views, errors, etc)
+  [key: string]: unknown;
 }
 
 export interface LocationInfo {

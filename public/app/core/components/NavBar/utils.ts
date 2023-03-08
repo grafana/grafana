@@ -7,7 +7,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 
 import { ShowModalReactEvent } from '../../../types/events';
 import appEvents from '../../app_events';
-import { FooterLink, getFooterLinks } from '../Footer/Footer';
+import { getFooterLinks } from '../Footer/Footer';
 import { OrgSwitcher } from '../OrgSwitcher';
 import { HelpModal } from '../help/HelpModal';
 
@@ -52,8 +52,9 @@ export const enrichConfigItems = (items: NavModelItem[], location: Location<unkn
 
     if (link.id === 'help') {
       link.children = [
+        ...menuItems,
         ...getFooterLinks(),
-        ...getSupportBundleFooterLinks(),
+        ...getEditionAndUpdateLinks(),
         {
           id: 'keyboard-shortcuts',
           text: t('nav.help/keyboard-shortcuts', 'Keyboard shortcuts'),
@@ -76,22 +77,6 @@ export const enrichConfigItems = (items: NavModelItem[], location: Location<unkn
     }
   });
   return items;
-};
-
-export let getSupportBundleFooterLinks = (cfg = config): FooterLink[] => {
-  if (!cfg.featureToggles.supportBundles) {
-    return [];
-  }
-
-  return [
-    {
-      target: '_self',
-      id: 'support-bundle',
-      text: t('nav.help/support-bundle', 'Support Bundles'),
-      icon: 'question-circle',
-      url: '/admin/support-bundles',
-    },
-  ];
 };
 
 export const enrichWithInteractionTracking = (item: NavModelItem, expandedState: boolean) => {
@@ -145,7 +130,7 @@ export const getActiveItem = (
   for (const link of navTree) {
     const linkWithoutParams = stripQueryParams(link.url);
     const linkPathname = locationUtil.stripBaseFromUrl(linkWithoutParams);
-    if (linkPathname) {
+    if (linkPathname && link.id !== 'starred') {
       if (linkPathname === pathname) {
         // exact match
         currentBestMatch = link;
@@ -185,4 +170,30 @@ export const isSearchActive = (location: Location<unknown>) => {
 
 export function getNavModelItemKey(item: NavModelItem) {
   return item.id ?? item.text;
+}
+
+export function getEditionAndUpdateLinks(): NavModelItem[] {
+  const { buildInfo, licenseInfo } = config;
+  const stateInfo = licenseInfo.stateInfo ? ` (${licenseInfo.stateInfo})` : '';
+  const links: NavModelItem[] = [];
+
+  links.push({
+    target: '_blank',
+    id: 'version',
+    text: `${buildInfo.edition}${stateInfo}`,
+    url: licenseInfo.licenseUrl,
+    icon: 'external-link-alt',
+  });
+
+  if (buildInfo.hasUpdate) {
+    links.push({
+      target: '_blank',
+      id: 'updateVersion',
+      text: `New version available!`,
+      icon: 'download-alt',
+      url: 'https://grafana.com/grafana/download?utm_source=grafana_footer',
+    });
+  }
+
+  return links;
 }

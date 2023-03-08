@@ -1,10 +1,10 @@
-import { DefaultTimeZone, toUtc } from '@grafana/data';
+import { DefaultTimeZone, TimeRange, toUtc, SupplementaryQueryType } from '@grafana/data';
 
-import { ExploreId, SupplementaryQueryType } from '../../../types';
+import { ExploreId } from '../../../types';
 
 export const createDefaultInitialState = () => {
   const t = toUtc();
-  const testRange = {
+  const testRange: TimeRange = {
     from: t,
     to: t,
     raw: {
@@ -23,7 +23,11 @@ export const createDefaultInitialState = () => {
         datasourceInstance: {
           query: jest.fn(),
           getRef: jest.fn(),
-          getLogsVolumeDataProvider: jest.fn(),
+          getDataProvider: jest.fn(),
+          getSupportedSupplementaryQueryTypes: jest
+            .fn()
+            .mockImplementation(() => [SupplementaryQueryType.LogsVolume, SupplementaryQueryType.LogsSample]),
+          getSupplementaryQuery: jest.fn(),
           meta: {
             id: 'something',
           },
@@ -42,6 +46,9 @@ export const createDefaultInitialState = () => {
         richHistory: [],
         supplementaryQueries: {
           [SupplementaryQueryType.LogsVolume]: {
+            enabled: true,
+          },
+          [SupplementaryQueryType.LogsSample]: {
             enabled: true,
           },
         },

@@ -1,6 +1,7 @@
 import React from 'react';
 import { ColumnInstance, HeaderGroup } from 'react-table';
 
+import { fieldReducers, ReducerID } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { EmptyCell, FooterCell } from './FooterCell';
@@ -63,12 +64,13 @@ export function getFooterValue(index: number, footerValues?: FooterItem[], isCou
   }
 
   if (isCountRowsSet) {
-    const count = footerValues[index];
-    if (typeof count !== 'string') {
+    if (footerValues[index] === undefined) {
       return EmptyCell;
     }
 
-    return FooterCell({ value: [{ Count: count }] });
+    const key = fieldReducers.get(ReducerID.count).name;
+
+    return FooterCell({ value: [{ [key]: String(footerValues[index]) }] });
   }
 
   return FooterCell({ value: footerValues[index] });

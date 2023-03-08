@@ -19,7 +19,7 @@ Server-side expressions allow you to manipulate data returned from queries with 
 
 ### Using expressions
 
-Expressions are primarily used by [Grafana Alerting]({{< relref "../../../alerting/" >}}). The processing is done server-side, so expressions can operate without a browser session. However, expressions can also be used with backend data sources and visualization.
+Expressions are most commonly used for [Grafana Alerting]({{< relref "../../../alerting/" >}}). The processing is done server-side, so expressions can operate without a browser session. However, expressions can also be used with backend data sources and visualization.
 
 > **Note:** Expressions do not work with legacy dashboard alerts.
 
@@ -219,3 +219,11 @@ For more information about expressions, refer to [About expressions]({{< relref 
 
 1. Write the expression.
 1. Click **Apply**.
+
+## Special cases
+
+When any queried data source returns no series or numbers, the expression engine returns `NoData`. For example, if a request contains two data source queries that are merged by an expression, if `NoData` is returned by at least one of the data source queries, then the returned result for the entire query is `NoData`.
+
+For more information about how [Grafana Alerting]({{< relref "../../../alerting/" >}}) processes `NoData` results, refer to [No data and error handling]({{< relref "../../../alerting/alerting-rules/create-grafana-managed-rule/#no-data-and-error-handling" >}}).
+
+In the case of using an expression on multiple queries, the expression engine requires that all of the queries return an identical timestamp. For example, if using math to combine the results of multiple SQL queries which each use `SELECT NOW() AS "time"`, the expression will only work if all queries evaluate `NOW()` to an identical timestamp; which does not always happen. To resolve this, you can replace `NOW()` with an arbitrary time, such as `SELECT 1 AS "time"`, or any other valid UNIX timestamp.

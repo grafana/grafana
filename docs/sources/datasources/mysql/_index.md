@@ -118,6 +118,8 @@ The response from MySQL can be formatted as either a table or as a time series. 
 
 ### Dataset and Table selection
 
+> **Note:** If your table or database name contains a reserved word or a [not permitted character](https://dev.mysql.com/doc/refman/8.0/en/identifiers.html) the editor will put quotes around them. For example a table name like `table-name` will be quoted with backticks `` `table-name` ``.
+
 In the dataset dropdown, choose the MySQL database to query. The dropdown is be populated with the databases that the user has access to.
 When the dataset is selected, the table dropdown is populated with the tables that are available.
 
