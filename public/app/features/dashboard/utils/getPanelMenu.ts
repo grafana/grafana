@@ -1,4 +1,4 @@
-import { isPluginExtensionLink, PanelMenuItem } from '@grafana/data';
+import { isPluginExtensionCommand, isPluginExtensionLink, PanelMenuItem } from '@grafana/data';
 import {
   AngularComponent,
   getDataSourceSrv,
@@ -297,6 +297,15 @@ export function getPanelMenu(
         text: truncateTitle(extension.title, 25),
         href: extension.path,
       });
+      continue;
+    }
+
+    if (isPluginExtensionCommand(extension)) {
+      subMenu.push({
+        text: truncateTitle(extension.title, 25),
+        onClick: extension.callHandlerWithContext,
+      });
+      continue;
     }
   }
 
