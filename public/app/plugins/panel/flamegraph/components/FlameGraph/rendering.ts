@@ -34,7 +34,7 @@ export function getRectDimensionsForLevel(
   rangeMin: number,
   pixelsPerTick: number,
   processor: DisplayProcessor,
-  labelProcessor: DisplayProcessor
+  getLabelValue: (value: number | string) => string
 ): RectData[] {
   const coordinatesLevel = [];
   for (let barIndex = 0; barIndex < level.length; barIndex += 1) {
@@ -66,8 +66,7 @@ export function getRectDimensionsForLevel(
       y: levelIndex * PIXELS_PER_LEVEL,
       collapsed,
       ticks: curBarTicks,
-      label: labelProcessor(item.label).text,
-      // label: item.label,
+      label: getLabelValue(item.label),
       unitLabel: unit,
     });
   }

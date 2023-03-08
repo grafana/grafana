@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import { DataFrame, DataFrameView, CoreApp } from '@grafana/data';
+import { DataFrame, DataFrameView, CoreApp, getEnumDisplayProcessor, createTheme } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH, PIXELS_PER_LEVEL } from '../constants';
@@ -30,6 +30,20 @@ const FlameGraphContainer = (props: Props) => {
   const [search, setSearch] = useState('');
   const [selectedView, setSelectedView] = useState(SelectedView.Both);
   const [sizeRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
+
+  const labelField = props.data.fields.find((f) => f.name === 'label');
+  // Label can actually be an enum field so depending on that we have to access it through display processor
+  const getLabelValue = useCallback(
+    (label: string | number) => {
+      const enumConfig = labelField?.config?.type?.enum;
+      if (enumConfig) {
+        return getEnumDisplayProcessor(createTheme(), enumConfig)(label).text;
+      } else {
+        return label.toString();
+      }
+    },
+    [labelField]
+  );
 
   // Transform dataFrame with nested set format to array of levels. Each level contains all the bars for a particular
   // level of the flame graph. We do this temporary as in the end we should be able to render directly by iterating
@@ -91,6 +105,7 @@ const FlameGraphContainer = (props: Props) => {
               setSelectedBarIndex={setSelectedBarIndex}
               setRangeMin={setRangeMin}
               setRangeMax={setRangeMax}
+              getLabelValue={getLabelValue}
             />
           )}
 
@@ -110,6 +125,7 @@ const FlameGraphContainer = (props: Props) => {
               setRangeMin={setRangeMin}
               setRangeMax={setRangeMax}
               selectedView={selectedView}
+              getLabelValue={getLabelValue}
             />
           )}
         </div>

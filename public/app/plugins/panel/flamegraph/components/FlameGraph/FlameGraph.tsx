@@ -21,14 +21,7 @@ import uFuzzy from '@leeoniya/ufuzzy';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMeasure } from 'react-use';
 
-import {
-  CoreApp,
-  createTheme,
-  DataFrame,
-  FieldType,
-  getDisplayProcessor,
-  getEnumDisplayProcessor,
-} from '@grafana/data';
+import { CoreApp, createTheme, DataFrame, FieldType, getDisplayProcessor } from '@grafana/data';
 
 import { PIXELS_PER_LEVEL } from '../../constants';
 import { TooltipData, SelectedView, ContextMenuData } from '../types';
@@ -55,6 +48,7 @@ type Props = {
   setRangeMax: (range: number) => void;
   selectedView: SelectedView;
   style?: React.CSSProperties;
+  getLabelValue: (label: string | number) => string;
 };
 
 const FlameGraph = ({
@@ -72,11 +66,13 @@ const FlameGraph = ({
   setRangeMin,
   setRangeMax,
   selectedView,
+  getLabelValue,
 }: Props) => {
   const styles = getStyles(selectedView, app, flameGraphHeight);
   const totalTicks = data.fields[1].values.get(0);
   const valueField =
     data.fields.find((f) => f.name === 'value') ?? data.fields.find((f) => f.type === FieldType.number);
+
   if (!valueField) {
     throw new Error('Malformed dataFrame: value field of type number is not in the query response');
   }
@@ -92,7 +88,13 @@ const FlameGraph = ({
   });
 
   const uniqueLabels = useMemo(() => {
-    return [...new Set<string>(data.fields.find((f) => f.name === 'label')?.values.toArray())];
+    const labelField = data.fields.find((f) => f.name === 'label');
+    const enumConfig = labelField?.config?.type?.enum;
+    if (enumConfig) {
+      return enumConfig.text || [];
+    } else {
+      return [...new Set<string>(labelField?.values.toArray())];
+    }
   }, [data]);
 
   const foundLabels = useMemo(() => {
@@ -130,11 +132,6 @@ const FlameGraph = ({
         theme: createTheme() /* theme does not matter for us here */,
       });
 
-      const labelProcessor = getEnumDisplayProcessor(
-        createTheme(),
-        data.fields.find((f) => f.name === 'label')!.config!.type!.enum
-      );
-
       for (let levelIndex = 0; levelIndex < levels.length; levelIndex++) {
         const level = levels[levelIndex];
         // Get all the dimensions of the rectangles for the level. We do this by level instead of per rectangle, because
@@ -146,7 +143,7 @@ const FlameGraph = ({
           rangeMin,
           pixelsPerTick,
           processor,
-          labelProcessor
+          getLabelValue
         );
         for (const rect of dimensions) {
           // Render each rectangle based on the computed dimensions
@@ -164,8 +161,7 @@ const FlameGraph = ({
       search,
       topLevelIndex,
       foundLabels,
-      ,
-      data.fields,
+      getLabelValue,
     ]
   );
 
@@ -263,7 +259,7 @@ const FlameGraph = ({
       <div className={styles.canvasContainer} id="flameGraphCanvasContainer">
         <canvas ref={graphRef} data-testid="flameGraph" />
       </div>
-      <FlameGraphTooltip tooltipRef={tooltipRef} tooltipData={tooltipData!} />
+      <FlameGraphTooltip tooltipRef={tooltipRef} tooltipData={tooltipData!} getLabelValue={getLabelValue} />
       {contextMenuData && (
         <FlameGraphContextMenu
           contextMenuData={contextMenuData!}
