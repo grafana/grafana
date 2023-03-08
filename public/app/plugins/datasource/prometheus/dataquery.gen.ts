@@ -21,6 +21,9 @@ export type PromQueryFormat = ('time_series' | 'table' | 'heatmap');
 
 export interface Prometheus extends common.DataQuery {
   editorMode?: QueryEditorMode;
+  /**
+   * Execute an additional query to identify interesting raw samples relevant for the given expr
+   */
   exemplar?: boolean;
   expr: string;
   format?: PromQueryFormat;

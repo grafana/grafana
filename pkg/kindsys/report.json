@@ -1362,7 +1362,7 @@
         "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/prometheus/dataquery.gen.ts"
       },
       "machineName": "prometheusdataquery",
-      "maturity": "merged",
+      "maturity": "experimental",
       "name": "PrometheusDataQuery",
       "pluralMachineName": "prometheusdataquerys",
       "pluralName": "PrometheusDataQuerys",
@@ -2055,6 +2055,7 @@
           "parcadataquery",
           "phlaredataquery",
           "piechartpanelcfg",
+          "prometheusdataquery",
           "statetimelinepanelcfg",
           "statpanelcfg",
           "statushistorypanelcfg",
@@ -2064,7 +2065,7 @@
           "textpanelcfg",
           "xychartpanelcfg"
         ],
-        "count": 26
+        "count": 27
       },
       "mature": {
         "name": "mature",
@@ -2080,12 +2081,11 @@
           "heatmappanelcfg",
           "playlist",
           "preferences",
-          "prometheusdataquery",
           "publicdashboard",
           "serviceaccount",
           "team"
         ],
-        "count": 10
+        "count": 9
       },
       "planned": {
         "name": "planned",

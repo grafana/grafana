@@ -46,9 +46,11 @@ type PrometheusDataQuery struct {
 	// TODO this shouldn't be unknown but DataSourceRef | null
 	Datasource *interface{} `json:"datasource,omitempty"`
 	EditorMode *EditorMode  `json:"editorMode,omitempty"`
-	Exemplar   *bool        `json:"exemplar,omitempty"`
-	Expr       string       `json:"expr"`
-	Format     *Format      `json:"format,omitempty"`
+
+	// Execute an additional query to identify interesting raw samples relevant for the given expr
+	Exemplar *bool   `json:"exemplar,omitempty"`
+	Expr     string  `json:"expr"`
+	Format   *Format `json:"format,omitempty"`
 
 	// Hide true if query is disabled (ie should not be returned to the dashboard)
 	Hide    *bool `json:"hide,omitempty"`

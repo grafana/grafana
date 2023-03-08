@@ -8,7 +8,7 @@ title: PrometheusDataQuery kind
 
 ## PrometheusDataQuery
 
-#### Maturity: [merged](../../../maturity/#merged)
+#### Maturity: [experimental](../../../maturity/#experimental)
 #### Version: 0.0
 
 
@@ -21,7 +21,7 @@ It extends [DataQuery](#dataquery).
 | `refId`      | string  | **Yes**  | *(Inherited from [DataQuery](#dataquery))*<br/>A - Z                                                                                                                                                                                                                                                   |
 | `datasource` |         | No       | *(Inherited from [DataQuery](#dataquery))*<br/>For mixed data sources the selected datasource is on the query level.<br/>For non mixed scenarios this is undefined.<br/>TODO find a better way to do this ^ that's friendly to schema<br/>TODO this shouldn't be unknown but DataSourceRef &#124; null |
 | `editorMode` | string  | No       | Possible values are: `code`, `builder`.                                                                                                                                                                                                                                                                |
-| `exemplar`   | boolean | No       |                                                                                                                                                                                                                                                                                                        |
+| `exemplar`   | boolean | No       | Execute an additional query to identify interesting raw samples relevant for the given expr                                                                                                                                                                                                            |
 | `format`     | string  | No       | Possible values are: `time_series`, `table`, `heatmap`.                                                                                                                                                                                                                                                |
 | `hide`       | boolean | No       | *(Inherited from [DataQuery](#dataquery))*<br/>true if query is disabled (ie should not be returned to the dashboard)                                                                                                                                                                                  |
 | `instant`    | boolean | No       |                                                                                                                                                                                                                                                                                                        |
