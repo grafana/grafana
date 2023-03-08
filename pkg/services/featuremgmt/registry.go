@@ -137,6 +137,7 @@ var (
 			Description:  "Enable mixed datasource in Explore",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+			Owner:        grafanaExploreSquad,
 		},
 		{
 			Name:         "tracing",
@@ -154,6 +155,7 @@ var (
 			Name:        "correlations",
 			Description: "Correlations page",
 			State:       FeatureStateAlpha,
+			Owner:       grafanaExploreSquad,
 		},
 		{
 			Name:        "cloudWatchDynamicLabels",
