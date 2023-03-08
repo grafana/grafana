@@ -29,7 +29,7 @@ Data like these form _time series_. The X-axis is a moment in time and the Y-axi
 Prometheus is a technology that collects and stores time series data. Time series are fundamental to Prometheus; its [data model](https://prometheus.io/docs/concepts/data_model/) is arranged into:
 
 - _metrics_ that consist of a _timestamp_ and a _sample_, which is the numeric value, such as how many disk bytes have been read or a stock price
-- a set of labels called _dimensions_
+- a set of labels called _dimensions_, for example, `job` and `device`
 
 You can store time series data in any relational database, but these kinds of systems are not developed to store and query large volumes of time series data. Prometheus and similar software provide tools to compact and optimize time series data.
 
@@ -91,7 +91,7 @@ These metrics are available in an HTTP endpoint, but how do they get to Grafana,
 
 To get these metrics into Grafana, you can use either the Prometheus software or [Grafana Agent](/docs/agent/latest/) to scrape metrics. Grafana Agent collects and forwards telemetry data to open-source deployments of the Grafana Stack, Grafana Cloud, or Grafana Enterprise, where your data can be analyzed.
 
-Telemetry refers to the process of recording and transmitting the readings of an application or piece of infrastructure. Telemetry is critical to observability because it helps you understand exactly what's going on in your infrastructure. Telemetry data is a source of truth.
+Telemetry refers to the process of recording and transmitting the readings of an application or piece of infrastructure. Telemetry is critical to observability because it helps you understand exactly what's going on in your infrastructure. Telemetry data is a source of truth. The metrics data that Prometheus helps us with is only one type of telemetry; the other two kinds of telemetry are logs and traces.
 
 The metrics introduced previously, for example, `MyAppnodejs_active_requests_total`, are telemetry data. MyApp only makes it available for pull by means of an HTTP request. You can configure Grafana Agent to pull that data from MyApp every five seconds and send the results to Grafana Cloud.
 
@@ -105,7 +105,7 @@ The combination of Prometheus and Grafana Agent gives you control over the metri
 
 ## What’s next?
 
-Now that you understand the basics of how Prometheus telemetry works, what will you build with it?
+Now that you understand how Prometheus metrics work, what will you build?
 
 - One great next step is to [build a dashboard]({{< relref "../../dashboards/build-dashboards/" >}}) in Grafana and start turning that raw Prometheus telemetry data into insights about what’s going with your services and infrastructure.
 - Another great step is to learn about [Grafana Mimir](/oss/mimir/), which is essentially a database for Prometheus data. If you’re wondering how to make this work for a huge number of metrics with a lot of data and fast querying, check out Grafana Mimir.
