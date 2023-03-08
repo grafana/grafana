@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
-	"os"
 	"sort"
 	"strings"
 	"time"
@@ -16,11 +15,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"github.com/grafana/grafana/pkg/tsdb/phlare/kinds/dataquery"
-	"github.com/xlab/treeprint"
-	"google.golang.org/protobuf/proto"
-
 	googlev1 "github.com/grafana/phlare/api/gen/proto/go/google/v1"
 	querierv1 "github.com/grafana/phlare/api/gen/proto/go/querier/v1"
+	"github.com/xlab/treeprint"
 )
 
 type queryModel struct {
@@ -88,24 +85,13 @@ func (d *PhlareDatasource) query(ctx context.Context, pCtx backend.PluginContext
 	if query.QueryType == queryTypeProfile || query.QueryType == queryTypeBoth {
 		req := makeRequest(qm, query)
 		logger.Debug("Sending SelectMergeProfile", "request", req, "queryModel", qm)
-		//resp, err := d.client.SelectMergeProfile(ctx, req)
+		resp, err := d.client.SelectMergeProfile(ctx, req)
 		if err != nil {
 			logger.Error("Querying SelectMergeProfile()", "err", err)
 			response.Error = err
 			return response
 		}
-		file, err := os.ReadFile("./pkg/tsdb/phlare/testdata/merge.pprof")
-		if err != nil {
-			panic(err)
-		}
-		prof := &googlev1.Profile{}
-		err = proto.Unmarshal(file, prof)
-		if err != nil {
-			panic(err)
-		}
-
-		//frame := responseToDataFrames(resp.Msg, qm.ProfileTypeId)
-		frame := responseToDataFrames(prof, qm.ProfileTypeId)
+		frame := responseToDataFrames(resp.Msg, qm.ProfileTypeId)
 		response.Frames = append(response.Frames, frame)
 
 		// If query called with streaming on then return a channel
@@ -382,16 +368,11 @@ func treeToNestedSetDataFrame(tree *ProfileTree, profileTypeID string) *data.Fra
 	parts := strings.Split(profileTypeID, ":")
 	valueField.Config = &data.FieldConfig{Unit: normalizeUnit(parts[2])}
 	selfField.Config = &data.FieldConfig{Unit: normalizeUnit(parts[2])}
-	labelField := data.NewField("label", nil, []int64{})
 	lineNumberField := data.NewField("line", nil, []int64{})
-	fileNameField := data.NewField("fileName", nil, []int64{})
-	frame.Fields = data.Fields{levelField, valueField, selfField, labelField, lineNumberField, fileNameField}
+	frame.Fields = data.Fields{levelField, valueField, selfField, lineNumberField}
 
-	filenameMap := make(map[string]int64)
-	filenameCounter := int64(0)
-
-	funcNameMap := make(map[string]int64)
-	funcCounter := int64(0)
+	labelField := NewEnumField("label", nil)
+	fileNameField := NewEnumField("fileName", nil)
 
 	walkTree(tree, func(tree *ProfileTree) {
 
@@ -401,51 +382,52 @@ func treeToNestedSetDataFrame(tree *ProfileTree, profileTypeID string) *data.Fra
 		// todo: inline functions
 		// tree.Inlined
 		lineNumberField.Append(tree.Function.Line)
-
-		if val, ok := funcNameMap[tree.Function.FunctionName]; ok {
-			labelField.Append(val)
-		} else {
-			funcNameMap[tree.Function.FunctionName] = funcCounter
-			labelField.Append(funcCounter)
-			funcCounter++
-		}
-
-		if val, ok := filenameMap[tree.Function.FileName]; ok {
-			fileNameField.Append(val)
-		} else {
-			filenameMap[tree.Function.FileName] = filenameCounter
-			fileNameField.Append(filenameCounter)
-			filenameCounter++
-		}
+		labelField.Append(tree.Function.FunctionName)
+		fileNameField.Append(tree.Function.FileName)
 	})
 
-	funcNameSlice := make([]string, len(funcNameMap))
-	for k, v := range funcNameMap {
-		funcNameSlice[v] = k
-	}
-
-	labelField.SetConfig(&data.FieldConfig{
-		TypeConfig: &data.FieldTypeConfig{
-			Enum: &data.EnumFieldConfig{
-				Text: funcNameSlice,
-			},
-		},
-	})
-
-	fileNameSlice := make([]string, len(filenameMap))
-	for k, v := range filenameMap {
-		fileNameSlice[v] = k
-	}
-
-	fileNameField.SetConfig(&data.FieldConfig{
-		TypeConfig: &data.FieldTypeConfig{
-			Enum: &data.EnumFieldConfig{
-				Text: fileNameSlice,
-			},
-		},
-	})
-
+	frame.Fields = append(frame.Fields, labelField.GetField(), fileNameField.GetField())
 	return frame
+}
+
+type EnumField struct {
+	field     *data.Field
+	valuesMap map[string]int64
+	counter   int64
+}
+
+func NewEnumField(name string, labels data.Labels) *EnumField {
+	return &EnumField{
+		field:     data.NewField(name, labels, []int64{}),
+		valuesMap: make(map[string]int64),
+	}
+}
+
+func (e *EnumField) Append(value string) {
+	if valueIndex, ok := e.valuesMap[value]; ok {
+		e.field.Append(valueIndex)
+	} else {
+		e.valuesMap[value] = e.counter
+		e.field.Append(e.counter)
+		e.counter++
+	}
+}
+
+func (e *EnumField) GetField() *data.Field {
+	s := make([]string, len(e.valuesMap))
+	for k, v := range e.valuesMap {
+		s[v] = k
+	}
+
+	e.field.SetConfig(&data.FieldConfig{
+		TypeConfig: &data.FieldTypeConfig{
+			Enum: &data.EnumFieldConfig{
+				Text: s,
+			},
+		},
+	})
+
+	return e.field
 }
 
 func walkTree(tree *ProfileTree, fn func(tree *ProfileTree)) {
