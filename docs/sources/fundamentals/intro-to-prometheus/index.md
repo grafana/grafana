@@ -14,7 +14,7 @@ weight: 300
 
 # What is Prometheus?
 
-Observability focuses on understanding the internal state of systems based on the data they produce, which helps determine if the infrastructure is operating as expected. Prometheus is a core technology for system observability. However, Prometheus can be a confusing term because it is used in different contexts. Understanding Prometheus basics, why it’s valuable, and how people use it in practice will help you use Grafana.
+Observability focuses on understanding the internal state of your systems based on the data they produce, which helps determine if your infrastructure is healthy. Prometheus is a core technology for system observability, but the term "Prometheus" can be confusing because it is used in different contexts. Understanding Prometheus basics, why it’s valuable for system observability, and how people use it in practice will both help you better understand it and help you use Grafana.```
 
 Prometheus was started in 2012 at SoundCloud, who found existing technologies such as Graphite insufficient for their observability needs. Prometheus has a robust data model and query language, both of which are addressed in the following sections, and is simple and scalable. In 2018, Prometheus graduated from Cloud Native Computing Foundation (CNCF) incubation, and today has a thriving community.
 
