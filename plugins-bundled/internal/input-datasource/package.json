@@ -18,15 +18,15 @@
     "@grafana/toolkit": "9.5.0-pre",
     "@types/jest": "26.0.15",
     "@types/lodash": "4.14.149",
-    "@types/react": "17.0.30",
+    "@types/react": "18.0.28",
     "lodash": "4.17.21"
   },
   "dependencies": {
     "@grafana/data": "9.5.0-pre",
     "@grafana/ui": "9.5.0-pre",
     "jquery": "3.5.1",
-    "react": "17.0.1",
-    "react-dom": "17.0.1",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
     "react-hook-form": "7.5.3",
     "react-router-dom": "^5.2.0",
     "tslib": "2.4.0"

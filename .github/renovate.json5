@@ -22,16 +22,6 @@
     "@sentry/browser",
     "@sentry/types",
     "@sentry/utils",
-
-    // dep updates blocked by React 18
-    "@testing-library/dom",
-    "@testing-library/react",
-    "@types/react",
-    "@types/react-dom",
-    "@types/react-test-renderer",
-    "react",
-    "react-dom",
-    "react-test-renderer"
   ],
   "includePaths": ["package.json", "packages/**"],
   "ignorePaths": ["packages/grafana-toolkit/package.json", "emails/**", "plugins-bundled/**", "**/mocks/**"],
