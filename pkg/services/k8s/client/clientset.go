@@ -32,6 +32,7 @@ var (
 	ErrCRDAlreadyRegistered = errors.New("error registering duplicate CRD")
 	// TODO not actually sure if this is correct
 	GrafanaFieldManager = "core.grafana.com"
+	caBundle            = getCABundle()
 )
 
 type Resource interface {
@@ -54,6 +55,14 @@ type Clientset struct {
 }
 
 var _ registry.CanBeDisabled = (*Clientset)(nil)
+
+// ShortWebhookConfig is a simple struct that is converted to a full k8s webhook config for an action on a resource.
+type ShortWebhookConfig struct {
+	Resource   string
+	Url        string
+	Operations []admissionregistrationV1.OperationType
+	Timeout    int32
+}
 
 // ProvideClientset returns a new Clientset configured with cfg.
 func ProvideClientset(toggles featuremgmt.FeatureToggles, cfg *rest.Config) (*Clientset, error) {
@@ -106,14 +115,6 @@ func NewClientset(
 
 		crds: make(map[k8schema.GroupVersion]apiextensionsv1.CustomResourceDefinition),
 		lock: sync.RWMutex{},
-	}
-
-	_, err := clientSet.RegisterValidation(context.Background())
-	//if err != nil && !kerrors.IsAlreadyExists(err) {
-	//    return err
-	//}
-	if err != nil {
-		return nil, err
 	}
 
 	return clientSet, nil
@@ -174,19 +175,41 @@ func (c *Clientset) GetResourceClient(gcrd crd.Kind, namespace ...string) (dynam
 	return resourceClient, nil
 }
 
-func (c *Clientset) RegisterValidation(ctx context.Context) (*admissionregistrationV1.ValidatingWebhookConfiguration, error) {
-	obj := &admissionregistrationV1.ValidatingWebhookConfiguration{
+// Converts shortwebhookconfigs into full k8s validationwebhookconfigurations and registers them
+func (c *Clientset) RegisterValidation(ctx context.Context, webhooks []ShortWebhookConfig) error {
+	for _, hook := range webhooks {
+		obj := convertShortWebhookToWebhook(hook)
+		force := true
+		patchOpts := metav1.PatchOptions{FieldManager: GrafanaFieldManager, Force: &force}
+		data, err := json.Marshal(obj)
+		if err != nil {
+			return err
+		}
+		_, err = c.admissionRegistration.ValidatingWebhookConfigurations().Patch(context.Background(), obj.Name, types.ApplyPatchType, data, patchOpts)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// Converts shortwebhookconfig into a validatingwebhookconfiguration
+func convertShortWebhookToWebhook(swc ShortWebhookConfig) *admissionregistrationV1.ValidatingWebhookConfiguration {
+	metaname := fmt.Sprintf("validation.%s.core.grafana.com", swc.Resource)
+
+	return &admissionregistrationV1.ValidatingWebhookConfiguration{
 		TypeMeta: metav1.TypeMeta{
 			Kind:       "ValidatingWebhookConfiguration",
 			APIVersion: "admissionregistration.k8s.io/v1",
 		},
-		ObjectMeta: metav1.ObjectMeta{Name: "validation.publicdashboard.core.grafana.com"},
+		ObjectMeta: metav1.ObjectMeta{Name: metaname},
 		Webhooks: []admissionregistrationV1.ValidatingWebhook{
 			{
-				Name: "validation.publicdashboard.core.grafana.com",
+				Name: metaname,
 				ClientConfig: admissionregistrationV1.WebhookClientConfig{
-					URL:      pontificate("https://host.docker.internal:3443/k8s/publicdashboards/admission/create"),
-					CABundle: getCABundle(),
+					URL:      &swc.Url,
+					CABundle: caBundle,
 				},
 				Rules: []admissionregistrationV1.RuleWithOperations{
 					{
@@ -196,55 +219,24 @@ func (c *Clientset) RegisterValidation(ctx context.Context) (*admissionregistrat
 						Rule: admissionregistrationV1.Rule{
 							APIGroups:   []string{"*"},
 							APIVersions: []string{"*"},
-							Resources:   []string{"publicdashboards"},
+							Resources:   []string{swc.Resource},
 							Scope:       pontificate(admissionregistrationV1.NamespacedScope),
 						},
 					},
 				},
-				TimeoutSeconds:          &fiveSeconds,
+				TimeoutSeconds:          &swc.Timeout,
 				AdmissionReviewVersions: []string{"v1"},
 				SideEffects:             pontificate(admissionregistrationV1.SideEffectClassNone),
 			},
 		},
 	}
-
-	//hook, err := admissionApplyV1.ExtractValidatingWebhookConfiguration(obj, GrafanaFieldManager)
-	//if err != nil {
-	//return nil, err
-	//}
-
-	//hook.WithWebhooks(obj)
-	//fmt.Printf("%#v", hook)
-
-	force := true
-	patchOpts := metav1.PatchOptions{FieldManager: GrafanaFieldManager, Force: &force}
-	pretty, err := json.MarshalIndent(obj, "", "	")
-	if err != nil {
-		return nil, err
-	}
-	fmt.Println(string(pretty))
-
-	data, err := json.Marshal(obj)
-	if err != nil {
-		return nil, err
-	}
-	return c.admissionRegistration.ValidatingWebhookConfigurations().Patch(context.Background(), obj.Name, types.ApplyPatchType, data, patchOpts)
-
-	//err := c.admissionRegistration.ValidatingWebhookConfigurations().Patch(types.ApplyPatchType).
-	//    Resource("validatingwebhookconfigurations").
-	//    Name(*&obj.Name).
-	//    VersionedParams(&patchOpts, scheme.ParameterCodec).
-	//    Body(data).
-	//    Do(ctx).
-	//    Into(result)
-
-	//return c.admissionRegistration.ValidatingWebhookConfigurations().Apply(ctx, hook, metav1.ApplyOptions{FieldManager: GrafanaFieldManager})
 }
 
 func getCABundle() []byte {
 	filename := "devenv/docker/blocks/apiserver/certs/ca.pem"
 	caBytes, err := os.ReadFile(filename)
 	if err != nil {
+		fmt.Println("Missing ca bundle. Check devenv/docker/blocks/apiserver/make_gen.sh")
 		panic(fmt.Sprintf("could not get ca bundle for k8s webhooks: %s, err: %s", filename, err.Error()))
 	}
 	return caBytes
