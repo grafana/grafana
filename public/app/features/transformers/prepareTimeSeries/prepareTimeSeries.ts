@@ -7,6 +7,7 @@ import {
   FieldType,
   DataTransformerID,
   outerJoinDataFrames,
+  FieldMatcher,
   fieldMatchers,
   FieldMatcherID,
   Field,
@@ -14,6 +15,8 @@ import {
   ArrayVector,
 } from '@grafana/data';
 import { Labels } from 'app/types/unified-alerting-dto';
+
+import { partitionByValues } from '../partitionByValues/partitionByValues';
 
 /**
  * There is currently an effort to figure out consistent names
@@ -282,6 +285,20 @@ export function toTimeSeriesLong(data: DataFrame[]): DataFrame[] {
   return result;
 }
 
+export function longToMultiTimeSeries(frame: DataFrame): DataFrame[] {
+  // All the string fields
+  const matcher = (field: Field) => field.type === FieldType.string;
+
+  // transform one dataFrame at a time and concat into DataFrame[]
+  return partitionByValues(frame, matcher).map((frame) => {
+    if (!frame.meta) {
+      frame.meta = {};
+    }
+    frame.meta.type = DataFrameType.TimeSeriesMulti;
+    return frame;
+  });
+}
+
 export const prepareTimeSeriesTransformer: SynchronousDataTransformerInfo<PrepareTimeSeriesOptions> = {
   id: DataTransformerID.prepareTimeSeries,
   name: 'Prepare time series',
@@ -299,13 +316,20 @@ export const prepareTimeSeriesTransformer: SynchronousDataTransformerInfo<Prepar
       return toTimeSeriesLong;
     }
 
+    // TimeSeriesWide
     return (data: DataFrame[]) => {
+      // Convert long to wide first
+      if (data.every((df) => df.meta?.type === DataFrameType.TimeSeriesLong)) {
+        data = longToWideTimeSeries(data);
+      }
+
       // Join by the first frame
       const frame = outerJoinDataFrames({
         frames: data,
         joinBy: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
         keepOriginIndices: true,
       });
+      frame?.meta?.type = DataFrameType.TimeSeriesWide;
       return frame ? [frame] : [];
     };
   },
