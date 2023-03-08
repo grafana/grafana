@@ -153,11 +153,7 @@ func TestIntegrationDelete(t *testing.T) {
 		})
 	*/
 
-	cmd := folder.CreateFolderCommand{
-		OrgID:     orgID,
-		ParentUID: "",
-	}
-	ancestorUIDs := CreateSubTree(t, folderStore, nil, folder.MaxNestedFolderDepth, "", cmd)
+	ancestorUIDs := CreateSubtree(t, folderStore, orgID, "", folder.MaxNestedFolderDepth, "")
 	require.Len(t, ancestorUIDs, folder.MaxNestedFolderDepth)
 
 	t.Cleanup(func() {
@@ -607,12 +603,7 @@ func TestIntegrationGetHeight(t *testing.T) {
 		UID:         uid1,
 	})
 	require.NoError(t, err)
-	cmd := folder.CreateFolderCommand{
-		OrgID:     orgID,
-		ParentUID: parent.UID,
-	}
-	subTree := CreateSubTree(t, folderStore, nil, 4, "sub", cmd)
-
+	subTree := CreateSubtree(t, folderStore, orgID, parent.UID, 4, "sub")
 	t.Run("should successfully get height", func(t *testing.T) {
 		height, err := folderStore.GetHeight(context.Background(), parent.UID, orgID, nil)
 		require.NoError(t, err)
@@ -640,27 +631,22 @@ func CreateOrg(t *testing.T, db *sqlstore.SQLStore) int64 {
 	return orgID
 }
 
-func CreateSubTree(t *testing.T, store *sqlStore, service *Service, depth int, prefix string, cmd folder.CreateFolderCommand) []string {
+func CreateSubtree(t *testing.T, store *sqlStore, orgID int64, parentUID string, depth int, prefix string) []string {
 	t.Helper()
 
 	ancestorUIDs := []string{}
-	if cmd.ParentUID != "" {
-		ancestorUIDs = append(ancestorUIDs, cmd.ParentUID)
+	if parentUID != "" {
+		ancestorUIDs = append(ancestorUIDs, parentUID)
 	}
 	for i := 0; i < depth; i++ {
 		title := fmt.Sprintf("%sfolder-%d", prefix, i)
-		cmd.Title = title
-		cmd.UID = util.GenerateShortUID()
-
-		var (
-			f   *folder.Folder
-			err error
-		)
-		if service != nil {
-			f, err = service.Create(context.Background(), &cmd)
-		} else {
-			f, err = store.Create(context.Background(), cmd)
+		cmd := folder.CreateFolderCommand{
+			Title:     title,
+			OrgID:     orgID,
+			ParentUID: parentUID,
+			UID:       util.GenerateShortUID(),
 		}
+		f, err := store.Create(context.Background(), cmd)
 		require.NoError(t, err)
 		require.Equal(t, title, f.Title)
 		require.NotEmpty(t, f.ID)
@@ -668,7 +654,7 @@ func CreateSubTree(t *testing.T, store *sqlStore, service *Service, depth int, p
 
 		parents, err := store.GetParents(context.Background(), folder.GetParentsQuery{
 			UID:   f.UID,
-			OrgID: cmd.OrgID,
+			OrgID: orgID,
 		})
 		require.NoError(t, err)
 		parentUIDs := []string{}
@@ -679,7 +665,7 @@ func CreateSubTree(t *testing.T, store *sqlStore, service *Service, depth int, p
 
 		ancestorUIDs = append(ancestorUIDs, f.UID)
 
-		cmd.ParentUID = f.UID
+		parentUID = f.UID
 	}
 
 	return ancestorUIDs
