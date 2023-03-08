@@ -41,6 +41,49 @@ func TestFeatureToggleFiles(t *testing.T) {
 		}
 	})
 
+	ownerlessFeatures := map[string]bool{
+		"alertingBigTransactions":           true,
+		"database_metrics":                  true,
+		"prometheusAzureOverrideAudience":   true,
+		"tracing":                           true,
+		"cloudWatchDynamicLabels":           true,
+		"prometheusWideSeries":              true,
+		"disableSecretsCompatibility":       true,
+		"logRequestsInstrumentedAsUnknown":  true,
+		"dataConnectionsConsole":            true,
+		"cloudWatchCrossAccountQuerying":    true,
+		"redshiftAsyncQueryDataSupport":     true,
+		"athenaAsyncQueryDataSupport":       true,
+		"newPanelChromeUI":                  true,
+		"showDashboardValidationWarnings":   true,
+		"datasourceOnboarding":              true,
+		"secureSocksDatasourceProxy":        true,
+		"disablePrometheusExemplarSampling": true,
+		"alertingBacktesting":               true,
+		"alertingNoNormalState":             true,
+		"individualCookiePreferences":       true,
+	}
+
+	t.Run("all new features should have an owner", func(t *testing.T) {
+		for _, flag := range standardFeatureFlags {
+			if flag.Owner == "" {
+				if _, ok := ownerlessFeatures[flag.Name]; !ok {
+					t.Errorf("feature %s does not have an owner", flag.Name)
+				}
+			}
+		}
+	})
+
+	t.Run("features with assigned owner should not be on the ownerless list", func(t *testing.T) {
+		for _, flag := range standardFeatureFlags {
+			if flag.Owner != "" {
+				if _, ok := ownerlessFeatures[flag.Name]; ok {
+					t.Errorf("feature %s should be removed from the ownerless list", flag.Name)
+				}
+			}
+		}
+	})
+
 	t.Run("verify files", func(t *testing.T) {
 		// Typescript files
 		verifyAndGenerateFile(t,

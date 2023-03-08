@@ -48,7 +48,7 @@ import { LogRows } from '../logs/components/LogRows';
 
 import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
-import { LogsVolumePanel } from './LogsVolumePanel';
+import { LogsVolumePanelList } from './LogsVolumePanelList';
 import { SETTINGS_KEYS } from './utils/logs';
 
 interface Props extends Themeable2 {
@@ -324,13 +324,10 @@ class UnthemedLogs extends PureComponent<Props, State> {
       splitOpen,
       logRows,
       logsMeta,
-      logsSeries,
-      visibleRange,
       logsVolumeEnabled,
       logsVolumeData,
       loadLogsVolumeData,
       loading = false,
-      loadingState,
       onClickFilterLabel,
       onClickFilterOutLabel,
       timeZone,
@@ -377,19 +374,10 @@ class UnthemedLogs extends PureComponent<Props, State> {
       <>
         <Collapse label="Logs volume" collapsible isOpen={logsVolumeEnabled} onToggle={this.onToggleLogsVolumeCollapse}>
           {logsVolumeEnabled && (
-            <LogsVolumePanel
+            <LogsVolumePanelList
               absoluteRange={absoluteRange}
               width={width}
               logsVolumeData={logsVolumeData}
-              logLinesBasedData={
-                logsSeries
-                  ? {
-                      data: logsSeries,
-                      state: loadingState,
-                    }
-                  : undefined
-              }
-              logLinesBasedDataVisibleRange={visibleRange}
               onUpdateTimeRange={onChangeTime}
               timeZone={timeZone}
               splitOpen={splitOpen}
