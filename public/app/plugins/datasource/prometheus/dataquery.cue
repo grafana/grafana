@@ -34,6 +34,7 @@ composableKinds: DataQuery: {
 						expr:        string
 						instant?:    bool
 						range?:      bool
+                                                  // Execute an additional query to identify interesting raw samples relevant for the given expr
 						exemplar?:   bool
 						editorMode?: #QueryEditorMode
 						format?:     #PromQueryFormat
