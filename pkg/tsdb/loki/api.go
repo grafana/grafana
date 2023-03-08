@@ -111,14 +111,12 @@ func makeLokiError(bytes []byte) error {
 		return fmt.Errorf("%v", string(bytes))
 	}
 
-	errorMessage := data.Message
-
-	if errorMessage == "" {
+	if data.Message == "" {
 		// we got no usable error message, we return the whole text
 		return fmt.Errorf("%v", string(bytes))
 	}
 
-	return fmt.Errorf("%v", errorMessage)
+	return fmt.Errorf("%v", data.Message)
 }
 
 // we know there is an error,
