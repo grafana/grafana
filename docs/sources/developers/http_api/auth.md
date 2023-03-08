@@ -202,3 +202,95 @@ Content-Type: application/json
 
 {"message":"API key deleted"}
 ```
+
+## Use Service Account Token
+
+Example of using the token with the API and view permissions for the token.
+
+The token can be placed in the `Authorization` header prefixed with `Bearer ` like shown in the example below.
+
+`GET /api/access-control/user/permissions`
+
+**Example Request**:
+
+```http
+GET /api/access-control/user/permissions HTTP/1.1
+Accept: application/json
+Content-Type: application/json
+Authorization: Bearer glsa_IXbY7r2yRWtX9oBWk4G7P10VMxf02w2l_601ad560
+```
+
+**Example Response**:
+
+```http
+HTTP/1.1 200
+Content-Type: application/json
+
+{
+  "alert.instances.external:read": [
+    "datasources:*"
+  ],
+  "alert.instances:read": [
+    "folders:*"
+  ],
+  "alert.notifications.external:read": [
+    "datasources:*"
+  ],
+  "alert.notifications:read": [
+    ""
+  ],
+  "alert.rules.external:read": [
+    "datasources:*"
+  ],
+  "alert.rules:read": [
+    "folders:*",
+    "folders:uid:5S3pm9o4z"
+  ],
+  "annotations:create": [
+    "annotations:type:dashboard"
+  ],
+  "annotations:delete": [
+    "annotations:type:dashboard"
+  ],
+  "annotations:read": [
+    "annotations:*"
+  ],
+  "annotations:write": [
+    "annotations:type:dashboard"
+  ],
+  "dashboards.insights:read": [
+    ""
+  ],
+  "dashboards:read": [
+    "dashboards:uid:AE2SW9T4k",
+    "dashboards:uid:r3V5c0O6z",
+    "folders:uid:5S3pm9o4z"
+  ],
+  "datasources.id:read": [
+    "datasources:*"
+  ],
+  "datasources.insights:read": [
+    ""
+  ],
+  "datasources:query": [
+    "datasources:*",
+    "datasources:uid:grafana"
+  ],
+  "datasources:read": [
+    "datasources:*",
+    "datasources:uid:grafana"
+  ],
+  "folders:read": [
+    "folders:uid:5S3pm9o4z"
+  ],
+  "orgs.quotas:read": [
+    ""
+  ],
+  "orgs:read": [
+    ""
+  ],
+  "plugins.app:access": [
+    "plugins:*"
+  ]
+}
+```
