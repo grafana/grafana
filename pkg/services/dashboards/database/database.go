@@ -46,7 +46,12 @@ type dashboardTag struct {
 // DashboardStore implements the Store interface
 var _ dashboards.Store = (*dashboardStore)(nil)
 
-func ProvideDashboardStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tagService tag.Service, quotaService quota.Service) (dashboards.Store, error) {
+// TODO: ¯\_(ツ)_/¯
+// This is a type for the original SQL based store
+// This only exists for wire dependency fooling
+type DashboardSQLStore dashboards.Store
+
+func ProvideDashboardStore(sqlStore db.DB, cfg *setting.Cfg, features featuremgmt.FeatureToggles, tagService tag.Service, quotaService quota.Service) (DashboardSQLStore, error) {
 	s := &dashboardStore{store: sqlStore, cfg: cfg, log: log.New("dashboard-store"), features: features, tagService: tagService}
 
 	defaultLimits, err := readQuotaConfig(cfg)
