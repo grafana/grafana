@@ -27,6 +27,7 @@ type ReqContext struct {
 	AllowAnonymous bool
 	SkipCache      bool
 	Logger         log.Logger
+	Error          error
 	// RequestNonce is a cryptographic request identifier for use with Content Security Policy.
 	RequestNonce          string
 	IsPublicDashboardView bool
@@ -136,6 +137,11 @@ func (ctx *ReqContext) writeErrOrFallback(status int, message string, err error)
 			if status == http.StatusInternalServerError {
 				logger = ctx.Logger.Error
 			}
+		}
+
+		if errutil.HasUnifiedLogging(ctx.Req.Context()) {
+			ctx.Error = err
+			logger = log.NewNopLogger().Info
 		}
 
 		logger(logMessage, "error", err, "remote_addr", ctx.RemoteAddr(), "traceID", traceID)

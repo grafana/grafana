@@ -13,12 +13,17 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 
-package middleware
+package loggermw
 
 import (
+	"errors"
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/grafana/grafana/pkg/middleware"
+
+	"github.com/grafana/grafana/pkg/util/errutil"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
@@ -28,7 +33,26 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func Logger(cfg *setting.Cfg) web.Middleware {
+type Logger interface {
+	Middleware() web.Middleware
+}
+
+type loggerImpl struct {
+	cfg   *setting.Cfg
+	flags featuremgmt.FeatureToggles
+}
+
+func Provide(
+	cfg *setting.Cfg,
+	flags featuremgmt.FeatureToggles,
+) Logger {
+	return &loggerImpl{
+		cfg:   cfg,
+		flags: flags,
+	}
+}
+
+func (l *loggerImpl) Middleware() web.Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
@@ -38,11 +62,15 @@ func Logger(cfg *setting.Cfg) web.Middleware {
 			// put the start time on context so we can measure it later.
 			r = r.WithContext(log.InitstartTime(r.Context(), time.Now()))
 
+			if l.flags.IsEnabled(featuremgmt.FlagUnifiedRequestLog) {
+				r = r.WithContext(errutil.SetUnifiedLogging(r.Context()))
+			}
+
 			rw := web.Rw(w, r)
 			next.ServeHTTP(rw, r)
 
-			timeTaken := time.Since(start) / time.Millisecond
-			duration := time.Since(start).String()
+			duration := time.Since(start)
+			timeTaken := duration / time.Millisecond
 			ctx := contexthandler.FromContext(r.Context())
 			if ctx != nil && ctx.PerfmonTimer != nil {
 				ctx.PerfmonTimer.Observe(float64(timeTaken))
@@ -50,30 +78,13 @@ func Logger(cfg *setting.Cfg) web.Middleware {
 
 			status := rw.Status()
 			if status == 200 || status == 304 {
-				if !cfg.RouterLogging {
+				if !l.cfg.RouterLogging {
 					return
 				}
 			}
 
 			if ctx != nil {
-				logParams := []interface{}{
-					"method", r.Method,
-					"path", r.URL.Path,
-					"status", status,
-					"remote_addr", ctx.RemoteAddr(),
-					"time_ms", int64(timeTaken),
-					"duration", duration,
-					"size", rw.Size(),
-					"referer", SanitizeURL(ctx, r.Referer()),
-				}
-
-				if cfg.IsFeatureToggleEnabled(featuremgmt.FlagDatabaseMetrics) {
-					logParams = append(logParams, "db_call_count", log.TotalDBCallCount(ctx.Req.Context()))
-				}
-
-				if handler, exist := routeOperationName(ctx.Req); exist {
-					logParams = append(logParams, "handler", handler)
-				}
+				logParams := l.prepareLogParams(ctx, r, rw, duration)
 
 				if status >= 500 {
 					ctx.Logger.Error("Request Completed", logParams...)
@@ -82,6 +93,48 @@ func Logger(cfg *setting.Cfg) web.Middleware {
 				}
 			}
 		})
+	}
+}
+
+func (l *loggerImpl) prepareLogParams(c *contextmodel.ReqContext, r *http.Request, rw web.ResponseWriter, duration time.Duration) []any {
+	logParams := []interface{}{
+		"method", r.Method,
+		"path", r.URL.Path,
+		"status", rw.Status(),
+		"remote_addr", c.RemoteAddr(),
+		"time_ms", int64(duration / time.Millisecond),
+		"duration", duration.String(),
+		"size", rw.Size(),
+		"referer", SanitizeURL(c, r.Referer()),
+	}
+
+	if l.flags.IsEnabled(featuremgmt.FlagDatabaseMetrics) {
+		logParams = append(logParams, "db_call_count", log.TotalDBCallCount(c.Req.Context()))
+	}
+
+	if handler, exist := middleware.RouteOperationName(c.Req); exist {
+		logParams = append(logParams, "handler", handler)
+	}
+
+	logParams = append(logParams, errorLogParams(c.Error)...)
+
+	return logParams
+}
+
+func errorLogParams(err error) []any {
+	if err == nil {
+		return nil
+	}
+
+	var gfErr *errutil.Error
+	if !errors.As(err, &gfErr) {
+		return []any{"err", err.Error()}
+	}
+
+	return []any{
+		"errReason", gfErr.Reason,
+		"errMessageID", gfErr.MessageID,
+		"err", gfErr.LogMessage,
 	}
 }
 

@@ -1,5 +1,7 @@
 package errutil
 
+import "context"
+
 type LogLevel string
 
 const (
@@ -34,4 +36,15 @@ func (l LogLevel) LogFunc(logger LogInterface) func(msg string, ctx ...interface
 	default: // LevelUnknown and LevelError.
 		return logger.Error
 	}
+}
+
+type useUnifiedLogging struct{}
+
+func SetUnifiedLogging(ctx context.Context) context.Context {
+	return context.WithValue(ctx, useUnifiedLogging{}, true)
+}
+
+func HasUnifiedLogging(ctx context.Context) bool {
+	v, ok := ctx.Value(useUnifiedLogging{}).(bool)
+	return ok && v
 }

@@ -80,21 +80,11 @@ func (r *NormalResponse) ErrMessage() string {
 
 func (r *NormalResponse) WriteTo(ctx *contextmodel.ReqContext) {
 	if r.err != nil {
-		v := map[string]interface{}{}
-		traceID := tracing.TraceIDFromContext(ctx.Req.Context(), false)
-		if err := json.Unmarshal(r.body.Bytes(), &v); err == nil {
-			v["traceID"] = traceID
-			if b, err := json.Marshal(v); err == nil {
-				r.body = bytes.NewBuffer(b)
-			}
+		if errutil.HasUnifiedLogging(ctx.Req.Context()) {
+			ctx.Error = r.err
+		} else {
+			r.writeLogLine(ctx)
 		}
-
-		logger := ctx.Logger.Error
-		var gfErr *errutil.Error
-		if errors.As(r.err, &gfErr) {
-			logger = gfErr.LogLevel.LogFunc(ctx.Logger)
-		}
-		logger(r.errMessage, "error", r.err, "remote_addr", ctx.RemoteAddr(), "traceID", traceID)
 	}
 
 	header := ctx.Resp.Header()
@@ -105,6 +95,24 @@ func (r *NormalResponse) WriteTo(ctx *contextmodel.ReqContext) {
 	if _, err := ctx.Resp.Write(r.body.Bytes()); err != nil {
 		ctx.Logger.Error("Error writing to response", "err", err)
 	}
+}
+
+func (r *NormalResponse) writeLogLine(c *contextmodel.ReqContext) {
+	v := map[string]interface{}{}
+	traceID := tracing.TraceIDFromContext(c.Req.Context(), false)
+	if err := json.Unmarshal(r.body.Bytes(), &v); err == nil {
+		v["traceID"] = traceID
+		if b, err := json.Marshal(v); err == nil {
+			r.body = bytes.NewBuffer(b)
+		}
+	}
+
+	logger := c.Logger.Error
+	var gfErr *errutil.Error
+	if errors.As(r.err, &gfErr) {
+		logger = gfErr.LogLevel.LogFunc(c.Logger)
+	}
+	logger(r.errMessage, "error", r.err, "remote_addr", c.RemoteAddr(), "traceID", traceID)
 }
 
 func (r *NormalResponse) SetHeader(key, value string) *NormalResponse {
