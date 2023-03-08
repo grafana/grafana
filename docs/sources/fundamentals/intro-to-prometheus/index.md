@@ -81,7 +81,7 @@ For example, a NodeJS application can configure the [prom-client](https://github
 
 The first section of this document introduced the Prometheus as Data concept and how the Prometheus data model and metrics are organized. The second section introduced the concept of Prometheus as Software that is used to collect, process, and store metrics.
 
-This section describes how “Prometheus as Data" and “Prometheus as Software” come together. To explain this further, let's use an example. Suppose a 'MyApp' application uses a Prometheus client to expose metrics. One approach to collecting metrics data is to use a URL in the application that points to an endpoint `http://localhost:3000/metrics` that produces Prometheus metrics data.
+This section describes how Prometheus as Data and Prometheus as Software come together. To explain this further, let's use an example. Suppose a 'MyApp' application uses a Prometheus client to expose metrics. One approach to collecting metrics data is to use a URL in the application that points to an endpoint `http://localhost:3000/metrics` that produces Prometheus metrics data.
 
 The following image shows the two metrics associated with the endpoint. The HELP text explains what the metric means, and the TYPE text indicates what kind of metric it is (in this case, a gauge). `MyAppnodejs_active_request_total` indicates the number of requests (in this case, `1`). `MyAppnodejs_heap_size_total_bytes` indicates the heap size reported in bytes. There are only two numbers because this data shows the value at the moment the data was fetched.
 
