@@ -17,6 +17,7 @@ import { PluginIconName } from 'app/features/plugins/admin/types';
 import { ShowModalReactEvent } from 'app/types/events';
 
 import { QueryResponse, SearchResultMeta } from '../../service';
+import { getIconForKind } from '../../service/utils';
 import { SelectionChecker, SelectionToggle } from '../selection';
 
 import { ExplainScorePopup } from './ExplainScorePopup';
@@ -169,7 +170,10 @@ export const generateColumns = (
         return (
           <div {...p.cellProps} className={cx(styles.locationCellStyle)}>
             {parts.map((p) => {
-              const info = meta.locationInfo[p];
+              let info = meta.locationInfo[p];
+              if (!info && p === 'general') {
+                info = { kind: 'folder', url: '/dashboards', name: 'General' };
+              }
               return info ? (
                 <a key={p} href={info.url} className={styles.locationItem}>
                   <Icon name={getIconForKind(info.kind)} /> {info.name}
@@ -248,16 +252,6 @@ export const generateColumns = (
 
   return columns;
 };
-
-function getIconForKind(v: string): IconName {
-  if (v === 'dashboard') {
-    return 'apps';
-  }
-  if (v === 'folder') {
-    return 'folder';
-  }
-  return 'question-circle';
-}
 
 function hasValue(f: Field): boolean {
   for (let i = 0; i < f.values.length; i++) {

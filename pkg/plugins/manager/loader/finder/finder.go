@@ -1,90 +1,44 @@
 package finder
 
 import (
-	"errors"
-	"fmt"
-	"os"
-	"path/filepath"
+	"context"
 
-	"github.com/grafana/grafana/pkg/infra/fs"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
-var walk = util.Walk
-
-type Finder struct {
-	log log.Logger
+type Service struct {
+	local *FS
+	log   log.Logger
 }
 
-func New() Finder {
-	return Finder{log: log.New("plugin.finder")}
+func NewService() *Service {
+	logger := log.New("plugin.finder")
+	return &Service{
+		local: newFS(logger),
+		log:   logger,
+	}
 }
 
-func (f *Finder) Find(pluginPaths []string) ([]string, error) {
-	var pluginJSONPaths []string
+func (f *Service) Find(ctx context.Context, pluginPaths ...string) ([]*plugins.FoundBundle, error) {
+	if len(pluginPaths) == 0 {
+		return []*plugins.FoundBundle{}, nil
+	}
 
+	fbs := make(map[string][]*plugins.FoundBundle)
 	for _, path := range pluginPaths {
-		exists, err := fs.Exists(path)
+		local, err := f.local.Find(ctx, path)
 		if err != nil {
-			f.log.Warn("Error occurred when checking if plugin directory exists", "path", path, "err", err)
-		}
-		if !exists {
-			f.log.Warn("Skipping finding plugins as directory does not exist", "path", path)
+			f.log.Warn("Error occurred when trying to find plugin", "path", path)
 			continue
 		}
-
-		paths, err := f.getAbsPluginJSONPaths(path)
-		if err != nil {
-			return nil, err
-		}
-		pluginJSONPaths = append(pluginJSONPaths, paths...)
+		fbs[path] = local
 	}
 
-	return pluginJSONPaths, nil
-}
-
-func (f *Finder) getAbsPluginJSONPaths(path string) ([]string, error) {
-	var pluginJSONPaths []string
-
-	var err error
-	path, err = filepath.Abs(path)
-	if err != nil {
-		return []string{}, err
+	var found []*plugins.FoundBundle
+	for _, fb := range fbs {
+		found = append(found, fb...)
 	}
 
-	if err := walk(path, true, true,
-		func(currentPath string, fi os.FileInfo, err error) error {
-			if err != nil {
-				if errors.Is(err, os.ErrNotExist) {
-					f.log.Error("Couldn't scan directory since it doesn't exist", "pluginDir", path, "err", err)
-					return nil
-				}
-				if errors.Is(err, os.ErrPermission) {
-					f.log.Error("Couldn't scan directory due to lack of permissions", "pluginDir", path, "err", err)
-					return nil
-				}
-
-				return fmt.Errorf("filepath.Walk reported an error for %q: %w", currentPath, err)
-			}
-
-			if fi.Name() == "node_modules" {
-				return util.ErrWalkSkipDir
-			}
-
-			if fi.IsDir() {
-				return nil
-			}
-
-			if fi.Name() != "plugin.json" {
-				return nil
-			}
-
-			pluginJSONPaths = append(pluginJSONPaths, currentPath)
-			return nil
-		}); err != nil {
-		return []string{}, err
-	}
-
-	return pluginJSONPaths, nil
+	return found, nil
 }

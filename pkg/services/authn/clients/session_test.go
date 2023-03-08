@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -27,13 +28,15 @@ func TestSession_Test(t *testing.T) {
 		Header: map[string][]string{},
 	}
 	validHTTPReq.AddCookie(&http.Cookie{Name: cookieName, Value: "bob-the-high-entropy-token"})
-
-	s := ProvideSession(&authtest.FakeUserAuthTokenService{}, &usertest.FakeUserService{}, "", 20*time.Second)
+	cfg := setting.NewCfg()
+	cfg.LoginCookieName = ""
+	cfg.LoginMaxLifetime = 20 * time.Second
+	s := ProvideSession(&authtest.FakeUserAuthTokenService{}, &usertest.FakeUserService{}, cfg)
 
 	disabled := s.Test(context.Background(), &authn.Request{HTTPRequest: validHTTPReq})
 	assert.False(t, disabled)
 
-	s.loginCookieName = cookieName
+	s.cfg.LoginCookieName = cookieName
 
 	good := s.Test(context.Background(), &authn.Request{HTTPRequest: validHTTPReq})
 	assert.True(t, good)
@@ -105,13 +108,19 @@ func TestSession_Authenticate(t *testing.T) {
 				OrgID:          1,
 				OrgRoles:       map[int64]roletype.RoleType{1: roletype.RoleEditor},
 				IsGrafanaAdmin: boolPtr(false),
+				ClientParams: authn.ClientParams{
+					SyncPermissions: true,
+				},
 			},
 			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := ProvideSession(tt.fields.sessionService, tt.fields.userService, cookieName, 20*time.Second)
+			cfg := setting.NewCfg()
+			cfg.LoginCookieName = cookieName
+			cfg.LoginMaxLifetime = 20 * time.Second
+			s := ProvideSession(tt.fields.sessionService, tt.fields.userService, cfg)
 
 			got, err := s.Authenticate(context.Background(), tt.args.r)
 			require.True(t, (err != nil) == tt.wantErr, err)
@@ -142,12 +151,15 @@ func (f *fakeResponseWriter) WriteHeader(statusCode int) {
 }
 
 func TestSession_Hook(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.LoginCookieName = "grafana-session"
+	cfg.LoginMaxLifetime = 20 * time.Second
 	s := ProvideSession(&authtest.FakeUserAuthTokenService{
 		TryRotateTokenProvider: func(ctx context.Context, token *auth.UserToken, clientIP net.IP, userAgent string) (bool, *auth.UserToken, error) {
 			token.UnhashedToken = "new-token"
 			return true, token, nil
 		},
-	}, &usertest.FakeUserService{}, "grafana-session", 20*time.Second)
+	}, &usertest.FakeUserService{}, cfg)
 
 	sampleID := &authn.Identity{
 		SessionToken: &auth.UserToken{

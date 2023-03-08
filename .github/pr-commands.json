@@ -23,6 +23,7 @@
         "package.json",
         "tsconfig.json",
         "lerna.json",
+        ".babelrc",
         ".prettierrc.js",
         ".eslintrc",
         "**/*.mdx"
@@ -189,5 +190,13 @@
     "ignoreList": ["renovate[bot]","dependabot[bot]"],
     "action": "updateLabel",
     "addLabel": "pr/external"
+  },
+  {
+    "type":"label",
+    "name":"type/docs",
+    "action":"addToProject",
+    "addToProject":{
+      "url":"https://github.com/orgs/grafana/projects/69"
+    }
   }
 ]

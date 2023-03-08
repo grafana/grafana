@@ -7,11 +7,14 @@ import (
 	"math"
 	"time"
 
+	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/weaveworks/common/http/client"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
@@ -44,14 +47,18 @@ type remoteLokiClient interface {
 type RemoteLokiBackend struct {
 	client         remoteLokiClient
 	externalLabels map[string]string
+	clock          clock.Clock
+	metrics        *metrics.Historian
 	log            log.Logger
 }
 
-func NewRemoteLokiBackend(cfg LokiConfig) *RemoteLokiBackend {
+func NewRemoteLokiBackend(cfg LokiConfig, req client.Requester, metrics *metrics.Historian) *RemoteLokiBackend {
 	logger := log.New("ngalert.state.historian", "backend", "loki")
 	return &RemoteLokiBackend{
-		client:         newLokiClient(cfg, logger),
+		client:         newLokiClient(cfg, req, metrics, logger),
 		externalLabels: cfg.ExternalLabels,
+		clock:          clock.New(),
+		metrics:        metrics,
 		log:            logger,
 	}
 }
@@ -66,8 +73,19 @@ func (h *RemoteLokiBackend) RecordStatesAsync(ctx context.Context, rule history_
 	errCh := make(chan error, 1)
 	go func() {
 		defer close(errCh)
+
+		org := fmt.Sprint(rule.OrgID)
+		h.metrics.WritesTotal.WithLabelValues(org).Inc()
+		samples := 0
+		for _, s := range streams {
+			samples += len(s.Values)
+		}
+		h.metrics.TransitionsTotal.WithLabelValues(org).Add(float64(samples))
+
 		if err := h.recordStreams(ctx, streams, logger); err != nil {
 			logger.Error("Failed to save alert state history batch", "error", err)
+			h.metrics.WritesFailed.WithLabelValues(org).Inc()
+			h.metrics.TransitionsFailed.WithLabelValues(org).Add(float64(samples))
 			errCh <- fmt.Errorf("failed to save alert state history batch: %w", err)
 		}
 	}()
@@ -274,6 +292,7 @@ func (h *RemoteLokiBackend) recordStreams(ctx context.Context, streams []stream,
 	if err := h.client.push(ctx, streams); err != nil {
 		return err
 	}
+
 	logger.Debug("Done saving alert state history batch")
 	return nil
 }
