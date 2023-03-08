@@ -153,6 +153,7 @@ var (
 			Description:  "Shows the new trace view design",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
 		{
 			Name:        "correlations",
@@ -177,6 +178,7 @@ var (
 			Description:  "Enable trace to metrics links",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
 		{
 			Name:        "newDBLibrary",
@@ -405,6 +407,7 @@ var (
 			Description:  "Enables the 'TraceQL Search' tab for the Tempo datasource which provides a UI to generate TraceQL queries",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
 		{
 			Name:         "prometheusMetricEncyclopedia",
