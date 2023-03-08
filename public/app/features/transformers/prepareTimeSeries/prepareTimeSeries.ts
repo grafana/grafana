@@ -333,7 +333,7 @@ export const prepareTimeSeriesTransformer: SynchronousDataTransformerInfo<Prepar
 
       // Join by the first frame
       const frame = outerJoinDataFrames({
-        frames: data,
+        frames: join,
         joinBy: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
         keepOriginIndices: true,
       });

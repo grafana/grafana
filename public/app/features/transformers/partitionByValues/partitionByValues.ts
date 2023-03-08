@@ -92,6 +92,7 @@ export const partitionByValuesTransformer: SynchronousDataTransformerInfo<Partit
   },
 };
 
+// Split a single frame dataset into multiple frames based on values in a set of fields
 export function partitionByValues(
   frame: DataFrame,
   matcher: FieldMatcher,
