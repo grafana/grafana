@@ -207,6 +207,7 @@ var (
 			Name:        "prometheusWideSeries",
 			Description: "Enable wide series responses in the Prometheus datasource",
 			State:       FeatureStateAlpha,
+			Owner:       "O11y-metrics",
 		},
 		{
 			Name:         "canvasPanelNesting",
@@ -353,6 +354,7 @@ var (
 			Name:        "disablePrometheusExemplarSampling",
 			Description: "Disable Prometheus examplar sampling",
 			State:       FeatureStateStable,
+			Owner:       "O11y-metrics",
 		},
 		{
 			Name:        "alertingBacktesting",
