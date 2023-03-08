@@ -3,8 +3,6 @@ package clients
 import (
 	"context"
 	"crypto/rsa"
-	"crypto/x509"
-	"encoding/pem"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -28,24 +26,11 @@ var (
 	ErrInvalidToken = errutil.NewBase(errutil.StatusUnauthorized,
 		"invalid_token", errutil.WithPublicMessage("Failed to verify JWT"))
 
-	publicKeyRaw, _ = pem.Decode([]byte(`-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvDNW/jqNoL6cJ7m1T/qM
-fNxouV9kItOWlA8NKm9vDickN8Dz+jMqog9/BJH5k2S5+AzB9aTo52Sm6XqiBvK3
-lrHA3aH2z9Zn0UVpccKxlsRfqaE1HYRFhRB80+gzZpeSHQmSYPLqOzhSB+Ytqz1Z
-mkW/DqjTwKrBSjP+RrFUZoDGU+/1FD92s0lMZbAlT+SDvawC5zuxWk7N9BuCZQ35
-FYKs7YM8wQv/mcq3kmeH47CGF7OQyH1sPfA+2GN4s+8UtK24rPd+ecS0pOD/pP5m
-W9J8Hl7JHR1e/5apPTEKovsKkgj4IMr8+2CXMkMTS1s1yY0enWdkzv4kiiHnJIHn
-XwIDAQAB
------END PUBLIC KEY-----`))
-	timeNow      = time.Now
-	parsedKey, _ = x509.ParsePKIXPublicKey(publicKeyRaw.Bytes)
-	publicKey    = parsedKey.(*rsa.PublicKey)
+	timeNow = time.Now
 )
 
 const (
 	SigningMethodNone = jose.SignatureAlgorithm("none")
-	ExpectedIssuer    = "http://localhost:3000"              // move to config
-	ExpectedAudiance  = "http://localhost:3000/oauth2/token" // move to config
 )
 
 func ProvideExtendedJWT(userService user.Service, cfg *setting.Cfg, oauthService oauthserver.OAuth2Service) *ExtendedJWT {
@@ -54,6 +39,7 @@ func ProvideExtendedJWT(userService user.Service, cfg *setting.Cfg, oauthService
 		log:          log.New(authn.ClientJWT),
 		userService:  userService,
 		oauthService: oauthService,
+		publicKey:    oauthService.GetServerPublicKey(),
 	}
 }
 
@@ -62,6 +48,7 @@ type ExtendedJWT struct {
 	log          log.Logger
 	userService  user.Service
 	oauthService oauthserver.OAuth2Service
+	publicKey    *rsa.PublicKey
 }
 
 func (s *ExtendedJWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
@@ -157,7 +144,7 @@ func (s *ExtendedJWT) Test(ctx context.Context, r *authn.Request) bool {
 		return false
 	}
 
-	return claims.Issuer == ExpectedIssuer
+	return claims.Issuer == s.cfg.AppURL
 }
 
 // VerifyRFC9068Token verifies the token against the RFC 9068 specification.
@@ -189,15 +176,16 @@ func (s *ExtendedJWT) VerifyRFC9068Token(ctx context.Context, rawToken string) (
 
 	var claims jwt.Claims
 	var allClaims map[string]interface{}
-	err = parsedToken.Claims(publicKey, &claims, &allClaims)
+	err = parsedToken.Claims(s.publicKey, &claims, &allClaims)
 	if err != nil {
 		return nil, fmt.Errorf("failed to verify JWT: %w", err)
 	}
 
 	err = claims.ValidateWithLeeway(jwt.Expected{
-		Issuer:   ExpectedIssuer,
-		Audience: jwt.Audience{ExpectedAudiance},
-		Time:     timeNow(),
+		Issuer: s.cfg.AppURL,
+		// FIXME: Commented this out for the credential grant to work, but might not be safe
+		// Audience: jwt.Audience{s.cfg.AppURL + "oauth2/token"},
+		Time: timeNow(),
 	}, 0)
 
 	if err != nil {
