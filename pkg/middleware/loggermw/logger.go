@@ -17,6 +17,7 @@ package loggermw
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 	"time"
@@ -76,31 +77,34 @@ func (l *loggerImpl) Middleware() web.Middleware {
 				ctx.PerfmonTimer.Observe(float64(timeTaken))
 			}
 
-			status := rw.Status()
-			if status == 200 || status == 304 {
-				if !l.cfg.RouterLogging {
-					return
-				}
-			}
-
 			if ctx != nil {
-				logParams := l.prepareLogParams(ctx, r, rw, duration)
-
-				if status >= 500 {
-					ctx.Logger.Error("Request Completed", logParams...)
-				} else {
-					ctx.Logger.Info("Request Completed", logParams...)
-				}
+				logParams, logger := l.prepareLogParams(ctx, duration)
+				logger.LogFunc(ctx.Logger)("Request Completed", logParams...)
 			}
 		})
 	}
 }
 
-func (l *loggerImpl) prepareLogParams(c *contextmodel.ReqContext, r *http.Request, rw web.ResponseWriter, duration time.Duration) []any {
-	logParams := []interface{}{
+func (l *loggerImpl) prepareLogParams(c *contextmodel.ReqContext, duration time.Duration) ([]any, errutil.LogLevel) {
+	rw := c.Resp
+	r := c.Req
+
+	status := rw.Status()
+	lvl := errutil.LevelInfo
+
+	switch {
+	case status == http.StatusOK, status == http.StatusNotModified:
+		if !l.cfg.RouterLogging {
+			lvl = errutil.LevelNever
+		}
+	case status >= http.StatusInternalServerError:
+		lvl = errutil.LevelError
+	}
+
+	logParams := []any{
 		"method", r.Method,
 		"path", r.URL.Path,
-		"status", rw.Status(),
+		"status", status,
 		"remote_addr", c.RemoteAddr(),
 		"time_ms", int64(duration / time.Millisecond),
 		"duration", duration.String(),
@@ -118,7 +122,7 @@ func (l *loggerImpl) prepareLogParams(c *contextmodel.ReqContext, r *http.Reques
 
 	logParams = append(logParams, errorLogParams(c.Error)...)
 
-	return logParams
+	return logParams, lvl
 }
 
 func errorLogParams(err error) []any {
