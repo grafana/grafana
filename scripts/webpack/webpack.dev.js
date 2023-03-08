@@ -88,11 +88,13 @@ module.exports = (env = {}) =>
               },
             },
           }),
-      new ESLintPlugin({
-        cache: true,
-        lintDirtyModulesOnly: true, // don't lint on start, only lint changed files
-        extensions: ['.ts', '.tsx'],
-      }),
+      parseInt(env.noLint, 10)
+        ? new DefinePlugin({}) // bogus plugin to satisfy webpack API
+        : new ESLintPlugin({
+            cache: true,
+            lintDirtyModulesOnly: true, // don't lint on start, only lint changed files
+            extensions: ['.ts', '.tsx'],
+          }),
       new MiniCssExtractPlugin({
         filename: 'grafana.[name].[contenthash].css',
       }),
