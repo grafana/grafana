@@ -19,6 +19,7 @@ var (
 			Name:        "trimDefaults",
 			Description: "Use cue schema to remove values that will be applied automatically",
 			State:       FeatureStateBeta,
+			Owner:       grafanaAsCodeSquad,
 		},
 		{
 			Name:        "disableEnvelopeEncryption",
@@ -97,6 +98,7 @@ var (
 			Name:        "featureHighlights",
 			Description: "Highlight Grafana Enterprise features",
 			State:       FeatureStateStable,
+			Owner:       grafanaAsCodeSquad,
 		},
 		{
 			Name:        "dashboardComments",
@@ -192,6 +194,7 @@ var (
 			Description:     "Validate dashboard JSON POSTed to api/dashboards/db",
 			State:           FeatureStateBeta,
 			RequiresRestart: true,
+			Owner:           grafanaAsCodeSquad,
 		},
 		{
 			Name:         "autoMigrateGraphPanels",
