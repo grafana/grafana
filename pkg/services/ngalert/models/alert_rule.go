@@ -447,14 +447,11 @@ func (c Condition) IsValid() bool {
 	return len(c.Data) != 0
 }
 
-// PatchPartialAlertRule patches `ruleToPatch` by `existingRule` following the rule that if a field of `ruleToPatch` is
-// empty or has the default value, it is populated by the value of the corresponding field from `existingRule`.
+// PatchPartialAlertRule patches `ruleToPatch` by `existingRule` following the rule that if a field of `ruleToPatch` is empty or has the default value, it is populated by the value of the corresponding field from `existingRule`.
 // There are several exceptions:
-//  1. Following fields are not patched and therefore will be ignored: AlertRule.ID, AlertRule.OrgID, AlertRule.Updated,
-//     AlertRule.Version, AlertRule.UID, AlertRule.DashboardUID, AlertRule.PanelID, AlertRule.Annotations, and
-//     AlertRule.Labels
-//  2. There are fields that are patched together:
-//     - AlertRule.Condition and AlertRule.Data
+// 1. Following fields are not patched and therefore will be ignored: AlertRule.ID, AlertRule.OrgID, AlertRule.Updated, AlertRule.Version, AlertRule.UID, AlertRule.DashboardUID, AlertRule.PanelID, AlertRule.Annotations and AlertRule.Labels
+// 2. There are fields that are patched together:
+//   - AlertRule.Condition and AlertRule.Data
 //
 // If either of the pair is specified, neither is patched.
 func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRuleWithOptionals) {
@@ -482,9 +479,6 @@ func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRuleWithOp
 	}
 	if ruleToPatch.For == -1 {
 		ruleToPatch.For = existingRule.For
-	}
-	if ruleToPatch.ForError == -1 {
-		ruleToPatch.ForError = existingRule.ForError
 	}
 	if !ruleToPatch.HasPause {
 		ruleToPatch.IsPaused = existingRule.IsPaused
