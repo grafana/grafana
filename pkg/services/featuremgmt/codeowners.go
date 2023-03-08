@@ -16,4 +16,5 @@ const (
 	grafanaAsCodeSquad            codeowner = "@grafana/grafana-as-code"
 	grafanaAuthnzSquad            codeowner = "@grafana/grafana-authnz-team"
 	grafanaObservabilityLogsSquad codeowner = "@grafana/observability-logs"
+	hostedGrafanaTeam             codeowner = "@grafana/hosted-grafana-team"
 )
