@@ -20,11 +20,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -310,6 +313,113 @@ func TestIntegrationFolderService(t *testing.T) {
 				actualError := toFolderError(tc.ActualError)
 				assert.EqualErrorf(t, actualError, tc.ExpectedError.Error(),
 					"For error '%s' expected error '%s', actual '%s'", tc.ActualError, tc.ExpectedError, actualError)
+			}
+		})
+	})
+}
+
+func TestIntegrationDeleteNestedFolders(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	db := sqlstore.InitTestDB(t)
+	quotaService := quotatest.New(false, nil)
+	folderStore := ProvideDashboardFolderStore(db)
+
+	cfg := setting.NewCfg()
+
+	featuresFlagOn := featuremgmt.WithFeatures("nestedFolders")
+	dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuresFlagOn, tagimpl.ProvideService(db, db.Cfg), quotaService)
+	require.NoError(t, err)
+	nestedFolderStore := ProvideStore(db, db.Cfg, featuresFlagOn)
+
+	serviceWithFlagOn := &Service{
+		cfg:                  cfg,
+		log:                  log.New("test-folder-service"),
+		dashboardStore:       dashStore,
+		dashboardFolderStore: folderStore,
+		store:                nestedFolderStore,
+		features:             featuresFlagOn,
+		bus:                  bus.ProvideBus(tracing.InitializeTracerForTest()),
+		db:                   db,
+	}
+
+	signedInUser := user.SignedInUser{UserID: 1, OrgID: orgID}
+	createCmd := folder.CreateFolderCommand{
+		OrgID:        orgID,
+		ParentUID:    "",
+		SignedInUser: &signedInUser,
+	}
+
+	t.Run("With nested folder feature flag on", func(t *testing.T) {
+		origNewGuardian := guardian.New
+		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
+
+		ancestorUIDs := CreateSubTree(t, nestedFolderStore, serviceWithFlagOn, 3, "", createCmd)
+
+		deleteCmd := folder.DeleteFolderCommand{
+			UID:          ancestorUIDs[0],
+			OrgID:        orgID,
+			SignedInUser: &signedInUser,
+		}
+		err = serviceWithFlagOn.Delete(context.Background(), &deleteCmd)
+		require.NoError(t, err)
+
+		for i, uid := range ancestorUIDs {
+			// dashboard table
+			_, err := serviceWithFlagOn.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, uid)
+			require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
+			// folder table
+			_, err = serviceWithFlagOn.store.Get(context.Background(), folder.GetFolderQuery{UID: &ancestorUIDs[i], OrgID: orgID})
+			require.ErrorIs(t, err, folder.ErrFolderNotFound)
+		}
+		t.Cleanup(func() {
+			guardian.New = origNewGuardian
+		})
+	})
+	t.Run("With feature flag unset", func(t *testing.T) {
+		featuresFlagOff := featuremgmt.WithFeatures()
+		dashStore, err := database.ProvideDashboardStore(db, db.Cfg, featuresFlagOff, tagimpl.ProvideService(db, db.Cfg), quotaService)
+		require.NoError(t, err)
+		nestedFolderStore := ProvideStore(db, db.Cfg, featuresFlagOff)
+
+		serviceWithFlagOff := &Service{
+			cfg:                  cfg,
+			log:                  log.New("test-folder-service"),
+			dashboardStore:       dashStore,
+			dashboardFolderStore: folderStore,
+			store:                nestedFolderStore,
+			features:             featuresFlagOff,
+			bus:                  bus.ProvideBus(tracing.InitializeTracerForTest()),
+			db:                   db,
+		}
+
+		origNewGuardian := guardian.New
+		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
+
+		ancestorUIDs := CreateSubTree(t, nestedFolderStore, serviceWithFlagOn, 1, "", createCmd)
+
+		deleteCmd := folder.DeleteFolderCommand{
+			UID:          ancestorUIDs[0],
+			OrgID:        orgID,
+			SignedInUser: &signedInUser,
+		}
+		err = serviceWithFlagOff.Delete(context.Background(), &deleteCmd)
+		require.NoError(t, err)
+
+		for i, uid := range ancestorUIDs {
+			// dashboard table
+			_, err := serviceWithFlagOff.dashboardFolderStore.GetFolderByUID(context.Background(), orgID, uid)
+			require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
+			// folder table
+			_, err = serviceWithFlagOff.store.Get(context.Background(), folder.GetFolderQuery{UID: &ancestorUIDs[i], OrgID: orgID})
+			require.NoError(t, err)
+		}
+		t.Cleanup(func() {
+			guardian.New = origNewGuardian
+			for _, uid := range ancestorUIDs {
+				err := serviceWithFlagOff.store.Delete(context.Background(), uid, orgID)
+				require.NoError(t, err)
 			}
 		})
 	})
