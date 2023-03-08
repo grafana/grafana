@@ -622,10 +622,9 @@ type ElasticsearchDataQuery struct {
 	Datasource *interface{} `json:"datasource,omitempty"`
 
 	// Hide true if query is disabled (ie should not be returned to the dashboard)
+	// Note this does not always imply that the query should not be executed since
+	// the results from a hidden query may be used as the input to other queries (SSE etc)
 	Hide *bool `json:"hide,omitempty"`
-
-	// Unique, guid like, string used in explore mode
-	Key *string `json:"key,omitempty"`
 
 	// List of metric aggregations
 	Metrics []MetricsItem `json:"metrics,omitempty"`

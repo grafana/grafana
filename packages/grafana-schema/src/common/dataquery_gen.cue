@@ -22,10 +22,9 @@ DataQuery: {
 	refId: string
 
 	// true if query is disabled (ie should not be returned to the dashboard)
+	// Note this does not always imply that the query should not be executed since
+	// the results from a hidden query may be used as the input to other queries (SSE etc)
 	hide?: bool
-
-	// Unique, guid like, string used in explore mode
-	key?: string
 
 	// Specify the query flavor
 	// TODO make this required and give it a default

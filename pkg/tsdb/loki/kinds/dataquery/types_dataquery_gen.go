@@ -54,13 +54,12 @@ type LokiDataQuery struct {
 	Expr string `json:"expr"`
 
 	// Hide true if query is disabled (ie should not be returned to the dashboard)
+	// Note this does not always imply that the query should not be executed since
+	// the results from a hidden query may be used as the input to other queries (SSE etc)
 	Hide *bool `json:"hide,omitempty"`
 
 	// @deprecated, now use queryType.
 	Instant *bool `json:"instant,omitempty"`
-
-	// Unique, guid like, string used in explore mode
-	Key *string `json:"key,omitempty"`
 
 	// Used to override the name of the series.
 	LegendFormat *string `json:"legendFormat,omitempty"`

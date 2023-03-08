@@ -191,10 +191,9 @@ type TestDataDataQuery struct {
 	ErrorType  *ErrorType   `json:"errorType,omitempty"`
 
 	// Hide true if query is disabled (ie should not be returned to the dashboard)
-	Hide *bool `json:"hide,omitempty"`
-
-	// Unique, guid like, string used in explore mode
-	Key         *string `json:"key,omitempty"`
+	// Note this does not always imply that the query should not be executed since
+	// the results from a hidden query may be used as the input to other queries (SSE etc)
+	Hide        *bool   `json:"hide,omitempty"`
 	Labels      *string `json:"labels,omitempty"`
 	LevelColumn *bool   `json:"levelColumn,omitempty"`
 	Lines       *int64  `json:"lines,omitempty"`
