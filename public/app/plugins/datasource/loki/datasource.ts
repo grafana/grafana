@@ -452,7 +452,28 @@ export class LokiDatasource
   }
 
   async formatQuery(query: string) {
-    return await this.metadataRequest('format_query', { query: query });
+    const placeHolderScopedVars: any = {
+      __interval: { value: '200y' },
+      __range: { value: '201y' },
+    };
+
+    this.templateSrv.getVariables().forEach((variable) => {
+      if (query.includes(variable.name) === false) {
+        return;
+      }
+
+      placeHolderScopedVars[variable.name] = { value: variable.query };
+    });
+
+    const interpolated = this.interpolateString(query, placeHolderScopedVars);
+    let response = await this.metadataRequest('format_query', { query: interpolated });
+
+    for (const variable in placeHolderScopedVars) {
+      const value = placeHolderScopedVars[variable].value;
+      response = response.replace(new RegExp(`\\[${value}\\]`, 'g'), `[$${variable}]`);
+    }
+
+    return response;
   }
 
   async metricFindQuery(query: LokiVariableQuery | string) {
