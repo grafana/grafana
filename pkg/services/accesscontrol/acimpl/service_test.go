@@ -740,3 +740,55 @@ func TestPermissionCacheKey(t *testing.T) {
 		})
 	}
 }
+
+func TestService_SaveExternalServiceRole(t *testing.T) {
+	type run struct {
+		cmd     accesscontrol.SaveExternalServiceRoleCommand
+		wantErr bool
+	}
+	tests := []struct {
+		name string
+		runs []run
+	}{
+		{
+			name: "can create and update a role",
+			runs: []run{
+				{
+					cmd: accesscontrol.SaveExternalServiceRoleCommand{
+						Global:            true,
+						ServiceAccountID:  2,
+						ExternalServiceID: "App 1",
+						Permissions:       []accesscontrol.Permission{{Action: "users:read", Scope: "users:id:1"}},
+					},
+					wantErr: false,
+				},
+				{
+					cmd: accesscontrol.SaveExternalServiceRoleCommand{
+						Global:            true,
+						ServiceAccountID:  2,
+						ExternalServiceID: "App 1",
+						Permissions: []accesscontrol.Permission{
+							{Action: "users:read", Scope: "users:id:1"},
+							{Action: "users:read", Scope: "users:id:2"},
+						},
+					},
+					wantErr: false,
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctx := context.Background()
+			ac := setupTestEnv(t)
+			for _, r := range tt.runs {
+				err := ac.SaveExternalServiceRole(ctx, r.cmd)
+				if r.wantErr {
+					require.Error(t, err)
+					continue
+				}
+				require.NoError(t, err)
+			}
+		})
+	}
+}

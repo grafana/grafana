@@ -30,6 +30,7 @@ type Calls struct {
 	DeleteUserPermissions          []interface{}
 	SearchUsersPermissions         []interface{}
 	SearchUserPermissions          []interface{}
+	SaveExternalServiceRole        []interface{}
 }
 
 type Mock struct {
@@ -56,6 +57,7 @@ type Mock struct {
 	DeleteUserPermissionsFunc          func(context.Context, int64) error
 	SearchUsersPermissionsFunc         func(context.Context, *user.SignedInUser, int64, accesscontrol.SearchOptions) (map[int64][]accesscontrol.Permission, error)
 	SearchUserPermissionsFunc          func(ctx context.Context, orgID int64, searchOptions accesscontrol.SearchOptions) ([]accesscontrol.Permission, error)
+	SaveExternalServiceRoleFunc        func(ctx context.Context, cmd accesscontrol.SaveExternalServiceRoleCommand) error
 
 	scopeResolvers accesscontrol.Resolvers
 }
@@ -234,4 +236,13 @@ func (m *Mock) SearchUserPermissions(ctx context.Context, orgID int64, searchOpt
 		return m.SearchUserPermissionsFunc(ctx, orgID, searchOptions)
 	}
 	return nil, nil
+}
+
+func (m *Mock) SaveExternalServiceRole(ctx context.Context, cmd accesscontrol.SaveExternalServiceRoleCommand) error {
+	m.Calls.SaveExternalServiceRole = append(m.Calls.SaveExternalServiceRole, []interface{}{ctx, cmd})
+	// Use override if provided
+	if m.SaveExternalServiceRoleFunc != nil {
+		return m.SaveExternalServiceRoleFunc(ctx, cmd)
+	}
+	return nil
 }

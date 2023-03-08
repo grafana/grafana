@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	ossac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/oauthserver"
@@ -198,7 +199,7 @@ func (s *OAuth2ServiceImpl) RegisterApp(ctx context.Context, registration *oauth
 	client.PublicPem = []byte(keys.PublicPem)
 
 	s.logger.Info("Registering app", "client", client)
-	err = s.sqlstore.RegisterApp(ctx, &client)
+	err = s.sqlstore.RegisterExternalService(ctx, &client)
 	if err != nil {
 		return nil, err
 	}
@@ -231,10 +232,12 @@ func (s *OAuth2ServiceImpl) createServiceAccount(ctx context.Context, registrati
 		return &b
 	}
 
+	slug := slugify.Slugify(registration.AppName)
+
 	// TODO: Can we use ServiceAccounts in global orgs in the future? As apps are available accross all orgs.
 	// FIXME currently using orgID 1
 	sa, err := s.saService.CreateServiceAccount(ctx, oauthserver.TmpOrgID, &serviceaccounts.CreateServiceAccountForm{
-		Name:       registration.AppName,
+		Name:       slug,
 		Role:       newRole(roletype.RoleViewer), // TODO: Use empty role
 		IsDisabled: newBool(false),
 	})
@@ -242,25 +245,15 @@ func (s *OAuth2ServiceImpl) createServiceAccount(ctx context.Context, registrati
 		return -1, err
 	}
 
-	// role, err := s.acSvc.CreateRole(ctx, entac.GlobalOrgID, entac.CreateRoleCommand{
-	// 	UID:         fmt.Sprintf("app_servicesaccounts_%v_permissions", sa.Id), // FIXME use managed instead of app
-	// 	Name:        fmt.Sprintf("app:servicesaccounts:%v:permissions", sa.Id), // FIXME use managed instead of app
-	// 	Permissions: registration.Permissions,
-	// 	Description: fmt.Sprintf("Managed role for service account %v created for %s", sa.Id, registration.AppName),
-	// 	Version:     1,
-	// 	Hidden:      true,
-	// })
-	// if err != nil {
-	// 	return -1, err
-	// }
-
-	// if err = s.acSvc.AddUserRole(ctx, entac.GlobalOrgID, entac.AddUserRoleCommand{
-	// 	Global:  true,
-	// 	RoleUID: role.UID,
-	// 	UserID:  sa.Id,
-	// }); err != nil {
-	// 	return -1, err
-	// }
+	if err := s.acService.SaveExternalServiceRole(ctx, ossac.SaveExternalServiceRoleCommand{
+		OrgID:             ossac.GlobalOrgID,
+		Global:            true,
+		ExternalServiceID: slug,
+		ServiceAccountID:  sa.Id,
+		Permissions:       registration.Permissions,
+	}); err != nil {
+		return -1, err
+	}
 
 	return sa.Id, nil
 }

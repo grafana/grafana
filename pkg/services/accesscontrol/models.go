@@ -2,10 +2,12 @@ package accesscontrol
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -243,6 +245,37 @@ type SetResourcePermissionCommand struct {
 	TeamID      int64  `json:"teamId,omitempty"`
 	BuiltinRole string `json:"builtInRole,omitempty"`
 	Permission  string `json:"permission"`
+}
+
+type SaveExternalServiceRoleCommand struct {
+	OrgID             int64
+	Global            bool
+	ExternalServiceID string
+	ServiceAccountID  int64
+	Permissions       []Permission
+}
+
+func (cmd *SaveExternalServiceRoleCommand) Validate() error {
+	if cmd.ExternalServiceID == "" {
+		return errors.New("external service id not specified")
+	}
+
+	// slugify the external service id ID for the role to have correct name and uid
+	cmd.ExternalServiceID = slugify.Slugify(cmd.ExternalServiceID)
+
+	if (cmd.OrgID == GlobalOrgID) != cmd.Global {
+		return fmt.Errorf("invalid org id %d for global role %t", cmd.OrgID, cmd.Global)
+	}
+
+	if cmd.Permissions == nil || len(cmd.Permissions) == 0 {
+		return errors.New("no permissions provided")
+	}
+
+	if cmd.ServiceAccountID <= 0 {
+		return fmt.Errorf("invalid service account id %d", cmd.ServiceAccountID)
+	}
+
+	return nil
 }
 
 const (

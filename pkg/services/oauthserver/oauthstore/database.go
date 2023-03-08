@@ -19,7 +19,7 @@ func NewStore(db db.DB) *Store {
 	}
 }
 
-func (s *Store) RegisterApp(ctx context.Context, client *oauthserver.Client) error {
+func (s *Store) RegisterExternalService(ctx context.Context, client *oauthserver.Client) error {
 	return s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		insertQuery := []interface{}{
 			`INSERT INTO oauth_client (app_name, client_id, secret, grant_types, service_account_id, public_pem, redirect_uri) VALUES (?, ?, ?, ?, ?, ?, ?)`,

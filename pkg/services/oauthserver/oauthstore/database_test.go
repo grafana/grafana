@@ -82,7 +82,7 @@ dCBBIFJlZ3VsYXIgQmFzZTY0IEVuY29kZWQgU3RyaW5nLi4uCg==
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := context.Background()
-			err := s.RegisterApp(ctx, &tt.client)
+			err := s.RegisterExternalService(ctx, &tt.client)
 			if tt.wantErr {
 				require.Error(t, err)
 				return
