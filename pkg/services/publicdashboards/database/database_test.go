@@ -672,25 +672,23 @@ func TestIntegrationDelete(t *testing.T) {
 }
 
 func TestGetDashboardByFolder(t *testing.T) {
-	t.Run("returns empty slice when dashboard is not a folder", func(t *testing.T) {
+	t.Run("returns nil when dashboard is not a folder", func(t *testing.T) {
 		sqlStore, _ := db.InitTestDBwithCfg(t)
 		dashboard := &dashboards.Dashboard{IsFolder: false}
 		store := ProvideStore(sqlStore)
 		pubdashes, err := store.FindByDashboardFolder(context.Background(), dashboard)
 
 		require.NoError(t, err)
-		assert.Len(t, pubdashes, 0)
-		assert.Empty(t, pubdashes)
+		assert.Nil(t, pubdashes)
 	})
 
-	t.Run("returns empty slice when dashboard is nil", func(t *testing.T) {
+	t.Run("returns nil when dashboard is nil", func(t *testing.T) {
 		sqlStore, _ := db.InitTestDBwithCfg(t)
 		store := ProvideStore(sqlStore)
 		pubdashes, err := store.FindByDashboardFolder(context.Background(), nil)
 
 		require.NoError(t, err)
-		assert.Len(t, pubdashes, 0)
-		assert.Empty(t, pubdashes)
+		assert.Nil(t, pubdashes)
 	})
 
 	t.Run("can get all pubdashes for dashboard folder and org", func(t *testing.T) {

@@ -271,7 +271,7 @@ func (d *PublicDashboardStoreImpl) Delete(ctx context.Context, uid string) (int6
 
 func (d *PublicDashboardStoreImpl) FindByDashboardFolder(ctx context.Context, dashboard *dashboards.Dashboard) ([]*PublicDashboard, error) {
 	if dashboard == nil || !dashboard.IsFolder {
-		return []*PublicDashboard{}, nil
+		return nil, nil
 	}
 
 	var pubdashes []*PublicDashboard
