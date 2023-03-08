@@ -119,6 +119,7 @@ export function formatDisplayValuesWithCustomUnits(
 ): FieldDisplay[] {
   const { prefix, suffix } = config;
 
+  // No custom values?
   if (!prefix && !suffix) {
     return fieldValues;
   }
@@ -128,13 +129,17 @@ export function formatDisplayValuesWithCustomUnits(
     // Test for FieldType.number, since that is the only type on which formatting is enforced
     if (fieldType === FieldType.number) {
       const { display } = fieldValue;
+
+      // Test also for nullishness here, otherwise "undefined" will be concatenated into the string
+      const customPrefix = `${prefix ?? ''}${display.prefix ?? ''}`;
+      const customSuffix = `${display.suffix ?? ''}${suffix ?? ''}`;
+
       return {
         ...fieldValue,
         display: {
           ...display,
-          // Test also for nullishness, otherwise "undefined" will be concatenated into the string
-          prefix: `${prefix ?? ''}${display.prefix ?? ''}`,
-          suffix: `${display.suffix ?? ''}${suffix ?? ''}`,
+          prefix: customPrefix,
+          suffix: customSuffix,
         },
       };
     }
