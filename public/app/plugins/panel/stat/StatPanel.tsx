@@ -27,12 +27,9 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
     const { value, alignmentFactors, width, height, count, orientation } = valueProps;
     const { openMenu, targetClassName } = menuProps;
     let sparkline = value.sparkline;
-    // console.log('🚀 ~ file: StatPanel.tsx:30 ~ StatPanel ~ sparkline:', sparkline);
     if (sparkline) {
       sparkline.timeRange = timeRange;
     }
-    console.log(this.props, 'this.props');
-    // console.log('🚀 ~ file: StatPanel.tsx:18 ~ config:', config);
 
     return (
       <BigValue
@@ -69,7 +66,6 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
 
   renderValue = (valueProps: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>): JSX.Element => {
     const { value } = valueProps;
-    // console.log('🚀 ~ file: StatPanel.tsx:70 ~ StatPanel ~ valueProps:', valueProps);
     const { getLinks, hasLinks } = value;
 
     if (hasLinks && getLinks) {
