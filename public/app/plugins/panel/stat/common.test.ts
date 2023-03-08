@@ -50,6 +50,7 @@ describe('formatting functions', () => {
       // toEqual() recursively checks every field of an object or array for equality
       expect(unchangedFieldValues).toEqual(mockFieldValues);
     });
+
     it('sucessfully prepends the `display.prefix` value with the custom prefix, and leave the suffix unchanged', () => {
       const updatedFieldValues = formatDisplayValuesWithCustomUnits(mockFieldValues, {
         // Empty custom suffix
@@ -60,6 +61,7 @@ describe('formatting functions', () => {
       expect(updatedFieldValues[0].display.prefix).toBe('&$');
       expect(updatedFieldValues[0].display.suffix).toBe(mockFieldValues[0].display.suffix);
     });
+
     it('sucessfully appends the `display.suffix` value with the custom suffix, and leaves the prefix unchanged', () => {
       const updatedFieldValues = formatDisplayValuesWithCustomUnits(mockFieldValues, {
         // Empty custom prefix
@@ -70,6 +72,7 @@ describe('formatting functions', () => {
       expect(updatedFieldValues[0].display.prefix).toBe(mockFieldValues[0].display.prefix);
       expect(updatedFieldValues[0].display.suffix).toBe('%*');
     });
+
     it('sucessfully formats both the prefix and the suffix', () => {
       const updatedFieldValues = formatDisplayValuesWithCustomUnits(mockFieldValues, {
         prefix,
@@ -79,6 +82,7 @@ describe('formatting functions', () => {
       expect(updatedFieldValues[0].display.prefix).toBe('&$');
       expect(updatedFieldValues[0].display.suffix).toBe('%*');
     });
+
     it('ignores any `fieldValues` that are non-numeric', () => {
       const updatedFieldValues = formatDisplayValuesWithCustomUnits(mockFieldValues, {
         prefix,
@@ -93,6 +97,7 @@ describe('formatting functions', () => {
       expect(updatedFieldValues[0].display.prefix).toBe('&$');
       expect(updatedFieldValues[0].display.suffix).toBe('%*');
     });
+
     it('should handle prefixes and suffixes that are nullish in nature', () => {
       // Empty object
       const updatedFieldValues1 = formatDisplayValuesWithCustomUnits(mockFieldValues, {});
