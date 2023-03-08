@@ -17,6 +17,8 @@ const (
 	grafanaAuthnzSquad                          codeowner = "@grafana/grafana-authnz-team"
 	grafanaObservabilityLogsSquad               codeowner = "@grafana/observability-logs"
 	grafanaObservabilityTracesAndProfilingSquad codeowner = "@grafana/observability-traces-and-profiling"
+	grafanaObservabilityMetricsSquad            codeowner = "@grafana/observability-metrics"
 	grafanaAlertingSquad                        codeowner = "@grafana/alerting-squad"
 	hostedGrafanaTeam                           codeowner = "@grafana/hosted-grafana-team"
+	awsPluginsSquad                             codeowner = "@grafana/aws-plugins"
 )
