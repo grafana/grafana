@@ -37,8 +37,8 @@ To run Grafana, open your browser and go to the Grafana port (http://localhost:3
 
 1. Extract this folder to anywhere you want Grafana to run from.
 
-1. Start Grafana by executing `grafana-server.exe`, located in the `bin` directory, preferably from the command line. If you want to run Grafana as a Windows service, then download
-   [NSSM](https://nssm.cc/). It is very easy to add Grafana as a Windows service using that tool.
+Start Grafana by executing `grafana-server.exe`, located in the `bin` directory, preferably from the command line. If you want to run Grafana as a Windows service, then download
+[NSSM](https://nssm.cc/). It is very easy to add Grafana as a Windows service using that tool.
 
 To run Grafana, open your browser and go to the Grafana port (http://localhost:3000/ is default) and then follow the instructions in [Getting Started]({{< relref "../../../getting-started/build-first-dashboard/" >}}).
 
