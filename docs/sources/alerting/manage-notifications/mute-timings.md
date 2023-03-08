@@ -36,8 +36,8 @@ The following table highlights the key differences between mute timings and sile
 1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page listing existing alerts.
 1. Click **Notification policies**.
 1. From the **Alertmanager** dropdown, select an external Alertmanager. By default, the Grafana Alertmanager is selected.
-1. Navigate to the tab titled **Mute Timings** by clicking it.
-1. Click the **Add mute timing** button.
+1. Click the **Mute Timings** tab.
+1. Click **Add mute timing**.
 1. You will be redirected to a form to create a [time interval](#time-intervals) to match against for your mute timing.
 1. Click **Submit** to create the mute timing.
 
