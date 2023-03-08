@@ -32,7 +32,6 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/registry/corekind"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -52,7 +51,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
 	"github.com/grafana/grafana/pkg/services/encryption"
-	"github.com/grafana/grafana/pkg/services/export"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/hooks"
@@ -70,7 +68,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
-	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
+	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	publicdashboardsApi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
@@ -146,7 +145,6 @@ type HTTPServer struct {
 	Live                         *live.GrafanaLive
 	LivePushGateway              *pushhttp.Gateway
 	ThumbService                 thumbs.Service
-	ExportService                export.ExportService
 	StorageService               store.StorageService
 	httpEntityStore              httpentitystore.HTTPEntityStore
 	SearchV2HTTPService          searchV2.SearchHTTPService
@@ -234,7 +232,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	live *live.GrafanaLive, livePushGateway *pushhttp.Gateway, plugCtxProvider *plugincontext.Provider,
 	contextHandler *contexthandler.ContextHandler, features *featuremgmt.FeatureManager,
 	alertNG *ngalert.AlertNG, libraryPanelService librarypanels.Service, libraryElementService libraryelements.Service,
-	quotaService quota.Service, socialService social.Service, tracer tracing.Tracer, exportService export.ExportService,
+	quotaService quota.Service, socialService social.Service, tracer tracing.Tracer,
 	encryptionService encryption.Internal, grafanaUpdateChecker *updatechecker.GrafanaService,
 	pluginsUpdateChecker *updatechecker.PluginsService, searchUsersService searchusers.Service,
 	dataSourcesService datasources.DataSourceService, queryDataService *query.Service,
@@ -298,7 +296,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		DataProxy:                    dataSourceProxy,
 		SearchV2HTTPService:          searchv2HTTPService,
 		SearchService:                searchService,
-		ExportService:                exportService,
 		Live:                         live,
 		LivePushGateway:              livePushGateway,
 		PluginContextProvider:        plugCtxProvider,

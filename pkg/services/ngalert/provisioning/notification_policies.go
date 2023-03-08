@@ -57,7 +57,7 @@ func (nps *NotificationPolicyService) GetPolicyTree(ctx context.Context, orgID i
 	}
 
 	result := *cfg.AlertmanagerConfig.Route
-	result.Provenance = provenance
+	result.Provenance = definitions.Provenance(provenance)
 
 	return result, nil
 }

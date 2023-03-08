@@ -13,13 +13,14 @@ import {
   QueryRunner as QueryRunnerSrv,
   LoadingState,
   DataSourceRef,
+  preProcessPanelData,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { getNextRequestId } from './PanelQueryRunner';
 import { setStructureRevision } from './processing/revision';
-import { preProcessPanelData, runRequest } from './runRequest';
+import { runRequest } from './runRequest';
 
 export class QueryRunner implements QueryRunnerSrv {
   private subject: ReplaySubject<PanelData>;

@@ -4,13 +4,14 @@ import (
 	"archive/zip"
 	"context"
 	"fmt"
+	"io/fs"
 	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
 )
@@ -349,4 +350,39 @@ func NewFakeRoleRegistry() *FakeRoleRegistry {
 
 func (f *FakeRoleRegistry) DeclarePluginRoles(_ context.Context, _ string, _ string, _ []plugins.RoleRegistration) error {
 	return f.ExpectedErr
+}
+
+type FakePluginFiles struct {
+	FS fs.FS
+
+	base string
+}
+
+func NewFakePluginFiles(base string) *FakePluginFiles {
+	return &FakePluginFiles{
+		base: base,
+	}
+}
+
+func (f *FakePluginFiles) Open(name string) (fs.File, error) {
+	return f.FS.Open(name)
+}
+
+func (f *FakePluginFiles) Base() string {
+	return f.base
+}
+
+func (f *FakePluginFiles) Files() []string {
+	return []string{}
+}
+
+type FakeSources struct {
+	ListFunc func(_ context.Context) []plugins.PluginSource
+}
+
+func (s *FakeSources) List(ctx context.Context) []plugins.PluginSource {
+	if s.ListFunc != nil {
+		return s.ListFunc(ctx)
+	}
+	return []plugins.PluginSource{}
 }
