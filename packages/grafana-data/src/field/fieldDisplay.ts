@@ -79,7 +79,7 @@ export interface GetFieldDisplayValuesOptions {
 export const DEFAULT_FIELD_DISPLAY_VALUES_LIMIT = 25;
 
 export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): FieldDisplay[] => {
-  const { replaceVariables, reduceOptions, timeZone, theme, fieldConfig } = options;
+  const { replaceVariables, reduceOptions, timeZone, theme } = options;
   const calcs = reduceOptions.calcs.length ? reduceOptions.calcs : [ReducerID.last];
 
   const values: FieldDisplay[] = [];
@@ -126,7 +126,6 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
       }
 
       const displayName = field.config.displayName ?? '';
-      console.log(field.display, 'field.display');
       const display =
         field.display ??
         getDisplayProcessor({
@@ -156,7 +155,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
 
           const displayValue = display(field.values.get(j));
           const rowName = getSmartDisplayNameForRow(dataFrame, field, j, replaceVariables, scopedVars);
-          const overrideColor = lookupRowColorFromOverride(rowName, fieldConfig, theme);
+          const overrideColor = lookupRowColorFromOverride(rowName, options.fieldConfig, theme);
 
           values.push({
             name: '',
