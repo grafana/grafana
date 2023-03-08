@@ -79,9 +79,7 @@ export interface GetFieldDisplayValuesOptions {
 export const DEFAULT_FIELD_DISPLAY_VALUES_LIMIT = 25;
 
 export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): FieldDisplay[] => {
-  // console.log('🚀 ~ file: fieldDisplay.ts:82 ~ getFieldDisplayValues ~ options:', options);
   const { replaceVariables, reduceOptions, timeZone, theme, fieldConfig } = options;
-  // console.log('🚀 ~ file: fieldDisplay.ts:84 ~ getFieldDisplayValues ~ fieldConfig:', fieldConfig);
   const calcs = reduceOptions.calcs.length ? reduceOptions.calcs : [ReducerID.last];
 
   const values: FieldDisplay[] = [];
@@ -128,7 +126,6 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
       }
 
       const displayName = field.config.displayName ?? '';
-      // console.log('🚀 ~ file: fieldDisplay.ts:131 ~ getFieldDisplayValues ~ displayName:', displayName);
       console.log(field.display, 'field.display');
       const display =
         field.display ??
@@ -137,7 +134,6 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
           theme: options.theme,
           timeZone,
         });
-      // console.log('🚀 ~ file: fieldDisplay.ts:134 ~ getFieldDisplayValues ~ display:', display);
 
       // Show all rows
       if (reduceOptions.values) {
@@ -159,7 +155,6 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
           field.state = setIndexForPaletteColor(field, values.length);
 
           const displayValue = display(field.values.get(j));
-          // console.log('🚀 ~ file: fieldDisplay.ts:160 ~ getFieldDisplayValues ~ displayValue:', displayValue);
           const rowName = getSmartDisplayNameForRow(dataFrame, field, j, replaceVariables, scopedVars);
           const overrideColor = lookupRowColorFromOverride(rowName, fieldConfig, theme);
 
