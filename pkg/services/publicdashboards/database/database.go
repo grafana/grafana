@@ -277,7 +277,7 @@ func (d *PublicDashboardStoreImpl) FindByDashboardFolder(ctx context.Context, da
 	var pubdashes []*PublicDashboard
 
 	err := d.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		return sess.SQL("SELECT * from dashboard_public WHERE (dashboard_uid, org_id) IN (SELECT uid, org_id FROM dashboard WHERE folder_id = ?) AND org_id = ?", dashboard.ID, dashboard.OrgID).Find(&pubdashes)
+		return sess.SQL("SELECT * from dashboard_public WHERE (dashboard_uid, org_id) IN (SELECT uid, org_id FROM dashboard WHERE folder_id = ?)", dashboard.ID).Find(&pubdashes)
 	})
 	if err != nil {
 		return nil, err

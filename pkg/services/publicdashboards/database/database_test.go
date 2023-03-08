@@ -699,7 +699,7 @@ func TestGetDashboardByFolder(t *testing.T) {
 		pubdashStore := ProvideStore(sqlStore)
 		dashboard := insertTestDashboard(t, dashboardStore, "title", 1, 1, true)
 		pubdash := insertPublicDashboard(t, pubdashStore, dashboard.UID, dashboard.OrgID, true)
-		dashboard2 := insertTestDashboard(t, dashboardStore, "title", 2, 1, true)
+		dashboard2 := insertTestDashboard(t, dashboardStore, "title", 1, 2, true)
 		_ = insertPublicDashboard(t, pubdashStore, dashboard2.UID, dashboard2.OrgID, true)
 
 		pubdashes, err := pubdashStore.FindByDashboardFolder(context.Background(), dashboard)
