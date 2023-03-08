@@ -22,25 +22,13 @@ import (
 func runRunnerCommand(command func(commandLine utils.CommandLine, runner server.Runner) error) func(context *cli.Context) error {
 	return func(context *cli.Context) error {
 		cmd := &utils.ContextCommandLine{Context: context}
-		configOptions := strings.Split(cmd.String("configOverrides"), " ")
-		runner, err := server.InitializeForCLI(setting.CommandLineArgs{
-			Config:   cmd.ConfigFile(),
-			HomePath: cmd.HomePath(),
-			// tailing arguments have precedence over the options string
-			Args: append(configOptions, cmd.Args().Slice()...),
-		})
+		runner, err := initializeRunner(cmd)
 		if err != nil {
 			return fmt.Errorf("%v: %w", "failed to initialize runner", err)
 		}
-
-		if cmd.Bool("debug") {
-			runner.Cfg.LogConfigSources()
-		}
-
 		if err := command(cmd, runner); err != nil {
 			return err
 		}
-
 		logger.Info("\n\n")
 		return nil
 	}
@@ -49,19 +37,9 @@ func runRunnerCommand(command func(commandLine utils.CommandLine, runner server.
 func runDbCommand(command func(commandLine utils.CommandLine, sqlStore db.DB) error) func(context *cli.Context) error {
 	return func(context *cli.Context) error {
 		cmd := &utils.ContextCommandLine{Context: context}
-		configOptions := strings.Split(cmd.String("configOverrides"), " ")
-		runner, err := server.InitializeForCLI(setting.CommandLineArgs{
-			Config:   cmd.ConfigFile(),
-			HomePath: cmd.HomePath(),
-			// tailing arguments have precedence over the options string
-			Args: append(configOptions, cmd.Args().Slice()...),
-		})
+		runner, err := initializeRunner(cmd)
 		if err != nil {
 			return fmt.Errorf("%v: %w", "failed to initialize runner", err)
-		}
-
-		if cmd.Bool("debug") {
-			runner.Cfg.LogConfigSources()
 		}
 
 		tracer, err := tracing.ProvideService(runner.Cfg)
@@ -83,6 +61,24 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore db.DB) er
 		logger.Info("\n\n")
 		return nil
 	}
+}
+
+func initializeRunner(cmd *utils.ContextCommandLine) (server.Runner, error) {
+	configOptions := strings.Split(cmd.String("configOverrides"), " ")
+	runner, err := server.InitializeForCLI(setting.CommandLineArgs{
+		Config:   cmd.ConfigFile(),
+		HomePath: cmd.HomePath(),
+		// tailing arguments have precedence over the options string
+		Args: append(configOptions, cmd.Args().Slice()...),
+	})
+	if err != nil {
+		return server.Runner{}, fmt.Errorf("%v: %w", "failed to initialize runner", err)
+	}
+
+	if cmd.Bool("debug") {
+		runner.Cfg.LogConfigSources()
+	}
+	return runner, nil
 }
 
 func runPluginCommand(command func(commandLine utils.CommandLine) error) func(context *cli.Context) error {
