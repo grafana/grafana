@@ -76,7 +76,7 @@ describe('Render', () => {
 
   it('should update chrome with section and pageNav', async () => {
     const { context } = setup({ navId: 'child1', pageNav });
-    expect(context.chrome.state.getValue().sectionNav.id).toBe('child1');
+    expect(context.chrome.state.getValue().sectionNav.node.id).toBe('child1');
     expect(context.chrome.state.getValue().pageNav).toBe(pageNav);
   });
 

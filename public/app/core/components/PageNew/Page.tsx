@@ -13,7 +13,6 @@ import { usePageTitle } from '../Page/usePageTitle';
 import { PageContents } from './PageContents';
 import { PageHeader } from './PageHeader';
 import { PageTabs } from './PageTabs';
-import { SectionNav } from './SectionNav';
 
 export const Page: PageType = ({
   navId,
@@ -42,35 +41,31 @@ export const Page: PageType = ({
   useEffect(() => {
     if (navModel) {
       chrome.update({
-        sectionNav: navModel.node,
+        sectionNav: navModel,
         pageNav: pageNav,
+        layout: layout,
       });
     }
-  }, [navModel, pageNav, chrome]);
+  }, [navModel, pageNav, chrome, layout]);
 
   return (
     <div className={cx(styles.wrapper, className)} {...otherProps}>
       {layout === PageLayoutType.Standard && (
-        <div className={styles.panes}>
-          {navModel && <SectionNav model={navModel} />}
-          <div className={styles.pageContainer}>
-            <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
-              <div className={styles.pageInner}>
-                {pageHeaderNav && (
-                  <PageHeader
-                    actions={actions}
-                    navItem={pageHeaderNav}
-                    renderTitle={renderTitle}
-                    info={info}
-                    subTitle={subTitle}
-                  />
-                )}
-                {pageNav && pageNav.children && <PageTabs navItem={pageNav} />}
-                <div className={styles.pageContent}>{children}</div>
-              </div>
-            </CustomScrollbar>
+        <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
+          <div className={styles.pageInner}>
+            {pageHeaderNav && (
+              <PageHeader
+                actions={actions}
+                navItem={pageHeaderNav}
+                renderTitle={renderTitle}
+                info={info}
+                subTitle={subTitle}
+              />
+            )}
+            {pageNav && pageNav.children && <PageTabs navItem={pageNav} />}
+            <div className={styles.pageContent}>{children}</div>
           </div>
-        </div>
+        </CustomScrollbar>
       )}
       {layout === PageLayoutType.Canvas && (
         <CustomScrollbar autoHeightMin={'100%'} scrollTop={scrollTop} scrollRefCallback={scrollRef}>
@@ -105,22 +100,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       flex: '1 1 0',
       flexDirection: 'column',
       minHeight: 0,
-    }),
-    panes: css({
-      label: 'page-panes',
-      display: 'flex',
-      height: '100%',
-      width: '100%',
-      flexGrow: 1,
-      minHeight: 0,
-      flexDirection: 'column',
-      [theme.breakpoints.up('md')]: {
-        flexDirection: 'row',
-      },
-    }),
-    pageContainer: css({
-      label: 'page-container',
-      flexGrow: 1,
     }),
     pageContent: css({
       label: 'page-content',

@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import React, { PropsWithChildren } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -11,6 +11,7 @@ import { KioskMode } from 'app/types';
 
 import { MegaMenu } from '../MegaMenu/MegaMenu';
 import { NavBar } from '../NavBar/NavBar';
+import { SectionNav } from '../PageNew/SectionNav';
 
 import { NavToolbar } from './NavToolbar';
 import { TopSearchBar } from './TopSearchBar';
@@ -61,7 +62,7 @@ export function AppChrome({ children }: Props) {
         {!searchBarHidden && <TopSearchBar />}
         <NavToolbar
           searchBarHidden={searchBarHidden}
-          sectionNav={state.sectionNav}
+          sectionNav={state.sectionNav.node}
           pageNav={state.pageNav}
           actions={state.actions}
           onToggleSearchBar={chrome.onToggleSearchBar}
@@ -69,7 +70,16 @@ export function AppChrome({ children }: Props) {
           onToggleKioskMode={chrome.onToggleKioskMode}
         />
       </div>
-      <div className={contentClass}>{children}</div>
+      <div className={contentClass}>
+        {state.layout === PageLayoutType.Standard && (
+          <div className={styles.panes}>
+            {state.sectionNav && <SectionNav model={state.sectionNav} />}
+            <div className={styles.pageContainer}>{children}</div>
+          </div>
+        )}
+        {state.layout === PageLayoutType.Canvas && children}
+        {state.layout === PageLayoutType.Custom && children}
+      </div>
       <MegaMenu searchBarHidden={searchBarHidden} onClose={() => chrome.setMegaMenu(false)} />
       <CommandPalette />
     </main>
@@ -104,6 +114,22 @@ const getStyles = (theme: GrafanaTheme2) => {
       boxShadow: shadow,
       background: theme.colors.background.primary,
       flexDirection: 'column',
+    }),
+    panes: css({
+      label: 'page-panes',
+      display: 'flex',
+      height: '100%',
+      width: '100%',
+      flexGrow: 1,
+      minHeight: 0,
+      flexDirection: 'column',
+      [theme.breakpoints.up('md')]: {
+        flexDirection: 'row',
+      },
+    }),
+    pageContainer: css({
+      label: 'page-container',
+      flexGrow: 1,
     }),
   };
 };
