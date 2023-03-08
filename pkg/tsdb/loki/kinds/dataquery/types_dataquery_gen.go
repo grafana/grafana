@@ -74,7 +74,9 @@ type LokiDataQuery struct {
 	// @deprecated, now use queryType.
 	Range *bool `json:"range,omitempty"`
 
-	// A - Z
+	// RefId a unique identifier for the query within the list of targets.
+	// In server side expressions, the refId is used as a variable name to identify results.
+	// By default, the UI will assign A-Z; however setting meaninful names may be useful
 	RefId string `json:"refId"`
 
 	// Used to scale the interval value.
