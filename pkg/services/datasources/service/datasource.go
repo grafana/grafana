@@ -424,10 +424,11 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 	if ds.JsonData != nil {
 		opts.CustomOptions = ds.JsonData.MustMap()
 		// allow the plugin sdk to get the json data in JSONDataFromHTTPClientOptions
-		opts.CustomOptions["grafanaData"] = make(map[string]interface{})
+		copiedMap := make(map[string]interface{})
 		for k, v := range opts.CustomOptions {
-			opts.CustomOptions[k] = v
+			copiedMap[k] = v
 		}
+		opts.CustomOptions["grafanaData"] = copiedMap
 	}
 	if ds.BasicAuth {
 		password, err := s.DecryptedBasicAuthPassword(ctx, ds)
