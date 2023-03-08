@@ -84,12 +84,13 @@ var (
 			Name:        "lokiLive",
 			Description: "Support WebSocket streaming for loki (early prototype)",
 			State:       FeatureStateAlpha,
-			Owner:       grafanaAppPlatformSquad,
+			Owner:       grafanaObservabilityLogsSquad,
 		},
 		{
 			Name:        "lokiDataframeApi",
 			Description: "Use experimental loki api for WebSocket streaming (early prototype)",
 			State:       FeatureStateAlpha,
+			Owner:       grafanaObservabilityLogsSquad,
 		},
 		{
 			Name:        "featureHighlights",
@@ -323,6 +324,7 @@ var (
 			Name:        "elasticsearchBackendMigration",
 			Description: "Use Elasticsearch as backend data source",
 			State:       FeatureStateAlpha,
+			Owner:       grafanaObservabilityLogsSquad,
 		},
 		{
 			Name:        "datasourceOnboarding",
@@ -370,18 +372,21 @@ var (
 			State:        FeatureStateStable,
 			Expression:   "true", //turned on by default
 			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
 			Name:         "logsContextDatasourceUi",
 			Description:  "Allow datasource to provide custom UI for context view",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
 			Name:         "lokiQuerySplitting",
 			Description:  "Split large interval queries into subqueries with smaller time intervals",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
 			Name:        "individualCookiePreferences",
