@@ -39,6 +39,6 @@ func (l Service) Path() string {
 	return l.licensePath
 }
 
-func (l Service) AppUrl() string {
+func (l Service) AppURL() string {
 	return l.appUrl
 }

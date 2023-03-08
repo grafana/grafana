@@ -100,7 +100,7 @@ type Licensing interface {
 
 	Path() string
 
-	AppUrl() string
+	AppURL() string
 }
 
 // RoleRegistry handles the plugin RBAC roles and their assignments
