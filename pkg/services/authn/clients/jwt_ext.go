@@ -222,7 +222,7 @@ func (s *ExtendedJWT) validateClientIdClaim(ctx context.Context, claims map[stri
 		return fmt.Errorf("invalid 'client_id' claim: %s", clientIdClaim)
 	}
 
-	if _, err := s.oauthService.GetClient(ctx, clientId); err != nil {
+	if _, err := s.oauthService.GetApp(ctx, clientId); err != nil {
 		return fmt.Errorf("invalid 'client_id' claim: %s", clientIdClaim)
 	}
 
