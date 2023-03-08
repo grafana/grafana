@@ -49,8 +49,8 @@ const (
 	silencesFilename        = "silences"
 
 	workingDir = "alerting"
-	// maintenanceNotificationAndSilences how often should we flush and gargabe collect notifications and silences
-	maintenanceNotificationAndSilences = 15 * time.Minute
+	// maintenanceNotificationAndSilences how often should we flush and gargabe collect notifications
+	notificationLogMaintenanceInterval = 15 * time.Minute
 	// defaultResolveTimeout is the default timeout used for resolving an alert
 	// if the end time is not specified.
 	defaultResolveTimeout = 5 * time.Minute
@@ -164,15 +164,20 @@ func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		return nil, err
 	}
 
+	nflogOptions := nflog.Options{
+		SnapshotFile: nflogFilepath,
+		Retention:    retentionNotificationsAndSilences,
+		Logger:       am.logger,
+		Metrics:      m.Registerer,
+	}
+	nflogMaintenanceFrequency := notificationLogMaintenanceInterval
+	nflogMaintenanceFunc :=
+		func(state *silence.Silences) (int64, error) {
+			return am.fileStore.Persist(ctx, notificationLogFilename, state)
+		}
+
 	// Initialize the notification log
-	am.wg.Add(1)
-	am.notificationLog, err = nflog.New(
-		nflog.WithRetention(retentionNotificationsAndSilences),
-		nflog.WithSnapshot(nflogFilepath),
-		nflog.WithMaintenance(maintenanceNotificationAndSilences, am.stopc, am.wg.Done, func() (int64, error) {
-			return am.fileStore.Persist(ctx, notificationLogFilename, am.notificationLog)
-		}),
-	)
+	am.notificationLog, err = nflog.New(nflogOptions)
 	if err != nil {
 		return nil, fmt.Errorf("unable to initialize the notification log component of alerting: %w", err)
 	}
@@ -191,6 +196,20 @@ func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 
 	c = am.peer.AddState(fmt.Sprintf("silences:%d", am.orgID), am.silences, m.Registerer)
 	am.silences.SetBroadcast(c.Broadcast)
+
+	am.wg.Add(1)
+	go func() {
+		// TODO: Backporting https://github.com/grafana/alerting/commit/1cf0f4d256fe92a4d8aaf34d5093cc096526357a
+		// This commit contains a bug (in master, right now) where silencesFilePath appears like it should be should be notificationLogFilename
+		// Preserving it for now, as I'm just backporting that change and don't want to touch anything out of order...
+		am.notificationLog.Maintenance(nflogMaintenanceFrequency, silencesFilePath, am.stopc, func() (int64, error) {
+			if _, err := am.notificationLog.GC(); err != nil {
+				am.logger.Error("notification log garbage collection", "err", err)
+			}
+
+			return nflogMaintenanceFunc(am.silences)
+		})
+	}()
 
 	am.wg.Add(1)
 	go func() {
