@@ -72,6 +72,7 @@ type CacheStorage interface {
 
 	// Count returns the number of items in the cache.
 	// Optionaly a prefix can be provided to only count items with that prefix
+	// DO NOT USE. Not available for memcached.
 	Count(ctx context.Context, prefix string) (int64, error)
 }
 
