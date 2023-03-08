@@ -67,6 +67,7 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
 
   renderValue = (valueProps: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>): JSX.Element => {
     const { value } = valueProps;
+    // console.log('🚀 ~ file: StatPanel.tsx:70 ~ StatPanel ~ valueProps:', valueProps);
     const { getLinks, hasLinks } = value;
 
     if (hasLinks && getLinks) {
