@@ -7,7 +7,6 @@ import {
   FieldType,
   DataTransformerID,
   outerJoinDataFrames,
-  FieldMatcher,
   fieldMatchers,
   FieldMatcherID,
   Field,
@@ -318,9 +317,18 @@ export const prepareTimeSeriesTransformer: SynchronousDataTransformerInfo<Prepar
 
     // TimeSeriesWide
     return (data: DataFrame[]) => {
+      if (!data.length) {
+        return [];
+      }
+
       // Convert long to wide first
-      if (data.every((df) => df.meta?.type === DataFrameType.TimeSeriesLong)) {
-        data = longToWideTimeSeries(data);
+      const join: DataFrame[] = [];
+      for (const df of data) {
+        if (df.meta?.type === DataFrameType.TimeSeriesLong) {
+          longToMultiTimeSeries(df).forEach((v) => join.push(v));
+        } else {
+          join.push(df);
+        }
       }
 
       // Join by the first frame
@@ -329,8 +337,14 @@ export const prepareTimeSeriesTransformer: SynchronousDataTransformerInfo<Prepar
         joinBy: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
         keepOriginIndices: true,
       });
-      frame?.meta?.type = DataFrameType.TimeSeriesWide;
-      return frame ? [frame] : [];
+      if (!frame) {
+        return [];
+      }
+      if (!frame.meta) {
+        frame.meta = {};
+      }
+      frame.meta.type = DataFrameType.TimeSeriesWide;
+      return [frame];
     };
   },
 };
