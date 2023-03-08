@@ -209,6 +209,7 @@ func newAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 
 			return nflogMaintenanceFunc(am.silences)
 		})
+		am.wg.Done()
 	}()
 
 	am.wg.Add(1)
