@@ -80,20 +80,20 @@ func TestIsExternallySynced(t *testing.T) {
 		},
 		{
 			name:     "Github synced user should return that it is externally synced",
-			cfg:      &setting.Cfg{GithubSkipOrgRoleSync: false},
+			cfg:      &setting.Cfg{GitHubSkipOrgRoleSync: false},
 			provider: GithubLabel,
 			expected: true,
 		},
 		{
 			name:     "Github synced user should return that it is not externally synced when org role sync is set",
-			cfg:      &setting.Cfg{GithubSkipOrgRoleSync: true},
+			cfg:      &setting.Cfg{GitHubSkipOrgRoleSync: true},
 			provider: GithubLabel,
 			expected: false,
 		},
 		// FIXME: remove this test as soon as we remove the deprecated setting for skipping org role sync for all external oauth providers
 		{
 			name:     "github external user should return that it is not externally synced when oauth org role sync is set",
-			cfg:      &setting.Cfg{GithubSkipOrgRoleSync: false, OAuthSkipOrgRoleUpdateSync: true},
+			cfg:      &setting.Cfg{GitHubSkipOrgRoleSync: false, OAuthSkipOrgRoleUpdateSync: true},
 			provider: GithubLabel,
 			expected: false,
 		},

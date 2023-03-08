@@ -164,7 +164,7 @@ func (auth *AuthProxy) Login(reqCtx *contextmodel.ReqContext, ignoreCache bool) 
 		}
 	}
 
-	if auth.cfg.LDAPEnabled {
+	if auth.cfg.LDAPAuthEnabled {
 		id, err := auth.LoginViaLDAP(reqCtx)
 		if err != nil {
 			if errors.Is(err, ldap.ErrInvalidCredentials) {

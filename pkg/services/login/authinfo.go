@@ -57,6 +57,9 @@ const (
 // then IsExternallySynced will be true for this one provider and false for the others
 func IsExternallySynced(cfg *setting.Cfg, autoProviderLabel string) bool {
 	// provider enabled in config
+	if !IsProviderEnabled(cfg, autoProviderLabel) {
+		return false
+	}
 	// first check SAML, LDAP and JWT
 	switch autoProviderLabel {
 	case SAMLLabel:
@@ -82,13 +85,39 @@ func IsExternallySynced(cfg *setting.Cfg, autoProviderLabel string) bool {
 	case GitLabLabel:
 		return !cfg.GitLabSkipOrgRoleSync
 	case GithubLabel:
-		return !cfg.GithubSkipOrgRoleSync
+		return !cfg.GitHubSkipOrgRoleSync
 	case GrafanaComLabel:
 		return !cfg.GrafanaComSkipOrgRoleSync
 	case GenericOAuthLabel:
 		return !cfg.GenericOAuthSkipOrgRoleSync
 	}
 	return true
+}
+
+func IsProviderEnabled(cfg *setting.Cfg, authProviderLabel string) bool {
+	switch authProviderLabel {
+	case SAMLLabel:
+		return cfg.SAMLAuthEnabled
+	case LDAPLabel:
+		return cfg.LDAPAuthEnabled
+	case JWTLabel:
+		return cfg.JWTAuthEnabled
+	case GoogleLabel:
+		return cfg.GoogleAuthEnabled
+	case OktaLabel:
+		return cfg.OktaAuthEnabled
+	case AzureADLabel:
+		return cfg.AzureADEnabled
+	case GitLabLabel:
+		return cfg.GitLabAuthEnabled
+	case GithubLabel:
+		return cfg.GitHubAuthEnabled
+	case GrafanaComLabel:
+		return cfg.GrafanaComAuthEnabled
+	case GenericOAuthLabel:
+		return cfg.GenericOAuthEnabled
+	}
+	return false
 }
 
 func GetAuthProviderLabel(authModule string) string {
