@@ -15,15 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type CacheableStruct struct {
-	String string
-	Int64  int64
-}
-
-func init() {
-	Register(CacheableStruct{})
-}
-
 func createTestClient(t *testing.T, opts *setting.RemoteCacheOptions, sqlstore db.DB) CacheStorage {
 	t.Helper()
 
@@ -49,7 +40,7 @@ func TestCachedBasedOnConfig(t *testing.T) {
 }
 
 func TestInvalidCacheTypeReturnsError(t *testing.T) {
-	_, err := createClient(&setting.RemoteCacheOptions{Name: "invalid"}, nil, &gobCodec{})
+	_, err := createClient(&setting.RemoteCacheOptions{Name: "invalid"}, nil)
 	assert.Equal(t, err, ErrInvalidCacheType)
 }
 
@@ -68,13 +59,13 @@ func runCountTestsForClient(t *testing.T, opts *setting.RemoteCacheOptions, sqls
 	t.Run("can count items", func(t *testing.T) {
 		cacheableValue := []byte("hej hej")
 
-		err := client.SetByteArray(context.Background(), "pref-key1", cacheableValue, 0)
+		err := client.Set(context.Background(), "pref-key1", cacheableValue, 0)
 		require.NoError(t, err)
 
-		err = client.SetByteArray(context.Background(), "pref-key2", cacheableValue, 0)
+		err = client.Set(context.Background(), "pref-key2", cacheableValue, 0)
 		require.NoError(t, err)
 
-		err = client.SetByteArray(context.Background(), "key3-not-pref", cacheableValue, 0)
+		err = client.Set(context.Background(), "key3-not-pref", cacheableValue, 0)
 		require.NoError(t, err)
 
 		n, errC := client.Count(context.Background(), "pref-")
@@ -92,10 +83,10 @@ func runCountTestsForClient(t *testing.T, opts *setting.RemoteCacheOptions, sqls
 func canPutGetAndDeleteCachedObjects(t *testing.T, client CacheStorage) {
 	dataToCache := []byte("some bytes")
 
-	err := client.SetByteArray(context.Background(), "key1", dataToCache, 0)
+	err := client.Set(context.Background(), "key1", dataToCache, 0)
 	assert.Equal(t, err, nil, "expected nil. got: ", err)
 
-	data, err := client.GetByteArray(context.Background(), "key1")
+	data, err := client.Get(context.Background(), "key1")
 	assert.Equal(t, err, nil)
 
 	assert.Equal(t, string(data), "some bytes")
@@ -103,21 +94,21 @@ func canPutGetAndDeleteCachedObjects(t *testing.T, client CacheStorage) {
 	err = client.Delete(context.Background(), "key1")
 	assert.Equal(t, err, nil)
 
-	_, err = client.GetByteArray(context.Background(), "key1")
+	_, err = client.Get(context.Background(), "key1")
 	assert.Equal(t, err, ErrCacheItemNotFound)
 }
 
 func canNotFetchExpiredItems(t *testing.T, client CacheStorage) {
 	dataToCache := []byte("some bytes")
 
-	err := client.SetByteArray(context.Background(), "key1", dataToCache, time.Second)
+	err := client.Set(context.Background(), "key1", dataToCache, time.Second)
 	assert.Equal(t, err, nil)
 
 	// not sure how this can be avoided when testing redis/memcached :/
 	<-time.After(time.Second + time.Millisecond)
 
 	// should not be able to read that value since its expired
-	_, err = client.GetByteArray(context.Background(), "key1")
+	_, err = client.Get(context.Background(), "key1")
 	assert.Equal(t, err, ErrCacheItemNotFound)
 }
 
@@ -144,22 +135,21 @@ func TestCachePrefix(t *testing.T) {
 	cache := &databaseCache{
 		SQLStore: db,
 		log:      log.New("remotecache.database"),
-		codec:    &gobCodec{},
 	}
 	prefixCache := &prefixCacheStorage{cache: cache, prefix: "test/"}
 
 	// Set a value (with a prefix)
-	err := prefixCache.SetByteArray(context.Background(), "foo", []byte("bar"), time.Hour)
+	err := prefixCache.Set(context.Background(), "foo", []byte("bar"), time.Hour)
 	require.NoError(t, err)
 	// Get a value (with a prefix)
-	v, err := prefixCache.GetByteArray(context.Background(), "foo")
+	v, err := prefixCache.Get(context.Background(), "foo")
 	require.NoError(t, err)
 	require.Equal(t, "bar", string(v))
 	// Get a value directly from the underlying cache, ensure the prefix is in the key
-	v, err = cache.GetByteArray(context.Background(), "test/foo")
+	v, err = cache.Get(context.Background(), "test/foo")
 	require.NoError(t, err)
 	require.Equal(t, "bar", string(v))
 	// Get a value directly from the underlying cache without a prefix, should not be there
-	_, err = cache.GetByteArray(context.Background(), "foo")
+	_, err = cache.Get(context.Background(), "foo")
 	require.Error(t, err)
 }

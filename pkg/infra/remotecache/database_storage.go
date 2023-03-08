@@ -14,14 +14,12 @@ const databaseCacheType = "database"
 
 type databaseCache struct {
 	SQLStore db.DB
-	codec    codec
 	log      log.Logger
 }
 
-func newDatabaseCache(sqlstore db.DB, codec codec) *databaseCache {
+func newDatabaseCache(sqlstore db.DB) *databaseCache {
 	dc := &databaseCache{
 		SQLStore: sqlstore,
-		codec:    codec,
 		log:      log.New("remotecache.database"),
 	}
 
@@ -54,7 +52,7 @@ func (dc *databaseCache) internalRunGC() {
 	}
 }
 
-func (dc *databaseCache) GetByteArray(ctx context.Context, key string) ([]byte, error) {
+func (dc *databaseCache) Get(ctx context.Context, key string) ([]byte, error) {
 	cacheHit := CacheData{}
 
 	err := dc.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
@@ -85,7 +83,7 @@ func (dc *databaseCache) GetByteArray(ctx context.Context, key string) ([]byte, 
 	return cacheHit.Data, err
 }
 
-func (dc *databaseCache) SetByteArray(ctx context.Context, key string, data []byte, expire time.Duration) error {
+func (dc *databaseCache) Set(ctx context.Context, key string, data []byte, expire time.Duration) error {
 	return dc.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
 		var expiresInSeconds int64
 		if expire != 0 {

@@ -16,8 +16,7 @@ import (
 const redisCacheType = "redis"
 
 type redisStorage struct {
-	c     *redis.Client
-	codec codec
+	c *redis.Client
 }
 
 // parseRedisConnStr parses k=v pairs in csv and builds a redis Options object
@@ -78,22 +77,22 @@ func parseRedisConnStr(connStr string) (*redis.Options, error) {
 	return options, nil
 }
 
-func newRedisStorage(opts *setting.RemoteCacheOptions, codec codec) (*redisStorage, error) {
+func newRedisStorage(opts *setting.RemoteCacheOptions) (*redisStorage, error) {
 	opt, err := parseRedisConnStr(opts.ConnStr)
 	if err != nil {
 		return nil, err
 	}
-	return &redisStorage{c: redis.NewClient(opt), codec: codec}, nil
+	return &redisStorage{c: redis.NewClient(opt)}, nil
 }
 
 // Set sets value to a given key
-func (s *redisStorage) SetByteArray(ctx context.Context, key string, data []byte, expires time.Duration) error {
+func (s *redisStorage) Set(ctx context.Context, key string, data []byte, expires time.Duration) error {
 	status := s.c.Set(ctx, key, data, expires)
 	return status.Err()
 }
 
 // GetByteArray returns the value as byte array
-func (s *redisStorage) GetByteArray(ctx context.Context, key string) ([]byte, error) {
+func (s *redisStorage) Get(ctx context.Context, key string) ([]byte, error) {
 	return s.c.Get(ctx, key).Bytes()
 }
 
