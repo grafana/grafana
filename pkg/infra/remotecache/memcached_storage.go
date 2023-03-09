@@ -12,7 +12,7 @@ import (
 
 const memcachedCacheType = "memcached"
 
-var ErrNotImplemented = errors.New("count not implemented")
+var ErrNotImplemented = errors.New("not implemented")
 
 type memcachedStorage struct {
 	c     *memcache.Client
