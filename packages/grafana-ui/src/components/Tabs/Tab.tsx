@@ -94,7 +94,7 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme2) => {
           left: 0;
           right: 0;
           height: 4px;
-          border-radius: 2px;
+          border-radius: ${theme.shape.borderRadius()};
           bottom: 0px;
           background: ${theme.colors.action.hover};
         }
@@ -117,7 +117,7 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme2) => {
         left: 0;
         right: 0;
         height: 4px;
-        border-radius: 2px;
+        border-radius: ${theme.shape.borderRadius()};
         bottom: 0px;
         background-image: ${theme.colors.gradients.brandHorizontal} !important;
       }

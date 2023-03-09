@@ -84,7 +84,7 @@ function getStyles(theme: GrafanaTheme2) {
   function buildTooltipTheme(tooltipBg: string, tooltipBorder: string, tooltipText: string) {
     return css`
       background-color: ${tooltipBg};
-      border-radius: 3px;
+      border-radius: ${theme.shape.borderRadius()};
       border: 1px solid ${tooltipBorder};
       box-shadow: ${theme.shadows.z2};
       color: ${tooltipText};

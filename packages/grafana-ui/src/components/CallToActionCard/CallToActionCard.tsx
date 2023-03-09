@@ -34,7 +34,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     label: call-to-action-card;
     padding: ${theme.spacing(3)};
     background: ${theme.colors.background.secondary};
-    border-radius: ${theme.shape.borderRadius(2)};
+    border-radius: ${theme.shape.borderRadius(1)};
     display: flex;
     flex-direction: column;
     align-items: center;

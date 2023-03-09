@@ -124,15 +124,15 @@ function getStyles(theme: GrafanaTheme2) {
       color: ${theme.colors.error.text};
     `,
     progressBar: css`
-      border-radius: ${theme.spacing(1)};
+      border-radius: ${theme.shape.borderRadius()};
       height: 4px;
       ::-webkit-progress-bar {
         background-color: ${theme.colors.border.weak};
-        border-radius: ${theme.spacing(1)};
+        border-radius: ${theme.shape.borderRadius()};
       }
       ::-webkit-progress-value {
         background-color: ${theme.colors.primary.main};
-        border-radius: ${theme.spacing(1)};
+        border-radius: ${theme.shape.borderRadius()};
       }
     `,
   };

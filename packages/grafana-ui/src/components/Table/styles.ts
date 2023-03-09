@@ -258,7 +258,7 @@ export const getTableStyles = (theme: GrafanaTheme2) => {
       height: 100%;
       position: absolute;
       right: -4px;
-      border-radius: 3px;
+      border-radius: ${theme.shape.borderRadius()};
       top: 0;
       touch-action: none;
 
