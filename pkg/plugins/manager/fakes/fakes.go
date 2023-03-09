@@ -4,6 +4,7 @@ import (
 	"archive/zip"
 	"context"
 	"fmt"
+	"io/fs"
 	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -321,6 +322,7 @@ type FakeLicensingService struct {
 	LicenseEdition string
 	TokenRaw       string
 	LicensePath    string
+	LicenseAppURL  string
 }
 
 func NewFakeLicensingService() *FakeLicensingService {
@@ -333,6 +335,10 @@ func (s *FakeLicensingService) Edition() string {
 
 func (s *FakeLicensingService) Path() string {
 	return s.LicensePath
+}
+
+func (s *FakeLicensingService) AppURL() string {
+	return s.LicenseAppURL
 }
 
 func (s *FakeLicensingService) Environment() []string {
@@ -349,6 +355,30 @@ func NewFakeRoleRegistry() *FakeRoleRegistry {
 
 func (f *FakeRoleRegistry) DeclarePluginRoles(_ context.Context, _ string, _ string, _ []plugins.RoleRegistration) error {
 	return f.ExpectedErr
+}
+
+type FakePluginFiles struct {
+	FS fs.FS
+
+	base string
+}
+
+func NewFakePluginFiles(base string) *FakePluginFiles {
+	return &FakePluginFiles{
+		base: base,
+	}
+}
+
+func (f *FakePluginFiles) Open(name string) (fs.File, error) {
+	return f.FS.Open(name)
+}
+
+func (f *FakePluginFiles) Base() string {
+	return f.base
+}
+
+func (f *FakePluginFiles) Files() []string {
+	return []string{}
 }
 
 type FakeSources struct {

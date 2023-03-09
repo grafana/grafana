@@ -28,7 +28,7 @@ export const DefaultCell: FC<TableCellProps> = (props) => {
     value = formattedValueToString(displayValue);
   }
 
-  const showFilters = field.config.filterable;
+  const showFilters = props.onCellFilterAdded && field.config.filterable;
   const showActions = (showFilters && cell.value !== undefined) || inspectEnabled;
   const cellOptions = getCellOptions(field);
   const cellStyle = getCellStyle(tableStyles, cellOptions, displayValue, inspectEnabled);
@@ -56,7 +56,7 @@ export const DefaultCell: FC<TableCellProps> = (props) => {
         </DataLinksContextMenu>
       )}
 
-      {showActions && <CellActions {...props} previewMode="text" />}
+      {showActions && <CellActions {...props} previewMode="text" showFilters={showFilters} />}
     </div>
   );
 };

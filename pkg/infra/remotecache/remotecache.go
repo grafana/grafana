@@ -7,10 +7,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/go-kit/log"
-
 	"github.com/grafana/grafana/pkg/infra/db"
-	glog "github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
@@ -30,7 +28,8 @@ const (
 	ServiceName = "RemoteCache"
 )
 
-func ProvideService(cfg *setting.Cfg, sqlStore db.DB, secretsService secrets.Service) (*RemoteCache, error) {
+func ProvideService(cfg *setting.Cfg, sqlStore db.DB, usageStats usagestats.Service,
+	secretsService secrets.Service) (*RemoteCache, error) {
 	var codec codec
 	if cfg.RemoteCacheOptions.Encryption {
 		codec = &encryptionCodec{secretsService}
@@ -44,10 +43,25 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, secretsService secrets.Ser
 	s := &RemoteCache{
 		SQLStore: sqlStore,
 		Cfg:      cfg,
-		log:      glog.New("cache.remote"),
 		client:   client,
 	}
+
+	usageStats.RegisterMetricsFunc(s.getUsageStats)
+
 	return s, nil
+}
+
+func (ds *RemoteCache) getUsageStats(ctx context.Context) (map[string]interface{}, error) {
+	stats := map[string]interface{}{}
+	stats["stats.remote_cache."+ds.Cfg.RemoteCacheOptions.Name+".count"] = 1
+	encryptVal := 0
+	if ds.Cfg.RemoteCacheOptions.Encryption {
+		encryptVal = 1
+	}
+
+	stats["stats.remote_cache.encrypt_enabled.count"] = encryptVal
+
+	return stats, nil
 }
 
 // CacheStorage allows the caller to set, get and delete items in the cache.
@@ -55,12 +69,6 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, secretsService secrets.Ser
 // so any struct added to the cache needs to be registered with `remotecache.Register`
 // ex `remotecache.Register(CacheableStruct{})`
 type CacheStorage interface {
-	// Get reads object from Cache
-	Get(ctx context.Context, key string) (interface{}, error)
-
-	// Set sets an object into the cache. if `expire` is set to zero it will default to 24h
-	Set(ctx context.Context, key string, value interface{}, expire time.Duration) error
-
 	// GetByteArray gets the cache value as an byte array
 	GetByteArray(ctx context.Context, key string) ([]byte, error)
 
@@ -72,20 +80,15 @@ type CacheStorage interface {
 
 	// Count returns the number of items in the cache.
 	// Optionaly a prefix can be provided to only count items with that prefix
+	// DO NOT USE. Not available for memcached.
 	Count(ctx context.Context, prefix string) (int64, error)
 }
 
 // RemoteCache allows Grafana to cache data outside its own process
 type RemoteCache struct {
-	log      log.Logger
 	client   CacheStorage
 	SQLStore db.DB
 	Cfg      *setting.Cfg
-}
-
-// Get reads object from Cache
-func (ds *RemoteCache) Get(ctx context.Context, key string) (interface{}, error) {
-	return ds.client.Get(ctx, key)
 }
 
 // GetByteArray returns the cached value as an byte array
@@ -95,16 +98,11 @@ func (ds *RemoteCache) GetByteArray(ctx context.Context, key string) ([]byte, er
 
 // SetByteArray stored the byte array in the cache
 func (ds *RemoteCache) SetByteArray(ctx context.Context, key string, value []byte, expire time.Duration) error {
-	return ds.client.SetByteArray(ctx, key, value, expire)
-}
-
-// Set sets an object into the cache. if `expire` is set to zero it will default to 24h
-func (ds *RemoteCache) Set(ctx context.Context, key string, value interface{}, expire time.Duration) error {
 	if expire == 0 {
 		expire = defaultMaxCacheExpiration
 	}
 
-	return ds.client.Set(ctx, key, value, expire)
+	return ds.client.SetByteArray(ctx, key, value, expire)
 }
 
 // Delete object from cache
@@ -208,14 +206,8 @@ type prefixCacheStorage struct {
 	prefix string
 }
 
-func (pcs *prefixCacheStorage) Get(ctx context.Context, key string) (interface{}, error) {
-	return pcs.cache.Get(ctx, pcs.prefix+key)
-}
 func (pcs *prefixCacheStorage) GetByteArray(ctx context.Context, key string) ([]byte, error) {
 	return pcs.cache.GetByteArray(ctx, pcs.prefix+key)
-}
-func (pcs *prefixCacheStorage) Set(ctx context.Context, key string, value interface{}, expire time.Duration) error {
-	return pcs.cache.Set(ctx, pcs.prefix+key, value, expire)
 }
 func (pcs *prefixCacheStorage) SetByteArray(ctx context.Context, key string, value []byte, expire time.Duration) error {
 	return pcs.cache.SetByteArray(ctx, pcs.prefix+key, value, expire)

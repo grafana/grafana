@@ -113,7 +113,7 @@ func (pd *PublicDashboardServiceImpl) FindPublicDashboardAndDashboardByAccessTok
 	}
 
 	if !pubdash.IsEnabled {
-		return nil, nil, ErrPublicDashboardNotFound.Errorf("FindPublicDashboardAndDashboardByAccessToken: Public dashboard is disabled accessToken: %s", accessToken)
+		return nil, nil, ErrPublicDashboardNotEnabled.Errorf("FindPublicDashboardAndDashboardByAccessToken: Public dashboard is paused accessToken: %s", accessToken)
 	}
 
 	dash, err := pd.store.FindDashboard(ctx, pubdash.OrgId, pubdash.DashboardUid)
@@ -329,17 +329,37 @@ func (pd *PublicDashboardServiceImpl) GetOrgIdByAccessToken(ctx context.Context,
 	return pd.store.GetOrgIdByAccessToken(ctx, accessToken)
 }
 
-func (pd *PublicDashboardServiceImpl) Delete(ctx context.Context, orgId int64, uid string) error {
-	affectedRows, err := pd.store.Delete(ctx, orgId, uid)
+func (pd *PublicDashboardServiceImpl) Delete(ctx context.Context, uid string) error {
+	return pd.serviceWrapper.Delete(ctx, uid)
+}
+
+func (pd *PublicDashboardServiceImpl) DeleteByDashboard(ctx context.Context, dashboard *dashboards.Dashboard) error {
+	if dashboard.IsFolder {
+		// get all pubdashes for the folder
+		pubdashes, err := pd.store.FindByDashboardFolder(ctx, dashboard)
+		if err != nil {
+			return err
+		}
+		// delete each pubdash
+		for _, pubdash := range pubdashes {
+			err = pd.serviceWrapper.Delete(ctx, pubdash.Uid)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
+
+	pubdash, err := pd.store.FindByDashboardUid(ctx, dashboard.OrgID, dashboard.UID)
 	if err != nil {
-		return ErrInternalServerError.Errorf("Delete: failed to delete a public dashboard by orgId: %d and Uid: %s %w", orgId, uid, err)
+		return ErrInternalServerError.Errorf("DeleteByDashboard: error finding a public dashboard by dashboard orgId: %d and Uid: %s %w", dashboard.OrgID, dashboard.UID, err)
+	}
+	if pubdash == nil {
+		return nil
 	}
 
-	if affectedRows == 0 {
-		return ErrPublicDashboardNotFound.Errorf("Delete: Public dashboard not found by orgId: %d and Uid: %s", orgId, uid)
-	}
-
-	return nil
+	return pd.serviceWrapper.Delete(ctx, pubdash.Uid)
 }
 
 // intervalMS and maxQueryData values are being calculated on the frontend for regular dashboards
