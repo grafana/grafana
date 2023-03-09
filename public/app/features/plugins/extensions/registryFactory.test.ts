@@ -204,7 +204,7 @@ describe('createPluginExtensionRegistry()', () => {
       ]);
 
       const [configure] = registry[linkConfig.placement];
-      const context = {};
+      const context = { version: 0 };
       const configurable = {
         title: linkConfig.title,
         description: linkConfig.description,
@@ -231,7 +231,7 @@ describe('createPluginExtensionRegistry()', () => {
       ]);
 
       const [configure] = registry[linkConfig.placement];
-      const context = {};
+      const context = { version: 0 };
       const configurable = {
         title: linkConfig.title,
         description: linkConfig.description,
@@ -258,7 +258,7 @@ describe('createPluginExtensionRegistry()', () => {
       ]);
 
       const [configure] = registry[linkConfig.placement];
-      const context = {};
+      const context = { version: 0 };
 
       expect(configure(context)).toBeUndefined();
     });
@@ -393,7 +393,7 @@ describe('createPluginExtensionRegistry()', () => {
       ]);
 
       const [configure] = registry[commandConfig1.placement];
-      const context = {};
+      const context = { version: 0 };
       const configurable = {
         title: commandConfig1.title,
         description: commandConfig2.description,
@@ -420,7 +420,7 @@ describe('createPluginExtensionRegistry()', () => {
       ]);
 
       const [configure] = registry[commandConfig1.placement];
-      const context = {};
+      const context = { version: 0 };
 
       expect(configure(context)).toBeUndefined();
     });
@@ -441,7 +441,7 @@ describe('createPluginExtensionRegistry()', () => {
 
       const extensions = registry[commandConfig1.placement];
       const [configure] = extensions;
-      const context = {};
+      const context = { version: 0 };
       const extension = configure(context);
 
       assertPluginExtensionCommand(extension);
@@ -464,7 +464,7 @@ describe('createPluginExtensionRegistry()', () => {
 
       const extensions = registry[commandConfig1.placement];
       const [configure] = extensions;
-      const context = {};
+      const context = { version: 0 };
       const extension = configure(context);
 
       assertPluginExtensionCommand(extension);
@@ -485,7 +485,7 @@ describe('createPluginExtensionRegistry()', () => {
         },
       ]);
 
-      const context = {};
+      const context = { version: 0 };
       const command1 = registry[commandConfig1.placement][0](context);
       const command2 = registry[commandConfig2.placement][0](context);
 

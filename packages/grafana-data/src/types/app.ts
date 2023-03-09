@@ -3,7 +3,12 @@ import { ComponentType } from 'react';
 import { KeyValue } from './data';
 import { NavModel } from './navModel';
 import { PluginMeta, GrafanaPlugin, PluginIncludeType } from './plugin';
-import { extensionLinkConfigIsValid, type PluginExtensionCommand, type PluginExtensionLink } from './pluginExtensions';
+import {
+  extensionLinkConfigIsValid,
+  type PluginExtensionContext,
+  type PluginExtensionCommand,
+  type PluginExtensionLink,
+} from './pluginExtensions';
 
 /**
  * @public
@@ -69,7 +74,7 @@ export type AppPluginExtensionCommandHelpers = {
 
 export type AppPluginExtensionCommand = Pick<PluginExtensionCommand, 'description' | 'title'>;
 
-export type AppPluginExtensionLinkConfig<C extends object = object> = {
+export type AppPluginExtensionLinkConfig<C extends PluginExtensionContext = PluginExtensionContext> = {
   title: string;
   description: string;
   placement: string;
@@ -77,7 +82,7 @@ export type AppPluginExtensionLinkConfig<C extends object = object> = {
   configure?: (extension: AppPluginExtensionLink, context?: C) => Partial<AppPluginExtensionLink> | undefined;
 };
 
-export type AppPluginExtensionCommandConfig<C extends object = object> = {
+export type AppPluginExtensionCommandConfig<C extends PluginExtensionContext = PluginExtensionContext> = {
   title: string;
   description: string;
   placement: string;
@@ -137,7 +142,7 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
     return this.commandExtensions;
   }
 
-  configureExtensionLink<C extends object>(config: AppPluginExtensionLinkConfig<C>) {
+  configureExtensionLink<C extends PluginExtensionContext>(config: AppPluginExtensionLinkConfig<C>) {
     const { path, description, title, placement } = config;
 
     if (!extensionLinkConfigIsValid({ path, description, title, placement })) {
@@ -149,7 +154,7 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
     return this;
   }
 
-  configureExtensionCommand<C extends object>(config: AppPluginExtensionCommandConfig<C>) {
+  configureExtensionCommand<C extends PluginExtensionContext>(config: AppPluginExtensionCommandConfig<C>) {
     this.commandExtensions.push(config as AppPluginExtensionCommandConfig);
     return this;
   }

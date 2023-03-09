@@ -54,6 +54,7 @@ export * from './accesscontrol';
 export * from './icon';
 export {
   type PluginExtension,
+  type PluginExtensionContext,
   type PluginExtensionLink,
   isPluginExtensionLink,
   assertPluginExtensionLink,

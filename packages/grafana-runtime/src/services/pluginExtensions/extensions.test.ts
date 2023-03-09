@@ -1,4 +1,9 @@
-import { assertPluginExtensionLink, PluginExtensionLink, PluginExtensionTypes } from '@grafana/data';
+import {
+  assertPluginExtensionLink,
+  PluginExtensionContext,
+  PluginExtensionLink,
+  PluginExtensionTypes,
+} from '@grafana/data';
 
 import { getPluginExtensions } from './extensions';
 import { PluginExtensionRegistryItem, setPluginsExtensionRegistry } from './registry';
@@ -72,7 +77,7 @@ describe('getPluginExtensions', () => {
 function createRegistryLinkItem(
   link: Omit<PluginExtensionLink, 'type'>
 ): PluginExtensionRegistryItem<PluginExtensionLink> {
-  return (context?: object) => ({
+  return (context?: PluginExtensionContext) => ({
     ...link,
     type: PluginExtensionTypes.link,
   });

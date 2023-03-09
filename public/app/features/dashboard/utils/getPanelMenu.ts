@@ -324,6 +324,7 @@ function createExtensionContext(panel: PanelModel, dashboard: DashboardModel): P
   const timeRange = Object.assign({}, dashboard.time);
 
   return Object.freeze({
+    version: 1,
     id: panel.id,
     pluginId: panel.type,
     title: panel.title,

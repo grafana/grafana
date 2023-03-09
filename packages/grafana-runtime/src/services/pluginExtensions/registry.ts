@@ -1,8 +1,9 @@
-import { PluginExtension } from '@grafana/data';
+import type { PluginExtension, PluginExtensionContext } from '@grafana/data';
 
-export type PluginExtensionRegistryItem<T extends PluginExtension = PluginExtension, C extends object = object> = (
-  context?: C
-) => T | undefined;
+export type PluginExtensionRegistryItem<
+  T extends PluginExtension = PluginExtension,
+  C extends PluginExtensionContext = PluginExtensionContext
+> = (context?: C) => T | undefined;
 
 export type PluginExtensionRegistry = Record<string, PluginExtensionRegistryItem[]>;
 

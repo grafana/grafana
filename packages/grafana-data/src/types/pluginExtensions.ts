@@ -2,6 +2,10 @@
  * These types are exposed when rendering extension points
  */
 
+export interface PluginExtensionContext {
+  version: number;
+}
+
 export enum PluginExtensionTypes {
   link = 'link',
   command = 'command',

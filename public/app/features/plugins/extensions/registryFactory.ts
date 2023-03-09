@@ -7,6 +7,7 @@ import {
   type PluginExtension,
   type PluginExtensionCommand,
   type PluginExtensionLink,
+  type PluginExtensionContext,
   PluginExtensionTypes,
 } from '@grafana/data';
 import type { PluginExtensionRegistry, PluginExtensionRegistryItem } from '@grafana/runtime';
@@ -125,7 +126,7 @@ function createLinkRegistryItem(
 }
 
 function createLinkFactory(pluginId: string, config: AppPluginExtensionLinkConfig) {
-  return (override: Partial<AppPluginExtensionLink>, context?: object): PluginExtensionLink => {
+  return (override: Partial<AppPluginExtensionLink>, context?: PluginExtensionContext): PluginExtensionLink => {
     const title = override?.title ?? config.title;
     const description = override?.description ?? config.description;
     const path = override?.path ?? config.path;
@@ -143,9 +144,9 @@ function createLinkFactory(pluginId: string, config: AppPluginExtensionLinkConfi
 function createCommandFactory(
   pluginId: string,
   config: AppPluginExtensionCommandConfig,
-  handler: (context?: object) => void
+  handler: (context?: PluginExtensionContext) => void
 ) {
-  return (override: Partial<AppPluginExtensionCommand>, context?: object): PluginExtensionCommand => {
+  return (override: Partial<AppPluginExtensionCommand>, context?: PluginExtensionContext): PluginExtensionCommand => {
     const title = override?.title ?? config.title;
     const description = override?.description ?? config.description;
 
@@ -160,11 +161,11 @@ function createCommandFactory(
 }
 
 function mapToConfigure<T extends PluginExtension, C>(
-  commandFactory: (override: Partial<C>, context?: object) => T | undefined,
+  commandFactory: (override: Partial<C>, context?: PluginExtensionContext) => T | undefined,
   configurable: C
 ): (configure: ConfigureFunc<C>) => PluginExtensionRegistryItem<T> {
   return (configure) => {
-    return function mapToExtension(context?: object): T | undefined {
+    return function mapToExtension(context?: PluginExtensionContext): T | undefined {
       const override = configure(configurable, context);
       if (!override) {
         return undefined;

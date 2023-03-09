@@ -10,7 +10,7 @@ describe('extension link validator', () => {
     logger: jest.fn(),
   });
 
-  const context = {};
+  const context = { version: 0 };
   const extension: AppPluginExtensionLink = {
     title: 'Go to page one',
     description: 'Will navigate the user to page one',

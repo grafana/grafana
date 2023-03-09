@@ -1,8 +1,8 @@
-import { type PluginExtension } from '@grafana/data';
+import type { PluginExtensionContext, PluginExtension } from '@grafana/data';
 
 import { getPluginsExtensionRegistry } from './registry';
 
-export type PluginExtensionsOptions<T extends object> = {
+export type PluginExtensionsOptions<T extends PluginExtensionContext> = {
   placement: string;
   context?: T;
 };
@@ -11,7 +11,7 @@ export type PluginExtensionsResult = {
   extensions: PluginExtension[];
 };
 
-export function getPluginExtensions<T extends object = {}>(
+export function getPluginExtensions<T extends PluginExtensionContext = PluginExtensionContext>(
   options: PluginExtensionsOptions<T>
 ): PluginExtensionsResult {
   const { placement, context } = options;

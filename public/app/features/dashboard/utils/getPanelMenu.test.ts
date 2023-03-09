@@ -1,4 +1,10 @@
-import { PanelMenuItem, PluginExtension, PluginExtensionLink, PluginExtensionTypes } from '@grafana/data';
+import {
+  PanelMenuItem,
+  PluginExtension,
+  PluginExtensionContext,
+  PluginExtensionLink,
+  PluginExtensionTypes,
+} from '@grafana/data';
 import {
   PluginExtensionPanelContext,
   PluginExtensionRegistryItem,
@@ -308,6 +314,7 @@ describe('getPanelMenu()', () => {
       getPanelMenu(dashboard, panel, LoadingState.Loading);
 
       const context: PluginExtensionPanelContext = {
+        version: 1,
         pluginId: 'timeseries',
         id: 1,
         title: 'My panel',
@@ -506,7 +513,7 @@ describe('getPanelMenu()', () => {
   });
 });
 
-function createRegistryItem<T extends PluginExtension, C extends object = object>(
+function createRegistryItem<T extends PluginExtension, C extends PluginExtensionContext = PluginExtensionContext>(
   extension: T,
   configure?: PluginExtensionRegistryItem<T, C>
 ): PluginExtensionRegistryItem<T, C> {
