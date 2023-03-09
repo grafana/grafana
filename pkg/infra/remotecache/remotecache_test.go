@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/setting"
@@ -131,11 +130,7 @@ func TestCollectUsageStats(t *testing.T) {
 }
 
 func TestCachePrefix(t *testing.T) {
-	db := db.InitTestDB(t)
-	cache := &databaseCache{
-		SQLStore: db,
-		log:      log.New("remotecache.database"),
-	}
+	cache := NewFakeCacheStorage()
 	prefixCache := &prefixCacheStorage{cache: cache, prefix: "test/"}
 
 	// Set a value (with a prefix)
@@ -152,4 +147,37 @@ func TestCachePrefix(t *testing.T) {
 	// Get a value directly from the underlying cache without a prefix, should not be there
 	_, err = cache.Get(context.Background(), "foo")
 	require.Error(t, err)
+}
+
+type fakeCacheStorage struct {
+	storage map[string][]byte
+}
+
+func (fcs fakeCacheStorage) Set(_ context.Context, key string, value []byte, exp time.Duration) error {
+	fcs.storage[key] = value
+	return nil
+}
+
+func (fcs fakeCacheStorage) Get(_ context.Context, key string) ([]byte, error) {
+	value, exist := fcs.storage[key]
+	if !exist {
+		return nil, ErrCacheItemNotFound
+	}
+
+	return value, nil
+}
+
+func (fcs fakeCacheStorage) Delete(_ context.Context, key string) error {
+	delete(fcs.storage, key)
+	return nil
+}
+
+func (fcs fakeCacheStorage) Count(_ context.Context, prefix string) (int64, error) {
+	return int64(len(fcs.storage)), nil
+}
+
+func NewFakeCacheStorage() CacheStorage {
+	return fakeCacheStorage{
+		storage: map[string][]byte{},
+	}
 }
