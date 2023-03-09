@@ -129,12 +129,7 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
       const isSelected = selectedConnection === v && scene.panel.context.instanceState.selectedConnection;
 
       const strokeColor = info.color ? scene.context.getColor(info.color).value() : defaultArrowColor;
-      const strokeWidth = info.size
-        ? !isNaN(scene.context.getScale(info.size).value())
-          ? scene.context.getScale(info.size).value()
-          : defaultArrowSize
-        : defaultArrowSize;
-      console.log('strokeWidth: ' + strokeWidth);
+      const strokeWidth = info.size ? scene.context.getScale(info.size).get(0) : defaultArrowSize; // @TODO index hardcoded!
 
       const connectionCursorStyle = scene.isEditingEnabled ? 'grab' : '';
       const selectedStyles = { stroke: strokeColor, strokeWidth: 3 };
