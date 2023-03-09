@@ -27,6 +27,8 @@ import { promQueryModeller } from '../PromQueryModeller';
 import { regexifyLabelValuesQueryString } from '../shared/parsingUtils';
 import { PromVisualQuery } from '../types';
 
+import { FeedbackLink } from './FeedbackLink';
+
 type Props = {
   datasource: PrometheusDatasource;
   isOpen: boolean;
@@ -347,6 +349,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
       onDismiss={onClose}
       aria-label="Metric Encyclopedia"
     >
+      <FeedbackLink feedbackUrl="https://forms.gle/DEMAJHoAMpe3e54CA" />
       <div className={styles.spacing}>
         Browse {totalMetricCount} metric{totalMetricCount > 1 ? 's' : ''} by text, by type, alphabetically or select a
         variable.
