@@ -358,7 +358,7 @@ var (
 		},
 		{
 			Name:        "onlyExternalOrgRoleSync",
-			Description: "Enables organization roles synced with external auth providers to not be changed at all",
+			Description: "Prohibits a user from changing organization roles synced with external auth providers",
 			State:       FeatureStateAlpha,
 		},
 		{

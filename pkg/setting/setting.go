@@ -416,7 +416,7 @@ type Cfg struct {
 	GitLabSkipOrgRoleSync bool
 
 	// Generic OAuth
-	GenericOAuthEnabled         bool
+	GenericOAuthAuthEnabled     bool
 	GenericOAuthSkipOrgRoleSync bool
 
 	// LDAP

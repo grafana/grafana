@@ -260,7 +260,7 @@ const (
 	FlagIndividualCookiePreferences = "individualCookiePreferences"
 
 	// FlagOnlyExternalOrgRoleSync
-	// Enables organization roles synced with external auth providers to not be changed at all
+	// Prohibits a user from changing organization roles synced with external auth providers
 	FlagOnlyExternalOrgRoleSync = "onlyExternalOrgRoleSync"
 
 	// FlagDrawerDataSourcePicker

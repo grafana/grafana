@@ -115,7 +115,7 @@ func IsProviderEnabled(cfg *setting.Cfg, authProviderLabel string) bool {
 	case GrafanaComLabel:
 		return cfg.GrafanaComAuthEnabled
 	case GenericOAuthLabel:
-		return cfg.GenericOAuthEnabled
+		return cfg.GenericOAuthAuthEnabled
 	}
 	return false
 }
