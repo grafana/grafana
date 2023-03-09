@@ -3,6 +3,11 @@
  */
 
 export interface PluginExtensionContext {
+  /**
+   * Version number of the context to make it easier for plugin developers
+   * to manage multiple versions of the context when supporting multiple
+   * versions of Grafana.
+   */
   version: number;
 }
 
