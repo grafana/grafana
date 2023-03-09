@@ -1345,7 +1345,7 @@ func TestTwoBucketScripts(t *testing.T) {
 	requireFloatAt(t, 48.0, fields[4], 1)
 }
 
-func TestLogsAndCount(t *testing.T) {
+func TestLogs(t *testing.T) {
 	query := []byte(`
 	[
 		{
@@ -1376,7 +1376,7 @@ func TestLogsAndCount(t *testing.T) {
 				  "_type": "_doc",
 				  "_index": "mock-index",
 				  "_source": {
-					"@timestamp": "2019-06-24T09:51:19.765Z",
+					"testtime": "2019-06-24T09:51:19.765Z",
 					"host": "djisaodjsoad",
 					"number": 1,
 					"line": "hello, i am a message",
@@ -1394,7 +1394,7 @@ func TestLogsAndCount(t *testing.T) {
 				  "_type": "_doc",
 				  "_index": "mock-index",
 				  "_source": {
-					"@timestamp": "2019-06-24T09:52:19.765Z",
+					"testtime": "2019-06-24T09:52:19.765Z",
 					"host": "dsalkdakdop",
 					"number": 2,
 					"line": "hello, i am also message",
@@ -1415,92 +1415,75 @@ func TestLogsAndCount(t *testing.T) {
 `)
 
 	t.Run("response", func(t *testing.T) {
-		// FIXME: config datasource with messageField=<unset>, levelField=<unset>
 		result, err := queryDataTest(query, response)
 		require.NoError(t, err)
 
 		require.Len(t, result.response.Responses, 1)
 		frames := result.response.Responses["A"].Frames
-		// require.Len(t, frames, 2) // FIXME
+		require.Len(t, frames, 1)
 
-		// logsFrame := frames[0]
+		logsFrame := frames[0]
 
-		// m := logsFrame.Meta
-		// require.Equal(t, "['hello', 'message']", m.SearchWords) // FIXME
-		// require.Equal(t, data.VisTypeLogs, m.PreferredVisualization) // FIXME
+		meta := logsFrame.Meta
+		require.Equal(t, map[string]interface{}{"searchWords": []string{"hello", "message"}}, meta.Custom)
+		require.Equal(t, data.VisTypeLogs, string(meta.PreferredVisualization))
 
-		// logsFieldMap := make(map[string]*data.Field)
-		// for _, field := range logsFrame.Fields {
-		// 	logsFieldMap[field.Name] = field
-		// }
-
-		// require.Contains(t, logsFieldMap, "@timestamp")
-		// require.Equal(t, data.FieldTypeTime, logsFieldMap["@timestamp"].Type())
-
-		// require.Contains(t, logsFieldMap, "host")
-		// require.Equal(t, data.FieldTypeString, logsFieldMap["host"].Type())
-
-		// require.Contains(t, logsFieldMap, "message")
-		// require.Equal(t, data.FieldTypeString, logsFieldMap["message"].Type())
-
-		// require.Contains(t, logsFieldMap, "number")
-		// require.Equal(t, data.FieldTypeNullableFloat64, logsFieldMap["number"].Type())
-
-		// requireStringAt(t, "fdsfs", logsFieldMap["_id"], 0)
-		// requireStringAt(t, "kdospaidopa", logsFieldMap["_id"], 1)
-		// requireStringAt(t, "_doc", logsFieldMap["_type"], 0)
-		// requireStringAt(t, "_doc", logsFieldMap["_type"], 1)
-		// requireStringAt(t, "mock-index", logsFieldMap["_index"], 0)
-		// requireStringAt(t, "mock-index", logsFieldMap["_index"], 1)
-
-		// actualJson1 := logsFieldMap["_source"].At(0).(*json.RawMessage)
-		// actualJson2 := logsFieldMap["_source"].At(1).(*json.RawMessage)
-
-		// expectedJson1 := []byte(`
-		// {
-		// 	"@timestamp": "2019-06-24T09:51:19.765Z",
-		// 	"host": "djisaodjsoad",
-		// 	"number": 1,
-		// 	"message": "hello, i am a message",
-		// 	"level": "debug",
-		// 	"fields.lvl": "debug"
-		// }
-		// `)
-
-		// expectedJson2 := []byte(`
-		// {
-		// 	"@timestamp": "2019-06-24T09:52:19.765Z",
-		// 	"host": "dsalkdakdop",
-		// 	"number": 2,
-		// 	"message": "hello, i am also message",
-		// 	"level": "error",
-		// 	"fields.lvl": "info"
-		// }
-		// `)
-
-		// require.Equal(t, expectedJson1, actualJson1)
-		// require.Equal(t, expectedJson2, actualJson2)
-
-		histogramFrame := frames[len(frames)-1] // the "last" frame
-
-		histFieldMap := make(map[string]*data.Field)
-		for _, field := range histogramFrame.Fields {
-			histFieldMap[field.Name] = field
+		logsFieldMap := make(map[string]*data.Field)
+		for _, field := range logsFrame.Fields {
+			logsFieldMap[field.Name] = field
 		}
 
-		// FIXME: the go-version uses lowercase-names, `time` and `value`
-		// t1 := histFieldMap["Time"].At(0).(time.Time)
-		// t2 := histFieldMap["Time"].At(1).(time.Time)
+		require.Contains(t, logsFieldMap, "testtime")
+		require.Equal(t, data.FieldTypeNullableTime, logsFieldMap["testtime"].Type())
 
-		// v1 := histFieldMap["Value"].At(0).(*float64)
-		// v2 := histFieldMap["Value"].At(1).(*float64)
+		require.Contains(t, logsFieldMap, "host")
+		require.Equal(t, data.FieldTypeNullableString, logsFieldMap["host"].Type())
 
-		// testData := make(map[int64]float64)
-		// testData[(t1).UnixMilli()] = *v1
-		// testData[(t2).UnixMilli()] = *v2
+		require.Contains(t, logsFieldMap, "line")
+		require.Equal(t, data.FieldTypeNullableString, logsFieldMap["line"].Type())
 
-		// require.Equal(t, 10.0, testData[1000])
-		// require.Equal(t, 15.0, testData[2000])
+		require.Contains(t, logsFieldMap, "number")
+		require.Equal(t, data.FieldTypeNullableFloat64, logsFieldMap["number"].Type())
+
+		require.Contains(t, logsFieldMap, "_source")
+		require.Equal(t, data.FieldTypeNullableJSON, logsFieldMap["_source"].Type())
+
+		requireStringAt(t, "fdsfs", logsFieldMap["_id"], 0)
+		requireStringAt(t, "kdospaidopa", logsFieldMap["_id"], 1)
+		requireStringAt(t, "_doc", logsFieldMap["_type"], 0)
+		requireStringAt(t, "_doc", logsFieldMap["_type"], 1)
+		requireStringAt(t, "mock-index", logsFieldMap["_index"], 0)
+		requireStringAt(t, "mock-index", logsFieldMap["_index"], 1)
+
+		actualJson1, err := json.Marshal(logsFieldMap["_source"].At(0).(*json.RawMessage))
+		require.NoError(t, err)
+		actualJson2, err := json.Marshal(logsFieldMap["_source"].At(1).(*json.RawMessage))
+		require.NoError(t, err)
+
+		expectedJson1 := `
+		{
+			"fields.lvl": "debug",
+			"host": "djisaodjsoad",
+			"level": "debug",
+			"line": "hello, i am a message",
+			"number": 1,
+			"testtime": "2019-06-24T09:51:19.765Z",
+			"line": "hello, i am a message"
+		}
+		`
+
+		expectedJson2 := `
+		{
+			"testtime": "2019-06-24T09:52:19.765Z",
+			"host": "dsalkdakdop",
+			"number": 2,
+			"line": "hello, i am also message",
+			"level": "error",
+			"fields.lvl": "info"
+		}`
+
+		require.JSONEq(t, expectedJson1, string(actualJson1))
+		require.JSONEq(t, expectedJson2, string(actualJson2))
 	})
 
 	t.Run("level field", func(t *testing.T) {
