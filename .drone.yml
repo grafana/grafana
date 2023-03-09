@@ -537,8 +537,6 @@ steps:
   - git tag $${TEST_TAG} && git push https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git
     $${TEST_TAG}
   environment:
-    DOWNSTREAM_REPO:
-      from_secret: downstream
     GITHUB_TOKEN:
       from_secret: github_token_pr
     TEST_TAG: v0.0.0-test
@@ -6690,6 +6688,6 @@ kind: secret
 name: enterprise2_security_prefix
 ---
 kind: signature
-hmac: 3c6a942f7e8e4472be0e7d46f00871612d0c40071085417947e8bb5ef47fa28c
+hmac: 9b743a1d8808c69cba9497ca9f2015a2cf82d6f82568a04516c006a56dbec0ae
 
 ...
