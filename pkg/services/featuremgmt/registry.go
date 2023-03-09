@@ -297,6 +297,7 @@ var (
 			Description:  "Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+			Owner:       grafanaDashboardsSquad,
 		},
 		{
 			Name:            "queryLibrary",
@@ -309,6 +310,7 @@ var (
 			Name:        "showDashboardValidationWarnings",
 			Description: "Show warnings when dashboards do not validate against the schema",
 			State:       FeatureStateAlpha,
+			Owner:       grafanaDashboardsSquad,
 		},
 		{
 			Name:        "mysqlAnsiQuotes",
@@ -345,6 +347,7 @@ var (
 			Name:        "datasourceOnboarding",
 			Description: "Enable data source onboarding page",
 			State:       FeatureStateAlpha,
+			Owner:       grafanaDashboardsSquad,
 		},
 		{
 			Name:        "secureSocksDatasourceProxy",
