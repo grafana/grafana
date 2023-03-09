@@ -1,8 +1,10 @@
 import { css } from '@emotion/css';
 import React from 'react';
+import { useLocation } from 'react-router-dom';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, locationUtil } from '@grafana/data';
 import { Dropdown, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { useSelector } from 'app/types';
 
@@ -20,14 +22,20 @@ import { TOP_BAR_LEVEL_HEIGHT } from './types';
 export function TopSearchBar() {
   const styles = useStyles2(getStyles);
   const navIndex = useSelector((state) => state.navIndex);
+  const location = useLocation();
 
   const helpNode = navIndex['help'];
   const profileNode = navIndex['profile'];
 
+  let homeUrl = config.appSubUrl || '/';
+  if (!config.bootData.user.isSignedIn && !config.anonymousEnabled) {
+    homeUrl = locationUtil.getUrlForPartial(location, { forceLogin: 'true' });
+  }
+
   return (
     <div className={styles.layout}>
       <TopSearchBarSection>
-        <a className={styles.logo} href="/" title="Go to home">
+        <a className={styles.logo} href={homeUrl} title="Go to home">
           <Branding.MenuLogo className={styles.img} />
         </a>
         <OrganizationSwitcher />

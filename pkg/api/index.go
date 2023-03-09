@@ -112,6 +112,10 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 			Language:                   language,
 			HelpFlags1:                 c.HelpFlags1,
 			HasEditPermissionInFolders: hasEditPerm,
+			Analytics: dtos.AnalyticsSettings{
+				Identifier:         c.SignedInUser.Analytics.Identifier,
+				IntercomIdentifier: c.SignedInUser.Analytics.IntercomIdentifier,
+			},
 		},
 		Settings:                            settings,
 		Theme:                               prefs.Theme,
