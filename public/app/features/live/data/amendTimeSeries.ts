@@ -1,6 +1,6 @@
 import { closestIdx } from "./StreamingDataFrame";
 
-type Table = [times: number[], ...values: any[][]];
+export type Table = [times: number[], ...values: any[][]];
 
 // prevTable and nextTable are assumed sorted ASC on reference [0] arrays
 // nextTable is assumed to be contiguous, only edges are checked for overlap
