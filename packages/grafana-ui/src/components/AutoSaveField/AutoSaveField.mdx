@@ -4,7 +4,7 @@ import { Basic } from './AutoSaveField.story.tsx';
 
 # AutoSaveField
 
-Used for form inputs that should save its content automatically. 
+Used for form inputs that should save its content automatically.
 
 ---
 
@@ -34,7 +34,7 @@ In this documentation you can find:
 
 ### **Dont's**
 
-- Do not use if high-impact situations (e.g. deleting a data source)
+- Do not use if high-impact situations (e.g. saving/changing passwords)
   <br />
   <br />
 
@@ -215,6 +215,7 @@ The `AutoSaveField`component is comprised of:
 - Custom error message
 
 {' '}
+
 <Preview>
   <Basic />
 </Preview>
@@ -239,7 +240,7 @@ As the data is changed (for instance typing into a text input), the `AutoSaveFie
 ### Common behaviour
 
 _**What triggers the auto-save action?**_\
-A change on the input, such as after typing a text or selecting a new option.
+A change on the input, such as after typing a text or selecting a new option. The request will be triggered after waiting 600 milliseconds from the last change (debouncing).
 
 _**What can be expected from the request?**_
 
