@@ -140,7 +140,7 @@ function WelcomeHeader({ className }: { className?: string }) {
     <ContentBox className={cx(styles.ctaContainer, className)}>
       <WelcomeCTABox
         title="Alert rules"
-        description="Define the condition that must be me before an alert rule fires"
+        description="Define the condition that must be met before an alert rule fires"
         href="/alerting/list"
         hrefText="Manage alert rules"
       />
