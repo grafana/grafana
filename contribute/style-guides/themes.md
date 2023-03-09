@@ -30,10 +30,10 @@ function Foo(props: FooProps) {
   // Use styles with className
 }
 
-
-const getStyles = (theme: GrafanaTheme2) => css({
-padding: theme.spacing(1,2)
-});
+const getStyles = (theme: GrafanaTheme2) =>
+  css({
+    padding: theme.spacing(1, 2),
+  });
 ```
 
 #### Get the theme object
