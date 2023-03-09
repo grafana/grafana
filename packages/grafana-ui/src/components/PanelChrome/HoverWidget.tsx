@@ -76,6 +76,7 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       position: 'absolute',
       zIndex: 1,
+      right: 0,
       boxSizing: 'border-box',
       alignItems: 'center',
       background: theme.colors.background.secondary,
