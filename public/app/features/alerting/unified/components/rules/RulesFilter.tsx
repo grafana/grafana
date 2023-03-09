@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { DataSourcePicker, logInfo } from '@grafana/runtime';
+import { logInfo } from '@grafana/runtime';
 import { Button, Field, Icon, Input, Label, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
@@ -14,6 +14,8 @@ import { useRulesFilter } from '../../hooks/useFilteredRules';
 import { RuleHealth } from '../../search/rulesSearchParser';
 import { alertStateToReadable } from '../../utils/rules';
 import { HoverCard } from '../HoverCard';
+
+import { MultipleDataSourcePicker } from './MultipleDataSourcePicker';
 
 const ViewOptions: SelectableValue[] = [
   {
@@ -77,11 +79,17 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
     setValue('searchQuery', searchQuery);
   }, [searchQuery, setValue]);
 
-  const handleDataSourceChange = (dataSourceValue: DataSourceInstanceSettings) => {
+  const handleDataSourceChange = (dataSourceValue: DataSourceInstanceSettings, action: 'add' | 'remove') => {
+    const dataSourceNames =
+      action === 'add'
+        ? [...filterState.dataSourceNames].concat([dataSourceValue.name])
+        : filterState.dataSourceNames.filter((name) => name !== dataSourceValue.name);
+
     updateFilters({
       ...filterState,
-      dataSourceNames: [...filterState.dataSourceNames].concat([dataSourceValue.name]),
+      dataSourceNames,
     });
+
     setFilterKey((key) => key + 1);
   };
 
@@ -123,12 +131,12 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
       <Stack direction="column" gap={1}>
         <Stack direction="row" gap={1}>
           <Field className={styles.dsPickerContainer} label="Search by data source">
-            <DataSourcePicker
+            <MultipleDataSourcePicker
               key={dataSourceKey}
               alerting
               noDefault
               placeholder="All data sources"
-              current={filterState.dataSourceNames?.[0]}
+              current={filterState.dataSourceNames}
               onChange={handleDataSourceChange}
               onClear={clearDataSource}
             />
