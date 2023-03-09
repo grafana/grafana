@@ -84,8 +84,9 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		)
 		floatFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
 
-		stringField := data.NewField("value", labels, []string{
-			"/usr/path", "/usr/path", "/usr/path",
+		string_test := "/usr/path"
+		stringField := data.NewField("value", labels, []*string{
+			&string_test, &string_test, &string_test,
 		})
 		stringField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.path { datacenter: America }"}
 		stringFrame := data.NewFrame("cpu.path { datacenter: America }",
@@ -99,8 +100,10 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		)
 		stringFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
 
-		boolField := data.NewField("value", labels, []bool{
-			true, false, true,
+		bool_true := true
+		bool_false := false
+		boolField := data.NewField("value", labels, []*bool{
+			&bool_true, &bool_false, &bool_true,
 		})
 		boolField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.isActive { datacenter: America }"}
 		boolFrame := data.NewFrame("cpu.isActive { datacenter: America }",
