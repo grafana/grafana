@@ -173,9 +173,6 @@ func (s *Service) collectSystemStats(ctx context.Context) (map[string]interface{
 	}
 
 	m["stats.avg_auth_token_per_user.count"] = avgAuthTokensPerUser
-	if s.cfg.RemoteCacheOptions != nil && s.cfg.RemoteCacheOptions.Name != "" {
-		m["stats.remote_cache."+s.cfg.RemoteCacheOptions.Name+".count"] = 1
-	}
 	m["stats.packaging."+s.cfg.Packaging+".count"] = 1
 	m["stats.distributor."+s.cfg.ReportingDistributor+".count"] = 1
 
