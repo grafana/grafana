@@ -110,6 +110,8 @@ export const MetricEncyclopediaModal = (props: Props) => {
   const [selectedTypes, setSelectedTypes] = useState<Array<SelectableValue<string>>>([]);
   const [letterSearch, setLetterSearch] = useState<string | null>(null);
 
+  const [totalMetricCount, setTotalMetricCount] = useState<number>(0);
+  const [filteredMetricCount, setFilteredMetricCount] = useState<number>();
   // backend search metric names by text
   const [useBackend, setUseBackend] = useState<boolean>(false);
 
@@ -171,6 +173,8 @@ export const MetricEncyclopediaModal = (props: Props) => {
       })
     );
 
+    setTotalMetricCount(metricsData.length);
+    setFilteredMetricCount(metricsData.length);
     setIsLoading(false);
   }, [query, datasource]);
 
@@ -293,6 +297,10 @@ export const MetricEncyclopediaModal = (props: Props) => {
   function displayedMetrics(metrics: MetricsData) {
     const filteredSorted: MetricsData = filterMetrics(metrics).sort(alphabetically(true, hasMetaDataFilters()));
 
+    if (filteredMetricCount !== filteredSorted.length && filteredSorted.length !== 0) {
+      setFilteredMetricCount(filteredSorted.length);
+    }
+
     const displayedMetrics: MetricsData = sliceMetrics(filteredSorted, pageNum, resultsPerPage);
 
     return displayedMetrics;
@@ -303,6 +311,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
   const debouncedBackendSearch = useMemo(
     () =>
       debounce(async (metricText: string) => {
+        setIsLoading(true);
         const queryString = regexifyLabelValuesQueryString(metricText);
 
         const labelsParams = query.labels.map((label) => {
@@ -324,6 +333,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
         });
 
         setMetrics(metrics);
+        setFilteredMetricCount(metrics.length);
         setIsLoading(false);
       }, 300),
     [datasource, query.labels]
@@ -338,7 +348,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
       aria-label="Metric Encyclopedia"
     >
       <div className={styles.spacing}>
-        Browse {metrics.length} metric{metrics.length > 1 ? 's' : ''} by text, by type, alphabetically or select a
+        Browse {totalMetricCount} metric{totalMetricCount > 1 ? 's' : ''} by text, by type, alphabetically or select a
         variable.
         {isLoading && (
           <div className={styles.inlineSpinner}>
@@ -364,7 +374,6 @@ export const MetricEncyclopediaModal = (props: Props) => {
               // get all metrics data if a user erases everything in the input
               updateMetricsMetadata();
             } else if (useBackend) {
-              setIsLoading(true);
               debouncedBackendSearch(value);
             } else {
               // do the search on the frontend
@@ -462,7 +471,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
           }}
         />
       </div>
-      <h5 className={`${styles.center} ${styles.topPadding}`}>Results</h5>
+      <h5 className={`${styles.center} ${styles.topPadding}`}>{filteredMetricCount} Results</h5>
       <div className={`${styles.center} ${styles.bottomPadding}`}>
         {[
           'A',
