@@ -4,7 +4,7 @@ import React, { useMemo, useCallback } from 'react';
 import {
   FieldMatcherID,
   fieldMatchers,
-  FieldValuesMatcherConfig,
+  FieldValueMatcherConfig,
   fieldReducers,
   ReducerID,
   SelectableValue,
@@ -18,7 +18,7 @@ import { Select } from '../Select/Select';
 
 import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
 
-type Props = MatcherUIProps<FieldValuesMatcherConfig>;
+type Props = MatcherUIProps<FieldValueMatcherConfig>;
 
 export const comparators = [
   { label: '==', value: ComparisonOperation.EQ },
@@ -104,7 +104,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-export const fieldValuesMatcherItem: FieldMatcherUIRegistryItem<FieldValuesMatcherConfig> = {
+export const fieldValuesMatcherItem: FieldMatcherUIRegistryItem<FieldValueMatcherConfig> = {
   id: FieldMatcherID.byValues,
   component: FieldValuesMatcherEditor,
   matcher: fieldMatchers.get(FieldMatcherID.byValues),

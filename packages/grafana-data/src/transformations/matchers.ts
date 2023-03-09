@@ -11,6 +11,7 @@ import {
 import { Registry } from '../utils/Registry';
 
 import { getFieldTypeMatchers } from './matchers/fieldTypeMatcher';
+import { fieldValueMatcherInfo } from './matchers/fieldValueMatcher';
 import { getFieldNameMatchers, getFrameNameMatchers } from './matchers/nameMatcher';
 import { getFieldPredicateMatchers, getFramePredicateMatchers } from './matchers/predicates';
 import { getRefIdMatchers } from './matchers/refIdMatcher';
@@ -20,9 +21,8 @@ import { getNullValueMatchers } from './matchers/valueMatchers/nullMatchers';
 import { getNumericValueMatchers } from './matchers/valueMatchers/numericMatchers';
 import { getRangeValueMatchers } from './matchers/valueMatchers/rangeMatchers';
 import { getRegexValueMatcher } from './matchers/valueMatchers/regexMatchers';
-import { fieldValueMatcherInfo } from './matchers/valuesMatcher';
 
-export { type FieldValuesMatcherConfig } from './matchers/valuesMatcher';
+export { type FieldValueMatcherConfig } from './matchers/fieldValueMatcher';
 
 /**
  * Registry that contains all of the built in field matchers.
