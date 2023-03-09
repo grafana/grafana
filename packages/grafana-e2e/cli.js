@@ -1,7 +1,7 @@
 const { program } = require('commander');
 const execa = require('execa');
 const { resolve, sep } = require('path');
-const resolveBin = require('resolve-as-bin');
+const resolveBin = require('resolve-bin');
 
 const cypress = (commandName, { updateScreenshots, browser }) => {
   // Support running an unpublished dev build
@@ -25,7 +25,7 @@ const cypress = (commandName, { updateScreenshots, browser }) => {
     stdio: 'inherit',
   };
 
-  return execa(resolveBin('cypress'), cypressOptions, execaOptions)
+  return execa(resolveBin.sync('cypress'), cypressOptions, execaOptions)
     .then(() => {}) // no return value
     .catch((error) => {
       console.error(error.message);

@@ -81,4 +81,6 @@ export interface FeatureToggles {
   individualCookiePreferences?: boolean;
   onlyExternalOrgRoleSync?: boolean;
   drawerDataSourcePicker?: boolean;
+  traceqlSearch?: boolean;
+  prometheusMetricEncyclopedia?: boolean;
 }

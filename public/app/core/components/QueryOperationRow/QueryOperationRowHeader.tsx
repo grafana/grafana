@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import React, { MouseEventHandler } from 'react';
-import { DraggableProvidedDragHandleProps } from 'react-beautiful-dnd';
+import { DraggableProvided } from 'react-beautiful-dnd';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, IconButton, useStyles2 } from '@grafana/ui';
@@ -9,7 +9,7 @@ interface QueryOperationRowHeaderProps {
   actionsElement?: React.ReactNode;
   disabled?: boolean;
   draggable: boolean;
-  dragHandleProps?: DraggableProvidedDragHandleProps;
+  dragHandleProps?: DraggableProvided['dragHandleProps'];
   headerElement?: React.ReactNode;
   isContentVisible: boolean;
   onRowToggle: () => void;

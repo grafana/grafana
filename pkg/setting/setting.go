@@ -145,6 +145,7 @@ var (
 
 // TODO move all global vars to this struct
 type Cfg struct {
+	Target []string
 	Raw    *ini.File
 	Logger log.Logger
 
@@ -917,6 +918,7 @@ var skipStaticRootValidation = false
 
 func NewCfg() *Cfg {
 	return &Cfg{
+		Target:      []string{"all"},
 		Logger:      log.New("settings"),
 		Raw:         ini.Empty(),
 		Azure:       &azsettings.AzureSettings{},
@@ -975,6 +977,8 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 
 	cfg.ErrTemplateName = "error"
 
+	Target := valueAsString(iniFile.Section(""), "target", "all")
+	cfg.Target = strings.Split(Target, " ")
 	Env = valueAsString(iniFile.Section(""), "app_mode", "development")
 	cfg.Env = Env
 	cfg.ForceMigration = iniFile.Section("").Key("force_migration").MustBool(false)
@@ -1275,6 +1279,7 @@ func (cfg *Cfg) LogConfigSources() {
 		}
 	}
 
+	cfg.Logger.Info("Target", "target", cfg.Target)
 	cfg.Logger.Info("Path Home", "path", HomePath)
 	cfg.Logger.Info("Path Data", "path", cfg.DataPath)
 	cfg.Logger.Info("Path Logs", "path", cfg.LogsPath)

@@ -72,6 +72,12 @@ func (moa *MultiOrgAlertmanager) GetOrCreateOrgRegistry(id int64) prometheus.Reg
 type AlertmanagerAggregatedMetrics struct {
 	registries *metrics.TenantRegistries
 
+	// metrics gather from the in-house "Alertmanager" directly.
+	numReceivedAlerts      *prometheus.Desc
+	numInvalidAlerts       *prometheus.Desc
+	configuredReceivers    *prometheus.Desc
+	configuredIntegrations *prometheus.Desc
+
 	// exported metrics, gathered from Alertmanager PipelineBuilder
 	numNotifications                   *prometheus.Desc
 	numFailedNotifications             *prometheus.Desc
@@ -106,6 +112,23 @@ type AlertmanagerAggregatedMetrics struct {
 func NewAlertmanagerAggregatedMetrics(registries *metrics.TenantRegistries) *AlertmanagerAggregatedMetrics {
 	aggregatedMetrics := &AlertmanagerAggregatedMetrics{
 		registries: registries,
+
+		numReceivedAlerts: prometheus.NewDesc(
+			fmt.Sprintf("%s_%s_alerts_received_total", Namespace, Subsystem),
+			"The total number of received alerts.",
+			[]string{"org", "status"}, nil),
+		numInvalidAlerts: prometheus.NewDesc(
+			fmt.Sprintf("%s_%s_alerts_invalid_total", Namespace, Subsystem),
+			"The total number of received alerts that were invalid.",
+			[]string{"org"}, nil),
+		configuredReceivers: prometheus.NewDesc(
+			fmt.Sprintf("%s_%s_alertmanager_receivers", Namespace, Subsystem),
+			"Number of configured receivers by state. It is considered active if used within a route.",
+			[]string{"org", "state"}, nil),
+		configuredIntegrations: prometheus.NewDesc(
+			fmt.Sprintf("%s_%s_alertmanager_integrations", Namespace, Subsystem),
+			"Number of configured receivers.",
+			[]string{"org", "type"}, nil),
 
 		numNotifications: prometheus.NewDesc(
 			fmt.Sprintf("%s_%s_notifications_total", Namespace, Subsystem),
@@ -204,6 +227,11 @@ func NewAlertmanagerAggregatedMetrics(registries *metrics.TenantRegistries) *Ale
 }
 
 func (a *AlertmanagerAggregatedMetrics) Describe(out chan<- *prometheus.Desc) {
+	out <- a.numReceivedAlerts
+	out <- a.numInvalidAlerts
+	out <- a.configuredReceivers
+	out <- a.configuredIntegrations
+
 	out <- a.numNotifications
 	out <- a.numFailedNotifications
 	out <- a.numNotificationRequestsTotal
@@ -233,6 +261,11 @@ func (a *AlertmanagerAggregatedMetrics) Describe(out chan<- *prometheus.Desc) {
 
 func (a *AlertmanagerAggregatedMetrics) Collect(out chan<- prometheus.Metric) {
 	data := a.registries.BuildMetricFamiliesPerTenant()
+
+	data.SendSumOfCountersPerTenant(out, a.numReceivedAlerts, "alertmanager_alerts_received_total", metrics.WithLabels("status"))
+	data.SendSumOfCountersPerTenant(out, a.numInvalidAlerts, "alertmanager_alerts_invalid_total")
+	data.SendSumOfGaugesPerTenantWithLabels(out, a.configuredReceivers, "grafana_alerting_alertmanager_receivers", "state")
+	data.SendSumOfGaugesPerTenantWithLabels(out, a.configuredIntegrations, "grafana_alerting_alertmanager_integrations", "type")
 
 	data.SendSumOfCountersPerTenant(out, a.numNotifications, "alertmanager_notifications_total", metrics.WithLabels("integration"), metrics.WithSkipZeroValueMetrics)
 	data.SendSumOfCountersPerTenant(out, a.numFailedNotifications, "alertmanager_notifications_failed_total", metrics.WithLabels("integration"), metrics.WithSkipZeroValueMetrics)

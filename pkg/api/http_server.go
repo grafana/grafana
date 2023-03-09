@@ -32,7 +32,6 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/registry/corekind"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -69,7 +68,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
-	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
+	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	publicdashboardsApi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
@@ -625,7 +625,9 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 
 	m.UseMiddleware(hs.ContextHandler.Middleware)
 	m.Use(middleware.OrgRedirect(hs.Cfg, hs.userService))
-	m.Use(accesscontrol.LoadPermissionsMiddleware(hs.accesscontrolService))
+	if !hs.Features.IsEnabled(featuremgmt.FlagAuthnService) {
+		m.Use(accesscontrol.LoadPermissionsMiddleware(hs.accesscontrolService))
+	}
 
 	// needs to be after context handler
 	if hs.Cfg.EnforceDomain {

@@ -13,6 +13,7 @@ import {
   obfuscate,
   combineResponses,
   cloneQueryResponse,
+  requestSupportsPartitioning,
 } from './queryUtils';
 import { LokiQuery, LokiQueryType } from './types';
 
@@ -524,5 +525,49 @@ describe('combineResponses', () => {
       const responseB = makeResponse();
       expect(combineResponses(responseA, responseB).data[0].meta.stats).toHaveLength(0);
     });
+  });
+});
+
+describe('requestSupportsPartitioning', () => {
+  it('hidden requests are not partitioned', () => {
+    const requests: LokiQuery[] = [
+      {
+        expr: '{a="b"}',
+        refId: 'A',
+        hide: true,
+      },
+    ];
+    expect(requestSupportsPartitioning(requests)).toBe(false);
+  });
+  it('special requests are not partitioned', () => {
+    const requests: LokiQuery[] = [
+      {
+        expr: '{a="b"}',
+        refId: 'do-not-chunk',
+      },
+    ];
+    expect(requestSupportsPartitioning(requests)).toBe(false);
+  });
+  it('empty requests are not partitioned', () => {
+    const requests: LokiQuery[] = [
+      {
+        expr: '',
+        refId: 'A',
+      },
+    ];
+    expect(requestSupportsPartitioning(requests)).toBe(false);
+  });
+  it('all other requests are partitioned', () => {
+    const requests: LokiQuery[] = [
+      {
+        expr: '{a="b"}',
+        refId: 'A',
+      },
+      {
+        expr: 'count_over_time({a="b"}[1h])',
+        refId: 'B',
+      },
+    ];
+    expect(requestSupportsPartitioning(requests)).toBe(true);
   });
 });

@@ -263,6 +263,8 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme2) => {
     tooltip: css`
       background: none;
       padding: 0;
+      overflow-y: auto;
+      max-height: 95vh;
     `,
     header: css`
       background: ${headerBg};
