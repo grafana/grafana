@@ -211,7 +211,7 @@
     "bargaugepanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/dataviz-squad"
+        "grafana/grafana-bi-squad"
       ],
       "currentVersion": [
         0,
@@ -525,7 +525,7 @@
     "gaugepanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/dataviz-squad"
+        "grafana/grafana-bi-squad"
       ],
       "currentVersion": [
         0,
@@ -1215,7 +1215,7 @@
     "piechartpanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/dataviz-squad"
+        "grafana/grafana-bi-squad"
       ],
       "currentVersion": [
         0,
@@ -1531,7 +1531,7 @@
     "statpanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/dataviz-squad"
+        "grafana/grafana-bi-squad"
       ],
       "currentVersion": [
         0,
