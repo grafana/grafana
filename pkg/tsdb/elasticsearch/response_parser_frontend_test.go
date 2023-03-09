@@ -813,10 +813,10 @@ func TestHistogramSimple(t *testing.T) {
 	require.Len(t, result.response.Responses, 1)
 	frames := result.response.Responses["A"].Frames
 	require.Len(t, frames, 1)
+	requireFrameLength(t, frames[0], 3)
 
 	fields := frames[0].Fields
 	require.Len(t, fields, 2)
-	require.Equal(t, fields[0].Len(), 3)
 
 	field1 := fields[0]
 	field2 := fields[1]
