@@ -51,7 +51,7 @@ const TagsInput = ({ updateFilter, deleteFilter, filters, datasource, setError, 
 
   return (
     <div className={styles.vertical}>
-      {dynamicFilters.map((f, i) => (
+      {dynamicFilters?.map((f, i) => (
         <div className={styles.horizontal} key={f.id}>
           <SearchField
             filter={f}
