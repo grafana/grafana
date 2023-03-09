@@ -3,6 +3,7 @@ package elasticsearch
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"regexp"
 	"sort"
 	"strconv"
@@ -35,6 +36,8 @@ const (
 	// Logs type
 	logsType = "logs"
 )
+
+var searchWordsRegex = regexp.MustCompile(regexp.QuoteMeta(es.HighlightPreTagsString) + `(.*?)` + regexp.QuoteMeta(es.HighlightPostTagsString))
 
 func parseResponse(responses []*es.SearchResponse, targets []*Query, configuredFields es.ConfiguredFields) (*backend.QueryDataResponse, error) {
 	result := backend.QueryDataResponse{
@@ -94,6 +97,7 @@ func parseResponse(responses []*es.SearchResponse, targets []*Query, configuredF
 func processLogsResponse(res *es.SearchResponse, target *Query, configuredFields es.ConfiguredFields, queryRes *backend.DataResponse) error {
 	propNames := make(map[string]bool)
 	docs := make([]map[string]interface{}, len(res.Hits.Hits))
+	searchWords := make(map[string]bool)
 
 	for hitIdx, hit := range res.Hits.Hits {
 		var flattened map[string]interface{}
@@ -121,7 +125,22 @@ func processLogsResponse(res *es.SearchResponse, target *Query, configuredFields
 		for key := range doc {
 			propNames[key] = true
 		}
-		// TODO: Implement highlighting
+
+		// Process highlight to searchWords
+		if highlights, ok := doc["highlight"].(map[string]interface{}); ok {
+			for _, highlight := range highlights {
+				if highlightList, ok := highlight.([]interface{}); ok {
+					for _, highlightValue := range highlightList {
+						str := fmt.Sprintf("%v", highlightValue)
+						matches := searchWordsRegex.FindAllStringSubmatch(str, -1)
+
+						for _, v := range matches {
+							searchWords[v[1]] = true
+						}
+					}
+				}
+			}
+		}
 
 		docs[hitIdx] = doc
 	}
@@ -131,7 +150,8 @@ func processLogsResponse(res *es.SearchResponse, target *Query, configuredFields
 
 	frames := data.Frames{}
 	frame := data.NewFrame("", fields...)
-	setPreferredVisType(frame, "logs")
+	setPreferredVisType(frame, data.VisTypeLogs)
+	setSearchWords(frame, searchWords)
 	frames = append(frames, frame)
 
 	queryRes.Frames = frames
@@ -1072,4 +1092,26 @@ func setPreferredVisType(frame *data.Frame, visType data.VisType) {
 	}
 
 	frame.Meta.PreferredVisualization = visType
+}
+
+func setSearchWords(frame *data.Frame, searchWords map[string]bool) {
+	i := 0
+	searchWordsList := make([]string, len(searchWords))
+	for searchWord := range searchWords {
+		searchWordsList[i] = searchWord
+		i++
+	}
+	sort.Strings(searchWordsList)
+
+	if frame.Meta == nil {
+		frame.Meta = &data.FrameMeta{}
+	}
+
+	if frame.Meta.Custom == nil {
+		frame.Meta.Custom = map[string]interface{}{}
+	}
+
+	frame.Meta.Custom = map[string]interface{}{
+		"searchWords": searchWordsList,
+	}
 }

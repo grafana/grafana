@@ -13195,7 +13195,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@xstate/react@npm:^3.0.0":
+"@xstate/react@npm:^3.2.1":
   version: 3.2.1
   resolution: "@xstate/react@npm:3.2.1"
   dependencies:
@@ -22356,7 +22356,7 @@ __metadata:
     react-dom: 17.0.2
     react-draggable: 4.4.5
     react-dropzone: ^14.2.3
-    react-enable: ^3.0.1
+    react-enable: ^3.1.0
     react-grid-layout: 1.3.4
     react-highlight-words: 0.20.0
     react-hook-form: 7.5.3
@@ -33019,18 +33019,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-enable@npm:^3.0.1":
-  version: 3.0.1
-  resolution: "react-enable@npm:3.0.1"
+"react-enable@npm:^3.1.0":
+  version: 3.1.0
+  resolution: "react-enable@npm:3.1.0"
   dependencies:
     "@headlessui/react": ^1.5.0
-    "@xstate/react": ^3.0.0
+    "@xstate/react": ^3.2.1
     tslib: ^1.14.1
-    xstate: ^4.31.0
+    xstate: ^4.37.0
   peerDependencies:
     react: ^17 || ^18
     react-dom: ^17 || ^18
-  checksum: 1426b2433785eab34054b82594c085772a8ce334e71ca8d49d4171cd3f37dc8d5273e4717f1c70efb1411ef89220a4bba156a9fae5c6eb2a9a80c178307567f4
+  checksum: fc6509bac91bff78529df3699799bb02ce6d5fcc594eea844779834fa8cd8827f328c4456c157e2aca6bebbd0969846e184625f2fa3e2edde97074e19e10d5e0
   languageName: node
   linkType: hard
 
@@ -40069,10 +40069,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"xstate@npm:^4.31.0":
-  version: 4.36.0
-  resolution: "xstate@npm:4.36.0"
-  checksum: c8c4c7bb02b0a1f402dc967ce29489551457f0bb5e021328b4cddf34d7eb6b66ad5c131003d33808f5a9ef2cbd2f6ae31ac5904314ee5e6adc7616589b746310
+"xstate@npm:^4.37.0":
+  version: 4.37.0
+  resolution: "xstate@npm:4.37.0"
+  checksum: 8eba107721c91ba08934b68a2881f01dd9ab6f23cc2ebcdd91145ce5999db8f690b38cf1570b928c058755150fc5024bed1cafe731ff7e6750d4e64752a7ab5b
   languageName: node
   linkType: hard
 

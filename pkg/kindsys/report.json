@@ -211,7 +211,7 @@
     "bargaugepanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/dataviz-squad"
+        "grafana/grafana-bi-squad"
       ],
       "currentVersion": [
         0,
@@ -525,7 +525,7 @@
     "gaugepanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/dataviz-squad"
+        "grafana/grafana-bi-squad"
       ],
       "currentVersion": [
         0,
@@ -1215,7 +1215,7 @@
     "piechartpanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/dataviz-squad"
+        "grafana/grafana-bi-squad"
       ],
       "currentVersion": [
         0,
@@ -1346,7 +1346,9 @@
     },
     "prometheusdataquery": {
       "category": "composable",
-      "codeowners": [],
+      "codeowners": [
+        "grafana/observability-metrics"
+      ],
       "currentVersion": [
         0,
         0
@@ -1354,13 +1356,13 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
-        "docs": "n/a",
-        "go": "n/a",
-        "schema": "n/a",
-        "ts": "n/a"
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/prometheusdataquery/schema-reference",
+        "go": "https://github.com/grafana/grafana/tree/main/pkg/tsdb/prometheus/kinds/dataquery/types_dataquery_gen.go",
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/prometheus/dataquery.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/prometheus/dataquery.gen.ts"
       },
       "machineName": "prometheusdataquery",
-      "maturity": "planned",
+      "maturity": "experimental",
       "name": "PrometheusDataQuery",
       "pluralMachineName": "prometheusdataquerys",
       "pluralName": "PrometheusDataQuerys",
@@ -1531,7 +1533,7 @@
     "statpanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/dataviz-squad"
+        "grafana/grafana-bi-squad"
       ],
       "currentVersion": [
         0,
@@ -2053,6 +2055,7 @@
           "parcadataquery",
           "phlaredataquery",
           "piechartpanelcfg",
+          "prometheusdataquery",
           "statetimelinepanelcfg",
           "statpanelcfg",
           "statushistorypanelcfg",
@@ -2062,7 +2065,7 @@
           "textpanelcfg",
           "xychartpanelcfg"
         ],
-        "count": 26
+        "count": 27
       },
       "mature": {
         "name": "mature",
@@ -2120,7 +2123,6 @@
           "phlaredatasourcecfg",
           "postgresqldataquery",
           "postgresqldatasourcecfg",
-          "prometheusdataquery",
           "prometheusdatasourcecfg",
           "query",
           "queryhistory",
@@ -2134,7 +2136,7 @@
           "zipkindataquery",
           "zipkindatasourcecfg"
         ],
-        "count": 46
+        "count": 45
       },
       "stable": {
         "name": "stable",
