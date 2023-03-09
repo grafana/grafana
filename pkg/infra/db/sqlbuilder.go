@@ -17,11 +17,12 @@ func NewSqlBuilder(cfg *setting.Cfg, features featuremgmt.FeatureToggles, dialec
 }
 
 type SQLBuilder struct {
-	cfg      *setting.Cfg
-	features featuremgmt.FeatureToggles
-	sql      bytes.Buffer
-	params   []interface{}
-	recQry   string
+	cfg          *setting.Cfg
+	features     featuremgmt.FeatureToggles
+	sql          bytes.Buffer
+	params       []interface{}
+	recQry       string
+	recQryParams []interface{}
 
 	dialect migrator.Dialect
 }
@@ -35,10 +36,22 @@ func (sb *SQLBuilder) Write(sql string, params ...interface{}) {
 }
 
 func (sb *SQLBuilder) GetSQLString() string {
-	return sb.sql.String()
+	if sb.recQry == "" {
+		return sb.sql.String()
+	}
+
+	var bf bytes.Buffer
+	bf.WriteString(sb.recQry)
+	bf.WriteString(sb.sql.String())
+	return bf.String()
 }
 
 func (sb *SQLBuilder) GetParams() []interface{} {
+	if len(sb.recQryParams) == 0 {
+		return sb.params
+	}
+
+	sb.params = append(sb.recQryParams, sb.params...)
 	return sb.params
 }
 
@@ -48,15 +61,15 @@ func (sb *SQLBuilder) AddParams(params ...interface{}) {
 
 func (sb *SQLBuilder) WriteDashboardPermissionFilter(user *user.SignedInUser, permission dashboards.PermissionType) {
 	var (
-		sql    string
-		params []interface{}
-		recQry string
+		sql          string
+		params       []interface{}
+		recQry       string
+		recQryParams []interface{}
 	)
 	if !ac.IsDisabled(sb.cfg) {
 		filterRBAC := permissions.NewAccessControlDashboardPermissionFilter(user, permission, "", sb.features)
 		sql, params = filterRBAC.Where()
-		// TODO: fixme
-		recQry, _ = filterRBAC.With()
+		recQry, recQryParams = filterRBAC.With()
 	} else {
 		sql, params = permissions.DashboardPermissionFilter{
 			OrgRole:         user.OrgRole,
@@ -70,4 +83,5 @@ func (sb *SQLBuilder) WriteDashboardPermissionFilter(user *user.SignedInUser, pe
 	sb.sql.WriteString(" AND " + sql)
 	sb.params = append(sb.params, params...)
 	sb.recQry = recQry
+	sb.recQryParams = recQryParams
 }

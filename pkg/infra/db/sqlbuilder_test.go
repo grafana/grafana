@@ -25,6 +25,7 @@ func TestIntegrationSQLBuilder(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+
 	t.Run("WriteDashboardPermissionFilter", func(t *testing.T) {
 		t.Run("user ACL", func(t *testing.T) {
 			test(t,
@@ -32,6 +33,7 @@ func TestIntegrationSQLBuilder(t *testing.T) {
 				&DashboardPermission{User: true, Permission: dashboards.PERMISSION_VIEW},
 				Search{UserFromACL: true, RequiredPermission: dashboards.PERMISSION_VIEW},
 				shouldFind,
+				featuremgmt.WithFeatures(),
 			)
 
 			test(t,
@@ -39,6 +41,7 @@ func TestIntegrationSQLBuilder(t *testing.T) {
 				&DashboardPermission{User: true, Permission: dashboards.PERMISSION_VIEW},
 				Search{UserFromACL: true, RequiredPermission: dashboards.PERMISSION_EDIT},
 				shouldNotFind,
+				featuremgmt.WithFeatures(),
 			)
 
 			test(t,
@@ -46,6 +49,7 @@ func TestIntegrationSQLBuilder(t *testing.T) {
 				&DashboardPermission{User: true, Permission: dashboards.PERMISSION_EDIT},
 				Search{UserFromACL: true, RequiredPermission: dashboards.PERMISSION_EDIT},
 				shouldFind,
+				featuremgmt.WithFeatures(),
 			)
 
 			test(t,
@@ -53,6 +57,7 @@ func TestIntegrationSQLBuilder(t *testing.T) {
 				&DashboardPermission{User: true, Permission: dashboards.PERMISSION_VIEW},
 				Search{RequiredPermission: dashboards.PERMISSION_VIEW},
 				shouldNotFind,
+				featuremgmt.WithFeatures(),
 			)
 		})
 
@@ -62,6 +67,7 @@ func TestIntegrationSQLBuilder(t *testing.T) {
 				&DashboardPermission{Role: org.RoleViewer, Permission: dashboards.PERMISSION_VIEW},
 				Search{UsersOrgRole: org.RoleViewer, RequiredPermission: dashboards.PERMISSION_VIEW},
 				shouldFind,
+				featuremgmt.WithFeatures(),
 			)
 
 			test(t,
@@ -69,6 +75,7 @@ func TestIntegrationSQLBuilder(t *testing.T) {
 				&DashboardPermission{Role: org.RoleViewer, Permission: dashboards.PERMISSION_VIEW},
 				Search{UsersOrgRole: org.RoleViewer, RequiredPermission: dashboards.PERMISSION_EDIT},
 				shouldNotFind,
+				featuremgmt.WithFeatures(),
 			)
 
 			test(t,
@@ -76,6 +83,7 @@ func TestIntegrationSQLBuilder(t *testing.T) {
 				&DashboardPermission{Role: org.RoleEditor, Permission: dashboards.PERMISSION_VIEW},
 				Search{UsersOrgRole: org.RoleViewer, RequiredPermission: dashboards.PERMISSION_VIEW},
 				shouldNotFind,
+				featuremgmt.WithFeatures(),
 			)
 
 			test(t,
@@ -83,6 +91,7 @@ func TestIntegrationSQLBuilder(t *testing.T) {
 				&DashboardPermission{Role: org.RoleEditor, Permission: dashboards.PERMISSION_VIEW},
 				Search{UsersOrgRole: org.RoleViewer, RequiredPermission: dashboards.PERMISSION_VIEW},
 				shouldNotFind,
+				featuremgmt.WithFeatures(),
 			)
 		})
 
@@ -92,6 +101,7 @@ func TestIntegrationSQLBuilder(t *testing.T) {
 				&DashboardPermission{Team: true, Permission: dashboards.PERMISSION_VIEW},
 				Search{UserFromACL: true, RequiredPermission: dashboards.PERMISSION_VIEW},
 				shouldFind,
+				featuremgmt.WithFeatures(),
 			)
 
 			test(t,
@@ -99,6 +109,7 @@ func TestIntegrationSQLBuilder(t *testing.T) {
 				&DashboardPermission{Team: true, Permission: dashboards.PERMISSION_VIEW},
 				Search{UserFromACL: true, RequiredPermission: dashboards.PERMISSION_EDIT},
 				shouldNotFind,
+				featuremgmt.WithFeatures(),
 			)
 
 			test(t,
@@ -106,6 +117,7 @@ func TestIntegrationSQLBuilder(t *testing.T) {
 				&DashboardPermission{Team: true, Permission: dashboards.PERMISSION_EDIT},
 				Search{UserFromACL: true, RequiredPermission: dashboards.PERMISSION_EDIT},
 				shouldFind,
+				featuremgmt.WithFeatures(),
 			)
 
 			test(t,
@@ -113,6 +125,7 @@ func TestIntegrationSQLBuilder(t *testing.T) {
 				&DashboardPermission{Team: true, Permission: dashboards.PERMISSION_EDIT},
 				Search{UserFromACL: false, RequiredPermission: dashboards.PERMISSION_EDIT},
 				shouldNotFind,
+				featuremgmt.WithFeatures(),
 			)
 		})
 
@@ -122,6 +135,7 @@ func TestIntegrationSQLBuilder(t *testing.T) {
 				nil,
 				Search{OrgId: -1, UsersOrgRole: org.RoleViewer, RequiredPermission: dashboards.PERMISSION_VIEW},
 				shouldNotFind,
+				featuremgmt.WithFeatures(),
 			)
 
 			test(t,
@@ -129,6 +143,7 @@ func TestIntegrationSQLBuilder(t *testing.T) {
 				nil,
 				Search{OrgId: -1, UsersOrgRole: org.RoleViewer, RequiredPermission: dashboards.PERMISSION_VIEW},
 				shouldFind,
+				featuremgmt.WithFeatures(),
 			)
 
 			test(t,
@@ -136,6 +151,7 @@ func TestIntegrationSQLBuilder(t *testing.T) {
 				nil,
 				Search{OrgId: -1, UsersOrgRole: org.RoleEditor, RequiredPermission: dashboards.PERMISSION_EDIT},
 				shouldFind,
+				featuremgmt.WithFeatures(),
 			)
 
 			test(t,
@@ -143,6 +159,7 @@ func TestIntegrationSQLBuilder(t *testing.T) {
 				nil,
 				Search{OrgId: -1, UsersOrgRole: org.RoleViewer, RequiredPermission: dashboards.PERMISSION_EDIT},
 				shouldNotFind,
+				featuremgmt.WithFeatures(),
 			)
 		})
 	})
@@ -173,7 +190,7 @@ type dashboardResponse struct {
 	Id int64
 }
 
-func test(t *testing.T, dashboardProps DashboardProps, dashboardPermission *DashboardPermission, search Search, shouldFind bool) {
+func test(t *testing.T, dashboardProps DashboardProps, dashboardPermission *DashboardPermission, search Search, shouldFind bool, features featuremgmt.FeatureToggles) {
 	t.Helper()
 
 	t.Run("", func(t *testing.T) {
@@ -187,7 +204,7 @@ func test(t *testing.T, dashboardProps DashboardProps, dashboardPermission *Dash
 			aclUserID = createDummyACL(t, sqlStore, dashboardPermission, search, dashboard.ID)
 			t.Logf("Created ACL with user ID %d\n", aclUserID)
 		}
-		dashboards := getDashboards(t, sqlStore, search, aclUserID)
+		dashboards := getDashboards(t, sqlStore, search, aclUserID, features)
 
 		if shouldFind {
 			require.Len(t, dashboards, 1, "Should return one dashboard")
@@ -293,7 +310,7 @@ func createDummyACL(t *testing.T, sqlStore *sqlstore.SQLStore, dashboardPermissi
 	return 0
 }
 
-func getDashboards(t *testing.T, sqlStore *sqlstore.SQLStore, search Search, aclUserID int64) []*dashboardResponse {
+func getDashboards(t *testing.T, sqlStore *sqlstore.SQLStore, search Search, aclUserID int64, features featuremgmt.FeatureToggles) []*dashboardResponse {
 	t.Helper()
 
 	old := sqlStore.Cfg.RBACEnabled
@@ -302,7 +319,7 @@ func getDashboards(t *testing.T, sqlStore *sqlstore.SQLStore, search Search, acl
 		sqlStore.Cfg.RBACEnabled = old
 	}()
 
-	builder := NewSqlBuilder(sqlStore.Cfg, featuremgmt.WithFeatures(), sqlStore.GetDialect())
+	builder := NewSqlBuilder(sqlStore.Cfg, features, sqlStore.GetDialect())
 	signedInUser := &user.SignedInUser{
 		UserID: 9999999999,
 	}
