@@ -7,8 +7,10 @@ import { ColorSwatch } from '@grafana/ui/src/components/ColorPicker/ColorSwatch'
 
 export interface ColorValueEditorSettings {
   placeholder?: string;
-  enableNamedColors?: boolean; // defaults to true
-  isClearable?: boolean; // defaults to false
+  /** defaults to true */
+  enableNamedColors?: boolean;
+  /** defaults to false */
+  isClearable?: boolean;
 }
 
 interface Props {
