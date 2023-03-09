@@ -126,7 +126,6 @@ const SearchField = ({
           inputId={`${filter.id}-tag`}
           isLoading={isTagsLoading}
           options={tags.map((t) => ({ label: t, value: t }))}
-          onOpenMenu={() => tags}
           value={filter.tag}
           onChange={(v) => {
             updateFilter({ ...filter, tag: v?.value });
@@ -155,11 +154,6 @@ const SearchField = ({
         inputId={`${filter.id}-value`}
         isLoading={isLoadingValues}
         options={options}
-        onOpenMenu={() => {
-          if (filter.tag) {
-            loadOptions();
-          }
-        }}
         value={filter.value}
         onChange={(val) => {
           if (Array.isArray(val)) {
