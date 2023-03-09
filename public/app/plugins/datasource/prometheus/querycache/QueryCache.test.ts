@@ -60,7 +60,7 @@ describe('QueryCache', function () {
     const firstFrames: DataFrame[] = [];
     const secondFrames: DataFrame[] = [];
 
-    const targetSignature = new Map<string, string>();
+    const cache = new Map<string, string>();
 
     // start time of scenario
     const firstFrom = dateTime(new Date(1675262550000));
@@ -92,12 +92,12 @@ describe('QueryCache', function () {
       },
     };
 
-    const frameSignature = `helloFrameSig`;
+    const targetSignature = `'1=1'|${interval}|${JSON.stringify(secondRange.raw)}`;
     const dashboardId = `dashid`;
     const panelId = 2;
     const targetIdentity = `${dashboardId}|${panelId}|A`;
 
-    targetSignature.set(targetIdentity, frameSignature);
+    cache.set(targetIdentity, targetSignature);
 
     const firstStoredFrames = storage.procFrames(
       mockRequest({
@@ -107,7 +107,7 @@ describe('QueryCache', function () {
       }),
       {
         requests: [], // unused
-        targSigs: targetSignature,
+        targSigs: cache,
         shouldCache: true,
       },
       firstFrames
@@ -129,7 +129,7 @@ describe('QueryCache', function () {
       }),
       {
         requests: [], // unused
-        targSigs: targetSignature,
+        targSigs: cache,
         shouldCache: true,
       },
       secondFrames
@@ -202,17 +202,21 @@ describe('QueryCache', function () {
       // This can't change
       const targetIdentity = `${dashboardId}|${panelId}|A`;
 
-      // But the signature can, and we should clean up any non-matching signatures
-      const frameSignature = `helloFrameSig--${index}`;
+      const request = mockRequest({
+        range: firstRange,
+        dashboardUID: dashboardId,
+        panelId: panelId,
+      });
 
-      targetSignatures.set(targetIdentity, frameSignature);
+      // But the signature can, and we should clean up any non-matching signatures
+      const targetSignature = `${request.targets[0].expr}|${request.intervalMs}|${JSON.stringify(
+        request.rangeRaw ?? ''
+      )}`;
+
+      targetSignatures.set(targetIdentity, targetSignature);
 
       const firstStoredFrames = storage.procFrames(
-        mockRequest({
-          range: firstRange,
-          dashboardUID: dashboardId,
-          panelId: panelId,
-        }),
+        request,
         {
           requests: [], // unused
           targSigs: targetSignatures,
@@ -288,7 +292,7 @@ describe('QueryCache', function () {
     const thirdFrames = IncrementalStorageDataFrameScenarios.histogram.evictionRequests.second
       .dataFrames as unknown as DataFrame[];
 
-    const targetSignature = new Map<string, string>();
+    const cache = new Map<string, string>();
     const interval = 15000;
 
     // start time of scenario
@@ -330,26 +334,27 @@ describe('QueryCache', function () {
     };
 
     // Signifier definition
-    const frameSignature = `helloFrameSig`;
+
     const dashboardId = `dashid`;
     const panelId = 200;
+
     const targetIdentity = `${dashboardId}|${panelId}|A`;
 
-    targetSignature.set(targetIdentity, frameSignature);
+    const request = mockRequest({
+      range: firstRange,
+      dashboardUID: dashboardId,
+      panelId: panelId,
+    });
 
-    const firstQueryResult = storage.procFrames(
-      mockRequest({
-        range: firstRange,
-        dashboardUID: dashboardId,
-        panelId: panelId,
-      }),
-      {
-        requests: [], // unused
-        targSigs: targetSignature,
-        shouldCache: true,
-      },
-      firstFrames
-    );
+    const requestInfo = {
+      requests: [], // unused
+      targSigs: cache,
+      shouldCache: true,
+    };
+    const targetSignature = `1=1|${interval}|${JSON.stringify(request.rangeRaw ?? '')}`;
+    cache.set(targetIdentity, targetSignature);
+
+    const firstQueryResult = storage.procFrames(request, requestInfo, firstFrames);
 
     const firstMergedLength = firstQueryResult[0].fields[0].values.length;
 
@@ -361,7 +366,7 @@ describe('QueryCache', function () {
       }),
       {
         requests: [], // unused
-        targSigs: targetSignature,
+        targSigs: cache,
         shouldCache: true,
       },
       secondFrames
@@ -378,6 +383,8 @@ describe('QueryCache', function () {
       secondQueryResult[0].fields[0].values.toArray()[0]
     );
 
+    cache.set(targetIdentity, `'1=1'|${interval}|${JSON.stringify(thirdRange.raw)}`);
+
     storage.procFrames(
       mockRequest({
         range: thirdRange,
@@ -386,7 +393,7 @@ describe('QueryCache', function () {
       }),
       {
         requests: [], // unused
-        targSigs: targetSignature,
+        targSigs: cache,
         shouldCache: true,
       },
       thirdFrames
