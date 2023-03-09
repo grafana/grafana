@@ -5,7 +5,17 @@ import React, { useCallback, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 import { DataQuery, GrafanaTheme2, PanelData, SelectableValue, DataTopic } from '@grafana/data';
-import { Card, Field, Select, useStyles2, VerticalGroup, Spinner, Switch, RadioButtonGroup } from '@grafana/ui';
+import {
+  Card,
+  Field,
+  Select,
+  useStyles2,
+  VerticalGroup,
+  HorizontalGroup,
+  Spinner,
+  Switch,
+  RadioButtonGroup,
+} from '@grafana/ui';
 import config from 'app/core/config';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { PanelModel } from 'app/features/dashboard/state';
@@ -157,15 +167,21 @@ export function DashboardQueryEditor({ panelData, queries, onChange, onRunQuerie
         />
       </Field>
 
-      <Field label="Data">
-        <RadioButtonGroup options={topics} value={query.topic === DataTopic.Annotations} onChange={onTopicChanged} />
-      </Field>
-
-      {showTransforms && (
-        <Field label="Transform" description="Apply panel transformations from the source panel">
-          <Switch value={Boolean(query.withTransforms)} onChange={onTransformToggle} />
+      <HorizontalGroup height="auto" wrap={true} align="flex-start">
+        <Field
+          label="Data Source"
+          description="Use data or annotations from the panel"
+          className={styles.horizontalField}
+        >
+          <RadioButtonGroup options={topics} value={query.topic === DataTopic.Annotations} onChange={onTopicChanged} />
         </Field>
-      )}
+
+        {showTransforms && (
+          <Field label="Transform" description="Apply panel transformations from the source panel">
+            <Switch value={Boolean(query.withTransforms)} onChange={onTransformToggle} />
+          </Field>
+        )}
+      </HorizontalGroup>
 
       {loadingResults ? (
         <Spinner />
@@ -194,6 +210,9 @@ export function DashboardQueryEditor({ panelData, queries, onChange, onRunQuerie
 
 function getStyles(theme: GrafanaTheme2) {
   return {
+    horizontalField: css({
+      marginRight: theme.spacing(2),
+    }),
     noQueriesText: css({
       padding: theme.spacing(1.25),
     }),
