@@ -207,6 +207,7 @@ func TestOrgUsersAPIEndpoint_updateOrgRole(t *testing.T) {
 	type testCase struct {
 		desc            string
 		SkipOrgRoleSync bool
+		AuthEnabled     bool
 		Body            string `json:"body"`
 		userId          int
 		orgId           int
@@ -218,6 +219,7 @@ func TestOrgUsersAPIEndpoint_updateOrgRole(t *testing.T) {
 		{
 			desc:            "should be able to change basicRole when skip_org_role_sync true",
 			SkipOrgRoleSync: true,
+			AuthEnabled:     true,
 			Body:            `{"userId": "1", "role": "Admin", "orgId": "1"}`,
 			userId:          2,
 			orgId:           1,
@@ -233,6 +235,7 @@ func TestOrgUsersAPIEndpoint_updateOrgRole(t *testing.T) {
 		{
 			desc:            "should not be able to change basicRole when skip_org_role_sync false",
 			SkipOrgRoleSync: false,
+			AuthEnabled:     true,
 			Body:            `{"userId": "1", "role": "Admin", "orgId": "1"}`,
 			userId:          2,
 			orgId:           1,
@@ -251,6 +254,7 @@ func TestOrgUsersAPIEndpoint_updateOrgRole(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				hs.Cfg = setting.NewCfg()
+				hs.Cfg.LDAPAuthEnabled = tt.AuthEnabled
 				hs.Cfg.LDAPSkipOrgRoleSync = tt.SkipOrgRoleSync
 
 				hs.authInfoService = &logintest.AuthInfoServiceFake{
