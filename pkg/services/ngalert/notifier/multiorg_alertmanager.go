@@ -75,39 +75,40 @@ func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore AlertingStore, orgSto
 	}
 
 	clusterLogger := l.New("component", "cluster")
-	moa.peer = &NilPeer{}
-	if len(cfg.UnifiedAlerting.HAPeers) > 0 {
-		peer, err := cluster.Create(
-			clusterLogger,
-			m.Registerer,
-			cfg.UnifiedAlerting.HAListenAddr,
-			cfg.UnifiedAlerting.HAAdvertiseAddr,
-			cfg.UnifiedAlerting.HAPeers, // peers
-			true,
-			cfg.UnifiedAlerting.HAPushPullInterval,
-			cfg.UnifiedAlerting.HAGossipInterval,
-			cluster.DefaultTCPTimeout,
-			cluster.DefaultProbeTimeout,
-			cluster.DefaultProbeInterval,
-			nil,
-			true,
-		)
+	moa.peer = NewRedisPeer("localhost:6379", clusterLogger)
+	// moa.peer = &NilPeer{}
+	// if len(cfg.UnifiedAlerting.HAPeers) > 0 {
+	// 	peer, err := cluster.Create(
+	// 		clusterLogger,
+	// 		m.Registerer,
+	// 		cfg.UnifiedAlerting.HAListenAddr,
+	// 		cfg.UnifiedAlerting.HAAdvertiseAddr,
+	// 		cfg.UnifiedAlerting.HAPeers, // peers
+	// 		true,
+	// 		cfg.UnifiedAlerting.HAPushPullInterval,
+	// 		cfg.UnifiedAlerting.HAGossipInterval,
+	// 		cluster.DefaultTCPTimeout,
+	// 		cluster.DefaultProbeTimeout,
+	// 		cluster.DefaultProbeInterval,
+	// 		nil,
+	// 		true,
+	// 	)
 
-		if err != nil {
-			return nil, fmt.Errorf("unable to initialize gossip mesh: %w", err)
-		}
+	// 	if err != nil {
+	// 		return nil, fmt.Errorf("unable to initialize gossip mesh: %w", err)
+	// 	}
 
-		err = peer.Join(cluster.DefaultReconnectInterval, cluster.DefaultReconnectTimeout)
-		if err != nil {
-			l.Error("msg", "unable to join gossip mesh while initializing cluster for high availability mode", "error", err)
-		}
-		// Attempt to verify the number of peers for 30s every 2s. The risk here is what we send a notification "too soon".
-		// Which should _never_ happen given we share the notification log via the database so the risk of double notification is very low.
-		var ctx context.Context
-		ctx, moa.settleCancel = context.WithTimeout(context.Background(), 30*time.Second)
-		go peer.Settle(ctx, cluster.DefaultGossipInterval*10)
-		moa.peer = peer
-	}
+	// 	err = peer.Join(cluster.DefaultReconnectInterval, cluster.DefaultReconnectTimeout)
+	// 	if err != nil {
+	// 		l.Error("msg", "unable to join gossip mesh while initializing cluster for high availability mode", "error", err)
+	// 	}
+	// 	// Attempt to verify the number of peers for 30s every 2s. The risk here is what we send a notification "too soon".
+	// 	// Which should _never_ happen given we share the notification log via the database so the risk of double notification is very low.
+	// 	var ctx context.Context
+	// 	ctx, moa.settleCancel = context.WithTimeout(context.Background(), 30*time.Second)
+	// 	go peer.Settle(ctx, cluster.DefaultGossipInterval*10)
+	// 	moa.peer = peer
+	// }
 
 	return moa, nil
 }
