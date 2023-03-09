@@ -1046,7 +1046,7 @@ func (d *dashboardStore) DeleteDashboardsInFolder(
 			return dashboards.ErrFolderNotFound
 		}
 
-		_, err = sess.Where("folder_id = ? AND org_id = ? AND is_folder = ", dashboard.ID, dashboard.OrgID, false).Delete(&dashboards.Dashboard{})
+		_, err = sess.Where("folder_id = ? AND org_id = ? AND is_folder = ?", dashboard.ID, dashboard.OrgID, false).Delete(&dashboards.Dashboard{})
 		return err
 	})
 }
