@@ -397,6 +397,7 @@ func newAppDTO(plugin plugins.PluginDTO, settings pluginsettings.InfoDTO) *plugi
 		Version: plugin.Info.Version,
 		Path:    plugin.Module,
 		Preload: false,
+		Name:    plugin.Name,
 	}
 
 	if settings.Enabled {
