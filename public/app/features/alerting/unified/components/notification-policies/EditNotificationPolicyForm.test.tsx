@@ -10,14 +10,13 @@ import { TestProvider } from '../../../../../../test/helpers/TestProvider';
 import { RouteWithID } from '../../../../../plugins/datasource/alertmanager/types';
 import * as grafanaApp from '../../components/receivers/grafanaAppReceivers/grafanaApp';
 import { FormAmRoute } from '../../types/amroutes';
-import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { AmRouteReceiver } from '../receivers/grafanaAppReceivers/types';
 
-import { AmRootRouteForm } from './EditDefaultPolicyForm';
+import { AmRoutesExpandedForm } from './EditNotificationPolicyForm';
 
 const ui = {
   error: byRole('alert'),
-  timingOptionsBtn: byRole('button', { name: /Timing options/ }),
+  overrideTimingsCheckbox: byRole('checkbox', { name: /Override general timings/ }),
   submitBtn: byRole('button', { name: /Update default policy/ }),
   groupWaitInput: byRole('textbox', { name: /Group wait/ }),
   groupIntervalInput: byRole('textbox', { name: /Group interval/ }),
@@ -28,37 +27,36 @@ const useGetGrafanaReceiverTypeCheckerMock = jest.spyOn(grafanaApp, 'useGetGrafa
 useGetGrafanaReceiverTypeCheckerMock.mockReturnValue(() => undefined);
 
 // TODO Default and Notification policy form should be unified so we don't need to maintain two almost identical forms
-describe('EditDefaultPolicyForm', function () {
+describe('EditNotificationPolicyForm', function () {
   describe('Timing options', function () {
     it('should render prometheus duration strings in form inputs', async function () {
-      const user = userEvent.setup();
-
       renderRouteForm({
-        id: '0',
+        id: '1',
         group_wait: '1m30s',
         group_interval: '2d4h30m35s',
         repeat_interval: '1w2d6h',
       });
 
-      await user.click(ui.timingOptionsBtn.get());
+      expect(ui.overrideTimingsCheckbox.get()).toBeChecked();
       expect(ui.groupWaitInput.get()).toHaveValue('1m30s');
       expect(ui.groupIntervalInput.get()).toHaveValue('2d4h30m35s');
       expect(ui.repeatIntervalInput.get()).toHaveValue('1w2d6h');
     });
+
     it('should allow submitting valid prometheus duration strings', async function () {
       const user = userEvent.setup();
 
       const onSubmit = jest.fn();
       renderRouteForm(
         {
-          id: '0',
+          id: '1',
           receiver: 'default',
         },
         [{ value: 'default', label: 'Default' }],
         onSubmit
       );
 
-      await user.click(ui.timingOptionsBtn.get());
+      await user.click(ui.overrideTimingsCheckbox.get());
 
       await user.type(ui.groupWaitInput.get(), '5m25s');
       await user.type(ui.groupIntervalInput.get(), '35m40s');
@@ -94,7 +92,6 @@ describe('EditDefaultPolicyForm', function () {
       onSubmit
     );
 
-    await user.click(ui.timingOptionsBtn.get());
     await user.clear(ui.groupWaitInput.get());
     await user.clear(ui.groupIntervalInput.get());
     await user.clear(ui.repeatIntervalInput.get());
@@ -119,8 +116,7 @@ function renderRouteForm(
   onSubmit: (route: Partial<FormAmRoute>) => void = noop
 ) {
   render(
-    <AmRootRouteForm
-      alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
+    <AmRoutesExpandedForm
       actionButtons={<Button type="submit">Update default policy</Button>}
       onSubmit={onSubmit}
       receivers={receivers}

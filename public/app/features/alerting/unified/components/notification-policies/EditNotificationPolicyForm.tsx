@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import React, { FC, ReactNode, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -212,12 +212,11 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ actionButt
                 invalid={!!errors.groupWaitValue}
                 error={errors.groupWaitValue?.message}
               >
-                <div className={cx(formStyles.container, formStyles.timingContainer)}>
-                  <PromDurationInput
-                    {...register('groupWaitValue', { validate: promDurationValidator })}
-                    aria-label="Group wait value"
-                  />
-                </div>
+                <PromDurationInput
+                  {...register('groupWaitValue', { validate: promDurationValidator })}
+                  aria-label="Group wait value"
+                  className={formStyles.promDurationInput}
+                />
               </Field>
               <Field
                 label="Group interval"
@@ -225,12 +224,11 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ actionButt
                 invalid={!!errors.groupIntervalValue}
                 error={errors.groupIntervalValue?.message}
               >
-                <div className={cx(formStyles.container, formStyles.timingContainer)}>
-                  <PromDurationInput
-                    {...register('groupIntervalValue', { validate: promDurationValidator })}
-                    aria-label="Group interval value"
-                  />
-                </div>
+                <PromDurationInput
+                  {...register('groupIntervalValue', { validate: promDurationValidator })}
+                  aria-label="Group interval value"
+                  className={formStyles.promDurationInput}
+                />
               </Field>
               <Field
                 label="Repeat interval"
@@ -238,12 +236,11 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ actionButt
                 invalid={!!errors.repeatIntervalValue}
                 error={errors.repeatIntervalValue?.message}
               >
-                <div className={cx(formStyles.container, formStyles.timingContainer)}>
-                  <PromDurationInput
-                    {...register('repeatIntervalValue', { validate: promDurationValidator })}
-                    aria-label="Repeat interval value"
-                  />
-                </div>
+                <PromDurationInput
+                  {...register('repeatIntervalValue', { validate: promDurationValidator })}
+                  aria-label="Repeat interval value"
+                  className={formStyles.promDurationInput}
+                />
               </Field>
             </>
           )}
