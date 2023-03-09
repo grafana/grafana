@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/pkg/errors"
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -132,7 +131,7 @@ func (ss *sqlStore) AddAPIKey(ctx context.Context, cmd *apikey.AddCommand) error
 		}
 
 		if _, err := sess.Insert(&t); err != nil {
-			return errors.Wrap(err, "failed to insert token")
+			return fmt.Errorf("%s: %w", "failed to insert token", err)
 		}
 		cmd.Result = &t
 		return nil

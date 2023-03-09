@@ -84,7 +84,7 @@ func populateDB(t *testing.T, sqlStore *sqlstore.SQLStore) {
 			Login:   fmt.Sprintf("user_test_%v_login", i),
 			OrgName: fmt.Sprintf("Org #%v", i),
 		}
-		user, err := userSvc.CreateUserForTests(context.Background(), &cmd)
+		user, err := userSvc.Create(context.Background(), &cmd)
 		require.NoError(t, err)
 		users[i] = *user
 	}

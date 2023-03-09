@@ -3,7 +3,7 @@ import React, { useMemo, useState, createRef } from 'react';
 import { useAsync } from 'react-use';
 
 import { PanelProps } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import { TraceView } from 'app/features/explore/TraceView/TraceView';
 import TracePageSearchBar from 'app/features/explore/TraceView/components/TracePageHeader/TracePageSearchBar';
 import { TopOfViewRefType } from 'app/features/explore/TraceView/components/TraceTimelineViewer/VirtualizedTraceView';
@@ -40,7 +40,7 @@ export const TracesPanel: React.FunctionComponent<PanelProps> = ({ data }) => {
   return (
     <div className={styles.wrapper}>
       <div ref={topOfViewRef}></div>
-      {data.series[0]?.meta?.preferredVisualisationType === 'trace' ? (
+      {data.series[0]?.meta?.preferredVisualisationType === 'trace' && !config.featureToggles.newTraceView ? (
         <TracePageSearchBar
           navigable={true}
           searchValue={search}

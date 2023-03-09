@@ -3,6 +3,7 @@ import React, { FC, Fragment, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { GrafanaTheme2, textUtil, urlUtil } from '@grafana/data';
+import { GrafanaEdition } from '@grafana/data/src/types/config';
 import { config } from '@grafana/runtime';
 import { Button, ClipboardButton, ConfirmModal, HorizontalGroup, LinkButton, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
@@ -177,7 +178,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, isViewM
     );
   }
 
-  if (isFiringRule) {
+  if (isFiringRule && shouldShowDeclareIncidentButton()) {
     buttons.push(
       <Fragment key="declare-incident">
         <DeclareIncident title={rule.name} url={buildShareUrl()} />
@@ -265,6 +266,18 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, isViewM
   }
   return null;
 };
+
+/**
+ * Since Incident isn't available as an open-source product we shouldn't show it for Open-Source licenced editions of Grafana.
+ * We should show it in development mode
+ */
+function shouldShowDeclareIncidentButton() {
+  const buildInfo = config.buildInfo;
+  const isOpenSourceEdition = buildInfo.edition === GrafanaEdition.OpenSource;
+  const isDevelopment = buildInfo.env === 'development';
+
+  return !isOpenSourceEdition || isDevelopment;
+}
 
 /**
  * We don't want to show the silence button if either

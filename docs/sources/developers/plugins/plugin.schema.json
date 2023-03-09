@@ -7,23 +7,67 @@
   "required": ["type", "name", "id", "info", "dependencies"],
   "additionalProperties": false,
   "properties": {
-    "$schema": {
-      "type": "string",
-      "description": "Schema definition for the plugin.json file."
-    },
     "id": {
       "type": "string",
-      "description": "Unique name of the plugin. If the plugin is published on grafana.com, then the plugin id has to follow the naming conventions.",
+      "description": "Unique name of the plugin. If the plugin is published on grafana.com, then the plugin `id` has to follow the naming conventions.",
       "pattern": "^[0-9a-z]+\\-([0-9a-z]+\\-)?(app|panel|datasource|secretsmanager)$"
     },
     "type": {
       "type": "string",
       "description": "Plugin type.",
-      "enum": ["app", "datasource", "panel", "secretsmanager"]
+      "enum": ["app", "datasource", "panel", "renderer", "secretsmanager"]
     },
     "name": {
       "type": "string",
       "description": "Human-readable name of the plugin that is shown to the user in the UI."
+    },
+    "dependencies": {
+      "type": "object",
+      "description": "Dependency information related to Grafana and other plugins.",
+      "required": ["grafanaDependency"],
+      "additionalProperties": false,
+      "properties": {
+        "grafanaVersion": {
+          "type": "string",
+          "description": "(Deprecated) Required Grafana version for this plugin, e.g. `6.x.x 7.x.x` to denote plugin requires Grafana v6.x.x or v7.x.x.",
+          "pattern": "^([0-9]+)(\\.[0-9x]+)?(\\.[0-9x])?$"
+        },
+        "grafanaDependency": {
+          "type": "string",
+          "description": "Required Grafana version for this plugin. Validated using https://github.com/npm/node-semver.",
+          "pattern": "^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)(\\.[0-9x\\*]+)?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x]+)(\\.[0-9x]+))?$"
+        },
+        "plugins": {
+          "type": "array",
+          "description": "An array of required plugins on which this plugin depends.",
+          "additionalItems": false,
+          "items": {
+            "type": "object",
+            "description": "Plugin dependency. Used to display information about plugin dependencies in the Grafana UI.",
+            "required": ["id", "name", "type", "version"],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[0-9a-z]+\\-([0-9a-z]+\\-)?(app|panel|datasource|secretsmanager)$"
+              },
+              "type": {
+                "type": "string",
+                "enum": ["app", "datasource", "panel", "secretsmanager"]
+              },
+              "name": {
+                "type": "string"
+              },
+              "version": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "$schema": {
+      "type": "string",
+      "description": "Schema definition for the plugin.json file. Used primarily for schema validation."
     },
     "category": {
       "type": "string",
@@ -132,50 +176,6 @@
     "autoEnabled": {
       "type": "boolean",
       "description": "Set to true for app plugins that should be enabled by default in all orgs"
-    },
-    "dependencies": {
-      "type": "object",
-      "description": "Dependencies needed by the plugin.",
-      "required": ["grafanaDependency"],
-      "additionalProperties": false,
-      "properties": {
-        "grafanaVersion": {
-          "type": "string",
-          "description": "(Deprecated) Required Grafana version for this plugin, e.g. `6.x.x 7.x.x` to denote plugin requires Grafana v6.x.x or v7.x.x.",
-          "pattern": "^([0-9]+)(\\.[0-9x]+)?(\\.[0-9x])?$"
-        },
-        "grafanaDependency": {
-          "type": "string",
-          "description": "Required Grafana version for this plugin. Validated using https://github.com/npm/node-semver.",
-          "pattern": "^(<=|>=|<|>|=|~|\\^)?([0-9]+)(\\.[0-9x\\*]+)(\\.[0-9x\\*]+)?(\\s(<=|>=|<|=>)?([0-9]+)(\\.[0-9x]+)(\\.[0-9x]+))?$"
-        },
-        "plugins": {
-          "type": "array",
-          "description": "An array of required plugins on which this plugin depends.",
-          "additionalItems": false,
-          "items": {
-            "type": "object",
-            "description": "Plugin dependency. Used to display information about plugin dependencies in the Grafana UI.",
-            "required": ["id", "name", "type", "version"],
-            "properties": {
-              "id": {
-                "type": "string",
-                "pattern": "^[0-9a-z]+\\-([0-9a-z]+\\-)?(app|panel|datasource|secretsmanager)$"
-              },
-              "type": {
-                "type": "string",
-                "enum": ["app", "datasource", "panel", "secretsmanager"]
-              },
-              "name": {
-                "type": "string"
-              },
-              "version": {
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
     },
     "info": {
       "type": "object",
@@ -470,39 +470,6 @@
           "type": "boolean",
           "description": "Enable/Disable health diagnostics errors. Requires Grafana >=7.5.5.",
           "default": false
-        }
-      }
-    },
-    "extensions": {
-      "type": "array",
-      "description": "Extends various parts of the Grafana UI with commands or links.",
-      "items": {
-        "type": "object",
-        "description": "Expose a page link that can be used by Grafana core or other plugins to navigate users to the plugin",
-        "additionalProperties": false,
-        "required": ["type", "title", "placement", "path"],
-        "properties": {
-          "type": {
-            "type": "string",
-            "enum": ["link"]
-          },
-          "title": {
-            "type": "string",
-            "minLength": 3,
-            "maxLength": 22
-          },
-          "placement": {
-            "type": "string",
-            "pattern": "^(plugins|grafana)/[a-z-/0-9]*$"
-          },
-          "description": {
-            "type": "string",
-            "maxLength": 200
-          },
-          "path": {
-            "type": "string",
-            "pattern": "^/.*"
-          }
         }
       }
     }

@@ -8,10 +8,14 @@ export * from './legacyAngularInjector';
 export * from './live';
 export * from './LocationService';
 export * from './appEvents';
-export { setPluginsExtensionRegistry } from './pluginExtensions/registry';
-export type { PluginsExtensionRegistry, PluginsExtensionLink, PluginsExtension } from './pluginExtensions/registry';
 export {
-  type GetPluginExtensionsOptions,
+  type PluginExtensionRegistry,
+  type PluginExtensionRegistryItem,
+  setPluginsExtensionRegistry,
+} from './pluginExtensions/registry';
+export {
+  type PluginExtensionsOptions,
   type PluginExtensionsResult,
   getPluginExtensions,
 } from './pluginExtensions/extensions';
+export { type PluginExtensionPanelContext } from './pluginExtensions/contexts';

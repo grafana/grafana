@@ -11,7 +11,7 @@ import (
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/licensing"
-	"github.com/grafana/grafana/pkg/services/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
@@ -399,7 +399,6 @@ func newAppDTO(plugin plugins.PluginDTO, settings pluginsettings.InfoDTO) *plugi
 	}
 
 	if settings.Enabled {
-		app.Extensions = plugin.Extensions
 		app.Preload = plugin.Preload
 	}
 
