@@ -3,6 +3,7 @@ package {{ .Props.MachineName }}
 import (
   _ "embed"
   "fmt"
+  "encoding/json"
 
   metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
   "github.com/grafana/grafana/pkg/kinds/{{ .Props.MachineName }}"
@@ -13,9 +14,10 @@ import (
 )
 
 var coreReg = corekind.NewBase(nil)
+var Kind = coreReg.{{ .Props.Name }}()
 
 var CRD = crd.Kind{
-	GrafanaKind: coreReg.{{ .Props.Name }}(),
+	GrafanaKind: Kind,
 	Object:      &{{ .Props.Name }}{},
 	ObjectList:  &{{ .Props.Name }}List{},
 }
@@ -29,6 +31,22 @@ var CRDYaml []byte
 // It implements [runtime.Object], and is used in k8s scheme construction.
 type {{ .Props.Name }} struct {
 	crd.Base[{{ .Props.MachineName }}.{{ .Props.Name }}]
+}
+
+func ({{.Props.MachineName }}CRD *{{ .Props.Name }}) UnmarshalJSON(data []byte) error {
+	m := make(map[string]interface{})
+    json.Unmarshal(data, &m)
+
+	u := &unstructured.Unstructured{}
+	u.SetUnstructuredContent(m)
+
+	obj, err := fromUnstructured(u)
+	if err != nil {
+		return err
+	}
+
+	*{{ .Props.MachineName}}CRD = *obj
+	return nil
 }
 
 // {{ .Props.Name }}List is the Go CRD representation of a list {{ .Props.Name }} objects.
