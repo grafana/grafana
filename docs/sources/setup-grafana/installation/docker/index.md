@@ -6,7 +6,7 @@ title: Run Grafana Docker image
 weight: 200
 ---
 
-# Run Grafana Docker image
+# Run Grafana Docker image via CLI
 
 You can install and run Grafana using the official Docker images. Our docker images come in two editions:
 
