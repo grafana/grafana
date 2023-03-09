@@ -72,13 +72,13 @@ const (
 // https://github.com/grafana/grafana/blob/4181acec72f76df7ad02badce13769bae4a1f840/pkg/services/login/authinfoservice/database/database.go#L61
 // this means that if the user has multiple auth providers and one of them is set to sync org roles
 // then IsExternallySynced will be true for this one provider and false for the others
-func IsExternallySynced(cfg *setting.Cfg, autoProviderLabel string) bool {
+func IsExternallySynced(cfg *setting.Cfg, authProviderLabel string) bool {
 	// provider enabled in config
-	if !IsProviderEnabled(cfg, autoProviderLabel) {
+	if !IsProviderEnabled(cfg, authProviderLabel) {
 		return false
 	}
 	// first check SAML, LDAP and JWT
-	switch autoProviderLabel {
+	switch authProviderLabel {
 	case SAMLLabel:
 		return !cfg.SAMLSkipOrgRoleSync
 	case LDAPLabel:
@@ -92,7 +92,7 @@ func IsExternallySynced(cfg *setting.Cfg, autoProviderLabel string) bool {
 	if cfg.OAuthSkipOrgRoleUpdateSync {
 		return false
 	}
-	switch autoProviderLabel {
+	switch authProviderLabel {
 	case GoogleLabel:
 		return !cfg.GoogleSkipOrgRoleSync
 	case OktaLabel:
