@@ -27,20 +27,14 @@ const meta: Meta = {
     },
     controls: {
       exclude: [
-        'prefix',
-        'width',
-        'loading',
-        'suffix',
-        'addonBefore',
-        'addonAfter',
-        'onFinishChange',
-        'invalid',
-        'description',
-        'horizontal',
-        'validationMessageHorizontalOverflow',
-        'htmlFor',
-        'error',
         'className',
+        'error',
+        'loading',
+        'htmlFor',
+        'invalid',
+        'horizontal',
+        'onFinishChange',
+        'validationMessageHorizontalOverflow',
       ],
     },
   },
@@ -48,6 +42,9 @@ const meta: Meta = {
     saveErrorMessage: { control: 'text' },
     label: { control: 'text' },
     required: {
+      control: { type: 'select', options: [true, false] },
+    },
+    inputSuccessful: {
       control: { type: 'select', options: [true, false] },
     },
   },
@@ -82,131 +79,30 @@ enum ThemeSwitchOption {
 }
 
 export const Basic: Story = (args) => {
-  const [inputSuccessValue, setInputSuccessValue] = useState('');
-  const [inputErrorValue, setInputErrorValue] = useState('');
+  const [inputValue, setInputValue] = useState('');
   return (
-    <div>
-      <AutoSaveField onFinishChange={getSuccess} label="Input saving value successfully" {...args}>
-        {(onChange) => (
-          <Input
-            value={inputSuccessValue}
-            onChange={(e) => {
-              const value = e.currentTarget.value;
-              onChange(value);
-              setInputSuccessValue(e.currentTarget.value);
-            }}
-          />
-        )}
-      </AutoSaveField>
-      <AutoSaveField onFinishChange={getError} label="Input with an error when saving" {...args}>
-        {(onChange) => (
-          <Input
-            value={inputErrorValue}
-            onChange={(e) => {
-              const value = e.currentTarget.value;
-              onChange(value);
-              setInputErrorValue(e.currentTarget.value);
-            }}
-          />
-        )}
-      </AutoSaveField>
-    </div>
+    <AutoSaveField onFinishChange={args.inputSuccessful ? getSuccess : getError} {...args}>
+      {(onChange) => (
+        <Input
+          value={inputValue}
+          onChange={(e) => {
+            const value = e.currentTarget.value;
+            onChange(value);
+            setInputValue(e.currentTarget.value);
+          }}
+        />
+      )}
+    </AutoSaveField>
   );
 };
 
-export const AllComponentsError: Story = (args) => {
-  const [selected, setSelected] = useState('');
-  const [checkBoxTest, setCheckBoxTest] = useState(false);
-  const [textAreaValue, setTextAreaValue] = useState('');
-  const [inputTextValue, setInputTextValue] = useState('');
-  const [switchTest, setSwitchTest] = useState(false);
-
-  return (
-    <div>
-      <AutoSaveField onFinishChange={getError} label="Text as a child" {...args}>
-        {(onChange) => (
-          <Input
-            value={inputTextValue}
-            onChange={(e) => {
-              const value = e.currentTarget.value;
-              onChange(value);
-              setInputTextValue(e.currentTarget.value);
-            }}
-          />
-        )}
-      </AutoSaveField>
-      <AutoSaveField onFinishChange={getError} label="Select as child" {...args}>
-        {(onChange) => (
-          <Select
-            options={themeOptions}
-            value={args.weekPickerValue}
-            onChange={(v) => {
-              onChange(v.value);
-            }}
-          />
-        )}
-      </AutoSaveField>
-      <AutoSaveField onFinishChange={getError} label="RadioButtonGroup as a child" {...args}>
-        {(onChange) => (
-          <RadioButtonGroup
-            options={themeOptions}
-            value={selected}
-            onChange={(themeOption) => {
-              setSelected(themeOption);
-              onChange(themeOption);
-            }}
-          />
-        )}
-      </AutoSaveField>
-      <AutoSaveField onFinishChange={getError} label="Checkbox as a child" {...args}>
-        {(onChange) => (
-          <Checkbox
-            label="Checkbox test"
-            description="This should trigger an error message"
-            name="checkbox-test"
-            value={checkBoxTest}
-            onChange={(e) => {
-              const value = e.currentTarget.checked.toString();
-              onChange(value);
-              setCheckBoxTest(e.currentTarget.checked);
-            }}
-          />
-        )}
-      </AutoSaveField>
-      <AutoSaveField onFinishChange={getError} label="TextArea as a child" {...args}>
-        {(onChange) => (
-          <TextArea
-            value={textAreaValue}
-            onChange={(e) => {
-              const value = e.currentTarget.value;
-              onChange(value);
-              setTextAreaValue(e.currentTarget.value);
-            }}
-          />
-        )}
-      </AutoSaveField>
-      <AutoSaveField onFinishChange={getError} label="Switch as a child" {...args}>
-        {(onChange) => (
-          <Switch
-            label="Switch test"
-            name="switch-test"
-            value={switchTest}
-            onChange={(e) => {
-              const value = e.currentTarget.checked ? ThemeSwitchOption.Dark : ThemeSwitchOption.Light;
-              onChange(value);
-              setSwitchTest(e.currentTarget.checked);
-            }}
-          />
-        )}
-      </AutoSaveField>
-    </div>
-  );
-};
-AllComponentsError.args = {
+Basic.args = {
   required: false,
+  label: 'Input saving value automatically',
+  inputSuccessful: false,
 };
 
-export const AllComponentsSuccess: Story = (args) => {
+export const AllComponents: Story = (args) => {
   const [selected, setSelected] = useState('');
   const [checkBoxTest, setCheckBoxTest] = useState(false);
   const [textAreaValue, setTextAreaValue] = useState('');
@@ -215,7 +111,7 @@ export const AllComponentsSuccess: Story = (args) => {
 
   return (
     <div>
-      <AutoSaveField onFinishChange={getSuccess} label="Text as a child" {...args}>
+      <AutoSaveField onFinishChange={args.inputSuccessful ? getSuccess : getError} label="Text as a child" {...args}>
         {(onChange) => (
           <Input
             value={inputTextValue}
@@ -227,7 +123,7 @@ export const AllComponentsSuccess: Story = (args) => {
           />
         )}
       </AutoSaveField>
-      <AutoSaveField onFinishChange={getSuccess} label="Select as child" {...args}>
+      <AutoSaveField onFinishChange={args.inputSuccessful ? getSuccess : getError} label="Select as child" {...args}>
         {(onChange) => (
           <Select
             options={themeOptions}
@@ -238,7 +134,11 @@ export const AllComponentsSuccess: Story = (args) => {
           />
         )}
       </AutoSaveField>
-      <AutoSaveField onFinishChange={getSuccess} label="RadioButtonGroup as a child" {...args}>
+      <AutoSaveField
+        onFinishChange={args.inputSuccessful ? getSuccess : getError}
+        label="RadioButtonGroup as a child"
+        {...args}
+      >
         {(onChange) => (
           <RadioButtonGroup
             options={themeOptions}
@@ -250,11 +150,15 @@ export const AllComponentsSuccess: Story = (args) => {
           />
         )}
       </AutoSaveField>
-      <AutoSaveField onFinishChange={getSuccess} label="Checkbox as a child" {...args}>
+      <AutoSaveField
+        onFinishChange={args.inputSuccessful ? getSuccess : getError}
+        label="Checkbox as a child"
+        {...args}
+      >
         {(onChange) => (
           <Checkbox
             label="Checkbox test"
-            description="This should show the 'Saved!' toast"
+            description="This is a checkbox input"
             name="checkbox-test"
             value={checkBoxTest}
             onChange={(e) => {
@@ -265,7 +169,11 @@ export const AllComponentsSuccess: Story = (args) => {
           />
         )}
       </AutoSaveField>
-      <AutoSaveField onFinishChange={getSuccess} label="TextArea as a child" {...args}>
+      <AutoSaveField
+        onFinishChange={args.inputSuccessful ? getSuccess : getError}
+        label="TextArea as a child"
+        {...args}
+      >
         {(onChange) => (
           <TextArea
             value={textAreaValue}
@@ -277,7 +185,7 @@ export const AllComponentsSuccess: Story = (args) => {
           />
         )}
       </AutoSaveField>
-      <AutoSaveField onFinishChange={getSuccess} label="Switch as a child" {...args}>
+      <AutoSaveField onFinishChange={args.inputSuccessful ? getSuccess : getError} label="Switch as a child" {...args}>
         {(onChange) => (
           <Switch
             label="Switch test"
@@ -294,6 +202,7 @@ export const AllComponentsSuccess: Story = (args) => {
     </div>
   );
 };
-AllComponentsSuccess.args = {
-  required: true,
+AllComponents.args = {
+  required: false,
+  inputSuccessful: true,
 };
