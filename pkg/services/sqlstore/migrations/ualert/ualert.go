@@ -43,6 +43,8 @@ var rmMigTitle = "remove unified alerting data"
 const clearMigrationEntryTitle = "clear migration entry %q"
 const codeMigration = "code migration"
 
+const expressionDatasourceUID = "__expr__"
+
 type MigrationError struct {
 	AlertId int64
 	Err     error
