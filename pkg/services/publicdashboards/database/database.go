@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 // Define the storage implementation. We're generating the mock implementation
@@ -255,8 +256,8 @@ func (d *PublicDashboardStoreImpl) Update(ctx context.Context, cmd SavePublicDas
 }
 
 // Deletes a public dashboard
-func (d *PublicDashboardStoreImpl) Delete(ctx context.Context, orgId int64, uid string) (int64, error) {
-	dashboard := &PublicDashboard{OrgId: orgId, Uid: uid}
+func (d *PublicDashboardStoreImpl) Delete(ctx context.Context, uid string) (int64, error) {
+	dashboard := &PublicDashboard{Uid: uid}
 	var affectedRows int64
 	err := d.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
 		var err error
@@ -266,4 +267,21 @@ func (d *PublicDashboardStoreImpl) Delete(ctx context.Context, orgId int64, uid 
 	})
 
 	return affectedRows, err
+}
+
+func (d *PublicDashboardStoreImpl) FindByDashboardFolder(ctx context.Context, dashboard *dashboards.Dashboard) ([]*PublicDashboard, error) {
+	if dashboard == nil || !dashboard.IsFolder {
+		return nil, nil
+	}
+
+	var pubdashes []*PublicDashboard
+
+	err := d.sqlStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		return sess.SQL("SELECT * from dashboard_public WHERE (dashboard_uid, org_id) IN (SELECT uid, org_id FROM dashboard WHERE folder_id = ?)", dashboard.ID).Find(&pubdashes)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return pubdashes, nil
 }

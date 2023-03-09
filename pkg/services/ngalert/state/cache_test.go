@@ -72,14 +72,21 @@ func Test_expand(t *testing.T) {
 		require.True(t, errors.As(err, &multierr))
 		require.Equal(t, multierr.Len(), 2)
 
-		// assert each error matches the expected error
-		var expandErr1 template.ExpandError
-		require.True(t, errors.As(multierr.Errors[0], &expandErr1))
-		require.EqualError(t, expandErr1, "failed to expand template '{{- $labels := .Labels -}}{{- $values := .Values -}}{{- $value := .Value -}}Instance {{ $labels. }} has been down for more than 5 minutes': error parsing template __alert_test: template: __alert_test:1: unexpected <.> in operand")
+		errsStr := []string{
+			multierr.Errors[0].Error(),
+			multierr.Errors[1].Error(),
+		}
 
-		var expandErr2 template.ExpandError
-		require.True(t, errors.As(multierr.Errors[1], &expandErr2))
-		require.EqualError(t, expandErr2, "failed to expand template '{{- $labels := .Labels -}}{{- $values := .Values -}}{{- $value := .Value -}}The instance has been down for {{ $value minutes, please check the instance is online': error parsing template __alert_test: template: __alert_test:1: function \"minutes\" not defined")
+		firstErrStr := "failed to expand template '{{- $labels := .Labels -}}{{- $values := .Values -}}{{- $value := .Value -}}Instance {{ $labels. }} has been down for more than 5 minutes': error parsing template __alert_test: template: __alert_test:1: unexpected <.> in operand"
+		secondErrStr := "failed to expand template '{{- $labels := .Labels -}}{{- $values := .Values -}}{{- $value := .Value -}}The instance has been down for {{ $value minutes, please check the instance is online': error parsing template __alert_test: template: __alert_test:1: function \"minutes\" not defined"
+
+		require.Contains(t, errsStr, firstErrStr)
+		require.Contains(t, errsStr, secondErrStr)
+
+		for _, err := range multierr.Errors {
+			var expandErr template.ExpandError
+			require.True(t, errors.As(err, &expandErr))
+		}
 	})
 
 	t.Run("expanded and original is returned when there is one error", func(t *testing.T) {

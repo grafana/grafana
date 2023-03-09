@@ -13,6 +13,7 @@ var (
 			Name:        "alertingBigTransactions",
 			Description: "Use big transactions for alerting database writes",
 			State:       FeatureStateAlpha,
+			Owner:       grafanaAlertingSquad,
 		},
 		{
 			Name:        "trimDefaults",
@@ -30,6 +31,7 @@ var (
 			Name:        "database_metrics",
 			Description: "Add Prometheus metrics for database tables",
 			State:       FeatureStateStable,
+			Owner:       hostedGrafanaTeam,
 		},
 		{
 			Name:        "dashboardPreviews",
@@ -168,6 +170,7 @@ var (
 			Description: "Use dynamic labels instead of alias patterns in CloudWatch datasource",
 			State:       FeatureStateStable,
 			Expression:  "true", // enabled by default
+			Owner:       awsPluginsSquad,
 		},
 		{
 			Name:        "datasourceQueryMultiStatus",
@@ -206,6 +209,7 @@ var (
 			Name:        "prometheusWideSeries",
 			Description: "Enable wide series responses in the Prometheus datasource",
 			State:       FeatureStateAlpha,
+			Owner:       grafanaObservabilityMetricsSquad,
 		},
 		{
 			Name:         "canvasPanelNesting",
@@ -226,16 +230,19 @@ var (
 			Description:     "Disable duplicated secret storage in legacy tables",
 			State:           FeatureStateAlpha,
 			RequiresRestart: true,
+			Owner:           hostedGrafanaTeam,
 		},
 		{
 			Name:        "logRequestsInstrumentedAsUnknown",
 			Description: "Logs the path for requests that are instrumented as unknown",
 			State:       FeatureStateAlpha,
+			Owner:       hostedGrafanaTeam,
 		},
 		{
 			Name:        "dataConnectionsConsole",
 			Description: "Enables a new top-level page called Connections. This page is an experiment that provides a better experience when you install and configure data sources and other plugins.",
 			State:       FeatureStateAlpha,
+			Owner:       grafanaPluginsPlatformSquad,
 		},
 		{
 			Name:        "internationalization",
@@ -269,24 +276,28 @@ var (
 			Description: "Enables cross-account querying in CloudWatch datasources",
 			State:       FeatureStateStable,
 			Expression:  "true", //enabled by default
+			Owner:       awsPluginsSquad,
 		},
 		{
 			Name:         "redshiftAsyncQueryDataSupport",
 			Description:  "Enable async query data support for Redshift",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+			Owner:        awsPluginsSquad,
 		},
 		{
 			Name:         "athenaAsyncQueryDataSupport",
 			Description:  "Enable async query data support for Athena",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+			Owner:        awsPluginsSquad,
 		},
 		{
 			Name:         "newPanelChromeUI",
 			Description:  "Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
 		},
 		{
 			Name:            "queryLibrary",
@@ -299,6 +310,7 @@ var (
 			Name:        "showDashboardValidationWarnings",
 			Description: "Show warnings when dashboards do not validate against the schema",
 			State:       FeatureStateAlpha,
+			Owner:       grafanaDashboardsSquad,
 		},
 		{
 			Name:        "mysqlAnsiQuotes",
@@ -335,11 +347,13 @@ var (
 			Name:        "datasourceOnboarding",
 			Description: "Enable data source onboarding page",
 			State:       FeatureStateAlpha,
+			Owner:       grafanaDashboardsSquad,
 		},
 		{
 			Name:        "secureSocksDatasourceProxy",
 			Description: "Enable secure socks tunneling for supported core datasources",
 			State:       FeatureStateAlpha,
+			Owner:       hostedGrafanaTeam,
 		},
 		{
 			Name:        "authnService",
@@ -351,11 +365,13 @@ var (
 			Name:        "disablePrometheusExemplarSampling",
 			Description: "Disable Prometheus examplar sampling",
 			State:       FeatureStateStable,
+			Owner:       grafanaObservabilityMetricsSquad,
 		},
 		{
 			Name:        "alertingBacktesting",
 			Description: "Rule backtesting API for alerting",
 			State:       FeatureStateAlpha,
+			Owner:       grafanaAlertingSquad,
 		},
 		{
 			Name:         "editPanelCSVDragAndDrop",
@@ -369,6 +385,7 @@ var (
 			Description:     "Stop maintaining state of alerts that are not firing",
 			State:           FeatureStateBeta,
 			RequiresRestart: false,
+			Owner:           grafanaAlertingSquad,
 		},
 		{
 
@@ -397,6 +414,7 @@ var (
 			Name:        "individualCookiePreferences",
 			Description: "Support overriding cookie preferences per user",
 			State:       FeatureStateAlpha,
+			Owner:       grafanaBackendPlatformSquad,
 		},
 		{
 			Name:         "drawerDataSourcePicker",
@@ -417,7 +435,7 @@ var (
 			Description:  "Replaces the Prometheus query builder metric select option with a paginated and filterable component",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
-			Owner:        "O11y-metrics",
+			Owner:        grafanaObservabilityMetricsSquad,
 		},
 	}
 )

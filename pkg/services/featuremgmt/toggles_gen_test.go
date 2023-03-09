@@ -42,26 +42,8 @@ func TestFeatureToggleFiles(t *testing.T) {
 	})
 
 	ownerlessFeatures := map[string]bool{
-		"alertingBigTransactions":           true,
-		"database_metrics":                  true,
-		"prometheusAzureOverrideAudience":   true,
-		"tracing":                           true,
-		"cloudWatchDynamicLabels":           true,
-		"prometheusWideSeries":              true,
-		"disableSecretsCompatibility":       true,
-		"logRequestsInstrumentedAsUnknown":  true,
-		"dataConnectionsConsole":            true,
-		"cloudWatchCrossAccountQuerying":    true,
-		"redshiftAsyncQueryDataSupport":     true,
-		"athenaAsyncQueryDataSupport":       true,
-		"newPanelChromeUI":                  true,
-		"showDashboardValidationWarnings":   true,
-		"datasourceOnboarding":              true,
-		"secureSocksDatasourceProxy":        true,
-		"disablePrometheusExemplarSampling": true,
-		"alertingBacktesting":               true,
-		"alertingNoNormalState":             true,
-		"individualCookiePreferences":       true,
+		"prometheusAzureOverrideAudience": true,
+		"tracing":                         true,
 	}
 
 	t.Run("all new features should have an owner", func(t *testing.T) {
