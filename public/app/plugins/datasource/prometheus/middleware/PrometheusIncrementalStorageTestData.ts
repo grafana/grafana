@@ -19,18 +19,6 @@ export const getMockTimeFrameArray = (length: number, start: number, step: numbe
 };
 
 /**
- *
- * @param startDateString - timestamp or argument fed to Date constructor
- * @param endDateString - timestamp or argument fed to Date constructor
- */
-export const mockOriginalRange = (startDateString?: string, endDateString?: string): { end: number; start: number } => {
-  return {
-    start: new Date(startDateString ?? '2023-01-30T19:33:31.357Z').valueOf(),
-    end: new Date(endDateString ?? '2023-01-30T20:33:31.357Z').valueOf(),
-  };
-};
-
-/**
  * @todo - replace with array.fill?
  * This just a really terrible job of mocking values, Array.fill would probably be better,
  * this happened because I was initially abstracting actual data frames into test scenarios, whenever I encountered a bug
@@ -58,14 +46,6 @@ timeFrameWithMissingValuesInMiddle.toArray().splice(360, 721 - 684);
 timeFrameWithMissingValuesAtStart.toArray().splice(0, 721 - 684);
 timeFrameWithMissingValuesAtEnd.toArray().splice(721 - 684, 721 - 684);
 
-// panel id
-// dashboard id
-// dsahboard UID
-// range
-// interval
-//intervalMs
-//  startTime,
-//     rangeRaw
 const twoRequestsOneCachedMissingData = {
   first: {
     request: {
