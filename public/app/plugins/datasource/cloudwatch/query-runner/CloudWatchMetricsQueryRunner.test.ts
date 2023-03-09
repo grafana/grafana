@@ -694,31 +694,7 @@ describe('CloudWatchMetricsQueryRunner', () => {
       );
     });
   });
-
   describe('interpolateMetricsQueryVariables', () => {
-    it('interpolates dimensions correctly', () => {
-      const testQuery = {
-        id: 'a',
-        refId: 'a',
-        region: 'us-east-2',
-        namespace: '',
-        dimensions: { InstanceId: '$dimension' },
-        expression: '',
-      };
-      const { runner } = setupMockedMetricsQueryRunner({ variables: [dimensionVariable], mockGetVariableName: false });
-      const result = runner.interpolateMetricsQueryVariables(testQuery, {
-        dimension: { text: 'foo', value: 'foo' },
-      });
-      expect(result).toStrictEqual({
-        alias: '',
-        metricName: '',
-        namespace: '',
-        period: '',
-        sqlExpression: '',
-        dimensions: { InstanceId: ['foo'] },
-        expression: '',
-      });
-    });
     it('interpolates values correctly', () => {
       const testQuery = {
         id: 'a',

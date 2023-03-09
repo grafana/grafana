@@ -109,7 +109,7 @@ export class CloudWatchMetricsQueryRunner extends CloudWatchRequest {
       namespace: this.replaceVariableAndDisplayWarningIfMulti(query.namespace, scopedVars),
       period: this.replaceVariableAndDisplayWarningIfMulti(query.period, scopedVars),
       expression: this.templateSrv.replace(query.expression, scopedVars),
-      sqlExpression: this.templateSrv.replace(query.sqlExpression, scopedVars, 'raw'),
+      sqlExpression: this.replaceVariableAndDisplayWarningIfMulti(query.sqlExpression, scopedVars),
       dimensions: this.convertDimensionFormat(query.dimensions ?? {}, scopedVars),
     };
   }
