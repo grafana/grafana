@@ -612,7 +612,6 @@ export interface Labels {}
 export enum TableCellDisplayMode {
   Auto = 'auto',
   BasicGauge = 'basic',
-  Chart = 'chart',
   ColorBackground = 'color-background',
   ColorBackgroundSolid = 'color-background-solid',
   ColorText = 'color-text',
@@ -621,6 +620,7 @@ export enum TableCellDisplayMode {
   Image = 'image',
   JSONView = 'json-view',
   LcdGauge = 'lcd-gauge',
+  Sparkline = 'sparkline',
 }
 
 /**
@@ -700,10 +700,10 @@ export interface TableBarGaugeCellOptions {
 }
 
 /**
- * Chart cell options
+ * Sparkline cell options
  */
-export interface TableChartCellOptions extends GraphFieldConfig {
-  type: TableCellDisplayMode.Chart;
+export interface TableSparklineCellOptions extends GraphFieldConfig {
+  type: TableCellDisplayMode.Sparkline;
 }
 
 /**
@@ -718,7 +718,7 @@ export interface TableColoredBackgroundCellOptions {
  * Table cell options. Each cell has a display mode
  * and other potential options for that display.
  */
-export type TableCellOptions = (TableAutoCellOptions | TableChartCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TableJsonViewCellOptions);
+export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TableJsonViewCellOptions);
 
 /**
  * Use UTC/GMT timezone

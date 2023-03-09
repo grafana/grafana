@@ -2,14 +2,14 @@ import { css } from '@emotion/css';
 import React, { useMemo } from 'react';
 
 import { createFieldConfigRegistry } from '@grafana/data';
-import { GraphFieldConfig, TableChartCellOptions } from '@grafana/schema';
+import { GraphFieldConfig, TableSparklineCellOptions } from '@grafana/schema';
 import { VerticalGroup, Field, useStyles2 } from '@grafana/ui';
-import { defaultChartCellConfig } from '@grafana/ui/src/components/Table/ChartCell';
+import { defaultSparklineCellConfig } from '@grafana/ui/src/components/Table/SparklineCell';
 
 import { getGraphFieldConfig } from '../../timeseries/config';
 import { TableCellEditorProps } from '../TableCellOptionEditor';
 
-type OptionKey = keyof TableChartCellOptions;
+type OptionKey = keyof TableSparklineCellOptions;
 
 const optionIds: Array<keyof GraphFieldConfig> = [
   'drawStyle',
@@ -24,17 +24,17 @@ const optionIds: Array<keyof GraphFieldConfig> = [
   'pointSize',
 ];
 
-export const ChartCellOptionsEditor = (props: TableCellEditorProps<TableChartCellOptions>) => {
+export const SparklineCellOptionsEditor = (props: TableCellEditorProps<TableSparklineCellOptions>) => {
   const { cellOptions, onChange } = props;
 
   const registry = useMemo(() => {
-    const config = getGraphFieldConfig(defaultChartCellConfig);
+    const config = getGraphFieldConfig(defaultSparklineCellConfig);
     return createFieldConfigRegistry(config, 'ChartCell');
   }, []);
 
   const style = useStyles2(getStyles);
 
-  const values = { ...defaultChartCellConfig, ...cellOptions };
+  const values = { ...defaultSparklineCellConfig, ...cellOptions };
 
   return (
     <VerticalGroup>
@@ -61,7 +61,7 @@ export const ChartCellOptionsEditor = (props: TableCellEditorProps<TableChartCel
 };
 
 // jumping through hoops to avoid using "any"
-function isOptionKey(key: string, options: TableChartCellOptions): key is OptionKey {
+function isOptionKey(key: string, options: TableSparklineCellOptions): key is OptionKey {
   return key in options;
 }
 
