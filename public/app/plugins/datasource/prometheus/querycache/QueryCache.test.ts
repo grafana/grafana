@@ -406,6 +406,4 @@ describe('QueryCache', function () {
 
   // Length mismatch?
   //storage.requestInfo() @todo
-
-  it('Will modify request if there is matching storage', () => {});
 });
