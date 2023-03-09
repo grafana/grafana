@@ -251,3 +251,6 @@ VizTooltipOptions: {
 Labels: {
 	[string]: string
 } @cuetsy(kind="interface")
+
+// Compare two values
+ComparisonOperation: "eq" | "neq" | "lt" | "lte" | "gt" | "gte" @cuetsy(kind="enum",memberNames="EQ|NEQ|LT|LTE|GT|GTE")

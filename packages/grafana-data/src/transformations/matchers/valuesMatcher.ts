@@ -1,29 +1,44 @@
+import { ComparisonOperation } from '@grafana/schema';
+
 import { Field, DataFrame } from '../../types/dataFrame';
 import { FieldMatcherInfo } from '../../types/transformations';
 import { reduceField, ReducerID } from '../fieldReducer';
 
-import { FieldMatcherID, ValueMatcherID } from './ids';
+import { FieldMatcherID } from './ids';
 
-// import { FieldMatcherID, reduceField, ReducerID, ValueMatcherID, MatcherID } from '@grafana/data';
+export interface FieldValuesMatcherConfig {
+  reduce: ReducerID;
+  op: ComparisonOperation;
+  value?: number; // or string?
+}
 
-const valuesMatcher: FieldMatcherInfo = {
+export const fieldValueMatcherInfo: FieldMatcherInfo<FieldValuesMatcherConfig> = {
   id: FieldMatcherID.byValues,
   name: 'By values (reducer)',
   description: 'By values (reducer)',
 
-  // todo: add condition (lower, greater) and RHS value
-  get: (reducerId: ReducerID, cmp = '==', value = true) => {
-    return (field: Field, frame: DataFrame, allFrames: DataFrame[]) => {
-      let reds = reduceField({
-        field,
-        reducers: [reducerId],
-      });
+  defaultOptions: {
+    reduce: ReducerID.allIsZero,
+    op: ComparisonOperation.GTE,
+    value: 0,
+  },
 
-      if (reducerId === ReducerID.allIsNull || reducerId === ReducerID.allIsZero) {
-        return reds[reducerId];
+  get: (props) => {
+    if (!props || !props.reduce) {
+      return () => false;
+    }
+    const { reduce, op, value } = props;
+    return (field: Field, frame: DataFrame, allFrames: DataFrame[]) => {
+      const left = reduceField({
+        field,
+        reducers: [reduce],
+      })[reduce];
+
+      if (reduce === ReducerID.allIsNull || reduce === ReducerID.allIsZero) {
+        return Boolean(left); // boolean
       }
 
-      return false;
+      return compareValues(left, op, value);
     };
   },
 
@@ -33,8 +48,42 @@ const valuesMatcher: FieldMatcherInfo = {
 };
 
 /**
- * Registry Initialization
+ * Compare two values
+ *
+ * @alpha
  */
-export function getValuesMatchers(): FieldMatcherInfo[] {
-  return [valuesMatcher];
+export function compareValues(
+  left: string | number | boolean | null | undefined,
+  op: ComparisonOperation,
+  right: string | number | boolean | null | undefined
+) {
+  // Normalize null|undefined values
+  if (left == null || right == null) {
+    if (left == null) {
+      left = 'null';
+    }
+    if (right == null) {
+      right = 'null';
+    }
+    if (op === ComparisonOperation.GTE || op === ComparisonOperation.LTE) {
+      op = ComparisonOperation.EQ; // check for equality
+    }
+  }
+
+  switch (op) {
+    case ComparisonOperation.EQ:
+      return `${left}` === `${right}`;
+    case ComparisonOperation.NEQ:
+      return `${left}` !== `${right}`;
+    case ComparisonOperation.GT:
+      return left > right;
+    case ComparisonOperation.GTE:
+      return left >= right;
+    case ComparisonOperation.LT:
+      return left < right;
+    case ComparisonOperation.LTE:
+      return left <= right;
+    default:
+      return false;
+  }
 }

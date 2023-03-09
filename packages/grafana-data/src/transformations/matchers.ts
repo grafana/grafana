@@ -20,7 +20,9 @@ import { getNullValueMatchers } from './matchers/valueMatchers/nullMatchers';
 import { getNumericValueMatchers } from './matchers/valueMatchers/numericMatchers';
 import { getRangeValueMatchers } from './matchers/valueMatchers/rangeMatchers';
 import { getRegexValueMatcher } from './matchers/valueMatchers/regexMatchers';
-import { getValuesMatchers } from './matchers/valuesMatcher';
+import { fieldValueMatcherInfo } from './matchers/valuesMatcher';
+
+export { type FieldValuesMatcherConfig } from './matchers/valuesMatcher';
 
 /**
  * Registry that contains all of the built in field matchers.
@@ -32,7 +34,7 @@ export const fieldMatchers = new Registry<FieldMatcherInfo>(() => {
     ...getFieldTypeMatchers(), // by type
     ...getFieldNameMatchers(), // by name
     ...getSimpleFieldMatchers(), // first
-    ...getValuesMatchers(),
+    fieldValueMatcherInfo, // reduce field (all null/zero)
   ];
 });
 

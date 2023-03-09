@@ -1,44 +1,114 @@
-import React, { memo, useMemo, useCallback } from 'react';
+import { css } from '@emotion/css';
+import React, { useMemo, useCallback } from 'react';
 
-import { FieldMatcherID, fieldMatchers, SelectableValue, fieldReducers } from '@grafana/data';
+import {
+  FieldMatcherID,
+  fieldMatchers,
+  FieldValuesMatcherConfig,
+  fieldReducers,
+  ReducerID,
+  SelectableValue,
+  GrafanaTheme2,
+} from '@grafana/data';
+import { ComparisonOperation } from '@grafana/schema';
 
+import { useStyles2 } from '../../themes';
+import { Input } from '../Input/Input';
 import { Select } from '../Select/Select';
 
 import { MatcherUIProps, FieldMatcherUIRegistryItem } from './types';
 
-export const FieldValuesMatcherEditor = memo<MatcherUIProps<string>>((props) => {
-  const { data, options, onChange: onChangeFromProps, id } = props;
+type Props = MatcherUIProps<FieldValuesMatcherConfig>;
 
-  const selectOptions = useMemo(() => {
-    const options: Array<SelectableValue<string>> = [];
+export const comparators = [
+  { label: '==', value: ComparisonOperation.EQ },
+  { label: '!=', value: ComparisonOperation.NEQ },
+  { label: '>', value: ComparisonOperation.GT },
+  { label: '>=', value: ComparisonOperation.GTE },
+  { label: '<', value: ComparisonOperation.LT },
+  { label: '<=', value: ComparisonOperation.LTE },
+];
 
-    for (const info of fieldReducers.list()) {
-      options.push({
-        value: info.id,
-        label: info.name,
-      });
-    }
+export const FieldValuesMatcherEditor = ({ options, onChange }: Props) => {
+  const styles = useStyles2(getStyles);
+  const reducer = useMemo(() => fieldReducers.selectOptions([options?.reduce]), [options?.reduce]);
 
-    return options;
-  }, []);
-
-  const onChange = useCallback(
+  const onSetReducer = useCallback(
     (selection: SelectableValue<string>) => {
-      return onChangeFromProps(selection.value!);
+      return onChange({ ...options, reduce: selection.value! as any });
     },
-    [onChangeFromProps]
+    [options, onChange]
   );
 
-  const selectedOption = selectOptions.find((v) => v.value === options);
-  return <Select inputId={id} value={selectedOption} options={selectOptions} onChange={onChange} />;
-});
-FieldValuesMatcherEditor.displayName = 'FieldValuesMatcherEditor';
+  const onChangeOp = useCallback(
+    (v: SelectableValue<ComparisonOperation>) => {
+      return onChange({ ...options, op: v.value! });
+    },
+    [options, onChange]
+  );
 
-export const fieldValuesMatcherItem: FieldMatcherUIRegistryItem<string> = {
+  const onChangeValue = useCallback(
+    (e: React.FormEvent<HTMLInputElement>) => {
+      const value = e.currentTarget.valueAsNumber;
+      return onChange({ ...options, value });
+    },
+    [options, onChange]
+  );
+
+  const opts = options ?? {};
+  const isBool = opts.reduce === ReducerID.allIsNull || opts.reduce === ReducerID.allIsZero;
+
+  return (
+    <div className={styles.spot}>
+      <Select
+        value={reducer.current}
+        options={reducer.options}
+        onChange={onSetReducer}
+        placeholder="Select field reducer"
+      />
+      {opts.reduce && !isBool && (
+        <>
+          <Select
+            value={comparators.find((v) => v.value === opts.op)}
+            options={comparators}
+            onChange={onChangeOp}
+            aria-label={'Comparison operator'}
+            width={19}
+          />
+
+          <Input type="number" value={opts.value} onChange={onChangeValue} />
+        </>
+      )}
+    </div>
+  );
+};
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    spot: css`
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      align-content: flex-end;
+    `,
+    // colorPicker: css`
+    //   padding: 0 ${theme.spacing(1)};
+    // `,
+    // colorText: css`
+    //   flex-grow: 2;
+    // `,
+    // placeholderText: css`
+    //   flex-grow: 2;
+    //   color: ${theme.colors.text.secondary};
+    // `,
+  };
+};
+
+export const fieldValuesMatcherItem: FieldMatcherUIRegistryItem<FieldValuesMatcherConfig> = {
   id: FieldMatcherID.byValues,
   component: FieldValuesMatcherEditor,
   matcher: fieldMatchers.get(FieldMatcherID.byValues),
   name: 'Fields with values',
   description: 'Set properties for fields with reducer condition',
-  optionsToLabel: (options) => options,
+  optionsToLabel: (options) => `${options?.reduce} ${options?.op} ${options?.value}`,
 };
