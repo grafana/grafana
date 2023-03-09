@@ -5,17 +5,7 @@ import React, { useCallback, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 import { DataQuery, GrafanaTheme2, PanelData, SelectableValue, DataTopic } from '@grafana/data';
-import {
-  Card,
-  Field,
-  Select,
-  useStyles2,
-  VerticalGroup,
-  Spinner,
-  Switch,
-  RadioButtonGroup,
-  IconButton,
-} from '@grafana/ui';
+import { Card, Field, Select, useStyles2, VerticalGroup, Spinner, Switch, RadioButtonGroup } from '@grafana/ui';
 import config from 'app/core/config';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { PanelModel } from 'app/features/dashboard/state';
@@ -117,6 +107,7 @@ export function DashboardQueryEditor({ panelData, queries, onChange, onRunQuerie
   );
 
   const dashboard = getDashboardSrv().getCurrent();
+  const showTransforms = Boolean(query.withTransforms || panel?.transformations?.length);
   const panels: Array<SelectableValue<number>> = useMemo(
     () =>
       dashboard?.panels
@@ -152,10 +143,6 @@ export function DashboardQueryEditor({ panelData, queries, onChange, onRunQuerie
   }
 
   const selected = panels.find((panel) => panel.value === query.panelId);
-  // Same as current URL, but different panelId
-  const encodedTitle = encodeURIComponent(dashboard.title);
-  const editURL = `d/${dashboard.uid}/${encodedTitle}?&editPanel=${query.panelId}`;
-  const showTransforms = Boolean(query.withTransforms || panel?.transformations?.length);
 
   return (
     <>
@@ -194,9 +181,6 @@ export function DashboardQueryEditor({ panelData, queries, onChange, onRunQuerie
                       <img src={target.img} alt={target.name} title={target.name} width={40} />
                     </Card.Figure>
                     <Card.Meta>{target.query}</Card.Meta>
-                    <Card.SecondaryActions>
-                      <IconButton key="edit" name="edit" tooltip="Edit Query" />
-                    </Card.SecondaryActions>
                   </Card>
                 ))}
               </VerticalGroup>
