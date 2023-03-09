@@ -90,7 +90,7 @@ func (s *Session) Priority() uint {
 }
 
 func (s *Session) Hook(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
-	if identity.SessionToken == nil {
+	if identity.SessionToken == nil || s.features.IsEnabled(featuremgmt.FlagFrontendTokenRotation) {
 		return nil
 	}
 

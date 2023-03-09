@@ -152,43 +152,54 @@ func (f *fakeResponseWriter) WriteHeader(statusCode int) {
 }
 
 func TestSession_Hook(t *testing.T) {
-	cfg := setting.NewCfg()
-	cfg.LoginCookieName = "grafana-session"
-	cfg.LoginMaxLifetime = 20 * time.Second
-	s := ProvideSession(cfg, &authtest.FakeUserAuthTokenService{
-		TryRotateTokenProvider: func(ctx context.Context, token *auth.UserToken, clientIP net.IP, userAgent string) (bool, *auth.UserToken, error) {
-			token.UnhashedToken = "new-token"
-			return true, token, nil
-		},
-	}, &usertest.FakeUserService{}, featuremgmt.WithFeatures())
+	t.Run("should rotate token", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.LoginCookieName = "grafana-session"
+		cfg.LoginMaxLifetime = 20 * time.Second
+		s := ProvideSession(cfg, &authtest.FakeUserAuthTokenService{
+			TryRotateTokenProvider: func(ctx context.Context, token *auth.UserToken, clientIP net.IP, userAgent string) (bool, *auth.UserToken, error) {
+				token.UnhashedToken = "new-token"
+				return true, token, nil
+			},
+		}, &usertest.FakeUserService{}, featuremgmt.WithFeatures())
 
-	sampleID := &authn.Identity{
-		SessionToken: &auth.UserToken{
-			Id:     1,
-			UserId: 1,
-		},
-	}
+		sampleID := &authn.Identity{
+			SessionToken: &auth.UserToken{
+				Id:     1,
+				UserId: 1,
+			},
+		}
 
-	mockResponseWriter := &fakeResponseWriter{
-		Status:      0,
-		HeaderStore: map[string][]string{},
-	}
+		mockResponseWriter := &fakeResponseWriter{
+			Status:      0,
+			HeaderStore: map[string][]string{},
+		}
 
-	resp := &authn.Request{
-		HTTPRequest: &http.Request{
-			Header: map[string][]string{},
-		},
-		Resp: web.NewResponseWriter(http.MethodConnect, mockResponseWriter),
-	}
+		resp := &authn.Request{
+			HTTPRequest: &http.Request{
+				Header: map[string][]string{},
+			},
+			Resp: web.NewResponseWriter(http.MethodConnect, mockResponseWriter),
+		}
 
-	err := s.Hook(context.Background(), sampleID, resp)
-	require.NoError(t, err)
+		err := s.Hook(context.Background(), sampleID, resp)
+		require.NoError(t, err)
 
-	resp.Resp.WriteHeader(201)
-	require.Equal(t, 201, mockResponseWriter.Status)
+		resp.Resp.WriteHeader(201)
+		require.Equal(t, 201, mockResponseWriter.Status)
 
-	assert.Equal(t, "new-token", sampleID.SessionToken.UnhashedToken)
-	require.Len(t, mockResponseWriter.HeaderStore, 1)
-	assert.Equal(t, "grafana-session=new-token; Path=/; Max-Age=20; HttpOnly",
-		mockResponseWriter.HeaderStore.Get("set-cookie"), mockResponseWriter.HeaderStore)
+		assert.Equal(t, "new-token", sampleID.SessionToken.UnhashedToken)
+		require.Len(t, mockResponseWriter.HeaderStore, 1)
+		assert.Equal(t, "grafana-session=new-token; Path=/; Max-Age=20; HttpOnly",
+			mockResponseWriter.HeaderStore.Get("set-cookie"), mockResponseWriter.HeaderStore)
+	})
+
+	t.Run("should not rotate token with feature flag", func(t *testing.T) {
+		s := ProvideSession(setting.NewCfg(), nil, nil, featuremgmt.WithFeatures(featuremgmt.FlagFrontendTokenRotation))
+
+		req := &authn.Request{}
+		identity := &authn.Identity{}
+		err := s.Hook(context.Background(), identity, req)
+		require.NoError(t, err)
+	})
 }
