@@ -152,6 +152,9 @@ func TestCollectingUsageStats(t *testing.T) {
 		AuthProxyEnabled:     true,
 		Packaging:            "deb",
 		ReportingDistributor: "hosted-grafana",
+		RemoteCacheOptions: &setting.RemoteCacheOptions{
+			Name: "database",
+		},
 	}, sqlStore, statsService,
 		withDatasources(mockDatasourceService{datasources: expectedDataSources}))
 

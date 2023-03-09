@@ -96,5 +96,5 @@ func (a *AnonSessionService) TagSession(ctx context.Context, httpReq *http.Reque
 
 	a.localCache.SetDefault(key, struct{}{})
 
-	return a.remoteCache.Set(ctx, key, key, thirtyDays)
+	return a.remoteCache.SetByteArray(ctx, key, []byte(key), thirtyDays)
 }

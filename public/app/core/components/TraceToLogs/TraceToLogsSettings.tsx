@@ -106,12 +106,14 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
     <div className={css({ width: '100%' })}>
       <h3 className="page-heading">Trace to logs</h3>
 
-      <div className={styles.infoText}>
-        Trace to logs lets you navigate from a trace span to the selected data source&apos;s logs.
-      </div>
+      <div className={styles.infoText}>Navigate from a trace span to the selected data source&apos;s logs.</div>
 
       <InlineFieldRow>
-        <InlineField tooltip="The data source the trace is going to navigate to" label="Data source" labelWidth={26}>
+        <InlineField
+          tooltip="The logs data source the trace is going to navigate to"
+          label="Data source"
+          labelWidth={26}
+        >
           <DataSourcePicker
             inputId="trace-to-logs-data-source-picker"
             filter={(ds) => supportedDataSourceTypes.includes(ds.type)}
@@ -165,7 +167,7 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
 
       <InlineFieldRow>
         <InlineField
-          tooltip="Use custom query with possibility to interpolate variables from the trace or span."
+          tooltip="Use a custom query with possibility to interpolate variables from the trace or span"
           label="Use custom query"
           labelWidth={26}
         >
@@ -183,7 +185,7 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
         <InlineField
           label="Query"
           labelWidth={26}
-          tooltip="The query that will run when navigating from a trace to logs data source. Interpolate tags using the `$__tags` keyword."
+          tooltip="The query that will run when navigating from a trace to logs data source. Interpolate tags using the `$__tags` keyword"
           grow
         >
           <Input
