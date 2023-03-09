@@ -52,7 +52,7 @@ func (s *OAuth2ServiceImpl) DeleteOpenIDConnectSession(ctx context.Context, auth
 // GetClient loads the client by its ID or returns an error
 // if the client does not exist or another error occurred.
 func (s *OAuth2ServiceImpl) GetClient(ctx context.Context, id string) (fosite.Client, error) {
-	return s.GetApp(ctx, id)
+	return s.GetExternalService(ctx, id)
 }
 
 // ClientAssertionJWTValid returns an error if the JTI is
@@ -172,12 +172,12 @@ func (s *OAuth2ServiceImpl) GetPublicKey(ctx context.Context, issuer string, sub
 	if kid != "1" {
 		return nil, fosite.ErrNotFound
 	}
-	return s.sqlstore.GetAppPublicKey(ctx, issuer)
+	return s.sqlstore.GetExternalServicePublicKey(ctx, issuer)
 }
 
 // GetPublicKeys returns public key, set issued by 'issuer', and assigned for subject.
 func (s *OAuth2ServiceImpl) GetPublicKeys(ctx context.Context, issuer string, subject string) (*jose.JSONWebKeySet, error) {
-	jwk, err := s.sqlstore.GetAppPublicKey(ctx, issuer)
+	jwk, err := s.sqlstore.GetExternalServicePublicKey(ctx, issuer)
 	if err != nil {
 		return nil, err
 	}
@@ -191,7 +191,7 @@ func (s *OAuth2ServiceImpl) GetPublicKeyScopes(ctx context.Context, issuer strin
 	if kid != "1" {
 		return nil, fosite.ErrNotFound
 	}
-	app, err := s.GetApp(ctx, issuer)
+	app, err := s.GetExternalService(ctx, issuer)
 	if err != nil {
 		return nil, err
 	}

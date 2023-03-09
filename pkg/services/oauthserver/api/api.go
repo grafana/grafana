@@ -40,13 +40,13 @@ func (a *api) RegisterAPIEndpoints() {
 }
 
 func (a *api) register(c *contextmodel.ReqContext) response.Response {
-	registration := &oauthserver.AppRegistration{}
+	registration := &oauthserver.ExternalServiceRegistration{}
 	err := web.Bind(c.Req, registration)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "invalid registration", err)
 	}
 
-	app, err := a.oauthService.RegisterApp(c.Req.Context(), registration)
+	app, err := a.oauthService.RegisterExternalService(c.Req.Context(), registration)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "could not register app", err)
 	}

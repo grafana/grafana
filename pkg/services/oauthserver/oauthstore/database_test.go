@@ -21,11 +21,11 @@ func TestStore_RegisterAndGetClient(t *testing.T) {
 		{
 			name: "register without impersonate permissions and get",
 			client: oauthserver.Client{
-				ID:         1,
-				AppName:    "The Worst App Ever",
-				ClientID:   "AnNonRandomClientID",
-				Secret:     "ICouldKeepSecrets",
-				GrantTypes: "clients_credentials",
+				ID:                  1,
+				ExternalServiceName: "The Worst App Ever",
+				ClientID:            "AnNonRandomClientID",
+				Secret:              "ICouldKeepSecrets",
+				GrantTypes:          "clients_credentials",
 				PublicPem: []byte(`------BEGIN FAKE PUBLIC KEY-----
 VGhpcyBJcyBOb3QgQW4gUlNBIEtleS4gVGhpcyBJcyBOb3QgQW4gUlNBIEtleS4gVGhpcyBJcyBO
 b3QgQW4gUlNBIEtleS4gVGhpcyBJcyBOb3QgQW4gUlNBIEtleS4gVGhpcyBJcyBOb3QgQW4gUlNB
@@ -59,14 +59,14 @@ dCBBIFJlZ3VsYXIgQmFzZTY0IEVuY29kZWQgU3RyaW5nLi4uCg==
 		{
 			name: "register and get",
 			client: oauthserver.Client{
-				ID:               2,
-				AppName:          "The Best App Ever",
-				ClientID:         "AnAlmostRandomClientID",
-				Secret:           "ICannotKeepSecrets",
-				GrantTypes:       "clients_credentials",
-				PublicPem:        []byte(`test`),
-				ServiceAccountID: 2,
-				SelfPermissions:  nil,
+				ID:                  2,
+				ExternalServiceName: "The Best App Ever",
+				ClientID:            "AnAlmostRandomClientID",
+				Secret:              "ICannotKeepSecrets",
+				GrantTypes:          "clients_credentials",
+				PublicPem:           []byte(`test`),
+				ServiceAccountID:    2,
+				SelfPermissions:     nil,
 				ImpersonatePermissions: []accesscontrol.Permission{
 					{Action: "dashboards:create", Scope: "folders:*"},
 					{Action: "dashboards:read", Scope: "folders:*"},
@@ -89,7 +89,7 @@ dCBBIFJlZ3VsYXIgQmFzZTY0IEVuY29kZWQgU3RyaW5nLi4uCg==
 			}
 			require.NoError(t, err)
 
-			stored, err := s.GetApp(ctx, tt.client.ClientID)
+			stored, err := s.GetExternalService(ctx, tt.client.ClientID)
 			require.NoError(t, err)
 			require.NotNil(t, stored)
 

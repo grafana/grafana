@@ -20,7 +20,7 @@ func AddMigration(mg *migrator.Migrator) {
 		Name: "oauth_client",
 		Columns: []*migrator.Column{
 			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-			{Name: "app_name", Type: migrator.DB_Varchar, Length: 190, Nullable: true},
+			{Name: "app_name", Type: migrator.DB_Varchar, Length: 190, Nullable: true}, // TODO: Rename to external_service_name
 			{Name: "client_id", Type: migrator.DB_Varchar, Length: 190, Nullable: false},
 			{Name: "secret", Type: migrator.DB_Varchar, Length: 190, Nullable: false},
 			{Name: "grant_types", Type: migrator.DB_Varchar, Length: 190, Nullable: true},

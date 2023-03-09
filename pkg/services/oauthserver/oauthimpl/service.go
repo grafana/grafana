@@ -18,10 +18,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/models/roletype"
-	ossac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/oauthserver"
 	"github.com/grafana/grafana/pkg/services/oauthserver/api"
 	"github.com/grafana/grafana/pkg/services/oauthserver/oauthstore"
@@ -33,41 +34,28 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+const (
+	cacheExpirationTime  = 5 * time.Minute
+	cacheCleanupInterval = 5 * time.Minute
+)
+
 type OAuth2ServiceImpl struct {
+	cache         *localcache.CacheService
 	memstore      *storage.MemoryStore
 	sqlstore      *oauthstore.Store
 	oauthProvider fosite.OAuth2Provider
 	logger        log.Logger
-	accessControl ossac.AccessControl
-	acService     ossac.Service
+	accessControl ac.AccessControl
+	acService     ac.Service
 	saService     serviceaccounts.Service
 	userService   user.Service
 	teamService   team.Service
 	publicKey     *rsa.PublicKey
 }
 
-func NewProvider(config *fosite.Config, storage interface{}, key interface{}) fosite.OAuth2Provider {
-	keyGetter := func(context.Context) (interface{}, error) {
-		return key, nil
-	}
-	return compose.Compose(
-		config,
-		storage,
-		&compose.CommonStrategy{
-			CoreStrategy:               compose.NewOAuth2JWTStrategy(keyGetter, compose.NewOAuth2HMACStrategy(config), config),
-			OpenIDConnectTokenStrategy: compose.NewOpenIDConnectStrategy(keyGetter, config),
-			Signer:                     &jwt.DefaultSigner{GetPrivateKey: keyGetter},
-		},
-		compose.OAuth2ClientCredentialsGrantFactory,
-		compose.RFC7523AssertionGrantFactory,
-
-		compose.OAuth2TokenIntrospectionFactory,
-		compose.OAuth2TokenRevocationFactory,
-	)
-}
-
-func ProvideService(router routing.RouteRegister, db db.DB, cfg *setting.Cfg, skv kvstore.SecretsKVStore, svcAccSvc serviceaccounts.Service,
-	accessControl ossac.AccessControl, acSvc ossac.Service, userSvc user.Service, teamSvc team.Service) (*OAuth2ServiceImpl, error) {
+func ProvideService(router routing.RouteRegister, db db.DB, cfg *setting.Cfg, skv kvstore.SecretsKVStore,
+	svcAccSvc serviceaccounts.Service, accessControl ac.AccessControl, acSvc ac.Service, userSvc user.Service,
+	teamSvc team.Service) (*OAuth2ServiceImpl, error) {
 
 	// TODO: Make this configurable
 	config := &fosite.Config{
@@ -89,6 +77,7 @@ func ProvideService(router routing.RouteRegister, db db.DB, cfg *setting.Cfg, sk
 	// storage := memstorage.NewGrafanaPluginAuthStore(config)
 
 	s := &OAuth2ServiceImpl{
+		cache:         localcache.New(cacheExpirationTime, cacheCleanupInterval),
 		accessControl: accessControl,
 		acService:     acSvc,
 		memstore:      storage.NewMemoryStore(),
@@ -103,9 +92,29 @@ func ProvideService(router routing.RouteRegister, db db.DB, cfg *setting.Cfg, sk
 	api := api.NewAPI(router, s)
 	api.RegisterAPIEndpoints()
 
-	s.oauthProvider = NewProvider(config, s, privateKey)
+	s.oauthProvider = newProvider(config, s, privateKey)
 
 	return s, nil
+}
+
+func newProvider(config *fosite.Config, storage interface{}, key interface{}) fosite.OAuth2Provider {
+	keyGetter := func(context.Context) (interface{}, error) {
+		return key, nil
+	}
+	return compose.Compose(
+		config,
+		storage,
+		&compose.CommonStrategy{
+			CoreStrategy:               compose.NewOAuth2JWTStrategy(keyGetter, compose.NewOAuth2HMACStrategy(config), config),
+			OpenIDConnectTokenStrategy: compose.NewOpenIDConnectStrategy(keyGetter, config),
+			Signer:                     &jwt.DefaultSigner{GetPrivateKey: keyGetter},
+		},
+		compose.OAuth2ClientCredentialsGrantFactory,
+		compose.RFC7523AssertionGrantFactory,
+
+		compose.OAuth2TokenIntrospectionFactory,
+		compose.OAuth2TokenRevocationFactory,
+	)
 }
 
 func loadServerPrivateKey(skv kvstore.SecretsKVStore) (*rsa.PrivateKey, error) {
@@ -152,10 +161,11 @@ func (s *OAuth2ServiceImpl) RandString(n int) (string, error) {
 	return base64.URLEncoding.WithPadding(base64.NoPadding).EncodeToString(res), nil
 }
 
-// TODO it would be great to create the service account in the same session
-func (s *OAuth2ServiceImpl) RegisterApp(ctx context.Context, registration *oauthserver.AppRegistration) (*oauthserver.ClientDTO, error) {
+// TODO it would be great to create the service account in the same DB session as the client
+func (s *OAuth2ServiceImpl) RegisterExternalService(ctx context.Context,
+	registration *oauthserver.ExternalServiceRegistration) (*oauthserver.ClientDTO, error) {
 	client := oauthserver.Client{
-		AppName:                registration.AppName,
+		ExternalServiceName:    registration.ExternalServiceName,
 		ImpersonatePermissions: registration.ImpersonatePermissions,
 	}
 	if registration.RedirectURI != nil {
@@ -208,7 +218,7 @@ func (s *OAuth2ServiceImpl) RegisterApp(ctx context.Context, registration *oauth
 	return dto, nil
 }
 
-func (s *OAuth2ServiceImpl) computeGrantTypes(registration *oauthserver.AppRegistration) []string {
+func (s *OAuth2ServiceImpl) computeGrantTypes(registration *oauthserver.ExternalServiceRegistration) []string {
 	grantTypes := []string{}
 
 	// If the app has permissions, it can use the client credentials grant type
@@ -224,7 +234,7 @@ func (s *OAuth2ServiceImpl) computeGrantTypes(registration *oauthserver.AppRegis
 	return grantTypes
 }
 
-func (s *OAuth2ServiceImpl) createServiceAccount(ctx context.Context, registration *oauthserver.AppRegistration) (int64, error) {
+func (s *OAuth2ServiceImpl) createServiceAccount(ctx context.Context, registration *oauthserver.ExternalServiceRegistration) (int64, error) {
 	newRole := func(r roletype.RoleType) *roletype.RoleType {
 		return &r
 	}
@@ -232,7 +242,7 @@ func (s *OAuth2ServiceImpl) createServiceAccount(ctx context.Context, registrati
 		return &b
 	}
 
-	slug := slugify.Slugify(registration.AppName)
+	slug := slugify.Slugify(registration.ExternalServiceName)
 
 	// TODO: Can we use ServiceAccounts in global orgs in the future? As apps are available accross all orgs.
 	// FIXME currently using orgID 1
@@ -245,8 +255,8 @@ func (s *OAuth2ServiceImpl) createServiceAccount(ctx context.Context, registrati
 		return -1, err
 	}
 
-	if err := s.acService.SaveExternalServiceRole(ctx, ossac.SaveExternalServiceRoleCommand{
-		OrgID:             ossac.GlobalOrgID,
+	if err := s.acService.SaveExternalServiceRole(ctx, ac.SaveExternalServiceRoleCommand{
+		OrgID:             ac.GlobalOrgID,
 		Global:            true,
 		ExternalServiceID: slug,
 		ServiceAccountID:  sa.Id,
@@ -258,7 +268,7 @@ func (s *OAuth2ServiceImpl) createServiceAccount(ctx context.Context, registrati
 	return sa.Id, nil
 }
 
-func (s *OAuth2ServiceImpl) handleKeyOptions(ctx context.Context, registration *oauthserver.AppRegistration) (*oauthserver.KeyResult, error) {
+func (s *OAuth2ServiceImpl) handleKeyOptions(ctx context.Context, registration *oauthserver.ExternalServiceRegistration) (*oauthserver.KeyResult, error) {
 	if registration.Key == nil {
 		return nil, nil
 	}
@@ -297,8 +307,16 @@ func (s *OAuth2ServiceImpl) handleKeyOptions(ctx context.Context, registration *
 	return nil, fmt.Errorf("at least one key option must be specified")
 }
 
-func (s *OAuth2ServiceImpl) GetApp(ctx context.Context, id string) (*oauthserver.Client, error) {
-	app, err := s.sqlstore.GetApp(ctx, id)
+func (s *OAuth2ServiceImpl) GetExternalService(ctx context.Context, id string) (*oauthserver.Client, error) {
+	entry, ok := s.cache.Get(id)
+	if ok {
+		app, ok := entry.(oauthserver.Client)
+		if ok {
+			return &app, nil
+		}
+	}
+
+	app, err := s.sqlstore.GetExternalService(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -317,14 +335,16 @@ func (s *OAuth2ServiceImpl) GetApp(ctx context.Context, id string) (*oauthserver
 		Name:        sa.Name,
 		Permissions: map[int64]map[string][]string{},
 	}
-	app.SelfPermissions, err = s.acService.GetUserPermissions(ctx, app.SignedInUser, ossac.Options{})
+	app.SelfPermissions, err = s.acService.GetUserPermissions(ctx, app.SignedInUser, ac.Options{})
 	if err != nil {
 		return nil, err
 	}
-	app.SignedInUser.Permissions[oauthserver.TmpOrgID] = ossac.GroupScopesByAction(app.SelfPermissions)
+	app.SignedInUser.Permissions[oauthserver.TmpOrgID] = ac.GroupScopesByAction(app.SelfPermissions)
 
 	// TODO: Retrieve org memberships
 	app.OrgIDs = []int64{oauthserver.TmpOrgID}
+
+	s.cache.Set(id, *app, cacheExpirationTime)
 
 	return app, nil
 }
@@ -350,15 +370,15 @@ func (s *OAuth2ServiceImpl) computeClientScopesOnUser(ctx context.Context, clien
 		case "openid":
 			hasAccess = true
 		case "email", "profile":
-			hasAccess, errAccess = s.accessControl.Evaluate(ctx, client.SignedInUser, ossac.EvalPermission(
+			hasAccess, errAccess = s.accessControl.Evaluate(ctx, client.SignedInUser, ac.EvalPermission(
 				"users:read", fmt.Sprintf("global.users:id:%v", targetUser.ID)))
 		case "permissions":
-			hasAccess, errAccess = s.accessControl.Evaluate(ctx, client.SignedInUser, ossac.EvalPermission(
+			hasAccess, errAccess = s.accessControl.Evaluate(ctx, client.SignedInUser, ac.EvalPermission(
 				"users.permissions:read", fmt.Sprintf("users:id:%v", targetUser.ID)))
 		case "teams":
 			// We don't need to check whether the service account has access to the specific teams of the target user
 			// because the filtering will be done by the Team service based on the service account permissions
-			hasAccess, errAccess = s.accessControl.Evaluate(ctx, client.SignedInUser, ossac.EvalPermission("teams:read"))
+			hasAccess, errAccess = s.accessControl.Evaluate(ctx, client.SignedInUser, ac.EvalPermission("teams:read"))
 		}
 		if errAccess != nil {
 			return nil, errAccess

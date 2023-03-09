@@ -41,7 +41,7 @@ func (s *OAuth2ServiceImpl) HandleTokenRequest(rw http.ResponseWriter, req *http
 		return
 	}
 
-	app, err := s.GetApp(ctx, accessRequest.GetClient().GetID())
+	app, err := s.GetExternalService(ctx, accessRequest.GetClient().GetID())
 	if err != nil || app == nil {
 		s.oauthProvider.WriteAccessError(ctx, rw, accessRequest, &fosite.RFC6749Error{
 			DescriptionField: "Could not find the requested subject.",

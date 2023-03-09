@@ -23,7 +23,7 @@ func (s *Store) RegisterExternalService(ctx context.Context, client *oauthserver
 	return s.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		insertQuery := []interface{}{
 			`INSERT INTO oauth_client (app_name, client_id, secret, grant_types, service_account_id, public_pem, redirect_uri) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-			client.AppName,
+			client.ExternalServiceName,
 			client.ClientID,
 			client.Secret,
 			client.GrantTypes,
@@ -52,7 +52,7 @@ func (s *Store) RegisterExternalService(ctx context.Context, client *oauthserver
 	})
 }
 
-func (s *Store) GetApp(ctx context.Context, id string) (*oauthserver.Client, error) {
+func (s *Store) GetExternalService(ctx context.Context, id string) (*oauthserver.Client, error) {
 	res := &oauthserver.Client{}
 	if id == "" {
 		return nil, oauthserver.ErrClientRequiredID
@@ -80,7 +80,7 @@ func (s *Store) GetApp(ctx context.Context, id string) (*oauthserver.Client, err
 
 // GetPublicKey returns public key, issued by 'issuer', and assigned for subject. Public key is used to check
 // signature of jwt assertion in authorization grants.
-func (s *Store) GetAppPublicKey(ctx context.Context, id string) (*jose.JSONWebKey, error) {
+func (s *Store) GetExternalServicePublicKey(ctx context.Context, id string) (*jose.JSONWebKey, error) {
 	res := &oauthserver.Client{}
 	if id == "" {
 		return nil, oauthserver.ErrClientRequiredID

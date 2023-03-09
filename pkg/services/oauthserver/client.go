@@ -34,18 +34,18 @@ type KeyResult struct {
 }
 
 type ClientDTO struct {
-	AppName     string     `json:"name"`
-	ID          string     `json:"clientId"`
-	Secret      string     `json:"clientSecret"`
-	GrantTypes  string     `xorm:"grant_types"` // CSV value
-	RedirectURI string     `json:"redirectUri,omitempty"`
-	KeyResult   *KeyResult `json:"key,omitempty"`
+	ExternalServiceName string     `json:"name"`
+	ID                  string     `json:"clientId"`
+	Secret              string     `json:"clientSecret"`
+	GrantTypes          string     `xorm:"grant_types"` // CSV value
+	RedirectURI         string     `json:"redirectUri,omitempty"`
+	KeyResult           *KeyResult `json:"key,omitempty"`
 }
 
 type Client struct {
 	ID                     int64           `xorm:"id pk autoincr"`
 	OrgIDs                 []int64         `xorm:"org_id"`
-	AppName                string          `xorm:"app_name"`
+	ExternalServiceName    string          `xorm:"app_name"`
 	ClientID               string          `xorm:"client_id"`
 	Secret                 string          `xorm:"secret"`
 	GrantTypes             string          `xorm:"grant_types"` // CSV value
@@ -60,11 +60,11 @@ type Client struct {
 
 func (c *Client) ToDTO() *ClientDTO {
 	return &ClientDTO{
-		AppName:     c.AppName,
-		ID:          c.ClientID,
-		Secret:      c.Secret,
-		GrantTypes:  c.GrantTypes,
-		RedirectURI: c.RedirectURI,
+		ExternalServiceName: c.ExternalServiceName,
+		ID:                  c.ClientID,
+		Secret:              c.Secret,
+		GrantTypes:          c.GrantTypes,
+		RedirectURI:         c.RedirectURI,
 		KeyResult: &KeyResult{
 			PublicPem: string(c.PublicPem),
 		},

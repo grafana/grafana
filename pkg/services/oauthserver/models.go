@@ -16,8 +16,8 @@ var (
 )
 
 type OAuth2Service interface {
-	RegisterApp(ctx context.Context, app *AppRegistration) (*ClientDTO, error)
-	GetApp(ctx context.Context, id string) (*Client, error)
+	RegisterExternalService(ctx context.Context, app *ExternalServiceRegistration) (*ClientDTO, error)
+	GetExternalService(ctx context.Context, id string) (*Client, error)
 	HandleTokenRequest(rw http.ResponseWriter, req *http.Request)
 	HandleIntrospectionRequest(rw http.ResponseWriter, req *http.Request)
 	GetServerPublicKey() *rsa.PublicKey
@@ -29,8 +29,8 @@ type KeyOption struct {
 	Generate  bool   `json:"generate,omitempty"`
 }
 
-type AppRegistration struct {
-	AppName                string                     `json:"name"`
+type ExternalServiceRegistration struct {
+	ExternalServiceName    string                     `json:"name"`
 	Permissions            []accesscontrol.Permission `json:"permissions,omitempty"`
 	ImpersonatePermissions []accesscontrol.Permission `json:"impersonatePermissions,omitempty"`
 	RedirectURI            *string                    `json:"redirectUri,omitempty"`
