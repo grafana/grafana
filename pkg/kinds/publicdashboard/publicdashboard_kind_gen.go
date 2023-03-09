@@ -10,10 +10,11 @@
 package publicdashboard
 
 import (
-	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/kindsys"
 	"github.com/grafana/thema"
 	"github.com/grafana/thema/vmux"
+
+	"github.com/grafana/grafana/pkg/cuectx"
 )
 
 // rootrel is the relative path from the grafana repository root to the
