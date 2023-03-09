@@ -80,7 +80,7 @@ const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean, 
       background: ${theme.colors.background.primary};
       box-shadow: 0 0 ${theme.spacing(1.25)} ${theme.v1.palette.black};
       border: 1px solid ${theme.colors.background.secondary};
-      border-radius: ${theme.shape.borderRadius(2)};
+      border-radius: ${theme.shape.borderRadius()};
       font-family: ${theme.typography.fontFamily};
     `,
     header: css`

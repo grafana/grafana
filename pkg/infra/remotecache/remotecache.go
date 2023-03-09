@@ -7,10 +7,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/go-kit/log"
-
 	"github.com/grafana/grafana/pkg/infra/db"
-	glog "github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
@@ -30,7 +28,8 @@ const (
 	ServiceName = "RemoteCache"
 )
 
-func ProvideService(cfg *setting.Cfg, sqlStore db.DB, secretsService secrets.Service) (*RemoteCache, error) {
+func ProvideService(cfg *setting.Cfg, sqlStore db.DB, usageStats usagestats.Service,
+	secretsService secrets.Service) (*RemoteCache, error) {
 	var codec codec
 	if cfg.RemoteCacheOptions.Encryption {
 		codec = &encryptionCodec{secretsService}
@@ -44,10 +43,25 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, secretsService secrets.Ser
 	s := &RemoteCache{
 		SQLStore: sqlStore,
 		Cfg:      cfg,
-		log:      glog.New("cache.remote"),
 		client:   client,
 	}
+
+	usageStats.RegisterMetricsFunc(s.getUsageStats)
+
 	return s, nil
+}
+
+func (ds *RemoteCache) getUsageStats(ctx context.Context) (map[string]interface{}, error) {
+	stats := map[string]interface{}{}
+	stats["stats.remote_cache."+ds.Cfg.RemoteCacheOptions.Name+".count"] = 1
+	encryptVal := 0
+	if ds.Cfg.RemoteCacheOptions.Encryption {
+		encryptVal = 1
+	}
+
+	stats["stats.remote_cache.encrypt_enabled.count"] = encryptVal
+
+	return stats, nil
 }
 
 // CacheStorage allows the caller to set, get and delete items in the cache.
@@ -66,12 +80,12 @@ type CacheStorage interface {
 
 	// Count returns the number of items in the cache.
 	// Optionaly a prefix can be provided to only count items with that prefix
+	// DO NOT USE. Not available for memcached.
 	Count(ctx context.Context, prefix string) (int64, error)
 }
 
 // RemoteCache allows Grafana to cache data outside its own process
 type RemoteCache struct {
-	log      log.Logger
 	client   CacheStorage
 	SQLStore db.DB
 	Cfg      *setting.Cfg

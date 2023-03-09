@@ -1481,7 +1481,6 @@ def trigger_test_release():
         "image": build_image,
         "environment": {
             "GITHUB_TOKEN": from_secret("github_token_pr"),
-            "DOWNSTREAM_REPO": from_secret("downstream"),
             "TEST_TAG": "v0.0.0-test",
         },
         "commands": [
