@@ -291,7 +291,7 @@ describe('fetchLabels', () => {
     expect(instance.labelKeys).toEqual(['other']);
   });
 
-  it('should return empyt array', async () => {
+  it('should return empty array', async () => {
     const datasourceWithLabels = setup({});
 
     const instance = new LanguageProvider(datasourceWithLabels);
