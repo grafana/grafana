@@ -201,6 +201,7 @@ export const Pages = {
       NoUpsertPermissionsWarningAlert: 'data-testid public dashboard no upsert permissions alert',
       EnableTimeRangeSwitch: 'data-testid public dashboard on off switch for time range',
       EmailSharingConfiguration: {
+        Container: 'data-testid email sharing config container',
         ShareType: 'data-testid public dashboard share type',
         EmailSharingInput: 'data-testid public dashboard email sharing input',
         EmailSharingInviteButton: 'data-testid public dashboard email sharing invite button',

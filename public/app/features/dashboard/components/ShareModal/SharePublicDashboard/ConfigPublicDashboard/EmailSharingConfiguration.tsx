@@ -144,7 +144,7 @@ export const EmailSharingConfiguration = () => {
   };
 
   return (
-    <form className={styles.container} onSubmit={handleSubmit(onSubmit)}>
+    <form data-testid={selectors.Container} className={styles.container} onSubmit={handleSubmit(onSubmit)}>
       <Field label="Can view dashboard">
         <InputControl
           name="shareType"
