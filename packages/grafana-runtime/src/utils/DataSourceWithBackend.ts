@@ -204,6 +204,9 @@ class DataSourceWithBackend<
     const headers: Record<string, string> = {};
     headers[PluginRequestHeaders.PluginID] = Array.from(pluginIDs).join(', ');
     headers[PluginRequestHeaders.DatasourceUID] = Array.from(dsUIDs).join(', ');
+    if (request?.originalQueryDelta !== undefined) {
+      headers['X-Grafana-Modified-From'] = request.originalQueryDelta.toString(10);
+    }
     if (request.dashboardUID) {
       headers[PluginRequestHeaders.DashboardUID] = request.dashboardUID;
     }
