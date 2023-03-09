@@ -194,22 +194,8 @@ export function DashboardQueryEditor({ panelData, queries, onChange, onRunQuerie
 
 function getStyles(theme: GrafanaTheme2) {
   return {
-    results: css({
-      padding: theme.spacing(2),
-    }),
     noQueriesText: css({
       padding: theme.spacing(1.25),
     }),
-    refId: css({
-      padding: theme.spacing(1.25),
-    }),
-    queryEditorRowHeader: css`
-      label: queryEditorRowHeader;
-      display: flex;
-      padding: 4px 8px;
-      flex-flow: row wrap;
-      background: ${theme.colors.background.secondary};
-      align-items: center;
-    `,
   };
 }
