@@ -110,7 +110,8 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({
               <Field
                 label="Group wait"
                 description="The waiting time until the initial notification is sent for a new group created by an incoming alert. Default 30 seconds."
-                invalid={!!errors.groupWaitValue}
+                // invalid={!!errors.groupWaitValue}
+                invalid={false}
                 error={errors.groupWaitValue?.message}
                 data-testid="am-group-wait"
               >
@@ -118,13 +119,14 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({
                   <PromDurationInput
                     {...register('groupWaitValue', { validate: promDurationValidator })}
                     placeholder="30s"
+                    aria-label="Group wait"
                   />
                 </div>
               </Field>
               <Field
                 label="Group interval"
                 description="The waiting time to send a batch of new alerts for that group after the first notification was sent. Default 5 minutes."
-                invalid={!!errors.groupIntervalValue}
+                // invalid={!!errors.groupIntervalValue}
                 error={errors.groupIntervalValue?.message}
                 data-testid="am-group-interval"
               >
@@ -138,7 +140,7 @@ export const AmRootRouteForm: FC<AmRootRouteFormProps> = ({
               <Field
                 label="Repeat interval"
                 description="The waiting time to resend an alert after they have successfully been sent. Default 4 hours."
-                invalid={!!errors.repeatIntervalValue}
+                // invalid={!!errors.repeatIntervalValue}
                 error={errors.repeatIntervalValue?.message}
                 data-testid="am-repeat-interval"
               >
