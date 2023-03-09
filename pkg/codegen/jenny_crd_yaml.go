@@ -10,10 +10,11 @@ import (
 	"cuelang.org/go/encoding/openapi"
 	cueyaml "cuelang.org/go/pkg/encoding/yaml"
 	"github.com/grafana/codejen"
-	"github.com/grafana/grafana/pkg/kindsys"
-	"github.com/grafana/grafana/pkg/kindsys/k8ssys"
+	"github.com/grafana/kindsys/k8ssys"
 	"github.com/grafana/thema"
 	goyaml "gopkg.in/yaml.v3"
+
+	"github.com/grafana/kindsys"
 )
 
 // TODO this jenny is quite sloppy, having been quickly adapted from app-sdk. It needs love

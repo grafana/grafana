@@ -18,9 +18,10 @@ import (
 	"cuelang.org/go/cue/errors"
 	"github.com/grafana/codejen"
 	"github.com/grafana/cuetsy"
+	"github.com/grafana/kindsys"
+
 	"github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/cuectx"
-	"github.com/grafana/grafana/pkg/kindsys"
 )
 
 func main() {
@@ -68,7 +69,7 @@ func main() {
 			continue
 		}
 		rel := filepath.Join(kindsys.CoreDefParentPath, kinddir.Name())
-		def, err := kindsys.LoadCoreKindDef(rel, rt.Context(), nil)
+		def, err := cuectx.LoadCoreKindDef(rel, rt.Context(), nil)
 		if err != nil {
 			die(fmt.Errorf("%s is not a valid kind: %s", rel, errors.Details(err, nil)))
 		}
