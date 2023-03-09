@@ -13,6 +13,8 @@ This topic explains how to install Grafana dependencies, install Grafana on Linu
 
 You can install Grafana using the Grafana Labs APT repository, by downloading a `.deb` package, or by downloading a binary `.tar.gz` file.
 
+If you install via the `.deb` package or `.tar.gz` file, then you will need to manually update Grafana for each new version.
+
 ## Download and install Grafana
 
 Complete the following steps to download and install Grafana on Debian or Ubuntu:
