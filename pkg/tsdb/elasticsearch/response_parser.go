@@ -150,7 +150,7 @@ func processLogsResponse(res *es.SearchResponse, target *Query, configuredFields
 
 	frames := data.Frames{}
 	frame := data.NewFrame("", fields...)
-	setPreferredVisType(frame, "logs")
+	setPreferredVisType(frame, data.VisTypeLogs)
 	setSearchWords(frame, searchWords)
 	frames = append(frames, frame)
 
