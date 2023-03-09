@@ -66,7 +66,7 @@ The link no longer works. You must create a new public URL as in [Make a dashboa
 
 ## Email Sharing
 
-> **Note:** Public dashboard email sharing is an opt-in alpha feature and is not available in Grafana OSS. For Grafana Cloud, you will need to contact support to have the feature enabled.
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud).
 
 Email sharing allows you to share your public dashboard with only specific people via email, instead of having it accessible to anyone with the url.
 
