@@ -1425,7 +1425,7 @@ func TestLogs(t *testing.T) {
 		logsFrame := frames[0]
 
 		meta := logsFrame.Meta
-		require.Equal(t, map[string]interface{}{"searchWords":[]string{"hello", "message"}}, meta.Custom)
+		require.Equal(t, map[string]interface{}{"searchWords": []string{"hello", "message"}}, meta.Custom)
 		require.Equal(t, data.VisTypeLogs, string(meta.PreferredVisualization))
 
 		logsFieldMap := make(map[string]*data.Field)
