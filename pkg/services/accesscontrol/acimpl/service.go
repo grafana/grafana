@@ -108,11 +108,11 @@ func (s *Service) getUserPermissions(ctx context.Context, user *user.SignedInUse
 	}
 
 	dbPermissions, err := s.store.GetUserPermissions(ctx, accesscontrol.GetUserPermissionsQuery{
-		OrgID:      user.OrgID,
-		UserID:     user.UserID,
-		Roles:      accesscontrol.GetOrgRoles(user),
-		TeamIDs:    user.Teams,
-		RolePrefix: accesscontrol.ManagedRolePrefix,
+		OrgID:        user.OrgID,
+		UserID:       user.UserID,
+		Roles:        accesscontrol.GetOrgRoles(user),
+		TeamIDs:      user.Teams,
+		RolePrefixes: []string{accesscontrol.ManagedRolePrefix, accesscontrol.ExternalServiceRolePrefix},
 	})
 	if err != nil {
 		return nil, err

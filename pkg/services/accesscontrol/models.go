@@ -131,6 +131,11 @@ func (r *RoleDTO) IsBasic() bool {
 	return strings.HasPrefix(r.Name, BasicRolePrefix) || strings.HasPrefix(r.UID, BasicRoleUIDPrefix)
 }
 
+// TODO restrict overriding everywhere
+func (r *RoleDTO) IsExternalService() bool {
+	return strings.HasPrefix(r.Name, ExternalServiceRolePrefix)
+}
+
 func (r RoleDTO) MarshalJSON() ([]byte, error) {
 	type Alias RoleDTO
 
@@ -190,11 +195,11 @@ func (p Permission) OSSPermission() Permission {
 }
 
 type GetUserPermissionsQuery struct {
-	OrgID      int64
-	UserID     int64
-	Roles      []string
-	TeamIDs    []int64
-	RolePrefix string
+	OrgID        int64
+	UserID       int64
+	Roles        []string
+	TeamIDs      []int64
+	RolePrefixes []string
 }
 
 // ResourcePermission is structure that holds all actions that either a team / user / builtin-role
@@ -279,13 +284,14 @@ func (cmd *SaveExternalServiceRoleCommand) Validate() error {
 }
 
 const (
-	GlobalOrgID        = 0
-	FixedRolePrefix    = "fixed:"
-	ManagedRolePrefix  = "managed:"
-	BasicRolePrefix    = "basic:"
-	PluginRolePrefix   = "plugins:"
-	BasicRoleUIDPrefix = "basic_"
-	RoleGrafanaAdmin   = "Grafana Admin"
+	GlobalOrgID               = 0
+	FixedRolePrefix           = "fixed:"
+	ManagedRolePrefix         = "managed:"
+	BasicRolePrefix           = "basic:"
+	PluginRolePrefix          = "plugins:"
+	ExternalServiceRolePrefix = "externalservice:"
+	BasicRoleUIDPrefix        = "basic_"
+	RoleGrafanaAdmin          = "Grafana Admin"
 
 	GeneralFolderUID = "general"
 
