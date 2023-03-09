@@ -56,6 +56,7 @@ func ProvideService(bus bus.Bus, cfg *setting.Cfg, mailer Mailer, store TempUser
 	mailTemplates.Funcs(template.FuncMap{
 		"Subject":       subjectTemplateFunc,
 		"HiddenSubject": hiddenSubjectTemplateFunc,
+		"safeHTML":      safeHTML,
 	})
 	mailTemplates.Funcs(sprig.FuncMap())
 
@@ -172,6 +173,11 @@ func subjectTemplateFunc(obj map[string]interface{}, data map[string]interface{}
 	// Since we have already executed the template, save it to subject data so we don't have to do it again later on
 	obj["executed_template"] = subj
 	return subj
+}
+
+// safeHTML allows marking areas of template as HTML safe, this will _not_ sanitize the string and will allow HTML snippets to be rendered verbatim
+func safeHTML(s string) template.HTML {
+	return template.HTML(s)
 }
 
 func (ns *NotificationService) SendEmailCommandHandlerSync(ctx context.Context, cmd *SendEmailCommandSync) error {
