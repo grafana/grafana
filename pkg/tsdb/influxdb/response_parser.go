@@ -89,8 +89,8 @@ func transformRows(rows []Row, query Query) data.Frames {
 
 				var timeArray []time.Time
 				var floatArray []*float64
-				var stringArray []string
-				var boolArray []bool
+				var stringArray []*string
+				var boolArray []*bool
 				valType := typeof(row.Values, colIndex)
 				name := formatFrameName(row, column, query)
 
@@ -100,14 +100,18 @@ func transformRows(rows []Row, query Query) data.Frames {
 					if timestampErr == nil {
 						timeArray = append(timeArray, timestamp)
 						if valType == "string" {
-							value := valuePair[colIndex].(string)
-							stringArray = append(stringArray, value)
+							value, err := valuePair[colIndex].(*string)
+							if !err {
+								stringArray = append(stringArray, value)
+							}
 						} else if valType == "json.Number" {
 							value := parseNumber(valuePair[colIndex])
 							floatArray = append(floatArray, value)
 						} else if valType == "bool" {
-							value := valuePair[colIndex].(bool)
-							boolArray = append(boolArray, value)
+							value, err := valuePair[colIndex].(*bool)
+							if !err {
+								boolArray = append(boolArray, value)
+							}
 						} else if valType == "null" {
 							floatArray = append(floatArray, nil)
 						}
