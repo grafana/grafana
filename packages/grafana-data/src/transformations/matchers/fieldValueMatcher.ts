@@ -13,6 +13,11 @@ export interface FieldValueMatcherConfig {
   value?: number; // or string?
 }
 
+// This should move to a utility function on the reducer registry
+function isBooleanReducer(r: ReducerID) {
+  return r === ReducerID.allIsNull || r === ReducerID.allIsZero;
+}
+
 export const fieldValueMatcherInfo: FieldMatcherInfo<FieldValueMatcherConfig> = {
   id: FieldMatcherID.byValue,
   name: 'By value (reducer)',
@@ -30,16 +35,16 @@ export const fieldValueMatcherInfo: FieldMatcherInfo<FieldValueMatcherConfig> = 
       return () => false;
     }
     const { reducer, op, value } = props;
+    const isBoolean = isBooleanReducer(reducer);
     return (field: Field, frame: DataFrame, allFrames: DataFrame[]) => {
       const left = reduceField({
         field,
         reducers: [reducer],
       })[reducer];
 
-      if (reducer === ReducerID.allIsNull || reducer === ReducerID.allIsZero) {
+      if (isBoolean) {
         return Boolean(left); // boolean
       }
-
       return compareValues(left, op, value);
     };
   },
