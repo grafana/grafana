@@ -53,6 +53,8 @@ export const plugin = new PanelPlugin<PanelOptions>(StatPanel)
         name: 'Background gradient',
         defaultValue: defaultPanelOptions.hasGradient,
         category: mainCategory,
+        // This
+        showIf: (panelOptions) => panelOptions.colorMode === BigValueColorMode.Background,
       })
       .addRadio({
         path: 'graphMode',
