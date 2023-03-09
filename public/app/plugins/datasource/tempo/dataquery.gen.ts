@@ -63,9 +63,9 @@ export type TempoQueryType = ('traceql' | 'traceqlSearch' | 'search' | 'serviceM
 export type TraceqlSearchFilterType = ('static' | 'dynamic');
 
 export enum TraceqlSearchScope {
-  All = 'all',
   Resource = 'resource',
   Span = 'span',
+  Unscoped = 'unscoped',
 }
 
 export interface TraceqlFilter {

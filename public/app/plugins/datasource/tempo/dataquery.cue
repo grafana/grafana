@@ -54,8 +54,8 @@ composableKinds: DataQuery: {
 						#TempoQueryType: "traceql" | "traceqlSearch" | "search" | "serviceMap" | "upload" | "nativeSearch" | "clear" @cuetsy(kind="type")
 
 						// static fields are pre-set in the UI, dynamic fields are added by the user
-						#TraceqlSearchFilterType: "static" | "dynamic"        @cuetsy(kind="type")
-						#TraceqlSearchScope:      "all" | "resource" | "span" @cuetsy(kind="enum")
+						#TraceqlSearchFilterType: "static" | "dynamic"             @cuetsy(kind="type")
+						#TraceqlSearchScope:      "unscoped" | "resource" | "span" @cuetsy(kind="enum")
 						#TraceqlFilter: {
 							// Uniquely identify the filter, will not be used in the query generation
 							id: string

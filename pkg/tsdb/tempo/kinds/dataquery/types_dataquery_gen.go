@@ -11,9 +11,9 @@ package dataquery
 
 // Defines values for TempoQueryFiltersScope.
 const (
-	TempoQueryFiltersScopeAll      TempoQueryFiltersScope = "all"
 	TempoQueryFiltersScopeResource TempoQueryFiltersScope = "resource"
 	TempoQueryFiltersScopeSpan     TempoQueryFiltersScope = "span"
+	TempoQueryFiltersScopeUnscoped TempoQueryFiltersScope = "unscoped"
 )
 
 // Defines values for TempoQueryFiltersType.
@@ -35,9 +35,9 @@ const (
 
 // Defines values for TraceqlFilterScope.
 const (
-	TraceqlFilterScopeAll      TraceqlFilterScope = "all"
 	TraceqlFilterScopeResource TraceqlFilterScope = "resource"
 	TraceqlFilterScopeSpan     TraceqlFilterScope = "span"
+	TraceqlFilterScopeUnscoped TraceqlFilterScope = "unscoped"
 )
 
 // Defines values for TraceqlFilterType.
@@ -54,9 +54,9 @@ const (
 
 // Defines values for TraceqlSearchScope.
 const (
-	TraceqlSearchScopeAll      TraceqlSearchScope = "all"
 	TraceqlSearchScopeResource TraceqlSearchScope = "resource"
 	TraceqlSearchScopeSpan     TraceqlSearchScope = "span"
+	TraceqlSearchScopeUnscoped TraceqlSearchScope = "unscoped"
 )
 
 // TempoDataQuery defines model for TempoDataQuery.

@@ -103,16 +103,10 @@ const SearchField = ({
     fetchOptions();
   }, [languageProvider, loadOptions, setError, filter.tag, filter.scope]);
 
-  const scopeOptions = Object.entries(TraceqlSearchScope).map((t) => {
-    let label = t[0];
-    if (t[1] === TraceqlSearchScope.All) {
-      label = 'All scopes';
-    }
-    return { label, value: t[1] };
-  });
+  const scopeOptions = Object.values(TraceqlSearchScope).map((t) => ({ label: t, value: t }));
 
   return (
-    <HorizontalGroup spacing={'none'}>
+    <HorizontalGroup spacing={'none'} width={'auto'}>
       {filter.type === 'dynamic' && (
         <Select
           className={styles.dropdown}
