@@ -150,6 +150,7 @@ func (st DBstore) InsertAlertRules(ctx context.Context, rules []ngmodels.AlertRu
 				NoDataState:      r.NoDataState,
 				ExecErrState:     r.ExecErrState,
 				For:              r.For,
+				ForError:         r.ForError,
 				Annotations:      r.Annotations,
 				Labels:           r.Labels,
 			})
@@ -218,6 +219,7 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, rules []ngmodels.UpdateR
 				NoDataState:      r.New.NoDataState,
 				ExecErrState:     r.New.ExecErrState,
 				For:              r.New.For,
+				ForError:         r.New.ForError,
 				Annotations:      r.New.Annotations,
 				Labels:           r.New.Labels,
 			})

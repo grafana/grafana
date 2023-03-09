@@ -200,6 +200,12 @@ func TestPatchPartialAlertRule(t *testing.T) {
 				},
 			},
 			{
+				name: "ForError is -1",
+				mutator: func(r *AlertRuleWithOptionals) {
+					r.ForError = -1
+				},
+			},
+			{
 				name: "IsPaused did not come in request",
 				mutator: func(r *AlertRuleWithOptionals) {
 					r.IsPaused = true
@@ -213,6 +219,7 @@ func TestPatchPartialAlertRule(t *testing.T) {
 				for {
 					rule := AlertRuleGen(func(rule *AlertRule) {
 						rule.For = time.Duration(rand.Int63n(1000) + 1)
+						rule.ForError = time.Duration(rand.Int63n(1000) + 1)
 					})()
 					existing = &AlertRuleWithOptionals{AlertRule: *rule}
 					cloned := *existing

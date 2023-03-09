@@ -484,6 +484,9 @@ func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRuleWithOp
 	if ruleToPatch.For == -1 {
 		ruleToPatch.For = existingRule.For
 	}
+	if ruleToPatch.ForError == -1 {
+		ruleToPatch.ForError = existingRule.ForError
+	}
 	if !ruleToPatch.HasPause {
 		ruleToPatch.IsPaused = existingRule.IsPaused
 	}

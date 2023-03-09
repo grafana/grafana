@@ -43,6 +43,7 @@ func config(t *testing.T) *setting.UnifiedAlertingSettings {
 
 func validRule() apimodels.PostableExtendedRuleNode {
 	forDuration := model.Duration(rand.Int63n(1000))
+	forErrorDuration := model.Duration(rand.Int63n(2000))
 	return apimodels.PostableExtendedRuleNode{
 		ApiRuleNode: &apimodels.ApiRuleNode{
 			For: &forDuration,
@@ -71,6 +72,7 @@ func validRule() apimodels.PostableExtendedRuleNode {
 			UID:          util.GenerateShortUID(),
 			NoDataState:  allNoData[rand.Intn(len(allNoData))],
 			ExecErrState: allExecError[rand.Intn(len(allExecError))],
+			ForError:     &forErrorDuration,
 		},
 	}
 }
@@ -260,6 +262,7 @@ func TestValidateRuleNode_NoUID(t *testing.T) {
 				require.Equal(t, models.NoDataState(api.GrafanaManagedAlert.NoDataState), alert.NoDataState)
 				require.Equal(t, models.ExecutionErrorState(api.GrafanaManagedAlert.ExecErrState), alert.ExecErrState)
 				require.Equal(t, time.Duration(*api.ApiRuleNode.For), alert.For)
+				require.Equal(t, time.Duration(*api.GrafanaManagedAlert.ForError), alert.ForError)
 				require.Equal(t, api.ApiRuleNode.Annotations, alert.Annotations)
 				require.Equal(t, api.ApiRuleNode.Labels, alert.Labels)
 			},

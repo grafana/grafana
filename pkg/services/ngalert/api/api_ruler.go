@@ -446,6 +446,7 @@ func toGettableExtendedRuleNode(r ngmodels.AlertRule, namespaceID int64, provena
 	if prov, exists := provenanceRecords[r.ResourceID()]; exists {
 		provenance = prov
 	}
+	forErrorDuration := model.Duration(r.ForError)
 	gettableExtendedRuleNode := apimodels.GettableExtendedRuleNode{
 		GrafanaManagedAlert: &apimodels.GettableGrafanaRule{
 			ID:              r.ID,
@@ -463,6 +464,7 @@ func toGettableExtendedRuleNode(r ngmodels.AlertRule, namespaceID int64, provena
 			NoDataState:     apimodels.NoDataState(r.NoDataState),
 			ExecErrState:    apimodels.ExecutionErrorState(r.ExecErrState),
 			Provenance:      apimodels.Provenance(provenance),
+			ForError:        &forErrorDuration,
 			IsPaused:        r.IsPaused,
 		},
 	}
