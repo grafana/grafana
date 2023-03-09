@@ -282,8 +282,8 @@ func (auth *AuthProxy) loginViaHeader(reqCtx *contextmodel.ReqContext) (int64, e
 				if rt.IsValid() {
 					extUser.OrgRoles = map[int64]org.RoleType{}
 					orgID := int64(1)
-					if setting.AutoAssignOrg && setting.AutoAssignOrgId > 0 {
-						orgID = int64(setting.AutoAssignOrgId)
+					if auth.cfg.AutoAssignOrg && auth.cfg.AutoAssignOrgId > 0 {
+						orgID = int64(auth.cfg.AutoAssignOrgId)
 					}
 					extUser.OrgRoles[orgID] = rt
 				}

@@ -1,4 +1,4 @@
-import { ArrayVector, DataQueryResponse } from '@grafana/data';
+import { ArrayVector, DataQueryResponse, QueryResultMetaStat } from '@grafana/data';
 
 import { getMockFrames } from './mocks';
 import {
@@ -13,6 +13,7 @@ import {
   obfuscate,
   combineResponses,
   cloneQueryResponse,
+  requestSupportsPartitioning,
 } from './queryUtils';
 import { LokiQuery, LokiQueryType } from './types';
 
@@ -368,8 +369,9 @@ describe('combineResponses', () => {
           meta: {
             stats: [
               {
-                displayName: 'Ingester: total reached',
-                value: 1,
+                displayName: 'Summary: total bytes processed',
+                unit: 'decbytes',
+                value: 33,
               },
             ],
           },
@@ -408,8 +410,9 @@ describe('combineResponses', () => {
           meta: {
             stats: [
               {
-                displayName: 'Ingester: total reached',
-                value: 3,
+                displayName: 'Summary: total bytes processed',
+                unit: 'decbytes',
+                value: 33,
               },
             ],
           },
@@ -448,8 +451,9 @@ describe('combineResponses', () => {
           meta: {
             stats: [
               {
-                displayName: 'Ingester: total reached',
-                value: 3,
+                displayName: 'Summary: total bytes processed',
+                unit: 'decbytes',
+                value: 33,
               },
             ],
           },
@@ -470,5 +474,100 @@ describe('combineResponses', () => {
     };
     expect(combineResponses(null, responseA)).not.toBe(responseA);
     expect(combineResponses(null, responseB)).not.toBe(responseB);
+  });
+
+  describe('combine stats', () => {
+    const { metricFrameA } = getMockFrames();
+    const makeResponse = (stats?: QueryResultMetaStat[]): DataQueryResponse => ({
+      data: [
+        {
+          ...metricFrameA,
+          meta: {
+            ...metricFrameA.meta,
+            stats,
+          },
+        },
+      ],
+    });
+    it('two values', () => {
+      const responseA = makeResponse([
+        { displayName: 'Ingester: total reached', value: 1 },
+        { displayName: 'Summary: total bytes processed', unit: 'decbytes', value: 11 },
+      ]);
+      const responseB = makeResponse([
+        { displayName: 'Ingester: total reached', value: 2 },
+        { displayName: 'Summary: total bytes processed', unit: 'decbytes', value: 22 },
+      ]);
+
+      expect(combineResponses(responseA, responseB).data[0].meta.stats).toStrictEqual([
+        { displayName: 'Summary: total bytes processed', unit: 'decbytes', value: 33 },
+      ]);
+    });
+
+    it('one value', () => {
+      const responseA = makeResponse([
+        { displayName: 'Ingester: total reached', value: 1 },
+        { displayName: 'Summary: total bytes processed', unit: 'decbytes', value: 11 },
+      ]);
+      const responseB = makeResponse();
+
+      expect(combineResponses(responseA, responseB).data[0].meta.stats).toStrictEqual([
+        { displayName: 'Summary: total bytes processed', unit: 'decbytes', value: 11 },
+      ]);
+
+      expect(combineResponses(responseB, responseA).data[0].meta.stats).toStrictEqual([
+        { displayName: 'Summary: total bytes processed', unit: 'decbytes', value: 11 },
+      ]);
+    });
+
+    it('no value', () => {
+      const responseA = makeResponse();
+      const responseB = makeResponse();
+      expect(combineResponses(responseA, responseB).data[0].meta.stats).toHaveLength(0);
+    });
+  });
+});
+
+describe('requestSupportsPartitioning', () => {
+  it('hidden requests are not partitioned', () => {
+    const requests: LokiQuery[] = [
+      {
+        expr: '{a="b"}',
+        refId: 'A',
+        hide: true,
+      },
+    ];
+    expect(requestSupportsPartitioning(requests)).toBe(false);
+  });
+  it('special requests are not partitioned', () => {
+    const requests: LokiQuery[] = [
+      {
+        expr: '{a="b"}',
+        refId: 'do-not-chunk',
+      },
+    ];
+    expect(requestSupportsPartitioning(requests)).toBe(false);
+  });
+  it('empty requests are not partitioned', () => {
+    const requests: LokiQuery[] = [
+      {
+        expr: '',
+        refId: 'A',
+      },
+    ];
+    expect(requestSupportsPartitioning(requests)).toBe(false);
+  });
+  it('all other requests are partitioned', () => {
+    const requests: LokiQuery[] = [
+      {
+        expr: '{a="b"}',
+        refId: 'A',
+      },
+      {
+        expr: 'count_over_time({a="b"}[1h])',
+        refId: 'B',
+      },
+    ];
+    expect(requestSupportsPartitioning(requests)).toBe(true);
   });
 });

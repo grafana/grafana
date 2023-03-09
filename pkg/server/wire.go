@@ -6,7 +6,6 @@ package server
 import (
 	"github.com/google/wire"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"github.com/grafana/grafana/pkg/services/folder"
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/avatar"
@@ -29,6 +28,7 @@ import (
 	loginpkg "github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
+	"github.com/grafana/grafana/pkg/modules"
 	pluginDashboards "github.com/grafana/grafana/pkg/plugins/manager/dashboards"
 	"github.com/grafana/grafana/pkg/registry/corekind"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -48,7 +48,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	dashboardimportservice "github.com/grafana/grafana/pkg/services/dashboardimport/service"
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardstore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
@@ -60,8 +59,8 @@ import (
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
-	"github.com/grafana/grafana/pkg/services/export"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	grpccontext "github.com/grafana/grafana/pkg/services/grpcserver/context"
@@ -92,8 +91,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/playlist/playlistimpl"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	plugindashboardsservice "github.com/grafana/grafana/pkg/services/plugindashboards/service"
-	"github.com/grafana/grafana/pkg/services/pluginsettings"
-	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration"
 	"github.com/grafana/grafana/pkg/services/preference/prefimpl"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
@@ -218,6 +215,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(correlations.Service), new(*correlations.CorrelationsService)),
 	quotaimpl.ProvideService,
 	remotecache.ProvideService,
+	wire.Bind(new(remotecache.CacheStorage), new(*remotecache.RemoteCache)),
 	loginservice.ProvideService,
 	wire.Bind(new(login.Service), new(*loginservice.Implementation)),
 	authinfoservice.ProvideAuthInfoService,
@@ -231,7 +229,6 @@ var wireBasicSet = wire.NewSet(
 	searchV2.ProvideSearchHTTPService,
 	store.ProvideService,
 	store.ProvideSystemUsersService,
-	export.ProvideService,
 	live.ProvideService,
 	pushhttp.ProvideService,
 	contexthandler.ProvideService,
@@ -280,8 +277,6 @@ var wireBasicSet = wire.NewSet(
 	dashsnapsvc.ProvideService,
 	datasourceservice.ProvideService,
 	wire.Bind(new(datasources.DataSourceService), new(*datasourceservice.Service)),
-	pluginSettings.ProvideService,
-	wire.Bind(new(pluginsettings.Service), new(*pluginSettings.Service)),
 	alerting.ProvideService,
 	serviceaccountsretriever.ProvideService,
 	wire.Bind(new(serviceaccountsretriever.ServiceAccountRetriever), new(*serviceaccountsretriever.Service)),
@@ -295,14 +290,13 @@ var wireBasicSet = wire.NewSet(
 	teamguardianManager.ProvideService,
 	featuremgmt.ProvideManagerService,
 	featuremgmt.ProvideToggles,
-	dashboardservice.ProvideDashboardService, // DashboardServiceImpl
+	dashboardservice.ProvideDashboardServiceImpl,
+	dashboardservice.ProvideDashboardService,
+	dashboardservice.ProvideDashboardProvisioningService,
+	dashboardservice.ProvideDashboardPluginService,
 	dashboardstore.ProvideDashboardStore,
 	folderimpl.ProvideService,
 	folderimpl.ProvideDashboardFolderStore,
-	dashboardservice.ProvideSimpleDashboardService,
-	dashboardservice.ProvideDashboardProvisioningService,
-	dashboardservice.ProvideDashboardPluginService,
-	wire.Bind(new(dashboards.Store), new(*dashboardstore.DashboardStore)),
 	wire.Bind(new(folder.FolderStore), new(*folderimpl.DashboardFolderStoreImpl)),
 	dashboardimportservice.ProvideService,
 	wire.Bind(new(dashboardimport.Service), new(*dashboardimportservice.ImportDashboardService)),
@@ -368,10 +362,12 @@ var wireBasicSet = wire.NewSet(
 	authnimpl.ProvideService,
 	wire.Bind(new(authn.Service), new(*authnimpl.Service)),
 	supportbundlesimpl.ProvideService,
+	modules.WireSet,
 )
 
 var wireSet = wire.NewSet(
 	wireBasicSet,
+	metrics.ProvideRegisterer,
 	sqlstore.ProvideService,
 	ngmetrics.ProvideService,
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationService)),
@@ -386,6 +382,7 @@ var wireSet = wire.NewSet(
 var wireTestSet = wire.NewSet(
 	wireBasicSet,
 	ProvideTestEnv,
+	metrics.ProvideRegistererForTest,
 	sqlstore.ProvideServiceForTests,
 	ngmetrics.ProvideServiceForTest,
 	notifications.MockNotificationService,

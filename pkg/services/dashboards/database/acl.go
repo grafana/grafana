@@ -15,7 +15,7 @@ import (
 // 1) Permissions for the dashboard
 // 2) permissions for its parent folder
 // 3) if no specific permissions have been set for the dashboard or its parent folder then get the default permissions
-func (d *DashboardStore) GetDashboardACLInfoList(ctx context.Context, query *dashboards.GetDashboardACLInfoListQuery) ([]*dashboards.DashboardACLInfoDTO, error) {
+func (d *dashboardStore) GetDashboardACLInfoList(ctx context.Context, query *dashboards.GetDashboardACLInfoListQuery) ([]*dashboards.DashboardACLInfoDTO, error) {
 	queryResult := make([]*dashboards.DashboardACLInfoDTO, 0)
 	outerErr := d.store.WithDbSession(ctx, func(dbSession *db.Session) error {
 		falseStr := d.store.GetDialect().BooleanStr(false)
@@ -98,7 +98,7 @@ func (d *DashboardStore) GetDashboardACLInfoList(ctx context.Context, query *das
 }
 
 // HasEditPermissionInFolders validates that an user have access to a certain folder
-func (d *DashboardStore) HasEditPermissionInFolders(ctx context.Context, query *folder.HasEditPermissionInFoldersQuery) (bool, error) {
+func (d *dashboardStore) HasEditPermissionInFolders(ctx context.Context, query *folder.HasEditPermissionInFoldersQuery) (bool, error) {
 	var queryResult bool
 	if query.SignedInUser.HasRole(org.RoleEditor) {
 		queryResult = true
@@ -130,7 +130,7 @@ func (d *DashboardStore) HasEditPermissionInFolders(ctx context.Context, query *
 	return queryResult, nil
 }
 
-func (d *DashboardStore) HasAdminPermissionInDashboardsOrFolders(ctx context.Context, query *folder.HasAdminPermissionInDashboardsOrFoldersQuery) (bool, error) {
+func (d *dashboardStore) HasAdminPermissionInDashboardsOrFolders(ctx context.Context, query *folder.HasAdminPermissionInDashboardsOrFoldersQuery) (bool, error) {
 	var queryResult bool
 	err := d.store.WithDbSession(ctx, func(dbSession *db.Session) error {
 		if query.SignedInUser.HasRole(org.RoleAdmin) {
@@ -161,7 +161,7 @@ func (d *DashboardStore) HasAdminPermissionInDashboardsOrFolders(ctx context.Con
 	return queryResult, nil
 }
 
-func (d *DashboardStore) DeleteACLByUser(ctx context.Context, userID int64) error {
+func (d *dashboardStore) DeleteACLByUser(ctx context.Context, userID int64) error {
 	return d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		var rawSQL = "DELETE FROM dashboard_acl WHERE user_id = ?"
 		_, err := sess.Exec(rawSQL, userID)

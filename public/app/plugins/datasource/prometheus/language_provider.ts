@@ -77,6 +77,20 @@ export function getMetadataString(metric: string, metadata: PromMetricsMetadata)
   return `${type.toUpperCase()}: ${help}`;
 }
 
+export function getMetadataHelp(metric: string, metadata: PromMetricsMetadata): string | undefined {
+  if (!metadata[metric]) {
+    return undefined;
+  }
+  return metadata[metric].help;
+}
+
+export function getMetadataType(metric: string, metadata: PromMetricsMetadata): string | undefined {
+  if (!metadata[metric]) {
+    return undefined;
+  }
+  return metadata[metric].type;
+}
+
 const PREFIX_DELIMITER_REGEX =
   /(="|!="|=~"|!~"|\{|\[|\(|\+|-|\/|\*|%|\^|\band\b|\bor\b|\bunless\b|==|>=|!=|<=|>|<|=|~|,)/;
 
