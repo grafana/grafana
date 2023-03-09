@@ -218,7 +218,7 @@ describe('CloudWatchLogsQueryRunner', () => {
 
   const logsScopedVarQuery: CloudWatchLogsQuery = {
     queryMode: 'Logs',
-    logGroups: [{ arn: logGroupNamesVariable.name, name: logGroupNamesVariable.name }],
+    logGroups: [{ arn: `$${logGroupNamesVariable.name}`, name: logGroupNamesVariable.name }],
     hide: false,
     id: '',
     region: '$' + regionVariable.name,
