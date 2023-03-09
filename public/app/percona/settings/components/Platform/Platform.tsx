@@ -18,7 +18,7 @@ import { Connected } from './Connected/Connected';
 import { API_INVALID_TOKEN_ERROR_CODE, CONNECT_AFTER_SETTINGS_DELAY, CONNECT_DELAY } from './Platform.constants';
 import { Messages } from './Platform.messages';
 import { PlatformService } from './Platform.service';
-import { ConnectRenderProps, ConnectErrorBody } from './types';
+import { ConnectRenderProps } from './types';
 
 export const Platform: FC = () => {
   const navModel = usePerconaNavModel('settings-percona-platform');
@@ -55,14 +55,17 @@ export const Platform: FC = () => {
         }));
       }, CONNECT_DELAY);
     } catch (e) {
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      const error = e as AxiosError<ConnectErrorBody>;
+      let message = null;
 
-      if (error.response?.data?.code === API_INVALID_TOKEN_ERROR_CODE) {
-        appEvents.emit(AppEvents.alertError, [Messages.invalidToken]);
-      } else {
-        appEvents.emit(AppEvents.alertError, [error.message]);
+      if (e instanceof AxiosError) {
+        if (e.response?.data?.code === API_INVALID_TOKEN_ERROR_CODE) {
+          message = Messages.invalidToken;
+        } else {
+          message = e.response?.data.message ?? e.message;
+        }
       }
+
+      appEvents.emit(AppEvents.alertError, [message ?? Messages.unknownError]);
 
       logger.error(e);
       setConnecting(false);
