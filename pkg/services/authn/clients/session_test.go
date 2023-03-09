@@ -10,14 +10,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -32,7 +29,7 @@ func TestSession_Test(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.LoginCookieName = ""
 	cfg.LoginMaxLifetime = 20 * time.Second
-	s := ProvideSession(cfg, &authtest.FakeUserAuthTokenService{}, &usertest.FakeUserService{}, featuremgmt.WithFeatures())
+	s := ProvideSession(cfg, &authtest.FakeUserAuthTokenService{}, featuremgmt.WithFeatures())
 
 	disabled := s.Test(context.Background(), &authn.Request{HTTPRequest: validHTTPReq})
 	assert.False(t, disabled)
@@ -64,18 +61,8 @@ func TestSession_Authenticate(t *testing.T) {
 		AuthTokenSeen: true,
 	}
 
-	sampleUser := &user.SignedInUser{
-		UserID:  1,
-		Name:    "sample user",
-		Login:   "sample_user",
-		Email:   "sample_user@samples.iwz",
-		OrgID:   1,
-		OrgRole: roletype.RoleEditor,
-	}
-
 	type fields struct {
 		sessionService auth.UserTokenService
-		userService    user.Service
 	}
 	type args struct {
 		r *authn.Request
@@ -89,7 +76,7 @@ func TestSession_Authenticate(t *testing.T) {
 	}{
 		{
 			name:    "cookie not found",
-			fields:  fields{sessionService: &authtest.FakeUserAuthTokenService{}, userService: &usertest.FakeUserService{}},
+			fields:  fields{sessionService: &authtest.FakeUserAuthTokenService{}},
 			args:    args{r: &authn.Request{HTTPRequest: &http.Request{}}},
 			wantID:  nil,
 			wantErr: true,
@@ -98,19 +85,14 @@ func TestSession_Authenticate(t *testing.T) {
 			name: "success",
 			fields: fields{sessionService: &authtest.FakeUserAuthTokenService{LookupTokenProvider: func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
 				return sampleToken, nil
-			}}, userService: &usertest.FakeUserService{ExpectedSignedInUser: sampleUser}},
+			}}},
 			args: args{r: &authn.Request{HTTPRequest: validHTTPReq}},
 			wantID: &authn.Identity{
-				SessionToken:   sampleToken,
-				ID:             "user:1",
-				Name:           "sample user",
-				Login:          "sample_user",
-				Email:          "sample_user@samples.iwz",
-				OrgID:          1,
-				OrgRoles:       map[int64]roletype.RoleType{1: roletype.RoleEditor},
-				IsGrafanaAdmin: boolPtr(false),
+				ID:           "user:1",
+				SessionToken: sampleToken,
 				ClientParams: authn.ClientParams{
 					SyncPermissions: true,
+					FetchSyncedUser: true,
 				},
 			},
 			wantErr: false,
@@ -121,7 +103,7 @@ func TestSession_Authenticate(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.LoginCookieName = cookieName
 			cfg.LoginMaxLifetime = 20 * time.Second
-			s := ProvideSession(cfg, tt.fields.sessionService, tt.fields.userService, featuremgmt.WithFeatures())
+			s := ProvideSession(cfg, tt.fields.sessionService, featuremgmt.WithFeatures())
 
 			got, err := s.Authenticate(context.Background(), tt.args.r)
 			require.True(t, (err != nil) == tt.wantErr, err)
@@ -161,7 +143,7 @@ func TestSession_Hook(t *testing.T) {
 				token.UnhashedToken = "new-token"
 				return true, token, nil
 			},
-		}, &usertest.FakeUserService{}, featuremgmt.WithFeatures())
+		}, featuremgmt.WithFeatures())
 
 		sampleID := &authn.Identity{
 			SessionToken: &auth.UserToken{
@@ -195,7 +177,7 @@ func TestSession_Hook(t *testing.T) {
 	})
 
 	t.Run("should not rotate token with feature flag", func(t *testing.T) {
-		s := ProvideSession(setting.NewCfg(), nil, nil, featuremgmt.WithFeatures(featuremgmt.FlagFrontendTokenRotation))
+		s := ProvideSession(setting.NewCfg(), nil, featuremgmt.WithFeatures(featuremgmt.FlagFrontendTokenRotation))
 
 		req := &authn.Request{}
 		identity := &authn.Identity{}

@@ -18,14 +18,11 @@ import (
 var _ authn.HookClient = new(Session)
 var _ authn.ContextAwareClient = new(Session)
 
-func ProvideSession(
-	cfg *setting.Cfg, sessionService auth.UserTokenService,
-	userService user.Service, features *featuremgmt.FeatureManager,
-) *Session {
+func ProvideSession(cfg *setting.Cfg, sessionService auth.UserTokenService, features *featuremgmt.FeatureManager) *Session {
 	return &Session{
 		cfg:            cfg,
+		features:       features,
 		sessionService: sessionService,
-		userService:    userService,
 		log:            log.New(authn.ClientSession),
 	}
 }
@@ -53,24 +50,27 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 		return nil, err
 	}
 
-	token, err := s.sessionService.LookupToken(ctx, rawSessionToken)
+	var token *auth.UserToken
+
+	if s.features.IsEnabled(featuremgmt.FlagFrontendTokenRotation) {
+		token, err = s.sessionService.GetToken(ctx, auth.GetTokenQuery{UnHashedToken: rawSessionToken})
+	} else {
+		token, err = s.sessionService.LookupToken(ctx, rawSessionToken)
+	}
+
 	if err != nil {
 		s.log.FromContext(ctx).Warn("Failed to look up session from cookie", "error", err)
 		return nil, err
 	}
 
-	signedInUser, err := s.userService.GetSignedInUserWithCacheCtx(
-		ctx, &user.GetSignedInUserQuery{UserID: token.UserId, OrgID: r.OrgID},
-	)
-	if err != nil {
-		s.log.FromContext(ctx).Error("Failed to get user with id", "userId", token.UserId, "error", err)
-		return nil, err
-	}
-
-	identity := authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, signedInUser.UserID), signedInUser, authn.ClientParams{SyncPermissions: true})
-	identity.SessionToken = token
-
-	return identity, nil
+	return &authn.Identity{
+		ID:           authn.NamespacedID(authn.NamespaceUser, token.UserId),
+		SessionToken: token,
+		ClientParams: authn.ClientParams{
+			FetchSyncedUser: true,
+			SyncPermissions: true,
+		},
+	}, nil
 }
 
 func (s *Session) Test(ctx context.Context, r *authn.Request) bool {
