@@ -59,13 +59,12 @@ type PrometheusDataQuery struct {
 	Format *Format `json:"format,omitempty"`
 
 	// Hide true if query is disabled (ie should not be returned to the dashboard)
+	// Note this does not always imply that the query should not be executed since
+	// the results from a hidden query may be used as the input to other queries (SSE etc)
 	Hide *bool `json:"hide,omitempty"`
 
 	// Returns only the latest value that Prometheus has scraped for the requested time series
 	Instant *bool `json:"instant,omitempty"`
-
-	// Unique, guid like, string used in explore mode
-	Key *string `json:"key,omitempty"`
 
 	// Specify the query flavor
 	// TODO make this required and give it a default
@@ -74,7 +73,9 @@ type PrometheusDataQuery struct {
 	// Returns a Range vector, comprised of a set of time series containing a range of data points over time for each time series
 	Range *bool `json:"range,omitempty"`
 
-	// A - Z
+	// A unique identifier for the query within the list of targets.
+	// In server side expressions, the refId is used as a variable name to identify results.
+	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
 	RefId string `json:"refId"`
 }
 
