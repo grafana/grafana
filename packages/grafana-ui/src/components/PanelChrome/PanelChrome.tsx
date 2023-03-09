@@ -149,7 +149,7 @@ export function PanelChrome({
       {hasHeader && (
         <div className={cx(styles.headerContainer, dragClass)} style={headerStyles} data-testid="header-container">
           {statusMessage && (
-            <div className={cx(styles.errorContainerInHeader, dragClassCancel)}>
+            <div className={dragClassCancel}>
               <PanelStatus message={statusMessage} onClick={statusMessageOnClick} ariaLabel="Panel status" />
             </div>
           )}
@@ -301,11 +301,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'panel-menu',
       visibility: 'hidden',
       border: 'none',
-    }),
-    errorContainerInHeader: css({
-      label: 'error-container',
-      marginRight: theme.spacing(1),
-      marginLeft: theme.spacing(-1),
     }),
     errorContainerFloating: css({
       label: 'error-container',
