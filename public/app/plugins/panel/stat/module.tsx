@@ -53,7 +53,7 @@ export const plugin = new PanelPlugin<PanelOptions>(StatPanel)
         name: 'Background gradient',
         defaultValue: defaultPanelOptions.hasGradient,
         category: mainCategory,
-        // This
+        // This toggle really only applies when the BigValueColorMode === `background`
         showIf: (panelOptions) => panelOptions.colorMode === BigValueColorMode.Background,
       })
       .addRadio({
