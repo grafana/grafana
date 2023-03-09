@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+
 	k8sTypes "k8s.io/apimachinery/pkg/types"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -42,7 +43,7 @@ func ProvideWebhooks(
 	}
 
 	webhooksAPI.RegisterAPIEndpoints()
-	err := clientset.RegisterValidation(context.Background(), []client.ShortWebhookConfig{})
+	err := clientset.RegisterValidation(context.Background(), GetWebhookConfigs())
 
 	// TODO do better
 	if err != nil {
