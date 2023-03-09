@@ -49,6 +49,7 @@ describe('DBClusterAdvancedOptions::', () => {
     const advancedOptions = screen.getByTestId('dbCluster-advanced-settings');
     waitFor(() => fireEvent.click(advancedOptions));
 
+    expect(await screen.getByTestId('template-field-container')).toBeInTheDocument();
     expect(await screen.getByTestId('nodes-number-input')).toBeInTheDocument();
     expect(await screen.getByTestId('resources-field-container')).toBeInTheDocument();
     expect(await screen.getByTestId('memory-number-input')).toBeInTheDocument();
@@ -81,6 +82,7 @@ describe('DBClusterAdvancedOptions::', () => {
       )
     );
 
+    expect(await screen.getByTestId('template-field-container')).toBeInTheDocument();
     expect(await screen.getByTestId('nodes-number-input')).toBeInTheDocument();
     expect(await screen.getByTestId('resources-field-container')).toBeInTheDocument();
     expect(await screen.getByTestId('memory-number-input')).toBeInTheDocument();

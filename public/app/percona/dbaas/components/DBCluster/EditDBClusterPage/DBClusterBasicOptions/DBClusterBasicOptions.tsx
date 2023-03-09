@@ -93,7 +93,7 @@ export const DBClusterBasicOptions: FC<DBClusterBasicOptionsProps> = ({ kubernet
       <Field
         dataTestId="dbcluster-kubernetes-cluster-field"
         name={BasicOptionsFields.kubernetesCluster}
-        label={Messages.kubernetesCluster}
+        label={Messages.labels.kubernetesCluster}
         options={kubernetesOptions}
         component={SelectFieldAdapter}
         noOptionsMessage={Messages.noOperatorsMessage}
@@ -105,7 +105,7 @@ export const DBClusterBasicOptions: FC<DBClusterBasicOptionsProps> = ({ kubernet
           disabled={!form.getState().values[BasicOptionsFields.kubernetesCluster] || !databaseOptions.length}
           dataTestId="dbcluster-database-type-field"
           name={BasicOptionsFields.databaseType}
-          label={Messages.databaseType}
+          label={Messages.labels.databaseType}
           options={databaseOptions}
           component={SelectFieldAdapter}
           validate={optionRequired}
@@ -115,7 +115,7 @@ export const DBClusterBasicOptions: FC<DBClusterBasicOptionsProps> = ({ kubernet
           disabled={isDatabaseVersionDisabled}
           dataTestId="dbcluster-database-version-field"
           name={BasicOptionsFields.databaseVersion}
-          label={Messages.databaseVersion}
+          label={Messages.labels.databaseVersion}
           component={AsyncSelectFieldAdapter}
           loading={loadingDatabaseVersions}
           options={databaseVersions}
@@ -124,7 +124,7 @@ export const DBClusterBasicOptions: FC<DBClusterBasicOptionsProps> = ({ kubernet
       </div>
       <TextInputField
         name={BasicOptionsFields.name}
-        label={Messages.clusterName}
+        label={Messages.labels.clusterName}
         validators={[required, kubernetesClusterNameValidator, maxLength(CLUSTER_NAME_MAX_LENGTH)]}
       />
       {settings?.backupEnabled && <Restore form={form} />}

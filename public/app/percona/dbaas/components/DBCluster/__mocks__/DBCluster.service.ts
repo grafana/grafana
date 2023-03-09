@@ -1,6 +1,6 @@
 import { DBClusterAllocatedResources } from '../DBCluster.types';
 
-import { dbCLusterAllocatedResourcesStub, dbClusterLogsAPI } from './dbClustersStubs';
+import { dbCLusterAllocatedResourcesStub, dbClusterLogsAPI, dbClusterTemplatesApi } from './dbClustersStubs';
 
 export class DBClusterService {
   static async getLogs() {
@@ -12,5 +12,9 @@ export class DBClusterService {
   }
   static async getDBClusters() {
     return Promise.resolve();
+  }
+
+  static getDBClusterTemplates() {
+    return Promise.resolve(dbClusterTemplatesApi);
   }
 }

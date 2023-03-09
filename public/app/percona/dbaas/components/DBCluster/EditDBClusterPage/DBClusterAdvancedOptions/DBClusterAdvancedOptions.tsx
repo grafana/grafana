@@ -33,6 +33,7 @@ import { getStyles } from './DBClusterAdvancedOptions.styles';
 import { AdvancedOptionsFields, DBClusterResources } from './DBClusterAdvancedOptions.types';
 import { canGetExpectedResources, nodesValidator, resourceValidator } from './DBClusterAdvancedOptions.utils';
 import NetworkAndSecurity from './NetworkAndSecurity/NetworkAndSecurity';
+import Templates from './Templates/Templates';
 
 export interface DBClusterAdvancedOptionsProps extends FormRenderProps {
   mode: DBClusterPageMode;
@@ -206,6 +207,10 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({
   return (
     <FieldSet label={Messages.fieldSets.advancedSettings} {...collapsableProps}>
       <>{showUnsafeConfigurationWarning && <UnsafeConfigurationWarning />}</>
+      <Templates
+        k8sClusterName={selectedCluster ? selectedCluster.kubernetesClusterName : kubernetesCluster?.value}
+        databaseType={databaseType?.value}
+      />
       <div className={styles.line}>
         <NumberInputField
           name={AdvancedOptionsFields.nodes}

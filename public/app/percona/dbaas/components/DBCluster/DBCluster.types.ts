@@ -15,6 +15,11 @@ export enum DBClusterType {
   psmdb = 'DB_CLUSTER_TYPE_PSMDB',
 }
 
+export const DatabaseToDBClusterTypeMapping: Partial<Record<Databases, DBClusterType>> = {
+  [Databases.mysql]: DBClusterType.pxc,
+  [Databases.mongodb]: DBClusterType.psmdb,
+};
+
 export interface DBCluster {
   clusterName: string;
   kubernetesClusterName: string;
@@ -39,6 +44,7 @@ export interface DBCluster {
   storageClass?: string;
   backup?: DBaaSBackup;
   restore?: DBaaSRestore;
+  template?: DBClusterTemplate;
 }
 
 interface DBaaSBackup {
@@ -189,6 +195,7 @@ export interface DBClusterPayload {
   pxcConfiguration?: string;
   internet_facing?: boolean;
   source_ranges?: string[];
+  template?: DBClusterTemplate;
 }
 
 export interface DBClusterActionAPI {
@@ -241,6 +248,19 @@ export interface DBClusterSecretsResponse {
 
 export interface DBClusterSecretsRequest {
   kubernetes_cluster_name: string;
+}
+
+export interface DBClusterTemplate {
+  name: string;
+  kind: string;
+}
+export interface DBClusterTemplatesResponse {
+  templates: DBClusterTemplate[];
+}
+
+export interface DBClusterTemplatesRequest {
+  kubernetes_cluster_name: string;
+  cluster_type: DBClusterType;
 }
 
 export interface DBClusterSecret {

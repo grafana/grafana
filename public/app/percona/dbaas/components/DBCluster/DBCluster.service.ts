@@ -22,6 +22,9 @@ import {
   DBClusterListResponse,
   DBClusterSecretsResponse,
   DBClusterSecretsRequest,
+  DBClusterTemplatesResponse,
+  DBClusterTemplatesRequest,
+  DBClusterType,
 } from './DBCluster.types';
 import { formatResources } from './DBCluster.utils';
 
@@ -107,5 +110,15 @@ export abstract class DBClusterService {
           },
         };
       });
+  }
+  static async getDBClusterTemplates(
+    kubernetesClusterName: string,
+    k8sClusterType: DBClusterType
+  ): Promise<DBClusterTemplatesResponse> {
+    return apiManagement.post<DBClusterTemplatesResponse, DBClusterTemplatesRequest>(
+      '/DBaaS/Templates/List',
+      { kubernetes_cluster_name: kubernetesClusterName, cluster_type: k8sClusterType },
+      true
+    );
   }
 }

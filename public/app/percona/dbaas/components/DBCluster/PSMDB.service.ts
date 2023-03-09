@@ -148,6 +148,7 @@ export class PSMDBService extends DBClusterService {
       expose: dbCluster.exposed,
       installedImage: dbCluster.installed_image,
       availableImage: dbCluster.available_image,
+      template: dbCluster.template,
     };
   }
 }
@@ -185,6 +186,12 @@ const toAPI = (dbCluster: DBCluster): DBClusterPayload => ({
       },
     }),
   },
+  ...(dbCluster.template && {
+    template: {
+      name: dbCluster.template.name,
+      kind: dbCluster.template.kind,
+    },
+  }),
 });
 
 const toSuspendAPI = (dbCluster: DBCluster) => ({

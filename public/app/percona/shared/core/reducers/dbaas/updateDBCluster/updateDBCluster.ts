@@ -42,7 +42,8 @@ const perconaUpdateDBClusterSlice = createSlice({
 export const updateDBClusterAction = createAsyncThunk(
   'percona/updateDBCluster',
   async (args: { values: Record<string, any>; selectedDBCluster: DBCluster }, thunkAPI): Promise<void> => {
-    const { cpu, memory, disk, nodes, configuration, sourceRanges, expose, internetFacing, storageClass } = args.values;
+    const { cpu, memory, disk, nodes, configuration, sourceRanges, expose, internetFacing, storageClass, template } =
+      args.values;
     const { selectedDBCluster } = args;
 
     const dbClusterService = newDBClusterService(selectedDBCluster.databaseType);
@@ -63,6 +64,12 @@ export const updateDBClusterAction = createAsyncThunk(
         configuration,
         sourceRanges: sourceRanges ? sourceRanges.map((item: any) => item?.sourceRange || '') : [],
         ...(storageClass?.value && { storageClass: storageClass?.value }),
+        ...(template && {
+          template: {
+            name: template.label,
+            kind: template.value,
+          },
+        }),
       }),
       {
         successMessage: 'Cluster was successfully updated',

@@ -4,6 +4,7 @@ export enum AdvancedOptionsFields {
   memory = 'memory',
   cpu = 'cpu',
   disk = 'disk',
+  template = 'template',
 }
 
 export enum DBClusterResources {

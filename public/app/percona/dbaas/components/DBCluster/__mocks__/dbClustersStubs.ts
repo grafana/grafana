@@ -9,6 +9,7 @@ import {
   DBClusterComponentVersionStatus,
   DBClusterAllocatedResources,
   ResourcesWithUnits,
+  DBClusterTemplate,
 } from '../DBCluster.types';
 import { Operators } from '../EditDBClusterPage/DBClusterBasicOptions/DBClusterBasicOptions.types';
 
@@ -178,6 +179,13 @@ export const dbClusterLogsAPI = {
     },
   ],
 };
+
+export const dbClusterTemplatesApi: DBClusterTemplate[] = [
+  {
+    name: 'template-name',
+    kind: 'template-kind',
+  },
+];
 
 export const dbCLusterAllocatedResourcesStub: DBClusterAllocatedResources = {
   total: {

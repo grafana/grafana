@@ -67,28 +67,28 @@ export const getEditInitialValues = (
   selectedDBCluster: DBCluster,
   configuration: DBClusterPayload | undefined
 ): UpdateDBClusterFormValues => {
-  const isCluster = selectedDBCluster.clusterSize > 1;
-  const sourceRangesArray = configuration?.source_ranges?.map((item) => ({ sourceRange: item })) || [{}];
+  const { template, clusterSize, sourceRanges, databaseType, cpu, disk, memory } = selectedDBCluster;
+  const isCluster = clusterSize > 1;
+  const sourceRangesArray = sourceRanges?.map((item) => ({ sourceRange: item })) || [{}];
   const storageClass = configuration?.params?.replicaset?.storage_class || configuration?.params?.pxc?.storage_class;
   const clusterParameters: UpdateDBClusterFormValues = {
-    nodes: isCluster ? selectedDBCluster.clusterSize : MIN_NODES,
+    nodes: isCluster ? clusterSize : MIN_NODES,
     databaseType: {
-      value: selectedDBCluster.databaseType,
-      label: DATABASE_LABELS[selectedDBCluster.databaseType],
+      value: databaseType,
+      label: DATABASE_LABELS[databaseType],
     },
-    cpu: selectedDBCluster.cpu,
-    disk: selectedDBCluster.disk,
-    memory: selectedDBCluster.memory,
+    cpu,
+    disk,
+    memory,
     configuration: configuration?.params?.pxc?.configuration || configuration?.params?.replicaset?.configuration,
     expose: configuration?.exposed,
     internetFacing: configuration?.internet_facing,
     sourceRanges: sourceRangesArray,
     ...(storageClass && { storageClass: { label: storageClass, value: storageClass } }),
+    ...(template && { template: { label: template.name, value: template.kind } }),
   };
   const isMatchSize = (type: DBClusterResources) =>
-    DEFAULT_SIZES[type].cpu === selectedDBCluster.cpu &&
-    DEFAULT_SIZES[type].memory === selectedDBCluster.memory &&
-    DEFAULT_SIZES[type].disk === selectedDBCluster.disk;
+    DEFAULT_SIZES[type].cpu === cpu && DEFAULT_SIZES[type].memory === memory && DEFAULT_SIZES[type].disk === disk;
 
   if (isMatchSize(DBClusterResources.small)) {
     clusterParameters.resources = DBClusterResources.small;
