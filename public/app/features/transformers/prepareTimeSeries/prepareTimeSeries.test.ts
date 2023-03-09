@@ -371,6 +371,40 @@ describe('Prepare time series transformer', () => {
       }),
     ]);
   });
+
+  const longFrame = [
+    toDataFrame({
+      meta: { type: DataFrameType.TimeSeriesLong },
+      refId: 'A',
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1, 1, 2, 2, 3, 3] },
+        { name: 'speed', type: FieldType.number, values: [4, 5, 6, 7, 8, 9] },
+        { name: 'sensor', type: FieldType.string, values: ['a', 'b', 'a', 'b', 'a', 'b'] },
+      ],
+    }),
+  ];
+
+  it('should handle long to wide', () => {
+    expect(
+      prepareTimeSeriesTransformer.transformer(
+        {
+          format: timeSeriesFormat.TimeSeriesWide,
+        },
+        ctx
+      )(longFrame)
+    ).toMatchSnapshot();
+  });
+
+  it('should handle long to multi', () => {
+    expect(
+      prepareTimeSeriesTransformer.transformer(
+        {
+          format: timeSeriesFormat.TimeSeriesMulti,
+        },
+        ctx
+      )(longFrame)
+    ).toMatchSnapshot(); // ???? expecting a single frame!!!!
+  });
 });
 
 function toEquableDataFrame(source: any): DataFrame {

@@ -1,0 +1,143 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Prepare time series transformer should handle long to multi 1`] = `
+[
+  {
+    "fields": [
+      {
+        "config": {},
+        "name": "time",
+        "type": "time",
+        "values": [
+          1,
+          2,
+          3,
+        ],
+      },
+      {
+        "config": {},
+        "labels": {
+          "sensor": "a",
+        },
+        "name": "speed",
+        "type": "number",
+        "values": [
+          4,
+          6,
+          8,
+        ],
+      },
+    ],
+    "length": 3,
+    "meta": {
+      "type": "timeseries-multi",
+    },
+    "name": undefined,
+    "refId": "A",
+  },
+  {
+    "fields": [
+      {
+        "config": {},
+        "name": "time",
+        "type": "time",
+        "values": [
+          1,
+          2,
+          3,
+        ],
+      },
+      {
+        "config": {},
+        "labels": {
+          "sensor": "b",
+        },
+        "name": "speed",
+        "type": "number",
+        "values": [
+          5,
+          7,
+          9,
+        ],
+      },
+    ],
+    "length": 3,
+    "meta": {
+      "type": "timeseries-multi",
+    },
+    "name": undefined,
+    "refId": "A",
+  },
+]
+`;
+
+exports[`Prepare time series transformer should handle long to wide 1`] = `
+[
+  {
+    "fields": [
+      {
+        "config": {},
+        "name": "time",
+        "type": "time",
+        "values": [
+          1,
+          2,
+          3,
+        ],
+      },
+      {
+        "config": {},
+        "labels": {
+          "sensor": "a",
+        },
+        "name": "speed",
+        "type": "number",
+        "values": [
+          4,
+          6,
+          8,
+        ],
+      },
+    ],
+    "length": 3,
+    "meta": {
+      "type": "timeseries-multi",
+    },
+    "name": undefined,
+    "refId": "A",
+  },
+  {
+    "fields": [
+      {
+        "config": {},
+        "name": "time",
+        "type": "time",
+        "values": [
+          1,
+          2,
+          3,
+        ],
+      },
+      {
+        "config": {},
+        "labels": {
+          "sensor": "b",
+        },
+        "name": "speed",
+        "type": "number",
+        "values": [
+          5,
+          7,
+          9,
+        ],
+      },
+    ],
+    "length": 3,
+    "meta": {
+      "type": "timeseries-multi",
+    },
+    "name": undefined,
+    "refId": "A",
+  },
+]
+`;

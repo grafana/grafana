@@ -314,8 +314,9 @@ export const prepareTimeSeriesTransformer: SynchronousDataTransformerInfo<Prepar
     } else if (format === timeSeriesFormat.TimeSeriesLong) {
       return toTimeSeriesLong;
     }
+    const joinBy = fieldMatchers.get(FieldMatcherID.firstTimeField).get({});
 
-    // TimeSeriesWide
+    // Single TimeSeriesWide frame (joined by time)
     return (data: DataFrame[]) => {
       if (!data.length) {
         return [];
@@ -334,17 +335,17 @@ export const prepareTimeSeriesTransformer: SynchronousDataTransformerInfo<Prepar
       // Join by the first frame
       const frame = outerJoinDataFrames({
         frames: join,
-        joinBy: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
+        joinBy,
         keepOriginIndices: true,
       });
-      if (!frame) {
-        return [];
+      if (frame) {
+        if (!frame.meta) {
+          frame.meta = {};
+        }
+        frame.meta.type = DataFrameType.TimeSeriesWide;
+        return [frame];
       }
-      if (!frame.meta) {
-        frame.meta = {};
-      }
-      frame.meta.type = DataFrameType.TimeSeriesWide;
-      return [frame];
+      return [];
     };
   },
 };
