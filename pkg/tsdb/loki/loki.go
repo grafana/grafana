@@ -95,10 +95,10 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	if err != nil {
 		return err
 	}
-	return callResource(ctx, req, sender, dsInfo, logger.FromContext(ctx))
+	return callResource(ctx, req, sender, dsInfo, logger.FromContext(ctx), s.tracer)
 }
 
-func callResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender, dsInfo *datasourceInfo, plog log.Logger) error {
+func callResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender, dsInfo *datasourceInfo, plog log.Logger, tracer tracing.Tracer) error {
 	url := req.URL
 
 	// a very basic is-this-url-valid check
@@ -113,8 +113,12 @@ func callResource(ctx context.Context, req *backend.CallResourceRequest, sender 
 	}
 	lokiURL := fmt.Sprintf("/loki/api/v1/%s", url)
 
+	ctx, span := tracer.Start(ctx, "datasource.loki.CallResource")
+	span.SetAttributes("url", lokiURL, attribute.Key("url").String(lokiURL))
+	defer span.End()
+
 	api := newLokiAPI(dsInfo.HTTPClient, dsInfo.URL, plog)
-	encodedBytes, err := api.RawQuery(ctx, lokiURL)
+	rawLokiResponse, err := api.RawQuery(ctx, lokiURL)
 
 	if err != nil {
 		return err
@@ -123,13 +127,13 @@ func callResource(ctx context.Context, req *backend.CallResourceRequest, sender 
 	respHeaders := map[string][]string{
 		"content-type": {"application/json"},
 	}
-	if encodedBytes.Encoding != "" {
-		respHeaders["content-encoding"] = []string{encodedBytes.Encoding}
+	if rawLokiResponse.Encoding != "" {
+		respHeaders["content-encoding"] = []string{rawLokiResponse.Encoding}
 	}
 	return sender.Send(&backend.CallResourceResponse{
-		Status:  http.StatusOK,
+		Status:  rawLokiResponse.Status,
 		Headers: respHeaders,
-		Body:    encodedBytes.Body,
+		Body:    rawLokiResponse.Body,
 	})
 }
 
