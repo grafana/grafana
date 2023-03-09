@@ -4,7 +4,7 @@ import { ContextSrv, contextSrv } from 'app/core/services/context_srv';
 import impressionSrv from 'app/core/services/impression_srv';
 import { DashboardQueryResult, getGrafanaSearcher, QueryResponse } from 'app/features/search/service';
 
-import { getRecentDashboardActions, getSearchResultActions } from './dashboardActions';
+import { getRecentDashboardActions, getDashboardSearchResultActions } from './dashboardActions';
 
 describe('dashboardActions', () => {
   let grafanaSearcherSpy: jest.SpyInstance;
@@ -96,10 +96,10 @@ describe('dashboardActions', () => {
     });
   });
 
-  describe('getSearchResultActions', () => {
+  describe('getDashboardSearchResultActions', () => {
     it('returns an empty array if the search query is empty', async () => {
       const searchQuery = '';
-      const results = await getSearchResultActions(searchQuery);
+      const results = await getDashboardSearchResultActions(searchQuery);
       expect(grafanaSearcherSpy).not.toHaveBeenCalled();
       expect(results).toEqual([]);
     });
@@ -112,7 +112,7 @@ describe('dashboardActions', () => {
       it('returns an empty array if anonymous access is not enabled', async () => {
         config.bootData.settings.anonymousEnabled = false;
         const searchQuery = 'mySearchQuery';
-        const results = await getSearchResultActions(searchQuery);
+        const results = await getDashboardSearchResultActions(searchQuery);
         expect(grafanaSearcherSpy).not.toHaveBeenCalled();
         expect(results).toEqual([]);
       });
@@ -120,7 +120,7 @@ describe('dashboardActions', () => {
       it('calls the search backend and returns an array of CommandPaletteActions if anonymous access is enabled', async () => {
         config.bootData.settings.anonymousEnabled = true;
         const searchQuery = 'mySearchQuery';
-        const results = await getSearchResultActions(searchQuery);
+        const results = await getDashboardSearchResultActions(searchQuery);
         expect(grafanaSearcherSpy).toHaveBeenCalledWith({
           kind: ['dashboard', 'folder'],
           query: searchQuery,
@@ -146,7 +146,7 @@ describe('dashboardActions', () => {
 
       it('calls the search backend with recent dashboards and returns an array of CommandPaletteActions', async () => {
         const searchQuery = 'mySearchQuery';
-        const results = await getSearchResultActions(searchQuery);
+        const results = await getDashboardSearchResultActions(searchQuery);
         expect(grafanaSearcherSpy).toHaveBeenCalledWith({
           kind: ['dashboard', 'folder'],
           query: searchQuery,
