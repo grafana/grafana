@@ -313,6 +313,11 @@ export class KeybindingSrv {
       dashboard.toggleLegendsForAll();
     });
 
+    // toggle all exemplars
+    this.bind('d x', () => {
+      dashboard.toggleExemplarsForAll();
+    });
+
     // collapse all rows
     this.bind('d shift+c', () => {
       dashboard.collapseRows();
