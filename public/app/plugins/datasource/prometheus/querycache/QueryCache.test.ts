@@ -49,18 +49,18 @@ const mockRequest = (request?: Partial<DataQueryRequest<PromQuery>>): DataQueryR
   };
 };
 
-describe('PrometheusIncrementalStorage', function () {
+describe('QueryCache', function () {
   it('instantiates', () => {
     const storage = new QueryCache();
     expect(storage).toBeInstanceOf(QueryCache);
   });
 
-  it('will not modify an empty response', () => {
+  it('will not modify or crash with empty response', () => {
     const storage = new QueryCache();
     const firstFrames: DataFrame[] = [];
     const secondFrames: DataFrame[] = [];
 
-    const targetSignifiers = new Map<string, string>();
+    const targetSignature = new Map<string, string>();
 
     // start time of scenario
     const firstFrom = dateTime(new Date(1675262550000));
@@ -92,12 +92,12 @@ describe('PrometheusIncrementalStorage', function () {
       },
     };
 
-    const frameSignifier = `helloFrameSig`;
+    const frameSignature = `helloFrameSig`;
     const dashboardId = `dashid`;
     const panelId = 2;
-    const targetSignifier = `${dashboardId}|${panelId}|A`;
+    const targetIdentity = `${dashboardId}|${panelId}|A`;
 
-    targetSignifiers.set(targetSignifier, frameSignifier);
+    targetSignature.set(targetIdentity, frameSignature);
 
     const firstStoredFrames = storage.procFrames(
       mockRequest({
@@ -107,13 +107,13 @@ describe('PrometheusIncrementalStorage', function () {
       }),
       {
         requests: [], // unused
-        targSigs: targetSignifiers,
+        targSigs: targetSignature,
         shouldCache: true,
       },
       firstFrames
     );
 
-    const cached = storage.cache.get(targetSignifier);
+    const cached = storage.cache.get(targetIdentity);
 
     expect(cached?.frames[0].fields[0].values.length).toEqual(firstFrames[0]?.fields[0]?.values?.length);
     expect(firstStoredFrames[0]?.fields[0].values.length).toEqual(firstFrames[0]?.fields[0]?.values?.length);
@@ -129,13 +129,13 @@ describe('PrometheusIncrementalStorage', function () {
       }),
       {
         requests: [], // unused
-        targSigs: targetSignifiers,
+        targSigs: targetSignature,
         shouldCache: true,
       },
       secondFrames
     );
 
-    const storageLengthAfterSubsequentQuery = storage.cache.get(targetSignifier);
+    const storageLengthAfterSubsequentQuery = storage.cache.get(targetIdentity);
 
     expect(secondStoredFrames).toEqual([]);
 
@@ -164,7 +164,7 @@ describe('PrometheusIncrementalStorage', function () {
       const firstFrames = scenario.first.dataFrames as unknown as DataFrame[];
       const secondFrames = scenario.second.dataFrames as unknown as DataFrame[];
 
-      const targetSignifiers = new Map<string, string>();
+      const targetSignatures = new Map<string, string>();
 
       // start time of scenario
       const firstFrom = dateTime(new Date(1675262550000));
@@ -196,12 +196,16 @@ describe('PrometheusIncrementalStorage', function () {
         },
       };
 
-      const frameSignifier = `helloFrameSig--${index}`;
       const dashboardId = `dashid--${index}`;
       const panelId = 2 + index;
-      const targetSignifier = `${dashboardId}|${panelId}|A`;
 
-      targetSignifiers.set(targetSignifier, frameSignifier);
+      // This can't change
+      const targetIdentity = `${dashboardId}|${panelId}|A`;
+
+      // But the signature can, and we should clean up any non-matching signatures
+      const frameSignature = `helloFrameSig--${index}`;
+
+      targetSignatures.set(targetIdentity, frameSignature);
 
       const firstStoredFrames = storage.procFrames(
         mockRequest({
@@ -211,13 +215,13 @@ describe('PrometheusIncrementalStorage', function () {
         }),
         {
           requests: [], // unused
-          targSigs: targetSignifiers,
+          targSigs: targetSignatures,
           shouldCache: true,
         },
         firstFrames
       );
 
-      const cached = storage.cache.get(targetSignifier);
+      const cached = storage.cache.get(targetIdentity);
 
       // I would expect that the number of values received from the API should be the same as the cached values?
       expect(cached?.frames[0].fields[0].values.length).toEqual(firstFrames[0].fields[0].values.length);
@@ -233,13 +237,13 @@ describe('PrometheusIncrementalStorage', function () {
         }),
         {
           requests: [], // unused
-          targSigs: targetSignifiers,
+          targSigs: targetSignatures,
           shouldCache: true,
         },
         secondFrames
       );
 
-      const storageLengthAfterSubsequentQuery = storage.cache.get(targetSignifier);
+      const storageLengthAfterSubsequentQuery = storage.cache.get(targetIdentity);
 
       storageLengthAfterSubsequentQuery?.frames.forEach((dataFrame, index) => {
         const secondFramesLength = secondFrames[index].fields[0].values.length;
@@ -267,6 +271,8 @@ describe('PrometheusIncrementalStorage', function () {
     });
   });
 
+  it('Modifying request interval will create new empty in cache, the old should be purged from cache', () => {});
+
   it('Will evict old dataframes, and use stored data when user shortens query window', () => {
     const storage = new QueryCache();
 
@@ -282,7 +288,7 @@ describe('PrometheusIncrementalStorage', function () {
     const thirdFrames = IncrementalStorageDataFrameScenarios.histogram.evictionRequests.second
       .dataFrames as unknown as DataFrame[];
 
-    const targetSignifiers = new Map<string, string>();
+    const targetSignature = new Map<string, string>();
     const interval = 15000;
 
     // start time of scenario
@@ -324,12 +330,12 @@ describe('PrometheusIncrementalStorage', function () {
     };
 
     // Signifier definition
-    const frameSignifier = `helloFrameSig`;
+    const frameSignature = `helloFrameSig`;
     const dashboardId = `dashid`;
     const panelId = 200;
-    const targetSignifier = `${dashboardId}|${panelId}|A`;
+    const targetIdentity = `${dashboardId}|${panelId}|A`;
 
-    targetSignifiers.set(targetSignifier, frameSignifier);
+    targetSignature.set(targetIdentity, frameSignature);
 
     const firstQueryResult = storage.procFrames(
       mockRequest({
@@ -339,7 +345,7 @@ describe('PrometheusIncrementalStorage', function () {
       }),
       {
         requests: [], // unused
-        targSigs: targetSignifiers,
+        targSigs: targetSignature,
         shouldCache: true,
       },
       firstFrames
@@ -355,7 +361,7 @@ describe('PrometheusIncrementalStorage', function () {
       }),
       {
         requests: [], // unused
-        targSigs: targetSignifiers,
+        targSigs: targetSignature,
         shouldCache: true,
       },
       secondFrames
@@ -380,16 +386,17 @@ describe('PrometheusIncrementalStorage', function () {
       }),
       {
         requests: [], // unused
-        targSigs: targetSignifiers,
+        targSigs: targetSignature,
         shouldCache: true,
       },
       thirdFrames
     );
 
-    const cachedAfterThird = storage.cache.get(targetSignifier);
+    const cachedAfterThird = storage.cache.get(targetIdentity);
     const storageLengthAfterThirdQuery = cachedAfterThird?.frames[0].fields[0].values.toArray().length;
     expect(storageLengthAfterThirdQuery).toEqual(20);
   });
+
   // Length mismatch?
   //storage.requestInfo() @todo
 
