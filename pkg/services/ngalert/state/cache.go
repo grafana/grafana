@@ -60,6 +60,24 @@ func (rs *ruleStates) getOrCreate(ctx context.Context, log log.Logger, alertRule
 	labels, _ := expand(ctx, log, alertRule.Title, alertRule.Labels, templateData, externalURL, result.EvaluatedAt)
 	annotations, _ := expand(ctx, log, alertRule.Title, alertRule.Annotations, templateData, externalURL, result.EvaluatedAt)
 
+	labels, duplicateLabels := mergeLabelsKeepDuplicates(extraLabels, labels)
+	if len(duplicateLabels) > 0 {
+		log.Warn("Custom labels conflict with one or more reserved labels, the duplicate labels will be ignored",
+			"reserved_labels", extraLabels, "duplicate_labels", duplicateLabels)
+	}
+
+	labels, duplicateLabels = mergeLabelsKeepDuplicates(labels, result.Instance)
+	if len(duplicateLabels) > 0 {
+		log.Warn("Evaluation labels conflict with one or more custom or reserved labels, the duplicate labels will be ignored",
+			"labels", labels, "duplicate_labels", duplicateLabels)
+	}
+
+	il := ngModels.InstanceLabels(labels)
+	id, err := il.StringKey()
+	if err != nil {
+		log.Error("Error getting cacheId for entry", "error", err)
+	}
+
 	values := make(map[string]float64)
 	for refID, v := range result.Values {
 		if v.Value != nil {
@@ -67,45 +85,6 @@ func (rs *ruleStates) getOrCreate(ctx context.Context, log log.Logger, alertRule
 		} else {
 			values[refID] = math.NaN()
 		}
-	}
-
-	lbs := make(data.Labels, len(extraLabels)+len(labels)+len(result.Instance))
-	dupes := make(data.Labels)
-	for key, val := range extraLabels {
-		lbs[key] = val
-	}
-	for key, val := range labels {
-		ruleVal, ok := lbs[key]
-		// if duplicate labels exist, reserved label will take precedence
-		if ok {
-			if ruleVal != val {
-				dupes[key] = val
-			}
-		} else {
-			lbs[key] = val
-		}
-	}
-	if len(dupes) > 0 {
-		log.Warn("Rule declares one or many reserved labels. Those rules labels will be ignored", "labels", dupes)
-	}
-	dupes = make(data.Labels)
-	for key, val := range result.Instance {
-		_, ok := lbs[key]
-		// if duplicate labels exist, reserved or alert rule label will take precedence
-		if ok {
-			dupes[key] = val
-		} else {
-			lbs[key] = val
-		}
-	}
-	if len(dupes) > 0 {
-		log.Warn("Evaluation result contains either reserved labels or labels declared in the rules. Those labels from the result will be ignored", "labels", dupes)
-	}
-
-	il := ngModels.InstanceLabels(lbs)
-	id, err := il.StringKey()
-	if err != nil {
-		log.Error("Error getting cacheId for entry", "error", err)
 	}
 
 	if state, ok := rs.states[id]; ok {
@@ -132,7 +111,7 @@ func (rs *ruleStates) getOrCreate(ctx context.Context, log log.Logger, alertRule
 		AlertRuleUID:       alertRule.UID,
 		OrgID:              alertRule.OrgID,
 		CacheID:            id,
-		Labels:             lbs,
+		Labels:             labels,
 		Annotations:        annotations,
 		EvaluationDuration: result.EvaluationDuration,
 		Values:             values,
@@ -307,16 +286,38 @@ func (c *cache) recordMetrics(metrics *metrics.State) {
 	}
 }
 
-// if duplicate labels exist, keep the value from the first set
+// mergeLabels returns the combined labels from both arguments, keeping
+// labels from the first argument where there are duplicates. It does not
+// change any of its arguments, instead returning a copy of them.
 func mergeLabels(a, b data.Labels) data.Labels {
-	newLbs := make(data.Labels, len(a)+len(b))
+	result := make(data.Labels, len(a)+len(b))
 	for k, v := range a {
-		newLbs[k] = v
+		result[k] = v
 	}
 	for k, v := range b {
-		if _, ok := newLbs[k]; !ok {
-			newLbs[k] = v
+		if _, ok := result[k]; !ok {
+			result[k] = v
 		}
 	}
-	return newLbs
+	return result
+}
+
+// mergeLabelsKeepDuplicates returns the combined labels from both
+// arguments, keeping labels from the first argument where there are
+// duplicates; and all duplicates from the second argument. It does
+// not change any of its arguments, instead returning a copy of them.
+func mergeLabelsKeepDuplicates(a, b data.Labels) (result data.Labels, duplicates data.Labels) {
+	result = make(data.Labels, len(a)+len(b))
+	duplicates = make(data.Labels)
+	for k, v := range a {
+		result[k] = v
+	}
+	for k, v := range b {
+		if _, ok := result[k]; !ok {
+			result[k] = v
+		} else {
+			duplicates[k] = v
+		}
+	}
+	return result, duplicates
 }
