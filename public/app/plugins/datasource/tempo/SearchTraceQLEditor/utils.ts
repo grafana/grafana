@@ -1,6 +1,7 @@
 import { SelectableValue } from '@grafana/data';
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
+import { CompletionProvider } from '../traceql/autocomplete';
 
 export const generateQueryFromFilters = (filters: TraceqlFilter[]) => {
   return `{${filters
@@ -19,6 +20,10 @@ const valueHelper = (f: TraceqlFilter) => {
   return f.value;
 };
 export const scopeHelper = (f: TraceqlFilter) => {
+  // Intrinsic fields don't have a scope
+  if (CompletionProvider.intrinsics.find((t) => t === f.tag)) {
+    return '';
+  }
   return (
     (f.scope === TraceqlSearchScope.Resource || f.scope === TraceqlSearchScope.Span ? f.scope?.toLowerCase() : '') + '.'
   );

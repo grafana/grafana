@@ -95,7 +95,7 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
                 findFilter('service-name') || {
                   id: 'service-name',
                   type: 'static',
-                  tag: '.service.name',
+                  tag: 'service.name',
                   operator: '=',
                   scope: TraceqlSearchScope.Resource,
                 }
