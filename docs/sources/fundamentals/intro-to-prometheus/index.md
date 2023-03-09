@@ -65,7 +65,7 @@ These core concepts of time series, metrics, labels, and aggregation functions a
 
 ## Why this is valuable
 
-Software and systems are a difficult business. Sometimes things go wrong. Observability helps you understand a system’s state so that issues can be quickly identified and proactively addressed. And when problems do occur, you can be alerted to them to diagnose and solve them within your Service Level Objectives (SLOs). 
+Software and systems are a difficult business. Sometimes things go wrong. Observability helps you understand a system’s state so that issues can be quickly identified and proactively addressed. And when problems do occur, you can be alerted to them to diagnose and solve them within your Service Level Objectives (SLOs).
 
 The [three pillars of observability](https://www.oreilly.com/library/view/distributed-systems-observability/9781492033431/ch04.html) are metrics, logs, and traces. Prometheus supports the metrics pillar. When software on a computer runs slowly, observability can help you identify whether CPU is saturated, the system is out of memory, or if the disk is writing at maximum speed so you can proactively respond.
 
@@ -73,7 +73,7 @@ The [three pillars of observability](https://www.oreilly.com/library/view/distri
 
 Prometheus isn’t just a data format; it is also considered an [open source systems monitoring and alerting toolkit](https://prometheus.io/docs/introduction/overview/). That’s because Prometheus is software, not just data.
 
-Prometheus can scrape metric data from software and infrastructure and store it. Scraping means that Prometheus software periodically revisits the same endpoint to check for new data. Prometheus “scrapes” data from a piece of software instrumented with a client library.
+Prometheus can scrape metric data from software and infrastructure and store it. Scraping means that Prometheus software periodically revisits the same endpoint to check for new data. Prometheus scrapes data from a piece of software instrumented with a client library.
 
 For example, a NodeJS application can configure the [prom-client](https://github.com/siimon/prom-client) to expose metrics easily at an endpoint, and Prometheus can regularly scrape that endpoint. Prometheus includes a number of other tools within the toolkit to instrument your applications.
 
@@ -89,7 +89,7 @@ The following image shows the two metrics associated with the endpoint. The HELP
 
 These metrics are available in an HTTP endpoint, but how do they get to Grafana, and subsequently, into a dashboard?
 
-To get these metrics into Grafana, you can use either the Prometheus software or [Grafana Agent](/docs/agent/latest/) to scrape metrics. Grafana Agent collects and forwards telemetry data to open-source deployments of the Grafana Stack, Grafana Cloud, or Grafana Enterprise, where your data can be analyzed.
+To get these metrics into Grafana, you can use either the Prometheus software or [Grafana Agent](/docs/agent/latest/) to scrape metrics. Grafana Agent collects and forwards telemetry data to open-source deployments of the Grafana Stack, Grafana Cloud, or Grafana Enterprise, where your data can be analyzed. Using Grafana Agent can be a great option because as you scale your observability practices to include logs and traces, which Grafana Agent also supports, you've got a telemetry solution already in place.
 
 Telemetry refers to the process of recording and transmitting the readings of an application or piece of infrastructure. Telemetry is critical to observability because it helps you understand exactly what's going on in your infrastructure. Telemetry data is a source of truth. The metrics data that Prometheus helps us with is only one type of telemetry; the other two kinds of telemetry are logs and traces.
 
