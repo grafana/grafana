@@ -75,6 +75,7 @@ type RotateResponse struct {
 type UserTokenService interface {
 	CreateToken(ctx context.Context, user *user.User, clientIP net.IP, userAgent string) (*UserToken, error)
 	LookupToken(ctx context.Context, unhashedToken string) (*UserToken, error)
+	// RotateToken will always rotate a valid token
 	RotateToken(ctx context.Context, cmd RotateCommand) (*RotateResponse, error)
 	TryRotateToken(ctx context.Context, token *UserToken, clientIP net.IP, userAgent string) (bool, *UserToken, error)
 	RevokeToken(ctx context.Context, token *UserToken, soft bool) error
