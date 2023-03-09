@@ -333,7 +333,7 @@ describe('BarGauge', () => {
           width: 100,
           value: getValue(1, 'AA'),
           orientation: VizOrientation.Horizontal,
-          valueMode: BarGaugeValueMode.Hidden,
+          valueDisplayMode: BarGaugeValueMode.Hidden,
         })
       );
       expect(result.valueWidth).toBe(0);
@@ -346,7 +346,7 @@ describe('BarGauge', () => {
         width: 150,
         value: getValue(100),
         orientation: VizOrientation.Vertical,
-        valueMode: BarGaugeValueMode.Text,
+        valueDisplayMode: BarGaugeValueMode.Text,
       });
       const styles = getBasicAndGradientStyles(props);
       expect(styles.bar.background).toBe('rgba(255, 0, 0, 0.35)');
