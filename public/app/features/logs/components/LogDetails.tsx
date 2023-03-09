@@ -77,10 +77,9 @@ class UnThemedLogDetails extends PureComponent<Props> {
       });
     });
     // do not show the log message unless there is a link attached
-    //TODO FIX
     const fields = fieldsAndLinks.filter((f) => f.links?.length === 0 && f.fieldIndex !== row.entryFieldIndex).sort();
     const fieldsAvailable = fields && fields.length > 0;
-    const linksAvailable = links && links.length > 0;
+    const linksAvailable = (showLinks && showLinks.length > 0) || (varMapLinks && varMapLinks.length > 0);
 
     // If logs with error, we are not showing the level color
     const levelClassName = hasError
