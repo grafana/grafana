@@ -175,6 +175,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *contextmodel.ReqContext) (map[st
 			"enabledFeatures": hs.License.EnabledFeatures(),
 		},
 		"featureToggles":                   hs.Features.GetEnabled(c.Req.Context()),
+		"anonymousEnabled":                 hs.Cfg.AnonymousEnabled,
 		"rendererAvailable":                hs.RenderService.IsAvailable(c.Req.Context()),
 		"rendererVersion":                  hs.RenderService.Version(),
 		"secretsManagerPluginEnabled":      secretsManagerPluginEnabled,

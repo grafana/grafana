@@ -79,6 +79,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   theme2: GrafanaTheme2;
   pluginsToPreload: PreloadPlugin[] = [];
   featureToggles: FeatureToggles = {};
+  anonymousEnabled = false;
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;
   dashboardPreviews: {
