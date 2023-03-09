@@ -360,7 +360,7 @@ describe('BarGauge', () => {
         width: 150,
         value: getValue(100),
         orientation: VizOrientation.Vertical,
-        valueMode: BarGaugeValueMode.Color,
+        valueDisplayMode: BarGaugeValueMode.Color,
       });
       const styles = getBasicAndGradientStyles(props);
       expect(styles.bar.background).toBe('rgba(255, 0, 0, 0.35)');
