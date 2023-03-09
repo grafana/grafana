@@ -13,7 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
-	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -219,7 +219,7 @@ type Identity struct {
 	// OAuthToken is the OAuth token used to authenticate the entity.
 	OAuthToken *oauth2.Token
 	// SessionToken is the session token used to authenticate the entity.
-	SessionToken *auth.UserToken
+	SessionToken *usertoken.UserToken
 	// ClientParams are hints for the auth service on how to handle the identity.
 	// Set by the authenticating client.
 	ClientParams ClientParams

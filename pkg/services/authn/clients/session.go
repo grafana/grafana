@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/url"
+	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/network"
@@ -51,10 +52,15 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 	}
 
 	token, err := s.sessionService.LookupToken(ctx, rawSessionToken)
-
 	if err != nil {
 		s.log.FromContext(ctx).Warn("Failed to look up session from cookie", "error", err)
 		return nil, err
+	}
+
+	if s.features.IsEnabled(featuremgmt.FlagFrontendTokenRotation) {
+		if token.NeedRotation(time.Duration(s.cfg.TokenRotationIntervalMinutes) * time.Minute) {
+			return nil, authn.ErrTokenNeedRotation.Errorf("token needs to be rotated")
+		}
 	}
 
 	return &authn.Identity{
