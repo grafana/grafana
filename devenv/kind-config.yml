@@ -5,9 +5,23 @@ networking:
   apiServerPort: 6443
 nodes:
 - role: control-plane
+  extraMounts:
+    - hostPath: /Users/charandas/go/src/github.com/grafana/grafana/devenv/docker/blocks/apiserver
+      containerPath: /config
   kubeadmConfigPatches:
   - |
     kind: ClusterConfiguration
     apiServer:
         extraArgs:
           enable-admission-plugins: MutatingAdmissionWebhook,ValidatingAdmissionWebhook
+          authorization-webhook-config-file: /config/authz-webhook-kubeconfig
+          authorization-mode: RBAC,Webhook
+          authorization-webhook-cache-authorized-ttl: 120s
+          authorization-webhook-cache-unauthorized-ttl: 30s
+          authorization-webhook-version: v1
+          runtime-config: authorization.k8s.io/v1beta1=true
+        extraVolumes:
+        - name: api-server-basic-auth-files
+          hostPath: "/config"
+          mountPath: "/config"
+          readOnly: true

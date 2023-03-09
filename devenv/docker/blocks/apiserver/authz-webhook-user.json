@@ -1,0 +1,16 @@
+{
+  "CN": "Test K8s POC Authz Webhook User",
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C":  "US",
+      "L":  "Anchorage",
+      "O":  "Grafana",
+      "OU": "WWW",
+      "ST": "Alaska"
+    }
+  ]
+}

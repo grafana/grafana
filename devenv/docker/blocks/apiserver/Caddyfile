@@ -1,4 +1,35 @@
-:443
-tls /conf/final/out.pem /conf/final/out-key.pem
-reverse_proxy host.docker.internal:3000
-log
+:443 {
+
+  log {
+    level DEBUG
+  }
+  tls /conf/webhooks/webhooks.pem /conf/webhooks/webhooks-key.pem
+
+  # This is the directory we are mounting in the container
+
+  root * /conf
+  file_server
+
+  @authnz {
+    method POST
+    path /authnz
+  }
+  @grafana not path /authnz*
+
+  route @grafana {
+    reverse_proxy host.docker.internal:3000
+  }
+
+  route @authnz {
+    header Content-Type "application/json"
+    respond 200 {
+      body `{
+         "apiVersion": "authorization.k8s.io/v1",
+         "kind": "SubjectAccessReview",
+         "status": {
+           "allowed": true
+         }
+       }`
+    }
+  }
+}
