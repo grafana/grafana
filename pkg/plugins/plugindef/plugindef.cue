@@ -146,7 +146,7 @@ seqs: [
 				// Schema definition for the plugin.json file. Used primarily for schema validation.
 				$schema?: string 
 
-				// For data source plugins, if the plugin supports alerting. Requires `backend` to be enabled as well.
+				// For data source plugins, if the plugin supports alerting. Requires `backend` to be set to `true`.
 				alerting?: bool
 
 				// For data source plugins, if the plugin supports annotation
@@ -159,14 +159,14 @@ seqs: [
 				// If the plugin has a backend component.
 				backend?: bool
 
-				// Indicates whether the plugin is developed and shipped as part
+				// [internal only] Indicates whether the plugin is developed and shipped as part
 				// of Grafana. Also known as a 'core plugin'.
 				builtIn: bool | *false
 
 				// Plugin category used on the Add data source page.
 				category?: "tsdb" | "logging" | "cloud" | "tracing" | "profiling" | "sql" | "enterprise" | "iot" | "other"
 
-				// Grafana Enerprise specific features.
+				// Grafana Enterprise specific features.
 				enterpriseFeatures?: {
 					// Enable/Disable health diagnostics errors. Requires Grafana
 					// >=7.5.5.
@@ -183,7 +183,7 @@ seqs: [
 				// https://golang.org/doc/install/source#environment.
 				executable?: string
 
-				// Excludes the plugin from listings in Grafana's UI. Only
+				// [internal only] Excludes the plugin from listings in Grafana's UI. Only
 				// allowed for `builtIn` plugins.
 				hideFromList: bool | *false
 
@@ -225,7 +225,7 @@ seqs: [
 				// For data source plugins, if the plugin supports logs. Not used in Grafana core but may be used by external plugins.
 				logs?: bool
 
-				// For data source plugins, if the plugin supports metric queries. Needs to be enabled for data source plugins.
+				// For data source plugins, if the plugin supports metric queries.
 				// Used to enable the plugin in the panel editor.
 				metrics?: bool
 
@@ -274,10 +274,10 @@ seqs: [
 				// ReleaseState indicates release maturity state of a plugin.
 				#ReleaseState: "alpha" | "beta" | "deprecated" | *"stable"
 
-				// For data source plugins, if the plugin supports streaming.
+				// For data source plugins, if the plugin supports streaming. Used in Explore to start live streaming.
 				streaming?: bool
 
-				// For data source plugins, if the plugin supports tracing.
+				// For data source plugins, if the plugin supports tracing. Used for example to link logs (e.g. Loki logs) with tracing plugins.
 				tracing?: bool
 
 				// Optional list of RBAC RoleRegistrations.

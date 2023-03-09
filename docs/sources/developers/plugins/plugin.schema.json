@@ -202,7 +202,7 @@
     },
     "alerting": {
       "type": "boolean",
-      "description": "For data source plugins, if the plugin supports alerting. Requires `backend` to be enabled as well."
+      "description": "For data source plugins, if the plugin supports alerting. Requires `backend` to be set to `true`."
     },
     "annotations": {
       "type": "boolean",
@@ -218,7 +218,7 @@
     },
     "builtIn": {
       "type": "boolean",
-      "description": "Indicates whether the plugin is developed and shipped as part of Grafana. Also known as a 'core plugin'."
+      "description": "[internal only] Indicates whether the plugin is developed and shipped as part of Grafana. Also known as a 'core plugin'."
     },
     "category": {
       "type": "string",
@@ -243,7 +243,7 @@
     },
     "hideFromList": {
       "type": "boolean",
-      "description": "Excludes the plugin from listings in Grafana's UI. Only allowed for `builtIn` plugins."
+      "description": "[internal only] Excludes the plugin from listings in Grafana's UI. Only allowed for `builtIn` plugins."
     },
     "includes": {
       "type": "array",
@@ -297,7 +297,7 @@
     },
     "metrics": {
       "type": "boolean",
-      "description": "For data source plugins, if the plugin supports metric queries. Needs to be enabled for data source plugins. Used to enable the plugin in the panel editor."
+      "description": "For data source plugins, if the plugin supports metric queries. Used to enable the plugin in the panel editor."
     },
     "pascalName": {
       "type": "string",
@@ -306,7 +306,7 @@
     },
     "preload": {
       "type": "boolean",
-      "description": "Initialize plugin on startup. By default, the plugin initializes on first use. Useful for app plugins that require to load without user interaction."
+      "description": "Initialize plugin on startup. By default, the plugin initializes on first use. Useful for app plugins that should load without user interaction."
     },
     "queryOptions": {
       "type": "object",
@@ -472,11 +472,11 @@
     },
     "streaming": {
       "type": "boolean",
-      "description": "For data source plugins, if the plugin supports streaming. Used in Explore to start live stream."
+      "description": "For data source plugins, if the plugin supports streaming. Used in Explore to start live streaming."
     },
     "tracing": {
       "type": "boolean",
-      "description": "For data source plugins, if the plugin supports tracing. Used, for example, to link logs (e.g. Loki logs) with tracing plugins."
+      "description": "For data source plugins, if the plugin supports tracing. Used for example to link logs (e.g. Loki logs) with tracing plugins."
     }
   }
 }

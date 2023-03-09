@@ -253,7 +253,7 @@ type PluginDef struct {
 	// Schema definition for the plugin.json file. Used primarily for schema validation.
 	Schema *string `json:"$schema,omitempty"`
 
-	// For data source plugins, if the plugin supports alerting. Requires `backend` to be enabled as well.
+	// For data source plugins, if the plugin supports alerting. Requires `backend` to be set to `true`.
 	Alerting *bool `json:"alerting,omitempty"`
 
 	// For data source plugins, if the plugin supports annotation
@@ -266,7 +266,7 @@ type PluginDef struct {
 	// If the plugin has a backend component.
 	Backend *bool `json:"backend,omitempty"`
 
-	// Indicates whether the plugin is developed and shipped as part
+	// [internal only] Indicates whether the plugin is developed and shipped as part
 	// of Grafana. Also known as a 'core plugin'.
 	BuiltIn bool `json:"builtIn"`
 
@@ -274,7 +274,7 @@ type PluginDef struct {
 	Category     *Category    `json:"category,omitempty"`
 	Dependencies Dependencies `json:"dependencies"`
 
-	// Grafana Enerprise specific features.
+	// Grafana Enterprise specific features.
 	EnterpriseFeatures *struct {
 		// Enable/Disable health diagnostics errors. Requires Grafana
 		// >=7.5.5.
@@ -290,7 +290,7 @@ type PluginDef struct {
 	// https://golang.org/doc/install/source#environment.
 	Executable *string `json:"executable,omitempty"`
 
-	// Excludes the plugin from listings in Grafana's UI. Only
+	// [internal only] Excludes the plugin from listings in Grafana's UI. Only
 	// allowed for `builtIn` plugins.
 	HideFromList bool `json:"hideFromList"`
 
@@ -309,7 +309,7 @@ type PluginDef struct {
 	// For data source plugins, if the plugin supports logs. Not used in Grafana core but may be used by external plugins.
 	Logs *bool `json:"logs,omitempty"`
 
-	// For data source plugins, if the plugin supports metric queries. Needs to be enabled for data source plugins.
+	// For data source plugins, if the plugin supports metric queries.
 	// Used to enable the plugin in the panel editor.
 	Metrics *bool `json:"metrics,omitempty"`
 
@@ -361,10 +361,10 @@ type PluginDef struct {
 	// ReleaseState indicates release maturity state of a plugin.
 	State *ReleaseState `json:"state,omitempty"`
 
-	// For data source plugins, if the plugin supports streaming.
+	// For data source plugins, if the plugin supports streaming. Used in Explore to start live streaming.
 	Streaming *bool `json:"streaming,omitempty"`
 
-	// For data source plugins, if the plugin supports tracing.
+	// For data source plugins, if the plugin supports tracing. Used for example to link logs (e.g. Loki logs) with tracing plugins.
 	Tracing *bool `json:"tracing,omitempty"`
 
 	// type indicates which type of Grafana plugin this is, of the defined
