@@ -22,7 +22,6 @@ function renderComponent({
       onRunQuery={onRunQuery}
       runQueryOnBlur={runQueryOnBlur}
       placeholder="Enter a Loki query (run with Shift+Enter)"
-      setQueryStats={() => {}}
     />
   );
 }

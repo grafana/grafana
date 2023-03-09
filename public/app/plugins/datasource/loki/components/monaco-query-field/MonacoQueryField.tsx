@@ -10,7 +10,6 @@ import { languageConfiguration, monarchlanguage } from '@grafana/monaco-logql';
 import { useTheme2, ReactMonacoEditor, Monaco, monacoTypes, MonacoEditor } from '@grafana/ui';
 
 import { isValidQuery } from '../../queryUtils';
-import { getStats, shouldUpdateStats } from '../stats';
 
 import { Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';
@@ -98,7 +97,7 @@ const MonacoQueryField = ({
   initialValue,
   datasource,
   placeholder,
-  setQueryStats,
+  onQueryType,
 }: Props) => {
   const id = uuidv4();
   // we need only one instance of `overrideServices` during the lifetime of the react component
@@ -151,19 +150,11 @@ const MonacoQueryField = ({
   };
 
   const onTypeDebounced = debounce(async (query: string) => {
-    if (isValidQuery(query) === false) {
+    if (!onQueryType || (isValidQuery(query) === false && query !== '')) {
       return;
     }
 
-    const timerange = datasource.getTimeRange();
-    const previousTimerange = undefined;
-    const previousQuery = undefined;
-
-    const update = shouldUpdateStats(query, previousQuery, timerange, previousTimerange);
-    if (update) {
-      const stats = await getStats(datasource, query);
-      setQueryStats!(stats);
-    }
+    onQueryType(query);
   }, 1000);
 
   return (

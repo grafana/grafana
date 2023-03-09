@@ -1,7 +1,7 @@
 import { HistoryItem } from '@grafana/data';
 
 import { LokiDatasource } from '../../datasource';
-import { LokiQuery, QueryStats } from '../../types';
+import { LokiQuery } from '../../types';
 
 // we need to store this in a separate file,
 // because we have an async-wrapper around,
@@ -14,5 +14,5 @@ export type Props = {
   onBlur: (value: string) => void;
   placeholder: string;
   datasource: LokiDatasource;
-  setQueryStats?: React.Dispatch<React.SetStateAction<QueryStats | undefined>>;
+  onQueryType?: (query: string) => void;
 };
