@@ -81,8 +81,8 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration) (*ngalert.AlertNG, 
 
 	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 
-	dashboardService := dashboardservice.ProvideDashboardService(
-		cfg, dashboardStore, nil,
+	dashboardService := dashboardservice.ProvideDashboardServiceImpl(
+		cfg, dashboardStore, folderStore, nil,
 		features, folderPermissions, dashboardPermissions, ac,
 		foldertest.NewFakeService(),
 	)

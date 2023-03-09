@@ -76,6 +76,7 @@ describe('Tempo data source', () => {
         search: '$interpolationVar',
         minDuration: '$interpolationVar',
         maxDuration: '$interpolationVar',
+        filters: [],
       };
     }
 
@@ -243,6 +244,7 @@ describe('Tempo data source', () => {
       minDuration: '$interpolationVar',
       maxDuration: '$interpolationVar',
       limit: 10,
+      filters: [],
     };
     const builtQuery = ds.buildSearchQuery(tempoQuery);
     expect(builtQuery).toStrictEqual({
@@ -260,6 +262,7 @@ describe('Tempo data source', () => {
       refId: 'A',
       query: '',
       search: '',
+      filters: [],
     };
     const builtQuery = ds.buildSearchQuery(tempoQuery);
     expect(builtQuery).toStrictEqual({
@@ -275,6 +278,7 @@ describe('Tempo data source', () => {
       refId: 'A',
       query: '',
       search: '',
+      filters: [],
     };
     const timeRange = { startTime: 0, endTime: 1000 };
     const builtQuery = ds.buildSearchQuery(tempoQuery, timeRange);
@@ -289,6 +293,7 @@ describe('Tempo data source', () => {
   it('formats native search query history correctly', () => {
     const ds = new TempoDatasource(defaultSettings);
     const tempoQuery: TempoQuery = {
+      filters: [],
       queryType: 'nativeSearch',
       refId: 'A',
       query: '',

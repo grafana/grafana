@@ -2,7 +2,6 @@ import { screen, waitForElementToBeRemoved } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
-import { MockDataSourceApi } from 'test/mocks/datasource_srv';
 import { byRole, byText } from 'testing-library-selector';
 
 import { setDataSourceSrv } from '@grafana/runtime';
@@ -160,10 +159,7 @@ describe('RuleEditor cloud: checking editable data sources', () => {
       return null;
     });
 
-    const dsServer = new MockDataSourceSrv(dataSources);
-    jest.spyOn(dsServer, 'get').mockResolvedValue(new MockDataSourceApi('ds'));
-
-    setDataSourceSrv(dsServer);
+    setDataSourceSrv(new MockDataSourceSrv(dataSources));
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     mocks.searchFolders.mockResolvedValue([]);
 

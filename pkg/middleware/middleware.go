@@ -37,7 +37,8 @@ func AddDefaultResponseHeaders(cfg *setting.Cfg) web.Handler {
 
 			_, _, resourceURLMatch := t.Match(c.Req.URL.Path)
 			resourceCachable := resourceURLMatch && allowCacheControl(c.Resp)
-			if !strings.HasPrefix(c.Req.URL.Path, "/api/datasources/proxy/") && !resourceCachable {
+			if !strings.HasPrefix(c.Req.URL.Path, "/public/plugins/") &&
+				!strings.HasPrefix(c.Req.URL.Path, "/api/datasources/proxy/") && !resourceCachable {
 				addNoCacheHeaders(c.Resp)
 			}
 

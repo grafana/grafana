@@ -59,11 +59,6 @@ func (f *FakeServiceAccountStore) DeleteServiceAccount(ctx context.Context, orgI
 	return f.ExpectedError
 }
 
-// HideApiKeysTab is a fake hiding the api keys tab.
-func (f *FakeServiceAccountStore) HideApiKeysTab(ctx context.Context, orgID int64) error {
-	return f.ExpectedError
-}
-
 // MigrateApiKeysToServiceAccounts is a fake migrating api keys to service accounts.
 func (f *FakeServiceAccountStore) MigrateApiKeysToServiceAccounts(ctx context.Context, orgID int64) error {
 	return f.ExpectedError
