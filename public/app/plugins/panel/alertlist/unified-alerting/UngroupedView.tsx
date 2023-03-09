@@ -3,7 +3,14 @@ import pluralize from 'pluralize';
 import React, { FC, useEffect, useState } from 'react';
 import { useLocation } from 'react-use';
 
-import { addDurationToDate, GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
+import {
+  dateMath,
+  GrafanaTheme2,
+  intervalToAbbreviatedDurationString,
+  RawTimeRange,
+  RelativeTimeRange,
+} from '@grafana/data';
+import { describeTimeRange } from '@grafana/data/src/datetime/rangeutil';
 import { Stack } from '@grafana/experimental';
 import { getBackendSrv } from '@grafana/runtime';
 import { Icon, useStyles2 } from '@grafana/ui';
@@ -18,10 +25,9 @@ import {
   isGrafanaRuleIdentifier,
 } from 'app/features/alerting/unified/utils/rules';
 import { createUrl } from 'app/features/alerting/unified/utils/url';
+import { AlertingRule, CombinedRuleWithLocation } from 'app/types/unified-alerting';
 import { GrafanaAlertState, PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
-import { RelativeTimeRange } from '../../../../../../packages/grafana-data/src/types/time';
-import { AlertingRule, CombinedRuleWithLocation } from '../../../../types/unified-alerting';
 import { AlertInstances } from '../AlertInstances';
 import { getStyles } from '../UnifiedAlertList';
 import { UnifiedAlertListOptions } from '../types';
@@ -29,9 +35,18 @@ import { UnifiedAlertListOptions } from '../types';
 type UngroupedModeProps = {
   rules: CombinedRuleWithLocation[];
   options: UnifiedAlertListOptions;
+  timeRange?: RawTimeRange;
 };
 
-export const useGetExtraInfoForAlertItem = (returnTo: string, slicedRules: CombinedRuleWithLocation[]) => {
+type HistoryResponse = {
+  data: { values: string[][] };
+};
+
+export const useGetRulesWithExtraInfo = (
+  returnTo: string,
+  slicedRules: CombinedRuleWithLocation[],
+  timeRange: RawTimeRange | undefined
+) => {
   const [rulesToDisplay, setRulesToDisplay] = useState<CombinedRuleWithLocationExtended[] | undefined>(undefined);
   useEffect(() => {
     const getExtraInfo = async () => {
@@ -40,35 +55,42 @@ export const useGetExtraInfoForAlertItem = (returnTo: string, slicedRules: Combi
           const identifier = fromCombinedRule(rule.dataSourceName, rule);
           const strIndentifier = stringifyIdentifier(identifier);
 
+          // create url to view rule
           const refToRuleView = createUrl(
             `/alerting/${encodeURIComponent(rule.dataSourceName)}/${encodeURIComponent(strIndentifier)}/view`,
             { returnTo: returnTo ?? '' }
           );
-          type HistoryResponse = {
-            data: { values: string[][] };
-          };
+
+          //optional data from history
           let history: HistoryResponse | undefined = undefined;
+          let firingCount: number | undefined;
+          let relativeTime: string | undefined;
+
           // history is supported only for grafana-managed alerts so far.
           if (isGrafanaRuleIdentifier(identifier)) {
-            const now = new Date().getTime();
-            const aWeekAgo = addDurationToDate(now, { days: -7 }).getTime();
-            const timeRange: RelativeTimeRange = {
-              from: aWeekAgo,
-              to: now,
-            };
-            history = await getBackendSrv().get('/api/v1/rules/history', { ruleUID: strIndentifier, ...timeRange });
+            let parsedTimeRange: RelativeTimeRange | undefined;
+            if (timeRange) {
+              parsedTimeRange = {
+                from: dateMath.parse(timeRange.from)?.valueOf() ?? 0,
+                to: dateMath.parse(timeRange.to)?.valueOf() ?? 0,
+              };
+            }
+            history = await getBackendSrv().get('/api/v1/rules/history', {
+              ruleUID: strIndentifier,
+              ...parsedTimeRange,
+            });
+            firingCount =
+              history &&
+              history.data?.values[2].reduce((sum, state) => (state === GrafanaAlertState.Alerting ? sum + 1 : sum), 0);
+            relativeTime = timeRange ? describeTimeRange(timeRange).toLocaleLowerCase() : undefined;
           }
-          let firingCount =
-            history &&
-            history.data?.values[2].reduce(
-              (sum, state, index) => (state === GrafanaAlertState.Alerting ? sum + 1 : sum),
-              0
-            );
 
+          // fill ruleToDisplay with optional extra info
           const ruleToDisplay: CombinedRuleWithLocationExtended = {
             ...rule,
             refToRuleView: refToRuleView,
             firingCount: firingCount,
+            relativeTime: relativeTime,
           };
           return ruleToDisplay;
         })
@@ -77,22 +99,28 @@ export const useGetExtraInfoForAlertItem = (returnTo: string, slicedRules: Combi
     };
 
     getExtraInfo().then((rules) => setRulesToDisplay(rules));
-  }, [slicedRules, returnTo]);
+  }, [slicedRules, returnTo, timeRange]);
   return rulesToDisplay;
 };
 
-function FiringHistoryCount({ firingCount }: { firingCount: number | undefined }) {
+function FiringHistoryCount({
+  firingCount,
+  relativeTime,
+}: {
+  firingCount: number | undefined;
+  relativeTime: string | undefined;
+}) {
   const stateStyle = useStyles2(getStateTagStyles);
   if (firingCount === undefined) {
     return <span className={stateStyle.neutral}>No history available.</span>;
   }
   if (firingCount === 0) {
-    return <span className={stateStyle.good}>No alerts in the past month.</span>;
+    return <span className={stateStyle.good}>{`No alerts (${relativeTime})`}.</span>;
   }
   return (
     <Stack alignItems="baseline" gap={0}>
       <span className={stateStyle.warning}>
-        Fired {firingCount} {pluralize('time', firingCount)} (past week).
+        Fired {firingCount} {pluralize('time', firingCount)} {`(${relativeTime})`}.
       </span>
     </Stack>
   );
@@ -103,11 +131,15 @@ function AlertItem({
   options,
   viewAlertRuleHref,
   firingCount,
+  timeRange,
+  relativeTime,
 }: {
   ruleWithLocation: CombinedRuleWithLocation;
   options: UnifiedAlertListOptions;
   viewAlertRuleHref: string;
   firingCount: number | undefined;
+  timeRange?: RawTimeRange;
+  relativeTime?: string;
 }) {
   const stateStyle = useStyles2(getStateTagStyles);
   const styles = useStyles2(getStyles);
@@ -133,8 +165,8 @@ function AlertItem({
                 {ruleWithLocation.name}
               </div>
               <Spacer />
-              <FiringHistoryCount firingCount={firingCount} />
-              {viewAlertRuleHref && ( //not necessary now?
+              <FiringHistoryCount firingCount={firingCount} relativeTime={relativeTime} />
+              {viewAlertRuleHref && (
                 <a href={viewAlertRuleHref} target="__blank" className={styles.link} rel="noopener">
                   <Stack alignItems="center" gap={1}>
                     View alert rule
@@ -173,34 +205,32 @@ export interface CombinedRuleWithLocationExtended extends CombinedRuleWithLocati
   refToRuleView: string;
   firingCountInHistory?: number;
   firingCount?: number;
+  relativeTime?: string;
 }
 
-const UngroupedModeView: FC<UngroupedModeProps> = ({ rules, options }) => {
+const UngroupedModeView: FC<UngroupedModeProps> = ({ rules, options, timeRange }) => {
   const styles = useStyles2(getStyles);
   const { href: returnTo } = useLocation();
 
   const slicedRules = rules.length <= options.maxItems ? rules : rules.slice(0, options.maxItems);
 
-  const rulesToDisplay = useGetExtraInfoForAlertItem(returnTo ?? '', slicedRules);
-  if (rulesToDisplay) {
-    return (
-      <ol className={styles.alertRuleList}>
-        {rulesToDisplay.map((rule, index) => {
-          return (
-            <AlertItem
-              key={`alert-${rule.namespaceName}-${rule.groupName}-${rule.name}-${index}`}
-              ruleWithLocation={rule}
-              options={options}
-              viewAlertRuleHref={rule.refToRuleView}
-              firingCount={rule.firingCount}
-            />
-          );
-        })}
-      </ol>
-    );
-  } else {
-    return null;
-  }
+  const rulesToDisplay = useGetRulesWithExtraInfo(returnTo ?? '', slicedRules, timeRange);
+  return (
+    <ol className={styles.alertRuleList}>
+      {rulesToDisplay?.map((rule, index) => {
+        return (
+          <AlertItem
+            key={`alert-${rule.namespaceName}-${rule.groupName}-${rule.name}-${index}`}
+            ruleWithLocation={rule}
+            options={options}
+            viewAlertRuleHref={rule.refToRuleView}
+            firingCount={rule.firingCount}
+            relativeTime={rule.relativeTime}
+          />
+        );
+      })}
+    </ol>
+  );
 };
 
 const getStateTagStyles = (theme: GrafanaTheme2) => ({

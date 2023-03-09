@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { sortBy } from 'lodash';
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
 import { GrafanaTheme2, PanelProps } from '@grafana/data';
@@ -29,14 +29,12 @@ import {
   GRAFANA_RULES_SOURCE_NAME,
 } from 'app/features/alerting/unified/utils/datasource';
 import { initialAsyncRequestState } from 'app/features/alerting/unified/utils/redux';
-import { flattenCombinedRules, getFirstActiveAt } from 'app/features/alerting/unified/utils/rules';
+import { flattenCombinedRules, getAlertingRule, getFirstActiveAt } from 'app/features/alerting/unified/utils/rules';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { AccessControlAction, useDispatch } from 'app/types';
+import { AlertingRule, CombinedRuleWithLocation } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
-
-import { getAlertingRule } from '../../../features/alerting/unified/utils/rules';
-import { AlertingRule, CombinedRuleWithLocation } from '../../../types/unified-alerting';
 
 import { GroupMode, SortOrder, UnifiedAlertListOptions, ViewMode } from './types';
 import GroupedModeView from './unified-alerting/GroupedView';
@@ -46,6 +44,7 @@ import { filterAlerts } from './util';
 export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
   const dispatch = useDispatch();
   const rulesDataSourceNames = useMemo(getAllRulesSourceNames, []);
+  const [dashboard, setDashboard] = useState<DashboardModel | undefined>(undefined);
 
   // backwards compat for "Inactive" state filter
   useEffect(() => {
@@ -55,10 +54,8 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
     props.options.stateFilter.inactive = undefined; // now disable inactive
   }, [props.options.stateFilter]);
 
-  let dashboard: DashboardModel | undefined = undefined;
-
   useEffectOnce(() => {
-    dashboard = getDashboardSrv().getCurrent();
+    setDashboard(getDashboardSrv().getCurrent());
   });
 
   useEffect(() => {
@@ -128,7 +125,7 @@ export function UnifiedAlertList(props: PanelProps<UnifiedAlertListOptions>) {
             <GroupedModeView rules={rules} options={props.options} />
           )}
           {props.options.viewMode === ViewMode.List && props.options.groupMode === GroupMode.Default && haveResults && (
-            <UngroupedModeView rules={rules} options={props.options} />
+            <UngroupedModeView rules={rules} options={props.options} timeRange={dashboard?.time} />
           )}
         </section>
       </div>
