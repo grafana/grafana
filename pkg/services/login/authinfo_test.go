@@ -14,6 +14,7 @@ func TestIsExternallySynced(t *testing.T) {
 		provider string
 		expected bool
 	}{
+		// azure
 		{
 			name:     "AzureAD synced user should return that it is externally synced",
 			cfg:      &setting.Cfg{AzureADEnabled: true, AzureADSkipOrgRoleSync: false},
@@ -33,6 +34,7 @@ func TestIsExternallySynced(t *testing.T) {
 			provider: AzureADLabel,
 			expected: false,
 		},
+		// google
 		{
 			name:     "Google synced user should return that it is externally synced",
 			cfg:      &setting.Cfg{GoogleAuthEnabled: true, GoogleSkipOrgRoleSync: false},
@@ -58,6 +60,7 @@ func TestIsExternallySynced(t *testing.T) {
 			provider: GoogleLabel,
 			expected: false,
 		},
+		// okta
 		{
 			name:     "Okta synced user should return that it is externally synced",
 			cfg:      &setting.Cfg{OktaAuthEnabled: true, OktaSkipOrgRoleSync: false},
@@ -78,6 +81,7 @@ func TestIsExternallySynced(t *testing.T) {
 			provider: OktaLabel,
 			expected: false,
 		},
+		// github
 		{
 			name:     "Github synced user should return that it is externally synced",
 			cfg:      &setting.Cfg{GitHubAuthEnabled: true, GitHubSkipOrgRoleSync: false},
@@ -137,6 +141,7 @@ func TestIsExternallySynced(t *testing.T) {
 			provider: GrafanaComLabel,
 			expected: false,
 		},
+		// generic oauth
 		{
 			name: "OAuth synced user should return that it is externally synced",
 			cfg:  &setting.Cfg{GenericOAuthAuthEnabled: true, OAuthSkipOrgRoleUpdateSync: false},
@@ -158,6 +163,7 @@ func TestIsExternallySynced(t *testing.T) {
 			provider: GenericOAuthLabel,
 			expected: false,
 		},
+		// saml
 		{
 			name:     "SAML synced user should return that it is externally synced",
 			cfg:      &setting.Cfg{SAMLAuthEnabled: true, SAMLSkipOrgRoleSync: false},
@@ -170,6 +176,7 @@ func TestIsExternallySynced(t *testing.T) {
 			provider: SAMLLabel,
 			expected: false,
 		},
+		// ldap
 		{
 			name:     "LDAP synced user should return that it is externally synced",
 			cfg:      &setting.Cfg{LDAPAuthEnabled: true, LDAPSkipOrgRoleSync: false},
@@ -182,6 +189,7 @@ func TestIsExternallySynced(t *testing.T) {
 			provider: LDAPLabel,
 			expected: false,
 		},
+		// jwt
 		{
 			name:     "JWT synced user should return that it is externally synced",
 			cfg:      &setting.Cfg{JWTAuthEnabled: true, JWTAuthSkipOrgRoleSync: false},
@@ -194,7 +202,7 @@ func TestIsExternallySynced(t *testing.T) {
 			provider: JWTLabel,
 			expected: false,
 		},
-		// this test could be for any provider
+		// IsProvider test
 		{
 			name:     "If no provider enabled should return false",
 			cfg:      &setting.Cfg{JWTAuthSkipOrgRoleSync: true},
@@ -206,6 +214,35 @@ func TestIsExternallySynced(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.Equal(t, tc.expected, IsExternallySynced(tc.cfg, tc.provider))
+		})
+	}
+}
+
+func TestIsProviderEnabled(t *testing.T) {
+	testcases := []struct {
+		name     string
+		cfg      *setting.Cfg
+		provider string
+		expected bool
+	}{
+		// github
+		{
+			name:     "Github should return true if enabled",
+			cfg:      &setting.Cfg{GitHubAuthEnabled: true},
+			provider: GithubLabel,
+			expected: true,
+		},
+		{
+			name:     "Github should return false if not enabled",
+			cfg:      &setting.Cfg{},
+			provider: GithubLabel,
+			expected: false,
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expected, IsProviderEnabled(tc.cfg, tc.provider))
 		})
 	}
 }
