@@ -1,7 +1,0 @@
-{
-  "apiVersion": "authorization.k8s.io/v1beta1",
-  "kind": "SubjectAccessReview",
-  "status": {
-    "allowed": true
-  }
-}
