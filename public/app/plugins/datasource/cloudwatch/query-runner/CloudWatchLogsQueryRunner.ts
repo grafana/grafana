@@ -103,7 +103,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
       return {
         refId: target.refId,
         region: this.templateSrv.replace(this.getActualRegion(target.region)),
-        queryString: this.templateSrv.replace(target.expression || ''),
+        queryString: this.templateSrv.replace(target.expression || '', options.scopedVars),
         logGroups,
         logGroupNames,
       };
