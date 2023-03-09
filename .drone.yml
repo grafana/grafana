@@ -452,8 +452,6 @@ steps:
   - git tag $${TEST_TAG} && git push https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git
     $${TEST_TAG}
   environment:
-    DOWNSTREAM_REPO:
-      from_secret: downstream
     GITHUB_TOKEN:
       from_secret: github_token_pr
     TEST_TAG: v0.0.0-test
@@ -6552,7 +6550,37 @@ get:
 kind: secret
 name: aws_secret_access_key
 ---
+get:
+  name: bucket
+  path: infra/data/ci/grafana-release-eng/security-bucket
+kind: secret
+name: security_dest_bucket
+---
+get:
+  name: static_asset_editions
+  path: infra/data/ci/grafana-release-eng/artifact-publishing
+kind: secret
+name: static_asset_editions
+---
+get:
+  name: security_prefix
+  path: infra/data/ci/grafana-release-eng/enterprise2
+kind: secret
+name: enterprise2_security_prefix
+---
+get:
+  name: cdn_path
+  path: infra/data/ci/grafana-release-eng/enterprise2
+kind: secret
+name: enterprise2-cdn-path
+---
+get:
+  name: security_prefix
+  path: infra/data/ci/grafana-release-eng/enterprise2
+kind: secret
+name: enterprise2_security_prefix
+---
 kind: signature
-hmac: 016127ae3397569f1355667e7bf7743da586fd9d30cb25bbb2495b466b0d0a60
+hmac: 4b6da11e7ed2c2341a0f0b56e2e5feae2ffd587ca00bd79cdfd5a0b8b4957418
 
 ...
