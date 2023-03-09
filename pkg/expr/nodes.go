@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -238,6 +239,12 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars, s *Service) (m
 
 		if len(qr.Frames) == 1 {
 			frame := qr.Frames[0]
+			// Handle Untyped NoData
+			if len(frame.Fields) == 0 {
+				return mathexp.Results{Values: mathexp.Values{mathexp.NoData{Frame: frame}}}, nil
+			}
+
+			// Handle Numeric Table
 			if frame.TimeSeriesSchema().Type == data.TimeSeriesTypeNot && isNumberTable(frame) {
 				logger.Debug("expression datasource query (numberSet)", "query", refID)
 				numberSet, err := extractNumberSet(frame)
