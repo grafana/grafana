@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"time"
 
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/registry"
@@ -58,10 +59,29 @@ type RevokeAuthTokenCmd struct {
 	AuthTokenId int64 `json:"authTokenId"`
 }
 
+type GetTokenQuery struct {
+	// token is the un-hashed token
+	UnHashedToken string
+}
+
+type RotateCommand struct {
+	// token is the un-hashed token
+	UnHashedToken string
+	IP            net.IP
+	UserAgent     string
+}
+
+type RotateResponse struct {
+	Token   string
+	Expires time.Time
+}
+
 // UserTokenService are used for generating and validating user tokens
 type UserTokenService interface {
 	CreateToken(ctx context.Context, user *user.User, clientIP net.IP, userAgent string) (*UserToken, error)
 	LookupToken(ctx context.Context, unhashedToken string) (*UserToken, error)
+	GetToken(ctx context.Context, query GetTokenQuery) (*UserToken, error)
+	RotateToken(ctx context.Context, cmd RotateCommand) (*RotateResponse, error)
 	TryRotateToken(ctx context.Context, token *UserToken, clientIP net.IP, userAgent string) (bool, *UserToken, error)
 	RevokeToken(ctx context.Context, token *UserToken, soft bool) error
 	RevokeAllUserTokens(ctx context.Context, userId int64) error

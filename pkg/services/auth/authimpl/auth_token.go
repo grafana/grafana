@@ -62,12 +62,10 @@ type UserAuthTokenService struct {
 }
 
 func (s *UserAuthTokenService) CreateToken(ctx context.Context, user *user.User, clientIP net.IP, userAgent string) (*auth.UserToken, error) {
-	token, err := util.RandomHex(16)
+	token, hashedToken, err := generateAndHashToken()
 	if err != nil {
 		return nil, err
 	}
-
-	hashedToken := hashToken(token)
 
 	now := getTime().Unix()
 	clientIPStr := clientIP.String()
@@ -104,7 +102,7 @@ func (s *UserAuthTokenService) CreateToken(ctx context.Context, user *user.User,
 	ctxLogger.Debug("user auth token created", "tokenId", userAuthToken.Id, "userId", userAuthToken.UserId, "clientIP", userAuthToken.ClientIp, "userAgent", userAuthToken.UserAgent, "authToken", userAuthToken.AuthToken)
 
 	var userToken auth.UserToken
-	err = userAuthToken.toUserToken(&userToken)
+	err = userAuthToken.toUserToken(&userToken, s.cfg.TokenRotationIntervalMinutes)
 
 	return &userToken, err
 }
@@ -210,9 +208,83 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 	model.UnhashedToken = unhashedToken
 
 	var userToken auth.UserToken
-	err = model.toUserToken(&userToken)
+	err = model.toUserToken(&userToken, s.cfg.TokenRotationIntervalMinutes)
 
 	return &userToken, err
+}
+
+func (s *UserAuthTokenService) GetToken(ctx context.Context, query auth.GetTokenQuery) (*auth.UserToken, error) {
+	if query.UnHashedToken == "" {
+		return nil, auth.ErrInvalidSessionToken
+	}
+
+	var token userAuthToken
+	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		has, err := sess.SQL("SELECT * FROM user_auth_token WHERE auth_token = ?", hashToken(query.UnHashedToken)).Get(&token)
+		if !has {
+			return auth.ErrInvalidSessionToken
+		}
+
+		return err
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	var userToken auth.UserToken
+	if err := token.toUserToken(&userToken, s.cfg.TokenRotationIntervalMinutes); err != nil {
+		return nil, err
+	}
+
+	if userToken.RevokedAt > 0 {
+		return nil, &auth.TokenRevokedError{UserID: token.UserId, TokenID: token.Id}
+	}
+
+	if userToken.ExpiresAt.Before(time.Now()) {
+		return nil, &auth.TokenExpiredError{UserID: token.UserId, TokenID: token.Id}
+	}
+
+	return &userToken, nil
+}
+
+func (s *UserAuthTokenService) RotateToken(ctx context.Context, cmd auth.RotateCommand) (*auth.RotateResponse, error) {
+	if cmd.UnHashedToken == "" {
+		return nil, auth.ErrInvalidSessionToken
+	}
+
+	newToken, newHashedToken, err := generateAndHashToken()
+	if err != nil {
+		return nil, err
+	}
+	rotatedAt := time.Now()
+
+	err = s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		// TODO: handle prev and current
+		res, err := sess.Exec(
+			"UPDATE user_auth_token SET  auth_token = ?, client_ip = ?, user_agent = ?, rotated_at = ? WHERE auth_token = ? AND revoked_at = 0",
+			newHashedToken, cmd.IP.String(), cmd.UserAgent, rotatedAt.Unix(), hashToken(cmd.UnHashedToken),
+		)
+		if err != nil {
+			return err
+		}
+
+		affected, _ := res.RowsAffected()
+		if affected == 0 {
+			return auth.ErrInvalidSessionToken
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &auth.RotateResponse{
+		Token:   newToken,
+		Expires: rotatedAt.Add(time.Duration(s.cfg.TokenRotationIntervalMinutes) * time.Minute),
+	}, nil
 }
 
 func (s *UserAuthTokenService) TryRotateToken(ctx context.Context, token *auth.UserToken,
@@ -293,7 +365,7 @@ func (s *UserAuthTokenService) TryRotateToken(ctx context.Context, token *auth.U
 			ctxLogger.Debug("auth token rotated", "affected", affected, "auth_token_id", model.Id, "userId", model.UserId)
 			model.UnhashedToken = newToken
 			var result auth.UserToken
-			if err := model.toUserToken(&result); err != nil {
+			if err := model.toUserToken(&result, s.cfg.TokenRotationIntervalMinutes); err != nil {
 				return nil, err
 			}
 			return &rotationResult{
@@ -417,7 +489,7 @@ func (s *UserAuthTokenService) GetUserToken(ctx context.Context, userId, userTok
 			return auth.ErrUserTokenNotFound
 		}
 
-		return token.toUserToken(&result)
+		return token.toUserToken(&result, s.cfg.TokenRotationIntervalMinutes)
 	})
 
 	return &result, err
@@ -438,7 +510,7 @@ func (s *UserAuthTokenService) GetUserTokens(ctx context.Context, userId int64) 
 
 		for _, token := range tokens {
 			var userToken auth.UserToken
-			if err := token.toUserToken(&userToken); err != nil {
+			if err := token.toUserToken(&userToken, s.cfg.TokenRotationIntervalMinutes); err != nil {
 				return err
 			}
 			result = append(result, &userToken)
@@ -461,7 +533,7 @@ func (s *UserAuthTokenService) GetUserRevokedTokens(ctx context.Context, userId 
 
 		for _, token := range tokens {
 			var userToken auth.UserToken
-			if err := token.toUserToken(&userToken); err != nil {
+			if err := token.toUserToken(&userToken, s.cfg.TokenRotationIntervalMinutes); err != nil {
 				return err
 			}
 			result = append(result, &userToken)
@@ -504,9 +576,27 @@ func (s *UserAuthTokenService) rotatedAfterParam() int64 {
 	return getTime().Add(-s.cfg.LoginMaxInactiveLifetime).Unix()
 }
 
+func createToken() (string, error) {
+	token, err := util.RandomHex(16)
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
+}
+
 func hashToken(token string) string {
 	hashBytes := sha256.Sum256([]byte(token + setting.SecretKey))
 	return hex.EncodeToString(hashBytes[:])
+}
+
+func generateAndHashToken() (string, string, error) {
+	token, err := createToken()
+	if err != nil {
+		return "", "", err
+	}
+
+	return token, hashToken(token), nil
 }
 
 func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {

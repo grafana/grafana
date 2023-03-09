@@ -3,6 +3,7 @@ package usertoken
 import (
 	"errors"
 	"fmt"
+	"time"
 )
 
 var ErrInvalidSessionToken = errors.New("invalid session token")
@@ -34,4 +35,5 @@ type UserToken struct {
 	UpdatedAt     int64
 	RevokedAt     int64
 	UnhashedToken string
+	ExpiresAt     time.Time
 }
