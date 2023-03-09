@@ -25,7 +25,7 @@ export function createPluginExtensionRegistry(preloadResults: PluginPreloadResul
   const registry: PluginExtensionRegistry = {};
 
   for (const result of preloadResults) {
-    const { pluginId, linkExtensions, commandExtensions, error } = result;
+    const { pluginId, pluginName, linkExtensions, commandExtensions, error } = result;
 
     if (error) {
       continue;
@@ -36,7 +36,7 @@ export function createPluginExtensionRegistry(preloadResults: PluginPreloadResul
 
     for (const config of configs) {
       const placement = config.placement;
-      const item = createRegistryItem(pluginId, config);
+      const item = createRegistryItem(pluginId, pluginName, config);
 
       if (!item || !placementsPerPlugin.allowedToAdd(placement)) {
         continue;
@@ -60,16 +60,18 @@ export function createPluginExtensionRegistry(preloadResults: PluginPreloadResul
 
 function createRegistryItem(
   pluginId: string,
+  pluginName: string,
   config: AppPluginExtensionCommandConfig | AppPluginExtensionLinkConfig
 ): PluginExtensionRegistryItem | undefined {
   if ('handler' in config) {
-    return createCommandRegistryItem(pluginId, config);
+    return createCommandRegistryItem(pluginId, pluginName, config);
   }
-  return createLinkRegistryItem(pluginId, config);
+  return createLinkRegistryItem(pluginId, pluginName, config);
 }
 
 function createCommandRegistryItem(
   pluginId: string,
+  pluginName: string,
   config: AppPluginExtensionCommandConfig
 ): PluginExtensionRegistryItem<PluginExtensionCommand> | undefined {
   const configure = config.configure ?? defaultConfigure;
@@ -85,7 +87,7 @@ function createCommandRegistryItem(
   const catchErrorsInHandler = handleErrorsInHandler(options);
   const handler = catchErrorsInHandler(handlerWithHelpers);
 
-  const extensionFactory = createCommandFactory(pluginId, config, handler);
+  const extensionFactory = createCommandFactory(pluginId, pluginName, config, handler);
   const mapper = mapToConfigure<PluginExtensionCommand, AppPluginExtensionCommand>(extensionFactory);
   const catchErrorsInConfigure = handleErrorsInConfigure<AppPluginExtensionCommand>(options);
 
@@ -94,6 +96,7 @@ function createCommandRegistryItem(
 
 function createLinkRegistryItem(
   pluginId: string,
+  pluginName: string,
   config: AppPluginExtensionLinkConfig
 ): PluginExtensionRegistryItem<PluginExtensionLink> | undefined {
   if (!isValidLinkPath(pluginId, config.path)) {
@@ -103,7 +106,7 @@ function createLinkRegistryItem(
   const configure = config.configure ?? defaultConfigure;
   const options = { pluginId: pluginId, title: config.title, logger: console.warn };
 
-  const extensionFactory = createLinkFactory(pluginId, config);
+  const extensionFactory = createLinkFactory(pluginId, pluginName, config);
   const mapper = mapToConfigure<PluginExtensionLink, AppPluginExtensionLink>(extensionFactory);
   const withConfigureErrorHandling = handleErrorsInConfigure<AppPluginExtensionLink>(options);
   const validateLink = createLinkValidator(options);
@@ -111,7 +114,7 @@ function createLinkRegistryItem(
   return mapper(validateLink(withConfigureErrorHandling(configure)));
 }
 
-function createLinkFactory(pluginId: string, config: AppPluginExtensionLinkConfig) {
+function createLinkFactory(pluginId: string, pluginName: string, config: AppPluginExtensionLinkConfig) {
   return (override: Partial<AppPluginExtensionLink>): PluginExtensionLink => {
     const title = override?.title ?? config.title;
     const description = override?.description ?? config.description;
@@ -122,6 +125,7 @@ function createLinkFactory(pluginId: string, config: AppPluginExtensionLinkConfi
       title: title,
       description: description,
       path: path,
+      pluginName: pluginName,
       key: hashKey(`${pluginId}${config.placement}${title}`),
     });
   };
@@ -129,6 +133,7 @@ function createLinkFactory(pluginId: string, config: AppPluginExtensionLinkConfi
 
 function createCommandFactory(
   pluginId: string,
+  pluginName: string,
   config: AppPluginExtensionCommandConfig,
   handler: (context?: object) => void
 ) {
@@ -140,6 +145,7 @@ function createCommandFactory(
       type: PluginExtensionTypes.command,
       title: title,
       description: description,
+      pluginName: pluginName,
       key: hashKey(`${pluginId}${config.placement}${title}`),
       callHandlerWithContext: () => handler(context),
     });
