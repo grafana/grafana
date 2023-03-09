@@ -86,6 +86,19 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
     }
   };
 
+  // @TODO revisit, currently returning last row index for field
+  const getRowIndex = (fieldName: string | undefined) => {
+    if (fieldName) {
+      const series = scene.context.getPanelData()?.series[0];
+      const field = series?.fields.find((f) => (f.name = fieldName));
+      const data = field?.values;
+
+      return data ? data.length - 1 : 0;
+    }
+
+    return 0;
+  };
+
   // Figure out target and then target's relative coordinates drawing (if no target do parent)
   const renderConnections = () => {
     return scene.connections.state.map((v, idx) => {
@@ -129,7 +142,9 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
       const isSelected = selectedConnection === v && scene.panel.context.instanceState.selectedConnection;
 
       const strokeColor = info.color ? scene.context.getColor(info.color).value() : defaultArrowColor;
-      const strokeWidth = info.size ? scene.context.getScale(info.size).get(0) : defaultArrowSize; // @TODO index hardcoded!
+      const lastRowIndex = getRowIndex(info.size?.field);
+
+      const strokeWidth = info.size ? scene.context.getScale(info.size).get(lastRowIndex) : defaultArrowSize;
 
       const connectionCursorStyle = scene.isEditingEnabled ? 'grab' : '';
       const selectedStyles = { stroke: strokeColor, strokeWidth: 3 };
