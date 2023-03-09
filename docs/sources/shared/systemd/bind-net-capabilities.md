@@ -2,7 +2,7 @@
 title: Serving Grafana on a port < 1024
 ---
 
-If you are using `systemd` and want to start Grafana on a port that is less than 1024, then you must add a `systemd` unit override.
+If you are using `systemd` and want to start Grafana on a port that is lower than 1024, you must add a `systemd` unit override.
 
 1. Run the following command to create an override file in your configured editor.
 

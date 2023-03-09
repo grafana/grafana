@@ -9,15 +9,82 @@ weight: 100
 
 # Install on Debian or Ubuntu
 
-This topic explains how to install Grafana dependencies, install Grafana on Linux Debian or Ubuntu, get the service up and running on your Debian or Ubuntu system, and describes the contents of the installation package.
+This topic explains how to install Grafana dependencies, install Grafana on Linux Debian or Ubuntu, and start the Grafana server on your Debian or Ubuntu system. This topic also describes the contents of the installation package.
 
 You can install Grafana using the Grafana Labs APT repository, by downloading a `.deb` package, or by downloading a binary `.tar.gz` file.
 
-If you install via the `.deb` package or `.tar.gz` file, then you will need to manually update Grafana for each new version.
+If you install via the `.deb` package or `.tar.gz` file, then you must manually update Grafana for each new version.
 
-## Download and install Grafana
+## Install from APT repository
 
-Complete the following steps to download and install Grafana on Debian or Ubuntu:
+If you install from the APT repository, Grafana automatically updates every time you run `apt-get update`.
+
+| Grafana Version           | Package            | Repository                            |
+| ------------------------- | ------------------ | ------------------------------------- |
+| Grafana Enterprise        | grafana-enterprise | `https://apt.grafana.com stable main` |
+| Grafana Enterprise (Beta) | grafana-enterprise | `https://apt.grafana.com beta main`   |
+| Grafana OSS               | grafana            | `https://apt.grafana.com stable main` |
+| Grafana OSS (Beta)        | grafana            | `https://apt.grafana.com beta main`   |
+
+> **Note:** Grafana Enterprise is the recommended and default edition. It is available for free and includes all the features of the OSS edition. You can also upgrade to the [full Enterprise feature set](https://grafana.com/products/enterprise/?utm_source=grafana-install-page), which has support for [Enterprise plugins](https://grafana.com/grafana/plugins/?enterprise=1&utcm_source=grafana-install-page).
+
+### Before you begin
+
+To follow these instructions, you need:
+
+- xxx
+- xxx
+
+### Steps
+
+Complete the following steps to install Grafana from the APT repository:
+
+1. To install the latest release, run the following commands:
+
+   ```bash
+   sudo apt-get install -y apt-transport-https
+   sudo apt-get install -y software-properties-common wget
+   sudo wget -q -O /usr/share/keyrings/grafana.key https://apt.grafana.com/gpg.key
+   ```
+
+1. To add a repository for stable releases, run the following commands:
+
+   ```bash
+   echo "deb [signed-by=/usr/share/keyrings/grafana.key] https://apt.grafana.com stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
+   ```
+
+1. To add a respository for beta releases, run the following commands:
+
+   ```bash
+   echo "deb [signed-by=/usr/share/keyrings/grafana.key] https://apt.grafana.com beta main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
+   ```
+
+1. After you add the repository, run one of the following commands:
+
+   ```bash
+   sudo apt-get update
+
+   # Install the latest OSS release:
+   sudo apt-get install grafana
+
+   # Install the latest Enterprise release:
+   sudo apt-get install grafana-enterprise
+   ```
+
+## Install Grafana using DEB or the standalone binaries
+
+If you choose not to install Grafana using APT, you can download and install Grafana using DEB or the standalone binaries.
+
+### Before you begin
+
+To follow these instructions, you need:
+
+- xxx
+- xxx
+
+### Steps
+
+Complete the following steps to install Grafana using DEB or the standalone binaries:
 
 1. Navigate to the [Grafana download page](https://grafana.com/grafana/download).
 1. Select the Grafana version you want to install.
@@ -29,97 +96,68 @@ Complete the following steps to download and install Grafana on Debian or Ubuntu
 1. Depending on which system you are running, click the **Linux** or **ARM** tab on the download page.
 1. Copy and paste the code from the installation page into your command line and run.
 
-### Install from APT repository
+## 2. Start the server
 
-If you install from the APT repository, then Grafana is automatically updated every time you run `apt-get update`.
-
-| Grafana Version           | Package            | Repository                            |
-| ------------------------- | ------------------ | ------------------------------------- |
-| Grafana Enterprise        | grafana-enterprise | `https://apt.grafana.com stable main` |
-| Grafana Enterprise (Beta) | grafana-enterprise | `https://apt.grafana.com beta main`   |
-| Grafana OSS               | grafana            | `https://apt.grafana.com stable main` |
-| Grafana OSS (Beta)        | grafana            | `https://apt.grafana.com beta main`   |
-
-> **Note:** Grafana Enterprise is the recommended and default edition. It is available for free and includes all the features of the OSS edition. You can also upgrade to the [full Enterprise feature set](https://grafana.com/products/enterprise/?utm_source=grafana-install-page), which has support for [Enterprise plugins](https://grafana.com/grafana/plugins/?enterprise=1&utcm_source=grafana-install-page).
-
-#### To install the latest release:
-
-```bash
-sudo apt-get install -y apt-transport-https
-sudo apt-get install -y software-properties-common wget
-sudo wget -q -O /usr/share/keyrings/grafana.key https://apt.grafana.com/gpg.key
-```
-
-Add this repository for stable releases:
-
-```bash
-echo "deb [signed-by=/usr/share/keyrings/grafana.key] https://apt.grafana.com stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
-```
-
-Add this repository if you want beta releases:
-
-```bash
-echo "deb [signed-by=/usr/share/keyrings/grafana.key] https://apt.grafana.com beta main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
-```
-
-After you add the repository:
-
-```bash
-sudo apt-get update
-
-# Install the latest OSS release:
-sudo apt-get install grafana
-
-# Install the latest Enterprise release:
-sudo apt-get install grafana-enterprise
-```
-
-## Start the Grafana server
-
-This starts the `grafana-server` process as the `grafana` user, which was created during the package installation.
+The following sections provide instructions for starting the `grafana-server` process as the `grafana` user, which was created during the package installation.
 
 If you installed with the APT repository or `.deb` package, then you can start the server using `systemd` or `init.d`. If you installed a binary `.tar.gz` file, then you need to execute the binary.
 
-### Start the server with systemd
+### Start the Grafana server with systemd
 
-To start the service and verify that the service has started:
+Complete the following steps to start the Grafana server with systemd and verify that it is running:
 
-```bash
-sudo systemctl daemon-reload
-sudo systemctl start grafana-server
-sudo systemctl status grafana-server
-```
+1. To start the service, run the following commands:
 
-Configure the Grafana server to start at boot:
+   ```bash
+   sudo systemctl daemon-reload
+   sudo systemctl start grafana-server
+   sudo systemctl status grafana-server
+   ```
 
-```bash
-sudo systemctl enable grafana-server.service
-```
+1. To verify that the service is running, run the following command:
 
-#### Serving Grafana on a port < 1024
+   ```
+   Need input here
+   ```
+
+1. To configure the Grafana server to start at boot, run the following command:
+
+   ```bash
+   sudo systemctl enable grafana-server.service
+   ```
+
+#### Serve Grafana on a port < 1024
 
 {{< docs/shared "systemd/bind-net-capabilities.md" >}}
 
 ### Start the server with init.d
 
-To start the service and verify that the service has started:
+Complete the following steps to start the Grafana service and verify that it is running:
 
-```bash
-sudo service grafana-server start
-sudo service grafana-server status
-```
+1. To start the Grafana server, run the following commands:
 
-Configure the Grafana server to start at boot:
+   ```bash
+   sudo service grafana-server start
+   sudo service grafana-server status
+   ```
 
-```bash
-sudo update-rc.d grafana-server defaults
-```
+1. To verify that the service is running, run the following command:
 
-### Execute the binary
+   ```
+   Need input here
+   ```
+
+1. To configure the Grafana server to start at boot, run the following command:
+
+   ```bash
+   sudo update-rc.d grafana-server defaults
+   ```
+
+### Start the server using the binary
 
 The `grafana-server` binary .tar.gz needs the working directory to be the root install directory where the binary and the `public` folder are located.
 
-Start Grafana by running:
+To start the Grafana server, run the following command:
 
 ```bash
 ./bin/grafana-server web
