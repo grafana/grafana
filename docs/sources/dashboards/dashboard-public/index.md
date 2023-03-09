@@ -102,7 +102,7 @@ If a viewer without access tries to navigate to the public dashboard, they will 
 1. Click **Resend** on the viewer you'd like to reshare the public dashboard with.
 2. This viewer will receive an email with a new one-time use link. This will invalidate all previously issued links for that viewer.
 
-### Access Limitations
+### Access limitations
 
 One-time use links utilize browser cookies, so when a viewer is granted access via a one-time use link, they will only have access through the browser they used to claim the link.
 
