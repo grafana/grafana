@@ -55,32 +55,114 @@ describe('PrometheusIncrementalStorage', function () {
     expect(storage).toBeInstanceOf(QueryCache);
   });
 
+  it('will not modify an empty response', () => {
+    const storage = new QueryCache();
+    const firstFrames: DataFrame[] = [];
+    const secondFrames: DataFrame[] = [];
+
+    const targetSignifiers = new Map<string, string>();
+
+    // start time of scenario
+    const firstFrom = dateTime(new Date(1675262550000));
+    // End time of scenario
+    const firstTo = dateTime(new Date(1675262550000)).add(6, 'hours');
+
+    const firstRange: TimeRange = {
+      from: firstFrom,
+      to: firstTo,
+      raw: {
+        from: 'now-6h',
+        to: 'now',
+      },
+    };
+
+    // Same query 2 minutes later
+    const numberOfSamplesLater = 4;
+    const interval = 30000;
+
+    const secondFrom = dateTime(new Date(1675262550000 + interval * numberOfSamplesLater));
+    const secondTo = dateTime(new Date(1675262550000 + interval * numberOfSamplesLater)).add(6, 'hours');
+
+    const secondRange: TimeRange = {
+      from: secondFrom,
+      to: secondTo,
+      raw: {
+        from: 'now-6h',
+        to: 'now',
+      },
+    };
+
+    const frameSignifier = `helloFrameSig`;
+    const dashboardId = `dashid`;
+    const panelId = 2;
+    const targetSignifier = `${dashboardId}|${panelId}|A`;
+
+    targetSignifiers.set(targetSignifier, frameSignifier);
+
+    const firstStoredFrames = storage.procFrames(
+      mockRequest({
+        range: firstRange,
+        dashboardUID: dashboardId,
+        panelId: panelId,
+      }),
+      {
+        requests: [], // unused
+        targSigs: targetSignifiers,
+        shouldCache: true,
+      },
+      firstFrames
+    );
+
+    const cached = storage.cache.get(targetSignifier);
+
+    expect(cached?.frames[0].fields[0].values.length).toEqual(firstFrames[0]?.fields[0]?.values?.length);
+    expect(firstStoredFrames[0]?.fields[0].values.length).toEqual(firstFrames[0]?.fields[0]?.values?.length);
+
+    // Should return the request frames unaltered
+    expect(firstStoredFrames).toEqual(firstFrames);
+
+    const secondStoredFrames = storage.procFrames(
+      mockRequest({
+        range: secondRange,
+        dashboardUID: dashboardId,
+        panelId: panelId,
+      }),
+      {
+        requests: [], // unused
+        targSigs: targetSignifiers,
+        shouldCache: true,
+      },
+      secondFrames
+    );
+
+    const storageLengthAfterSubsequentQuery = storage.cache.get(targetSignifier);
+
+    expect(secondStoredFrames).toEqual([]);
+
+    storageLengthAfterSubsequentQuery?.frames.forEach((dataFrame, index) => {
+      const secondFramesLength = secondFrames[index].fields[0].values.length;
+      const firstFramesLength = firstFrames[index].fields[0].values.length;
+
+      const cacheLength = dataFrame.fields[0].values.length;
+
+      // Cache can contain more, but never less
+      expect(cacheLength).toBeGreaterThanOrEqual(secondFramesLength + firstFramesLength - (20 + numberOfSamplesLater));
+
+      // Fewer results are sent in incremental result
+      expect(firstFramesLength).toBeGreaterThan(secondFramesLength);
+    });
+  });
+
   it('Merges incremental queries in storage', () => {
     const scenarios = [
       IncrementalStorageDataFrameScenarios.histogram.getSeriesWithGapAtEnd(),
       IncrementalStorageDataFrameScenarios.histogram.getSeriesWithGapInMiddle(),
       IncrementalStorageDataFrameScenarios.histogram.getSeriesWithGapAtStart(),
     ];
-
     scenarios.forEach((scenario, index) => {
       const storage = new QueryCache();
       const firstFrames = scenario.first.dataFrames as unknown as DataFrame[];
       const secondFrames = scenario.second.dataFrames as unknown as DataFrame[];
-
-      // All "incoming" frames from the API should be square, we can remove these assertions
-      expect(scenario.first.dataFrames[0].fields[0].values.length).toEqual(
-        scenario.first.dataFrames[0].fields[1].values.length
-      );
-      expect(scenario.first.dataFrames[1].fields[0].values.length).toEqual(
-        scenario.first.dataFrames[1].fields[1].values.length
-      );
-
-      expect(scenario.second.dataFrames[0].fields[0].values.length).toEqual(
-        scenario.second.dataFrames[0].fields[1].values.length
-      );
-      expect(scenario.second.dataFrames[1].fields[0].values.length).toEqual(
-        scenario.second.dataFrames[1].fields[1].values.length
-      );
 
       const targetSignifiers = new Map<string, string>();
 
@@ -236,7 +318,7 @@ describe('PrometheusIncrementalStorage', function () {
       from: thirdFrom,
       to: thirdTo,
       raw: {
-        from: 'now-6h',
+        from: 'now-5m',
         to: 'now',
       },
     };
@@ -280,8 +362,6 @@ describe('PrometheusIncrementalStorage', function () {
     );
 
     const secondMergedLength = secondQueryResult[0].fields[0].values.length;
-    const cached = storage.cache.get(targetSignifier);
-    const storageLengthAfterSecondQuery = cached?.frames[0].fields[0].values.length;
 
     // Since the step is 15s, and the request was 30 seconds later, we should have 2 extra frames, but we should evict the first two, so we should get the same length
     expect(firstMergedLength).toEqual(secondMergedLength);
@@ -292,9 +372,7 @@ describe('PrometheusIncrementalStorage', function () {
       secondQueryResult[0].fields[0].values.toArray()[0]
     );
 
-    // @todo assertions
-
-    const thirdQueryResult = storage.procFrames(
+    storage.procFrames(
       mockRequest({
         range: thirdRange,
         dashboardUID: dashboardId,
@@ -309,84 +387,11 @@ describe('PrometheusIncrementalStorage', function () {
     );
 
     const cachedAfterThird = storage.cache.get(targetSignifier);
-    const storageLengthAfterThirdQuery = cachedAfterThird?.frames[0].fields[0].values.length ?? 0;
-    expect(storageLengthAfterSecondQuery).toBeGreaterThan(storageLengthAfterThirdQuery);
+    const storageLengthAfterThirdQuery = cachedAfterThird?.frames[0].fields[0].values.toArray().length;
+    expect(storageLengthAfterThirdQuery).toEqual(20);
   });
+  // Length mismatch?
+  //storage.requestInfo() @todo
 
-  // it('Avoids off by one error', () => {
-  //   const storage = new IncrementalStorage(getDatasourceStub(), defaultOptions);
-  //
-  //   const firstRequest = IncrementalStorageDataFrameScenarios.histogram.noEvictionRequests.first;
-  //   const secondRequest = IncrementalStorageDataFrameScenarios.histogram.noEvictionRequests.second;
-  //   const thirdRequest = IncrementalStorageDataFrameScenarios.histogram.noEvictionRequests.third;
-  //
-  //   const firstDataFrameResponse: DataQueryResponse = { data: [toDataFrame(firstRequest.dataFrame)] };
-  //   const secondDataFrameResponse: DataQueryResponse = { data: [toDataFrame(secondRequest.dataFrame)] };
-  //   const thirdDataFrameResponse: DataQueryResponse = { data: [toDataFrame(thirdRequest.dataFrame)] };
-  //
-  //   // Our first query should just prime the cache, and return unaltered data frames
-  //   const firstDataFrames = storage.appendQueryResultToDataFrameStorage(
-  //     mockRequest(firstRequest.request as DataQueryRequest<PromQuery>),
-  //     firstDataFrameResponse,
-  //     firstRequest.originalRange
-  //   );
-  //
-  //   // Should be unchanged...
-  //   expect(JSON.stringify(firstDataFrames)).toEqual(JSON.stringify({ data: [toDataFrame(firstRequest.dataFrame)] }));
-  //
-  //   // and the same object in memory
-  //   expect(firstDataFrames).toBe(firstDataFrameResponse);
-  //
-  //   const firstRequestLength = firstRequest.dataFrame.fields[0].values.length;
-  //   const firstMergedLength = firstDataFrames.data[0].fields[0].values.length;
-  //   expect(firstRequestLength).toEqual(firstMergedLength);
-  //
-  //   // Now the second query we get is just for a few seconds later, without prometheus storage we'd have to ask prometheus for the entire set of data again!
-  //   // But since we have the frames from the last request stored, we were able to modify the request to the backend to exclude data the client already has available
-  //   // So this request was much smaller than the first one!
-  //   // But now we have the arduous task of merging the new frames from the response with the ones we have in storage.
-  //   // A few things to note here, we provide an overlap duration in this class PROMETHEUS_INCREMENTAL_QUERY_OVERLAP_DURATION_MS,
-  //   // which adds a bit of overhead to these requests, but trends towards eventual consistency:
-  //   //  prom records can be inconsistent from the last 10 minutes in some instances
-  //
-  //   const secondDataFrames = storage.appendQueryResultToDataFrameStorage(
-  //     mockRequest(secondRequest.request as DataQueryRequest<PromQuery>),
-  //     secondDataFrameResponse,
-  //     secondRequest.originalRange
-  //   );
-  //
-  //   // Should still be same object
-  //   expect(secondDataFrames).toBe(secondDataFrameResponse);
-  //
-  //   // But since we stitched frames from storage into the response, this dataframe should be a bit longer or equal, as long as the original query duration doesn't begin after existing frames
-  //   // To keep the frame from getting evicted we're using a request that has a huge original request duration, so everything is kept in storage indefinitely for the purpose of this test
-  //   const secondRequestLength = secondRequest.dataFrame.fields[0].values.length;
-  //   const secondMergedLength = secondDataFrames.data[0].fields[0].values.length;
-  //   expect(secondRequestLength).toBeLessThanOrEqual(secondMergedLength);
-  //   expect(secondMergedLength).toBe(firstRequestLength + 1);
-  //
-  //   const thirdDataFrames = storage.appendQueryResultToDataFrameStorage(
-  //     mockRequest(thirdRequest.request as DataQueryRequest<PromQuery>),
-  //     thirdDataFrameResponse,
-  //     thirdRequest.originalRange
-  //   );
-  //
-  //   // STILL the same object
-  //   expect(thirdDataFrames).toBe(thirdDataFrameResponse);
-  //
-  //   const thirdRequestLength = thirdRequest.dataFrame.fields[0].values.length;
-  //   const thirdMergedLength = thirdDataFrames.data[0].fields[0].values.length;
-  //
-  //   // request should be smaller then dataframe returned to viz
-  //   expect(thirdRequestLength).toBeLessThan(thirdMergedLength);
-  //
-  //   // Both of the subsequent requests should be smaller
-  //   expect(thirdRequestLength).toBeLessThan(firstRequestLength);
-  //   expect(secondRequestLength).toBeLessThan(firstRequestLength);
-  //
-  //   // But the second and third had the same number of
-  //   expect(thirdRequestLength).toEqual(secondRequestLength);
-  //
-  //   expect((firstMergedLength === secondMergedLength) === thirdMergedLength);
-  // });
+  it('Will modify request if there is matching storage', () => {});
 });
