@@ -297,7 +297,7 @@ var (
 			Description:  "Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
-			Owner:       grafanaDashboardsSquad,
+			Owner:        grafanaDashboardsSquad,
 		},
 		{
 			Name:            "queryLibrary",
