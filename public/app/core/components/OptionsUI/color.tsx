@@ -54,9 +54,7 @@ export const ColorValueEditor = ({ value, settings, onChange, details }: ColorVa
                     {settings?.placeholder ?? 'Select color'}
                   </span>
                 )}
-                {settings?.isClearable && value && (
-                  <IconButton className={styles.trashIcon} name="times" onClick={() => onChange(undefined)} />
-                )}
+                {settings?.isClearable && value && <IconButton name="times" onClick={() => onChange(undefined)} />}
               </>
             )}
           </div>
@@ -92,9 +90,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     placeholderText: css`
       flex-grow: 2;
       color: ${theme.colors.text.secondary};
-    `,
-    trashIcon: css`
-      padding: 0 ${theme.spacing(1)};
     `,
   };
 };
