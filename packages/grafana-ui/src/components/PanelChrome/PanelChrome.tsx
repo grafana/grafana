@@ -299,7 +299,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       textOverflow: 'ellipsis',
       overflow: 'hidden',
       whiteSpace: 'nowrap',
-      maxWidth: theme.spacing(50),
       fontSize: theme.typography.h6.fontSize,
       fontWeight: theme.typography.h6.fontWeight,
     }),
@@ -315,6 +314,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'panel-menu',
       visibility: 'hidden',
       border: 'none',
+      background: theme.colors.secondary.main,
+      '&:hover': {
+        background: theme.colors.secondary.shade,
+      },
     }),
     errorContainer: css({
       label: 'error-container',
