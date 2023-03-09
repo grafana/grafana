@@ -131,13 +131,13 @@ func (pd *PublicDashboardServiceImpl) FindPublicDashboardAndDashboardByAccessTok
 // Creates and validates the public dashboard and saves it to the database
 func (pd *PublicDashboardServiceImpl) Create(ctx context.Context, u *user.SignedInUser, dto *SavePublicDashboardDTO) (*PublicDashboard, error) {
 	// ensure dashboard exists
-	dashboard, err := pd.FindDashboard(ctx, u.OrgID, dto.DashboardUid)
+	_, err := pd.FindDashboard(ctx, u.OrgID, dto.DashboardUid)
 	if err != nil {
 		return nil, err
 	}
 
 	// validate fields
-	err = validation.ValidatePublicDashboard(dto, dashboard)
+	err = validation.ValidatePublicDashboard(dto)
 	if err != nil {
 		return nil, err
 	}
@@ -225,7 +225,7 @@ func (pd *PublicDashboardServiceImpl) Update(ctx context.Context, u *user.Signed
 	}
 
 	// validate dashboard
-	err = validation.ValidatePublicDashboard(dto, dashboard)
+	err = validation.ValidatePublicDashboard(dto)
 	if err != nil {
 		return nil, err
 	}

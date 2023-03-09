@@ -55,7 +55,7 @@ const ConfigPublicDashboard = () => {
 
   const hasWritePermissions = contextSrv.hasAccess(AccessControlAction.DashboardsPublicWrite, isOrgAdmin());
   const hasEmailSharingEnabled =
-    config.licenseInfo.edition === GrafanaEdition.Enterprise && !!config.featureToggles.publicDashboardsEmailSharing;
+    config.licenseInfo.edition === GrafanaEdition.Pro && !!config.featureToggles.publicDashboardsEmailSharing;
   const dashboardState = useSelector((store) => store.dashboard);
   const dashboard = dashboardState.getModel()!;
   const dashboardVariables = dashboard.getVariables();
