@@ -2,7 +2,6 @@ package authimpl
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/grafana/grafana/pkg/services/auth"
 )
@@ -51,7 +50,7 @@ func (uat *userAuthToken) fromUserToken(ut *auth.UserToken) error {
 	return nil
 }
 
-func (uat *userAuthToken) toUserToken(ut *auth.UserToken, rotationIntervalMinutes int) error {
+func (uat *userAuthToken) toUserToken(ut *auth.UserToken) error {
 	if uat == nil {
 		return fmt.Errorf("needs pointer to userAuthToken struct")
 	}
@@ -69,6 +68,5 @@ func (uat *userAuthToken) toUserToken(ut *auth.UserToken, rotationIntervalMinute
 	ut.UpdatedAt = uat.UpdatedAt
 	ut.RevokedAt = uat.RevokedAt
 	ut.UnhashedToken = uat.UnhashedToken
-	ut.ExpiresAt = time.Unix(uat.RotatedAt, 0).Add(time.Duration(rotationIntervalMinutes) * time.Minute)
 	return nil
 }

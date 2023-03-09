@@ -35,5 +35,14 @@ type UserToken struct {
 	UpdatedAt     int64
 	RevokedAt     int64
 	UnhashedToken string
-	ExpiresAt     time.Time
+}
+
+const UrgentRotateTime = 1 * time.Minute
+
+func (t *UserToken) NeedRotation(rotationInterval time.Duration) bool {
+	rotatedAt := time.Unix(t.RotatedAt, 0)
+	if t.AuthTokenSeen {
+		return rotatedAt.Before(time.Now().Add(-rotationInterval))
+	}
+	return rotatedAt.Before(time.Now().Add(-UrgentRotateTime))
 }

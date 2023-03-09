@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/models/usertoken"
 	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -20,8 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
-
-const urgentRotateTime = 1 * time.Minute
 
 var getTime = time.Now
 
@@ -102,7 +101,7 @@ func (s *UserAuthTokenService) CreateToken(ctx context.Context, user *user.User,
 	ctxLogger.Debug("user auth token created", "tokenId", userAuthToken.Id, "userId", userAuthToken.UserId, "clientIP", userAuthToken.ClientIp, "userAgent", userAuthToken.UserAgent, "authToken", userAuthToken.AuthToken)
 
 	var userToken auth.UserToken
-	err = userAuthToken.toUserToken(&userToken, s.cfg.TokenRotationIntervalMinutes)
+	err = userAuthToken.toUserToken(&userToken)
 
 	return &userToken, err
 }
@@ -150,7 +149,7 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 	if model.AuthToken != hashedToken && model.PrevAuthToken == hashedToken && model.AuthTokenSeen {
 		modelCopy := model
 		modelCopy.AuthTokenSeen = false
-		expireBefore := getTime().Add(-urgentRotateTime).Unix()
+		expireBefore := getTime().Add(-usertoken.UrgentRotateTime).Unix()
 
 		var affectedRows int64
 		err = s.sqlStore.WithTransactionalDbSession(ctx, func(dbSession *db.Session) error {
@@ -208,7 +207,7 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 	model.UnhashedToken = unhashedToken
 
 	var userToken auth.UserToken
-	err = model.toUserToken(&userToken, s.cfg.TokenRotationIntervalMinutes)
+	err = model.toUserToken(&userToken)
 
 	return &userToken, err
 }
@@ -271,20 +270,12 @@ func (s *UserAuthTokenService) TryRotateToken(ctx context.Context, token *auth.U
 	}
 
 	rotResult, err, _ := s.singleflight.Do(fmt.Sprint(model.Id), func() (interface{}, error) {
-		var needsRotation bool
-		rotatedAt := time.Unix(model.RotatedAt, 0)
-		if model.AuthTokenSeen {
-			needsRotation = rotatedAt.Before(now.Add(-time.Duration(s.cfg.TokenRotationIntervalMinutes) * time.Minute))
-		} else {
-			needsRotation = rotatedAt.Before(now.Add(-urgentRotateTime))
-		}
-
-		if !needsRotation {
+		if !token.NeedRotation(time.Duration(s.cfg.TokenRotationIntervalMinutes) * time.Minute) {
 			return &rotationResult{rotated: false}, nil
 		}
 
 		ctxLogger := s.log.FromContext(ctx)
-		ctxLogger.Debug("token needs rotation", "tokenId", model.Id, "authTokenSeen", model.AuthTokenSeen, "rotatedAt", rotatedAt)
+		ctxLogger.Debug("token needs rotation", "tokenId", model.Id, "authTokenSeen", model.AuthTokenSeen, "rotatedAt", time.Unix(model.RotatedAt, 0))
 
 		clientIPStr := clientIP.String()
 		if len(clientIP) == 0 {
@@ -330,7 +321,7 @@ func (s *UserAuthTokenService) TryRotateToken(ctx context.Context, token *auth.U
 			ctxLogger.Debug("auth token rotated", "affected", affected, "auth_token_id", model.Id, "userId", model.UserId)
 			model.UnhashedToken = newToken
 			var result auth.UserToken
-			if err := model.toUserToken(&result, s.cfg.TokenRotationIntervalMinutes); err != nil {
+			if err := model.toUserToken(&result); err != nil {
 				return nil, err
 			}
 			return &rotationResult{
@@ -454,7 +445,7 @@ func (s *UserAuthTokenService) GetUserToken(ctx context.Context, userId, userTok
 			return auth.ErrUserTokenNotFound
 		}
 
-		return token.toUserToken(&result, s.cfg.TokenRotationIntervalMinutes)
+		return token.toUserToken(&result)
 	})
 
 	return &result, err
@@ -475,7 +466,7 @@ func (s *UserAuthTokenService) GetUserTokens(ctx context.Context, userId int64) 
 
 		for _, token := range tokens {
 			var userToken auth.UserToken
-			if err := token.toUserToken(&userToken, s.cfg.TokenRotationIntervalMinutes); err != nil {
+			if err := token.toUserToken(&userToken); err != nil {
 				return err
 			}
 			result = append(result, &userToken)
@@ -498,7 +489,7 @@ func (s *UserAuthTokenService) GetUserRevokedTokens(ctx context.Context, userId 
 
 		for _, token := range tokens {
 			var userToken auth.UserToken
-			if err := token.toUserToken(&userToken, s.cfg.TokenRotationIntervalMinutes); err != nil {
+			if err := token.toUserToken(&userToken); err != nil {
 				return err
 			}
 			result = append(result, &userToken)
