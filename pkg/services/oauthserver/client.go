@@ -126,12 +126,12 @@ func (c *Client) GetScopes() fosite.Arguments {
 		switch c.SelfPermissions[i].Action {
 		case "users:impersonate":
 			permissionBasedScopes["impersonate"] = true
-		case "users:read":
+		case ac.ActionUsersRead:
 			permissionBasedScopes["profile"] = true
 			permissionBasedScopes["email"] = true
-		case "users.permissions:read":
+		case ac.ActionUsersPermissionsRead:
 			permissionBasedScopes["permissions"] = true
-		case "teams:read":
+		case ac.ActionTeamsRead:
 			permissionBasedScopes["teams"] = true
 		}
 	}
