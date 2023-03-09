@@ -204,17 +204,17 @@ devenv:
 	@printf 'You have to define sources for this command \nexample: make devenv sources=postgres,openldap\n'
 else
 devenv: ${KIND} devenv-down ## Start optional services, e.g. postgres, prometheus, and elasticsearch.
-ifneq (,$(findstring apiserver,$(targets)))
-	@${KIND} create cluster --name grafana-devenv --config=devenv/kind-config.yml
-endif
 	echo "$(targets)"
 
 	@cd devenv; \
 	./create_docker_compose.sh $(targets) || \
 	(rm -rf {docker-compose.yaml,conf.tmp,.env}; exit 1)
 
-	@cd devenv; cd ..; \
 	docker-compose -f ./devenv/docker-compose.yaml  up -d --build
+
+ifneq (,$(findstring apiserver,$(targets)))
+	@${KIND} create cluster --name grafana-devenv --config=devenv/kind-config.yml
+endif
 endif
 
 devenv-down: ## Stop optional services.
