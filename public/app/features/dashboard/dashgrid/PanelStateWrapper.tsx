@@ -631,12 +631,13 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     const { transparent } = panel;
 
     const alertState = data.alertState?.state;
+    const hasHoverHeader = this.hasOverlayHeader();
 
     const containerClassNames = classNames({
       'panel-container': true,
       'panel-container--absolute': isSoloRoute(locationService.getLocation().pathname),
       'panel-container--transparent': transparent,
-      'panel-container--no-title': this.hasOverlayHeader(),
+      'panel-container--no-title': hasHoverHeader,
       [`panel-alert-state--${alertState}`]: alertState !== undefined,
     });
 
@@ -648,6 +649,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       (data.series.length > 0 && data.series.some((v) => (v.meta?.notices?.length ?? 0) > 0)) ||
       (data.request && data.request.timeInfo) ||
       alertState;
+
     const titleItems = showTitleItems && (
       <PanelHeaderTitleItems
         key="title-items"
@@ -685,7 +687,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
           dragClassCancel="grid-drag-cancel"
           padding={padding}
           hoverHeaderOffset={hoverHeaderOffset}
-          hoverHeader={title ? false : true}
+          hoverHeader={this.hasOverlayHeader()}
           displayMode={transparent ? 'transparent' : 'default'}
         >
           {(innerWidth, innerHeight) => (
