@@ -3,20 +3,30 @@ package database
 import (
 	"context"
 	"testing"
+	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
 )
 
 var testFeatureToggles = featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch)
@@ -36,7 +46,7 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 			sqlStore.Cfg.RBACEnabled = false
 			quotaService := quotatest.New(false, nil)
 			var err error
-			dashboardStore, err = ProvideDashboardStore(sqlStore, &setting.Cfg{}, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
+			dashboardStore, err = ProvideDashboardStore(sqlStore, sqlStore.Cfg, testFeatureToggles, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
 			require.NoError(t, err)
 			flder = insertTestDashboard(t, dashboardStore, "1 test dash folder", 1, 0, true, "prod", "webapp")
 			dashInRoot = insertTestDashboard(t, dashboardStore, "test dash 67", 1, 0, false, "prod", "webapp")
@@ -477,6 +487,189 @@ func TestIntegrationDashboardFolderDataAccess(t *testing.T) {
 	})
 }
 
+func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	var sqlStore *sqlstore.SQLStore
+	var dashboardStore dashboards.Store
+	var parent, subfolder *folder.Folder
+	const (
+		parentTitle          = "parent"
+		subfolderTitle       = "subfolder"
+		dashInRootTitle      = "dashboard in root"
+		dashInParentTitle    = "dashboard in parent"
+		dashInSubfolderTitle = "dashboard in subfolder"
+	)
+	var viewer user.SignedInUser
+	var role *accesscontrol.Role
+
+	setup := func(features featuremgmt.FeatureToggles) {
+		sqlStore = db.InitTestDB(t)
+		sqlStore.Cfg.RBACEnabled = true
+		quotaService := quotatest.New(false, nil)
+		var err error
+		dashboardStore, err = ProvideDashboardStore(sqlStore, sqlStore.Cfg, features, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
+		require.NoError(t, err)
+
+		usr := createUser(t, sqlStore, "viewer", "Viewer", false)
+		viewer = user.SignedInUser{
+			UserID:  usr.ID,
+			OrgID:   usr.OrgID,
+			OrgRole: org.RoleViewer,
+		}
+
+		orgService, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotaService)
+		require.NoError(t, err)
+		usrSvc, err := userimpl.ProvideService(sqlStore, orgService, sqlStore.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
+		require.NoError(t, err)
+
+		// create admin user in the same org
+		currentUserCmd := user.CreateUserCommand{Login: "admin", Email: "admin@test.com", Name: "an admin", IsAdmin: false, OrgID: viewer.OrgID}
+		u, err := usrSvc.Create(context.Background(), &currentUserCmd)
+		require.NoError(t, err)
+		admin := user.SignedInUser{
+			UserID:  u.ID,
+			OrgID:   u.OrgID,
+			OrgRole: org.RoleAdmin,
+		}
+		require.NotEqual(t, viewer.UserID, admin.UserID)
+
+		origNewGuardian := guardian.New
+		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true, CanSaveValue: true})
+		t.Cleanup(func() {
+			guardian.New = origNewGuardian
+		})
+
+		folderSvc := folderimpl.ProvideService(mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), sqlStore.Cfg, dashboardStore, folderimpl.ProvideDashboardFolderStore(sqlStore), sqlStore, features)
+
+		// create parent folder
+		parent, err = folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
+			UID:          "parent",
+			OrgID:        admin.OrgID,
+			Title:        parentTitle,
+			SignedInUser: &admin,
+		})
+		require.NoError(t, err)
+
+		// create subfolder
+		subfolder, err = folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
+			UID:          "subfolder",
+			ParentUID:    "parent",
+			OrgID:        admin.OrgID,
+			Title:        subfolderTitle,
+			SignedInUser: &admin,
+		})
+		require.NoError(t, err)
+
+		saveDashboardCmd := dashboards.SaveDashboardCommand{
+			UserID:   admin.UserID,
+			OrgID:    admin.OrgID,
+			IsFolder: false,
+			Dashboard: simplejson.NewFromAny(map[string]interface{}{
+				"title": dashInRootTitle,
+			}),
+		}
+		_, err = dashboardStore.SaveDashboard(context.Background(), saveDashboardCmd)
+		require.NoError(t, err)
+
+		saveDashboardCmd = dashboards.SaveDashboardCommand{
+			UserID:   admin.UserID,
+			OrgID:    admin.OrgID,
+			IsFolder: false,
+			Dashboard: simplejson.NewFromAny(map[string]interface{}{
+				"title": dashInParentTitle,
+			}),
+			FolderID:  parent.ID,
+			FolderUID: parent.UID,
+		}
+		_, err = dashboardStore.SaveDashboard(context.Background(), saveDashboardCmd)
+		require.NoError(t, err)
+
+		saveDashboardCmd = dashboards.SaveDashboardCommand{
+			UserID:   admin.UserID,
+			OrgID:    admin.OrgID,
+			IsFolder: false,
+			Dashboard: simplejson.NewFromAny(map[string]interface{}{
+				"title": dashInSubfolderTitle,
+			}),
+			FolderID:  subfolder.ID,
+			FolderUID: subfolder.UID,
+		}
+		_, err = dashboardStore.SaveDashboard(context.Background(), saveDashboardCmd)
+		require.NoError(t, err)
+
+		role = setupRBACRole(t, *sqlStore, &viewer)
+	}
+
+	testCases := []struct {
+		desc           string
+		features       featuremgmt.FeatureToggles
+		permissions    map[string][]string
+		expectedTitles []string
+	}{
+		{
+			desc:           "it should not return folder if ACL is not set for parent folder",
+			features:       featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch),
+			permissions:    nil,
+			expectedTitles: nil,
+		},
+		{
+			desc:     "it should not return dashboard in subfolder if nested folders are disabled and the user has permission to read dashboards under parent folder",
+			features: featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch),
+			permissions: map[string][]string{
+				dashboards.ActionDashboardsRead: {"folders:uid:parent"},
+			},
+			expectedTitles: []string{dashInParentTitle},
+		},
+		{
+			desc:     "it should return dashboard in subfolder if nested folders are enabled and the user has permission to read dashboards under parent folder",
+			features: featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch, featuremgmt.FlagNestedFolders),
+			permissions: map[string][]string{
+				dashboards.ActionDashboardsRead: {"folders:uid:parent"},
+			},
+			expectedTitles: []string{dashInParentTitle, dashInSubfolderTitle},
+		},
+		{
+			desc:     "it should not return subfolder if nested folders are disabled and the user has permission to read folders under parent folder",
+			features: featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch),
+			permissions: map[string][]string{
+				dashboards.ActionFoldersRead: {"folders:uid:parent"},
+			},
+			expectedTitles: []string{parentTitle},
+		},
+		{
+			desc:     "it should return subfolder if nested folders are enabled and the user has permission to read folders under parent folder",
+			features: featuremgmt.WithFeatures(featuremgmt.FlagPanelTitleSearch, featuremgmt.FlagNestedFolders),
+			permissions: map[string][]string{
+				dashboards.ActionFoldersRead: {"folders:uid:parent"},
+			},
+			expectedTitles: []string{parentTitle, subfolderTitle},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			setup(tc.features)
+			viewer.Permissions = map[int64]map[string][]string{viewer.OrgID: tc.permissions}
+			setupRBACPermission(t, *sqlStore, role, &viewer)
+
+			query := &dashboards.FindPersistedDashboardsQuery{
+				SignedInUser: &viewer,
+				OrgId:        viewer.OrgID,
+			}
+			err := testSearchDashboards(dashboardStore, query)
+			require.NoError(t, err)
+
+			require.Equal(t, len(tc.expectedTitles), len(query.Result))
+			for i, tlt := range tc.expectedTitles {
+				assert.Equal(t, tlt, query.Result[i].Title)
+			}
+		})
+	}
+}
+
 func moveDashboard(t *testing.T, dashboardStore dashboards.Store, orgId int64, dashboard *simplejson.Json,
 	newFolderId int64) *dashboards.Dashboard {
 	t.Helper()
@@ -491,4 +684,62 @@ func moveDashboard(t *testing.T, dashboardStore dashboards.Store, orgId int64, d
 	require.NoError(t, err)
 
 	return dash
+}
+
+func setupRBACRole(t *testing.T, db sqlstore.SQLStore, user *user.SignedInUser) *accesscontrol.Role {
+	t.Helper()
+	var role *accesscontrol.Role
+	err := db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		role = &accesscontrol.Role{
+			OrgID:   user.OrgID,
+			UID:     "test_role",
+			Name:    "test:role",
+			Updated: time.Now(),
+			Created: time.Now(),
+		}
+		_, err := sess.Insert(role)
+		if err != nil {
+			return err
+		}
+
+		_, err = sess.Insert(accesscontrol.UserRole{
+			OrgID:   role.OrgID,
+			RoleID:  role.ID,
+			UserID:  user.UserID,
+			Created: time.Now(),
+		})
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+
+	require.NoError(t, err)
+	return role
+}
+
+func setupRBACPermission(t *testing.T, db sqlstore.SQLStore, role *accesscontrol.Role, user *user.SignedInUser) {
+	t.Helper()
+	err := db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		if _, err := sess.Exec("DELETE FROM permission WHERE role_id = ?", role.ID); err != nil {
+			return err
+		}
+
+		var acPermission []accesscontrol.Permission
+		for action, scopes := range user.Permissions[user.OrgID] {
+			for _, scope := range scopes {
+				acPermission = append(acPermission, accesscontrol.Permission{
+					RoleID: role.ID, Action: action, Scope: scope, Created: time.Now(), Updated: time.Now(),
+				})
+			}
+		}
+
+		if _, err := sess.InsertMulti(&acPermission); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	require.NoError(t, err)
 }
