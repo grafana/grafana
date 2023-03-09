@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -17,7 +18,10 @@ import (
 var _ authn.HookClient = new(Session)
 var _ authn.ContextAwareClient = new(Session)
 
-func ProvideSession(sessionService auth.UserTokenService, userService user.Service, cfg *setting.Cfg) *Session {
+func ProvideSession(
+	cfg *setting.Cfg, sessionService auth.UserTokenService,
+	userService user.Service, features *featuremgmt.FeatureManager,
+) *Session {
 	return &Session{
 		cfg:            cfg,
 		sessionService: sessionService,
@@ -28,6 +32,7 @@ func ProvideSession(sessionService auth.UserTokenService, userService user.Servi
 
 type Session struct {
 	cfg            *setting.Cfg
+	features       *featuremgmt.FeatureManager
 	sessionService auth.UserTokenService
 	userService    user.Service
 	log            log.Logger

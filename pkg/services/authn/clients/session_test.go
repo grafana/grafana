@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -16,8 +15,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -31,7 +32,7 @@ func TestSession_Test(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.LoginCookieName = ""
 	cfg.LoginMaxLifetime = 20 * time.Second
-	s := ProvideSession(&authtest.FakeUserAuthTokenService{}, &usertest.FakeUserService{}, cfg)
+	s := ProvideSession(cfg, &authtest.FakeUserAuthTokenService{}, &usertest.FakeUserService{}, featuremgmt.WithFeatures())
 
 	disabled := s.Test(context.Background(), &authn.Request{HTTPRequest: validHTTPReq})
 	assert.False(t, disabled)
@@ -120,7 +121,7 @@ func TestSession_Authenticate(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.LoginCookieName = cookieName
 			cfg.LoginMaxLifetime = 20 * time.Second
-			s := ProvideSession(tt.fields.sessionService, tt.fields.userService, cfg)
+			s := ProvideSession(cfg, tt.fields.sessionService, tt.fields.userService, featuremgmt.WithFeatures())
 
 			got, err := s.Authenticate(context.Background(), tt.args.r)
 			require.True(t, (err != nil) == tt.wantErr, err)
@@ -154,12 +155,12 @@ func TestSession_Hook(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.LoginCookieName = "grafana-session"
 	cfg.LoginMaxLifetime = 20 * time.Second
-	s := ProvideSession(&authtest.FakeUserAuthTokenService{
+	s := ProvideSession(cfg, &authtest.FakeUserAuthTokenService{
 		TryRotateTokenProvider: func(ctx context.Context, token *auth.UserToken, clientIP net.IP, userAgent string) (bool, *auth.UserToken, error) {
 			token.UnhashedToken = "new-token"
 			return true, token, nil
 		},
-	}, &usertest.FakeUserService{}, cfg)
+	}, &usertest.FakeUserService{}, featuremgmt.WithFeatures())
 
 	sampleID := &authn.Identity{
 		SessionToken: &auth.UserToken{
