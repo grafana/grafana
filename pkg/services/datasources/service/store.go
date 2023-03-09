@@ -339,6 +339,8 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 		sess.UseBool("read_only")
 		// Make sure database field is zeroed out if empty. We want to migrate away from this field.
 		sess.MustCols("database")
+		// Allow empty url in datasource update
+		sess.MustCols("url")
 		// Make sure password are zeroed out if empty. We do this as we want to migrate passwords from
 		// plain text fields to SecureJsonData.
 		sess.MustCols("password")
