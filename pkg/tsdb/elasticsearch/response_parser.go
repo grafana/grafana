@@ -732,14 +732,18 @@ func processAggregationDocs(esAgg *simplejson.Json, aggDef *BucketAgg, target *Q
 }
 
 func extractDataField(name string, v interface{}) *data.Field {
+	var field *data.Field
 	switch v.(type) {
 	case *string:
-		return data.NewField(name, nil, []*string{})
+		field = data.NewField(name, nil, []*string{})
 	case *float64:
-		return data.NewField(name, nil, []*float64{})
+		field = data.NewField(name, nil, []*float64{})
 	default:
-		return &data.Field{}
+		field = &data.Field{}
 	}
+	isFilterable := true
+	field.Config = &data.FieldConfig{Filterable: &isFilterable}
+	return field
 }
 
 func trimDatapoints(queryResult backend.DataResponse, target *Query) {
