@@ -9,7 +9,7 @@ import { FieldMatcherID } from './ids';
 
 export interface FieldValueMatcherConfig {
   reducer: ReducerID;
-  op: ComparisonOperation;
+  op?: ComparisonOperation;
   value?: number; // or string?
 }
 
@@ -34,8 +34,11 @@ export const fieldValueMatcherInfo: FieldMatcherInfo<FieldValueMatcherConfig> = 
     if (!props || !props.reducer) {
       return () => false;
     }
-    const { reducer, op, value } = props;
+    let { reducer, op, value } = props;
     const isBoolean = isBooleanReducer(reducer);
+    if (!op) {
+      op = ComparisonOperation.EQ;
+    }
     return (field: Field, frame: DataFrame, allFrames: DataFrame[]) => {
       const left = reduceField({
         field,
@@ -45,7 +48,7 @@ export const fieldValueMatcherInfo: FieldMatcherInfo<FieldValueMatcherConfig> = 
       if (isBoolean) {
         return Boolean(left); // boolean
       }
-      return compareValues(left, op, value);
+      return compareValues(left, op!, value);
     };
   },
 
