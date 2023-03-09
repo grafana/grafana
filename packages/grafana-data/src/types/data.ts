@@ -30,7 +30,7 @@ export const preferredVisualizationTypes = [
   'flamegraph',
   'rawPrometheus',
 ] as const;
-export type PreferredVisualisationType = typeof preferredVisualizationTypes[number];
+export type PreferredVisualisationType = (typeof preferredVisualizationTypes)[number];
 
 /**
  * @public

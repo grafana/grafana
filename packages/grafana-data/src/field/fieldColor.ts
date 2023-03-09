@@ -51,70 +51,70 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
       },
     }),
     new FieldColorSchemeMode({
-      id: 'continuous-GrYlRd',
+      id: FieldColorModeId.ContinuousGrYlRd,
       name: 'Green-Yellow-Red',
       isContinuous: true,
       isByValue: true,
       getColors: (theme: GrafanaTheme2) => ['green', 'yellow', 'red'],
     }),
     new FieldColorSchemeMode({
-      id: 'continuous-RdYlGr',
+      id: FieldColorModeId.ContinuousRdYlGr,
       name: 'Red-Yellow-Green',
       isContinuous: true,
       isByValue: true,
       getColors: (theme: GrafanaTheme2) => ['red', 'yellow', 'green'],
     }),
     new FieldColorSchemeMode({
-      id: 'continuous-BlYlRd',
+      id: FieldColorModeId.ContinuousBlYlRd,
       name: 'Blue-Yellow-Red',
       isContinuous: true,
       isByValue: true,
       getColors: (theme: GrafanaTheme2) => ['dark-blue', 'super-light-yellow', 'dark-red'],
     }),
     new FieldColorSchemeMode({
-      id: 'continuous-YlRd',
+      id: FieldColorModeId.ContinuousYlRd,
       name: 'Yellow-Red',
       isContinuous: true,
       isByValue: true,
       getColors: (theme: GrafanaTheme2) => ['super-light-yellow', 'dark-red'],
     }),
     new FieldColorSchemeMode({
-      id: 'continuous-BlPu',
+      id: FieldColorModeId.ContinuousBlPu,
       name: 'Blue-Purple',
       isContinuous: true,
       isByValue: true,
       getColors: (theme: GrafanaTheme2) => ['blue', 'purple'],
     }),
     new FieldColorSchemeMode({
-      id: 'continuous-YlBl',
+      id: FieldColorModeId.ContinuousYlBl,
       name: 'Yellow-Blue',
       isContinuous: true,
       isByValue: true,
       getColors: (theme: GrafanaTheme2) => ['super-light-yellow', 'dark-blue'],
     }),
     new FieldColorSchemeMode({
-      id: 'continuous-blues',
+      id: FieldColorModeId.ContinuousBlues,
       name: 'Blues',
       isContinuous: true,
       isByValue: true,
       getColors: (theme: GrafanaTheme2) => ['panel-bg', 'dark-blue'],
     }),
     new FieldColorSchemeMode({
-      id: 'continuous-reds',
+      id: FieldColorModeId.ContinuousReds,
       name: 'Reds',
       isContinuous: true,
       isByValue: true,
       getColors: (theme: GrafanaTheme2) => ['panel-bg', 'dark-red'],
     }),
     new FieldColorSchemeMode({
-      id: 'continuous-greens',
+      id: FieldColorModeId.ContinuousGreens,
       name: 'Greens',
       isContinuous: true,
       isByValue: true,
       getColors: (theme: GrafanaTheme2) => ['panel-bg', 'dark-green'],
     }),
     new FieldColorSchemeMode({
-      id: 'continuous-purples',
+      id: FieldColorModeId.ContinuousPurples,
       name: 'Purples',
       isContinuous: true,
       isByValue: true,
@@ -124,7 +124,7 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
 });
 
 interface FieldColorSchemeModeOptions {
-  id: string;
+  id: FieldColorModeId;
   name: string;
   description?: string;
   getColors: (theme: GrafanaTheme2) => string[];
@@ -133,7 +133,7 @@ interface FieldColorSchemeModeOptions {
 }
 
 export class FieldColorSchemeMode implements FieldColorMode {
-  id: string;
+  id: FieldColorModeId;
   name: string;
   description?: string;
   isContinuous: boolean;

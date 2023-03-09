@@ -1,5 +1,5 @@
 // BETTERER RESULTS V2.
-//
+// 
 // If this file contains merge conflicts, use `betterer merge` to automatically resolve them:
 // https://phenomnomnominal.github.io/betterer/docs/results-file/#merge
 //
@@ -334,7 +334,8 @@ exports[`better eslint`] = {
     ],
     "packages/grafana-data/src/types/app.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
+      [0, 0, 0, "Do not use any type assertions.", "1"],
+      [0, 0, 0, "Do not use any type assertions.", "2"]
     ],
     "packages/grafana-data/src/types/config.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -2279,10 +2280,6 @@ exports[`better eslint`] = {
     "public/app/core/history/richHistoryLocalStorageUtils.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "public/app/core/logsModel.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
-    ],
     "public/app/core/navigation/GrafanaRoute.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
@@ -2689,9 +2686,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
     "public/app/features/alerting/unified/components/rules/RuleDetailsDataSources.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/features/alerting/unified/components/rules/RulesFilter.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/alerting/unified/components/silences/SilencesEditor.tsx:5381": [
@@ -3678,9 +3672,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/features/live/index.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"]
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/live/pages/AddNewRule.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
