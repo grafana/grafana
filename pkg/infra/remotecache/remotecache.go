@@ -145,7 +145,12 @@ func createClient(opts *setting.RemoteCacheOptions, sqlstore db.DB) (cache Cache
 
 type encryptedCacheStorage struct {
 	cache          CacheStorage
-	secretsService secrets.Service
+	secretsService encryptionService
+}
+
+type encryptionService interface {
+	Encrypt(ctx context.Context, payload []byte, opt secrets.EncryptionOptions) ([]byte, error)
+	Decrypt(ctx context.Context, payload []byte) ([]byte, error)
 }
 
 func (pcs *encryptedCacheStorage) Get(ctx context.Context, key string) ([]byte, error) {

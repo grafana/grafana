@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -149,6 +150,25 @@ func TestCachePrefix(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestEncryptedCache(t *testing.T) {
+	cache := NewFakeCacheStorage()
+	encryptedCache := &encryptedCacheStorage{cache: cache, secretsService: &fakeSecretsService{}}
+
+	// Set a value in the encrypted cache
+	err := encryptedCache.Set(context.Background(), "foo", []byte("bar"), time.Hour)
+	require.NoError(t, err)
+
+	// make sure the stored value is not equal to input
+	v, err := cache.Get(context.Background(), "foo")
+	require.NoError(t, err)
+	require.NotEqual(t, "bar", string(v))
+
+	// make sure the returned value is the same as orignial
+	v, err = encryptedCache.Get(context.Background(), "foo")
+	require.NoError(t, err)
+	require.Equal(t, "bar", string(v))
+}
+
 type fakeCacheStorage struct {
 	storage map[string][]byte
 }
@@ -180,4 +200,22 @@ func NewFakeCacheStorage() CacheStorage {
 	return fakeCacheStorage{
 		storage: map[string][]byte{},
 	}
+}
+
+type fakeSecretsService struct{}
+
+func (f fakeSecretsService) Encrypt(_ context.Context, payload []byte, _ secrets.EncryptionOptions) ([]byte, error) {
+	return f.reverse(payload), nil
+}
+
+func (f fakeSecretsService) Decrypt(_ context.Context, payload []byte) ([]byte, error) {
+	return f.reverse(payload), nil
+}
+
+func (f fakeSecretsService) reverse(input []byte) []byte {
+	r := []rune(string(input))
+	for i, j := 0, len(r)-1; i < len(r)/2; i, j = i+1, j-1 {
+		r[i], r[j] = r[j], r[i]
+	}
+	return []byte(string(r))
 }
