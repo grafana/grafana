@@ -11,10 +11,7 @@ export interface ColorValueEditorSettings {
   isClearable?: boolean; // defaults to false
 }
 
-/**
- * @alpha
- * */
-export interface ColorValueEditorProps {
+interface Props {
   value?: string;
   onChange: (value: string | undefined) => void;
   settings?: ColorValueEditorSettings;
@@ -26,7 +23,7 @@ export interface ColorValueEditorProps {
 /**
  * @alpha
  * */
-export const ColorValueEditor = ({ value, settings, onChange, details }: ColorValueEditorProps) => {
+export const ColorValueEditor = ({ value, settings, onChange, details }: Props) => {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
