@@ -226,6 +226,7 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 								Info:    plugins.Info{Version: "0.5.0"},
 								Type:    plugins.App,
 								Preload: true,
+								Name:    "Test App",
 							},
 						},
 					},
@@ -243,12 +244,13 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 						Preload: false,
 						Path:    "/test-app/module.js",
 						Version: "0.5.0",
+						Name:    "Test App",
 					},
 				},
 			},
 		},
 		{
-			desc: "enalbed app with preload",
+			desc: "enabled app with preload",
 			pluginStore: func() plugins.Store {
 				return &plugins.FakePluginStore{
 					PluginList: []plugins.PluginDTO{
@@ -259,6 +261,7 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 								Info:    plugins.Info{Version: "0.5.0"},
 								Type:    plugins.App,
 								Preload: true,
+								Name:    "Test App",
 							},
 						},
 					},
@@ -276,6 +279,7 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 						Preload: true,
 						Path:    "/test-app/module.js",
 						Version: "0.5.0",
+						Name:    "Test App",
 					},
 				},
 			},
