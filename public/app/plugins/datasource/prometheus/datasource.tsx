@@ -43,7 +43,6 @@ import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { PromApiFeatures, PromApplication } from 'app/types/unified-alerting-dto';
 
-import { QueryCache } from './QueryCache';
 import { addLabelToQuery } from './add_label_to_query';
 import { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
 import PrometheusLanguageProvider from './language_provider';
@@ -52,6 +51,7 @@ import { renderLegendFormat } from './legend';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { getInitHints, getQueryHints } from './query_hints';
 import { QueryEditorMode } from './querybuilder/shared/types';
+import { QueryCache } from './querycache/QueryCache';
 import { getOriginalMetricName, transform, transformV2 } from './result_transformer';
 import { trackQuery } from './tracking';
 import {
@@ -459,7 +459,9 @@ export class PrometheusDatasource
             ...response,
             data: this.cache.procFrames(request, requestInfo, response.data),
           };
-          return transformV2(amendedResponse, request, { exemplarTraceIdDestinations: this.exemplarTraceIdDestinations });
+          return transformV2(amendedResponse, request, {
+            exemplarTraceIdDestinations: this.exemplarTraceIdDestinations,
+          });
         }),
         tap((response: DataQueryResponse) => {
           trackQuery(response, request, startTime);

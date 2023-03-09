@@ -1,7 +1,7 @@
-import { ArrayVector, DataFrame, DataQueryRequest, dateTime, Field } from '@grafana/data';
+import { ArrayVector, DataFrame, DataQueryRequest, dateTime, Field } from '@grafana/data/src';
 import { amendTable, Table, trimTable } from 'app/features/live/data/amendTimeSeries';
 
-import { PromQuery } from './types';
+import { PromQuery } from '../types';
 
 // dashboardUID + panelId + refId
 // (must be stable across query changes, time range changes / interval changes / panel resizes / template variable changes)

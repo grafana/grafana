@@ -2,11 +2,11 @@ import moment from 'moment';
 
 import { DataFrame, DataQueryRequest, DateTime, dateTime, TimeRange } from '@grafana/data/src';
 
-import { QueryCache } from '../QueryCache';
 import { QueryEditorMode } from '../querybuilder/shared/types';
 import { PromQuery } from '../types';
 
-import { IncrementalStorageDataFrameScenarios } from './PrometheusIncrementalStorageTestData';
+import { QueryCache } from './QueryCache';
+import { IncrementalStorageDataFrameScenarios } from './QueryCacheTestData';
 
 const mockRequest = (request?: Partial<DataQueryRequest<PromQuery>>): DataQueryRequest<PromQuery> => {
   // Histogram
