@@ -1,6 +1,4 @@
-import moment from 'moment';
-
-import { ArrayVector, DataFrame, DataQueryRequest, DateTime, Field } from '@grafana/data';
+import { ArrayVector, DataFrame, DataQueryRequest, dateTime, Field } from '@grafana/data';
 import { amendTable, trimTable } from 'app/features/live/data/amendTimeSeries';
 
 import { PromQuery } from './types';
@@ -26,7 +24,7 @@ interface TargetCache {
 interface RequestInfo {
   requests: Array<DataQueryRequest<PromQuery>>;
   targSigs: Map<TargetIdent, TargetSig>;
-  shouldCache: boolean,
+  shouldCache: boolean;
 }
 
 export const getFieldIdent = (field: Field) => `${field.type}|${field.name}|${JSON.stringify(field.labels ?? '')}`;
@@ -35,10 +33,7 @@ export class QueryCache {
   cache = new Map<TargetIdent, TargetCache>();
 
   // can be used to change full range request to partial, split into multiple requests
-  requestInfo(
-    request: DataQueryRequest<PromQuery>,
-    interpolateString: StringInterpolator
-  ): RequestInfo {
+  requestInfo(request: DataQueryRequest<PromQuery>, interpolateString: StringInterpolator): RequestInfo {
     // TODO: align from/to to interval to increase probability of hitting backend cache
 
     const newFrom = request.range.from.valueOf();
@@ -83,10 +78,10 @@ export class QueryCache {
     // console.log(`${doPartialQuery ? 'partial' : 'full'} query`);
 
     if (doPartialQuery) {
-      // 10m requery overlap
+      // 10m re-query overlap
       const requeryLastMs = 10 * 60 * 1000;
 
-      // clamp to make sure we don't requery previous 10m when newFrom is ahead of it (e.g. 5min range, 30s refresh)
+      // clamp to make sure we don't re-query previous 10m when newFrom is ahead of it (e.g. 5min range, 30s refresh)
       let newFromPartial = Math.max(prevTo! - requeryLastMs, newFrom);
 
       // console.log(`query previous ${(newTo - newFromPartial) / 1000 / 60} mins`);
@@ -102,8 +97,8 @@ export class QueryCache {
         ...request,
         range: {
           ...request.range,
-          from: moment(newFromPartial) as DateTime,
-          to: moment(newTo) as DateTime,
+          from: dateTime(newFromPartial),
+          to: dateTime(newTo),
         },
       };
     } else {
