@@ -1,4 +1,3 @@
-import { durationToMilliseconds, parseDuration } from '@grafana/data';
 import { describeInterval } from '@grafana/data/src/datetime/rangeutil';
 
 import { TimeOptions } from '../types/time';
@@ -28,10 +27,6 @@ export const timeOptions = Object.entries(TimeOptions).map(([key, value]) => ({
   value: value,
 }));
 
-export function parseDurationToMilliseconds(duration: string) {
-  return durationToMilliseconds(parseDuration(duration));
-}
-
 export function isValidPrometheusDuration(duration: string): boolean {
   try {
     parsePrometheusDuration(duration);
@@ -57,8 +52,6 @@ const INVALID_FORMAT = new Error(
     TimeOptions
   ).join(', ')}`
 );
-
-export const PROM_DURATION_UNITS = Object.values(TimeOptions);
 
 /**
  * According to https://prometheus.io/docs/alerting/latest/configuration/#configuration-file

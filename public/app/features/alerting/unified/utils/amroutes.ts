@@ -58,11 +58,8 @@ export const emptyRoute: FormAmRoute = {
   receiver: '',
   overrideTimings: false,
   groupWaitValue: '',
-  // groupWaitValueType: timeOptions[0].value,
   groupIntervalValue: '',
-  // groupIntervalValueType: timeOptions[0].value,
   repeatIntervalValue: '',
-  // repeatIntervalValueType: timeOptions[0].value,
   muteTimeIntervals: [],
 };
 
@@ -146,10 +143,6 @@ export const amRouteToFormAmRoute = (route: RouteWithID | Route | undefined): Fo
     route.object_matchers?.map((matcher) => ({ name: matcher[0], operator: matcher[1], value: matcher[2] })) ?? [];
   const matchers = route.matchers?.map((matcher) => matcherToMatcherField(parseMatcher(matcher))) ?? [];
 
-  // const [groupWaitValue, groupWaitValueType] = intervalToValueAndType(route.group_wait, ['', 's']);
-  // const [groupIntervalValue, groupIntervalValueType] = intervalToValueAndType(route.group_interval, ['', 'm']);
-  // const [repeatIntervalValue, repeatIntervalValueType] = intervalToValueAndType(route.repeat_interval, ['', 'h']);
-
   return {
     id,
     // Frontend migration to use object_matchers instead of matchers, match, and match_re
@@ -165,11 +158,8 @@ export const amRouteToFormAmRoute = (route: RouteWithID | Route | undefined): Fo
     groupBy: route.group_by ?? [],
     overrideTimings: [route.group_wait, route.group_interval, route.repeat_interval].some(Boolean),
     groupWaitValue: route.group_wait ?? '',
-    // groupWaitValueType,
     groupIntervalValue: route.group_interval ?? '',
-    // groupIntervalValueType,
     repeatIntervalValue: route.repeat_interval ?? '',
-    // repeatIntervalValueType,
     routes: formRoutes,
     muteTimeIntervals: route.mute_time_intervals ?? [],
   };

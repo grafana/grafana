@@ -15,7 +15,7 @@ export function PromDurationDocs() {
       <br />
       Different units can be combined for more granularity.
       <hr />
-      <div className={styles.dl}>
+      <div className={styles.list}>
         <div className={styles.header}>
           <div>Symbol</div>
           <div>Time unit</div>
@@ -51,7 +51,7 @@ const getPromDurationStyles = (theme: GrafanaTheme2) => ({
   unit: css`
     font-weight: ${theme.typography.fontWeightBold};
   `,
-  dl: css`
+  list: css`
     display: grid;
     grid-template-columns: max-content 1fr 2fr;
     gap: ${theme.spacing(1, 3)};

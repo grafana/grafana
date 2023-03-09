@@ -22,12 +22,6 @@ export const getFormStyles = (theme: GrafanaTheme2) => {
     timingFormContainer: css`
       padding: ${theme.spacing(1)};
     `,
-    timingContainer: css`
-      max-width: ${theme.spacing(33)};
-    `,
-    smallInput: css`
-      width: ${theme.spacing(6.5)};
-    `,
     linkText: css`
       text-decoration: underline;
     `,
