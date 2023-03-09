@@ -64,6 +64,52 @@ The dashboard is no longer accessible, even with the link, until you make it sha
 
 The link no longer works. You must create a new public URL as in [Make a dashboard public](#make-a-dashboard-public).
 
+## Email Sharing
+
+> **Note:** Public dashboard email sharing is an opt-in alpha feature and is not available in Grafana OSS. For Grafana Cloud, you will need to contact support to have the feature enabled.
+
+Email sharing allows you to share your public dashboard with only specific people via email, instead of having it accessible to anyone with the url.
+
+### Enable email sharing
+
+> **Note:** For Grafana Cloud, you will need to contact support to have the feature enabled.
+
+Add the `publicDashboardsEmailSharing` feature toggle to your `custom.ini` file.
+
+```
+[feature_toggles]
+publicDashboardsEmailSharing = true
+```
+
+### Inviting a viewer
+
+1. Click **Only specified people**.
+2. Enter the email you want to share the public dashboard with.
+3. Click **Invite**.
+4. They will receive an email with a one-time use link. This link must be used within **1 hour** or it will be considered expired. Once the link is used, it will give the viewer access to the public dashboard for **30 days**.
+
+### Viewers requesting access
+
+If a viewer without access tries to navigate to the public dashboard, they will be asked to request access by providing their email. They will receive an email with a new one-time use link if the email they provided has already been invited to view the public dashboard and has not been revoked.
+
+### Revoking access for a viewer
+
+1. Click **revoke** on the viewer you'd like to revoke access for.
+2. This will immediately prevent the user from accessing the public dashboard or using any existing one-time use links they may have.
+
+### Resharing access for a viewer
+
+1. Click **Resend** on the viewer you'd like to reshare the public dashboard with.
+2. This viewer will receive an email with a new one-time use link. This will invalidate all previously issued links for that viewer.
+
+### Access Limitations
+
+One-time use links utilize browser cookies, so when a viewer is granted access via a one-time use link, they will only have access through the browser they used to claim the link.
+
+A single viewer cannot generate multiple valid one-time use links. When a user gets a new one-time use link issued, all previous ones are invalidated.
+
+If a Grafana user has read access to the parent dashboard, they can view the public dashboard without needing to be granted access to it.
+
 ## Supported datasources
 
 Public dashboards _should_ work with any datasource that has the properties `backend` and `alerting` both set to true in it's `package.json`. However, this cannot always be
@@ -166,7 +212,6 @@ guaranteed because plugin developers can override this functionality. The follow
 
 - Panels that use frontend datasources will fail to fetch data.
 - Template variables are currently not supported, but are planned to be in the future.
-- The time range is permanently set to the default time range on the dashboard. If you update the default time range for a dashboard, it will be reflected in the public dashboard.
 - Exemplars will be omitted from the panel.
 - Only annotations that query the `-- Grafana --` datasource are supported.
 - Organization annotations are not supported.
