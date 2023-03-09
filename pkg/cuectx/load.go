@@ -127,6 +127,9 @@ func LoadGrafanaInstance(relpath string, pkg string, overlay fs.FS) (*build.Inst
 	relpath = filepath.ToSlash(relpath)
 
 	var f fs.FS = grafana.CueSchemaFS
+	// merge the kindsys filesystem with ours for the kind categories
+	f = merged_fs.NewMergedFS(kindsys.CueSchemaFS, f)
+
 	var err error
 	if overlay != nil {
 		f, err = prefixWithGrafanaCUE(relpath, overlay)
@@ -196,9 +199,16 @@ func LoadInstanceWithGrafana(fsys fs.FS, dir string, opts ...load.Option) (*buil
 	if err != nil {
 		panic(err)
 	}
+	// TODO wasteful, doing this every time - make that stateless prefixfs!
+	kindsysFS, err := prefixFS("cue.mod/pkg/github.com/grafana/kindsys", kindsys.CueSchemaFS)
+	if err != nil {
+		panic(err)
+	}
+
+	allTheFs := merged_fs.MergeMultiple(kindsysFS, depFS, fsys)
 
 	// FIXME remove grafana from cue.mod/pkg if it exists, otherwise external thing can inject files to be loaded
-	return load.InstanceWithThema(merged_fs.NewMergedFS(depFS, fsys), dir, opts...)
+	return load.InstanceWithThema(allTheFs, dir, opts...)
 }
 
 // LoadCoreKindDef loads and validates a core kind definition of the kind
