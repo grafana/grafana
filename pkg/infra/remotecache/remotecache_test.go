@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -29,7 +30,7 @@ func createTestClient(t *testing.T, opts *setting.RemoteCacheOptions, sqlstore d
 	cfg := &setting.Cfg{
 		RemoteCacheOptions: opts,
 	}
-	dc, err := ProvideService(cfg, sqlstore, fakes.NewFakeSecretsService())
+	dc, err := ProvideService(cfg, sqlstore, &usagestats.UsageStatsMock{}, fakes.NewFakeSecretsService())
 	require.Nil(t, err, "Failed to init client for test")
 
 	return dc
@@ -118,6 +119,24 @@ func canNotFetchExpiredItems(t *testing.T, client CacheStorage) {
 	// should not be able to read that value since its expired
 	_, err = client.GetByteArray(context.Background(), "key1")
 	assert.Equal(t, err, ErrCacheItemNotFound)
+}
+
+func TestCollectUsageStats(t *testing.T) {
+	wantMap := map[string]interface{}{
+		"stats.remote_cache.redis.count":           1,
+		"stats.remote_cache.encrypt_enabled.count": 1,
+	}
+	cfg := setting.NewCfg()
+	cfg.RemoteCacheOptions = &setting.RemoteCacheOptions{Name: redisCacheType, Encryption: true}
+
+	remoteCache := &RemoteCache{
+		Cfg: cfg,
+	}
+
+	stats, err := remoteCache.getUsageStats(context.Background())
+	require.NoError(t, err)
+
+	assert.EqualValues(t, wantMap, stats)
 }
 
 func TestCachePrefix(t *testing.T) {
