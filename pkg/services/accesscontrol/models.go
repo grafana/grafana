@@ -133,7 +133,7 @@ func (r *RoleDTO) IsBasic() bool {
 
 // TODO restrict overriding everywhere
 func (r *RoleDTO) IsExternalService() bool {
-	return strings.HasPrefix(r.Name, ExternalServiceRolePrefix)
+	return strings.HasPrefix(r.Name, ExternalServiceRolePrefix) || strings.HasPrefix(r.UID, ExternalServiceRoleUIDPrefix)
 }
 
 func (r RoleDTO) MarshalJSON() ([]byte, error) {
@@ -284,14 +284,15 @@ func (cmd *SaveExternalServiceRoleCommand) Validate() error {
 }
 
 const (
-	GlobalOrgID               = 0
-	FixedRolePrefix           = "fixed:"
-	ManagedRolePrefix         = "managed:"
-	BasicRolePrefix           = "basic:"
-	PluginRolePrefix          = "plugins:"
-	ExternalServiceRolePrefix = "externalservice:"
-	BasicRoleUIDPrefix        = "basic_"
-	RoleGrafanaAdmin          = "Grafana Admin"
+	GlobalOrgID                  = 0
+	FixedRolePrefix              = "fixed:"
+	ManagedRolePrefix            = "managed:"
+	BasicRolePrefix              = "basic:"
+	PluginRolePrefix             = "plugins:"
+	ExternalServiceRolePrefix    = "externalservice:"
+	BasicRoleUIDPrefix           = "basic_"
+	ExternalServiceRoleUIDPrefix = "externalservice_"
+	RoleGrafanaAdmin             = "Grafana Admin"
 
 	GeneralFolderUID = "general"
 

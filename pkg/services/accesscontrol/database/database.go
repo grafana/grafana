@@ -266,8 +266,8 @@ func genExternalServiceRoleAndAssignment(cmd accesscontrol.SaveExternalServiceRo
 	role := accesscontrol.Role{
 		OrgID:       cmd.OrgID,
 		Version:     1,
-		Name:        fmt.Sprintf("externalservice:%s:permissions", cmd.ExternalServiceID),
-		UID:         fmt.Sprintf("externalservice_%s_permissions", cmd.ExternalServiceID),
+		Name:        fmt.Sprintf("%s%s:permissions", accesscontrol.ExternalServiceRolePrefix, cmd.ExternalServiceID),
+		UID:         fmt.Sprintf("%s%s_permissions", accesscontrol.ExternalServiceRoleUIDPrefix, cmd.ExternalServiceID),
 		DisplayName: fmt.Sprintf("External Service %s Permissions", cmd.ExternalServiceID),
 		Description: fmt.Sprintf("External Service %s permissions", cmd.ExternalServiceID),
 		Hidden:      true,
