@@ -16,7 +16,7 @@ export interface PanelOptions {
   /**
    * Controls the height of the rows
    */
-  cellHeight: string;
+  cellHeight?: ui.TableCellHeight;
   /**
    * Controls footer options
    */
@@ -44,7 +44,7 @@ export interface PanelOptions {
 }
 
 export const defaultPanelOptions: Partial<PanelOptions> = {
-  cellHeight: 'md',
+  cellHeight: ui.TableCellHeight.Md,
   footer: {
     /**
      * Controls whether the footer should be shown

@@ -252,5 +252,5 @@ Labels: {
 	[string]: string
 } @cuetsy(kind="interface")
 
-// TODO docs
+// Height of a table cell
 TableCellHeight: "sm" | "md" | "lg" @cuetsy(kind="enum")

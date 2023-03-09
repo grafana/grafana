@@ -780,7 +780,7 @@ export enum LogsDedupStrategy {
 }
 
 /**
- * TODO docs
+ * Height of a table cell
  */
 export enum TableCellHeight {
   Lg = 'lg',
