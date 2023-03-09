@@ -380,15 +380,16 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		ruleEval, err := sch.evaluatorFactory.Create(evalCtx, e.rule.GetEvalCondition())
 		var results eval.Results
 		var dur time.Duration
-		if err == nil {
+		if err != nil {
+			dur = sch.clock.Now().Sub(start)
+			logger.Error("Failed to build rule evaluator", "error", err)
+		} else {
 			results, err = ruleEval.Evaluate(ctx, e.scheduledAt)
+			dur = sch.clock.Now().Sub(start)
 			if err != nil {
 				logger.Error("Failed to evaluate rule", "error", err, "duration", dur)
 			}
-		} else {
-			logger.Error("Failed to build rule evaluator", "error", err)
 		}
-		dur = sch.clock.Now().Sub(start)
 
 		evalTotal.Inc()
 		evalDuration.Observe(dur.Seconds())
