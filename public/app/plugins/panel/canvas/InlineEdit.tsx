@@ -108,7 +108,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     box-shadow: 5px 5px 20px -5px #000000;
     z-index: 1000;
     opacity: 1;
-    min-width: 400px;
+    min-width: 570px;
   `,
   draggableWrapper: css`
     width: 0;

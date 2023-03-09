@@ -20,6 +20,7 @@ export interface DropNode extends DragNode {
 export enum InlineEditTabs {
   ElementManagement = 'element-management',
   SelectedElement = 'selected-element',
+  SelectedConnection = 'selected-connection',
 }
 
 export type AnchorPoint = {
