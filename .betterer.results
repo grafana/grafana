@@ -1162,10 +1162,6 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/Logs/logParser.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "packages/grafana-ui/src/components/MatchersUI/FieldValuesMatcher.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
     "packages/grafana-ui/src/components/MatchersUI/fieldMatchersUI.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],

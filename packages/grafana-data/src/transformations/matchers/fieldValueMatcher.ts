@@ -8,7 +8,7 @@ import { compareValues } from './compareValues';
 import { FieldMatcherID } from './ids';
 
 export interface FieldValueMatcherConfig {
-  reduce: ReducerID;
+  reducer: ReducerID;
   op: ComparisonOperation;
   value?: number; // or string?
 }
@@ -20,23 +20,23 @@ export const fieldValueMatcherInfo: FieldMatcherInfo<FieldValueMatcherConfig> = 
 
   // This is added to overrides by default
   defaultOptions: {
-    reduce: ReducerID.allIsZero,
+    reducer: ReducerID.allIsZero,
     op: ComparisonOperation.GTE,
     value: 0,
   },
 
   get: (props) => {
-    if (!props || !props.reduce) {
+    if (!props || !props.reducer) {
       return () => false;
     }
-    const { reduce, op, value } = props;
+    const { reducer, op, value } = props;
     return (field: Field, frame: DataFrame, allFrames: DataFrame[]) => {
       const left = reduceField({
         field,
-        reducers: [reduce],
-      })[reduce];
+        reducers: [reducer],
+      })[reducer];
 
-      if (reduce === ReducerID.allIsNull || reduce === ReducerID.allIsZero) {
+      if (reducer === ReducerID.allIsNull || reducer === ReducerID.allIsZero) {
         return Boolean(left); // boolean
       }
 
@@ -44,7 +44,7 @@ export const fieldValueMatcherInfo: FieldMatcherInfo<FieldValueMatcherConfig> = 
     };
   },
 
-  getOptionsDisplayText: () => {
-    return `By values (reducer)`;
+  getOptionsDisplayText: (props) => {
+    return `By value (${props.reducer})`;
   },
 };
