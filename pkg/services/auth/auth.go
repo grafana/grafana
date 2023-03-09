@@ -59,11 +59,6 @@ type RevokeAuthTokenCmd struct {
 	AuthTokenId int64 `json:"authTokenId"`
 }
 
-type GetTokenQuery struct {
-	// token is the un-hashed token
-	UnHashedToken string
-}
-
 type RotateCommand struct {
 	// token is the un-hashed token
 	UnHashedToken string
@@ -80,7 +75,6 @@ type RotateResponse struct {
 type UserTokenService interface {
 	CreateToken(ctx context.Context, user *user.User, clientIP net.IP, userAgent string) (*UserToken, error)
 	LookupToken(ctx context.Context, unhashedToken string) (*UserToken, error)
-	GetToken(ctx context.Context, query GetTokenQuery) (*UserToken, error)
 	RotateToken(ctx context.Context, cmd RotateCommand) (*RotateResponse, error)
 	TryRotateToken(ctx context.Context, token *UserToken, clientIP net.IP, userAgent string) (bool, *UserToken, error)
 	RevokeToken(ctx context.Context, token *UserToken, soft bool) error

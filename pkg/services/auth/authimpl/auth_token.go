@@ -213,41 +213,6 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 	return &userToken, err
 }
 
-func (s *UserAuthTokenService) GetToken(ctx context.Context, query auth.GetTokenQuery) (*auth.UserToken, error) {
-	if query.UnHashedToken == "" {
-		return nil, auth.ErrInvalidSessionToken
-	}
-
-	var token userAuthToken
-	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
-		has, err := sess.SQL("SELECT * FROM user_auth_token WHERE auth_token = ?", hashToken(query.UnHashedToken)).Get(&token)
-		if !has {
-			return auth.ErrInvalidSessionToken
-		}
-
-		return err
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	var userToken auth.UserToken
-	if err := token.toUserToken(&userToken, s.cfg.TokenRotationIntervalMinutes); err != nil {
-		return nil, err
-	}
-
-	if userToken.RevokedAt > 0 {
-		return nil, &auth.TokenRevokedError{UserID: token.UserId, TokenID: token.Id}
-	}
-
-	if userToken.ExpiresAt.Before(time.Now()) {
-		return nil, &auth.TokenExpiredError{UserID: token.UserId, TokenID: token.Id}
-	}
-
-	return &userToken, nil
-}
-
 func (s *UserAuthTokenService) RotateToken(ctx context.Context, cmd auth.RotateCommand) (*auth.RotateResponse, error) {
 	if cmd.UnHashedToken == "" {
 		return nil, auth.ErrInvalidSessionToken

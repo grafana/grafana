@@ -50,13 +50,7 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 		return nil, err
 	}
 
-	var token *auth.UserToken
-
-	if s.features.IsEnabled(featuremgmt.FlagFrontendTokenRotation) {
-		token, err = s.sessionService.GetToken(ctx, auth.GetTokenQuery{UnHashedToken: rawSessionToken})
-	} else {
-		token, err = s.sessionService.LookupToken(ctx, rawSessionToken)
-	}
+	token, err := s.sessionService.LookupToken(ctx, rawSessionToken)
 
 	if err != nil {
 		s.log.FromContext(ctx).Warn("Failed to look up session from cookie", "error", err)
