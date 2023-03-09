@@ -104,7 +104,7 @@ type lokiResponseError struct {
 }
 
 type lokiError struct {
-	Message string 
+	Message string
 }
 
 func makeLokiError(bytes []byte) error {
