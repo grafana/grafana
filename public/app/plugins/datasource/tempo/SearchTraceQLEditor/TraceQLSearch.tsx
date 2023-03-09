@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { EditorRow } from '@grafana/experimental';
@@ -10,7 +10,7 @@ import { createErrorNotification } from '../../../../core/copy/appNotification';
 import { notifyApp } from '../../../../core/reducers/appNotification';
 import { dispatch } from '../../../../store/store';
 import { RawQuery } from '../../prometheus/querybuilder/shared/RawQuery';
-import { TraceqlFilter } from '../dataquery.gen';
+import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import { TempoQueryBuilderOptions } from '../traceql/TempoQueryBuilderOptions';
 import { CompletionProvider } from '../traceql/autocomplete';
@@ -73,8 +73,7 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
           if (!tags.find((t) => t === 'status')) {
             tags.push('status');
           }
-          const tagsWithDot = tags.sort().map((t) => `.${t}`);
-          setTags(tagsWithDot);
+          setTags(tags);
           setIsTagsLoading(false);
         }
       } catch (error) {
@@ -98,6 +97,7 @@ const TraceQLSearch = ({ datasource, query, onChange }: Props) => {
                   type: 'static',
                   tag: '.service.name',
                   operator: '=',
+                  scope: TraceqlSearchScope.Resource,
                 }
               }
               datasource={datasource}

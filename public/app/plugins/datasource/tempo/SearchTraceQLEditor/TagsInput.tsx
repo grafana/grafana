@@ -1,11 +1,11 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { AccessoryButton } from '@grafana/experimental';
 import { FetchError } from '@grafana/runtime';
 import { HorizontalGroup, VerticalGroup } from '@grafana/ui';
 
-import { TraceqlFilter } from '../dataquery.gen';
+import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 
 import SearchField from './SearchField';
@@ -22,7 +22,7 @@ interface Props {
 const TagsInput = ({ updateFilter, deleteFilter, filters, datasource, setError, tags, isTagsLoading }: Props) => {
   const generateId = () => uuidv4().slice(0, 8);
   const handleOnAdd = useCallback(
-    () => updateFilter({ id: generateId(), type: 'dynamic', operator: '=' }),
+    () => updateFilter({ id: generateId(), type: 'dynamic', operator: '=', scope: TraceqlSearchScope.All }),
     [updateFilter]
   );
 

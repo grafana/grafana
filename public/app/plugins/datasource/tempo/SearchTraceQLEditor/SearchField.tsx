@@ -1,19 +1,26 @@
+import { css } from '@emotion/css';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { AccessoryButton } from '@grafana/experimental';
 import { FetchError, isFetchError } from '@grafana/runtime';
-import { Select, HorizontalGroup } from '@grafana/ui';
+import { Select, HorizontalGroup, useStyles2 } from '@grafana/ui';
 
 import { createErrorNotification } from '../../../../core/copy/appNotification';
 import { notifyApp } from '../../../../core/reducers/appNotification';
 import { dispatch } from '../../../../store/store';
-import { TraceqlFilter } from '../dataquery.gen';
+import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
 import { operators as allOperators } from '../traceql/traceql';
 
-import { operatorSelectableValue } from './utils';
+import { operatorSelectableValue, scopeHelper } from './utils';
+
+const getStyles = () => ({
+  dropdown: css`
+    box-shadow: none;
+  `,
+});
 
 interface Props {
   filter: TraceqlFilter;
@@ -35,6 +42,7 @@ const SearchField = ({
   setError,
   operators,
 }: Props) => {
+  const styles = useStyles2(getStyles);
   const languageProvider = useMemo(() => new TempoLanguageProvider(datasource), [datasource]);
   const [isLoadingValues, setIsLoadingValues] = useState(false);
   const [options, setOptions] = useState<Array<SelectableValue<string>>>([]);
@@ -58,32 +66,30 @@ const SearchField = ({
     setPrevValue(filter.value);
   }, [filter.value]);
 
-  const loadOptions = useCallback(
-    async (name: string) => {
-      setIsLoadingValues(true);
+  const loadOptions = useCallback(async () => {
+    setIsLoadingValues(true);
 
-      try {
-        const options = await languageProvider.getOptionsV2(name);
-        return options;
-      } catch (error) {
-        if (isFetchError(error) && error?.status === 404) {
-          setError(error);
-        } else if (error instanceof Error) {
-          dispatch(notifyApp(createErrorNotification('Error', error)));
-        }
-        return [];
-      } finally {
-        setIsLoadingValues(false);
+    try {
+      const name = scopeHelper(filter) + filter.tag;
+      const options = await languageProvider.getOptionsV2(name);
+      return options;
+    } catch (error) {
+      if (isFetchError(error) && error?.status === 404) {
+        setError(error);
+      } else if (error instanceof Error) {
+        dispatch(notifyApp(createErrorNotification('Error', error)));
       }
-    },
-    [setError, languageProvider]
-  );
+      return [];
+    } finally {
+      setIsLoadingValues(false);
+    }
+  }, [setError, languageProvider, filter]);
 
   useEffect(() => {
     const fetchOptions = async () => {
       try {
         if (filter.tag) {
-          setOptions(await loadOptions(filter.tag));
+          setOptions(await loadOptions());
         }
       } catch (error) {
         // Display message if Tempo is connected but search 404's
@@ -95,12 +101,34 @@ const SearchField = ({
       }
     };
     fetchOptions();
-  }, [languageProvider, loadOptions, setError, filter.tag]);
+  }, [languageProvider, loadOptions, setError, filter.tag, filter.scope]);
+
+  const scopeOptions = Object.entries(TraceqlSearchScope).map((t) => {
+    let label = t[0];
+    if (t[1] === TraceqlSearchScope.All) {
+      label = 'All scopes';
+    }
+    return { label, value: t[1] };
+  });
 
   return (
     <HorizontalGroup spacing={'none'}>
       {filter.type === 'dynamic' && (
         <Select
+          className={styles.dropdown}
+          inputId={`${filter.id}-scope`}
+          options={scopeOptions}
+          value={filter.scope}
+          onChange={(v) => {
+            updateFilter({ ...filter, scope: v?.value });
+          }}
+          placeholder="Select scope"
+          aria-label={`select ${filter.id} scope`}
+        />
+      )}
+      {filter.type === 'dynamic' && (
+        <Select
+          className={styles.dropdown}
           inputId={`${filter.id}-tag`}
           isLoading={isTagsLoading}
           options={tags.map((t) => ({ label: t, value: t }))}
@@ -116,6 +144,7 @@ const SearchField = ({
         />
       )}
       <Select
+        className={styles.dropdown}
         inputId={`${filter.id}-operator`}
         options={(operators || allOperators).map(operatorSelectableValue)}
         value={filter.operator}
@@ -128,12 +157,13 @@ const SearchField = ({
         width={8}
       />
       <Select
+        className={styles.dropdown}
         inputId={`${filter.id}-value`}
         isLoading={isLoadingValues}
         options={options}
         onOpenMenu={() => {
           if (filter.tag) {
-            loadOptions(filter.tag);
+            loadOptions();
           }
         }}
         value={filter.value}
