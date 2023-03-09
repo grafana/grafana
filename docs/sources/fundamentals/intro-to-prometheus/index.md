@@ -79,23 +79,21 @@ For example, a NodeJS application can configure the [prom-client](https://github
 
 ## Prometheus as deployment
 
-The first section of this document introduced the Prometheus as Data concept and how the Prometheus data model and metrics are organized. The second section introduced the concept of Prometheus as Software that is used to collect, process, and store metrics.
+The first section of this document introduced the Prometheus as Data concept and how the Prometheus data model and metrics are organized. The second section introduced the concept of Prometheus as Software that is used to collect, process, and store metrics. This section describes how Prometheus as Data and Prometheus as Software come together.
 
-This section describes how Prometheus as Data and Prometheus as Software come together. To explain this further, let's use an example. Suppose a 'MyApp' application uses a Prometheus client to expose metrics. One approach to collecting metrics data is to use a URL in the application that points to an endpoint `http://localhost:3000/metrics` that produces Prometheus metrics data.
+Consider the following example. Suppose a 'MyApp' application uses a Prometheus client to expose metrics. One approach to collecting metrics data is to use a URL in the application that points to an endpoint `http://localhost:3000/metrics` that produces Prometheus metrics data.
 
 The following image shows the two metrics associated with the endpoint. The HELP text explains what the metric means, and the TYPE text indicates what kind of metric it is (in this case, a gauge). `MyAppnodejs_active_request_total` indicates the number of requests (in this case, `1`). `MyAppnodejs_heap_size_total_bytes` indicates the heap size reported in bytes. There are only two numbers because this data shows the value at the moment the data was fetched.
 
 {{< figure src="/media/docs/grafana/intro-prometheus/endpoint-data.png" max-width="750px" caption="Endpoint example" >}}
 
-These metrics are available in an HTTP endpoint, but how do they get to Grafana, and subsequently, into a dashboard?
+The 'MyApp' metrics are available in an HTTP endpoint, but how do they get to Grafana, and subsequently, into a dashboard? The process of recording and transmitting the readings of an application or piece of infrastructure is known as _telemetry_. Telemetry is critical to observability because it helps you understand exactly what's going on in your infrastructure. The metrics introduced previously, for example, `MyAppnodejs_active_requests_total`, are telemetry data.
 
-To get these metrics into Grafana, you can use either the Prometheus software or [Grafana Agent](/docs/agent/latest/) to scrape metrics. Grafana Agent collects and forwards telemetry data to open-source deployments of the Grafana Stack, Grafana Cloud, or Grafana Enterprise, where your data can be analyzed. Using Grafana Agent can be a great option because as you scale your observability practices to include logs and traces, which Grafana Agent also supports, you've got a telemetry solution already in place.
+To get metrics into Grafana, you can use either the Prometheus software or [Grafana Agent](/docs/agent/latest/) to scrape metrics. Grafana Agent collects and forwards the telemetry data to open-source deployments of the Grafana Stack, Grafana Cloud, or Grafana Enterprise, where your data can be analyzed. For example, you can configure Grafana Agent to pull the data from 'MyApp' every five seconds and send the results to Grafana Cloud.
 
-Telemetry refers to the process of recording and transmitting the readings of an application or piece of infrastructure. Telemetry is critical to observability because it helps you understand exactly what's going on in your infrastructure. Telemetry data is a source of truth. The metrics data that Prometheus helps us with is only one type of telemetry; the other two kinds of telemetry are logs and traces.
+Metrics data is only one type of telemetry data; the other kinds are logs and traces. Using Grafana Agent can be a great option to send telemetry data because as you scale your observability practices to include logs and traces, which Grafana Agent also supports, you've got a solution already in place.
 
-The metrics introduced previously, for example, `MyAppnodejs_active_requests_total`, are telemetry data. MyApp only makes it available for pull by means of an HTTP request. You can configure Grafana Agent to pull that data from MyApp every five seconds and send the results to Grafana Cloud.
-
-The following image illustrates how Grafana Agent works as an intermediary between MyApp and Grafana Cloud.
+The following image illustrates how Grafana Agent works as an intermediary between 'MyApp' and Grafana Cloud.
 
 {{< figure src="/media/docs/grafana/intro-prometheus/grafana-agent.png" max-width="750px" caption="Grafana Agent" >}}
 
