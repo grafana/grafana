@@ -8,6 +8,7 @@ import {
   Field,
   FieldType,
   MutableDataFrame,
+  isTimeSeriesFrame,
 } from '@grafana/data';
 
 export interface TimeSeriesTableTransformerOptions {}
@@ -26,11 +27,20 @@ export const timeSeriesTableTransformer: DataTransformerInfo<TimeSeriesTableTran
     ),
 };
 
-/*
-For each refId (queryName) convert all time series frames into a single table frame, adding each series
-as values of a "Trend" frame field. This allows "Trend" to be rendered as area chart type.
-Any non time series frames are returned as is. 
-*/
+/**
+ * Converts time series frames to table frames for use with sparkline chart type.
+ *
+ * @remarks
+ * For each refId (queryName) convert all time series frames into a single table frame, adding each series
+ * as values of a "Trend" frame field. This allows "Trend" to be rendered as area chart type.
+ * Any non time series frames are returned as is.
+ *
+ * @param options - Transform options, currently not used
+ * @param data - Array of data frames to transform
+ * @returns Array of transformed data frames
+ *
+ * @alpha
+ */
 export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOptions, data: DataFrame[]): DataFrame[] {
   // initialize fields from labels for each refId
   const refId2LabelFields = getLabelFields(data);
@@ -40,7 +50,7 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
   const result: DataFrame[] = [];
 
   for (const frame of data) {
-    if (!isTimeSeries(frame)) {
+    if (!isTimeSeriesFrame(frame)) {
       result.push(frame);
       continue;
     }
@@ -85,7 +95,7 @@ function getLabelFields(frames: DataFrame[]): Record<string, Record<string, Fiel
   const labelFields: Record<string, Record<string, Field<string, ArrayVector>>> = {};
 
   for (const frame of frames) {
-    if (!isTimeSeries(frame)) {
+    if (!isTimeSeriesFrame(frame)) {
       continue;
     }
 
@@ -114,12 +124,4 @@ function getLabelFields(frames: DataFrame[]): Record<string, Record<string, Fiel
   }
 
   return labelFields;
-}
-
-export function isTimeSeries(frame: DataFrame) {
-  if (frame.fields.length > 2) {
-    return false;
-  }
-
-  return Boolean(frame.fields.find((field) => field.type === FieldType.time));
 }

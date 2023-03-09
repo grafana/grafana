@@ -43,7 +43,6 @@ export const ChartCellOptionsEditor = (props: TableCellEditorProps<TableChartCel
           return null;
         }
         const Editor = item.editor;
-
         const path = item.path;
 
         return (
