@@ -1,5 +1,5 @@
 import { ArrayVector, DataFrame, DataQueryRequest, dateTime, Field } from '@grafana/data';
-import { amendTable, trimTable } from 'app/features/live/data/amendTimeSeries';
+import { amendTable, Table, trimTable } from 'app/features/live/data/amendTimeSeries';
 
 import { PromQuery } from './types';
 
@@ -166,8 +166,8 @@ export class QueryCache {
             // we assume that fields cannot appear/disappear and will all exist in same order
 
             // amend & re-cache
-            let prevTable = cachedFrame.fields.map((field) => field.values.toArray());
-            let nextTable = respFrame.fields.map((field) => field.values.toArray());
+            let prevTable: Table = cachedFrame.fields.map((field) => field.values.toArray()) as Table;
+            let nextTable: Table = respFrame.fields.map((field) => field.values.toArray()) as Table;
 
             let amendedTable = amendTable(prevTable, nextTable);
 
@@ -183,7 +183,7 @@ export class QueryCache {
         let nonEmptyCachedFrames: DataFrame[] = [];
 
         cachedFrames.forEach((frame) => {
-          let table = frame.fields.map((field) => field.values.toArray());
+          let table: Table = frame.fields.map((field) => field.values.toArray()) as Table;
 
           let trimmed = trimTable(table, newFrom, newTo);
 

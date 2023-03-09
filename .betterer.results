@@ -5497,6 +5497,11 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/opentsdb/migrations.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
+    "public/app/plugins/datasource/prometheus/QueryCache.ts:5381": [
+      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Do not use any type assertions.", "1"],
+      [0, 0, 0, "Do not use any type assertions.", "2"]
+    ],
     "public/app/plugins/datasource/prometheus/components/PromLink.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
