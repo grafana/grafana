@@ -98,9 +98,13 @@ func makeDataRequest(ctx context.Context, lokiDsUrl string, query lokiQuery) (*h
 	return req, nil
 }
 
-type lokiError struct {
+type lokiResponseError struct {
 	Message string `json:"message"`
 	TraceID string `json:"traceID,omitempty"`
+}
+
+type lokiError struct {
+	Message string 
 }
 
 func makeLokiError(bytes []byte) error {
@@ -228,12 +232,12 @@ func (api *LokiAPI) RawQuery(ctx context.Context, resourcePath string) (RawLokiR
 
 	// client errors are passed as a json struct to the client
 	if resp.StatusCode/100 != 2 {
-		lokiErr := lokiError{Message: makeLokiError(body).Error()}
+		lokiResponseErr := lokiResponseError{Message: makeLokiError(body).Error()}
 		traceID := tracing.TraceIDFromContext(ctx, false)
 		if traceID != "" {
-			lokiErr.TraceID = traceID
+			lokiResponseErr.TraceID = traceID
 		}
-		body, err = json.Marshal(lokiErr)
+		body, err = json.Marshal(lokiResponseErr)
 		if err != nil {
 			return RawLokiResponse{}, err
 		}
