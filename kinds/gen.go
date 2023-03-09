@@ -38,13 +38,13 @@ func main() {
 
 	// All the jennies that comprise the core kinds generator pipeline
 	coreKindsGen.Append(
-		codegen.LatestJenny(kindsys.GoCoreKindParentPath, codegen.GoTypesJenny{}),
-		codegen.CoreKindJenny(kindsys.GoCoreKindParentPath, nil),
-		codegen.BaseCoreRegistryJenny(filepath.Join("pkg", "registry", "corekind"), kindsys.GoCoreKindParentPath),
-		codegen.LatestMajorsOrXJenny(kindsys.TSCoreKindParentPath, codegen.TSTypesJenny{}),
+		codegen.LatestJenny(cuectx.GoCoreKindParentPath, codegen.GoTypesJenny{}),
+		codegen.CoreKindJenny(cuectx.GoCoreKindParentPath, nil),
+		codegen.BaseCoreRegistryJenny(filepath.Join("pkg", "registry", "corekind"), cuectx.GoCoreKindParentPath),
+		codegen.LatestMajorsOrXJenny(cuectx.TSCoreKindParentPath, codegen.TSTypesJenny{}),
 		codegen.TSVeneerIndexJenny(filepath.Join("packages", "grafana-schema", "src")),
-		codegen.CRDTypesJenny(kindsys.GoCoreKindParentPath),
-		codegen.YamlCRDJenny(kindsys.GoCoreKindParentPath),
+		codegen.CRDTypesJenny(cuectx.GoCoreKindParentPath),
+		codegen.YamlCRDJenny(cuectx.GoCoreKindParentPath),
 		codegen.CRDKindRegistryJenny(filepath.Join("pkg", "registry", "corecrd")),
 		codegen.DocsJenny(filepath.Join("docs", "sources", "developers", "kinds", "core")),
 	)
@@ -62,13 +62,13 @@ func main() {
 	rt := cuectx.GrafanaThemaRuntime()
 	var all []kindsys.Kind
 
-	f := os.DirFS(filepath.Join(groot, kindsys.CoreDefParentPath))
+	f := os.DirFS(filepath.Join(groot, cuectx.CoreDefParentPath))
 	kinddirs := elsedie(fs.ReadDir(f, "."))("error reading core kind fs root directory")
 	for _, kinddir := range kinddirs {
 		if !kinddir.IsDir() {
 			continue
 		}
-		rel := filepath.Join(kindsys.CoreDefParentPath, kinddir.Name())
+		rel := filepath.Join(cuectx.CoreDefParentPath, kinddir.Name())
 		def, err := cuectx.LoadCoreKindDef(rel, rt.Context(), nil)
 		if err != nil {
 			die(fmt.Errorf("%s is not a valid kind: %s", rel, errors.Details(err, nil)))
