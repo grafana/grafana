@@ -556,7 +556,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 		UserID: 1,
 		OrgID:  1,
 	}
-	role := setupRBACRole(t, repo, user)
+	role := setupRBACRole(t, sql, user)
 
 	type testStruct struct {
 		description           string
@@ -617,7 +617,7 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.description, func(t *testing.T) {
 			user.Permissions = map[int64]map[string][]string{1: tc.permissions}
-			setupRBACPermission(t, repo, role, user)
+			setupRBACPermission(t, sql, role, user)
 
 			results, err := repo.Get(context.Background(), &annotations.ItemQuery{
 				OrgID:        1,
@@ -650,15 +650,15 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 	annotation1Text := "annotation 1"
 	annotation2Text := "annotation 2"
 	var role *accesscontrol.Role
-	setupTest := func(features featuremgmt.FeatureToggles) xormRepositoryImpl {
-		sql := db.InitTestDB(t)
 
-		var maximumTagsLength int64 = 60
-		repo := xormRepositoryImpl{db: sql, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(sql, sql.Cfg), maximumTagsLength: maximumTagsLength, features: features}
+	var parent, subfolder *folder.Folder
+	var dashboard, dashboard2 *dashboards.Dashboard
 
-		// dashboard store commands that should be called.
-		dashStore, err := dashboardstore.ProvideDashboardStore(sql, sql.Cfg, features, tagimpl.ProvideService(sql, sql.Cfg), quotatest.New(false, nil))
-		require.NoError(t, err)
+	setupFolderStructure := func() *sqlstore.SQLStore {
+		db := db.InitTestDB(t)
+
+		// enable nested folders so that the folder table is populated for all the tests
+		features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
 
 		origNewGuardian := guardian.New
 		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true, CanSaveValue: true})
@@ -666,10 +666,14 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 			guardian.New = origNewGuardian
 		})
 
-		folderSvc := folderimpl.ProvideService(mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), sql.Cfg, dashStore, folderimpl.ProvideDashboardFolderStore(sql), sql, features)
+		// dashboard store commands that should be called.
+		dashStore, err := dashboardstore.ProvideDashboardStore(db, db.Cfg, features, tagimpl.ProvideService(db, db.Cfg), quotatest.New(false, nil))
+		require.NoError(t, err)
+
+		folderSvc := folderimpl.ProvideService(mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), db.Cfg, dashStore, folderimpl.ProvideDashboardFolderStore(db), db, features)
 
 		// create parent folder
-		parent, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
+		parent, err = folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
 			UID:          "parent",
 			OrgID:        orgID,
 			Title:        "parent",
@@ -678,7 +682,7 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 		require.NoError(t, err)
 
 		// create subfolder
-		subfolder, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
+		subfolder, err = folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
 			UID:          "subfolder",
 			ParentUID:    "parent",
 			OrgID:        orgID,
@@ -697,7 +701,7 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 			FolderID:  parent.ID,
 			FolderUID: parent.UID,
 		}
-		dashboard, err := dashStore.SaveDashboard(context.Background(), testDashboard1)
+		dashboard, err = dashStore.SaveDashboard(context.Background(), testDashboard1)
 		require.NoError(t, err)
 
 		testDashboard2 := dashboards.SaveDashboardCommand{
@@ -709,8 +713,16 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 			FolderID:  subfolder.ID,
 			FolderUID: subfolder.UID,
 		}
-		dashboard2, err := dashStore.SaveDashboard(context.Background(), testDashboard2)
+		dashboard2, err = dashStore.SaveDashboard(context.Background(), testDashboard2)
 		require.NoError(t, err)
+
+		role = setupRBACRole(t, db, usr)
+		return db
+	}
+
+	setupRepo := func(db *sqlstore.SQLStore, features featuremgmt.FeatureToggles) xormRepositoryImpl {
+		var maximumTagsLength int64 = 60
+		repo := xormRepositoryImpl{db: db, cfg: setting.NewCfg(), log: log.New("annotation.test"), tagService: tagimpl.ProvideService(db, db.Cfg), maximumTagsLength: maximumTagsLength, features: features}
 
 		dash1Annotation := &annotations.Item{
 			OrgID:       1,
@@ -718,7 +730,7 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 			Epoch:       10,
 			Text:        annotation1Text,
 		}
-		err = repo.Add(context.Background(), dash1Annotation)
+		err := repo.Add(context.Background(), dash1Annotation)
 		require.NoError(t, err)
 
 		dash2Annotation := &annotations.Item{
@@ -729,8 +741,6 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 		}
 		err = repo.Add(context.Background(), dash2Annotation)
 		require.NoError(t, err)
-
-		role = setupRBACRole(t, repo, usr)
 
 		return repo
 	}
@@ -763,10 +773,11 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		repo := setupTest(tc.features)
+		db := setupFolderStructure()
+		repo := setupRepo(db, tc.features)
 		t.Run(tc.desc, func(t *testing.T) {
 			usr.Permissions = map[int64]map[string][]string{1: tc.permissions}
-			setupRBACPermission(t, repo, role, usr)
+			setupRBACPermission(t, db, role, usr)
 
 			results, err := repo.Get(context.Background(), &annotations.ItemQuery{
 				OrgID:        1,
@@ -785,10 +796,10 @@ func TestIntegrationAnnotationListingWithInheritedRBAC(t *testing.T) {
 	}
 }
 
-func setupRBACRole(t *testing.T, repo xormRepositoryImpl, user *user.SignedInUser) *accesscontrol.Role {
+func setupRBACRole(t *testing.T, db *sqlstore.SQLStore, user *user.SignedInUser) *accesscontrol.Role {
 	t.Helper()
 	var role *accesscontrol.Role
-	err := repo.db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		role = &accesscontrol.Role{
 			OrgID:   user.OrgID,
 			UID:     "test_role",
@@ -817,9 +828,9 @@ func setupRBACRole(t *testing.T, repo xormRepositoryImpl, user *user.SignedInUse
 	return role
 }
 
-func setupRBACPermission(t *testing.T, repo xormRepositoryImpl, role *accesscontrol.Role, user *user.SignedInUser) {
+func setupRBACPermission(t *testing.T, db *sqlstore.SQLStore, role *accesscontrol.Role, user *user.SignedInUser) {
 	t.Helper()
-	err := repo.db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err := db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		if _, err := sess.Exec("DELETE FROM permission WHERE role_id = ?", role.ID); err != nil {
 			return err
 		}

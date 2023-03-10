@@ -493,7 +493,6 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 	}
 
 	var sqlStore *sqlstore.SQLStore
-	var dashboardStore dashboards.Store
 	var parent, subfolder *folder.Folder
 	const (
 		parentTitle          = "parent"
@@ -505,12 +504,16 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 	var viewer user.SignedInUser
 	var role *accesscontrol.Role
 
-	setup := func(features featuremgmt.FeatureToggles) {
+	setup := func() {
 		sqlStore = db.InitTestDB(t)
 		sqlStore.Cfg.RBACEnabled = true
 		quotaService := quotatest.New(false, nil)
+
+		// enable nested folders so that the folder table is populated for all the tests
+		features := featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders)
+
 		var err error
-		dashboardStore, err = ProvideDashboardStore(sqlStore, sqlStore.Cfg, features, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
+		dashboardWriteStore, err := ProvideDashboardStore(sqlStore, sqlStore.Cfg, features, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotaService)
 		require.NoError(t, err)
 
 		usr := createUser(t, sqlStore, "viewer", "Viewer", false)
@@ -542,7 +545,7 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 			guardian.New = origNewGuardian
 		})
 
-		folderSvc := folderimpl.ProvideService(mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), sqlStore.Cfg, dashboardStore, folderimpl.ProvideDashboardFolderStore(sqlStore), sqlStore, features)
+		folderSvc := folderimpl.ProvideService(mock.New(), bus.ProvideBus(tracing.InitializeTracerForTest()), sqlStore.Cfg, dashboardWriteStore, folderimpl.ProvideDashboardFolderStore(sqlStore), sqlStore, features)
 
 		// create parent folder
 		parent, err = folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
@@ -571,7 +574,7 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 				"title": dashInRootTitle,
 			}),
 		}
-		_, err = dashboardStore.SaveDashboard(context.Background(), saveDashboardCmd)
+		_, err = dashboardWriteStore.SaveDashboard(context.Background(), saveDashboardCmd)
 		require.NoError(t, err)
 
 		saveDashboardCmd = dashboards.SaveDashboardCommand{
@@ -584,7 +587,7 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 			FolderID:  parent.ID,
 			FolderUID: parent.UID,
 		}
-		_, err = dashboardStore.SaveDashboard(context.Background(), saveDashboardCmd)
+		_, err = dashboardWriteStore.SaveDashboard(context.Background(), saveDashboardCmd)
 		require.NoError(t, err)
 
 		saveDashboardCmd = dashboards.SaveDashboardCommand{
@@ -597,7 +600,7 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 			FolderID:  subfolder.ID,
 			FolderUID: subfolder.UID,
 		}
-		_, err = dashboardStore.SaveDashboard(context.Background(), saveDashboardCmd)
+		_, err = dashboardWriteStore.SaveDashboard(context.Background(), saveDashboardCmd)
 		require.NoError(t, err)
 
 		role = setupRBACRole(t, *sqlStore, &viewer)
@@ -651,7 +654,11 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			setup(tc.features)
+			setup()
+
+			dashboardReadStore, err := ProvideDashboardStore(sqlStore, sqlStore.Cfg, tc.features, tagimpl.ProvideService(sqlStore, sqlStore.Cfg), quotatest.New(false, nil))
+			require.NoError(t, err)
+
 			viewer.Permissions = map[int64]map[string][]string{viewer.OrgID: tc.permissions}
 			setupRBACPermission(t, *sqlStore, role, &viewer)
 
@@ -659,7 +666,8 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 				SignedInUser: &viewer,
 				OrgId:        viewer.OrgID,
 			}
-			err := testSearchDashboards(dashboardStore, query)
+
+			err = testSearchDashboards(dashboardReadStore, query)
 			require.NoError(t, err)
 
 			require.Equal(t, len(tc.expectedTitles), len(query.Result))

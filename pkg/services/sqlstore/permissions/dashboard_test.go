@@ -196,7 +196,7 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 			expectedResult: []string{"parent", "subfolder"},
 		},
 		{
-			desc:       "Should be not able to view inherited folders if nested folders are not enabled",
+			desc:       "Should not be able to view inherited folders if nested folders are not enabled",
 			queryType:  searchstore.TypeFolder,
 			permission: dashboards.PERMISSION_VIEW,
 			permissions: []accesscontrol.Permission{
@@ -214,6 +214,16 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 			},
 			features:       featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
 			expectedResult: []string{"parent", "subfolder", "dashboard under parent folder", "dashboard under subfolder"},
+		},
+		{
+			desc:       "Should not be able to view inherited dashboards and folders if nested folders are not enabled",
+			permission: dashboards.PERMISSION_VIEW,
+			permissions: []accesscontrol.Permission{
+				{Action: dashboards.ActionFoldersRead, Scope: "folders:uid:parent"},
+				{Action: dashboards.ActionDashboardsRead, Scope: "folders:uid:parent"},
+			},
+			features:       featuremgmt.WithFeatures(),
+			expectedResult: []string{"parent", "dashboard under parent folder"},
 		},
 	}
 
