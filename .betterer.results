@@ -655,16 +655,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "10"]
     ],
-    "packages/grafana-data/src/valueFormats/arithmeticFormatters.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "packages/grafana-data/src/valueFormats/dateTimeFormatters.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "packages/grafana-data/src/valueFormats/valueFormats.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
-    ],
     "packages/grafana-data/src/vector/AppendedVectors.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
@@ -690,8 +680,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "packages/grafana-data/test/__mocks__/pluginMocks.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "packages/grafana-e2e/cypress/plugins/benchmark/formatting.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -1029,8 +1018,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "2"]
     ],
     "packages/grafana-ui/src/components/Dropdown/ButtonSelect.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "packages/grafana-ui/src/components/Forms/FieldArray.story.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
