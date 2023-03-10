@@ -219,7 +219,7 @@ For general documentation on querying data sources in Grafana, see [Query and tr
 
 ### Query by trace ID
 
-**To query a particular trace:**
+To query a particular trace:
 
 1. Select the **TraceID** query type.
 1. Enter the trace's ID into the **Trace ID** field.
