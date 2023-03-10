@@ -100,7 +100,7 @@ If a viewer without access tries to navigate to the public dashboard, they'll be
 1. Click the **Public dashboard** tab.
 1. Click **Revoke** on the viewer you'd like to revoke access for.
 
-Immediately, the user no longer has access to the public dashboard, nor can they use any existing one-time use links they may have.
+Immediately, the viewer no longer has access to the public dashboard, nor can they use any existing one-time use links they may have.
 
 ### Reinvite a viewer
 
