@@ -10,12 +10,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models/usertoken"
 	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
+	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -226,14 +226,22 @@ func (s *UserAuthTokenService) RotateToken(ctx context.Context, cmd auth.RotateC
 		return nil, err
 	}
 
-	newToken, err := s.rotateToken(ctx, token, cmd.IP, cmd.UserAgent)
+	res, err, _ := s.singleflight.Do(strconv.FormatInt(token.Id, 10), func() (interface{}, error) {
+		newToken, err := s.rotateToken(ctx, token, cmd.IP, cmd.UserAgent)
+		if err != nil {
+			return nil, err
+		}
+
+		return &auth.RotateResponse{
+			Token: newToken.UnhashedToken,
+		}, nil
+	})
+
 	if err != nil {
 		return nil, err
 	}
 
-	return &auth.RotateResponse{
-		Token: newToken.UnhashedToken,
-	}, nil
+	return res.(*auth.RotateResponse), nil
 }
 
 func (s *UserAuthTokenService) TryRotateToken(ctx context.Context, token *auth.UserToken,
