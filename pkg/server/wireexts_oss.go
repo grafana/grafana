@@ -88,8 +88,8 @@ var wireExtsBasicSet = wire.NewSet(
 	pluginsintegration.WireExtensionSet,
 	publicdashboardsService.ProvideServiceWrapper,
 	wire.Bind(new(publicdashboards.ServiceWrapper), new(*publicdashboardsService.PublicDashboardServiceWrapperImpl)),
-	auth.ProvideOSSKeyService,
-	wire.Bind(new(auth.KeyService), new(*auth.OSSKeyService)),
+	auth.ProvideEmbeddedKeyService,
+	wire.Bind(new(auth.KeyService), new(*auth.EmbeddedKeyService)),
 )
 
 var wireExtsSet = wire.NewSet(

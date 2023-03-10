@@ -20,10 +20,10 @@ type KeyService interface {
 	GetPrivateKey(privateKeyID string) interface{}
 }
 
-var _ KeyService = new(OSSKeyService)
+var _ KeyService = new(EmbeddedKeyService)
 
-func ProvideOSSKeyService() *OSSKeyService {
-	s := &OSSKeyService{
+func ProvideEmbeddedKeyService() *EmbeddedKeyService {
+	s := &EmbeddedKeyService{
 		log: log.New("auth.key_service"),
 	}
 
@@ -38,17 +38,14 @@ func ProvideOSSKeyService() *OSSKeyService {
 	return s
 }
 
-type OSSKeyService struct {
+type EmbeddedKeyService struct {
 	log  log.Logger
 	keys map[string]*rsa.PrivateKey
 }
 
-func (s *OSSKeyService) GetJWKS() (jose.JSONWebKeySet, error) {
-	// TODO
-	return jose.JSONWebKeySet{}, nil
-}
+func (s *EmbeddedKeyService) GetJWKS() (jose.JSONWebKeySet, error) {
 
-func (s *OSSKeyService) GetJWK(keyID string) (jose.JSONWebKey, error) {
+func (s *EmbeddedKeyService) GetJWK(keyID string) (jose.JSONWebKey, error) {
 	privateKey := s.keys[keyID]
 
 	serialNumber, err := rand.Int(rand.Reader, big.NewInt(100))
@@ -92,7 +89,7 @@ func (s *OSSKeyService) GetJWK(keyID string) (jose.JSONWebKey, error) {
 	return jwk, nil
 }
 
-func (s *OSSKeyService) GetPublicKey(keyID string) interface{} {
+func (s *EmbeddedKeyService) GetPublicKey(keyID string) interface{} {
 	privateKey, ok := s.keys[keyID]
 	if !ok {
 		s.log.Error("The specified key was not found", "keyID", keyID)
@@ -102,7 +99,7 @@ func (s *OSSKeyService) GetPublicKey(keyID string) interface{} {
 	return &privateKey.PublicKey
 }
 
-func (s *OSSKeyService) GetPrivateKey(keyID string) interface{} {
+func (s *EmbeddedKeyService) GetPrivateKey(keyID string) interface{} {
 	privateKey, ok := s.keys[keyID]
 	if !ok {
 		s.log.Error("The specified key was not found", "keyID", keyID)
