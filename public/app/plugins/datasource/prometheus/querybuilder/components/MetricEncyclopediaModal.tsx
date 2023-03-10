@@ -452,6 +452,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
             } else {
               // search either the names or all metadata
               // fuzzy search go!
+
               if (fullMetaSearch) {
                 debouncedFuzzySearch(metaHaystack, value, setFuzzyMetaSearchResults);
               } else {

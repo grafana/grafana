@@ -92,8 +92,12 @@ const FlameGraph = ({
     const foundLabels = new Set<string>();
 
     if (search) {
-      for (let idx of ufuzzy.filter(uniqueLabels, search)) {
-        foundLabels.add(uniqueLabels[idx]);
+      let idxs = ufuzzy.filter(uniqueLabels, search);
+
+      if (idxs) {
+        for (let idx of idxs) {
+          foundLabels.add(uniqueLabels[idx]);
+        }
       }
     }
 
