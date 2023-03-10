@@ -150,6 +150,8 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 			return nil, err
 		}
 
+		// TODO?? check UID?
+
 		if provisionedData != nil {
 			return nil, dashboards.ErrDashboardCannotSaveProvisionedDashboard
 		}

@@ -428,39 +428,43 @@ func saveDashboard(sess *db.Session, cmd *dashboards.SaveDashboardCommand, emitE
 		userId = -1
 	}
 
-	if dash.ID > 0 {
+	if dash.UID == "" {
+		dash.SetUID(util.GenerateShortUID())
+	} else {
 		var existing dashboards.Dashboard
-		dashWithIdExists, err := sess.Where("id=? AND org_id=?", dash.ID, dash.OrgID).Get(&existing)
+		found, err := sess.Where("uid=? AND org_id=?", dash.UID, dash.OrgID).Get(&existing)
 		if err != nil {
 			return nil, err
 		}
-		if !dashWithIdExists {
-			return nil, dashboards.ErrDashboardNotFound
-		}
+		if found {
+			// set the local ID
+			dash.ID = existing.ID
 
-		// check for is someone else has written in between
-		if dash.Version != existing.Version {
-			if cmd.Overwrite {
-				dash.SetVersion(existing.Version)
-			} else {
-				return nil, dashboards.ErrDashboardVersionMismatch
+			// check for is someone else has written in between
+			if dash.Version != existing.Version {
+				if cmd.Overwrite {
+					dash.SetVersion(existing.Version)
+				} else {
+					return nil, dashboards.ErrDashboardVersionMismatch
+				}
+			}
+
+			// do not allow plugin dashboard updates without overwrite flag
+			if existing.PluginID != "" && !cmd.Overwrite {
+				return nil, dashboards.UpdatePluginDashboardError{PluginId: existing.PluginID}
 			}
 		}
-
-		// do not allow plugin dashboard updates without overwrite flag
-		if existing.PluginID != "" && !cmd.Overwrite {
-			return nil, dashboards.UpdatePluginDashboardError{PluginId: existing.PluginID}
-		}
-	}
-
-	if dash.UID == "" {
-		dash.SetUID(util.GenerateShortUID())
+		// else {
+		// 	// Previously this would error????
+		// 	// return nil, dashboards.ErrDashboardNotFound
+		// }
 	}
 
 	parentVersion := dash.Version
 	var affectedRows int64
 	var err error
 
+	dash.Data.Del("id") // don't save the internal id in the JSON payload
 	if dash.ID == 0 {
 		dash.SetVersion(1)
 		dash.Created = time.Now()

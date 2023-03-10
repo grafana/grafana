@@ -4,6 +4,7 @@ package searchstore_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -162,7 +163,6 @@ func createDashboards(t *testing.T, store db.DB, startID, endID int, orgID int64
 	createdIds := []int64{}
 	for i := startID; i < endID; i++ {
 		dashboard, err := simplejson.NewJson([]byte(`{
-			"id": null,
 			"uid": null,
 			"title": "` + lexiCounter(i) + `",
 			"tags": [ "templated" ],
@@ -179,6 +179,8 @@ func createDashboards(t *testing.T, store db.DB, startID, endID int, orgID int64
 			dash.UID = util.GenerateShortUID()
 			dash.CreatedBy = 1
 			dash.UpdatedBy = 1
+			dash.Created = time.Now()
+			dash.Updated = time.Now()
 			_, err := sess.Insert(dash)
 			require.NoError(t, err)
 

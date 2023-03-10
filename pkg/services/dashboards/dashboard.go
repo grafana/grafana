@@ -43,6 +43,7 @@ type DashboardProvisioningService interface {
 	DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *DeleteOrphanedProvisionedDashboardsCommand) error
 	DeleteProvisionedDashboard(ctx context.Context, dashboardID int64, orgID int64) error
 	GetProvisionedDashboardData(ctx context.Context, name string) ([]*DashboardProvisioning, error)
+	// Deprecated: use GetProvisionedDashboardDataByDashboardUID
 	GetProvisionedDashboardDataByDashboardID(ctx context.Context, dashboardID int64) (*DashboardProvisioning, error)
 	GetProvisionedDashboardDataByDashboardUID(ctx context.Context, orgID int64, dashboardUID string) (*DashboardProvisioning, error)
 	SaveFolderForProvisionedDashboards(context.Context, *SaveDashboardDTO) (*Dashboard, error)
@@ -65,6 +66,7 @@ type Store interface {
 	GetDashboardsByPluginID(ctx context.Context, query *GetDashboardsByPluginIDQuery) ([]*Dashboard, error)
 	GetDashboardTags(ctx context.Context, query *GetDashboardTagsQuery) ([]*DashboardTagCloudItem, error)
 	GetProvisionedDashboardData(ctx context.Context, name string) ([]*DashboardProvisioning, error)
+	// Deprecated: use GetProvisionedDataByDashboardUID
 	GetProvisionedDataByDashboardID(ctx context.Context, dashboardID int64) (*DashboardProvisioning, error)
 	GetProvisionedDataByDashboardUID(ctx context.Context, orgID int64, dashboardUID string) (*DashboardProvisioning, error)
 	HasAdminPermissionInDashboardsOrFolders(ctx context.Context, query *folder.HasAdminPermissionInDashboardsOrFoldersQuery) (bool, error)

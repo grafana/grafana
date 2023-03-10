@@ -238,6 +238,11 @@ func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response
 		Meta:      meta,
 	}
 
+	// do not expose internal ids... stuff will likely break!!!!!
+	if false {
+		dash.Data.Del("id") // do not advertise the internal ids
+	}
+
 	c.TimeRequest(metrics.MApiDashboardGet)
 	return response.JSON(http.StatusOK, dto)
 }
@@ -423,7 +428,7 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 	}
 
 	dash := cmd.GetDashboardModel()
-	newDashboard := dash.ID == 0
+	newDashboard := dash.UID == "" // May not be totally accurate... but true from the UI
 	if newDashboard {
 		limitReached, err := hs.QuotaService.QuotaReached(c, dashboards.QuotaTargetSrv)
 		if err != nil {
@@ -434,24 +439,15 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 		}
 	}
 
-	var provisioningData *dashboards.DashboardProvisioning
-	if dash.ID != 0 {
-		data, err := hs.dashboardProvisioningService.GetProvisionedDashboardDataByDashboardID(c.Req.Context(), dash.ID)
-		if err != nil {
-			return response.Error(500, "Error while checking if dashboard is provisioned using ID", err)
-		}
-		provisioningData = data
-	} else if dash.UID != "" {
+	allowUiUpdate := true
+	if !newDashboard {
 		data, err := hs.dashboardProvisioningService.GetProvisionedDashboardDataByDashboardUID(c.Req.Context(), dash.OrgID, dash.UID)
 		if err != nil && !errors.Is(err, dashboards.ErrProvisionedDashboardNotFound) && !errors.Is(err, dashboards.ErrDashboardNotFound) {
 			return response.Error(500, "Error while checking if dashboard is provisioned", err)
 		}
-		provisioningData = data
-	}
-
-	allowUiUpdate := true
-	if provisioningData != nil {
-		allowUiUpdate = hs.ProvisioningService.GetAllowUIUpdatesFromConfig(provisioningData.Name)
+		if data != nil && data.DashboardID > 0 {
+			allowUiUpdate = hs.ProvisioningService.GetAllowUIUpdatesFromConfig(data.Name)
+		}
 	}
 
 	dashItem := &dashboards.SaveDashboardDTO{

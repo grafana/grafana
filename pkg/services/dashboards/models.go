@@ -92,25 +92,16 @@ func NewDashboardFromJson(data *simplejson.Json) *Dashboard {
 	dash.Data = data
 	dash.Title = dash.Data.Get("title").MustString()
 	dash.UpdateSlug()
-	update := false
 
-	if id, err := dash.Data.Get("id").Float64(); err == nil {
-		dash.ID = int64(id)
-		update = true
-	}
+	// Ideally we should ignore the internal id saveed in the body
+	dash.ID = dash.Data.Get("id").MustInt64(0)
 
 	if uid, err := dash.Data.Get("uid").String(); err == nil {
 		dash.UID = uid
-		update = true
 	}
 
-	if version, err := dash.Data.Get("version").Float64(); err == nil && update {
+	if version, err := dash.Data.Get("version").Float64(); err == nil {
 		dash.Version = int(version)
-		dash.Updated = time.Now()
-	} else {
-		dash.Data.Set("version", 0)
-		dash.Created = time.Now()
-		dash.Updated = time.Now()
 	}
 
 	if gnetId, err := dash.Data.Get("gnetId").Float64(); err == nil {

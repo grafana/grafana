@@ -179,12 +179,12 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		require.False(t, dashboard.Updated.IsZero())
 	})
 
-	t.Run("Should be able to update dashboard by id and remove folderId", func(t *testing.T) {
+	t.Run("Should be able to update dashboard by uid and remove folderId", func(t *testing.T) {
 		setup()
 		cmd := dashboards.SaveDashboardCommand{
 			OrgID: 1,
 			Dashboard: simplejson.NewFromAny(map[string]interface{}{
-				"id":    savedDash.ID,
+				"uid":   savedDash.UID,
 				"title": "folderId",
 				"tags":  []interface{}{},
 			}),
@@ -199,7 +199,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		cmd = dashboards.SaveDashboardCommand{
 			OrgID: 1,
 			Dashboard: simplejson.NewFromAny(map[string]interface{}{
-				"id":    savedDash.ID,
+				"uid":   savedDash.UID,
 				"title": "folderId",
 				"tags":  []interface{}{},
 			}),
@@ -713,7 +713,6 @@ func insertTestDashboard(t *testing.T, dashboardStore dashboards.Store, title st
 		FolderID: folderId,
 		IsFolder: isFolder,
 		Dashboard: simplejson.NewFromAny(map[string]interface{}{
-			"id":    nil,
 			"title": title,
 			"tags":  tags,
 		}),
@@ -734,7 +733,6 @@ func insertTestDashboardForPlugin(t *testing.T, dashboardStore dashboards.Store,
 		FolderID: folderId,
 		IsFolder: isFolder,
 		Dashboard: simplejson.NewFromAny(map[string]interface{}{
-			"id":    nil,
 			"title": title,
 		}),
 		PluginID: pluginId,

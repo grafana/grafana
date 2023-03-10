@@ -35,18 +35,18 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 	t.Run("Given saved folders and dashboards in organization A", func(t *testing.T) {
 		// Basic validation tests
 
-		permissionScenario(t, "When saving a dashboard with non-existing id", true,
+		permissionScenario(t, "Can save a dashboard with a specified uid", true,
 			func(t *testing.T, sc *permissionScenarioContext) {
 				cmd := dashboards.SaveDashboardCommand{
 					OrgID: testOrgID,
 					Dashboard: simplejson.NewFromAny(map[string]interface{}{
-						"id":    float64(123412321),
-						"title": "Expect error",
+						"uid":   "abc",
+						"title": "Expect no error",
 					}),
 				}
 
 				err := callSaveWithError(t, cmd, sc.sqlStore)
-				assert.Equal(t, dashboards.ErrDashboardNotFound, err)
+				require.NoError(t, err)
 			})
 
 		// Given other organization
@@ -932,7 +932,6 @@ func saveTestDashboard(t *testing.T, title string, orgID, folderID int64, sqlSto
 		FolderID: folderID,
 		IsFolder: false,
 		Dashboard: simplejson.NewFromAny(map[string]interface{}{
-			"id":    nil,
 			"title": title,
 		}),
 	}
@@ -974,7 +973,6 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.DB) *da
 		FolderID: 0,
 		IsFolder: true,
 		Dashboard: simplejson.NewFromAny(map[string]interface{}{
-			"id":    nil,
 			"title": title,
 		}),
 	}
