@@ -9,6 +9,8 @@ import (
 var WireSet = wire.NewSet(
 	ProvideValidation,
 	wire.Bind(new(admission.ValidatingAdmissionController), new(*pdValidation)),
+	ProvideMutation,
+	wire.Bind(new(admission.MutatingAdmissionController), new(*pdMutation)),
 	ProvideWebhooks,
 	ProvideWatcher,
 	wire.Bind(new(Watcher), new(*watcher)),
