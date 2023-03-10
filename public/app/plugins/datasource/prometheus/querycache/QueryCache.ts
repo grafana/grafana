@@ -84,14 +84,6 @@ export class QueryCache {
       // clamp to make sure we don't re-query previous 10m when newFrom is ahead of it (e.g. 5min range, 30s refresh)
       let newFromPartial = Math.max(prevTo! - requeryLastMs, newFrom);
 
-      // console.log(`query previous ${(newTo - newFromPartial) / 1000 / 60} mins`);
-
-      // align the query to the interval to increase the chance of hitting the backend cache
-      // ASK: how to test if this actually has desired effect?
-      // ASK: does the backend already do this anyways? do we need to do it here?
-      // newFromPartial = incrRoundDn(newFromPartial, request.intervalMs);
-      // newToPartial = incrRoundDn(newTo, request.intervalMs);
-
       // modify to partial query
       request = {
         ...request,
@@ -104,11 +96,6 @@ export class QueryCache {
     } else {
       reqTargSigs.forEach((targSig, targIdent) => {
         this.cache.delete(targIdent);
-
-        // TODO: figure out how to purge caches of targets that have permanently stopped making queries
-        // - dashboard deleted (dashboardUID)
-        // - panel removed (panelId),
-        // - query removed (refId)
       });
     }
 
