@@ -11,7 +11,7 @@ import (
 
 	"github.com/ory/fosite"
 
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/oauthserver"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
@@ -30,11 +30,6 @@ func (s *OAuth2ServiceImpl) HandleTokenRequest(rw http.ResponseWriter, req *http
 
 	// This will create an access request object and iterate through the registered TokenEndpointHandlers to validate the request.
 	accessRequest, err := s.oauthProvider.NewAccessRequest(ctx, req, currentOAuthSessionData)
-
-	// Catch any errors, e.g.:
-	// * unknown client
-	// * invalid redirect
-	// * ...
 	if err != nil {
 		s.writeAccessError(ctx, rw, accessRequest, err)
 		return
@@ -124,8 +119,21 @@ func (s *OAuth2ServiceImpl) handleJWTBearer(ctx context.Context, accessRequest f
 			}
 		}
 
-		query := user.GetUserByIDQuery{ID: userID}
+		// Check the service is actually allowed to impersonate the user
+		// We can either check the requested scopes and make sure it contains the impersonate scope
+		// or perform an access control check again.
+		// There must be a better way to do this but fosites calls the GetGrantTypes without passing the subject.
+		ev := ac.EvalPermission(ac.ActionUsersImpersonate, ac.Scope("users", "id", strconv.FormatInt(userID, 10)))
+		hasAccess, errAccess := s.accessControl.Evaluate(ctx, client.SignedInUser, ev)
+		if errAccess != nil || !hasAccess {
+			return &fosite.RFC6749Error{
+				DescriptionField: "Client is not allowed to impersonate subject.",
+				ErrorField:       "restricted_access",
+				CodeField:        http.StatusForbidden,
+			}
+		}
 
+		query := user.GetUserByIDQuery{ID: userID}
 		dbUser, err := s.userService.GetByID(ctx, &query)
 		if err != nil {
 			if errors.Is(err, user.ErrUserNotFound) {
@@ -179,7 +187,7 @@ func (s *OAuth2ServiceImpl) profileFromUser(siu *user.SignedInUser, up *user.Use
 		Login:     up.Login,
 		UpdatedAt: up.Updated,
 		PermissionsFunc: func(ctx context.Context) (map[string][]string, error) {
-			permissions, err := s.acService.SearchUsersPermissions(ctx, siu, 1, accesscontrol.SearchOptions{
+			permissions, err := s.acService.SearchUsersPermissions(ctx, siu, 1, ac.SearchOptions{
 				ActionPrefix: "dashboards",
 				UserID:       up.ID,
 			})
@@ -191,7 +199,7 @@ func (s *OAuth2ServiceImpl) profileFromUser(siu *user.SignedInUser, up *user.Use
 				}
 			}
 			if len(permissions) > 0 {
-				return accesscontrol.Reduce(permissions[up.ID]), nil
+				return ac.Reduce(permissions[up.ID]), nil
 			}
 			return nil, nil
 		},
@@ -227,7 +235,7 @@ func (s *OAuth2ServiceImpl) profileFromServiceAccount(siu *user.SignedInUser, sa
 		Login:     sa.Login,
 		UpdatedAt: sa.Updated,
 		PermissionsFunc: func(ctx context.Context) (map[string][]string, error) {
-			permissions, err := s.acService.SearchUsersPermissions(ctx, siu, 1, accesscontrol.SearchOptions{
+			permissions, err := s.acService.SearchUsersPermissions(ctx, siu, 1, ac.SearchOptions{
 				ActionPrefix: "dashboards",
 				UserID:       sa.Id,
 			})
@@ -239,7 +247,7 @@ func (s *OAuth2ServiceImpl) profileFromServiceAccount(siu *user.SignedInUser, sa
 				}
 			}
 			if len(permissions) > 0 {
-				return accesscontrol.Reduce(permissions[sa.Id]), nil
+				return ac.Reduce(permissions[sa.Id]), nil
 			}
 			return nil, nil
 		},
