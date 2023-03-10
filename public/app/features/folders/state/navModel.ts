@@ -3,12 +3,13 @@ import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, FolderDTO } from 'app/types';
 
-export function buildNavModel(folder: FolderDTO): NavModelItem {
+export function buildNavModel(folder: FolderDTO, parentItem?: NavModelItem): NavModelItem {
   const model: NavModelItem = {
     icon: 'folder',
     id: 'manage-folder',
+    parentItem,
     subTitle: 'Manage folder dashboards and permissions',
-    url: '',
+    url: folder.url,
     text: folder.title,
     breadcrumbs: [{ title: 'Dashboards', url: 'dashboards' }],
     children: [
@@ -18,6 +19,7 @@ export function buildNavModel(folder: FolderDTO): NavModelItem {
         id: `folder-dashboards-${folder.uid}`,
         text: 'Dashboards',
         url: folder.url,
+        hideFromBreadcrumbs: true,
       },
     ],
   };
@@ -28,6 +30,7 @@ export function buildNavModel(folder: FolderDTO): NavModelItem {
     id: `folder-library-panels-${folder.uid}`,
     text: 'Panels',
     url: `${folder.url}/library-panels`,
+    hideFromBreadcrumbs: true,
   });
 
   if (contextSrv.hasPermission(AccessControlAction.AlertingRuleRead) && config.unifiedAlertingEnabled) {
@@ -37,6 +40,7 @@ export function buildNavModel(folder: FolderDTO): NavModelItem {
       id: `folder-alerting-${folder.uid}`,
       text: 'Alert rules',
       url: `${folder.url}/alerting`,
+      hideFromBreadcrumbs: true,
     });
   }
 
@@ -47,6 +51,7 @@ export function buildNavModel(folder: FolderDTO): NavModelItem {
       id: `folder-permissions-${folder.uid}`,
       text: 'Permissions',
       url: `${folder.url}/permissions`,
+      hideFromBreadcrumbs: true,
     });
   }
 
@@ -57,6 +62,7 @@ export function buildNavModel(folder: FolderDTO): NavModelItem {
       id: `folder-settings-${folder.uid}`,
       text: 'Settings',
       url: `${folder.url}/settings`,
+      hideFromBreadcrumbs: true,
     });
   }
 

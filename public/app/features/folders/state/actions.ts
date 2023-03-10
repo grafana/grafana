@@ -1,6 +1,6 @@
 import { lastValueFrom } from 'rxjs';
 
-import { locationUtil } from '@grafana/data';
+import { locationUtil, NavModelItem } from '@grafana/data';
 import { getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { notifyApp, updateNavIndex } from 'app/core/actions';
 import { createSuccessNotification, createWarningNotification } from 'app/core/copy/appNotification';
@@ -12,11 +12,17 @@ import { DashboardAcl, DashboardAclUpdateDTO, NewDashboardAclItem, PermissionLev
 import { buildNavModel } from './navModel';
 import { loadFolder, loadFolderPermissions, setCanViewFolderPermissions } from './reducers';
 
-export function getFolderByUid(uid: string): ThunkResult<void> {
+export function getFolderByUid(uid: string): ThunkResult<Promise<NavModelItem>> {
   return async (dispatch) => {
     const folder = await backendSrv.getFolderByUid(uid);
     dispatch(loadFolder(folder));
-    dispatch(updateNavIndex(buildNavModel(folder)));
+    let parentItem: NavModelItem | undefined;
+    if (folder.parentUid) {
+      parentItem = await dispatch(getFolderByUid(folder.parentUid));
+    }
+    const navModel = buildNavModel(folder, parentItem);
+    dispatch(updateNavIndex(navModel));
+    return navModel;
   };
 }
 

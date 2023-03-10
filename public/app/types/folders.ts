@@ -12,6 +12,7 @@ export interface FolderDTO extends WithAccessControlMetadata {
   canEdit: boolean;
   canAdmin: boolean;
   canDelete: boolean;
+  parentUid?: string;
 }
 
 export interface FolderState {
