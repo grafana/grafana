@@ -79,7 +79,7 @@ There are two ways to configure the trace to logs feature:
 
 #### Variables that can be used in a custom query
 
-To use a variable you need to wrap it in `${}`. For example `${__span.name}`.
+To use a variable you need to wrap it in `${}`. For example: `${__span.name}`.
 
 | Variable name          | Description                                                                                                                                                                                                                                                                                                                              |
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
