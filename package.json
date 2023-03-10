@@ -438,7 +438,7 @@
     "@storybook/builder-webpack5/webpack": "5.75.0",
     "@storybook/manager-webpack5/webpack": "5.75.0",
     "ngtemplate-loader/loader-utils": "^2.0.0",
-    "trim@0.0.1": "0.0.3",
+    "trim": "0.0.3",
     "slate-dev-environment@^0.2.2": "patch:slate-dev-environment@npm:0.2.5#.yarn/patches/slate-dev-environment-npm-0.2.5-9aeb7da7b5.patch"
   },
   "workspaces": {
