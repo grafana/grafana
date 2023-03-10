@@ -1,4 +1,9 @@
-import { isPluginExtensionCommand, isPluginExtensionLink, PanelMenuItem } from '@grafana/data';
+import {
+  isPluginExtensionCommand,
+  isPluginExtensionLink,
+  PanelMenuItem,
+  PluginExtensionPlacements,
+} from '@grafana/data';
 import {
   AngularComponent,
   getDataSourceSrv,
@@ -26,7 +31,6 @@ import {
 } from 'app/features/dashboard/utils/panel';
 import { InspectTab } from 'app/features/inspector/types';
 import { isPanelModelLibraryPanel } from 'app/features/library-panels/guard';
-import { GrafanaExtensions } from 'app/features/plugins/extensions/placements';
 import { store } from 'app/store/store';
 
 import { navigateToExplore } from '../../explore/state/main';
@@ -295,7 +299,7 @@ export function getPanelMenu(
   }
 
   const { extensions } = getPluginExtensions({
-    placement: GrafanaExtensions.DashboardPanelMenu,
+    placement: PluginExtensionPlacements.DashboardPanelMenu,
     context: createExtensionContext(panel, dashboard),
   });
 
