@@ -145,7 +145,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 		if h.features.IsEnabled(featuremgmt.FlagAuthnService) {
 			identity, err := h.authnService.Authenticate(ctx, &authn.Request{HTTPRequest: reqContext.Req, Resp: reqContext.Resp})
 			if err != nil {
-				if errors.Is(err, auth.ErrUserTokenNotFound) || errors.Is(err, auth.ErrInvalidSessionToken) {
+				if errors.Is(err, auth.ErrInvalidSessionToken) {
 					// Burn the cookie in case of invalid, expired or missing token
 					reqContext.Resp.Before(h.deleteInvalidCookieEndOfRequestFunc(reqContext))
 				}
@@ -541,6 +541,10 @@ func (h *ContextHandler) initContextWithToken(reqContext *contextmodel.ReqContex
 
 func (h *ContextHandler) deleteInvalidCookieEndOfRequestFunc(reqContext *contextmodel.ReqContext) web.BeforeFunc {
 	return func(w web.ResponseWriter) {
+		if h.features.IsEnabled(featuremgmt.FlagClientTokenRotation) {
+			return
+		}
+
 		if w.Written() {
 			reqContext.Logger.Debug("Response written, skipping invalid cookie delete")
 			return
@@ -553,6 +557,9 @@ func (h *ContextHandler) deleteInvalidCookieEndOfRequestFunc(reqContext *context
 
 func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *contextmodel.ReqContext) web.BeforeFunc {
 	return func(w web.ResponseWriter) {
+		if h.features.IsEnabled(featuremgmt.FlagClientTokenRotation) {
+			return
+		}
 		// if response has already been written, skip.
 		if w.Written() {
 			return
