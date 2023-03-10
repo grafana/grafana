@@ -68,7 +68,7 @@ describe('fieldColorModeRegistry', () => {
     expect(calcFn(70, 0, undefined)).toEqual(color);
   });
 
-  it('Shades should return different than select color for index 1', () => {
+  it('Shades should return different than selected color for index 1', () => {
     const color = '#123456';
     const calcFn = getCalculator({ mode: FieldColorModeId.Shades, seriesIndex: 1, fixedColor: color });
     expect(calcFn(70, 0, undefined)).not.toEqual(color);
