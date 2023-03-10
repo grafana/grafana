@@ -177,7 +177,7 @@ func TestSession_Hook(t *testing.T) {
 	})
 
 	t.Run("should not rotate token with feature flag", func(t *testing.T) {
-		s := ProvideSession(setting.NewCfg(), nil, featuremgmt.WithFeatures(featuremgmt.FlagFrontendTokenRotation))
+		s := ProvideSession(setting.NewCfg(), nil, featuremgmt.WithFeatures(featuremgmt.FlagClientTokenRotation))
 
 		req := &authn.Request{}
 		identity := &authn.Identity{}

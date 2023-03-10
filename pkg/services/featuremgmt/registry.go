@@ -429,8 +429,8 @@ var (
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
 		{
-			Name:        "frontendTokenRotation",
-			Description: "Replaces the current in-request token rotation",
+			Name:        "clientTokenRotation",
+			Description: "Replaces the current in-request token rotation and forces the rotation to happen from client",
 			State:       FeatureStateAlpha,
 			Owner:       grafanaAuthnzSquad,
 		},
