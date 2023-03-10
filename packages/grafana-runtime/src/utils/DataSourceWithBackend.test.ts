@@ -88,7 +88,7 @@ describe('DataSourceWithBackend', () => {
           "X-Dashboard-Uid": "dashA",
           "X-Datasource-Uid": "abc, <mockuid>",
           "X-Panel-Id": "123",
-          "X-Plugin-Id": "dummy, sample"
+          "X-Plugin-Id": "dummy, sample",
         },
         "hideFromInspector": false,
         "method": "POST",
