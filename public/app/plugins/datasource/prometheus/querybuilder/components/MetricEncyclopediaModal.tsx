@@ -243,6 +243,9 @@ export const MetricEncyclopediaModal = (props: Props) => {
     if (fuzzySearchQuery || excludeNullMetadata || (letterSearch && !skipLetterSearch) || selectedTypes.length > 0) {
       filteredMetrics = filteredMetrics.filter((m: MetricData, idx) => {
         let keepMetric = false;
+        // keepMetric should progessively filter
+        // if it is true in fuzzy search then we can check the others
+        // come up with a set of rules for progression of filtering
 
         // search by text
         if (fuzzySearchQuery) {
@@ -260,14 +263,14 @@ export const MetricEncyclopediaModal = (props: Props) => {
         // backend and frontend
         // skipLetterSearch is purely for setting letter spans as active so they can be clicked
         // where we don't filter out by letter search and keep letters of all other filters
-        if (letterSearch && !skipLetterSearch) {
+        if ((keepMetric || !fuzzySearchQuery) && letterSearch && !skipLetterSearch) {
           const letters: string[] = [letterSearch, letterSearch.toLowerCase()];
           keepMetric = letters.includes(m.value[0]);
         }
 
         // select by type, counter, gauge, etc
         // skip for backend because no metadata is returned
-        if (selectedTypes.length > 0 && !useBackend) {
+        if (keepMetric && selectedTypes.length > 0 && !useBackend) {
           // return the metric that matches the type
           // return the metric if it has no type AND we are NOT excluding metrics without metadata
 
