@@ -220,7 +220,7 @@ lineage: seqs: [
 					value?: number @grafanamaturity(NeedsExpertReview)
 					// TODO docs
 					color: string @grafanamaturity(NeedsExpertReview)
-					// TODO docs
+					// Threshold index, an old property that is not needed an should only appear in older dashboards
 					index?: int32 @grafanamaturity(NeedsExpertReview)
 					// TODO docs
 					// TODO are the values here enumerable into a disjunction?
