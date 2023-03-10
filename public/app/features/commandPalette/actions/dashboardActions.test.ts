@@ -122,7 +122,7 @@ describe('dashboardActions', () => {
         const searchQuery = 'mySearchQuery';
         const results = await getDashboardSearchResultActions(searchQuery);
         expect(grafanaSearcherSpy).toHaveBeenCalledWith({
-          kind: ['dashboard', 'folder'],
+          kind: ['dashboard'],
           query: searchQuery,
           limit: 100,
         });
@@ -132,7 +132,6 @@ describe('dashboardActions', () => {
             name: 'My dashboard 1',
             priority: 1,
             section: 'Dashboards',
-            subtitle: 'My folder 1',
             url: '/my-dashboard-1',
           },
         ]);
@@ -148,7 +147,7 @@ describe('dashboardActions', () => {
         const searchQuery = 'mySearchQuery';
         const results = await getDashboardSearchResultActions(searchQuery);
         expect(grafanaSearcherSpy).toHaveBeenCalledWith({
-          kind: ['dashboard', 'folder'],
+          kind: ['dashboard'],
           query: searchQuery,
           limit: 100,
         });
@@ -158,7 +157,6 @@ describe('dashboardActions', () => {
             name: 'My dashboard 1',
             priority: 1,
             section: 'Dashboards',
-            subtitle: 'My folder 1',
             url: '/my-dashboard-1',
           },
         ]);
