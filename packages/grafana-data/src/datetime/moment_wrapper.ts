@@ -94,9 +94,9 @@ export const isDateTimeInput = (value: unknown): value is DateTimeInput => {
     value === null ||
     typeof value === 'string' ||
     typeof value === 'number' ||
-    isDateTime(value) ||
     value instanceof Date ||
-    (Array.isArray(value) && value.every((v) => typeof v === 'string' || typeof v === 'number'))
+    (Array.isArray(value) && value.every((v) => typeof v === 'string' || typeof v === 'number')) ||
+    isDateTime(value)
   );
 };
 
