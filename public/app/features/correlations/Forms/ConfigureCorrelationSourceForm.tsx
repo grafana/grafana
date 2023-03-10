@@ -12,9 +12,6 @@ import { getInputId } from './utils';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   label: css`
-    max-width: ${theme.spacing(32)};
-  `,
-  description: css`
     max-width: ${theme.spacing(80)};
   `,
 });
@@ -28,6 +25,7 @@ export const ConfigureCorrelationSourceForm = () => {
 
   return (
     <>
+      <h3>Step 3: Attach link to origin data source results</h3>
       <Controller
         control={control}
         name="sourceUID"
@@ -40,7 +38,8 @@ export const ConfigureCorrelationSourceForm = () => {
         }}
         render={({ field: { onChange, value } }) => (
           <Field
-            label="Source"
+            label="Origin data source"
+            description="Results from selected origin data source will have links displayed in the panel"
             htmlFor="source"
             invalid={!!formState.errors.sourceUID}
             error={formState.errors.sourceUID?.message}
@@ -58,7 +57,8 @@ export const ConfigureCorrelationSourceForm = () => {
       />
 
       <Field
-        label="Target field"
+        label="Results field"
+        description="The link will be shown next to the value of this field"
         className={styles.label}
         invalid={!!formState.errors?.config?.field}
         error={formState.errors?.config?.field?.message}

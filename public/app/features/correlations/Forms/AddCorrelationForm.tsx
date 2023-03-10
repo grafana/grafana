@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { PanelContainer, useStyles2 } from '@grafana/ui';
+import { PanelContainer, useStyles2, InfoBox } from '@grafana/ui';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 
 import { Wizard } from '../components/Wizard';
@@ -46,6 +46,17 @@ export const AddCorrelationForm = ({ onClose, onCreated }: Props) => {
   return (
     <PanelContainer className={styles.panelContainer}>
       <CloseButton onClick={onClose} />
+      <InfoBox title="Add a new correlation" urlTitle="Documentation" url="about:blank">
+        <p>
+          This wizard will guide you through setting up a new correlation. Based on the setup Grafana will create
+          interactive links in the result panels in Explore.
+        </p>
+        <p>
+          You can specify the behavior of these links. Link will be shown in results of selected origin data source. The
+          link will be attached to the field with provided name. Clicking on a link will run a provided target query. To
+          build a target query you can extract data from the origin results.
+        </p>
+      </InfoBox>
       <CorrelationsFormContextProvider data={{ loading, readOnly: false, correlation: undefined }}>
         <Wizard<FormDTO>
           defaultValues={defaultValues}

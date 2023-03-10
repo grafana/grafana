@@ -16,13 +16,15 @@ export const ConfigureCorrelationTargetForm = () => {
 
   return (
     <>
+      <h3>Step 2: Setup target query</h3>
       <Controller
         control={control}
         name="targetUID"
         rules={{ required: { value: true, message: 'This field is required.' } }}
         render={({ field: { onChange, value } }) => (
           <Field
-            label="Target"
+            label="Target data source"
+            description="Specify which data source should be queried when the link is clicked"
             htmlFor="target"
             invalid={!!formState.errors.targetUID}
             error={formState.errors.targetUID?.message}
