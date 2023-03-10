@@ -218,6 +218,17 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/swagger-ui", swaggerUI)
 	r.Get("/openapi3", openapi3)
 
+<<<<<<< Updated upstream
+	if hs.Features.IsEnabled(featuremgmt.FlagFrontendTokenRotation) {
+		r.Post("/user/auth-token/rotate", routing.Wrap(hs.RotateUserAuthToken))
+		r.Get("/user/auth-token/rotate", routing.Wrap(hs.RotateUserAuthTokenRedirect))
+=======
+	if hs.Features.IsEnabled(featuremgmt.FlagClientTokenRotation) {
+		r.Post("/api/user/auth-tokens/rotate", routing.Wrap(hs.RotateUserAuthToken))
+		r.Get("/user/auth-tokens/rotate", routing.Wrap(hs.RotateUserAuthTokenRedirect))
+>>>>>>> Stashed changes
+	}
+
 	// authed api
 	r.Group("/api", func(apiRoute routing.RouteRegister) {
 		// user (signed in)

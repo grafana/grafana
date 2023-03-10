@@ -10,6 +10,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/infra/network"
+	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/services/auth"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -50,6 +52,79 @@ func (hs *HTTPServer) RevokeUserAuthToken(c *contextmodel.ReqContext) response.R
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	return hs.revokeUserAuthTokenInternal(c, c.UserID, cmd)
+}
+
+// swagger:route GET /user/auth-tokens/rotate
+//
+// # Rotate the auth token of the caller
+//
+// FIXME(kalleep): add longer description
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
+func (hs *HTTPServer) RotateUserAuthTokenRedirect(c *contextmodel.ReqContext) response.Response {
+	token := c.GetCookie(hs.Cfg.LoginCookieName)
+	if token == "" {
+		hs.log.FromContext(c.Req.Context()).Debug("Rotate called without session cookie")
+		return response.Redirect(hs.Cfg.AppSubURL + "/")
+	}
+
+	ip, _ := network.GetIPFromAddress(c.RemoteAddr())
+	res, err := hs.AuthTokenService.RotateToken(c.Req.Context(), auth.RotateCommand{
+		UnHashedToken: token,
+		IP:            ip,
+		UserAgent:     c.Req.UserAgent(),
+	})
+
+	if err != nil {
+		// FIXME(kalleep): redirect with error or log?
+		hs.log.FromContext(c.Req.Context()).Debug("Failed to rotate token", "error", err)
+		cookies.DeleteCookie(c.Resp, hs.Cfg.LoginCookieName, nil)
+		return response.Redirect(hs.Cfg.AppSubURL + "/")
+	}
+
+	cookies.WriteSessionCookie(c, hs.Cfg, res.Token, hs.Cfg.LoginMaxLifetime)
+	return response.Redirect(hs.GetRedirectURL(c))
+}
+
+// swagger:route POST /user/auth-tokens/rotate
+//
+// # Rotate the auth token of the caller
+//
+// FIXME(kalleep): add longer description
+//
+// Responses:
+// 200: okResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 500: internalServerError
+func (hs *HTTPServer) RotateUserAuthToken(c *contextmodel.ReqContext) response.Response {
+	token := c.GetCookie(hs.Cfg.LoginCookieName)
+	if token == "" {
+		hs.log.FromContext(c.Req.Context()).Debug("Rotate called without session cookie")
+		return response.Error(http.StatusUnauthorized, http.StatusText(http.StatusUnauthorized), nil)
+	}
+
+	ip, _ := network.GetIPFromAddress(c.RemoteAddr())
+	res, err := hs.AuthTokenService.RotateToken(c.Req.Context(), auth.RotateCommand{
+		UnHashedToken: token,
+		IP:            ip,
+		UserAgent:     c.Req.UserAgent(),
+	})
+
+	if err != nil {
+		hs.log.FromContext(c.Req.Context()).Debug("Failed to rotate token", "error", err)
+		cookies.DeleteCookie(c.Resp, hs.Cfg.LoginCookieName, nil)
+		return response.ErrOrFallback(http.StatusUnauthorized, http.StatusText(http.StatusUnauthorized), err)
+	}
+
+	cookies.WriteSessionCookie(c, hs.Cfg, res.Token, hs.Cfg.LoginMaxLifetime)
+	return response.JSON(http.StatusOK, map[string]any{})
 }
 
 func (hs *HTTPServer) logoutUserFromAllDevicesInternal(ctx context.Context, userID int64) response.Response {

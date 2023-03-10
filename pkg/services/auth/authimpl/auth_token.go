@@ -265,9 +265,9 @@ func (s *UserAuthTokenService) TryRotateToken(ctx context.Context, token *auth.U
 }
 
 func (s *UserAuthTokenService) rotateToken(ctx context.Context, token *auth.UserToken, clientIP net.IP, userAgent string) (*auth.UserToken, error) {
-	clientIPStr := clientIP.String()
-	if len(clientIP) == 0 {
-		clientIPStr = ""
+	var clientIPStr string
+	if clientIP != nil {
+		clientIPStr = clientIP.String()
 	}
 
 	newToken, hashedToken, err := generateAndHashToken()
