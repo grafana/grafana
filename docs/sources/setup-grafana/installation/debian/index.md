@@ -39,7 +39,7 @@ To follow these instructions, you need:
 
 Complete the following steps to install Grafana from the APT repository:
 
-1. To install the latest release, run the following commands:
+1. To install required packages and download the Grafana repository signing key, run the following commands:
 
    ```bash
    sudo apt-get install -y apt-transport-https
@@ -59,9 +59,10 @@ Complete the following steps to install Grafana from the APT repository:
    echo "deb [signed-by=/usr/share/keyrings/grafana.key] https://apt.grafana.com beta main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
    ```
 
-1. After you add the repository, run one of the following commands:
+1. After you add the repository, run the following commands to install the OSS or Enterprise release:
 
    ```bash
+   # Update the list of available packages
    sudo apt-get update
 
    # Install the latest OSS release:
@@ -71,9 +72,9 @@ Complete the following steps to install Grafana from the APT repository:
    sudo apt-get install grafana-enterprise
    ```
 
-## Install Grafana using DEB or the standalone binaries
+## Install Grafana using a deb package or as a standalone binary
 
-If you choose not to install Grafana using APT, you can download and install Grafana using DEB or the standalone binaries.
+If you choose not to install Grafana using APT, you can download and install Grafana using the deb package or as a standalone binary.
 
 ### Before you begin
 
@@ -117,7 +118,7 @@ Complete the following steps to start the Grafana server with systemd and verify
 1. To verify that the service is running, run the following command:
 
    ```
-   Need input here
+   sudo systemctl status grafana-server
    ```
 
 1. To configure the Grafana server to start at boot, run the following command:
@@ -144,7 +145,7 @@ Complete the following steps to start the Grafana service and verify that it is 
 1. To verify that the service is running, run the following command:
 
    ```
-   Need input here
+   sudo service grafana-server status
    ```
 
 1. To configure the Grafana server to start at boot, run the following command:
