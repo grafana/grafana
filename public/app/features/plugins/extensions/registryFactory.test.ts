@@ -269,18 +269,22 @@ describe('createPluginExtensionRegistry()', () => {
   describe('when registering commands', () => {
     const pluginId = 'belugacdn-app';
     // Sample command configurations to be used in tests
-    const commandConfig1 = {
-      placement: 'grafana/dashboard/panel/menu',
-      title: 'Open incident',
-      description: 'You can create an incident from this context',
-      handler: () => {},
-    };
-    const commandConfig2 = {
-      placement: 'plugins/grafana-slo-app/slo-breached',
-      title: 'Open incident',
-      description: 'You can create an incident from this context',
-      handler: () => {},
-    };
+    let commandConfig1: AppPluginExtensionCommandConfig, commandConfig2: AppPluginExtensionCommandConfig;
+
+    beforeEach(() => {
+      commandConfig1 = {
+        placement: 'grafana/dashboard/panel/menu',
+        title: 'Open incident',
+        description: 'You can create an incident from this context',
+        handler: jest.fn(),
+      };
+      commandConfig2 = {
+        placement: 'plugins/grafana-slo-app/slo-breached',
+        title: 'Open incident',
+        description: 'You can create an incident from this context',
+        handler: jest.fn(),
+      };
+    });
 
     it('should register a command extension', () => {
       const registry = createPluginExtensionRegistry([
@@ -428,26 +432,25 @@ describe('createPluginExtensionRegistry()', () => {
           linkExtensions: [],
           commandExtensions: [
             {
-              placement: 'grafana/dashboard/panel/menu',
-              title: 'Open incident',
-              description: 'You can create an incident from this context',
-              handler: () => {},
+              ...commandConfig1,
               configure: () => ({}),
             },
           ],
         },
       ]);
 
-      const extensions = registry['grafana/dashboard/panel/menu'];
+      const extensions = registry[commandConfig1.placement];
       const [configure] = extensions;
       const context = {};
-      const extension = configure?.(context);
+      const extension = configure(context);
 
       assertPluginExtensionCommand(extension);
 
       extension.callHandlerWithContext();
 
+      expect(commandErrorHandler).toBeCalledTimes(1);
       expect(commandErrorHandler).toBeCalledWith(expect.any(Function), context);
+      expect(commandConfig1.handler).toBeCalledTimes(1);
     });
 
     it('should wrap handler function with extension error handling when no configure function is added', () => {
@@ -455,27 +458,52 @@ describe('createPluginExtensionRegistry()', () => {
         {
           pluginId,
           linkExtensions: [],
-          commandExtensions: [
-            {
-              placement: 'grafana/dashboard/panel/menu',
-              title: 'Open incident',
-              description: 'You can create an incident from this context',
-              handler: () => {},
-            },
-          ],
+          commandExtensions: [commandConfig1],
         },
       ]);
 
-      const extensions = registry['grafana/dashboard/panel/menu'];
+      const extensions = registry[commandConfig1.placement];
       const [configure] = extensions;
       const context = {};
-      const extension = configure?.(context);
+      const extension = configure(context);
 
       assertPluginExtensionCommand(extension);
 
       extension.callHandlerWithContext();
 
+      expect(commandErrorHandler).toBeCalledTimes(1);
       expect(commandErrorHandler).toBeCalledWith(expect.any(Function), context);
+      expect(commandConfig1.handler).toBeCalledTimes(1);
+    });
+
+    it('should call the `handler()` function with the context and a `helpers` object', () => {
+      const registry = createPluginExtensionRegistry([
+        {
+          pluginId,
+          linkExtensions: [],
+          commandExtensions: [commandConfig1, { ...commandConfig2, configure: () => ({}) }],
+        },
+      ]);
+
+      const context = {};
+      const command1 = registry[commandConfig1.placement][0](context);
+      const command2 = registry[commandConfig2.placement][0](context);
+
+      assertPluginExtensionCommand(command1);
+      assertPluginExtensionCommand(command2);
+
+      command1.callHandlerWithContext();
+      command2.callHandlerWithContext();
+
+      expect(commandConfig1.handler).toBeCalledTimes(1);
+      expect(commandConfig1.handler).toBeCalledWith(context, {
+        openModal: expect.any(Function),
+      });
+
+      expect(commandConfig2.handler).toBeCalledTimes(1);
+      expect(commandConfig2.handler).toBeCalledWith(context, {
+        openModal: expect.any(Function),
+      });
     });
   });
 });

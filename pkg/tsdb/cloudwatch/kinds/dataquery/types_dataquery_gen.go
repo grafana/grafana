@@ -240,10 +240,9 @@ type CloudWatchAnnotationQuery struct {
 	Dimensions map[string]interface{} `json:"dimensions,omitempty"`
 
 	// Hide true if query is disabled (ie should not be returned to the dashboard)
-	Hide *bool `json:"hide,omitempty"`
-
-	// Unique, guid like, string used in explore mode
-	Key            *string                            `json:"key,omitempty"`
+	// Note this does not always imply that the query should not be executed since
+	// the results from a hidden query may be used as the input to other queries (SSE etc)
+	Hide           *bool                              `json:"hide,omitempty"`
 	MatchExact     *bool                              `json:"matchExact,omitempty"`
 	MetricName     *string                            `json:"metricName,omitempty"`
 	Namespace      string                             `json:"namespace"`
@@ -255,7 +254,9 @@ type CloudWatchAnnotationQuery struct {
 	// TODO make this required and give it a default
 	QueryType *string `json:"queryType,omitempty"`
 
-	// A - Z
+	// A unique identifier for the query within the list of targets.
+	// In server side expressions, the refId is used as a variable name to identify results.
+	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
 	RefId     string  `json:"refId"`
 	Region    string  `json:"region"`
 	Statistic *string `json:"statistic,omitempty"`
@@ -280,11 +281,10 @@ type CloudWatchLogsQuery struct {
 	Expression *string      `json:"expression,omitempty"`
 
 	// Hide true if query is disabled (ie should not be returned to the dashboard)
+	// Note this does not always imply that the query should not be executed since
+	// the results from a hidden query may be used as the input to other queries (SSE etc)
 	Hide *bool  `json:"hide,omitempty"`
 	Id   string `json:"id"`
-
-	// Unique, guid like, string used in explore mode
-	Key *string `json:"key,omitempty"`
 
 	// LogGroupNames deprecated, use logGroups instead
 	LogGroupNames []string `json:"logGroupNames,omitempty"`
@@ -300,7 +300,9 @@ type CloudWatchLogsQuery struct {
 	// TODO make this required and give it a default
 	QueryType *string `json:"queryType,omitempty"`
 
-	// A - Z
+	// A unique identifier for the query within the list of targets.
+	// In server side expressions, the refId is used as a variable name to identify results.
+	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
 	RefId       string   `json:"refId"`
 	Region      string   `json:"region"`
 	StatsGroups []string `json:"statsGroups,omitempty"`
@@ -325,13 +327,12 @@ type CloudWatchMetricsQuery struct {
 	Expression *string `json:"expression,omitempty"`
 
 	// Hide true if query is disabled (ie should not be returned to the dashboard)
+	// Note this does not always imply that the query should not be executed since
+	// the results from a hidden query may be used as the input to other queries (SSE etc)
 	Hide *bool `json:"hide,omitempty"`
 
 	// Id common props
-	Id string `json:"id"`
-
-	// Unique, guid like, string used in explore mode
-	Key              *string                                 `json:"key,omitempty"`
+	Id               string                                  `json:"id"`
 	Label            *string                                 `json:"label,omitempty"`
 	MatchExact       *bool                                   `json:"matchExact,omitempty"`
 	MetricEditorMode *CloudWatchMetricsQueryMetricEditorMode `json:"metricEditorMode,omitempty"`
@@ -345,7 +346,9 @@ type CloudWatchMetricsQuery struct {
 	// TODO make this required and give it a default
 	QueryType *string `json:"queryType,omitempty"`
 
-	// A - Z
+	// A unique identifier for the query within the list of targets.
+	// In server side expressions, the refId is used as a variable name to identify results.
+	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
 	RefId  string `json:"refId"`
 	Region string `json:"region"`
 	Sql    *struct {
