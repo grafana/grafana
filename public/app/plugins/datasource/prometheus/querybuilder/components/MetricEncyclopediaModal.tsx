@@ -234,7 +234,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
    * Filter
    *
    * @param metrics
-   * @param skipLetterSearch
+   * @param skipLetterSearch used to show the alphabet letters as clickable before filtering out letters (needs to be refactored)
    * @returns
    */
   function filterMetrics(metrics: MetricsData, skipLetterSearch?: boolean): MetricsData {
@@ -258,6 +258,8 @@ export const MetricEncyclopediaModal = (props: Props) => {
 
         // user clicks the alphabet search
         // backend and frontend
+        // skipLetterSearch is purely for setting letter spans as active so they can be clicked
+        // where we don't filter out by letter search and keep letters of all other filters
         if (letterSearch && !skipLetterSearch) {
           const letters: string[] = [letterSearch, letterSearch.toLowerCase()];
           keepMetric = letters.includes(m.value[0]);
@@ -332,6 +334,80 @@ export const MetricEncyclopediaModal = (props: Props) => {
       }, 300),
     [datasource, query.labels]
   );
+
+  function letterSearchComponent() {
+    const alphabetCheck: { [char: string]: number } = {
+      A: 0,
+      B: 0,
+      C: 0,
+      D: 0,
+      E: 0,
+      F: 0,
+      G: 0,
+      H: 0,
+      I: 0,
+      J: 0,
+      K: 0,
+      L: 0,
+      M: 0,
+      N: 0,
+      O: 0,
+      P: 0,
+      Q: 0,
+      R: 0,
+      S: 0,
+      T: 0,
+      U: 0,
+      V: 0,
+      W: 0,
+      X: 0,
+      Y: 0,
+      Z: 0,
+    };
+
+    filterMetrics(metrics, true).forEach((m: MetricData, idx) => {
+      const metricFirstLetter = m.value[0].toUpperCase();
+
+      if (alphabet.includes(metricFirstLetter) && !alphabetCheck[metricFirstLetter]) {
+        alphabetCheck[metricFirstLetter] += 1;
+      }
+    });
+
+    // return the alphabet components with the correct style and behavior
+    return Object.keys(alphabetCheck).map((letter: string) => {
+      // const active: boolean = .some((m: MetricData) => {
+      //   return m.value[0] === letter || m.value[0] === letter?.toLowerCase();
+      // });
+      const active: boolean = alphabetCheck[letter] > 0;
+      // starts with letter search
+      // filter by starts with letter
+      // if same letter searched null out remove letter search
+      function updateLetterSearch() {
+        if (letterSearch === letter) {
+          setLetterSearch(null);
+        } else {
+          setLetterSearch(letter);
+        }
+        setPageNum(1);
+      }
+      // selected letter to filter by
+      const selectedClass: string = letterSearch === letter ? styles.selAlpha : '';
+      // these letters are represented in the list of metrics
+      const activeClass: string = active ? styles.active : styles.gray;
+
+      return (
+        <span
+          onClick={active ? updateLetterSearch : () => {}}
+          className={`${selectedClass} ${activeClass}`}
+          key={letter}
+          data-testid={'letter-' + letter}
+        >
+          {letter + ' '}
+          {/* {idx !== coll.length - 1 ? '|': ''} */}
+        </span>
+      );
+    });
+  }
 
   return (
     <Modal
@@ -472,68 +548,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
         />
       </div>
       <h5 className={`${styles.center} ${styles.topPadding}`}>{filteredMetricCount} Results</h5>
-      <div className={`${styles.center} ${styles.bottomPadding}`}>
-        {[
-          'A',
-          'B',
-          'C',
-          'D',
-          'E',
-          'F',
-          'G',
-          'H',
-          'I',
-          'J',
-          'K',
-          'L',
-          'M',
-          'N',
-          'O',
-          'P',
-          'Q',
-          'R',
-          'S',
-          'T',
-          'U',
-          'V',
-          'W',
-          'X',
-          'Y',
-          'Z',
-        ].map((letter, idx, coll) => {
-          const active: boolean = filterMetrics(metrics, true).some((m: MetricData) => {
-            return m.value[0] === letter || m.value[0] === letter?.toLowerCase();
-          });
-
-          // starts with letter search
-          // filter by starts with letter
-          // if same letter searched null out remove letter search
-          function updateLetterSearch() {
-            if (letterSearch === letter) {
-              setLetterSearch(null);
-            } else {
-              setLetterSearch(letter);
-            }
-            setPageNum(1);
-          }
-          // selected letter to filter by
-          const selectedClass: string = letterSearch === letter ? styles.selAlpha : '';
-          // these letters are represented in the list of metrics
-          const activeClass: string = active ? styles.active : styles.gray;
-
-          return (
-            <span
-              onClick={active ? updateLetterSearch : () => {}}
-              className={`${selectedClass} ${activeClass}`}
-              key={letter}
-              data-testid={'letter-' + letter}
-            >
-              {letter + ' '}
-              {/* {idx !== coll.length - 1 ? '|': ''} */}
-            </span>
-          );
-        })}
-      </div>
+      <div className={`${styles.center} ${styles.bottomPadding}`}>{letterSearchComponent()}</div>
       {metrics &&
         displayedMetrics(metrics).map((metric: MetricData, idx) => {
           return (
@@ -726,3 +741,61 @@ export const testIds = {
   resultsPerPage: 'results-per-page',
   setUseBackend: 'set-use-backend',
 };
+
+const alphabet = [
+  'A',
+  'B',
+  'C',
+  'D',
+  'E',
+  'F',
+  'G',
+  'H',
+  'I',
+  'J',
+  'K',
+  'L',
+  'M',
+  'N',
+  'O',
+  'P',
+  'Q',
+  'R',
+  'S',
+  'T',
+  'U',
+  'V',
+  'W',
+  'X',
+  'Y',
+  'Z',
+];
+
+// type alphabetCheckType = {
+//   a?: number;
+//   b?: number;
+//   c?: number;
+//   d?: number;
+//   e?: number;
+//   f?: number;
+//   g?: number;
+//   h?: number;
+//   i?: number;
+//   j?: number;
+//   k?: number;
+//   l?: number;
+//   m?: number;
+//   n?: number;
+//   o?: number;
+//   p?: number;
+//   q?: number;
+//   r?: number;
+//   s?: number;
+//   t?: number;
+//   u?: number;
+//   v?: number;
+//   w?: number;
+//   x?: number;
+//   y?: number;
+//   z?: number;
+// };
