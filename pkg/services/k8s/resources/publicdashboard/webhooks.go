@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 
+	//jsonpatch "github.com/evanphx/json-patch"
 	k8sTypes "k8s.io/apimachinery/pkg/types"
 
 	"github.com/grafana/grafana/pkg/api/response"
@@ -188,6 +189,7 @@ func (api *WebhooksAPI) MutationCreate(c *contextmodel.ReqContext) response.Resp
 		return response.Error(500, "error unmarshalling request body", err)
 	}
 
+	// Current state of object
 	obj := &PublicDashboard{}
 	err = obj.UnmarshalJSON(rev.Request.Object.Raw)
 	if err != nil {
@@ -195,6 +197,7 @@ func (api *WebhooksAPI) MutationCreate(c *contextmodel.ReqContext) response.Resp
 		return response.Error(500, "error unmarshalling request body", err)
 	}
 
+	// Previous state of object for update or delete
 	oldObj := &PublicDashboard{}
 	err = oldObj.UnmarshalJSON(rev.Request.OldObject.Raw)
 	if err != nil {
@@ -225,6 +228,18 @@ func (api *WebhooksAPI) MutationCreate(c *contextmodel.ReqContext) response.Resp
 		resp = makeFailureAdmissionReview(rev.Request.UID, rev.TypeMeta, err, 403)
 	} else {
 		resp = makeSuccessfulAdmissionReview(rev.Request.UID, rev.TypeMeta, 200)
+	}
+
+	// compare original and defaulted version
+	//ops, err := jsonpatch.CreatePatch(rev.Request.OldObject.Raw, rev.Request.Object.Raw)
+	if err != nil {
+		//responsewriters.InternalError(w, req, fmt.Errorf("unexpected diff error: %v", err))
+		//return
+	}
+	//review.Response.Patch, err = json.Marshal(ops)
+	if err != nil {
+		//responsewriters.InternalError(w, req, fmt.Errorf("unexpected patch encoding error: %v", err))
+		//return
 	}
 
 	return response.JSON(int(resp.Response.Result.Code), mutationResponse)

@@ -3,6 +3,7 @@ package publicdashboard
 import (
 	"context"
 	"fmt"
+
 	"github.com/grafana/grafana/pkg/services/k8s/admission"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	publicdashboardModels "github.com/grafana/grafana/pkg/services/publicdashboards/models"
@@ -28,7 +29,7 @@ func ProvideValidation(
 
 func (v *pdValidation) Validate(ctx context.Context, request *admission.AdmissionRequest) error {
 	k8Dashboard := request.Object.(*PublicDashboard)
-	pdModel, err := k8sPublicDashboardToDTO(k8Dashboard)
+	pdModel, err := k8sObjectToModel(k8Dashboard)
 	if err != nil {
 		return err
 	}

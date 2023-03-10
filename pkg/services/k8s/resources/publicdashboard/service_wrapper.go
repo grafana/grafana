@@ -3,11 +3,8 @@ package publicdashboard
 import (
 	"context"
 	"fmt"
-	"strconv"
-	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/kinds/publicdashboard"
 	"github.com/grafana/grafana/pkg/services/k8s/client"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	publicdashboardStore "github.com/grafana/grafana/pkg/services/publicdashboards/database"
@@ -47,62 +44,33 @@ func ProvideService(
 
 // SaveDashboard saves the dashboard to kubernetes
 func (s *ServiceWrapper) Create(ctx context.Context, u *user.SignedInUser, dto *publicdashboardModels.SavePublicDashboardDTO) (*publicdashboardModels.PublicDashboard, error) {
-	// SERVICE MUTATION LOGIC
-	// set default value for time settings
-	if dto.PublicDashboard.TimeSettings == nil {
-		dto.PublicDashboard.TimeSettings = &publicdashboardModels.TimeSettings{}
-	}
+	// set params from DTO on model and use model from here down
+	pd := dto.PublicDashboard
+	pd.CreatedBy = u.UserID
+	pd.DashboardUid = dto.DashboardUid
+	pd.OrgId = u.OrgID
 
-	if dto.PublicDashboard.Share == "" {
-		dto.PublicDashboard.Share = publicdashboardModels.PublicShareType
-	}
-
-	uid := dto.PublicDashboard.Uid
+	// TODO this is mutation - investigate uid and whether we can do this in mutation hook
+	uid := pd.Uid
 	if uid == "" {
 		uid = util.GenerateShortUID()
 	}
-	accessToken, err := s.Service.NewPublicDashboardAccessToken(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	dto.PublicDashboard.Uid = uid
-	dto.PublicDashboard.DashboardUid = dto.DashboardUid
-	dto.PublicDashboard.OrgId = dto.OrgId
-	dto.PublicDashboard.CreatedBy = dto.UserId
-	dto.PublicDashboard.CreatedAt = time.Now()
-	dto.PublicDashboard.AccessToken = accessToken
-
-	// K8S LOGIC
+	pd.Uid = uid
 
 	// get resource client
 	publicdashboardResource, err := s.clientset.GetResourceClient(CRD)
 	if err != nil {
 		return nil, fmt.Errorf("provideServiceWrapper failed to get public dashboard resource client: %w", err)
 	}
-	// get annotations
-	annotations, err := annotationsFromPublicDashboardDTO(dto)
+
+	// convert from runtime object to core kind
+	k8sModel, err := modelToK8sObject(s.namespace, pd)
 	if err != nil {
-		return nil, fmt.Errorf("error getting annotations from public dashboard dto: %s", err)
+		return nil, err
 	}
 
-	// convert DTO to k8s
-	meta := metav1.ObjectMeta{
-		Name:        dto.PublicDashboard.Uid,
-		Namespace:   s.namespace,
-		Annotations: annotations,
-	}
-
-	// create a publicdashboard kind object and assign values used in create
-	pd := &publicdashboard.PublicDashboard{}
-	pd.Uid = dto.PublicDashboard.Uid
-	pd.DashboardUid = dto.DashboardUid
-	pd.AccessToken = &dto.PublicDashboard.AccessToken
-	pd.AnnotationsEnabled = dto.PublicDashboard.AnnotationsEnabled
-	pd.TimeSelectionEnabled = dto.PublicDashboard.TimeSelectionEnabled
-	pd.IsEnabled = dto.PublicDashboard.IsEnabled
-
-	uObj, err := toUnstructured(pd, meta)
+	// convert from core kind to unstructured
+	uObj, err := k8sObjectToUnstructured(k8sModel)
 	if err != nil {
 		return nil, err
 	}
@@ -116,24 +84,5 @@ func (s *ServiceWrapper) Create(ctx context.Context, u *user.SignedInUser, dto *
 	rv := uObj.GetResourceVersion()
 	s.log.Debug("wait for revision", "revision", rv)
 
-	return dto.PublicDashboard, nil
-}
-
-func annotationsFromPublicDashboardDTO(dto *publicdashboardModels.SavePublicDashboardDTO) (map[string]string, error) {
-	ts, err := dto.PublicDashboard.TimeSettings.ToDB()
-	if err != nil {
-		return nil, nil
-	}
-
-	annotations := map[string]string{
-		"orgID":        strconv.FormatInt(dto.OrgId, 10),
-		"updatedBy":    strconv.FormatInt(dto.PublicDashboard.UpdatedBy, 10),
-		"updatedAt":    strconv.FormatInt(dto.PublicDashboard.UpdatedAt.UnixNano(), 10),
-		"createdBy":    strconv.FormatInt(dto.PublicDashboard.CreatedBy, 10),
-		"createdAt":    strconv.FormatInt(dto.PublicDashboard.CreatedAt.UnixNano(), 10),
-		"dashboardUID": dto.DashboardUid,
-		"timeSettings": string(ts),
-	}
-
-	return annotations, nil
+	return pd, nil
 }
