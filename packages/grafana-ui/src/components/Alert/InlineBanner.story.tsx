@@ -17,14 +17,11 @@ const meta: Meta = {
     docs: {
       page: mdx,
     },
-    knobs: {
-      disable: true,
-    },
     controls: {},
   },
   argTypes: {
-    severity: { 
-        control: { type: 'select', options: severities } 
+    severity: {
+      control: { type: 'select', options: severities },
     },
   },
 };
@@ -45,37 +42,22 @@ Basic.args = {
   severity: 'error',
   title: 'Basic',
 };
-Basic.parameters = {
-    control: { exclude: ['buttonContent', 'withButton']},
-};
 
 export const WithActions: ComponentStory<typeof Alert> = (args) => {
   return (
-    <Alert {...args} buttonContent={args.withButton ? args.buttonContent : undefined} onRemove={action('Remove button clicked')}>
-        <VerticalGroup>
-          <div>Child content that includes some alert details, like maybe what actually happened.</div>
-        </VerticalGroup>
-      </Alert>
+    <Alert {...args}>
+      <VerticalGroup>
+        <div>Child content that includes some alert details, like maybe what actually happened.</div>
+      </VerticalGroup>
+    </Alert>
   );
 };
-
-WithActions.argTypes = {
-    withButton: { 
-        control: { type: 'select', options: [true, false] } 
-    },
-}
 
 WithActions.args = {
   title: 'With action',
   severity: 'error',
   onRemove: action('Remove button clicked'),
   buttonContent: 'Close',
-  withButton: true
 };
 
-WithActions.parameters = {
-  controls: {
-    exclude: ['onRemove'],
-  },
-};
 export default meta;

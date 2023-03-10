@@ -17,12 +17,6 @@ const meta: ComponentMeta<typeof Alert> = {
     docs: {
       page: mdx,
     },
-    knobs: {
-      disable: true,
-    },
-    controls: {
-        exclude: ['onRemove'],
-    },
   },
   argTypes: {
     severity: { control: { type: 'select', options: severities } },
@@ -31,7 +25,7 @@ const meta: ComponentMeta<typeof Alert> = {
     title: 'Toast',
     severity: 'error',
     onRemove: action('Remove button clicked'),
-  }
+  },
 };
 
 export const Toast: ComponentStory<typeof Alert> = (args) => {
