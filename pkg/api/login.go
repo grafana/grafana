@@ -84,6 +84,13 @@ func (hs *HTTPServer) CookieOptionsFromCfg() cookies.CookieOptions {
 }
 
 func (hs *HTTPServer) LoginView(c *contextmodel.ReqContext) {
+	if hs.Features.IsEnabled(featuremgmt.FlagClientTokenRotation) {
+		if errors.Is(c.LookupTokenErr, authn.ErrTokenNeedRotation) {
+			c.Redirect(hs.Cfg.AppSubURL + "/")
+			return
+		}
+	}
+
 	viewData, err := setIndexViewData(hs, c)
 	if err != nil {
 		c.Handle(hs.Cfg, 500, "Failed to get settings", err)
