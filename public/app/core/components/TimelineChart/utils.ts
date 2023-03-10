@@ -404,9 +404,9 @@ export function mergeThresholdValues(field: Field, theme: GrafanaTheme2): Field 
     },
     type: FieldType.string,
     values: new ArrayVector(vals),
-    display: (value: string) => ({
-      text: value,
-      color: textToColor.get(value),
+    display: (value) => ({
+      text: String(value),
+      color: textToColor.get(String(value)),
       numeric: NaN,
     }),
   };
