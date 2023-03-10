@@ -49,7 +49,7 @@ describe('DataSourceWithBackend', () => {
       targets: [{ refId: 'A' }, { refId: 'B', datasource: { type: 'sample' } }],
       dashboardUID: 'dashA',
       panelId: 123,
-      correlationId: 'abc',
+      queryGroupId: 'abc',
     } as DataQueryRequest);
 
     const args = mock.calls[0][0];
@@ -84,7 +84,7 @@ describe('DataSourceWithBackend', () => {
           ],
         },
         "headers": {
-          "X-Correlation-Id": "abc",
+          "X-Query-Group-Id": "abc",
           "X-Dashboard-Uid": "dashA",
           "X-Datasource-Uid": "abc, <mockuid>",
           "X-Panel-Id": "123",

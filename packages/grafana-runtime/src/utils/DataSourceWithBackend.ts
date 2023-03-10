@@ -77,7 +77,7 @@ enum PluginRequestHeaders {
   DatasourceUID = 'X-Datasource-Uid', // can be used for routing/ load balancing
   DashboardUID = 'X-Dashboard-Uid', // mainly useful for debuging slow queries
   PanelID = 'X-Panel-Id', // mainly useful for debuging slow queries
-  CorrrelationID = 'X-Correlation-Id', // mainly useful to find related queries with query chunking
+  QueryGroupID = 'X-Query-Group-Id', // mainly useful to find related queries with query chunking
 }
 
 /**
@@ -211,8 +211,8 @@ class DataSourceWithBackend<
     if (request.panelId) {
       headers[PluginRequestHeaders.PanelID] = `${request.panelId}`;
     }
-    if (request.correlationId) {
-      headers[PluginRequestHeaders.CorrrelationID] = `${request.correlationId}`;
+    if (request.queryGroupId) {
+      headers[PluginRequestHeaders.QueryGroupID] = `${request.queryGroupId}`;
     }
     return getBackendSrv()
       .fetch<BackendDataSourceResponse>({

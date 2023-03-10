@@ -493,7 +493,6 @@ export interface DataQueryError {
 
 export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   requestId: string; // Used to identify results and optionally cancel the request in backendSrv
-  correlationId?: string; // Used to correlate multiple related requests
 
   interval: string;
   intervalMs: number;
@@ -523,6 +522,9 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
 
   // Make it possible to hide support queries from the inspector
   hideFromInspector?: boolean;
+
+  // Used to correlate multiple related requests
+  queryGroupId?: string;
 }
 
 export interface DataQueryTimings {

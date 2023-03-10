@@ -180,7 +180,7 @@ export function runPartitionedQueries(datasource: LokiDatasource, request: DataQ
   const [logQueries, metricQueries] = partition(normalQueries, (query) => isLogsQuery(query.expr));
 
   const uuid = uuidv4();
-  request.correlationId = uuid;
+  request.queryGroupId = uuid;
   const requests: LokiGroupedRequest = [];
   if (logQueries.length) {
     requests.push({
