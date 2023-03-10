@@ -4,5 +4,6 @@ import { DeepPartial, FieldValues, UnpackNestedValue } from 'react-hook-form';
 export type WizardProps<T extends FieldValues> = {
   defaultValues: UnpackNestedValue<DeepPartial<T>>;
   pages: ComponentType[];
-  onSubmit: (data: T) => void;
+  navigation: ComponentType;
+  onSubmit: (data: FieldValues) => void;
 };

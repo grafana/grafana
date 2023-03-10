@@ -7,6 +7,7 @@ import { useCorrelations } from '../useCorrelations';
 import { ConfigureCorrelationBasicInfoForm } from './ConfigureCorrelationBasicInfoForm';
 import { ConfigureCorrelationSourceForm } from './ConfigureCorrelationSourceForm';
 import { ConfigureCorrelationTargetForm } from './ConfigureCorrelationTargetForm';
+import { CorrelationFormNavigation } from './CorrelationFormNavigation';
 import { CorrelationsFormContextProvider } from './correlationsFormContext';
 import { EditFormDTO } from './types';
 
@@ -37,6 +38,7 @@ export const EditCorrelationForm = ({ onUpdated, correlation, readOnly = false }
         defaultValues={correlation}
         pages={[ConfigureCorrelationBasicInfoForm, ConfigureCorrelationTargetForm, ConfigureCorrelationSourceForm]}
         onSubmit={readOnly ? (e) => () => {} : onSubmit}
+        navigation={CorrelationFormNavigation}
       />
     </CorrelationsFormContextProvider>
   );

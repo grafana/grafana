@@ -11,6 +11,7 @@ import { useCorrelations } from '../useCorrelations';
 import { ConfigureCorrelationBasicInfoForm } from './ConfigureCorrelationBasicInfoForm';
 import { ConfigureCorrelationSourceForm } from './ConfigureCorrelationSourceForm';
 import { ConfigureCorrelationTargetForm } from './ConfigureCorrelationTargetForm';
+import { CorrelationFormNavigation } from './CorrelationFormNavigation';
 import { CorrelationsFormContextProvider } from './correlationsFormContext';
 import { FormDTO } from './types';
 
@@ -49,6 +50,7 @@ export const AddCorrelationForm = ({ onClose, onCreated }: Props) => {
         <Wizard<FormDTO>
           defaultValues={defaultValues}
           pages={[ConfigureCorrelationBasicInfoForm, ConfigureCorrelationTargetForm, ConfigureCorrelationSourceForm]}
+          navigation={CorrelationFormNavigation}
           onSubmit={execute}
         />
       </CorrelationsFormContextProvider>
