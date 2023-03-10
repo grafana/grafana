@@ -52,7 +52,7 @@ const (
 	FlagPublicDashboards = "publicDashboards"
 
 	// FlagPublicDashboardsEmailSharing
-	// Allows public dashboard sharing to be restricted to only allowed emails
+	// Enables public dashboard sharing to be restricted to only allowed emails
 	FlagPublicDashboardsEmailSharing = "publicDashboardsEmailSharing"
 
 	// FlagLokiLive
@@ -262,4 +262,12 @@ const (
 	// FlagDrawerDataSourcePicker
 	// Changes the user experience for data source selection to a drawer.
 	FlagDrawerDataSourcePicker = "drawerDataSourcePicker"
+
+	// FlagTraceqlSearch
+	// Enables the &#39;TraceQL Search&#39; tab for the Tempo datasource which provides a UI to generate TraceQL queries
+	FlagTraceqlSearch = "traceqlSearch"
+
+	// FlagPrometheusMetricEncyclopedia
+	// Replaces the Prometheus query builder metric select option with a paginated and filterable component
+	FlagPrometheusMetricEncyclopedia = "prometheusMetricEncyclopedia"
 )

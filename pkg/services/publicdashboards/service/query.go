@@ -18,7 +18,7 @@ import (
 
 // FindAnnotations returns annotations for a public dashboard
 func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDTO models.AnnotationsQueryDTO, accessToken string) ([]models.AnnotationEvent, error) {
-	pub, dash, err := pd.FindPublicDashboardAndDashboardByAccessToken(ctx, accessToken)
+	pub, dash, err := pd.FindEnabledPublicDashboardAndDashboardByAccessToken(ctx, accessToken)
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +119,7 @@ func (pd *PublicDashboardServiceImpl) GetMetricRequest(ctx context.Context, dash
 
 // GetQueryDataResponse returns a query data response for the given panel and query
 func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, skipCache bool, queryDto models.PublicDashboardQueryDTO, panelId int64, accessToken string) (*backend.QueryDataResponse, error) {
-	publicDashboard, dashboard, err := pd.FindPublicDashboardAndDashboardByAccessToken(ctx, accessToken)
+	publicDashboard, dashboard, err := pd.FindEnabledPublicDashboardAndDashboardByAccessToken(ctx, accessToken)
 	if err != nil {
 		return nil, err
 	}

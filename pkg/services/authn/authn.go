@@ -57,6 +57,8 @@ type ClientParams struct {
 	CacheAuthProxyKey string
 	// LookUpParams are the arguments used to look up the entity in the DB.
 	LookUpParams login.UserLookupParams
+	// SyncPermissions ensure that permissions are loaded from DB and added to the identity
+	SyncPermissions bool
 }
 
 type PostAuthHookFn func(ctx context.Context, identity *Identity, r *Request) error
@@ -221,6 +223,8 @@ type Identity struct {
 	// ClientParams are hints for the auth service on how to handle the identity.
 	// Set by the authenticating client.
 	ClientParams ClientParams
+	// Permissions is the list of permissions the entity has.
+	Permissions map[int64]map[string][]string
 }
 
 // Role returns the role of the identity in the active organization.
@@ -273,6 +277,7 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		HelpFlags1:         i.HelpFlags1,
 		LastSeenAt:         i.LastSeenAt,
 		Teams:              i.Teams,
+		Permissions:        i.Permissions,
 	}
 
 	namespace, id := i.NamespacedID()
@@ -320,6 +325,7 @@ func IdentityFromSignedInUser(id string, usr *user.SignedInUser, params ClientPa
 		LastSeenAt:     usr.LastSeenAt,
 		Teams:          usr.Teams,
 		ClientParams:   params,
+		Permissions:    usr.Permissions,
 	}
 }
 

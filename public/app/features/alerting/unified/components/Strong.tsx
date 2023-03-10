@@ -1,8 +1,10 @@
-import React, { FC } from 'react';
+import React from 'react';
 
 import { useTheme2 } from '@grafana/ui';
 
-const Strong: FC = ({ children }) => {
+interface Props {}
+
+const Strong = ({ children }: React.PropsWithChildren<Props>) => {
   const theme = useTheme2();
   return <strong style={{ color: theme.colors.text.maxContrast }}>{children}</strong>;
 };
