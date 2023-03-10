@@ -41,11 +41,6 @@ export function partitionTimeRange(
     ? getLogsRangeChunks(start, end, duration)
     : getMetricRangeChunks(start, end, step, duration);
 
-  // if the split was not possible, go with the original range
-  if (ranges == null) {
-    throw new Error('The selected time interval exceeds the defined query split limit. Please try a smaller range.');
-  }
-
   return ranges.map(([start, end]) => {
     const from = dateTime(start);
     const to = dateTime(end);
