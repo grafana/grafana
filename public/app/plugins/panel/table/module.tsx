@@ -7,7 +7,13 @@ import {
   standardEditorsRegistry,
   identityOverrideProcessor,
 } from '@grafana/data';
-import { TableFieldOptions, TableCellOptions, TableCellDisplayMode, defaultTableFieldOptions } from '@grafana/schema';
+import {
+  TableFieldOptions,
+  TableCellOptions,
+  TableCellDisplayMode,
+  defaultTableFieldOptions,
+  TableCellHeight,
+} from '@grafana/schema';
 
 import { PaginationEditor } from './PaginationEditor';
 import { TableCellOptionEditor } from './TableCellOptionEditor';
@@ -107,6 +113,18 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
         path: 'showHeader',
         name: 'Show table header',
         defaultValue: defaultPanelOptions.showHeader,
+      })
+      .addRadio({
+        path: 'cellHeight',
+        name: 'Cell height',
+        defaultValue: defaultPanelOptions.cellHeight,
+        settings: {
+          options: [
+            { value: TableCellHeight.Sm, label: 'Small' },
+            { value: TableCellHeight.Md, label: 'Medium' },
+            { value: TableCellHeight.Lg, label: 'Large' },
+          ],
+        },
       })
       .addBooleanSwitch({
         path: 'showRowNums',

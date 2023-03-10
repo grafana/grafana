@@ -438,5 +438,12 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityMetricsSquad,
 		},
+		{
+			Name:         "timeSeriesTable",
+			Description:  "Enable time series table transformer & sparkline cell type",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+			Owner:        appO11ySquad,
+		},
 	}
 )
