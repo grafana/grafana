@@ -66,7 +66,7 @@ There are two ways to configure the trace to logs feature:
 1. Select the target data source.
 1. Set start and end time shift. Since the logs timestamps may not exactly match the timestamps of the spans in trace, it may be necessary to search in larger or shifted time range to find the desired logs.
 1. Select which tags to use in the logs query. The tags you configure must be present in the spans attributes or resources for a trace to logs span link to appear. You can optionally configure a new name for the tag. This is useful if the tag has dots in the name and the target data source does not allow dots in labels. In that case, you can, for example, remap `http.status` to `http_status`.
-1. Optionally switch on the **Filter by trace ID** and/or **Filter by span ID** setting to further filter the logs if your logs consistently contain trace or span IDs.
+1. Optionally, switch on the **Filter by trace ID** and/or **Filter by span ID** setting to further filter the logs if your logs consistently contain trace or span IDs.
 
 #### Configure a custom query
 
