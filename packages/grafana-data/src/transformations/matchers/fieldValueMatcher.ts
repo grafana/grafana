@@ -21,7 +21,7 @@ function isBooleanReducer(r: ReducerID) {
 export const fieldValueMatcherInfo: FieldMatcherInfo<FieldValueMatcherConfig> = {
   id: FieldMatcherID.byValue,
   name: 'By value (reducer)',
-  description: 'Rduce a field to a single value and test for inclusion',
+  description: 'Reduce a field to a single value and test for inclusion',
 
   // This is added to overrides by default
   defaultOptions: {
