@@ -69,7 +69,7 @@
             "mode": "percentage",
             "steps": [
               {
-                "color": "green"                
+                "color": "green"
               },
               {
                 "color": "blue",
@@ -280,7 +280,7 @@
       },
       "gridPos": {
         "h": 16,
-        "w": 14,
+        "w": 17,
         "x": 7,
         "y": 1
       },
@@ -344,7 +344,7 @@
     {
       "datasource": {
         "type": "testdata",
-        "uid": "gdev-testdata"
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -363,7 +363,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"                
+                "color": "green"
               },
               {
                 "color": "red",
@@ -382,6 +382,9 @@
               {
                 "id": "custom.cellOptions",
                 "value": {
+                  "fillOpacity": 29,
+                  "gradientMode": "opacity",
+                  "lineWidth": 1,
                   "type": "sparkline"
                 }
               },
@@ -392,16 +395,41 @@
                 }
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "cluster"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 120
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "service"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 120
+              }
+            ]
           }
         ]
       },
       "gridPos": {
-        "h": 8,
+        "h": 7,
         "w": 9,
         "x": 0,
         "y": 17
       },
       "id": 14,
+      "maxDataPoints": 50,
       "options": {
         "cellHeight": "md",
         "footer": {
@@ -413,7 +441,8 @@
           "show": false
         },
         "showHeader": true,
-        "showRowNums": false
+        "showRowNums": false,
+        "sortBy": []
       },
       "pluginVersion": "9.5.0-pre",
       "targets": [
@@ -451,7 +480,7 @@
     {
       "datasource": {
         "type": "testdata",
-        "uid": "gdev-testdata"
+        "uid": "PD8C576611E62080A"
       },
       "fieldConfig": {
         "defaults": {
@@ -490,9 +519,9 @@
                 "id": "custom.cellOptions",
                 "value": {
                   "drawStyle": "bars",
-                  "fillOpacity": 40,
-                  "gradientMode": "opacity",
-                  "lineWidth": 1,
+                  "fillOpacity": 100,
+                  "gradientMode": "hue",
+                  "lineWidth": 0,
                   "showPoints": "auto",
                   "type": "sparkline"
                 }
@@ -501,6 +530,13 @@
                 "id": "color",
                 "value": {
                   "mode": "continuous-GrYlRd"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
                 }
               }
             ]
@@ -515,29 +551,55 @@
                 "id": "custom.cellOptions",
                 "value": {
                   "fillOpacity": 40,
-                  "gradientMode": "hue",
+                  "gradientMode": "opacity",
+                  "lineInterpolation": "stepBefore",
+                  "lineWidth": 1,
                   "type": "sparkline"
                 }
               },
               {
                 "id": "color",
                 "value": {
-                  "fixedColor": "orange",
+                  "fixedColor": "purple",
                   "mode": "fixed"
                 }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "service"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 120
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "cluster"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 120
               }
             ]
           }
         ]
       },
       "gridPos": {
-        "h": 8,
-        "w": 9,
+        "h": 7,
+        "w": 15,
         "x": 9,
         "y": 17
       },
       "id": 15,
-      "maxDataPoints": 100,
+      "maxDataPoints": 30,
       "options": {
         "cellHeight": "md",
         "footer": {
@@ -617,9 +679,18 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 25
+        "y": 24
       },
-      "id": 9,      
+      "id": 9,
+      "targets": [
+        {
+          "datasource": {
+            "type": "testdata",
+            "uid": "gdev-testdata"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "Data links",
       "type": "row"
     },
@@ -700,7 +771,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 26
+        "y": 25
       },
       "id": 3,
       "options": {
@@ -811,7 +882,7 @@
         "h": 8,
         "w": 5,
         "x": 12,
-        "y": 26
+        "y": 25
       },
       "id": 10,
       "options": {
@@ -891,7 +962,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"                
+                "color": "green"
               },
               {
                 "color": "red",
@@ -906,7 +977,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 34
+        "y": 33
       },
       "id": 12,
       "options": {
