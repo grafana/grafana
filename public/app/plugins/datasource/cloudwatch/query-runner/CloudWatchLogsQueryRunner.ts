@@ -85,13 +85,15 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     const startQueryRequests: StartQueryRequest[] = validLogQueries.map((target: CloudWatchLogsQuery) => {
       const interpolatedLogGroupArns = interpolateStringArrayUsingSingleOrMultiValuedVariable(
         this.templateSrv,
-        (target.logGroups || this.instanceSettings.jsonData.logGroups || []).map((lg) => lg.arn)
+        (target.logGroups || this.instanceSettings.jsonData.logGroups || []).map((lg) => lg.arn),
+        options.scopedVars
       );
 
       // need to support legacy format variables too
       const interpolatedLogGroupNames = interpolateStringArrayUsingSingleOrMultiValuedVariable(
         this.templateSrv,
         target.logGroupNames || this.instanceSettings.jsonData.defaultLogGroups || [],
+        options.scopedVars,
         'text'
       );
 
