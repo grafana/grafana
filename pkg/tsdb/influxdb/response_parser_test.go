@@ -135,36 +135,16 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		parser := &ResponseParser{}
 
 		response := `
-		{
-			"results": [
-				{
-					"series": [
-						{
-							"name": "cpu",
-							"columns": ["time","path"],
-							"tags": {"datacenter": "America"},
-							"values": [
-								[111,null],
-								[111,"/usr/path"],
-								[111,"/usr/path"]
-							]
-						}
-					]
-				}
-			]
-		}
-		`
+		{"results": [{"series": [{"name": "cpu","columns": ["time","path"],"values": [[111,null],[111,"/usr/path"],[111,"/usr/path"]]}]}]}`
 
 		query := &Query{}
-		labels, err := data.LabelsFromString("datacenter=America")
-		require.Nil(t, err)
 
 		string_test := "/usr/path"
-		stringField := data.NewField("value", labels, []*string{
+		stringField := data.NewField("value", nil, []*string{
 			nil, &string_test, &string_test,
 		})
-		stringField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.path { datacenter: America }"}
-		stringFrame := data.NewFrame("cpu.path { datacenter: America }",
+		stringField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.path"}
+		stringFrame := data.NewFrame("cpu.path",
 			data.NewField("time", nil,
 				[]time.Time{
 					time.Date(1970, 1, 1, 0, 0, 0, 111000000, time.UTC),
@@ -187,37 +167,17 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		parser := &ResponseParser{}
 
 		response := `
-		{
-			"results": [
-				{
-					"series": [
-						{
-							"name": "cpu",
-							"columns": ["time","isActive"],
-							"tags": {"datacenter": "America"},
-							"values": [
-								[111,null],
-								[111,false],
-								[111,true]
-							]
-						}
-					]
-				}
-			]
-		}
-		`
+		{"results": [{"series": [{"name": "cpu","columns": ["time","isActive"],"values": [[111,null],[111,false],[111,true]]}]}]}`
 
 		query := &Query{}
-		labels, err := data.LabelsFromString("datacenter=America")
-		require.Nil(t, err)
 
 		bool_true := true
 		bool_false := false
-		boolField := data.NewField("value", labels, []*bool{
+		boolField := data.NewField("value", nil, []*bool{
 			nil, &bool_false, &bool_true,
 		})
-		boolField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.isActive { datacenter: America }"}
-		boolFrame := data.NewFrame("cpu.isActive { datacenter: America }",
+		boolField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.isActive"}
+		boolFrame := data.NewFrame("cpu.isActive",
 			data.NewField("time", nil,
 				[]time.Time{
 					time.Date(1970, 1, 1, 0, 0, 0, 111000000, time.UTC),
