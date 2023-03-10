@@ -84,11 +84,11 @@ describe('DataSourceWithBackend', () => {
           ],
         },
         "headers": {
+          "X-Correlation-Id": "abc",
           "X-Dashboard-Uid": "dashA",
           "X-Datasource-Uid": "abc, <mockuid>",
           "X-Panel-Id": "123",
-          "X-Plugin-Id": "dummy, sample",
-          "X-Correlation-Id": "abc"
+          "X-Plugin-Id": "dummy, sample"
         },
         "hideFromInspector": false,
         "method": "POST",
