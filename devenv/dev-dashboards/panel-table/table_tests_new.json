@@ -619,16 +619,7 @@
         "x": 0,
         "y": 25
       },
-      "id": 9,
-      "targets": [
-        {
-          "datasource": {
-            "type": "testdata",
-            "uid": "gdev-testdata"
-          },
-          "refId": "A"
-        }
-      ],
+      "id": 9,      
       "title": "Data links",
       "type": "row"
     },
