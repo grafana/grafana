@@ -76,8 +76,7 @@ Within Grafana, we have two different types of alerts and they can be used depen
 ## <a name="usage"/>Usage
 
 <br />
-### <a name="alert-inline" />
-Inline Banner
+### <a name="alert-inline" /> Inline Banner
 
 Inline Banners are task-oriented alerts that notify users of the status of an action or system. These alerts are contextual — appearing above or below main content areas — allowing users to address issues or to read messages quickly.
 
@@ -133,7 +132,7 @@ appEvents.publish({
 
 #### Don'ts
 
-    - Do not use this component straightfordward.
+    - Do not use this component directly. Instead, emit the `appEvent` to trigger it's appearance.
 
 #### When to use
 
