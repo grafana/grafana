@@ -493,6 +493,7 @@ export interface DataQueryError {
 
 export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
   requestId: string; // Used to identify results and optionally cancel the request in backendSrv
+  correlationId?: string; // Used to correlate multiple related requests
 
   interval: string;
   intervalMs: number;
