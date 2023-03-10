@@ -8,12 +8,18 @@ import (
 	"github.com/grafana/dskit/services"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/corecrd"
+	"github.com/grafana/grafana/pkg/services/k8s/apiserver"
+	"github.com/grafana/grafana/pkg/services/k8s/kine"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 // List of available targets.
 const (
-	All string = "all"
+	All                 string = "all"
+	Kine                string = "kine"
+	KubernetesCRDs      string = "kubernetes-crds"
+	KubernetesAPIServer string = "kubernetes-apiserver"
 )
 
 type Engine interface {
@@ -40,19 +46,39 @@ type service struct {
 	ModuleManager  *modules.Manager
 	ServiceManager *services.Manager
 	ServiceMap     map[string]services.Service
+
+	apiServer   apiserver.Service
+	crdRegistry *corecrd.Registry
+	kineService kine.Service
 }
 
-func ProvideService(cfg *setting.Cfg) *service {
+func ProvideService(
+	cfg *setting.Cfg,
+	apiServer apiserver.Service,
+	crdRegistry *corecrd.Registry,
+	kineService kine.Service,
+) *service {
 	logger := log.New("modules")
+
+	dependencyMap := map[string][]string{
+		Kine:                {},
+		KubernetesAPIServer: {Kine},
+		KubernetesCRDs:      {KubernetesAPIServer},
+		All:                 {KubernetesCRDs},
+	}
 
 	return &service{
 		cfg:           cfg,
 		log:           logger,
 		targets:       cfg.Target,
-		dependencyMap: map[string][]string{},
+		dependencyMap: dependencyMap,
 
 		ModuleManager: modules.NewManager(logger),
 		ServiceMap:    map[string]services.Service{},
+
+		apiServer:   apiServer,
+		crdRegistry: crdRegistry,
+		kineService: kineService,
 	}
 }
 
@@ -61,6 +87,9 @@ func (m *service) Init(_ context.Context) error {
 	var err error
 
 	// module registration
+	m.RegisterModule(Kine, m.kineInit)
+	m.RegisterModule(KubernetesCRDs, m.k8sCRDsInit)
+	m.RegisterModule(KubernetesAPIServer, m.k8sApiServerInit)
 	m.RegisterModule(All, nil)
 
 	for mod, targets := range m.dependencyMap {
@@ -139,6 +168,9 @@ func (m *service) Shutdown(ctx context.Context) error {
 // RegisterModule registers a module with the dskit module manager.
 func (m *service) RegisterModule(name string, initFn func() (services.Service, error), deps ...string) {
 	m.ModuleManager.RegisterModule(name, initFn)
+	if len(deps) == 0 {
+		return
+	}
 	m.dependencyMap[name] = deps
 }
 
@@ -146,10 +178,25 @@ func (m *service) RegisterModule(name string, initFn func() (services.Service, e
 // Invisible modules are not visible to the user, and are intendent to be used as dependencies.
 func (m *service) RegisterInvisibleModule(name string, initFn func() (services.Service, error), deps ...string) {
 	m.ModuleManager.RegisterModule(name, initFn, modules.UserInvisibleModule)
+	if len(deps) == 0 {
+		return
+	}
 	m.dependencyMap[name] = deps
 }
 
 // IsModuleEnabled returns true if the module is enabled.
 func (m *service) IsModuleEnabled(name string) bool {
 	return stringsContain(m.targets, name)
+}
+
+func (m *service) k8sApiServerInit() (services.Service, error) {
+	return m.apiServer, nil
+}
+
+func (m *service) k8sCRDsInit() (services.Service, error) {
+	return m.crdRegistry, nil
+}
+
+func (m *service) kineInit() (services.Service, error) {
+	return m.kineService, nil
 }

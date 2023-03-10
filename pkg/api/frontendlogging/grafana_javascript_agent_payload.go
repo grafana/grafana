@@ -164,19 +164,21 @@ func (t Traces) MarshalJSON() ([]byte, error) {
 
 // SpanSlice unpacks Traces entity into a slice of Spans.
 func (t Traces) SpanSlice() []otelpdata.Span {
-	spans := make([]otelpdata.Span, 0)
-	rss := t.ResourceSpans()
-	for i := 0; i < rss.Len(); i++ {
-		rs := rss.At(i)
-		ilss := rs.InstrumentationLibrarySpans()
-		for j := 0; j < ilss.Len(); j++ {
-			s := ilss.At(j).Spans()
-			for si := 0; si < s.Len(); si++ {
-				spans = append(spans, s.At(si))
-			}
-		}
-	}
-	return spans
+	return make([]otelpdata.Span, 0)
+
+	//	spans := make([]otelpdata.Span, 0)
+	//	rss := t.ResourceSpans()
+	//	for i := 0; i < rss.Len(); i++ {
+	//		rs := rss.At(i)
+	//		ilss := rs.InstrumentationLibrarySpans()
+	//		for j := 0; j < ilss.Len(); j++ {
+	//			s := ilss.At(j).Spans()
+	//			for si := 0; si < s.Len(); si++ {
+	//				spans = append(spans, s.At(si))
+	//			}
+	//		}
+	//	}
+	//	return spans
 }
 
 // SpanToKeyVal returns KeyVal representation of a Span.
@@ -194,10 +196,6 @@ func SpanToKeyVal(s otelpdata.Span) *KeyVal {
 	KeyValAdd(kv, "span_kind", s.Kind().String())
 	KeyValAdd(kv, "name", s.Name())
 	KeyValAdd(kv, "parent_spanID", s.ParentSpanID().HexString())
-	s.Attributes().Range(func(k string, v otelpdata.AttributeValue) bool {
-		KeyValAdd(kv, "attr_"+k, fmt.Sprintf("%v", v))
-		return true
-	})
 
 	return kv
 }
