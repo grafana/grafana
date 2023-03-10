@@ -25,7 +25,7 @@ Use this to search for traces by service name, span name, duration range, or pro
 
 To configure Tempo and the Tempo data source for search, refer to [Configure the data source]({{< relref "../#configure-the-data-source" >}}).
 
-**To search for traces:**
+To search for traces:
 
 1. Select **Search** from the **Query** type selector.
 1. Fill out the search form:
