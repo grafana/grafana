@@ -222,7 +222,7 @@ seqs: [
 					...
 				}
 
-				// For data source plugins, if the plugin supports logs. Not used in Grafana core but may be used by external plugins.
+				// For data source plugins, if the plugin supports logs. It may be used to filter logs only features.
 				logs?: bool
 
 				// For data source plugins, if the plugin supports metric queries.
@@ -234,7 +234,7 @@ seqs: [
 				// syntax (fixed by grafana/thema#82). Either way, for now, pascalName gets populated in Go.
 				let sani = (strings.ToTitle(regexp.ReplaceAllLiteral("[^a-zA-Z]+", name, "")))
 
-				// The PascalCase name for the plugin. Used for creating machine-friendly
+				// [internal only] The PascalCase name for the plugin. Used for creating machine-friendly
 				// identifiers, typically in code generation.
 				//
 				// If not provided, defaults to name, but title-cased and sanitized (only

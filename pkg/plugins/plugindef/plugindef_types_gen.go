@@ -306,7 +306,7 @@ type PluginDef struct {
 	// page in Grafana and others on grafana.com, if the plugin is published.
 	Info Info `json:"info"`
 
-	// For data source plugins, if the plugin supports logs. Not used in Grafana core but may be used by external plugins.
+	// For data source plugins, if the plugin supports logs. It may be used to filter logs only features.
 	Logs *bool `json:"logs,omitempty"`
 
 	// For data source plugins, if the plugin supports metric queries.
@@ -317,7 +317,7 @@ type PluginDef struct {
 	// the UI.
 	Name string `json:"name"`
 
-	// The PascalCase name for the plugin. Used for creating machine-friendly
+	// [internal only] The PascalCase name for the plugin. Used for creating machine-friendly
 	// identifiers, typically in code generation.
 	//
 	// If not provided, defaults to name, but title-cased and sanitized (only

@@ -293,7 +293,7 @@
     },
     "logs": {
       "type": "boolean",
-      "description": "For data source plugins, if the plugin supports logs. Not used in Grafana core but may be used by external plugins."
+      "description": "For data source plugins, if the plugin supports logs. It may be used to filter logs only features."
     },
     "metrics": {
       "type": "boolean",
@@ -301,7 +301,7 @@
     },
     "pascalName": {
       "type": "string",
-      "description": "The PascalCase name for the plugin. Used for creating machine-friendly identifiers, typically in code generation. If not provided, defaults to name, but title-cased and sanitized (only alphabetical characters allowed).",
+      "description": "[internal only] The PascalCase name for the plugin. Used for creating machine-friendly identifiers, typically in code generation. If not provided, defaults to name, but title-cased and sanitized (only alphabetical characters allowed).",
       "pattern": "^([A-Z][a-zA-Z]{1,62})$"
     },
     "preload": {
