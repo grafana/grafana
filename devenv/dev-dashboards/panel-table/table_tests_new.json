@@ -76,7 +76,7 @@
             "mode": "percentage",
             "steps": [
               {
-                "color": "green"                
+                "color": "green"
               },
               {
                 "color": "blue",
@@ -359,15 +359,6 @@
       },
       "id": 9,
       "panels": [],
-      "targets": [
-        {
-          "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
-          },
-          "refId": "A"
-        }
-      ],
       "title": "Data links",
       "type": "row"
     },
@@ -451,7 +442,7 @@
         "y": 18
       },
       "id": 3,
-      "maxDataPoints": "10",
+      "maxDataPoints": 10,
       "options": {
         "footer": {
           "countRows": false,
