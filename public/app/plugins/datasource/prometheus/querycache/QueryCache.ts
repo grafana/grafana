@@ -51,7 +51,7 @@ export class QueryCache {
     request.targets.forEach((targ) => {
       let targIdent = `${request.dashboardUID}|${request.panelId}|${targ.refId}`;
       let targExpr = interpolateString(targ.expr);
-      let targSig = `${targExpr}|${request.intervalMs}|${JSON.stringify(request.rangeRaw ?? '')}`; // ${request.maxDataPoints} ?
+      let targSig = `${targExpr}|${request.intervalMs}|${JSON.stringify(request.rangeRaw ?? '')}|${targ.exemplar}`; // ${request.maxDataPoints} ?
 
       reqTargSigs.set(targIdent, targSig);
     });

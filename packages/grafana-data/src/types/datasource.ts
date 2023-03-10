@@ -465,12 +465,6 @@ export interface DataQueryResponse {
    * Defaults to LoadingState.Done if state is not defined
    */
   state?: LoadingState;
-
-  /**
-   * The response headers. This can be used to get the size and gzip stats
-   * for sending frontend metrics
-   */
-  headers?: Headers;
 }
 
 export enum DataQueryErrorType {

@@ -142,8 +142,6 @@ export function toDataQueryResponse(
     }
   }
 
-  rsp.headers = (res as FetchResponse).headers;
-
   return rsp;
 }
 
