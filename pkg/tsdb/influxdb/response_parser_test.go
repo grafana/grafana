@@ -131,6 +131,96 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		}
 	})
 
+	t.Run("Influxdb response parser should parse nil bools and strings without panic", func(t *testing.T) {
+		parser := &ResponseParser{}
+
+		response := `
+		{
+			"results": [
+				{
+					"series": [
+						{
+							"name": "cpu",
+							"columns": ["time","mean","path","isActive"],
+							"tags": {"datacenter": "America"},
+							"values": [
+								[111,222,null,null],
+								[111,222,"/usr/path",false],
+								[111,null,"/usr/path",true]
+							]
+						}
+					]
+				}
+			]
+		}
+		`
+
+		query := &Query{}
+		labels, err := data.LabelsFromString("datacenter=America")
+		require.Nil(t, err)
+
+		floatField := data.NewField("value", labels, []*float64{
+			util.Pointer(222.0), util.Pointer(222.0), nil,
+		})
+		floatField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.mean { datacenter: America }"}
+		floatFrame := data.NewFrame("cpu.mean { datacenter: America }",
+			data.NewField("time", nil,
+				[]time.Time{
+					time.Date(1970, 1, 1, 0, 0, 0, 111000000, time.UTC),
+					time.Date(1970, 1, 1, 0, 0, 0, 111000000, time.UTC),
+					time.Date(1970, 1, 1, 0, 0, 0, 111000000, time.UTC),
+				}),
+			floatField,
+		)
+		floatFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
+
+		string_test := "/usr/path"
+		stringField := data.NewField("value", labels, []*string{
+			nil, &string_test, &string_test,
+		})
+		stringField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.path { datacenter: America }"}
+		stringFrame := data.NewFrame("cpu.path { datacenter: America }",
+			data.NewField("time", nil,
+				[]time.Time{
+					time.Date(1970, 1, 1, 0, 0, 0, 111000000, time.UTC),
+					time.Date(1970, 1, 1, 0, 0, 0, 111000000, time.UTC),
+					time.Date(1970, 1, 1, 0, 0, 0, 111000000, time.UTC),
+				}),
+			stringField,
+		)
+		stringFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
+
+		bool_true := true
+		bool_false := false
+		boolField := data.NewField("value", labels, []*bool{
+			nil, &bool_false, &bool_true,
+		})
+		boolField.Config = &data.FieldConfig{DisplayNameFromDS: "cpu.isActive { datacenter: America }"}
+		boolFrame := data.NewFrame("cpu.isActive { datacenter: America }",
+			data.NewField("time", nil,
+				[]time.Time{
+					time.Date(1970, 1, 1, 0, 0, 0, 111000000, time.UTC),
+					time.Date(1970, 1, 1, 0, 0, 0, 111000000, time.UTC),
+					time.Date(1970, 1, 1, 0, 0, 0, 111000000, time.UTC),
+				}),
+			boolField,
+		)
+		boolFrame.Meta = &data.FrameMeta{ExecutedQueryString: "Test raw query"}
+
+		result := parser.Parse(prepare(response), addQueryToQueries(*query))
+
+		frame := result.Responses["A"]
+		if diff := cmp.Diff(floatFrame, frame.Frames[0], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
+		if diff := cmp.Diff(stringFrame, frame.Frames[1], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
+		if diff := cmp.Diff(boolFrame, frame.Frames[2], data.FrameTestCompareOptions()...); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
+	})
+
 	t.Run("Influxdb response parser should parse metricFindQueries normally", func(t *testing.T) {
 		parser := &ResponseParser{}
 
