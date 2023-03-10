@@ -11,7 +11,16 @@ import {
   DataSourceWithLogsContextSupport,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Alert, Button, ClickOutsideWrapper, CustomScrollbar, IconButton, List, useStyles2 } from '@grafana/ui';
+import {
+  Alert,
+  Button,
+  ClickOutsideWrapper,
+  CustomScrollbar,
+  IconButton,
+  List,
+  useStyles2,
+  useTheme2,
+} from '@grafana/ui';
 
 import { LogMessageAnsi } from './LogMessageAnsi';
 import { HasMoreContextRows, LogRowContextQueryErrors, LogRowContextRows } from './LogRowContextProvider';
@@ -158,6 +167,7 @@ interface LogRowContextGroupHeaderProps {
   logsSortOrder?: LogsSortOrder | null;
   getLogRowContextUi?: DataSourceWithLogsContextSupport['getLogRowContextUi'];
   runContextQuery?: () => void;
+  onHeightChange?: (height: number) => void;
 }
 interface LogRowContextGroupProps extends LogRowContextGroupHeaderProps {
   rows: Array<string | DataQueryError>;
@@ -175,14 +185,12 @@ const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeader
   logsSortOrder,
   getLogRowContextUi,
   runContextQuery,
+  onHeightChange,
 }) => {
   const [height, setHeight] = useState(0);
   const datasourceUiRef = React.createRef<HTMLDivElement>();
-  const {
-    datasourceUi: dsUi,
-    header,
-    headerButton,
-  } = useStyles2((theme) => getLogRowContextStyles(theme, undefined, height));
+  const theme = useTheme2();
+  const { datasourceUi, header, headerButton } = getLogRowContextStyles(theme, undefined, height);
 
   // determine the position in time for this LogGroup by taking the ordering of
   // logs and position of the component itself into account.
@@ -204,9 +212,12 @@ const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeader
         new ResizeObserver((entries) => {
           for (let entry of entries) {
             setHeight(entry.contentRect.height);
+            if (onHeightChange) {
+              onHeightChange(entry.contentRect.height);
+            }
           }
         }),
-      []
+      [onHeightChange]
     );
 
     // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -226,7 +237,7 @@ const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeader
   return (
     <>
       {config.featureToggles.logsContextDatasourceUi && getLogRowContextUi && (
-        <div ref={datasourceUiRef} className={dsUi}>
+        <div ref={datasourceUiRef} className={datasourceUi}>
           {getLogRowContextUi(row, runContextQuery)}
         </div>
       )}
@@ -260,8 +271,11 @@ export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps
   logsSortOrder,
   getLogRowContextUi,
   runContextQuery,
+  onHeightChange,
 }) => {
-  const { commonStyles, logs, bottomContext } = useStyles2(getLogRowContextStyles);
+  const [height, setHeight] = useState(0);
+  const theme = useTheme2();
+  const { commonStyles, logs, bottomContext, afterContext } = getLogRowContextStyles(theme, undefined, height);
   const [scrollTop, setScrollTop] = useState(0);
   const [scrollHeight, setScrollHeight] = useState(0);
 
@@ -306,6 +320,13 @@ export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps
     }
   };
 
+  const changeHeight = (height: number) => {
+    setHeight(height);
+    if (onHeightChange) {
+      onHeightChange(height);
+    }
+  };
+
   const headerProps = {
     row,
     rows,
@@ -318,9 +339,11 @@ export const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps
   };
 
   return (
-    <div className={cx(commonStyles, className, groupPosition === LogGroupPosition.Bottom ? bottomContext : '')}>
+    <div
+      className={cx(commonStyles, className, groupPosition === LogGroupPosition.Bottom ? bottomContext : afterContext)}
+    >
       {/* When displaying "after" context */}
-      {shouldScrollToBottom && !error && <LogRowContextGroupHeader {...headerProps} />}
+      {shouldScrollToBottom && !error && <LogRowContextGroupHeader onHeightChange={changeHeight} {...headerProps} />}
       <div className={logs}>
         <CustomScrollbar autoHide onScroll={updateScroll} scrollTop={scrollTop} autoHeightMin={'210px'}>
           <div ref={listContainerRef}>
@@ -373,8 +396,9 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
       document.removeEventListener('keydown', handleEscKeyDown, false);
     };
   }, [onOutsideClick, row]);
-  const { afterContext, beforeContext, title, top, actions, width } = useStyles2((theme) =>
-    getLogRowContextStyles(theme, wrapLogMessage)
+  const [height, setHeight] = useState(0);
+  const { beforeContext, title, top, actions, width } = useStyles2((theme) =>
+    getLogRowContextStyles(theme, wrapLogMessage, height)
   );
   const handleOutsideClick = useCallback(() => onOutsideClick('close_outside_click'), [onOutsideClick]);
 
@@ -390,7 +414,7 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
             rows={context.after}
             error={errors && errors.after}
             row={row}
-            className={cx(afterContext, top, width)}
+            className={cx(top, width)}
             shouldScrollToBottom
             canLoadMoreRows={hasMoreContextRows ? hasMoreContextRows.after : false}
             onLoadMoreContext={onLoadMoreContext}
@@ -398,6 +422,7 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
             logsSortOrder={logsSortOrder}
             getLogRowContextUi={getLogRowContextUi}
             runContextQuery={runContextQuery}
+            onHeightChange={setHeight}
           />
         )}
 
