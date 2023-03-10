@@ -1,7 +1,8 @@
 {
-  "name": "Test App1",
+  "name": "Test App3",
   "redirect_uri": "https://localhost:3000/a/test-app/",
   "permissions": [
+    {"action": "users:impersonate", "scope": "users:*"},
     {"action": "users:read", "scope": "global.users:*"},
     {"action": "users.permissions:read", "scope": "users:*"},
     {"action": "teams:read", "scope": "teams:*"},

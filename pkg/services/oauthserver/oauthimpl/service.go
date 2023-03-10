@@ -351,41 +351,19 @@ func (s *OAuth2ServiceImpl) GetExternalService(ctx context.Context, id string) (
 
 // TODO cache scopes
 // ComputeClientScopesOnTarget computes the scopes that a client has on a specific user (targetLogin) only searching in the subset of scopes provided
-func (s *OAuth2ServiceImpl) computeClientScopesOnUser(ctx context.Context, client *oauthserver.Client, userID int64) ([]string, error) {
+func (s *OAuth2ServiceImpl) computeClientScopesOnUser(ctx context.Context, client *oauthserver.Client, userID int64) (fosite.Arguments, error) {
 	// TODO I used userID here as we used it for the ext jwt service, but it would be better to use login as app shouldn't know the user id
 	// TODO Inefficient again as we fetch the user to populate the id_token again later
-	targetUser, err := s.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: userID})
+	// Check user existence
+	_, err := s.userService.GetByID(ctx, &user.GetUserByIDQuery{ID: userID})
 	if err != nil {
 		return nil, err
 	}
 
-	res := []string{}
-	for _, scope := range client.GetScopes() {
-		hasAccess := false
-		var errAccess error
-		if strings.HasPrefix(scope, "org.") {
-			hasAccess = true
-		}
-		switch string(scope) {
-		case "openid":
-			hasAccess = true
-		case "email", "profile":
-			hasAccess, errAccess = s.accessControl.Evaluate(ctx, client.SignedInUser, ac.EvalPermission(
-				"users:read", fmt.Sprintf("global.users:id:%v", targetUser.ID)))
-		case "permissions":
-			hasAccess, errAccess = s.accessControl.Evaluate(ctx, client.SignedInUser, ac.EvalPermission(
-				"users.permissions:read", fmt.Sprintf("users:id:%v", targetUser.ID)))
-		case "teams":
-			// We don't need to check whether the service account has access to the specific teams of the target user
-			// because the filtering will be done by the Team service based on the service account permissions
-			hasAccess, errAccess = s.accessControl.Evaluate(ctx, client.SignedInUser, ac.EvalPermission("teams:read"))
-		}
-		if errAccess != nil {
-			return nil, errAccess
-		}
-		if hasAccess {
-			res = append(res, string(scope))
-		}
-	}
-	return res, nil
+	// Compute the scopes on the target user
+	scopes := client.GetOpenIDScope()
+	scopes = append(scopes, client.GetOrgScopes()...)
+	scopes = append(scopes, client.GetScopesOnUser(ctx, s.accessControl, userID)...)
+
+	return scopes, nil
 }

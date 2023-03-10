@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -14,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/oauthserver"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -36,8 +36,7 @@ func (s *OAuth2ServiceImpl) HandleTokenRequest(rw http.ResponseWriter, req *http
 	// * invalid redirect
 	// * ...
 	if err != nil {
-		log.Printf("Error occurred in NewAccessRequest: %+v", err)
-		s.oauthProvider.WriteAccessError(ctx, rw, accessRequest, err)
+		s.writeAccessError(ctx, rw, accessRequest, err)
 		return
 	}
 
@@ -52,92 +51,23 @@ func (s *OAuth2ServiceImpl) HandleTokenRequest(rw http.ResponseWriter, req *http
 	}
 	currentOAuthSessionData.JWTClaims.Add("client_id", app.ClientID)
 
-	if accessRequest.GetGrantTypes().ExactOne("client_credentials") {
-		currentOAuthSessionData.SetSubject(fmt.Sprintf("user:%d", app.ServiceAccountID))
-
-		sa, err := s.saService.RetrieveServiceAccount(ctx, 1, app.ServiceAccountID)
-		if err != nil {
-			if errors.Is(err, serviceaccounts.ErrServiceAccountNotFound) {
-				s.oauthProvider.WriteAccessError(ctx, rw, accessRequest, &fosite.RFC6749Error{
-					DescriptionField: "Could not find the requested subject.",
-					ErrorField:       "not_found",
-					CodeField:        http.StatusBadRequest,
-				})
-				return
-			}
-			s.oauthProvider.WriteAccessError(ctx, rw, accessRequest, &fosite.RFC6749Error{
-				DescriptionField: "The request subject could not be processed.",
-				ErrorField:       "server_error",
-				CodeField:        http.StatusInternalServerError,
-			})
-			return
-		}
-
-		currentOAuthSessionData.Username = sa.Login
-		saProfile := s.profileFromServiceAccount(app.SignedInUser, sa)
-
-		// If this is a client_credentials grant, grant all requested scopes
-		// NewAccessRequest validated that all requested scopes the client is allowed to perform
-		// based on configured scope matching strategy.
-		for _, scope := range accessRequest.GetRequestedScopes() {
-			err = s.processScopes(ctx, currentOAuthSessionData, saProfile, scope)
-			if err != nil {
-				s.oauthProvider.WriteAccessError(ctx, rw, accessRequest, err)
-				return
-			}
-			accessRequest.GrantScope(scope)
-		}
+	errClientCred := s.handleClientCredentials(ctx, accessRequest, currentOAuthSessionData, app)
+	if errClientCred != nil {
+		s.writeAccessError(ctx, rw, accessRequest, errClientCred)
+		return
 	}
 
-	if accessRequest.GetGrantTypes().ExactOne(grantTypeJWTBearer) {
-		userID, err := getUserIDFromSubject(currentOAuthSessionData.Subject)
-		if err != nil {
-			s.oauthProvider.WriteAccessError(ctx, rw, accessRequest, &fosite.RFC6749Error{
-				DescriptionField: "Could not find the requested subject.",
-				ErrorField:       "not_found",
-				CodeField:        http.StatusBadRequest,
-			})
-			return
-		}
-
-		query := user.GetUserByIDQuery{ID: userID}
-
-		dbUser, err := s.userService.GetByID(ctx, &query)
-		if err != nil {
-			if errors.Is(err, user.ErrUserNotFound) {
-				s.oauthProvider.WriteAccessError(ctx, rw, accessRequest, &fosite.RFC6749Error{
-					DescriptionField: "Could not find the requested subject.",
-					ErrorField:       "not_found",
-					CodeField:        http.StatusBadRequest,
-				})
-				return
-			}
-			s.oauthProvider.WriteAccessError(ctx, rw, accessRequest, &fosite.RFC6749Error{
-				DescriptionField: "The request subject could not be processed.",
-				ErrorField:       "server_error",
-				CodeField:        http.StatusInternalServerError,
-			})
-			return
-		}
-		currentOAuthSessionData.Username = dbUser.Login
-		userProfile := s.profileFromUser(app.SignedInUser, dbUser)
-
-		for _, scope := range accessRequest.GetRequestedScopes() {
-			err = s.processScopes(ctx, currentOAuthSessionData, userProfile, scope)
-			if err != nil {
-				s.oauthProvider.WriteAccessError(ctx, rw, accessRequest, err)
-				return
-			}
-			accessRequest.GrantScope(scope)
-		}
+	errJWTBearer := s.handleJWTBearer(ctx, accessRequest, currentOAuthSessionData, app)
+	if errJWTBearer != nil {
+		s.writeAccessError(ctx, rw, accessRequest, errJWTBearer)
+		return
 	}
 
 	// Next we create a response for the access request. Again, we iterate through the TokenEndpointHandlers
 	// and aggregate the result in response.
 	response, err := s.oauthProvider.NewAccessResponse(ctx, accessRequest)
 	if err != nil {
-		log.Printf("Error occurred in NewAccessResponse: %+v", err)
-		s.oauthProvider.WriteAccessError(ctx, rw, accessRequest, err)
+		s.writeAccessError(ctx, rw, accessRequest, err)
 		return
 	}
 
@@ -145,6 +75,86 @@ func (s *OAuth2ServiceImpl) HandleTokenRequest(rw http.ResponseWriter, req *http
 	// The client now has a valid access token
 	s.oauthProvider.WriteAccessResponse(ctx, rw, accessRequest, response)
 
+}
+
+func (s *OAuth2ServiceImpl) handleClientCredentials(ctx context.Context, accessRequest fosite.AccessRequester, currentOAuthSessionData *PluginAuthSession, client *oauthserver.Client) error {
+	if accessRequest.GetGrantTypes().ExactOne("client_credentials") {
+		currentOAuthSessionData.SetSubject(fmt.Sprintf("user:%d", client.ServiceAccountID))
+
+		sa, err := s.saService.RetrieveServiceAccount(ctx, 1, client.ServiceAccountID)
+		if err != nil {
+			if errors.Is(err, serviceaccounts.ErrServiceAccountNotFound) {
+				return &fosite.RFC6749Error{
+					DescriptionField: "Could not find the requested subject.",
+					ErrorField:       "not_found",
+					CodeField:        http.StatusBadRequest,
+				}
+
+			}
+			return &fosite.RFC6749Error{
+				DescriptionField: "The request subject could not be processed.",
+				ErrorField:       "server_error",
+				CodeField:        http.StatusInternalServerError,
+			}
+		}
+
+		currentOAuthSessionData.Username = sa.Login
+		saProfile := s.profileFromServiceAccount(client.SignedInUser, sa)
+
+		// If one of the requested scopes wasn't granted we wouldn't have reached this point
+		// so we can safely grant all of them
+		for _, scope := range accessRequest.GetRequestedScopes() {
+			if err := s.processScopes(ctx, currentOAuthSessionData, saProfile, scope); err != nil {
+				return err
+			}
+			accessRequest.GrantScope(scope)
+		}
+	}
+	return nil
+}
+
+func (s *OAuth2ServiceImpl) handleJWTBearer(ctx context.Context, accessRequest fosite.AccessRequester, currentOAuthSessionData *PluginAuthSession, client *oauthserver.Client) error {
+	if accessRequest.GetGrantTypes().ExactOne(grantTypeJWTBearer) {
+		userID, err := getUserIDFromSubject(currentOAuthSessionData.Subject)
+		if err != nil {
+			return &fosite.RFC6749Error{
+				DescriptionField: "Could not find the requested subject.",
+				ErrorField:       "not_found",
+				CodeField:        http.StatusBadRequest,
+			}
+		}
+
+		query := user.GetUserByIDQuery{ID: userID}
+
+		dbUser, err := s.userService.GetByID(ctx, &query)
+		if err != nil {
+			if errors.Is(err, user.ErrUserNotFound) {
+				return &fosite.RFC6749Error{
+					DescriptionField: "Could not find the requested subject.",
+					ErrorField:       "not_found",
+					CodeField:        http.StatusBadRequest,
+				}
+			}
+			return &fosite.RFC6749Error{
+				DescriptionField: "The request subject could not be processed.",
+				ErrorField:       "server_error",
+				CodeField:        http.StatusInternalServerError,
+			}
+		}
+		currentOAuthSessionData.Username = dbUser.Login
+		userProfile := s.profileFromUser(client.SignedInUser, dbUser)
+
+		// If one of the requested scopes wasn't granted we wouldn't have reached this point
+		// so we can safely grant all of them
+		for _, scope := range accessRequest.GetRequestedScopes() {
+			err = s.processScopes(ctx, currentOAuthSessionData, userProfile, scope)
+			if err != nil {
+				return err
+			}
+			accessRequest.GrantScope(scope)
+		}
+	}
+	return nil
 }
 
 func getUserIDFromSubject(subject string) (int64, error) {
@@ -263,4 +273,13 @@ func (s *OAuth2ServiceImpl) processScopes(ctx context.Context, currentOAuthSessi
 		currentOAuthSessionData.JWTClaims.Add("groups", teams)
 	}
 	return nil
+}
+
+func (s *OAuth2ServiceImpl) writeAccessError(ctx context.Context, rw http.ResponseWriter, accessRequest fosite.AccessRequester, err error) {
+	if fositeErr, ok := err.(*fosite.RFC6749Error); ok {
+		s.logger.Error("description", fositeErr.DescriptionField, "hint", fositeErr.HintField, "error", fositeErr.ErrorField)
+	} else {
+		s.logger.Error("error", err)
+	}
+	s.oauthProvider.WriteAccessError(ctx, rw, accessRequest, err)
 }
