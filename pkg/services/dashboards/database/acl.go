@@ -104,8 +104,14 @@ func (d *dashboardStore) HasEditPermissionInFolders(ctx context.Context, query *
 		queryResult = true
 		return queryResult, nil
 	}
-	err := d.store.WithDbSession(ctx, func(dbSession *db.Session) error {
-		builder := db.NewSqlBuilder(d.cfg, featuremgmt.WithFeatures(), d.store.GetDialect())
+
+	recursiveQueriesAreSupported, err := d.store.RecursiveQueriesAreSupported()
+	if err != nil {
+		return queryResult, err
+	}
+
+	err = d.store.WithDbSession(ctx, func(dbSession *db.Session) error {
+		builder := db.NewSqlBuilder(d.cfg, featuremgmt.WithFeatures(), d.store.GetDialect(), recursiveQueriesAreSupported)
 		builder.Write("SELECT COUNT(dashboard.id) AS count FROM dashboard WHERE dashboard.org_id = ? AND dashboard.is_folder = ?",
 			query.SignedInUser.OrgID, d.store.GetDialect().BooleanStr(true))
 		builder.WriteDashboardPermissionFilter(query.SignedInUser, dashboards.PERMISSION_EDIT)
@@ -132,13 +138,18 @@ func (d *dashboardStore) HasEditPermissionInFolders(ctx context.Context, query *
 
 func (d *dashboardStore) HasAdminPermissionInDashboardsOrFolders(ctx context.Context, query *folder.HasAdminPermissionInDashboardsOrFoldersQuery) (bool, error) {
 	var queryResult bool
-	err := d.store.WithDbSession(ctx, func(dbSession *db.Session) error {
+	recursiveQueriesAreSupported, err := d.store.RecursiveQueriesAreSupported()
+	if err != nil {
+		return queryResult, err
+	}
+
+	err = d.store.WithDbSession(ctx, func(dbSession *db.Session) error {
 		if query.SignedInUser.HasRole(org.RoleAdmin) {
 			queryResult = true
 			return nil
 		}
 
-		builder := db.NewSqlBuilder(d.cfg, featuremgmt.WithFeatures(), d.store.GetDialect())
+		builder := db.NewSqlBuilder(d.cfg, featuremgmt.WithFeatures(), d.store.GetDialect(), recursiveQueriesAreSupported)
 		builder.Write("SELECT COUNT(dashboard.id) AS count FROM dashboard WHERE dashboard.org_id = ?", query.SignedInUser.OrgID)
 		builder.WriteDashboardPermissionFilter(query.SignedInUser, dashboards.PERMISSION_ADMIN)
 

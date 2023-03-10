@@ -369,7 +369,12 @@ func (r *xormRepositoryImpl) getAccessControlFilter(user *user.SignedInUser) (ac
 		}
 		// annotation read permission with scope annotations:type:dashboard allows listing annotations from dashboards which the user can view
 		if t == annotations.Dashboard.String() {
-			filterRBAC := permissions.NewAccessControlDashboardPermissionFilter(user, dashboards.PERMISSION_VIEW, searchstore.TypeDashboard, r.features)
+			recursiveQueriesAreSupported, err := r.db.RecursiveQueriesAreSupported()
+			if err != nil {
+				return acFilter{}, err
+			}
+
+			filterRBAC := permissions.NewAccessControlDashboardPermissionFilter(user, dashboards.PERMISSION_VIEW, searchstore.TypeDashboard, r.features, recursiveQueriesAreSupported)
 			dashboardFilter, dashboardParams := filterRBAC.Where()
 			recQueries, recQueriesParams = filterRBAC.With()
 			filter := fmt.Sprintf("a.dashboard_id IN(SELECT id FROM dashboard WHERE %s)", dashboardFilter)

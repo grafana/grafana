@@ -139,11 +139,14 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			store := setupTest(t, 10, 100, tt.permissions)
+			recursiveQueriesAreSupported, err := store.RecursiveQueriesAreSupported()
+			require.NoError(t, err)
+
 			usr := &user.SignedInUser{OrgID: 1, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}
-			filter := permissions.NewAccessControlDashboardPermissionFilter(usr, tt.permission, tt.queryType, featuremgmt.WithFeatures())
+			filter := permissions.NewAccessControlDashboardPermissionFilter(usr, tt.permission, tt.queryType, featuremgmt.WithFeatures(), recursiveQueriesAreSupported)
 
 			var result int
-			err := store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			err = store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 				q, params := filter.Where()
 				//q, params := filter.With()
 				_, err := sess.SQL("SELECT COUNT(*) FROM dashboard WHERE "+q, params...).Get(&result)
@@ -239,9 +242,11 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			usr := &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tc.permissions)}}
 			db := setupNestedTest(t, usr, tc.permissions, orgID, tc.features)
-			filter := permissions.NewAccessControlDashboardPermissionFilter(usr, tc.permission, tc.queryType, tc.features)
+			recursiveQueriesAreSupported, err := db.RecursiveQueriesAreSupported()
+			require.NoError(t, err)
+			filter := permissions.NewAccessControlDashboardPermissionFilter(usr, tc.permission, tc.queryType, tc.features, recursiveQueriesAreSupported)
 			var result []string
-			err := db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+			err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 				q, params := filter.Where()
 				recQry, recQryParams := filter.With()
 				params = append(recQryParams, params...)

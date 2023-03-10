@@ -23,10 +23,14 @@ import (
 
 func benchmarkDashboardPermissionFilter(b *testing.B, numUsers, numDashboards int) {
 	store := setupBenchMark(b, numUsers, numDashboards)
+
+	recursiveQueriesAreSupported, err := store.RecursiveQueriesAreSupported()
+	require.NoError(b, err)
+
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		usr := &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{1: {}}}
-		filter := permissions.NewAccessControlDashboardPermissionFilter(usr, dashboards.PERMISSION_VIEW, "", featuremgmt.WithFeatures())
+		filter := permissions.NewAccessControlDashboardPermissionFilter(usr, dashboards.PERMISSION_VIEW, "", featuremgmt.WithFeatures(), recursiveQueriesAreSupported)
 		var result int
 		err := store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 			q, params := filter.Where()

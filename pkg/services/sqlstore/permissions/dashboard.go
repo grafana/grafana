@@ -97,11 +97,12 @@ type accessControlDashboardPermissionFilter struct {
 
 	where clause
 	// any recursive CTE queries (if supported)
-	recQueries []clause
+	recQueries                   []clause
+	recursiveQueriesAreSupported bool
 }
 
 // NewAccessControlDashboardPermissionFilter creates a new AccessControlDashboardPermissionFilter that is configured with specific actions calculated based on the dashboards.PermissionType and query type
-func NewAccessControlDashboardPermissionFilter(user *user.SignedInUser, permissionLevel dashboards.PermissionType, queryType string, features featuremgmt.FeatureToggles) *accessControlDashboardPermissionFilter {
+func NewAccessControlDashboardPermissionFilter(user *user.SignedInUser, permissionLevel dashboards.PermissionType, queryType string, features featuremgmt.FeatureToggles, recursiveQueriesAreSupported bool) *accessControlDashboardPermissionFilter {
 	needEdit := permissionLevel > dashboards.PERMISSION_VIEW
 
 	var folderActions []string
@@ -206,9 +207,14 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 
 			switch f.features.IsEnabled(featuremgmt.FlagNestedFolders) {
 			case true:
-				recQueryName := fmt.Sprintf("RecQry%d", len(f.recQueries))
-				f.addRecQry(recQueryName, permSelector.String(), permSelectorArgs)
-				builder.WriteString(fmt.Sprintf("WHERE d.uid IN (SELECT uid FROM %s)", recQueryName))
+				switch f.recursiveQueriesAreSupported {
+				case true:
+					recQueryName := fmt.Sprintf("RecQry%d", len(f.recQueries))
+					f.addRecQry(recQueryName, permSelector.String(), permSelectorArgs)
+					builder.WriteString(fmt.Sprintf("WHERE d.uid IN (SELECT uid FROM %s)", recQueryName))
+				default:
+					builder.WriteString(fmt.Sprintf("WHERE d.uid IN (SELECT uid FROM %s)"))
+				}
 			default:
 				builder.WriteString("WHERE d.uid IN ")
 				builder.WriteString(permSelector.String())

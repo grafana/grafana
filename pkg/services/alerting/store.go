@@ -108,8 +108,13 @@ func deleteAlertByIdInternal(alertId int64, reason string, sess *db.Session, log
 }
 
 func (ss *sqlStore) HandleAlertsQuery(ctx context.Context, query *alertmodels.GetAlertsQuery) (res []*alertmodels.AlertListItemDTO, err error) {
+	recursiveQueriesAreSupported, err := ss.db.RecursiveQueriesAreSupported()
+	if err != nil {
+		return res, err
+	}
+
 	err = ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		builder := db.NewSqlBuilder(ss.cfg, featuremgmt.WithFeatures(), ss.db.GetDialect())
+		builder := db.NewSqlBuilder(ss.cfg, featuremgmt.WithFeatures(), ss.db.GetDialect(), recursiveQueriesAreSupported)
 
 		builder.Write(`SELECT
 		alert.id,

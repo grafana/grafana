@@ -249,6 +249,9 @@ func TestBuilder_RBAC(t *testing.T) {
 	store := setupTestEnvironment(t)
 	createDashboards(t, store, 0, 1, user.OrgID)
 
+	recursiveQueriesAreSupported, err := store.RecursiveQueriesAreSupported()
+	require.NoError(t, err)
+
 	for _, tc := range testsCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			if len(tc.userPermissions) > 0 {
@@ -266,6 +269,7 @@ func TestBuilder_RBAC(t *testing.T) {
 						level,
 						"",
 						tc.features,
+						recursiveQueriesAreSupported,
 					),
 				},
 				Dialect: store.GetDialect(),

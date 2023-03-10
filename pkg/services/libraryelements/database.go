@@ -230,8 +230,14 @@ func (l *LibraryElementService) deleteLibraryElement(c context.Context, signedIn
 // getLibraryElements gets a Library Element where param == value
 func getLibraryElements(c context.Context, store db.DB, cfg *setting.Cfg, signedInUser *user.SignedInUser, params []Pair) ([]model.LibraryElementDTO, error) {
 	libraryElements := make([]model.LibraryElementWithMeta, 0)
-	err := store.WithDbSession(c, func(session *db.Session) error {
-		builder := db.NewSqlBuilder(cfg, featuremgmt.WithFeatures(), store.GetDialect())
+
+	recursiveQueriesAreSupported, err := store.RecursiveQueriesAreSupported()
+	if err != nil {
+		return nil, err
+	}
+
+	err = store.WithDbSession(c, func(session *db.Session) error {
+		builder := db.NewSqlBuilder(cfg, featuremgmt.WithFeatures(), store.GetDialect(), recursiveQueriesAreSupported)
 		builder.Write(selectLibraryElementDTOWithMeta)
 		builder.Write(", 'General' as folder_name ")
 		builder.Write(", '' as folder_uid ")
@@ -320,6 +326,12 @@ func (l *LibraryElementService) getLibraryElementsByName(c context.Context, sign
 func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedInUser *user.SignedInUser, query model.SearchLibraryElementsQuery) (model.LibraryElementSearchResult, error) {
 	elements := make([]model.LibraryElementWithMeta, 0)
 	result := model.LibraryElementSearchResult{}
+
+	recursiveQueriesAreSupported, err := l.SQLStore.RecursiveQueriesAreSupported()
+	if err != nil {
+		return result, err
+	}
+
 	if query.PerPage <= 0 {
 		query.PerPage = 100
 	}
@@ -334,8 +346,8 @@ func (l *LibraryElementService) getAllLibraryElements(c context.Context, signedI
 	if folderFilter.parseError != nil {
 		return model.LibraryElementSearchResult{}, folderFilter.parseError
 	}
-	err := l.SQLStore.WithDbSession(c, func(session *db.Session) error {
-		builder := db.NewSqlBuilder(l.Cfg, featuremgmt.WithFeatures(), l.SQLStore.GetDialect())
+	err = l.SQLStore.WithDbSession(c, func(session *db.Session) error {
+		builder := db.NewSqlBuilder(l.Cfg, featuremgmt.WithFeatures(), l.SQLStore.GetDialect(), recursiveQueriesAreSupported)
 		if folderFilter.includeGeneralFolder {
 			builder.Write(selectLibraryElementDTOWithMeta)
 			builder.Write(", 'General' as folder_name ")
@@ -564,13 +576,18 @@ func (l *LibraryElementService) patchLibraryElement(c context.Context, signedInU
 // getConnections gets all connections for a Library Element.
 func (l *LibraryElementService) getConnections(c context.Context, signedInUser *user.SignedInUser, uid string) ([]model.LibraryElementConnectionDTO, error) {
 	connections := make([]model.LibraryElementConnectionDTO, 0)
-	err := l.SQLStore.WithDbSession(c, func(session *db.Session) error {
+	recursiveQueriesAreSupported, err := l.SQLStore.RecursiveQueriesAreSupported()
+	if err != nil {
+		return nil, err
+	}
+
+	err = l.SQLStore.WithDbSession(c, func(session *db.Session) error {
 		element, err := getLibraryElement(l.SQLStore.GetDialect(), session, uid, signedInUser.OrgID)
 		if err != nil {
 			return err
 		}
 		var libraryElementConnections []model.LibraryElementConnectionWithMeta
-		builder := db.NewSqlBuilder(l.Cfg, featuremgmt.WithFeatures(), l.SQLStore.GetDialect())
+		builder := db.NewSqlBuilder(l.Cfg, featuremgmt.WithFeatures(), l.SQLStore.GetDialect(), recursiveQueriesAreSupported)
 		builder.Write("SELECT lec.*, u1.login AS created_by_name, u1.email AS created_by_email, dashboard.uid AS connection_uid")
 		builder.Write(" FROM " + model.LibraryElementConnectionTableName + " AS lec")
 		builder.Write(" LEFT JOIN " + l.SQLStore.GetDialect().Quote("user") + " AS u1 ON lec.created_by = u1.id")

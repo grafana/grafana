@@ -319,7 +319,10 @@ func getDashboards(t *testing.T, sqlStore *sqlstore.SQLStore, search Search, acl
 		sqlStore.Cfg.RBACEnabled = old
 	}()
 
-	builder := NewSqlBuilder(sqlStore.Cfg, features, sqlStore.GetDialect())
+	recursiveQueriesAreSupported, err := sqlStore.RecursiveQueriesAreSupported()
+	require.NoError(t, err)
+
+	builder := NewSqlBuilder(sqlStore.Cfg, features, sqlStore.GetDialect(), recursiveQueriesAreSupported)
 	signedInUser := &user.SignedInUser{
 		UserID: 9999999999,
 	}
@@ -343,7 +346,7 @@ func getDashboards(t *testing.T, sqlStore *sqlstore.SQLStore, search Search, acl
 	builder.Write("SELECT * FROM dashboard WHERE true")
 	builder.WriteDashboardPermissionFilter(signedInUser, search.RequiredPermission)
 	t.Logf("Searching for dashboards, SQL: %q\n", builder.GetSQLString())
-	err := sqlStore.GetEngine().SQL(builder.GetSQLString(), builder.params...).Find(&res)
+	err = sqlStore.GetEngine().SQL(builder.GetSQLString(), builder.params...).Find(&res)
 	require.NoError(t, err)
 	return res
 }

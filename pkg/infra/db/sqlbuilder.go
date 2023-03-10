@@ -12,17 +12,18 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func NewSqlBuilder(cfg *setting.Cfg, features featuremgmt.FeatureToggles, dialect migrator.Dialect) SQLBuilder {
-	return SQLBuilder{cfg: cfg, dialect: dialect}
+func NewSqlBuilder(cfg *setting.Cfg, features featuremgmt.FeatureToggles, dialect migrator.Dialect, recursiveQueriesAreSupported bool) SQLBuilder {
+	return SQLBuilder{cfg: cfg, dialect: dialect, recursiveQueriesAreSupported: recursiveQueriesAreSupported}
 }
 
 type SQLBuilder struct {
-	cfg          *setting.Cfg
-	features     featuremgmt.FeatureToggles
-	sql          bytes.Buffer
-	params       []interface{}
-	recQry       string
-	recQryParams []interface{}
+	cfg                          *setting.Cfg
+	features                     featuremgmt.FeatureToggles
+	sql                          bytes.Buffer
+	params                       []interface{}
+	recQry                       string
+	recQryParams                 []interface{}
+	recursiveQueriesAreSupported bool
 
 	dialect migrator.Dialect
 }
@@ -67,7 +68,7 @@ func (sb *SQLBuilder) WriteDashboardPermissionFilter(user *user.SignedInUser, pe
 		recQryParams []interface{}
 	)
 	if !ac.IsDisabled(sb.cfg) {
-		filterRBAC := permissions.NewAccessControlDashboardPermissionFilter(user, permission, "", sb.features)
+		filterRBAC := permissions.NewAccessControlDashboardPermissionFilter(user, permission, "", sb.features, sb.recursiveQueriesAreSupported)
 		sql, params = filterRBAC.Where()
 		recQry, recQryParams = filterRBAC.With()
 	} else {
