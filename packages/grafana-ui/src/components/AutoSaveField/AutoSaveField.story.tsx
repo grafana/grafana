@@ -42,10 +42,10 @@ const meta: Meta = {
     saveErrorMessage: { control: 'text' },
     label: { control: 'text' },
     required: {
-      control: { type: 'select', options: [true, false] },
+      control: { type: 'boolean', options: [true, false] },
     },
     inputSuccessful: {
-      control: { type: 'select', options: [true, false] },
+      control: { type: 'boolean', options: [true, false] },
     },
   },
   args: {
