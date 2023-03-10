@@ -35,8 +35,8 @@ To search for traces:
 | **Service Name** | Returns a list of services.                                                                                                       |
 | **Span Name**    | Returns a list of span names.                                                                                                     |
 | **Tags**         | Sets tags with values in the [logfmt](https://brandur.org/logfmt) format, such as `error=true db.statement="select * from User"`. |
-| **Min Duration** | Filters all traces with a duration higher than the set value. Possible values are `1.2s`, `100ms`, `500us`.                           |
-| **Max Duration** | Filters all traces with a duration lower than the set value. Possible values are `1.2s`, `100ms`, `500us`.                            |
+| **Min Duration** | Filters all traces with a duration higher than the set value. Possible values are `1.2s`, `100ms`, `500us`.                       |
+| **Max Duration** | Filters all traces with a duration lower than the set value. Possible values are `1.2s`, `100ms`, `500us`.                        |
 | **Limit**        | Limits the number of traces returned.                                                                                             |
 
 {{< figure src="/static/img/docs/explore/tempo-search.png" class="docs-image--no-shadow" max-width="750px" caption="Screenshot of the Tempo search feature with a trace rendered in the right panel" >}}
@@ -56,7 +56,7 @@ To configure your Tempo data source to use this feature, refer to the [Tempo doc
 
 ## Query by trace ID
 
-**To query a particular trace:**
+To query a particular trace:
 
 1. Select the **TraceID** query type.
 1. Enter the trace's ID into the **Trace ID** field.

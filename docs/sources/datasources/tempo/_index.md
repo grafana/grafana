@@ -112,7 +112,7 @@ The following table describes the ways in which you can configure your trace to 
 
 The **Trace to metrics** setting configures the [trace to metrics feature](/blog/2022/08/18/new-in-grafana-9.1-trace-to-metrics-allows-users-to-navigate-from-a-trace-span-to-a-selected-data-source/) available when integrating Grafana with Tempo.
 
-**To configure trace to metrics:**
+To configure trace to metrics:
 
 1. Select the target data source.
 1. Create any desired linked queries.
