@@ -594,6 +594,15 @@ export enum BarGaugeDisplayMode {
 }
 
 /**
+ * Allows for the table cell gauge display type to set the gauge mode.
+ */
+export enum BarGaugeValueMode {
+  Color = 'color',
+  Hidden = 'hidden',
+  Text = 'text',
+}
+
+/**
  * TODO docs
  */
 export interface VizTooltipOptions {
@@ -697,6 +706,7 @@ export interface TableImageCellOptions {
 export interface TableBarGaugeCellOptions {
   mode?: BarGaugeDisplayMode;
   type: TableCellDisplayMode.Gauge;
+  valueDisplayMode?: BarGaugeValueMode;
 }
 
 /**

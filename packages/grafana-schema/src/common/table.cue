@@ -52,6 +52,7 @@ TableImageCellOptions: {
 TableBarGaugeCellOptions: {
 	type: TableCellDisplayMode & "gauge"
 	mode?: BarGaugeDisplayMode
+	valueDisplayMode?: BarGaugeValueMode
 } @cuetsy(kind="interface")
 
 // Sparkline cell options
