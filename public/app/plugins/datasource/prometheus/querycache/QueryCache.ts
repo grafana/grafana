@@ -27,8 +27,29 @@ export interface CacheRequestInfo {
   shouldCache: boolean;
 }
 
+/**
+ * Get field identity
+ * This is the string used to uniquely identify a field within a "target"
+ * @param field
+ */
 export const getFieldIdent = (field: Field) => `${field.type}|${field.name}|${JSON.stringify(field.labels ?? '')}`;
 
+/**
+ * Get target signature
+ * @param targExpr
+ * @param request
+ * @param targ
+ */
+function getTargSig(targExpr: string, request: DataQueryRequest<PromQuery>, targ: PromQuery) {
+  return `${targExpr}|${request.intervalMs}|${JSON.stringify(request.rangeRaw ?? '')}|${targ.exemplar}`;
+}
+
+/**
+ * NOMENCLATURE
+ * Target: The request target (DataQueryRequest), i.e. a specific query reference within a panel
+ * Ident: Identity: the string that is not expected to change
+ * Sig: Signature: the string that is expected to change, upon which we wipe the cache fields
+ */
 export class QueryCache {
   cache = new Map<TargetIdent, TargetCache>();
 
@@ -51,7 +72,7 @@ export class QueryCache {
     request.targets.forEach((targ) => {
       let targIdent = `${request.dashboardUID}|${request.panelId}|${targ.refId}`;
       let targExpr = interpolateString(targ.expr);
-      let targSig = `${targExpr}|${request.intervalMs}|${JSON.stringify(request.rangeRaw ?? '')}|${targ.exemplar}`; // ${request.maxDataPoints} ?
+      let targSig = getTargSig(targExpr, request, targ); // ${request.maxDataPoints} ?
 
       reqTargSigs.set(targIdent, targSig);
     });
