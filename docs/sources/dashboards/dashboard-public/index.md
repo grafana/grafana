@@ -88,7 +88,7 @@ publicDashboardsEmailSharing = true
 1. Click **Only specified people**.
 1. Enter the email you want to share the public dashboard with.
 1. Click **Invite**.
-1. The recipient(s) will receive an email with a one-time use link. This link must be used within **one hour** or it expires. Once the link is used, viewer has access to the public dashboard for **30 days**.
+1. The recipient(s) will receive an email with a one-time use link. This link must be used within **one hour** or it expires. Once the link is used, the viewer has access to the public dashboard for **30 days**.
 
 ### Viewers requesting access
 
