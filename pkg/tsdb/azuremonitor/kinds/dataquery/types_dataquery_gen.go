@@ -359,20 +359,21 @@ type AzureMonitorQuery struct {
 	Datasource *interface{} `json:"datasource,omitempty"`
 
 	// @deprecated Legacy template variable support.
-	GrafanaTemplateVariableFn *AzureMonitorQuery_GrafanaTemplateVariableFn `json:"grafanaTemplateVariableFn,omitempty"`
+	GrafanaTemplateVariableFn *AzureMonitorQueryGrafanaTemplateVariableFn `json:"grafanaTemplateVariableFn,omitempty"`
 
 	// Hide true if query is disabled (ie should not be returned to the dashboard)
-	Hide *bool `json:"hide,omitempty"`
-
-	// Unique, guid like, string used in explore mode
-	Key       *string `json:"key,omitempty"`
+	// Note this does not always imply that the query should not be executed since
+	// the results from a hidden query may be used as the input to other queries (SSE etc)
+	Hide      *bool   `json:"hide,omitempty"`
 	Namespace *string `json:"namespace,omitempty"`
 
 	// Specify the query flavor
 	// TODO make this required and give it a default
 	QueryType *string `json:"queryType,omitempty"`
 
-	// A - Z
+	// A unique identifier for the query within the list of targets.
+	// In server side expressions, the refId is used as a variable name to identify results.
+	// By default, the UI will assign A->Z; however setting meaningful names may be useful.
 	RefId string `json:"refId"`
 
 	// Azure Monitor query type.
@@ -394,7 +395,7 @@ type AzureMonitorQuery struct {
 type AzureMonitorQueryAzureLogAnalyticsResultFormat string
 
 // @deprecated Legacy template variable support.
-type AzureMonitorQuery_GrafanaTemplateVariableFn struct {
+type AzureMonitorQueryGrafanaTemplateVariableFn struct {
 	Kind                 *interface{}           `json:"kind,omitempty"`
 	MetricName           *string                `json:"metricName,omitempty"`
 	MetricNamespace      *string                `json:"metricNamespace,omitempty"`

@@ -158,15 +158,15 @@ func TestMiddlewareContext(t *testing.T) {
 
 	middlewareScenario(t, "middleware should pass cache-control on resources with private cache control", func(t *testing.T, sc *scenarioContext) {
 		sc = sc.fakeReq("GET", "/api/datasources/1/resources/foo")
-		sc.resp.Header().Add("Cache-Control", "private")
+		sc.resp.Header().Add("Cache-Control", "private, max-age=86400")
 		sc.resp.Header().Add("X-Grafana-Cache", "true")
 		sc.exec()
-		assert.Equal(t, "private", sc.resp.Header().Get("Cache-Control"))
+		assert.Equal(t, "private, max-age=86400", sc.resp.Header().Get("Cache-Control"))
 	})
 
 	middlewareScenario(t, "middleware should not pass cache-control on resources with public cache control", func(t *testing.T, sc *scenarioContext) {
 		sc = sc.fakeReq("GET", "/api/datasources/1/resources/foo")
-		sc.resp.Header().Add("Cache-Control", "public")
+		sc.resp.Header().Add("Cache-Control", "public, max-age=86400, private")
 		sc.resp.Header().Add("X-Grafana-Cache", "true")
 		sc.exec()
 		assert.Equal(t, noStore, sc.resp.Header().Get("Cache-Control"))
@@ -615,7 +615,7 @@ func TestMiddlewareContext(t *testing.T) {
 			require.NoError(t, err)
 			key := fmt.Sprintf(authproxy.CachePrefix, h)
 			userIdBytes := []byte(strconv.FormatInt(userID, 10))
-			err = sc.remoteCacheService.SetByteArray(context.Background(), key, userIdBytes, 0)
+			err = sc.remoteCacheService.Set(context.Background(), key, userIdBytes, 0)
 			require.NoError(t, err)
 			sc.fakeReq("GET", "/")
 

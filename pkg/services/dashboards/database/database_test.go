@@ -16,8 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/publicdashboards/database"
-	publicDashboardModels "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -27,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestIntegrationDashboardDataAccess(t *testing.T) {
@@ -37,9 +34,8 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 	var sqlStore *sqlstore.SQLStore
 	var cfg *setting.Cfg
 	var savedFolder, savedDash, savedDash2 *dashboards.Dashboard
-	var dashboardStore *DashboardStore
+	var dashboardStore dashboards.Store
 	var starService star.Service
-	var publicDashboardStore *database.PublicDashboardStoreImpl
 
 	setup := func() {
 		sqlStore, cfg = db.InitTestDBwithCfg(t)
@@ -53,8 +49,6 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		insertTestDashboard(t, dashboardStore, "test dash 45", 1, savedFolder.ID, false, "prod")
 		savedDash2 = insertTestDashboard(t, dashboardStore, "test dash 67", 1, 0, false, "prod")
 		insertTestRule(t, sqlStore, savedFolder.OrgID, savedFolder.UID)
-
-		publicDashboardStore = database.ProvideStore(sqlStore)
 	}
 
 	t.Run("Should return dashboard model", func(t *testing.T) {
@@ -244,78 +238,6 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		deleteCmd := &dashboards.DeleteDashboardCommand{ID: savedFolder.ID, ForceDeleteFolderRules: false}
 		err := dashboardStore.DeleteDashboard(context.Background(), deleteCmd)
 		require.True(t, errors.Is(err, dashboards.ErrFolderContainsAlertRules))
-	})
-
-	t.Run("Should be able to delete dashboard and related public dashboard", func(t *testing.T) {
-		setup()
-
-		uid := util.GenerateShortUID()
-		cmd := publicDashboardModels.SavePublicDashboardCommand{
-			PublicDashboard: publicDashboardModels.PublicDashboard{
-				Uid:          uid,
-				DashboardUid: savedDash.UID,
-				OrgId:        savedDash.OrgID,
-				IsEnabled:    true,
-				TimeSettings: &publicDashboardModels.TimeSettings{},
-				CreatedBy:    1,
-				CreatedAt:    time.Now(),
-				AccessToken:  "an-access-token",
-			},
-		}
-		_, err := publicDashboardStore.Create(context.Background(), cmd)
-		require.NoError(t, err)
-		pubdashConfig, _ := publicDashboardStore.FindByAccessToken(context.Background(), "an-access-token")
-		require.NotNil(t, pubdashConfig)
-
-		deleteCmd := &dashboards.DeleteDashboardCommand{ID: savedDash.ID, OrgID: savedDash.OrgID}
-		err = dashboardStore.DeleteDashboard(context.Background(), deleteCmd)
-		require.NoError(t, err)
-
-		query := dashboards.GetDashboardQuery{UID: savedDash.UID, OrgID: savedDash.OrgID}
-		dash, getErr := dashboardStore.GetDashboard(context.Background(), &query)
-		require.Equal(t, getErr, dashboards.ErrDashboardNotFound)
-		assert.Nil(t, dash)
-
-		pubdashConfig, err = publicDashboardStore.FindByAccessToken(context.Background(), "an-access-token")
-		require.Nil(t, err)
-		require.Nil(t, pubdashConfig)
-	})
-
-	t.Run("Should be able to delete a dashboard folder, with its dashboard and related public dashboard", func(t *testing.T) {
-		setup()
-
-		uid := util.GenerateShortUID()
-		cmd := publicDashboardModels.SavePublicDashboardCommand{
-			PublicDashboard: publicDashboardModels.PublicDashboard{
-				Uid:          uid,
-				DashboardUid: savedDash.UID,
-				OrgId:        savedDash.OrgID,
-				IsEnabled:    true,
-				TimeSettings: &publicDashboardModels.TimeSettings{},
-				CreatedBy:    1,
-				CreatedAt:    time.Now(),
-				AccessToken:  "an-access-token",
-			},
-		}
-		_, err := publicDashboardStore.Create(context.Background(), cmd)
-		require.NoError(t, err)
-		pubdashConfig, _ := publicDashboardStore.FindByAccessToken(context.Background(), "an-access-token")
-		require.NotNil(t, pubdashConfig)
-
-		deleteCmd := &dashboards.DeleteDashboardCommand{ID: savedFolder.ID, ForceDeleteFolderRules: true}
-		err = dashboardStore.DeleteDashboard(context.Background(), deleteCmd)
-		require.NoError(t, err)
-
-		query := dashboards.GetDashboardsQuery{
-			DashboardIDs: []int64{savedFolder.ID, savedDash.ID},
-		}
-		queryResult, err := dashboardStore.GetDashboards(context.Background(), &query)
-		require.NoError(t, err)
-		require.Equal(t, len(queryResult), 0)
-
-		pubdashConfig, err = publicDashboardStore.FindByAccessToken(context.Background(), "an-access-token")
-		require.Nil(t, err)
-		require.Nil(t, pubdashConfig)
 	})
 
 	t.Run("Should be able to delete a dashboard folder and its children if force delete rules is enabled", func(t *testing.T) {
@@ -783,7 +705,7 @@ func insertTestRule(t *testing.T, sqlStore db.DB, foderOrgID int64, folderUID st
 	require.NoError(t, err)
 }
 
-func insertTestDashboard(t *testing.T, dashboardStore *DashboardStore, title string, orgId int64,
+func insertTestDashboard(t *testing.T, dashboardStore dashboards.Store, title string, orgId int64,
 	folderId int64, isFolder bool, tags ...interface{}) *dashboards.Dashboard {
 	t.Helper()
 	cmd := dashboards.SaveDashboardCommand{
@@ -804,7 +726,7 @@ func insertTestDashboard(t *testing.T, dashboardStore *DashboardStore, title str
 	return dash
 }
 
-func insertTestDashboardForPlugin(t *testing.T, dashboardStore *DashboardStore, title string, orgId int64,
+func insertTestDashboardForPlugin(t *testing.T, dashboardStore dashboards.Store, title string, orgId int64,
 	folderId int64, isFolder bool, pluginId string) *dashboards.Dashboard {
 	t.Helper()
 	cmd := dashboards.SaveDashboardCommand{
@@ -824,7 +746,7 @@ func insertTestDashboardForPlugin(t *testing.T, dashboardStore *DashboardStore, 
 	return dash
 }
 
-func updateDashboardACL(t *testing.T, dashboardStore *DashboardStore, dashboardID int64,
+func updateDashboardACL(t *testing.T, dashboardStore dashboards.Store, dashboardID int64,
 	items ...dashboards.DashboardACL) error {
 	t.Helper()
 
@@ -841,7 +763,7 @@ func updateDashboardACL(t *testing.T, dashboardStore *DashboardStore, dashboardI
 
 // testSearchDashboards is a (near) copy of the dashboard service
 // SearchDashboards, which is a wrapper around FindDashboards.
-func testSearchDashboards(d *DashboardStore, query *dashboards.FindPersistedDashboardsQuery) error {
+func testSearchDashboards(d dashboards.Store, query *dashboards.FindPersistedDashboardsQuery) error {
 	res, err := d.FindDashboards(context.Background(), query)
 	if err != nil {
 		return err

@@ -15,4 +15,4 @@ export { sortThresholds, getActiveThreshold } from './thresholds';
 export { applyFieldOverrides, validateFieldConfig, applyRawFieldOverrides, useFieldOverrides } from './fieldOverrides';
 export { getFieldDisplayValuesProxy } from './getFieldDisplayValuesProxy';
 export { getFieldDisplayName, getFrameDisplayName } from './fieldState';
-export { getScaleCalculator, getFieldConfigWithMinMax } from './scale';
+export { getScaleCalculator, getFieldConfigWithMinMax, getMinMaxAndDelta } from './scale';
