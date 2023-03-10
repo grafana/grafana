@@ -140,14 +140,14 @@ func (pd *PublicDashboardServiceImpl) FindPublicDashboardAndDashboardByAccessTok
 
 // Creates and validates the public dashboard and saves it to the database
 func (pd *PublicDashboardServiceImpl) Create(ctx context.Context, u *user.SignedInUser, dto *SavePublicDashboardDTO) (*PublicDashboard, error) {
-	// ensure dashboard exists
-	dashboard, err := pd.FindDashboard(ctx, u.OrgID, dto.DashboardUid)
+	// validate fields
+	err := validation.ValidatePublicDashboard(dto)
 	if err != nil {
 		return nil, err
 	}
 
-	// validate fields
-	err = validation.ValidatePublicDashboard(dto, dashboard)
+	// ensure dashboard exists
+	_, err = pd.FindDashboard(ctx, u.OrgID, dto.DashboardUid)
 	if err != nil {
 		return nil, err
 	}
@@ -216,6 +216,12 @@ func (pd *PublicDashboardServiceImpl) Create(ctx context.Context, u *user.Signed
 
 // Update: updates an existing public dashboard based on publicdashboard.Uid
 func (pd *PublicDashboardServiceImpl) Update(ctx context.Context, u *user.SignedInUser, dto *SavePublicDashboardDTO) (*PublicDashboard, error) {
+	// validate fields
+	err := validation.ValidatePublicDashboard(dto)
+	if err != nil {
+		return nil, err
+	}
+
 	// validate if the dashboard exists
 	dashboard, err := pd.FindDashboard(ctx, u.OrgID, dto.DashboardUid)
 	if err != nil {
@@ -232,12 +238,6 @@ func (pd *PublicDashboardServiceImpl) Update(ctx context.Context, u *user.Signed
 		return nil, ErrInternalServerError.Errorf("Update: failed to find public dashboard by uid: %s: %w", dto.PublicDashboard.Uid, err)
 	} else if existingPubdash == nil {
 		return nil, ErrPublicDashboardNotFound.Errorf("Update: public dashboard not found by uid: %s", dto.PublicDashboard.Uid)
-	}
-
-	// validate dashboard
-	err = validation.ValidatePublicDashboard(dto, dashboard)
-	if err != nil {
-		return nil, err
 	}
 
 	// set default value for time settings
