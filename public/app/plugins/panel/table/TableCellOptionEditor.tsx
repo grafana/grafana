@@ -3,11 +3,13 @@ import { merge } from 'lodash';
 import React, { useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { TableCellOptions } from '@grafana/schema';
 import { Field, Select, TableCellDisplayMode, useStyles2 } from '@grafana/ui';
 
 import { BarGaugeCellOptionsEditor } from './cells/BarGaugeCellOptionsEditor';
 import { ColorBackgroundCellOptionsEditor } from './cells/ColorBackgroundCellOptionsEditor';
+import { SparklineCellOptionsEditor } from './cells/SparklineCellOptionsEditor';
 
 // The props that any cell type editor are expected
 // to handle. In this case the generic type should
@@ -65,21 +67,30 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
       {cellType === TableCellDisplayMode.ColorBackground && (
         <ColorBackgroundCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
       )}
+      {cellType === TableCellDisplayMode.Sparkline && (
+        <SparklineCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
+      )}
     </div>
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) => ({
-  fixBottomMargin: css({
-    marginBottom: theme.spacing(-2),
-  }),
-});
+const SparklineDisplayModeOption: SelectableValue<TableCellOptions> = {
+  value: { type: TableCellDisplayMode.Sparkline },
+  label: 'Sparkline',
+};
 
 const cellDisplayModeOptions: Array<SelectableValue<TableCellOptions>> = [
   { value: { type: TableCellDisplayMode.Auto }, label: 'Auto' },
+  ...(config.featureToggles.timeSeriesTable ? [SparklineDisplayModeOption] : []),
   { value: { type: TableCellDisplayMode.ColorText }, label: 'Colored text' },
   { value: { type: TableCellDisplayMode.ColorBackground }, label: 'Colored background' },
   { value: { type: TableCellDisplayMode.Gauge }, label: 'Gauge' },
   { value: { type: TableCellDisplayMode.JSONView }, label: 'JSON View' },
   { value: { type: TableCellDisplayMode.Image }, label: 'Image' },
 ];
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  fixBottomMargin: css({
+    marginBottom: theme.spacing(-2),
+  }),
+});

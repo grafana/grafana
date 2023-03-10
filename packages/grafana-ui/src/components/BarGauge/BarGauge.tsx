@@ -388,6 +388,7 @@ export function calculateBarAndValueDimensions(props: Props): BarAndValueDimensi
       valueHeight = height - titleDim.height;
       valueWidth = Math.max(Math.min(width * 0.2, MAX_VALUE_WIDTH), realValueWidth);
     }
+    console.log('valueWidth', valueWidth);
 
     maxBarHeight = height - titleDim.height;
     maxBarWidth = width - valueWidth - titleDim.width;

@@ -11,12 +11,6 @@
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
-        "target": {
-          "limit": 100,
-          "matchAny": false,
-          "tags": [],
-          "type": "dashboard"
-        },
         "type": "dashboard"
       }
     ]
@@ -24,14 +18,13 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 141,
   "links": [],
   "liveNow": false,
   "panels": [
     {
       "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
+        "type": "datasource",
+        "uid": "grafana"
       },
       "gridPos": {
         "h": 1,
@@ -43,8 +36,8 @@
       "targets": [
         {
           "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "type": "datasource",
+            "uid": "grafana"
           },
           "refId": "A"
         }
@@ -55,7 +48,7 @@
     {
       "datasource": {
         "type": "testdata",
-        "uid": "PD8C576611E62080A"
+        "uid": "gdev-testdata"
       },
       "fieldConfig": {
         "defaults": {
@@ -76,7 +69,7 @@
             "mode": "percentage",
             "steps": [
               {
-                "color": "green"
+                "color": "green"                
               },
               {
                 "color": "blue",
@@ -153,6 +146,7 @@
       },
       "id": 4,
       "options": {
+        "cellHeight": "md",
         "footer": {
           "countRows": false,
           "fields": "",
@@ -162,6 +156,7 @@
           "show": false
         },
         "showHeader": true,
+        "showRowNums": false,
         "sortBy": [
           {
             "desc": true,
@@ -169,12 +164,12 @@
           }
         ]
       },
-      "pluginVersion": "9.4.0-pre",
+      "pluginVersion": "9.5.0-pre",
       "targets": [
         {
           "datasource": {
             "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "uid": "gdev-testdata"
           },
           "refId": "A",
           "scenarioId": "random_walk",
@@ -300,6 +295,7 @@
           "show": false
         },
         "showHeader": true,
+        "showRowNums": false,
         "sortBy": [
           {
             "desc": false,
@@ -307,7 +303,7 @@
           }
         ]
       },
-      "pluginVersion": "9.4.0-pre",
+      "pluginVersion": "9.5.0-pre",
       "targets": [
         {
           "datasource": {
@@ -346,26 +342,300 @@
       "type": "table"
     },
     {
-      "collapsed": false,
       "datasource": {
         "type": "testdata",
-        "uid": "PD8C576611E62080A"
+        "uid": "gdev-testdata"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"                
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "rate"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "sparkline"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "continuous-GrYlRd"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 9,
+        "x": 0,
+        "y": 17
+      },
+      "id": 14,
+      "options": {
+        "cellHeight": "md",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "showRowNums": false
+      },
+      "pluginVersion": "9.5.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "type": "testdata",
+            "uid": "gdev-testdata"
+          },
+          "labels": "cluster=eu,service=checkout",
+          "min": 0.1,
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "seriesCount": 3
+        }
+      ],
+      "title": "Sparkline cell",
+      "transformations": [
+        {
+          "id": "timeSeriesTable",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "indexByName": {},
+            "renameByName": {
+              "Trend": "rate"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "gdev-testdata"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "rate"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "drawStyle": "bars",
+                  "fillOpacity": 40,
+                  "gradientMode": "opacity",
+                  "lineWidth": 1,
+                  "showPoints": "auto",
+                  "type": "sparkline"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "continuous-GrYlRd"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "latency"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "fillOpacity": 40,
+                  "gradientMode": "hue",
+                  "type": "sparkline"
+                }
+              },
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 9,
+        "x": 9,
+        "y": 17
+      },
+      "id": 15,
+      "maxDataPoints": 100,
+      "options": {
+        "cellHeight": "md",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "showRowNums": false
+      },
+      "pluginVersion": "9.5.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "type": "testdata",
+            "uid": "gdev-testdata"
+          },
+          "labels": "cluster=eu,service=checkout",
+          "min": 0.1,
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "seriesCount": 3
+        },
+        {
+          "datasource": {
+            "type": "testdata",
+            "uid": "gdev-testdata"
+          },
+          "hide": false,
+          "labels": "cluster=eu,service=checkout",
+          "min": 0.1,
+          "refId": "B",
+          "scenarioId": "random_walk",
+          "seriesCount": 3
+        }
+      ],
+      "title": "Multiple sparkline cells per row",
+      "transformations": [
+        {
+          "id": "timeSeriesTable",
+          "options": {}
+        },
+        {
+          "id": "joinByField",
+          "options": {
+            "byField": "service",
+            "mode": "outer"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "cluster 2": true
+            },
+            "indexByName": {},
+            "renameByName": {
+              "Trend": "rate",
+              "Trend #A": "rate",
+              "Trend #B": "latency",
+              "cluster 1": "cluster"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "gdev-testdata"
       },
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 17
+        "y": 25
       },
       "id": 9,
-      "panels": [],
+      "targets": [
+        {
+          "datasource": {
+            "type": "testdata",
+            "uid": "gdev-testdata"
+          },
+          "refId": "A"
+        }
+      ],
       "title": "Data links",
       "type": "row"
     },
     {
       "datasource": {
         "type": "testdata",
-        "uid": "PD8C576611E62080A"
+        "uid": "gdev-testdata"
       },
       "fieldConfig": {
         "defaults": {
@@ -437,13 +707,13 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 21,
+        "w": 12,
         "x": 0,
-        "y": 18
+        "y": 26
       },
       "id": 3,
-      "maxDataPoints": 10,
       "options": {
+        "cellHeight": "md",
         "footer": {
           "countRows": false,
           "fields": "",
@@ -452,15 +722,16 @@
           ],
           "show": false
         },
-        "showHeader": true
+        "showHeader": true,
+        "showRowNums": false
       },
-      "pluginVersion": "9.4.0-pre",
+      "pluginVersion": "9.5.0-pre",
       "targets": [
         {
           "alias": "S1",
           "datasource": {
             "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "uid": "gdev-testdata"
           },
           "labels": "server=A",
           "refId": "A",
@@ -472,7 +743,7 @@
           "alias": "S2",
           "datasource": {
             "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "uid": "gdev-testdata"
           },
           "labels": "server=B",
           "refId": "B",
@@ -484,7 +755,7 @@
           "alias": "S3",
           "datasource": {
             "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "uid": "gdev-testdata"
           },
           "labels": "server=C",
           "refId": "C",
@@ -505,71 +776,7 @@
     {
       "datasource": {
         "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "custom": {
-            "align": "auto",
-            "cellOptions": {
-              "type": "auto"
-            },
-            "inspect": false
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 10,
-        "x": 0,
-        "y": 26
-      },
-      "id": 12,
-      "options": {
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": [
-            "sum"
-          ],
-          "show": true
-        },
-        "showHeader": true
-      },
-      "pluginVersion": "9.4.0-pre",
-      "targets": [
-        {
-          "datasource": {
-            "type": "testdata",
-            "uid": "PD8C576611E62080A"
-          },
-          "refId": "A"
-        }
-      ],
-      "title": "Footer",
-      "type": "table"
-    },
-    {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
+        "uid": "gdev-testdata"
       },
       "fieldConfig": {
         "defaults": {
@@ -611,12 +818,13 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 11,
-        "x": 10,
+        "w": 5,
+        "x": 12,
         "y": 26
       },
       "id": 10,
       "options": {
+        "cellHeight": "md",
         "footer": {
           "countRows": false,
           "fields": "",
@@ -626,6 +834,7 @@
           "show": false
         },
         "showHeader": false,
+        "showRowNums": false,
         "sortBy": [
           {
             "desc": true,
@@ -633,12 +842,12 @@
           }
         ]
       },
-      "pluginVersion": "9.4.0-pre",
+      "pluginVersion": "9.5.0-pre",
       "targets": [
         {
           "datasource": {
             "type": "testdata",
-            "uid": "PD8C576611E62080A"
+            "uid": "gdev-testdata"
           },
           "refId": "A",
           "scenarioId": "random_walk_table",
@@ -668,12 +877,82 @@
         }
       ],
       "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "testdata",
+        "uid": "gdev-testdata"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"                
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 34
+      },
+      "id": 12,
+      "options": {
+        "cellHeight": "md",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": true
+        },
+        "showHeader": true,
+        "showRowNums": false
+      },
+      "pluginVersion": "9.5.0-pre",
+      "targets": [
+        {
+          "datasource": {
+            "type": "testdata",
+            "uid": "gdev-testdata"
+          },
+          "refId": "A"
+        }
+      ],
+      "title": "Footer",
+      "type": "table"
     }
   ],
+  "refresh": "",
   "revision": 1,
   "schemaVersion": 38,
   "style": "dark",
-  "tags": [],
+  "tags": [
+    "gdev",
+    "panel-tests"
+  ],
   "templating": {
     "list": []
   },
@@ -697,6 +976,6 @@
   "timezone": "",
   "title": "Panel Tests - React Table",
   "uid": "U_bZIMRMk",
-  "version": 6,
+  "version": 7,
   "weekStart": ""
 }
