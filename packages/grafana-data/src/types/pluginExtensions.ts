@@ -2,6 +2,10 @@
  * These types are exposed when rendering extension points
  */
 
+export enum PluginExtensionPlacements {
+  DashboardPanelMenu = 'grafana/dashboard/panel/menu',
+}
+
 export enum PluginExtensionTypes {
   link = 'link',
   command = 'command',

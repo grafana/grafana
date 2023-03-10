@@ -250,8 +250,7 @@ const getContentBoxStyles = (theme: GrafanaTheme2) => ({
   box: css`
     padding: ${theme.spacing(2)};
     background-color: ${theme.colors.background.secondary};
-    border-radius: 3px;
-    outline: 1px solid ${theme.colors.border.strong};
+    border-radius: ${theme.shape.borderRadius()};
   `,
 });
 

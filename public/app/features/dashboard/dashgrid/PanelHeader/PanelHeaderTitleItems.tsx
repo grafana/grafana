@@ -74,6 +74,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     timeshift: css({
       color: theme.colors.text.link,
       gap: theme.spacing(0.5),
+      whiteSpace: 'nowrap',
 
       '&:hover': {
         color: theme.colors.emphasize(theme.colors.text.link, 0.03),

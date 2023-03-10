@@ -108,7 +108,7 @@ export const filterRules = (
     const [idxs, info, order] = ufuzzy.search(namespaceHaystack, namespaceFilter);
     if (info && order) {
       filteredNamespaces = order.map((idx) => filteredNamespaces[info.idx[idx]]);
-    } else {
+    } else if (idxs) {
       filteredNamespaces = idxs.map((idx) => filteredNamespaces[idx]);
     }
   }
@@ -127,7 +127,7 @@ const reduceNamespaces = (filterState: RulesFilter) => {
       const [idxs, info, order] = ufuzzy.search(groupsHaystack, groupNameFilter);
       if (info && order) {
         filteredGroups = order.map((idx) => filteredGroups[info.idx[idx]]);
-      } else {
+      } else if (idxs) {
         filteredGroups = idxs.map((idx) => filteredGroups[idx]);
       }
     }
@@ -157,7 +157,7 @@ const reduceGroups = (filterState: RulesFilter) => {
       const [idxs, info, order] = ufuzzy.search(rulesHaystack, ruleNameQuery);
       if (info && order) {
         filteredRules = order.map((idx) => filteredRules[info.idx[idx]]);
-      } else {
+      } else if (idxs) {
         filteredRules = idxs.map((idx) => filteredRules[idx]);
       }
     }
