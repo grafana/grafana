@@ -94,6 +94,8 @@ publicDashboardsEmailSharing = true
 
 If a viewer without access tries to navigate to the public dashboard, they'll be asked to request access by providing their email. They will receive an email with a new one-time use link if the email they provided has already been invited to view the public dashboard and has not been revoked.
 
+If the viewer doesn't have an invitation or it's been revoked, you won't be notified and no link is sent.
+
 ### Revoke access for a viewer
 
 1. Click the sharing icon to the right of the dashboard title.
