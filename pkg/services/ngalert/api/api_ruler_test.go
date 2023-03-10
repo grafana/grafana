@@ -47,6 +47,7 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 		return result
 	}
 
+	// TODO (yuri) remove scheduler from all places in api tests
 	assertRulesDeleted := func(t *testing.T, expectedRules []*models.AlertRule, ruleStore *fakes.RuleStore, scheduler *schedule.FakeScheduleService) {
 		deleteCommands := getRecordedCommand(ruleStore)
 		require.Len(t, deleteCommands, 1)
@@ -56,20 +57,6 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 		for _, rule := range expectedRules {
 			require.Containsf(t, actualUIDs, rule.UID, "Rule %s was expected to be deleted but it wasn't", rule.UID)
 		}
-
-		notDeletedRules := make(map[models.AlertRuleKey]struct{}, len(expectedRules))
-		for _, rule := range expectedRules {
-			notDeletedRules[rule.GetKey()] = struct{}{}
-		}
-		for _, call := range scheduler.Calls {
-			require.Equal(t, "DeleteAlertRule", call.Method)
-			keys, ok := call.Arguments.Get(0).([]models.AlertRuleKey)
-			require.Truef(t, ok, "Expected AlertRuleKey but got something else")
-			for _, key := range keys {
-				delete(notDeletedRules, key)
-			}
-		}
-		require.Emptyf(t, notDeletedRules, "Not all rules were deleted")
 	}
 
 	orgID := rand.Int63()
