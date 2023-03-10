@@ -1,5 +1,5 @@
 import { action } from '@storybook/addon-actions';
-import { ComponentStory, ComponentMeta } from '@storybook/react';
+import { ComponentStory, Meta } from '@storybook/react';
 import React from 'react';
 
 import { Alert, AlertVariant, VerticalGroup } from '@grafana/ui';
@@ -9,8 +9,8 @@ import mdx from '../Alert/Alert.mdx';
 
 const severities: AlertVariant[] = ['error', 'warning', 'info', 'success'];
 
-const meta: ComponentMeta<typeof Alert> = {
-  title: 'Overlays/Alert',
+const meta: Meta = {
+  title: 'Overlays/Alert/InlineBanner',
   component: Alert,
   decorators: [withCenteredStory, withHorizontallyCenteredStory],
   parameters: {
@@ -23,11 +23,13 @@ const meta: ComponentMeta<typeof Alert> = {
     controls: {},
   },
   argTypes: {
-    severity: { control: { type: 'select', options: severities } },
+    severity: { 
+        control: { type: 'select', options: severities } 
+    },
   },
 };
 
-export const InlineBanner: ComponentStory<typeof Alert> = (args) => {
+export const Basic: ComponentStory<typeof Alert> = (args) => {
   return (
     <div>
       <Alert {...args}>
@@ -35,49 +37,43 @@ export const InlineBanner: ComponentStory<typeof Alert> = (args) => {
           <div>Child content that includes some alert details, like maybe what actually happened.</div>
         </VerticalGroup>
       </Alert>
-      <Alert {...args} onRemove={action('Remove button clicked')} buttonContent={undefined}>
-        <VerticalGroup>
-          <div>Child content that includes some alert details, like maybe what actually happened.</div>
-        </VerticalGroup>
-      </Alert>
-      <Alert {...args} onRemove={action('Remove button clicked')}>
-        <VerticalGroup>
-          <div>Child content that includes some alert details, like maybe what actually happened.</div>
-        </VerticalGroup>
-      </Alert>
     </div>
   );
 };
 
-InlineBanner.args = {
+Basic.args = {
   severity: 'error',
-  title: 'Title',
-  buttonContent: 'Close',
+  title: 'Basic',
 };
-InlineBanner.argTypes = {
-  buttonContent: {
-    control: { type: 'text', default: 'Close' },
-  },
+Basic.parameters = {
+    control: { exclude: ['buttonContent', 'withButton']},
 };
 
-export const Toast: ComponentStory<typeof Alert> = (args) => {
+export const WithActions: ComponentStory<typeof Alert> = (args) => {
   return (
-    <div className="page-alert-list">
-      <Alert {...args} elevated>
+    <Alert {...args} buttonContent={args.withButton ? args.buttonContent : undefined} onRemove={action('Remove button clicked')}>
         <VerticalGroup>
           <div>Child content that includes some alert details, like maybe what actually happened.</div>
         </VerticalGroup>
       </Alert>
-    </div>
   );
 };
 
-Toast.args = {
-  title: 'Toast',
+WithActions.argTypes = {
+    withButton: { 
+        control: { type: 'select', options: [true, false] } 
+    },
+}
+
+WithActions.args = {
+  title: 'With action',
   severity: 'error',
   onRemove: action('Remove button clicked'),
+  buttonContent: 'Close',
+  withButton: true
 };
-Toast.parameters = {
+
+WithActions.parameters = {
   controls: {
     exclude: ['onRemove'],
   },
