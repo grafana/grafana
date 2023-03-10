@@ -251,3 +251,6 @@ VizTooltipOptions: {
 Labels: {
 	[string]: string
 } @cuetsy(kind="interface")
+
+// Height of a table cell
+TableCellHeight: "sm" | "md" | "lg" @cuetsy(kind="enum")

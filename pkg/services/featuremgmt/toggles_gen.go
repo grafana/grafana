@@ -270,4 +270,8 @@ const (
 	// FlagPrometheusMetricEncyclopedia
 	// Replaces the Prometheus query builder metric select option with a paginated and filterable component
 	FlagPrometheusMetricEncyclopedia = "prometheusMetricEncyclopedia"
+
+	// FlagTimeSeriesTable
+	// Enable time series table transformer &amp; sparkline cell type
+	FlagTimeSeriesTable = "timeSeriesTable"
 )
