@@ -19,7 +19,7 @@ function expandTimeRange(startTime: number, endTime: number, step: number): [num
   return [newStartTime, newEndTime];
 }
 
-const MAX_CHUNK_COUNT = 50;
+const MAX_CHUNK_COUNT = 10000;
 
 export function getRangeChunks(
   startTime: number,

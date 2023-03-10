@@ -1,5 +1,5 @@
 import { partition } from 'lodash';
-import { Subscriber, Observable, Subscription } from 'rxjs';
+import { Subscriber, Observable, Subscription, throwError } from 'rxjs';
 
 import { DataQueryRequest, DataQueryResponse, dateTime, TimeRange } from '@grafana/data';
 import { LoadingState } from '@grafana/schema';
@@ -43,7 +43,7 @@ export function partitionTimeRange(
 
   // if the split was not possible, go with the original range
   if (ranges == null) {
-    return [originalTimeRange];
+    throw new Error('The selected time interval exceeds the defined query split limit. Please try a smaller range.');
   }
 
   return ranges.map(([start, end]) => {
@@ -179,23 +179,28 @@ export function runPartitionedQueries(datasource: LokiDatasource, request: DataQ
   const [logQueries, metricQueries] = partition(normalQueries, (query) => isLogsQuery(query.expr));
 
   const requests: LokiGroupedRequest = [];
-  if (logQueries.length) {
-    requests.push({
-      request: { ...request, targets: logQueries },
-      partition: partitionTimeRange(true, request.range, request.intervalMs, logQueries[0].resolution ?? 1),
-    });
+  try {
+    if (logQueries.length) {
+      requests.push({
+        request: { ...request, targets: logQueries },
+        partition: partitionTimeRange(true, request.range, request.intervalMs, logQueries[0].resolution ?? 1),
+      });
+    }
+    if (metricQueries.length) {
+      requests.push({
+        request: { ...request, targets: metricQueries },
+        partition: partitionTimeRange(false, request.range, request.intervalMs, metricQueries[0].resolution ?? 1),
+      });
+    }
+    if (instantQueries.length) {
+      requests.push({
+        request: { ...request, targets: instantQueries },
+        partition: [request.range],
+      });
+    }
+  } catch (error) {
+    return throwError(() => error);
   }
-  if (metricQueries.length) {
-    requests.push({
-      request: { ...request, targets: metricQueries },
-      partition: partitionTimeRange(false, request.range, request.intervalMs, metricQueries[0].resolution ?? 1),
-    });
-  }
-  if (instantQueries.length) {
-    requests.push({
-      request: { ...request, targets: instantQueries },
-      partition: [request.range],
-    });
-  }
+
   return runGroupedQueries(datasource, requests);
 }

@@ -14,7 +14,7 @@ describe('querySplit', () => {
   });
 
   it('should return null if too many chunks would be generated', () => {
-    const start = Date.parse('2022-02-06T14:10:03');
+    const start = Date.parse('1990-02-06T14:10:03');
     const end = Date.parse('2022-02-06T14:35:01');
     const step = 10 * 1000;
     expect(getRangeChunks(start, end, step, 20000)).toBeNull();

@@ -28,8 +28,8 @@ describe('querySplit', () => {
   });
 
   it('should return null if too many chunks would be generated', () => {
-    const start = Date.parse('2022-02-06T14:10:03');
-    const end = Date.parse('2022-02-06T14:30:03');
+    const start = Date.parse('1990-02-06T14:10:03');
+    const end = Date.parse('2023-02-06T14:30:03');
     expect(getRangeChunks(start, end, 10000)).toBeNull();
   });
 });

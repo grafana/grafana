@@ -190,4 +190,24 @@ describe('runPartitionedQueries()', () => {
       });
     });
   });
+
+  test('Throws when the requested interval is excessively large', async () => {
+    const range = {
+      from: dateTime('1990-02-08T05:00:00.000Z'),
+      to: dateTime('2023-02-10T06:00:00.000Z'),
+      raw: {
+        from: dateTime('1990-02-08T05:00:00.000Z'),
+        to: dateTime('2023-02-10T06:00:00.000Z'),
+      },
+    };
+    const request = getQueryOptions<LokiQuery>({
+      targets: [{ expr: 'count_over_time({a="b"}[1m])', refId: 'A' }],
+      range,
+    });
+
+    await expect(runPartitionedQueries(datasource, request)).toEmitValuesWith((error) => {
+      expect(error[0]).toBeInstanceOf(Error);
+      expect(datasource.runQuery).toHaveBeenCalledTimes(0);
+    });
+  });
 });
