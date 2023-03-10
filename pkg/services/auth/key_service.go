@@ -27,7 +27,7 @@ func ProvideEmbeddedKeyService() *EmbeddedKeyService {
 		log: log.New("auth.key_service"),
 	}
 
-	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	privateKey, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
 		s.log.Error("Error generating private key", "err", err)
 	}
@@ -44,6 +44,19 @@ type EmbeddedKeyService struct {
 }
 
 func (s *EmbeddedKeyService) GetJWKS() (jose.JSONWebKeySet, error) {
+	result := jose.JSONWebKeySet{}
+
+	for keyID := range s.keys {
+		jwk, err := s.GetJWK(keyID)
+		if err != nil {
+			s.log.Error("The specified key was not found", "keyID", keyID)
+			return jose.JSONWebKeySet{}, err
+		}
+		result.Keys = append(result.Keys, jwk)
+	}
+
+	return result, nil
+}
 
 func (s *EmbeddedKeyService) GetJWK(keyID string) (jose.JSONWebKey, error) {
 	privateKey := s.keys[keyID]
