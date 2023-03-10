@@ -83,7 +83,15 @@
       "matchPackagePrefixes": [
         "@visx/"
       ]
-    }
+    },
+    {
+      "groupName": "uLibraries",
+      "matchPackageNames": [
+        "@leeoniya/ufuzzy",
+        "uplot"
+      ],
+      "reviewers": ["leeoniya"],
+    },
   ],
   "pin": {
     "enabled": false

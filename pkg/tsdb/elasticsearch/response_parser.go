@@ -3,6 +3,7 @@ package elasticsearch
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"regexp"
 	"sort"
 	"strconv"
@@ -36,6 +37,8 @@ const (
 	logsType = "logs"
 )
 
+var searchWordsRegex = regexp.MustCompile(regexp.QuoteMeta(es.HighlightPreTagsString) + `(.*?)` + regexp.QuoteMeta(es.HighlightPostTagsString))
+
 func parseResponse(responses []*es.SearchResponse, targets []*Query, configuredFields es.ConfiguredFields) (*backend.QueryDataResponse, error) {
 	result := backend.QueryDataResponse{
 		Responses: backend.Responses{},
@@ -57,8 +60,14 @@ func parseResponse(responses []*es.SearchResponse, targets []*Query, configuredF
 
 		queryRes := backend.DataResponse{}
 
-		if isDocumentQuery(target) {
-			err := processDocumentResponse(res, target, configuredFields, &queryRes)
+		if isRawDataQuery(target) {
+			err := processRawDataResponse(res, target, configuredFields, &queryRes)
+			if err != nil {
+				return &backend.QueryDataResponse{}, err
+			}
+			result.Responses[target.RefID] = queryRes
+		} else if isRawDocumentQuery(target) {
+			err := processRawDocumentResponse(res, target, &queryRes)
 			if err != nil {
 				return &backend.QueryDataResponse{}, err
 			}
@@ -76,7 +85,7 @@ func parseResponse(responses []*es.SearchResponse, targets []*Query, configuredF
 			if err != nil {
 				return &backend.QueryDataResponse{}, err
 			}
-			nameFields(queryRes, target)
+			nameFrames(queryRes, target)
 			trimDatapoints(queryRes, target)
 
 			result.Responses[target.RefID] = queryRes
@@ -88,6 +97,7 @@ func parseResponse(responses []*es.SearchResponse, targets []*Query, configuredF
 func processLogsResponse(res *es.SearchResponse, target *Query, configuredFields es.ConfiguredFields, queryRes *backend.DataResponse) error {
 	propNames := make(map[string]bool)
 	docs := make([]map[string]interface{}, len(res.Hits.Hits))
+	searchWords := make(map[string]bool)
 
 	for hitIdx, hit := range res.Hits.Hits {
 		var flattened map[string]interface{}
@@ -115,7 +125,22 @@ func processLogsResponse(res *es.SearchResponse, target *Query, configuredFields
 		for key := range doc {
 			propNames[key] = true
 		}
-		// TODO: Implement highlighting
+
+		// Process highlight to searchWords
+		if highlights, ok := doc["highlight"].(map[string]interface{}); ok {
+			for _, highlight := range highlights {
+				if highlightList, ok := highlight.([]interface{}); ok {
+					for _, highlightValue := range highlightList {
+						str := fmt.Sprintf("%v", highlightValue)
+						matches := searchWordsRegex.FindAllStringSubmatch(str, -1)
+
+						for _, v := range matches {
+							searchWords[v[1]] = true
+						}
+					}
+				}
+			}
+		}
 
 		docs[hitIdx] = doc
 	}
@@ -125,14 +150,15 @@ func processLogsResponse(res *es.SearchResponse, target *Query, configuredFields
 
 	frames := data.Frames{}
 	frame := data.NewFrame("", fields...)
-	setPreferredVisType(frame, "logs")
+	setPreferredVisType(frame, data.VisTypeLogs)
+	setSearchWords(frame, searchWords)
 	frames = append(frames, frame)
 
 	queryRes.Frames = frames
 	return nil
 }
 
-func processDocumentResponse(res *es.SearchResponse, target *Query, configuredFields es.ConfiguredFields, queryRes *backend.DataResponse) error {
+func processRawDataResponse(res *es.SearchResponse, target *Query, configuredFields es.ConfiguredFields, queryRes *backend.DataResponse) error {
 	propNames := make(map[string]bool)
 	docs := make([]map[string]interface{}, len(res.Hits.Hits))
 
@@ -148,7 +174,6 @@ func processDocumentResponse(res *es.SearchResponse, target *Query, configuredFi
 			"_index":    hit["_index"],
 			"sort":      hit["sort"],
 			"highlight": hit["highlight"],
-			"_source":   flattened,
 		}
 
 		for k, v := range flattened {
@@ -167,6 +192,62 @@ func processDocumentResponse(res *es.SearchResponse, target *Query, configuredFi
 
 	frames := data.Frames{}
 	frame := data.NewFrame("", fields...)
+	frames = append(frames, frame)
+
+	queryRes.Frames = frames
+	return nil
+}
+
+func processRawDocumentResponse(res *es.SearchResponse, target *Query, queryRes *backend.DataResponse) error {
+	docs := make([]map[string]interface{}, len(res.Hits.Hits))
+	for hitIdx, hit := range res.Hits.Hits {
+		doc := map[string]interface{}{
+			"_id":       hit["_id"],
+			"_type":     hit["_type"],
+			"_index":    hit["_index"],
+			"sort":      hit["sort"],
+			"highlight": hit["highlight"],
+		}
+
+		if hit["_source"] != nil {
+			source, ok := hit["_source"].(map[string]interface{})
+			if ok {
+				for k, v := range source {
+					doc[k] = v
+				}
+			}
+		}
+
+		if hit["fields"] != nil {
+			source, ok := hit["fields"].(map[string]interface{})
+			if ok {
+				for k, v := range source {
+					doc[k] = v
+				}
+			}
+		}
+
+		docs[hitIdx] = doc
+	}
+
+	fieldVector := make([]*json.RawMessage, len(res.Hits.Hits))
+	for i, doc := range docs {
+		bytes, err := json.Marshal(doc)
+		if err != nil {
+			// We skip docs that can't be marshalled
+			// should not happen
+			continue
+		}
+		value := json.RawMessage(bytes)
+		fieldVector[i] = &value
+	}
+
+	isFilterable := true
+	field := data.NewField(target.RefID, nil, fieldVector)
+	field.Config = &data.FieldConfig{Filterable: &isFilterable}
+
+	frames := data.Frames{}
+	frame := data.NewFrame(target.RefID, field)
 	frames = append(frames, frame)
 
 	queryRes.Frames = frames
@@ -320,8 +401,8 @@ func processBuckets(aggs map[string]interface{}, target *Query,
 
 func newTimeSeriesFrame(timeData []time.Time, tags map[string]string, values []*float64) *data.Frame {
 	frame := data.NewFrame("",
-		data.NewField("time", nil, timeData),
-		data.NewField("value", tags, values))
+		data.NewField(data.TimeSeriesTimeFieldName, nil, timeData),
+		data.NewField(data.TimeSeriesValueFieldName, tags, values))
 	frame.Meta = &data.FrameMeta{
 		Type: data.FrameTypeTimeSeriesMulti,
 	}
@@ -716,7 +797,7 @@ func getSortedLabelValues(labels data.Labels) []string {
 	return values
 }
 
-func nameFields(queryResult backend.DataResponse, target *Query) {
+func nameFrames(queryResult backend.DataResponse, target *Query) {
 	set := make(map[string]struct{})
 	frames := queryResult.Frames
 	for _, v := range frames {
@@ -735,9 +816,7 @@ func nameFields(queryResult backend.DataResponse, target *Query) {
 			// another is "number"
 			valueField := frame.Fields[1]
 			fieldName := getFieldName(*valueField, target, metricTypeCount)
-			if fieldName != "" {
-				valueField.SetConfig(&data.FieldConfig{DisplayNameFromDS: fieldName})
-			}
+			frame.Name = fieldName
 		}
 	}
 }
@@ -1013,4 +1092,26 @@ func setPreferredVisType(frame *data.Frame, visType data.VisType) {
 	}
 
 	frame.Meta.PreferredVisualization = visType
+}
+
+func setSearchWords(frame *data.Frame, searchWords map[string]bool) {
+	i := 0
+	searchWordsList := make([]string, len(searchWords))
+	for searchWord := range searchWords {
+		searchWordsList[i] = searchWord
+		i++
+	}
+	sort.Strings(searchWordsList)
+
+	if frame.Meta == nil {
+		frame.Meta = &data.FrameMeta{}
+	}
+
+	if frame.Meta.Custom == nil {
+		frame.Meta.Custom = map[string]interface{}{}
+	}
+
+	frame.Meta.Custom = map[string]interface{}{
+		"searchWords": searchWordsList,
+	}
 }

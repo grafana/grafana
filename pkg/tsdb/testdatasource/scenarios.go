@@ -712,15 +712,29 @@ func randomWalkTable(query backend.DataQuery, model *simplejson.Json) *data.Fram
 	walker := model.Get("startValue").MustFloat64(rand.Float64() * 100)
 	spread := 2.5
 
+	stateField := data.NewFieldFromFieldType(data.FieldTypeEnum, 0)
+	stateField.Name = "State"
+	stateField.Config = &data.FieldConfig{
+		TypeConfig: &data.FieldTypeConfig{
+			Enum: &data.EnumFieldConfig{
+				Text: []string{
+					"Unknown", "Up", "Down", // 0,1,2
+				},
+			},
+		},
+	}
+
 	frame := data.NewFrame(query.RefID,
 		data.NewField("Time", nil, []*time.Time{}),
 		data.NewField("Value", nil, []*float64{}),
 		data.NewField("Min", nil, []*float64{}),
 		data.NewField("Max", nil, []*float64{}),
 		data.NewField("Info", nil, []*string{}),
+		stateField,
 	)
 
 	var info strings.Builder
+	state := data.EnumItemIndex(0)
 
 	for i := int64(0); i < query.MaxDataPoints && timeWalkerMs < to; i++ {
 		delta := rand.Float64() - 0.5
@@ -729,8 +743,10 @@ func randomWalkTable(query backend.DataQuery, model *simplejson.Json) *data.Fram
 		info.Reset()
 		if delta > 0 {
 			info.WriteString("up")
+			state = 1
 		} else {
 			info.WriteString("down")
+			state = 2
 		}
 		if math.Abs(delta) > .4 {
 			info.WriteString(" fast")
@@ -748,11 +764,12 @@ func randomWalkTable(query backend.DataQuery, model *simplejson.Json) *data.Fram
 			for i := range vals {
 				if rand.Float64() > .2 {
 					vals[i] = nil
+					state = 0
 				}
 			}
 		}
 
-		frame.AppendRow(&t, vals[0], vals[1], vals[2], &infoString)
+		frame.AppendRow(&t, vals[0], vals[1], vals[2], &infoString, state)
 
 		timeWalkerMs += query.Interval.Milliseconds()
 	}

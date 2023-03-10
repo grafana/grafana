@@ -1,25 +1,21 @@
-export type PluginsExtensionLink = {
-  type: 'link';
-  title: string;
-  description: string;
-  path: string;
-  key: number;
-};
+import { PluginExtension } from '@grafana/data';
 
-export type PluginsExtension = PluginsExtensionLink;
+export type PluginExtensionRegistryItem<T extends PluginExtension = PluginExtension, C extends object = object> = (
+  context?: C
+) => T | undefined;
 
-export type PluginsExtensionRegistry = Record<string, PluginsExtension[]>;
+export type PluginExtensionRegistry = Record<string, PluginExtensionRegistryItem[]>;
 
-let registry: PluginsExtensionRegistry | undefined;
+let registry: PluginExtensionRegistry | undefined;
 
-export function setPluginsExtensionRegistry(instance: PluginsExtensionRegistry): void {
-  if (registry) {
+export function setPluginsExtensionRegistry(instance: PluginExtensionRegistry): void {
+  if (registry && process.env.NODE_ENV !== 'test') {
     throw new Error('setPluginsExtensionRegistry function should only be called once, when Grafana is starting.');
   }
   registry = instance;
 }
 
-export function getPluginsExtensionRegistry(): PluginsExtensionRegistry {
+export function getPluginsExtensionRegistry(): PluginExtensionRegistry {
   if (!registry) {
     throw new Error('getPluginsExtensionRegistry can only be used after the Grafana instance has started.');
   }
