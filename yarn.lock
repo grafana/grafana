@@ -4956,7 +4956,7 @@ __metadata:
     react-test-renderer: 17.0.2
     react-use: 17.4.0
     regenerator-runtime: 0.13.11
-    rimraf: 4.2.0
+    rimraf: 4.4.0
     rollup: 2.79.1
     rollup-plugin-dts: ^5.0.0
     rollup-plugin-esbuild: 5.0.0
@@ -4983,7 +4983,7 @@ __metadata:
     "@rollup/plugin-node-resolve": 15.0.1
     "@types/node": 18.14.6
     esbuild: 0.16.17
-    rimraf: 4.2.0
+    rimraf: 4.4.0
     rollup: 2.79.1
     rollup-plugin-dts: ^5.0.0
     rollup-plugin-esbuild: 5.0.0
@@ -5031,7 +5031,7 @@ __metadata:
     lodash: 4.17.21
     mocha: 10.2.0
     resolve-bin: 1.0.1
-    rimraf: 4.2.0
+    rimraf: 4.4.0
     rollup: 2.79.1
     rollup-plugin-dts: ^5.0.0
     rollup-plugin-esbuild: 5.0.0
@@ -5190,7 +5190,7 @@ __metadata:
     lodash: 4.17.21
     react: 17.0.2
     react-dom: 17.0.2
-    rimraf: 4.2.0
+    rimraf: 4.4.0
     rollup: 2.79.1
     rollup-plugin-dts: ^5.0.0
     rollup-plugin-esbuild: 5.0.0
@@ -5230,7 +5230,7 @@ __metadata:
     "@rollup/plugin-json": 5.0.1
     "@rollup/plugin-node-resolve": 15.0.1
     esbuild: 0.16.17
-    rimraf: 4.2.0
+    rimraf: 4.4.0
     rollup: 2.79.1
     rollup-plugin-dts: ^5.0.0
     rollup-plugin-esbuild: 5.0.0
@@ -5462,7 +5462,7 @@ __metadata:
     react-transition-group: 4.4.5
     react-use: 17.4.0
     react-window: 1.8.8
-    rimraf: 4.2.0
+    rimraf: 4.4.0
     rollup: 2.79.1
     rollup-plugin-dts: ^5.0.0
     rollup-plugin-esbuild: 5.0.0
@@ -22387,7 +22387,7 @@ __metadata:
     redux-thunk: 2.4.2
     regenerator-runtime: 0.13.11
     reselect: 4.1.7
-    rimraf: 4.2.0
+    rimraf: 4.4.0
     rst2html: "github:thoward/rst2html#990cb89f2a300cdd9151790be377c4c0840df809"
     rudder-sdk-js: 2.25.0
     rxjs: 7.8.0
@@ -34600,14 +34600,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rimraf@npm:4.2.0":
-  version: 4.2.0
-  resolution: "rimraf@npm:4.2.0"
+"rimraf@npm:4.4.0":
+  version: 4.4.0
+  resolution: "rimraf@npm:4.4.0"
   dependencies:
     glob: ^9.2.0
   bin:
     rimraf: dist/cjs/src/bin.js
-  checksum: 885baaec6d8e3a771bb3060f110c29070073a47fdcb26775ae165703173e79e845974dc8ed07e8eb4c3c85f126777968febdb385d0c274ad3b167db326e7f82e
+  checksum: 0cedaf9d138589d1bb0ab851f05804c6d30827aa66563472b04ab76245f83537e23e7b94f1f79ea6c368c0d84a18fcde6a756fca3a44c967e08792671b3a0a6e
   languageName: node
   linkType: hard
 
