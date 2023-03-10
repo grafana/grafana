@@ -15,6 +15,8 @@ import {
   reduceField,
   GrafanaTheme2,
   ArrayVector,
+  isDataFrame,
+  isTimeSeriesFrame,
 } from '@grafana/data';
 import {
   BarGaugeDisplayMode,
@@ -30,6 +32,7 @@ import { GeoCell } from './GeoCell';
 import { ImageCell } from './ImageCell';
 import { JSONViewCell } from './JSONViewCell';
 import { RowExpander } from './RowExpander';
+import { SparklineCell } from './SparklineCell';
 import {
   CellComponent,
   TableCellDisplayMode,
@@ -190,6 +193,8 @@ export function getCellComponent(displayMode: TableCellDisplayMode, field: Field
       return ImageCell;
     case TableCellDisplayMode.Gauge:
       return BarGaugeCell;
+    case TableCellDisplayMode.Sparkline:
+      return SparklineCell;
     case TableCellDisplayMode.JSONView:
       return JSONViewCell;
   }
@@ -198,10 +203,20 @@ export function getCellComponent(displayMode: TableCellDisplayMode, field: Field
     return GeoCell;
   }
 
+  if (field.type === FieldType.frame) {
+    const firstValue = field.values.get(0);
+    if (isDataFrame(firstValue) && isTimeSeriesFrame(firstValue)) {
+      return SparklineCell;
+    }
+
+    return JSONViewCell;
+  }
+
   // Default or Auto
   if (field.type === FieldType.other) {
     return JSONViewCell;
   }
+
   return DefaultCell;
 }
 
