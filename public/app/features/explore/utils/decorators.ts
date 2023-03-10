@@ -9,6 +9,7 @@ import {
   getDisplayProcessor,
   PanelData,
   standardTransformers,
+  preProcessPanelData,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
@@ -19,7 +20,6 @@ import { ExplorePanelData } from '../../../types';
 import { CorrelationData } from '../../correlations/useCorrelations';
 import { attachCorrelationsToDataFrames } from '../../correlations/utils';
 import { sortLogsResult } from '../../logs/utils';
-import { preProcessPanelData } from '../../query/state/runRequest';
 
 /**
  * When processing response first we try to determine what kind of dataframes we got as one query can return multiple
@@ -56,7 +56,7 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
         nodeGraphFrames.push(frame);
         break;
       case 'flamegraph':
-        config.featureToggles.flameGraph ? flameGraphFrames.push(frame) : tableFrames.push(frame);
+        flameGraphFrames.push(frame);
         break;
       default:
         if (isTimeSeries(frame)) {
@@ -223,7 +223,6 @@ export const decorateWithLogsResult =
       absoluteRange?: AbsoluteTimeRange;
       refreshInterval?: string;
       queries?: DataQuery[];
-      fullRangeLogsVolumeAvailable?: boolean;
     } = {}
   ) =>
   (data: ExplorePanelData): ExplorePanelData => {
@@ -236,7 +235,7 @@ export const decorateWithLogsResult =
     const sortOrder = refreshIntervalToSortOrder(options.refreshInterval);
     const sortedNewResults = sortLogsResult(newResults, sortOrder);
     const rows = sortedNewResults.rows;
-    const series = options.fullRangeLogsVolumeAvailable ? undefined : sortedNewResults.series;
+    const series = sortedNewResults.series;
     const logsResult = { ...sortedNewResults, rows, series };
 
     return { ...data, logsResult };
@@ -249,8 +248,7 @@ export function decorateData(
   absoluteRange: AbsoluteTimeRange,
   refreshInterval: string | undefined,
   queries: DataQuery[] | undefined,
-  correlations: CorrelationData[] | undefined,
-  fullRangeLogsVolumeAvailable: boolean
+  correlations: CorrelationData[] | undefined
 ): Observable<ExplorePanelData> {
   return of(data).pipe(
     map((data: PanelData) => preProcessPanelData(data, queryResponse)),
@@ -258,7 +256,7 @@ export function decorateData(
     map(decorateWithFrameTypeMetadata),
     map(decorateWithGraphResult),
     map(decorateWithGraphResult),
-    map(decorateWithLogsResult({ absoluteRange, refreshInterval, queries, fullRangeLogsVolumeAvailable })),
+    map(decorateWithLogsResult({ absoluteRange, refreshInterval, queries })),
     mergeMap(decorateWithRawPrometheusResult),
     mergeMap(decorateWithTableResult)
   );

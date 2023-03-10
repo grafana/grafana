@@ -17,7 +17,7 @@ The easiest way to start developing Grafana plugins is to use the Grafana [creat
 Open the terminal, and run the following command in your [plugin directory]({{< relref "../../setup-grafana/configure-grafana/#plugins" >}}):
 
 ```bash
-npx @grafana/create-plugin
+npx @grafana/create-plugin@latest
 ```
 
 Follow the questions and you will have a starter plugin ready to develop.
@@ -47,35 +47,35 @@ Ready to learn more? Check out our other tutorials:
 
 Improve an existing plugin with one of our guides:
 
-- [Add authentication for data source plugins](/tutorials/add-authentication-for-data-source-plugins/)
-- [Add support for annotations](/tutorials/add-support-for-annotations/)
-- [Add support for Explore queries](/tutorials/add-support-for-explore-queries/)
-- [Add support for variables](/tutorials/add-support-for-variables/)
-- [Add a query editor help component](/tutorials/add-query-editor-help/)
-- [Build a logs data source plugin](/tutorials/build-a-logs-data-source-plugin/)
-- [Build a streaming data source plugin](/tutorials/build-a-streaming-data-source-plugin/)
-- [Error handling](/tutorials/error-handling/)
-- [Working with data frames](/tutorials/working-with-data-frames/)
-- [Development with local Grafana](/tutorials/development-with-local-grafana/)
+- [Add authentication for data source plugins]({{< relref "add-authentication-for-data-source-plugins.md" >}})
+- [Add support for annotations]({{< relref "add-support-for-annotations.md" >}})
+- [Add support for Explore queries]({{< relref "add-support-for-explore-queries.md" >}})
+- [Add support for variables]({{< relref "add-support-for-variables.md" >}})
+- [Add a query editor help component]({{< relref "add-query-editor-help.md" >}})
+- [Build a logs data source plugin]({{< relref "build-a-logs-data-source-plugin.md" >}})
+- [Build a streaming data source plugin]({{< relref "build-a-streaming-data-source-plugin.md" >}}/)
+- [Error handling]({{< relref "error-handling.md" >}})
+- [Working with data frames]({{< relref "working-with-data-frames.md" >}})
+- [Development with local Grafana]({{< relref "development-with-local-grafana.md" >}})
 
 ### Concepts
 
 Deepen your knowledge through a series of high-level overviews of plugin concepts:
 
-- [Data frames](/tutorials/data-frames/)
+- [Data frames]({{< relref "data-frames.md" >}})
 
 ### UI library
 
-Explore the many UI components in our [Grafana UI library](/ui).
+Explore the many UI components in our [Grafana UI library](https://developers.grafana.com/ui).
 
 ### Examples
 
-For inspiration, check out our [plugin examples](/grafana/grafana-plugin-examples).
+For inspiration, check out our [plugin examples](https://github.com/grafana/grafana-plugin-examples).
 
 ### Metadata
 
-- [Plugin metadata](/tutorials/metadata/)
+- [Plugin metadata]({{< relref "metadata.md" >}})
 
 ### SDK
 
-- [Grafana Plugin SDK for Go](/tutorials/backend/grafana-plugin-sdk-for-go/)
+- [Grafana Plugin SDK for Go]({{< relref "backend/grafana-plugin-sdk-for-go.md" >}})

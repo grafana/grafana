@@ -152,6 +152,9 @@ func TestCollectingUsageStats(t *testing.T) {
 		AuthProxyEnabled:     true,
 		Packaging:            "deb",
 		ReportingDistributor: "hosted-grafana",
+		RemoteCacheOptions: &setting.RemoteCacheOptions{
+			Name: "database",
+		},
 	}, sqlStore, statsService,
 		withDatasources(mockDatasourceService{datasources: expectedDataSources}))
 
@@ -460,9 +463,8 @@ type mockDatasourceService struct {
 	datasources []*datasources.DataSource
 }
 
-func (s mockDatasourceService) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) error {
-	query.Result = s.datasources
-	return nil
+func (s mockDatasourceService) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) ([]*datasources.DataSource, error) {
+	return s.datasources, nil
 }
 
 func (s mockDatasourceService) GetHTTPTransport(ctx context.Context, ds *datasources.DataSource, provider httpclient.Provider, customMiddlewares ...sdkhttpclient.Middleware) (http.RoundTripper, error) {

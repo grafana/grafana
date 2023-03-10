@@ -214,11 +214,11 @@ func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]string, erro
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
-	err := d.datasourceService.GetDataSourcesByType(ctx, query)
+	dataSources, err := d.datasourceService.GetDataSourcesByType(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch datasources for org: %w", err)
 	}
-	for _, ds := range query.Result {
+	for _, ds := range dataSources {
 		if !ds.JsonData.Get(definitions.HandleGrafanaManagedAlerts).MustBool(false) {
 			continue
 		}
@@ -242,6 +242,20 @@ func (d *AlertsRouter) buildExternalURL(ds *datasources.DataSource) (string, err
 	if err != nil {
 		return "", fmt.Errorf("failed to parse alertmanager datasource url: %w", err)
 	}
+
+	// If this is a Mimir or Cortex implementation, the Alert API is under a different path than config API
+	if ds.JsonData != nil {
+		impl := ds.JsonData.Get("implementation").MustString("")
+		switch impl {
+		case "mimir", "cortex":
+			if parsed.Path == "" {
+				parsed.Path = "/"
+			}
+			parsed = parsed.JoinPath("/alertmanager")
+		default:
+		}
+	}
+
 	// if basic auth is enabled we need to build the url with basic auth baked in
 	if !ds.BasicAuth {
 		return parsed.String(), nil

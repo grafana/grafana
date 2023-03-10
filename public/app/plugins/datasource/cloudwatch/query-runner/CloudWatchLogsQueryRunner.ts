@@ -67,7 +67,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
     super(instanceSettings, templateSrv);
 
     this.tracingDataSourceUid = instanceSettings.jsonData.tracingDatasourceUid;
-    this.logsTimeout = instanceSettings.jsonData.logsTimeout || '15m';
+    this.logsTimeout = instanceSettings.jsonData.logsTimeout || '30m';
   }
 
   /**
@@ -103,7 +103,7 @@ export class CloudWatchLogsQueryRunner extends CloudWatchRequest {
       return {
         refId: target.refId,
         region: this.templateSrv.replace(this.getActualRegion(target.region)),
-        queryString: this.templateSrv.replace(target.expression || ''),
+        queryString: this.templateSrv.replace(target.expression || '', options.scopedVars),
         logGroups,
         logGroupNames,
       };

@@ -38,16 +38,13 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `trimDefaults`                    | Use cue schema to remove values that will be applied automatically              |
 | `panelTitleSearch`                | Search for dashboards using panel title                                         |
 | `prometheusAzureOverrideAudience` | Experimental. Allow override default AAD audience for Azure Prometheus endpoint |
-| `swaggerUi`                       | Serves swagger UI                                                               |
 | `migrationLocking`                | Lock database during migrations                                                 |
 | `newDBLibrary`                    | Use jmoiron/sqlx rather than xorm for a few backend services                    |
 | `validateDashboardsOnSave`        | Validate dashboard JSON POSTed to api/dashboards/db                             |
 | `autoMigrateGraphPanels`          | Replace the angular graph panel with timeseries                                 |
 | `topnav`                          | Displays new top nav and page layouts                                           |
-| `datasourceLogger`                | Logs all datasource requests                                                    |
 | `accessControlOnCall`             | Access control primitives for OnCall                                            |
 | `alertingNoNormalState`           | Stop maintaining state of alerts that are not firing                            |
-| `topNavCommandPalette`            | Launch the Command Palette from the top navigation search box                   |
 
 ## Alpha feature toggles
 
@@ -56,21 +53,21 @@ Alpha features might be changed or removed without prior notice.
 
 | Feature toggle name                | Description                                                                                                                                                                  |
 | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `returnUnameHeader`                | Return user login as header for authenticated requests                                                                                                                       |
 | `alertingBigTransactions`          | Use big transactions for alerting database writes                                                                                                                            |
 | `dashboardPreviews`                | Create and show thumbnails for dashboard search results                                                                                                                      |
 | `live-pipeline`                    | Enable a generic live processing pipeline                                                                                                                                    |
 | `live-service-web-worker`          | This will use a webworker thread to processes events rather than the main thread                                                                                             |
 | `queryOverLive`                    | Use Grafana Live WebSocket to execute backend queries                                                                                                                        |
 | `publicDashboards`                 | Enables public access to dashboards                                                                                                                                          |
+| `publicDashboardsEmailSharing`     | Enables public dashboard sharing to be restricted to only allowed emails                                                                                                     |
 | `lokiLive`                         | Support WebSocket streaming for loki (early prototype)                                                                                                                       |
 | `lokiDataframeApi`                 | Use experimental loki api for WebSocket streaming (early prototype)                                                                                                          |
 | `dashboardComments`                | Enable dashboard-wide comments                                                                                                                                               |
 | `annotationComments`               | Enable annotation comments                                                                                                                                                   |
 | `storage`                          | Configurable storage for dashboards, datasources, and resources                                                                                                              |
-| `supportBundles`                   | Support bundles for troubleshooting                                                                                                                                          |
 | `exploreMixedDatasource`           | Enable mixed datasource in Explore                                                                                                                                           |
 | `tracing`                          | Adds trace ID to error notifications                                                                                                                                         |
+| `newTraceView`                     | Shows the new trace view design                                                                                                                                              |
 | `correlations`                     | Correlations page                                                                                                                                                            |
 | `datasourceQueryMultiStatus`       | Introduce HTTP 207 Multi Status for api/ds/query                                                                                                                             |
 | `traceToMetrics`                   | Enable trace to metrics links                                                                                                                                                |
@@ -80,7 +77,6 @@ Alpha features might be changed or removed without prior notice.
 | `disableSecretsCompatibility`      | Disable duplicated secret storage in legacy tables                                                                                                                           |
 | `logRequestsInstrumentedAsUnknown` | Logs the path for requests that are instrumented as unknown                                                                                                                  |
 | `dataConnectionsConsole`           | Enables a new top-level page called Connections. This page is an experiment that provides a better experience when you install and configure data sources and other plugins. |
-| `flameGraph`                       | Show the flame graph                                                                                                                                                         |
 | `redshiftAsyncQueryDataSupport`    | Enable async query data support for Redshift                                                                                                                                 |
 | `athenaAsyncQueryDataSupport`      | Enable async query data support for Athena                                                                                                                                   |
 | `newPanelChromeUI`                 | Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu                                                                                          |
@@ -93,21 +89,21 @@ Alpha features might be changed or removed without prior notice.
 | `alertingBacktesting`              | Rule backtesting API for alerting                                                                                                                                            |
 | `editPanelCSVDragAndDrop`          | Enables drag and drop for CSV and Excel files                                                                                                                                |
 | `logsContextDatasourceUi`          | Allow datasource to provide custom UI for context view                                                                                                                       |
+| `lokiQuerySplitting`               | Split large interval queries into subqueries with smaller time intervals                                                                                                     |
+| `individualCookiePreferences`      | Support overriding cookie preferences per user                                                                                                                               |
+| `drawerDataSourcePicker`           | Changes the user experience for data source selection to a drawer.                                                                                                           |
+| `traceqlSearch`                    | Enables the 'TraceQL Search' tab for the Tempo datasource which provides a UI to generate TraceQL queries                                                                    |
+| `prometheusMetricEncyclopedia`     | Replaces the Prometheus query builder metric select option with a paginated and filterable component                                                                         |
 
 ## Development feature toggles
 
 The following toggles require explicitly setting Grafana's [app mode]({{< relref "../_index.md/#app_mode" >}}) to 'development' before you can enable this feature toggle. These features tend to be experimental.
 
-| Feature toggle name            | Description                                                             |
-| ------------------------------ | ----------------------------------------------------------------------- |
-| `showFeatureFlagsInUI`         | Show feature flags in the settings UI                                   |
-| `publicDashboardsEmailSharing` | Allows public dashboard sharing to be restricted to only allowed emails |
-| `k8s`                          | Explore native k8s integrations                                         |
-| `k8sDashboards`                | Save dashboards via k8s                                                 |
-| `apiserver`                    | Add a k8s API server proxy                                              |
-| `dashboardsFromStorage`        | Load dashboards from the generic storage interface                      |
-| `export`                       | Export grafana instance (to git, etc)                                   |
-| `grpcServer`                   | Run GRPC server                                                         |
-| `entityStore`                  | SQL-based entity store (requires storage flag also)                     |
-| `queryLibrary`                 | Reusable query library                                                  |
-| `nestedFolders`                | Enable folder nesting                                                   |
+| Feature toggle name     | Description                                         |
+| ----------------------- | --------------------------------------------------- |
+| `k8s`                   | Explore native k8s integrations                     |
+| `dashboardsFromStorage` | Load dashboards from the generic storage interface  |
+| `grpcServer`            | Run GRPC server                                     |
+| `entityStore`           | SQL-based entity store (requires storage flag also) |
+| `queryLibrary`          | Reusable query library                              |
+| `nestedFolders`         | Enable folder nesting                               |

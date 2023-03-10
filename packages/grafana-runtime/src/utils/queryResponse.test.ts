@@ -54,6 +54,7 @@ const resWithError = {
     results: {
       A: {
         error: 'Hello Error',
+        status: 400,
         frames: [
           {
             schema: {
@@ -354,8 +355,16 @@ describe('Query Response parser', () => {
       {
         "message": "Hello Error",
         "refId": "A",
+        "status": 400,
       }
     `);
+    expect(res.errors).toEqual([
+      {
+        message: 'Hello Error',
+        refId: 'A',
+        status: 400,
+      },
+    ]);
 
     const norm = res.data.map((f) => toDataFrameDTO(f));
     expect(norm).toMatchInlineSnapshot(`

@@ -25,7 +25,6 @@ func TestFeatureToggleFiles(t *testing.T) {
 		"live-pipeline":                 true,
 		"live-service-web-worker":       true,
 		"k8s":                           true, // Camel case does not like this one
-		"k8sDashboards":                 true, // or this one
 	}
 
 	t.Run("check registry constraints", func(t *testing.T) {
@@ -38,6 +37,31 @@ func TestFeatureToggleFiles(t *testing.T) {
 			}
 			if flag.State == FeatureStateUnknown {
 				t.Errorf("standard toggles should not have an unknown state.  See: %s", flag.Name)
+			}
+		}
+	})
+
+	ownerlessFeatures := map[string]bool{
+		"prometheusAzureOverrideAudience": true,
+		"tracing":                         true,
+	}
+
+	t.Run("all new features should have an owner", func(t *testing.T) {
+		for _, flag := range standardFeatureFlags {
+			if flag.Owner == "" {
+				if _, ok := ownerlessFeatures[flag.Name]; !ok {
+					t.Errorf("feature %s does not have an owner", flag.Name)
+				}
+			}
+		}
+	})
+
+	t.Run("features with assigned owner should not be on the ownerless list", func(t *testing.T) {
+		for _, flag := range standardFeatureFlags {
+			if flag.Owner != "" {
+				if _, ok := ownerlessFeatures[flag.Name]; ok {
+					t.Errorf("feature %s should be removed from the ownerless list", flag.Name)
+				}
 			}
 		}
 	})

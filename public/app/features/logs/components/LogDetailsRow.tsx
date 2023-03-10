@@ -5,7 +5,7 @@ import React, { PureComponent } from 'react';
 
 import { CoreApp, Field, GrafanaTheme2, LinkModel, LogLabelStatsModel, LogRowModel } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { ClipboardButton, DataLinkButton, Themeable2, ToolbarButton, ToolbarButtonRow, withTheme2 } from '@grafana/ui';
+import { ClipboardButton, DataLinkButton, IconButton, Themeable2, withTheme2 } from '@grafana/ui';
 
 import { LogLabelStats } from './LogLabelStats';
 import { getLogRowStyles } from './getLogRowStyles';
@@ -34,58 +34,11 @@ interface State {
   fieldStats: LogLabelStatsModel[] | null;
 }
 
-const getStyles = memoizeOne((theme: GrafanaTheme2, activeButton: boolean) => {
-  // those styles come from ToolbarButton. Unfortunately this is needed because we can not control the variant of the menu-button in a ToolbarButtonRow.
-  const defaultOld = css`
-    color: ${theme.colors.text.secondary};
-    background-color: ${theme.colors.background.primary};
-
-    &:hover {
-      color: ${theme.colors.text.primary};
-      background: ${theme.colors.background.secondary};
-    }
-  `;
-
-  const defaultTopNav = css`
-    color: ${theme.colors.text.secondary};
-    background-color: transparent;
-    border-color: transparent;
-
-    &:hover {
-      color: ${theme.colors.text.primary};
-      background: ${theme.colors.background.secondary};
-    }
-  `;
-
-  const active = css`
-    color: ${theme.v1.palette.orangeDark};
-    border-color: ${theme.v1.palette.orangeDark};
-    background-color: transparent;
-
-    &:hover {
-      color: ${theme.colors.text.primary};
-      background: ${theme.colors.emphasize(theme.colors.background.canvas, 0.03)};
-    }
-  `;
-
-  const defaultToolbarButtonStyle = theme.flags.topnav ? defaultTopNav : defaultOld;
+const getStyles = memoizeOne((theme: GrafanaTheme2) => {
   return {
-    noHoverBackground: css`
-      label: noHoverBackground;
-      :hover {
-        background-color: transparent;
-      }
-    `,
-    hoverCursor: css`
-      label: hoverCursor;
-      cursor: pointer;
-    `,
     wordBreakAll: css`
       label: wordBreakAll;
       word-break: break-all;
-    `,
-    showingField: css`
-      color: ${theme.colors.primary.text};
     `,
     copyButton: css`
       & > button {
@@ -111,29 +64,6 @@ const getStyles = memoizeOne((theme: GrafanaTheme2, activeButton: boolean) => {
       label: wrapLine;
       white-space: pre-wrap;
     `,
-    toolbarButtonRow: css`
-      label: toolbarButtonRow;
-      gap: ${theme.spacing(0.5)};
-
-      max-width: calc(3 * ${theme.spacing(theme.components.height.sm)});
-      & > div {
-        height: ${theme.spacing(theme.components.height.sm)};
-        width: ${theme.spacing(theme.components.height.sm)};
-        & > button {
-          border: 0;
-          background-color: transparent;
-          height: inherit;
-
-          &:hover {
-            box-shadow: none;
-            border-radius: 50%;
-          }
-        }
-      }
-      & div:last-child > button:not(.stats-button) {
-        ${activeButton ? active : defaultToolbarButtonStyle};
-      }
-    `,
     logDetailsStats: css`
       padding: 0 ${theme.spacing(1)};
     `,
@@ -151,6 +81,12 @@ const getStyles = memoizeOne((theme: GrafanaTheme2, activeButton: boolean) => {
           visibility: visible;
         }
       }
+    `,
+    buttonRow: css`
+      display: flex;
+      flex-direction: row;
+      gap: ${theme.spacing(0.5)};
+      margin-left: ${theme.spacing(0.5)};
     `,
   };
 });
@@ -267,58 +203,37 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
       onClickFilterOutLabel,
     } = this.props;
     const { showFieldsStats, fieldStats, fieldCount } = this.state;
-    const activeButton = displayedFields?.includes(parsedKey) || showFieldsStats;
-    const styles = getStyles(theme, activeButton);
+    const styles = getStyles(theme);
     const style = getLogRowStyles(theme);
     const hasFilteringFunctionality = onClickFilterLabel && onClickFilterOutLabel;
 
     const toggleFieldButton =
       displayedFields && displayedFields.includes(parsedKey) ? (
-        <ToolbarButton variant="active" tooltip="Hide this field" iconOnly narrow icon="eye" onClick={this.hideField} />
+        <IconButton variant="primary" tooltip="Hide this field" name="eye" onClick={this.hideField} />
       ) : (
-        <ToolbarButton
-          tooltip="Show this field instead of the message"
-          iconOnly
-          narrow
-          icon="eye"
-          onClick={this.showField}
-        />
+        <IconButton tooltip="Show this field instead of the message" name="eye" onClick={this.showField} />
       );
 
     return (
       <>
         <tr className={cx(style.logDetailsValue)}>
           <td className={style.logsDetailsIcon}>
-            <ToolbarButtonRow alignment="left" className={styles.toolbarButtonRow}>
+            <div className={styles.buttonRow}>
               {hasFilteringFunctionality && (
-                <ToolbarButton
-                  iconOnly
-                  narrow
-                  icon="search-plus"
-                  tooltip="Filter for value"
-                  onClick={this.filterLabel}
-                />
+                <IconButton name="search-plus" tooltip="Filter for value" onClick={this.filterLabel} />
               )}
               {hasFilteringFunctionality && (
-                <ToolbarButton
-                  iconOnly
-                  narrow
-                  icon="search-minus"
-                  tooltip="Filter out value"
-                  onClick={this.filterOutLabel}
-                />
+                <IconButton name="search-minus" tooltip="Filter out value" onClick={this.filterOutLabel} />
               )}
               {displayedFields && toggleFieldButton}
-              <ToolbarButton
-                iconOnly
-                variant={showFieldsStats ? 'active' : 'default'}
-                narrow
-                icon="signal"
+              <IconButton
+                variant={showFieldsStats ? 'primary' : 'secondary'}
+                name="signal"
                 tooltip="Ad-hoc statistics"
                 className="stats-button"
                 onClick={this.showStats}
               />
-            </ToolbarButtonRow>
+            </div>
           </td>
 
           {/* Key - value columns */}
@@ -350,16 +265,12 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
         {showFieldsStats && (
           <tr>
             <td>
-              <ToolbarButtonRow alignment="left" className={styles.toolbarButtonRow}>
-                <ToolbarButton
-                  iconOnly
-                  variant={showFieldsStats ? 'active' : 'default'}
-                  narrow
-                  icon="signal"
-                  tooltip="Hide ad-hoc statistics"
-                  onClick={this.showStats}
-                />
-              </ToolbarButtonRow>
+              <IconButton
+                variant={showFieldsStats ? 'primary' : 'secondary'}
+                name="signal"
+                tooltip="Hide ad-hoc statistics"
+                onClick={this.showStats}
+              />
             </td>
             <td colSpan={2}>
               <div className={styles.logDetailsStats}>

@@ -9,6 +9,8 @@ import {
   CustomVariable,
   DataSourceVariable,
   TestVariable,
+  NestedScene,
+  TextBoxVariable,
 } from '@grafana/scenes';
 
 import { DashboardScene } from '../dashboard/DashboardScene';
@@ -54,25 +56,55 @@ export function getVariablesDemo(): DashboardScene {
           name: 'ds',
           query: 'testdata',
         }),
+        new TextBoxVariable({
+          name: 'textbox',
+          value: 'default value',
+        }),
       ],
     }),
     body: new SceneFlexLayout({
       direction: 'row',
       children: [
         new SceneFlexLayout({
+          direction: 'column',
           children: [
-            new VizPanel({
-              pluginId: 'timeseries',
-              title: 'handler: $handler',
-              $data: getQueryRunnerWithRandomWalkQuery({
-                alias: 'handler: $handler',
-              }),
+            new SceneFlexLayout({
+              children: [
+                new VizPanel({
+                  pluginId: 'timeseries',
+                  title: 'handler: $handler',
+                  $data: getQueryRunnerWithRandomWalkQuery({
+                    alias: 'handler: $handler',
+                  }),
+                }),
+                new SceneCanvasText({
+                  text: 'Text: ${textbox}',
+                  fontSize: 20,
+                  align: 'center',
+                }),
+                new SceneCanvasText({
+                  placement: { width: '40%' },
+                  text: 'server: ${server} pod:${pod}',
+                  fontSize: 20,
+                  align: 'center',
+                }),
+              ],
             }),
-            new SceneCanvasText({
-              placement: { width: '40%' },
-              text: 'server: ${server} pod:${pod}',
-              fontSize: 20,
-              align: 'center',
+            new NestedScene({
+              title: 'Collapsable inner scene',
+              canCollapse: true,
+              body: new SceneFlexLayout({
+                direction: 'row',
+                children: [
+                  new VizPanel({
+                    pluginId: 'timeseries',
+                    title: 'handler: $handler',
+                    $data: getQueryRunnerWithRandomWalkQuery({
+                      alias: 'handler: $handler',
+                    }),
+                  }),
+                ],
+              }),
             }),
           ],
         }),

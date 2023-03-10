@@ -380,6 +380,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
         .sort()
         .filter((label) => label !== '__name__');
       this.labelKeys = labels;
+      return this.labelKeys;
     }
 
     return [];

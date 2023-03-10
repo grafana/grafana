@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import usePrevious from 'react-use/lib/usePrevious';
 
 import {
@@ -80,7 +80,7 @@ const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean, 
       background: ${theme.colors.background.primary};
       box-shadow: 0 0 ${theme.spacing(1.25)} ${theme.v1.palette.black};
       border: 1px solid ${theme.colors.background.secondary};
-      border-radius: ${theme.shape.borderRadius(2)};
+      border-radius: ${theme.shape.borderRadius()};
       font-family: ${theme.typography.fontFamily};
     `,
     header: css`
@@ -376,9 +376,10 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
   const { afterContext, beforeContext, title, top, actions, width } = useStyles2((theme) =>
     getLogRowContextStyles(theme, wrapLogMessage)
   );
+  const handleOutsideClick = useCallback(() => onOutsideClick('close_outside_click'), [onOutsideClick]);
 
   return (
-    <ClickOutsideWrapper onClick={() => onOutsideClick('close_outside_click')}>
+    <ClickOutsideWrapper onClick={handleOutsideClick}>
       {/* e.stopPropagation is necessary so the log details doesn't open when clicked on log line in context
        * and/or when context log line is being highlighted
        */}

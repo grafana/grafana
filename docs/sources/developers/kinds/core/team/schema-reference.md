@@ -8,7 +8,7 @@ title: Team kind
 
 ## Team
 
-#### Maturity: merged
+#### Maturity: [merged](../../../maturity/#merged)
 #### Version: 0.0
 
 A team is a named grouping of Grafana users to which access control rules may be assigned.

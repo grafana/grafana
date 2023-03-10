@@ -11,10 +11,21 @@ TableCellDisplayMode: "auto" | "color-text" | "color-background" | "color-backgr
 // or a gradient.
 TableCellBackgroundDisplayMode: "basic" | "gradient" @cuetsy(kind="enum",memberNames="Basic|Gradient")
 
-// TODO docs
+// Sort by field state
 TableSortByFieldState: {
+	// Sets the display name of the field to sort by
 	displayName: string
+	// Flag used to indicate descending sort order
 	desc?:       bool
+} @cuetsy(kind="interface")
+
+// Footer options
+TableFooterOptions: {
+	show: bool
+  reducer: [...string] // actually 1 value
+  fields?: [...string]
+  enablePagination?: bool
+  countRows?: bool
 } @cuetsy(kind="interface")
 
 // Auto mode table cell options
