@@ -9,7 +9,7 @@ weight: 100
 
 # Install on Debian or Ubuntu
 
-This topic explains how to install Grafana dependencies, install Grafana on Linux Debian or Ubuntu, and start the Grafana server on your Debian or Ubuntu system. This topic also describes the contents of the installation package.
+This topic explains how to install Grafana dependencies, install Grafana on Linux Debian or Ubuntu, and start the Grafana server on your Debian or Ubuntu system.
 
 You can install Grafana using the Grafana Labs APT repository, by downloading a `.deb` package, or by downloading a binary `.tar.gz` file.
 
@@ -17,7 +17,7 @@ If you install via the `.deb` package or `.tar.gz` file, then you must manually 
 
 ## Install from APT repository
 
-If you install from the APT repository, Grafana automatically updates every time you run `apt-get update`.
+If you install from the APT repository, Grafana automatically updates when you run `apt-get update`.
 
 | Grafana Version           | Package            | Repository                            |
 | ------------------------- | ------------------ | ------------------------------------- |
@@ -27,13 +27,6 @@ If you install from the APT repository, Grafana automatically updates every time
 | Grafana OSS (Beta)        | grafana            | `https://apt.grafana.com beta main`   |
 
 > **Note:** Grafana Enterprise is the recommended and default edition. It is available for free and includes all the features of the OSS edition. You can also upgrade to the [full Enterprise feature set](https://grafana.com/products/enterprise/?utm_source=grafana-install-page), which has support for [Enterprise plugins](https://grafana.com/grafana/plugins/?enterprise=1&utcm_source=grafana-install-page).
-
-### Before you begin
-
-To follow these instructions, you need:
-
-- xxx
-- xxx
 
 ### Steps
 
@@ -47,13 +40,13 @@ Complete the following steps to install Grafana from the APT repository:
    sudo wget -q -O /usr/share/keyrings/grafana.key https://apt.grafana.com/gpg.key
    ```
 
-1. To add a repository for stable releases, run the following commands:
+1. To add a repository for stable releases, run the following command:
 
    ```bash
    echo "deb [signed-by=/usr/share/keyrings/grafana.key] https://apt.grafana.com stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
    ```
 
-1. To add a respository for beta releases, run the following commands:
+1. To add a respository for beta releases, run the following command:
 
    ```bash
    echo "deb [signed-by=/usr/share/keyrings/grafana.key] https://apt.grafana.com beta main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
@@ -75,13 +68,6 @@ Complete the following steps to install Grafana from the APT repository:
 ## Install Grafana using a deb package or as a standalone binary
 
 If you choose not to install Grafana using APT, you can download and install Grafana using the deb package or as a standalone binary.
-
-### Before you begin
-
-To follow these instructions, you need:
-
-- xxx
-- xxx
 
 ### Steps
 
@@ -164,21 +150,10 @@ To start the Grafana server, run the following command:
 ./bin/grafana-server web
 ```
 
-## Package details
-
-- Installs binary to `/usr/sbin/grafana-server`
-- Installs Init.d script to `/etc/init.d/grafana-server`
-- Creates default file (environment vars) to `/etc/default/grafana-server`
-- Installs configuration file to `/etc/grafana/grafana.ini`
-- Installs systemd service (if systemd is available) name `grafana-server.service`
-- The default configuration sets the log file at `/var/log/grafana/grafana.log`
-- The default configuration specifies a SQLite3 db at `/var/lib/grafana/grafana.db`
-- Installs HTML/JS/CSS and other Grafana files at `/usr/share/grafana`
-
 ## Upgrade Grafana
 
 While the process for upgrading Grafana is very similar to installing Grafana, there are important backup tasks you should perform. Refer to [Upgrade Grafana]({{< relref "../../../upgrade-guide/" >}}) for guidance on updating an existing installation.
 
 ## Next steps
 
-- [Start the Grafana server]({{< relref "../../../restart-grafana/" >}})
+- [Start the Grafana server]({{< relref "../../start-restart-grafana/" >}})

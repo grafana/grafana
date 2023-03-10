@@ -21,7 +21,7 @@ Starting and restarting the Grafana server depends on whether your Linux system 
 
 ### Start the Grafana server with systemd
 
-Complete the following steps to start the Grafana server with systemd and verify that it is running:
+Complete the following steps to start the Grafana server using systemd and verify that it is running:
 
 1. To start the service, run the following commands:
 
@@ -34,41 +34,34 @@ Complete the following steps to start the Grafana server with systemd and verify
 1. To verify that the service is running, run the following command:
 
    ```
-   Need input here
-   ```
-
-1. To configure the Grafana server to start at boot, run the following command:
-
-   ```bash
-   sudo systemctl enable grafana-server.service
-   ```
-
-#### Restart the server
-
-Complete the following steps to restart the Grafana server:
-
-1. To restart the Grafana server, run the following commands:
-
-   ```bash
-   sudo systemctl restart grafana-server
    sudo systemctl status grafana-server
    ```
 
-1. To configure the Grafana server to restart at boot, run the following command:
+### Configure the Grafana server to start at boot using systemd
 
-   ```bash
-   sudo systemctl enable grafana-server.service
-   ```
+To configure the Grafana server to start at boot, run the following command:
 
-> **Note:** SUSE or OpenSUSE users might need to start the server with the systemd method, then use the init.d method to configure Grafana to start at boot.
+```bash
+sudo systemctl enable grafana-server.service
+```
 
 #### Serve Grafana on a port < 1024
 
 {{< docs/shared "systemd/bind-net-capabilities.md" >}}
 
-### Start the server with init.d
+### Restart the Grafana server using systemd
 
-Complete the following steps to start the Grafana service and verify that it is running:
+To restart the Grafana server, run the following commands:
+
+```bash
+sudo systemctl restart grafana-server
+```
+
+> **Note:** SUSE or OpenSUSE users might need to start the server with the systemd method, then use the init.d method to configure Grafana to start at boot.
+
+### Start the Grafana server using init.d
+
+Complete the following steps to start the Grafana server using init.d and verify that it is running:
 
 1. To start the Grafana server, run the following commands:
 
@@ -80,14 +73,24 @@ Complete the following steps to start the Grafana service and verify that it is 
 1. To verify that the service is running, run the following command:
 
    ```
-   Need input here
+   sudo service grafana-server status
    ```
 
-1. To configure the Grafana server to start at boot, run the following command:
+### Configure the Grafana server to start at boot using init.d
 
-   ```bash
-   sudo update-rc.d grafana-server defaults
-   ```
+To configure the Grafana server to start at boot, run the following command:
+
+```bash
+sudo update-rc.d grafana-server defaults
+```
+
+#### Restart the Grafana server using init.d
+
+To restart the Grafana server, run the following commands:
+
+```bash
+Need input
+```
 
 ### Start the server using the binary
 
