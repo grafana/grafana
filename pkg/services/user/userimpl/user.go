@@ -419,7 +419,9 @@ func (s *Service) supportBundleCollector() supportbundles.Collector {
 				Login:            "sa-supportbundle",
 				OrgRole:          "Admin",
 				IsGrafanaAdmin:   true,
-				IsServiceAccount: true},
+				IsServiceAccount: true,
+				Permissions:      map[int64]map[string][]string{ac.GlobalOrgID: {ac.ActionUsersRead: {ac.ScopeGlobalUsersAll}}},
+			},
 			OrgID:      0,
 			Query:      "",
 			Page:       0,
@@ -433,7 +435,7 @@ func (s *Service) supportBundleCollector() supportbundles.Collector {
 			return nil, err
 		}
 
-		userBytes, err := json.Marshal(res.Users)
+		userBytes, err := json.MarshalIndent(res.Users, "", " ")
 		if err != nil {
 			return nil, err
 		}
