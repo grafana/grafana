@@ -163,6 +163,10 @@ func queryData(ctx context.Context, req *backend.QueryDataRequest, dsInfo *datas
 		span.SetAttributes("start_unixnano", query.Start, attribute.Key("start_unixnano").Int64(query.Start.UnixNano()))
 		span.SetAttributes("stop_unixnano", query.End, attribute.Key("stop_unixnano").Int64(query.End.UnixNano()))
 
+		if req.GetHTTPHeader("X-Correlation-Id") != "" {
+			span.SetAttributes("correlation_id", req.GetHTTPHeader("X-Correlation-Id"), attribute.Key("correlation_id").String(req.GetHTTPHeader("X-Correlation-Id")))
+		}
+
 		logger := logger.FromContext(ctx) // get logger with trace-id and other contextual info
 		logger.Debug("Sending query", "start", query.Start, "end", query.End, "step", query.Step, "query", query.Expr)
 
