@@ -4993,14 +4993,14 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/e2e-selectors@npm:canary":
-  version: 9.4.0-96193pre
-  resolution: "@grafana/e2e-selectors@npm:9.4.0-96193pre"
+"@grafana/e2e-selectors@npm:^9.4.3":
+  version: 9.4.3
+  resolution: "@grafana/e2e-selectors@npm:9.4.3"
   dependencies:
     "@grafana/tsconfig": ^1.2.0-rc1
     tslib: 2.4.1
     typescript: 4.8.4
-  checksum: 1ce663607c0c816ec02cad33d80c38731c4dfafdc7d1693baa989b8eff6588e3cc1d8a031c4f30f888bbd8aa8768cce7c5dd4cb2455306040f39dcac933ceae4
+  checksum: 85a88cdf4adb643ff863b15f96fc6c04ecb7567c27cc526a00c157eb02575e55adc1e7701d58e1b48f00f24951c332fbb191cd2b5a8e74cd0c545543777e82af
   languageName: node
   linkType: hard
 
@@ -5207,17 +5207,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:^0.0.16":
-  version: 0.0.16
-  resolution: "@grafana/scenes@npm:0.0.16"
+"@grafana/scenes@npm:^0.0.18":
+  version: 0.0.18
+  resolution: "@grafana/scenes@npm:0.0.18"
   dependencies:
-    "@grafana/e2e-selectors": canary
+    "@grafana/e2e-selectors": ^9.4.3
     "@grafana/experimental": 1.0.1
     react-grid-layout: 1.3.4
     react-use: 17.4.0
     react-virtualized-auto-sizer: 1.0.7
     uuid: ^9.0.0
-  checksum: c6cf9f1571309da4ed0fb5046f8abf18b324e9847890c54307ca093610760d52fdb44002fb1db8e81abca6371121a0623a2f44c9828ef80b11d8d189993f457a
+  checksum: f863cbf410d71e579cd4e343fb7b8ad014bc66a250f4d31f9d43c43fe8e97f5b6e3e8d01ed69818c347b3db31b6ecb153d1dc7a0e2946d360e7e1806eb6f5d8c
   languageName: node
   linkType: hard
 
@@ -22130,7 +22130,7 @@ __metadata:
     "@grafana/lezer-logql": 0.1.2
     "@grafana/monaco-logql": ^0.0.7
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": ^0.0.16
+    "@grafana/scenes": ^0.0.18
     "@grafana/schema": "workspace:*"
     "@grafana/toolkit": "workspace:*"
     "@grafana/tsconfig": ^1.2.0-rc1
