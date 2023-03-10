@@ -8,6 +8,8 @@ export function trackQuery(
   request: DataQueryRequest<PromQuery> & { targets: PromQuery[] },
   startTime: Date
 ): void {
+  console.log(response.headers!.get('content-length'), response.headers!.get('content-encoding'));
+
   const { app, targets: queries } = request;
   // We do want to track panel-editor and explore
   // We do not want to track queries from the dashboard or viewing a panel

@@ -465,6 +465,12 @@ export interface DataQueryResponse {
    * Defaults to LoadingState.Done if state is not defined
    */
   state?: LoadingState;
+
+  /**
+   * The response headers. This can be used to get the size and gzip stats
+   * for sending frontend metrics
+   */
+  headers?: Headers;
 }
 
 export enum DataQueryErrorType {
@@ -522,10 +528,6 @@ export interface DataQueryRequest<TQuery extends DataQuery = DataQuery> {
 
   // Make it possible to hide support queries from the inspector
   hideFromInspector?: boolean;
-
-  // For incremental queries that have modified the request, to let the backend know what the requested interval was
-  //@todo, store the delta? Or the stamp?
-  originalQueryDelta?: number;
 }
 
 export interface DataQueryTimings {

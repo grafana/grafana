@@ -83,7 +83,6 @@ export class QueryCache {
 
       // clamp to make sure we don't re-query previous 10m when newFrom is ahead of it (e.g. 5min range, 30s refresh)
       let newFromPartial = Math.max(prevTo! - requeryLastMs, newFrom);
-      request.originalQueryDelta = newFromPartial - newFrom;
 
       // console.log(`query previous ${(newTo - newFromPartial) / 1000 / 60} mins`);
 
