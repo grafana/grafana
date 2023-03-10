@@ -13,7 +13,7 @@ import (
 // Converts shortwebhookconfigs into full k8s validationwebhookconfigurations and registers them
 func (c *Clientset) RegisterValidation(ctx context.Context, webhooks []ShortWebhookConfig) error {
 	for _, hook := range webhooks {
-		obj := convertShortWebhookToMutationWebhook(hook)
+		obj := convertShortWebhookToValidationWebhook(hook)
 		force := true
 		patchOpts := metav1.PatchOptions{FieldManager: GrafanaFieldManager, Force: &force}
 		data, err := json.Marshal(obj)
