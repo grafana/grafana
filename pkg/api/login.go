@@ -123,19 +123,7 @@ func (hs *HTTPServer) LoginView(c *contextmodel.ReqContext) {
 			}
 		}
 
-		if redirectTo := c.GetCookie("redirect_to"); len(redirectTo) > 0 {
-			if err := hs.ValidateRedirectTo(redirectTo); err != nil {
-				// the user is already logged so instead of rendering the login page with error
-				// it should be redirected to the home page.
-				c.Logger.Debug("Ignored invalid redirect_to cookie value", "redirect_to", redirectTo)
-				redirectTo = hs.Cfg.AppSubURL + "/"
-			}
-			cookies.DeleteCookie(c.Resp, "redirect_to", hs.CookieOptionsFromCfg)
-			c.Redirect(redirectTo)
-			return
-		}
-
-		c.Redirect(hs.Cfg.AppSubURL + "/")
+		c.Redirect(hs.GetRedirectURL(c))
 		return
 	}
 
@@ -286,22 +274,11 @@ func (hs *HTTPServer) LoginPost(c *contextmodel.ReqContext) response.Response {
 		return resp
 	}
 
-	result := map[string]interface{}{
-		"message": "Logged in",
-	}
-
-	if redirectTo := c.GetCookie("redirect_to"); len(redirectTo) > 0 {
-		if err := hs.ValidateRedirectTo(redirectTo); err == nil {
-			result["redirectUrl"] = redirectTo
-		} else {
-			c.Logger.Info("Ignored invalid redirect_to cookie value.", "url", redirectTo)
-		}
-		cookies.DeleteCookie(c.Resp, "redirect_to", hs.CookieOptionsFromCfg)
-	}
-
 	metrics.MApiLoginPost.Inc()
-	resp = response.JSON(http.StatusOK, result)
-	return resp
+	return response.JSON(http.StatusOK, map[string]any{
+		"message":     "Logged in",
+		"redirectUrl": hs.GetRedirectURL(c),
+	})
 }
 
 func (hs *HTTPServer) loginUserWithUser(user *user.User, c *contextmodel.ReqContext) error {
