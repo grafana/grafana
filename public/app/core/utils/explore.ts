@@ -153,6 +153,8 @@ export function buildQueryTransaction(
     scopedVars: {
       __interval: { text: interval, value: interval },
       __interval_ms: { text: intervalMs, value: intervalMs },
+      __user_email: { text: config.bootData.user.email, value: config.bootData.user.email },
+      __user_login: { text: config.bootData.user.login, value: config.bootData.user.login },
     },
     maxDataPoints: queryOptions.maxDataPoints,
     liveStreaming: queryOptions.liveStreaming,
