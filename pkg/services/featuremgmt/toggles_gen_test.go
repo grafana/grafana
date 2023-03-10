@@ -43,7 +43,6 @@ func TestFeatureToggleFiles(t *testing.T) {
 
 	ownerlessFeatures := map[string]bool{
 		"prometheusAzureOverrideAudience": true,
-		"tracing":                         true,
 	}
 
 	t.Run("all new features should have an owner", func(t *testing.T) {
