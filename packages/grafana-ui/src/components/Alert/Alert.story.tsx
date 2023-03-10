@@ -24,29 +24,28 @@ const meta: ComponentMeta<typeof Alert> = {
   },
   argTypes: {
     severity: { control: { type: 'select', options: severities } },
-    onRemove: {
-      description: "To show a button or a close icon, select 'function'. To get rid of them, select 'undefined'",
-      control: { type: 'select', options: [action('Remove button clicked'), undefined] },
-    },
-    buttonContent: {
-      description: "To show an example of button, select 'Close', otherwise, select 'undefined'",
-      control: { type: 'select', options: ['Close', undefined] },
-    },
   },
 };
 
-export const InlineBanner: ComponentStory<typeof Alert> = ({ severity, title, buttonContent, onRemove }) => {
+export const InlineBanner: ComponentStory<typeof Alert> = (args) => {
   return (
-    <Alert
-      title={title}
-      severity={severity}
-      buttonContent={buttonContent ? <span>{buttonContent}</span> : ''}
-      onRemove={onRemove ? onRemove : undefined}
-    >
-      <VerticalGroup>
-        <div>Child content that includes some alert details, like maybe what actually happened.</div>
-      </VerticalGroup>
-    </Alert>
+    <div>
+      <Alert {...args}>
+        <VerticalGroup>
+          <div>Child content that includes some alert details, like maybe what actually happened.</div>
+        </VerticalGroup>
+      </Alert>
+      <Alert {...args} onRemove={action('Remove button clicked')} buttonContent={undefined}>
+        <VerticalGroup>
+          <div>Child content that includes some alert details, like maybe what actually happened.</div>
+        </VerticalGroup>
+      </Alert>
+      <Alert {...args} onRemove={action('Remove button clicked')}>
+        <VerticalGroup>
+          <div>Child content that includes some alert details, like maybe what actually happened.</div>
+        </VerticalGroup>
+      </Alert>
+    </div>
   );
 };
 
@@ -54,17 +53,17 @@ InlineBanner.args = {
   severity: 'error',
   title: 'Title',
   buttonContent: 'Close',
-  onRemove: action('Remove button clicked'),
+};
+InlineBanner.argTypes = {
+  buttonContent: {
+    control: { type: 'text', default: 'Close' },
+  },
 };
 
-InlineBanner.parameters = {
-  controls: { expanded: true },
-};
-
-export const Toast: ComponentStory<typeof Alert> = ({ severity }) => {
+export const Toast: ComponentStory<typeof Alert> = (args) => {
   return (
     <div className="page-alert-list">
-      <Alert title="Toast" severity={severity} onRemove={action('Remove button clicked')} elevated>
+      <Alert {...args} elevated>
         <VerticalGroup>
           <div>Child content that includes some alert details, like maybe what actually happened.</div>
         </VerticalGroup>
@@ -74,7 +73,13 @@ export const Toast: ComponentStory<typeof Alert> = ({ severity }) => {
 };
 
 Toast.args = {
+  title: 'Toast',
   severity: 'error',
+  onRemove: action('Remove button clicked'),
 };
-
+Toast.parameters = {
+  controls: {
+    exclude: ['onRemove'],
+  },
+};
 export default meta;
