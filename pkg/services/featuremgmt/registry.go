@@ -151,6 +151,7 @@ var (
 			Description:  "Adds trace ID to error notifications",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+			Owner:        grafanaUserEssentialsSquad,
 		},
 		{
 			Name:         "newTraceView",
