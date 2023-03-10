@@ -335,6 +335,23 @@ export const PromSettings = (props: Props) => {
             />
           </div>
         </div>
+
+        <div className="gf-form-inline">
+          <div className="gf-form max-width-30">
+            <FormField
+              label="Incremental querying (beta)"
+              labelWidth={14}
+              tooltip="This feature will change the default behavior of relative queries to always request fresh data from the prometheus instance, instead query results will be cached, and only new records are requested. Turn this on to decrease database and network load."
+              inputEl={
+                <InlineSwitch
+                  value={options.jsonData.incrementalQuerying ?? false}
+                  onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'incrementalQuerying')}
+                  disabled={options.readOnly}
+                />
+              }
+            />
+          </div>
+        </div>
       </div>
       <ExemplarsSettings
         options={options.jsonData.exemplarTraceIdDestinations}

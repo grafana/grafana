@@ -21,7 +21,7 @@ interface TargetCache {
   frames: DataFrame[];
 }
 
-interface RequestInfo {
+export interface CacheRequestInfo {
   requests: Array<DataQueryRequest<PromQuery>>;
   targSigs: Map<TargetIdent, TargetSig>;
   shouldCache: boolean;
@@ -33,7 +33,7 @@ export class QueryCache {
   cache = new Map<TargetIdent, TargetCache>();
 
   // can be used to change full range request to partial, split into multiple requests
-  requestInfo(request: DataQueryRequest<PromQuery>, interpolateString: StringInterpolator): RequestInfo {
+  requestInfo(request: DataQueryRequest<PromQuery>, interpolateString: StringInterpolator): CacheRequestInfo {
     // TODO: align from/to to interval to increase probability of hitting backend cache
 
     const newFrom = request.range.from.valueOf();
@@ -120,8 +120,12 @@ export class QueryCache {
   }
 
   // should amend existing cache with new frames and return full response
-  procFrames(request: DataQueryRequest<PromQuery>, requestInfo: RequestInfo, respFrames: DataFrame[]): DataFrame[] {
-    if (requestInfo.shouldCache) {
+  procFrames(
+    request: DataQueryRequest<PromQuery>,
+    requestInfo: CacheRequestInfo | undefined,
+    respFrames: DataFrame[]
+  ): DataFrame[] {
+    if (requestInfo?.shouldCache) {
       const newFrom = request.range.from.valueOf();
       const newTo = request.range.to.valueOf();
 

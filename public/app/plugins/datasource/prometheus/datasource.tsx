@@ -51,7 +51,7 @@ import { renderLegendFormat } from './legend';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { getInitHints, getQueryHints } from './query_hints';
 import { QueryEditorMode } from './querybuilder/shared/types';
-import { QueryCache } from './querycache/QueryCache';
+import { CacheRequestInfo, QueryCache } from './querycache/QueryCache';
 import { getOriginalMetricName, transform, transformV2 } from './result_transformer';
 import { trackQuery } from './tracking';
 import {
@@ -80,6 +80,7 @@ export class PrometheusDatasource
   type: string;
   editorSrc: string;
   ruleMappings: { [index: string]: string };
+  hasIncrementalQuery?: boolean;
   url: string;
   id: number;
   directUrl: string;
@@ -127,6 +128,7 @@ export class PrometheusDatasource
     // here we "fall back" to this.url to make typescript happy, but it should never happen
     this.directUrl = instanceSettings.jsonData.directUrl ?? this.url;
     this.exemplarTraceIdDestinations = instanceSettings.jsonData.exemplarTraceIdDestinations;
+    this.hasIncrementalQuery = instanceSettings.jsonData.incrementalQuerying ?? false;
     this.ruleMappings = {};
     this.languageProvider = languageProvider ?? new PrometheusLanguageProvider(this);
     this.lookupsDisabled = instanceSettings.jsonData.disableMetricsLookup ?? false;
@@ -448,8 +450,14 @@ export class PrometheusDatasource
 
   query(request: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
     if (this.access === 'proxy') {
-      const requestInfo = this.cache.requestInfo(request, this.interpolateString.bind(this));
-      const fullOrPartialRequest = requestInfo.requests[0];
+      let fullOrPartialRequest: DataQueryRequest<PromQuery>;
+      let requestInfo: CacheRequestInfo | undefined = undefined;
+      if (this.hasIncrementalQuery) {
+        requestInfo = this.cache.requestInfo(request, this.interpolateString.bind(this));
+        fullOrPartialRequest = requestInfo.requests[0];
+      } else {
+        fullOrPartialRequest = request;
+      }
 
       const targets = fullOrPartialRequest.targets.map((target) => this.processTargetV2(target, fullOrPartialRequest));
       const startTime = new Date();
