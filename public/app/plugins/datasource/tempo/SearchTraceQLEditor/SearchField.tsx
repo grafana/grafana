@@ -12,7 +12,7 @@ import { dispatch } from '../../../../store/store';
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
-import { operators as allOperators } from '../traceql/traceql';
+import { operators as allOperators, stringOperators, numberOperators } from '../traceql/traceql';
 
 import { operatorSelectableValue, scopeHelper } from './utils';
 
@@ -30,18 +30,8 @@ interface Props {
   setError: (error: FetchError) => void;
   isTagsLoading?: boolean;
   tags: string[];
-  operators?: string[];
 }
-const SearchField = ({
-  filter,
-  datasource,
-  updateFilter,
-  deleteFilter,
-  isTagsLoading,
-  tags,
-  setError,
-  operators,
-}: Props) => {
+const SearchField = ({ filter, datasource, updateFilter, deleteFilter, isTagsLoading, tags, setError }: Props) => {
   const styles = useStyles2(getStyles);
   const languageProvider = useMemo(() => new TempoLanguageProvider(datasource), [datasource]);
   const [isLoadingValues, setIsLoadingValues] = useState(false);
@@ -105,6 +95,19 @@ const SearchField = ({
 
   const scopeOptions = Object.values(TraceqlSearchScope).map((t) => ({ label: t, value: t }));
 
+  // If all values have type string or int/float use a focused list of operators instead of all operators
+  const optionsOfFirstType = options.filter((o) => o.type === options[0]?.type);
+  const uniqueOptionType = options.length === optionsOfFirstType.length ? options[0]?.type : undefined;
+  let operatorList = allOperators;
+  switch (uniqueOptionType) {
+    case 'string':
+      operatorList = stringOperators;
+      break;
+    case 'int':
+    case 'float':
+      operatorList = numberOperators;
+  }
+
   return (
     <HorizontalGroup spacing={'none'} width={'auto'}>
       {filter.type === 'dynamic' && (
@@ -139,7 +142,7 @@ const SearchField = ({
       <Select
         className={styles.dropdown}
         inputId={`${filter.id}-operator`}
-        options={(operators || allOperators).map(operatorSelectableValue)}
+        options={operatorList.map(operatorSelectableValue)}
         value={filter.operator}
         onChange={(v) => {
           updateFilter({ ...filter, operator: v?.value });
