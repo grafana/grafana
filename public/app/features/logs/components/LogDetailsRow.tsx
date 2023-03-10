@@ -62,6 +62,9 @@ const getStyles = memoizeOne((theme: GrafanaTheme2) => {
         }
       }
     `,
+    adjoiningLinkButton: css`
+      margin-left: ${theme.spacing(1)};
+    `,
     wrapLine: css`
       label: wrapLine;
       white-space: pre-wrap;
@@ -204,7 +207,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
               <tr key={`${val}-${i}`}>
                 <td>
                   {val}
-                  {showCopy && (
+                  {showCopy && val !== '' && (
                     <div className={cx('show-on-hover', styles.copyButton)}>
                       <ClipboardButton
                         getText={() => val}
@@ -243,6 +246,8 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     const styles = getStyles(theme);
     const style = getLogRowStyles(theme);
     const hasFilteringFunctionality = onClickFilterLabel && onClickFilterOutLabel;
+    const hasParsedValueArrayValues =
+      parsedValueArray && parsedValueArray.length > 0 && !parsedValueArray.every((val) => val === '');
 
     const toggleFieldButton =
       displayedFields && displayedFields.includes(parsedKey) ? (
@@ -293,10 +298,13 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
                   />
                 </div>
               )}
-              <div>
+              <div
+                className={cx(
+                  (parsedValueArray === undefined || hasParsedValueArrayValues) && styles.adjoiningLinkButton
+                )}
+              >
                 {links?.map((link, i) => (
                   <span key={`${link.title}-${i}`}>
-                    &nbsp;
                     <DataLinkButton link={link} />
                   </span>
                 ))}

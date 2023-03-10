@@ -125,6 +125,14 @@ export const getFieldLinksForExplore = (options: {
         const allVars = { ...scopedVars, ...internalLinkSpecificVars };
         const varMapFn = getTemplateSrv().getVariablesMapInTemplate.bind(getTemplateSrv());
         const variableMapData = dataLinkHasAllVariablesDefined(link, allVars, varMapFn);
+        let variableMap: Record<string, string | number | boolean | undefined> = {};
+        if (Object.keys(variableMapData.variableMap).length === 0) {
+          const fieldName = field.name.toString();
+          variableMap[fieldName] = '';
+        } else {
+          variableMap = variableMapData.variableMap;
+        }
+
         if (variableMapData.allVariablesDefined) {
           return mapInternalLinkToExplore({
             link,
@@ -134,7 +142,7 @@ export const getFieldLinksForExplore = (options: {
             field,
             onClickFn: splitOpenFn,
             replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
-            variableMap: variableMapData.variableMap,
+            variableMap: variableMap,
           });
         } else {
           return undefined;
