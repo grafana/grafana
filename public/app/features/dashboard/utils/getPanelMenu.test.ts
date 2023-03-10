@@ -125,8 +125,8 @@ describe('getPanelMenu()', () => {
 
       const panel = new PanelModel({});
       const dashboard = createDashboardModelFixture({});
-      const menuItems = getPanelMenu(dashboard, panel);
-      const moreSubMenu = menuItems.find((i) => i.text === 'More...')?.subMenu;
+      const menuItems = getPanelMenu(dashboard, panel, LoadingState.Loading);
+      const moreSubMenu = menuItems.find((i) => i.text === 'Extensions')?.subMenu;
 
       expect(moreSubMenu).toEqual(
         expect.arrayContaining([
@@ -153,8 +153,8 @@ describe('getPanelMenu()', () => {
 
       const panel = new PanelModel({});
       const dashboard = createDashboardModelFixture({});
-      const menuItems = getPanelMenu(dashboard, panel);
-      const moreSubMenu = menuItems.find((i) => i.text === 'More...')?.subMenu;
+      const menuItems = getPanelMenu(dashboard, panel, LoadingState.Loading);
+      const moreSubMenu = menuItems.find((i) => i.text === 'Extensions')?.subMenu;
 
       expect(moreSubMenu).toEqual(
         expect.arrayContaining([
@@ -192,8 +192,8 @@ describe('getPanelMenu()', () => {
 
       const panel = new PanelModel({});
       const dashboard = createDashboardModelFixture({});
-      const menuItems = getPanelMenu(dashboard, panel);
-      const moreSubMenu = menuItems.find((i) => i.text === 'More...')?.subMenu;
+      const menuItems = getPanelMenu(dashboard, panel, LoadingState.Loading);
+      const moreSubMenu = menuItems.find((i) => i.text === 'Extensions')?.subMenu;
 
       expect(moreSubMenu).toEqual(
         expect.arrayContaining([
@@ -223,8 +223,8 @@ describe('getPanelMenu()', () => {
 
       const panel = new PanelModel({});
       const dashboard = createDashboardModelFixture({});
-      const menuItems = getPanelMenu(dashboard, panel);
-      const moreSubMenu = menuItems.find((i) => i.text === 'More...')?.subMenu;
+      const menuItems = getPanelMenu(dashboard, panel, LoadingState.Loading);
+      const moreSubMenu = menuItems.find((i) => i.text === 'Extensions')?.subMenu;
 
       expect(moreSubMenu).toEqual(
         expect.not.arrayContaining([
