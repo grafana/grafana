@@ -58,7 +58,7 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 
 	t.Logf("Injecting stale user ID in cache with key %q", key)
 	userIdPayload := []byte(strconv.FormatInt(int64(33), 10))
-	err = svc.RemoteCache.SetByteArray(context.Background(), key, userIdPayload, 0)
+	err = svc.RemoteCache.Set(context.Background(), key, userIdPayload, 0)
 	require.NoError(t, err)
 
 	authEnabled := svc.initContextWithAuthProxy(ctx, orgID)
@@ -67,7 +67,7 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 	require.Equal(t, userID, ctx.SignedInUser.UserID)
 	require.True(t, ctx.IsSignedIn)
 
-	cachedByteArray, err := svc.RemoteCache.GetByteArray(context.Background(), key)
+	cachedByteArray, err := svc.RemoteCache.Get(context.Background(), key)
 	require.NoError(t, err)
 
 	cacheUserId, err := strconv.ParseInt(string(cachedByteArray), 10, 64)
