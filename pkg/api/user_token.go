@@ -70,7 +70,7 @@ func (hs *HTTPServer) RotateUserAuthTokenRedirect(c *contextmodel.ReqContext) re
 	token := c.GetCookie(hs.Cfg.LoginCookieName)
 	if token == "" {
 		hs.log.FromContext(c.Req.Context()).Debug("Rotate called without session cookie")
-		return response.Redirect(hs.Cfg.AppSubURL + "/")
+		return response.Redirect(hs.Cfg.AppSubURL + "/login")
 	}
 
 	ip, _ := network.GetIPFromAddress(c.RemoteAddr())
@@ -81,10 +81,11 @@ func (hs *HTTPServer) RotateUserAuthTokenRedirect(c *contextmodel.ReqContext) re
 	})
 
 	if err != nil {
-		// FIXME(kalleep): redirect with error or log?
 		hs.log.FromContext(c.Req.Context()).Debug("Failed to rotate token", "error", err)
-		cookies.DeleteCookie(c.Resp, hs.Cfg.LoginCookieName, nil)
-		return response.Redirect(hs.Cfg.AppSubURL + "/")
+		if errors.Is(err, auth.ErrInvalidSessionToken) {
+			cookies.DeleteCookie(c.Resp, hs.Cfg.LoginCookieName, nil)
+		}
+		return response.Redirect(hs.Cfg.AppSubURL + "/login")
 	}
 
 	cookies.WriteSessionCookie(c, hs.Cfg, res.Token, hs.Cfg.LoginMaxLifetime)
@@ -119,7 +120,9 @@ func (hs *HTTPServer) RotateUserAuthToken(c *contextmodel.ReqContext) response.R
 
 	if err != nil {
 		hs.log.FromContext(c.Req.Context()).Debug("Failed to rotate token", "error", err)
-		cookies.DeleteCookie(c.Resp, hs.Cfg.LoginCookieName, nil)
+		if errors.Is(err, auth.ErrInvalidSessionToken) {
+			cookies.DeleteCookie(c.Resp, hs.Cfg.LoginCookieName, nil)
+		}
 		return response.ErrOrFallback(http.StatusUnauthorized, http.StatusText(http.StatusUnauthorized), err)
 	}
 
