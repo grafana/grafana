@@ -594,12 +594,23 @@ export enum BarGaugeDisplayMode {
 }
 
 /**
+ * Allows for the table cell gauge display type to set the gauge mode.
+ */
+export enum BarGaugeValueMode {
+  Color = 'color',
+  Hidden = 'hidden',
+  Text = 'text',
+}
+
+/**
  * TODO docs
  */
 export interface VizTooltipOptions {
   mode: TooltipDisplayMode;
   sort: SortOrder;
 }
+
+export interface Labels {}
 
 /**
  * Internally, this is the "type" of cell that's being displayed
@@ -618,6 +629,7 @@ export enum TableCellDisplayMode {
   Image = 'image',
   JSONView = 'json-view',
   LcdGauge = 'lcd-gauge',
+  Sparkline = 'sparkline',
 }
 
 /**
@@ -694,6 +706,14 @@ export interface TableImageCellOptions {
 export interface TableBarGaugeCellOptions {
   mode?: BarGaugeDisplayMode;
   type: TableCellDisplayMode.Gauge;
+  valueDisplayMode?: BarGaugeValueMode;
+}
+
+/**
+ * Sparkline cell options
+ */
+export interface TableSparklineCellOptions extends GraphFieldConfig {
+  type: TableCellDisplayMode.Sparkline;
 }
 
 /**
@@ -708,7 +728,7 @@ export interface TableColoredBackgroundCellOptions {
  * Table cell options. Each cell has a display mode
  * and other potential options for that display.
  */
-export type TableCellOptions = (TableAutoCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TableJsonViewCellOptions);
+export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TableJsonViewCellOptions);
 
 /**
  * Use UTC/GMT timezone
@@ -769,7 +789,14 @@ export enum LogsDedupStrategy {
   signature = 'signature',
 }
 
-export interface Labels {}
+/**
+ * Height of a table cell
+ */
+export enum TableCellHeight {
+  Lg = 'lg',
+  Md = 'md',
+  Sm = 'sm',
+}
 
 /**
  * Field options for each field within a table (e.g 10, "The String", 64.20, etc.)

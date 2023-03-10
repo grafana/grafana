@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import uFuzzy from '@leeoniya/ufuzzy';
 import debounce from 'debounce-promise';
 import { debounce as debounceLodash } from 'lodash';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
@@ -81,9 +81,24 @@ export const placeholders = {
 
 export const DEFAULT_RESULTS_PER_PAGE = 10;
 
-export const MetricEncyclopediaModal = (props: Props) => {
-  const uf = UseUfuzzy();
+const uf = new uFuzzy({
+  intraMode: 1,
+  intraIns: 1,
+  intraSub: 1,
+  intraTrn: 1,
+  intraDel: 1,
+});
 
+function fuzzySearch(haystack: string[], query: string, setter: React.Dispatch<React.SetStateAction<number[]>>) {
+  // console.log('fuzzySearch');
+
+  const idxs = uf.filter(haystack, query);
+  idxs && setter(idxs);
+}
+
+const debouncedFuzzySearch = debounceLodash(fuzzySearch, 300);
+
+export const MetricEncyclopediaModal = (props: Props) => {
   const { datasource, isOpen, onClose, onChange, query } = props;
 
   const [variables, setVariables] = useState<Array<SelectableValue<string>>>([]);
@@ -93,7 +108,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
   // metric list
   const [metrics, setMetrics] = useState<MetricsData>([]);
   const [hasMetadata, setHasMetadata] = useState<boolean>(true);
-  const [haystack, setHaystack] = useState<string[]>([]);
+  const [metaHaystack, setMetaHaystack] = useState<string[]>([]);
   const [nameHaystack, setNameHaystack] = useState<string[]>([]);
   const [openTabs, setOpenTabs] = useState<string[]>([]);
 
@@ -104,7 +119,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
   // filters
   const [fuzzySearchQuery, setFuzzySearchQuery] = useState<string>('');
   const [fuzzyMetaSearchResults, setFuzzyMetaSearchResults] = useState<number[]>([]);
-  const [fuzzyNameSearchResults, setNameFuzzySearchResults] = useState<number[]>([]);
+  const [fuzzyNameSearchResults, setFuzzyNameSearchResults] = useState<number[]>([]);
   const [fullMetaSearch, setFullMetaSearch] = useState<boolean>(false);
   const [excludeNullMetadata, setExcludeNullMetadata] = useState<boolean>(false);
   const [selectedTypes, setSelectedTypes] = useState<Array<SelectableValue<string>>>([]);
@@ -141,14 +156,14 @@ export const MetricEncyclopediaModal = (props: Props) => {
       metrics = (await datasource.languageProvider.getLabelValues('__name__')) ?? [];
     }
 
-    let haystackData: string[] = [];
+    let haystackMetaData: string[] = [];
     let haystackNameData: string[] = [];
     let metricsData: MetricsData = metrics.map((m) => {
       const type = getMetadataType(m, datasource.languageProvider.metricsMetadata!);
       const description = getMetadataHelp(m, datasource.languageProvider.metricsMetadata!);
 
       // string[] = name + type + description
-      haystackData.push(`${m} ${type} ${description}`);
+      haystackMetaData.push(`${m} ${type} ${description}`);
       haystackNameData.push(m);
       return {
         value: m,
@@ -159,7 +174,7 @@ export const MetricEncyclopediaModal = (props: Props) => {
 
     // setting this by the backend if useBackend is true
     setMetrics(metricsData);
-    setHaystack(haystackData);
+    setMetaHaystack(haystackMetaData);
     setNameHaystack(haystackNameData);
 
     setVariables(
@@ -210,27 +225,6 @@ export const MetricEncyclopediaModal = (props: Props) => {
   function hasMetaDataFilters() {
     return selectedTypes.length > 0;
   }
-
-  function fuzzySearch(query: string) {
-    // search either the names or all metadata
-    // fuzzy search go!
-
-    if (fullMetaSearch) {
-      // considered simply filtering indexes with reduce and includes
-      // Performance comparison with 13,000 metrics searching metadata
-      // Fuzzy 6326ms
-      // Reduce & Includes 5541ms
-      const metaIdxs = uf.filter(haystack, query.toLowerCase());
-      setFuzzyMetaSearchResults(metaIdxs);
-    } else {
-      const nameIdxs = uf.filter(nameHaystack, query.toLowerCase());
-      setNameFuzzySearchResults(nameIdxs);
-    }
-  }
-
-  const debouncedFuzzySearch = debounceLodash((query: string) => {
-    fuzzySearch(query);
-  }, 300);
 
   /**
    * Filter
@@ -367,8 +361,14 @@ export const MetricEncyclopediaModal = (props: Props) => {
               setIsLoading(true);
               debouncedBackendSearch(value);
             } else {
-              // do the search on the frontend
-              debouncedFuzzySearch(value);
+              // search either the names or all metadata
+              // fuzzy search go!
+
+              if (fullMetaSearch) {
+                debouncedFuzzySearch(metaHaystack, value, setFuzzyMetaSearchResults);
+              } else {
+                debouncedFuzzySearch(nameHaystack, value, setFuzzyNameSearchResults);
+              }
             }
 
             setPageNum(1);
@@ -654,22 +654,6 @@ function alphabetically(ascending: boolean, metadataFilters: boolean) {
     // if descending, highest sorts first
     return a.value < b.value ? 1 : -1;
   };
-}
-
-function UseUfuzzy(): uFuzzy {
-  const ref = useRef<uFuzzy>();
-
-  if (!ref.current) {
-    ref.current = new uFuzzy({
-      intraMode: 1,
-      intraIns: 1,
-      intraSub: 1,
-      intraTrn: 1,
-      intraDel: 1,
-    });
-  }
-
-  return ref.current;
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
