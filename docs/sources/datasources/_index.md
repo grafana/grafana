@@ -72,7 +72,7 @@ These built-in core data sources are included in the Grafana documentation:
 
 ## Special data sources
 
-Grafana includes three special data sources:
+Grafana also includes three special data sources:
 
 - **Grafana:** A built-in data source that generates random walk data and can poll the [Testdata]({{< relref "./testdata/" >}}) data source. Additionally, it can list files and get other data from a Grafana installation. This can be helpful for testing visualizations and running experiments.
 - **Mixed:** An abstraction that lets you query multiple data sources in the same panel.
