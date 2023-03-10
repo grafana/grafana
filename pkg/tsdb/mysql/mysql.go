@@ -21,6 +21,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 )
@@ -54,6 +55,7 @@ func newInstanceSettings(cfg *setting.Cfg, httpClientProvider httpclient.Provide
 			MaxOpenConns:    0,
 			MaxIdleConns:    2,
 			ConnMaxLifetime: 14400,
+			SecureDSProxy:   false,
 		}
 
 		err := json.Unmarshal(settings.JSONData, &jsonData)
@@ -80,6 +82,14 @@ func newInstanceSettings(cfg *setting.Cfg, httpClientProvider httpclient.Provide
 		protocol := "tcp"
 		if strings.HasPrefix(dsInfo.URL, "/") {
 			protocol = "unix"
+		}
+
+		// register the secure socks proxy dialer context, if enabled
+		if cfg.IsFeatureToggleEnabled(featuremgmt.FlagSecureSocksDatasourceProxy) && cfg.SecureSocksDSProxy.Enabled && jsonData.SecureDSProxy {
+			protocol, err = registerProxyDialerContext(&cfg.SecureSocksDSProxy, protocol, dsInfo.UID)
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		cnnstr := fmt.Sprintf("%s:%s@%s(%s)/%s?collation=utf8mb4_unicode_ci&parseTime=true&loc=UTC&allowNativePasswords=true",

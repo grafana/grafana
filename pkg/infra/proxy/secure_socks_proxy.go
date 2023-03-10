@@ -1,4 +1,4 @@
-package httpclientprovider
+package proxy
 
 import (
 	"crypto/tls"
@@ -14,24 +14,40 @@ import (
 	"golang.org/x/net/proxy"
 )
 
-// newSecureSocksProxy takes a http.DefaultTransport and wraps it in a socks5 proxy with TLS
-func newSecureSocksProxy(cfg *setting.SecureSocksDSProxySettings, transport *http.Transport) error {
+// NewSecureSocksProxy takes a http.DefaultTransport and wraps it in a socks5 proxy with TLS
+func NewSecureSocksHTTPProxy(cfg *setting.SecureSocksDSProxySettings, transport *http.Transport) error {
+	dialSocksProxy, err := NewSecureSocksProxyContextDialer(cfg)
+	if err != nil {
+		return err
+	}
+
+	contextDialer, ok := dialSocksProxy.(proxy.ContextDialer)
+	if !ok {
+		return errors.New("unable to cast socks proxy dialer to context proxy dialer")
+	}
+
+	transport.DialContext = contextDialer.DialContext
+	return nil
+}
+
+// NewSecureSocksProxyContextDialer returns a proxy context dialer that will wrap connections in a secure socks proxy
+func NewSecureSocksProxyContextDialer(cfg *setting.SecureSocksDSProxySettings) (proxy.Dialer, error) {
 	certPool := x509.NewCertPool()
 	for _, rootCAFile := range strings.Split(cfg.RootCA, " ") {
 		// nolint:gosec
 		// The gosec G304 warning can be ignored because `rootCAFile` comes from config ini.
 		pem, err := os.ReadFile(rootCAFile)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		if !certPool.AppendCertsFromPEM(pem) {
-			return errors.New("failed to append CA certificate " + rootCAFile)
+			return nil, errors.New("failed to append CA certificate " + rootCAFile)
 		}
 	}
 
 	cert, err := tls.LoadX509KeyPair(cfg.ClientCert, cfg.ClientKey)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	tlsDialer := &tls.Dialer{
@@ -43,21 +59,14 @@ func newSecureSocksProxy(cfg *setting.SecureSocksDSProxySettings, transport *htt
 	}
 	dialSocksProxy, err := proxy.SOCKS5("tcp", cfg.ProxyAddress, nil, tlsDialer)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	contextDialer, ok := dialSocksProxy.(proxy.ContextDialer)
-	if !ok {
-		return errors.New("unable to cast socks proxy dialer to context proxy dialer")
-	}
-
-	transport.DialContext = contextDialer.DialContext
-
-	return nil
+	return dialSocksProxy, nil
 }
 
-// secureSocksProxyEnabledOnDS checks the datasource json data to see if the secure socks proxy is enabled on it
-func secureSocksProxyEnabledOnDS(opts sdkhttpclient.Options) bool {
+// SecureSocksProxyEnabledOnDS checks the datasource json data to see if the secure socks proxy is enabled on it
+func SecureSocksProxyEnabledOnDS(opts sdkhttpclient.Options) bool {
 	jsonData := backend.JSONDataFromHTTPClientOptions(opts)
 	res, enabled := jsonData["enableSecureSocksProxy"]
 	if !enabled {

@@ -67,6 +67,7 @@ type JsonData struct {
 	Servername          string `json:"servername"`
 	TimeInterval        string `json:"timeInterval"`
 	Database            string `json:"database"`
+	SecureDSProxy       bool   `json:"enableSecureSocksProxy"`
 }
 
 type DataSourceInfo struct {
