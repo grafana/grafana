@@ -99,7 +99,7 @@ export function LabelFilterItem({
             aria-label={selectors.components.QueryBuilder.matchOperatorSelect}
             value={toOption(item.op ?? defaultOp)}
             options={operators}
-            width={14}
+            width="auto"
             onChange={(change) => {
               if (change.value != null) {
                 onChange({
