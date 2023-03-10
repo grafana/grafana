@@ -1,5 +1,6 @@
 import { partition } from 'lodash';
 import { Subscriber, Observable, Subscription } from 'rxjs';
+import { v4 as uuidv4 } from 'uuid';
 
 import { DataQueryRequest, DataQueryResponse, dateTime, TimeRange } from '@grafana/data';
 import { LoadingState } from '@grafana/schema';
@@ -178,6 +179,8 @@ export function runPartitionedQueries(datasource: LokiDatasource, request: DataQ
   const [instantQueries, normalQueries] = partition(queries, (query) => query.queryType === LokiQueryType.Instant);
   const [logQueries, metricQueries] = partition(normalQueries, (query) => isLogsQuery(query.expr));
 
+  const uuid = uuidv4();
+  request.correlationId = uuid;
   const requests: LokiGroupedRequest = [];
   if (logQueries.length) {
     requests.push({
