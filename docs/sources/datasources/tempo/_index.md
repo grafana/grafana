@@ -15,7 +15,7 @@ weight: 1400
 
 # Tempo data source
 
-Grafana ships with built-in support for Tempo, a high-volume, minimal-dependency trace storage, open-source tracing solution from Grafana Labs. This topic explains configuration and queries specific to the Tempo data source.
+Grafana ships with built-in support for [Tempo](https://grafana.com/docs/tempo/latest/), a high-volume, minimal-dependency trace storage, open-source tracing solution from Grafana Labs. This topic explains configuration and queries specific to the Tempo data source.
 
 For instructions on how to add a data source to Grafana, refer to the [administration documentation]({{< relref "../../administration/data-source-management/" >}}).
 Only users with the organization administrator role can add data sources.
