@@ -208,6 +208,11 @@ type readyToRunItem struct {
 	evaluation
 }
 
+type readyToUpdateItem struct {
+	ruleInfo *alertRuleInfo
+	ruleVersionAndPauseStatus
+}
+
 func (sch *schedule) updateRulesMetrics(alertRules []*ngmodels.AlertRule) {
 	orgs := make(map[int64]int64, len(alertRules))
 	orgsPaused := make(map[int64]int64, len(alertRules))
@@ -233,9 +238,13 @@ func (sch *schedule) updateRulesMetrics(alertRules []*ngmodels.AlertRule) {
 func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.Group, tick time.Time) ([]readyToRunItem, map[ngmodels.AlertRuleKey]struct{}) {
 	tickNum := tick.Unix() / int64(sch.baseInterval.Seconds())
 
-	if err := sch.updateSchedulableAlertRules(ctx); err != nil {
+	// update the local registry. If there was a difference between the previous state and the current new state, rulesDiff will contains keys of rules that were updated.
+	rulesDiff, err := sch.updateSchedulableAlertRules(ctx)
+	if err != nil {
 		sch.log.Error("Failed to update alert rules", "error", err)
 	}
+
+	// this is the new current state. rulesDiff contains the difference between this state and the previous state.
 	alertRules, folderTitles := sch.schedulableAlertRules.all()
 
 	// registeredDefinitions is a map used for finding deleted alert rules
@@ -247,6 +256,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 	sch.updateRulesMetrics(alertRules)
 
 	readyToRun := make([]readyToRunItem, 0)
+	needToUpdate := make([]readyToUpdateItem, 0, len(rulesDiff.updated))
 	missingFolder := make(map[string][]string)
 	for _, item := range alertRules {
 		key := item.GetKey()
@@ -289,6 +299,17 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 				rule:        item,
 				folderTitle: folderTitle,
 			}})
+		} else if !rulesDiff.IsEmpty() {
+			// if we do not need to eval the rule, check the whether rule was just updated and if it was, notify evaluation routine about that
+			_, isUpdated := rulesDiff.updated[key]
+			if isUpdated {
+				sch.log.Debug("Rule has been updated. Notifying evaluation routine", key.LogContext()...)
+				needToUpdate = append(needToUpdate, readyToUpdateItem{ruleInfo: ruleInfo,
+					ruleVersionAndPauseStatus: ruleVersionAndPauseStatus{
+						Version:  ruleVersion(item.Version),
+						IsPaused: item.IsPaused,
+					}})
+			}
 		}
 
 		// remove the alert rule from the registered alert rules
@@ -320,6 +341,12 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 				sch.metrics.EvaluationMissed.WithLabelValues(orgID, item.rule.Title).Inc()
 			}
 		})
+	}
+
+	for _, item := range needToUpdate {
+		go func(i readyToUpdateItem) {
+			i.ruleInfo.update(i.ruleVersionAndPauseStatus)
+		}(item)
 	}
 
 	// unregister and stop routines of the deleted alert rules
