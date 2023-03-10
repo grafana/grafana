@@ -6,7 +6,7 @@ import { getGrafanaSearcher } from './searcher';
 import { NestedFolderDTO } from './types';
 import { queryResultToViewItem } from './utils';
 
-export async function getFolderChildren(parentUid?: string): Promise<DashboardViewItem[]> {
+export async function getFolderChildren(parentUid?: string, parentTitle?: string): Promise<DashboardViewItem[]> {
   if (!config.featureToggles.nestedFolders) {
     throw new Error('PR TODO: Require nestedFolders enabled');
   }
@@ -30,12 +30,12 @@ export async function getFolderChildren(parentUid?: string): Promise<DashboardVi
     return queryResultToViewItem(item, dashboardsResults.view);
   });
 
-  const folders = await getChildFolders(parentUid);
+  const folders = await getChildFolders(parentUid, parentTitle);
 
   return [...folders, ...dashboardItems];
 }
 
-async function getChildFolders(parentUid?: string): Promise<DashboardViewItem[]> {
+async function getChildFolders(parentUid?: string, parentTitle?: string): Promise<DashboardViewItem[]> {
   const backendSrv = getBackendSrv();
 
   const folders = await backendSrv.get<NestedFolderDTO[]>('/api/folders', { parentUid });
@@ -44,6 +44,7 @@ async function getChildFolders(parentUid?: string): Promise<DashboardViewItem[]>
     kind: 'folder',
     uid: item.uid,
     title: item.title,
+    parentTitle,
     url: `/dashboards/f/${item.uid}/`,
   }));
 }

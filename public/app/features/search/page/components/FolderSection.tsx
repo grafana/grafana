@@ -44,7 +44,7 @@ export const FolderSection = ({
       return Promise.resolve([]);
     }
 
-    const childItems = getFolderChildren(section.uid);
+    const childItems = getFolderChildren(section.uid, section.title);
 
     return childItems;
   }, [sectionExpanded, tags]);
