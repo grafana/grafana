@@ -199,7 +199,7 @@
     "eslint-webpack-plugin": "4.0.0",
     "expose-loader": "4.0.0",
     "fork-ts-checker-webpack-plugin": "8.0.0",
-    "glob": "9.1.2",
+    "glob": "9.2.1",
     "html-loader": "4.2.0",
     "html-webpack-plugin": "5.5.0",
     "http-server": "14.1.1",
