@@ -67,15 +67,15 @@ func TestGetPublicDashboard(t *testing.T) {
 			DashResp: &dashboards.Dashboard{UID: "mydashboard", Data: dashboardData},
 		},
 		{
-			Name:        "returns ErrPublicDashboardNotFound when isEnabled is false",
+			Name:        "returns dashboard when isEnabled is false",
 			AccessToken: "abc123",
 			StoreResp: &storeResp{
 				pd:  &PublicDashboard{AccessToken: "abcdToken", IsEnabled: false},
-				d:   &dashboards.Dashboard{UID: "mydashboard"},
+				d:   &dashboards.Dashboard{UID: "mydashboard", Data: dashboardData},
 				err: nil,
 			},
-			ErrResp:  ErrPublicDashboardNotFound,
-			DashResp: nil,
+			ErrResp:  nil,
+			DashResp: &dashboards.Dashboard{UID: "mydashboard", Data: dashboardData},
 		},
 		{
 			Name:        "returns ErrPublicDashboardNotFound if PublicDashboard missing",
@@ -105,6 +105,72 @@ func TestGetPublicDashboard(t *testing.T) {
 			fakeStore.On("FindDashboard", mock.Anything, mock.Anything, mock.Anything).Return(test.StoreResp.d, test.StoreResp.err)
 
 			pdc, dash, err := service.FindPublicDashboardAndDashboardByAccessToken(context.Background(), test.AccessToken)
+			if test.ErrResp != nil {
+				assert.Error(t, test.ErrResp, err)
+			} else {
+				require.NoError(t, err)
+			}
+
+			assert.Equal(t, test.DashResp, dash)
+
+			if test.DashResp != nil {
+				assert.NotNil(t, dash.CreatedBy)
+				assert.Equal(t, test.StoreResp.pd, pdc)
+			}
+		})
+	}
+}
+
+func TestGetEnabledPublicDashboard(t *testing.T) {
+	type storeResp struct {
+		pd  *PublicDashboard
+		d   *dashboards.Dashboard
+		err error
+	}
+
+	testCases := []struct {
+		Name        string
+		AccessToken string
+		StoreResp   *storeResp
+		ErrResp     error
+		DashResp    *dashboards.Dashboard
+	}{
+		{
+			Name:        "returns a dashboard",
+			AccessToken: "abc123",
+			StoreResp: &storeResp{
+				pd:  &PublicDashboard{AccessToken: "abcdToken", IsEnabled: true},
+				d:   &dashboards.Dashboard{UID: "mydashboard", Data: dashboardData},
+				err: nil,
+			},
+			ErrResp:  nil,
+			DashResp: &dashboards.Dashboard{UID: "mydashboard", Data: dashboardData},
+		},
+		{
+			Name:        "returns ErrPublicDashboardNotFound when isEnabled is false",
+			AccessToken: "abc123",
+			StoreResp: &storeResp{
+				pd:  &PublicDashboard{AccessToken: "abcdToken", IsEnabled: false},
+				d:   &dashboards.Dashboard{UID: "mydashboard"},
+				err: nil,
+			},
+			ErrResp:  ErrPublicDashboardNotFound,
+			DashResp: nil,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.Name, func(t *testing.T) {
+			fakeStore := FakePublicDashboardStore{}
+			service := &PublicDashboardServiceImpl{
+				log:   log.New("test.logger"),
+				store: &fakeStore,
+			}
+
+			fakeStore.On("FindByAccessToken", mock.Anything, mock.Anything).Return(test.StoreResp.pd, test.StoreResp.err)
+			fakeStore.On("FindDashboard", mock.Anything, mock.Anything, mock.Anything).Return(test.StoreResp.d, test.StoreResp.err)
+
+			pdc, dash, err := service.FindEnabledPublicDashboardAndDashboardByAccessToken(context.Background(), test.AccessToken)
 			if test.ErrResp != nil {
 				assert.Error(t, test.ErrResp, err)
 			} else {
