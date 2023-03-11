@@ -83,9 +83,9 @@ const (
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
 
-	// FlagK8s
+	// FlagK8S
 	// Explore native k8s integrations
-	FlagK8s = "k8s"
+	FlagK8S = "k8s"
 
 	// FlagDashboardsFromStorage
 	// Load dashboards from the generic storage interface
