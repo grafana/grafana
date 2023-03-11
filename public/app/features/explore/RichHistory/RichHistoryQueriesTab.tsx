@@ -239,7 +239,7 @@ export function RichHistoryQueriesTab(props: Props) {
                     {mappedQueriesToHeadings[heading].length} queries
                   </span>
                 </div>
-                {mappedQueriesToHeadings[heading].map((q: RichHistoryQuery) => {
+                {mappedQueriesToHeadings[heading].map((q) => {
                   return <RichHistoryCard query={q} key={q.id} exploreId={exploreId} />;
                 })}
               </div>
