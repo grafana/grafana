@@ -4,6 +4,7 @@ import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { DataSourceHttpSettings, SecureSocksProxySettings } from '@grafana/ui';
 import { NodeGraphSettings } from 'app/core/components/NodeGraphSettings';
+import { TraceIdTimeParams } from 'app/core/components/TraceIdTimeParams';
 import { TraceToLogsSettings } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { TraceToMetricsSettings } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
 import { SpanBarSettings } from 'app/features/explore/TraceView/components';
@@ -40,6 +41,10 @@ export const ConfigEditor = ({ options, onOptionsChange }: Props) => {
 
       <div className="gf-form-group">
         <SpanBarSettings options={options} onOptionsChange={onOptionsChange} />
+      </div>
+
+      <div className="gf-form-group">
+        <TraceIdTimeParams options={options} onOptionsChange={onOptionsChange} />
       </div>
     </>
   );

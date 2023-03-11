@@ -16,6 +16,7 @@ import {
 } from '@grafana/data';
 import { BackendSrvRequest, getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
+import { TraceIdTimeParamsOptions } from 'app/core/components/TraceIdTimeParams';
 import { serializeParams } from 'app/core/utils/fetch';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { SpanBarOptions } from 'app/features/explore/TraceView/components';
@@ -28,11 +29,13 @@ import { convertTagsLogfmt } from './util';
 
 export interface JaegerJsonData extends DataSourceJsonData {
   nodeGraph?: NodeGraphOptions;
+  traceIdTimeParams?: TraceIdTimeParamsOptions;
 }
 
 export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData> {
   uploadedJson: string | ArrayBuffer | null = null;
   nodeGraph?: NodeGraphOptions;
+  traceIdTimeParams?: TraceIdTimeParamsOptions;
   spanBar?: SpanBarOptions;
   constructor(
     private instanceSettings: DataSourceInstanceSettings<JaegerJsonData>,
@@ -41,6 +44,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
   ) {
     super(instanceSettings);
     this.nodeGraph = instanceSettings.jsonData.nodeGraph;
+    this.traceIdTimeParams = instanceSettings.jsonData.traceIdTimeParams;
   }
 
   async metadataRequest(url: string, params?: Record<string, any>): Promise<any> {
@@ -66,13 +70,15 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery, JaegerJsonData>
     }
 
     let { start, end } = this.getTimeRange();
+    console.log('checking', this.traceIdTimeParams);
 
     if (target.queryType !== 'search' && target.query) {
-      return this._request(
-        `/api/traces/${encodeURIComponent(
-          this.templateSrv.replace(target.query, options.scopedVars)
-        )}?start=${start}&end=${end}`
-      ).pipe(
+      let url = `/api/traces/${encodeURIComponent(this.templateSrv.replace(target.query, options.scopedVars))}`;
+      if (this.traceIdTimeParams) {
+        url += `?start=${start}&end=${end}`;
+      }
+
+      return this._request(url).pipe(
         map((response) => {
           const traceData = response?.data?.data?.[0];
           if (!traceData) {
