@@ -61,6 +61,7 @@ allowed_groups =
 role_attribute_path =
 role_attribute_strict = false
 allow_assign_grafana_admin = false
+tls_skip_verify_insecure = false
 ```
 
 You may have to set the `root_url` option of `[server]` for the callback URL to be
@@ -140,6 +141,7 @@ allowed_groups = example, foo/bar
 role_attribute_path = is_admin && 'Admin' || 'Viewer'
 role_attribute_strict = true
 allow_assign_grafana_admin = false
+tls_skip_verify_insecure = false
 ```
 
 ### Configure automatic login
