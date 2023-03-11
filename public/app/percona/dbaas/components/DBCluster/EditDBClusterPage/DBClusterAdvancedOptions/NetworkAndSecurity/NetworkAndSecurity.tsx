@@ -8,8 +8,8 @@ import FieldSet from '../../../../../../shared/components/Form/FieldSet/FieldSet
 import { Messages } from '../DBClusterAdvancedOptions.messages';
 
 import { getStyles } from './NetworkAndSecurity.styles';
-import { NetworkAndSecurityFields, NetworkAndSecurityProps } from './NetworkAndSecurity.types';
-export const NetworkAndSecurity: FC<NetworkAndSecurityProps> = ({ mode }) => {
+import { NetworkAndSecurityFields } from './NetworkAndSecurity.types';
+export const NetworkAndSecurity: FC = () => {
   const styles = useStyles(getStyles);
   return (
     <FieldSet label={Messages.fieldSets.networkAndSecurity} data-testid="network-and-security">
@@ -19,13 +19,8 @@ export const NetworkAndSecurity: FC<NetworkAndSecurityProps> = ({ mode }) => {
         tooltipIcon="info-circle"
         tooltipText={Messages.tooltips.expose}
         noError
-        disabled={mode === 'edit'}
       />
-      <CheckboxField
-        name={NetworkAndSecurityFields.internetFacing}
-        label={Messages.labels.internetFacing}
-        disabled={mode === 'edit'}
-      />
+      <CheckboxField name={NetworkAndSecurityFields.internetFacing} label={Messages.labels.internetFacing} />
       <FieldArray name={NetworkAndSecurityFields.sourceRanges}>
         {({ fields }) => (
           <div className={styles.fieldsWrapper}>
@@ -34,7 +29,6 @@ export const NetworkAndSecurity: FC<NetworkAndSecurityProps> = ({ mode }) => {
               variant="secondary"
               onClick={() => fields.push({ sourceRange: '' })}
               icon="plus"
-              disabled={mode === 'edit'}
             >
               {Messages.buttons.addNew}
             </Button>
@@ -45,16 +39,14 @@ export const NetworkAndSecurity: FC<NetworkAndSecurityProps> = ({ mode }) => {
                   label={index === 0 ? Messages.labels.sourceRange : ''}
                   placeholder={Messages.placeholders.sourceRange}
                   fieldClassName={styles.field}
-                  disabled={mode === 'edit'}
                 />
-                {index > 0 && (
-                  <Button
-                    className={styles.deleteButton}
-                    variant="secondary"
-                    onClick={() => fields.remove(index)}
-                    icon="trash-alt"
-                  />
-                )}
+                <Button
+                  data-testid={`deleteButton-${index}`}
+                  className={styles.deleteButton}
+                  variant="secondary"
+                  onClick={() => (index > 0 ? fields.remove(index) : fields.update(0, ''))}
+                  icon="trash-alt"
+                />
               </div>
             ))}
           </div>

@@ -4,6 +4,7 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { withAppEvents } from '../../../../../../features/alerting/unified/utils/redux';
 import { DBCluster } from '../../../../../dbaas/components/DBCluster/DBCluster.types';
 import { newDBClusterService } from '../../../../../dbaas/components/DBCluster/DBCluster.utils';
+import { prepareSourceRanges } from '../dbaas.utils';
 
 import { PerconaUpdateDBClusterState } from './updateDBCluster.types';
 
@@ -49,6 +50,8 @@ export const updateDBClusterAction = createAsyncThunk(
     const dbClusterService = newDBClusterService(selectedDBCluster.databaseType);
     thunkAPI.dispatch(setUpdateDBClusterLoading());
 
+    const preparedSourceRanges = prepareSourceRanges(sourceRanges);
+
     await withAppEvents(
       dbClusterService.updateDBCluster({
         databaseImage: selectedDBCluster.installedImage,
@@ -62,7 +65,7 @@ export const updateDBClusterAction = createAsyncThunk(
         expose,
         internetFacing,
         configuration,
-        sourceRanges: sourceRanges ? sourceRanges.map((item: any) => item?.sourceRange || '') : [],
+        sourceRanges: preparedSourceRanges,
         ...(storageClass?.value && { storageClass: storageClass?.value }),
         ...(template && {
           template: {

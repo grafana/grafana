@@ -23,6 +23,7 @@ import {
 } from '../../Kubernetes/EditK8sClusterPage/EditK8sClusterPage.constants';
 import { PMMServerUrlWarning } from '../../PMMServerURLWarning/PMMServerUrlWarning';
 
+import { ConfigurationFields } from './DBClusterAdvancedOptions/Configurations/Configurations.types';
 import { DBClusterAdvancedOptions } from './DBClusterAdvancedOptions/DBClusterAdvancedOptions';
 import { DBClusterBasicOptions } from './DBClusterBasicOptions/DBClusterBasicOptions';
 import { BasicOptionsFields } from './DBClusterBasicOptions/DBClusterBasicOptions.types';
@@ -87,6 +88,9 @@ export const EditDBClusterPage: FC<EditDBClusterPageProps> = () => {
             setClusterName: (databaseTypeValue: string, state, { changeValue }) => {
               changeValue(state, `${BasicOptionsFields.name}`, () => `${databaseTypeValue}-${generateUID()}`);
             },
+            trimConfiguration: ([configuration]: string[], state, { changeValue }) => {
+              changeValue(state, ConfigurationFields.configuration, () => configuration.trim());
+            },
             ...arrayMutators,
           }}
           render={({ form, handleSubmit, valid, pristine, ...props }) => (
@@ -121,13 +125,13 @@ export const EditDBClusterPage: FC<EditDBClusterPageProps> = () => {
                     />
                   )}
                   <DBClusterAdvancedOptions
-                    mode={mode}
                     showUnsafeConfigurationWarning={showUnsafeConfigurationWarning}
-                    setShowUnsafeConfigurationWarning={setShowUnsafeConfigurationWarning}
+                    mode={mode}
                     form={form}
+                    setShowUnsafeConfigurationWarning={setShowUnsafeConfigurationWarning}
                     selectedCluster={selectedDBCluster}
-                    handleSubmit={handleSubmit}
                     pristine={pristine}
+                    handleSubmit={handleSubmit}
                     valid={valid}
                     {...props}
                   />

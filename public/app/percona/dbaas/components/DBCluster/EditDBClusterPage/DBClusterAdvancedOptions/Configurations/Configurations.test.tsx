@@ -14,7 +14,9 @@ describe('DBClusterAdvancedOptions Configurations::', () => {
       render(
         <Form
           onSubmit={jest.fn()}
-          render={() => <Configurations databaseType={Databases.haproxy} k8sClusterName={'testName'} />}
+          render={({ form }) => (
+            <Configurations databaseType={Databases.haproxy} k8sClusterName={'testName'} mode={'create'} form={form} />
+          )}
         />
       )
     );
@@ -32,7 +34,9 @@ describe('DBClusterAdvancedOptions Configurations::', () => {
       render(
         <Form
           onSubmit={jest.fn()}
-          render={() => <Configurations databaseType={Databases.mysql} k8sClusterName={'testName'} />}
+          render={({ form }) => (
+            <Configurations databaseType={Databases.mysql} k8sClusterName={'testName'} mode={'create'} form={form} />
+          )}
         />
       )
     );
@@ -47,7 +51,9 @@ describe('DBClusterAdvancedOptions Configurations::', () => {
       render(
         <Form
           onSubmit={jest.fn()}
-          render={() => <Configurations databaseType={Databases.mongodb} k8sClusterName={'testName'} />}
+          render={({ form }) => (
+            <Configurations databaseType={Databases.mongodb} k8sClusterName={'testName'} mode={'create'} form={form} />
+          )}
         />
       )
     );
@@ -55,5 +61,19 @@ describe('DBClusterAdvancedOptions Configurations::', () => {
       Messages.fieldSets.mongodbConfiguration
     );
     expect(screen.getByTestId('configuration-field-label')).toHaveTextContent(Messages.labels.mongodbConfiguration);
+  });
+
+  it('storageClass is disabled for edit mode', async () => {
+    await waitFor(() =>
+      render(
+        <Form
+          onSubmit={jest.fn()}
+          render={({ form }) => (
+            <Configurations databaseType={Databases.mongodb} k8sClusterName={'testName'} mode={'edit'} form={form} />
+          )}
+        />
+      )
+    );
+    expect(screen.getByTestId('storageClass-field-container').querySelector('input')).toBeDisabled();
   });
 });

@@ -13,6 +13,11 @@ export const getStyles = ({ spacing }: GrafanaTheme) => ({
   fieldsWrapper: css`
     position: relative;
     width: 100%;
+    div:first-of-type {
+      button {
+        margin-top: 25px;
+      }
+    }
   `,
 
   button: css`

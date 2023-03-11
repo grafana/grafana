@@ -149,6 +149,7 @@ export class PSMDBService extends DBClusterService {
       installedImage: dbCluster.installed_image,
       availableImage: dbCluster.available_image,
       template: dbCluster.template,
+      sourceRanges: dbCluster.source_ranges,
     };
   }
 }

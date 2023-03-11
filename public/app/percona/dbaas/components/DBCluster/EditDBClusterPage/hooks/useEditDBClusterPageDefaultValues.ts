@@ -41,7 +41,7 @@ export const useEditDBClusterPageDefaultValues = ({
     }
     return undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [history, kubernetes, mode, preSelectedKubernetesCluster, selectedDBCluster]);
+  }, [history, kubernetes, mode, preSelectedKubernetesCluster, selectedDBCluster, configuration]);
 
   if (mode !== 'create' && (mode !== 'edit' || !selectedDBCluster)) {
     history.push(DB_CLUSTER_INVENTORY_URL);
