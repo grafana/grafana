@@ -443,6 +443,13 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('panel-stat-overrides', import '../dev-dashboards/panel-stat/panel-stat-overrides.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('panel-stat-tests', import '../dev-dashboards/panel-stat/panel-stat-tests.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
