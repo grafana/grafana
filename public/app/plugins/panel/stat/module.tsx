@@ -4,14 +4,15 @@ import { commonOptionsBuilder, sharedSingleStatMigrationHandler } from '@grafana
 
 import { statPanelChangedHandler } from './StatMigrations';
 import { StatPanel } from './StatPanel';
-import { addStandardDataReduceOptions, addOrientationOption, addCustomUnitTextInputs } from './common';
+import { addStandardDataReduceOptions, addOrientationOption } from './common';
+import { addDisplayOverrideOptions } from './override';
 import { defaultPanelOptions, PanelOptions } from './panelcfg.gen';
 import { StatSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<PanelOptions>(StatPanel)
   .useFieldConfig({
     // Add a custom text fields for custom stat units
-    useCustomConfig: (builder) => addCustomUnitTextInputs(builder),
+    useCustomConfig: (builder) => addDisplayOverrideOptions(builder),
   })
   .setPanelOptions((builder) => {
     const mainCategory = ['Stat styles'];

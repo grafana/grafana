@@ -20,10 +20,12 @@ title: StatPanelCfg kind
 
 ### PanelFieldConfig
 
-| Property | Type   | Required | Description |
-|----------|--------|----------|-------------|
-| `prefix` | string | No       |             |
-| `suffix` | string | No       |             |
+| Property | Type   | Required | Description                                               |
+|----------|--------|----------|-----------------------------------------------------------|
+| `color`  | string | No       | Override the display color                                |
+| `prefix` | string | No       | Override the display prefix (supports template variables) |
+| `suffix` | string | No       | Override the display prefix (supports template variables) |
+| `text`   | string | No       | Override the display text (supports template variables)   |
 
 ### PanelOptions
 

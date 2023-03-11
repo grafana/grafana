@@ -16,7 +16,7 @@ import { BigValue, DataLinksContextMenu, VizRepeater, VizRepeaterRenderValueProp
 import { DataLinksContextMenuApi } from '@grafana/ui/src/components/DataLinks/DataLinksContextMenu';
 import { config } from 'app/core/config';
 
-import { formatDisplayValuesWithCustomUnits } from './common';
+import { applyDisplayOverrides } from './override';
 import { PanelOptions } from './panelcfg.gen';
 
 export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
@@ -83,20 +83,17 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
 
   getValues = (): FieldDisplay[] => {
     const { data, options, replaceVariables, fieldConfig, timeZone } = this.props;
-    // Grab any custom units to prepend/append
-    const customConfig = fieldConfig.defaults?.custom ?? {};
-
     let globalRange: NumericRange | undefined = undefined;
 
     for (let frame of data.series) {
       for (let field of frame.fields) {
-        let { config } = field;
         // mostly copied from fieldOverrides, since they are skipped during streaming
         // Set the Min/Max value automatically
         if (field.type === FieldType.number) {
           if (field.state?.range) {
             continue;
           }
+          let { config } = field;
           if (!globalRange && (!isNumber(config.min) || !isNumber(config.max))) {
             globalRange = findNumericFieldMinMax(data.series);
           }
@@ -108,7 +105,7 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
       }
     }
 
-    const fieldDisplayValues = getFieldDisplayValues({
+    return getFieldDisplayValues({
       fieldConfig,
       reduceOptions: options.reduceOptions,
       replaceVariables,
@@ -116,9 +113,7 @@ export class StatPanel extends PureComponent<PanelProps<PanelOptions>> {
       data: data.series,
       sparkline: options.graphMode !== BigValueGraphMode.None,
       timeZone,
-    });
-
-    return formatDisplayValuesWithCustomUnits(fieldDisplayValues, customConfig);
+    }).map((v) => applyDisplayOverrides(v, config.theme2, this.props.replaceVariables));
   };
 
   render() {

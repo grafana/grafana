@@ -27,6 +27,20 @@ export const defaultPanelOptions: Partial<PanelOptions> = {
 };
 
 export interface PanelFieldConfig {
+  /**
+   * Override the display color
+   */
+  color?: string;
+  /**
+   * Override the display prefix (supports template variables)
+   */
   prefix?: string;
+  /**
+   * Override the display prefix (supports template variables)
+   */
   suffix?: string;
+  /**
+   * Override the display text (supports template variables)
+   */
+  text?: string;
 }

@@ -34,8 +34,14 @@ composableKinds: PanelCfg: {
 							textMode:    common.BigValueTextMode | *"auto"
 						} @cuetsy(kind="interface")
 						PanelFieldConfig: {
+							// Override the display prefix (supports template variables)
 							prefix?: string
+							// Override the display prefix (supports template variables)
 							suffix?: string
+							// Override the display text (supports template variables)
+							text?: string
+							// Override the display color
+							color?: string
 						} @cuetsy(kind="interface")
 					},
 				]
