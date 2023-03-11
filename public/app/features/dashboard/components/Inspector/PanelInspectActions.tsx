@@ -4,6 +4,12 @@ import { PanelData } from '@grafana/data';
 
 import { PanelModel } from '../../state';
 
+declare global {
+  interface Window {
+    grafanaPanelInspectActionSupplier?: PanelInspectActionSupplier;
+  }
+}
+
 export interface PanelInspectActionProps {
   panel: PanelModel;
   data?: PanelData;
@@ -61,7 +67,7 @@ interface InspectActionsTabProps {
 }
 
 export const InspectActionsTab: React.FC<InspectActionsTabProps> = ({ panel, data }) => {
-  const supplier = (window as any).grafanaPanelInspectActionSupplier as PanelInspectActionSupplier;
+  const supplier = window.grafanaPanelInspectActionSupplier;
   if (!supplier) {
     return <div>Missing actions</div>;
   }

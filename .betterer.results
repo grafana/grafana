@@ -2218,10 +2218,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
-    "public/app/core/profiler.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
     "public/app/core/reducers/root.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
@@ -2258,9 +2254,7 @@ exports[`better eslint`] = {
     ],
     "public/app/core/services/echo/backends/analytics/ApplicationInsightsBackend.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/core/services/echo/backends/analytics/RudderstackBackend.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -2823,18 +2817,8 @@ exports[`better eslint`] = {
     "public/app/features/dashboard/components/HelpWizard/randomizer.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/features/dashboard/components/Inspector/PanelInspectActions.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
-    ],
     "public/app/features/dashboard/components/Inspector/PanelInspector.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/features/dashboard/components/Inspector/hooks.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
     "public/app/features/dashboard/components/PanelEditor/OptionsPane.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
@@ -2926,20 +2910,11 @@ exports[`better eslint`] = {
     "public/app/features/dashboard/components/ShareModal/ShareExport.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "public/app/features/dashboard/components/ShareModal/ShareLink.test.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "public/app/features/dashboard/components/ShareModal/ShareModal.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/dashboard/components/ShareModal/ShareSnapshot.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/features/dashboard/components/ShareModal/utils.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
     ],
     "public/app/features/dashboard/components/TransformationsEditor/TransformationEditor.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -3297,10 +3272,6 @@ exports[`better eslint`] = {
     ],
     "public/app/features/dimensions/editors/FolderPickerTab.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/features/dimensions/editors/IconSelector.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/features/dimensions/editors/ResourceDimensionEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -3944,11 +3915,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "11"]
-    ],
-    "public/app/features/runtime/init.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"]
     ],
     "public/app/features/sandbox/TestStuffPage.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -5312,12 +5278,6 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/datasource/loki/getDerivedFields.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
-    "public/app/plugins/datasource/loki/querySplitting.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
     ],
     "public/app/plugins/datasource/loki/querybuilder/binaryScalarOperations.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
