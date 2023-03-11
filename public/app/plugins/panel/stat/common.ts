@@ -7,13 +7,8 @@ import {
   PanelOptionsEditorBuilder,
   ReducerID,
   standardEditorsRegistry,
-  FieldDisplay,
-  FieldConfigEditorBuilder,
-  FieldType,
 } from '@grafana/data';
 import { SingleStatBaseOptions, VizOrientation } from '@grafana/schema';
-
-import { PanelFieldConfig } from './panelcfg.gen';
 
 export function addStandardDataReduceOptions<T extends SingleStatBaseOptions>(
   builder: PanelOptionsEditorBuilder<T>,
