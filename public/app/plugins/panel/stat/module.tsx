@@ -11,7 +11,7 @@ import { StatSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<PanelOptions>(StatPanel)
   .useFieldConfig({
-    // Add a custom text fields for custom stat units
+    // Allow setting custom display properties
     useCustomConfig: (builder) => addDisplayOverrideOptions(builder),
   })
   .setPanelOptions((builder) => {
