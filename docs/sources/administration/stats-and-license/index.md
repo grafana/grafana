@@ -11,6 +11,9 @@ keywords:
   - configuration
   - server
   - settings
+labels:
+  products:
+    - oss
 title: Stats and license
 weight: 400
 ---
