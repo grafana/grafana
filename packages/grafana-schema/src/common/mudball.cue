@@ -242,6 +242,9 @@ VizLegendOptions: {
 // for the bar gauge component of Grafana UI
 BarGaugeDisplayMode: "basic" | "lcd" | "gradient" @cuetsy(kind="enum")
 
+// Allows for the table cell gauge display type to set the gauge mode.
+BarGaugeValueMode: "color" | "text" | "hidden" @cuetsy(kind="enum")
+
 // TODO docs
 VizTooltipOptions: {
 	mode: TooltipDisplayMode
@@ -251,3 +254,6 @@ VizTooltipOptions: {
 Labels: {
 	[string]: string
 } @cuetsy(kind="interface")
+
+// Compare two values
+ComparisonOperation: "eq" | "neq" | "lt" | "lte" | "gt" | "gte" @cuetsy(kind="enum",memberNames="EQ|NEQ|LT|LTE|GT|GTE")
