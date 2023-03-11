@@ -43,6 +43,7 @@ func TestFeatureToggleFiles(t *testing.T) {
 
 	ownerlessFeatures := map[string]bool{
 		"prometheusAzureOverrideAudience": true,
+		"azLegacyTemplateVariables":       true,
 	}
 
 	t.Run("all new features should have an owner", func(t *testing.T) {
@@ -141,8 +142,6 @@ func generateTypeScript() string {
  * @public
  */
 export interface FeatureToggles {
-  [name: string]: boolean | undefined; // support any string value
-
 `
 	for _, flag := range standardFeatureFlags {
 		buf += "  " + getTypeScriptKey(flag.Name) + "?: boolean;\n"
