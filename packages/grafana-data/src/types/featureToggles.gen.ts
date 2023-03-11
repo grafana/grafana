@@ -31,8 +31,6 @@ export interface FeatureToggles {
   lokiLive?: boolean;
   lokiDataframeApi?: boolean;
   featureHighlights?: boolean;
-  dashboardComments?: boolean;
-  annotationComments?: boolean;
   migrationLocking?: boolean;
   storage?: boolean;
   k8s?: boolean;
