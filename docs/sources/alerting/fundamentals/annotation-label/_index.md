@@ -15,7 +15,7 @@ weight: 401
 
 # Annotations and labels for alerting rules
 
-Annotations and labels are key value pairs associated with alerts originating from the alerting rule, datasource response, and as a result of alerting rule evaluation. They can be used in alert notifications directly or in [templates]({{< relref "../../contact-points/message-templating/" >}}) and [template functions]({{< relref "../../contact-points/fundamentals/annotation-label/template-functions/" >}}) to create notification content dynamically.
+Annotations and labels are key value pairs associated with alerts originating from the alerting rule, datasource response, and as a result of alerting rule evaluation. They can be used in alert notifications directly or in [templates]({{< relref "../../contact-points/message-templating" >}}) and [template functions]({{< relref "./template-functions" >}}) to create notification content dynamically.
 
 ## Annotations
 

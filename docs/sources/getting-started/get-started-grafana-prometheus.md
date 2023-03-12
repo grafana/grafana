@@ -12,8 +12,6 @@ weight: 300
 
 Prometheus is an open source monitoring system for which Grafana provides out-of-the-box support. This topic walks you through the steps to create a series of dashboards in Grafana to display system metrics for a server monitored by Prometheus.
 
-{{< docs/shared "getting-started/first-step.md" >}}
-
 #### Download Prometheus and node_exporter
 
 Prometheus, like Grafana, can be installed on many different operating systems. Refer to the [Prometheus download page](https://prometheus.io/download/), which lists all stable versions of Prometheus components. Download the following components:

@@ -86,7 +86,7 @@ In this case the labels that represent the dimensions will have two keys based o
 
 > **Note:** More than one dimension is currently only supported in the Logs queries within the Azure Monitor service as of version 7.1.
 
-> **Note:** Multiple dimensions are not supported in a way that maps to multiple alerts in Grafana, but rather they are treated as multiple conditions to a single alert. For more information, see See the documentation on [creating alerts with multiple series]({{< relref "../alerting/alerting-rules/create-grafana-managed-rule/#single-and-multi-dimensional-rule" >}}).
+> **Note:** Multiple dimensions are not supported in a way that maps to multiple alerts in Grafana, but rather they are treated as multiple conditions to a single alert. For more information, see See the documentation on [creating alerts with multiple series]({{< relref "../../alerting/alerting-rules/create-grafana-managed-rule#single-and-multi-dimensional-rule" >}}).
 
 ### Multiple values
 

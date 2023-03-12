@@ -29,7 +29,7 @@ Grafana performs provisioning during startup. After you make a change to the con
 
 3. Create a new YAML in the following folder: **provisioning/access-control**. For example, `provisioning/access-control/custom-roles.yml`
 
-4. Add RBAC provisioning details to the configuration file. See [manage RBAC roles]({{< relref "./manage-rbac-roles/" >}}) and [assign RBAC roles]({{< relref "./assign-rbac-roles/" >}}) for instructions, and see this [example role provisioning file]({{< relref "./rbac-provisioning/#example" >}}) for a complete example of a provisioning file.
+4. Add RBAC provisioning details to the configuration file. See [manage RBAC roles]({{< relref "../manage-rbac-roles" >}}) and [assign RBAC roles]({{< relref "../assign-rbac-roles" >}}) for instructions, and see this [example role provisioning file]({{< relref "#example" >}}) for a complete example of a provisioning file.
 
 5. Reload the provisioning configuration file.
 
