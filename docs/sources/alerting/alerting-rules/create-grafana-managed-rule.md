@@ -26,7 +26,7 @@ Watch this video to learn more about creating alerts: {{< vimeo 720001934 >}}
    - In **Rule name**, add a descriptive name. This name is displayed in the alert rule list. It is also the `alertname` label for every alert instance that is created from this rule.
 1. In Step 2, add queries and expressions to evaluate, and then select the alert condition.
    - For queries, select a data source from the drop-down.
-   - Add one or more [queries]({{< relref "../../panels-visualizations/query-transform-data/#add-a-query" >}}) or [expressions]({{< relref "../../panels-visualizations/query-transform-data/expression-queries/" >}}).
+   - Add one or more [queries]({{< relref "/docs/grafana/latest/panels-visualizations/query-transform-data#add-a-query" >}}) or [expressions]({{< relref "/docs/grafana/latest/panels-visualizations/query-transform-data/expression-queries" >}}).
    - For each expression, select either **Classic condition** to create a single alert rule, or choose from **Math**, **Reduce**, **Resample** options to generate separate alert for each series. For details on these options, see [Single and multi dimensional rule](#single-and-multi-dimensional-rule).
    - Click **Run queries** to verify that the query is successful.
    - Next, select the query or expression for your alert condition.
@@ -74,7 +74,7 @@ To generate a separate alert for each series, create a multi-dimensional rule. U
 
 #### Rule with classic condition
 
-For more information, see [expressions documentation]({{< relref "../../panels-visualizations/query-transform-data/expression-queries/" >}}).
+For more information, see [expressions documentation]({{< relref "/docs/grafana/latest/panels-visualizations/query-transform-data/expression-queries" >}}).
 
 ### No data and error handling
 
@@ -87,7 +87,7 @@ Configure alerting behavior in the absence of data using information in the foll
 | Ok             | Set alert rule state to `Normal`.                                                                                                         |
 
 | Error or timeout option | Description                                                                                                                                       |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | Alerting                | Set alert rule state to `Alerting`. From Grafana 8.5, the alert rule waits for the entire duration for which the condition is true before firing. |
 | OK                      | Set alert rule state to `Normal`                                                                                                                  |
-| Error                   | Create a new alert `DatasourceError` with the name and UID of the alert rule, and UID of the datasource that returned no data as labels.          |
+| re                      | Error                                                                                                                                             | Create a new alert `DatasourceError` with the name and UID of the alert rule, and UID of the datasource that returned no data as labels. |
