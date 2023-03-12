@@ -27,7 +27,7 @@ This API allows you to interact programmatically with the [Reporting]({{< relref
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#reporting-api" >}}) for an explanation.
+See note in the [introduction]({{< relref "./#reporting-api" >}}) for an explanation.
 
 | Action       | Scope                       |
 | ------------ | --------------------------- |
@@ -99,7 +99,7 @@ Content-Length: 1840
 ### Status Codes
 
 - **200** – OK
-- **401** - Authentication failed, refer to [Authentication API]({{< relref "auth/" >}}).
+- **401** - Authentication failed, refer to [Authentication API]({{< relref "./auth/" >}}).
 - **500** – Unexpected error or server misconfiguration. Refer to server logs for more details.
 
 ## Get a report
@@ -108,7 +108,7 @@ Content-Length: 1840
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#reporting-api" >}}) for an explanation.
+See note in the [introduction]({{< relref "./#reporting-api" >}}) for an explanation.
 
 | Action       | Scope                                                      |
 | ------------ | ---------------------------------------------------------- |
@@ -183,7 +183,7 @@ Content-Length: 940
 
 - **200** – OK
 - **400** – Bad request (invalid report ID).
-- **401** - Authentication failed, refer to [Authentication API]({{< relref "auth/" >}}).
+- **401** - Authentication failed, refer to [Authentication API]({{< relref "./auth/" >}}).
 - **403** – Forbidden (access denied to a report or a dashboard used in the report).
 - **404** – Not found (such report does not exist).
 - **500** – Unexpected error or server misconfiguration. Refer to server logs for more details.
@@ -194,7 +194,7 @@ Content-Length: 940
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#reporting-api" >}}) for an explanation.
+See note in the [introduction]({{< ref "./#reporting-api" >}}) for an explanation.
 
 | Action         | Scope |
 | -------------- | ----- |
@@ -304,7 +304,7 @@ Content-Length: 35
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#reporting-api" >}}) for an explanation.
+See note in the [introduction]({{< ref "./#reporting-api" >}}) for an explanation.
 
 | Action        | Scope                                                     |
 | ------------- | --------------------------------------------------------- |
@@ -377,7 +377,7 @@ Content-Length: 28
 
 - **200** – OK
 - **400** – Bad request (invalid json, missing or invalid fields values, etc.).
-- **401** - Authentication failed, refer to [Authentication API]({{< relref "auth/" >}}).
+- **401** - Authentication failed, refer to [Authentication API]({{< relref "./auth/" >}}).
 - **403** – Forbidden (access denied to a report or a dashboard used in the report).
 - **404** – Not found (such report does not exist).
 - **500** – Unexpected error or server misconfiguration. Refer to server logs for more details.
@@ -388,7 +388,7 @@ Content-Length: 28
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#reporting-api" >}}) for an explanation.
+See note in the [introduction]({{< ref "./#reporting-api" >}}) for an explanation.
 
 | Action         | Scope                                                     |
 | -------------- | --------------------------------------------------------- |
@@ -419,7 +419,7 @@ Content-Length: 39
 
 - **200** – OK
 - **400** – Bad request (invalid report ID).
-- **401** - Authentication failed, refer to [Authentication API]({{< relref "auth/" >}}).
+- **401** - Authentication failed, refer to [Authentication API]({{< relref "./auth/" >}}).
 - **404** - Not found (report with this ID does not exist).
 - **500** - Unexpected error or server misconfiguration. Refer to server logs for more details
 
@@ -431,7 +431,7 @@ Generate and send a report. This API waits for the report to be generated before
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#reporting-api" >}}) for an explanation.
+See note in the [introduction]({{< ref "./#reporting-api" >}}) for an explanation.
 
 | Action       | Scope |
 | ------------ | ----- |
@@ -473,7 +473,7 @@ Content-Length: 29
 
 - **200** – Report was sent.
 - **400** – Bad request (invalid json, missing content-type, missing or invalid fields, etc.).
-- **401** - Authentication failed, refer to [Authentication API]({{< relref "auth/" >}}).
+- **401** - Authentication failed, refer to [Authentication API]({{< relref "./auth/" >}}).
 - **403** - Forbidden (access denied to a report or a dashboard used in the report).
 - **404** - Report not found.
 - **500** - Unexpected error or server misconfiguration. Refer to server logs for more details.
@@ -486,7 +486,7 @@ Returns reports branding settings that are global and used across all the report
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#reporting-api" >}}) for an explanation.
+See note in the [introduction]({{< ref "./#reporting-api" >}}) for an explanation.
 
 | Action                | Scope |
 | --------------------- | ----- |
@@ -525,7 +525,7 @@ Content-Length: 181
 ### Status Codes
 
 - **200** – OK
-- **401** - Authentication failed, refer to [Authentication API]({{< relref "auth/" >}}).
+- **401** - Authentication failed, refer to [Authentication API]({{< relref "./auth/" >}}).
 - **500** - Unexpected error or server misconfiguration. Refer to server logs for more detail
 
 ## Save reports branding settings
@@ -536,7 +536,7 @@ Creates settings if they don't exist, otherwise updates them. These settings are
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#reporting-api" >}}) for an explanation.
+See note in the [introduction]({{< ref "./#reporting-api" >}}) for an explanation.
 
 | Action                 | Scope |
 | ---------------------- | ----- |
@@ -587,7 +587,7 @@ Content-Length: 35
 
 - **200** – OK
 - **400** – Bad request (invalid json, missing or invalid fields values, etc.).
-- **401** - Authentication failed, refer to [Authentication API]({{< relref "auth/" >}}).
+- **401** - Authentication failed, refer to [Authentication API]({{< relref "./auth/" >}}).
 - **500** - Unexpected error or server misconfiguration. Refer to server logs for more detail
 
 ## Send a test email
@@ -598,7 +598,7 @@ Sends a test email with a report without persisting it in the database.
 
 #### Required permissions
 
-See note in the [introduction]({{< ref "#reporting-api" >}}) for an explanation.
+See note in the [introduction]({{< ref "./#reporting-api" >}}) for an explanation.
 
 | Action       | Scope |
 | ------------ | ----- |
@@ -670,6 +670,6 @@ Content-Length: 29
 
 - **200** – OK
 - **400** – Bad request (invalid json, missing or invalid fields values, etc.).
-- **401** - Authentication failed, refer to [Authentication API]({{< relref "auth/" >}}).
+- **401** - Authentication failed, refer to [Authentication API]({{< relref "./auth/" >}}).
 - **403** - Forbidden (access denied to a report or a dashboard used in the report).
 - **500** - Unexpected error or server misconfiguration. Refer to server logs for more details
