@@ -594,6 +594,15 @@ export enum BarGaugeDisplayMode {
 }
 
 /**
+ * Allows for the table cell gauge display type to set the gauge mode.
+ */
+export enum BarGaugeValueMode {
+  Color = 'color',
+  Hidden = 'hidden',
+  Text = 'text',
+}
+
+/**
  * TODO docs
  */
 export interface VizTooltipOptions {
@@ -697,6 +706,7 @@ export interface TableImageCellOptions {
 export interface TableBarGaugeCellOptions {
   mode?: BarGaugeDisplayMode;
   type: TableCellDisplayMode.Gauge;
+  valueDisplayMode?: BarGaugeValueMode;
 }
 
 /**
@@ -712,6 +722,15 @@ export interface TableSparklineCellOptions extends GraphFieldConfig {
 export interface TableColoredBackgroundCellOptions {
   mode?: TableCellBackgroundDisplayMode;
   type: TableCellDisplayMode.ColorBackground;
+}
+
+/**
+ * Height of a table cell
+ */
+export enum TableCellHeight {
+  Lg = 'lg',
+  Md = 'md',
+  Sm = 'sm',
 }
 
 /**
@@ -780,12 +799,15 @@ export enum LogsDedupStrategy {
 }
 
 /**
- * Height of a table cell
+ * Compare two values
  */
-export enum TableCellHeight {
-  Lg = 'lg',
-  Md = 'md',
-  Sm = 'sm',
+export enum ComparisonOperation {
+  EQ = 'eq',
+  GT = 'gt',
+  GTE = 'gte',
+  LT = 'lt',
+  LTE = 'lte',
+  NEQ = 'neq',
 }
 
 /**

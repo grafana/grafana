@@ -108,6 +108,22 @@ The gauge is split up in small cells that are lit or unlit.
 
 {{< figure src="/static/img/docs/tables/lcd-gauge.png" max-width="500px" caption="LCD gauge" class="docs-image--no-shadow" >}}
 
+#### Label Options
+
+Additionally, labels displayed alongside of the gauges can be set to be colored by value, match the theme text color, or be hidden.
+
+**Value Color**
+
+{{< figure src="/static/img/docs/tables/value-color-mode.png" max-width="500px" caption="Color Label by Value" class="docs-image--no-shadow" >}}
+
+**Text Color**
+
+{{< figure src="/static/img/docs/tables/text-color-mode.png" max-width="500px" caption="Color Label by theme color" class="docs-image--no-shadow" >}}
+
+**Hidden**
+
+{{< figure src="/static/img/docs/tables/hidden-mode.png" max-width="500px" caption="Hide Label" class="docs-image--no-shadow" >}}
+
 ### JSON view
 
 Shows value formatted as code. If a value is an object the JSON view allowing browsing the JSON object will appear on hover.

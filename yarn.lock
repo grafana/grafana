@@ -4993,14 +4993,14 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/e2e-selectors@npm:canary":
-  version: 9.4.0-96193pre
-  resolution: "@grafana/e2e-selectors@npm:9.4.0-96193pre"
+"@grafana/e2e-selectors@npm:^9.4.3":
+  version: 9.4.3
+  resolution: "@grafana/e2e-selectors@npm:9.4.3"
   dependencies:
     "@grafana/tsconfig": ^1.2.0-rc1
     tslib: 2.4.1
     typescript: 4.8.4
-  checksum: 1ce663607c0c816ec02cad33d80c38731c4dfafdc7d1693baa989b8eff6588e3cc1d8a031c4f30f888bbd8aa8768cce7c5dd4cb2455306040f39dcac933ceae4
+  checksum: 85a88cdf4adb643ff863b15f96fc6c04ecb7567c27cc526a00c157eb02575e55adc1e7701d58e1b48f00f24951c332fbb191cd2b5a8e74cd0c545543777e82af
   languageName: node
   linkType: hard
 
@@ -5041,7 +5041,7 @@ __metadata:
     tslib: 2.5.0
     typescript: 4.8.4
     uuid: 9.0.0
-    webpack: 5.75.0
+    webpack: 5.76.0
     yaml: ^2.0.0
   bin:
     grafana-e2e: bin/grafana-e2e.js
@@ -5207,17 +5207,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:^0.0.16":
-  version: 0.0.16
-  resolution: "@grafana/scenes@npm:0.0.16"
+"@grafana/scenes@npm:^0.0.18":
+  version: 0.0.18
+  resolution: "@grafana/scenes@npm:0.0.18"
   dependencies:
-    "@grafana/e2e-selectors": canary
+    "@grafana/e2e-selectors": ^9.4.3
     "@grafana/experimental": 1.0.1
     react-grid-layout: 1.3.4
     react-use: 17.4.0
     react-virtualized-auto-sizer: 1.0.7
     uuid: ^9.0.0
-  checksum: c6cf9f1571309da4ed0fb5046f8abf18b324e9847890c54307ca093610760d52fdb44002fb1db8e81abca6371121a0623a2f44c9828ef80b11d8d189993f457a
+  checksum: f863cbf410d71e579cd4e343fb7b8ad014bc66a250f4d31f9d43c43fe8e97f5b6e3e8d01ed69818c347b3db31b6ecb153d1dc7a0e2946d360e7e1806eb6f5d8c
   languageName: node
   linkType: hard
 
@@ -5481,7 +5481,7 @@ __metadata:
     typescript: 4.8.4
     uplot: 1.6.24
     uuid: 9.0.0
-    webpack: 5.75.0
+    webpack: 5.76.0
   peerDependencies:
     react: ^16.8.0 || ^17.0.0
     react-dom: ^16.8.0 || ^17.0.0
@@ -21888,15 +21888,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"glob@npm:9.1.2":
-  version: 9.1.2
-  resolution: "glob@npm:9.1.2"
+"glob@npm:9.2.1, glob@npm:^9.2.0":
+  version: 9.2.1
+  resolution: "glob@npm:9.2.1"
   dependencies:
     fs.realpath: ^1.0.0
     minimatch: ^7.4.1
     minipass: ^4.2.4
-    path-scurry: ^1.5.0
-  checksum: 8c0bcd729b5783c340553966a25728a6c6e53275b825b4bf3be52bc2d6d31ea39d55d3c7e989edfc541f5a0ba7421b8616788f55367dd8551aac6cebbf7491ab
+    path-scurry: ^1.6.1
+  checksum: ef9b1c32491e6b532bdd0d2abcc3c9f48e83446609e11285869156982fc5a756dfbaa6f59f797712343bd1e22500ac15708692806633653fde4ef67c85e2aab7
   languageName: node
   linkType: hard
 
@@ -21910,18 +21910,6 @@ __metadata:
     minimatch: ^5.0.1
     once: ^1.3.0
   checksum: 50bcdea19d8e79d8de5f460b1939ffc2b3299eac28deb502093fdca22a78efebc03e66bf54f0abc3d3d07d8134d19a32850288b7440d77e072aa55f9d33b18c5
-  languageName: node
-  linkType: hard
-
-"glob@npm:^9.2.0":
-  version: 9.2.1
-  resolution: "glob@npm:9.2.1"
-  dependencies:
-    fs.realpath: ^1.0.0
-    minimatch: ^7.4.1
-    minipass: ^4.2.4
-    path-scurry: ^1.6.1
-  checksum: ef9b1c32491e6b532bdd0d2abcc3c9f48e83446609e11285869156982fc5a756dfbaa6f59f797712343bd1e22500ac15708692806633653fde4ef67c85e2aab7
   languageName: node
   linkType: hard
 
@@ -22130,7 +22118,7 @@ __metadata:
     "@grafana/lezer-logql": 0.1.2
     "@grafana/monaco-logql": ^0.0.7
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": ^0.0.16
+    "@grafana/scenes": ^0.0.18
     "@grafana/schema": "workspace:*"
     "@grafana/toolkit": "workspace:*"
     "@grafana/tsconfig": ^1.2.0-rc1
@@ -22288,7 +22276,7 @@ __metadata:
     file-saver: 2.0.5
     fork-ts-checker-webpack-plugin: 8.0.0
     framework-utils: ^1.1.0
-    glob: 9.1.2
+    glob: 9.2.1
     history: 4.10.1
     hoist-non-react-statics: 3.3.2
     html-loader: 4.2.0
@@ -22421,7 +22409,7 @@ __metadata:
     vendor: "link:./public/vendor"
     visjs-network: 4.25.0
     wait-on: 7.0.1
-    webpack: 5.75.0
+    webpack: 5.76.0
     webpack-bundle-analyzer: 4.8.0
     webpack-cli: 5.0.1
     webpack-dev-server: 4.11.1
@@ -30356,7 +30344,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"path-scurry@npm:^1.5.0, path-scurry@npm:^1.6.1":
+"path-scurry@npm:^1.6.1":
   version: 1.6.1
   resolution: "path-scurry@npm:1.6.1"
   dependencies:
@@ -39484,9 +39472,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webpack@npm:5.75.0":
-  version: 5.75.0
-  resolution: "webpack@npm:5.75.0"
+"webpack@npm:5.76.0":
+  version: 5.76.0
+  resolution: "webpack@npm:5.76.0"
   dependencies:
     "@types/eslint-scope": ^3.7.3
     "@types/estree": ^0.0.51
@@ -39517,7 +39505,7 @@ __metadata:
       optional: true
   bin:
     webpack: bin/webpack.js
-  checksum: 2bcc5f3c195f375944e8af2f00bf2feea39cb9fda5f763b0d1b00077f1c51783db25c94d3fae96a07dead9fa085e6ae7474417e5ab31719c9776ea5969ceb83a
+  checksum: e897b3b34068222fe910d8894837cbf39f5e66b4772fe8d24dfc0090cd13e19337a3a757a97bc185be6c64d9d5a7b1ae372821b65a6079ce8c7ceba606edb409
   languageName: node
   linkType: hard
 

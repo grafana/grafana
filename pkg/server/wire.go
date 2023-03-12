@@ -42,7 +42,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authnimpl"
 	"github.com/grafana/grafana/pkg/services/cleanup"
-	"github.com/grafana/grafana/pkg/services/comments"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/correlations"
@@ -305,7 +304,6 @@ var wireBasicSet = wire.NewSet(
 	plugindashboardsservice.ProvideDashboardUpdater,
 	alerting.ProvideDashAlertExtractorService,
 	wire.Bind(new(alerting.DashAlertExtractor), new(*alerting.DashAlertExtractorService)),
-	comments.ProvideService,
 	guardian.ProvideService,
 	sanitizer.ProvideService,
 	secretsStore.ProvideService,

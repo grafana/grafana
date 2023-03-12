@@ -52,6 +52,7 @@ TableImageCellOptions: {
 TableBarGaugeCellOptions: {
 	type: TableCellDisplayMode & "gauge"
 	mode?: BarGaugeDisplayMode
+	valueDisplayMode?: BarGaugeValueMode
 } @cuetsy(kind="interface")
 
 // Sparkline cell options
@@ -65,6 +66,9 @@ TableColoredBackgroundCellOptions: {
 	type: TableCellDisplayMode & "color-background"
 	mode?: TableCellBackgroundDisplayMode
 } @cuetsy(kind="interface")
+
+// Height of a table cell
+TableCellHeight: "sm" | "md" | "lg" @cuetsy(kind="enum")
 
 // Table cell options. Each cell has a display mode
 // and other potential options for that display.

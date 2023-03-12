@@ -102,18 +102,6 @@ var (
 			Owner:       grafanaAsCodeSquad,
 		},
 		{
-			Name:        "dashboardComments",
-			Description: "Enable dashboard-wide comments",
-			State:       FeatureStateAlpha,
-			Owner:       grafanaAppPlatformSquad,
-		},
-		{
-			Name:        "annotationComments",
-			Description: "Enable annotation comments",
-			State:       FeatureStateAlpha,
-			Owner:       grafanaAppPlatformSquad,
-		},
-		{
 			Name:        "migrationLocking",
 			Description: "Lock database during migrations",
 			State:       FeatureStateBeta,
