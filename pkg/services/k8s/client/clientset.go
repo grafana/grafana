@@ -5,8 +5,9 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/k8s/apiserver"
 	"github.com/grafana/grafana/pkg/services/k8s/crd"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	apiextensionsclient "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
@@ -30,6 +31,14 @@ type Resource interface {
 	dynamic.ResourceInterface
 }
 
+type Service interface {
+	services.Service
+}
+
+type ClientSetProvider interface {
+	GetClientset() *Clientset
+}
+
 // Clientset is the clientset for Kubernetes APIs.
 // It provides functionality to talk to the APIs as well as register new API clients for CRDs.
 type Clientset struct {
@@ -44,14 +53,47 @@ type Clientset struct {
 	lock sync.RWMutex
 }
 
-var _ registry.CanBeDisabled = (*Clientset)(nil)
+type service struct {
+	*services.BasicService
+	clientset          *Clientset
+	restConfigProvider apiserver.RestConfigProvider
+}
 
 // ProvideClientset returns a new Clientset configured with cfg.
-func ProvideClientset(toggles featuremgmt.FeatureToggles, cfg *rest.Config) (*Clientset, error) {
+func ProvideClientsetProvier(toggles featuremgmt.FeatureToggles, restConfigProvider apiserver.RestConfigProvider) (*service, error) {
 	if !toggles.IsEnabled(featuremgmt.FlagK8s) {
-		return &Clientset{}, nil
+		return &service{}, nil
 	}
 
+	s := &service{}
+	s.BasicService = services.NewBasicService(s.start, s.running, nil)
+
+	return s, nil
+}
+
+func (s *service) GetClientset() *Clientset {
+	return s.clientset
+}
+
+func (s *service) start(ctx context.Context) error {
+	cfg := s.restConfigProvider.GetRestConfig()
+	clientSet, err := NewClientset(cfg)
+	if err != nil {
+		return err
+	}
+	s.clientset = clientSet
+	return nil
+}
+
+func (s *service) running(ctx context.Context) error {
+	<-ctx.Done()
+	return nil
+}
+
+// NewClientset returns a new Clientset.
+func NewClientset(
+	cfg *rest.Config,
+) (*Clientset, error) {
 	k8sset, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
 		return nil, err
@@ -69,17 +111,6 @@ func ProvideClientset(toggles featuremgmt.FeatureToggles, cfg *rest.Config) (*Cl
 
 	mapper := restmapper.NewDeferredDiscoveryRESTMapper(memory.NewMemCacheClient(k8sset))
 
-	return NewClientset(cfg, k8sset, extset, dyn, mapper)
-}
-
-// NewClientset returns a new Clientset.
-func NewClientset(
-	cfg *rest.Config,
-	k8sset kubernetes.Interface,
-	extset apiextensionsclient.Interface,
-	dyn dynamic.Interface,
-	mapper meta.RESTMapper,
-) (*Clientset, error) {
 	return &Clientset{
 		config: cfg,
 
@@ -91,10 +122,6 @@ func NewClientset(
 		crds: make(map[k8schema.GroupVersion]apiextensionsv1.CustomResourceDefinition),
 		lock: sync.RWMutex{},
 	}, nil
-}
-
-func (c *Clientset) IsDisabled() bool {
-	return c.config == nil
 }
 
 // RegisterSchema registers a k8ssys.Kind with the Kubernetes API.

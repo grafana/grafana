@@ -19,31 +19,30 @@ import (
 
 type ServiceWrapper struct {
 	dashboards.DashboardService
-	log       log.Logger
-	clientset *client.Clientset
-	namespace string
+	log               log.Logger
+	clientsetProvider client.ClientSetProvider
+	namespace         string
 }
 
 var _ dashboards.DashboardService = (*ServiceWrapper)(nil)
 
 func ProvideServiceWrapper(
 	dashboardService *service.DashboardServiceImpl,
-	clientset *client.Clientset,
+	clientsetProvider client.ClientSetProvider,
 ) (*ServiceWrapper, error) {
 
 	return &ServiceWrapper{
-		DashboardService: dashboardService,
-		log:              log.New("k8s.dashboards.service-wrapper"),
-		clientset:        clientset,
-		namespace:        "default",
+		DashboardService:  dashboardService,
+		log:               log.New("k8s.dashboards.service-wrapper"),
+		clientsetProvider: clientsetProvider,
+		namespace:         "default",
 	}, nil
 }
 
 // SaveDashboard saves the dashboard to kubernetes
 func (s *ServiceWrapper) SaveDashboard(ctx context.Context, dto *dashboards.SaveDashboardDTO, allowUiUpdate bool) (*dashboards.Dashboard, error) {
-	/////////////////
-	// do  work
-	dashboardResource, err := s.clientset.GetResourceClient(CRD)
+	clientset := s.clientsetProvider.GetClientset()
+	dashboardResource, err := clientset.GetResourceClient(CRD)
 	if err != nil {
 		return nil, fmt.Errorf("ProvideServiceWrapper failed to get dashboard resource client: %w", err)
 	}

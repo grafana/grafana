@@ -37,8 +37,8 @@ import (
 // is passed, the singleton will be used.
 func New(
 	rt *thema.Runtime,
-	clientSet *client.Clientset,
-	informerFactory *informer.Factory,
+	clientsetProvider client.ClientSetProvider,
+	informerFactory informer.Informer,
 	dashboardWatcher dashboard.Watcher,
 	librarypanelWatcher librarypanel.Watcher,
 	playlistWatcher playlist.Watcher,
@@ -50,7 +50,7 @@ func New(
 	breg := corekind.NewBase(rt)
 	r := doNewRegistry(
 		breg,
-		clientSet,
+		clientsetProvider,
 		informerFactory,
 		dashboardWatcher,
 		librarypanelWatcher,
@@ -86,8 +86,8 @@ func (r *Registry) All() []crd.Kind {
 type Registry struct {
 	*services.BasicService
 	all                    [7]crd.Kind
-	clientSet              *client.Clientset
-	informerFactory        *informer.Factory
+	clientsetProvider      client.ClientSetProvider
+	informerFactory        informer.Informer
 	dashboardWatcher       dashboard.Watcher
 	librarypanelWatcher    librarypanel.Watcher
 	playlistWatcher        playlist.Watcher
@@ -102,6 +102,7 @@ func (r *Registry) start(ctx context.Context) error {
 		err error
 		b   []byte
 	)
+	clientSet := r.clientsetProvider.GetClientset()
 
 	/************************ Dashboard ************************/
 	// TODO Having the committed form on disk in YAML is worth doing this for now...but fix this silliness
@@ -119,7 +120,7 @@ func (r *Registry) start(ctx context.Context) error {
 		panic(fmt.Sprintf("could not unmarshal CRD JSON for Dashboard: %s", err))
 	}
 
-	err = r.clientSet.RegisterKind(ctx, dashboard.CRD)
+	err = clientSet.RegisterKind(ctx, dashboard.CRD)
 	if err != nil {
 		panic(fmt.Sprintf("generated CRD for Dashboard failed to register: %s\n", err))
 	}
@@ -143,7 +144,7 @@ func (r *Registry) start(ctx context.Context) error {
 		panic(fmt.Sprintf("could not unmarshal CRD JSON for LibraryPanel: %s", err))
 	}
 
-	err = r.clientSet.RegisterKind(ctx, librarypanel.CRD)
+	err = clientSet.RegisterKind(ctx, librarypanel.CRD)
 	if err != nil {
 		panic(fmt.Sprintf("generated CRD for LibraryPanel failed to register: %s\n", err))
 	}
@@ -167,7 +168,7 @@ func (r *Registry) start(ctx context.Context) error {
 		panic(fmt.Sprintf("could not unmarshal CRD JSON for Playlist: %s", err))
 	}
 
-	err = r.clientSet.RegisterKind(ctx, playlist.CRD)
+	err = clientSet.RegisterKind(ctx, playlist.CRD)
 	if err != nil {
 		panic(fmt.Sprintf("generated CRD for Playlist failed to register: %s\n", err))
 	}
@@ -191,7 +192,7 @@ func (r *Registry) start(ctx context.Context) error {
 		panic(fmt.Sprintf("could not unmarshal CRD JSON for Preferences: %s", err))
 	}
 
-	err = r.clientSet.RegisterKind(ctx, preferences.CRD)
+	err = clientSet.RegisterKind(ctx, preferences.CRD)
 	if err != nil {
 		panic(fmt.Sprintf("generated CRD for Preferences failed to register: %s\n", err))
 	}
@@ -215,7 +216,7 @@ func (r *Registry) start(ctx context.Context) error {
 		panic(fmt.Sprintf("could not unmarshal CRD JSON for PublicDashboard: %s", err))
 	}
 
-	err = r.clientSet.RegisterKind(ctx, publicdashboard.CRD)
+	err = clientSet.RegisterKind(ctx, publicdashboard.CRD)
 	if err != nil {
 		panic(fmt.Sprintf("generated CRD for PublicDashboard failed to register: %s\n", err))
 	}
@@ -239,7 +240,7 @@ func (r *Registry) start(ctx context.Context) error {
 		panic(fmt.Sprintf("could not unmarshal CRD JSON for ServiceAccount: %s", err))
 	}
 
-	err = r.clientSet.RegisterKind(ctx, serviceaccount.CRD)
+	err = clientSet.RegisterKind(ctx, serviceaccount.CRD)
 	if err != nil {
 		panic(fmt.Sprintf("generated CRD for ServiceAccount failed to register: %s\n", err))
 	}
@@ -263,7 +264,7 @@ func (r *Registry) start(ctx context.Context) error {
 		panic(fmt.Sprintf("could not unmarshal CRD JSON for Team: %s", err))
 	}
 
-	err = r.clientSet.RegisterKind(ctx, team.CRD)
+	err = clientSet.RegisterKind(ctx, team.CRD)
 	if err != nil {
 		panic(fmt.Sprintf("generated CRD for Team failed to register: %s\n", err))
 	}
@@ -316,8 +317,8 @@ func (r *Registry) Team() crd.Kind {
 
 func doNewRegistry(
 	breg *corekind.Base,
-	clientset *client.Clientset,
-	informerFactory *informer.Factory,
+	clientsetProvider client.ClientSetProvider,
+	informerFactory informer.Informer,
 	dashboardWatcher dashboard.Watcher,
 	librarypanelWatcher librarypanel.Watcher,
 	playlistWatcher playlist.Watcher,
@@ -327,7 +328,7 @@ func doNewRegistry(
 	teamWatcher team.Watcher,
 ) *Registry {
 	reg := &Registry{}
-	reg.clientSet = clientset
+	reg.clientsetProvider = clientsetProvider
 	reg.informerFactory = informerFactory
 
 	reg.dashboardWatcher = dashboardWatcher

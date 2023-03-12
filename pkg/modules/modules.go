@@ -10,6 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/corecrd"
 	"github.com/grafana/grafana/pkg/services/k8s/apiserver"
+	"github.com/grafana/grafana/pkg/services/k8s/client"
+	"github.com/grafana/grafana/pkg/services/k8s/informer"
 	"github.com/grafana/grafana/pkg/services/k8s/kine"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -20,6 +22,9 @@ const (
 	Kine                string = "kine"
 	KubernetesCRDs      string = "kubernetes-crds"
 	KubernetesAPIServer string = "kubernetes-apiserver"
+	KubernetesInformers string = "kubernetes-informers"
+	KubernetesClientset string = "kubernetes-clientset"
+	Kubernetes          string = "kubernetes"
 )
 
 type Engine interface {
@@ -47,9 +52,11 @@ type service struct {
 	ServiceManager *services.Manager
 	ServiceMap     map[string]services.Service
 
-	apiServer   apiserver.Service
-	crdRegistry *corecrd.Registry
-	kineService kine.Service
+	apiServer        apiserver.Service
+	crdRegistry      *corecrd.Registry
+	kineService      kine.Service
+	intormerService  informer.Service
+	clientsetService client.Service
 }
 
 func ProvideService(
@@ -57,14 +64,19 @@ func ProvideService(
 	apiServer apiserver.Service,
 	crdRegistry *corecrd.Registry,
 	kineService kine.Service,
+	informerService informer.Service,
+	clientsetService client.Service,
 ) *service {
 	logger := log.New("modules")
 
 	dependencyMap := map[string][]string{
 		Kine:                {},
 		KubernetesAPIServer: {Kine},
-		KubernetesCRDs:      {KubernetesAPIServer},
-		All:                 {KubernetesCRDs},
+		KubernetesClientset: {KubernetesAPIServer},
+		KubernetesCRDs:      {KubernetesClientset},
+		KubernetesInformers: {KubernetesCRDs},
+		Kubernetes:          {KubernetesInformers},
+		All:                 {Kubernetes},
 	}
 
 	return &service{
@@ -76,9 +88,11 @@ func ProvideService(
 		ModuleManager: modules.NewManager(logger),
 		ServiceMap:    map[string]services.Service{},
 
-		apiServer:   apiServer,
-		crdRegistry: crdRegistry,
-		kineService: kineService,
+		apiServer:        apiServer,
+		crdRegistry:      crdRegistry,
+		kineService:      kineService,
+		intormerService:  informerService,
+		clientsetService: clientsetService,
 	}
 }
 
@@ -88,8 +102,11 @@ func (m *service) Init(_ context.Context) error {
 
 	// module registration
 	m.RegisterModule(Kine, m.kineInit)
-	m.RegisterModule(KubernetesCRDs, m.k8sCRDsInit)
 	m.RegisterModule(KubernetesAPIServer, m.k8sApiServerInit)
+	m.RegisterModule(KubernetesClientset, m.k8sClientsetInit)
+	m.RegisterModule(KubernetesCRDs, m.k8sCRDsInit)
+	m.RegisterModule(KubernetesInformers, m.k8sInformersInit)
+	m.RegisterModule(Kubernetes, nil)
 	m.RegisterModule(All, nil)
 
 	for mod, targets := range m.dependencyMap {
@@ -195,6 +212,14 @@ func (m *service) k8sApiServerInit() (services.Service, error) {
 
 func (m *service) k8sCRDsInit() (services.Service, error) {
 	return m.crdRegistry, nil
+}
+
+func (m *service) k8sInformersInit() (services.Service, error) {
+	return m.intormerService, nil
+}
+
+func (m *service) k8sClientsetInit() (services.Service, error) {
+	return m.clientsetService, nil
 }
 
 func (m *service) kineInit() (services.Service, error) {

@@ -15,16 +15,25 @@ import (
 	genericapifilters "k8s.io/apiserver/pkg/endpoints/filters"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/util/notfoundhandler"
+	"k8s.io/client-go/rest"
 )
+
+var _ Service = (*service)(nil)
+var _ RestConfigProvider = (*service)(nil)
 
 type Service interface {
 	services.Service
+}
+
+type RestConfigProvider interface {
+	GetRestConfig() *rest.Config
 }
 
 type service struct {
 	*services.BasicService
 
 	etcdProvider kine.EtcdProvider
+	restConfig   *rest.Config
 
 	stopCh    chan struct{}
 	stoppedCh <-chan struct{}
@@ -51,11 +60,16 @@ func ProvideService(etcdProvider kine.EtcdProvider) (*service, error) {
 	return s, nil
 }
 
+func (s *service) GetRestConfig() *rest.Config {
+	return s.restConfig
+}
+
 func (s *service) start(ctx context.Context) error {
 	recommendedOptions, apiServerConfig, err := s.apiserverConfig()
 	if err != nil {
 		return fmt.Errorf("failed to create apiserver config: %w", err)
 	}
+	s.restConfig = apiServerConfig.LoopbackClientConfig
 	extensionsServerConfig, err := s.extensionsServerConfig(recommendedOptions, apiServerConfig)
 	if err != nil {
 		return fmt.Errorf("failed to create extensions server config: %w", err)

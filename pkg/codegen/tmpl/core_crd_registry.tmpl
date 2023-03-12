@@ -23,14 +23,14 @@ import (
 // is passed, the singleton will be used.
 func New(
   rt *thema.Runtime,
-  clientSet *client.Clientset,
-  informerFactory *informer.Factory,{{range $i, $k := .Kinds }}
+  clientsetProvider client.ClientSetProvider,
+  informerFactory informer.Informer,{{range $i, $k := .Kinds }}
   {{ $k.Props.MachineName }}Watcher {{ $k.Props.MachineName }}.Watcher,{{end}}
 ) *Registry {
 	breg := corekind.NewBase(rt)
 	r := doNewRegistry(
     breg,
-    clientSet,
+    clientsetProvider,
     informerFactory,{{range $i, $k := .Kinds }}
     {{ $k.Props.MachineName }}Watcher,{{end}}
   )
@@ -60,8 +60,8 @@ func (r *Registry) All() []crd.Kind {
 type Registry struct {
   *services.BasicService
 	all [{{ len .Kinds }}]crd.Kind
-  clientSet *client.Clientset
-  informerFactory *informer.Factory{{range $i, $k := .Kinds }}
+  clientsetProvider client.ClientSetProvider
+  informerFactory informer.Informer{{range $i, $k := .Kinds }}
   {{ $k.Props.MachineName }}Watcher {{ $k.Props.MachineName }}.Watcher{{end}}
 }
 
@@ -70,6 +70,7 @@ func (r *Registry) start(ctx context.Context) error {
     err error
     b []byte
   )
+  clientSet := r.clientsetProvider.GetClientset()
   {{range $i, $k := .Kinds }}
    /************************ {{ $k.Props.Name }} ************************/
     // TODO Having the committed form on disk in YAML is worth doing this for now...but fix this silliness
@@ -87,7 +88,7 @@ func (r *Registry) start(ctx context.Context) error {
       panic(fmt.Sprintf("could not unmarshal CRD JSON for {{ $k.Props.Name }}: %s", err))
     }
 
-  err = r.clientSet.RegisterKind(ctx, {{ $k.Props.MachineName }}.CRD)
+  err = clientSet.RegisterKind(ctx, {{ $k.Props.MachineName }}.CRD)
   if err != nil {
     panic(fmt.Sprintf("generated CRD for {{ $k.Props.Name }} failed to register: %s\n", err))
   }
@@ -112,12 +113,12 @@ func (r *Registry) {{ .Props.Name }}() crd.Kind {
 
 func doNewRegistry(
   breg *corekind.Base,
-  clientset *client.Clientset,
-  informerFactory *informer.Factory,{{range $i, $k := .Kinds }}
+  clientsetProvider client.ClientSetProvider,
+  informerFactory informer.Informer,{{range $i, $k := .Kinds }}
   {{ $k.Props.MachineName }}Watcher {{ $k.Props.MachineName }}.Watcher,{{end}}
 ) *Registry {
 reg := &Registry{}
-reg.clientSet = clientset
+reg.clientsetProvider = clientsetProvider
 reg.informerFactory = informerFactory
 
 {{range $i, $k := .Kinds }}

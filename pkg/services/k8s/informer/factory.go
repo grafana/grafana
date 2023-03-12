@@ -4,19 +4,16 @@ import (
 	"context"
 	"time"
 
+	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/k8s/apiserver"
 	"github.com/grafana/grafana/pkg/services/k8s/crd"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/dynamic/dynamicinformer"
-	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 )
-
-var _ registry.BackgroundService = (*Factory)(nil)
-var _ registry.CanBeDisabled = (*Factory)(nil)
 
 type ResourceWatcher interface {
 	Add(context.Context, any) error
@@ -24,64 +21,81 @@ type ResourceWatcher interface {
 	Delete(context.Context, any) error
 }
 
-type Factory struct {
+type Service interface {
+	services.Service
+}
+
+type Informer interface {
+	AddWatcher(gcrd crd.Kind, watcher ResourceWatcher)
+}
+
+type factory struct {
+	*services.BasicService
 	dynamicinformer.DynamicSharedInformerFactory
 
 	enabled   bool
 	log       log.Logger
 	watchers  map[schema.GroupVersionResource][]ResourceWatcher
 	informers map[schema.GroupVersionResource]cache.SharedIndexInformer
+	stopCh    chan struct{}
+
+	restConfigProvider apiserver.RestConfigProvider
 }
 
 func ProvideFactory(
-	cfg *rest.Config,
+	restConfigProvider apiserver.RestConfigProvider,
 	features featuremgmt.FeatureToggles,
-) (*Factory, error) {
+) (*factory, error) {
 	enabled := features.IsEnabled(featuremgmt.FlagK8s)
 	if !enabled {
-		return &Factory{}, nil
+		return &factory{}, nil
 	}
 
-	dyn, err := dynamic.NewForConfig(cfg)
-	if err != nil {
-		return nil, err
+	f := &factory{
+		log:                log.New("k8s.informer.factory"),
+		enabled:            enabled,
+		watchers:           make(map[schema.GroupVersionResource][]ResourceWatcher),
+		informers:          make(map[schema.GroupVersionResource]cache.SharedIndexInformer),
+		stopCh:             make(chan struct{}),
+		restConfigProvider: restConfigProvider,
 	}
 
-	f := &Factory{
-		DynamicSharedInformerFactory: dynamicinformer.NewDynamicSharedInformerFactory(dyn, time.Minute),
-		log:                          log.New("k8s.informer.factory"),
-		enabled:                      enabled,
-		watchers:                     make(map[schema.GroupVersionResource][]ResourceWatcher),
-		informers:                    make(map[schema.GroupVersionResource]cache.SharedIndexInformer),
-	}
+	f.BasicService = services.NewBasicService(f.start, f.running, nil)
 
 	return f, nil
 }
 
-func (f *Factory) Run(ctx context.Context) error {
-	f.initializeInformers()
-	f.initializeWatchers(ctx)
-	f.Start(ctx.Done())
-	<-ctx.Done()
-	return nil
-}
-
-func (f *Factory) IsDisabled() bool {
-	return !f.enabled
-}
-
-func (f *Factory) AddWatcher(gcrd crd.Kind, watcher ResourceWatcher) {
+func (f *factory) AddWatcher(gcrd crd.Kind, watcher ResourceWatcher) {
 	gvr := gcrd.GVR()
 	f.watchers[gvr] = append(f.watchers[gvr], watcher)
 }
 
-func (f *Factory) initializeInformers() {
+func (f *factory) start(ctx context.Context) error {
+	cfg := f.restConfigProvider.GetRestConfig()
+	dyn, err := dynamic.NewForConfig(cfg)
+	if err != nil {
+		return err
+	}
+	f.DynamicSharedInformerFactory = dynamicinformer.NewDynamicSharedInformerFactory(dyn, time.Minute)
+	f.initializeInformers()
+	f.initializeWatchers(ctx)
+	f.Start(f.stopCh)
+	return nil
+}
+
+func (f *factory) running(ctx context.Context) error {
+	<-ctx.Done()
+	close(f.stopCh)
+	return nil
+}
+
+func (f *factory) initializeInformers() {
 	for gvr := range f.watchers {
 		f.informers[gvr] = f.ForResource(gvr).Informer()
 	}
 }
 
-func (f *Factory) initializeWatchers(ctx context.Context) {
+func (f *factory) initializeWatchers(ctx context.Context) {
 	for gvr, watchers := range f.watchers {
 		for _, watcher := range watchers {
 			f.informers[gvr].AddEventHandler(

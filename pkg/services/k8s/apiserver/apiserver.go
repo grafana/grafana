@@ -6,7 +6,6 @@ import (
 	apiextensionsapiserver "k8s.io/apiextensions-apiserver/pkg/apiserver"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
-	"k8s.io/client-go/rest"
 	"k8s.io/kubernetes/pkg/api/legacyscheme"
 )
 
@@ -29,10 +28,6 @@ func (s *service) apiserverConfig() (*options.RecommendedOptions, *genericapiser
 	}
 	if err := recommendedOptions.ApplyTo(serverConfig); err != nil {
 		return nil, nil, err
-	}
-	serverConfig.ExternalAddress = "127.0.0.1:6443"
-	serverConfig.LoopbackClientConfig = &rest.Config{
-		Host: "http://127.0.0.1:6443",
 	}
 	return recommendedOptions, serverConfig, nil
 }
