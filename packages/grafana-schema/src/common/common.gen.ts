@@ -34,19 +34,19 @@ export interface DataQuery {
   datasource?: unknown;
   /**
    * true if query is disabled (ie should not be returned to the dashboard)
+   * Note this does not always imply that the query should not be executed since
+   * the results from a hidden query may be used as the input to other queries (SSE etc)
    */
   hide?: boolean;
-  /**
-   * Unique, guid like, string used in explore mode
-   */
-  key?: string;
   /**
    * Specify the query flavor
    * TODO make this required and give it a default
    */
   queryType?: string;
   /**
-   * A - Z
+   * A unique identifier for the query within the list of targets.
+   * In server side expressions, the refId is used as a variable name to identify results.
+   * By default, the UI will assign A->Z; however setting meaningful names may be useful.
    */
   refId: string;
 }
@@ -594,12 +594,23 @@ export enum BarGaugeDisplayMode {
 }
 
 /**
+ * Allows for the table cell gauge display type to set the gauge mode.
+ */
+export enum BarGaugeValueMode {
+  Color = 'color',
+  Hidden = 'hidden',
+  Text = 'text',
+}
+
+/**
  * TODO docs
  */
 export interface VizTooltipOptions {
   mode: TooltipDisplayMode;
   sort: SortOrder;
 }
+
+export interface Labels {}
 
 /**
  * Internally, this is the "type" of cell that's being displayed
@@ -618,6 +629,7 @@ export enum TableCellDisplayMode {
   Image = 'image',
   JSONView = 'json-view',
   LcdGauge = 'lcd-gauge',
+  Sparkline = 'sparkline',
 }
 
 /**
@@ -694,6 +706,14 @@ export interface TableImageCellOptions {
 export interface TableBarGaugeCellOptions {
   mode?: BarGaugeDisplayMode;
   type: TableCellDisplayMode.Gauge;
+  valueDisplayMode?: BarGaugeValueMode;
+}
+
+/**
+ * Sparkline cell options
+ */
+export interface TableSparklineCellOptions extends GraphFieldConfig {
+  type: TableCellDisplayMode.Sparkline;
 }
 
 /**
@@ -705,10 +725,19 @@ export interface TableColoredBackgroundCellOptions {
 }
 
 /**
+ * Height of a table cell
+ */
+export enum TableCellHeight {
+  Lg = 'lg',
+  Md = 'md',
+  Sm = 'sm',
+}
+
+/**
  * Table cell options. Each cell has a display mode
  * and other potential options for that display.
  */
-export type TableCellOptions = (TableAutoCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TableJsonViewCellOptions);
+export type TableCellOptions = (TableAutoCellOptions | TableSparklineCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions | TableColorTextCellOptions | TableImageCellOptions | TableJsonViewCellOptions);
 
 /**
  * Use UTC/GMT timezone
@@ -769,7 +798,17 @@ export enum LogsDedupStrategy {
   signature = 'signature',
 }
 
-export interface Labels {}
+/**
+ * Compare two values
+ */
+export enum ComparisonOperation {
+  EQ = 'eq',
+  GT = 'gt',
+  GTE = 'gte',
+  LT = 'lt',
+  LTE = 'lte',
+  NEQ = 'neq',
+}
 
 /**
  * Field options for each field within a table (e.g 10, "The String", 64.20, etc.)

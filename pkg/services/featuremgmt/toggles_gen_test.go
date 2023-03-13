@@ -41,6 +41,14 @@ func TestFeatureToggleFiles(t *testing.T) {
 		}
 	})
 
+	t.Run("all new features should have an owner", func(t *testing.T) {
+		for _, flag := range standardFeatureFlags {
+			if flag.Owner == "" {
+				t.Errorf("feature %s does not have an owner. please fill the FeatureFlag.Owner property", flag.Name)
+			}
+		}
+	})
+
 	t.Run("verify files", func(t *testing.T) {
 		// Typescript files
 		verifyAndGenerateFile(t,

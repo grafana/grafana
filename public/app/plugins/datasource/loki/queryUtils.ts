@@ -305,14 +305,20 @@ export function getStreamSelectorsFromQuery(query: string): string[] {
 }
 
 export function requestSupportsPartitioning(allQueries: LokiQuery[]) {
-  const queries = allQueries.filter((query) => !query.hide).filter((query) => !query.refId.includes('do-not-chunk'));
+  const queries = allQueries
+    .filter((query) => !query.hide)
+    .filter((query) => !query.refId.includes('do-not-chunk'))
+    .filter((query) => query.expr);
 
-  const instantQueries = queries.some((query) => query.queryType === LokiQueryType.Instant);
-  if (instantQueries) {
+  return queries.length > 0;
+}
+
+function shouldCombine(frame1: DataFrame, frame2: DataFrame): boolean {
+  if (frame1.refId !== frame2.refId) {
     return false;
   }
 
-  return queries.length > 0;
+  return frame1.name === frame2.name;
 }
 
 export function combineResponses(currentResult: DataQueryResponse | null, newResult: DataQueryResponse) {
@@ -321,7 +327,7 @@ export function combineResponses(currentResult: DataQueryResponse | null, newRes
   }
 
   newResult.data.forEach((newFrame) => {
-    const currentFrame = currentResult.data.find((frame) => frame.name === newFrame.name);
+    const currentFrame = currentResult.data.find((frame) => shouldCombine(frame, newFrame));
     if (!currentFrame) {
       currentResult.data.push(cloneDataFrame(newFrame));
       return;
@@ -357,7 +363,7 @@ function getCombinedMetadataStats(
   const sourceStat = sourceStats.find((s) => s.displayName === TOTAL_BYTES_STAT);
 
   if (sourceStat != null && destStat != null) {
-    return [{ value: sourceStat.value + destStat.value, displayName: TOTAL_BYTES_STAT }];
+    return [{ value: sourceStat.value + destStat.value, displayName: TOTAL_BYTES_STAT, unit: destStat.unit }];
   }
 
   // maybe one of them exist

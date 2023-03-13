@@ -176,7 +176,7 @@ func TestIntegration_CountAlertRules(t *testing.T) {
 }
 
 func createRule(t *testing.T, store *DBstore) *models.AlertRule {
-	rule := models.AlertRuleGen(withIntervalMatching(store.Cfg.BaseInterval))()
+	rule := models.AlertRuleGen(withIntervalMatching(store.Cfg.BaseInterval), models.WithUniqueID())()
 	err := store.SQLStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 		_, err := sess.Table(models.AlertRule{}).InsertOne(rule)
 		if err != nil {

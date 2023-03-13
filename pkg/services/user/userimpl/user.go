@@ -2,8 +2,10 @@ package userimpl
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -110,9 +112,9 @@ func (s *Service) Create(ctx context.Context, cmd *user.CreateUserCommand) (*use
 		IsDisabled:       cmd.IsDisabled,
 		OrgID:            orgID,
 		EmailVerified:    cmd.EmailVerified,
-		Created:          time.Now(),
-		Updated:          time.Now(),
-		LastSeenAt:       time.Now().AddDate(-10, 0, 0),
+		Created:          timeNow(),
+		Updated:          timeNow(),
+		LastSeenAt:       timeNow().AddDate(-10, 0, 0),
 		IsServiceAccount: cmd.IsServiceAccount,
 	}
 
@@ -359,121 +361,12 @@ func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 	return limits, nil
 }
 
-// CreateUserForTests creates a test user and optionally an organization. Unlike
-// Create, `cmd.SkipOrgSetup` toggles whether or not to create an org for the
-// test user if there isn't already an existing org. This must only be used in tests.
-func (s *Service) CreateUserForTests(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
-	var orgID int64 = -1
-	var err error
-	if !cmd.SkipOrgSetup {
-		orgID, err = s.getOrgIDForNewUser(ctx, cmd)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if cmd.Email == "" {
-		cmd.Email = cmd.Login
-	}
-
-	usr, err := s.GetByLogin(ctx, &user.GetUserByLoginQuery{LoginOrEmail: cmd.Login})
-	if err != nil && !errors.Is(err, user.ErrUserNotFound) {
-		return usr, err
-	} else if err == nil { // user exists
-		return usr, err
-	}
-
-	// create user
-	usr = &user.User{
-		Email:            cmd.Email,
-		Name:             cmd.Name,
-		Login:            cmd.Login,
-		Company:          cmd.Company,
-		IsAdmin:          cmd.IsAdmin,
-		IsDisabled:       cmd.IsDisabled,
-		OrgID:            orgID,
-		EmailVerified:    cmd.EmailVerified,
-		Created:          timeNow(),
-		Updated:          timeNow(),
-		LastSeenAt:       timeNow().AddDate(-10, 0, 0),
-		IsServiceAccount: cmd.IsServiceAccount,
-	}
-
-	salt, err := util.GetRandomString(10)
-	if err != nil {
-		return usr, err
-	}
-	usr.Salt = salt
-	rands, err := util.GetRandomString(10)
-	if err != nil {
-		return usr, err
-	}
-	usr.Rands = rands
-
-	if len(cmd.Password) > 0 {
-		encodedPassword, err := util.EncodePassword(cmd.Password, usr.Salt)
-		if err != nil {
-			return usr, err
-		}
-		usr.Password = encodedPassword
-	}
-
-	_, err = s.store.Insert(ctx, usr)
-	if err != nil {
-		return usr, err
-	}
-
-	// create org user link
-	if !cmd.SkipOrgSetup {
-		orgCmd := &org.AddOrgUserCommand{
-			OrgID:                     orgID,
-			UserID:                    usr.ID,
-			Role:                      org.RoleAdmin,
-			AllowAddingServiceAccount: true,
-		}
-
-		if s.cfg.AutoAssignOrg && !usr.IsAdmin {
-			if len(cmd.DefaultOrgRole) > 0 {
-				orgCmd.Role = org.RoleType(cmd.DefaultOrgRole)
-			} else {
-				orgCmd.Role = org.RoleType(s.cfg.AutoAssignOrgRole)
-			}
-		}
-
-		if err = s.orgService.AddOrgUser(ctx, orgCmd); err != nil {
-			return nil, err
-		}
-	}
-
-	return usr, nil
-}
-
-func (s *Service) getOrgIDForNewUser(ctx context.Context, cmd *user.CreateUserCommand) (int64, error) {
-	if s.cfg.AutoAssignOrg && cmd.OrgID != 0 {
-		if _, err := s.orgService.GetByID(ctx, &org.GetOrgByIDQuery{ID: cmd.OrgID}); err != nil {
-			return -1, err
-		}
-		return cmd.OrgID, nil
-	}
-
-	orgName := cmd.OrgName
-	if orgName == "" {
-		orgName = util.StringsFallback2(cmd.Email, cmd.Login)
-	}
-
-	orgID, err := s.orgService.GetOrCreate(ctx, orgName)
-	if err != nil {
-		return 0, err
-	}
-	return orgID, err
-}
-
 // CreateServiceAccount creates a service account in the user table and adds service account to an organisation in the org_user table
 func (s *Service) CreateServiceAccount(ctx context.Context, cmd *user.CreateUserCommand) (*user.User, error) {
 	cmd.Email = cmd.Login
 	err := s.store.LoginConflict(ctx, cmd.Login, cmd.Email, s.cfg.CaseInsensitiveLogin)
 	if err != nil {
-		return nil, serviceaccounts.ErrServiceAccountAlreadyExists
+		return nil, serviceaccounts.ErrServiceAccountAlreadyExists.Errorf("service account with login %s already exists", cmd.Login)
 	}
 
 	// create user
@@ -526,7 +419,9 @@ func (s *Service) supportBundleCollector() supportbundles.Collector {
 				Login:            "sa-supportbundle",
 				OrgRole:          "Admin",
 				IsGrafanaAdmin:   true,
-				IsServiceAccount: true},
+				IsServiceAccount: true,
+				Permissions:      map[int64]map[string][]string{ac.GlobalOrgID: {ac.ActionUsersRead: {ac.ScopeGlobalUsersAll}}},
+			},
 			OrgID:      0,
 			Query:      "",
 			Page:       0,
@@ -540,7 +435,7 @@ func (s *Service) supportBundleCollector() supportbundles.Collector {
 			return nil, err
 		}
 
-		userBytes, err := json.Marshal(res.Users)
+		userBytes, err := json.MarshalIndent(res.Users, "", " ")
 		if err != nil {
 			return nil, err
 		}
@@ -559,4 +454,26 @@ func (s *Service) supportBundleCollector() supportbundles.Collector {
 		Default:           false,
 		Fn:                collectorFn,
 	}
+}
+
+func hashUserIdentifier(identifier string, secret string) string {
+	key := []byte(secret)
+	h := hmac.New(sha256.New, key)
+	h.Write([]byte(identifier))
+	return hex.EncodeToString(h.Sum(nil))
+}
+
+func buildUserAnalyticsSettings(signedInUser user.SignedInUser, intercomSecret string) user.AnalyticsSettings {
+	var settings user.AnalyticsSettings
+
+	if signedInUser.ExternalAuthID != "" {
+		settings.Identifier = signedInUser.ExternalAuthID
+	} else {
+		settings.Identifier = signedInUser.Email + "@" + setting.AppUrl
+	}
+
+	if intercomSecret != "" {
+		settings.IntercomIdentifier = hashUserIdentifier(settings.Identifier, intercomSecret)
+	}
+	return settings
 }

@@ -136,6 +136,7 @@ func TestPluginUpdateChecker_checkForUpdates(t *testing.T) {
 							Info: plugins.Info{Version: "0.9.0"},
 							Type: plugins.DataSource,
 						},
+						Class: plugins.External,
 					},
 					{
 						JSONData: plugins.JSONData{
@@ -143,6 +144,7 @@ func TestPluginUpdateChecker_checkForUpdates(t *testing.T) {
 							Info: plugins.Info{Version: "0.5.0"},
 							Type: plugins.App,
 						},
+						Class: plugins.External,
 					},
 					{
 						JSONData: plugins.JSONData{
@@ -150,14 +152,15 @@ func TestPluginUpdateChecker_checkForUpdates(t *testing.T) {
 							Info: plugins.Info{Version: "2.5.7"},
 							Type: plugins.Panel,
 						},
+						Class: plugins.Bundled,
 					},
 					{
-						Class: plugins.Core,
 						JSONData: plugins.JSONData{
 							ID:   "test-core-panel",
 							Info: plugins.Info{Version: "0.0.1"},
 							Type: plugins.Panel,
 						},
+						Class: plugins.Core,
 					},
 				},
 			},

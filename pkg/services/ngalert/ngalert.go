@@ -391,11 +391,13 @@ type Historian interface {
 
 func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingStateHistorySettings, ar annotations.Repository, ds dashboards.DashboardService, rs historian.RuleStore, met *metrics.Historian) (Historian, error) {
 	if !cfg.Enabled {
+		met.Info.WithLabelValues("noop").Set(0)
 		return historian.NewNopHistorian(), nil
 	}
 
+	met.Info.WithLabelValues(cfg.Backend).Set(1)
 	if cfg.Backend == "annotations" {
-		return historian.NewAnnotationBackend(ar, ds, rs), nil
+		return historian.NewAnnotationBackend(ar, ds, rs, met), nil
 	}
 	if cfg.Backend == "loki" {
 		lcfg, err := historian.NewLokiConfig(cfg)

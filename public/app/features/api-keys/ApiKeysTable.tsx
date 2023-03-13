@@ -26,6 +26,7 @@ export const ApiKeysTable: FC<Props> = ({ apiKeys, timeZone, onDelete, onMigrate
           <th>Name</th>
           <th>Role</th>
           <th>Expires</th>
+          <th>Last used at</th>
           <th style={{ width: '34px' }} />
         </tr>
       </thead>
@@ -47,6 +48,7 @@ export const ApiKeysTable: FC<Props> = ({ apiKeys, timeZone, onDelete, onMigrate
                     </span>
                   )}
                 </td>
+                <td>{formatLastUsedAtDate(timeZone, key.lastUsedAt)}</td>
                 <td>
                   <HorizontalGroup justify="flex-end">
                     <Button size="sm" onClick={() => onMigrate(key)}>
@@ -68,6 +70,13 @@ export const ApiKeysTable: FC<Props> = ({ apiKeys, timeZone, onDelete, onMigrate
     </table>
   );
 };
+
+function formatLastUsedAtDate(timeZone: TimeZone, lastUsedAt?: string): string {
+  if (!lastUsedAt) {
+    return 'Never';
+  }
+  return dateTimeFormat(lastUsedAt, { timeZone });
+}
 
 function formatDate(expiration: string | undefined, timeZone: TimeZone): string {
   if (!expiration) {

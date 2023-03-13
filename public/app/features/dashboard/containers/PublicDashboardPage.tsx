@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { usePrevious } from 'react-use';
 
 import { GrafanaTheme2, PageLayoutType, TimeZone } from '@grafana/data';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { PageToolbar, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { useGrafana } from 'app/core/context/GrafanaContext';
@@ -14,6 +15,7 @@ import { DashNavTimeControls } from '../components/DashNav/DashNavTimeControls';
 import { DashboardFailed } from '../components/DashboardLoading/DashboardFailed';
 import { DashboardLoading } from '../components/DashboardLoading/DashboardLoading';
 import { PublicDashboardFooter } from '../components/PublicDashboardFooter/PublicDashboardsFooter';
+import { PublicDashboardNotAvailable } from '../components/PublicDashboardNotAvailable/PublicDashboardNotAvailable';
 import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { getTimeSrv } from '../services/TimeSrv';
 import { DashboardModel } from '../state';
@@ -30,6 +32,8 @@ interface PublicDashboardPageRouteSearchParams {
 }
 
 export type Props = GrafanaRouteComponentProps<PublicDashboardPageRouteParams, PublicDashboardPageRouteSearchParams>;
+
+const selectors = e2eSelectors.pages.PublicDashboard;
 
 const Toolbar = ({ dashboard }: { dashboard: DashboardModel }) => {
   const dispatch = useDispatch();
@@ -91,11 +95,20 @@ const PublicDashboardPage = (props: Props) => {
     return <DashboardLoading initPhase={dashboardState.initPhase} />;
   }
 
+  if (dashboard.meta.publicDashboardEnabled === false) {
+    return <PublicDashboardNotAvailable paused />;
+  }
+
+  if (dashboard.meta.dashboardNotFound) {
+    return <PublicDashboardNotAvailable />;
+  }
+
   return (
     <Page
       pageNav={{ text: dashboard.title }}
       layout={PageLayoutType.Custom}
       toolbar={<Toolbar dashboard={dashboard} />}
+      data-testid={selectors.page}
     >
       {dashboardState.initError && <DashboardFailed initError={dashboardState.initError} />}
       <div className={styles.gridContainer}>
