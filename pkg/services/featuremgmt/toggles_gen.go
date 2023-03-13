@@ -268,6 +268,6 @@ const (
 	FlagTimeSeriesTable = "timeSeriesTable"
 
 	// FlagUnifiedRequestLog
-	// Writes error logs to the request logger.
+	// Writes error logs to the request logger
 	FlagUnifiedRequestLog = "unifiedRequestLog"
 )
