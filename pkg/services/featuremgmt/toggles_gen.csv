@@ -8,7 +8,7 @@ live-pipeline,alpha,@grafana/grafana-app-platform-squad,false,false,false,false
 live-service-web-worker,alpha,@grafana/grafana-app-platform-squad,false,false,false,true
 queryOverLive,alpha,@grafana/grafana-app-platform-squad,false,false,false,true
 panelTitleSearch,beta,@grafana/grafana-app-platform-squad,false,false,false,false
-azLegacyTemplateVariables,beta,@grafana/observability-metrics,false,false,false,true
+azLegacyTemplateVariables,beta,@grafana/partner-plugins,false,false,false,true
 prometheusAzureOverrideAudience,beta,@grafana/observability-metrics,false,false,false,false
 publicDashboards,alpha,@grafana/dashboards-squad,false,false,false,false
 publicDashboardsEmailSharing,alpha,@grafana/dashboards-squad,false,true,false,false

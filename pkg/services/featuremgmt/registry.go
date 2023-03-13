@@ -69,7 +69,7 @@ var (
 			Name:         "azLegacyTemplateVariables",
 			Description:  "Azure Legacy Template Variables",
 			State:        FeatureStateBeta,
-			Owner:        grafanaObservabilityMetricsSquad,
+			Owner:        grafanaPartnerPluginsSquad,
 			FrontendOnly: true,
 		},
 		{
