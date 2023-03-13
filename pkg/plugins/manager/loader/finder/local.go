@@ -2,9 +2,9 @@ package finder
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/log"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -24,15 +23,17 @@ var (
 	ErrInvalidPluginJSONFilePath = errors.New("invalid plugin.json filepath was provided")
 )
 
-type FS struct {
+type Local struct {
 	log log.Logger
 }
 
-func newFS(logger log.Logger) *FS {
-	return &FS{log: logger.New("fs")}
+func NewLocalFinder() *Local {
+	return &Local{
+		log: log.New("finder.local"),
+	}
 }
 
-func (f *FS) Find(_ context.Context, pluginPaths ...string) ([]*plugins.FoundBundle, error) {
+func (l *Local) Find(_ context.Context, pluginPaths ...string) ([]*plugins.FoundBundle, error) {
 	if len(pluginPaths) == 0 {
 		return []*plugins.FoundBundle{}, nil
 	}
@@ -41,15 +42,15 @@ func (f *FS) Find(_ context.Context, pluginPaths ...string) ([]*plugins.FoundBun
 	for _, path := range pluginPaths {
 		exists, err := fs.Exists(path)
 		if err != nil {
-			f.log.Warn("Skipping finding plugins as an error occurred", "path", path, "err", err)
+			l.log.Warn("Skipping finding plugins as an error occurred", "path", path, "err", err)
 			continue
 		}
 		if !exists {
-			f.log.Warn("Skipping finding plugins as directory does not exist", "path", path)
+			l.log.Warn("Skipping finding plugins as directory does not exist", "path", path)
 			continue
 		}
 
-		paths, err := f.getAbsPluginJSONPaths(path)
+		paths, err := l.getAbsPluginJSONPaths(path)
 		if err != nil {
 			return nil, err
 		}
@@ -59,20 +60,28 @@ func (f *FS) Find(_ context.Context, pluginPaths ...string) ([]*plugins.FoundBun
 	// load plugin.json files and map directory to JSON data
 	foundPlugins := make(map[string]plugins.JSONData)
 	for _, pluginJSONPath := range pluginJSONPaths {
-		plugin, err := f.readPluginJSON(pluginJSONPath)
+		reader, err := l.readFile(pluginJSONPath)
 		if err != nil {
-			f.log.Warn("Skipping plugin loading as its plugin.json could not be read", "path", pluginJSONPath, "err", err)
+			l.log.Warn("Skipping plugin loading as its plugin.json could not be read", "path", pluginJSONPath, "err", err)
 			continue
+		}
+		plugin, err := ReadPluginJSON(reader)
+		if err != nil {
+			l.log.Warn("Skipping plugin loading as its plugin.json could not be read", "path", pluginJSONPath, "err", err)
+			continue
+		}
+		if err = reader.Close(); err != nil {
+			l.log.Warn("Failed to close plugin JSON file", "path", pluginJSONPath, "err", err)
 		}
 
 		pluginJSONAbsPath, err := filepath.Abs(pluginJSONPath)
 		if err != nil {
-			f.log.Warn("Skipping plugin loading as absolute plugin.json path could not be calculated", "pluginID", plugin.ID, "err", err)
+			l.log.Warn("Skipping plugin loading as absolute plugin.json path could not be calculated", "pluginID", plugin.ID, "err", err)
 			continue
 		}
 
 		if _, dupe := foundPlugins[filepath.Dir(pluginJSONAbsPath)]; dupe {
-			f.log.Warn("Skipping plugin loading as it's a duplicate", "pluginID", plugin.ID)
+			l.log.Warn("Skipping plugin loading as it's a duplicate", "pluginID", plugin.ID)
 			continue
 		}
 		foundPlugins[filepath.Dir(pluginJSONAbsPath)] = plugin
@@ -121,7 +130,7 @@ func (f *FS) Find(_ context.Context, pluginPaths ...string) ([]*plugins.FoundBun
 	return result, nil
 }
 
-func (f *FS) getAbsPluginJSONPaths(path string) ([]string, error) {
+func (l *Local) getAbsPluginJSONPaths(path string) ([]string, error) {
 	var pluginJSONPaths []string
 
 	var err error
@@ -134,11 +143,11 @@ func (f *FS) getAbsPluginJSONPaths(path string) ([]string, error) {
 		func(currentPath string, fi os.FileInfo, err error) error {
 			if err != nil {
 				if errors.Is(err, os.ErrNotExist) {
-					f.log.Error("Couldn't scan directory since it doesn't exist", "pluginDir", path, "err", err)
+					l.log.Error("Couldn't scan directory since it doesn't exist", "pluginDir", path, "err", err)
 					return nil
 				}
 				if errors.Is(err, os.ErrPermission) {
-					f.log.Error("Couldn't scan directory due to lack of permissions", "pluginDir", path, "err", err)
+					l.log.Error("Couldn't scan directory due to lack of permissions", "pluginDir", path, "err", err)
 					return nil
 				}
 
@@ -164,70 +173,6 @@ func (f *FS) getAbsPluginJSONPaths(path string) ([]string, error) {
 	}
 
 	return pluginJSONPaths, nil
-}
-
-func (f *FS) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error) {
-	f.log.Debug("Loading plugin", "path", pluginJSONPath)
-
-	if !strings.EqualFold(filepath.Ext(pluginJSONPath), ".json") {
-		return plugins.JSONData{}, ErrInvalidPluginJSONFilePath
-	}
-
-	absPluginJSONPath, err := filepath.Abs(pluginJSONPath)
-	if err != nil {
-		return plugins.JSONData{}, err
-	}
-
-	// Wrapping in filepath.Clean to properly handle
-	// gosec G304 Potential file inclusion via variable rule.
-	reader, err := os.Open(filepath.Clean(absPluginJSONPath))
-	if err != nil {
-		return plugins.JSONData{}, err
-	}
-	defer func() {
-		if reader == nil {
-			return
-		}
-		if err = reader.Close(); err != nil {
-			f.log.Warn("Failed to close JSON file", "path", pluginJSONPath, "err", err)
-		}
-	}()
-
-	plugin := plugins.JSONData{}
-	if err = json.NewDecoder(reader).Decode(&plugin); err != nil {
-		return plugins.JSONData{}, err
-	}
-
-	if err = validatePluginJSON(plugin); err != nil {
-		return plugins.JSONData{}, err
-	}
-
-	if plugin.ID == "grafana-piechart-panel" {
-		plugin.Name = "Pie Chart (old)"
-	}
-
-	if len(plugin.Dependencies.Plugins) == 0 {
-		plugin.Dependencies.Plugins = []plugins.Dependency{}
-	}
-
-	if plugin.Dependencies.GrafanaVersion == "" {
-		plugin.Dependencies.GrafanaVersion = "*"
-	}
-
-	for _, include := range plugin.Includes {
-		if include.Role == "" {
-			include.Role = org.RoleViewer
-		}
-	}
-
-	return plugin, nil
-}
-
-func validatePluginJSON(data plugins.JSONData) error {
-	if data.ID == "" || !data.Type.IsValid() {
-		return ErrInvalidPluginJSON
-	}
-	return nil
 }
 
 func collectFilesWithin(dir string) (map[string]struct{}, error) {
@@ -283,4 +228,21 @@ func collectFilesWithin(dir string) (map[string]struct{}, error) {
 	})
 
 	return files, err
+}
+
+func (l *Local) readFile(pluginJSONPath string) (io.ReadCloser, error) {
+	l.log.Debug("Loading plugin", "path", pluginJSONPath)
+
+	if !strings.EqualFold(filepath.Ext(pluginJSONPath), ".json") {
+		return nil, ErrInvalidPluginJSONFilePath
+	}
+
+	absPluginJSONPath, err := filepath.Abs(pluginJSONPath)
+	if err != nil {
+		return nil, err
+	}
+
+	// Wrapping in filepath.Clean to properly handle
+	// gosec G304 Potential file inclusion via variable rule.
+	return os.Open(filepath.Clean(absPluginJSONPath))
 }

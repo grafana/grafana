@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -278,7 +277,7 @@ func TestFinder_Find(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			f := newFS(log.NewTestLogger())
+			f := NewLocalFinder()
 			pluginBundles, err := f.Find(context.Background(), tc.pluginDirs...)
 			if (err != nil) && !errors.Is(err, tc.err) {
 				t.Errorf("Find() error = %v, expected error %v", err, tc.err)
@@ -307,7 +306,7 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 			walk = origWalk
 		})
 
-		finder := newFS(log.NewTestLogger())
+		finder := NewLocalFinder()
 		paths, err := finder.getAbsPluginJSONPaths("test")
 		require.NoError(t, err)
 		require.Empty(t, paths)
@@ -322,7 +321,7 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 			walk = origWalk
 		})
 
-		finder := newFS(log.NewTestLogger())
+		finder := NewLocalFinder()
 		paths, err := finder.getAbsPluginJSONPaths("test")
 		require.NoError(t, err)
 		require.Empty(t, paths)
@@ -337,7 +336,7 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 			walk = origWalk
 		})
 
-		finder := newFS(log.NewTestLogger())
+		finder := NewLocalFinder()
 		paths, err := finder.getAbsPluginJSONPaths("test")
 		require.Error(t, err)
 		require.Empty(t, paths)
@@ -396,7 +395,7 @@ func TestFinder_readPluginJSON(t *testing.T) {
 		name       string
 		pluginPath string
 		expected   plugins.JSONData
-		failed     bool
+		err        error
 	}{
 		{
 			name:       "Valid plugin",
@@ -444,27 +443,23 @@ func TestFinder_readPluginJSON(t *testing.T) {
 		},
 		{
 			name:       "Invalid plugin JSON",
-			pluginPath: "../testdata/invalid-plugin-json/plugin.json",
-			failed:     true,
-		},
-		{
-			name:       "Non-existing JSON file",
-			pluginPath: "nonExistingFile.json",
-			failed:     true,
+			pluginPath: "../../testdata/invalid-plugin-json/plugin.json",
+			err:        ErrInvalidPluginJSON,
 		},
 	}
 
-	f := newFS(log.NewTestLogger())
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := f.readPluginJSON(tt.pluginPath)
-			if (err != nil) && !tt.failed {
-				t.Errorf("readPluginJSON() error = %v, failed %v", err, tt.failed)
-				return
+			reader, err := os.Open(tt.pluginPath)
+			require.NoError(t, err)
+			got, err := ReadPluginJSON(reader)
+			if tt.err != nil {
+				require.ErrorIs(t, err, tt.err)
 			}
 			if !cmp.Equal(got, tt.expected) {
 				t.Errorf("Unexpected pluginJSONData: %v", cmp.Diff(got, tt.expected))
 			}
+			require.NoError(t, reader.Close())
 		})
 	}
 }

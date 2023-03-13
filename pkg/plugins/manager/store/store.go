@@ -16,7 +16,7 @@ type Service struct {
 	pluginRegistry registry.Service
 }
 
-func ProvideService(pluginRegistry registry.Service, pluginSources sources.Resolver,
+func ProvideService(pluginRegistry registry.Service, pluginSources sources.Registry,
 	pluginLoader loader.Service) (*Service, error) {
 	ctx := context.Background()
 	for _, ps := range pluginSources.List(ctx) {
