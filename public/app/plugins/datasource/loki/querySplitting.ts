@@ -174,27 +174,23 @@ export function runPartitionedQueries(datasource: LokiDatasource, request: DataQ
   const [logQueries, metricQueries] = partition(normalQueries, (query) => isLogsQuery(query.expr));
 
   const requests: LokiGroupedRequest = [];
-  try {
-    if (logQueries.length) {
-      requests.push({
-        request: { ...request, targets: logQueries },
-        partition: partitionTimeRange(true, request.range, request.intervalMs, logQueries[0].resolution ?? 1),
-      });
-    }
-    if (metricQueries.length) {
-      requests.push({
-        request: { ...request, targets: metricQueries },
-        partition: partitionTimeRange(false, request.range, request.intervalMs, metricQueries[0].resolution ?? 1),
-      });
-    }
-    if (instantQueries.length) {
-      requests.push({
-        request: { ...request, targets: instantQueries },
-        partition: [request.range],
-      });
-    }
-  } catch (error) {
-    return throwError(() => error);
+  if (logQueries.length) {
+    requests.push({
+      request: { ...request, targets: logQueries },
+      partition: partitionTimeRange(true, request.range, request.intervalMs, logQueries[0].resolution ?? 1),
+    });
+  }
+  if (metricQueries.length) {
+    requests.push({
+      request: { ...request, targets: metricQueries },
+      partition: partitionTimeRange(false, request.range, request.intervalMs, metricQueries[0].resolution ?? 1),
+    });
+  }
+  if (instantQueries.length) {
+    requests.push({
+      request: { ...request, targets: instantQueries },
+      partition: [request.range],
+    });
   }
 
   return runGroupedQueries(datasource, requests);
