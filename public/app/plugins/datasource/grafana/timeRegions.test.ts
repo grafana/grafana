@@ -3,7 +3,7 @@ import { dateTime, toDataFrameDTO } from '@grafana/data';
 import { doTimeRegionQuery } from './timeRegions';
 
 describe('grafana data source', () => {
-  describe('time region query', () => {
+  it('supports time region query', () => {
     const out = doTimeRegionQuery(
       { name: 'T1', color: 'green', fromDayOfWeek: 1, toDayOfWeek: 2 },
       {
@@ -13,7 +13,8 @@ describe('grafana data source', () => {
           to: '',
           from: '',
         },
-      }
+      },
+      'utc'
     );
 
     expect(toDataFrameDTO(out!)).toMatchSnapshot(); // inline??

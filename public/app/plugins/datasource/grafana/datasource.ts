@@ -103,14 +103,12 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
             regions.push(frame);
           }
         }
-        if (regions.length) {
-          results.push(
-            of({
-              data: regions,
-              state: LoadingState.Done,
-            })
-          );
-        }
+        results.push(
+          of({
+            data: regions,
+            state: LoadingState.Done,
+          })
+        );
         continue;
       }
 

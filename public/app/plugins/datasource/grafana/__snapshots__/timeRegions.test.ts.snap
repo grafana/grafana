@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[` 1`] = `
+exports[`grafana data source time region query 1`] = `
 {
   "fields": [
     {
