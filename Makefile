@@ -165,9 +165,14 @@ shellcheck: $(SH_FILES) ## Run checks for shell scripts.
 
 ##@ Docker
 
-TMP_DIR!=mktemp -d
+TMP_DIR:=$(shell mktemp -d)
 TAG_SUFFIX=$(if $(WIRE_TAGS)!=oss,-$(WIRE_TAGS))
 PLATFORM=linux/amd64
+SHA=$(shell git rev-parse --short HEAD)
+
+push-hackathon: build build-docker-full
+	docker tag grafana/grafana$(TAG_SUFFIX):dev-$(SHA) ctovena/grafana:dev-$(SHA)
+	docker push ctovena/grafana:dev-$(SHA)
 
 build-docker-full: ## Build Docker image for development.
 	@echo "build docker container"
@@ -178,7 +183,7 @@ build-docker-full: ## Build Docker image for development.
 	--build-arg BINGO=false \
 	--build-arg GO_BUILD_TAGS=$(GO_BUILD_TAGS) \
 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
-	--tag grafana/grafana$(TAG_SUFFIX):dev \
+	--tag grafana/grafana$(TAG_SUFFIX):dev-$(SHA) \
 	$(DOCKER_BUILD_ARGS)
 
 build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
@@ -192,7 +197,7 @@ build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	--build-arg WIRE_TAGS=$(WIRE_TAGS) \
 	--build-arg BASE_IMAGE=ubuntu:20.04 \
 	--build-arg GO_IMAGE=golang:1.20.1 \
-	--tag grafana/grafana$(TAG_SUFFIX):dev-ubuntu \
+	--tag grafana/grafana$(TAG_SUFFIX):dev-ubuntu-$(SHA) \
 	$(DOCKER_BUILD_ARGS)
 
 ##@ Services
