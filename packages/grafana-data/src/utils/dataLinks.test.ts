@@ -136,7 +136,7 @@ describe('dataLinks utils', () => {
   });
 
   describe('dataLinkHasAllVariablesDefined', () => {
-    it('returns true when all variables are used', () => {
+    it('returns true when query contains variables and all variables are used', () => {
       const dataLink = {
         url: '',
         title: '',
@@ -155,7 +155,7 @@ describe('dataLinks utils', () => {
       expect(dataLinkRtnVal).toBe(true);
     });
 
-    it('returns false when no variables are used', () => {
+    it('returns false when query contains variables and no variables are used', () => {
       const dataLink = {
         url: '',
         title: '',
@@ -173,7 +173,7 @@ describe('dataLinks utils', () => {
 
       expect(dataLinkRtnVal).toBe(false);
     });
-    it('returns false when some variables are used', () => {
+    it('returns false when query contains variables and some variables are used', () => {
       const dataLink = {
         url: '',
         title: '',
@@ -189,6 +189,24 @@ describe('dataLinks utils', () => {
       const varMapMock = jest.fn().mockReturnValue({ testVal: 'val1', diffVar: null });
       const dataLinkRtnVal = dataLinkHasAllVariablesDefined(dataLink, scopedVars, varMapMock).allVariablesDefined;
       expect(dataLinkRtnVal).toBe(false);
+    });
+
+    it('returns true when query contains no variables', () => {
+      const dataLink = {
+        url: '',
+        title: '',
+        internal: {
+          datasourceUid: 'uid',
+          datasourceName: 'dsName',
+          query: { query: 'test' },
+        },
+      };
+      const scopedVars = {
+        testVal: { text: '', value: 'val1' },
+      };
+      const varMapMock = jest.fn().mockReturnValue({});
+      const dataLinkRtnVal = dataLinkHasAllVariablesDefined(dataLink, scopedVars, varMapMock).allVariablesDefined;
+      expect(dataLinkRtnVal).toBe(true);
     });
   });
 });

@@ -28,6 +28,9 @@ export interface Props extends Themeable2 {
   onClickHideField?: (key: string) => void;
 }
 
+// This holds multiple key/values if the field being displayed has several keys and values
+// The multiple keys/values need to be displayed together as one field
+// The index of the key will be the same as the index of the value
 interface FieldDefArr extends FieldDef {
   keyArr: string[];
   valArr: string[];
@@ -56,16 +59,16 @@ class UnThemedLogDetails extends PureComponent<Props> {
     const labels = row.labels ? row.labels : {};
     const labelsAvailable = Object.keys(labels).length > 0;
     const fieldsAndLinks = getAllFields(row, getFieldLinks);
-    let links = fieldsAndLinks.filter((f) => f.links?.length);
-    const showLinks = links.filter((f) => f.fieldIndex !== row.entryFieldIndex).sort();
-    const hiddenLinks = links.filter((f) => f.fieldIndex === row.entryFieldIndex).sort();
-    const varMapLinks: FieldDefArr[] = [];
+    let fieldsWithlinks = fieldsAndLinks.filter((f) => f.links?.length);
+    const displayedFieldsWithLinks = fieldsWithlinks.filter((f) => f.fieldIndex !== row.entryFieldIndex).sort();
+    const hiddenFieldsWithLinks = fieldsWithlinks.filter((f) => f.fieldIndex === row.entryFieldIndex).sort();
+    const fieldsWithLinksFromVariableMap: FieldDefArr[] = [];
 
     // create route for log line links to be displayed
-    hiddenLinks.forEach((linkField) => {
+    hiddenFieldsWithLinks.forEach((linkField) => {
       linkField.links?.forEach((link) => {
         if (link.variableMap) {
-          varMapLinks.push({
+          fieldsWithLinksFromVariableMap.push({
             key: linkField.key,
             value: linkField.value,
             keyArr: Object.keys(link.variableMap),
@@ -79,7 +82,9 @@ class UnThemedLogDetails extends PureComponent<Props> {
     // do not show the log message unless there is a link attached
     const fields = fieldsAndLinks.filter((f) => f.links?.length === 0 && f.fieldIndex !== row.entryFieldIndex).sort();
     const fieldsAvailable = fields && fields.length > 0;
-    const linksAvailable = (showLinks && showLinks.length > 0) || (varMapLinks && varMapLinks.length > 0);
+    const fieldsWithLinksAvailable =
+      (displayedFieldsWithLinks && displayedFieldsWithLinks.length > 0) ||
+      (fieldsWithLinksFromVariableMap && fieldsWithLinksFromVariableMap.length > 0);
 
     // If logs with error, we are not showing the level color
     const levelClassName = hasError
@@ -143,14 +148,14 @@ class UnThemedLogDetails extends PureComponent<Props> {
                   );
                 })}
 
-                {linksAvailable && (
+                {fieldsWithLinksAvailable && (
                   <tr>
                     <td colSpan={100} className={styles.logDetailsHeading} aria-label="Data Links">
                       Links
                     </td>
                   </tr>
                 )}
-                {showLinks.map((field, i) => {
+                {displayedFieldsWithLinks.map((field, i) => {
                   const { key, value, links, fieldIndex } = field;
                   return (
                     <LogDetailsRow
@@ -168,7 +173,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
                     />
                   );
                 })}
-                {varMapLinks?.map((field, i) => {
+                {fieldsWithLinksFromVariableMap?.map((field, i) => {
                   const { key, value, keyArr, valArr, links, fieldIndex } = field;
                   return (
                     <LogDetailsRow
@@ -189,7 +194,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
                   );
                 })}
 
-                {!fieldsAvailable && !labelsAvailable && !linksAvailable && (
+                {!fieldsAvailable && !labelsAvailable && !fieldsWithLinksAvailable && (
                   <tr>
                     <td colSpan={100} aria-label="No details">
                       No details available
