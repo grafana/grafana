@@ -11,8 +11,8 @@ import (
 	"time"
 
 	om "github.com/wk8/go-ordered-map"
-	otlp "go.opentelemetry.io/collector/model/otlp"
-	otelpdata "go.opentelemetry.io/collector/model/pdata"
+	"go.opentelemetry.io/collector/pdata/pcommon"
+	"go.opentelemetry.io/collector/pdata/ptrace"
 )
 
 // KeyVal is an ordered map of string to interface
@@ -142,12 +142,12 @@ func (tc TraceContext) KeyVal() *KeyVal {
 
 // Traces wraps the otel traces model.
 type Traces struct {
-	otelpdata.Traces
+	ptrace.Traces
 }
 
 // UnmarshalJSON unmarshals Traces model.
 func (t *Traces) UnmarshalJSON(b []byte) error {
-	unmarshaler := otlp.NewJSONTracesUnmarshaler()
+	unmarshaler := ptrace.NewJSONUnmarshaler()
 	td, err := unmarshaler.UnmarshalTraces(b)
 	if err != nil {
 		return err
@@ -158,17 +158,17 @@ func (t *Traces) UnmarshalJSON(b []byte) error {
 
 // MarshalJSON marshals Traces model to json.
 func (t Traces) MarshalJSON() ([]byte, error) {
-	marshaler := otlp.NewJSONTracesMarshaler()
+	marshaler := ptrace.NewJSONMarshaler()
 	return marshaler.MarshalTraces(t.Traces)
 }
 
 // SpanSlice unpacks Traces entity into a slice of Spans.
-func (t Traces) SpanSlice() []otelpdata.Span {
-	spans := make([]otelpdata.Span, 0)
+func (t Traces) SpanSlice() []ptrace.Span {
+	spans := make([]ptrace.Span, 0)
 	rss := t.ResourceSpans()
 	for i := 0; i < rss.Len(); i++ {
 		rs := rss.At(i)
-		ilss := rs.InstrumentationLibrarySpans()
+		ilss := rs.ScopeSpans()
 		for j := 0; j < ilss.Len(); j++ {
 			s := ilss.At(j).Spans()
 			for si := 0; si < s.Len(); si++ {
@@ -180,7 +180,7 @@ func (t Traces) SpanSlice() []otelpdata.Span {
 }
 
 // SpanToKeyVal returns KeyVal representation of a Span.
-func SpanToKeyVal(s otelpdata.Span) *KeyVal {
+func SpanToKeyVal(s ptrace.Span) *KeyVal {
 	kv := NewKeyVal()
 	if s.StartTimestamp() > 0 {
 		KeyValAdd(kv, "timestamp", s.StartTimestamp().AsTime().String())
@@ -194,7 +194,7 @@ func SpanToKeyVal(s otelpdata.Span) *KeyVal {
 	KeyValAdd(kv, "span_kind", s.Kind().String())
 	KeyValAdd(kv, "name", s.Name())
 	KeyValAdd(kv, "parent_spanID", s.ParentSpanID().HexString())
-	s.Attributes().Range(func(k string, v otelpdata.AttributeValue) bool {
+	s.Attributes().Range(func(k string, v pcommon.Value) bool {
 		KeyValAdd(kv, "attr_"+k, fmt.Sprintf("%v", v))
 		return true
 	})

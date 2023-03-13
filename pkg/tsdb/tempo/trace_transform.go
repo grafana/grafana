@@ -7,8 +7,44 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/collector/model/pdata"
-	"go.opentelemetry.io/collector/translator/conventions"
-	tracetranslator "go.opentelemetry.io/collector/translator/trace"
+	"go.opentelemetry.io/collector/pdata/pcommon"
+	"go.opentelemetry.io/collector/pdata/ptrace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.18.0"
+)
+
+// Some of the keys used to represent OTLP constructs as tags or annotations in other formats.
+const (
+	TagMessage = "message"
+
+	TagSpanKind = "span.kind"
+
+	TagStatusCode    = "status.code"
+	TagStatusMsg     = "status.message"
+	TagError         = "error"
+	TagHTTPStatusMsg = "http.status_message"
+
+	TagW3CTraceState = "w3c.tracestate"
+)
+
+// Constants used for signifying batch-level attribute values where not supplied by OTLP data but required
+// by other protocols.
+const (
+	ResourceNoServiceName = "OTLPResourceNoServiceName"
+)
+
+// OpenTracingSpanKind are possible values for TagSpanKind and match the OpenTracing
+// conventions: https://github.com/opentracing/specification/blob/main/semantic_conventions.md
+// These values are used for representing span kinds that have no
+// equivalents in OpenCensus format. They are stored as values of TagSpanKind
+type OpenTracingSpanKind string
+
+const (
+	OpenTracingSpanKindUnspecified OpenTracingSpanKind = ""
+	OpenTracingSpanKindClient      OpenTracingSpanKind = "client"
+	OpenTracingSpanKindServer      OpenTracingSpanKind = "server"
+	OpenTracingSpanKindConsumer    OpenTracingSpanKind = "consumer"
+	OpenTracingSpanKindProducer    OpenTracingSpanKind = "producer"
+	OpenTracingSpanKindInternal    OpenTracingSpanKind = "internal"
 )
 
 type KeyValue struct {
@@ -77,7 +113,7 @@ func TraceToFrame(td pdata.Traces) (*data.Frame, error) {
 // resourceSpansToRows processes all the spans for a particular resource/service
 func resourceSpansToRows(rs pdata.ResourceSpans) ([][]interface{}, error) {
 	resource := rs.Resource()
-	ilss := rs.InstrumentationLibrarySpans()
+	ilss := rs.ScopeSpans()
 
 	if resource.Attributes().Len() == 0 || ilss.Len() == 0 {
 		return [][]interface{}{}, nil
@@ -95,7 +131,7 @@ func resourceSpansToRows(rs pdata.ResourceSpans) ([][]interface{}, error) {
 
 		for j := 0; j < spans.Len(); j++ {
 			span := spans.At(j)
-			row, err := spanToSpanRow(span, ils.InstrumentationLibrary(), resource)
+			row, err := spanToSpanRow(span, ils.Scope(), resource)
 			if err != nil {
 				return nil, err
 			}
@@ -108,7 +144,7 @@ func resourceSpansToRows(rs pdata.ResourceSpans) ([][]interface{}, error) {
 	return rows, nil
 }
 
-func spanToSpanRow(span pdata.Span, libraryTags pdata.InstrumentationLibrary, resource pdata.Resource) ([]interface{}, error) {
+func spanToSpanRow(span pdata.Span, libraryTags pcommon.InstrumentationScope, resource pdata.Resource) ([]interface{}, error) {
 	// If the id representation changed from hexstring to something else we need to change the transformBase64IDToHexString in the frontend code
 	traceID := span.TraceID().HexString()
 	traceID = strings.TrimPrefix(traceID, strings.Repeat("0", 16))
@@ -158,14 +194,14 @@ func spanToSpanRow(span pdata.Span, libraryTags pdata.InstrumentationLibrary, re
 
 func resourceToProcess(resource pdata.Resource) (string, []*KeyValue) {
 	attrs := resource.Attributes()
-	serviceName := tracetranslator.ResourceNoServiceName
+	serviceName := ResourceNoServiceName
 	if attrs.Len() == 0 {
 		return serviceName, nil
 	}
 
 	tags := make([]*KeyValue, 0, attrs.Len()-1)
-	attrs.Range(func(key string, attr pdata.AttributeValue) bool {
-		if key == conventions.AttributeServiceName {
+	attrs.Range(func(key string, attr pdata.Value) bool {
+		if key == string(semconv.ServiceNameKey) {
 			serviceName = attr.StringVal()
 		}
 		tags = append(tags, &KeyValue{Key: key, Value: getAttributeVal(attr)})
@@ -175,31 +211,31 @@ func resourceToProcess(resource pdata.Resource) (string, []*KeyValue) {
 	return serviceName, tags
 }
 
-func getAttributeVal(attr pdata.AttributeValue) interface{} {
+func getAttributeVal(attr pdata.Value) interface{} {
 	switch attr.Type() {
-	case pdata.AttributeValueTypeString:
+	case pcommon.ValueTypeString:
 		return attr.StringVal()
-	case pdata.AttributeValueTypeInt:
+	case pcommon.ValueTypeInt:
 		return attr.IntVal()
-	case pdata.AttributeValueTypeBool:
+	case pcommon.ValueTypeBool:
 		return attr.BoolVal()
-	case pdata.AttributeValueTypeDouble:
+	case pcommon.ValueTypeDouble:
 		return attr.DoubleVal()
-	case pdata.AttributeValueTypeMap, pdata.AttributeValueTypeArray:
-		return tracetranslator.AttributeValueToString(attr)
+	case pcommon.ValueTypeMap, pcommon.ValueTypeSlice:
+		return attr.AsString()
 	default:
 		return nil
 	}
 }
 
-func getSpanTags(span pdata.Span, instrumentationLibrary pdata.InstrumentationLibrary) []*KeyValue {
+func getSpanTags(span pdata.Span, instrumentationLibrary pcommon.InstrumentationScope) []*KeyValue {
 	var tags []*KeyValue
 
 	libraryTags := getTagsFromInstrumentationLibrary(instrumentationLibrary)
 	if libraryTags != nil {
 		tags = append(tags, libraryTags...)
 	}
-	span.Attributes().Range(func(key string, attr pdata.AttributeValue) bool {
+	span.Attributes().Range(func(key string, attr pdata.Value) bool {
 		tags = append(tags, &KeyValue{Key: key, Value: getAttributeVal(attr)})
 		return true
 	})
@@ -221,18 +257,18 @@ func getSpanTags(span pdata.Span, instrumentationLibrary pdata.InstrumentationLi
 	return tags
 }
 
-func getTagsFromInstrumentationLibrary(il pdata.InstrumentationLibrary) []*KeyValue {
+func getTagsFromInstrumentationLibrary(il pcommon.InstrumentationScope) []*KeyValue {
 	var keyValues []*KeyValue
 	if ilName := il.Name(); ilName != "" {
 		kv := &KeyValue{
-			Key:   conventions.InstrumentationLibraryName,
+			Key:   string(semconv.OTelLibraryNameKey),
 			Value: ilName,
 		}
 		keyValues = append(keyValues, kv)
 	}
 	if ilVersion := il.Version(); ilVersion != "" {
 		kv := &KeyValue{
-			Key:   conventions.InstrumentationLibraryVersion,
+			Key:   string(semconv.OTelLibraryVersionKey),
 			Value: ilVersion,
 		}
 		keyValues = append(keyValues, kv)
@@ -241,40 +277,40 @@ func getTagsFromInstrumentationLibrary(il pdata.InstrumentationLibrary) []*KeyVa
 	return keyValues
 }
 
-func getTagFromSpanKind(spanKind pdata.SpanKind) *KeyValue {
+func getTagFromSpanKind(spanKind ptrace.SpanKind) *KeyValue {
 	var tagStr string
 	switch spanKind {
-	case pdata.SpanKindClient:
-		tagStr = string(tracetranslator.OpenTracingSpanKindClient)
-	case pdata.SpanKindServer:
-		tagStr = string(tracetranslator.OpenTracingSpanKindServer)
-	case pdata.SpanKindProducer:
-		tagStr = string(tracetranslator.OpenTracingSpanKindProducer)
-	case pdata.SpanKindConsumer:
-		tagStr = string(tracetranslator.OpenTracingSpanKindConsumer)
-	case pdata.SpanKindInternal:
-		tagStr = string(tracetranslator.OpenTracingSpanKindInternal)
+	case ptrace.SpanKindClient:
+		tagStr = string(OpenTracingSpanKindClient)
+	case ptrace.SpanKindServer:
+		tagStr = string(OpenTracingSpanKindServer)
+	case ptrace.SpanKindProducer:
+		tagStr = string(OpenTracingSpanKindProducer)
+	case ptrace.SpanKindConsumer:
+		tagStr = string(OpenTracingSpanKindConsumer)
+	case ptrace.SpanKindInternal:
+		tagStr = string(OpenTracingSpanKindInternal)
 	default:
 		return nil
 	}
 
 	return &KeyValue{
-		Key:   tracetranslator.TagSpanKind,
+		Key:   TagSpanKind,
 		Value: tagStr,
 	}
 }
 
 func getTagFromStatusCode(statusCode pdata.StatusCode) *KeyValue {
 	return &KeyValue{
-		Key:   tracetranslator.TagStatusCode,
+		Key:   TagStatusCode,
 		Value: int64(statusCode),
 	}
 }
 
 func getErrorTagFromStatusCode(statusCode pdata.StatusCode) *KeyValue {
-	if statusCode == pdata.StatusCodeError {
+	if statusCode == ptrace.StatusCodeError {
 		return &KeyValue{
-			Key:   tracetranslator.TagError,
+			Key:   TagError,
 			Value: true,
 		}
 	}
@@ -286,7 +322,7 @@ func getTagFromStatusMsg(statusMsg string) *KeyValue {
 		return nil
 	}
 	return &KeyValue{
-		Key:   tracetranslator.TagStatusMsg,
+		Key:   TagStatusMsg,
 		Value: statusMsg,
 	}
 }
@@ -294,7 +330,7 @@ func getTagFromStatusMsg(statusMsg string) *KeyValue {
 func getTagFromTraceState(traceState pdata.TraceState) *KeyValue {
 	if traceState != pdata.TraceStateEmpty {
 		return &KeyValue{
-			Key:   tracetranslator.TagW3CTraceState,
+			Key:   TagW3CTraceState,
 			Value: string(traceState),
 		}
 	}
@@ -312,11 +348,11 @@ func spanEventsToLogs(events pdata.SpanEventSlice) []*TraceLog {
 		fields := make([]*KeyValue, 0, event.Attributes().Len()+1)
 		if event.Name() != "" {
 			fields = append(fields, &KeyValue{
-				Key:   tracetranslator.TagMessage,
+				Key:   TagMessage,
 				Value: event.Name(),
 			})
 		}
-		event.Attributes().Range(func(key string, attr pdata.AttributeValue) bool {
+		event.Attributes().Range(func(key string, attr pdata.Value) bool {
 			fields = append(fields, &KeyValue{Key: key, Value: getAttributeVal(attr)})
 			return true
 		})
@@ -344,7 +380,7 @@ func spanLinksToReferences(links pdata.SpanLinkSlice) []*TraceReference {
 		spanId := link.SpanID().HexString()
 
 		tags := make([]*KeyValue, 0, link.Attributes().Len())
-		link.Attributes().Range(func(key string, attr pdata.AttributeValue) bool {
+		link.Attributes().Range(func(key string, attr pdata.Value) bool {
 			tags = append(tags, &KeyValue{Key: key, Value: getAttributeVal(attr)})
 			return true
 		})
