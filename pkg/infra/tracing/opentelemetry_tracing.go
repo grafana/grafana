@@ -9,7 +9,7 @@ import (
 
 	"github.com/go-kit/log/level"
 	"go.etcd.io/etcd/api/v3/version"
-	jaegerpropagator "go.opentelemetry.io/contrib/propagators/jaeger"
+	"go.opentelemetry.io/contrib/propagators/autoprop"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -67,21 +67,27 @@ type ExporterConfig interface {
 
 type OTLPExporterConfig struct {
 	ExporterConfig
+	Insecure       bool     `ini:"insecure"`
 	LegacyEndpoint string   `ini:"address"`
 	Endpoint       string   `ini:"endpoint"`
 	Propagation    []string `ini:"propagation"`
 }
 
 func (e OTLPExporterConfig) ToExporter() (tracesdk.SpanExporter, error) {
+	// silently fallback to legacy endpoint
 	endpoint := e.LegacyEndpoint
 	if endpoint == "" {
 		endpoint = e.Endpoint
 	}
 
-	client := otlptracegrpc.NewClient(
-		otlptracegrpc.WithEndpoint(endpoint),
-		otlptracegrpc.WithInsecure(),
-	)
+	options := make([]otlptracegrpc.Option, 0)
+	options = append(options, otlptracegrpc.WithEndpoint(endpoint))
+
+	if e.Insecure {
+		options = append(options, otlptracegrpc.WithInsecure())
+	}
+
+	client := otlptracegrpc.NewClient(options...)
 	return otlptrace.New(context.Background(), client)
 }
 
@@ -89,8 +95,8 @@ type OTLPHTTPExporterConfig struct {
 	ExporterConfig
 	Endpoint    string   `ini:"endpoint"`
 	Headers     []string `ini:"headers"`
-	Propagation []string `ini:"propagation"`
 	Insecure    bool     `ini:"insecure"`
+	Propagation []string `ini:"propagation"`
 }
 
 func (e OTLPHTTPExporterConfig) ToExporter() (tracesdk.SpanExporter, error) {
@@ -274,6 +280,13 @@ func (ots *OpenTelemetry) createResource() (*resource.Resource, error) {
 	)
 }
 
+func (ots *OpenTelemetry) createPropagatorMap(propagators []string) propagation.TextMapPropagator {
+	// register fallback for known value of "w3c"
+	autoprop.RegisterTextMapPropagator("w3c", propagation.TraceContext{})
+
+	return autoprop.NewTextMapPropagator()
+}
+
 func (ots *OpenTelemetry) initJaegerTracerProvider() (*tracesdk.TracerProvider, error) {
 	// Create the Jaeger exporter
 
@@ -344,22 +357,28 @@ func (ots *OpenTelemetry) initNoopTracerProvider() (tracerProvider, error) {
 func (ots *OpenTelemetry) initOpenTelemetryTracer() error {
 	var tp tracerProvider
 	var err error
+
+	propagation := ots.createPropagatorMap(strings.Split("none", ""))
+
 	switch ots.enabled {
 	case jaegerExporter:
 		tp, err = ots.initJaegerTracerProvider()
 		if err != nil {
 			return err
 		}
+		propagation = ots.createPropagatorMap(ots.exporters[jaegerExporter].(JaegerExporterConfig).Propagation)
 	case otlpExporter:
 		tp, err = ots.initOTLPTracerProvider()
 		if err != nil {
 			return err
 		}
+		propagation = ots.createPropagatorMap(ots.exporters[otlpExporter].(OTLPExporterConfig).Propagation)
 	case otlpHttpExporter:
 		tp, err = ots.initOTLPHTTPTracerProvider()
 		if err != nil {
 			return err
 		}
+		propagation = ots.createPropagatorMap(ots.exporters[otlpHttpExporter].(OTLPHTTPExporterConfig).Propagation)
 	default:
 		tp, err = ots.initNoopTracerProvider()
 		if err != nil {
@@ -374,14 +393,8 @@ func (ots *OpenTelemetry) initOpenTelemetryTracer() error {
 		otel.SetTracerProvider(tp)
 	}
 
-	switch ots.propagation {
-	case w3cPropagator:
-		otel.SetTextMapPropagator(propagation.TraceContext{})
-	case jaegerPropagator:
-		otel.SetTextMapPropagator(jaegerpropagator.Jaeger{})
-	default:
-		otel.SetTextMapPropagator(propagation.TraceContext{})
-	}
+	otel.SetTextMapPropagator(propagation)
+
 	ots.tracerProvider = tp
 	ots.tracer = otel.GetTracerProvider().Tracer("component-main")
 
