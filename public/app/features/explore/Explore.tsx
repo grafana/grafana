@@ -402,8 +402,8 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   memoizedGetNodeGraphDataFrames = memoizeOne(getNodeGraphDataFrames);
 
   renderFlameGraphPanel() {
-    const { queryResponse } = this.props;
-    return <FlameGraphExploreContainer dataFrames={queryResponse.flameGraphFrames} />;
+    const { queryResponse, datasourceInstance } = this.props;
+    return <FlameGraphExploreContainer dataFrames={queryResponse.flameGraphFrames} datasource={datasourceInstance} />;
   }
 
   renderTraceViewPanel() {

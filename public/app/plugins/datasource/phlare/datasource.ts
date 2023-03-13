@@ -13,9 +13,17 @@ import { DataSourceWithBackend, getTemplateSrv, TemplateSrv } from '@grafana/run
 import { extractLabelMatchers, toPromLikeExpr } from '../prometheus/language_utils';
 
 import { normalizeQuery } from './QueryEditor/QueryEditor';
-import { PhlareDataSourceOptions, Query, ProfileTypeMessage, SeriesMessage } from './types';
+import {
+  PhlareDataSourceOptions,
+  Query,
+  ProfileTypeMessage,
+  SeriesMessage,
+  SourceCodeAPI,
+  SourceCode,
+  CodeLocation,
+} from './types';
 
-export class PhlareDataSource extends DataSourceWithBackend<Query, PhlareDataSourceOptions> {
+export class PhlareDataSource extends DataSourceWithBackend<Query, PhlareDataSourceOptions> implements SourceCodeAPI {
   constructor(
     instanceSettings: DataSourceInstanceSettings<PhlareDataSourceOptions>,
     private readonly templateSrv: TemplateSrv = getTemplateSrv()
@@ -93,6 +101,10 @@ export class PhlareDataSource extends DataSourceWithBackend<Query, PhlareDataSou
       refId: query.refId,
       labelMatchers: extractLabelMatchers(tokens),
     };
+  }
+
+  getSourceCode(location: CodeLocation): Promise<SourceCode> {
+    return Promise.resolve({});
   }
 }
 

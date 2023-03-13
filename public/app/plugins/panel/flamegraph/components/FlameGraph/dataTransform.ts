@@ -1,7 +1,7 @@
 import { DataFrameView } from '@grafana/data';
 
-export type Item = { level: number; value: number; label: string; self: number };
-export type ItemWithStart = Item & { start: number };
+export type Item = { level: number; value: number; label: string; self: number, fileName: string, line: number };
+export type ItemWithStart = Item & { start: number, index: number };
 
 /**
  * Convert data frame with nested set format into array of level. This is mainly done for compatibility with current
@@ -26,6 +26,7 @@ export function nestedSetToLevels(dataView: DataFrameView<Item>): ItemWithStart[
     }
     const newItem: ItemWithStart = {
       ...item,
+      index: i,
       start: offset,
     };
 

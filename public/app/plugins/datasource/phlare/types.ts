@@ -23,3 +23,17 @@ export type SeriesMessage = Array<{ labels: Array<{ name: string; value: string 
 export interface PhlareDataSourceOptions extends DataSourceJsonData {
   minStep?: string;
 }
+
+export type CodeLocation = {
+  fileName: string;
+  func: string;
+  line: number;
+};
+
+export type SourceCode = {
+  // TODO
+};
+
+export interface SourceCodeAPI {
+  getSourceCode(location: CodeLocation): Promise<SourceCode>;
+}

@@ -16,7 +16,7 @@
 // OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
 // TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 // THIS SOFTWARE.
-import { css } from '@emotion/css';
+import {css, cx} from '@emotion/css';
 import uFuzzy from '@leeoniya/ufuzzy';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMeasure } from 'react-use';
@@ -48,6 +48,8 @@ type Props = {
   setRangeMax: (range: number) => void;
   selectedView: SelectedView;
   style?: React.CSSProperties;
+  setSelectedLocation: (index: number) => void;
+  className?: string
   getLabelValue: (label: string | number) => string;
 };
 
@@ -66,6 +68,8 @@ const FlameGraph = ({
   setRangeMin,
   setRangeMax,
   selectedView,
+  setSelectedLocation,
+  className,
   getLabelValue,
 }: Props) => {
   const styles = getStyles(selectedView, app, flameGraphHeight);
@@ -187,7 +191,7 @@ const FlameGraph = ({
 
         // if clicking on a block in the canvas
         if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
-          setContextMenuData({ e, levelIndex, barIndex });
+          setContextMenuData({ e, levelIndex, barIndex, index: levels[levelIndex][barIndex].index });
         } else {
           // if clicking on the canvas but there is no block beneath the cursor
           setContextMenuData(undefined);
@@ -252,7 +256,7 @@ const FlameGraph = ({
   }, [setContextMenuData]);
 
   return (
-    <div className={styles.graph} ref={sizeRef}>
+    <div className={cx(styles.graph, className)} ref={sizeRef}>
       <FlameGraphMetadata
         levels={levels}
         topLevelIndex={topLevelIndex}
@@ -275,6 +279,7 @@ const FlameGraph = ({
           setSelectedBarIndex={setSelectedBarIndex}
           setRangeMin={setRangeMin}
           setRangeMax={setRangeMax}
+          setSelectedLocation={setSelectedLocation}
         />
       )}
     </div>
