@@ -22,6 +22,6 @@ func (f *NoOpHistorian) Record(ctx context.Context, _ history_model.RuleMeta, _ 
 	return errCh
 }
 
-func (f *NoOpHistorian) QueryStates(ctx context.Context, query models.HistoryQuery) (*data.Frame, error) {
+func (f *NoOpHistorian) Query(ctx context.Context, query models.HistoryQuery) (*data.Frame, error) {
 	return data.NewFrame("states"), nil
 }

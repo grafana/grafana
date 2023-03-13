@@ -27,6 +27,6 @@ func (h *SqlBackend) Record(ctx context.Context, _ history_model.RuleMeta, _ []s
 	return errCh
 }
 
-func (h *SqlBackend) QueryStates(ctx context.Context, query models.HistoryQuery) (*data.Frame, error) {
+func (h *SqlBackend) Query(ctx context.Context, query models.HistoryQuery) (*data.Frame, error) {
 	return data.NewFrame("states"), nil
 }

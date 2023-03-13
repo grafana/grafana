@@ -37,7 +37,7 @@ func TestAnnotationHistorian(t *testing.T) {
 			RuleUID: "my-rule",
 			OrgID:   1,
 		}
-		frame, err := anns.QueryStates(context.Background(), q)
+		frame, err := anns.Query(context.Background(), q)
 
 		require.NoError(t, err)
 		require.NotNil(t, frame)

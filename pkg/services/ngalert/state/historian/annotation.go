@@ -69,7 +69,7 @@ func (h *AnnotationBackend) Record(ctx context.Context, rule history_model.RuleM
 	return errCh
 }
 
-func (h *AnnotationBackend) QueryStates(ctx context.Context, query ngmodels.HistoryQuery) (*data.Frame, error) {
+func (h *AnnotationBackend) Query(ctx context.Context, query ngmodels.HistoryQuery) (*data.Frame, error) {
 	logger := h.log.FromContext(ctx)
 	if query.RuleUID == "" {
 		return nil, fmt.Errorf("ruleUID is required to query annotations")

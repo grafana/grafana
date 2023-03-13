@@ -92,7 +92,7 @@ func (h *RemoteLokiBackend) Record(ctx context.Context, rule history_model.RuleM
 	return errCh
 }
 
-func (h *RemoteLokiBackend) QueryStates(ctx context.Context, query models.HistoryQuery) (*data.Frame, error) {
+func (h *RemoteLokiBackend) Query(ctx context.Context, query models.HistoryQuery) (*data.Frame, error) {
 	selectors, err := buildSelectors(query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build the provided selectors: %w", err)
