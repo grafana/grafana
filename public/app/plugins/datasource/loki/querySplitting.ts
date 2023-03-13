@@ -1,5 +1,5 @@
 import { partition } from 'lodash';
-import { Subscriber, Observable, Subscription, throwError } from 'rxjs';
+import { Subscriber, Observable, Subscription } from 'rxjs';
 
 import { DataQueryRequest, DataQueryResponse, dateTime, TimeRange } from '@grafana/data';
 import { LoadingState } from '@grafana/schema';
