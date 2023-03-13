@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
@@ -139,7 +140,8 @@ func NewAccessControlDashboardPermissionFilter(user *user.SignedInUser, permissi
 	}
 
 	f := accessControlDashboardPermissionFilter{user: user, folderActions: folderActions, dashboardActions: dashboardActions, features: features,
-		recQueries: make([]clause, 0, maximumRecursiveQueries),
+		recQueries:                   make([]clause, 0, maximumRecursiveQueries),
+		recursiveQueriesAreSupported: recursiveQueriesAreSupported,
 	}
 
 	f.buildClauses()
@@ -190,7 +192,6 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 			builder.WriteString(") AND NOT dashboard.is_folder)")
 
 			builder.WriteString(" OR ")
-			builder.WriteString("(dashboard.folder_id IN (SELECT id FROM dashboard as d ")
 			permSelector.WriteString("(SELECT substr(scope, 13) FROM permission WHERE scope LIKE 'folders:uid:%' ")
 			permSelector.WriteString(rolesFilter)
 			permSelectorArgs = append(permSelectorArgs, params...)
@@ -211,11 +212,16 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 				case true:
 					recQueryName := fmt.Sprintf("RecQry%d", len(f.recQueries))
 					f.addRecQry(recQueryName, permSelector.String(), permSelectorArgs)
+					builder.WriteString("(dashboard.folder_id IN (SELECT d.id FROM dashboard as d ")
 					builder.WriteString(fmt.Sprintf("WHERE d.uid IN (SELECT uid FROM %s)", recQueryName))
 				default:
-					builder.WriteString(fmt.Sprintf("WHERE d.uid IN (SELECT uid FROM %s)"))
+					nestedFoldersSelectors, nestedFoldersArgs := nestedFoldersSelectors(permSelector.String(), permSelectorArgs, "folder_id", "id")
+					builder.WriteRune('(')
+					builder.WriteString(nestedFoldersSelectors)
+					args = append(args, nestedFoldersArgs...)
 				}
 			default:
+				builder.WriteString("(dashboard.folder_id IN (SELECT d.id FROM dashboard as d ")
 				builder.WriteString("WHERE d.uid IN ")
 				builder.WriteString(permSelector.String())
 				args = append(args, permSelectorArgs...)
@@ -237,7 +243,6 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 
 		toCheck := actionsToCheck(f.folderActions, f.user.Permissions[f.user.OrgID], folderWildcards)
 		if len(toCheck) > 0 {
-			builder.WriteString("(dashboard.uid IN ")
 			permSelector.WriteString("(SELECT substr(scope, 13) FROM permission WHERE scope LIKE 'folders:uid:%'")
 			permSelector.WriteString(rolesFilter)
 			permSelectorArgs = append(permSelectorArgs, params...)
@@ -253,10 +258,21 @@ func (f *accessControlDashboardPermissionFilter) buildClauses() {
 
 			switch f.features.IsEnabled(featuremgmt.FlagNestedFolders) {
 			case true:
-				recQueryName := fmt.Sprintf("RecQry%d", len(f.recQueries))
-				f.addRecQry(recQueryName, permSelector.String(), permSelectorArgs)
-				builder.WriteString(fmt.Sprintf("(SELECT uid FROM %s)", recQueryName))
+				switch f.recursiveQueriesAreSupported {
+				case true:
+					recQueryName := fmt.Sprintf("RecQry%d", len(f.recQueries))
+					f.addRecQry(recQueryName, permSelector.String(), permSelectorArgs)
+					builder.WriteString("(dashboard.uid IN ")
+					builder.WriteString(fmt.Sprintf("(SELECT uid FROM %s)", recQueryName))
+				default:
+					nestedFoldersSelectors, nestedFoldersArgs := nestedFoldersSelectors(permSelector.String(), permSelectorArgs, "uid", "uid")
+					builder.WriteRune('(')
+					builder.WriteString(nestedFoldersSelectors)
+					builder.WriteRune(')')
+					args = append(args, nestedFoldersArgs...)
+				}
 			default:
+				builder.WriteString("(dashboard.uid IN ")
 				builder.WriteString(permSelector.String())
 				args = append(args, permSelectorArgs...)
 			}
@@ -321,4 +337,29 @@ func actionsToCheck(actions []string, permissions map[string][]string, wildcards
 		}
 	}
 	return toCheck
+}
+
+func nestedFoldersSelectors(permSelector string, permSelectorArgs []interface{}, leftTableCol string, rightTableCol string) (string, []interface{}) {
+	wheres := make([]string, 0, folder.MaxNestedFolderDepth+1)
+	args := make([]interface{}, 0, len(permSelectorArgs)*(folder.MaxNestedFolderDepth+1))
+
+	joins := make([]string, 0, folder.MaxNestedFolderDepth+2)
+
+	tmpl := "INNER JOIN folder %s ON %s.%s = %s.uid AND %s.org_id = %s.org_id "
+
+	prev := "d"
+	onCol := "uid"
+	for i := 1; i <= folder.MaxNestedFolderDepth+2; i++ {
+		t := fmt.Sprintf("f%d", i)
+		s := fmt.Sprintf(tmpl, t, prev, onCol, t, prev, t)
+		joins = append(joins, s)
+
+		wheres = append(wheres, fmt.Sprintf("(dashboard.%s = (SELECT d.%s FROM dashboard d %s WHERE %s.uid IN %s)", leftTableCol, rightTableCol, strings.Join(joins, " "), t, permSelector))
+		args = append(args, permSelectorArgs...)
+
+		prev = t
+		onCol = "parent_uid"
+	}
+
+	return strings.Join(wheres, ") OR "), args
 }
