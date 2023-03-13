@@ -226,7 +226,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin-bottom: ${theme.spacing(1)};
     `,
     dsPickerContainer: css`
-      width: 250px;
+      width: 550px;
       flex-grow: 0;
       margin: 0;
     `,
