@@ -3,6 +3,7 @@ import { GenericDataSourcePlugin } from 'app/features/datasources/types';
 
 import { SandboxOptions, SandboxProxyDataSource, SandboxQuery } from './sandbox_datasource';
 
+// we might not need this wrapper at all
 export class SandboxDataSourcePlugin extends DataSourcePlugin<SandboxProxyDataSource, SandboxQuery, SandboxOptions> {
   constructor(meta: DataSourcePluginMeta) {
     super(
@@ -18,5 +19,5 @@ export class SandboxDataSourcePlugin extends DataSourcePlugin<SandboxProxyDataSo
 }
 
 export async function getSandboxDataSourcePlugin(meta: DataSourcePluginMeta): Promise<GenericDataSourcePlugin> {
-  return new SandboxDataSourcePlugin(meta) as GenericDataSourcePlugin;
+  return new SandboxDataSourcePlugin(meta) as unknown as GenericDataSourcePlugin;
 }
