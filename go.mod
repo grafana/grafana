@@ -9,7 +9,7 @@ replace github.com/denisenkom/go-mssqldb => github.com/grafana/go-mssqldb v0.0.0
 
 // Override k8s.io/client-go outdated dependency, which is an indirect dependency of grafana/loki.
 // It's also present on grafana/loki's go.mod so we'll need till it gets updated.
-replace k8s.io/client-go => k8s.io/client-go v0.26.1
+replace k8s.io/client-go => k8s.io/client-go v0.26.2
 
 replace github.com/russellhaering/goxmldsig@v1.1.0 => github.com/russellhaering/goxmldsig v1.1.1
 
@@ -279,7 +279,8 @@ require (
 	github.com/k3s-io/kine v0.9.9
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f
 	k8s.io/apiextensions-apiserver v0.26.2
-	k8s.io/kubernetes v1.13.0
+	k8s.io/kube-aggregator v0.0.0
+	k8s.io/kubernetes v1.26.2
 )
 
 require (
@@ -299,6 +300,7 @@ require (
 	github.com/buildkite/yaml v2.1.0+incompatible // indirect
 	github.com/canonical/go-dqlite v1.5.1 // indirect
 	github.com/containerd/containerd v1.6.8 // indirect
+	github.com/coreos/go-oidc v2.1.0+incompatible // indirect
 	github.com/coreos/go-systemd/v22 v22.5.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -340,14 +342,18 @@ require (
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
+	github.com/moby/sys/mountinfo v0.6.2 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
+	github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f // indirect
 	github.com/nats-io/jsm.go v0.0.31-0.20220317133147-fe318f464eee // indirect
 	github.com/nats-io/nats.go v1.17.1-0.20220923204156-36d2b654c70f // indirect
 	github.com/nats-io/nkeys v0.3.0 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.3-0.20211202183452-c5a74bcca799 // indirect
+	github.com/opencontainers/selinux v1.10.1 // indirect
+	github.com/pquerna/cachecontrol v0.1.0 // indirect
 	github.com/rivo/uniseg v0.3.4 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.9 // indirect
@@ -382,8 +388,15 @@ require (
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
+	gopkg.in/square/go-jose.v2 v2.5.1 // indirect
+	k8s.io/cloud-provider v0.0.0 // indirect
+	k8s.io/cluster-bootstrap v0.0.0 // indirect
+	k8s.io/component-helpers v0.26.2 // indirect
 	k8s.io/klog/v2 v2.80.1 // indirect
 	k8s.io/kms v0.26.2 // indirect
+	k8s.io/kubelet v0.0.0 // indirect
+	k8s.io/mount-utils v0.0.0 // indirect
+	k8s.io/pod-security-admission v0.0.0 // indirect
 	k8s.io/utils v0.0.0-20221107191617-1a15be271d1d // indirect
 	sigs.k8s.io/apiserver-network-proxy/konnectivity-client v0.0.35 // indirect
 	sigs.k8s.io/json v0.0.0-20220713155537-f223a00ba0e2 // indirect
@@ -472,3 +485,61 @@ replace google.golang.org/grpc => google.golang.org/grpc v1.45.0
 replace go.opentelemetry.io/collector/pdata => go.opentelemetry.io/collector/pdata v0.50.0
 
 replace google.golang.org/genproto => google.golang.org/genproto v0.0.0-20220421151946-72621c1f0bd3
+
+replace k8s.io/api => k8s.io/api v0.26.2
+
+replace k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.26.2
+
+replace k8s.io/apimachinery => k8s.io/apimachinery v0.26.3-rc.0
+
+replace k8s.io/apiserver => k8s.io/apiserver v0.26.2
+
+replace k8s.io/cli-runtime => k8s.io/cli-runtime v0.26.2
+
+replace k8s.io/cloud-provider => k8s.io/cloud-provider v0.26.2
+
+replace k8s.io/cluster-bootstrap => k8s.io/cluster-bootstrap v0.26.2
+
+replace k8s.io/code-generator => k8s.io/code-generator v0.26.3-rc.0
+
+replace k8s.io/component-base => k8s.io/component-base v0.26.2
+
+replace k8s.io/component-helpers => k8s.io/component-helpers v0.26.2
+
+replace k8s.io/controller-manager => k8s.io/controller-manager v0.26.2
+
+replace k8s.io/cri-api => k8s.io/cri-api v0.26.3-rc.0
+
+replace k8s.io/csi-translation-lib => k8s.io/csi-translation-lib v0.26.2
+
+replace k8s.io/dynamic-resource-allocation => k8s.io/dynamic-resource-allocation v0.26.2
+
+replace k8s.io/kms => k8s.io/kms v0.26.3-rc.0
+
+replace k8s.io/kube-aggregator => k8s.io/kube-aggregator v0.26.2
+
+replace k8s.io/kube-controller-manager => k8s.io/kube-controller-manager v0.26.2
+
+replace k8s.io/kube-proxy => k8s.io/kube-proxy v0.26.2
+
+replace k8s.io/kube-scheduler => k8s.io/kube-scheduler v0.26.2
+
+replace k8s.io/kubectl => k8s.io/kubectl v0.26.2
+
+replace k8s.io/kubelet => k8s.io/kubelet v0.26.2
+
+replace k8s.io/legacy-cloud-providers => k8s.io/legacy-cloud-providers v0.26.2
+
+replace k8s.io/metrics => k8s.io/metrics v0.26.2
+
+replace k8s.io/mount-utils => k8s.io/mount-utils v0.26.3-rc.0
+
+replace k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.26.2
+
+replace k8s.io/sample-apiserver => k8s.io/sample-apiserver v0.26.2
+
+replace k8s.io/sample-cli-plugin => k8s.io/sample-cli-plugin v0.26.2
+
+replace k8s.io/sample-controller => k8s.io/sample-controller v0.26.2
+
+replace gopkg.in/square/go-jose.v2 => gopkg.in/square/go-jose.v2 v2.2.2

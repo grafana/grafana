@@ -17,26 +17,33 @@ import (
 
 	"k8s.io/apiserver/pkg/util/proxy"
 	"k8s.io/apiserver/pkg/util/webhook"
+	clientgoinformers "k8s.io/client-go/informers"
 	corev1 "k8s.io/client-go/listers/core/v1"
 )
 
-func (s *service) extensionsServerConfig(recommendedOptions *genericoptions.RecommendedOptions, apiServerConfig *genericapiserver.RecommendedConfig) (*apiextensionsapiserver.Config, error) {
+func (s *service) extensionsServerConfig(sharedInformerFactory clientgoinformers.SharedInformerFactory, etdOptions *genericoptions.EtcdOptions, apiServerConfig *genericapiserver.Config) (*apiextensionsapiserver.Config, error) {
 	APIEnablement := options.NewAPIEnablementOptions()
 	serverConfig := *apiServerConfig
+	serverConfig.PostStartHooks = map[string]genericapiserver.PostStartHookConfigEntry{}
+	serverConfig.RESTOptionsGetter = nil
 
-	if err := APIEnablement.ApplyTo(&serverConfig.Config, apiextensionsapiserver.DefaultAPIResourceConfigSource(), apiextensionsapiserver.Scheme); err != nil {
+	if err := APIEnablement.ApplyTo(&serverConfig, apiextensionsapiserver.DefaultAPIResourceConfigSource(), apiextensionsapiserver.Scheme); err != nil {
 		return nil, err
 	}
-	crdRESTOptionsGetter, err := NewCRDRESTOptionsGetter(*recommendedOptions.Etcd)
+	crdRESTOptionsGetter, err := NewCRDRESTOptionsGetter(*etdOptions)
 	if err != nil {
 		return nil, err
 	}
 
 	config := &apiserver.Config{
-		GenericConfig: &serverConfig,
+		GenericConfig: &genericapiserver.RecommendedConfig{
+			Config:                serverConfig,
+			SharedInformerFactory: sharedInformerFactory,
+		},
 		ExtraConfig: apiserver.ExtraConfig{
 			CRDRESTOptionsGetter: crdRESTOptionsGetter,
-			ServiceResolver:      &serviceResolver{serverConfig.SharedInformerFactory.Core().V1().Services().Lister()},
+			MasterCount:          1,
+			ServiceResolver:      &serviceResolver{sharedInformerFactory.Core().V1().Services().Lister()},
 			AuthResolverWrapper:  webhook.NewDefaultAuthenticationInfoResolverWrapper(nil, nil, serverConfig.LoopbackClientConfig, oteltrace.NewNoopTracerProvider()),
 		},
 	}

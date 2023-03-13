@@ -34,6 +34,7 @@ func (s *service) GetConfig() *endpoint.ETCDConfig {
 func (s *service) start(ctx context.Context) error {
 	config := endpoint.Config{
 		Endpoint: "sqlite://data/kine.db",
+		Listener: "tcp://127.0.0.1:9990",
 	}
 	etcdConfig, err := endpoint.Listen(ctx, config)
 	if err != nil {

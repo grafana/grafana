@@ -65,12 +65,12 @@ func (s *service) GetRestConfig() *rest.Config {
 }
 
 func (s *service) start(ctx context.Context) error {
-	recommendedOptions, apiServerConfig, err := s.apiserverConfig()
+	sharedInformers, etcdOptions, apiServerConfig, err := s.apiserverConfig()
 	if err != nil {
 		return fmt.Errorf("failed to create apiserver config: %w", err)
 	}
 	s.restConfig = apiServerConfig.LoopbackClientConfig
-	extensionsServerConfig, err := s.extensionsServerConfig(recommendedOptions, apiServerConfig)
+	extensionsServerConfig, err := s.extensionsServerConfig(sharedInformers, etcdOptions, apiServerConfig)
 	if err != nil {
 		return fmt.Errorf("failed to create extensions server config: %w", err)
 	}
@@ -83,7 +83,7 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	apiServer, err := apiServerConfig.Complete().New("grafana", extensionServer.GenericAPIServer)
+	apiServer, err := apiServerConfig.Complete(sharedInformers).New("grafana", extensionServer.GenericAPIServer)
 	if err != nil {
 		return err
 	}
