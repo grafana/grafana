@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import React, { FC, useMemo, useState } from 'react';
-import { useTable, usePagination, useExpanded } from 'react-table';
+import { useExpanded, usePagination, useTable } from 'react-table';
 
 import { useStyles } from '@grafana/ui';
 import { Overlay } from 'app/percona/shared/components/Elements/Overlay/Overlay';
@@ -9,7 +9,7 @@ import { Filter } from './Filter/Filter';
 import { Pagination } from './Pagination';
 import { PAGE_SIZES } from './Pagination/Pagination.constants';
 import { getStyles } from './Table.styles';
-import { TableProps, PaginatedTableOptions, PaginatedTableState } from './Table.types';
+import { PaginatedTableOptions, PaginatedTableState, TableProps } from './Table.types';
 import { TableContent } from './TableContent';
 
 const defaultPropGetter = () => ({});
@@ -37,6 +37,7 @@ export const Table: FC<TableProps> = ({
   showFilter = false,
   hasBackendFiltering = false,
   getRowId,
+  tableKey,
 }) => {
   const [filterData, setFilteredData] = useState<Object[]>([]);
   const data = useMemo(() => (showFilter ? filterData : rawData), [showFilter, filterData, rawData]);
@@ -105,6 +106,7 @@ export const Table: FC<TableProps> = ({
             rawData={rawData}
             setFilteredData={setFilteredData}
             hasBackendFiltering={hasBackendFiltering}
+            tableKey={tableKey}
           />
         )}
         <div className={style.tableWrap} data-testid="table-outer-wrapper">

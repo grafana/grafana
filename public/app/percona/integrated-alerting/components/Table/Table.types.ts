@@ -1,16 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
-  Column,
-  TableInstance,
-  TableState,
-  Row,
-  TableOptions,
-  TableHeaderProps,
-  TableRowProps,
-  TableCellProps,
   Cell,
+  Column,
   ColumnInstance,
   HeaderGroup,
+  Row,
+  TableCellProps,
+  TableHeaderProps,
+  TableInstance,
+  TableOptions,
+  TableRowProps,
+  TableState,
 } from 'react-table';
 
 import { SelectableValue } from '@grafana/data';
@@ -63,6 +63,7 @@ export interface TableProps {
   getRowId?: (originalRow: any, relativeIndex: number, parent?: Row<any>) => string;
   showFilter?: boolean;
   hasBackendFiltering?: boolean;
+  tableKey?: string;
 }
 
 export interface PaginatedTableState extends TableState {

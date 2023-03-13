@@ -1,11 +1,12 @@
 import { LoaderButton, logger } from '@percona/platform-core';
 import React, { FC, useCallback, useMemo, useState } from 'react';
 
-import { AppEvents } from '@grafana/data';
+import { AppEvents, UrlQueryMap } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { OldPage } from 'app/core/components/Page/Page';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { CheckService } from 'app/percona/check/Check.service';
 import { CheckDetails, Interval } from 'app/percona/check/types';
@@ -36,10 +37,11 @@ export const AllChecksTab: FC<GrafanaRouteComponentProps<{ category: string }>> 
   const { loading: advisorsPending } = useSelector(getAdvisors);
   const categorizedAdvisors = useSelector(getCategorizedAdvisors);
   const advisors = categorizedAdvisors[category];
+  const [queryParams] = useQueryParams();
+
   if (navModel.main.id === 'not-found') {
     locationService.push('/advisors');
   }
-
   const getCheckNamesListInCategory = () => {
     return Object.values(advisors)
       .map((advisor) => advisor.checks)
@@ -166,6 +168,10 @@ export const AllChecksTab: FC<GrafanaRouteComponentProps<{ category: string }>> 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const featureSelector = useCallback(getPerconaSettingFlag('sttEnabled'), []);
 
+  const isFilterSet = (queryParams: UrlQueryMap, advisorName: string) => {
+    return Object.keys(queryParams).includes(advisorName);
+  };
+
   return (
     <OldPage navModel={navModel} tabsDataTestId="db-check-tabs-bar" data-testid="db-check-panel">
       <OldPage.Contents dataTestId="db-check-tab-content">
@@ -198,6 +204,7 @@ export const AllChecksTab: FC<GrafanaRouteComponentProps<{ category: string }>> 
                   mainLabel={summary}
                   content={advisors[summary].description}
                   sideLabel={advisors[summary].comment}
+                  isInitOpen={isFilterSet(queryParams, advisors[summary].name)}
                 >
                   <Table
                     totalItems={advisors[summary].checks.length}
@@ -205,6 +212,7 @@ export const AllChecksTab: FC<GrafanaRouteComponentProps<{ category: string }>> 
                     columns={columns}
                     pendingRequest={advisorsPending}
                     emptyMessage={Messages.table.noData}
+                    tableKey={advisors[summary].name}
                     showFilter
                   />
                   {!!selectedCheck && checkIntervalModalVisible && (

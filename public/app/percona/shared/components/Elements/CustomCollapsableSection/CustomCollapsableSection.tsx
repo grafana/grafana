@@ -11,6 +11,7 @@ export const CustomCollapsableSection = ({
   mainLabel,
   content,
   sideLabel,
+  isInitOpen,
 }: CustomCollapsableSectionProps) => {
   //used to automatically disable collapse when wrapping in UpgradePlanWrapper
   const disabled = useContext(IsDisabledContext);
@@ -30,6 +31,7 @@ export const CustomCollapsableSection = ({
       headerCustomClass={styles.collapsableHeader}
       headerLabelCustomClass={styles.collapsableHeaderLabel}
       disabled={disabled}
+      isOpen={isInitOpen}
     >
       {children}
     </ControlledCollapse>

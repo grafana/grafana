@@ -5,4 +5,5 @@ export interface CustomCollapsableSectionProps {
   mainLabel: string;
   content: string;
   sideLabel: string;
+  isInitOpen: boolean;
 }

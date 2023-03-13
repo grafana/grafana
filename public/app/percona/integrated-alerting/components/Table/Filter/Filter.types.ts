@@ -7,4 +7,5 @@ export interface FilterProps {
   rawData: Object[];
   setFilteredData: (data: Object[]) => void;
   hasBackendFiltering: boolean;
+  tableKey?: string;
 }

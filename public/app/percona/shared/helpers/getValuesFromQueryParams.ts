@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { UrlQueryMap, UrlQueryValue } from '@grafana/data';
 
 interface QueryParamTransform {
@@ -17,7 +18,6 @@ export const getValuesFromQueryParams = (queryParams: UrlQueryMap, keys: QueryPa
 
   keys.forEach(({ key, transform = defaultTransform }) => {
     const param = queryParams[key];
-
     if (param !== undefined && param !== null) {
       result = { ...result, [key]: transform(param) };
     }

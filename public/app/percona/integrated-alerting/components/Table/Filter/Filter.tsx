@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-assertion */
 import { FormApi } from 'final-form';
 import { debounce } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -15,7 +15,7 @@ import { getStyles } from './Filter.styles';
 import { FilterProps } from './Filter.types';
 import {
   buildEmptyValues,
-  buildObjForQueryParams,
+  buildParamsFromKey,
   buildSearchOptions,
   getQueryParams,
   isInOptions,
@@ -27,24 +27,39 @@ import { SearchTextField } from './components/fields/SearchTextField';
 import { SelectColumnField } from './components/fields/SelectColumnField';
 import { SelectDropdownField } from './components/fields/SelectDropdownField';
 
-export const Filter = ({ columns, rawData, setFilteredData, hasBackendFiltering = false }: FilterProps) => {
+export const Filter = ({ columns, rawData, setFilteredData, hasBackendFiltering = false, tableKey }: FilterProps) => {
   const [openCollapse, setOpenCollapse] = useState(false);
   const [openSearchFields, setOpenSearchFields] = useState(false);
   const styles = useStyles2(getStyles);
   const [queryParams, setQueryParams] = useQueryParams();
 
+  const queryParamsByKey = useMemo(() => {
+    if (tableKey) {
+      // eslint-disable-next-line
+      const params = queryParams[tableKey] as any;
+
+      if (params) {
+        const paramsObj = JSON.parse(params);
+        return paramsObj;
+      } else {
+        return {};
+      }
+    }
+    return queryParams;
+  }, [queryParams, tableKey]);
+
   const searchColumnsOptions = useMemo(() => buildSearchOptions(columns), [columns]);
 
   const onFormChange = debounce(
-    (values: Record<string, any>) => setQueryParams(buildObjForQueryParams(columns, values)),
+    (values: Record<string, any>) => setQueryParams(buildParamsFromKey(tableKey, columns, values)),
     DEBOUNCE_DELAY
   );
   const onSubmit = (values: Record<string, any>) => {
-    setQueryParams(buildObjForQueryParams(columns, values));
+    setQueryParams(buildParamsFromKey(tableKey, columns, values));
   };
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const initialValues = useMemo(() => getQueryParams(columns, queryParams), []);
+  const initialValues = useMemo(() => getQueryParams(columns, queryParamsByKey), []);
   const onClearAll = (form: FormApi) => {
     form.initialize(buildEmptyValues(columns));
     setOpenCollapse(false);
@@ -72,8 +87,8 @@ export const Filter = ({ columns, rawData, setFilteredData, hasBackendFiltering 
   }, []);
 
   useEffect(() => {
-    const queryParamsObj = getQueryParams(columns, queryParams);
-    if (Object.keys(queryParams).length > 0 && !hasBackendFiltering) {
+    const queryParamsObj = getQueryParams(columns, queryParamsByKey);
+    if (Object.keys(queryParamsByKey).length > 0 && !hasBackendFiltering) {
       const dataArray = rawData.filter(
         (filterValue) =>
           isValueInTextColumn(columns, filterValue, queryParamsObj) &&
@@ -85,7 +100,7 @@ export const Filter = ({ columns, rawData, setFilteredData, hasBackendFiltering 
       setFilteredData(rawData);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queryParams, rawData]);
+  }, [queryParamsByKey, rawData]);
 
   const showAdvanceFilter = useMemo(
     () => isOtherThanTextType(columns),
@@ -100,7 +115,6 @@ export const Filter = ({ columns, rawData, setFilteredData, hasBackendFiltering 
       render={({ handleSubmit, form }) => (
         <form
           onSubmit={handleSubmit}
-          role="form"
           onKeyPress={(e) => {
             e.key === 'Enter' && e.preventDefault();
           }}
