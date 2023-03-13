@@ -6,7 +6,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"strconv"
 	"time"
 
 	extensionsapiserver "k8s.io/apiextensions-apiserver/pkg/apiserver"
@@ -14,7 +13,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
-	"k8s.io/apiserver/pkg/endpoints/discovery"
 	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/egressselector"
@@ -30,13 +28,17 @@ import (
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 	aggregatorapiserver "k8s.io/kube-aggregator/pkg/apiserver"
 	"k8s.io/kubernetes/pkg/api/legacyscheme"
+	api "k8s.io/kubernetes/pkg/apis/core"
+	"k8s.io/kubernetes/pkg/cluster/ports"
 	"k8s.io/kubernetes/pkg/controlplane"
 	"k8s.io/kubernetes/pkg/controlplane/controller/clusterauthenticationtrust"
+	"k8s.io/kubernetes/pkg/controlplane/reconcilers"
 	generatedopenapi "k8s.io/kubernetes/pkg/generated/openapi"
 	"k8s.io/kubernetes/pkg/kubeapiserver"
 	kubeapiserveradmission "k8s.io/kubernetes/pkg/kubeapiserver/admission"
 	"k8s.io/kubernetes/pkg/kubeapiserver/authorizer/modes"
 	kubeoptions "k8s.io/kubernetes/pkg/kubeapiserver/options"
+	kubeletclient "k8s.io/kubernetes/pkg/kubelet/client"
 	rbacrest "k8s.io/kubernetes/pkg/registry/rbac/rest"
 )
 
@@ -164,24 +166,34 @@ func (s *service) apiserverConfig() (*apiServerConfig, error) {
 			APIResourceConfigSource:   serverConfig.MergedResourceConfig,
 			StorageFactory:            storageFactory,
 			ProxyTransport:            proxyTransport,
-			APIServerServiceIP:        net.ParseIP("127.0.0.1:6443"),
-			APIServerServicePort:      6443,
+			EventTTL:                  1 * time.Hour,
 			MasterCount:               1,
-			VersionedInformers:        versionedInformers,
+			EndpointReconcilerType:    reconcilers.LeaseEndpointReconcilerType,
+			ServiceNodePortRange:      kubeoptions.DefaultServiceNodePortRange,
+			APIServerServicePort:      6443,
+			KubeletClientConfig: kubeletclient.KubeletClientConfig{
+				Port:         ports.KubeletPort,
+				ReadOnlyPort: ports.KubeletReadOnlyPort,
+				PreferredAddressTypes: []string{
+					// --override-hostname
+					string(api.NodeHostName),
+
+					// internal, preferring DNS if reported
+					string(api.NodeInternalDNS),
+					string(api.NodeInternalIP),
+
+					// external, preferring DNS if reported
+					string(api.NodeExternalDNS),
+					string(api.NodeExternalIP),
+				},
+				HTTPTimeout: time.Duration(5) * time.Second,
+			},
+			VersionedInformers: versionedInformers,
 		},
 	}
 
-	controlPlaneConfig.ExtraConfig.ServiceIPRange = net.IPNet{IP: serverConfig.PublicAddress, Mask: net.CIDRMask(24, 24)}
-	controlPlaneConfig.ExtraConfig.ServiceNodePortRange = *utilnet.ParsePortRangeOrDie("6443-6443")
 	controlPlaneConfig.ExtraConfig.APIServerServiceIP = serverConfig.PublicAddress
 	controlPlaneConfig.ExtraConfig.APIServerServicePort = 6443
-
-	discoveryAddresses := discovery.DefaultAddresses{DefaultAddress: controlPlaneConfig.GenericConfig.ExternalAddress}
-	discoveryAddresses.CIDRRules = append(discoveryAddresses.CIDRRules,
-		discovery.CIDRRule{IPRange: controlPlaneConfig.ExtraConfig.ServiceIPRange, Address: net.JoinHostPort(controlPlaneConfig.ExtraConfig.APIServerServiceIP.String(), strconv.Itoa(controlPlaneConfig.ExtraConfig.APIServerServicePort))})
-	controlPlaneConfig.GenericConfig.DiscoveryAddresses = discoveryAddresses
-
-	//authentication.ApplyAuthorization(authorization)
 
 	return &apiServerConfig{
 		ServerRunOptions:      serverRunOptions,

@@ -83,6 +83,9 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	apiServer, err := createAPIServer(apiConfig.ControlPlaneConfig, extensionServer.GenericAPIServer)
+	if err != nil {
+		return err
+	}
 
 	aggregatorConfig, err := createAggregatorConfig(*apiConfig)
 	if err != nil {
