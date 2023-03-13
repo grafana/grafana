@@ -29,7 +29,6 @@ export const Page: PageType = ({
   toolbar,
   scrollTop,
   scrollRef,
-  hideFooter,
   ...otherProps
 }) => {
   const styles = useStyles2(getStyles);

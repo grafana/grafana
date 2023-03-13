@@ -4,10 +4,6 @@ import { NavModel } from '@grafana/data';
 
 export interface PluginPageContextType {
   sectionNav: NavModel;
-  /**
-   * Only used when wrapping a SceneApp in core
-   */
-  navId?: string;
 }
 
 export const PluginPageContext = React.createContext(getInitialPluginPageContext());
