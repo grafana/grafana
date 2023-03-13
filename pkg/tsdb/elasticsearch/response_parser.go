@@ -430,7 +430,7 @@ func processMetrics(esAgg *simplejson.Json, target *Query, query *backend.DataRe
 				bucket := simplejson.NewFromAny(v)
 				value := castToFloat(bucket.Get("doc_count"))
 				key := castToFloat(bucket.Get("key"))
-				timeVector = append(timeVector, time.Unix(int64(*key)/1000, 0).UTC())
+				timeVector = append(timeVector, time.UnixMilli(int64(*key)).UTC())
 				values = append(values, value)
 			}
 
@@ -467,7 +467,7 @@ func processMetrics(esAgg *simplejson.Json, target *Query, query *backend.DataRe
 					bucket := simplejson.NewFromAny(v)
 					value := castToFloat(bucket.GetPath(metric.ID, "values", percentileName))
 					key := castToFloat(bucket.Get("key"))
-					timeVector = append(timeVector, time.Unix(int64(*key)/1000, 0).UTC())
+					timeVector = append(timeVector, time.UnixMilli(int64(*key)).UTC())
 					values = append(values, value)
 				}
 				frames = append(frames, newTimeSeriesFrame(timeVector, tags, values))
@@ -492,7 +492,7 @@ func processMetrics(esAgg *simplejson.Json, target *Query, query *backend.DataRe
 					stats := bucket.GetPath(metric.ID, "top")
 					key := castToFloat(bucket.Get("key"))
 
-					timeVector = append(timeVector, time.Unix(int64(*key)/1000, 0).UTC())
+					timeVector = append(timeVector, time.UnixMilli(int64(*key)).UTC())
 
 					for _, stat := range stats.MustArray() {
 						stat := stat.(map[string]interface{})
@@ -550,7 +550,7 @@ func processMetrics(esAgg *simplejson.Json, target *Query, query *backend.DataRe
 					default:
 						value = castToFloat(bucket.GetPath(metric.ID, statName))
 					}
-					timeVector = append(timeVector, time.Unix(int64(*key)/1000, 0).UTC())
+					timeVector = append(timeVector, time.UnixMilli(int64(*key)).UTC())
 					values = append(values, value)
 				}
 				labels := tags
@@ -577,7 +577,7 @@ func processMetrics(esAgg *simplejson.Json, target *Query, query *backend.DataRe
 				} else {
 					value = castToFloat(bucket.GetPath(metric.ID, "value"))
 				}
-				timeVector = append(timeVector, time.Unix(int64(*key)/1000, 0).UTC())
+				timeVector = append(timeVector, time.UnixMilli(int64(*key)).UTC())
 				values = append(values, value)
 			}
 			frames = append(frames, newTimeSeriesFrame(timeVector, tags, values))
