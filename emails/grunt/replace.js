@@ -31,7 +31,7 @@ const txt = {
  * to work with MS Outlook on the Desktop.
  */
 const HTML_SAFE_FUNC = 'safeHTML';
-const commentBlock = /(\<\!\-\-(?:.|\n|\r)*?-->)/g;
+const commentBlock = /(<!--[\s\S]*?-->)/g;
 
 const comments = {
   overwrite: true,
