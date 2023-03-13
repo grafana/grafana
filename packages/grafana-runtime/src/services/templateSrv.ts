@@ -18,6 +18,15 @@ export interface TemplateSrv {
    */
   replace(target?: string, scopedVars?: ScopedVars, format?: string | Function): string;
 
+  /*
+  Return the variables and values only
+  */
+  getVariablesMapInTemplate(
+    target: string,
+    scopedVars: ScopedVars,
+    format?: string | Function
+  ): Record<string, string | number | boolean | undefined>;
+
   /**
    * Checks if a target contains template variables.
    */

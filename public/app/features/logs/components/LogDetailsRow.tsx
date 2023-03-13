@@ -15,6 +15,8 @@ import { getLogRowStyles } from './getLogRowStyles';
 export interface Props extends Themeable2 {
   parsedValue: string;
   parsedKey: string;
+  parsedValueArray?: string[];
+  parsedKeyArray?: string[];
   wrapLogMessage?: boolean;
   isLabel?: boolean;
   onClickFilterLabel?: (key: string, value: string) => void;
@@ -60,6 +62,9 @@ const getStyles = memoizeOne((theme: GrafanaTheme2) => {
         }
       }
     `,
+    adjoiningLinkButton: css`
+      margin-left: ${theme.spacing(1)};
+    `,
     wrapLine: css`
       label: wrapLine;
       white-space: pre-wrap;
@@ -68,8 +73,8 @@ const getStyles = memoizeOne((theme: GrafanaTheme2) => {
       padding: 0 ${theme.spacing(1)};
     `,
     logDetailsValue: css`
-      display: table-cell;
-      vertical-align: middle;
+      display: flex;
+      align-items: center;
       line-height: 22px;
 
       .show-on-hover {
@@ -190,11 +195,46 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     });
   }
 
+  generateMultiVal(value: string[], showCopy?: boolean) {
+    const { theme } = this.props;
+    const styles = getStyles(theme);
+
+    return (
+      <table>
+        <tbody>
+          {value.map((val, i) => {
+            return (
+              <tr key={`${val}-${i}`}>
+                <td>
+                  {val}
+                  {showCopy && val !== '' && (
+                    <div className={cx('show-on-hover', styles.copyButton)}>
+                      <ClipboardButton
+                        getText={() => val}
+                        title="Copy value to clipboard"
+                        fill="text"
+                        variant="secondary"
+                        icon="copy"
+                        size="md"
+                      />
+                    </div>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    );
+  }
+
   render() {
     const {
       theme,
       parsedKey,
+      parsedKeyArray,
       parsedValue,
+      parsedValueArray,
       isLabel,
       links,
       displayedFields,
@@ -206,6 +246,8 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     const styles = getStyles(theme);
     const style = getLogRowStyles(theme);
     const hasFilteringFunctionality = onClickFilterLabel && onClickFilterOutLabel;
+    const hasParsedValueArrayValues =
+      parsedValueArray && parsedValueArray.length > 0 && !parsedValueArray.every((val) => val === '');
 
     const toggleFieldButton =
       displayedFields && displayedFields.includes(parsedKey) ? (
@@ -237,28 +279,36 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
           </td>
 
           {/* Key - value columns */}
-          <td className={style.logDetailsLabel}>{parsedKey}</td>
+          <td className={style.logDetailsLabel}>
+            {parsedKeyArray ? this.generateMultiVal(parsedKeyArray) : parsedKey}
+          </td>
           <td className={cx(styles.wordBreakAll, wrapLogMessage && styles.wrapLine)}>
             <div className={styles.logDetailsValue}>
-              {parsedValue}
+              {parsedValueArray ? this.generateMultiVal(parsedValueArray, true) : parsedValue}
 
-              <div className={cx('show-on-hover', styles.copyButton)}>
-                <ClipboardButton
-                  getText={() => parsedValue}
-                  title="Copy value to clipboard"
-                  fill="text"
-                  variant="secondary"
-                  icon="copy"
-                  size="md"
-                />
+              {parsedValueArray === undefined && (
+                <div className={cx('show-on-hover', styles.copyButton)}>
+                  <ClipboardButton
+                    getText={() => parsedValue}
+                    title="Copy value to clipboard"
+                    fill="text"
+                    variant="secondary"
+                    icon="copy"
+                    size="md"
+                  />
+                </div>
+              )}
+              <div
+                className={cx(
+                  (parsedValueArray === undefined || hasParsedValueArrayValues) && styles.adjoiningLinkButton
+                )}
+              >
+                {links?.map((link, i) => (
+                  <span key={`${link.title}-${i}`}>
+                    <DataLinkButton link={link} />
+                  </span>
+                ))}
               </div>
-
-              {links?.map((link) => (
-                <span key={link.title}>
-                  &nbsp;
-                  <DataLinkButton link={link} />
-                </span>
-              ))}
             </div>
           </td>
         </tr>

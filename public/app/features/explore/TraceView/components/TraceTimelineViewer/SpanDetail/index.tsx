@@ -236,6 +236,10 @@ export default function SpanDetail(props: SpanDetailProps) {
   }
 
   const focusSpanLink = createFocusSpanLink(traceID, spanID);
+  // focusSpanLink is destructured directly into the dom, so remove variable that is not used or expected
+  if (focusSpanLink) {
+    delete focusSpanLink.variableMap;
+  }
   return (
     <div data-testid="span-detail-component">
       <div className={styles.header}>

@@ -76,6 +76,12 @@ export interface LinkModel<T = any> {
 
   // When a click callback exists, this is passed the raw mouse|react event
   onClick?: (e: any, origin?: any) => void;
+
+  /* 
+    Returns a map of all variables found in the link, and the values 
+    that were interpolated in, including variables that did not have a value defined
+  */
+  variableMap?: Record<string, string | number | boolean | undefined>;
 }
 
 /**

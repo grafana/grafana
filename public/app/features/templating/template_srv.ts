@@ -23,6 +23,8 @@ interface FieldAccessorCache {
   [key: string]: (obj: any) => any;
 }
 
+export type VarValue = string | number | boolean | undefined;
+
 export interface TemplateSrvDependencies {
   getFilteredVariables: typeof getFilteredVariables;
   getVariables: typeof getVariables;
@@ -345,6 +347,55 @@ export class TemplateSrv implements BaseTemplateSrv {
       const res = this.formatValue(value, fmt, variable, text);
       return res;
     });
+  }
+
+  getVariablesMapInTemplate(
+    target: string,
+    scopedVars: ScopedVars,
+    format?: string | Function
+  ): Record<string, VarValue> {
+    const values: Record<string, VarValue> = {};
+
+    this.replaceInVariableRegex(target, (match, var1, var2, fmt2, var3, fieldPath, fmt3) => {
+      const variableName = var1 || var2 || var3;
+      const variableDisplayName =
+        var1 || var2 || (var3 !== undefined && fieldPath !== undefined) ? `${var3}.${fieldPath}` : var3;
+      const fmt = fmt2 || fmt3 || format;
+      const value = this.getVariableValue(variableName, fieldPath, scopedVars);
+      if (value !== null && value !== undefined) {
+        const variable = this.getVariableAtIndex(variableName);
+        const text = this.getVariableText(variableName, value, scopedVars);
+        values[variableDisplayName] = this.formatValue(value, fmt, variable, text);
+      } else {
+        values[variableDisplayName] = undefined;
+      }
+
+      // Don't care about the result anyway
+      return '';
+    });
+
+    return values;
+  }
+
+  /**
+   * The replace function, for every match, will return a function that has the full match as a param
+   * followed by one param per capture group of the variable regex.
+   *
+   * See the definition of this.regex for further comments on the variable definitions.
+   */
+  private replaceInVariableRegex(
+    text: string,
+    replace: (
+      fullMatch: string, //     $simpleVarName   [[squareVarName:squareFormat]]   ${curlyVarName.curlyPath:curlyFormat}
+      simpleVarName: string, // simpleVarName                  -                                     -
+      squareVarName: string, //        -                squareVarName                                -
+      squareFormat: string, //         -                squareFormat                                 -
+      curlyVarName: string, //         -                      -                                curlyVarName
+      curlyPath: string, //            -                      -                                  curlyPath
+      curlyFormat: string //           -                      -                                 curlyFormat
+    ) => string
+  ) {
+    return text.replace(this.regex, replace);
   }
 
   isAllValue(value: any) {

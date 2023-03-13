@@ -2,7 +2,7 @@ import memoizeOne from 'memoize-one';
 
 import { DataFrame, Field, FieldType, LinkModel, LogRowModel } from '@grafana/data';
 
-type FieldDef = {
+export type FieldDef = {
   key: string;
   value: string;
   links?: Array<LinkModel<Field>>;
@@ -55,10 +55,6 @@ function shouldRemoveField(field: Field, index: number, row: LogRowModel) {
   }
   // id and tsNs are arbitrary added fields in the backend and should be hidden in the UI
   if (field.name === 'id' || field.name === 'tsNs') {
-    return true;
-  }
-  // entry field which we are showing as the log message
-  if (row.entryFieldIndex === index) {
     return true;
   }
   const firstTimeField = row.dataFrame.fields.find((f) => f.type === FieldType.time);
