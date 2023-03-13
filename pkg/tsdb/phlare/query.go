@@ -375,7 +375,6 @@ func treeToNestedSetDataFrame(tree *ProfileTree, profileTypeID string) *data.Fra
 	fileNameField := NewEnumField("fileName", nil)
 
 	walkTree(tree, func(tree *ProfileTree) {
-
 		levelField.Append(int64(tree.Level))
 		valueField.Append(tree.Value)
 		selfField.Append(tree.Self)

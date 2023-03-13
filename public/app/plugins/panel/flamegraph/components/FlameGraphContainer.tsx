@@ -14,7 +14,7 @@ import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer'
 import { SelectedView } from './types';
 
 type Props = {
-  data: DataFrame;
+  data?: DataFrame;
   app: CoreApp;
   // Height for flame graph when not used in explore.
   // This needs to be different to explore flame graph height as we
@@ -31,7 +31,7 @@ const FlameGraphContainer = (props: Props) => {
   const [selectedView, setSelectedView] = useState(SelectedView.Both);
   const [sizeRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
 
-  const labelField = props.data.fields.find((f) => f.name === 'label');
+  const labelField = props.data?.fields.find((f) => f.name === 'label');
 
   // Label can actually be an enum field so depending on that we have to access it through display processor. This is
   // both a backward compatibility but also to allow using a simple dataFrame without enum config. This would allow
