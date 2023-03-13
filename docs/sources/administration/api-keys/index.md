@@ -27,11 +27,15 @@ Create an API key when you want to manage your computed workload with a user.
 
 This topic shows you how to create an API key using the Grafana UI. You can also create an API key using the Grafana HTTP API. For more information about creating API keys via the API, refer to [Create API key via API]({{< relref "../../developers/http_api/create-api-tokens-for-org/#how-to-create-a-new-organization-and-an-api-token" >}}).
 
-### Before you begin:
+### Before you begin
 
-- Ensure you have permission to create and edit API keys. For more information about permissions, refer to [Roles and permissions]({{< relref "../roles-and-permissions/#" >}}).
+To follow these instructions, you need:
 
-**To create an API key:**
+- To ensure you have permission to create and edit API keys. For more information about permissions, refer to [Roles and permissions]({{< relref "../roles-and-permissions/#" >}}).
+
+### Steps
+
+To create an API key, complete the following steps:
 
 1. Sign in to Grafana, hover your cursor over **Configuration** (the gear icon), and click **API Keys**.
 1. Click **New API key**.
@@ -44,88 +48,91 @@ This topic shows you how to create an API key using the Grafana UI. You can also
    - If you are unsure about how long an API key should be valid, we recommend that you choose a short duration, such as a few hours. This approach limits the risk of having API keys that are valid for a long time.
 1. Click **Add**.
 
-## Migrate API Keys to Grafana service accounts
+## Migrate API keys to Grafana service accounts
 
-You can migrate one or all API keys to [Grafana service accounts]({{< relref "../service-accounts/" >}}). When you migrate an API key to a service account, a service account will be created with a service account token.
-The API key will continue to work, and you can find it in the [Grafana service account tokens]({{< relref "../service-accounts/#service-account-tokens" >}}) details.
-For more information about benefits of service accounts, refer to [Grafana service account benefits]({{< relref "../service-accounts/#service-account-benefits" >}}).
+As an alternative to using API keys for authentication, you can use a service account-based authentication system. When compared to API keys, service accounts have limited scopes which provides more security than using API keys. For more information about the benefits of service accounts, refer to [Grafana service account benefits]({{< relref "../service-accounts/#service-account-benefits" >}}).
 
-You can choose to migrate a single API key or all API keys. Note that when you migrate all API keys, you can't create new API keys anymore and will have to use service accounts instead.
+The service account endpoints generate a machine-user for authentication instead of using API keys. When you migrate an API key to a service account, a service account will be created with a service account token.
 
-### Before you begin
+> **Note:** If you are using API keys for authentication, we recommend that you migrate your integration to the service account authentication method. The API key will continue to work. You can locate the API key in the [Grafana service account tokens]({{< relref "../service-accounts/#service-account-tokens" >}}) details.
 
-- Ensure you have permission to create Grafana service accounts. For more information about permissions, refer to [Roles and permissions]({{< relref "../roles-and-permissions/#" >}}).
+This section shows you how to migrate your integration to use the new service account endpoints. You can migrate your API keys using:
 
-**To migrate all API keys to service accounts:**
+- The Grafana user interface
+- The Grafana API
+- Terraform
+
+### Migrate API keys to Grafana service accounts using the Grafana user interface
+
+This section shows you how to migrate API keys to Grafana service accounts using the Grafana user interface. You can choose to migrate a single API key or all API keys. When you migrate all API keys, you can no longer create API keys and must use service accounts instead.
+
+#### Before you begin
+
+To follow these instructions, you need:
+
+- To ensure you have permission to create Grafana service accounts. For more information about permissions, refer to [Roles and permissions]({{< relref "../roles-and-permissions/#" >}}).
+
+#### Steps
+
+To migrate all API keys to service accounts, complete the following steps:
 
 1. Sign in to Grafana, hover your cursor over **Configuration** (the gear icon), and click **API Keys**.
-2. In the top of the page, find the section which says **Switch from API keys to service accounts**
-3. Click **Migrate to service accounts now**.
-4. A confirmation window will appear, asking to confirm the migration. Click **Yes, migrate now** if you are willing to continue.
-5. Once migration is successful, you can choose to forever hide the API keys page. Click **Hide API keys page forever** if you want to do that.
+1. In the top of the page, find the section which says **Switch from API keys to service accounts**
+1. Click **Migrate to service accounts now**.
+1. A confirmation window will appear, asking to confirm the migration. Click **Yes, migrate now** if you are willing to continue.
+1. Once migration is successful, you can choose to forever hide the API keys page. Click **Hide API keys page forever** if you want to do that.
 
-**To migrate single API key to a service account:**
+To migrate a single API key to a service account, complete the following steps:
 
 1. Sign in to Grafana, hover your cursor over **Configuration** (the gear icon), and click **API Keys**.
 1. Find the API Key you want to migrate.
 1. Click **Migrate to service account**.
 
-### Migrating from API Keys to Service Accounts (API)
+### Migrate API keys to Grafana service accounts using the API
 
-We are deprecating the existing `/api/auth/keys` endpoint in favor of a new service account-based authentication system. This documentation will guide you through migrating your integration to use the new service account endpoints.
+This section shows you how to migrate API keys to Grafana service accounts using the Grafana API.
 
-**Existing /api/auth/keys behavior**
-The existing /api/auth/keys endpoint generates API keys that can be used to authenticate API requests. The process involves:
+#### Before you begin
 
-1. Retrieving a token for a API key - POST /api/auth/keys
-2. Using the token to authenticate requests
+To follow these instructions, you need:
 
-**New service account endpoints**
-The new service account endpoints generate a machine-user for authentication instead of simple API keys. The process involves:
+- xxx
+- xxx
 
-1. Creating a service account - POST /api/serviceaccounts
-2. Retrieving a token for a service account - POST /api/serviceaccounts/<id>/token
-3. Using the token to authenticate requests
+#### Steps
 
-Service accounts can have limited scopes, offering more security than API keys.
+Complete the following steps to migrate from API keys to service accounts using the API:
 
-#### Recommended Migration steps (API)
+1. Call the `POST /api/serviceaccounts` endpoint and the `POST /api/serviceaccounts/<id>/tokens`.
 
-Here are the steps required to migrate from API keys to service accounts:
+   This action generates a service account token.
 
-1. Generate a service account token by calling the POST /api/serviceaccounts endpoint and the POST /api/serviceaccounts/<id>/tokens.
-2. Store the ID and secret returned.
-3. Use the token to authenticate API requests by passing it in the Authorization header, prefixed with Bearer.
-4. SATs used for authentication
-5. Remove any code handling the old /api/auth/keys endpoint - these endpoint will soon be deprecated.
-6. Track the [API keys](http://localhost:3000/org/apikeys) in use and migrate them to SATs
+1. Store the ID and secret that the system returns to you.
+1. Pass the token in the `Authrorization` header, prefixed with `Bearer`.
 
-Following these steps will migrate your integration to the new, more secure service account authentication method. Please let us know if you have any issues or feedback.
+   This action authenticates API requests.
 
-### Migrating from API Keys to Service Accounts (Terraform)
+1. SATs used for authentication
+1. Remove code that handles the old `/api/auth/keys` endpoint.
+1. Track the [API keys](http://localhost:3000/org/apikeys) in use and migrate them to SATs.
 
-We are deprecating the grafana_api_key resource in favor of grafana_service_account and grafana_service_account_token resources. This documentation will guide you through migrating your Terraform code to use the new service account resources.
+### Migrate API keys to Grafana service accounts using Terraform
 
-**Existing grafana_api_key behavior**
-The grafana_api_key resource generates API keys that can be used to authenticate API requests to Grafana. API keys are simple strings that can be easily shared or compromised.
+This section shows you how to migrate API keys to Grafana service accounts using Terraform.
 
-**New service account resources**
-The new `grafana_service_account` and `grafana_service_account_token` resources generate a machine-user for authentication instead of API keys. The process involves:
+#### Before you begin
 
-1. Creating a service account - `grafana_service_account`
-2. Retrieving a token for a service account - `grafana_service_account_token`
-3. Using the token to authenticate requests
+To follow these instructions, you need:
 
-Service accounts can have limited scopes, offering more security than API keys.
+- xxx
+- xxx
 
-#### Recommended Migration steps (Terraform)
+#### Steps
 
-Here are the steps required to migrate from API keys to service accounts in Terraform:
+Complete the following steps to migrate from API keys to service accounts using Terraform:
 
-1. Generate grafana_service_account and grafana_service_account_token resources
-2. When creating the service account, specify desired scopes and expiration time
-3. Use the token returned from grafana_service_account_token to authenticate API requests
-4. Remove any references to the deprecated grafana_api_key resource
-5. Track the [API keys](http://localhost:3000/org/apikeys) in use and migrate them to SATs
-
-Following these steps will migrate your Terraform code to the new, more secure service account authentication resources. Please let us know if you have any issues or feedback.
+1. Generate `grafana_service_account` and `grafana_service_account_token` resources.
+1. Specify the desired scopes and expiration date when creating the service account.
+1. Use the token returned from `grafana_service_account_token` to authenticate the API requests.
+1. Remove references to the deprecated `grafana_api_key` resource.
+1. Track the [API keys](http://localhost:3000/org/apikeys) in use and migrate them to SATs.
