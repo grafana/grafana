@@ -122,13 +122,43 @@ Service account access tokens inherit permissions from the service account.
 
 ### 🚧 API keys
 
-## 🚧 How to work with roles?
+## How to work with roles?
 
-### 🚧 What are permissions?
+Roles are used to regulate which resources each user or service account can access within Grafana and what actions they're allowed to carry out.
 
-### 🚧 What are roles?
+Roles can be set manually through the UI or APIs, provisioned through Terraform or automatically synced through an external IAM provider.
 
-### 🚧 Grafana roles vs RBAC: Which one is for me?
+### What are roles?
+
+Grafana has a set of basic roles - organization administrator, editor and viewer - that determine user's permissions within an organization, such as access to edit data sources or create teams.
+Each user must have one of these roles assigned to them in each organization that they are a member of.
+
+Furthermore, Grafana has a server administrator basic role which allows accessing and interacting with instance wide resources, such as organizations, users and server-wide settings.
+This role is only available to users of self-hosted Grafana instances. It is a powerful role and is meant for Grafana instance administrators.
+
+### What are permissions?
+
+Each role consists of a set of permissions. Permissions determine the tasks a user can perform in the system.
+For example, the **Admin** role includes permissions for an administrator to create and delete users.
+
+Grafana supports setting granular permissions for dashboards and folders to determine which users and teams are allowed to view, edit and administer them.
+For example, you might want a certain viewer to be able to edit a dashboard. While that user can see all dashboards, you can grant them access to update only one of them.
+
+In [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}), you can also grant granular permissions for data sources to control who can query and edit them.
+
+Dashboard, folder and data source permissions can be set through the UI or APIs or provisioned through Terraform.
+
+### Role-based access control
+
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced](/docs/grafana-cloud).
+
+If you find basic organization and server administrator roles are too restrictive, you might want to consider using RBAC features.
+RBAC provides you a fully flexible way of granting, changing, and revoking user read and write access to Grafana resources, such as users, data sources and reports.
+
+RBAC comes with a set of pre-defined roles, such as data source writer, which allows updating, reading, or querying all data sources.
+You can assign these roles to users, teams and service accounts.
+
+Moreover, RBAC allows you to create your own custom roles and edit permissions granted by Grafana's basic roles.
 
 ## 🚧 Will I need synchronization?
 
