@@ -15,7 +15,7 @@ When query caching is enabled, Grafana temporarily stores the results of data so
 
 Query caching works for all backend data sources. You can enable the cache globally and configure the cache duration (also called Time to Live, or TTL).
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../enterprise/" >}}) and [Grafana Cloud Pro and Advanced]({{< ref "/grafana-cloud" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../enterprise/" >}}) and [Grafana Cloud Pro and Advanced]({{< relref "/docs/grafana-cloud" >}}).
 
 The following cache backends are available: in-memory, Redis, and Memcached.
 

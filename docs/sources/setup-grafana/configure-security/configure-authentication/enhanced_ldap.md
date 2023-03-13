@@ -17,7 +17,7 @@ weight: 900
 
 The enhanced LDAP integration adds additional functionality on top of the [LDAP integration]({{< relref "ldap/" >}}) available in the open source edition of Grafana.
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../../enterprise/" >}}) and [Grafana Cloud Advanced]({{< ref "/grafana-cloud" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../../enterprise/" >}}) and [Grafana Cloud Advanced]({{< ref "/docs/grafana-cloud" >}}).
 
 > To control user access with role-based permissions, refer to [role-based access control]({{< relref "../../../administration/roles-and-permissions/access-control/" >}}).
 
