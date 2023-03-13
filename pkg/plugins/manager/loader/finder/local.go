@@ -60,18 +60,10 @@ func (l *Local) Find(_ context.Context, pluginPaths ...string) ([]*plugins.Found
 	// load plugin.json files and map directory to JSON data
 	foundPlugins := make(map[string]plugins.JSONData)
 	for _, pluginJSONPath := range pluginJSONPaths {
-		reader, err := l.readFile(pluginJSONPath)
+		plugin, err := l.readPluginJSON(pluginJSONPath)
 		if err != nil {
 			l.log.Warn("Skipping plugin loading as its plugin.json could not be read", "path", pluginJSONPath, "err", err)
 			continue
-		}
-		plugin, err := ReadPluginJSON(reader)
-		if err != nil {
-			l.log.Warn("Skipping plugin loading as its plugin.json could not be read", "path", pluginJSONPath, "err", err)
-			continue
-		}
-		if err = reader.Close(); err != nil {
-			l.log.Warn("Failed to close plugin JSON file", "path", pluginJSONPath, "err", err)
 		}
 
 		pluginJSONAbsPath, err := filepath.Abs(pluginJSONPath)
@@ -128,6 +120,28 @@ func (l *Local) Find(_ context.Context, pluginPaths ...string) ([]*plugins.Found
 	}
 
 	return result, nil
+}
+
+func (l *Local) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error) {
+	reader, err := l.readFile(pluginJSONPath)
+	if reader != nil {
+		defer func() {
+			if err = reader.Close(); err != nil {
+				l.log.Warn("Failed to close plugin JSON file", "path", pluginJSONPath, "err", err)
+			}
+		}()
+	}
+	if err != nil {
+		l.log.Warn("Skipping plugin loading as its plugin.json could not be read", "path", pluginJSONPath, "err", err)
+		return plugins.JSONData{}, err
+	}
+	plugin, err := ReadPluginJSON(reader)
+	if err != nil {
+		l.log.Warn("Skipping plugin loading as its plugin.json could not be read", "path", pluginJSONPath, "err", err)
+		return plugins.JSONData{}, err
+	}
+
+	return plugin, nil
 }
 
 func (l *Local) getAbsPluginJSONPaths(path string) ([]string, error) {
