@@ -41,11 +41,6 @@ export function partitionTimeRange(
     ? getLogsRangeChunks(start, end, duration)
     : getMetricRangeChunks(start, end, step, duration);
 
-  // if the split was not possible, go with the original range
-  if (ranges == null) {
-    return [originalTimeRange];
-  }
-
   return ranges.map(([start, end]) => {
     const from = dateTime(start);
     const to = dateTime(end);
@@ -197,5 +192,6 @@ export function runPartitionedQueries(datasource: LokiDatasource, request: DataQ
       partition: [request.range],
     });
   }
+
   return runGroupedQueries(datasource, requests);
 }
