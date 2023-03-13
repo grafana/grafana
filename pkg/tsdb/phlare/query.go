@@ -20,6 +20,7 @@ import (
 	"github.com/xlab/treeprint"
 )
 
+// test ci
 type queryModel struct {
 	WithStreaming bool
 	dataquery.PhlareDataQuery
