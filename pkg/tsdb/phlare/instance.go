@@ -44,7 +44,7 @@ func NewPhlareDatasource(httpClientProvider httpclient.Provider, settings backen
 	}
 
 	var jsonData = map[string]interface{}{}
-	err := json.Unmarshal(settings.JSONData, &jsonData)
+	err = json.Unmarshal(settings.JSONData, &jsonData)
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshalling JSONData: %w", err)
 	}
