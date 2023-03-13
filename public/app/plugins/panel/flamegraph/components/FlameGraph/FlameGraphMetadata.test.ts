@@ -1,10 +1,28 @@
-import { ArrayVector, Field, FieldType } from '@grafana/data';
+import { MutableDataFrame } from '@grafana/data';
 
 import { getMetadata } from './FlameGraphMetadata';
+import { FlameGraphDataContainer } from './dataTransform';
+
+function makeDataFrame(fields: Record<string, Array<number | string>>, unit?: string) {
+  return new MutableDataFrame({
+    fields: Object.keys(fields).map((key) => ({
+      name: key,
+      values: fields[key],
+      config: unit
+        ? {
+            unit,
+          }
+        : {},
+    })),
+  });
+}
 
 describe('should get metadata correctly', () => {
   it('for bytes', () => {
-    const metadata = getMetadata(makeField('bytes'), 1_624_078_250, 8_624_078_250);
+    const container = new FlameGraphDataContainer(
+      makeDataFrame({ value: [1_624_078_250], level: [1], label: ['1'], self: [0] }, 'bytes')
+    );
+    const metadata = getMetadata(container, { itemIndex: 0, start: 0 }, 8_624_078_250);
     expect(metadata).toEqual({
       percentValue: 18.83,
       unitTitle: 'RAM',
@@ -14,7 +32,10 @@ describe('should get metadata correctly', () => {
   });
 
   it('with default unit', () => {
-    const metadata = getMetadata(makeField('none'), 1_624_078_250, 8_624_078_250);
+    const container = new FlameGraphDataContainer(
+      makeDataFrame({ value: [1_624_078_250], level: [1], label: ['1'], self: [0] }, 'none')
+    );
+    const metadata = getMetadata(container, { itemIndex: 0, start: 0 }, 8_624_078_250);
     expect(metadata).toEqual({
       percentValue: 18.83,
       unitTitle: 'Count',
@@ -24,16 +45,10 @@ describe('should get metadata correctly', () => {
   });
 
   it('without unit', () => {
-    const metadata = getMetadata(
-      {
-        name: 'test',
-        type: FieldType.number,
-        values: new ArrayVector(),
-        config: {},
-      },
-      1_624_078_250,
-      8_624_078_250
+    const container = new FlameGraphDataContainer(
+      makeDataFrame({ value: [1_624_078_250], level: [1], label: ['1'], self: [0] })
     );
+    const metadata = getMetadata(container, { itemIndex: 0, start: 0 }, 8_624_078_250);
     expect(metadata).toEqual({
       percentValue: 18.83,
       unitTitle: 'Count',
@@ -43,7 +58,10 @@ describe('should get metadata correctly', () => {
   });
 
   it('for objects', () => {
-    const metadata = getMetadata(makeField('short'), 1_624_078_250, 8_624_078_250);
+    const container = new FlameGraphDataContainer(
+      makeDataFrame({ value: [1_624_078_250], level: [1], label: ['1'], self: [0] }, 'short')
+    );
+    const metadata = getMetadata(container, { itemIndex: 0, start: 0 }, 8_624_078_250);
     expect(metadata).toEqual({
       percentValue: 18.83,
       unitTitle: 'Count',
@@ -53,7 +71,10 @@ describe('should get metadata correctly', () => {
   });
 
   it('for nanoseconds', () => {
-    const metadata = getMetadata(makeField('ns'), 1_624_078_250, 8_624_078_250);
+    const container = new FlameGraphDataContainer(
+      makeDataFrame({ value: [1_624_078_250], level: [1], label: ['1'], self: [0] }, 'ns')
+    );
+    const metadata = getMetadata(container, { itemIndex: 0, start: 0 }, 8_624_078_250);
     expect(metadata).toEqual({
       percentValue: 18.83,
       unitTitle: 'Time',
@@ -62,14 +83,3 @@ describe('should get metadata correctly', () => {
     });
   });
 });
-
-function makeField(unit: string): Field {
-  return {
-    name: 'test',
-    type: FieldType.number,
-    config: {
-      unit,
-    },
-    values: new ArrayVector(),
-  };
-}

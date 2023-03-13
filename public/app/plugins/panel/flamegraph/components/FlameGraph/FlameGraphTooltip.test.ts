@@ -1,7 +1,5 @@
 import { ArrayVector, Field, FieldType } from '@grafana/data';
 
-import { getTooltipData } from './FlameGraphTooltip';
-
 describe('should get tooltip data correctly', () => {
   it('for bytes', () => {
     const tooltipData = getTooltipData(makeField('bytes'), 'total', 8_624_078_250, 978_250, 8_624_078_250);

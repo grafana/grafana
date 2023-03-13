@@ -4,11 +4,12 @@ import { MenuItem, ContextMenu } from '@grafana/ui';
 
 import { ContextMenuData } from '../types';
 
-import { ItemWithStart } from './dataTransform';
+import { FlameGraphDataContainer, LevelItem } from './dataTransform';
 
 type Props = {
   contextMenuData: ContextMenuData;
-  levels: ItemWithStart[][];
+  data: FlameGraphDataContainer;
+  levels: LevelItem[][];
   totalTicks: number;
   graphRef: React.RefObject<HTMLCanvasElement>;
   setContextMenuData: (event: ContextMenuData | undefined) => void;
@@ -28,7 +29,10 @@ const FlameGraphContextMenu = ({
   setSelectedBarIndex,
   setRangeMin,
   setRangeMax,
+  data,
 }: Props) => {
+  const clickedItem = levels[contextMenuData.levelIndex][contextMenuData.barIndex];
+
   const renderMenuItems = () => {
     return (
       <>
@@ -39,12 +43,8 @@ const FlameGraphContextMenu = ({
             if (graphRef.current && contextMenuData) {
               setTopLevelIndex(contextMenuData.levelIndex);
               setSelectedBarIndex(contextMenuData.barIndex);
-              setRangeMin(levels[contextMenuData.levelIndex][contextMenuData.barIndex].start / totalTicks);
-              setRangeMax(
-                (levels[contextMenuData.levelIndex][contextMenuData.barIndex].start +
-                  levels[contextMenuData.levelIndex][contextMenuData.barIndex].value) /
-                  totalTicks
-              );
+              setRangeMin(clickedItem.start / totalTicks);
+              setRangeMax((clickedItem.start + data.getValue(clickedItem.itemIndex)) / totalTicks);
               setContextMenuData(undefined);
             }
           }}
@@ -54,8 +54,7 @@ const FlameGraphContextMenu = ({
           icon={'copy'}
           onClick={() => {
             if (graphRef.current && contextMenuData) {
-              const bar = levels[contextMenuData.levelIndex][contextMenuData.barIndex];
-              navigator.clipboard.writeText(bar.label).then(() => {
+              navigator.clipboard.writeText(data.getLabel(clickedItem.itemIndex)).then(() => {
                 setContextMenuData(undefined);
               });
             }
