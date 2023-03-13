@@ -1,7 +1,7 @@
 package tracing
 
 func InitializeTracerForTest() Tracer {
-	ots := &Opentelemetry{enabled: noopExporter}
-	_ = ots.initOpentelemetryTracer()
+	ots := &OpenTelemetry{enabled: noopExporter}
+	_ = ots.initOpenTelemetryTracer()
 	return ots
 }

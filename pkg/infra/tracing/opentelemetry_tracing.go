@@ -35,7 +35,7 @@ const (
 	w3cPropagator    string = "w3c"
 )
 
-type Opentelemetry struct {
+type OpenTelemetry struct {
 	enabled       string
 	address       string
 	propagation   string
@@ -54,7 +54,7 @@ type tracerProvider interface {
 	Shutdown(ctx context.Context) error
 }
 
-type OpentelemetrySpan struct {
+type OpenTelemetrySpan struct {
 	span trace.Span
 }
 
@@ -77,7 +77,7 @@ func (noopTracerProvider) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-func (ots *Opentelemetry) parseSettingsOpentelemetry() error {
+func (ots *OpenTelemetry) parseSettingsOpentelemetry() error {
 	section, err := ots.Cfg.Raw.GetSection("tracing.opentelemetry")
 	if err != nil {
 		return err
@@ -130,7 +130,7 @@ func splitCustomAttribs(s string) ([]attribute.KeyValue, error) {
 	return res, nil
 }
 
-func (ots *Opentelemetry) initJaegerTracerProvider() (*tracesdk.TracerProvider, error) {
+func (ots *OpenTelemetry) initJaegerTracerProvider() (*tracesdk.TracerProvider, error) {
 	// Create the Jaeger exporter
 	exp, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(ots.address)))
 	if err != nil {
@@ -159,7 +159,7 @@ func (ots *Opentelemetry) initJaegerTracerProvider() (*tracesdk.TracerProvider, 
 	return tp, nil
 }
 
-func (ots *Opentelemetry) initOTLPTracerProvider() (*tracesdk.TracerProvider, error) {
+func (ots *OpenTelemetry) initOTLPTracerProvider() (*tracesdk.TracerProvider, error) {
 	client := otlptracegrpc.NewClient(otlptracegrpc.WithEndpoint(ots.address), otlptracegrpc.WithInsecure())
 	exp, err := otlptrace.New(context.Background(), client)
 	if err != nil {
@@ -190,11 +190,11 @@ func (ots *Opentelemetry) initOTLPTracerProvider() (*tracesdk.TracerProvider, er
 	return tp, nil
 }
 
-func (ots *Opentelemetry) initNoopTracerProvider() (tracerProvider, error) {
+func (ots *OpenTelemetry) initNoopTracerProvider() (tracerProvider, error) {
 	return &noopTracerProvider{TracerProvider: trace.NewNoopTracerProvider()}, nil
 }
 
-func (ots *Opentelemetry) initOpentelemetryTracer() error {
+func (ots *OpenTelemetry) initOpenTelemetryTracer() error {
 	var tp tracerProvider
 	var err error
 	switch ots.enabled {
@@ -236,7 +236,7 @@ func (ots *Opentelemetry) initOpentelemetryTracer() error {
 	return nil
 }
 
-func (ots *Opentelemetry) Run(ctx context.Context) error {
+func (ots *OpenTelemetry) Run(ctx context.Context) error {
 	otel.SetErrorHandler(otelErrHandler(func(err error) {
 		err = level.Error(ots.log).Log("msg", "OpenTelemetry handler returned an error", "err", err)
 		if err != nil {
@@ -259,9 +259,9 @@ func (ots *Opentelemetry) Run(ctx context.Context) error {
 	return nil
 }
 
-func (ots *Opentelemetry) Start(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, Span) {
+func (ots *OpenTelemetry) Start(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, Span) {
 	ctx, span := ots.tracer.Start(ctx, spanName, opts...)
-	opentelemetrySpan := OpentelemetrySpan{
+	opentelemetrySpan := OpenTelemetrySpan{
 		span: span,
 	}
 
@@ -272,31 +272,31 @@ func (ots *Opentelemetry) Start(ctx context.Context, spanName string, opts ...tr
 	return ctx, opentelemetrySpan
 }
 
-func (ots *Opentelemetry) Inject(ctx context.Context, header http.Header, _ Span) {
+func (ots *OpenTelemetry) Inject(ctx context.Context, header http.Header, _ Span) {
 	otel.GetTextMapPropagator().Inject(ctx, propagation.HeaderCarrier(header))
 }
 
-func (s OpentelemetrySpan) End() {
+func (s OpenTelemetrySpan) End() {
 	s.span.End()
 }
 
-func (s OpentelemetrySpan) SetAttributes(key string, value interface{}, kv attribute.KeyValue) {
+func (s OpenTelemetrySpan) SetAttributes(key string, value interface{}, kv attribute.KeyValue) {
 	s.span.SetAttributes(kv)
 }
 
-func (s OpentelemetrySpan) SetName(name string) {
+func (s OpenTelemetrySpan) SetName(name string) {
 	s.span.SetName(name)
 }
 
-func (s OpentelemetrySpan) SetStatus(code codes.Code, description string) {
+func (s OpenTelemetrySpan) SetStatus(code codes.Code, description string) {
 	s.span.SetStatus(code, description)
 }
 
-func (s OpentelemetrySpan) RecordError(err error, options ...trace.EventOption) {
+func (s OpenTelemetrySpan) RecordError(err error, options ...trace.EventOption) {
 	s.span.RecordError(err, options...)
 }
 
-func (s OpentelemetrySpan) AddEvents(keys []string, values []EventValue) {
+func (s OpenTelemetrySpan) AddEvents(keys []string, values []EventValue) {
 	for i, v := range values {
 		if v.Str != "" {
 			s.span.AddEvent(keys[i], trace.WithAttributes(attribute.Key(keys[i]).String(v.Str)))

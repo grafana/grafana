@@ -55,7 +55,7 @@ func TestSplitCustomAttribs_Malformed(t *testing.T) {
 
 func TestOptentelemetry_ParseSettingsOpentelemetry(t *testing.T) {
 	cfg := setting.NewCfg()
-	otel := &Opentelemetry{Cfg: cfg}
+	otel := &OpenTelemetry{Cfg: cfg}
 
 	otelsect := cfg.Raw.Section("tracing.opentelemetry")
 	jaegersect := cfg.Raw.Section("tracing.opentelemetry.jaeger")
