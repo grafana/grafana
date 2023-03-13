@@ -65,12 +65,12 @@ func (s *service) GetRestConfig() *rest.Config {
 }
 
 func (s *service) start(ctx context.Context) error {
-	sharedInformers, etcdOptions, apiServerConfig, err := s.apiserverConfig()
+	apiEnablement, sharedInformers, etcdOptions, apiServerConfig, err := s.apiserverConfig()
 	if err != nil {
 		return fmt.Errorf("failed to create apiserver config: %w", err)
 	}
 	s.restConfig = apiServerConfig.LoopbackClientConfig
-	extensionsServerConfig, err := s.extensionsServerConfig(sharedInformers, etcdOptions, apiServerConfig)
+	extensionsServerConfig, err := s.extensionsServerConfig(sharedInformers, apiEnablement, etcdOptions, apiServerConfig)
 	if err != nil {
 		return fmt.Errorf("failed to create extensions server config: %w", err)
 	}
@@ -104,6 +104,8 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 	s.stoppedCh = stoppedCh
+	fmt.Printf("API server listening at: %v", apiServerConfig.LoopbackClientConfig)
+	s.restConfig = apiServerConfig.LoopbackClientConfig
 
 	return nil
 }

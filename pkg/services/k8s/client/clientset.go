@@ -65,7 +65,7 @@ func ProvideClientsetProvier(toggles featuremgmt.FeatureToggles, restConfigProvi
 		return &service{}, nil
 	}
 
-	s := &service{}
+	s := &service{restConfigProvider: restConfigProvider}
 	s.BasicService = services.NewBasicService(s.start, s.running, nil)
 
 	return s, nil
