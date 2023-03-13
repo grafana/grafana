@@ -137,6 +137,14 @@ export interface Field<T = any, V = Vector<T>> {
    */
   config: FieldConfig;
   values: V; // The raw field values
+
+  /**
+   * When type === FieldType.Time, this can optionally store
+   * the nanosecond-precison fractions as integers between
+   * 0 and 999999.
+   */
+  nanos?: number[];
+
   labels?: Labels;
 
   /**
