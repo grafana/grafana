@@ -3,6 +3,7 @@ package phlare
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/url"
 	"strings"
 	"time"
@@ -36,9 +37,23 @@ func NewPhlareDatasource(httpClientProvider httpclient.Provider, settings backen
 	if err != nil {
 		return nil, err
 	}
+
 	httpClient, err := httpClientProvider.New(opt)
 	if err != nil {
 		return nil, err
+	}
+
+	var jsonData = map[string]interface{}{}
+	err := json.Unmarshal(settings.JSONData, &jsonData)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshalling JSONData: %w", err)
+	}
+
+	sourceCodeURL := "https://go-source.swine.dev/source/go"
+	if urlIntf, ok := jsonData["sourceCodeUrl"]; ok {
+		if url, ok := urlIntf.(string); ok {
+			sourceCodeURL = url
+		}
 	}
 
 	sourceHTTPClient, err := httpClientProvider.New()
@@ -50,7 +65,7 @@ func NewPhlareDatasource(httpClientProvider httpclient.Provider, settings backen
 		client: querierv1connect.NewQuerierServiceClient(httpClient, settings.URL),
 		sourceCodeClient: &sourceCodeClient{
 			client:  sourceHTTPClient,
-			baseURL: "https://go-source.swine.dev/source/go",
+			baseURL: sourceCodeURL,
 		},
 	}, nil
 }
