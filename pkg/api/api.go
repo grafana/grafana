@@ -617,11 +617,6 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// short urls
 		apiRoute.Post("/short-urls", routing.Wrap(hs.createShortURL))
-
-		apiRoute.Group("/comments", func(commentRoute routing.RouteRegister) {
-			commentRoute.Post("/get", routing.Wrap(hs.commentsGet))
-			commentRoute.Post("/create", routing.Wrap(hs.commentsCreate))
-		})
 	}, reqSignedIn)
 
 	// admin api
