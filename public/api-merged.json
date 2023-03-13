@@ -5401,7 +5401,14 @@
             "default": 1,
             "description": "Page index for starting fetching folders",
             "name": "page",
-            "in": "query"                    
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "The parent folder UID",
+            "name": "parentUid",
+            "in": "query"
+          }
         ],
         "responses": {
           "200": {
