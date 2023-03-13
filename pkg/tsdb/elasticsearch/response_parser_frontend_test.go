@@ -812,7 +812,8 @@ func TestHistogramSimple(t *testing.T) {
 
 	require.Len(t, result.response.Responses, 1)
 	frames := result.response.Responses["A"].Frames
-	// require.Len(t, frames, 3) // FIXME
+	require.Len(t, frames, 1)
+	requireFrameLength(t, frames[0], 3)
 
 	fields := frames[0].Fields
 	require.Len(t, fields, 2)
@@ -822,14 +823,12 @@ func TestHistogramSimple(t *testing.T) {
 
 	require.Equal(t, "bytes", field1.Name)
 
-	// trueValue := true
-	// filterableConfig := data.FieldConfig{Filterable: &trueValue}
+	trueValue := true
+	filterableConfig := data.FieldConfig{Filterable: &trueValue}
 
 	// we need to test that the only changed setting is `filterable`
-	// require.Equal(t, filterableConfig, *field1.Config) // FIXME
-
+	require.Equal(t, filterableConfig, *field1.Config)
 	require.Equal(t, "Count", field2.Name)
-
 	// we need to test that the fieldConfig is "empty"
 	require.Nil(t, field2.Config)
 }

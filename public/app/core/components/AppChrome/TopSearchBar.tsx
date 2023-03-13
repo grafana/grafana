@@ -19,7 +19,7 @@ import { TopSearchBarSection } from './TopBar/TopSearchBarSection';
 import { TopSearchBarCommandPaletteTrigger } from './TopSearchBarCommandPaletteTrigger';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
 
-export function TopSearchBar() {
+export const TopSearchBar = React.memo(function TopSearchBar() {
   const styles = useStyles2(getStyles);
   const navIndex = useSelector((state) => state.navIndex);
   const location = useLocation();
@@ -67,7 +67,7 @@ export function TopSearchBar() {
       </TopSearchBarSection>
     </div>
   );
-}
+});
 
 const getStyles = (theme: GrafanaTheme2) => ({
   layout: css({

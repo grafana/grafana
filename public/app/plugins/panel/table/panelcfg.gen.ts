@@ -44,7 +44,7 @@ export interface PanelOptions {
 }
 
 export const defaultPanelOptions: Partial<PanelOptions> = {
-  cellHeight: ui.TableCellHeight.Md,
+  cellHeight: ui.TableCellHeight.Sm,
   footer: {
     /**
      * Controls whether the footer should be shown
