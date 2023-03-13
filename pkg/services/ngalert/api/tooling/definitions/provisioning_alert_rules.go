@@ -125,6 +125,8 @@ type ProvisionedAlertRule struct {
 	ExecErrState ExecutionErrorState `json:"execErrState"`
 	// required: true
 	For model.Duration `json:"for"`
+	// required: true
+	ForError model.Duration `json:"forError"`
 	// example: {"runbook_url": "https://supercoolrunbook.com/page/13"}
 	Annotations map[string]string `json:"annotations,omitempty"`
 	// example: {"team": "sre-team-1"}
