@@ -13,21 +13,25 @@ var (
 			Name:        "alertingBigTransactions",
 			Description: "Use big transactions for alerting database writes",
 			State:       FeatureStateAlpha,
+			Owner:       grafanaAlertingSquad,
 		},
 		{
 			Name:        "trimDefaults",
 			Description: "Use cue schema to remove values that will be applied automatically",
 			State:       FeatureStateBeta,
+			Owner:       grafanaAsCodeSquad,
 		},
 		{
 			Name:        "disableEnvelopeEncryption",
 			Description: "Disable envelope encryption (emergency only)",
 			State:       FeatureStateStable,
+			Owner:       grafanaAsCodeSquad,
 		},
 		{
 			Name:        "database_metrics",
 			Description: "Add Prometheus metrics for database tables",
 			State:       FeatureStateStable,
+			Owner:       hostedGrafanaTeam,
 		},
 		{
 			Name:        "dashboardPreviews",
@@ -83,29 +87,19 @@ var (
 			Name:        "lokiLive",
 			Description: "Support WebSocket streaming for loki (early prototype)",
 			State:       FeatureStateAlpha,
-			Owner:       grafanaAppPlatformSquad,
+			Owner:       grafanaObservabilityLogsSquad,
 		},
 		{
 			Name:        "lokiDataframeApi",
 			Description: "Use experimental loki api for WebSocket streaming (early prototype)",
 			State:       FeatureStateAlpha,
+			Owner:       grafanaObservabilityLogsSquad,
 		},
 		{
 			Name:        "featureHighlights",
 			Description: "Highlight Grafana Enterprise features",
 			State:       FeatureStateStable,
-		},
-		{
-			Name:        "dashboardComments",
-			Description: "Enable dashboard-wide comments",
-			State:       FeatureStateAlpha,
-			Owner:       grafanaAppPlatformSquad,
-		},
-		{
-			Name:        "annotationComments",
-			Description: "Enable annotation comments",
-			State:       FeatureStateAlpha,
-			Owner:       grafanaAppPlatformSquad,
+			Owner:       grafanaAsCodeSquad,
 		},
 		{
 			Name:        "migrationLocking",
@@ -138,29 +132,34 @@ var (
 			Description:  "Enable mixed datasource in Explore",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+			Owner:        grafanaExploreSquad,
 		},
 		{
 			Name:         "tracing",
 			Description:  "Adds trace ID to error notifications",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+			Owner:        grafanaUserEssentialsSquad,
 		},
 		{
 			Name:         "newTraceView",
 			Description:  "Shows the new trace view design",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
 		{
 			Name:        "correlations",
 			Description: "Correlations page",
 			State:       FeatureStateAlpha,
+			Owner:       grafanaExploreSquad,
 		},
 		{
 			Name:        "cloudWatchDynamicLabels",
 			Description: "Use dynamic labels instead of alias patterns in CloudWatch datasource",
 			State:       FeatureStateStable,
 			Expression:  "true", // enabled by default
+			Owner:       awsPluginsSquad,
 		},
 		{
 			Name:        "datasourceQueryMultiStatus",
@@ -173,6 +172,7 @@ var (
 			Description:  "Enable trace to metrics links",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
 		{
 			Name:        "newDBLibrary",
@@ -185,6 +185,7 @@ var (
 			Description:     "Validate dashboard JSON POSTed to api/dashboards/db",
 			State:           FeatureStateBeta,
 			RequiresRestart: true,
+			Owner:           grafanaAsCodeSquad,
 		},
 		{
 			Name:         "autoMigrateGraphPanels",
@@ -197,6 +198,7 @@ var (
 			Name:        "prometheusWideSeries",
 			Description: "Enable wide series responses in the Prometheus datasource",
 			State:       FeatureStateAlpha,
+			Owner:       grafanaObservabilityMetricsSquad,
 		},
 		{
 			Name:         "canvasPanelNesting",
@@ -217,16 +219,19 @@ var (
 			Description:     "Disable duplicated secret storage in legacy tables",
 			State:           FeatureStateAlpha,
 			RequiresRestart: true,
+			Owner:           hostedGrafanaTeam,
 		},
 		{
 			Name:        "logRequestsInstrumentedAsUnknown",
 			Description: "Logs the path for requests that are instrumented as unknown",
 			State:       FeatureStateAlpha,
+			Owner:       hostedGrafanaTeam,
 		},
 		{
 			Name:        "dataConnectionsConsole",
 			Description: "Enables a new top-level page called Connections. This page is an experiment that provides a better experience when you install and configure data sources and other plugins.",
 			State:       FeatureStateAlpha,
+			Owner:       grafanaPluginsPlatformSquad,
 		},
 		{
 			Name:        "internationalization",
@@ -260,24 +265,28 @@ var (
 			Description: "Enables cross-account querying in CloudWatch datasources",
 			State:       FeatureStateStable,
 			Expression:  "true", //enabled by default
+			Owner:       awsPluginsSquad,
 		},
 		{
 			Name:         "redshiftAsyncQueryDataSupport",
 			Description:  "Enable async query data support for Redshift",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+			Owner:        awsPluginsSquad,
 		},
 		{
 			Name:         "athenaAsyncQueryDataSupport",
 			Description:  "Enable async query data support for Athena",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+			Owner:        awsPluginsSquad,
 		},
 		{
 			Name:         "newPanelChromeUI",
 			Description:  "Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+			Owner:        grafanaDashboardsSquad,
 		},
 		{
 			Name:            "queryLibrary",
@@ -290,6 +299,7 @@ var (
 			Name:        "showDashboardValidationWarnings",
 			Description: "Show warnings when dashboards do not validate against the schema",
 			State:       FeatureStateAlpha,
+			Owner:       grafanaDashboardsSquad,
 		},
 		{
 			Name:        "mysqlAnsiQuotes",
@@ -320,16 +330,19 @@ var (
 			Name:        "elasticsearchBackendMigration",
 			Description: "Use Elasticsearch as backend data source",
 			State:       FeatureStateAlpha,
+			Owner:       grafanaObservabilityLogsSquad,
 		},
 		{
 			Name:        "datasourceOnboarding",
 			Description: "Enable data source onboarding page",
 			State:       FeatureStateAlpha,
+			Owner:       grafanaDashboardsSquad,
 		},
 		{
 			Name:        "secureSocksDatasourceProxy",
 			Description: "Enable secure socks tunneling for supported core datasources",
 			State:       FeatureStateAlpha,
+			Owner:       hostedGrafanaTeam,
 		},
 		{
 			Name:        "authnService",
@@ -341,11 +354,13 @@ var (
 			Name:        "disablePrometheusExemplarSampling",
 			Description: "Disable Prometheus examplar sampling",
 			State:       FeatureStateStable,
+			Owner:       grafanaObservabilityMetricsSquad,
 		},
 		{
 			Name:        "alertingBacktesting",
 			Description: "Rule backtesting API for alerting",
 			State:       FeatureStateAlpha,
+			Owner:       grafanaAlertingSquad,
 		},
 		{
 			Name:         "editPanelCSVDragAndDrop",
@@ -359,6 +374,7 @@ var (
 			Description:     "Stop maintaining state of alerts that are not firing",
 			State:           FeatureStateBeta,
 			RequiresRestart: false,
+			Owner:           grafanaAlertingSquad,
 		},
 		{
 
@@ -367,23 +383,27 @@ var (
 			State:        FeatureStateStable,
 			Expression:   "true", //turned on by default
 			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
 			Name:         "logsContextDatasourceUi",
 			Description:  "Allow datasource to provide custom UI for context view",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
 			Name:         "lokiQuerySplitting",
 			Description:  "Split large interval queries into subqueries with smaller time intervals",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+			Owner:        grafanaObservabilityLogsSquad,
 		},
 		{
 			Name:        "individualCookiePreferences",
 			Description: "Support overriding cookie preferences per user",
 			State:       FeatureStateAlpha,
+			Owner:       grafanaBackendPlatformSquad,
 		},
 		{
 			Name:         "drawerDataSourcePicker",
@@ -397,13 +417,21 @@ var (
 			Description:  "Enables the 'TraceQL Search' tab for the Tempo datasource which provides a UI to generate TraceQL queries",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+			Owner:        grafanaObservabilityTracesAndProfilingSquad,
 		},
 		{
 			Name:         "prometheusMetricEncyclopedia",
 			Description:  "Replaces the Prometheus query builder metric select option with a paginated and filterable component",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
-			Owner:        "O11y-metrics",
+			Owner:        grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:         "timeSeriesTable",
+			Description:  "Enable time series table transformer & sparkline cell type",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+			Owner:        appO11ySquad,
 		},
 	}
 )
