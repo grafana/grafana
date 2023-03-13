@@ -12,6 +12,7 @@ export type ContextMenuData = {
   e: MouseEvent;
   levelIndex: number;
   barIndex: number;
+  index: number;
 };
 
 export type Metadata = {

@@ -16,6 +16,7 @@ type Props = {
   setSelectedBarIndex: (bar: number) => void;
   setRangeMin: (range: number) => void;
   setRangeMax: (range: number) => void;
+  setSelectedLocation: (index: number) => void
 };
 
 const FlameGraphContextMenu = ({
@@ -28,10 +29,19 @@ const FlameGraphContextMenu = ({
   setSelectedBarIndex,
   setRangeMin,
   setRangeMax,
+  setSelectedLocation,
 }: Props) => {
   const renderMenuItems = () => {
     return (
       <>
+        <MenuItem
+          label="Show me code"
+          icon={'file-alt'}
+          onClick={() => {
+            setSelectedLocation(contextMenuData.index)
+            setContextMenuData(undefined);
+          }}
+        />
         <MenuItem
           label="Focus block"
           icon={'eye'}

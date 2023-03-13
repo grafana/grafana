@@ -1,13 +1,14 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { DataFrame, GrafanaTheme2, CoreApp } from '@grafana/data';
+import { DataFrame, GrafanaTheme2, CoreApp, DataSourceApi } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 import FlameGraphContainer from '../../plugins/panel/flamegraph/components/FlameGraphContainer';
 
 interface Props {
   dataFrames: DataFrame[];
+  datasource?: DataSourceApi | null;
 }
 
 export const FlameGraphExploreContainer = (props: Props) => {
@@ -15,7 +16,7 @@ export const FlameGraphExploreContainer = (props: Props) => {
 
   return (
     <div className={styles.container}>
-      <FlameGraphContainer data={props.dataFrames[0]} app={CoreApp.Explore} />
+      <FlameGraphContainer data={props.dataFrames[0]} app={CoreApp.Explore} datasource={props.datasource} />
     </div>
   );
 };
