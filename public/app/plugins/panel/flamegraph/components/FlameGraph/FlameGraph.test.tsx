@@ -48,6 +48,7 @@ describe('FlameGraph', () => {
         setRangeMax={setRangeMax}
         selectedView={selectedView}
         getLabelValue={(val) => val.toString()}
+        setSelectedLocation={() => {}}
       />
     );
   };
