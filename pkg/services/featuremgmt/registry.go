@@ -69,6 +69,7 @@ var (
 			Name:        "prometheusAzureOverrideAudience",
 			Description: "Experimental. Allow override default AAD audience for Azure Prometheus endpoint",
 			State:       FeatureStateBeta,
+			Owner:       grafanaObservabilityMetricsSquad,
 		},
 		{
 			Name:        "publicDashboards",
@@ -100,18 +101,6 @@ var (
 			Description: "Highlight Grafana Enterprise features",
 			State:       FeatureStateStable,
 			Owner:       grafanaAsCodeSquad,
-		},
-		{
-			Name:        "dashboardComments",
-			Description: "Enable dashboard-wide comments",
-			State:       FeatureStateAlpha,
-			Owner:       grafanaAppPlatformSquad,
-		},
-		{
-			Name:        "annotationComments",
-			Description: "Enable annotation comments",
-			State:       FeatureStateAlpha,
-			Owner:       grafanaAppPlatformSquad,
 		},
 		{
 			Name:        "migrationLocking",
@@ -151,6 +140,7 @@ var (
 			Description:  "Adds trace ID to error notifications",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
+			Owner:        grafanaUserEssentialsSquad,
 		},
 		{
 			Name:         "newTraceView",
@@ -436,6 +426,13 @@ var (
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityMetricsSquad,
+		},
+		{
+			Name:         "timeSeriesTable",
+			Description:  "Enable time series table transformer & sparkline cell type",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+			Owner:        appO11ySquad,
 		},
 	}
 )

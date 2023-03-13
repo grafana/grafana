@@ -56,6 +56,7 @@ export function TablePanel(props: Props) {
       footerOptions={options.footer}
       enablePagination={options.footer?.enablePagination}
       subData={subData}
+      cellHeight={options.cellHeight}
     />
   );
 
