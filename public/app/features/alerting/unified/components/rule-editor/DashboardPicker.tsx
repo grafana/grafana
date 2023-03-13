@@ -85,7 +85,7 @@ export const DashboardPicker = ({ dashboardUid, panelId, isOpen, onChange, onDis
   const selectedDashboardIsInPageResult = selectedDashboardIndex >= 0;
 
   const scrollToItem = useCallback(
-    (node) => {
+    (node: FixedSizeList) => {
       const canScroll = selectedDashboardIndex >= 0;
 
       if (isDefaultSelection && canScroll) {

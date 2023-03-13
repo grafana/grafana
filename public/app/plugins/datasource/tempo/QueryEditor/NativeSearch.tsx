@@ -93,7 +93,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
   };
 
   const handleOnChange = useCallback(
-    (value) => {
+    (value: string) => {
       onChange({
         ...query,
         search: value,

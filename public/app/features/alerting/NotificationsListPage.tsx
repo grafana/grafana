@@ -52,7 +52,7 @@ const NotificationsListPage: FC = () => {
   return (
     <Page navModel={navModel}>
       <Page.Contents>
-        {state.error && <p>{state.error}</p>}
+        {state.error && <p>{state.error.message}</p>}
         {!!notifications.length && (
           <>
             <div className="page-action-bar">

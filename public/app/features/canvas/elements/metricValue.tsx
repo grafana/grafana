@@ -47,7 +47,7 @@ const MetricValueEdit = (props: CanvasElementProps<TextConfig, TextData>) => {
   panelData = context.instanceState?.scene?.data.series;
 
   const onFieldChange = useCallback(
-    (field) => {
+    (field: string | undefined) => {
       let selectedElement: ElementState;
       selectedElement = context.instanceState?.selected[0];
       if (selectedElement) {
