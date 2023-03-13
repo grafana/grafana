@@ -49,19 +49,19 @@ You can re-encrypt secrets in order to:
 - Move already existing secrets' encryption forward from legacy to envelope encryption.
 - Re-encrypt secrets after a [data keys rotation](#rotate-data-keys).
 
-To re-encrypt secrets, use the [Grafana CLI]({{< ref "/cli/" >}}) by running the `grafana-cli admin secrets-migration re-encrypt` command or the `/encryption/reencrypt-secrets` endpoint of the Grafana [Admin API]({{< relref "../../../developers/http_api/admin/#roll-back-secrets" >}}). It's safe to run more than once, more recommended under maintenance mode.
+To re-encrypt secrets, use the [Grafana CLI]({{< relref "../../../cli/" >}}) by running the `grafana-cli admin secrets-migration re-encrypt` command or the `/encryption/reencrypt-secrets` endpoint of the Grafana [Admin API]({{< relref "../../../developers/http_api/admin/#roll-back-secrets" >}}). It's safe to run more than once, more recommended under maintenance mode.
 
 ### Roll back secrets
 
 You can roll back secrets encrypted with envelope encryption to legacy encryption. This might be necessary to downgrade to Grafana versions prior to v9.0 after an unsuccessful upgrade.
 
-To roll back secrets, use the [Grafana CLI]({{< ref "/cli/" >}}) by running the `grafana-cli admin secrets-migration rollback` command or the `/encryption/rollback-secrets` endpoint of the Grafana [Admin API]({{< relref "../../../developers/http_api/admin/#re-encrypt-secrets" >}}). It's safe to run more than once, more recommended under maintenance mode.
+To roll back secrets, use the [Grafana CLI]({{< relref "../../../cli/" >}}) by running the `grafana-cli admin secrets-migration rollback` command or the `/encryption/rollback-secrets` endpoint of the Grafana [Admin API]({{< relref "../../../developers/http_api/admin/#re-encrypt-secrets" >}}). It's safe to run more than once, more recommended under maintenance mode.
 
 ### Re-encrypt data keys
 
 You can re-encrypt data keys encrypted with a specific key encryption key (KEK). This allows you to either re-encrypt existing data keys with a new KEK version (see [KMS integration](#kms-integration) rotation) or to re-encrypt them with a completely different KEK.
 
-To re-encrypt data keys, use the [Grafana CLI]({{< ref "/cli/" >}}) by running the `grafana-cli admin secrets-migration re-encrypt-data-keys` command or the `/encryption/reencrypt-data-keys` endpoint of the Grafana [Admin API]({{< relref "../../../developers/http_api/admin/#re-encrypt-data-encryption-keys" >}}). It's safe to run more than once, more recommended under maintenance mode.
+To re-encrypt data keys, use the [Grafana CLI]({{< relref "../../../cli/" >}}) by running the `grafana-cli admin secrets-migration re-encrypt-data-keys` command or the `/encryption/reencrypt-data-keys` endpoint of the Grafana [Admin API]({{< relref "../../../developers/http_api/admin/#re-encrypt-data-encryption-keys" >}}). It's safe to run more than once, more recommended under maintenance mode.
 
 ### Rotate data keys
 

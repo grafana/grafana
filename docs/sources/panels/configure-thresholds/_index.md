@@ -25,7 +25,7 @@ Thresholds provide one method for you to conditionally style and color your visu
 You can use thresholds to:
 
 - Color grid lines or grid ares areas in the [Time-series visualization]({{< relref "../../visualizations/time-series/" >}})
-- Color lines in the [Time-series visualization]({{< relref "../../visualizations/time-series/graph-color-scheme/#from-thresholds" >}})
+- Color lines in the [Time-series visualization]({{< relref "../../visualizations/time-series#from-thresholds" >}})
 - Color the background or value text in the [Stat visualization]({{< relref "../../visualizations/stat-panel/" >}})
 - Color the gauge and threshold markers in the [Gauge visualization]({{< relref "../../visualizations/gauge-panel/" >}})
 - Color markers in the [Geomap visualization]({{< relref "../../visualizations/geomap/" >}})

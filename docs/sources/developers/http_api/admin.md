@@ -17,7 +17,7 @@ The Admin HTTP API does not currently work with an API Token. API Tokens are cur
 the permission of server admin, only users can be given that permission. So in order to use these API calls you will have to use Basic Auth and the Grafana user
 must have the Grafana Admin permission. (The default admin user is called `admin` and has permission to use this API.)
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../enterprise/access-control/custom-role-actions-scopes/" >}}) for more information.
+> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions]({{< relref "../../administration/roles-and-permissions/access-control/custom-role-actions-scopes" >}}) for more information.
 
 ## Fetch settings
 
