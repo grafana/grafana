@@ -16,6 +16,7 @@ import (
 	"go.opentelemetry.io/otel/exporters/jaeger"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	tracesdk "go.opentelemetry.io/otel/sdk/trace"
@@ -27,9 +28,10 @@ import (
 )
 
 const (
-	jaegerExporter string = "jaeger"
-	otlpExporter   string = "otlp"
-	noopExporter   string = "noop"
+	jaegerExporter   string = "jaeger"
+	otlpExporter     string = "otlp"
+	otlpHttpExporter string = "otlphttp"
+	noopExporter     string = "noop"
 
 	jaegerPropagator string = "jaeger"
 	w3cPropagator    string = "w3c"
@@ -46,6 +48,95 @@ type OpenTelemetry struct {
 	tracer         trace.Tracer
 
 	Cfg *setting.Cfg
+
+	exporters map[string]ExporterConfig
+}
+
+func NewOpenTelemetry(cfg *setting.Cfg, logger log.Logger) *OpenTelemetry {
+
+	return &OpenTelemetry{
+		log:       logger.New("tracing.opentelemetry"),
+		exporters: make(map[string]ExporterConfig),
+		Cfg:       cfg,
+	}
+}
+
+type ExporterConfig interface {
+	ToExporter() (tracesdk.SpanExporter, error)
+}
+
+type OTLPExporterConfig struct {
+	ExporterConfig
+	LegacyEndpoint string   `ini:"address"`
+	Endpoint       string   `ini:"endpoint"`
+	Propagation    []string `ini:"propagation"`
+}
+
+func (e OTLPExporterConfig) ToExporter() (tracesdk.SpanExporter, error) {
+	endpoint := e.LegacyEndpoint
+	if endpoint == "" {
+		endpoint = e.Endpoint
+	}
+
+	client := otlptracegrpc.NewClient(
+		otlptracegrpc.WithEndpoint(endpoint),
+		otlptracegrpc.WithInsecure(),
+	)
+	return otlptrace.New(context.Background(), client)
+}
+
+type OTLPHTTPExporterConfig struct {
+	ExporterConfig
+	Endpoint    string   `ini:"endpoint"`
+	Headers     []string `ini:"headers"`
+	Propagation []string `ini:"propagation"`
+	Insecure    bool     `ini:"insecure"`
+}
+
+func (e OTLPHTTPExporterConfig) ToExporter() (tracesdk.SpanExporter, error) {
+	headers := make(map[string]string)
+	for _, header := range e.Headers {
+		pair := strings.Split(header, ":")
+		headers[strings.Trim(pair[0], " ")] = strings.Trim(pair[1], " ")
+	}
+
+	path := ""
+	endpoint := e.Endpoint
+
+	// edge-case: if the endpoint contains a path, we need to split it out to accomodate the special
+	// needs of the go OTLP/HTTP exporter
+	if strings.Contains(e.Endpoint, "/") {
+		parts := strings.SplitN(e.Endpoint, "/", 2)
+		endpoint = parts[0]
+		path = fmt.Sprintf("/%s", parts[1])
+	}
+
+	options := make([]otlptracehttp.Option, 0)
+	options = append(options, otlptracehttp.WithEndpoint(endpoint))
+	options = append(options, otlptracehttp.WithHeaders(headers))
+
+	if path != "" && path != "/" {
+		path = fmt.Sprintf("%s/v1/traces", strings.TrimRight(path, "/"))
+		options = append(options, otlptracehttp.WithURLPath(path))
+	}
+
+	if e.Insecure {
+		options = append(options, otlptracehttp.WithInsecure())
+	}
+
+	client := otlptracehttp.NewClient(options...)
+
+	return otlptrace.New(context.Background(), client)
+}
+
+type JaegerExporterConfig struct {
+	ExporterConfig
+	Address     string   `ini:"address"`
+	Propagation []string `ini:"propagation"`
+}
+
+func (e JaegerExporterConfig) ToExporter() (tracesdk.SpanExporter, error) {
+	return jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(e.Address)))
 }
 
 type tracerProvider interface {
@@ -94,6 +185,18 @@ func (ots *OpenTelemetry) parseSettingsOpentelemetry() error {
 	}
 	ots.enabled = noopExporter
 
+	jaegerExporterConfig := JaegerExporterConfig{}
+	err = section.MapTo(&jaegerExporterConfig)
+	if err != nil {
+		return err
+	}
+
+	if jaegerExporterConfig.Address != "" {
+		ots.enabled = otlpExporter
+		ots.exporters[jaegerExporter] = jaegerExporterConfig
+		return nil
+	}
+
 	ots.address = section.Key("address").MustString("")
 	ots.propagation = section.Key("propagation").MustString("")
 	if ots.address != "" {
@@ -106,11 +209,34 @@ func (ots *OpenTelemetry) parseSettingsOpentelemetry() error {
 		return err
 	}
 
-	ots.address = section.Key("address").MustString("")
-	if ots.address != "" {
-		ots.enabled = otlpExporter
+	otlpExporterConfig := OTLPExporterConfig{}
+	err = section.MapTo(&otlpExporterConfig)
+	if err != nil {
+		return err
 	}
-	ots.propagation = section.Key("propagation").MustString("")
+
+	if otlpExporterConfig.Endpoint != "" {
+		ots.enabled = otlpExporter
+		ots.exporters[otlpExporter] = otlpExporterConfig
+		return nil
+	}
+
+	section, err = ots.Cfg.Raw.GetSection("tracing.opentelemetry.otlphttp")
+	if err != nil {
+		return err
+	}
+
+	otlpHttpExporterConfig := OTLPHTTPExporterConfig{}
+	err = section.MapTo(&otlpHttpExporterConfig)
+	if err != nil {
+		return err
+	}
+
+	if otlpHttpExporterConfig.Endpoint != "" {
+		ots.enabled = otlpHttpExporter
+		ots.exporters[otlpHttpExporter] = otlpHttpExporterConfig
+	}
+
 	return nil
 }
 
@@ -130,23 +256,33 @@ func splitCustomAttribs(s string) ([]attribute.KeyValue, error) {
 	return res, nil
 }
 
+// createResource creates a resource with the service name and version
+// the resource is uniform across all exporters
+func (ots *OpenTelemetry) createResource() (*resource.Resource, error) {
+
+	return resource.New(
+		context.Background(),
+		// detect additional resource attributes from OTEL_RESOURCE_ATTRIBUTES
+		resource.WithFromEnv(),
+		resource.WithAttributes(
+			semconv.ServiceNameKey.String("grafana"),
+			semconv.ServiceVersionKey.String(version.Version),
+		),
+		resource.WithAttributes(ots.customAttribs...),
+		resource.WithProcessRuntimeDescription(),
+		resource.WithTelemetrySDK(),
+	)
+}
+
 func (ots *OpenTelemetry) initJaegerTracerProvider() (*tracesdk.TracerProvider, error) {
 	// Create the Jaeger exporter
-	exp, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(ots.address)))
+
+	exp, err := ots.exporters[jaegerExporter].ToExporter()
 	if err != nil {
 		return nil, err
 	}
 
-	res, err := resource.New(
-		context.Background(),
-		resource.WithAttributes(
-			// TODO: why are these attributes different from ones added to the
-			// OTLP provider?
-			semconv.ServiceNameKey.String("grafana"),
-			attribute.String("environment", "production"),
-		),
-		resource.WithAttributes(ots.customAttribs...),
-	)
+	res, err := ots.createResource()
 	if err != nil {
 		return nil, err
 	}
@@ -160,22 +296,33 @@ func (ots *OpenTelemetry) initJaegerTracerProvider() (*tracesdk.TracerProvider, 
 }
 
 func (ots *OpenTelemetry) initOTLPTracerProvider() (*tracesdk.TracerProvider, error) {
-	client := otlptracegrpc.NewClient(otlptracegrpc.WithEndpoint(ots.address), otlptracegrpc.WithInsecure())
-	exp, err := otlptrace.New(context.Background(), client)
+	exp, err := ots.exporters[otlpExporter].ToExporter()
 	if err != nil {
 		return nil, err
 	}
 
-	res, err := resource.New(
-		context.Background(),
-		resource.WithAttributes(
-			semconv.ServiceNameKey.String("grafana"),
-			semconv.ServiceVersionKey.String(version.Version),
-		),
-		resource.WithAttributes(ots.customAttribs...),
-		resource.WithProcessRuntimeDescription(),
-		resource.WithTelemetrySDK(),
+	res, err := ots.createResource()
+	if err != nil {
+		return nil, err
+	}
+
+	tp := tracesdk.NewTracerProvider(
+		tracesdk.WithBatcher(exp),
+		tracesdk.WithSampler(tracesdk.ParentBased(
+			tracesdk.AlwaysSample(),
+		)),
+		tracesdk.WithResource(res),
 	)
+	return tp, nil
+}
+
+func (ots *OpenTelemetry) initOTLPHTTPTracerProvider() (*tracesdk.TracerProvider, error) {
+	exp, err := ots.exporters[otlpHttpExporter].ToExporter()
+	if err != nil {
+		return nil, err
+	}
+
+	res, err := ots.createResource()
 	if err != nil {
 		return nil, err
 	}
@@ -205,6 +352,11 @@ func (ots *OpenTelemetry) initOpenTelemetryTracer() error {
 		}
 	case otlpExporter:
 		tp, err = ots.initOTLPTracerProvider()
+		if err != nil {
+			return err
+		}
+	case otlpHttpExporter:
+		tp, err = ots.initOTLPHTTPTracerProvider()
 		if err != nil {
 			return err
 		}

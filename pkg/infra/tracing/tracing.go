@@ -113,10 +113,7 @@ func parseSettings(cfg *setting.Cfg) (*OpenTracing, *OpenTelemetry, error) {
 		return ts, nil, nil
 	}
 
-	ots := &OpenTelemetry{
-		Cfg: cfg,
-		log: log.New("tracing"),
-	}
+	ots := NewOpenTelemetry(cfg, log.New("tracing"))
 	err = ots.parseSettingsOpentelemetry()
 	return ts, ots, err
 }

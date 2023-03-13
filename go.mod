@@ -93,7 +93,7 @@ require (
 	github.com/prometheus/alertmanager v0.25.0
 	github.com/prometheus/client_golang v1.14.0
 	github.com/prometheus/client_model v0.3.0
-	github.com/prometheus/common v0.40.0
+	github.com/prometheus/common v0.41.0
 	github.com/prometheus/prometheus v1.8.2-0.20211011171444-354d8d2ecfac
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/russellhaering/goxmldsig v1.2.0
@@ -113,9 +113,9 @@ require (
 	golang.org/x/sync v0.1.0
 	golang.org/x/time v0.2.0
 	golang.org/x/tools v0.5.0
-	gonum.org/v1/gonum v0.11.0
+	gonum.org/v1/gonum v0.12.0
 	google.golang.org/api v0.104.0
-	google.golang.org/grpc v1.51.0
+	google.golang.org/grpc v1.53.0
 	google.golang.org/protobuf v1.28.1
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/ini.v1 v1.67.0
@@ -219,12 +219,12 @@ require (
 	go.mongodb.org/mongo-driver v1.11.1 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.uber.org/atomic v1.10.0
-	go.uber.org/goleak v1.2.0 // indirect
-	golang.org/x/sys v0.5.0 // indirect
+	go.uber.org/goleak v1.2.1 // indirect
+	golang.org/x/sys v0.6.0 // indirect
 	golang.org/x/text v0.7.0
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20221227171554-f9683d7f8bef
+	google.golang.org/genproto v0.0.0-20230110181048-76db0878b65f
 )
 
 require (
@@ -265,17 +265,18 @@ require (
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f
 	go.opentelemetry.io/collector/model v0.50.0
 	go.opentelemetry.io/collector/pdata v0.50.0
-	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.28.0
+	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.40.0
 	go.opentelemetry.io/contrib/propagators/jaeger v1.15.0
 	go.opentelemetry.io/otel/exporters/jaeger v1.14.0
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.3.0
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.3.0
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.14.0
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.14.0
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.14.0
 	go.opentelemetry.io/otel/trace v1.14.0
 )
 
 require (
-	cloud.google.com/go v0.105.0 // indirect
-	cloud.google.com/go/compute/metadata v0.2.2 // indirect
+	cloud.google.com/go v0.107.0 // indirect
+	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	github.com/Azure/azure-pipeline-go v0.2.3 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/Azure/go-ntlmssp v0.0.0-20220621081337-cb9428e4ac1e // indirect
@@ -331,8 +332,9 @@ require (
 	github.com/unknwon/com v1.0.1 // indirect
 	github.com/unknwon/log v0.0.0-20150304194804-e617c87089d3 // indirect
 	github.com/weaveworks/promrus v1.2.0 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.3.0 // indirect
-	go.opentelemetry.io/proto/otlp v0.15.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/internal/retry v1.14.0 // indirect
+	go.opentelemetry.io/otel/metric v0.37.0 // indirect
+	go.opentelemetry.io/proto/otlp v0.19.0 // indirect
 	go.starlark.net v0.0.0-20221020143700-22309ac47eac // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
@@ -344,7 +346,7 @@ require (
 )
 
 require (
-	cloud.google.com/go/compute v1.13.0 // indirect
+	cloud.google.com/go/compute v1.15.1 // indirect
 	cloud.google.com/go/iam v0.8.0 // indirect
 	filippo.io/age v1.1.1
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.2.0 // indirect
@@ -380,7 +382,7 @@ require (
 	github.com/imdario/mergo v0.3.12 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/kevinburke/ssh_config v0.0.0-20201106050909-4977a11b4351 // indirect
-	github.com/klauspost/compress v1.15.13 // indirect
+	github.com/klauspost/compress v1.16.0 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/labstack/echo/v4 v4.10.0 // indirect
 	github.com/labstack/gommon v0.4.0 // indirect
