@@ -23,6 +23,9 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
+// Registering and querying drivers in xorm is not safe for concurrent use
+var XormDriverMu sync.RWMutex
+
 // MetaKeyExecutedQueryString is the key where the executed query should get stored
 const MetaKeyExecutedQueryString = "executedQueryString"
 

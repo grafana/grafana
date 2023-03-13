@@ -9,6 +9,7 @@ import (
 
 	iproxy "github.com/grafana/grafana/pkg/infra/proxy"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/lib/pq"
 	"golang.org/x/net/proxy"
@@ -18,6 +19,9 @@ import (
 // createPostgresProxyDriver creates and registers a new sql driver that uses a postgres connector and updates the dialer to
 // route connections through the secure socks proxy
 func createPostgresProxyDriver(settings *setting.SecureSocksDSProxySettings, cnnstr string) (string, error) {
+	sqleng.XormDriverMu.Lock()
+	defer sqleng.XormDriverMu.Unlock()
+
 	// create a unique driver per connection string
 	hash, err := util.Md5SumString(cnnstr)
 	if err != nil {
@@ -86,6 +90,9 @@ func (p *postgresProxyDialer) DialTimeout(network, address string, timeout time.
 
 // Parse uses the xorm postgres dialect for the driver (this has to be implemented to register the driver with xorm)
 func (d *postgresProxyDriver) Parse(a string, b string) (*core.Uri, error) {
+	sqleng.XormDriverMu.RLock()
+	defer sqleng.XormDriverMu.RUnlock()
+
 	return core.QueryDriver("postgres").Parse(a, b)
 }
 

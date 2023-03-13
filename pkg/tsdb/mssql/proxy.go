@@ -9,6 +9,7 @@ import (
 	mssql "github.com/denisenkom/go-mssqldb"
 	iproxy "github.com/grafana/grafana/pkg/infra/proxy"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/sqleng"
 	"github.com/grafana/grafana/pkg/util"
 	"golang.org/x/net/proxy"
 	"xorm.io/core"
@@ -17,6 +18,9 @@ import (
 // createMSSQLProxyDriver creates and registers a new sql driver that uses a mssql connector and updates the dialer to
 // route connections through the secure socks proxy
 func createMSSQLProxyDriver(settings *setting.SecureSocksDSProxySettings, cnnstr string) (string, error) {
+	sqleng.XormDriverMu.Lock()
+	defer sqleng.XormDriverMu.Unlock()
+
 	// create a unique driver per connection string
 	hash, err := util.Md5SumString(cnnstr)
 	if err != nil {
@@ -70,6 +74,9 @@ func newMSSQLProxyDriver(cfg *setting.SecureSocksDSProxySettings, connector *mss
 
 // Parse uses the xorm mssql dialect for the driver (this has to be implemented to register the driver with xorm)
 func (d *mssqlProxyDriver) Parse(a string, b string) (*core.Uri, error) {
+	sqleng.XormDriverMu.RLock()
+	defer sqleng.XormDriverMu.RUnlock()
+
 	return core.QueryDriver("mssql").Parse(a, b)
 }
 

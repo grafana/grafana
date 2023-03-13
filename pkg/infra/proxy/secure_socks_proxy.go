@@ -14,7 +14,7 @@ import (
 	"golang.org/x/net/proxy"
 )
 
-// NewSecureSocksProxy takes a http.DefaultTransport and wraps it in a socks5 proxy with TLS
+// NewSecureSocksHTTPProxy takes a http.DefaultTransport and wraps it in a socks5 proxy with TLS
 func NewSecureSocksHTTPProxy(cfg *setting.SecureSocksDSProxySettings, transport *http.Transport) error {
 	dialSocksProxy, err := NewSecureSocksProxyContextDialer(cfg)
 	if err != nil {
