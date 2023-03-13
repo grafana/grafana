@@ -504,7 +504,6 @@ func (ss *SQLStore) RecursiveQueriesAreSupported() (bool, error) {
 				}
 			}
 			return false, err
-
 		}
 		return true, nil
 	}
