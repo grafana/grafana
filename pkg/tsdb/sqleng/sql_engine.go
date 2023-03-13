@@ -23,7 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
-// Registering and querying drivers in xorm is not safe for concurrent use
+// XormDriverMu is used to allow safe concurrent registering and querying of drivers in xorm
 var XormDriverMu sync.RWMutex
 
 // MetaKeyExecutedQueryString is the key where the executed query should get stored
