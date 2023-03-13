@@ -16,12 +16,14 @@ package web
 
 import (
 	"encoding/json"
+	"errors"
 	"html/template"
 	"net"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+	"syscall"
 
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/util/errutil/errhttp"
@@ -103,6 +105,9 @@ func (ctx *Context) HTML(status int, name string, data interface{}) {
 	ctx.Resp.Header().Set(headerContentType, contentTypeHTML)
 	ctx.Resp.WriteHeader(status)
 	if err := ctx.template.ExecuteTemplate(ctx.Resp, name, data); err != nil {
+		if errors.Is(err, syscall.EPIPE) { // Client has stopped listening.
+			return
+		}
 		panic("Context.HTML:" + err.Error())
 	}
 }
