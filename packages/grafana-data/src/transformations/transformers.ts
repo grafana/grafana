@@ -19,6 +19,7 @@ import { organizeFieldsTransformer } from './transformers/organize';
 import { reduceTransformer } from './transformers/reduce';
 import { renameFieldsTransformer } from './transformers/rename';
 import { renameByRegexTransformer } from './transformers/renameByRegex';
+import { rowNumberToFieldTransformer } from './transformers/rowNumberToField';
 import { seriesToRowsTransformer } from './transformers/seriesToRows';
 import { sortByTransformer } from './transformers/sortBy';
 
@@ -35,6 +36,7 @@ export const standardTransformers = {
   concatenateTransformer,
   calculateFieldTransformer,
   joinByFieldTransformer,
+  rowNumberToFieldTransformer,
   /** @deprecated */
   seriesToColumnsTransformer: joinByFieldTransformer,
   seriesToRowsTransformer,

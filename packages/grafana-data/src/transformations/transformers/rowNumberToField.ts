@@ -10,13 +10,10 @@ export interface RowNumberToFieldTransformerOptions {}
 
 export const rowNumberToFieldTransformer: DataTransformerInfo<RowNumberToFieldTransformerOptions> = {
   id: DataTransformerID.rowNumberToField,
-  name: 'Row number to column',
-  description: 'Extract row number to column',
+  name: 'Row number to field',
+  description: 'Add the row number of the data frame as a field',
   defaultOptions: {},
 
-  /**
-   * Describe me here
-   */
   operator: (options) => (source) =>
     source.pipe(
       map((data) => {
@@ -26,21 +23,28 @@ export const rowNumberToFieldTransformer: DataTransformerInfo<RowNumberToFieldTr
 
         return data.map((frame) => ({
           ...frame,
-          fields: renumberer(frame),
+          fields: addRowNumberField(frame),
         }));
       })
     ),
 };
 
-const renumberer = (frame: DataFrame): Field[] => {
-  const rowNumbers = frame.fields[0].values.toArray().map((value, index) => index + 1);
+function addRowNumberField(frame: DataFrame): Field[] {
+  const rowNumberFieldIndex = frame.fields.findIndex((field) => field.name === 'row number');
+  const rowNumbers = frame.fields[0].values.toArray().map((_, index) => index + 1);
 
-  frame.fields.unshift({
+  const newField = {
     name: 'row number',
     type: FieldType.number,
     values: new ArrayVector(rowNumbers),
     config: {},
-  });
+  };
+
+  if (rowNumberFieldIndex > -1) {
+    frame.fields[rowNumberFieldIndex] = newField;
+  } else {
+    frame.fields.unshift(newField);
+  }
 
   return frame.fields;
-};
+}

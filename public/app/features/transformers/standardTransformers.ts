@@ -19,6 +19,7 @@ import { mergeTransformerRegistryItem } from './editors/MergeTransformerEditor';
 import { organizeFieldsTransformRegistryItem } from './editors/OrganizeFieldsTransformerEditor';
 import { reduceTransformRegistryItem } from './editors/ReduceTransformerEditor';
 import { renameByRegexTransformRegistryItem } from './editors/RenameByRegexTransformer';
+import { rowNumberToFieldTransformerRegistryItem } from './editors/RowNumberToFieldTransformerEditor';
 import { seriesToRowsTransformerRegistryItem } from './editors/SeriesToRowsTransformerEditor';
 import { sortByTransformRegistryItem } from './editors/SortByTransformerEditor';
 import { extractFieldsTransformRegistryItem } from './extractFields/ExtractFieldsTransformerEditor';
@@ -59,6 +60,7 @@ export const getStandardTransformers = (): Array<TransformerRegistryItem<any>> =
     limitTransformRegistryItem,
     joinByLabelsTransformRegistryItem,
     partitionByValuesTransformRegistryItem,
+    rowNumberToFieldTransformerRegistryItem,
     ...(config.featureToggles.timeSeriesTable ? [timeSeriesTableTransformRegistryItem] : []),
   ];
 };
