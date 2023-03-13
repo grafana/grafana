@@ -56,7 +56,6 @@ func TestAnonSessionKey(t *testing.T) {
 			assert.Equal(t, tc.expected, got)
 		})
 	}
-
 }
 
 func TestIntegrationAnonSessionService_tag(t *testing.T) {
