@@ -155,6 +155,7 @@ export interface PluginMetaInfo {
   screenshots: ScreenshotInfo[];
   updated: string;
   version: string;
+  sandboxed?: boolean;
 }
 
 export interface PluginConfigPageProps<T extends PluginMeta> {
