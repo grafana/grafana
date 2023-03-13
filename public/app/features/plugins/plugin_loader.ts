@@ -32,6 +32,7 @@ import * as ticks from 'app/core/utils/ticks';
 import { GenericDataSourcePlugin } from '../datasources/types';
 
 import builtInPlugins from './built_in_plugins';
+import { getSandboxDataSourcePlugin } from './sandbox/sandbox_datasource_plugin';
 import { locateFromCDN, translateForCDN } from './systemjsPlugins/pluginCDN';
 import { fetchCSS, locateCSS } from './systemjsPlugins/pluginCSS';
 import { locateWithCache, registerPluginInCache } from './systemjsPlugins/pluginCacheBuster';
@@ -145,14 +146,14 @@ exposeToPlugin('app/core/core', {
 });
 
 import 'vendor/flot/jquery.flot';
-import 'vendor/flot/jquery.flot.selection';
-import 'vendor/flot/jquery.flot.time';
-import 'vendor/flot/jquery.flot.stack';
-import 'vendor/flot/jquery.flot.stackpercent';
-import 'vendor/flot/jquery.flot.fillbelow';
 import 'vendor/flot/jquery.flot.crosshair';
 import 'vendor/flot/jquery.flot.dashes';
+import 'vendor/flot/jquery.flot.fillbelow';
 import 'vendor/flot/jquery.flot.gauge';
+import 'vendor/flot/jquery.flot.selection';
+import 'vendor/flot/jquery.flot.stack';
+import 'vendor/flot/jquery.flot.stackpercent';
+import 'vendor/flot/jquery.flot.time';
 
 const flotDeps = [
   'jquery.flot',
@@ -189,6 +190,11 @@ export async function importPluginModule(path: string, version?: string): Promis
 }
 
 export function importDataSourcePlugin(meta: grafanaData.DataSourcePluginMeta): Promise<GenericDataSourcePlugin> {
+  if (meta.info.sandboxed) {
+    // Sandbox plugins are not loaded via SystemJS
+    return getSandboxDataSourcePlugin(meta);
+  }
+
   return importPluginModule(meta.module, meta.info?.version).then((pluginExports) => {
     if (pluginExports.plugin) {
       const dsPlugin = pluginExports.plugin as GenericDataSourcePlugin;
