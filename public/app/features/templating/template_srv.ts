@@ -377,22 +377,22 @@ export class TemplateSrv implements BaseTemplateSrv {
     return values;
   }
 
-  /* 
-    The replace function, for every match, will return a function that has the full match as a param
-    followed by one param per capture group of the variable regex.
-
-    See the definition of this.regex for further comments on the variable definitions.
-  */
+  /**
+   * The replace function, for every match, will return a function that has the full match as a param
+   * followed by one param per capture group of the variable regex.
+   *
+   * See the definition of this.regex for further comments on the variable definitions.
+   */
   private replaceInVariableRegex(
     text: string,
     replace: (
-      fullMatch: string, // $simpleVarName   [[squareVarName:squareFormat]]   ${curlyVarName.curlyPath:curlyFormat}
+      fullMatch: string, //     $simpleVarName   [[squareVarName:squareFormat]]   ${curlyVarName.curlyPath:curlyFormat}
       simpleVarName: string, // simpleVarName                  -                                     -
-      squareVarName: string, //  -                       squareVarName                               -
-      squareFormat: string, //  -                       squareFormat                                -
-      curlyVarName: string, //  -                             -                               curlyVarName
-      curlyPath: string, //  -                             -                                 curlyPath
-      curlyFormat: string //  -                             -                                 curlyFormat
+      squareVarName: string, //        -                squareVarName                                -
+      squareFormat: string, //         -                squareFormat                                 -
+      curlyVarName: string, //         -                      -                                curlyVarName
+      curlyPath: string, //            -                      -                                  curlyPath
+      curlyFormat: string //           -                      -                                 curlyFormat
     ) => string
   ) {
     return text.replace(this.regex, replace);
