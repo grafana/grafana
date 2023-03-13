@@ -129,7 +129,7 @@ Under the hood, the new theme architecture enables us to bring more sophisticate
 
 When you inspect a panel, you can now download log results as a text (.txt) file.
 
-[Download log results]({{< relref "../panels/working-with-panels/download-log-results.md" >}}) was added as a result of this feature.
+[Download query results]({{< relref "../panels/working-with-panels/download-query-results.md" >}}) was added as a result of this feature.
 
 ### Inspector in Explore
 
