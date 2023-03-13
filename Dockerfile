@@ -35,7 +35,7 @@ FROM ${GO_IMAGE} as go-builder
 
 # Install build dependencies
 RUN if grep -i -q alpine /etc/issue; then \
-      apk add --no-cache gcc g++ make; \
+      apk add --no-cache gcc g++ make binutils-gold; \
     fi
 
 WORKDIR /tmp/grafana
