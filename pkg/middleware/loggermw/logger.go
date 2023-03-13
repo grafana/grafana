@@ -139,13 +139,13 @@ func errorLogParams(err error) []any {
 
 	var gfErr errutil.Error
 	if !errors.As(err, &gfErr) {
-		return []any{"err", err.Error()}
+		return []any{"error", err.Error()}
 	}
 
 	return []any{
-		"errReason", gfErr.Reason,
-		"errMessageID", gfErr.MessageID,
-		"err", gfErr.LogMessage,
+		"errorReason", gfErr.Reason,
+		"errorMessageID", gfErr.MessageID,
+		"error", gfErr.LogMessage,
 	}
 }
 

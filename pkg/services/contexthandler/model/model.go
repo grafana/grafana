@@ -141,10 +141,9 @@ func (ctx *ReqContext) writeErrOrFallback(status int, message string, err error)
 
 		if errutil.HasUnifiedLogging(ctx.Req.Context()) {
 			ctx.Error = err
-			logger = log.NewNopLogger().Info
+		} else {
+			logger(logMessage, "error", err, "remote_addr", ctx.RemoteAddr(), "traceID", traceID)
 		}
-
-		logger(logMessage, "error", err, "remote_addr", ctx.RemoteAddr(), "traceID", traceID)
 	}
 
 	if _, ok := data["message"]; !ok && message != "" {
