@@ -22,6 +22,7 @@ export const getFieldValidationMessageStyles = stylesFactory((theme: GrafanaThem
       border-radius: ${theme.shape.borderRadius()};
       position: relative;
       display: inline-block;
+      align-self: flex-start;
 
       a {
         color: ${theme.colors.error.contrastText};
