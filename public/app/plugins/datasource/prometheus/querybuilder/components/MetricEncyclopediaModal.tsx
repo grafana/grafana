@@ -240,50 +240,35 @@ export const MetricEncyclopediaModal = (props: Props) => {
   function filterMetrics(metrics: MetricsData, skipLetterSearch?: boolean): MetricsData {
     let filteredMetrics: MetricsData = metrics;
 
-    if (fuzzySearchQuery || excludeNullMetadata || (letterSearch && !skipLetterSearch) || selectedTypes.length > 0) {
+    if (fuzzySearchQuery) {
       filteredMetrics = filteredMetrics.filter((m: MetricData, idx) => {
-        let keepMetric = false;
-        // keepMetric should progessively filter
-        // if it is true in fuzzy search then we can check the others
-        // come up with a set of rules for progression of filtering
-
-        // search by text
-        if (fuzzySearchQuery) {
-          if (useBackend) {
-            // skip for backend!
-            keepMetric = true;
-          } else if (fullMetaSearch) {
-            keepMetric = fuzzyMetaSearchResults.includes(idx);
-          } else {
-            keepMetric = fuzzyNameSearchResults.includes(idx);
-          }
+        if (useBackend) {
+          // skip for backend!
+          return true;
+        } else if (fullMetaSearch) {
+          return fuzzyMetaSearchResults.includes(idx);
+        } else {
+          return fuzzyNameSearchResults.includes(idx);
         }
+      });
+    }
 
-        // user clicks the alphabet search
-        // backend and frontend
-        // skipLetterSearch is purely for setting letter spans as active so they can be clicked
-        // where we don't filter out by letter search and keep letters of all other filters
-        if ((keepMetric || !fuzzySearchQuery) && letterSearch && !skipLetterSearch) {
-          const letters: string[] = [letterSearch, letterSearch.toLowerCase()];
-          keepMetric = letters.includes(m.value[0]);
-        }
+    if (letterSearch && !skipLetterSearch) {
+      filteredMetrics = filteredMetrics.filter((m: MetricData, idx) => {
+        const letters: string[] = [letterSearch, letterSearch.toLowerCase()];
+        return letters.includes(m.value[0]);
+      });
+    }
 
-        // select by type, counter, gauge, etc
-        // skip for backend because no metadata is returned
-        if (keepMetric && selectedTypes.length > 0 && !useBackend) {
-          // return the metric that matches the type
-          // return the metric if it has no type AND we are NOT excluding metrics without metadata
+    if (selectedTypes.length > 0 && !useBackend) {
+      filteredMetrics = filteredMetrics.filter((m: MetricData, idx) => {
+        // Matches type
+        const matchesSelectedType = selectedTypes.some((t) => t.value === m.type);
 
-          // Matches type
-          const matchesSelectedType = selectedTypes.some((t) => t.value === m.type);
+        // missing type
+        const hasNoType = !m.type;
 
-          // missing type
-          const hasNoType = !m.type;
-
-          return matchesSelectedType || (hasNoType && !excludeNullMetadata);
-        }
-
-        return keepMetric;
+        return matchesSelectedType || (hasNoType && !excludeNullMetadata);
       });
     }
 
