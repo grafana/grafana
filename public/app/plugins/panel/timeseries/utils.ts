@@ -30,7 +30,7 @@ export function prepareGraphableFields(
     return null;
   }
 
-  // some datasources, like Elastic simply tag the field as time, but dont convert to milli epochs
+  // some datasources simply tag the field as time, but don't convert to milli epochs
   // so we're stuck with doing the parsing here to avoid Moment slowness everywhere later
   // this mutates (once)
   for (let frame of series) {
