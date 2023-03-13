@@ -4679,7 +4679,7 @@ volumes:
   name: docker
 ---
 clone:
-  retries: 3
+  disable: true
 depends_on: []
 environment:
   EDITION: enterprise
@@ -6552,6 +6552,6 @@ kind: secret
 name: enterprise2_security_prefix
 ---
 kind: signature
-hmac: aeb60fb4807df0f275d5a54e21154337acd8157bde0c31203e17bd878b327718
+hmac: 404ecabc22e8ef4d37079f952c798c0a4e539efa69ed77db6a03ccd3900ac5f2
 
 ...
