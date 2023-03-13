@@ -10,9 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
-	"github.com/grafana/grafana/pkg/services/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
@@ -63,11 +62,6 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			continue
 		}
 
-		hideFromList := panel.HideFromList
-		if panel.ID == "flamegraph" {
-			hideFromList = !hs.Features.IsEnabled(featuremgmt.FlagFlameGraph)
-		}
-
 		panels[panel.ID] = plugins.PanelDTO{
 			ID:            panel.ID,
 			Name:          panel.Name,
@@ -75,7 +69,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 			Module:        panel.Module,
 			BaseURL:       panel.BaseURL,
 			SkipDataQuery: panel.SkipDataQuery,
-			HideFromList:  hideFromList,
+			HideFromList:  panel.HideFromList,
 			ReleaseState:  string(panel.State),
 			Signature:     string(panel.Signature),
 			Sort:          getPanelSort(panel.ID),
@@ -180,6 +174,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		},
 
 		FeatureToggles:                   hs.Features.GetEnabled(c.Req.Context()),
+		AnonymousEnabled:                 hs.Cfg.AnonymousEnabled,
 		RendererAvailable:                hs.RenderService.IsAvailable(c.Req.Context()),
 		RendererVersion:                  hs.RenderService.Version(),
 		SecretsManagerPluginEnabled:      secretsManagerPluginEnabled,
@@ -405,7 +400,6 @@ func newAppDTO(plugin plugins.PluginDTO, settings pluginsettings.InfoDTO) *plugi
 	}
 
 	if settings.Enabled {
-		app.Extensions = plugin.Extensions
 		app.Preload = plugin.Preload
 	}
 

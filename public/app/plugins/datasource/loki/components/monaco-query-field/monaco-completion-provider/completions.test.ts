@@ -206,7 +206,7 @@ describe('getCompletions', () => {
     const situation = { type } as Situation;
     const completions = await getCompletions(situation, completionProvider);
 
-    expect(completions).toHaveLength(24);
+    expect(completions).toHaveLength(25);
   });
 
   test('Returns completion options when the situation is IN_RANGE', async () => {

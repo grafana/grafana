@@ -24,6 +24,7 @@
     "@sentry/utils",
 
     // dep updates blocked by React 18
+    "@testing-library/dom",
     "@testing-library/react",
     "@types/react",
     "@types/react-dom",
@@ -82,7 +83,15 @@
       "matchPackagePrefixes": [
         "@visx/"
       ]
-    }
+    },
+    {
+      "groupName": "uLibraries",
+      "matchPackageNames": [
+        "@leeoniya/ufuzzy",
+        "uplot"
+      ],
+      "reviewers": ["leeoniya"],
+    },
   ],
   "pin": {
     "enabled": false

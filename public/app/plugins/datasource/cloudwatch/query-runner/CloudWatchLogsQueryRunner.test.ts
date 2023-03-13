@@ -195,7 +195,7 @@ describe('CloudWatchLogsQueryRunner', () => {
 
   const legacyLogGroupNamesQuery: CloudWatchLogsQuery = {
     queryMode: 'Logs',
-    logGroupNames: ['group-A', 'templatedGroup-1', logGroupNamesVariable.name],
+    logGroupNames: ['group-A', 'templatedGroup-1', `$${logGroupNamesVariable.name}`],
     hide: false,
     id: '',
     region: 'us-east-2',
@@ -207,13 +207,23 @@ describe('CloudWatchLogsQueryRunner', () => {
     queryMode: 'Logs',
     logGroups: [
       { arn: 'arn:aws:logs:us-east-2:123456789012:log-group:group-A:*', name: 'group-A' },
-      { arn: logGroupNamesVariable.name, name: logGroupNamesVariable.name },
+      { arn: `$${logGroupNamesVariable.name}`, name: logGroupNamesVariable.name },
     ],
     hide: false,
     id: '',
     region: '$' + regionVariable.name,
     refId: 'A',
     expression: `fields @timestamp, @message | sort @timestamp desc | limit 1`,
+  };
+
+  const logsScopedVarQuery: CloudWatchLogsQuery = {
+    queryMode: 'Logs',
+    logGroups: [{ arn: `$${logGroupNamesVariable.name}`, name: logGroupNamesVariable.name }],
+    hide: false,
+    id: '',
+    region: '$' + regionVariable.name,
+    refId: 'A',
+    expression: `stats count(*) by queryType, bin($__interval)`,
   };
 
   describe('handleLogQueries', () => {
@@ -227,9 +237,12 @@ describe('CloudWatchLogsQueryRunner', () => {
             logsTimeout: '500ms',
           },
         },
+        mockGetVariableName: false,
       });
       const spy = jest.spyOn(runner, 'makeLogActionRequest');
-      await lastValueFrom(runner.handleLogQueries([legacyLogGroupNamesQuery, logGroupNamesQuery], LogsRequestMock));
+      await lastValueFrom(
+        runner.handleLogQueries([legacyLogGroupNamesQuery, logGroupNamesQuery, logsScopedVarQuery], LogsRequestMock)
+      );
       const startQueryRequests: StartQueryRequest[] = [
         {
           queryString: `fields @timestamp, @message | sort @timestamp desc | limit ${limitVariable.current.value}`,
@@ -248,6 +261,13 @@ describe('CloudWatchLogsQueryRunner', () => {
             },
             ...(logGroupNamesVariable.current.value as string[]).map((v) => ({ arn: v, name: v })),
           ],
+          refId: legacyLogGroupNamesQuery.refId,
+          region: regionVariable.current.value as string,
+        },
+        {
+          queryString: `stats count(*) by queryType, bin(20s)`,
+          logGroupNames: [],
+          logGroups: [...(logGroupNamesVariable.current.value as string[]).map((v) => ({ arn: v, name: v }))],
           refId: legacyLogGroupNamesQuery.refId,
           region: regionVariable.current.value as string,
         },

@@ -211,7 +211,7 @@
     "bargaugepanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/dataviz-squad"
+        "grafana/grafana-bi-squad"
       ],
       "currentVersion": [
         0,
@@ -296,7 +296,7 @@
         0
       ],
       "description": "A Grafana dashboard.",
-      "grafanaMaturityCount": 139,
+      "grafanaMaturityCount": 140,
       "lineageIsGroup": false,
       "links": {
         "docs": "https://grafana.com/docs/grafana/next/developers/kinds/core/dashboard/schema-reference",
@@ -525,7 +525,7 @@
     "gaugepanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/dataviz-squad"
+        "grafana/grafana-bi-squad"
       ],
       "currentVersion": [
         0,
@@ -744,6 +744,30 @@
       "name": "GraphOldPanelCfg",
       "pluralMachineName": "grapholdpanelcfgs",
       "pluralName": "GraphOldPanelCfgs",
+      "schemaInterface": "PanelCfg"
+    },
+    "heatmappanelcfg": {
+      "category": "composable",
+      "codeowners": [
+        "grafana/dataviz-squad"
+      ],
+      "currentVersion": [
+        0,
+        0
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": true,
+      "links": {
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/heatmappanelcfg/schema-reference",
+        "go": "n/a",
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/heatmap/panelcfg.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/heatmap/panelcfg.gen.ts"
+      },
+      "machineName": "heatmappanelcfg",
+      "maturity": "merged",
+      "name": "HeatmapPanelCfg",
+      "pluralMachineName": "heatmappanelcfgs",
+      "pluralName": "HeatmapPanelCfgs",
       "schemaInterface": "PanelCfg"
     },
     "histogrampanelcfg": {
@@ -1191,7 +1215,7 @@
     "piechartpanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/dataviz-squad"
+        "grafana/grafana-bi-squad"
       ],
       "currentVersion": [
         0,
@@ -1322,7 +1346,9 @@
     },
     "prometheusdataquery": {
       "category": "composable",
-      "codeowners": [],
+      "codeowners": [
+        "grafana/observability-metrics"
+      ],
       "currentVersion": [
         0,
         0
@@ -1330,13 +1356,13 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
-        "docs": "n/a",
-        "go": "n/a",
-        "schema": "n/a",
-        "ts": "n/a"
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/prometheusdataquery/schema-reference",
+        "go": "https://github.com/grafana/grafana/tree/main/pkg/tsdb/prometheus/kinds/dataquery/types_dataquery_gen.go",
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/prometheus/dataquery.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/prometheus/dataquery.gen.ts"
       },
       "machineName": "prometheusdataquery",
-      "maturity": "planned",
+      "maturity": "experimental",
       "name": "PrometheusDataQuery",
       "pluralMachineName": "prometheusdataquerys",
       "pluralName": "PrometheusDataQuerys",
@@ -1507,7 +1533,7 @@
     "statpanelcfg": {
       "category": "composable",
       "codeowners": [
-        "grafana/dataviz-squad"
+        "grafana/grafana-bi-squad"
       ],
       "currentVersion": [
         0,
@@ -1572,6 +1598,30 @@
       "name": "TableOldPanelCfg",
       "pluralMachineName": "tableoldpanelcfgs",
       "pluralName": "TableOldPanelCfgs",
+      "schemaInterface": "PanelCfg"
+    },
+    "tablepanelcfg": {
+      "category": "composable",
+      "codeowners": [
+        "grafana/grafana-bi-squad"
+      ],
+      "currentVersion": [
+        0,
+        0
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": true,
+      "links": {
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/tablepanelcfg/schema-reference",
+        "go": "n/a",
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/table/panelcfg.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/table/panelcfg.gen.ts"
+      },
+      "machineName": "tablepanelcfg",
+      "maturity": "experimental",
+      "name": "TablePanelCfg",
+      "pluralMachineName": "tablepanelcfgs",
+      "pluralName": "TablePanelCfgs",
       "schemaInterface": "PanelCfg"
     },
     "team": {
@@ -1920,6 +1970,7 @@
           "graphitedataquery",
           "graphitedatasourcecfg",
           "grapholdpanelcfg",
+          "heatmappanelcfg",
           "histogrampanelcfg",
           "iconpanelcfg",
           "jaegerdataquery",
@@ -1947,6 +1998,7 @@
           "statpanelcfg",
           "statushistorypanelcfg",
           "tableoldpanelcfg",
+          "tablepanelcfg",
           "tempodataquery",
           "tempodatasourcecfg",
           "testdatadataquery",
@@ -1958,7 +2010,7 @@
           "zipkindataquery",
           "zipkindatasourcecfg"
         ],
-        "count": 65
+        "count": 67
       },
       "core": {
         "name": "core",
@@ -2003,15 +2055,17 @@
           "parcadataquery",
           "phlaredataquery",
           "piechartpanelcfg",
+          "prometheusdataquery",
           "statetimelinepanelcfg",
           "statpanelcfg",
           "statushistorypanelcfg",
+          "tablepanelcfg",
           "tempodataquery",
           "testdatadataquery",
           "textpanelcfg",
           "xychartpanelcfg"
         ],
-        "count": 25
+        "count": 27
       },
       "mature": {
         "name": "mature",
@@ -2024,13 +2078,14 @@
           "alertgroupspanelcfg",
           "azuremonitordataquery",
           "cloudwatchdataquery",
+          "heatmappanelcfg",
           "playlist",
           "preferences",
           "publicdashboard",
           "serviceaccount",
           "team"
         ],
-        "count": 8
+        "count": 9
       },
       "planned": {
         "name": "planned",
@@ -2068,7 +2123,6 @@
           "phlaredatasourcecfg",
           "postgresqldataquery",
           "postgresqldatasourcecfg",
-          "prometheusdataquery",
           "prometheusdatasourcecfg",
           "query",
           "queryhistory",
@@ -2082,7 +2136,7 @@
           "zipkindataquery",
           "zipkindatasourcecfg"
         ],
-        "count": 46
+        "count": 45
       },
       "stable": {
         "name": "stable",
