@@ -65,12 +65,11 @@ func (s *service) GetRestConfig() *rest.Config {
 }
 
 func (s *service) start(ctx context.Context) error {
-	apiEnablement, sharedInformers, etcdOptions, apiServerConfig, err := s.apiserverConfig()
+	apiConfig, err := s.apiserverConfig()
 	if err != nil {
 		return fmt.Errorf("failed to create apiserver config: %w", err)
 	}
-	s.restConfig = apiServerConfig.LoopbackClientConfig
-	extensionsServerConfig, err := s.extensionsServerConfig(sharedInformers, apiEnablement, etcdOptions, apiServerConfig)
+	extensionsServerConfig, err := s.extensionsServerConfig(*apiConfig)
 	if err != nil {
 		return fmt.Errorf("failed to create extensions server config: %w", err)
 	}
@@ -83,12 +82,22 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	apiServer, err := apiServerConfig.Complete(sharedInformers).New("grafana", extensionServer.GenericAPIServer)
+	apiServer, err := createAPIServer(apiConfig.ControlPlaneConfig, extensionServer.GenericAPIServer)
+
+	aggregatorConfig, err := createAggregatorConfig(*apiConfig)
 	if err != nil {
 		return err
 	}
 
-	prepared := apiServer.PrepareRun()
+	aggregatorServer, err := createAggregatorServer(aggregatorConfig, apiServer.GenericAPIServer, extensionServer.Informers)
+	if err != nil {
+		return err
+	}
+
+	prepared, err := aggregatorServer.PrepareRun()
+	if err != nil {
+		return err
+	}
 
 	l, err := net.Listen("tcp", "127.0.0.1:6443")
 	if err != nil {
@@ -97,15 +106,19 @@ func (s *service) start(ctx context.Context) error {
 
 	stoppedCh, _, err := genericapiserver.RunServer(&http.Server{
 		Addr:           "127.0.0.1:6443",
-		Handler:        prepared.Handler,
+		Handler:        prepared.GenericAPIServer.Handler,
 		MaxHeaderBytes: 1 << 20,
-	}, l, prepared.ShutdownTimeout, s.stopCh)
+	}, l, prepared.GenericAPIServer.ShutdownTimeout, s.stopCh)
 	if err != nil {
 		return err
 	}
 	s.stoppedCh = stoppedCh
-	fmt.Printf("API server listening at: %v", apiServerConfig.LoopbackClientConfig)
-	s.restConfig = apiServerConfig.LoopbackClientConfig
+	s.restConfig = apiConfig.Config.LoopbackClientConfig
+	if err := prepared.Run(s.stopCh); err != nil {
+		return err
+	}
+
+	fmt.Printf("K8s API server is running %v", s.restConfig)
 
 	return nil
 }

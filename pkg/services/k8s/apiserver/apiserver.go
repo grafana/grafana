@@ -3,14 +3,18 @@ package apiserver
 import (
 	"crypto/tls"
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 
 	extensionsapiserver "k8s.io/apiextensions-apiserver/pkg/apiserver"
 	utilnet "k8s.io/apimachinery/pkg/util/net"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apiserver/pkg/admission"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
+	"k8s.io/apiserver/pkg/endpoints/discovery"
 	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/egressselector"
@@ -27,6 +31,7 @@ import (
 	aggregatorapiserver "k8s.io/kube-aggregator/pkg/apiserver"
 	"k8s.io/kubernetes/pkg/api/legacyscheme"
 	"k8s.io/kubernetes/pkg/controlplane"
+	"k8s.io/kubernetes/pkg/controlplane/controller/clusterauthenticationtrust"
 	generatedopenapi "k8s.io/kubernetes/pkg/generated/openapi"
 	"k8s.io/kubernetes/pkg/kubeapiserver"
 	kubeapiserveradmission "k8s.io/kubernetes/pkg/kubeapiserver/admission"
@@ -35,8 +40,25 @@ import (
 	rbacrest "k8s.io/kubernetes/pkg/registry/rbac/rest"
 )
 
-func (s *service) apiserverConfig() (*options.APIEnablementOptions, clientgoinformers.SharedInformerFactory, *options.EtcdOptions, *genericapiserver.Config, error) {
+type apiServerConfig struct {
+	ServerRunOptions      *options.ServerRunOptions
+	AdmissionOptions      *kubeoptions.AdmissionOptions
+	AuthorizationOptions  *kubeoptions.BuiltInAuthorizationOptions
+	AuthenticationOptions *kubeoptions.BuiltInAuthenticationOptions
+	EtcdOptions           *options.EtcdOptions
+	APIEnablement         *options.APIEnablementOptions
+	Config                *genericapiserver.Config
+	ControlPlaneConfig    *controlplane.Config
+	ServiceResolver       webhook.ServiceResolver
+	ProxyTransport        *http.Transport
+	SharedInformers       clientgoinformers.SharedInformerFactory
+	PluginInitializers    []admission.PluginInitializer
+}
+
+func (s *service) apiserverConfig() (*apiServerConfig, error) {
 	serverRunOptions := options.NewServerRunOptions()
+	serverRunOptions.AdvertiseAddress = net.ParseIP("127.0.0.1")
+
 	admissionOptions := kubeoptions.NewAdmissionOptions()
 	authentication := kubeoptions.NewBuiltInAuthenticationOptions().WithAll()
 	authorization := kubeoptions.NewBuiltInAuthorizationOptions()
@@ -56,10 +78,10 @@ func (s *service) apiserverConfig() (*options.APIEnablementOptions, clientgoinfo
 		Host: "http://127.0.0.1:6443",
 	}
 	if err := serverRunOptions.ApplyTo(serverConfig); err != nil {
-		return nil, nil, nil, nil, err
+		return nil, err
 	}
 	if err := apiEnablement.ApplyTo(serverConfig, controlplane.DefaultAPIResourceConfigSource(), legacyscheme.Scheme); err != nil {
-		return nil, nil, nil, nil, err
+		return nil, err
 	}
 	// wrap the definitions to revert any changes from disabled features
 	getOpenAPIDefinitions := openapi.GetOpenAPIDefinitionsWithoutDisabledFeatures(generatedopenapi.GetOpenAPIDefinitions)
@@ -68,16 +90,16 @@ func (s *service) apiserverConfig() (*options.APIEnablementOptions, clientgoinfo
 	serverConfig.OpenAPIV3Config = genericapiserver.DefaultOpenAPIV3Config(getOpenAPIDefinitions, openapinamer.NewDefinitionNamer(legacyscheme.Scheme, extensionsapiserver.Scheme))
 	serverConfig.OpenAPIV3Config.Info.Title = "Kubernetes"
 	if err := etcdOptions.Complete(serverConfig.StorageObjectCountTracker, serverConfig.DrainedNotify(), serverConfig.AddPostStartHook); err != nil {
-		return nil, nil, nil, nil, err
+		return nil, err
 	}
 	storageFactoryConfig := kubeapiserver.NewStorageFactoryConfig()
 	storageFactoryConfig.APIResourceConfig = serverConfig.MergedResourceConfig
 	storageFactory, err := storageFactoryConfig.Complete(etcdOptions).New()
 	if err != nil {
-		return nil, nil, nil, nil, err
+		return nil, err
 	}
 	if err = etcdOptions.ApplyWithStorageFactoryTo(storageFactory, serverConfig); err != nil {
-		return nil, nil, nil, nil, err
+		return nil, err
 	}
 
 	serverConfig.LoopbackClientConfig.ContentConfig.ContentType = "application/vnd.kubernetes.protobuf"
@@ -86,19 +108,19 @@ func (s *service) apiserverConfig() (*options.APIEnablementOptions, clientgoinfo
 	kubeClientConfig := serverConfig.LoopbackClientConfig
 	clientgoExternalClient, err := clientgoclientset.NewForConfig(kubeClientConfig)
 	if err != nil {
-		return nil, nil, nil, nil, fmt.Errorf("failed to create clientset: %v", err)
+		return nil, fmt.Errorf("failed to create clientset: %v", err)
 	}
 
 	versionedInformers := clientgoinformers.NewSharedInformerFactory(clientgoExternalClient, 10*time.Minute)
 
 	// Authentication.ApplyTo requires already applied OpenAPIConfig and EgressSelector if present
 	if err = authentication.ApplyTo(&serverConfig.Authentication, serverConfig.SecureServing, serverConfig.EgressSelector, serverConfig.OpenAPIConfig, serverConfig.OpenAPIV3Config, clientgoExternalClient, versionedInformers); err != nil {
-		return nil, nil, nil, nil, err
+		return nil, err
 	}
 
-	serverConfig.Authorization.Authorizer, serverConfig.RuleResolver, err = BuildAuthorizer(authorization, serverConfig.EgressSelector, versionedInformers)
+	serverConfig.Authorization.Authorizer, serverConfig.RuleResolver, err = buildAuthorizer(authorization, serverConfig.EgressSelector, versionedInformers)
 	if err != nil {
-		return nil, nil, nil, nil, err
+		return nil, err
 	}
 	if !sets.NewString(authorization.Modes...).Has(modes.ModeRBAC) {
 		serverConfig.DisabledPostStartHooks.Insert(rbacrest.PostStartHookName)
@@ -113,7 +135,7 @@ func (s *service) apiserverConfig() (*options.APIEnablementOptions, clientgoinfo
 	serviceResolver := buildServiceResolver(false, serverConfig.LoopbackClientConfig.Host, versionedInformers)
 	pluginInitializers, admissionPostStartHook, err := admissionConfig.New(proxyTransport, serverConfig.EgressSelector, serviceResolver, serverConfig.TracerProvider)
 	if err != nil {
-		return nil, nil, nil, nil, err
+		return nil, err
 	}
 
 	err = admissionOptions.ApplyTo(
@@ -123,18 +145,58 @@ func (s *service) apiserverConfig() (*options.APIEnablementOptions, clientgoinfo
 		utilfeature.DefaultFeatureGate,
 		pluginInitializers...)
 	if err != nil {
-		return nil, nil, nil, nil, err
+		return nil, err
 	}
 
 	if err := serverConfig.AddPostStartHook("start-kube-apiserver-admission-initializer", admissionPostStartHook); err != nil {
-		return nil, nil, nil, nil, err
+		return nil, err
 	}
 	serverConfig.ExternalAddress = "127.0.0.1:6443"
 
 	if err := s.writeKubeConfiguration(serverConfig.LoopbackClientConfig); err != nil {
-		return nil, nil, nil, nil, err
+		return nil, err
 	}
-	return apiEnablement, versionedInformers, etcdOptions, serverConfig, nil
+
+	controlPlaneConfig := &controlplane.Config{
+		GenericConfig: serverConfig,
+		ExtraConfig: controlplane.ExtraConfig{
+			ClusterAuthenticationInfo: clusterauthenticationtrust.ClusterAuthenticationInfo{},
+			APIResourceConfigSource:   serverConfig.MergedResourceConfig,
+			StorageFactory:            storageFactory,
+			ProxyTransport:            proxyTransport,
+			APIServerServiceIP:        net.ParseIP("127.0.0.1:6443"),
+			APIServerServicePort:      6443,
+			MasterCount:               1,
+			VersionedInformers:        versionedInformers,
+		},
+	}
+
+	controlPlaneConfig.ExtraConfig.ServiceIPRange = net.IPNet{IP: serverConfig.PublicAddress, Mask: net.CIDRMask(24, 24)}
+	controlPlaneConfig.ExtraConfig.ServiceNodePortRange = *utilnet.ParsePortRangeOrDie("6443-6443")
+	controlPlaneConfig.ExtraConfig.APIServerServiceIP = serverConfig.PublicAddress
+	controlPlaneConfig.ExtraConfig.APIServerServicePort = 6443
+
+	discoveryAddresses := discovery.DefaultAddresses{DefaultAddress: controlPlaneConfig.GenericConfig.ExternalAddress}
+	discoveryAddresses.CIDRRules = append(discoveryAddresses.CIDRRules,
+		discovery.CIDRRule{IPRange: controlPlaneConfig.ExtraConfig.ServiceIPRange, Address: net.JoinHostPort(controlPlaneConfig.ExtraConfig.APIServerServiceIP.String(), strconv.Itoa(controlPlaneConfig.ExtraConfig.APIServerServicePort))})
+	controlPlaneConfig.GenericConfig.DiscoveryAddresses = discoveryAddresses
+
+	//authentication.ApplyAuthorization(authorization)
+
+	return &apiServerConfig{
+		ServerRunOptions:      serverRunOptions,
+		AdmissionOptions:      admissionOptions,
+		AuthorizationOptions:  authorization,
+		AuthenticationOptions: authentication,
+		EtcdOptions:           etcdOptions,
+		APIEnablement:         apiEnablement,
+		Config:                serverConfig,
+		ControlPlaneConfig:    controlPlaneConfig,
+		ServiceResolver:       serviceResolver,
+		ProxyTransport:        proxyTransport,
+		SharedInformers:       versionedInformers,
+		PluginInitializers:    pluginInitializers,
+	}, err
 }
 
 func (s *service) writeKubeConfiguration(restConfig *rest.Config) error {
@@ -165,8 +227,16 @@ func (s *service) writeKubeConfiguration(restConfig *rest.Config) error {
 	return clientcmd.WriteToFile(clientConfig, "data/grafana.kubeconfig")
 }
 
-// BuildAuthorizer constructs the authorizer
-func BuildAuthorizer(authorization *kubeoptions.BuiltInAuthorizationOptions, EgressSelector *egressselector.EgressSelector, versionedInformers clientgoinformers.SharedInformerFactory) (authorizer.Authorizer, authorizer.RuleResolver, error) {
+func createAPIServer(kubeAPIServerConfig *controlplane.Config, delegateAPIServer genericapiserver.DelegationTarget) (*controlplane.Instance, error) {
+	apiServer, err := kubeAPIServerConfig.Complete().New(delegateAPIServer)
+	if err != nil {
+		return nil, err
+	}
+
+	return apiServer, nil
+}
+
+func buildAuthorizer(authorization *kubeoptions.BuiltInAuthorizationOptions, EgressSelector *egressselector.EgressSelector, versionedInformers clientgoinformers.SharedInformerFactory) (authorizer.Authorizer, authorizer.RuleResolver, error) {
 	authorizationConfig := authorization.ToAuthorizationConfig(versionedInformers)
 
 	if EgressSelector != nil {

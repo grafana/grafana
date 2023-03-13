@@ -76,7 +76,7 @@ func ProvideService(
 		KubernetesCRDs:      {KubernetesClientset},
 		KubernetesInformers: {KubernetesCRDs},
 		Kubernetes:          {KubernetesInformers},
-		All:                 {Kubernetes},
+		All:                 {KubernetesAPIServer},
 	}
 
 	return &service{
