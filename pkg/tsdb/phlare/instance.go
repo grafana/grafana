@@ -26,7 +26,8 @@ var (
 
 // PhlareDatasource is a datasource for querying application performance profiles.
 type PhlareDatasource struct {
-	client querierv1connect.QuerierServiceClient
+	client           querierv1connect.QuerierServiceClient
+	sourceCodeClient *sourceCodeClient
 }
 
 // NewPhlareDatasource creates a new datasource instance.
@@ -40,8 +41,17 @@ func NewPhlareDatasource(httpClientProvider httpclient.Provider, settings backen
 		return nil, err
 	}
 
+	sourceHTTPClient, err := httpClientProvider.New()
+	if err != nil {
+		return nil, err
+	}
+
 	return &PhlareDatasource{
 		client: querierv1connect.NewQuerierServiceClient(httpClient, settings.URL),
+		sourceCodeClient: &sourceCodeClient{
+			client:  sourceHTTPClient,
+			baseURL: "https://go-source.swine.dev/source/go",
+		},
 	}, nil
 }
 
@@ -55,6 +65,9 @@ func (d *PhlareDatasource) CallResource(ctx context.Context, req *backend.CallRe
 	}
 	if req.Path == "series" {
 		return d.callSeries(ctx, req, sender)
+	}
+	if req.Path == "sourceCode" {
+		return d.callSourceCode(ctx, req, sender)
 	}
 	return sender.Send(&backend.CallResourceResponse{
 		Status: 404,
@@ -125,6 +138,31 @@ func (d *PhlareDatasource) callLabelNames(ctx context.Context, req *backend.Call
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func (d *PhlareDatasource) callSourceCode(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	parsedUrl, err := url.Parse(req.URL)
+	if err != nil {
+		return err
+	}
+
+	data, err := d.sourceCodeClient.GetSourceCode(ctx, parsedUrl.Query())
+	if err != nil {
+		return err
+	}
+
+	// TODO: Pass on errors in a nicer way
+	err = sender.Send(&backend.CallResourceResponse{
+		Body:    data,
+		Headers: url.Values{"Content-Type": []string{"text/plain"}},
+		Status:  200,
+	},
+	)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
