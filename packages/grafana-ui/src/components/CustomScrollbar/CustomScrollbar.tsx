@@ -49,7 +49,7 @@ export const CustomScrollbar = ({
   onScroll,
   children,
 }: React.PropsWithChildren<Props>) => {
-  const ref = useRef<Scrollbars & { view: HTMLDivElement }>(null);
+  const ref = useRef<Scrollbars & { view: HTMLDivElement; update: () => void }>(null);
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
@@ -73,7 +73,7 @@ export const CustomScrollbar = ({
       return;
     }
     setTimeout(() => {
-      const scrollbar = ref.current as any;
+      const scrollbar = ref.current;
       if (scrollbar?.update) {
         scrollbar.update();
       }

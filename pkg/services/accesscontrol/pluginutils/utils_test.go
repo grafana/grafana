@@ -3,9 +3,10 @@ package pluginutils
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/stretchr/testify/require"
 )
 
 func TestToRegistrations(t *testing.T) {
@@ -122,11 +123,22 @@ func TestValidatePluginRole(t *testing.T) {
 			role: ac.RoleDTO{
 				Name: "plugins:test-app:reader",
 				Permissions: []ac.Permission{
-					{Action: "plugins.app:access"},
+					{Action: "plugins.app:access", Scope: "plugins:id:test-app"},
 					{Action: "test-app:read"},
 					{Action: "test-app.resources:read"},
 				},
 			},
+		},
+		{
+			name:     "invalid permission targets other plugin",
+			pluginID: "test-app",
+			role: ac.RoleDTO{
+				Name: "plugins:test-app:reader",
+				Permissions: []ac.Permission{
+					{Action: "plugins.app:access", Scope: "plugins:id:other-app"},
+				},
+			},
+			wantErr: &ac.ErrorInvalidRole{},
 		},
 	}
 	for _, tt := range tests {

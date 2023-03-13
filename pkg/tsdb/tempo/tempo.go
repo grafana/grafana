@@ -7,6 +7,8 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
@@ -34,10 +36,6 @@ type datasourceInfo struct {
 	URL        string
 }
 
-type QueryModel struct {
-	TraceID string `json:"query"`
-}
-
 func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.InstanceFactoryFunc {
 	return func(settings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 		opts, err := settings.HTTPClientOptions()
@@ -63,7 +61,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	queryRes := backend.DataResponse{}
 	refID := req.Queries[0].RefID
 
-	model := &QueryModel{}
+	model := &dataquery.TempoQuery{}
 	err := json.Unmarshal(req.Queries[0].JSON, model)
 	if err != nil {
 		return result, err
@@ -74,7 +72,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return nil, err
 	}
 
-	request, err := s.createRequest(ctx, dsInfo, model.TraceID, req.Queries[0].TimeRange.From.Unix(), req.Queries[0].TimeRange.To.Unix())
+	request, err := s.createRequest(ctx, dsInfo, model.Query, req.Queries[0].TimeRange.From.Unix(), req.Queries[0].TimeRange.To.Unix())
 	if err != nil {
 		return result, err
 	}
@@ -96,7 +94,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		queryRes.Error = fmt.Errorf("failed to get trace with id: %s Status: %s Body: %s", model.TraceID, resp.Status, string(body))
+		queryRes.Error = fmt.Errorf("failed to get trace with id: %s Status: %s Body: %s", model.Query, resp.Status, string(body))
 		result.Responses[refID] = queryRes
 		return result, nil
 	}
@@ -109,7 +107,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 	frame, err := TraceToFrame(otTrace)
 	if err != nil {
-		return &backend.QueryDataResponse{}, fmt.Errorf("failed to transform trace %v to data frame: %w", model.TraceID, err)
+		return &backend.QueryDataResponse{}, fmt.Errorf("failed to transform trace %v to data frame: %w", model.Query, err)
 	}
 	frame.RefID = refID
 	frames := []*data.Frame{frame}

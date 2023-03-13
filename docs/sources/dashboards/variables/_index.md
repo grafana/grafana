@@ -1,8 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/variables/
-  - /docs/grafana/latest/variables/variable-examples/
-  - docs/grafana/latest/dashboards/variables/
+  - ../variables/
+  - ../variables/variable-examples/
+  - ./
 title: Variables
 weight: 130
 ---
@@ -47,7 +47,7 @@ Variables can be used in titles, descriptions, text panels, and queries. Queries
 
 The following dashboards in Grafana Play provide examples of template variables.
 
-- [Elasticsearch Metrics](https://play.grafana.org/d/000000014/elasticsearch-metrics?orgId=1) - Uses ad hoc filters, global variables, and a custom variable.
+- [Elasticsearch Metrics](https://play.grafana.org/d/z8OZC66nk/elasticsearch-8-2-0-sample-flight-data?orgId=1) - Uses ad hoc filters, global variables, and a custom variable.
 - [Graphite Templated Nested](https://play.grafana.org/d/000000056/graphite-templated-nested?orgId=1) - Uses query variables, chained query variables, an interval variable, and a repeated panel.
 - [Influx DB Group By Variable](https://play.grafana.org/d/000000137/influxdb-group-by-variable?orgId=1) - Query variable, panel uses the variable results to group the metric data.
 - [InfluxDB Raw Query Template Var](https://play.grafana.org/d/000000083/influxdb-raw-query-template-var?orgId=1) - Uses query variables, chained query variables, and an interval variable.

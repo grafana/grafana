@@ -2,13 +2,13 @@ package codegen
 
 import (
 	"bytes"
-	"go/format"
 	"go/parser"
 	"go/token"
 	"testing"
 
+	"github.com/dave/dst/decorator"
+	"github.com/dave/dst/dstutil"
 	"github.com/matryer/is"
-	"golang.org/x/tools/go/ast/astutil"
 )
 
 func TestPrefixDropper(t *testing.T) {
@@ -276,15 +276,15 @@ type Thing struct {
 			}
 			is := is.New(t)
 			fset := token.NewFileSet()
-			inf, err := parser.ParseFile(fset, "input.go", item.in, parser.ParseComments)
+			inf, err := decorator.ParseFile(fset, "input.go", item.in, parser.ParseComments)
 			if err != nil {
 				t.Fatal(err)
 			}
 
 			drop := PrefixDropper("Foo")
-			astutil.Apply(inf, drop, nil)
+			dstutil.Apply(inf, drop, nil)
 			buf := new(bytes.Buffer)
-			err = format.Node(buf, fset, inf)
+			err = decorator.Fprint(buf, inf)
 			if err != nil {
 				t.Fatal(err)
 			}

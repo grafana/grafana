@@ -5,10 +5,11 @@ import { EditorField, EditorRow, EditorSwitch } from '@grafana/experimental';
 import { AutoSizeInput, RadioButtonGroup, Select } from '@grafana/ui';
 
 import { getQueryTypeChangeHandler, getQueryTypeOptions } from '../../components/PromExploreExtraField';
-import { FORMAT_OPTIONS, INTERVAL_FACTOR_OPTIONS } from '../../components/PromQueryEditor';
+import { PromQueryFormat } from '../../dataquery.gen';
 import { PromQuery } from '../../types';
 import { QueryOptionGroup } from '../shared/QueryOptionGroup';
 
+import { FORMAT_OPTIONS, INTERVAL_FACTOR_OPTIONS } from './PromQueryEditorSelector';
 import { getLegendModeLabel, PromQueryLegendEditor } from './PromQueryLegendEditor';
 
 export interface UIOptions {
@@ -28,7 +29,7 @@ export interface Props {
 }
 
 export const PromQueryBuilderOptions = React.memo<Props>(({ query, app, onChange, onRunQuery }) => {
-  const onChangeFormat = (value: SelectableValue<string>) => {
+  const onChangeFormat = (value: SelectableValue<PromQueryFormat>) => {
     onChange({ ...query, format: value.value });
     onRunQuery();
   };

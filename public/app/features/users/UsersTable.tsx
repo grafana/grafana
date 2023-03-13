@@ -1,9 +1,10 @@
-import React, { FC, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { OrgRole } from '@grafana/data';
 import { Button, ConfirmModal } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
+import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { contextSrv } from 'app/core/core';
 import { AccessControlAction, OrgUser, Role } from 'app/types';
 
@@ -16,8 +17,7 @@ export interface Props {
   onRemoveUser: (user: OrgUser) => void;
 }
 
-const UsersTable: FC<Props> = (props) => {
-  const { users, orgId, onRoleChange, onRemoveUser } = props;
+export const UsersTable = ({ users, orgId, onRoleChange, onRemoveUser }: Props) => {
   const [userToRemove, setUserToRemove] = useState<OrgUser | null>(null);
   const [roleOptions, setRoleOptions] = useState<Role[]>([]);
 
@@ -49,6 +49,7 @@ const UsersTable: FC<Props> = (props) => {
             <th>Seen</th>
             <th>Role</th>
             <th style={{ width: '34px' }} />
+            <th></th>
             <th></th>
           </tr>
         </thead>
@@ -101,6 +102,12 @@ const UsersTable: FC<Props> = (props) => {
                   {user.isDisabled && <span className="label label-tag label-tag--gray">Disabled</span>}
                 </td>
 
+                <td className="width-1">
+                  {Array.isArray(user.authLabels) && user.authLabels.length > 0 && (
+                    <TagBadge label={user.authLabels[0]} removeIcon={false} count={0} />
+                  )}
+                </td>
+
                 {contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersRemove, user) && (
                   <td className="text-right">
                     <Button
@@ -140,5 +147,3 @@ const UsersTable: FC<Props> = (props) => {
     </>
   );
 };
-
-export default UsersTable;

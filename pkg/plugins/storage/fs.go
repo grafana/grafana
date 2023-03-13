@@ -14,7 +14,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/grafana/grafana/pkg/plugins/logger"
+	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
 var _ Manager = (*FS)(nil)
@@ -30,10 +30,10 @@ type FS struct {
 	store      map[string]string
 	mu         sync.RWMutex
 	pluginsDir string
-	log        logger.Logger
+	log        log.PrettyLogger
 }
 
-func FileSystem(logger logger.Logger, pluginsDir string) *FS {
+func FileSystem(logger log.PrettyLogger, pluginsDir string) *FS {
 	return &FS{
 		store:      make(map[string]string),
 		pluginsDir: pluginsDir,
@@ -55,7 +55,7 @@ func (fs *FS) Add(ctx context.Context, pluginID string, pluginArchive *zip.ReadC
 
 	fs.log.Successf("Downloaded and extracted %s v%s zip successfully to %s", res.ID, res.Info.Version, pluginDir)
 
-	var deps []*Dependency
+	deps := make([]*Dependency, 0, len(res.Dependencies.Plugins))
 	for _, plugin := range res.Dependencies.Plugins {
 		deps = append(deps, &Dependency{
 			ID:      plugin.ID,
@@ -220,7 +220,7 @@ func isSymlinkRelativeTo(basePath string, symlinkDestPath string, symlinkOrigPat
 func extractFile(file *zip.File, filePath string) (err error) {
 	fileMode := file.Mode()
 	// This is entry point for backend plugins so we want to make them executable
-	if strings.HasSuffix(filePath, "_linux_amd64") || strings.HasSuffix(filePath, "_darwin_amd64") {
+	if strings.HasSuffix(filePath, "_linux_amd64") || strings.HasSuffix(filePath, "_linux_arm") || strings.HasSuffix(filePath, "_linux_arm64") || strings.HasSuffix(filePath, "_darwin_amd64") || strings.HasSuffix(filePath, "_darwin_arm64") || strings.HasSuffix(filePath, "_windows_amd64.exe") {
 		fileMode = os.FileMode(0755)
 	}
 

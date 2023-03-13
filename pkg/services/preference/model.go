@@ -7,9 +7,16 @@ import (
 	"errors"
 	"fmt"
 	"time"
+
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var ErrPrefNotFound = errors.New("preference not found")
+var ErrUnknownCookieType = errutil.NewBase(
+	errutil.StatusBadRequest,
+	"preferences.unknownCookieType",
+	errutil.WithPublicMessage("Got an unknown cookie preference type. Expected a set containing one or more of 'functional', 'performance', or 'analytics'}"),
+)
 
 type Preference struct {
 	ID              int64               `xorm:"pk autoincr 'id'" db:"id"`
@@ -20,11 +27,20 @@ type Preference struct {
 	Version         int                 `db:"version"`
 	HomeDashboardID int64               `xorm:"home_dashboard_id" db:"home_dashboard_id"`
 	Timezone        string              `db:"timezone"`
-	WeekStart       string              `db:"week_start"`
+	WeekStart       *string             `db:"week_start"`
 	Theme           string              `db:"theme"`
 	Created         time.Time           `db:"created"`
 	Updated         time.Time           `db:"updated"`
 	JSONData        *PreferenceJSONData `xorm:"json_data" db:"json_data"`
+}
+
+func (p Preference) Cookies(typ string) bool {
+	if p.JSONData == nil || p.JSONData.CookiePreferences == nil {
+		return false
+	}
+
+	_, ok := p.JSONData.CookiePreferences[typ]
+	return ok
 }
 
 type GetPreferenceWithDefaultsQuery struct {
@@ -44,14 +60,14 @@ type SavePreferenceCommand struct {
 	OrgID  int64
 	TeamID int64
 
-	HomeDashboardID  int64                   `json:"homeDashboardId,omitempty"`
-	HomeDashboardUID *string                 `json:"homeDashboardUID,omitempty"`
-	Timezone         string                  `json:"timezone,omitempty"`
-	WeekStart        string                  `json:"weekStart,omitempty"`
-	Theme            string                  `json:"theme,omitempty"`
-	Locale           string                  `json:"locale,omitempty"`
-	Navbar           *NavbarPreference       `json:"navbar,omitempty"`
-	QueryHistory     *QueryHistoryPreference `json:"queryHistory,omitempty"`
+	HomeDashboardID   int64                   `json:"homeDashboardId,omitempty"`
+	HomeDashboardUID  *string                 `json:"homeDashboardUID,omitempty"`
+	Timezone          string                  `json:"timezone,omitempty"`
+	WeekStart         string                  `json:"weekStart,omitempty"`
+	Theme             string                  `json:"theme,omitempty"`
+	Language          string                  `json:"language,omitempty"`
+	QueryHistory      *QueryHistoryPreference `json:"queryHistory,omitempty"`
+	CookiePreferences []CookieType            `json:"cookiePreferences,omitempty"`
 }
 
 type PatchPreferenceCommand struct {
@@ -59,31 +75,20 @@ type PatchPreferenceCommand struct {
 	OrgID  int64
 	TeamID int64
 
-	HomeDashboardID  *int64                  `json:"homeDashboardId,omitempty"`
-	HomeDashboardUID *string                 `json:"homeDashboardUID,omitempty"`
-	Timezone         *string                 `json:"timezone,omitempty"`
-	WeekStart        *string                 `json:"weekStart,omitempty"`
-	Theme            *string                 `json:"theme,omitempty"`
-	Locale           *string                 `json:"locale,omitempty"`
-	Navbar           *NavbarPreference       `json:"navbar,omitempty"`
-	QueryHistory     *QueryHistoryPreference `json:"queryHistory,omitempty"`
-}
-
-type NavLink struct {
-	ID     string `json:"id,omitempty"`
-	Text   string `json:"text,omitempty"`
-	Url    string `json:"url,omitempty"`
-	Target string `json:"target,omitempty"`
-}
-
-type NavbarPreference struct {
-	SavedItems []NavLink `json:"savedItems"`
+	HomeDashboardID   *int64                  `json:"homeDashboardId,omitempty"`
+	HomeDashboardUID  *string                 `json:"homeDashboardUID,omitempty"`
+	Timezone          *string                 `json:"timezone,omitempty"`
+	WeekStart         *string                 `json:"weekStart,omitempty"`
+	Theme             *string                 `json:"theme,omitempty"`
+	Language          *string                 `json:"language,omitempty"`
+	QueryHistory      *QueryHistoryPreference `json:"queryHistory,omitempty"`
+	CookiePreferences []CookieType            `json:"cookiePreferences,omitempty"`
 }
 
 type PreferenceJSONData struct {
-	Locale       string                 `json:"locale"`
-	Navbar       NavbarPreference       `json:"navbar"`
-	QueryHistory QueryHistoryPreference `json:"queryHistory"`
+	Language          string                 `json:"language"`
+	QueryHistory      QueryHistoryPreference `json:"queryHistory"`
+	CookiePreferences map[string]struct{}    `json:"cookiePreferences"`
 }
 
 type QueryHistoryPreference struct {
@@ -126,3 +131,7 @@ func (j *PreferenceJSONData) ToDB() ([]byte, error) {
 }
 
 func (p Preference) TableName() string { return "preferences" }
+
+// swagger:model
+// Enum: analytics,performance,functional
+type CookieType string

@@ -1,20 +1,18 @@
 ---
 aliases:
-  - /docs/grafana/latest/administration/reports/
-  - /docs/grafana/latest/enterprise/reporting/
-  - /docs/grafana/latest/administration/reports/
-  - /docs/grafana/latest/dashboards/reporting/
-  - /docs/grafana/latest/enterprise/export-pdf/
-  - /docs/grafana/latest/panels/create-reports
-  - /docs/grafana/latest/dashboards/create-reports
-title: Create and manage reports
-menuTitle: Reporting
-weight: 85
+  - ../administration/reports/
+  - ../enterprise/export-pdf/
+  - ../enterprise/reporting/
+  - ../panels/create-reports/
+  - reporting/
 keywords:
   - grafana
   - reporting
   - export
   - pdf
+menuTitle: Reporting
+title: Create and manage reports
+weight: 85
 ---
 
 # Create and manage reports
@@ -69,12 +67,6 @@ Only organization administrators can create reports by default. You can customiz
    - **Include a dashboard link:** Include a link to the dashboard from within the report email.
    - **Send test email:** To verify that the configuration works as expected. You can choose to send this email to the recipients configured for the report, or to a different set of email addresses only used for testing.
 1. Preview and save the report.
-
-{{< figure src="/static/img/docs/enterprise/reports/select-dashboard.png" max-width="500px" class="docs-image--no-shadow" >}}
-{{< figure src="/static/img/docs/enterprise/reports/format-report.png" max-width="500px" class="docs-image--no-shadow" >}}
-{{< figure src="/static/img/docs/enterprise/reports/schedule.png" max-width="500px" class="docs-image--no-shadow" >}}
-{{< figure src="/static/img/docs/enterprise/reports/share.png" max-width="500px" class="docs-image--no-shadow" >}}
-{{< figure src="/static/img/docs/enterprise/reports/confirm.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ### Choose template variables
 
@@ -142,8 +134,6 @@ A background job runs every 10 minutes and removes temporary CSV files. You can 
 
 Scheduled reports can be sent once, or repeated on an hourly, daily, weekly, or monthly basis, or sent at custom intervals. You can also disable scheduling by selecting **Never**, for example to send the report via the API.
 
-{{< figure src="/static/img/docs/enterprise/reports_scheduler_8.1.png" max-width="500px" class="docs-image--no-shadow" >}}
-
 **Send now or schedule for later**
 
 - **Send now** sends the report immediately after you save it. To stop sending the report at some point in the future, add an end date. If you leave the end date empty, the report is sent out indefinitely.
@@ -169,8 +159,6 @@ When you schedule a report with a monthly frequency, and set the start date betw
 
 The last saved version of the report will be sent to selected emails. You can use this to verify emails are working and to make sure the report is generated and displayed as you expect.
 
-{{< figure src="/static/img/docs/enterprise/reports_send_test_mail.png" max-width="500px" class="docs-image--no-shadow" >}}
-
 ### Pause a report
 
 > **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 8.0 and later, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
@@ -193,7 +181,7 @@ You can send a report email with an image of the dashboard embedded in the email
 
 You can generate and save PDF files of any dashboard.
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../introduction/grafana-enterprise/" >}}) version 6.7 and later, and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud/).
 
 1. In the upper-right corner of the dashboard that you want to export as PDF, click the **Share dashboard** icon.
 1. On the PDF tab, select a layout option for the exported dashboard: **Portrait** or **Landscape**.
@@ -248,16 +236,16 @@ You can customize the branding options.
 
 Report branding:
 
-- **Company logo URL:** Company logo displayed in the report PDF. Defaults to the Grafana logo.
+- **Company logo:** Company logo displayed in the report PDF. It can be configured by specifying a URL, or by uploading a file. Defaults to the Grafana logo.
 
 Email branding:
 
-- **Company logo URL:** Company logo displayed in the report PDF. Defaults to the Grafana logo.
+- **Company logo:** Company logo displayed in the report email. It can be configured by specifying a URL, or by uploading a file. Defaults to the Grafana logo.
 - **Email footer:** Toggle to enable the report email footer. Select **Sent by** or **None**.
 - **Footer link text:** Text of the link in the report email footer. Defaults to `Grafana`.
 - **Footer link URL:** Link of the report email footer.
 
-{{< figure src="/static/img/docs/enterprise/reports_settings.png" max-width="500px" class="docs-image--no-shadow" >}}
+> Note: Currently, the API does not allow for the simultaneous upload of files with identical names for both the email logo and report logo. You can still upload the same file for each logo separately in two distinct steps.
 
 ## Troubleshoot reporting
 

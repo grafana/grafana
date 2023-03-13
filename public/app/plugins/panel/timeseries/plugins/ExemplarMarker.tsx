@@ -22,6 +22,7 @@ interface ExemplarMarkerProps {
   dataFrameFieldIndex: DataFrameFieldIndex;
   config: UPlotConfigBuilder;
   getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
+  exemplarColor?: string;
 }
 
 export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
@@ -30,29 +31,59 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
   dataFrameFieldIndex,
   config,
   getFieldLinks,
+  exemplarColor,
 }) => {
   const styles = useStyles2(getExemplarMarkerStyles);
   const [isOpen, setIsOpen] = useState(false);
   const [markerElement, setMarkerElement] = React.useState<HTMLDivElement | null>(null);
   const [popperElement, setPopperElement] = React.useState<HTMLDivElement | null>(null);
-  const { styles: popperStyles, attributes } = usePopper(markerElement, popperElement);
+  const { styles: popperStyles, attributes } = usePopper(markerElement, popperElement, {
+    modifiers: [
+      {
+        name: 'preventOverflow',
+        options: {
+          altAxis: true,
+        },
+      },
+      {
+        name: 'flip',
+        options: {
+          fallbackPlacements: ['top', 'left-start'],
+        },
+      },
+    ],
+  });
   const popoverRenderTimeout = useRef<NodeJS.Timer>();
 
   const getSymbol = () => {
     const symbols = [
-      <rect key="diamond" x="3.38672" width="4.78985" height="4.78985" transform="rotate(45 3.38672 0)" />,
+      <rect
+        fill={exemplarColor}
+        key="diamond"
+        x="3.38672"
+        width="4.78985"
+        height="4.78985"
+        transform="rotate(45 3.38672 0)"
+      />,
       <path
+        fill={exemplarColor}
         key="x"
         d="M1.94444 3.49988L0 5.44432L1.55552 6.99984L3.49996 5.05539L5.4444 6.99983L6.99992 5.44431L5.05548 3.49988L6.99983 1.55552L5.44431 0L3.49996 1.94436L1.5556 0L8.42584e-05 1.55552L1.94444 3.49988Z"
       />,
-      <path key="triangle" d="M4 0L7.4641 6H0.535898L4 0Z" />,
-      <rect key="rectangle" width="5" height="5" />,
-      <path key="pentagon" d="M3 0.5L5.85317 2.57295L4.76336 5.92705H1.23664L0.146831 2.57295L3 0.5Z" />,
+      <path fill={exemplarColor} key="triangle" d="M4 0L7.4641 6H0.535898L4 0Z" />,
+      <rect fill={exemplarColor} key="rectangle" width="5" height="5" />,
       <path
+        fill={exemplarColor}
+        key="pentagon"
+        d="M3 0.5L5.85317 2.57295L4.76336 5.92705H1.23664L0.146831 2.57295L3 0.5Z"
+      />,
+      <path
+        fill={exemplarColor}
         key="plus"
         d="m2.35672,4.2425l0,2.357l1.88558,0l0,-2.357l2.3572,0l0,-1.88558l-2.3572,0l0,-2.35692l-1.88558,0l0,2.35692l-2.35672,0l0,1.88558l2.35672,0z"
       />,
     ];
+
     return symbols[dataFrameFieldIndex.frameIndex % symbols.length];
   };
 
@@ -70,6 +101,10 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
   }, [setIsOpen]);
 
   const renderMarker = useCallback(() => {
+    // Put the traceID field in front.
+    const traceIDField = dataFrame.fields.find((field) => field.name === 'traceID') || dataFrame.fields[0];
+    const orderedDataFrameFields = [traceIDField, ...dataFrame.fields.filter((field) => traceIDField !== field)];
+
     const timeFormatter = (value: number) => {
       return dateTimeFormat(value, {
         format: systemDateFormats.fullDate,
@@ -94,7 +129,7 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({
             <div>
               <table className={styles.exemplarsTable}>
                 <tbody>
-                  {dataFrame.fields.map((field, i) => {
+                  {orderedDataFrameFields.map((field, i) => {
                     const value = field.values.get(dataFrameFieldIndex.fieldIndex);
                     const links = field.config.links?.length
                       ? getFieldLinks(field, dataFrameFieldIndex.fieldIndex)
@@ -228,6 +263,8 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme2) => {
     tooltip: css`
       background: none;
       padding: 0;
+      overflow-y: auto;
+      max-height: 95vh;
     `,
     header: css`
       background: ${headerBg};

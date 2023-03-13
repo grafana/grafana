@@ -1,6 +1,7 @@
 import { thunkTester } from 'test/core/thunk/thunkTester';
 
-import { setBackendSrv } from '@grafana/runtime';
+import { DataSourceInstanceSettings } from '@grafana/data';
+import { BackendSrv, setBackendSrv } from '@grafana/runtime';
 
 import { validateDashboardJson } from '../utils/validation';
 
@@ -20,11 +21,11 @@ describe('importDashboard', () => {
           uid: 'ds-uid',
           name: 'ds-name',
           type: 'prometheus',
-        } as any,
+        } as DataSourceInstanceSettings,
       ],
       elements: [],
       folder: {
-        id: 1,
+        uid: '5v6e5VH4z',
         title: 'title',
       },
     };
@@ -32,13 +33,13 @@ describe('importDashboard', () => {
     let postArgs: any;
 
     setBackendSrv({
-      post: (url: string, args: any) => {
+      post: (url, args) => {
         postArgs = args;
         return Promise.resolve({
           importedUrl: '/my/dashboard',
         });
       },
-    } as any);
+    } as BackendSrv);
 
     await thunkTester({
       importDashboard: {
@@ -64,7 +65,7 @@ describe('importDashboard', () => {
         title: 'Asda',
         uid: '12',
       },
-      folderId: 1,
+      folderUid: '5v6e5VH4z',
       inputs: [
         {
           name: 'ds-name',

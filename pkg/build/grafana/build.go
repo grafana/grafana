@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/build/golangutils"
 )
 
-var binaries = []string{"grafana-server", "grafana-cli"}
+var binaries = []string{"grafana", "grafana-server", "grafana-cli"}
 
 const (
 	SuffixEnterprise2 = "-enterprise2"
@@ -99,7 +99,7 @@ func BuildGrafanaBinary(ctx context.Context, name, version string, args BuildArg
 
 	descriptor := GrafanaDescriptor(opts)
 
-	log.Printf("Building %q for %s\nwith env: %v", binary, descriptor, opts.Env())
+	log.Printf("Building %q for %s", binary, descriptor)
 
 	opts.LdFlags = append(args.LdFlags, GrafanaLDFlags(version, revision)...)
 

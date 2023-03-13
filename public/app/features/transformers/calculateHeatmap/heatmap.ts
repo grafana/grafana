@@ -16,9 +16,13 @@ import {
   durationToMilliseconds,
   parseDuration,
 } from '@grafana/data';
-import { ScaleDistribution } from '@grafana/schema';
+import {
+  ScaleDistribution,
+  HeatmapCellLayout,
+  HeatmapCalculationMode,
+  HeatmapCalculationOptions,
+} from '@grafana/schema';
 
-import { HeatmapCellLayout, HeatmapCalculationMode, HeatmapCalculationOptions } from './models.gen';
 import { niceLinearIncrs, niceTimeIncrs } from './utils';
 
 export interface HeatmapTransformerOptions extends HeatmapCalculationOptions {
@@ -32,7 +36,8 @@ export const heatmapTransformer: SynchronousDataTransformerInfo<HeatmapTransform
   description: 'calculate heatmap from source data',
   defaultOptions: {},
 
-  operator: (options) => (source) => source.pipe(map((data) => heatmapTransformer.transformer(options)(data))),
+  operator: (options, ctx) => (source) =>
+    source.pipe(map((data) => heatmapTransformer.transformer(options, ctx)(data))),
 
   transformer: (options: HeatmapTransformerOptions) => {
     return (data: DataFrame[]) => {
@@ -173,6 +178,14 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
     });
   }
 
+  const valueCfg = {
+    ...yFields[0].config,
+  };
+
+  if (valueCfg.displayNameFromDS) {
+    delete valueCfg.displayNameFromDS;
+  }
+
   return {
     length: xs.length,
     refId: opts.frame.refId,
@@ -182,7 +195,7 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
     },
     fields: [
       {
-        name: 'xMax',
+        name: xField.type === FieldType.time ? 'xMax' : 'x',
         type: xField.type,
         values: new ArrayVector(xs),
         config: xField.config,
@@ -199,7 +212,7 @@ export function rowsToCellsHeatmap(opts: RowsHeatmapOptions): DataFrame {
         name: opts.value?.length ? opts.value : 'Value',
         type: FieldType.number,
         values: new ArrayVector(counts2),
-        config: yFields[0].config,
+        config: valueCfg,
         display: yFields[0].display,
       },
     ],

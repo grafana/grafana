@@ -8,17 +8,18 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/org"
-
+	"github.com/go-jose/go-jose/v3/jwt"
 	"golang.org/x/oauth2"
-	"gopkg.in/square/go-jose.v2/jwt"
+
+	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/services/org"
 )
 
 type SocialAzureAD struct {
 	*SocialBase
 	allowedGroups    []string
 	forceUseGraphAPI bool
+	skipOrgRoleSync  bool
 }
 
 type azureClaims struct {
@@ -46,10 +47,6 @@ type azureAccessClaims struct {
 	TenantID string `json:"tid"`
 }
 
-func (s *SocialAzureAD) Type() int {
-	return int(models.AZUREAD)
-}
-
 func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
 	idToken := token.Extra("id_token")
 	if idToken == nil {
@@ -75,18 +72,21 @@ func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*Bas
 		return nil, ErrEmailNotFound
 	}
 
-	role, grafanaAdmin := s.extractRoleAndAdmin(&claims)
+	// setting the role, grafanaAdmin to empty to reflect that we are not syncronizing with the external provider
+	var role roletype.RoleType
+	var grafanaAdmin bool
+	if !s.skipOrgRoleSync {
+		role, grafanaAdmin = s.extractRoleAndAdmin(&claims)
+	}
 	if s.roleAttributeStrict && !role.IsValid() {
 		return nil, &InvalidBasicRoleError{idP: "Azure", assignedRole: string(role)}
 	}
-
 	logger.Debug("AzureAD OAuth: extracted role", "email", email, "role", role)
 
 	groups, err := s.extractGroups(client, claims, token)
 	if err != nil {
 		return nil, fmt.Errorf("failed to extract groups: %w", err)
 	}
-
 	logger.Debug("AzureAD OAuth: extracted groups", "email", email, "groups", fmt.Sprintf("%v", groups))
 	if !s.IsGroupMember(groups) {
 		return nil, errMissingGroupMembership

@@ -38,6 +38,7 @@ function SimpleInputParamEditor(props: QueryBuilderOperationParamEditorProps) {
       minWidth={props.paramDef.minWidth}
       placeholder={props.paramDef.placeholder}
       title={props.paramDef.description}
+      maxWidth={(props.paramDef.minWidth || 20) * 3}
       onCommitChange={(evt) => {
         props.onChange(props.index, evt.currentTarget.value);
         if (props.paramDef.runQueryOnEnter && evt.type === 'keydown') {

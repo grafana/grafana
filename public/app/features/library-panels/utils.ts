@@ -13,9 +13,9 @@ export function createPanelLibrarySuccessNotification(message: string): AppNotif
   return createSuccessNotification(message);
 }
 
-export async function saveAndRefreshLibraryPanel(panel: PanelModel, folderId: number): Promise<LibraryElementDTO> {
+export async function saveAndRefreshLibraryPanel(panel: PanelModel, folderUid: string): Promise<LibraryElementDTO> {
   const panelSaveModel = toPanelSaveModel(panel);
-  const savedPanel = await saveOrUpdateLibraryPanel(panelSaveModel, folderId);
+  const savedPanel = await saveOrUpdateLibraryPanel(panelSaveModel, folderUid);
   updatePanelModelWithUpdate(panel, savedPanel);
   return savedPanel;
 }
@@ -44,13 +44,13 @@ function updatePanelModelWithUpdate(panel: PanelModel, updated: LibraryElementDT
   panel.refresh();
 }
 
-function saveOrUpdateLibraryPanel(panel: any, folderId: number): Promise<LibraryElementDTO> {
+function saveOrUpdateLibraryPanel(panel: any, folderUid: string): Promise<LibraryElementDTO> {
   if (!panel.libraryPanel) {
     return Promise.reject();
   }
 
   if (panel.libraryPanel && panel.libraryPanel.uid === '') {
-    return addLibraryPanel(panel, folderId!);
+    return addLibraryPanel(panel, folderUid!);
   }
 
   return updateLibraryPanel(panel);

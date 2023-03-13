@@ -12,10 +12,11 @@ import { ColorPickerProps } from './ColorPickerPopover';
 
 interface ColorInputProps extends ColorPickerProps, Omit<InputProps, 'color' | 'onChange'> {
   isClearable?: boolean;
+  buttonAriaLabel?: string;
 }
 
 const ColorInput = forwardRef<HTMLInputElement, ColorInputProps>(
-  ({ color, onChange, isClearable = false, ...inputProps }, ref) => {
+  ({ color, onChange, isClearable = false, onClick, onBlur, disabled, buttonAriaLabel, ...inputProps }, ref) => {
     const [value, setValue] = useState(color);
     const [previousColor, setPreviousColor] = useState(color);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -44,12 +45,14 @@ const ColorInput = forwardRef<HTMLInputElement, ColorInputProps>(
       }
     };
 
-    const onBlur = () => {
+    const onBlurInput = (event: React.FocusEvent<HTMLInputElement>) => {
       const newColor = tinycolor(value);
 
       if (!newColor.isValid()) {
         setValue(color);
       }
+
+      onBlur?.(event);
     };
 
     return (
@@ -57,8 +60,10 @@ const ColorInput = forwardRef<HTMLInputElement, ColorInputProps>(
         {...inputProps}
         value={value}
         onChange={onChangeColor}
-        onBlur={onBlur}
-        addonBefore={<ColorPreview color={color} />}
+        disabled={disabled}
+        onClick={onClick}
+        onBlur={onBlurInput}
+        addonBefore={<ColorPreview onClick={onClick} ariaLabel={buttonAriaLabel} disabled={disabled} color={color} />}
         ref={ref}
       />
     );
@@ -71,13 +76,20 @@ export default ColorInput;
 
 interface ColorPreviewProps {
   color: string;
+  onClick?: React.MouseEventHandler<HTMLElement>;
+  disabled?: boolean;
+  ariaLabel?: string;
 }
 
-const ColorPreview = ({ color }: ColorPreviewProps) => {
+const ColorPreview = ({ color, onClick, disabled, ariaLabel }: ColorPreviewProps) => {
   const styles = useStyles2(getColorPreviewStyles);
 
   return (
-    <div
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={ariaLabel}
+      disabled={disabled || !onClick}
       className={cx(
         styles,
         css`

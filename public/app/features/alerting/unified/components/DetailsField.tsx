@@ -8,15 +8,22 @@ interface Props {
   label: React.ReactNode;
   className?: string;
   horizontal?: boolean;
+  childrenWrapperClassName?: string;
 }
 
-export const DetailsField = ({ className, label, horizontal, children }: React.PropsWithChildren<Props>) => {
+export const DetailsField = ({
+  className,
+  label,
+  horizontal,
+  children,
+  childrenWrapperClassName,
+}: React.PropsWithChildren<Props>) => {
   const styles = useStyles2(getStyles);
 
   return (
-    <div className={cx(className, styles.field, horizontal ? styles.fieldHorizontal : styles.fieldVertical)}>
+    <div className={cx(styles.field, horizontal ? styles.fieldHorizontal : styles.fieldVertical, className)}>
       <div>{label}</div>
-      <div>{children}</div>
+      <div className={childrenWrapperClassName}>{children}</div>
     </div>
   );
 };

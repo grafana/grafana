@@ -3,10 +3,11 @@ package metrics
 import (
 	"runtime"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	pubdash "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 // ExporterName is used as namespace for exposing prometheus metrics
@@ -136,7 +137,7 @@ var (
 	// MStatTotalDashboards is a metric total amount of dashboards
 	MStatTotalDashboards prometheus.Gauge
 
-	// MStatTotalDashboards is a metric total amount of dashboards
+	// MStatTotalFolders is a metric total amount of folders
 	MStatTotalFolders prometheus.Gauge
 
 	// MStatTotalUsers is a metric total amount of users

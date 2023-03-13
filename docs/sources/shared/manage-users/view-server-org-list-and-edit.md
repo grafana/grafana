@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/shared/manage-users/view-server-org-list-and-edit/
 title: View org list as server admin
 ---
 

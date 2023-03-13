@@ -11,10 +11,6 @@ const (
 	// Use big transactions for alerting database writes
 	FlagAlertingBigTransactions = "alertingBigTransactions"
 
-	// FlagPromQueryBuilder
-	// Show prometheus query builder
-	FlagPromQueryBuilder = "promQueryBuilder"
-
 	// FlagTrimDefaults
 	// Use cue schema to remove values that will be applied automatically
 	FlagTrimDefaults = "trimDefaults"
@@ -24,23 +20,15 @@ const (
 	FlagDisableEnvelopeEncryption = "disableEnvelopeEncryption"
 
 	// FlagDatabaseMetrics
-	// Add prometheus metrics for database tables
+	// Add Prometheus metrics for database tables
 	FlagDatabaseMetrics = "database_metrics"
 
 	// FlagDashboardPreviews
 	// Create and show thumbnails for dashboard search results
 	FlagDashboardPreviews = "dashboardPreviews"
 
-	// FlagDashboardPreviewsAdmin
-	// Manage the dashboard previews crawler process from the UI
-	FlagDashboardPreviewsAdmin = "dashboardPreviewsAdmin"
-
-	// FlagLiveConfig
-	// Save grafana live configuration in SQL tables
-	FlagLiveConfig = "live-config"
-
 	// FlagLivePipeline
-	// enable a generic live processing pipeline
+	// Enable a generic live processing pipeline
 	FlagLivePipeline = "live-pipeline"
 
 	// FlagLiveServiceWebWorker
@@ -48,60 +36,36 @@ const (
 	FlagLiveServiceWebWorker = "live-service-web-worker"
 
 	// FlagQueryOverLive
-	// Use grafana live websocket to execute backend queries
+	// Use Grafana Live WebSocket to execute backend queries
 	FlagQueryOverLive = "queryOverLive"
 
 	// FlagPanelTitleSearch
 	// Search for dashboards using panel title
 	FlagPanelTitleSearch = "panelTitleSearch"
 
-	// FlagTempoApmTable
-	// Show APM table
-	FlagTempoApmTable = "tempoApmTable"
-
 	// FlagPrometheusAzureOverrideAudience
 	// Experimental. Allow override default AAD audience for Azure Prometheus endpoint
 	FlagPrometheusAzureOverrideAudience = "prometheusAzureOverrideAudience"
 
-	// FlagInfluxdbBackendMigration
-	// Query InfluxDB InfluxQL without the proxy
-	FlagInfluxdbBackendMigration = "influxdbBackendMigration"
-
-	// FlagShowFeatureFlagsInUI
-	// Show feature flags in the settings UI
-	FlagShowFeatureFlagsInUI = "showFeatureFlagsInUI"
-
 	// FlagPublicDashboards
-	// enables public access to dashboards
+	// Enables public access to dashboards
 	FlagPublicDashboards = "publicDashboards"
 
+	// FlagPublicDashboardsEmailSharing
+	// Enables public dashboard sharing to be restricted to only allowed emails
+	FlagPublicDashboardsEmailSharing = "publicDashboardsEmailSharing"
+
 	// FlagLokiLive
-	// support websocket streaming for loki (early prototype)
+	// Support WebSocket streaming for loki (early prototype)
 	FlagLokiLive = "lokiLive"
 
 	// FlagLokiDataframeApi
-	// use experimental loki api for websocket streaming (early prototype)
+	// Use experimental loki api for WebSocket streaming (early prototype)
 	FlagLokiDataframeApi = "lokiDataframeApi"
 
-	// FlagLokiMonacoEditor
-	// Access to Monaco query editor for Loki
-	FlagLokiMonacoEditor = "lokiMonacoEditor"
-
-	// FlagSwaggerUi
-	// Serves swagger UI
-	FlagSwaggerUi = "swaggerUi"
-
 	// FlagFeatureHighlights
-	// Highlight Enterprise features
+	// Highlight Grafana Enterprise features
 	FlagFeatureHighlights = "featureHighlights"
-
-	// FlagDashboardComments
-	// Enable dashboard-wide comments
-	FlagDashboardComments = "dashboardComments"
-
-	// FlagAnnotationComments
-	// Enable annotation comments
-	FlagAnnotationComments = "annotationComments"
 
 	// FlagMigrationLocking
 	// Lock database during migrations
@@ -111,17 +75,13 @@ const (
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
 
+	// FlagK8s
+	// Explore native k8s integrations
+	FlagK8s = "k8s"
+
 	// FlagDashboardsFromStorage
 	// Load dashboards from the generic storage interface
 	FlagDashboardsFromStorage = "dashboardsFromStorage"
-
-	// FlagExport
-	// Export grafana instance (to git, etc)
-	FlagExport = "export"
-
-	// FlagAzureMonitorResourcePickerForMetrics
-	// New UI for Azure Monitor Metrics Query
-	FlagAzureMonitorResourcePickerForMetrics = "azureMonitorResourcePickerForMetrics"
 
 	// FlagExploreMixedDatasource
 	// Enable mixed datasource in Explore
@@ -131,9 +91,9 @@ const (
 	// Adds trace ID to error notifications
 	FlagTracing = "tracing"
 
-	// FlagCommandPalette
-	// Enable command palette
-	FlagCommandPalette = "commandPalette"
+	// FlagNewTraceView
+	// Shows the new trace view design
+	FlagNewTraceView = "newTraceView"
 
 	// FlagCorrelations
 	// Correlations page
@@ -150,10 +110,6 @@ const (
 	// FlagTraceToMetrics
 	// Enable trace to metrics links
 	FlagTraceToMetrics = "traceToMetrics"
-
-	// FlagPrometheusBufferedClient
-	// Enable buffered (old) client for Prometheus datasource as default instead of streaming JSON parser client (new)
-	FlagPrometheusBufferedClient = "prometheusBufferedClient"
 
 	// FlagNewDBLibrary
 	// Use jmoiron/sqlx rather than xorm for a few backend services
@@ -179,10 +135,6 @@ const (
 	// Experimental framework to build interactive dashboards
 	FlagScenes = "scenes"
 
-	// FlagUseLegacyHeatmapPanel
-	// Continue to use the angular/flot based heatmap panel
-	FlagUseLegacyHeatmapPanel = "useLegacyHeatmapPanel"
-
 	// FlagDisableSecretsCompatibility
 	// Disable duplicated secret storage in legacy tables
 	FlagDisableSecretsCompatibility = "disableSecretsCompatibility"
@@ -192,32 +144,28 @@ const (
 	FlagLogRequestsInstrumentedAsUnknown = "logRequestsInstrumentedAsUnknown"
 
 	// FlagDataConnectionsConsole
-	// Enables a new top-level page called Connections. This page is an experiment for better grouping of installing / configuring data sources and other plugins.
+	// Enables a new top-level page called Connections. This page is an experiment that provides a better experience when you install and configure data sources and other plugins.
 	FlagDataConnectionsConsole = "dataConnectionsConsole"
 
 	// FlagInternationalization
-	// Enables work-in-progress internationalization
+	// Enables internationalization
 	FlagInternationalization = "internationalization"
 
 	// FlagTopnav
-	// New top nav and page layouts
+	// Displays new top nav and page layouts
 	FlagTopnav = "topnav"
 
 	// FlagGrpcServer
 	// Run GRPC server
 	FlagGrpcServer = "grpcServer"
 
-	// FlagObjectStore
-	// SQL based object store
-	FlagObjectStore = "objectStore"
+	// FlagEntityStore
+	// SQL-based entity store (requires storage flag also)
+	FlagEntityStore = "entityStore"
 
-	// FlagTraceqlEditor
-	// Show the TraceQL editor in the explore page
-	FlagTraceqlEditor = "traceqlEditor"
-
-	// FlagFlameGraph
-	// Show the flame graph
-	FlagFlameGraph = "flameGraph"
+	// FlagCloudWatchCrossAccountQuerying
+	// Enables cross-account querying in CloudWatch datasources
+	FlagCloudWatchCrossAccountQuerying = "cloudWatchCrossAccountQuerying"
 
 	// FlagRedshiftAsyncQueryDataSupport
 	// Enable async query data support for Redshift
@@ -226,14 +174,6 @@ const (
 	// FlagAthenaAsyncQueryDataSupport
 	// Enable async query data support for Athena
 	FlagAthenaAsyncQueryDataSupport = "athenaAsyncQueryDataSupport"
-
-	// FlagIncreaseInMemDatabaseQueryCache
-	// Enable more in memory caching for database queries
-	FlagIncreaseInMemDatabaseQueryCache = "increaseInMemDatabaseQueryCache"
-
-	// FlagInterFont
-	// Switch to inter font
-	FlagInterFont = "interFont"
 
 	// FlagNewPanelChromeUI
 	// Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu
@@ -244,16 +184,12 @@ const (
 	FlagQueryLibrary = "queryLibrary"
 
 	// FlagShowDashboardValidationWarnings
-	// Show warnings when Dashboards do not validate against the schema
+	// Show warnings when dashboards do not validate against the schema
 	FlagShowDashboardValidationWarnings = "showDashboardValidationWarnings"
 
 	// FlagMysqlAnsiQuotes
-	// Use double quote to escape keyword in Mysql query
+	// Use double quotes to escape keyword in a MySQL query
 	FlagMysqlAnsiQuotes = "mysqlAnsiQuotes"
-
-	// FlagDatasourceLogger
-	// Logs all datasource requests
-	FlagDatasourceLogger = "datasourceLogger"
 
 	// FlagAccessControlOnCall
 	// Access control primitives for OnCall
@@ -270,4 +206,64 @@ const (
 	// FlagElasticsearchBackendMigration
 	// Use Elasticsearch as backend data source
 	FlagElasticsearchBackendMigration = "elasticsearchBackendMigration"
+
+	// FlagDatasourceOnboarding
+	// Enable data source onboarding page
+	FlagDatasourceOnboarding = "datasourceOnboarding"
+
+	// FlagSecureSocksDatasourceProxy
+	// Enable secure socks tunneling for supported core datasources
+	FlagSecureSocksDatasourceProxy = "secureSocksDatasourceProxy"
+
+	// FlagAuthnService
+	// Use new auth service to perform authentication
+	FlagAuthnService = "authnService"
+
+	// FlagDisablePrometheusExemplarSampling
+	// Disable Prometheus examplar sampling
+	FlagDisablePrometheusExemplarSampling = "disablePrometheusExemplarSampling"
+
+	// FlagAlertingBacktesting
+	// Rule backtesting API for alerting
+	FlagAlertingBacktesting = "alertingBacktesting"
+
+	// FlagEditPanelCSVDragAndDrop
+	// Enables drag and drop for CSV and Excel files
+	FlagEditPanelCSVDragAndDrop = "editPanelCSVDragAndDrop"
+
+	// FlagAlertingNoNormalState
+	// Stop maintaining state of alerts that are not firing
+	FlagAlertingNoNormalState = "alertingNoNormalState"
+
+	// FlagLogsSampleInExplore
+	// Enables access to the logs sample feature in Explore
+	FlagLogsSampleInExplore = "logsSampleInExplore"
+
+	// FlagLogsContextDatasourceUi
+	// Allow datasource to provide custom UI for context view
+	FlagLogsContextDatasourceUi = "logsContextDatasourceUi"
+
+	// FlagLokiQuerySplitting
+	// Split large interval queries into subqueries with smaller time intervals
+	FlagLokiQuerySplitting = "lokiQuerySplitting"
+
+	// FlagIndividualCookiePreferences
+	// Support overriding cookie preferences per user
+	FlagIndividualCookiePreferences = "individualCookiePreferences"
+
+	// FlagDrawerDataSourcePicker
+	// Changes the user experience for data source selection to a drawer.
+	FlagDrawerDataSourcePicker = "drawerDataSourcePicker"
+
+	// FlagTraceqlSearch
+	// Enables the &#39;TraceQL Search&#39; tab for the Tempo datasource which provides a UI to generate TraceQL queries
+	FlagTraceqlSearch = "traceqlSearch"
+
+	// FlagPrometheusMetricEncyclopedia
+	// Replaces the Prometheus query builder metric select option with a paginated and filterable component
+	FlagPrometheusMetricEncyclopedia = "prometheusMetricEncyclopedia"
+
+	// FlagTimeSeriesTable
+	// Enable time series table transformer &amp; sparkline cell type
+	FlagTimeSeriesTable = "timeSeriesTable"
 )

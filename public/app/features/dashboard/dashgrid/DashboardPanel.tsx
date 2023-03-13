@@ -20,6 +20,8 @@ export interface OwnProps {
   width: number;
   height: number;
   lazy?: boolean;
+  timezone?: string;
+  hideMenu?: boolean;
 }
 
 const mapStateToProps = (state: StoreState, props: OwnProps) => {
@@ -70,7 +72,7 @@ export class DashboardPanelUnconnected extends PureComponent<Props> {
   };
 
   renderPanel = (isInView: boolean) => {
-    const { dashboard, panel, isViewing, isEditing, width, height, plugin } = this.props;
+    const { dashboard, panel, isViewing, isEditing, width, height, plugin, timezone, hideMenu } = this.props;
 
     if (!plugin) {
       return null;
@@ -102,6 +104,8 @@ export class DashboardPanelUnconnected extends PureComponent<Props> {
         width={width}
         height={height}
         onInstanceStateChange={this.onInstanceStateChange}
+        timezone={timezone}
+        hideMenu={hideMenu}
       />
     );
   };

@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/loganalytics"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/macros"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
@@ -183,6 +182,13 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, logger 
 		return dataResponseErrorWithExecuted(err)
 	}
 
+	defer func() {
+		err := res.Body.Close()
+		if err != nil {
+			logger.Warn("failed to close response body", "error", err)
+		}
+	}()
+
 	argResponse, err := e.unmarshalResponse(logger, res)
 	if err != nil {
 		return dataResponseErrorWithExecuted(err)
@@ -191,6 +197,10 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, logger 
 	frame, err := loganalytics.ResponseTableToFrame(&argResponse.Data, query.RefID, query.InterpolatedQuery)
 	if err != nil {
 		return dataResponseErrorWithExecuted(err)
+	}
+	if frame == nil {
+		// empty response
+		return dataResponse
 	}
 
 	azurePortalUrl, err := GetAzurePortalUrl(dsInfo.Cloud)
@@ -232,7 +242,6 @@ func (e *AzureResourceGraphDatasource) createRequest(ctx context.Context, logger
 	}
 	req.URL.Path = "/"
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
 
 	return req, nil
 }
@@ -273,8 +282,6 @@ func GetAzurePortalUrl(azureCloud string) (string, error) {
 		return "https://portal.azure.cn", nil
 	case azsettings.AzureUSGovernment:
 		return "https://portal.azure.us", nil
-	case azsettings.AzureGermany:
-		return "https://portal.microsoftazure.de", nil
 	default:
 		return "", fmt.Errorf("the cloud is not supported")
 	}

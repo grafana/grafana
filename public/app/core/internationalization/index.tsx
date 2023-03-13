@@ -2,13 +2,13 @@ import i18n, { BackendModule } from 'i18next';
 import React from 'react';
 import { Trans as I18NextTrans, initReactI18next } from 'react-i18next'; // eslint-disable-line no-restricted-imports
 
-import { DEFAULT_LOCALE, LOCALES, VALID_LOCALES } from './constants';
+import { DEFAULT_LANGUAGE, LANGUAGES, VALID_LANGUAGES } from './constants';
 
 const loadTranslations: BackendModule = {
   type: 'backend',
   init() {},
   async read(language, namespace, callback) {
-    const localeDef = LOCALES.find((v) => v.code === language);
+    const localeDef = LANGUAGES.find((v) => v.code === language);
 
     if (!localeDef) {
       return callback(new Error('No message loader available for ' + language), null);
@@ -19,10 +19,17 @@ const loadTranslations: BackendModule = {
   },
 };
 
-export function initializeI18n(locale: string) {
-  const validLocale = VALID_LOCALES.includes(locale) ? locale : DEFAULT_LOCALE;
+export function initializeI18n(language: string) {
+  const validLocale = VALID_LANGUAGES.includes(language) ? language : DEFAULT_LANGUAGE;
 
-  i18n
+  // This is a placeholder so we can put a 'comment' in the message json files.
+  // Starts with an underscore so it's sorted to the top of the file
+  t(
+    '_comment',
+    'Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source'
+  );
+
+  return i18n
     .use(loadTranslations)
     .use(initReactI18next) // passes i18n down to react-i18next
     .init({
@@ -37,17 +44,10 @@ export function initializeI18n(locale: string) {
 
       pluralSeparator: '__',
     });
-
-  // This is a placeholder so we can put a 'comment' in the message json files.
-  // Starts with an underscore so it's sorted to the top of the file
-  t(
-    '_comment',
-    'Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source'
-  );
 }
 
 export function changeLanguage(locale: string) {
-  const validLocale = VALID_LOCALES.includes(locale) ? locale : DEFAULT_LOCALE;
+  const validLocale = VALID_LANGUAGES.includes(locale) ? locale : DEFAULT_LANGUAGE;
   return i18n.changeLanguage(validLocale);
 }
 
@@ -55,15 +55,18 @@ export const Trans: typeof I18NextTrans = (props) => {
   return <I18NextTrans {...props} />;
 };
 
+// Reassign t() so i18next-parser doesn't warn on dynamic key, and we can have 'failOnWarnings' enabled
+const tFunc = i18n.t;
+
 export const t = (id: string, defaultMessage: string, values?: Record<string, unknown>) => {
-  return i18n.t(id, defaultMessage, values);
+  return tFunc(id, defaultMessage, values);
 };
 
 export const i18nDate = (value: number | Date | string, format: Intl.DateTimeFormatOptions = {}): string => {
   if (typeof value === 'string') {
     return i18nDate(new Date(value), format);
   }
-  const locale = i18n.options.lng ?? DEFAULT_LOCALE;
+  const locale = i18n.options.lng ?? DEFAULT_LANGUAGE;
 
   const dateFormatter = new Intl.DateTimeFormat(locale, format);
   return dateFormatter.format(value);

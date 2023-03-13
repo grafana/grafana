@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/migrating-alerts/opt-out/
-  - /docs/grafana/latest/alerting/opt-in/
-  - /docs/grafana/latest/alerting/unified-alerting/opt-in/
+  - ../opt-in/
+  - ../unified-alerting/opt-in/
 description: Opt out of Grafana Alerting
 title: Opt out of Grafana Alerting
 weight: 102

@@ -3,21 +3,30 @@ package plugins
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
+	"path"
+	"runtime"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/infra/log"
+
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
+	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/util"
 )
+
+var ErrFileNotExist = errors.New("file does not exist")
 
 type Plugin struct {
 	JSONData
 
-	PluginDir string
-	Class     Class
+	FS    FS
+	Class Class
 
 	// App fields
 	IncludedInAppID string
@@ -30,7 +39,6 @@ type Plugin struct {
 	SignatureOrg   string
 	Parent         *Plugin
 	Children       []*Plugin
-	SignedFiles    PluginFiles
 	SignatureError *SignatureError
 
 	// SystemJS fields
@@ -46,8 +54,11 @@ type Plugin struct {
 type PluginDTO struct {
 	JSONData
 
-	PluginDir string
-	Class     Class
+	fs                FS
+	logger            log.Logger
+	supportsStreaming bool
+
+	Class Class
 
 	// App fields
 	IncludedInAppID string
@@ -58,19 +69,19 @@ type PluginDTO struct {
 	Signature      SignatureStatus
 	SignatureType  SignatureType
 	SignatureOrg   string
-	SignedFiles    PluginFiles
 	SignatureError *SignatureError
 
 	// SystemJS fields
 	Module  string
 	BaseURL string
-
-	// temporary
-	backend.StreamHandler
 }
 
 func (p PluginDTO) SupportsStreaming() bool {
-	return p.StreamHandler != nil
+	return p.supportsStreaming
+}
+
+func (p PluginDTO) Base() string {
+	return p.fs.Base()
 }
 
 func (p PluginDTO) IsApp() bool {
@@ -81,29 +92,23 @@ func (p PluginDTO) IsCorePlugin() bool {
 	return p.Class == Core
 }
 
-func (p PluginDTO) IsExternalPlugin() bool {
-	return p.Class == External
-}
-
-func (p PluginDTO) IsSecretsManager() bool {
-	return p.JSONData.Type == SecretsManager
-}
-
-func (p PluginDTO) IncludedInSignature(file string) bool {
-	// permit Core plugin files
-	if p.IsCorePlugin() {
-		return true
+func (p PluginDTO) File(name string) (fs.File, error) {
+	cleanPath, err := util.CleanRelativePath(name)
+	if err != nil {
+		// CleanRelativePath should clean and make the path relative so this is not expected to fail
+		return nil, err
 	}
 
-	// permit when no signed files (no MANIFEST)
-	if p.SignedFiles == nil {
-		return true
+	if p.fs == nil {
+		return nil, ErrFileNotExist
 	}
 
-	if _, exists := p.SignedFiles[file]; !exists {
-		return false
+	f, err := p.fs.Open(cleanPath)
+	if err != nil {
+		return nil, err
 	}
-	return true
+
+	return f, nil
 }
 
 // JSONData represents the plugin's plugin.json
@@ -251,6 +256,16 @@ func (p *Plugin) Exited() bool {
 	return false
 }
 
+func (p *Plugin) Target() backendplugin.Target {
+	if !p.Backend {
+		return backendplugin.TargetNone
+	}
+	if p.client == nil {
+		return backendplugin.TargetUnknown
+	}
+	return p.client.Target()
+}
+
 func (p *Plugin) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	pluginClient, ok := p.Client()
 	if !ok {
@@ -318,6 +333,29 @@ func (p *Plugin) Client() (PluginClient, bool) {
 	return nil, false
 }
 
+func (p *Plugin) ExecutablePath() string {
+	if p.IsRenderer() {
+		return p.executablePath("plugin_start")
+	}
+
+	if p.IsSecretsManager() {
+		return p.executablePath("secrets_plugin_start")
+	}
+
+	return p.executablePath(p.Executable)
+}
+
+func (p *Plugin) executablePath(f string) string {
+	os := strings.ToLower(runtime.GOOS)
+	arch := runtime.GOARCH
+	extension := ""
+
+	if os == "windows" {
+		extension = ".exe"
+	}
+	return path.Join(p.FS.Base(), fmt.Sprintf("%s_%s_%s%s", f, os, strings.ToLower(arch), extension))
+}
+
 type PluginClient interface {
 	backend.QueryDataHandler
 	backend.CollectMetricsHandler
@@ -327,23 +365,21 @@ type PluginClient interface {
 }
 
 func (p *Plugin) ToDTO() PluginDTO {
-	c, _ := p.Client()
-
 	return PluginDTO{
-		JSONData:        p.JSONData,
-		PluginDir:       p.PluginDir,
-		Class:           p.Class,
-		IncludedInAppID: p.IncludedInAppID,
-		DefaultNavURL:   p.DefaultNavURL,
-		Pinned:          p.Pinned,
-		Signature:       p.Signature,
-		SignatureType:   p.SignatureType,
-		SignatureOrg:    p.SignatureOrg,
-		SignedFiles:     p.SignedFiles,
-		SignatureError:  p.SignatureError,
-		Module:          p.Module,
-		BaseURL:         p.BaseURL,
-		StreamHandler:   c,
+		logger:            p.Logger(),
+		fs:                p.FS,
+		supportsStreaming: p.client != nil && p.client.(backend.StreamHandler) != nil,
+		Class:             p.Class,
+		JSONData:          p.JSONData,
+		IncludedInAppID:   p.IncludedInAppID,
+		DefaultNavURL:     p.DefaultNavURL,
+		Pinned:            p.Pinned,
+		Signature:         p.Signature,
+		SignatureType:     p.SignatureType,
+		SignatureOrg:      p.SignatureOrg,
+		SignatureError:    p.SignatureError,
+		Module:            p.Module,
+		BaseURL:           p.BaseURL,
 	}
 }
 
@@ -352,27 +388,23 @@ func (p *Plugin) StaticRoute() *StaticRoute {
 		return nil
 	}
 
-	return &StaticRoute{Directory: p.PluginDir, PluginID: p.ID}
+	if p.FS == nil {
+		return nil
+	}
+
+	return &StaticRoute{Directory: p.FS.Base(), PluginID: p.ID}
 }
 
 func (p *Plugin) IsRenderer() bool {
-	return p.Type == "renderer"
+	return p.Type == Renderer
 }
 
 func (p *Plugin) IsSecretsManager() bool {
-	return p.Type == "secretsmanager"
-}
-
-func (p *Plugin) IsDataSource() bool {
-	return p.Type == "datasource"
-}
-
-func (p *Plugin) IsPanel() bool {
-	return p.Type == "panel"
+	return p.Type == SecretsManager
 }
 
 func (p *Plugin) IsApp() bool {
-	return p.Type == "app"
+	return p.Type == App
 }
 
 func (p *Plugin) IsCorePlugin() bool {

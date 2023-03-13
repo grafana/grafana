@@ -26,6 +26,8 @@ export function DashboardSearch({}: Props) {
           <div>
             <input
               type="text"
+              // eslint-disable-next-line jsx-a11y/no-autofocus
+              autoFocus
               placeholder={state.includePanels ? 'Search dashboards and panels by name' : 'Search dashboards by name'}
               value={state.query ?? ''}
               onChange={(e) => stateManager.onQueryChange(e.currentTarget.value)}

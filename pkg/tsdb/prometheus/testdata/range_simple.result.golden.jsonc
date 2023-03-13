@@ -1,7 +1,11 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
 //  Frame[0] {
-//      "type": "timeseries-many",
+//      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
 //      "custom": {
 //          "resultType": "matrix"
 //      },
@@ -22,7 +26,11 @@
 //  
 //  
 //  Frame[1] {
-//      "type": "timeseries-many",
+//      "type": "timeseries-multi",
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
 //      "custom": {
 //          "resultType": "matrix"
 //      },
@@ -48,7 +56,11 @@
       "schema": {
         "name": "prometheus_http_requests_total{code=\"200\", handler=\"/api/v1/query_range\", job=\"prometheus\"}",
         "meta": {
-          "type": "timeseries-many",
+          "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ],
           "custom": {
             "resultType": "matrix"
           },
@@ -102,7 +114,11 @@
       "schema": {
         "name": "prometheus_http_requests_total{code=\"400\", handler=\"/api/v1/query_range\", job=\"prometheus\"}",
         "meta": {
-          "type": "timeseries-many",
+          "type": "timeseries-multi",
+          "typeVersion": [
+            0,
+            0
+          ],
           "custom": {
             "resultType": "matrix"
           },

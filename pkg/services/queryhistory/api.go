@@ -6,7 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -36,7 +36,7 @@ func (s *QueryHistoryService) registerAPIEndpoints() {
 // 400: badRequestError
 // 401: unauthorisedError
 // 500: internalServerError
-func (s *QueryHistoryService) createHandler(c *models.ReqContext) response.Response {
+func (s *QueryHistoryService) createHandler(c *contextmodel.ReqContext) response.Response {
 	cmd := CreateQueryInQueryHistoryCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -62,7 +62,7 @@ func (s *QueryHistoryService) createHandler(c *models.ReqContext) response.Respo
 // 200: getQueryHistorySearchResponse
 // 401: unauthorisedError
 // 500: internalServerError
-func (s *QueryHistoryService) searchHandler(c *models.ReqContext) response.Response {
+func (s *QueryHistoryService) searchHandler(c *contextmodel.ReqContext) response.Response {
 	timeRange := legacydata.NewDataTimeRange(c.Query("from"), c.Query("to"))
 
 	query := SearchInQueryHistoryQuery{
@@ -94,7 +94,7 @@ func (s *QueryHistoryService) searchHandler(c *models.ReqContext) response.Respo
 // 200: getQueryHistoryDeleteQueryResponse
 // 401: unauthorisedError
 // 500: internalServerError
-func (s *QueryHistoryService) deleteHandler(c *models.ReqContext) response.Response {
+func (s *QueryHistoryService) deleteHandler(c *contextmodel.ReqContext) response.Response {
 	queryUID := web.Params(c.Req)[":uid"]
 	if len(queryUID) > 0 && !util.IsValidShortUID(queryUID) {
 		return response.Error(http.StatusNotFound, "Query in query history not found", nil)
@@ -122,7 +122,7 @@ func (s *QueryHistoryService) deleteHandler(c *models.ReqContext) response.Respo
 // 400: badRequestError
 // 401: unauthorisedError
 // 500: internalServerError
-func (s *QueryHistoryService) patchCommentHandler(c *models.ReqContext) response.Response {
+func (s *QueryHistoryService) patchCommentHandler(c *contextmodel.ReqContext) response.Response {
 	queryUID := web.Params(c.Req)[":uid"]
 	if len(queryUID) > 0 && !util.IsValidShortUID(queryUID) {
 		return response.Error(http.StatusNotFound, "Query in query history not found", nil)
@@ -151,7 +151,7 @@ func (s *QueryHistoryService) patchCommentHandler(c *models.ReqContext) response
 // 200: getQueryHistoryResponse
 // 401: unauthorisedError
 // 500: internalServerError
-func (s *QueryHistoryService) starHandler(c *models.ReqContext) response.Response {
+func (s *QueryHistoryService) starHandler(c *contextmodel.ReqContext) response.Response {
 	queryUID := web.Params(c.Req)[":uid"]
 	if len(queryUID) > 0 && !util.IsValidShortUID(queryUID) {
 		return response.Error(http.StatusNotFound, "Query in query history not found", nil)
@@ -175,7 +175,7 @@ func (s *QueryHistoryService) starHandler(c *models.ReqContext) response.Respons
 // 200: getQueryHistoryResponse
 // 401: unauthorisedError
 // 500: internalServerError
-func (s *QueryHistoryService) unstarHandler(c *models.ReqContext) response.Response {
+func (s *QueryHistoryService) unstarHandler(c *contextmodel.ReqContext) response.Response {
 	queryUID := web.Params(c.Req)[":uid"]
 	if len(queryUID) > 0 && !util.IsValidShortUID(queryUID) {
 		return response.Error(http.StatusNotFound, "Query in query history not found", nil)
@@ -200,7 +200,7 @@ func (s *QueryHistoryService) unstarHandler(c *models.ReqContext) response.Respo
 // 400: badRequestError
 // 401: unauthorisedError
 // 500: internalServerError
-func (s *QueryHistoryService) migrateHandler(c *models.ReqContext) response.Response {
+func (s *QueryHistoryService) migrateHandler(c *contextmodel.ReqContext) response.Response {
 	cmd := MigrateQueriesToQueryHistoryCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)

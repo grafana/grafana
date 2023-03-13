@@ -44,19 +44,22 @@ Here is the conf you need to add to your configuration file (conf/custom.ini):
 [auth.jwt]
 enabled = true
 header_name = X-JWT-Assertion
-username_claim = login
+username_claim = preferred_username
 email_claim = email
 jwk_set_file = devenv/docker/blocks/auth/oauth/jwks.json
 cache_ttl = 60m
-expect_claims = {"iss": "http://localhost:8087/auth/realms/grafana", "azp": "grafana-oauth"}
+expect_claims = {"iss": "http://localhost:8087/realms/grafana", "azp": "grafana-oauth"}
 auto_sign_up = true
+role_attribute_path = contains(roles[*], 'grafanaadmin') && 'GrafanaAdmin' || contains(roles[*], 'admin') && 'Admin' || contains(roles[*], 'editor') && 'Editor' || 'Viewer'
+role_attribute_strict = true
+allow_assign_grafana_admin = true
 ```
 
 You can obtain a jwt token by using the following command for oauth-admin:
 
 ```sh
 curl --request POST \
-  --url http://localhost:8087/auth/realms/grafana/protocol/openid-connect/token \
+  --url http://localhost:8087/realms/grafana/protocol/openid-connect/token \
   --header 'Content-Type: application/x-www-form-urlencoded' \
   --data client_id=grafana-oauth \
   --data grant_type=password \

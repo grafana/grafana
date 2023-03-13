@@ -34,7 +34,7 @@ func (ss *SQLStore) inTransactionWithRetry(ctx context.Context, fn func(ctx cont
 }
 
 func (ss *SQLStore) inTransactionWithRetryCtx(ctx context.Context, engine *xorm.Engine, bus bus.Bus, callback DBTransactionFunc, retry int) error {
-	sess, isNew, err := startSessionOrUseExisting(ctx, engine, true)
+	sess, isNew, span, err := startSessionOrUseExisting(ctx, engine, true, ss.tracer)
 	if err != nil {
 		return err
 	}
@@ -45,7 +45,12 @@ func (ss *SQLStore) inTransactionWithRetryCtx(ctx context.Context, engine *xorm.
 	}
 
 	if isNew { // if this call initiated the session, it should be responsible for closing it.
-		defer sess.Close()
+		defer func() {
+			if span != nil {
+				span.End()
+			}
+			sess.Close()
+		}()
 	}
 
 	err = callback(sess)
@@ -80,11 +85,9 @@ func (ss *SQLStore) inTransactionWithRetryCtx(ctx context.Context, engine *xorm.
 		return err
 	}
 
-	if len(sess.events) > 0 {
-		for _, e := range sess.events {
-			if err = bus.Publish(ctx, e); err != nil {
-				ctxLogger.Error("Failed to publish event after commit.", "error", err)
-			}
+	for _, e := range sess.events {
+		if err = bus.Publish(ctx, e); err != nil {
+			ctxLogger.Error("Failed to publish event after commit.", "error", err)
 		}
 	}
 

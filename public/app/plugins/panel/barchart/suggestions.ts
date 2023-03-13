@@ -1,8 +1,8 @@
 import { VisualizationSuggestionsBuilder, VizOrientation } from '@grafana/data';
-import { StackingMode, VisibilityMode } from '@grafana/schema';
+import { LegendDisplayMode, StackingMode, VisibilityMode } from '@grafana/schema';
 import { SuggestionName } from 'app/types/suggestions';
 
-import { PanelFieldConfig, PanelOptions } from './models.gen';
+import { PanelFieldConfig, PanelOptions } from './panelcfg.gen';
 
 export class BarChartSuggestionsSupplier {
   getListWithDefaults(builder: VisualizationSuggestionsBuilder) {
@@ -12,9 +12,11 @@ export class BarChartSuggestionsSupplier {
       options: {
         showValue: VisibilityMode.Never,
         legend: {
+          calcs: [],
+          displayMode: LegendDisplayMode.List,
           showLegend: true,
           placement: 'right',
-        } as any,
+        },
       },
       fieldConfig: {
         defaults: {

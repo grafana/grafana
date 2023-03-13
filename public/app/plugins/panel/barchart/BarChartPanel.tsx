@@ -13,6 +13,7 @@ import {
   VizOrientation,
 } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
+import { SortOrder } from '@grafana/schema';
 import {
   GraphGradientMode,
   GraphNG,
@@ -20,6 +21,7 @@ import {
   measureText,
   PlotLegend,
   Portal,
+  StackingMode,
   TooltipDisplayMode,
   UPlotConfigBuilder,
   UPLOT_AXIS_FONT_SIZE,
@@ -32,11 +34,11 @@ import {
 import { PropDiffFn } from '@grafana/ui/src/components/GraphNG/GraphNG';
 import { HoverEvent, addTooltipSupport } from '@grafana/ui/src/components/uPlot/config/addTooltipSupport';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
+import { getFieldLegendItem } from 'app/core/components/TimelineChart/utils';
 
 import { DataHoverView } from '../geomap/components/DataHoverView';
-import { getFieldLegendItem } from '../state-timeline/utils';
 
-import { PanelOptions } from './models.gen';
+import { PanelOptions } from './panelcfg.gen';
 import { prepareBarChartDisplayValues, preparePlotConfigBuilder } from './utils';
 
 const TOOLTIP_OFFSET = 10;
@@ -168,6 +170,10 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
       const disp = getFieldDisplayName(field, alignedFrame);
       seriesIdx = info.aligned.fields.findIndex((f) => disp === getFieldDisplayName(f, info.aligned));
     }
+    const tooltipMode =
+      options.fullHighlight && options.stacking !== StackingMode.None ? TooltipDisplayMode.Multi : options.tooltip.mode;
+
+    const tooltipSort = options.tooltip.mode === TooltipDisplayMode.Multi ? options.tooltip.sort : SortOrder.None;
 
     return (
       <>
@@ -194,8 +200,8 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
           data={info.aligned}
           rowIndex={datapointIdx}
           columnIndex={seriesIdx}
-          sortOrder={options.tooltip.sort}
-          mode={options.tooltip.mode}
+          sortOrder={tooltipSort}
+          mode={tooltipMode}
         />
       </>
     );
@@ -218,7 +224,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
       }
     }
 
-    return <PlotLegend data={info.viz} config={config} maxHeight="35%" maxWidth="60%" {...options.legend} />;
+    return <PlotLegend data={[info.legend]} config={config} maxHeight="35%" maxWidth="60%" {...options.legend} />;
   };
 
   const rawValue = (seriesIdx: number, valueIdx: number) => {
@@ -242,7 +248,17 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
         f.config.custom?.gradientMode === GraphGradientMode.Scheme &&
         f.config.color?.mode === FieldColorModeId.Thresholds;
 
-      return fromThresholds || f.config.mappings?.some((m) => m.options.result.color != null);
+      return (
+        fromThresholds ||
+        f.config.mappings?.some((m) => {
+          // ValueToText mappings have a different format, where all of them are grouped into an object keyed by value
+          if (m.type === 'value') {
+            // === MappingType.ValueToText
+            return Object.values(m.options).some((result) => result.color != null);
+          }
+          return m.options.result.color != null;
+        })
+      );
     });
 
     if (hasPerBarColor) {
@@ -270,6 +286,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
       text,
       xTickLabelRotation,
       xTickLabelSpacing,
+      fullHighlight,
     } = options;
 
     return preparePlotConfigBuilder({
@@ -295,6 +312,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
       getColor,
       fillOpacity,
       allFrames: info.viz,
+      fullHighlight,
     });
   };
 
@@ -340,7 +358,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
                 offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
                 allowPointerEvents={isToolTipOpen.current}
               >
-                {renderTooltip(info.aligned, focusedSeriesIdx, focusedPointIdx)}
+                {renderTooltip(info.viz[0], focusedSeriesIdx, focusedPointIdx)}
               </VizTooltipContainer>
             )}
           </Portal>

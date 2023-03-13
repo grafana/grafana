@@ -3,7 +3,6 @@ import React, { useMemo, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { DataFrame, GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import {
   Alert,
   Button,
@@ -100,11 +99,6 @@ export function RootView({ root, onPathChange }: Props) {
         <Button className="pull-right" onClick={() => onPathChange('', StorageView.AddRoot)}>
           Add Root
         </Button>
-        {config.featureToggles.export && (
-          <Button className="pull-right" onClick={() => onPathChange('', StorageView.Export)}>
-            Export
-          </Button>
-        )}
       </div>
 
       <div>{renderRoots('', roots.base)}</div>
@@ -132,9 +126,6 @@ function getTags(v: StorageInfo) {
   const tags: string[] = [];
   if (v.builtin) {
     tags.push('Builtin');
-  }
-  if (!v.editable) {
-    tags.push('Read only');
   }
 
   // Error

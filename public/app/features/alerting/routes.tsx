@@ -11,16 +11,15 @@ import { AccessControlAction } from 'app/types';
 
 import { evaluateAccess } from './unified/utils/access-control';
 
-const commonRoutes: RouteDescriptor[] = [
+const commonRoutes: RouteDescriptor[] = [];
+
+const legacyRoutes: RouteDescriptor[] = [
+  ...commonRoutes,
   {
     path: '/alerting',
     component: () =>
       config.featureToggles.topnav ? <NavLandingPage navId="alerting" /> : <Redirect to="/alerting/list" />,
   },
-];
-
-const legacyRoutes: RouteDescriptor[] = [
-  ...commonRoutes,
   {
     path: '/alerting/list',
     component: SafeDynamicImport(
@@ -91,6 +90,19 @@ const legacyRoutes: RouteDescriptor[] = [
 
 const unifiedRoutes: RouteDescriptor[] = [
   ...commonRoutes,
+  config.featureToggles.topnav
+    ? {
+        path: '/alerting',
+        component: SafeDynamicImport(
+          () => import(/* webpackChunkName: "AlertingHome" */ 'app/features/alerting/unified/Home')
+        ),
+      }
+    : {
+        path: '/alerting/home',
+        component: SafeDynamicImport(
+          () => import(/* webpackChunkName: "AlertingHome" */ 'app/features/alerting/unified/Home')
+        ),
+      },
   {
     path: '/alerting/list',
     roles: evaluateAccess(
@@ -108,7 +120,7 @@ const unifiedRoutes: RouteDescriptor[] = [
       [OrgRole.Editor, OrgRole.Admin]
     ),
     component: SafeDynamicImport(
-      () => import(/* webpackChunkName: "AlertAmRoutes" */ 'app/features/alerting/unified/AmRoutes')
+      () => import(/* webpackChunkName: "AlertAmRoutes" */ 'app/features/alerting/unified/NotificationPolicies')
     ),
   },
   {
@@ -183,6 +195,16 @@ const unifiedRoutes: RouteDescriptor[] = [
   },
   {
     path: '/alerting/notifications/:type/:id/edit',
+    roles: evaluateAccess(
+      [AccessControlAction.AlertingNotificationsWrite, AccessControlAction.AlertingNotificationsExternalWrite],
+      ['Editor', 'Admin']
+    ),
+    component: SafeDynamicImport(
+      () => import(/* webpackChunkName: "NotificationsListPage" */ 'app/features/alerting/unified/Receivers')
+    ),
+  },
+  {
+    path: '/alerting/notifications/:type/:id/duplicate',
     roles: evaluateAccess(
       [AccessControlAction.AlertingNotificationsWrite, AccessControlAction.AlertingNotificationsExternalWrite],
       ['Editor', 'Admin']

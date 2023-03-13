@@ -2,11 +2,10 @@ package loginattemptimpl
 
 import (
 	"context"
-	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/loginattempt"
 )
 
 type xormStore struct {
@@ -15,14 +14,15 @@ type xormStore struct {
 }
 
 type store interface {
-	CreateLoginAttempt(context.Context, *models.CreateLoginAttemptCommand) error
-	DeleteOldLoginAttempts(context.Context, *models.DeleteOldLoginAttemptsCommand) error
-	GetUserLoginAttemptCount(context.Context, *models.GetUserLoginAttemptCountQuery) error
+	CreateLoginAttempt(ctx context.Context, cmd CreateLoginAttemptCommand) error
+	DeleteOldLoginAttempts(ctx context.Context, cmd DeleteOldLoginAttemptsCommand) (int64, error)
+	DeleteLoginAttempts(ctx context.Context, cmd DeleteLoginAttemptsCommand) error
+	GetUserLoginAttemptCount(ctx context.Context, query GetUserLoginAttemptCountQuery) (int64, error)
 }
 
-func (xs *xormStore) CreateLoginAttempt(ctx context.Context, cmd *models.CreateLoginAttemptCommand) error {
+func (xs *xormStore) CreateLoginAttempt(ctx context.Context, cmd CreateLoginAttemptCommand) error {
 	return xs.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		loginAttempt := models.LoginAttempt{
+		loginAttempt := loginattempt.LoginAttempt{
 			Username:  cmd.Username,
 			IpAddress: cmd.IpAddress,
 			Created:   xs.now().Unix(),
@@ -38,63 +38,46 @@ func (xs *xormStore) CreateLoginAttempt(ctx context.Context, cmd *models.CreateL
 	})
 }
 
-func (xs *xormStore) DeleteOldLoginAttempts(ctx context.Context, cmd *models.DeleteOldLoginAttemptsCommand) error {
-	return xs.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		var maxId int64
-		sql := "SELECT max(id) as id FROM login_attempt WHERE created < ?"
-		result, err := sess.Query(sql, cmd.OlderThan.Unix())
+func (xs *xormStore) DeleteOldLoginAttempts(ctx context.Context, cmd DeleteOldLoginAttemptsCommand) (int64, error) {
+	var deletedRows int64
+	err := xs.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		deleteResult, err := sess.Exec("DELETE FROM login_attempt WHERE created < ?", cmd.OlderThan.Unix())
 		if err != nil {
 			return err
 		}
-		if len(result) == 0 || result[0] == nil {
-			return nil
-		}
 
-		// TODO: why don't we know the type of ID?
-		maxId = toInt64(result[0]["id"])
-
-		if maxId == 0 {
-			return nil
-		}
-
-		sql = "DELETE FROM login_attempt WHERE id <= ?"
-
-		if result, err := sess.Exec(sql, maxId); err != nil {
-			return err
-		} else if cmd.DeletedRows, err = result.RowsAffected(); err != nil {
+		deletedRows, err = deleteResult.RowsAffected()
+		if err != nil {
 			return err
 		}
-
 		return nil
+	})
+	return deletedRows, err
+}
+
+func (xs *xormStore) DeleteLoginAttempts(ctx context.Context, cmd DeleteLoginAttemptsCommand) error {
+	return xs.db.WithDbSession(ctx, func(sess *db.Session) error {
+		_, err := sess.Exec("DELETE FROM login_attempt WHERE username = ?", cmd.Username)
+		return err
 	})
 }
 
-func (xs *xormStore) GetUserLoginAttemptCount(ctx context.Context, query *models.GetUserLoginAttemptCountQuery) error {
-	return xs.db.WithDbSession(ctx, func(dbSession *db.Session) error {
-		loginAttempt := new(models.LoginAttempt)
-		total, err := dbSession.
+func (xs *xormStore) GetUserLoginAttemptCount(ctx context.Context, query GetUserLoginAttemptCountQuery) (int64, error) {
+	var total int64
+	err := xs.db.WithDbSession(ctx, func(dbSession *db.Session) error {
+		var queryErr error
+		loginAttempt := new(loginattempt.LoginAttempt)
+		total, queryErr = dbSession.
 			Where("username = ?", query.Username).
 			And("created >= ?", query.Since.Unix()).
 			Count(loginAttempt)
 
-		if err != nil {
-			return err
+		if queryErr != nil {
+			return queryErr
 		}
 
-		query.Result = total
 		return nil
 	})
-}
 
-func toInt64(i interface{}) int64 {
-	switch i := i.(type) {
-	case []byte:
-		n, _ := strconv.ParseInt(string(i), 10, 64)
-		return n
-	case int:
-		return int64(i)
-	case int64:
-		return i
-	}
-	return 0
+	return total, err
 }

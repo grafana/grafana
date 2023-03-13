@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/provision-alerting-resources/terraform-provisioning
+  - ../../provision-alerting-resources/terraform-provisioning/
 description: Create and manage alerting resources using Terraform
 keywords:
   - grafana
@@ -98,7 +98,7 @@ EOT
 
 2. Enter text for your notification in the text field.
 
-The `text` field supports [Go-style templating](https://pkg.go.dev/text/template). This enables you to manage your Grafana Alerting message templates directly in Terraform.
+The `text` field supports [Go-style templating](https://pkg.go.dev/text/template). This enables you to manage your Grafana Alerting notification templates directly in Terraform.
 
 3. Run the command ‘terraform apply’.
 
@@ -282,7 +282,7 @@ resource "grafana_rule_group" "my_rule_group" {
 
         // The query was configured to obtain data from the last 60 seconds. Let's alert on the average value of that series using a Reduce stage.
         data {
-            datasource_uid = "-100"
+            datasource_uid = "__expr__"
             // You can also create a rule in the UI, then GET that rule to obtain the JSON.
             // This can be helpful when using more complex reduce expressions.
             model = <<EOT
@@ -298,7 +298,7 @@ EOT
         // Now, let's use a math expression as our threshold.
         // We want to alert when the value of stage "B" above exceeds 70.
         data {
-            datasource_uid = "-100"
+            datasource_uid = "__expr__"
             ref_id = "C"
             relative_time_range {
                 from = 0

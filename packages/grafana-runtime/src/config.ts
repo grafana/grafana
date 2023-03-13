@@ -14,7 +14,6 @@ import {
   MapLayerOptions,
   OAuthSettings,
   PanelPluginMeta,
-  PreloadPlugin,
   systemDateFormats,
   SystemDateFormatSettings,
   NewThemeOptions,
@@ -25,10 +24,19 @@ export interface AzureSettings {
   managedIdentityEnabled: boolean;
 }
 
+export type AppPluginConfig = {
+  id: string;
+  path: string;
+  version: string;
+  preload: boolean;
+};
+
 export class GrafanaBootConfig implements GrafanaConfig {
   isPublicDashboardView: boolean;
+  snapshotEnabled = true;
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
   panels: { [key: string]: PanelPluginMeta } = {};
+  apps: Record<string, AppPluginConfig> = {};
   auth: AuthSettings = {};
   minRefreshInterval = '';
   appUrl = '';
@@ -76,8 +84,8 @@ export class GrafanaBootConfig implements GrafanaConfig {
   /** @deprecated Use `theme2` instead. */
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
-  pluginsToPreload: PreloadPlugin[] = [];
   featureToggles: FeatureToggles = {};
+  anonymousEnabled = false;
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;
   dashboardPreviews: {
@@ -89,6 +97,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   } = { systemRequirements: { met: false, requiredImageRendererPluginVersion: '' }, thumbnailsExist: false };
   rendererVersion = '';
   secretsManagerPluginEnabled = false;
+  supportBundlesEnabled = false;
   http2Enabled = false;
   dateFormats?: SystemDateFormatSettings;
   sentry = {
@@ -109,6 +118,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   pluginAdminEnabled = true;
   pluginAdminExternalManageEnabled = false;
   pluginCatalogHiddenPlugins: string[] = [];
+  pluginsCDNBaseURL = '';
   expressionsEnabled = false;
   customTheme?: undefined;
   awsAllowedAuthProviders: string[] = [];
@@ -142,8 +152,11 @@ export class GrafanaBootConfig implements GrafanaConfig {
   rudderstackSdkUrl: undefined;
   rudderstackConfigUrl: undefined;
 
+  tokenExpirationDayLimit: undefined;
+
   constructor(options: GrafanaBootConfig) {
     this.bootData = options.bootData;
+    this.bootData.user.lightTheme = getThemeMode(options) === 'light';
     this.isPublicDashboardView = options.bootData.settings.isPublicDashboardView;
 
     const defaults = {
@@ -175,7 +188,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
 
     overrideFeatureTogglesFromUrl(this);
 
-    // Creating theme after apply feature toggle overrides as the code below is checking a feature toggle right now
+    // Creating theme after applying feature toggle overrides in case we need to toggle anything
     this.theme2 = createTheme(getThemeCustomizations(this));
 
     this.theme = this.theme2.v1;
@@ -184,15 +197,27 @@ export class GrafanaBootConfig implements GrafanaConfig {
   }
 }
 
+function getThemeMode(config: GrafanaBootConfig) {
+  let mode: 'light' | 'dark' = 'dark';
+  const themePref = config.bootData.user.theme;
+
+  if (themePref === 'light' || themePref === 'dark') {
+    mode = themePref;
+  } else if (themePref === 'system') {
+    const mediaResult = window.matchMedia('(prefers-color-scheme: dark)');
+    mode = mediaResult.matches ? 'dark' : 'light';
+  }
+
+  return mode;
+}
+
 function getThemeCustomizations(config: GrafanaBootConfig) {
+  // if/when we remove CurrentUserDTO.lightTheme, change this to use getThemeMode instead
   const mode = config.bootData.user.lightTheme ? 'light' : 'dark';
+
   const themeOptions: NewThemeOptions = {
     colors: { mode },
   };
-
-  if (config.featureToggles.interFont) {
-    themeOptions.typography = { fontFamily: '"Inter", "Helvetica", "Arial", sans-serif' };
-  }
 
   return themeOptions;
 }

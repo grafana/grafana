@@ -21,7 +21,7 @@ const mapStateToProps = (state: StoreState) => {
     meta: state.importDashboard.meta,
     source: state.importDashboard.source,
     inputs: state.importDashboard.inputs,
-    folder: searchObj.folderId ? { id: Number(searchObj.folderId) } : { id: 0 },
+    folder: searchObj.folderUid ? { uid: String(searchObj.folderUid) } : { uid: '' },
   };
 };
 
@@ -111,7 +111,7 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
               onUidReset={this.onUidReset}
               onSubmit={this.onSubmit}
               watch={watch}
-              initialFolderId={folder.id}
+              initialFolderUid={folder.uid}
             />
           )}
         </Form>

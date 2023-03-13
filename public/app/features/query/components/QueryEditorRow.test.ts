@@ -21,10 +21,12 @@ describe('filterPanelDataToQuery', () => {
       toDataFrame({ refId: 'B', fields: [{ name: 'B333' }], meta: {} }),
       toDataFrame({ refId: 'C', fields: [{ name: 'CCCC' }], meta: { requestId: 'sub3' } }),
     ],
-    error: {
-      refId: 'B',
-      message: 'Error!!',
-    },
+    errors: [
+      {
+        refId: 'B',
+        message: 'Error!!',
+      },
+    ],
     request: makePretendRequest('111', [
       makePretendRequest('sub1'),
       makePretendRequest('sub2'),
@@ -38,6 +40,7 @@ describe('filterPanelDataToQuery', () => {
     expect(panelData?.series.length).toBe(1);
     expect(panelData?.series[0].refId).toBe('A');
     expect(panelData?.error).toBeUndefined();
+    expect(panelData?.errors).toBeUndefined();
   });
 
   it('should match the error to the query', () => {
@@ -45,6 +48,7 @@ describe('filterPanelDataToQuery', () => {
     expect(panelData?.series.length).toBe(3);
     expect(panelData?.series[0].refId).toBe('B');
     expect(panelData?.error!.refId).toBe('B');
+    expect(panelData?.errors![0].refId).toBe('B');
   });
 
   it('should include errors when missing data', () => {
@@ -53,12 +57,14 @@ describe('filterPanelDataToQuery', () => {
       error: {
         message: 'Error!!',
       },
+      errors: [{ message: 'Error!!' }],
     } as unknown as PanelData;
 
     const panelData = filterPanelDataToQuery(withError, 'B');
     expect(panelData).toBeDefined();
     expect(panelData?.state).toBe(LoadingState.Error);
     expect(panelData?.error).toBe(withError.error);
+    expect(panelData?.errors).toEqual(withError.errors);
   });
 
   it('should set the state to done if the frame has no errors', () => {
@@ -91,6 +97,7 @@ describe('filterPanelDataToQuery', () => {
     const panelDataB = filterPanelDataToQuery(withError, 'Q');
     expect(panelDataB?.series.length).toBe(0);
     expect(panelDataB?.error?.refId).toBe('Q');
+    expect(panelDataB?.errors![0].refId).toBe('Q');
   });
 
   it('should not set the state to done if the frame is loading and has no errors', () => {
@@ -109,8 +116,21 @@ describe('filterPanelDataToQuery', () => {
     const panelDataA = filterPanelDataToQuery(loadingData, 'A');
     expect(panelDataA?.state).toBe(LoadingState.Loading);
   });
+  it('should keep the state in loading until all queries are finished, even if the current query has errored', () => {
+    const loadingData: PanelData = {
+      state: LoadingState.Loading,
+      series: [],
+      error: {
+        refId: 'A',
+        message: 'Error',
+      },
+      timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
+    };
 
-  it('should not set the state to error if the frame is still loading', () => {
+    const panelDataA = filterPanelDataToQuery(loadingData, 'A');
+    expect(panelDataA?.state).toBe(LoadingState.Loading);
+  });
+  it('should keep the state in loading until all queries are finished, if another query has errored', () => {
     const loadingData: PanelData = {
       state: LoadingState.Loading,
       series: [],

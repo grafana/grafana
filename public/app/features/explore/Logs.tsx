@@ -16,7 +16,6 @@ import {
   LogsSortOrder,
   LinkModel,
   Field,
-  DataQuery,
   DataFrame,
   GrafanaTheme2,
   LoadingState,
@@ -26,8 +25,10 @@ import {
   DataHoverEvent,
   DataHoverClearEvent,
   EventBus,
+  DataSourceWithLogsContextSupport,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import {
   RadioButtonGroup,
   Button,
@@ -47,7 +48,7 @@ import { LogRows } from '../logs/components/LogRows';
 
 import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
-import { LogsVolumePanel } from './LogsVolumePanel';
+import { LogsVolumePanelList } from './LogsVolumePanelList';
 import { SETTINGS_KEYS } from './utils/logs';
 
 interface Props extends Themeable2 {
@@ -71,14 +72,15 @@ interface Props extends Themeable2 {
   logsVolumeData: DataQueryResponse | undefined;
   scrollElement?: HTMLDivElement;
   onSetLogsVolumeEnabled: (enabled: boolean) => void;
-  loadLogsVolumeData: (exploreId: ExploreId) => void;
+  loadLogsVolumeData: () => void;
   showContextToggle?: (row?: LogRowModel) => boolean;
   onChangeTime: (range: AbsoluteTimeRange) => void;
-  onClickFilterLabel?: (key: string, value: string) => void;
-  onClickFilterOutLabel?: (key: string, value: string) => void;
+  onClickFilterLabel: (key: string, value: string) => void;
+  onClickFilterOutLabel: (key: string, value: string) => void;
   onStartScanning?: () => void;
   onStopScanning?: () => void;
   getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<any>;
+  getLogRowContextUi?: DataSourceWithLogsContextSupport['getLogRowContextUi'];
   getFieldLinks: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
   addResultsToCache: () => void;
   clearCache: () => void;
@@ -94,7 +96,7 @@ interface State {
   hiddenLogLevels: LogLevel[];
   logsSortOrder: LogsSortOrder | null;
   isFlipping: boolean;
-  showDetectedFields: string[];
+  displayedFields: string[];
   forceEscape: boolean;
 }
 
@@ -107,6 +109,14 @@ const styleOverridesForStickyNavigation = css`
     }
   }
 `;
+
+// we need to define the order of these explicitly
+const DEDUP_OPTIONS = [
+  LogsDedupStrategy.none,
+  LogsDedupStrategy.exact,
+  LogsDedupStrategy.numbers,
+  LogsDedupStrategy.signature,
+];
 
 class UnthemedLogs extends PureComponent<Props, State> {
   flipOrderTimer?: number;
@@ -123,7 +133,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     hiddenLogLevels: [],
     logsSortOrder: store.get(SETTINGS_KEYS.logsSortOrder) || LogsSortOrder.Descending,
     isFlipping: false,
-    showDetectedFields: [],
+    displayedFields: [],
     forceEscape: false,
   };
 
@@ -255,24 +265,24 @@ class UnthemedLogs extends PureComponent<Props, State> {
     }
   };
 
-  showDetectedField = (key: string) => {
-    const index = this.state.showDetectedFields.indexOf(key);
+  showField = (key: string) => {
+    const index = this.state.displayedFields.indexOf(key);
 
     if (index === -1) {
       this.setState((state) => {
         return {
-          showDetectedFields: state.showDetectedFields.concat(key),
+          displayedFields: state.displayedFields.concat(key),
         };
       });
     }
   };
 
-  hideDetectedField = (key: string) => {
-    const index = this.state.showDetectedFields.indexOf(key);
+  hideField = (key: string) => {
+    const index = this.state.displayedFields.indexOf(key);
     if (index > -1) {
       this.setState((state) => {
         return {
-          showDetectedFields: state.showDetectedFields.filter((k) => key !== k),
+          displayedFields: state.displayedFields.filter((k) => key !== k),
         };
       });
     }
@@ -281,7 +291,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
   clearDetectedFields = () => {
     this.setState((state) => {
       return {
-        showDetectedFields: [],
+        displayedFields: [],
       };
     });
   };
@@ -322,13 +332,10 @@ class UnthemedLogs extends PureComponent<Props, State> {
       splitOpen,
       logRows,
       logsMeta,
-      logsSeries,
-      visibleRange,
       logsVolumeEnabled,
       logsVolumeData,
       loadLogsVolumeData,
       loading = false,
-      loadingState,
       onClickFilterLabel,
       onClickFilterOutLabel,
       timeZone,
@@ -344,6 +351,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
       addResultsToCache,
       exploreId,
       scrollElement,
+      getRowContext,
+      getLogRowContextUi,
     } = this.props;
 
     const {
@@ -355,7 +364,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
       hiddenLogLevels,
       logsSortOrder,
       isFlipping,
-      showDetectedFields,
+      displayedFields,
       forceEscape,
     } = this.state;
 
@@ -373,23 +382,14 @@ class UnthemedLogs extends PureComponent<Props, State> {
       <>
         <Collapse label="Logs volume" collapsible isOpen={logsVolumeEnabled} onToggle={this.onToggleLogsVolumeCollapse}>
           {logsVolumeEnabled && (
-            <LogsVolumePanel
+            <LogsVolumePanelList
               absoluteRange={absoluteRange}
               width={width}
               logsVolumeData={logsVolumeData}
-              logLinesBasedData={
-                logsSeries
-                  ? {
-                      data: logsSeries,
-                      state: loadingState,
-                    }
-                  : undefined
-              }
-              logLinesBasedDataVisibleRange={visibleRange}
               onUpdateTimeRange={onChangeTime}
               timeZone={timeZone}
               splitOpen={splitOpen}
-              onLoadLogsVolume={() => loadLogsVolumeData(exploreId)}
+              onLoadLogsVolume={loadLogsVolumeData}
               onHiddenSeriesChanged={this.onToggleLogLevel}
               eventBus={this.logsVolumeEventBus}
             />
@@ -434,9 +434,9 @@ class UnthemedLogs extends PureComponent<Props, State> {
                   id={`prettify_${exploreId}`}
                 />
               </InlineField>
-              <InlineField label="Dedup" className={styles.horizontalInlineLabel} transparent>
+              <InlineField label="Deduplication" className={styles.horizontalInlineLabel} transparent>
                 <RadioButtonGroup
-                  options={Object.values(LogsDedupStrategy).map((dedupType) => ({
+                  options={DEDUP_OPTIONS.map((dedupType) => ({
                     label: capitalize(dedupType),
                     value: dedupType,
                     description: LogsDedupDescription[dedupType],
@@ -477,7 +477,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
             dedupCount={dedupCount}
             hasUnescapedContent={hasUnescapedContent}
             forceEscape={forceEscape}
-            showDetectedFields={showDetectedFields}
+            displayedFields={displayedFields}
             onEscapeNewlines={this.onEscapeNewlines}
             clearDetectedFields={this.clearDetectedFields}
           />
@@ -487,7 +487,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 logRows={logRows}
                 deduplicatedRows={dedupedRows}
                 dedupStrategy={dedupStrategy}
-                getRowContext={this.props.getRowContext}
+                getRowContext={getRowContext}
+                getLogRowContextUi={getLogRowContextUi}
                 onClickFilterLabel={onClickFilterLabel}
                 onClickFilterOutLabel={onClickFilterOutLabel}
                 showContextToggle={showContextToggle}
@@ -500,13 +501,29 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 timeZone={timeZone}
                 getFieldLinks={getFieldLinks}
                 logsSortOrder={logsSortOrder}
-                showDetectedFields={showDetectedFields}
-                onClickShowDetectedField={this.showDetectedField}
-                onClickHideDetectedField={this.hideDetectedField}
+                displayedFields={displayedFields}
+                onClickShowField={this.showField}
+                onClickHideField={this.hideField}
                 app={CoreApp.Explore}
                 scrollElement={scrollElement}
                 onLogRowHover={this.onLogRowHover}
               />
+              {!loading && !hasData && !scanning && (
+                <div className={styles.noData}>
+                  No logs found.
+                  <Button size="sm" variant="secondary" onClick={this.onClickScan}>
+                    Scan for older logs
+                  </Button>
+                </div>
+              )}
+              {scanning && (
+                <div className={styles.noData}>
+                  <span>{scanText}</span>
+                  <Button size="sm" variant="secondary" onClick={this.onClickStopScan}>
+                    Stop scan
+                  </Button>
+                </div>
+              )}
             </div>
             <LogsNavigation
               logsSortOrder={logsSortOrder}
@@ -521,22 +538,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
               clearCache={clearCache}
             />
           </div>
-          {!loading && !hasData && !scanning && (
-            <div className={styles.noData}>
-              No logs found.
-              <Button size="xs" fill="text" onClick={this.onClickScan}>
-                Scan for older logs
-              </Button>
-            </div>
-          )}
-          {scanning && (
-            <div className={styles.noData}>
-              <span>{scanText}</span>
-              <Button size="xs" fill="text" onClick={this.onClickStopScan}>
-                Stop scan
-              </Button>
-            </div>
-          )}
         </Collapse>
       </>
     );

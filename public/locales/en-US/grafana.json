@@ -1,5 +1,29 @@
 {
   "_comment": "Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source",
+  "clipboard-button": {
+    "inline-toast": {
+      "success": "Copied"
+    }
+  },
+  "command-palette": {
+    "action": {
+      "change-theme": "Change theme...",
+      "dark-theme": "Dark",
+      "light-theme": "Light",
+      "search": "Search"
+    },
+    "search-box": {
+      "placeholder": "Search or jump to..."
+    },
+    "section": {
+      "actions": "Actions",
+      "dashboard-search-results": "Dashboards",
+      "folder-search-results": "Folders",
+      "pages": "Pages",
+      "preferences": "Preferences",
+      "recent-dashboards": "Recent dashboards"
+    }
+  },
   "common": {
     "locale": {
       "default": "Default"
@@ -75,8 +99,24 @@
       "unmark-favorite": "Unmark as favorite"
     }
   },
+  "datasource-onboarding": {
+    "contact-admin": "Please contact your administrator to configure data sources.",
+    "explanation": "To visualize your data, you'll need to connect it first.",
+    "new-dashboard": "New dashboard",
+    "preferred": "Connect your preferred data source:",
+    "sampleData": "Or set up a new dashboard with sample data",
+    "viewAll": "View all",
+    "welcome": "Welcome to Grafana dashboards!"
+  },
   "folder-picker": {
     "loading": "Loading folders..."
+  },
+  "grafana-ui": {
+    "segment-async": {
+      "error": "Failed to load options",
+      "loading": "Loading options...",
+      "no-options": "No options found"
+    }
   },
   "library-panel": {
     "add-modal": {
@@ -117,6 +157,9 @@
       "subtitle": "See grouped alerts from an Alertmanager instance",
       "title": "Groups"
     },
+    "alerting-home": {
+      "title": "Home"
+    },
     "alerting-legacy": {
       "title": "Alerting (legacy)"
     },
@@ -125,7 +168,7 @@
       "title": "Alert rules"
     },
     "alerting-receivers": {
-      "subtitle": "Decide how your contacts are notified when an alert fires",
+      "subtitle": "Choose how to notify your contact points when an alert instance fires",
       "title": "Contact points"
     },
     "alerting-silences": {
@@ -156,7 +199,7 @@
       "title": "Create"
     },
     "create-alert": {
-      "title": "New alert rule"
+      "title": "Create alert rule"
     },
     "create-dashboard": {
       "title": "Dashboard"
@@ -183,8 +226,9 @@
       "title": "Organizations"
     },
     "global-users": {
-      "subtitle": "Manage and create users across the whole Grafana server",
-      "title": "Users"
+      "subtitle": "Manage users in Grafana",
+      "title": "Users",
+      "titleBeforeTopnav": "Users"
     },
     "help": {
       "title": "Help"
@@ -215,9 +259,15 @@
     "manage-dashboards": {
       "title": "Browse"
     },
+    "manage-folder": {
+      "subtitle": "Manage folder dashboards and permissions"
+    },
     "monitoring": {
       "subtitle": "Monitoring and infrastructure apps",
       "title": "Monitoring"
+    },
+    "new": {
+      "title": "New"
     },
     "new-dashboard": {
       "title": "New dashboard"
@@ -227,7 +277,8 @@
     },
     "org-settings": {
       "subtitle": "Manage preferences across an organization",
-      "title": "Preferences"
+      "title": "Default preferences",
+      "titleBeforeTopnav": "Preferences"
     },
     "playlists": {
       "subtitle": "Groups of dashboards that are displayed in a sequence",
@@ -244,14 +295,21 @@
       "title": "Change password"
     },
     "profile/settings": {
-      "title": "Preferences"
+      "title": "Profile"
     },
     "profile/switch-org": "Switch organization",
+    "public": {
+      "title": "Public dashboards"
+    },
     "scenes": {
       "title": "Scenes"
     },
     "search": {
-      "placeholder": "Search Grafana"
+      "placeholder": "Search Grafana",
+      "placeholderCommandPalette": "Search or jump to..."
+    },
+    "search-dashboards": {
+      "title": "Search dashboards"
     },
     "server-settings": {
       "subtitle": "View the settings defined in your Grafana config",
@@ -279,6 +337,10 @@
       "subtitle": "Manage file storage",
       "title": "Storage"
     },
+    "support-bundles": {
+      "subtitle": "Download support bundles",
+      "title": "Support bundles"
+    },
     "teams": {
       "subtitle": "Groups of users that have common dashboard and permission needs",
       "title": "Teams"
@@ -294,18 +356,38 @@
   "navigation": {
     "kiosk": {
       "tv-alert": "Press ESC to exit kiosk mode"
+    },
+    "toolbar": {
+      "enable-kiosk": "Enable kiosk mode",
+      "toggle-menu": "Toggle menu",
+      "toggle-search-bar": "Toggle top search bar"
     }
   },
   "news": {
     "title": "Latest from the blog"
   },
+  "notifications": {
+    "starred-dashboard": "Dashboard starred",
+    "unstarred-dashboard": "Dashboard unstarred"
+  },
   "panel": {
     "header-menu": {
+      "copy": "Copy",
+      "create-library-panel": "Create library panel",
+      "duplicate": "Duplicate",
+      "edit": "Edit",
+      "explore": "Explore",
+      "get-help": "Get help",
+      "hide-legend": "Hide legend",
       "inspect": "Inspect",
       "inspect-data": "Data",
       "inspect-json": "Panel JSON",
       "more": "More...",
+      "query": "Query",
+      "remove": "Remove",
       "share": "Share",
+      "show-legend": "Show legend",
+      "unlink-library-panel": "Unlink library panel",
       "view": "View"
     }
   },
@@ -324,6 +406,40 @@
     },
     "select-button": {
       "auto-refresh": "Set auto refresh interval"
+    }
+  },
+  "search": {
+    "actions": {
+      "include-panels": "Include panels",
+      "remove-datasource-filter": "Datasource: {{datasource}}",
+      "sort-placeholder": "Sort",
+      "starred": "Starred",
+      "view-as-folders": "View by folders",
+      "view-as-grid": "Grid view",
+      "view-as-list": "View as list"
+    },
+    "dashboard-actions": {
+      "import": "Import",
+      "new": "New",
+      "new-dashboard": "New Dashboard",
+      "new-folder": "New Folder"
+    },
+    "folder-view": {
+      "go-to-folder": "Go to folder",
+      "select-folder": "Select folder"
+    },
+    "results-table": {
+      "datasource-header": "Data source",
+      "location-header": "Location",
+      "name-header": "Name",
+      "tags-header": "Tags",
+      "type-dashboard": "Dashboard",
+      "type-folder": "Folder",
+      "type-header": "Type"
+    },
+    "search-input": {
+      "include-panels-placeholder": "Search for dashboards and panels",
+      "placeholder": "Search for dashboards"
     }
   },
   "share-modal": {
@@ -381,7 +497,8 @@
       "mistake-message": "Did you make a mistake? ",
       "name": "Snapshot name",
       "timeout": "Timeout (seconds)",
-      "timeout-description": "You might need to configure the timeout value if it takes a long time to collect your dashboard metrics."
+      "timeout-description": "You might need to configure the timeout value if it takes a long time to collect your dashboard metrics.",
+      "url-label": "Snapshot URL"
     },
     "tab-title": {
       "embed": "Embed",
@@ -395,6 +512,9 @@
       "dark": "Dark",
       "field-name": "Theme",
       "light": "Light"
+    },
+    "view-json": {
+      "copy-button": "Copy to Clipboard"
     }
   },
   "shared-dashboard": {
@@ -414,9 +534,15 @@
     "theme": {
       "dark-label": "Dark",
       "default-label": "Default",
-      "light-label": "Light"
+      "light-label": "Light",
+      "system-label": "System"
     },
     "title": "Preferences"
+  },
+  "tag-filter": {
+    "loading": "Loading...",
+    "no-tags": "No tags found",
+    "placeholder": "Filter by tag"
   },
   "time-picker": {
     "absolute": {
@@ -480,8 +606,7 @@
       "name-error": "Name is required",
       "name-label": "Name",
       "username-label": "Username"
-    },
-    "title": "Edit profile"
+    }
   },
   "user-session": {
     "browser-column": "Browser & OS",
@@ -492,5 +617,22 @@
   },
   "user-sessions": {
     "loading": "Loading sessions..."
+  },
+  "variable": {
+    "adhoc": {
+      "placeholder": "Select value"
+    },
+    "dropdown": {
+      "placeholder": "Enter variable value"
+    },
+    "picker": {
+      "link-all": "All",
+      "option-all": "All",
+      "option-selected-values": "Selected",
+      "option-tooltip": "Clear selections"
+    },
+    "textbox": {
+      "placeholder": "Enter variable value"
+    }
   }
 }

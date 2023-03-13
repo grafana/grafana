@@ -19,6 +19,7 @@ type frontendLogMessageHandler func(hs *HTTPServer, c *web.Context)
 const sentryLogEndpointPath = "/log"
 const grafanaJavascriptAgentEndpointPath = "/log-grafana-javascript-agent"
 
+/** @deprecated will be removed in the next major version */
 func NewFrontendLogMessageHandler(store *frontendlogging.SourceMapStore) frontendLogMessageHandler {
 	return func(hs *HTTPServer, c *web.Context) {
 		event := frontendlogging.FrontendSentryEvent{}

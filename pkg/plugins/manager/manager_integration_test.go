@@ -4,15 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"path/filepath"
-	"strings"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"github.com/grafana/grafana/pkg/tsdb/parca"
-	"github.com/grafana/grafana/pkg/tsdb/phlare"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/ini.v1"
 
@@ -22,12 +19,16 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/provider"
 	"github.com/grafana/grafana/pkg/plugins/config"
+	plicensing "github.com/grafana/grafana/pkg/plugins/licensing"
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
+	"github.com/grafana/grafana/pkg/plugins/manager/sources"
 	"github.com/grafana/grafana/pkg/plugins/manager/store"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/searchV2"
@@ -43,6 +44,8 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/mssql"
 	"github.com/grafana/grafana/pkg/tsdb/mysql"
 	"github.com/grafana/grafana/pkg/tsdb/opentsdb"
+	"github.com/grafana/grafana/pkg/tsdb/parca"
+	"github.com/grafana/grafana/pkg/tsdb/phlare"
 	"github.com/grafana/grafana/pkg/tsdb/postgres"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"
@@ -100,7 +103,7 @@ func TestIntegrationPluginManager(t *testing.T) {
 	pg := postgres.ProvideService(cfg)
 	my := mysql.ProvideService(cfg, hcp)
 	ms := mssql.ProvideService(cfg)
-	sv2 := searchV2.ProvideService(cfg, db.InitTestDB(t), nil, nil, tracer, features, nil, nil, nil)
+	sv2 := searchV2.ProvideService(cfg, db.InitTestDB(t), nil, nil, tracer, features, nil, nil, nil, nil)
 	graf := grafanads.ProvideService(sv2, nil)
 	phlare := phlare.ProvideService(hcp)
 	parca := parca.ProvideService(hcp)
@@ -109,15 +112,20 @@ func TestIntegrationPluginManager(t *testing.T) {
 
 	pCfg := config.ProvideConfig(setting.ProvideProvider(cfg), cfg)
 	reg := registry.ProvideService()
-	l := loader.ProvideService(pCfg, &licensing.OSSLicensingService{Cfg: cfg}, signature.NewUnsignedAuthorizer(pCfg),
-		reg, provider.ProvideService(coreRegistry), fakes.NewFakeRoleRegistry())
-	ps, err := store.ProvideService(cfg, pCfg, reg, l)
+	cdn := pluginscdn.ProvideService(pCfg)
+
+	lic := plicensing.ProvideLicensing(cfg, &licensing.OSSLicensingService{Cfg: cfg})
+	l := loader.ProvideService(pCfg, lic, signature.NewUnsignedAuthorizer(pCfg),
+		reg, provider.ProvideService(coreRegistry), fakes.NewFakeRoleRegistry(),
+		cdn, assetpath.ProvideService(cdn))
+	srcs := sources.ProvideService(cfg, pCfg)
+	ps, err := store.ProvideService(reg, srcs, l)
 	require.NoError(t, err)
 
 	ctx := context.Background()
 	verifyCorePluginCatalogue(t, ctx, ps)
 	verifyBundledPlugins(t, ctx, ps)
-	verifyPluginStaticRoutes(t, ctx, ps)
+	verifyPluginStaticRoutes(t, ctx, ps, reg)
 	verifyBackendProcesses(t, reg.Plugins(ctx))
 	verifyPluginQuery(t, ctx, client.ProvideService(reg, pCfg))
 }
@@ -164,7 +172,6 @@ func verifyCorePluginCatalogue(t *testing.T, ctx context.Context, ps *store.Serv
 		"gettingstarted": {},
 		"graph":          {},
 		"heatmap":        {},
-		"heatmap-old":    {},
 		"histogram":      {},
 		"icon":           {},
 		"live":           {},
@@ -266,25 +273,25 @@ func verifyBundledPlugins(t *testing.T, ctx context.Context, ps *store.Service) 
 
 	for _, pluginID := range []string{"input"} {
 		require.Contains(t, pluginRoutes, pluginID)
-		require.True(t, strings.HasPrefix(pluginRoutes[pluginID].Directory, inputPlugin.PluginDir))
+		require.Equal(t, pluginRoutes[pluginID].Directory, inputPlugin.Base())
 	}
 }
 
-func verifyPluginStaticRoutes(t *testing.T, ctx context.Context, ps *store.Service) {
+func verifyPluginStaticRoutes(t *testing.T, ctx context.Context, rr plugins.StaticRouteResolver, reg registry.Service) {
 	routes := make(map[string]*plugins.StaticRoute)
-	for _, route := range ps.Routes() {
+	for _, route := range rr.Routes() {
 		routes[route.PluginID] = route
 	}
 
 	require.Len(t, routes, 2)
 
-	inputPlugin, _ := ps.Plugin(ctx, "input")
+	inputPlugin, _ := reg.Plugin(ctx, "input")
 	require.NotNil(t, routes["input"])
-	require.Equal(t, routes["input"].Directory, inputPlugin.PluginDir)
+	require.Equal(t, routes["input"].Directory, inputPlugin.FS.Base())
 
-	testAppPlugin, _ := ps.Plugin(ctx, "test-app")
+	testAppPlugin, _ := reg.Plugin(ctx, "test-app")
 	require.Contains(t, routes, "test-app")
-	require.Equal(t, routes["test-app"].Directory, testAppPlugin.PluginDir)
+	require.Equal(t, routes["test-app"].Directory, testAppPlugin.FS.Base())
 }
 
 func verifyBackendProcesses(t *testing.T, ps []*plugins.Plugin) {

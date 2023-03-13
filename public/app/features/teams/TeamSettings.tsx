@@ -41,7 +41,7 @@ export const TeamSettings: FC<Props> = ({ team, updateTeam }) => {
           if (contextSrv.licensedAccessControlEnabled() && canUpdateRoles) {
             await updateTeamRoles(pendingRoles, team.id);
           }
-          updateTeam(formTeam.name, formTeam.email);
+          updateTeam(formTeam.name, formTeam.email || '');
         }}
         disabled={!canWriteTeamSettings}
       >
@@ -84,7 +84,7 @@ export const TeamSettings: FC<Props> = ({ team, updateTeam }) => {
           </FieldSet>
         )}
       </Form>
-      <SharedPreferences resourceUri={`teams/${team.id}`} disabled={!canWriteTeamSettings} />
+      <SharedPreferences resourceUri={`teams/${team.id}`} disabled={!canWriteTeamSettings} preferenceType="team" />
     </VerticalGroup>
   );
 };

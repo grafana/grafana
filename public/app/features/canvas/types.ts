@@ -1,3 +1,4 @@
+import { LinkModel } from '@grafana/data/src';
 import { ColorDimensionConfig, ResourceDimensionConfig, TextDimensionConfig } from 'app/features/dimensions/types';
 
 export interface Placement {
@@ -77,6 +78,7 @@ export interface TextData {
   size?: number; // 0 or missing will "auto size"
   align: Align;
   valign: VAlign;
+  links?: LinkModel[];
 }
 
 export interface TextConfig {

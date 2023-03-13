@@ -1,11 +1,16 @@
 package channels_config
 
 import (
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
+	"os"
+
+	alertingOpsgenie "github.com/grafana/alerting/receivers/opsgenie"
+	alertingTemplates "github.com/grafana/alerting/templates"
 )
 
 // GetAvailableNotifiers returns the metadata of all the notification channels that can be configured.
 func GetAvailableNotifiers() []*NotifierPlugin {
+	hostname, _ := os.Hostname()
+
 	pushoverSoundOptions := []SelectOption{
 		{
 			Value: "default",
@@ -137,14 +142,14 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Element:      ElementTypeInput,
 					InputType:    InputTypeText,
 					Description:  "Templated title of the message",
-					Placeholder:  channels.DefaultMessageTitleEmbed,
+					Placeholder:  alertingTemplates.DefaultMessageTitleEmbed,
 					PropertyName: "title",
 				},
 				{ // New in 8.0.
 					Label:        "Message",
 					Element:      ElementTypeTextArea,
 					Description:  "Custom DingDing message. You can use template variables.",
-					Placeholder:  channels.DefaultMessageEmbed,
+					Placeholder:  alertingTemplates.DefaultMessageEmbed,
 					PropertyName: "message",
 				},
 			},
@@ -159,6 +164,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Label:        "Kafka REST Proxy",
 					Element:      ElementTypeInput,
 					InputType:    InputTypeText,
+					Description:  "Hint: If you are directly using v3 APIs hosted on a Confluent Kafka Server, you must append /kafka to the URL here. Example: https://localhost:8082/kafka",
 					Placeholder:  "http://localhost:8082",
 					PropertyName: "kafkaRestProxy",
 					Required:     true,
@@ -172,19 +178,66 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Required:     true,
 				},
 				{
+					Label:        "Username",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					PropertyName: "username",
+					Required:     false,
+				},
+				{
+					Label:        "Password",
+					Element:      ElementTypeInput,
+					InputType:    InputTypePassword,
+					Description:  "The password to use when making a call to the Kafka REST Proxy",
+					PropertyName: "password",
+					Required:     false,
+					Secure:       true,
+				},
+				{
+					Label:        "API version",
+					Element:      ElementTypeSelect,
+					InputType:    InputTypeText,
+					Description:  "The API version to use when contacting the Kafka REST Server. By default v2 will be used.",
+					PropertyName: "apiVersion",
+					Required:     false,
+					SelectOptions: []SelectOption{
+						{
+							Value: "v2",
+							Label: "v2",
+						},
+						{
+							Value: "v3",
+							Label: "v3",
+						},
+					},
+				},
+				{
+					Label:        "Cluster ID",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Description:  "v3 APIs require a clusterID to be specified.",
+					Placeholder:  "lkc-abcde",
+					PropertyName: "kafkaClusterId",
+					Required:     true,
+					ShowWhen: ShowWhen{
+						Field: "apiVersion",
+						Is:    "v3",
+					},
+				},
+				{
 					Label:        "Description",
 					Element:      ElementTypeInput,
 					InputType:    InputTypeText,
 					Description:  "Templated description of the Kafka message",
 					PropertyName: "description",
-					Placeholder:  channels.DefaultMessageTitleEmbed,
+					Placeholder:  alertingTemplates.DefaultMessageTitleEmbed,
 				},
 				{
 					Label:        "Details",
 					Element:      ElementTypeTextArea,
 					Description:  "Custom details to include with the message. You can use template variables.",
 					PropertyName: "details",
-					Placeholder:  channels.DefaultMessageEmbed,
+					Placeholder:  alertingTemplates.DefaultMessageEmbed,
 				},
 			},
 		},
@@ -219,7 +272,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					InputType:    InputTypeText,
 					Description:  "Templated subject of the email",
 					PropertyName: "subject",
-					Placeholder:  channels.DefaultMessageTitleEmbed,
+					Placeholder:  alertingTemplates.DefaultMessageTitleEmbed,
 				},
 			},
 		},
@@ -239,26 +292,11 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Secure:       true,
 				},
 				{
-					Label:   "Severity",
-					Element: ElementTypeSelect,
-					SelectOptions: []SelectOption{
-						{
-							Value: "critical",
-							Label: "Critical",
-						},
-						{
-							Value: "error",
-							Label: "Error",
-						},
-						{
-							Value: "warning",
-							Label: "Warning",
-						},
-						{
-							Value: "info",
-							Label: "Info",
-						},
-					},
+					Label:        "Severity",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "error",
+					Description:  "Severity of the event. It must be critical, error, warning, info - otherwise, the default is set which is error. You can use templates",
 					PropertyName: "severity",
 				},
 				{ // New in 8.0.
@@ -288,8 +326,32 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Description:  "You can use templates for summary",
 					Element:      ElementTypeInput,
 					InputType:    InputTypeText,
-					Placeholder:  channels.DefaultMessageTitleEmbed,
+					Placeholder:  alertingTemplates.DefaultMessageTitleEmbed,
 					PropertyName: "summary",
+				},
+				{ // New in 9.4.
+					Label:        "Source",
+					Description:  "The unique location of the affected system, preferably a hostname or FQDN. You can use templates",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  hostname,
+					PropertyName: "source",
+				},
+				{ // New in 9.4.
+					Label:        "Client",
+					Description:  "The name of the monitoring client that is triggering this event. You can use templates",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "Grafana",
+					PropertyName: "client",
+				},
+				{ // New in 9.4.
+					Label:        "Client URL",
+					Description:  "The URL of the monitoring client that is triggering this event. You can use templates",
+					Element:      ElementTypeInput,
+					InputType:    InputTypeText,
+					Placeholder:  "{{ .ExternalURL }}",
+					PropertyName: "client_url",
 				},
 			},
 		},
@@ -327,7 +389,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					InputType:    InputTypeText,
 					Description:  "Templated title to display",
 					PropertyName: "title",
-					Placeholder:  channels.DefaultMessageTitleEmbed,
+					Placeholder:  alertingTemplates.DefaultMessageTitleEmbed,
 				},
 				{ // New in 9.3.
 					Label:        "Description",
@@ -335,7 +397,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					InputType:    InputTypeText,
 					Description:  "Templated description of the message",
 					PropertyName: "description",
-					Placeholder:  channels.DefaultMessageEmbed,
+					Placeholder:  alertingTemplates.DefaultMessageEmbed,
 				},
 			},
 		},
@@ -414,13 +476,13 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Label:        "Title",
 					Element:      ElementTypeInput,
 					InputType:    InputTypeText,
-					Placeholder:  channels.DefaultMessageTitleEmbed,
+					Placeholder:  alertingTemplates.DefaultMessageTitleEmbed,
 					PropertyName: "title",
 				},
 				{ // New in 8.0.
 					Label:        "Message",
 					Element:      ElementTypeTextArea,
-					Placeholder:  channels.DefaultMessageEmbed,
+					Placeholder:  alertingTemplates.DefaultMessageEmbed,
 					PropertyName: "message",
 				},
 			},
@@ -598,7 +660,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 				{ // New in 8.0.
 					Label:        "Message",
 					Element:      ElementTypeTextArea,
-					Placeholder:  channels.DefaultMessageEmbed,
+					Placeholder:  alertingTemplates.DefaultMessageEmbed,
 					PropertyName: "message",
 				},
 			},
@@ -623,7 +685,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					InputType:    InputTypeText,
 					Description:  "Templated title of the Teams message.",
 					PropertyName: "title",
-					Placeholder:  channels.DefaultMessageTitleEmbed,
+					Placeholder:  alertingTemplates.DefaultMessageTitleEmbed,
 				},
 				{
 					Label:        "Section Title",
@@ -635,7 +697,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 				{ // New in 8.0.
 					Label:        "Message",
 					Element:      ElementTypeTextArea,
-					Placeholder:  channels.DefaultMessageEmbed,
+					Placeholder:  alertingTemplates.DefaultMessageEmbed,
 					PropertyName: "message",
 				},
 			},
@@ -666,8 +728,38 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 				{ // New in 8.0.
 					Label:        "Message",
 					Element:      ElementTypeTextArea,
-					Placeholder:  channels.DefaultMessageEmbed,
+					Placeholder:  alertingTemplates.DefaultMessageEmbed,
 					PropertyName: "message",
+				},
+				{
+					Label:   "Parse Mode",
+					Element: ElementTypeSelect,
+					SelectOptions: []SelectOption{
+						{
+							Value: "None",
+							Label: "None",
+						},
+						{
+							Value: "HTML",
+							Label: "HTML",
+						},
+						{
+							Value: "Markdown",
+							Label: "Markdown",
+						},
+						{
+							Value: "MarkdownV2",
+							Label: "Markdown V2",
+						},
+					},
+					Description:  `Mode for parsing entities in the message text. Default is 'HTML'`,
+					PropertyName: "parse_mode",
+				},
+				{
+					Label:        "Disable Notification",
+					Description:  "Sends the message silently. Users will receive a notification with no sound.",
+					Element:      ElementTypeCheckbox,
+					PropertyName: "disable_notification",
 				},
 			},
 		},
@@ -741,14 +833,14 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Element:      ElementTypeInput,
 					InputType:    InputTypeText,
 					PropertyName: "title",
-					Placeholder:  channels.DefaultMessageTitleEmbed,
+					Placeholder:  alertingTemplates.DefaultMessageTitleEmbed,
 				},
 				{ // New in 9.3.
 					Label:        "Message",
 					Description:  "Custom message. You can use template variables.",
 					Element:      ElementTypeTextArea,
 					PropertyName: "message",
-					Placeholder:  channels.DefaultMessageEmbed,
+					Placeholder:  alertingTemplates.DefaultMessageEmbed,
 				},
 			},
 		},
@@ -820,7 +912,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Label:        "Message",
 					Description:  "Custom WeCom message. You can use template variables.",
 					Element:      ElementTypeTextArea,
-					Placeholder:  channels.DefaultMessageEmbed,
+					Placeholder:  alertingTemplates.DefaultMessageEmbed,
 					PropertyName: "message",
 				},
 				{ // New in 9.1.
@@ -829,7 +921,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					InputType:    InputTypeText,
 					Description:  "Templated title of the message",
 					PropertyName: "title",
-					Placeholder:  channels.DefaultMessageTitleEmbed,
+					Placeholder:  alertingTemplates.DefaultMessageTitleEmbed,
 				},
 				{
 					Label:        "To User",
@@ -880,7 +972,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Description:  "Templated title of the message",
 					Element:      ElementTypeInput,
 					InputType:    InputTypeText,
-					Placeholder:  channels.DefaultMessageTitleEmbed,
+					Placeholder:  alertingTemplates.DefaultMessageTitleEmbed,
 					PropertyName: "title",
 				},
 				{
@@ -888,7 +980,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Description:  "Mention a group using @ or a user using <@ID> when notifying in a channel",
 					Element:      ElementTypeInput,
 					InputType:    InputTypeText,
-					Placeholder:  channels.DefaultMessageEmbed,
+					Placeholder:  alertingTemplates.DefaultMessageEmbed,
 					PropertyName: "message",
 				},
 				{
@@ -932,13 +1024,13 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Description:  "Templated title of the message",
 					Element:      ElementTypeInput,
 					InputType:    InputTypeText,
-					Placeholder:  channels.DefaultMessageTitleEmbed,
+					Placeholder:  alertingTemplates.DefaultMessageTitleEmbed,
 					PropertyName: "title",
 				},
 				{
 					Label:        "Message",
 					Element:      ElementTypeTextArea,
-					Placeholder:  channels.DefaultMessageEmbed,
+					Placeholder:  alertingTemplates.DefaultMessageEmbed,
 					PropertyName: "message",
 				},
 			},
@@ -964,7 +1056,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					InputType:    InputTypeText,
 					Description:  "Templated title of the message",
 					PropertyName: "title",
-					Placeholder:  channels.DefaultMessageTitleEmbed,
+					Placeholder:  alertingTemplates.DefaultMessageTitleEmbed,
 				},
 				{ // New in 9.3
 					Label:        "Description",
@@ -972,7 +1064,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					InputType:    InputTypeText,
 					Description:  "Templated description of the message",
 					PropertyName: "description",
-					Placeholder:  channels.DefaultMessageEmbed,
+					Placeholder:  alertingTemplates.DefaultMessageEmbed,
 				},
 			},
 		},
@@ -1019,7 +1111,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					InputType:    InputTypeText,
 					Description:  "Templated title of the message.",
 					PropertyName: "title",
-					Placeholder:  channels.DefaultMessageTitleEmbed,
+					Placeholder:  alertingTemplates.DefaultMessageTitleEmbed,
 				},
 				{ // New in 9.3
 					Label:        "Description",
@@ -1027,7 +1119,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					InputType:    InputTypeText,
 					Description:  "Templated description of the message.",
 					PropertyName: "description",
-					Placeholder:  channels.DefaultMessageEmbed,
+					Placeholder:  alertingTemplates.DefaultMessageEmbed,
 				},
 			},
 		},
@@ -1059,7 +1151,7 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Description:  "Alert text limited to 130 characters.",
 					Element:      ElementTypeInput,
 					InputType:    InputTypeText,
-					Placeholder:  channels.DefaultMessageTitleEmbed,
+					Placeholder:  alertingTemplates.DefaultMessageTitleEmbed,
 					PropertyName: "message",
 				},
 				{
@@ -1084,15 +1176,15 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Element: ElementTypeSelect,
 					SelectOptions: []SelectOption{
 						{
-							Value: channels.OpsgenieSendTags,
+							Value: alertingOpsgenie.SendTags,
 							Label: "Tags",
 						},
 						{
-							Value: channels.OpsgenieSendDetails,
+							Value: alertingOpsgenie.SendDetails,
 							Label: "Extra Properties",
 						},
 						{
-							Value: channels.OpsgenieSendBoth,
+							Value: alertingOpsgenie.SendBoth,
 							Label: "Tags & Extra Properties",
 						},
 					},
@@ -1136,8 +1228,8 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Required:     true,
 				},
 				{
-					Label:        "Message Template",
-					Description:  "Message template to use. Markdown is supported.",
+					Label:        "Notification Template",
+					Description:  "Notification template to use. Markdown is supported.",
 					Element:      ElementTypeInput,
 					InputType:    InputTypeText,
 					Placeholder:  `{{ template "default.message" . }}`,

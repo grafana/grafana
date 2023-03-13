@@ -66,6 +66,7 @@ type JsonData struct {
 	Encrypt             string `json:"encrypt"`
 	Servername          string `json:"servername"`
 	TimeInterval        string `json:"timeInterval"`
+	Database            string `json:"database"`
 }
 
 type DataSourceInfo struct {
@@ -96,7 +97,9 @@ type DataSourceHandler struct {
 	log                    log.Logger
 	dsInfo                 DataSourceInfo
 	rowLimit               int64
+	session                *xorm.Session
 }
+
 type QueryJson struct {
 	RawSql       string  `json:"rawSql"`
 	Fill         bool    `json:"fill"`
@@ -106,7 +109,7 @@ type QueryJson struct {
 	Format       string  `json:"format"`
 }
 
-func (e *DataSourceHandler) transformQueryError(logger log.Logger, err error) error {
+func (e *DataSourceHandler) TransformQueryError(logger log.Logger, err error) error {
 	// OpError is the error type usually returned by functions in the net
 	// package. It describes the operation, network type, and address of
 	// an error. We log this error rather than return it to the client
@@ -144,6 +147,7 @@ func NewQueryDataHandler(config DataPluginConfiguration, queryResultTransformer 
 		queryDataHandler.metricColumnTypes = config.MetricColumnTypes
 	}
 
+	// Create the xorm engine
 	engine, err := NewXormEngine(config.DriverName, config.ConnectionString)
 	if err != nil {
 		return nil, err
@@ -154,6 +158,11 @@ func NewQueryDataHandler(config DataPluginConfiguration, queryResultTransformer 
 	engine.SetConnMaxLifetime(time.Duration(config.DSInfo.JsonData.ConnMaxLifetime) * time.Second)
 
 	queryDataHandler.engine = engine
+
+	// Create the xorm session
+	session := engine.NewSession()
+	queryDataHandler.session = session
+
 	return &queryDataHandler, nil
 }
 
@@ -170,6 +179,10 @@ func (e *DataSourceHandler) Dispose() {
 		}
 	}
 	e.log.Debug("Engine disposed")
+}
+
+func (e *DataSourceHandler) Ping() error {
+	return e.engine.Ping()
 }
 
 func (e *DataSourceHandler) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -249,24 +262,22 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 	// global substitutions
 	interpolatedQuery, err := Interpolate(query, timeRange, e.dsInfo.JsonData.TimeInterval, queryJson.RawSql)
 	if err != nil {
-		errAppendDebug("interpolation failed", e.transformQueryError(logger, err), interpolatedQuery)
+		errAppendDebug("interpolation failed", e.TransformQueryError(logger, err), interpolatedQuery)
 		return
 	}
 
 	// data source specific substitutions
 	interpolatedQuery, err = e.macroEngine.Interpolate(&query, timeRange, interpolatedQuery)
 	if err != nil {
-		errAppendDebug("interpolation failed", e.transformQueryError(logger, err), interpolatedQuery)
+		errAppendDebug("interpolation failed", e.TransformQueryError(logger, err), interpolatedQuery)
 		return
 	}
 
-	session := e.engine.NewSession()
-	defer session.Close()
-	db := session.DB()
+	db := e.session.DB()
 
 	rows, err := db.QueryContext(queryContext, interpolatedQuery)
 	if err != nil {
-		errAppendDebug("db query error", e.transformQueryError(logger, err), interpolatedQuery)
+		errAppendDebug("db query error", e.TransformQueryError(logger, err), interpolatedQuery)
 		return
 	}
 	defer func() {
@@ -297,7 +308,7 @@ func (e *DataSourceHandler) executeQuery(query backend.DataQuery, wg *sync.WaitG
 
 	// If no rows were returned, no point checking anything else.
 	if frame.Rows() == 0 {
-		queryResult.dataResponse.Frames = data.Frames{frame}
+		queryResult.dataResponse.Frames = data.Frames{}
 		ch <- queryResult
 		return
 	}

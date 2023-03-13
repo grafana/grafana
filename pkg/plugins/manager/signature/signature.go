@@ -1,8 +1,8 @@
 package signature
 
 import (
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
 type Validator struct {
@@ -18,14 +18,14 @@ func NewValidator(authorizer plugins.PluginLoaderAuthorizer) Validator {
 }
 
 func (s *Validator) Validate(plugin *plugins.Plugin) *plugins.SignatureError {
-	if plugin.Signature == plugins.SignatureValid {
+	if plugin.Signature.IsValid() {
 		s.log.Debug("Plugin has valid signature", "id", plugin.ID)
 		return nil
 	}
 
 	// If a plugin is nested within another, create links to each other to inherit signature details
 	if plugin.Parent != nil {
-		if plugin.IsCorePlugin() || plugin.Signature == plugins.SignatureInternal {
+		if plugin.IsCorePlugin() || plugin.Signature.IsInternal() {
 			s.log.Debug("Not setting descendant plugin's signature to that of root since it's core or internal",
 				"plugin", plugin.ID, "signature", plugin.Signature, "isCore", plugin.IsCorePlugin())
 		} else {
@@ -34,7 +34,7 @@ func (s *Validator) Validate(plugin *plugins.Plugin) *plugins.SignatureError {
 			plugin.Signature = plugin.Parent.Signature
 			plugin.SignatureType = plugin.Parent.SignatureType
 			plugin.SignatureOrg = plugin.Parent.SignatureOrg
-			if plugin.Signature == plugins.SignatureValid {
+			if plugin.Signature.IsValid() {
 				s.log.Debug("Plugin has valid signature (inherited from root)", "id", plugin.ID)
 				return nil
 			}
@@ -54,7 +54,7 @@ func (s *Validator) Validate(plugin *plugins.Plugin) *plugins.SignatureError {
 				SignatureStatus: plugins.SignatureUnsigned,
 			}
 		}
-		s.log.Warn("Permitting unsigned plugin. This is not recommended", "pluginID", plugin.ID, "pluginDir", plugin.PluginDir)
+		s.log.Warn("Permitting unsigned plugin. This is not recommended", "pluginID", plugin.ID)
 		return nil
 	case plugins.SignatureInvalid:
 		s.log.Debug("Plugin has an invalid signature", "pluginID", plugin.ID)

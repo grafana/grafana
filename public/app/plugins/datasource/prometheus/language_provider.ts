@@ -14,6 +14,7 @@ import {
 import { BackendSrvRequest } from '@grafana/runtime';
 import { CompletionItem, CompletionItemGroup, SearchFunctionType, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
 
+import { Label } from './components/monaco-query-field/monaco-completion-provider/situation';
 import { PrometheusDatasource } from './datasource';
 import {
   addLimitInfo,
@@ -76,6 +77,20 @@ export function getMetadataString(metric: string, metadata: PromMetricsMetadata)
   return `${type.toUpperCase()}: ${help}`;
 }
 
+export function getMetadataHelp(metric: string, metadata: PromMetricsMetadata): string | undefined {
+  if (!metadata[metric]) {
+    return undefined;
+  }
+  return metadata[metric].help;
+}
+
+export function getMetadataType(metric: string, metadata: PromMetricsMetadata): string | undefined {
+  if (!metadata[metric]) {
+    return undefined;
+  }
+  return metadata[metric].type;
+}
+
 const PREFIX_DELIMITER_REGEX =
   /(="|!="|=~"|!~"|\{|\[|\(|\+|-|\/|\*|%|\^|\band\b|\bor\b|\bunless\b|==|>=|!=|<=|>|<|=|~|,)/;
 
@@ -98,6 +113,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    *  10 as a max size is totally arbitrary right now.
    */
   private labelsCache = new LRU<string, Record<string, string[]>>({ max: 10 });
+  private labelValuesCache = new LRU<string, string[]>({ max: 10 });
 
   constructor(datasource: PrometheusDatasource, initialValues?: Partial<PromQlLanguageProvider>) {
     super();
@@ -502,18 +518,75 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   }
 
   /**
+   * Gets series values
+   * Function to replace old getSeries calls in a way that will provide faster endpoints for new prometheus instances,
+   * while maintaining backward compatability
+   * @param labelName
+   * @param selector
+   */
+  getSeriesValues = async (labelName: string, selector: string): Promise<string[]> => {
+    if (!this.datasource.hasLabelsMatchAPISupport()) {
+      const data = await this.getSeries(selector);
+      return data[labelName] ?? [];
+    }
+    return await this.fetchSeriesValuesWithMatch(labelName, selector);
+  };
+
+  /**
    * Fetches all values for a label, with optional match[]
    * @param name
    * @param match
    */
-  fetchSeriesValues = async (name: string, match?: string): Promise<string[]> => {
+  fetchSeriesValuesWithMatch = async (name: string, match?: string): Promise<string[]> => {
     const interpolatedName = name ? this.datasource.interpolateString(name) : null;
     const range = this.datasource.getTimeRangeParams();
     const urlParams = {
       ...range,
-      ...(interpolatedName && { 'match[]': match }),
+      ...(match && { 'match[]': match }),
     };
-    return await this.request(`/api/v1/label/${interpolatedName}/values`, [], urlParams);
+
+    const cacheParams = new URLSearchParams({
+      'match[]': interpolatedName ?? '',
+      start: roundSecToMin(parseInt(range.start, 10)).toString(),
+      end: roundSecToMin(parseInt(range.end, 10)).toString(),
+      name: name,
+    });
+
+    const cacheKey = `/api/v1/label/?${cacheParams.toString()}/values`;
+    let value: string[] | undefined = this.labelValuesCache.get(cacheKey);
+    if (!value) {
+      value = await this.request(`/api/v1/label/${interpolatedName}/values`, [], urlParams);
+      if (value) {
+        this.labelValuesCache.set(cacheKey, value);
+      }
+    }
+    return value ?? [];
+  };
+
+  /**
+   * Gets series labels
+   * Function to replace old getSeries calls in a way that will provide faster endpoints for new prometheus instances,
+   * while maintaining backward compatability. The old API call got the labels and the values in a single query,
+   * but with the new query we need two calls, one to get the labels, and another to get the values.
+   *
+   * @param selector
+   * @param otherLabels
+   */
+  getSeriesLabels = async (selector: string, otherLabels: Label[]): Promise<string[]> => {
+    let possibleLabelNames, data: Record<string, string[]>;
+
+    if (!this.datasource.hasLabelsMatchAPISupport()) {
+      data = await this.getSeries(selector);
+      possibleLabelNames = Object.keys(data); // all names from prometheus
+    } else {
+      // Exclude __name__ from output
+      otherLabels.push({ name: '__name__', value: '', op: '!=' });
+      data = await this.fetchSeriesLabelsMatch(selector);
+      possibleLabelNames = Object.keys(data);
+    }
+
+    const usedLabelNames = new Set(otherLabels.map((l) => l.name)); // names used in the query
+    return possibleLabelNames.filter((l) => !usedLabelNames.has(l));
   };
 
   /**

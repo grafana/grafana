@@ -14,7 +14,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
 	"gopkg.in/ini.v1"
 )
 
@@ -265,6 +264,30 @@ func TestLoadingSettings(t *testing.T) {
 			value := valueAsString(iniFile.Section("server"), "extra_url", "default_url_val")
 			require.Equal(t, "default_url_val", value)
 		})
+	})
+
+	t.Run("grafana.com API URL can be set separately from grafana.com URL", func(t *testing.T) {
+		err := os.Setenv("GF_GRAFANA_NET_URL", "https://grafana-dev.com")
+		require.NoError(t, err)
+		err = os.Setenv("GF_GRAFANA_COM_API_URL", "http://grafana-dev.internal/api")
+		require.NoError(t, err)
+		cfg := NewCfg()
+		err = cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"})
+		require.Nil(t, err)
+		require.Equal(t, "https://grafana-dev.com", cfg.GrafanaComURL)
+		require.Equal(t, "http://grafana-dev.internal/api", cfg.GrafanaComAPIURL)
+	})
+
+	t.Run("grafana.com API URL falls back to grafana.com URL + /api", func(t *testing.T) {
+		err := os.Unsetenv("GF_GRAFANA_NET_URL")
+		require.NoError(t, err)
+		err = os.Unsetenv("GF_GRAFANA_COM_API_URL")
+		require.NoError(t, err)
+		cfg := NewCfg()
+		err = cfg.Load(CommandLineArgs{HomePath: "../../"})
+		require.Nil(t, err)
+		require.Equal(t, "https://grafana.com", cfg.GrafanaComURL)
+		require.Equal(t, "https://grafana.com/api", cfg.GrafanaComAPIURL)
 	})
 }
 

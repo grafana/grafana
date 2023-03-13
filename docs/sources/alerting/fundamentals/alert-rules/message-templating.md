@@ -1,25 +1,26 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/contact-points/message-templating/
-  - /docs/grafana/latest/alerting/message-templating/
-  - /docs/grafana/latest/alerting/unified-alerting/message-templating/
-  - /docs/grafana/latest/alerting/fundamentals/alert-rules/message-templating
-description: Message templating
+  - ../../contact-points/message-templating/
+  - ../../message-templating/
+  - ../../unified-alerting/message-templating/
+description: Notification templating
 keywords:
   - grafana
   - alerting
   - guide
   - contact point
   - templating
-title: Message templating
+title: Notification templating
 weight: 415
 ---
 
-# Message templating
+# Notification templating
 
-Notifications sent via contact points are built using messaging templates. Grafana's default templates are based on the [Go templating system](https://golang.org/pkg/text/template) where some fields are evaluated as text, while others are evaluated as HTML (which can affect escaping). The default template, defined in [default_template.go](https://github.com/grafana/grafana/blob/main/pkg/services/ngalert/notifier/channels/default_template.go), is a useful reference for custom templates.
+Notifications sent via contact points are built using notification templates. Grafana's default templates are based on the [Go templating system](https://golang.org/pkg/text/template) where some fields are evaluated as text, while others are evaluated as HTML (which can affect escaping).
 
-Since most of the contact point fields can be templated, you can create reusable custom templates and use them in multiple contact points. The default template is defined in [default_template.go](https://github.com/grafana/grafana/blob/main/pkg/services/ngalert/notifier/channels/default_template.go) which can serve as a useful reference or starting point for custom templates.
+The default template [default_template.go](https://github.com/grafana/alerting/blob/main/templates/default_template.go) is a useful reference for custom templates.
+
+Since most of the contact point fields can be templated, you can create reusable custom templates and use them in multiple contact points.
 
 ### Using templates
 
@@ -58,8 +59,8 @@ You can use any of the following built-in template options to embed custom templ
 | `default.message`       | Provides a formatted summary of firing and resolved alerts.   |
 | `teams.default.message` | Similar to `default.messsage`, formatted for Microsoft Teams. |
 
-### HTML in message templates
+### HTML in notification templates
 
-HTML in alerting message templates is escaped. We do not support rendering of HTML in the resulting notification.
+HTML in alerting notification templates is escaped. We do not support rendering of HTML in the resulting notification.
 
 Some notifiers support alternative methods of changing the look and feel of the resulting notification. For example, Grafana installs the base template for alerting emails to `<grafana-install-dir>/public/emails/ng_alert_notification.html`. You can edit this file to change the appearance of all alerting emails.

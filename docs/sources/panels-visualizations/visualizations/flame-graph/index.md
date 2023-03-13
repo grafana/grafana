@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/visualizations/flame-graph/
-  - /docs/grafana/latest/panels-visualizations/visualizations/flame-graph/
+  - ../../visualizations/flame-graph/
 keywords:
   - grafana
   - dashboard
@@ -13,8 +12,6 @@ weight: 850
 ---
 
 # Flame graph panel
-
-> **Note:** This panel is currently in beta & behind the `flameGraph` feature toggle.
 
 The flame graph takes advantage of the hierarchical nature of profiling data. It condenses data into a format that allows you to easily see which code paths are consuming the most system resources.
 

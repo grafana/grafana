@@ -6,8 +6,9 @@ import { selectors } from '@grafana/e2e-selectors';
 import { AccessoryButton, InputGroup } from '@grafana/experimental';
 import { AsyncSelect, Select } from '@grafana/ui';
 
-import { PROMETHEUS_QUERY_BUILDER_MAX_RESULTS } from '../components/MetricSelect';
 import { QueryBuilderLabelFilter } from '../shared/types';
+
+import { PROMETHEUS_QUERY_BUILDER_MAX_RESULTS } from './MetricSelect';
 
 export interface Props {
   defaultOp: string;
@@ -89,6 +90,7 @@ export function LabelFilterItem({
         {/* Operator select i.e.   = =~ != !~   */}
         <Select
           aria-label={selectors.components.QueryBuilder.matchOperatorSelect}
+          className="query-segment-operator"
           value={toOption(item.op ?? defaultOp)}
           options={operators}
           width="auto"
@@ -159,8 +161,10 @@ export function LabelFilterItem({
 }
 
 const operators = [
-  { label: '=~', value: '=~', isMultiValue: true },
   { label: '=', value: '=', isMultiValue: false },
   { label: '!=', value: '!=', isMultiValue: false },
+  { label: '<', value: '<', isMultiValue: false },
+  { label: '>', value: '>', isMultiValue: false },
+  { label: '=~', value: '=~', isMultiValue: true },
   { label: '!~', value: '!~', isMultiValue: true },
 ];

@@ -1,10 +1,13 @@
-import { BaseQueryFn, createApi, retry } from '@reduxjs/toolkit/query/react';
+import { BaseQueryFn, createApi } from '@reduxjs/toolkit/query/react';
 import { lastValueFrom } from 'rxjs';
 
-import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime/src';
+import { BackendSrvRequest, FetchError, getBackendSrv, isFetchError } from '@grafana/runtime/src';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';
-import { PublicDashboard } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
+import {
+  PublicDashboard,
+  PublicDashboardSettings,
+} from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { ListPublicDashboardResponse } from 'app/features/manage-dashboards/types';
 
@@ -12,6 +15,10 @@ type ReqOptions = {
   manageError?: (err: unknown) => { error: unknown };
   showErrorAlert?: boolean;
 };
+
+function isFetchBaseQueryError(error: unknown): error is { error: FetchError } {
+  return typeof error === 'object' && error != null && 'error' in error;
+}
 
 const backendSrvBaseQuery =
   ({ baseUrl }: { baseUrl: string }): BaseQueryFn<BackendSrvRequest & ReqOptions> =>
@@ -30,17 +37,17 @@ const backendSrvBaseQuery =
     }
   };
 
-const getConfigError = (err: { status: number }) => ({ error: err.status !== 404 ? err : null });
+const getConfigError = (err: unknown) => ({ error: isFetchError(err) && err.status !== 404 ? err : null });
 
 export const publicDashboardApi = createApi({
   reducerPath: 'publicDashboardApi',
-  baseQuery: retry(backendSrvBaseQuery({ baseUrl: '/api/dashboards' }), { maxRetries: 0 }),
+  baseQuery: backendSrvBaseQuery({ baseUrl: '/api' }),
   tagTypes: ['PublicDashboard', 'AuditTablePublicDashboard'],
   refetchOnMountOrArgChange: true,
   endpoints: (builder) => ({
-    getPublicDashboard: builder.query<PublicDashboard, string>({
+    getPublicDashboard: builder.query<PublicDashboard | undefined, string>({
       query: (dashboardUid) => ({
-        url: `/uid/${dashboardUid}/public-dashboards`,
+        url: `/dashboards/uid/${dashboardUid}/public-dashboards`,
         manageError: getConfigError,
         showErrorAlert: false,
       }),
@@ -48,61 +55,76 @@ export const publicDashboardApi = createApi({
         try {
           await queryFulfilled;
         } catch (e) {
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          const customError = e as { error: { data: { message: string } } };
-          dispatch(notifyApp(createErrorNotification(customError?.error?.data?.message)));
+          if (isFetchBaseQueryError(e) && isFetchError(e.error)) {
+            dispatch(notifyApp(createErrorNotification(e.error.data.message)));
+          }
         }
       },
       providesTags: (result, error, dashboardUid) => [{ type: 'PublicDashboard', id: dashboardUid }],
     }),
-    createPublicDashboard: builder.mutation<PublicDashboard, { dashboard: DashboardModel; payload: PublicDashboard }>({
+    createPublicDashboard: builder.mutation<
+      PublicDashboard,
+      { dashboard: DashboardModel; payload: Partial<PublicDashboardSettings> }
+    >({
       query: (params) => ({
-        url: `/uid/${params.dashboard.uid}/public-dashboards`,
+        url: `/dashboards/uid/${params.dashboard.uid}/public-dashboards`,
         method: 'POST',
         data: params.payload,
       }),
       async onQueryStarted({ dashboard, payload }, { dispatch, queryFulfilled }) {
         const { data } = await queryFulfilled;
-        dispatch(notifyApp(createSuccessNotification('Public dashboard created!')));
+        dispatch(notifyApp(createSuccessNotification('Dashboard is public!')));
 
         // Update runtime meta flag
         dashboard.updateMeta({
-          hasPublicDashboard: true,
           publicDashboardUid: data.uid,
           publicDashboardEnabled: data.isEnabled,
         });
       },
-      invalidatesTags: (result, error, { payload }) => [{ type: 'PublicDashboard', id: payload.dashboardUid }],
+      invalidatesTags: (result, error, { dashboard }) => [{ type: 'PublicDashboard', id: dashboard.uid }],
     }),
     updatePublicDashboard: builder.mutation<PublicDashboard, { dashboard: DashboardModel; payload: PublicDashboard }>({
       query: (params) => ({
-        url: `/uid/${params.dashboard.uid}/public-dashboards/${params.payload.uid}`,
+        url: `/dashboards/uid/${params.dashboard.uid}/public-dashboards/${params.payload.uid}`,
         method: 'PUT',
         data: params.payload,
       }),
-      extraOptions: { maxRetries: 0 },
       async onQueryStarted({ dashboard, payload }, { dispatch, queryFulfilled }) {
         const { data } = await queryFulfilled;
         dispatch(notifyApp(createSuccessNotification('Public dashboard updated!')));
 
         // Update runtime meta flag
         dashboard.updateMeta({
-          hasPublicDashboard: true,
           publicDashboardUid: data.uid,
           publicDashboardEnabled: data.isEnabled,
         });
       },
       invalidatesTags: (result, error, { payload }) => [{ type: 'PublicDashboard', id: payload.dashboardUid }],
     }),
+    addRecipient: builder.mutation<void, { recipient: string; dashboardUid: string; uid: string }>({
+      query: () => ({
+        url: '',
+      }),
+    }),
+    deleteRecipient: builder.mutation<void, { recipientUid: string; dashboardUid: string; uid: string }>({
+      query: () => ({
+        url: '',
+      }),
+    }),
+    reshareAccessToRecipient: builder.mutation<void, { recipientUid: string; uid: string }>({
+      query: () => ({
+        url: '',
+      }),
+    }),
     listPublicDashboards: builder.query<ListPublicDashboardResponse[], void>({
       query: () => ({
-        url: '/public-dashboards',
+        url: '/dashboards/public-dashboards',
       }),
       providesTags: ['AuditTablePublicDashboard'],
     }),
     deletePublicDashboard: builder.mutation<void, { dashboard?: DashboardModel; dashboardUid: string; uid: string }>({
       query: (params) => ({
-        url: `/uid/${params.dashboardUid}/public-dashboards/${params.uid}`,
+        url: `/dashboards/uid/${params.dashboardUid}/public-dashboards/${params.uid}`,
         method: 'DELETE',
       }),
       async onQueryStarted({ dashboard, uid }, { dispatch, queryFulfilled }) {
@@ -110,7 +132,6 @@ export const publicDashboardApi = createApi({
         dispatch(notifyApp(createSuccessNotification('Public dashboard deleted!')));
 
         dashboard?.updateMeta({
-          hasPublicDashboard: false,
           publicDashboardUid: uid,
           publicDashboardEnabled: false,
         });
@@ -129,4 +150,7 @@ export const {
   useUpdatePublicDashboardMutation,
   useDeletePublicDashboardMutation,
   useListPublicDashboardsQuery,
+  useAddRecipientMutation,
+  useDeleteRecipientMutation,
+  useReshareAccessToRecipientMutation,
 } = publicDashboardApi;

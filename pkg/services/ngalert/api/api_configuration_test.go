@@ -5,13 +5,14 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/stretchr/testify/require"
 )
 
 func TestExternalAlertmanagerChoice(t *testing.T) {
@@ -27,9 +28,9 @@ func TestExternalAlertmanagerChoice(t *testing.T) {
 			alertmanagerChoice: definitions.ExternalAlertmanagers,
 			datasources: []*datasources.DataSource{
 				{
-					OrgId: 1,
+					OrgID: 1,
 					Type:  datasources.DS_ALERTMANAGER,
-					Url:   "http://localhost:9000",
+					URL:   "http://localhost:9000",
 					JsonData: simplejson.NewFromAny(map[string]interface{}{
 						definitions.HandleGrafanaManagedAlerts: true,
 					}),
@@ -43,9 +44,9 @@ func TestExternalAlertmanagerChoice(t *testing.T) {
 			alertmanagerChoice: definitions.ExternalAlertmanagers,
 			datasources: []*datasources.DataSource{
 				{
-					OrgId:    1,
+					OrgID:    1,
 					Type:     datasources.DS_ALERTMANAGER,
-					Url:      "http://localhost:9000",
+					URL:      "http://localhost:9000",
 					JsonData: simplejson.NewFromAny(map[string]interface{}{}),
 				},
 			},

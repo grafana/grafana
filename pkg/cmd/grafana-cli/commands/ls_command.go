@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/fatih/color"
+
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
@@ -44,6 +45,8 @@ func (cmd Command) lsCommand(c utils.CommandLine) error {
 
 	if len(plugins) > 0 {
 		logger.Info("installed plugins:\n")
+	} else {
+		logger.Info("no installed plugins found\n")
 	}
 
 	for _, plugin := range plugins {

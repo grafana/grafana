@@ -1,15 +1,14 @@
 ---
 aliases:
-  - /docs/grafana/latest/dashboards/annotations/
-  - /docs/grafana/latest/reference/annotations/
-  - /docs/grafana/next/dashboards/build-dashboards/annotate-visualizations/
+  - ../../reference/annotations/
+  - ../annotations/
 keywords:
   - grafana
   - annotations
   - documentation
   - guide
-title: Annotate visualizations
 menuTitle: Annotate visualizations
+title: Annotate visualizations
 weight: 600
 ---
 

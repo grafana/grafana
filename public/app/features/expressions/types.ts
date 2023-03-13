@@ -2,6 +2,11 @@ import { DataQuery, ReducerID, SelectableValue } from '@grafana/data';
 
 import { EvalFunction } from '../alerting/state/alertDef';
 
+/**
+ * MATCHES a constant in DataSourceWithBackend
+ */
+export const ExpressionDatasourceUID = '__expr__';
+
 export enum ExpressionQueryType {
   math = 'math',
   reduce = 'reduce',
@@ -56,7 +61,7 @@ export enum ReducerMode {
   DropNonNumbers = 'dropNN',
 }
 
-export const reducerMode: Array<SelectableValue<ReducerMode>> = [
+export const reducerModes: Array<SelectableValue<ReducerMode>> = [
   {
     value: ReducerMode.Strict,
     label: 'Strict',

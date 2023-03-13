@@ -56,7 +56,7 @@ func getDatasourcePluginSlugs(baseUrl string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	var slugs []string
+	slugs := make([]string, 0, len(res.Items))
 	for _, meta := range res.Items {
 		slugs = append(slugs, meta.Slug)
 	}

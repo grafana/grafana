@@ -21,8 +21,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -35,6 +35,8 @@ func Logger(cfg *setting.Cfg) web.Middleware {
 
 			// we have to init the context with the counter here to update the request
 			r = r.WithContext(log.InitCounter(r.Context()))
+			// put the start time on context so we can measure it later.
+			r = r.WithContext(log.InitstartTime(r.Context(), time.Now()))
 
 			rw := web.Rw(w, r)
 			next.ServeHTTP(rw, r)
@@ -87,7 +89,7 @@ var sensitiveQueryStrings = [...]string{
 	"auth_token",
 }
 
-func SanitizeURL(ctx *models.ReqContext, s string) string {
+func SanitizeURL(ctx *contextmodel.ReqContext, s string) string {
 	if s == "" {
 		return s
 	}

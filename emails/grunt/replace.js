@@ -1,7 +1,7 @@
 module.exports = {
   dist: {
     overwrite: true,
-    src: ['dist/*.html', 'dist/*.txt'],
+    src: ['dist/*.txt'],
     replacements: [
       {
         from: '[[',

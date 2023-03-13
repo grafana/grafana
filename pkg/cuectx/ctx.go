@@ -95,13 +95,19 @@ func LoadGrafanaInstancesWithThema(path string, cueFS fs.FS, rt *thema.Runtime, 
 //
 // The returned fs.FS is suitable for passing to a CUE loader, such as [load.InstanceWithThema].
 func prefixWithGrafanaCUE(prefix string, inputfs fs.FS) (fs.FS, error) {
-	m := fstest.MapFS{
-		// fstest can recognize only forward slashes.
-		// filepath.ToSlash(filepath.Join("cue.mod", "module.cue")): &fstest.MapFile{Data: []byte(`module: "github.com/grafana/grafana"`)},
+	m, err := prefixFS(prefix, inputfs)
+	if err != nil {
+		return nil, err
 	}
+	return merged_fs.NewMergedFS(m, grafana.CueSchemaFS), nil
+}
+
+// TODO such a waste, replace with stateless impl that just transforms paths on the fly
+func prefixFS(prefix string, fsys fs.FS) (fs.FS, error) {
+	m := make(fstest.MapFS)
 
 	prefix = filepath.FromSlash(prefix)
-	err := fs.WalkDir(inputfs, ".", func(path string, d fs.DirEntry, err error) error {
+	err := fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -110,7 +116,7 @@ func prefixWithGrafanaCUE(prefix string, inputfs fs.FS) (fs.FS, error) {
 			return nil
 		}
 
-		b, err := fs.ReadFile(inputfs, path)
+		b, err := fs.ReadFile(fsys, filepath.ToSlash(path))
 		if err != nil {
 			return err
 		}
@@ -118,10 +124,7 @@ func prefixWithGrafanaCUE(prefix string, inputfs fs.FS) (fs.FS, error) {
 		m[filepath.ToSlash(filepath.Join(prefix, path))] = &fstest.MapFile{Data: b}
 		return nil
 	})
-	if err != nil {
-		return nil, err
-	}
-	return merged_fs.NewMergedFS(m, grafana.CueSchemaFS), nil
+	return m, err
 }
 
 // LoadGrafanaInstance wraps [load.InstanceWithThema] to load a
@@ -141,7 +144,7 @@ func prefixWithGrafanaCUE(prefix string, inputfs fs.FS) (fs.FS, error) {
 // ["cuelang.org/go/cue/load".Config.Package]. If the CUE package to be loaded
 // is the same as the parent directory name, it should be omitted.
 //
-// NOTE this function will be removed in favor of a more generic loader
+// NOTE this function will be deprecated in favor of a more generic loader
 func LoadGrafanaInstance(relpath string, pkg string, overlay fs.FS) (*build.Instance, error) {
 	// notes about how this crap needs to work
 	//
@@ -175,10 +178,13 @@ func LoadGrafanaInstance(relpath string, pkg string, overlay fs.FS) (*build.Inst
 }
 
 // BuildGrafanaInstance wraps [LoadGrafanaInstance], additionally building
-// the returned [*build.Instance], if valid, into a [cue.Value] that is checked
-// for errors before returning.
+// the returned [*build.Instance] into a [cue.Value].
 //
-// NOTE this function will be removed in favor of a more generic loader
+// An error is returned if:
+//   - The underlying call to [LoadGrafanaInstance] returns an error
+//   - The built [cue.Value] has an error ([cue.Value.Err] returns non-nil)
+//
+// NOTE this function will be deprecated in favor of a more generic builder
 func BuildGrafanaInstance(ctx *cue.Context, relpath string, pkg string, overlay fs.FS) (cue.Value, error) {
 	bi, err := LoadGrafanaInstance(relpath, pkg, overlay)
 	if err != nil {
@@ -193,4 +199,40 @@ func BuildGrafanaInstance(ctx *cue.Context, relpath string, pkg string, overlay 
 		return v, fmt.Errorf("%s not a valid CUE instance: %w", relpath, v.Err())
 	}
 	return v, nil
+}
+
+// LoadInstanceWithGrafana loads a [*build.Instance] from .cue files
+// in the provided modFS as ["cuelang.org/go/cue/load".Instances], but
+// fulfilling any imports of CUE packages under:
+//
+//   - github.com/grafana/grafana
+//   - github.com/grafana/thema
+//
+// This function is modeled after [load.InstanceWithThema]. It has the same
+// signature and expectations for the modFS.
+//
+// Attempting to use this func to load files within the
+// github.com/grafana/grafana CUE module will result in an error. Use
+// [LoadGrafanaInstance] instead.
+//
+// NOTE This function will be deprecated in favor of a more generic loader
+func LoadInstanceWithGrafana(fsys fs.FS, dir string, opts ...load.Option) (*build.Instance, error) {
+	if modf, err := fs.ReadFile(fsys, "cue.mod/module.cue"); err != nil {
+		// delegate error handling
+		return load.InstanceWithThema(fsys, dir, opts...)
+	} else if modname, err := cuecontext.New().CompileBytes(modf).LookupPath(cue.MakePath(cue.Str("module"))).String(); err != nil {
+		// delegate error handling
+		return load.InstanceWithThema(fsys, dir, opts...)
+	} else if modname == "github.com/grafana/grafana" {
+		return nil, fmt.Errorf("use cuectx.LoadGrafanaInstance to load .cue files within github.com/grafana/grafana CUE module")
+	}
+
+	// TODO wasteful, doing this every time - make that stateless prefixfs!
+	depFS, err := prefixFS("cue.mod/pkg/github.com/grafana/grafana", grafana.CueSchemaFS)
+	if err != nil {
+		panic(err)
+	}
+
+	// FIXME remove grafana from cue.mod/pkg if it exists, otherwise external thing can inject files to be loaded
+	return load.InstanceWithThema(merged_fs.NewMergedFS(depFS, fsys), dir, opts...)
 }

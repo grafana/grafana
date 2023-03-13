@@ -11,15 +11,16 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashdb "github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -584,51 +585,66 @@ func TestAccessControlDashboardGuardian_GetHiddenACL(t *testing.T) {
 	}
 }
 
-func setupAccessControlGuardianTest(t *testing.T, uid string, permissions []accesscontrol.Permission, dashboardSvc dashboards.DashboardService) (*AccessControlDashboardGuardian, *models.Dashboard) {
+func setupAccessControlGuardianTest(t *testing.T, uid string, permissions []accesscontrol.Permission, dashboardSvc dashboards.DashboardService) (*AccessControlDashboardGuardian, *dashboards.Dashboard) {
 	t.Helper()
 	store := db.InitTestDB(t)
 
-	toSave := models.NewDashboard(uid)
-	toSave.SetUid(uid)
+	toSave := dashboards.NewDashboard(uid)
+	toSave.SetUID(uid)
 
 	// seed dashboard
 	quotaService := quotatest.New(false, nil)
 	dashStore, err := dashdb.ProvideDashboardStore(store, store.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(store, store.Cfg), quotaService)
 	require.NoError(t, err)
-	dash, err := dashStore.SaveDashboard(context.Background(), models.SaveDashboardCommand{
+	dash, err := dashStore.SaveDashboard(context.Background(), dashboards.SaveDashboardCommand{
 		Dashboard: toSave.Data,
-		UserId:    1,
-		OrgId:     1,
+		UserID:    1,
+		OrgID:     1,
 	})
 	require.NoError(t, err)
+	if dashboardSvc == nil {
+		fakeDashboardService := dashboards.NewFakeDashboardService(t)
+		qResult := &dashboards.Dashboard{}
+		fakeDashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
+			q := args.Get(1).(*dashboards.GetDashboardQuery)
+			qResult = &dashboards.Dashboard{
+				ID:    q.ID,
+				UID:   q.UID,
+				OrgID: q.OrgID,
+			}
+		}).Return(qResult, nil)
+		dashboardSvc = fakeDashboardService
+	}
+
 	ac := accesscontrolmock.New().WithPermissions(permissions)
-	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(dashStore))
+	// TODO replace with actual folder store implementation after resolving import cycles
+	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(foldertest.NewFakeFolderStore(t), dashboardSvc, foldertest.NewFakeService()))
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
 	teamSvc := teamimpl.ProvideService(store, store.Cfg)
-	userSvc, err := userimpl.ProvideService(store, nil, store.Cfg, nil, nil, quotatest.New(false, nil))
+	userSvc, err := userimpl.ProvideService(store, nil, store.Cfg, nil, nil, quotatest.New(false, nil), supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
 
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
-		setting.NewCfg(), routing.NewRouteRegister(), store, ac, license, &dashboards.FakeDashboardStore{}, ac, teamSvc, userSvc)
+		setting.NewCfg(), routing.NewRouteRegister(), store, ac, license, &dashboards.FakeDashboardStore{}, foldertest.NewFakeService(), ac, teamSvc, userSvc)
 	require.NoError(t, err)
 	dashboardPermissions, err := ossaccesscontrol.ProvideDashboardPermissions(
-		setting.NewCfg(), routing.NewRouteRegister(), store, ac, license, &dashboards.FakeDashboardStore{}, ac, teamSvc, userSvc)
+		setting.NewCfg(), routing.NewRouteRegister(), store, ac, license, &dashboards.FakeDashboardStore{}, foldertest.NewFakeService(), ac, teamSvc, userSvc)
 	require.NoError(t, err)
-	if dashboardSvc == nil {
-		dashboardSvc = &dashboards.FakeDashboardService{}
-	}
-	return NewAccessControlDashboardGuardian(context.Background(), dash.Id, &user.SignedInUser{OrgID: 1}, store, ac, folderPermissions, dashboardPermissions, dashboardSvc), dash
+
+	g, err := NewAccessControlDashboardGuardian(context.Background(), dash.ID, &user.SignedInUser{OrgID: 1}, store, ac, folderPermissions, dashboardPermissions, dashboardSvc)
+	require.NoError(t, err)
+	g.dashboard = dash
+	return g, dash
 }
 
 func testDashSvc(t *testing.T) dashboards.DashboardService {
 	dashSvc := dashboards.NewFakeDashboardService(t)
-	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
-		q := args.Get(1).(*models.GetDashboardQuery)
-		d := models.NewDashboard("mocked")
-		d.Id = 1
-		d.Uid = "1"
-		q.Result = d
-	}).Return(nil)
+	d := &dashboards.Dashboard{}
+	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
+		d := dashboards.NewDashboard("mocked")
+		d.ID = 1
+		d.UID = "1"
+	}).Return(d, nil)
 	return dashSvc
 }

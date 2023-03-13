@@ -178,7 +178,7 @@ func makeIdField(stringTimeField *data.Field, lineField *data.Field, labelsField
 }
 
 func formatNamePrometheusStyle(labels map[string]string) string {
-	var parts []string
+	parts := make([]string, 0, len(labels))
 
 	for k, v := range labels {
 		parts = append(parts, fmt.Sprintf("%s=%q", k, v))

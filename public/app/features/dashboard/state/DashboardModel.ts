@@ -17,6 +17,7 @@ import {
   UrlQueryValue,
 } from '@grafana/data';
 import { RefreshEvent, TimeRangeUpdatedEvent } from '@grafana/runtime';
+import { Dashboard } from '@grafana/schema';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -68,9 +69,9 @@ export interface DashboardLink {
 
 export class DashboardModel implements TimeModel {
   id: any;
-  uid: string;
+  // TODO: use propert type and fix all the places where uid is set to null
+  uid: any;
   title: string;
-  autoUpdate: any;
   description: any;
   tags: any;
   style: any;
@@ -85,11 +86,11 @@ export class DashboardModel implements TimeModel {
   templating: { list: any[] };
   private originalTemplating: any;
   annotations: { list: AnnotationQuery[] };
-  refresh: any;
+  refresh: string;
   snapshot: any;
   schemaVersion: number;
   version: number;
-  revision: number;
+  revision?: number; // Only used for dashboards managed by plugins
   links: DashboardLink[];
   gnetId: any;
   panels: PanelModel[];
@@ -125,17 +126,13 @@ export class DashboardModel implements TimeModel {
     lastRefresh: true,
   };
 
-  constructor(data: any, meta?: DashboardMeta, private getVariablesFromState: GetVariables = getVariablesByKey) {
-    if (!data) {
-      data = {};
-    }
-
+  constructor(data: Dashboard, meta?: DashboardMeta, private getVariablesFromState: GetVariables = getVariablesByKey) {
     this.events = new EventBusSrv();
     this.id = data.id || null;
+    // UID is not there for newly created dashboards
     this.uid = data.uid || null;
-    this.revision = data.revision;
+    this.revision = data.revision ?? undefined;
     this.title = data.title ?? 'No Title';
-    this.autoUpdate = data.autoUpdate;
     this.description = data.description;
     this.tags = data.tags ?? [];
     this.style = data.style ?? 'dark';
@@ -148,7 +145,7 @@ export class DashboardModel implements TimeModel {
     this.liveNow = Boolean(data.liveNow);
     this.templating = this.ensureListExist(data.templating);
     this.annotations = this.ensureListExist(data.annotations);
-    this.refresh = data.refresh;
+    this.refresh = data.refresh || '';
     this.snapshot = data.snapshot;
     this.schemaVersion = data.schemaVersion ?? 0;
     this.fiscalYearStartMonth = data.fiscalYearStartMonth ?? 0;
@@ -497,6 +494,15 @@ export class DashboardModel implements TimeModel {
   updateMeta(updates: Partial<DashboardMeta>) {
     this.meta = { ...this.meta, ...updates };
     this.events.publish(new DashboardMetaChangedEvent());
+  }
+
+  makeEditable() {
+    this.editable = true;
+    this.updateMeta({
+      canMakeEditable: false,
+      canEdit: true,
+      canSave: true,
+    });
   }
 
   sortPanelsByGridPos() {
@@ -1039,14 +1045,8 @@ export class DashboardModel implements TimeModel {
 
     const navbarHeight = 55;
     const margin = 20;
-    const submenuHeight = 50;
 
     let visibleHeight = viewHeight - navbarHeight - margin;
-
-    // Remove submenu height if visible
-    if (this.meta.submenuEnabled && !kioskMode) {
-      visibleHeight -= submenuHeight;
-    }
 
     // add back navbar height
     if (kioskMode && kioskMode !== KioskMode.TV) {

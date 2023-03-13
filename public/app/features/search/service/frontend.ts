@@ -116,28 +116,27 @@ class FullResultCache {
     // eslint-disable-next-line
     const values = allFields.map((v) => [] as any[]); // empty value for each field
 
-    // out-of-order terms
-    const oooIdxs = new Set<number>();
-    const queryTerms = this.ufuzzy.split(query);
-    const oooNeedles = uFuzzy.permute(queryTerms).map((terms) => terms.join(' '));
+    let [idxs, info, order] = this.ufuzzy.search(haystack, query, true);
 
-    oooNeedles.forEach((needle) => {
-      let idxs = this.ufuzzy.filter(haystack, needle);
-      let info = this.ufuzzy.info(idxs, haystack, needle);
-      let order = this.ufuzzy.sort(info, haystack, needle);
+    for (let c = 0; c < allFields.length; c++) {
+      let src = allFields[c].values.toArray();
+      let dst = values[c];
 
-      for (let i = 0; i < order.length; i++) {
-        let haystackIdx = info.idx[order[i]];
-
-        if (!oooIdxs.has(haystackIdx)) {
-          oooIdxs.add(haystackIdx);
-
-          for (let c = 0; c < allFields.length; c++) {
-            values[c].push(allFields[c].values.get(haystackIdx));
-          }
+      // <= 1000 matches (ranked)
+      if (info && order) {
+        for (let i = 0; i < order.length; i++) {
+          let haystackIdx = info.idx[order[i]];
+          dst.push(src[haystackIdx]);
         }
       }
-    });
+      // > 1000 matches (unranked)
+      else if (idxs) {
+        for (let i = 0; i < idxs.length; i++) {
+          let haystackIdx = idxs[i];
+          dst.push(src[haystackIdx]);
+        }
+      }
+    }
 
     // mutates the search object
     this.empty.dataFrame.fields.forEach((f, idx) => {

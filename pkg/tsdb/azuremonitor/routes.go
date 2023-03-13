@@ -25,12 +25,6 @@ var azUSGovManagement = types.AzRoute{
 	Headers: map[string]string{"x-ms-app": "Grafana"},
 }
 
-var azGermanyManagement = types.AzRoute{
-	URL:     "https://management.microsoftazure.de",
-	Scopes:  []string{"https://management.microsoftazure.de/.default"},
-	Headers: map[string]string{"x-ms-app": "Grafana"},
-}
-
 var azChinaManagement = types.AzRoute{
 	URL:     "https://management.chinacloudapi.cn",
 	Scopes:  []string{"https://management.chinacloudapi.cn/.default"},
@@ -68,9 +62,6 @@ var (
 			azureMonitor:       azUSGovManagement,
 			azureLogAnalytics:  azUSGovLogAnalytics,
 			azureResourceGraph: azUSGovManagement,
-		},
-		azsettings.AzureGermany: {
-			azureMonitor: azGermanyManagement,
 		},
 		azsettings.AzureChina: {
 			azureMonitor:       azChinaManagement,

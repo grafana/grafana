@@ -7,7 +7,7 @@ import (
 )
 
 // Grafana resource name.  See also:
-// https://github.com/grafana/grafana/blob/main/pkg/services/store/object/object.proto#L6
+// https://github.com/grafana/grafana/blob/main/pkg/services/store/entity/entity.proto#L6
 // NOTE: This structure/format is still under active development and is subject to change
 type GRN struct {
 	// TenantID contains the ID of the tenant (in hosted grafana) or

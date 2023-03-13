@@ -80,6 +80,12 @@ export function buildVisualQueryFromString(expr: string): Context {
   if (isEmptyQuery(context.query)) {
     context.errors = [];
   }
+
+  // We don't want parsing errors related to Grafana global variables
+  if (isValidPromQLMinusGrafanaGlobalVariables(expr)) {
+    context.errors = [];
+  }
+
   return context;
 }
 
@@ -93,6 +99,35 @@ interface ParsingError {
 interface Context {
   query: PromVisualQuery;
   errors: ParsingError[];
+}
+
+function isValidPromQLMinusGrafanaGlobalVariables(expr: string) {
+  const context: Context = {
+    query: {
+      metric: '',
+      labels: [],
+      operations: [],
+    },
+    errors: [],
+  };
+
+  expr = expr.replace(/\$__interval/g, '1s');
+  expr = expr.replace(/\$__interval_ms/g, '1000');
+  expr = expr.replace(/\$__rate_interval/g, '1s');
+  expr = expr.replace(/\$__range_ms/g, '1000');
+  expr = expr.replace(/\$__range_s/g, '1');
+  expr = expr.replace(/\$__range/g, '1s');
+
+  const tree = parser.parse(expr);
+  const node = tree.topNode;
+
+  try {
+    handleExpression(expr, node, context);
+  } catch (err) {
+    return false;
+  }
+
+  return context.errors.length === 0;
 }
 
 /**

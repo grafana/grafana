@@ -30,38 +30,38 @@ describe('SupportSnapshotService', () => {
     const service = new SupportSnapshotService(panel);
     await service.buildDebugDashboard();
     expect(service.state.snapshot.panels[0].targets[0]).toMatchInlineSnapshot(`
-      Object {
-        "datasource": Object {
+      {
+        "datasource": {
           "type": "grafana",
           "uid": "grafana",
         },
         "queryType": "snapshot",
         "refId": "A",
-        "snapshot": Array [
-          Object {
-            "data": Object {
-              "values": Array [
-                Array [
+        "snapshot": [
+          {
+            "data": {
+              "values": [
+                [
                   1,
                   2,
                   3,
                 ],
-                Array [
+                [
                   11,
                   22,
                   33,
                 ],
               ],
             },
-            "schema": Object {
-              "fields": Array [
-                Object {
-                  "config": Object {},
+            "schema": {
+              "fields": [
+                {
+                  "config": {},
                   "name": "Time",
                   "type": "time",
                 },
-                Object {
-                  "config": Object {},
+                {
+                  "config": {},
                   "name": "Value",
                   "type": "number",
                 },

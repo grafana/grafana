@@ -33,4 +33,9 @@ func setDefaultTemplateData(cfg *setting.Cfg, data map[string]interface{}, u *us
 	if u != nil {
 		data["Name"] = u.NameOrFallback()
 	}
+	dataCopy := map[string]interface{}{}
+	for k, v := range data {
+		dataCopy[k] = v
+	}
+	data["TemplateData"] = dataCopy
 }

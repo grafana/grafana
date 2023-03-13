@@ -15,8 +15,11 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
+	"github.com/grafana/grafana/pkg/kindsys"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/kinds/dataquery"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 )
 
 // when memory-profiling this benchmark, these commands are recommended:
@@ -37,6 +40,7 @@ func BenchmarkExemplarJson(b *testing.B) {
 	tCtx, err := setup(true)
 	require.NoError(b, err)
 	b.ResetTimer()
+	b.ReportAllocs()
 	for n := 0; n < b.N; n++ {
 		res := http.Response{
 			StatusCode: 200,
@@ -119,8 +123,10 @@ func createJsonTestData(start int64, step int64, timestampCount int, seriesCount
 	bytes := []byte(fmt.Sprintf(`{"status":"success","data":{"resultType":"matrix","result":[%v]}}`, strings.Join(allSeries, ",")))
 
 	qm := models.QueryModel{
-		RangeQuery: true,
-		Expr:       "test",
+		PrometheusDataQuery: dataquery.PrometheusDataQuery{
+			Range: kindsys.Ptr(true),
+			Expr:  "test",
+		},
 	}
 
 	data, err := json.Marshal(&qm)

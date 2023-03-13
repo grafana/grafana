@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { cloneDeep, defaultsDeep } from 'lodash';
 import React from 'react';
 
-import { config } from '@grafana/runtime';
+import { CoreApp } from '@grafana/data';
 import { QueryEditorMode } from 'app/plugins/datasource/prometheus/querybuilder/shared/types';
 
 import { createLokiDatasource } from '../mocks';
@@ -11,11 +11,21 @@ import { EXPLAIN_LABEL_FILTER_CONTENT } from '../querybuilder/components/LokiQue
 import { LokiQuery, LokiQueryType } from '../types';
 
 import { LokiQueryEditor } from './LokiQueryEditor';
+import { LokiQueryEditorProps } from './types';
 
 jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
     reportInteraction: jest.fn(),
+  };
+});
+
+// We need to mock this because it seems jest has problem importing monaco in tests
+jest.mock('./monaco-query-field/MonacoQueryFieldWrapper', () => {
+  return {
+    MonacoQueryFieldWrapper: () => {
+      return 'MonacoQueryFieldWrapper';
+    },
   };
 });
 
@@ -48,10 +58,6 @@ const defaultProps = {
   onChange: () => {},
 };
 
-beforeAll(() => {
-  config.featureToggles.lokiMonacoEditor = true;
-});
-
 describe('LokiQueryEditorSelector', () => {
   it('shows code editor if expr and nothing else', async () => {
     // We opt for showing code editor for queries created before this feature was added
@@ -82,6 +88,21 @@ describe('LokiQueryEditorSelector', () => {
     await expectBuilder();
   });
 
+  it('shows Run Queries button in Dashboards', () => {
+    renderWithProps({}, { app: CoreApp.Dashboard });
+    expectRunQueriesButton();
+  });
+
+  it('hides Run Queries button in Explore', async () => {
+    renderWithProps({}, { app: CoreApp.Explore });
+    expectNoRunQueriesButton();
+  });
+
+  it('hides Run Queries button in Correlations Page', async () => {
+    renderWithProps({}, { app: CoreApp.Correlations });
+    await expectNoRunQueriesButton();
+  });
+
   it('changes to builder mode', async () => {
     const { onChange } = renderWithMode(QueryEditorMode.Code);
     await expectCodeEditor();
@@ -94,14 +115,7 @@ describe('LokiQueryEditorSelector', () => {
     });
   });
 
-  it('Can enable raw query', async () => {
-    renderWithMode(QueryEditorMode.Builder);
-    expect(await screen.findByLabelText('selector')).toBeInTheDocument();
-    screen.getByLabelText('Raw query').click();
-    expect(screen.queryByLabelText('selector')).not.toBeInTheDocument();
-  });
-
-  it('Should show raw query by default', async () => {
+  it('Should show the query by default', async () => {
     renderWithProps({
       editorMode: QueryEditorMode.Builder,
       expr: '{job="grafana"}',
@@ -114,7 +128,7 @@ describe('LokiQueryEditorSelector', () => {
   it('Can enable explain', async () => {
     renderWithMode(QueryEditorMode.Builder);
     expect(screen.queryByText(EXPLAIN_LABEL_FILTER_CONTENT)).not.toBeInTheDocument();
-    screen.getByLabelText('Explain').click();
+    screen.getByLabelText('Explain query').click();
     expect(await screen.findByText(EXPLAIN_LABEL_FILTER_CONTENT)).toBeInTheDocument();
   });
 
@@ -156,27 +170,40 @@ describe('LokiQueryEditorSelector', () => {
     expect(screen.getByText('Rate')).toBeInTheDocument();
     expect(screen.getByText('$__interval')).toBeInTheDocument();
   });
+
+  it('renders the label browser button', async () => {
+    renderWithMode(QueryEditorMode.Code);
+    expect(await screen.findByTestId('label-browser-button')).toBeInTheDocument();
+  });
 });
 
 function renderWithMode(mode: QueryEditorMode) {
   return renderWithProps({ editorMode: mode });
 }
 
-function renderWithProps(overrides?: Partial<LokiQuery>) {
+function renderWithProps(overrides?: Partial<LokiQuery>, componentProps: Partial<LokiQueryEditorProps> = {}) {
   const query = defaultsDeep(overrides ?? {}, cloneDeep(defaultQuery));
   const onChange = jest.fn();
 
-  const stuff = render(<LokiQueryEditor {...defaultProps} query={query} onChange={onChange} />);
+  const allProps = { ...defaultProps, ...componentProps };
+  const stuff = render(<LokiQueryEditor {...allProps} query={query} onChange={onChange} />);
   return { onChange, ...stuff };
 }
 
 async function expectCodeEditor() {
-  // Label browser shows this until log labels are loaded.
-  expect(await screen.findByText('Loading...')).toBeInTheDocument();
+  expect(await screen.findByText('MonacoQueryFieldWrapper')).toBeInTheDocument();
 }
 
 async function expectBuilder() {
   expect(await screen.findByText('Label filters')).toBeInTheDocument();
+}
+
+function expectRunQueriesButton() {
+  expect(screen.getByRole('button', { name: /run queries/i })).toBeInTheDocument();
+}
+
+function expectNoRunQueriesButton() {
+  expect(screen.queryByRole('button', { name: /run queries/i })).not.toBeInTheDocument();
 }
 
 async function switchToMode(mode: QueryEditorMode) {

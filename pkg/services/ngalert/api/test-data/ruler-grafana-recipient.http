@@ -98,7 +98,7 @@ content-type: application/json
               "from": 18000,
               "to": 10800
             },
-            "datasourceUid": "-100",
+            "datasourceUid": "__expr__",
             "model": {
               "expression": "query",
               "hide": false,
@@ -116,7 +116,7 @@ content-type: application/json
               "from": 18000,
               "to": 10800
             },
-            "datasourceUid": "-100",
+            "datasourceUid": "__expr__",
             "model": {
               "expression": "$reduced > 10",
               "hide": false,
@@ -184,7 +184,7 @@ content-type: application/json
               "from": 18000,
               "to": 10800
             },
-            "datasourceUid": "-100",
+            "datasourceUid": "__expr__",
             "model": {
               "expression": "query",
               "hide": false,
@@ -202,7 +202,7 @@ content-type: application/json
               "from": 18000,
               "to": 10800
             },
-            "datasourceUid": "-100",
+            "datasourceUid": "__expr__",
             "model": {
               "expression": "$reduced > 42",
               "hide": false,
@@ -283,7 +283,7 @@ Content-Type: application/json
               "from": 18000,
               "to": 10800
             },
-            "datasourceUid": "-100",
+            "datasourceUid": "__expr__",
             "model": {
               "expression": "query",
               "hide": false,
@@ -301,7 +301,7 @@ Content-Type: application/json
               "from": 18000,
               "to": 10800
             },
-            "datasourceUid": "-100",
+            "datasourceUid": "__expr__",
             "model": {
               "expression": "$reduced > 42",
               "hide": false,

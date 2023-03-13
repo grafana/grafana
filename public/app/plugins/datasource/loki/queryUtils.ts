@@ -2,6 +2,14 @@ import { SyntaxNode } from '@lezer/common';
 import { escapeRegExp } from 'lodash';
 
 import {
+  ArrayVector,
+  DataFrame,
+  DataQueryResponse,
+  DataQueryResponseData,
+  Field,
+  QueryResultMetaStat,
+} from '@grafana/data';
+import {
   parser,
   LineFilter,
   PipeExact,
@@ -21,6 +29,7 @@ import {
 
 import { ErrorId } from '../prometheus/querybuilder/shared/parsingUtils';
 
+import { getStreamSelectorPositions } from './modifyQuery';
 import { LokiQuery, LokiQueryType } from './types';
 
 export function formatQuery(selector: string | undefined): string {
@@ -108,6 +117,33 @@ export function getNormalizedLokiQuery(query: LokiQuery): LokiQuery {
   return { ...rest, queryType: LokiQueryType.Range };
 }
 
+const tagsToObscure = ['String', 'Identifier', 'LineComment', 'Number'];
+const partsToKeep = ['__error__', '__interval', '__interval_ms'];
+export function obfuscate(query: string): string {
+  let obfuscatedQuery: string = query;
+  const tree = parser.parse(query);
+  tree.iterate({
+    enter: ({ name, from, to }): false | void => {
+      const queryPart = query.substring(from, to);
+      if (tagsToObscure.includes(name) && !partsToKeep.includes(queryPart)) {
+        obfuscatedQuery = obfuscatedQuery.replace(queryPart, name);
+      }
+    },
+  });
+  return obfuscatedQuery;
+}
+
+export function parseToNodeNamesArray(query: string): string[] {
+  const queryParts: string[] = [];
+  const tree = parser.parse(query);
+  tree.iterate({
+    enter: ({ name }): false | void => {
+      queryParts.push(name);
+    },
+  });
+  return queryParts;
+}
+
 export function isValidQuery(query: string): boolean {
   let isValid = true;
   const tree = parser.parse(query);
@@ -145,6 +181,21 @@ export function isQueryWithParser(query: string): { queryWithParser: boolean; pa
     },
   });
   return { queryWithParser: parserCount > 0, parserCount };
+}
+
+export function getParserFromQuery(query: string) {
+  const tree = parser.parse(query);
+  let logParser;
+  tree.iterate({
+    enter: (node: SyntaxNode): false | void => {
+      if (node.type.id === LabelParser || node.type.id === JsonExpressionParser) {
+        logParser = query.substring(node.from, node.to).trim();
+        return false;
+      }
+    },
+  });
+
+  return logParser;
 }
 
 export function isQueryPipelineErrorFiltering(query: string): boolean {
@@ -209,4 +260,138 @@ export function getLogQueryFromMetricsQuery(query: string): string {
   });
 
   return selector + pipelineExpr;
+}
+
+export function isQueryWithLabelFilter(query: string): boolean {
+  const tree = parser.parse(query);
+  let hasLabelFilter = false;
+
+  tree.iterate({
+    enter: ({ type, node }): false | void => {
+      if (type.id === LabelFilter) {
+        hasLabelFilter = true;
+        return;
+      }
+    },
+  });
+
+  return hasLabelFilter;
+}
+
+export function isQueryWithLineFilter(query: string): boolean {
+  const tree = parser.parse(query);
+  let queryWithLineFilter = false;
+
+  tree.iterate({
+    enter: ({ type }): false | void => {
+      if (type.id === LineFilter) {
+        queryWithLineFilter = true;
+        return;
+      }
+    },
+  });
+
+  return queryWithLineFilter;
+}
+
+export function getStreamSelectorsFromQuery(query: string): string[] {
+  const labelMatcherPositions = getStreamSelectorPositions(query);
+
+  const labelMatchers = labelMatcherPositions.map((labelMatcher) => {
+    return query.slice(labelMatcher.from, labelMatcher.to);
+  });
+
+  return labelMatchers;
+}
+
+export function requestSupportsPartitioning(allQueries: LokiQuery[]) {
+  const queries = allQueries
+    .filter((query) => !query.hide)
+    .filter((query) => !query.refId.includes('do-not-chunk'))
+    .filter((query) => query.expr);
+
+  return queries.length > 0;
+}
+
+function shouldCombine(frame1: DataFrame, frame2: DataFrame): boolean {
+  if (frame1.refId !== frame2.refId) {
+    return false;
+  }
+
+  return frame1.name === frame2.name;
+}
+
+export function combineResponses(currentResult: DataQueryResponse | null, newResult: DataQueryResponse) {
+  if (!currentResult) {
+    return cloneQueryResponse(newResult);
+  }
+
+  newResult.data.forEach((newFrame) => {
+    const currentFrame = currentResult.data.find((frame) => shouldCombine(frame, newFrame));
+    if (!currentFrame) {
+      currentResult.data.push(cloneDataFrame(newFrame));
+      return;
+    }
+    combineFrames(currentFrame, newFrame);
+  });
+
+  return currentResult;
+}
+
+function combineFrames(dest: DataFrame, source: DataFrame) {
+  const totalFields = dest.fields.length;
+  for (let i = 0; i < totalFields; i++) {
+    dest.fields[i].values = new ArrayVector(
+      [].concat.apply(source.fields[i].values.toArray(), dest.fields[i].values.toArray())
+    );
+  }
+  dest.length += source.length;
+  dest.meta = {
+    ...dest.meta,
+    stats: getCombinedMetadataStats(dest.meta?.stats ?? [], source.meta?.stats ?? []),
+  };
+}
+
+const TOTAL_BYTES_STAT = 'Summary: total bytes processed';
+
+function getCombinedMetadataStats(
+  destStats: QueryResultMetaStat[],
+  sourceStats: QueryResultMetaStat[]
+): QueryResultMetaStat[] {
+  // in the current approach, we only handle a single stat
+  const destStat = destStats.find((s) => s.displayName === TOTAL_BYTES_STAT);
+  const sourceStat = sourceStats.find((s) => s.displayName === TOTAL_BYTES_STAT);
+
+  if (sourceStat != null && destStat != null) {
+    return [{ value: sourceStat.value + destStat.value, displayName: TOTAL_BYTES_STAT, unit: destStat.unit }];
+  }
+
+  // maybe one of them exist
+  const eitherStat = sourceStat ?? destStat;
+  if (eitherStat != null) {
+    return [eitherStat];
+  }
+
+  return [];
+}
+
+/**
+ * Deep clones a DataQueryResponse
+ */
+export function cloneQueryResponse(response: DataQueryResponse): DataQueryResponse {
+  const newResponse = {
+    ...response,
+    data: response.data.map(cloneDataFrame),
+  };
+  return newResponse;
+}
+
+function cloneDataFrame(frame: DataQueryResponseData): DataQueryResponseData {
+  return {
+    ...frame,
+    fields: frame.fields.map((field: Field<unknown, ArrayVector>) => ({
+      ...field,
+      values: new ArrayVector(field.values.buffer),
+    })),
+  };
 }

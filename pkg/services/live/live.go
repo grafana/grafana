@@ -14,6 +14,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/centrifugal/centrifuge"
+	"github.com/go-redis/redis/v8"
+	"github.com/gobwas/glob"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/live"
+	jsoniter "github.com/json-iterator/go"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -22,12 +30,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/plugincontext"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
-	"github.com/grafana/grafana/pkg/services/comments/commentmodel"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -36,12 +42,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/live/livecontext"
 	"github.com/grafana/grafana/pkg/services/live/liveplugin"
 	"github.com/grafana/grafana/pkg/services/live/managedstream"
+	"github.com/grafana/grafana/pkg/services/live/model"
 	"github.com/grafana/grafana/pkg/services/live/orgchannel"
 	"github.com/grafana/grafana/pkg/services/live/pipeline"
 	"github.com/grafana/grafana/pkg/services/live/pushws"
 	"github.com/grafana/grafana/pkg/services/live/runstream"
 	"github.com/grafana/grafana/pkg/services/live/survey"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -49,14 +57,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
-
-	"github.com/centrifugal/centrifuge"
-	"github.com/go-redis/redis/v8"
-	"github.com/gobwas/glob"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/live"
-	jsoniter "github.com/json-iterator/go"
-	"golang.org/x/sync/errgroup"
 )
 
 var (
@@ -66,14 +66,14 @@ var (
 
 // CoreGrafanaScope list of core features
 type CoreGrafanaScope struct {
-	Features map[string]models.ChannelHandlerFactory
+	Features map[string]model.ChannelHandlerFactory
 
 	// The generic service to advertise dashboard changes
-	Dashboards models.DashboardActivityChannel
+	Dashboards DashboardActivityChannel
 }
 
 func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, routeRegister routing.RouteRegister,
-	pluginStore plugins.Store, cacheService *localcache.CacheService,
+	pluginStore plugins.Store, pluginClient plugins.Client, cacheService *localcache.CacheService,
 	dataSourceCache datasources.CacheService, sqlStore db.DB, secretsService secrets.Service,
 	usageStatsService usagestats.Service, queryDataService *query.Service, toggles featuremgmt.FeatureToggles,
 	accessControl accesscontrol.AccessControl, dashboardService dashboards.DashboardService, annotationsRepo annotations.Repository,
@@ -84,14 +84,15 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		PluginContextProvider: plugCtxProvider,
 		RouteRegister:         routeRegister,
 		pluginStore:           pluginStore,
+		pluginClient:          pluginClient,
 		CacheService:          cacheService,
 		DataSourceCache:       dataSourceCache,
 		SQLStore:              sqlStore,
 		SecretsService:        secretsService,
 		queryDataService:      queryDataService,
-		channels:              make(map[string]models.ChannelHandler),
+		channels:              make(map[string]model.ChannelHandler),
 		GrafanaScope: CoreGrafanaScope{
-			Features: make(map[string]models.ChannelHandlerFactory),
+			Features: make(map[string]model.ChannelHandlerFactory),
 		},
 		usageStatsService: usageStatsService,
 		orgService:        orgService,
@@ -245,7 +246,6 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 	g.GrafanaScope.Dashboards = dash
 	g.GrafanaScope.Features["dashboard"] = dash
 	g.GrafanaScope.Features["broadcast"] = features.NewBroadcastRunner(g.storage)
-	g.GrafanaScope.Features["comment"] = features.NewCommentHandler(commentmodel.NewPermissionChecker(g.SQLStore, g.Features, accessControl, dashboardService, annotationsRepo))
 
 	g.surveyCaller = survey.NewCaller(managedStreamRunner, node)
 	err = g.surveyCaller.SetupHandlers()
@@ -349,7 +349,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		CheckOrigin:     checkOrigin,
 	})
 
-	g.websocketHandler = func(ctx *models.ReqContext) {
+	g.websocketHandler = func(ctx *contextmodel.ReqContext) {
 		user := ctx.SignedInUser
 
 		// Centrifuge expects Credentials in context with a current user ID.
@@ -362,7 +362,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		wsHandler.ServeHTTP(ctx.Resp, r)
 	}
 
-	g.pushWebsocketHandler = func(ctx *models.ReqContext) {
+	g.pushWebsocketHandler = func(ctx *contextmodel.ReqContext) {
 		user := ctx.SignedInUser
 		newCtx := livecontext.SetContextSignedUser(ctx.Req.Context(), user)
 		newCtx = livecontext.SetContextStreamID(newCtx, web.Params(ctx.Req)[":streamId"])
@@ -370,7 +370,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		pushWSHandler.ServeHTTP(ctx.Resp, r)
 	}
 
-	g.pushPipelineWebsocketHandler = func(ctx *models.ReqContext) {
+	g.pushPipelineWebsocketHandler = func(ctx *contextmodel.ReqContext) {
 		user := ctx.SignedInUser
 		newCtx := livecontext.SetContextSignedUser(ctx.Req.Context(), user)
 		newCtx = livecontext.SetContextChannelID(newCtx, web.Params(ctx.Req)["*"])
@@ -407,6 +407,7 @@ type GrafanaLive struct {
 	SQLStore              db.DB
 	SecretsService        secrets.Service
 	pluginStore           plugins.Store
+	pluginClient          plugins.Client
 	queryDataService      *query.Service
 	orgService            org.Service
 
@@ -419,7 +420,7 @@ type GrafanaLive struct {
 	pushPipelineWebsocketHandler interface{}
 
 	// Full channel handler
-	channels   map[string]models.ChannelHandler
+	channels   map[string]model.ChannelHandler
 	channelsMu sync.RWMutex
 
 	// The core internal features
@@ -437,13 +438,29 @@ type GrafanaLive struct {
 	usageStats        usageStats
 }
 
+// DashboardActivityChannel is a service to advertise dashboard activity
+type DashboardActivityChannel interface {
+	// Called when a dashboard is saved -- this includes the error so we can support a
+	// gitops workflow that knows if the value was saved to the local database or not
+	// in many cases all direct save requests will fail, but the request should be forwarded
+	// to any gitops observers
+	DashboardSaved(orgID int64, user *user.UserDisplayDTO, message string, dashboard *dashboards.Dashboard, err error) error
+
+	// Called when a dashboard is deleted
+	DashboardDeleted(orgID int64, user *user.UserDisplayDTO, uid string) error
+
+	// Experimental! Indicate is GitOps is active.  This really means
+	// someone is subscribed to the `grafana/dashboards/gitops` channel
+	HasGitOpsObserver(orgID int64) bool
+}
+
 func (g *GrafanaLive) getStreamPlugin(ctx context.Context, pluginID string) (backend.StreamHandler, error) {
 	plugin, exists := g.pluginStore.Plugin(ctx, pluginID)
 	if !exists {
 		return nil, fmt.Errorf("plugin not found: %s", pluginID)
 	}
 	if plugin.SupportsStreaming() {
-		return plugin, nil
+		return g.pluginClient, nil
 	}
 	return nil, fmt.Errorf("%s plugin does not implement StreamHandler: %#v", pluginID, plugin)
 }
@@ -633,7 +650,7 @@ func (g *GrafanaLive) handleOnSubscribe(ctx context.Context, client *centrifuge.
 		return centrifuge.SubscribeReply{}, centrifuge.ErrorPermissionDenied
 	}
 
-	var reply models.SubscribeReply
+	var reply model.SubscribeReply
 	var status backend.SubscribeStreamStatus
 	var ruleFound bool
 
@@ -685,7 +702,7 @@ func (g *GrafanaLive) handleOnSubscribe(ctx context.Context, client *centrifuge.
 			logger.Error("Error getting channel handler", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
 			return centrifuge.SubscribeReply{}, centrifuge.ErrorInternal
 		}
-		reply, status, err = handler.OnSubscribe(client.Context(), user, models.SubscribeEvent{
+		reply, status, err = handler.OnSubscribe(client.Context(), user, model.SubscribeEvent{
 			Channel: channel,
 			Path:    addr.Path,
 			Data:    e.Data,
@@ -779,7 +796,7 @@ func (g *GrafanaLive) handleOnPublish(ctx context.Context, client *centrifuge.Cl
 		logger.Error("Error getting channel handler", "user", client.UserID(), "client", client.ID(), "channel", e.Channel, "error", err)
 		return centrifuge.PublishReply{}, centrifuge.ErrorInternal
 	}
-	reply, status, err := handler.OnPublish(client.Context(), user, models.PublishEvent{
+	reply, status, err := handler.OnPublish(client.Context(), user, model.PublishEvent{
 		Channel: channel,
 		Path:    addr.Path,
 		Data:    e.Data,
@@ -840,7 +857,7 @@ func publishStatusToHTTPError(status backend.PublishStreamStatus) (int, string) 
 }
 
 // GetChannelHandler gives thread-safe access to the channel.
-func (g *GrafanaLive) GetChannelHandler(ctx context.Context, user *user.SignedInUser, channel string) (models.ChannelHandler, live.Channel, error) {
+func (g *GrafanaLive) GetChannelHandler(ctx context.Context, user *user.SignedInUser, channel string) (model.ChannelHandler, live.Channel, error) {
 	// Parse the identifier ${scope}/${namespace}/${path}
 	addr, err := live.ParseChannel(channel)
 	if err != nil {
@@ -881,7 +898,7 @@ func (g *GrafanaLive) GetChannelHandler(ctx context.Context, user *user.SignedIn
 
 // GetChannelHandlerFactory gets a ChannelHandlerFactory for a namespace.
 // It gives thread-safe access to the channel.
-func (g *GrafanaLive) GetChannelHandlerFactory(ctx context.Context, user *user.SignedInUser, scope string, namespace string) (models.ChannelHandlerFactory, error) {
+func (g *GrafanaLive) GetChannelHandlerFactory(ctx context.Context, user *user.SignedInUser, scope string, namespace string) (model.ChannelHandlerFactory, error) {
 	switch scope {
 	case live.ScopeGrafana:
 		return g.handleGrafanaScope(user, namespace)
@@ -896,14 +913,14 @@ func (g *GrafanaLive) GetChannelHandlerFactory(ctx context.Context, user *user.S
 	}
 }
 
-func (g *GrafanaLive) handleGrafanaScope(_ *user.SignedInUser, namespace string) (models.ChannelHandlerFactory, error) {
+func (g *GrafanaLive) handleGrafanaScope(_ *user.SignedInUser, namespace string) (model.ChannelHandlerFactory, error) {
 	if p, ok := g.GrafanaScope.Features[namespace]; ok {
 		return p, nil
 	}
 	return nil, fmt.Errorf("unknown feature: %q", namespace)
 }
 
-func (g *GrafanaLive) handlePluginScope(ctx context.Context, _ *user.SignedInUser, namespace string) (models.ChannelHandlerFactory, error) {
+func (g *GrafanaLive) handlePluginScope(ctx context.Context, _ *user.SignedInUser, namespace string) (model.ChannelHandlerFactory, error) {
 	streamHandler, err := g.getStreamPlugin(ctx, namespace)
 	if err != nil {
 		return nil, fmt.Errorf("can't find stream plugin: %s", namespace)
@@ -917,11 +934,11 @@ func (g *GrafanaLive) handlePluginScope(ctx context.Context, _ *user.SignedInUse
 	), nil
 }
 
-func (g *GrafanaLive) handleStreamScope(u *user.SignedInUser, namespace string) (models.ChannelHandlerFactory, error) {
+func (g *GrafanaLive) handleStreamScope(u *user.SignedInUser, namespace string) (model.ChannelHandlerFactory, error) {
 	return g.ManagedStreamRunner.GetOrCreateStream(u.OrgID, live.ScopeStream, namespace)
 }
 
-func (g *GrafanaLive) handleDatasourceScope(ctx context.Context, user *user.SignedInUser, namespace string) (models.ChannelHandlerFactory, error) {
+func (g *GrafanaLive) handleDatasourceScope(ctx context.Context, user *user.SignedInUser, namespace string) (model.ChannelHandlerFactory, error) {
 	ds, err := g.DataSourceCache.GetDatasourceByUID(ctx, namespace, user, false)
 	if err != nil {
 		return nil, fmt.Errorf("error getting datasource: %w", err)
@@ -932,7 +949,7 @@ func (g *GrafanaLive) handleDatasourceScope(ctx context.Context, user *user.Sign
 	}
 	return features.NewPluginRunner(
 		ds.Type,
-		ds.Uid,
+		ds.UID,
 		g.runStreamManager,
 		g.contextGetter,
 		streamHandler,
@@ -954,7 +971,7 @@ func (g *GrafanaLive) ClientCount(orgID int64, channel string) (int, error) {
 	return len(p.Presence), nil
 }
 
-func (g *GrafanaLive) HandleHTTPPublish(ctx *models.ReqContext) response.Response {
+func (g *GrafanaLive) HandleHTTPPublish(ctx *contextmodel.ReqContext) response.Response {
 	cmd := dtos.LivePublishCmd{}
 	if err := web.Bind(ctx.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -1004,7 +1021,7 @@ func (g *GrafanaLive) HandleHTTPPublish(ctx *models.ReqContext) response.Respons
 		return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), nil)
 	}
 
-	reply, status, err := channelHandler.OnPublish(ctx.Req.Context(), ctx.SignedInUser, models.PublishEvent{Channel: cmd.Channel, Path: addr.Path, Data: cmd.Data})
+	reply, status, err := channelHandler.OnPublish(ctx.Req.Context(), ctx.SignedInUser, model.PublishEvent{Channel: cmd.Channel, Path: addr.Path, Data: cmd.Data})
 	if err != nil {
 		logger.Error("Error calling OnPublish", "error", err, "channel", cmd.Channel)
 		return response.Error(http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError), nil)
@@ -1030,7 +1047,7 @@ type streamChannelListResponse struct {
 }
 
 // HandleListHTTP returns metadata so the UI can build a nice form
-func (g *GrafanaLive) HandleListHTTP(c *models.ReqContext) response.Response {
+func (g *GrafanaLive) HandleListHTTP(c *contextmodel.ReqContext) response.Response {
 	var channels []*managedstream.ManagedChannel
 	var err error
 	if g.IsHA() {
@@ -1048,7 +1065,7 @@ func (g *GrafanaLive) HandleListHTTP(c *models.ReqContext) response.Response {
 }
 
 // HandleInfoHTTP special http response for
-func (g *GrafanaLive) HandleInfoHTTP(ctx *models.ReqContext) response.Response {
+func (g *GrafanaLive) HandleInfoHTTP(ctx *contextmodel.ReqContext) response.Response {
 	path := web.Params(ctx.Req)["*"]
 	if path == "grafana/dashboards/gitops" {
 		return response.JSON(http.StatusOK, util.DynMap{
@@ -1061,7 +1078,7 @@ func (g *GrafanaLive) HandleInfoHTTP(ctx *models.ReqContext) response.Response {
 }
 
 // HandleChannelRulesListHTTP ...
-func (g *GrafanaLive) HandleChannelRulesListHTTP(c *models.ReqContext) response.Response {
+func (g *GrafanaLive) HandleChannelRulesListHTTP(c *contextmodel.ReqContext) response.Response {
 	result, err := g.pipelineStorage.ListChannelRules(c.Req.Context(), c.OrgID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get channel rules", err)
@@ -1122,7 +1139,7 @@ func (s *DryRunRuleStorage) ListChannelRules(_ context.Context, _ int64) ([]pipe
 }
 
 // HandlePipelineConvertTestHTTP ...
-func (g *GrafanaLive) HandlePipelineConvertTestHTTP(c *models.ReqContext) response.Response {
+func (g *GrafanaLive) HandlePipelineConvertTestHTTP(c *contextmodel.ReqContext) response.Response {
 	body, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error reading body", err)
@@ -1167,7 +1184,7 @@ func (g *GrafanaLive) HandlePipelineConvertTestHTTP(c *models.ReqContext) respon
 }
 
 // HandleChannelRulesPostHTTP ...
-func (g *GrafanaLive) HandleChannelRulesPostHTTP(c *models.ReqContext) response.Response {
+func (g *GrafanaLive) HandleChannelRulesPostHTTP(c *contextmodel.ReqContext) response.Response {
 	body, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error reading body", err)
@@ -1187,7 +1204,7 @@ func (g *GrafanaLive) HandleChannelRulesPostHTTP(c *models.ReqContext) response.
 }
 
 // HandleChannelRulesPutHTTP ...
-func (g *GrafanaLive) HandleChannelRulesPutHTTP(c *models.ReqContext) response.Response {
+func (g *GrafanaLive) HandleChannelRulesPutHTTP(c *contextmodel.ReqContext) response.Response {
 	body, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error reading body", err)
@@ -1210,7 +1227,7 @@ func (g *GrafanaLive) HandleChannelRulesPutHTTP(c *models.ReqContext) response.R
 }
 
 // HandleChannelRulesDeleteHTTP ...
-func (g *GrafanaLive) HandleChannelRulesDeleteHTTP(c *models.ReqContext) response.Response {
+func (g *GrafanaLive) HandleChannelRulesDeleteHTTP(c *contextmodel.ReqContext) response.Response {
 	body, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error reading body", err)
@@ -1231,7 +1248,7 @@ func (g *GrafanaLive) HandleChannelRulesDeleteHTTP(c *models.ReqContext) respons
 }
 
 // HandlePipelineEntitiesListHTTP ...
-func (g *GrafanaLive) HandlePipelineEntitiesListHTTP(_ *models.ReqContext) response.Response {
+func (g *GrafanaLive) HandlePipelineEntitiesListHTTP(_ *contextmodel.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, util.DynMap{
 		"subscribers":     pipeline.SubscribersRegistry,
 		"dataOutputs":     pipeline.DataOutputsRegistry,
@@ -1242,7 +1259,7 @@ func (g *GrafanaLive) HandlePipelineEntitiesListHTTP(_ *models.ReqContext) respo
 }
 
 // HandleWriteConfigsListHTTP ...
-func (g *GrafanaLive) HandleWriteConfigsListHTTP(c *models.ReqContext) response.Response {
+func (g *GrafanaLive) HandleWriteConfigsListHTTP(c *contextmodel.ReqContext) response.Response {
 	backends, err := g.pipelineStorage.ListWriteConfigs(c.Req.Context(), c.OrgID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get write configs", err)
@@ -1257,7 +1274,7 @@ func (g *GrafanaLive) HandleWriteConfigsListHTTP(c *models.ReqContext) response.
 }
 
 // HandleWriteConfigsPostHTTP ...
-func (g *GrafanaLive) HandleWriteConfigsPostHTTP(c *models.ReqContext) response.Response {
+func (g *GrafanaLive) HandleWriteConfigsPostHTTP(c *contextmodel.ReqContext) response.Response {
 	body, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error reading body", err)
@@ -1277,7 +1294,7 @@ func (g *GrafanaLive) HandleWriteConfigsPostHTTP(c *models.ReqContext) response.
 }
 
 // HandleWriteConfigsPutHTTP ...
-func (g *GrafanaLive) HandleWriteConfigsPutHTTP(c *models.ReqContext) response.Response {
+func (g *GrafanaLive) HandleWriteConfigsPutHTTP(c *contextmodel.ReqContext) response.Response {
 	body, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error reading body", err)
@@ -1321,7 +1338,7 @@ func (g *GrafanaLive) HandleWriteConfigsPutHTTP(c *models.ReqContext) response.R
 }
 
 // HandleWriteConfigsDeleteHTTP ...
-func (g *GrafanaLive) HandleWriteConfigsDeleteHTTP(c *models.ReqContext) response.Response {
+func (g *GrafanaLive) HandleWriteConfigsDeleteHTTP(c *contextmodel.ReqContext) response.Response {
 	body, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error reading body", err)

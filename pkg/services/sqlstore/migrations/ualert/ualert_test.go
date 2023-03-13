@@ -8,10 +8,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var MigTitle = migTitle
@@ -171,4 +172,24 @@ func Test_getAlertFolderNameFromDashboard(t *testing.T) {
 		require.Len(t, folder, MaxFolderName)
 		require.Contains(t, folder, dash.Uid)
 	})
+}
+
+func Test_shortUIDCaseInsensitiveConflicts(t *testing.T) {
+	s := uidSet{
+		set:             make(map[string]struct{}),
+		caseInsensitive: true,
+	}
+
+	// 10000 uids seems to be enough to cause a collision in almost every run if using util.GenerateShortUID directly.
+	for i := 0; i < 10000; i++ {
+		_, _ = s.generateUid()
+	}
+
+	// check if any are case-insensitive duplicates.
+	deduped := make(map[string]struct{})
+	for k := range s.set {
+		deduped[strings.ToLower(k)] = struct{}{}
+	}
+
+	require.Equal(t, len(s.set), len(deduped))
 }

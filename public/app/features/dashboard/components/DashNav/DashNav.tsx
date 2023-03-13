@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import React, { FC, ReactNode, useContext, useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import { useLocation } from 'react-router-dom';
@@ -14,20 +15,22 @@ import {
   Tag,
   ToolbarButtonRow,
   ModalsContext,
+  ConfirmModal,
 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbarSeparator';
 import config from 'app/core/config';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { useAppNotification } from 'app/core/copy/appNotification';
+import { appEvents } from 'app/core/core';
 import { useBusEvent } from 'app/core/hooks/useBusEvent';
 import { t, Trans } from 'app/core/internationalization';
-import { DashboardCommentsModal } from 'app/features/dashboard/components/DashboardComments/DashboardCommentsModal';
 import { SaveDashboardDrawer } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDrawer';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 import { KioskMode } from 'app/types';
-import { DashboardMetaChangedEvent } from 'app/types/events';
+import { DashboardMetaChangedEvent, ShowModalReactEvent } from 'app/types/events';
 
 import { setStarred } from '../../../../core/reducers/navBarTree';
 import { getDashboardSrv } from '../../services/DashboardSrv';
@@ -83,11 +86,50 @@ export const DashNav = React.memo<Props>((props) => {
   // We don't really care about the event payload here only that it triggeres a re-render of this component
   useBusEvent(props.dashboard.events, DashboardMetaChangedEvent);
 
+  const originalUrl = props.dashboard.snapshot?.originalUrl ?? '';
+  const gotoSnapshotOrigin = () => {
+    window.location.href = textUtil.sanitizeUrl(props.dashboard.snapshot.originalUrl);
+  };
+
+  const notifyApp = useAppNotification();
+  const onOpenSnapshotOriginal = () => {
+    try {
+      const sanitizedUrl = new URL(textUtil.sanitizeUrl(originalUrl), config.appUrl);
+      const appUrl = new URL(config.appUrl);
+      if (sanitizedUrl.host !== appUrl.host) {
+        appEvents.publish(
+          new ShowModalReactEvent({
+            component: ConfirmModal,
+            props: {
+              title: 'Proceed to external site?',
+              modalClass: modalStyles,
+              body: (
+                <>
+                  <p>
+                    {`This link connects to an external website at`} <code>{originalUrl}</code>
+                  </p>
+                  <p>{"Are you sure you'd like to proceed?"}</p>
+                </>
+              ),
+              confirmVariant: 'primary',
+              confirmText: 'Proceed',
+              onConfirm: gotoSnapshotOrigin,
+            },
+          })
+        );
+      } else {
+        gotoSnapshotOrigin();
+      }
+    } catch (err) {
+      notifyApp.error('Invalid URL', err instanceof Error ? err.message : undefined);
+    }
+  };
+
   const onStarDashboard = () => {
     const dashboardSrv = getDashboardSrv();
     const { dashboard, setStarred } = props;
 
-    dashboardSrv.starDashboard(dashboard.id, Boolean(dashboard.meta.isStarred)).then((newState) => {
+    dashboardSrv.starDashboard(dashboard.uid, Boolean(dashboard.meta.isStarred)).then((newState) => {
       setStarred({ id: dashboard.uid, title: dashboard.title, url: dashboard.meta.url ?? '', isStarred: newState });
       dashboard.meta.isStarred = newState;
       forceUpdate();
@@ -201,26 +243,6 @@ export const DashNav = React.memo<Props>((props) => {
       );
     }
 
-    if (dashboard.uid && config.featureToggles.dashboardComments) {
-      buttons.push(
-        <ModalsController key="button-dashboard-comments">
-          {({ showModal, hideModal }) => (
-            <DashNavButton
-              tooltip={t('dashboard.toolbar.comments-show', 'Show dashboard comments')}
-              icon="comment-alt-message"
-              iconSize="lg"
-              onClick={() => {
-                showModal(DashboardCommentsModal, {
-                  dashboard,
-                  onDismiss: hideModal,
-                });
-              }}
-            />
-          )}
-        </ModalsController>
-      );
-    }
-
     addCustomContent(customLeftActions, buttons);
     return buttons;
   };
@@ -316,7 +338,7 @@ export const DashNav = React.memo<Props>((props) => {
       buttons.push(
         <ToolbarButton
           tooltip={t('dashboard.toolbar.open-original', 'Open original dashboard')}
-          onClick={() => gotoSnapshotOrigin(snapshotUrl)}
+          onClick={onOpenSnapshotOriginal}
           icon="link"
           key="button-snapshot"
         />
@@ -338,11 +360,18 @@ export const DashNav = React.memo<Props>((props) => {
 
     buttons.push(renderTimeControls());
     buttons.push(tvButton);
-    return buttons;
-  };
 
-  const gotoSnapshotOrigin = (snapshotUrl: string) => {
-    window.location.href = textUtil.sanitizeUrl(snapshotUrl);
+    if (config.featureToggles.scenes) {
+      buttons.push(
+        <ToolbarButton
+          key="button-scenes"
+          tooltip={'View as Scene'}
+          icon="apps"
+          onClick={() => locationService.push(`/scenes/dashboard/${dashboard.uid}`)}
+        />
+      );
+    }
+    return buttons;
   };
 
   const { isFullscreen, title, folderTitle } = props;
@@ -384,3 +413,8 @@ export const DashNav = React.memo<Props>((props) => {
 DashNav.displayName = 'DashNav';
 
 export default connector(DashNav);
+
+const modalStyles = css({
+  width: 'max-content',
+  maxWidth: '80vw',
+});

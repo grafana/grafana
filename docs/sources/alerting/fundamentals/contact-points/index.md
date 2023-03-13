@@ -19,7 +19,11 @@ weight: 410
 
 Use contact points to define how your contacts are notified when an alert rule fires. A contact point can have one or more contact point types, for example, email, slack, webhook, and so on. When an alert rule fires, a notification is sent to all contact point types listed for a contact point. Contact points can be configured for the Grafana Alertmanager as well as external alertmanagers.
 
-You can also use message templating to customize notification messages for contact point types.
+You can also use notification templating to customize notification messages for contact point types.
+
+**Note:**
+
+If you've created an OnCall contact point in the Grafana OnCall application, you can view it in the Alerting application.
 
 ## Supported contact point types
 
@@ -52,4 +56,4 @@ The following table lists the contact point types supported by Grafana.
 
 [Manage contact points](https://grafana.com/docs/grafana/next/alerting/manage-notifications/create-contact-point/)
 
-[Create and edit message templates](https://grafana.com/docs/grafana/next/alerting/manage-notifications/create-message-template/)
+[Create and edit notification templates](https://grafana.com/docs/grafana/next/alerting/manage-notifications/create-message-template/)

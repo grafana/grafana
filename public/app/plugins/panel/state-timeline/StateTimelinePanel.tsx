@@ -12,6 +12,12 @@ import {
 } from '@grafana/ui';
 import { HoverEvent, addTooltipSupport } from '@grafana/ui/src/components/uPlot/config/addTooltipSupport';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
+import { TimelineChart } from 'app/core/components/TimelineChart/TimelineChart';
+import {
+  prepareTimelineFields,
+  prepareTimelineLegendItems,
+  TimelineMode,
+} from 'app/core/components/TimelineChart/utils';
 import { getLastStreamingDataFramePacket } from 'app/features/live/data/StreamingDataFrame';
 
 import { AnnotationEditorPlugin } from '../timeseries/plugins/AnnotationEditorPlugin';
@@ -20,13 +26,11 @@ import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getTimezones } from '../timeseries/utils';
 
 import { StateTimelineTooltip } from './StateTimelineTooltip';
-import { TimelineChart } from './TimelineChart';
-import { TimelineMode, TimelineOptions } from './types';
-import { prepareTimelineFields, prepareTimelineLegendItems } from './utils';
+import { PanelOptions } from './panelcfg.gen';
 
 const TOOLTIP_OFFSET = 10;
 
-interface TimelinePanelProps extends PanelProps<TimelineOptions> {}
+interface TimelinePanelProps extends PanelProps<PanelOptions> {}
 
 /**
  * @alpha

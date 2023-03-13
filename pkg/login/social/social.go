@@ -1,6 +1,7 @@
 package social
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
@@ -9,13 +10,13 @@ import (
 	"os"
 	"strings"
 
-	"context"
-
 	"golang.org/x/oauth2"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -56,14 +57,20 @@ type OAuthInfo struct {
 	TlsClientCa             string
 	TlsSkipVerify           bool
 	UsePKCE                 bool
+	AutoLogin               bool
 }
 
-func ProvideService(cfg *setting.Cfg) *SocialService {
+func ProvideService(cfg *setting.Cfg,
+	features *featuremgmt.FeatureManager,
+	usageStats usagestats.Service,
+) *SocialService {
 	ss := SocialService{
 		cfg:           cfg,
 		oAuthProvider: make(map[string]*OAuthInfo),
 		socialMap:     make(map[string]SocialConnector),
 	}
+
+	usageStats.RegisterMetricsFunc(ss.getUsageStats)
 
 	for _, name := range allOauthes {
 		sec := cfg.Raw.Section("auth." + name)
@@ -94,6 +101,7 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 			TlsSkipVerify:           sec.Key("tls_skip_verify_insecure").MustBool(),
 			UsePKCE:                 sec.Key("use_pkce").MustBool(),
 			AllowAssignGrafanaAdmin: sec.Key("allow_assign_grafana_admin").MustBool(false),
+			AutoLogin:               sec.Key("auto_login").MustBool(false),
 		}
 
 		// when empty_scopes parameter exists and is true, overwrite scope with empty value
@@ -139,26 +147,28 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 		// GitHub.
 		if name == "github" {
 			ss.socialMap["github"] = &SocialGithub{
-				SocialBase:           newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync),
+				SocialBase:           newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 				apiUrl:               info.ApiUrl,
 				teamIds:              sec.Key("team_ids").Ints(","),
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
+				skipOrgRoleSync:      cfg.GithubSkipOrgRoleSync,
 			}
 		}
 
 		// GitLab.
 		if name == "gitlab" {
 			ss.socialMap["gitlab"] = &SocialGitlab{
-				SocialBase:    newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync),
-				apiUrl:        info.ApiUrl,
-				allowedGroups: util.SplitString(sec.Key("allowed_groups").String()),
+				SocialBase:      newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+				apiUrl:          info.ApiUrl,
+				allowedGroups:   util.SplitString(sec.Key("allowed_groups").String()),
+				skipOrgRoleSync: cfg.GitLabSkipOrgRoleSync,
 			}
 		}
 
 		// Google.
 		if name == "google" {
 			ss.socialMap["google"] = &SocialGoogle{
-				SocialBase:   newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync),
+				SocialBase:   newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 				hostedDomain: info.HostedDomain,
 				apiUrl:       info.ApiUrl,
 			}
@@ -167,25 +177,27 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 		// AzureAD.
 		if name == "azuread" {
 			ss.socialMap["azuread"] = &SocialAzureAD{
-				SocialBase:       newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync),
+				SocialBase:       newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 				allowedGroups:    util.SplitString(sec.Key("allowed_groups").String()),
 				forceUseGraphAPI: sec.Key("force_use_graph_api").MustBool(false),
+				skipOrgRoleSync:  cfg.AzureADSkipOrgRoleSync,
 			}
 		}
 
 		// Okta
 		if name == "okta" {
 			ss.socialMap["okta"] = &SocialOkta{
-				SocialBase:    newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync),
-				apiUrl:        info.ApiUrl,
-				allowedGroups: util.SplitString(sec.Key("allowed_groups").String()),
+				SocialBase:      newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+				apiUrl:          info.ApiUrl,
+				allowedGroups:   util.SplitString(sec.Key("allowed_groups").String()),
+				skipOrgRoleSync: cfg.OktaSkipOrgRoleSync,
 			}
 		}
 
 		// Generic - Uses the same scheme as GitHub.
 		if name == "generic_oauth" {
 			ss.socialMap["generic_oauth"] = &SocialGenericOAuth{
-				SocialBase:           newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync),
+				SocialBase:           newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 				apiUrl:               info.ApiUrl,
 				teamsUrl:             info.TeamsUrl,
 				emailAttributeName:   info.EmailAttributeName,
@@ -214,13 +226,14 @@ func ProvideService(cfg *setting.Cfg) *SocialService {
 			}
 
 			ss.socialMap[grafanaCom] = &SocialGrafanaCom{
-				SocialBase: newSocialBase(name, &config, info,
-					cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync),
+				SocialBase:           newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 				url:                  cfg.GrafanaComURL,
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
+				skipOrgRoleSync:      cfg.GrafanaComSkipOrgRoleSync,
 			}
 		}
 	}
+
 	return &ss
 }
 
@@ -240,7 +253,6 @@ func (b *BasicUserInfo) String() string {
 }
 
 type SocialConnector interface {
-	Type() int
 	UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error)
 	IsEmailAllowed(email string) bool
 	IsSignupAllowed() bool
@@ -262,6 +274,7 @@ type SocialBase struct {
 	roleAttributeStrict bool
 	autoAssignOrgRole   string
 	skipOrgRoleSync     bool
+	features            featuremgmt.FeatureManager
 }
 
 type Error struct {
@@ -296,6 +309,7 @@ func newSocialBase(name string,
 	info *OAuthInfo,
 	autoAssignOrgRole string,
 	skipOrgRoleSync bool,
+	features featuremgmt.FeatureManager,
 ) *SocialBase {
 	logger := log.New("oauth." + name)
 
@@ -309,6 +323,7 @@ func newSocialBase(name string,
 		roleAttributePath:       info.RoleAttributePath,
 		roleAttributeStrict:     info.RoleAttributeStrict,
 		skipOrgRoleSync:         skipOrgRoleSync,
+		features:                features,
 	}
 }
 
@@ -352,7 +367,7 @@ func (s *SocialBase) defaultRole(legacy bool) org.RoleType {
 	if legacy && !s.skipOrgRoleSync {
 		s.log.Warn("No valid role found. Skipping role sync. " +
 			"In Grafana 10, this will result in the user being assigned the default role and overriding manual assignment. " +
-			"If role sync is not desired, set oauth_skip_org_role_update_sync to true")
+			"If role sync is not desired, set skip_org_role_sync for your provider to true")
 	}
 
 	return ""
@@ -449,4 +464,24 @@ func (ss *SocialService) GetOAuthInfoProvider(name string) *OAuthInfo {
 
 func (ss *SocialService) GetOAuthInfoProviders() map[string]*OAuthInfo {
 	return ss.oAuthProvider
+}
+
+func (ss *SocialService) getUsageStats(ctx context.Context) (map[string]interface{}, error) {
+	m := map[string]interface{}{}
+
+	authTypes := map[string]bool{}
+	for provider, enabled := range ss.GetOAuthProviders() {
+		authTypes["oauth_"+provider] = enabled
+	}
+
+	for authType, enabled := range authTypes {
+		enabledValue := 0
+		if enabled {
+			enabledValue = 1
+		}
+
+		m["stats.auth_enabled."+authType+".count"] = enabledValue
+	}
+
+	return m, nil
 }

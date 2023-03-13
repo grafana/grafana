@@ -1,7 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/http_api/other/
-  - /docs/grafana/latest/http_api/other/
+  - ../../http_api/other/
+canonical: /docs/grafana/latest/developers/http_api/other/
 description: Grafana Other HTTP API
 keywords:
   - grafana

@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/dashboards/json-model/
-  - /docs/grafana/latest/reference/dashboard/
-  - /docs/grafana/latest/dashboards/build-dashboards/view-dashboard-json-model/
+  - ../../reference/dashboard/
+  - ../json-model/
 keywords:
   - grafana
   - dashboard
@@ -76,7 +75,7 @@ Each field in the dashboard JSON is explained below with its usage:
 | **time**          | time range for dashboard, i.e. last 6 hours, last 7 days, etc                                                     |
 | **timepicker**    | timepicker metadata, see [timepicker section](#timepicker) for details                                            |
 | **templating**    | templating metadata, see [templating section](#templating) for details                                            |
-| **annotations**   | annotations metadata, see [annotations section](#annotations) for details                                         |
+| **annotations**   | annotations metadata, see [annotations]({{< relref "../annotate-visualizations" >}}) for how to add them          |
 | **refresh**       | auto-refresh interval                                                                                             |
 | **schemaVersion** | version of the JSON schema (integer), incremented each time a Grafana update brings changes to said schema        |
 | **version**       | version of the dashboard (integer), incremented each time the dashboard is updated                                |
@@ -145,11 +144,11 @@ Usage of the fields is explained below:
 | --------------------- | -------------------------------------- |
 | **collapse**          | whether timepicker is collapsed or not |
 | **enable**            | whether timepicker is enabled or not   |
-| **notice**            | TODO                                   |
-| **now**               | TODO                                   |
-| **refresh_intervals** | TODO                                   |
-| **status**            | TODO                                   |
-| **type**              | TODO                                   |
+| **notice**            |                                        |
+| **now**               |                                        |
+| **refresh_intervals** |                                        |
+| **status**            |                                        |
+| **type**              |                                        |
 
 ### templating
 
@@ -237,6 +236,6 @@ Usage of the above mentioned fields in the templating section is explained below
 | **name**        | name of variable                                                                                        |
 | **options**     | array of variable text/value pairs available for selection on dashboard                                 |
 | **query**       | data source query used to fetch values for a variable                                                   |
-| **refresh**     | TODO                                                                                                    |
-| **regex**       | TODO                                                                                                    |
+| **refresh**     |                                                                                                         |
+| **regex**       |                                                                                                         |
 | **type**        | type of variable, i.e. `custom`, `query` or `interval`                                                  |

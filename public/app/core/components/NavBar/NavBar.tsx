@@ -5,9 +5,9 @@ import { cloneDeep } from 'lodash';
 import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { GrafanaTheme2, NavModelItem, NavSection } from '@grafana/data';
+import { GrafanaTheme2, locationUtil, NavModelItem, NavSection } from '@grafana/data';
 import { config, locationSearchToObject, locationService, reportInteraction } from '@grafana/runtime';
-import { Icon, useTheme2, CustomScrollbar } from '@grafana/ui';
+import { useTheme2, CustomScrollbar, IconButton } from '@grafana/ui';
 import { getKioskMode } from 'app/core/navigation/kiosk';
 import { useSelector } from 'app/types';
 
@@ -51,17 +51,22 @@ export const NavBar = React.memo(() => {
     menuOpen
   );
 
+  let homeUrl = config.appSubUrl || '/';
+  if (!config.bootData.user.isSignedIn && !config.anonymousEnabled) {
+    homeUrl = locationUtil.getUrlForPartial(location, { forceLogin: 'true' });
+  }
+
   const homeItem: NavModelItem = enrichWithInteractionTracking(
     {
       id: 'home',
       text: 'Home',
-      url: config.bootData.user.isSignedIn ? config.appSubUrl || '/' : '/login',
+      url: homeUrl,
       icon: 'grafana',
     },
     menuOpen
   );
 
-  const navTree = cloneDeep(navBarTree);
+  const navTree = cloneDeep(navBarTree).filter((item) => item.hideFromMenu !== true);
 
   const coreItems = navTree
     .filter((item) => item.section === NavSection.Core)
@@ -90,8 +95,14 @@ export const NavBar = React.memo(() => {
           }}
         >
           <FocusScope>
-            <div className={styles.mobileSidemenuLogo} onClick={() => setMenuOpen(!menuOpen)} key="hamburger">
-              <Icon name="bars" size="xl" />
+            <div className={styles.mobileSidemenuLogo} key="hamburger">
+              <IconButton
+                name="bars"
+                tooltip="Toggle menu"
+                tooltipPlacement="bottom"
+                size="xl"
+                onClick={() => setMenuOpen(!menuOpen)}
+              />
             </div>
 
             <NavBarToggle
@@ -186,10 +197,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   navWrapper: css({
     position: 'relative',
     display: 'flex',
-
-    '.sidemenu-hidden &': {
-      display: 'none',
-    },
   }),
   sidemenu: css({
     label: 'sidemenu',
@@ -212,7 +219,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   mobileSidemenuLogo: css({
     alignItems: 'center',
-    cursor: 'pointer',
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'space-between',

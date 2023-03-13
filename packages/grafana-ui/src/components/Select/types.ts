@@ -27,6 +27,8 @@ export interface SelectCommonProps<T> {
   closeMenuOnSelect?: boolean;
   /** Used for custom components. For more information, see `react-select` */
   components?: any;
+  /** Sets the position of the createOption element in your options list. Defaults to 'last' */
+  createOptionPosition?: 'first' | 'last';
   defaultValue?: any;
   disabled?: boolean;
   filterOption?: (option: SelectableValue<T>, searchQuery: string) => boolean;
@@ -86,7 +88,7 @@ export interface SelectCommonProps<T> {
   isValidNewOption?: (
     inputValue: string,
     value: SelectableValue<T> | null,
-    options: OptionsOrGroups<unknown, GroupBase<unknown>>
+    options: OptionsOrGroups<SelectableValue<T>, GroupBase<SelectableValue<T>>>
   ) => boolean;
   /** Message to display isLoading=true*/
   loadingMessage?: string;
@@ -110,9 +112,14 @@ export interface VirtualizedSelectProps<T> extends Omit<SelectCommonProps<T>, 'v
   options?: Array<Pick<SelectableValue<T>, 'label' | 'value'>>;
 }
 
+/** The AsyncVirtualizedSelect component uses a slightly different SelectableValue, description and other props are not supported */
+export interface VirtualizedSelectAsyncProps<T>
+  extends Omit<SelectCommonProps<T>, 'virtualized'>,
+    SelectAsyncProps<T> {}
+
 export interface MultiSelectCommonProps<T> extends Omit<SelectCommonProps<T>, 'onChange' | 'isMulti' | 'value'> {
   value?: Array<SelectableValue<T>> | T[];
-  onChange: (item: Array<SelectableValue<T>>) => {} | void;
+  onChange: (item: Array<SelectableValue<T>>, actionMeta: ActionMeta) => {} | void;
 }
 
 // This is the type of *our* SelectBase component, not ReactSelect's prop, although
@@ -140,6 +147,7 @@ export type ControlComponent<T> = React.ComponentType<CustomControlProps<T>>;
 export interface SelectableOptGroup<T = any> {
   label: string;
   options: Array<SelectableValue<T>>;
+
   [key: string]: any;
 }
 

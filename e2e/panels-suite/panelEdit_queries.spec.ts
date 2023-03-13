@@ -29,6 +29,7 @@ e2e.scenario({
     e2e.components.QueryEditorRows.rows({ timeout: flakyTimeout }).should('have.length', 2);
 
     // Remove refId A
+    e2e.components.QueryEditorRow.actionButton('Remove query').eq(0).scrollIntoView();
     e2e.components.QueryEditorRow.actionButton('Remove query').eq(0).should('be.visible').click();
 
     // We expect row with refId B to exist and be visible

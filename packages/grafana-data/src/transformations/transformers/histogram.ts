@@ -2,8 +2,9 @@ import { map } from 'rxjs/operators';
 
 import { getDisplayProcessor } from '../../field';
 import { createTheme, GrafanaTheme2 } from '../../themes';
-import { SynchronousDataTransformerInfo } from '../../types';
+import { DataFrameType, SynchronousDataTransformerInfo } from '../../types';
 import { DataFrame, Field, FieldConfig, FieldType } from '../../types/dataFrame';
+import { roundDecimals } from '../../utils';
 import { ArrayVector } from '../../vector/ArrayVector';
 
 import { DataTransformerID } from './ids';
@@ -82,7 +83,8 @@ export const histogramTransformer: SynchronousDataTransformerInfo<HistogramTrans
     fields: {},
   },
 
-  operator: (options) => (source) => source.pipe(map((data) => histogramTransformer.transformer(options)(data))),
+  operator: (options, ctx) => (source) =>
+    source.pipe(map((data) => histogramTransformer.transformer(options, ctx)(data))),
 
   transformer: (options: HistogramTransformerOptions) => (data: DataFrame[]) => {
     if (!Array.isArray(data) || data.length === 0) {
@@ -99,19 +101,33 @@ export const histogramTransformer: SynchronousDataTransformerInfo<HistogramTrans
 /**
  * @internal
  */
-export const histogramFrameBucketMinFieldName = 'BucketMin';
+export const histogramFrameBucketMinFieldName = 'xMin';
 
 /**
  * @internal
  */
-export const histogramFrameBucketMaxFieldName = 'BucketMax';
+export function isHistogramFrameBucketMinFieldName(v: string) {
+  return v === histogramFrameBucketMinFieldName || v === 'BucketMin'; // REMOVE 'BuckentMin/Max'
+}
+
+/**
+ * @internal
+ */
+export const histogramFrameBucketMaxFieldName = 'xMax';
+
+/**
+ * @internal
+ */
+export function isHistogramFrameBucketMaxFieldName(v: string) {
+  return v === histogramFrameBucketMaxFieldName || v === 'BucketMax'; // REMOVE 'BuckentMin/Max'
+}
 
 /**
  * @alpha
  */
 export interface HistogramFields {
-  bucketMin: Field;
-  bucketMax: Field;
+  xMin: Field;
+  xMax: Field;
   counts: Field[]; // frequency
 }
 
@@ -121,22 +137,46 @@ export interface HistogramFields {
  * @alpha
  */
 export function getHistogramFields(frame: DataFrame): HistogramFields | undefined {
-  let bucketMin: Field | undefined = undefined;
-  let bucketMax: Field | undefined = undefined;
+  let xMin: Field | undefined = undefined;
+  let xMax: Field | undefined = undefined;
   const counts: Field[] = [];
   for (const field of frame.fields) {
-    if (field.name === histogramFrameBucketMinFieldName) {
-      bucketMin = field;
-    } else if (field.name === histogramFrameBucketMaxFieldName) {
-      bucketMax = field;
+    if (isHistogramFrameBucketMinFieldName(field.name)) {
+      xMin = field;
+    } else if (isHistogramFrameBucketMaxFieldName(field.name)) {
+      xMax = field;
     } else if (field.type === FieldType.number) {
       counts.push(field);
     }
   }
-  if (bucketMin && bucketMax && counts.length) {
+
+  // guess bucket size from single explicit bucket field
+  if (!xMax && xMin && xMin.values.length > 1) {
+    let vals = xMin.values.toArray();
+    let bucketSize = roundDecimals(vals[1] - vals[0], 6);
+
+    xMax = {
+      ...xMin,
+      name: histogramFrameBucketMaxFieldName,
+      values: new ArrayVector(vals.map((v) => v + bucketSize)),
+    };
+  }
+
+  if (!xMin && xMax && xMax?.values.length > 1) {
+    let vals = xMax.values.toArray();
+    let bucketSize = roundDecimals(vals[1] - vals[0], 6);
+
+    xMin = {
+      ...xMax,
+      name: histogramFrameBucketMinFieldName,
+      values: new ArrayVector(vals.map((v) => v - bucketSize)),
+    };
+  }
+
+  if (xMin && xMax && counts.length) {
     return {
-      bucketMin,
-      bucketMax,
+      xMin,
+      xMax,
       counts,
     };
   }
@@ -249,7 +289,7 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
     }
   }
 
-  const bucketMin: Field = {
+  const xMin: Field = {
     name: histogramFrameBucketMinFieldName,
     values: new ArrayVector(joinedHists[0]),
     type: FieldType.number,
@@ -262,8 +302,8 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
             decimals: bucketDecimals,
           },
   };
-  const bucketMax = {
-    ...bucketMin,
+  const xMax = {
+    ...xMin,
     name: histogramFrameBucketMaxFieldName,
     values: new ArrayVector(joinedHists[0].map((v) => v + bucketSize!)),
   };
@@ -278,7 +318,7 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
     counts = [
       {
         ...counts[0],
-        name: 'Count',
+        name: 'count',
         values: new ArrayVector(vals),
         type: FieldType.number,
         state: undefined,
@@ -291,8 +331,8 @@ export function buildHistogram(frames: DataFrame[], options?: HistogramTransform
   }
 
   return {
-    bucketMin,
-    bucketMax,
+    xMin,
+    xMax,
     counts,
   };
 }
@@ -363,13 +403,13 @@ function histogram(
  * @internal
  */
 export function histogramFieldsToFrame(info: HistogramFields, theme?: GrafanaTheme2): DataFrame {
-  if (!info.bucketMin.display) {
+  if (!info.xMin.display) {
     const display = getDisplayProcessor({
-      field: info.bucketMin,
+      field: info.xMin,
       theme: theme ?? createTheme(),
     });
-    info.bucketMin.display = display;
-    info.bucketMax.display = display;
+    info.xMin.display = display;
+    info.xMax.display = display;
   }
 
   // ensure updated units are reflected on the count field used for y axis formatting
@@ -379,7 +419,10 @@ export function histogramFieldsToFrame(info: HistogramFields, theme?: GrafanaThe
   });
 
   return {
-    fields: [info.bucketMin, info.bucketMax, ...info.counts],
-    length: info.bucketMin.values.length,
+    length: info.xMin.values.length,
+    meta: {
+      type: DataFrameType.Histogram,
+    },
+    fields: [info.xMin, info.xMax, ...info.counts],
   };
 }

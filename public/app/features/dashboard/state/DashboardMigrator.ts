@@ -6,7 +6,6 @@ import {
   DataLinkBuiltInVars,
   DataQuery,
   DataSourceRef,
-  DataTransformerConfig,
   FieldConfigSource,
   FieldMatcherID,
   FieldType,
@@ -26,7 +25,9 @@ import {
 import { labelsToFieldsTransformer } from '@grafana/data/src/transformations/transformers/labelsToFields';
 import { mergeTransformer } from '@grafana/data/src/transformations/transformers/merge';
 import { getDataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
+import { DataTransformerConfig } from '@grafana/schema';
 import { AxisPlacement, GraphFieldConfig } from '@grafana/ui';
+import { migrateTableDisplayModeToCellOptions } from '@grafana/ui/src/components/Table/utils';
 import { getAllOptionEditors, getAllStandardFieldConfigs } from 'app/core/components/OptionsUI/registry';
 import { config } from 'app/core/config';
 import {
@@ -77,7 +78,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades: PanelSchemeUpgradeHandler[] = [];
-    this.dashboard.schemaVersion = 37;
+    this.dashboard.schemaVersion = 38;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -803,6 +804,40 @@ export class DashboardMigrator {
         } else if (panel.options?.legend) {
           panel.options.legend = { ...panel.options?.legend, showLegend: true };
         }
+        return panel;
+      });
+    }
+
+    // Update old table cell display configuration to the new
+    // format which uses an object for configuration
+    if (oldVersion < 38) {
+      panelUpgrades.push((panel: PanelModel) => {
+        if (panel.type === 'table' && panel.fieldConfig !== undefined) {
+          const displayMode = panel.fieldConfig.defaults?.custom?.displayMode;
+
+          // Update field configuration
+          if (displayMode !== undefined) {
+            // Migrate any options for the panel
+            panel.fieldConfig.defaults.custom.cellOptions = migrateTableDisplayModeToCellOptions(displayMode);
+
+            // Delete the legacy field
+            delete panel.fieldConfig.defaults.custom.displayMode;
+          }
+
+          // Update any overrides referencing the cell display mode
+          for (let i = 0; i < panel.fieldConfig.overrides.length; i++) {
+            for (let j = 0; j < panel.fieldConfig.overrides[i].properties.length; j++) {
+              let overrideDisplayMode = panel.fieldConfig.overrides[i].properties[j].value;
+
+              if (panel.fieldConfig.overrides[i].properties[j].id === 'custom.displayMode') {
+                panel.fieldConfig.overrides[i].properties[j].id = 'custom.cellOptions';
+                panel.fieldConfig.overrides[i].properties[j].value =
+                  migrateTableDisplayModeToCellOptions(overrideDisplayMode);
+              }
+            }
+          }
+        }
+
         return panel;
       });
     }

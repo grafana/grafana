@@ -88,6 +88,7 @@ export class ExploreTimeControls extends Component<Props> {
 
     return (
       <TimePickerWithHistory
+        isOnCanvas
         {...timePickerCommonProps}
         timeSyncButton={timeSyncButton}
         isSynced={syncedTimes}

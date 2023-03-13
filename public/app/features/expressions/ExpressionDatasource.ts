@@ -1,4 +1,4 @@
-import { Observable, from, mergeMap } from 'rxjs';
+import { from, mergeMap, Observable } from 'rxjs';
 
 import {
   DataQueryRequest,
@@ -12,7 +12,7 @@ import { DataSourceWithBackend, getDataSourceSrv, getTemplateSrv } from '@grafan
 import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
 
 import { ExpressionQueryEditor } from './ExpressionQueryEditor';
-import { ExpressionQuery, ExpressionQueryType } from './types';
+import { ExpressionDatasourceUID, ExpressionQuery, ExpressionQueryType } from './types';
 
 /**
  * This is a singleton instance that just pretends to be a DataSource
@@ -59,12 +59,6 @@ export class ExpressionDatasourceApi extends DataSourceWithBackend<ExpressionQue
     };
   }
 }
-
-/**
- * MATCHES a constant in DataSourceWithBackend, this should be '__expr__'
- * @deprecated
- */
-export const ExpressionDatasourceUID = '-100';
 
 export const instanceSettings: DataSourceInstanceSettings = {
   id: -100,

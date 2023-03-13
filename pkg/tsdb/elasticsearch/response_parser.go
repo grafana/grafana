@@ -1,7 +1,9 @@
 package elasticsearch
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"regexp"
 	"sort"
 	"strconv"
@@ -10,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
@@ -22,77 +25,296 @@ const (
 	topMetricsType    = "top_metrics"
 	// Bucket types
 	dateHistType    = "date_histogram"
+	nestedType      = "nested"
 	histogramType   = "histogram"
 	filtersType     = "filters"
 	termsType       = "terms"
 	geohashGridType = "geohash_grid"
+	//  Document types
+	rawDocumentType = "raw_document"
+	rawDataType     = "raw_data"
+	// Logs type
+	logsType = "logs"
 )
 
-type responseParser struct {
-	Responses []*es.SearchResponse
-	Targets   []*Query
-	DebugInfo *es.SearchDebugInfo
-}
+var searchWordsRegex = regexp.MustCompile(regexp.QuoteMeta(es.HighlightPreTagsString) + `(.*?)` + regexp.QuoteMeta(es.HighlightPostTagsString))
 
-var newResponseParser = func(responses []*es.SearchResponse, targets []*Query, debugInfo *es.SearchDebugInfo) *responseParser {
-	return &responseParser{
-		Responses: responses,
-		Targets:   targets,
-		DebugInfo: debugInfo,
-	}
-}
-
-func (rp *responseParser) getTimeSeries() (*backend.QueryDataResponse, error) {
+func parseResponse(responses []*es.SearchResponse, targets []*Query, configuredFields es.ConfiguredFields) (*backend.QueryDataResponse, error) {
 	result := backend.QueryDataResponse{
 		Responses: backend.Responses{},
 	}
-	if rp.Responses == nil {
+	if responses == nil {
 		return &result, nil
 	}
 
-	for i, res := range rp.Responses {
-		target := rp.Targets[i]
-
-		var debugInfo *simplejson.Json
-		if rp.DebugInfo != nil && i == 0 {
-			debugInfo = simplejson.NewFromAny(rp.DebugInfo)
-		}
+	for i, res := range responses {
+		target := targets[i]
 
 		if res.Error != nil {
 			errResult := getErrorFromElasticResponse(res)
 			result.Responses[target.RefID] = backend.DataResponse{
 				Error: errors.New(errResult),
-				Frames: data.Frames{
-					&data.Frame{
-						Meta: &data.FrameMeta{
-							Custom: debugInfo,
-						},
-					},
-				}}
+			}
 			continue
 		}
 
 		queryRes := backend.DataResponse{}
 
-		props := make(map[string]string)
-		err := rp.processBuckets(res.Aggregations, target, &queryRes, props, 0)
-		if err != nil {
-			return &backend.QueryDataResponse{}, err
-		}
-		rp.nameFields(queryRes, target)
-		rp.trimDatapoints(queryRes, target)
-
-		for _, frame := range queryRes.Frames {
-			frame.Meta = &data.FrameMeta{
-				Custom: debugInfo,
+		if isRawDataQuery(target) {
+			err := processRawDataResponse(res, target, configuredFields, &queryRes)
+			if err != nil {
+				return &backend.QueryDataResponse{}, err
 			}
+			result.Responses[target.RefID] = queryRes
+		} else if isRawDocumentQuery(target) {
+			err := processRawDocumentResponse(res, target, &queryRes)
+			if err != nil {
+				return &backend.QueryDataResponse{}, err
+			}
+			result.Responses[target.RefID] = queryRes
+		} else if isLogsQuery(target) {
+			err := processLogsResponse(res, target, configuredFields, &queryRes)
+			if err != nil {
+				return &backend.QueryDataResponse{}, err
+			}
+			result.Responses[target.RefID] = queryRes
+		} else {
+			// Process as metric query result
+			props := make(map[string]string)
+			err := processBuckets(res.Aggregations, target, &queryRes, props, 0)
+			if err != nil {
+				return &backend.QueryDataResponse{}, err
+			}
+			nameFrames(queryRes, target)
+			trimDatapoints(queryRes, target)
+
+			result.Responses[target.RefID] = queryRes
 		}
-		result.Responses[target.RefID] = queryRes
 	}
 	return &result, nil
 }
 
-func (rp *responseParser) processBuckets(aggs map[string]interface{}, target *Query,
+func processLogsResponse(res *es.SearchResponse, target *Query, configuredFields es.ConfiguredFields, queryRes *backend.DataResponse) error {
+	propNames := make(map[string]bool)
+	docs := make([]map[string]interface{}, len(res.Hits.Hits))
+	searchWords := make(map[string]bool)
+
+	for hitIdx, hit := range res.Hits.Hits {
+		var flattened map[string]interface{}
+		if hit["_source"] != nil {
+			flattened = flatten(hit["_source"].(map[string]interface{}))
+		}
+
+		doc := map[string]interface{}{
+			"_id":       hit["_id"],
+			"_type":     hit["_type"],
+			"_index":    hit["_index"],
+			"sort":      hit["sort"],
+			"highlight": hit["highlight"],
+			"_source":   flattened,
+		}
+
+		for k, v := range flattened {
+			if configuredFields.LogLevelField != "" && k == configuredFields.LogLevelField {
+				doc["level"] = v
+			} else {
+				doc[k] = v
+			}
+		}
+
+		for key := range doc {
+			propNames[key] = true
+		}
+
+		// Process highlight to searchWords
+		if highlights, ok := doc["highlight"].(map[string]interface{}); ok {
+			for _, highlight := range highlights {
+				if highlightList, ok := highlight.([]interface{}); ok {
+					for _, highlightValue := range highlightList {
+						str := fmt.Sprintf("%v", highlightValue)
+						matches := searchWordsRegex.FindAllStringSubmatch(str, -1)
+
+						for _, v := range matches {
+							searchWords[v[1]] = true
+						}
+					}
+				}
+			}
+		}
+
+		docs[hitIdx] = doc
+	}
+
+	sortedPropNames := sortPropNames(propNames, configuredFields, true)
+	fields := processDocsToDataFrameFields(docs, sortedPropNames, configuredFields)
+
+	frames := data.Frames{}
+	frame := data.NewFrame("", fields...)
+	setPreferredVisType(frame, data.VisTypeLogs)
+	setSearchWords(frame, searchWords)
+	frames = append(frames, frame)
+
+	queryRes.Frames = frames
+	return nil
+}
+
+func processRawDataResponse(res *es.SearchResponse, target *Query, configuredFields es.ConfiguredFields, queryRes *backend.DataResponse) error {
+	propNames := make(map[string]bool)
+	docs := make([]map[string]interface{}, len(res.Hits.Hits))
+
+	for hitIdx, hit := range res.Hits.Hits {
+		var flattened map[string]interface{}
+		if hit["_source"] != nil {
+			flattened = flatten(hit["_source"].(map[string]interface{}))
+		}
+
+		doc := map[string]interface{}{
+			"_id":       hit["_id"],
+			"_type":     hit["_type"],
+			"_index":    hit["_index"],
+			"sort":      hit["sort"],
+			"highlight": hit["highlight"],
+		}
+
+		for k, v := range flattened {
+			doc[k] = v
+		}
+
+		for key := range doc {
+			propNames[key] = true
+		}
+
+		docs[hitIdx] = doc
+	}
+
+	sortedPropNames := sortPropNames(propNames, configuredFields, false)
+	fields := processDocsToDataFrameFields(docs, sortedPropNames, configuredFields)
+
+	frames := data.Frames{}
+	frame := data.NewFrame("", fields...)
+	frames = append(frames, frame)
+
+	queryRes.Frames = frames
+	return nil
+}
+
+func processRawDocumentResponse(res *es.SearchResponse, target *Query, queryRes *backend.DataResponse) error {
+	docs := make([]map[string]interface{}, len(res.Hits.Hits))
+	for hitIdx, hit := range res.Hits.Hits {
+		doc := map[string]interface{}{
+			"_id":       hit["_id"],
+			"_type":     hit["_type"],
+			"_index":    hit["_index"],
+			"sort":      hit["sort"],
+			"highlight": hit["highlight"],
+		}
+
+		if hit["_source"] != nil {
+			source, ok := hit["_source"].(map[string]interface{})
+			if ok {
+				for k, v := range source {
+					doc[k] = v
+				}
+			}
+		}
+
+		if hit["fields"] != nil {
+			source, ok := hit["fields"].(map[string]interface{})
+			if ok {
+				for k, v := range source {
+					doc[k] = v
+				}
+			}
+		}
+
+		docs[hitIdx] = doc
+	}
+
+	fieldVector := make([]*json.RawMessage, len(res.Hits.Hits))
+	for i, doc := range docs {
+		bytes, err := json.Marshal(doc)
+		if err != nil {
+			// We skip docs that can't be marshalled
+			// should not happen
+			continue
+		}
+		value := json.RawMessage(bytes)
+		fieldVector[i] = &value
+	}
+
+	isFilterable := true
+	field := data.NewField(target.RefID, nil, fieldVector)
+	field.Config = &data.FieldConfig{Filterable: &isFilterable}
+
+	frames := data.Frames{}
+	frame := data.NewFrame(target.RefID, field)
+	frames = append(frames, frame)
+
+	queryRes.Frames = frames
+	return nil
+}
+
+func processDocsToDataFrameFields(docs []map[string]interface{}, propNames []string, configuredFields es.ConfiguredFields) []*data.Field {
+	size := len(docs)
+	isFilterable := true
+	allFields := make([]*data.Field, len(propNames))
+
+	for propNameIdx, propName := range propNames {
+		// Special handling for time field
+		if propName == configuredFields.TimeField {
+			timeVector := make([]*time.Time, size)
+			for i, doc := range docs {
+				timeString, ok := doc[configuredFields.TimeField].(string)
+				if !ok {
+					continue
+				}
+				timeValue, err := time.Parse(time.RFC3339Nano, timeString)
+				if err != nil {
+					// We skip time values that cannot be parsed
+					continue
+				} else {
+					timeVector[i] = &timeValue
+				}
+			}
+			field := data.NewField(configuredFields.TimeField, nil, timeVector)
+			field.Config = &data.FieldConfig{Filterable: &isFilterable}
+			allFields[propNameIdx] = field
+			continue
+		}
+
+		propNameValue := findTheFirstNonNilDocValueForPropName(docs, propName)
+		switch propNameValue.(type) {
+		// We are checking for default data types values (float64, int, bool, string)
+		// and default to json.RawMessage if we cannot find any of them
+		case float64:
+			allFields[propNameIdx] = createFieldOfType[float64](docs, propName, size, isFilterable)
+		case int:
+			allFields[propNameIdx] = createFieldOfType[int](docs, propName, size, isFilterable)
+		case string:
+			allFields[propNameIdx] = createFieldOfType[string](docs, propName, size, isFilterable)
+		case bool:
+			allFields[propNameIdx] = createFieldOfType[bool](docs, propName, size, isFilterable)
+		default:
+			fieldVector := make([]*json.RawMessage, size)
+			for i, doc := range docs {
+				bytes, err := json.Marshal(doc[propName])
+				if err != nil {
+					// We skip values that cannot be marshalled
+					continue
+				}
+				value := json.RawMessage(bytes)
+				fieldVector[i] = &value
+			}
+			field := data.NewField(propName, nil, fieldVector)
+			field.Config = &data.FieldConfig{Filterable: &isFilterable}
+			allFields[propNameIdx] = field
+		}
+	}
+
+	return allFields
+}
+
+func processBuckets(aggs map[string]interface{}, target *Query,
 	queryResult *backend.DataResponse, props map[string]string, depth int) error {
 	var err error
 	maxDepth := len(target.BucketAggs) - 1
@@ -109,12 +331,19 @@ func (rp *responseParser) processBuckets(aggs map[string]interface{}, target *Qu
 		if aggDef == nil {
 			continue
 		}
+		if aggDef.Type == nestedType {
+			err = processBuckets(esAgg.MustMap(), target, queryResult, props, depth+1)
+			if err != nil {
+				return err
+			}
+			continue
+		}
 
 		if depth == maxDepth {
 			if aggDef.Type == dateHistType {
-				err = rp.processMetrics(esAgg, target, queryResult, props)
+				err = processMetrics(esAgg, target, queryResult, props)
 			} else {
-				err = rp.processAggregationDocs(esAgg, aggDef, target, queryResult, props)
+				err = processAggregationDocs(esAgg, aggDef, target, queryResult, props)
 			}
 			if err != nil {
 				return err
@@ -137,7 +366,7 @@ func (rp *responseParser) processBuckets(aggs map[string]interface{}, target *Qu
 				if key, err := bucket.Get("key_as_string").String(); err == nil {
 					newProps[aggDef.Field] = key
 				}
-				err = rp.processBuckets(bucket.MustMap(), target, queryResult, newProps, depth+1)
+				err = processBuckets(bucket.MustMap(), target, queryResult, newProps, depth+1)
 				if err != nil {
 					return err
 				}
@@ -160,7 +389,7 @@ func (rp *responseParser) processBuckets(aggs map[string]interface{}, target *Qu
 
 				newProps["filter"] = bucketKey
 
-				err = rp.processBuckets(bucket.MustMap(), target, queryResult, newProps, depth+1)
+				err = processBuckets(bucket.MustMap(), target, queryResult, newProps, depth+1)
 				if err != nil {
 					return err
 				}
@@ -170,8 +399,18 @@ func (rp *responseParser) processBuckets(aggs map[string]interface{}, target *Qu
 	return nil
 }
 
+func newTimeSeriesFrame(timeData []time.Time, tags map[string]string, values []*float64) *data.Frame {
+	frame := data.NewFrame("",
+		data.NewField(data.TimeSeriesTimeFieldName, nil, timeData),
+		data.NewField(data.TimeSeriesValueFieldName, tags, values))
+	frame.Meta = &data.FrameMeta{
+		Type: data.FrameTypeTimeSeriesMulti,
+	}
+	return frame
+}
+
 // nolint:gocyclo
-func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, query *backend.DataResponse,
+func processMetrics(esAgg *simplejson.Json, target *Query, query *backend.DataResponse,
 	props map[string]string) error {
 	frames := data.Frames{}
 	esAggBuckets := esAgg.Get("buckets").MustArray()
@@ -199,9 +438,7 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 				tags[k] = v
 			}
 			tags["metric"] = countType
-			frames = append(frames, data.NewFrame("",
-				data.NewField("time", nil, timeVector),
-				data.NewField("value", tags, values)))
+			frames = append(frames, newTimeSeriesFrame(timeVector, tags, values))
 		case percentilesType:
 			buckets := esAggBuckets
 			if len(buckets) == 0 {
@@ -233,9 +470,7 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 					timeVector = append(timeVector, time.Unix(int64(*key)/1000, 0).UTC())
 					values = append(values, value)
 				}
-				frames = append(frames, data.NewFrame("",
-					data.NewField("time", nil, timeVector),
-					data.NewField("value", tags, values)))
+				frames = append(frames, newTimeSeriesFrame(timeVector, tags, values))
 			}
 		case topMetricsType:
 			buckets := esAggBuckets
@@ -275,10 +510,7 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 					}
 				}
 
-				frames = append(frames, data.NewFrame("",
-					data.NewField("time", nil, timeVector),
-					data.NewField("value", tags, values),
-				))
+				frames = append(frames, newTimeSeriesFrame(timeVector, tags, values))
 			}
 
 		case extendedStatsType:
@@ -322,9 +554,7 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 					values = append(values, value)
 				}
 				labels := tags
-				frames = append(frames, data.NewFrame("",
-					data.NewField("time", nil, timeVector),
-					data.NewField("value", labels, values)))
+				frames = append(frames, newTimeSeriesFrame(timeVector, labels, values))
 			}
 		default:
 			for k, v := range props {
@@ -350,9 +580,7 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 				timeVector = append(timeVector, time.Unix(int64(*key)/1000, 0).UTC())
 				values = append(values, value)
 			}
-			frames = append(frames, data.NewFrame("",
-				data.NewField("time", nil, timeVector),
-				data.NewField("value", tags, values)))
+			frames = append(frames, newTimeSeriesFrame(timeVector, tags, values))
 		}
 	}
 	if query.Frames != nil {
@@ -363,7 +591,7 @@ func (rp *responseParser) processMetrics(esAgg *simplejson.Json, target *Query, 
 	return nil
 }
 
-func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef *BucketAgg, target *Query,
+func processAggregationDocs(esAgg *simplejson.Json, aggDef *BucketAgg, target *Query,
 	queryResult *backend.DataResponse, props map[string]string) error {
 	propKeys := make([]string, 0)
 	for k := range props {
@@ -442,7 +670,7 @@ func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef 
 		for _, metric := range target.Metrics {
 			switch metric.Type {
 			case countType:
-				addMetricValue(values, rp.getMetricName(metric.Type), castToFloat(bucket.Get("doc_count")))
+				addMetricValue(values, getMetricName(metric.Type), castToFloat(bucket.Get("doc_count")))
 			case extendedStatsType:
 				metaKeys := make([]string, 0)
 				meta := metric.Meta.MustMap()
@@ -466,11 +694,11 @@ func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef 
 						value = castToFloat(bucket.GetPath(metric.ID, statName))
 					}
 
-					addMetricValue(values, rp.getMetricName(metric.Type), value)
+					addMetricValue(values, getMetricName(metric.Type), value)
 					break
 				}
 			default:
-				metricName := rp.getMetricName(metric.Type)
+				metricName := getMetricName(metric.Type)
 				otherMetrics := make([]*MetricAgg, 0)
 
 				for _, m := range target.Metrics {
@@ -504,17 +732,21 @@ func (rp *responseParser) processAggregationDocs(esAgg *simplejson.Json, aggDef 
 }
 
 func extractDataField(name string, v interface{}) *data.Field {
+	var field *data.Field
 	switch v.(type) {
 	case *string:
-		return data.NewField(name, nil, []*string{})
+		field = data.NewField(name, nil, []*string{})
 	case *float64:
-		return data.NewField(name, nil, []*float64{})
+		field = data.NewField(name, nil, []*float64{})
 	default:
-		return &data.Field{}
+		field = &data.Field{}
 	}
+	isFilterable := true
+	field.Config = &data.FieldConfig{Filterable: &isFilterable}
+	return field
 }
 
-func (rp *responseParser) trimDatapoints(queryResult backend.DataResponse, target *Query) {
+func trimDatapoints(queryResult backend.DataResponse, target *Query) {
 	var histogram *BucketAgg
 	for _, bucketAgg := range target.BucketAggs {
 		if bucketAgg.Type == dateHistType {
@@ -551,7 +783,25 @@ func (rp *responseParser) trimDatapoints(queryResult backend.DataResponse, targe
 	}
 }
 
-func (rp *responseParser) nameFields(queryResult backend.DataResponse, target *Query) {
+// we sort the label's pairs by the label-key,
+// and return the label-values
+func getSortedLabelValues(labels data.Labels) []string {
+	var keys []string
+	for key := range labels {
+		keys = append(keys, key)
+	}
+
+	sort.Strings(keys)
+
+	var values []string
+	for _, key := range keys {
+		values = append(values, labels[key])
+	}
+
+	return values
+}
+
+func nameFrames(queryResult backend.DataResponse, target *Query) {
 	set := make(map[string]struct{})
 	frames := queryResult.Frames
 	for _, v := range frames {
@@ -564,19 +814,22 @@ func (rp *responseParser) nameFields(queryResult backend.DataResponse, target *Q
 		}
 	}
 	metricTypeCount := len(set)
-	for i := range frames {
-		fieldName := rp.getFieldName(*frames[i].Fields[1], target, metricTypeCount)
-		for _, field := range frames[i].Fields {
-			field.SetConfig(&data.FieldConfig{DisplayNameFromDS: fieldName})
+	for _, frame := range frames {
+		if frame.Meta != nil && frame.Meta.Type == data.FrameTypeTimeSeriesMulti {
+			// if it is a time-series-multi, it means it has two columns, one is "time",
+			// another is "number"
+			valueField := frame.Fields[1]
+			fieldName := getFieldName(*valueField, target, metricTypeCount)
+			frame.Name = fieldName
 		}
 	}
 }
 
 var aliasPatternRegex = regexp.MustCompile(`\{\{([\s\S]+?)\}\}`)
 
-func (rp *responseParser) getFieldName(dataField data.Field, target *Query, metricTypeCount int) string {
+func getFieldName(dataField data.Field, target *Query, metricTypeCount int) string {
 	metricType := dataField.Labels["metric"]
-	metricName := rp.getMetricName(metricType)
+	metricName := getMetricName(metricType)
 	delete(dataField.Labels, "metric")
 
 	field := ""
@@ -613,8 +866,8 @@ func (rp *responseParser) getFieldName(dataField data.Field, target *Query, metr
 		return frameName
 	}
 	// todo, if field and pipelineAgg
-	if field != "" && isPipelineAgg(metricType) {
-		if isPipelineAggWithMultipleBucketPaths(metricType) {
+	if isPipelineAgg(metricType) {
+		if metricType != "" && isPipelineAggWithMultipleBucketPaths(metricType) {
 			metricID := ""
 			if v, ok := dataField.Labels["metricId"]; ok {
 				metricID = v
@@ -633,15 +886,17 @@ func (rp *responseParser) getFieldName(dataField data.Field, target *Query, metr
 				}
 			}
 		} else {
-			found := false
-			for _, metric := range target.Metrics {
-				if metric.ID == field {
-					metricName += " " + describeMetric(metric.Type, field)
-					found = true
+			if field != "" {
+				found := false
+				for _, metric := range target.Metrics {
+					if metric.ID == field {
+						metricName += " " + describeMetric(metric.Type, field)
+						found = true
+					}
 				}
-			}
-			if !found {
-				metricName = "Unset"
+				if !found {
+					metricName = "Unset"
+				}
 			}
 		}
 	} else if field != "" {
@@ -655,7 +910,7 @@ func (rp *responseParser) getFieldName(dataField data.Field, target *Query, metr
 	}
 
 	name := ""
-	for _, v := range dataField.Labels {
+	for _, v := range getSortedLabelValues(dataField.Labels) {
 		name += v + " "
 	}
 
@@ -666,7 +921,7 @@ func (rp *responseParser) getFieldName(dataField data.Field, target *Query, metr
 	return strings.TrimSpace(name) + " " + metricName
 }
 
-func (rp *responseParser) getMetricName(metric string) string {
+func getMetricName(metric string) string {
 	if text, ok := metricAggType[metric]; ok {
 		return text
 	}
@@ -730,15 +985,137 @@ func getErrorFromElasticResponse(response *es.SearchResponse) string {
 	json := simplejson.NewFromAny(response.Error)
 	reason := json.Get("reason").MustString()
 	rootCauseReason := json.Get("root_cause").GetIndex(0).Get("reason").MustString()
+	causedByReason := json.Get("caused_by").Get("reason").MustString()
 
 	switch {
 	case rootCauseReason != "":
 		errorString = rootCauseReason
 	case reason != "":
 		errorString = reason
+	case causedByReason != "":
+		errorString = causedByReason
 	default:
 		errorString = "Unknown elasticsearch error response"
 	}
 
 	return errorString
+}
+
+// flatten flattens multi-level objects to single level objects. It uses dot notation to join keys.
+func flatten(target map[string]interface{}) map[string]interface{} {
+	// On frontend maxDepth wasn't used but as we are processing on backend
+	// let's put a limit to avoid infinite loop. 10 was chosen arbitrary.
+	maxDepth := 10
+	currentDepth := 0
+	delimiter := ""
+	output := make(map[string]interface{})
+
+	var step func(object map[string]interface{}, prev string)
+
+	step = func(object map[string]interface{}, prev string) {
+		for key, value := range object {
+			if prev == "" {
+				delimiter = ""
+			} else {
+				delimiter = "."
+			}
+			newKey := prev + delimiter + key
+
+			v, ok := value.(map[string]interface{})
+			shouldStepInside := ok && len(v) > 0 && currentDepth < maxDepth
+			if shouldStepInside {
+				currentDepth++
+				step(v, newKey)
+			} else {
+				output[newKey] = value
+			}
+		}
+	}
+
+	step(target, "")
+	return output
+}
+
+// sortPropNames orders propNames so that timeField is first (if it exists), log message field is second
+// if shouldSortLogMessageField is true, and rest of propNames are ordered alphabetically
+func sortPropNames(propNames map[string]bool, configuredFields es.ConfiguredFields, shouldSortLogMessageField bool) []string {
+	hasTimeField := false
+	hasLogMessageField := false
+
+	var sortedPropNames []string
+	for k := range propNames {
+		if configuredFields.TimeField != "" && k == configuredFields.TimeField {
+			hasTimeField = true
+		} else if shouldSortLogMessageField && configuredFields.LogMessageField != "" && k == configuredFields.LogMessageField {
+			hasLogMessageField = true
+		} else {
+			sortedPropNames = append(sortedPropNames, k)
+		}
+	}
+
+	sort.Strings(sortedPropNames)
+
+	if hasLogMessageField {
+		sortedPropNames = append([]string{configuredFields.LogMessageField}, sortedPropNames...)
+	}
+
+	if hasTimeField {
+		sortedPropNames = append([]string{configuredFields.TimeField}, sortedPropNames...)
+	}
+
+	return sortedPropNames
+}
+
+// findTheFirstNonNilDocValueForPropName finds the first non-nil value for propName in docs. If none of the values are non-nil, it returns the value of propName in the first doc.
+func findTheFirstNonNilDocValueForPropName(docs []map[string]interface{}, propName string) interface{} {
+	for _, doc := range docs {
+		if doc[propName] != nil {
+			return doc[propName]
+		}
+	}
+	return docs[0][propName]
+}
+
+func createFieldOfType[T int | float64 | bool | string](docs []map[string]interface{}, propName string, size int, isFilterable bool) *data.Field {
+	fieldVector := make([]*T, size)
+	for i, doc := range docs {
+		value, ok := doc[propName].(T)
+		if !ok {
+			continue
+		}
+		fieldVector[i] = &value
+	}
+	field := data.NewField(propName, nil, fieldVector)
+	field.Config = &data.FieldConfig{Filterable: &isFilterable}
+	return field
+}
+
+func setPreferredVisType(frame *data.Frame, visType data.VisType) {
+	if frame.Meta == nil {
+		frame.Meta = &data.FrameMeta{}
+	}
+
+	frame.Meta.PreferredVisualization = visType
+}
+
+func setSearchWords(frame *data.Frame, searchWords map[string]bool) {
+	i := 0
+	searchWordsList := make([]string, len(searchWords))
+	for searchWord := range searchWords {
+		searchWordsList[i] = searchWord
+		i++
+	}
+	sort.Strings(searchWordsList)
+
+	if frame.Meta == nil {
+		frame.Meta = &data.FrameMeta{}
+	}
+
+	if frame.Meta.Custom == nil {
+		frame.Meta.Custom = map[string]interface{}{}
+	}
+
+	frame.Meta.Custom = map[string]interface{}{
+		"searchWords": searchWordsList,
+	}
 }

@@ -10,10 +10,10 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/pluginsettings"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
@@ -49,7 +49,7 @@ func TestPluginProxy(t *testing.T) {
 				},
 			},
 			secretsService,
-			&models.ReqContext{
+			&contextmodel.ReqContext{
 				SignedInUser: &user.SignedInUser{
 					Login: "test_user",
 				},
@@ -72,7 +72,7 @@ func TestPluginProxy(t *testing.T) {
 			t,
 			&pluginsettings.DTO{},
 			secretsService,
-			&models.ReqContext{
+			&contextmodel.ReqContext{
 				SignedInUser: &user.SignedInUser{
 					Login: "test_user",
 				},
@@ -96,7 +96,7 @@ func TestPluginProxy(t *testing.T) {
 			t,
 			&pluginsettings.DTO{},
 			secretsService,
-			&models.ReqContext{
+			&contextmodel.ReqContext{
 				SignedInUser: &user.SignedInUser{
 					Login: "test_user",
 				},
@@ -119,7 +119,7 @@ func TestPluginProxy(t *testing.T) {
 			t,
 			&pluginsettings.DTO{},
 			secretsService,
-			&models.ReqContext{
+			&contextmodel.ReqContext{
 				SignedInUser: &user.SignedInUser{IsAnonymous: true},
 				Context: &web.Context{
 					Req: httpReq,
@@ -150,7 +150,7 @@ func TestPluginProxy(t *testing.T) {
 				},
 			},
 			secretsService,
-			&models.ReqContext{
+			&contextmodel.ReqContext{
 				SignedInUser: &user.SignedInUser{
 					Login: "test_user",
 				},
@@ -178,7 +178,7 @@ func TestPluginProxy(t *testing.T) {
 			t,
 			&pluginsettings.DTO{},
 			secretsService,
-			&models.ReqContext{
+			&contextmodel.ReqContext{
 				SignedInUser: &user.SignedInUser{
 					Login: "test_user",
 				},
@@ -216,7 +216,7 @@ func TestPluginProxy(t *testing.T) {
 				SecureJSONData: encryptedJsonData,
 			},
 			secretsService,
-			&models.ReqContext{
+			&contextmodel.ReqContext{
 				SignedInUser: &user.SignedInUser{
 					Login: "test_user",
 				},
@@ -250,7 +250,7 @@ func TestPluginProxy(t *testing.T) {
 			},
 		}
 
-		ctx := &models.ReqContext{
+		ctx := &contextmodel.ReqContext{
 			SignedInUser: &user.SignedInUser{},
 			Context: &web.Context{
 				Req:  httptest.NewRequest("GET", "/", nil),
@@ -388,7 +388,7 @@ func TestPluginProxyRoutes(t *testing.T) {
 
 			responseWriter := web.NewResponseWriter("GET", httptest.NewRecorder())
 
-			ctx := &models.ReqContext{
+			ctx := &contextmodel.ReqContext{
 				SignedInUser: &user.SignedInUser{},
 				Context: &web.Context{
 					Req:  httptest.NewRequest("GET", tc.proxyPath, nil),
@@ -420,7 +420,7 @@ func TestPluginProxyRoutes(t *testing.T) {
 }
 
 // getPluginProxiedRequest is a helper for easier setup of tests based on global config and ReqContext.
-func getPluginProxiedRequest(t *testing.T, ps *pluginsettings.DTO, secretsService secrets.Service, ctx *models.ReqContext, cfg *setting.Cfg, route *plugins.Route) *http.Request {
+func getPluginProxiedRequest(t *testing.T, ps *pluginsettings.DTO, secretsService secrets.Service, ctx *contextmodel.ReqContext, cfg *setting.Cfg, route *plugins.Route) *http.Request {
 	// insert dummy route if none is specified
 	if route == nil {
 		route = &plugins.Route{

@@ -38,7 +38,7 @@ type RuleReader interface {
 
 // CalculateChanges calculates the difference between rules in the group in the database and the submitted rules. If a submitted rule has UID it tries to find it in the database (in other groups).
 // returns a list of rules that need to be added, updated and deleted. Deleted considered rules in the database that belong to the group but do not exist in the list of submitted rules.
-func CalculateChanges(ctx context.Context, ruleReader RuleReader, groupKey models.AlertRuleGroupKey, submittedRules []*models.AlertRule) (*GroupDelta, error) {
+func CalculateChanges(ctx context.Context, ruleReader RuleReader, groupKey models.AlertRuleGroupKey, submittedRules []*models.AlertRuleWithOptionals) (*GroupDelta, error) {
 	affectedGroups := make(map[models.AlertRuleGroupKey]models.RulesGroup)
 	q := &models.ListAlertRulesQuery{
 		OrgID:         groupKey.OrgID,
@@ -58,7 +58,9 @@ func CalculateChanges(ctx context.Context, ruleReader RuleReader, groupKey model
 		existingGroupRulesUIDs[r.UID] = r
 	}
 
-	var toAdd, toDelete []*models.AlertRule
+	//nolint:prealloc // difficult logic
+	var toAdd []*models.AlertRule
+	//nolint:prealloc // difficult logic
 	var toUpdate []RuleDelta
 	loadedRulesByUID := map[string]*models.AlertRule{} // auxiliary cache to avoid unnecessary queries if there are multiple moves from the same group
 	for _, r := range submittedRules {
@@ -91,25 +93,26 @@ func CalculateChanges(ctx context.Context, ruleReader RuleReader, groupKey model
 		}
 
 		if existing == nil {
-			toAdd = append(toAdd, r)
+			toAdd = append(toAdd, &r.AlertRule)
 			continue
 		}
 
 		models.PatchPartialAlertRule(existing, r)
 
-		diff := existing.Diff(r, AlertRuleFieldsToIgnoreInDiff[:]...)
+		diff := existing.Diff(&r.AlertRule, AlertRuleFieldsToIgnoreInDiff[:]...)
 		if len(diff) == 0 {
 			continue
 		}
 
 		toUpdate = append(toUpdate, RuleDelta{
 			Existing: existing,
-			New:      r,
+			New:      &r.AlertRule,
 			Diff:     diff,
 		})
 		continue
 	}
 
+	toDelete := make([]*models.AlertRule, 0, len(existingGroupRulesUIDs))
 	for _, rule := range existingGroupRulesUIDs {
 		toDelete = append(toDelete, rule)
 	}

@@ -33,85 +33,83 @@ export const PublicDashboardListTable = () => {
 
   return (
     <Page.Contents isLoading={isLoading}>
-      <div className="page-action-bar">
-        <table className="filter-table">
-          <thead>
-            <tr>
-              <th className={styles.nameTh}>Name</th>
-              <th>Status</th>
-              <th className={styles.fetchingSpinner}>{isFetching && <Spinner />}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {publicDashboards?.map((pd: ListPublicDashboardResponse) => {
-              const isOrphaned = !pd.dashboardUid;
-              return (
-                <tr key={pd.uid}>
-                  <td className={styles.titleTd}>
-                    <Tooltip
-                      content={!isOrphaned ? pd.title : 'The linked dashboard has already been deleted'}
-                      placement="top"
+      <table className="filter-table">
+        <thead>
+          <tr>
+            <th className={styles.nameTh}>Name</th>
+            <th>Status</th>
+            <th className={styles.fetchingSpinner}>{isFetching && <Spinner />}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {publicDashboards?.map((pd: ListPublicDashboardResponse) => {
+            const isOrphaned = !pd.dashboardUid;
+            return (
+              <tr key={pd.uid}>
+                <td className={styles.titleTd}>
+                  <Tooltip
+                    content={!isOrphaned ? pd.title : 'The linked dashboard has already been deleted'}
+                    placement="top"
+                  >
+                    {!isOrphaned ? (
+                      <Link className={styles.link} href={`/d/${pd.dashboardUid}`}>
+                        {pd.title}
+                      </Link>
+                    ) : (
+                      <div className={styles.orphanedTitle}>
+                        <p>Orphaned public dashboard</p>
+                        <Icon name="info-circle" className={styles.orphanedInfoIcon} />
+                      </div>
+                    )}
+                  </Tooltip>
+                </td>
+                <td>
+                  <Tag
+                    name={pd.isEnabled ? 'enabled' : 'paused'}
+                    colorIndex={isOrphaned ? 9 : pd.isEnabled ? 20 : 15}
+                  />
+                </td>
+                <td>
+                  <ButtonGroup className={styles.buttonGroup}>
+                    <LinkButton
+                      href={viewPublicDashboardUrl(pd.accessToken)}
+                      fill="text"
+                      size={responsiveSize}
+                      title={pd.isEnabled ? 'View public dashboard' : 'Public dashboard is disabled'}
+                      target="_blank"
+                      disabled={!pd.isEnabled || isOrphaned}
+                      data-testid={selectors.ListItem.linkButton}
                     >
-                      {!isOrphaned ? (
-                        <Link className={styles.link} href={`/d/${pd.dashboardUid}`}>
-                          {pd.title}
-                        </Link>
-                      ) : (
-                        <div className={styles.orphanedTitle}>
-                          <p>Orphaned public dashboard</p>
-                          <Icon name="info-circle" className={styles.orphanedInfoIcon} />
-                        </div>
-                      )}
-                    </Tooltip>
-                  </td>
-                  <td>
-                    <Tag
-                      name={pd.isEnabled ? 'enabled' : 'disabled'}
-                      colorIndex={isOrphaned ? 9 : pd.isEnabled ? 20 : 15}
-                    />
-                  </td>
-                  <td>
-                    <ButtonGroup className={styles.buttonGroup}>
-                      <LinkButton
-                        href={viewPublicDashboardUrl(pd.accessToken)}
+                      <Icon size={responsiveSize} name="external-link-alt" />
+                    </LinkButton>
+                    <LinkButton
+                      fill="text"
+                      size={responsiveSize}
+                      href={`/d/${pd.dashboardUid}?shareView=share`}
+                      title="Configure public dashboard"
+                      disabled={isOrphaned}
+                      data-testid={selectors.ListItem.configButton}
+                    >
+                      <Icon size={responsiveSize} name="cog" />
+                    </LinkButton>
+                    {hasWritePermissions && (
+                      <DeletePublicDashboardButton
+                        variant="primary"
                         fill="text"
-                        size={responsiveSize}
-                        title={pd.isEnabled ? 'View public dashboard' : 'Public dashboard is disabled'}
-                        target="_blank"
-                        disabled={!pd.isEnabled || isOrphaned}
-                        data-testid={selectors.ListItem.linkButton}
+                        data-testid={selectors.ListItem.trashcanButton}
+                        publicDashboard={pd}
+                        loader={<Spinner />}
                       >
-                        <Icon size={responsiveSize} name="external-link-alt" />
-                      </LinkButton>
-                      <LinkButton
-                        fill="text"
-                        size={responsiveSize}
-                        href={`/d/${pd.dashboardUid}?shareView=share`}
-                        title="Configure public dashboard"
-                        disabled={isOrphaned}
-                        data-testid={selectors.ListItem.configButton}
-                      >
-                        <Icon size={responsiveSize} name="cog" />
-                      </LinkButton>
-                      {hasWritePermissions && (
-                        <DeletePublicDashboardButton
-                          variant="primary"
-                          fill="text"
-                          data-testid={selectors.ListItem.trashcanButton}
-                          publicDashboard={pd}
-                          loader={<Spinner />}
-                        >
-                          <Icon size={responsiveSize} name="trash-alt" />
-                        </DeletePublicDashboardButton>
-                      )}
-                    </ButtonGroup>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+                        <Icon size={responsiveSize} name="trash-alt" />
+                      </DeletePublicDashboardButton>
+                    )}
+                  </ButtonGroup>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </Page.Contents>
   );
 };

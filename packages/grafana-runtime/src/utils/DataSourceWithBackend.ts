@@ -2,30 +2,30 @@ import { lastValueFrom, merge, Observable, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
 import {
-  DataSourceApi,
+  DataFrame,
+  dataFrameToJSON,
+  DataQuery,
   DataQueryRequest,
   DataQueryResponse,
+  DataSourceApi,
   DataSourceInstanceSettings,
-  DataQuery,
   DataSourceJsonData,
-  ScopedVars,
-  makeClassES5Compatible,
-  DataFrame,
-  parseLiveChannelAddress,
-  getDataSourceRef,
   DataSourceRef,
-  dataFrameToJSON,
+  getDataSourceRef,
+  makeClassES5Compatible,
+  parseLiveChannelAddress,
+  ScopedVars,
 } from '@grafana/data';
 
 import { config } from '../config';
 import {
+  BackendSrvRequest,
+  FetchResponse,
   getBackendSrv,
   getDataSourceSrv,
   getGrafanaLiveSrv,
-  StreamingFrameOptions,
   StreamingFrameAction,
-  BackendSrvRequest,
-  FetchResponse,
+  StreamingFrameOptions,
 } from '../services';
 
 import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
@@ -46,7 +46,7 @@ export function isExpressionReference(ref?: DataSourceRef | string | null): bool
   if (!ref) {
     return false;
   }
-  const v = (ref as any).type ?? ref;
+  const v = typeof ref === 'string' ? ref : ref.type;
   return v === ExpressionDatasourceRef.type || v === '-100'; // -100 was a legacy accident that should be removed
 }
 
@@ -88,7 +88,7 @@ enum PluginRequestHeaders {
  *
  * @public
  */
-export type HealthCheckResultDetails = Record<string, any> | undefined;
+export type HealthCheckResultDetails = Record<string, unknown> | undefined;
 
 /**
  * Describes the payload returned when checking the health of a data source
@@ -120,7 +120,7 @@ class DataSourceWithBackend<
    * Ideally final -- any other implementation may not work as expected
    */
   query(request: DataQueryRequest<TQuery>): Observable<DataQueryResponse> {
-    const { intervalMs, maxDataPoints, range, requestId, hideFromInspector = false } = request;
+    const { intervalMs, maxDataPoints, queryCachingTTL, range, requestId, hideFromInspector = false } = request;
     let targets = request.targets;
 
     if (this.filterQuery) {
@@ -133,6 +133,7 @@ class DataSourceWithBackend<
     const queries = targets.map((q) => {
       let datasource = this.getRef();
       let datasourceId = this.id;
+      let shouldApplyTemplateVariables = true;
 
       if (isExpressionReference(q.datasource)) {
         hasExpr = true;
@@ -149,8 +150,15 @@ class DataSourceWithBackend<
           throw new Error(`Unknown Datasource: ${JSON.stringify(q.datasource)}`);
         }
 
-        datasource = ds.rawRef ?? getDataSourceRef(ds);
-        datasourceId = ds.id;
+        const dsRef = ds.rawRef ?? getDataSourceRef(ds);
+        const dsId = ds.id;
+        if (dsRef.uid !== datasource.uid || datasourceId !== dsId) {
+          datasource = dsRef;
+          datasourceId = dsId;
+          // If the query is using a different datasource, we would need to retrieve the datasource
+          // instance (async) and apply the template variables but it seems it's not necessary for now.
+          shouldApplyTemplateVariables = false;
+        }
       }
       if (datasource.type?.length) {
         pluginIDs.add(datasource.type);
@@ -159,11 +167,12 @@ class DataSourceWithBackend<
         dsUIDs.add(datasource.uid);
       }
       return {
-        ...this.applyTemplateVariables(q, request.scopedVars),
+        ...(shouldApplyTemplateVariables ? this.applyTemplateVariables(q, request.scopedVars) : q),
         datasource,
         datasourceId, // deprecated!
         intervalMs,
         maxDataPoints,
+        queryCachingTTL,
       };
     });
 
@@ -273,7 +282,7 @@ class DataSourceWithBackend<
         method: 'GET',
         headers: options?.headers ? { ...options.headers, ...headers } : headers,
         params: params ?? options?.params,
-        url: `/api/datasources/${this.id}/resources/${path}`,
+        url: `/api/datasources/uid/${this.uid}/resources/${path}`,
       })
     );
     return result.data;
@@ -291,10 +300,10 @@ class DataSourceWithBackend<
     const result = await lastValueFrom(
       getBackendSrv().fetch<T>({
         ...options,
-        method: 'GET',
+        method: 'POST',
         headers: options?.headers ? { ...options.headers, ...headers } : headers,
         data: data ?? { ...data },
-        url: `/api/datasources/${this.id}/resources/${path}`,
+        url: `/api/datasources/uid/${this.uid}/resources/${path}`,
       })
     );
     return result.data;
@@ -307,13 +316,13 @@ class DataSourceWithBackend<
     return lastValueFrom(
       getBackendSrv().fetch<HealthCheckResult>({
         method: 'GET',
-        url: `/api/datasources/${this.id}/health`,
+        url: `/api/datasources/uid/${this.uid}/health`,
         showErrorAlert: false,
         headers: this.getRequestHeaders(),
       })
     )
-      .then((v: FetchResponse) => v.data as HealthCheckResult)
-      .catch((err) => err.data as HealthCheckResult);
+      .then((v: FetchResponse) => v.data)
+      .catch((err) => err.data);
   }
 
   /**
@@ -352,7 +361,7 @@ export function toStreamingDataResponse<TQuery extends DataQuery = DataQuery>(
   for (const f of rsp.data) {
     const addr = parseLiveChannelAddress(f.meta?.channel);
     if (addr) {
-      const frame = f as DataFrame;
+      const frame: DataFrame = f;
       streams.push(
         live.getDataStream({
           addr,

@@ -7,7 +7,7 @@ import { config } from 'app/core/config';
 
 import { clearNameForSingleSeries } from '../bargauge/BarGaugePanel';
 
-import { PanelOptions } from './models.gen';
+import { PanelOptions } from './panelcfg.gen';
 
 export class GaugePanel extends PureComponent<PanelProps<PanelOptions>> {
   renderComponent = (
@@ -41,7 +41,7 @@ export class GaugePanel extends PureComponent<PanelProps<PanelOptions>> {
 
     if (hasLinks && getLinks) {
       return (
-        <DataLinksContextMenu links={getLinks}>
+        <DataLinksContextMenu links={getLinks} style={{ flexGrow: 1 }}>
           {(api) => {
             return this.renderComponent(valueProps, api);
           }}

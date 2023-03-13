@@ -30,7 +30,8 @@ import { RefreshPicker } from '@grafana/ui';
 import store from 'app/core/store';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { PanelModel } from 'app/features/dashboard/state';
-import { EXPLORE_GRAPH_STYLES, ExploreGraphStyle, ExploreId, QueryOptions, QueryTransaction } from 'app/types/explore';
+import { ExpressionDatasourceUID } from 'app/features/expressions/types';
+import { ExploreId, QueryOptions, QueryTransaction } from 'app/types/explore';
 
 import { config } from '../config';
 
@@ -67,8 +68,12 @@ export async function getExploreUrl(args: GetExploreUrlArguments): Promise<strin
 
   /** In Explore, we don't have legend formatter and we don't want to keep
    * legend formatting as we can't change it
+   *
+   * We also don't have expressions, so filter those out
    */
-  let exploreTargets: DataQuery[] = panel.targets.map((t) => omit(t, 'legendFormat'));
+  let exploreTargets: DataQuery[] = panel.targets
+    .map((t) => omit(t, 'legendFormat'))
+    .filter((t) => t.datasource?.uid !== ExpressionDatasourceUID);
   let url: string | undefined;
   // if the mixed datasource is not enabled for explore, choose only one datasource
   if (
@@ -192,7 +197,7 @@ export const safeParseJson = (text?: string): any | undefined => {
 };
 
 export const safeStringifyValue = (value: any, space?: number) => {
-  if (!value) {
+  if (value === undefined || value === null) {
     return '';
   }
 
@@ -203,21 +208,6 @@ export const safeStringifyValue = (value: any, space?: number) => {
   }
 
   return '';
-};
-
-const DEFAULT_GRAPH_STYLE: ExploreGraphStyle = 'lines';
-// we use this function to take any kind of data we loaded
-// from an external source (URL, localStorage, whatever),
-// and extract the graph-style from it, or return the default
-// graph-style if we are not able to do that.
-// it is important that this function is able to take any form of data,
-// (be it objects, or arrays, or booleans or whatever),
-// and produce a best-effort graphStyle.
-// note that typescript makes sure we make no mistake in this function.
-// we do not rely on ` as ` or ` any `.
-export const toGraphStyle = (data: unknown): ExploreGraphStyle => {
-  const found = EXPLORE_GRAPH_STYLES.find((v) => v === data);
-  return found ?? DEFAULT_GRAPH_STYLE;
 };
 
 export function parseUrlState(initial: string | undefined): ExploreUrlState {
@@ -234,7 +224,8 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
   }
 
   if (!Array.isArray(parsed)) {
-    return parsed;
+    const urlState = { ...parsed, isFromCompactUrl: false };
+    return urlState;
   }
 
   if (parsed.length <= ParseUrlStateIndex.SegmentsStart) {
@@ -251,7 +242,7 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
   const queries = parsedSegments.filter((segment) => !isSegment(segment, 'ui', 'mode', '__panelsState'));
 
   const panelsState = parsedSegments.find((segment) => isSegment(segment, '__panelsState'))?.__panelsState;
-  return { datasource, queries, range, panelsState };
+  return { datasource, queries, range, panelsState, isFromCompactUrl: true };
 }
 
 export function generateKey(index = 0): string {

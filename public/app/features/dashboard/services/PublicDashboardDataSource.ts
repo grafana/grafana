@@ -80,7 +80,15 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
    * Ideally final -- any other implementation may not work as expected
    */
   query(request: DataQueryRequest<DataQuery>): Observable<DataQueryResponse> {
-    const { intervalMs, maxDataPoints, requestId, publicDashboardAccessToken, panelId } = request;
+    const {
+      intervalMs,
+      maxDataPoints,
+      requestId,
+      publicDashboardAccessToken,
+      panelId,
+      queryCachingTTL,
+      range: { from: fromRange, to: toRange },
+    } = request;
     let queries: DataQuery[];
 
     // Return early if no queries exist
@@ -100,7 +108,12 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
 
     // Its a datasource query
     else {
-      const body = { intervalMs, maxDataPoints };
+      const body = {
+        intervalMs,
+        maxDataPoints,
+        queryCachingTTL,
+        timeRange: { from: fromRange.valueOf().toString(), to: toRange.valueOf().toString() },
+      };
 
       return getBackendSrv()
         .fetch<BackendDataSourceResponse>({
@@ -130,7 +143,10 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
       from: from.valueOf(),
       to: to.valueOf(),
     };
-    const annotations = await getBackendSrv().get(`/api/public/dashboards/${accessToken}/annotations`, params);
+
+    const annotations = accessToken
+      ? await getBackendSrv().get(`/api/public/dashboards/${accessToken}/annotations`, params)
+      : [];
 
     return { data: [toDataFrame(annotations)] };
   }

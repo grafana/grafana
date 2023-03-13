@@ -8,9 +8,10 @@ export interface LayerNameProps {
   name: string;
   onChange: (v: string) => void;
   verifyLayerNameUniqueness?: (nameToCheck: string) => boolean;
+  overrideStyles?: boolean;
 }
 
-export const LayerName = ({ name, onChange, verifyLayerNameUniqueness }: LayerNameProps) => {
+export const LayerName = ({ name, onChange, verifyLayerNameUniqueness, overrideStyles }: LayerNameProps) => {
   const styles = useStyles2(getStyles);
 
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -75,7 +76,7 @@ export const LayerName = ({ name, onChange, verifyLayerNameUniqueness }: LayerNa
             onClick={onEditLayer}
             data-testid="layer-name-div"
           >
-            <span className={styles.layerName}>{name}</span>
+            <span className={overrideStyles ? '' : styles.layerName}>{name}</span>
             <Icon name="pen" className={styles.layerEditIcon} size="sm" />
           </button>
         )}

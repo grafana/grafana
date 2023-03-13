@@ -5,75 +5,14 @@ import BaseLayer from 'ol/layer/Base';
 import { Subject } from 'rxjs';
 
 import { MapLayerHandler, MapLayerOptions } from '@grafana/data';
-import { HideableFieldConfig } from '@grafana/schema';
+import { ComparisonOperation } from '@grafana/schema';
 import { LayerElement } from 'app/core/components/Layers/types';
 
+import { ControlsOptions as ControlsOptionsBase } from './panelcfg.gen';
 import { StyleConfig } from './style/types';
-import { MapCenterID } from './view';
 
-export interface ControlsOptions {
-  // Zoom (upper left)
-  showZoom?: boolean;
-
-  // let the mouse wheel zoom
-  mouseWheelZoom?: boolean;
-
-  // Lower right
-  showAttribution?: boolean;
-
-  // Scale options
-  showScale?: boolean;
+export interface ControlsOptions extends ControlsOptionsBase {
   scaleUnits?: Units;
-
-  // Show debug
-  showDebug?: boolean;
-
-  // Show measure
-  showMeasure?: boolean;
-}
-
-export enum TooltipMode {
-  None = 'none',
-  Details = 'details',
-}
-
-export interface TooltipOptions {
-  mode: TooltipMode;
-}
-
-export interface MapViewConfig {
-  id: string; // placename > lookup
-  lat?: number;
-  lon?: number;
-  zoom?: number;
-  minZoom?: number;
-  maxZoom?: number;
-  padding?: number;
-  allLayers?: boolean;
-  lastOnly?: boolean;
-  layer?: string;
-  shared?: boolean;
-}
-
-export const defaultView: MapViewConfig = {
-  id: MapCenterID.Zero,
-  lat: 0,
-  lon: 0,
-  zoom: 1,
-  allLayers: true,
-};
-
-/** Support hide from legend/tooltip */
-export interface GeomapFieldConfig extends HideableFieldConfig {
-  // nothing custom yet
-}
-
-export interface GeomapPanelOptions {
-  view: MapViewConfig;
-  controls: ControlsOptions;
-  basemap: MapLayerOptions;
-  layers: MapLayerOptions[];
-  tooltip: TooltipOptions;
 }
 
 export interface FeatureStyleConfig {
@@ -102,15 +41,6 @@ export interface GeomapInstanceState {
   actions: GeomapLayerActions;
 }
 
-export enum ComparisonOperation {
-  EQ = 'eq',
-  NEQ = 'neq',
-  LT = 'lt',
-  LTE = 'lte',
-  GT = 'gt',
-  GTE = 'gte',
-}
-
 //-------------------
 // Runtime model
 //-------------------
@@ -122,3 +52,5 @@ export interface MapLayerState<TConfig = unknown> extends LayerElement {
   isBasemap?: boolean;
   mouseEvents: Subject<FeatureLike | undefined>;
 }
+
+export { PanelOptions, MapViewConfig, TooltipOptions, TooltipMode, defaultMapViewConfig } from './panelcfg.gen';

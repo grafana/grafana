@@ -95,7 +95,7 @@ func TestAdjustFrame(t *testing.T) {
 		field2.Labels = data.Labels{"app": "Application", "tag2": "tag2"}
 
 		frame := data.NewFrame("test", field1, field2)
-		frame.SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMany})
+		frame.SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})
 
 		query := &lokiQuery{
 			Expr:         "up(ALERTS)",
@@ -123,7 +123,7 @@ func TestAdjustFrame(t *testing.T) {
 		field2 := data.NewField("", nil, make([]float64, 0))
 
 		frame := data.NewFrame("test", field1, field2)
-		frame.SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMany})
+		frame.SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})
 
 		err := adjustFrame(frame, query)
 		require.NoError(t, err)

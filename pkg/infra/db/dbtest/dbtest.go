@@ -5,10 +5,10 @@ import (
 
 	"xorm.io/core"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
+	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 )
 
 type FakeDB struct {
@@ -47,7 +47,11 @@ func (f *FakeDB) GetSqlxSession() *session.SessionDB {
 	return nil
 }
 
+func (f *FakeDB) Quote(value string) string {
+	return ""
+}
+
 // TODO: service-specific methods not yet split out ; to be removed
-func (f *FakeDB) UpdateTempUserWithEmailSent(ctx context.Context, cmd *models.UpdateTempUserWithEmailSentCommand) error {
+func (f *FakeDB) UpdateTempUserWithEmailSent(ctx context.Context, cmd *tempuser.UpdateTempUserWithEmailSentCommand) error {
 	return f.ExpectedError
 }

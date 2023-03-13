@@ -1,35 +1,50 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { useCallback, useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { DataSourceInstanceSettings, DateTime, dateTime, GrafanaTheme2, PanelData, urlUtil } from '@grafana/data';
+import {
+  DataSourceInstanceSettings,
+  DateTime,
+  dateTime,
+  GrafanaTheme2,
+  PanelData,
+  RelativeTimeRange,
+  urlUtil,
+} from '@grafana/data';
 import { config, getDataSourceSrv, PanelRenderer } from '@grafana/runtime';
 import { Alert, CodeEditor, DateTimePicker, LinkButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import { PanelOptions } from 'app/plugins/panel/table/models.gen';
+import { PanelOptions } from 'app/plugins/panel/table/panelcfg.gen';
 import { AccessControlAction } from 'app/types';
-import { AlertQuery } from 'app/types/unified-alerting-dto';
+import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { TABLE, TIMESERIES } from '../../utils/constants';
 import { Authorize } from '../Authorize';
 import { PanelPluginsButtonGroup, SupportedPanelPlugins } from '../PanelPluginsButtonGroup';
 
-type RuleViewerVisualizationProps = {
+interface RuleViewerVisualizationProps
+  extends Pick<AlertQuery, 'refId' | 'datasourceUid' | 'model' | 'relativeTimeRange'> {
   data?: PanelData;
-  query: AlertQuery;
-  onChangeQuery: (query: AlertQuery) => void;
-};
+  onTimeRangeChange: (range: RelativeTimeRange) => void;
+  className?: string;
+}
 
 const headerHeight = 4;
 
-export function RuleViewerVisualization(props: RuleViewerVisualizationProps): JSX.Element | null {
+export function RuleViewerVisualization({
+  data,
+  refId,
+  model,
+  datasourceUid,
+  relativeTimeRange,
+  onTimeRangeChange,
+  className,
+}: RuleViewerVisualizationProps): JSX.Element | null {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
-  const { data, query, onChangeQuery } = props;
-  const defaultPanel = isExpressionQuery(query.model) ? TABLE : TIMESERIES;
+  const defaultPanel = isExpressionQuery(model) ? TABLE : TIMESERIES;
   const [panel, setPanel] = useState<SupportedPanelPlugins>(defaultPanel);
-  const dsSettings = getDataSourceSrv().getInstanceSettings(query.datasourceUid);
-  const relativeTimeRange = query.relativeTimeRange;
+  const dsSettings = getDataSourceSrv().getInstanceSettings(datasourceUid);
   const [options, setOptions] = useState<PanelOptions>({
     frameIndex: 0,
     showHeader: true,
@@ -41,13 +56,10 @@ export function RuleViewerVisualization(props: RuleViewerVisualizationProps): JS
 
       if (relativeTimeRange) {
         const interval = relativeTimeRange.from - relativeTimeRange.to;
-        onChangeQuery({
-          ...query,
-          relativeTimeRange: { from: now + interval, to: now },
-        });
+        onTimeRangeChange({ from: now + interval, to: now });
       }
     },
-    [onChangeQuery, query, relativeTimeRange]
+    [onTimeRangeChange, relativeTimeRange]
   );
 
   const setDateTime = useCallback((relativeTimeRangeTo: number) => {
@@ -60,7 +72,7 @@ export function RuleViewerVisualization(props: RuleViewerVisualizationProps): JS
 
   if (!dsSettings) {
     return (
-      <div className={styles.content}>
+      <div className={cx(styles.content, className)}>
         <Alert title="Could not find datasource for query" />
         <CodeEditor
           width="100%"
@@ -68,7 +80,7 @@ export function RuleViewerVisualization(props: RuleViewerVisualizationProps): JS
           language="json"
           showLineNumbers={false}
           showMiniMap={false}
-          value={JSON.stringify(query, null, '\t')}
+          value={JSON.stringify(model, null, '\t')}
           readOnly={true}
         />
       </div>
@@ -76,18 +88,14 @@ export function RuleViewerVisualization(props: RuleViewerVisualizationProps): JS
   }
 
   return (
-    <div className={styles.content}>
+    <div className={cx(styles.content, className)}>
       <AutoSizer>
         {({ width, height }) => {
           return (
             <div style={{ width, height }}>
               <div className={styles.header}>
-                <div>
-                  {`Query ${query.refId}`}
-                  <span className={styles.dataSource}>({dsSettings.name})</span>
-                </div>
                 <div className={styles.actions}>
-                  {!isExpressionQuery(query.model) && relativeTimeRange ? (
+                  {!isExpressionQuery(model) && relativeTimeRange ? (
                     <DateTimePicker
                       date={setDateTime(relativeTimeRange.to)}
                       onChange={onTimeChange}
@@ -96,7 +104,7 @@ export function RuleViewerVisualization(props: RuleViewerVisualizationProps): JS
                   ) : null}
                   <PanelPluginsButtonGroup onChange={setPanel} value={panel} size="md" />
                   <Authorize actions={[AccessControlAction.DataSourcesExplore]}>
-                    {!isExpressionQuery(query.model) && (
+                    {!isExpressionQuery(model) && (
                       <>
                         <div className={styles.spacing} />
                         <LinkButton
@@ -104,7 +112,7 @@ export function RuleViewerVisualization(props: RuleViewerVisualizationProps): JS
                           variant="secondary"
                           icon="compass"
                           target="_blank"
-                          href={createExploreLink(dsSettings, query)}
+                          href={createExploreLink(dsSettings, model)}
                         >
                           View in Explore
                         </LinkButton>
@@ -130,13 +138,17 @@ export function RuleViewerVisualization(props: RuleViewerVisualizationProps): JS
   );
 }
 
-function createExploreLink(settings: DataSourceInstanceSettings, query: AlertQuery): string {
+function createExploreLink(settings: DataSourceInstanceSettings, model: AlertDataQuery): string {
   const { name } = settings;
-  const { refId, ...rest } = query.model;
+  const { refId, ...rest } = model;
   const queryParams = { ...rest, datasource: name };
 
   return urlUtil.renderUrl(`${config.appSubUrl}/explore`, {
-    left: JSON.stringify(['now-1h', 'now', name, queryParams]),
+    left: JSON.stringify({
+      datasource: name,
+      queries: [{ refId: 'A', ...queryParams }],
+      range: { from: 'now-1h', to: 'now' },
+    }),
   });
 }
 
@@ -150,7 +162,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: ${theme.spacing(headerHeight)};
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: flex-end;
       white-space: nowrap;
     `,
     refId: css`

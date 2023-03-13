@@ -5,18 +5,19 @@ import { EditorField } from '@grafana/experimental';
 import { RadioButtonGroup } from '@grafana/ui';
 
 import { getAlignmentPickerData } from '../functions';
-import { MetricDescriptor, MetricKind, MetricQuery, PreprocessorType, ValueTypes } from '../types';
+import { MetricDescriptor, MetricKind, PreprocessorType, TimeSeriesList, ValueTypes } from '../types';
 
 const NONE_OPTION = { label: 'None', value: PreprocessorType.None };
 
 export interface Props {
   metricDescriptor?: MetricDescriptor;
-  onChange: (query: MetricQuery) => void;
-  query: MetricQuery;
+  onChange: (query: TimeSeriesList) => void;
+  query: TimeSeriesList;
 }
 
 export const Preprocessor: FunctionComponent<Props> = ({ query, metricDescriptor, onChange }) => {
   const options = useOptions(metricDescriptor);
+
   return (
     <EditorField
       label="Pre-processing"
@@ -24,7 +25,8 @@ export const Preprocessor: FunctionComponent<Props> = ({ query, metricDescriptor
     >
       <RadioButtonGroup
         onChange={(value: PreprocessorType) => {
-          const { valueType, metricKind, perSeriesAligner: psa } = query;
+          const { perSeriesAligner: psa } = query;
+          const { valueType, metricKind } = metricDescriptor ?? {};
           const { perSeriesAligner } = getAlignmentPickerData(valueType, metricKind, psa, value);
           onChange({ ...query, preprocessor: value, perSeriesAligner });
         }}

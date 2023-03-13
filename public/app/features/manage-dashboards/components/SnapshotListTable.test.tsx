@@ -3,7 +3,7 @@ import { locationService } from '@grafana/runtime';
 import { getSnapshots } from './SnapshotListTable';
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => ({
     get: jest.fn().mockResolvedValue([
       {
@@ -24,7 +24,7 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('getSnapshots', () => {
-  (global as any).window = Object.create(window);
+  global.window = Object.create(window);
   Object.defineProperty(window, 'location', {
     value: {
       href: 'http://localhost:3000/grafana/dashboard/snapshots',
@@ -38,15 +38,15 @@ describe('getSnapshots', () => {
     const results = await getSnapshots();
 
     expect(results).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "external": true,
           "externalUrl": "https://www.externalSnapshotUrl.com",
           "key": "JRXqfKihKZek70FM6Xaq502NxH7OyyEs",
           "name": "Snap 1",
           "url": "/dashboard/snapshot/JRXqfKihKZek70FM6Xaq502NxH7OyyEs",
         },
-        Object {
+        {
           "external": false,
           "externalUrl": "",
           "id": 3,

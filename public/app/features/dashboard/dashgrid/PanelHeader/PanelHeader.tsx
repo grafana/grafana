@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { DataLink, GrafanaTheme2, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -27,7 +27,7 @@ export interface Props {
   data: PanelData;
 }
 
-export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, data, alertState, dashboard }) => {
+export function PanelHeader({ panel, error, isViewing, isEditing, data, alertState, dashboard }: Props) {
   const onCancelQuery = () => panel.getQueryRunner().cancelQuery();
   const title = panel.getDisplayTitle();
   const className = cx('panel-header', !(isViewing || isEditing) ? 'grid-drag-handle' : '');
@@ -63,9 +63,7 @@ export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, dat
                   {!dashboard.meta.publicDashboardAccessToken && (
                     <div data-testid="panel-dropdown">
                       <Icon name="angle-down" className="panel-menu-toggle" />
-                      {panelMenuOpen ? (
-                        <PanelHeaderMenuWrapper panel={panel} dashboard={dashboard} onClose={closeMenu} />
-                      ) : null}
+                      {panelMenuOpen ? <PanelHeaderMenuWrapper panel={panel} dashboard={dashboard} /> : null}
                     </div>
                   )}
                   {data.request && data.request.timeInfo && (
@@ -81,7 +79,7 @@ export const PanelHeader: FC<Props> = ({ panel, error, isViewing, isEditing, dat
       </div>
     </>
   );
-};
+}
 
 const panelStyles = (theme: GrafanaTheme2) => {
   return {

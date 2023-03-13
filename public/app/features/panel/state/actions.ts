@@ -1,6 +1,5 @@
-import { DataTransformerConfig, FieldConfigSource } from '@grafana/data';
+import { DataTransformerConfig, FieldConfigSource, getPanelOptionsWithDefaults } from '@grafana/data';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
-import { getPanelOptionsWithDefaults } from 'app/features/dashboard/state/getPanelOptionsWithDefaults';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 import { LibraryElementDTO } from 'app/features/library-panels/types';
 import { getPanelPluginNotFound } from 'app/features/panel/components/PanelPluginError';

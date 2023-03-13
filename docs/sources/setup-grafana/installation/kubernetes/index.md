@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/installation/kubernetes/
-  - /docs/grafana/latest/setup-grafana/installation/kubernetes/
+  - ../../installation/kubernetes/
 description: Guide for deploying Grafana on Kubernetes
 title: Deploy Grafana on Kubernetes
 weight: 300
@@ -11,7 +10,7 @@ weight: 300
 
 This page explains how to install and run Grafana on Kubernetes (K8S). It uses Kubernetes manifests for the setup. If you prefer Helm, refer to the [Grafana Helm community charts](https://github.com/grafana/helm-charts).
 
-## Deploy Grafana OS on Kubernetes
+## Deploy Grafana OSS on Kubernetes
 
 This section explains how to install Grafana using Kubernetes.
 If you are interested in the Grafana Enterprise version of this information, see [Deploy Grafana Enterprise on Kubernetes](#deploy-grafana-enterprise-on-kubernetes).

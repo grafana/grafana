@@ -374,6 +374,7 @@ type PostableGrafanaRule struct {
 	UID          string              `json:"uid" yaml:"uid"`
 	NoDataState  NoDataState         `json:"no_data_state" yaml:"no_data_state"`
 	ExecErrState ExecutionErrorState `json:"exec_err_state" yaml:"exec_err_state"`
+	IsPaused     *bool               `json:"is_paused" yaml:"is_paused"`
 }
 
 // swagger:model
@@ -392,5 +393,6 @@ type GettableGrafanaRule struct {
 	RuleGroup       string              `json:"rule_group" yaml:"rule_group"`
 	NoDataState     NoDataState         `json:"no_data_state" yaml:"no_data_state"`
 	ExecErrState    ExecutionErrorState `json:"exec_err_state" yaml:"exec_err_state"`
-	Provenance      models.Provenance   `json:"provenance,omitempty" yaml:"provenance,omitempty"`
+	Provenance      Provenance          `json:"provenance,omitempty" yaml:"provenance,omitempty"`
+	IsPaused        bool                `json:"is_paused" yaml:"is_paused"`
 }

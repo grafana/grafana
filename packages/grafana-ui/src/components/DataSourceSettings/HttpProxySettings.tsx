@@ -15,14 +15,19 @@ export const HttpProxySettings: React.FC<HttpSettingsBaseProps> = ({
   return (
     <>
       <div className="gf-form-inline">
-        <InlineField label="TLS Client Auth" labelWidth={LABEL_WIDTH}>
+        <InlineField label="TLS Client Auth" labelWidth={LABEL_WIDTH} disabled={dataSourceConfig.readOnly}>
           <InlineSwitch
             id="http-settings-tls-client-auth"
             value={dataSourceConfig.jsonData.tlsAuth || false}
             onChange={(event) => onChange({ ...dataSourceConfig.jsonData, tlsAuth: event!.currentTarget.checked })}
           />
         </InlineField>
-        <InlineField label="With CA Cert" tooltip="Needed for verifying self-signed TLS Certs" labelWidth={LABEL_WIDTH}>
+        <InlineField
+          label="With CA Cert"
+          tooltip="Needed for verifying self-signed TLS Certs"
+          labelWidth={LABEL_WIDTH}
+          disabled={dataSourceConfig.readOnly}
+        >
           <InlineSwitch
             id="http-settings-ca-cert"
             value={dataSourceConfig.jsonData.tlsAuthWithCACert || false}
@@ -33,7 +38,7 @@ export const HttpProxySettings: React.FC<HttpSettingsBaseProps> = ({
         </InlineField>
       </div>
       <div className="gf-form-inline">
-        <InlineField label="Skip TLS Verify" labelWidth={LABEL_WIDTH}>
+        <InlineField label="Skip TLS Verify" labelWidth={LABEL_WIDTH} disabled={dataSourceConfig.readOnly}>
           <InlineSwitch
             id="http-settings-skip-tls-verify"
             value={dataSourceConfig.jsonData.tlsSkipVerify || false}
@@ -49,6 +54,7 @@ export const HttpProxySettings: React.FC<HttpSettingsBaseProps> = ({
             label="Forward OAuth Identity"
             tooltip="Forward the user's upstream OAuth identity to the data source (Their access token gets passed along)."
             labelWidth={LABEL_WIDTH}
+            disabled={dataSourceConfig.readOnly}
           >
             <InlineSwitch
               id="http-settings-forward-oauth"

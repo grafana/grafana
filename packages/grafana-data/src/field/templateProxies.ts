@@ -9,9 +9,9 @@ import { getFieldDisplayName } from './fieldState';
  */
 export function getTemplateProxyForField(field: Field, frame?: DataFrame, frames?: DataFrame[]): any {
   return new Proxy(
-    {} as any, // This object shows up in test snapshots
+    {}, // This object shows up in test snapshots
     {
-      get: (obj: Field, key: string, reciever: any) => {
+      get: (obj, key) => {
         if (key === 'name') {
           return field.name;
         }
@@ -33,7 +33,7 @@ export function getTemplateProxyForField(field: Field, frame?: DataFrame, frames
             },
           };
         }
-        return undefined; // (field as any)[key]; // any property?
+        return undefined;
       },
     }
   );

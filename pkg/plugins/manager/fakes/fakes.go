@@ -3,13 +3,15 @@ package fakes
 import (
 	"archive/zip"
 	"context"
+	"fmt"
+	"io/fs"
 	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
 )
@@ -317,43 +319,30 @@ func (pr *FakeBackendProcessProvider) BackendFactory(_ context.Context, p *plugi
 }
 
 type FakeLicensingService struct {
-	TokenRaw string
+	LicenseEdition string
+	TokenRaw       string
+	LicensePath    string
+	LicenseAppURL  string
 }
 
 func NewFakeLicensingService() *FakeLicensingService {
 	return &FakeLicensingService{}
 }
 
-func (t *FakeLicensingService) Expiry() int64 {
-	return 0
+func (s *FakeLicensingService) Edition() string {
+	return s.LicenseEdition
 }
 
-func (t *FakeLicensingService) Edition() string {
-	return ""
+func (s *FakeLicensingService) Path() string {
+	return s.LicensePath
 }
 
-func (t *FakeLicensingService) StateInfo() string {
-	return ""
+func (s *FakeLicensingService) AppURL() string {
+	return s.LicenseAppURL
 }
 
-func (t *FakeLicensingService) ContentDeliveryPrefix() string {
-	return ""
-}
-
-func (t *FakeLicensingService) LicenseURL(_ bool) string {
-	return ""
-}
-
-func (t *FakeLicensingService) Environment() map[string]string {
-	return map[string]string{"GF_ENTERPRISE_LICENSE_TEXT": t.TokenRaw}
-}
-
-func (*FakeLicensingService) EnabledFeatures() map[string]bool {
-	return map[string]bool{}
-}
-
-func (*FakeLicensingService) FeatureEnabled(_ string) bool {
-	return false
+func (s *FakeLicensingService) Environment() []string {
+	return []string{fmt.Sprintf("GF_ENTERPRISE_LICENSE_TEXT=%s", s.TokenRaw)}
 }
 
 type FakeRoleRegistry struct {
@@ -366,4 +355,39 @@ func NewFakeRoleRegistry() *FakeRoleRegistry {
 
 func (f *FakeRoleRegistry) DeclarePluginRoles(_ context.Context, _ string, _ string, _ []plugins.RoleRegistration) error {
 	return f.ExpectedErr
+}
+
+type FakePluginFiles struct {
+	FS fs.FS
+
+	base string
+}
+
+func NewFakePluginFiles(base string) *FakePluginFiles {
+	return &FakePluginFiles{
+		base: base,
+	}
+}
+
+func (f *FakePluginFiles) Open(name string) (fs.File, error) {
+	return f.FS.Open(name)
+}
+
+func (f *FakePluginFiles) Base() string {
+	return f.base
+}
+
+func (f *FakePluginFiles) Files() []string {
+	return []string{}
+}
+
+type FakeSources struct {
+	ListFunc func(_ context.Context) []plugins.PluginSource
+}
+
+func (s *FakeSources) List(ctx context.Context) []plugins.PluginSource {
+	if s.ListFunc != nil {
+		return s.ListFunc(ctx)
+	}
+	return []plugins.PluginSource{}
 }

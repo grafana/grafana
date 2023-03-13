@@ -1,9 +1,11 @@
 import { css, cx } from '@emotion/css';
+import { isEqual } from 'lodash';
+import memoizeOne from 'memoize-one';
 import React, { PureComponent } from 'react';
 
-import { Field, LinkModel, LogLabelStatsModel, GrafanaTheme2, LogRowModel, CoreApp } from '@grafana/data';
+import { CoreApp, Field, GrafanaTheme2, LinkModel, LogLabelStatsModel, LogRowModel } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { withTheme2, Themeable2, ClipboardButton, DataLinkButton, IconButton } from '@grafana/ui';
+import { ClipboardButton, DataLinkButton, IconButton, Themeable2, withTheme2 } from '@grafana/ui';
 
 import { LogLabelStats } from './LogLabelStats';
 import { getLogRowStyles } from './getLogRowStyles';
@@ -19,9 +21,9 @@ export interface Props extends Themeable2 {
   onClickFilterOutLabel?: (key: string, value: string) => void;
   links?: Array<LinkModel<Field>>;
   getStats: () => LogLabelStatsModel[] | null;
-  showDetectedFields?: string[];
-  onClickShowDetectedField?: (key: string) => void;
-  onClickHideDetectedField?: (key: string) => void;
+  displayedFields?: string[];
+  onClickShowField?: (key: string) => void;
+  onClickHideField?: (key: string) => void;
   row: LogRowModel;
   app?: CoreApp;
 }
@@ -30,54 +32,80 @@ interface State {
   showFieldsStats: boolean;
   fieldCount: number;
   fieldStats: LogLabelStatsModel[] | null;
-  mouseOver: boolean;
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = memoizeOne((theme: GrafanaTheme2) => {
   return {
-    noHoverBackground: css`
-      label: noHoverBackground;
-      :hover {
-        background-color: transparent;
-      }
-    `,
-    hoverCursor: css`
-      label: hoverCursor;
-      cursor: pointer;
-    `,
     wordBreakAll: css`
       label: wordBreakAll;
       word-break: break-all;
     `,
-    showingField: css`
-      color: ${theme.colors.primary.text};
-    `,
-    hoverValueCopy: css`
-      margin: ${theme.spacing(0, 0, 0, 1.2)};
-      position: absolute;
-      top: 0px;
-      justify-content: center;
-      border-radius: ${theme.shape.borderRadius(10)};
-      width: ${theme.spacing(3.25)};
-      height: ${theme.spacing(3.25)};
+    copyButton: css`
+      & > button {
+        color: ${theme.colors.text.secondary};
+        padding: 0;
+        justify-content: center;
+        border-radius: 50%;
+        height: ${theme.spacing(theme.components.height.sm)};
+        width: ${theme.spacing(theme.components.height.sm)};
+        svg {
+          margin: 0;
+        }
+
+        span > div {
+          top: -5px;
+          & button {
+            color: ${theme.colors.success.main};
+          }
+        }
+      }
     `,
     wrapLine: css`
       label: wrapLine;
       white-space: pre-wrap;
     `,
+    logDetailsStats: css`
+      padding: 0 ${theme.spacing(1)};
+    `,
+    logDetailsValue: css`
+      display: table-cell;
+      vertical-align: middle;
+      line-height: 22px;
+
+      .show-on-hover {
+        display: inline;
+        visibility: hidden;
+      }
+      &:hover {
+        .show-on-hover {
+          visibility: visible;
+        }
+      }
+    `,
+    buttonRow: css`
+      display: flex;
+      flex-direction: row;
+      gap: ${theme.spacing(0.5)};
+      margin-left: ${theme.spacing(0.5)};
+    `,
   };
-};
+});
 
 class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   state: State = {
     showFieldsStats: false,
     fieldCount: 0,
     fieldStats: null,
-    mouseOver: false,
   };
 
+  componentDidUpdate() {
+    if (this.state.showFieldsStats) {
+      this.updateStats();
+    }
+  }
+
   showField = () => {
-    const { onClickShowDetectedField, parsedKey, row } = this.props;
+    const { onClickShowField: onClickShowDetectedField, parsedKey, row } = this.props;
     if (onClickShowDetectedField) {
       onClickShowDetectedField(parsedKey);
     }
@@ -90,7 +118,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   };
 
   hideField = () => {
-    const { onClickHideDetectedField, parsedKey, row } = this.props;
+    const { onClickHideField: onClickHideDetectedField, parsedKey, row } = this.props;
     if (onClickHideDetectedField) {
       onClickHideDetectedField(parsedKey);
     }
@@ -128,13 +156,20 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     });
   };
 
+  updateStats = () => {
+    const { getStats } = this.props;
+    const fieldStats = getStats();
+    const fieldCount = fieldStats ? fieldStats.reduce((sum, stat) => sum + stat.count, 0) : 0;
+    if (!isEqual(this.state.fieldStats, fieldStats) || fieldCount !== this.state.fieldCount) {
+      this.setState({ fieldStats, fieldCount });
+    }
+  };
+
   showStats = () => {
-    const { getStats, isLabel, row, app } = this.props;
+    const { isLabel, row, app } = this.props;
     const { showFieldsStats } = this.state;
     if (!showFieldsStats) {
-      const fieldStats = getStats();
-      const fieldCount = fieldStats ? fieldStats.reduce((sum, stat) => sum + stat.count, 0) : 0;
-      this.setState({ fieldStats, fieldCount });
+      this.updateStats();
     }
     this.toggleFieldsStats();
 
@@ -155,11 +190,6 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     });
   }
 
-  hoverValueCopy() {
-    const mouseOver = !this.state.mouseOver;
-    this.setState({ mouseOver });
-  }
-
   render() {
     const {
       theme,
@@ -167,87 +197,95 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
       parsedValue,
       isLabel,
       links,
-      showDetectedFields,
+      displayedFields,
       wrapLogMessage,
-      onClickShowDetectedField,
-      onClickHideDetectedField,
       onClickFilterLabel,
       onClickFilterOutLabel,
     } = this.props;
-    const { showFieldsStats, fieldStats, fieldCount, mouseOver } = this.state;
+    const { showFieldsStats, fieldStats, fieldCount } = this.state;
     const styles = getStyles(theme);
     const style = getLogRowStyles(theme);
-
-    const hasDetectedFieldsFunctionality = onClickShowDetectedField && onClickHideDetectedField;
     const hasFilteringFunctionality = onClickFilterLabel && onClickFilterOutLabel;
 
     const toggleFieldButton =
-      !isLabel && showDetectedFields && showDetectedFields.includes(parsedKey) ? (
-        <IconButton name="eye" className={styles.showingField} title="Hide this field" onClick={this.hideField} />
+      displayedFields && displayedFields.includes(parsedKey) ? (
+        <IconButton variant="primary" tooltip="Hide this field" name="eye" onClick={this.hideField} />
       ) : (
-        <IconButton name="eye" title="Show this field instead of the message" onClick={this.showField} />
+        <IconButton tooltip="Show this field instead of the message" name="eye" onClick={this.showField} />
       );
 
     return (
-      <tr className={cx(style.logDetailsValue, { [styles.noHoverBackground]: showFieldsStats })}>
-        {/* Action buttons - show stats/filter results */}
-        <td className={style.logsDetailsIcon}>
-          <IconButton name="signal" title={'Ad-hoc statistics'} onClick={this.showStats} />
-        </td>
-
-        {hasFilteringFunctionality && isLabel && (
-          <>
-            <td className={style.logsDetailsIcon}>
-              <IconButton name="search-plus" title="Filter for value" onClick={this.filterLabel} />
-            </td>
-            <td className={style.logsDetailsIcon}>
-              <IconButton name="search-minus" title="Filter out value" onClick={this.filterOutLabel} />
-            </td>
-          </>
-        )}
-
-        {hasDetectedFieldsFunctionality && !isLabel && (
-          <td className={style.logsDetailsIcon} colSpan={2}>
-            {toggleFieldButton}
+      <>
+        <tr className={cx(style.logDetailsValue)}>
+          <td className={style.logsDetailsIcon}>
+            <div className={styles.buttonRow}>
+              {hasFilteringFunctionality && (
+                <IconButton name="search-plus" tooltip="Filter for value" onClick={this.filterLabel} />
+              )}
+              {hasFilteringFunctionality && (
+                <IconButton name="search-minus" tooltip="Filter out value" onClick={this.filterOutLabel} />
+              )}
+              {displayedFields && toggleFieldButton}
+              <IconButton
+                variant={showFieldsStats ? 'primary' : 'secondary'}
+                name="signal"
+                tooltip="Ad-hoc statistics"
+                className="stats-button"
+                onClick={this.showStats}
+              />
+            </div>
           </td>
-        )}
 
-        {/* Key - value columns */}
-        <td className={style.logDetailsLabel}>{parsedKey}</td>
-        <td
-          className={cx(styles.wordBreakAll, wrapLogMessage && styles.wrapLine)}
-          onMouseEnter={this.hoverValueCopy.bind(this)}
-          onMouseLeave={this.hoverValueCopy.bind(this)}
-        >
-          {parsedValue}
-          {mouseOver && (
-            <ClipboardButton
-              getText={() => parsedValue}
-              title="Copy value to clipboard"
-              fill="text"
-              variant="secondary"
-              icon="copy"
-              size="sm"
-              className={styles.hoverValueCopy}
-            />
-          )}
-          {links?.map((link) => (
-            <span key={link.title}>
-              &nbsp;
-              <DataLinkButton link={link} />
-            </span>
-          ))}
-          {showFieldsStats && (
-            <LogLabelStats
-              stats={fieldStats!}
-              label={parsedKey}
-              value={parsedValue}
-              rowCount={fieldCount}
-              isLabel={isLabel}
-            />
-          )}
-        </td>
-      </tr>
+          {/* Key - value columns */}
+          <td className={style.logDetailsLabel}>{parsedKey}</td>
+          <td className={cx(styles.wordBreakAll, wrapLogMessage && styles.wrapLine)}>
+            <div className={styles.logDetailsValue}>
+              {parsedValue}
+
+              <div className={cx('show-on-hover', styles.copyButton)}>
+                <ClipboardButton
+                  getText={() => parsedValue}
+                  title="Copy value to clipboard"
+                  fill="text"
+                  variant="secondary"
+                  icon="copy"
+                  size="md"
+                />
+              </div>
+
+              {links?.map((link) => (
+                <span key={link.title}>
+                  &nbsp;
+                  <DataLinkButton link={link} />
+                </span>
+              ))}
+            </div>
+          </td>
+        </tr>
+        {showFieldsStats && (
+          <tr>
+            <td>
+              <IconButton
+                variant={showFieldsStats ? 'primary' : 'secondary'}
+                name="signal"
+                tooltip="Hide ad-hoc statistics"
+                onClick={this.showStats}
+              />
+            </td>
+            <td colSpan={2}>
+              <div className={styles.logDetailsStats}>
+                <LogLabelStats
+                  stats={fieldStats!}
+                  label={parsedKey}
+                  value={parsedValue}
+                  rowCount={fieldCount}
+                  isLabel={isLabel}
+                />
+              </div>
+            </td>
+          </tr>
+        )}
+      </>
     );
   }
 }

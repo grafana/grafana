@@ -20,7 +20,7 @@ export const NoSilencesSplash: FC<Props> = ({ alertManagerSourceName }) => {
         title="You haven't created any silences yet"
         buttonIcon="bell-slash"
         buttonLink={makeAMLink('alerting/silence/new', alertManagerSourceName)}
-        buttonTitle="New silence"
+        buttonTitle="Create silence"
       />
     );
   }

@@ -5,10 +5,12 @@ import (
 	"path/filepath"
 
 	"github.com/urfave/cli/v2"
+
+	"github.com/grafana/grafana/pkg/build/config"
 )
 
 func ExportVersion(c *cli.Context) error {
-	metadata, err := GenerateMetadata(c)
+	metadata, err := config.GenerateMetadata(c)
 	if err != nil {
 		return err
 	}

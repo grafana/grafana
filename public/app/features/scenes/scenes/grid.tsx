@@ -1,53 +1,45 @@
-import { getDefaultTimeRange } from '@grafana/data';
+import { VizPanel, SceneTimePicker, SceneFlexLayout, SceneGridLayout, SceneTimeRange } from '@grafana/scenes';
 
-import { Scene } from '../components/Scene';
-import { SceneTimePicker } from '../components/SceneTimePicker';
-import { VizPanel } from '../components/VizPanel';
-import { SceneFlexLayout } from '../components/layout/SceneFlexLayout';
-import { SceneGridLayout } from '../components/layout/SceneGridLayout';
-import { SceneTimeRange } from '../core/SceneTimeRange';
+import { DashboardScene } from '../dashboard/DashboardScene';
 import { SceneEditManager } from '../editor/SceneEditManager';
-import { SceneQueryRunner } from '../querying/SceneQueryRunner';
 
-export function getGridLayoutTest(): Scene {
-  const scene = new Scene({
+import { getQueryRunnerWithRandomWalkQuery } from './queries';
+
+export function getGridLayoutTest(): DashboardScene {
+  return new DashboardScene({
     title: 'Grid layout test',
-    layout: new SceneGridLayout({
+    body: new SceneGridLayout({
       children: [
         new VizPanel({
-          isResizable: true,
-          isDraggable: true,
           pluginId: 'timeseries',
           title: 'Draggable and resizable',
-          size: {
+          placement: {
             x: 0,
             y: 0,
             width: 12,
             height: 10,
+            isResizable: true,
+            isDraggable: true,
           },
         }),
 
         new VizPanel({
           pluginId: 'timeseries',
           title: 'No drag and no resize',
-          isResizable: false,
-          isDraggable: false,
-          size: { x: 12, y: 0, width: 12, height: 10 },
+          placement: { x: 12, y: 0, width: 12, height: 10, isResizable: false, isDraggable: false },
         }),
 
         new SceneFlexLayout({
           direction: 'column',
-          isDraggable: true,
-          isResizable: true,
-          size: { x: 6, y: 11, width: 12, height: 10 },
+          placement: { x: 6, y: 11, width: 12, height: 10, isDraggable: true, isResizable: true },
           children: [
             new VizPanel({
-              size: { ySizing: 'fill' },
+              placement: { ySizing: 'fill' },
               pluginId: 'timeseries',
               title: 'Child of flex layout',
             }),
             new VizPanel({
-              size: { ySizing: 'fill' },
+              placement: { ySizing: 'fill' },
               pluginId: 'timeseries',
               title: 'Child of flex layout',
             }),
@@ -56,21 +48,8 @@ export function getGridLayoutTest(): Scene {
       ],
     }),
     $editor: new SceneEditManager({}),
-    $timeRange: new SceneTimeRange(getDefaultTimeRange()),
-    $data: new SceneQueryRunner({
-      queries: [
-        {
-          refId: 'A',
-          datasource: {
-            uid: 'gdev-testdata',
-            type: 'testdata',
-          },
-          scenarioId: 'random_walk',
-        },
-      ],
-    }),
+    $timeRange: new SceneTimeRange(),
+    $data: getQueryRunnerWithRandomWalkQuery(),
     actions: [new SceneTimePicker({})],
   });
-
-  return scene;
 }

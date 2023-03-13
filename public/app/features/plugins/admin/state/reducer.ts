@@ -5,7 +5,15 @@ import { PanelPlugin } from '@grafana/data';
 import { STATE_PREFIX } from '../constants';
 import { CatalogPlugin, PluginListDisplayMode, ReducerState, RequestStatus } from '../types';
 
-import { fetchAll, fetchDetails, install, uninstall, loadPluginDashboards, panelPluginLoaded } from './actions';
+import {
+  fetchAll,
+  fetchDetails,
+  install,
+  uninstall,
+  loadPluginDashboards,
+  panelPluginLoaded,
+  fetchAllLocal,
+} from './actions';
 
 export const pluginsAdapter = createEntityAdapter<CatalogPlugin>();
 
@@ -52,6 +60,10 @@ const slice = createSlice({
     builder
       // Fetch All
       .addCase(fetchAll.fulfilled, (state, action) => {
+        pluginsAdapter.upsertMany(state.items, action.payload);
+      })
+      // Fetch All local
+      .addCase(fetchAllLocal.fulfilled, (state, action) => {
         pluginsAdapter.upsertMany(state.items, action.payload);
       })
       // Fetch Details

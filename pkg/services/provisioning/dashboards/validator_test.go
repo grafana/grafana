@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 )
 
@@ -37,9 +36,9 @@ func TestDuplicatesValidator(t *testing.T) {
 		fakeStore := &fakeDashboardStore{}
 		r, err := NewDashboardFileReader(cfg, logger, nil, fakeStore)
 		require.NoError(t, err)
-		fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything).Return(&models.Dashboard{}, nil).Times(6)
-		fakeService.On("GetProvisionedDashboardData", mock.Anything, mock.AnythingOfType("string")).Return([]*models.DashboardProvisioning{}, nil).Times(4)
-		fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&models.Dashboard{}, nil).Times(5)
+		fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Times(6)
+		fakeService.On("GetProvisionedDashboardData", mock.Anything, mock.AnythingOfType("string")).Return([]*dashboards.DashboardProvisioning{}, nil).Times(4)
+		fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Times(5)
 		folderID, err := r.getOrCreateFolderID(context.Background(), cfg, fakeService, folderName)
 		require.NoError(t, err)
 
@@ -151,9 +150,9 @@ func TestDuplicatesValidator(t *testing.T) {
 	})
 
 	t.Run("Duplicates validator should restrict write access only for readers with duplicates", func(t *testing.T) {
-		fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything).Return(&models.Dashboard{}, nil).Times(5)
-		fakeService.On("GetProvisionedDashboardData", mock.Anything, mock.AnythingOfType("string")).Return([]*models.DashboardProvisioning{}, nil).Times(3)
-		fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&models.Dashboard{}, nil).Times(5)
+		fakeService.On("SaveFolderForProvisionedDashboards", mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Times(5)
+		fakeService.On("GetProvisionedDashboardData", mock.Anything, mock.AnythingOfType("string")).Return([]*dashboards.DashboardProvisioning{}, nil).Times(3)
+		fakeService.On("SaveProvisionedDashboard", mock.Anything, mock.Anything, mock.Anything).Return(&dashboards.Dashboard{}, nil).Times(5)
 		fakeStore := &fakeDashboardStore{}
 
 		cfg1 := &config{

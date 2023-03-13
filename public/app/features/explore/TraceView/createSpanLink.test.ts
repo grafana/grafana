@@ -1,19 +1,26 @@
 import { DataSourceInstanceSettings, LinkModel, MutableDataFrame } from '@grafana/data';
 import { DataSourceSrv, setDataSourceSrv, setTemplateSrv } from '@grafana/runtime';
-import { TraceSpan } from '@jaegertracing/jaeger-ui-components';
 import { TraceToMetricsOptions } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 
-import { TraceToLogsOptions } from '../../../core/components/TraceToLogs/TraceToLogsSettings';
+import { TraceToLogsOptionsV2 } from '../../../core/components/TraceToLogs/TraceToLogsSettings';
 import { LinkSrv, setLinkSrv } from '../../panel/panellinks/link_srv';
 import { TemplateSrv } from '../../templating/template_srv';
 
+import { Trace, TraceSpan } from './components';
 import { createSpanLinkFactory } from './createSpanLink';
+
+const dummyTraceData = { duration: 10, traceID: 'trace1', traceName: 'test trace' } as unknown as Trace;
+const dummyDataFrame = new MutableDataFrame({ fields: [{ name: 'traceId', values: ['trace1'] }] });
 
 describe('createSpanLinkFactory', () => {
   it('returns no links if there is no data source uid', () => {
     const splitOpenFn = jest.fn();
-    const createLink = createSpanLinkFactory({ splitOpenFn: splitOpenFn });
+    const createLink = createSpanLinkFactory({
+      splitOpenFn: splitOpenFn,
+      trace: dummyTraceData,
+      dataFrame: dummyDataFrame,
+    });
     const links = createLink!(createTraceSpan());
     expect(links?.logLinks).toBeUndefined();
     expect(links?.metricLinks).toBeUndefined();
@@ -40,14 +47,14 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef).toBeDefined();
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"loki1_uid","queries":[{"expr":"{cluster=\\"cluster1\\", hostname=\\"hostname1\\"}","refId":""}],"panelsState":{}}'
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"loki1_uid","queries":[{"expr":"{cluster=\\"cluster1\\", hostname=\\"hostname1\\"}","refId":""}]}'
         )}`
       );
     });
 
     it('with tags that passed in and without tags that are not in the span', () => {
       const createLink = setupSpanLinkFactory({
-        tags: ['ip', 'newTag'],
+        tags: [{ key: 'ip' }, { key: 'newTag' }],
       });
       expect(createLink).toBeDefined();
       const links = createLink!(
@@ -65,14 +72,14 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef).toBeDefined();
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"loki1_uid","queries":[{"expr":"{ip=\\"192.168.0.1\\"}","refId":""}],"panelsState":{}}'
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"loki1_uid","queries":[{"expr":"{ip=\\"192.168.0.1\\"}","refId":""}]}'
         )}`
       );
     });
 
     it('from tags and process tags as well', () => {
       const createLink = setupSpanLinkFactory({
-        tags: ['ip', 'host'],
+        tags: [{ key: 'ip' }, { key: 'host' }],
       });
       expect(createLink).toBeDefined();
       const links = createLink!(
@@ -90,7 +97,7 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef).toBeDefined();
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"loki1_uid","queries":[{"expr":"{ip=\\"192.168.0.1\\", host=\\"host\\"}","refId":""}],"panelsState":{}}'
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"loki1_uid","queries":[{"expr":"{ip=\\"192.168.0.1\\", host=\\"host\\"}","refId":""}]}'
         )}`
       );
     });
@@ -116,7 +123,7 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef).toBeDefined();
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"2020-10-14T01:01:00.000Z","to":"2020-10-14T01:01:01.000Z"},"datasource":"loki1_uid","queries":[{"expr":"{hostname=\\"hostname1\\"}","refId":""}],"panelsState":{}}'
+          '{"range":{"from":"2020-10-14T01:01:00.000Z","to":"2020-10-14T01:01:01.000Z"},"datasource":"loki1_uid","queries":[{"expr":"{hostname=\\"hostname1\\"}","refId":""}]}'
         )}`
       );
     });
@@ -131,10 +138,18 @@ describe('createSpanLinkFactory', () => {
 
       const linkDef = links?.logLinks?.[0];
       expect(linkDef).toBeDefined();
-      expect(linkDef!.href).toBe(
-        `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"loki1_uid","queries":[{"expr":"{cluster=\\"cluster1\\", hostname=\\"hostname1\\"} |=\\"7946b05c2e2e4e5a\\" |=\\"6605c7b08e715d6c\\"","refId":""}],"panelsState":{}}'
-        )}`
+      expect(decodeURIComponent(linkDef!.href)).toBe(
+        '/explore?left=' +
+          JSON.stringify({
+            range: { from: '2020-10-14T01:00:00.000Z', to: '2020-10-14T01:00:01.000Z' },
+            datasource: 'loki1_uid',
+            queries: [
+              {
+                expr: '{cluster="cluster1", hostname="hostname1"} |="7946b05c2e2e4e5a" |="6605c7b08e715d6c"',
+                refId: '',
+              },
+            ],
+          })
       );
     });
 
@@ -152,6 +167,7 @@ describe('createSpanLinkFactory', () => {
             },
           ],
         }),
+        trace: dummyTraceData,
       });
       expect(createLink).toBeDefined();
       const links = createLink!(createTraceSpan());
@@ -163,8 +179,7 @@ describe('createSpanLinkFactory', () => {
 
     it('handles renamed tags', () => {
       const createLink = setupSpanLinkFactory({
-        mapTagNamesEnabled: true,
-        mappedTags: [
+        tags: [
           { key: 'service.name', value: 'service' },
           { key: 'k8s.pod.name', value: 'pod' },
         ],
@@ -186,15 +201,14 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef).toBeDefined();
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"loki1_uid","queries":[{"expr":"{service=\\"serviceName\\", pod=\\"podName\\"}","refId":""}],"panelsState":{}}'
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"loki1_uid","queries":[{"expr":"{service=\\"serviceName\\", pod=\\"podName\\"}","refId":""}]}'
         )}`
       );
     });
 
     it('handles incomplete renamed tags', () => {
       const createLink = setupSpanLinkFactory({
-        mapTagNamesEnabled: true,
-        mappedTags: [
+        tags: [
           { key: 'service.name', value: '' },
           { key: 'k8s.pod.name', value: 'pod' },
         ],
@@ -216,7 +230,7 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef).toBeDefined();
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"loki1_uid","queries":[{"expr":"{service.name=\\"serviceName\\", pod=\\"podName\\"}","refId":""}],"panelsState":{}}'
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"loki1_uid","queries":[{"expr":"{service.name=\\"serviceName\\", pod=\\"podName\\"}","refId":""}]}'
         )}`
       );
     });
@@ -238,6 +252,16 @@ describe('createSpanLinkFactory', () => {
         })
       );
       expect(links?.logLinks).toBeUndefined();
+    });
+
+    it('interpolates span intrinsics', () => {
+      const createLink = setupSpanLinkFactory({
+        tags: [{ key: 'name', value: 'spanName' }],
+      });
+      expect(createLink).toBeDefined();
+      const links = createLink!(createTraceSpan());
+      expect(links?.logLinks).toBeDefined();
+      expect(decodeURIComponent(links!.logLinks![0].href)).toContain('spanName=\\"operation\\"');
     });
   });
 
@@ -301,14 +325,14 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef).toBeDefined();
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"splunkUID","queries":[{"query":"cluster=\\"cluster1\\" hostname=\\"hostname1\\" \\"7946b05c2e2e4e5a\\" \\"6605c7b08e715d6c\\"","refId":""}],"panelsState":{}}'
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"splunkUID","queries":[{"query":"cluster=\\"cluster1\\" hostname=\\"hostname1\\" \\"7946b05c2e2e4e5a\\" \\"6605c7b08e715d6c\\"","refId":""}]}'
         )}`
       );
     });
 
     it('should format one tag correctly', () => {
       const createLink = setupSpanLinkFactory({
-        tags: ['ip'],
+        tags: [{ key: 'ip' }],
       });
       expect(createLink).toBeDefined();
       const links = createLink!(
@@ -324,14 +348,14 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef).toBeDefined();
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"splunkUID","queries":[{"query":"ip=\\"192.168.0.1\\"","refId":""}],"panelsState":{}}'
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"splunkUID","queries":[{"query":"ip=\\"192.168.0.1\\"","refId":""}]}'
         )}`
       );
     });
 
     it('should format multiple tags correctly', () => {
       const createLink = setupSpanLinkFactory({
-        tags: ['ip', 'hostname'],
+        tags: [{ key: 'ip' }, { key: 'hostname' }],
       });
       expect(createLink).toBeDefined();
       const links = createLink!(
@@ -350,15 +374,14 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef).toBeDefined();
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"splunkUID","queries":[{"query":"hostname=\\"hostname1\\" ip=\\"192.168.0.1\\"","refId":""}],"panelsState":{}}'
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"splunkUID","queries":[{"query":"hostname=\\"hostname1\\" ip=\\"192.168.0.1\\"","refId":""}]}'
         )}`
       );
     });
 
     it('handles renamed tags', () => {
       const createLink = setupSpanLinkFactory({
-        mapTagNamesEnabled: true,
-        mappedTags: [
+        tags: [
           { key: 'service.name', value: 'service' },
           { key: 'k8s.pod.name', value: 'pod' },
         ],
@@ -380,7 +403,7 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef).toBeDefined();
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"splunkUID","queries":[{"query":"service=\\"serviceName\\" pod=\\"podName\\"","refId":""}],"panelsState":{}}'
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"splunkUID","queries":[{"query":"service=\\"serviceName\\" pod=\\"podName\\"","refId":""}]}'
         )}`
       );
     });
@@ -406,6 +429,8 @@ describe('createSpanLinkFactory', () => {
           datasourceUid: 'prom1Uid',
           queries: [{ query: 'customQuery' }],
         },
+        trace: dummyTraceData,
+        dataFrame: dummyDataFrame,
       });
       expect(createLink).toBeDefined();
 
@@ -415,7 +440,7 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef).toBeDefined();
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"prom1Uid","queries":[{"expr":"customQuery","refId":"A"}],"panelsState":{}}'
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"prom1Uid","queries":[{"expr":"customQuery","refId":"A"}]}'
         )}`
       );
     });
@@ -427,6 +452,8 @@ describe('createSpanLinkFactory', () => {
         traceToMetricsOptions: {
           datasourceUid: 'prom1',
         } as TraceToMetricsOptions,
+        trace: dummyTraceData,
+        dataFrame: dummyDataFrame,
       });
       expect(createLink).toBeDefined();
 
@@ -445,7 +472,9 @@ describe('createSpanLinkFactory', () => {
             { name: 'defaultQuery', query: '' },
             { query: 'no_name_here' },
           ],
-        } as TraceToMetricsOptions,
+        },
+        trace: dummyTraceData,
+        dataFrame: dummyDataFrame,
       });
       expect(createLink).toBeDefined();
 
@@ -458,7 +487,7 @@ describe('createSpanLinkFactory', () => {
       expect(namedLink!.title).toBe('Named Query');
       expect(namedLink!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"prom1Uid","queries":[{"expr":"customQuery","refId":"A"}],"panelsState":{}}'
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"prom1Uid","queries":[{"expr":"customQuery","refId":"A"}]}'
         )}`
       );
 
@@ -467,7 +496,7 @@ describe('createSpanLinkFactory', () => {
       expect(defaultLink!.title).toBe('defaultQuery');
       expect(defaultLink!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"prom1Uid","queries":[{"expr":"histogram_quantile(0.5, sum(rate(tempo_spanmetrics_latency_bucket{operation=\\"operation\\"}[5m])) by (le))","refId":"A"}],"panelsState":{}}'
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"prom1Uid","queries":[{"expr":"histogram_quantile(0.5, sum(rate(traces_spanmetrics_latency_bucket{service=\\"test service\\"}[5m])) by (le))","refId":"A"}]}'
         )}`
       );
 
@@ -476,7 +505,7 @@ describe('createSpanLinkFactory', () => {
       expect(unnamedQuery!.title).toBeUndefined();
       expect(unnamedQuery!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"prom1Uid","queries":[{"expr":"no_name_here","refId":"A"}],"panelsState":{}}'
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"prom1Uid","queries":[{"expr":"no_name_here","refId":"A"}]}'
         )}`
       );
     });
@@ -491,6 +520,8 @@ describe('createSpanLinkFactory', () => {
           spanStartTimeShift: '-1h',
           spanEndTimeShift: '1h',
         },
+        trace: dummyTraceData,
+        dataFrame: dummyDataFrame,
       });
       expect(createLink).toBeDefined();
 
@@ -500,7 +531,7 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef).toBeDefined();
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"2020-10-14T00:00:00.000Z","to":"2020-10-14T02:00:01.000Z"},"datasource":"prom1Uid","queries":[{"expr":"customQuery","refId":"A"}],"panelsState":{}}'
+          '{"range":{"from":"2020-10-14T00:00:00.000Z","to":"2020-10-14T02:00:01.000Z"},"datasource":"prom1Uid","queries":[{"expr":"customQuery","refId":"A"}]}'
         )}`
       );
     });
@@ -512,12 +543,14 @@ describe('createSpanLinkFactory', () => {
       splitOpenFn,
       traceToMetricsOptions: {
         datasourceUid: 'prom1Uid',
-        queries: [{ name: 'Named Query', query: 'metric{$__tags}[5m]' }],
+        queries: [{ name: 'Named Query', query: 'metric{$__tags, $__tags}[5m]' }],
         tags: [
           { key: 'job', value: '' },
           { key: 'k8s.pod', value: 'pod' },
         ],
-      } as TraceToMetricsOptions,
+      },
+      trace: dummyTraceData,
+      dataFrame: dummyDataFrame,
     });
     expect(createLink).toBeDefined();
 
@@ -535,7 +568,7 @@ describe('createSpanLinkFactory', () => {
     expect(links).toBeDefined();
     expect(links!.metricLinks![0]!.href).toBe(
       `/explore?left=${encodeURIComponent(
-        '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"prom1Uid","queries":[{"expr":"metric{job=\\"tns/app\\", pod=\\"sample-pod\\"}[5m]","refId":"A"}],"panelsState":{}}'
+        '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"prom1Uid","queries":[{"expr":"metric{job=\\"tns/app\\", pod=\\"sample-pod\\", job=\\"tns/app\\", pod=\\"sample-pod\\"}[5m]","refId":"A"}]}'
       )}`
     );
   });
@@ -620,10 +653,8 @@ describe('createSpanLinkFactory', () => {
 
       const linkDef = links?.logLinks?.[0];
       expect(linkDef).toBeDefined();
-      expect(linkDef!.href).toContain(
-        encodeURIComponent(
-          `datasource":"${searchUID}","queries":[{"query":"cluster:\\"cluster1\\" AND hostname:\\"hostname1\\"","refId":"","metrics":[{"id":"1","type":"logs"}]}]`
-        )
+      expect(decodeURIComponent(linkDef!.href)).toContain(
+        `datasource":"${searchUID}","queries":[{"query":"cluster:\\"cluster1\\" AND hostname:\\"hostname1\\"","refId":"","metrics":[{"id":"1","type":"logs"}]}]`
       );
     });
 
@@ -660,15 +691,41 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef).toBeDefined();
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          `{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"${searchUID}","queries":[{"query":"\\"6605c7b08e715d6c\\" AND \\"7946b05c2e2e4e5a\\" AND cluster:\\"cluster1\\" AND hostname:\\"hostname1\\"","refId":"","metrics":[{"id":"1","type":"logs"}]}],"panelsState":{}}`
+          `{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"${searchUID}","queries":[{"query":"\\"6605c7b08e715d6c\\" AND \\"7946b05c2e2e4e5a\\" AND cluster:\\"cluster1\\" AND hostname:\\"hostname1\\"","refId":"","metrics":[{"id":"1","type":"logs"}]}]}`
         )}`
+      );
+    });
+
+    it('formats query correctly if only filterByTraceID is true', () => {
+      const createLink = setupSpanLinkFactory(
+        {
+          datasourceUid: searchUID,
+          filterByTraceID: true,
+        },
+        searchUID
+      );
+
+      expect(createLink).toBeDefined();
+      const links = createLink!(
+        createTraceSpan({
+          process: {
+            serviceName: 'service',
+            tags: [],
+          },
+        })
+      );
+
+      const linkDef = links?.logLinks?.[0];
+      expect(linkDef).toBeDefined();
+      expect(decodeURIComponent(linkDef!.href)).toBe(
+        `/explore?left={"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"searchUID","queries":[{"query":"\\"7946b05c2e2e4e5a\\"","refId":"","metrics":[{"id":"1","type":"logs"}]}]}`
       );
     });
 
     it('should format one tag correctly', () => {
       const createLink = setupSpanLinkFactory(
         {
-          tags: ['ip'],
+          tags: [{ key: 'ip' }],
         },
         searchUID
       );
@@ -686,7 +743,7 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef).toBeDefined();
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          `{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"${searchUID}","queries":[{"query":"ip:\\"192.168.0.1\\"","refId":"","metrics":[{"id":"1","type":"logs"}]}],"panelsState":{}}`
+          `{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"${searchUID}","queries":[{"query":"ip:\\"192.168.0.1\\"","refId":"","metrics":[{"id":"1","type":"logs"}]}]}`
         )}`
       );
     });
@@ -694,7 +751,7 @@ describe('createSpanLinkFactory', () => {
     it('should format multiple tags correctly', () => {
       const createLink = setupSpanLinkFactory(
         {
-          tags: ['ip', 'hostname'],
+          tags: [{ key: 'ip' }, { key: 'hostname' }],
         },
         searchUID
       );
@@ -715,7 +772,7 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef).toBeDefined();
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          `{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"${searchUID}","queries":[{"query":"hostname:\\"hostname1\\" AND ip:\\"192.168.0.1\\"","refId":"","metrics":[{"id":"1","type":"logs"}]}],"panelsState":{}}`
+          `{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"${searchUID}","queries":[{"query":"hostname:\\"hostname1\\" AND ip:\\"192.168.0.1\\"","refId":"","metrics":[{"id":"1","type":"logs"}]}]}`
         )}`
       );
     });
@@ -723,8 +780,7 @@ describe('createSpanLinkFactory', () => {
     it('handles renamed tags', () => {
       const createLink = setupSpanLinkFactory(
         {
-          mapTagNamesEnabled: true,
-          mappedTags: [
+          tags: [
             { key: 'service.name', value: 'service' },
             { key: 'k8s.pod.name', value: 'pod' },
           ],
@@ -748,18 +804,200 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef).toBeDefined();
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          `{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"${searchUID}","queries":[{"query":"service:\\"serviceName\\" AND pod:\\"podName\\"","refId":"","metrics":[{"id":"1","type":"logs"}]}],"panelsState":{}}`
+          `{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"${searchUID}","queries":[{"query":"service:\\"serviceName\\" AND pod:\\"podName\\"","refId":"","metrics":[{"id":"1","type":"logs"}]}]}`
+        )}`
+      );
+    });
+  });
+
+  describe('custom query', () => {
+    beforeAll(() => {
+      setDataSourceSrv({
+        getInstanceSettings() {
+          return { uid: 'loki1_uid', name: 'loki1', type: 'loki' } as unknown as DataSourceInstanceSettings;
+        },
+      } as unknown as DataSourceSrv);
+
+      setLinkSrv(new LinkSrv());
+      setTemplateSrv(new TemplateSrv());
+    });
+
+    it('interpolates custom query correctly', () => {
+      const createLink = setupSpanLinkFactory({
+        tags: [
+          { key: 'service.name', value: 'service' },
+          { key: 'k8s.pod.name', value: 'pod' },
+        ],
+        customQuery: true,
+        query: '{${__tags}} |="${__span.tags["service.name"]}" |="${__trace.traceId}"',
+      });
+      expect(createLink).toBeDefined();
+      const links = createLink!(
+        createTraceSpan({
+          process: {
+            serviceName: 'service',
+            tags: [
+              { key: 'service.name', value: 'serviceName' },
+              { key: 'k8s.pod.name', value: 'podName' },
+            ],
+          },
+        })
+      );
+
+      const linkDef = links?.logLinks?.[0];
+      expect(linkDef).toBeDefined();
+      expect(decodeURIComponent(linkDef!.href)).toContain(
+        '"queries":' +
+          JSON.stringify([{ expr: '{service="serviceName", pod="podName"} |="serviceName" |="trace1"', refId: '' }])
+      );
+    });
+
+    it('does not return a link if variables are not matched', () => {
+      const createLink = setupSpanLinkFactory({
+        tags: [{ key: 'service.name', value: 'service' }],
+        customQuery: true,
+        query: '{${__tags}} |="${__span.tags["service.name"]}" |="${__trace.id}"',
+      });
+      expect(createLink).toBeDefined();
+      const links = createLink!(createTraceSpan());
+      expect(links?.logLinks).toBeUndefined();
+    });
+  });
+
+  describe('should return falconLogScale link', () => {
+    const falconLogScaleUID = 'falconLogScaleUID';
+
+    beforeAll(() => {
+      setDataSourceSrv({
+        getInstanceSettings() {
+          return {
+            uid: falconLogScaleUID,
+            name: 'FalconLogScale',
+            type: 'grafana-falconlogscale-datasource',
+          } as unknown as DataSourceInstanceSettings;
+        },
+      } as unknown as DataSourceSrv);
+
+      setLinkSrv(new LinkSrv());
+      setTemplateSrv(new TemplateSrv());
+    });
+
+    it('the `lsql` keyword is used in the link', () => {
+      const createLink = setupSpanLinkFactory({
+        datasourceUid: falconLogScaleUID,
+      });
+      const links = createLink!(createTraceSpan());
+
+      const linkDef = links?.logLinks?.[0];
+      expect(linkDef).toBeDefined();
+      expect(linkDef!.href).toContain(`${encodeURIComponent('datasource":"falconLogScaleUID","queries":[{"lsql"')}`);
+    });
+
+    it('formats query correctly if filterByTraceID and or filterBySpanID is true', () => {
+      const createLink = setupSpanLinkFactory({
+        datasourceUid: falconLogScaleUID,
+        filterByTraceID: true,
+        filterBySpanID: true,
+      });
+
+      expect(createLink).toBeDefined();
+      const links = createLink!(createTraceSpan());
+
+      const linkDef = links?.logLinks?.[0];
+      expect(linkDef).toBeDefined();
+      expect(linkDef!.href).toBe(
+        `/explore?left=${encodeURIComponent(
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"falconLogScaleUID","queries":[{"lsql":"cluster=\\"cluster1\\" OR hostname=\\"hostname1\\" or \\"7946b05c2e2e4e5a\\" or \\"6605c7b08e715d6c\\"","refId":""}]}'
+        )}`
+      );
+    });
+
+    it('should format one tag correctly', () => {
+      const createLink = setupSpanLinkFactory({
+        tags: [{ key: 'ip' }],
+      });
+      expect(createLink).toBeDefined();
+      const links = createLink!(
+        createTraceSpan({
+          process: {
+            serviceName: 'service',
+            tags: [{ key: 'ip', value: '192.168.0.1' }],
+          },
+        })
+      );
+
+      const linkDef = links?.logLinks?.[0];
+      expect(linkDef).toBeDefined();
+      expect(linkDef!.href).toBe(
+        `/explore?left=${encodeURIComponent(
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"falconLogScaleUID","queries":[{"lsql":"ip=\\"192.168.0.1\\"","refId":""}]}'
+        )}`
+      );
+    });
+
+    it('should format multiple tags correctly', () => {
+      const createLink = setupSpanLinkFactory({
+        tags: [{ key: 'ip' }, { key: 'hostname' }],
+      });
+      expect(createLink).toBeDefined();
+      const links = createLink!(
+        createTraceSpan({
+          process: {
+            serviceName: 'service',
+            tags: [
+              { key: 'hostname', value: 'hostname1' },
+              { key: 'ip', value: '192.168.0.1' },
+            ],
+          },
+        })
+      );
+
+      const linkDef = links?.logLinks?.[0];
+      expect(linkDef).toBeDefined();
+      expect(linkDef!.href).toBe(
+        `/explore?left=${encodeURIComponent(
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"falconLogScaleUID","queries":[{"lsql":"hostname=\\"hostname1\\" OR ip=\\"192.168.0.1\\"","refId":""}]}'
+        )}`
+      );
+    });
+
+    it('handles renamed tags', () => {
+      const createLink = setupSpanLinkFactory({
+        tags: [
+          { key: 'service.name', value: 'service' },
+          { key: 'k8s.pod.name', value: 'pod' },
+        ],
+      });
+      expect(createLink).toBeDefined();
+      const links = createLink!(
+        createTraceSpan({
+          process: {
+            serviceName: 'service',
+            tags: [
+              { key: 'service.name', value: 'serviceName' },
+              { key: 'k8s.pod.name', value: 'podName' },
+            ],
+          },
+        })
+      );
+
+      const linkDef = links?.logLinks?.[0];
+      expect(linkDef).toBeDefined();
+      expect(linkDef!.href).toBe(
+        `/explore?left=${encodeURIComponent(
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"falconLogScaleUID","queries":[{"lsql":"service=\\"serviceName\\" OR pod=\\"podName\\"","refId":""}]}'
         )}`
       );
     });
   });
 });
 
-function setupSpanLinkFactory(options: Partial<TraceToLogsOptions> = {}, datasourceUid = 'lokiUid') {
+function setupSpanLinkFactory(options: Partial<TraceToLogsOptionsV2> = {}, datasourceUid = 'lokiUid') {
   const splitOpenFn = jest.fn();
   return createSpanLinkFactory({
     splitOpenFn,
     traceToLogsOptions: {
+      customQuery: false,
       datasourceUid,
       ...options,
     },
@@ -768,6 +1006,8 @@ function setupSpanLinkFactory(options: Partial<TraceToLogsOptions> = {}, datasou
         href: `${traceId}-${spanId}`,
       } as unknown as LinkModel;
     },
+    trace: dummyTraceData,
+    dataFrame: dummyDataFrame,
   });
 }
 

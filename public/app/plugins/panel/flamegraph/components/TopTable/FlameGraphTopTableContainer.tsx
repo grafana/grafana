@@ -18,8 +18,10 @@ type Props = {
   search: string;
   setSearch: (search: string) => void;
   setTopLevelIndex: (level: number) => void;
+  setSelectedBarIndex: (bar: number) => void;
   setRangeMin: (range: number) => void;
   setRangeMax: (range: number) => void;
+  getLabelValue: (label: string | number) => string;
 };
 
 const FlameGraphTopTableContainer = ({
@@ -30,28 +32,32 @@ const FlameGraphTopTableContainer = ({
   search,
   setSearch,
   setTopLevelIndex,
+  setSelectedBarIndex,
   setRangeMin,
   setRangeMax,
+  getLabelValue,
 }: Props) => {
   const styles = useStyles2(() => getStyles(selectedView, app));
   const [topTable, setTopTable] = useState<TopTableData[]>();
   const valueField =
     data.fields.find((f) => f.name === 'value') ?? data.fields.find((f) => f.type === FieldType.number);
+
   const selfField = data.fields.find((f) => f.name === 'self') ?? data.fields.find((f) => f.type === FieldType.number);
+  const labelsField = data.fields.find((f) => f.name === 'label');
 
   const sortLevelsIntoTable = useCallback(() => {
     let label, self, value;
     let table: { [key: string]: TableData } = {};
 
-    if (data.fields.length === 4) {
-      const valueValues = data.fields[1].values;
-      const selfValues = data.fields[2].values;
-      const labelValues = data.fields[3].values;
+    if (valueField && selfField && labelsField) {
+      const valueValues = valueField.values;
+      const selfValues = selfField.values;
+      const labelValues = labelsField.values;
 
       for (let i = 0; i < valueValues.length; i++) {
         value = valueValues.get(i);
         self = selfValues.get(i);
-        label = labelValues.get(i);
+        label = getLabelValue(labelValues.get(i));
         table[label] = table[label] || {};
         table[label].self = table[label].self ? table[label].self + self : self;
         table[label].total = table[label].total ? table[label].total + value : value;
@@ -59,7 +65,7 @@ const FlameGraphTopTableContainer = ({
     }
 
     return table;
-  }, [data.fields]);
+  }, [getLabelValue, selfField, valueField, labelsField]);
 
   const getTopTableData = (field: Field, value: number) => {
     const processor = getDisplayProcessor({ field, theme: createTheme() /* theme does not matter for us here */ });
@@ -113,6 +119,7 @@ const FlameGraphTopTableContainer = ({
                 search={search}
                 setSearch={setSearch}
                 setTopLevelIndex={setTopLevelIndex}
+                setSelectedBarIndex={setSelectedBarIndex}
                 setRangeMin={setRangeMin}
                 setRangeMax={setRangeMax}
               />
@@ -133,7 +140,9 @@ const getStyles = (selectedView: SelectedView, app: CoreApp) => {
       float: left;
       margin-right: ${marginRight};
       width: ${selectedView === SelectedView.TopTable ? '100%' : `calc(50% - ${marginRight})`};
-      ${app !== CoreApp.Explore ? 'height: calc(100% - 44px)' : ''}; // 44px to adjust for header pushing content down
+      ${app !== CoreApp.Explore
+        ? 'height: calc(100% - 50px)'
+        : 'height: calc(100% + 50px)'}; // 50px to adjust for header pushing content down
     `,
   };
 };

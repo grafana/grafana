@@ -1,6 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useId } from '@react-aria/utils';
-import React, { HTMLAttributes, ReactNode } from 'react';
+import React, { AriaRole, HTMLAttributes, ReactNode } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -54,16 +53,24 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
     ref
   ) => {
     const theme = useTheme2();
-    const styles = getStyles(theme, severity, elevated, bottomSpacing, topSpacing);
-    const titleId = useId();
+    const hasTitle = Boolean(title);
+    const styles = getStyles(theme, severity, hasTitle, elevated, bottomSpacing, topSpacing);
+    const rolesBySeverity: Record<AlertVariant, AriaRole> = {
+      error: 'alert',
+      warning: 'alert',
+      info: 'status',
+      success: 'status',
+    };
+    const role = restProps['role'] || rolesBySeverity[severity];
+    const ariaLabel = restProps['aria-label'] || title;
 
     return (
       <div
         ref={ref}
         className={cx(styles.alert, className)}
         data-testid={selectors.components.Alert.alertV2(severity)}
-        role="alert"
-        aria-labelledby={titleId}
+        role={role}
+        aria-label={ariaLabel}
         {...restProps}
       >
         <div className={styles.icon}>
@@ -71,9 +78,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
         </div>
 
         <div className={styles.body}>
-          <div id={titleId} className={styles.title}>
-            {title}
-          </div>
+          <div className={styles.title}>{title}</div>
           {children && <div className={styles.content}>{children}</div>}
         </div>
 
@@ -101,6 +106,7 @@ Alert.displayName = 'Alert';
 const getStyles = (
   theme: GrafanaTheme2,
   severity: AlertVariant,
+  hasTitle: boolean,
   elevated?: boolean,
   bottomSpacing?: number,
   topSpacing?: number
@@ -157,7 +163,7 @@ const getStyles = (
     `,
     content: css`
       color: ${theme.colors.text.secondary};
-      padding-top: ${theme.spacing(1)};
+      padding-top: ${hasTitle ? theme.spacing(1) : 0};
       max-height: 50vh;
       overflow-y: auto;
     `,

@@ -23,6 +23,7 @@ func (rp *ResponseParser) Parse(buf io.ReadCloser, queries []Query) *backend.Que
 	resp := backend.NewQueryDataResponse()
 
 	response, jsonErr := parseJSON(buf)
+
 	if jsonErr != nil {
 		resp.Responses["A"] = backend.DataResponse{Error: jsonErr}
 		return resp
@@ -46,10 +47,12 @@ func (rp *ResponseParser) Parse(buf io.ReadCloser, queries []Query) *backend.Que
 
 func parseJSON(buf io.ReadCloser) (Response, error) {
 	var response Response
+
 	dec := json.NewDecoder(buf)
 	dec.UseNumber()
 
 	err := dec.Decode(&response)
+
 	return response, err
 }
 
@@ -89,8 +92,8 @@ func transformRows(rows []Row, query Query) data.Frames {
 
 				var timeArray []time.Time
 				var floatArray []*float64
-				var stringArray []string
-				var boolArray []bool
+				var stringArray []*string
+				var boolArray []*bool
 				valType := typeof(row.Values, colIndex)
 				name := formatFrameName(row, column, query)
 
@@ -99,16 +102,27 @@ func transformRows(rows []Row, query Query) data.Frames {
 					// we only add this row if the timestamp is valid
 					if timestampErr == nil {
 						timeArray = append(timeArray, timestamp)
-						if valType == "string" {
-							value := valuePair[colIndex].(string)
-							stringArray = append(stringArray, value)
-						} else if valType == "json.Number" {
+						switch valType {
+						case "string":
+							{
+								value, chk := valuePair[colIndex].(string)
+								if chk {
+									stringArray = append(stringArray, &value)
+								} else {
+									stringArray = append(stringArray, nil)
+								}
+							}
+						case "json.Number":
 							value := parseNumber(valuePair[colIndex])
 							floatArray = append(floatArray, value)
-						} else if valType == "bool" {
-							value := valuePair[colIndex].(bool)
-							boolArray = append(boolArray, value)
-						} else if valType == "null" {
+						case "bool":
+							value, chk := valuePair[colIndex].(bool)
+							if chk {
+								boolArray = append(boolArray, &value)
+							} else {
+								boolArray = append(boolArray, nil)
+							}
+						case "null":
 							floatArray = append(floatArray, nil)
 						}
 					}
@@ -189,7 +203,7 @@ func formatFrameName(row Row, column string, query Query) string {
 }
 
 func buildFrameNameFromQuery(row Row, column string) string {
-	var tags []string
+	tags := make([]string, 0, len(row.Tags))
 	for k, v := range row.Tags {
 		tags = append(tags, fmt.Sprintf("%s: %s", k, v))
 	}

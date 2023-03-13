@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -13,9 +12,8 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/services/contexthandler"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 	"github.com/grafana/grafana/pkg/web"
@@ -24,11 +22,11 @@ import (
 // CallResource passes a resource call from a plugin to the backend plugin.
 //
 // /api/plugins/:pluginId/resources/*
-func (hs *HTTPServer) CallResource(c *models.ReqContext) {
+func (hs *HTTPServer) CallResource(c *contextmodel.ReqContext) {
 	hs.callPluginResource(c, web.Params(c.Req)[":pluginId"])
 }
 
-func (hs *HTTPServer) callPluginResource(c *models.ReqContext, pluginID string) {
+func (hs *HTTPServer) callPluginResource(c *contextmodel.ReqContext, pluginID string) {
 	pCtx, found, err := hs.PluginContextProvider.Get(c.Req.Context(), pluginID, c.SignedInUser)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to get plugin settings", err)
@@ -50,7 +48,7 @@ func (hs *HTTPServer) callPluginResource(c *models.ReqContext, pluginID string) 
 	}
 }
 
-func (hs *HTTPServer) callPluginResourceWithDataSource(c *models.ReqContext, pluginID string, ds *datasources.DataSource) {
+func (hs *HTTPServer) callPluginResourceWithDataSource(c *contextmodel.ReqContext, pluginID string, ds *datasources.DataSource) {
 	pCtx, found, err := hs.PluginContextProvider.GetWithDataSource(c.Req.Context(), pluginID, c.SignedInUser, ds)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to get plugin settings", err)
@@ -78,23 +76,12 @@ func (hs *HTTPServer) callPluginResourceWithDataSource(c *models.ReqContext, plu
 		return
 	}
 
-	if hs.DataProxy.OAuthTokenService.IsOAuthPassThruEnabled(ds) {
-		if token := hs.DataProxy.OAuthTokenService.GetCurrentOAuthToken(c.Req.Context(), c.SignedInUser); token != nil {
-			req.Header.Add("Authorization", fmt.Sprintf("%s %s", token.Type(), token.AccessToken))
-
-			idToken, ok := token.Extra("id_token").(string)
-			if ok && idToken != "" {
-				req.Header.Add("X-ID-Token", idToken)
-			}
-		}
-	}
-
 	if err = hs.makePluginResourceRequest(c.Resp, req, pCtx); err != nil {
 		handleCallResourceError(err, c)
 	}
 }
 
-func (hs *HTTPServer) pluginResourceRequest(c *models.ReqContext) (*http.Request, error) {
+func (hs *HTTPServer) pluginResourceRequest(c *contextmodel.ReqContext) (*http.Request, error) {
 	clonedReq := c.Req.Clone(c.Req.Context())
 	rawURL := web.Params(c.Req)["*"]
 	if clonedReq.URL.RawQuery != "" {
@@ -110,24 +97,6 @@ func (hs *HTTPServer) pluginResourceRequest(c *models.ReqContext) (*http.Request
 }
 
 func (hs *HTTPServer) makePluginResourceRequest(w http.ResponseWriter, req *http.Request, pCtx backend.PluginContext) error {
-	keepCookieModel := struct {
-		KeepCookies []string `json:"keepCookies"`
-	}{}
-	if dis := pCtx.DataSourceInstanceSettings; dis != nil {
-		err := json.Unmarshal(dis.JSONData, &keepCookieModel)
-		if err != nil {
-			hs.log.Warn("failed to unpack JSONData in datasource instance settings", "err", err)
-		}
-	}
-
-	list := contexthandler.AuthHTTPHeaderListFromContext(req.Context())
-	if list != nil {
-		for _, name := range list.Items {
-			req.Header.Del(name)
-		}
-	}
-
-	proxyutil.ClearCookieHeader(req, keepCookieModel.KeepCookies, []string{hs.Cfg.LoginCookieName})
 	proxyutil.PrepareProxyRequest(req)
 
 	body, err := io.ReadAll(req.Body)
@@ -238,7 +207,7 @@ func (hs *HTTPServer) flushStream(stream callResourceClientResponseStream, w htt
 	}
 }
 
-func handleCallResourceError(err error, reqCtx *models.ReqContext) {
+func handleCallResourceError(err error, reqCtx *contextmodel.ReqContext) {
 	if errors.Is(err, backendplugin.ErrPluginUnavailable) {
 		reqCtx.JsonApiErr(503, "Plugin unavailable", err)
 		return

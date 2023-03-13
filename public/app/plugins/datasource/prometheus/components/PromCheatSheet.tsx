@@ -35,12 +35,13 @@ const PromCheatSheet = (props: QueryEditorHelpProps<PromQuery>) => (
       <div className="cheat-sheet-item" key={index}>
         <div className="cheat-sheet-item__title">{item.title}</div>
         {item.expression ? (
-          <div
+          <button
+            type="button"
             className="cheat-sheet-item__example"
             onClick={(e) => props.onClickExample({ refId: 'A', expr: item.expression })}
           >
             <code>{item.expression}</code>
-          </div>
+          </button>
         ) : null}
         <div className="cheat-sheet-item__label">{item.label}</div>
       </div>

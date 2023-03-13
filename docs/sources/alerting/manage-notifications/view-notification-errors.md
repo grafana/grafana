@@ -1,5 +1,4 @@
 ---
-aliases:
 keywords:
   - grafana
   - alerting
@@ -7,7 +6,7 @@ keywords:
   - errors
   - contact points
 title: View notification errors
-weight: 150
+weight: 900
 ---
 
 # View notification errors

@@ -1,0 +1,143 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`getThresholdsForQueries should work for classic_condition 1`] = `
+{
+  "A": {
+    "config": {
+      "mode": "absolute",
+      "steps": [
+        {
+          "color": "transparent",
+          "value": -Infinity,
+        },
+        {
+          "color": "#D10E5C",
+          "value": 0,
+        },
+      ],
+    },
+    "mode": "line",
+  },
+}
+`;
+
+exports[`getThresholdsForQueries should work for lt and gt 1`] = `
+{
+  "A": {
+    "config": {
+      "mode": "absolute",
+      "steps": [
+        {
+          "color": "transparent",
+          "value": -Infinity,
+        },
+        {
+          "color": "#D10E5C",
+          "value": 0,
+        },
+      ],
+    },
+    "mode": "line",
+  },
+}
+`;
+
+exports[`getThresholdsForQueries should work for lt and gt 2`] = `
+{
+  "A": {
+    "config": {
+      "mode": "absolute",
+      "steps": [
+        {
+          "color": "transparent",
+          "value": -Infinity,
+        },
+        {
+          "color": "#D10E5C",
+          "value": 0,
+        },
+      ],
+    },
+    "mode": "line",
+  },
+}
+`;
+
+exports[`getThresholdsForQueries should work for outside_range 1`] = `
+{
+  "A": {
+    "config": {
+      "mode": "absolute",
+      "steps": [
+        {
+          "color": "#D10E5C",
+          "value": -Infinity,
+        },
+        {
+          "color": "#D10E5C",
+          "value": 0,
+        },
+        {
+          "color": "transparent",
+          "value": 0,
+        },
+        {
+          "color": "#D10E5C",
+          "value": 10,
+        },
+      ],
+    },
+    "mode": "line+area",
+  },
+}
+`;
+
+exports[`getThresholdsForQueries should work for threshold condition 1`] = `
+{
+  "A": {
+    "config": {
+      "mode": "absolute",
+      "steps": [
+        {
+          "color": "transparent",
+          "value": -Infinity,
+        },
+        {
+          "color": "#D10E5C",
+          "value": 0,
+        },
+      ],
+    },
+    "mode": "line",
+  },
+}
+`;
+
+exports[`getThresholdsForQueries should work for within_range 1`] = `
+{
+  "A": {
+    "config": {
+      "mode": "absolute",
+      "steps": [
+        {
+          "color": "transparent",
+          "value": -Infinity,
+        },
+        {
+          "color": "#D10E5C",
+          "value": 0,
+        },
+        {
+          "color": "#D10E5C",
+          "value": 10,
+        },
+        {
+          "color": "transparent",
+          "value": 10,
+        },
+      ],
+    },
+    "mode": "line+area",
+  },
+}
+`;

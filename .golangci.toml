@@ -19,6 +19,9 @@ include-go-root = true
 packages = ["io/ioutil"]
 [[linters-settings.depguard.packages-with-error-message]]
 "io/ioutil" = "Deprecated: As of Go 1.16, the same functionality is now provided by package io or package os, and those implementations should be preferred in new code. See the specific function documentation for details."
+"gopkg.in/yaml.v2" = "Grafana packages are not allowed to depend on gopkg.in/yaml.v2 as gopkg.in/yaml.v3 is now available"
+"github.com/pkg/errors" = "Deprecated: Go 1.13 supports the functionality provided by pkg/errors in the standard library."
+"github.com/xorcare/pointer" = "Use pkg/util.Pointer instead, which is a generic one-liner alternative"
 
 [linters-settings.gocritic]
 enabled-checks = ["ruleguard"]
@@ -56,7 +59,6 @@ enable = [
   "typecheck",
   "asciicheck",
   "errorlint",
-  "sqlclosecheck",
   "revive",
 ]
 
@@ -83,7 +85,11 @@ text = "ST1001"
 # Use golang.org/x/text/cases instead.
 [[issues.exclude-rules]]
 linters = ["staticcheck"]
-text = "SA1019"
+text = "SA1019: strings.Title"
+
+[[issues.exclude-rules]]
+linters = ["staticcheck"]
+text = "use fake service and real access control evaluator instead"
 
 [[issues.exclude-rules]]
 linters = ["gosec"]

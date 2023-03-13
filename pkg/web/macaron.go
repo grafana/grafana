@@ -19,11 +19,10 @@
 package web
 
 import (
-	_ "unsafe"
-
 	"context"
 	"net/http"
 	"strings"
+	_ "unsafe"
 )
 
 const _VERSION = "1.3.4.0805"

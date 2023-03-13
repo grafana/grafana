@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 	"math/rand"
 	"sort"
 	"strings"
@@ -82,55 +83,141 @@ func TestErrStateFromString(t *testing.T) {
 	})
 }
 
+func TestSetDashboardAndPanelFromAnnotations(t *testing.T) {
+	testCases := []struct {
+		name                 string
+		annotations          map[string]string
+		expectedError        error
+		expectedDashboardUID string
+		expectedPanelID      int64
+	}{
+		{
+			name:                 "annotations is empty",
+			annotations:          nil,
+			expectedError:        nil,
+			expectedDashboardUID: "",
+			expectedPanelID:      -1,
+		},
+		{
+			name:        "dashboardUID is not present",
+			annotations: map[string]string{PanelIDAnnotation: "1234567890"},
+			expectedError: fmt.Errorf("both annotations %s and %s must be specified",
+				DashboardUIDAnnotation, PanelIDAnnotation),
+			expectedDashboardUID: "",
+			expectedPanelID:      -1,
+		},
+		{
+			name:        "dashboardUID is present but empty",
+			annotations: map[string]string{DashboardUIDAnnotation: "", PanelIDAnnotation: "1234567890"},
+			expectedError: fmt.Errorf("both annotations %s and %s must be specified",
+				DashboardUIDAnnotation, PanelIDAnnotation),
+			expectedDashboardUID: "",
+			expectedPanelID:      -1,
+		},
+		{
+			name:        "panelID is not present",
+			annotations: map[string]string{DashboardUIDAnnotation: "cKy7f6Hk"},
+			expectedError: fmt.Errorf("both annotations %s and %s must be specified",
+				DashboardUIDAnnotation, PanelIDAnnotation),
+			expectedDashboardUID: "",
+			expectedPanelID:      -1,
+		},
+		{
+			name:        "panelID is present but empty",
+			annotations: map[string]string{DashboardUIDAnnotation: "cKy7f6Hk", PanelIDAnnotation: ""},
+			expectedError: fmt.Errorf("both annotations %s and %s must be specified",
+				DashboardUIDAnnotation, PanelIDAnnotation),
+			expectedDashboardUID: "",
+			expectedPanelID:      -1,
+		},
+		{
+			name:                 "dashboardUID and panelID are present but panelID is not a correct int64",
+			annotations:          map[string]string{DashboardUIDAnnotation: "cKy7f6Hk", PanelIDAnnotation: "fgh"},
+			expectedError:        fmt.Errorf("annotation %s must be a valid integer Panel ID", PanelIDAnnotation),
+			expectedDashboardUID: "",
+			expectedPanelID:      -1,
+		},
+		{
+			name:                 "dashboardUID and panelID are present and correct",
+			annotations:          map[string]string{DashboardUIDAnnotation: "cKy7f6Hk", PanelIDAnnotation: "65"},
+			expectedError:        nil,
+			expectedDashboardUID: "cKy7f6Hk",
+			expectedPanelID:      65,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			rule := AlertRuleGen(func(rule *AlertRule) {
+				rule.Annotations = tc.annotations
+				rule.DashboardUID = nil
+				rule.PanelID = nil
+			})()
+			err := rule.SetDashboardAndPanelFromAnnotations()
+
+			require.Equal(t, tc.expectedError, err)
+			require.Equal(t, tc.expectedDashboardUID, rule.GetDashboardUID())
+			require.Equal(t, tc.expectedPanelID, rule.GetPanelID())
+		})
+	}
+}
+
 func TestPatchPartialAlertRule(t *testing.T) {
 	t.Run("patches", func(t *testing.T) {
 		testCases := []struct {
 			name    string
-			mutator func(r *AlertRule)
+			mutator func(r *AlertRuleWithOptionals)
 		}{
 			{
 				name: "title is empty",
-				mutator: func(r *AlertRule) {
+				mutator: func(r *AlertRuleWithOptionals) {
 					r.Title = ""
 				},
 			},
 			{
 				name: "condition and data are empty",
-				mutator: func(r *AlertRule) {
+				mutator: func(r *AlertRuleWithOptionals) {
 					r.Condition = ""
 					r.Data = nil
 				},
 			},
 			{
 				name: "ExecErrState is empty",
-				mutator: func(r *AlertRule) {
+				mutator: func(r *AlertRuleWithOptionals) {
 					r.ExecErrState = ""
 				},
 			},
 			{
 				name: "NoDataState is empty",
-				mutator: func(r *AlertRule) {
+				mutator: func(r *AlertRuleWithOptionals) {
 					r.NoDataState = ""
 				},
 			},
 			{
 				name: "For is -1",
-				mutator: func(r *AlertRule) {
+				mutator: func(r *AlertRuleWithOptionals) {
 					r.For = -1
+				},
+			},
+			{
+				name: "IsPaused did not come in request",
+				mutator: func(r *AlertRuleWithOptionals) {
+					r.IsPaused = true
 				},
 			},
 		}
 
 		for _, testCase := range testCases {
 			t.Run(testCase.name, func(t *testing.T) {
-				var existing *AlertRule
+				var existing *AlertRuleWithOptionals
 				for {
-					existing = AlertRuleGen(func(rule *AlertRule) {
+					rule := AlertRuleGen(func(rule *AlertRule) {
 						rule.For = time.Duration(rand.Int63n(1000) + 1)
 					})()
+					existing = &AlertRuleWithOptionals{AlertRule: *rule}
 					cloned := *existing
 					testCase.mutator(&cloned)
-					if !cmp.Equal(*existing, cloned, cmp.FilterPath(func(path cmp.Path) bool {
+					if !cmp.Equal(existing, cloned, cmp.FilterPath(func(path cmp.Path) bool {
 						return path.String() == "Data.modelProps"
 					}, cmp.Ignore())) {
 						break
@@ -140,7 +227,7 @@ func TestPatchPartialAlertRule(t *testing.T) {
 				testCase.mutator(&patch)
 
 				require.NotEqual(t, *existing, patch)
-				PatchPartialAlertRule(existing, &patch)
+				PatchPartialAlertRule(&existing.AlertRule, &patch)
 				require.Equal(t, *existing, patch)
 			})
 		}
@@ -221,10 +308,10 @@ func TestPatchPartialAlertRule(t *testing.T) {
 						break
 					}
 				}
-				patch := *existing
-				testCase.mutator(&patch)
+				patch := AlertRuleWithOptionals{AlertRule: *existing}
+				testCase.mutator(&patch.AlertRule)
 				PatchPartialAlertRule(existing, &patch)
-				require.NotEqual(t, *existing, patch)
+				require.NotEqual(t, *existing, &patch.AlertRule)
 			})
 		}
 	})

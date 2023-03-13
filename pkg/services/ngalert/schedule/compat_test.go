@@ -9,6 +9,7 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/go-openapi/strfmt"
+	alertingModels "github.com/grafana/alerting/models"
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
@@ -57,7 +58,7 @@ func Test_stateToPostableAlert(t *testing.T) {
 			t.Run("it generates proper URL", func(t *testing.T) {
 				t.Run("to alert rule", func(t *testing.T) {
 					alertState := randomState(tc.state)
-					alertState.Labels[ngModels.RuleUIDLabel] = alertState.AlertRuleUID
+					alertState.Labels[alertingModels.RuleUIDLabel] = alertState.AlertRuleUID
 					result := stateToPostableAlert(alertState, appURL)
 					u := *appURL
 					u.Path = u.Path + "/alerting/grafana/" + alertState.AlertRuleUID + "/view"
@@ -66,18 +67,18 @@ func Test_stateToPostableAlert(t *testing.T) {
 
 				t.Run("app URL as is if rule UID is not specified", func(t *testing.T) {
 					alertState := randomState(tc.state)
-					alertState.Labels[ngModels.RuleUIDLabel] = ""
+					alertState.Labels[alertingModels.RuleUIDLabel] = ""
 					result := stateToPostableAlert(alertState, appURL)
 					require.Equal(t, appURL.String(), result.Alert.GeneratorURL.String())
 
-					delete(alertState.Labels, ngModels.RuleUIDLabel)
+					delete(alertState.Labels, alertingModels.RuleUIDLabel)
 					result = stateToPostableAlert(alertState, appURL)
 					require.Equal(t, appURL.String(), result.Alert.GeneratorURL.String())
 				})
 
 				t.Run("empty string if app URL is not provided", func(t *testing.T) {
 					alertState := randomState(tc.state)
-					alertState.Labels[ngModels.RuleUIDLabel] = alertState.AlertRuleUID
+					alertState.Labels[alertingModels.RuleUIDLabel] = alertState.AlertRuleUID
 					result := stateToPostableAlert(alertState, nil)
 					require.Equal(t, "", result.Alert.GeneratorURL.String())
 				})
@@ -221,9 +222,14 @@ func Test_FromAlertsStateToStoppedAlert(t *testing.T) {
 	}
 
 	evalStates := [...]eval.State{eval.Normal, eval.Alerting, eval.Pending, eval.Error, eval.NoData}
-	states := make([]*state.State, 0, len(evalStates))
-	for _, s := range evalStates {
-		states = append(states, randomState(s))
+	states := make([]state.StateTransition, 0, len(evalStates)*len(evalStates))
+	for _, to := range evalStates {
+		for _, from := range evalStates {
+			states = append(states, state.StateTransition{
+				State:         randomState(to),
+				PreviousState: from,
+			})
+		}
 	}
 
 	clk := clock.NewMock()
@@ -231,10 +237,10 @@ func Test_FromAlertsStateToStoppedAlert(t *testing.T) {
 
 	expected := make([]models.PostableAlert, 0, len(states))
 	for _, s := range states {
-		if !(s.State == eval.Alerting || s.State == eval.Error || s.State == eval.NoData) {
+		if !(s.PreviousState == eval.Alerting || s.PreviousState == eval.Error || s.PreviousState == eval.NoData) {
 			continue
 		}
-		alert := stateToPostableAlert(s, appURL)
+		alert := stateToPostableAlert(s.State, appURL)
 		alert.EndsAt = strfmt.DateTime(clk.Now())
 		expected = append(expected, *alert)
 	}

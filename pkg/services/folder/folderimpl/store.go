@@ -26,5 +26,9 @@ type store interface {
 
 	// GetChildren returns the set of immediate children folders (depth=1) of the
 	// given folder.
-	GetChildren(ctx context.Context, cmd folder.GetTreeQuery) ([]*folder.Folder, error)
+	GetChildren(ctx context.Context, cmd folder.GetChildrenQuery) ([]*folder.Folder, error)
+
+	// GetHeight returns the height of the folder tree. When parentUID is set, the function would
+	// verify in the meanwhile that parentUID is not present in the subtree of the folder with the given UID.
+	GetHeight(ctx context.Context, foldrUID string, orgID int64, parentUID *string) (int, error)
 }

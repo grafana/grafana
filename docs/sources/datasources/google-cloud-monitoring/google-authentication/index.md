@@ -1,6 +1,5 @@
 ---
 aliases:
-  - /docs/grafana/latest/datasources/google-cloud-monitoring/google-authentication/
   - /docs/grafana/next/datasources/cloudmonitoring/
 description: Google authentication
 keywords:

@@ -26,11 +26,6 @@ type RectData = {
 /**
  * Compute the pixel coordinates for each bar in a level. We need full level of bars so that we can collapse small bars
  * into bigger rects.
- * @param level
- * @param levelIndex
- * @param totalTicks
- * @param rangeMin
- * @param pixelsPerTick
  */
 export function getRectDimensionsForLevel(
   level: ItemWithStart[],
@@ -38,7 +33,8 @@ export function getRectDimensionsForLevel(
   totalTicks: number,
   rangeMin: number,
   pixelsPerTick: number,
-  processor: DisplayProcessor
+  processor: DisplayProcessor,
+  getLabelValue: (value: number | string) => string
 ): RectData[] {
   const coordinatesLevel = [];
   for (let barIndex = 0; barIndex < level.length; barIndex += 1) {
@@ -70,7 +66,7 @@ export function getRectDimensionsForLevel(
       y: levelIndex * PIXELS_PER_LEVEL,
       collapsed,
       ticks: curBarTicks,
-      label: item.label,
+      label: getLabelValue(item.label),
       unitLabel: unit,
     });
   }
@@ -85,7 +81,8 @@ export function renderRect(
   rangeMax: number,
   query: string,
   levelIndex: number,
-  topLevelIndex: number
+  topLevelIndex: number,
+  foundNames: Set<string>
 ) {
   if (rect.width < HIDE_THRESHOLD) {
     return;
@@ -100,18 +97,17 @@ export function renderRect(
   const l = 65 + 7 * intensity;
 
   const name = rect.label;
-  const queryResult = query && name.toLowerCase().includes(query.toLowerCase());
 
   if (!rect.collapsed) {
     ctx.stroke();
 
     if (query) {
-      ctx.fillStyle = queryResult ? getBarColor(h, l) : colors[55];
+      ctx.fillStyle = foundNames.has(name) ? getBarColor(h, l) : colors[55];
     } else {
       ctx.fillStyle = levelIndex > topLevelIndex - 1 ? getBarColor(h, l) : getBarColor(h, l + 15);
     }
   } else {
-    ctx.fillStyle = queryResult ? getBarColor(h, l) : colors[55];
+    ctx.fillStyle = foundNames.has(name) ? getBarColor(h, l) : colors[55];
   }
   ctx.fill();
 

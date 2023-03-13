@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import TracePageSearchBar from '@jaegertracing/jaeger-ui-components/src/TracePageHeader/TracePageSearchBar';
-import { TopOfViewRefType } from '@jaegertracing/jaeger-ui-components/src/TraceTimelineViewer/VirtualizedTraceView';
 import React, { useMemo, useState, createRef } from 'react';
 import { useAsync } from 'react-use';
 
 import { PanelProps } from '@grafana/data';
-import { getDataSourceSrv } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import { TraceView } from 'app/features/explore/TraceView/TraceView';
+import TracePageSearchBar from 'app/features/explore/TraceView/components/TracePageHeader/TracePageSearchBar';
+import { TopOfViewRefType } from 'app/features/explore/TraceView/components/TraceTimelineViewer/VirtualizedTraceView';
 import { useSearch } from 'app/features/explore/TraceView/useSearch';
 import { transformDataFrames } from 'app/features/explore/TraceView/utils/transform';
 
@@ -27,6 +27,7 @@ export const TracesPanel: React.FunctionComponent<PanelProps> = ({ data }) => {
     return await getDataSourceSrv().get(data.request?.targets[0].datasource?.uid);
   });
   const scrollElement = document.getElementsByClassName(styles.wrapper)[0];
+  const datasourceType = dataSource && dataSource.value ? dataSource.value.type : 'unknown';
 
   if (!data || !data.series.length || !traceProp) {
     return (
@@ -39,7 +40,7 @@ export const TracesPanel: React.FunctionComponent<PanelProps> = ({ data }) => {
   return (
     <div className={styles.wrapper}>
       <div ref={topOfViewRef}></div>
-      {data.series[0]?.meta?.preferredVisualisationType === 'trace' ? (
+      {data.series[0]?.meta?.preferredVisualisationType === 'trace' && !config.featureToggles.newTraceView ? (
         <TracePageSearchBar
           navigable={true}
           searchValue={search}
@@ -49,6 +50,7 @@ export const TracesPanel: React.FunctionComponent<PanelProps> = ({ data }) => {
           setSearchBarSuffix={setSearchBarSuffix}
           focusedSpanIdForSearch={focusedSpanIdForSearch}
           setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
+          datasourceType={datasourceType}
         />
       ) : null}
 

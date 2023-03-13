@@ -36,42 +36,42 @@ describe('align frames', () => {
           values: f.values.toArray(),
         }))
       ).toMatchInlineSnapshot(`
-        Array [
-          Object {
+        [
+          {
             "name": "TheTime",
-            "values": Array [
+            "values": [
               1000,
               1500,
               2000,
             ],
           },
-          Object {
+          {
             "name": "A",
-            "values": Array [
+            "values": [
               1,
               undefined,
               100,
             ],
           },
-          Object {
+          {
             "name": "A",
-            "values": Array [
+            "values": [
               2,
               20,
               200,
             ],
           },
-          Object {
+          {
             "name": "B",
-            "values": Array [
+            "values": [
               3,
               30,
               300,
             ],
           },
-          Object {
+          {
             "name": "C",
-            "values": Array [
+            "values": [
               "first",
               "second",
               "third",
@@ -89,38 +89,38 @@ describe('align frames', () => {
           values: f.values.toArray(),
         }))
       ).toMatchInlineSnapshot(`
-        Array [
-          Object {
+        [
+          {
             "name": "TheTime",
-            "values": Array [
+            "values": [
               1000,
               2000,
             ],
           },
-          Object {
+          {
             "name": "A",
-            "values": Array [
+            "values": [
               1,
               100,
             ],
           },
-          Object {
+          {
             "name": "A",
-            "values": Array [
+            "values": [
               2,
               200,
             ],
           },
-          Object {
+          {
             "name": "B",
-            "values": Array [
+            "values": [
               3,
               300,
             ],
           },
-          Object {
+          {
             "name": "C",
-            "values": Array [
+            "values": [
               "first",
               "third",
             ],
@@ -154,44 +154,44 @@ describe('align frames', () => {
         state: f.state,
       }))
     ).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "name": "TheTime",
-          "state": Object {
-            "origin": Object {
+          "state": {
+            "origin": {
               "fieldIndex": 0,
               "frameIndex": 0,
             },
           },
-          "values": Array [
+          "values": [
             1000,
             1500,
             2000,
           ],
         },
-        Object {
+        {
           "name": "A1",
-          "state": Object {
-            "origin": Object {
+          "state": {
+            "origin": {
               "fieldIndex": 1,
               "frameIndex": 0,
             },
           },
-          "values": Array [
+          "values": [
             1,
             15,
             2,
           ],
         },
-        Object {
+        {
           "name": "A2",
-          "state": Object {
-            "origin": Object {
+          "state": {
+            "origin": {
               "fieldIndex": 1,
               "frameIndex": 1,
             },
           },
-          "values": Array [
+          "values": [
             1,
             undefined,
             2,
@@ -208,20 +208,20 @@ describe('align frames', () => {
         state: f.state,
       }))
     ).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "name": "TheTime",
-          "state": Object {
-            "origin": Object {
+          "state": {
+            "origin": {
               "fieldIndex": 0,
               "frameIndex": 0,
             },
           },
         },
-        Object {
+        {
           "name": "A1",
-          "state": Object {
-            "origin": Object {
+          "state": {
+            "origin": {
               "fieldIndex": 1,
               "frameIndex": 0,
             },
@@ -246,18 +246,18 @@ describe('align frames', () => {
         values: f.values.toArray(),
       }))
     ).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "name": "TheTime",
-          "values": Array [
+          "values": [
             1500,
             2000,
             6000,
           ],
         },
-        Object {
+        {
           "name": "A1",
-          "values": Array [
+          "values": [
             15,
             22,
             1,
@@ -293,24 +293,24 @@ describe('align frames', () => {
         values: f.values.toArray(),
       }))
     ).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "name": "TheTime",
-          "values": Array [
+          "values": [
             1000,
             2000,
           ],
         },
-        Object {
+        {
           "name": "A",
-          "values": Array [
+          "values": [
             1,
             100,
           ],
         },
-        Object {
+        {
           "name": "A",
-          "values": Array [
+          "values": [
             200,
             undefined,
           ],

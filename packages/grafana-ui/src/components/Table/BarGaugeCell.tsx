@@ -2,11 +2,13 @@ import { isFunction } from 'lodash';
 import React, { FC } from 'react';
 
 import { ThresholdsConfig, ThresholdsMode, VizOrientation, getFieldConfigWithMinMax } from '@grafana/data';
+import { BarGaugeDisplayMode, BarGaugeValueMode } from '@grafana/schema';
 
-import { BarGauge, BarGaugeDisplayMode } from '../BarGauge/BarGauge';
+import { BarGauge } from '../BarGauge/BarGauge';
 import { DataLinksContextMenu, DataLinksContextMenuApi } from '../DataLinks/DataLinksContextMenu';
 
 import { TableCellProps, TableCellDisplayMode } from './types';
+import { getCellOptions } from './utils';
 
 const defaultScale: ThresholdsConfig = {
   mode: ThresholdsMode.Absolute,
@@ -24,6 +26,8 @@ const defaultScale: ThresholdsConfig = {
 
 export const BarGaugeCell: FC<TableCellProps> = (props) => {
   const { field, innerWidth, tableStyles, cell, cellProps, row } = props;
+  const displayValue = field.display!(cell.value);
+  const cellOptions = getCellOptions(field);
 
   let config = getFieldConfigWithMinMax(field, false);
   if (!config.thresholds) {
@@ -33,13 +37,15 @@ export const BarGaugeCell: FC<TableCellProps> = (props) => {
     };
   }
 
-  const displayValue = field.display!(cell.value);
-  let barGaugeMode = BarGaugeDisplayMode.Gradient;
+  // Set default display mode and update if defined
+  // and update the valueMode if defined
+  let barGaugeMode: BarGaugeDisplayMode = BarGaugeDisplayMode.Gradient;
+  let valueDisplayMode: BarGaugeValueMode | undefined = undefined;
 
-  if (field.config.custom && field.config.custom.displayMode === TableCellDisplayMode.LcdGauge) {
-    barGaugeMode = BarGaugeDisplayMode.Lcd;
-  } else if (field.config.custom && field.config.custom.displayMode === TableCellDisplayMode.BasicGauge) {
-    barGaugeMode = BarGaugeDisplayMode.Basic;
+  if (cellOptions.type === TableCellDisplayMode.Gauge) {
+    barGaugeMode = cellOptions.mode ?? BarGaugeDisplayMode.Gradient;
+    valueDisplayMode =
+      cellOptions.valueDisplayMode !== undefined ? cellOptions.valueDisplayMode : BarGaugeValueMode.Text;
   }
 
   const getLinks = () => {
@@ -70,6 +76,7 @@ export const BarGaugeCell: FC<TableCellProps> = (props) => {
         itemSpacing={1}
         lcdCellWidth={8}
         displayMode={barGaugeMode}
+        valueDisplayMode={valueDisplayMode}
       />
     );
   };
@@ -81,21 +88,7 @@ export const BarGaugeCell: FC<TableCellProps> = (props) => {
           {(api) => renderComponent(api)}
         </DataLinksContextMenu>
       )}
-      {!hasLinks && (
-        <BarGauge
-          width={innerWidth}
-          height={tableStyles.cellHeightInner}
-          field={config}
-          display={field.display}
-          text={{ valueSize: 14 }}
-          value={displayValue}
-          orientation={VizOrientation.Horizontal}
-          theme={tableStyles.theme}
-          itemSpacing={1}
-          lcdCellWidth={8}
-          displayMode={barGaugeMode}
-        />
-      )}
+      {!hasLinks && renderComponent({})}
     </div>
   );
 };

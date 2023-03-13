@@ -6,17 +6,27 @@ import { locationService } from '@grafana/runtime';
 import { Button, HorizontalGroup, ConfirmModal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
+import { removePluginFromNavTree } from 'app/core/reducers/navBarTree';
+import { useDispatch } from 'app/types';
 
 import { useInstallStatus, useUninstallStatus, useInstall, useUninstall } from '../../state/hooks';
+import { trackPluginInstalled, trackPluginUninstalled } from '../../tracking';
 import { CatalogPlugin, PluginStatus, PluginTabIds, Version } from '../../types';
 
 type InstallControlsButtonProps = {
   plugin: CatalogPlugin;
   pluginStatus: PluginStatus;
   latestCompatibleVersion?: Version;
+  setNeedReload: (needReload: boolean) => void;
 };
 
-export function InstallControlsButton({ plugin, pluginStatus, latestCompatibleVersion }: InstallControlsButtonProps) {
+export function InstallControlsButton({
+  plugin,
+  pluginStatus,
+  latestCompatibleVersion,
+  setNeedReload,
+}: InstallControlsButtonProps) {
+  const dispatch = useDispatch();
   const [queryParams] = useQueryParams();
   const location = useLocation();
   const { isInstalling, error: errorInstalling } = useInstallStatus();
@@ -27,16 +37,26 @@ export function InstallControlsButton({ plugin, pluginStatus, latestCompatibleVe
   const showConfirmModal = () => setIsConfirmModalVisible(true);
   const hideConfirmModal = () => setIsConfirmModalVisible(false);
   const uninstallBtnText = isUninstalling ? 'Uninstalling' : 'Uninstall';
+  const trackingProps = {
+    plugin_id: plugin.id,
+    plugin_type: plugin.type,
+    path: location.pathname,
+  };
 
   const onInstall = async () => {
+    trackPluginInstalled(trackingProps);
     await install(plugin.id, latestCompatibleVersion?.version);
     if (!errorInstalling) {
       appEvents.emit(AppEvents.alertSuccess, [`Installed ${plugin.name}`]);
+      if (plugin.type === 'app') {
+        setNeedReload(true);
+      }
     }
   };
 
   const onUninstall = async () => {
     hideConfirmModal();
+    trackPluginUninstalled(trackingProps);
     await uninstall(plugin.id);
     if (!errorUninstalling) {
       // If an app plugin is uninstalled we need to reset the active tab when the config / dashboards tabs are removed.
@@ -46,6 +66,10 @@ export function InstallControlsButton({ plugin, pluginStatus, latestCompatibleVe
         locationService.replace(`${location.pathname}?page=${PluginTabIds.OVERVIEW}`);
       }
       appEvents.emit(AppEvents.alertSuccess, [`Uninstalled ${plugin.name}`]);
+      if (plugin.type === 'app') {
+        dispatch(removePluginFromNavTree({ pluginID: plugin.id }));
+        setNeedReload(false);
+      }
     }
   };
 

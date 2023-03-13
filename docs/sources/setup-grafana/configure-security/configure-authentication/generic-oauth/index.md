@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/auth/generic-oauth/
-  - /docs/grafana/latest/setup-grafana/configure-security/configure-authentication/generic-oauth/
+  - ../../../auth/generic-oauth/
 description: Grafana OAuthentication Guide
 keywords:
   - grafana
@@ -36,6 +35,8 @@ Example config:
 name = OAuth
 icon = signin
 enabled = true
+allow_sign_up = true
+auto_login = false
 client_id = YOUR_APP_CLIENT_ID
 client_secret = YOUR_APP_CLIENT_SECRET
 scopes =
@@ -44,7 +45,6 @@ auth_url =
 token_url =
 api_url =
 allowed_domains = mycompany.com mycompany.org
-allow_sign_up = true
 tls_skip_verify_insecure = false
 tls_client_cert =
 tls_client_key =
@@ -131,6 +131,15 @@ To configure Generic OAuth to use a refresh token, perform one or both of the fo
 - Extend the `[auth.generic_oauth]` section with additional scopes
 - Enable the refresh token on the provider
 
+### Configure automatic login
+
+Set `auto_login` option to true to attempt login automatically, skipping the login screen.
+This setting is ignored if multiple auth providers are configured to use auto login.
+
+```
+auto_login = true
+```
+
 ## Set up OAuth2 with Auth0
 
 1. Use the following parameters to create a client in Auth0:
@@ -148,6 +157,7 @@ To configure Generic OAuth to use a refresh token, perform one or both of the fo
    [auth.generic_oauth]
    enabled = true
    allow_sign_up = true
+   auto_login = false
    team_ids =
    allowed_organizations =
    name = Auth0
@@ -167,6 +177,7 @@ To configure Generic OAuth to use a refresh token, perform one or both of the fo
 name = BitBucket
 enabled = true
 allow_sign_up = true
+auto_login = false
 client_id = <client id>
 client_secret = <client secret>
 scopes = account email
@@ -204,8 +215,9 @@ By default, a refresh token is included in the response for the **Authorization 
    name = Centrify
    enabled = true
    allow_sign_up = true
+   auto_login = false
    client_id = <OpenID Connect Client ID from Centrify>
-   client_secret = <your generated OpenID Connect Client Secret"
+   client_secret = <your generated OpenID Connect Client Secret>
    scopes = openid profile email
    auth_url = https://<your domain>.my.centrify.com/OAuth2/Authorize/<Application ID>
    token_url = https://<your domain>.my.centrify.com/OAuth2/Token/<Application ID>
@@ -243,6 +255,7 @@ By default, a refresh token is included in the response for the **Authorization 
    name = OneLogin
    enabled = true
    allow_sign_up = true
+   auto_login = false
    client_id = <client id>
    client_secret = <client secret>
    scopes = openid email name
@@ -261,8 +274,8 @@ For more information, refer to the [JMESPath examples](#jmespath-examples).
 
 > **Warning**: Currently if no organization role mapping is found for a user, Grafana doesn't
 > update the user's organization role. This is going to change in Grafana 10. To avoid overriding manually set roles,
-> enable the `oauth_skip_org_role_update_sync` option.
-> See [configure-grafana]({{< relref "../../../configure-grafana#oauth_skip_org_role_update_sync" >}}) for more information.
+> enable the `skip_org_role_sync` option.
+> See [configure-grafana]({{< relref "../../../configure-grafana#authgeneric_oauth-skip-org-role-sync" >}}) for more information.
 
 On first login, if the`role_attribute_path` property does not return a role, then the user is assigned the role
 specified by [the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
@@ -378,4 +391,17 @@ Payload:
     },
     ...
 }
+```
+
+## Skip organization role sync
+
+To prevent the sync of organization roles from the OAuth provider, set `skip_org_role_sync` to `true`. This is useful if you want to manage the organization roles for your users from within Grafana.
+This also impacts the `allow_assign_grafana_admin` setting by not syncing the Grafana admin role from the OAuth provider.
+
+```ini
+[auth.generic_oauth]
+# ..
+# prevents the sync of org roles from the Oauth provider
+skip_org_role_sync = true
+``
 ```

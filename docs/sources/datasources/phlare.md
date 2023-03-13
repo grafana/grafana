@@ -1,8 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/datasources/phlare/
-  - /docs/grafana/latest/features/datasources/phlare/
-description: Horizontally-scalable, highly-available, multi-tenant continuous profiling aggregation system. OSS profiling solution from Grafana Labs.
+  - ../features/datasources/phlare/
+description: Horizontally-scalable, highly-available, multi-tenant continuous profiling
+  aggregation system. OSS profiling solution from Grafana Labs.
 keywords:
   - grafana
   - phlare
@@ -13,10 +13,6 @@ weight: 1150
 ---
 
 # Phlare data source
-
-> **Note:** This feature is behind the `flameGraph` feature toggle.
-> You can enable feature toggles through configuration file or environment variables. See configuration [docs]({{< relref "../setup-grafana/configure-grafana/#feature_toggles" >}}) for details.
-> Grafana Cloud users can access this feature by [opening a support ticket in the Cloud Portal](https://grafana.com/profile/org#support).
 
 Grafana ships with built-in support for Phlare, a horizontally scalable, highly-available, multi-tenant, OSS, continuous profiling aggregation system from Grafana Labs. Add it as a data source, and you are ready to query your profiles in [Explore]({{< relref "../explore" >}}).
 

@@ -7,12 +7,16 @@ import (
 
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // Typed errors
 var (
-	ErrOrgNotFound  = errors.New("organization not found")
-	ErrOrgNameTaken = errors.New("organization name is taken")
+	ErrOrgNameTaken        = errors.New("organization name is taken")
+	ErrLastOrgAdmin        = errors.New("cannot remove last organization admin")
+	ErrOrgUserNotFound     = errors.New("cannot find the organization user")
+	ErrOrgUserAlreadyAdded = errors.New("user is already added to organization")
+	ErrOrgNotFound         = errutil.NewBase(errutil.StatusNotFound, "org.notFound", errutil.WithPublicMessage("organization not found"))
 )
 
 type Org struct {
@@ -90,7 +94,7 @@ type OrgDTO struct {
 	Name string `json:"name"`
 }
 
-type GetOrgByIdQuery struct {
+type GetOrgByIDQuery struct {
 	ID int64
 }
 
@@ -148,6 +152,7 @@ type OrgUserDTO struct {
 	LastSeenAtAge string          `json:"lastSeenAtAge"`
 	AccessControl map[string]bool `json:"accessControl,omitempty"`
 	IsDisabled    bool            `json:"isDisabled"`
+	AuthLabels    []string        `json:"authLabels" xorm:"-"`
 }
 
 type RemoveOrgUserCommand struct {
@@ -161,6 +166,7 @@ type GetOrgUsersQuery struct {
 	UserID int64 `xorm:"user_id"`
 	OrgID  int64 `xorm:"org_id"`
 	Query  string
+	Page   int
 	Limit  int
 	// Flag used to allow oss edition to query users without access control
 	DontEnforceAccessControl bool
@@ -169,22 +175,31 @@ type GetOrgUsersQuery struct {
 }
 
 type SearchOrgUsersQuery struct {
-	OrgID int64 `xorm:"org_id"`
-	Query string
-	Page  int
-	Limit int
+	UserID int64 `xorm:"user_id"`
+	OrgID  int64 `xorm:"org_id"`
+	Query  string
+	Page   int
+	Limit  int
+	// Flag used to allow oss edition to query users without access control
+	DontEnforceAccessControl bool
 
 	User *user.SignedInUser
 }
 
 type SearchOrgUsersQueryResult struct {
 	TotalCount int64         `json:"totalCount"`
-	OrgUsers   []*OrgUserDTO `json:"OrgUsers"`
+	OrgUsers   []*OrgUserDTO `json:"orgUsers"`
 	Page       int           `json:"page"`
 	PerPage    int           `json:"perPage"`
 }
 
 type ByOrgName []*UserOrgDTO
+
+type OrgDetailsDTO struct {
+	ID      int64   `json:"id"`
+	Name    string  `json:"name"`
+	Address Address `json:"address"`
+}
 
 // Len returns the length of an array of organisations.
 func (o ByOrgName) Len() int {

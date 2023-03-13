@@ -1,4 +1,4 @@
-import { PanelOptionsEditorBuilder, PanelPlugin } from '@grafana/data';
+import { FieldConfigProperty, PanelOptionsEditorBuilder, PanelPlugin } from '@grafana/data';
 import { FrameState } from 'app/features/canvas/runtime/frame';
 
 import { CanvasPanel, InstanceState } from './CanvasPanel';
@@ -25,7 +25,15 @@ export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilde
 
 export const plugin = new PanelPlugin<PanelOptions>(CanvasPanel)
   .setNoPadding() // extend to panel edges
-  .useFieldConfig()
+  .useFieldConfig({
+    standardOptions: {
+      [FieldConfigProperty.Mappings]: {
+        settings: {
+          icon: true,
+        },
+      },
+    },
+  })
   .setMigrationHandler(canvasMigrationHandler)
   .setPanelOptions((builder, context) => {
     const state: InstanceState = context.instanceState;

@@ -7,13 +7,16 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/stretchr/testify/require"
 )
 
-func TestProvisioning(t *testing.T) {
+func TestIntegrationProvisioning(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
@@ -59,7 +62,7 @@ func TestProvisioning(t *testing.T) {
 			"name": "test-receiver",
 			"type": "slack",
 			"settings": {
-				"recipient": "value_recipient", 
+				"recipient": "value_recipient",
 				"token": "value_token"
 			}
 		}`
@@ -157,7 +160,7 @@ func TestProvisioning(t *testing.T) {
 			"name": "my-contact-point",
 			"type": "slack",
 			"settings": {
-				"recipient": "value_recipient", 
+				"recipient": "value_recipient",
 				"token": "value_token"
 			}
 		}`

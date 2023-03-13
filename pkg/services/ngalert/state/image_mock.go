@@ -9,6 +9,7 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
+
 	models "github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 

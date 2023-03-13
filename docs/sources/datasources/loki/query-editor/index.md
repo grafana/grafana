@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/data-sources/loki/query-editor/
+  - ../../data-sources/loki/query-editor/
 description: Guide for using the Loki data source's query editor
 keywords:
   - grafana
@@ -68,7 +68,7 @@ You can use the Loki label browser to navigate through your labels and values, a
 1. Choose a query type between [**logs query**]({{< relref "#create-a-log-query" >}}) and [**rate metrics query**]({{< relref "#create-a-metric-query" >}}).
    You can also validate the selector.
 
-{{< figure src="/static/img/docs/v75/loki_log_browser.png" class="docs-image--no-shadow" max-width="800px" caption="The Loki label browser" >}}
+{{< figure src="/static/img/docs/v75/loki_label_browser.png" class="docs-image--no-shadow" max-width="800px" caption="The Loki label browser" >}}
 
 ### Configure query settings
 
@@ -90,8 +90,8 @@ In addition to the **Run query** button and mode switcher, Builder mode provides
 | Name                      | Description                                                                               |
 | ------------------------- | ----------------------------------------------------------------------------------------- |
 | **Kick start your query** | A list of useful operation patterns you can use to add multiple operations to your query. |
-| **Explain**               | Displays a step-by-step explanation of all query components and operations.               |
-| **Raw query**             | Displays the raw LogQL query that the Builder would send to Loki.                         |
+| **Label browser**         | Used to navigate through your labels and values, and also build queries.                  |
+| **Explain query**         | Displays a step-by-step explanation of all query components and operations.               |
 
 ### Use the Labels selector
 
@@ -125,13 +125,13 @@ To re-order operations manually, drag the operation box by its name and drop it 
 
 In same cases the query editor can detect which operations would be most appropriate for a selected log stream. In such cases it will show a hint next to the `+ Operations` button. Click on the hint to add the operations to your query.
 
-### Explain mode
+### Explain query
 
-Explain mode helps with understanding the query. It shows a step by step explanation of all query parts and the operations.
+This section is only shown if the `Explain query` switch from the query editor top toolbar is set to `on`. It shows a step by step explanation of all query parts and the operations.
 
 ### Raw query
 
-This section is shown only if the `Raw query` switch from the query editor top toolbar is set to `on`. It shows the raw query that will be created and executed by the query editor.
+It shows the raw query that will be created and executed by the query editor.
 
 There are two types of LogQL queries:
 

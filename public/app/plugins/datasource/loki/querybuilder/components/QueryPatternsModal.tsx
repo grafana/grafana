@@ -66,7 +66,7 @@ export const QueryPatternsModal = (props: Props) => {
   };
 
   return (
-    <Modal isOpen={isOpen} title="Kick start your query" onDismiss={onClose}>
+    <Modal isOpen={isOpen} title="Kick start your query" onDismiss={onClose} className={styles.modal}>
       <div className={styles.spacing}>
         Kick start your query by selecting one of these queries. You can then continue to complete your query.
       </div>
@@ -120,6 +120,12 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     spacing: css`
       margin-bottom: ${theme.spacing(1)};
+    `,
+    modal: css`
+      width: 85vw;
+      ${theme.breakpoints.down('md')} {
+        width: 100%;
+      }
     `,
   };
 };

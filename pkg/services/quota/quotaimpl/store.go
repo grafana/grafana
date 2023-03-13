@@ -30,6 +30,10 @@ func (ss *sqlStore) DeleteByUser(ctx quota.Context, userID int64) error {
 
 func (ss *sqlStore) Get(ctx quota.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {
 	limits := quota.Map{}
+	if scopeParams == nil {
+		return &limits, nil
+	}
+
 	if scopeParams.OrgID != 0 {
 		orgLimits, err := ss.getOrgScopeQuota(ctx, scopeParams.OrgID)
 		if err != nil {

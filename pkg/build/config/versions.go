@@ -59,7 +59,7 @@ var Versions = VersionMap{
 			Storybook:            "grafana-storybook",
 		},
 	},
-	CustomMode: {
+	DownstreamMode: {
 		Variants: []Variant{
 			VariantArmV6,
 			VariantArmV7,
@@ -120,6 +120,7 @@ var Versions = VersionMap{
 				Alpine,
 				Ubuntu,
 			},
+			PrereleaseBucket: "grafana-prerelease/artifacts/docker",
 		},
 		Buckets: Buckets{
 			Artifacts:            "grafana-downloads",
@@ -128,6 +129,44 @@ var Versions = VersionMap{
 		},
 	},
 	TagMode: {
+		Variants: []Variant{
+			VariantArmV6,
+			VariantArmV7,
+			VariantArmV7Musl,
+			VariantArm64,
+			VariantArm64Musl,
+			VariantDarwinAmd64,
+			VariantWindowsAmd64,
+			VariantLinuxAmd64,
+			VariantLinuxAmd64Musl,
+		},
+		PluginSignature: PluginSignature{
+			Sign:      true,
+			AdminSign: true,
+		},
+		Docker: Docker{
+			ShouldSave: true,
+			Architectures: []Architecture{
+				ArchAMD64,
+				ArchARM64,
+				ArchARMv7,
+			},
+			Distribution: []Distribution{
+				Alpine,
+				Ubuntu,
+			},
+			PrereleaseBucket: "grafana-prerelease/artifacts/docker",
+		},
+		Buckets: Buckets{
+			Artifacts:            "grafana-prerelease/artifacts/downloads",
+			ArtifactsEnterprise2: "grafana-prerelease/artifacts/downloads-enterprise2",
+			CDNAssets:            "grafana-prerelease",
+			CDNAssetsDir:         "artifacts/static-assets",
+			Storybook:            "grafana-prerelease",
+			StorybookSrcDir:      "artifacts/storybook",
+		},
+	},
+	Enterprise2Mode: {
 		Variants: []Variant{
 			VariantArmV6,
 			VariantArmV7,

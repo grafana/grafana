@@ -69,7 +69,7 @@ export const DataLinkSuggestions: React.FC<DataLinkSuggestionsProps> = ({ sugges
   const styles = useStyles2(getStyles);
 
   return (
-    <div ref={ref} className={styles.wrapper}>
+    <div role="menu" ref={ref} className={styles.wrapper}>
       {Object.keys(groupedSuggestions).map((key, i) => {
         const indexOffset =
           i === 0
@@ -116,7 +116,11 @@ const DataLinkSuggestionsList: React.FC<DataLinkSuggestionsListProps> = React.me
           renderItem={(item, index) => {
             const isActive = index + activeIndexOffset === activeIndex;
             return (
+              // key events are handled by DataLinkInput
+              // eslint-disable-next-line jsx-a11y/click-events-have-key-events
               <div
+                role="menuitem"
+                tabIndex={0}
                 className={cx(styles.item, isActive && styles.activeItem)}
                 ref={isActive ? selectedRef : undefined}
                 onClick={() => {

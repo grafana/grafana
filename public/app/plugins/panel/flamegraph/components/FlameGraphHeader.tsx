@@ -12,6 +12,7 @@ type Props = {
   app: CoreApp;
   search: string;
   setTopLevelIndex: (level: number) => void;
+  setSelectedBarIndex: (bar: number) => void;
   setRangeMin: (range: number) => void;
   setRangeMax: (range: number) => void;
   setSearch: (search: string) => void;
@@ -24,6 +25,7 @@ const FlameGraphHeader = ({
   app,
   search,
   setTopLevelIndex,
+  setSelectedBarIndex,
   setRangeMin,
   setRangeMax,
   setSearch,
@@ -33,7 +35,7 @@ const FlameGraphHeader = ({
 }: Props) => {
   const styles = useStyles2((theme) => getStyles(theme, app));
 
-  let viewOptions: Array<{ value: string; label: string; description: string }> = [
+  let viewOptions: Array<{ value: SelectedView; label: string; description: string }> = [
     { value: SelectedView.TopTable, label: 'Top Table', description: 'Only show top table' },
     { value: SelectedView.FlameGraph, label: 'Flame Graph', description: 'Only show flame graph' },
   ];
@@ -64,6 +66,7 @@ const FlameGraphHeader = ({
           size={'md'}
           onClick={() => {
             setTopLevelIndex(0);
+            setSelectedBarIndex(0);
             setRangeMin(0);
             setRangeMax(1);
             setSearch('');
@@ -74,11 +77,11 @@ const FlameGraphHeader = ({
       </div>
 
       <div className={styles.rightContainer}>
-        <RadioButtonGroup
+        <RadioButtonGroup<SelectedView>
           options={viewOptions}
           value={selectedView}
           onChange={(view) => {
-            setSelectedView(view as SelectedView);
+            setSelectedView(view);
           }}
         />
       </div>

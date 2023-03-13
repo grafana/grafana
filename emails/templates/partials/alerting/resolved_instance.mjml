@@ -1,0 +1,23 @@
+<mj-section padding="10px 0" border-bottom="1px solid #2f3037">
+  <mj-column vertical-align="middle">
+    <mj-button border="1px solid #32632b" color="#a5d69e" background-color="#26322a" padding="0" inner-padding="5px 12px">
+      Resolved
+    </mj-button>
+  </mj-column>
+  <mj-column vertical-align="middle">
+    <mj-text align="center" padding="0">
+      <strong>{{ .Labels.alertname }}</strong>
+    </mj-text>
+  </mj-column>
+  <mj-raw>
+    {{ if gt (len .GeneratorURL) 0 }}
+  </mj-raw>
+  <mj-column vertical-align="middle">
+    <mj-button href="{{ .GeneratorURL }}" padding="0" inner-padding="5px 12px">
+      View alert
+    </mj-button>
+  </mj-column>
+  <mj-raw>
+    {{ end }}
+  </mj-raw>
+</mj-section>

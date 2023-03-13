@@ -12,10 +12,10 @@ import { SpanNullsEditor } from '../timeseries/SpanNullsEditor';
 
 import { StateTimelinePanel } from './StateTimelinePanel';
 import { timelinePanelChangedHandler } from './migrations';
+import { PanelOptions, PanelFieldConfig, defaultPanelOptions, defaultPanelFieldConfig } from './panelcfg.gen';
 import { StatTimelineSuggestionsSupplier } from './suggestions';
-import { TimelineOptions, TimelineFieldConfig, defaultPanelOptions, defaultTimelineFieldConfig } from './types';
 
-export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(StateTimelinePanel)
+export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(StateTimelinePanel)
   .setPanelChangeHandler(timelinePanelChangedHandler)
   .useFieldConfig({
     standardOptions: {
@@ -33,7 +33,7 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Stat
         .addSliderInput({
           path: 'lineWidth',
           name: 'Line width',
-          defaultValue: defaultTimelineFieldConfig.lineWidth,
+          defaultValue: defaultPanelFieldConfig.lineWidth,
           settings: {
             min: 0,
             max: 10,
@@ -43,7 +43,7 @@ export const plugin = new PanelPlugin<TimelineOptions, TimelineFieldConfig>(Stat
         .addSliderInput({
           path: 'fillOpacity',
           name: 'Fill opacity',
-          defaultValue: defaultTimelineFieldConfig.fillOpacity,
+          defaultValue: defaultPanelFieldConfig.fillOpacity,
           settings: {
             min: 0,
             max: 100,

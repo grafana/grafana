@@ -7,6 +7,13 @@ import { createMockQuery } from '../__mocks__/cloudMonitoringQuery';
 
 import { AnnotationQueryEditor } from './AnnotationQueryEditor';
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getTemplateSrv: () => ({
+    replace: (val: string) => val,
+  }),
+}));
+
 describe('AnnotationQueryEditor', () => {
   it('renders correctly', async () => {
     const onChange = jest.fn();

@@ -11,7 +11,7 @@ interface InspectStatsTabProps {
   timeZone: TimeZone;
 }
 
-export const InspectStatsTab: React.FC<InspectStatsTabProps> = ({ data, timeZone }) => {
+export const InspectStatsTab = ({ data, timeZone }: InspectStatsTabProps) => {
   if (!data.request) {
     return null;
   }
