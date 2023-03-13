@@ -73,22 +73,42 @@ func (s *Service) Run(ctx context.Context) error {
 
 // QueryData processes queries and returns query responses. It handles queries to single or mixed datasources, as well as expressions.
 func (s *Service) QueryData(ctx context.Context, user *user.SignedInUser, skipDSCache bool, skipQueryCache bool, reqDTO dtos.MetricRequest) (*backend.QueryDataResponse, error) {
+	// First look in the query cache if enabled
+	var updateCacheFn caching.CacheResponseFn
+	if !skipQueryCache {
+		resp, found, fn, err := s.cachingService.HandleQueryRequest(ctx, reqDTO)
+		if found {
+			return resp, err
+		}
+		if err != nil {
+			// Log but continue
+			s.log.Error("error checking cache for metrics request", "error", err.Error())
+		}
+		updateCacheFn = fn
+	}
+
 	// Parse the request into parsed queries grouped by datasource uid
 	parsedReq, err := s.parseMetricRequest(ctx, user, skipDSCache, reqDTO)
 	if err != nil {
 		return nil, err
 	}
 
-	// If there are expressions, handle them and return
+	var resp *backend.QueryDataResponse
+	var respErr error
 	if parsedReq.hasExpression {
-		return s.handleExpressions(ctx, user, parsedReq)
+		// If there are expressions, handle them and return
+		resp, respErr = s.handleExpressions(ctx, user, parsedReq)
+	} else if len(parsedReq.parsedQueries) == 1 {
+		// If there is only one datasource, query it and return
+		resp, respErr = s.handleQuerySingleDatasource(ctx, user, parsedReq)
+	} else {
+		// If there are multiple datasources, handle their queries concurrently and return the aggregate result
+		resp, respErr = s.executeConcurrentQueries(ctx, user, skipDSCache, skipQueryCache, reqDTO, parsedReq.parsedQueries)
 	}
-	// If there is only one datasource, query it and return
-	if len(parsedReq.parsedQueries) == 1 {
-		return s.handleQuerySingleDatasource(ctx, user, parsedReq)
+	if respErr == nil && updateCacheFn != nil {
+		updateCacheFn(ctx, resp)
 	}
-	// If there are multiple datasources, handle their queries concurrently and return the aggregate result
-	return s.executeConcurrentQueries(ctx, user, skipDSCache, skipQueryCache, reqDTO, parsedReq.parsedQueries)
+	return resp, respErr
 }
 
 // executeConcurrentQueries executes queries to multiple datasources concurrently and returns the aggregate result.
