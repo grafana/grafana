@@ -31,6 +31,15 @@ This topic shows you how to create an API key using the Grafana UI. You can also
 
 To follow these instructions, you need:
 
+Either
+
+- Admin/Editor
+
+Or
+
+- API keys writer
+- Service account writer
+
 - To ensure you have permission to create and edit API keys. For more information about permissions, refer to [Roles and permissions]({{< relref "../roles-and-permissions/#" >}}).
 
 ### Steps
@@ -70,7 +79,12 @@ This section shows you how to migrate API keys to Grafana service accounts using
 
 To follow these instructions, you need:
 
-- Adimin/Editor
+Either
+
+- Admin/Editor
+
+Or
+
 - API keys writer
 - Service account writer
 
@@ -100,7 +114,12 @@ This section shows you how to migrate API keys to Grafana service accounts using
 
 To follow these instructions, you need:
 
-- Adimin/Editor
+Either
+
+- Admin/Editor
+
+Or
+
 - API keys writer
 - Service account writer
 
