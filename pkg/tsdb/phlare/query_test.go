@@ -121,14 +121,29 @@ func Test_treeToNestedDataFrame(t *testing.T) {
 	}
 
 	frame := treeToNestedSetDataFrame(tree, "memory:alloc_objects:count:space:bytes")
+
+	labelConfig := &data.FieldConfig{
+		TypeConfig: &data.FieldTypeConfig{
+			Enum: &data.EnumFieldConfig{
+				Text: []string{"root", "func1", "func2", "func1:func3"},
+			},
+		},
+	}
+	filenameConfig := &data.FieldConfig{
+		TypeConfig: &data.FieldTypeConfig{
+			Enum: &data.EnumFieldConfig{
+				Text: []string{"", "1", "2", "3"},
+			},
+		},
+	}
 	require.Equal(t,
 		[]*data.Field{
 			data.NewField("level", nil, []int64{0, 1, 1, 2}),
 			data.NewField("value", nil, []int64{100, 40, 30, 15}).SetConfig(&data.FieldConfig{Unit: "short"}),
 			data.NewField("self", nil, []int64{1, 2, 3, 4}).SetConfig(&data.FieldConfig{Unit: "short"}),
-			data.NewField("label", nil, []string{"root", "func1", "func2", "func1:func3"}),
 			data.NewField("line", nil, []int64{0, 1, 2, 3}),
-			data.NewField("fileName", nil, []string{"", "1", "2", "3"}),
+			data.NewField("label", nil, []int64{0, 1, 2, 3}).SetConfig(labelConfig),
+			data.NewField("fileName", nil, []int64{0, 1, 2, 3}).SetConfig(filenameConfig),
 		}, frame.Fields)
 }
 

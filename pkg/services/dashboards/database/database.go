@@ -702,7 +702,6 @@ func (d *dashboardStore) deleteDashboard(cmd *dashboards.DeleteDashboardCommand,
 	deletes := []string{
 		"DELETE FROM dashboard_tag WHERE dashboard_id = ? ",
 		"DELETE FROM star WHERE dashboard_id = ? ",
-		"DELETE FROM dashboard_public WHERE dashboard_uid = (SELECT uid FROM dashboard WHERE id = ?)",
 		"DELETE FROM dashboard WHERE id = ?",
 		"DELETE FROM playlist_item WHERE type = 'dashboard_by_id' AND value = ?",
 		"DELETE FROM dashboard_version WHERE dashboard_id = ?",
@@ -751,7 +750,6 @@ func (d *dashboardStore) deleteDashboard(cmd *dashboards.DeleteDashboardCommand,
 				"DELETE FROM annotation WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
 				"DELETE FROM dashboard_provisioning WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
 				"DELETE FROM dashboard_acl WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
-				"DELETE FROM dashboard_public WHERE dashboard_uid IN (SELECT uid FROM dashboard WHERE org_id = ? AND folder_id = ?)",
 			}
 			for _, sql := range childrenDeletes {
 				_, err := sess.Exec(sql, dashboard.OrgID, dashboard.ID)
