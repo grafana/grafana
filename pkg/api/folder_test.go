@@ -169,12 +169,14 @@ func TestFoldersCreateAPIEndpoint(t *testing.T) {
 			req = webtest.RequestWithSignedInUser(req, userWithPermissions(1, tc.permissions))
 			resp, err := srv.SendJSON(req)
 			require.NoError(t, err)
-
 			require.Equal(t, tc.expectedCode, resp.StatusCode)
+
+			folder := dtos.Folder{}
+			err = json.NewDecoder(resp.Body).Decode(&folder)
+			require.NoError(t, err)
+			require.NoError(t, resp.Body.Close())
+
 			if tc.expectedCode == http.StatusOK {
-				folder := dtos.Folder{}
-				err = json.NewDecoder(resp.Body).Decode(&folder)
-				require.NoError(t, err)
 				assert.Equal(t, int64(1), folder.Id)
 				assert.Equal(t, "uid", folder.Uid)
 				assert.Equal(t, "Folder", folder.Title)
@@ -273,12 +275,14 @@ func TestFoldersUpdateAPIEndpoint(t *testing.T) {
 			req = webtest.RequestWithSignedInUser(req, userWithPermissions(1, tc.permissions))
 			resp, err := srv.SendJSON(req)
 			require.NoError(t, err)
-
 			require.Equal(t, tc.expectedCode, resp.StatusCode)
+
+			folder := dtos.Folder{}
+			err = json.NewDecoder(resp.Body).Decode(&folder)
+			require.NoError(t, err)
+			require.NoError(t, resp.Body.Close())
+
 			if tc.expectedCode == http.StatusOK {
-				folder := dtos.Folder{}
-				err = json.NewDecoder(resp.Body).Decode(&folder)
-				require.NoError(t, err)
 				assert.Equal(t, int64(1), folder.Id)
 				assert.Equal(t, "uid", folder.Uid)
 				assert.Equal(t, "Folder upd", folder.Title)
@@ -455,6 +459,7 @@ func TestFolderMoveAPIEndpoint(t *testing.T) {
 			resp, err := srv.SendJSON(req)
 			require.NoError(t, err)
 			require.Equal(t, tc.expectedCode, resp.StatusCode)
+			require.NoError(t, resp.Body.Close())
 		})
 	}
 }
