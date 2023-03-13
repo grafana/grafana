@@ -13,8 +13,11 @@ import {
   DataLink,
   DisplayValue,
   dataLinkHasAllVariablesDefined,
+  DataLinkConfigOrigin,
+  SplitOpenOptions,
 } from '@grafana/data';
-import { getTemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv, reportInteraction } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getTransformationVars } from 'app/features/correlations/transformations';
 
@@ -133,6 +136,16 @@ export const getFieldLinksForExplore = (options: {
           variableMap = variableMapData.variableMap;
         }
 
+        const splitFnWithTracking = (options?: SplitOpenOptions<DataQuery>) => {
+          if (link.origin === DataLinkConfigOrigin.Correlations) {
+            reportInteraction('grafana_explore_correlation_clicked');
+          }
+
+          if (splitOpenFn) {
+            splitOpenFn(options);
+          }
+        };
+
         if (variableMapData.allVariablesDefined) {
           return mapInternalLinkToExplore({
             link,
@@ -140,7 +153,7 @@ export const getFieldLinksForExplore = (options: {
             scopedVars: allVars,
             range,
             field,
-            onClickFn: splitOpenFn,
+            onClickFn: (options) => splitFnWithTracking(options),
             replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
             variableMap: variableMap,
           });

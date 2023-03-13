@@ -1,4 +1,4 @@
-import { DataFrame } from '@grafana/data';
+import { DataFrame, DataLinkConfigOrigin } from '@grafana/data';
 
 import { CorrelationData } from './useCorrelations';
 
@@ -43,6 +43,7 @@ const decorateDataFrameWithInternalDataLinks = (dataFrame: DataFrame, correlatio
           },
           url: '',
           title: correlation.label || correlation.target.name,
+          origin: DataLinkConfigOrigin.Correlations,
         });
       }
     });
