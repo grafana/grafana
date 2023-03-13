@@ -18,7 +18,10 @@ export function QueryErrorAlert({ error }: Props) {
       <div className={styles.icon}>
         <Icon name="exclamation-triangle" />
       </div>
-      <div className={styles.message}>{message}</div>
+      <div className={styles.message}>
+        {message} <br />
+        (traceId: {error.traceId})
+      </div>
     </div>
   );
 }

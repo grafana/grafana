@@ -5,6 +5,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from 'app/core/internationalization';
 
 import { InspectStatsTable } from './InspectStatsTable';
+import { InspectStatsTraceIdsTable } from './InspectStatsTraceIdsTable';
 
 interface InspectStatsTabProps {
   data: PanelData;
@@ -59,11 +60,14 @@ export const InspectStatsTab = ({ data, timeZone }: InspectStatsTabProps) => {
 
   const statsTableName = t('dashboard.inspect-stats.table-title', 'Stats');
   const dataStatsTableName = t('dashboard.inspect-stats.data-title', 'Data source stats');
+  const traceIdsStatsTableName = t('dashboard.inspect-stats.data-traceids', 'Trace ids');
 
   return (
     <div aria-label={selectors.components.PanelInspector.Stats.content}>
+      {(data.traceIds ?? []).join(' ')}
       <InspectStatsTable timeZone={timeZone} name={statsTableName} stats={stats} />
       <InspectStatsTable timeZone={timeZone} name={dataStatsTableName} stats={dataStats} />
+      <InspectStatsTraceIdsTable name={traceIdsStatsTableName} traceIds={data.traceIds ?? []} />
     </div>
   );
 };

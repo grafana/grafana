@@ -65,6 +65,13 @@ export function toDataQueryResponse(
   queries?: DataQuery[]
 ): DataQueryResponse {
   const rsp: DataQueryResponse = { data: [], state: LoadingState.Done };
+
+  const traceId = (res as FetchResponse | FetchError).traceId;
+
+  if (traceId != null) {
+    rsp.traceIds = [traceId];
+  }
+
   // If the response isn't in a correct shape we just ignore the data and pass empty DataQueryResponse.
   if ((res as FetchResponse).data?.results) {
     const results = (res as FetchResponse).data.results;
@@ -88,12 +95,13 @@ export function toDataQueryResponse(
             refId: dr.refId,
             message: dr.error,
             status: dr.status,
+            traceId,
           };
         }
         if (rsp.errors) {
-          rsp.errors.push({ refId: dr.refId, message: dr.error, status: dr.status });
+          rsp.errors.push({ refId: dr.refId, message: dr.error, status: dr.status, traceId });
         } else {
-          rsp.errors = [{ refId: dr.refId, message: dr.error, status: dr.status }];
+          rsp.errors = [{ refId: dr.refId, message: dr.error, status: dr.status, traceId }];
         }
         rsp.state = LoadingState.Error;
       }

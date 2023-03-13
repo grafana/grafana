@@ -149,6 +149,8 @@ export function combineResponses(currentResult: DataQueryResponse | null, newRes
   // otherwise the new error, if it exists.
   currentResult.error = currentResult.error ?? newResult.error;
 
+  currentResult.traceIds = [...(currentResult.traceIds ?? []), ...(newResult.traceIds ?? [])];
+
   return currentResult;
 }
 

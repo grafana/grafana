@@ -36,6 +36,12 @@ function renderError(error: DataQueryError) {
         <>
           {error.status && <>Status: {error.status}. Message: </>}
           {msg}
+          {error.traceId != null && (
+            <>
+              <br />
+              (traceId: {error.traceId})
+            </>
+          )}
         </>
       );
     } else {
