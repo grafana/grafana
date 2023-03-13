@@ -13,12 +13,13 @@ ENV NODE_OPTIONS=--max_old_space_size=8000
 
 WORKDIR /tmp/grafana
 
-RUN apk add python3
-
 COPY package.json yarn.lock .yarnrc.yml ./
 COPY .yarn .yarn
 COPY packages packages
 COPY plugins-bundled plugins-bundled
+
+RUN apk add --update python3 make g++\
+   && rm -rf /var/cache/apk/*
 
 RUN yarn install
 
