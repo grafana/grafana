@@ -48,8 +48,9 @@ export function HoverWidget({ menu, title, dragClass, children, offset = -32 }: 
         onPointerUp={onPointerUp}
         ref={draggableRef}
       >
-        <Icon name="draggabledots" />
+        <Icon name="expand-arrows" className={styles.draggableIcon} />
       </div>
+      {!title && <h6 className={classnames(styles.untitled, styles.draggable, dragClass)}>Untitled</h6>}
       {children}
       <div className={styles.square}>
         <PanelMenu
@@ -95,6 +96,10 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     draggable: css({
       cursor: 'move',
+      // mobile do not support draggable panels
+      [theme.breakpoints.down('md')]: {
+        display: 'none',
+      },
     }),
     menuButton: css({
       color: theme.colors.text.primary,
@@ -104,6 +109,14 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     title: css({
       padding: theme.spacing(0.75),
+    }),
+    untitled: css({
+      color: theme.colors.text.disabled,
+      fontStyle: 'italic',
+      marginBottom: 0,
+    }),
+    draggableIcon: css({
+      transform: 'rotate(45deg)',
     }),
   };
 }
