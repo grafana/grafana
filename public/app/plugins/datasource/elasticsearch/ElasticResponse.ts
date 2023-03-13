@@ -7,8 +7,8 @@ import {
   FieldType,
   MutableDataFrame,
   PreferredVisualisationType,
-  dateTime,
 } from '@grafana/data';
+import { convertFieldType } from '@grafana/data/src/transformations/transformers/convertFieldType';
 import TableModel from 'app/core/TableModel';
 import flatten from 'app/core/utils/flatten';
 
@@ -503,7 +503,6 @@ export class ElasticResponse {
     logLevelField?: string
   ): DataQueryResponse {
     const dataFrame: DataFrame[] = [];
-    const timeField = this.targets[0].timeField;
     for (let n = 0; n < this.response.responses.length; n++) {
       const response = this.response.responses[n];
       if (response.error) {
@@ -517,7 +516,7 @@ export class ElasticResponse {
           ? createEmptyDataFrame(
               propNames.map(toNameTypePair(docs)),
               isLogsRequest,
-              timeField,
+              this.targets[0].timeField,
               logMessageField,
               logLevelField
             )
@@ -534,13 +533,6 @@ export class ElasticResponse {
             // then used in explore to figure out the log level. We may rewrite
             // some actual data in the level field if they are different.
             doc['level'] = doc[logLevelField];
-          }
-          // If we have time field with string value, change it to DateTime
-          if (timeField && doc[timeField]) {
-            const time = doc[timeField];
-            if (typeof time === 'string') {
-              doc[timeField] = dateTime(time);
-            }
           }
           // When highlighting exists, we need to collect all the highlighted
           // phrases and add them to the DataFrame's meta.searchWords array.
@@ -606,6 +598,14 @@ export class ElasticResponse {
 
           series.refId = target.refId;
           dataFrame.push(series);
+        }
+      }
+    }
+
+    for (let frame of dataFrame) {
+      for (let field of frame.fields) {
+        if (field.type === FieldType.time && typeof field.values.get(0) !== 'number') {
+          field.values = convertFieldType(field, { destinationType: FieldType.time }).values;
         }
       }
     }

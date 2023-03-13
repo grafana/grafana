@@ -1,13 +1,4 @@
-import {
-  DataFrame,
-  DataFrameView,
-  Field,
-  FieldCache,
-  FieldType,
-  isDateTime,
-  KeyValue,
-  MutableDataFrame,
-} from '@grafana/data';
+import { DataFrame, DataFrameView, Field, FieldCache, FieldType, KeyValue, MutableDataFrame } from '@grafana/data';
 import flatten from 'app/core/utils/flatten';
 
 import { ElasticResponse } from './ElasticResponse';
@@ -1347,7 +1338,7 @@ describe('ElasticResponse', () => {
     it('should have time field values in DateTime format', () => {
       const timeField = result.data[0].fields.find((field) => field.name === '@timestamp');
       expect(timeField).toBeDefined();
-      expect(isDateTime(timeField?.values.get(0))).toBe(true);
+      expect(timeField?.values.get(0)).toBe(1546300800000);
     });
   });
 
