@@ -1,21 +1,55 @@
-import React from 'react';
-import { useAsync } from 'react-use';
+import { css } from '@emotion/css';
+import React, { useEffect, useState } from 'react';
 
-import { CodeLocation, SourceCodeAPI } from 'app/plugins/datasource/phlare/types';
+import { GrafanaTheme2 } from '@grafana/data';
+import { CodeEditor, useTheme2 } from '@grafana/ui';
 
-type Props = {
-  datasource: SourceCodeAPI;
+import { PhlareDataSource } from '../../../datasource/phlare/datasource';
+import { CodeLocation } from '../../../datasource/phlare/types';
+
+interface Props {
+  datasource: PhlareDataSource;
   location: CodeLocation;
-  className?: string;
-};
+  getLabelValue: (label: string | number) => string;
+  getFileNameValue: (label: string | number) => string;
+}
+export function SourceCodeView(props: Props) {
+  const { datasource, location, getLabelValue, getFileNameValue } = props;
+  const [source, setSource] = useState<string>('');
+  const theme = useTheme2();
+  const styles = getStyles(theme);
 
-export const SourceCodeView = (props: Props) => {
-  const result = useAsync(() => props.datasource.getSourceCode(props.location));
-  // TODO use result
+  useEffect(() => {
+    (async () => {
+      const sourceCode = await datasource.getSource(getLabelValue(location.func), getFileNameValue(location.fileName));
+      setSource(sourceCode);
+    })();
+  }, [datasource, location, getLabelValue, getFileNameValue]);
 
   return (
-    <div className={props.className}>
-      <pre>Hello World;</pre>
-    </div>
+    <CodeEditor
+      value={source}
+      language={'go'}
+      containerStyles={styles.queryField}
+      readOnly={true}
+      showLineNumbers={true}
+      monacoOptions={{
+        fontSize: 14,
+      }}
+    />
   );
+}
+
+interface EditorStyles {
+  queryField: string;
+}
+
+const getStyles = (theme: GrafanaTheme2): EditorStyles => {
+  return {
+    queryField: css`
+      float: left;
+      width: 50%;
+      height: 100%;
+    `,
+  };
 };

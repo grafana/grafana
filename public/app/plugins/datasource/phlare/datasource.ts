@@ -66,6 +66,10 @@ export class PhlareDataSource extends DataSourceWithBackend<Query, PhlareDataSou
     return await super.getResource('labelNames');
   }
 
+  async getSource(func: string, path: string): Promise<string> {
+    return await super.getResource('sourceCode', { function: func, path, revision: 'latest' });
+  }
+
   applyTemplateVariables(query: Query, scopedVars: ScopedVars): Query {
     return {
       ...query,

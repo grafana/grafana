@@ -39,6 +39,7 @@ const FlameGraphContainer = (props: Props) => {
   const [selectedLocation, setSelectedLocation] = useState<CodeLocation>();
 
   const labelField = props.data?.fields.find((f) => f.name === 'label');
+  const fileNameField = props.data?.fields.find((f) => f.name === 'fileName');
 
   // Label can actually be an enum field so depending on that we have to access it through display processor. This is
   // both a backward compatibility but also to allow using a simple dataFrame without enum config. This would allow
@@ -53,6 +54,18 @@ const FlameGraphContainer = (props: Props) => {
       }
     },
     [labelField]
+  );
+
+  const getFileNameValue = useCallback(
+    (label: string | number) => {
+      const enumConfig = fileNameField?.config?.type?.enum;
+      if (enumConfig) {
+        return getEnumDisplayProcessor(createTheme(), enumConfig)(label).text;
+      } else {
+        return label.toString();
+      }
+    },
+    [fileNameField]
   );
 
   // Transform dataFrame with nested set format to array of levels. Each level contains all the bars for a particular
@@ -138,7 +151,7 @@ const FlameGraphContainer = (props: Props) => {
               selectedView={selectedView}
               getLabelValue={getLabelValue}
               setSelectedLocation={(index: number) => {
-                const view = new DataFrameView<Item>(props.data);
+                const view = new DataFrameView<Item>(props.data!);
                 const row = view.get(index);
                 setSelectedLocation({
                   fileName: row.fileName,
@@ -148,12 +161,13 @@ const FlameGraphContainer = (props: Props) => {
               }}
             />
           )}
-          
+
           {selectedLocation && (
             <SourceCodeView
-              className={styles.code}
               location={selectedLocation}
               datasource={props.datasource! as PhlareDataSource}
+              getLabelValue={getLabelValue}
+              getFileNameValue={getFileNameValue}
             />
           )}
         </div>
