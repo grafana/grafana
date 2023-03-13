@@ -367,13 +367,6 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
-      path: '/admin/storage/k8s',
-      roles: () => ['Admin'],
-      component: SafeDynamicImport(
-        () => import(/* webpackChunkName: "K8SStoragePage" */ 'app/features/storage/k8s/K8SPage')
-      ),
-    },
-    {
       path: '/admin/storage/export',
       roles: () => ['Admin'],
       component: SafeDynamicImport(
@@ -559,7 +552,7 @@ export function getBrowseStorageRoutes(cfg = config): RouteDescriptor[] {
 }
 
 export function getSupportBundleRoutes(cfg = config): RouteDescriptor[] {
-  if (!cfg.featureToggles.supportBundles) {
+  if (!cfg.supportBundlesEnabled) {
     return [];
   }
 

@@ -170,16 +170,6 @@ func (s *ServiceImpl) getServerAdminNode(c *contextmodel.ReqContext) *navtree.Na
 				Url:      s.cfg.AppSubURL + "/admin/storage/export",
 			})
 		}
-
-		if s.features.IsEnabled(featuremgmt.FlagK8s) {
-			storage.Children = append(storage.Children, &navtree.NavLink{
-				Text:     "Kubernetes",
-				Id:       "k8s",
-				SubTitle: "Manage k8s storage",
-				Icon:     "cube",
-				Url:      s.cfg.AppSubURL + "/admin/storage/k8s",
-			})
-		}
 	}
 
 	if s.cfg.LDAPEnabled && hasAccess(ac.ReqGrafanaAdmin, ac.EvalPermission(ac.ActionLDAPStatusRead)) {

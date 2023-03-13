@@ -13,6 +13,7 @@ type Scheduler struct {
 	EvalTotal                           *prometheus.CounterVec
 	EvalFailures                        *prometheus.CounterVec
 	EvalDuration                        *prometheus.HistogramVec
+	GroupRules                          *prometheus.GaugeVec
 	SchedulePeriodicDuration            prometheus.Histogram
 	SchedulableAlertRules               prometheus.Gauge
 	SchedulableAlertRulesHash           prometheus.Gauge
@@ -59,6 +60,16 @@ func NewSchedulerMetrics(r prometheus.Registerer) *Scheduler {
 				Name:      "rule_evaluation_duration_seconds",
 				Help:      "The duration for a rule to execute.",
 				Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
+			},
+			[]string{"org"},
+		),
+		// TODO: partition on rule group as well as tenant, similar to loki|cortex.
+		GroupRules: promauto.With(r).NewGaugeVec(
+			prometheus.GaugeOpts{
+				Namespace: Namespace,
+				Subsystem: Subsystem,
+				Name:      "rule_group_rules",
+				Help:      "The number of rules.",
 			},
 			[]string{"org"},
 		),

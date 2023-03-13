@@ -13,7 +13,7 @@ import { AnnoListPanel, Props } from './AnnoListPanel';
 import { PanelOptions } from './panelcfg.gen';
 
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: () => backendSrv,
 }));
 

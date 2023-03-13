@@ -29,7 +29,7 @@ export enum PluginExtensionTypes {
 }
 
 export type PluginsExtensionLinkConfig = {
-  target: string;
+  placement: string;
   type: PluginExtensionTypes.link;
   title: string;
   description: string;

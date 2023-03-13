@@ -36,6 +36,13 @@ type Service interface {
 	ExistsEnabledByDashboardUid(ctx context.Context, dashboardUid string) (bool, error)
 }
 
+// ServiceWrapper these methods have different behavior between OSS and Enterprise. The latter would call the OSS service first
+//
+//go:generate mockery --name ServiceWrapper --structname FakePublicDashboardServiceWrapper --inpackage --filename public_dashboard_service_wrapper_mock.go
+type ServiceWrapper interface {
+	FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error)
+}
+
 //go:generate mockery --name Store --structname FakePublicDashboardStore --inpackage --filename public_dashboard_store_mock.go
 type Store interface {
 	Find(ctx context.Context, uid string) (*PublicDashboard, error)

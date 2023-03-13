@@ -2,13 +2,18 @@ import { Subject, throwError } from 'rxjs';
 import { delay } from 'rxjs/operators';
 
 import { AnnotationQuery } from '@grafana/data';
-import { setDataSourceSrv } from '@grafana/runtime';
+import { DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
+import { DashboardModel } from 'app/features/dashboard/state';
 
 import { silenceConsoleOutput } from '../../../../../test/core/utils/silenceConsoleOutput';
 import * as annotationsSrv from '../../../annotations/executeAnnotationQuery';
 
 import { AnnotationsWorker } from './AnnotationsWorker';
-import { createDashboardQueryRunner, setDashboardQueryRunnerFactory } from './DashboardQueryRunner';
+import {
+  createDashboardQueryRunner,
+  DashboardQueryRunnerFactoryArgs,
+  setDashboardQueryRunnerFactory,
+} from './DashboardQueryRunner';
 import { getDefaultOptions, LEGACY_DS_NAME, NEXT_GEN_DS_NAME, toAsyncOfResult } from './testHelpers';
 import { DashboardQueryRunnerOptions, DashboardQueryRunnerWorkerResult } from './types';
 import { emptyResult } from './utils';
@@ -23,12 +28,12 @@ function getTestContext(dataSourceSrvRejects = false) {
     cancellations: () => cancellations,
     destroy: () => undefined,
   }));
-  createDashboardQueryRunner({} as any);
+  createDashboardQueryRunner({} as DashboardQueryRunnerFactoryArgs);
   const executeAnnotationQueryMock = jest
     .spyOn(annotationsSrv, 'executeAnnotationQuery')
     .mockReturnValue(toAsyncOfResult({ events: [{ id: 'NextGen' }] }));
   const annotationQueryMock = jest.fn().mockResolvedValue([{ id: 'Legacy' }]);
-  const dataSourceSrvMock: any = {
+  const dataSourceSrvMock = {
     get: async (name: string) => {
       if (dataSourceSrvRejects) {
         return Promise.reject(`Could not find datasource with name: ${name}`);
@@ -47,7 +52,7 @@ function getTestContext(dataSourceSrvRejects = false) {
 
       return {};
     },
-  };
+  } as DataSourceSrv;
   setDataSourceSrv(dataSourceSrvMock);
   const options = getDefaultOptions();
 
@@ -97,7 +102,7 @@ describe('AnnotationsWorker', () => {
 
   describe('when canWork is called with incorrect props', () => {
     it('then it should return false', () => {
-      const dashboard: any = { annotations: { list: [] } };
+      const dashboard = { annotations: { list: [] } } as unknown as DashboardModel;
       const options = { ...getDefaultOptions(), dashboard };
 
       expect(worker.canWork(options)).toBe(false);
@@ -106,7 +111,7 @@ describe('AnnotationsWorker', () => {
 
   describe('when run is called with incorrect props', () => {
     it('then it should return the correct results', async () => {
-      const dashboard: any = { annotations: { list: [] } };
+      const dashboard = { annotations: { list: [] } } as unknown as DashboardModel;
       const options = { ...getDefaultOptions(), dashboard };
 
       await expect(worker.work(options)).toEmitValues([{ alertStates: [], annotations: [] }]);

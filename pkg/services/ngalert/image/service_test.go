@@ -38,10 +38,11 @@ func TestScreenshotImageService(t *testing.T) {
 
 	t.Run("image is taken, uploaded, saved to database and cached", func(t *testing.T) {
 		// assert that the cache is checked for an existing image
-		cache.EXPECT().Get(gomock.Any(), "M2DGZaRLXtg=").Return(models.Image{}, false)
+		cache.EXPECT().Get(gomock.Any(), "oyh1kYgaJwM=").Return(models.Image{}, false)
 
 		// assert that a screenshot is taken
 		screenshots.EXPECT().Take(gomock.Any(), screenshot.ScreenshotOptions{
+			OrgID:        1,
 			DashboardUID: "foo",
 			PanelID:      1,
 			Timeout:      5 * time.Second,
@@ -62,7 +63,7 @@ func TestScreenshotImageService(t *testing.T) {
 		}
 
 		// assert that the image is saved into the cache
-		cache.EXPECT().Set(gomock.Any(), "M2DGZaRLXtg=", expected).Return(nil)
+		cache.EXPECT().Set(gomock.Any(), "oyh1kYgaJwM=", expected).Return(nil)
 
 		image, err := s.NewImage(ctx, &models.AlertRule{
 			OrgID:        1,
@@ -75,10 +76,11 @@ func TestScreenshotImageService(t *testing.T) {
 
 	t.Run("image is taken, upload return error, saved to database without URL and cached", func(t *testing.T) {
 		// assert that the cache is checked for an existing image
-		cache.EXPECT().Get(gomock.Any(), "rTOWVcbRidk=").Return(models.Image{}, false)
+		cache.EXPECT().Get(gomock.Any(), "yszV9tgmKAo=").Return(models.Image{}, false)
 
 		// assert that a screenshot is taken
 		screenshots.EXPECT().Take(gomock.Any(), screenshot.ScreenshotOptions{
+			OrgID:        1,
 			DashboardUID: "bar",
 			PanelID:      1,
 			Timeout:      5 * time.Second,
@@ -98,7 +100,7 @@ func TestScreenshotImageService(t *testing.T) {
 		}
 
 		// assert that the image is saved into the cache, but without a URL
-		cache.EXPECT().Set(gomock.Any(), "rTOWVcbRidk=", expected).Return(nil)
+		cache.EXPECT().Set(gomock.Any(), "yszV9tgmKAo=", expected).Return(nil)
 
 		image, err := s.NewImage(ctx, &models.AlertRule{
 			OrgID:        1,
@@ -113,7 +115,7 @@ func TestScreenshotImageService(t *testing.T) {
 		expected := models.Image{Path: "baz.png", URL: "https://example.com/baz.png"}
 
 		// assert that the cache is checked for an existing image and it is returned
-		cache.EXPECT().Get(gomock.Any(), "8hJuVe20rVE=").Return(expected, true)
+		cache.EXPECT().Get(gomock.Any(), "he399rFDBPI=").Return(expected, true)
 
 		image, err := s.NewImage(ctx, &models.AlertRule{
 			OrgID:        1,
@@ -126,10 +128,11 @@ func TestScreenshotImageService(t *testing.T) {
 
 	t.Run("error is returned when timeout is exceeded", func(t *testing.T) {
 		// assert that the cache is checked for an existing image
-		cache.EXPECT().Get(gomock.Any(), "jtThkFaZLA4=").Return(models.Image{}, false)
+		cache.EXPECT().Get(gomock.Any(), "TTHub8HUe2U=").Return(models.Image{}, false)
 
 		// assert that when the timeout is exceeded an error is returned
 		screenshots.EXPECT().Take(gomock.Any(), screenshot.ScreenshotOptions{
+			OrgID:        1,
 			DashboardUID: "qux",
 			PanelID:      1,
 			Timeout:      5 * time.Second,

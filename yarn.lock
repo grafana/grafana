@@ -4928,13 +4928,13 @@ __metadata:
   linkType: soft
 
 "@grafana/e2e-selectors@npm:canary":
-  version: 9.4.0-96193pre
-  resolution: "@grafana/e2e-selectors@npm:9.4.0-96193pre"
+  version: 9.4.0-101831pre
+  resolution: "@grafana/e2e-selectors@npm:9.4.0-101831pre"
   dependencies:
     "@grafana/tsconfig": ^1.2.0-rc1
     tslib: 2.4.1
     typescript: 4.8.4
-  checksum: 1ce663607c0c816ec02cad33d80c38731c4dfafdc7d1693baa989b8eff6588e3cc1d8a031c4f30f888bbd8aa8768cce7c5dd4cb2455306040f39dcac933ceae4
+  checksum: ee788792fb6b8a35095cf8f306ac45136c1fec6add9da6696cb591492dbfd3f496d261c96a6efda0986078f94740434625b5eb61e664aea4b08ec0f5558918cd
   languageName: node
   linkType: hard
 
@@ -5351,7 +5351,7 @@ __metadata:
     calculate-size: 1.1.1
     classnames: 2.3.2
     common-tags: 1.8.2
-    core-js: 3.27.1
+    core-js: 3.28.0
     css-loader: 6.7.1
     csstype: 3.1.1
     d3: 7.8.2
@@ -5390,7 +5390,7 @@ __metadata:
     react-popper: 2.3.0
     react-popper-tooltip: 4.4.2
     react-router-dom: ^5.2.0
-    react-select: 5.6.0
+    react-select: 5.7.0
     react-select-event: ^5.1.0
     react-table: 7.8.0
     react-test-renderer: 17.0.2
@@ -5424,9 +5424,9 @@ __metadata:
   linkType: soft
 
 "@hapi/hoek@npm:^9.0.0":
-  version: 9.2.1
-  resolution: "@hapi/hoek@npm:9.2.1"
-  checksum: 6a439f672df5f12f1d08d56967b4cb364ce05d81e95e3c3c1b88c5a98b917ca91c70e78cc0b2b4219a760cceec1f22d6658bfc93a83670cecc1ce9ca2247ebd8
+  version: 9.3.0
+  resolution: "@hapi/hoek@npm:9.3.0"
+  checksum: 4771c7a776242c3c022b168046af4e324d116a9d2e1d60631ee64f474c6e38d1bb07092d898bf95c7bc5d334c5582798a1456321b2e53ca817d4e7c88bc25b43
   languageName: node
   linkType: hard
 
@@ -8800,9 +8800,9 @@ __metadata:
   linkType: hard
 
 "@sideway/formula@npm:^3.0.0":
-  version: 3.0.0
-  resolution: "@sideway/formula@npm:3.0.0"
-  checksum: 8ae26a0ed6bc84f7310be6aae6eb9d81e97f382619fc69025d346871a707eaab0fa38b8c857e3f0c35a19923de129f42d35c50b8010c928d64aab41578580ec4
+  version: 3.0.1
+  resolution: "@sideway/formula@npm:3.0.1"
+  checksum: e4beeebc9dbe2ff4ef0def15cec0165e00d1612e3d7cea0bc9ce5175c3263fc2c818b679bd558957f49400ee7be9d4e5ac90487e1625b4932e15c4aa7919c57a
   languageName: node
   linkType: hard
 
@@ -16638,10 +16638,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"core-js@npm:3.27.1":
-  version: 3.27.1
-  resolution: "core-js@npm:3.27.1"
-  checksum: d50b5f88aea4302512ad9446c18e90f4d35dea1e6d8d3f87337690677061565ff11a670f1e0c87de57aa6074375fbb25ed5784076c040d3c4de8b4bce7d2ebeb
+"core-js@npm:3.28.0":
+  version: 3.28.0
+  resolution: "core-js@npm:3.28.0"
+  checksum: 3155fd0ec16d0089106b145e9595280a4ea4bde0d7ff26aa14364cd4f1c203baf6620c3025acd284f363d08b9f21104101692766ca9a36ffeee7307bdf3e1881
   languageName: node
   linkType: hard
 
@@ -19919,9 +19919,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint@npm:8.33.0":
-  version: 8.33.0
-  resolution: "eslint@npm:8.33.0"
+"eslint@npm:8.34.0":
+  version: 8.34.0
+  resolution: "eslint@npm:8.34.0"
   dependencies:
     "@eslint/eslintrc": ^1.4.1
     "@humanwhocodes/config-array": ^0.11.8
@@ -19964,7 +19964,7 @@ __metadata:
     text-table: ^0.2.0
   bin:
     eslint: bin/eslint.js
-  checksum: 727e63ab8b7acf281442323c5971f6afdd5b656fbcebc4476cf54e35af51b2f180617433fc5e1952f0449ca3f43a905527f9407ea4b8a7ea7562fc9c3f278d4c
+  checksum: 4e13e9eb05ac2248efbb6acae0b2325091235d5c47ba91a4775c7d6760778cbcd358a773ebd42f4629d2ad89e27c02f5d66eb1f737d75d9f5fc411454f83b2e5
   languageName: node
   linkType: hard
 
@@ -20922,12 +20922,12 @@ __metadata:
   linkType: hard
 
 "follow-redirects@npm:^1.14.7":
-  version: 1.14.9
-  resolution: "follow-redirects@npm:1.14.9"
+  version: 1.15.2
+  resolution: "follow-redirects@npm:1.15.2"
   peerDependenciesMeta:
     debug:
       optional: true
-  checksum: f5982e0eb481818642492d3ca35a86989c98af1128b8e1a62911a3410621bc15d2b079e8170b35b19d3bdee770b73ed431a257ed86195af773771145baa57845
+  checksum: faa66059b66358ba65c234c2f2a37fcec029dc22775f35d9ad6abac56003268baf41e55f9ee645957b32c7d9f62baf1f0b906e68267276f54ec4b4c597c2b190
   languageName: node
   linkType: hard
 
@@ -22109,7 +22109,7 @@ __metadata:
     comlink: 4.4.0
     common-tags: 1.8.2
     copy-webpack-plugin: 11.0.0
-    core-js: 3.27.1
+    core-js: 3.28.0
     css-loader: 6.7.1
     css-minimizer-webpack-plugin: 4.2.2
     cypress: 9.5.1
@@ -22124,7 +22124,7 @@ __metadata:
     esbuild: 0.16.17
     esbuild-loader: 2.21.0
     esbuild-plugin-browserslist: ^0.6.0
-    eslint: 8.33.0
+    eslint: 8.34.0
     eslint-config-prettier: 8.6.0
     eslint-plugin-import: ^2.26.0
     eslint-plugin-jest: 27.2.1
@@ -22209,6 +22209,7 @@ __metadata:
     react-diff-viewer: ^3.1.1
     react-dom: 17.0.2
     react-draggable: 4.4.5
+    react-dropzone: ^14.2.3
     react-grid-layout: 1.3.4
     react-highlight-words: 0.20.0
     react-hook-form: 7.5.3
@@ -22222,7 +22223,7 @@ __metadata:
     react-resizable: 3.0.4
     react-reverse-portal: 2.1.1
     react-router-dom: ^5.2.0
-    react-select: 5.6.0
+    react-select: 5.7.0
     react-select-event: 5.5.1
     react-simple-compat: 1.2.3
     react-split-pane: 0.1.92
@@ -22230,7 +22231,7 @@ __metadata:
     react-test-renderer: 17.0.2
     react-transition-group: 4.4.5
     react-use: 17.4.0
-    react-virtual: 2.8.2
+    react-virtual: 2.10.4
     react-virtualized-auto-sizer: 1.0.7
     react-window: 1.8.8
     react-window-infinite-loader: 1.0.8
@@ -25821,15 +25822,15 @@ __metadata:
   linkType: hard
 
 "joi@npm:^17.6.0":
-  version: 17.6.0
-  resolution: "joi@npm:17.6.0"
+  version: 17.7.0
+  resolution: "joi@npm:17.7.0"
   dependencies:
     "@hapi/hoek": ^9.0.0
     "@hapi/topo": ^5.0.0
     "@sideway/address": ^4.1.3
     "@sideway/formula": ^3.0.0
     "@sideway/pinpoint": ^2.0.0
-  checksum: eaf62f6c02f2edb1042f1ab04fc23a5918a2cb8f54bec84c6e1033624d8a462c10ae9518af55a3ba84f1793960450d58094eda308e7ef93c17edd4e3c8ef31d5
+  checksum: 767a847936cb66787256c4351ff86e1b9e8d7383cbe81a5c827064032c2a8e8b6e938baef5ad32c4035fe4c56e537bd90aa2a952be8a0658601c920cdeb4fb3c
   languageName: node
   linkType: hard
 
@@ -28088,15 +28089,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"minimatch@npm:3.0.4, minimatch@npm:^3.0.4":
-  version: 3.0.4
-  resolution: "minimatch@npm:3.0.4"
-  dependencies:
-    brace-expansion: ^1.1.7
-  checksum: 66ac295f8a7b59788000ea3749938b0970344c841750abd96694f80269b926ebcafad3deeb3f1da2522978b119e6ae3a5869b63b13a7859a456b3408bd18a078
-  languageName: node
-  linkType: hard
-
 "minimatch@npm:3.0.5":
   version: 3.0.5
   resolution: "minimatch@npm:3.0.5"
@@ -28115,7 +28107,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"minimatch@npm:^3.0.2, minimatch@npm:^3.0.5, minimatch@npm:^3.1.2":
+"minimatch@npm:^3.0.2, minimatch@npm:^3.0.4, minimatch@npm:^3.0.5, minimatch@npm:^3.1.2":
   version: 3.1.2
   resolution: "minimatch@npm:3.1.2"
   dependencies:
@@ -28563,12 +28555,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nanoid@npm:^3.1.30":
-  version: 3.1.30
-  resolution: "nanoid@npm:3.1.30"
+"nanoid@npm:^3.1.30, nanoid@npm:^3.3.4":
+  version: 3.3.4
+  resolution: "nanoid@npm:3.3.4"
   bin:
     nanoid: bin/nanoid.cjs
-  checksum: 276d0d4b0c41c46aeefec5f09f093e4085a2352d06881c845db22b84f8ef72cc8defae6d76bfb1d8a2a128eb2dec42ab148d16582be4e7754c97905806ef57b6
+  checksum: 2fddd6dee994b7676f008d3ffa4ab16035a754f4bb586c61df5a22cf8c8c94017aadd360368f47d653829e0569a92b129979152ff97af23a558331e47e37cd9c
   languageName: node
   linkType: hard
 
@@ -28578,15 +28570,6 @@ __metadata:
   bin:
     nanoid: bin/nanoid.cjs
   checksum: 4ef0969e1bbe866fc223eb32276cbccb0961900bfe79104fa5abe34361979dead8d0e061410a5c03bc3d47455685adf32c09d6f27790f4a6898fb51f7df7ec86
-  languageName: node
-  linkType: hard
-
-"nanoid@npm:^3.3.4":
-  version: 3.3.4
-  resolution: "nanoid@npm:3.3.4"
-  bin:
-    nanoid: bin/nanoid.cjs
-  checksum: 2fddd6dee994b7676f008d3ffa4ab16035a754f4bb586c61df5a22cf8c8c94017aadd360368f47d653829e0569a92b129979152ff97af23a558331e47e37cd9c
   languageName: node
   linkType: hard
 
@@ -32732,7 +32715,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-dropzone@npm:14.2.3":
+"react-dropzone@npm:14.2.3, react-dropzone@npm:^14.2.3":
   version: 14.2.3
   resolution: "react-dropzone@npm:14.2.3"
   dependencies:
@@ -33094,9 +33077,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-select@npm:5.6.0":
-  version: 5.6.0
-  resolution: "react-select@npm:5.6.0"
+"react-select@npm:5.7.0":
+  version: 5.7.0
+  resolution: "react-select@npm:5.7.0"
   dependencies:
     "@babel/runtime": ^7.12.0
     "@emotion/cache": ^11.4.0
@@ -33110,7 +33093,7 @@ __metadata:
   peerDependencies:
     react: ^16.8.0 || ^17.0.0 || ^18.0.0
     react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
-  checksum: d0a51e618168f3f275fbf96e23eb88ac6066006bcca136e293327f6eddd0b419ef02aaa847bf1670c5f07c8e9d9fc4b975fcae833085e11fc41e29e2b802a75b
+  checksum: 3d29f7bb6dd66ad55396d820f05da6112f1d21b67526422a8ff5aa6cd47c783804c1b73042ac2949ba0871056a3dc68c06a73a8281abb61571e475d72bbd80dc
   languageName: node
   linkType: hard
 
@@ -33286,18 +33269,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-virtual@npm:2.8.2":
-  version: 2.8.2
-  resolution: "react-virtual@npm:2.8.2"
-  dependencies:
-    "@reach/observe-rect": ^1.1.0
-  peerDependencies:
-    react: ^16.6.3 || ^17.0.0
-  checksum: 3c95c7ea951d33d6da8d5461ea28b39dea7bd536b06ccae58ac808907761bc2425dcb469be5618c95a6f9f021f70b8019f386d21d33c64540d051f11e3f10e4a
-  languageName: node
-  linkType: hard
-
-"react-virtual@npm:^2.8.2":
+"react-virtual@npm:2.10.4, react-virtual@npm:^2.8.2":
   version: 2.10.4
   resolution: "react-virtual@npm:2.10.4"
   dependencies:
@@ -33545,11 +33517,11 @@ __metadata:
   linkType: hard
 
 "recursive-readdir@npm:^2.2.2":
-  version: 2.2.2
-  resolution: "recursive-readdir@npm:2.2.2"
+  version: 2.2.3
+  resolution: "recursive-readdir@npm:2.2.3"
   dependencies:
-    minimatch: 3.0.4
-  checksum: a6b22994d76458443d4a27f5fd7147ac63ad31bba972666a291d511d4d819ee40ff71ba7524c14f6a565b8cfaf7f48b318f971804b913cf538d58f04e25d1fee
+    minimatch: ^3.0.5
+  checksum: 88ec96e276237290607edc0872b4f9842837b95cfde0cdbb1e00ba9623dfdf3514d44cdd14496ab60a0c2dd180a6ef8a3f1c34599e6cf2273afac9b72a6fb2b5
   languageName: node
   linkType: hard
 
@@ -34537,7 +34509,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rxjs@npm:^7.5.1":
+"rxjs@npm:^7.5.1, rxjs@npm:^7.5.4":
   version: 7.8.0
   resolution: "rxjs@npm:7.8.0"
   dependencies:
@@ -34546,7 +34518,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rxjs@npm:^7.5.4, rxjs@npm:^7.5.5":
+"rxjs@npm:^7.5.5":
   version: 7.5.5
   resolution: "rxjs@npm:7.5.5"
   dependencies:
@@ -35653,7 +35625,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"source-map@npm:^0.7.0, source-map@npm:~0.7.2":
+"source-map@npm:^0.7.0":
   version: 0.7.4
   resolution: "source-map@npm:0.7.4"
   checksum: 01cc5a74b1f0e1d626a58d36ad6898ea820567e87f18dfc9d24a9843a351aaa2ec09b87422589906d6ff1deed29693e176194dc88bcae7c9a852dc74b311dbf5
@@ -36884,15 +36856,16 @@ __metadata:
   linkType: hard
 
 "terser@npm:^5.0.0, terser@npm:^5.7.2":
-  version: 5.9.0
-  resolution: "terser@npm:5.9.0"
+  version: 5.16.3
+  resolution: "terser@npm:5.16.3"
   dependencies:
+    "@jridgewell/source-map": ^0.3.2
+    acorn: ^8.5.0
     commander: ^2.20.0
-    source-map: ~0.7.2
     source-map-support: ~0.5.20
   bin:
     terser: bin/terser
-  checksum: 11c1246b1991015a8881742878af779e3863fad42f626ffda957dbf28c94bf51e7994cffb9ffbec86ff3c23ab45ffa6d79d453c15e664306e35fc7b2c4eee5f4
+  checksum: d3c2ac1c2723c37b698b25b68d76fd315a1277fddde113983d5783d1f2a01dd7b8ed83ba3f54e5e65f0b59dd971ed7be2fdf8d4be94ec694b2d27832d2e7561f
   languageName: node
   linkType: hard
 
@@ -37346,10 +37319,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"trim@npm:0.0.1":
-  version: 0.0.1
-  resolution: "trim@npm:0.0.1"
-  checksum: 2b4646dff99a222e8e1526edd4e3a43bbd925af0b8e837c340455d250157e7deefaa4da49bb891ab841e5c27b1afc5e9e32d4b57afb875d2dfcabf4e319b8f7f
+"trim@npm:0.0.3":
+  version: 0.0.3
+  resolution: "trim@npm:0.0.3"
+  checksum: 9a059ba56d5e22c9e571798a7c63640cb25478c495d8a9d001f6352927207c6bd224018751a0c5145fbedc943ee2ebab1d7cc2e8ccba3121a51a7d3428dd879c
   languageName: node
   linkType: hard
 

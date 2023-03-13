@@ -101,7 +101,7 @@ seqs: [
 					component?: string
 
 					// The minimum role a user must have to see this page in the navigation menu.
-					role?:      "Admin" | "Editor" | "Viewer"
+					role?: "Admin" | "Editor" | "Viewer"
 
 					// RBAC action the user must have to access the route
 					action?: string
@@ -124,7 +124,7 @@ seqs: [
 
 				#ExtensionsLink: {
 					// Target where the link will be rendered
-					target: =~"^(plugins|grafana)\/[a-z-/0-9]*$"
+					placement: =~"^(plugins|grafana)\/[a-z-/0-9]*$"
 					// Type of extension
 					type: "link"
 					// Title that will be displayed for the rendered link

@@ -402,6 +402,7 @@ func TestIntegrationCreatePublicDashboard(t *testing.T) {
 				IsEnabled:            true,
 				AnnotationsEnabled:   true,
 				TimeSelectionEnabled: true,
+				Share:                PublicShareType,
 				Uid:                  "pubdash-uid",
 				DashboardUid:         savedDashboard.UID,
 				OrgId:                savedDashboard.OrgID,
@@ -417,10 +418,11 @@ func TestIntegrationCreatePublicDashboard(t *testing.T) {
 
 		pubdash, err := publicdashboardStore.FindByDashboardUid(context.Background(), savedDashboard.OrgID, savedDashboard.UID)
 		require.NoError(t, err)
-		assert.Equal(t, pubdash.AccessToken, "NOTAREALUUID")
+		assert.Equal(t, cmd.PublicDashboard.AccessToken, pubdash.AccessToken)
 		assert.True(t, pubdash.IsEnabled)
 		assert.True(t, pubdash.AnnotationsEnabled)
 		assert.True(t, pubdash.TimeSelectionEnabled)
+		assert.Equal(t, cmd.PublicDashboard.Share, pubdash.Share)
 
 		// verify we didn't update all dashboards
 		pubdash2, err := publicdashboardStore.FindByDashboardUid(context.Background(), savedDashboard2.OrgID, savedDashboard2.UID)
@@ -502,6 +504,7 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 				IsEnabled:            true,
 				AnnotationsEnabled:   false,
 				TimeSelectionEnabled: false,
+				Share:                PublicShareType,
 				CreatedAt:            DefaultTime,
 				CreatedBy:            7,
 				AccessToken:          "fakeaccesstoken",
@@ -519,6 +522,7 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 			IsEnabled:            false,
 			AnnotationsEnabled:   true,
 			TimeSelectionEnabled: true,
+			Share:                EmailShareType,
 			TimeSettings:         &TimeSettings{From: "now-8", To: "now"},
 			UpdatedAt:            time.Now().UTC().Round(time.Second),
 			UpdatedBy:            8,
@@ -540,6 +544,7 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 		assert.Equal(t, updatedPublicDashboard.IsEnabled, pdRetrieved.IsEnabled)
 		assert.Equal(t, updatedPublicDashboard.AnnotationsEnabled, pdRetrieved.AnnotationsEnabled)
 		assert.Equal(t, updatedPublicDashboard.TimeSelectionEnabled, pdRetrieved.TimeSelectionEnabled)
+		assert.Equal(t, updatedPublicDashboard.Share, pdRetrieved.Share)
 
 		// not updated dashboard shouldn't have changed
 		pdNotUpdatedRetrieved, err := publicdashboardStore.FindByDashboardUid(context.Background(), anotherSavedDashboard.OrgID, anotherSavedDashboard.UID)
@@ -547,6 +552,7 @@ func TestIntegrationUpdatePublicDashboard(t *testing.T) {
 		assert.NotEqual(t, updatedPublicDashboard.UpdatedAt, pdNotUpdatedRetrieved.UpdatedAt)
 		assert.NotEqual(t, updatedPublicDashboard.IsEnabled, pdNotUpdatedRetrieved.IsEnabled)
 		assert.NotEqual(t, updatedPublicDashboard.AnnotationsEnabled, pdNotUpdatedRetrieved.AnnotationsEnabled)
+		assert.NotEqual(t, updatedPublicDashboard.Share, pdNotUpdatedRetrieved.Share)
 	})
 }
 

@@ -19,16 +19,16 @@ When available, we list all changes with links to pull requests or issues in the
 
 Although Grafana automatically upgrades the database on startup, we recommend that you back up your Grafana database so that you can roll back to a previous version, if required.
 
-### sqlite
+### SQLite
 
-If you use sqlite, you only need to back up the `grafana.db` file. On Unix systems, the database file is usually located in `/var/lib/grafana/`.
+If you use SQLite, you only need to back up the `grafana.db` file. On Unix systems, the database file is usually located in `/var/lib/grafana/`.
 
 If you are unsure which database you use and where it is stored, check the Grafana configuration file. If you
 installed Grafana to a custom location using a binary tar/zip, the database is usually located in `<grafana_install_dir>/data`.
 
-### mysql
+### MySQL
 
-To back up or restore a mysql Grafana database, run the following commands:
+To back up or restore a MySQL Grafana database, run the following commands:
 
 ```bash
 backup:
@@ -38,9 +38,9 @@ restore:
 > mysql -u root -p grafana < grafana_backup.sql
 ```
 
-### postgres
+### Postgres
 
-To back up or restore a postgres Grafana database, run the following commands:
+To back up or restore a Postgres Grafana database, run the following commands:
 
 ```bash
 backup:
@@ -84,7 +84,7 @@ To upgrade Grafana installed from the Grafana Labs APT repository, complete the 
 
    This enables you to upgrade Grafana without the risk of losing your configuration changes.
 
-1. Run the following command.
+1. Run the following commands:
 
    ```bash
    sudo apt-get update
@@ -105,9 +105,9 @@ To upgrade Grafana installed from the binary `.tar.gz` package, complete the fol
 
 1. Extract the downloaded package and overwrite the existing files.
 
-### Centos or RHEL
+### CentOS or RHEL
 
-To upgrade Grafana running on Centos or RHEL, complete the following steps:
+To upgrade Grafana running on CentOS or RHEL, complete the following steps:
 
 1. In your current installation of Grafana, save your custom configuration changes to a file named `<grafana_install_dir>/conf/custom.ini`.
 
@@ -130,7 +130,7 @@ To upgrade Grafana running in a Docker container, complete the following steps:
 
    This enables you to upgrade Grafana without the risk of losing your configuration changes.
 
-1. Run a command similar to the following command.
+1. Run a commands similar to the following commands.
 
    > **Note:** This is an example. The parameters you enter depend on how you configured your Grafana container.
 

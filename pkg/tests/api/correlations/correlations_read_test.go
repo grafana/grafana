@@ -70,8 +70,7 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 		Type:  "loki",
 		OrgID: 1,
 	}
-	ctx.createDs(createDsCommand)
-	dsWithCorrelations := createDsCommand.Result
+	dsWithCorrelations := ctx.createDs(createDsCommand)
 	correlation := ctx.createCorrelation(correlations.CreateCorrelationCommand{
 		SourceUID: dsWithCorrelations.UID,
 		TargetUID: &dsWithCorrelations.UID,
@@ -88,8 +87,7 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 		Type:  "loki",
 		OrgID: 1,
 	}
-	ctx.createDs(createDsCommand)
-	dsWithoutCorrelations := createDsCommand.Result
+	dsWithoutCorrelations := ctx.createDs(createDsCommand)
 
 	// This creates 2 records in the correlation table that should never be returned by the API.
 	// Given all tests in this file work on the assumption that only a single correlation exists,

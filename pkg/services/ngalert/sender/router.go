@@ -214,11 +214,11 @@ func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]string, erro
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
-	err := d.datasourceService.GetDataSourcesByType(ctx, query)
+	dataSources, err := d.datasourceService.GetDataSourcesByType(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch datasources for org: %w", err)
 	}
-	for _, ds := range query.Result {
+	for _, ds := range dataSources {
 		if !ds.JsonData.Get(definitions.HandleGrafanaManagedAlerts).MustBool(false) {
 			continue
 		}

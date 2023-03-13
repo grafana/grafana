@@ -26,7 +26,6 @@ export interface FeatureToggles {
   queryOverLive?: boolean;
   panelTitleSearch?: boolean;
   prometheusAzureOverrideAudience?: boolean;
-  showFeatureFlagsInUI?: boolean;
   publicDashboards?: boolean;
   publicDashboardsEmailSharing?: boolean;
   lokiLive?: boolean;
@@ -38,9 +37,6 @@ export interface FeatureToggles {
   migrationLocking?: boolean;
   storage?: boolean;
   k8s?: boolean;
-  k8sDashboards?: boolean;
-  apiserver?: boolean;
-  supportBundles?: boolean;
   dashboardsFromStorage?: boolean;
   export?: boolean;
   exploreMixedDatasource?: boolean;
@@ -84,4 +80,5 @@ export interface FeatureToggles {
   topNavCommandPalette?: boolean;
   logsSampleInExplore?: boolean;
   logsContextDatasourceUi?: boolean;
+  lokiQuerySplitting?: boolean;
 }

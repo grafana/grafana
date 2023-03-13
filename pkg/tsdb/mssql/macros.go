@@ -49,9 +49,13 @@ func (m *msSQLMacroEngine) Interpolate(query *backend.DataQuery, timeRange backe
 	// TODO: Return any error
 	rExp, _ := regexp.Compile(sExpr)
 	var macroError error
-	formattedSql, fctCallArgsMap := replaceFunctionCallArgsWithPlaceholders(sql)
+	var fctCallArgsMap map[string]string
 
-	sql = m.ReplaceAllStringSubmatchFunc(rExp, formattedSql, func(groups []string) string {
+	if rExp.FindAllSubmatchIndex([]byte(sql), -1) != nil {
+		sql, fctCallArgsMap = replaceFunctionCallArgsWithPlaceholders(sql)
+	}
+
+	sql = m.ReplaceAllStringSubmatchFunc(rExp, sql, func(groups []string) string {
 		args := strings.Split(groups[2], ",")
 		for i, arg := range args {
 			args[i] = strings.Trim(arg, " ")

@@ -1,15 +1,18 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
+import { PrometheusDatasource } from '../datasource';
+import { PromQuery } from '../types';
+
 import { PromExploreExtraFieldProps, PromExploreExtraField, testIds } from './PromExploreExtraField';
 
 const setup = (propOverrides?: PromExploreExtraFieldProps) => {
-  const query = { exemplar: false };
-  const datasource = {};
+  const query = { exemplar: false } as PromQuery;
+  const datasource = {} as PrometheusDatasource;
   const onChange = jest.fn();
   const onRunQuery = jest.fn();
 
-  const props: any = {
+  const props: PromExploreExtraFieldProps = {
     onChange,
     onRunQuery,
     query,

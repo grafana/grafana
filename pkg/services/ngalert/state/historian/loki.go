@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
-	"strconv"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -39,7 +38,7 @@ const defaultQueryRange = 6 * time.Hour
 type remoteLokiClient interface {
 	ping(context.Context) error
 	push(context.Context, []stream) error
-	rangeQuery(ctx context.Context, selectors []Selector, start, end int64) (QueryRes, error)
+	rangeQuery(ctx context.Context, selectors []Selector, start, end int64) (queryRes, error)
 }
 
 type RemoteLokiBackend struct {
@@ -139,7 +138,7 @@ func buildSelectors(query models.HistoryQuery) ([]Selector, error) {
 }
 
 // merge will put all the results in one array sorted by timestamp.
-func merge(res QueryRes, ruleUID string) (*data.Frame, error) {
+func merge(res queryRes, ruleUID string) (*data.Frame, error) {
 	// Find the total number of elements in all arrays.
 	totalLen := 0
 	for _, arr := range res.Data.Result {
@@ -165,7 +164,7 @@ func merge(res QueryRes, ruleUID string) (*data.Frame, error) {
 	pointers := make([]int, len(res.Data.Result))
 	for {
 		minTime := int64(math.MaxInt64)
-		minEl := [2]string{}
+		minEl := sample{}
 		minElStreamIdx := -1
 		// Find the element with the earliest time among all arrays.
 		for i, stream := range res.Data.Result {
@@ -173,10 +172,7 @@ func merge(res QueryRes, ruleUID string) (*data.Frame, error) {
 			if len(stream.Values) == pointers[i] {
 				continue
 			}
-			curTime, err := strconv.ParseInt(stream.Values[pointers[i]][0], 10, 64)
-			if err != nil {
-				return nil, fmt.Errorf("failed to parse timestamp from loki response: %w", err)
-			}
+			curTime := stream.Values[pointers[i]].T.UnixNano()
 			if pointers[i] < len(stream.Values) && curTime < minTime {
 				minTime = curTime
 				minEl = stream.Values[pointers[i]]
@@ -188,22 +184,19 @@ func merge(res QueryRes, ruleUID string) (*data.Frame, error) {
 			break
 		}
 		var entry lokiEntry
-		err := json.Unmarshal([]byte(minEl[1]), &entry)
+		err := json.Unmarshal([]byte(minEl.V), &entry)
 		if err != nil {
 			return nil, fmt.Errorf("failed to unmarshal entry: %w", err)
 		}
 		// Append the minimum element to the merged slice and move the pointer.
-		tsNano, err := strconv.ParseInt(minEl[0], 10, 64)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse timestamp in response: %w", err)
-		}
+		tsNano := minEl.T.UnixNano()
 		// TODO: In general, perhaps we should omit the offending line and log, rather than failing the request entirely.
 		streamLbls := res.Data.Result[minElStreamIdx].Stream
 		lblsJson, err := json.Marshal(streamLbls)
 		if err != nil {
 			return nil, fmt.Errorf("failed to serialize stream labels: %w", err)
 		}
-		line, err := jsonifyRow(minEl[1])
+		line, err := jsonifyRow(minEl.V)
 		if err != nil {
 			return nil, fmt.Errorf("a line was in an invalid format: %w", err)
 		}
@@ -222,7 +215,7 @@ func merge(res QueryRes, ruleUID string) (*data.Frame, error) {
 }
 
 func statesToStreams(rule history_model.RuleMeta, states []state.StateTransition, externalLabels map[string]string, logger log.Logger) []stream {
-	buckets := make(map[string][]row) // label repr -> entries
+	buckets := make(map[string][]sample) // label repr -> entries
 	for _, state := range states {
 		if !shouldRecord(state) {
 			continue
@@ -255,9 +248,9 @@ func statesToStreams(rule history_model.RuleMeta, states []state.StateTransition
 		}
 		line := string(jsn)
 
-		buckets[repr] = append(buckets[repr], row{
-			At:  state.State.LastEvaluationTime,
-			Val: line,
+		buckets[repr] = append(buckets[repr], sample{
+			T: state.State.LastEvaluationTime,
+			V: line,
 		})
 	}
 

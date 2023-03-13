@@ -2,6 +2,7 @@ package historian
 
 import (
 	"context"
+	"encoding/json"
 	"net/url"
 	"testing"
 	"time"
@@ -154,4 +155,68 @@ func TestNewSelector(t *testing.T) {
 
 	selector, err = NewSelector("label", "invalid", "value")
 	require.Error(t, err)
+}
+
+func TestRow(t *testing.T) {
+	t.Run("marshal", func(t *testing.T) {
+		row := sample{
+			T: time.Unix(0, 1234),
+			V: "some sample",
+		}
+
+		jsn, err := json.Marshal(&row)
+
+		require.NoError(t, err)
+		require.JSONEq(t, `["1234", "some sample"]`, string(jsn))
+	})
+
+	t.Run("unmarshal", func(t *testing.T) {
+		jsn := []byte(`["1234", "some sample"]`)
+
+		row := sample{}
+		err := json.Unmarshal(jsn, &row)
+
+		require.NoError(t, err)
+		require.Equal(t, int64(1234), row.T.UnixNano())
+		require.Equal(t, "some sample", row.V)
+	})
+
+	t.Run("unmarshal invalid", func(t *testing.T) {
+		jsn := []byte(`{"key": "wrong shape"}`)
+
+		row := sample{}
+		err := json.Unmarshal(jsn, &row)
+
+		require.ErrorContains(t, err, "failed to deserialize sample")
+	})
+
+	t.Run("unmarshal bad timestamp", func(t *testing.T) {
+		jsn := []byte(`["not-unix-nano", "some sample"]`)
+
+		row := sample{}
+		err := json.Unmarshal(jsn, &row)
+
+		require.ErrorContains(t, err, "timestamp in Loki sample")
+	})
+}
+
+func TestStream(t *testing.T) {
+	t.Run("marshal", func(t *testing.T) {
+		stream := stream{
+			Stream: map[string]string{"a": "b"},
+			Values: []sample{
+				{T: time.Unix(0, 1), V: "one"},
+				{T: time.Unix(0, 2), V: "two"},
+			},
+		}
+
+		jsn, err := json.Marshal(stream)
+
+		require.NoError(t, err)
+		require.JSONEq(
+			t,
+			`{"stream": {"a": "b"}, "values": [["1", "one"], ["2", "two"]]}`,
+			string(jsn),
+		)
+	})
 }

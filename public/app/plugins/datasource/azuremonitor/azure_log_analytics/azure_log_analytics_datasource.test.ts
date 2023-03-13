@@ -14,7 +14,7 @@ const templateSrv = new TemplateSrv();
 
 jest.mock('app/core/services/backend_srv');
 jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  ...jest.requireActual('@grafana/runtime'),
   getTemplateSrv: () => templateSrv,
 }));
 

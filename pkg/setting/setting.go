@@ -140,14 +140,6 @@ var (
 	RudderstackSdkUrl                   string
 	RudderstackConfigUrl                string
 
-	// LDAP
-	LDAPEnabled           bool
-	LDAPSkipOrgRoleSync   bool
-	LDAPConfigFile        string
-	LDAPSyncCron          string
-	LDAPAllowSignup       bool
-	LDAPActiveSyncEnabled bool
-
 	// Alerting
 	AlertingEnabled            *bool
 	ExecuteAlerts              bool
@@ -440,9 +432,12 @@ type Cfg struct {
 	GenericOAuthSkipOrgRoleSync bool
 
 	// LDAP
-	LDAPEnabled         bool
-	LDAPSkipOrgRoleSync bool
-	LDAPAllowSignup     bool
+	LDAPEnabled           bool
+	LDAPSkipOrgRoleSync   bool
+	LDAPConfigFilePath    string
+	LDAPAllowSignup       bool
+	LDAPActiveSyncEnabled bool
+	LDAPSyncCron          string
 
 	DefaultTheme    string
 	DefaultLanguage string
@@ -504,6 +499,9 @@ type Cfg struct {
 	Search SearchSettings
 
 	SecureSocksDSProxy SecureSocksDSProxySettings
+
+	// SAML Auth
+	SAMLSkipOrgRoleSync bool
 
 	// Okta OAuth
 	OktaSkipOrgRoleSync bool
@@ -1095,6 +1093,7 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 		cfg.PluginsEnableAlpha = true
 	}
 
+	cfg.readSAMLConfig()
 	cfg.readLDAPConfig()
 	cfg.handleAWSConfig()
 	cfg.readAzureSettings()
@@ -1194,17 +1193,19 @@ type RemoteCacheOptions struct {
 	Encryption bool
 }
 
+func (cfg *Cfg) readSAMLConfig() {
+	samlSec := cfg.Raw.Section("auth.saml")
+	cfg.SAMLSkipOrgRoleSync = samlSec.Key("skip_org_role_sync").MustBool(false)
+}
+
 func (cfg *Cfg) readLDAPConfig() {
 	ldapSec := cfg.Raw.Section("auth.ldap")
-	LDAPConfigFile = ldapSec.Key("config_file").String()
-	LDAPSyncCron = ldapSec.Key("sync_cron").String()
-	LDAPEnabled = ldapSec.Key("enabled").MustBool(false)
-	cfg.LDAPEnabled = LDAPEnabled
-	LDAPSkipOrgRoleSync = ldapSec.Key("skip_org_role_sync").MustBool(false)
-	cfg.LDAPSkipOrgRoleSync = LDAPSkipOrgRoleSync
-	LDAPActiveSyncEnabled = ldapSec.Key("active_sync_enabled").MustBool(false)
-	LDAPAllowSignup = ldapSec.Key("allow_sign_up").MustBool(true)
-	cfg.LDAPAllowSignup = LDAPAllowSignup
+	cfg.LDAPConfigFilePath = ldapSec.Key("config_file").String()
+	cfg.LDAPSyncCron = ldapSec.Key("sync_cron").String()
+	cfg.LDAPEnabled = ldapSec.Key("enabled").MustBool(false)
+	cfg.LDAPSkipOrgRoleSync = ldapSec.Key("skip_org_role_sync").MustBool(false)
+	cfg.LDAPActiveSyncEnabled = ldapSec.Key("active_sync_enabled").MustBool(false)
+	cfg.LDAPAllowSignup = ldapSec.Key("allow_sign_up").MustBool(true)
 }
 
 func (cfg *Cfg) handleAWSConfig() {
